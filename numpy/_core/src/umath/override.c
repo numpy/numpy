@@ -309,8 +309,6 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         goto fail;
     }
 
-    int len = nin;
-
     /* Call __array_ufunc__ functions in correct order */
     while (1) {
         PyObject *override_obj = NULL;
@@ -352,7 +350,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
          * We increase all references since SET_ITEM steals
          * them and they will be DECREF'd when the tuple is deleted.
          */
-        override_args = PyTuple_New(len + 3);
+        override_args = PyTuple_New(nin + 3);
         if (override_args == NULL) {
             goto fail;
         }
@@ -360,7 +358,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         PyTuple_SET_ITEM(override_args, 1, (PyObject *)ufunc);
         Py_INCREF(method_name);
         PyTuple_SET_ITEM(override_args, 2, method_name);
-        for (int i = 0; i < len; i++) {
+        for (int i = 0; i < nin; i++) {
             PyObject *item = in_args[i];
 
             PyTuple_SET_ITEM(override_args, i + 3, Py_NewRef(item));

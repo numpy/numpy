@@ -31,7 +31,6 @@
 #include <Python.h>
 
 #include <stddef.h>
-#include <assert.h>
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
@@ -69,29 +68,6 @@
 #include "number.h"
 #include "scalartypes.h"  // for is_anyscalar_exact and scalar_value
 
-/// function to print debugging messages
-//inline std::string base_name(std::string const &path) { return path.substr(path.find_last_of("/\\") + 1); }
-
-static inline void printfd_handler (const char *file, const char *func, int line, const char *message, ...) {
-       // std::string s = file;
-        //s = base_name (s);
-        int verbose = 0;
-
-        if (verbose) {
-            //const char *fileshort = s.c_str ();
-            printf ("file %s: function %s: line %d: ", file, func, line);
-            char buf[32 * 1024];
-
-            va_list va;
-            va_start (va, message);
-            vsnprintf (buf, 32*1024, message, va);
-            va_end (va);
-            printf ("%s", buf);
-        }
-}
-#define printfd(...) printfd_handler (__FILE__, __FUNCTION__, __LINE__, __VA_ARGS__)
-#define printfd(...) 
-
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
 
@@ -127,7 +103,7 @@ _decref_pyobjects(PyObject *const *array, npy_intp size) {
  * Lightweight structure to keep track of input and output arguments
  */
 typedef struct {
-    PyObject *const *in;   /* Array of input arguments (borrowed refs, immutable) */
+    PyObject *const *in;   /* Array of input arguments (borrowed or owned refs, immutable) */
     PyObject **out;  /* Array of output arguments (owned refs). If no non-None outputs are
                         provided, then this is NULL. */
     npy_intp nin;    /* Number of input arguments */
@@ -136,8 +112,7 @@ typedef struct {
 
 /*
  * Release all owned output references held by a ufunc_full_args_light
- * and reset the output count.  Input references are not touched because
- * they may be borrowed.
+ * and reset the output count.
  */
 static inline void
 ufunc_full_args_light_clear_out(ufunc_full_args_light *full_args)
@@ -767,7 +742,6 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
     if (full_args_light->out != NULL) {
         for (int i = 0; i < nout; i++) {
             obj = full_args_light->out[i];
-            printfd("convert_ufunc_arguments: call to _set_out_array: obj %p i %d nin %d nout %d\n", obj, i, nin, nout );
             if (_set_out_array(obj, out_op + i + nin) < 0) {
                 goto fail;
             }
@@ -3476,7 +3450,7 @@ _set_full_args_out(int nout, PyObject *out_obj,
             return 0;
         }
         /* Can be an array if it only has one output */
-        if (full_args_light != NULL && full_args_light->out != NULL) {
+        if (full_args_light->out != NULL) {
             full_args_light->out[0] = Py_NewRef(out_obj);
             full_args_light->nout = 1;
         }
@@ -3760,6 +3734,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     if (naxes < 0) {
         goto fail;
     }
+
     switch(operation) {
     case UFUNC_REDUCE:
         ret = PyUFunc_Reduce(ufunc,
@@ -4500,14 +4475,12 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 {
     int errval;
     int nin = ufunc->nin, nout = ufunc->nout, nop = ufunc->nargs;
-    //printf("ufunc_generic_fastcall %d %d outer %d\n", nin, nout, outer);
 
     if (len_args == 1 && kwnames == NULL && !PyArray_Check(args[0])
             && nin == 1 && nout == 1 && !ufunc->core_enabled) {
         // Possibly scalar input, try the fast path, falling back on failure.
         PyObject *result = NULL;
         if (try_trivial_scalar_call(ufunc, args[0], &result) != -2) {
-            printfd("ufunc_generic_fastcall %d %d: try_trivial_scalar_call worked\n", nin, nout);
             return result;
         }
     }
@@ -4542,9 +4515,9 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
      * Note that the input (and possibly output) arguments are passed in as
      * positional arguments. We extract these first and check for `out`
      * passed by keyword later.
-     * Outputs and inputs are stored in `ufunc_in` and `ufunc_out`
-     * as plain arrays (or NULL when no outputs are passed). The references are counted,
-     * but in the future we can switch to borrowed references.
+     * Outputs and inputs are stored in `full_args_light.in` and
+     * `full_args_light.out` as plain arrays (or NULL when no outputs
+     * are passed).
      */
 
     /* Check number of arguments */
@@ -4570,7 +4543,8 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     }
     /*
      * If there are more arguments, they define the out args. Otherwise
-     * out_tuple is NULL for now, and the `out` kwarg may still be passed.
+     * full_args_light.out is NULL for now, and the `out` kwarg may still
+     * be passed.
      */
     npy_bool out_is_passed_by_position = len_args > nin;
     if (out_is_passed_by_position) {
@@ -4616,9 +4590,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             full_args_light.out = NULL;
             full_args_light.nout = 0;
         }
-    }
-    else {
-        full_args_light.nout = 0;
     }
 
     /*
@@ -4681,7 +4652,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
                         "positional and keyword argument");
                 goto fail;
             }
-            printfd("ufunc_generic_fastcall: out via kwargs\n");
             if (out_obj == Py_Ellipsis) {
                 return_scalar = NPY_FALSE;
             }
@@ -4717,7 +4687,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         method = "outer";
     }
     /* We now have all the information required to check for Overrides */
-    printfd("ufunc_generic_fastcall: calling PyUFunc_CheckOverride\n");
 
     PyObject *override = NULL;
     errval = PyUFunc_CheckOverride(ufunc, method,
@@ -4752,8 +4721,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             goto fail;
         }
     }
-    printfd("ufunc_generic_fastcall: after prepare_input_arguments_for_outer\n");
-
 
     /*
      * Parse the passed `dtype` or `signature` into an array containing
@@ -4763,7 +4730,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             dtype_obj, signature_obj, signature) < 0) {
         goto fail;
     }
-    printfd("ufunc_generic_fastcall: after _get_fixed_signature\n");
 
     NPY_ORDER order = NPY_KEEPORDER;
     NPY_CASTING casting = NPY_DEFAULT_ASSIGN_CASTING;
@@ -4785,7 +4751,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             keepdims_obj, &keepdims) < 0) {
         goto fail;
     }
-    printfd("ufunc_generic_fastcall: after convert_ufunc_arguments\n");
 
     /*
      * Note that part of the promotion is to the complete the signature
@@ -4840,12 +4805,10 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             Py_DECREF(operands[i]);
         }
     }
-    printfd("ufunc_generic_fastcall: after variable clear\n");
 
     /* The following steals the references to the outputs: */
     PyObject *result = replace_with_wrapped_result_and_return(ufunc,
             &full_args_light, subok, operands+nin, return_scalar);
-    printfd("ufunc_generic_fastcall: after replace_with_wrapped_result_and_return\n");
 
     if (outer) {
         _xdecref_pyobjects(full_args_light.in, nin);
@@ -5634,7 +5597,6 @@ prepare_input_arguments_for_outer(ufunc_full_args_light *full_args_light, PyUFun
     }
 
     /* Update full_args_light->in with the reshaped arrays */
-    /* TODO: Refactor to avoid modifying const array once we switch to borrowed refs */
     Py_DECREF(ap1);
     Py_SETREF(((PyObject **)full_args_light->in)[0], (PyObject *)ap_new);
     Py_SETREF(((PyObject **)full_args_light->in)[1], (PyObject *)ap2);
