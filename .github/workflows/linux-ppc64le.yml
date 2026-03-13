@@ -78,8 +78,6 @@ jobs:
         sudo apt install -y clang-20
         echo CC=clang-20 >> $GITHUB_ENV
         echo CXX=clang++-20 >> $GITHUB_ENV
-        echo "CFLAGS=-fno-strict-aliasing" >> $GITHUB_ENV
-        echo "CXXFLAGS=-fno-strict-aliasing" >> $GITHUB_ENV
 
     - name: Meson Build
       run: |
