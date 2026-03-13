@@ -1899,6 +1899,8 @@ with the rest of the ArrayMethod API.
             entry points, ``(module ':')? (object '.')* name``, with ``numpy``
             the default module. Examples: ``sin``, ``strings.str_len``,
             ``numpy.strings:str_len``.
+            ``"sort"``, ``"argsort"``, ``".real"``, ``".imag"`` and specific names
+            as they do not correspond directly to ufuncs.
 
         .. c:member:: PyArrayMethod_Spec *spec
 
@@ -1912,6 +1914,8 @@ with the rest of the ArrayMethod API.
     Add multiple loops to ufuncs from ArrayMethod specs. This also
     handles the registration of methods for the ufunc-like functions
     ``sort`` and ``argsort``. See :ref:`array-methods-sorting` for details.
+    As well as for the array attributes ``.real`` and ``.imag`` needed
+    for user defined complex DTypes (with ``".real"`` and ``".imag"`` as names).
 
     The ``slots`` argument must be a  NULL-terminated array of
     `PyUFunc_LoopSlot` (see above), which give the name of the
@@ -1941,6 +1945,22 @@ with the rest of the ArrayMethod API.
    operation and requested DType signatures and can mutate the signatures to
    attempt a search for a new loop or promoter that can accomplish the operation
    by casting the inputs to the "promoted" DTypes.
+
+    A promoter should honor ``signature[]`` (if set). A promoter must return ``-1``
+    on failure. A Python error may be set but is not required (a general error is
+    set in either paths, although the original error is chained).
+    A promoter must return ``0`` or ``1`` on success.  NumPy normally checks that
+    ``new_op_dtypes`` are different from ``op_dtypes`` to prevent recursion.
+    This check is skipped if the promoter returns ``1``, which allows the promoter
+    to add a new loop (when adding a new loop, ``new_op_dtypes`` should be identical
+    to ``op_dtypes``).
+
+    .. versionchanged:: 2.5
+        After 2.5 a return of ``1`` indicates that the promoter was successful
+        skipping a recursion protection step.
+        This mainly allows the promoter to add new loop to the ufunc that must
+        now match instead of the promoter itself.
+        (Normally, a promoter must modify)
 
 .. c:function:: int PyUFunc_GiveFloatingpointErrors( \
                         const char *name, int fpe_errors)

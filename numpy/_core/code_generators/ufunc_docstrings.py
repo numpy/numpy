@@ -4522,6 +4522,68 @@ add_newdoc('numpy._core.umath', 'bitwise_count',
 
     """)
 
+add_newdoc('numpy._core.umath', 'real',
+    """
+    Returns the real part of the elements in the array. Unlike most ufuncs,
+    the return may be a view into the original array.
+
+    Unlike typical ufuncs, the return is typically a view into the original array.
+
+    Parameters
+    ----------
+    x : array_like
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        Real part of input array.
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    ndarray.real
+    ndarray.imag
+
+    Notes
+    -----
+    This ufunc is used to implement the `ndarray.real` attribute which is usually
+    preferred.
+
+    """)
+
+add_newdoc('numpy._core.umath', 'imag',
+    """
+    Returns the imaginary part of the elements in the array.
+
+    Unlike typical ufuncs, the return is typically a view into the original array.
+
+    Parameters
+    ----------
+    x : array_like
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        Complex part of input array or zeros.
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    ndarray.imag
+    ndarray.real
+
+    Notes
+    -----
+    This ufunc is used to implement the `ndarray.imag` attribute which is usually
+    preferred. Unlike the attribute, this ufunc raises an error for non-complex
+    inputs.
+    The attribute itself additionally returns a broadcast, read-only array of zeros
+    for known real dtypes.
+
+    """)
+
 add_newdoc('numpy._core.umath', 'str_len',
     """
     Returns the length of each element. For byte strings,

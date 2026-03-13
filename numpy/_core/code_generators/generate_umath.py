@@ -1172,6 +1172,18 @@ defdict = {
           TD(O),
           signature='(n),(n,m)->(m)',
           ),
+# Real and imag ufunc helpers (loops added later):
+'real':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy._core.umath.real'),
+          None,
+          ),
+'imag':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy._core.umath.imag'),
+          None,
+          ),
+# String ufuncs (loops added later):
 'str_len':
     Ufunc(1, 1, Zero,
           docstrings.get('numpy._core.umath.str_len'),
