@@ -32,6 +32,7 @@ multi_DECREF(PyObject *const *objects, npy_intp n)
 static inline void
 multi_XDECREF(PyObject *const *objects, npy_intp n)
 {
+    assert(objects != NULL || n == 0);
     for (npy_intp i = 0; i < n; i++) {
         Py_XDECREF(objects[i]);
     }
