@@ -359,6 +359,12 @@ dtypemeta_initialize_struct_from_spec(
         if (meth_spec == NULL) {
             break;
         }
+        if (meth_spec->flags & NPY_METH_REQUIRES_CONTIGUOUS) {
+            PyErr_SetString(PyExc_ValueError,
+                    "The NPY_METH_REQUIRES_CONTIGUOUS flag is not yet supported "
+                    "for casting operations.");
+            return -1;
+        }
         /*
          * The user doesn't know the name of DType yet, so we have to fill it
          * in for them!

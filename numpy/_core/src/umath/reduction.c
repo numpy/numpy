@@ -233,6 +233,10 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
                   NPY_ITER_ALIGNED |
                   NPY_ITER_NO_BROADCAST;
 
+    if (context->method->flags & NPY_METH_REQUIRES_CONTIGUOUS) {
+        op_flags[0] |= NPY_ITER_CONTIG;
+        op_flags[1] |= NPY_ITER_CONTIG;
+    }
     if (wheremask != NULL) {
         op[2] = wheremask;
         /* wheremask is guaranteed to be NPY_BOOL, so borrow its reference */
@@ -242,6 +246,9 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
             goto fail;
         }
         op_flags[2] = NPY_ITER_READONLY;
+        if (context->method->flags & NPY_METH_REQUIRES_CONTIGUOUS) {
+            op_flags[2] |= NPY_ITER_CONTIG;
+        }
     }
     /* Set up result array axes mapping, operand and wheremask use default */
     int result_axes[NPY_MAXDIMS];

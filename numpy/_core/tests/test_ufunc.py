@@ -3334,6 +3334,37 @@ class TestLowlevelAPIAccess:
         tc = np.cos(t)
         assert_equal(tc[0][0], tc[28][414])
 
+def test_ufunc_non_contiguous_basic():
+    #GH#30413
+    a = np.arange(20.0)[::2]
+    b = np.ones(10)
+
+    result = np.add(a, b)
+    expected = np.arange(0, 20, 2) + 1.0
+    assert_array_equal(result, expected)
+
+    c = a.copy()
+    np.add(c, b, out=c)
+    assert_array_equal(c, expected)
+
+def test_ufunc_requires_contiguous_flag_sfloat():
+    #GH#30413
+    try:
+        from numpy._core import _scaled_float_dtype
+    except ImportError:
+        pytest.skip("Could not import _scaled_float_dtype for testing")
+
+    dt = _scaled_float_dtype.scaled_float64
+    
+    a_raw = np.arange(10.)
+    a = a_raw.astype(dt)
+
+    a_non_contig = a[::2]
+    assert not a_non_contig.flags.c_contiguous
+
+    res = np.add(a_non_contig, a_non_contig)
+    expected = (a_raw[::2] + a_raw[::2]).astype(dt)
+    assert_equal(res, expected)
 
 class TestUFuncInspectSignature:
     PARAMS_COMMON = {
