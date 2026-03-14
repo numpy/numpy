@@ -84,7 +84,6 @@
 #endif
 /**********************************************/
 
-
 /* ---------------------------------------------------------------- */
 
 static int
@@ -97,7 +96,7 @@ resolve_descriptors(int nop,
         PyUFuncObject *ufunc, PyArrayMethodObject *ufuncimpl,
         PyArrayObject *operands[], PyArray_Descr *dtypes[],
         PyArray_DTypeMeta *signature[], PyArray_DTypeMeta *original_DTypes[],
-        PyObject *const *inputs, int ninputs, NPY_CASTING casting);
+        PyObject *const *inputs, NPY_CASTING casting);
 
 
 /*UFUNC_API*/
@@ -2352,7 +2351,7 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
      * (although this should possibly happen through a deprecation)
      */
     int res = resolve_descriptors(3, ufunc, ufuncimpl,
-            ops, out_descrs, signature, operation_DTypes, NULL, 0, casting);
+            ops, out_descrs, signature, operation_DTypes, NULL, casting);
 
     Py_XDECREF(operation_DTypes[0]);
     Py_XDECREF(operation_DTypes[1]);
@@ -3386,12 +3385,15 @@ tuple_all_none(PyObject *tup) {
 
 /*
  * Parse the `out` argument and populate ufunc_output with owned refs.
+ * ufunc_output must not be NULL.
  * Returns the number of outputs set (0 if all None), or -1 on error.
  */
 static int
 _set_full_args_out(int nout, PyObject *out_obj,
                    PyObject **ufunc_output)
 {
+    assert(ufunc_output != NULL);
+
     if (PyTuple_CheckExact(out_obj)) {
         if (PyTuple_GET_SIZE(out_obj) != nout) {
             PyErr_SetString(PyExc_ValueError,
@@ -3403,11 +3405,9 @@ _set_full_args_out(int nout, PyObject *out_obj,
             return 0;
         }
         else {
-            if (ufunc_output != NULL) {
-                for (int i = 0; i < nout; i++) {
-                    PyObject *item = PyTuple_GET_ITEM(out_obj, i);
-                    ufunc_output[i] = Py_NewRef(item);
-                }
+            for (int i = 0; i < nout; i++) {
+                PyObject *item = PyTuple_GET_ITEM(out_obj, i);
+                ufunc_output[i] = Py_NewRef(item);
             }
             return nout;
         }
@@ -3417,9 +3417,7 @@ _set_full_args_out(int nout, PyObject *out_obj,
             return 0;
         }
         /* Can be an array if it only has one output */
-        if (ufunc_output != NULL) {
-            ufunc_output[0] = Py_NewRef(out_obj);
-        }
+        ufunc_output[0] = Py_NewRef(out_obj);
         return 1;
     }
     else {
@@ -4045,7 +4043,7 @@ resolve_descriptors(int nop,
         PyUFuncObject *ufunc, PyArrayMethodObject *ufuncimpl,
         PyArrayObject *operands[], PyArray_Descr *dtypes[],
         PyArray_DTypeMeta *signature[], PyArray_DTypeMeta *original_DTypes[],
-        PyObject *const *inputs, int ninputs, NPY_CASTING casting)
+        PyObject *const *inputs, NPY_CASTING casting)
 {
     int retval = -1;
     NPY_CASTING safety;
@@ -4736,7 +4734,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     /* Find the correct descriptors for the operation */
     if (resolve_descriptors(nop, ufunc, ufuncimpl,
             operands, operation_descrs, signature, operand_DTypes,
-            ufunc_input, nin, casting) < 0) {
+            ufunc_input, casting) < 0) {
         goto fail;
     }
 
@@ -5480,11 +5478,6 @@ ufunc_outer(PyUFuncObject *ufunc,
 }
 
 
-/*
- * Prepare input arguments for outer by converting to arrays and reshaping.
- * Reads from ufunc_input (borrowed refs) and writes owned refs to
- * ufunc_input_out.
- */
 static int
 prepare_input_arguments_for_outer(
         PyObject *const *ufunc_input, PyObject **ufunc_input_out,
@@ -6079,7 +6072,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
         /* Find the correct operation_descrs for the operation */
         int resolve_result = resolve_descriptors(nop, ufunc, ufuncimpl,
-                tmp_operands, operation_descrs, signature, operand_DTypes, NULL, 0, NPY_UNSAFE_CASTING);
+                tmp_operands, operation_descrs, signature, operand_DTypes, NULL, NPY_UNSAFE_CASTING);
         for (int i = 0; i < 3; i++) {
             Py_XDECREF(signature[i]);
             Py_XDECREF(operand_DTypes[i]);
@@ -6398,7 +6391,7 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
         /* Find the correct descriptors for the operation */
         if (resolve_descriptors(ufunc->nargs, ufunc, ufuncimpl,
                 dummy_arrays, operation_descrs, signature, DTypes,
-                NULL, 0, casting) < 0) {
+                NULL, casting) < 0) {
             goto finish;
         }
 
