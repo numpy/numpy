@@ -704,8 +704,11 @@ def common_type(*arrays):
     is_complex = False
     precision = 0
     for a in arrays:
-        t = a.dtype.type
-        if iscomplexobj(a):
+        if isinstance(a, _nx.dtype):
+            t = a.type
+        else:
+            t = a.dtype.type
+        if issubclass(t, _nx.complexfloating):
             is_complex = True
         if issubclass(t, _nx.integer):
             p = 2  # array_precision[_nx.double]

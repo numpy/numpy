@@ -33,6 +33,18 @@ class TestCommonType:
         assert_(common_type(acs) == np.complex64)
         assert_(common_type(acd) == np.complex128)
 
+    def test_dtype_input(self):
+        # gh-30890: common_type should accept dtype objects, not just arrays
+        assert_(common_type(np.dtype('f2')) == np.float16)
+        assert_(common_type(np.dtype('f4')) == np.float32)
+        assert_(common_type(np.dtype('f8')) == np.float64)
+        assert_(common_type(np.dtype('c8')) == np.complex64)
+        assert_(common_type(np.dtype('c16')) == np.complex128)
+        assert_(common_type(np.dtype('i4')) == np.float64)
+        # mixed: array and dtype
+        assert_(common_type(np.dtype('f4'), np.dtype('f8')) == np.float64)
+        assert_(common_type(np.dtype('f4'), np.dtype('c8')) == np.complex64)
+
 
 class TestMintypecode:
 
