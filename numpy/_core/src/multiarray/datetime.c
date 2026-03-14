@@ -2379,26 +2379,28 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
     /* Datetime scalar */
     else if (PyArray_IsScalar(obj, Datetime)) {
         PyDatetimeScalarObject *dts = (PyDatetimeScalarObject *)obj;
+        PyArray_DatetimeMetaData *obmeta = PyDatetimeScalar_OBMETA(dts);
+        npy_datetime obval = PyArrayScalar_VAL(dts, Datetime);
 
         /* Copy the scalar directly if units weren't specified */
         if (meta->base == NPY_FR_ERROR) {
-            *meta = dts->obmeta;
-            *out = dts->obval;
+            *meta = *obmeta;
+            *out = obval;
 
             return 0;
         }
         /* Otherwise do a casting transformation */
         else {
             /* Allow NaT (not-a-time) values to slip through any rule */
-            if (dts->obval != NPY_DATETIME_NAT &&
+            if (obval != NPY_DATETIME_NAT &&
                         raise_if_datetime64_metadata_cast_error(
                                 "NumPy timedelta64 scalar",
-                                &dts->obmeta, meta, casting) < 0) {
+                                obmeta, meta, casting) < 0) {
                 return -1;
             }
             else {
-                return cast_datetime_to_datetime(&dts->obmeta, meta,
-                                                    dts->obval, out);
+                return cast_datetime_to_datetime(obmeta, meta,
+                                                    obval, out);
             }
         }
     }
@@ -2580,26 +2582,28 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
     /* Timedelta scalar */
     else if (PyArray_IsScalar(obj, Timedelta)) {
         PyTimedeltaScalarObject *dts = (PyTimedeltaScalarObject *)obj;
+        PyArray_DatetimeMetaData *obmeta = PyTimedeltaScalar_OBMETA(dts);
+        npy_timedelta obval = PyArrayScalar_VAL(dts, Timedelta);
 
         /* Copy the scalar directly if units weren't specified */
         if (meta->base == NPY_FR_ERROR) {
-            *meta = dts->obmeta;
-            *out = dts->obval;
+            *meta = *obmeta;
+            *out = obval;
 
             return 0;
         }
         /* Otherwise do a casting transformation */
         else {
             /* Allow NaT (not-a-time) values to slip through any rule */
-            if (dts->obval != NPY_DATETIME_NAT &&
+            if (obval != NPY_DATETIME_NAT &&
                         raise_if_timedelta64_metadata_cast_error(
                                 "NumPy timedelta64 scalar",
-                                &dts->obmeta, meta, casting) < 0) {
+                                obmeta, meta, casting) < 0) {
                 return -1;
             }
             else {
-                return cast_timedelta_to_timedelta(&dts->obmeta, meta,
-                                                    dts->obval, out);
+                return cast_timedelta_to_timedelta(obmeta, meta,
+                                                    obval, out);
             }
         }
     }
@@ -3676,10 +3680,11 @@ find_object_datetime64_meta(PyObject *obj, PyArray_DatetimeMetaData *meta)
 {
     if (PyArray_IsScalar(obj, Datetime)) {
         PyDatetimeScalarObject *dts = (PyDatetimeScalarObject *)obj;
+        PyArray_DatetimeMetaData *obmeta = PyDatetimeScalar_OBMETA(dts);
 
         /* Combine it with 'meta' */
         if (compute_datetime_metadata_greatest_common_divisor(meta,
-                        &dts->obmeta, meta, 0, 0) < 0) {
+                        obmeta, meta, 0, 0) < 0) {
             return -1;
         }
 
@@ -3784,10 +3789,11 @@ find_object_timedelta64_meta(PyObject *obj, PyArray_DatetimeMetaData *meta)
     /* Datetime scalar -> use its metadata */
     if (PyArray_IsScalar(obj, Timedelta)) {
         PyTimedeltaScalarObject *dts = (PyTimedeltaScalarObject *)obj;
+        PyArray_DatetimeMetaData *obmeta = PyTimedeltaScalar_OBMETA(dts);
 
         /* Combine it with 'meta' */
         if (compute_datetime_metadata_greatest_common_divisor(meta,
-                        &dts->obmeta, meta, 1, 1) < 0) {
+                        obmeta, meta, 1, 1) < 0) {
             return -1;
         }
 
