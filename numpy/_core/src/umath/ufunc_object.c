@@ -85,20 +85,6 @@
 /**********************************************/
 
 
-static inline void
-_xdecref_pyobjects(PyObject *const *array, npy_intp size) {
-    for (npy_intp i = 0; i < size; i++) {
-        Py_XDECREF(array[i]);
-    }
-}
-
-static inline void
-_decref_pyobjects(PyObject *const *array, npy_intp size) {
-    for (npy_intp i = 0; i < size; i++) {
-        Py_DECREF(array[i]);
-    }
-}
-
 /*
  * Lightweight structure to keep track of input and output arguments
  */
@@ -106,20 +92,9 @@ typedef struct {
     PyObject *const *in;   /* Array of input arguments (borrowed or owned refs, immutable) */
     PyObject **out;  /* Array of output arguments (owned refs). If no non-None outputs are
                         provided, then this is NULL. */
-    npy_intp nin;    /* Number of input arguments */
-    npy_intp nout;   /* Number of output arguments (0 if out is NULL) */
+    int nin;    /* Number of input arguments */
+    int nout;   /* Number of output arguments (0 if out is NULL) */
 } ufunc_full_args_light;
-
-/*
- * Release all owned output references held by a ufunc_full_args_light
- * and reset the output count.
- */
-static inline void
-ufunc_full_args_light_clear_out(ufunc_full_args_light *full_args)
-{
-    _xdecref_pyobjects(full_args->out, full_args->nout);
-    full_args->nout = 0;
-}
 
 
 /* ---------------------------------------------------------------- */
@@ -2593,7 +2568,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
             arr, out, wheremask, axis_flags, keepdims,
             initial, reduce_loop, buffersize, ufunc_name, errormask);
 
-    _decref_pyobjects((PyObject *const *)descrs, 3);
+    multi_DECREF((PyObject *const *)descrs, 3);
     return result;
 }
 
@@ -3549,7 +3524,6 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
 
     PyObject *in_args[2] = {NULL, NULL};  /* Stack allocation for lightweight args */
     PyObject *out_arg = NULL;
-    PyObject *out_tuple = NULL;
     ufunc_full_args_light full_args_light = {in_args, &out_arg, 0, 0};
     PyObject *axes_obj = NULL;
     PyArrayObject *mp = NULL, *wheremask = NULL, *ret = NULL;
@@ -3656,10 +3630,6 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
         if (out_obj != Py_None) {
-            out_tuple = PyArray_TupleFromItems(1, &out_obj, 0);
-            if (out_tuple == NULL) {
-                goto fail;
-            }
             out_arg = Py_NewRef(out_obj);
             full_args_light.nout = 1;
         }
@@ -3688,9 +3658,9 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         return NULL;
     }
     else if (override) {
-        _xdecref_pyobjects(in_args, full_args_light.nin);
-        ufunc_full_args_light_clear_out(&full_args_light);
-        Py_XDECREF(out_tuple);
+        multi_XDECREF(in_args, full_args_light.nin);
+        multi_XDECREF(full_args_light.out, full_args_light.nout);
+        full_args_light.nout = 0;
         return override;
     }
 
@@ -3780,9 +3750,9 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     Py_DECREF(signature[2]);
 
     Py_DECREF(mp);
-    _xdecref_pyobjects(in_args, full_args_light.nin);
-    ufunc_full_args_light_clear_out(&full_args_light);
-    Py_XDECREF(out_tuple);
+    multi_XDECREF(in_args, full_args_light.nin);
+    multi_XDECREF(full_args_light.out, full_args_light.nout);
+    full_args_light.nout = 0;
 
     /* Wrap and return the output */
     PyObject *wrap, *wrap_type;
@@ -3810,9 +3780,9 @@ fail:
     Py_XDECREF(mp);
     Py_XDECREF(wheremask);
     Py_XDECREF(indices);
-    _xdecref_pyobjects(in_args, full_args_light.nin);
-    ufunc_full_args_light_clear_out(&full_args_light);
-    Py_XDECREF(out_tuple);
+    multi_XDECREF(in_args, full_args_light.nin);
+    multi_XDECREF(full_args_light.out, full_args_light.nout);
+    full_args_light.nout = 0;
     return NULL;
 }
 
@@ -4220,7 +4190,7 @@ resolve_descriptors(int nop,
     retval = 0;
 
   finish:
-    _xdecref_pyobjects((PyObject *const *)original_descrs, n_cleanup);
+    multi_XDECREF((PyObject *const *)original_descrs, n_cleanup);
     return retval;
 }
 
@@ -4484,6 +4454,17 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             return result;
         }
     }
+
+    /* Check number of arguments */
+    if (NPY_UNLIKELY((len_args < nin) || (len_args > nop))) {
+        const char *verb = (len_args == 1) ? "was" : "were";
+        PyErr_Format(PyExc_TypeError,
+            "%s() takes from %d to %d positional arguments but "
+            "%zd %s given",
+            ufunc_get_name_cstr(ufunc), nin, nop, len_args, verb);
+        goto fail;
+    }
+
     /* All following variables are cleared in the `fail` error path */
     PyArrayObject *wheremask = NULL;
 
@@ -4519,16 +4500,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
      * `full_args_light.out` as plain arrays (or NULL when no outputs
      * are passed).
      */
-
-    /* Check number of arguments */
-    if (NPY_UNLIKELY((len_args < nin) || (len_args > nop))) {
-        const char *verb = (len_args == 1) ? "was" : "were";
-        PyErr_Format(PyExc_TypeError,
-            "%s() takes from %d to %d positional arguments but "
-            "%zd %s given",
-            ufunc_get_name_cstr(ufunc), nin, nop, len_args, verb);
-        goto fail;
-    }
 
     if (outer) {
         /* outer modifies inputs, so we need owned refs in scratch space */
@@ -4586,7 +4557,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         }
 
         if (all_none) {
-            _decref_pyobjects(full_args_light.out, nout);
+            multi_DECREF(full_args_light.out, nout);
             full_args_light.out = NULL;
             full_args_light.nout = 0;
         }
@@ -4699,9 +4670,10 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     }
     else if (override) {
         if (outer) {
-            _xdecref_pyobjects(full_args_light.in, nin);
+            multi_XDECREF(full_args_light.in, nin);
         }
-        ufunc_full_args_light_clear_out(&full_args_light);
+        multi_XDECREF(full_args_light.out, full_args_light.nout);
+        full_args_light.nout = 0;
         npy_free_workspace(scratch_objs);
         return override;
     }
@@ -4811,9 +4783,10 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             &full_args_light, subok, operands+nin, return_scalar);
 
     if (outer) {
-        _xdecref_pyobjects(full_args_light.in, nin);
+        multi_XDECREF(full_args_light.in, nin);
     }
-    ufunc_full_args_light_clear_out(&full_args_light);
+    multi_XDECREF(full_args_light.out, full_args_light.nout);
+    full_args_light.nout = 0;
 
     npy_free_workspace(scratch_objs);
 
@@ -4821,9 +4794,10 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 
 fail:
     if (outer) {
-        _xdecref_pyobjects(full_args_light.in, nin);
+        multi_XDECREF(full_args_light.in, nin);
     }
-    ufunc_full_args_light_clear_out(&full_args_light);
+    multi_XDECREF(full_args_light.out, full_args_light.nout);
+    full_args_light.nout = 0;
     Py_XDECREF(wheremask);
     for (int i = 0; i < ufunc->nargs; i++) {
         Py_XDECREF(operands[i]);
@@ -6221,7 +6195,7 @@ fail:
 
     Py_XDECREF(op2_array);
     Py_XDECREF(iter2);
-    _xdecref_pyobjects((PyObject *const *)operation_descrs, nop);
+    multi_XDECREF((PyObject *const *)operation_descrs, nop);
 
     /*
      * An error should only be possible if needs_api is true or `res != 0`,
@@ -6266,7 +6240,7 @@ free_ufunc_call_info(PyObject *self)
     PyArrayMethod_Context *context = call_info->context;
 
     int nargs = context->method->nin + context->method->nout;
-    _decref_pyobjects((PyObject *const *)context->descriptors, nargs);
+    multi_DECREF((PyObject *const *)context->descriptors, nargs);
     Py_DECREF(context->caller);
     Py_DECREF(context->method);
     NPY_AUXDATA_FREE(call_info->auxdata);
