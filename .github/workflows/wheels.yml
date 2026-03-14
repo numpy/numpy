@@ -101,6 +101,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@ee02a1537ce3071a004a6b08c41e72f0fdc42d9a  # v3.4.0
         env:
+          PYTHONSAFEPATH: 1  # make sure the build doesn't depend on implicit unsafe paths in sys.path
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
       - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
