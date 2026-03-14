@@ -2587,7 +2587,11 @@ def _multi_svd_norm(x, row_axis, col_axis, op, initial=None):
 
     """
     y = moveaxis(x, (row_axis, col_axis), (-2, -1))
-    result = op(svd(y, compute_uv=False), axis=-1, initial=initial)
+    s = svd(y, compute_uv=False)
+    if s.shape[-1] == 0:
+        # Empty matrix: no singular values. Return zeros with the batch shape.
+        return zeros(s.shape[:-1], dtype=s.dtype)
+    result = op(s, axis=-1, initial=initial)
     return result
 
 

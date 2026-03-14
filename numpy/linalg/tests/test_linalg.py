@@ -2414,6 +2414,7 @@ def test_matrix_norm_empty():
             assert_equal(np.linalg.matrix_norm(x, ord="nuc"), 0)
             assert_equal(np.linalg.matrix_norm(x, ord=1), 0)
             assert_equal(np.linalg.matrix_norm(x, ord=2), 0)
+            assert_equal(np.linalg.matrix_norm(x, ord=-2), 0)
             assert_equal(np.linalg.matrix_norm(x, ord=np.inf), 0)
 
 def test_vector_norm():
