@@ -1321,3 +1321,22 @@ def test_multithreaded_array_printing():
     # reasons this test makes sure it is set up in a thread-safe manner
 
     run_threaded(TestPrintOptions().test_floatmode, 500)
+
+@pytest.mark.filterwarnings("ignore")
+def test_user_defined_floating_dtype_printing_does_not_corrupt_precision():
+    """
+    Ensure that array printing does not use NumPy Dragon4 formatting
+    for user-defined floating dtypes, which would silently truncate
+    precision to float64.
+    """
+    QuadPrecDType = pytest.importorskip("numpy_quaddtype").QuadPrecDType
+
+    pi_str = "3.14159265358979323846264338327950288"
+    arr = np.array([pi_str], dtype=QuadPrecDType())
+
+    with np.printoptions(precision=34, floatmode="fixed"):
+        s = str(arr)
+
+    # float64 would truncate the last digit here due to precision loss
+    assert s.strip().startswith("[3.1415926535897932")
+
