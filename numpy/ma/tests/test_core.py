@@ -4336,6 +4336,87 @@ class TestMaskedArrayMathMethods:
         assert_equal(test.filled(0), [0, 0, 0])
         assert_equal(test.mask, [1, 1, 1])
 
+    def test_mean_masked_result(self):
+        a = array(np.ones((3, 3, 3)), mask=np.ones((3, 3, 3)))
+        m = a.mean()
+        assert_equal(m, masked)
+
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
+    def test_mean_dtypes_are_preserved(self, dtype):
+        a = array(np.ones((3, 3, 3), dtype=dtype),
+                  mask=np.zeros((3, 3, 3)))
+        v = a.mean(axis=0)
+        assert_equal(v.dtype, dtype)
+
+        a = array(np.ones((3, 3, 3), dtype=dtype))
+        v = a.mean(axis=0)
+        assert_equal(v.dtype, dtype)
+
+    @pytest.mark.parametrize("dtype", [np.int8, np.uint8, np.uint32, np.int64])
+    def test_mean_integral_dtypes_become_float64(self, dtype):
+        a = array(np.ones((3, 3, 3), dtype=dtype),
+                  mask=np.zeros((3, 3, 3)))
+        v = a.mean(axis=0)
+        assert_equal(v.dtype, np.float64)
+
+        a = array(np.ones((3, 3, 3), dtype=dtype))
+        v = a.mean(axis=0)
+        assert_equal(v.dtype, np.float64)
+
+    def test_mean_complex_dtypes_are_kept(self):
+        a = array(np.ones((3, 3, 3), dtype=np.complex64),
+                  mask=np.zeros((3, 3, 3)))
+        v = a.mean(axis=0)
+        assert_equal(v.dtype, np.complex64)
+
+        a = array(np.ones((3, 3, 3), dtype=np.complex64))
+        v = a.mean(axis=0)
+        assert_equal(v.dtype, np.complex64)
+
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.int32, np.uint8])
+    def test_mean_explicit_dtypes_apply(self, dtype):
+        a = array(np.ones((3, 3, 3)))
+        v = a.mean(axis=0, dtype=dtype)
+        assert_equal(v.dtype, dtype)
+
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
+    def test_var_dtypes_are_preserved(self, dtype):
+        a = array(np.ones((3, 3, 3), dtype=dtype),
+                  mask=np.zeros((3, 3, 3)))
+        v = a.var(axis=0)
+        assert_equal(v.dtype, dtype)
+
+        a = array(np.ones((3, 3, 3), dtype=dtype))
+        v = a.var(axis=0)
+        assert_equal(v.dtype, dtype)
+
+    @pytest.mark.parametrize("dtype", [np.int8, np.uint8, np.uint32, np.int64])
+    def test_var_integral_dtypes_become_float64(self, dtype):
+        a = array(np.ones((3, 3, 3), dtype=dtype),
+                  mask=np.zeros((3, 3, 3)))
+        v = a.var(axis=0)
+        assert_equal(v.dtype, np.float64)
+
+        a = array(np.ones((3, 3, 3), dtype=dtype))
+        v = a.var(axis=0)
+        assert_equal(v.dtype, np.float64)
+
+    def test_var_complex_dtypes_are_kept(self):
+        a = array(np.ones((3, 3, 3), dtype=np.complex64),
+                  mask=np.zeros((3, 3, 3)))
+        v = a.var(axis=0)
+        assert_equal(v.dtype, np.complex64)
+
+        a = array(np.ones((3, 3, 3), dtype=np.complex64))
+        v = a.var(axis=0)
+        assert_equal(v.dtype, np.complex64)
+
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.int32, np.uint8])
+    def test_var_explicit_dtypes_apply(self, dtype):
+        a = array(np.ones((3, 3, 3)))
+        v = a.var(axis=0, dtype=dtype)
+        assert_equal(v.dtype, dtype)
+
     def test_diag(self):
         # Test diag
         x = arange(9).reshape((3, 3))
@@ -4378,6 +4459,28 @@ class TestMaskedArrayMathMethods:
         a = masked_array(np.full((10000, 10000), 65535, dtype=np.uint16),
                          mask=np.zeros((10000, 10000)))
         assert_equal(a.mean(), 65535.0)
+
+    @pytest.mark.parametrize("dtype",
+                             [np.float16, np.float32, np.double, np.longdouble])
+    def test_ma_mean_behaves_like_ndarray(self, dtype):
+        x = np.arange(-30, 30).astype(dtype)
+        mx = array(x, mask=np.zeros(x.shape, dtype=bool))
+        assert_equal(x.mean(), mx.mean())
+
+        x = np.arange(0, 30).astype(dtype)
+        mx = array(x, mask=np.zeros(x.shape, dtype=bool))
+        assert_equal(x.mean(), mx.mean())
+
+    @pytest.mark.parametrize("dtype",
+                             [np.float16, np.float32, np.double, np.longdouble])
+    def test_ma_var_behaves_like_ndarray(self, dtype):
+        x = np.arange(-30, 30).astype(dtype)
+        mx = array(x, mask=np.zeros(x.shape, dtype=bool))
+        assert_equal(x.var(), mx.var())
+
+        x = np.arange(0, 30).astype(dtype)
+        mx = array(x, mask=np.zeros(x.shape, dtype=bool))
+        assert_equal(x.var(), mx.var())
 
     def test_diff_with_prepend(self):
         # GH 22465
