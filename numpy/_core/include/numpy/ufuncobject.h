@@ -122,7 +122,7 @@ typedef struct _tagPyUFuncObject {
         /* The number of elements in 'functions' and 'data' */
         int ntypes;
 
-        /* Used to be unused field 'check_return' */
+        /* Flags for the ufunc (e.g. UFUNC_NO_FLOATINGPOINT_ERRORS) */
         int reserved1;
 
         /* The name of the ufunc */

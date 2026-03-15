@@ -727,6 +727,7 @@ defdict = {
                   dispatch=[('loops_logical', '?')]),
           TD(ints, dispatch=[('loops_autovec', ints)]),
           TD(O, f='PyNumber_And'),
+          no_float_errors=True,
           ),
 'bitwise_or':
     Ufunc(2, 1, Zero,
@@ -735,6 +736,7 @@ defdict = {
           TD('?', cfunc_alias='logical_or', dispatch=[('loops_logical', '?')]),
           TD(ints, dispatch=[('loops_autovec', ints)]),
           TD(O, f='PyNumber_Or'),
+          no_float_errors=True,
           ),
 'bitwise_xor':
     Ufunc(2, 1, Zero,
@@ -744,6 +746,7 @@ defdict = {
                   dispatch=[('loops_comparison', '?')]),
           TD(ints, dispatch=[('loops_autovec', ints)]),
           TD(O, f='PyNumber_Xor'),
+          no_float_errors=True,
           ),
 'invert':
     Ufunc(1, 1, None,
@@ -753,6 +756,7 @@ defdict = {
                   dispatch=[('loops_logical', '?')]),
           TD(ints, dispatch=[('loops_autovec', ints)]),
           TD(O, f='PyNumber_Invert'),
+          no_float_errors=True,
           ),
 'left_shift':
     Ufunc(2, 1, None,
@@ -760,6 +764,7 @@ defdict = {
           None,
           TD(ints, dispatch=[('loops_autovec', ints)]),
           TD(O, f='PyNumber_Lshift'),
+          no_float_errors=True,
           ),
 'right_shift':
     Ufunc(2, 1, None,
@@ -767,6 +772,7 @@ defdict = {
           None,
           TD(ints, dispatch=[('loops_autovec', ints)]),
           TD(O, f='PyNumber_Rshift'),
+          no_float_errors=True,
           ),
 'heaviside':
     Ufunc(2, 1, None,

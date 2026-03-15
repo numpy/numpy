@@ -401,7 +401,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
     /*
      * Set NPY_METH_NO_FLOATINGPOINT_ERRORS for non-object loops of ufuncs
      * that are known to never raise floating point errors (e.g. comparisons,
-     * logical operations, bitwise operations like abs/neg/copysign, etc.).
+     * logical operations, abs, neg, copysign, etc.).
      * The flag is set on the ufunc via reserved1 during initialization in
      * __umath_generated.c (driven by no_float_errors=True in generate_umath.py).
      */
