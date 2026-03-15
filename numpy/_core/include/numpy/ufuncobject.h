@@ -247,6 +247,13 @@ typedef struct _tagPyUFuncObject {
 #define UFUNC_OBJ_ISOBJECT      1
 #define UFUNC_OBJ_NEEDS_API     2
 
+/*
+ * Flag stored in PyUFuncObject.reserved1 to indicate that non-object loops
+ * of this ufunc never raise floating point errors.  Used to skip the
+ * expensive npy_clear_floatstatus/npy_get_floatstatus calls.
+ */
+#define UFUNC_NO_FLOATINGPOINT_ERRORS  0x1
+
 
 #if NPY_ALLOW_THREADS
 #define NPY_LOOP_BEGIN_THREADS do {if (!(loop->obj & UFUNC_OBJ_NEEDS_API)) _save = PyEval_SaveThread();} while (0);
