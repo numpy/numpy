@@ -1599,7 +1599,7 @@ PyArray_FLAGS(const PyArrayObject *arr)
 static inline int
 PyArray_TYPE(const PyArrayObject *arr)
 {
-    return PyDataType_TYPENUM(((PyArrayObject_fields *)arr)->descr);
+    return PyDataType_TYPENUM(PyArray_DESCR(arr));
 }
 
 static inline int
@@ -1611,7 +1611,7 @@ PyArray_CHKFLAGS(const PyArrayObject *arr, int flags)
 static inline PyArray_Descr *
 PyArray_DTYPE(const PyArrayObject *arr)
 {
-    return ((PyArrayObject_fields *)arr)->descr;
+    return PyArray_DESCR(arr);
 }
 
 static inline npy_intp *
