@@ -487,16 +487,19 @@ will mean duplicating the memory. Do not do this for very large arrays:
 
 .. note::
 
-  Note that GPU tensors can't be converted to NumPy arrays since NumPy doesn't
-  support GPU devices:
+  GPU tensors cannot be directly zero-copy converted to NumPy arrays since
+  NumPy does not support GPU devices. However, since DLPack v1, cross-device
+  copy is supported via the ``device`` parameter:
 
    >>> x_torch = torch.arange(5, device='cuda')
-   >>> np.from_dlpack(x_torch)
+   >>> np.from_dlpack(x_torch)  # fails: implicit device=None means same device
    Traceback (most recent call last):
      File "<stdin>", line 1, in <module>
    RuntimeError: Unsupported device in DLTensor.
+   >>> np.from_dlpack(x_torch, device='cpu')  # works: explicit copy to CPU
+   array([0, 1, 2, 3, 4])
 
-  But, if both libraries support the device the data buffer is on, it is
+  If both libraries support the device the data buffer is on, it is
   possible to use the ``__dlpack__`` protocol (e.g. PyTorch_ and CuPy_):
 
    >>> x_torch = torch.arange(5, device='cuda')
