@@ -388,38 +388,13 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
             get_reduction_intial = &get_initial_from_ufunc;
         }
     }
-    int all_non_object = 1;
     for (int i = 0; i < ufunc->nin+ufunc->nout; i++) {
         if (signature[i]->singleton->flags & (
                 NPY_ITEM_REFCOUNT | NPY_ITEM_IS_POINTER | NPY_NEEDS_PYAPI)) {
             flags |= NPY_METH_REQUIRES_PYAPI;
-            all_non_object = 0;
         }
         if (NPY_DT_is_parametric(signature[i])) {
             any_output_flexible = 1;
-        }
-    }
-    /*
-     * Ufuncs that never raise floating point errors for any input.
-     * This allows skipping the expensive FP status check/clear.
-     */
-    static const char *no_fp_error_ufuncs[] = {
-        "absolute", "conjugate", "copysign",
-        "equal", "fabs", "fmax", "fmin",
-        "greater", "greater_equal",
-        "isfinite", "isinf", "isnan",
-        "less", "less_equal",
-        "logical_and", "logical_not", "logical_or", "logical_xor",
-        "maximum", "minimum",
-        "negative", "not_equal", "positive",
-        "sign", "signbit",
-    };
-    if (all_non_object) {
-        for (size_t i = 0; i < sizeof(no_fp_error_ufuncs)
-                                / sizeof(no_fp_error_ufuncs[0]); i++) {
-            if (strcmp(ufunc->name, no_fp_error_ufuncs[i]) == 0) {
-               flags |= NPY_METH_NO_FLOATINGPOINT_ERRORS;
-            }
         }
     }
 
