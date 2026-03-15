@@ -1555,20 +1555,22 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
         }
     }
 
+    int input_type = dtypes[0]->type_num;
     types = ufunc->types;
     for (i = 0; i < ufunc->ntypes; ++i) {
-        /* Copy the types into an int array for matching */
-        for (j = 0; j < nargs; ++j) {
-            if (types[j] != dtypes[j]->type_num) {
-                break;
+        if ((int)types[0] == input_type) {
+            for (j = 1; j < nargs; ++j) {
+                if (types[j] != dtypes[j]->type_num) {
+                    break;
+                }
+            }
+            if (j == nargs) {
+                *out_innerloop = ufunc->functions[i];
+                *out_innerloopdata = (ufunc->data == NULL) ?
+                                     NULL : ufunc->data[i];
+                return 0;
             }
         }
-        if (j == nargs) {
-            *out_innerloop = ufunc->functions[i];
-            *out_innerloopdata = (ufunc->data == NULL) ? NULL : ufunc->data[i];
-            return 0;
-        }
-
         types += nargs;
     }
 
