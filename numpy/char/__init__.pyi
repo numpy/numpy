@@ -4,7 +4,7 @@ from numpy._core.defchararray import (  # type: ignore[deprecated]
     asarray,
     capitalize,
     center,
-    chararray,
+    chararray,  # pyrefly: ignore[deprecated]
     compare_chararrays,
     count,
     decode,

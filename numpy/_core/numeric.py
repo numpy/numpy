@@ -485,15 +485,10 @@ def count_nonzero(a, axis=None, *, keepdims=False):
     """
     Counts the number of non-zero values in the array ``a``.
 
-    The word "non-zero" is in reference to the Python 2.x
-    built-in method ``__nonzero__()`` (renamed ``__bool__()``
-    in Python 3.x) of Python objects that tests an object's
-    "truthfulness". For example, any number is considered
-    truthful if it is nonzero, whereas any string is considered
-    truthful if it is not the empty string. Thus, this function
-    (recursively) counts how many elements in ``a`` (and in
-    sub-arrays thereof) have their ``__nonzero__()`` or ``__bool__()``
-    method evaluated to ``True``.
+    A non-zero value is one that evaluates to truthful in a boolean
+    context, including any non-zero number and any string that
+    is not empty. This function recursively counts how many elements
+    in ``a`` (and its sub-arrays) are non-zero values.
 
     Parameters
     ----------
@@ -2010,7 +2005,7 @@ def binary_repr(num, width=None):
 
     In a two's-complement system negative numbers are represented by the two's
     complement of the absolute value. This is the most common method of
-    representing signed integers on computers [1]_. A N-bit two's-complement
+    representing signed integers on computers [1]_. An N-bit two's-complement
     system can represent every integer in the range
     :math:`-2^{N-1}` to :math:`+2^{N-1}-1`.
 

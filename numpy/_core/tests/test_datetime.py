@@ -2220,6 +2220,11 @@ class TestDateTime:
         bdd = np.busdaycalendar(weekmask="0011001")
         assert_equal(bdd.weekmask, np.array([0, 0, 1, 1, 0, 0, 1], dtype='?'))
 
+        # Check length 7 bool array.
+        mask = np.array([False, True, True, True, True, False, False])
+        bdd = np.busdaycalendar(weekmask=mask)
+        assert_equal(bdd.weekmask, mask, strict=True)
+
         # Check length 7 string weekmask.
         bdd = np.busdaycalendar(weekmask="Mon Tue")
         assert_equal(bdd.weekmask, np.array([1, 1, 0, 0, 0, 0, 0], dtype='?'))

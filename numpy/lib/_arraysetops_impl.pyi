@@ -379,23 +379,25 @@ def unique_values[ScalarT: np.generic](x: _ArrayLike[ScalarT]) -> _Array1D[Scala
 @overload
 def unique_values(x: ArrayLike) -> _Array1D[Incomplete]: ...
 
+# NOTE: we ignore UP047 because inlining `_AnyScalarT` would result in a lot of code duplication
+
 #
 @overload  # known scalar-type, return_indices=False (default)
-def intersect1d(
+def intersect1d(  # noqa: UP047
     ar1: _ArrayLike[_AnyScalarT],
     ar2: _ArrayLike[_AnyScalarT],
     assume_unique: bool = False,
     return_indices: L[False] = False,
 ) -> _Array1D[_AnyScalarT]: ...
 @overload  # known scalar-type, return_indices=True (positional)
-def intersect1d(
+def intersect1d(  # noqa: UP047
     ar1: _ArrayLike[_AnyScalarT],
     ar2: _ArrayLike[_AnyScalarT],
     assume_unique: bool,
     return_indices: L[True],
 ) -> _IntersectResult[_AnyScalarT]: ...
 @overload  # known scalar-type, return_indices=True (keyword)
-def intersect1d(
+def intersect1d(  # noqa: UP047
     ar1: _ArrayLike[_AnyScalarT],
     ar2: _ArrayLike[_AnyScalarT],
     assume_unique: bool = False,
@@ -427,19 +429,23 @@ def intersect1d(
 
 #
 @overload
-def setxor1d(ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT], assume_unique: bool = False) -> _Array1D[_AnyScalarT]: ...
+def setxor1d(  # noqa: UP047
+    ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT], assume_unique: bool = False
+) -> _Array1D[_AnyScalarT]: ...
 @overload
 def setxor1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False) -> _Array1D[Incomplete]: ...
 
 #
 @overload
-def union1d(ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT]) -> _Array1D[_AnyScalarT]: ...
+def union1d(ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT]) -> _Array1D[_AnyScalarT]: ...  # noqa: UP047
 @overload
 def union1d(ar1: ArrayLike, ar2: ArrayLike) -> _Array1D[Incomplete]: ...
 
 #
 @overload
-def setdiff1d(ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT], assume_unique: bool = False) -> _Array1D[_AnyScalarT]: ...
+def setdiff1d(  # noqa: UP047
+    ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT], assume_unique: bool = False
+) -> _Array1D[_AnyScalarT]: ...
 @overload
 def setdiff1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False) -> _Array1D[Incomplete]: ...
 

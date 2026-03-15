@@ -1,13 +1,11 @@
 Cython
-hypothesis==6.151.5
+hypothesis==6.151.9
 pytest==9.0.2
 pytest-cov==7.0.0
 meson
 ninja; sys_platform != "emscripten"
 pytest-xdist
 pytest-timeout
-# For testing types
-mypy==1.19.1
 # for optional f2py encoding detection
 charset-normalizer
 tzdata

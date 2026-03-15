@@ -146,6 +146,9 @@ _get_keywords(int rtype, PyArrayObject *out)
     PyObject *kwds = NULL;
     if (rtype != NPY_NOTYPE || out != NULL) {
         kwds = PyDict_New();
+        if (kwds == NULL) {
+            return NULL;
+        }
         if (rtype != NPY_NOTYPE) {
             PyArray_Descr *descr;
             descr = PyArray_DescrFromType(rtype);
@@ -169,13 +172,16 @@ PyArray_GenericReduceFunction(PyArrayObject *m1, PyObject *op, int axis,
     PyObject *kwds;
 
     args = Py_BuildValue("(Oi)", m1, axis);
+    if (args == NULL) {
+        return NULL;
+    }
     kwds = _get_keywords(rtype, out);
     meth = PyObject_GetAttrString(op, "reduce");
     if (meth && PyCallable_Check(meth)) {
         ret = PyObject_Call(meth, args, kwds);
     }
     Py_DECREF(args);
-    Py_DECREF(meth);
+    Py_XDECREF(meth);
     Py_XDECREF(kwds);
     return ret;
 }
@@ -189,13 +195,16 @@ PyArray_GenericAccumulateFunction(PyArrayObject *m1, PyObject *op, int axis,
     PyObject *kwds;
 
     args = Py_BuildValue("(Oi)", m1, axis);
+    if (args == NULL) {
+        return NULL;
+    }
     kwds = _get_keywords(rtype, out);
     meth = PyObject_GetAttrString(op, "accumulate");
     if (meth && PyCallable_Check(meth)) {
         ret = PyObject_Call(meth, args, kwds);
     }
     Py_DECREF(args);
-    Py_DECREF(meth);
+    Py_XDECREF(meth);
     Py_XDECREF(kwds);
     return ret;
 }

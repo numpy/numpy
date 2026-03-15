@@ -776,14 +776,14 @@ array__unique_hash(PyObject *NPY_UNUSED(module),
     npy_bool return_counts = NPY_FALSE;
 
     NPY_PREPARE_ARGPARSER;
-    if (npy_parse_arguments("_unique_hash", args, len_args, kwnames,
-                            "arr", &PyArray_Converter, &arr,
-                            "|equal_nan",  &PyArray_BoolConverter, &equal_nan,
-                            "|return_index", &PyArray_BoolConverter, &return_index,
-                            "|return_inverse", &PyArray_BoolConverter, &return_inverse,
-                            "|return_counts", &PyArray_BoolConverter, &return_counts,
-                            NULL, NULL, NULL
-                            ) < 0
+    if (npy_parse_arguments(
+            "_unique_hash", args, len_args, kwnames,
+            {"arr", (void *)&PyArray_Converter, &arr},
+            {"|equal_nan", (void *)&PyArray_BoolConverter, &equal_nan},
+            {"|return_index", (void *)&PyArray_BoolConverter, &return_index},
+            {"|return_inverse", (void *)&PyArray_BoolConverter, &return_inverse},
+            {"|return_counts", (void *)&PyArray_BoolConverter, &return_counts},
+        ) < 0
     ) {
         Py_XDECREF(arr);
         return NULL;
