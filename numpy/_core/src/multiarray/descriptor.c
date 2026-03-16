@@ -2089,7 +2089,7 @@ arraydescr_subdescr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 NPY_NO_EXPORT PyObject *
 arraydescr_protocol_typestr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
-    if (!PyDataType_ISLEGACY(NPY_DTYPE(self))) {
+    if (!PyDataType_ISLEGACY(self)) {
         return (PyObject *) Py_TYPE(self)->tp_str((PyObject *)self);
     }
 

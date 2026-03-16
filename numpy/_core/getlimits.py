@@ -168,7 +168,7 @@ class finfo:
 
     """
 
-    _finfo_cache = {}
+    _finfo_cache = {}  # noqa: RUF012
 
     __class_getitem__ = classmethod(types.GenericAlias)
 
@@ -395,8 +395,8 @@ class iinfo:
 
     """
 
-    _min_vals = {}
-    _max_vals = {}
+    _min_vals = {}  # noqa: RUF012
+    _max_vals = {}  # noqa: RUF012
 
     __class_getitem__ = classmethod(types.GenericAlias)
 

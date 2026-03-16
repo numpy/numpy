@@ -28,7 +28,7 @@ from numpy._typing import (
     _SupportsArray,
 )
 
-__all__ = [  # noqa: RUF022
+__all__ = [
     "ravel_multi_index",
     "unravel_index",
     "mgrid",
@@ -56,7 +56,7 @@ _Trans1DT_co = TypeVar("_Trans1DT_co", bound=int, default=L[-1], covariant=True)
 
 ###
 
-class ndenumerate(Generic[_ScalarT_co]):  # noqa: UP046
+class ndenumerate(Generic[_ScalarT_co]):
     @overload
     def __init__[ScalarT: np.generic](
         self: ndenumerate[ScalarT],

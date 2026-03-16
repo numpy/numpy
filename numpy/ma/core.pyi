@@ -618,7 +618,7 @@ def getmaskarray(arr: _ScalarLike_co) -> _MaskArray[tuple[()]]: ...
 def getmaskarray[ShapeT: _Shape](arr: np.ndarray[ShapeT, Any]) -> _MaskArray[ShapeT]: ...
 
 # It's sufficient for `m` to have dtype with type: `type[np.bool_]`,
-# which isn't necessarily a ndarray. Please open an issue if this causes issues.
+# which isn't necessarily an ndarray. Please open an issue if this causes issues.
 def is_mask(m: object) -> TypeIs[NDArray[bool_]]: ...
 
 #
@@ -2220,7 +2220,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
 
     # Keep in-sync with np.ma.argmin
     @overload  # type: ignore[override]
-    def argmin(
+    def argmin(  # pyrefly: ignore[bad-param-name-override]
         self,
         axis: None = None,
         fill_value: _ScalarLike_co | None = None,
@@ -2258,7 +2258,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
 
     # Keep in-sync with np.ma.argmax
     @overload  # type: ignore[override]
-    def argmax(
+    def argmax(  # pyrefly: ignore[bad-param-name-override]
         self,
         axis: None = None,
         fill_value: _ScalarLike_co | None = None,
@@ -3774,26 +3774,43 @@ def choose[ArrayT: np.ndarray](
 
 #
 @overload  # a: masked_array, out: None (default)
+def round[MArray: MaskedArray](a: MArray, decimals: int = 0, out: None = None) -> MArray: ...
+@overload  # a: known array-like, out: None (default)
+def round[ScalarT: np.number](a: _ArrayLike[ScalarT], decimals: int = 0, out: None = None) -> _MaskedArray[ScalarT]: ...
+@overload  # a: unknown array-like, out: None (default)
+def round(a: _ArrayLikeNumber_co, decimals: int = 0, out: None = None) -> _MaskedArray[Incomplete]: ...
+@overload  # out: ndarray (positional)
+def round[ArrayT: np.ndarray](a: ArrayLike, decimals: int, out: ArrayT) -> ArrayT: ...
+@overload  # out: ndarray (keyword)
+def round[ArrayT: np.ndarray](a: ArrayLike, decimals: int = 0, *, out: ArrayT) -> ArrayT: ...
+
+#
+@overload  # a: masked_array, out: None (default)
+@deprecated("numpy.ma.round_ is deprecated. Use numpy.ma.round instead.")
 def round_[MArray: MaskedArray](a: MArray, decimals: int = 0, out: None = None) -> MArray: ...
 @overload  # a: known array-like, out: None (default)
+@deprecated("numpy.ma.round_ is deprecated. Use numpy.ma.round instead.")
 def round_[ScalarT: np.number](a: _ArrayLike[ScalarT], decimals: int = 0, out: None = None) -> _MaskedArray[ScalarT]: ...
 @overload  # a: unknown array-like, out: None (default)
+@deprecated("numpy.ma.round_ is deprecated. Use numpy.ma.round instead.")
 def round_(a: _ArrayLikeNumber_co, decimals: int = 0, out: None = None) -> _MaskedArray[Incomplete]: ...
 @overload  # out: ndarray (positional)
+@deprecated("numpy.ma.round_ is deprecated. Use numpy.ma.round instead.")
 def round_[ArrayT: np.ndarray](a: ArrayLike, decimals: int, out: ArrayT) -> ArrayT: ...
 @overload  # out: ndarray (keyword)
+@deprecated("numpy.ma.round_ is deprecated. Use numpy.ma.round instead.")
 def round_[ArrayT: np.ndarray](a: ArrayLike, decimals: int = 0, *, out: ArrayT) -> ArrayT: ...
-
-round = round_
 
 # keep in sync with `_core.multiarray.inner`
 def inner(a: ArrayLike, b: ArrayLike) -> Incomplete: ...
 
 innerproduct = inner
 
+# NOTE: we ignore UP047 because inlining `_AnyScalarT` would result in a lot of code duplication
+
 # keep in sync with `_core.numeric.outer`
 @overload
-def outer(a: _ArrayLike[_AnyNumericScalarT], b: _ArrayLike[_AnyNumericScalarT]) -> _Masked2D[_AnyNumericScalarT]: ...
+def outer(a: _ArrayLike[_AnyNumericScalarT], b: _ArrayLike[_AnyNumericScalarT]) -> _Masked2D[_AnyNumericScalarT]: ...  # noqa: UP047
 @overload
 def outer(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co) -> _Masked2D[np.bool]: ...
 @overload
@@ -3809,7 +3826,7 @@ outerproduct = outer
 
 # keep in sync with `convolve` and `_core.numeric.correlate`
 @overload
-def correlate(
+def correlate(  # noqa: UP047
     a: _ArrayLike[_AnyNumericScalarT],
     v: _ArrayLike[_AnyNumericScalarT],
     mode: _CorrelateMode = "valid",
@@ -3853,7 +3870,7 @@ def correlate(
 
 # keep in sync with `correlate` and `_core.numeric.convolve`
 @overload
-def convolve(
+def convolve(  # noqa: UP047
     a: _ArrayLike[_AnyNumericScalarT],
     v: _ArrayLike[_AnyNumericScalarT],
     mode: _CorrelateMode = "full",
