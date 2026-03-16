@@ -2254,12 +2254,19 @@ Shape Manipulation
     a different total number of elements then the old shape. If reallocation is
     necessary, then *self* must own its data, have *self* - ``>base==NULL``,
     have *self* - ``>weakrefs==NULL``, and (unless refcheck is 0) not be
-    referenced by any other array.  The fortran argument can be
-    :c:data:`NPY_ANYORDER`, :c:data:`NPY_CORDER`, or
-    :c:data:`NPY_FORTRANORDER`.  It currently has no effect. Eventually it
-    could be used to determine how the resize operation should view the data
-    when constructing a differently-dimensioned array.  Returns None on success
-    and NULL on error.
+    referenced by any other array.
+
+    On Python 3.13 and older, the check allows objects with exactly one
+    reference to be resized, because it is impossible to differentiate between
+    an array with one reference created via an extension and a uniquely
+    referenced array defined in a Python function. On Python 3.14 and newer,
+    the array must be uniquely referenced.
+
+    Resizing arrays in-place can often lead to memory fragmentation and should
+    be avoided if the goal is to reclaim memory. Create a new array and copy the
+    relevant subset of data over instead.
+
+    Returns None on success and NULL on error.
 
 .. c:function:: PyObject* PyArray_Transpose( \
         PyArrayObject* self, PyArray_Dims* permute)

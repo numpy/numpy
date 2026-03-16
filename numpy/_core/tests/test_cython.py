@@ -350,3 +350,12 @@ def test_npystring_allocators_other_dtype(install_temp):
 def test_npy_uintp_type_enum(install_temp):
     import checks
     assert checks.check_npy_uintp_type_enum()
+
+
+@pytest.mark.skipif(sysconfig.get_platform() == 'win-arm64',
+                    reason='no checks module on win-arm64')
+def test_resize_refcheck(install_temp):
+    import checks
+    if sys.version_info >= (3, 14):
+        with pytest.raises(ValueError):
+            checks.resize_refcheck_test()

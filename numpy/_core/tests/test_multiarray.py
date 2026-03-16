@@ -13,8 +13,10 @@ import os
 import pathlib
 import pickle
 import re
+import subprocess
 import sys
 import tempfile
+import textwrap
 import tracemalloc
 import warnings
 import weakref
@@ -6376,6 +6378,22 @@ class TestResize:
         x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         y = x
         assert_raises(ValueError, x.resize, (5, 1))
+
+    def test_check_reference_module_scope(self):
+        code = textwrap.dedent("""
+            import numpy as np
+
+            # See gh-30991
+            a = np.array([[0, 1], [2, 3]], order='C')
+            a.resize((2, 1))
+        """)
+        try:
+            subprocess.check_output([sys.executable, "-c", code],
+                                    stderr=subprocess.STDOUT, text=True)
+        except subprocess.CalledProcessError as e:
+            assert sys.version_info >= (3, 14)
+            assert "ValueError" in e.stdout
+            assert "It is possible that the array is not referenced" in e.stdout
 
     def test_check_reference_2(self):
         # see gh-30265
