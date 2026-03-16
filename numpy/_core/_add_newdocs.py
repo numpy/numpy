@@ -4184,15 +4184,7 @@ _array_method_doc('resize', "*new_shape, refcheck=True",
     Raises
     ------
     ValueError
-        If `a` does not own its own data or references or views to it exist,
-        and the data memory must be changed.
-        PyPy only: will always raise if the data memory must be changed, since
-        there is no reliable way to determine if references or views to it
-        exist.
-
-    SystemError
-        If the `order` keyword argument is specified. This behaviour is a
-        bug in NumPy.
+        If `a` does not own its own data or references or views to may exist.
 
     See Also
     --------
@@ -4205,12 +4197,25 @@ _array_method_doc('resize', "*new_shape, refcheck=True",
     Only contiguous arrays (data elements consecutive in memory) can be
     resized.
 
+    Resizing arrays in-place can increase memory fragmentation. For that reason,
+    it is often preferable to allocate new memory for the result by calling
+    ``np.resize`` instead. This can reduce overall memory usage, even in
+    situations where one might expect to avoid wasting memory by resizing
+    in-place.
+
     The purpose of the reference count check is to make sure you
     do not use this array as a buffer for another Python object and then
-    reallocate the memory. However, reference counts can increase in
-    other ways so if you are sure that you have not shared the memory
-    for this array with another Python object, then you may safely set
-    `refcheck` to False.
+    reallocate the memory.
+
+    Note that CPython 3.14 changed reference counting for function locals, so
+    that NumPy cannot tell the difference between situations where an array is
+    referenced by exactly one object or an array is referenced by the
+    interpreter or by a C, C++, or Cython function. In these cases, NumPy may
+    raise a ValueError in a situation where an array has no references and it is
+    safe to resize in-place.
+
+    If you are sure that you have not shared the memory for this array with
+    another Python object, then you may safely set `refcheck` to False.
 
     Examples
     --------
