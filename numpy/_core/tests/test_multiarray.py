@@ -6290,6 +6290,7 @@ class TestResize:
         y = x
         assert_raises(ValueError, x.resize, (5, 1))
 
+    @pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
     def test_check_reference_module_scope(self):
         code = textwrap.dedent("""
             import numpy as np
