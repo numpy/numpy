@@ -248,7 +248,7 @@ def isreal(x):
     The function does not work on string arrays.
 
     >>> a = np.array([2j, "a"], dtype=np.str_)
-    >>> np.isreal(a)  # Compares as strings currently
+    >>> np.isreal(a)  # returns the result of `"" == 0` currently.
     array([False, False])
 
     Returns True for all elements that either have no ``.imag`` attribute

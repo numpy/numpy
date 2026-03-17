@@ -236,10 +236,10 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
     for (slot = slots; slot->name != NULL; slot++) {
         // Hardcode slot names for attributes and non-ufuncs stored on the DType
         // (Also avoids circular imports a bit.)
-        if (strcmp(slot->name, ".real") == 0) {
+        if (strcmp(slot->name, "real") == 0) {
             Py_XSETREF(ufunc, npy_interned_str.real);
         }
-        else if (strcmp(slot->name, ".imag") == 0) {
+        else if (strcmp(slot->name, "imag") == 0) {
             Py_XSETREF(ufunc, npy_interned_str.imag);
         }
         else if (strcmp(slot->name, "sort") == 0) {
@@ -627,10 +627,7 @@ call_promoter_and_recurse(PyUFuncObject *ufunc, PyObject *info,
         /*
          * If none of the dtypes changes, we would recurse infinitely, abort.
          * (Of course it is nevertheless possible to recurse infinitely.)
-         *
-         * TODO: We could allow users to signal this directly and also move
-         *       the call to be (almost immediate).  That would call it
-         *       unnecessarily sometimes, but may allow additional flexibility.
+         * If the user indicates a `1` result, we trust the user.
          */
         if (promoter_result != 1) {
             int dtypes_changed = 0;

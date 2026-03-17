@@ -575,6 +575,12 @@ array_base_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 }
 
 
+/*
+ * Fetches the real or imaginary part of an array. If `need_view` is set the return
+ * cannot be a copy (must be a view).
+ * If `need_view` is zero it will return the `ufunc`s result (a new array) and set it
+ * to read-only.
+ */
 static PyObject *
 _get_part(PyArrayObject *self, PyObject *ufunc, PyBoundArrayMethodObject *meth, int need_view)
 {

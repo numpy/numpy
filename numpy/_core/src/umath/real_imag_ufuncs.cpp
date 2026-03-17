@@ -1,7 +1,7 @@
 /*
  * This file implements the real and imag ufuncs which are in turn used
- * for the `.imag` and `.real` attributes of arrays.
- * The ArrayMethods are primarily stored on the DType for `.real` and `.imag`
+ * for the `imag` and `real` attributes of arrays.
+ * The ArrayMethods are primarily stored on the DType for `real` and `imag`
  * while the ufunc uses a promoter to access these dynamically.
  */
 
@@ -154,10 +154,10 @@ register_one_for_type(
 template <typename real_type>
 static int
 register_both_for_type(PyArray_DTypeMeta *complex_dtype, PyArray_DTypeMeta *real_dtype) {
-    if (register_one_for_type<real_type, true>(".real", complex_dtype, real_dtype) < 0) {
+    if (register_one_for_type<real_type, true>("real", complex_dtype, real_dtype) < 0) {
         return -1;
     }
-    if (register_one_for_type<real_type, false>(".imag", complex_dtype, real_dtype) < 0) {
+    if (register_one_for_type<real_type, false>("imag", complex_dtype, real_dtype) < 0) {
         return -1;
     }
     return 0;
@@ -270,16 +270,17 @@ init_real_imag_ufuncs(PyObject *umath)
     if (register_both_for_type<npy_longdouble>(&PyArray_CLongDoubleDType, &PyArray_LongDoubleDType) < 0) {
         goto finish;
     }
-    if (register_one_object_loop<&npy_interned_str_struct::real>(".real") < 0) {
+    if (register_one_object_loop<&npy_interned_str_struct::real>("real") < 0) {
         goto finish;
     }
-    if (register_one_object_loop<&npy_interned_str_struct::imag>(".imag") < 0) {
+    if (register_one_object_loop<&npy_interned_str_struct::imag>("imag") < 0) {
         goto finish;
     }
 
     /*
      * The above actually only adds the method to the DType itself. We deal with
-     * the ufunc by adding a general fall-back method that
+     * the ufunc by adding a general fall-back method that dynamically registers
+     * loops based on the above DType method slots.
      */
     if (add_promoter_for_slot<&NPY_DType_Slots::real_meth>(real_ufunc) < 0) {
         goto finish;

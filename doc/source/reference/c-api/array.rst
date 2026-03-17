@@ -1899,8 +1899,9 @@ with the rest of the ArrayMethod API.
             entry points, ``(module ':')? (object '.')* name``, with ``numpy``
             the default module. Examples: ``sin``, ``strings.str_len``,
             ``numpy.strings:str_len``.
-            ``"sort"``, ``"argsort"``, ``".real"``, ``".imag"`` and specific names
-            as they do not correspond directly to ufuncs.
+            Note that some names are supported but do not directly correspond
+            to ufuncs: ``"sort"``, ``"argsort"``, ``"real"``, ``"imag"``.
+            (These do use ufunc-likes or even ufuncs internally.)
 
         .. c:member:: PyArrayMethod_Spec *spec
 
@@ -1960,7 +1961,7 @@ with the rest of the ArrayMethod API.
         skipping a recursion protection step.
         This mainly allows the promoter to add new loop to the ufunc that must
         now match instead of the promoter itself.
-        (Normally, a promoter must modify)
+        (Normally, a promoter must modify the DTypes help find the right loop.)
 
 .. c:function:: int PyUFunc_GiveFloatingpointErrors( \
                         const char *name, int fpe_errors)
