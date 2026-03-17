@@ -181,7 +181,7 @@ class TestRegression:
             if mismatches != 0:
                 assert False, ("unexpected result from matmul, "
                     "probably due to OpenBLAS threading issues")
-    
+
     def test_norm_linux_arm(self):
         # gh-30816
         a = np.arange(20000) / 50000
