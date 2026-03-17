@@ -355,13 +355,10 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         if (override_args == NULL) {
             goto fail;
         }
-        Py_INCREF(ufunc);
-        PyTuple_SET_ITEM(override_args, 1, (PyObject *)ufunc);
-        Py_INCREF(method_name);
-        PyTuple_SET_ITEM(override_args, 2, method_name);
+        PyTuple_SET_ITEM(override_args, 1, Py_NewRef(ufunc));
+        PyTuple_SET_ITEM(override_args, 2, Py_NewRef(method_name));
         for (int i = 0; i < nin; i++) {
             PyObject *item = in_args[i];
-
             PyTuple_SET_ITEM(override_args, i + 3, Py_NewRef(item));
         }
 
@@ -371,8 +368,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
             PyObject *errmsg;
 
             /* All tuple items must be set before use */
-            Py_INCREF(Py_None);
-            PyTuple_SET_ITEM(override_args, 0, Py_None);
+            PyTuple_SET_ITEM(override_args, 0, Py_NewRef(Py_None));
             if (npy_cache_import_runtime(
                     "numpy._core._internal",
                     "array_ufunc_errmsg_formatter",

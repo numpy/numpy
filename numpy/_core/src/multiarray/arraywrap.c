@@ -115,8 +115,7 @@ _get_wrap_prepare_args(NpyUFuncContext *context) {
     }
     if (context->out != NULL) {
         for (int i = 0; i < context->nout; i++) {
-            PyTuple_SET_ITEM(args_tup, context->nin + i,
-                             Py_NewRef(context->out[i]));
+            PyTuple_SET_ITEM(args_tup, context->nin + i, Py_NewRef(context->out[i]));
         }
     }
     return args_tup;

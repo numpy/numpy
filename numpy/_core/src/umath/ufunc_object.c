@@ -3389,8 +3389,7 @@ tuple_all_none(PyObject *tup) {
  * Returns the number of outputs set (0 if all None), or -1 on error.
  */
 static int
-_set_full_args_out(int nout, PyObject *out_obj,
-                   PyObject **ufunc_output)
+_set_full_args_out(int nout, PyObject *out_obj, PyObject **ufunc_output)
 {
     assert(ufunc_output != NULL);
 
