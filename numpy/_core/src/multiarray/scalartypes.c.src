@@ -3786,6 +3786,29 @@ static PyObject *
 static PyNumberMethods @name@_arrtype_as_number;
 /**end repeat**/
 
+static PyNumberMethods datetime_arrtype_as_number;
+static PyNumberMethods timedelta_arrtype_as_number;
+
+static PyObject *
+datetimetype_int(PyObject *self)
+{
+    PyErr_Format(PyExc_TypeError,
+            "int() argument must be a string, a bytes-like object "
+            "or a real number, not '%.200s'",
+            Py_TYPE(self)->tp_name);
+    return NULL;
+}
+
+static PyObject *
+datetimetype_float(PyObject *self)
+{
+    PyErr_Format(PyExc_TypeError,
+            "float() argument must be a string or a real number, "
+            "not '%.200s'",
+            Py_TYPE(self)->tp_name);
+    return NULL;
+}
+
 /* Arithmetic methods -- only so we can override &, |, ^. */
 NPY_NO_EXPORT PyNumberMethods bool_arrtype_as_number = {
     .nb_bool = (inquiry)bool_arrtype_nonzero,
@@ -4475,6 +4498,21 @@ initialize_numeric_types(void)
     Py@NAME@ArrType_Type.tp_as_number = &@name@_arrtype_as_number;
 
     /**end repeat**/
+
+    /*
+     * Datetime and timedelta types should not be convertible to int/float.
+     * Their getitem returns numpy scalars (datetime64/timedelta64), not
+     * Python scalars, so gentype_int/gentype_float would infinitely recurse.
+     */
+    datetime_arrtype_as_number = gentype_as_number;
+    datetime_arrtype_as_number.nb_int = (unaryfunc)datetimetype_int;
+    datetime_arrtype_as_number.nb_float = (unaryfunc)datetimetype_float;
+    PyDatetimeArrType_Type.tp_as_number = &datetime_arrtype_as_number;
+
+    timedelta_arrtype_as_number = gentype_as_number;
+    timedelta_arrtype_as_number.nb_int = (unaryfunc)datetimetype_int;
+    timedelta_arrtype_as_number.nb_float = (unaryfunc)datetimetype_float;
+    PyTimedeltaArrType_Type.tp_as_number = &timedelta_arrtype_as_number;
 
     PyStringArrType_Type.tp_alloc = NULL;
     PyStringArrType_Type.tp_free = NULL;

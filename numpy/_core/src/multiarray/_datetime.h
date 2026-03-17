@@ -242,10 +242,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
 /*
  * Converts a datetime into a PyObject *.
  *
- * NaT (Not-a-time) is returned as None.
- * For D/W/Y/M (days or coarser), returns a datetime.date.
- * For μs/ms/s/m/h/D/W (microseconds or coarser), returns a datetime.datetime.
- * For ns/ps/fs/as (units shorter than microseconds), returns an integer.
+ * Always returns a numpy.datetime64 scalar (including NaT).
  */
 NPY_NO_EXPORT PyObject *
 convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta);
@@ -253,9 +250,7 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta);
 /*
  * Converts a timedelta into a PyObject *.
  *
- * NaT (Not-a-time) is returned as None.
- * For μs/ms/s/m/h/D/W (microseconds or coarser), returns a datetime.timedelta.
- * For Y/M (non-linear units), generic units and ns/ps/fs/as (units shorter than microseconds), returns an integer.
+ * Always returns a numpy.timedelta64 scalar (including NaT).
  */
 NPY_NO_EXPORT PyObject *
 convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta);

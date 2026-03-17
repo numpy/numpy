@@ -423,16 +423,21 @@ class TestTimeScalars:
     @pytest.mark.parametrize("dtype", [np.int64, np.float32])
     @pytest.mark.parametrize("value, unit", [param(123, "ns", id="timedelta64[ns]")])
     def test_coercion_timedelta_convert_to_number(self, dtype, value, unit):
-        # Only "ns" and "generic" timedeltas can be converted to numbers
-        # so these are slightly special.
+        # "ns" timedeltas can be converted to numeric dtypes
+        # via np.array(scalar, dtype=...) and .astype(), but integer item
+        # assignment raises TypeError because it goes through int().
         scalar = np.timedelta64(value, unit)
         arr = np.array(scalar, dtype=dtype)
         cast = np.array(scalar).astype(dtype)
-        ass = np.ones((), dtype=dtype)
-        ass[()] = scalar  # raises, as would np.array([scalar], dtype=dtype)
-
         assert_array_equal(arr, cast)
-        assert_array_equal(cast, cast)
+
+        ass = np.ones((), dtype=dtype)
+        if np.issubdtype(dtype, np.integer):
+            with pytest.raises(TypeError):
+                ass[()] = scalar
+        else:
+            ass[()] = scalar
+            assert_array_equal(ass, cast)
 
     @pytest.mark.parametrize("dtype", [np.int64, np.float32])
     @pytest.mark.parametrize("value, unit",
@@ -445,11 +450,15 @@ class TestTimeScalars:
             scalar = np.timedelta64(value, unit)
             arr = np.array(scalar, dtype=dtype)
             cast = np.array(scalar).astype(dtype)
-            ass = np.ones((), dtype=dtype)
-            ass[()] = scalar  # raises, as would np.array([scalar], dtype=dtype)
-
             assert_array_equal(arr, cast)
-            assert_array_equal(cast, cast)
+
+            ass = np.ones((), dtype=dtype)
+            if np.issubdtype(dtype, np.integer):
+                with pytest.raises(TypeError):
+                    ass[()] = scalar
+            else:
+                ass[()] = scalar
+                assert_array_equal(ass, cast)
 
     @pytest.mark.parametrize("dtype", ["S6", "U6"])
     @pytest.mark.parametrize(["val", "unit"],
