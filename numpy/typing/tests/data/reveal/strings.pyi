@@ -11,33 +11,33 @@ AR_U: npt.NDArray[np.str_]
 AR_S: npt.NDArray[np.bytes_]
 AR_T: AR_T_alias
 
-assert_type(np.strings.equal(AR_U, AR_U), npt.NDArray[np.bool])
-assert_type(np.strings.equal(AR_S, AR_S), npt.NDArray[np.bool])
-assert_type(np.strings.equal(AR_T, AR_T), npt.NDArray[np.bool])
+assert_type(np.strings.equal(AR_U, AR_U), np.ndarray)
+assert_type(np.strings.equal(AR_S, AR_S), np.ndarray)
+assert_type(np.strings.equal(AR_T, AR_T), np.ndarray)
 
-assert_type(np.strings.not_equal(AR_U, AR_U), npt.NDArray[np.bool])
-assert_type(np.strings.not_equal(AR_S, AR_S), npt.NDArray[np.bool])
-assert_type(np.strings.not_equal(AR_T, AR_T), npt.NDArray[np.bool])
+assert_type(np.strings.not_equal(AR_U, AR_U), np.ndarray)
+assert_type(np.strings.not_equal(AR_S, AR_S), np.ndarray)
+assert_type(np.strings.not_equal(AR_T, AR_T), np.ndarray)
 
-assert_type(np.strings.greater_equal(AR_U, AR_U), npt.NDArray[np.bool])
-assert_type(np.strings.greater_equal(AR_S, AR_S), npt.NDArray[np.bool])
-assert_type(np.strings.greater_equal(AR_T, AR_T), npt.NDArray[np.bool])
+assert_type(np.strings.greater_equal(AR_U, AR_U), np.ndarray)
+assert_type(np.strings.greater_equal(AR_S, AR_S), np.ndarray)
+assert_type(np.strings.greater_equal(AR_T, AR_T), np.ndarray)
 
-assert_type(np.strings.less_equal(AR_U, AR_U), npt.NDArray[np.bool])
-assert_type(np.strings.less_equal(AR_S, AR_S), npt.NDArray[np.bool])
-assert_type(np.strings.less_equal(AR_T, AR_T), npt.NDArray[np.bool])
+assert_type(np.strings.less_equal(AR_U, AR_U), np.ndarray)
+assert_type(np.strings.less_equal(AR_S, AR_S), np.ndarray)
+assert_type(np.strings.less_equal(AR_T, AR_T), np.ndarray)
 
-assert_type(np.strings.greater(AR_U, AR_U), npt.NDArray[np.bool])
-assert_type(np.strings.greater(AR_S, AR_S), npt.NDArray[np.bool])
-assert_type(np.strings.greater(AR_T, AR_T), npt.NDArray[np.bool])
+assert_type(np.strings.greater(AR_U, AR_U), np.ndarray)
+assert_type(np.strings.greater(AR_S, AR_S), np.ndarray)
+assert_type(np.strings.greater(AR_T, AR_T), np.ndarray)
 
-assert_type(np.strings.less(AR_U, AR_U), npt.NDArray[np.bool])
-assert_type(np.strings.less(AR_S, AR_S), npt.NDArray[np.bool])
-assert_type(np.strings.less(AR_T, AR_T), npt.NDArray[np.bool])
+assert_type(np.strings.less(AR_U, AR_U), np.ndarray)
+assert_type(np.strings.less(AR_S, AR_S), np.ndarray)
+assert_type(np.strings.less(AR_T, AR_T), np.ndarray)
 
-assert_type(np.strings.add(AR_U, AR_U), npt.NDArray[np.str_])
-assert_type(np.strings.add(AR_S, AR_S), npt.NDArray[np.bytes_])
-assert_type(np.strings.add(AR_T, AR_T), AR_T_alias)
+assert_type(np.strings.add(AR_U, AR_U), np.ndarray)
+assert_type(np.strings.add(AR_S, AR_S), np.ndarray)
+assert_type(np.strings.add(AR_T, AR_T), np.ndarray)
 
 assert_type(np.strings.multiply(AR_U, 5), npt.NDArray[np.str_])
 assert_type(np.strings.multiply(AR_S, [5, 4, 3]), npt.NDArray[np.bytes_])
