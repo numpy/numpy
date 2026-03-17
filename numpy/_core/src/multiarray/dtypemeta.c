@@ -199,11 +199,7 @@ register_sort_compare(PyArray_DTypeMeta *dtype)
             .nout = 1,
             .dtypes = sort_dtypes,
             .slots = sort_slots,
-            .flags = NPY_METH_NO_FLOATINGPOINT_ERRORS,
     };
-    if (dtype->flags & NPY_NEEDS_PYAPI) {
-        sort_spec.flags |= NPY_METH_REQUIRES_PYAPI;
-    }
 
     PyArray_DTypeMeta *argsort_dtypes[2] = {dtype, &PyArray_IntpDType};
     PyType_Slot argsort_slots[3] = {
@@ -225,11 +221,7 @@ register_sort_compare(PyArray_DTypeMeta *dtype)
             .nout = 1,
             .dtypes = argsort_dtypes,
             .slots = argsort_slots,
-            .flags = NPY_METH_NO_FLOATINGPOINT_ERRORS,
     };
-    if (dtype->flags & NPY_NEEDS_PYAPI) {
-        argsort_spec.flags |= NPY_METH_REQUIRES_PYAPI;
-    }
 
     PyUFunc_LoopSlot loops[] = {
             {"sort", &sort_spec},

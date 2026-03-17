@@ -95,7 +95,7 @@ npy_default_get_sort_loop(
     PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
     *flags |= NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
-    if (PyDataType_REFCHK(context->descriptors[0])) {
+    if (PyDataType_FLAGS(context->descriptors[0]) & NPY_NEEDS_PYAPI) {
         *flags |= NPY_METH_REQUIRES_PYAPI;
     }
 
@@ -122,7 +122,7 @@ npy_default_get_argsort_loop(
     PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
     *flags |= NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
-    if (PyDataType_REFCHK(context->descriptors[0])) {
+    if (PyDataType_FLAGS(context->descriptors[0]) & NPY_NEEDS_PYAPI) {
         *flags |= NPY_METH_REQUIRES_PYAPI;
     }
 
