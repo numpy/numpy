@@ -4471,17 +4471,16 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     /*
      * Scratch space for operands, dtypes, etc.  Note that operands and
      * operation_descrs may hold an entry for the wheremask.
-     * Also includes space for ufunc_output (nout slots) and,
-     * when outer is used, ufunc_input (nin slots, owned refs).
+     * Also includes space for ufunc_input (nin slots, used by outer) and
+     * ufunc_output (nout slots).
      */
-    int extra_scratch = outer ? nin + nout : nout;
     NPY_ALLOC_WORKSPACE(scratch_objs, void *,
                         UFUNC_STACK_NARGS * 4 + 2,
-                        nop * 4 + 2 + extra_scratch);
+                        nop * 4 + 2 + nop);
     if (scratch_objs == NULL) {
         return NULL;
     }
-    memset(scratch_objs, 0, sizeof(void *) * (nop * 4 + 2 + extra_scratch));
+    memset(scratch_objs, 0, sizeof(void *) * (nop * 4 + 2 + nop));
 
     PyArray_DTypeMeta **signature = (PyArray_DTypeMeta **)scratch_objs;
     PyArrayObject **operands = (PyArrayObject **)(signature + nop);
@@ -4510,7 +4509,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     npy_bool out_is_passed_by_position = len_args > nin;
     if (out_is_passed_by_position) {
         npy_bool all_none = NPY_TRUE;
-        ufunc_output = args_scratch + (outer ? nin : 0);
+        ufunc_output = args_scratch + nin;
 
         for (int i = nin; i < nop; i++) {
             PyObject *tmp;
@@ -4617,7 +4616,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
                 return_scalar = NPY_FALSE;
             }
             else {
-                ufunc_output = args_scratch + (outer ? nin : 0);
+                ufunc_output = args_scratch + nin;
                 int n = _set_full_args_out(nout, out_obj, ufunc_output);
                 if (n < 0) {
                     goto fail;
