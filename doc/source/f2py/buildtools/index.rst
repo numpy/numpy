@@ -108,6 +108,7 @@ Build systems
    :maxdepth: 2
 
    meson
+   meson-python
    cmake
    skbuild
    distutils-to-meson

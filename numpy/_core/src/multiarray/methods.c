@@ -126,11 +126,10 @@ array_take(PyArrayObject *self,
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("take", args, len_args, kwnames,
-            "indices", NULL, &indices,
-            "|axis", &PyArray_AxisConverter, &dimension,
-            "|out", &PyArray_OutputConverter, &out,
-            "|mode", &PyArray_ClipmodeConverter, &mode,
-            NULL, NULL, NULL) < 0) {
+            {"indices", NULL, &indices},
+            {"|axis", &PyArray_AxisConverter, &dimension},
+            {"|out", &PyArray_OutputConverter, &out},
+            {"|mode", &PyArray_ClipmodeConverter, &mode}) < 0) {
         return NULL;
     }
 
@@ -225,8 +224,7 @@ array_squeeze(PyArrayObject *self,
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("squeeze", args, len_args, kwnames,
-            "|axis", NULL, &axis_in,
-            NULL, NULL, NULL) < 0) {
+            {"|axis", NULL, &axis_in}) < 0) {
         return NULL;
     }
 
@@ -253,9 +251,8 @@ array_view(PyArrayObject *self,
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("view", args, len_args, kwnames,
-            "|dtype", NULL, &out_dtype,
-            "|type", NULL, &out_type,
-            NULL, NULL, NULL) < 0) {
+            {"|dtype", NULL, &out_dtype},
+            {"|type", NULL, &out_type}) < 0) {
         return NULL;
     }
 
@@ -302,10 +299,9 @@ array_argmax(PyArrayObject *self,
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("argmax", args, len_args, kwnames,
-            "|axis", &PyArray_AxisConverter, &axis,
-            "|out", &PyArray_OutputConverter, &out,
-            "$keepdims", &PyArray_BoolConverter, &keepdims,
-            NULL, NULL, NULL) < 0) {
+            {"|axis", &PyArray_AxisConverter, &axis},
+            {"|out", &PyArray_OutputConverter, &out},
+            {"$keepdims", &PyArray_BoolConverter, &keepdims}) < 0) {
         return NULL;
     }
 
@@ -329,10 +325,9 @@ array_argmin(PyArrayObject *self,
     npy_bool keepdims = NPY_FALSE;
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("argmin", args, len_args, kwnames,
-            "|axis", &PyArray_AxisConverter, &axis,
-            "|out", &PyArray_OutputConverter, &out,
-            "$keepdims", &PyArray_BoolConverter, &keepdims,
-            NULL, NULL, NULL) < 0) {
+            {"|axis", &PyArray_AxisConverter, &axis},
+            {"|out", &PyArray_OutputConverter, &out},
+            {"$keepdims", &PyArray_BoolConverter, &keepdims}) < 0) {
         return NULL;
     }
 
@@ -773,12 +768,11 @@ array_astype(PyArrayObject *self,
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("astype", args, len_args, kwnames,
-            "dtype", &PyArray_DTypeOrDescrConverterRequired, &dt_info,
-            "|order", &PyArray_OrderConverter, &order,
-            "|casting", &PyArray_CastingConverterSameValue, &casting,
-            "|subok", &PyArray_PythonPyIntFromInt, &subok,
-            "|copy", &PyArray_AsTypeCopyConverter, &forcecopy,
-            NULL, NULL, NULL) < 0) {
+            {"dtype", &PyArray_DTypeOrDescrConverterRequired, &dt_info},
+            {"|order", &PyArray_OrderConverter, &order},
+            {"|casting", &PyArray_CastingConverterSameValue, &casting},
+            {"|subok", &PyArray_PythonPyIntFromInt, &subok},
+            {"|copy", &PyArray_AsTypeCopyConverter, &forcecopy}) < 0) {
         Py_XDECREF(dt_info.descr);
         Py_XDECREF(dt_info.dtype);
         return NULL;
@@ -1151,8 +1145,7 @@ array_copy(PyArrayObject *self,
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("copy", args, len_args, kwnames,
-            "|order", PyArray_OrderConverter, &order,
-            NULL, NULL, NULL) < 0) {
+            {"|order", PyArray_OrderConverter, &order}) < 0) {
         return NULL;
     }
 
@@ -1271,12 +1264,12 @@ array_sort(PyArrayObject *self,
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("sort", args, len_args, kwnames,
-            "|axis", &PyArray_PythonPyIntFromInt, &axis,
-            "|kind", &PyArray_SortkindConverter, &sortkind,
-            "|order", NULL, &order,
-            "$stable", &PyArray_OptionalBoolConverter, &stable,
-//            "$descending", &PyArray_OptionalBoolConverter, &descending,
-            NULL, NULL, NULL) < 0) {
+            {"|axis", &PyArray_PythonPyIntFromInt, &axis},
+            {"|kind", &PyArray_SortkindConverter, &sortkind},
+            {"|order", NULL, &order},
+            {"$stable", &PyArray_OptionalBoolConverter, &stable}
+            // {"$descending", &PyArray_OptionalBoolConverter, &descending}
+            ) < 0) {
         return NULL;
     }
 
@@ -1359,11 +1352,10 @@ array_partition(PyArrayObject *self,
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("partition", args, len_args, kwnames,
-            "kth", NULL, &kthobj,
-            "|axis", &PyArray_PythonPyIntFromInt, &axis,
-            "|kind", &PyArray_SelectkindConverter, &sortkind,
-            "|order", NULL, &order,
-            NULL, NULL, NULL) < 0) {
+            {"kth", NULL, &kthobj},
+            {"|axis", &PyArray_PythonPyIntFromInt, &axis},
+            {"|kind", &PyArray_SelectkindConverter, &sortkind},
+            {"|order", NULL, &order}) < 0) {
         return NULL;
     }
 
@@ -1433,12 +1425,13 @@ array_argsort(PyArrayObject *self,
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("argsort", args, len_args, kwnames,
-            "|axis", &PyArray_AxisConverter, &axis,
-            "|kind", &PyArray_SortkindConverter, &sortkind,
-            "|order", NULL, &order,
-            "$stable", &PyArray_OptionalBoolConverter, &stable,
-//            "$descending", &PyArray_OptionalBoolConverter, &descending,
-            NULL, NULL, NULL) < 0) {
+            {"|axis", &PyArray_AxisConverter, &axis},
+            {"|kind", &PyArray_SortkindConverter, &sortkind},
+            {"|order", NULL, &order},
+            {"$stable", &PyArray_OptionalBoolConverter, &stable}
+            // TODO: add descending sorts, gh-14728
+            // {"$descending", &PyArray_OptionalBoolConverter, &descending}
+            ) < 0) {
         return NULL;
     }
 
@@ -1515,11 +1508,10 @@ array_argpartition(PyArrayObject *self,
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("argpartition", args, len_args, kwnames,
-            "kth", NULL, &kthobj,
-            "|axis", &PyArray_AxisConverter, &axis,
-            "|kind", &PyArray_SelectkindConverter, &sortkind,
-            "|order", NULL, &order,
-            NULL, NULL, NULL) < 0) {
+            {"kth", NULL, &kthobj},
+            {"|axis", &PyArray_AxisConverter, &axis},
+            {"|kind", &PyArray_SelectkindConverter, &sortkind},
+            {"|order", NULL, &order}) < 0) {
         return NULL;
     }
     if (order == Py_None) {
@@ -1580,10 +1572,9 @@ array_searchsorted(PyArrayObject *self,
 
     sorter = NULL;
     if (npy_parse_arguments("searchsorted", args, len_args, kwnames,
-            "v", NULL, &keys,
-            "|side", &PyArray_SearchsideConverter, &side,
-            "|sorter", NULL, &sorter,
-            NULL, NULL, NULL) < 0) {
+            {"v", NULL, &keys},
+            {"|side", &PyArray_SearchsideConverter, &side},
+            {"|sorter", NULL, &sorter}) < 0) {
         return NULL;
     }
     if (sorter == Py_None) {
@@ -2444,9 +2435,8 @@ array_dot(PyArrayObject *self,
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("dot", args, len_args, kwnames,
-            "b", NULL, &b,
-            "|out", NULL, &o,
-            NULL, NULL, NULL) < 0) {
+            {"b", NULL, &b},
+            {"|out", NULL, &o}) < 0) {
         return NULL;
     }
 
@@ -2542,12 +2532,11 @@ array_trace(PyArrayObject *self,
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("trace", args, len_args, kwnames,
-            "|offset", &PyArray_PythonPyIntFromInt, &offset,
-            "|axis1", &PyArray_PythonPyIntFromInt, &axis1,
-            "|axis2", &PyArray_PythonPyIntFromInt, &axis2,
-            "|dtype", &PyArray_DescrConverter2, &dtype,
-            "|out", &PyArray_OutputConverter, &out,
-            NULL, NULL, NULL) < 0) {
+            {"|offset", &PyArray_PythonPyIntFromInt, &offset},
+            {"|axis1", &PyArray_PythonPyIntFromInt, &axis1},
+            {"|axis2", &PyArray_PythonPyIntFromInt, &axis2},
+            {"|dtype", &PyArray_DescrConverter2, &dtype},
+            {"|out", &PyArray_OutputConverter, &out}) < 0) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -2616,8 +2605,7 @@ array_flatten(PyArrayObject *self,
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("flatten", args, len_args, kwnames,
-            "|order", PyArray_OrderConverter, &order,
-            NULL, NULL, NULL) < 0) {
+            {"|order", PyArray_OrderConverter, &order}) < 0) {
         return NULL;
     }
     return PyArray_Flatten(self, order);
@@ -2632,8 +2620,7 @@ array_ravel(PyArrayObject *self,
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("ravel", args, len_args, kwnames,
-            "|order", PyArray_OrderConverter, &order,
-            NULL, NULL, NULL) < 0) {
+            {"|order", PyArray_OrderConverter, &order}) < 0) {
         return NULL;
     }
     return PyArray_Ravel(self, order);

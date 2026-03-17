@@ -230,13 +230,13 @@ NPY_TITLE_KEY_check(PyObject *key, PyObject *value)
 static inline npy_intp
 PyArray_ITEMSIZE(const PyArrayObject *arr)
 {
-    return PyDataType_ELSIZE(PyArray_GET_ITEM_DATA(arr)->descr);
+    return PyDataType_ELSIZE(PyArray_DESCR(arr));
 }
 
 #define PyDataType_HASFIELDS(obj) (PyDataType_ISLEGACY((PyArray_Descr*)(obj)) && PyDataType_NAMES((PyArray_Descr*)(obj)) != NULL)
-#define PyDataType_HASSUBARRAY(dtype) (PyDataType_ISLEGACY((PyArray_Descr*)dtype) && PyDataType_SUBARRAY((PyArray_Descr*)dtype) != NULL)
-#define PyDataType_ISUNSIZED(dtype) (PyDataType_ELSIZE((PyArray_Descr*)dtype) == 0 &&        \
-                                      !PyDataType_HASFIELDS((PyArray_Descr*)dtype))
+#define PyDataType_HASSUBARRAY(dtype) (PyDataType_ISLEGACY(dtype) && PyDataType_SUBARRAY(dtype) != NULL)
+#define PyDataType_ISUNSIZED(dtype) (PyDataType_ELSIZE((PyArray_Descr*)(dtype)) == 0 && \
+                                      !PyDataType_HASFIELDS(dtype))
 
 #define PyDataType_FLAGCHK(dtype, flag) \
         ((PyDataType_FLAGS(dtype) & (flag)) == (flag))
@@ -261,8 +261,7 @@ PyArray_ITEMSIZE(const PyArrayObject *arr)
 static inline PyObject *
 PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 {
-    return PyDataType_GetArrFuncs(PyArray_GET_ITEM_DATA(arr)->descr)->getitem(
-                                        (void *)itemptr, (PyArrayObject *)arr);
+    return PyDataType_GetArrFuncs(PyArray_DESCR(arr))->getitem((void *)itemptr, (PyArrayObject *)arr);
 }
 
 /*
@@ -273,7 +272,7 @@ PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 static inline int
 PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 {
-    return PyDataType_GetArrFuncs(PyArray_GET_ITEM_DATA(arr)->descr)->setitem(v, itemptr, arr);
+    return PyDataType_GetArrFuncs(PyArray_DESCR(arr))->setitem(v, itemptr, arr);
 }
 #endif  /* not internal */
 
