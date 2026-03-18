@@ -89,7 +89,7 @@ get_new_loop_data(
  * This is a thin wrapper around the legacy loop signature.
  */
 static int
-generic_wrapped_legacy_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+call_auxdata_loop(PyArrayMethod_Context *NPY_UNUSED(context),
         char *const *data, const npy_intp *dimensions, const npy_intp *strides,
         NpyAuxData *auxdata)
 {
@@ -97,6 +97,26 @@ generic_wrapped_legacy_loop(PyArrayMethod_Context *NPY_UNUSED(context),
 
     ldata->loop((char **)data, dimensions, strides, ldata->user_data);
     if (ldata->pyerr_check && PyErr_Occurred()) {
+        return -1;
+    }
+    return 0;
+}
+
+/*
+ * Cached version: reads loop and user_data from the method object
+ * instead of heap-allocated auxdata.
+ */
+static int
+call_cached_loop(PyArrayMethod_Context *context,
+        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(auxdata))
+{
+    PyArrayMethodObject *method = context->method;
+    ((PyUFuncGenericFunction)method->cached_loop)(
+            (char **)data, dimensions, strides,
+            method->cached_loop_data);
+    if ((method->flags & NPY_METH_REQUIRES_PYAPI) &&
+            PyErr_Occurred()) {
         return -1;
     }
     return 0;
@@ -218,6 +238,28 @@ get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
         return -1;
     }
 
+    /*
+     * Use cached loop if available (set at method creation time).
+     * This avoids the PyUFunc_DefaultLegacyInnerLoopSelector linear search
+     * and the heap allocation of auxdata on every call.
+     *
+     * The cache succeeds for all built-in NumPy ufuncs (including
+     * datetime/timedelta) because PyUFunc_DefaultLegacyInnerLoopSelector
+     * only matches on type_num, and DType singletons always have valid
+     * type_nums. The fallback below is kept as a safety net for edge
+     * cases such as third-party ufuncs with userloops.
+     */
+    *flags = context->method->flags & NPY_METH_RUNTIME_FLAGS;
+    if (context->method->cached_loop != NULL) {
+        *out_loop = &call_cached_loop;
+        *out_transferdata = NULL;
+        return 0;
+    }
+
+    /* Fallback: resolve loop at call time and heap-allocate auxdata.
+     *
+     * This code path is untested and could potentially be deprecated.
+     */
     PyUFuncObject *ufunc = (PyUFuncObject *)context->caller;
     void *user_data;
     int needs_api = 0;
@@ -228,12 +270,11 @@ get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
             context->descriptors, &loop, &user_data, &needs_api) < 0) {
         return -1;
     }
-    *flags = context->method->flags & NPY_METH_RUNTIME_FLAGS;
     if (needs_api) {
         *flags |= NPY_METH_REQUIRES_PYAPI;
     }
 
-    *out_loop = &generic_wrapped_legacy_loop;
+    *out_loop = &call_auxdata_loop;
     *out_transferdata = get_new_loop_data(
             loop, user_data, (*flags & NPY_METH_REQUIRES_PYAPI) != 0);
     if (*out_transferdata == NULL) {
@@ -457,6 +498,31 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         }
     }
 
+
+    /*
+     * Cache the legacy loop function and user_data on the method so that
+     * get_wrapped_legacy_ufunc_loop can avoid heap-allocating auxdata
+     * on every call.
+     */
+    {
+        void *user_data = NULL;
+        int needs_api = 0;
+        PyUFuncGenericFunction loop = NULL;
+        PyArray_Descr *descrs[NPY_MAXARGS];
+        for (int i = 0; i < ufunc->nin + ufunc->nout; i++) {
+            descrs[i] = bound_res->dtypes[i]->singleton;
+        }
+        if (PyUFunc_DefaultLegacyInnerLoopSelector(
+                ufunc, descrs, &loop, &user_data, &needs_api) < 0) {
+            PyErr_Clear();
+            res->cached_loop = NULL;
+            res->cached_loop_data = NULL;
+        }
+        else {
+            res->cached_loop = loop;
+            res->cached_loop_data = user_data;
+        }
+    }
 
     Py_INCREF(res);
     Py_DECREF(bound_res);
