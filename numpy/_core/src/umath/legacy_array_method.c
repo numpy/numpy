@@ -216,8 +216,10 @@ simple_legacy_resolve_descriptors(
 
 
 /*
- * This function grabs the legacy inner-loop.  If this turns out to be slow
- * we could probably cache it (with some care).
+ * Fallback get_strided_loop for legacy-wrapped methods that could not be
+ * promoted to the new-style path at creation time (e.g. third-party ufuncs
+ * with userloops).  Also called directly by special_integer_comparisons
+ * when both operands share the same type.
  */
 NPY_NO_EXPORT int
 get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
@@ -500,9 +502,10 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
 
 
     /*
-     * Cache the legacy loop function and user_data on the method so that
-     * get_wrapped_legacy_ufunc_loop can avoid heap-allocating auxdata
-     * on every call.
+     * Cache the legacy loop function and user_data on the method, and
+     * promote to the new-style get_strided_loop path so that the hot path
+     * goes through npy_default_get_strided_loop instead of the legacy
+     * wrapper chain.
      */
     {
         void *user_data = NULL;
@@ -521,6 +524,13 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         else {
             res->cached_loop = loop;
             res->cached_loop_data = user_data;
+            /*
+             * Legacy loops handle strides themselves, so strided and
+             * contiguous variants are the same wrapper.
+             */
+            res->strided_loop = &call_cached_loop;
+            res->contiguous_loop = &call_cached_loop;
+            res->get_strided_loop = &npy_default_get_strided_loop;
         }
     }
 

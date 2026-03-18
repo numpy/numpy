@@ -5254,9 +5254,10 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
             continue;
         }
         PyObject *registered = PyTuple_GET_ITEM(item, 1);
-        if (!PyObject_TypeCheck(registered, &PyArrayMethod_Type) || (
-                (PyArrayMethodObject *)registered)->get_strided_loop !=
-                        &get_wrapped_legacy_ufunc_loop) {
+        PyArrayMethodObject *reg_meth = (PyArrayMethodObject *)registered;
+        if (!PyObject_TypeCheck(registered, &PyArrayMethod_Type)
+                || (reg_meth->get_strided_loop != &get_wrapped_legacy_ufunc_loop
+                    && reg_meth->cached_loop == NULL)) {
             PyErr_Format(PyExc_TypeError,
                     "A non-compatible loop was already registered for "
                     "ufunc %s and DTypes %S.",
