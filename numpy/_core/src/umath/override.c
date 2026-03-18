@@ -120,16 +120,6 @@ initialize_normal_kwds(PyObject *out_args,
             return -1;
         }
     }
-    else {
-        /* Ensure that `out` is not present. */
-        int res = PyDict_Contains(normal_kwds, npy_interned_str.out);
-        if (res < 0) {
-            return -1;
-        }
-        if (res) {
-            return PyDict_DelItem(normal_kwds, npy_interned_str.out);
-        }
-    }
     return 0;
 }
 
