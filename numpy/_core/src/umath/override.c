@@ -125,7 +125,7 @@ initialize_normal_kwds(PyObject *out_args,
             return -1;
         }
     }
-    else if contains_where {
+    else if (contains_where == 0) {
         /* Ensure that `out` is not present unless `where` is present. */
         int res = PyDict_Contains(normal_kwds, npy_interned_str.out);
         if (res < 0) {
