@@ -3663,17 +3663,17 @@ class TestSpecialMethods:
         res = np.multiply.reduce(a, None, out=(None,), dtype=None)
         assert_equal(res[4], {'axis': None, 'dtype': None})
         res = np.multiply.reduce(a, 0, None, None, False, 2, True)
-        assert_equal(res[4], {'axis': 0, 'dtype': None, 'keepdims': False,
-                              'initial': 2, 'where': True})
+        assert_equal(res[4], {'axis': 0, 'dtype': None, 'out': None,
+                              'keepdims': False, 'initial': 2, 'where': True})
         # np._NoValue ignored for initial
         res = np.multiply.reduce(a, 0, None, None, False,
                                  np._NoValue, True)
-        assert_equal(res[4], {'axis': 0, 'dtype': None, 'keepdims': False,
-                              'where': True})
+        assert_equal(res[4], {'axis': 0, 'dtype': None, 'out': None,
+                              'keepdims': False, 'where': True})
         # None kept for initial, True for where.
         res = np.multiply.reduce(a, 0, None, None, False, None, True)
-        assert_equal(res[4], {'axis': 0, 'dtype': None, 'keepdims': False,
-                              'initial': None, 'where': True})
+        assert_equal(res[4], {'axis': 0, 'dtype': None, 'out': None,
+                              'keepdims': False, 'initial': None, 'where': True})
 
         # reduce, wrong args
         assert_raises(ValueError, np.multiply.reduce, a, out=())
