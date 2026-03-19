@@ -285,7 +285,6 @@ import numpy as np
 from numpy.lib import format
 from numpy.testing import (
     IS_64BIT,
-    IS_PYPY,
     IS_WASM,
     assert_,
     assert_array_equal,
@@ -675,7 +674,7 @@ def test_descr_to_dtype(dt):
 def test_version_2_0():
     f = BytesIO()
     # requires more than 2 byte for header
-    dt = [(("%d" % i) * 100, float) for i in range(500)]
+    dt = [(f"{i}" * 100, float) for i in range(500)]
     d = np.ones(1000, dtype=dt)
 
     format.write_array(f, d, version=(2, 0))
@@ -700,7 +699,7 @@ def test_version_2_0():
 @pytest.mark.skipif(IS_WASM, reason="memmap doesn't work correctly")
 def test_version_2_0_memmap(tmpdir):
     # requires more than 2 byte for header
-    dt = [(("%d" % i) * 100, float) for i in range(500)]
+    dt = [(f"{i}" * 100, float) for i in range(500)]
     d = np.ones(1000, dtype=dt)
     tf1 = os.path.join(tmpdir, 'version2_01.npy')
     tf2 = os.path.join(tmpdir, 'version2_02.npy')
@@ -943,7 +942,6 @@ def test_large_file_support(tmpdir):
     assert_array_equal(r, d)
 
 
-@pytest.mark.skipif(IS_PYPY, reason="flaky on PyPy")
 @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
 @pytest.mark.slow
 @requires_memory(free_bytes=2 * 2**30)

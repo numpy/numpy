@@ -527,8 +527,10 @@ defdict = {
 'sign':
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.sign'),
-          'PyUFunc_SimpleUniformOperationTypeResolver',
-          TD(nobool_or_datetime, dispatch=[('loops_autovec', ints)]),
+          'PyUFunc_SignTypeResolver',
+          TD(ints + flts, dispatch=[('loops_autovec', ints)]),
+          TD(timedeltaonly, out='d'),
+          TD(cmplx + O),
           ),
 'greater':
     Ufunc(2, 1, None,

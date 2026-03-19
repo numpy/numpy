@@ -2,6 +2,7 @@ import importlib
 import os
 import re
 import sys
+import sysconfig
 from datetime import datetime
 
 from docutils import nodes
@@ -17,6 +18,9 @@ needs_sphinx = '4.3'
 # must be kept alive to hold the patched names
 _name_cache = {}
 
+FREE_THREADED_BUILD = sysconfig.get_config_var('Py_GIL_DISABLED')
+
+
 def replace_scalar_type_names():
     """ Rename numpy types to use the canonical names to make sphinx behave """
     import ctypes
@@ -30,10 +34,19 @@ def replace_scalar_type_names():
     class PyTypeObject(ctypes.Structure):
         pass
 
-    PyObject._fields_ = [
-        ('ob_refcnt', Py_ssize_t),
-        ('ob_type', ctypes.POINTER(PyTypeObject)),
-    ]
+    if not FREE_THREADED_BUILD:
+        PyObject._fields_ = [
+            ('ob_refcnt', Py_ssize_t),
+            ('ob_type', ctypes.POINTER(PyTypeObject)),
+        ]
+    else:
+        # As of Python 3.14
+        PyObject._fields_ = [
+            ('ob_refcnt_full', ctypes.c_int64),
+            # an anonymous struct that we don't try to model
+            ('__private', ctypes.c_int64),
+            ('ob_type', ctypes.POINTER(PyTypeObject)),
+        ]
 
     PyTypeObject._fields_ = [
         # varhead
@@ -410,7 +423,7 @@ intersphinx_mapping = {
     'matplotlib': ('https://matplotlib.org/stable', None),
     'imageio': ('https://imageio.readthedocs.io/en/stable', None),
     'skimage': ('https://scikit-image.org/docs/stable', None),
-    'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
+    'pandas': ('https://pandas.pydata.org/docs', None),
     'scipy-lecture-notes': ('https://scipy-lectures.org', None),
     'pytest': ('https://docs.pytest.org/en/stable', None),
     'numpy-tutorials': ('https://numpy.org/numpy-tutorials', None),
@@ -592,7 +605,7 @@ from pygments.token import Comment
 class NumPyLexer(CLexer):
     name = 'NUMPYLEXER'
 
-    tokens = {
+    tokens = {  # noqa: RUF012
         'statements': [
             (r'@[a-zA-Z_]*@', Comment.Preproc, 'macro'),
             inherit,

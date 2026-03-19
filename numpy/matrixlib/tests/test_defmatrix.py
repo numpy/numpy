@@ -451,3 +451,25 @@ class TestShape:
         expanded = np.expand_dims(a, axis=1)
         assert_equal(expanded.ndim, 3)
         assert_(not isinstance(expanded, np.matrix))
+
+
+class TestPatternMatching:
+    """Tests for structural pattern matching support (PEP 634)."""
+
+    def test_match_sequence_pattern_2d(self):
+        # matrix is always 2D, so rows are (1, N) matrices not 1D arrays
+        arr = matrix([[1, 2], [3, 4]])
+        # outer matching
+        match arr:
+            case [row1, row2]:
+                assert_array_equal(row1, [[1, 2]])
+                assert_array_equal(row2, [[3, 4]])
+            case _:
+                raise AssertionError("2D matrix did not match sequence pattern")
+        # inner matching - rows are still 2D matrices, not scalars
+        match arr:
+            case [[a], [b]]:
+                assert_array_equal(a, [[1, 2]])
+                assert_array_equal(b, [[3, 4]])
+            case _:
+                raise AssertionError("2D matrix did not match sequence pattern")

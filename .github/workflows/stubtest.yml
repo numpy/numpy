@@ -14,7 +14,7 @@ on:
       - ".github/workflows/stubtest.yml"
       - "numpy/**"
       - "!numpy/**/tests/**"
-      - "requirements/test_requirements.txt"
+      - "requirements/typing_requirements.txt"
       - "tools/stubtest/**"
   workflow_dispatch:
 
@@ -37,25 +37,25 @@ jobs:
         py: ["3.12", "3.14"]
 
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           submodules: recursive
           fetch-tags: true
           persist-credentials: false
 
-      - uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
+      - uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
         with:
           python-version: ${{ matrix.py }}
           activate-environment: true
           cache-dependency-glob: |
             requirements/build_requirements.txt
-            requirements/test_requirements.txt
+            requirements/typing_requirements.txt
 
       - name: uv pip install
         run: >-
           uv pip install
           -r requirements/build_requirements.txt
-          -r requirements/test_requirements.txt
+          -r requirements/typing_requirements.txt
 
       - name: spin build
         run: spin build -j2 -- -Dallow-noblas=true -Ddisable-optimization=true --vsenv

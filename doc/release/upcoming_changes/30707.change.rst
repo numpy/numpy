@@ -1,0 +1,4 @@
+``meshgrid`` now always returns a tuple
+---------------------------------------
+``np.meshgrid`` previously used to return a list when ``sparse`` was true and ``copy`` was false.
+Now, it always returns a tuple regardless of the arguments.

@@ -216,44 +216,10 @@ array_priority_get(PyArrayObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 }
 
 static PyObject *
-array_typestr_get(PyArrayObject *self)
-{
-    return arraydescr_protocol_typestr_get(PyArray_DESCR(self), NULL);
-}
-
-static PyObject *
 array_descr_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 {
     Py_INCREF(PyArray_DESCR(self));
     return (PyObject *)PyArray_DESCR(self);
-}
-
-static PyObject *
-array_protocol_descr_get(PyArrayObject *self)
-{
-    PyObject *res;
-    PyObject *dobj;
-
-    res = arraydescr_protocol_descr_get(PyArray_DESCR(self), NULL);
-    if (res) {
-        return res;
-    }
-    PyErr_Clear();
-
-    /* get default */
-    dobj = PyTuple_New(2);
-    if (dobj == NULL) {
-        return NULL;
-    }
-    PyTuple_SET_ITEM(dobj, 0, PyUnicode_FromString(""));
-    PyTuple_SET_ITEM(dobj, 1, array_typestr_get(self));
-    res = PyList_New(1);
-    if (res == NULL) {
-        Py_DECREF(dobj);
-        return NULL;
-    }
-    PyList_SET_ITEM(res, 0, dobj);
-    return res;
 }
 
 static PyObject *
@@ -295,65 +261,49 @@ array_ctypes_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 static PyObject *
 array_interface_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 {
-    PyObject *dict;
-    PyObject *obj;
+    PyObject *dataptr = NULL;
+    PyObject *strides = NULL;
+    PyObject *shape = NULL;
+    PyObject *descr = NULL;
+    PyObject *typestr = NULL;
+    PyObject *dict = NULL;
 
-    dict = PyDict_New();
-    if (dict == NULL) {
-        return NULL;
+    dataptr = array_dataptr_get(self, NULL);
+    if (dataptr == NULL) {
+        goto finish;
     }
 
-    int ret;
-
-    /* dataptr */
-    obj = array_dataptr_get(self, NULL);
-    ret = PyDict_SetItemString(dict, "data", obj);
-    Py_DECREF(obj);
-    if (ret < 0) {
-        Py_DECREF(dict);
-        return NULL;
+    strides = array_protocol_strides_get(self);
+    if (strides == NULL) {
+        goto finish;
     }
 
-    obj = array_protocol_strides_get(self);
-    ret = PyDict_SetItemString(dict, "strides", obj);
-    Py_DECREF(obj);
-    if (ret < 0) {
-        Py_DECREF(dict);
-        return NULL;
+    descr = array_protocol_descr_get(PyArray_DESCR(self));
+    if (descr == NULL) {
+        goto finish;
     }
 
-    obj = array_protocol_descr_get(self);
-    ret = PyDict_SetItemString(dict, "descr", obj);
-    Py_DECREF(obj);
-    if (ret < 0) {
-        Py_DECREF(dict);
-        return NULL;
+    typestr = arraydescr_protocol_typestr_get(PyArray_DESCR(self), NULL);
+    if (typestr == NULL) {
+        goto finish;
     }
 
-    obj = arraydescr_protocol_typestr_get(PyArray_DESCR(self), NULL);
-    ret = PyDict_SetItemString(dict, "typestr", obj);
-    Py_DECREF(obj);
-    if (ret < 0) {
-        Py_DECREF(dict);
-        return NULL;
+    shape = array_shape_get(self, NULL);
+    if (shape == NULL) {
+        goto finish;
     }
 
-    obj = array_shape_get(self, NULL);
-    ret = PyDict_SetItemString(dict, "shape", obj);
-    Py_DECREF(obj);
-    if (ret < 0) {
-        Py_DECREF(dict);
-        return NULL;
-    }
+    dict = build_array_interface(
+        dataptr, descr, strides, typestr, shape
+    );
+    goto finish;
 
-    obj = PyLong_FromLong(3);
-    ret = PyDict_SetItemString(dict, "version", obj);
-    Py_DECREF(obj);
-    if (ret < 0) {
-        Py_DECREF(dict);
-        return NULL;
-    }
-
+finish:
+    Py_XDECREF(dataptr);
+    Py_XDECREF(strides);
+    Py_XDECREF(shape);
+    Py_XDECREF(descr);
+    Py_XDECREF(typestr);
     return dict;
 }
 

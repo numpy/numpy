@@ -1384,7 +1384,7 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
             Py_INCREF(op_axes_tuple);
         }
         else if (op_ncore == 1) {
-            op_axes_tuple = PyTuple_Pack(1, op_axes_tuple);
+            op_axes_tuple = PyTuple_FromArray(&op_axes_tuple, 1);
             if (op_axes_tuple == NULL) {
                 return -1;
             }
@@ -2738,8 +2738,9 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     else {
         fixed_strides[0] = PyArray_STRIDES(op[0])[axis];
         fixed_strides[1] = PyArray_STRIDES(op[1])[axis];
-        fixed_strides[2] = fixed_strides[0];
     }
+    // First argument is also passed as output (e.g. see dataptr below).
+    fixed_strides[2] = fixed_strides[0];
 
 
     NPY_ARRAYMETHOD_FLAGS flags = 0;
@@ -3411,7 +3412,7 @@ _set_full_args_out(int nout, PyObject *out_obj, ufunc_full_args *full_args)
             return 0;
         }
         /* Can be an array if it only has one output */
-        full_args->out = PyTuple_Pack(1, out_obj);
+        full_args->out = PyTuple_FromArray(&out_obj, 1);
         if (full_args->out == NULL) {
             return -1;
         }
@@ -3426,6 +3427,72 @@ _set_full_args_out(int nout, PyObject *out_obj, ufunc_full_args *full_args)
     return 0;
 }
 
+static inline int
+/* Convert the 'axis' parameter into a list of axes */
+_parse_axis(PyObject *axes_obj, int ndim, int *axes)
+{
+   int naxes = 0;
+   if (axes_obj == NULL) {
+        /* apply defaults */
+        if (ndim == 0) {
+            naxes = 0;
+        }
+        else {
+            naxes = 1;
+            axes[0] = 0;
+        }
+    }
+    else if (axes_obj == Py_None) {
+        /* Convert 'None' into all the axes */
+        naxes = ndim;
+        for (int i = 0; i < naxes; ++i) {
+            axes[i] = i;
+        }
+    }
+    else if (PyTuple_Check(axes_obj)) {
+        naxes = PyTuple_Size(axes_obj);
+        if (naxes < 0 || naxes > NPY_MAXDIMS) {
+            PyErr_SetString(PyExc_ValueError,
+                    "too many values for 'axis'");
+            return -1;
+        }
+        for (int i = 0; i < naxes; ++i) {
+            PyObject *tmp = PyTuple_GET_ITEM(axes_obj, i);
+            int axis = PyArray_PyIntAsInt(tmp);
+            if (error_converting(axis)) {
+                return -1;
+            }
+            if (check_and_adjust_axis(&axis, ndim) < 0) {
+                return -1;
+            }
+            axes[i] = (int)axis;
+        }
+    }
+    else {
+        /* Try to interpret axis as an integer */
+        int axis = PyArray_PyIntAsInt(axes_obj);
+        /* TODO: PyNumber_Index would be good to use here */
+        if (error_converting(axis)) {
+            return -1;
+        }
+        /*
+        * As a special case for backwards compatibility in 'sum',
+        * 'prod', et al, also allow a reduction for scalars even
+        * though this is technically incorrect.
+        */
+        if (ndim == 0 && (axis == 0 || axis == -1)) {
+            naxes = 0;
+        }
+        else if (check_and_adjust_axis(&axis, ndim) < 0) {
+            return -1;
+        }
+        else {
+            axes[0] = (int)axis;
+            naxes = 1;
+        }
+    }
+    return naxes;
+}
 
 /* forward declaration */
 static PyArray_DTypeMeta * _get_dtype(PyObject *dtype_obj);
@@ -3439,7 +3506,7 @@ static PyObject *
 PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames, int operation)
 {
-    int i, naxes=0, ndim;
+    int ndim;
     int axes[NPY_MAXDIMS];
 
     ufunc_full_args full_args = {NULL, NULL};
@@ -3492,16 +3559,16 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         NPY_PREPARE_ARGPARSER;
 
         if (npy_parse_arguments("reduceat", args, len_args, kwnames,
-                "array", NULL, &op,
-                "indices", NULL, &indices_obj,
-                "|axis", NULL, &axes_obj,
-                "|dtype", NULL, &otype_obj,
-                "|out", NULL, &out_obj,
-                NULL, NULL, NULL) < 0) {
+                {"array", NULL, &op},
+                {"indices", NULL, &indices_obj},
+                {"|axis", NULL, &axes_obj},
+                {"|dtype", NULL, &otype_obj},
+                {"|out", NULL, &out_obj}) < 0) {
             goto fail;
         }
         /* Prepare inputs for PyUfunc_CheckOverride */
-        full_args.in = PyTuple_Pack(2, op, indices_obj);
+        PyObject *reduce_in[] = {op, indices_obj};
+        full_args.in = PyTuple_FromArray(reduce_in, 2);
         if (full_args.in == NULL) {
             goto fail;
         }
@@ -3511,15 +3578,14 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         NPY_PREPARE_ARGPARSER;
 
         if (npy_parse_arguments("accumulate", args, len_args, kwnames,
-                "array", NULL, &op,
-                "|axis", NULL, &axes_obj,
-                "|dtype", NULL, &otype_obj,
-                "|out", NULL, &out_obj,
-                NULL, NULL, NULL) < 0) {
+                {"array", NULL, &op},
+                {"|axis", NULL, &axes_obj},
+                {"|dtype", NULL, &otype_obj},
+                {"|out", NULL, &out_obj}) < 0) {
             goto fail;
         }
         /* Prepare input for PyUfunc_CheckOverride */
-        full_args.in = PyTuple_Pack(1, op);
+        full_args.in = PyTuple_FromArray(&op, 1);
         if (full_args.in == NULL) {
             goto fail;
         }
@@ -3529,18 +3595,17 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         NPY_PREPARE_ARGPARSER;
 
         if (npy_parse_arguments("reduce", args, len_args, kwnames,
-                "array", NULL, &op,
-                "|axis", NULL, &axes_obj,
-                "|dtype", NULL, &otype_obj,
-                "|out", NULL, &out_obj,
-                "|keepdims", NULL, &keepdims_obj,
-                "|initial", &_not_NoValue, &initial,
-                "|where", NULL, &wheremask_obj,
-                NULL, NULL, NULL) < 0) {
+                {"array", NULL, &op},
+                {"|axis", NULL, &axes_obj},
+                {"|dtype", NULL, &otype_obj},
+                {"|out", NULL, &out_obj},
+                {"|keepdims", NULL, &keepdims_obj},
+                {"|initial", &_not_NoValue, &initial},
+                {"|where", NULL, &wheremask_obj}) < 0) {
             goto fail;
         }
         /* Prepare input for PyUfunc_CheckOverride */
-        full_args.in = PyTuple_Pack(1, op);
+        full_args.in = PyTuple_FromArray(&op, 1);
         if (full_args.in == NULL) {
             goto fail;
         }
@@ -3556,7 +3621,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
         if (out_obj != Py_None) {
-            full_args.out = PyTuple_Pack(1, out_obj);
+            full_args.out = PyTuple_FromArray(&out_obj, 1);
             if (full_args.out == NULL) {
                 goto fail;
             }
@@ -3624,65 +3689,10 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
 
     ndim = PyArray_NDIM(mp);
 
-    /* Convert the 'axis' parameter into a list of axes */
-    if (axes_obj == NULL) {
-        /* apply defaults */
-        if (ndim == 0) {
-            naxes = 0;
-        }
-        else {
-            naxes = 1;
-            axes[0] = 0;
-        }
-    }
-    else if (axes_obj == Py_None) {
-        /* Convert 'None' into all the axes */
-        naxes = ndim;
-        for (i = 0; i < naxes; ++i) {
-            axes[i] = i;
-        }
-    }
-    else if (PyTuple_Check(axes_obj)) {
-        naxes = PyTuple_Size(axes_obj);
-        if (naxes < 0 || naxes > NPY_MAXDIMS) {
-            PyErr_SetString(PyExc_ValueError,
-                    "too many values for 'axis'");
-            goto fail;
-        }
-        for (i = 0; i < naxes; ++i) {
-            PyObject *tmp = PyTuple_GET_ITEM(axes_obj, i);
-            int axis = PyArray_PyIntAsInt(tmp);
-            if (error_converting(axis)) {
-                goto fail;
-            }
-            if (check_and_adjust_axis(&axis, ndim) < 0) {
-                goto fail;
-            }
-            axes[i] = (int)axis;
-        }
-    }
-    else {
-        /* Try to interpret axis as an integer */
-        int axis = PyArray_PyIntAsInt(axes_obj);
-        /* TODO: PyNumber_Index would be good to use here */
-        if (error_converting(axis)) {
-            goto fail;
-        }
-        /*
-         * As a special case for backwards compatibility in 'sum',
-         * 'prod', et al, also allow a reduction for scalars even
-         * though this is technically incorrect.
-         */
-        if (ndim == 0 && (axis == 0 || axis == -1)) {
-            naxes = 0;
-        }
-        else if (check_and_adjust_axis(&axis, ndim) < 0) {
-            goto fail;
-        }
-        else {
-            axes[0] = (int)axis;
-            naxes = 1;
-        }
+    /* Extract the axis argument */
+    int naxes = _parse_axis(axes_obj, ndim, axes);
+    if (naxes < 0) {
+        goto fail;
     }
 
     switch(operation) {
@@ -4337,18 +4347,9 @@ try_trivial_scalar_call(
     // Try getting info from the (private) cache.  Fall back if not found,
     // so that the the dtype gets registered and things will work next time.
     PyArray_DTypeMeta *op_dtypes[2] = {NPY_DTYPE(dt), NULL};
-#ifdef Py_GIL_DISABLED
-    // Other threads may be in the process of filling the dispatch cache,
-    // so we need to acquire the free-threading-specific dispatch cache mutex
-    // before reading the cache
-    PyObject *info = PyArrayIdentityHash_GetItemWithLock(  // borrowed reference.
-        (PyArrayIdentityHash *)ufunc->_dispatch_cache,
-        (PyObject **)op_dtypes);
-#else
     PyObject *info = PyArrayIdentityHash_GetItem(  // borrowed reference.
         (PyArrayIdentityHash *)ufunc->_dispatch_cache,
         (PyObject **)op_dtypes);
-#endif
     if (info == NULL) {
         goto bail;
     }
@@ -4524,7 +4525,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
                 "use the `out` keyword argument instead. If you hoped to work with "
                 "more than 2 inputs, combine them into a single array and get the extrema "
                 "for the relevant axis.") < 0) {
-                return NULL;
+                goto fail;
             }
         }
 
@@ -4554,15 +4555,14 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             NPY_PREPARE_ARGPARSER;
 
             if (npy_parse_arguments(ufunc->name, args + len_args, 0, kwnames,
-                    "$out", NULL, &out_obj,
-                    "$where", NULL, &where_obj,
-                    "$casting", NULL, &casting_obj,
-                    "$order", NULL, &order_obj,
-                    "$subok", NULL, &subok_obj,
-                    "$dtype", NULL, &dtype_obj,
-                    "$signature", NULL, &signature_obj,
-                    "$sig", NULL, &sig_obj,
-                    NULL, NULL, NULL) < 0) {
+                    {"$out", NULL, &out_obj},
+                    {"$where", NULL, &where_obj},
+                    {"$casting", NULL, &casting_obj},
+                    {"$order", NULL, &order_obj},
+                    {"$subok", NULL, &subok_obj},
+                    {"$dtype", NULL, &dtype_obj},
+                    {"$signature", NULL, &signature_obj},
+                    {"$sig", NULL, &sig_obj}) < 0) {
                 goto fail;
             }
         }
@@ -4570,17 +4570,16 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             NPY_PREPARE_ARGPARSER;
 
             if (npy_parse_arguments(ufunc->name, args + len_args, 0, kwnames,
-                    "$out", NULL, &out_obj,
-                    "$axes", NULL, &axes_obj,
-                    "$axis", NULL, &axis_obj,
-                    "$keepdims", NULL, &keepdims_obj,
-                    "$casting", NULL, &casting_obj,
-                    "$order", NULL, &order_obj,
-                    "$subok", NULL, &subok_obj,
-                    "$dtype", NULL, &dtype_obj,
-                    "$signature", NULL, &signature_obj,
-                    "$sig", NULL, &sig_obj,
-                    NULL, NULL, NULL) < 0) {
+                    {"$out", NULL, &out_obj},
+                    {"$axes", NULL, &axes_obj},
+                    {"$axis", NULL, &axis_obj},
+                    {"$keepdims", NULL, &keepdims_obj},
+                    {"$casting", NULL, &casting_obj},
+                    {"$order", NULL, &order_obj},
+                    {"$subok", NULL, &subok_obj},
+                    {"$dtype", NULL, &dtype_obj},
+                    {"$signature", NULL, &signature_obj},
+                    {"$sig", NULL, &sig_obj}) < 0) {
                 goto fail;
             }
             if (NPY_UNLIKELY((axes_obj != NULL) && (axis_obj != NULL))) {
@@ -6219,11 +6218,10 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
     npy_bool reduction = NPY_FALSE;
 
     if (npy_parse_arguments("resolve_dtypes", args, len_args, kwnames,
-            "", NULL, &descrs_tuple,
-            "$signature", NULL, &signature_obj,
-            "$casting", &PyArray_CastingConverter, &casting,
-            "$reduction", &PyArray_BoolConverter, &reduction,
-            NULL, NULL, NULL) < 0) {
+            {"", NULL, &descrs_tuple},
+            {"$signature", NULL, &signature_obj},
+            {"$casting", &PyArray_CastingConverter, &casting},
+            {"$reduction", &PyArray_BoolConverter, &reduction}) < 0) {
         return NULL;
     }
 
@@ -6430,7 +6428,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
         ((PyArray_Descr **)context->descriptors)[i] = operation_descrs[i];
     }
 
-    result = PyTuple_Pack(2, result_dtype_tuple, capsule);
+    PyObject *result_items[] = {result_dtype_tuple, capsule};
+    result = PyTuple_FromArray(result_items, 2);
     /* cleanup and return */
     Py_DECREF(capsule);
 
@@ -6474,9 +6473,8 @@ py_get_strided_loop(PyUFuncObject *ufunc,
     npy_intp fixed_strides[NPY_MAXARGS];
 
     if (npy_parse_arguments("_get_strided_loop", args, len_args, kwnames,
-            "", NULL, &call_info_obj,
-            "$fixed_strides", NULL, &fixed_strides_obj,
-            NULL, NULL, NULL) < 0) {
+            {"", NULL, &call_info_obj},
+            {"$fixed_strides", NULL, &fixed_strides_obj}) < 0) {
         return NULL;
     }
 

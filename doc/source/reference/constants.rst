@@ -8,7 +8,7 @@ NumPy includes several constants:
 
 .. data:: e
 
-    Euler's constant, base of natural logarithms, Napier's constant.
+    Euler's number, base of natural logarithms, Napier's constant.
 
     ``e = 2.71828182845904523536028747135266249775724709369995...``
 

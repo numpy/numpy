@@ -206,6 +206,11 @@ class TestRemovedGlobals:
             getattr(np, name)
 
 
+class TestCharArray(_DeprecationTestCase):
+    def test_deprecated_chararray(self):
+        self.assert_deprecated(lambda: np.char.chararray)
+
+
 class TestDeprecatedDTypeAliases(_DeprecationTestCase):
     @pytest.mark.parametrize("dtype_code", ["a", "a10"])
     def test_a_dtype_alias(self, dtype_code: str):
@@ -342,3 +347,48 @@ class TestTooManyArgsExtremum(_DeprecationTestCase):
     @pytest.mark.parametrize("ufunc", [np.minimum, np.maximum])
     def test_extremem_3_args(self, ufunc):
         self.assert_deprecated(ufunc, args=(np.ones(1), np.zeros(1), np.empty(1)))
+
+
+class TestTypenameDeprecation(_DeprecationTestCase):
+    # Deprecation in Numpy 2.5, 2026-02
+
+    def test_typename_emits_deprecation_warning(self):
+        self.assert_deprecated(lambda: np.typename("S1"))
+        self.assert_deprecated(lambda: np.typename("h"))
+
+class TestRoundDeprecation(_DeprecationTestCase):
+    # Deprecation in NumPy 2.5, 2026-02
+
+    def test_round_emits_deprecation_warning_array(self):
+        a = np.array([1.5, 2.7, -1.5, -2.7])
+        self.assert_deprecated(lambda: np.ma.round_(a))
+
+    def test_round_emits_deprecation_warning_scalar(self):
+        self.assert_deprecated(lambda: np.ma.round_(3.14))
+
+class TestTriDeprecationWithNonInteger(_DeprecationTestCase):
+    # Deprecation in NumPy 2.5, 2026-03
+
+    def test_tri(self):
+        self.assert_deprecated(lambda: np.tri(M=2.3, k=3.14, N=np.object_(8)))
+
+    def test_triu_indices(self):
+        self.assert_deprecated(lambda: np.triu_indices(n=np.float64(7.14), k=3.2))
+        self.assert_deprecated(lambda: np.triu_indices(n=4, k=np.bool(0)))
+
+    def test_tril_indices(self):
+        self.assert_deprecated(lambda: np.tril_indices(n=np.array(3.14)))
+
+    def test_triu_indices_from(self):
+        a = np.array([[ 0,  1,  2,  3],
+           [ 4,  5,  6,  7],
+           [ 8,  9, 10, 11],
+           [12, 13, 14, 15]])
+        self.assert_deprecated(lambda: np.triu_indices_from(a, k=np.object_(9.8)))
+
+    def test_tril_indices_from(self):
+        a = np.array([[ 0,  1,  2,  3],
+           [ 4,  5,  6,  7],
+           [ 8,  9, 10, 11],
+           [12, 13, 14, 15]])
+        self.assert_deprecated(lambda: np.tril_indices_from(a, k=9.8))

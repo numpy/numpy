@@ -66,7 +66,7 @@ else:
     try:
         if sys.version_info < (3, 13):
             # Backport importlib.metadata.Distribution.origin
-            import json  # noqa: E401
+            import json
             import types
             origin = json.loads(
                 np_dist.read_text('direct_url.json') or '{}',
@@ -744,7 +744,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     ox, oy = x, y
 
     def isnumber(x):
-        return x.dtype.char in '?bhilqpBHILQPefdgFDG'
+        return type(x.dtype)._is_numeric
 
     def istime(x):
         return x.dtype.char in "Mm"
@@ -905,8 +905,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             n_mismatch = reduced.size - reduced.sum(dtype=intp)
             n_elements = flagged.size if flagged.ndim != 0 else reduced.size
             percent_mismatch = 100 * n_mismatch / n_elements
-            remarks = [f'Mismatched elements: {n_mismatch} / {n_elements} '
-                       f'({percent_mismatch:.3g}%)']
+            remarks = [(f'Mismatched elements: {n_mismatch} / {n_elements} '
+                        f'({percent_mismatch:.3g}%)')]
             if invalids.ndim != 0:
                 if flagged.ndim > 0:
                     positions = np.argwhere(np.asarray(~flagged))[invalids]
@@ -2848,6 +2848,8 @@ def requires_deep_recursion(func):
             pytest.skip("Pyston disables recursion checking")
         if IS_WASM:
             pytest.skip("WASM has limited stack size")
+        if not IS_64BIT:
+            pytest.skip("32 bit Python has limited stack size")
         cflags = sysconfig.get_config_var('CFLAGS') or ''
         config_args = sysconfig.get_config_var('CONFIG_ARGS') or ''
         address_sanitizer = (

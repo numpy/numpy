@@ -2,6 +2,7 @@ import contextlib
 import ctypes
 import inspect
 import operator
+import os
 import pickle
 import sys
 import types
@@ -19,7 +20,6 @@ from numpy._core._rational_tests import rational
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
-    IS_PYPY,
     assert_,
     assert_array_equal,
     assert_equal,
@@ -778,7 +778,7 @@ class TestSubarray:
         arr = np.ones(3, dtype=[("f", "i", 3)])
         cast = arr.astype(object)
         for fields in cast:
-            assert type(fields) == tuple and len(fields) == 1
+            assert type(fields) is tuple and len(fields) == 1
             subarr = fields[0]
             assert subarr.base is None
             assert subarr.flags.owndata
@@ -1341,6 +1341,29 @@ class TestPickling:
             assert roundtrip_dt == dt
             assert hash(roundtrip_dt) == pre_pickle_hash
 
+    @pytest.mark.parametrize('dt', [
+        np.dtype([('a', 'i4'), ('b', 'f8')]),
+        np.dtype('i4, i1', align=True),
+    ])
+    def test_setstate_invalid_tuple_size(self, dt):
+        # gh-30476
+        valid_state = dt.__reduce__()[2]
+        dt.__setstate__(valid_state)
+
+        for size in [1, 2, 3, 4]:
+            with pytest.raises(
+                ValueError, match="Invalid state while unpickling"
+            ):
+                dt.__setstate__(valid_state[:size])
+
+        min_extra = 10 - len(valid_state)
+        for extra in range(min_extra, min_extra + 5):
+            extended = valid_state + (None,) * extra
+            with pytest.raises(
+                ValueError, match="Invalid state while unpickling"
+            ):
+                dt.__setstate__(extended)
+
 
 class TestPromotion:
     """Test cases related to more complex DType promotions.  Further promotion
@@ -1496,6 +1519,7 @@ class TestFromDTypeAttribute:
         with pytest.raises(ValueError):
             np.dtype(dt_instance)
 
+    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
     def test_void_subtype(self):
         class dt(np.void):
             # This code path is fully untested before, so it is unclear
@@ -1875,6 +1899,7 @@ class TestUserDType:
     @pytest.mark.thread_unsafe(
         reason="crashes when GIL disabled, dtype setup is thread-unsafe",
     )
+    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
     def test_custom_structured_dtype(self):
         class mytype:
             pass
@@ -1898,6 +1923,7 @@ class TestUserDType:
     @pytest.mark.thread_unsafe(
         reason="crashes when GIL disabled, dtype setup is thread-unsafe",
     )
+    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
     def test_custom_structured_dtype_errors(self):
         class mytype:
             pass
@@ -1957,7 +1983,6 @@ def test_creating_dtype_with_dtype_class_errors():
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-@pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
 class TestDTypeSignatures:
     def test_signature_dtype(self):
         sig = inspect.signature(np.dtype)

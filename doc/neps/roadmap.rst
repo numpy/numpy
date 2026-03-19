@@ -213,7 +213,7 @@ Maintenance
 - ``numpy.ma`` is still in poor shape and under-maintained. It needs to be
   improved, ideas include:
 
-  - Rewrite masked arrays to not be a ndarray subclass -- maybe in a separate project?
+  - Rewrite masked arrays to not be an ndarray subclass -- maybe in a separate project?
   - MaskedArray as a duck-array type, and/or
   - dtypes that support missing values
 

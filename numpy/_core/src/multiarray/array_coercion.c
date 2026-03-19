@@ -1138,7 +1138,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
 
   force_sequence_due_to_char_dtype:
 
-    /* Ensure we have a sequence (required for PyPy) */
+    /* Ensure we have a sequence */
     seq = PySequence_Fast(obj, "Could not convert object to sequence"); // noqa: borrowed-ref - manual fix needed
     if (seq == NULL) {
         /*
@@ -1420,9 +1420,8 @@ _discover_array_parameters(PyObject *NPY_UNUSED(self),
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments(
             "_discover_array_parameters", args, len_args, kwnames,
-            "", NULL, &obj,
-            "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
-            NULL, NULL, NULL) < 0) {
+            {"", NULL, &obj},
+            {"|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info}) < 0) {
         /* fixed is last to parse, so never necessary to clean up */
         return NULL;
     }

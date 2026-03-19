@@ -36,7 +36,7 @@ from numpy import (
     amax,
     amin,
     angle,
-    array as narray,  # noqa: F401
+    array as narray,
     bool_,
     expand_dims,
     finfo,  # noqa: F401
@@ -722,12 +722,12 @@ def getdata(a, subok=True):
     Return the data of a masked array as an ndarray.
 
     Return the data of `a` (if any) as an ndarray if `a` is a ``MaskedArray``,
-    else return `a` as a ndarray or subclass (depending on `subok`) if not.
+    else return `a` as an ndarray or subclass (depending on `subok`) if not.
 
     Parameters
     ----------
     a : array_like
-        Input ``MaskedArray``, alternatively a ndarray or a subclass thereof.
+        Input ``MaskedArray``, alternatively an ndarray or a subclass thereof.
     subok : bool
         Whether to force the output to be a `pure` ndarray (False) or to
         return a subclass of ndarray if appropriate (True, default).
@@ -2590,7 +2590,7 @@ def flatten_structured_array(a):
 
         """
         for elm in iter(iterable):
-            if hasattr(elm, '__iter__'):
+            if hasattr(elm, "__iter__") and not isinstance(elm, (str, bytes)):
                 yield from flatten_sequence(elm)
             else:
                 yield elm
@@ -3162,7 +3162,7 @@ class MaskedArray(ndarray):
             # Get the domain mask
             domain = ufunc_domain.get(func)
             if domain is not None:
-                # Take the domain, and make sure it's a ndarray
+                # Take the domain, and make sure it's an ndarray
                 with np.errstate(divide='ignore', invalid='ignore'):
                     # The result may be masked for two (unary) domains.
                     # That can't really be right as some domains drop
@@ -3562,7 +3562,7 @@ class MaskedArray(ndarray):
                     mask = mask.astype(mdtype)
             # Mask is a sequence
             else:
-                # Make sure the new mask is a ndarray with the proper dtype
+                # Make sure the new mask is an ndarray with the proper dtype
                 try:
                     copy = None if not copy else True
                     mask = np.array(mask, copy=copy, dtype=mdtype)
@@ -3607,7 +3607,7 @@ class MaskedArray(ndarray):
     def recordmask(self):
         """
         Get or set the mask of the array if it has no named fields. For
-        structured arrays, returns a ndarray of booleans where entries are
+        structured arrays, returns an ndarray of booleans where entries are
         ``True`` if **all** the fields are masked, ``False`` otherwise:
 
         >>> x = np.ma.array([(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
@@ -8089,9 +8089,68 @@ def choose(indices, choices, out=None, mode='raise'):
     return d
 
 
+def round(a, decimals=0, out=None):
+    """
+    Return a copy of a, rounded to 'decimals' places.
+
+    When 'decimals' is negative, it specifies the number of positions
+    to the left of the decimal point.  The real and imaginary parts of
+    complex numbers are rounded separately. Nothing is done if the
+    array is not of float type and 'decimals' is greater than or equal
+    to 0.
+
+    Parameters
+    ----------
+    decimals : int
+        Number of decimals to round to. May be negative.
+    out : array_like
+        Existing array to use for output.
+        If not given, returns a default copy of a.
+
+    Notes
+    -----
+    If out is given and does not have a mask attribute, the mask of a
+    is lost!
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import numpy.ma as ma
+    >>> x = [11.2, -3.973, 0.801, -1.41]
+    >>> mask = [0, 0, 0, 1]
+    >>> masked_x = ma.masked_array(x, mask)
+    >>> masked_x
+    masked_array(data=[11.2, -3.973, 0.801, --],
+                 mask=[False, False, False, True],
+        fill_value=1e+20)
+    >>> ma.round(masked_x)
+    masked_array(data=[11.0, -4.0, 1.0, --],
+                 mask=[False, False, False, True],
+        fill_value=1e+20)
+    >>> ma.round(masked_x, decimals=1)
+    masked_array(data=[11.2, -4.0, 0.8, --],
+                 mask=[False, False, False, True],
+        fill_value=1e+20)
+    >>> ma.round(masked_x, decimals=-1)
+    masked_array(data=[10.0, -0.0, 0.0, --],
+                 mask=[False, False, False, True],
+        fill_value=1e+20)
+    """
+    if out is None:
+        return np.round(a, decimals, out)
+    else:
+        np.round(getdata(a), decimals, out)
+        if hasattr(out, '_mask'):
+            out._mask = getmask(a)
+        return out
+
+
 def round_(a, decimals=0, out=None):
     """
     Return a copy of a, rounded to 'decimals' places.
+
+    .. deprecated:: 2.5
+        `numpy.ma.round_` is deprecated. Use `numpy.ma.round` instead.
 
     When 'decimals' is negative, it specifies the number of positions
     to the left of the decimal point.  The real and imaginary parts of
@@ -8136,17 +8195,12 @@ def round_(a, decimals=0, out=None):
                  mask=[False, False, False, True],
         fill_value=1e+20)
     """
-    if out is None:
-        return np.round(a, decimals, out)
-    else:
-        np.round(getdata(a), decimals, out)
-        if hasattr(out, '_mask'):
-            out._mask = getmask(a)
-        return out
-
-
-round = round_
-
+    warnings.warn(
+        "numpy.ma.round_ is deprecated. Use numpy.ma.round instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return round(a, decimals, out)
 
 def _mask_propagate(a, axis):
     """

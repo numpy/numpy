@@ -3,8 +3,8 @@ from typing import Any, assert_type
 import numpy as np
 import numpy.typing as npt
 
-type _BytesCharArray = np.char.chararray[tuple[Any, ...], np.dtype[np.bytes_]]
-type _StrCharArray = np.char.chararray[tuple[Any, ...], np.dtype[np.str_]]
+type _BytesCharArray = np.char.chararray[tuple[Any, ...], np.dtype[np.bytes_]]  # type: ignore[deprecated]
+type _StrCharArray = np.char.chararray[tuple[Any, ...], np.dtype[np.str_]]  # type: ignore[deprecated]
 
 AR_U: _StrCharArray
 AR_S: _BytesCharArray

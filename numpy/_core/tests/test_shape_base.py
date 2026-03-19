@@ -24,7 +24,6 @@ from numpy._core.shape_base import (
 )
 from numpy.exceptions import AxisError
 from numpy.testing import (
-    IS_PYPY,
     assert_,
     assert_array_equal,
     assert_equal,
@@ -389,10 +388,6 @@ class TestConcatenate:
         with pytest.raises(ValueError, match="^casting must be one of"):
             concatenate([r4, r4], casting="same_value")
 
-    @pytest.mark.skipif(
-        IS_PYPY,
-        reason="PYPY handles sq_concat, nb_add differently than cpython"
-    )
     def test_operator_concat(self):
         import operator
         a = array([1, 2])

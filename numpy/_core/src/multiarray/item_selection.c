@@ -1371,7 +1371,6 @@ fail:
     if (needcopy) {
         PyArray_ClearBuffer(odescr, buffer, elsize, N, 1);
         PyDataMem_UserFREE(buffer, N * elsize, mem_handler);
-        Py_DECREF(odescr);
     }
     if (ret < 0 && !PyErr_Occurred()) {
         /* Out of memory during sorting or buffer creation */
@@ -1384,6 +1383,7 @@ fail:
     if (PyErr_Occurred() && ret == 0) {
         ret = -1;
     }
+    Py_XDECREF(odescr);
     Py_DECREF(it);
     Py_DECREF(mem_handler);
     NPY_cast_info_xfree(&to_cast_info);
@@ -1594,7 +1594,6 @@ fail:
     if (needcopy) {
         PyArray_ClearBuffer(odescr, valbuffer, elsize, N, 1);
         PyDataMem_UserFREE(valbuffer, N * elsize, mem_handler);
-        Py_DECREF(odescr);
     }
     PyDataMem_UserFREE(idxbuffer, N * sizeof(npy_intp), mem_handler);
     if (ret < 0) {
@@ -1605,6 +1604,7 @@ fail:
         Py_XDECREF(rop);
         rop = NULL;
     }
+    Py_XDECREF(odescr);
     Py_XDECREF(it);
     Py_XDECREF(rit);
     Py_DECREF(mem_handler);

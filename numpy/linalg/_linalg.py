@@ -186,6 +186,19 @@ def _realType(t, default=double):
 def _complexType(t, default=cdouble):
     return _complex_types_map.get(t, default)
 
+
+def _to_real_if_imag_zero(w, t):
+    """Backwards compat helper: force w to be real if t.dtype is real and w.imag == 0
+    """
+    result_t = t.dtype.type
+    if not isComplexType(result_t) and all(w.imag == 0.0):
+        w = w.real
+        result_t = _realType(result_t)
+    else:
+        result_t = _complexType(result_t)
+    return w.astype(result_t, copy=False)
+
+
 def _commonType(*arrays):
     # in lite version, use higher precision (always double or cdouble)
     result_type = single
@@ -1229,11 +1242,11 @@ def eigvals(a):
 
     >>> D = np.diag((-1,1))
     >>> LA.eigvals(D)
-    array([-1.,  1.])
+    array([-1. + 0.j,  1. + 0.j])
     >>> A = np.dot(Q, D)
     >>> A = np.dot(A, Q.T)
     >>> LA.eigvals(A)
-    array([ 1., -1.]) # random
+    array([ 1., -1.])  # random
 
     """
     a, wrap = _makearray(a)
@@ -1247,14 +1260,7 @@ def eigvals(a):
                   under='ignore'):
         w = _umath_linalg.eigvals(a, signature=signature)
 
-    if not isComplexType(t):
-        if all(w.imag == 0):
-            w = w.real
-            result_t = _realType(result_t)
-        else:
-            result_t = _complexType(result_t)
-
-    return w.astype(result_t, copy=False)
+    return w.astype(_complexType(result_t), copy=False)
 
 
 def _eigvalsh_dispatcher(a, UPLO=None):
@@ -1450,8 +1456,8 @@ def eig(a):
 
     >>> eigenvalues, eigenvectors = LA.eig(np.diag((1, 2, 3)))
     >>> eigenvalues
-    array([1., 2., 3.])
-    >>> eigenvectors
+    array([1. + 0j, 2. + 0j, 3. + 0j])
+    >>> eigenvectors.real
     array([[1., 0., 0.],
            [0., 1., 0.],
            [0., 0., 1.]])
@@ -1483,8 +1489,8 @@ def eig(a):
     >>> # Theor. eigenvalues are 1 +/- 1e-9
     >>> eigenvalues, eigenvectors = LA.eig(a)
     >>> eigenvalues
-    array([1., 1.])
-    >>> eigenvectors
+    array([1.+0j, 1.+0j])
+    >>> eigenvectors.real
     array([[1., 0.],
            [0., 1.]])
 
@@ -1500,15 +1506,9 @@ def eig(a):
                   under='ignore'):
         w, vt = _umath_linalg.eig(a, signature=signature)
 
-    if not isComplexType(t) and all(w.imag == 0.0):
-        w = w.real
-        vt = vt.real
-        result_t = _realType(result_t)
-    else:
-        result_t = _complexType(result_t)
-
-    vt = vt.astype(result_t, copy=False)
-    return EigResult(w.astype(result_t, copy=False), wrap(vt))
+    w = w.astype(_complexType(result_t), copy=False)
+    vt = vt.astype(_complexType(result_t), copy=False)
+    return EigResult(w, wrap(vt))
 
 
 @array_function_dispatch(_eigvalsh_dispatcher)

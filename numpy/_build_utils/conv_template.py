@@ -110,8 +110,8 @@ def parse_structure(astr, level):
         loopbeg = "/**begin repeat"
         loopend = "/**end repeat**/"
     else:
-        loopbeg = "/**begin repeat%d" % level
-        loopend = "/**end repeat%d**/" % level
+        loopbeg = f"/**begin repeat{level}"
+        loopend = f"/**end repeat{level}**/"
 
     ind = 0
     line = 0
@@ -214,7 +214,7 @@ replace_re = re.compile(r"@(\w+)@")
 
 
 def parse_string(astr, env, level, line):
-    lineno = "#line %d\n" % line
+    lineno = f"#line {line}\n"
 
     # local function for string replacement, uses env
     def replace(match):
@@ -242,7 +242,7 @@ def parse_string(astr, env, level, line):
             try:
                 envlist = parse_loop_header(head)
             except ValueError as e:
-                msg = "line %d: %s" % (newline, e)
+                msg = f"line {newline}: {e}"
                 raise ValueError(msg)
             for newenv in envlist:
                 newenv.update(env)
@@ -289,8 +289,8 @@ def process_file(source):
     try:
         code = process_str(''.join(lines))
     except ValueError as e:
-        raise ValueError('In "%s" loop at %s' % (sourcefile, e)) from None
-    return '#line 1 "%s"\n%s' % (sourcefile, code)
+        raise ValueError(f'In "{sourcefile}" loop at {e}') from None
+    return f'#line 1 "{sourcefile}"\n{code}'
 
 
 def unique_key(adict):
@@ -326,7 +326,7 @@ def main():
     try:
         writestr = process_str(allstr)
     except ValueError as e:
-        raise ValueError("In %s loop at %s" % (file, e)) from None
+        raise ValueError(f"In {file} loop at {e}") from None
 
     outfile.write(writestr)
 

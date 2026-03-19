@@ -274,8 +274,8 @@ class TestCasting:
                 for to_dt in [to_Dt(), to_Dt().newbyteorder()]:
                     casting, (from_res, to_res), view_off = (
                             cast._resolve_descriptors((from_dt, to_dt)))
-                    assert type(from_res) == from_Dt
-                    assert type(to_res) == to_Dt
+                    assert type(from_res) is from_Dt
+                    assert type(to_res) is to_Dt
                     if view_off is not None:
                         # If a view is acceptable, this is "no" casting
                         # and byte order must be matching.
@@ -470,7 +470,7 @@ class TestCasting:
         orig_arr = values.view(from_dt)
         orig_out = np.empty_like(expected_out)
 
-        if casting == Casting.unsafe and (to_dt == "m8" or to_dt == "M8"):  # noqa: PLR1714
+        if casting == Casting.unsafe and (to_dt == "m8" or to_dt == "M8"):
             # Casting from non-generic to generic units is an error and should
             # probably be reported as an invalid cast earlier.
             with pytest.raises(ValueError):
