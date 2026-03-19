@@ -535,7 +535,7 @@ cppmacros['CHECKSTRING'] = """
 #define CHECKSTRING(check,tcheck,name,show,var)\\
     if (!(check)) {\\
         char errstring[256];\\
-        sprintf(errstring, \"%s: \"show, \"(\"tcheck\") failed for \"name, slen(var), var);\\
+        snprintf(errstring, sizeof(errstring), \"%s: \"show, \"(\"tcheck\") failed for \"name, slen(var), var);\\
         PyErr_SetString(#modulename#_error, errstring);\\
         /*goto capi_fail;*/\\
     } else """
@@ -543,7 +543,7 @@ cppmacros['CHECKSCALAR'] = """
 #define CHECKSCALAR(check,tcheck,name,show,var)\\
     if (!(check)) {\\
         char errstring[256];\\
-        sprintf(errstring, \"%s: \"show, \"(\"tcheck\") failed for \"name, var);\\
+        snprintf(errstring, sizeof(errstring), \"%s: \"show, \"(\"tcheck\") failed for \"name, var);\\
         PyErr_SetString(#modulename#_error,errstring);\\
         /*goto capi_fail;*/\\
     } else """
@@ -852,7 +852,8 @@ character_from_pyobj(character* v, PyObject *obj, const char *errmess) {
             Py_INCREF(err);
             PyErr_Clear();
         }
-        sprintf(mess + strlen(mess),
+        size_t len = strlen(mess);
+        snprintf(mess + len, F2PY_MESSAGE_BUFFER_SIZE - len,
                 " -- expected str|bytes|sequence-of-str-or-bytes, got ");
         f2py_describe(obj, mess + strlen(mess));
         PyErr_SetString(err, mess);
