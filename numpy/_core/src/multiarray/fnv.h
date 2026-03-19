@@ -7,7 +7,6 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY_MULTIARRAY_FNV_H_
 #define NUMPY_CORE_INCLUDE_NUMPY_MULTIARRAY_FNV_H_
 
-#include "numpy/npy_common.h"
 
 /*
   Compute a size_t FNV-1a hash of the given data
