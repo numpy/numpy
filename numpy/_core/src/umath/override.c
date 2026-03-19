@@ -100,7 +100,7 @@ fail:
  * normalized version (and always pass it even if it was passed by position).
  */
 static int
-initialize_normal_kwds(PyObject *out_args,
+initialize_normal_kwds(PyObject *out_args, PyObject *wheremask_obj,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
         PyObject *normal_kwds)
 {
@@ -113,11 +113,6 @@ initialize_normal_kwds(PyObject *out_args,
         }
     }
 
-    int contains_where = PyDict_Contains(normal_kwds, npy_interned_str.where);
-    if (contains_where < 0) {
-        return -1;
-    }
-
     if (out_args != NULL) {
         /* Replace `out` argument with the normalized version */
         int res = PyDict_SetItem(normal_kwds, npy_interned_str.out, out_args);
@@ -125,7 +120,7 @@ initialize_normal_kwds(PyObject *out_args,
             return -1;
         }
     }
-    else if (contains_where == 0) {
+    else if (wheremask_obj == NULL) {
         /* Ensure that `out` is not present unless `where` is present. */
         int res = PyDict_Contains(normal_kwds, npy_interned_str.out);
         if (res < 0) {
@@ -246,7 +241,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     if (normal_kwds == NULL) {
         goto fail;
     }
-    if (initialize_normal_kwds(out_args,
+    if (initialize_normal_kwds(out_args, wheremask_obj,
             args, len_args, kwnames, normal_kwds) < 0) {
         goto fail;
     }
