@@ -113,11 +113,26 @@ initialize_normal_kwds(PyObject *out_args,
         }
     }
 
+    int contains_where = PyDict_Contains(normal_kwds, npy_interned_str.where)
+    if (contains_where < 0) {
+        return -1
+    }
+
     if (out_args != NULL) {
         /* Replace `out` argument with the normalized version */
         int res = PyDict_SetItem(normal_kwds, npy_interned_str.out, out_args);
         if (res < 0) {
             return -1;
+        }
+    }
+    else if (contains_where == 0) {
+        /* Ensure that `out` is not present unless `where` is present. */
+        int res = PyDict_Contains(normal_kwds, npy_interned_str.out);
+        if (res < 0) {
+            return -1;
+        }
+        if (res) {
+            return PyDict_DelItem(normal_kwds, npy_interned_str.out);
         }
     }
     return 0;
