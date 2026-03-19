@@ -32,61 +32,9 @@ typedef struct {
 } legacy_array_method_auxdata;
 
 
-/* Use a free list, since we should normally only need one at a time */
-#ifndef Py_GIL_DISABLED
-#define NPY_LOOP_DATA_CACHE_SIZE 5
-static int loop_data_num_cached = 0;
-static  legacy_array_method_auxdata *loop_data_cache[NPY_LOOP_DATA_CACHE_SIZE];
-#else
-#define NPY_LOOP_DATA_CACHE_SIZE 0
-#endif
-
-static void
-legacy_array_method_auxdata_free(NpyAuxData *data)
-{
-#if NPY_LOOP_DATA_CACHE_SIZE > 0
-    if (loop_data_num_cached < NPY_LOOP_DATA_CACHE_SIZE) {
-        loop_data_cache[loop_data_num_cached] = (
-                (legacy_array_method_auxdata *)data);
-        loop_data_num_cached++;
-    }
-    else
-#endif
-    {
-        PyMem_Free(data);
-    }
-}
-
-NpyAuxData *
-get_new_loop_data(
-        PyUFuncGenericFunction loop, void *user_data, int pyerr_check)
-{
-    legacy_array_method_auxdata *data;
-#if NPY_LOOP_DATA_CACHE_SIZE > 0
-    if (NPY_LIKELY(loop_data_num_cached > 0)) {
-        loop_data_num_cached--;
-        data = loop_data_cache[loop_data_num_cached];
-    }
-    else
-#endif
-    {
-        data = PyMem_Malloc(sizeof(legacy_array_method_auxdata));
-        if (data == NULL) {
-            return NULL;
-        }
-        data->base.free = legacy_array_method_auxdata_free;
-        data->base.clone = NULL;  /* no need for cloning (at least for now) */
-    }
-    data->loop = loop;
-    data->user_data = user_data;
-    data->pyerr_check = pyerr_check;
-    return (NpyAuxData *)data;
-}
-
-#undef NPY_LOOP_DATA_CACHE_SIZE
-
 /*
- * This is a thin wrapper around the legacy loop signature.
+ * Thin wrapper around the legacy loop using heap-allocated auxdata.
+ * Used only by the fallback path in get_wrapped_legacy_ufunc_loop.
  */
 static int
 call_auxdata_loop(PyArrayMethod_Context *NPY_UNUSED(context),
@@ -101,6 +49,7 @@ call_auxdata_loop(PyArrayMethod_Context *NPY_UNUSED(context),
     }
     return 0;
 }
+
 
 /*
  * Cached version: reads loop and user_data from the method object
@@ -258,16 +207,17 @@ get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
         return 0;
     }
 
-    /* Fallback: resolve loop at call time and heap-allocate auxdata.
-     *
-     * This code path is untested and could potentially be deprecated.
+    /*
+     * Fallback: resolve loop at call time and heap-allocate auxdata.
+     * This is reached when get_wrapped_legacy_ufunc_loop is called
+     * directly (e.g. from special_integer_comparisons) rather than
+     * through a legacy-wrapped method with a cached loop.
      */
     PyUFuncObject *ufunc = (PyUFuncObject *)context->caller;
     void *user_data;
     int needs_api = 0;
 
     PyUFuncGenericFunction loop = NULL;
-    /* Note that `needs_api` is not reliable (it was in fact unused normally) */
     if (PyUFunc_DefaultLegacyInnerLoopSelector(ufunc,
             context->descriptors, &loop, &user_data, &needs_api) < 0) {
         return -1;
@@ -276,13 +226,20 @@ get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
         *flags |= NPY_METH_REQUIRES_PYAPI;
     }
 
-    *out_loop = &call_auxdata_loop;
-    *out_transferdata = get_new_loop_data(
-            loop, user_data, (*flags & NPY_METH_REQUIRES_PYAPI) != 0);
-    if (*out_transferdata == NULL) {
+    legacy_array_method_auxdata *data = PyMem_Malloc(
+            sizeof(legacy_array_method_auxdata));
+    if (data == NULL) {
         PyErr_NoMemory();
         return -1;
     }
+    data->base.free = (void (*)(NpyAuxData *))PyMem_Free;
+    data->base.clone = NULL;
+    data->loop = loop;
+    data->user_data = user_data;
+    data->pyerr_check = (*flags & NPY_METH_REQUIRES_PYAPI) != 0;
+
+    *out_loop = &call_auxdata_loop;
+    *out_transferdata = (NpyAuxData *)data;
     return 0;
 }
 
