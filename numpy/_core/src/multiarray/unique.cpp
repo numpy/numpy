@@ -62,12 +62,12 @@ empty_array_like(PyArrayObject *arr, npy_intp length)
 }
 
 template <typename T>
-size_t hash_integer(const T *value, npy_bool equal_nan) {
+npy_intp hash_integer(const T *value, npy_bool equal_nan) {
     return npy_fnv1a(reinterpret_cast<const unsigned char*>(value), sizeof(T));
 }
 
 template <typename S, typename T, S (*real)(T), S (*imag)(T)>
-size_t hash_complex(const T *value, npy_bool equal_nan) {
+npy_intp hash_complex(const T *value, npy_bool equal_nan) {
     std::complex<S> z = *reinterpret_cast<const std::complex<S> *>(value);
     int hasnan = npy_isnan(z.real()) || npy_isnan(z.imag());
     if (equal_nan && hasnan) {
@@ -85,11 +85,11 @@ size_t hash_complex(const T *value, npy_bool equal_nan) {
         z.imag(NPY_PZERO);
     }
 
-    size_t hash = npy_fnv1a(reinterpret_cast<const unsigned char*>(&z), sizeof(z));
+    npy_intp hash = npy_fnv1a(reinterpret_cast<const unsigned char*>(&z), sizeof(z));
     return hash;
 }
 
-size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan) {
+npy_intp hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan) {
     std::complex<long double> z =
         *reinterpret_cast<const std::complex<long double> *>(value);
     int hasnan = npy_isnan(z.real()) || npy_isnan(z.imag());
@@ -118,14 +118,14 @@ size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan
         defined(HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE) || \
         defined(HAVE_LDOUBLE_MOTOROLA_EXTENDED_12_BYTES_BE)
 
-    constexpr size_t SIZEOF_LDOUBLE_MAN = sizeof(ldouble_man_t);
-    constexpr size_t SIZEOF_LDOUBLE_EXP = sizeof(ldouble_exp_t);
-    constexpr size_t SIZEOF_LDOUBLE_SIGN = sizeof(ldouble_sign_t);
-    constexpr size_t SIZEOF_BUFFER = 2 * (SIZEOF_LDOUBLE_MAN + SIZEOF_LDOUBLE_MAN + SIZEOF_LDOUBLE_EXP + SIZEOF_LDOUBLE_SIGN);
+    constexpr npy_intp SIZEOF_LDOUBLE_MAN = sizeof(ldouble_man_t);
+    constexpr npy_intp SIZEOF_LDOUBLE_EXP = sizeof(ldouble_exp_t);
+    constexpr npy_intp SIZEOF_LDOUBLE_SIGN = sizeof(ldouble_sign_t);
+    constexpr npy_intp SIZEOF_BUFFER = 2 * (SIZEOF_LDOUBLE_MAN + SIZEOF_LDOUBLE_MAN + SIZEOF_LDOUBLE_EXP + SIZEOF_LDOUBLE_SIGN);
     unsigned char buffer[SIZEOF_BUFFER];
 
     union IEEEl2bitsrep bits_real{z.real()}, bits_imag{z.imag()};
-    size_t offset = 0;
+    npy_intp offset = 0;
 
     for (const IEEEl2bitsrep &bits: {bits_real, bits_imag}) {
         ldouble_man_t manh = GET_LDOUBLE_MANH(bits);
@@ -145,11 +145,11 @@ size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan
     #else
 
     const unsigned char* buffer = reinterpret_cast<const unsigned char*>(&z);
-    constexpr size_t SIZEOF_BUFFER = sizeof(z);
+    constexpr npy_intp SIZEOF_BUFFER = sizeof(z);
 
     #endif
 
-    size_t hash = npy_fnv1a(buffer, SIZEOF_BUFFER);
+    npy_intp hash = npy_fnv1a(buffer, SIZEOF_BUFFER);
 
     return hash;
 }
@@ -200,7 +200,7 @@ void copy_complex(char *data, T *value) {
 
 template <
     typename T,
-    size_t (*hash_func)(const T *, npy_bool),
+    npy_intp (*hash_func)(const T *, npy_bool),
     int (*equal_func)(const T *, const T *, npy_bool),
     void (*copy_func)(char *, T *)
 >
@@ -213,7 +213,7 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan)
      * This function uses hashing to identify uniqueness efficiently.
      */
 
-    auto hash = [equal_nan](const T *value) -> size_t {
+    auto hash = [equal_nan](const T *value) -> npy_intp {
         return hash_func(value, equal_nan);
     };
     auto equal = [equal_nan](const T *lhs, const T *rhs) -> bool {
@@ -269,7 +269,7 @@ unique_string(PyArrayObject *self, npy_bool equal_nan)
     npy_intp itemsize = descr->elsize;
     npy_intp num_chars = itemsize / sizeof(T);
 
-    auto hash = [num_chars](const T *value) -> size_t {
+    auto hash = [num_chars](const T *value) -> npy_intp {
         return npy_fnv1a(value, num_chars * sizeof(T));
     };
     auto equal = [itemsize](const T *lhs, const T *rhs) -> bool {
@@ -318,7 +318,7 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
      * This function uses hashing to identify uniqueness efficiently.
      */
 
-    auto hash = [equal_nan](const npy_static_string *value) -> size_t {
+    auto hash = [equal_nan](const npy_static_string *value) -> npy_intp {
         if (value->buf == NULL) {
             if (equal_nan) {
                 return 0;

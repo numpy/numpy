@@ -21,7 +21,7 @@
   https://github.com/lcn2/fnv/blob/b7fcbee95538ee6a15744e756e7e7f1c02862cb0/hash_32a.c
 */
 npy_uint32 
-npy_fnv1a_32(const void *buf, size_t len, npy_uint32 hval)
+npy_fnv1a_32(const void *buf, npy_intp len, npy_uint32 hval)
 {
     const unsigned char *bp = (const unsigned char *)buf;  /* start of buffer */
     const unsigned char *be = bp + len;                    /* beyond end of buffer */
@@ -48,7 +48,7 @@ npy_fnv1a_32(const void *buf, size_t len, npy_uint32 hval)
   https://github.com/lcn2/fnv/blob/b7fcbee95538ee6a15744e756e7e7f1c02862cb0/hash_64a.c
 */
 npy_uint64 
-npy_fnv1a_64(const void *buf, size_t len, npy_uint64 hval)
+npy_fnv1a_64(const void *buf, npy_intp len, npy_uint64 hval)
 {
     const unsigned char *bp = (const unsigned char *)buf;  /* start of buffer */
     const unsigned char *be = bp + len;                    /* beyond end of buffer */
@@ -71,15 +71,15 @@ npy_fnv1a_64(const void *buf, size_t len, npy_uint64 hval)
 }
 
 /*
- * Compute a size_t FNV-1a hash of the given data
- * This will use 32-bit or 64-bit hash depending on the size of size_t
+ * Compute a npy_intp FNV-1a hash of the given data
+ * This will use 32-bit or 64-bit hash depending on the size of npy_intp
  */
-size_t 
-npy_fnv1a(const void *buf, size_t len)
+npy_intp 
+npy_fnv1a(const void *buf, npy_intp len)
 {
-#if NPY_SIZEOF_SIZE_T == 8
-    return (size_t)npy_fnv1a_64(buf, len, FNV1A_64_INIT);
-#else /* NPY_SIZEOF_SIZE_T == 4 */
-    return (size_t)npy_fnv1a_32(buf, len, FNV1A_32_INIT);
+#if NPY_SIZEOF_INTP == 8
+    return (npy_intp)npy_fnv1a_64(buf, len, FNV1A_64_INIT);
+#else /* NPY_SIZEOF_INTP == 4 */
+    return (npy_intp)npy_fnv1a_32(buf, len, FNV1A_32_INIT);
 #endif
 }

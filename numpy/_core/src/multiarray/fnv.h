@@ -7,10 +7,11 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY_MULTIARRAY_FNV_H_
 #define NUMPY_CORE_INCLUDE_NUMPY_MULTIARRAY_FNV_H_
 
+#include "numpy/npy_common.h"
 
 /*
-  Compute a size_t FNV-1a hash of the given data
-  This will use 32-bit or 64-bit hash depending on the size of size_t
+  Compute a npy_intp FNV-1a hash of the given data
+  This will use 32-bit or 64-bit hash depending on the size of npy_intp
 
   Parameters:
   -----------
@@ -19,8 +20,8 @@
 
   Returns:
   -----------
-  size_t hash value
+  npy_intp hash value
 */
-size_t npy_fnv1a(const void *buf, size_t len);
+npy_intp npy_fnv1a(const void *buf, npy_intp len);
 
 #endif  // NUMPY_CORE_INCLUDE_NUMPY_MULTIARRAY_FNV_H_
