@@ -714,6 +714,15 @@ OBJECT_dotc(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp
     npy_intp i;
     PyObject *result = NULL;
 
+    if (n == 0) {
+        PyObject *zero = PyLong_FromLong(0);
+        if (zero == NULL) {
+            return;
+        }
+        Py_XSETREF(*((PyObject **)op), zero);
+        return;
+    }
+
     for (i = 0; i < n; i++, ip1 += is1, ip2 += is2) {
         PyObject *obj1 = *(PyObject**)ip1, *obj2 = *(PyObject**)ip2;
         if (obj1 == NULL) {
