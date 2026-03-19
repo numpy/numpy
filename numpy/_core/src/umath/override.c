@@ -113,9 +113,9 @@ initialize_normal_kwds(PyObject *out_args,
         }
     }
 
-    int contains_where = PyDict_Contains(normal_kwds, npy_interned_str.where)
+    int contains_where = PyDict_Contains(normal_kwds, npy_interned_str.where);
     if (contains_where < 0) {
-        return -1
+        return -1;
     }
 
     if (out_args != NULL) {
