@@ -1,3 +1,8 @@
+# To update pinned container digests and uv version: not handled by Dependabot.
+# Containers: change tag and get new digest with
+#   docker pull <image>:<tag> && docker inspect --format='{{index .RepoDigests 0}}' <image>:<tag>
+# uv: change version in URL and update checksum (curl -sL <url> | sha256sum)
+#
 # Meson's Python module doesn't support crosscompiling,
 # and python dependencies may be another potential hurdle.
 # There might also be a need to run runtime tests during configure time.
@@ -80,7 +85,7 @@ jobs:
 
     name: "${{ matrix.BUILD_PROP[0] }}"
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
         fetch-tags: true
@@ -88,8 +93,7 @@ jobs:
 
     - name: Initialize binfmt_misc for qemu-user-static
       run: |
-        # see https://hub.docker.com/r/tonistiigi/binfmt for available versions
-        docker run --rm --privileged tonistiigi/binfmt:qemu-v9.2.2-52 --install all
+        docker run --rm --privileged tonistiigi/binfmt:qemu-v9.2.2-52@sha256:1b804311fe87047a4c96d38b4b3ef6f62fca8cd125265917a9e3dc3c996c39e6 --install all
 
     - name: Install GCC cross-compilers
       run: |
@@ -97,7 +101,7 @@ jobs:
         sudo apt install -y ninja-build gcc-${TOOLCHAIN_NAME} g++-${TOOLCHAIN_NAME} gfortran-${TOOLCHAIN_NAME}
 
     - name: Cache docker container
-      uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
       id: container-cache
       with:
         path: ~/docker_${{ matrix.BUILD_PROP[1] }}
@@ -110,7 +114,9 @@ jobs:
           -v /:/host -v $(pwd):/numpy ${DOCKER_CONTAINER} /bin/bash -c "
           apt update &&
           apt install -y cmake git curl ca-certificates &&
-          curl -LsSf https://astral.sh/uv/install.sh | sh &&
+          curl -LsSf https://astral.sh/uv/0.10.8/install.sh -o /tmp/uv-install.sh &&
+          echo 'eae5e1dae89cd0b74d357f549ccd6faa94b2ad6c1d89d78972a625655a4556ae  /tmp/uv-install.sh' | sha256sum -c - &&
+          sh /tmp/uv-install.sh &&
           export PATH="/root/.local/bin:$PATH" &&
           mkdir -p /lib64 && ln -s /host/lib64/ld-* /lib64/ &&
           ln -s /host/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu &&
@@ -175,7 +181,7 @@ jobs:
           - [
               "loongarch64",
               "loongarch64-linux-gnu",
-              "cnclarechen/numpy-loong64-debian:v1",
+              "cnclarechen/numpy-loong64-debian:v1@sha256:1f35e614955fa9cba890172a73a068120f25f1cfcd59ad5521995e37cb7e2c3f",
               "-Dallow-noblas=true",
               "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
               "loong64"
@@ -190,14 +196,14 @@ jobs:
 
     name: "${{ matrix.BUILD_PROP[0] }}"
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
         fetch-tags: true
 
     - name: Initialize binfmt_misc for qemu-user-static
       run: |
-          docker run --rm --privileged tonistiigi/binfmt:qemu-v10.0.4-56 --install all
+          docker run --rm --privileged tonistiigi/binfmt:qemu-v10.0.4-56@sha256:30cc9a4d03765acac9be2ed0afc23af1ad018aed2c28ea4be8c2eb9afe03fbd1 --install all
 
     - name: Install GCC cross-compilers
       run: |
@@ -205,7 +211,7 @@ jobs:
         sudo apt install -y ninja-build gcc-14-${TOOLCHAIN_NAME} g++-14-${TOOLCHAIN_NAME} gfortran-14-${TOOLCHAIN_NAME}
 
     - name: Cache docker container
-      uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
       id: container-cache
       with:
         path: ~/docker_${{ matrix.BUILD_PROP[1] }}

@@ -76,8 +76,6 @@ PyArray_PythonPyIntFromInt(PyObject *obj, int *value)
 }
 
 
-typedef int convert(PyObject *, void *);
-
 /**
  * Internal function to initialize keyword argument parsing.
  *
@@ -92,55 +90,41 @@ typedef int convert(PyObject *, void *);
  *
  * @param funcname Name of the function, mainly used for errors.
  * @param cache A cache object stored statically in the parsing function
- * @param va_orig Argument list to npy_parse_arguments
+ * @param specs Array of argument specifications
+ * @param nspecs Number of argument specifications
  * @return 0 on success, -1 on failure
  */
 static int
 initialize_keywords(const char *funcname,
-        _NpyArgParserCache *cache, va_list va_orig) {
-    va_list va;
-    int nargs = 0;
+        _NpyArgParserCache *cache, npy_arg_spec *specs, int nspecs) {
     int nkwargs = 0;
     int npositional_only = 0;
     int nrequired = 0;
     int npositional = 0;
     char state = '\0';
 
-    va_copy(va, va_orig);
-    while (1) {
-        /* Count length first: */
-        char *name = va_arg(va, char *);
-        convert *converter = va_arg(va, convert *);
-        void *data = va_arg(va, void *);
-
-        /* Check if this is the sentinel, only converter may be NULL */
-        if ((name == NULL) && (converter == NULL) && (data == NULL)) {
-            break;
-        }
+    for (int i = 0; i < nspecs; i++) {
+        const char *name = specs[i].name;
 
         if (name == NULL) {
             PyErr_Format(PyExc_SystemError,
                     "NumPy internal error: name is NULL in %s() at "
-                    "argument %d.", funcname, nargs);
-            va_end(va);
+                    "argument %d.", funcname, i);
             return -1;
         }
-        if (data == NULL) {
+        if (specs[i].output == NULL) {
             PyErr_Format(PyExc_SystemError,
                     "NumPy internal error: data is NULL in %s() at "
-                    "argument %d.", funcname, nargs);
-            va_end(va);
+                    "argument %d.", funcname, i);
             return -1;
         }
 
-        nargs += 1;
         if (*name == '|') {
             if (state == '$') {
                 PyErr_Format(PyExc_SystemError,
                         "NumPy internal error: positional argument `|` "
                         "after keyword only `$` one to %s() at argument %d.",
-                        funcname, nargs);
-                va_end(va);
+                        funcname, i + 1);
                 return -1;
             }
             state = '|';
@@ -156,8 +140,7 @@ initialize_keywords(const char *funcname,
                 PyErr_Format(PyExc_SystemError,
                         "NumPy internal error: non-required argument after "
                         "required | or $ one to %s() at argument %d.",
-                        funcname, nargs);
-                va_end(va);
+                        funcname, i + 1);
                 return -1;
             }
 
@@ -172,8 +155,7 @@ initialize_keywords(const char *funcname,
                 PyErr_Format(PyExc_SystemError,
                         "NumPy internal error: non-kwarg marked with $ "
                         "to %s() at argument %d or positional only following "
-                        "kwarg.", funcname, nargs);
-                va_end(va);
+                        "kwarg.", funcname, i + 1);
                 return -1;
             }
         }
@@ -181,18 +163,17 @@ initialize_keywords(const char *funcname,
             nkwargs += 1;
         }
     }
-    va_end(va);
 
     if (npositional == -1) {
-        npositional = nargs;
+        npositional = nspecs;
     }
 
-    if (nargs > _NPY_MAX_KWARGS) {
+    if (nspecs > _NPY_MAX_KWARGS) {
         PyErr_Format(PyExc_SystemError,
                 "NumPy internal error: function %s() has %d arguments, but "
                 "the maximum is currently limited to %d for easier parsing; "
                 "it can be increased by modifying `_NPY_MAX_KWARGS`.",
-                funcname, nargs, _NPY_MAX_KWARGS);
+                funcname, nspecs, _NPY_MAX_KWARGS);
         return -1;
     }
 
@@ -200,7 +181,7 @@ initialize_keywords(const char *funcname,
      * Do any necessary string allocation and interning,
      * creating a caching object.
      */
-    cache->nargs = nargs;
+    cache->nargs = nspecs;
     cache->npositional_only = npositional_only;
     cache->npositional = npositional;
     cache->nrequired = nrequired;
@@ -208,12 +189,8 @@ initialize_keywords(const char *funcname,
     /* NULL kw_strings for easier cleanup (and NULL termination) */
     memset(cache->kw_strings, 0, sizeof(PyObject *) * (nkwargs + 1));
 
-    va_copy(va, va_orig);
-    for (int i = 0; i < nargs; i++) {
-        /* Advance through non-kwargs, which do not require setup. */
-        char *name = va_arg(va, char *);
-        va_arg(va, convert *);
-        va_arg(va, void *);
+    for (int i = 0; i < nspecs; i++) {
+        const char *name = specs[i].name;
 
         if (*name == '|' || *name == '$') {
             name++;  /* ignore | and $ */
@@ -222,13 +199,11 @@ initialize_keywords(const char *funcname,
             int i_kwarg = i - npositional_only;
             cache->kw_strings[i_kwarg] = PyUnicode_InternFromString(name);
             if (cache->kw_strings[i_kwarg] == NULL) {
-                va_end(va);
                 goto error;
             }
         }
     }
 
-    va_end(va);
     return 0;
 
 error:
@@ -288,25 +263,21 @@ raise_missing_argument(const char *funcname,
  * @param args Python passed args (METH_FASTCALL)
  * @param len_args Number of arguments (not flagged)
  * @param kwnames Tuple as passed by METH_FASTCALL or NULL.
- * @param ... List of arguments (see macro version).
+ * @param specs Array of argument specifications
+ * @param nspecs Number of argument specifications
  *
  * @return Returns 0 on success and -1 on failure.
  */
 NPY_NO_EXPORT int
 _npy_parse_arguments(const char *funcname,
-         /* cache_ptr is a NULL initialized persistent storage for data */
         _NpyArgParserCache *cache,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
-        /* ... is NULL, NULL, NULL terminated: name, converter, value */
-        ...)
+        npy_arg_spec *specs, int nspecs)
 {
     if (!atomic_load_explicit((_Atomic(uint8_t) *)&cache->initialized, memory_order_acquire)) {
         LOCK_ARGPARSE_MUTEX;
         if (!atomic_load_explicit((_Atomic(uint8_t) *)&cache->initialized, memory_order_acquire)) {
-            va_list va;
-            va_start(va, kwnames);
-            int res = initialize_keywords(funcname, cache, va);
-            va_end(va);
+            int res = initialize_keywords(funcname, cache, specs, nspecs);
             if (res < 0) {
                 UNLOCK_ARGPARSE_MUTEX;
                 return -1;
@@ -394,38 +365,33 @@ _npy_parse_arguments(const char *funcname,
     assert(len_args + len_kwargs <= cache->nargs);
 
     /* At this time `all_arguments` holds either NULLs or the objects */
-    va_list va;
-    va_start(va, kwnames);
-
     for (int i = 0; i < max_nargs; i++) {
-        va_arg(va, char *);
-        convert *converter = va_arg(va, convert *);
-        void *data = va_arg(va, void *);
-
         if (all_arguments[i] == NULL) {
             continue;
         }
 
-        int res;
+        npy_arg_converter converter = (npy_arg_converter)specs[i].converter;
+        void *data = specs[i].output;
+
         if (converter == NULL) {
             *((PyObject **) data) = all_arguments[i];
             continue;
         }
-        res = converter(all_arguments[i], data);
+        int res = converter(all_arguments[i], data);
 
         if (NPY_UNLIKELY(res == NPY_SUCCEED)) {
             continue;
         }
         else if (NPY_UNLIKELY(res == NPY_FAIL)) {
             /* It is usually the users responsibility to clean up. */
-            goto converting_failed;
+            return -1;
         }
         else if (NPY_UNLIKELY(res == Py_CLEANUP_SUPPORTED)) {
             /* TODO: Implementing cleanup if/when needed should not be hard */
             PyErr_Format(PyExc_SystemError,
                     "converter cleanup of parameter %d to %s() not supported.",
                     i, funcname);
-            goto converting_failed;
+            return -1;
         }
         assert(0);
     }
@@ -435,21 +401,15 @@ _npy_parse_arguments(const char *funcname,
         /* (PyArg_* also does this after the actual parsing is finished) */
         if (NPY_UNLIKELY(max_nargs < cache->nrequired)) {
             raise_missing_argument(funcname, cache, max_nargs);
-            goto converting_failed;
+            return -1;
         }
         for (int i = 0; i < cache->nrequired; i++) {
             if (NPY_UNLIKELY(all_arguments[i] == NULL)) {
                 raise_missing_argument(funcname, cache, i);
-                goto converting_failed;
+                return -1;
             }
         }
     }
 
-    va_end(va);
     return 0;
-
-converting_failed:
-    va_end(va);
-    return -1;
-
 }

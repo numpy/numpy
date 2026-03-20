@@ -396,8 +396,8 @@ def buildmodules(lst):
     ret = {}
     for module, name in zip(modules, mnames):
         if name in isusedby:
-            outmess('\tSkipping module "%s" which is used by %s.\n' % (
-                name, ','.join('"%s"' % s for s in isusedby[name])))
+            using_modules = ','.join(f'"{s}"' for s in isusedby[name])
+            outmess(f'\tSkipping module "{name}" which is used by {using_modules}.\n')
         else:
             um = []
             if 'use' in module:
@@ -498,8 +498,8 @@ def run_main(comline_list):
             if 'python module' not in options:
                 errmess(
                     'Tip: If your original code is Fortran source then you must use -m option.\n')
-            raise TypeError('All blocks must be python module blocks but got %s' % (
-                repr(plist['block'])))
+            raise TypeError('All blocks must be python module blocks but got '
+                            f'{plist["block"]!r}')
     auxfuncs.debugoptions = options['debug']
     f90mod_rules.options = options
     auxfuncs.wrapfuncs = options['wrapfuncs']
