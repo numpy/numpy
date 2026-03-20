@@ -100,11 +100,10 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
                     PyErr_SetString(
                             PyExc_ValueError,
                             "cannot resize an array that may be referenced "
-                            "by another object in this way.\n"
-                            "It is possible that the array is not referenced by "
-                            "another object and this is a false positive.\n"
+                            "by another object.\n"
+                            "It is possible that this is a false positive.\n"
                             "If you are sure that the array is uniquely referenced, "
-                            "set refcheck=False to disable this check, otherwise use np.resize.");
+                            "set refcheck=False.");
                     return -1;
                 }
 #else
