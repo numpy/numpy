@@ -2257,13 +2257,18 @@ Shape Manipulation
     referenced by any other array.
 
     On Python 3.13 and older, the check allows objects with exactly one
-    reference to be resized, because it is impossible to differentiate between
-    an array with one reference created via an extension and a uniquely
-    referenced array defined in a Python function. On Python 3.14 and newer,
-    the array must be uniquely referenced.
+    reference to be reallocated in-place. On Python 3.14 and newer, the array
+    must be uniquely referenced. See the Python 3.14 `What's New entry
+    <https://docs.python.org/3/whatsnew/3.14.html#whatsnew314-refcount>`_ on
+    this topic for more information on why there is a behavior difference.
 
-    Resizing arrays in-place can often lead to memory fragmentation and should
-    be avoided. If the goal is to reclaim over-allocated memory, alternatives are to create a view or a copy of just the desired data, or using two passes to build the array: one to cheaply determine the shape and another to allocate and fill. Benchmark your use case to determine what is optimum. You may be surprised to find ``resize`` actually slows down or bloats your application.
+    Reallocating arrays in-place can often lead to memory fragmentation and
+    should be avoided. If the goal is to reclaim over-allocated memory,
+    alternatives are to create a view or a copy of just the desired data, or
+    using two passes to build the array: one to cheaply determine the shape and
+    another to allocate and fill. Benchmark your use case to determine what is
+    optimum. You may be surprised to find ``resize`` actually slows down or
+    bloats your application.
 
     Returns None on success and NULL on error.
 
@@ -4267,9 +4272,9 @@ Memory management
 .. c:function:: int PyArray_ResolveWritebackIfCopy(PyArrayObject* obj)
 
     If ``obj->flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, this function
-    clears the flags, `DECREF` s
-    `obj->base` and makes it writeable, and sets ``obj->base`` to NULL. It then
-    copies ``obj->data`` to `obj->base->data`, and returns the error state of
+    clears the flags, ``DECREF`` s
+    ``obj->base`` and makes it writeable, and sets ``obj->base`` to NULL. It then
+    copies ``obj->data`` to ``obj->base->data``, and returns the error state of
     the copy operation. This is the opposite of
     :c:func:`PyArray_SetWritebackIfCopyBase`. Usually this is called once
     you are finished with ``obj``, just before ``Py_DECREF(obj)``. It may be called
@@ -4505,9 +4510,9 @@ Miscellaneous Macros
 
     If ``obj->flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, this function
     clears the flags, `DECREF` s
-    `obj->base` and makes it writeable, and sets ``obj->base`` to NULL. In
+    ``obj->base`` and makes it writeable, and sets ``obj->base`` to NULL. In
     contrast to :c:func:`PyArray_ResolveWritebackIfCopy` it makes no attempt
-    to copy the data from `obj->base`. This undoes
+    to copy the data from ``obj->base``. This undoes
     :c:func:`PyArray_SetWritebackIfCopyBase`. Usually this is called after an
     error when you are finished with ``obj``, just before ``Py_DECREF(obj)``.
     It may be called multiple times, or with ``NULL`` input.

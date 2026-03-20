@@ -4164,6 +4164,7 @@ _array_method_doc('resize', "*new_shape, refcheck=True",
         Shape of resized array.
     refcheck : bool, optional
         If False, reference count will not be checked. Default is True.
+        See Notes below for more explanation.
 
     Returns
     -------
@@ -4185,25 +4186,29 @@ _array_method_doc('resize', "*new_shape, refcheck=True",
     Only contiguous arrays (data elements consecutive in memory) can be
     resized.
 
-    Resizing arrays in-place can increase memory fragmentation. For that reason,
-    it is often preferable to allocate new memory for the result by calling
-    ``np.resize`` instead. This can reduce overall memory usage, even in
-    situations where one might expect to avoid wasting memory by resizing
-    in-place.
+    Reallocating arrays in-place can often lead to memory fragmentation and
+    should be avoided. If the goal is to reclaim over-allocated memory,
+    alternatives are to create a view or a copy of just the desired data, or
+    using two passes to build the array: one to cheaply determine the shape and
+    another to allocate and fill. Benchmark your use case to determine what is
+    optimum. You may be surprised to find ``resize`` actually slows down or
+    bloats your application.
 
     The purpose of the reference count check is to make sure you
     do not use this array as a buffer for another Python object and then
     reallocate the memory.
 
-    Note that CPython 3.14 changed reference counting for function locals, so
-    that NumPy cannot tell the difference between situations where an array is
-    referenced by exactly one object or an array is referenced by the
-    interpreter or by a C, C++, or Cython function. In these cases, NumPy may
-    raise a ValueError in a situation where an array has no references and it is
-    safe to resize in-place.
+    On Python 3.13 and older, the check allows objects with exactly one
+    reference to be reallocated in-place. On Python 3.14 and newer, the array
+    must be uniquely referenced. See [1]_ for more details.
 
     If you are sure that you have not shared the memory for this array with
     another Python object, then you may safely set `refcheck` to False.
+
+
+    References
+    ----------
+    .. [1] Python 3.14 What's New, https://docs.python.org/3/whatsnew/3.14.html#whatsnew314-refcount
 
     Examples
     --------
