@@ -376,6 +376,6 @@ def check_npy_uintp_type_enum():
 
 
 def resize_refcheck_test():
-    # should run without error, see gh-30991
+    # see gh-30991
     a = np.array([[0, 1], [2, 3]], order='C')
     a.resize((2, 1))

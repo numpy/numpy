@@ -352,10 +352,16 @@ def test_npy_uintp_type_enum(install_temp):
     assert checks.check_npy_uintp_type_enum()
 
 
-@pytest.mark.skipif(sysconfig.get_platform() == 'win-arm64',
-                    reason='no checks module on win-arm64')
+@pytest.mark.skipif(
+    sys.version_info < (3, 14),
+    reason="Tests behavior that happens on Python 3.14 and newer"
+)
+@pytest.mark.skipif(
+    sysconfig.get_platform() == 'win-arm64',
+    reason='no checks module on win-arm64'
+)
 def test_resize_refcheck(install_temp):
     import checks
-    if sys.version_info >= (3, 14):
-        with pytest.raises(ValueError):
-            checks.resize_refcheck_test()
+    msg = "It is possible that this is a false positive."
+    with pytest.raises(ValueError, match=msg):
+        checks.resize_refcheck_test()
