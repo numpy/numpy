@@ -25,7 +25,10 @@ jobs:
           - default
           - freethreading
           - asan
-          - tsan-freethreading
+          # TSan CI runs for longer than 30 minutes due to slow
+          # stdlib bytecode compilation step. Disable or parallelize
+          # byte compilation once rattler-build has support.
+          # - tsan-freethreading
     if: github.repository == 'numpy/numpy'
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
