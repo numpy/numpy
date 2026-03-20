@@ -2263,8 +2263,7 @@ Shape Manipulation
     the array must be uniquely referenced.
 
     Resizing arrays in-place can often lead to memory fragmentation and should
-    be avoided if the goal is to reclaim memory. Create a new array and copy the
-    relevant subset of data over instead.
+    be avoided. If the goal is to reclaim over-allocated memory, alternatives are to create a view or a copy of just the desired data, or using two passes to build the array: one to cheaply determine the shape and another to allocate and fill. Benchmark your use case to determine what is optimum. You may be surprised to find ``resize`` actually slows down or bloats your application.
 
     Returns None on success and NULL on error.
 
