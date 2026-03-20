@@ -6305,7 +6305,7 @@ class TestResize:
         except subprocess.CalledProcessError as e:
             assert sys.version_info >= (3, 14)
             assert "ValueError" in e.stdout
-            assert "It is possible that the array is not referenced" in e.stdout
+            assert "It is possible that this is a false positive." in e.stdout
 
     def test_check_reference_2(self):
         # see gh-30265
