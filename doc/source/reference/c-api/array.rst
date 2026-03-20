@@ -868,7 +868,7 @@ cannot not be accessed directly.
     .. versionadded:: 2.5
 
     The type object for the scalar type. See the ``typeobj`` member of the
-    ``PyArray_Descr`` struct. See :ref:`descr-definition` for a full description
+    ``PyArray_Descr`` struct. See :c:data:`PyArray_Descr` for a full description
     of the ``PyArray_Descr`` struct layout.
 
 Data-type checking

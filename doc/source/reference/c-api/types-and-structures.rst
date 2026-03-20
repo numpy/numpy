@@ -230,8 +230,6 @@ PyGenericArrType_Type
    create the `numpy.generic` python type.
 
 
-.. _descr-definition:
-
 PyArrayDescr_Type and PyArray_Descr
 -----------------------------------
 
