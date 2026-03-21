@@ -52,10 +52,9 @@ get_new_loop_data(
 
 /*
  * Thin wrapper around the legacy loop using heap-allocated auxdata.
- * Used only by the fallback path in get_wrapped_legacy_ufunc_loop.
  */
 static int
-call_auxdata_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+generic_wrapped_legacy_loop(PyArrayMethod_Context *NPY_UNUSED(context),
         char *const *data, const npy_intp *dimensions, const npy_intp *strides,
         NpyAuxData *auxdata)
 {
@@ -244,7 +243,7 @@ get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
         *flags |= NPY_METH_REQUIRES_PYAPI;
     }
 
-    *out_loop = &call_auxdata_loop;
+    *out_loop = &generic_wrapped_legacy_loop;
     *out_transferdata = get_new_loop_data(
             loop, user_data, (*flags & NPY_METH_REQUIRES_PYAPI) != 0);
     if (*out_transferdata == NULL) {
