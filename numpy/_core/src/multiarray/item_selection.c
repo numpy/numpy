@@ -2407,7 +2407,7 @@ count_nonzero_bytes_384(const npy_uint64 * w)
      */
     if (NPY_UNLIKELY(
              ((w1 | w2 | w3 | w4 | w5 | w6) & 0xFEFEFEFEFEFEFEFEULL) != 0)) {
-        /* reload from pointer to avoid a unnecessary stack spill with gcc */
+        /* reload from pointer to avoid an unnecessary stack spill with gcc */
         const char * c = (const char *)w;
         npy_uintp i, count = 0;
         for (i = 0; i < 48; i++) {
