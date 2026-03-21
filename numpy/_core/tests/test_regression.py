@@ -1073,7 +1073,7 @@ class TestRegression:
         x = np.zeros((30, 40))
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             y = pickle.loads(pickle.dumps(x, protocol=proto))
-            # y is now typically not aligned on a 8-byte boundary
+            # y is now typically not aligned on an 8-byte boundary
             z = np.ones((1, y.shape[0]))
             # This shouldn't cause a segmentation fault:
             np.dot(z, y)
