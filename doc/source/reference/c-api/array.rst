@@ -2254,11 +2254,12 @@ Shape Manipulation
     a different total number of elements then the old shape. If reallocation is
     necessary, then *self* must own its data, have *self* - ``>base==NULL``,
     have *self* - ``>weakrefs==NULL``, and (unless refcheck is 0) not be
-    referenced by any other array.
+    referenced by any other array. The *fortran* argument has no effect.
 
-    On Python 3.13 and older, the check allows objects with exactly one
-    reference to be reallocated in-place. On Python 3.14 and newer, the array
-    must be uniquely referenced. See the Python 3.14 `What's New entry
+    On Python 3.13 and older, the check allows uniquely referenced objects and
+    objects with exactly one reference to be reallocated in-place. On Python
+    3.14 and newer, the array must be uniquely referenced. See the Python 3.14
+    `What's New entry
     <https://docs.python.org/3/whatsnew/3.14.html#whatsnew314-refcount>`_ on
     this topic for more information on why there is a behavior difference.
 

@@ -201,11 +201,6 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
  * must be uniquely referenced. In some cases this can lead to spurious
  * ValueErrors on Python 3.14.
  *
- * On Python 3.13 and older, the check allows objects with exactly one
- * reference to be resized, because it is impossible to differentiate between
- * an array with one reference created via an extension and a uniquely
- * referenced array defined in a Python function.
- *
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
