@@ -8327,6 +8327,19 @@ class TestMinScalarType:
         wanted = np.dtype('O')
         assert_equal(wanted, dt)
 
+    def test_float_max_boundaries(self):
+        f16_max = np.finfo(np.float16).max
+        f32_max = np.finfo(np.float32).max
+        f64_max = np.finfo(np.float64).max
+        assert_equal(np.min_scalar_type(f16_max), np.dtype('float16'))
+        assert_equal(np.min_scalar_type(-f16_max), np.dtype('float16'))
+        assert_equal(np.min_scalar_type(65504.2), np.dtype('float32')) 
+        assert_equal(np.min_scalar_type(f32_max), np.dtype('float32'))
+        assert_equal(np.min_scalar_type(-f32_max), np.dtype('float32'))
+        assert_equal(np.min_scalar_type(3.5e38), np.dtype('float64'))
+        assert_equal(np.min_scalar_type(f64_max), np.dtype('float64'))
+        assert_equal(np.min_scalar_type(-f64_max), np.dtype('float64'))
+
 
 from numpy._core._internal import _dtype_from_pep3118
 
