@@ -870,7 +870,7 @@ type _DTypeNum = L[
 ]
 type _DTypeBuiltinKind = L[0, 1, 2]
 
-type _ArrayAPIVersion = L["2021.12", "2022.12", "2023.12", "2024.12"]
+type _ArrayAPIVersion = L["2021.12", "2022.12", "2023.12", "2024.12", "2025.12"]
 
 type _CastingKind = L["no", "equiv", "safe", "same_kind", "same_value", "unsafe"]
 
@@ -1067,7 +1067,7 @@ __NUMPY_SETUP__: Final[L[False]] = False
 __numpy_submodules__: Final[set[LiteralString]] = ...
 __former_attrs__: Final[_FormerAttrsDict] = ...
 __future_scalars__: Final[set[L["bytes", "str", "object"]]] = ...
-__array_api_version__: Final[L["2024.12"]] = "2024.12"
+__array_api_version__: Final[L["2025.12"]] = "2025.12"
 test: Final[PytestTester] = ...
 
 @type_check_only
