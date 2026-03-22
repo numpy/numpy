@@ -1751,6 +1751,10 @@ class TestUfunc:
         # Sanity check
         assert np.all(result1[::2] == [0, 4, 8, 12])
         assert np.all(result2[::2] == [0, 4, 8, 12])
+        # Also no warning for where=True
+        result3 = np.add(a, a, where=True)
+        # Sanity check
+        assert_array_equal(result3, a + a)
 
     @staticmethod
     def identityless_reduce_arrs():

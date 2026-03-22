@@ -3513,6 +3513,19 @@ class TestSpecialMethods:
                               'axis': 'axis0',
                               'initial': 'init0',
                               'where': 'where0'})
+        # reduce, kwargs, out=None is removed
+        res = np.multiply.reduce(a, axis='axis0', dtype='dtype0', out=None,
+                                 keepdims='keep0', initial='init0',
+                                 where='where0')
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'reduce')
+        assert_equal(res[3], (a,))
+        assert_equal(res[4], {'dtype': 'dtype0',
+                              'keepdims': 'keep0',
+                              'axis': 'axis0',
+                              'initial': 'init0',
+                              'where': 'where0'})
 
         # reduce, output equal to None removed, but not other explicit ones,
         # even if they are at their default value.
