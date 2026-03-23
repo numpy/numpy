@@ -2272,8 +2272,7 @@ gentype_astype(PyObject *self, PyObject *args, PyObject *kwds)
             Py_DECREF(dtype1);
             Py_XDECREF(temp);
             return gentype_generic_method(self, args, kwds, "astype");
-        } 
-        Py_XDECREF(temp);
+        }
         PyArray_Descr *dtype2;
         PyObject *arg = PyTuple_GET_ITEM(args, 0);
         PyArray_DescrConverter(arg, &dtype2);
@@ -2282,9 +2281,11 @@ gentype_astype(PyObject *self, PyObject *args, PyObject *kwds)
         Py_DECREF(dtype2); 
         if (same_dtype) {
             // dtypes are equal, scalars are immutable so no copy is needed
+            Py_XDECREF(temp);
             return Py_NewRef(self);
         }
     }
+    Py_XDECREF(temp);
     return gentype_generic_method(self, args, kwds, "astype");
 }
 
