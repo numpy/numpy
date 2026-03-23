@@ -199,7 +199,7 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
  * On Python 3.13 and older, the check allows objects with exactly one
  * reference to be reallocated in-place. On Python 3.14 and newer, the array
  * must be uniquely referenced. In some cases this can lead to spurious
- * ValueErrors on Python 3.14.
+ * ValueErrors.
  *
  */
 NPY_NO_EXPORT PyObject *
