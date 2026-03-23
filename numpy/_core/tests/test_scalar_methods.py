@@ -3,6 +3,7 @@ Test the scalar constructors, which also do type-coercion
 """
 import fractions
 import inspect
+import math
 import platform
 import sys
 import types
@@ -134,6 +135,95 @@ class TestIsInteger:
             if value == 0:
                 continue
             assert not value.is_integer()
+
+
+class TestRealScalarProtocols:
+    @pytest.mark.parametrize("code", np.typecodes["Float"])
+    @pytest.mark.parametrize(
+        "value, trunc, floor, ceil",
+        [
+            (1.5, 1, 1, 2),
+            (-1.5, -1, -2, -1),
+            (2.0, 2, 2, 2),
+        ],
+    )
+    def test_float_dunders(self, code: str, value: float,
+                           trunc: int, floor: int, ceil: int) -> None:
+        cls = np.dtype(code).type
+        scalar = cls(value)
+
+        assert scalar.__trunc__() == trunc
+        assert scalar.__floor__() == floor
+        assert scalar.__ceil__() == ceil
+
+        assert type(scalar.__trunc__()) is int
+        assert type(scalar.__floor__()) is int
+        assert type(scalar.__ceil__()) is int
+
+        assert math.trunc(scalar) == trunc
+        assert math.floor(scalar) == floor
+        assert math.ceil(scalar) == ceil
+
+    @pytest.mark.parametrize("ftype", [np.float32, np.float64, np.longdouble])
+    def test_float_dunders_large_bignum(self, ftype) -> None:
+        expected = 2**70
+        assert expected > np.iinfo(np.int64).max
+
+        scalar = ftype(expected)
+
+        assert scalar.__trunc__() == expected
+        assert scalar.__floor__() == expected
+        assert scalar.__ceil__() == expected
+
+        assert math.trunc(scalar) == expected
+        assert math.floor(scalar) == expected
+        assert math.ceil(scalar) == expected
+
+        assert type(scalar.__trunc__()) is int
+        assert type(scalar.__floor__()) is int
+        assert type(scalar.__ceil__()) is int
+
+
+    @pytest.mark.parametrize("code", np.typecodes["AllInteger"])
+    def test_integer_dunders(self, code: str) -> None:
+        cls = np.dtype(code).type
+        scalar = cls(7)
+
+        assert scalar.__trunc__() == 7
+        assert scalar.__floor__() == 7
+        assert scalar.__ceil__() == 7
+
+        assert type(scalar.__trunc__()) is int
+        assert type(scalar.__floor__()) is int
+        assert type(scalar.__ceil__()) is int
+
+        assert math.trunc(scalar) == 7
+        assert math.floor(scalar) == 7
+        assert math.ceil(scalar) == 7
+
+    def test_longdouble_ceil_preserves_precision(self) -> None:
+        if np.finfo(np.double) == np.finfo(np.longdouble):
+            pytest.skip("long double is same as double")
+
+        scalar = np.longdouble("9007199254740992.5")
+
+        assert scalar.__floor__() == 9007199254740992
+        assert scalar.__ceil__() == 9007199254740993
+        assert math.floor(scalar) == 9007199254740992
+        assert math.ceil(scalar) == 9007199254740993
+
+    @pytest.mark.parametrize("value, exc", [
+        (np.float32("nan"), ValueError),
+        (np.float32("inf"), OverflowError),
+        (np.float32("-inf"), OverflowError),
+    ])
+    def test_float_dunders_special_values(self, value, exc) -> None:
+        with pytest.raises(exc):
+            value.__trunc__()
+        with pytest.raises(exc):
+            value.__floor__()
+        with pytest.raises(exc):
+            value.__ceil__()
 
 
 class TestClassGetItem:
