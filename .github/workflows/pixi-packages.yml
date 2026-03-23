@@ -28,6 +28,7 @@ jobs:
           # TSan CI runs for longer than 30 minutes due to slow
           # stdlib bytecode compilation step. Disable or parallelize
           # byte compilation once rattler-build has support.
+          # See https://github.com/prefix-dev/pixi/pull/5737
           # - tsan-freethreading
     if: github.repository == 'numpy/numpy'
     steps:
