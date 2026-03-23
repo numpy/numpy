@@ -2201,7 +2201,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
  *
  * #name = take, getfield, put, repeat, tofile, mean, trace, diagonal, clip,
  *         std, var, sum, cumsum, prod, cumprod, compress, sort, argsort,
- *         round, argmax, argmin, max, min, any, all, astype, resize,
+ *         round, argmax, argmin, max, min, any, all, resize,
  *         reshape, choose, tobytes, copy, searchsorted, view,
  *         flatten, ravel, squeeze#
  */
@@ -2252,6 +2252,41 @@ static PyObject *
     return obj;
 }
 /**end repeat**/
+
+static PyObject *
+gentype_astype(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    int copy = 0; 
+    PyObject *temp = NULL;
+    if (kwds != NULL){
+        PyDict_GetItemStringRef(kwds, "copy", &temp);
+        if (temp != NULL){
+            copy = PyObject_IsTrue(temp);
+        }
+    }      
+    if ((copy == 0) && (PyTuple_Size(args)==1)) {
+        PyArray_Descr *dtype1 = PyArray_DescrFromScalar(self);
+        assert(dtype1 != NULL); 
+        if((PyDataType_NAMES(dtype1) != NULL) && (temp == NULL)){
+            // guard for structured data types
+            Py_DECREF(dtype1);
+            Py_XDECREF(temp);
+            return gentype_generic_method(self, args, kwds, "astype");
+        } 
+        Py_XDECREF(temp);
+        PyArray_Descr *dtype2;
+        PyObject *arg = PyTuple_GET_ITEM(args, 0);
+        PyArray_DescrConverter(arg, &dtype2);
+        int same_dtype = (dtype1 == dtype2);
+        Py_DECREF(dtype1);
+        Py_DECREF(dtype2); 
+        if (same_dtype) {
+            // dtypes are equal, scalars are immutable so no copy is needed
+            return Py_NewRef(self);
+        }
+    }
+    return gentype_generic_method(self, args, kwds, "astype");
+}
 
 static PyObject *
 voidtype_getfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
