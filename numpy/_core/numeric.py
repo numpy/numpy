@@ -230,7 +230,11 @@ def ones(shape, dtype=None, order='C', *, device=None, like=None):
         )
 
     a = empty(shape, dtype, order, device=device)
-    multiarray.copyto(a, 1, casting='unsafe')
+    try:
+        fill_value = array(1, dtype=a.dtype)
+    except TypeError:
+        fill_value = 1
+    multiarray.copyto(a, fill_value, casting='unsafe')
     return a
 
 
@@ -310,7 +314,11 @@ def ones_like(
     res = empty_like(
         a, dtype=dtype, order=order, subok=subok, shape=shape, device=device
     )
-    multiarray.copyto(res, 1, casting='unsafe')
+    try:
+        fill_value = array(1, dtype=res.dtype)
+    except TypeError:
+        fill_value = 1
+    multiarray.copyto(res, fill_value, casting='unsafe')
     return res
 
 
