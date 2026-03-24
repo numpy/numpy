@@ -841,6 +841,35 @@ cannot not be accessed directly.
             The shape (always C-style contiguous) of the sub-array as a Python
             tuple.
 
+.. c:function:: char PyDataType_TYPE(PyArray_Descr *descr)
+
+    .. versionadded:: 2.5
+
+    Data type character code. See `numpy.dtype.char`. Only set for built-in and
+    legacy user DTypes. Null character (``b'\x00'``) otherwise.
+
+.. c:function:: char PyDataType_KIND(PyArray_Descr *descr)
+
+    .. versionadded:: 2.5
+
+    Data type kind character code. See `numpy.dtype.kind`. Only set for built-in
+    and legacy user DTypes.  Null character (``b'\x00``) otherwise.
+
+.. c:function:: char PyDataType_BYTEORDER(PyArray_Descr *descr)
+
+    .. versionadded:: 2.5
+
+    Data type bytorder character code. One of ``'='`` (native), ``'<'``
+    (little-endian), ``'>'`` (big-endian), or ``'|'`` (not applicable). See
+    `numpy.dtype.byteorder`.
+
+.. c:function:: PyTypeObject *PyDataType_TYPEOBJ(PyArray_Descr *descr)
+
+    .. versionadded:: 2.5
+
+    The type object for the scalar type. See the ``typeobj`` member of the
+    ``PyArray_Descr`` struct. See :c:data:`PyArray_Descr` for a full description
+    of the ``PyArray_Descr`` struct layout.
 
 Data-type checking
 ~~~~~~~~~~~~~~~~~~
