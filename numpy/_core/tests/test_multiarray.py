@@ -6290,6 +6290,7 @@ class TestResize:
         assert_raises(ValueError, x.resize, (5, 1))
 
     @pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
+    @pytest.mark.skipif(IS_PYPY, reason="The method always raises")
     def test_check_reference_module_scope(self):
         code = textwrap.dedent("""
             import numpy as np
@@ -6307,7 +6308,7 @@ class TestResize:
             assert "It is possible that this is a false positive." in e.stdout
         else:
             if sys.version_info >= (3, 14):
-                raise AsseritonError("Unexpected success of resize refcheck")
+                raise AssertionError("Unexpected success of resize refcheck")
 
     def test_check_reference_2(self):
         # see gh-30265
