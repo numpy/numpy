@@ -51,7 +51,7 @@ get_new_loop_data(
 }
 
 /*
- * Thin wrapper around the legacy loop using heap-allocated auxdata.
+ * This is a thin wrapper around the legacy loop signature.
  */
 static int
 generic_wrapped_legacy_loop(PyArrayMethod_Context *NPY_UNUSED(context),
