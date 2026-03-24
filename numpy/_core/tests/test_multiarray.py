@@ -17,7 +17,6 @@ import subprocess
 import sys
 import tempfile
 import textwrap
-import tracemalloc
 import warnings
 import weakref
 from contextlib import contextmanager
