@@ -4,6 +4,7 @@
 Functions in this module give python-space wrappers for cython functions
 exposed in numpy/__init__.pxd, so they can be tested in test_cython.py
 """
+import numpy as np
 cimport numpy as cnp
 cnp.import_array()
 
@@ -372,3 +373,9 @@ def check_npy_uintp_type_enum():
     # Regression test for gh-27890: cnp.NPY_UINTP was not defined.
     # Cython would fail to compile this before gh-27890 was fixed.
     return cnp.NPY_UINTP > 0
+
+
+def resize_refcheck_test():
+    # see gh-30991
+    a = np.array([[0, 1], [2, 3]], order='C')
+    a.resize((2, 1))
