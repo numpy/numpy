@@ -4072,17 +4072,17 @@ class TestMaskedArrayMethods:
         assert_equal(xd.data, x.diagonal().data)
 
     def test_mvoid_fill_value_propagation(self):
-            data = [((1,),)]
-            dtype = [('a', 'i', (1,))]
-            fill_value = -1
+        data = [((1,),)]
+        dtype = [('a', 'i', (1,))]
+        fill_value = -1
             
-            ma = np.ma.MaskedArray(data, dtype=dtype, fill_value=fill_value)
+        ma = np.ma.MaskedArray(data, dtype=dtype, fill_value=fill_value)
             
-            subma_1 = ma[0]['a']
-            subma_2 = ma['a'][0]
+        subma_1 = ma[0]['a']
+        subma_2 = ma['a'][0]
             
-            assert_equal(subma_1.fill_value, fill_value)
-            assert_equal(subma_1.fill_value, subma_2.fill_value)
+        assert_equal(subma_1.fill_value, fill_value)
+        assert_equal(subma_1.fill_value, subma_2.fill_value)
 
 
 class TestMaskedArrayMathMethods:
