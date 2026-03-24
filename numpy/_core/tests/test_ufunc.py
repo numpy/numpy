@@ -1761,6 +1761,41 @@ class TestUfunc:
         # Sanity check
         assert_array_equal(result3, a + a)
 
+    def test_where_out_none_propagated_to_array_ufunc(self):
+        # Regression test for gh-31030: out=None must be forwarded to
+        # __array_ufunc__ so subclasses can pass it on and suppress the
+        # "where without out" warning.
+        import dataclasses
+        import warnings
+
+        @dataclasses.dataclass
+        class DuckArray:
+            ndarray: np.ndarray
+            received_kwargs: dict = dataclasses.field(default_factory=dict)
+
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+                self.received_kwargs = dict(kwargs)
+                return ufunc(
+                    *[x.ndarray if isinstance(x, DuckArray) else x
+                      for x in inputs],
+                    **kwargs,
+                )
+
+        a = DuckArray(np.array([1.0]))
+        mask = np.array([True])
+
+        # out=None must arrive in __array_ufunc__ kwargs so the inner call
+        # does not trigger the "where without out" warning (gh-31030).
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            result = np.log(a, where=mask, out=None)
+
+        # Verify that out=None was forwarded into __array_ufunc__
+        assert "out" in a.received_kwargs, (
+            "out=None was not propagated to __array_ufunc__"
+        )
+        assert a.received_kwargs["out"] is None
+
     @staticmethod
     def identityless_reduce_arrs():
         yield np.empty((2, 3, 4), order='C')

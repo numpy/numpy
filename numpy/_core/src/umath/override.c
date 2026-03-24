@@ -121,13 +121,30 @@ initialize_normal_kwds(PyObject *out_args,
         }
     }
     else {
-        /* Ensure that `out` is not present. */
-        int res = PyDict_Contains(normal_kwds, npy_interned_str.out);
+        /*
+         * No normalized outputs (out_args is NULL), which means either no
+         * `out` was passed or `out=None` was passed explicitly.  If the user
+         * passed `out=None` it will already be in normal_kwds (copied from
+         * kwnames above); preserve it so that __array_ufunc__ implementations
+         * can forward it to the ufunc and suppress the "where without out"
+         * warning.  Only delete `out` from the dict when its value is not
+         * None (which would indicate a stale entry that should not be
+         * forwarded).
+         */
+        PyObject *out_val = NULL;
+        int res = PyDict_GetItemRef(normal_kwds, npy_interned_str.out, &out_val);
         if (res < 0) {
             return -1;
         }
-        if (res) {
-            return PyDict_DelItem(normal_kwds, npy_interned_str.out);
+        if (res == 1) {
+            /* `out` is present in the dict */
+            int is_none = (out_val == Py_None);
+            Py_DECREF(out_val);
+            if (!is_none) {
+                /* Non-None value without a real out_args — remove it. */
+                return PyDict_DelItem(normal_kwds, npy_interned_str.out);
+            }
+            /* out=None: leave it in the dict so __array_ufunc__ receives it */
         }
     }
     return 0;
