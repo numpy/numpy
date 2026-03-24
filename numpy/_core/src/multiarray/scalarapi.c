@@ -402,67 +402,37 @@ PyArray_DescrFromTypeObject(PyObject *type)
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrFromScalar(PyObject *sc)
 {
-    int type_num;
-    PyArray_Descr *descr;
-
-    if (PyArray_IsScalar(sc, Void)) {
-        descr = (PyArray_Descr *)((PyVoidScalarObject *)sc)->descr;
-        Py_INCREF(descr);
-        return descr;
+    /*
+     * Look up the DType directly from the scalar's type.  This avoids calling
+     * the NPY_DT_default_descr slot (via PyArray_GetDefaultDescr), which for
+     * parametric dtypes may raise an error or return an incorrect stub.
+     * Once we have the DType class, discover_descr_from_pyobject extracts the
+     * correct instance-specific descriptor (handling void, datetime, string,
+     * and new-style user-defined parametric dtypes correctly).
+     */
+    PyArray_DTypeMeta *DType =
+            (PyArray_DTypeMeta *)PyArray_DiscoverDTypeFromScalarType(Py_TYPE(sc));
+    if (DType != NULL) {
+        PyArray_Descr *result = NPY_DT_CALL_discover_descr_from_pyobject(DType, sc);
+        Py_DECREF(DType);
+        return result;
     }
 
-    if (PyArray_IsScalar(sc, Datetime) || PyArray_IsScalar(sc, Timedelta)) {
-        PyArray_DatetimeMetaData *dt_data;
-
-        if (PyArray_IsScalar(sc, Datetime)) {
-            descr = PyArray_DescrNewFromType(NPY_DATETIME);
-        }
-        else {
-            /* Timedelta */
-            descr = PyArray_DescrNewFromType(NPY_TIMEDELTA);
-        }
-        if (descr == NULL) {
-            return NULL;
-        }
-        dt_data = &(((PyArray_DatetimeDTypeMetaData *)((_PyArray_LegacyDescr *)descr)->c_metadata)->meta);
-        memcpy(dt_data, &((PyDatetimeScalarObject *)sc)->obmeta,
-               sizeof(PyArray_DatetimeMetaData));
-
-        return descr;
-    }
-
-    descr = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(sc));
+    /*
+     * Fallback for scalar subclasses that are not directly in the scalar-type
+     * registry (e.g. a Python subclass of np.float64).  These are always
+     * legacy non-parametric dtypes, so PyArray_DescrFromTypeObject is safe:
+     * it walks the MRO to find the registered base type and calls
+     * PyArray_GetDefaultDescr, which works correctly for non-parametric dtypes.
+     */
+    PyArray_Descr *descr = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(sc));
     if (descr == NULL) {
         return NULL;
     }
-    if (PyDataType_ISLEGACY(descr) && PyDataType_ISUNSIZED(descr)) {
-        PyArray_DESCR_REPLACE(descr);
-        if (descr == NULL) {
-            return NULL;
-        }
-        type_num = descr->type_num;
-        if (type_num == NPY_STRING) {
-            descr->elsize = PyBytes_GET_SIZE(sc);
-        }
-        else if (type_num == NPY_UNICODE) {
-            descr->elsize = PyUnicode_GET_LENGTH(sc) * 4;
-        }
-        else {
-            _PyArray_LegacyDescr *ldescr = (_PyArray_LegacyDescr *)descr;
-            PyArray_Descr *dtype;
-            dtype = (PyArray_Descr *)PyObject_GetAttrString(sc, "dtype");
-            if (dtype != NULL) {
-                descr->elsize = dtype->elsize;
-                ldescr->fields = PyDataType_FIELDS(dtype);
-                Py_XINCREF(ldescr->fields);
-                ldescr->names = PyDataType_NAMES(dtype);
-                Py_XINCREF(ldescr->names);
-                Py_DECREF(dtype);
-            }
-            PyErr_Clear();
-        }
-    }
-    return descr;
+    DType = NPY_DTYPE(descr);
+    PyArray_Descr *result = NPY_DT_CALL_discover_descr_from_pyobject(DType, sc);
+    Py_DECREF(descr);
+    return result;
 }
 
 /*NUMPY_API
