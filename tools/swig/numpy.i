@@ -457,9 +457,11 @@ void free_cap(PyObject * cap)
     {
       int used_buffer_space = 0;
       int written;
-      for (i = 0; i < n-1; i++)
-      {
-        written = snprintf(dims_str + used_buffer_space, dims_str_size - used_buffer_space, "%d, ", exact_dimensions[i]);
+      for (i = 0; i < n-1; i++) {
+        written = snprintf(dims_str + used_buffer_space, 
+                           dims_str_size - used_buffer_space, 
+                           "%d, ", 
+                           exact_dimensions[i]);
         if (written < 0)
           written = 0;
         if (written >= (int)(dims_str_size - used_buffer_space))
@@ -467,7 +469,8 @@ void free_cap(PyObject * cap)
         used_buffer_space += written;
       }
 
-      snprintf(dims_str + used_buffer_space, dims_str_size - used_buffer_space, "or %d", exact_dimensions[n-1]);
+      snprintf(dims_str + used_buffer_space, dims_str_size - used_buffer_space,
+               "or %d", exact_dimensions[n-1]);
       PyErr_Format(PyExc_TypeError,
                    "Array must have %s dimensions.  Given array has %d dimensions",
                    dims_str,
@@ -502,16 +505,16 @@ void free_cap(PyObject * cap)
       int used_buffer_space = strlen(desired_dims);
       int written;
         
-      for (i = 0; i < n; i++)
-      {
+      for (i = 0; i < n; i++) {
         if (size[i] == -1)
-        {
-          written = snprintf(desired_dims + used_buffer_space, dims_str_size - used_buffer_space, "*,");
-        }
+          written = snprintf(desired_dims + used_buffer_space, 
+                             dims_str_size - used_buffer_space, 
+                             "*,");
         else
-        {
-          written = snprintf(desired_dims + used_buffer_space, dims_str_size - used_buffer_space, "%ld,", (long int)size[i]);
-        }
+          written = snprintf(desired_dims + used_buffer_space, 
+                             dims_str_size - used_buffer_space, 
+                             "%ld,", 
+                             (long int)size[i]);
         if (written < 0)
           written = 0;
         if (written >= (int)(dims_str_size - used_buffer_space))
@@ -524,7 +527,10 @@ void free_cap(PyObject * cap)
       used_buffer_space = strlen(actual_dims);
       for (i = 0; i < n; i++)
       {
-        written = snprintf(actual_dims + used_buffer_space, dims_str_size - used_buffer_space, "%ld,", (long int)array_size(ary,i));
+        written = snprintf(actual_dims + used_buffer_space, 
+                           dims_str_size - used_buffer_space, 
+                           "%ld,", 
+                           (long int)array_size(ary,i));
         if (written < 0)
           written = 0;
         if (written >= (int)(dims_str_size - used_buffer_space))
