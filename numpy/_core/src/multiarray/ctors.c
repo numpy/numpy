@@ -2176,6 +2176,7 @@ PyArray_FromInterface(PyObject *origin)
     PyObject *iface = NULL;
     PyObject *attr = NULL;
     PyObject *base = NULL;
+    PyObject *refs = NULL;  /* owned tuple to keep iface alive when base=origin */
     PyArrayObject *ret;
     PyArray_Descr *dtype = NULL;
     char *data = NULL;
@@ -2349,7 +2350,21 @@ PyArray_FromInterface(PyObject *origin)
         if (istrue) {
             dataflags &= ~NPY_ARRAY_WRITEABLE;
         }
-        base = origin;
+        /*
+         * The `iface` dict may carry a `__ref` entry that owns the memory
+         * pointed to by `data` (e.g. numpy scalars store a 0-d array there
+         * to keep the underlying buffer alive).  If we only hold `origin`
+         * as the array base the dict will be freed by Py_DECREF(iface)
+         * below, releasing `__ref` and leaving `data` as a dangling
+         * pointer.  Keep both `origin` and `iface` alive through the
+         * array's lifetime by using a (origin, iface) tuple as the base —
+         * the same pattern used in PyArray_FromStructInterface.
+         */
+        refs = PyTuple_Pack(2, origin, iface);
+        if (refs == NULL) {
+            goto fail;
+        }
+        base = refs;
     }
 
     /* Case for data access through buffer */
@@ -2404,9 +2419,11 @@ PyArray_FromInterface(PyObject *origin)
             dataflags, NULL, base);
     /*
      * Ref to dtype was stolen by PyArray_NewFromDescrAndBase
-     * Prevent DECREFing dtype in fail codepath by setting to NULL
+     * Prevent DECREFing dtype in fail codepath by setting to NULL.
+     * refs (if set) has been adopted by the array via base; release it.
      */
     dtype = NULL;
+    Py_CLEAR(refs);
     if (ret == NULL) {
         goto fail;
     }
@@ -2473,6 +2490,7 @@ PyArray_FromInterface(PyObject *origin)
  fail:
     Py_XDECREF(attr);
     Py_XDECREF(dtype);
+    Py_XDECREF(refs);
     Py_XDECREF(iface);
     return NULL;
 }

@@ -220,3 +220,60 @@ def test_cstruct(get_module):
     stderr.write(' ---- free shared data ---- \n')
     arr = None
     stderr.write(' ---- OK!\n\n')
+
+
+def test_array_interface_without_array_struct():
+    """
+    Regression test for gh-31036.
+
+    An object that defines only ``__array_interface__`` (not
+    ``__array_struct__``) should produce a correct array.  Previously the
+    ``iface`` dict returned by ``__array_interface__`` was released
+    immediately after ``PyArray_NewFromDescrAndBase``, which freed the
+    ``__ref`` entry inside the dict (kept there by numpy scalars to pin
+    their buffer), leaving the new array with a dangling data pointer.
+    """
+    import gc
+
+    class InterfaceOnly:
+        """Wraps a numpy scalar, forwarding __array_interface__ but NOT
+        __array_struct__."""
+
+        def __init__(self, scalar):
+            self._scalar = scalar
+
+        @property
+        def __array_interface__(self):
+            return self._scalar.__array_interface__
+
+    for scalar in (np.int64(2), np.float64(3.14), np.int32(-7)):
+        obj = InterfaceOnly(scalar)
+
+        # Force GC so any freed temporary dicts are reclaimed
+        arr = np.asarray(obj)
+        gc.collect()
+
+        assert arr[()] == scalar, (
+            f"Expected {scalar!r}, got {arr[()]!r} — possible dangling "
+            f"pointer in __array_interface__ path"
+        )
+        assert arr.dtype == scalar.dtype
+
+    # Also verify arithmetic involving such an object gives the right result
+    # (the original issue from gh-31036).
+    class MyObj:
+        value = np.int64(2)
+
+        def __rsub__(self, other):
+            return self.value.__rsub__(other)
+
+        @property
+        def __array_interface__(self):
+            return self.value.__array_interface__
+
+    o = MyObj()
+    result = np.int64(1) - o
+    gc.collect()
+    assert result == np.int64(-1), (
+        f"Expected -1, got {result!r} — gh-31036 regression"
+    )

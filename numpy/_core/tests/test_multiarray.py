@@ -8999,11 +8999,14 @@ class TestArrayCreationCopyArgument:
 
         arr = ArrayLike()
 
-        for copy, val in [(True, None), (np._CopyMode.ALWAYS, None),
-                          (False, arr), (np._CopyMode.IF_NEEDED, arr),
-                          (np._CopyMode.NEVER, arr)]:
+        for copy in (True, np._CopyMode.ALWAYS):
             res = np.array(arr, copy=copy)
-            assert res.base is val
+            assert res.base is None
+        for copy in (False, np._CopyMode.IF_NEEDED, np._CopyMode.NEVER):
+            res = np.array(arr, copy=copy)
+            # The base is a (origin, iface_dict) tuple that keeps both the
+            # source object and the interface dict alive (gh-31036 fix).
+            assert res.base[0] is arr
 
     def test___array__(self):
         base_arr = np.arange(10)
