@@ -353,15 +353,14 @@ def test_npy_uintp_type_enum(install_temp):
 
 
 @pytest.mark.skipif(
-    sys.version_info < (3, 14),
-    reason="Tests behavior that happens on Python 3.14 and newer"
-)
-@pytest.mark.skipif(
     sysconfig.get_platform() == 'win-arm64',
     reason='no checks module on win-arm64'
 )
 def test_resize_refcheck(install_temp):
+    # gh-30991: resize from a Cython function should not raise spuriously.
+    # Cython does not use CO_OPTIMIZED frames, so the fix falls back to the
+    # pre-3.14 "refcount <= 2" heuristic.  The array is solely owned (the
+    # extra ref from the method dispatch lands at exactly refcount == 2),
+    # so the resize must succeed on all Python versions.
     import checks
-    msg = "It is possible that this is a false positive."
-    with pytest.raises(ValueError, match=msg):
-        checks.resize_refcheck_test()
+    checks.resize_refcheck_test()  # must not raise

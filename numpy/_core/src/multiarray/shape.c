@@ -90,22 +90,31 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
         if (refcheck) {
 #if PY_VERSION_HEX >= 0x030E00B0
             // Python 3.14 changed reference counting semantics for function-
-            // local variables. There is no way to tell if the calling function
-            // has been optimized (because it might be implemented in C or Cython)
+            // local variables (PEP 703 / gh-30991): optimized frames use
+            // borrowed references, so calling a method on a local variable
+            // does NOT bump its refcount.  Non-optimized frames (module
+            // scope, exec(), Cython, etc.) still increment the refcount
+            // around the call, producing a spurious refcount of 2.
             //
-            // Instead, warn if the refcount is exactly 2 that this might be a
-            // false positive
-            if (!PyUnstable_Object_IsUniquelyReferenced((PyObject *)self)) {
-                if (Py_REFCNT(self) == 2) {
-                    PyErr_SetString(
-                            PyExc_ValueError,
-                            "cannot resize an array that may be referenced "
-                            "by another object.\n"
-                            "It is possible that this is a false positive.\n"
-                            "If you are sure that the array is uniquely referenced, "
-                            "set refcheck=False.");
-                    return -1;
+            // Strategy: if the immediate caller lives in an optimized frame
+            // (CO_OPTIMIZED flag set — i.e. a regular Python function body)
+            // trust PyUnstable_Object_IsUniquelyReferenced.  Otherwise fall
+            // back to the pre-3.14 "refcount <= 2" heuristic which is
+            // correct for non-optimized callers.
+            int caller_is_optimized = 0;
+            PyFrameObject *frame = PyEval_GetFrame();
+            if (frame != NULL) {
+                PyCodeObject *code = PyFrame_GetCode(frame);
+                if (code != NULL) {
+                    caller_is_optimized = (code->co_flags & CO_OPTIMIZED) != 0;
+                    Py_DECREF(code);
                 }
+            }
+            int has_extra_ref =
+                    caller_is_optimized
+                    ? !PyUnstable_Object_IsUniquelyReferenced((PyObject *)self)
+                    : Py_REFCNT(self) > 2;
+            if (has_extra_ref) {
 #else
             if (Py_REFCNT(self) > 2) {
 #endif
@@ -190,9 +199,11 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
  * weak-references and no base object.
  *
  * On Python 3.13 and older, the check allows objects with exactly one
- * reference to be reallocated in-place. On Python 3.14 and newer, the array
- * must be uniquely referenced. In some cases this can lead to spurious
- * ValueErrors.
+ * reference to be reallocated in-place. On Python 3.14 and newer, the check
+ * uses PyUnstable_Object_IsUniquelyReferenced when called from an optimized
+ * frame (regular Python function body), and falls back to the pre-3.14
+ * "refcount <= 2" heuristic for non-optimized frames (module scope, exec,
+ * Cython, etc.) to avoid spurious ValueErrors in those contexts (gh-30991).
  *
  */
 NPY_NO_EXPORT PyObject *

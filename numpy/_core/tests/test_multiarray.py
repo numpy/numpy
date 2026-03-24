@@ -6381,10 +6381,17 @@ class TestResize:
 
     @pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
     def test_check_reference_module_scope(self):
+        # gh-30991: on Python 3.14+, module-scope resize used to raise a
+        # spurious ValueError because optimized-frame borrowed-reference
+        # semantics do not apply at module scope.  The fix detects whether the
+        # caller is in an optimized frame (CO_OPTIMIZED) and falls back to the
+        # pre-3.14 "refcount <= 2" heuristic when it is not.  At module scope
+        # the array is the sole owner so the resize should succeed on all
+        # Python versions.
         code = textwrap.dedent("""
             import numpy as np
 
-            # See gh-30991
+            # See gh-30991: must succeed at module scope on all Python versions
             a = np.array([[0, 1], [2, 3]], order='C')
             a.resize((2, 1))
         """)
@@ -6392,12 +6399,10 @@ class TestResize:
             subprocess.check_output([sys.executable, "-c", code],
                                     stderr=subprocess.STDOUT, text=True)
         except subprocess.CalledProcessError as e:
-            assert sys.version_info >= (3, 14)
-            assert "ValueError" in e.stdout
-            assert "It is possible that this is a false positive." in e.stdout
-        else:
-            if sys.version_info >= (3, 14):
-                raise AsseritonError("Unexpected success of resize refcheck")
+            raise AssertionError(
+                f"resize raised unexpectedly at module scope "
+                f"(Python {sys.version_info}): {e.stdout}"
+            ) from e
 
     def test_check_reference_2(self):
         # see gh-30265

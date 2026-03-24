@@ -4199,8 +4199,12 @@ _array_method_doc('resize', "*new_shape, refcheck=True",
     reallocate the memory.
 
     On Python 3.13 and older, the check allows objects with exactly one
-    reference to be reallocated in-place. On Python 3.14 and newer, the array
-    must be uniquely referenced. See [1]_ for more details.
+    reference to be reallocated in-place. On Python 3.14 and newer, the check
+    uses ``PyUnstable_Object_IsUniquelyReferenced`` when the array is resized
+    from within a regular Python function (an *optimized frame*), and falls
+    back to the pre-3.14 heuristic for module-level code, Cython extensions,
+    and other non-optimized callers. This avoids the spurious
+    ``ValueError`` that occurred in those contexts. See [1]_ for more details.
 
     If you are sure that you have not shared the memory for this array with
     another Python object, then you may safely set `refcheck` to False.
