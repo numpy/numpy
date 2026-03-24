@@ -1194,6 +1194,27 @@ class TestTypes:
         self.check_promotion_cases(np.result_type)
         assert_(np.result_type(None) == np.dtype(None))
 
+    def test_result_type_builtin_types_as_abstract(self):
+        # gh-31037: Python builtin types (int, float, complex, bool) should be
+        # treated as abstract/weak scalars, consistent with scalar *instances*
+        # (e.g. 1, 1.0, 1j).  Before the fix these fell through to
+        # PyArray_DescrConverter which resolved them to the platform default
+        # dtype (e.g. int -> int64), so result_type(np.int32, int) returned
+        # int64 instead of int32.
+        assert_equal(np.result_type(np.int32(1), int(1)),
+                     np.result_type(np.int32, int))
+        assert_equal(np.result_type(np.float32(1), float(1)),
+                     np.result_type(np.float32, float))
+        assert_equal(np.result_type(np.complex64(1), complex(1)),
+                     np.result_type(np.complex64, complex))
+        # Concrete cases: narrower numpy type should win
+        assert_equal(np.result_type(np.int32, int), np.dtype(np.int32))
+        assert_equal(np.result_type(np.float32, float), np.dtype(np.float32))
+        assert_equal(np.result_type(np.complex64, complex), np.dtype(np.complex64))
+        # bool type: consistent with bool instance
+        assert_equal(np.result_type(np.bool_(True), bool(True)),
+                     np.result_type(np.bool_, bool))
+
     def test_promote_types_endian(self):
         # promote_types should always return native-endian types
         assert_equal(np.promote_types('<i8', '<i8'), np.dtype('i8'))

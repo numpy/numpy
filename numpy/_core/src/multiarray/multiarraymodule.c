@@ -3653,6 +3653,44 @@ array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
             npy_mark_tmp_array_if_pyscalar(obj, arr[narr], NULL);
             ++narr;
         }
+        else if (obj == (PyObject *)&PyLong_Type ||
+                 obj == (PyObject *)&PyFloat_Type ||
+                 obj == (PyObject *)&PyComplex_Type ||
+                 obj == (PyObject *)&PyBool_Type) {
+            /*
+             * Python builtin types int/float/complex/bool are treated as
+             * abstract scalars, consistent with how Python scalar *instances*
+             * (e.g. 1, 1.0, 1j) behave under NEP 50 weak-type promotion.
+             * Previously these fell through to PyArray_DescrConverter which
+             * mapped them to the default NumPy dtype (e.g. int -> int64),
+             * causing np.result_type(np.int32, int) != np.result_type(np.int32, 1).
+             * See gh-31037.
+             */
+            PyObject *representative;
+            if (obj == (PyObject *)&PyBool_Type) {
+                representative = PyBool_FromLong(0);
+            }
+            else if (obj == (PyObject *)&PyLong_Type) {
+                representative = PyLong_FromLong(0);
+            }
+            else if (obj == (PyObject *)&PyFloat_Type) {
+                representative = PyFloat_FromDouble(0.0);
+            }
+            else {
+                representative = PyComplex_FromDoubles(0.0, 0.0);
+            }
+            if (representative == NULL) {
+                goto finish;
+            }
+            arr[narr] = (PyArrayObject *)PyArray_FROM_O(representative);
+            if (arr[narr] == NULL) {
+                Py_DECREF(representative);
+                goto finish;
+            }
+            npy_mark_tmp_array_if_pyscalar(representative, arr[narr], NULL);
+            Py_DECREF(representative);
+            ++narr;
+        }
         else {
             if (!PyArray_DescrConverter(obj, &dtypes[ndtypes])) {
                 goto finish;
