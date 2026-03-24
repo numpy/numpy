@@ -315,7 +315,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             /* Deprecated NumPy 2.5, 2026-01 */
             if (!PyArray_CanCastTypeTo(dtype, out_dtype, NPY_SAME_KIND_CASTING)) {
                 if (DEPRECATE(
-                        "Implicit casting of output to a different kind is deprecated."
+                        "Implicit casting of output to a different kind is deprecated. "
                         "In a future version, this will result in an error. (Deprecated NumPy 2.5)") <
                     0) {
                     goto fail;
@@ -3183,7 +3183,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         PyArray_Descr *given_descrs[2] = {descr, descr};
         // Sort cannot be a view, so view_offset is unused
         npy_intp view_offset = 0;
-        
+
         if (sort_method->resolve_descriptors(
             sort_method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
             PyErr_SetString(PyExc_RuntimeError,
@@ -3293,7 +3293,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         PyArray_Descr *given_descrs[2] = {descr, odescr};
         // we can ignore the view_offset for sorting
         npy_intp view_offset = 0;
-        
+
         int resolve_ret = argsort_method->resolve_descriptors(
             argsort_method, dtypes, given_descrs, loop_descrs, &view_offset);
         Py_DECREF(odescr);
