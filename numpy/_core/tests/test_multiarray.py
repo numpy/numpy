@@ -6397,7 +6397,7 @@ class TestResize:
             assert "It is possible that this is a false positive." in e.stdout
         else:
             if sys.version_info >= (3, 14):
-                raise AsseritonError("Unexpected success of resize refcheck")
+                raise AssertionError("Unexpected success of resize refcheck")
 
     def test_check_reference_2(self):
         # see gh-30265
