@@ -444,8 +444,8 @@ void free_cap(PyObject * cap)
   {
     int success = 0;
     int i;
-    char dims_str[255] = "";
-    char s[255];
+    const size_t dims_str_size = 255;
+    char dims_str[dims_str_size] = "";
     for (i = 0; i < n && !success; i++)
     {
       if (array_numdims(ary) == exact_dimensions[i])
@@ -455,13 +455,19 @@ void free_cap(PyObject * cap)
     }
     if (!success)
     {
+      int used_buffer_space = 0;
+      int written;
       for (i = 0; i < n-1; i++)
       {
-        snprintf(s, sizeof(s), "%d, ", exact_dimensions[i]);
-        strcat(dims_str,s);
+        written = snprintf(dims_str + used_buffer_space, dims_str_size - used_buffer_space, "%d, ", exact_dimensions[i]);
+        if (written < 0)
+          written = 0;
+        if (written >= (int)(dims_str_size - used_buffer_space))
+          written = (int)(dims_str_size - used_buffer_space) - 1;
+        used_buffer_space += written;
       }
-      snprintf(s, sizeof(s), " or %d", exact_dimensions[n-1]);
-      strcat(dims_str,s);
+
+      snprintf(dims_str + used_buffer_space, dims_str_size - used_buffer_space, "or %d", exact_dimensions[n-1]);
       PyErr_Format(PyExc_TypeError,
                    "Array must have %s dimensions.  Given array has %d dimensions",
                    dims_str,
@@ -481,9 +487,9 @@ void free_cap(PyObject * cap)
     int i;
     int success = 1;
     size_t len;
-    char desired_dims[255] = "[";
-    char s[255];
-    char actual_dims[255] = "[";
+    const size_t dims_str_size = 255;
+    char desired_dims[dims_str_size] = "[";
+    char actual_dims[dims_str_size] = "[";
     for(i=0; i < n;i++)
     {
       if (size[i] != -1 &&  size[i] != array_size(ary,i))
@@ -493,24 +499,37 @@ void free_cap(PyObject * cap)
     }
     if (!success)
     {
+      int used_buffer_space = strlen(desired_dims);
+      int written;
+        
       for (i = 0; i < n; i++)
       {
         if (size[i] == -1)
         {
-          snprintf(s, sizeof(s), "*,");
+          written = snprintf(desired_dims + used_buffer_space, dims_str_size - used_buffer_space, "*,");
         }
         else
         {
-          snprintf(s, sizeof(s), "%ld,", (long int)size[i]);
+          written = snprintf(desired_dims + used_buffer_space, dims_str_size - used_buffer_space, "%ld,", (long int)size[i]);
         }
-        strcat(desired_dims,s);
+        if (written < 0)
+          written = 0;
+        if (written >= (int)(dims_str_size - used_buffer_space))
+          written = (int)(dims_str_size - used_buffer_space) - 1;
+        used_buffer_space += written;
       }
       len = strlen(desired_dims);
       desired_dims[len-1] = ']';
+
+      used_buffer_space = strlen(actual_dims);
       for (i = 0; i < n; i++)
       {
-        snprintf(s, sizeof(s), "%ld,", (long int)array_size(ary,i));
-        strcat(actual_dims,s);
+        written = snprintf(actual_dims + used_buffer_space, dims_str_size - used_buffer_space, "%ld,", (long int)array_size(ary,i));
+        if (written < 0)
+          written = 0;
+        if (written >= (int)(dims_str_size - used_buffer_space))
+          written = (int)(dims_str_size - used_buffer_space) - 1;
+        used_buffer_space += written;
       }
       len = strlen(actual_dims);
       actual_dims[len-1] = ']';
