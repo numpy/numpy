@@ -13,6 +13,7 @@ from numpy.testing import (
     IS_WASM,
     assert_,
     assert_equal,
+    assert_array_equal,
     assert_raises,
     assert_raises_regex,
 )
@@ -1322,7 +1323,7 @@ def test_multithreaded_array_printing():
 
     run_threaded(TestPrintOptions().test_floatmode, 500)
 
-@pytest.mark.filterwarnings("ignore")
+
 def test_user_defined_floating_dtype_printing_does_not_corrupt_precision():
     """
     Ensure that array printing does not use NumPy Dragon4 formatting
@@ -1333,10 +1334,6 @@ def test_user_defined_floating_dtype_printing_does_not_corrupt_precision():
 
     pi_str = "3.14159265358979323846264338327950288"
     arr = np.array([pi_str], dtype=QuadPrecDType())
-
-    with np.printoptions(precision=34, floatmode="fixed"):
-        s = str(arr)
-
-    # float64 would truncate the last digit here due to precision loss
-    assert s.strip().startswith("[3.1415926535897932")
-
+    res = np.array(str(arr).strip("[] "), dtype=QuadPrecDType())
+    # Check that the string representation round-trips correctly.
+    assert_array_equal(res, arr)

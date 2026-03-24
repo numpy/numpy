@@ -9,3 +9,5 @@ pytest-timeout
 # for optional f2py encoding detection
 charset-normalizer
 tzdata
+# Ensure we install quaddtype in CI for some wheel setups (mac):
+numpy_quaddtype ; python_version<"3.15" and sys_platform=="darwin"

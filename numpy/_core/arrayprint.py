@@ -494,9 +494,7 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
         'timedelta': lambda: TimedeltaFormat(data),
         'object': lambda: _object_format,
         'void': lambda: str_format,
-        # Strings should keep quotes, so use repr()
-        'numpystr': lambda: repr_format,
-    }
+        'numpystr': lambda: repr_format}
     # we need to wrap values in `formatter` in a lambda, so that the interface
     # is the same as the above values.
     def indirect(x):
@@ -531,43 +529,37 @@ def _get_format_function(data, **options):
     dtypeobj = dtype_.type
     formatdict = _get_formatdict(data, **options)
 
-    # NOTE: removed an overly-broad module-based early guard that routed
-    # non-`numpy`-module dtype classes (e.g. `StringDType`) to the `void`
-    # formatter. Such types can still be core NumPy dtypes and must use the
-    # appropriate formatter (e.g. `numpystr` for string dtypes). See PR
-    # discussion for a targeted strategy for user-defined floating dtypes.
     if dtypeobj is None:
         return formatdict["numpystr"]()
-
+    elif getattr(dtypeobj, "__module__") != "numpy":
+        # Use `str()` as a default format for non-NumPy dtypes. This should be
+        # improved.  We use `str` assuming that `repr` is likely to duplicate
+        # information that is contained in the dtype.
+        # (Do this early, because e.g. quaddtype subclasses floating.)
+        return formatdict['void']()
     elif issubclass(dtypeobj, _nt.bool):
         return formatdict['bool']()
-
     elif issubclass(dtypeobj, _nt.integer):
         if issubclass(dtypeobj, _nt.timedelta64):
             return formatdict['timedelta']()
-        return formatdict['int']()
-
+        else:
+            return formatdict['int']()
     elif issubclass(dtypeobj, _nt.floating):
         if issubclass(dtypeobj, _nt.longdouble):
             return formatdict['longfloat']()
         else:
             return formatdict['float']()
-
     elif issubclass(dtypeobj, _nt.complexfloating):
         if issubclass(dtypeobj, _nt.clongdouble):
             return formatdict['longcomplexfloat']()
         else:
             return formatdict['complexfloat']()
-
     elif issubclass(dtypeobj, (_nt.str_, _nt.bytes_)):
         return formatdict['numpystr']()
-
     elif issubclass(dtypeobj, _nt.datetime64):
         return formatdict['datetime']()
-
     elif issubclass(dtypeobj, _nt.object_):
         return formatdict['object']()
-
     elif issubclass(dtypeobj, _nt.void):
         if dtype_.names is not None:
             return StructuredVoidFormat.from_data(data, **options)
@@ -576,6 +568,8 @@ def _get_format_function(data, **options):
 
     else:
         return formatdict['numpystr']()
+
+
 def _recursive_guard(fillvalue='...'):
     """
     Like the python 3.2 reprlib.recursive_repr, but forwards *args and **kwargs
