@@ -495,6 +495,7 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
         'object': lambda: _object_format,
         'void': lambda: str_format,
         'numpystr': lambda: repr_format}
+
     # we need to wrap values in `formatter` in a lambda, so that the interface
     # is the same as the above values.
     def indirect(x):
@@ -521,6 +522,7 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
                 formatdict[key] = indirect(formatter[key])
 
     return formatdict
+
 def _get_format_function(data, **options):
     """
     find the right formatting function for the dtype_
@@ -565,7 +567,6 @@ def _get_format_function(data, **options):
             return StructuredVoidFormat.from_data(data, **options)
         else:
             return formatdict['void']()
-
     else:
         return formatdict['numpystr']()
 
