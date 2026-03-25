@@ -15,7 +15,6 @@ Original author: Robert Cimrman
 
 """
 import functools
-import warnings
 from typing import NamedTuple
 
 import numpy as np
@@ -28,7 +27,7 @@ array_function_dispatch = functools.partial(
 
 
 __all__ = [
-    "ediff1d", "in1d", "intersect1d", "isin", "setdiff1d", "setxor1d",
+    "ediff1d", "intersect1d", "isin", "setdiff1d", "setxor1d",
     "union1d", "unique", "unique_all", "unique_counts", "unique_inverse",
     "unique_values"
 ]
@@ -804,112 +803,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
     return aux[flag[1:] & flag[:-1]]
 
 
-def _in1d_dispatcher(ar1, ar2, assume_unique=None, invert=None, *,
-                     kind=None):
-    return (ar1, ar2)
-
-
-@array_function_dispatch(_in1d_dispatcher)
-def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
-    """
-    Test whether each element of a 1-D array is also present in a second array.
-
-    .. deprecated:: 2.0
-        Use :func:`isin` instead of `in1d` for new code.
-
-    Returns a boolean array the same length as `ar1` that is True
-    where an element of `ar1` is in `ar2` and False otherwise.
-
-    Parameters
-    ----------
-    ar1 : (M,) array_like
-        Input array.
-    ar2 : array_like
-        The values against which to test each value of `ar1`.
-    assume_unique : bool, optional
-        If True, the input arrays are both assumed to be unique, which
-        can speed up the calculation.  Default is False.
-    invert : bool, optional
-        If True, the values in the returned array are inverted (that is,
-        False where an element of `ar1` is in `ar2` and True otherwise).
-        Default is False. ``np.in1d(a, b, invert=True)`` is equivalent
-        to (but is faster than) ``np.invert(in1d(a, b))``.
-    kind : {None, 'sort', 'table'}, optional
-        The algorithm to use. This will not affect the final result,
-        but will affect the speed and memory use. The default, None,
-        will select automatically based on memory considerations.
-
-        * If 'sort', will use a mergesort-based approach. This will have
-          a memory usage of roughly 6 times the sum of the sizes of
-          `ar1` and `ar2`, not accounting for size of dtypes.
-        * If 'table', will use a lookup table approach similar
-          to a counting sort. This is only available for boolean and
-          integer arrays. This will have a memory usage of the
-          size of `ar1` plus the max-min value of `ar2`. `assume_unique`
-          has no effect when the 'table' option is used.
-        * If None, will automatically choose 'table' if
-          the required memory allocation is less than or equal to
-          6 times the sum of the sizes of `ar1` and `ar2`,
-          otherwise will use 'sort'. This is done to not use
-          a large amount of memory by default, even though
-          'table' may be faster in most cases. If 'table' is chosen,
-          `assume_unique` will have no effect.
-
-    Returns
-    -------
-    in1d : (M,) ndarray, bool
-        The values `ar1[in1d]` are in `ar2`.
-
-    See Also
-    --------
-    isin                  : Version of this function that preserves the
-                            shape of ar1.
-
-    Notes
-    -----
-    `in1d` can be considered as an element-wise function version of the
-    python keyword `in`, for 1-D sequences. ``in1d(a, b)`` is roughly
-    equivalent to ``np.array([item in b for item in a])``.
-    However, this idea fails if `ar2` is a set, or similar (non-sequence)
-    container:  As ``ar2`` is converted to an array, in those cases
-    ``asarray(ar2)`` is an object array rather than the expected array of
-    contained values.
-
-    Using ``kind='table'`` tends to be faster than `kind='sort'` if the
-    following relationship is true:
-    ``log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927``,
-    but may use greater memory. The default value for `kind` will
-    be automatically selected based only on memory usage, so one may
-    manually set ``kind='table'`` if memory constraints can be relaxed.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> test = np.array([0, 1, 2, 5, 0])
-    >>> states = [0, 2]
-    >>> mask = np.in1d(test, states)
-    >>> mask
-    array([ True, False,  True, False,  True])
-    >>> test[mask]
-    array([0, 2, 0])
-    >>> mask = np.in1d(test, states, invert=True)
-    >>> mask
-    array([False,  True, False,  True, False])
-    >>> test[mask]
-    array([1, 5])
-    """
-
-    # Deprecated in NumPy 2.0, 2023-08-18
-    warnings.warn(
-        "`in1d` is deprecated. Use `np.isin` instead.",
-        DeprecationWarning,
-        stacklevel=2
-    )
-
-    return _in1d(ar1, ar2, assume_unique, invert, kind=kind)
-
-
-def _in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
+def _isin(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     # Ravel both arrays, behavior for the first array could be different
     ar1 = np.asarray(ar1).ravel()
     ar2 = np.asarray(ar2).ravel()
@@ -1178,7 +1072,7 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
            [ True, False]])
     """
     element = np.asarray(element)
-    return _in1d(element, test_elements, assume_unique=assume_unique,
+    return _isin(element, test_elements, assume_unique=assume_unique,
                  invert=invert, kind=kind).reshape(element.shape)
 
 
@@ -1261,4 +1155,4 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     else:
         ar1 = unique(ar1)
         ar2 = unique(ar2)
-    return ar1[_in1d(ar1, ar2, assume_unique=True, invert=True)]
+    return ar1[_isin(ar1, ar2, assume_unique=True, invert=True)]

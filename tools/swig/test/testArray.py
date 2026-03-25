@@ -378,9 +378,9 @@ if __name__ == "__main__":
 
     # Build the test suite
     suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(Array1TestCase))
-    suite.addTest(unittest.makeSuite(Array2TestCase))
-    suite.addTest(unittest.makeSuite(ArrayZTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(Array1TestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(Array2TestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ArrayZTestCase))
 
     # Execute the test suite
     print("Testing Classes of Module Array")

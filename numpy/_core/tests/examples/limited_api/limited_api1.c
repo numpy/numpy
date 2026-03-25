@@ -1,5 +1,3 @@
-#define Py_LIMITED_API 0x03060000
-
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <numpy/ufuncobject.h>

@@ -328,6 +328,30 @@ _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset)
     return 0;
 }
 
+
+/**
+ * Unpack a field from a structured dtype. The field index must be valid.
+ *
+ * @param descr The dtype to unpack.
+ * @param index The index of the field to unpack.
+ * @param odescr will be set to the field's dtype
+ * @param offset will be set to the field's offset
+ *
+ * @return -1 on failure, 0 on success.
+ */
+ NPY_NO_EXPORT int
+ _unpack_field_index(
+    _PyArray_LegacyDescr *descr,
+    npy_intp index,
+    PyArray_Descr **odescr,
+    npy_intp *offset)
+ {
+    PyObject *key = PyTuple_GET_ITEM(descr->names, index);
+    PyObject *tup = PyDict_GetItem(descr->fields, key);  // noqa: borrowed-ref OK
+    return _unpack_field(tup, odescr, offset);
+ }
+
+
 /*
  * check whether arrays with datatype dtype might have object fields. This will
  * only happen for structured dtypes (which may have hidden objects even if the
@@ -357,7 +381,7 @@ _may_have_objects(PyArray_Descr *dtype)
  */
 NPY_NO_EXPORT PyArrayObject *
 new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
-                  int nd, npy_intp dimensions[], int typenum, PyArrayObject **result)
+                  int nd, npy_intp dimensions[], PyArray_Descr *descr, PyArrayObject **result)
 {
     PyArrayObject *out_buf;
 
@@ -366,7 +390,7 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
 
         /* verify that out is usable */
         if (PyArray_NDIM(out) != nd ||
-            PyArray_TYPE(out) != typenum ||
+            !PyArray_EquivTypes(PyArray_DESCR(out), descr) ||
             !PyArray_ISCARRAY(out)) {
             PyErr_SetString(PyExc_ValueError,
                 "output array is not acceptable (must have the right datatype, "
@@ -394,8 +418,8 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
             /* set copy-back */
             Py_INCREF(out);
             if (PyArray_SetWritebackIfCopyBase(out_buf, out) < 0) {
-                Py_DECREF(out);
                 Py_DECREF(out_buf);
+                // PyArray_SetWritebackIfCopyBase steals reference to second argument
                 return NULL;
             }
         }
@@ -428,10 +452,11 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
             subtype = Py_TYPE(ap1);
         }
 
-        out_buf = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
-                                               typenum, NULL, NULL, 0, 0,
-                                               (PyObject *)
-                                               (prior2 > prior1 ? ap2 : ap1));
+        Py_INCREF(descr);
+        out_buf = (PyArrayObject *)PyArray_NewFromDescr(subtype, descr, nd, dimensions,
+                                                        NULL, NULL, 0,
+                                                        (PyObject *)
+                                                        (prior2 > prior1 ? ap2 : ap1));
 
         if (out_buf != NULL && result) {
             Py_INCREF(out_buf);
@@ -452,4 +477,62 @@ check_is_convertible_to_scalar(PyArrayObject *v)
     PyErr_SetString(PyExc_TypeError,
             "only 0-dimensional arrays can be converted to Python scalars");
     return -1;
+}
+
+NPY_NO_EXPORT PyObject *
+build_array_interface(PyObject *dataptr, PyObject *descr, PyObject *strides,
+                      PyObject *typestr, PyObject *shape)
+{
+    PyObject *inter = NULL;
+    PyObject *version = NULL;
+    int ret;
+
+    inter = PyDict_New();
+    if (inter == NULL) {
+        goto fail;
+    }
+
+    ret = PyDict_SetItemString(inter, "data", dataptr);
+    if (ret < 0) {
+        goto fail;
+    }
+
+    ret = PyDict_SetItemString(inter, "strides", strides);
+    if (ret < 0) {
+        goto fail;
+    }
+
+    ret = PyDict_SetItemString(inter, "descr", descr);
+    if (ret < 0) {
+        goto fail;
+    }
+
+    ret = PyDict_SetItemString(inter, "typestr", typestr);
+    if (ret < 0) {
+        goto fail;
+    }
+
+    ret = PyDict_SetItemString(inter, "shape", shape);
+    if (ret < 0) {
+        goto fail;
+    }
+
+    version = PyLong_FromLong(3);
+    if (version == NULL) {
+        goto fail;
+    }
+
+    ret = PyDict_SetItemString(inter, "version", version);
+    if (ret < 0) {
+        goto fail;
+    }
+    Py_XDECREF(version);
+    return inter;
+
+
+fail:
+    Py_XDECREF(inter);
+    Py_XDECREF(version);
+    return NULL;
+
 }

@@ -36,7 +36,8 @@ However, you can ensure that we can track down such issues more easily:
   consider creating an additional simpler test as well.
   This can be helpful, because often it is only easy to find which test
   triggers an issue and not which line of the test.
-* Never use ``np.empty`` if data is read/used. ``valgrind`` will notice this
+* Never use ``np.empty`` if data is read/used.
+  `Valgrind <https://valgrind.org/>`_ will notice this
   and report an error. When you do not care about values, you can generate
   random values instead.
 
@@ -131,7 +132,8 @@ to mark them, but expect some false positives.
 ``valgrind``
 ============
 
-Valgrind is a powerful tool to find certain memory access problems and should
+`Valgrind <https://valgrind.org/>`_ is a powerful tool
+to find certain memory access problems and should
 be run on complicated C code.
 Basic use of ``valgrind`` usually requires no more than::
 
@@ -170,7 +172,7 @@ Valgrind helps:
   Python allocators.)
 
 Even though using valgrind for memory leak detection is slow and less sensitive
-it can be a convenient: you can run most programs with valgrind without
+it can be convenient: you can run most programs with valgrind without
 modification.
 
 Things to be aware of:
@@ -233,7 +235,7 @@ The NumPy developers often use both ``gdb`` and ``lldb`` to debug Numpy. As a
 rule of thumb, ``gdb`` is often easier to use on Linux while ``lldb`` is easier
 to use on a Mac environment. They have disjoint user interfaces, so you will need to
 learn how to use whichever one you land on. The ``gdb`` to ``lldb`` `command map
-<https://lldb.llvm.org/use/map.html>`_ is a convnient reference for how to
+<https://lldb.llvm.org/use/map.html>`_ is a convenient reference for how to
 accomplish common recipes in both debuggers.
 
 
@@ -243,6 +245,25 @@ Building With Debug Symbols
 The ``spin`` `development workflow tool
 <https://github.com/scientific-python/spin>`_. has built-in support for working
 with both ``gdb`` and ``lldb`` via the ``spin gdb`` and ``spin lldb`` commands.
+
+.. note::
+
+   Building with ``-Dbuildtype=debug`` has a couple of important effects to
+   be aware of:
+
+   * **Assertions are enabled**: This build type does not define the ``NDEBUG``
+     macro, which means that any C-level assertions in the code will be
+     active. This is very useful for debugging, as it can help pinpoint
+     where an unexpected condition occurs.
+
+   * **Compiler flags may need overriding**: Some compiler toolchains,
+     particularly those from ``conda-forge``, may set optimization flags
+     like ``-O2`` by default. These can override the ``debug`` build type.
+     To ensure a true debug build in such environments, you may need to
+     manually unset or override this flag.
+
+   For more details on both points, see the `meson-python guide on
+   debug builds <https://mesonbuild.com/meson-python/how-to-guides/debug-builds.html>`_.
 
 For both debuggers, it's advisable to build NumPy in either the ``debug`` or
 ``debugoptimized`` meson build profile. To use ``debug`` you can pass the option

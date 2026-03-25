@@ -15,11 +15,6 @@ Using via ``meson``
    The default build system for ``f2py`` is now ``meson``, see
    :ref:`distutils-status-migration` for some more details..
 
-The key advantage gained by leveraging ``meson`` over the techniques described
-in :ref:`f2py-distutils` is that this feeds into existing systems and larger
-projects with ease. ``meson`` has a rather pythonic syntax which makes it more
-comfortable and amenable to extension for ``python`` users.
-
 Fibonacci walkthrough (F77)
 ===========================
 

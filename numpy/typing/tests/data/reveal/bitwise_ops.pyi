@@ -1,10 +1,10 @@
-from typing import Literal as L, TypeAlias, assert_type
+from typing import Literal as L, assert_type
 
 import numpy as np
 import numpy.typing as npt
 
-FalseType: TypeAlias = L[False]
-TrueType: TypeAlias = L[True]
+type FalseType = L[False]
+type TrueType = L[True]
 
 i4: np.int32
 i8: np.int64

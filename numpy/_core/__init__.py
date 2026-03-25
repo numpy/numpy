@@ -13,9 +13,11 @@ from numpy.version import version as __version__
 # disables OpenBLAS affinity setting of the main thread that limits
 # python threads or processes to one core
 env_added = []
-for envkey in ['OPENBLAS_MAIN_FREE', 'GOTOBLAS_MAIN_FREE']:
+for envkey in ['OPENBLAS_MAIN_FREE']:
     if envkey not in os.environ:
-        os.environ[envkey] = '1'
+        # Note: using `putenv` (and `unsetenv` further down) instead of updating
+        # `os.environ` on purpose to avoid a race condition, see gh-30627.
+        os.putenv(envkey, '1')
         env_added.append(envkey)
 
 try:
@@ -83,7 +85,7 @@ Original error was: {exc}
     raise ImportError(msg) from exc
 finally:
     for envkey in env_added:
-        del os.environ[envkey]
+        os.unsetenv(envkey)
 del envkey
 del env_added
 del os
@@ -106,15 +108,7 @@ from . import numerictypes as nt
 from .numerictypes import sctypeDict, sctypes
 
 multiarray.set_typeDict(nt.sctypeDict)
-from . import (
-    _machar,
-    einsumfunc,
-    fromnumeric,
-    function_base,
-    getlimits,
-    numeric,
-    shape_base,
-)
+from . import einsumfunc, fromnumeric, function_base, getlimits, numeric, shape_base
 from .einsumfunc import *
 from .fromnumeric import *
 from .function_base import *
@@ -193,18 +187,6 @@ def _DType_reduce(DType):
     # For these, we pickle them by reconstructing them from the scalar type:
     scalar_type = DType.type
     return _DType_reconstruct, (scalar_type,)
-
-
-def __getattr__(name):
-    # Deprecated 2022-11-22, NumPy 1.25.
-    if name == "MachAr":
-        import warnings
-        warnings.warn(
-            "The `np._core.MachAr` is considered private API (NumPy 1.24)",
-            DeprecationWarning, stacklevel=2,
-        )
-        return _machar.MachAr
-    raise AttributeError(f"Module {__name__!r} has no attribute {name!r}")
 
 
 import copyreg

@@ -1332,20 +1332,6 @@ PyArray_TypestrConvert(int itemsize, int gentype)
             newtype = NPY_STRING;
             break;
 
-        case NPY_DEPRECATED_STRINGLTR2:
-        {
-            /*
-             * raise a deprecation warning, which might be an exception
-             * if warnings are errors, so leave newtype unset in that
-             * case
-             */
-            int ret = DEPRECATE("Data type alias 'a' was deprecated in NumPy 2.0. "
-                                "Use the 'S' alias instead.");
-            if (ret == 0) {
-                newtype = NPY_STRING;
-            }
-            break;
-        }
         case NPY_UNICODELTR:
             newtype = NPY_UNICODE;
             break;

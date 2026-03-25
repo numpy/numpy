@@ -57,13 +57,13 @@ PyMODINIT_FUNC PyInit__operand_flag_tests(void)
     PyObject *m = NULL;
     PyObject *ufunc;
 
+    import_array();
+    import_umath();
+
     m = PyModule_Create(&moduledef);
     if (m == NULL) {
         goto fail;
     }
-
-    import_array();
-    import_umath();
 
     ufunc = PyUFunc_FromFuncAndData(funcs, data, types, 1, 2, 0,
                                     PyUFunc_None, "inplace_add",

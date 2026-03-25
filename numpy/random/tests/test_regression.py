@@ -1,4 +1,7 @@
+import inspect
 import sys
+
+import pytest
 
 import numpy as np
 from numpy import random
@@ -146,3 +149,26 @@ class TestRegression:
         perm = rng.permutation(m)
         assert_array_equal(perm, np.array([2, 1, 4, 0, 3]))
         assert_array_equal(m.__array__(), np.arange(5))
+
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.parametrize(
+        "cls",
+        [
+            random.Generator,
+            random.MT19937,
+            random.PCG64,
+            random.PCG64DXSM,
+            random.Philox,
+            random.RandomState,
+            random.SFC64,
+            random.BitGenerator,
+            random.SeedSequence,
+            random.bit_generator.SeedlessSeedSequence,
+        ],
+    )
+    def test_inspect_signature(self, cls: type) -> None:
+        assert hasattr(cls, "__text_signature__")
+        try:
+            inspect.signature(cls)
+        except ValueError:
+            pytest.fail(f"invalid signature: {cls.__module__}.{cls.__qualname__}")

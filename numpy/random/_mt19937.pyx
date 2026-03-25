@@ -43,8 +43,8 @@ cdef uint64_t mt19937_raw(void *st) noexcept nogil:
     return <uint64_t>mt19937_next32(<mt19937_state *> st)
 
 cdef class MT19937(BitGenerator):
-    """
-    MT19937(seed=None)
+    # the first line is used to populate `__text_signature__`
+    """MT19937(seed=None)\n--
 
     Container for the Mersenne Twister pseudo-random number generator.
 

@@ -645,7 +645,7 @@ def _read_array_header(fp, version, max_header_size=_MAX_HEADER_SIZE):
             "may be necessary.")
 
     # The header is a pretty-printed string representation of a literal
-    # Python dictionary with trailing newlines padded to a ARRAY_ALIGN byte
+    # Python dictionary with trailing newlines padded to an ARRAY_ALIGN byte
     # boundary. The keys are strings.
     #   "shape" : tuple of int
     #   "fortran_order" : bool
@@ -838,9 +838,11 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
             array = pickle.load(fp, **pickle_kwargs)
         except UnicodeError as err:
             # Friendlier error message
-            raise UnicodeError("Unpickling a python object failed: %r\n"
-                               "You may need to pass the encoding= option "
-                               "to numpy.load" % (err,)) from err
+            raise UnicodeError(
+                f"Unpickling a python object failed: {err!r}\n"
+                "You may need to pass the encoding= option "
+                "to numpy.load"
+            ) from err
     else:
         if isfileobj(fp):
             # We can use the fast fromfile() function.

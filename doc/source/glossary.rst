@@ -472,7 +472,8 @@ Glossary
 
        Strides are computed automatically from an array's dtype and
        shape, but can be directly specified using
-       :doc:`as_strided. <reference/generated/numpy.lib.stride_tricks.as_strided>`
+       :doc:`as_strided <reference/generated/numpy.lib.stride_tricks.as_strided>`.
+       Bounds validation can be enabled with the ``check_bounds`` parameter.
 
        For details, see
        :doc:`numpy.ndarray.strides <reference/generated/numpy.ndarray.strides>`.

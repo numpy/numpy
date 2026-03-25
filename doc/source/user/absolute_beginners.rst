@@ -779,7 +779,7 @@ You can add the arrays together with the plus sign.
 ::
 
   >>> data = np.array([1, 2])
-  >>> ones = np.ones(2, dtype=int)
+  >>> ones = np.ones(2, dtype=np.int_)
   >>> data + ones
   array([2, 3])
 
@@ -1348,7 +1348,7 @@ For example::
       With a single iterable argument, return its biggest item. The
       default keyword-only argument specifies an object to return if
       the provided iterable is empty.
-      With two or more arguments, return the largest argument.
+      With two or more ...arguments, return the largest argument.
   <BLANKLINE>
 
 
