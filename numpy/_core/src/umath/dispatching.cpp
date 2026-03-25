@@ -237,16 +237,16 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
         // Hardcode slot names for attributes and non-ufuncs stored on the DType
         // (Also avoids circular imports a bit.)
         if (strcmp(slot->name, "real") == 0) {
-            Py_XSETREF(ufunc, npy_interned_str.real);
+            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.real));
         }
         else if (strcmp(slot->name, "imag") == 0) {
-            Py_XSETREF(ufunc, npy_interned_str.imag);
+            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.imag));
         }
         else if (strcmp(slot->name, "sort") == 0) {
-            Py_XSETREF(ufunc, npy_interned_str.sort);
+            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.sort));
         }
         else if (strcmp(slot->name, "argsort") == 0) {
-            Py_XSETREF(ufunc, npy_interned_str.argsort);
+            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.argsort));
         }
         else {
             Py_XSETREF(ufunc, npy_import_entry_point(slot->name));
