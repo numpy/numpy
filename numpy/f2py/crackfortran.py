@@ -2523,9 +2523,9 @@ def get_parameters(vars, global_params={}):
             # Handle _dp for gh-6624
             # Also fixes gh-20460
             if real16pattern.search(v):
-                v = '8'
+                v = 8
             elif real8pattern.search(v):
-                v = '4'
+                v = 4
             try:
                 params[n] = param_eval(v, g_params, params, dimspec=dimspec)
             except Exception as msg:
