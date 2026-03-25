@@ -1,28 +1,16 @@
 import re
 from _typeshed import StrOrBytesPath, StrPath
 from collections.abc import Callable, Iterable, Mapping
-from typing import (
-    IO,
-    Any,
-    Concatenate,
-    Final,
-    Literal as L,
-    Never,
-    ParamSpec,
-    TypeAlias,
-    overload,
-)
+from typing import IO, Any, Concatenate, Final, Literal as L, Never, overload
 
 from .__version__ import version
 from .auxfuncs import isintent_dict as isintent_dict
 
 ###
 
-_Tss = ParamSpec("_Tss")
-
-_VisitResult: TypeAlias = list[Any] | dict[str, Any] | None
-_VisitItem: TypeAlias = tuple[str | None, _VisitResult]
-_VisitFunc: TypeAlias = Callable[Concatenate[_VisitItem, list[_VisitItem], _VisitResult, _Tss], _VisitItem | None]
+type _VisitResult = list[Any] | dict[str, Any] | None
+type _VisitItem = tuple[str | None, _VisitResult]
+type _VisitFunc[**Tss] = Callable[Concatenate[_VisitItem, list[_VisitItem], _VisitResult, Tss], _VisitItem | None]
 
 ###
 
@@ -220,8 +208,6 @@ def analyzevars(block: Mapping[str, Any]) -> dict[str, dict[str, str]]: ...
 
 #
 def param_eval(v: str, g_params: dict[str, Any], params: Mapping[str, object], dimspec: str | None = None) -> dict[str, Any]: ...
-def balance_parentheses(s: str) -> str: ...
-def replace_variables_in_equation(d: str, params: dict) -> str: ...
 def param_parse(d: str, params: Mapping[str, str]) -> str: ...
 def expr2name(a: str, block: Mapping[str, object], args: list[str] = []) -> str: ...
 def analyzeargs(block: Mapping[str, object]) -> dict[str, Any]: ...
@@ -245,13 +231,13 @@ def crackfortran(files: StrOrBytesPath | Iterable[StrOrBytesPath]) -> list[dict[
 def crack2fortran(block: Mapping[str, Any]) -> str: ...
 
 #
-def traverse(
+def traverse[**Tss](
     obj: tuple[str | None, _VisitResult],
-    visit: _VisitFunc[_Tss],
+    visit: _VisitFunc[Tss],
     parents: list[tuple[str | None, _VisitResult]] = [],
     result: list[Any] | dict[str, Any] | None = None,
-    *args: _Tss.args,
-    **kwargs: _Tss.kwargs,
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
 ) -> _VisitItem | _VisitResult: ...
 
 #
