@@ -1612,8 +1612,7 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     # Check the kwargs to avoid a more cryptic error later, without having to
     # repeat default values here
     valid_einsum_kwargs = ['dtype', 'order', 'casting']
-    unknown_kwargs = [k for (k, v) in kwargs.items() if
-                      k not in valid_einsum_kwargs]
+    unknown_kwargs = [k for k in kwargs if k not in valid_einsum_kwargs]
     if len(unknown_kwargs):
         raise TypeError(f"Did not understand the following kwargs: {unknown_kwargs}")
 

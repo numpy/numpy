@@ -232,7 +232,9 @@ typedef struct _tagPyUFuncObject {
          */
         PyUFunc_ProcessCoreDimsFunc *process_core_dims_func;
     #endif
-} PyUFuncObject;
+} PyUFuncObject_fields;
+
+typedef PyUFuncObject_fields PyUFuncObject;
 
 #include "arrayobject.h"
 /* Generalized ufunc; 0x0001 reserved for possible use as CORE_ENABLED */
@@ -335,6 +337,12 @@ typedef struct _loop1d_info {
 #endif
 
 #include "__ufunc_api.h"
+
+// In future, when adding support for opaque PyObject, this would become
+// a ABI function call to get the ufunc struct fields from the PyObject.
+static inline PyUFuncObject_fields *_PyUFuncObject_GET_ITEM_DATA(PyUFuncObject *ufunc) {
+    return (PyUFuncObject_fields *)ufunc;
+}
 
 #ifdef __cplusplus
 }

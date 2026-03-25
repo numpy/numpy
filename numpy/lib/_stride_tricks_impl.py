@@ -364,6 +364,21 @@ def sliding_window_view(x, window_shape, axis=None, *,
     >>> moving_average
     array([1., 2., 3., 4.])
 
+    To adjust the step size of the sliding window, index the output view along
+    the desired dimension(s). Using the array shown above:
+
+    >>> v[::2]
+    array([[0, 1, 2],
+           [2, 3, 4]])
+
+    You can slide in the reverse direction using the same technique:
+
+    >>> v[::-1]
+    array([[3, 4, 5],
+           [2, 3, 4],
+           [1, 2, 3],
+           [0, 1, 2]])
+
     The two examples below demonstrate the effect of ``writeable=True``.
 
     Creating a view with the default ``writeable=False`` and then writing to

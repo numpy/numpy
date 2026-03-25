@@ -30,7 +30,7 @@
  *
  * - Don't add new members to ndarray or descr structs, to preserve binary
  *   compatibility. (Also, adding the items is actually not very useful,
- *   since mutability issues prevent an 1 to 1 relationship between arrays
+ *   since mutability issues prevent a one-to-one relationship between arrays
  *   and buffer views.)
  *
  * - Don't use bf_releasebuffer, because it prevents PyArg_ParseTuple("s#", ...
