@@ -2666,7 +2666,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('imag',
     The imaginary part of the array.
 
     Returns a view into the original array for complex arrays.
-    For non-compelx ones, returns a zero array of the same dtype.
+    For non-complex arrays, returns a zero array of the same dtype.
     For ``object`` arrays returns elementwise ``.imag`` or ``0``
     if ``.imag`` is undefined.
 
