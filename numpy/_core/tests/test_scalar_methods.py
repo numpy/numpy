@@ -183,7 +183,6 @@ class TestRealScalarProtocols:
         assert type(scalar.__floor__()) is int
         assert type(scalar.__ceil__()) is int
 
-
     @pytest.mark.parametrize("code", np.typecodes["AllInteger"])
     def test_integer_dunders(self, code: str) -> None:
         cls = np.dtype(code).type
@@ -206,6 +205,8 @@ class TestRealScalarProtocols:
             pytest.skip("long double is same as double")
 
         scalar = np.longdouble("9007199254740992.5")
+        if scalar == np.longdouble("9007199254740992.0"):
+            pytest.skip("long double cannot represent the test value precisely")
 
         assert scalar.__floor__() == 9007199254740992
         assert scalar.__ceil__() == 9007199254740993
