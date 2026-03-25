@@ -248,7 +248,7 @@ _get_castingimpl(PyObject *NPY_UNUSED(module), PyObject *args)
 {
     PyArray_DTypeMeta *from, *to;
     if (!PyArg_ParseTuple(args, "O!O!:_get_castingimpl",
-            &PyArrayDTypeMeta_Type, &from, &PyArrayDTypeMeta_Type, &to)) {
+            PyArrayDTypeMeta_Type, &from, PyArrayDTypeMeta_Type, &to)) {
         return NULL;
     }
     return PyArray_GetBoundCastingImpl(from, to);

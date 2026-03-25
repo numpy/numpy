@@ -222,7 +222,7 @@ validate_spec(PyArrayMethod_Spec *spec)
                     "(method: %s)", spec->name);
             return -1;
         }
-        if (!PyObject_TypeCheck(spec->dtypes[i], &PyArrayDTypeMeta_Type)) {
+        if (!PyObject_TypeCheck(spec->dtypes[i], PyArrayDTypeMeta_Type)) {
             PyErr_Format(PyExc_TypeError,
                     "ArrayMethod provided object %R is not a DType."
                     "(method: %s)", spec->dtypes[i], spec->name);
@@ -407,7 +407,7 @@ NPY_NO_EXPORT PyObject *
 PyArrayMethod_FromSpec(PyArrayMethod_Spec *spec)
 {
     for (int i = 0; i < spec->nin + spec->nout; i++) {
-        if (!PyObject_TypeCheck(spec->dtypes[i], &PyArrayDTypeMeta_Type)) {
+        if (!PyObject_TypeCheck(spec->dtypes[i], PyArrayDTypeMeta_Type)) {
             PyErr_SetString(PyExc_RuntimeError,
                     "ArrayMethod spec contained a non DType.");
             return NULL;

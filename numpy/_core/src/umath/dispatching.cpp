@@ -100,7 +100,7 @@ PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate)
     for (Py_ssize_t i = 0; i < PyTuple_GET_SIZE(DType_tuple); i++) {
         PyObject *item = PyTuple_GET_ITEM(DType_tuple, i);
         if (item != Py_None
-                && !PyObject_TypeCheck(item, &PyArrayDTypeMeta_Type)) {
+                && !PyObject_TypeCheck(item, PyArrayDTypeMeta_Type)) {
             PyErr_SetString(PyExc_TypeError,
                     "DType tuple may only contain None and DType classes");
             return -1;

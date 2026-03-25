@@ -29,7 +29,7 @@ int
 PyArrayInitDTypeMeta_FromSpec(
         PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *spec)
 {
-    if (!PyObject_TypeCheck(DType, &PyArrayDTypeMeta_Type)) {
+    if (!PyObject_TypeCheck(DType, PyArrayDTypeMeta_Type)) {
         PyErr_SetString(PyExc_RuntimeError,
                 "Passed in DType must be a valid (initialized) DTypeMeta "
                 "instance!");
@@ -127,7 +127,7 @@ _fill_dtype_api(void *full_api_table[])
     void **api_table = full_api_table + 320;
 
     /* The type of the DType metaclass */
-    api_table[0] = &PyArrayDTypeMeta_Type;
+    api_table[0] = PyArrayDTypeMeta_Type;
     /* Boolean */
     api_table[1] = &PyArray_BoolDType;
     /* Integers */
