@@ -1438,6 +1438,7 @@ def test_memmap_takes_fast_route(tmpdir):
             np.nanmin(mm, out=np.zeros(2))
 
 
+@pytest.mark.filterwarnings("ignore:All-NaN slice:RuntimeWarning")
 def test_masked_array_all_masked():
     """
     Test that `nan*` functions do not raise a `ValueError` when passed a
@@ -1445,12 +1446,9 @@ def test_masked_array_all_masked():
     """
     vals_ma = np.ma.MaskedArray([np.nan, 3], mask=[True, True])
 
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore', RuntimeWarning)
+    for f in [np.nanmean, np.nanstd]:
+        res = f(vals_ma)
+        assert_(np.ma.is_masked(res))
 
-        for f in [np.nanmean, np.nanstd]:
-            res = f(vals_ma)
-            assert_(np.ma.is_masked(res), msg=f"{f.__name__} failed to return masked")
-
-        res = np.nanpercentile(vals_ma, 90)
-        assert_(np.isnan(res), msg="nanpercentile failed to return NaN")
+    res = np.nanpercentile(vals_ma, 90)
+    assert_(np.isnan(res))
