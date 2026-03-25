@@ -47,17 +47,23 @@ static void simd_unary_negative_cn(
 {
     using IdxT = std::conditional_t<sizeof(T) == 4, int32_t, int64_t>;
     HWY_LANES_CONSTEXPR int vstep = Lanes<T>();
-    const auto idx = hn::Mul(hn::Iota(_Tag<IdxT>(), 0),
-                             hn::Set(_Tag<IdxT>(), static_cast<IdxT>(ostride)));
+    // Shift base pointer down to prevent negative Gather/Scatter indices
+    npy_intp o_base_offset = (ostride < 0) ? (vstep - 1) * ostride : 0;
+    auto idx = hn::Mul(hn::Iota(_Tag<IdxT>(), 0),
+                       hn::Set(_Tag<IdxT>(), static_cast<IdxT>(ostride)));
+    if (ostride < 0) {
+        idx = hn::Sub(idx, hn::Set(_Tag<IdxT>(), static_cast<IdxT>(o_base_offset)));
+    }
+
     constexpr int UNROLL = 4;
     const int wstep = vstep * UNROLL;
     for (; len >= wstep; len -= wstep, ip += static_cast<npy_intp>(wstep), op += ostride * wstep) {
         for (int i = 0; i < UNROLL; ++i)
             hn::ScatterIndex(simd_neg<T>(LoadU(ip + static_cast<npy_intp>(i) * vstep)),
-                             _Tag<T>(), op + static_cast<npy_intp>(i) * vstep * ostride, idx);
+                             _Tag<T>(), op + static_cast<npy_intp>(i) * vstep * ostride + o_base_offset, idx);
     }
     for (; len >= vstep; len -= vstep, ip += static_cast<npy_intp>(vstep), op += ostride * vstep)
-        hn::ScatterIndex(simd_neg<T>(LoadU(ip)), _Tag<T>(), op, idx);
+        hn::ScatterIndex(simd_neg<T>(LoadU(ip)), _Tag<T>(), op + o_base_offset, idx);
     for (; len > 0; --len, ++ip, op += ostride) { *op = -(*ip); }
 }
 
@@ -69,18 +75,25 @@ static void simd_unary_negative_nc(
 {
     using IdxT = std::conditional_t<sizeof(T) == 4, int32_t, int64_t>;
     HWY_LANES_CONSTEXPR int vstep = Lanes<T>();
-    const auto idx = hn::Mul(hn::Iota(_Tag<IdxT>(), 0),
-                             hn::Set(_Tag<IdxT>(), static_cast<IdxT>(istride)));
+
+    // Shift base pointer down to prevent negative Gather/Scatter indices
+    npy_intp i_base_offset = (istride < 0) ? (vstep - 1) * istride : 0;
+    auto idx = hn::Mul(hn::Iota(_Tag<IdxT>(), 0),
+                       hn::Set(_Tag<IdxT>(), static_cast<IdxT>(istride)));
+    if (istride < 0) {
+        idx = hn::Sub(idx, hn::Set(_Tag<IdxT>(), static_cast<IdxT>(i_base_offset)));
+    }
+
     constexpr int UNROLL = 4;
     const int wstep = vstep * UNROLL;
     for (; len >= wstep; len -= wstep, ip += istride * static_cast<npy_intp>(wstep), op += static_cast<npy_intp>(wstep)) {
         for (int i = 0; i < UNROLL; ++i)
             StoreU(simd_neg<T>(
-                       hn::GatherIndex(_Tag<T>(), ip + static_cast<npy_intp>(i) * vstep * istride, idx)),
+                       hn::GatherIndex(_Tag<T>(), ip + static_cast<npy_intp>(i) * vstep * istride + i_base_offset, idx)),
                    op + static_cast<npy_intp>(i) * vstep);
     }
     for (; len >= vstep; len -= vstep, ip += istride * static_cast<npy_intp>(vstep), op += static_cast<npy_intp>(vstep))
-        StoreU(simd_neg<T>(hn::GatherIndex(_Tag<T>(), ip, idx)), op);
+        StoreU(simd_neg<T>(hn::GatherIndex(_Tag<T>(), ip + i_base_offset, idx)), op);
     for (; len > 0; --len, ip += istride, ++op) { *op = -(*ip); }
 }
 
@@ -93,21 +106,30 @@ static void simd_unary_negative_nn(
 {
     using IdxT = std::conditional_t<sizeof(T) == 4, int32_t, int64_t>;
     HWY_LANES_CONSTEXPR int vstep = Lanes<T>();
-    const auto iidx = hn::Mul(hn::Iota(_Tag<IdxT>(), 0),
-                               hn::Set(_Tag<IdxT>(), static_cast<IdxT>(istride)));
-    const auto oidx = hn::Mul(hn::Iota(_Tag<IdxT>(), 0),
-                               hn::Set(_Tag<IdxT>(), static_cast<IdxT>(ostride)));
+    npy_intp i_base_offset = (istride < 0) ? (vstep - 1) * istride : 0;
+    auto iidx = hn::Mul(hn::Iota(_Tag<IdxT>(), 0), 
+                        hn::Set(_Tag<IdxT>(), static_cast<IdxT>(istride)));
+    if (istride < 0) {
+        iidx = hn::Sub(iidx, hn::Set(_Tag<IdxT>(), static_cast<IdxT>(i_base_offset)));
+    }
+    npy_intp o_base_offset = (ostride < 0) ? (vstep - 1) * ostride : 0;
+    auto oidx = hn::Mul(hn::Iota(_Tag<IdxT>(), 0), 
+                        hn::Set(_Tag<IdxT>(), static_cast<IdxT>(ostride)));
+    if (ostride < 0) {
+        oidx = hn::Sub(oidx, hn::Set(_Tag<IdxT>(), static_cast<IdxT>(o_base_offset)));
+    }
+
     constexpr int UNROLL = 2;
     const int wstep = vstep * UNROLL;
     for (; len >= wstep; len -= wstep, ip += istride * static_cast<npy_intp>(wstep), op += ostride * static_cast<npy_intp>(wstep)) {
         for (int i = 0; i < UNROLL; ++i)
             hn::ScatterIndex(
-                simd_neg<T>(hn::GatherIndex(_Tag<T>(), ip + static_cast<npy_intp>(i) * vstep * istride, iidx)),
-                _Tag<T>(), op + static_cast<npy_intp>(i) * vstep * ostride, oidx);
+                simd_neg<T>(hn::GatherIndex(_Tag<T>(), ip + static_cast<npy_intp>(i) * vstep * istride + i_base_offset, iidx)),
+                _Tag<T>(), op + static_cast<npy_intp>(i) * vstep * ostride + o_base_offset, oidx);
     }
     for (; len >= vstep; len -= vstep, ip += istride * static_cast<npy_intp>(vstep), op += ostride * static_cast<npy_intp>(vstep))
         hn::ScatterIndex(
-            simd_neg<T>(hn::GatherIndex(_Tag<T>(), ip, iidx)), _Tag<T>(), op, oidx);
+            simd_neg<T>(hn::GatherIndex(_Tag<T>(), ip + i_base_offset, iidx)), _Tag<T>(), op + o_base_offset, oidx);
     for (; len > 0; --len, ip += istride, op += ostride) { *op = -(*ip); }
 }
 #endif // !NPY_HAVE_SSE2
@@ -124,12 +146,11 @@ run_simd_negative(char** args, npy_intp const* dimensions, npy_intp const* steps
     const T* ip = reinterpret_cast<const T*>(args[0]);
     T* op = reinterpret_cast<T*>(args[1]);
 
-    if (istride_mut < 0) {
+    // If both strides are negative, shift views and flip signs
+    if (istride_mut < 0 && ostride_mut < 0) {
         ip += (len - 1) * istride_mut;
-        istride_mut = -istride_mut;
-    }
-    if (ostride_mut < 0) {
         op += (len - 1) * ostride_mut;
+        istride_mut = -istride_mut;
         ostride_mut = -ostride_mut;
     }
 
