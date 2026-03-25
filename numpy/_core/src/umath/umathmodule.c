@@ -163,53 +163,6 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     return (PyObject *)self;
 }
 
-/* docstring in numpy.add_newdocs.py */
-PyObject *
-add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
-{
-
-    /* 2024-11-12, NumPy 2.2 */
-    if (DEPRECATE("_add_newdoc_ufunc is deprecated. "
-                  "Use `ufunc.__doc__ = newdoc` instead.") < 0) {
-        return NULL;
-    }
-
-    PyUFuncObject *ufunc;
-    PyObject *str;
-    if (!PyArg_ParseTuple(args, "O!O!:_add_newdoc_ufunc", &PyUFunc_Type, &ufunc,
-                                        &PyUnicode_Type, &str)) {
-        return NULL;
-    }
-    if (ufunc->doc != NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot change docstring of ufunc with non-NULL docstring");
-        return NULL;
-    }
-
-    PyObject *tmp = PyUnicode_AsUTF8String(str);
-    if (tmp == NULL) {
-        return NULL;
-    }
-    char *docstr = PyBytes_AS_STRING(tmp);
-
-    /*
-     * This introduces a memory leak, as the memory allocated for the doc
-     * will not be freed even if the ufunc itself is deleted. In practice
-     * this should not be a problem since the user would have to
-     * repeatedly create, document, and throw away ufuncs.
-     */
-    char *newdocstr = malloc(strlen(docstr) + 1);
-    if (!newdocstr) {
-        Py_DECREF(tmp);
-        return PyErr_NoMemory();
-    }
-    strcpy(newdocstr, docstr);
-    ufunc->doc = newdocstr;
-
-    Py_DECREF(tmp);
-    Py_RETURN_NONE;
-}
-
 
 /*
  *****************************************************************************

@@ -1,38 +1,36 @@
-from typing import Protocol, TypeAlias, TypeVar, assert_type
+from typing import Any, Protocol, assert_type
 
 import numpy as np
 from numpy._typing import _64Bit
 
-_T = TypeVar("_T")
-_T_co = TypeVar("_T_co", covariant=True)
+class CanAbs[T](Protocol):
+    def __abs__(self, /) -> T: ...
 
-class CanAbs(Protocol[_T_co]):
-    def __abs__(self, /) -> _T_co: ...
+class CanInvert[T](Protocol):
+    def __invert__(self, /) -> T: ...
 
-class CanInvert(Protocol[_T_co]):
-    def __invert__(self, /) -> _T_co: ...
+class CanNeg[T](Protocol):
+    def __neg__(self, /) -> T: ...
 
-class CanNeg(Protocol[_T_co]):
-    def __neg__(self, /) -> _T_co: ...
+class CanPos[T](Protocol):
+    def __pos__(self, /) -> T: ...
 
-class CanPos(Protocol[_T_co]):
-    def __pos__(self, /) -> _T_co: ...
+def do_abs[T](x: CanAbs[T]) -> T: ...
+def do_invert[T](x: CanInvert[T]) -> T: ...
+def do_neg[T](x: CanNeg[T]) -> T: ...
+def do_pos[T](x: CanPos[T]) -> T: ...
 
-def do_abs(x: CanAbs[_T]) -> _T: ...
-def do_invert(x: CanInvert[_T]) -> _T: ...
-def do_neg(x: CanNeg[_T]) -> _T: ...
-def do_pos(x: CanPos[_T]) -> _T: ...
-
-_Bool_1d: TypeAlias = np.ndarray[tuple[int], np.dtype[np.bool]]
-_UInt8_1d: TypeAlias = np.ndarray[tuple[int], np.dtype[np.uint8]]
-_Int16_1d: TypeAlias = np.ndarray[tuple[int], np.dtype[np.int16]]
-_LongLong_1d: TypeAlias = np.ndarray[tuple[int], np.dtype[np.longlong]]
-_Float32_1d: TypeAlias = np.ndarray[tuple[int], np.dtype[np.float32]]
-_Float64_1d: TypeAlias = np.ndarray[tuple[int], np.dtype[np.float64]]
-_LongDouble_1d: TypeAlias = np.ndarray[tuple[int], np.dtype[np.longdouble]]
-_Complex64_1d: TypeAlias = np.ndarray[tuple[int], np.dtype[np.complex64]]
-_Complex128_1d: TypeAlias = np.ndarray[tuple[int], np.dtype[np.complex128]]
-_CLongDouble_1d: TypeAlias = np.ndarray[tuple[int], np.dtype[np.clongdouble]]
+type _Bool_1d = np.ndarray[tuple[int], np.dtype[np.bool]]
+type _UInt8_1d = np.ndarray[tuple[int], np.dtype[np.uint8]]
+type _Int16_1d = np.ndarray[tuple[int], np.dtype[np.int16]]
+type _LongLong_1d = np.ndarray[tuple[int], np.dtype[np.longlong]]
+type _Float32_1d = np.ndarray[tuple[int], np.dtype[np.float32]]
+type _Float64_1d = np.ndarray[tuple[int], np.dtype[np.float64]]
+type _LongDouble_1d = np.ndarray[tuple[int], np.dtype[np.longdouble]]
+type _Complex64_1d = np.ndarray[tuple[int], np.dtype[np.complex64]]
+type _Complex128_1d = np.ndarray[tuple[int], np.dtype[np.complex128]]
+type _CLongDouble_1d = np.ndarray[tuple[int], np.dtype[np.clongdouble]]
+type _Void_1d = np.ndarray[tuple[int], np.dtype[np.void]]
 
 b1_1d: _Bool_1d
 u1_1d: _UInt8_1d
@@ -44,6 +42,7 @@ g_1d: _LongDouble_1d
 c8_1d: _Complex64_1d
 c16_1d: _Complex128_1d
 G_1d: _CLongDouble_1d
+V_1d: _Void_1d
 
 assert_type(do_abs(b1_1d), _Bool_1d)
 assert_type(do_abs(u1_1d), _UInt8_1d)
@@ -75,3 +74,6 @@ assert_type(do_pos(i2_1d), _Int16_1d)
 assert_type(do_pos(q_1d), _LongLong_1d)
 assert_type(do_pos(f4_1d), _Float32_1d)
 assert_type(do_pos(c16_1d), _Complex128_1d)
+
+# this shape is effectively equivalent to `tuple[int, *tuple[Any, ...]]`, i.e. ndim >= 1
+assert_type(V_1d["field"], np.ndarray[tuple[int] | tuple[Any, ...]])

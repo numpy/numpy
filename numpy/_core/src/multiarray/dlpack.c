@@ -285,10 +285,6 @@ fill_dl_tensor_information(
     }
 
     dl_tensor->ndim = ndim;
-    if (PyArray_IS_C_CONTIGUOUS(self)) {
-        /* No need to pass strides, so just NULL it again */
-        dl_tensor->strides = NULL;
-    }
     dl_tensor->byte_offset = 0;
 
     return 0;
@@ -351,9 +347,8 @@ create_dlpack_capsule(
         dl_tensor = &managed->dl_tensor;
     }
 
-    dl_tensor->shape = (int64_t *)((char *)ptr + offset);
-    /* Note that strides may be set to NULL later if C-contiguous */
-    dl_tensor->strides = dl_tensor->shape + ndim;
+    dl_tensor->shape = (ndim > 0) ? (int64_t *)((char *)ptr + offset) : NULL;
+    dl_tensor->strides = (ndim > 0) ? dl_tensor->shape + ndim : NULL;
 
     if (fill_dl_tensor_information(dl_tensor, self, result_device) < 0) {
         PyMem_Free(ptr);
@@ -397,7 +392,8 @@ device_converter(PyObject *obj, DLDevice *result_device)
         return NPY_SUCCEED;
     }
 
-    PyErr_SetString(PyExc_ValueError, "unsupported device requested");
+    /* Must be a BufferError */
+    PyErr_SetString(PyExc_BufferError, "unsupported device requested");
     return NPY_FAIL;
 }
 
@@ -418,11 +414,10 @@ array_dlpack(PyArrayObject *self,
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("__dlpack__", args, len_args, kwnames,
-            "$stream", NULL, &stream,
-            "$max_version", NULL, &max_version,
-            "$dl_device", &device_converter, &result_device,
-            "$copy", &PyArray_CopyConverter, &copy_mode,
-            NULL, NULL, NULL)) {
+            {"$stream", NULL, &stream},
+            {"$max_version", NULL, &max_version},
+            {"$dl_device", &device_converter, &result_device},
+            {"$copy", &PyArray_CopyConverter, &copy_mode})) {
         return NULL;
     }
 
@@ -497,10 +492,9 @@ from_dlpack(PyObject *NPY_UNUSED(self),
     PyObject *obj, *copy = Py_None, *device = Py_None;
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("from_dlpack", args, len_args, kwnames,
-            "obj", NULL, &obj,
-            "$copy", NULL, &copy,
-            "$device", NULL, &device,
-            NULL, NULL, NULL) < 0) {
+            {"obj", NULL, &obj},
+            {"$copy", NULL, &copy},
+            {"$device", NULL, &device}) < 0) {
         return NULL;
     }
 

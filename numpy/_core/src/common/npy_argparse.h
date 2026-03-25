@@ -20,7 +20,15 @@
 NPY_NO_EXPORT int
 PyArray_PythonPyIntFromInt(PyObject *obj, int *value);
 
-#define _NPY_MAX_KWARGS 15
+#define _NPY_MAX_KWARGS 14
+
+typedef int (*npy_arg_converter)(PyObject *, void *);
+
+typedef struct {
+    const char *name;
+    void *converter;
+    void *output;
+} npy_arg_spec;
 
 typedef struct {
     int npositional;
@@ -54,11 +62,10 @@ NPY_NO_EXPORT int init_argparse_mutex(void);
  *
  *     PyObject *argument1, *argument3;
  *     int argument2 = -1;
- *     if (npy_parse_arguments("method", args, len_args, kwnames),
- *                "argument1", NULL, &argument1,
- *                "|argument2", &PyArray_PythonPyIntFromInt, &argument2,
- *                "$argument3", NULL, &argument3,
- *                NULL, NULL, NULL) < 0) {
+ *     if (npy_parse_arguments("method", args, len_args, kwnames,
+ *                {"argument1", NULL, &argument1},
+ *                {"|argument2", &PyArray_PythonPyIntFromInt, &argument2},
+ *                {"$argument3", NULL, &argument3}) < 0) {
  *          return NULL;
  *      }
  * }
@@ -66,32 +73,43 @@ NPY_NO_EXPORT int init_argparse_mutex(void);
  *
  * The `NPY_PREPARE_ARGPARSER` macro sets up a static cache variable necessary
  * to hold data for speeding up the parsing. `npy_parse_arguments` must be
- * used in cunjunction with the macro defined in the same scope.
+ * used in conjunction with the macro defined in the same scope.
  * (No two `npy_parse_arguments` may share a single `NPY_PREPARE_ARGPARSER`.)
  *
  * @param funcname Function name
  * @param args Python passed args (METH_FASTCALL)
  * @param len_args Number of arguments (not flagged)
  * @param kwnames Tuple as passed by METH_FASTCALL or NULL.
- * @param ... List of arguments must be param1_name, param1_converter,
- *            *param1_outvalue, param2_name, ..., NULL, NULL, NULL.
- *            Where name is ``char *``, ``converter`` a python converter
- *            function or NULL and ``outvalue`` is the ``void *`` passed to
- *            the converter (holding the converted data or a borrowed
- *            reference if converter is NULL).
+ * @param ... List of argument specs as {name, converter, outvalue} structs.
+ *            Where name is ``const char *``, ``converter`` a python converter
+ *            function pointer or NULL and ``outvalue`` is the ``void *``
+ *            passed to the converter (holding the converted data or a
+ *            borrowed reference if converter is NULL).
  *
  * @return Returns 0 on success and -1 on failure.
  */
 NPY_NO_EXPORT int
 _npy_parse_arguments(const char *funcname,
-        /* cache_ptr is a NULL initialized persistent storage for data */
-        _NpyArgParserCache *cache_ptr,
+        _NpyArgParserCache *cache,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
-        /* va_list is NULL, NULL, NULL terminated: name, converter, value */
-        ...) NPY_GCC_NONNULL(1);
+        npy_arg_spec *specs, int nspecs) NPY_GCC_NONNULL(1);
 
-#define npy_parse_arguments(funcname, args, len_args, kwnames, ...)      \
-        _npy_parse_arguments(funcname, &__argparse_cache,                \
-                args, len_args, kwnames, __VA_ARGS__)
+#ifdef __cplusplus
+#define npy_parse_arguments(funcname, args, len_args, kwnames, ...)       \
+        [&]() -> int {                                                     \
+            npy_arg_spec _npy_specs_[] = {__VA_ARGS__};                   \
+            return _npy_parse_arguments(funcname, &__argparse_cache,       \
+                    args, len_args, kwnames,                               \
+                    _npy_specs_,                                           \
+                    (int)(sizeof(_npy_specs_) / sizeof(npy_arg_spec)));    \
+        }()
+#else
+#define npy_parse_arguments(funcname, args, len_args, kwnames, ...)       \
+        _npy_parse_arguments(funcname, &__argparse_cache,                 \
+                args, len_args, kwnames,                                  \
+                (npy_arg_spec[]){__VA_ARGS__},                            \
+                (int)(sizeof((npy_arg_spec[]){__VA_ARGS__})               \
+                      / sizeof(npy_arg_spec)))
+#endif
 
 #endif  /* NUMPY_CORE_SRC_COMMON_NPY_ARGPARSE_H */

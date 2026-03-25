@@ -1080,21 +1080,18 @@ class TestDateTime:
         assert_equal(np.zeros_like(b).dtype, b.dtype)
         assert_equal(np.empty_like(b).dtype, b.dtype)
 
-    def test_datetime_unary(self):
-        for tda, tdb, tdzero, tdone, tdmone in \
+    def test_timedelta64_unary(self):
+        for tda, tdb, tdzero in \
                 [
                  # One-dimensional arrays
                  (np.array([3], dtype='m8[D]'),
                   np.array([-3], dtype='m8[D]'),
-                  np.array([0], dtype='m8[D]'),
-                  np.array([1], dtype='m8[D]'),
-                  np.array([-1], dtype='m8[D]')),
+                  np.array([0], dtype='m8[D]')),
                  # NumPy scalars
                  (np.timedelta64(3, '[D]'),
                   np.timedelta64(-3, '[D]'),
-                  np.timedelta64(0, '[D]'),
-                  np.timedelta64(1, '[D]'),
-                  np.timedelta64(-1, '[D]'))]:
+                  np.timedelta64(0, '[D]')),
+                ]:
             # negative ufunc
             assert_equal(-tdb, tda)
             assert_equal((-tdb).dtype, tda.dtype)
@@ -1112,13 +1109,24 @@ class TestDateTime:
             assert_equal(np.absolute(tdb).dtype, tda.dtype)
 
             # sign ufunc
-            assert_equal(np.sign(tda), tdone)
-            assert_equal(np.sign(tdb), tdmone)
-            assert_equal(np.sign(tdzero), tdzero)
-            assert_equal(np.sign(tda).dtype, tda.dtype)
+            assert_equal(np.sign(tda), np.ones_like(tda, dtype=np.float64),
+                         strict=True)
+            assert_equal(np.sign(tdb), -np.ones_like(tdb, dtype=np.float64),
+                         strict=True)
+            assert_equal(np.sign(tdzero), np.zeros_like(tdzero, dtype=np.float64),
+                         strict=True)
 
-            # The ufuncs always produce native-endian results
-            assert_
+    def test_timedelta64_sign_nat(self):
+        x = np.array([np.timedelta64(-123, 's'),
+                      np.timedelta64(0, 's'),
+                      np.timedelta64(88, 's'),
+                      np.timedelta64('NaT', 's')])
+        s = np.sign(x)
+        assert_equal(s, np.array([-1.0, 0.0, 1.0, np.nan]), strict=True)
+
+    def test_timedelta64_sign_nat_scalar(self):
+        nat = np.timedelta64('nat', 'm')
+        assert_equal(np.sign(nat), np.nan)
 
     def test_datetime_add(self):
         for dta, dtb, dtc, dtnat, tda, tdb, tdc in \
@@ -2212,6 +2220,11 @@ class TestDateTime:
         bdd = np.busdaycalendar(weekmask="0011001")
         assert_equal(bdd.weekmask, np.array([0, 0, 1, 1, 0, 0, 1], dtype='?'))
 
+        # Check length 7 bool array.
+        mask = np.array([False, True, True, True, True, False, False])
+        bdd = np.busdaycalendar(weekmask=mask)
+        assert_equal(bdd.weekmask, mask, strict=True)
+
         # Check length 7 string weekmask.
         bdd = np.busdaycalendar(weekmask="Mon Tue")
         assert_equal(bdd.weekmask, np.array([1, 1, 0, 0, 0, 0, 0], dtype='?'))
@@ -2700,6 +2713,65 @@ class TestDateTime:
         td2 = np.timedelta64(td, unit)
         _assert_equal_hash(td, td2)
 
+    @pytest.mark.parametrize(
+        "inputs, divisor, expected",
+        [
+            (
+                np.array(
+                    [datetime.timedelta(seconds=20), datetime.timedelta(days=2)],
+                    dtype="object",
+                ),
+                np.int64(2),
+                np.array(
+                    [datetime.timedelta(seconds=10), datetime.timedelta(days=1)],
+                    dtype="object",
+                ),
+            ),
+            (
+                np.array(
+                    [datetime.timedelta(seconds=20), datetime.timedelta(days=2)],
+                    dtype="object",
+                ),
+                np.timedelta64(2, "s"),
+                np.array(
+                    [10.0, 24.0 * 60.0 * 60.0],
+                    dtype="object",
+                ),
+            ),
+            (
+                datetime.timedelta(seconds=2),
+                np.array(
+                    [datetime.timedelta(seconds=20), datetime.timedelta(days=2)],
+                    dtype="object",
+                ),
+                np.array(
+                    [1.0 / 10.0, 1.0 / (24.0 * 60.0 * 60.0)],
+                    dtype="object",
+                ),
+            ),
+        ],
+    )
+    def test_true_divide_object_by_timedelta(
+        self,
+        inputs: np.ndarray | type[np.generic],
+        divisor: np.ndarray | type[np.generic],
+        expected: np.ndarray,
+    ):
+        # gh-30025
+        results = inputs / divisor
+        assert_array_equal(results, expected)
+
+    @pytest.mark.parametrize(
+        "atol", [np.timedelta64(1, "s"), np.timedelta64(1, "ms")]
+    )
+    def test_assert_all_close_with_timedelta_atol(
+        self, atol: np.timedelta64 | datetime.timedelta
+    ):
+        # gh-30382
+        a = np.array([1, 2], dtype="m8[s]")
+        b = np.array([3, 4], dtype="m8[s]")
+        with pytest.raises(AssertionError):
+            np.testing.assert_allclose(a, b, atol=atol)
 
 class TestDateTimeData:
 

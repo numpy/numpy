@@ -8,7 +8,6 @@ from typing import (
     Literal,
     NamedTuple,
     Self,
-    TypeAlias,
     TypedDict,
     overload,
     type_check_only,
@@ -29,7 +28,7 @@ __all__ = ["BitGenerator", "SeedSequence"]
 
 ###
 
-_DTypeLikeUint_: TypeAlias = _DTypeLike[np.uint32 | np.uint64] | _UInt32Codes | _UInt64Codes
+type _DTypeLikeUint_ = _DTypeLike[np.uint32 | np.uint64] | _UInt32Codes | _UInt64Codes
 
 @type_check_only
 class _SeedSeqState(TypedDict):
@@ -50,7 +49,7 @@ class _Interface(NamedTuple):
 @type_check_only
 class _CythonMixin:
     def __setstate_cython__(self, pyx_state: object, /) -> None: ...
-    def __reduce_cython__(self) -> Any: ...  # noqa: ANN401
+    def __reduce_cython__(self) -> Any: ...
 
 @type_check_only
 class _GenerateStateMixin(_CythonMixin):

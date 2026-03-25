@@ -54,7 +54,7 @@ and accepts negative indices for indexing from the end of the array. ::
 It is not necessary to
 separate each dimension's index into its own set of square brackets. ::
 
-    >>> x.shape = (2, 5)  # now x is 2-dimensional
+    >>> x = x.reshape((2, 5))  # now x is 2-dimensional
     >>> x[1, 3]
     8
     >>> x[1, -1]

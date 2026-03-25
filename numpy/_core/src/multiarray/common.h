@@ -22,6 +22,10 @@ extern "C" {
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
 
+NPY_NO_EXPORT PyObject *
+build_array_interface(PyObject *dataptr, PyObject *descr, PyObject *strides,
+                      PyObject *typestr, PyObject *shape);
+
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_DTypeFromObjectStringDiscovery(
         PyObject *obj, PyArray_Descr *last_dtype, int string_type);
@@ -65,11 +69,22 @@ convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending);
 NPY_NO_EXPORT void
 dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j);
 
+
 /**
  * unpack tuple of PyDataType_FIELDS(dtype) (descr, offset, title[not-needed])
  */
 NPY_NO_EXPORT int
 _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset);
+
+/**
+ * Unpack a field from a structured dtype by index.
+ */
+NPY_NO_EXPORT int
+_unpack_field_index(
+   _PyArray_LegacyDescr *descr,
+   npy_intp index,
+   PyArray_Descr **odescr,
+   npy_intp *offset);
 
 /*
  * check whether arrays with datatype dtype might have object fields. This will
@@ -324,7 +339,7 @@ check_is_convertible_to_scalar(PyArrayObject *v);
  */
 NPY_NO_EXPORT PyArrayObject *
 new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
-                  int nd, npy_intp dimensions[], int typenum, PyArrayObject **result);
+                  int nd, npy_intp dimensions[], PyArray_Descr *descr, PyArrayObject **result);
 
 
 /*

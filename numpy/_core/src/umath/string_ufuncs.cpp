@@ -176,9 +176,14 @@ string_multiply(Buffer<enc> buf1, npy_int64 reps, Buffer<enc> out)
         return 0;
     }
 
+    size_t width = out.buffer_width();
+    // we know this is positive
+    size_t reps_ = (size_t)reps;
+
     if (len1 == 1) {
-        out.buffer_memset(*buf1, reps);
-        out.buffer_fill_with_zeros_after_index(reps);
+        size_t end_index = reps_ > width ? width : reps_;
+        out.buffer_memset(*buf1, end_index);
+        out.buffer_fill_with_zeros_after_index(end_index);
         return 0;
     }
 
@@ -188,7 +193,6 @@ string_multiply(Buffer<enc> buf1, npy_int64 reps, Buffer<enc> out)
     }
 
     size_t pad = 0;
-    size_t width = out.buffer_width();
     if (width < newlen) {
         reps = width / len1;
         pad = width % len1;
@@ -941,7 +945,7 @@ string_expandtabs_length_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    Py_INCREF(op_dtypes[0]);
+    Py_XINCREF(op_dtypes[0]);
     new_op_dtypes[0] = op_dtypes[0];
     new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_Int64DType);
     new_op_dtypes[2] = PyArray_DTypeFromTypeNum(NPY_DEFAULT_INT);
@@ -1125,9 +1129,9 @@ string_partition_promoter(PyObject *NPY_UNUSED(ufunc),
 static NPY_CASTING
 string_partition_resolve_descriptors(
         PyArrayMethodObject *self,
-        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[3]),
-        PyArray_Descr *const given_descrs[3],
-        PyArray_Descr *loop_descrs[3],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[6]),
+        PyArray_Descr *const given_descrs[6],
+        PyArray_Descr *loop_descrs[6],
         npy_intp *NPY_UNUSED(view_offset))
 {
     if (!given_descrs[3] || !given_descrs[4] || !given_descrs[5]) {

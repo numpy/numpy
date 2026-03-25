@@ -123,14 +123,14 @@ PyMODINIT_FUNC PyInit__struct_ufunc_tests(void)
     PyArray_Descr *dtype;
     PyArray_Descr *dtypes[3];
 
+    import_array();
+    import_umath();
+
     m = PyModule_Create(&moduledef);
 
     if (m == NULL) {
         return NULL;
     }
-
-    import_array();
-    import_umath();
 
     add_triplet = PyUFunc_FromFuncAndData(NULL, NULL, NULL, 0, 2, 1,
                                           PyUFunc_None, "add_triplet",

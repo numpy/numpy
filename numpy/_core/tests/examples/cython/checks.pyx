@@ -142,7 +142,7 @@ def get_dtype_flags(cnp.dtype dtype):
 
 
 cdef cnp.NpyIter* npyiter_from_nditer_obj(object it):
-    """A function to create a NpyIter struct from a nditer object.
+    """A function to create a NpyIter struct from an nditer object.
 
     This function is only meant for testing purposes and only extracts the
     necessary info from nditer to test the functionality of NpyIter methods
@@ -244,10 +244,11 @@ def npyiter_has_multi_index(it: "nditer"):
 
 def test_get_multi_index_iter_next(it: "nditer", cnp.ndarray[cnp.float64_t, ndim=2] arr):
     cdef cnp.NpyIter* cit = npyiter_from_nditer_obj(it)
-    cdef cnp.NpyIter_GetMultiIndexFunc get_multi_index = \
+    cdef cnp.NpyIter_GetMultiIndexFunc _get_multi_index = \
         cnp.NpyIter_GetGetMultiIndex(cit, NULL)
-    cdef cnp.NpyIter_IterNextFunc iternext = \
+    cdef cnp.NpyIter_IterNextFunc _iternext = \
         cnp.NpyIter_GetIterNext(cit, NULL)
+    cnp.NpyIter_Deallocate(cit)
     return 1
 
 
