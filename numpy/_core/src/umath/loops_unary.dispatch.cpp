@@ -118,38 +118,46 @@ run_simd_negative(char** args, npy_intp const* dimensions, npy_intp const* steps
 {
     npy_intp istep = steps[0], ostep = steps[1];
     npy_intp len   = dimensions[0];
-    const npy_intp istride = istep / sizeof(T);
-    const npy_intp ostride = ostep / sizeof(T);
+    npy_intp istride_mut = istep / sizeof(T);
+    npy_intp ostride_mut = ostep / sizeof(T);
+
+    const T* ip = reinterpret_cast<const T*>(args[0]);
+    T* op = reinterpret_cast<T*>(args[1]);
+
+    if (istride_mut < 0) {
+        ip += (len - 1) * istride_mut;
+        istride_mut = -istride_mut;
+    }
+    if (ostride_mut < 0) {
+        op += (len - 1) * ostride_mut;
+        ostride_mut = -ostride_mut;
+    }
+
+    const npy_intp istride = istride_mut;
+    const npy_intp ostride = ostride_mut;
+
     if (!is_mem_overlap(args[0], istep, args[1], ostep, len)) {
-        if (IS_UNARY_CONT(T, T)) {
-            simd_unary_negative_cc(
-                reinterpret_cast<const T*>(args[0]),
-                reinterpret_cast<T*>(args[1]), len);
+        if (istride == 1 && ostride == 1) {
+            simd_unary_negative_cc(ip, op, len);
             return 1;
-        }
+        }    
         if constexpr (sizeof(T) >= 4) {
             if (istride == 1 && ostride != 1) {
-                simd_unary_negative_cn(
-                    reinterpret_cast<const T*>(args[0]),
-                    reinterpret_cast<T*>(args[1]), ostride, len);
+                simd_unary_negative_cn(ip, op, ostride, len);
                 return 1;
             }
             if (istride != 1 && ostride == 1) {
-                simd_unary_negative_nc(
-                    reinterpret_cast<const T*>(args[0]), istride,
-                    reinterpret_cast<T*>(args[1]), len);
+                simd_unary_negative_nc(ip, istride, op, len);
                 return 1;
             }
-#ifndef NPY_HAVE_SSE2
+    #ifndef NPY_HAVE_SSE2
             if (istride != 1 && ostride != 1) {
-                simd_unary_negative_nn(
-                    reinterpret_cast<const T*>(args[0]), istride,
-                    reinterpret_cast<T*>(args[1]), ostride, len);
+                simd_unary_negative_nn(ip, istride, op, ostride, len);
                 return 1;
             }
-#endif
+    #endif
         }
-    }
+    } 
     return 0;
 }
 
