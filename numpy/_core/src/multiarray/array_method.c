@@ -129,9 +129,9 @@ is_contiguous(
  * param move_references UNUSED -- listed below but doxygen doesn't see as a parameter
  * @param strides Array of step sizes for each dimension of the arrays involved
  * @param out_loop Output pointer to the function that will perform the strided loop.
- * @param out_transferdata Output pointer to auxiliary data (if any) 
+ * @param out_transferdata Output pointer to auxiliary data (if any)
  *        needed by the out_loop function.
- * @param flags Output pointer to additional flags (if any) 
+ * @param flags Output pointer to additional flags (if any)
  *        needed by the out_loop function
  * @returns 0 on success -1 on failure.
  */
@@ -485,7 +485,12 @@ PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private)
         return NULL;
     }
     strcpy(res->method->name, spec->name);
-
+#ifdef Py_GIL_DISABLED
+    // Mark immortal to reduce reference count contention in PyArray_GetCastingImpl
+    // If we ever allow replacing ArrayMethod objects or cleanup it DTypes or ufuncs, this may need to be reconsidered.
+    // An alternative that might help is to store cast methods in a PyArrayIdentityHash instead of a dict.
+    PyUnstable_SetImmortal((PyObject *)res->method);
+#endif
     return res;
 }
 
