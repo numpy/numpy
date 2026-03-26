@@ -212,6 +212,10 @@ class TestSavezLoad(RoundtripTest):
                 arr_reloaded.fid.close()
                 os.remove(arr_reloaded.fid.name)
 
+    @pytest.mark.skip(reason="mmap not supported for .npz files")
+    def test_mmap(self):
+        pass
+
     def test_load_non_npy(self):
         """Test loading non-.npy files and name mapping in .npz."""
         with temppath(prefix="numpy_test_npz_load_non_npy_", suffix=".npz") as tmp:
@@ -227,6 +231,17 @@ class TestSavezLoad(RoundtripTest):
                 assert len(npz["test1.npy"]) == 10
                 assert len(npz["test2"]) == 10
                 assert npz["metadata"] == b"Name: Test"
+
+    def test_load_npz_mmap_not_supported(self):
+        """"
+        Verify that np.load raises a ValueError when mmap_mode 
+        is used with .npz files, as mmap is not supported for .npz.
+        """
+        with temppath(prefix="numpy_test_npz_mmap_", suffix=".npz") as tmp:
+            np.savez(tmp, x=np.arange(10))
+
+            with pytest.raises(ValueError):
+                np.load(tmp, mmap_mode="r")
 
     @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
     @pytest.mark.slow
