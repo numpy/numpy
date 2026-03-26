@@ -96,6 +96,26 @@ class AbstractTest:
             return map_names in self.features_flags
         return any(f in self.features_flags for f in map_names)
 
+    def load_flags_hwcap(self, hwcap_bits, hwcap2_bits=None):
+        import ctypes
+        libc = ctypes.CDLL(None, use_errno=True)
+        getauxval = libc.getauxval
+        getauxval.restype = ctypes.c_ulong
+        getauxval.argtypes = [ctypes.c_ulong]
+
+        AT_HWCAP = 16
+        hwcap = getauxval(AT_HWCAP)
+        for bit, name in hwcap_bits.items():
+            if hwcap & bit:
+                self.features_flags.add(name)
+
+        if hwcap2_bits:
+            AT_HWCAP2 = 26
+            hwcap2 = getauxval(AT_HWCAP2)
+            for bit, name in hwcap2_bits.items():
+                if hwcap2 & bit:
+                    self.features_flags.add(name)
+
     def load_flags_cpuinfo(self, magic_key):
         self.features_flags = self.get_cpuinfo_item(magic_key)
 
@@ -110,16 +130,6 @@ class AbstractTest:
                     values = values.union(flags_value[1].upper().split())
         return values
 
-    def load_flags_auxv(self):
-        auxv = subprocess.check_output(['/bin/true'], env={"LD_SHOW_AUXV": "1"})
-        for at in auxv.split(b'\n'):
-            if not at.startswith(b"AT_HWCAP"):
-                continue
-            hwcap_value = [s.strip() for s in at.split(b':', 1)]
-            if len(hwcap_value) == 2:
-                self.features_flags = self.features_flags.union(
-                    hwcap_value[1].upper().decode().split()
-                )
 
 @pytest.mark.skipif(
     sys.platform == 'emscripten',
@@ -390,7 +400,15 @@ class Test_POWER_Features(AbstractTest):
     features_map = {"VSX2": "ARCH_2_07", "VSX3": "ARCH_3_00", "VSX4": "ARCH_3_1"}
 
     def load_flags(self):
-        self.load_flags_auxv()
+        # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/powerpc/include/uapi/asm/cputable.h
+        self.load_flags_hwcap(
+            {0x00000080: "VSX"},
+            {
+                0x80000000: "ARCH_2_07",
+                0x00800000: "ARCH_3_00",
+                0x00040000: "ARCH_3_1",
+            },
+        )
 
 
 is_zarch = re.match(r"^(s390x)", machine, re.IGNORECASE)
@@ -400,7 +418,10 @@ class Test_ZARCH_Features(AbstractTest):
     features = ["VX", "VXE", "VXE2"]
 
     def load_flags(self):
-        self.load_flags_auxv()
+        # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/s390/include/asm/elf.h
+        self.load_flags_hwcap(
+            {1 << 11: "VX", 1 << 13: "VXE", 1 << 15: "VXE2"},
+        )
 
 
 is_arm = re.match(r"^(arm|aarch64)", machine, re.IGNORECASE)
@@ -454,10 +475,5 @@ class Test_RISCV_Features(AbstractTest):
     features = ["RVV"]
 
     def load_flags(self):
-        self.load_flags_auxv()
-        if not self.features_flags:
-            # Let the test fail and dump if we cannot read HWCAP.
-            return
-        hwcap = int(next(iter(self.features_flags)), 16)
-        if hwcap & (1 << 21):  # HWCAP_RISCV_V
-            self.features_flags.add("RVV")
+        # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/riscv/include/uapi/asm/hwcap.h
+        self.load_flags_hwcap({1 << 21: "RVV"})
