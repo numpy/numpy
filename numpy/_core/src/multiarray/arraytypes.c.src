@@ -4380,7 +4380,7 @@ static int
 
 /* 
 Keeping Half macros consistent with standard C 
-Refernce: https://en.cppreference.com/w/c/types/limits.html
+Reference: https://en.cppreference.com/w/c/types/limits.html
 */
 #define HALF_MAX 31743       /* Bit pattern for 65504.0 */
 #define HALF_MIN 1024        /* Bit pattern for smallest positive normal: 2^-14 */
@@ -4476,7 +4476,7 @@ static int
             /*
             Definition: Minimum negative integer such that FLT_RADIX raised by power one less than that integer is a normalized float, double and long double respectively
 
-            refernce: https://en.cppreference.com/w/c/types/limits.html
+            reference: https://en.cppreference.com/w/c/types/limits.html
             */
             *(npy_intp *)ptr = @ABB@_MIN_EXP - 1;
             return 1;

@@ -397,7 +397,7 @@ class TestModulus:
             a //= b
 
 class TestComparison:
-    def test_comparision_different_types(self):
+    def test_comparison_different_types(self):
         x = np.array(1)
         y = np.array('s')
         eq = x == y
@@ -1066,7 +1066,7 @@ def test_longdouble_complex():
 def test_pyscalar_subclasses(subtype, __op__, __rop__, op, cmp):
     # This tests that python scalar subclasses behave like a float64 (if they
     # don't override it).
-    # In an earlier version of NEP 50, they behaved like the Python buildins.
+    # In an earlier version of NEP 50, they behaved like the Python builtins.
     def op_func(self, other):
         return __op__
 

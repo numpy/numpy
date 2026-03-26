@@ -1956,7 +1956,7 @@ def trim_zeros(filt, trim='fb', axis=None):
         returned that still contains all values which are not zero.
         If an axis is specified, `filt` will be sliced in that dimension only
         on the sides specified by `trim`. The remaining area will be the
-        smallest that still contains all values wich are not zero.
+        smallest that still contains all values which are not zero.
 
         .. versionadded:: 2.2.0
 
@@ -5070,7 +5070,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
         ``(1, ..., 1, Ni, 1, ..., 1)``.  These sparse coordinate grids are
         intended to be used with :ref:`basics.broadcasting`.  When all
         coordinates are used in an expression, broadcasting still leads to a
-        fully-dimensonal result array.
+        fully-dimensional result array.
 
         Default is False.
 
