@@ -1409,7 +1409,7 @@ static PyType_Slot dtypemeta_slots[] = {
 static PyType_Spec dtypemeta_spec = {
     .name = "numpy._DTypeMeta",
     .basicsize = sizeof(PyArray_DTypeMeta),
-    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
+    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_IMMUTABLETYPE,
     .slots = dtypemeta_slots,
 };
 
