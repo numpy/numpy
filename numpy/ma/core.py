@@ -7941,7 +7941,7 @@ def where(condition, x=_NoValue, y=_NoValue):
     Returns
     -------
     out : MaskedArray
-        An masked array with `masked` elements where the condition is masked,
+        A masked array with `masked` elements where the condition is masked,
         elements from `x` where `condition` is True, and elements from `y`
         elsewhere.
 

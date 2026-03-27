@@ -322,7 +322,7 @@ class __array_namespace_info__:
         """
         The devices supported by NumPy.
 
-        For NumPy, this always returns ``['cpu']``.
+        For NumPy, this always returns ``('cpu',)``.
 
         Returns
         -------
@@ -340,7 +340,7 @@ class __array_namespace_info__:
         --------
         >>> info = np.__array_namespace_info__()
         >>> info.devices()
-        ['cpu']
+        ('cpu',)
 
         """
-        return ["cpu"]
+        return ("cpu",)

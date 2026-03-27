@@ -909,6 +909,13 @@ class TestUfunc:
         with pytest.raises(AttributeError, match="conjugate"):
             np.vecdot(arr, arr)
 
+    def test_vecdot_object_empty_is_zero(self):
+        x = np.empty((0,), dtype=object)
+        assert np.vecdot(x, x) == 0
+
+        x2 = np.empty((1, 0), dtype=object)
+        assert_array_equal(np.vecdot(x2, x2), np.array([0], dtype=object))
+
     def test_vecdot_object_breaks_outer_loop_on_error(self):
         arr1 = np.ones((3, 3)).astype(object)
         arr2 = arr1.copy()
@@ -1749,6 +1756,10 @@ class TestUfunc:
         # Sanity check
         assert np.all(result1[::2] == [0, 4, 8, 12])
         assert np.all(result2[::2] == [0, 4, 8, 12])
+        # Also no warning for where=True
+        result3 = np.add(a, a, where=True)
+        # Sanity check
+        assert_array_equal(result3, a + a)
 
     @staticmethod
     def identityless_reduce_arrs():
