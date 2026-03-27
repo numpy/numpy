@@ -1618,7 +1618,7 @@ def make_ufuncs(funcdict):
 
         if uf.no_float_errors:
             mlist.append(
-                r"((PyUFuncObject *)f)->reserved1 |="
+                r"((PyUFuncObject *)f)->_ufunc_flags |="
                 r" UFUNC_NO_FLOATINGPOINT_ERRORS;")
         mlist.append(r"""PyDict_SetItemString(dictionary, "%s", f);""" % name)
         mlist.append(r"""Py_DECREF(f);""")
