@@ -79,7 +79,7 @@ npy_cpu_dispatch_trace(const char *func_name, const char *signature,
  * Extract the enabled CPU targets from the generated configuration file.
  *
  * This macro is used to extract the enabled CPU targets from the generated configuration file,
- * which is derived from 'meson.multi_targets()' or from 'disuttils.CCompilerOpt' in the case of using distutils.
+ * which is derived from 'meson.multi_targets()'.
  * It then calls 'npy_cpu_dispatch_trace()' to insert a new item into the '__cpu_targets_info__' dictionary,
  * based on the provided FUNC_NAME and SIGNATURE.
  *
