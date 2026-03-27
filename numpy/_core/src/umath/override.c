@@ -1,6 +1,8 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define NO_IMPORT_ARRAY
 
+#include <assert.h>
+
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
 #include "npy_import.h"
@@ -113,7 +115,8 @@ initialize_normal_kwds(PyObject *const *out_args, int nout,
         }
     }
 
-    if (out_args != NULL && nout > 0) {
+    if (out_args != NULL) {
+        assert(nout > 0);
         /* Replace `out` argument with the normalized version */
         PyObject *out_tuple = PyTuple_FromArray(out_args, nout);
         if (out_tuple == NULL) {
