@@ -40,6 +40,7 @@
 #define NO_IMPORT_ARRAY
 #endif
 #include "stdio.h"
+#include <string.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 %}
@@ -444,8 +445,8 @@ void free_cap(PyObject * cap)
   {
     int success = 0;
     int i;
-    const size_t dims_str_size = 255;
-    char dims_str[dims_str_size] = "";
+    char dims_str[255] = "";
+    char s[255];
     for (i = 0; i < n && !success; i++)
     {
       if (array_numdims(ary) == exact_dimensions[i])
@@ -455,22 +456,13 @@ void free_cap(PyObject * cap)
     }
     if (!success)
     {
-      int used_buffer_space = 0;
-      int written;
-      for (i = 0; i < n-1; i++) {
-        written = snprintf(dims_str + used_buffer_space, 
-                           dims_str_size - used_buffer_space, 
-                           "%d, ", 
-                           exact_dimensions[i]);
-        if (written < 0)
-          written = 0;
-        if (written >= (int)(dims_str_size - used_buffer_space))
-          written = (int)(dims_str_size - used_buffer_space) - 1;
-        used_buffer_space += written;
+      for (i = 0; i < n-1; i++)
+      {
+        snprintf(s, sizeof(s), "%d, ", exact_dimensions[i]);
+        strncat(dims_str, s, sizeof(dims_str) - strlen(dims_str) - 1);
       }
-
-      snprintf(dims_str + used_buffer_space, dims_str_size - used_buffer_space,
-               "or %d", exact_dimensions[n-1]);
+      snprintf(s, sizeof(s), " or %d", exact_dimensions[n-1]);
+      strncat(dims_str, s, sizeof(dims_str) - strlen(dims_str) - 1);
       PyErr_Format(PyExc_TypeError,
                    "Array must have %s dimensions.  Given array has %d dimensions",
                    dims_str,
@@ -490,9 +482,9 @@ void free_cap(PyObject * cap)
     int i;
     int success = 1;
     size_t len;
-    const size_t dims_str_size = 255;
-    char desired_dims[dims_str_size] = "[";
-    char actual_dims[dims_str_size] = "[";
+    char desired_dims[255] = "[";
+    char s[255];
+    char actual_dims[255] = "[";
     for(i=0; i < n;i++)
     {
       if (size[i] != -1 &&  size[i] != array_size(ary,i))
@@ -502,40 +494,24 @@ void free_cap(PyObject * cap)
     }
     if (!success)
     {
-      int used_buffer_space = strlen(desired_dims);
-      int written;
-        
-      for (i = 0; i < n; i++) {
+      for (i = 0; i < n; i++)
+      {
         if (size[i] == -1)
-          written = snprintf(desired_dims + used_buffer_space, 
-                             dims_str_size - used_buffer_space, 
-                             "*,");
+        {
+          snprintf(s, sizeof(s), "*,");
+        }
         else
-          written = snprintf(desired_dims + used_buffer_space, 
-                             dims_str_size - used_buffer_space, 
-                             "%ld,", 
-                             (long int)size[i]);
-        if (written < 0)
-          written = 0;
-        if (written >= (int)(dims_str_size - used_buffer_space))
-          written = (int)(dims_str_size - used_buffer_space) - 1;
-        used_buffer_space += written;
+        {
+          snprintf(s, sizeof(s), "%ld,", (long int)size[i]);
+        }
+        strncat(desired_dims, s, sizeof(desired_dims) - strlen(desired_dims) - 1);
       }
       len = strlen(desired_dims);
       desired_dims[len-1] = ']';
-
-      used_buffer_space = strlen(actual_dims);
       for (i = 0; i < n; i++)
       {
-        written = snprintf(actual_dims + used_buffer_space, 
-                           dims_str_size - used_buffer_space, 
-                           "%ld,", 
-                           (long int)array_size(ary,i));
-        if (written < 0)
-          written = 0;
-        if (written >= (int)(dims_str_size - used_buffer_space))
-          written = (int)(dims_str_size - used_buffer_space) - 1;
-        used_buffer_space += written;
+        snprintf(s, sizeof(s), "%ld,", (long int)array_size(ary,i));
+        strncat(actual_dims, s, sizeof(actual_dims) - strlen(actual_dims) - 1);
       }
       len = strlen(actual_dims);
       actual_dims[len-1] = ']';
