@@ -2857,20 +2857,65 @@ datetime_hash(PyArray_DatetimeMetaData *meta, npy_datetime dt)
 
     if (meta->base == NPY_FR_GENERIC) {
         obj = PyLong_FromLongLong(dt);
-    } else {
-        if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(meta, dt, &dts) < 0) {
+        if (obj == NULL) {
             return -1;
         }
+        res = PyObject_Hash(obj);
+        Py_DECREF(obj);
+        return res;
+    }
 
-        if (dts.year < 1 || dts.year > 9999
-            || dts.ps != 0 || dts.as != 0) {
-            /* NpyDatetime_ConvertDatetime64ToDatetimeStruct does memset,
-             * so this is safe from loose struct packing. */
-            obj = PyBytes_FromStringAndSize((const char *)&dts, sizeof(dts));
-        } else {
-            obj = PyDateTime_FromDateAndTime(dts.year, dts.month, dts.day,
-                                             dts.hour, dts.min, dts.sec, dts.us);
+    if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(meta, dt, &dts) < 0) {
+        return -1;
+    }
+
+    /*
+     * If the date is in the datetime.datetime range (year 1-9999) and
+     * has no sub-microsecond precision, hash as a Python datetime.
+     * This matches the pd.Timestamp.__hash__ approach and ensures
+     * hash(np.datetime64(x, 'us')) == hash(datetime(x)).
+     */
+    if (dts.year >= 1 && dts.year <= 9999
+            && dts.ps == 0 && dts.as == 0) {
+        obj = PyDateTime_FromDateAndTime(dts.year, dts.month, dts.day,
+                                         dts.hour, dts.min, dts.sec, dts.us);
+        if (obj == NULL) {
+            return -1;
         }
+        res = PyObject_Hash(obj);
+        Py_DECREF(obj);
+        return res;
+    }
+
+    /*
+     * Otherwise, compute a canonical nanosecond value from the
+     * datetimestruct and hash that. Since the struct is unit-independent,
+     * all datetime64 representations of the same time point produce the
+     * same struct and thus the same canonical_ns. This may overflow for
+     * dates outside ~1678-2262, but the overflow is consistent across
+     * units.
+     *
+     * For values with sub-nanosecond precision, include that component
+     * (in attoseconds) in the hash to distinguish them. dts.ps % 1000
+     * extracts only the sub-ns part of the picoseconds, since the
+     * nanosecond component (ps / 1000) is already in canonical_ns.
+     */
+    npy_datetime canonical_ns;
+    PyArray_DatetimeMetaData ns_meta = {NPY_FR_ns, 1};
+    if (NpyDatetime_ConvertDatetimeStructToDatetime64(
+                &ns_meta, &dts, &canonical_ns) < 0) {
+        return -1;
+    }
+
+    npy_int32 sub_ns_ps = dts.ps % 1000;
+    npy_int64 sub_ns_as = (npy_int64)sub_ns_ps * 1000000 + dts.as;
+
+    if (sub_ns_as == 0) {
+        obj = PyLong_FromLongLong(canonical_ns);
+    }
+    else {
+        obj = Py_BuildValue("(LL)",
+                (long long)canonical_ns, (long long)sub_ns_as);
     }
 
     if (obj == NULL) {
@@ -2878,9 +2923,7 @@ datetime_hash(PyArray_DatetimeMetaData *meta, npy_datetime dt)
     }
 
     res = PyObject_Hash(obj);
-
     Py_DECREF(obj);
-
     return res;
 }
 
@@ -3029,21 +3072,65 @@ timedelta_hash(PyArray_DatetimeMetaData *meta, npy_timedelta td)
 
     if (meta->base == NPY_FR_Y) {
         obj = PyLong_FromLongLong(td * 12);
-    } else if (meta->base == NPY_FR_M) {
-        obj = PyLong_FromLongLong(td);
-    } else {
-        if (convert_timedelta_to_timedeltastruct(meta, td, &tds) < 0) {
+        if (obj == NULL) {
             return -1;
         }
-
-        if (tds.day < -999999999 || tds.day > 999999999
-            || tds.ps != 0 || tds.as != 0) {
-            /* convert_timedelta_to_timedeltastruct does memset,
-             * so this is safe from loose struct packing. */
-            obj = PyBytes_FromStringAndSize((const char *)&tds, sizeof(tds));
-        } else {
-            obj = PyDelta_FromDSU(tds.day, tds.sec, tds.us);
+        res = PyObject_Hash(obj);
+        Py_DECREF(obj);
+        return res;
+    }
+    if (meta->base == NPY_FR_M) {
+        obj = PyLong_FromLongLong(td);
+        if (obj == NULL) {
+            return -1;
         }
+        res = PyObject_Hash(obj);
+        Py_DECREF(obj);
+        return res;
+    }
+
+    if (convert_timedelta_to_timedeltastruct(meta, td, &tds) < 0) {
+        return -1;
+    }
+
+    /*
+     * If it fits in a datetime.timedelta and has no sub-microsecond
+     * precision, hash as a Python timedelta. This ensures
+     * hash(np.timedelta64(d)) == hash(d) when d is a datetime.timedelta.
+     */
+    if (tds.day >= -999999999 && tds.day <= 999999999
+            && tds.ps == 0 && tds.as == 0) {
+        obj = PyDelta_FromDSU(tds.day, tds.sec, tds.us);
+        if (obj == NULL) {
+            return -1;
+        }
+        res = PyObject_Hash(obj);
+        Py_DECREF(obj);
+        return res;
+    }
+
+    /*
+     * Otherwise, compute a canonical nanosecond value from the struct
+     * and hash that. The timedeltastruct is unit-independent, so all
+     * timedelta64 representations of the same duration produce the
+     * same struct and thus the same canonical_ns. The conversion may
+     * overflow for large durations, but the overflow is consistent
+     * across units.
+     */
+    npy_int64 canonical_ns =
+            ((npy_int64)tds.day * 86400LL + tds.sec) * 1000000000LL
+            + (npy_int64)tds.us * 1000LL
+            + tds.ps / 1000;
+
+    npy_int32 sub_ns_ps = tds.ps % 1000;
+    npy_int64 sub_ns_as = (npy_int64)sub_ns_ps * 1000000 + tds.as;
+
+    if (sub_ns_as == 0) {
+        obj = PyLong_FromLongLong(canonical_ns);
+    }
+    else {
+        obj = Py_BuildValue("(LL)",
+                (long long)canonical_ns, (long long)sub_ns_as);
     }
 
     if (obj == NULL) {
@@ -3051,9 +3138,7 @@ timedelta_hash(PyArray_DatetimeMetaData *meta, npy_timedelta td)
     }
 
     res = PyObject_Hash(obj);
-
     Py_DECREF(obj);
-
     return res;
 }
 

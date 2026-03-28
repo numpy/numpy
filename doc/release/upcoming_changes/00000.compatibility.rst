@@ -1,0 +1,16 @@
+``datetime64`` and ``timedelta64`` hashing fixed across units
+-------------------------------------------------------------
+Hashing of `~numpy.datetime64` and `~numpy.timedelta64` scalars has been
+fixed so that equal values with different units produce matching hashes.
+For example, ``hash(np.datetime64(0, 's')) == hash(np.datetime64(0, 'us'))``
+now holds.
+
+For ``datetime64`` values in the ``datetime.datetime``-representable range
+(year 1--9999 with microsecond precision or coarser), the hash matches
+``hash(datetime.datetime(...))``, following the same approach as
+``pd.Timestamp.__hash__``. Similarly, ``timedelta64`` values that fit in a
+``datetime.timedelta`` hash to the same value as their Python equivalents.
+
+Values outside these ranges now hash based on a canonical nanosecond
+representation instead of the raw bytes of an internal struct, which could
+previously produce different hashes for equal values in different units.
