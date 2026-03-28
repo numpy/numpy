@@ -4544,8 +4544,8 @@ add_newdoc('numpy._core.umath', 'real',
 
     Notes
     -----
-    This ufunc is used internally in the implement of the `ndarray.real`
-    attribute and `np.real` function which should be used instead.
+    This ufunc is used internally to implement the `ndarray.real`
+    attribute and the `np.real` function. It should not be used directly.
 
     """)
 
@@ -4573,8 +4573,8 @@ add_newdoc('numpy._core.umath', 'imag',
 
     Notes
     -----
-    This ufunc is used internally in the implement of the `ndarray.imag`
-    attribute and `np.imag` function which should be used instead.
+    This ufunc is used internally to implement the `ndarray.imag`
+    attribute and the `np.imag` function. It should not be used directly.
 
     """)
 

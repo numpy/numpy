@@ -1914,9 +1914,9 @@ with the rest of the ArrayMethod API.
 
     Add multiple loops to ufuncs from ArrayMethod specs. This also
     handles the registration of methods for the ufunc-like functions
-    ``sort`` and ``argsort``. See :ref:`array-methods-sorting` for details.
-    As well as for the array attributes ``.real`` and ``.imag`` needed
-    for user defined complex DTypes (with ``".real"`` and ``".imag"`` as names).
+    ``sort`` and ``argsort`` (see :ref:`array-methods-sorting` for details),
+    as well as for the array attributes ``.real`` and ``.imag`` needed
+    for user defined complex DTypes (with ``"real"`` and ``"imag"`` as names).
 
     The ``slots`` argument must be a  NULL-terminated array of
     `PyUFunc_LoopSlot` (see above), which give the name of the
