@@ -217,7 +217,7 @@ real_imag_promoter(PyObject *ufunc,
     if (info == NULL) {
         return -1;
     }
-    int res = PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+    int res = PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 1);
     Py_DECREF(info);
     if (res < 0) {
         return -1;
