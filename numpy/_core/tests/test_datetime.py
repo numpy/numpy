@@ -963,15 +963,20 @@ class TestDateTime:
         # INT64_MAX / 1e9 ≈ 9.2e9 seconds ≈ 292 years from epoch,
         # so dates beyond ~2262 overflow when cast to ns.
 
-        # scalar
+        # gh-16352: upconversion to finer units overflows
+        arr = np.array(["2367-12-31 12:00:00"], dtype="datetime64[h]")
+        with pytest.raises(OverflowError, match="Overflow"):
+            arr.astype("datetime64[ns]")
+
+        # gh-16352: scalar case
         val = np.datetime64("3000-01-01", "s")
         with pytest.raises(OverflowError, match="Overflow"):
             val.astype("datetime64[ns]")
 
-        # array
-        arr = np.array(["3000-01-01", "4000-01-01"], dtype="datetime64[s]")
+        # gh-22346: downconversion to coarser units overflows near INT64_MIN
+        dt = np.datetime64(np.iinfo(np.int64).min + 1, "s")
         with pytest.raises(OverflowError, match="Overflow"):
-            arr.astype("datetime64[ns]")
+            dt.astype("M8[m]")
 
         # negative overflow (far in the past)
         val_neg = np.datetime64("0001-01-01", "s")
