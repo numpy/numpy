@@ -957,6 +957,48 @@ class TestDateTime:
             numpy.datetime64("2014").astype("<M8[fs]")
         assert_raises(OverflowError, cast2)
 
+    def test_cast_overflow_safe_unit_conversion(self):
+        # Overflow when converting datetime64 between linear units
+        # (the fast-path cast), e.g. seconds -> nanoseconds.
+        # INT64_MAX / 1e9 ≈ 9.2e9 seconds ≈ 292 years from epoch,
+        # so dates beyond ~2262 overflow when cast to ns.
+
+        # scalar
+        val = np.datetime64("3000-01-01", "s")
+        with pytest.raises(OverflowError, match="Overflow"):
+            val.astype("datetime64[ns]")
+
+        # array
+        arr = np.array(["3000-01-01", "4000-01-01"], dtype="datetime64[s]")
+        with pytest.raises(OverflowError, match="Overflow"):
+            arr.astype("datetime64[ns]")
+
+        # negative overflow (far in the past)
+        val_neg = np.datetime64("0001-01-01", "s")
+        with pytest.raises(OverflowError, match="Overflow"):
+            val_neg.astype("datetime64[ns]")
+
+        # timedelta overflow
+        td = np.timedelta64(2**62, "s")
+        with pytest.raises(OverflowError, match="Overflow"):
+            td.astype("timedelta64[ns]")
+
+        # valid conversions near the boundary should still work
+        val_ok = np.datetime64("2020-01-01", "s")
+        result = val_ok.astype("datetime64[ns]")
+        assert result == np.datetime64("2020-01-01", "ns")
+
+        arr_ok = np.array(["2000-01-01", "2020-06-15"], dtype="datetime64[s]")
+        result_arr = arr_ok.astype("datetime64[ns]")
+        expected = np.array(["2000-01-01", "2020-06-15"], dtype="datetime64[ns]")
+        assert_equal(result_arr, expected)
+
+        # NaT should pass through without raising
+        arr_nat = np.array(["NaT", "2020-01-01"], dtype="datetime64[s]")
+        result_nat = arr_nat.astype("datetime64[ns]")
+        assert np.isnat(result_nat[0])
+        assert result_nat[1] == np.datetime64("2020-01-01", "ns")
+
     def test_pyobject_roundtrip(self):
         # All datetime types should be able to roundtrip through object
         a = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0,

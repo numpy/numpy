@@ -444,7 +444,16 @@ NpyDatetime_ConvertDatetime64ToDatetimeStruct(
         return -1;
     }
 
-    /* TODO: Change to a mechanism that avoids the potential overflow */
+    /* Check for overflow before multiplying by meta->num */
+    if (meta->num > 1) {
+        npy_int64 overflow_limit = NPY_MAX_INT64 / meta->num;
+        if (dt > overflow_limit || dt < -overflow_limit) {
+            PyErr_SetString(PyExc_OverflowError,
+                    "Overflow when converting between "
+                    "datetime64 units");
+            return -1;
+        }
+    }
     dt *= meta->num;
 
     /*

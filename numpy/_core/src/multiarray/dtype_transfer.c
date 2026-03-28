@@ -818,10 +818,23 @@ _strided_to_strided_datetime_cast(
     npy_int64 num = d->num, denom = d->denom;
     npy_int64 dt;
 
+    /*
+     * Precompute the overflow boundary so that |dt * num| and the
+     * subsequent subtraction of (denom - 1) for negative values
+     * cannot overflow int64.
+     */
+    npy_int64 overflow_limit = (NPY_MAX_INT64 - denom + 1) / num;
+
     while (N > 0) {
         memcpy(&dt, src, sizeof(dt));
 
         if (dt != NPY_DATETIME_NAT) {
+            if (dt > overflow_limit || dt < -overflow_limit) {
+                PyErr_SetString(PyExc_OverflowError,
+                        "Overflow when converting between "
+                        "datetime64 units");
+                return -1;
+            }
             /* Apply the scaling */
             if (dt < 0) {
                 dt = (dt * num - (denom - 1)) / denom;
@@ -854,10 +867,23 @@ _aligned_strided_to_strided_datetime_cast(
     npy_int64 num = d->num, denom = d->denom;
     npy_int64 dt;
 
+    /*
+     * Precompute the overflow boundary so that |dt * num| and the
+     * subsequent subtraction of (denom - 1) for negative values
+     * cannot overflow int64.
+     */
+    npy_int64 overflow_limit = (NPY_MAX_INT64 - denom + 1) / num;
+
     while (N > 0) {
         dt = *(npy_int64 *)src;
 
         if (dt != NPY_DATETIME_NAT) {
+            if (dt > overflow_limit || dt < -overflow_limit) {
+                PyErr_SetString(PyExc_OverflowError,
+                        "Overflow when converting between "
+                        "datetime64 units");
+                return -1;
+            }
             /* Apply the scaling */
             if (dt < 0) {
                 dt = (dt * num - (denom - 1)) / denom;
