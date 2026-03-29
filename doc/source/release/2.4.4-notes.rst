@@ -4,7 +4,7 @@
 NumPy 2.4.4 Release Notes
 =========================
 
-The NumPy 2.4.3 is a patch release that fixes bugs discovered after the 2.4.2
+The NumPy 2.4.4 is a patch release that fixes bugs discovered after the 2.4.3
 release. It should finally close issue #30816, the OpenBLAS threading problem
 on ARM.
 
