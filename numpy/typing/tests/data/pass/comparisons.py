@@ -34,8 +34,8 @@ AR_c: np.ndarray[Any, np.dtype[np.complex128]] = np.array([1.0j])
 AR_S: np.ndarray[Any, np.dtype[np.bytes_]] = np.array([b"a"], "S")
 AR_T = cast(np.ndarray[Any, np.dtypes.StringDType], np.array(["a"], "T"))
 AR_U: np.ndarray[Any, np.dtype[np.str_]] = np.array(["a"], "U")
-AR_m: np.ndarray[Any, np.dtype[np.timedelta64]] = np.array([np.timedelta64("1")])
-AR_M: np.ndarray[Any, np.dtype[np.datetime64]] = np.array([np.datetime64("1")])
+AR_m: np.ndarray[Any, np.dtype[np.timedelta64]] = np.array([np.timedelta64("1", "s")])
+AR_M: np.ndarray[Any, np.dtype[np.datetime64]] = np.array([np.datetime64("1", "s")])
 AR_O: np.ndarray[Any, np.dtype[np.object_]] = np.array([1], dtype=object)
 
 # Arrays
