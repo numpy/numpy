@@ -4891,7 +4891,7 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     ufunc->userloops = NULL;
     ufunc->ptr = NULL;
     ufunc->vectorcall = &ufunc_generic_vectorcall;
-    ufunc->reserved1 = 0;
+    ufunc->_ufunc_flags = 0;
     ufunc->iter_flags = 0;
 
     /* Type resolution and inner loop selection functions */

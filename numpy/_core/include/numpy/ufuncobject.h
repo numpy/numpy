@@ -122,8 +122,8 @@ typedef struct _tagPyUFuncObject {
         /* The number of elements in 'functions' and 'data' */
         int ntypes;
 
-        /* Used to be unused field 'check_return' */
-        int reserved1;
+        /* Flags for the ufunc (e.g. UFUNC_NO_FLOATINGPOINT_ERRORS) */
+        int _ufunc_flags;
 
         /* The name of the ufunc */
         const char *name;
@@ -248,6 +248,15 @@ typedef PyUFuncObject_fields PyUFuncObject;
 
 #define UFUNC_OBJ_ISOBJECT      1
 #define UFUNC_OBJ_NEEDS_API     2
+
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+/*
+ * Flag stored in PyUFuncObject._ufunc_flags to indicate that non-object loops
+ * of this ufunc never raise floating point errors.  Used to skip the
+ * expensive npy_clear_floatstatus/npy_get_floatstatus calls.
+ */
+#define UFUNC_NO_FLOATINGPOINT_ERRORS  0x1
+#endif  /* NPY_INTERNAL_BUILD */
 
 
 #if NPY_ALLOW_THREADS
