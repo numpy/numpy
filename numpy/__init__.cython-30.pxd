@@ -951,49 +951,49 @@ cdef extern from "numpy/ufuncobject.h":
     ctypedef class numpy.ufunc [object PyUFuncObject, check_size ignore]:
         @property
         cdef inline int nin(self) noexcept nogil:
-            return _PyUFuncObject_GET_ITEM_DATA(self).nin
+            return PyUFuncObject_GET_ITEM_DATA(self).nin
 
         @property
         cdef inline int nout(self) noexcept nogil:
-            return _PyUFuncObject_GET_ITEM_DATA(self).nout
+            return PyUFuncObject_GET_ITEM_DATA(self).nout
 
         @property
         cdef inline int nargs(self) noexcept nogil:
-            return _PyUFuncObject_GET_ITEM_DATA(self).nargs
+            return PyUFuncObject_GET_ITEM_DATA(self).nargs
 
         @property
         cdef inline PyUFuncGenericFunction* functions(self) noexcept nogil:
-            return _PyUFuncObject_GET_ITEM_DATA(self).functions
+            return PyUFuncObject_GET_ITEM_DATA(self).functions
 
         @property
         cdef inline void ** data(self) noexcept nogil:
-            return <void **>_PyUFuncObject_GET_ITEM_DATA(self).data
+            return <void **>PyUFuncObject_GET_ITEM_DATA(self).data
 
         @property
         cdef inline int ntypes(self) noexcept nogil:
-            return _PyUFuncObject_GET_ITEM_DATA(self).ntypes
+            return PyUFuncObject_GET_ITEM_DATA(self).ntypes
 
         @property
         cdef inline const char* name(self) noexcept nogil:
-            return _PyUFuncObject_GET_ITEM_DATA(self).name
+            return PyUFuncObject_GET_ITEM_DATA(self).name
 
         @property
         cdef inline const char* doc(self) noexcept nogil:
-            return _PyUFuncObject_GET_ITEM_DATA(self).doc
+            return PyUFuncObject_GET_ITEM_DATA(self).doc
 
         @property
         cdef inline void* ptr(self) noexcept nogil:
-            return _PyUFuncObject_GET_ITEM_DATA(self).ptr
+            return PyUFuncObject_GET_ITEM_DATA(self).ptr
 
         @property
         cdef inline PyObject* obj(self) noexcept nogil:
-            return _PyUFuncObject_GET_ITEM_DATA(self).obj
+            return PyUFuncObject_GET_ITEM_DATA(self).obj
 
         @property
         cdef inline PyObject* userloops(self) noexcept nogil:
-            return _PyUFuncObject_GET_ITEM_DATA(self).userloops
+            return PyUFuncObject_GET_ITEM_DATA(self).userloops
 
-    PyUFuncObject_fields *_PyUFuncObject_GET_ITEM_DATA(ufunc) nogil
+    PyUFuncObject_fields *PyUFuncObject_GET_ITEM_DATA(ufunc) nogil
 
     cdef enum:
         PyUFunc_Zero

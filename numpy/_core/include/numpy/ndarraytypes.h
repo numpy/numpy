@@ -769,8 +769,6 @@ typedef struct _arr_descr {
         PyObject *shape;       /* a tuple */
 } PyArray_ArrayDescr;
 
-#define PyDataType_TYPENUM(descr) (((PyArray_Descr *)(descr))->type_num)
-
 /*
  * Memory handler structure for array data.
  */

@@ -235,13 +235,6 @@ typedef struct _tagPyUFuncObject {
     #endif
 } PyUFuncObject_fields;
 
-#ifndef _Py_OPAQUE_PYOBJECT
-typedef struct _tagPyUFuncObject PyUFuncObject;
-#define PyUFuncObject_GET_ITEM_DATA(obj) ((PyUFuncObject_fields *)(obj))
-#else
-typedef struct tagPyUFuncObject PyUFuncObject;
-#define PyUFuncObject_GET_ITEM_DATA(obj) _PyUFuncObject_GET_ITEM_DATA(obj)
-#endif
 
 #include "arrayobject.h"
 /* Generalized ufunc; 0x0001 reserved for possible use as CORE_ENABLED */
@@ -343,13 +336,15 @@ typedef struct _loop1d_info {
 #endif
 #endif
 
-#include "__ufunc_api.h"
+#ifndef _Py_OPAQUE_PYOBJECT
+typedef struct _tagPyUFuncObject PyUFuncObject;
+#define PyUFuncObject_GET_ITEM_DATA(obj) ((PyUFuncObject_fields *)(obj))
+#else
+typedef struct tagPyUFuncObject PyUFuncObject;
+#define PyUFuncObject_GET_ITEM_DATA(obj) _PyUFuncObject_GET_ITEM_DATA(obj)
+#endif
 
-// In future, when adding support for opaque PyObject, this would become
-// a ABI function call to get the ufunc struct fields from the PyObject.
-static inline PyUFuncObject_fields *_PyUFuncObject_GET_ITEM_DATA(PyUFuncObject *ufunc) {
-    return (PyUFuncObject_fields *)ufunc;
-}
+#include "__ufunc_api.h"
 
 #ifdef __cplusplus
 }
