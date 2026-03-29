@@ -920,10 +920,7 @@ PyArray_AdaptDescriptorToArray(
         return descr;
     }
     if (dtype == NULL) {
-        res = PyArray_ExtractDTypeAndDescriptor(descr, &new_descr, &dtype);
-        if (res < 0) {
-            return NULL;
-        }
+        PyArray_ExtractDTypeAndDescriptor(descr, &new_descr, &dtype);
         if (new_descr != NULL) {
             Py_DECREF(dtype);
             return new_descr;

@@ -1533,16 +1533,10 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
     npy_dtype_info dt_info = {NULL, NULL};
 
-    int res = PyArray_ExtractDTypeAndDescriptor(
+    PyArray_ExtractDTypeAndDescriptor(
         newtype, &dt_info.descr, &dt_info.dtype);
 
     Py_XDECREF(newtype);
-
-    if (res < 0) {
-        Py_XDECREF(dt_info.descr);
-        Py_XDECREF(dt_info.dtype);
-        return NULL;
-    }
 
     /*
      * The internal implementation treats 0 as actually wanting a zero-dimensional
@@ -1830,16 +1824,10 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
 {
     npy_dtype_info dt_info = {NULL, NULL};
 
-    int res = PyArray_ExtractDTypeAndDescriptor(
+    PyArray_ExtractDTypeAndDescriptor(
         descr, &dt_info.descr, &dt_info.dtype);
 
     Py_XDECREF(descr);
-
-    if (res < 0) {
-        Py_XDECREF(dt_info.descr);
-        Py_XDECREF(dt_info.dtype);
-        return NULL;
-    }
 
     /* See comment in PyArray_FromAny for rationale */
     if (max_depth == 0 || max_depth > NPY_MAXDIMS) {
@@ -3012,17 +3000,11 @@ PyArray_Zeros(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
 {
     npy_dtype_info dt_info = {NULL, NULL};
 
-    int res = PyArray_ExtractDTypeAndDescriptor(
+    PyArray_ExtractDTypeAndDescriptor(
         type, &dt_info.descr, &dt_info.dtype);
 
     // steal reference
     Py_XDECREF(type);
-
-    if (res < 0) {
-        Py_XDECREF(dt_info.descr);
-        Py_XDECREF(dt_info.dtype);
-        return NULL;
-    }
 
     PyObject *ret = PyArray_Zeros_int(nd, dims, dt_info.descr, dt_info.dtype,
                                       is_f_order);
@@ -3077,15 +3059,11 @@ PyArray_Empty(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
 {
     npy_dtype_info dt_info = {NULL, NULL};
 
-    int res = PyArray_ExtractDTypeAndDescriptor(
+    PyArray_ExtractDTypeAndDescriptor(
         type, &dt_info.descr, &dt_info.dtype);
 
     // steal reference
     Py_XDECREF(type);
-
-    if (res < 0) {
-        return NULL;
-    }
 
     PyObject *ret = PyArray_Empty_int(
         nd, dims, dt_info.descr, dt_info.dtype, is_f_order);
