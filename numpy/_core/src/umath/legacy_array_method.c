@@ -398,6 +398,18 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         }
     }
 
+    /*
+     * Set NPY_METH_NO_FLOATINGPOINT_ERRORS for non-object loops of ufuncs
+     * that are known to never raise floating point errors (e.g. comparisons,
+     * logical operations, abs, neg, copysign, etc.).
+     * The flag is set on the ufunc via _ufunc_flags during initialization in
+     * __umath_generated.c (driven by no_float_errors=True in generate_umath.py).
+     */
+    if ((ufunc->_ufunc_flags & UFUNC_NO_FLOATINGPOINT_ERRORS) &&
+            !(flags & NPY_METH_REQUIRES_PYAPI)) {
+        flags |= NPY_METH_NO_FLOATINGPOINT_ERRORS;
+    }
+
     PyType_Slot slots[4] = {
         {NPY_METH_get_loop, &get_wrapped_legacy_ufunc_loop},
         {NPY_METH_resolve_descriptors, &simple_legacy_resolve_descriptors},

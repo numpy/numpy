@@ -194,6 +194,33 @@ PyUFunc_AddLoopFromSpec_int(PyObject *ufunc, PyArrayMethod_Spec *spec, int priv)
 }
 
 
+
+/*
+ * There are a few ArrayMethods we store on the DType since they are not
+ * (only) used via ufuncs.  Some don't need to be bound (DTypes attached)
+ * and are currently not.
+ */
+template <auto slot, bool bound>
+static int
+set_static_method(PyArrayMethod_Spec *spec) {
+    PyArray_DTypeMeta *dtype = spec->dtypes[0];
+    PyBoundArrayMethodObject *meth = PyArrayMethod_FromSpec_int(spec, 0);
+    if (meth == NULL) {
+        return -1;
+    }
+
+    if constexpr (!bound) {
+        Py_INCREF(meth->method);
+        NPY_DT_SLOTS(dtype)->*slot = meth->method;
+        Py_DECREF(meth);
+    }
+    else {
+        NPY_DT_SLOTS(dtype)->*slot = meth;
+    }
+    return 0;
+}
+
+
 /*UFUNC_API
  * Add multiple loops to ufuncs from ArrayMethod specs. This also
  * handles the registration of sort and argsort methods for dtypes
@@ -202,64 +229,67 @@ PyUFunc_AddLoopFromSpec_int(PyObject *ufunc, PyArrayMethod_Spec *spec, int priv)
 NPY_NO_EXPORT int
 PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
 {
-    if (npy_cache_import_runtime(
-            "numpy", "sort", &npy_runtime_imports.sort) < 0) {
-        return -1;
-    }
-    if (npy_cache_import_runtime(
-            "numpy", "argsort", &npy_runtime_imports.argsort) < 0) {
-        return -1;
-    }
+    int ret = -1;
+    PyObject *ufunc = NULL;
 
     PyUFunc_LoopSlot *slot;
     for (slot = slots; slot->name != NULL; slot++) {
-        PyObject *ufunc = npy_import_entry_point(slot->name);
-        if (ufunc == NULL) {
-            return -1;
+        // Hardcode slot names for attributes and non-ufuncs stored on the DType
+        // (Also avoids circular imports a bit.)
+        if (strcmp(slot->name, "real") == 0) {
+            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.real));
+        }
+        else if (strcmp(slot->name, "imag") == 0) {
+            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.imag));
+        }
+        else if (strcmp(slot->name, "sort") == 0) {
+            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.sort));
+        }
+        else if (strcmp(slot->name, "argsort") == 0) {
+            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.argsort));
+        }
+        else {
+            Py_XSETREF(ufunc, npy_import_entry_point(slot->name));
+            if (ufunc == NULL) {
+                goto finish;
+            }
         }
 
-        if (ufunc == npy_runtime_imports.sort) {
-            Py_DECREF(ufunc);
-
-            PyArray_DTypeMeta *dtype = slot->spec->dtypes[0];
-            PyBoundArrayMethodObject *sort_meth = PyArrayMethod_FromSpec_int(slot->spec, 0);
-            if (sort_meth == NULL) {
-                return -1;
+        if (ufunc == npy_interned_str.real) {
+            if (set_static_method<&NPY_DType_Slots::real_meth, true>(slot->spec) < 0) {
+                goto finish;
             }
-
-            NPY_DT_SLOTS(dtype)->sort_meth = sort_meth->method;
-            Py_INCREF(sort_meth->method);
-            Py_DECREF(sort_meth);
         }
-        else if (ufunc == npy_runtime_imports.argsort) {
-            Py_DECREF(ufunc);
-
-            PyArray_DTypeMeta *dtype = slot->spec->dtypes[0];
-            PyBoundArrayMethodObject *argsort_meth = PyArrayMethod_FromSpec_int(slot->spec, 0);
-            if (argsort_meth == NULL) {
-                return -1;
+        else if (ufunc == npy_interned_str.imag) {
+            if (set_static_method<&NPY_DType_Slots::imag_meth, true>(slot->spec) < 0) {
+                goto finish;
             }
-
-            NPY_DT_SLOTS(dtype)->argsort_meth = argsort_meth->method;
-            Py_INCREF(argsort_meth->method);
-            Py_DECREF(argsort_meth);
+        }
+        else if (ufunc == npy_interned_str.sort) {
+            if (set_static_method<&NPY_DType_Slots::sort_meth, false>(slot->spec) < 0) {
+                goto finish;
+            }
+        }
+        else if (ufunc == npy_interned_str.argsort) {
+            if (set_static_method<&NPY_DType_Slots::argsort_meth, false>(slot->spec) < 0) {
+                goto finish;
+            }
         }
         else {
             if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
                 PyErr_Format(PyExc_TypeError, "%s was not a ufunc!", slot->name);
-                Py_DECREF(ufunc);
-                return -1;
+                goto finish;
             }
-
-            int ret = PyUFunc_AddLoopFromSpec_int(ufunc, slot->spec, 0);
-            Py_DECREF(ufunc);
-            if (ret < 0) {
-                return -1;
+            if (PyUFunc_AddLoopFromSpec_int(ufunc, slot->spec, 0) < 0) {
+                goto finish;
             }
         }
     }
 
-    return 0;
+    ret = 0;
+  finish:
+    Py_XDECREF(ufunc);
+    return ret;
 }
 
 
@@ -595,22 +625,21 @@ call_promoter_and_recurse(PyUFuncObject *ufunc, PyObject *info,
             return NULL;
         }
         /*
-        * If none of the dtypes changes, we would recurse infinitely, abort.
-        * (Of course it is nevertheless possible to recurse infinitely.)
-        *
-        * TODO: We could allow users to signal this directly and also move
-        *       the call to be (almost immediate).  That would call it
-        *       unnecessarily sometimes, but may allow additional flexibility.
-        */
-        int dtypes_changed = 0;
-        for (int i = 0; i < nargs; i++) {
-            if (new_op_dtypes[i] != op_dtypes[i]) {
-                dtypes_changed = 1;
-                break;
+         * If none of the dtypes changes, we would recurse infinitely, abort.
+         * (Of course it is nevertheless possible to recurse infinitely.)
+         * If the user indicates a `1` result, we trust the user.
+         */
+        if (promoter_result != 1) {
+            int dtypes_changed = 0;
+            for (int i = 0; i < nargs; i++) {
+                if (new_op_dtypes[i] != op_dtypes[i]) {
+                    dtypes_changed = 1;
+                    break;
+                }
             }
-        }
-        if (!dtypes_changed) {
-            goto finish;
+            if (!dtypes_changed) {
+                goto finish;
+            }
         }
     }
     else {

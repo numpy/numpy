@@ -2114,11 +2114,11 @@ def place(arr, mask, vals):
     arr : ndarray
         Array to put data into.
     mask : array_like
-        Boolean mask array. Must have the same size as `a`.
+        Boolean mask array. Must have the same size as `arr`.
     vals : 1-D sequence
-        Values to put into `a`. Only the first N elements are used, where
+        Values to put into `arr`. Only the first N elements are used, where
         N is the number of True values in `mask`. If `vals` is smaller
-        than N, it will be repeated, and if elements of `a` are to be masked,
+        than N, it will be repeated, and if elements of `arr` are to be masked,
         this sequence must be non-empty.
 
     See Also

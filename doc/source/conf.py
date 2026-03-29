@@ -423,7 +423,7 @@ intersphinx_mapping = {
     'matplotlib': ('https://matplotlib.org/stable', None),
     'imageio': ('https://imageio.readthedocs.io/en/stable', None),
     'skimage': ('https://scikit-image.org/docs/stable', None),
-    'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
+    'pandas': ('https://pandas.pydata.org/docs', None),
     'scipy-lecture-notes': ('https://scipy-lectures.org', None),
     'pytest': ('https://docs.pytest.org/en/stable', None),
     'numpy-tutorials': ('https://numpy.org/numpy-tutorials', None),

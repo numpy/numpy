@@ -397,6 +397,7 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
     ):
         self.assert_deprecated(op, args=(value, generic_value))
 
+
 class TestTriDeprecationWithNonInteger(_DeprecationTestCase):
     # Deprecation in NumPy 2.5, 2026-03
 
@@ -423,3 +424,15 @@ class TestTriDeprecationWithNonInteger(_DeprecationTestCase):
            [ 8,  9, 10, 11],
            [12, 13, 14, 15]])
         self.assert_deprecated(lambda: np.tril_indices_from(a, k=9.8))
+
+
+class TestTakeOutDtype(_DeprecationTestCase):
+    # Deprecated in Numpy 2.5, 2026-01
+    message = "Implicit casting of output to a different kind."
+
+    def test_out_dtype_deprecated(self):
+        a = np.arange(3).astype(np.int32)
+        indices = np.arange(2)
+        different_dtype_out = np.zeros_like(indices, dtype=np.uint32)
+
+        self.assert_deprecated(lambda: np.take(a, indices, out=different_dtype_out))
