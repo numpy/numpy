@@ -1520,6 +1520,18 @@ NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                 int max_depth, int flags, PyObject *context)
 {
+    /*
+     * Fast path: when op is already an ndarray and no dtype, flags,
+     * depth, or context constraints are given, return it directly.
+     * This avoids the expensive DiscoverDTypeAndShape +
+     * PyArray_CanCastArrayTo pipeline for the common no-op case.
+     */
+    if (newtype == NULL && flags == 0 && min_depth == 0
+            && context == NULL && PyArray_Check(op)) {
+        Py_INCREF(op);
+        return op;
+    }
+
     npy_dtype_info dt_info = {NULL, NULL};
 
     int res = PyArray_ExtractDTypeAndDescriptor(
