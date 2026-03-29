@@ -98,6 +98,7 @@ typedef int (PyUFunc_TypeResolutionFunc)(
 typedef int (PyUFunc_ProcessCoreDimsFunc)(
                                 struct _tagPyUFuncObject *ufunc,
                                 npy_intp *core_dim_sizes);
+
 typedef struct _tagPyUFuncObject {
 #ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD

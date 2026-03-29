@@ -25,13 +25,13 @@ _PyArrayNeighborhoodIter_IncrCoord(PyArrayNeighborhoodIterObject* iter);
  *  ....
  */
 #define _UPDATE_COORD_ITER(c) \
-    wb = PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->coordinates[c] < PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->bounds[c][1]; \
+    wb = _PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->coordinates[c] < _PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->bounds[c][1]; \
     if (wb) { \
-        PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->coordinates[c] += 1; \
+        _PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->coordinates[c] += 1; \
         return 0; \
     } \
     else { \
-        PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->coordinates[c] = PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->bounds[c][0]; \
+        _PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->coordinates[c] = _PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->bounds[c][0]; \
     }
 
 static inline int
@@ -39,7 +39,7 @@ _PyArrayNeighborhoodIter_IncrCoord(PyArrayNeighborhoodIterObject* iter)
 {
     npy_intp i, wb;
 
-    for (i = PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->nd - 1; i >= 0; --i) {
+    for (i = _PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->nd - 1; i >= 0; --i) {
         _UPDATE_COORD_ITER(i)
     }
 
@@ -68,7 +68,7 @@ static inline int
 PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter)
 {
     _PyArrayNeighborhoodIter_IncrCoord (iter);
-    PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->dataptr = PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->translate((PyArrayIterObject*)iter, PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->coordinates);
+    _PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->dataptr = _PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->translate((PyArrayIterObject*)iter, _PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->coordinates);
 
     return 0;
 }
@@ -81,10 +81,10 @@ PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter)
 {
     npy_intp i;
 
-    for (i = 0; i < PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->nd; ++i) {
-        PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->coordinates[i] = PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->bounds[i][0];
+    for (i = 0; i < _PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->nd; ++i) {
+        _PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->coordinates[i] = _PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->bounds[i][0];
     }
-    PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->dataptr = PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->translate((PyArrayIterObject*)iter, PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->coordinates);
+    _PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->dataptr = _PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->translate((PyArrayIterObject*)iter, _PyArrayNeighborhoodIter_GET_ITEM_DATA(iter)->coordinates);
 
     return 0;
 }

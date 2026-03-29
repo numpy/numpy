@@ -147,7 +147,7 @@ extern "C" {
 static inline void
 PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
 {
-    PyArrayObject_fields *fa = PyArray_GET_ITEM_DATA(arr);
+    PyArrayObject_fields *fa = _PyArray_GET_ITEM_DATA(arr);
     if (fa && fa->base) {
         if (fa->flags & NPY_ARRAY_WRITEBACKIFCOPY) {
             PyArray_ENABLEFLAGS((PyArrayObject*)fa->base, NPY_ARRAY_WRITEABLE);

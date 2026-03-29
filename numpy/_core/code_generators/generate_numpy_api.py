@@ -49,10 +49,6 @@ static int PyArray_RUNTIME_VERSION = 0;
 #endif
 #endif
 
-#if defined(_Py_OPAQUE_PYOBJECT) && NPY_TARGET_VERSION < NPY_2_5_API_VERSION
-#error "NumPy 2.5 or later is required when compiling with opaque PyObject"
-#endif
-
 %s
 
 /*
