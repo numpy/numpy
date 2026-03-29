@@ -102,6 +102,7 @@ def test_limited_api(install_temp):
 
 def test_limited_opaque(install_temp):
     import limited_api_opaque
+
     import numpy as np
     arr = np.ones((200, 200))
-    assert limited_api_opaque.nonzero(arr) == 200*200
+    assert limited_api_opaque.nonzero(arr) == 200 * 200
