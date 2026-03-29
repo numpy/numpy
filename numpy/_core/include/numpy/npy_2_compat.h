@@ -141,7 +141,7 @@ PyArray_ImportNumPyAPI(void)
  */
 
 
-#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION || NPY_ABI_VERSION < 0x02000000 || defined(_Py_OPAQUE_PYOBJECT)
+#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION || NPY_ABI_VERSION < 0x02000000
     /* Compiling for 1.x or 2.x only, direct field access is OK: */
 
     static inline void
@@ -153,7 +153,7 @@ PyArray_ImportNumPyAPI(void)
     static inline npy_uint64
     PyDataType_FLAGS(const PyArray_Descr *dtype)
     {
-    #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION || defined(_Py_OPAQUE_PYOBJECT)
+    #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
         return PyDataType_GET_ITEM_DATA(dtype)->flags;
     #else
         return (unsigned char)dtype->flags;  /* Need unsigned cast on 1.x */
@@ -225,7 +225,7 @@ DESCR_ACCESSOR(TYPEOBJ, typeobj, PyTypeObject *, 0)
 
 
 #if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
-#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION || defined(_Py_OPAQUE_PYOBJECT)
+#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
     static inline PyArray_ArrFuncs *
     PyDataType_GetArrFuncs(const PyArray_Descr *descr)
     {

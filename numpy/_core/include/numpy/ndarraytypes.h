@@ -614,7 +614,7 @@ typedef struct {
  * instead. See npy_2_compat.h.
  */
 
-#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION || defined(_Py_OPAQUE_PYOBJECT)
+#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
 
 #if !defined(_Py_OPAQUE_PYOBJECT)
 typedef struct _PyArray_Descr {
