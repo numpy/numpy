@@ -1524,12 +1524,11 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
      * Fast path: when op is already an ndarray and no dtype, flags,
      * depth, or context constraints are given, return it directly.
      * This avoids the expensive DiscoverDTypeAndShape +
-     * PyArray_CanCastArrayTo pipeline for the common no-op case.
+     * PyArray_CanCastArrayTo for the common case.
      */
     if (newtype == NULL && flags == 0 && min_depth == 0
             && context == NULL && PyArray_Check(op)) {
-        Py_INCREF(op);
-        return op;
+        return Py_NewRef(op);
     }
 
     npy_dtype_info dt_info = {NULL, NULL};
