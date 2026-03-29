@@ -858,7 +858,7 @@ static const char conv1d_full_typecodes[] = {NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE}
 
 
 /*
- * Test helpers for PyUFunc_ReplaceLoopBySignature (unary ufuncs only).
+ * Test helpers for PyUFunc_ReplaceLoopBySignature.
  *
  * _constant42_loop: unary float64 loop that always writes 42.0.
  */
