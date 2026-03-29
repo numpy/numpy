@@ -573,15 +573,10 @@ discover_datetime_and_timedelta_from_pyobject(
         PyArray_DTypeMeta *cls, PyObject *obj) {
     if (PyArray_IsScalar(obj, Datetime) ||
             PyArray_IsScalar(obj, Timedelta)) {
-        PyArray_DatetimeMetaData *meta;
-        PyArray_Descr *descr = PyArray_DescrFromScalar(obj);
-        meta = get_datetime_metadata_from_dtype(descr);
-        if (meta == NULL) {
-            return NULL;
-        }
-        PyArray_Descr *new_descr = create_datetime_dtype(cls->type_num, meta);
-        Py_DECREF(descr);
-        return new_descr;
+        /* Extract metadata directly from the scalar object. */
+        PyArray_DatetimeMetaData *meta =
+                &((PyDatetimeScalarObject *)obj)->obmeta;
+        return create_datetime_dtype(cls->type_num, meta);
     }
     else {
         return find_object_datetime_type(obj, cls->type_num);
