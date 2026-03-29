@@ -86,7 +86,7 @@ default_resolve_descriptors(
      * abstract ones or unspecified outputs).  We can use the common-dtype
      * operation to provide a default here.
      */
-    if (method->casting == NPY_NO_CASTING) {
+    if (method->casting == NPY_NO_CASTING && (method->flags & _NPY_METH_IS_CAST)) {
         /*
          * By (current) definition no-casting should imply viewable.  This
          * is currently indicated for example for object to object cast.
