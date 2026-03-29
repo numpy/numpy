@@ -64,13 +64,15 @@ if py.get_variable('Py_GIL_DISABLED', 0) == 0
 )
 endif
 
-py.extension_module(
-    'limited_api_opaque',
-    'limited_api_opaque.c',
-    c_args: [
-      '-DNPY_TARGET_VERSION=NPY_2_5_API_VERSION',
-      '-D_Py_OPAQUE_PYOBJECT',
-    ],
-    include_directories: [npy_include_path],
-    limited_api: '3.15',
-)
+if py.language_version().version_compare('>=3.15')
+  py.extension_module(
+      'limited_api_opaque',
+      'limited_api_opaque.c',
+      c_args: [
+        '-DNPY_TARGET_VERSION=NPY_2_5_API_VERSION',
+        '-D_Py_OPAQUE_PYOBJECT',
+      ],
+      include_directories: [npy_include_path],
+      limited_api: '3.15',
+  )
+endif
