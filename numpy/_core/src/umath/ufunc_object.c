@@ -5359,6 +5359,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 
 #undef _SETCPTR
 
+#undef _PyUFuncObject_GET_ITEM_DATA
 /*UFUNC_API*/
 NPY_NO_EXPORT PyUFuncObject_fields *
 _PyUFuncObject_GET_ITEM_DATA(const PyUFuncObject *obj)

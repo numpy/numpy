@@ -338,13 +338,16 @@ typedef struct _loop1d_info {
 
 #ifndef _Py_OPAQUE_PYOBJECT
 typedef struct _tagPyUFuncObject PyUFuncObject;
-#define PyUFuncObject_GET_ITEM_DATA(obj) ((PyUFuncObject_fields *)(obj))
 #else
 typedef struct tagPyUFuncObject PyUFuncObject;
-#define PyUFuncObject_GET_ITEM_DATA(obj) _PyUFuncObject_GET_ITEM_DATA(obj)
 #endif
 
 #include "__ufunc_api.h"
+
+#ifndef _Py_OPAQUE_PYOBJECT
+#undef _PyUFuncObject_GET_ITEM_DATA
+#define _PyUFuncObject_GET_ITEM_DATA(ufunc) ((PyUFuncObject_fields *)(ufunc))
+#endif
 
 #ifdef __cplusplus
 }
