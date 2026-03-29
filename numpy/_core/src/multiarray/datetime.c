@@ -4218,10 +4218,10 @@ PyArray_InitializeDatetimeCasts()
     slots[2].slot = 0;
     slots[2].pfunc = NULL;
 
-    PyArray_DTypeMeta *datetime = &PyArray_DatetimeDType;
-    PyArray_DTypeMeta *timedelta = &PyArray_TimedeltaDType;
-    PyArray_DTypeMeta *string = &PyArray_BytesDType;
-    PyArray_DTypeMeta *unicode = &PyArray_UnicodeDType;
+    PyArray_DTypeMeta *datetime = PyArray_DatetimeDTypePtr;
+    PyArray_DTypeMeta *timedelta = PyArray_TimedeltaDTypePtr;
+    PyArray_DTypeMeta *string = PyArray_BytesDTypePtr;
+    PyArray_DTypeMeta *unicode = PyArray_UnicodeDTypePtr;
     PyArray_DTypeMeta *tmp = NULL;
 
     dtypes[0] = datetime;

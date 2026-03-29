@@ -4573,16 +4573,16 @@ set_typeinfo(PyObject *dict)
      *         CFloat, CDouble, CLongDouble,
      *         Object, String, Unicode, Void,
      *         Datetime, Timedelta#
-     * #scls = PyArrayDescr_Type,
-     *         PyArray_IntAbstractDType*10,
-     *         PyArray_FloatAbstractDType*4,
-     *         PyArray_ComplexAbstractDType*3,
-     *         PyArrayDescr_Type*6 #
+     * #scls = &PyArrayDescr_Type,
+     *         PyArray_IntAbstractDTypePtr*10,
+     *         PyArray_FloatAbstractDTypePtr*4,
+     *         PyArray_ComplexAbstractDTypePtr*3,
+     *         &PyArrayDescr_Type*6 #
      */
     dtypemeta = dtypemeta_wrap_legacy_descriptor(
             _builtin_descrs[NPY_@NAME@],
             &_Py@Name@_ArrFuncs,
-            (PyTypeObject *)&@scls@,
+            (PyTypeObject *)@scls@,
             "numpy.dtypes." NPY_@NAME@_Name "DType",
 #ifdef NPY_@NAME@_alias
             "numpy.dtypes." NPY_@NAME@_Alias "DType"

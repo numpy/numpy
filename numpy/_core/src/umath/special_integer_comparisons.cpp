@@ -177,7 +177,7 @@ resolve_descriptors_with_scalars(
 {
     int value_range = 0;
 
-    npy_bool first_is_pyint = dtypes[0] == &PyArray_PyLongDType;
+    npy_bool first_is_pyint = dtypes[0] == PyArray_PyLongDTypePtr;
     int arr_idx = first_is_pyint? 1 : 0;
     int scalar_idx = first_is_pyint? 0 : 1;
     PyObject *scalar = input_scalars[scalar_idx];
@@ -310,9 +310,9 @@ pyint_comparison_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    new_op_dtypes[0] = NPY_DT_NewRef(&PyArray_ObjectDType);
-    new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_ObjectDType);
-    new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_BoolDType);
+    new_op_dtypes[0] = NPY_DT_NewRef(PyArray_ObjectDTypePtr);
+    new_op_dtypes[1] = NPY_DT_NewRef(PyArray_ObjectDTypePtr);
+    new_op_dtypes[2] = NPY_DT_NewRef(PyArray_BoolDTypePtr);
     return 0;
 }
 
@@ -327,7 +327,7 @@ template<COMP comp>
 static int
 add_dtype_loops(PyObject *umath, PyArrayMethod_Spec *spec, PyObject *info)
 {
-    PyArray_DTypeMeta *PyInt = &PyArray_PyLongDType;
+    PyArray_DTypeMeta *PyInt = PyArray_PyLongDTypePtr;
 
     PyObject *name = PyUnicode_FromString(comp_name(comp));
     if (name == nullptr) {
@@ -413,7 +413,7 @@ init_special_int_comparisons(PyObject *umath)
 {
     int res = -1;
     PyObject *info = NULL, *promoter = NULL;
-    PyArray_DTypeMeta *Bool = &PyArray_BoolDType;
+    PyArray_DTypeMeta *Bool = PyArray_BoolDTypePtr;
 
     /* All loops have a boolean out DType (others filled in later) */
     PyArray_DTypeMeta *dtypes[] = {NULL, NULL, Bool};
@@ -441,7 +441,7 @@ init_special_int_comparisons(PyObject *umath)
      * `np.equal(2, 4)` (with two python integers) use an object loop.
      */
     PyObject *dtype_tuple = PyTuple_Pack(3,
-            &PyArray_PyLongDType, &PyArray_PyLongDType, Bool);
+            PyArray_PyLongDTypePtr, PyArray_PyLongDTypePtr, Bool);
     if (dtype_tuple == NULL) {
         goto finish;
     }

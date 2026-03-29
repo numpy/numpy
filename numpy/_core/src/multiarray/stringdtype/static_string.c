@@ -324,7 +324,7 @@ NpyString_acquire_allocators(size_t n_descriptors,
                              npy_string_allocator *allocators[])
 {
     for (size_t i=0; i<n_descriptors; i++) {
-        if (NPY_DTYPE(descrs[i]) != &PyArray_StringDType) {
+        if (NPY_DTYPE(descrs[i]) != PyArray_StringDTypePtr) {
             allocators[i] = NULL;
             continue;
         }

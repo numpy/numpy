@@ -13,7 +13,7 @@
 #undef NPY_INTERNAL_BUILD
 #endif
 // for add_INT32_negative_indexed
-#define NPY_TARGET_VERSION NPY_2_1_API_VERSION
+#define NPY_TARGET_VERSION NPY_2_5_API_VERSION
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "numpy/ndarrayobject.h"
@@ -742,7 +742,7 @@ add_INT32_negative_indexed(PyObject *module, PyObject *dict) {
     if (negative == NULL) {
         return -1;
     }
-    PyArray_DTypeMeta *dtypes[] = {&PyArray_Int32DType, &PyArray_Int32DType};
+    PyArray_DTypeMeta *dtypes[] = {PyArray_Int32DTypePtr, PyArray_Int32DTypePtr};
 
     PyType_Slot slots[] = {
         {NPY_METH_contiguous_indexed_loop, INT32_negative_indexed},

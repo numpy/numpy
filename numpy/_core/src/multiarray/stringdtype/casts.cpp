@@ -931,7 +931,7 @@ static PyType_Slot int2s_slots[] = {
 
 static PyArray_DTypeMeta **
 get_s2type_dtypes(NPY_TYPES typenum) {
-    return get_dtypes(&PyArray_StringDType, typenum_to_dtypemeta(typenum));
+    return get_dtypes(PyArray_StringDTypePtr, typenum_to_dtypemeta(typenum));
 }
 
 template<typename NpyType, typename NpyLongType, NPY_TYPES typenum>
@@ -949,7 +949,7 @@ getStringToIntCastSpec() {
 
 static PyArray_DTypeMeta **
 get_type2s_dtypes(NPY_TYPES typenum) {
-    return get_dtypes(typenum_to_dtypemeta(typenum), &PyArray_StringDType);
+    return get_dtypes(typenum_to_dtypemeta(typenum), PyArray_StringDTypePtr);
 }
 
 template<typename NpyType, typename TClongType, NPY_TYPES typenum>
@@ -2103,8 +2103,8 @@ to_float(double x) {
 NPY_NO_EXPORT PyArrayMethod_Spec **
 get_casts() {
     PyArray_DTypeMeta **t2t_dtypes = get_dtypes(
-        &PyArray_StringDType,
-        &PyArray_StringDType
+        PyArray_StringDTypePtr,
+        PyArray_StringDTypePtr
     );
 
     PyArrayMethod_Spec *ThisToThisCastSpec = get_cast_spec(
@@ -2131,7 +2131,7 @@ get_casts() {
 #endif
 
     PyArray_DTypeMeta **u2s_dtypes = get_dtypes(
-            &PyArray_UnicodeDType, &PyArray_StringDType);
+            PyArray_UnicodeDTypePtr, PyArray_StringDTypePtr);
 
     PyArrayMethod_Spec *UnicodeToStringCastSpec = get_cast_spec(
         make_type2s_name(NPY_UNICODE),
@@ -2142,7 +2142,7 @@ get_casts() {
     );
 
     PyArray_DTypeMeta **s2u_dtypes = get_dtypes(
-            &PyArray_StringDType, &PyArray_UnicodeDType);
+            PyArray_StringDTypePtr, PyArray_UnicodeDTypePtr);
 
     PyArrayMethod_Spec *StringToUnicodeCastSpec = get_cast_spec(
         make_s2type_name(NPY_UNICODE),
@@ -2153,7 +2153,7 @@ get_casts() {
     );
 
     PyArray_DTypeMeta **s2b_dtypes =
-            get_dtypes(&PyArray_StringDType, &PyArray_BoolDType);
+            get_dtypes(PyArray_StringDTypePtr, PyArray_BoolDTypePtr);
 
     PyArrayMethod_Spec *StringToBoolCastSpec = get_cast_spec(
         make_s2type_name(NPY_BOOL),
@@ -2164,7 +2164,7 @@ get_casts() {
     );
 
     PyArray_DTypeMeta **b2s_dtypes =
-            get_dtypes(&PyArray_BoolDType, &PyArray_StringDType);
+            get_dtypes(PyArray_BoolDTypePtr, PyArray_StringDTypePtr);
 
     PyArrayMethod_Spec *BoolToStringCastSpec = get_cast_spec(
         make_type2s_name(NPY_BOOL),
@@ -2175,7 +2175,7 @@ get_casts() {
     );
 
     PyArray_DTypeMeta **s2dt_dtypes = get_dtypes(
-            &PyArray_StringDType, &PyArray_DatetimeDType);
+            PyArray_StringDTypePtr, PyArray_DatetimeDTypePtr);
 
     PyArrayMethod_Spec *StringToDatetimeCastSpec = get_cast_spec(
         make_s2type_name(NPY_DATETIME),
@@ -2186,7 +2186,7 @@ get_casts() {
     );
 
     PyArray_DTypeMeta **dt2s_dtypes = get_dtypes(
-            &PyArray_DatetimeDType, &PyArray_StringDType);
+            PyArray_DatetimeDTypePtr, PyArray_StringDTypePtr);
 
     PyArrayMethod_Spec *DatetimeToStringCastSpec = get_cast_spec(
         make_type2s_name(NPY_DATETIME),
@@ -2197,7 +2197,7 @@ get_casts() {
     );
 
     PyArray_DTypeMeta **s2td_dtypes = get_dtypes(
-            &PyArray_StringDType, &PyArray_TimedeltaDType);
+            PyArray_StringDTypePtr, PyArray_TimedeltaDTypePtr);
 
     PyArrayMethod_Spec *StringToTimedeltaCastSpec = get_cast_spec(
         make_s2type_name(NPY_TIMEDELTA),
@@ -2208,7 +2208,7 @@ get_casts() {
     );
 
     PyArray_DTypeMeta **td2s_dtypes = get_dtypes(
-            &PyArray_TimedeltaDType, &PyArray_StringDType);
+            PyArray_TimedeltaDTypePtr, PyArray_StringDTypePtr);
 
     PyArrayMethod_Spec *TimedeltaToStringCastSpec = get_cast_spec(
         make_type2s_name(NPY_TIMEDELTA),
@@ -2219,7 +2219,7 @@ get_casts() {
     );
 
     PyArray_DTypeMeta **s2v_dtypes = get_dtypes(
-            &PyArray_StringDType, &PyArray_VoidDType);
+            PyArray_StringDTypePtr, PyArray_VoidDTypePtr);
 
     PyArrayMethod_Spec *StringToVoidCastSpec = get_cast_spec(
         make_s2type_name(NPY_VOID),
@@ -2230,7 +2230,7 @@ get_casts() {
     );
 
     PyArray_DTypeMeta **v2s_dtypes = get_dtypes(
-            &PyArray_VoidDType, &PyArray_StringDType);
+            PyArray_VoidDTypePtr, PyArray_StringDTypePtr);
 
     PyArrayMethod_Spec *VoidToStringCastSpec = get_cast_spec(
         make_type2s_name(NPY_VOID),
@@ -2241,7 +2241,7 @@ get_casts() {
     );
 
     PyArray_DTypeMeta **s2bytes_dtypes = get_dtypes(
-            &PyArray_StringDType, &PyArray_BytesDType);
+            PyArray_StringDTypePtr, PyArray_BytesDTypePtr);
 
     PyArrayMethod_Spec *StringToBytesCastSpec = get_cast_spec(
         make_s2type_name(NPY_BYTE),
@@ -2252,7 +2252,7 @@ get_casts() {
     );
 
     PyArray_DTypeMeta **bytes2s_dtypes = get_dtypes(
-            &PyArray_BytesDType, &PyArray_StringDType);
+            PyArray_BytesDTypePtr, PyArray_StringDTypePtr);
 
     PyArrayMethod_Spec *BytesToStringCastSpec = get_cast_spec(
         make_type2s_name(NPY_BYTE),

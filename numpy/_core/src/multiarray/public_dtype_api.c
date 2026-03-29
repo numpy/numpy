@@ -29,7 +29,7 @@ int
 PyArrayInitDTypeMeta_FromSpec(
         PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *spec)
 {
-    if (!PyObject_TypeCheck(DType, &PyArrayDTypeMeta_Type)) {
+    if (!PyObject_TypeCheck(DType, PyArrayDTypeMeta_TypePtr)) {
         PyErr_SetString(PyExc_RuntimeError,
                 "Passed in DType must be a valid (initialized) DTypeMeta "
                 "instance!");
@@ -127,59 +127,59 @@ _fill_dtype_api(void *full_api_table[])
     void **api_table = full_api_table + 320;
 
     /* The type of the DType metaclass */
-    api_table[0] = &PyArrayDTypeMeta_Type;
+    api_table[0] = PyArrayDTypeMeta_TypePtr;
     /* Boolean */
-    api_table[1] = &PyArray_BoolDType;
+    api_table[1] = PyArray_BoolDTypePtr;
     /* Integers */
-    api_table[2] = &PyArray_ByteDType;
-    api_table[3] = &PyArray_UByteDType;
-    api_table[4] = &PyArray_ShortDType;
-    api_table[5] = &PyArray_UShortDType;
-    api_table[6] = &PyArray_IntDType;
-    api_table[7] = &PyArray_UIntDType;
-    api_table[8] = &PyArray_LongDType;
-    api_table[9] = &PyArray_ULongDType;
-    api_table[10] = &PyArray_LongLongDType;
-    api_table[11] = &PyArray_ULongLongDType;
+    api_table[2] = PyArray_ByteDTypePtr;
+    api_table[3] = PyArray_UByteDTypePtr;
+    api_table[4] = PyArray_ShortDTypePtr;
+    api_table[5] = PyArray_UShortDTypePtr;
+    api_table[6] = PyArray_IntDTypePtr;
+    api_table[7] = PyArray_UIntDTypePtr;
+    api_table[8] = PyArray_LongDTypePtr;
+    api_table[9] = PyArray_ULongDTypePtr;
+    api_table[10] = PyArray_LongLongDTypePtr;
+    api_table[11] = PyArray_ULongLongDTypePtr;
     /* Integer aliases */
-    api_table[12] = &PyArray_Int8DType;
-    api_table[13] = &PyArray_UInt8DType;
-    api_table[14] = &PyArray_Int16DType;
-    api_table[15] = &PyArray_UInt16DType;
-    api_table[16] = &PyArray_Int32DType;
-    api_table[17] = &PyArray_UInt32DType;
-    api_table[18] = &PyArray_Int64DType;
-    api_table[19] = &PyArray_UInt64DType;
-    api_table[20] = &PyArray_IntpDType;
-    api_table[21] = &PyArray_UIntpDType;
+    api_table[12] = PyArray_Int8DTypePtr;
+    api_table[13] = PyArray_UInt8DTypePtr;
+    api_table[14] = PyArray_Int16DTypePtr;
+    api_table[15] = PyArray_UInt16DTypePtr;
+    api_table[16] = PyArray_Int32DTypePtr;
+    api_table[17] = PyArray_UInt32DTypePtr;
+    api_table[18] = PyArray_Int64DTypePtr;
+    api_table[19] = PyArray_UInt64DTypePtr;
+    api_table[20] = PyArray_IntpDTypePtr;
+    api_table[21] = PyArray_UIntpDTypePtr;
     /* Floats */
-    api_table[22] = &PyArray_HalfDType;
-    api_table[23] = &PyArray_FloatDType;
-    api_table[24] = &PyArray_DoubleDType;
-    api_table[25] = &PyArray_LongDoubleDType;
+    api_table[22] = PyArray_HalfDTypePtr;
+    api_table[23] = PyArray_FloatDTypePtr;
+    api_table[24] = PyArray_DoubleDTypePtr;
+    api_table[25] = PyArray_LongDoubleDTypePtr;
     /* Complex */
-    api_table[26] = &PyArray_CFloatDType;
-    api_table[27] = &PyArray_CDoubleDType;
-    api_table[28] = &PyArray_CLongDoubleDType;
+    api_table[26] = PyArray_CFloatDTypePtr;
+    api_table[27] = PyArray_CDoubleDTypePtr;
+    api_table[28] = PyArray_CLongDoubleDTypePtr;
     /* String/Bytes */
-    api_table[29] = &PyArray_BytesDType;
-    api_table[30] = &PyArray_UnicodeDType;
+    api_table[29] = PyArray_BytesDTypePtr;
+    api_table[30] = PyArray_UnicodeDTypePtr;
     /* Datetime/Timedelta */
-    api_table[31] = &PyArray_DatetimeDType;
-    api_table[32] = &PyArray_TimedeltaDType;
+    api_table[31] = PyArray_DatetimeDTypePtr;
+    api_table[32] = PyArray_TimedeltaDTypePtr;
     /* Object and Structured */
-    api_table[33] = &PyArray_ObjectDType;
-    api_table[34] = &PyArray_VoidDType;
+    api_table[33] = PyArray_ObjectDTypePtr;
+    api_table[34] = PyArray_VoidDTypePtr;
     /* Abstract */
-    api_table[35] = &PyArray_PyLongDType;
-    api_table[36] = &PyArray_PyFloatDType;
-    api_table[37] = &PyArray_PyComplexDType;
-    api_table[38] = &PyArray_DefaultIntDType;
+    api_table[35] = PyArray_PyLongDTypePtr;
+    api_table[36] = PyArray_PyFloatDTypePtr;
+    api_table[37] = PyArray_PyComplexDTypePtr;
+    api_table[38] = PyArray_DefaultIntDTypePtr;
     /* Non-legacy DTypes that are built in to NumPy */
-    api_table[39] = &PyArray_StringDType;
+    api_table[39] = PyArray_StringDTypePtr;
 
     /* Abstract ones added directly: */
-    full_api_table[366] = &PyArray_IntAbstractDType;
-    full_api_table[367] = &PyArray_FloatAbstractDType;
-    full_api_table[368] = &PyArray_ComplexAbstractDType;
+    full_api_table[366] = PyArray_IntAbstractDTypePtr;
+    full_api_table[367] = PyArray_FloatAbstractDTypePtr;
+    full_api_table[368] = PyArray_ComplexAbstractDTypePtr;
 }

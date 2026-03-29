@@ -941,29 +941,29 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
          * If our own DType is not numerical or has lower priority (e.g.
          * integer but abstract one is float), signal not implemented.
          */
-        if (other == &PyArray_PyComplexDType) {
+        if (other == PyArray_PyComplexDTypePtr) {
             if (PyTypeNum_ISCOMPLEX(cls->type_num)) {
                 Py_INCREF(cls);
                 return cls;
             }
             else if (cls->type_num == NPY_HALF || cls->type_num == NPY_FLOAT) {
-                return NPY_DT_NewRef(&PyArray_CFloatDType);
+                return NPY_DT_NewRef(PyArray_CFloatDTypePtr);
             }
             else if (cls->type_num == NPY_DOUBLE) {
-                return NPY_DT_NewRef(&PyArray_CDoubleDType);
+                return NPY_DT_NewRef(PyArray_CDoubleDTypePtr);
             }
             else if (cls->type_num == NPY_LONGDOUBLE) {
-                return NPY_DT_NewRef(&PyArray_CLongDoubleDType);
+                return NPY_DT_NewRef(PyArray_CLongDoubleDTypePtr);
             }
         }
-        else if (other == &PyArray_PyFloatDType) {
+        else if (other == PyArray_PyFloatDTypePtr) {
             if (PyTypeNum_ISCOMPLEX(cls->type_num)
                     || PyTypeNum_ISFLOAT(cls->type_num)) {
                 Py_INCREF(cls);
                 return cls;
             }
         }
-        else if (other == &PyArray_PyLongDType) {
+        else if (other == PyArray_PyLongDTypePtr) {
             if (PyTypeNum_ISCOMPLEX(cls->type_num)
                     || PyTypeNum_ISFLOAT(cls->type_num)
                     || PyTypeNum_ISINTEGER(cls->type_num)
@@ -1380,6 +1380,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
     .tp_new = dtypemeta_new,
     .tp_is_gc = dtypemeta_is_gc,
 };
+NPY_NO_EXPORT PyTypeObject *PyArrayDTypeMeta_TypePtr = &PyArrayDTypeMeta_Type;
 
 PyArray_DTypeMeta *_Bool_dtype = NULL;
 PyArray_DTypeMeta *_Byte_dtype = NULL;

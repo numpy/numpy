@@ -85,49 +85,49 @@ discover_descriptor_from_pycomplex(
 NPY_NO_EXPORT int
 initialize_and_map_pytypes_to_dtypes()
 {
-    if (PyType_Ready((PyTypeObject *)&PyArray_IntAbstractDType) < 0) {
+    if (PyType_Ready((PyTypeObject *)PyArray_IntAbstractDTypePtr) < 0) {
         return -1;
     }
-    if (PyType_Ready((PyTypeObject *)&PyArray_FloatAbstractDType) < 0) {
+    if (PyType_Ready((PyTypeObject *)PyArray_FloatAbstractDTypePtr) < 0) {
         return -1;
     }
-    if (PyType_Ready((PyTypeObject *)&PyArray_ComplexAbstractDType) < 0) {
+    if (PyType_Ready((PyTypeObject *)PyArray_ComplexAbstractDTypePtr) < 0) {
         return -1;
     }
     /*
      * Delayed assignments to avoid "error C2099: initializer is not a constant"
      * in windows compilers.  Can hopefully be done in structs in the future.
      */
-    ((PyTypeObject *)&PyArray_PyLongDType)->tp_base =
-        (PyTypeObject *)&PyArray_IntAbstractDType;
-    PyArray_PyLongDType.scalar_type = &PyLong_Type;
-    if (PyType_Ready((PyTypeObject *)&PyArray_PyLongDType) < 0) {
+    ((PyTypeObject *)PyArray_PyLongDTypePtr)->tp_base =
+        (PyTypeObject *)PyArray_IntAbstractDTypePtr;
+    PyArray_PyLongDTypePtr->scalar_type = &PyLong_Type;
+    if (PyType_Ready((PyTypeObject *)PyArray_PyLongDTypePtr) < 0) {
         return -1;
     }
-    ((PyTypeObject *)&PyArray_PyFloatDType)->tp_base =
-        (PyTypeObject *)&PyArray_FloatAbstractDType;
-    PyArray_PyFloatDType.scalar_type = &PyFloat_Type;
-    if (PyType_Ready((PyTypeObject *)&PyArray_PyFloatDType) < 0) {
+    ((PyTypeObject *)PyArray_PyFloatDTypePtr)->tp_base =
+        (PyTypeObject *)PyArray_FloatAbstractDTypePtr;
+    PyArray_PyFloatDTypePtr->scalar_type = &PyFloat_Type;
+    if (PyType_Ready((PyTypeObject *)PyArray_PyFloatDTypePtr) < 0) {
         return -1;
     }
-    ((PyTypeObject *)&PyArray_PyComplexDType)->tp_base =
-        (PyTypeObject *)&PyArray_ComplexAbstractDType;
-    PyArray_PyComplexDType.scalar_type = &PyComplex_Type;
-    if (PyType_Ready((PyTypeObject *)&PyArray_PyComplexDType) < 0) {
+    ((PyTypeObject *)PyArray_PyComplexDTypePtr)->tp_base =
+        (PyTypeObject *)PyArray_ComplexAbstractDTypePtr;
+    PyArray_PyComplexDTypePtr->scalar_type = &PyComplex_Type;
+    if (PyType_Ready((PyTypeObject *)PyArray_PyComplexDTypePtr) < 0) {
         return -1;
     }
 
     /* Register the new DTypes for discovery */
     if (_PyArray_MapPyTypeToDType(
-            &PyArray_PyLongDType, &PyLong_Type, NPY_FALSE) < 0) {
+            PyArray_PyLongDTypePtr, &PyLong_Type, NPY_FALSE) < 0) {
         return -1;
     }
     if (_PyArray_MapPyTypeToDType(
-            &PyArray_PyFloatDType, &PyFloat_Type, NPY_FALSE) < 0) {
+            PyArray_PyFloatDTypePtr, &PyFloat_Type, NPY_FALSE) < 0) {
         return -1;
     }
     if (_PyArray_MapPyTypeToDType(
-            &PyArray_PyComplexDType, &PyComplex_Type, NPY_FALSE) < 0) {
+            PyArray_PyComplexDTypePtr, &PyComplex_Type, NPY_FALSE) < 0) {
         return -1;
     }
 
@@ -170,12 +170,12 @@ int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
     if (NPY_DT_is_legacy(other) && other->type_num < NPY_NTYPES_LEGACY) {
         if (other->type_num == NPY_BOOL) {
             /* Use the default integer for bools: */
-            return NPY_DT_NewRef(&PyArray_IntpDType);
+            return NPY_DT_NewRef(PyArray_IntpDTypePtr);
         }
     }
     else if (NPY_DT_is_legacy(other)) {
         /* This is a back-compat fallback to usually do the right thing... */
-        PyArray_DTypeMeta *uint8_dt = &PyArray_UInt8DType;
+        PyArray_DTypeMeta *uint8_dt = PyArray_UInt8DTypePtr;
         PyArray_DTypeMeta *res = NPY_DT_CALL_common_dtype(other, uint8_dt);
         if (res == NULL) {
             PyErr_Clear();
@@ -187,7 +187,7 @@ int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
             return res;
         }
         /* Try again with `int8`, an error may have been set, though */
-        PyArray_DTypeMeta *int8_dt = &PyArray_Int8DType;
+        PyArray_DTypeMeta *int8_dt = PyArray_Int8DTypePtr;
         res = NPY_DT_CALL_common_dtype(other, int8_dt);
         if (res == NULL) {
             PyErr_Clear();
@@ -199,7 +199,7 @@ int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
             return res;
         }
         /* And finally, we will try the default integer, just for sports... */
-        PyArray_DTypeMeta *default_int = &PyArray_IntpDType;
+        PyArray_DTypeMeta *default_int = PyArray_IntpDTypePtr;
         res = NPY_DT_CALL_common_dtype(other, default_int);
         if (res == NULL) {
             PyErr_Clear();
@@ -217,16 +217,16 @@ float_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
     if (NPY_DT_is_legacy(other) && other->type_num < NPY_NTYPES_LEGACY) {
         if (other->type_num == NPY_BOOL || PyTypeNum_ISINTEGER(other->type_num)) {
             /* Use the default integer for bools and ints: */
-            return NPY_DT_NewRef(&PyArray_DoubleDType);
+            return NPY_DT_NewRef(PyArray_DoubleDTypePtr);
         }
     }
-    else if (other == &PyArray_PyLongDType) {
+    else if (other == PyArray_PyLongDTypePtr) {
         Py_INCREF(cls);
         return cls;
     }
     else if (NPY_DT_is_legacy(other)) {
         /* This is a back-compat fallback to usually do the right thing... */
-        PyArray_DTypeMeta *half_dt = &PyArray_HalfDType;
+        PyArray_DTypeMeta *half_dt = PyArray_HalfDTypePtr;
         PyArray_DTypeMeta *res = NPY_DT_CALL_common_dtype(other, half_dt);
         if (res == NULL) {
             PyErr_Clear();
@@ -238,7 +238,7 @@ float_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
             return res;
         }
         /* Retry with double (the default float) */
-        PyArray_DTypeMeta *double_dt = &PyArray_DoubleDType;
+        PyArray_DTypeMeta *double_dt = PyArray_DoubleDTypePtr;
         res = NPY_DT_CALL_common_dtype(other, double_dt);
         return res;
     }
@@ -254,12 +254,12 @@ complex_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
         if (other->type_num == NPY_BOOL ||
                 PyTypeNum_ISINTEGER(other->type_num)) {
             /* Use the default integer for bools and ints: */
-            return NPY_DT_NewRef(&PyArray_CDoubleDType);
+            return NPY_DT_NewRef(PyArray_CDoubleDTypePtr);
         }
     }
     else if (NPY_DT_is_legacy(other)) {
         /* This is a back-compat fallback to usually do the right thing... */
-        PyArray_DTypeMeta *cfloat_dt = &PyArray_CFloatDType;
+        PyArray_DTypeMeta *cfloat_dt = PyArray_CFloatDTypePtr;
         PyArray_DTypeMeta *res = NPY_DT_CALL_common_dtype(other, cfloat_dt);
         if (res == NULL) {
             PyErr_Clear();
@@ -271,13 +271,13 @@ complex_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
             return res;
         }
         /* Retry with cdouble (the default complex) */
-        PyArray_DTypeMeta *cdouble_dt = &PyArray_CDoubleDType;
+        PyArray_DTypeMeta *cdouble_dt = PyArray_CDoubleDTypePtr;
         res = NPY_DT_CALL_common_dtype(other, cdouble_dt);
         return res;
 
     }
-    else if (other == &PyArray_PyLongDType ||
-             other == &PyArray_PyFloatDType) {
+    else if (other == PyArray_PyLongDTypePtr ||
+             other == PyArray_PyFloatDTypePtr) {
         Py_INCREF(cls);
         return cls;
     }
@@ -301,6 +301,7 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_IntAbstractDType = {{{
     .type_num = -1,
     .flags = NPY_DT_ABSTRACT,
 };
+NPY_NO_EXPORT PyArray_DTypeMeta *PyArray_IntAbstractDTypePtr = &PyArray_IntAbstractDType;
 
 NPY_DType_Slots pylongdtype_slots = {
     .discover_descr_from_pyobject = discover_descriptor_from_pylong,
@@ -319,6 +320,7 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyLongDType = {{{
     .dt_slots = &pylongdtype_slots,
     .scalar_type = NULL,  /* set in initialize_and_map_pytypes_to_dtypes */
 };
+NPY_NO_EXPORT PyArray_DTypeMeta *PyArray_PyLongDTypePtr = &PyArray_PyLongDType;
 
 NPY_NO_EXPORT PyArray_DTypeMeta PyArray_FloatAbstractDType = {{{
         PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
@@ -330,6 +332,7 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_FloatAbstractDType = {{{
     .type_num = -1,
     .flags = NPY_DT_ABSTRACT,
 };
+NPY_NO_EXPORT PyArray_DTypeMeta *PyArray_FloatAbstractDTypePtr = &PyArray_FloatAbstractDType;
 
 NPY_DType_Slots pyfloatdtype_slots = {
     .discover_descr_from_pyobject = discover_descriptor_from_pyfloat,
@@ -348,6 +351,7 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyFloatDType = {{{
     .dt_slots = &pyfloatdtype_slots,
     .scalar_type = NULL,  /* set in initialize_and_map_pytypes_to_dtypes */
 };
+NPY_NO_EXPORT PyArray_DTypeMeta *PyArray_PyFloatDTypePtr = &PyArray_PyFloatDType;
 
 NPY_NO_EXPORT PyArray_DTypeMeta PyArray_ComplexAbstractDType = {{{
         PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
@@ -359,6 +363,7 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_ComplexAbstractDType = {{{
     .type_num = -1,
     .flags = NPY_DT_ABSTRACT,
 };
+NPY_NO_EXPORT PyArray_DTypeMeta *PyArray_ComplexAbstractDTypePtr = &PyArray_ComplexAbstractDType;
 
 NPY_DType_Slots pycomplexdtype_slots = {
     .discover_descr_from_pyobject = discover_descriptor_from_pycomplex,
@@ -377,6 +382,7 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyComplexDType = {{{
     .dt_slots = &pycomplexdtype_slots,
     .scalar_type = NULL,  /* set in initialize_and_map_pytypes_to_dtypes */
 };
+NPY_NO_EXPORT PyArray_DTypeMeta *PyArray_PyComplexDTypePtr = &PyArray_PyComplexDType;
 
 
 /*
