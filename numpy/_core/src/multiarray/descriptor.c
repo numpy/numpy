@@ -1412,8 +1412,9 @@ descr_is_legacy_parametric_instance(PyArray_Descr *descr,
     }
     /* Flexible descr with generic time unit (which can be adapted) */
     if (PyDataType_ISDATETIME(descr)) {
-        PyArray_DatetimeMetaData *meta;
-        meta = get_datetime_metadata_from_dtype(descr);
+        _PyArray_LegacyDescr *ldescr = (_PyArray_LegacyDescr *)descr;
+        PyArray_DatetimeMetaData *meta =
+                &(((PyArray_DatetimeDTypeMetaData *)ldescr->c_metadata)->meta);
         if (meta->base == NPY_FR_GENERIC) {
             return 1;
         }
