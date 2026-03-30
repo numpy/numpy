@@ -1,7 +1,7 @@
 Cython
 hypothesis==6.151.9
 pytest==9.0.2
-pytest-cov==7.0.0
+pytest-cov==7.1.0
 meson
 ninja; sys_platform != "emscripten"
 pytest-xdist
