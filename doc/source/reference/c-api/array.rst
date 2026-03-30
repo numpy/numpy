@@ -3533,13 +3533,15 @@ Also see :ref:`dtypemeta` for documentation on ``PyArray_DTypeMeta`` and
 .. c:function:: int PyArrayInitDTypeMeta_FromSpec( \
                 PyArray_DTypeMeta *Dtype, PyArrayDTypeMeta_Spec *spec)
 
- Initialize a new DType.  It must currently be a static Python C type that is
- declared as :c:type:`PyArray_DTypeMeta` and not :c:type:`PyTypeObject`.
+ Initialize a new DType.  It must currently be a Python C type that is
+ declared as :c:type:`PyArray_DTypeMetaPtr` and not :c:type:`PyTypeObject`.
  Further, it must subclass `np.dtype` and set its type to
- :c:type:`PyArrayDTypeMeta_Type` (before calling :c:func:`PyType_Ready()`),
+ :c:type:`PyArrayDTypeMeta_TypePtr` (before calling :c:func:`PyType_Ready()`),
  which has additional fields compared to a normal :c:type:`PyTypeObject`. See
  the examples in the ``numpy-user-dtypes`` repository for usage with both
  parametric and non-parametric data types.
+
+ The type can be either a static type or a heap type.
 
 .. _dtype-flags:
 
