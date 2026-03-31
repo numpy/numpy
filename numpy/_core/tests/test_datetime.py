@@ -2696,6 +2696,10 @@ class TestDateTime:
         limit_via_str = np.datetime64(str(limit), time_unit)
         assert limit_via_str == limit
 
+    def test_cast_to_truncated_string_doesnt_overflow(self):
+        a = np.array([1, -2, 1], dtype='timedelta64[D]')
+        assert_array_equal(a.astype('U1'), ['1', '-', '1'])
+
     def test_datetime_hash_nat(self):
         nat1 = np.datetime64()
         nat2 = np.datetime64()
