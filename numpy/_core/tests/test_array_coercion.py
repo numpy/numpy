@@ -926,7 +926,7 @@ def test_empty_string():
 @pytest.mark.parametrize("res_dt,hug_val",
     [("float16", "1e30"), ("float32", "1e200")])
 def test_string_to_float_coercion_errors(dtype, res_dt, hug_val):
-    # This test primarly tests setitem
+    # This test primarily tests setitem
     val = np.array(["3M"], dtype=dtype)[0]  # use the scalar
 
     with pytest.raises(ValueError):

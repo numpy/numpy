@@ -1400,7 +1400,7 @@ class TestCreation:
         with pytest.raises(ValueError, match="ndmax must be in the range"):
             np.array(data, ndmax=-1)
 
-    def test_ndmax_greather_than_NPY_MAXDIMS(self):
+    def test_ndmax_greater_than_NPY_MAXDIMS(self):
         data = [1, 2, 3]
         # current NPY_MAXDIMS is 64
         with pytest.raises(ValueError, match="ndmax must be in the range"):
@@ -1808,7 +1808,7 @@ class TestStructured:
     @pytest.mark.parametrize("align", [True, False])
     def test_structured_promotion_packs(self, dtype_dict, align):
         # Structured dtypes are packed when promoted (we consider the packed
-        # form to be "canonical"), so tere is no extra padding.
+        # form to be "canonical"), so there is no extra padding.
         dtype = np.dtype(dtype_dict, align=align)
         # Remove non "canonical" dtype options:
         dtype_dict.pop("itemsize", None)
@@ -8335,22 +8335,22 @@ class TestWarnings:
 
 class TestMinScalarType:
 
-    def test_usigned_shortshort(self):
+    def test_unsigned_shortshort(self):
         dt = np.min_scalar_type(2**8 - 1)
         wanted = np.dtype('uint8')
         assert_equal(wanted, dt)
 
-    def test_usigned_short(self):
+    def test_unsigned_short(self):
         dt = np.min_scalar_type(2**16 - 1)
         wanted = np.dtype('uint16')
         assert_equal(wanted, dt)
 
-    def test_usigned_int(self):
+    def test_unsigned_int(self):
         dt = np.min_scalar_type(2**32 - 1)
         wanted = np.dtype('uint32')
         assert_equal(wanted, dt)
 
-    def test_usigned_longlong(self):
+    def test_unsigned_longlong(self):
         dt = np.min_scalar_type(2**63 - 1)
         wanted = np.dtype('uint64')
         assert_equal(wanted, dt)

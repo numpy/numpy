@@ -1184,7 +1184,7 @@ class TestEinsumPath:
             ret &= (comp[pos + 1] == benchmark[pos + 1])
         assert_(ret)
 
-    def test_memory_contraints(self):
+    def test_memory_constraints(self):
         # Ensure memory constraints are satisfied
 
         outer_test = self.build_operands('a,b,c->abc')

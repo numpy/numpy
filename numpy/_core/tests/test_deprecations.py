@@ -346,7 +346,7 @@ class TestTooManyArgsExtremum(_DeprecationTestCase):
     message = "Passing more than 2 positional arguments to np.maximum and np.minimum "
 
     @pytest.mark.parametrize("ufunc", [np.minimum, np.maximum])
-    def test_extremem_3_args(self, ufunc):
+    def test_extremum_3_args(self, ufunc):
         self.assert_deprecated(ufunc, args=(np.ones(1), np.zeros(1), np.empty(1)))
 
 

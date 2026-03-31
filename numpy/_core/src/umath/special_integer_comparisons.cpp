@@ -141,7 +141,7 @@ get_value_range(PyObject *value, int type_num, int *range)
     }
     else {
         /*
-        * If we are checking for unisgned long long, the value may be larger
+        * If we are checking for unsigned long long, the value may be larger
         * then long long, but within range of unsigned long long.  Check this
         * by doing the normal Python integer comparison.
         */

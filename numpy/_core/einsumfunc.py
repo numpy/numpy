@@ -1188,14 +1188,14 @@ def bmm_einsum(eq, a, b, out=None, **kwargs):
 
     # prepare left
     if eq_a is not None:
-        # diagonals, sums, and tranpose
+        # diagonals, sums, and transpose
         a = c_einsum(eq_a, a)
     if new_shape_a is not None:
         a = reshape(a, new_shape_a)
 
     # prepare right
     if eq_b is not None:
-        # diagonals, sums, and tranpose
+        # diagonals, sums, and transpose
         b = c_einsum(eq_b, b)
     if new_shape_b is not None:
         b = reshape(b, new_shape_b)

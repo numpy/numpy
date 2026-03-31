@@ -835,7 +835,7 @@ _TIME_UNITS = (
     "Y", "M", "W", "D", "h", "m", "s", "ms", "us", "ns", "ps", "fs", "as"
 )
 
-# All `inexact` + `timdelta64` type codes
+# All `inexact` + `timedelta64` type codes
 _TYPE_CODES = list(np.typecodes["AllFloat"])
 _TYPE_CODES += [f"m8[{unit}]" for unit in _TIME_UNITS]
 

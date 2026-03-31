@@ -1199,7 +1199,7 @@ class TestDTypeMakeCanonical:
 
     def test_object_flag_not_inherited(self):
         # The following dtype still indicates "object", because its included
-        # in the unaccessible space (maybe this could change at some point):
+        # in the inaccessible space (maybe this could change at some point):
         arr = np.ones(3, "i,O,i")[["f0", "f2"]]
         assert arr.dtype.hasobject
         canonical_dt = np.result_type(arr.dtype)
