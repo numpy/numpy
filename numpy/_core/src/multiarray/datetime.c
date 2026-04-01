@@ -4090,6 +4090,9 @@ time_to_string_resolve_descriptors(
         if (loop_descrs[1] == NULL) {
             return -1;
         }
+        if (given_descrs[1] != NULL) {
+            size = (size < given_descrs[1]->elsize) ? size : given_descrs[1]->elsize;
+        }
         loop_descrs[1]->elsize = size;
     }
 
