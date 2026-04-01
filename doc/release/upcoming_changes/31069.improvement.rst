@@ -1,0 +1,3 @@
+``nanfunctions`` now support fully masked ``MaskedArray`` inputs
+----------------------------------------------------------------
+Functions like ``np.nanmean``, ``np.nanstd``, and ``np.nanpercentile`` no longer raise a ``ValueError`` when given a ``MaskedArray`` where all values are masked. For fully masked arrays, ``nanmean`` and ``nanstd`` now correctly return a masked array/constant instead of throwing an error, while ``nanpercentile`` returns ``NaN``.
