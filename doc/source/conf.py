@@ -70,7 +70,7 @@ def replace_scalar_type_names():
         if sys.implementation.name == 'cpython':
             c_typ.tp_name = _name_cache[typ] = b"numpy." + name.encode('utf8')
         else:
-            # It is not guarenteed that the c_typ has this model on other
+            # It is not guaranteed that the c_typ has this model on other
             # implementations
             _name_cache[typ] = b"numpy." + name.encode('utf8')
 
@@ -423,7 +423,7 @@ intersphinx_mapping = {
     'matplotlib': ('https://matplotlib.org/stable', None),
     'imageio': ('https://imageio.readthedocs.io/en/stable', None),
     'skimage': ('https://scikit-image.org/docs/stable', None),
-    'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
+    'pandas': ('https://pandas.pydata.org/docs', None),
     'scipy-lecture-notes': ('https://scipy-lectures.org', None),
     'pytest': ('https://docs.pytest.org/en/stable', None),
     'numpy-tutorials': ('https://numpy.org/numpy-tutorials', None),
@@ -605,7 +605,7 @@ from pygments.token import Comment
 class NumPyLexer(CLexer):
     name = 'NUMPYLEXER'
 
-    tokens = {
+    tokens = {  # noqa: RUF012
         'statements': [
             (r'@[a-zA-Z_]*@', Comment.Preproc, 'macro'),
             inherit,

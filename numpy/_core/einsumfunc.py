@@ -1186,14 +1186,14 @@ def bmm_einsum(eq, a, b, out=None, **kwargs):
 
     # prepare left
     if eq_a is not None:
-        # diagonals, sums, and tranpose
+        # diagonals, sums, and transpose
         a = c_einsum(eq_a, a)
     if new_shape_a is not None:
         a = reshape(a, new_shape_a)
 
     # prepare right
     if eq_b is not None:
-        # diagonals, sums, and tranpose
+        # diagonals, sums, and transpose
         b = c_einsum(eq_b, b)
     if new_shape_b is not None:
         b = reshape(b, new_shape_b)
@@ -1610,8 +1610,7 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     # Check the kwargs to avoid a more cryptic error later, without having to
     # repeat default values here
     valid_einsum_kwargs = ['dtype', 'order', 'casting']
-    unknown_kwargs = [k for (k, v) in kwargs.items() if
-                      k not in valid_einsum_kwargs]
+    unknown_kwargs = [k for k in kwargs if k not in valid_einsum_kwargs]
     if len(unknown_kwargs):
         raise TypeError(f"Did not understand the following kwargs: {unknown_kwargs}")
 

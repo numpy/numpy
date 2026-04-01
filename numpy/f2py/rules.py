@@ -96,6 +96,7 @@ from .auxfuncs import (
     isintent_copy,
     isintent_hide,
     isintent_inout,
+    isintent_inplace,
     isintent_nothide,
     isintent_out,
     isintent_overwrite,
@@ -1200,6 +1201,17 @@ if (#varname#_cb.capi==Py_None) {
     }
     if (f2py_success) {"""]},
                       ],
+        'pyobjfrom': [
+            {l_and(isintent_inplace, l_not(isintent_out)): """\
+        f2py_success = (PyArray_ResolveWritebackIfCopy(capi_#varname#_as_array) >= 0);
+        if (f2py_success) { /* inplace array #varname# has been written back to */"""},
+            {l_and(isintent_inplace, isintent_out): """\
+        f2py_success = (PyArray_ResolveWritebackIfCopy(capi_#varname#_as_array) >= 0);
+        if (f2py_success) { /* return written-back-to inplace array #varname# */
+        Py_INCREF(#varname#_capi);
+        Py_SETREF(capi_#varname#_as_array, (PyArrayObject*)#varname#_capi);"""},
+            ],
+        'closepyobjfrom': {isintent_inplace: '    } /*if (f2py_success) of #varname# pyobjfrom*/'},
         'cleanupfrompyobj': [  # note that this list will be reversed
             ('    }  '
              '/* if (capi_#varname#_as_array == NULL) ... else of #varname# */'),
@@ -1431,8 +1443,7 @@ def buildmodule(m, um):
         with open(fn, 'w') as f:
             f.write('.. -*- rest -*-\n')
             f.write('\n'.join(ar['restdoc']))
-        outmess('    ReST Documentation is saved to file "%s/%smodule.rest"\n' %
-                (options['buildpath'], vrd['modulename']))
+        outmess(f'    ReST Documentation is saved to file "{fn}"\n')
     if options['dolatexdoc']:
         fn = os.path.join(
             options['buildpath'], vrd['modulename'] + 'module.tex')
@@ -1446,8 +1457,7 @@ def buildmodule(m, um):
                 f.write('\n'.join(ar['latexdoc']))
             if 'shortlatex' not in options:
                 f.write('\\end{document}')
-        outmess('    Documentation is saved to file "%s/%smodule.tex"\n' %
-                (options['buildpath'], vrd['modulename']))
+        outmess(f'    Documentation is saved to file "{fn}"\n')
     if funcwrappers:
         wn = os.path.join(options['buildpath'], vrd['f2py_wrapper_output'])
         ret['fsrc'] = wn
@@ -1515,8 +1525,10 @@ def buildapi(rout):
     var = rout['vars']
 
     if ismoduleroutine(rout):
-        outmess('            Constructing wrapper function "%s.%s"...\n' %
-                (rout['modulename'], rout['name']))
+        module_name = rout['modulename']
+        name = rout['name']
+        outmess('            Constructing wrapper function '
+                f'"{module_name}.{name}"...\n')
     else:
         outmess(f"        Constructing wrapper function \"{rout['name']}\"...\n")
     # Routine

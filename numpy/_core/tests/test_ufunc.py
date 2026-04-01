@@ -909,6 +909,13 @@ class TestUfunc:
         with pytest.raises(AttributeError, match="conjugate"):
             np.vecdot(arr, arr)
 
+    def test_vecdot_object_empty_is_zero(self):
+        x = np.empty((0,), dtype=object)
+        assert np.vecdot(x, x) == 0
+
+        x2 = np.empty((1, 0), dtype=object)
+        assert_array_equal(np.vecdot(x2, x2), np.array([0], dtype=object))
+
     def test_vecdot_object_breaks_outer_loop_on_error(self):
         arr1 = np.ones((3, 3)).astype(object)
         arr2 = arr1.copy()
@@ -1749,6 +1756,10 @@ class TestUfunc:
         # Sanity check
         assert np.all(result1[::2] == [0, 4, 8, 12])
         assert np.all(result2[::2] == [0, 4, 8, 12])
+        # Also no warning for where=True
+        result3 = np.add(a, a, where=True)
+        # Sanity check
+        assert_array_equal(result3, a + a)
 
     @staticmethod
     def identityless_reduce_arrs():
@@ -2760,21 +2771,27 @@ class TestUfunc:
         # minimally check the exception text
         assert exc.match('loop of ufunc does not support')
 
-    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    @pytest.mark.parametrize(
+        "nat", [np.datetime64("nat", "s"), np.timedelta64("nat", "ns")]
+    )
     def test_nat_is_not_finite(self, nat):
         try:
             assert not np.isfinite(nat)
         except TypeError:
             pass  # ok, just not implemented
 
-    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    @pytest.mark.parametrize(
+        "nat", [np.datetime64("nat", "s"), np.timedelta64("nat", "ns")]
+    )
     def test_nat_is_nan(self, nat):
         try:
             assert np.isnan(nat)
         except TypeError:
             pass  # ok, just not implemented
 
-    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    @pytest.mark.parametrize(
+        "nat", [np.datetime64("nat", "s"), np.timedelta64("nat", "ns")]
+    )
     def test_nat_is_not_inf(self, nat):
         try:
             assert not np.isinf(nat)
@@ -2840,7 +2857,14 @@ def test_ufunc_types(ufunc):
         if 'O' in typ or '?' in typ:
             continue
         inp, out = typ.split('->')
-        args = [np.ones((3, 3), t) for t in inp]
+        if 'm' in inp:
+            with pytest.warns(
+                DeprecationWarning,
+                match="Using 'generic' unit for NumPy timedelta is deprecated",
+            ):
+                args = [np.ones((3, 3), t) for t in inp]
+        else:
+            args = [np.ones((3, 3), t) for t in inp]
         with warnings.catch_warnings(record=True):
             warnings.filterwarnings("always")
             res = ufunc(*args)

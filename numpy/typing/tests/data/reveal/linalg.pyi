@@ -137,9 +137,9 @@ assert_type(np.linalg.eigvalsh(AR_i8), npt.NDArray[np.float64])
 assert_type(np.linalg.eigvalsh(AR_f8), npt.NDArray[np.float64])
 assert_type(np.linalg.eigvalsh(AR_c16), npt.NDArray[np.float64])
 
-assert_type(np.linalg.eig(AR_i8), EigResult[np.float64] | EigResult[np.complex128])
-assert_type(np.linalg.eig(AR_f4), EigResult[np.float32] | EigResult[np.complex64])
-assert_type(np.linalg.eig(AR_f8), EigResult[np.float64] | EigResult[np.complex128])
+assert_type(np.linalg.eig(AR_i8), EigResult[np.complex128])
+assert_type(np.linalg.eig(AR_f4), EigResult[np.complex64])
+assert_type(np.linalg.eig(AR_f8), EigResult[np.complex128])
 assert_type(np.linalg.eig(AR_c8), EigResult[np.complex64])
 assert_type(np.linalg.eig(AR_c16), EigResult[np.complex128])
 # Mypy bug: `Expression is of type "EigResult[Any]", not "EigResult[Any]"`

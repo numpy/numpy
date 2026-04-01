@@ -1231,7 +1231,7 @@ class TestMedian:
         b[2] = np.nan
         assert_equal(np.ma.median(a, (0, 2)), b)
 
-    def test_ambigous_fill(self):
+    def test_ambiguous_fill(self):
         # 255 is max value, used as filler for sort
         a = np.array([[3, 3, 255], [3, 3, 255]], dtype=np.uint8)
         a = np.ma.masked_array(a, mask=a == 3)

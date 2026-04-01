@@ -1,0 +1,43 @@
+project('fib_wrapper', 'c',
+  version : '0.1.0',
+  meson_version: '>=1.1.0',
+  default_options : ['warning_level=2'],
+)
+
+add_languages('fortran', native: false)
+
+py = import('python').find_installation(pure: false)
+
+# NumPy >=2.0 provides include dirs via dependency()
+np_dep = dependency('numpy')
+
+incdir_f2py = run_command(py,
+  ['-c', 'import numpy.f2py; print(numpy.f2py.get_include())'],
+  check : true
+).stdout().strip()
+
+# f2py include dir (for fortranobject.h) is not in dependency('numpy'),
+# so add it separately
+f2py_dep = declare_dependency(
+  include_directories : incdir_f2py,
+)
+
+# Generate the f2py wrappers
+fib_source = custom_target('fibmodule.c',
+  input : ['fib.f90'],
+  output : ['fibmodule.c', 'fib-f2pywrappers.f'],
+  command : [py, '-m', 'numpy.f2py', '@INPUT@', '-m', 'fib', '--lower']
+)
+
+py.extension_module('fib',
+  ['fib.f90', fib_source, incdir_f2py / 'fortranobject.c'],
+  dependencies : [np_dep, f2py_dep],
+  subdir: 'fib_wrapper',
+  install : true,
+)
+
+# Install the Python package files
+py.install_sources(
+  'fib_wrapper/__init__.py',
+  subdir: 'fib_wrapper',
+)

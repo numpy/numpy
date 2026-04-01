@@ -1,0 +1,19 @@
+For ``f2py``, the behaviour of ``intent(inplace)`` has improved.
+Previously, if an input array did not have the right dtype or order,
+the input array was modified in-place, changing its dtype and
+replacing its data by a corrected copy.  Now, instead, the corrected
+copy is kept a separate array, which, after being passed and
+presumably modified by the fortran routine, is copied back to the
+input routine.  The above means one no longer has the risk that
+pre-existing views or slices of the input array start pointing to
+unallocated memory (at the price of increased overhead for the
+write-back copy at the end of the call).
+
+A potential problem would be that one might get very different results
+if one, e.g., previously passed in an integer array where a double
+array was expected: the writeback to integer would likely give wrong
+results.  To avoid such situations, ``intent(inplace)`` will now only
+allow arrays that have equivalent type to that used in the fortran
+routine, i.e., ``dtype.kind`` is the same. For instance, a routine
+expecting double would be able to receive float, but would raise on
+integer input.

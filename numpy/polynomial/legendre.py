@@ -1372,7 +1372,7 @@ def legcompanion(c):
     """Return the scaled companion matrix of c.
 
     The basis polynomials are scaled so that the companion matrix is
-    symmetric when `c` is an Legendre basis polynomial. This provides
+    symmetric when `c` is a Legendre basis polynomial. This provides
     better eigenvalue estimates than the unscaled case and for basis
     polynomials the eigenvalues are guaranteed to be real if
     `numpy.linalg.eigvalsh` is used to obtain them.

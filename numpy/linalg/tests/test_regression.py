@@ -7,6 +7,7 @@ import numpy as np
 from numpy import arange, array, dot, float64, linalg, transpose
 from numpy.testing import (
     assert_,
+    assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
     assert_array_less,
@@ -180,3 +181,10 @@ class TestRegression:
             if mismatches != 0:
                 assert False, ("unexpected result from matmul, "
                     "probably due to OpenBLAS threading issues")
+
+    def test_norm_linux_arm(self):
+        # gh-30816
+        a = np.arange(20000) / 50000
+        b = a + 1j * np.roll(np.flip(a), 12345)
+        norm = np.linalg.norm(b)
+        assert_almost_equal(norm, 46.18628948075393)

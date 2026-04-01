@@ -66,7 +66,7 @@ else:
     try:
         if sys.version_info < (3, 13):
             # Backport importlib.metadata.Distribution.origin
-            import json  # noqa: E401
+            import json
             import types
             origin = json.loads(
                 np_dist.read_text('direct_url.json') or '{}',
@@ -744,7 +744,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     ox, oy = x, y
 
     def isnumber(x):
-        return x.dtype.char in '?bhilqpBHILQPefdgFDG'
+        return type(x.dtype)._is_numeric
 
     def istime(x):
         return x.dtype.char in "Mm"
@@ -955,7 +955,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                     # note: this definition of relative error matches that one
                     # used by assert_allclose (found in np.isclose)
                     # Filter values where the divisor would be zero
-                    nonzero = np.bool(y != 0)
+                    nonzero = np.bool(y != np.zeros_like(y))
                     nonzero_and_invalid = np.logical_and(invalids, nonzero)
 
                     if all(~nonzero_and_invalid):

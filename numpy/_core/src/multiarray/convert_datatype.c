@@ -930,7 +930,7 @@ PyArray_CastDescrToDType(PyArray_Descr *descr, PyArray_DTypeMeta *given_DType)
         Py_INCREF(descr);
         return descr;
     }
-    if (!NPY_DT_is_parametric(given_DType)) {
+    if (!NPY_DT_is_parametric(given_DType) && !NPY_DT_is_abstract(given_DType)) {
         /*
          * Don't actually do anything, the default is always the result
          * of any cast.
@@ -2090,6 +2090,7 @@ PyArray_AddCastingImplementation_FromSpec(PyArrayMethod_Spec *spec, int private)
     if (meth == NULL) {
         return -1;
     }
+    meth->method->flags |= _NPY_METH_IS_CAST;
     int res = PyArray_AddCastingImplementation(meth);
     Py_DECREF(meth);
     if (res < 0) {

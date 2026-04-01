@@ -5,6 +5,7 @@ to document how deprecations should eventually be turned into errors.
 """
 import contextlib
 import warnings
+from collections.abc import Callable
 
 import pytest
 
@@ -344,5 +345,93 @@ class TestTooManyArgsExtremum(_DeprecationTestCase):
     message = "Passing more than 2 positional arguments to np.maximum and np.minimum "
 
     @pytest.mark.parametrize("ufunc", [np.minimum, np.maximum])
-    def test_extremem_3_args(self, ufunc):
+    def test_extremum_3_args(self, ufunc):
         self.assert_deprecated(ufunc, args=(np.ones(1), np.zeros(1), np.empty(1)))
+
+
+class TestTypenameDeprecation(_DeprecationTestCase):
+    # Deprecation in Numpy 2.5, 2026-02
+
+    def test_typename_emits_deprecation_warning(self):
+        self.assert_deprecated(lambda: np.typename("S1"))
+        self.assert_deprecated(lambda: np.typename("h"))
+
+class TestRoundDeprecation(_DeprecationTestCase):
+    # Deprecation in NumPy 2.5, 2026-02
+
+    def test_round_emits_deprecation_warning_array(self):
+        a = np.array([1.5, 2.7, -1.5, -2.7])
+        self.assert_deprecated(lambda: np.ma.round_(a))
+
+    def test_round_emits_deprecation_warning_scalar(self):
+        self.assert_deprecated(lambda: np.ma.round_(3.14))
+
+
+class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
+    # Deprecated in Numpy 2.5, 2025-11
+    # See gh-29619
+    message = "Using 'generic' unit for NumPy timedelta is deprecated"
+
+    @pytest.mark.parametrize('value', [
+        3, 10, "NaT"
+    ])
+    def test_raise_warning_for_timedelta_with_generic_unit(self, value: int | str):
+        self.assert_deprecated(lambda x: np.timedelta64(x), args=(value,))
+
+    @pytest.mark.parametrize('value', [
+        np.timedelta64(3, "s"), np.timedelta64(10, "D")
+    ])
+    @pytest.mark.parametrize('generic_value', [
+        5, 2
+    ])
+    @pytest.mark.parametrize(
+        "op",
+        [
+            np.add,
+            np.subtract,
+        ],
+    )
+    def test_raise_warning_for_operation_with_generic_unit(
+        self, value: int, generic_value: int, op: Callable
+    ):
+        self.assert_deprecated(op, args=(value, generic_value))
+
+
+class TestTriDeprecationWithNonInteger(_DeprecationTestCase):
+    # Deprecation in NumPy 2.5, 2026-03
+
+    def test_tri(self):
+        self.assert_deprecated(lambda: np.tri(M=2.3, k=3.14, N=np.object_(8)))
+
+    def test_triu_indices(self):
+        self.assert_deprecated(lambda: np.triu_indices(n=np.float64(7.14), k=3.2))
+        self.assert_deprecated(lambda: np.triu_indices(n=4, k=np.bool(0)))
+
+    def test_tril_indices(self):
+        self.assert_deprecated(lambda: np.tril_indices(n=np.array(3.14)))
+
+    def test_triu_indices_from(self):
+        a = np.array([[ 0,  1,  2,  3],
+           [ 4,  5,  6,  7],
+           [ 8,  9, 10, 11],
+           [12, 13, 14, 15]])
+        self.assert_deprecated(lambda: np.triu_indices_from(a, k=np.object_(9.8)))
+
+    def test_tril_indices_from(self):
+        a = np.array([[ 0,  1,  2,  3],
+           [ 4,  5,  6,  7],
+           [ 8,  9, 10, 11],
+           [12, 13, 14, 15]])
+        self.assert_deprecated(lambda: np.tril_indices_from(a, k=9.8))
+
+
+class TestTakeOutDtype(_DeprecationTestCase):
+    # Deprecated in Numpy 2.5, 2026-01
+    message = "Implicit casting of output to a different kind."
+
+    def test_out_dtype_deprecated(self):
+        a = np.arange(3).astype(np.int32)
+        indices = np.arange(2)
+        different_dtype_out = np.zeros_like(indices, dtype=np.uint32)
+
+        self.assert_deprecated(lambda: np.take(a, indices, out=different_dtype_out))

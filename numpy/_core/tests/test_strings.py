@@ -193,7 +193,7 @@ def test_large_string_cast():
 
 
 @pytest.mark.parametrize("dt", ["S1", "U1"])
-def test_in_place_mutiply_no_overflow(dt):
+def test_in_place_multiply_no_overflow(dt):
     # see gh-30495
     a = np.array("a", dtype=dt)
     a *= 20

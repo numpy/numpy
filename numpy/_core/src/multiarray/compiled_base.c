@@ -123,10 +123,9 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("bincount", args, len_args, kwnames,
-                "list", NULL, &list,
-                "|weights", NULL, &weight,
-                "|minlength", NULL, &mlength,
-                NULL, NULL, NULL) < 0) {
+                {"list", NULL, &list},
+                {"|weights", NULL, &weight},
+                {"|minlength", NULL, &mlength}) < 0) {
         return NULL;
     }
 
@@ -553,12 +552,11 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("interp", args, len_args, kwnames,
-                "x", NULL, &x,
-                "xp", NULL, &xp,
-                "fp", NULL, &fp,
-                "|left", NULL, &left,
-                "|right", NULL, &right,
-                NULL, NULL, NULL) < 0) {
+                {"x", NULL, &x},
+                {"xp", NULL, &xp},
+                {"fp", NULL, &fp},
+                {"|left", NULL, &left},
+                {"|right", NULL, &right}) < 0) {
         return NULL;
     }
 
@@ -725,12 +723,11 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("interp_complex", args, len_args, kwnames,
-                "x", NULL, &x,
-                "xp", NULL, &xp,
-                "fp", NULL, &fp,
-                "|left", NULL, &left,
-                "|right", NULL, &right,
-                NULL, NULL, NULL) < 0) {
+                {"x", NULL, &x},
+                {"xp", NULL, &xp},
+                {"fp", NULL, &fp},
+                {"|left", NULL, &left},
+                {"|right", NULL, &right}) < 0) {
         return NULL;
     }
 
@@ -1465,9 +1462,8 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("add_docstring", args, len_args, NULL,
-            "", NULL, &obj,
-            "", NULL, &str,
-            NULL, NULL, NULL) < 0) {
+            {"", NULL, &obj},
+            {"", NULL, &str}) < 0) {
         return NULL;
     }
     if (!PyUnicode_Check(str)) {

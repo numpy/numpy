@@ -1,5 +1,7 @@
 import copy
+import datetime
 import gc
+import os
 import pickle
 import sys
 import tempfile
@@ -1072,7 +1074,7 @@ class TestRegression:
         x = np.zeros((30, 40))
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             y = pickle.loads(pickle.dumps(x, protocol=proto))
-            # y is now typically not aligned on a 8-byte boundary
+            # y is now typically not aligned on an 8-byte boundary
             z = np.ones((1, y.shape[0]))
             # This shouldn't cause a segmentation fault:
             np.dot(z, y)
@@ -1092,18 +1094,24 @@ class TestRegression:
         assert_(xp.__array_interface__['data'][0] !=
                 xpd.__array_interface__['data'][0])
 
+    @pytest.mark.filterwarnings(
+        "error:Implicit casting of output.*:DeprecationWarning",
+    )
     def test_compress_small_type(self):
         # Ticket #789, changeset 5217.
         # compress with out argument segfaulted if cannot cast safely
         import numpy as np
         a = np.array([[1, 2], [3, 4]])
         b = np.zeros((2, 1), dtype=np.single)
+        a.compress([True, False], axis=1, out=b)
+        assert_equal(b, np.array([[1.0], [3.0]]))
         try:
-            a.compress([True, False], axis=1, out=b)
-            raise AssertionError("compress with an out which cannot be "
-                                 "safely casted should not return "
-                                 "successfully")
-        except TypeError:
+            # Previously the above already failed (and that is OK) but take
+            # currently allows same-kind casting for the output.
+            a.compress([True, False], axis=1, out=np.empty((2, 1), dtype=bool))
+            raise AssertionError("Expected TypeError due to unsafe out cast")
+        except DeprecationWarning:
+            # After deprecation remove TypeError the warnings filter.
             pass
 
     def test_attributes(self):
@@ -1908,6 +1916,7 @@ class TestRegression:
     @pytest.mark.filterwarnings(
         "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
     )
+    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
     def test_pickle_py2_array_latin1_hack(self):
         # Check that unpickling hacks in Py3 that support
         # encoding='latin1' work correctly.
@@ -2326,6 +2335,7 @@ class TestRegression:
             np.bytes_: b"a",
             np.str_: "a",
             np.datetime64: "2017-08-25",
+            np.timedelta64: datetime.timedelta(days=1)
         }
         for sctype in scalar_types:
             item = sctype(values.get(sctype, 1))
@@ -2351,6 +2361,7 @@ class TestRegression:
         values = {
             'S': b"a",
             'M': "2018-06-20",
+            'm': datetime.timedelta(days=3),
         }
         for ch in np.typecodes['All']:
             if ch in 'O':

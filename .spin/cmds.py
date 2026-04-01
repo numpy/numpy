@@ -154,7 +154,7 @@ def test(*, parent_callback, pytest_args, tests, markexpr, parallel_threads, **k
 
     When pytest-run-parallel is avaliable, use `spin test -p auto` or
     `spin test -p <num_of_threads>` to run tests sequentional in parallel threads.
-    """  # noqa: E501
+    """
     if (not pytest_args) and (not tests):
         pytest_args = ('--pyargs', 'numpy')
 
@@ -201,10 +201,10 @@ def check_docs(*, parent_callback, pytest_args, **kwargs):
      - This command only doctests public objects: those which are accessible
        from the top-level `__init__.py` file.
 
-    """  # noqa: E501
+    """
     try:
         # prevent obscure error later
-        import scipy_doctest  # noqa: F401
+        import scipy_doctest
     except ModuleNotFoundError as e:
         raise ModuleNotFoundError("scipy-doctest not installed") from e
     if scipy_doctest.__version__ < '1.8.0':
@@ -247,7 +247,7 @@ def check_tutorials(*, parent_callback, pytest_args, **kwargs):
      - This command only doctests public objects: those which are accessible
        from the top-level `__init__.py` file.
 
-    """  # noqa: E501
+    """
     # handle all of
     #   - `spin check-tutorials` (pytest_args == ())
     #   - `spin check-tutorials path/to/rst`, and
@@ -545,6 +545,13 @@ def mypy(ctx):
     ctx.params['pytest_args'] = [os.path.join('numpy', 'typing')]
     ctx.params['markexpr'] = 'full'
     ctx.forward(test)
+
+
+@click.command()
+def pyrefly() -> None:
+    """🪲 Type-check the stubs with Pyrefly
+    """
+    spin.util.run(['pyrefly', 'check'])
 
 
 @click.command()

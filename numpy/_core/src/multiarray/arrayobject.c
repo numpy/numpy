@@ -961,6 +961,9 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         PyErr_Clear();
 
         PyArrayObject *array_other = (PyArrayObject *)PyArray_FROM_O(other);
+        if (array_other == NULL) {
+            return NULL;
+        }
         if (PyArray_TYPE(array_other) == NPY_VOID) {
             /*
             * Void arrays are currently not handled by ufuncs, so if the other

@@ -1188,7 +1188,7 @@ def argsort(a, axis=-1, kind=None, order=None, *, stable=None):
     array([[0, 3],
            [2, 2]])
 
-    Indices of the sorted elements of a N-dimensional array:
+    Indices of the sorted elements of an N-dimensional array:
 
     >>> ind = np.unravel_index(np.argsort(x, axis=None), x.shape)
     >>> ind
@@ -1275,7 +1275,7 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     >>> np.argmax(a, axis=1)
     array([2, 2])
 
-    Indexes of the maximal elements of a N-dimensional array:
+    Indexes of the maximal elements of an N-dimensional array:
 
     >>> a.flat[np.argmax(a)]
     15
@@ -1375,7 +1375,7 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     >>> np.argmin(a, axis=1)
     array([0, 0])
 
-    Indices of the minimum elements of a N-dimensional array:
+    Indices of the minimum elements of an N-dimensional array:
 
     >>> a.flat[np.argmin(a)]
     10
