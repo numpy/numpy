@@ -819,17 +819,19 @@ _strided_to_strided_datetime_cast(
     npy_int64 dt;
 
     /*
-     * Precompute the overflow boundary so that |dt * num| and the
-     * subsequent subtraction of (denom - 1) for negative values
-     * cannot overflow int64.
+     * Precompute overflow boundaries for the dt * num multiplication.
+     * Positive values compute dt * num / denom (no subtraction risk).
+     * Negative values compute (dt * num - (denom - 1)) / denom, so
+     * the limit must also account for the (denom - 1) subtraction.
      */
-    npy_int64 overflow_limit = (NPY_MAX_INT64 - denom + 1) / num;
+    npy_int64 pos_limit = NPY_MAX_INT64 / num;
+    npy_int64 neg_limit = (NPY_MAX_INT64 - denom + 1) / num;
 
     while (N > 0) {
         memcpy(&dt, src, sizeof(dt));
 
         if (dt != NPY_DATETIME_NAT) {
-            if (dt > overflow_limit || dt < -overflow_limit) {
+            if (dt > pos_limit || dt < -neg_limit) {
                 PyErr_SetString(PyExc_OverflowError,
                         "Overflow when converting between "
                         "datetime64 units");
@@ -868,17 +870,19 @@ _aligned_strided_to_strided_datetime_cast(
     npy_int64 dt;
 
     /*
-     * Precompute the overflow boundary so that |dt * num| and the
-     * subsequent subtraction of (denom - 1) for negative values
-     * cannot overflow int64.
+     * Precompute overflow boundaries for the dt * num multiplication.
+     * Positive values compute dt * num / denom (no subtraction risk).
+     * Negative values compute (dt * num - (denom - 1)) / denom, so
+     * the limit must also account for the (denom - 1) subtraction.
      */
-    npy_int64 overflow_limit = (NPY_MAX_INT64 - denom + 1) / num;
+    npy_int64 pos_limit = NPY_MAX_INT64 / num;
+    npy_int64 neg_limit = (NPY_MAX_INT64 - denom + 1) / num;
 
     while (N > 0) {
         dt = *(npy_int64 *)src;
 
         if (dt != NPY_DATETIME_NAT) {
-            if (dt > overflow_limit || dt < -overflow_limit) {
+            if (dt > pos_limit || dt < -neg_limit) {
                 PyErr_SetString(PyExc_OverflowError,
                         "Overflow when converting between "
                         "datetime64 units");
