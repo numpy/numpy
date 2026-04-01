@@ -123,7 +123,7 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
 
     Optimization: we unroll the first iteration for the following reasons:
         1. ret is not initialized with the bases, so we save |keys| writes
-        by not having to intialize it with 0s.
+        by not having to initialize it with 0s.
         2. By assuming the initial base for every key is 0, we also save
         |keys| reads.
         3. In the first iteration, all elements are compared against the

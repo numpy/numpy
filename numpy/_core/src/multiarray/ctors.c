@@ -1060,7 +1060,7 @@ PyArray_NewFromDescrAndBase(
  *             NPY_KEEPORDER - Keeps the axis ordering of prototype.
  * descr     - If not NULL, overrides the data type of the result.
  * dtype     - If not NULL and if descr is NULL, overrides the data type
-               of the result, so long as dtype is non-parameteric
+               of the result, so long as dtype is non-parametric
  * ndim      - If not -1, overrides the shape of the result.
  * dims      - If ndim is not -1, overrides the shape of the result.
  * subok     - If 1, use the prototype's array subtype, otherwise

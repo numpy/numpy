@@ -257,7 +257,7 @@ class ReadValuesNested:
             assert_equal(h['z'], np.array([self._buffer[0][5],
                                            self._buffer[1][5]], dtype='u1'))
 
-    def test_nested1_acessors(self):
+    def test_nested1_accessors(self):
         """Check reading the nested fields of a nested array (1st level)"""
         h = np.array(self._buffer, dtype=self._descr)
         if not self.multiple_rows:
@@ -287,7 +287,7 @@ class ReadValuesNested:
                                 self._buffer[1][3][1]],
                                dtype='c16'))
 
-    def test_nested2_acessors(self):
+    def test_nested2_accessors(self):
         """Check reading the nested fields of a nested array (2nd level)"""
         h = np.array(self._buffer, dtype=self._descr)
         if not self.multiple_rows:
@@ -573,7 +573,7 @@ class TestScalarTypeNames:
         assert getattr(np, t.__name__) is t
 
     @pytest.mark.parametrize('t', numeric_types)
-    def test_names_are_undersood_by_dtype(self, t):
+    def test_names_are_understood_by_dtype(self, t):
         """ Test the dtype constructor maps names back to the type """
         assert np.dtype(t.__name__).type is t
 

@@ -367,7 +367,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         flags = _NPY_METH_FORCE_CAST_INPUTS;
     }
 
-    PyArrayMethod_GetReductionInitial *get_reduction_intial = NULL;
+    PyArrayMethod_GetReductionInitial *get_reduction_initial = NULL;
     if (ufunc->nin == 2 && ufunc->nout == 1) {
         npy_bool reorderable = NPY_FALSE;
         PyObject *identity_obj = PyUFunc_GetDefaultIdentity(
@@ -385,7 +385,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
             flags |= NPY_METH_IS_REORDERABLE;
         }
         if (identity_obj != Py_None) {
-            get_reduction_intial = &get_initial_from_ufunc;
+            get_reduction_initial = &get_initial_from_ufunc;
         }
     }
     for (int i = 0; i < ufunc->nin+ufunc->nout; i++) {
@@ -413,7 +413,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
     PyType_Slot slots[4] = {
         {NPY_METH_get_loop, &get_wrapped_legacy_ufunc_loop},
         {NPY_METH_resolve_descriptors, &simple_legacy_resolve_descriptors},
-        {NPY_METH_get_reduction_initial, get_reduction_intial},
+        {NPY_METH_get_reduction_initial, get_reduction_initial},
         {0, NULL},
     };
     if (any_output_flexible) {

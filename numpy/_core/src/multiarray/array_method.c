@@ -572,7 +572,7 @@ boundarraymethod_dealloc(PyObject *self)
  *       changes and especially testing if they were to be made public.
  */
 static PyObject *
-boundarraymethod__resolve_descripors(
+boundarraymethod__resolve_descriptors(
         PyBoundArrayMethodObject *self, PyObject *descr_tuple)
 {
     int nin = self->method->nin;
@@ -962,7 +962,7 @@ PyArrayMethod_GetMaskedStridedLoop(
 
 
 PyMethodDef boundarraymethod_methods[] = {
-    {"_resolve_descriptors", (PyCFunction)boundarraymethod__resolve_descripors,
+    {"_resolve_descriptors", (PyCFunction)boundarraymethod__resolve_descriptors,
      METH_O, "Resolve the given dtypes."},
     {"_simple_strided_call", (PyCFunction)boundarraymethod__simple_strided_call,
      METH_O, "call on 1-d inputs and pre-allocated outputs (single call)."},

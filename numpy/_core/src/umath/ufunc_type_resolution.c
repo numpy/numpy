@@ -1158,7 +1158,7 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
 
-            // This is wrong agaian cause of elsize, but only the DType matters
+            // This is wrong again because of elsize, but only the DType matters
             // here (String or Unicode).
             out_dtypes[2] = out_dtypes[1];
             Py_INCREF(out_dtypes[1]);

@@ -496,7 +496,7 @@ typedef PyArray_Descr *(PyArrayDTypeMeta_EnsureCanonical)(PyArray_Descr *dtype);
 typedef PyArray_Descr *(PyArrayDTypeMeta_FinalizeDescriptor)(PyArray_Descr *dtype);
 
 /*
- * Constants that can be queried and used e.g. by reduce identies defaults.
+ * Constants that can be queried and used e.g. by reducing identities defaults.
  * These are also used to expose .finfo and .iinfo for example.
  */
 /* Numerical constants */

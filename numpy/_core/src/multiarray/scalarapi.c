@@ -346,7 +346,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
         _PyArray_LegacyDescr *conv = NULL;
         int res = PyObject_GetOptionalAttr(type, npy_interned_str.dtype, &attr);
         if (res < 0) {
-            return NULL;  // Should be a rather criticial error, so just fail.
+            return NULL;  // Should be a rather critical error, so just fail.
         }
         if (res == 1) {
             if (!PyArray_DescrCheck(attr)) {

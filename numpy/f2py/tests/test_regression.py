@@ -123,7 +123,7 @@ class TestF77Comments(util.F2PyTest):
         res = self.module.testsub2()
         npt.assert_allclose(expected, res)
 
-class TestF90Contiuation(util.F2PyTest):
+class TestF90Continuation(util.F2PyTest):
     # Check that comments are stripped from F90 continuation lines
     sources = [util.getpath("tests", "src", "regression", "f90continuation.f90")]
 

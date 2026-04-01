@@ -3774,7 +3774,7 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     def setfield(self: Never, val: Never, /, dtype: Never, offset: L[0] = 0) -> None: ...  # type: ignore[misc]
     def searchsorted(self: Never, v: Never, /, side: L["left"] = "left", sorter: None = None) -> Never: ...  # type: ignore[misc]
 
-    # NOTE: this wont't raise, but won't do anything either
+    # NOTE: this won't raise, but won't do anything either
     @overload
     @deprecated("Resizing a NumPy generic inplace has been deprecated in NumPy 2.5")
     def resize(self, /, *, refcheck: py_bool = True) -> None: ...
