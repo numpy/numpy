@@ -9,6 +9,8 @@ class NDArraySubclass(np.ndarray[tuple[Any, ...], np.dtype[np.complex128]]): ...
 
 AR_b: npt.NDArray[np.bool]
 AR_f4: npt.NDArray[np.float32]
+AR_f4_1d: np.ndarray[tuple[int], np.dtype[np.float32]]
+AR_f4_2d: np.ndarray[tuple[int, int], np.dtype[np.float32]]
 AR_c16: npt.NDArray[np.complex128]
 AR_u8: npt.NDArray[np.uint64]
 AR_i8: npt.NDArray[np.int64]
@@ -68,6 +70,8 @@ assert_type(np.transpose(f4), npt.NDArray[np.float32])
 assert_type(np.transpose(f), npt.NDArray[Any])
 assert_type(np.transpose(AR_b), npt.NDArray[np.bool])
 assert_type(np.transpose(AR_f4), npt.NDArray[np.float32])
+assert_type(np.transpose(AR_f4_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.transpose(AR_f4_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 
 assert_type(np.partition(b, 0, axis=None), npt.NDArray[np.bool])
 assert_type(np.partition(f4, 0, axis=None), npt.NDArray[np.float32])
