@@ -1028,10 +1028,11 @@ def hermevalnd(pts, c):
     This function returns the values:
 
     .. math::
+        p(pts, c) = \sum_{i_1, i_2, \dots, i_n}
+        c_{i_1, i_2, \dots, i_n} * He_{i_1}(x_1) * He_{i_2}(x_2) \dots He_{i_n}(x_n)
 
-        p(x_1, x_2, \dots, x_n) =
-        \sum_{i_1, i_2, \dots, i_n} c_{i_1, i_2, \dots, i_n}
-        * He_{i_1}(x_1) * He_{i_2}(x_2) \dots He_{i_n}(x_n)
+    where :math:`x_1, x_2, \dots, x_n = pts`.
+    Note that `pts` may also be an `(n, m)` array.
 
     The parameters in `pts` are converted to arrays only if they are
     tuples or lists, otherwise they are treated as scalars and

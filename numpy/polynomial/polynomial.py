@@ -1023,10 +1023,11 @@ def polyvalnd(pts, c):
     This function returns the values:
 
     .. math::
+        p(pts, c) = \sum_{i_1, i_2, \dots, i_n}
+        c_{i_1, i_2, \dots, i_n} * x_1^{i_1} * x_2^{i_2} \dots x_n^{i_n}
 
-        p(x_1, x_2, \dots, x_n) =
-        \sum_{i_1, i_2, \dots, i_n} c_{i_1, i_2, \dots, i_n}
-        * x_1^{i_1} * x_2^{i_2} \dots x_n^{i_n}
+    where :math:`x_1, x_2, \dots, x_n = pts`.
+    Note that `pts` may also be an `(n, m)` array.
 
     The parameters in `pts` are converted to arrays only if they are
     tuples or lists, otherwise they are treated as scalars and
