@@ -918,40 +918,75 @@ def any[ArrayT: np.ndarray](
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ArrayT: ...
 
-#
+# keep in sync with `cumprod` below
 @overload
 def cumsum[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
-    axis: SupportsIndex | None = None,
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+) -> _Array1D[ScalarT]: ...
+@overload
+def cumsum[ArrayT: np.ndarray](
+    a: ArrayT,
+    axis: SupportsIndex,
+    dtype: None = None,
+    out: None = None,
+) -> ArrayT: ...
+@overload
+def cumsum[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    axis: SupportsIndex,
     dtype: None = None,
     out: None = None,
 ) -> NDArray[ScalarT]: ...
 @overload
 def cumsum(
     a: ArrayLike,
-    axis: SupportsIndex | None = None,
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+) -> _Array1D[Any]: ...
+@overload
+def cumsum(
+    a: ArrayLike,
+    axis: SupportsIndex,
     dtype: None = None,
     out: None = None,
 ) -> NDArray[Any]: ...
 @overload
 def cumsum[ScalarT: np.generic](
     a: ArrayLike,
-    axis: SupportsIndex | None,
+    axis: None,
     dtype: _DTypeLike[ScalarT],
     out: None = None,
-) -> NDArray[ScalarT]: ...
+) -> _Array1D[ScalarT]: ...
 @overload
 def cumsum[ScalarT: np.generic](
     a: ArrayLike,
-    axis: SupportsIndex | None = None,
+    axis: None = None,
     *,
+    dtype: _DTypeLike[ScalarT],
+    out: None = None,
+) -> _Array1D[ScalarT]: ...
+@overload
+def cumsum[ScalarT: np.generic](
+    a: ArrayLike,
+    axis: SupportsIndex,
     dtype: _DTypeLike[ScalarT],
     out: None = None,
 ) -> NDArray[ScalarT]: ...
 @overload
 def cumsum(
     a: ArrayLike,
-    axis: SupportsIndex | None = None,
+    axis: None = None,
+    dtype: DTypeLike | None = None,
+    out: None = None,
+) -> _Array1D[Any]: ...
+@overload
+def cumsum(
+    a: ArrayLike,
+    axis: SupportsIndex,
     dtype: DTypeLike | None = None,
     out: None = None,
 ) -> NDArray[Any]: ...
@@ -971,12 +1006,33 @@ def cumsum[ArrayT: np.ndarray](
     out: ArrayT,
 ) -> ArrayT: ...
 
+# keep in sync with `cumulative_prod` below
 @overload
 def cumulative_sum[ScalarT: np.generic](
     x: _ArrayLike[ScalarT],
     /,
     *,
-    axis: SupportsIndex | None = None,
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+    include_initial: bool = False,
+) -> _Array1D[ScalarT]: ...
+@overload
+def cumulative_sum[ArrayT: np.ndarray](
+    x: ArrayT,
+    /,
+    *,
+    axis: SupportsIndex,
+    dtype: None = None,
+    out: None = None,
+    include_initial: bool = False,
+) -> ArrayT: ...
+@overload
+def cumulative_sum[ScalarT: np.generic](
+    x: _ArrayLike[ScalarT],
+    /,
+    *,
+    axis: SupportsIndex,
     dtype: None = None,
     out: None = None,
     include_initial: bool = False,
@@ -986,7 +1042,17 @@ def cumulative_sum(
     x: ArrayLike,
     /,
     *,
-    axis: SupportsIndex | None = None,
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+    include_initial: bool = False,
+) -> _Array1D[Any]: ...
+@overload
+def cumulative_sum(
+    x: ArrayLike,
+    /,
+    *,
+    axis: SupportsIndex,
     dtype: None = None,
     out: None = None,
     include_initial: bool = False,
@@ -996,7 +1062,17 @@ def cumulative_sum[ScalarT: np.generic](
     x: ArrayLike,
     /,
     *,
-    axis: SupportsIndex | None = None,
+    axis: None = None,
+    dtype: _DTypeLike[ScalarT],
+    out: None = None,
+    include_initial: bool = False,
+) -> _Array1D[ScalarT]: ...
+@overload
+def cumulative_sum[ScalarT: np.generic](
+    x: ArrayLike,
+    /,
+    *,
+    axis: SupportsIndex,
     dtype: _DTypeLike[ScalarT],
     out: None = None,
     include_initial: bool = False,
@@ -1006,7 +1082,17 @@ def cumulative_sum(
     x: ArrayLike,
     /,
     *,
-    axis: SupportsIndex | None = None,
+    axis: None = None,
+    dtype: DTypeLike | None = None,
+    out: None = None,
+    include_initial: bool = False,
+) -> _Array1D[Any]: ...
+@overload
+def cumulative_sum(
+    x: ArrayLike,
+    /,
+    *,
+    axis: SupportsIndex,
     dtype: DTypeLike | None = None,
     out: None = None,
     include_initial: bool = False,
@@ -1248,68 +1334,75 @@ def prod[ArrayT: np.ndarray](
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ArrayT: ...
 
-# TODO: Fix overlapping overloads: https://github.com/numpy/numpy/issues/27032
+# keep in sync with `cumsum` above
 @overload
-def cumprod(
-    a: _ArrayLikeBool_co,
-    axis: SupportsIndex | None = None,
+def cumprod[ScalarT: np.number | np.bool | np.object_](
+    a: _ArrayLike[ScalarT],
+    axis: None = None,
     dtype: None = None,
     out: None = None,
-) -> NDArray[int_]: ...
+) -> _Array1D[ScalarT]: ...
 @overload
-def cumprod(
-    a: _ArrayLikeUInt_co,
-    axis: SupportsIndex | None = None,
+def cumprod[ArrayT: NDArray[np.number | np.bool | np.object_]](
+    a: ArrayT,
+    axis: SupportsIndex,
     dtype: None = None,
     out: None = None,
-) -> NDArray[uint64]: ...
+) -> ArrayT: ...
 @overload
-def cumprod(
-    a: _ArrayLikeInt_co,
-    axis: SupportsIndex | None = None,
+def cumprod[ScalarT: np.number | np.bool | np.object_](
+    a: _ArrayLike[ScalarT],
+    axis: SupportsIndex,
     dtype: None = None,
-    out: None = None,
-) -> NDArray[int64]: ...
-@overload
-def cumprod(
-    a: _ArrayLikeFloat_co,
-    axis: SupportsIndex | None = None,
-    dtype: None = None,
-    out: None = None,
-) -> NDArray[floating]: ...
-@overload
-def cumprod(
-    a: _ArrayLikeComplex_co,
-    axis: SupportsIndex | None = None,
-    dtype: None = None,
-    out: None = None,
-) -> NDArray[complexfloating]: ...
-@overload
-def cumprod(
-    a: _ArrayLikeObject_co,
-    axis: SupportsIndex | None = None,
-    dtype: None = None,
-    out: None = None,
-) -> NDArray[object_]: ...
-@overload
-def cumprod[ScalarT: np.generic](
-    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
-    axis: SupportsIndex | None,
-    dtype: _DTypeLike[ScalarT],
     out: None = None,
 ) -> NDArray[ScalarT]: ...
 @overload
-def cumprod[ScalarT: np.generic](
+def cumprod(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
-    axis: SupportsIndex | None = None,
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+) -> _Array1D[Any]: ...
+@overload
+def cumprod(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    axis: SupportsIndex,
+    dtype: None = None,
+    out: None = None,
+) -> NDArray[Any]: ...
+@overload
+def cumprod[ScalarT: np.number | np.bool | np.object_](
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    axis: None,
+    dtype: _DTypeLike[ScalarT],
+    out: None = None,
+) -> _Array1D[ScalarT]: ...
+@overload
+def cumprod[ScalarT: np.number | np.bool | np.object_](
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    axis: None = None,
     *,
     dtype: _DTypeLike[ScalarT],
     out: None = None,
+) -> _Array1D[ScalarT]: ...
+@overload
+def cumprod[ScalarT: np.number | np.bool | np.object_](
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    axis: SupportsIndex,
+    dtype: _DTypeLike[ScalarT],
+    out: None = None,
 ) -> NDArray[ScalarT]: ...
 @overload
 def cumprod(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
-    axis: SupportsIndex | None = None,
+    axis: None = None,
+    dtype: DTypeLike | None = None,
+    out: None = None,
+) -> _Array1D[Any]: ...
+@overload
+def cumprod(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    axis: SupportsIndex,
     dtype: DTypeLike | None = None,
     out: None = None,
 ) -> NDArray[Any]: ...
@@ -1329,73 +1422,73 @@ def cumprod[ArrayT: np.ndarray](
     out: ArrayT,
 ) -> ArrayT: ...
 
-# TODO: Fix overlapping overloads: https://github.com/numpy/numpy/issues/27032
+# keep in sync with `cumulative_sum` above
 @overload
-def cumulative_prod(
-    x: _ArrayLikeBool_co,
+def cumulative_prod[ScalarT: np.number | np.bool | np.object_](
+    x: _ArrayLike[ScalarT],
     /,
     *,
-    axis: SupportsIndex | None = None,
+    axis: None = None,
     dtype: None = None,
     out: None = None,
     include_initial: bool = False,
-) -> NDArray[int_]: ...
+) -> _Array1D[ScalarT]: ...
 @overload
-def cumulative_prod(
-    x: _ArrayLikeUInt_co,
+def cumulative_prod[ArrayT: NDArray[np.number | np.bool | np.object_]](
+    x: ArrayT,
     /,
     *,
-    axis: SupportsIndex | None = None,
+    axis: SupportsIndex,
     dtype: None = None,
     out: None = None,
     include_initial: bool = False,
-) -> NDArray[uint64]: ...
-@overload
-def cumulative_prod(
-    x: _ArrayLikeInt_co,
-    /,
-    *,
-    axis: SupportsIndex | None = None,
-    dtype: None = None,
-    out: None = None,
-    include_initial: bool = False,
-) -> NDArray[int64]: ...
-@overload
-def cumulative_prod(
-    x: _ArrayLikeFloat_co,
-    /,
-    *,
-    axis: SupportsIndex | None = None,
-    dtype: None = None,
-    out: None = None,
-    include_initial: bool = False,
-) -> NDArray[floating]: ...
-@overload
-def cumulative_prod(
-    x: _ArrayLikeComplex_co,
-    /,
-    *,
-    axis: SupportsIndex | None = None,
-    dtype: None = None,
-    out: None = None,
-    include_initial: bool = False,
-) -> NDArray[complexfloating]: ...
-@overload
-def cumulative_prod(
-    x: _ArrayLikeObject_co,
-    /,
-    *,
-    axis: SupportsIndex | None = None,
-    dtype: None = None,
-    out: None = None,
-    include_initial: bool = False,
-) -> NDArray[object_]: ...
+) -> ArrayT: ...
 @overload
 def cumulative_prod[ScalarT: np.generic](
+    x: _ArrayLike[ScalarT],
+    /,
+    *,
+    axis: SupportsIndex,
+    dtype: None = None,
+    out: None = None,
+    include_initial: bool = False,
+) -> NDArray[ScalarT]: ...
+@overload
+def cumulative_prod(
     x: _ArrayLikeComplex_co | _ArrayLikeObject_co,
     /,
     *,
-    axis: SupportsIndex | None = None,
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+    include_initial: bool = False,
+) -> _Array1D[Any]: ...
+@overload
+def cumulative_prod(
+    x: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    /,
+    *,
+    axis: SupportsIndex,
+    dtype: None = None,
+    out: None = None,
+    include_initial: bool = False,
+) -> NDArray[Any]: ...
+@overload
+def cumulative_prod[ScalarT: np.number | np.bool | np.object_](
+    x: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    /,
+    *,
+    axis: None = None,
+    dtype: _DTypeLike[ScalarT],
+    out: None = None,
+    include_initial: bool = False,
+) -> _Array1D[ScalarT]: ...
+@overload
+def cumulative_prod[ScalarT: np.number | np.bool | np.object_](
+    x: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    /,
+    *,
+    axis: SupportsIndex,
     dtype: _DTypeLike[ScalarT],
     out: None = None,
     include_initial: bool = False,
@@ -1405,7 +1498,17 @@ def cumulative_prod(
     x: _ArrayLikeComplex_co | _ArrayLikeObject_co,
     /,
     *,
-    axis: SupportsIndex | None = None,
+    axis: None = None,
+    dtype: DTypeLike | None = None,
+    out: None = None,
+    include_initial: bool = False,
+) -> _Array1D[Any]: ...
+@overload
+def cumulative_prod(
+    x: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    /,
+    *,
+    axis: SupportsIndex,
     dtype: DTypeLike | None = None,
     out: None = None,
     include_initial: bool = False,
