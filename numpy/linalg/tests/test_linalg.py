@@ -160,7 +160,7 @@ CASES += apply_tag('square', [
                array(
                    [[2. + 1j, 1. + 2j, 1 + 3j], [1 - 2j, 1 - 3j, 1 - 6j]],
                    dtype=cdouble
-               )),
+                   )),
     LinalgCase("0x0",
                np.empty((0, 0), dtype=double),
                np.empty((0,), dtype=double),
@@ -194,25 +194,25 @@ CASES += apply_tag('nonsquare', [
                array(
                    [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]],
                    dtype=csingle
-               ),
+                   ),
                array([2. + 1j, 1. + 2j], dtype=csingle)),
     LinalgCase("csingle_nsq_2",
                array(
                    [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]],
                    dtype=csingle
-               ),
+                   ),
                array([2. + 1j, 1. + 2j, 3. - 3j], dtype=csingle)),
     LinalgCase("cdouble_nsq_1",
                array(
                    [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]],
                    dtype=cdouble
-               ),
+                   ),
                array([2. + 1j, 1. + 2j], dtype=cdouble)),
     LinalgCase("cdouble_nsq_2",
                array(
                    [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]],
                    dtype=cdouble
-               ),
+                   ),
                array([2. + 1j, 1. + 2j, 3. - 3j], dtype=cdouble)),
     LinalgCase("cdouble_nsq_1_2",
                array(
@@ -224,11 +224,10 @@ CASES += apply_tag('nonsquare', [
                array(
                    [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]],
                    dtype=cdouble
-               ),
-               array(
-                   [[2. + 1j, 1. + 2j], [1 - 1j, 2 - 2j], [1 - 1j, 2 - 2j]],
-                   dtype=cdouble
-               )),
+                   ),
+               array([[2. + 1j, 1. + 2j], [1 - 1j, 2 - 2j], [1 - 1j, 2 - 2j]],
+                     dtype=cdouble
+                     )),
     LinalgCase("8x11",
                np.random.rand(8, 11),
                np.random.rand(8)),
