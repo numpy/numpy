@@ -219,30 +219,6 @@ class TestDeprecatedDTypeAliases(_DeprecationTestCase):
             np.dtype(dtype_code)
 
 
-class TestDeprecatedArrayWrap(_DeprecationTestCase):
-    message = "__array_wrap__.*"
-
-    def test_deprecated(self):
-        class Test1:
-            def __array__(self, dtype=None, copy=None):
-                return np.arange(4)
-
-            def __array_wrap__(self, arr, context=None):
-                self.called = True
-                return 'pass context'
-
-        class Test2(Test1):
-            def __array_wrap__(self, arr):
-                self.called = True
-                return 'pass'
-
-        test1 = Test1()
-        test2 = Test2()
-        self.assert_deprecated(lambda: np.negative(test1))
-        assert test1.called
-        self.assert_deprecated(lambda: np.negative(test2))
-        assert test2.called
-
 class TestDeprecatedArrayAttributeSetting(_DeprecationTestCase):
     message = "Setting the .*on a NumPy array has been deprecated.*"
 
