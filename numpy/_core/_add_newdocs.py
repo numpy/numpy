@@ -2148,7 +2148,7 @@ add_newdoc('numpy._core.multiarray', 'c_einsum',
     * Return a diagonal, :py:func:`numpy.diag`.
     * Array axis summations, :py:func:`numpy.sum`.
     * Transpositions and permutations, :py:func:`numpy.transpose`.
-    * Matrix multiplication and dot product, py:func:`numpy.matmul` :py:func:`numpy.dot`.
+    * Matrix multiplication and dot product, :py:func:`numpy.matmul` :py:func:`numpy.dot`.
     * Vector inner and outer products, :py:func:`numpy.inner` :py:func:`numpy.outer`.
     * Broadcasting, element-wise and scalar multiplication, :py:func:`numpy.multiply`.
     * Tensor contractions, :py:func:`numpy.tensordot`.
