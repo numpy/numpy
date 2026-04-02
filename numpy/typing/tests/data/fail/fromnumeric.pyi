@@ -122,7 +122,7 @@ np.prod(AR_U)  # type: ignore[arg-type]
 
 np.cumprod(a, axis=1.0)  # type: ignore[call-overload]
 np.cumprod(a, out=False)  # type: ignore[call-overload]
-np.cumprod(AR_U)  # type: ignore[arg-type]
+np.cumprod(AR_U)  # type: ignore[type-var]
 
 np.size(a, axis=1.0)  # type: ignore[arg-type]
 
