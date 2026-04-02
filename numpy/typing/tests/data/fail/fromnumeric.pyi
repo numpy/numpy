@@ -128,7 +128,7 @@ np.size(a, axis=1.0)  # type: ignore[arg-type]
 
 np.around(a, decimals=1.0)  # type: ignore[call-overload]
 np.around(a, out=type)  # type: ignore[call-overload]
-np.around(AR_U)  # type: ignore[arg-type]
+np.around(AR_U)  # type: ignore[type-var]
 
 np.mean(a, axis=1.0)  # type: ignore[call-overload]
 np.mean(a, out=False)  # type: ignore[call-overload]
