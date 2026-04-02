@@ -137,7 +137,6 @@ npy_apply_wrap(
     PyObject *res = NULL;
     PyObject *new_wrap = NULL;
     PyArrayObject *arr = NULL;
-    PyObject *err_type, *err_value, *traceback;
 
     /* If provided, we prefer the actual out objects wrap: */
     if (original_out != NULL && original_out != Py_None) {
@@ -236,59 +235,6 @@ npy_apply_wrap(
             wrap, arr, py_context,
             (return_scalar && PyArray_NDIM(arr) == 0) ? Py_True : Py_False,
             NULL);
-    if (res != NULL) {
-        goto finish;
-    }
-    else if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
-        goto finish;
-    }
-
-    /*
-     * Retry without passing return_scalar.  If that succeeds give a
-     * Deprecation warning.
-     * When context is None, there is no reason to try this, though.
-     */
-    if (py_context != Py_None) {
-        PyErr_Fetch(&err_type, &err_value, &traceback);
-        res = PyObject_CallFunctionObjArgs(wrap, arr, py_context, NULL);
-        if (res != NULL) {
-            goto deprecation_warning;
-        }
-        Py_DECREF(err_type);
-        Py_XDECREF(err_value);
-        Py_XDECREF(traceback);
-        if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
-            goto finish;
-        }
-    }
-
-    /*
-     * Retry without passing context and return_scalar parameters.
-     * If that succeeds, we give a DeprecationWarning.
-     */
-    PyErr_Fetch(&err_type, &err_value, &traceback);
-    res = PyObject_CallFunctionObjArgs(wrap, arr, NULL);
-    if (res == NULL) {
-        Py_DECREF(err_type);
-        Py_XDECREF(err_value);
-        Py_XDECREF(traceback);
-        goto finish;
-    }
-
-  deprecation_warning:
-    /* If we reach here, the original error is still stored. */
-    /* Deprecated 2024-01-17, NumPy 2.0 */
-    if (DEPRECATE(
-            "__array_wrap__ must accept context and return_scalar arguments "
-            "(positionally) in the future. (Deprecated NumPy 2.0)") < 0) {
-        npy_PyErr_ChainExceptionsCause(err_type, err_value, traceback);
-        Py_CLEAR(res);
-    }
-    else {
-        Py_DECREF(err_type);
-        Py_XDECREF(err_value);
-        Py_XDECREF(traceback);
-    }
 
   finish:
     Py_XDECREF(py_context);
