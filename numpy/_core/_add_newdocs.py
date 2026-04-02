@@ -391,7 +391,16 @@ add_newdoc('numpy._core', 'nditer',
     Here is an example function which operates like a "lambda" ufunc:
 
     >>> def luf(lamdaexpr, *args, **kwargs):
-    ...    '''luf(lambdaexpr, op1, ..., opn, out=None, order='K', casting='safe', buffersize=0)'''
+    ...    '''luf(
+    ...         lambdaexpr,
+    ...         op1,
+    ...         ...,
+    ...         opn,
+    ...         out=None,
+    ...         order='K',
+    ...         casting='safe',
+    ...         buffersize=0
+    ...       )'''
     ...    nargs = len(args)
     ...    op = (kwargs.get('out',None),) + args
     ...    it = np.nditer(op, ['buffered','external_loop'],
@@ -1052,7 +1061,8 @@ add_newdoc('numpy._core.multiarray', 'asarray',
         'C' gives a row-major layout (C-style),
         'F' gives a column-major layout (Fortran-style).
         'C' and 'F' will copy if needed to ensure the output format.
-        'A' (any) is equivalent to 'F' if input a is non-contiguous or Fortran-contiguous, otherwise, it is equivalent to 'C'.
+        'A' (any) is equivalent to 'F' if input a is non-contiguous or
+        Fortran-contiguous, otherwise, it is equivalent to 'C'.
         Unlike 'C' or 'F', 'A' does not ensure that the result is contiguous.
         'K' (keep) is the default and preserves the input order for the output.
     device : str, optional
@@ -1146,7 +1156,8 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
         'C' gives a row-major layout (C-style),
         'F' gives a column-major layout (Fortran-style).
         'C' and 'F' will copy if needed to ensure the output format.
-        'A' (any) is equivalent to 'F' if input a is non-contiguous or Fortran-contiguous, otherwise, it is equivalent to 'C'.
+        'A' (any) is equivalent to 'F' if input a is non-contiguous or
+        Fortran-contiguous, otherwise, it is equivalent to 'C'.
         Unlike 'C' or 'F', 'A' does not ensure that the result is contiguous.
         'K' (keep) preserves the input order for the output.
         'C' is the default.
@@ -2057,8 +2068,10 @@ add_newdoc('numpy._core.multiarray', 'c_einsum',
     c_einsum(subscripts, *operands, out=None, dtype=None, order='K',
            casting='safe')
 
-    *This documentation shadows that of the native python implementation of the `einsum` function,
-    except all references and examples related to the `optimize` argument (v 0.12.0) have been removed.*
+    *This documentation shadows that of the native python implementation of the `einsum`
+    function,
+    except all references and examples related to the `optimize` argument (v 0.12.0)
+    have been removed.*
 
     Evaluates the Einstein summation convention on the operands.
 
@@ -2135,7 +2148,7 @@ add_newdoc('numpy._core.multiarray', 'c_einsum',
     * Return a diagonal, :py:func:`numpy.diag`.
     * Array axis summations, :py:func:`numpy.sum`.
     * Transpositions and permutations, :py:func:`numpy.transpose`.
-    * Matrix multiplication and dot product, :py:func:`numpy.matmul` :py:func:`numpy.dot`.
+    * Matrix multiplication and dot product, py:func:`numpy.matmul` :py:func:`numpy.dot`.
     * Vector inner and outer products, :py:func:`numpy.inner` :py:func:`numpy.outer`.
     * Broadcasting, element-wise and scalar multiplication, :py:func:`numpy.multiply`.
     * Tensor contractions, :py:func:`numpy.tensordot`.
@@ -2354,7 +2367,7 @@ add_newdoc('numpy._core.multiarray', 'c_einsum',
     array([[10, 28, 46, 64],
            [13, 40, 67, 94]])
 
-    """)
+    """)  # noqa: E501
 
 
 ##############################################################################
@@ -4873,7 +4886,8 @@ _array_method_doc('view', "*args, **kwargs",
     >>> y.view(dtype=[('width', np.int16), ('length', np.int16)])
     Traceback (most recent call last):
         ...
-    ValueError: To change to a dtype of a different size, the last axis must be contiguous
+    ValueError: To change to a dtype of a different size, the last axis must be
+    contiguous
     >>> z = y.copy()
     >>> z.view(dtype=[('width', np.int16), ('length', np.int16)])
     array([[(1, 3)],
@@ -5349,7 +5363,15 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
     reduce($self, array, /, axis=0, dtype=None, out=None, **kwargs)
     --
 
-    reduce(array, axis=0, dtype=None, out=None, keepdims=False, initial=<no value>, where=True)
+    reduce(
+        array,
+        axis=0,
+        dtype=None,
+        out=None,
+        keepdims=False,
+        initial=<no value>,
+        where=True
+    )
 
     Reduces `array`'s dimension by one, by applying ufunc along one axis.
 
@@ -5870,10 +5892,23 @@ add_newdoc('numpy._core', 'ufunc', ('resolve_dtypes',
 
 add_newdoc('numpy._core', 'ufunc', ('_resolve_dtypes_and_context',
     """
-    _resolve_dtypes_and_context($self, dtypes, *, signature=None, casting=None, reduction=False)
+    _resolve_dtypes_and_context(
+        $self,
+        dtypes,
+        *,
+        signature=None,
+        casting=None,
+        reduction=False
+    )
     --
 
-    _resolve_dtypes_and_context(dtypes, *, signature=None, casting=None, reduction=False)
+    _resolve_dtypes_and_context(
+        dtypes,
+        *,
+        signature=None,
+        casting=None,
+        reduction=False
+    )
 
     See `numpy.ufunc.resolve_dtypes` for parameter information.  This
     function is considered *unstable*.  You may use it, but the returned
@@ -5945,7 +5980,7 @@ add_newdoc('numpy._core', 'ufunc', ('_get_strided_loop',
     Only the ``strided_loop``signature is considered guaranteed stable
     for NumPy bug-fix releases.  All other API is tied to the experimental
     API versioning.
-
+    except all references and examples related to the `optimize` argument (v 0.12.0)
     The reason for the split call is that cast information is required to
     decide what the fixed-strides will be.
 

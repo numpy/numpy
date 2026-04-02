@@ -82,8 +82,6 @@ ignore = [
 "bench_*.py" = ["B015", "B018", "RUF012"]
 "test*.py" = ["B015", "B018", "E201", "E714", "RUF012"]
 
-"numpy/_core/_add_newdocs.py" = ["E501"]
-"numpy/_core/_add_newdocs_scalars.py" = ["E501"]
 "numpy/lib/tests/test_format.py" = ["E501"]
 "numpy/linalg/tests/test_linalg.py" = ["E501"]
 "numpy/f2py/*py" = ["E501"]
