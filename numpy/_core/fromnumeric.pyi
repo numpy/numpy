@@ -311,18 +311,17 @@ def swapaxes[ScalarT: np.generic](a: _ArrayLike[ScalarT], axis1: SupportsIndex, 
 @overload
 def swapaxes(a: ArrayLike, axis1: SupportsIndex, axis2: SupportsIndex) -> NDArray[Any]: ...
 
-# keep in sync with `ma.core.transpose`
+#
 @overload
-def transpose[ScalarT: np.generic](
-    a: _ArrayLike[ScalarT],
-    axes: _ShapeLike | None = None,
-) -> NDArray[ScalarT]: ...
+def transpose[ArrayT: np.ndarray](a: ArrayT, axes: _ShapeLike | None = None) -> ArrayT: ...
 @overload
-def transpose(
-    a: ArrayLike,
-    axes: _ShapeLike | None = None,
-) -> NDArray[Any]: ...
+def transpose[ScalarT: np.generic](a: _ArrayLike[ScalarT], axes: _ShapeLike | None = None) -> NDArray[ScalarT]: ...
+@overload
+def transpose(a: ArrayLike, axes: _ShapeLike | None = None) -> NDArray[Any]: ...
 
+#
+@overload
+def matrix_transpose[ArrayT: np.ndarray](x: ArrayT, /) -> ArrayT: ...
 @overload
 def matrix_transpose[ScalarT: np.generic](x: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
 @overload
