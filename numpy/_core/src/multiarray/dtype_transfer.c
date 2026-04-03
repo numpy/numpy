@@ -818,37 +818,11 @@ _strided_to_strided_datetime_cast(
     npy_int64 num = d->num, denom = d->denom;
     npy_int64 dt;
 
-    /*
-     * Precompute overflow boundaries for the dt * num multiplication.
-     * Positive values compute dt * num / denom (no subtraction risk).
-     * Negative values compute (dt * num - (denom - 1)) / denom, so
-     * the limit must also account for the (denom - 1) subtraction.
-     *
-     * NPY_DATETIME_NAT is NPY_MIN_INT64 (i.e. -NPY_MAX_INT64 - 1),
-     * so the neg_limit formula also ensures that a valid dt * num
-     * never produces NPY_MIN_INT64, which would be misinterpreted
-     * as NaT.
-     */
-    npy_int64 pos_limit = NPY_MAX_INT64 / num;
-    npy_int64 neg_limit = (NPY_MAX_INT64 - denom + 1) / num;
-
     while (N > 0) {
         memcpy(&dt, src, sizeof(dt));
 
-        if (dt != NPY_DATETIME_NAT) {
-            if (dt > pos_limit || dt < -neg_limit) {
-                PyErr_SetString(PyExc_OverflowError,
-                        "Overflow when converting between "
-                        "datetime64 units");
-                return -1;
-            }
-            /* Apply the scaling */
-            if (dt < 0) {
-                dt = (dt * num - (denom - 1)) / denom;
-            }
-            else {
-                dt = dt * num / denom;
-            }
+        if (_datetime_scale_with_overflow_check(&dt, num, denom) < 0) {
+            return -1;
         }
 
         memcpy(dst, &dt, sizeof(dt));
@@ -874,37 +848,11 @@ _aligned_strided_to_strided_datetime_cast(
     npy_int64 num = d->num, denom = d->denom;
     npy_int64 dt;
 
-    /*
-     * Precompute overflow boundaries for the dt * num multiplication.
-     * Positive values compute dt * num / denom (no subtraction risk).
-     * Negative values compute (dt * num - (denom - 1)) / denom, so
-     * the limit must also account for the (denom - 1) subtraction.
-     *
-     * NPY_DATETIME_NAT is NPY_MIN_INT64 (i.e. -NPY_MAX_INT64 - 1),
-     * so the neg_limit formula also ensures that a valid dt * num
-     * never produces NPY_MIN_INT64, which would be misinterpreted
-     * as NaT.
-     */
-    npy_int64 pos_limit = NPY_MAX_INT64 / num;
-    npy_int64 neg_limit = (NPY_MAX_INT64 - denom + 1) / num;
-
     while (N > 0) {
         dt = *(npy_int64 *)src;
 
-        if (dt != NPY_DATETIME_NAT) {
-            if (dt > pos_limit || dt < -neg_limit) {
-                PyErr_SetString(PyExc_OverflowError,
-                        "Overflow when converting between "
-                        "datetime64 units");
-                return -1;
-            }
-            /* Apply the scaling */
-            if (dt < 0) {
-                dt = (dt * num - (denom - 1)) / denom;
-            }
-            else {
-                dt = dt * num / denom;
-            }
+        if (_datetime_scale_with_overflow_check(&dt, num, denom) < 0) {
+            return -1;
         }
 
         *(npy_int64 *)dst = dt;
