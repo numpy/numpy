@@ -781,37 +781,189 @@ def unpackbits(
 def shares_memory(a: object, b: object, /, max_work: _MaxWork = -1) -> bool: ...
 def may_share_memory(a: object, b: object, /, max_work: _MaxWork = 0) -> bool: ...
 
-@overload
+#
+@overload  # ndarray
+def asarray[ShapeT: _Shape, DTypeT: np.dtype](
+    a: np.ndarray[ShapeT, DTypeT],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # ndarray, dtype: <known>
+def asarray[ShapeT: _Shape, ScalarT: np.generic](
+    a: np.ndarray[ShapeT],
+    dtype: _DTypeLike[ScalarT],
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # ndarray, dtype: <unknown>
+def asarray[ShapeT: _Shape](
+    a: np.ndarray[ShapeT],
+    dtype: DTypeLike,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> np.ndarray[ShapeT]: ...
+@overload  # 1d bool
+def asarray(
+    a: Sequence[bool],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.bool]: ...
+@overload  # 1d ~int
+def asarray(
+    a: list[int],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.int_]: ...
+@overload  # 1d ~float
+def asarray(
+    a: list[float],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.float64]: ...
+@overload  # 1d ~complex
+def asarray(
+    a: list[complex],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.complex128]: ...
+@overload  # 1d _, dtype: <known>
+def asarray[ScalarT: np.generic](
+    a: Sequence[complex | np.generic],
+    dtype: _DTypeLike[ScalarT],
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[ScalarT]: ...
+@overload  # 1d _, dtype: <unknown>
+def asarray(
+    a: Sequence[complex | np.generic],
+    dtype: DTypeLike,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[Any]: ...
+@overload  # 2d bool
+def asarray(
+    a: Sequence[Sequence[bool]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[np.bool]: ...
+@overload  # 2d ~int
+def asarray(
+    a: Sequence[list[int]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[np.int_]: ...
+@overload  # 2d ~float
+def asarray(
+    a: Sequence[list[float]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[np.float64]: ...
+@overload  # 2d ~complex
+def asarray(
+    a: Sequence[list[complex]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[np.complex128]: ...
+@overload  # 2d _, dtype: <known>
+def asarray[ScalarT: np.generic](
+    a: Sequence[Sequence[complex | np.generic]],
+    dtype: _DTypeLike[ScalarT],
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[ScalarT]: ...
+@overload  # 2d _, dtype: <unknown>
+def asarray(
+    a: Sequence[Sequence[complex | np.generic]],
+    dtype: DTypeLike,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[Any]: ...
+@overload  # known array-like
 def asarray[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     dtype: None = None,
-    order: _OrderKACF = ...,
+    order: _OrderKACF = None,
     *,
-    device: L["cpu"] | None = ...,
-    copy: bool | None = ...,
-    like: _SupportsArrayFunc | None = ...,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # array-like, dtype: <known>
 def asarray[ScalarT: np.generic](
-    a: Any,
+    a: object,
     dtype: _DTypeLike[ScalarT],
-    order: _OrderKACF = ...,
+    order: _OrderKACF = None,
     *,
-    device: L["cpu"] | None = ...,
-    copy: bool | None = ...,
-    like: _SupportsArrayFunc | None = ...,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # fallback
 def asarray(
-    a: Any,
-    dtype: DTypeLike | None = ...,
-    order: _OrderKACF = ...,
+    a: object,
+    dtype: DTypeLike | None = None,
+    order: _OrderKACF = None,
     *,
-    device: L["cpu"] | None = ...,
-    copy: bool | None = ...,
-    like: _SupportsArrayFunc | None = ...,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Any]: ...
 
+#
 @overload
 def asanyarray[ArrayT: np.ndarray](
     a: ArrayT,  # Preserve subclass-information
@@ -853,50 +1005,67 @@ def asanyarray(
     like: _SupportsArrayFunc | None = ...,
 ) -> NDArray[Any]: ...
 
+#
+@overload
+def ascontiguousarray[ShapeT: _Shape, DTypeT: np.dtype](
+    a: np.ndarray[ShapeT, DTypeT],
+    dtype: None = None,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> np.ndarray[ShapeT, DTypeT]: ...
 @overload
 def ascontiguousarray[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     dtype: None = None,
     *,
-    like: _SupportsArrayFunc | None = ...,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
 @overload
 def ascontiguousarray[ScalarT: np.generic](
-    a: Any,
+    a: object,
     dtype: _DTypeLike[ScalarT],
     *,
-    like: _SupportsArrayFunc | None = ...,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
 @overload
 def ascontiguousarray(
-    a: Any,
-    dtype: DTypeLike | None = ...,
+    a: object,
+    dtype: DTypeLike | None = None,
     *,
-    like: _SupportsArrayFunc | None = ...,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Any]: ...
 
+#
+@overload
+def asfortranarray[ShapeT: _Shape, DTypeT: np.dtype](
+    a: np.ndarray[ShapeT, DTypeT],
+    dtype: None = None,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> np.ndarray[ShapeT, DTypeT]: ...
 @overload
 def asfortranarray[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     dtype: None = None,
     *,
-    like: _SupportsArrayFunc | None = ...,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
 @overload
 def asfortranarray[ScalarT: np.generic](
-    a: Any,
+    a: object,
     dtype: _DTypeLike[ScalarT],
     *,
-    like: _SupportsArrayFunc | None = ...,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
 @overload
 def asfortranarray(
-    a: Any,
-    dtype: DTypeLike | None = ...,
+    a: object,
+    dtype: DTypeLike | None = None,
     *,
-    like: _SupportsArrayFunc | None = ...,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Any]: ...
 
+#
 def promote_types(__type1: DTypeLike, __type2: DTypeLike) -> dtype: ...
 
 # `sep` is a de facto mandatory argument, as its default value is deprecated
