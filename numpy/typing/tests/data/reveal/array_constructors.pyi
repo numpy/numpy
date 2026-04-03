@@ -7,6 +7,7 @@ import numpy.typing as npt
 from numpy._typing import _AnyShape
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
 class SubClass[ScalarT: np.generic](np.ndarray[_AnyShape, np.dtype[ScalarT]]): ...
 
@@ -20,6 +21,16 @@ B: SubClass[np.float64]
 C: list[int]
 D: SubClass[np.float64 | np.int64]
 E: IntoSubClass[np.float64 | np.int64]
+
+_f32_1d: _Array1D[np.float32]
+_py_b_1d: list[bool]
+_py_b_2d: list[list[bool]]
+_py_i_1d: list[int]
+_py_i_2d: list[list[int]]
+_py_f_1d: list[float]
+_py_f_2d: list[list[float]]
+_py_c_1d: list[complex]
+_py_c_2d: list[list[complex]]
 
 mixed_shape: tuple[int, np.int64]
 
@@ -70,9 +81,24 @@ assert_type(np.concatenate([1, 1.0], out=A), npt.NDArray[np.float64])
 
 assert_type(np.asarray(A), npt.NDArray[np.float64])
 assert_type(np.asarray(B), npt.NDArray[np.float64])
-assert_type(np.asarray([1, 1.0]), npt.NDArray[Any])
+assert_type(np.asarray(C), _Array1D[np.int_])
 assert_type(np.asarray(A, dtype=np.int64), npt.NDArray[np.int64])
 assert_type(np.asarray(A, dtype="c16"), npt.NDArray[Any])
+assert_type(np.asarray(_f32_1d), _Array1D[np.float32])
+assert_type(np.asarray(_f32_1d, dtype=np.float64), _Array1D[np.float64])
+assert_type(np.asarray(_f32_1d, dtype="f8"), _Array1D[Any])
+assert_type(np.asarray(_py_b_1d), _Array1D[np.bool_])
+assert_type(np.asarray(_py_b_2d), _Array2D[np.bool_])
+assert_type(np.asarray(_py_i_1d), _Array1D[np.int_])
+assert_type(np.asarray(_py_i_2d), _Array2D[np.int_])
+assert_type(np.asarray(_py_f_1d), _Array1D[np.float64])
+assert_type(np.asarray(_py_f_2d), _Array2D[np.float64])
+assert_type(np.asarray(_py_c_1d), _Array1D[np.complex128])
+assert_type(np.asarray(_py_c_2d), _Array2D[np.complex128])
+assert_type(np.asarray(_py_i_1d, dtype=np.float32), _Array1D[np.float32])
+assert_type(np.asarray(_py_i_1d, dtype="f4"), _Array1D[Any])
+assert_type(np.asarray(_py_i_2d, dtype=np.float32), _Array2D[np.float32])
+assert_type(np.asarray(_py_i_2d, dtype="f4"), _Array2D[Any])
 
 assert_type(np.asanyarray(A), npt.NDArray[np.float64])
 assert_type(np.asanyarray(B), SubClass[np.float64])
