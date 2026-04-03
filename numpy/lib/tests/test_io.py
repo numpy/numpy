@@ -1275,6 +1275,10 @@ class TestLoadTxt(LoadTxtBase):
 
         if isinstance(data, StringIO):
             data.seek(0)
+        # gh-31113 old test checked the warning twice on `StringIO` inputs
+        x = np.loadtxt(data, dtype=int, skiprows=skip, delimiter=",",
+                       max_rows=3 - skip)
+        assert_array_equal(x, [[-1, 0], [1, 2], [3, 4]][skip:])
 
 class Testfromregex:
     def test_record(self):
