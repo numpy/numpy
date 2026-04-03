@@ -711,8 +711,8 @@ def compress[ArrayT: np.ndarray](
 
 # TODO: Fix overlapping overloads: https://github.com/numpy/numpy/issues/27032
 @overload
-def clip[ScalarT: np.generic](
-    a: ScalarT,
+def clip[ScalarOrArrayT: np.generic | np.ndarray](
+    a: ScalarOrArrayT,
     a_min: ArrayLike | _NoValueType | None = ...,
     a_max: ArrayLike | _NoValueType | None = ...,
     out: None = None,
@@ -721,7 +721,7 @@ def clip[ScalarT: np.generic](
     max: ArrayLike | _NoValueType | None = ...,
     dtype: None = None,
     **kwargs: Unpack[_UFuncKwargs],
-) -> ScalarT: ...
+) -> ScalarOrArrayT: ...
 @overload
 def clip(
     a: _ScalarLike_co,
@@ -1583,11 +1583,11 @@ def around(
     out: None = None,
 ) -> float16: ...
 @overload
-def around[NumberOrObjectT: np.number | np.object_](
-    a: NumberOrObjectT,
+def around[ScalarOrArrayT: np.number | np.object_ | NDArray[np.number | np.object_]](
+    a: ScalarOrArrayT,
     decimals: SupportsIndex = 0,
     out: None = None,
-) -> NumberOrObjectT: ...
+) -> ScalarOrArrayT: ...
 @overload
 def around(
     a: _ComplexLike_co | object_,
