@@ -1033,23 +1033,65 @@ def fromfile(
     like: _SupportsArrayFunc | None = ...,
 ) -> _Array1D[Any]: ...
 
-@overload
+#
+@overload  # dtype=<known>
 def fromiter[ScalarT: np.generic](
-    iter: Iterable[Any],
+    iter: Iterable[_ScalarLike_co],
     dtype: _DTypeLike[ScalarT],
-    count: SupportsIndex = ...,
+    count: SupportsIndex = -1,
     *,
-    like: _SupportsArrayFunc | None = ...,
-) -> NDArray[ScalarT]: ...
-@overload
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[ScalarT]: ...
+@overload  # dtype=None
 def fromiter(
-    iter: Iterable[Any],
-    dtype: DTypeLike | None,
-    count: SupportsIndex = ...,
+    iter: Iterable[_ScalarLike_co],
+    dtype: None,
+    count: SupportsIndex = -1,
     *,
-    like: _SupportsArrayFunc | None = ...,
-) -> NDArray[Any]: ...
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.float64]: ...
+@overload  # dtype=bool
+def fromiter(
+    iter: Iterable[_ScalarLike_co],
+    dtype: type[bool],
+    count: SupportsIndex = -1,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.bool]: ...
+@overload  # dtype=int
+def fromiter(
+    iter: Iterable[_ScalarLike_co],
+    dtype: type[int],
+    count: SupportsIndex = -1,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.int_ | Any]: ...
+@overload  # dtype=float
+def fromiter(
+    iter: Iterable[_ScalarLike_co],
+    dtype: type[float],
+    count: SupportsIndex = -1,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.float64 | Any]: ...
+@overload  # dtype=complex
+def fromiter(
+    iter: Iterable[_ScalarLike_co],
+    dtype: type[complex],
+    count: SupportsIndex = -1,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.complex128 | Any]: ...
+@overload  # dtype=<unknown>
+def fromiter(
+    iter: Iterable[_ScalarLike_co],
+    dtype: DTypeLike,
+    count: SupportsIndex = -1,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[Any]: ...
 
+#
 @overload
 def frombuffer(
     buffer: Buffer,

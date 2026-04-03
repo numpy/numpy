@@ -107,8 +107,14 @@ with open("test.txt") as f:
     assert_type(np.fromfile(b"test.txt", sep=" "), _Array1D[np.float64])
     assert_type(np.fromfile(Path("test.txt"), sep=" "), _Array1D[np.float64])
 
-assert_type(np.fromiter("12345", np.float64), npt.NDArray[np.float64])
-assert_type(np.fromiter("12345", float), npt.NDArray[Any])
+assert_type(np.fromiter("12345", np.float32), _Array1D[np.float32])
+assert_type(np.fromiter("12345", np.float64), _Array1D[np.float64])
+assert_type(np.fromiter("12345", bool), _Array1D[np.bool])
+assert_type(np.fromiter("12345", int), _Array1D[np.int_ | Any])
+assert_type(np.fromiter("12345", float), _Array1D[np.float64 | Any])
+assert_type(np.fromiter("12345", complex), _Array1D[np.complex128 | Any])
+assert_type(np.fromiter("12345", None), _Array1D[np.float64])
+assert_type(np.fromiter("12345", object), _Array1D[Any])
 
 assert_type(np.frombuffer(A), _Array1D[np.float64])
 assert_type(np.frombuffer(A, dtype=np.int64), _Array1D[np.int64])
