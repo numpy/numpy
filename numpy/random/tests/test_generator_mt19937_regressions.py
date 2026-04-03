@@ -112,7 +112,7 @@ class TestRegression:
         #    # CDF of the beta distribution at x:
         #    p = mp.betainc(a, b, x1=0, x2=x, regularized=True)
         #    n = 1000000
-        #    exprected_freq = float(n*p)
+        #    expected_freq = float(n*p)
         #
         expected_freq = 77616.90831318991
         assert 0.95 * expected_freq < nzeros < 1.05 * expected_freq

@@ -820,8 +820,8 @@ def test_iter_broadcasting_errors():
         assert_(msg.find('(2,3)->(2,3)') >= 0,
             f'Message "{msg}" doesn\'t contain operand shape (2,3)->(2,3)')
         assert_(msg.find('(2,)->(2,newaxis)') >= 0,
-                ('Message "%s" doesn\'t contain remapped operand shape'
-                '(2,)->(2,newaxis)') % msg)
+                f'Message "{msg}" doesn\'t contain remapped operand shape'
+                '(2,)->(2,newaxis)')
         # The message should contain the itershape parameter
         assert_(msg.find('(4,3)') >= 0,
                 f'Message "{msg}" doesn\'t contain itershape parameter (4,3)')
@@ -1529,7 +1529,10 @@ def test_iter_copy():
 
 @pytest.mark.parametrize("dtype", np.typecodes["All"])
 @pytest.mark.parametrize("loop_dtype", np.typecodes["All"])
-@pytest.mark.filterwarnings("ignore::numpy.exceptions.ComplexWarning")
+@pytest.mark.filterwarnings(
+    "ignore::numpy.exceptions.ComplexWarning",
+    "ignore::DeprecationWarning",
+)
 def test_iter_copy_casts(dtype, loop_dtype):
     # Ensure the dtype is never flexible:
     if loop_dtype.lower() == "m":

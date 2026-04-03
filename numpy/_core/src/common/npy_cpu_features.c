@@ -502,7 +502,7 @@ npy__cpu_init_features(void)
     // long mode only
     npy__cpu_have[NPY_CPU_FEATURE_LAHF]  = (reg[2] & (1 << 0)) != 0;
 #else
-    // alawys available
+    // always available
     npy__cpu_have[NPY_CPU_FEATURE_LAHF]  = 1;
 #endif
     npy__cpu_have[NPY_CPU_FEATURE_LZCNT] = (reg[2] & (1 << 5))  != 0;

@@ -70,6 +70,10 @@ intern_strings(void)
     INTERN_STRING(dl_device, "dl_device");
     INTERN_STRING(max_version, "max_version");
     INTERN_STRING(array_dealloc, "array_dealloc");
+    INTERN_STRING(real, "real");
+    INTERN_STRING(imag, "imag");
+    INTERN_STRING(sort, "sort");
+    INTERN_STRING(argsort, "argsort");
     return 0;
 }
 

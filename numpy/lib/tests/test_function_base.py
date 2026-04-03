@@ -507,9 +507,9 @@ class TestAverage:
         assert_equal(type(rw), subclass)
 
     def test_upcasting(self):
-        typs = [('i4', 'i4', 'f8'), ('i4', 'f4', 'f8'), ('f4', 'i4', 'f8'),
+        types = [('i4', 'i4', 'f8'), ('i4', 'f4', 'f8'), ('f4', 'i4', 'f8'),
                  ('f4', 'f4', 'f4'), ('f4', 'f8', 'f8')]
-        for at, wt, rt in typs:
+        for at, wt, rt in types:
             a = np.array([[1, 2], [3, 4]], dtype=at)
             w = np.array([[1, 2], [3, 4]], dtype=wt)
             assert_equal(np.average(a, weights=w).dtype, np.dtype(rt))

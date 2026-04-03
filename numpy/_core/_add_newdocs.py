@@ -2665,6 +2665,11 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('imag',
     """
     The imaginary part of the array.
 
+    Returns a view into the original array for complex arrays.
+    For non-complex arrays, returns a zero array of the same dtype.
+    For ``object`` arrays returns elementwise ``.imag`` or ``0``
+    if ``.imag`` is undefined.
+
     Examples
     --------
     >>> import numpy as np
@@ -2855,6 +2860,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('ndim',
 add_newdoc('numpy._core.multiarray', 'ndarray', ('real',
     """
     The real part of the array.
+
+    Usually returns a view into the original array, but returns
+    elementwise ``.real`` for arrays of objects.
 
     Examples
     --------

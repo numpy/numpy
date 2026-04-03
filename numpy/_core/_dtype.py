@@ -116,13 +116,13 @@ def _scalar_str(dtype, short):
         if _isunsized(dtype):
             return "'S'"
         else:
-            return "'S%d'" % dtype.itemsize
+            return f"'S{dtype.itemsize}'"
 
     elif dtype.type == np.str_:
         if _isunsized(dtype):
             return f"'{byteorder}U'"
         else:
-            return "'%sU%d'" % (byteorder, dtype.itemsize / 4)
+            return f"'{byteorder}U{dtype.itemsize // 4}'"
 
     elif dtype.type is str:
         return "'T'"
@@ -136,7 +136,7 @@ def _scalar_str(dtype, short):
         if _isunsized(dtype):
             return "'V'"
         else:
-            return "'V%d'" % dtype.itemsize
+            return f"'V{dtype.itemsize}'"
 
     elif dtype.type == np.datetime64:
         return f"'{byteorder}M8{_datetime_metadata_str(dtype)}'"
@@ -150,11 +150,11 @@ def _scalar_str(dtype, short):
     elif np.issubdtype(dtype, np.number):
         # Short repr with endianness, like '<f8'
         if short or dtype.byteorder not in ('=', '|'):
-            return "'%s%c%d'" % (byteorder, dtype.kind, dtype.itemsize)
+            return f"'{byteorder}{dtype.kind}{dtype.itemsize}'"
 
         # Longer repr, like 'float64'
         else:
-            return "'%s%d'" % (_kind_name(dtype), 8 * dtype.itemsize)
+            return f"'{_kind_name(dtype)}{8 * dtype.itemsize}'"
 
     else:
         raise RuntimeError(
@@ -212,7 +212,7 @@ def _struct_dict_str(dtype, includealignedflag):
         fieldsep = ", "
 
     # First, the names
-    ret = "{'names'%s[" % colon
+    ret = f"{{'names'{colon}["
     ret += fieldsep.join(repr(name) for name in names)
 
     # Second, the formats
@@ -222,7 +222,7 @@ def _struct_dict_str(dtype, includealignedflag):
 
     # Third, the offsets
     ret += f"], 'offsets'{colon}["
-    ret += fieldsep.join("%d" % offset for offset in offsets)
+    ret += fieldsep.join(f"{offset}" for offset in offsets)
 
     # Fourth, the titles
     if any(title is not None for title in titles):
@@ -230,11 +230,11 @@ def _struct_dict_str(dtype, includealignedflag):
         ret += fieldsep.join(repr(title) for title in titles)
 
     # Fifth, the itemsize
-    ret += "], 'itemsize'%s%d" % (colon, dtype.itemsize)
+    ret += f"], 'itemsize'{colon}{dtype.itemsize}"
 
     if (includealignedflag and dtype.isalignedstruct):
         # Finally, the aligned flag
-        ret += ", 'aligned'%sTrue}" % colon
+        ret += f", 'aligned'{colon}True}}"
     else:
         ret += "}"
 

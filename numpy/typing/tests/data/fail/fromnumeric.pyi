@@ -46,8 +46,8 @@ np.sort(A, axis="bob")  # type: ignore[call-overload]
 np.sort(A, kind="bob")  # type: ignore[call-overload]
 np.sort(A, order=range(5))  # type: ignore[arg-type]
 
-np.argsort(A, axis="bob")  # type: ignore[arg-type]
-np.argsort(A, kind="bob")  # type: ignore[arg-type]
+np.argsort(A, axis="bob")  # type: ignore[call-overload]
+np.argsort(A, kind="bob")  # type: ignore[call-overload]
 np.argsort(A, order=range(5))  # type: ignore[arg-type]
 
 np.argmax(A, axis="bob")  # type: ignore[call-overload]
@@ -122,7 +122,7 @@ np.prod(AR_U)  # type: ignore[arg-type]
 
 np.cumprod(a, axis=1.0)  # type: ignore[call-overload]
 np.cumprod(a, out=False)  # type: ignore[call-overload]
-np.cumprod(AR_U)  # type: ignore[arg-type]
+np.cumprod(AR_U)  # type: ignore[type-var]
 
 np.size(a, axis=1.0)  # type: ignore[arg-type]
 

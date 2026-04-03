@@ -248,21 +248,15 @@ def isreal(x):
     The function does not work on string arrays.
 
     >>> a = np.array([2j, "a"], dtype=np.str_)
-    >>> np.isreal(a)  # Warns about non-elementwise comparison
-    False
+    >>> np.isreal(a)  # returns the result of `"" == 0` currently.
+    array([False, False])
 
-    Returns True for all elements in input array of ``dtype=np.object_`` even if
-    any of the elements is complex.
+    Returns True for all elements that either have no ``.imag`` attribute
+    or for which that attribute is zero:
 
     >>> a = np.array([1, "2", 3+4j], dtype=np.object_)
     >>> np.isreal(a)
-    array([ True,  True,  True])
-
-    isreal should not be used with object arrays
-
-    >>> a = np.array([1+2j, 2+1j], dtype=np.object_)
-    >>> np.isreal(a)
-    array([ True,  True])
+    array([ True,  True,  False])
 
     """
     return imag(x) == 0

@@ -5,6 +5,7 @@ to document how deprecations should eventually be turned into errors.
 """
 import contextlib
 import warnings
+from collections.abc import Callable
 
 import pytest
 
@@ -86,9 +87,8 @@ class _DeprecationTestCase:
             if warning.category is self.warning_cls:
                 num_found += 1
             elif not ignore_others:
-                raise AssertionError(
-                        "expected %s but got: %s" %
-                        (self.warning_cls.__name__, warning.category))
+                name = self.warning_cls.__name__
+                raise AssertionError(f"expected {name} but got: {warning.category}")
         if num is not None and num_found != num:
             msg = f"{len(w_context)} warnings found but {num} expected."
             lst = [str(w) for w in w_context]
@@ -345,7 +345,7 @@ class TestTooManyArgsExtremum(_DeprecationTestCase):
     message = "Passing more than 2 positional arguments to np.maximum and np.minimum "
 
     @pytest.mark.parametrize("ufunc", [np.minimum, np.maximum])
-    def test_extremem_3_args(self, ufunc):
+    def test_extremum_3_args(self, ufunc):
         self.assert_deprecated(ufunc, args=(np.ones(1), np.zeros(1), np.empty(1)))
 
 
@@ -365,6 +365,36 @@ class TestRoundDeprecation(_DeprecationTestCase):
 
     def test_round_emits_deprecation_warning_scalar(self):
         self.assert_deprecated(lambda: np.ma.round_(3.14))
+
+
+class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
+    # Deprecated in Numpy 2.5, 2025-11
+    # See gh-29619
+    message = "Using 'generic' unit for NumPy timedelta is deprecated"
+
+    @pytest.mark.parametrize('value', [
+        3, 10, "NaT"
+    ])
+    def test_raise_warning_for_timedelta_with_generic_unit(self, value: int | str):
+        self.assert_deprecated(lambda x: np.timedelta64(x), args=(value,))
+
+    @pytest.mark.parametrize('value', [
+        np.timedelta64(3, "s"), np.timedelta64(10, "D")
+    ])
+    @pytest.mark.parametrize('generic_value', [
+        5, 2
+    ])
+    @pytest.mark.parametrize(
+        "op",
+        [
+            np.add,
+            np.subtract,
+        ],
+    )
+    def test_raise_warning_for_operation_with_generic_unit(
+        self, value: int, generic_value: int, op: Callable
+    ):
+        self.assert_deprecated(op, args=(value, generic_value))
 
 
 class TestTriDeprecationWithNonInteger(_DeprecationTestCase):
