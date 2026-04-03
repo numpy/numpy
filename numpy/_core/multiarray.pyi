@@ -944,7 +944,7 @@ def asarray[ScalarT: np.generic](
 ) -> NDArray[ScalarT]: ...
 @overload  # array-like, dtype: <known>
 def asarray[ScalarT: np.generic](
-    a: ArrayLike,
+    a: object,
     dtype: _DTypeLike[ScalarT],
     order: _OrderKACF = None,
     *,
@@ -954,7 +954,7 @@ def asarray[ScalarT: np.generic](
 ) -> NDArray[ScalarT]: ...
 @overload  # fallback
 def asarray(
-    a: ArrayLike,
+    a: object,
     dtype: DTypeLike | None = None,
     order: _OrderKACF = None,
     *,
@@ -963,6 +963,7 @@ def asarray(
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Any]: ...
 
+#
 @overload
 def asanyarray[ArrayT: np.ndarray](
     a: ArrayT,  # Preserve subclass-information
@@ -1004,50 +1005,67 @@ def asanyarray(
     like: _SupportsArrayFunc | None = ...,
 ) -> NDArray[Any]: ...
 
+#
+@overload
+def ascontiguousarray[ShapeT: _Shape, DTypeT: np.dtype](
+    a: np.ndarray[ShapeT, DTypeT],
+    dtype: None = None,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> np.ndarray[ShapeT, DTypeT]: ...
 @overload
 def ascontiguousarray[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     dtype: None = None,
     *,
-    like: _SupportsArrayFunc | None = ...,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
 @overload
 def ascontiguousarray[ScalarT: np.generic](
-    a: Any,
+    a: object,
     dtype: _DTypeLike[ScalarT],
     *,
-    like: _SupportsArrayFunc | None = ...,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
 @overload
 def ascontiguousarray(
-    a: Any,
-    dtype: DTypeLike | None = ...,
+    a: object,
+    dtype: DTypeLike | None = None,
     *,
-    like: _SupportsArrayFunc | None = ...,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Any]: ...
 
+#
+@overload
+def asfortranarray[ShapeT: _Shape, DTypeT: np.dtype](
+    a: np.ndarray[ShapeT, DTypeT],
+    dtype: None = None,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> np.ndarray[ShapeT, DTypeT]: ...
 @overload
 def asfortranarray[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     dtype: None = None,
     *,
-    like: _SupportsArrayFunc | None = ...,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
 @overload
 def asfortranarray[ScalarT: np.generic](
-    a: Any,
+    a: object,
     dtype: _DTypeLike[ScalarT],
     *,
-    like: _SupportsArrayFunc | None = ...,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
 @overload
 def asfortranarray(
-    a: Any,
-    dtype: DTypeLike | None = ...,
+    a: object,
+    dtype: DTypeLike | None = None,
     *,
-    like: _SupportsArrayFunc | None = ...,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Any]: ...
 
+#
 def promote_types(__type1: DTypeLike, __type2: DTypeLike) -> dtype: ...
 
 # `sep` is a de facto mandatory argument, as its default value is deprecated
