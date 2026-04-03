@@ -447,7 +447,7 @@ NpyDatetime_ConvertDatetime64ToDatetimeStruct(
     /* Check for overflow and apply meta->num scaling */
     if (meta->num > 1) {
         if (_datetime_scale_with_overflow_check(
-                &dt, (npy_int64)meta->num, 1) < 0) {
+                &dt, (npy_int64)meta->num, 1, "datetime64") < 0) {
             return -1;
         }
     }
@@ -3166,7 +3166,7 @@ cast_timedelta_to_timedelta(PyArray_DatetimeMetaData *src_meta,
     }
 
     /* Apply the scaling, checking for overflow */
-    if (_datetime_scale_with_overflow_check(&src_dt, num, denom) < 0) {
+    if (_datetime_scale_with_overflow_check(&src_dt, num, denom, "timedelta64") < 0) {
         return -1;
     }
     *dst_dt = src_dt;

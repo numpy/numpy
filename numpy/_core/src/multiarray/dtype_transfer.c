@@ -821,7 +821,7 @@ _strided_to_strided_datetime_cast(
     while (N > 0) {
         memcpy(&dt, src, sizeof(dt));
 
-        if (_datetime_scale_with_overflow_check(&dt, num, denom) < 0) {
+        if (_datetime_scale_with_overflow_check(&dt, num, denom, "datetime64") < 0) {
             return -1;
         }
 
@@ -851,7 +851,7 @@ _aligned_strided_to_strided_datetime_cast(
     while (N > 0) {
         dt = *(npy_int64 *)src;
 
-        if (_datetime_scale_with_overflow_check(&dt, num, denom) < 0) {
+        if (_datetime_scale_with_overflow_check(&dt, num, denom, "datetime64") < 0) {
             return -1;
         }
 

@@ -352,7 +352,8 @@ timedelta_hash(PyArray_DatetimeMetaData *meta, npy_timedelta td);
  */
 static inline int
 _datetime_scale_with_overflow_check(
-        npy_int64 *dt, npy_int64 num, npy_int64 denom)
+        npy_int64 *dt, npy_int64 num, npy_int64 denom,
+        const char *type_name)
 {
     if (*dt == NPY_DATETIME_NAT) {
         return 0;
@@ -361,9 +362,9 @@ _datetime_scale_with_overflow_check(
     npy_int64 neg_limit = (NPY_MAX_INT64 - denom + 1) / num;
 
     if (*dt > pos_limit || *dt < -neg_limit) {
-        PyErr_SetString(PyExc_OverflowError,
+        PyErr_Format(PyExc_OverflowError,
                 "Overflow when converting between "
-                "datetime64 units");
+                "%s units", type_name);
         return -1;
     }
     if (*dt < 0) {
