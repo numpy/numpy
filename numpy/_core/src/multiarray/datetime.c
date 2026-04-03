@@ -28,6 +28,7 @@
 #include "usertypes.h"
 
 #include "dtype_transfer.h"
+#include "templ_common.h"
 #include "lowlevel_strided_loops.h"
 
 #include <datetime.h>
@@ -446,15 +447,19 @@ NpyDatetime_ConvertDatetime64ToDatetimeStruct(
 
     /* Check for overflow before multiplying by meta->num */
     if (meta->num > 1) {
-        npy_int64 overflow_limit = NPY_MAX_INT64 / meta->num;
-        if (dt > overflow_limit || dt < -overflow_limit) {
+        npy_longlong tmp;
+        if (npy_mul_with_overflow_longlong(
+                &tmp, (npy_longlong)dt, (npy_longlong)meta->num)) {
             PyErr_SetString(PyExc_OverflowError,
                     "Overflow when converting between "
                     "datetime64 units");
             return -1;
         }
+        dt = (npy_int64)tmp;
     }
-    dt *= meta->num;
+    else {
+        dt *= meta->num;
+    }
 
     /*
      * Note that care must be taken with the / and % operators
@@ -3166,7 +3171,17 @@ cast_timedelta_to_timedelta(PyArray_DatetimeMetaData *src_meta,
         return -1;
     }
 
-    /* Apply the scaling */
+    /* Apply the scaling, checking for overflow */
+    npy_int64 pos_limit = NPY_MAX_INT64 / num;
+    npy_int64 neg_limit = (NPY_MAX_INT64 - denom + 1) / num;
+
+    if (src_dt > pos_limit || src_dt < -neg_limit) {
+        PyErr_SetString(PyExc_OverflowError,
+                "Overflow when converting between "
+                "timedelta64 units");
+        return -1;
+    }
+
     if (src_dt < 0) {
         *dst_dt = (src_dt * num - (denom - 1)) / denom;
     }

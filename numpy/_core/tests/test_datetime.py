@@ -983,10 +983,35 @@ class TestDateTime:
         with pytest.raises(OverflowError, match="Overflow"):
             val_neg.astype("datetime64[ns]")
 
-        # timedelta overflow
+        # timedelta overflow (strided cast path in dtype_transfer.c)
         td = np.timedelta64(2**62, "s")
         with pytest.raises(OverflowError, match="Overflow"):
             td.astype("timedelta64[ns]")
+
+        # timedelta overflow (scalar cast path in datetime.c via
+        # cast_timedelta_to_timedelta)
+        td_big = np.timedelta64(2**62, "s")
+        with pytest.raises(OverflowError, match="Overflow"):
+            np.array(td_big, dtype="timedelta64[ns]")
+
+        # timedelta exact boundary: INT64_MAX // 1e9 = 9223372036
+        td_ok = np.timedelta64(9223372036, "s")
+        result_td = td_ok.astype("timedelta64[ns]")
+        assert result_td == np.timedelta64(9223372036000000000, "ns")
+
+        td_bad = np.timedelta64(9223372037, "s")
+        with pytest.raises(OverflowError, match="Overflow"):
+            td_bad.astype("timedelta64[ns]")
+
+        # negative timedelta overflow
+        td_neg = np.timedelta64(-9223372037, "s")
+        with pytest.raises(OverflowError, match="Overflow"):
+            td_neg.astype("timedelta64[ns]")
+
+        # timedelta NaT passthrough
+        td_nat = np.timedelta64("NaT", "s")
+        result_td_nat = td_nat.astype("timedelta64[ns]")
+        assert np.isnat(result_td_nat)
 
         # valid conversions near the boundary should still work
         val_ok = np.datetime64("2020-01-01", "s")
@@ -1003,6 +1028,26 @@ class TestDateTime:
         result_nat = arr_nat.astype("datetime64[ns]")
         assert np.isnat(result_nat[0])
         assert result_nat[1] == np.datetime64("2020-01-01", "ns")
+
+        # Exact boundary: INT64_MAX // 1e9 = 9223372036 seconds is OK,
+        # 9223372037 seconds overflows when cast to ns.
+        ok_boundary = np.datetime64(9223372036, "s")
+        result_boundary = ok_boundary.astype("datetime64[ns]")
+        assert result_boundary == np.datetime64(9223372036, "s")
+
+        bad_boundary = np.datetime64(9223372037, "s")
+        with pytest.raises(OverflowError, match="Overflow"):
+            bad_boundary.astype("datetime64[ns]")
+
+        # Exercise the num != 1 code path (e.g. "2s" metadata)
+        arr_2s = np.array([3], dtype="datetime64[2s]")
+        result_2s = arr_2s.astype("datetime64[s]")
+        assert result_2s[0] == np.datetime64(6, "s")
+
+        # Overflow with num != 1
+        arr_2s_big = np.array([np.iinfo(np.int64).max // 2], dtype="datetime64[2s]")
+        with pytest.raises(OverflowError, match="Overflow"):
+            arr_2s_big.astype("datetime64[ns]")
 
     def test_pyobject_roundtrip(self):
         # All datetime types should be able to roundtrip through object

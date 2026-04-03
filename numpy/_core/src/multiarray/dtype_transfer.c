@@ -823,6 +823,11 @@ _strided_to_strided_datetime_cast(
      * Positive values compute dt * num / denom (no subtraction risk).
      * Negative values compute (dt * num - (denom - 1)) / denom, so
      * the limit must also account for the (denom - 1) subtraction.
+     *
+     * NPY_DATETIME_NAT is NPY_MIN_INT64 (i.e. -NPY_MAX_INT64 - 1),
+     * so the neg_limit formula also ensures that a valid dt * num
+     * never produces NPY_MIN_INT64, which would be misinterpreted
+     * as NaT.
      */
     npy_int64 pos_limit = NPY_MAX_INT64 / num;
     npy_int64 neg_limit = (NPY_MAX_INT64 - denom + 1) / num;
@@ -874,6 +879,11 @@ _aligned_strided_to_strided_datetime_cast(
      * Positive values compute dt * num / denom (no subtraction risk).
      * Negative values compute (dt * num - (denom - 1)) / denom, so
      * the limit must also account for the (denom - 1) subtraction.
+     *
+     * NPY_DATETIME_NAT is NPY_MIN_INT64 (i.e. -NPY_MAX_INT64 - 1),
+     * so the neg_limit formula also ensures that a valid dt * num
+     * never produces NPY_MIN_INT64, which would be misinterpreted
+     * as NaT.
      */
     npy_int64 pos_limit = NPY_MAX_INT64 / num;
     npy_int64 neg_limit = (NPY_MAX_INT64 - denom + 1) / num;
