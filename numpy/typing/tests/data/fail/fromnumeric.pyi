@@ -46,8 +46,8 @@ np.sort(A, axis="bob")  # type: ignore[call-overload]
 np.sort(A, kind="bob")  # type: ignore[call-overload]
 np.sort(A, order=range(5))  # type: ignore[arg-type]
 
-np.argsort(A, axis="bob")  # type: ignore[arg-type]
-np.argsort(A, kind="bob")  # type: ignore[arg-type]
+np.argsort(A, axis="bob")  # type: ignore[call-overload]
+np.argsort(A, kind="bob")  # type: ignore[call-overload]
 np.argsort(A, order=range(5))  # type: ignore[arg-type]
 
 np.argmax(A, axis="bob")  # type: ignore[call-overload]

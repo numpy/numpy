@@ -9,6 +9,8 @@ class NDArraySubclass(np.ndarray[tuple[Any, ...], np.dtype[np.complex128]]): ...
 
 AR_b: npt.NDArray[np.bool]
 AR_f4: npt.NDArray[np.float32]
+AR_f4_1d: np.ndarray[tuple[int], np.dtype[np.float32]]
+AR_f4_2d: np.ndarray[tuple[int, int], np.dtype[np.float32]]
 AR_c16: npt.NDArray[np.complex128]
 AR_u8: npt.NDArray[np.uint64]
 AR_i8: npt.NDArray[np.int64]
@@ -86,12 +88,27 @@ assert_type(np.argpartition(f, 0, axis=None), np.ndarray[tuple[int], np.dtype[np
 assert_type(np.argpartition(AR_b, 0, axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
 assert_type(np.argpartition(AR_f4, 0, axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
 
-assert_type(np.sort([2, 1], 0), npt.NDArray[Any])
-assert_type(np.sort(AR_b, 0), npt.NDArray[np.bool])
-assert_type(np.sort(AR_f4, 0), npt.NDArray[np.float32])
+assert_type(np.sort([2, 1]), npt.NDArray[Any])
+assert_type(np.sort(AR_b), npt.NDArray[np.bool])
+assert_type(np.sort(AR_f4), npt.NDArray[np.float32])
+assert_type(np.sort(AR_f4_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.sort(AR_f4_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.sort([2, 1], axis=None), np.ndarray[tuple[int]])
+assert_type(np.sort(AR_b, axis=None), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.sort(AR_f4, axis=None), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.sort(AR_f4_1d, axis=None), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.sort(AR_f4_2d, axis=None), np.ndarray[tuple[int], np.dtype[np.float32]])
 
-assert_type(np.argsort(AR_b, 0), npt.NDArray[np.intp])
-assert_type(np.argsort(AR_f4, 0), npt.NDArray[np.intp])
+assert_type(np.argsort([2, 1]), npt.NDArray[np.intp])
+assert_type(np.argsort(AR_b), npt.NDArray[np.intp])
+assert_type(np.argsort(AR_f4), npt.NDArray[np.intp])
+assert_type(np.argsort(AR_f4_1d), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.argsort(AR_f4_2d), np.ndarray[tuple[int, int], np.dtype[np.intp]])
+assert_type(np.argsort([2, 1], axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.argsort(AR_b, axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.argsort(AR_f4, axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.argsort(AR_f4_1d, axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.argsort(AR_f4_2d, axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
 
 assert_type(np.argmax(AR_b), np.intp)
 assert_type(np.argmax(AR_f4), np.intp)

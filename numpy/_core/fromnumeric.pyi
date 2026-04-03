@@ -414,33 +414,81 @@ def argpartition[ShapeT: _Shape](
 
 #
 @overload
+def sort[ArrayT: np.ndarray](
+    a: ArrayT,
+    axis: SupportsIndex = -1,
+    kind: _SortKind | None = None,
+    order: str | Sequence[str] | None = None,
+    *,
+    stable: bool | None = None,
+) -> ArrayT: ...
+@overload
 def sort[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
-    axis: SupportsIndex | None = -1,
+    axis: SupportsIndex = -1,
     kind: _SortKind | None = None,
     order: str | Sequence[str] | None = None,
     *,
     stable: bool | None = None,
 ) -> NDArray[ScalarT]: ...
 @overload
+def sort[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    axis: None,
+    kind: _SortKind | None = None,
+    order: str | Sequence[str] | None = None,
+    *,
+    stable: bool | None = None,
+) -> _Array1D[ScalarT]: ...
+@overload
 def sort(
     a: ArrayLike,
-    axis: SupportsIndex | None = -1,
+    axis: SupportsIndex = -1,
     kind: _SortKind | None = None,
     order: str | Sequence[str] | None = None,
     *,
     stable: bool | None = None,
 ) -> NDArray[Any]: ...
-
-def argsort(
+@overload
+def sort(
     a: ArrayLike,
-    axis: SupportsIndex | None = -1,
+    axis: None,
     kind: _SortKind | None = None,
     order: str | Sequence[str] | None = None,
     *,
     stable: bool | None = None,
-) -> NDArray[intp]: ...
+) -> _Array1D[Any]: ...
 
+#
+@overload
+def argsort[ShapeT: _Shape](
+    a: np.ndarray[ShapeT],
+    axis: SupportsIndex = -1,
+    kind: _SortKind | None = None,
+    order: str | Sequence[str] | None = None,
+    *,
+    stable: bool | None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.intp]]: ...
+@overload
+def argsort(
+    a: ArrayLike,
+    axis: SupportsIndex = -1,
+    kind: _SortKind | None = None,
+    order: str | Sequence[str] | None = None,
+    *,
+    stable: bool | None = None,
+) -> NDArray[np.intp]: ...
+@overload
+def argsort(
+    a: ArrayLike,
+    axis: None,
+    kind: _SortKind | None = None,
+    order: str | Sequence[str] | None = None,
+    *,
+    stable: bool | None = None,
+) -> _Array1D[np.intp]: ...
+
+#
 @overload
 def argmax(
     a: ArrayLike,
