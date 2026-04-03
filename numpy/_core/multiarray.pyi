@@ -1205,7 +1205,7 @@ def fromfile(
 #
 @overload  # dtype=<known>
 def fromiter[ScalarT: np.generic](
-    iter: Iterable[_ScalarLike_co],
+    iter: Iterable[object],
     dtype: _DTypeLike[ScalarT],
     count: SupportsIndex = -1,
     *,
@@ -1213,7 +1213,7 @@ def fromiter[ScalarT: np.generic](
 ) -> _Array1D[ScalarT]: ...
 @overload  # dtype=None
 def fromiter(
-    iter: Iterable[_ScalarLike_co],
+    iter: Iterable[object],
     dtype: None,
     count: SupportsIndex = -1,
     *,
@@ -1221,7 +1221,7 @@ def fromiter(
 ) -> _Array1D[np.float64]: ...
 @overload  # dtype=bool
 def fromiter(
-    iter: Iterable[_ScalarLike_co],
+    iter: Iterable[object],
     dtype: type[bool],
     count: SupportsIndex = -1,
     *,
@@ -1229,7 +1229,7 @@ def fromiter(
 ) -> _Array1D[np.bool]: ...
 @overload  # dtype=int
 def fromiter(
-    iter: Iterable[_ScalarLike_co],
+    iter: Iterable[object],
     dtype: type[int],
     count: SupportsIndex = -1,
     *,
@@ -1237,7 +1237,7 @@ def fromiter(
 ) -> _Array1D[np.int_ | Any]: ...
 @overload  # dtype=float
 def fromiter(
-    iter: Iterable[_ScalarLike_co],
+    iter: Iterable[object],
     dtype: type[float],
     count: SupportsIndex = -1,
     *,
@@ -1245,7 +1245,7 @@ def fromiter(
 ) -> _Array1D[np.float64 | Any]: ...
 @overload  # dtype=complex
 def fromiter(
-    iter: Iterable[_ScalarLike_co],
+    iter: Iterable[object],
     dtype: type[complex],
     count: SupportsIndex = -1,
     *,
@@ -1253,7 +1253,7 @@ def fromiter(
 ) -> _Array1D[np.complex128 | Any]: ...
 @overload  # dtype=<unknown>
 def fromiter(
-    iter: Iterable[_ScalarLike_co],
+    iter: Iterable[object],
     dtype: DTypeLike,
     count: SupportsIndex = -1,
     *,
