@@ -2818,6 +2818,16 @@ def norm(x, ord=None, axis=None, keepdims=False):
         col_axis = normalize_axis_index(col_axis, nd)
         if row_axis == col_axis:
             raise ValueError('Duplicate axes given.')
+        if x.shape[row_axis] == 0 or x.shape[col_axis] == 0:
+            # Norm of an empty matrix is 0; use the Frobenius path
+            # which handles empty reductions correctly via add.reduce.
+            ret = sqrt(add.reduce((x.conj() * x).real, axis=axis))
+            if keepdims:
+                ret_shape = list(x.shape)
+                ret_shape[axis[0]] = 1
+                ret_shape[axis[1]] = 1
+                ret = ret.reshape(ret_shape)
+            return ret
         if ord == 2:
             ret = _multi_svd_norm(x, row_axis, col_axis, amax, 0)
         elif ord == -2:
