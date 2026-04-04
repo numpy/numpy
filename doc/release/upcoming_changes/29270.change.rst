@@ -1,0 +1,13 @@
+Structured array copies now use ``memcpy`` for contiguous dtypes
+----------------------------------------------------------------
+Copying structured arrays with identical dtypes now uses ``memcpy`` instead of
+field-by-field transfer when the dtype has a contiguous layout (no gaps between
+fields). A new ``NPY_NOT_TRIVIALLY_COPYABLE`` dtype flag is set on structured
+dtypes that have gaps in their memory layout, such as those created with
+explicit ``offsets`` or via multi-field indexing. Only these dtypes continue to
+use the slower field-by-field copy.
+
+This means that padding bytes in contiguous structured dtypes (e.g. those
+created without explicit ``offsets``) may now be copied as part of the
+``memcpy``, whereas previously they were left untouched. Code that relies on
+padding bytes being preserved during structured array copies may be affected.

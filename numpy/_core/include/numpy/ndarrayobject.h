@@ -253,6 +253,9 @@ PyArray_ITEMSIZE(const PyArrayObject *arr)
 #define PyDataType_REFCHK(dtype) \
         PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)
 
+#define PyDataType_ISTRIVIALLYCOPYABLE(dtype) \
+        (!(PyDataType_FLAGS(dtype) & (NPY_NOT_TRIVIALLY_COPYABLE | NPY_ITEM_REFCOUNT)))
+
 #define NPY_BEGIN_THREADS_DESCR(dtype) \
         do {if (!(PyDataType_FLAGCHK((dtype), NPY_NEEDS_PYAPI))) \
                 NPY_BEGIN_THREADS;} while (0);
