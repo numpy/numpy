@@ -21,7 +21,7 @@ details are found in :ref:`reference`.
    :maxdepth: 2
 
    basics
-
+   parallelism
 .. toctree::
    :maxdepth: 1
 
