@@ -99,11 +99,11 @@ AR_O > 1
 dt > dt
 
 td > td
-td > i
-td > i4
-td > i8
+td > i  # type: ignore[deprecated]
+td > i4  # type: ignore[deprecated]
+td > i8  # type: ignore[deprecated]
 td > AR_i
-td > SEQ
+td > SEQ  # type: ignore[deprecated]
 
 # boolean
 

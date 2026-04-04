@@ -419,11 +419,11 @@ assert_type(M8_none - M8, np.timedelta64[None])  # type: ignore[assert-type]
 assert_type(M8_none - m8, np.datetime64[None])  # type: ignore[assert-type]
 
 assert_type(m8 + m8, np.timedelta64)
-assert_type(m8 + i, np.timedelta64)
-assert_type(m8 + i8, np.timedelta64)
+assert_type(m8 + i, np.timedelta64)  # type: ignore[deprecated]
+assert_type(m8 + i8, np.timedelta64)  # type: ignore[deprecated]
 assert_type(m8 - m8, np.timedelta64)
-assert_type(m8 - i, np.timedelta64)
-assert_type(m8 - i8, np.timedelta64)
+assert_type(m8 - i, np.timedelta64)  # type: ignore[deprecated]
+assert_type(m8 - i8, np.timedelta64)  # type: ignore[deprecated]
 assert_type(m8 * f, np.timedelta64)
 assert_type(m8 * f4, np.timedelta64)
 assert_type(m8 * np.True_, np.timedelta64)
@@ -436,15 +436,15 @@ assert_type(m8 % m8, np.timedelta64)
 assert_type(divmod(m8, m8), tuple[np.int64, np.timedelta64])  # type: ignore[assert-type]
 
 assert_type(m8_none + m8, np.timedelta64[None])
-assert_type(m8_none + i, np.timedelta64[None])
-assert_type(m8_none + i8, np.timedelta64[None])
-assert_type(m8_none - i, np.timedelta64[None])
-assert_type(m8_none - i8, np.timedelta64[None])
+assert_type(m8_none + i, np.timedelta64[None])  # type: ignore[deprecated]
+assert_type(m8_none + i8, np.timedelta64[None])  # type: ignore[deprecated]
+assert_type(m8_none - i, np.timedelta64[None])  # type: ignore[deprecated]
+assert_type(m8_none - i8, np.timedelta64[None])  # type: ignore[deprecated]
 
-assert_type(m8_int + i, np.timedelta64[int])
+assert_type(m8_int + i, np.timedelta64[int])  # type: ignore[deprecated]
 assert_type(m8_int + m8_delta, np.timedelta64[int])
 assert_type(m8_int + m8, np.timedelta64)
-assert_type(m8_int - i, np.timedelta64[int])
+assert_type(m8_int - i, np.timedelta64[int])  # type: ignore[deprecated]
 assert_type(m8_int - m8_delta, np.timedelta64[int])
 assert_type(m8_int - m8_int, np.timedelta64[int])
 assert_type(m8_int - m8_none, np.timedelta64[None])
