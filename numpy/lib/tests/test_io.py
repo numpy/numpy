@@ -1019,7 +1019,7 @@ class TestLoadTxt(LoadTxtBase):
     def test_uint64_type(self):
         tgt = (9223372043271415339, 9223372043271415853)
         c = TextIO()
-        c.write("%s %s" % tgt)
+        c.write(f'{tgt[0]} {tgt[1]}')
         c.seek(0)
         res = np.loadtxt(c, dtype=np.uint64)
         assert_equal(res, tgt)
@@ -1027,7 +1027,7 @@ class TestLoadTxt(LoadTxtBase):
     def test_int64_type(self):
         tgt = (-9223372036854775807, 9223372036854775807)
         c = TextIO()
-        c.write("%s %s" % tgt)
+        c.write(f'{tgt[0]} {tgt[1]}')
         c.seek(0)
         res = np.loadtxt(c, dtype=np.int64)
         assert_equal(res, tgt)
@@ -1069,7 +1069,7 @@ class TestLoadTxt(LoadTxtBase):
     def test_from_complex(self):
         tgt = (complex(1, 1), complex(1, -1))
         c = TextIO()
-        c.write("%s %s" % tgt)
+        c.write(f'{tgt[0]} {tgt[1]}')
         c.seek(0)
         res = np.loadtxt(c, dtype=complex)
         assert_equal(res, tgt)
