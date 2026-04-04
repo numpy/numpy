@@ -1,0 +1,5 @@
+``f2py`` callback wrappers no longer emit conflicting ``external`` declarations
+--------------------------------------------------------------------------------
+``f2py``-generated Fortran 90 wrappers now use interface blocks instead of bare
+``external`` declarations for callbacks, fixing compilation with strict
+compilers (e.g., Intel ifort/ifx).
