@@ -1,0 +1,4 @@
+``ma.flatten_structured_array`` now does not flatten objects
+------------------------------------------------------------
+``numpy.ma.flatten_structured_array`` previously used to flatten elements with an object data type.
+Now, it does not flatten such elements.
