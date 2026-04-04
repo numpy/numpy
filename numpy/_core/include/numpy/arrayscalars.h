@@ -1,6 +1,7 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY_ARRAYSCALARS_H_
 #define NUMPY_CORE_INCLUDE_NUMPY_ARRAYSCALARS_H_
 
+#ifndef _Py_OPAQUE_PYOBJECT
 #ifndef _MULTIARRAYMODULE
 typedef struct {
         PyObject_HEAD
@@ -134,7 +135,7 @@ typedef struct {
         char obval;
 } PyScalarObject;
 
-#define PyStringScalarObject PyBytesObject
+
 #ifndef Py_LIMITED_API
 typedef struct {
         /* note that the PyObject_HEAD macro lives right here */
@@ -162,6 +163,34 @@ typedef struct {
         void *_buffer_info;  /* private buffer info, tagged to allow warning */
     #endif
 } PyVoidScalarObject;
+#else
+typedef struct PyBoolScalarObject PyBoolScalarObject;
+typedef struct PyByteScalarObject PyByteScalarObject;
+typedef struct PyShortScalarObject PyShortScalarObject;
+typedef struct PyIntScalarObject PyIntScalarObject;
+typedef struct PyLongScalarObject PyLongScalarObject;
+typedef struct PyLongLongScalarObject PyLongLongScalarObject;
+typedef struct PyUByteScalarObject PyUByteScalarObject;
+typedef struct PyUShortScalarObject PyUShortScalarObject;
+typedef struct PyUIntScalarObject PyUIntScalarObject;
+typedef struct PyULongScalarObject PyULongScalarObject;
+typedef struct PyULongLongScalarObject PyULongLongScalarObject;
+typedef struct PyHalfScalarObject PyHalfScalarObject;
+typedef struct PyFloatScalarObject PyFloatScalarObject;
+typedef struct PyDoubleScalarObject PyDoubleScalarObject;
+typedef struct PyLongDoubleScalarObject PyLongDoubleScalarObject;
+typedef struct PyCFloatScalarObject PyCFloatScalarObject;
+typedef struct PyCDoubleScalarObject PyCDoubleScalarObject;
+typedef struct PyCLongDoubleScalarObject PyCLongDoubleScalarObject;
+typedef struct PyObjectScalarObject PyObjectScalarObject;
+typedef struct PyDatetimeScalarObject PyDatetimeScalarObject;
+typedef struct PyTimedeltaScalarObject PyTimedeltaScalarObject;
+typedef struct PyScalarObject PyScalarObject;
+typedef struct PyVoidScalarObject PyVoidScalarObject;
+#endif
+
+#define PyStringScalarObject PyBytesObject
+
 
 /* Macros
      Py<Cls><bitsize>ScalarObject

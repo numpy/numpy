@@ -612,8 +612,12 @@ typedef struct {
 /*
  * Public version of the Descriptor struct as of 2.x
  */
+#if !defined(_Py_OPAQUE_PYOBJECT)
 typedef struct _PyArray_Descr {
         PyObject_HEAD
+#else
+typedef struct _PyArray_Descr_fields {
+#endif
         /*
          * the type object representing an
          * instance of this type -- should not
@@ -646,7 +650,7 @@ typedef struct _PyArray_Descr {
         npy_hash_t hash;
         /* Unused slot (must be initialized to NULL) for future use */
         void *reserved_null[2];
-} PyArray_Descr;
+} PyArray_Descr_fields;
 
 #else  /* 1.x and 2.x compatible version (only shared fields): */
 
@@ -658,7 +662,7 @@ typedef struct _PyArray_Descr {
         char byteorder;
         char _former_flags;
         int type_num;
-} PyArray_Descr;
+} PyArray_Descr_fields;
 
 /* To access modified fields, define the full 2.0 struct: */
 typedef struct {
@@ -679,13 +683,17 @@ typedef struct {
 
 #endif  /* 1.x and 2.x compatible version */
 
+typedef struct _PyArray_Descr PyArray_Descr;
+
 /*
  * Semi-private struct with additional field of legacy descriptors (must
  * check NPY_DT_is_legacy before casting/accessing).  The struct is also not
  * valid when running on 1.x (i.e. in public API use).
  */
 typedef struct {
+#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
+#endif
         PyTypeObject *typeobj;
         char kind;
         char type;
@@ -702,9 +710,16 @@ typedef struct {
         PyObject *fields;
         PyObject *names;
         NpyAuxData *c_metadata;
-} _PyArray_LegacyDescr;
+} _PyArray_LegacyDescr_fields;
+
+#ifdef _Py_OPAQUE_PYOBJECT
+typedef struct _PyArray_LegacyDescrTag _PyArray_LegacyDescr;
+#else
+typedef _PyArray_LegacyDescr_fields _PyArray_LegacyDescr;
+#endif
 
 
+#if !defined(_Py_OPAQUE_PYOBJECT)
 /*
  * Umodified PyArray_Descr struct identical to NumPy 1.x.  This struct is
  * used as a prototype for registering a new legacy DType.
@@ -728,14 +743,12 @@ typedef struct {
         NpyAuxData *c_metadata;
         npy_hash_t hash;
 } PyArray_DescrProto;
-
+#endif
 
 typedef struct _arr_descr {
         PyArray_Descr *base;
         PyObject *shape;       /* a tuple */
 } PyArray_ArrayDescr;
-
-#define PyDataType_TYPENUM(descr) (((PyArray_Descr *)(descr))->type_num)
 
 /*
  * Memory handler structure for array data.
@@ -772,7 +785,9 @@ typedef struct {
  */
 /* This struct will be moved to a private header in a future release */
 typedef struct tagPyArrayObject_fields {
+#ifndef _Py_OPAQUE_PYOBJECT
     PyObject_HEAD
+#endif
     /* Pointer to the raw data buffer */
     char *data;
     /* The number of dimensions, also called 'ndim' */
@@ -824,6 +839,7 @@ typedef struct tagPyArrayObject_fields {
  * To hide the implementation details, we only expose
  * the Python struct HEAD.
  */
+#ifndef _Py_OPAQUE_PYOBJECT
 #if !defined(NPY_NO_DEPRECATED_API) || \
     (NPY_NO_DEPRECATED_API < NPY_1_7_API_VERSION)
 /*
@@ -836,6 +852,10 @@ typedef struct tagPyArrayObject {
         PyObject_HEAD
 } PyArrayObject;
 #endif
+#else
+typedef struct tagPyArrayObjectOpaque PyArrayObject;
+#endif
+
 
 /*
  * Removed 2020-Nov-25, NumPy 1.20
@@ -850,7 +870,7 @@ typedef struct tagPyArrayObject {
  */
 
 /* Mirrors buffer object to ptr */
-
+#ifndef _Py_OPAQUE_PYOBJECT
 typedef struct {
         PyObject_HEAD
         PyObject *base;
@@ -858,6 +878,7 @@ typedef struct {
         npy_intp len;
         int flags;
 } PyArray_Chunk;
+#endif
 
 typedef struct {
     NPY_DATETIMEUNIT base;
@@ -1173,13 +1194,16 @@ typedef void (NpyIter_GetMultiIndexFunc)(NpyIter *iter,
 #define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
 #define NPY_ITER_PER_OP_FLAGS               0xffff0000
 
-
 /*****************************
  * Basic iterator object
  *****************************/
 
 /* FWD declaration */
+#ifndef _Py_OPAQUE_PYOBJECT
+typedef struct PyArrayIterObject_fields PyArrayIterObject;
+#else
 typedef struct PyArrayIterObject_tag PyArrayIterObject;
+#endif
 
 /*
  * type of the function which translates a set of coordinates to a
@@ -1188,8 +1212,10 @@ typedef struct PyArrayIterObject_tag PyArrayIterObject;
 typedef char* (*npy_iter_get_dataptr_t)(
         PyArrayIterObject* iter, const npy_intp*);
 
-struct PyArrayIterObject_tag {
+typedef struct PyArrayIterObject_fields {
+#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
+#endif
         int               nd_m1;            /* number of dimensions - 1 */
         npy_intp          index, size;
         npy_intp          coordinates[NPY_MAXDIMS_LEGACY_ITERS];/* N-dimensional loop */
@@ -1205,124 +1231,17 @@ struct PyArrayIterObject_tag {
         npy_intp          limits[NPY_MAXDIMS_LEGACY_ITERS][2];
         npy_intp          limits_sizes[NPY_MAXDIMS_LEGACY_ITERS];
         npy_iter_get_dataptr_t translate;
-} ;
-
-
-/* Iterator API */
-#define PyArrayIter_Check(op) PyObject_TypeCheck((op), &PyArrayIter_Type)
-
-#define _PyAIT(it) ((PyArrayIterObject *)(it))
-#define PyArray_ITER_RESET(it) do { \
-        _PyAIT(it)->index = 0; \
-        _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao); \
-        memset(_PyAIT(it)->coordinates, 0, \
-               (_PyAIT(it)->nd_m1+1)*sizeof(npy_intp)); \
-} while (0)
-
-#define _PyArray_ITER_NEXT1(it) do { \
-        (it)->dataptr += _PyAIT(it)->strides[0]; \
-        (it)->coordinates[0]++; \
-} while (0)
-
-#define _PyArray_ITER_NEXT2(it) do { \
-        if ((it)->coordinates[1] < (it)->dims_m1[1]) { \
-                (it)->coordinates[1]++; \
-                (it)->dataptr += (it)->strides[1]; \
-        } \
-        else { \
-                (it)->coordinates[1] = 0; \
-                (it)->coordinates[0]++; \
-                (it)->dataptr += (it)->strides[0] - \
-                        (it)->backstrides[1]; \
-        } \
-} while (0)
-
-#define PyArray_ITER_NEXT(it) do { \
-        _PyAIT(it)->index++; \
-        if (_PyAIT(it)->nd_m1 == 0) { \
-                _PyArray_ITER_NEXT1(_PyAIT(it)); \
-        } \
-        else if (_PyAIT(it)->contiguous) \
-                _PyAIT(it)->dataptr += PyArray_ITEMSIZE(_PyAIT(it)->ao); \
-        else if (_PyAIT(it)->nd_m1 == 1) { \
-                _PyArray_ITER_NEXT2(_PyAIT(it)); \
-        } \
-        else { \
-                int __npy_i; \
-                for (__npy_i=_PyAIT(it)->nd_m1; __npy_i >= 0; __npy_i--) { \
-                        if (_PyAIT(it)->coordinates[__npy_i] < \
-                            _PyAIT(it)->dims_m1[__npy_i]) { \
-                                _PyAIT(it)->coordinates[__npy_i]++; \
-                                _PyAIT(it)->dataptr += \
-                                        _PyAIT(it)->strides[__npy_i]; \
-                                break; \
-                        } \
-                        else { \
-                                _PyAIT(it)->coordinates[__npy_i] = 0; \
-                                _PyAIT(it)->dataptr -= \
-                                        _PyAIT(it)->backstrides[__npy_i]; \
-                        } \
-                } \
-        } \
-} while (0)
-
-#define PyArray_ITER_GOTO(it, destination) do { \
-        int __npy_i; \
-        _PyAIT(it)->index = 0; \
-        _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao); \
-        for (__npy_i = _PyAIT(it)->nd_m1; __npy_i>=0; __npy_i--) { \
-                if (destination[__npy_i] < 0) { \
-                        destination[__npy_i] += \
-                                _PyAIT(it)->dims_m1[__npy_i]+1; \
-                } \
-                _PyAIT(it)->dataptr += destination[__npy_i] * \
-                        _PyAIT(it)->strides[__npy_i]; \
-                _PyAIT(it)->coordinates[__npy_i] = \
-                        destination[__npy_i]; \
-                _PyAIT(it)->index += destination[__npy_i] * \
-                        ( __npy_i==_PyAIT(it)->nd_m1 ? 1 : \
-                          _PyAIT(it)->dims_m1[__npy_i+1]+1) ; \
-        } \
-} while (0)
-
-#define PyArray_ITER_GOTO1D(it, ind) do { \
-        int __npy_i; \
-        npy_intp __npy_ind = (npy_intp)(ind); \
-        if (__npy_ind < 0) __npy_ind += _PyAIT(it)->size; \
-        _PyAIT(it)->index = __npy_ind; \
-        if (_PyAIT(it)->nd_m1 == 0) { \
-                _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao) + \
-                        __npy_ind * _PyAIT(it)->strides[0]; \
-        } \
-        else if (_PyAIT(it)->contiguous) \
-                _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao) + \
-                        __npy_ind * PyArray_ITEMSIZE(_PyAIT(it)->ao); \
-        else { \
-                _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao); \
-                for (__npy_i = 0; __npy_i<=_PyAIT(it)->nd_m1; \
-                     __npy_i++) { \
-                        _PyAIT(it)->coordinates[__npy_i] = \
-                                (__npy_ind / _PyAIT(it)->factors[__npy_i]); \
-                        _PyAIT(it)->dataptr += \
-                                (__npy_ind / _PyAIT(it)->factors[__npy_i]) \
-                                * _PyAIT(it)->strides[__npy_i]; \
-                        __npy_ind %= _PyAIT(it)->factors[__npy_i]; \
-                } \
-        } \
-} while (0)
-
-#define PyArray_ITER_DATA(it) ((void *)(_PyAIT(it)->dataptr))
-
-#define PyArray_ITER_NOTDONE(it) (_PyAIT(it)->index < _PyAIT(it)->size)
+} PyArrayIterObject_fields;
 
 
 /*
  * Any object passed to PyArray_Broadcast must be binary compatible
  * with this structure.
  */
-
 typedef struct {
+#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
+#endif
         int                  numiter;                 /* number of iters */
         npy_intp             size;                    /* broadcasted size */
         npy_intp             index;                   /* current index */
@@ -1347,92 +1266,13 @@ typedef struct {
 #else
         PyArrayIterObject    *iters[];
 #endif
-} PyArrayMultiIterObject;
+} PyArrayMultiIterObject_fields;
 
-#define _PyMIT(m) ((PyArrayMultiIterObject *)(m))
-#define PyArray_MultiIter_RESET(multi) do {                                   \
-        int __npy_mi;                                                         \
-        _PyMIT(multi)->index = 0;                                             \
-        for (__npy_mi=0; __npy_mi < _PyMIT(multi)->numiter;  __npy_mi++) {    \
-                PyArray_ITER_RESET(_PyMIT(multi)->iters[__npy_mi]);           \
-        }                                                                     \
-} while (0)
-
-#define PyArray_MultiIter_NEXT(multi) do {                                    \
-        int __npy_mi;                                                         \
-        _PyMIT(multi)->index++;                                               \
-        for (__npy_mi=0; __npy_mi < _PyMIT(multi)->numiter;   __npy_mi++) {   \
-                PyArray_ITER_NEXT(_PyMIT(multi)->iters[__npy_mi]);            \
-        }                                                                     \
-} while (0)
-
-#define PyArray_MultiIter_GOTO(multi, dest) do {                            \
-        int __npy_mi;                                                       \
-        for (__npy_mi=0; __npy_mi < _PyMIT(multi)->numiter; __npy_mi++) {   \
-                PyArray_ITER_GOTO(_PyMIT(multi)->iters[__npy_mi], dest);    \
-        }                                                                   \
-        _PyMIT(multi)->index = _PyMIT(multi)->iters[0]->index;              \
-} while (0)
-
-#define PyArray_MultiIter_GOTO1D(multi, ind) do {                          \
-        int __npy_mi;                                                      \
-        for (__npy_mi=0; __npy_mi < _PyMIT(multi)->numiter; __npy_mi++) {  \
-                PyArray_ITER_GOTO1D(_PyMIT(multi)->iters[__npy_mi], ind);  \
-        }                                                                  \
-        _PyMIT(multi)->index = _PyMIT(multi)->iters[0]->index;             \
-} while (0)
-
-#define PyArray_MultiIter_DATA(multi, i)                \
-        ((void *)(_PyMIT(multi)->iters[i]->dataptr))
-
-#define PyArray_MultiIter_NEXTi(multi, i)               \
-        PyArray_ITER_NEXT(_PyMIT(multi)->iters[i])
-
-#define PyArray_MultiIter_NOTDONE(multi)                \
-        (_PyMIT(multi)->index < _PyMIT(multi)->size)
-
-
-static NPY_INLINE int
-PyArray_MultiIter_NUMITER(PyArrayMultiIterObject *multi)
-{
-    return multi->numiter;
-}
-
-
-static NPY_INLINE npy_intp
-PyArray_MultiIter_SIZE(PyArrayMultiIterObject *multi)
-{
-    return multi->size;
-}
-
-
-static NPY_INLINE npy_intp
-PyArray_MultiIter_INDEX(PyArrayMultiIterObject *multi)
-{
-    return multi->index;
-}
-
-
-static NPY_INLINE int
-PyArray_MultiIter_NDIM(PyArrayMultiIterObject *multi)
-{
-    return multi->nd;
-}
-
-
-static NPY_INLINE npy_intp *
-PyArray_MultiIter_DIMS(PyArrayMultiIterObject *multi)
-{
-    return multi->dimensions;
-}
-
-
-static NPY_INLINE void **
-PyArray_MultiIter_ITERS(PyArrayMultiIterObject *multi)
-{
-    return (void**)multi->iters;
-}
-
+#ifndef _Py_OPAQUE_PYOBJECT
+typedef PyArrayMultiIterObject_fields PyArrayMultiIterObject;
+#else
+typedef struct PyArrayMultiIterObject_tag PyArrayMultiIterObject;
+#endif
 
 enum {
     NPY_NEIGHBORHOOD_ITER_ZERO_PADDING,
@@ -1443,8 +1283,9 @@ enum {
 };
 
 typedef struct {
+#ifndef _Py_OPAQUE_PYOBJECT
     PyObject_HEAD
-
+#endif
     /*
      * PyArrayIterObject part: keep this in this exact order
      */
@@ -1484,7 +1325,13 @@ typedef struct {
     char* constant;
 
     int mode;
-} PyArrayNeighborhoodIterObject;
+} PyArrayNeighborhoodIterObject_fields;
+
+#ifndef _Py_OPAQUE_PYOBJECT
+typedef PyArrayNeighborhoodIterObject_fields PyArrayNeighborhoodIterObject;
+#else
+typedef struct PyArrayNeighborhoodIterObject_tag PyArrayNeighborhoodIterObject;
+#endif
 
 /*
  * Neighborhood iterator API
@@ -1504,15 +1351,203 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
  * Include inline implementations - functions defined there are not
  * considered public API
  */
-#define NUMPY_CORE_INCLUDE_NUMPY__NEIGHBORHOOD_IMP_H_
-#include "_neighborhood_iterator_imp.h"
-#undef NUMPY_CORE_INCLUDE_NUMPY__NEIGHBORHOOD_IMP_H_
 
 
 
 /* The default array type */
 #define NPY_DEFAULT_TYPE NPY_DOUBLE
 /* default integer type defined in npy_2_compat header */
+
+/************************************************************
+ * A struct used by PyArray_CreateSortedStridePerm, new in 1.7.
+ ************************************************************/
+
+typedef struct {
+    npy_intp perm, stride;
+} npy_stride_sort_item;
+
+/************************************************************
+ * This is the form of the struct that's stored in the
+ * PyCapsule returned by an array's __array_struct__ attribute. See
+ * https://docs.scipy.org/doc/numpy/reference/arrays.interface.html for the full
+ * documentation.
+ ************************************************************/
+typedef struct {
+    int two;              /*
+                           * contains the integer 2 as a sanity
+                           * check
+                           */
+
+    int nd;               /* number of dimensions */
+
+    char typekind;        /*
+                           * kind in array --- character code of
+                           * typestr
+                           */
+
+    int itemsize;         /* size of each element */
+
+    int flags;            /*
+                           * how should be data interpreted. Valid
+                           * flags are CONTIGUOUS (1), F_CONTIGUOUS (2),
+                           * ALIGNED (0x100), NOTSWAPPED (0x200), and
+                           * WRITEABLE (0x400).  ARR_HAS_DESCR (0x800)
+                           * states that arrdescr field is present in
+                           * structure
+                           */
+
+    npy_intp *shape;       /*
+                            * A length-nd array of shape
+                            * information
+                            */
+
+    npy_intp *strides;    /* A length-nd array of stride information */
+
+    void *data;           /* A pointer to the first element of the array */
+
+    PyObject *descr;      /*
+                           * A list of fields or NULL (ignored if flags
+                           * does not have ARR_HAS_DESCR flag set)
+                           */
+} PyArrayInterface;
+
+
+/****************************************
+ * NpyString
+ *
+ * Types used by the NpyString API.
+ ****************************************/
+
+/*
+ * A "packed" encoded string. The string data must be accessed by first unpacking the string.
+ */
+typedef struct npy_packed_static_string npy_packed_static_string;
+
+/*
+ * An unpacked read-only view onto the data in a packed string
+ */
+typedef struct npy_unpacked_static_string {
+    size_t size;
+    const char *buf;
+} npy_static_string;
+
+/*
+ * Handles heap allocations for static strings.
+ */
+typedef struct npy_string_allocator npy_string_allocator;
+
+typedef struct {
+    PyArray_Descr_fields base;
+    // The object representing a null value
+    PyObject *na_object;
+    // Flag indicating whether or not to coerce arbitrary objects to strings
+    char coerce;
+    // Flag indicating the na object is NaN-like
+    char has_nan_na;
+    // Flag indicating the na object is a string
+    char has_string_na;
+    // If nonzero, indicates that this instance is owned by an array already
+    char array_owned;
+    // The string data to use when a default string is needed
+    npy_static_string default_string;
+    // The name of the missing data object, if any
+    npy_static_string na_name;
+    // the allocator should only be directly accessed after
+    // acquiring the allocator_lock and the lock should
+    // be released immediately after the allocator is
+    // no longer needed
+    npy_string_allocator *allocator;
+} PyArray_StringDTypeObject;
+
+/*
+ * PyArray_DTypeMeta related definitions.
+ *
+ * As of now, this API is preliminary and will be extended as necessary.
+ */
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+    /*
+     * The Structures defined in this block are currently considered
+     * private API and may change without warning!
+     * Part of this (at least the size) is expected to be public API without
+     * further modifications.
+     */
+    /* TODO: Make this definition public in the API, as soon as its settled */
+    NPY_NO_EXPORT extern PyTypeObject PyArrayDTypeMeta_Type;
+
+    /*
+     * While NumPy DTypes would not need to be heap types the plan is to
+     * make DTypes available in Python at which point they will be heap types.
+     * Since we also wish to add fields to the DType class, this looks like
+     * a typical instance definition, but with PyHeapTypeObject instead of
+     * only the PyObject_HEAD.
+     * This must only be exposed very extremely careful consideration, since
+     * it is a fairly complex construct which may be better to allow
+     * refactoring of.
+     */
+    typedef struct {
+        PyHeapTypeObject super;
+
+        /*
+         * Most DTypes will have a singleton default instance, for the
+         * parametric legacy DTypes (bytes, string, void, datetime) this
+         * may be a pointer to the *prototype* instance?
+         */
+        PyArray_Descr *singleton;
+        /* Copy of the legacy DTypes type number, usually invalid. */
+        int type_num;
+
+        /* The type object of the scalar instances (may be NULL?) */
+        PyTypeObject *scalar_type;
+        /*
+         * DType flags to signal legacy, parametric, or
+         * abstract.  But plenty of space for additional information/flags.
+         */
+        npy_uint64 flags;
+
+        /*
+         * Use indirection in order to allow a fixed size for this struct.
+         * A stable ABI size makes creating a static DType less painful
+         * while also ensuring flexibility for all opaque API (with one
+         * indirection due the pointer lookup).
+         */
+        void *dt_slots;
+        void *reserved[3];
+    } PyArray_DTypeMeta;
+
+#endif  /* NPY_INTERNAL_BUILD */
+
+/* Includes the "function" C-API -- these are all stored in a
+   list of pointers --- one for each file
+   The two lists are concatenated into one in multiarray.
+
+   They are available as import_array()
+*/
+
+#include "dtype_api.h"
+#include "__multiarray_api.h"
+
+#ifndef _Py_OPAQUE_PYOBJECT
+#undef _PyArray_GET_ITEM_DATA
+#define _PyArray_GET_ITEM_DATA(arr) ((PyArrayObject_fields *)(arr))
+#undef _PyArrayIter_GET_ITEM_DATA
+#define _PyArrayIter_GET_ITEM_DATA(iter) ((PyArrayIterObject_fields *)(iter))
+#undef _PyArrayMultiIter_GET_ITEM_DATA
+#define _PyArrayMultiIter_GET_ITEM_DATA(multi) ((PyArrayMultiIterObject_fields *)(multi))
+#undef _PyArrayNeighborhoodIter_GET_ITEM_DATA
+#define _PyArrayNeighborhoodIter_GET_ITEM_DATA(iter) ((PyArrayNeighborhoodIterObject_fields *)(iter))
+#undef _PyDataType_GET_ITEM_DATA
+#define _PyDataType_GET_ITEM_DATA(descr) ((PyArray_Descr_fields *)(descr))
+#undef _PyArray_LegacyDescr_GET_ITEM_DATA
+#define _PyArray_LegacyDescr_GET_ITEM_DATA(descr) ((_PyArray_LegacyDescr_fields *)(descr))
+#endif
+
+/*
+ * Include inline implementations - functions defined there are not
+ * considered public API
+ */
+#define NUMPY_CORE_INCLUDE_NUMPY__NEIGHBORHOOD_IMP_H_
+#include "_neighborhood_iterator_imp.h"
+#undef NUMPY_CORE_INCLUDE_NUMPY__NEIGHBORHOOD_IMP_H_
 
 /*
  * All sorts of useful ways to look into a PyArrayObject. It is recommended
@@ -1525,6 +1560,7 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
  * functions accepting PyArrayObject * provides for some compile-time
  * checking of correctness when working with these objects in C.
  */
+#define PyDataType_TYPENUM(descr) (_PyDataType_GET_ITEM_DATA((PyArray_Descr *)(descr))->type_num)
 
 #define PyArray_ISONESEGMENT(m) (PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS) || \
                                  PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS))
@@ -1534,67 +1570,65 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 
 #define PyArray_FORTRAN_IF(m) ((PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS) ? \
                                NPY_ARRAY_F_CONTIGUOUS : 0))
-
 static inline int
 PyArray_NDIM(const PyArrayObject *arr)
 {
-    return ((PyArrayObject_fields *)arr)->nd;
+    return _PyArray_GET_ITEM_DATA(arr)->nd;
 }
 
 static inline void *
 PyArray_DATA(const PyArrayObject *arr)
 {
-    return ((PyArrayObject_fields *)arr)->data;
+    return _PyArray_GET_ITEM_DATA(arr)->data;
 }
 
 static inline char *
 PyArray_BYTES(const PyArrayObject *arr)
 {
-    return ((PyArrayObject_fields *)arr)->data;
+    return _PyArray_GET_ITEM_DATA(arr)->data;
 }
 
 static inline npy_intp *
 PyArray_DIMS(const PyArrayObject *arr)
 {
-    return ((PyArrayObject_fields *)arr)->dimensions;
+    return _PyArray_GET_ITEM_DATA(arr)->dimensions;
 }
 
 static inline npy_intp *
 PyArray_STRIDES(const PyArrayObject *arr)
 {
-    return ((PyArrayObject_fields *)arr)->strides;
+    return _PyArray_GET_ITEM_DATA(arr)->strides;
 }
 
 static inline npy_intp
 PyArray_DIM(const PyArrayObject *arr, int idim)
 {
-    return ((PyArrayObject_fields *)arr)->dimensions[idim];
+    return _PyArray_GET_ITEM_DATA(arr)->dimensions[idim];
 }
 
 static inline npy_intp
 PyArray_STRIDE(const PyArrayObject *arr, int istride)
 {
-    return ((PyArrayObject_fields *)arr)->strides[istride];
+    return _PyArray_GET_ITEM_DATA(arr)->strides[istride];
 }
 
 static inline NPY_RETURNS_BORROWED_REF PyObject *
 PyArray_BASE(const PyArrayObject *arr)
 {
-    return ((PyArrayObject_fields *)arr)->base;
+    return _PyArray_GET_ITEM_DATA(arr)->base;
 }
 
 static inline NPY_RETURNS_BORROWED_REF PyArray_Descr *
 PyArray_DESCR(const PyArrayObject *arr)
 {
-    return ((PyArrayObject_fields *)arr)->descr;
+    return _PyArray_GET_ITEM_DATA(arr)->descr;
 }
 
 static inline int
 PyArray_FLAGS(const PyArrayObject *arr)
 {
-    return ((PyArrayObject_fields *)arr)->flags;
+    return _PyArray_GET_ITEM_DATA(arr)->flags;
 }
-
 
 static inline int
 PyArray_TYPE(const PyArrayObject *arr)
@@ -1617,7 +1651,7 @@ PyArray_DTYPE(const PyArrayObject *arr)
 static inline npy_intp *
 PyArray_SHAPE(const PyArrayObject *arr)
 {
-    return ((PyArrayObject_fields *)arr)->dimensions;
+    return _PyArray_GET_ITEM_DATA(arr)->dimensions;
 }
 
 /*
@@ -1627,7 +1661,7 @@ PyArray_SHAPE(const PyArrayObject *arr)
 static inline void
 PyArray_ENABLEFLAGS(PyArrayObject *arr, int flags)
 {
-    ((PyArrayObject_fields *)arr)->flags |= flags;
+    _PyArray_GET_ITEM_DATA(arr)->flags |= flags;
 }
 
 /*
@@ -1637,14 +1671,14 @@ PyArray_ENABLEFLAGS(PyArrayObject *arr, int flags)
 static inline void
 PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 {
-    ((PyArrayObject_fields *)arr)->flags &= ~flags;
+    _PyArray_GET_ITEM_DATA(arr)->flags &= ~flags;
 }
 
 #if NPY_FEATURE_VERSION >= NPY_1_22_API_VERSION
     static inline NPY_RETURNS_BORROWED_REF PyObject *
     PyArray_HANDLER(PyArrayObject *arr)
     {
-        return ((PyArrayObject_fields *)arr)->mem_handler;
+        return _PyArray_GET_ITEM_DATA(arr)->mem_handler;
     }
 #endif
 
@@ -1771,166 +1805,202 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 #define PyArray_ISBEHAVED_RO(m) PyArray_FLAGSWAP(m, NPY_ARRAY_ALIGNED)
 
 
-#define PyDataType_ISNOTSWAPPED(d) PyArray_ISNBO(PyDataType_BYTEORDER(d))
+#define PyDataType_ISNOTSWAPPED(d) PyArray_ISNBO(PyDataType_BYTEORDER((PyArray_Descr *)(d)))
 #define PyDataType_ISBYTESWAPPED(d) (!PyDataType_ISNOTSWAPPED(d))
 
-/************************************************************
- * A struct used by PyArray_CreateSortedStridePerm, new in 1.7.
- ************************************************************/
-
-typedef struct {
-    npy_intp perm, stride;
-} npy_stride_sort_item;
-
-/************************************************************
- * This is the form of the struct that's stored in the
- * PyCapsule returned by an array's __array_struct__ attribute. See
- * https://docs.scipy.org/doc/numpy/reference/arrays.interface.html for the full
- * documentation.
- ************************************************************/
-typedef struct {
-    int two;              /*
-                           * contains the integer 2 as a sanity
-                           * check
-                           */
-
-    int nd;               /* number of dimensions */
-
-    char typekind;        /*
-                           * kind in array --- character code of
-                           * typestr
-                           */
-
-    int itemsize;         /* size of each element */
-
-    int flags;            /*
-                           * how should be data interpreted. Valid
-                           * flags are CONTIGUOUS (1), F_CONTIGUOUS (2),
-                           * ALIGNED (0x100), NOTSWAPPED (0x200), and
-                           * WRITEABLE (0x400).  ARR_HAS_DESCR (0x800)
-                           * states that arrdescr field is present in
-                           * structure
-                           */
-
-    npy_intp *shape;       /*
-                            * A length-nd array of shape
-                            * information
-                            */
-
-    npy_intp *strides;    /* A length-nd array of stride information */
-
-    void *data;           /* A pointer to the first element of the array */
-
-    PyObject *descr;      /*
-                           * A list of fields or NULL (ignored if flags
-                           * does not have ARR_HAS_DESCR flag set)
-                           */
-} PyArrayInterface;
 
 
-/****************************************
- * NpyString
- *
- * Types used by the NpyString API.
- ****************************************/
+/* Iterator API */
+#define PyArrayIter_Check(op) PyObject_TypeCheck((op), &PyArrayIter_Type)
 
-/*
- * A "packed" encoded string. The string data must be accessed by first unpacking the string.
- */
-typedef struct npy_packed_static_string npy_packed_static_string;
+#define _PyAIT(it) _PyArrayIter_GET_ITEM_DATA(it)
+#define PyArray_ITER_RESET(it) do { \
+        _PyAIT(it)->index = 0; \
+        _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao); \
+        memset(_PyAIT(it)->coordinates, 0, \
+               (_PyAIT(it)->nd_m1+1)*sizeof(npy_intp)); \
+} while (0)
 
-/*
- * An unpacked read-only view onto the data in a packed string
- */
-typedef struct npy_unpacked_static_string {
-    size_t size;
-    const char *buf;
-} npy_static_string;
+#define _PyArray_ITER_NEXT1(it) do { \
+        _PyAIT(it)->dataptr += _PyAIT(it)->strides[0]; \
+        _PyAIT(it)->coordinates[0]++; \
+} while (0)
 
-/*
- * Handles heap allocations for static strings.
- */
-typedef struct npy_string_allocator npy_string_allocator;
+#define _PyArray_ITER_NEXT2(it) do { \
+        if (_PyAIT(it)->coordinates[1] < _PyAIT(it)->dims_m1[1]) { \
+                _PyAIT(it)->coordinates[1]++; \
+                _PyAIT(it)->dataptr += _PyAIT(it)->strides[1]; \
+        } \
+        else { \
+                _PyAIT(it)->coordinates[1] = 0; \
+                _PyAIT(it)->coordinates[0]++; \
+                _PyAIT(it)->dataptr += _PyAIT(it)->strides[0] - \
+                        _PyAIT(it)->backstrides[1]; \
+        } \
+} while (0)
 
-typedef struct {
-    PyArray_Descr base;
-    // The object representing a null value
-    PyObject *na_object;
-    // Flag indicating whether or not to coerce arbitrary objects to strings
-    char coerce;
-    // Flag indicating the na object is NaN-like
-    char has_nan_na;
-    // Flag indicating the na object is a string
-    char has_string_na;
-    // If nonzero, indicates that this instance is owned by an array already
-    char array_owned;
-    // The string data to use when a default string is needed
-    npy_static_string default_string;
-    // The name of the missing data object, if any
-    npy_static_string na_name;
-    // the allocator should only be directly accessed after
-    // acquiring the allocator_lock and the lock should
-    // be released immediately after the allocator is
-    // no longer needed
-    npy_string_allocator *allocator;
-} PyArray_StringDTypeObject;
+#define PyArray_ITER_NEXT(it) do { \
+        _PyAIT(it)->index++; \
+        if (_PyAIT(it)->nd_m1 == 0) { \
+                _PyArray_ITER_NEXT1(_PyAIT(it)); \
+        } \
+        else if (_PyAIT(it)->contiguous) \
+                _PyAIT(it)->dataptr += PyArray_ITEMSIZE(_PyAIT(it)->ao); \
+        else if (_PyAIT(it)->nd_m1 == 1) { \
+                _PyArray_ITER_NEXT2(_PyAIT(it)); \
+        } \
+        else { \
+                int __npy_i; \
+                for (__npy_i=_PyAIT(it)->nd_m1; __npy_i >= 0; __npy_i--) { \
+                        if (_PyAIT(it)->coordinates[__npy_i] < \
+                            _PyAIT(it)->dims_m1[__npy_i]) { \
+                                _PyAIT(it)->coordinates[__npy_i]++; \
+                                _PyAIT(it)->dataptr += \
+                                        _PyAIT(it)->strides[__npy_i]; \
+                                break; \
+                        } \
+                        else { \
+                                _PyAIT(it)->coordinates[__npy_i] = 0; \
+                                _PyAIT(it)->dataptr -= \
+                                        _PyAIT(it)->backstrides[__npy_i]; \
+                        } \
+                } \
+        } \
+} while (0)
 
-/*
- * PyArray_DTypeMeta related definitions.
- *
- * As of now, this API is preliminary and will be extended as necessary.
- */
-#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
-    /*
-     * The Structures defined in this block are currently considered
-     * private API and may change without warning!
-     * Part of this (at least the size) is expected to be public API without
-     * further modifications.
-     */
-    /* TODO: Make this definition public in the API, as soon as its settled */
-    NPY_NO_EXPORT extern PyTypeObject PyArrayDTypeMeta_Type;
+#define PyArray_ITER_GOTO(it, destination) do { \
+        int __npy_i; \
+        _PyAIT(it)->index = 0; \
+        _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao); \
+        for (__npy_i = _PyAIT(it)->nd_m1; __npy_i>=0; __npy_i--) { \
+                if (destination[__npy_i] < 0) { \
+                        destination[__npy_i] += \
+                                _PyAIT(it)->dims_m1[__npy_i]+1; \
+                } \
+                _PyAIT(it)->dataptr += destination[__npy_i] * \
+                        _PyAIT(it)->strides[__npy_i]; \
+                _PyAIT(it)->coordinates[__npy_i] = \
+                        destination[__npy_i]; \
+                _PyAIT(it)->index += destination[__npy_i] * \
+                        ( __npy_i==_PyAIT(it)->nd_m1 ? 1 : \
+                          _PyAIT(it)->dims_m1[__npy_i+1]+1) ; \
+        } \
+} while (0)
 
-    /*
-     * While NumPy DTypes would not need to be heap types the plan is to
-     * make DTypes available in Python at which point they will be heap types.
-     * Since we also wish to add fields to the DType class, this looks like
-     * a typical instance definition, but with PyHeapTypeObject instead of
-     * only the PyObject_HEAD.
-     * This must only be exposed very extremely careful consideration, since
-     * it is a fairly complex construct which may be better to allow
-     * refactoring of.
-     */
-    typedef struct {
-        PyHeapTypeObject super;
+#define PyArray_ITER_GOTO1D(it, ind) do { \
+        int __npy_i; \
+        npy_intp __npy_ind = (npy_intp)(ind); \
+        if (__npy_ind < 0) __npy_ind += _PyAIT(it)->size; \
+        _PyAIT(it)->index = __npy_ind; \
+        if (_PyAIT(it)->nd_m1 == 0) { \
+                _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao) + \
+                        __npy_ind * _PyAIT(it)->strides[0]; \
+        } \
+        else if (_PyAIT(it)->contiguous) \
+                _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao) + \
+                        __npy_ind * PyArray_ITEMSIZE(_PyAIT(it)->ao); \
+        else { \
+                _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao); \
+                for (__npy_i = 0; __npy_i<=_PyAIT(it)->nd_m1; \
+                     __npy_i++) { \
+                        _PyAIT(it)->coordinates[__npy_i] = \
+                                (__npy_ind / _PyAIT(it)->factors[__npy_i]); \
+                        _PyAIT(it)->dataptr += \
+                                (__npy_ind / _PyAIT(it)->factors[__npy_i]) \
+                                * _PyAIT(it)->strides[__npy_i]; \
+                        __npy_ind %= _PyAIT(it)->factors[__npy_i]; \
+                } \
+        } \
+} while (0)
 
-        /*
-         * Most DTypes will have a singleton default instance, for the
-         * parametric legacy DTypes (bytes, string, void, datetime) this
-         * may be a pointer to the *prototype* instance?
-         */
-        PyArray_Descr *singleton;
-        /* Copy of the legacy DTypes type number, usually invalid. */
-        int type_num;
+#define PyArray_ITER_DATA(it) ((void *)(_PyAIT(it)->dataptr))
 
-        /* The type object of the scalar instances (may be NULL?) */
-        PyTypeObject *scalar_type;
-        /*
-         * DType flags to signal legacy, parametric, or
-         * abstract.  But plenty of space for additional information/flags.
-         */
-        npy_uint64 flags;
+#define PyArray_ITER_NOTDONE(it) (_PyAIT(it)->index < _PyAIT(it)->size)
 
-        /*
-         * Use indirection in order to allow a fixed size for this struct.
-         * A stable ABI size makes creating a static DType less painful
-         * while also ensuring flexibility for all opaque API (with one
-         * indirection due the pointer lookup).
-         */
-        void *dt_slots;
-        void *reserved[3];
-    } PyArray_DTypeMeta;
 
-#endif  /* NPY_INTERNAL_BUILD */
+#define _PyMIT(m) (_PyArrayMultiIter_GET_ITEM_DATA((PyArrayMultiIterObject *)m))
+#define PyArray_MultiIter_RESET(multi) do {                                   \
+        int __npy_mi;                                                         \
+        _PyMIT(multi)->index = 0;                                             \
+        for (__npy_mi=0; __npy_mi < _PyMIT(multi)->numiter;  __npy_mi++) {    \
+                PyArray_ITER_RESET(_PyMIT(multi)->iters[__npy_mi]);           \
+        }                                                                     \
+} while (0)
+
+#define PyArray_MultiIter_NEXT(multi) do {                                    \
+        int __npy_mi;                                                         \
+        _PyMIT(multi)->index++;                                               \
+        for (__npy_mi=0; __npy_mi < _PyMIT(multi)->numiter;   __npy_mi++) {   \
+                PyArray_ITER_NEXT(_PyMIT(multi)->iters[__npy_mi]);            \
+        }                                                                     \
+} while (0)
+
+#define PyArray_MultiIter_GOTO(multi, dest) do {                            \
+        int __npy_mi;                                                       \
+        for (__npy_mi=0; __npy_mi < _PyMIT(multi)->numiter; __npy_mi++) {   \
+                PyArray_ITER_GOTO(_PyMIT(multi)->iters[__npy_mi], dest);    \
+        }                                                                   \
+        _PyMIT(multi)->index = _PyMIT(multi)->iters[0]->index;              \
+} while (0)
+
+#define PyArray_MultiIter_GOTO1D(multi, ind) do {                          \
+        int __npy_mi;                                                      \
+        for (__npy_mi=0; __npy_mi < _PyMIT(multi)->numiter; __npy_mi++) {  \
+                PyArray_ITER_GOTO1D(_PyMIT(multi)->iters[__npy_mi], ind);  \
+        }                                                                  \
+        _PyMIT(multi)->index = _PyMIT(multi)->iters[0]->index;             \
+} while (0)
+
+#define PyArray_MultiIter_DATA(multi, i)                \
+        ((void *)(_PyMIT(multi)->iters[i]->dataptr))
+
+#define PyArray_MultiIter_NEXTi(multi, i)               \
+        PyArray_ITER_NEXT(_PyMIT(multi)->iters[i])
+
+#define PyArray_MultiIter_NOTDONE(multi)                \
+        (_PyMIT(multi)->index < _PyMIT(multi)->size)
+
+
+static NPY_INLINE int
+PyArray_MultiIter_NUMITER(PyArrayMultiIterObject *multi)
+{
+    return _PyMIT(multi)->numiter;
+}
+
+
+static NPY_INLINE npy_intp
+PyArray_MultiIter_SIZE(PyArrayMultiIterObject *multi)
+{
+    return _PyMIT(multi)->size;
+}
+
+
+static NPY_INLINE npy_intp
+PyArray_MultiIter_INDEX(PyArrayMultiIterObject *multi)
+{
+    return _PyMIT(multi)->index;
+}
+
+
+static NPY_INLINE int
+PyArray_MultiIter_NDIM(PyArrayMultiIterObject *multi)
+{
+    return _PyMIT(multi)->nd;
+}
+
+
+static NPY_INLINE npy_intp *
+PyArray_MultiIter_DIMS(PyArrayMultiIterObject *multi)
+{
+    return _PyMIT(multi)->dimensions;
+}
+
+
+static NPY_INLINE void **
+PyArray_MultiIter_ITERS(PyArrayMultiIterObject *multi)
+{
+    return (void**)_PyMIT(multi)->iters;
+}
 
 
 /*

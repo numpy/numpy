@@ -79,7 +79,7 @@
 #define NPY_2_2_API_VERSION 0x00000013
 #define NPY_2_3_API_VERSION 0x00000014
 #define NPY_2_4_API_VERSION 0x00000015
-#define NPY_2_5_API_VERSION 0x00000015
+#define NPY_2_5_API_VERSION 0x00000016
 
 
 /*
@@ -119,6 +119,8 @@
 #elif defined(NPY_TARGET_VERSION) && NPY_TARGET_VERSION
     /* user provided a target version, use it */
     #define NPY_FEATURE_VERSION NPY_TARGET_VERSION
+#elif defined(_Py_OPAQUE_PYOBJECT) && NPY_TARGET_VERSION < NPY_2_5_API_VERSION
+    #error "NumPy 2.5 or later is required when compiling with opaque PyObject"
 #else
     /* Use the default (increase when dropping Python 3.12 support) */
     #define NPY_FEATURE_VERSION NPY_1_25_API_VERSION

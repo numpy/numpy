@@ -836,6 +836,7 @@ cdef extern from "numpy/ndarraytypes.h":
     ctypedef int (*NpyIter_IterNextFunc "NpyIter_IterNextFunc *")(NpyIter* it) noexcept nogil
     ctypedef void (*NpyIter_GetMultiIndexFunc "NpyIter_GetMultiIndexFunc *")(NpyIter* it, npy_intp* outcoords) noexcept nogil
 
+    NPY_DATETIMEUNIT _PyDatetimeScalarObject_GetUnit (object)
 
 cdef extern from "numpy/arrayscalars.h":
 
@@ -862,14 +863,10 @@ cdef extern from "numpy/arrayscalars.h":
         pass
 
     ctypedef struct PyDatetimeScalarObject:
-        # PyObject_HEAD
-        npy_datetime obval
-        PyArray_DatetimeMetaData obmeta
+        pass
 
     ctypedef struct PyTimedeltaScalarObject:
-        # PyObject_HEAD
-        npy_timedelta obval
-        PyArray_DatetimeMetaData obmeta
+        pass
 
     ctypedef enum NPY_DATETIMEUNIT:
         NPY_FR_Y
@@ -1119,28 +1116,32 @@ cdef inline bint is_datetime64_object(object obj) noexcept:
     return PyObject_TypeCheck(obj, &PyDatetimeArrType_Type)
 
 
-cdef inline npy_datetime get_datetime64_value(object obj) noexcept nogil:
+cdef inline npy_datetime get_datetime64_value(object obj) noexcept:
     """
     returns the int64 value underlying scalar numpy datetime64 object
 
     Note that to interpret this as a datetime, the corresponding unit is
     also needed.  That can be found using `get_datetime64_unit`.
     """
-    return (<PyDatetimeScalarObject*>obj).obval
+    cdef npy_datetime value
+    PyArray_ScalarAsCtype(obj, &value)
+    return value
 
 
-cdef inline npy_timedelta get_timedelta64_value(object obj) noexcept nogil:
+cdef inline npy_timedelta get_timedelta64_value(object obj) noexcept:
     """
     returns the int64 value underlying scalar numpy timedelta64 object
     """
-    return (<PyTimedeltaScalarObject*>obj).obval
+    cdef npy_timedelta value
+    PyArray_ScalarAsCtype(obj, &value)
+    return value
 
 
-cdef inline NPY_DATETIMEUNIT get_datetime64_unit(object obj) noexcept nogil:
+cdef inline NPY_DATETIMEUNIT get_datetime64_unit(object obj) noexcept:
     """
     returns the unit part of the dtype for a numpy datetime64 object.
     """
-    return <NPY_DATETIMEUNIT>(<PyDatetimeScalarObject*>obj).obmeta.base
+    return _PyDatetimeScalarObject_GetUnit(obj)
 
 
 cdef extern from "numpy/arrayobject.h":

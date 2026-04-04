@@ -10,16 +10,7 @@ extern "C" {
 
 #include <Python.h>
 #include "ndarraytypes.h"
-#include "dtype_api.h"
 
-/* Includes the "function" C-API -- these are all stored in a
-   list of pointers --- one for each file
-   The two lists are concatenated into one in multiarray.
-
-   They are available as import_array()
-*/
-
-#include "__multiarray_api.h"
 
 /*
  * Include any definitions which are defined differently for 1.x and 2.x
@@ -156,7 +147,7 @@ extern "C" {
 static inline void
 PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
 {
-    PyArrayObject_fields *fa = (PyArrayObject_fields *)arr;
+    PyArrayObject_fields *fa = _PyArray_GET_ITEM_DATA(arr);
     if (fa && fa->base) {
         if (fa->flags & NPY_ARRAY_WRITEBACKIFCOPY) {
             PyArray_ENABLEFLAGS((PyArrayObject*)fa->base, NPY_ARRAY_WRITEABLE);

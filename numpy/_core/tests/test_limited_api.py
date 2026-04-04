@@ -99,3 +99,13 @@ def test_limited_api(install_temp):
     import limited_api1  # Earliest (3.6)  # noqa: F401
     import limited_api2  # cython  # noqa: F401
     import limited_api_latest  # Latest version (current Python)  # noqa: F401
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 15), reason="opaque PyObject requires Python 3.15+"
+)
+def test_limited_opaque(install_temp):
+    import limited_api_opaque
+
+    import numpy as np
+    arr = np.ones((200, 200))
+    assert limited_api_opaque.nonzero(arr) == 200 * 200
