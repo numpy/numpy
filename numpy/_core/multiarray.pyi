@@ -19,7 +19,7 @@ from typing import (
 from typing_extensions import CapsuleType, TypeVar
 
 import numpy as np
-from numpy import (  # type: ignore[attr-defined]  # Python >=3.12
+from numpy import (
     _CastingKind,
     _CopyMode,
     _ModeKind,
@@ -218,6 +218,7 @@ type _RollKind = L[  # `raise` is deliberately excluded
 
 type _ArangeScalar = np.integer | np.floating | np.datetime64 | np.timedelta64
 type _InnerScalar = np.number | np.bool | np.timedelta64
+type _DotScalar = np.number | np.bool
 
 # The datetime functions perform unsafe casts to `datetime64[D]`,
 # so a lot of different argument types are allowed here
@@ -712,6 +713,56 @@ def inner[ScalarT: _InnerScalar | np.object_](a: _ToArray2D[ScalarT], b: _Array2
 @overload  # fallback
 def inner(a: ArrayLike, b: ArrayLike, /) -> Any: ...
 
+# keep in sync with `ma.core.dot`
+@overload  # (?d _, Nd _) -> 0d|Nd _  (workaround)
+def dot(a: _ArrayJustND[_DotScalar | np.object_], b: _ArrayLike[_DotScalar | np.object_], out: None = None) -> Any: ...
+@overload  # (Nd _, ?d _) -> 0d|Nd _  (workaround)
+def dot(a: _ArrayLike[_DotScalar | np.object_], b: _ArrayJustND[_DotScalar | np.object_], out: None = None) -> Any: ...
+@overload  # (1d T, 1d T) -> 0d T
+def dot[ScalarT: _DotScalar](a: _ToArray1D[ScalarT], b: _ToArray1D[ScalarT], out: None = None) -> ScalarT: ...
+@overload  # (1d object_, 1d _) -> 0d object
+def dot(a: _Array1D[np.object_], b: _Array1D[np.object_] | _ToArray1D[_DotScalar], out: None = None) -> Any: ...
+@overload  # (1d _, 1d object_) -> 0d object
+def dot(a: _ToArray1D[_DotScalar], b: _Array1D[np.object_], out: None = None) -> Any: ...
+@overload  # (1d bool, 1d bool) -> bool_
+def dot(a: Sequence[bool], b: Sequence[bool], out: None = None) -> np.bool: ...
+@overload  # (1d ~int, 1d +int) -> int_
+def dot(a: list[int], b: Sequence[int], out: None = None) -> np.int_: ...
+@overload  # (1d +int, 1d ~int) -> int_
+def dot(a: Sequence[int], b: list[int], out: None = None) -> np.int_: ...
+@overload  # (1d ~float, 1d +float) -> float64
+def dot(a: list[float], b: Sequence[float], out: None = None) -> np.float64: ...
+@overload  # (1d +float, 1d ~float) -> float64
+def dot(a: Sequence[float], b: list[float], out: None = None) -> np.float64: ...
+@overload  # (1d ~complex, 1d +complex) -> complex128
+def dot(a: list[complex], b: Sequence[complex], out: None = None) -> np.complex128: ...
+@overload  # (1d +complex, 1d ~complex) -> complex128
+def dot(a: Sequence[complex], b: list[complex], out: None = None) -> np.complex128: ...
+@overload  # (1d T, 2d T) -> 1d T
+def dot[ScalarT: _DotScalar | np.object_](
+    a: _ToArray1D[ScalarT], b: _ToArray2D[ScalarT], out: None = None
+) -> _Array1D[ScalarT]: ...
+@overload  # (2d T, 1d T) -> 1d T
+def dot[ScalarT: _DotScalar | np.object_](
+    a: _ToArray2D[ScalarT], b: _ToArray1D[ScalarT], out: None = None
+) -> _Array1D[ScalarT]: ...
+@overload  # (2d T, 2d T) -> 2d T
+def dot[ScalarT: _DotScalar | np.object_](
+    a: _ToArray2D[ScalarT], b: _ToArray2D[ScalarT], out: None = None
+) -> _Array2D[ScalarT]: ...
+@overload  # (2d T, ?d T) -> >=1d T
+def dot[ScalarT: _DotScalar | np.object_](
+    a: _ToArray2D[ScalarT], b: _ArrayLike[ScalarT], out: None = None
+) -> NDArray[ScalarT]: ...
+@overload  # (?d T, 2d T) -> >=1d T
+def dot[ScalarT: _DotScalar | np.object_](
+    a: _ArrayLike[ScalarT], b: _ToArray2D[ScalarT], out: None = None
+) -> NDArray[ScalarT]: ...
+@overload
+def dot(a: ArrayLike, b: ArrayLike, out: None = None) -> Incomplete: ...
+@overload
+def dot[OutT: np.ndarray](a: ArrayLike, b: ArrayLike, out: OutT) -> OutT: ...
+
 # keep in sync with `ma.core.where`
 @overload
 def where(condition: ArrayLike, x: None = None, y: None = None, /) -> tuple[NDArray[intp], ...]: ...
@@ -724,12 +775,6 @@ def can_cast(from_: ArrayLike | DTypeLike, to: DTypeLike, casting: _CastingKind 
 
 def min_scalar_type(a: ArrayLike, /) -> dtype: ...
 def result_type(*arrays_and_dtypes: ArrayLike | DTypeLike | None) -> dtype: ...
-
-# keep in sync with `ma.core.dot`
-@overload
-def dot(a: ArrayLike, b: ArrayLike, out: None = None) -> Incomplete: ...
-@overload
-def dot[OutT: np.ndarray](a: ArrayLike, b: ArrayLike, out: OutT) -> OutT: ...
 
 @overload
 def vdot(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co, /) -> np.bool: ...
