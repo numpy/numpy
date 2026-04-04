@@ -2116,6 +2116,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         self,
         ufunc: ufunc,
         method: L["__call__", "reduce", "reduceat", "accumulate", "outer", "at"],
+        /,
         *inputs: Any,
         **kwargs: Any,
     ) -> Any: ...
