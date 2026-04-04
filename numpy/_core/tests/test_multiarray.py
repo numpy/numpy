@@ -6378,6 +6378,13 @@ class TestResize:
                 np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]).flat)
         assert_array_equal(x[9:].flat, 0)
 
+    def test_scalar(self):
+        x = np.array(1.5)
+        x.resize((5, 5))
+        expected = np.zeros((5, 5))
+        expected[0, 0] = 1.5
+        assert_array_equal(x, expected)
+
     def test_check_reference(self):
         x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         y = x

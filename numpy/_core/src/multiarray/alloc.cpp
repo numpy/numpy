@@ -468,6 +468,97 @@ PyDataMem_Handler default_handler = {
 PyObject *PyDataMem_DefaultHandler;
 PyObject *current_handler;
 
+// For small allocations, we store data on the instance, with the size
+// in bytes stored right in front.
+// If the data is resized to something bigger, we allocate new memory.
+// To distinguish this case, it will also have extra space in front
+// for a size, but set to -1.
+// Note: malloc and calloc are only included for completeness. They
+// are not used in the numpy code
+static inline void *
+on_instance_malloc(void *NPY_UNUSED(ctx), size_t size)
+{
+    const size_t extra = sizeof(npy_intp*);
+    void *base = PyDataMem_NEW(size + extra);
+    if (base == NULL) {
+        return NULL;
+    }
+    *(npy_intp *)base = -1;
+    return (void*)((char*)base + extra);
+}
+
+static inline void *
+on_instance_calloc(void *NPY_UNUSED(ctx), size_t nelem, size_t elsize)
+{
+    const size_t extra = sizeof(npy_intp*);
+    if (npy_mul_with_overflow_size_t(&nelem, nelem, elsize)) {
+        return NULL;
+    }
+    void *base = PyDataMem_NEW_ZEROED(nelem + extra, 1);
+    if (base == NULL) {
+        return NULL;
+    }
+    *(npy_intp *)base = -1;
+    return (void*)((char*)base + extra);
+}
+
+static inline void
+on_instance_free(void *ctx, void *ptr, size_t size)
+{
+    const size_t extra = sizeof(npy_intp*);
+    void *oldbase = (void*)((char*)ptr - extra);
+    if (*(npy_intp*)oldbase < 0) {
+        // Use PyDataMem_FREE to ensure tracking skipped in UserFree.
+        PyDataMem_FREE(oldbase);
+    }
+    // else: data is on instance, nothing to free.
+}
+
+static inline void *
+on_instance_realloc(void *ctx, void *ptr, size_t new_size)
+{
+    void *newbase;
+    const size_t extra = sizeof(npy_intp*);
+    void *oldbase = (void*)((char*)ptr - extra);
+    if (*(npy_intp*)oldbase >= 0) {
+        npy_uintp old_size = *(npy_uintp*)oldbase;
+        if (new_size <= old_size) {
+            *(npy_intp*)oldbase = new_size;  // new size fits, just store it.
+            return ptr;
+        }
+        newbase = PyDataMem_NEW(new_size + extra);
+        if (newbase == NULL) {
+            // malloc failed, nothing more to do.
+            return NULL;
+        }
+        // Move existing data over, past storage for size.
+        memmove((char*)newbase + extra, (char*)ptr, old_size);
+    }
+    else {
+        // Not on instance, so default reallocation, but with extra space.
+        newbase = PyDataMem_RENEW(oldbase, new_size + extra);
+        if (newbase == NULL) {
+            return NULL;
+        }
+    }
+    *(npy_intp*)newbase = -1;
+    return (void *)((char*)newbase + extra);
+}
+
+/* Memory handler global default */
+PyDataMem_Handler on_instance_handler = {
+    "on_instance_allocator",
+    1,
+    {
+        NULL,            /* ctx */
+        on_instance_malloc,  /* not used normally */
+        on_instance_calloc,  /* not used normally */
+        on_instance_realloc, /* realloc */
+        on_instance_free     /* free */
+    }
+};
+
+
 int uo_index=0;   /* user_override index */
 
 /* Wrappers for the default or any user-assigned PyDataMem_Handler */
@@ -485,6 +576,10 @@ PyDataMem_UserNEW(size_t size, PyObject *mem_handler)
     result = handler->allocator.malloc(handler->allocator.ctx, size);
     if (result == NULL) {
         return NULL;
+    }
+    if (handler == &on_instance_handler) {
+        // Since data can be on instance, tracking is done by the handler.
+        return result;
     }
     int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     if (ret == -1) {
@@ -507,6 +602,10 @@ PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyObject *mem_handler)
     if (result == NULL) {
         return NULL;
     }
+    if (handler == &on_instance_handler) {
+        // Since data can be on instance, tracking is done by the handler.
+        return result;
+    }
     int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
     if (ret == -1) {
         handler->allocator.free(handler->allocator.ctx, result, size);
@@ -524,6 +623,11 @@ PyDataMem_UserFREE(void *ptr, size_t size, PyObject *mem_handler)
     if (handler == NULL) {
         WARN_NO_RETURN(PyExc_RuntimeWarning,
                      "Could not get pointer to 'mem_handler' from PyCapsule");
+        return;
+    }
+    if (handler == &on_instance_handler) {
+        // Since data can be on instance, tracking is done by the handler.
+        handler->allocator.free(handler->allocator.ctx, ptr, size);
         return;
     }
     // ignore -2 return when tracemalloc is disabled
@@ -546,6 +650,10 @@ PyDataMem_UserRENEW(void *ptr, size_t size, PyObject *mem_handler)
     if (result == NULL) {
         // ptr is still valid here
         return NULL;
+    }
+    if (handler == &on_instance_handler) {
+        // Since data can be on instance, tracking is done by the handler.
+        return result;
     }
     int ret = PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     if (ret == -2) {

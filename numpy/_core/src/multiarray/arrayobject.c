@@ -455,7 +455,7 @@ _clear_array_attributes(PyArrayObject *self, npy_bool unraisable)
     }
 
     /* must match allocation in PyArray_NewFromDescr */
-    npy_free_cache_dim(fa->dimensions, 2 * fa->nd);
+    npy_free_cache_dim_array(self); // frees it if not on instance.
     fa->dimensions = NULL;
     Py_CLEAR(fa->descr);
     return 0;

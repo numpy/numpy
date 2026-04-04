@@ -9,7 +9,7 @@ import pytest
 
 import numpy as np
 from numpy._core.multiarray import get_handler_name
-from numpy.testing import IS_EDITABLE, IS_WASM, extbuild
+from numpy.testing import IS_EDITABLE, IS_WASM, assert_array_equal, extbuild
 
 
 @pytest.fixture
@@ -102,6 +102,30 @@ def get_module(tmp_path):
             }
             return arr;
 
+         """),
+        ("get_handler_from_array", "METH_O", """
+            if (!PyArray_Check(args)) {
+                PyErr_SetString(PyExc_ValueError,
+                             "need an ndarray");
+                return NULL;
+            }
+            PyObject *mem_handler = ((PyArrayObject_fields *)args)->mem_handler;
+            Py_INCREF(mem_handler);
+            return mem_handler;
+
+         """),
+        ("is_data_on_instance", "METH_O", """
+            /* Only works for on_instance_handler!!! */
+            if (!PyArray_Check(args)) {
+                PyErr_SetString(PyExc_ValueError,
+                             "need an ndarray");
+                return NULL;
+            }
+            char *data = (char *)PyArray_DATA((PyArrayObject*)args);
+            npy_intp size = *(npy_intp*)(data-sizeof(npy_intp));
+            PyObject *result = size > 0 ? Py_True : Py_False;
+            Py_INCREF(result);
+            return result;
          """),
     ]
     prologue = '''
@@ -237,7 +261,8 @@ def test_set_policy(get_module):
     get_handler_version = np._core.multiarray.get_handler_version
     orig_policy_name = get_handler_name()
 
-    a = np.arange(10).reshape((2, 5))  # a doesn't own its own data
+    # Large array so we are sure not to store on the instance.
+    a = np.empty(1000).reshape((-1, 5))  # a doesn't own its own data
     assert get_handler_name(a) is None
     assert get_handler_version(a) is None
     assert get_handler_name(a.base) == orig_policy_name
@@ -292,7 +317,8 @@ def test_policy_propagation(get_module):
 
     get_handler_name = np._core.multiarray.get_handler_name
     orig_policy_name = get_handler_name()
-    a = np.arange(10).view(MyArr).reshape((2, 5))
+    # Large array so we for sure do not store on the instance.
+    a = np.empty(1000).view(MyArr).reshape((-1, 5))
     assert get_handler_name(a) is None
     assert a.flags.owndata is False
 
@@ -385,7 +411,7 @@ def test_new_policy(get_module):
 
     orig_policy = get_module.set_secret_data_policy()
 
-    b = np.arange(10)
+    b = np.arange(10)  # Small array will now not be on instance.
     assert np._core.multiarray.get_handler_name(b) == 'secret_data_allocator'
 
     # test array manipulation. This is slow
@@ -445,3 +471,58 @@ def test_owner_is_base(get_module):
         del a
         gc.collect()
         gc.collect()
+
+
+def test_on_instance_handler(get_module):
+    """Test the allocator for data on instances.
+
+    Note that the on-instance allocator is meant for internal use only,
+    but internally no actual allocations are done (only reallocation
+    and freeing), so this adds a few tests that those do work.
+
+    """
+
+    get_handler_name = np._core.multiarray.get_handler_name
+    get_handler_version = np._core.multiarray.get_handler_version
+    orig_policy_name = get_handler_name()
+
+    # Small array so we will store on the instance.
+    a = np.empty(4)  # a owns its data.
+    assert get_handler_name(a) == "on_instance_allocator"
+    assert get_module.is_data_on_instance(a)
+    # Making it smaller, data should remain on instance.
+    a.resize(2)
+    assert get_module.is_data_on_instance(a)
+    # But not if we make it bigger (even if it would still fit).
+    a.resize(3)
+    assert not get_module.is_data_on_instance(a)
+
+    b = np.empty(1000)  # b is too large for on-instance
+    assert get_handler_name(b) == "default_allocator"
+
+    on_instance_handler = get_module.get_handler_from_array(a)
+    try:
+        get_module.set_old_policy(on_instance_handler)
+        assert get_handler_name() == 'on_instance_allocator'
+        # Large array now uses this allocator too (though it not
+        # actually on the instance, at least not as implemented).
+        c = np.ones(499)
+        assert get_handler_name(c) == "on_instance_allocator"
+        assert not get_module.is_data_on_instance(c)
+        # Check going through calloc instead of malloc.
+        d = np.zeros(500)
+        assert get_handler_name(d) == "on_instance_allocator"
+        assert not get_module.is_data_on_instance(d)
+        # Check resize up and down.
+        c.resize(50)
+        assert c.shape == (50,)
+        assert_array_equal(c, 1.0)
+        assert get_handler_name(c) == "on_instance_allocator"
+        c.resize(100)
+        assert get_handler_name(c) == "on_instance_allocator"
+        assert_array_equal(c[:50], 1.0)
+        assert_array_equal(c[50:], 0.0)
+        assert not get_module.is_data_on_instance(c)
+    finally:
+        get_module.set_old_policy(None)
+    assert get_handler_name() == orig_policy_name
