@@ -11,6 +11,7 @@ AR_b: npt.NDArray[np.bool]
 AR_f4: npt.NDArray[np.float32]
 AR_f4_1d: np.ndarray[tuple[int], np.dtype[np.float32]]
 AR_f4_2d: np.ndarray[tuple[int, int], np.dtype[np.float32]]
+AR_f4_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float32]]
 AR_c16: npt.NDArray[np.complex128]
 AR_u8: npt.NDArray[np.uint64]
 AR_i8: npt.NDArray[np.int64]
@@ -155,10 +156,12 @@ assert_type(np.ravel(f), np.ndarray[tuple[int], np.dtype[np.float64 | Any]])
 assert_type(np.ravel(AR_b), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(np.ravel(AR_f4), np.ndarray[tuple[int], np.dtype[np.float32]])
 
-assert_type(np.nonzero(AR_b), tuple[np.ndarray[tuple[int], np.dtype[np.intp]], ...])
-assert_type(np.nonzero(AR_f4), tuple[np.ndarray[tuple[int], np.dtype[np.intp]], ...])
-assert_type(np.nonzero(AR_1d), tuple[np.ndarray[tuple[int], np.dtype[np.intp]], ...])
-assert_type(np.nonzero(AR_nd), tuple[np.ndarray[tuple[int], np.dtype[np.intp]], ...])
+type _Int1D = np.ndarray[tuple[int], np.dtype[np.intp]]
+
+assert_type(np.nonzero(AR_f4), tuple[_Int1D, *tuple[_Int1D, ...]])
+assert_type(np.nonzero(AR_f4_1d), tuple[_Int1D])
+assert_type(np.nonzero(AR_f4_2d), tuple[_Int1D, _Int1D])
+assert_type(np.nonzero(AR_f4_3d), tuple[_Int1D, _Int1D, _Int1D])
 
 assert_type(np.shape(b), tuple[()])
 assert_type(np.shape(f), tuple[()])

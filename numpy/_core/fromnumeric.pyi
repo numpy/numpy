@@ -129,6 +129,14 @@ type _3D = tuple[int, int, int]
 type _4D = tuple[int, int, int, int]
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[_1D, np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[_2D, np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[_3D, np.dtype[ScalarT]]
+# workaround for mypy's and pyright's typing spec non-compliance regarding overloads
+type _ArrayJustND[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, Never], np.dtype[ScalarT]]
+
+type _ToArray1D[ScalarT: np.generic] = _Array1D[ScalarT] | Sequence[ScalarT]
+type _ToArray2D[ScalarT: np.generic] = _Array2D[ScalarT] | Sequence[Sequence[ScalarT]]
+type _ToArray3D[ScalarT: np.generic] = _Array3D[ScalarT] | Sequence[Sequence[Sequence[ScalarT]]]
 
 ###
 
@@ -658,7 +666,17 @@ def ravel(a: complex | _NestedSequence[complex], order: _OrderKACF = "C") -> _Ar
 @overload
 def ravel(a: ArrayLike, order: _OrderKACF = "C") -> np.ndarray[_1D]: ...
 
-def nonzero(a: _ArrayLike[Any]) -> tuple[_Array1D[np.intp], ...]: ...
+# keep in sync with the 1-arg overloads of `_core.multiarray.where`
+@overload  # ?d  (workaround)
+def nonzero(a: _ArrayJustND[Any]) -> tuple[_Array1D[np.intp], *tuple[_Array1D[np.intp], ...]]: ...
+@overload  # 1d
+def nonzero(a: _ToArray1D[Any]) -> tuple[_Array1D[np.intp]]: ...
+@overload  # 2d
+def nonzero(a: _ToArray2D[Any]) -> tuple[_Array1D[np.intp], _Array1D[np.intp]]: ...
+@overload  # 3d
+def nonzero(a: _ToArray3D[Any]) -> tuple[_Array1D[np.intp], _Array1D[np.intp], _Array1D[np.intp]]: ...
+@overload  # Nd  (fallback)
+def nonzero(a: _ArrayLike[Any]) ->  tuple[_Array1D[np.intp], *tuple[_Array1D[np.intp], ...]]: ...
 
 # this prevents `Any` from being returned with Pyright
 @overload
