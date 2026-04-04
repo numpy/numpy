@@ -1,0 +1,13 @@
+``datetime64`` and ``timedelta64`` now always return numpy scalars from ``.item()`` and ``.astype(object)``
+-----------------------------------------------------------------------------------------------------------
+
+Previously, ``.item()`` and ``.astype(object)`` on ``datetime64`` and
+``timedelta64`` arrays returned a mix of Python types depending on the unit
+and value: ``datetime.datetime``, ``datetime.date``, ``datetime.timedelta``,
+``None`` (for NaT), or raw ``int`` (for sub-microsecond units or out-of-range
+values). They now always return ``numpy.datetime64`` or ``numpy.timedelta64``
+scalars.
+
+As a consequence, ``int()`` and ``float()`` on ``datetime64`` and
+``timedelta64`` scalars now raise ``TypeError`` for all units. Previously
+they returned the underlying integer for sub-microsecond units.

@@ -2794,57 +2794,32 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
 }
 
 /*
+ * Creates a numpy datetime64 or timedelta64 scalar from a raw value
+ * and metadata.  Used as a fallback when the value cannot be represented
+ * as a Python datetime.datetime or datetime.timedelta.
+ */
+static PyObject *
+_make_datetime_or_timedelta_scalar(
+        int type_num, npy_int64 val, PyArray_DatetimeMetaData *meta)
+{
+    PyArray_Descr *dtype = create_datetime_dtype(type_num, meta);
+    if (dtype == NULL) {
+        return NULL;
+    }
+    PyObject *ret = PyArray_Scalar(&val, dtype, NULL);
+    Py_DECREF(dtype);
+    return ret;
+}
+
+/*
  * Converts a datetime into a PyObject *.
  *
- * NaT (Not-a-time) is returned as None.
- * For D/W/Y/M (days or coarser), returns a datetime.date.
- * For μs/ms/s/m/h/D/W (microseconds or coarser), returns a datetime.datetime.
- * For ns/ps/fs/as (units shorter than microseconds), returns an integer.
+ * Always returns a numpy.datetime64 scalar (including NaT).
  */
 NPY_NO_EXPORT PyObject *
 convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
 {
-    PyObject *ret = NULL;
-    npy_datetimestruct dts;
-
-    /*
-     * Convert NaT (not-a-time) and any value with generic units
-     * into None.
-     */
-    if (dt == NPY_DATETIME_NAT || meta->base == NPY_FR_GENERIC) {
-        Py_RETURN_NONE;
-    }
-
-    /* If the type's precision is greater than microseconds, return an int */
-    if (meta->base > NPY_FR_us) {
-        return PyLong_FromLongLong(dt);
-    }
-
-    /* Convert to a datetimestruct */
-    if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(meta, dt, &dts) < 0) {
-        return NULL;
-    }
-
-    /*
-     * If the year is outside the range of years supported by Python's
-     * datetime, or the datetime64 falls on a leap second,
-     * return a raw int.
-     */
-    if (dts.year < 1 || dts.year > 9999 || dts.sec == 60) {
-        return PyLong_FromLongLong(dt);
-    }
-
-    /* If the type's precision is greater than days, return a datetime */
-    if (meta->base > NPY_FR_D) {
-        ret = PyDateTime_FromDateAndTime(dts.year, dts.month, dts.day,
-                                dts.hour, dts.min, dts.sec, dts.us);
-    }
-    /* Otherwise return a date */
-    else {
-        ret = PyDate_FromDate(dts.year, dts.month, dts.day);
-    }
-
-    return ret;
+    return _make_datetime_or_timedelta_scalar(NPY_DATETIME, dt, meta);
 }
 
 /*
@@ -2980,46 +2955,12 @@ convert_timedelta_to_timedeltastruct(PyArray_DatetimeMetaData *meta,
 /*
  * Converts a timedelta into a PyObject *.
  *
- * NaT (Not-a-time) is returned as None.
- * For μs/ms/s/m/h/D/W (microseconds or coarser), returns a datetime.timedelta.
- * For Y/M (non-linear units), generic units and ns/ps/fs/as (units shorter than microseconds), returns an integer.
+ * Always returns a numpy.timedelta64 scalar (including NaT).
  */
 NPY_NO_EXPORT PyObject *
 convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta)
 {
-    npy_timedeltastruct tds;
-
-    /*
-     * Convert NaT (not-a-time) into None.
-     */
-    if (td == NPY_DATETIME_NAT) {
-        Py_RETURN_NONE;
-    }
-
-    /*
-     * If the type's precision is greater than microseconds, is
-     * Y/M (nonlinear units), or is generic units, return an int
-     */
-    if (meta->base > NPY_FR_us ||
-                    meta->base == NPY_FR_Y ||
-                    meta->base == NPY_FR_M ||
-                    meta->base == NPY_FR_GENERIC) {
-        return PyLong_FromLongLong(td);
-    }
-
-    if (convert_timedelta_to_timedeltastruct(meta, td, &tds) < 0) {
-        return NULL;
-    }
-
-    /*
-     * If it would overflow the datetime.timedelta days, return a raw int
-     */
-    if (tds.day < -999999999 || tds.day > 999999999) {
-        return PyLong_FromLongLong(td);
-    }
-    else {
-        return PyDelta_FromDSU(tds.day, tds.sec, tds.us);
-    }
+    return _make_datetime_or_timedelta_scalar(NPY_TIMEDELTA, td, meta);
 }
 
 /*
