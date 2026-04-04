@@ -61,7 +61,7 @@ jobs:
           architecture: 'x86'
 
       - name: win_arm64 - set environment variables
-        if: matrix.buildplat[1] == 'win' && matrix.buildplat[2] == 'ARM64'
+        if: ${{ matrix.buildplat[1] == 'win_arm64' }}
         run: |
             echo "C:\Program Files\LLVM\bin" >> $env:GIHUB_PATH
             echo "CC=clang-cl" >> $env:GITHUB_ENV
