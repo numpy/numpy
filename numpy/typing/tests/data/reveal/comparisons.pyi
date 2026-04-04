@@ -42,15 +42,15 @@ assert_type(i8 > [decimal.Decimal("1.5")], npt.NDArray[np.bool])
 assert_type(dt > dt, np.bool)
 
 assert_type(td > td, np.bool)
-assert_type(td > i, np.bool)
-assert_type(td > i4, np.bool)
-assert_type(td > i8, np.bool)
+assert_type(td > i, np.bool)  # type: ignore[deprecated]
+assert_type(td > i4, np.bool)  # type: ignore[deprecated]
+assert_type(td > i8, np.bool)  # type: ignore[deprecated]
 
-assert_type(td > AR, npt.NDArray[np.bool])
-assert_type(td > SEQ, npt.NDArray[np.bool])
+assert_type(td > AR, npt.NDArray[np.bool])  # type: ignore[deprecated]
+assert_type(td > SEQ, npt.NDArray[np.bool])  # type: ignore[deprecated]
 assert_type(AR > SEQ, npt.NDArray[np.bool])
 assert_type(AR > td, npt.NDArray[np.bool])
-assert_type(SEQ > td, npt.NDArray[np.bool])
+assert_type(SEQ > td, npt.NDArray[np.bool])  # type: ignore[deprecated]
 assert_type(SEQ > AR, npt.NDArray[np.bool])
 
 # boolean
