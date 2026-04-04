@@ -551,7 +551,7 @@ class TestPrintOptions:
     def test_non_finite(self):
         p = poly.Polynomial([nan, inf])
         assert str(p) == 'nan + inf x'
-        assert p._repr_latex_() == r'$x \mapsto \text{nan} + \text{inf}\,x$'  # noqa: RUF027
+        assert p._repr_latex_() == r'$x \mapsto \text{nan} + \text{inf}\,x$'
         with printoptions(nanstr='NAN', infstr='INF'):
             assert str(p) == 'NAN + INF x'
             assert p._repr_latex_() == \

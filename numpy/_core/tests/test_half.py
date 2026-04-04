@@ -298,19 +298,15 @@ class TestHalf:
         if len(a32_fail) != 0:
             bad_index = a32_fail[0]
             assert_equal(finite_f32, a_manual,
-                 "First non-equal is half value 0x%x -> %g != %g" %
-                            (a_bits[bad_index],
-                             finite_f32[bad_index],
-                             a_manual[bad_index]))
+                 f"First non-equal is half value 0x{a_bits[bad_index]:x} -> "
+                 f"{finite_f32[bad_index]:g} != {a_manual[bad_index]:g}")
 
         a64_fail = np.nonzero(finite_f64 != a_manual)[0]
         if len(a64_fail) != 0:
             bad_index = a64_fail[0]
             assert_equal(finite_f64, a_manual,
-                 "First non-equal is half value 0x%x -> %g != %g" %
-                            (a_bits[bad_index],
-                             finite_f64[bad_index],
-                             a_manual[bad_index]))
+                 f"First non-equal is half value 0x{a_bits[bad_index]:x} -> "
+                 f"{finite_f64[bad_index]:g} != {a_manual[bad_index]:g}")
 
     def test_half_ordering(self):
         """Make sure comparisons are working right"""

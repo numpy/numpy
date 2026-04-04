@@ -1,0 +1,10 @@
+[build-system]
+# numpy>=2.0 is required for dependency('numpy') support in meson.build
+requires = ["meson-python>=0.15.0", "numpy>=2.0"]
+build-backend = "mesonpy"
+
+[project]
+name = "fib_wrapper"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = ["numpy"]

@@ -594,7 +594,7 @@ from numpy.matrixlib import (
     matrix,
 )
 
-__all__ = [  # noqa: RUF022
+__all__ = [
     # __numpy_submodules__
     "char", "core", "ctypeslib", "dtypes", "exceptions", "f2py", "fft", "lib", "linalg",
     "ma", "polynomial", "random", "rec", "strings", "test", "testing", "typing",
@@ -870,13 +870,13 @@ type _DTypeNum = L[
 ]
 type _DTypeBuiltinKind = L[0, 1, 2]
 
-type _ArrayAPIVersion = L["2021.12", "2022.12", "2023.12", "2024.12"]
+type _ArrayAPIVersion = L["2021.12", "2022.12", "2023.12", "2024.12", "2025.12"]
 
 type _CastingKind = L["no", "equiv", "safe", "same_kind", "same_value", "unsafe"]
 
 type _OrderKACF = L["K", "A", "C", "F"] | None
 type _OrderACF = L["A", "C", "F"] | None
-type _OrderCF = L["C", "F"] | None  # noqa: PYI047
+type _OrderCF = L["C", "F"] | None
 
 type _ModeKind = L["raise", "wrap", "clip"]
 type _PartitionKind = L["introselect"]
@@ -1067,7 +1067,7 @@ __NUMPY_SETUP__: Final[L[False]] = False
 __numpy_submodules__: Final[set[LiteralString]] = ...
 __former_attrs__: Final[_FormerAttrsDict] = ...
 __future_scalars__: Final[set[L["bytes", "str", "object"]]] = ...
-__array_api_version__: Final[L["2024.12"]] = "2024.12"
+__array_api_version__: Final[L["2025.12"]] = "2025.12"
 test: Final[PytestTester] = ...
 
 @type_check_only
@@ -1084,7 +1084,7 @@ class _DTypeMeta(type):
     def _legacy(cls, /) -> bool: ...
 
 @final
-class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
+class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     names: tuple[py_str, ...] | None
     def __hash__(self) -> int: ...
 
@@ -2767,9 +2767,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def __abs__[ArrayT: NDArray[bool_ | integer | floating | timedelta64 | object_]](self: ArrayT, /) -> ArrayT: ...
 
-    def __invert__[ArrayT: NDArray[bool_ | integer | object_]](self: ArrayT, /) -> ArrayT: ...  # noqa: PYI019
-    def __neg__[ArrayT: _ArrayNumeric](self: ArrayT, /) -> ArrayT: ...  # noqa: PYI019
-    def __pos__[ArrayT: _ArrayNumeric](self: ArrayT, /) -> ArrayT: ...  # noqa: PYI019
+    def __invert__[ArrayT: NDArray[bool_ | integer | object_]](self: ArrayT, /) -> ArrayT: ...
+    def __neg__[ArrayT: _ArrayNumeric](self: ArrayT, /) -> ArrayT: ...
+    def __pos__[ArrayT: _ArrayNumeric](self: ArrayT, /) -> ArrayT: ...
 
     # Binary ops
 
@@ -3774,7 +3774,7 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     def setfield(self: Never, val: Never, /, dtype: Never, offset: L[0] = 0) -> None: ...  # type: ignore[misc]
     def searchsorted(self: Never, v: Never, /, side: L["left"] = "left", sorter: None = None) -> Never: ...  # type: ignore[misc]
 
-    # NOTE: this wont't raise, but won't do anything either
+    # NOTE: this won't raise, but won't do anything either
     @overload
     @deprecated("Resizing a NumPy generic inplace has been deprecated in NumPy 2.5")
     def resize(self, /, *, refcheck: py_bool = True) -> None: ...

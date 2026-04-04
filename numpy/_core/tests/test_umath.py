@@ -1340,7 +1340,7 @@ class TestLog2:
         # a good log2 implementation should provide this,
         # might fail on OS with bad libm
         v = np.log2(2.**i)
-        assert_equal(v, float(i), err_msg='at exponent %d' % i)
+        assert_equal(v, float(i), err_msg=f'at exponent {i}')
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_log2_special(self):
@@ -3649,6 +3649,19 @@ class TestSpecialMethods:
         assert_equal(res[3], (a,))
         assert_equal(res[4], {'dtype': 'dtype0',
                               'out': ('out0',),
+                              'keepdims': 'keep0',
+                              'axis': 'axis0',
+                              'initial': 'init0',
+                              'where': 'where0'})
+        # reduce, kwargs, out=None is removed
+        res = np.multiply.reduce(a, axis='axis0', dtype='dtype0', out=None,
+                                 keepdims='keep0', initial='init0',
+                                 where='where0')
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'reduce')
+        assert_equal(res[3], (a,))
+        assert_equal(res[4], {'dtype': 'dtype0',
                               'keepdims': 'keep0',
                               'axis': 'axis0',
                               'initial': 'init0',

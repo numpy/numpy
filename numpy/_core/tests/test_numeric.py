@@ -1211,10 +1211,10 @@ class TestTypes:
         assert_equal(np.promote_types('<U5', '<U8'), np.dtype('U8'))
         assert_equal(np.promote_types('>U8', '>U5'), np.dtype('U8'))
 
-        assert_equal(np.promote_types('<M8', '<M8'), np.dtype('M8'))
-        assert_equal(np.promote_types('>M8', '>M8'), np.dtype('M8'))
-        assert_equal(np.promote_types('<m8', '<m8'), np.dtype('m8'))
-        assert_equal(np.promote_types('>m8', '>m8'), np.dtype('m8'))
+        assert_equal(np.promote_types('<M8[Y]', '<M8[Y]'), np.dtype('M8[Y]'))
+        assert_equal(np.promote_types('>M8[D]', '>M8[D]'), np.dtype('M8[D]'))
+        assert_equal(np.promote_types('<m8[ns]', '<m8[ns]'), np.dtype('m8[ns]'))
+        assert_equal(np.promote_types('>m8[s]', '>m8[s]'), np.dtype('m8[s]'))
 
     def test_can_cast_and_promote_usertypes(self):
         # The rational type defines safe casting for signed integers,
@@ -1772,20 +1772,32 @@ class TestNonzero:
             err_msg = msg % (np.dtype(dt).name,)
 
             if dt != 'V':
-                if dt != 'M':
-                    m = np.zeros((3, 3), dtype=dt)
-                    n = np.ones(1, dtype=dt)
-
-                    m[0, 0] = n[0]
-                    m[1, 0] = n[0]
-
-                else:  # np.zeros doesn't work for np.datetime64
+                if dt == 'M':
+                    # np.zeros doesn't work for np.datetime64
                     m = np.array(['1970-01-01'] * 9)
                     m = m.reshape((3, 3))
 
                     m[0, 0] = '1970-01-12'
                     m[1, 0] = '1970-01-12'
                     m = m.astype(dt)
+
+                elif dt == 'm':
+                    with pytest.warns(
+                        DeprecationWarning,
+                        match="Using 'generic' unit for NumPy timedelta is deprecated",
+                    ):
+                        m = np.zeros((3, 3), dtype=dt)
+                        n = np.ones(1, dtype=dt)
+
+                    m[0, 0] = n[0]
+                    m[1, 0] = n[0]
+
+                else:
+                    m = np.zeros((3, 3), dtype=dt)
+                    n = np.ones(1, dtype=dt)
+
+                    m[0, 0] = n[0]
+                    m[1, 0] = n[0]
 
                 expected = np.array([2, 0, 0], dtype=np.intp)
                 assert_equal_w_dt(np.count_nonzero(m, axis=0),
@@ -2160,8 +2172,8 @@ def _test_array_equal_parametrizations():
     yield (b4, b4.copy(), False, False)
     yield (b4, b4.copy(), True, True)
 
-    t1 = b1.astype("timedelta64")
-    t2 = b2.astype("timedelta64")
+    t1 = b1.astype("timedelta64[D]")
+    t2 = b2.astype("timedelta64[D]")
 
     # Timedeltas are particular
     yield (t1, t1, None, False)
@@ -2815,10 +2827,10 @@ class TestClip:
          np.full(10, -2**64 + 1, dtype=object)),
         # for bugs in NPY_TIMEDELTA_MAX, based on a case
         # produced by hypothesis
-        (np.zeros(10, dtype='m8') - 1,
-         0,
-         0,
-         np.zeros(10, dtype='m8')),
+        (np.zeros(10, dtype='m8[s]') - np.timedelta64(1, 's'),
+         np.timedelta64(0, 's'),
+         np.timedelta64(0, 's'),
+         np.zeros(10, dtype='m8[s]')),
     ])
     def test_clip_problem_cases(self, arr, amin, amax, exp):
         actual = np.clip(arr, amin, amax)
@@ -2838,8 +2850,8 @@ class TestClip:
         assert_equal(actual, expected)
 
     @pytest.mark.parametrize("arr, amin, amax", [
-        (np.array([1] * 10, dtype='m8'),
-         np.timedelta64('NaT'),
+        (np.array([1] * 10, dtype='m8[s]'),
+         np.timedelta64('NaT', 's'),
          np.zeros(10, dtype=np.int32)),
     ])
     def test_NaT_propagation(self, arr, amin, amax):
@@ -3207,9 +3219,7 @@ class TestIsclose:
         # Allclose currently works for timedelta64 as long as `atol` is
         # an integer or also a timedelta64
         a = np.array([[1, 2, 3, "NaT"]], dtype="m8[ns]")
-        assert np.isclose(a, a, atol=0, equal_nan=True).all()
         assert np.isclose(a, a, atol=np.timedelta64(1, "ns"), equal_nan=True).all()
-        assert np.allclose(a, a, atol=0, equal_nan=True)
         assert np.allclose(a, a, atol=np.timedelta64(1, "ns"), equal_nan=True)
 
     def test_tol_warnings(self):
