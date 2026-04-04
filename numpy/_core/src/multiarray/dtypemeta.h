@@ -223,52 +223,53 @@ extern PyArray_DTypeMeta *_Timedelta_dtype;
 extern PyArray_DTypeMeta *_Object_dtype;
 extern PyArray_DTypeMeta *_Void_dtype;
 
-#define PyArray_BoolDType (*(_Bool_dtype))
+/* Define aliases for the types that are public API */
+#define PyArray_BoolDTypePtr _Bool_dtype
 /* Integers */
-#define PyArray_ByteDType (*(_Byte_dtype))
-#define PyArray_UByteDType (*(_UByte_dtype))
-#define PyArray_ShortDType (*(_Short_dtype))
-#define PyArray_UShortDType (*(_UShort_dtype))
-#define PyArray_IntDType (*(_Int_dtype))
-#define PyArray_UIntDType (*(_UInt_dtype))
-#define PyArray_LongDType (*(_Long_dtype))
-#define PyArray_ULongDType (*(_ULong_dtype))
-#define PyArray_LongLongDType (*(_LongLong_dtype))
-#define PyArray_ULongLongDType (*(_ULongLong_dtype))
+#define PyArray_ByteDTypePtr _Byte_dtype
+#define PyArray_UByteDTypePtr _UByte_dtype
+#define PyArray_ShortDTypePtr _Short_dtype
+#define PyArray_UShortDTypePtr _UShort_dtype
+#define PyArray_IntDTypePtr _Int_dtype
+#define PyArray_UIntDTypePtr _UInt_dtype
+#define PyArray_LongDTypePtr _Long_dtype
+#define PyArray_ULongDTypePtr _ULong_dtype
+#define PyArray_LongLongDTypePtr _LongLong_dtype
+#define PyArray_ULongLongDTypePtr _ULongLong_dtype
 /* Integer aliases */
-#define PyArray_Int8DType (*(_Int8_dtype))
-#define PyArray_UInt8DType (*(_UInt8_dtype))
-#define PyArray_Int16DType (*(_Int16_dtype))
-#define PyArray_UInt16DType (*(_UInt16_dtype))
-#define PyArray_Int32DType (*(_Int32_dtype))
-#define PyArray_UInt32DType (*(_UInt32_dtype))
-#define PyArray_Int64DType (*(_Int64_dtype))
-#define PyArray_UInt64DType (*(_UInt64_dtype))
-#define PyArray_IntpDType (*(_Intp_dtype))
-#define PyArray_UIntpDType (*(_UIntp_dtype))
-#define PyArray_DefaultIntDType (*(_DefaultInt_dtype))
+#define PyArray_Int8DTypePtr _Int8_dtype
+#define PyArray_UInt8DTypePtr _UInt8_dtype
+#define PyArray_Int16DTypePtr _Int16_dtype
+#define PyArray_UInt16DTypePtr _UInt16_dtype
+#define PyArray_Int32DTypePtr _Int32_dtype
+#define PyArray_UInt32DTypePtr _UInt32_dtype
+#define PyArray_Int64DTypePtr _Int64_dtype
+#define PyArray_UInt64DTypePtr _UInt64_dtype
+#define PyArray_IntpDTypePtr _Intp_dtype
+#define PyArray_UIntpDTypePtr _UIntp_dtype
+#define PyArray_DefaultIntDTypePtr _DefaultInt_dtype
 /* Floats */
-#define PyArray_HalfDType (*(_Half_dtype))
-#define PyArray_FloatDType (*(_Float_dtype))
-#define PyArray_DoubleDType (*(_Double_dtype))
-#define PyArray_LongDoubleDType (*(_LongDouble_dtype))
+#define PyArray_HalfDTypePtr _Half_dtype
+#define PyArray_FloatDTypePtr _Float_dtype
+#define PyArray_DoubleDTypePtr _Double_dtype
+#define PyArray_LongDoubleDTypePtr _LongDouble_dtype
 /* Complex */
-#define PyArray_CFloatDType (*(_CFloat_dtype))
-#define PyArray_CDoubleDType (*(_CDouble_dtype))
-#define PyArray_CLongDoubleDType (*(_CLongDouble_dtype))
+#define PyArray_CFloatDTypePtr _CFloat_dtype
+#define PyArray_CDoubleDTypePtr _CDouble_dtype
+#define PyArray_CLongDoubleDTypePtr _CLongDouble_dtype
 /* String/Bytes */
-#define PyArray_BytesDType (*(_Bytes_dtype))
-#define PyArray_UnicodeDType (*(_Unicode_dtype))
+#define PyArray_BytesDTypePtr _Bytes_dtype
+#define PyArray_UnicodeDTypePtr _Unicode_dtype
+/* Datetime/Timedelta */
+#define PyArray_DatetimeDTypePtr _Datetime_dtype
+#define PyArray_TimedeltaDTypePtr _Timedelta_dtype
 // StringDType is not a legacy DType and has a static dtypemeta implementation
 // we can refer to, so no need for the indirection we use for the built-in
 // dtypes.
-extern PyArray_DTypeMeta PyArray_StringDType;
-/* Datetime/Timedelta */
-#define PyArray_DatetimeDType (*(_Datetime_dtype))
-#define PyArray_TimedeltaDType (*(_Timedelta_dtype))
+extern PyArray_DTypeMeta *PyArray_StringDTypePtr;
 /* Object/Void */
-#define PyArray_ObjectDType (*(_Object_dtype))
-#define PyArray_VoidDType (*(_Void_dtype))
+#define PyArray_ObjectDTypePtr _Object_dtype
+#define PyArray_VoidDTypePtr _Void_dtype
 
 #ifdef __cplusplus
 }

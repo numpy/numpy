@@ -27,7 +27,7 @@ PyObject *
 new_stringdtype_instance(PyObject *na_object, int coerce)
 {
     PyObject *new =
-            PyArrayDescr_Type.tp_new((PyTypeObject *)&PyArray_StringDType, NULL, NULL);
+            PyArrayDescr_Type.tp_new((PyTypeObject *)PyArray_StringDTypePtr, NULL, NULL);
 
     if (new == NULL) {
         return NULL;
@@ -941,11 +941,12 @@ PyArray_DTypeMeta PyArray_StringDType = {
         }},
         /* rest, filled in during DTypeMeta initialization */
 };
+NPY_NO_EXPORT PyArray_DTypeMeta *PyArray_StringDTypePtr = &PyArray_StringDType;
 
 NPY_NO_EXPORT int
 init_stringdtype_sorts(void)
 {
-    PyArray_DTypeMeta *stringdtype = &PyArray_StringDType;
+    PyArray_DTypeMeta *stringdtype = PyArray_StringDTypePtr;
 
     PyArray_DTypeMeta *sort_dtypes[2] = {stringdtype, stringdtype};
     PyType_Slot sort_slots[4] = {
@@ -972,7 +973,7 @@ init_stringdtype_sorts(void)
     Py_INCREF(sort_method->method);
     Py_DECREF(sort_method);
 
-    PyArray_DTypeMeta *argsort_dtypes[2] = {stringdtype, &PyArray_IntpDType};
+    PyArray_DTypeMeta *argsort_dtypes[2] = {stringdtype, PyArray_IntpDTypePtr};
     PyType_Slot argsort_slots[3] = {
             {NPY_METH_get_loop, &stringdtype_get_argsort_loop},
             {_NPY_METH_static_data, &_sort_compare},
@@ -1011,19 +1012,19 @@ init_string_dtype(void)
     };
 
     /* Loaded dynamically, so needs to be set here: */
-    ((PyObject *)&PyArray_StringDType)->ob_type = &PyArrayDTypeMeta_Type;
-    ((PyTypeObject *)&PyArray_StringDType)->tp_base = &PyArrayDescr_Type;
-    if (PyType_Ready((PyTypeObject *)&PyArray_StringDType) < 0) {
+    ((PyObject *)PyArray_StringDTypePtr)->ob_type = PyArrayDTypeMeta_TypePtr;
+    ((PyTypeObject *)PyArray_StringDTypePtr)->tp_base = &PyArrayDescr_Type;
+    if (PyType_Ready((PyTypeObject *)PyArray_StringDTypePtr) < 0) {
         return -1;
     }
 
     if (dtypemeta_initialize_struct_from_spec(
-                &PyArray_StringDType, &PyArray_StringDType_DTypeSpec, 1) < 0) {
+                PyArray_StringDTypePtr, &PyArray_StringDType_DTypeSpec, 1) < 0) {
         return -1;
     }
 
     PyArray_StringDTypeObject *singleton =
-            (PyArray_StringDTypeObject *)NPY_DT_CALL_default_descr(&PyArray_StringDType);
+            (PyArray_StringDTypeObject *)NPY_DT_CALL_default_descr(PyArray_StringDTypePtr);
 
     if (singleton == NULL) {
         return -1;

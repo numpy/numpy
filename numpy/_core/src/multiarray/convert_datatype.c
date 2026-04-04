@@ -248,7 +248,7 @@ _get_castingimpl(PyObject *NPY_UNUSED(module), PyObject *args)
 {
     PyArray_DTypeMeta *from, *to;
     if (!PyArg_ParseTuple(args, "O!O!:_get_castingimpl",
-            &PyArrayDTypeMeta_Type, &from, &PyArrayDTypeMeta_Type, &to)) {
+            PyArrayDTypeMeta_TypePtr, &from, PyArrayDTypeMeta_TypePtr, &to)) {
         return NULL;
     }
     return PyArray_GetBoundCastingImpl(from, to);
@@ -772,15 +772,15 @@ can_cast_pyscalar_scalar_to(
     PyArray_Descr *default_dtype;
     if (flags & NPY_ARRAY_WAS_PYTHON_INT) {
         default_dtype = PyArray_DescrNewFromType(NPY_INTP);
-        from_DType = &PyArray_PyLongDType;
+        from_DType = PyArray_PyLongDTypePtr;
     }
     else if (flags & NPY_ARRAY_WAS_PYTHON_FLOAT) {
         default_dtype = PyArray_DescrNewFromType(NPY_FLOAT64);
-        from_DType =  &PyArray_PyFloatDType;
+        from_DType =  PyArray_PyFloatDTypePtr;
     }
     else {
         default_dtype = PyArray_DescrNewFromType(NPY_COMPLEX128);
-        from_DType = &PyArray_PyComplexDType;
+        from_DType = PyArray_PyComplexDTypePtr;
     }
 
     PyArray_Descr *from = npy_find_descr_for_scalar(
@@ -1631,13 +1631,13 @@ PyArray_ResultType(
         all_descriptors[i_all] = NULL;  /* no descriptor for py-scalars */
         if (PyArray_FLAGS(arrs[i]) & NPY_ARRAY_WAS_PYTHON_INT) {
             /* This could even be an object dtype here for large ints */
-            all_DTypes[i_all] = &PyArray_PyLongDType;
+            all_DTypes[i_all] = PyArray_PyLongDTypePtr;
         }
         else if (PyArray_FLAGS(arrs[i]) & NPY_ARRAY_WAS_PYTHON_FLOAT) {
-            all_DTypes[i_all] = &PyArray_PyFloatDType;
+            all_DTypes[i_all] = PyArray_PyFloatDTypePtr;
         }
         else if (PyArray_FLAGS(arrs[i]) & NPY_ARRAY_WAS_PYTHON_COMPLEX) {
-            all_DTypes[i_all] = &PyArray_PyComplexDType;
+            all_DTypes[i_all] = PyArray_PyComplexDTypePtr;
         }
         else {
             all_descriptors[i_all] = PyArray_DTYPE(arrs[i]);
@@ -2633,8 +2633,8 @@ static int
 PyArray_InitializeStringCasts(void)
 {
     int result = -1;
-    PyArray_DTypeMeta *string = &PyArray_BytesDType;
-    PyArray_DTypeMeta *unicode = &PyArray_UnicodeDType;
+    PyArray_DTypeMeta *string = PyArray_BytesDTypePtr;
+    PyArray_DTypeMeta *unicode = PyArray_UnicodeDTypePtr;
     PyArray_DTypeMeta *other_dt = NULL;
 
     /* Add most casts as legacy ones */
@@ -3318,7 +3318,7 @@ void_to_void_get_loop(
 static int
 PyArray_InitializeVoidToVoidCast(void)
 {
-    PyArray_DTypeMeta *Void = &PyArray_VoidDType;
+    PyArray_DTypeMeta *Void = PyArray_VoidDTypePtr;
     PyArray_DTypeMeta *dtypes[2] = {Void, Void};
     PyType_Slot slots[] = {
             {NPY_METH_get_loop, &void_to_void_get_loop},
@@ -3363,7 +3363,7 @@ object_to_any_resolve_descriptors(
          * StringDType is excluded since using the parameters of that dtype
          * requires creating an instance explicitly
          */
-        if (NPY_DT_is_parametric(dtypes[1]) && dtypes[1] != &PyArray_StringDType) {
+        if (NPY_DT_is_parametric(dtypes[1]) && dtypes[1] != PyArray_StringDTypePtr) {
             PyErr_Format(PyExc_TypeError,
                     "casting from object to the parametric DType %S requires "
                     "the specified output dtype instance. "
@@ -3464,7 +3464,7 @@ object_to_object_get_loop(
 static int
 PyArray_InitializeObjectToObjectCast(void)
 {
-    PyArray_DTypeMeta *Object = &PyArray_ObjectDType;
+    PyArray_DTypeMeta *Object = PyArray_ObjectDTypePtr;
     PyArray_DTypeMeta *dtypes[2] = {Object, Object};
     PyType_Slot slots[] = {
             {NPY_METH_get_loop, &object_to_object_get_loop},
