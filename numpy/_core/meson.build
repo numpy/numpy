@@ -939,13 +939,14 @@ foreach gen_mtargets : [
   ],
   [
     'loops_hyperbolic.dispatch.h',
-    src_file.process('src/umath/loops_hyperbolic.dispatch.cpp.src'),
+    'src/umath/loops_hyperbolic.dispatch.cpp',
     [
       X86_V4, X86_V3,
       VSX4, VSX2,
       NEON_VFPV4,
       VXE,
       LSX,
+      RVV,
     ]
   ],
   [
