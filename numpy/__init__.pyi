@@ -739,7 +739,10 @@ type _Truthy = L[True, 1] | bool_[L[True]]
 
 type _1D = tuple[int]
 type _2D = tuple[int, int]
+type _3D = tuple[int, int, int]
+
 type _2Tuple[T] = tuple[T, T]
+type _3Tuple[T] = tuple[T, T, T]
 
 type _ArrayUInt_co = NDArray[unsignedinteger | bool_]
 type _ArrayInt_co = NDArray[integer | bool_]
@@ -2414,8 +2417,19 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def dot[ArrayT: ndarray](self, b: ArrayLike, /, out: ArrayT) -> ArrayT: ...
 
-    # `nonzero()` raises for 0d arrays/generics
-    def nonzero(self) -> tuple[ndarray[tuple[int], _dtype[intp]], ...]: ...
+    # keep in sync with `_core.fromnumeric.nonzero`
+    @overload  # ?d  (workaround)
+    def nonzero(
+        self: ndarray[tuple[Never, Never, Never, Never]]
+    ) -> tuple[ndarray[_1D, _dtype[intp]], *tuple[ndarray[_1D, _dtype[intp]], ...]]: ...
+    @overload  # 1d
+    def nonzero(self: ndarray[_1D]) -> tuple[ndarray[_1D, _dtype[intp]]]: ...
+    @overload  # 2d
+    def nonzero(self: ndarray[_2D]) -> _2Tuple[ndarray[_1D, _dtype[intp]]]: ...
+    @overload  # 3d
+    def nonzero(self: ndarray[_3D]) -> _3Tuple[ndarray[_1D, _dtype[intp]]]: ...
+    @overload  # 3d
+    def nonzero(self) -> tuple[ndarray[_1D, _dtype[intp]], *tuple[ndarray[_1D, _dtype[intp]], ...]]: ...
 
     @overload
     def searchsorted(
