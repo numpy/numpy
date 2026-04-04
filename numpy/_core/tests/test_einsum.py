@@ -839,6 +839,53 @@ class TestEinsum:
             # used to raise error
             assert_equal(np.einsum("...lmn,lmno->...o", A, B, optimize=opt), ref)
 
+    def test_einsum_broadcast_30349(self):
+        # Issue #30349 related to broadcasting with ellipsis
+        # Specific case that was failing
+        x = np.tile(np.array([1, 2, 3]), (3, 3, 1))
+
+        assert_equal(np.einsum("i...->i", x, optimize=False), np.array([18, 18, 18]))
+        assert_equal(np.einsum("i...->i", x, optimize=True), np.einsum("i...->i", x, optimize=False))
+
+    @pytest.mark.parametrize(
+        "subscript",
+        [
+            ("...i->i"),
+            ("ij...->i"),
+            ("ij...->ij"),
+            ("...ij->i"),
+            ("...ij->ij"),
+            ("i...j->i"),
+            ("i...j->ij"),
+            ("ijk->i"),
+            ("ijk->ij"),
+            ("ijk->ijk")
+        ])
+    def test_einsum_ellipsis_30349_single_operand(self, subscript):
+        # Test other subscripts for same results with both optimized and unoptimized paths
+        x = np.tile(np.array([1, 2, 3]), (3, 3, 1))
+        result = np.einsum(subscript, x, optimize=True)
+        expected = np.einsum(subscript, x, optimize=False)
+        assert_equal(result, expected)
+
+    @pytest.mark.parametrize(
+        "subscript",
+        [
+            ("ij..., i...->i"),
+            ("j..., i...->j"),
+            ("j..., i...->"),
+            ("ijk, jk...->"),
+            ("ijk, k...->i"),
+            ("ijk, klm->k"),
+            ("ijk, jkl->ik")
+        ])
+    def test_einsum_ellipsis_30349_two_operands(self, subscript):
+        # Test other subscripts for same results with both optimized and unoptimized paths
+        x = np.tile(np.array([1, 2, 3]), (3, 3, 1))
+        result = np.einsum(subscript, x, x, optimize=True)
+        expected = np.einsum(subscript, x, x, optimize=False)
+        assert_equal(result, expected)
+
     def test_einsum_fixedstridebug(self):
         # Issue #4485 obscure einsum bug
         # This case revealed a bug in nditer where it reported a stride
