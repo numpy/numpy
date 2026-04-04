@@ -589,7 +589,7 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
         usecomplex = False
 
     def _build_err_msg():
-        header = ('Arrays are not almost equal to %d decimals' % decimal)
+        header = (f'Arrays are not almost equal to {decimal} decimals')
         return build_err_msg([actual, desired], err_msg, verbose=verbose,
                              header=header)
 
@@ -712,7 +712,7 @@ def assert_approx_equal(actual, desired, significant=7, err_msg='',
         sc_actual = 0.0
     msg = build_err_msg(
         [actual, desired], err_msg,
-        header='Items are not equal to %d significant digits:' % significant,
+        header=f'Items are not equal to {significant} significant digits:',
         verbose=verbose)
     try:
         # If one of desired/actual is not finite, handle it specially here:
@@ -784,8 +784,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         if robust_any_difference(x_id, y_id):
             msg = build_err_msg(
                 [x, y],
-                err_msg + '\n%s location mismatch:'
-                % (hasval), verbose=verbose, header=header,
+                err_msg + f'\n{hasval} location mismatch:',
+                verbose=verbose, header=header,
                 names=names,
                 precision=precision)
             raise AssertionError(msg)
@@ -1222,9 +1222,8 @@ def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
 
         return z < 1.5 * 10.0**(-decimal)
 
-    assert_array_compare(compare, actual, desired, err_msg=err_msg,
-                         verbose=verbose,
-             header=('Arrays are not almost equal to %d decimals' % decimal),
+    assert_array_compare(compare, actual, desired, err_msg=err_msg, verbose=verbose,
+             header=(f'Arrays are not almost equal to {decimal} decimals'),
              precision=decimal)
 
 
@@ -1465,7 +1464,8 @@ def rundocs(filename=None, raise_on_error=True):
         runner.run(test, out=out)
 
     if runner.failures > 0 and raise_on_error:
-        raise AssertionError("Some doctests failed:\n%s" % "\n".join(msg))
+        err_msg = '\n'.join(msg)
+        raise AssertionError(f"Some doctests failed:\n{err_msg}")
 
 
 def check_support_sve(__cache=[]):
@@ -1570,7 +1570,7 @@ def decorate_methods(cls, decorator, testmatch=None):
 
     """
     if testmatch is None:
-        testmatch = re.compile(r'(?:^|[\\b_\\.%s-])[Tt]est' % os.sep)
+        testmatch = re.compile(rf'(?:^|[\\b_\\.{os.sep}-])[Tt]est')
     else:
         testmatch = re.compile(testmatch)
     cls_attr = cls.__dict__
@@ -1887,9 +1887,8 @@ def assert_array_max_ulp(a, b, maxulp=1, dtype=None):
     import numpy as np
     ret = nulp_diff(a, b, dtype)
     if not np.all(ret <= maxulp):
-        raise AssertionError("Arrays are not almost equal up to %g "
-                             "ULP (max difference is %g ULP)" %
-                             (maxulp, np.max(ret)))
+        raise AssertionError(f"Arrays are not almost equal up to {maxulp:g} "
+                             f"ULP (max difference is {np.max(ret):g} ULP)")
     return ret
 
 

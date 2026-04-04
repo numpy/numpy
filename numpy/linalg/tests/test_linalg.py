@@ -329,7 +329,8 @@ def _stride_comb_iter(x):
         xi[...] = x
         xi = xi.view(x.__class__)
         assert_(np.all(xi == x))
-        yield xi, "stride_" + "_".join(["%+d" % j for j in repeats])
+        parts = [f"{j:+}" for j in repeats]
+        yield xi, "stride_" + "_".join(parts)
 
         # generate also zero strides if possible
         if x.ndim >= 1 and x.shape[-1] == 1:
