@@ -173,7 +173,7 @@ assert_type(AR_f8.dot(1, out=B), SubClass)
 
 type _Int1D = np.ndarray[tuple[int], np.dtype[np.intp]]
 
-assert_type(AR_f8.nonzero(), tuple[_Int1D, *tuple[_Int1D, ...]])
+assert_type(AR_f8.nonzero(), tuple[_Int1D, ...])
 assert_type(AR_f8_1d.nonzero(), tuple[_Int1D])
 assert_type(AR_f8_2d.nonzero(), tuple[_Int1D, _Int1D])
 assert_type(AR_f8_3d.nonzero(), tuple[_Int1D, _Int1D, _Int1D])

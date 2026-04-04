@@ -2419,9 +2419,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 
     # keep in sync with `_core.fromnumeric.nonzero`
     @overload  # ?d  (workaround)
-    def nonzero(
-        self: ndarray[tuple[Never, Never, Never, Never]]
-    ) -> tuple[ndarray[_1D, _dtype[intp]], *tuple[ndarray[_1D, _dtype[intp]], ...]]: ...
+    def nonzero(self: ndarray[tuple[Never, Never, Never, Never]]) -> tuple[ndarray[_1D, _dtype[intp]], ...]: ...
     @overload  # 1d
     def nonzero(self: ndarray[_1D]) -> tuple[ndarray[_1D, _dtype[intp]]]: ...
     @overload  # 2d
@@ -2429,7 +2427,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d
     def nonzero(self: ndarray[_3D]) -> _3Tuple[ndarray[_1D, _dtype[intp]]]: ...
     @overload  # 3d
-    def nonzero(self) -> tuple[ndarray[_1D, _dtype[intp]], *tuple[ndarray[_1D, _dtype[intp]], ...]]: ...
+    def nonzero(self) -> tuple[ndarray[_1D, _dtype[intp]], ...]: ...
 
     @overload
     def searchsorted(

@@ -158,7 +158,7 @@ assert_type(np.ravel(AR_f4), np.ndarray[tuple[int], np.dtype[np.float32]])
 
 type _Int1D = np.ndarray[tuple[int], np.dtype[np.intp]]
 
-assert_type(np.nonzero(AR_f4), tuple[_Int1D, *tuple[_Int1D, ...]])
+assert_type(np.nonzero(AR_f4), tuple[_Int1D, ...])
 assert_type(np.nonzero(AR_f4_1d), tuple[_Int1D])
 assert_type(np.nonzero(AR_f4_2d), tuple[_Int1D, _Int1D])
 assert_type(np.nonzero(AR_f4_3d), tuple[_Int1D, _Int1D, _Int1D])

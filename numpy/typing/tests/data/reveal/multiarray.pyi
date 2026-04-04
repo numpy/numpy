@@ -199,7 +199,7 @@ assert_type(np.where([True, True, False]), tuple[_Int1D,])
 assert_type(np.where(AR_f4_1d), tuple[_Int1D])
 assert_type(np.where(AR_f4_2d), tuple[_Int1D, _Int1D])
 assert_type(np.where(AR_f4_3d), tuple[_Int1D, _Int1D, _Int1D])
-assert_type(np.where(AR_f4_nd), tuple[_Int1D, *tuple[_Int1D, ...]])
+assert_type(np.where(AR_f4_nd), tuple[_Int1D, ...])
 assert_type(np.where([True, True, False], 1, 0), npt.NDArray[Any])
 
 assert_type(np.lexsort([0, 1, 2]), npt.NDArray[np.intp])
