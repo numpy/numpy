@@ -424,8 +424,7 @@ assert_type(MAR_2d_f4.dot(1), MaskedArray[Any])
 assert_type(MAR_2d_f4.dot([1]), MaskedArray[Any])
 assert_type(MAR_2d_f4.dot(1, out=MAR_subclass), MaskedArraySubclassC)
 
-assert_type(MAR_2d_f4.nonzero(), tuple[_Array1D[np.intp], ...])
-assert_type(MAR_2d_f4.nonzero()[0], _Array1D[np.intp])
+assert_type(MAR_2d_f4.nonzero(), tuple[_Array1D[np.intp], _Array1D[np.intp]])
 
 assert_type(MAR_f8.trace(), Any)
 assert_type(MAR_f8.trace(out=MAR_subclass), MaskedArraySubclassC)

@@ -75,7 +75,7 @@ np.trace(A, axis2=[])  # type: ignore[call-overload]
 
 np.ravel(a, order="bob")  # type: ignore[call-overload]
 
-np.nonzero(0)  # type: ignore[arg-type]
+np.nonzero(0)  # type: ignore[call-overload]
 
 np.compress([True], A, axis=1.0)  # type: ignore[call-overload]
 

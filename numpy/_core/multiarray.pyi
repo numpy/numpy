@@ -185,11 +185,13 @@ _ArrayT_co = TypeVar("_ArrayT_co", bound=np.ndarray, default=np.ndarray, covaria
 type _Array[ShapeT: _Shape, ScalarT: np.generic] = ndarray[ShapeT, dtype[ScalarT]]
 type _Array1D[ScalarT: np.generic] = ndarray[tuple[int], dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = ndarray[tuple[int, int], dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = ndarray[tuple[int, int, int], dtype[ScalarT]]
 # workaround for mypy's and pyright's typing spec non-compliance regarding overloads
-type _ArrayJustND[ScalarT: np.generic] = ndarray[tuple[Never, Never, Never], dtype[ScalarT]]
+type _ArrayJustND[ScalarT: np.generic] = ndarray[tuple[Never, Never, Never, Never], dtype[ScalarT]]
 
 type _ToArray1D[ScalarT: np.generic] = _Array1D[ScalarT] | Sequence[ScalarT]
 type _ToArray2D[ScalarT: np.generic] = _Array2D[ScalarT] | Sequence[Sequence[ScalarT]]
+type _ToArray3D[ScalarT: np.generic] = _Array3D[ScalarT] | Sequence[Sequence[Sequence[ScalarT]]]
 
 # Valid time units
 type _UnitKind = L[
@@ -763,12 +765,23 @@ def dot(a: ArrayLike, b: ArrayLike, out: None = None) -> Incomplete: ...
 @overload
 def dot[OutT: np.ndarray](a: ArrayLike, b: ArrayLike, out: OutT) -> OutT: ...
 
-# keep in sync with `ma.core.where`
-@overload
-def where(condition: ArrayLike, x: None = None, y: None = None, /) -> tuple[NDArray[intp], ...]: ...
+# keep in sync with `ma.core.where` and the 1-arg overloads with `_core.fromnumeric.nonzerp`
+@overload  # (?d)  (workaround)
+def where(condition: _ArrayJustND[Any], x: None = None, y: None = None, /) -> tuple[_Array1D[np.intp], ...]: ...
+@overload  # (1d)
+def where(condition: _ToArray1D[Any], x: None = None, y: None = None, /) -> tuple[_Array1D[np.intp]]: ...
+@overload  # (2d)
+def where(condition: _ToArray2D[Any], x: None = None, y: None = None, /) -> tuple[_Array1D[np.intp], _Array1D[np.intp]]: ...
+@overload  # (3d)
+def where(
+    condition: _ToArray3D[Any], x: None = None, y: None = None, /
+) -> tuple[_Array1D[np.intp], _Array1D[np.intp], _Array1D[np.intp]]: ...
+@overload  # (Nd)  (fallback)
+def where(condition: _ArrayLike[Any], x: None = None, y: None = None, /) -> tuple[_Array1D[np.intp], ...]: ...
 @overload
 def where(condition: ArrayLike, x: ArrayLike, y: ArrayLike, /) -> NDArray[Incomplete]: ...
 
+#
 def lexsort(keys: ArrayLike, axis: SupportsIndex = -1) -> NDArray[intp]: ...
 
 def can_cast(from_: ArrayLike | DTypeLike, to: DTypeLike, casting: _CastingKind = "safe") -> bool: ...
