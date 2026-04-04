@@ -8,6 +8,7 @@ from numpy._typing import _AnyShape
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 
 class SubClass[ScalarT: np.generic](np.ndarray[_AnyShape, np.dtype[ScalarT]]): ...
 
@@ -22,7 +23,11 @@ C: list[int]
 D: SubClass[np.float64 | np.int64]
 E: IntoSubClass[np.float64 | np.int64]
 
+_f32_0d: np.float32
 _f32_1d: _Array1D[np.float32]
+_f32_2d: _Array2D[np.float32]
+_f32_3d: _Array3D[np.float32]
+
 _py_b_1d: list[bool]
 _py_b_2d: list[list[bool]]
 _py_i_1d: list[int]
@@ -270,6 +275,10 @@ assert_type(np.identity(3, dtype="complex"), np.ndarray[tuple[int, int], np.dtyp
 assert_type(np.identity(3, dtype="c16"), np.ndarray[tuple[int, int], np.dtype[np.complex128 | Any]])
 assert_type(np.identity(3, dtype="D"), np.ndarray[tuple[int, int], np.dtype[np.complex128 | Any]])
 
+assert_type(np.atleast_1d(_f32_0d), _Array1D[np.float32])
+assert_type(np.atleast_1d(_f32_1d), _Array1D[np.float32])
+assert_type(np.atleast_1d(_f32_2d), _Array2D[np.float32])
+assert_type(np.atleast_1d(_f32_3d), _Array3D[np.float32])
 assert_type(np.atleast_1d(A), npt.NDArray[np.float64])
 assert_type(np.atleast_1d(C), npt.NDArray[Any])
 assert_type(np.atleast_1d(A, A), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]])
@@ -278,10 +287,18 @@ assert_type(np.atleast_1d(C, C), tuple[npt.NDArray[Any], npt.NDArray[Any]])
 assert_type(np.atleast_1d(A, A, A), tuple[npt.NDArray[np.float64], ...])
 assert_type(np.atleast_1d(C, C, C), tuple[npt.NDArray[Any], ...])
 
+assert_type(np.atleast_2d(_f32_0d), _Array2D[np.float32])
+assert_type(np.atleast_2d(_f32_1d), _Array2D[np.float32])
+assert_type(np.atleast_2d(_f32_2d), _Array2D[np.float32])
+assert_type(np.atleast_2d(_f32_3d), _Array3D[np.float32])
 assert_type(np.atleast_2d(A), npt.NDArray[np.float64])
 assert_type(np.atleast_2d(A, A), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]])
 assert_type(np.atleast_2d(A, A, A), tuple[npt.NDArray[np.float64], ...])
 
+assert_type(np.atleast_3d(_f32_0d), _Array3D[np.float32])
+assert_type(np.atleast_3d(_f32_1d), _Array3D[np.float32])
+assert_type(np.atleast_3d(_f32_2d), _Array3D[np.float32])
+assert_type(np.atleast_3d(_f32_3d), _Array3D[np.float32])
 assert_type(np.atleast_3d(A), npt.NDArray[np.float64])
 assert_type(np.atleast_3d(A, A), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]])
 assert_type(np.atleast_3d(A, A, A), tuple[npt.NDArray[np.float64], ...])
