@@ -3618,6 +3618,24 @@ class TestMethods:
         assert_(c.base is a.base)
         assert_equal(c, b)
 
+    def test_matvec_out(self):
+        # overlapping memory
+        a = np.arange(18, dtype=float).reshape(2, 3, 3)
+        b = np.arange(6, dtype=float).reshape(2, 3)
+        expected = np.matvec(a, b)
+        c = np.matvec(a, b, out=b)
+        assert_(c is b)
+        assert_equal(c, expected)
+
+    def test_vecmat_out(self):
+        # overlapping memory
+        a = np.arange(18, dtype=float).reshape(2, 3, 3)
+        b = np.arange(6, dtype=float).reshape(2, 3)
+        expected = np.vecmat(b, a)
+        c = np.vecmat(b, a, out=b)
+        assert_(c is b)
+        assert_equal(c, expected)
+
     def test_diagonal(self):
         a = np.arange(12).reshape((3, 4))
         assert_equal(a.diagonal(), [0, 5, 10])
