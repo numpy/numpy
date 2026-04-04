@@ -4998,13 +4998,12 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
 
-    PyArrayDTypeMeta_Type.tp_base = &PyType_Type;
-    if (PyType_Ready(&PyArrayDTypeMeta_Type) < 0) {
+    if (PyArrayDTypeMeta_Type_init() < 0) {
         return -1;
     }
 
     PyArrayDescr_Type.tp_hash = PyArray_DescrHash;
-    Py_SET_TYPE(&PyArrayDescr_Type, &PyArrayDTypeMeta_Type);
+    Py_SET_TYPE(&PyArrayDescr_Type, PyArrayDTypeMeta_Type);
     if (PyType_Ready(&PyArrayDescr_Type) < 0) {
         return -1;
     }

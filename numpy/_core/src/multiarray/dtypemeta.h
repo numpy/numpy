@@ -177,6 +177,9 @@ dtypemeta_wrap_legacy_descriptor(
 NPY_NO_EXPORT void
 initialize_legacy_dtypemeta_aliases(_PyArray_LegacyDescr **_builtin_descrs);
 
+NPY_NO_EXPORT int
+PyArrayDTypeMeta_Type_init(void);
+
 /*
  * NumPy's builtin DTypes:
  */

@@ -1876,9 +1876,8 @@ typedef struct {
 } PyArray_StringDTypeObject;
 
 /*
- * PyArray_DTypeMeta related definitions.
- *
- * As of now, this API is preliminary and will be extended as necessary.
+ * PyArray_DTypeMeta related definitions. Only for internal use, should be moved
+ * away from public headers eventually
  */
 #if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
     /*
@@ -1887,18 +1886,20 @@ typedef struct {
      * Part of this (at least the size) is expected to be public API without
      * further modifications.
      */
-    /* TODO: Make this definition public in the API, as soon as its settled */
-    NPY_NO_EXPORT extern PyTypeObject PyArrayDTypeMeta_Type;
+    /*
+     * This is made public in _public_dtype_api_table.h via the PyArray_API table,
+     * but there it is a dereferenced pointer
+     */
+    NPY_NO_EXPORT extern PyTypeObject *PyArrayDTypeMeta_Type;
 
     /*
      * While NumPy DTypes would not need to be heap types the plan is to
      * make DTypes available in Python at which point they will be heap types.
+     *
      * Since we also wish to add fields to the DType class, this looks like
      * a typical instance definition, but with PyHeapTypeObject instead of
      * only the PyObject_HEAD.
-     * This must only be exposed very extremely careful consideration, since
-     * it is a fairly complex construct which may be better to allow
-     * refactoring of.
+     * This is exposed in dtype_api.h
      */
     typedef struct {
         PyHeapTypeObject super;

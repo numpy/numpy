@@ -1011,7 +1011,7 @@ init_string_dtype(void)
     };
 
     /* Loaded dynamically, so needs to be set here: */
-    ((PyObject *)&PyArray_StringDType)->ob_type = &PyArrayDTypeMeta_Type;
+    ((PyObject *)&PyArray_StringDType)->ob_type = PyArrayDTypeMeta_Type;
     ((PyTypeObject *)&PyArray_StringDType)->tp_base = &PyArrayDescr_Type;
     if (PyType_Ready((PyTypeObject *)&PyArray_StringDType) < 0) {
         return -1;

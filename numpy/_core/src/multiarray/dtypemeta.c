@@ -1143,7 +1143,7 @@ dtypemeta_wrap_legacy_descriptor(
      */
     static PyArray_DTypeMeta prototype = {
         {{
-            PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
+            PyVarObject_HEAD_INIT(NULL, 0)
             .tp_name = NULL,  /* set below */
             .tp_basicsize = sizeof(_PyArray_LegacyDescr),
             .tp_flags = Py_TPFLAGS_DEFAULT,
@@ -1155,6 +1155,7 @@ dtypemeta_wrap_legacy_descriptor(
         /* Further fields are not common between DTypes */
     };
     memcpy(dtype_class, &prototype, sizeof(PyArray_DTypeMeta));
+    Py_SET_TYPE((PyTypeObject *)dtype_class, PyArrayDTypeMeta_Type);
     /* Fix name and superclass of the Type*/
     ((PyTypeObject *)dtype_class)->tp_name = name;
     ((PyTypeObject *)dtype_class)->tp_base = dtype_super_class,
@@ -1305,6 +1306,28 @@ dtypemeta_get_is_numeric(PyArray_DTypeMeta *self, void *NPY_UNUSED(ignored)) {
     return PyBool_FromLong(NPY_DT_is_numeric(self));
 }
 
+static PyObject *
+dtypemeta_getattro(PyObject *self, PyObject *name)
+{
+    /*
+     * Legacy (non-heap) DType types store their module in tp_name as
+     * "module.classname" (e.g. "numpy.dtypes.TimeDelta64DType"), but their
+     * MRO does not include PyType_Type so type.__module__'s data descriptor
+     * is never found during attribute lookup, causing __module__ to fall back
+     * to the string stored in _DTypeMeta's tp_dict by PyType_FromSpecWithBases.
+     * Intercept here and compute the correct module from tp_name.
+     * TODO: remove this after converting all legacy DTypes to heap types.
+     */
+    if (PyUnicode_CompareWithASCIIString(name, "__module__") == 0
+            && !(((PyTypeObject *)self)->tp_flags & Py_TPFLAGS_HEAPTYPE)) {
+        const char *tp_name = ((PyTypeObject *)self)->tp_name;
+        const char *dot = strrchr(tp_name, '.');
+        assert(dot != NULL);
+        return PyUnicode_FromStringAndSize(tp_name, dot - tp_name);
+    }
+    return PyType_Type.tp_getattro(self, name);
+}
+
 /*
  * Simple exposed information, defined for each DType (class).
  */
@@ -1363,23 +1386,41 @@ initialize_legacy_dtypemeta_aliases(_PyArray_LegacyDescr **_builtin_descrs) {
     _Void_dtype = NPY_DTYPE(_builtin_descrs[NPY_VOID]);
 }
 
-NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy._DTypeMeta",
-    .tp_basicsize = sizeof(PyArray_DTypeMeta),
-    .tp_dealloc = (destructor)dtypemeta_dealloc,
+static PyType_Slot dtypemeta_slots[] = {
+    {Py_tp_dealloc, (void *)dtypemeta_dealloc},
     /* Types are garbage collected (see dtypemeta_is_gc documentation) */
-    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
-    .tp_doc = "Preliminary NumPy API: The Type of NumPy DTypes (metaclass)",
-    .tp_traverse = (traverseproc)dtypemeta_traverse,
-    .tp_members = dtypemeta_members,
-    .tp_getset = dtypemeta_getset,
-    .tp_base = NULL,  /* set to PyType_Type at import time */
-    .tp_init = (initproc)dtypemeta_init,
-    .tp_alloc = dtypemeta_alloc,
-    .tp_new = dtypemeta_new,
-    .tp_is_gc = dtypemeta_is_gc,
+    {Py_tp_traverse, (void *)dtypemeta_traverse},
+    {Py_tp_members, (void *)dtypemeta_members},
+    {Py_tp_getset, (void *)dtypemeta_getset},
+    {Py_tp_getattro, (void *)dtypemeta_getattro},
+    {Py_tp_init, (void *)dtypemeta_init},
+    {Py_tp_alloc, (void *)dtypemeta_alloc},
+    {Py_tp_new, (void *)dtypemeta_new},
+    {Py_tp_is_gc, (void *)dtypemeta_is_gc},
+    {Py_tp_doc, (void *)"Preliminary NumPy API: The Type of NumPy DTypes (metaclass)"},
+    {0, NULL},
 };
+
+static PyType_Spec dtypemeta_spec = {
+    .name = "numpy._DTypeMeta",
+    .basicsize = sizeof(PyArray_DTypeMeta),
+    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_IMMUTABLETYPE,
+    .slots = dtypemeta_slots,
+};
+
+NPY_NO_EXPORT PyTypeObject *PyArrayDTypeMeta_Type = NULL;
+
+NPY_NO_EXPORT int
+PyArrayDTypeMeta_Type_init(void) {
+    PyObject *bases = PyTuple_Pack(1, &PyType_Type);
+    if (bases == NULL) {
+        return -1;
+    }
+    PyArrayDTypeMeta_Type = (PyTypeObject *)PyType_FromSpecWithBases(
+            &dtypemeta_spec, bases);
+    Py_DECREF(bases);
+    return (PyArrayDTypeMeta_Type != NULL) ? 0 : -1;
+}
 
 PyArray_DTypeMeta *_Bool_dtype = NULL;
 PyArray_DTypeMeta *_Byte_dtype = NULL;
