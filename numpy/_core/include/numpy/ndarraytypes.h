@@ -916,12 +916,20 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  */
 
 /*
- * If set, the array owns the data: it will be free'd when the array
- * is deleted.
+ * If set, the array owns the data: if the data is not stored on the
+ * instance, it will be free'd when the array is deleted.
  *
  * This flag may be tested for in PyArray_FLAGS(arr).
  */
 #define NPY_ARRAY_OWNDATA         0x0004
+
+/*
+ * If set, the data is stored on the array instance.
+ *
+ * This flag may be tested for in PyArray_FLAGS(arr).
+ * (MAYBE: allow it to be requested as well?)
+ */
+#define NPY_ARRAY_DATAONINSTANCE  0x0008
 
 /*
  * An array never has the next four set; they're only used as parameter
