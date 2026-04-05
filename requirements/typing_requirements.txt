@@ -2,5 +2,5 @@
 
 -r test_requirements.txt
 
-mypy==1.19.1
+mypy==1.20.0
 pyrefly==0.58.0
