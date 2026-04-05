@@ -1,6 +1,7 @@
 import datetime
 import pickle
 import warnings
+from typing import Final
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import pytest
@@ -34,6 +35,9 @@ def _assert_equal_hash(v1, v2):
 
 
 class TestDateTime:
+    generic_unit_deprecation_message: Final[str] = (
+        "The 'generic' unit for NumPy timedelta is deprecated"
+    )
 
     def test_string(self):
         msg = "no explicit representation of timezones available for " \
@@ -204,7 +208,7 @@ class TestDateTime:
         # regression tests for gh-6452
         with pytest.warns(
             DeprecationWarning,
-            match="Using 'generic' unit for NumPy timedelta is deprecated",
+            match=self.generic_unit_deprecation_message,
         ):
             assert_(
                 np.datetime64("NaT") != np.datetime64("2000") + np.timedelta64("NaT")
@@ -396,7 +400,7 @@ class TestDateTime:
         else:
             with pytest.warns(
                 DeprecationWarning,
-                match="Using 'generic' unit for NumPy timedelta is deprecated",
+                match=self.generic_unit_deprecation_message
             ):
                 assert_equal(np.timedelta64(np.int64(123)), np.timedelta64(123))
 
@@ -409,7 +413,7 @@ class TestDateTime:
 
         with pytest.warns(
             DeprecationWarning,
-            match="Using 'generic' unit for NumPy timedelta is deprecated",
+            match=self.generic_unit_deprecation_message,
         ):
             # Default construction means 0
             assert_equal(np.timedelta64(), np.timedelta64(0))
@@ -421,7 +425,7 @@ class TestDateTime:
         assert_equal(str(np.timedelta64('NaT', 'ns')), 'NaT')
         with pytest.warns(
             DeprecationWarning,
-            match="Using 'generic' unit for NumPy timedelta is deprecated",
+            match=self.generic_unit_deprecation_message,
         ):
             assert_equal(repr(np.timedelta64("NaT")), "np.timedelta64('NaT')")
         assert_equal(str(np.timedelta64(3, 's')), '3 seconds')
@@ -430,7 +434,7 @@ class TestDateTime:
 
         with pytest.warns(
             DeprecationWarning,
-            match="Using 'generic' unit for NumPy timedelta is deprecated",
+            match=self.generic_unit_deprecation_message,
         ):
             assert_equal(repr(np.timedelta64(12)),
                         "np.timedelta64(12)")
@@ -521,7 +525,7 @@ class TestDateTime:
         # gh-17552
         with pytest.warns(
             DeprecationWarning,
-            match="Using 'generic' unit for NumPy timedelta is deprecated",
+            match=self.generic_unit_deprecation_message,
         ):
             assert_equal('NaT', f'{np.timedelta64("nat")}')
 
@@ -872,7 +876,7 @@ class TestDateTime:
         # Regression test for gh-29497.
         with pytest.warns(
             DeprecationWarning,
-            match="Using 'generic' unit for NumPy timedelta is deprecated",
+            match=self.generic_unit_deprecation_message,
         ):
             x = np.array(
                 [
@@ -1185,7 +1189,7 @@ class TestDateTime:
 
             with pytest.warns(
                 DeprecationWarning,
-                match="Using 'generic' unit for NumPy timedelta is deprecated",
+                match=self.generic_unit_deprecation_message,
             ):
                 # m8 + bool
                 assert_equal(tdb + True, tdb + 1)
@@ -1265,7 +1269,7 @@ class TestDateTime:
             assert_equal((tdb - tda).dtype, np.dtype("m8[h]"))
             with pytest.warns(
                 DeprecationWarning,
-                match="Using 'generic' unit for NumPy timedelta is deprecated",
+                match=self.generic_unit_deprecation_message,
             ):
                 # m8 - bool
                 assert_equal(tdc - True, tdc - 1)
@@ -1404,7 +1408,7 @@ class TestDateTime:
     def test_generic_timedelta_floor_divide(self):
         with pytest.warns(
             DeprecationWarning,
-            match="Using 'generic' unit for NumPy timedelta is deprecated",
+            match=self.generic_unit_deprecation_message,
         ):
             assert_equal(np.timedelta64(1890) // np.timedelta64(31), 60)
 
@@ -1439,7 +1443,7 @@ class TestDateTime:
     def test_timedelta_floor_div_precision(self, val1, val2):
         with pytest.warns(
             DeprecationWarning,
-            match="Using 'generic' unit for NumPy timedelta is deprecated",
+            match=self.generic_unit_deprecation_message,
         ):
             op1 = np.timedelta64(val1)
             op2 = np.timedelta64(val2)
@@ -1491,7 +1495,7 @@ class TestDateTime:
     def test_generic_timedelta_divmod(self, op1, op2):
         with pytest.warns(
             DeprecationWarning,
-            match="Using 'generic' unit for NumPy timedelta is deprecated",
+            match=self.generic_unit_deprecation_message,
         ):
             op1 = np.timedelta64(op1)
             op2 = np.timedelta64(op2)
@@ -1580,7 +1584,7 @@ class TestDateTime:
                 'ignore', r".*encountered in divide", RuntimeWarning)
             warnings.filterwarnings(
                 "ignore",
-                "Using 'generic' unit for NumPy timedelta is deprecated",
+                self.generic_unit_deprecation_message,
                 DeprecationWarning,
             )
             nat = np.timedelta64('NaT', 's')
@@ -2048,7 +2052,7 @@ class TestDateTime:
 
         with pytest.warns(
             DeprecationWarning,
-            match="Using 'generic' unit for NumPy timedelta is deprecated",
+            match=self.generic_unit_deprecation_message,
         ):
             # Unit should be detected as months here
             a = np.arange("1969-05", "1970-05", 2, dtype="M8")
@@ -2756,7 +2760,7 @@ class TestDateTime:
     def test_timedelta_hash_generic(self):
         with pytest.warns(
             DeprecationWarning,
-            match="Using 'generic' unit for NumPy timedelta is deprecated",
+            match=self.generic_unit_deprecation_message,
         ):
             assert_raises(ValueError, hash, np.timedelta64(123))  # generic
 

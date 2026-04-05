@@ -434,7 +434,7 @@ class TestEqual(TestArrayEqual):
         # not a timedelta
         with pytest.warns(
             DeprecationWarning,
-            match="Using 'generic' unit for NumPy timedelta is deprecated",
+            match="The 'generic' unit for NumPy timedelta is deprecated",
         ):
             natd_no_unit = np.timedelta64("NaT")
         natd_s = np.timedelta64("NaT", "s")
@@ -1343,7 +1343,7 @@ class TestAssertAllclose:
         # see gh-18286
         with pytest.warns(
             DeprecationWarning,
-            match="Using 'generic' unit for NumPy timedelta is deprecated",
+            match="The 'generic' unit for NumPy timedelta is deprecated",
         ):
             a = np.array([[1, 2, 3, "NaT"]], dtype="m8[ns]")
             assert_allclose(a, a)
