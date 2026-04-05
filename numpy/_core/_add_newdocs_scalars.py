@@ -32,22 +32,52 @@ possible_aliases = numeric_type_aliases([
     ('int8', '8-bit signed integer (``-128`` to ``127``)'),
     ('int16', '16-bit signed integer (``-32_768`` to ``32_767``)'),
     ('int32', '32-bit signed integer (``-2_147_483_648`` to ``2_147_483_647``)'),
-    ('int64', '64-bit signed integer (``-9_223_372_036_854_775_808`` to ``9_223_372_036_854_775_807``)'),
-    ('intp', 'Signed integer large enough to fit pointer, compatible with C ``intptr_t``'),
+    (
+        'int64',
+        '64-bit signed integer (``-9_223_372_036_854_775_808`` to ``9_223_372_036_854_775_807``)'  # noqa: E501
+    ),
+    (
+        'intp',
+        'Signed integer large enough to fit pointer, compatible with C ``intptr_t``'
+    ),
     ('uint8', '8-bit unsigned integer (``0`` to ``255``)'),
     ('uint16', '16-bit unsigned integer (``0`` to ``65_535``)'),
     ('uint32', '32-bit unsigned integer (``0`` to ``4_294_967_295``)'),
     ('uint64', '64-bit unsigned integer (``0`` to ``18_446_744_073_709_551_615``)'),
-    ('uintp', 'Unsigned integer large enough to fit pointer, compatible with C ``uintptr_t``'),
-    ('float16', '16-bit-precision floating-point number type: sign bit, 5 bits exponent, 10 bits mantissa'),
-    ('float32', '32-bit-precision floating-point number type: sign bit, 8 bits exponent, 23 bits mantissa'),
-    ('float64', '64-bit precision floating-point number type: sign bit, 11 bits exponent, 52 bits mantissa'),
+    (
+        'uintp',
+        'Unsigned integer large enough to fit pointer, compatible with C ``uintptr_t``'
+    ),
+    (
+        'float16',
+        '16-bit-precision floating-point number type: sign bit, 5 bits exponent, 10 bits mantissa'  # noqa: E501
+    ),
+    (
+        'float32',
+        '32-bit-precision floating-point number type: sign bit, 8 bits exponent, 23 bits mantissa'  # noqa: E501
+    ),
+    (
+        'float64',
+        '64-bit precision floating-point number type: sign bit, 11 bits exponent, 52 bits mantissa'  # noqa: E501
+    ),
     ('float96', '96-bit extended-precision floating-point number type'),
     ('float128', '128-bit extended-precision floating-point number type'),
-    ('complex64', 'Complex number type composed of 2 32-bit-precision floating-point numbers'),
-    ('complex128', 'Complex number type composed of 2 64-bit-precision floating-point numbers'),
-    ('complex192', 'Complex number type composed of 2 96-bit extended-precision floating-point numbers'),
-    ('complex256', 'Complex number type composed of 2 128-bit extended-precision floating-point numbers'),
+    (
+        'complex64',
+        'Complex number type composed of 2 32-bit-precision floating-point numbers'
+    ),
+    (
+        'complex128',
+        'Complex number type composed of 2 64-bit-precision floating-point numbers'
+    ),
+    (
+        'complex192',
+        'Complex number type composed of 2 96-bit extended-precision floating-point numbers'  # noqa: E501
+    ),
+    (
+        'complex256',
+        'Complex number type composed of 2 128-bit extended-precision floating-point numbers'  # noqa: E501
+    ),
 ])
 
 
@@ -171,7 +201,8 @@ Single-precision floating-point number type, compatible with C ``float``.
 """)
 
 add_newdoc_for_scalar_type('double', '(value=0, /)', """
-Double-precision floating-point number type, compatible with Python :class:`float` and C ``double``.
+Double-precision floating-point number type, compatible with Python :class:`float`
+and C ``double``.
 """)
 
 add_newdoc_for_scalar_type('longdouble', '(value=0, /)', """
