@@ -47,6 +47,7 @@ from numpy._typing import (
     _BoolLike_co,
     _ComplexLike_co,
     _DTypeLike,
+    _FloatLike_co,
     _IntLike_co,
     _NestedSequence,
     _NumberLike_co,
@@ -816,100 +817,6 @@ def clip(
     **kwargs: Unpack[_UFuncKwargs],
 ) -> Any: ...
 
-@overload
-def sum[ScalarT: np.generic](
-    a: _ArrayLike[ScalarT],
-    axis: None = None,
-    dtype: None = None,
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-    initial: _NumberLike_co | _NoValueType = ...,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> ScalarT: ...
-@overload
-def sum[ScalarT: np.generic](
-    a: _ArrayLike[ScalarT],
-    axis: None = None,
-    dtype: None = None,
-    out: None = None,
-    keepdims: bool | _NoValueType = ...,
-    initial: _NumberLike_co | _NoValueType = ...,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> ScalarT | NDArray[ScalarT]: ...
-@overload
-def sum[ScalarT: np.generic](
-    a: ArrayLike,
-    axis: None,
-    dtype: _DTypeLike[ScalarT],
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-    initial: _NumberLike_co | _NoValueType = ...,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> ScalarT: ...
-@overload
-def sum[ScalarT: np.generic](
-    a: ArrayLike,
-    axis: None = None,
-    *,
-    dtype: _DTypeLike[ScalarT],
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-    initial: _NumberLike_co | _NoValueType = ...,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> ScalarT: ...
-@overload
-def sum[ScalarT: np.generic](
-    a: ArrayLike,
-    axis: _ShapeLike | None,
-    dtype: _DTypeLike[ScalarT],
-    out: None = None,
-    keepdims: bool | _NoValueType = ...,
-    initial: _NumberLike_co | _NoValueType = ...,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> ScalarT | NDArray[ScalarT]: ...
-@overload
-def sum[ScalarT: np.generic](
-    a: ArrayLike,
-    axis: _ShapeLike | None = None,
-    *,
-    dtype: _DTypeLike[ScalarT],
-    out: None = None,
-    keepdims: bool | _NoValueType = ...,
-    initial: _NumberLike_co | _NoValueType = ...,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> ScalarT | NDArray[ScalarT]: ...
-@overload
-def sum(
-    a: ArrayLike,
-    axis: _ShapeLike | None = None,
-    dtype: DTypeLike | None = None,
-    out: None = None,
-    keepdims: bool | _NoValueType = ...,
-    initial: _NumberLike_co | _NoValueType = ...,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> Any: ...
-@overload
-def sum[ArrayT: np.ndarray](
-    a: ArrayLike,
-    axis: _ShapeLike | None,
-    dtype: DTypeLike | None,
-    out: ArrayT,
-    keepdims: bool | _NoValueType = ...,
-    initial: _NumberLike_co | _NoValueType = ...,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> ArrayT: ...
-@overload
-def sum[ArrayT: np.ndarray](
-    a: ArrayLike,
-    axis: _ShapeLike | None = None,
-    dtype: DTypeLike | None = None,
-    *,
-    out: ArrayT,
-    keepdims: bool | _NoValueType = ...,
-    initial: _NumberLike_co | _NoValueType = ...,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> ArrayT: ...
-
 # keep in sync with `any`
 @overload
 def all(
@@ -1646,6 +1553,248 @@ def around[ArrayT: np.ndarray](
     *,
     out: ArrayT,
 ) -> ArrayT: ...
+
+#
+@overload  # bool_ | +builtins.int
+def sum(
+    a: _DualArrayLike[np.dtype[np.bool], int],
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _IntLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.int_: ...
+@overload  # bool_ | +builtins.int, axis: <given>
+def sum(
+    a: _DualArrayLike[np.dtype[np.bool], int],
+    axis: int | tuple[int, ...],
+    dtype: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _IntLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.int_]: ...
+@overload  # bool_, keepdims=True
+def sum[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.bool]],
+    axis: int | tuple[int, ...] | None = None,
+    dtype: None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+    initial: _IntLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.ndarray[ShapeT, np.dtype[np.int_]]: ...
+@overload  # ~builtins.float
+def sum(
+    a: _NestedSequence[list[float]] | list[float],
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _FloatLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.float64: ...
+@overload  # ~builtins.float, axis: <given>
+def sum(
+    a: _NestedSequence[list[float]] | list[float],
+    axis: int | tuple[int, ...],
+    dtype: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _FloatLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.float64]: ...
+@overload  # ~builtins.float, keepdims=True
+def sum(
+    a: _NestedSequence[list[float]] | list[float],
+    axis: int | tuple[int, ...] | None = None,
+    dtype: None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+    initial: _FloatLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.float64]: ...
+@overload  # ~builtins.complex
+def sum(
+    a: _NestedSequence[list[complex]] | list[complex],
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.complex128: ...
+@overload  # ~builtins.complex, axis: <given>
+def sum(
+    a: _NestedSequence[list[complex]] | list[complex],
+    axis: int | tuple[int, ...],
+    dtype: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.complex128]: ...
+@overload  # ~builtins.complex, keepdims=True
+def sum(
+    a: _NestedSequence[list[complex]] | list[complex],
+    axis: int | tuple[int, ...] | None = None,
+    dtype: None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.complex128]: ...
+@overload  # object_
+def sum(
+    a: _SupportsArray[np.dtype[np.object_]],
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> Any: ...
+@overload  # ~number | timedelta64
+def sum[ScalarT: np.number | np.timedelta64](
+    a: _ArrayLike[ScalarT],
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> ScalarT: ...
+@overload  # ~number | timedelta64 | object_, axis: <given>
+def sum[ScalarT: np.number | np.timedelta64 | np.object_](
+    a: _ArrayLike[ScalarT],
+    axis: int | tuple[int, ...],
+    dtype: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[ScalarT]: ...
+@overload  # ~number | timedelta64 | object_, keepdims=True
+def sum[ArrayT: NDArray[np.number | np.timedelta64 | np.object_]](
+    a: ArrayT,
+    axis: int | tuple[int, ...] | None = None,
+    dtype: None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> ArrayT: ...
+@overload  # dtype: ScalarT
+def sum[ScalarT: np.generic](
+    a: _ArrayLikeNumeric_co,
+    axis: None = None,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> ScalarT: ...
+@overload  # dtype: ScalarT (keyword), keepdims=True
+def sum[ShapeT: _Shape, ScalarT: np.generic](
+    a: np.ndarray[ShapeT, np.dtype[np.number | np.bool | np.timedelta64 | np.object_]],
+    axis: int | tuple[int, ...] | None = None,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    out: None = None,
+    keepdims: Literal[True],
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # dtype: ScalarT (positional), keepdims=True
+def sum[ShapeT: _Shape, ScalarT: np.generic](
+    a: np.ndarray[ShapeT, np.dtype[np.number | np.bool | np.timedelta64 | np.object_]],
+    axis: int | tuple[int, ...] | None,
+    dtype: _DTypeLike[ScalarT],
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # dtype: ScalarT (keyword), keepdims=True
+def sum[ScalarT: np.generic](
+    a: _ArrayLikeNumeric_co,
+    axis: int | tuple[int, ...] | None = None,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    out: None = None,
+    keepdims: Literal[True],
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[ScalarT]: ...
+@overload  # axis: <given>, dtype: ScalarT
+def sum[ScalarT: np.generic](
+    a: _ArrayLikeNumeric_co,
+    axis: int | tuple[int, ...],
+    dtype: _DTypeLike[ScalarT],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[ScalarT]: ...
+@overload  # out: ArrayT (keyword)
+def sum[ArrayT: np.ndarray](
+    a: _ArrayLikeNumeric_co,
+    axis: int | tuple[int, ...] | None = None,
+    dtype: DTypeLike | None = None,
+    *,
+    out: ArrayT,
+    keepdims: bool | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> ArrayT: ...
+@overload  # out: ArrayT (positional)
+def sum[ArrayT: np.ndarray](
+    a: _ArrayLikeNumeric_co,
+    axis: int | tuple[int, ...] | None,
+    dtype: DTypeLike | None,
+    out: ArrayT,
+    keepdims: bool | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> ArrayT: ...
+@overload  # fallback
+def sum(
+    a: _ArrayLikeNumeric_co,
+    axis: None = None,
+    dtype: DTypeLike | None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> Any: ...
+@overload  # fallback, axis: <given>
+def sum(
+    a: _ArrayLikeNumeric_co,
+    axis: int | tuple[int, ...],
+    dtype: DTypeLike | None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[Any]: ...
+@overload  # fallback, keepdims=True
+def sum(
+    a: _ArrayLikeNumeric_co,
+    axis: int | tuple[int, ...] | None = None,
+    dtype: DTypeLike | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[Any]: ...
 
 #
 @overload  # +integer | ~object_ | +builtins.float
