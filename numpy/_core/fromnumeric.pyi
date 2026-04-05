@@ -1,4 +1,4 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete, SupportsBool
 from collections.abc import Sequence
 from typing import (
     Any,
@@ -136,6 +136,16 @@ type _ToArray3D[ScalarT: np.generic] = _Array3D[ScalarT] | Sequence[Sequence[Seq
 
 type _ArrayLikeMultiplicative_co = _DualArrayLike[np.dtype[np.number | np.bool | np.object_], complex]
 type _ArrayLikeNumeric_co = _DualArrayLike[np.dtype[np.number | np.bool | np.object_ | np.timedelta64], complex]
+
+@type_check_only
+class _CanLE(Protocol):
+    def __le__(self, other: Any, /) -> SupportsBool: ...
+
+@type_check_only
+class _CanGE(Protocol):
+    def __ge__(self, other: Any, /) -> SupportsBool: ...
+
+type _Orderable = _CanLE | _CanGE
 
 ###
 
@@ -1377,9 +1387,37 @@ def amax(
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> Any: ...
+@overload  # sequence of orderable non-array-likes
+def amax[T: _Orderable](
+    a: _NestedSequence[T],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> T: ...
+@overload  # sequence of orderable non-array-likes, axis: <given>
+def amax(
+    a: _NestedSequence[_Orderable],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.object_]: ...
+@overload  # sequence of orderable non-array-likes, keepdims=True
+def amax(
+    a: _NestedSequence[_Orderable],
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.object_]: ...
 @overload  # out: ArrayT
 def amax[ArrayT: np.ndarray](
-    a: _ArrayLikeNumeric_co,
+    a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
     axis: int | tuple[int, ...] | None = None,
     *,
     out: ArrayT,
@@ -1568,9 +1606,37 @@ def amin(
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> Any: ...
+@overload  # sequence of orderable non-array-likes
+def amin[T: _Orderable](
+    a: _NestedSequence[T],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> T: ...
+@overload  # sequence of orderable non-array-likes, axis: <given>
+def amin(
+    a: _NestedSequence[_Orderable],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.object_]: ...
+@overload  # sequence of orderable non-array-likes, keepdims=True
+def amin(
+    a: _NestedSequence[_Orderable],
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.object_]: ...
 @overload  # out: ArrayT
 def amin[ArrayT: np.ndarray](
-    a: _ArrayLikeNumeric_co,
+    a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
     axis: int | tuple[int, ...] | None = None,
     *,
     out: ArrayT,

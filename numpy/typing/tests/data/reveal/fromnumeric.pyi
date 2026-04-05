@@ -31,6 +31,8 @@ f4: np.float32
 i8: np.int64
 f: float
 
+_dtype_list: list[np.dtype]
+
 # integer‑dtype subclass for argmin/argmax
 class NDArrayIntSubclass(np.ndarray[tuple[Any, ...], np.dtype[np.intp]]): ...
 AR_sub_i: NDArrayIntSubclass
@@ -283,6 +285,9 @@ assert_type(np.amax(AR_f4, out=AR_subclass), NDArraySubclass)
 assert_type(np.amax(AR_nd), Any)
 assert_type(np.amax(AR_nd, axis=1), np.ndarray)
 assert_type(np.amax(AR_nd, keepdims=True), np.ndarray)
+assert_type(np.amax(_dtype_list), np.dtype)
+assert_type(np.amax(_dtype_list, axis=1), npt.NDArray[np.object_])
+assert_type(np.amax(_dtype_list, keepdims=True), npt.NDArray[np.object_])
 
 # same as above
 assert_type(np.amin(AR_i8), np.int64)
@@ -308,6 +313,9 @@ assert_type(np.amin(AR_f4, out=AR_subclass), NDArraySubclass)
 assert_type(np.amin(AR_nd), Any)
 assert_type(np.amin(AR_nd, axis=1), np.ndarray)
 assert_type(np.amin(AR_nd, keepdims=True), np.ndarray)
+assert_type(np.amin(_dtype_list), np.dtype)
+assert_type(np.amin(_dtype_list, axis=1), npt.NDArray[np.object_])
+assert_type(np.amin(_dtype_list, keepdims=True), npt.NDArray[np.object_])
 
 assert_type(np.cumprod(b), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(np.cumprod(f4), np.ndarray[tuple[int], np.dtype[np.float32]])
