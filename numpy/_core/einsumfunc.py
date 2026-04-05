@@ -968,7 +968,7 @@ def _parse_eq_to_pure_multiplication(a_term, shape_a, b_term, shape_b, out):
 @functools.lru_cache(2**12)
 def _parse_eq_to_batch_matmul(eq, shape_a, shape_b):
     """Cached parsing of a two term einsum equation into the necessary
-    sequence of arguments for contracttion via batched matrix multiplication.
+    sequence of arguments for contraction via batched matrix multiplication.
     The steps we need to specify are:
 
         1. Remove repeated and trivial indices from the left and right terms,
