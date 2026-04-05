@@ -895,6 +895,12 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
         Py_XDECREF(typec);
         return NULL;
     }
+    if (typenum >= NPY_NTYPES_LEGACY) {
+    PyErr_SetString(PyExc_TypeError,
+        "inner() does not support user-defined dtypes. "
+        "Consider using '@' (matmul), np.vecdot, np.matvec, or np.vecmat instead.");
+    return NULL;
+    }
 
     if (typec == NULL) {
         typec = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
@@ -989,6 +995,12 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &typec) < 0) {
         Py_XDECREF(typec);
         return NULL;
+    }
+    if (typenum >= NPY_NTYPES_LEGACY) {
+    PyErr_SetString(PyExc_TypeError,
+        "dot() does not support user-defined dtypes. "
+        "Consider using '@' (matmul), np.vecdot, np.matvec, or np.vecmat instead.");
+    return NULL;
     }
 
     if (typec == NULL) {
@@ -1331,6 +1343,12 @@ PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
         Py_XDECREF(typec);
         return NULL;
     }
+    if (typenum >= NPY_NTYPES_LEGACY) {
+    PyErr_SetString(PyExc_TypeError,
+        "correlate() does not support user-defined dtypes. "
+        "Consider using '@' (matmul), np.vecdot, np.matvec, or np.vecmat instead.");
+    return NULL;
+    }
 
     if (typec == NULL) {
         typec = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
@@ -1410,6 +1428,12 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
     if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &typec) < 0) {
         Py_XDECREF(typec);
         return NULL;
+    }
+    if (typenum >= NPY_NTYPES_LEGACY) {
+    PyErr_SetString(PyExc_TypeError,
+        "correlate() does not support user-defined dtypes. "
+        "Consider using '@' (matmul), np.vecdot, np.matvec, or np.vecmat instead.");
+    return NULL;
     }
 
     if (typec == NULL) {
@@ -2617,6 +2641,12 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
     if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &type) < 0) {
         Py_XDECREF(type);
         return NULL;
+    }
+    if (typenum >= NPY_NTYPES_LEGACY) {
+    PyErr_SetString(PyExc_TypeError,
+        "vdot() does not support user-defined dtypes. "
+        "Consider using '@' (matmul), np.vecdot, np.matvec, or np.vecmat instead.");
+    return NULL;
     }
 
     if (type == NULL) {
