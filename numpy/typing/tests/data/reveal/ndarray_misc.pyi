@@ -7,6 +7,7 @@ function-based counterpart in `../from_numeric.py`.
 """
 
 import ctypes as ct
+import datetime as dt
 import operator
 from collections.abc import Iterator
 from types import ModuleType
@@ -20,7 +21,13 @@ class SubClass(np.ndarray[tuple[Any, ...], np.dtype[np.object_]]): ...
 
 f8: np.float64
 i8: np.int64
+b1: np.bool
+m8_ns: np.timedelta64[int]
+m8_ms: np.timedelta64[dt.timedelta]
+m8_na: np.timedelta64[None]
+
 B: SubClass
+
 AR_f8: npt.NDArray[np.float64]
 AR_i8: npt.NDArray[np.int64]
 AR_u1: npt.NDArray[np.uint8]
@@ -108,8 +115,10 @@ assert_type(AR_f8.max(axis=0), Any)
 assert_type(AR_f8.max(keepdims=True), Any)
 assert_type(AR_f8.max(out=B), SubClass)
 
-# same as below
-assert_type(f8.prod(), Any)
+# same as below (but without `timedelta64`)
+assert_type(b1.prod(), np.int_)
+assert_type(i8.prod(), np.int64)
+assert_type(f8.prod(), np.float64)
 assert_type(AR_i8.prod(), np.int64)
 assert_type(AR_i8.prod(keepdims=True), npt.NDArray[np.int64])
 assert_type(AR_i8.prod(axis=0), npt.NDArray[np.int64])
@@ -132,8 +141,13 @@ assert_type(AR_f8_2d.prod(dtype=np.float32, axis=0), npt.NDArray[np.float32])
 assert_type(AR_f8_2d.prod(dtype=np.float32, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 assert_type(AR_f8_2d.prod(dtype=np.float32, axis=0, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 
-# same as above
-assert_type(f8.sum(), Any)
+# same as above (but also accept `timedelta64`)
+assert_type(b1.sum(), np.int_)
+assert_type(i8.sum(), np.int64)
+assert_type(f8.sum(), np.float64)
+assert_type(m8_ns.sum(), np.timedelta64[int])
+assert_type(m8_ms.sum(), np.timedelta64[dt.timedelta])
+assert_type(m8_na.sum(), np.timedelta64[None])
 assert_type(AR_i8.sum(), np.int64)
 assert_type(AR_i8.sum(keepdims=True), npt.NDArray[np.int64])
 assert_type(AR_i8.sum(axis=0), npt.NDArray[np.int64])

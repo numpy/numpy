@@ -4947,6 +4947,100 @@ class number(generic[_NumberItemT_co], Generic[_NBitT, _NumberItemT_co]):
     @overload
     def __ge__(self, other: _SupportsLE, /) -> bool_: ...
 
+    # keep in sync with `number.sum`
+    @override  # type: ignore[override]
+    @overload  # out: None (default)
+    def prod(
+        self,
+        axis: _ShapeLike | None = None,
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> Self: ...
+    @overload  # dtype: <given> (keyword)
+    def prod(
+        self,
+        axis: _ShapeLike | None = None,
+        *,
+        dtype: DTypeLike,
+        out: None = None,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> Any: ...
+    @overload  # dtype: <given>  (positional)
+    def prod(
+        self,
+        axis: _ShapeLike | None,
+        dtype: DTypeLike,
+        out: None = None,
+        *,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> Any: ...
+    @overload  # out: <given>
+    def prod[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        *,
+        out: ArrayT,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ArrayT: ...
+
+    # keep in sync with `number.prod`
+    @override  # type: ignore[override]
+    @overload  # out: None (default)
+    def sum(
+        self,
+        axis: _ShapeLike | None = None,
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> Self: ...
+    @overload  # dtype: <given> (keyword)
+    def sum(
+        self,
+        axis: _ShapeLike | None = None,
+        *,
+        dtype: DTypeLike,
+        out: None = None,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> Any: ...
+    @overload  # dtype: <given>  (positional)
+    def sum(
+        self,
+        axis: _ShapeLike | None,
+        dtype: DTypeLike,
+        out: None = None,
+        *,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> Any: ...
+    @overload  # out: <given>
+    def sum[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        *,
+        out: ArrayT,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ArrayT: ...
+
 class bool(generic[_BoolItemT_co], Generic[_BoolItemT_co]):
     @property
     def itemsize(self) -> L[1]: ...
@@ -5241,6 +5335,100 @@ class bool(generic[_BoolItemT_co], Generic[_BoolItemT_co]):
     def __ge__(self, other: _ArrayLikeNumber_co | _NestedSequence[_SupportsLE], /) -> NDArray[bool_]: ...
     @overload
     def __ge__(self, other: _SupportsLE, /) -> bool_: ...
+
+    # keep in sync with `bool.sum`
+    @override  # type: ignore[override]
+    @overload  # out: None (default)
+    def prod(
+        self,
+        axis: _ShapeLike | None = None,
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> int_: ...
+    @overload  # dtype: <given> (keyword)
+    def prod(
+        self,
+        axis: _ShapeLike | None = None,
+        *,
+        dtype: DTypeLike,
+        out: None = None,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> Any: ...
+    @overload  # dtype: <given>  (positional)
+    def prod(
+        self,
+        axis: _ShapeLike | None,
+        dtype: DTypeLike,
+        out: None = None,
+        *,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> Any: ...
+    @overload  # out: <given>
+    def prod[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        *,
+        out: ArrayT,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ArrayT: ...
+
+    # keep in sync with `bool.prod`
+    @override  # type: ignore[override]
+    @overload  # out: None (default)
+    def sum(
+        self,
+        axis: _ShapeLike | None = None,
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _IntLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> int_: ...
+    @overload  # dtype: <given> (keyword)
+    def sum(
+        self,
+        axis: _ShapeLike | None = None,
+        *,
+        dtype: DTypeLike,
+        out: None = None,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> Any: ...
+    @overload  # dtype: <given>  (positional)
+    def sum(
+        self,
+        axis: _ShapeLike | None,
+        dtype: DTypeLike,
+        out: None = None,
+        *,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _IntLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> Any: ...
+    @overload  # out: <given>
+    def sum[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        *,
+        out: ArrayT,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ArrayT: ...
 
 # NOTE: This should _not_ be `Final[_]`, `_: TypeAlias`, or `type _`
 bool_ = bool
@@ -6588,6 +6776,53 @@ class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]
     def __ge__(self, other: _ArrayLike[timedelta64] | _NestedSequence[_SupportsLE], /) -> NDArray[bool_]: ...
     @overload
     def __ge__(self, other: _SupportsLE, /) -> bool_: ...
+
+    # keep in sync with `number.sum`
+    @override  # type: ignore[override]
+    @overload  # out: None (default)
+    def sum(
+        self,
+        axis: _ShapeLike | None = None,
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _IntLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> Self: ...
+    @overload  # dtype: <given> (keyword)
+    def sum(
+        self,
+        axis: _ShapeLike | None = None,
+        *,
+        dtype: DTypeLike,
+        out: None = None,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> Any: ...
+    @overload  # dtype: <given>  (positional)
+    def sum(
+        self,
+        axis: _ShapeLike | None,
+        dtype: DTypeLike,
+        out: None = None,
+        *,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _IntLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> Any: ...
+    @overload  # out: <given>
+    def sum[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        *,
+        out: ArrayT,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ArrayT: ...
 
 class datetime64(_RealMixin, generic[_DT64ItemT_co], Generic[_DT64ItemT_co]):
     @property
