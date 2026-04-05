@@ -3,7 +3,7 @@
 """
 import numpy as np
 import numpy.polynomial.polyutils as pu
-from numpy.testing import assert_, assert_almost_equal, assert_equal, assert_raises
+from numpy.testing import assert_, assert_almost_equal, assert_equal, assert_raises, assert_raises_regex
 
 
 class TestMisc:
@@ -52,7 +52,7 @@ class TestMisc:
 
     def test_div_zerodiv(self):
         # c2[-1] == 0
-        assert_raises(ZeroDivisionError, pu._div, pu._div, (1, 2, 3), [0])
+        assert_raises_regex(ZeroDivisionError, "zero polynomial", pu._div, pu._div, (1, 2, 3), [0])
 
     def test_pow_too_large(self):
         # power > maxpower
