@@ -5980,7 +5980,6 @@ add_newdoc('numpy._core', 'ufunc', ('_get_strided_loop',
     Only the ``strided_loop``signature is considered guaranteed stable
     for NumPy bug-fix releases.  All other API is tied to the experimental
     API versioning.
-    except all references and examples related to the `optimize` argument (v 0.12.0)
     The reason for the split call is that cast information is required to
     decide what the fixed-strides will be.
 
