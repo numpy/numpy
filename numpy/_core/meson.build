@@ -630,23 +630,44 @@ endif
 # building, but we can't add it to the sources of that extension (this C file
 # doesn't compile, it's only included in another r file. Hence use the slightly
 # hacky --ignore argument to the next custom_target().
+codegen_files = [
+  'code_generators/__init__.py',
+  'code_generators/genapi.py',
+  'code_generators/generate_numpy_api.py',
+  'code_generators/generate_ufunc_api.py',
+  'code_generators/generate_umath_doc.py',
+  'code_generators/generate_umath.py',
+  'code_generators/numpy_api.py',
+  'code_generators/ufunc_docstrings.py',
+]
+codegen_env = {
+  # Explicitly set PYTHONPATH to avoid depending on the current working directory
+  # at build time, and on unsafe paths that may be prepended to sys.path and can be
+  # disabled by PYTHONSAFEPATH. See:
+  # [1] https://github.com/numpy/numpy/issues/24907
+  # [2] https://docs.python.org/3/library/sys.html#sys.path
+  'PYTHONPATH': meson.current_source_dir(),
+}
+
 src_umath_api_c = custom_target('__umath_generated',
   output : '__umath_generated.c',
-  input : 'code_generators/generate_umath.py',
-  command: [py, '@INPUT@', '-o', '@OUTPUT@'],
+  depend_files: codegen_files,
+  command: [py, '-m', 'code_generators.generate_umath', '-o', '@OUTPUT@'],
+  env: codegen_env,
 )
 
 src_umath_doc_h = custom_target('_umath_doc_generated',
   output : '_umath_doc_generated.h',
-  input : ['code_generators/generate_umath_doc.py',
-           'code_generators/ufunc_docstrings.py'],
-  command: [py, '@INPUT0@', '-o', '@OUTPUT@'],
+  depend_files: codegen_files,
+  command: [py, '-m', 'code_generators.generate_umath_doc', '-o', '@OUTPUT@'],
+  env: codegen_env,
 )
 
 src_numpy_api = custom_target('__multiarray_api',
   output : ['__multiarray_api.c', '__multiarray_api.h'],
-  input : 'code_generators/generate_numpy_api.py',
-  command: [py, '@INPUT@', '-o', '@OUTDIR@', '--ignore', src_umath_api_c],
+  depend_files: codegen_files,
+  command: [py, '-m', 'code_generators.generate_numpy_api', '-o', '@OUTDIR@', '--ignore', src_umath_api_c],
+  env: codegen_env,
   install: true,  # NOTE: setup.py build installs all, but just need .h?
   install_dir: np_dir / '_core/include/numpy',
   install_tag: 'devel'
@@ -654,8 +675,9 @@ src_numpy_api = custom_target('__multiarray_api',
 
 src_ufunc_api = custom_target('__ufunc_api',
   output : ['__ufunc_api.c', '__ufunc_api.h'],
-  input : 'code_generators/generate_ufunc_api.py',
-  command: [py, '@INPUT@', '-o', '@OUTDIR@'],
+  depend_files: codegen_files,
+  command: [py, '-m', 'code_generators.generate_ufunc_api', '-o', '@OUTDIR@'],
+  env: codegen_env,
   install: true,  # NOTE: setup.py build installs all, but just need .h?
   install_dir: np_dir / '_core/include/numpy',
   install_tag: 'devel'
