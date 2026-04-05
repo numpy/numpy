@@ -315,6 +315,7 @@ assert_type(np.around([1.5]), npt.NDArray[Any])
 assert_type(np.around(AR_f4, out=AR_subclass), NDArraySubclass)
 assert_type(np.around(AR_f4_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
 
+assert_type(np.prod(AR_nd), Any)
 assert_type(np.prod(AR_b), np.int_)
 assert_type(np.prod(AR_i8), np.int64)
 assert_type(np.prod(AR_i8, axis=0), npt.NDArray[np.int64])
@@ -343,6 +344,7 @@ assert_type(np.prod(AR_f4_2d, dtype=np.float64, keepdims=True), np.ndarray[tuple
 assert_type(np.prod(AR_f4, out=AR_subclass), NDArraySubclass)
 
 # same as above (but with `timedelta64`)
+assert_type(np.sum(AR_nd), Any)
 assert_type(np.sum(AR_b), np.int_)
 assert_type(np.sum(AR_i8), np.int64)
 assert_type(np.sum(AR_i8, axis=0), npt.NDArray[np.int64])
@@ -465,3 +467,8 @@ assert_type(np.var(AR_f4, dtype=np.float64, keepdims=True), npt.NDArray[np.float
 assert_type(np.var(AR_f4_1d, dtype=np.float64, keepdims=True), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.var(AR_f4_2d, dtype=np.float64, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float64]])
 assert_type(np.var(AR_f4, out=AR_subclass), NDArraySubclass)
+
+###
+
+data: npt.NDArray[np.void]
+polygons = data["vectors"].sum(axis=1)

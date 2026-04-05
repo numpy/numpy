@@ -2344,6 +2344,39 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 
     # keep in sync with `sum` below (but without `timedelta64`)
     @override  # type: ignore[override]
+    @overload  # ~number
+    def prod[ScalarT: number](
+        self: NDArray[ScalarT],
+        axis: None = None,
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ScalarT: ...
+    @overload  # ~number, axis: <given>
+    def prod[ScalarT: number | object_](
+        self: NDArray[ScalarT],
+        axis: int | tuple[int, ...],
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> NDArray[ScalarT]: ...
+    @overload  # ~number | object_, keepdims=True
+    def prod[ArrayT: NDArray[number | object_]](
+        self: ArrayT,
+        axis: int | tuple[int, ...] | None = None,
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: L[True],
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ArrayT: ...
     @overload  # bool_
     def prod(
         self: NDArray[bool_],
@@ -2388,39 +2421,6 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         initial: _NumberLike_co | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> Any: ...
-    @overload  # ~number
-    def prod[ScalarT: number](
-        self: NDArray[ScalarT],
-        axis: None = None,
-        dtype: None = None,
-        out: None = None,
-        *,
-        keepdims: L[False] | _NoValueType = ...,
-        initial: _NumberLike_co | _NoValueType = ...,
-        where: _ArrayLikeBool_co | _NoValueType = ...,
-    ) -> ScalarT: ...
-    @overload  # ~number, axis: <given>
-    def prod[ScalarT: number | object_](
-        self: NDArray[ScalarT],
-        axis: int | tuple[int, ...],
-        dtype: None = None,
-        out: None = None,
-        *,
-        keepdims: L[False] | _NoValueType = ...,
-        initial: _NumberLike_co | _NoValueType = ...,
-        where: _ArrayLikeBool_co | _NoValueType = ...,
-    ) -> NDArray[ScalarT]: ...
-    @overload  # ~number | object_, keepdims=True
-    def prod[ArrayT: NDArray[number | object_]](
-        self: ArrayT,
-        axis: int | tuple[int, ...] | None = None,
-        dtype: None = None,
-        out: None = None,
-        *,
-        keepdims: L[True],
-        initial: _NumberLike_co | _NoValueType = ...,
-        where: _ArrayLikeBool_co | _NoValueType = ...,
-    ) -> ArrayT: ...
     @overload  # dtype: ScalarT
     def prod[ScalarT: generic](
         self: NDArray[number | bool_ | object_],
@@ -2523,6 +2523,39 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 
     # keep in sync with `prod` above (but also accept `timedelta64`)
     @override  # type: ignore[override]
+    @overload  # ~number | timedelta64
+    def sum[ScalarT: number | timedelta64](
+        self: NDArray[ScalarT],
+        axis: None = None,
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ScalarT: ...
+    @overload  # ~number | timedelta64, axis: <given>
+    def sum[ScalarT: number | timedelta64 | object_](
+        self: NDArray[ScalarT],
+        axis: int | tuple[int, ...],
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> NDArray[ScalarT]: ...
+    @overload  # ~number | timedelta64 | object_, keepdims=True
+    def sum[ArrayT: NDArray[number | timedelta64 | object_]](
+        self: ArrayT,
+        axis: int | tuple[int, ...] | None = None,
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: L[True],
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ArrayT: ...
     @overload  # bool_
     def sum(
         self: NDArray[bool_],
@@ -2567,39 +2600,6 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         initial: _NumberLike_co | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> Any: ...
-    @overload  # ~number | timedelta64
-    def sum[ScalarT: number | timedelta64](
-        self: NDArray[ScalarT],
-        axis: None = None,
-        dtype: None = None,
-        out: None = None,
-        *,
-        keepdims: L[False] | _NoValueType = ...,
-        initial: _NumberLike_co | _NoValueType = ...,
-        where: _ArrayLikeBool_co | _NoValueType = ...,
-    ) -> ScalarT: ...
-    @overload  # ~number | timedelta64, axis: <given>
-    def sum[ScalarT: number | timedelta64 | object_](
-        self: NDArray[ScalarT],
-        axis: int | tuple[int, ...],
-        dtype: None = None,
-        out: None = None,
-        *,
-        keepdims: L[False] | _NoValueType = ...,
-        initial: _NumberLike_co | _NoValueType = ...,
-        where: _ArrayLikeBool_co | _NoValueType = ...,
-    ) -> NDArray[ScalarT]: ...
-    @overload  # ~number | timedelta64 | object_, keepdims=True
-    def sum[ArrayT: NDArray[number | timedelta64 | object_]](
-        self: ArrayT,
-        axis: int | tuple[int, ...] | None = None,
-        dtype: None = None,
-        out: None = None,
-        *,
-        keepdims: L[True],
-        initial: _NumberLike_co | _NoValueType = ...,
-        where: _ArrayLikeBool_co | _NoValueType = ...,
-    ) -> ArrayT: ...
     @overload  # dtype: ScalarT
     def sum[ScalarT: generic](
         self: NDArray[number | bool_ | timedelta64 | object_],

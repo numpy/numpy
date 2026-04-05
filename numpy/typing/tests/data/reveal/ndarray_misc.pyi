@@ -40,6 +40,8 @@ AR_f8_1d: np.ndarray[tuple[int], np.dtype[np.float64]]
 AR_f8_2d: np.ndarray[tuple[int, int], np.dtype[np.float64]]
 AR_f8_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float64]]
 
+AR_any: np.ndarray
+
 ctypes_obj = AR_f8.ctypes
 
 assert_type(AR_f8.__dlpack__(), CapsuleType)
@@ -140,6 +142,7 @@ assert_type(AR_f8_2d.prod(dtype=np.float32), np.float32)
 assert_type(AR_f8_2d.prod(dtype=np.float32, axis=0), npt.NDArray[np.float32])
 assert_type(AR_f8_2d.prod(dtype=np.float32, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 assert_type(AR_f8_2d.prod(dtype=np.float32, axis=0, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(AR_any.prod(), Any)
 
 # same as above (but also accept `timedelta64`)
 assert_type(b1.sum(), np.int_)
@@ -169,6 +172,7 @@ assert_type(AR_f8_2d.sum(dtype=np.float32), np.float32)
 assert_type(AR_f8_2d.sum(dtype=np.float32, axis=0), npt.NDArray[np.float32])
 assert_type(AR_f8_2d.sum(dtype=np.float32, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 assert_type(AR_f8_2d.sum(dtype=np.float32, axis=0, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(AR_any.sum(), Any)
 
 # same as below
 assert_type(f8.mean(), Any)

@@ -1430,37 +1430,6 @@ def around[ArrayT: np.ndarray](
 ) -> ArrayT: ...
 
 # keep in sync with `sum` below (but without `timedelta64`)
-@overload  # bool_ | +builtins.int
-def prod(
-    a: _DualArrayLike[np.dtype[np.bool], int],
-    axis: None = None,
-    dtype: None = None,
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-    initial: _IntLike_co | _NoValueType = ...,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> np.int_: ...
-@overload  # bool_ | +builtins.int, axis: <given>
-def prod(
-    a: _DualArrayLike[np.dtype[np.bool], int],
-    axis: int | tuple[int, ...],
-    dtype: None = None,
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-    initial: _IntLike_co | _NoValueType = ...,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> NDArray[np.int_]: ...
-@overload  # bool_, keepdims=True
-def prod[ShapeT: _Shape](
-    a: np.ndarray[ShapeT, np.dtype[np.bool]],
-    axis: int | tuple[int, ...] | None = None,
-    dtype: None = None,
-    out: None = None,
-    *,
-    keepdims: Literal[True],
-    initial: _IntLike_co | _NoValueType = ...,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> np.ndarray[ShapeT, np.dtype[np.int_]]: ...
 @overload  # ~builtins.float
 def prod(
     a: _NestedSequence[list[float]] | list[float],
@@ -1523,16 +1492,6 @@ def prod(
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.complex128]: ...
-@overload  # object_
-def prod(
-    a: _SupportsArray[np.dtype[np.object_]],
-    axis: None = None,
-    dtype: None = None,
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-    initial: _NumberLike_co | _NoValueType = ...,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> Any: ...
 @overload  # ~number
 def prod[ScalarT: np.number](
     a: _ArrayLike[ScalarT],
@@ -1564,6 +1523,47 @@ def prod[ArrayT: NDArray[np.number | np.object_]](
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ArrayT: ...
+@overload  # bool_ | +builtins.int
+def prod(
+    a: _DualArrayLike[np.dtype[np.bool], int],
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _IntLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.int_: ...
+@overload  # bool_ | +builtins.int, axis: <given>
+def prod(
+    a: _DualArrayLike[np.dtype[np.bool], int],
+    axis: int | tuple[int, ...],
+    dtype: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _IntLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.int_]: ...
+@overload  # bool_, keepdims=True
+def prod[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.bool]],
+    axis: int | tuple[int, ...] | None = None,
+    dtype: None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+    initial: _IntLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.ndarray[ShapeT, np.dtype[np.int_]]: ...
+@overload  # object_
+def prod(
+    a: _SupportsArray[np.dtype[np.object_]],
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> Any: ...
 @overload  # dtype: ScalarT
 def prod[ScalarT: np.generic](
     a: _ArrayLikeNumeric_co,
@@ -1672,37 +1672,6 @@ def prod(
 ) -> NDArray[Any]: ...
 
 # keep in sync with `prod` above (but also accept `timedelta64`)
-@overload  # bool_ | +builtins.int
-def sum(
-    a: _DualArrayLike[np.dtype[np.bool], int],
-    axis: None = None,
-    dtype: None = None,
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-    initial: _IntLike_co | _NoValueType = ...,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> np.int_: ...
-@overload  # bool_ | +builtins.int, axis: <given>
-def sum(
-    a: _DualArrayLike[np.dtype[np.bool], int],
-    axis: int | tuple[int, ...],
-    dtype: None = None,
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-    initial: _IntLike_co | _NoValueType = ...,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> NDArray[np.int_]: ...
-@overload  # bool_, keepdims=True
-def sum[ShapeT: _Shape](
-    a: np.ndarray[ShapeT, np.dtype[np.bool]],
-    axis: int | tuple[int, ...] | None = None,
-    dtype: None = None,
-    out: None = None,
-    *,
-    keepdims: Literal[True],
-    initial: _IntLike_co | _NoValueType = ...,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> np.ndarray[ShapeT, np.dtype[np.int_]]: ...
 @overload  # ~builtins.float
 def sum(
     a: _NestedSequence[list[float]] | list[float],
@@ -1765,16 +1734,6 @@ def sum(
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.complex128]: ...
-@overload  # object_
-def sum(
-    a: _SupportsArray[np.dtype[np.object_]],
-    axis: None = None,
-    dtype: None = None,
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-    initial: _NumberLike_co | _NoValueType = ...,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> Any: ...
 @overload  # ~number | timedelta64
 def sum[ScalarT: np.number | np.timedelta64](
     a: _ArrayLike[ScalarT],
@@ -1806,6 +1765,47 @@ def sum[ArrayT: NDArray[np.number | np.timedelta64 | np.object_]](
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ArrayT: ...
+@overload  # bool_ | +builtins.int
+def sum(
+    a: _DualArrayLike[np.dtype[np.bool], int],
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _IntLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.int_: ...
+@overload  # bool_ | +builtins.int, axis: <given>
+def sum(
+    a: _DualArrayLike[np.dtype[np.bool], int],
+    axis: int | tuple[int, ...],
+    dtype: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _IntLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.int_]: ...
+@overload  # bool_, keepdims=True
+def sum[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.bool]],
+    axis: int | tuple[int, ...] | None = None,
+    dtype: None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+    initial: _IntLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.ndarray[ShapeT, np.dtype[np.int_]]: ...
+@overload  # object_
+def sum(
+    a: _SupportsArray[np.dtype[np.object_]],
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> Any: ...
 @overload  # dtype: ScalarT
 def sum[ScalarT: np.generic](
     a: _ArrayLikeNumeric_co,
