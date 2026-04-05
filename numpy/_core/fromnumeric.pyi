@@ -1238,6 +1238,15 @@ def ptp(
 ) -> NDArray[Any]: ...
 
 # keep in sync with `amin` below
+@overload  # sequence of just `Any` (workaround)
+def amax(
+    a: _NestedSequence[Never],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> Any: ...
 @overload  # builtins.bool
 def amax(
     a: _NestedSequence[bool],
@@ -1429,6 +1438,15 @@ def amax(
 max = amax
 
 # keep in sync with `amax` above
+@overload  # sequence of just `Any` (workaround)
+def amin(
+    a: _NestedSequence[Never],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> Any: ...
 @overload  # builtins.bool
 def amin(
     a: _NestedSequence[bool],

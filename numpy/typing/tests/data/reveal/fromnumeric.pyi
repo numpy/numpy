@@ -32,6 +32,7 @@ i8: np.int64
 f: float
 
 _dtype_list: list[np.dtype]
+_any_list: list[Any]
 
 # integer‑dtype subclass for argmin/argmax
 class NDArrayIntSubclass(np.ndarray[tuple[Any, ...], np.dtype[np.intp]]): ...
@@ -288,6 +289,7 @@ assert_type(np.amax(AR_nd, keepdims=True), np.ndarray)
 assert_type(np.amax(_dtype_list), Any)
 assert_type(np.amax(_dtype_list, axis=1), npt.NDArray[Any])
 assert_type(np.amax(_dtype_list, keepdims=True), npt.NDArray[Any])
+assert_type(np.amax(_any_list), Any)
 
 # same as above
 assert_type(np.amin(AR_i8), np.int64)
