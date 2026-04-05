@@ -169,7 +169,7 @@ def get_temp_module_name():
     return name
 
 
-def _memorize(func):
+def _memoize(func):
     memo = {}
 
     def wrapper(*a, **kw):
@@ -194,7 +194,7 @@ def _memorize(func):
 #
 
 
-@_memorize
+@_memoize
 def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     """
     Compile and import a f2py module, built from the given files.
@@ -273,7 +273,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     return import_module(module_name)
 
 
-@_memorize
+@_memoize
 def build_code(source_code,
                options=[],
                skip=[],
