@@ -2086,14 +2086,75 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     product = prod
 
     # Keep in sync with `ndarray.cumprod` and `ma.core.cumprod`
-    @overload  # out: None (default)
-    def cumprod(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, out: None = None) -> MaskedArray: ...
-    @overload  # out: ndarray
-    def cumprod[ArrayT: np.ndarray](self, /, axis: SupportsIndex | None, dtype: DTypeLike | None, out: ArrayT) -> ArrayT: ...
+    @override  # type: ignore[override]
     @overload
-    def cumprod[ArrayT: np.ndarray](
-        self,
-        /,
+    def cumprod[DTypeT: dtype[number | bool_ | object_]](
+        self: ndarray[Any, DTypeT],
+        axis: None = None,
+        dtype: None = None,
+        out: None = None,
+    ) -> MaskedArray[tuple[int], DTypeT]: ...
+    @overload  # dtype: <known>  (keyword)
+    def cumprod[ScalarT: number | bool_ | object_](
+        self: NDArray[number | bool_ | object_],
+        axis: None = None,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+    ) -> _Masked1D[ScalarT]: ...
+    @overload  # dtype: <unknown>  (keyword)
+    def cumprod(
+        self: NDArray[number | bool_ | object_],
+        axis: None = None,
+        *,
+        dtype: DTypeLike,
+        out: None = None,
+    ) -> _Masked1D[Any]: ...
+    @overload  # dtype: <known>  (positional)
+    def cumprod[ScalarT: number | bool_ | object_](
+        self: NDArray[number | bool_ | object_],
+        axis: None,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+    ) -> _Masked1D[ScalarT]: ...
+    @overload  # dtype: <unknown>  (positional)
+    def cumprod(
+        self: NDArray[number | bool_ | object_],
+        axis: None,
+        dtype: DTypeLike,
+        out: None = None,
+    ) -> _Masked1D[Any]: ...
+    @overload  # axis: <given>
+    def cumprod[ArrayT: NDArray[number | bool_ | object_]](
+        self: ArrayT,
+        axis: SupportsIndex,
+        dtype: None = None,
+        out: None = None,
+    ) -> ArrayT: ...
+    @overload  # axis: <given>, dtype: <known>
+    def cumprod[ShapeT: _Shape, ScalarT: number | bool_ | object_](
+        self: ndarray[ShapeT, dtype[number | bool_ | object_]],
+        axis: SupportsIndex,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+    ) -> MaskedArray[ShapeT, dtype[ScalarT]]: ...
+    @overload  # axis: <given>, dtype: <unknown>
+    def cumprod[ShapeT: _Shape](
+        self: ndarray[ShapeT, dtype[number | bool_ | object_]],
+        axis: SupportsIndex,
+        dtype: DTypeLike,
+        out: None = None,
+    ) -> MaskedArray[ShapeT]: ...
+    @overload  # out: ndarray
+    def cumprod[ArrayT: ndarray](
+        self: NDArray[number | bool_ | object_],
+        axis: SupportsIndex | None,
+        dtype: DTypeLike | None,
+        out: ArrayT,
+    ) -> ArrayT: ...
+    @overload
+    def cumprod[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self: NDArray[number | bool_ | object_],
         axis: SupportsIndex | None = None,
         dtype: DTypeLike | None = None,
         *,

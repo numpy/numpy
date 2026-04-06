@@ -440,7 +440,7 @@ assert_type(MAR_td64.reshape(()), np.ma.MaskedArray[tuple[()], np.dtype[np.timed
 assert_type(MAR_s.reshape([]), np.ma.MaskedArray[tuple[()], np.dtype[np.str_]])
 assert_type(MAR_V.reshape((480, 720, 4)), np.ma.MaskedArray[tuple[int, int, int], np.dtype[np.void]])
 
-assert_type(MAR_f8.cumprod(), MaskedArray[Any])
+assert_type(MAR_f8.cumprod(), np.ma.MaskedArray[tuple[int], np.dtype[np.float64]])
 assert_type(MAR_f8.cumprod(out=MAR_subclass), MaskedArraySubclassC)
 
 assert_type(MAR_f8.cumsum(), MaskedArray[Any])

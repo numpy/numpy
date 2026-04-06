@@ -1799,7 +1799,7 @@ class _ArrayOrScalarCommon:
         self, /, condition: _ArrayLikeInt_co, axis: SupportsIndex | None = None, *, out: ArrayT
     ) -> ArrayT: ...
 
-    # Keep in sync with `MaskedArray.cumprod`
+    #
     @overload  # out: None (default)
     def cumprod(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, out: None = None) -> NDArray[Any]: ...
     @overload  # out: ndarray
@@ -1809,7 +1809,7 @@ class _ArrayOrScalarCommon:
         self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, *, out: ArrayT
     ) -> ArrayT: ...
 
-    # Keep in sync with `MaskedArray.cumsum`
+    #
     @overload  # out: None (default)
     def cumsum(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, out: None = None) -> NDArray[Any]: ...
     @overload  # out: ndarray
@@ -3212,6 +3212,96 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         mean: _ArrayLikeNumber_co | _NoValueType = ...,
         correction: float | _NoValueType = ...,
     ) -> ndarray[_ShapeT_co]: ...
+
+    # keep in sync with `MaskedArray.cumprod`
+    @override  # type: ignore[override]
+    @overload  # number | object_
+    def cumprod[DTypeT: dtype[number | object_]](
+        self: ndarray[Any, DTypeT],
+        axis: None = None,
+        dtype: None = None,
+        out: None = None,
+    ) -> ndarray[_1D, DTypeT]: ...
+    @overload  # bool_
+    def cumprod(
+        self: NDArray[bool_],
+        axis: None = None,
+        dtype: None = None,
+        out: None = None,
+    ) -> ndarray[_1D, dtype[int_]]: ...
+    @overload  # dtype: <known>  (keyword)
+    def cumprod[ScalarT: generic](
+        self: NDArray[number | bool_ | object_],
+        axis: None = None,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+    ) -> ndarray[_1D, dtype[ScalarT]]: ...
+    @overload  # dtype: <unknown>  (keyword)
+    def cumprod(
+        self: NDArray[number | bool_ | object_],
+        axis: None = None,
+        *,
+        dtype: DTypeLike,
+        out: None = None,
+    ) -> ndarray[_1D]: ...
+    @overload  # dtype: <known>  (positional)
+    def cumprod[ScalarT: generic](
+        self: NDArray[number | bool_ | object_],
+        axis: None,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+    ) -> ndarray[_1D, dtype[ScalarT]]: ...
+    @overload  # dtype: <unknown>  (positional)
+    def cumprod(
+        self: NDArray[number | bool_ | object_],
+        axis: None,
+        dtype: DTypeLike,
+        out: None = None,
+    ) -> ndarray[_1D]: ...
+    @overload  # axis: <given>
+    def cumprod[ArrayT: NDArray[number | object_]](
+        self: ArrayT,
+        axis: SupportsIndex,
+        dtype: None = None,
+        out: None = None,
+    ) -> ArrayT: ...
+    @overload  # bool_, axis: <given>
+    def cumprod[ShapeT: _Shape](
+        self: ndarray[ShapeT, dtype[bool_]],
+        axis: SupportsIndex,
+        dtype: None = None,
+        out: None = None,
+    ) -> ndarray[ShapeT, dtype[int_]]: ...
+    @overload  # axis: <given>, dtype: <known>
+    def cumprod[ShapeT: _Shape, ScalarT: generic](
+        self: ndarray[ShapeT, dtype[number | bool_ | object_]],
+        axis: SupportsIndex,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+    ) -> ndarray[ShapeT, dtype[ScalarT]]: ...
+    @overload  # axis: <given>, dtype: <unknown>
+    def cumprod[ShapeT: _Shape](
+        self: ndarray[ShapeT, dtype[number | bool_ | object_]],
+        axis: SupportsIndex,
+        dtype: DTypeLike,
+        out: None = None,
+    ) -> ndarray[ShapeT]: ...
+    @overload  # out: ndarray
+    def cumprod[ArrayT: ndarray](
+        self: NDArray[number | bool_ | object_],
+        axis: SupportsIndex | None,
+        dtype: DTypeLike | None,
+        out: ArrayT,
+    ) -> ArrayT: ...
+    @overload
+    def cumprod[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self: NDArray[number | bool_ | object_],
+        axis: SupportsIndex | None = None,
+        dtype: DTypeLike | None = None,
+        *,
+        out: ArrayT,
+    ) -> ArrayT: ...
 
     #
     @overload
