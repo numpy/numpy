@@ -2268,6 +2268,93 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def transpose(self, /, *axes: SupportsIndex) -> Self: ...
 
+    # keep in sync with `ndarray.argmin` (below) and `ma.MaskedArray.argmax`
+    @override  # type: ignore[override]
+    @overload
+    def argmax(
+        self,
+        axis: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] = False,
+    ) -> intp: ...
+    @overload  # axis: <given>
+    def argmax(
+        self,
+        axis: SupportsIndex,
+        out: None = None,
+        *,
+        keepdims: L[False] = False,
+    ) -> NDArray[intp]: ...
+    @overload  # keepdims: True
+    def argmax(
+        self,
+        axis: SupportsIndex | None = None,
+        out: None = None,
+        *,
+        keepdims: L[True],
+    ) -> ndarray[_ShapeT_co, dtype[intp]]: ...
+    @overload  # out: <given>  (keyword)
+    def argmax[ArrayT: NDArray[intp]](
+        self,
+        axis: SupportsIndex | None = None,
+        *,
+        out: ArrayT,
+        keepdims: py_bool = False,
+    ) -> ArrayT: ...
+    @overload  # out: <given>  (positional)
+    def argmax[ArrayT: NDArray[intp]](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        axis: SupportsIndex | None,
+        out: ArrayT,
+        *,
+        keepdims: py_bool = False,
+    ) -> ArrayT: ...
+
+    # keep in sync with `ndarray.argmax` (above) and `ma.MaskedArray.argmin`
+    @override  # type: ignore[override]
+    @overload
+    def argmin(
+        self,
+        axis: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] = False,
+    ) -> intp: ...
+    @overload  # axis: <given>
+    def argmin(
+        self,
+        axis: SupportsIndex,
+        out: None = None,
+        *,
+        keepdims: L[False] = False,
+    ) -> NDArray[intp]: ...
+    @overload  # keepdims: True
+    def argmin(
+        self,
+        axis: SupportsIndex | None = None,
+        out: None = None,
+        *,
+        keepdims: L[True],
+    ) -> ndarray[_ShapeT_co, dtype[intp]]: ...
+    @overload  # out: <given>  (keyword)
+    def argmin[ArrayT: NDArray[intp]](
+        self,
+        axis: SupportsIndex | None = None,
+        *,
+        out: ArrayT,
+        keepdims: py_bool = False,
+    ) -> ArrayT: ...
+    @overload  # out: <given>  (positional)
+    def argmin[ArrayT: NDArray[intp]](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        axis: SupportsIndex | None,
+        out: ArrayT,
+        *,
+        keepdims: py_bool = False,
+    ) -> ArrayT: ...
+
+    #
     @overload
     def all(
         self,
