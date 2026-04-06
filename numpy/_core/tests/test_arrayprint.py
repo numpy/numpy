@@ -8,10 +8,12 @@ from hypothesis.extra import numpy as hynp
 
 import numpy as np
 from numpy._core.arrayprint import _typelessdata
+from numpy._utils import _pep440
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_WASM,
     assert_,
+    assert_array_equal,
     assert_equal,
     assert_raises,
     assert_raises_regex,
@@ -277,11 +279,12 @@ class TestArray2String:
             # for issue #5692
             A = np.zeros(shape=10, dtype=[("A", "M8[s]")])
             A[5:].fill(np.datetime64('NaT'))
+            date_string = '1970-01-01T00:00:00'
             assert_equal(
                 np.array2string(A),
-                textwrap.dedent("""\
-                [('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',)
-                 ('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',) ('NaT',) ('NaT',)
+                textwrap.dedent(f"""\
+                [('{date_string}',) ('{date_string}',) ('{date_string}',)
+                 ('{date_string}',) ('{date_string}',) ('NaT',) ('NaT',)
                  ('NaT',) ('NaT',) ('NaT',)]""")
             )
         finally:
@@ -546,6 +549,7 @@ class TestArray2String:
         assert_equal(result, expected_repr)
 
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    @pytest.mark.thread_unsafe(reason="garbage collector is global state")
     def test_refcount(self):
         # make sure we do not hold references to the array due to a recursive
         # closure (gh-10620)
@@ -734,12 +738,7 @@ class TestPrintOptions:
         # str is unaffected
         assert_equal(str(x), "1")
 
-        # check `style` arg raises
-        pytest.warns(DeprecationWarning, np.array2string,
-                                         np.array(1.), style=repr)
-        # but not in legacy mode
-        np.array2string(np.array(1.), style=repr, legacy='1.13')
-        # gh-10934 style was broken in legacy mode, check it works
+        # check it works
         np.array2string(np.array(1.), legacy='1.13')
 
     def test_float_spacing(self):
@@ -1247,7 +1246,7 @@ def test_scalar_repr_numbers(dtype, value):
         (np.str_('a'), "'a'", "np.str_('a')"),
         (np.datetime64("2012"),
             "numpy.datetime64('2012')", "np.datetime64('2012')"),
-        (np.timedelta64(1), "numpy.timedelta64(1)", "np.timedelta64(1)"),
+        (np.timedelta64(1, 's'), "numpy.timedelta64(1,'s')", "np.timedelta64(1,'s')"),
         (np.void((True, 2), dtype="?,<i8"),
             "(True, 2)",
             "np.void((True, 2), dtype=[('f0', '?'), ('f1', '<i8')])"),
@@ -1271,8 +1270,6 @@ def test_scalar_void_float_str():
     assert str(scalar) == "(1.0, 2.0)"
 
 @pytest.mark.skipif(IS_WASM, reason="wasm doesn't support asyncio")
-@pytest.mark.skipif(sys.version_info < (3, 11),
-                    reason="asyncio.barrier was added in Python 3.11")
 def test_printoptions_asyncio_safe():
     asyncio = pytest.importorskip("asyncio")
 
@@ -1320,8 +1317,37 @@ def test_printoptions_asyncio_safe():
     loop.close()
 
 @pytest.mark.skipif(IS_WASM, reason="wasm doesn't support threads")
+@pytest.mark.thread_unsafe(reason="test is already explicitly multi-threaded")
 def test_multithreaded_array_printing():
     # the dragon4 implementation uses a static scratch space for performance
     # reasons this test makes sure it is set up in a thread-safe manner
 
     run_threaded(TestPrintOptions().test_floatmode, 500)
+
+
+def test_user_defined_floating_dtype_printing_does_not_corrupt_precision():
+    """
+    Ensure that array printing does not use NumPy Dragon4 formatting
+    for user-defined floating dtypes, which would silently truncate
+    precision to float64.
+    """
+    # Quaddtype (<=1.0.0) may have a bug that leads to test failures elsewhere
+    # (this may also be an interplay of numpy/quaddtype but let's hope new
+    # quaddtype versions will fix it.)
+    from importlib.metadata import version
+
+    try:
+        quaddtype_version = version("numpy_quaddtype")
+    except Exception:
+        pytest.skip("numpy_quaddtype not installed")
+    else:
+        if _pep440.Version(quaddtype_version) <= _pep440.Version("1.0.0"):
+            pytest.skip("critical bug in quaddtype during import")
+
+    numpy_quaddtype = pytest.importorskip("numpy_quaddtype")
+
+    pi_str = "3.14159265358979323846264338327950288"
+    arr = np.array([pi_str], dtype=QuadPrecDType())
+    res = np.array(str(arr).strip("[] "), dtype=QuadPrecDType())
+    # Check that the string representation round-trips correctly.
+    assert_array_equal(res, arr)

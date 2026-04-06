@@ -155,7 +155,7 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
     """
     Open `path` with `mode` and return the file object.
 
-    If ``path`` is an URL, it will be downloaded, stored in the
+    If ``path`` is a URL, it will be downloaded, stored in the
     `DataSource` `destpath` directory and opened from there.
 
     Parameters
@@ -340,7 +340,7 @@ class DataSource:
     def _findfile(self, path):
         """Searches for ``path`` and returns full path if found.
 
-        If path is an URL, _findfile will cache a local copy and return the
+        If path is a URL, _findfile will cache a local copy and return the
         path to the cached file.  If path is a local file, _findfile will
         return a path to that local file.
 
@@ -372,7 +372,7 @@ class DataSource:
         """
         Return absolute path of file in the DataSource directory.
 
-        If `path` is an URL, then `abspath` will return either the location
+        If `path` is a URL, then `abspath` will return either the location
         the file exists locally or the location it would exist when opened
         using the `open` method.
 
@@ -448,7 +448,7 @@ class DataSource:
 
         Notes
         -----
-        When `path` is an URL, `exists` will return True if it's either
+        When `path` is a URL, `exists` will return True if it's either
         stored locally in the `DataSource` directory, or is a valid remote
         URL.  `DataSource` does not discriminate between the two, the file
         is accessible if it exists in either location.
@@ -484,7 +484,7 @@ class DataSource:
         """
         Open and return file-like object.
 
-        If `path` is an URL, it will be downloaded, stored in the
+        If `path` is a URL, it will be downloaded, stored in the
         `DataSource` directory and opened from there.
 
         Parameters
@@ -594,7 +594,7 @@ class Repository (DataSource):
         """
         Return absolute path of file in the Repository directory.
 
-        If `path` is an URL, then `abspath` will return either the location
+        If `path` is a URL, then `abspath` will return either the location
         the file exists locally or the location it would exist when opened
         using the `open` method.
 
@@ -639,7 +639,7 @@ class Repository (DataSource):
 
         Notes
         -----
-        When `path` is an URL, `exists` will return True if it's either
+        When `path` is a URL, `exists` will return True if it's either
         stored locally in the `DataSource` directory, or is a valid remote
         URL.  `DataSource` does not discriminate between the two, the file
         is accessible if it exists in either location.
@@ -651,7 +651,7 @@ class Repository (DataSource):
         """
         Open and return file-like object prepending Repository base URL.
 
-        If `path` is an URL, it will be downloaded, stored in the
+        If `path` is a URL, it will be downloaded, stored in the
         DataSource directory and opened from there.
 
         Parameters

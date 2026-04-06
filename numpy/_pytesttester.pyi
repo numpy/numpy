@@ -8,11 +8,11 @@ class PytestTester:
     def __init__(self, module_name: str) -> None: ...
     def __call__(
         self,
-        label: L["fast", "full"] = ...,
-        verbose: int = ...,
-        extra_argv: Iterable[str] | None = ...,
-        doctests: L[False] = ...,
-        coverage: bool = ...,
-        durations: int = ...,
-        tests: Iterable[str] | None = ...,
+        label: L["fast", "full"] = "fast",
+        verbose: int = 1,
+        extra_argv: Iterable[str] | None = None,
+        doctests: L[False] = False,
+        coverage: bool = False,
+        durations: int = -1,
+        tests: Iterable[str] | None = None,
     ) -> bool: ...

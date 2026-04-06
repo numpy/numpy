@@ -123,10 +123,9 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("bincount", args, len_args, kwnames,
-                "list", NULL, &list,
-                "|weights", NULL, &weight,
-                "|minlength", NULL, &mlength,
-                NULL, NULL, NULL) < 0) {
+                {"list", NULL, &list},
+                {"|weights", NULL, &weight},
+                {"|minlength", NULL, &mlength}) < 0) {
         return NULL;
     }
 
@@ -158,20 +157,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
             lst = (PyArrayObject *)PyArray_FromAny((PyObject *)tmp1, local_dtype, 1, 1, flags, NULL);
             Py_DECREF(tmp1);
             if (lst == NULL) {
-                /* Failed converting to NPY_INTP. */
-                if (PyErr_ExceptionMatches(PyExc_TypeError)) {
-                    PyErr_Clear();
-                    /* Deprecated 2024-08-02, NumPy 2.1 */
-                    if (DEPRECATE("Non-integer input passed to bincount. In a "
-                                  "future version of NumPy, this will be an "
-                                  "error. (Deprecated NumPy 2.1)") < 0) {
-                        goto fail;
-                    }
-                }
-                else {
-                    /* Failure was not a TypeError. */
-                    goto fail;
-                }
+                goto fail;
             }
         }
         else {
@@ -450,7 +436,7 @@ _linear_search(const npy_double key, const npy_double *arr, const npy_intp len, 
 
 /** @brief find index of a sorted array such that arr[i] <= key < arr[i + 1].
  *
- * If an starting index guess is in-range, the array values around this
+ * If a starting index guess is in-range, the array values around this
  * index are first checked.  This allows for repeated calls for well-ordered
  * keys (a very common case) to use the previous index as a very good guess.
  *
@@ -566,12 +552,11 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("interp", args, len_args, kwnames,
-                "x", NULL, &x,
-                "xp", NULL, &xp,
-                "fp", NULL, &fp,
-                "|left", NULL, &left,
-                "|right", NULL, &right,
-                NULL, NULL, NULL) < 0) {
+                {"x", NULL, &x},
+                {"xp", NULL, &xp},
+                {"fp", NULL, &fp},
+                {"|left", NULL, &left},
+                {"|right", NULL, &right}) < 0) {
         return NULL;
     }
 
@@ -738,12 +723,11 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("interp_complex", args, len_args, kwnames,
-                "x", NULL, &x,
-                "xp", NULL, &xp,
-                "fp", NULL, &fp,
-                "|left", NULL, &left,
-                "|right", NULL, &right,
-                NULL, NULL, NULL) < 0) {
+                {"x", NULL, &x},
+                {"xp", NULL, &xp},
+                {"fp", NULL, &fp},
+                {"|left", NULL, &left},
+                {"|right", NULL, &right}) < 0) {
         return NULL;
     }
 
@@ -1478,9 +1462,8 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("add_docstring", args, len_args, NULL,
-            "", NULL, &obj,
-            "", NULL, &str,
-            NULL, NULL, NULL) < 0) {
+            {"", NULL, &obj},
+            {"", NULL, &str}) < 0) {
         return NULL;
     }
     if (!PyUnicode_Check(str)) {
@@ -1628,9 +1611,29 @@ pack_inner(const char *inptr,
             #else
                 npy_uint64 arr[4] = {bb[0], bb[1], bb[2], bb[3]};
             #endif
+
+            #if NPY_BYTE_ORDER == NPY_BIG_ENDIAN
+                #if NPY_SIMD_WIDTH == 16
+                arr[0] = npy_bswap8(arr[0]);
+                #elif NPY_SIMD_WIDTH == 32
+                arr[0] = npy_bswap8(arr[0]);
+                arr[1] = npy_bswap8(arr[1]);
+                #else
+                arr[0] = npy_bswap8(arr[0]);
+                arr[1] = npy_bswap8(arr[1]);
+                arr[2] = npy_bswap8(arr[2]);
+                arr[3] = npy_bswap8(arr[3]);
+                #endif
+            #endif
                 memcpy(outptr, arr, sizeof(arr));
                 outptr += vstepx4;
             } else {
+                #if NPY_BYTE_ORDER == NPY_BIG_ENDIAN
+                bb[0] = npy_bswap8(bb[0]);
+                bb[1] = npy_bswap8(bb[1]);
+                bb[2] = npy_bswap8(bb[2]);
+                bb[3] = npy_bswap8(bb[3]);
+                #endif
                 for(int i = 0; i < 4; i++) {
                     for (int j = 0; j < vstep; j++) {
                         memcpy(outptr, (char*)&bb[i] + j, 1);
@@ -1645,6 +1648,11 @@ pack_inner(const char *inptr,
                 va = npyv_rev64_u8(va);
             }
             npy_uint64 bb = npyv_tobits_b8(npyv_cmpneq_u8(va, v_zero));
+
+            #if NPY_BYTE_ORDER == NPY_BIG_ENDIAN
+            bb = npy_bswap8(bb);
+            #endif
+
             for (int i = 0; i < vstep; ++i) {
                 memcpy(outptr, (char*)&bb + i, 1);
                 outptr += out_stride;

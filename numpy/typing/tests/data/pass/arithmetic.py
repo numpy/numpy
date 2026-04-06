@@ -29,7 +29,7 @@ i = 1
 
 
 class Object:
-    def __array__(self, dtype: np.typing.DTypeLike = None,
+    def __array__(self, dtype: np.typing.DTypeLike | None = None,
                   copy: bool | None = None) -> np.ndarray[Any, np.dtype[np.object_]]:
         ret = np.empty((), dtype=object)
         ret[()] = self
@@ -392,13 +392,13 @@ dt - i4
 dt - i8
 
 td + td
-td + i
-td + i4
-td + i8
+td + i  # type: ignore[deprecated]
+td + i4  # type: ignore[deprecated]
+td + i8  # type: ignore[deprecated]
 td - td
-td - i
-td - i4
-td - i8
+td - i  # type: ignore[deprecated]
+td - i4  # type: ignore[deprecated]
+td - i8  # type: ignore[deprecated]
 td / f
 td / f4
 td / f8

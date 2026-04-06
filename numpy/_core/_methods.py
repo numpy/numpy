@@ -185,15 +185,14 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
     # Compute sum of squared deviations from mean
     # Note that x may not be inexact and that we need it to be an array,
     # not a scalar.
-    x = asanyarray(arr - arrmean)
-
+    x = um.subtract(arr, arrmean, out=...)
     if issubclass(arr.dtype.type, (nt.floating, nt.integer)):
-        x = um.multiply(x, x, out=x)
+        x = um.square(x, out=x)
     # Fast-paths for built-in complex types
-    elif x.dtype in _complex_to_float:
-        xv = x.view(dtype=(_complex_to_float[x.dtype], (2,)))
-        um.multiply(xv, xv, out=xv)
-        x = um.add(xv[..., 0], xv[..., 1], out=x.real).real
+    elif (_float_dtype := _complex_to_float.get(x.dtype)) is not None:
+        xv = x.view(dtype=(_float_dtype, (2,)))
+        um.square(xv, out=xv)
+        x = um.add(xv[..., 0], xv[..., 1], out=x.real)
     # Most general case; includes handling object arrays containing imaginary
     # numbers and complex types with non-native byteorder
     else:

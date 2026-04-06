@@ -11,7 +11,7 @@ import pytest
 import numpy as np
 from numpy._core.tests._natype import pd_NA
 from numpy.dtypes import StringDType
-from numpy.testing import IS_PYPY, assert_array_equal
+from numpy.testing import assert_array_equal
 
 
 def random_unicode_string_list():
@@ -596,10 +596,7 @@ def test_concatenate(string_list):
 
 def test_resize_method(string_list):
     sarr = np.array(string_list, dtype="T")
-    if IS_PYPY:
-        sarr.resize(len(string_list) + 3, refcheck=False)
-    else:
-        sarr.resize(len(string_list) + 3)
+    sarr.resize(len(string_list) + 3)
     assert_array_equal(sarr, np.array(string_list + [''] * 3,  dtype="T"))
 
 
@@ -1155,7 +1152,7 @@ TIMEDELTA_INPUT = [
     np.timedelta64(12358, "s"),
     np.timedelta64(23, "s"),
     np.timedelta64(74, "s"),
-    np.timedelta64("NaT"),
+    np.timedelta64("NaT", "s"),
     np.timedelta64(23, "s"),
     np.timedelta64(73, "s"),
     np.timedelta64(7, "s"),
@@ -1207,7 +1204,7 @@ def test_nat_casts():
     all_nats = itertools.product(*zip(s.upper(), s.lower()))
     all_nats = list(map(''.join, all_nats))
     NaT_dt = np.datetime64('NaT')
-    NaT_td = np.timedelta64('NaT')
+    NaT_td = np.timedelta64('NaT', 's')
     for na_object in [np._NoValue, None, np.nan, 'nat', '']:
         # numpy treats empty string and all case combinations of 'nat' as NaT
         dtype = StringDType(na_object=na_object)
@@ -1457,7 +1454,7 @@ PASSES_THROUGH_NAN_NULLS = [
     "strip",
     "lstrip",
     "rstrip",
-    "replace"
+    "replace",
     "zfill",
 ]
 
@@ -1672,17 +1669,17 @@ class TestImplementation:
     """
 
     @classmethod
-    def setup_class(self):
-        self.MISSING = 0x80
-        self.INITIALIZED = 0x40
-        self.OUTSIDE_ARENA = 0x20
-        self.LONG = 0x10
-        self.dtype = StringDType(na_object=np.nan)
-        self.sizeofstr = self.dtype.itemsize
-        sp = self.dtype.itemsize // 2  # pointer size = sizeof(size_t)
+    def setup_class(cls):
+        cls.MISSING = 0x80
+        cls.INITIALIZED = 0x40
+        cls.OUTSIDE_ARENA = 0x20
+        cls.LONG = 0x10
+        cls.dtype = StringDType(na_object=np.nan)
+        cls.sizeofstr = cls.dtype.itemsize
+        sp = cls.dtype.itemsize // 2  # pointer size = sizeof(size_t)
         # Below, size is not strictly correct, since it really uses
         # 7 (or 3) bytes, but good enough for the tests here.
-        self.view_dtype = np.dtype([
+        cls.view_dtype = np.dtype([
             ('offset', f'u{sp}'),
             ('size', f'u{sp // 2}'),
             ('xsiz', f'V{sp // 2 - 1}'),
@@ -1693,13 +1690,13 @@ class TestImplementation:
             ('size', f'u{sp // 2}'),
             ('offset', f'u{sp}'),
         ])
-        self.s_empty = ""
-        self.s_short = "01234"
-        self.s_medium = "abcdefghijklmnopqrstuvwxyz"
-        self.s_long = "-=+" * 100
-        self.a = np.array(
-            [self.s_empty, self.s_short, self.s_medium, self.s_long],
-            self.dtype)
+        cls.s_empty = ""
+        cls.s_short = "01234"
+        cls.s_medium = "abcdefghijklmnopqrstuvwxyz"
+        cls.s_long = "-=+" * 100
+        cls.a = np.array(
+            [cls.s_empty, cls.s_short, cls.s_medium, cls.s_long],
+            cls.dtype)
 
     def get_view(self, a):
         # Cannot view a StringDType as anything else directly, since

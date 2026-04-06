@@ -224,7 +224,7 @@ def mod(a, values):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array_like, with ``bytes_`` or ``str_`` dtype
 
     values : array_like of values
        These values will be element-wise interpolated into the string.
@@ -263,7 +263,7 @@ def find(a, sub, start=0, end=None):
     ----------
     a : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
 
-    sub : array_like, with `np.bytes_` or `np.str_` dtype
+    sub : array_like, with ``bytes_`` or ``str_`` dtype
         The substring to search for.
 
     start, end : array_like, with any integer dtype
@@ -375,9 +375,9 @@ def rindex(a, sub, start=0, end=None):
 
     Parameters
     ----------
-    a : array-like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``bytes_`` or ``str_`` dtype
 
-    sub : array-like, with `np.bytes_` or `np.str_` dtype
+    sub : array-like, with ``bytes_`` or ``str_`` dtype
 
     start, end : array-like, with any integer dtype, optional
 
@@ -1689,7 +1689,7 @@ def translate(a, table, deletechars=None):
 
     Parameters
     ----------
-    a : array-like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``bytes_`` or ``str_`` dtype
 
     table : str of length 256
 
@@ -1727,7 +1727,7 @@ def translate(a, table, deletechars=None):
         )
 
 @set_module("numpy.strings")
-def slice(a, start=None, stop=None, step=None, /):
+def slice(a, start=None, stop=np._NoValue, step=None, /):
     """
     Slice the strings in `a` by slices specified by `start`, `stop`, `step`.
     Like in the regular Python `slice` object, if only `start` is
@@ -1760,6 +1760,9 @@ def slice(a, start=None, stop=None, step=None, /):
     >>> np.strings.slice(a, 2)
     array(['he', 'wo'], dtype='<U5')
 
+    >>> np.strings.slice(a, 2, None)
+    array(['llo', 'rld'], dtype='<U5')
+
     >>> np.strings.slice(a, 1, 5, 2)
     array(['el', 'ol'], dtype='<U5')
 
@@ -1775,6 +1778,9 @@ def slice(a, start=None, stop=None, step=None, /):
     >>> np.strings.slice(b, -2)
     array(['hello wor', 'γεια σου κόσ', '你好', '👋'], dtype=StringDType())
 
+    >>> np.strings.slice(b, -2, None)
+    array(['ld', 'με', '世界', ' 🌍'], dtype=StringDType())
+
     >>> np.strings.slice(b, [3, -10, 2, -3], [-1, -2, -1, 3])
     array(['lo worl', ' σου κόσ', '世', '👋 🌍'], dtype=StringDType())
 
@@ -1785,7 +1791,7 @@ def slice(a, start=None, stop=None, step=None, /):
     """
     # Just like in the construction of a regular slice object, if only start
     # is specified then start will become stop, see logic in slice_new.
-    if stop is None:
+    if stop is np._NoValue:
         stop = start
         start = None
 

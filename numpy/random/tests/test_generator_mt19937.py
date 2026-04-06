@@ -1266,6 +1266,7 @@ class TestRandomDist:
         assert_array_almost_equal(actual, expected, decimal=15)
 
     @pytest.mark.slow
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
     def test_dirichlet_moderately_small_alpha(self):
         # Use alpha.max() < 0.1 to trigger stick breaking code path
         alpha = np.array([0.02, 0.04, 0.03])
@@ -1684,7 +1685,7 @@ class TestRandomDist:
                             [1.093830802293668, 1.256977002164613]])
         assert_array_almost_equal(actual, desired, decimal=15)
 
-    def test_standard_expoential_type_error(self):
+    def test_standard_exponential_type_error(self):
         assert_raises(TypeError, random.standard_exponential, dtype=np.int32)
 
     def test_standard_gamma(self):
@@ -1873,6 +1874,11 @@ class TestRandomDist:
                             [2.20328374987066, 2.40958405189353],
                             [2.07093587449261, 0.73073890064369]])
         assert_array_almost_equal(actual, desired, decimal=14)
+
+    def test_wald_nonnegative(self):
+        random = Generator(MT19937(self.seed))
+        samples = random.wald(mean=1e9, scale=2.25, size=1000)
+        assert_(np.all(samples >= 0.0))
 
     def test_weibull(self):
         random = Generator(MT19937(self.seed))

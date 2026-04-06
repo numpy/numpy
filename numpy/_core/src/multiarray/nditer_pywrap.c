@@ -916,7 +916,7 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
         }
         if (!PyTuple_Check(item) && !PyList_Check(item)) {
             PyErr_SetString(PyExc_ValueError,
-                    "Each item in axes must be a an integer tuple");
+                    "Each item in axes must be an integer tuple");
             Py_DECREF(item);
             return NULL;
         }
@@ -1423,7 +1423,10 @@ npyiter_enable_external_loop(
         return NULL;
     }
 
-    NpyIter_EnableExternalLoop(self->iter);
+    if (NpyIter_EnableExternalLoop(self->iter) != NPY_SUCCEED) {
+        return NULL;
+    }
+
     /* EnableExternalLoop invalidates cached values */
     if (npyiter_cache_values(self) < 0) {
         return NULL;

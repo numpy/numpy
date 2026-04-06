@@ -1,0 +1,15 @@
+``object`` dtype in ``.real`` and ``.imag`` and related functions
+-----------------------------------------------------------------
+The array attributes ``.real`` and ``.imag`` now behave differently
+for object arrays and return ``getattr(element, "real", element)``
+or ``getattr(element, "imag", 0)`` elementwise.
+Additionally, the return for both is now read-only to avoid possible
+in-place changes having no effect.
+
+This change also affects ``np.isreal()`` which uses ``arr.imag``.
+
+Previously, ``.imag`` always returned ``0`` while ``.real`` returned
+the original array unmodified.
+The new behavior now returnes the correct values for complex Python
+objects but may also lead to surprises for example if ``element.real()``
+is a method and not a property.

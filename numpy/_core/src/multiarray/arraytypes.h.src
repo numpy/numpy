@@ -44,7 +44,7 @@ small_correlate(const char * d_, npy_intp dstride,
  */
 
 NPY_NO_EXPORT int
-@TYPE@_setitem(PyObject *obj, void *data_ptr, void *arr);
+@TYPE@_setitem(PyArray_Descr *descr, PyObject *obj, char *data_ptr);
 
 /**end repeat**/
 

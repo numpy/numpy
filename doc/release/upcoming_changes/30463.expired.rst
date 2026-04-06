@@ -1,0 +1,2 @@
+* ``numpy.row_stack`` has been removed in favor of ``numpy.vstack`` (deprecated since 2.0).
+* ``get_array_wrap`` has been removed (deprecated since 2.0).

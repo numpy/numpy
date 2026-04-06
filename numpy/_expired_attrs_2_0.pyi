@@ -47,7 +47,6 @@ class _ExpiredAttributesType(TypedDict):
     recfromtxt: str
     deprecate: str
     deprecate_with_doc: str
-    disp: str
     find_common_type: str
     round_: str
     get_array_wrap: str

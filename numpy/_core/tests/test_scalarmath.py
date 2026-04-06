@@ -15,7 +15,6 @@ from numpy._core._rational_tests import rational
 from numpy._utils import _pep440
 from numpy.exceptions import ComplexWarning
 from numpy.testing import (
-    IS_PYPY,
     _gen_alignment_data,
     assert_,
     assert_almost_equal,
@@ -70,8 +69,8 @@ class TestTypes:
                 # skipped ahead based on the first argument, but that
                 # does not produce properly symmetric results...
                 assert_equal(c_scalar.dtype, c_array.dtype,
-                           "error with types (%d/'%c' + %d/'%c')" %
-                            (k, np.dtype(atype).char, l, np.dtype(btype).char))
+                             f"error with types ({k}/{np.dtype(atype).char!r} + "
+                             f"{l}/{np.dtype(btype).char!r})")
 
     def test_type_create(self):
         for atype in types:
@@ -276,7 +275,7 @@ class TestPower:
         a = 5
         b = 4
         c = 10
-        expected = pow(a, b, c)  # noqa: F841
+        expected = pow(a, b, c)
         for t in (np.int32, np.float32, np.complex64):
             # note that 3-operand power only dispatches on the first argument
             assert_raises(TypeError, operator.pow, t(a), b, c)
@@ -398,7 +397,7 @@ class TestModulus:
             a //= b
 
 class TestComparison:
-    def test_comparision_different_types(self):
+    def test_comparison_different_types(self):
         x = np.array(1)
         y = np.array('s')
         eq = x == y
@@ -519,14 +518,6 @@ class TestConversion:
         with pytest.warns(ComplexWarning):
             x = np.clongdouble(np.inf)
             assert_raises(OverflowError, int, x)
-
-    @pytest.mark.skipif(not IS_PYPY, reason="Test is PyPy only (gh-9972)")
-    def test_int_from_infinite_longdouble___int__(self):
-        x = np.longdouble(np.inf)
-        assert_raises(OverflowError, x.__int__)
-        with pytest.warns(ComplexWarning):
-            x = np.clongdouble(np.inf)
-            assert_raises(OverflowError, x.__int__)
 
     @pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
                         reason="long double is same as double")
@@ -652,18 +643,16 @@ class TestRepr:
             self._test_type_repr(t)
 
 
-if not IS_PYPY:
-    # sys.getsizeof() is not valid on PyPy
-    class TestSizeOf:
+class TestSizeOf:
 
-        def test_equal_nbytes(self):
-            for type in types:
-                x = type(0)
-                assert_(sys.getsizeof(x) > x.nbytes)
+    def test_equal_nbytes(self):
+        for type in types:
+            x = type(0)
+            assert_(sys.getsizeof(x) > x.nbytes)
 
-        def test_error(self):
-            d = np.float32()
-            assert_raises(TypeError, d.__sizeof__, "a")
+    def test_error(self):
+        d = np.float32()
+        assert_raises(TypeError, d.__sizeof__, "a")
 
 
 class TestMultiply:
@@ -871,6 +860,7 @@ def recursionlimit(n):
 @given(sampled_from(objecty_things),
        sampled_from(binary_operators_for_scalar_ints),
        sampled_from(types + [rational]))
+@pytest.mark.thread_unsafe(reason="sets recursion limit globally")
 def test_operator_object_left(o, op, type_):
     try:
         with recursionlimit(200):
@@ -882,6 +872,7 @@ def test_operator_object_left(o, op, type_):
 @given(sampled_from(objecty_things),
        sampled_from(binary_operators_for_scalar_ints),
        sampled_from(types + [rational]))
+@pytest.mark.thread_unsafe(reason="sets recursion limit globally")
 def test_operator_object_right(o, op, type_):
     try:
         with recursionlimit(200):
@@ -1053,7 +1044,7 @@ def test_subclass_deferral(sctype, __op__, __rop__, op, cmp):
 
     # inheritance has to override, or this is correctly lost:
     res = op(myf_simple1(1), myf_simple2(2))
-    assert type(res) == sctype or type(res) == np.bool
+    assert type(res) is sctype or type(res) is np.bool
     assert op(myf_simple1(1), myf_simple2(2)) == op(1, 2)  # inherited
 
     # Two independent subclasses do not really define an order.  This could
@@ -1075,7 +1066,7 @@ def test_longdouble_complex():
 def test_pyscalar_subclasses(subtype, __op__, __rop__, op, cmp):
     # This tests that python scalar subclasses behave like a float64 (if they
     # don't override it).
-    # In an earlier version of NEP 50, they behaved like the Python buildins.
+    # In an earlier version of NEP 50, they behaved like the Python builtins.
     def op_func(self, other):
         return __op__
 
@@ -1090,7 +1081,7 @@ def test_pyscalar_subclasses(subtype, __op__, __rop__, op, cmp):
     assert op(myt(1), np.float64(2)) == __op__
     assert op(np.float64(1), myt(2)) == __rop__
 
-    if op in {operator.mod, operator.floordiv} and subtype == complex:
+    if op in {operator.mod, operator.floordiv} and subtype is complex:
         return  # module is not support for complex.  Do not test.
 
     if __rop__ == __op__:
@@ -1104,12 +1095,11 @@ def test_pyscalar_subclasses(subtype, __op__, __rop__, op, cmp):
     res = op(myt(1), np.float16(2))
     expected = op(behaves_like(1), np.float16(2))
     assert res == expected
-    assert type(res) == type(expected)
+    assert type(res) is type(expected)
     res = op(np.float32(2), myt(1))
     expected = op(np.float32(2), behaves_like(1))
     assert res == expected
-    assert type(res) == type(expected)
-
+    assert type(res) is type(expected)
     # Same check for longdouble (compare via dtype to accept float64 when
     # longdouble has the identical size), which is currently not perfectly
     # consistent.

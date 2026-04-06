@@ -1,7 +1,7 @@
 from _typeshed import FileDescriptorOrPath
 from collections.abc import Callable, Mapping
 from pprint import pprint as show
-from typing import Any, Final, Literal as L, Never, TypeAlias, TypeVar, overload
+from typing import Any, Final, Literal as L, Never, overload
 
 from .cfuncs import errmess
 
@@ -106,15 +106,12 @@ __all__ = [
 
 ###
 
-_VT = TypeVar("_VT")
-_RT = TypeVar("_RT")
+type _Var = Mapping[str, list[str]]
+type _ROut = Mapping[str, str]
+type _F2CMap = Mapping[str, Mapping[str, str]]
 
-_Var: TypeAlias = Mapping[str, list[str]]
-_ROut: TypeAlias = Mapping[str, str]
-_F2CMap: TypeAlias = Mapping[str, Mapping[str, str]]
-
-_Bool: TypeAlias = bool | L[0, 1]
-_Intent: TypeAlias = L[
+type _Bool = bool | L[0, 1]
+type _Intent = L[
     "INTENT_IN",
     "INTENT_OUT",
     "INTENT_INOUT",
@@ -140,9 +137,9 @@ class throw_error:
     def __call__(self, /, var: _Var) -> Never: ...  # raises F2PYError
 
 #
-def l_and(*f: tuple[str, Callable[[_VT], _RT]]) -> Callable[[_VT], _RT]: ...
-def l_or(*f: tuple[str, Callable[[_VT], _RT]]) -> Callable[[_VT], _RT]: ...
-def l_not(f: tuple[str, Callable[[_VT], _RT]]) -> Callable[[_VT], _RT]: ...
+def l_and[VT, RT](*f: tuple[str, Callable[[VT], RT]]) -> Callable[[VT], RT]: ...
+def l_or[VT, RT](*f: tuple[str, Callable[[VT], RT]]) -> Callable[[VT], RT]: ...
+def l_not[VT, RT](f: tuple[str, Callable[[VT], RT]]) -> Callable[[VT], RT]: ...
 
 #
 def outmess(t: str) -> None: ...

@@ -1,0 +1,1 @@
+* ``numpy._core.numerictypes.maximum_sctype`` has been removed (deprecated since 2.0)

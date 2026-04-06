@@ -117,6 +117,7 @@ def _test_redirected_print(x, tp, ref=None):
                  err_msg=f'print failed for type{tp}')
 
 
+@pytest.mark.thread_unsafe(reason="sys.stdout not thread-safe")
 @pytest.mark.parametrize('tp', [np.float32, np.double, np.longdouble])
 def test_float_type_print(tp):
     """Check formatting when using print """
@@ -133,6 +134,7 @@ def test_float_type_print(tp):
         _test_redirected_print(1e16, tp, ref)
 
 
+@pytest.mark.thread_unsafe(reason="sys.stdout not thread-safe")
 @pytest.mark.parametrize('tp', [np.complex64, np.cdouble, np.clongdouble])
 def test_complex_type_print(tp):
     """Check formatting when using print """
@@ -178,8 +180,8 @@ def test_scalar_format():
                     f"failed with val {val}, type {valtype}")
         except ValueError as e:
             assert_(False,
-               "format raised exception (fmt='%s', val=%s, type=%s, exc='%s')" %
-                            (fmat, repr(val), repr(valtype), str(e)))
+                    f"format raised exception (fmt='{fmat}', {val=}, "
+                    f"type={valtype!r}, exc='{e}')")
 
 
 #

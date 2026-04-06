@@ -22,6 +22,7 @@
 #include "getset.h"
 #include "arrayobject.h"
 #include "mem_overlap.h"
+#include "number.h"
 #include "alloc.h"
 #include "npy_buffer.h"
 #include "shape.h"
@@ -49,17 +50,13 @@ array_shape_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 }
 
 
-static int
-array_shape_set(PyArrayObject *self, PyObject *val, void* NPY_UNUSED(ignored))
+NPY_NO_EXPORT int
+array_shape_set_internal(PyArrayObject *self, PyObject *val)
 {
     int nd;
     PyArrayObject *ret;
+    assert(val);
 
-    if (val == NULL) {
-        PyErr_SetString(PyExc_AttributeError,
-                "Cannot delete array shape");
-        return -1;
-    }
     /* Assumes C-order */
     ret = (PyArrayObject *)PyArray_Reshape(self, val);
     if (ret == NULL) {
@@ -106,6 +103,25 @@ array_shape_set(PyArrayObject *self, PyObject *val, void* NPY_UNUSED(ignored))
     return 0;
 }
 
+static int
+array_shape_set(PyArrayObject *self, PyObject *val, void* NPY_UNUSED(ignored))
+{
+    if (val == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete array shape");
+        return -1;
+    }
+
+    /* Deprecated NumPy 2.5, 2026-01-05 */
+    if (DEPRECATE("Setting the shape on a NumPy array has been deprecated"
+                  " in NumPy 2.5.\nAs an alternative, you can create a new"
+                  " view using np.reshape (with copy=False if needed)."
+                 ) < 0 ) {
+            return -1;
+    }
+
+    return array_shape_set_internal(self, val);
+}
 
 static PyObject *
 array_strides_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
@@ -201,44 +217,10 @@ array_priority_get(PyArrayObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 }
 
 static PyObject *
-array_typestr_get(PyArrayObject *self)
-{
-    return arraydescr_protocol_typestr_get(PyArray_DESCR(self), NULL);
-}
-
-static PyObject *
 array_descr_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 {
     Py_INCREF(PyArray_DESCR(self));
     return (PyObject *)PyArray_DESCR(self);
-}
-
-static PyObject *
-array_protocol_descr_get(PyArrayObject *self)
-{
-    PyObject *res;
-    PyObject *dobj;
-
-    res = arraydescr_protocol_descr_get(PyArray_DESCR(self), NULL);
-    if (res) {
-        return res;
-    }
-    PyErr_Clear();
-
-    /* get default */
-    dobj = PyTuple_New(2);
-    if (dobj == NULL) {
-        return NULL;
-    }
-    PyTuple_SET_ITEM(dobj, 0, PyUnicode_FromString(""));
-    PyTuple_SET_ITEM(dobj, 1, array_typestr_get(self));
-    res = PyList_New(1);
-    if (res == NULL) {
-        Py_DECREF(dobj);
-        return NULL;
-    }
-    PyList_SET_ITEM(res, 0, dobj);
-    return res;
 }
 
 static PyObject *
@@ -280,65 +262,49 @@ array_ctypes_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 static PyObject *
 array_interface_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 {
-    PyObject *dict;
-    PyObject *obj;
+    PyObject *dataptr = NULL;
+    PyObject *strides = NULL;
+    PyObject *shape = NULL;
+    PyObject *descr = NULL;
+    PyObject *typestr = NULL;
+    PyObject *dict = NULL;
 
-    dict = PyDict_New();
-    if (dict == NULL) {
-        return NULL;
+    dataptr = array_dataptr_get(self, NULL);
+    if (dataptr == NULL) {
+        goto finish;
     }
 
-    int ret;
-
-    /* dataptr */
-    obj = array_dataptr_get(self, NULL);
-    ret = PyDict_SetItemString(dict, "data", obj);
-    Py_DECREF(obj);
-    if (ret < 0) {
-        Py_DECREF(dict);
-        return NULL;
+    strides = array_protocol_strides_get(self);
+    if (strides == NULL) {
+        goto finish;
     }
 
-    obj = array_protocol_strides_get(self);
-    ret = PyDict_SetItemString(dict, "strides", obj);
-    Py_DECREF(obj);
-    if (ret < 0) {
-        Py_DECREF(dict);
-        return NULL;
+    descr = array_protocol_descr_get(PyArray_DESCR(self));
+    if (descr == NULL) {
+        goto finish;
     }
 
-    obj = array_protocol_descr_get(self);
-    ret = PyDict_SetItemString(dict, "descr", obj);
-    Py_DECREF(obj);
-    if (ret < 0) {
-        Py_DECREF(dict);
-        return NULL;
+    typestr = arraydescr_protocol_typestr_get(PyArray_DESCR(self), NULL);
+    if (typestr == NULL) {
+        goto finish;
     }
 
-    obj = arraydescr_protocol_typestr_get(PyArray_DESCR(self), NULL);
-    ret = PyDict_SetItemString(dict, "typestr", obj);
-    Py_DECREF(obj);
-    if (ret < 0) {
-        Py_DECREF(dict);
-        return NULL;
+    shape = array_shape_get(self, NULL);
+    if (shape == NULL) {
+        goto finish;
     }
 
-    obj = array_shape_get(self, NULL);
-    ret = PyDict_SetItemString(dict, "shape", obj);
-    Py_DECREF(obj);
-    if (ret < 0) {
-        Py_DECREF(dict);
-        return NULL;
-    }
+    dict = build_array_interface(
+        dataptr, descr, strides, typestr, shape
+    );
+    goto finish;
 
-    obj = PyLong_FromLong(3);
-    ret = PyDict_SetItemString(dict, "version", obj);
-    Py_DECREF(obj);
-    if (ret < 0) {
-        Py_DECREF(dict);
-        return NULL;
-    }
-
+finish:
+    Py_XDECREF(dataptr);
+    Py_XDECREF(strides);
+    Py_XDECREF(shape);
+    Py_XDECREF(descr);
+    Py_XDECREF(typestr);
     return dict;
 }
 
@@ -500,15 +466,23 @@ array_descr_set(PyArrayObject *self, PyObject *arg, void *NPY_UNUSED(ignored))
         if (temp == NULL) {
             return -1;
         }
+        /* create new dimensions cache and fill it */
+        npy_intp new_nd = PyArray_NDIM(temp);
+        npy_intp *new_dims = npy_alloc_cache_dim(2 * new_nd);
+        if (new_dims == NULL) {
+            Py_DECREF(temp);
+            PyErr_NoMemory();
+            return -1;
+        }
+        memcpy(new_dims, PyArray_DIMS(temp), new_nd * sizeof(npy_intp));
+        memcpy(new_dims + new_nd, PyArray_STRIDES(temp), new_nd * sizeof(npy_intp));
+        /* Update self with new cache */
         npy_free_cache_dim_array(self);
-        ((PyArrayObject_fields *)self)->dimensions = PyArray_DIMS(temp);
-        ((PyArrayObject_fields *)self)->nd = PyArray_NDIM(temp);
-        ((PyArrayObject_fields *)self)->strides = PyArray_STRIDES(temp);
+        ((PyArrayObject_fields *)self)->nd = new_nd;
+        ((PyArrayObject_fields *)self)->dimensions = new_dims;
+        ((PyArrayObject_fields *)self)->strides = new_dims + new_nd;
         newtype = PyArray_DESCR(temp);
-        Py_INCREF(PyArray_DESCR(temp));
-        /* Fool deallocator not to delete these*/
-        ((PyArrayObject_fields *)temp)->nd = 0;
-        ((PyArrayObject_fields *)temp)->dimensions = NULL;
+        Py_INCREF(newtype);
         Py_DECREF(temp);
     }
 
@@ -600,132 +574,109 @@ array_base_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     }
 }
 
+
 /*
- * Create a view of a complex array with an equivalent data-type
- * except it is real instead of complex.
+ * Fetches the real or imaginary part of an array. If `need_view` is set the return
+ * cannot be a copy (must be a view).
+ * If `need_view` is zero it will return the `ufunc`s result (a new array) and set it
+ * to read-only.
  */
-static PyArrayObject *
-_get_part(PyArrayObject *self, int imag)
+static PyObject *
+_get_part(PyArrayObject *self, PyObject *ufunc, PyBoundArrayMethodObject *meth, int need_view)
 {
-    int float_type_num;
-    PyArray_Descr *type;
-    PyArrayObject *ret;
-    int offset;
-
-    switch (PyArray_DESCR(self)->type_num) {
-        case NPY_CFLOAT:
-            float_type_num = NPY_FLOAT;
-            break;
-        case NPY_CDOUBLE:
-            float_type_num = NPY_DOUBLE;
-            break;
-        case NPY_CLONGDOUBLE:
-            float_type_num = NPY_LONGDOUBLE;
-            break;
-        default:
-            PyErr_Format(PyExc_ValueError,
-                     "Cannot convert complex type number %d to float",
-                     PyArray_DESCR(self)->type_num);
-            return NULL;
-
-    }
-    type = PyArray_DescrFromType(float_type_num);
-    if (type == NULL) {
+    PyObject *ret = NULL;
+    PyArray_Descr *descrs[2] = {PyArray_DESCR(self), NULL};
+    PyArray_Descr *loop_descrs[2] = {NULL, NULL};
+    npy_intp view_offset = NPY_MIN_INTP;
+    int res = meth->method->resolve_descriptors(
+        meth->method, meth->dtypes, descrs, loop_descrs, &view_offset);
+    if (res < 0) {
         return NULL;
     }
-
-    offset = (imag ? type->elsize : 0);
-
-    if (!PyArray_ISNBO(PyArray_DESCR(self)->byteorder)) {
-        Py_SETREF(type, PyArray_DescrNew(type));
-        if (type == NULL) {
-            return NULL;
+    if (view_offset != NPY_MIN_INTP) {
+        Py_INCREF(loop_descrs[1]);
+        ret = PyArray_NewFromDescr_int(
+            Py_TYPE(self), loop_descrs[1],
+            PyArray_NDIM(self), PyArray_DIMS(self),
+            PyArray_STRIDES(self), PyArray_BYTES(self) + view_offset,
+            PyArray_FLAGS(self), (PyObject *)self, (PyObject *)self,
+            _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
+    }
+    else if (!need_view) {
+        // resolve_descriptors was successful, but view_offset is not set so we call
+        // the ufunc to let it deal with the (potential) complexity.
+        ret = PyArray_GenericUnaryFunction(self, ufunc);
+        if (ret != NULL && PyArray_Check(ret)) {
+            // Make result read-only, since otherwise `arr.imag[...] = val`
+            // would for example work.
+            PyArray_CLEARFLAGS((PyArrayObject *)ret, NPY_ARRAY_WRITEABLE);
         }
-        type->byteorder = PyArray_DESCR(self)->byteorder;
     }
-    ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
-            Py_TYPE(self),
-            type,
-            PyArray_NDIM(self),
-            PyArray_DIMS(self),
-            PyArray_STRIDES(self),
-            PyArray_BYTES(self) + offset,
-            PyArray_FLAGS(self), (PyObject *)self, (PyObject *)self);
-    if (ret == NULL) {
-        return NULL;
-    }
+
+    Py_DECREF(loop_descrs[0]);
+    Py_DECREF(loop_descrs[1]);
     return ret;
 }
 
-/* For Object arrays, we need to get and set the
-   real part of each element.
- */
 
 static PyObject *
 array_real_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 {
-    PyArrayObject *ret;
+    PyBoundArrayMethodObject *meth = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DTYPE(self)))->real_meth;
 
-    if (PyArray_ISCOMPLEX(self)) {
-        ret = _get_part(self, 0);
-        return (PyObject *)ret;
+    if (meth == NULL) {
+        // If the method is not set, we just assume this can be seen as "real"
+        // it really may be nice to change that one day.
+        return Py_NewRef((PyObject *)self);
     }
-    else {
-        Py_INCREF(self);
-        return (PyObject *)self;
-    }
+
+    return _get_part(self, n_ops.real, meth, /* need_view */ 0);
 }
-
 
 static int
 array_real_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
 {
-    PyArrayObject *ret;
-    PyArrayObject *new;
-    int retcode;
-
     if (val == NULL) {
         PyErr_SetString(PyExc_AttributeError,
                 "Cannot delete array real part");
         return -1;
     }
-    if (PyArray_ISCOMPLEX(self)) {
-        ret = _get_part(self, 0);
-        if (ret == NULL) {
+
+    PyArrayObject *part;
+    PyBoundArrayMethodObject *meth = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DTYPE(self)))->real_meth;
+
+    if (meth == NULL) {
+        // See above, we may want to not guess this always...
+        Py_INCREF(self);
+        part = self;
+    }
+    else {
+        part = (PyArrayObject *)_get_part(
+            self, n_ops.real, meth, /* need_view */ 1);
+        if (part == NULL) {
+            if (!PyErr_Occurred()) {
+                PyErr_SetString(PyExc_TypeError,
+                        "Cannot set real part when `.real` isn't a view.");
+            }
             return -1;
         }
     }
-    else {
-        Py_INCREF(self);
-        ret = self;
-    }
-    new = (PyArrayObject *)PyArray_FROM_O(val);
-    if (new == NULL) {
-        Py_DECREF(ret);
-        return -1;
-    }
-    retcode = PyArray_CopyInto(ret, new);
-    Py_DECREF(ret);
-    Py_DECREF(new);
-    return retcode;
+
+    int ret = PyArray_CopyObject(part, val);
+    Py_DECREF(part);
+    return ret;
 }
 
-/* For Object arrays we need to get
-   and set the imaginary part of
-   each element
-*/
 
 static PyObject *
 array_imag_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 {
-    PyArrayObject *ret;
+    PyBoundArrayMethodObject *meth = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DTYPE(self)))->imag_meth;
 
-    if (PyArray_ISCOMPLEX(self)) {
-        ret = _get_part(self, 1);
-    }
-    else {
+    if (meth == NULL) {
+        // We assume this is a real type, so return a zeroed array.
         Py_INCREF(PyArray_DESCR(self));
-        ret = (PyArrayObject *)PyArray_NewFromDescr_int(
+        PyObject *ret = PyArray_NewFromDescr_int(
                 Py_TYPE(self),
                 PyArray_DESCR(self),
                 PyArray_NDIM(self),
@@ -736,9 +687,11 @@ array_imag_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
         if (ret == NULL) {
             return NULL;
         }
-        PyArray_CLEARFLAGS(ret, NPY_ARRAY_WRITEABLE);
+        PyArray_CLEARFLAGS((PyArrayObject *)ret, NPY_ARRAY_WRITEABLE);
+        return ret;
     }
-    return (PyObject *) ret;
+
+    return _get_part(self, n_ops.imag, meth, /* need_view */ 0);
 }
 
 static int
@@ -749,30 +702,28 @@ array_imag_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
                 "Cannot delete array imaginary part");
         return -1;
     }
-    if (PyArray_ISCOMPLEX(self)) {
-        PyArrayObject *ret;
-        PyArrayObject *new;
-        int retcode;
+    PyArrayObject *part;
+    PyBoundArrayMethodObject *meth = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DTYPE(self)))->imag_meth;
 
-        ret = _get_part(self, 1);
-        if (ret == NULL) {
-            return -1;
-        }
-        new = (PyArrayObject *)PyArray_FROM_O(val);
-        if (new == NULL) {
-            Py_DECREF(ret);
-            return -1;
-        }
-        retcode = PyArray_CopyInto(ret, new);
-        Py_DECREF(ret);
-        Py_DECREF(new);
-        return retcode;
-    }
-    else {
+    if (meth == NULL) {
         PyErr_SetString(PyExc_TypeError,
-                "array does not have imaginary part to set");
+            "Cannot set imaginary part of non-complex array.");
         return -1;
     }
+
+    part = (PyArrayObject *)_get_part(
+        self, n_ops.imag, meth, /* need_view */ 1);
+    if (part == NULL) {
+        if (!PyErr_Occurred()) {
+            PyErr_SetString(PyExc_TypeError,
+                    "Cannot set imaginary part when `.imag` isn't a view.");
+        }
+        return -1;
+    }
+
+    int ret = PyArray_CopyObject(part, val);
+    Py_DECREF(part);
+    return ret;
 }
 
 static PyObject *
@@ -865,34 +816,6 @@ array_matrix_transpose_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     return PyArray_MatrixTranspose(self);
 }
 
-static PyObject *
-array_ptp(PyArrayObject *self, void *NPY_UNUSED(ignored))
-{
-    PyErr_SetString(PyExc_AttributeError,
-                    "`ptp` was removed from the ndarray class in NumPy 2.0. "
-                    "Use np.ptp(arr, ...) instead.");
-    return NULL;
-}
-
-static PyObject *
-array_newbyteorder(PyArrayObject *self, PyObject *args)
-{
-    PyErr_SetString(PyExc_AttributeError,
-                    "`newbyteorder` was removed from the ndarray class "
-                    "in NumPy 2.0. "
-                    "Use `arr.view(arr.dtype.newbyteorder(order))` instead.");
-    return NULL;
-}
-
-static PyObject *
-array_itemset(PyArrayObject *self, PyObject *args)
-{
-    PyErr_SetString(PyExc_AttributeError,
-                    "`itemset` was removed from the ndarray class in "
-                    "NumPy 2.0. Use `arr[index] = value` instead.");
-    return NULL;
-}
-
 NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
     {"ndim",
         (getter)array_ndim_get,
@@ -956,18 +879,6 @@ NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
         NULL, NULL},
     {"mT",
         (getter)array_matrix_transpose_get,
-        NULL,
-        NULL, NULL},
-    {"ptp",
-        (getter)array_ptp,
-        NULL,
-        NULL, NULL},
-    {"newbyteorder",
-        (getter)array_newbyteorder,
-        NULL,
-        NULL, NULL},
-    {"itemset",
-        (getter)array_itemset,
         NULL,
         NULL, NULL},
     {"device",

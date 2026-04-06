@@ -179,8 +179,8 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
         return -1;
     }
     descr_proto->type_num = -1;
-    if (PyDataType_ISUNSIZED(descr_proto)) {
-        PyErr_SetString(PyExc_ValueError, "cannot register a" \
+    if (descr_proto->elsize == 0) {
+        PyErr_SetString(PyExc_ValueError, "cannot register a " \
                         "flexible data-type");
         return -1;
     }
@@ -306,8 +306,9 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
     descr->type_num = typenum;
     /* update prototype to notice duplicate registration */
     descr_proto->type_num = typenum;
-    if (dtypemeta_wrap_legacy_descriptor(
-            descr, descr_proto->f, &PyArrayDescr_Type, name, NULL) < 0) {
+    PyArray_DTypeMeta *wrapped_dtype = dtypemeta_wrap_legacy_descriptor(
+        descr, descr_proto->f, &PyArrayDescr_Type, name, NULL);
+    if (wrapped_dtype == NULL) {
         descr->type_num = -1;
         NPY_NUMUSERTYPES--;
         /* Override the type, it might be wrong and then decref crashes */

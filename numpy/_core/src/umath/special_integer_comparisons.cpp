@@ -106,7 +106,7 @@ get_min_max(int typenum, long long *min, unsigned long long *max)
 
 /*
  * Determine if a Python long is within the typenums range, smaller, or larger.
- * 
+ *
  * Function returns -1 for errors.
  */
 static inline int
@@ -141,7 +141,7 @@ get_value_range(PyObject *value, int type_num, int *range)
     }
     else {
         /*
-        * If we are checking for unisgned long long, the value may be larger
+        * If we are checking for unsigned long long, the value may be larger
         * then long long, but within range of unsigned long long.  Check this
         * by doing the normal Python integer comparison.
         */
@@ -344,7 +344,7 @@ add_dtype_loops(PyObject *umath, PyArrayMethod_Spec *spec, PyObject *info)
         goto fail;
     }
 
-    /* 
+    /*
      * NOTE: Iterates all type numbers, it would be nice to reduce this.
      *       (that would be easier if we consolidate int DTypes in general.)
      */

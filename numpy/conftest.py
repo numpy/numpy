@@ -6,6 +6,7 @@ import sys
 import tempfile
 import warnings
 from contextlib import contextmanager
+from pathlib import Path
 
 import hypothesis
 import pytest
@@ -20,6 +21,11 @@ try:
 except ModuleNotFoundError:
     HAVE_SCPDT = False
 
+try:
+    import pytest_run_parallel  # noqa: F401
+    PARALLEL_RUN_AVAILABLE = True
+except ModuleNotFoundError:
+    PARALLEL_RUN_AVAILABLE = False
 
 _old_fpu_mode = None
 _collect_results = {}
@@ -60,8 +66,17 @@ def pytest_configure(config):
         "leaks_references: Tests that are known to leak references.")
     config.addinivalue_line("markers",
         "slow: Tests that are very slow.")
-    config.addinivalue_line("markers",
-        "slow_pypy: Tests that are very slow on pypy.")
+    if not PARALLEL_RUN_AVAILABLE:
+        config.addinivalue_line("markers",
+            "parallel_threads(n): run the given test function in parallel "
+            "using `n` threads.",
+        )
+        config.addinivalue_line("markers",
+            "iterations(n): run the given test function `n` times in each thread",
+        )
+        config.addinivalue_line("markers",
+            "thread_unsafe: mark the test function as single-threaded",
+        )
 
 
 def pytest_addoption(parser):
@@ -100,7 +115,7 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
         pytest.exit("GIL re-enabled during tests", returncode=1)
 
 # FIXME when yield tests are gone.
-@pytest.hookimpl()
+@pytest.hookimpl(tryfirst=True)
 def pytest_itemcollected(item):
     """
     Check FPU precision mode was not changed during test collection.
@@ -118,6 +133,11 @@ def pytest_itemcollected(item):
     elif mode != _old_fpu_mode:
         _collect_results[item] = (_old_fpu_mode, mode)
         _old_fpu_mode = mode
+
+    # mark f2py tests as thread unsafe
+    if Path(item.fspath).parent == Path(__file__).parent / 'f2py' / 'tests':
+        item.add_marker(pytest.mark.thread_unsafe(
+            reason="f2py tests are thread-unsafe"))
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -161,10 +181,12 @@ if HAVE_SCPDT:
                 "numpy.core",
                 "Importing from numpy.matlib",
                 "This function is deprecated.",    # random_integers
-                "Data type alias 'a'",     # numpy.rec.fromfile
                 "Arrays of 2-dimensional vectors",   # matlib.cross
-                "`in1d` is deprecated",
-                "NumPy warning suppression and assertion utilities are deprecated."
+                "NumPy warning suppression and assertion utilities are deprecated.",
+                "numpy.fix is deprecated",  # fix -> trunc
+                "The chararray class is deprecated",  # char.chararray
+                "numpy.typename is deprecated",  # typename -> dtype.name
+                "numpy.ma.round_ is deprecated",  # ma.round_ -> ma.round
         ]
         msg = "|".join(msgs)
 

@@ -24,7 +24,6 @@ from numpy._core.shape_base import (
 )
 from numpy.exceptions import AxisError
 from numpy.testing import (
-    IS_PYPY,
     assert_,
     assert_array_equal,
     assert_equal,
@@ -299,6 +298,7 @@ class TestConcatenate:
         reason="only problematic on 64bit platforms"
     )
     @requires_memory(2 * np.iinfo(np.intc).max)
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
     def test_huge_list_error(self):
         a = np.array([1])
         max_int = np.iinfo(np.intc).max
@@ -383,10 +383,11 @@ class TestConcatenate:
         assert_(out is rout)
         assert_equal(res, rout)
 
-    @pytest.mark.skipif(
-        IS_PYPY,
-        reason="PYPY handles sq_concat, nb_add differently than cpython"
-    )
+    def test_concatenate_same_value(self):
+        r4 = list(range(4))
+        with pytest.raises(ValueError, match="^casting must be one of"):
+            concatenate([r4, r4], casting="same_value")
+
     def test_operator_concat(self):
         import operator
         a = array([1, 2])

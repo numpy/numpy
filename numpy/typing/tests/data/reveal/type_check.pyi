@@ -54,10 +54,10 @@ assert_type(np.real_if_close(AR_c16), npt.NDArray[np.float64 | np.complex128])
 assert_type(np.real_if_close(AR_c8), npt.NDArray[np.float32 | np.complex64])
 assert_type(np.real_if_close(AR_LIKE_f), npt.NDArray[Any])
 
-assert_type(np.typename("h"), Literal["short"])
-assert_type(np.typename("B"), Literal["unsigned char"])
-assert_type(np.typename("V"), Literal["void"])
-assert_type(np.typename("S1"), Literal["character"])
+assert_type(np.typename("h"), Literal["short"])  # type: ignore[deprecated]
+assert_type(np.typename("B"), Literal["unsigned char"])  # type: ignore[deprecated]
+assert_type(np.typename("V"), Literal["void"])  # type: ignore[deprecated]
+assert_type(np.typename("S1"), Literal["character"])  # type: ignore[deprecated]
 
 assert_type(np.common_type(AR_i4), type[np.float64])
 assert_type(np.common_type(AR_f2), type[np.float16])

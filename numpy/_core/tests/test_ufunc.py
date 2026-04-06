@@ -1,4 +1,5 @@
 import ctypes as ct
+import inspect
 import itertools
 import pickle
 import sys
@@ -16,7 +17,6 @@ import numpy.linalg._umath_linalg as uml
 from numpy.exceptions import AxisError
 from numpy.testing import (
     HAS_REFCOUNT,
-    IS_PYPY,
     IS_WASM,
     assert_,
     assert_allclose,
@@ -214,7 +214,6 @@ class TestUfunc:
                    b"(S'numpy._core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
         assert_(pickle.loads(astring) is np.cos)
 
-    @pytest.mark.skipif(IS_PYPY, reason="'is' check does not work on PyPy")
     def test_pickle_name_is_qualname(self):
         # This tests that a simplification of our ufunc pickle code will
         # lead to allowing qualnames as names.  Future ufuncs should
@@ -909,6 +908,13 @@ class TestUfunc:
         arr = np.array(["1", "2"], dtype=object)
         with pytest.raises(AttributeError, match="conjugate"):
             np.vecdot(arr, arr)
+
+    def test_vecdot_object_empty_is_zero(self):
+        x = np.empty((0,), dtype=object)
+        assert np.vecdot(x, x) == 0
+
+        x2 = np.empty((1, 0), dtype=object)
+        assert_array_equal(np.vecdot(x2, x2), np.array([0], dtype=object))
 
     def test_vecdot_object_breaks_outer_loop_on_error(self):
         arr1 = np.ones((3, 3)).astype(object)
@@ -1710,9 +1716,6 @@ class TestUfunc:
         assert_equal(a, [[0, 27], [14, 5]])
 
     def test_where_param_buffer_output(self):
-        # This test is temporarily skipped because it requires
-        # adding masking features to the nditer to work properly
-
         # With casting on output
         a = np.ones(10, np.int64)
         b = np.ones(10, np.int64)
@@ -1724,12 +1727,12 @@ class TestUfunc:
         # With casting and allocated output
         a = np.array([1], dtype=np.int64)
         m = np.array([True], dtype=bool)
-        assert_equal(np.sqrt(a, where=m), [1])
+        assert_equal(np.sqrt(a, where=m, out=None), [1])
 
         # No casting and allocated output
         a = np.array([1], dtype=np.float64)
         m = np.array([True], dtype=bool)
-        assert_equal(np.sqrt(a, where=m), [1])
+        assert_equal(np.sqrt(a, where=m, out=None), [1])
 
     def test_where_with_broadcasting(self):
         # See gh-17198
@@ -1742,6 +1745,21 @@ class TestUfunc:
         b_where = np.broadcast_to(b, a.shape)[where]
         assert_array_equal((a[where] < b_where), out[where].astype(bool))
         assert not out[~where].any()  # outside mask, out remains all 0
+
+    def test_where_warns(self):
+        a = np.arange(7)
+        mask = a % 2 == 0
+        with pytest.warns(UserWarning, match="'where' used without 'out'"):
+            result1 = np.add(a, a, where=mask)
+        # Does not warn
+        result2 = np.add(a, a, where=mask, out=None)
+        # Sanity check
+        assert np.all(result1[::2] == [0, 4, 8, 12])
+        assert np.all(result2[::2] == [0, 4, 8, 12])
+        # Also no warning for where=True
+        result3 = np.add(a, a, where=True)
+        # Sanity check
+        assert_array_equal(result3, a + a)
 
     @staticmethod
     def identityless_reduce_arrs():
@@ -1756,14 +1774,15 @@ class TestUfunc:
         # Not contiguous and not aligned
         a = np.empty((3 * 4 * 5 * 8 + 1,), dtype='i1')
         a = a[1:].view(dtype='f8')
-        a.shape = (3, 4, 5)
+        a = a.reshape((3, 4, 5))
         a = a[1:, 1:, 1:]
         yield a
 
-    @pytest.mark.parametrize("a", identityless_reduce_arrs())
+    @pytest.mark.parametrize("arrs", identityless_reduce_arrs())
     @pytest.mark.parametrize("pos", [(1, 0, 0), (0, 1, 0), (0, 0, 1)])
-    def test_identityless_reduction(self, a, pos):
+    def test_identityless_reduction(self, arrs, pos):
         # np.minimum.reduce is an identityless reduction
+        a = arrs.copy()
         a[...] = 1
         a[pos] = 0
 
@@ -1787,6 +1806,7 @@ class TestUfunc:
     @requires_memory(6 * 1024**3)
     @pytest.mark.skipif(sys.maxsize < 2**32,
             reason="test array too large for 32bit platform")
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
     def test_identityless_reduction_huge_array(self):
         # Regression test for gh-20921 (copying identity incorrectly failed)
         arr = np.zeros((2, 2**31), 'uint8')
@@ -1912,7 +1932,7 @@ class TestUfunc:
         assert_raises(ValueError, np.divide.reduce, a, axis=(0, 1))
 
     def test_reduce_zero_axis(self):
-        # If we have a n x m array and do a reduction with axis=1, then we are
+        # If we have an n x m array and do a reduction with axis=1, then we are
         # doing n reductions, and each reduction takes an m-element array. For
         # a reduction operation without an identity, then:
         #   n > 0, m > 0: fine
@@ -2250,14 +2270,14 @@ class TestUfunc:
         np.add.at(arr, index, values)
         assert arr[0] == len(values)
 
-    @pytest.mark.parametrize("value", [
-        np.ones(1), np.ones(()), np.float64(1.), 1.])
-    def test_ufunc_at_scalar_value_fastpath(self, value):
-        arr = np.zeros(1000)
-        # index must be cast, which may be buffered in chunks:
-        index = np.repeat(np.arange(1000), 2)
-        np.add.at(arr, index, value)
-        assert_array_equal(arr, np.full_like(arr, 2 * value))
+    def test_ufunc_at_scalar_value_fastpath(self):
+        values = [np.ones(1), np.ones(()), np.float64(1.), 1.]
+        for value in values:
+            arr = np.zeros(1000)
+            # index must be cast, which may be buffered in chunks:
+            index = np.repeat(np.arange(1000), 2)
+            np.add.at(arr, index, value)
+            assert_array_equal(arr, np.full_like(arr, 2 * value))
 
     def test_ufunc_at_multiD(self):
         a = np.arange(9).reshape(3, 3)
@@ -2751,21 +2771,27 @@ class TestUfunc:
         # minimally check the exception text
         assert exc.match('loop of ufunc does not support')
 
-    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    @pytest.mark.parametrize(
+        "nat", [np.datetime64("nat", "s"), np.timedelta64("nat", "ns")]
+    )
     def test_nat_is_not_finite(self, nat):
         try:
             assert not np.isfinite(nat)
         except TypeError:
             pass  # ok, just not implemented
 
-    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    @pytest.mark.parametrize(
+        "nat", [np.datetime64("nat", "s"), np.timedelta64("nat", "ns")]
+    )
     def test_nat_is_nan(self, nat):
         try:
             assert np.isnan(nat)
         except TypeError:
             pass  # ok, just not implemented
 
-    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    @pytest.mark.parametrize(
+        "nat", [np.datetime64("nat", "s"), np.timedelta64("nat", "ns")]
+    )
     def test_nat_is_not_inf(self, nat):
         try:
             assert not np.isinf(nat)
@@ -2831,7 +2857,14 @@ def test_ufunc_types(ufunc):
         if 'O' in typ or '?' in typ:
             continue
         inp, out = typ.split('->')
-        args = [np.ones((3, 3), t) for t in inp]
+        if 'm' in inp:
+            with pytest.warns(
+                DeprecationWarning,
+                match="Using 'generic' unit for NumPy timedelta is deprecated",
+            ):
+                args = [np.ones((3, 3), t) for t in inp]
+        else:
+            args = [np.ones((3, 3), t) for t in inp]
         with warnings.catch_warnings(record=True):
             warnings.filterwarnings("always")
             res = ufunc(*args)
@@ -2964,6 +2997,20 @@ def test_ufunc_input_floatingpoint_error(bad_offset):
     with np.errstate(invalid="raise"), pytest.raises(FloatingPointError):
         # Force cast inputs, but the buffered cast of `arr` to intp fails:
         np.add(arr, arr, dtype=np.intp, casting="unsafe")
+
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.parametrize(
+    "methodname",
+    ["__call__", "accumulate", "at", "outer", "reduce", "reduceat", "resolve_dtypes"],
+)
+def test_ufunc_method_signatures(methodname: str):
+    method = getattr(np.ufunc, methodname)
+
+    try:
+        _ = inspect.signature(method)
+    except ValueError as e:
+        pytest.fail(e.args[0])
 
 
 def test_trivial_loop_invalid_cast():
@@ -3238,6 +3285,7 @@ class TestLowlevelAPIAccess:
 
     @pytest.mark.skipif(not hasattr(ct, "pythonapi"),
             reason="`ctypes.pythonapi` required for capsule unpacking.")
+    @pytest.mark.thread_unsafe(reason="modifies global object in the ctypes API")
     def test_loop_access(self):
         # This is a basic test for the full strided loop access
         data_t = ct.c_char_p * 2
@@ -3341,3 +3389,69 @@ def test_ufunc_requires_contiguous_flag_sfloat():
     res = np.add(a_non_contig, a_non_contig)
     expected = (a_raw[::2] + a_raw[::2]).astype(dt)
     assert_equal(res, expected)
+
+class TestUFuncInspectSignature:
+    PARAMS_COMMON = {
+        "casting": "same_kind",
+        "order": "K",
+        "dtype": None,
+        "subok": True,
+        "signature": None,
+    }
+
+    PARAMS_UFUNC = {
+        "where": True,
+    } | PARAMS_COMMON
+
+    PARAMS_GUFUNC = {
+        "axes": np._NoValue,
+        "axis": np._NoValue,
+        "keepdims": False,
+    } | PARAMS_COMMON
+
+    @pytest.mark.parametrize("ufunc", [np.log, np.gcd, np.frexp, np.divmod, np.matvec])
+    def test_dunder_signature_attr(self, ufunc: np.ufunc):
+        assert hasattr(ufunc, "__signature__")
+        assert isinstance(ufunc.__signature__, inspect.Signature)
+        assert inspect.signature(ufunc) == ufunc.__signature__
+
+    @pytest.mark.parametrize("ufunc", [np.exp, np.mod, np.frexp, np.divmod, np.vecmat])
+    def test_params_common_positional(self, ufunc: np.ufunc):
+        sig = inspect.signature(ufunc)
+
+        # check positional-only parameters
+        posonly_params = {name: param.default
+                          for name, param in sig.parameters.items()
+                          if param.kind is param.POSITIONAL_ONLY}
+        assert len(posonly_params) == ufunc.nin
+        assert all(default is inspect.Parameter.empty
+                   for default in posonly_params.values())
+
+        # check 'out' parameter
+        out_param = sig.parameters.get("out")
+        assert out_param is not None
+        assert out_param.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+
+    @pytest.mark.parametrize("ufunc", [np.sin, np.add, np.frexp, np.divmod])
+    def test_params_common_ufunc(self, ufunc: np.ufunc):
+        assert ufunc.signature is None  # sanity check
+
+        sig = inspect.signature(ufunc)
+
+        # check keyword-only parameters
+        keyword_params = {name: param.default
+                          for name, param in sig.parameters.items()
+                          if param.kind is param.KEYWORD_ONLY}
+        assert keyword_params == self.PARAMS_UFUNC
+
+    @pytest.mark.parametrize("gufunc", [np.matmul, np.matvec, np.vecdot, np.vecmat])
+    def test_params_common_gufunc(self, gufunc: np.ufunc):
+        assert gufunc.signature is not None  # sanity check
+
+        sig = inspect.signature(gufunc)
+
+        # check keyword-only parameters
+        keyword_params = {name: param.default
+                          for name, param in sig.parameters.items()
+                          if param.kind is param.KEYWORD_ONLY}
+        assert keyword_params == self.PARAMS_GUFUNC

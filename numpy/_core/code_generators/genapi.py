@@ -17,11 +17,11 @@ from os.path import join
 
 
 def get_processor():
-    # Convoluted because we can't import from numpy.distutils
+    # Convoluted because we can't import from numpy
     # (numpy is not yet built)
     conv_template_path = os.path.join(
         os.path.dirname(__file__),
-        '..', '..', 'distutils', 'conv_template.py'
+        '..', '..', '_build_utils', 'conv_template.py'
     )
     spec = importlib.util.spec_from_file_location(
         'conv_template', conv_template_path
@@ -37,7 +37,7 @@ process_c_file = get_processor()
 __docformat__ = 'restructuredtext'
 
 # The files under src/ that are scanned for API functions
-API_FILES = [join('multiarray', 'alloc.c'),
+API_FILES = [join('multiarray', 'alloc.cpp'),
              join('multiarray', 'abstractdtypes.c'),
              join('multiarray', 'arrayfunction_override.c'),
              join('multiarray', 'array_api_standard.c'),
@@ -62,7 +62,7 @@ API_FILES = [join('multiarray', 'alloc.c'),
              join('multiarray', 'descriptor.c'),
              join('multiarray', 'dlpack.c'),
              join('multiarray', 'dtypemeta.c'),
-             join('multiarray', 'einsum.c.src'),
+             join('multiarray', 'einsum.cpp'),
              join('multiarray', 'public_dtype_api.c'),
              join('multiarray', 'flagsobject.c'),
              join('multiarray', 'getset.c'),
@@ -132,9 +132,9 @@ class StealRef:
 
     def __str__(self):
         try:
-            return ' '.join('NPY_STEALS_REF_TO_ARG(%d)' % x for x in self.arg)
+            return ' '.join(f'NPY_STEALS_REF_TO_ARG({x})' for x in self.arg)
         except TypeError:
-            return 'NPY_STEALS_REF_TO_ARG(%d)' % self.arg
+            return f'NPY_STEALS_REF_TO_ARG({self.arg})'
 
 
 class Function:
@@ -337,10 +337,8 @@ class TypeApi:
         self.internal_type = internal_type
 
     def define_from_array_api_string(self):
-        return "#define %s (*(%s *)%s[%d])" % (self.name,
-                                               self.ptr_cast,
-                                               self.api_name,
-                                               self.index)
+        return (f"#define {self.name} (*({self.ptr_cast} *)"
+                f"{self.api_name}[{self.index}])")
 
     def array_api_define(self):
         return f"        (void *) &{self.name}"
@@ -369,10 +367,7 @@ class GlobalVarApi:
         self.api_name = api_name
 
     def define_from_array_api_string(self):
-        return "#define %s (*(%s *)%s[%d])" % (self.name,
-                                                        self.type,
-                                                        self.api_name,
-                                                        self.index)
+        return f"#define {self.name} (*({self.type} *){self.api_name}[{self.index}])"
 
     def array_api_define(self):
         return f"        ({self.type} *) &{self.name}"
@@ -392,10 +387,7 @@ class BoolValuesApi:
         self.api_name = api_name
 
     def define_from_array_api_string(self):
-        return "#define %s ((%s *)%s[%d])" % (self.name,
-                                              self.type,
-                                              self.api_name,
-                                              self.index)
+        return f"#define {self.name} (({self.type} *){self.api_name}[{self.index}])"
 
     def array_api_define(self):
         return f"        (void *) &{self.name}"

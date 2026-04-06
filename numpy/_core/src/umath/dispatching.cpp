@@ -42,11 +42,9 @@
 #include <Python.h>
 #include <convert_datatype.h>
 
-#include <mutex>
-#include <shared_mutex>
-
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_3kcompat.h"
+#include "npy_import.h"
 #include "common.h"
 #include "npy_pycompat.h"
 
@@ -181,6 +179,7 @@ PyUFunc_AddLoopFromSpec_int(PyObject *ufunc, PyArrayMethod_Spec *spec, int priv)
     PyObject *dtypes = PyArray_TupleFromItems(
             nargs, (PyObject **)bmeth->dtypes, 1);
     if (dtypes == NULL) {
+        Py_DECREF(bmeth);
         return -1;
     }
     PyObject *info = PyTuple_Pack(2, dtypes, bmeth->method);
@@ -189,7 +188,108 @@ PyUFunc_AddLoopFromSpec_int(PyObject *ufunc, PyArrayMethod_Spec *spec, int priv)
     if (info == NULL) {
         return -1;
     }
-    return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+    int res = PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+    Py_DECREF(info);
+    return res;
+}
+
+
+
+/*
+ * There are a few ArrayMethods we store on the DType since they are not
+ * (only) used via ufuncs.  Some don't need to be bound (DTypes attached)
+ * and are currently not.
+ */
+template <auto slot, bool bound>
+static int
+set_static_method(PyArrayMethod_Spec *spec) {
+    PyArray_DTypeMeta *dtype = spec->dtypes[0];
+    PyBoundArrayMethodObject *meth = PyArrayMethod_FromSpec_int(spec, 0);
+    if (meth == NULL) {
+        return -1;
+    }
+
+    if constexpr (!bound) {
+        Py_INCREF(meth->method);
+        NPY_DT_SLOTS(dtype)->*slot = meth->method;
+        Py_DECREF(meth);
+    }
+    else {
+        NPY_DT_SLOTS(dtype)->*slot = meth;
+    }
+    return 0;
+}
+
+
+/*UFUNC_API
+ * Add multiple loops to ufuncs from ArrayMethod specs. This also
+ * handles the registration of sort and argsort methods for dtypes
+ * from ArrayMethod specs.
+ */
+NPY_NO_EXPORT int
+PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
+{
+    int ret = -1;
+    PyObject *ufunc = NULL;
+
+    PyUFunc_LoopSlot *slot;
+    for (slot = slots; slot->name != NULL; slot++) {
+        // Hardcode slot names for attributes and non-ufuncs stored on the DType
+        // (Also avoids circular imports a bit.)
+        if (strcmp(slot->name, "real") == 0) {
+            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.real));
+        }
+        else if (strcmp(slot->name, "imag") == 0) {
+            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.imag));
+        }
+        else if (strcmp(slot->name, "sort") == 0) {
+            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.sort));
+        }
+        else if (strcmp(slot->name, "argsort") == 0) {
+            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.argsort));
+        }
+        else {
+            Py_XSETREF(ufunc, npy_import_entry_point(slot->name));
+            if (ufunc == NULL) {
+                goto finish;
+            }
+        }
+
+        if (ufunc == npy_interned_str.real) {
+            if (set_static_method<&NPY_DType_Slots::real_meth, true>(slot->spec) < 0) {
+                goto finish;
+            }
+        }
+        else if (ufunc == npy_interned_str.imag) {
+            if (set_static_method<&NPY_DType_Slots::imag_meth, true>(slot->spec) < 0) {
+                goto finish;
+            }
+        }
+        else if (ufunc == npy_interned_str.sort) {
+            if (set_static_method<&NPY_DType_Slots::sort_meth, false>(slot->spec) < 0) {
+                goto finish;
+            }
+        }
+        else if (ufunc == npy_interned_str.argsort) {
+            if (set_static_method<&NPY_DType_Slots::argsort_meth, false>(slot->spec) < 0) {
+                goto finish;
+            }
+        }
+        else {
+            if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
+                PyErr_Format(PyExc_TypeError, "%s was not a ufunc!", slot->name);
+                goto finish;
+            }
+            if (PyUFunc_AddLoopFromSpec_int(ufunc, slot->spec, 0) < 0) {
+                goto finish;
+            }
+        }
+    }
+
+    ret = 0;
+  finish:
+    Py_XDECREF(ufunc);
+    return ret;
 }
 
 
@@ -525,22 +625,21 @@ call_promoter_and_recurse(PyUFuncObject *ufunc, PyObject *info,
             return NULL;
         }
         /*
-        * If none of the dtypes changes, we would recurse infinitely, abort.
-        * (Of course it is nevertheless possible to recurse infinitely.)
-        *
-        * TODO: We could allow users to signal this directly and also move
-        *       the call to be (almost immediate).  That would call it
-        *       unnecessarily sometimes, but may allow additional flexibility.
-        */
-        int dtypes_changed = 0;
-        for (int i = 0; i < nargs; i++) {
-            if (new_op_dtypes[i] != op_dtypes[i]) {
-                dtypes_changed = 1;
-                break;
+         * If none of the dtypes changes, we would recurse infinitely, abort.
+         * (Of course it is nevertheless possible to recurse infinitely.)
+         * If the user indicates a `1` result, we trust the user.
+         */
+        if (promoter_result != 1) {
+            int dtypes_changed = 0;
+            for (int i = 0; i < nargs; i++) {
+                if (new_op_dtypes[i] != op_dtypes[i]) {
+                    dtypes_changed = 1;
+                    break;
+                }
             }
-        }
-        if (!dtypes_changed) {
-            goto finish;
+            if (!dtypes_changed) {
+                goto finish;
+            }
         }
     }
     else {
@@ -756,6 +855,13 @@ add_and_return_legacy_wrapping_ufunc_loop(PyUFuncObject *ufunc,
  * to use for a ufunc.  This function may recurse with `do_legacy_fallback`
  * set to False.
  *
+ * The result is cached in the ufunc's dispatch cache for faster lookup next time.
+ * It is possible that multiple threads call this function at the same time, and
+ * there is cache miss, in that case all threads will do the full resolution, however
+ * only one will store the result in the cache (the others get the stored result).
+ * This is ensured by `PyArrayIdentityHash_SetItemDefault` which only sets the item
+ * if it is not already set otherwise returning the existing value.
+ *
  * If value-based promotion is necessary, this is handled ahead of time by
  * `promote_and_get_ufuncimpl`.
  */
@@ -798,12 +904,13 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
              * Found the ArrayMethod and NOT promoter.  Before returning it
              * add it to the cache for faster lookup in the future.
              */
-            if (PyArrayIdentityHash_SetItem(
+            PyObject *result = NULL;
+            if (PyArrayIdentityHash_SetItemDefault(
                         (PyArrayIdentityHash *)ufunc->_dispatch_cache,
-                        (PyObject **)op_dtypes, info, 0) < 0) {
+                        (PyObject **)op_dtypes, info, &result) < 0) {
                 return NULL;
             }
-            return info;
+            return result;
         }
     }
 
@@ -821,12 +928,13 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         }
         else if (info != NULL) {
             /* Add result to the cache using the original types: */
-            if (PyArrayIdentityHash_SetItem(
+            PyObject *result = NULL;
+            if (PyArrayIdentityHash_SetItemDefault(
                         (PyArrayIdentityHash *)ufunc->_dispatch_cache,
-                        (PyObject **)op_dtypes, info, 0) < 0) {
+                        (PyObject **)op_dtypes, info, &result) < 0) {
                 return NULL;
             }
-            return info;
+            return result;
         }
     }
 
@@ -888,56 +996,20 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         Py_XDECREF(new_op_dtypes[i]);
     }
 
-    /* Add this to the cache using the original types: */
-    if (cacheable && PyArrayIdentityHash_SetItem(
-                (PyArrayIdentityHash *)ufunc->_dispatch_cache,
-                (PyObject **)op_dtypes, info, 0) < 0) {
+    if (info == NULL) {
         return NULL;
     }
-    return info;
-}
-
-#ifdef Py_GIL_DISABLED
-/*
- * Fast path for promote_and_get_info_and_ufuncimpl.
- * Acquires a read lock to check for a cache hit and then
- * only acquires a write lock on a cache miss to fill the cache
- */
-static inline PyObject *
-promote_and_get_info_and_ufuncimpl_with_locking(
-        PyUFuncObject *ufunc,
-        PyArrayObject *const ops[],
-        PyArray_DTypeMeta *signature[],
-        PyArray_DTypeMeta *op_dtypes[],
-        npy_bool legacy_promotion_is_possible)
-{
-    std::shared_mutex *mutex = ((std::shared_mutex *)((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex);
-    NPY_BEGIN_ALLOW_THREADS
-    mutex->lock_shared();
-    NPY_END_ALLOW_THREADS
-    PyObject *info = PyArrayIdentityHash_GetItem(
-            (PyArrayIdentityHash *)ufunc->_dispatch_cache,
-            (PyObject **)op_dtypes);
-    mutex->unlock_shared();
-
-    if (info != NULL && PyObject_TypeCheck(
-                    PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type)) {
-        /* Found the ArrayMethod and NOT a promoter: return it */
-        return info;
+    if (cacheable) {
+        PyObject *result = NULL;
+        /* Add this to the cache using the original types: */
+        if (PyArrayIdentityHash_SetItemDefault((PyArrayIdentityHash *)ufunc->_dispatch_cache,
+                (PyObject **)op_dtypes, info, &result) < 0) {
+            return NULL;
+        }
+        return result;
     }
-
-    // cache miss, need to acquire a write lock and recursively calculate the
-    // correct dispatch resolution
-    NPY_BEGIN_ALLOW_THREADS
-    mutex->lock();
-    NPY_END_ALLOW_THREADS
-    info = promote_and_get_info_and_ufuncimpl(ufunc,
-            ops, signature, op_dtypes, legacy_promotion_is_possible);
-    mutex->unlock();
-
     return info;
 }
-#endif
 
 /**
  * The central entry-point for the promotion and dispatching machinery.
@@ -1027,13 +1099,8 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         }
     }
 
-#ifdef Py_GIL_DISABLED
-    PyObject *info = promote_and_get_info_and_ufuncimpl_with_locking(ufunc,
-            ops, signature, op_dtypes, legacy_promotion_is_possible);
-#else
     PyObject *info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, op_dtypes, legacy_promotion_is_possible);
-#endif
 
     if (info == NULL) {
         goto handle_error;
@@ -1284,8 +1351,9 @@ install_logical_ufunc_promoter(PyObject *ufunc)
     if (info == NULL) {
         return -1;
     }
-
-    return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+    int res = PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+    Py_DECREF(info);
+    return res;
 }
 
 /*
@@ -1359,5 +1427,7 @@ PyUFunc_AddPromoter(
     if (info == NULL) {
         return -1;
     }
-    return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+    int res = PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+    Py_DECREF(info);
+    return res;
 }

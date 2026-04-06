@@ -1,6 +1,8 @@
-from typing import TypeAlias, overload
+from typing import overload
 
 import numpy as np
+from numpy import add, equal, greater, greater_equal, less, less_equal, not_equal
+from numpy._globals import _NoValueType
 from numpy._typing import (
     NDArray,
     _AnyShape,
@@ -10,6 +12,20 @@ from numpy._typing import (
     _ArrayLikeStr_co as U_co,
     _ArrayLikeString_co as T_co,
     _SupportsArray,
+)
+
+from .defchararray import (
+    isalnum,
+    isalpha,
+    isdecimal,
+    isdigit,
+    islower,
+    isnumeric,
+    isspace,
+    istitle,
+    isupper,
+    mod,
+    str_len,
 )
 
 __all__ = [
@@ -61,60 +77,9 @@ __all__ = [
     "slice",
 ]
 
-_StringDTypeArray: TypeAlias = np.ndarray[_AnyShape, np.dtypes.StringDType]
-_StringDTypeSupportsArray: TypeAlias = _SupportsArray[np.dtypes.StringDType]
-_StringDTypeOrUnicodeArray: TypeAlias = np.ndarray[_AnyShape, np.dtype[np.str_]] | _StringDTypeArray
-
-@overload
-def equal(x1: U_co, x2: U_co) -> NDArray[np.bool]: ...
-@overload
-def equal(x1: S_co, x2: S_co) -> NDArray[np.bool]: ...
-@overload
-def equal(x1: T_co, x2: T_co) -> NDArray[np.bool]: ...
-
-@overload
-def not_equal(x1: U_co, x2: U_co) -> NDArray[np.bool]: ...
-@overload
-def not_equal(x1: S_co, x2: S_co) -> NDArray[np.bool]: ...
-@overload
-def not_equal(x1: T_co, x2: T_co) -> NDArray[np.bool]: ...
-
-@overload
-def greater_equal(x1: U_co, x2: U_co) -> NDArray[np.bool]: ...
-@overload
-def greater_equal(x1: S_co, x2: S_co) -> NDArray[np.bool]: ...
-@overload
-def greater_equal(x1: T_co, x2: T_co) -> NDArray[np.bool]: ...
-
-@overload
-def less_equal(x1: U_co, x2: U_co) -> NDArray[np.bool]: ...
-@overload
-def less_equal(x1: S_co, x2: S_co) -> NDArray[np.bool]: ...
-@overload
-def less_equal(x1: T_co, x2: T_co) -> NDArray[np.bool]: ...
-
-@overload
-def greater(x1: U_co, x2: U_co) -> NDArray[np.bool]: ...
-@overload
-def greater(x1: S_co, x2: S_co) -> NDArray[np.bool]: ...
-@overload
-def greater(x1: T_co, x2: T_co) -> NDArray[np.bool]: ...
-
-@overload
-def less(x1: U_co, x2: U_co) -> NDArray[np.bool]: ...
-@overload
-def less(x1: S_co, x2: S_co) -> NDArray[np.bool]: ...
-@overload
-def less(x1: T_co, x2: T_co) -> NDArray[np.bool]: ...
-
-@overload
-def add(x1: U_co, x2: U_co) -> NDArray[np.str_]: ...
-@overload
-def add(x1: S_co, x2: S_co) -> NDArray[np.bytes_]: ...
-@overload
-def add(x1: _StringDTypeSupportsArray, x2: _StringDTypeSupportsArray) -> _StringDTypeArray: ...
-@overload
-def add(x1: T_co, x2: T_co) -> _StringDTypeOrUnicodeArray: ...
+type _StringDTypeArray = np.ndarray[_AnyShape, np.dtypes.StringDType]
+type _StringDTypeSupportsArray = _SupportsArray[np.dtypes.StringDType]
+type _StringDTypeOrUnicodeArray = NDArray[np.str_] | _StringDTypeArray
 
 @overload
 def multiply(a: U_co, i: i_co) -> NDArray[np.str_]: ...
@@ -124,27 +89,6 @@ def multiply(a: S_co, i: i_co) -> NDArray[np.bytes_]: ...
 def multiply(a: _StringDTypeSupportsArray, i: i_co) -> _StringDTypeArray: ...
 @overload
 def multiply(a: T_co, i: i_co) -> _StringDTypeOrUnicodeArray: ...
-
-@overload
-def mod(a: U_co, value: object) -> NDArray[np.str_]: ...
-@overload
-def mod(a: S_co, value: object) -> NDArray[np.bytes_]: ...
-@overload
-def mod(a: _StringDTypeSupportsArray, value: object) -> _StringDTypeArray: ...
-@overload
-def mod(a: T_co, value: object) -> _StringDTypeOrUnicodeArray: ...
-
-def isalpha(x: UST_co) -> NDArray[np.bool]: ...
-def isalnum(a: UST_co) -> NDArray[np.bool]: ...
-def isdigit(x: UST_co) -> NDArray[np.bool]: ...
-def isspace(x: UST_co) -> NDArray[np.bool]: ...
-def isdecimal(x: U_co | T_co) -> NDArray[np.bool]: ...
-def isnumeric(x: U_co | T_co) -> NDArray[np.bool]: ...
-def islower(a: UST_co) -> NDArray[np.bool]: ...
-def istitle(a: UST_co) -> NDArray[np.bool]: ...
-def isupper(a: UST_co) -> NDArray[np.bool]: ...
-
-def str_len(x: UST_co) -> NDArray[np.int_]: ...
 
 @overload
 def find(
@@ -502,14 +446,34 @@ def translate(
 
 #
 @overload
-def slice(a: U_co, start: i_co | None = None, stop: i_co | None = None, step: i_co | None = None, /) -> NDArray[np.str_]: ...  # type: ignore[overload-overlap]
-@overload
-def slice(a: S_co, start: i_co | None = None, stop: i_co | None = None, step: i_co | None = None, /) -> NDArray[np.bytes_]: ...
+def slice(
+    a: U_co,
+    start: i_co | None = None,
+    stop: i_co | _NoValueType | None = ...,  # = np._NoValue
+    step: i_co | None = None,
+    /,
+) -> NDArray[np.str_]: ...
 @overload
 def slice(
-    a: _StringDTypeSupportsArray, start: i_co | None = None, stop: i_co | None = None, step: i_co | None = None, /
+    a: S_co,
+    start: i_co | None = None,
+    stop: i_co | _NoValueType | None = ...,  # = np._NoValue
+    step: i_co | None = None,
+    /,
+) -> NDArray[np.bytes_]: ...
+@overload
+def slice(
+    a: _StringDTypeSupportsArray,
+    start: i_co | None = None,
+    stop: i_co | _NoValueType | None = ...,  # = np._NoValue
+    step: i_co | None = None,
+    /,
 ) -> _StringDTypeArray: ...
 @overload
 def slice(
-    a: T_co, start: i_co | None = None, stop: i_co | None = None, step: i_co | None = None, /
+    a: T_co,
+    start: i_co | None = None,
+    stop: i_co | _NoValueType | None = ...,  # = np._NoValue
+    step: i_co | None = None,
+    /,
 ) -> _StringDTypeOrUnicodeArray: ...

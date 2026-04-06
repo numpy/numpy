@@ -93,6 +93,21 @@ class TestHalf:
         arr = np.ones(3, dtype=np.float16).astype(string_dt)
         assert arr.dtype == expected_dt
 
+    @pytest.mark.parametrize("dtype", ["S", "U", object])
+    def test_to_half_cast_error(self, dtype):
+        arr = np.array(["3M"], dtype=dtype)
+        with pytest.raises(ValueError):
+            arr.astype(np.float16)
+
+        arr = np.array(["23490349034"], dtype=dtype)
+        with np.errstate(all="warn"):
+            with pytest.warns(RuntimeWarning):
+                arr.astype(np.float16)
+
+        with np.errstate(all="raise"):
+            with pytest.raises(FloatingPointError):
+                arr.astype(np.float16)
+
     @pytest.mark.parametrize("string_dt", ["S", "U"])
     def test_half_conversion_from_string(self, string_dt):
         string = np.array("3.1416", dtype=string_dt)
@@ -283,19 +298,15 @@ class TestHalf:
         if len(a32_fail) != 0:
             bad_index = a32_fail[0]
             assert_equal(finite_f32, a_manual,
-                 "First non-equal is half value 0x%x -> %g != %g" %
-                            (a_bits[bad_index],
-                             finite_f32[bad_index],
-                             a_manual[bad_index]))
+                 f"First non-equal is half value 0x{a_bits[bad_index]:x} -> "
+                 f"{finite_f32[bad_index]:g} != {a_manual[bad_index]:g}")
 
         a64_fail = np.nonzero(finite_f64 != a_manual)[0]
         if len(a64_fail) != 0:
             bad_index = a64_fail[0]
             assert_equal(finite_f64, a_manual,
-                 "First non-equal is half value 0x%x -> %g != %g" %
-                            (a_bits[bad_index],
-                             finite_f64[bad_index],
-                             a_manual[bad_index]))
+                 f"First non-equal is half value 0x{a_bits[bad_index]:x} -> "
+                 f"{finite_f64[bad_index]:g} != {a_manual[bad_index]:g}")
 
     def test_half_ordering(self):
         """Make sure comparisons are working right"""

@@ -1,3 +1,4 @@
+import inspect
 import itertools
 import math
 import platform
@@ -185,12 +186,6 @@ class TestNonarrayArgs:
 
         with pytest.raises(
             TypeError,
-            match="You cannot specify 'newshape' and 'shape' "
-                  "arguments at the same time."
-        ):
-            np.reshape(arr, shape=shape, newshape=shape)
-        with pytest.raises(
-            TypeError,
             match=r"reshape\(\) missing 1 required positional "
                   "argument: 'shape'"
         ):
@@ -201,9 +196,6 @@ class TestNonarrayArgs:
         assert_equal(np.reshape(arr, shape, "C"), expected)
         assert_equal(np.reshape(arr, shape=shape), expected)
         assert_equal(np.reshape(arr, shape=shape, order="C"), expected)
-        with pytest.warns(DeprecationWarning):
-            actual = np.reshape(arr, newshape=shape)
-            assert_equal(actual, expected)
 
     def test_reshape_copy_arg(self):
         arr = np.arange(24).reshape(2, 3, 4)
@@ -1000,7 +992,7 @@ class TestFloatExceptions:
             if np.dtype(ftype).kind == 'f':
                 # Get some extreme values for the type
                 fi = np.finfo(ftype)
-                ft_tiny = fi._machar.tiny
+                ft_tiny = fi.tiny
                 ft_max = fi.max
                 ft_eps = fi.eps
                 underflow = 'underflow'
@@ -1009,7 +1001,7 @@ class TestFloatExceptions:
                 # 'c', complex, corresponding real dtype
                 rtype = type(ftype(0).real)
                 fi = np.finfo(rtype)
-                ft_tiny = ftype(fi._machar.tiny)
+                ft_tiny = ftype(fi.tiny)
                 ft_max = ftype(fi.max)
                 ft_eps = ftype(fi.eps)
                 # The complex types raise different exceptions
@@ -1033,8 +1025,11 @@ class TestFloatExceptions:
                                    lambda a, b: a + b, ft_max, ft_max * ft_eps)
             self.assert_raises_fpe(overflow,
                                    lambda a, b: a - b, -ft_max, ft_max * ft_eps)
-            self.assert_raises_fpe(overflow,
-                                   np.power, ftype(2), ftype(2**fi.nexp))
+            # On AIX, pow() with double does not raise the overflow exception,
+            # it returns inf. Long double is the same as double.
+            if sys.platform != 'aix' or typecode not in 'dDgG':
+                self.assert_raises_fpe(overflow,
+                                       np.power, ftype(2), ftype(2**fi.nexp))
             self.assert_raises_fpe(divbyzero,
                                    lambda a, b: a / b, ftype(1), ftype(0))
             self.assert_raises_fpe(
@@ -1216,10 +1211,10 @@ class TestTypes:
         assert_equal(np.promote_types('<U5', '<U8'), np.dtype('U8'))
         assert_equal(np.promote_types('>U8', '>U5'), np.dtype('U8'))
 
-        assert_equal(np.promote_types('<M8', '<M8'), np.dtype('M8'))
-        assert_equal(np.promote_types('>M8', '>M8'), np.dtype('M8'))
-        assert_equal(np.promote_types('<m8', '<m8'), np.dtype('m8'))
-        assert_equal(np.promote_types('>m8', '>m8'), np.dtype('m8'))
+        assert_equal(np.promote_types('<M8[Y]', '<M8[Y]'), np.dtype('M8[Y]'))
+        assert_equal(np.promote_types('>M8[D]', '>M8[D]'), np.dtype('M8[D]'))
+        assert_equal(np.promote_types('<m8[ns]', '<m8[ns]'), np.dtype('m8[ns]'))
+        assert_equal(np.promote_types('>m8[s]', '>m8[s]'), np.dtype('m8[s]'))
 
     def test_can_cast_and_promote_usertypes(self):
         # The rational type defines safe casting for signed integers,
@@ -1664,8 +1659,10 @@ class TestNonzero:
 
         # x = np.array([(1, 2), (0, 0), (1, 1), (-1, 3), (0, 7)],
         #              dtype=[('a', 'i4'), ('b', 'i2')])
-        x = np.array([(1, 2, -5, -3), (0, 0, 2, 7), (1, 1, 0, 1), (-1, 3, 1, 0), (0, 7, 0, 4)],
-                     dtype=[('a', 'i4'), ('b', 'i2'), ('c', 'i1'), ('d', 'i8')])
+        x = np.array(
+            [(1, 2, -5, -3), (0, 0, 2, 7), (1, 1, 0, 1), (-1, 3, 1, 0), (0, 7, 0, 4)],
+            dtype=[('a', 'i4'), ('b', 'i2'), ('c', 'i1'), ('d', 'i8')]
+        )
         assert_equal(np.count_nonzero(x['a']), 3)
         assert_equal(np.count_nonzero(x['b']), 4)
         assert_equal(np.count_nonzero(x['c']), 3)
@@ -1775,20 +1772,32 @@ class TestNonzero:
             err_msg = msg % (np.dtype(dt).name,)
 
             if dt != 'V':
-                if dt != 'M':
-                    m = np.zeros((3, 3), dtype=dt)
-                    n = np.ones(1, dtype=dt)
-
-                    m[0, 0] = n[0]
-                    m[1, 0] = n[0]
-
-                else:  # np.zeros doesn't work for np.datetime64
+                if dt == 'M':
+                    # np.zeros doesn't work for np.datetime64
                     m = np.array(['1970-01-01'] * 9)
                     m = m.reshape((3, 3))
 
                     m[0, 0] = '1970-01-12'
                     m[1, 0] = '1970-01-12'
                     m = m.astype(dt)
+
+                elif dt == 'm':
+                    with pytest.warns(
+                        DeprecationWarning,
+                        match="Using 'generic' unit for NumPy timedelta is deprecated",
+                    ):
+                        m = np.zeros((3, 3), dtype=dt)
+                        n = np.ones(1, dtype=dt)
+
+                    m[0, 0] = n[0]
+                    m[1, 0] = n[0]
+
+                else:
+                    m = np.zeros((3, 3), dtype=dt)
+                    n = np.ones(1, dtype=dt)
+
+                    m[0, 0] = n[0]
+                    m[1, 0] = n[0]
 
                 expected = np.array([2, 0, 0], dtype=np.intp)
                 assert_equal_w_dt(np.count_nonzero(m, axis=0),
@@ -1999,7 +2008,9 @@ class TestIndex:
         g1 = randint(0, 5, size=15)
         g2 = randint(0, 8, size=15)
         V[g1, g2] = -V[g1, g2]
-        assert_((np.array([a[0][V > 0], a[1][V > 0], a[2][V > 0]]) == a[:, V > 0]).all())
+        assert_(
+            (np.array([a[0][V > 0], a[1][V > 0], a[2][V > 0]]) == a[:, V > 0]).all()
+        )
 
     def test_boolean_edgecase(self):
         a = np.array([], dtype='int32')
@@ -2161,8 +2172,8 @@ def _test_array_equal_parametrizations():
     yield (b4, b4.copy(), False, False)
     yield (b4, b4.copy(), True, True)
 
-    t1 = b1.astype("timedelta64")
-    t2 = b2.astype("timedelta64")
+    t1 = b1.astype("timedelta64[D]")
+    t2 = b2.astype("timedelta64[D]")
 
     # Timedeltas are particular
     yield (t1, t1, None, False)
@@ -2265,7 +2276,10 @@ class TestArrayComparisons:
         res = np.array_equiv(np.array([1, 2]), np.array([[1], [2]]))
         assert_(not res)
         assert_(type(res) is bool)
-        res = np.array_equiv(np.array([1, 2]), np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
+        res = np.array_equiv(
+            np.array([1, 2]),
+            np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]),
+        )
         assert_(not res)
         assert_(type(res) is bool)
 
@@ -2813,10 +2827,10 @@ class TestClip:
          np.full(10, -2**64 + 1, dtype=object)),
         # for bugs in NPY_TIMEDELTA_MAX, based on a case
         # produced by hypothesis
-        (np.zeros(10, dtype='m8') - 1,
-         0,
-         0,
-         np.zeros(10, dtype='m8')),
+        (np.zeros(10, dtype='m8[s]') - np.timedelta64(1, 's'),
+         np.timedelta64(0, 's'),
+         np.timedelta64(0, 's'),
+         np.zeros(10, dtype='m8[s]')),
     ])
     def test_clip_problem_cases(self, arr, amin, amax, exp):
         actual = np.clip(arr, amin, amax)
@@ -2835,16 +2849,12 @@ class TestClip:
         actual = np.clip(arr, amin, amax)
         assert_equal(actual, expected)
 
-    @pytest.mark.xfail(reason="propagation doesn't match spec")
     @pytest.mark.parametrize("arr, amin, amax", [
-        (np.array([1] * 10, dtype='m8'),
-         np.timedelta64('NaT'),
+        (np.array([1] * 10, dtype='m8[s]'),
+         np.timedelta64('NaT', 's'),
          np.zeros(10, dtype=np.int32)),
     ])
-    @pytest.mark.filterwarnings("ignore::DeprecationWarning")
     def test_NaT_propagation(self, arr, amin, amax):
-        # NOTE: the expected function spec doesn't
-        # propagate NaT, but clip() now does
         expected = np.minimum(np.maximum(arr, amin), amax)
         actual = np.clip(arr, amin, amax)
         assert_equal(actual, expected)
@@ -3124,7 +3134,9 @@ class TestIsclose:
         if np.isscalar(x) and np.isscalar(y):
             assert_(np.isclose(x, y) == np.allclose(x, y), msg=msg2 % (x, y))
         else:
-            assert_array_equal(np.isclose(x, y).all(), np.allclose(x, y), msg % (x, y))
+            assert_array_equal(
+                np.isclose(x, y).all(), np.allclose(x, y), msg % (x, y)
+            )
 
     def test_ip_all_isclose(self):
         self._setup()
@@ -3207,9 +3219,7 @@ class TestIsclose:
         # Allclose currently works for timedelta64 as long as `atol` is
         # an integer or also a timedelta64
         a = np.array([[1, 2, 3, "NaT"]], dtype="m8[ns]")
-        assert np.isclose(a, a, atol=0, equal_nan=True).all()
         assert np.isclose(a, a, atol=np.timedelta64(1, "ns"), equal_nan=True).all()
-        assert np.allclose(a, a, atol=0, equal_nan=True)
         assert np.allclose(a, a, atol=np.timedelta64(1, "ns"), equal_nan=True)
 
     def test_tol_warnings(self):
@@ -3218,7 +3228,8 @@ class TestIsclose:
 
         for i in b:
             for j in b:
-                # Making sure that i and j are not both numbers, because that won't create a warning
+                # Making sure that i and j are not both numbers,
+                # because that won't create a warning
                 if (i == 1) and (j == 1):
                     continue
 
@@ -3228,7 +3239,8 @@ class TestIsclose:
                     c = np.isclose(a, a, atol=i, rtol=j)
                     assert len(w) == 1
                     assert issubclass(w[-1].category, RuntimeWarning)
-                    assert f"One of rtol or atol is not valid, atol: {i}, rtol: {j}" in str(w[-1].message)
+                    expected = f"One of rtol or atol is not valid, atol: {i}, rtol: {j}"
+                    assert expected in str(w[-1].message)
 
 
 class TestStdVar:
@@ -3380,6 +3392,34 @@ class TestCreationFuncs:
         assert_(sys.getrefcount(dim) == beg)
         np.full([dim] * 10, 0)
         assert_(sys.getrefcount(dim) == beg)
+
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.parametrize("func", [np.empty, np.zeros, np.ones, np.full])
+    def test_signatures(self, func):
+        sig = inspect.signature(func)
+        params = sig.parameters
+
+        assert len(params) in {5, 6}
+
+        assert 'shape' in params
+        assert params["shape"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert params["shape"].default is inspect.Parameter.empty
+
+        assert 'dtype' in params
+        assert params["dtype"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert params["dtype"].default is None
+
+        assert 'order' in params
+        assert params["order"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert params["order"].default == "C"
+
+        assert 'device' in params
+        assert params["device"].kind is inspect.Parameter.KEYWORD_ONLY
+        assert params["device"].default is None
+
+        assert 'like' in params
+        assert params["like"].kind is inspect.Parameter.KEYWORD_ONLY
+        assert params["like"].default is None
 
 
 class TestLikeFuncs:
@@ -3549,7 +3589,7 @@ class TestLikeFuncs:
         b = a[:, ::2]  # Ensure b is not contiguous.
         kwargs = {'fill_value': ''} if likefunc == np.full_like else {}
         result = likefunc(b, dtype=dtype, **kwargs)
-        if dtype == str:
+        if dtype is str:
             assert result.strides == (16, 4)
         else:
             # dtype is bytes
@@ -3654,6 +3694,16 @@ class TestConvolve:
         with assert_raises(TypeError):
             np.convolve(d, k, mode=None)
 
+    def test_convolve_empty_input_error_message(self):
+        """
+        Test that convolve raises the correct error message when inputs are empty.
+        Regression test for gh-30272 (variable swapping bug).
+        """
+        with pytest.raises(ValueError, match="a cannot be empty"):
+            np.convolve(np.array([]), np.array([1, 2]))
+
+        with pytest.raises(ValueError, match="v cannot be empty"):
+            np.convolve(np.array([1, 2]), np.array([]))
 
 class TestArgwhere:
 
@@ -3899,29 +3949,16 @@ class TestMoveaxis:
 
 
 class TestCross:
-    @pytest.mark.filterwarnings(
-        "ignore:.*2-dimensional vectors.*:DeprecationWarning"
-    )
     def test_2x2(self):
         u = [1, 2]
         v = [3, 4]
-        z = -2
-        cp = np.cross(u, v)
-        assert_equal(cp, z)
-        cp = np.cross(v, u)
-        assert_equal(cp, -z)
+        assert_raises(ValueError, np.cross, u, v)
 
-    @pytest.mark.filterwarnings(
-        "ignore:.*2-dimensional vectors.*:DeprecationWarning"
-    )
     def test_2x3(self):
         u = [1, 2]
         v = [3, 4, 5]
-        z = np.array([10, -5, -2])
-        cp = np.cross(u, v)
-        assert_equal(cp, z)
-        cp = np.cross(v, u)
-        assert_equal(cp, -z)
+        assert_raises(ValueError, np.cross, u, v)
+        assert_raises(ValueError, np.cross, v, u)
 
     def test_3x3(self):
         u = [1, 2, 3]
@@ -3932,32 +3969,7 @@ class TestCross:
         cp = np.cross(v, u)
         assert_equal(cp, -z)
 
-    @pytest.mark.filterwarnings(
-        "ignore:.*2-dimensional vectors.*:DeprecationWarning"
-    )
     def test_broadcasting(self):
-        # Ticket #2624 (Trac #2032)
-        u = np.tile([1, 2], (11, 1))
-        v = np.tile([3, 4], (11, 1))
-        z = -2
-        assert_equal(np.cross(u, v), z)
-        assert_equal(np.cross(v, u), -z)
-        assert_equal(np.cross(u, u), 0)
-
-        u = np.tile([1, 2], (11, 1)).T
-        v = np.tile([3, 4, 5], (11, 1))
-        z = np.tile([10, -5, -2], (11, 1))
-        assert_equal(np.cross(u, v, axisa=0), z)
-        assert_equal(np.cross(v, u.T), -z)
-        assert_equal(np.cross(v, v), 0)
-
-        u = np.tile([1, 2, 3], (11, 1)).T
-        v = np.tile([3, 4], (11, 1)).T
-        z = np.tile([-12, 9, -2], (11, 1))
-        assert_equal(np.cross(u, v, axisa=0, axisb=0), z)
-        assert_equal(np.cross(v.T, u.T), -z)
-        assert_equal(np.cross(u.T, u.T), 0)
-
         u = np.tile([1, 2, 3], (5, 1))
         v = np.tile([4, 5, 6], (5, 1)).T
         z = np.tile([-3, 6, -3], (5, 1))
@@ -3965,27 +3977,20 @@ class TestCross:
         assert_equal(np.cross(v.T, u), -z)
         assert_equal(np.cross(u, u), 0)
 
-    @pytest.mark.filterwarnings(
-        "ignore:.*2-dimensional vectors.*:DeprecationWarning"
-    )
     def test_broadcasting_shapes(self):
         u = np.ones((2, 1, 3))
         v = np.ones((5, 3))
         assert_equal(np.cross(u, v).shape, (2, 5, 3))
         u = np.ones((10, 3, 5))
-        v = np.ones((2, 5))
+        v = np.ones((3, 5))
         assert_equal(np.cross(u, v, axisa=1, axisb=0).shape, (10, 5, 3))
         assert_raises(AxisError, np.cross, u, v, axisa=1, axisb=2)
         assert_raises(AxisError, np.cross, u, v, axisa=3, axisb=0)
         u = np.ones((10, 3, 5, 7))
-        v = np.ones((5, 7, 2))
+        v = np.ones((5, 7, 3))
         assert_equal(np.cross(u, v, axisa=1, axisc=2).shape, (10, 5, 3, 7))
         assert_raises(AxisError, np.cross, u, v, axisa=-5, axisb=2)
         assert_raises(AxisError, np.cross, u, v, axisa=1, axisb=-4)
-        # gh-5885
-        u = np.ones((3, 4, 2))
-        for axisc in range(-2, 2):
-            assert_equal(np.cross(u, u, axisc=axisc).shape, (3, 4))
 
     def test_uint8_int32_mixed_dtypes(self):
         # regression test for gh-19138
@@ -4184,6 +4189,18 @@ class TestBroadcast:
                                              r"arg 2 with shape \(2,\)"):
             np.broadcast([[1, 2, 3]], [[4], [5]], [6, 7])
 
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    def test_signatures(self):
+        sig_new = inspect.signature(np.broadcast)
+        assert len(sig_new.parameters) == 1
+        assert "arrays" in sig_new.parameters
+        assert sig_new.parameters["arrays"].kind == inspect.Parameter.VAR_POSITIONAL
+
+        sig_reset = inspect.signature(np.broadcast.reset)
+        assert len(sig_reset.parameters) == 1
+        assert "self" in sig_reset.parameters
+        assert sig_reset.parameters["self"].kind == inspect.Parameter.POSITIONAL_ONLY
+
 
 class TestKeepdims:
 
@@ -4199,6 +4216,12 @@ class TestKeepdims:
 
 class TestTensordot:
 
+    def test_rejects_duplicate_axes(self):
+        a = np.ones((2, 3, 3))
+        b = np.ones((3, 3, 4))
+        with pytest.raises(ValueError):
+            np.tensordot(a, b, axes=([1, 1], [0, 0]))
+
     def test_zero_dimension(self):
         # Test resolution to issue #5663
         a = np.ndarray((3, 0))
@@ -4210,7 +4233,8 @@ class TestTensordot:
     def test_zero_dimensional(self):
         # gh-12130
         arr_0d = np.array(1)
-        ret = np.tensordot(arr_0d, arr_0d, ([], []))  # contracting no axes is well defined
+        # contracting no axes is well defined
+        ret = np.tensordot(arr_0d, arr_0d, ([], []))
         assert_array_equal(ret, arr_0d)
 
 

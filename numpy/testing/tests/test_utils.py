@@ -432,7 +432,11 @@ class TestEqual(TestArrayEqual):
         nadt_s = np.datetime64("NaT", "s")
         nadt_d = np.datetime64("NaT", "ns")
         # not a timedelta
-        natd_no_unit = np.timedelta64("NaT")
+        with pytest.warns(
+            DeprecationWarning,
+            match="Using 'generic' unit for NumPy timedelta is deprecated",
+        ):
+            natd_no_unit = np.timedelta64("NaT")
         natd_s = np.timedelta64("NaT", "s")
         natd_d = np.timedelta64("NaT", "ns")
 
@@ -1146,6 +1150,7 @@ class TestArrayAssertLess:
 @pytest.mark.filterwarnings(
     "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
     ".*:DeprecationWarning")
+@pytest.mark.thread_unsafe(reason="checks global module & deprecated warnings")
 class TestWarns:
 
     def test_warn(self):
@@ -1336,8 +1341,12 @@ class TestAssertAllclose:
 
     def test_timedelta(self):
         # see gh-18286
-        a = np.array([[1, 2, 3, "NaT"]], dtype="m8[ns]")
-        assert_allclose(a, a)
+        with pytest.warns(
+            DeprecationWarning,
+            match="Using 'generic' unit for NumPy timedelta is deprecated",
+        ):
+            a = np.array([[1, 2, 3, "NaT"]], dtype="m8[ns]")
+            assert_allclose(a, a)
 
     def test_error_message_unsigned(self):
         """Check the message is formatted correctly when overflow can occur
@@ -1760,6 +1769,7 @@ def _get_fresh_mod():
     return my_mod
 
 
+@pytest.mark.thread_unsafe(reason="checks global module & deprecated warnings")
 def test_clear_and_catch_warnings():
     # Initial state of module, no warnings
     my_mod = _get_fresh_mod()
@@ -1795,6 +1805,7 @@ def test_clear_and_catch_warnings():
 @pytest.mark.filterwarnings(
     "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
     ".*:DeprecationWarning")
+@pytest.mark.thread_unsafe(reason="checks global module & deprecated warnings")
 def test_suppress_warnings_module():
     # Initial state of module, no warnings
     my_mod = _get_fresh_mod()
@@ -1844,6 +1855,7 @@ def test_suppress_warnings_module():
 @pytest.mark.filterwarnings(
     "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
     ".*:DeprecationWarning")
+@pytest.mark.thread_unsafe(reason="checks global module & deprecated warnings")
 def test_suppress_warnings_type():
     # Initial state of module, no warnings
     my_mod = _get_fresh_mod()
@@ -1875,6 +1887,9 @@ def test_suppress_warnings_type():
 @pytest.mark.filterwarnings(
     "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
     ".*:DeprecationWarning")
+@pytest.mark.thread_unsafe(
+    reason="uses deprecated thread-unsafe warnings control utilities"
+)
 def test_suppress_warnings_decorate_no_record():
     sup = suppress_warnings()
     sup.filter(UserWarning)
@@ -1893,6 +1908,9 @@ def test_suppress_warnings_decorate_no_record():
 @pytest.mark.filterwarnings(
     "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
     ".*:DeprecationWarning")
+@pytest.mark.thread_unsafe(
+    reason="uses deprecated thread-unsafe warnings control utilities"
+)
 def test_suppress_warnings_record():
     sup = suppress_warnings()
     log1 = sup.record()
@@ -1937,6 +1955,9 @@ def test_suppress_warnings_record():
 @pytest.mark.filterwarnings(
     "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
     ".*:DeprecationWarning")
+@pytest.mark.thread_unsafe(
+    reason="uses deprecated thread-unsafe warnings control utilities"
+)
 def test_suppress_warnings_forwarding():
     def warn_other_module():
         # Apply along axis is implemented in python; stacklevel=2 means
@@ -2026,6 +2047,7 @@ class my_cacw(clear_and_catch_warnings):
     class_modules = (sys.modules[__name__],)
 
 
+@pytest.mark.thread_unsafe(reason="checks global module & deprecated warnings")
 def test_clear_and_catch_warnings_inherit():
     # Test can subclass and add default modules
     my_mod = _get_fresh_mod()
@@ -2036,6 +2058,7 @@ def test_clear_and_catch_warnings_inherit():
 
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+@pytest.mark.thread_unsafe(reason="garbage collector is global state")
 class TestAssertNoGcCycles:
     """ Test assert_no_gc_cycles """
 

@@ -304,7 +304,7 @@ class DLPMethods(Benchmark):
 class NDArrayAsType(Benchmark):
     """ Benchmark for type conversion
     """
-    params = [list(itertools.combinations(TYPES1, 2))]
+    params = [list(itertools.product(TYPES1, TYPES1))]
     param_names = ['typeconv']
     timeout = 10
 

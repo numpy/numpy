@@ -165,7 +165,7 @@ PyArray_CopyInitialReduceValues(
  * funcname    : The name of the reduction function, for error messages.
  * errormask   : forwarded from _get_bufsize_errmask
  *
- * TODO FIXME: if you squint, this is essentially an second independent
+ * TODO FIXME: if you squint, this is essentially a second independent
  * implementation of generalized ufuncs with signature (i)->(), plus a few
  * extra bells and whistles. (Indeed, as far as I can tell, it was originally
  * split out to support a fancy version of count_nonzero... which is not
@@ -379,7 +379,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
                 PyArray_NDIM(result), PyArray_DIMS(result),
                 PyArray_DESCR(result),
                 PyArray_BYTES(result), PyArray_STRIDES(result),
-                op_dtypes[0], initial_buf);
+                op_dtypes[0], initial_buf, NPY_UNSAFE_CASTING);
         if (ret < 0) {
             goto fail;
         }

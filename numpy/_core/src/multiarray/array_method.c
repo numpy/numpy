@@ -4,7 +4,7 @@
  * pointers to do fast operations on the given input functions.
  * It thus adds an abstraction layer around individual ufunc loops.
  *
- * Unlike methods, a ArrayMethod can have multiple inputs and outputs.
+ * Unlike methods, an ArrayMethod can have multiple inputs and outputs.
  * This has some serious implication for garbage collection, and as far
  * as I (@seberg) understands, it is not possible to always guarantee correct
  * cyclic garbage collection of dynamically created DTypes with methods.
@@ -30,8 +30,8 @@
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
 
-#include <npy_pycompat.h>
 #include <numpy/ndarrayobject.h>
+#include <npy_pycompat.h>
 #include "arrayobject.h"
 #include "array_coercion.h"
 #include "array_method.h"
@@ -39,6 +39,7 @@
 #include "convert_datatype.h"
 #include "common.h"
 #include "numpy/ufuncobject.h"
+#include "dtype_transfer.h"
 
 
 /*
@@ -85,7 +86,7 @@ default_resolve_descriptors(
      * abstract ones or unspecified outputs).  We can use the common-dtype
      * operation to provide a default here.
      */
-    if (method->casting == NPY_NO_CASTING) {
+    if (method->casting == NPY_NO_CASTING && (method->flags & _NPY_METH_IS_CAST)) {
         /*
          * By (current) definition no-casting should imply viewable.  This
          * is currently indicated for example for object to object cast.
@@ -128,9 +129,9 @@ is_contiguous(
  * param move_references UNUSED -- listed below but doxygen doesn't see as a parameter
  * @param strides Array of step sizes for each dimension of the arrays involved
  * @param out_loop Output pointer to the function that will perform the strided loop.
- * @param out_transferdata Output pointer to auxiliary data (if any) 
+ * @param out_transferdata Output pointer to auxiliary data (if any)
  *        needed by the out_loop function.
- * @param flags Output pointer to additional flags (if any) 
+ * @param flags Output pointer to additional flags (if any)
  *        needed by the out_loop function
  * @returns 0 on success -1 on failure.
  */
@@ -189,12 +190,17 @@ validate_spec(PyArrayMethod_Spec *spec)
                 "not exceed %d. (method: %s)", NPY_MAXARGS, spec->name);
         return -1;
     }
-    switch (spec->casting) {
+    switch ((int)spec->casting) {
         case NPY_NO_CASTING:
         case NPY_EQUIV_CASTING:
         case NPY_SAFE_CASTING:
         case NPY_SAME_KIND_CASTING:
         case NPY_UNSAFE_CASTING:
+        case NPY_NO_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+        case NPY_EQUIV_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+        case NPY_SAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+        case NPY_SAME_KIND_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+        case NPY_UNSAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
             break;
         default:
             if (spec->casting != -1) {
@@ -498,7 +504,12 @@ PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private)
         return NULL;
     }
     strcpy(res->method->name, spec->name);
-
+#ifdef Py_GIL_DISABLED
+    // Mark immortal to reduce reference count contention in PyArray_GetCastingImpl
+    // If we ever allow replacing ArrayMethod objects or cleanup it DTypes or ufuncs, this may need to be reconsidered.
+    // An alternative that might help is to store cast methods in a PyArrayIdentityHash instead of a dict.
+    PyUnstable_SetImmortal((PyObject *)res->method);
+#endif
     return res;
 }
 
@@ -580,7 +591,7 @@ boundarraymethod_dealloc(PyObject *self)
  *       changes and especially testing if they were to be made public.
  */
 static PyObject *
-boundarraymethod__resolve_descripors(
+boundarraymethod__resolve_descriptors(
         PyBoundArrayMethodObject *self, PyObject *descr_tuple)
 {
     int nin = self->method->nin;
@@ -687,10 +698,11 @@ boundarraymethod__resolve_descripors(
         if (!parametric) {
             /*
              * Non-parametric can only mismatch if it switches from equiv to no
-             * (e.g. due to byteorder changes).
+             * (e.g. due to byteorder changes). Throw away same_value casting flag
              */
+            int method_casting = self->method->casting & ~NPY_SAME_VALUE_CASTING_FLAG;
             if (cast != self->method->casting &&
-                    self->method->casting != NPY_EQUIV_CASTING) {
+                    method_casting != NPY_EQUIV_CASTING) {
                 PyErr_Format(PyExc_RuntimeError,
                         "resolve_descriptors cast level changed even though "
                         "the cast is non-parametric where the only possible "
@@ -811,11 +823,10 @@ boundarraymethod__simple_strided_call(
         return NULL;
     }
 
-    PyArrayMethod_Context context = {
-            .caller = NULL,
-            .method = self->method,
-            .descriptors = descrs,
-    };
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, descrs);
+    context.method = self->method;
+
     PyArrayMethod_StridedLoop *strided_loop = NULL;
     NpyAuxData *loop_data = NULL;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
@@ -970,7 +981,7 @@ PyArrayMethod_GetMaskedStridedLoop(
 
 
 PyMethodDef boundarraymethod_methods[] = {
-    {"_resolve_descriptors", (PyCFunction)boundarraymethod__resolve_descripors,
+    {"_resolve_descriptors", (PyCFunction)boundarraymethod__resolve_descriptors,
      METH_O, "Resolve the given dtypes."},
     {"_simple_strided_call", (PyCFunction)boundarraymethod__simple_strided_call,
      METH_O, "call on 1-d inputs and pre-allocated outputs (single call)."},
@@ -1003,3 +1014,4 @@ NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type = {
     .tp_methods = boundarraymethod_methods,
     .tp_getset = boundarraymethods_getters,
 };
+

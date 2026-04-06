@@ -723,22 +723,22 @@ class TestNanFunctions_MeanVarStd(SharedNanFunctionsTestsMixin):
                 res = nf(_ndat, axis=1, ddof=ddof)
                 assert_almost_equal(res, tgt)
 
-    def test_ddof_too_big(self, recwarn):
+    def test_ddof_too_big(self):
         nanfuncs = [np.nanvar, np.nanstd]
         stdfuncs = [np.var, np.std]
         dsize = [len(d) for d in _rdat]
         for nf, rf in zip(nanfuncs, stdfuncs):
             for ddof in range(5):
-                with warnings.catch_warnings():
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter('always')
                     warnings.simplefilter('ignore', ComplexWarning)
                     tgt = [ddof >= d for d in dsize]
                     res = nf(_ndat, axis=1, ddof=ddof)
                     assert_equal(np.isnan(res), tgt)
                 if any(tgt):
-                    assert_(len(recwarn) == 1)
-                    recwarn.pop(RuntimeWarning)
+                    assert_(len(w) == 1)
                 else:
-                    assert_(len(recwarn) == 0)
+                    assert_(len(w) == 0)
 
     @pytest.mark.parametrize("axis", [None, 0, 1])
     @pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
@@ -835,7 +835,7 @@ _TIME_UNITS = (
     "Y", "M", "W", "D", "h", "m", "s", "ms", "us", "ns", "ps", "fs", "as"
 )
 
-# All `inexact` + `timdelta64` type codes
+# All `inexact` + `timedelta64` type codes
 _TYPE_CODES = list(np.typecodes["AllFloat"])
 _TYPE_CODES += [f"m8[{unit}]" for unit in _TIME_UNITS]
 
@@ -945,27 +945,37 @@ class TestNanFunctions_Median:
     @pytest.mark.parametrize("axis", [None, 0, 1])
     @pytest.mark.parametrize("dtype", _TYPE_CODES)
     def test_allnans(self, dtype, axis):
-        mat = np.full((3, 3), np.nan).astype(dtype)
-        with pytest.warns(RuntimeWarning) as r:
+        mat = np.full((3, 3), np.nan, dtype=dtype)
+        with pytest.warns((RuntimeWarning, DeprecationWarning)) as r:
             output = np.nanmedian(mat, axis=axis)
             assert output.dtype == mat.dtype
             assert np.isnan(output).all()
 
+            _filtered_record = [
+                item.message
+                for item in r
+                if "All-NaN slice encountered" in str(item.message)
+            ]
             if axis is None:
-                assert_(len(r) == 1)
+                assert_(len(_filtered_record) == 1)
             else:
-                assert_(len(r) == 3)
+                assert_(len(_filtered_record) == 3)
 
             # Check scalar
-            scalar = np.array(np.nan).astype(dtype)[()]
+            scalar = np.full((1, 1), np.nan, dtype=dtype)[0, 0]
             output_scalar = np.nanmedian(scalar)
             assert output_scalar.dtype == scalar.dtype
             assert np.isnan(output_scalar)
 
+            _filtered_record = [
+                item.message
+                for item in r
+                if "All-NaN slice encountered" in str(item.message)
+            ]
             if axis is None:
-                assert_(len(r) == 2)
+                assert_(len(_filtered_record) == 2)
             else:
-                assert_(len(r) == 4)
+                assert_(len(_filtered_record) == 4)
 
     def test_empty(self):
         mat = np.zeros((0, 3))
@@ -1422,6 +1432,7 @@ def test__replace_nan():
         assert np.isnan(arr_nan[-1])
 
 
+@pytest.mark.thread_unsafe(reason="memmap is thread-unsafe (gh-29126)")
 def test_memmap_takes_fast_route(tmpdir):
     # We want memory mapped arrays to take the fast route through nanmax,
     # which avoids creating a mask by using fmax.reduce (see gh-28721). So we

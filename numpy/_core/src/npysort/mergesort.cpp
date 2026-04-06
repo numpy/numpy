@@ -337,7 +337,7 @@ string_amergesort_(type *v, npy_intp *tosort, npy_intp num, void *varr)
 
 static void
 npy_mergesort0(char *pl, char *pr, char *pw, char *vp, npy_intp elsize,
-               PyArray_CompareFunc *cmp, PyArrayObject *arr)
+               PyArray_CompareFunc *cmp, void *arr)
 {
     char *pi, *pj, *pk, *pm;
 
@@ -383,9 +383,19 @@ npy_mergesort0(char *pl, char *pr, char *pw, char *vp, npy_intp elsize,
 NPY_NO_EXPORT int
 npy_mergesort(void *start, npy_intp num, void *varr)
 {
-    PyArrayObject *arr = (PyArrayObject *)varr;
-    npy_intp elsize = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+    void *arr = varr;
+    npy_intp elsize;
+    PyArray_CompareFunc *cmp;
+    get_sort_data_from_array(arr, &elsize, &cmp);
+
+    return npy_mergesort_impl(start, num, varr, elsize, cmp);
+}
+
+NPY_NO_EXPORT int
+npy_mergesort_impl(void *start, npy_intp num, void *varr,
+                   npy_intp elsize, PyArray_CompareFunc *cmp)
+{
+    void *arr = varr;
     char *pl = (char *)start;
     char *pr = pl + num * elsize;
     char *pw;
@@ -413,7 +423,7 @@ npy_mergesort(void *start, npy_intp num, void *varr)
 
 static void
 npy_amergesort0(npy_intp *pl, npy_intp *pr, char *v, npy_intp *pw,
-                npy_intp elsize, PyArray_CompareFunc *cmp, PyArrayObject *arr)
+                npy_intp elsize, PyArray_CompareFunc *cmp, void *arr)
 {
     char *vp;
     npy_intp vi, *pi, *pj, *pk, *pm;
@@ -459,9 +469,19 @@ npy_amergesort0(npy_intp *pl, npy_intp *pr, char *v, npy_intp *pw,
 NPY_NO_EXPORT int
 npy_amergesort(void *v, npy_intp *tosort, npy_intp num, void *varr)
 {
-    PyArrayObject *arr = (PyArrayObject *)varr;
-    npy_intp elsize = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+    void *arr = varr;
+    npy_intp elsize;
+    PyArray_CompareFunc *cmp;
+    get_sort_data_from_array(arr, &elsize, &cmp);
+
+    return npy_amergesort_impl(v, tosort, num, varr, elsize, cmp);
+}
+
+NPY_NO_EXPORT int
+npy_amergesort_impl(void *v, npy_intp *tosort, npy_intp num, void *varr,
+                    npy_intp elsize, PyArray_CompareFunc *cmp)
+{
+    void *arr = varr;
     npy_intp *pl, *pr, *pw;
 
     /* Items that have zero size don't make sense to sort */

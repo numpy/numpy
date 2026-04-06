@@ -1233,6 +1233,10 @@ can_cast_datetime64_units(NPY_DATETIMEUNIT src_unit,
                           NPY_DATETIMEUNIT dst_unit,
                           NPY_CASTING casting)
 {
+    if ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
+        /* TODO: support this */
+        return 0;
+    }
     switch (casting) {
         /* Allow anything with unsafe casting */
         case NPY_UNSAFE_CASTING:
@@ -1278,6 +1282,10 @@ can_cast_timedelta64_units(NPY_DATETIMEUNIT src_unit,
                           NPY_DATETIMEUNIT dst_unit,
                           NPY_CASTING casting)
 {
+    if ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
+        /* Use SAFE_CASTING, which implies SAME_VALUE */
+        casting = NPY_SAFE_CASTING;
+    }
     switch (casting) {
         /* Allow anything with unsafe casting */
         case NPY_UNSAFE_CASTING:
@@ -1325,6 +1333,10 @@ can_cast_datetime64_metadata(PyArray_DatetimeMetaData *src_meta,
                              PyArray_DatetimeMetaData *dst_meta,
                              NPY_CASTING casting)
 {
+    if ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
+        /* Force SAFE_CASTING */
+        casting = NPY_SAFE_CASTING;
+    }
     switch (casting) {
         case NPY_UNSAFE_CASTING:
             return 1;
@@ -1352,6 +1364,10 @@ can_cast_timedelta64_metadata(PyArray_DatetimeMetaData *src_meta,
                              PyArray_DatetimeMetaData *dst_meta,
                              NPY_CASTING casting)
 {
+    if ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
+        /* Use SAFE_CASTING, which implies SAME_VALUE */
+        casting = NPY_SAFE_CASTING;
+    }
     switch (casting) {
         case NPY_UNSAFE_CASTING:
             return 1;
@@ -2543,6 +2559,15 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
                 meta->base = NPY_FR_GENERIC;
                 meta->num = 1;
             }
+            /* If output is NaT, skip this warning. */
+            if(meta->base == NPY_FR_GENERIC) {
+                if (DEPRECATE(
+                            "Using 'generic' unit for NumPy timedelta is deprecated, "
+                            "and will raise an error in the future. Please use a "
+                            "specific units instead.") < 0) {
+                    return -1;
+                }
+            }
 
             return 0;
         }
@@ -2559,6 +2584,16 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         if (error_converting(*out)) {
             return -1;
         }
+
+        if (meta->base == NPY_FR_GENERIC) {
+            if (DEPRECATE(
+                        "Using 'generic' unit for NumPy timedelta is deprecated, "
+                        "and will raise an error in the future. "
+                        "Please use a specific units instead.") < 0) {
+                return -1;
+            }
+        }
+
         return 0;
     }
     /* Timedelta scalar */
@@ -2761,10 +2796,10 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
 /*
  * Converts a datetime into a PyObject *.
  *
- * Not-a-time is returned as the string "NaT".
- * For days or coarser, returns a datetime.date.
- * For microseconds or coarser, returns a datetime.datetime.
- * For units finer than microseconds, returns an integer.
+ * NaT (Not-a-time) is returned as None.
+ * For D/W/Y/M (days or coarser), returns a datetime.date.
+ * For μs/ms/s/m/h/D/W (microseconds or coarser), returns a datetime.datetime.
+ * For ns/ps/fs/as (units shorter than microseconds), returns an integer.
  */
 NPY_NO_EXPORT PyObject *
 convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
@@ -2945,9 +2980,9 @@ convert_timedelta_to_timedeltastruct(PyArray_DatetimeMetaData *meta,
 /*
  * Converts a timedelta into a PyObject *.
  *
- * Not-a-time is returned as the string "NaT".
- * For microseconds or coarser, returns a datetime.timedelta.
- * For units finer than microseconds, returns an integer.
+ * NaT (Not-a-time) is returned as None.
+ * For μs/ms/s/m/h/D/W (microseconds or coarser), returns a datetime.timedelta.
+ * For Y/M (non-linear units), generic units and ns/ps/fs/as (units shorter than microseconds), returns an integer.
  */
 NPY_NO_EXPORT PyObject *
 convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta)
@@ -2963,7 +2998,7 @@ convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta)
 
     /*
      * If the type's precision is greater than microseconds, is
-     * Y/M/B (nonlinear units), or is generic units, return an int
+     * Y/M (nonlinear units), or is generic units, return an int
      */
     if (meta->base > NPY_FR_us ||
                     meta->base == NPY_FR_Y ||
@@ -4054,6 +4089,9 @@ time_to_string_resolve_descriptors(
         loop_descrs[1] = PyArray_DescrNewFromType(dtypes[1]->type_num);
         if (loop_descrs[1] == NULL) {
             return -1;
+        }
+        if (given_descrs[1] != NULL) {
+            size = (size < given_descrs[1]->elsize) ? size : given_descrs[1]->elsize;
         }
         loop_descrs[1]->elsize = size;
     }

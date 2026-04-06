@@ -1,0 +1,64 @@
+name: stubtest
+permissions: read-all
+
+# Stubtest depends on different branches and paths than mypy does, so we have a separate workflow.
+
+on:
+  pull_request:
+    branches:
+      - "main"
+      - "maintenance/2.**"
+      # Stubtest requires numpy>=2.4
+      - "!maintenance/2.[0-3].x"
+    paths:
+      - ".github/workflows/stubtest.yml"
+      - "numpy/**"
+      - "!numpy/**/tests/**"
+      - "requirements/typing_requirements.txt"
+      - "tools/stubtest/**"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  mypy:
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+
+    name: stubtest
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # TODO: consider including macos and windows
+        os: [ubuntu]
+        py: ["3.12", "3.14"]
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: recursive
+          fetch-tags: true
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          python-version: ${{ matrix.py }}
+          activate-environment: true
+          cache-dependency-glob: |
+            requirements/build_requirements.txt
+            requirements/typing_requirements.txt
+
+      - name: uv pip install
+        run: >-
+          uv pip install
+          -r requirements/build_requirements.txt
+          -r requirements/typing_requirements.txt
+
+      - name: spin build
+        run: spin build -j2 -- -Dallow-noblas=true -Ddisable-optimization=true --vsenv
+
+      - name: spin stubtest
+        run: spin stubtest

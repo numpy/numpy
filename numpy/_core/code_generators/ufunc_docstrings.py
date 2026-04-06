@@ -332,7 +332,7 @@ add_newdoc('numpy._core.umath', 'arcsin',
 
 add_newdoc('numpy._core.umath', 'arcsinh',
     """
-    Inverse hyperbolic sine element-wise.
+    Inverse hyperbolic sine, element-wise.
 
     Parameters
     ----------
@@ -534,7 +534,7 @@ add_newdoc('numpy._core.umath', '_arg',
 
 add_newdoc('numpy._core.umath', 'arctanh',
     """
-    Inverse hyperbolic tangent element-wise.
+    Inverse hyperbolic tangent, element-wise.
 
     Parameters
     ----------
@@ -917,7 +917,7 @@ add_newdoc('numpy._core.umath', 'cos',
     array([  1.00000000e+00,   6.12303177e-17,  -1.00000000e+00])
     >>>
     >>> # Example of providing the optional output parameter
-    >>> out1 = np.array([0], dtype='d')
+    >>> out1 = np.array([0], dtype=np.float64)
     >>> out2 = np.cos([0.1], out1)
     >>> out2 is out1
     True
@@ -1145,7 +1145,7 @@ add_newdoc('numpy._core.umath', 'equal',
     -------
     out : ndarray or scalar
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -1506,7 +1506,7 @@ add_newdoc('numpy._core.umath', 'greater',
     -------
     out : ndarray or scalar
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
 
@@ -1545,7 +1545,7 @@ add_newdoc('numpy._core.umath', 'greater_equal',
     -------
     out : bool or ndarray of bool
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -1619,7 +1619,7 @@ add_newdoc('numpy._core.umath', 'invert',
     returned. In a two's-complement system, this operation effectively flips
     all the bits, resulting in a representation that corresponds to the
     negative of the input plus one. This is the most common method of
-    representing signed integers on computers [1]_. A N-bit two's-complement
+    representing signed integers on computers [1]_. An N-bit two's-complement
     system can represent every integer in the range :math:`-2^{N-1}` to
     :math:`+2^{N-1}-1`.
 
@@ -1957,7 +1957,7 @@ add_newdoc('numpy._core.umath', 'less',
     -------
     out : ndarray or scalar
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -1994,7 +1994,7 @@ add_newdoc('numpy._core.umath', 'less_equal',
     -------
     out : ndarray or scalar
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -3174,7 +3174,7 @@ add_newdoc('numpy._core.umath', 'multiply',
 
 add_newdoc('numpy._core.umath', 'negative',
     """
-    Numerical negative, element-wise.
+    Numerical negation, element-wise.
 
     Parameters
     ----------
@@ -3255,7 +3255,7 @@ add_newdoc('numpy._core.umath', 'not_equal',
     -------
     out : ndarray or scalar
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -3373,9 +3373,9 @@ add_newdoc('numpy._core.umath', 'power',
     >>> p
     array([nan, nan])
 
-    To get complex results, give the argument ``dtype=complex``.
+    To get complex results, give the argument ``dtype=np.complex128``.
 
-    >>> np.power(x3, 1.5, dtype=complex)
+    >>> np.power(x3, 1.5, dtype=np.complex128)
     array([-1.83697020e-16-1.j, -1.46957616e-15-8.j])
 
     """)
@@ -3452,9 +3452,9 @@ add_newdoc('numpy._core.umath', 'float_power',
     >>> p
     array([nan, nan])
 
-    To get complex results, give the argument ``dtype=complex``.
+    To get complex results, give the argument ``dtype=np.complex128``.
 
-    >>> np.float_power(x3, 1.5, dtype=complex)
+    >>> np.float_power(x3, 1.5, dtype=np.complex128)
     array([-1.83697020e-16-1.j, -1.46957616e-15-8.j])
 
     """)
@@ -4055,7 +4055,7 @@ add_newdoc('numpy._core.umath', 'sinh',
     >>> # Discrepancy due to vagaries of floating point arithmetic.
 
     >>> # Example of providing the optional output parameter
-    >>> out1 = np.array([0], dtype='d')
+    >>> out1 = np.array([0], dtype=np.float64)
     >>> out2 = np.sinh([0.1], out1)
     >>> out2 is out1
     True
@@ -4256,7 +4256,7 @@ add_newdoc('numpy._core.umath', 'tan',
     >>>
     >>> # Example of providing the optional output parameter illustrating
     >>> # that what is returned is a reference to said parameter
-    >>> out1 = np.array([0], dtype='d')
+    >>> out1 = np.array([0], dtype=np.float64)
     >>> out2 = np.cos([0.1], out1)
     >>> out2 is out1
     True
@@ -4271,7 +4271,7 @@ add_newdoc('numpy._core.umath', 'tan',
 
 add_newdoc('numpy._core.umath', 'tanh',
     """
-    Compute hyperbolic tangent element-wise.
+    Hyperbolic tangent, element-wise.
 
     Equivalent to ``np.sinh(x)/np.cosh(x)`` or ``-1j * np.tan(1j*x)``.
 
@@ -4309,7 +4309,7 @@ add_newdoc('numpy._core.umath', 'tanh',
 
     >>> # Example of providing the optional output parameter illustrating
     >>> # that what is returned is a reference to said parameter
-    >>> out1 = np.array([0], dtype='d')
+    >>> out1 = np.array([0], dtype=np.float64)
     >>> out2 = np.tanh([0.1], out1)
     >>> out2 is out1
     True
@@ -4519,6 +4519,62 @@ add_newdoc('numpy._core.umath', 'bitwise_count',
     >>> np.bitwise_count(a)
     array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15],
           dtype=uint8)
+
+    """)
+
+add_newdoc('numpy._core.umath', 'real',
+    """
+    Returns the real part of the elements in the array.
+
+    Parameters
+    ----------
+    x : array_like
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        Real part of input array.
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    ndarray.real
+    ndarray.imag
+
+    Notes
+    -----
+    This ufunc is used internally to implement the `ndarray.real`
+    attribute and the `np.real` function. It should not be used directly.
+
+    """)
+
+add_newdoc('numpy._core.umath', 'imag',
+    """
+    Returns the imaginary part of the elements in the array.
+
+    Unlike typical ufuncs, the return is typically a view into the original array.
+
+    Parameters
+    ----------
+    x : array_like
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        Complex part of input array or zeros.
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    ndarray.imag
+    ndarray.real
+
+    Notes
+    -----
+    This ufunc is used internally to implement the `ndarray.imag`
+    attribute and the `np.imag` function. It should not be used directly.
 
     """)
 

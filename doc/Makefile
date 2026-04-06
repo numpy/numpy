@@ -39,7 +39,7 @@ help:
 	@echo "  clean     to remove generated doc files and start fresh"
 	@echo "  docenv    make a virtual environment in which to build docs"
 	@echo "  html      to make standalone HTML files"
-	@echo "  htmlhelp  to make HTML files and a HTML help project"
+	@echo "  htmlhelp  to make HTML files and an HTML help project"
 	@echo "  latex     to make LaTeX files, you can set PAPER=a4 or PAPER=letter"
 	@echo "  changes   to make an overview over all changed/added/deprecated items"
 	@echo "  linkcheck to check all external links for integrity"

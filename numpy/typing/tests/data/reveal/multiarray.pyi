@@ -1,23 +1,31 @@
 import datetime as dt
-from typing import Any, Literal, TypeVar, assert_type
+from typing import Any, Literal, assert_type
 
 import numpy as np
 import numpy.typing as npt
 
-_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
-
-class SubClass(npt.NDArray[_ScalarT_co]): ...
+class SubClass[ScalarT: np.generic](np.ndarray[tuple[Any, ...], np.dtype[ScalarT]]): ...
 
 subclass: SubClass[np.float64]
 
+AR_f4_nd: npt.NDArray[np.float32]
+AR_f4_1d: np.ndarray[tuple[int], np.dtype[np.float32]]
+AR_f4_2d: np.ndarray[tuple[int, int], np.dtype[np.float32]]
+AR_f4_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float32]]
 AR_f8: npt.NDArray[np.float64]
+AR_c16: npt.NDArray[np.complex128]
 AR_i8: npt.NDArray[np.int64]
 AR_u1: npt.NDArray[np.uint8]
 AR_m: npt.NDArray[np.timedelta64]
 AR_M: npt.NDArray[np.datetime64]
+AR_O_nd: npt.NDArray[np.object_]
+AR_O_1d: np.ndarray[tuple[int], np.dtype[np.object_]]
+AR_O_2d: np.ndarray[tuple[int, int], np.dtype[np.object_]]
 
-AR_LIKE_f: list[float]
+AR_LIKE_b: list[bool]
 AR_LIKE_i: list[int]
+AR_LIKE_f: list[float]
+AR_LIKE_c: list[complex]
 
 m: np.timedelta64
 M: np.datetime64
@@ -61,12 +69,140 @@ assert_type(b_i8_f8_f8.numiter, int)
 assert_type(b_i8_f8_f8.shape, tuple[Any, ...])
 assert_type(b_i8_f8_f8.size, int)
 
-assert_type(np.inner(AR_f8, AR_i8), Any)
+#
 
-assert_type(np.where([True, True, False]), tuple[npt.NDArray[np.intp], ...])
+assert_type(np.inner(AR_LIKE_b, AR_LIKE_b), np.bool)
+assert_type(np.inner(AR_LIKE_b, AR_LIKE_i), np.int_)
+assert_type(np.inner(AR_LIKE_b, AR_LIKE_f), np.float64)
+assert_type(np.inner(AR_LIKE_b, AR_LIKE_c), np.complex128)
+assert_type(np.inner(AR_LIKE_i, AR_LIKE_b), np.int_)
+assert_type(np.inner(AR_LIKE_i, AR_LIKE_i), np.int_)
+assert_type(np.inner(AR_LIKE_i, AR_LIKE_f), np.float64)
+assert_type(np.inner(AR_LIKE_i, AR_LIKE_c), np.complex128)
+assert_type(np.inner(AR_LIKE_f, AR_LIKE_b), np.float64)
+assert_type(np.inner(AR_LIKE_f, AR_LIKE_i), np.float64)
+assert_type(np.inner(AR_LIKE_f, AR_LIKE_f), np.float64)
+assert_type(np.inner(AR_LIKE_f, AR_LIKE_c), np.complex128)
+assert_type(np.inner(AR_LIKE_c, AR_LIKE_b), np.complex128)
+assert_type(np.inner(AR_LIKE_c, AR_LIKE_i), np.complex128)
+assert_type(np.inner(AR_LIKE_c, AR_LIKE_f), np.complex128)
+assert_type(np.inner(AR_LIKE_c, AR_LIKE_c), np.complex128)
+
+assert_type(np.inner(AR_f4_1d, AR_f4_1d), np.float32)
+assert_type(np.inner(AR_f4_1d, AR_f4_2d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.inner(AR_f4_1d, AR_f4_nd), npt.NDArray[np.float32] | Any)
+assert_type(np.inner(AR_f4_2d, AR_f4_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.inner(AR_f4_2d, AR_f4_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.inner(AR_f4_2d, AR_f4_nd), npt.NDArray[np.float32] | Any)
+assert_type(np.inner(AR_f4_nd, AR_f4_1d), npt.NDArray[np.float32] | Any)
+assert_type(np.inner(AR_f4_nd, AR_f4_2d), npt.NDArray[np.float32] | Any)
+assert_type(np.inner(AR_f4_nd, AR_f4_nd), npt.NDArray[np.float32] | Any)
+
+assert_type(np.inner(AR_O_1d, AR_O_1d), Any)
+assert_type(np.inner(AR_O_1d, AR_O_2d), np.ndarray[tuple[int], np.dtype[np.object_]])
+assert_type(np.inner(AR_O_1d, AR_O_nd), npt.NDArray[np.object_] | Any)
+assert_type(np.inner(AR_O_2d, AR_O_1d), np.ndarray[tuple[int], np.dtype[np.object_]])
+assert_type(np.inner(AR_O_2d, AR_O_2d), np.ndarray[tuple[int, int], np.dtype[np.object_]])
+assert_type(np.inner(AR_O_2d, AR_O_nd), npt.NDArray[np.object_] | Any)
+assert_type(np.inner(AR_O_nd, AR_O_1d), npt.NDArray[np.object_] | Any)
+assert_type(np.inner(AR_O_nd, AR_O_2d), npt.NDArray[np.object_] | Any)
+assert_type(np.inner(AR_O_nd, AR_O_nd), npt.NDArray[np.object_] | Any)
+
+assert_type(np.inner(AR_u1, AR_u1), npt.NDArray[np.uint8] | Any)
+assert_type(np.inner(AR_i8, AR_i8), npt.NDArray[np.int64] | Any)
+assert_type(np.inner(AR_f8, AR_f8), npt.NDArray[np.float64] | Any)
+assert_type(np.inner(AR_c16, AR_c16), npt.NDArray[np.complex128] | Any)
+
+#
+
+assert_type(np.dot(AR_LIKE_b, AR_LIKE_b), np.bool)
+assert_type(np.dot(AR_LIKE_b, AR_LIKE_i), np.int_)
+assert_type(np.dot(AR_LIKE_b, AR_LIKE_f), np.float64)
+assert_type(np.dot(AR_LIKE_b, AR_LIKE_c), np.complex128)
+assert_type(np.dot(AR_LIKE_i, AR_LIKE_b), np.int_)
+assert_type(np.dot(AR_LIKE_i, AR_LIKE_i), np.int_)
+assert_type(np.dot(AR_LIKE_i, AR_LIKE_f), np.float64)
+assert_type(np.dot(AR_LIKE_i, AR_LIKE_c), np.complex128)
+assert_type(np.dot(AR_LIKE_f, AR_LIKE_b), np.float64)
+assert_type(np.dot(AR_LIKE_f, AR_LIKE_i), np.float64)
+assert_type(np.dot(AR_LIKE_f, AR_LIKE_f), np.float64)
+assert_type(np.dot(AR_LIKE_f, AR_LIKE_c), np.complex128)
+assert_type(np.dot(AR_LIKE_c, AR_LIKE_b), np.complex128)
+assert_type(np.dot(AR_LIKE_c, AR_LIKE_i), np.complex128)
+assert_type(np.dot(AR_LIKE_c, AR_LIKE_f), np.complex128)
+assert_type(np.dot(AR_LIKE_c, AR_LIKE_c), np.complex128)
+
+assert_type(np.dot(AR_f4_1d, AR_f4_1d), np.float32)
+assert_type(np.dot(AR_f4_1d, AR_f4_2d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.dot(AR_f4_1d, AR_f4_nd), Any)
+assert_type(np.dot(AR_f4_2d, AR_f4_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.dot(AR_f4_2d, AR_f4_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.dot(AR_f4_2d, AR_f4_nd), Any)
+assert_type(np.dot(AR_f4_nd, AR_f4_1d), Any)
+assert_type(np.dot(AR_f4_nd, AR_f4_2d), Any)
+assert_type(np.dot(AR_f4_nd, AR_f4_nd), Any)
+
+assert_type(np.dot(AR_O_1d, AR_O_1d), Any)
+assert_type(np.dot(AR_O_1d, AR_O_2d), np.ndarray[tuple[int], np.dtype[np.object_]])
+assert_type(np.dot(AR_O_1d, AR_O_nd), Any)
+assert_type(np.dot(AR_O_2d, AR_O_1d), np.ndarray[tuple[int], np.dtype[np.object_]])
+assert_type(np.dot(AR_O_2d, AR_O_2d), np.ndarray[tuple[int, int], np.dtype[np.object_]])
+assert_type(np.dot(AR_O_2d, AR_O_nd), Any)
+assert_type(np.dot(AR_O_nd, AR_O_1d), Any)
+assert_type(np.dot(AR_O_nd, AR_O_2d), Any)
+assert_type(np.dot(AR_O_nd, AR_O_nd), Any)
+
+#
+
+assert_type(np.dot(AR_LIKE_b, AR_LIKE_b), np.bool)
+assert_type(np.dot(AR_LIKE_b, AR_LIKE_i), np.int_)
+assert_type(np.dot(AR_LIKE_b, AR_LIKE_f), np.float64)
+assert_type(np.dot(AR_LIKE_b, AR_LIKE_c), np.complex128)
+assert_type(np.dot(AR_LIKE_i, AR_LIKE_b), np.int_)
+assert_type(np.dot(AR_LIKE_i, AR_LIKE_i), np.int_)
+assert_type(np.dot(AR_LIKE_i, AR_LIKE_f), np.float64)
+assert_type(np.dot(AR_LIKE_i, AR_LIKE_c), np.complex128)
+assert_type(np.dot(AR_LIKE_f, AR_LIKE_b), np.float64)
+assert_type(np.dot(AR_LIKE_f, AR_LIKE_i), np.float64)
+assert_type(np.dot(AR_LIKE_f, AR_LIKE_f), np.float64)
+assert_type(np.dot(AR_LIKE_f, AR_LIKE_c), np.complex128)
+assert_type(np.dot(AR_LIKE_c, AR_LIKE_b), np.complex128)
+assert_type(np.dot(AR_LIKE_c, AR_LIKE_i), np.complex128)
+assert_type(np.dot(AR_LIKE_c, AR_LIKE_f), np.complex128)
+assert_type(np.dot(AR_LIKE_c, AR_LIKE_c), np.complex128)
+
+assert_type(np.dot(AR_f4_1d, AR_f4_1d), np.float32)
+assert_type(np.dot(AR_f4_1d, AR_f4_2d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.dot(AR_f4_1d, AR_f4_nd), Any)
+assert_type(np.dot(AR_f4_2d, AR_f4_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.dot(AR_f4_2d, AR_f4_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.dot(AR_f4_2d, AR_f4_nd), Any)
+assert_type(np.dot(AR_f4_nd, AR_f4_1d), Any)
+assert_type(np.dot(AR_f4_nd, AR_f4_2d), Any)
+assert_type(np.dot(AR_f4_nd, AR_f4_nd), Any)
+
+assert_type(np.dot(AR_O_1d, AR_O_1d), Any)
+assert_type(np.dot(AR_O_1d, AR_O_2d), np.ndarray[tuple[int], np.dtype[np.object_]])
+assert_type(np.dot(AR_O_1d, AR_O_nd), Any)
+assert_type(np.dot(AR_O_2d, AR_O_1d), np.ndarray[tuple[int], np.dtype[np.object_]])
+assert_type(np.dot(AR_O_2d, AR_O_2d), np.ndarray[tuple[int, int], np.dtype[np.object_]])
+assert_type(np.dot(AR_O_2d, AR_O_nd), Any)
+assert_type(np.dot(AR_O_nd, AR_O_1d), Any)
+assert_type(np.dot(AR_O_nd, AR_O_2d), Any)
+assert_type(np.dot(AR_O_nd, AR_O_nd), Any)
+
+#
+
+type _Int1D = np.ndarray[tuple[int], np.dtype[np.intp]]
+
+assert_type(np.where([True, True, False]), tuple[_Int1D,])
+assert_type(np.where(AR_f4_1d), tuple[_Int1D])
+assert_type(np.where(AR_f4_2d), tuple[_Int1D, _Int1D])
+assert_type(np.where(AR_f4_3d), tuple[_Int1D, _Int1D, _Int1D])
+assert_type(np.where(AR_f4_nd), tuple[_Int1D, ...])
 assert_type(np.where([True, True, False], 1, 0), npt.NDArray[Any])
 
-assert_type(np.lexsort([0, 1, 2]), Any)
+assert_type(np.lexsort([0, 1, 2]), npt.NDArray[np.intp])
 
 assert_type(np.can_cast(np.dtype("i8"), int), bool)
 assert_type(np.can_cast(AR_f8, "f8"), bool)
@@ -79,31 +215,29 @@ assert_type(np.result_type(int, [1]), np.dtype)
 assert_type(np.result_type(AR_f8, AR_u1), np.dtype)
 assert_type(np.result_type(AR_f8, np.complex128), np.dtype)
 
-assert_type(np.dot(AR_LIKE_f, AR_i8), Any)
-assert_type(np.dot(AR_u1, 1), Any)
-assert_type(np.dot(1.5j, 1), Any)
-assert_type(np.dot(AR_u1, 1, out=AR_f8), npt.NDArray[np.float64])
-
 assert_type(np.vdot(AR_LIKE_f, AR_i8), np.floating)
 assert_type(np.vdot(AR_u1, 1), np.signedinteger)
 assert_type(np.vdot(1.5j, 1), np.complexfloating)
 
-assert_type(np.bincount(AR_i8), npt.NDArray[np.intp])
+assert_type(np.bincount(AR_i8), np.ndarray[tuple[int], np.dtype[np.intp]])
 
 assert_type(np.copyto(AR_f8, [1., 1.5, 1.6]), None)
 
 assert_type(np.putmask(AR_f8, [True, True, False], 1.5), None)
 
-assert_type(np.packbits(AR_i8), npt.NDArray[np.uint8])
-assert_type(np.packbits(AR_u1), npt.NDArray[np.uint8])
+assert_type(np.packbits(AR_i8),  np.ndarray[tuple[int], np.dtype[np.uint8]])
+assert_type(np.packbits(AR_u1),  np.ndarray[tuple[int], np.dtype[np.uint8]])
+assert_type(np.packbits(AR_i8, axis=1), npt.NDArray[np.uint8])
+assert_type(np.packbits(AR_u1, axis=1), npt.NDArray[np.uint8])
 
-assert_type(np.unpackbits(AR_u1), npt.NDArray[np.uint8])
+assert_type(np.unpackbits(AR_u1), np.ndarray[tuple[int], np.dtype[np.uint8]])
+assert_type(np.unpackbits(AR_u1, axis=1), npt.NDArray[np.uint8])
 
 assert_type(np.shares_memory(1, 2), bool)
-assert_type(np.shares_memory(AR_f8, AR_f8, max_work=1), bool)
+assert_type(np.shares_memory(AR_f8, AR_f8, max_work=-1), bool)
 
 assert_type(np.may_share_memory(1, 2), bool)
-assert_type(np.may_share_memory(AR_f8, AR_f8, max_work=1), bool)
+assert_type(np.may_share_memory(AR_f8, AR_f8, max_work=0), bool)
 
 assert_type(np.promote_types(np.int32, np.int64), np.dtype)
 assert_type(np.promote_types("f4", float), np.dtype)
@@ -167,9 +301,10 @@ assert_type(np.busday_count("2011-01", "2011-02"), np.int_)
 assert_type(np.busday_count(["2011-01"], "2011-02"), npt.NDArray[np.int_])
 assert_type(np.busday_count(["2011-01"], date_scalar), npt.NDArray[np.int_])
 
-assert_type(np.busday_offset(M, m), np.datetime64)
+# NOTE: Mypy incorrectly infers `Any`, but pyright behaves correctly.
+assert_type(np.busday_offset(M, m), np.datetime64)  # type: ignore[assert-type]
+assert_type(np.busday_offset(M, 5), np.datetime64)  # type: ignore[assert-type]
 assert_type(np.busday_offset(date_scalar, m), np.datetime64)
-assert_type(np.busday_offset(M, 5), np.datetime64)
 assert_type(np.busday_offset(AR_M, m), npt.NDArray[np.datetime64])
 assert_type(np.busday_offset(M, timedelta_seq), npt.NDArray[np.datetime64])
 assert_type(np.busday_offset("2011-01", "2011-02", roll="forward"), np.datetime64)
@@ -179,7 +314,8 @@ assert_type(np.is_busday("2012"), np.bool)
 assert_type(np.is_busday(date_scalar), np.bool)
 assert_type(np.is_busday(["2012"]), npt.NDArray[np.bool])
 
-assert_type(np.datetime_as_string(M), np.str_)
+# NOTE: Mypy incorrectly infers `Any`, but pyright behaves correctly.
+assert_type(np.datetime_as_string(M), np.str_)  # type: ignore[assert-type]
 assert_type(np.datetime_as_string(AR_M), npt.NDArray[np.str_])
 
 assert_type(np.busdaycalendar(holidays=date_seq), np.busdaycalendar)

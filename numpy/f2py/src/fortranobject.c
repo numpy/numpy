@@ -192,13 +192,24 @@ PyFortranObject_NewAsAttr(FortranDataDef *defs)
     }
     fp->len = 1;
     fp->defs = defs;
+    PyObject *name;
     if (defs->rank == -1) {
-      PyDict_SetItemString(fp->dict, "__name__", PyUnicode_FromFormat("function %s", defs->name));
+      name = PyUnicode_FromFormat("function %s", defs->name);
     } else if (defs->rank == 0) {
-      PyDict_SetItemString(fp->dict, "__name__", PyUnicode_FromFormat("scalar %s", defs->name));
+      name = PyUnicode_FromFormat("scalar %s", defs->name);
     } else {
-      PyDict_SetItemString(fp->dict, "__name__", PyUnicode_FromFormat("array %s", defs->name));
+      name = PyUnicode_FromFormat("array %s", defs->name);
     }
+    if (name == NULL) {
+        Py_DECREF(fp);
+        return NULL;
+    }
+    if (PyDict_SetItemString(fp->dict, "__name__", name) < 0) {
+        Py_DECREF(name);
+        Py_DECREF(fp);
+        return NULL;
+    }
+    Py_DECREF(name);
     return (PyObject *)fp;
 }
 
@@ -565,6 +576,47 @@ fortran_repr(PyFortranObject *fp)
     return repr;
 }
 
+static PyObject *
+fortran_dir(PyFortranObject *fp, PyObject *Py_UNUSED(args))
+{
+    int i;
+    PyObject *dir_list = PyDict_Keys(fp->dict);
+    if (dir_list == NULL) {
+        return NULL;
+    }
+    for (i = 0; i < fp->len; i++) {
+        PyObject *name = PyUnicode_FromString(fp->defs[i].name);
+        if (name == NULL) {
+            Py_DECREF(dir_list);
+            return NULL;
+        }
+        int contains = PySequence_Contains(dir_list, name);
+        if (contains == -1) {
+            Py_DECREF(name);
+            Py_DECREF(dir_list);
+            return NULL;
+        }
+        if (!contains) {
+            if (PyList_Append(dir_list, name) < 0) {
+                Py_DECREF(name);
+                Py_DECREF(dir_list);
+                return NULL;
+            }
+        }
+        Py_DECREF(name);
+    }
+    if (PyList_Sort(dir_list) < 0) {
+        Py_DECREF(dir_list);
+        return NULL;
+    }
+    return dir_list;
+}
+
+static PyMethodDef fortran_methods[] = {
+        {"__dir__", (PyCFunction)fortran_dir, METH_NOARGS, NULL},
+        {NULL, NULL, 0, NULL}
+};
+
 PyTypeObject PyFortran_Type = {
         PyVarObject_HEAD_INIT(NULL, 0).tp_name = "fortran",
         .tp_basicsize = sizeof(PyFortranObject),
@@ -572,6 +624,7 @@ PyTypeObject PyFortran_Type = {
         .tp_getattr = (getattrfunc)fortran_getattr,
         .tp_setattr = (setattrfunc)fortran_setattr,
         .tp_repr = (reprfunc)fortran_repr,
+        .tp_methods = fortran_methods,
         .tp_call = (ternaryfunc)fortran_call,
 };
 
@@ -773,30 +826,6 @@ dump_attrs(const PyArrayObject *obj)
     dump_dims(rank, arr->dimensions);
 }
 #endif
-
-#define SWAPTYPE(a, b, t) \
-    {                     \
-        t c;              \
-        c = (a);          \
-        (a) = (b);        \
-        (b) = c;          \
-    }
-
-static int
-swap_arrays(PyArrayObject *obj1, PyArrayObject *obj2)
-{
-    PyArrayObject_fields *arr1 = (PyArrayObject_fields *)obj1,
-                         *arr2 = (PyArrayObject_fields *)obj2;
-    SWAPTYPE(arr1->data, arr2->data, char *);
-    SWAPTYPE(arr1->nd, arr2->nd, int);
-    SWAPTYPE(arr1->dimensions, arr2->dimensions, npy_intp *);
-    SWAPTYPE(arr1->strides, arr2->strides, npy_intp *);
-    SWAPTYPE(arr1->base, arr2->base, PyObject *);
-    SWAPTYPE(arr1->descr, arr2->descr, PyArray_Descr *);
-    SWAPTYPE(arr1->flags, arr2->flags, int);
-    /* SWAPTYPE(arr1->weakreflist,arr2->weakreflist,PyObject*); */
-    return 0;
-}
 
 #define ARRAY_ISCOMPATIBLE(arr,type_num)                                \
     ((PyArray_ISINTEGER(arr) && PyTypeNum_ISINTEGER(type_num)) ||     \
@@ -1039,32 +1068,38 @@ ndarray_from_pyobj(const int type_num,
             return NULL;
         }
 
-        /* here we have always intent(in) or intent(inplace) */
+        /*
+         * Here, we have always intent(in) or intent(inplace)
+         * and require a copy for input.  We allow arbitrary casting for
+         * input, but for inplace we check that the types are equivalent.
+         */
 
         {
-          PyArrayObject * retarr = (PyArrayObject *)                    \
-            PyArray_NewFromDescr(&PyArray_Type, descr, PyArray_NDIM(arr), PyArray_DIMS(arr),
-                                 NULL, NULL, !(intent & F2PY_INTENT_C), NULL);
-          if (retarr==NULL) {
-            Py_DECREF(descr);
-            return NULL;
-          }
-          F2PY_REPORT_ON_ARRAY_COPY_FROMARR;
-          if (PyArray_CopyInto(retarr, arr)) {
-            Py_DECREF(retarr);
-            return NULL;
-          }
+          int flags = NPY_ARRAY_FORCECAST | NPY_ARRAY_ENSURECOPY
+              | ((intent & F2PY_INTENT_C) ? NPY_ARRAY_IN_ARRAY
+                 : NPY_ARRAY_IN_FARRAY);
           if (intent & F2PY_INTENT_INPLACE) {
-            if (swap_arrays(arr,retarr)) {
-              Py_DECREF(retarr);
-              return NULL; /* XXX: set exception */
-            }
-            Py_XDECREF(retarr);
-            if (intent & F2PY_INTENT_OUT)
-              Py_INCREF(arr);
-          } else {
-            arr = retarr;
+              if (!(ARRAY_ISCOMPATIBLE(arr, type_num)) ||
+                  (PyArray_ISSIGNED(arr) && PyTypeNum_ISUNSIGNED(type_num)) ||
+                  (PyArray_ISUNSIGNED(arr) && PyTypeNum_ISSIGNED(type_num))
+                  ) {
+                  sprintf(mess, "failed to initialize intent(inplace) array"
+                          " -- input '%c' not compatible to '%c'",
+                          PyArray_DESCR(arr)->type, descr->type);
+                  PyErr_SetString(PyExc_ValueError, mess);
+                  Py_DECREF(descr);
+                  return NULL;
+              }
+              flags |= NPY_ARRAY_WRITEBACKIFCOPY;
           }
+          /* Steals reference to descr */
+          PyArrayObject *retarr = (PyArrayObject *)PyArray_FromArray(
+              arr, descr, flags);
+          if (retarr==NULL) {
+            return NULL;
+          }
+          arr = retarr;
+          F2PY_REPORT_ON_ARRAY_COPY_FROMARR;
         }
         return arr;
     }

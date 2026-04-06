@@ -1,0 +1,42 @@
+# intentional type-check-only deviations from runtime
+numpy\._typing.*
+numpy\.polynomial\._polytypes
+
+# internal testing code
+numpy\.conftest.*
+numpy\.random\._generator\.__test__
+numpy(\.\w+)?\.tests.*
+
+# system-dependent SIMD constants
+numpy\._core\._simd\.\w+
+
+# these are always either float96/complex192 or float128/complex256
+numpy\.__all__
+numpy\._core\.__all__
+numpy\._?core\.numeric\.__all__
+numpy\._?core\.numerictypes\.__all__
+numpy\.matlib\.__all__
+
+# requires numpy/_core/code_generators to be on the PYTHONPATH when running stubtest
+numpy\._core\.cversions
+
+# raises SystemExit on import
+numpy\.f2py\.__main__
+
+# inexpressible: the `dtype.type` class-attribute is `None` unless instantiated
+numpy(\..+)?\.dtype\.type
+
+# import errors
+numpy\._pyinstaller\..*
+
+# known minor deviations from runtime
+numpy\.(\w+\.)*integer\.__index__
+numpy\.(\w+\.)*integer\.bit_count
+numpy\.(\w+\.)*floating\.as_integer_ratio
+numpy\.(\w+\.)*floating\.is_integer
+numpy\.(\w+\.)*complexfloating\.__complex__
+# https://github.com/numpy/numpy/issues/30445#issuecomment-3665484402
+numpy\.(\w+\.)*generic\.__hash__
+
+# intentionally missing deprecated module stubs
+numpy\.typing\.mypy_plugin
