@@ -2222,9 +2222,10 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         stable: bool = False,
     ) -> _MaskedArray[intp]: ...
 
-    # Keep in-sync with np.ma.argmin
-    @overload  # type: ignore[override]
-    def argmin(  # pyrefly: ignore[bad-param-name-override]
+    # keep in sync with `MaskedArray.argmin` (below) and `ndarray.argmax`
+    @override  # type: ignore[override]
+    @overload
+    def argmax(
         self,
         axis: None = None,
         fill_value: _ScalarLike_co | None = None,
@@ -2232,17 +2233,26 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         *,
         keepdims: Literal[False] | _NoValueType = ...,
     ) -> intp: ...
-    @overload
-    def argmin(
+    @overload  # axis: <given>
+    def argmax(
+        self,
+        axis: SupportsIndex,
+        fill_value: _ScalarLike_co | None = None,
+        out: None = None,
+        *,
+        keepdims: Literal[False] | _NoValueType = ...,
+    ) -> _MaskedArray[intp]: ...
+    @overload  # keepdims: True
+    def argmax(
         self,
         axis: SupportsIndex | None = None,
         fill_value: _ScalarLike_co | None = None,
         out: None = None,
         *,
-        keepdims: bool | _NoValueType = ...,
-    ) -> Any: ...
-    @overload
-    def argmin[ArrayT: np.ndarray](
+        keepdims: Literal[True],
+    ) -> MaskedArray[_ShapeT_co, dtype[intp]]: ...
+    @overload  # out: <given>  (keyword)
+    def argmax[ArrayT: NDArray[intp]](
         self,
         axis: SupportsIndex | None = None,
         fill_value: _ScalarLike_co | None = None,
@@ -2250,8 +2260,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         out: ArrayT,
         keepdims: bool | _NoValueType = ...,
     ) -> ArrayT: ...
-    @overload
-    def argmin[ArrayT: np.ndarray](
+    @overload  # out: <given>  (positional)
+    def argmax[ArrayT: NDArray[intp]](  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         axis: SupportsIndex | None,
         fill_value: _ScalarLike_co | None,
@@ -2260,9 +2270,10 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         keepdims: bool | _NoValueType = ...,
     ) -> ArrayT: ...
 
-    # Keep in-sync with np.ma.argmax
-    @overload  # type: ignore[override]
-    def argmax(  # pyrefly: ignore[bad-param-name-override]
+    # keep in sync with `MaskedArray.argmax` (above) and `ndarray.argmin`
+    @override  # type: ignore[override]
+    @overload
+    def argmin(
         self,
         axis: None = None,
         fill_value: _ScalarLike_co | None = None,
@@ -2270,17 +2281,26 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         *,
         keepdims: Literal[False] | _NoValueType = ...,
     ) -> intp: ...
-    @overload
-    def argmax(
+    @overload  # axis: <given>
+    def argmin(
+        self,
+        axis: SupportsIndex,
+        fill_value: _ScalarLike_co | None = None,
+        out: None = None,
+        *,
+        keepdims: Literal[False] | _NoValueType = ...,
+    ) -> _MaskedArray[intp]: ...
+    @overload  # keepdims: True
+    def argmin(
         self,
         axis: SupportsIndex | None = None,
         fill_value: _ScalarLike_co | None = None,
         out: None = None,
         *,
-        keepdims: bool | _NoValueType = ...,
-    ) -> Any: ...
-    @overload
-    def argmax[ArrayT: np.ndarray](
+        keepdims: Literal[True],
+    ) -> MaskedArray[_ShapeT_co, dtype[intp]]: ...
+    @overload  # out: <given>  (keyword)
+    def argmin[ArrayT: NDArray[intp]](
         self,
         axis: SupportsIndex | None = None,
         fill_value: _ScalarLike_co | None = None,
@@ -2288,8 +2308,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         out: ArrayT,
         keepdims: bool | _NoValueType = ...,
     ) -> ArrayT: ...
-    @overload
-    def argmax[ArrayT: np.ndarray](
+    @overload  # out: <given>  (positional)
+    def argmin[ArrayT: NDArray[intp]](  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         axis: SupportsIndex | None,
         fill_value: _ScalarLike_co | None,

@@ -15,6 +15,7 @@ class IntoMaskedArraySubClass[ScalarT: np.generic]:
     def __array__(self) -> MaskedArraySubclass[ScalarT]: ...
 
 type MaskedArraySubclassC = MaskedArraySubclass[np.complex128]
+type MaskedArraySubclassI = MaskedArraySubclass[np.intp]
 
 AR_b: NDArray[np.bool]
 AR_f4: NDArray[np.float32]
@@ -51,6 +52,7 @@ MAR_floating: MaskedArray[np.floating]
 MAR_number: MaskedArray[np.number]
 
 MAR_subclass: MaskedArraySubclassC
+MAR_subclass_i: MaskedArraySubclassI
 MAR_into_subclass: IntoMaskedArraySubClass[np.float32]
 
 MAR_1d: np.ma.MaskedArray[tuple[int], np.dtype]
@@ -131,12 +133,12 @@ assert_type(MAR_f4.ptp(None, MAR_subclass), MaskedArraySubclassC)
 
 assert_type(MAR_b.argmin(), np.intp)
 assert_type(MAR_f4.argmin(), np.intp)
-assert_type(MAR_f4.argmax(fill_value=6.28318, keepdims=False), np.intp)
-assert_type(MAR_b.argmin(axis=0), Any)
-assert_type(MAR_f4.argmin(axis=0), Any)
-assert_type(MAR_b.argmin(keepdims=True), Any)
-assert_type(MAR_f4.argmin(out=MAR_subclass), MaskedArraySubclassC)
-assert_type(MAR_f4.argmin(None, None, out=MAR_subclass), MaskedArraySubclassC)
+assert_type(MAR_f4.argmin(fill_value=6.28318, keepdims=False), np.intp)
+assert_type(MAR_b.argmin(axis=0), MaskedArray[np.intp])
+assert_type(MAR_f4.argmin(axis=0), MaskedArray[np.intp])
+assert_type(MAR_b.argmin(keepdims=True), MaskedArray[np.intp])
+assert_type(MAR_f4.argmin(out=MAR_subclass_i), MaskedArraySubclassI)
+assert_type(MAR_f4.argmin(None, None, out=MAR_subclass_i), MaskedArraySubclassI)
 
 assert_type(np.ma.argmin(MAR_b), np.intp)
 assert_type(np.ma.argmin(MAR_f4), np.intp)
@@ -150,11 +152,11 @@ assert_type(np.ma.argmin(MAR_f4, None, None, out=MAR_subclass), MaskedArraySubcl
 assert_type(MAR_b.argmax(), np.intp)
 assert_type(MAR_f4.argmax(), np.intp)
 assert_type(MAR_f4.argmax(fill_value=6.28318, keepdims=False), np.intp)
-assert_type(MAR_b.argmax(axis=0), Any)
-assert_type(MAR_f4.argmax(axis=0), Any)
-assert_type(MAR_b.argmax(keepdims=True), Any)
-assert_type(MAR_f4.argmax(out=MAR_subclass), MaskedArraySubclassC)
-assert_type(MAR_f4.argmax(None, None, out=MAR_subclass), MaskedArraySubclassC)
+assert_type(MAR_b.argmax(axis=0), MaskedArray[np.intp])
+assert_type(MAR_f4.argmax(axis=0), MaskedArray[np.intp])
+assert_type(MAR_b.argmax(keepdims=True), MaskedArray[np.intp])
+assert_type(MAR_f4.argmax(out=MAR_subclass_i), MaskedArraySubclassI)
+assert_type(MAR_f4.argmax(None, None, out=MAR_subclass_i), MaskedArraySubclassI)
 
 assert_type(np.ma.argmax(MAR_b), np.intp)
 assert_type(np.ma.argmax(MAR_f4), np.intp)
