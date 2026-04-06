@@ -262,6 +262,8 @@ assert_type(AR_f8.argpartition([0]), npt.NDArray[np.intp])
 assert_type(AR_f8.argpartition(0, axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
 
 assert_type(AR_f8.diagonal(), npt.NDArray[np.float64])
+assert_type(AR_f8_2d.diagonal(), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8_3d.diagonal(), np.ndarray[tuple[int, int], np.dtype[np.float64]])
 
 assert_type(AR_f8.dot(1), npt.NDArray[Any])
 assert_type(AR_f8.dot([1]), Any)

@@ -2511,9 +2511,30 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
 
     # keep in sync with `ndarray.diagonal`
     @override
+    @overload  # ?d  (workaround)
+    def diagonal[DTypeT: dtype](
+        self: MaskedArray[tuple[Never, Never, Never, Never], DTypeT],
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+    ) -> MaskedArray[_AnyShape, DTypeT]: ...
+    @overload  # 2d
+    def diagonal[DTypeT: dtype](
+        self: MaskedArray[tuple[int, int], DTypeT],
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+    ) -> MaskedArray[tuple[int], DTypeT]: ...
+    @overload  # 3d
+    def diagonal[DTypeT: dtype](
+        self: MaskedArray[tuple[int, int, int], DTypeT],
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+    ) -> MaskedArray[tuple[int, int], DTypeT]: ...
+    @overload  # Nd  (fallback)
     def diagonal(
         self,
-        /,
         offset: SupportsIndex = 0,
         axis1: SupportsIndex = 0,
         axis2: SupportsIndex = 1,
