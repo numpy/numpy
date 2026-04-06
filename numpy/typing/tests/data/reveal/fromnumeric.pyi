@@ -116,16 +116,22 @@ assert_type(np.argsort(AR_f4, axis=None), np.ndarray[tuple[int], np.dtype[np.int
 assert_type(np.argsort(AR_f4_1d, axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
 assert_type(np.argsort(AR_f4_2d, axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
 
-assert_type(np.argmax(AR_b), np.intp)
+# same as below
 assert_type(np.argmax(AR_f4), np.intp)
-assert_type(np.argmax(AR_b, axis=0), Any)
-assert_type(np.argmax(AR_f4, axis=0), Any)
+assert_type(np.argmax(AR_f4, axis=0), npt.NDArray[np.intp])
+assert_type(np.argmax(AR_f4, keepdims=True), npt.NDArray[np.intp])
+assert_type(np.argmax(AR_f4_1d, keepdims=True), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.argmax(AR_f4_2d, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.intp]])
+assert_type(np.argmax(AR_f4_3d, keepdims=True), np.ndarray[tuple[int, int, int], np.dtype[np.intp]])
 assert_type(np.argmax(AR_f4, out=AR_sub_i), NDArrayIntSubclass)
 
-assert_type(np.argmin(AR_b), np.intp)
+# same as above
 assert_type(np.argmin(AR_f4), np.intp)
-assert_type(np.argmin(AR_b, axis=0), Any)
-assert_type(np.argmin(AR_f4, axis=0), Any)
+assert_type(np.argmin(AR_f4, axis=0), npt.NDArray[np.intp])
+assert_type(np.argmin(AR_f4, keepdims=True), npt.NDArray[np.intp])
+assert_type(np.argmin(AR_f4_1d, keepdims=True), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.argmin(AR_f4_2d, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.intp]])
+assert_type(np.argmin(AR_f4_3d, keepdims=True), np.ndarray[tuple[int, int, int], np.dtype[np.intp]])
 assert_type(np.argmin(AR_f4, out=AR_sub_i), NDArrayIntSubclass)
 
 assert_type(np.searchsorted(AR_b[0], 0), np.intp)

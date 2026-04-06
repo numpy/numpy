@@ -1,4 +1,4 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete, SupportsBool
 from collections.abc import Sequence
 from typing import (
     Any,
@@ -136,6 +136,16 @@ type _ToArray3D[ScalarT: np.generic] = _Array3D[ScalarT] | Sequence[Sequence[Seq
 
 type _ArrayLikeMultiplicative_co = _DualArrayLike[np.dtype[np.number | np.bool | np.object_], complex]
 type _ArrayLikeNumeric_co = _DualArrayLike[np.dtype[np.number | np.bool | np.object_ | np.timedelta64], complex]
+
+@type_check_only
+class _CanLE(Protocol):
+    def __le__(self, other: Any, /) -> SupportsBool: ...
+
+@type_check_only
+class _CanGE(Protocol):
+    def __ge__(self, other: Any, /) -> SupportsBool: ...
+
+type _Orderable = _CanLE | _CanGE
 
 ###
 
@@ -494,72 +504,89 @@ def argsort(
     stable: bool | None = None,
 ) -> _Array1D[np.intp]: ...
 
-#
-@overload
+# keep in sync with `argmin` below
+@overload  # ?d
 def argmax(
-    a: ArrayLike,
+    a: ArrayLike | _NestedSequence[_Orderable],
     axis: None = None,
     out: None = None,
     *,
     keepdims: Literal[False] | _NoValueType = ...,
-) -> intp: ...
-@overload
+) -> np.intp: ...
+@overload  # ?d, axis: <given>
 def argmax(
-    a: ArrayLike,
+    a: ArrayLike | _NestedSequence[_Orderable],
+    axis: SupportsIndex,
+    out: None = None,
+    *,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> NDArray[np.intp]: ...
+@overload  # Nd, keepdims=True
+def argmax[ShapeT: _Shape](
+    a: np.ndarray[ShapeT],
     axis: SupportsIndex | None = None,
     out: None = None,
     *,
-    keepdims: bool | _NoValueType = ...,
-) -> Any: ...
-@overload
-def argmax[BoolOrIntArrayT: NDArray[np.integer | np.bool]](
-    a: ArrayLike,
-    axis: SupportsIndex | None,
-    out: BoolOrIntArrayT,
+    keepdims: Literal[True],
+) -> np.ndarray[ShapeT, np.dtype[np.intp]]: ...
+@overload  # ?d, keepdims=True
+def argmax(
+    a: ArrayLike | _NestedSequence[_Orderable],
+    axis: SupportsIndex | None = None,
+    out: None = None,
     *,
-    keepdims: bool | _NoValueType = ...,
-) -> BoolOrIntArrayT: ...
-@overload
-def argmax[BoolOrIntArrayT: NDArray[np.integer | np.bool]](
-    a: ArrayLike,
+    keepdims: Literal[True],
+) -> NDArray[np.intp]: ...
+@overload  # ?d, out: ArrayT
+def argmax[ArrayT: NDArray[np.intp]](
+    a: ArrayLike | _NestedSequence[_Orderable],
     axis: SupportsIndex | None = None,
     *,
-    out: BoolOrIntArrayT,
+    out: ArrayT,
     keepdims: bool | _NoValueType = ...,
-) -> BoolOrIntArrayT: ...
+) -> ArrayT: ...
 
-@overload
+# keep in sync with `argmax` above
+@overload  # ?d
 def argmin(
-    a: ArrayLike,
+    a: ArrayLike | _NestedSequence[_Orderable],
     axis: None = None,
     out: None = None,
     *,
     keepdims: Literal[False] | _NoValueType = ...,
-) -> intp: ...
-@overload
+) -> np.intp: ...
+@overload  # ?d, axis: <given>
 def argmin(
-    a: ArrayLike,
+    a: ArrayLike | _NestedSequence[_Orderable],
+    axis: SupportsIndex,
+    out: None = None,
+    *,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> NDArray[np.intp]: ...
+@overload  # Nd, keepdims=True
+def argmin[ShapeT: _Shape](
+    a: np.ndarray[ShapeT],
     axis: SupportsIndex | None = None,
     out: None = None,
     *,
-    keepdims: bool | _NoValueType = ...,
-) -> Any: ...
-@overload
-def argmin[BoolOrIntArrayT: NDArray[np.integer | np.bool]](
-    a: ArrayLike,
-    axis: SupportsIndex | None,
-    out: BoolOrIntArrayT,
+    keepdims: Literal[True],
+) -> np.ndarray[ShapeT, np.dtype[np.intp]]: ...
+@overload  # ?d, keepdims=True
+def argmin(
+    a: ArrayLike | _NestedSequence[_Orderable],
+    axis: SupportsIndex | None = None,
+    out: None = None,
     *,
-    keepdims: bool | _NoValueType = ...,
-) -> BoolOrIntArrayT: ...
-@overload
-def argmin[BoolOrIntArrayT: NDArray[np.integer | np.bool]](
-    a: ArrayLike,
+    keepdims: Literal[True],
+) -> NDArray[np.intp]: ...
+@overload  # ?d, out: ArrayT
+def argmin[ArrayT: NDArray[np.intp]](
+    a: ArrayLike | _NestedSequence[_Orderable],
     axis: SupportsIndex | None = None,
     *,
-    out: BoolOrIntArrayT,
+    out: ArrayT,
     keepdims: bool | _NoValueType = ...,
-) -> BoolOrIntArrayT: ...
+) -> ArrayT: ...
 
 # TODO: Fix overlapping overloads: https://github.com/numpy/numpy/issues/27032
 @overload
