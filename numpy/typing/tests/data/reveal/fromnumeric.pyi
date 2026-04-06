@@ -31,6 +31,10 @@ f4: np.float32
 i8: np.int64
 f: float
 
+_py_list_1d: list[int]
+_py_list_2d: list[list[int]]
+_py_list_3d: list[list[list[int]]]
+
 _dtype_list: list[np.dtype]
 _any_list: list[Any]
 
@@ -185,6 +189,9 @@ assert_type(np.shape(f), tuple[()])
 assert_type(np.shape([1]), tuple[int])
 assert_type(np.shape([[2]]), tuple[int, int])
 assert_type(np.shape([[[3]]]), tuple[int, int, int])
+assert_type(np.shape(_py_list_1d), tuple[int])
+assert_type(np.shape(_py_list_2d), tuple[int, int])
+assert_type(np.shape(_py_list_3d), tuple[int, int, int])
 assert_type(np.shape(AR_b), tuple[Any, ...])
 assert_type(np.shape(AR_nd), tuple[Any, ...])
 # these fail on mypy, but it works as expected with pyright/pylance
