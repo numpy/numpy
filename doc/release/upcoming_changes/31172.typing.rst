@@ -7,7 +7,7 @@ as a 1-d ``float64`` array, and ``np.sum(x, keepdims=True)`` has the same
 number of dimensions as ``x``.
 
 This covers ``numpy.linalg`` functions, array creation functions (like
-``asarray``, ``fromiter``, and ``fromregex``), range functions (``linspace``,
+``asarray``, ``from{buffer,string,file,iter,regex}``), range functions (``linspace``,
 ``logspace``, ``geomspace``), aggregation functions and methods (``sum``,
 ``mean``, ``std``, ``var``, ``min``, ``max``, ``all``, ``any``, etc.), sorting
 (``sort``, ``argsort``, ``argpartition``), cumulative operations (``cumsum``,
