@@ -886,15 +886,24 @@ def all(
     *,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> np.bool: ...
-@overload  # axis: <given>
+@overload  # axis: int
 def all[ShapeT: _Shape](
     a: ArrayLike,
-    axis: int | tuple[int, ...],
+    axis: int,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     *,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.bool]: ...
+@overload  # axis: (int, ...)
+def all[ShapeT: _Shape](
+    a: ArrayLike,
+    axis: tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    *,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.bool] | Any: ...
 @overload  # Nd, keepdims: True
 def all[ShapeT: _Shape](
     a: np.ndarray[ShapeT],
@@ -942,15 +951,24 @@ def any(
     *,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> np.bool: ...
-@overload  # axis: <given>
+@overload  # axis: int
 def any[ShapeT: _Shape](
     a: ArrayLike,
-    axis: int | tuple[int, ...],
+    axis: int,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     *,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.bool]: ...
+@overload  # axis: (int, ...)
+def any[ShapeT: _Shape](
+    a: ArrayLike,
+    axis: tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    *,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.bool] | Any: ...
 @overload  # Nd, keepdims: True
 def any[ShapeT: _Shape](
     a: np.ndarray[ShapeT],
