@@ -31,6 +31,7 @@ from numpy._typing import (
     _ArrayLikeBool_co,
     _ArrayLikeComplex_co,
     _ArrayLikeFloat_co,
+    _ArrayLikeInt,
     _ArrayLikeInt_co,
     _ArrayLikeObject_co,
     _ArrayLikeUInt_co,
@@ -225,12 +226,6 @@ def kron(a: _ArrayLikeObject_co, b: Any) -> NDArray[object_]: ...
 def kron(a: Any, b: _ArrayLikeObject_co) -> NDArray[object_]: ...
 
 @overload
-def tile(
-    A: _ArrayLike[_ScalarT],
-    reps: int | Sequence[int],
-) -> NDArray[_ScalarT]: ...
+def tile(A: _ArrayLike[_ScalarT], reps: _ArrayLikeInt) -> NDArray[_ScalarT]: ...
 @overload
-def tile(
-    A: ArrayLike,
-    reps: int | Sequence[int],
-) -> NDArray[Any]: ...
+def tile(A: ArrayLike, reps: _ArrayLikeInt) -> NDArray[Any]: ...
