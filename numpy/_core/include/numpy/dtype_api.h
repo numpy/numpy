@@ -97,8 +97,7 @@ typedef enum {
     /* All flags which can change at runtime */
     NPY_METH_RUNTIME_FLAGS = (
             NPY_METH_REQUIRES_PYAPI |
-            NPY_METH_NO_FLOATINGPOINT_ERRORS |
-            NPY_METH_REQUIRES_CONTIGUOUS),
+            NPY_METH_NO_FLOATINGPOINT_ERRORS),
 } NPY_ARRAYMETHOD_FLAGS;
 
 

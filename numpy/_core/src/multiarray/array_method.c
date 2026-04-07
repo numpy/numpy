@@ -147,15 +147,21 @@ npy_default_get_strided_loop(
     *flags = meth->flags & NPY_METH_RUNTIME_FLAGS;
     *out_transferdata = NULL;
 
+    /*
+     * If the method requires contiguous access, the iterator handles
+     * buffering due to the flag on the arraymethod.
+     */
+    if (meth->flags & NPY_METH_REQUIRES_CONTIGUOUS) {
+        if (meth->strided_loop == NULL) {
+            *out_loop = meth->contiguous_loop;
+            return 0;
+        }
+    }
+
     int nargs = meth->nin + meth->nout;
     if (aligned) {
         if (meth->contiguous_loop == NULL ||
                 !is_contiguous(strides, descrs, nargs)) {
-            if (meth->strided_loop == NULL &&
-                    (meth->flags & NPY_METH_REQUIRES_CONTIGUOUS)) {
-                *out_loop = (PyArrayMethod_StridedLoop *)meth->contiguous_loop;
-                return 0;
-            }
             *out_loop = meth->strided_loop;
             return 0;
         }
