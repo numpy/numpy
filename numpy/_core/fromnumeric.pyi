@@ -345,30 +345,46 @@ def matrix_transpose[ScalarT: np.generic](x: _ArrayLike[ScalarT], /) -> NDArray[
 def matrix_transpose(x: ArrayLike, /) -> NDArray[Any]: ...
 
 #
-@overload
+@overload  # Nd
+def partition[ArrayT: np.ndarray](
+    a: ArrayT,
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex = -1,
+    kind: _PartitionKind = "introselect",
+    order: str | Sequence[str] | None = None,
+) -> ArrayT: ...
+@overload  # ?d
 def partition[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     kth: _ArrayLikeInt,
-    axis: SupportsIndex | None = -1,
-    kind: _PartitionKind = "introselect",
-    order: None = None,
-) -> NDArray[ScalarT]: ...
-@overload
-def partition(
-    a: _ArrayLike[np.void],
-    kth: _ArrayLikeInt,
-    axis: SupportsIndex | None = -1,
+    axis: SupportsIndex = -1,
     kind: _PartitionKind = "introselect",
     order: str | Sequence[str] | None = None,
-) -> NDArray[np.void]: ...
-@overload
+) -> NDArray[ScalarT]: ...
+@overload  # axis: None
+def partition[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    kth: _ArrayLikeInt,
+    axis: None,
+    kind: _PartitionKind = "introselect",
+    order: str | Sequence[str] | None = None,
+) -> _Array1D[ScalarT]: ...
+@overload  # fallback
 def partition(
     a: ArrayLike,
     kth: _ArrayLikeInt,
-    axis: SupportsIndex | None = -1,
+    axis: SupportsIndex = -1,
     kind: _PartitionKind = "introselect",
     order: str | Sequence[str] | None = None,
 ) -> NDArray[Any]: ...
+@overload  # fallback, axis: None
+def partition(
+    a: ArrayLike,
+    kth: _ArrayLikeInt,
+    axis: None,
+    kind: _PartitionKind = "introselect",
+    order: str | Sequence[str] | None = None,
+) -> _Array1D[Any]: ...
 
 # keep roughly in sync with `ndarray.argpartition`
 @overload  # axis: None
