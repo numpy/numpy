@@ -3921,19 +3921,20 @@ to.
 
 .. c:function:: int PyArray_BufferConverter(PyObject* obj, PyArray_Chunk* buf)
 
-    Convert any Python object, *obj*, with a (single-segment) buffer
-    interface to a variable with members that detail the object's use
-    of its chunk of memory. The *buf* variable is a pointer to a
-    structure with base, ptr, len, and flags members. The
-    :c:type:`PyArray_Chunk` structure is binary compatible with the
-    Python's buffer object (through its len member on 32-bit platforms
-    and its ptr member on 64-bit platforms). On return, the base member
-    is set to *obj* (or its base if *obj* is already a buffer object
+    .. deprecated:: 2.5
+
+       Use the standard Python buffer protocol directly instead.
+
+    Convert any Python object, *obj*, that exports a buffer to a
+    variable with members that describe the exported memory. The
+    *buf* variable is a pointer to a structure with base, ptr, len,
+    and flags members. On return, the base member is set to *obj*
+    (or its base if *obj* is already a buffer-exporting object
     pointing to another object). If you need to hold on to the memory
     be sure to INCREF the base member. The chunk of memory is pointed
     to by *buf* ->ptr member and has length *buf* ->len. The flags
     member of *buf* is :c:data:`NPY_ARRAY_ALIGNED` with the
-    :c:data:`NPY_ARRAY_WRITEABLE` flag set if *obj* has a writeable
+    :c:data:`NPY_ARRAY_WRITEABLE` flag set if *obj* has a writable
     buffer interface.
 
 .. c:function:: int PyArray_AxisConverter(PyObject* obj, int* axis)

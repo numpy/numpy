@@ -2227,6 +2227,17 @@ run_intp_converter(PyObject* NPY_UNUSED(self), PyObject *args)
     return tup;
 }
 
+static PyObject *
+run_buffer_converter(PyObject* NPY_UNUSED(self), PyObject *args)
+{
+    PyArray_Chunk buffer;
+
+    if (!PyArg_ParseTuple(args, "O&", PyArray_BufferConverter, &buffer)) {
+        return NULL;
+    }
+    return PyLong_FromSsize_t((Py_ssize_t)buffer.len);
+}
+
 /* used to test NPY_ARRAY_ENSURENOCOPY raises ValueError */
 static PyObject*
 npy_ensurenocopy(PyObject* NPY_UNUSED(self), PyObject* args)
@@ -2462,6 +2473,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_O, NULL},
     {"run_intp_converter",
         run_intp_converter,
+        METH_VARARGS, NULL},
+    {"run_buffer_converter",
+        run_buffer_converter,
         METH_VARARGS, NULL},
     {"npy_import_entry_point",
         _npy_import_entry_point,

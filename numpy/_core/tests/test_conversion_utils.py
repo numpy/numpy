@@ -207,3 +207,12 @@ class TestIntpConverter:
         assert self.conv([1] * 64) == (1,) * 64
         with pytest.raises(ValueError):
             self.conv([1] * 65)
+
+
+class TestBufferConverterDeprecation:
+    def test_deprecated(self):
+        with pytest.warns(
+            DeprecationWarning,
+            match="PyArray_BufferConverter is deprecated",
+        ):
+            assert mt.run_buffer_converter(b"\x01\x02") == 2
