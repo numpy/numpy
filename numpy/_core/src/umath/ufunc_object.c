@@ -142,21 +142,16 @@ PyUFunc_clearfperr()
     NPY_ITER_NO_SUBTYPE | \
     NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE
 
-/* Called at module initialization to set the matmul ufunc output flags */
+/* Called at module initialization to set the matmul family gufunc output flags */
 NPY_NO_EXPORT int
 set_matmul_flags(PyObject *d)
 {
-    PyObject *matmul = NULL;
-    int result = PyDict_GetItemStringRef(d, "matmul", &matmul);
-    if (result <= 0) {
-        // caller sets an error if one isn't already set
-        return -1;
-    }
     /*
      * The default output flag NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE allows
      * perfectly overlapping input and output (in-place operations). While
      * correct for the common mathematical operations, this assumption is
-     * incorrect in the general case and specifically in the case of matmul.
+     * incorrect in the general case and specifically in the case of matmul,
+     * matvec, and vecmat.
      *
      * NPY_ITER_UPDATEIFCOPY is added by default in
      * PyUFunc_GeneralizedFunction, which is the variant called for gufuncs
@@ -164,11 +159,22 @@ set_matmul_flags(PyObject *d)
      *
      * Enabling NPY_ITER_WRITEONLY can prevent a copy in some cases.
      */
-    ((PyUFuncObject *)matmul)->op_flags[2] = (NPY_ITER_WRITEONLY |
-                                         NPY_ITER_UPDATEIFCOPY |
-                                         NPY_UFUNC_DEFAULT_OUTPUT_FLAGS) &
-                                         ~NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
-    Py_DECREF(matmul);
+    npy_uint32 flags = (NPY_ITER_WRITEONLY |
+                        NPY_ITER_UPDATEIFCOPY |
+                        NPY_UFUNC_DEFAULT_OUTPUT_FLAGS) &
+                        ~NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
+
+    const char *names[] = {"matmul", "matvec", "vecmat"};
+    for (int i = 0; i < 3; i++) {
+        PyObject *ufunc = NULL;
+        int result = PyDict_GetItemStringRef(d, names[i], &ufunc);
+        if (result <= 0) {
+            // caller sets an error if one isn't already set
+            return -1;
+        }
+        ((PyUFuncObject *)ufunc)->op_flags[2] = flags;
+        Py_DECREF(ufunc);
+    }
     return 0;
 }
 
