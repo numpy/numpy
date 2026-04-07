@@ -69,6 +69,7 @@ class AbstractTest:
     features_groups = {}
     features_map = {}
     features_flags = set()
+    features_hwcap = dict()
 
     def load_flags(self):
         # a hook
@@ -116,9 +117,14 @@ class AbstractTest:
                 continue
             hwcap_value = [s.strip() for s in at.split(b':', 1)]
             if len(hwcap_value) == 2:
-                self.features_flags = self.features_flags.union(
-                    hwcap_value[1].upper().decode().split()
-                )
+                hwcap_decoded = hwcap_value[1].upper().decode().split()
+                if len(hwcap_decoded) == 1 and hwcap_decoded[0].startswith("0X"):
+                    hwcap_int = int(hwcap_decoded[0], 16)
+                    for k, v in self.features_hwcap.items():
+                        if (hwcap_int & k) != 0:
+                            self.features_flags.add(v)
+                else:
+                    self.features_flags = self.features_flags.union(hwcap_decoded)
 
 @pytest.mark.skipif(
     sys.platform == 'emscripten',
@@ -429,9 +435,10 @@ is_zarch = re.match(r"^(s390x)", machine, re.IGNORECASE)
                     reason="Only for Linux and IBM Z")
 class Test_ZARCH_Features(AbstractTest):
     features = ["VX", "VXE", "VXE2"]
+    features_hwcap = { (1 << 11): "VX", (1 << 13): "VXE", (1 << 15): "VXE2"}
 
     def load_flags(self):
-        self.load_flags_cpuinfo("features")
+        self.load_flags_auxv()
 
 
 is_arm = re.match(r"^(arm|aarch64)", machine, re.IGNORECASE)
