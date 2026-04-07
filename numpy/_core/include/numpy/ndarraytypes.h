@@ -849,8 +849,21 @@ typedef struct tagPyArrayObject {
  * compatible with multiple NumPy versions.
  */
 
-/* Mirrors buffer object to ptr */
-
+/*
+ * Buffer-converter metadata used by ndarray construction.
+ *
+ * The public API keeps PyArray_Chunk available, while internal code uses the
+ * private _PyArray_Chunk name to avoid relying on the public alias.
+ */
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+typedef struct _PyArray_Chunk {
+        PyObject_HEAD
+        PyObject *base;
+        void *ptr;
+        npy_intp len;
+        int flags;
+} _PyArray_Chunk;
+#else
 typedef struct {
         PyObject_HEAD
         PyObject *base;
@@ -858,6 +871,7 @@ typedef struct {
         npy_intp len;
         int flags;
 } PyArray_Chunk;
+#endif
 
 typedef struct {
     NPY_DATETIMEUNIT base;

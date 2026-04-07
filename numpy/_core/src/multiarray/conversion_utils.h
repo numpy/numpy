@@ -30,7 +30,7 @@ NPY_NO_EXPORT int
 PyArray_AsTypeCopyConverter(PyObject *obj, NPY_ASTYPECOPYMODE *copyflag);
 
 NPY_NO_EXPORT int
-PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf);
+PyArray_BufferConverter(PyObject *obj, _PyArray_Chunk *buf);
 
 NPY_NO_EXPORT int
 PyArray_BoolConverter(PyObject *object, npy_bool *val);

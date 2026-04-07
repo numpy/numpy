@@ -1116,7 +1116,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     int itemsize;
     PyArray_Dims dims = {NULL, 0};
     PyArray_Dims strides = {NULL, -1};
-    PyArray_Chunk buffer;
+    _PyArray_Chunk buffer;
     npy_longlong offset = 0;
     NPY_ORDER order = NPY_CORDER;
     int is_f_order = 0;

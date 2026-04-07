@@ -262,6 +262,17 @@ class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
         self.assert_deprecated(np.dtype, args=(string,))
 
 
+class TestDeprecatedBufferConverter(_DeprecationTestCase):
+    message = r"PyArray_BufferConverter is deprecated"
+
+    def test_ndarray_buffer_kwarg_deprecated(self):
+        def make_array():
+            arr = np.ndarray((2,), dtype=np.uint8, buffer=b"\x01\x02")
+            assert arr.tolist() == [1, 2]
+
+        self.assert_deprecated(make_array)
+
+
 class TestDTypeAlignBool(_VisibleDeprecationTestCase):
     # Deprecated in Numpy 2.4, 2025-07
     # NOTE: As you can see, finalizing this deprecation breaks some (very) old

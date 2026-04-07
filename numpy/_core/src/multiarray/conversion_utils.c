@@ -283,8 +283,8 @@ PyArray_AsTypeCopyConverter(PyObject *obj, NPY_ASTYPECOPYMODE *copymode)
 /*NUMPY_API
  * Get buffer chunk from object
  *
- * this function takes a Python object which exposes the (single-segment)
- * buffer interface and returns a pointer to the data segment
+ * this function takes a Python object which exposes the buffer interface
+ * and returns a pointer to the data segment
  *
  * You should increment the reference count by one of buf->base
  * if you will hang on to a reference
@@ -293,9 +293,13 @@ PyArray_AsTypeCopyConverter(PyObject *obj, NPY_ASTYPECOPYMODE *copymode)
  * memory...
  */
 NPY_NO_EXPORT int
-PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
+PyArray_BufferConverter(PyObject *obj, _PyArray_Chunk *buf)
 {
     Py_buffer view;
+
+    if (DEPRECATE("PyArray_BufferConverter is deprecated and will be removed in a future version. Use the standard Python buffer protocol instead.") < 0) {
+        return NPY_FAIL;
+    }
 
     buf->ptr = NULL;
     buf->flags = NPY_ARRAY_BEHAVED;
