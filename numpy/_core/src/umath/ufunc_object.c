@@ -4893,6 +4893,9 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     ufunc->vectorcall = &ufunc_generic_vectorcall;
     ufunc->_ufunc_flags = 0;
     ufunc->iter_flags = 0;
+#ifdef Py_GIL_DISABLED
+    ufunc->_mutex = (PyMutex){0};
+#endif
 
     /* Type resolution and inner loop selection functions */
     ufunc->type_resolver = &PyUFunc_DefaultTypeResolver;

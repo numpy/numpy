@@ -114,39 +114,50 @@ PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate)
         return -1;
     }
 
+    Py_ssize_t length = -1;
+    int ret = -1;
+#ifdef Py_GIL_DISABLED
+    PyMutex_Lock(&ufunc->_mutex);
+#endif
     if (ufunc->_loops == NULL) {
         ufunc->_loops = PyList_New(0);
         if (ufunc->_loops == NULL) {
-            return -1;
+            goto finish;
         }
     }
 
-    PyObject *loops = ufunc->_loops;
-    Py_ssize_t length = PyList_Size(loops);
+    length = PyList_Size(ufunc->_loops);
     for (Py_ssize_t i = 0; i < length; i++) {
-        PyObject *item = PyList_GetItemRef(loops, i);
+        PyObject *item = PyList_GetItemRef(ufunc->_loops, i);
         PyObject *cur_DType_tuple = PyTuple_GetItem(item, 0);
         Py_DECREF(item);
         int cmp = PyObject_RichCompareBool(cur_DType_tuple, DType_tuple, Py_EQ);
         if (cmp < 0) {
-            return -1;
+            goto finish;
         }
         if (cmp == 0) {
             continue;
         }
         if (ignore_duplicate) {
-            return 0;
+            ret = 0;
+            goto finish;
         }
         PyErr_Format(PyExc_TypeError,
                 "A loop/promoter has already been registered with '%s' for %R",
                 ufunc_get_name_cstr(ufunc), DType_tuple);
-        return -1;
+        goto finish;
     }
 
-    if (PyList_Append(loops, info) < 0) {
-        return -1;
+    if (PyList_Append(ufunc->_loops, info) < 0) {
+        goto finish;
     }
-    return 0;
+    ret = 0;
+
+    finish:
+#ifdef Py_GIL_DISABLED
+    PyMutex_Unlock(&ufunc->_mutex);
+#endif
+    return ret;
 }
 
 

@@ -232,6 +232,10 @@ typedef struct _tagPyUFuncObject {
          */
         PyUFunc_ProcessCoreDimsFunc *process_core_dims_func;
     #endif
+    #if NPY_INTERNAL_BUILD && Py_GIL_DISABLED
+        /* Private mutex, currently for thread-safety while adding loops */
+        PyMutex _mutex;
+    #endif
 } PyUFuncObject_fields;
 
 typedef PyUFuncObject_fields PyUFuncObject;
