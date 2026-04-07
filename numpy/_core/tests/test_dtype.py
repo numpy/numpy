@@ -6,6 +6,7 @@ import os
 import pickle
 import sys
 import types
+import warnings
 from itertools import permutations
 from typing import Any
 
@@ -1116,7 +1117,10 @@ class TestDtypeAttributes:
         arr = np.broadcast_to(arr, 10)
         assert arr.strides == (0,)
         with pytest.raises(ValueError):
-            arr.dtype = "i1"
+            with warnings.catch_warnings():  # gh-28901
+                warnings.filterwarnings(action="ignore",
+                                        category=DeprecationWarning)
+                arr.dtype = "i1"
 
 class TestDTypeMakeCanonical:
     def check_canonical(self, dtype, canonical):
