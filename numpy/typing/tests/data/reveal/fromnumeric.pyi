@@ -21,6 +21,7 @@ AR_subclass: NDArraySubclass
 AR_m_ns: npt.NDArray[np.timedelta64[int]]
 AR_m_s: npt.NDArray[np.timedelta64[dt.timedelta]]
 AR_m_nat: npt.NDArray[np.timedelta64[None]]
+AR_M_ns: npt.NDArray[np.datetime64[int]]
 AR_0d: np.ndarray[tuple[()]]
 AR_1d: np.ndarray[tuple[int]]
 AR_nd: np.ndarray
@@ -29,6 +30,9 @@ b: np.bool
 f4: np.float32
 i8: np.int64
 f: float
+
+_dtype_list: list[np.dtype]
+_any_list: list[Any]
 
 # integer‑dtype subclass for argmin/argmax
 class NDArrayIntSubclass(np.ndarray[tuple[Any, ...], np.dtype[np.intp]]): ...
@@ -237,38 +241,83 @@ assert_type(np.cumulative_sum(f, dtype=float), np.ndarray[tuple[int]])
 assert_type(np.cumulative_sum(f, dtype=np.float64), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.cumulative_sum(AR_f4, out=AR_subclass), NDArraySubclass)
 
-assert_type(np.ptp(b), np.bool)
-assert_type(np.ptp(f4), np.float32)
-assert_type(np.ptp(f), Any)
-assert_type(np.ptp(AR_b), np.bool)
+assert_type(np.ptp(AR_i8), np.int64)
+assert_type(np.ptp(AR_i8, axis=0), npt.NDArray[np.int64])
+assert_type(np.ptp(AR_i8, keepdims=True), npt.NDArray[np.int64])
+assert_type(np.ptp(AR_i8, axis=0, keepdims=True), npt.NDArray[np.int64])
 assert_type(np.ptp(AR_f4), np.float32)
-assert_type(np.ptp(AR_b, axis=0), Any)
-assert_type(np.ptp(AR_f4, axis=0), Any)
-assert_type(np.ptp(AR_b, keepdims=True), Any)
-assert_type(np.ptp(AR_f4, keepdims=True), Any)
+assert_type(np.ptp(AR_c16), np.complex128)
+assert_type(np.ptp(AR_O), Any)
+assert_type(np.ptp(AR_O, axis=0), npt.NDArray[np.object_])
+assert_type(np.ptp(AR_O, keepdims=True), npt.NDArray[np.object_])
+assert_type(np.ptp(AR_O, axis=0, keepdims=True), npt.NDArray[np.object_])
+assert_type(np.ptp(AR_m_ns), np.timedelta64[int])
+assert_type(np.ptp(AR_m_s), np.timedelta64[dt.timedelta])
+assert_type(np.ptp(AR_m_nat), np.timedelta64[None])
+assert_type(np.ptp(AR_M_ns), np.timedelta64)
+assert_type(np.ptp(AR_f4, axis=0), npt.NDArray[np.float32])
+assert_type(np.ptp(AR_f4, keepdims=True), npt.NDArray[np.float32])
+assert_type(np.ptp(AR_f4_1d, keepdims=True), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.ptp(AR_f4_2d, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 assert_type(np.ptp(AR_f4, out=AR_subclass), NDArraySubclass)
+assert_type(np.ptp(AR_nd), Any)
 
-assert_type(np.amax(b), np.bool)
-assert_type(np.amax(f4), np.float32)
-assert_type(np.amax(f), Any)
+# same as below
+assert_type(np.amax(AR_i8), np.int64)
+assert_type(np.amax(AR_i8, axis=0), npt.NDArray[np.int64])
+assert_type(np.amax(AR_i8, keepdims=True), npt.NDArray[np.int64])
+assert_type(np.amax(AR_i8, axis=0, keepdims=True), npt.NDArray[np.int64])
 assert_type(np.amax(AR_b), np.bool)
 assert_type(np.amax(AR_f4), np.float32)
-assert_type(np.amax(AR_b, axis=0), Any)
-assert_type(np.amax(AR_f4, axis=0), Any)
-assert_type(np.amax(AR_b, keepdims=True), Any)
-assert_type(np.amax(AR_f4, keepdims=True), Any)
+assert_type(np.amax(AR_c16), np.complex128)
+assert_type(np.amax(AR_O), Any)
+assert_type(np.amax(AR_O, axis=0), npt.NDArray[np.object_])
+assert_type(np.amax(AR_O, keepdims=True), npt.NDArray[np.object_])
+assert_type(np.amax(AR_O, axis=0, keepdims=True), npt.NDArray[np.object_])
+assert_type(np.amax(AR_m_ns), np.timedelta64[int])
+assert_type(np.amax(AR_m_s), np.timedelta64[dt.timedelta])
+assert_type(np.amax(AR_m_nat), np.timedelta64[None])
+assert_type(np.amax(AR_M_ns), np.datetime64[int])
+assert_type(np.amax(AR_f4, axis=0), npt.NDArray[np.float32])
+assert_type(np.amax(AR_f4, keepdims=True), npt.NDArray[np.float32])
+assert_type(np.amax(AR_f4_1d, keepdims=True), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.amax(AR_f4_2d, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 assert_type(np.amax(AR_f4, out=AR_subclass), NDArraySubclass)
+assert_type(np.amax(AR_nd), Any)
+assert_type(np.amax(AR_nd, axis=1), np.ndarray)
+assert_type(np.amax(AR_nd, keepdims=True), np.ndarray)
+assert_type(np.amax(_dtype_list), Any)
+assert_type(np.amax(_dtype_list, axis=1), npt.NDArray[Any])
+assert_type(np.amax(_dtype_list, keepdims=True), npt.NDArray[Any])
+assert_type(np.amax(_any_list), Any)
 
-assert_type(np.amin(b), np.bool)
-assert_type(np.amin(f4), np.float32)
-assert_type(np.amin(f), Any)
+# same as above
+assert_type(np.amin(AR_i8), np.int64)
+assert_type(np.amin(AR_i8, axis=0), npt.NDArray[np.int64])
+assert_type(np.amin(AR_i8, keepdims=True), npt.NDArray[np.int64])
+assert_type(np.amin(AR_i8, axis=0, keepdims=True), npt.NDArray[np.int64])
 assert_type(np.amin(AR_b), np.bool)
 assert_type(np.amin(AR_f4), np.float32)
-assert_type(np.amin(AR_b, axis=0), Any)
-assert_type(np.amin(AR_f4, axis=0), Any)
-assert_type(np.amin(AR_b, keepdims=True), Any)
-assert_type(np.amin(AR_f4, keepdims=True), Any)
+assert_type(np.amin(AR_c16), np.complex128)
+assert_type(np.amin(AR_O), Any)
+assert_type(np.amin(AR_O, axis=0), npt.NDArray[np.object_])
+assert_type(np.amin(AR_O, keepdims=True), npt.NDArray[np.object_])
+assert_type(np.amin(AR_O, axis=0, keepdims=True), npt.NDArray[np.object_])
+assert_type(np.amin(AR_m_ns), np.timedelta64[int])
+assert_type(np.amin(AR_m_s), np.timedelta64[dt.timedelta])
+assert_type(np.amin(AR_m_nat), np.timedelta64[None])
+assert_type(np.amin(AR_M_ns), np.datetime64[int])
+assert_type(np.amin(AR_f4, axis=0), npt.NDArray[np.float32])
+assert_type(np.amin(AR_f4, keepdims=True), npt.NDArray[np.float32])
+assert_type(np.amin(AR_f4_1d, keepdims=True), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.amin(AR_f4_2d, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 assert_type(np.amin(AR_f4, out=AR_subclass), NDArraySubclass)
+assert_type(np.amin(AR_nd), Any)
+assert_type(np.amin(AR_nd, axis=1), np.ndarray)
+assert_type(np.amin(AR_nd, keepdims=True), np.ndarray)
+assert_type(np.amin(_dtype_list), Any)
+assert_type(np.amin(_dtype_list, axis=1), npt.NDArray[Any])
+assert_type(np.amin(_dtype_list, keepdims=True), npt.NDArray[Any])
 
 assert_type(np.cumprod(b), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(np.cumprod(f4), np.ndarray[tuple[int], np.dtype[np.float32]])

@@ -3213,6 +3213,112 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         correction: float | _NoValueType = ...,
     ) -> ndarray[_ShapeT_co]: ...
 
+    # keep in sync with `ndarray.amin` below
+    @override  # type: ignore[override]
+    @overload  # +number | timedelta64 | datetime64
+    def max[ScalarT: number | bool_ | timedelta64 | datetime64](
+        self: NDArray[ScalarT],
+        axis: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ScalarT: ...
+    @overload  # +number | timedelta64 | datetime64 | object_, axis: <given>
+    def max[ScalarT: number | bool_ | timedelta64 | datetime64 | object_](
+        self: NDArray[ScalarT],
+        axis: int | tuple[int, ...],
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> NDArray[ScalarT]: ...
+    @overload  # +number | timedelta64 | datetime64 | object_, keepdims=True
+    def max[ArrayT: NDArray[number | bool_ | timedelta64 | datetime64 | object_]](
+        self: ArrayT,
+        axis: int | tuple[int, ...] | None = None,
+        out: None = None,
+        *,
+        keepdims: L[True],
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ArrayT: ...
+    @overload  # object_
+    def max(
+        self: NDArray[object_],
+        axis: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> Any: ...
+    @overload  # out: ArrayT
+    def max[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self: NDArray[number | bool_ | timedelta64 | datetime64 | object_],
+        axis: int | tuple[int, ...] | None = None,
+        *,
+        out: ArrayT,
+        keepdims: bool | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ArrayT: ...
+
+    # keep in sync with `ndarray.amax` above
+    @override  # type: ignore[override]
+    @overload  # +number | timedelta64 | datetime64
+    def min[ScalarT: number | bool_ | timedelta64 | datetime64](
+        self: NDArray[ScalarT],
+        axis: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ScalarT: ...
+    @overload  # +number | timedelta64 | datetime64 | object_, axis: <given>
+    def min[ScalarT: number | bool_ | timedelta64 | datetime64 | object_](
+        self: NDArray[ScalarT],
+        axis: int | tuple[int, ...],
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> NDArray[ScalarT]: ...
+    @overload  # +number | timedelta64 | datetime64 | object_, keepdims=True
+    def min[ArrayT: NDArray[number | bool_ | timedelta64 | datetime64 | object_]](
+        self: ArrayT,
+        axis: int | tuple[int, ...] | None = None,
+        out: None = None,
+        *,
+        keepdims: L[True],
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ArrayT: ...
+    @overload  # object_
+    def min(
+        self: NDArray[object_],
+        axis: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> Any: ...
+    @overload  # out: ArrayT
+    def min[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self: NDArray[number | bool_ | timedelta64 | datetime64 | object_],
+        axis: int | tuple[int, ...] | None = None,
+        *,
+        out: ArrayT,
+        keepdims: bool | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ArrayT: ...
+
     #
     @overload
     def partition(
