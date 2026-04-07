@@ -1,4 +1,4 @@
-from _typeshed import Incomplete, SupportsBool
+from _typeshed import SupportsBool
 from collections.abc import Sequence
 from typing import (
     Any,
@@ -882,35 +882,62 @@ def all(
     a: ArrayLike | None,
     axis: None = None,
     out: None = None,
-    keepdims: Literal[False, 0] | _NoValueType = ...,
+    keepdims: Literal[False] | _NoValueType = ...,
     *,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> np.bool: ...
-@overload
-def all(
-    a: ArrayLike | None,
-    axis: int | tuple[int, ...] | None = None,
+@overload  # axis: int
+def all[ShapeT: _Shape](
+    a: ArrayLike,
+    axis: int,
     out: None = None,
-    keepdims: _BoolLike_co | _NoValueType = ...,
+    keepdims: Literal[False] | _NoValueType = ...,
     *,
     where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> Incomplete: ...
-@overload
+) -> NDArray[np.bool]: ...
+@overload  # axis: (int, ...)
+def all[ShapeT: _Shape](
+    a: ArrayLike,
+    axis: tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    *,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.bool] | Any: ...
+@overload  # Nd, keepdims: True
+def all[ShapeT: _Shape](
+    a: np.ndarray[ShapeT],
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+@overload  # ?d, keepdims: True
+def all[ShapeT: _Shape](
+    a: ArrayLike,
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.bool]: ...
+@overload  # out: <given> (keyword)
+def all[ArrayT: np.ndarray](
+    a: ArrayLike | None,
+    axis: int | tuple[int, ...] | None = None,
+    *,
+    out: ArrayT,
+    keepdims: bool | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> ArrayT: ...
+@overload  # out: <given> (positional)
 def all[ArrayT: np.ndarray](
     a: ArrayLike | None,
     axis: int | tuple[int, ...] | None,
     out: ArrayT,
-    keepdims: _BoolLike_co | _NoValueType = ...,
+    keepdims: bool | _NoValueType = ...,
     *,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> ArrayT: ...
-@overload
-def all[ArrayT: np.ndarray](
-    a: ArrayLike | None,
-    axis: int | tuple[int, ...] | None = None,
-    *,
-    out: ArrayT,
-    keepdims: _BoolLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ArrayT: ...
 
@@ -920,35 +947,62 @@ def any(
     a: ArrayLike | None,
     axis: None = None,
     out: None = None,
-    keepdims: Literal[False, 0] | _NoValueType = ...,
+    keepdims: Literal[False] | _NoValueType = ...,
     *,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> np.bool: ...
-@overload
-def any(
-    a: ArrayLike | None,
-    axis: int | tuple[int, ...] | None = None,
+@overload  # axis: int
+def any[ShapeT: _Shape](
+    a: ArrayLike,
+    axis: int,
     out: None = None,
-    keepdims: _BoolLike_co | _NoValueType = ...,
+    keepdims: Literal[False] | _NoValueType = ...,
     *,
     where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> Incomplete: ...
-@overload
+) -> NDArray[np.bool]: ...
+@overload  # axis: (int, ...)
+def any[ShapeT: _Shape](
+    a: ArrayLike,
+    axis: tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    *,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.bool] | Any: ...
+@overload  # Nd, keepdims: True
+def any[ShapeT: _Shape](
+    a: np.ndarray[ShapeT],
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+@overload  # ?d, keepdims: True
+def any[ShapeT: _Shape](
+    a: ArrayLike,
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.bool]: ...
+@overload  # out: <given> (keyword)
+def any[ArrayT: np.ndarray](
+    a: ArrayLike | None,
+    axis: int | tuple[int, ...] | None = None,
+    *,
+    out: ArrayT,
+    keepdims: bool | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> ArrayT: ...
+@overload  # out: <given> (positional)
 def any[ArrayT: np.ndarray](
     a: ArrayLike | None,
     axis: int | tuple[int, ...] | None,
     out: ArrayT,
-    keepdims: _BoolLike_co | _NoValueType = ...,
+    keepdims: bool | _NoValueType = ...,
     *,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> ArrayT: ...
-@overload
-def any[ArrayT: np.ndarray](
-    a: ArrayLike | None,
-    axis: int | tuple[int, ...] | None = None,
-    *,
-    out: ArrayT,
-    keepdims: _BoolLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ArrayT: ...
 

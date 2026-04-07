@@ -2355,77 +2355,97 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     ) -> ArrayT: ...
 
     #
+    # keep in sync with `ndarray.any` (below)
     @overload
     def all(
         self,
         axis: None = None,
         out: None = None,
-        keepdims: L[False, 0] = False,
+        keepdims: L[False] = False,
         *,
         where: _ArrayLikeBool_co = True
     ) -> bool_: ...
-    @overload
+    @overload  # axis: <given>
+    def all(
+        self,
+        axis: int | tuple[int, ...],
+        out: None = None,
+        keepdims: L[False] = False,
+        *,
+        where: _ArrayLikeBool_co = True,
+    ) -> NDArray[bool_]: ...
+    @overload  # keepdims: True
     def all(
         self,
         axis: int | tuple[int, ...] | None = None,
         out: None = None,
-        keepdims: SupportsIndex = False,
         *,
+        keepdims: L[True],
         where: _ArrayLikeBool_co = True,
-    ) -> bool_ | NDArray[bool_]: ...
-    @overload
-    def all[ArrayT: ndarray](
-        self,
-        axis: int | tuple[int, ...] | None,
-        out: ArrayT,
-        keepdims: SupportsIndex = False,
-        *,
-        where: _ArrayLikeBool_co = True,
-    ) -> ArrayT: ...
-    @overload
+    ) -> ndarray[_ShapeT_co, dtype[bool_]]: ...
+    @overload  # out: <given> (keyword)
     def all[ArrayT: ndarray](
         self,
         axis: int | tuple[int, ...] | None = None,
         *,
         out: ArrayT,
-        keepdims: SupportsIndex = False,
+        keepdims: py_bool = False,
+        where: _ArrayLikeBool_co = True,
+    ) -> ArrayT: ...
+    @overload  # out: <given> (positional)
+    def all[ArrayT: ndarray](
+        self,
+        axis: int | tuple[int, ...] | None,
+        out: ArrayT,
+        keepdims: py_bool = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> ArrayT: ...
 
+    # keep in sync with `ndarray.all` (above)
     @overload
     def any(
         self,
         axis: None = None,
         out: None = None,
-        keepdims: L[False, 0] = False,
+        keepdims: L[False] = False,
         *,
         where: _ArrayLikeBool_co = True
     ) -> bool_: ...
-    @overload
+    @overload  # axis: <given>
+    def any(
+        self,
+        axis: int | tuple[int, ...],
+        out: None = None,
+        keepdims: L[False] = False,
+        *,
+        where: _ArrayLikeBool_co = True,
+    ) -> NDArray[bool_]: ...
+    @overload  # keepdims: True
     def any(
         self,
         axis: int | tuple[int, ...] | None = None,
         out: None = None,
-        keepdims: SupportsIndex = False,
         *,
+        keepdims: L[True],
         where: _ArrayLikeBool_co = True,
-    ) -> bool_ | NDArray[bool_]: ...
-    @overload
-    def any[ArrayT: ndarray](
-        self,
-        axis: int | tuple[int, ...] | None,
-        out: ArrayT,
-        keepdims: SupportsIndex = False,
-        *,
-        where: _ArrayLikeBool_co = True,
-    ) -> ArrayT: ...
-    @overload
+    ) -> ndarray[_ShapeT_co, dtype[bool_]]: ...
+    @overload  # out: <given> (keyword)
     def any[ArrayT: ndarray](
         self,
         axis: int | tuple[int, ...] | None = None,
         *,
         out: ArrayT,
-        keepdims: SupportsIndex = False,
+        keepdims: py_bool = False,
+        where: _ArrayLikeBool_co = True,
+    ) -> ArrayT: ...
+    @overload  # out: <given> (positional)
+    def any[ArrayT: ndarray](
+        self,
+        axis: int | tuple[int, ...] | None,
+        out: ArrayT,
+        keepdims: py_bool = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> ArrayT: ...
 
