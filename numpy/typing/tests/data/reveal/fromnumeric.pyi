@@ -151,6 +151,8 @@ assert_type(np.squeeze(AR_f4), npt.NDArray[np.float32])
 
 assert_type(np.diagonal(AR_b), npt.NDArray[np.bool])
 assert_type(np.diagonal(AR_f4), npt.NDArray[np.float32])
+assert_type(np.diagonal(AR_f4_2d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.diagonal(AR_f4_3d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 
 assert_type(np.trace(AR_b), Any)
 assert_type(np.trace(AR_f4), Any)

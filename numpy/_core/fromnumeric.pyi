@@ -613,19 +613,40 @@ def squeeze[ScalarT: np.generic](a: _ArrayLike[ScalarT], axis: _ShapeLike | None
 def squeeze(a: ArrayLike, axis: _ShapeLike | None = None) -> NDArray[Any]: ...
 
 # keep in sync with `ma.core.diagonal`
-@overload
+@overload  # ?d  (workaround)
+def diagonal[ScalarT: np.generic](
+    a: _ArrayJustND[ScalarT],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+) -> NDArray[ScalarT]: ...
+@overload  # 2d
+def diagonal[ScalarT: np.generic](
+    a: _ToArray2D[ScalarT],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+) -> _Array1D[ScalarT]: ...
+@overload  # 3d
+def diagonal[ScalarT: np.generic](
+    a: _ToArray3D[ScalarT],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+) -> _Array2D[ScalarT]: ...
+@overload  # Nd
 def diagonal[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     offset: SupportsIndex = 0,
     axis1: SupportsIndex = 0,
-    axis2: SupportsIndex = 1,  # >= 2D array
+    axis2: SupportsIndex = 1,
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # fallback
 def diagonal(
     a: ArrayLike,
     offset: SupportsIndex = 0,
     axis1: SupportsIndex = 0,
-    axis2: SupportsIndex = 1,  # >= 2D array
+    axis2: SupportsIndex = 1,
 ) -> NDArray[Any]: ...
 
 # keep in sync with `ma.core.trace`
