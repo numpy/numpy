@@ -133,6 +133,7 @@ _T = TypeVar("_T")
 _PyArray: TypeAlias = list[_T] | tuple[_T, ...]
 # `int` also covers `bool`
 _PyScalar: TypeAlias = complex | bytes | str
+_PyScalarT = TypeVar("_PyScalarT", bound=_PyScalar)
 
 # TODO: Fix overlapping overloads: https://github.com/numpy/numpy/issues/27032
 @overload
@@ -571,21 +572,21 @@ def ravel(a: ArrayLike, order: _OrderKACF = "C") -> np.ndarray[tuple[int], np.dt
 
 def nonzero(a: _ArrayLike[Any]) -> tuple[np.ndarray[tuple[int], np.dtype[intp]], ...]: ...
 
-# this prevents `Any` from being returned with Pyright
-@overload
+# `collections.abc.Sequence` can't be used here because `bytes` and `str` are
+# subtypes of it, which would make the return types incompatible.
+@overload  # this prevents `Any` from being returned with Pyright
 def shape(a: _SupportsShape[Never]) -> _AnyShape: ...
 @overload
 def shape(a: _SupportsShape[_ShapeT]) -> _ShapeT: ...
 @overload
 def shape(a: _PyScalar) -> tuple[()]: ...
-# `collections.abc.Sequence` can't be used hesre, since `bytes` and `str` are
-# subtypes of it, which would make the return types incompatible.
+@overload  # an unbound type variable is used because `list` is invariant
+def shape(a: _PyArray[_PyScalarT]) -> tuple[int]: ...
 @overload
-def shape(a: _PyArray[_PyScalar]) -> tuple[int]: ...
+def shape(a: Sequence[_PyArray[_PyScalarT]]) -> tuple[int, int]: ...
 @overload
-def shape(a: _PyArray[_PyArray[_PyScalar]]) -> tuple[int, int]: ...
-# this overload will be skipped by typecheckers that don't support PEP 688
-@overload
+def shape(a: Sequence[Sequence[_PyArray[_PyScalarT]]]) -> tuple[int, int, int]: ...
+@overload  # this will be skipped by typecheckers that don't support PEP 688
 def shape(a: memoryview | bytearray) -> tuple[int]: ...
 @overload
 def shape(a: ArrayLike) -> _AnyShape: ...
