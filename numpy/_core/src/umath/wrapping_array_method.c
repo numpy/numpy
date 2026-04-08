@@ -249,28 +249,21 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
     }
 
     PyArrayMethodObject *wrapped_meth = NULL;
-    PyObject *loops = ufunc->_loops;
-    Py_ssize_t length = PyList_Size(loops);
-    for (Py_ssize_t i = 0; i < length; i++) {
-        PyObject *item = PyList_GetItemRef(loops, i);
-        PyObject *cur_DType_tuple = PyTuple_GetItem(item, 0);
-        Py_DECREF(item);
-        int cmp = PyObject_RichCompareBool(cur_DType_tuple, wrapped_dt_tuple, Py_EQ);
-        if (cmp < 0) {
-            goto finish;
-        }
-        if (cmp == 0) {
-            continue;
-        }
-        wrapped_meth = (PyArrayMethodObject *)PyTuple_GET_ITEM(item, 1);
-        if (!PyObject_TypeCheck(wrapped_meth, &PyArrayMethod_Type)) {
+    PyObject *existing_info;
+    if (PyDict_GetItemRef(ufunc->_loops, wrapped_dt_tuple, &existing_info) < 0) {
+        goto finish;
+    }
+    if (existing_info != NULL) {
+        PyObject *existing_meth = PyTuple_GET_ITEM(existing_info, 1);
+        Py_DECREF(existing_info);
+        if (!PyObject_TypeCheck(existing_meth, &PyArrayMethod_Type)) {
             PyErr_SetString(PyExc_TypeError,
                     "Matching loop was not an ArrayMethod.");
             goto finish;
         }
-        break;
+        wrapped_meth = (PyArrayMethodObject *)existing_meth;
     }
-    if (wrapped_meth == NULL) {
+    else {
         PyErr_Format(PyExc_TypeError,
                 "Did not find the to-be-wrapped loop in the ufunc with given "
                 "DTypes. Received wrapping types: %S", wrapped_dt_tuple);

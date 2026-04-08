@@ -4893,9 +4893,6 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     ufunc->vectorcall = &ufunc_generic_vectorcall;
     ufunc->_ufunc_flags = 0;
     ufunc->iter_flags = 0;
-#ifdef Py_GIL_DISABLED
-    ufunc->_mutex = (PyMutex){0};
-#endif
 
     /* Type resolution and inner loop selection functions */
     ufunc->type_resolver = &PyUFunc_DefaultTypeResolver;
@@ -4918,7 +4915,7 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
          */
         ufunc->_dispatch_cache = NULL;
     }
-    ufunc->_loops = PyList_New(0);
+    ufunc->_loops = PyDict_New();
     if (ufunc->_loops == NULL) {
         Py_DECREF(ufunc);
         return NULL;
@@ -5246,18 +5243,13 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
      * A new-style loop should not be replaced by an old-style one.
      */
     int add_new_loop = 1;
-    for (Py_ssize_t j = 0; j < PyList_GET_SIZE(ufunc->_loops); j++) {
-        PyObject *item = PyList_GET_ITEM(ufunc->_loops, j); // noqa: borrowed-ref OK
-        PyObject *existing_tuple = PyTuple_GET_ITEM(item, 0);
-
-        int cmp = PyObject_RichCompareBool(existing_tuple, signature_tuple, Py_EQ);
-        if (cmp < 0) {
-            goto fail;
-        }
-        if (!cmp) {
-            continue;
-        }
-        PyObject *registered = PyTuple_GET_ITEM(item, 1);
+    PyObject *existing_item;
+    if (PyDict_GetItemRef(ufunc->_loops, signature_tuple, &existing_item) < 0) {
+        goto fail;
+    }
+    if (existing_item != NULL) {
+        PyObject *registered = PyTuple_GET_ITEM(existing_item, 1);
+        Py_DECREF(existing_item);
         if (!PyObject_TypeCheck(registered, &PyArrayMethod_Type) || (
                 (PyArrayMethodObject *)registered)->get_strided_loop !=
                         &get_wrapped_legacy_ufunc_loop) {
@@ -5269,7 +5261,6 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
         }
         /* The loop was already added */
         add_new_loop = 0;
-        break;
     }
     if (add_new_loop) {
         PyObject *info = add_and_return_legacy_wrapping_ufunc_loop(

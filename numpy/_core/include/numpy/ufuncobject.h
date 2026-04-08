@@ -223,7 +223,7 @@ typedef struct _tagPyUFuncObject {
     #if NPY_FEATURE_VERSION >= NPY_1_22_API_VERSION
         /* New private fields related to dispatching */
         void *_dispatch_cache;
-        /* A PyListObject of `(tuple of DTypes, ArrayMethod/Promoter)` */
+        /* Ordered dict `tuple of DTypes -> (tuple of DTypes, ArrayMethod/Promoter)` */
         PyObject *_loops;
     #endif
     #if NPY_FEATURE_VERSION >= NPY_2_1_API_VERSION
@@ -231,10 +231,6 @@ typedef struct _tagPyUFuncObject {
          * Optional function to process core dimensions of a gufunc.
          */
         PyUFunc_ProcessCoreDimsFunc *process_core_dims_func;
-    #endif
-    #if NPY_INTERNAL_BUILD && Py_GIL_DISABLED
-        /* Private mutex, currently for thread-safety while adding loops */
-        PyMutex _mutex;
     #endif
 } PyUFuncObject_fields;
 
