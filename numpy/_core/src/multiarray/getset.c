@@ -518,7 +518,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
          // when array.view(new_dtype) is called
          /* DEPRECATED 2026-02-06, NumPy 2.5 */
          int ret = PyErr_WarnEx(PyExc_DeprecationWarning,
-                    "Setting the dtype on a NumPy array has been deprecated in NumPy 2.4.\n"
+                    "Setting the dtype on a NumPy array has been deprecated in NumPy 2.5.\n"
                     "Instead of changing the dtype on an array x, create a new array with x.view(new_dtype)",
                     1);
         if (ret) {
