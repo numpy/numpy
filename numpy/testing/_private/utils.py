@@ -1223,7 +1223,7 @@ def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
         return z < 1.5 * 10.0**(-decimal)
 
     assert_array_compare(compare, actual, desired, err_msg=err_msg, verbose=verbose,
-             header=(f'Arrays are not almost equal to {decimal} decimals'),
+             header=f'Arrays are not almost equal to {decimal} decimals',
              precision=decimal)
 
 
