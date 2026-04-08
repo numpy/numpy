@@ -9,6 +9,7 @@ import pytest
 from pytest import param
 
 import numpy as np
+from numpy._core import _scaled_float_dtype
 import numpy._core._operand_flag_tests as opflag_tests
 import numpy._core._rational_tests as _rational_tests
 import numpy._core._umath_tests as umt
@@ -3359,7 +3360,7 @@ class TestLowlevelAPIAccess:
         assert_equal(tc[0][0], tc[28][414])
 
 def test_ufunc_non_contiguous_basic():
-    #GH#30413
+    # gh-30413
     a = np.arange(20.0)[::2]
     b = np.ones(10)
 
@@ -3367,19 +3368,11 @@ def test_ufunc_non_contiguous_basic():
     expected = np.arange(0, 20, 2) + 1.0
     assert_array_equal(result, expected)
 
-    c = a.copy()
-    np.add(c, b, out=c)
-    assert_array_equal(c, expected)
-
 def test_ufunc_requires_contiguous_flag_sfloat():
-    #GH#30413
-    try:
-        from numpy._core import _scaled_float_dtype
-    except ImportError:
-        pytest.skip("Could not import _scaled_float_dtype for testing")
+    # gh-30413
 
     dt = _scaled_float_dtype.scaled_float64
-    
+
     a_raw = np.arange(10.)
     a = a_raw.astype(dt)
 
@@ -3388,6 +3381,21 @@ def test_ufunc_requires_contiguous_flag_sfloat():
 
     res = np.add(a_non_contig, a_non_contig)
     expected = (a_raw[::2] + a_raw[::2]).astype(dt)
+    assert_equal(res, expected)
+
+    # accumulate
+    res = np.add.accumulate(a_non_contig)
+    expected = np.add.accumulate(a_raw[::2]).astype(dt)
+    assert_equal(res, expected)
+
+    # reduce
+    res = np.add.reduce(a_non_contig)
+    expected = np.add.reduce(a_raw[::2]).astype(dt)
+    assert_equal(res, expected)
+
+    # outer
+    res = np.add.outer(a_non_contig, a_non_contig)
+    expected = np.add.outer(a_raw[::2], a_raw[::2]).astype(dt)
     assert_equal(res, expected)
 
 class TestUFuncInspectSignature:

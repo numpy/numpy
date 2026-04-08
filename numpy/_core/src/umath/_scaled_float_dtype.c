@@ -580,6 +580,12 @@ add_sfloats(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
+    /* Verify contiguous guarantee; length-1 is always trivially contiguous. */
+    assert(dimensions[0] <= 1 ||
+           (strides[0] == sizeof(double) &&
+            strides[1] == sizeof(double) &&
+            strides[2] == sizeof(double)));
+
     double fin1 = ((PyArray_SFloatDescr *)context->descriptors[0])->scaling;
     double fin2 = ((PyArray_SFloatDescr *)context->descriptors[1])->scaling;
     double fout = ((PyArray_SFloatDescr *)context->descriptors[2])->scaling;

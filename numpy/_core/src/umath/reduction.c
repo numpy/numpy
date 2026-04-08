@@ -234,6 +234,11 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
                   NPY_ITER_NO_BROADCAST;
 
     if (context->method->flags & NPY_METH_REQUIRES_CONTIGUOUS) {
+        /*
+         * Note: for reductions, only the result operand is guaranteed to be
+         * contiguous here; the reduction axis for the input operand may still
+         * be non-contiguous.
+         */
         op_flags[0] |= NPY_ITER_CONTIG;
         op_flags[1] |= NPY_ITER_CONTIG;
     }
