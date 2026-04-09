@@ -114,13 +114,6 @@ PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate)
         return -1;
     }
 
-    if (ufunc->_loops == NULL) {
-        ufunc->_loops = PyDict_New();
-        if (ufunc->_loops == NULL) {
-            return -1;
-        }
-    }
-
     int found = PyDict_SetDefaultRef(ufunc->_loops, DType_tuple, info, NULL);
     if (found < 0) {
         return -1;
