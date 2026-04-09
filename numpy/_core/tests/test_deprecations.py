@@ -280,11 +280,18 @@ class TestDTypeAlignBool(_VisibleDeprecationTestCase):
         # alignment, or pass them accidentally as a subarray shape (meaning to pass
         # a tuple).
         self.assert_deprecated(lambda: np.dtype("f8", align=3))
+        self.assert_deprecated(lambda: np.dtype("f8", align=0, copy=10**100))
+        self.assert_deprecated(lambda: np.dtype("f8", align=10**100, copy=0))
+        # Subclasses of ints don't hit the below pickle code path:
+        self.assert_deprecated(
+            lambda: np.dtype("f8", align=np.long(0), copy=np.long(1)))
 
     @pytest.mark.parametrize("align", [True, False, np.True_, np.False_])
     def test_not_deprecated(self, align):
         # if the user passes a bool, it is accepted.
         self.assert_not_deprecated(lambda: np.dtype("f8", align=align))
+        # The following specific case is used by old pickles:
+        self.assert_not_deprecated(lambda: np.dtype("f8", align=0, copy=1))
 
 
 class TestFlatiterIndexing0dBoolIndex(_DeprecationTestCase):
