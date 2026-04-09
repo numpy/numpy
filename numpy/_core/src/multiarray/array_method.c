@@ -147,17 +147,6 @@ npy_default_get_strided_loop(
     *flags = meth->flags & NPY_METH_RUNTIME_FLAGS;
     *out_transferdata = NULL;
 
-    /*
-     * If the method requires contiguous access, the iterator handles
-     * buffering due to the flag on the arraymethod.
-     */
-    if (meth->flags & NPY_METH_REQUIRES_CONTIGUOUS) {
-        if (meth->strided_loop == NULL) {
-            *out_loop = meth->contiguous_loop;
-            return 0;
-        }
-    }
-
     int nargs = meth->nin + meth->nout;
     if (aligned) {
         if (meth->contiguous_loop == NULL ||
@@ -410,13 +399,10 @@ fill_arraymethod_from_slots(
     }
 
     if (meth->strided_loop == NULL) {
-        if (!(meth->flags & NPY_METH_REQUIRES_CONTIGUOUS) ||
-                meth->contiguous_loop == NULL) {
-            PyErr_Format(PyExc_TypeError,
-                    "Must provide a strided inner loop function. (method: %s)",
-                    spec->name);
-            return -1;
-        }
+        PyErr_Format(PyExc_TypeError,
+                "Must provide a strided inner loop function. (method: %s)",
+                spec->name);
+        return -1;
     }
     return 0;
 }

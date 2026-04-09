@@ -580,11 +580,20 @@ add_sfloats(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    /* Verify contiguous guarantee; length-1 is always trivially contiguous. */
-    assert(dimensions[0] <= 1 ||
-           (strides[0] == sizeof(double) &&
-            strides[1] == sizeof(double) &&
-            strides[2] == sizeof(double)));
+    /*
+     * Reductions can use stride-0 for the accumulator, while normal calls
+     * should remain contiguous under NPY_METH_REQUIRES_CONTIGUOUS.
+     */
+    if (dimensions[0] > 1 &&
+        ((strides[0] != sizeof(double) && strides[0] != 0) ||
+         (strides[1] != sizeof(double) && strides[1] != 0) ||
+         (strides[2] != sizeof(double) && strides[2] != 0))) {
+        npy_gil_error(PyExc_RuntimeError,
+                "Unexpected inner-loop strides for sfloat_add: "
+                "(%" NPY_INTP_FMT ", %" NPY_INTP_FMT ", %" NPY_INTP_FMT ")",
+                strides[0], strides[1], strides[2]);
+        return -1;
+    }
 
     double fin1 = ((PyArray_SFloatDescr *)context->descriptors[0])->scaling;
     double fin2 = ((PyArray_SFloatDescr *)context->descriptors[1])->scaling;
@@ -982,8 +991,9 @@ sfloat_init_ufuncs(void) {
         .casting = NPY_NO_CASTING,
     };
 
-    PyType_Slot add_slots[3] = {
+    PyType_Slot add_slots[4] = {
         {NPY_METH_resolve_descriptors, &add_sfloats_resolve_descriptors},
+        {NPY_METH_strided_loop, &add_sfloats},
         {NPY_METH_contiguous_loop, &add_sfloats},
         {0, NULL}
     };

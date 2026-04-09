@@ -235,9 +235,9 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
 
     if (context->method->flags & NPY_METH_REQUIRES_CONTIGUOUS) {
         /*
-         * Note: for reductions, only the result operand is guaranteed to be
-         * contiguous here; the reduction axis for the input operand may still
-         * be non-contiguous.
+         * Reductions still request contiguous iterator buffering, but inner
+         * loops can observe stride-0 for the accumulator and non-unit strides
+         * along the reduced input axis.
          */
         op_flags[0] |= NPY_ITER_CONTIG;
         op_flags[1] |= NPY_ITER_CONTIG;
