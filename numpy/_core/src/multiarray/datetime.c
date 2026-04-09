@@ -444,8 +444,16 @@ NpyDatetime_ConvertDatetime64ToDatetimeStruct(
         return -1;
     }
 
-    /* TODO: Change to a mechanism that avoids the potential overflow */
-    dt *= meta->num;
+    /* Check for overflow and apply meta->num scaling */
+    if (meta->num > 1) {
+        if (_datetime_scale_with_overflow_check(
+                &dt, (npy_int64)meta->num, 1, "datetime64") < 0) {
+            return -1;
+        }
+    }
+    else {
+        dt *= meta->num;
+    }
 
     /*
      * Note that care must be taken with the / and % operators
@@ -3178,13 +3186,11 @@ cast_timedelta_to_timedelta(PyArray_DatetimeMetaData *src_meta,
         return -1;
     }
 
-    /* Apply the scaling */
-    if (src_dt < 0) {
-        *dst_dt = (src_dt * num - (denom - 1)) / denom;
+    /* Apply the scaling, checking for overflow */
+    if (_datetime_scale_with_overflow_check(&src_dt, num, denom, "timedelta64") < 0) {
+        return -1;
     }
-    else {
-        *dst_dt = src_dt * num / denom;
-    }
+    *dst_dt = src_dt;
 
     return 0;
 }
