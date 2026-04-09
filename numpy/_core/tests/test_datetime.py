@@ -2696,6 +2696,34 @@ class TestDateTime:
         limit_via_str = np.datetime64(str(limit), time_unit)
         assert limit_via_str == limit
 
+    @pytest.mark.parametrize("days,expected", [
+        # Fast-path lower boundary (Neri-Schneider range starts at -12699422)
+        (-12699422, "-32800-03-01"),
+        (-12699421, "-32800-03-02"),
+        # Fast-path upper boundary (Neri-Schneider range ends at 1061042401)
+        (1061042400, "2907005-06-04"),
+        (1061042401, "2907005-06-05"),
+        # Just outside fast-path (fallback)
+        (-12699423, "-32800-02-29"),
+        (1061042402, "2907005-06-06"),
+        # Typical dates near epoch for sanity
+        (0, "1970-01-01"),
+        (-1, "1969-12-31"),
+        (1, "1970-01-02"),
+        # Leap year boundaries
+        (10957, "2000-01-01"),
+        (11016, "2000-02-29"),   # 2000 is a leap year
+        (11017, "2000-03-01"),
+        (-25567, "1900-01-01"),  # 1900 is not a leap year
+    ])
+    def test_days_to_date_roundtrip(self, days, expected):
+        """Test the calendar conversion at Neri-Schneider algorithm boundaries
+        and typical dates, verifying both the fast-path and fallback."""
+        dt = np.datetime64(days, "D")
+        assert str(dt) == expected
+        # roundtrip back
+        assert dt == np.datetime64(expected, "D")
+
     def test_cast_to_truncated_string_doesnt_overflow(self):
         a = np.array([1, -2, 1], dtype='timedelta64[D]')
         assert_array_equal(a.astype('U1'), ['1', '-', '1'])
