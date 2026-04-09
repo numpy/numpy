@@ -5249,8 +5249,9 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     }
     if (existing_item != NULL) {
         PyObject *registered = PyTuple_GET_ITEM(existing_item, 1);
+        int is_array_meth = PyObject_TypeCheck(registered, &PyArrayMethod_Type);
         Py_DECREF(existing_item);
-        if (!PyObject_TypeCheck(registered, &PyArrayMethod_Type) || (
+        if (!is_array_meth || (
                 (PyArrayMethodObject *)registered)->get_strided_loop !=
                         &get_wrapped_legacy_ufunc_loop) {
             PyErr_Format(PyExc_TypeError,

@@ -235,6 +235,7 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
     PyObject *wrapped_dt_tuple = NULL;
     PyObject *new_dt_tuple = NULL;
     PyArrayMethodObject *meth = NULL;
+    PyObject *existing_info = NULL;
 
     if (!PyObject_TypeCheck(ufunc_obj, &PyUFunc_Type)) {
         PyErr_SetString(PyExc_TypeError,
@@ -249,13 +250,11 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
     }
 
     PyArrayMethodObject *wrapped_meth = NULL;
-    PyObject *existing_info;
     if (PyDict_GetItemRef(ufunc->_loops, wrapped_dt_tuple, &existing_info) < 0) {
         goto finish;
     }
     if (existing_info != NULL) {
         PyObject *existing_meth = PyTuple_GET_ITEM(existing_info, 1);
-        Py_DECREF(existing_info);
         if (!PyObject_TypeCheck(existing_meth, &PyArrayMethod_Type)) {
             PyErr_SetString(PyExc_TypeError,
                     "Matching loop was not an ArrayMethod.");
@@ -329,5 +328,6 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
     Py_XDECREF(wrapped_dt_tuple);
     Py_XDECREF(new_dt_tuple);
     Py_XDECREF(meth);
+    Py_XDECREF(existing_info);
     return res;
 }
