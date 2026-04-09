@@ -375,7 +375,7 @@ class TestRoundDeprecation(_DeprecationTestCase):
 class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
     # Deprecated in Numpy 2.5, 2025-11
     # See gh-29619
-    message = "Using 'generic' unit for NumPy timedelta is deprecated"
+    message = "The 'generic' unit for NumPy timedelta is deprecated"
 
     @pytest.mark.parametrize('value', [
         3, 10, "NaT"
