@@ -462,7 +462,7 @@ class TestIntegers:
             except Exception as e:
                 raise AssertionError("No error should have been raised, "
                                      "but one was with the following "
-                                     "message:\n\n%s" % str(e))
+                                     f"message:\n\n{e}")
 
     def test_full_range_array(self, endpoint):
         # Test for ticket #1690
@@ -477,7 +477,7 @@ class TestIntegers:
             except Exception as e:
                 raise AssertionError("No error should have been raised, "
                                      "but one was with the following "
-                                     "message:\n\n%s" % str(e))
+                                     f"message:\n\n{e}")
 
     def test_in_bounds_fuzz(self, endpoint):
         # Don't use fixed seed
