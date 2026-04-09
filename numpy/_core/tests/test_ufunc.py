@@ -9,7 +9,6 @@ import pytest
 from pytest import param
 
 import numpy as np
-from numpy._core import _scaled_float_dtype
 import numpy._core._operand_flag_tests as opflag_tests
 import numpy._core._rational_tests as _rational_tests
 import numpy._core._umath_tests as umt
@@ -3370,6 +3369,7 @@ def test_ufunc_non_contiguous_basic():
 
 def test_ufunc_requires_contiguous_flag_sfloat():
     # gh-30413
+    _scaled_float_dtype = pytest.importorskip("numpy._core._scaled_float_dtype")
 
     dt = _scaled_float_dtype.scaled_float64
 
