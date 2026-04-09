@@ -5114,6 +5114,7 @@ def test_bad_legacy_gufunc_silent_errors(x1):
 class TestReplaceLoopBySignature:
     """Tests for PyUFunc_ReplaceLoopBySignature C API."""
 
+    @pytest.mark.thread_unsafe(reason="modifies ufunc within test")
     def test_replace_loop(self):
         # Call the ufunc first to populate any internal dispatch caches,
         # then replace the float64 loop with one that outputs 42.0,
