@@ -654,7 +654,7 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
         op2 = n_ops.multiply;
         if (decimals == INT_MIN) {
             // not technically correct but it doesn't matter because no one in
-            // this millenium is using floating point numbers with enough
+            // this millennium is using floating point numbers with enough
             // accuracy for this to matter
             decimals = INT_MAX;
         }

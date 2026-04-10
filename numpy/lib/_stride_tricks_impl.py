@@ -140,7 +140,7 @@ def as_strided(
     array = np.asarray(DummyArray(interface, base=base))
     # The route via `__interface__` does not preserve structured
     # dtypes. Since dtype should remain unchanged, we set it explicitly.
-    array.dtype = base.dtype
+    array._set_dtype(base.dtype)
 
     view = _maybe_view_as_subclass(base, array)
 

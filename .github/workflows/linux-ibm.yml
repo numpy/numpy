@@ -1,4 +1,4 @@
-name: Native ppc64le Linux Test
+name: Linux IBM tests
 
 on:
   pull_request:
@@ -20,21 +20,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  native_ppc64le:
-    # This job runs only in the main NumPy repository.
-    # It requires a native ppc64le GHA runner, which is not available on forks.
+  native_ibm:
+    # These jobs runs only in the main NumPy repository.
+    # It requires a native ppc64le and s390x GHA runners, which are not available on forks.
     # For more details, see: https://github.com/numpy/numpy/issues/29125
     if: github.repository == 'numpy/numpy'
-    runs-on: ubuntu-24.04-ppc64le-p10
+    runs-on: ${{ matrix.config.runner }}
 
     strategy:
       fail-fast: false
       matrix:
         config:
-          - name: "GCC"
+          - name: "ppc64le/gcc - baseline(default)"
             args: "-Dallow-noblas=false"
-          - name: "clang"
+            runner: ubuntu-24.04-ppc64le-p10
+            compiler: "gcc"
+          - name: "ppc64le/clang - baseline(default)"
             args: "-Dallow-noblas=false"
+            runner: ubuntu-24.04-ppc64le-p10
+            compiler: "clang"
+          - name: "s390x/gcc - baseline(default)"
+            args: "-Dallow-noblas=false"
+            runner: ubuntu-24.04-s390x
+            compiler: "gcc"
+          - name: "s390x/clang - baseline(default)"
+            args: "-Dallow-noblas=false"
+            runner: ubuntu-24.04-s390x
+            compiler: "clang"
+          - name: "s390x/gcc - baseline(Z15/VXE2)"
+            args: "-Dallow-noblas=false -Dcpu-baseline=vxe2"
+            runner: ubuntu-24.04-s390x
+            compiler: "gcc"
+          - name: "s390x/clang - baseline(Z15/VXE2)"
+            args: "-Dallow-noblas=false -Dcpu-baseline=vxe2"
+            runner: ubuntu-24.04-s390x
+            compiler: "clang"
 
     name: "${{ matrix.config.name }}"
     steps:
@@ -53,11 +73,11 @@ jobs:
         echo "/home/runner/.local/bin" >> $GITHUB_PATH
 
     - name: Install clang
-      if: matrix.config.name == 'clang'
+      if: matrix.config.compiler == 'clang'
       run: |
-        sudo apt install -y clang
-        export CC=clang
-        export CXX=clang++
+        sudo apt install -y clang-20
+        echo CC=clang-20 >> $GITHUB_ENV
+        echo CXX=clang++-20 >> $GITHUB_ENV
 
     - name: Meson Build
       run: |

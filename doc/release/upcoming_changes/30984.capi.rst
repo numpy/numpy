@@ -1,0 +1,5 @@
+* It is now possible to register ``"real"`` and ``"imag"``
+  ArrayMethods via ``PyUFunc_AddLoopsFromSpecs``.  These will
+  be used for ``imag`` and ``real`` and should normally
+  set ``*view_offset`` in their ``resolve_descriptors`` function
+  to allow the array attributes to return views.

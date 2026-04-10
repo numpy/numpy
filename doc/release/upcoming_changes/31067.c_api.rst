@@ -1,0 +1,8 @@
+``PyArray_DescrFromScalar`` now preserves parametric dtype information
+----------------------------------------------------------------------
+``PyArray_DescrFromScalar`` now correctly returns the full dtype descriptor for
+scalars of user-defined parametric data types, including any dtype parameters.
+Previously, parameters were silently discarded, which could cause incorrect
+results in operations like ``astype`` on scalar objects. Internally, the
+function now delegates to ``discover_descr_from_pyobject``, which handles
+parametric dtypes correctly.

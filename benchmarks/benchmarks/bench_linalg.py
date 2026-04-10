@@ -252,7 +252,8 @@ class MatmulStrided(Benchmark):
 
     def __init__(self):
         self.args_map = {
-            'matmul_m%03d_p%03d_n%03d_bs%02d' % arg: arg for arg in self.args
+            f'matmul_m{arg[0]:03}_p{arg[1]:03}_n{arg[2]:03}_bs{arg[3]:02}': arg
+            for arg in self.args
         }
 
         self.params = [list(self.args_map.keys())]

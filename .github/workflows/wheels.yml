@@ -60,14 +60,17 @@ jobs:
         with:
           architecture: 'x86'
 
-      - name: Setup LLVM for Windows ARM64
+      - name: win_arm64 - set environment variables
         if: ${{ matrix.buildplat[1] == 'win_arm64' }}
-        uses: ./.github/windows_arm64_steps
+        run: |
+            echo "C:\Program Files\LLVM\bin" >> $env:GIHUB_PATH
+            echo "CC=clang-cl" >> $env:GITHUB_ENV
+            echo "CXX=clang-cl" >> $env:GITHUB_ENV
+            echo "FC=flang" >> $env:GITHUB_ENV
 
       - name: pkg-config-for-win
         if: runner.os == 'windows'
         run: |
-          choco install -y --no-progress --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
           $CIBW = "${{ github.workspace }}/.openblas"
           # pkgconfig needs a complete path, and not just "./openblas since the
           # build is run in a tmp dir (?)
@@ -99,7 +102,7 @@ jobs:
           fi
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@ee02a1537ce3071a004a6b08c41e72f0fdc42d9a  # v3.4.0
+        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 

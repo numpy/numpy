@@ -3,6 +3,7 @@ import sys
 import pytest
 
 import numpy as np
+from numpy._core._rational_tests import rational
 from numpy.testing import HAS_REFCOUNT, assert_array_equal
 
 
@@ -93,3 +94,104 @@ def test_cleanup_with_refs_non_contig():
     actual_ref_obj = sys.getrefcount(obj)
     assert actual_ref_dtype == expected_ref_dtype
     assert actual_ref_obj == actual_ref_dtype
+
+
+@pytest.mark.parametrize("dtype",
+    list("?bhilqnpBHILQNPefdgSUV") + ["M8[ns]", "m8[ns]", rational])
+def test_real_imag_attributes_non_complex(dtype):
+    dtype = np.dtype(dtype)
+
+    a = np.array([[1, 2, 3], [4, 5, 6]]).astype(dtype)
+    assert a.real is a
+    # One could imagine broadcasting, but doesn't right now:
+    imag = a.imag
+    assert imag.strides == a.strides
+    assert imag.dtype == a.dtype
+    # This part is rather unclear:
+    assert (imag == np.zeros((), dtype=a.dtype)).all()
+    assert imag.flags.writeable is False
+
+    class myarr(np.ndarray):
+        def __array_finalize__(self, obj):
+            self.finalized_with = obj
+
+    ma = a.view(myarr)
+    assert ma.real is ma
+    assert type(ma.imag) is myarr
+    assert ma.imag.finalized_with is ma
+
+
+@pytest.mark.parametrize("dtype,real_dt",
+    [(">c8", ">f4"), ("c16", "f8"), ("clongdouble", "longdouble")])
+@pytest.mark.parametrize("variation", ["transpose", "set_writeable"])
+def test_real_imag_attributes_complex(dtype, real_dt, variation):
+    a = np.array([[1, 2j, 3], [4, 5j, 6]]).astype(dtype)
+    real = np.array([[1, 0, 3], [4, 0, 6]], dtype=real_dt)
+    imag = np.array([[0, 2, 0], [0, 5, 0]], dtype=real_dt)
+
+    if variation == "transpose":
+        a = a.T
+        real = real.T
+        imag = imag.T
+    elif variation == "set_writeable":
+        a.flags.writeable = False
+
+    assert_array_equal(a.real, real)
+    assert_array_equal(a.imag, imag)
+    assert a.real.dtype == real_dt
+    assert a.imag.dtype == real_dt
+    assert np.may_share_memory(a.real, a)
+    assert np.may_share_memory(a.imag, a)
+    assert a.real.flags.writeable == a.flags.writeable
+    assert a.imag.flags.writeable == a.flags.writeable
+
+    class myarr(np.ndarray):
+        def __array_finalize__(self, obj):
+            self.finalized_with = obj
+
+    ma = a.view(myarr)
+    assert ma.real.finalized_with is ma
+    assert ma.imag.finalized_with is ma
+
+
+def test_real_imag_attributes_object():
+    a = np.array([[1, 0.5 + 2j, 3, int], [4, 5j, "string", {}]], dtype=object)
+
+    # NOTE(seberg): doing something for non-numbers is guesswork...
+    real = np.array([[1, 0.5, 3, int.real], [4, 0, "string", {}]], dtype=object)
+    imag = np.array([[0, 2, 0, int.imag], [0, 5, 0, 0]], dtype=object)
+
+    assert_array_equal(a.real, real)
+    assert_array_equal(a.imag, imag)
+    assert a.real.dtype == object
+    assert a.imag.dtype == object
+    assert not np.may_share_memory(a.real, a)
+    assert not np.may_share_memory(a.imag, a)
+    assert not a.real.flags.writeable
+    assert not a.imag.flags.writeable
+
+    # Object returns new arrays via ufuncs, so call wrap
+    class myarr(np.ndarray):
+        def __array_wrap__(self, *args, **kwargs):
+            ret = super().__array_wrap__(*args, **kwargs)
+            ret.wrap_called = True
+            return ret
+
+    ma = a.view(myarr)
+    assert ma.real.wrap_called
+    assert ma.imag.wrap_called
+
+
+@pytest.mark.parametrize("ufunc,attr", [
+    (np._core.umath.real, "real"), (np._core.umath.imag, "imag")])
+def test_real_imag_ufunc_minimal(ufunc, attr):
+    with pytest.raises(TypeError):
+        ufunc(np.array([1, 2, 3]))  # non-complex or object raises
+
+    arr = np.array([1 + 2j, 3 + 4j])
+    res = ufunc(arr)
+    assert_array_equal(res, getattr(arr, attr), strict=True)
+
+    arr = np.array([1 + 2j, 3 + 4j], dtype=object)
+    res = ufunc(arr)
+    assert_array_equal(res, getattr(arr, attr), strict=True)

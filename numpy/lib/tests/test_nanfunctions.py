@@ -835,7 +835,7 @@ _TIME_UNITS = (
     "Y", "M", "W", "D", "h", "m", "s", "ms", "us", "ns", "ps", "fs", "as"
 )
 
-# All `inexact` + `timdelta64` type codes
+# All `inexact` + `timedelta64` type codes
 _TYPE_CODES = list(np.typecodes["AllFloat"])
 _TYPE_CODES += [f"m8[{unit}]" for unit in _TIME_UNITS]
 
@@ -945,27 +945,37 @@ class TestNanFunctions_Median:
     @pytest.mark.parametrize("axis", [None, 0, 1])
     @pytest.mark.parametrize("dtype", _TYPE_CODES)
     def test_allnans(self, dtype, axis):
-        mat = np.full((3, 3), np.nan).astype(dtype)
-        with pytest.warns(RuntimeWarning) as r:
+        mat = np.full((3, 3), np.nan, dtype=dtype)
+        with pytest.warns((RuntimeWarning, DeprecationWarning)) as r:
             output = np.nanmedian(mat, axis=axis)
             assert output.dtype == mat.dtype
             assert np.isnan(output).all()
 
+            _filtered_record = [
+                item.message
+                for item in r
+                if "All-NaN slice encountered" in str(item.message)
+            ]
             if axis is None:
-                assert_(len(r) == 1)
+                assert_(len(_filtered_record) == 1)
             else:
-                assert_(len(r) == 3)
+                assert_(len(_filtered_record) == 3)
 
             # Check scalar
-            scalar = np.array(np.nan).astype(dtype)[()]
+            scalar = np.full((1, 1), np.nan, dtype=dtype)[0, 0]
             output_scalar = np.nanmedian(scalar)
             assert output_scalar.dtype == scalar.dtype
             assert np.isnan(output_scalar)
 
+            _filtered_record = [
+                item.message
+                for item in r
+                if "All-NaN slice encountered" in str(item.message)
+            ]
             if axis is None:
-                assert_(len(r) == 2)
+                assert_(len(_filtered_record) == 2)
             else:
-                assert_(len(r) == 4)
+                assert_(len(_filtered_record) == 4)
 
     def test_empty(self):
         mat = np.zeros((0, 3))
