@@ -1116,7 +1116,7 @@ cdef inline bint is_datetime64_object(object obj) noexcept:
     return PyObject_TypeCheck(obj, &PyDatetimeArrType_Type)
 
 
-cdef inline npy_datetime get_datetime64_value(object obj) noexcept:
+cdef inline npy_datetime get_datetime64_value(object obj) noexcept nogil:
     """
     returns the int64 value underlying scalar numpy datetime64 object
 
@@ -1124,16 +1124,18 @@ cdef inline npy_datetime get_datetime64_value(object obj) noexcept:
     also needed.  That can be found using `get_datetime64_unit`.
     """
     cdef npy_datetime value
-    PyArray_ScalarAsCtype(obj, &value)
+    with gil:
+        PyArray_ScalarAsCtype(obj, &value)
     return value
 
 
-cdef inline npy_timedelta get_timedelta64_value(object obj) noexcept:
+cdef inline npy_timedelta get_timedelta64_value(object obj) noexcept nogil:
     """
     returns the int64 value underlying scalar numpy timedelta64 object
     """
     cdef npy_timedelta value
-    PyArray_ScalarAsCtype(obj, &value)
+    with gil:
+        PyArray_ScalarAsCtype(obj, &value)
     return value
 
 
