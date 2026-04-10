@@ -1526,8 +1526,11 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
      * This avoids the expensive DiscoverDTypeAndShape +
      * PyArray_CanCastArrayTo for the common case.
      */
-    if (newtype == NULL && flags == 0 && min_depth == 0
-            && context == NULL && PyArray_Check(op)) {
+    if (context != NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "'context' must be NULL");
+        return NULL;
+    }
+    if (newtype == NULL && flags == 0 && min_depth == 0 && PyArray_Check(op)) {
         return Py_NewRef(op);
     }
 
@@ -1551,7 +1554,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     int was_scalar;
     PyObject* ret =  PyArray_FromAny_int(
             op, dt_info.descr, dt_info.dtype,
-            min_depth, max_depth, flags, context, &was_scalar);
+            min_depth, max_depth, flags, &was_scalar);
 
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
@@ -1573,7 +1576,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
                     PyArray_DTypeMeta *in_DType, int min_depth, int max_depth,
-                    int flags, PyObject *context, int *was_scalar)
+                    int flags, int *was_scalar)
 {
     /*
      * This is the main code to make a NumPy array from a Python
@@ -1584,11 +1587,6 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
     coercion_cache_obj *cache = NULL;
     int ndim = 0;
     npy_intp dims[NPY_MAXDIMS];
-
-    if (context != NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "'context' must be NULL");
-        return NULL;
-    }
 
     // Default is copy = None
     int copy = -1;
@@ -1822,6 +1820,11 @@ NPY_NO_EXPORT PyObject *
 PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
                      int max_depth, int requirements, PyObject *context)
 {
+    if (context != NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "'context' must be NULL");
+        return NULL;
+    }
+
     npy_dtype_info dt_info = {NULL, NULL};
 
     PyArray_ExtractDTypeAndDescriptor(
@@ -1835,8 +1838,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
     }
 
     PyObject* ret =  PyArray_CheckFromAny_int(
-        op, dt_info.descr, dt_info.dtype, min_depth, max_depth, requirements,
-        context);
+        op, dt_info.descr, dt_info.dtype, min_depth, max_depth, requirements);
 
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
@@ -1850,7 +1852,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
 NPY_NO_EXPORT PyObject *
 PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
                          PyArray_DTypeMeta *in_DType, int min_depth,
-                         int max_depth, int requirements, PyObject *context)
+                         int max_depth, int requirements)
 {
     PyObject *obj;
     Py_XINCREF(in_descr);  /* take ownership as we may replace it */
@@ -1869,7 +1871,7 @@ PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
 
     int was_scalar;
     obj = PyArray_FromAny_int(op, in_descr, in_DType, min_depth,
-                              max_depth, requirements, context, &was_scalar);
+                              max_depth, requirements, &was_scalar);
     Py_XDECREF(in_descr);
     if (obj == NULL) {
         return NULL;
