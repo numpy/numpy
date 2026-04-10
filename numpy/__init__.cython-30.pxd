@@ -836,7 +836,7 @@ cdef extern from "numpy/ndarraytypes.h":
     ctypedef int (*NpyIter_IterNextFunc "NpyIter_IterNextFunc *")(NpyIter* it) noexcept nogil
     ctypedef void (*NpyIter_GetMultiIndexFunc "NpyIter_GetMultiIndexFunc *")(NpyIter* it, npy_intp* outcoords) noexcept nogil
 
-    NPY_DATETIMEUNIT _PyDatetimeScalarObject_GetUnit (object)
+    PyArray_DatetimeMetaData _PyDatetimeScalarObject_GetMetadata(object) noexcept nogil
 
 cdef extern from "numpy/arrayscalars.h":
 
@@ -1137,11 +1137,11 @@ cdef inline npy_timedelta get_timedelta64_value(object obj) noexcept:
     return value
 
 
-cdef inline NPY_DATETIMEUNIT get_datetime64_unit(object obj) noexcept:
+cdef inline NPY_DATETIMEUNIT get_datetime64_unit(object obj) noexcept nogil:
     """
     returns the unit part of the dtype for a numpy datetime64 object.
     """
-    return _PyDatetimeScalarObject_GetUnit(obj)
+    return _PyDatetimeScalarObject_GetMetadata(obj).base
 
 
 cdef extern from "numpy/arrayobject.h":
