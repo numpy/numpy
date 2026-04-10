@@ -120,6 +120,10 @@ is_leapyear(npy_int64 year)
  * Adapted from Hinnant's days_from_civil algorithm (public domain).
  * See: https://howardhinnant.github.io/date_algorithms.html#days_from_civil
  *
+ * This is the same algorithm used by C++20 std::chrono
+ * (year_month_day to sys_days). See libstdc++:
+ * gcc/libstdc++-v3/include/std/chrono (operator sys_days)
+ *
  * The March-1 epoch trick places the leap day at the end of the year,
  * eliminating special cases for February.
  */
@@ -209,6 +213,10 @@ days_to_month_number(npy_datetime days)
  * Algorithm: Neri C, Schneider L. "Euclidean Affine Functions and their
  * Application to Calendar Algorithms." Software: Practice and Experience.
  * 2023;53(4):937-970. doi:10.1002/spe.3172
+ *
+ * This is the same algorithm used by C++20 std::chrono
+ * (sys_days to year_month_day). See libstdc++:
+ * gcc/libstdc++-v3/include/std/chrono (year_month_day::_M_days_since_epoch)
  *
  * Falls back to the classical algorithm for dates beyond ~32K years
  * before epoch or ~2.9M years after (effectively never reached in practice).
