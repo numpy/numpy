@@ -1977,7 +1977,7 @@ def test_result_type_integers_and_unitless_timedelta64():
     # would cause a seg. fault.
     with pytest.warns(
         DeprecationWarning,
-        match="Using 'generic' unit for NumPy timedelta is deprecated",
+        match="The 'generic' unit for NumPy timedelta is deprecated",
     ):
         td = np.timedelta64(4)
         result = np.result_type(0, td)

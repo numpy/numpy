@@ -4729,9 +4729,6 @@ class TestPickling:
 
     # version 0 pickles, using protocol=2 to pickle
     # version 0 doesn't have a version field
-    @pytest.mark.filterwarnings(
-        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
-    )
     def test_version0_int8(self):
         s = (
             b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\n"
@@ -4743,9 +4740,6 @@ class TestPickling:
         p = self._loads(s)
         assert_equal(a, p)
 
-    @pytest.mark.filterwarnings(
-        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
-    )
     def test_version0_float32(self):
         s = (
             b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\n"
@@ -4758,9 +4752,6 @@ class TestPickling:
         p = self._loads(s)
         assert_equal(a, p)
 
-    @pytest.mark.filterwarnings(
-        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
-    )
     def test_version0_object(self):
         s = (
             b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\n"
@@ -4774,9 +4765,6 @@ class TestPickling:
         assert_equal(a, p)
 
     # version 1 pickles, using protocol=2 to pickle
-    @pytest.mark.filterwarnings(
-        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
-    )
     def test_version1_int8(self):
         s = (
             b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\n"
@@ -4788,9 +4776,6 @@ class TestPickling:
         p = self._loads(s)
         assert_equal(a, p)
 
-    @pytest.mark.filterwarnings(
-        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
-    )
     def test_version1_float32(self):
         s = (
             b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\n"
@@ -4803,9 +4788,6 @@ class TestPickling:
         p = self._loads(s)
         assert_equal(a, p)
 
-    @pytest.mark.filterwarnings(
-        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
-    )
     def test_version1_object(self):
         s = (
             b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\n"
@@ -4818,9 +4800,6 @@ class TestPickling:
         p = self._loads(s)
         assert_equal(a, p)
 
-    @pytest.mark.filterwarnings(
-        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
-    )
     def test_subarray_int_shape(self):
         s = (
             b"cnumpy.core.multiarray\n_reconstruct\np0\n"

@@ -440,7 +440,7 @@ class TestTimeScalars:
     def test_coercion_generic_timedelta_convert_to_number(self, dtype, value, unit):
         with pytest.warns(
             DeprecationWarning,
-            match="Using 'generic' unit for NumPy timedelta is deprecated",
+            match="The 'generic' unit for NumPy timedelta is deprecated",
         ):
             scalar = np.timedelta64(value, unit)
             arr = np.array(scalar, dtype=dtype)
