@@ -1,0 +1,5 @@
+``np.result_type`` treats Python type objects as weak scalars
+
+-------------------------------------------------------------
+
+``np.result_type`` now treats Python builtin types (``int``, ``float``, ``complex``) as weak/abstract scalars under NEP 50, consistent with how their instances already behave, so ``np.result_type(np.int32, int)`` now returns ``int32`` instead of ``int64``.
