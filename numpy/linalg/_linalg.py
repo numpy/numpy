@@ -3400,13 +3400,13 @@ def matmul(x1, x2, /):
 
 # tensordot
 
-def _tensordot_dispatcher(x1, x2, /, *, axes=None):
-    return (x1, x2)
+def _tensordot_dispatcher(a, b, /, *, axes=None):
+    return (a, b)
 
 
 @array_function_dispatch(_tensordot_dispatcher)
-def tensordot(x1, x2, /, *, axes=2):
-    return _core_tensordot(x1, x2, axes=axes)
+def tensordot(a, b, /, *, axes=2):
+    return _core_tensordot(a, b, axes=axes)
 
 
 tensordot.__doc__ = _core_tensordot.__doc__
