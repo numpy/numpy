@@ -1429,7 +1429,6 @@ fail:
  * @param requested_dtype a requested dtype instance, may be NULL; The result
  *                       DType may be used, but is not enforced.
  * @param writeable whether the result must be writeable.
- * @param context Unused parameter, must be NULL (should be removed later).
  * @param copy Specifies the copy behavior.
  * @param was_copied_by__array__ Set to 1 if it can be assumed that a copy
  *        was made by implementor.
@@ -1440,7 +1439,7 @@ fail:
  */
 NPY_NO_EXPORT PyObject *
 _array_from_array_like(PyObject *op,
-        PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context,
+        PyArray_Descr *requested_dtype, npy_bool writeable,
         int copy, int *was_copied_by__array__) {
     PyObject* tmp;
 
@@ -1520,18 +1519,9 @@ NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                 int max_depth, int flags, PyObject *context)
 {
-    /*
-     * Fast path: when op is already an ndarray and no dtype, flags,
-     * depth, or context constraints are given, return it directly.
-     * This avoids the expensive DiscoverDTypeAndShape +
-     * PyArray_CanCastArrayTo for the common case.
-     */
     if (context != NULL) {
         PyErr_SetString(PyExc_RuntimeError, "'context' must be NULL");
         return NULL;
-    }
-    if (newtype == NULL && flags == 0 && min_depth == 0 && PyArray_Check(op)) {
-        return Py_NewRef(op);
     }
 
     npy_dtype_info dt_info = {NULL, NULL};
@@ -1582,6 +1572,17 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
      * This is the main code to make a NumPy array from a Python
      * Object.  It is called from many different places.
      */
+
+    /*
+     * Fast path: op is already an ndarray with no dtype, flags, or depth
+     * constraints.  Avoids DiscoverDTypeAndShape + PyArray_CanCastArrayTo.
+     */
+    if (in_descr == NULL && in_DType == NULL && flags == 0
+            && min_depth == 0 && PyArray_Check(op)) {
+        *was_scalar = 0;
+        return Py_NewRef(op);
+    }
+
     PyArrayObject *arr = NULL, *ret = NULL;
     PyArray_Descr *dtype = NULL;
     coercion_cache_obj *cache = NULL;
