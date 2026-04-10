@@ -3390,14 +3390,18 @@ tuple_all_none(PyObject *tup) {
 
 
 /*
- * Parse the `out` argument and populate ufunc_output with owned refs.
- * ufunc_output must not be NULL.
- * Returns the number of outputs set (0 if all None), or -1 on error.
+ * Parse the `out` argument and populate *ufunc_output with owned refs.
+ * On entry, *ufunc_output must point to a buffer of at least nout slots.
+ * On success, returns 0:
+ *   - if all outputs are None, *ufunc_output is set to NULL
+ *     (no references are written into the buffer);
+ *   - otherwise the buffer is filled with `nout` owned references.
+ * Returns -1 on error.
  */
 static int
-_set_full_args_out(int nout, PyObject *out_obj, PyObject **ufunc_output)
+_parse_out_arg(int nout, PyObject *out_obj, PyObject ***ufunc_output)
 {
-    assert(ufunc_output != NULL);
+    assert(ufunc_output != NULL && *ufunc_output != NULL);
 
     if (PyTuple_CheckExact(out_obj)) {
         if (PyTuple_GET_SIZE(out_obj) != nout) {
@@ -3407,23 +3411,23 @@ _set_full_args_out(int nout, PyObject *out_obj, PyObject **ufunc_output)
             return -1;
         }
         if (tuple_all_none(out_obj)) {
+            *ufunc_output = NULL;
             return 0;
         }
-        else {
-            for (int i = 0; i < nout; i++) {
-                PyObject *item = PyTuple_GET_ITEM(out_obj, i);
-                ufunc_output[i] = Py_NewRef(item);
-            }
-            return nout;
+        for (int i = 0; i < nout; i++) {
+            PyObject *item = PyTuple_GET_ITEM(out_obj, i);
+            (*ufunc_output)[i] = Py_NewRef(item);
         }
+        return 0;
     }
     else if (nout == 1) {
         if (out_obj == Py_None) {
+            *ufunc_output = NULL;
             return 0;
         }
         /* Can be an array if it only has one output */
-        ufunc_output[0] = Py_NewRef(out_obj);
-        return 1;
+        (*ufunc_output)[0] = Py_NewRef(out_obj);
+        return 0;
     }
     else {
         PyErr_SetString(PyExc_TypeError,
@@ -3637,14 +3641,10 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         }
         else {
             ufunc_output = &ufunc_output_storage;
-            int n = _set_full_args_out(1, out_obj, ufunc_output);
-            if (n < 0) {
+            if (_parse_out_arg(1, out_obj, &ufunc_output) < 0) {
                 goto fail;
             }
-            nout_args = n;
-            if (nout_args == 0) {
-                ufunc_output = NULL;
-            }
+            nout_args = (ufunc_output != NULL) ? 1 : 0;
         }
         /* Ensure that out_obj is the array, not the tuple: */
         if (nout_args != 0) {
@@ -4532,8 +4532,8 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
                 tmp = Py_None;
             }
             ufunc_output[i-nin] = Py_NewRef(tmp);
+            nout_args = i - nin + 1;
         }
-        nout_args = nout;
 
         /* Extra positional args but no keywords */
         /* DEPRECATED NumPy 2.4, 2025-08 */
@@ -4621,16 +4621,10 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             }
             else {
                 ufunc_output = args_scratch + nin;
-                int n = _set_full_args_out(nout, out_obj, ufunc_output);
-                if (n < 0) {
+                if (_parse_out_arg(nout, out_obj, &ufunc_output) < 0) {
                     goto fail;
                 }
-                nout_args = n;
-                /* If all outputs were None, reset out to NULL
-                 * so downstream code doesn't iterate over empty slots. */
-                if (nout_args == 0) {
-                    ufunc_output = NULL;
-                }
+                nout_args = (ufunc_output != NULL) ? nout : 0;
             }
         }
         /*
