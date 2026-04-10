@@ -5259,7 +5259,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
             !PyObject_TypeCheck(registered, &PyArrayMethod_Type) ||
             ((PyArrayMethodObject *)registered)->get_strided_loop !=
                 &get_wrapped_legacy_ufunc_loop
-                && reg_meth->cached_loop == NULL);
+                && ((PyArrayMethodObject *)registered)->cached_loop == NULL);
         Py_DECREF(existing_item);
         if (not_compatible) {
             PyErr_Format(PyExc_TypeError,
