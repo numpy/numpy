@@ -917,6 +917,24 @@ def test_pinv_rtol_arg():
         np.linalg.pinv(a, rcond=0.5, rtol=0.5)
 
 
+@pytest.mark.parametrize("dtype", [np.int32, np.int64])
+def test_pinv_int_dtype(dtype):
+    # gh-30917: pinv used to crash with ``rtol=None`` on integer inputs
+    # because ``finfo`` was called on the original int dtype.  The result
+    # should match ``pinv`` on the same matrix cast to ``float64``.
+    a = np.array([[1, 2, 3], [4, 1, 1], [2, 3, 1]], dtype=dtype)
+    expected = np.linalg.pinv(a.astype(np.float64), rtol=None)
+
+    # ``rtol=None`` path (the one that was crashing).
+    assert_almost_equal(np.linalg.pinv(a, rtol=None), expected)
+
+    # Default path (no ``rtol`` kwarg) should also work on int input.
+    assert_almost_equal(
+        np.linalg.pinv(a),
+        np.linalg.pinv(a.astype(np.float64)),
+    )
+
+
 class DetCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
     def do(self, a, b, tags):
