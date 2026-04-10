@@ -4480,9 +4480,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
      * Also includes space for ufunc_input (nin slots, used by outer) and
      * ufunc_output (nout slots).
      */
-    NPY_ALLOC_WORKSPACE(scratch_objs, void *,
-                        UFUNC_STACK_NARGS * 4 + 2,
-                        nop * 4 + 2 + nop);
+    NPY_ALLOC_WORKSPACE(scratch_objs, void *, UFUNC_STACK_NARGS * 5 + 2, nop * 5 + 2);
     if (scratch_objs == NULL) {
         return NULL;
     }
