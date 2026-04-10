@@ -219,7 +219,7 @@ class TestDeprecatedDTypeAliases(_DeprecationTestCase):
             np.dtype(dtype_code)
 
 
-class TestDeprecatedArrayWrap(_DeprecationTestCase):
+class TestDeprecatedArrayWrap(_VisibleDeprecationTestCase):
     message = "__array_wrap__.*"
 
     def test_deprecated(self):
