@@ -1813,7 +1813,7 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 /* Iterator API */
 #define PyArrayIter_Check(op) PyObject_TypeCheck((op), &PyArrayIter_Type)
 
-#define _PyAIT(it) _PyArrayIter_GET_ITEM_DATA(it)
+#define _PyAIT(it) _PyArrayIter_GET_ITEM_DATA((PyArrayIterObject *)(it))
 #define PyArray_ITER_RESET(it) do { \
         _PyAIT(it)->index = 0; \
         _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao); \
@@ -1842,12 +1842,12 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 #define PyArray_ITER_NEXT(it) do { \
         _PyAIT(it)->index++; \
         if (_PyAIT(it)->nd_m1 == 0) { \
-                _PyArray_ITER_NEXT1(_PyAIT(it)); \
+                _PyArray_ITER_NEXT1(it); \
         } \
         else if (_PyAIT(it)->contiguous) \
                 _PyAIT(it)->dataptr += PyArray_ITEMSIZE(_PyAIT(it)->ao); \
         else if (_PyAIT(it)->nd_m1 == 1) { \
-                _PyArray_ITER_NEXT2(_PyAIT(it)); \
+                _PyArray_ITER_NEXT2(it); \
         } \
         else { \
                 int __npy_i; \
@@ -1940,7 +1940,7 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
         for (__npy_mi=0; __npy_mi < _PyMIT(multi)->numiter; __npy_mi++) {   \
                 PyArray_ITER_GOTO(_PyMIT(multi)->iters[__npy_mi], dest);    \
         }                                                                   \
-        _PyMIT(multi)->index = _PyMIT(multi)->iters[0]->index;              \
+        _PyMIT(multi)->index = _PyAIT(_PyMIT(multi)->iters[0])->index;      \
 } while (0)
 
 #define PyArray_MultiIter_GOTO1D(multi, ind) do {                          \
@@ -1948,11 +1948,11 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
         for (__npy_mi=0; __npy_mi < _PyMIT(multi)->numiter; __npy_mi++) {  \
                 PyArray_ITER_GOTO1D(_PyMIT(multi)->iters[__npy_mi], ind);  \
         }                                                                  \
-        _PyMIT(multi)->index = _PyMIT(multi)->iters[0]->index;             \
+        _PyMIT(multi)->index = _PyAIT(_PyMIT(multi)->iters[0])->index;     \
 } while (0)
 
 #define PyArray_MultiIter_DATA(multi, i)                \
-        ((void *)(_PyMIT(multi)->iters[i]->dataptr))
+        ((void *)(_PyAIT(_PyMIT(multi)->iters[i])->dataptr))
 
 #define PyArray_MultiIter_NEXTi(multi, i)               \
         PyArray_ITER_NEXT(_PyMIT(multi)->iters[i])
