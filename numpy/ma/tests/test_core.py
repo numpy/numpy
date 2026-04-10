@@ -4144,14 +4144,21 @@ class TestMaskedArrayMathMethods:
         _, X, _, m, mx, mX, _, _, _, _ = self._create_data()
         (n, m) = X.shape
         assert_equal(mx.ptp(), np.ptp(mx.compressed()))
+        assert_equal(np.ptp(mx), mx.ptp())
         rows = np.zeros(n, float)
         cols = np.zeros(m, float)
         for k in range(m):
             cols[k] = np.ptp(mX[:, k].compressed())
         for k in range(n):
             rows[k] = np.ptp(mX[k].compressed())
+        assert_equal(np.ptp(mX, axis=0), cols)
+        assert_equal(np.ptp(mX, axis=1), rows)
         assert_equal(mX.ptp(0), cols)
         assert_equal(mX.ptp(1), rows)
+
+    def test_ptp_masked_invalid_matches_masked_array_method(self):
+        arr = np.ma.masked_invalid([np.nan, 5, 10, 5, 10])
+        assert_equal(np.ptp(arr), arr.ptp())
 
     def test_add_object(self):
         x = masked_array(['a', 'b'], mask=[1, 0], dtype=object)
