@@ -4811,6 +4811,39 @@ PyUFunc_ReplaceLoopBySignature(PyUFuncObject *func,
         }
         func->functions[i] = newfunc;
         res = 0;
+
+        /*
+         * If the method for this signature has a cached_loop, update it
+         * so that subsequent calls use the new function rather than the
+         * stale cached one.
+         */
+        if (func->_loops != NULL) {
+            PyArray_DTypeMeta *sig_dtypes[NPY_MAXARGS];
+            for (j = 0; j < func->nargs; j++) {
+                sig_dtypes[j] = PyArray_DTypeFromTypeNum(signature[j]);
+            }
+            PyObject *sig_tuple = PyArray_TupleFromItems(
+                    func->nargs, (PyObject **)sig_dtypes, 0);
+            if (sig_tuple != NULL) {
+                PyObject *item;
+                if (PyDict_GetItemRef(func->_loops, sig_tuple, &item) == 1) {
+                    PyObject *method_obj = PyTuple_GET_ITEM(item, 1);
+                    if (PyObject_TypeCheck(method_obj, &PyArrayMethod_Type)) {
+                        PyArrayMethodObject *method =
+                                (PyArrayMethodObject *)method_obj;
+                        if (method->cached_loop != NULL) {
+                            method->cached_loop = newfunc;
+                            /* data stays the same; only the function changes */
+                        }
+                    }
+                    Py_DECREF(item);
+                }
+                Py_DECREF(sig_tuple);
+            }
+            else {
+                PyErr_Clear();  /* non-fatal: fallback path still works */
+            }
+        }
         break;
     }
     return res;
