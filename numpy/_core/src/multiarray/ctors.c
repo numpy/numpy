@@ -1521,6 +1521,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 {
     if (context != NULL) {
         PyErr_SetString(PyExc_RuntimeError, "'context' must be NULL");
+        Py_XDECREF(newtype);
         return NULL;
     }
 
@@ -1823,6 +1824,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
 {
     if (context != NULL) {
         PyErr_SetString(PyExc_RuntimeError, "'context' must be NULL");
+        Py_XDECREF(descr);
         return NULL;
     }
 
