@@ -1981,6 +1981,9 @@ def get_useparameters(block, param_map=None):
     for usename, mapping in list(usedict.items()):
         usename = usename.lower()
         if usename not in f90modulevars:
+            if mapping and 'map' in mapping:
+                for local_name, remote_name in mapping['map'].items():
+                    param_map[local_name] = remote_name
             outmess(f'get_useparameters: no module {usename} info used by '
                     f'{block.get("name")}\n')
             continue
@@ -1988,9 +1991,14 @@ def get_useparameters(block, param_map=None):
         params = get_parameters(mvars)
         if not params:
             continue
-        # XXX: apply mapping
         if mapping:
-            errmess(f'get_useparameters: mapping for {mapping} not impl.\n')
+            mapping_dict = mapping.get('map', {})
+            if mapping_dict:
+                params = {
+                    local_name: params[remote_name]
+                    for local_name, remote_name in mapping_dict.items()
+                    if remote_name in params
+                }
         for k, v in list(params.items()):
             if k in param_map:
                 outmess(f'get_useparameters: overriding parameter {k!r} with'
