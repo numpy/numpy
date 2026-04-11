@@ -1,5 +1,5 @@
-#ifndef _Py_OPAQUE_PYOBJECT
-#error "This file must be compiled with -D_Py_OPAQUE_PYOBJECT"
+#ifndef Py_TARGET_ABI3T
+#error "This file must be compiled with -DPy_TARGET_ABI3T"
 #endif
 
 #include <Python.h>

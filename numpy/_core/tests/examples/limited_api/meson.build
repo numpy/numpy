@@ -70,7 +70,7 @@ if py.language_version().version_compare('>=3.15')
       'limited_api_opaque.c',
       c_args: [
         '-DNPY_TARGET_VERSION=NPY_2_5_API_VERSION',
-        '-D_Py_OPAQUE_PYOBJECT',
+        '-DPy_TARGET_ABI3T=0x030F0000',
       ],
       include_directories: [npy_include_path],
       limited_api: '3.15',

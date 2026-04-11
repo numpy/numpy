@@ -119,7 +119,7 @@
 #elif defined(NPY_TARGET_VERSION) && NPY_TARGET_VERSION
     /* user provided a target version, use it */
     #define NPY_FEATURE_VERSION NPY_TARGET_VERSION
-#elif defined(_Py_OPAQUE_PYOBJECT) && NPY_TARGET_VERSION < NPY_2_5_API_VERSION
+#elif defined(Py_TARGET_ABI3T) && NPY_TARGET_VERSION < NPY_2_5_API_VERSION
     #error "NumPy 2.5 or later is required when compiling with opaque PyObject"
 #else
     /* Use the default (increase when dropping Python 3.12 support) */

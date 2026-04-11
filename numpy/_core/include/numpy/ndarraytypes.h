@@ -612,7 +612,7 @@ typedef struct {
 /*
  * Public version of the Descriptor struct as of 2.x
  */
-#if !defined(_Py_OPAQUE_PYOBJECT)
+#if !defined(Py_TARGET_ABI3T)
 typedef struct _PyArray_Descr {
         PyObject_HEAD
 #else
@@ -691,7 +691,7 @@ typedef struct _PyArray_Descr PyArray_Descr;
  * valid when running on 1.x (i.e. in public API use).
  */
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
+#ifndef Py_TARGET_ABI3T
         PyObject_HEAD
 #endif
         PyTypeObject *typeobj;
@@ -712,14 +712,14 @@ typedef struct {
         NpyAuxData *c_metadata;
 } _PyArray_LegacyDescr_fields;
 
-#ifdef _Py_OPAQUE_PYOBJECT
+#ifdef Py_TARGET_ABI3T
 typedef struct _PyArray_LegacyDescrTag _PyArray_LegacyDescr;
 #else
 typedef _PyArray_LegacyDescr_fields _PyArray_LegacyDescr;
 #endif
 
 
-#if !defined(_Py_OPAQUE_PYOBJECT)
+#if !defined(Py_TARGET_ABI3T)
 /*
  * Umodified PyArray_Descr struct identical to NumPy 1.x.  This struct is
  * used as a prototype for registering a new legacy DType.
@@ -785,7 +785,7 @@ typedef struct {
  */
 /* This struct will be moved to a private header in a future release */
 typedef struct tagPyArrayObject_fields {
-#ifndef _Py_OPAQUE_PYOBJECT
+#ifndef Py_TARGET_ABI3T
     PyObject_HEAD
 #endif
     /* Pointer to the raw data buffer */
@@ -839,7 +839,7 @@ typedef struct tagPyArrayObject_fields {
  * To hide the implementation details, we only expose
  * the Python struct HEAD.
  */
-#ifndef _Py_OPAQUE_PYOBJECT
+#ifndef Py_TARGET_ABI3T
 #if !defined(NPY_NO_DEPRECATED_API) || \
     (NPY_NO_DEPRECATED_API < NPY_1_7_API_VERSION)
 /*
@@ -870,7 +870,7 @@ typedef struct tagPyArrayObjectOpaque PyArrayObject;
  */
 
 /* Mirrors buffer object to ptr */
-#ifndef _Py_OPAQUE_PYOBJECT
+#ifndef Py_TARGET_ABI3T
 typedef struct {
         PyObject_HEAD
         PyObject *base;
@@ -1199,7 +1199,7 @@ typedef void (NpyIter_GetMultiIndexFunc)(NpyIter *iter,
  *****************************/
 
 /* FWD declaration */
-#ifndef _Py_OPAQUE_PYOBJECT
+#ifndef Py_TARGET_ABI3T
 typedef struct PyArrayIterObject_fields PyArrayIterObject;
 #else
 typedef struct PyArrayIterObject_tag PyArrayIterObject;
@@ -1213,7 +1213,7 @@ typedef char* (*npy_iter_get_dataptr_t)(
         PyArrayIterObject* iter, const npy_intp*);
 
 typedef struct PyArrayIterObject_fields {
-#ifndef _Py_OPAQUE_PYOBJECT
+#ifndef Py_TARGET_ABI3T
         PyObject_HEAD
 #endif
         int               nd_m1;            /* number of dimensions - 1 */
@@ -1239,7 +1239,7 @@ typedef struct PyArrayIterObject_fields {
  * with this structure.
  */
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
+#ifndef Py_TARGET_ABI3T
         PyObject_HEAD
 #endif
         int                  numiter;                 /* number of iters */
@@ -1268,7 +1268,7 @@ typedef struct {
 #endif
 } PyArrayMultiIterObject_fields;
 
-#ifndef _Py_OPAQUE_PYOBJECT
+#ifndef Py_TARGET_ABI3T
 typedef PyArrayMultiIterObject_fields PyArrayMultiIterObject;
 #else
 typedef struct PyArrayMultiIterObject_tag PyArrayMultiIterObject;
@@ -1283,7 +1283,7 @@ enum {
 };
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
+#ifndef Py_TARGET_ABI3T
     PyObject_HEAD
 #endif
     /*
@@ -1327,7 +1327,7 @@ typedef struct {
     int mode;
 } PyArrayNeighborhoodIterObject_fields;
 
-#ifndef _Py_OPAQUE_PYOBJECT
+#ifndef Py_TARGET_ABI3T
 typedef PyArrayNeighborhoodIterObject_fields PyArrayNeighborhoodIterObject;
 #else
 typedef struct PyArrayNeighborhoodIterObject_tag PyArrayNeighborhoodIterObject;
@@ -1526,7 +1526,7 @@ typedef struct {
 #include "dtype_api.h"
 #include "__multiarray_api.h"
 
-#ifndef _Py_OPAQUE_PYOBJECT
+#ifndef Py_TARGET_ABI3T
 #undef _PyArray_GET_ITEM_DATA
 #define _PyArray_GET_ITEM_DATA(arr) ((PyArrayObject_fields *)(arr))
 #undef _PyArrayIter_GET_ITEM_DATA

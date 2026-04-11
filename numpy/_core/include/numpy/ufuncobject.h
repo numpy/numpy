@@ -100,7 +100,7 @@ typedef int (PyUFunc_ProcessCoreDimsFunc)(
                                 npy_intp *core_dim_sizes);
 
 typedef struct _tagPyUFuncObject {
-#ifndef _Py_OPAQUE_PYOBJECT
+#ifndef Py_TARGET_ABI3T
         PyObject_HEAD
 #endif
         /*
@@ -337,7 +337,7 @@ typedef struct _loop1d_info {
 #endif
 #endif
 
-#ifndef _Py_OPAQUE_PYOBJECT
+#ifndef Py_TARGET_ABI3T
 typedef struct _tagPyUFuncObject PyUFuncObject;
 #else
 typedef struct tagPyUFuncObject PyUFuncObject;
@@ -345,7 +345,7 @@ typedef struct tagPyUFuncObject PyUFuncObject;
 
 #include "__ufunc_api.h"
 
-#ifndef _Py_OPAQUE_PYOBJECT
+#ifndef Py_TARGET_ABI3T
 #undef _PyUFuncObject_GET_ITEM_DATA
 #define _PyUFuncObject_GET_ITEM_DATA(ufunc) ((PyUFuncObject_fields *)(ufunc))
 #endif
