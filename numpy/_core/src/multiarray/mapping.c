@@ -2755,7 +2755,7 @@ indexing_error:
  *
  * @param Index information filled by prepare_index.
  * @param Number of indices (gotten through prepare_index).
- * @param Kind of index (gotten through preprare_index).
+ * @param Kind of index (gotten through prepare_index).
  * @param NpyIter flags for an extra array. If 0 assume that there is no
  *        extra operand. NPY_ITER_ALLOCATE can make sense here.
  * @param Array being indexed

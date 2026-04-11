@@ -142,21 +142,16 @@ PyUFunc_clearfperr()
     NPY_ITER_NO_SUBTYPE | \
     NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE
 
-/* Called at module initialization to set the matmul ufunc output flags */
+/* Called at module initialization to set the matmul family gufunc output flags */
 NPY_NO_EXPORT int
 set_matmul_flags(PyObject *d)
 {
-    PyObject *matmul = NULL;
-    int result = PyDict_GetItemStringRef(d, "matmul", &matmul);
-    if (result <= 0) {
-        // caller sets an error if one isn't already set
-        return -1;
-    }
     /*
      * The default output flag NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE allows
      * perfectly overlapping input and output (in-place operations). While
      * correct for the common mathematical operations, this assumption is
-     * incorrect in the general case and specifically in the case of matmul.
+     * incorrect in the general case and specifically in the case of matmul,
+     * matvec, and vecmat.
      *
      * NPY_ITER_UPDATEIFCOPY is added by default in
      * PyUFunc_GeneralizedFunction, which is the variant called for gufuncs
@@ -164,11 +159,22 @@ set_matmul_flags(PyObject *d)
      *
      * Enabling NPY_ITER_WRITEONLY can prevent a copy in some cases.
      */
-    ((PyUFuncObject *)matmul)->op_flags[2] = (NPY_ITER_WRITEONLY |
-                                         NPY_ITER_UPDATEIFCOPY |
-                                         NPY_UFUNC_DEFAULT_OUTPUT_FLAGS) &
-                                         ~NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
-    Py_DECREF(matmul);
+    npy_uint32 flags = (NPY_ITER_WRITEONLY |
+                        NPY_ITER_UPDATEIFCOPY |
+                        NPY_UFUNC_DEFAULT_OUTPUT_FLAGS) &
+                        ~NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
+
+    const char *names[] = {"matmul", "matvec", "vecmat"};
+    for (int i = 0; i < 3; i++) {
+        PyObject *ufunc = NULL;
+        int result = PyDict_GetItemStringRef(d, names[i], &ufunc);
+        if (result <= 0) {
+            // caller sets an error if one isn't already set
+            return -1;
+        }
+        ((PyUFuncObject *)ufunc)->op_flags[2] = flags;
+        Py_DECREF(ufunc);
+    }
     return 0;
 }
 
@@ -4546,7 +4552,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     PyObject *keepdims_obj = NULL, *casting_obj = NULL, *order_obj = NULL;
     PyObject *subok_obj = NULL, *signature_obj = NULL, *sig_obj = NULL;
     PyObject *dtype_obj = NULL;
-    /* Typically, NumPy defaults to returnin scalars for 0-D results */
+    /* Typically, NumPy defaults to returning scalars for 0-D results */
     npy_bool return_scalar = NPY_TRUE;
 
     /* Skip parsing if there are no keyword arguments, nothing left to do */
@@ -4640,7 +4646,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     if ((where_obj != NULL && where_obj != Py_True)
         && (full_args.out == NULL) && (out_obj == NULL)) {
         if (PyErr_WarnEx(PyExc_UserWarning,
-                "'where' used without 'out', expect unitialized memory in output. "
+                "'where' used without 'out', expect uninitialized memory in output. "
                 "If this is intentional, use out=None.", 1) < 0) {
             goto fail;
         }
@@ -4891,7 +4897,7 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     ufunc->userloops = NULL;
     ufunc->ptr = NULL;
     ufunc->vectorcall = &ufunc_generic_vectorcall;
-    ufunc->reserved1 = 0;
+    ufunc->_ufunc_flags = 0;
     ufunc->iter_flags = 0;
 
     /* Type resolution and inner loop selection functions */
@@ -4915,7 +4921,7 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
          */
         ufunc->_dispatch_cache = NULL;
     }
-    ufunc->_loops = PyList_New(0);
+    ufunc->_loops = PyDict_New();
     if (ufunc->_loops == NULL) {
         Py_DECREF(ufunc);
         return NULL;
@@ -5243,21 +5249,18 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
      * A new-style loop should not be replaced by an old-style one.
      */
     int add_new_loop = 1;
-    for (Py_ssize_t j = 0; j < PyList_GET_SIZE(ufunc->_loops); j++) {
-        PyObject *item = PyList_GET_ITEM(ufunc->_loops, j); // noqa: borrowed-ref OK
-        PyObject *existing_tuple = PyTuple_GET_ITEM(item, 0);
-
-        int cmp = PyObject_RichCompareBool(existing_tuple, signature_tuple, Py_EQ);
-        if (cmp < 0) {
-            goto fail;
-        }
-        if (!cmp) {
-            continue;
-        }
-        PyObject *registered = PyTuple_GET_ITEM(item, 1);
-        if (!PyObject_TypeCheck(registered, &PyArrayMethod_Type) || (
-                (PyArrayMethodObject *)registered)->get_strided_loop !=
-                        &get_wrapped_legacy_ufunc_loop) {
+    PyObject *existing_item;
+    if (PyDict_GetItemRef(ufunc->_loops, signature_tuple, &existing_item) < 0) {
+        goto fail;
+    }
+    if (existing_item != NULL) {
+        PyObject *registered = PyTuple_GET_ITEM(existing_item, 1);
+        int not_compatible = (
+            !PyObject_TypeCheck(registered, &PyArrayMethod_Type) ||
+            ((PyArrayMethodObject *)registered)->get_strided_loop !=
+                &get_wrapped_legacy_ufunc_loop);
+        Py_DECREF(existing_item);
+        if (not_compatible) {
             PyErr_Format(PyExc_TypeError,
                     "A non-compatible loop was already registered for "
                     "ufunc %s and DTypes %S.",
@@ -5266,7 +5269,6 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
         }
         /* The loop was already added */
         add_new_loop = 0;
-        break;
     }
     if (add_new_loop) {
         PyObject *info = add_and_return_legacy_wrapping_ufunc_loop(

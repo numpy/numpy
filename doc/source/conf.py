@@ -70,7 +70,7 @@ def replace_scalar_type_names():
         if sys.implementation.name == 'cpython':
             c_typ.tp_name = _name_cache[typ] = b"numpy." + name.encode('utf8')
         else:
-            # It is not guarenteed that the c_typ has this model on other
+            # It is not guaranteed that the c_typ has this model on other
             # implementations
             _name_cache[typ] = b"numpy." + name.encode('utf8')
 
@@ -583,7 +583,7 @@ def linkcode_resolve(domain, info):
         fn = relpath(fn, start=dirname(numpy.__file__))
 
     if lineno:
-        linespec = "#L%d-L%d" % (lineno, lineno + len(source) - 1)
+        linespec = f"#L{lineno}-L{lineno + len(source) - 1}"
     else:
         linespec = ""
 
@@ -593,8 +593,8 @@ def linkcode_resolve(domain, info):
     if 'dev' in numpy.__version__:
         return f"https://github.com/numpy/numpy/blob/main/numpy/{fn}{linespec}"
     else:
-        return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
-           numpy.__version__, fn, linespec)
+        return (f"https://github.com/numpy/numpy/blob/v{numpy.__version__}/"
+                f"numpy/{fn}{linespec}")
 
 
 from pygments.lexer import inherit

@@ -122,6 +122,8 @@ _PyArray_SetNumericOps(PyObject *dict)
     SET(conjugate);
     SET(matmul);
     SET(clip);
+    SET(real);
+    SET(imag);
 
     // initialize static globals needed for matmul
     npy_static_pydata.axes_1d_obj_kwargs = Py_BuildValue(

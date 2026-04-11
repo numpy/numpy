@@ -7,6 +7,8 @@ import numpy.typing as npt
 from numpy._typing import _AnyShape
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 
 class SubClass[ScalarT: np.generic](np.ndarray[_AnyShape, np.dtype[ScalarT]]): ...
 
@@ -20,6 +22,20 @@ B: SubClass[np.float64]
 C: list[int]
 D: SubClass[np.float64 | np.int64]
 E: IntoSubClass[np.float64 | np.int64]
+
+_f32_0d: np.float32
+_f32_1d: _Array1D[np.float32]
+_f32_2d: _Array2D[np.float32]
+_f32_3d: _Array3D[np.float32]
+
+_py_b_1d: list[bool]
+_py_b_2d: list[list[bool]]
+_py_i_1d: list[int]
+_py_i_2d: list[list[int]]
+_py_f_1d: list[float]
+_py_f_2d: list[list[float]]
+_py_c_1d: list[complex]
+_py_c_2d: list[list[complex]]
 
 mixed_shape: tuple[int, np.int64]
 
@@ -70,9 +86,24 @@ assert_type(np.concatenate([1, 1.0], out=A), npt.NDArray[np.float64])
 
 assert_type(np.asarray(A), npt.NDArray[np.float64])
 assert_type(np.asarray(B), npt.NDArray[np.float64])
-assert_type(np.asarray([1, 1.0]), npt.NDArray[Any])
+assert_type(np.asarray(C), _Array1D[np.int_])
 assert_type(np.asarray(A, dtype=np.int64), npt.NDArray[np.int64])
 assert_type(np.asarray(A, dtype="c16"), npt.NDArray[Any])
+assert_type(np.asarray(_f32_1d), _Array1D[np.float32])
+assert_type(np.asarray(_f32_1d, dtype=np.float64), _Array1D[np.float64])
+assert_type(np.asarray(_f32_1d, dtype="f8"), _Array1D[Any])
+assert_type(np.asarray(_py_b_1d), _Array1D[np.bool_])
+assert_type(np.asarray(_py_b_2d), _Array2D[np.bool_])
+assert_type(np.asarray(_py_i_1d), _Array1D[np.int_])
+assert_type(np.asarray(_py_i_2d), _Array2D[np.int_])
+assert_type(np.asarray(_py_f_1d), _Array1D[np.float64])
+assert_type(np.asarray(_py_f_2d), _Array2D[np.float64])
+assert_type(np.asarray(_py_c_1d), _Array1D[np.complex128])
+assert_type(np.asarray(_py_c_2d), _Array2D[np.complex128])
+assert_type(np.asarray(_py_i_1d, dtype=np.float32), _Array1D[np.float32])
+assert_type(np.asarray(_py_i_1d, dtype="f4"), _Array1D[Any])
+assert_type(np.asarray(_py_i_2d, dtype=np.float32), _Array2D[np.float32])
+assert_type(np.asarray(_py_i_2d, dtype="f4"), _Array2D[Any])
 
 assert_type(np.asanyarray(A), npt.NDArray[np.float64])
 assert_type(np.asanyarray(B), SubClass[np.float64])
@@ -85,12 +116,14 @@ assert_type(np.ascontiguousarray(B), npt.NDArray[np.float64])
 assert_type(np.ascontiguousarray([1, 1.0]), npt.NDArray[Any])
 assert_type(np.ascontiguousarray(A, dtype=np.int64), npt.NDArray[np.int64])
 assert_type(np.ascontiguousarray(A, dtype="c16"), npt.NDArray[Any])
+assert_type(np.ascontiguousarray(_f32_1d), _Array1D[np.float32])
 
 assert_type(np.asfortranarray(A), npt.NDArray[np.float64])
 assert_type(np.asfortranarray(B), npt.NDArray[np.float64])
 assert_type(np.asfortranarray([1, 1.0]), npt.NDArray[Any])
 assert_type(np.asfortranarray(A, dtype=np.int64), npt.NDArray[np.int64])
 assert_type(np.asfortranarray(A, dtype="c16"), npt.NDArray[Any])
+assert_type(np.asfortranarray(_f32_1d), _Array1D[np.float32])
 
 assert_type(np.fromstring("1 1 1", sep=" "), _Array1D[np.float64])
 assert_type(np.fromstring(b"1 1 1", sep=" "), _Array1D[np.float64])
@@ -107,8 +140,14 @@ with open("test.txt") as f:
     assert_type(np.fromfile(b"test.txt", sep=" "), _Array1D[np.float64])
     assert_type(np.fromfile(Path("test.txt"), sep=" "), _Array1D[np.float64])
 
-assert_type(np.fromiter("12345", np.float64), npt.NDArray[np.float64])
-assert_type(np.fromiter("12345", float), npt.NDArray[Any])
+assert_type(np.fromiter("12345", np.float32), _Array1D[np.float32])
+assert_type(np.fromiter("12345", np.float64), _Array1D[np.float64])
+assert_type(np.fromiter("12345", bool), _Array1D[np.bool])
+assert_type(np.fromiter("12345", int), _Array1D[np.int_ | Any])
+assert_type(np.fromiter("12345", float), _Array1D[np.float64 | Any])
+assert_type(np.fromiter("12345", complex), _Array1D[np.complex128 | Any])
+assert_type(np.fromiter("12345", None), _Array1D[np.float64])
+assert_type(np.fromiter("12345", object), _Array1D[Any])
 
 assert_type(np.frombuffer(A), _Array1D[np.float64])
 assert_type(np.frombuffer(A, dtype=np.int64), _Array1D[np.int64])
@@ -236,6 +275,10 @@ assert_type(np.identity(3, dtype="complex"), np.ndarray[tuple[int, int], np.dtyp
 assert_type(np.identity(3, dtype="c16"), np.ndarray[tuple[int, int], np.dtype[np.complex128 | Any]])
 assert_type(np.identity(3, dtype="D"), np.ndarray[tuple[int, int], np.dtype[np.complex128 | Any]])
 
+assert_type(np.atleast_1d(_f32_0d), _Array1D[np.float32])
+assert_type(np.atleast_1d(_f32_1d), _Array1D[np.float32])
+assert_type(np.atleast_1d(_f32_2d), _Array2D[np.float32])
+assert_type(np.atleast_1d(_f32_3d), _Array3D[np.float32])
 assert_type(np.atleast_1d(A), npt.NDArray[np.float64])
 assert_type(np.atleast_1d(C), npt.NDArray[Any])
 assert_type(np.atleast_1d(A, A), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]])
@@ -244,10 +287,18 @@ assert_type(np.atleast_1d(C, C), tuple[npt.NDArray[Any], npt.NDArray[Any]])
 assert_type(np.atleast_1d(A, A, A), tuple[npt.NDArray[np.float64], ...])
 assert_type(np.atleast_1d(C, C, C), tuple[npt.NDArray[Any], ...])
 
+assert_type(np.atleast_2d(_f32_0d), _Array2D[np.float32])
+assert_type(np.atleast_2d(_f32_1d), _Array2D[np.float32])
+assert_type(np.atleast_2d(_f32_2d), _Array2D[np.float32])
+assert_type(np.atleast_2d(_f32_3d), _Array3D[np.float32])
 assert_type(np.atleast_2d(A), npt.NDArray[np.float64])
 assert_type(np.atleast_2d(A, A), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]])
 assert_type(np.atleast_2d(A, A, A), tuple[npt.NDArray[np.float64], ...])
 
+assert_type(np.atleast_3d(_f32_0d), _Array3D[np.float32])
+assert_type(np.atleast_3d(_f32_1d), _Array3D[np.float32])
+assert_type(np.atleast_3d(_f32_2d), _Array3D[np.float32])
+assert_type(np.atleast_3d(_f32_3d), _Array3D[np.float32])
 assert_type(np.atleast_3d(A), npt.NDArray[np.float64])
 assert_type(np.atleast_3d(A, A), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]])
 assert_type(np.atleast_3d(A, A, A), tuple[npt.NDArray[np.float64], ...])

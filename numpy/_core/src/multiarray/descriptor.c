@@ -1412,8 +1412,9 @@ descr_is_legacy_parametric_instance(PyArray_Descr *descr,
     }
     /* Flexible descr with generic time unit (which can be adapted) */
     if (PyDataType_ISDATETIME(descr)) {
-        PyArray_DatetimeMetaData *meta;
-        meta = get_datetime_metadata_from_dtype(descr);
+        _PyArray_LegacyDescr *ldescr = (_PyArray_LegacyDescr *)descr;
+        PyArray_DatetimeMetaData *meta =
+                &(((PyArray_DatetimeDTypeMetaData *)ldescr->c_metadata)->meta);
         if (meta->base == NPY_FR_GENERIC) {
             return 1;
         }
@@ -1428,12 +1429,13 @@ descr_is_legacy_parametric_instance(PyArray_Descr *descr,
  * both results can be NULL (if the input is).  But it always sets the DType
  * when a descriptor is set.
  *
+ * This function cannot fail.
+ *
  * @param dtype Input descriptor to be converted
  * @param out_descr Output descriptor
  * @param out_DType DType of the output descriptor
- * @return 0 on success -1 on failure
  */
-NPY_NO_EXPORT int
+NPY_NO_EXPORT void
 PyArray_ExtractDTypeAndDescriptor(PyArray_Descr *dtype,
         PyArray_Descr **out_descr, PyArray_DTypeMeta **out_DType)
 {
@@ -1449,7 +1451,6 @@ PyArray_ExtractDTypeAndDescriptor(PyArray_Descr *dtype,
             Py_INCREF(*out_descr);
         }
     }
-    return 0;
 }
 
 
@@ -1493,12 +1494,8 @@ PyArray_DTypeOrDescrConverterRequired(PyObject *obj, npy_dtype_info *dt_info)
      * be considered an instance with actual 0 length.
      * TODO: It would be nice to fix that eventually.
      */
-    int res = PyArray_ExtractDTypeAndDescriptor(
-                descr, &dt_info->descr, &dt_info->dtype);
+    PyArray_ExtractDTypeAndDescriptor(descr, &dt_info->descr, &dt_info->dtype);
     Py_DECREF(descr);
-    if (res < 0) {
-        return NPY_FAIL;
-    }
     return NPY_SUCCEED;
 }
 
@@ -2529,6 +2526,7 @@ arraydescr_new(PyTypeObject *subtype,
 
     PyObject *odescr;
     PyObject *oalign = NULL;
+    PyObject *ocopy = NULL;
     PyObject *metadata = NULL;
     PyArray_Descr *conv;
     npy_bool align = NPY_FALSE;
@@ -2537,21 +2535,36 @@ arraydescr_new(PyTypeObject *subtype,
 
     static char *kwlist[] = {"dtype", "align", "copy", "metadata", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O!:dtype", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OOO!:dtype", kwlist,
                 &odescr,
                 &oalign,
-                PyArray_BoolConverter, &copy,
+                &ocopy,
                 &PyDict_Type, &metadata)) {
         return NULL;
     }
 
+    if (ocopy != NULL && !PyArray_BoolConverter(ocopy, &copy)) {
+        return NULL;
+    }
     if (oalign != NULL) {
         /*
          * In the future, reject non Python (or NumPy) boolean, including integers to avoid any
          * possibility of thinking that an integer alignment makes sense here.
+         * We omit the case of `oalign == 0` and `ocopy == 1` if there are exact ints.
+         * This can fail, in which case res is -1 and we enter the deprecation path.
          */
-        if (!PyBool_Check(oalign) && !PyArray_IsScalar(oalign, Bool)) {
+        int res = 0;
+        int overflow;
+        if (!PyBool_Check(oalign) && !PyArray_IsScalar(oalign, Bool) && !(
+                // Some old pickles use 0, 1 exactly, assume no user passes it
+                // (It may also be possible to use `copyreg` instead.)
+                PyLong_CheckExact(oalign) && (res = PyLong_IsZero(oalign)) == 1 &&
+                ocopy != NULL && PyLong_CheckExact(ocopy) &&
+                (res = PyLong_AsLongAndOverflow(ocopy, &overflow)) == 1)) {
             /* Deprecated 2025-07-01: NumPy 2.4 */
+            if (res == -1 && PyErr_Occurred()) {
+                return NULL;  // Should actually be impossible (as inputs are `long`)
+            }
             if (PyErr_WarnFormat(npy_static_pydata.VisibleDeprecationWarning, 1,
                         "dtype(): align should be passed as Python or NumPy boolean but got `align=%.100R`. "
                         "Did you mean to pass a tuple to create a subarray type? (Deprecated NumPy 2.4)",

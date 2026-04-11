@@ -1,0 +1,22 @@
+Shape-typing support for many functions and methods
+---------------------------------------------------
+Many functions and methods now have shape-aware return type annotations.
+Type-checkers can now infer the number of dimensions of the returned array
+through common operations. For example, ``np.linspace(0, 1)`` is now typed
+as a 1-d ``float64`` array, and ``np.sum(x, keepdims=True)`` has the same
+number of dimensions as ``x``.
+
+This covers ``numpy.linalg`` functions, array creation functions (like
+``asarray``, ``from{buffer,string,file,iter,regex}``), range functions (``linspace``,
+``logspace``, ``geomspace``), aggregation functions and methods (``sum``,
+``mean``, ``std``, ``var``, ``min``, ``max``, ``all``, ``any``, etc.), sorting
+(``sort``, ``argsort``, ``argpartition``), cumulative operations (``cumsum``,
+``cumprod``, etc.), set operations (``unique_values``, ``intersect1d``,
+``union1d``, etc.), and various other functions including ``nonzero``,
+``transpose``, ``diagonal``, ``atleast_{1,2,3}d``, ``clip``, ``round``,
+``inner``, ``bincount``, and ``fft.fftfreq``. Several of these also gained
+more precise return dtype annotations as part of this work.
+
+Shape-typing is still a work-in-progress, so coverage is not yet complete.
+Because of limitations in Python's type system and current type-checkers,
+shape-typing is often only implemented for the most common lower-rank cases.

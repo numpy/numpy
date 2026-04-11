@@ -53,13 +53,12 @@ f"""
 {auxv}
 """, prefix='\r')
 
-    raise AssertionError((
+    raise AssertionError(
         "Failure Detection\n"
-        " NAME: '%s'\n"
-        " ACTUAL: %s\n"
-        " DESIRED: %s\n"
-        "%s"
-    ) % (fname, actual, desired, error_report))
+        f" NAME: '{fname}'\n"
+        f" ACTUAL: {actual}\n"
+        f" DESIRED: {desired}\n"
+        f"{error_report}")
 
 def _text_to_list(txt):
     out = txt.strip("][\n").replace("'", "").split(', ')
@@ -432,7 +431,7 @@ class Test_ZARCH_Features(AbstractTest):
     features = ["VX", "VXE", "VXE2"]
 
     def load_flags(self):
-        self.load_flags_auxv()
+        self.load_flags_cpuinfo("features")
 
 
 is_arm = re.match(r"^(arm|aarch64)", machine, re.IGNORECASE)

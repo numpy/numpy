@@ -161,7 +161,7 @@ class TestRegression:
         rs2 = np.random.RandomState(seed=123456789)
         assert rs1.randint(0, 100) == rs2.randint(0, 100)
 
-    def test_choice_retun_dtype(self):
+    def test_choice_return_dtype(self):
         # GH 9867, now long since the NumPy default changed.
         c = np.random.choice(10, p=[.1] * 10, size=2)
         assert c.dtype == np.dtype(np.long)

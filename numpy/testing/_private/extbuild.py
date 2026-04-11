@@ -139,8 +139,7 @@ def _make_methods(functions, modname):
             signature = '(PyObject *self, PyObject *args, PyObject *kwargs)'
         else:
             signature = '(PyObject *self, PyObject *args)'
-        methods_table.append(
-            "{\"%s\", (PyCFunction)%s, %s}," % (funcname, cfuncname, flags))
+        methods_table.append(f'{{"{funcname}", (PyCFunction){cfuncname}, {flags}}},')
         func_code = f"""
         static PyObject* {cfuncname}{signature}
         {{
@@ -149,37 +148,36 @@ def _make_methods(functions, modname):
         """
         codes.append(func_code)
 
-    body = "\n".join(codes) + """
-    static PyMethodDef methods[] = {
-    %(methods)s
-    { NULL }
-    };
-    static struct PyModuleDef moduledef = {
+    methods_str = '\n'.join(methods_table)
+    body = "\n".join(codes) + f"""
+    static PyMethodDef methods[] = {{
+    {methods_str}
+    {{ NULL }}
+    }};
+    static struct PyModuleDef moduledef = {{
         PyModuleDef_HEAD_INIT,
-        "%(modname)s",  /* m_name */
+        "{modname}",    /* m_name */
         NULL,           /* m_doc */
         -1,             /* m_size */
         methods,        /* m_methods */
-    };
-    """ % {'methods': '\n'.join(methods_table), 'modname': modname}
+    }};
+    """
     return body
 
 
 def _make_source(name, init, body):
     """ Combines the code fragments into source code ready to be compiled
     """
-    code = """
+    code = f"""
     #include <Python.h>
 
-    %(body)s
+    {body}
 
     PyMODINIT_FUNC
-    PyInit_%(name)s(void) {
-    %(init)s
-    }
-    """ % {
-        'name': name, 'init': init, 'body': body,
-    }
+    PyInit_{name}(void) {{
+    {init}
+    }}
+    """
     return code
 
 

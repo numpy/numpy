@@ -96,6 +96,9 @@ typedef struct {
      */
     PyArrayMethodObject *sort_meth;
     PyArrayMethodObject *argsort_meth;
+    /* Definition for real and imaginary parts, and the (internal) ufuncs */
+    PyBoundArrayMethodObject *real_meth;
+    PyBoundArrayMethodObject *imag_meth;
 } NPY_DType_Slots;
 
 // This must be updated if new slots before within_dtype_castingimpl

@@ -444,8 +444,16 @@ NpyDatetime_ConvertDatetime64ToDatetimeStruct(
         return -1;
     }
 
-    /* TODO: Change to a mechanism that avoids the potential overflow */
-    dt *= meta->num;
+    /* Check for overflow and apply meta->num scaling */
+    if (meta->num > 1) {
+        if (_datetime_scale_with_overflow_check(
+                &dt, (npy_int64)meta->num, 1, "datetime64") < 0) {
+            return -1;
+        }
+    }
+    else {
+        dt *= meta->num;
+    }
 
     /*
      * Note that care must be taken with the / and % operators
@@ -2559,6 +2567,16 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
                 meta->base = NPY_FR_GENERIC;
                 meta->num = 1;
             }
+            /* If output is NaT, skip this warning. */
+            if(meta->base == NPY_FR_GENERIC) {
+                if (DEPRECATE(
+                            "The 'generic' unit for NumPy timedelta is deprecated, "
+                            "and will raise an error in the future. "
+                            "This includes implicit conversion of bare integers (e.g. `+ 1`)."
+                            "Please use a specific unit instead.") < 0) {
+                    return -1;
+                }
+            }
 
             return 0;
         }
@@ -2575,6 +2593,17 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         if (error_converting(*out)) {
             return -1;
         }
+
+        if (meta->base == NPY_FR_GENERIC) {
+            if (DEPRECATE(
+                    "The 'generic' unit for NumPy timedelta is deprecated, "
+                    "and will raise an error in the future. "
+                    "This includes implicit conversion of bare integers (e.g. `+ 1`)."
+                    "Please use a specific unit instead.") < 0) {
+                return -1;
+            }
+        }
+
         return 0;
     }
     /* Timedelta scalar */
@@ -3157,13 +3186,11 @@ cast_timedelta_to_timedelta(PyArray_DatetimeMetaData *src_meta,
         return -1;
     }
 
-    /* Apply the scaling */
-    if (src_dt < 0) {
-        *dst_dt = (src_dt * num - (denom - 1)) / denom;
+    /* Apply the scaling, checking for overflow */
+    if (_datetime_scale_with_overflow_check(&src_dt, num, denom, "timedelta64") < 0) {
+        return -1;
     }
-    else {
-        *dst_dt = src_dt * num / denom;
-    }
+    *dst_dt = src_dt;
 
     return 0;
 }
@@ -4070,6 +4097,9 @@ time_to_string_resolve_descriptors(
         loop_descrs[1] = PyArray_DescrNewFromType(dtypes[1]->type_num);
         if (loop_descrs[1] == NULL) {
             return -1;
+        }
+        if (given_descrs[1] != NULL) {
+            size = (size < given_descrs[1]->elsize) ? size : given_descrs[1]->elsize;
         }
         loop_descrs[1]->elsize = size;
     }
