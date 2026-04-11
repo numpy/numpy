@@ -663,8 +663,13 @@ class TestMultiply:
         # change.
         accepted_types = set(np.typecodes["AllInteger"])
         deprecated_types = {'?'}
+        datetime_types = set(np.typecodes['Datetime'])
         forbidden_types = (
-            set(np.typecodes["All"]) - accepted_types - deprecated_types)
+            set(np.typecodes["All"])
+            - accepted_types
+            - deprecated_types
+            - datetime_types
+        )
         forbidden_types -= {'V'}  # can't default-construct void scalars
 
         for seq_type in (list, tuple):
@@ -681,6 +686,11 @@ class TestMultiply:
 
             for numpy_type in forbidden_types:
                 i = np.dtype(numpy_type).type()
+                assert_raises(TypeError, operator.mul, seq, i)
+                assert_raises(TypeError, operator.mul, i, seq)
+
+            for numpy_type in datetime_types:
+                i = np.dtype(numpy_type).type(1, "D")
                 assert_raises(TypeError, operator.mul, seq, i)
                 assert_raises(TypeError, operator.mul, i, seq)
 

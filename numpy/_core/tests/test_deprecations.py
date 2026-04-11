@@ -408,6 +408,9 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
     ):
         self.assert_deprecated(op, args=(value, generic_value))
 
+    def test_raise_warning_for_default_constructor(self):
+        self.assert_deprecated(lambda: np.timedelta64())
+
 
 class TestTriDeprecationWithNonInteger(_DeprecationTestCase):
     # Deprecation in NumPy 2.5, 2026-03
