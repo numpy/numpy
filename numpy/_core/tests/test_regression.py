@@ -2317,7 +2317,7 @@ class TestRegression:
         all_types = set(np._core.sctypeDict.values()) - {np.void}
         for t in all_types:
             if t is np.timedelta64:
-                val = t(1, 's')
+                val = t(0, 's')
             else:
                 val = t()
 
