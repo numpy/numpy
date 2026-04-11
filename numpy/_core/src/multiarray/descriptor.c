@@ -2544,6 +2544,7 @@ arraydescr_new(PyTypeObject *subtype,
 
     PyObject *odescr;
     PyObject *oalign = NULL;
+    PyObject *ocopy = NULL;
     PyObject *metadata = NULL;
     PyArray_Descr *conv;
     npy_bool align = NPY_FALSE;
@@ -2552,21 +2553,36 @@ arraydescr_new(PyTypeObject *subtype,
 
     static char *kwlist[] = {"dtype", "align", "copy", "metadata", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O!:dtype", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OOO!:dtype", kwlist,
                 &odescr,
                 &oalign,
-                PyArray_BoolConverter, &copy,
+                &ocopy,
                 &PyDict_Type, &metadata)) {
         return NULL;
     }
 
+    if (ocopy != NULL && !PyArray_BoolConverter(ocopy, &copy)) {
+        return NULL;
+    }
     if (oalign != NULL) {
         /*
          * In the future, reject non Python (or NumPy) boolean, including integers to avoid any
          * possibility of thinking that an integer alignment makes sense here.
+         * We omit the case of `oalign == 0` and `ocopy == 1` if there are exact ints.
+         * This can fail, in which case res is -1 and we enter the deprecation path.
          */
-        if (!PyBool_Check(oalign) && !PyArray_IsScalar(oalign, Bool)) {
+        int res = 0;
+        int overflow;
+        if (!PyBool_Check(oalign) && !PyArray_IsScalar(oalign, Bool) && !(
+                // Some old pickles use 0, 1 exactly, assume no user passes it
+                // (It may also be possible to use `copyreg` instead.)
+                PyLong_CheckExact(oalign) && (res = PyLong_IsZero(oalign)) == 1 &&
+                ocopy != NULL && PyLong_CheckExact(ocopy) &&
+                (res = PyLong_AsLongAndOverflow(ocopy, &overflow)) == 1)) {
             /* Deprecated 2025-07-01: NumPy 2.4 */
+            if (res == -1 && PyErr_Occurred()) {
+                return NULL;  // Should actually be impossible (as inputs are `long`)
+            }
             if (PyErr_WarnFormat(npy_static_pydata.VisibleDeprecationWarning, 1,
                         "dtype(): align should be passed as Python or NumPy boolean but got `align=%.100R`. "
                         "Did you mean to pass a tuple to create a subarray type? (Deprecated NumPy 2.4)",
