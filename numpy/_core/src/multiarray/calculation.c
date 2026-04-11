@@ -829,7 +829,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
 {
     if (PyArray_ISCOMPLEX(self) || PyArray_ISOBJECT(self) ||
-            PyArray_ISUSERDEF(self)) {
+            PyArray_ISUSERDEF(self) || !NPY_DT_is_legacy(PyArray_DESCR(self))) {
         if (out == NULL) {
             return PyArray_GenericUnaryFunction(self,
                                                 n_ops.conjugate);
