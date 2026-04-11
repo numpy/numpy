@@ -336,7 +336,7 @@ def test_truediv(Poly):
         s = stype(5, 'D')
         with pytest.warns(
             DeprecationWarning,
-            match="Using 'generic' unit for NumPy timedelta is deprecated",
+            match="The 'generic' unit for NumPy timedelta is deprecated",
         ):
             assert_poly_almost_equal(op.truediv(p2, s), p1)
         assert_raises(TypeError, op.truediv, s, p2)

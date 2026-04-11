@@ -1784,7 +1784,7 @@ class TestNonzero:
                 elif dt == 'm':
                     with pytest.warns(
                         DeprecationWarning,
-                        match="Using 'generic' unit for NumPy timedelta is deprecated",
+                        match="The 'generic' unit for NumPy timedelta is deprecated",
                     ):
                         m = np.zeros((3, 3), dtype=dt)
                         n = np.ones(1, dtype=dt)

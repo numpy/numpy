@@ -2873,7 +2873,7 @@ def test_ufunc_types(ufunc):
         if 'm' in inp:
             with pytest.warns(
                 DeprecationWarning,
-                match="Using 'generic' unit for NumPy timedelta is deprecated",
+                match="The 'generic' unit for NumPy timedelta is deprecated",
             ):
                 args = [np.ones((3, 3), t) for t in inp]
         else:

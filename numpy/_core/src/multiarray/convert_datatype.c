@@ -993,10 +993,8 @@ PyArray_FindConcatenationDescriptor(
 
     PyArray_DTypeMeta *common_dtype;
     PyArray_Descr *result = NULL;
-    if (PyArray_ExtractDTypeAndDescriptor(
-            requested_dtype, &result, &common_dtype) < 0) {
-        return NULL;
-    }
+    PyArray_ExtractDTypeAndDescriptor(
+            requested_dtype, &result, &common_dtype);
     if (result != NULL) {
         if (PyDataType_SUBARRAY(result) != NULL) {
             PyErr_Format(PyExc_TypeError,

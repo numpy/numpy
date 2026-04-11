@@ -223,7 +223,7 @@ typedef struct _tagPyUFuncObject {
     #if NPY_FEATURE_VERSION >= NPY_1_22_API_VERSION
         /* New private fields related to dispatching */
         void *_dispatch_cache;
-        /* A PyListObject of `(tuple of DTypes, ArrayMethod/Promoter)` */
+        /* Ordered dict `tuple of DTypes -> (tuple of DTypes, ArrayMethod/Promoter)` */
         PyObject *_loops;
     #endif
     #if NPY_FEATURE_VERSION >= NPY_2_1_API_VERSION

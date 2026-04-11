@@ -5111,6 +5111,26 @@ def test_bad_legacy_gufunc_silent_errors(x1):
         ncu_tests.always_error_gufunc(x1, 0.0)
 
 
+class TestReplaceLoopBySignature:
+    """Tests for PyUFunc_ReplaceLoopBySignature C API."""
+
+    @pytest.mark.thread_unsafe(reason="modifies ufunc within test")
+    def test_replace_loop(self):
+        # Call the ufunc first to populate any internal dispatch caches,
+        # then replace the float64 loop with one that outputs 42.0,
+        # verify the replacement is used, and restore the original.
+        a = np.array([1.0, 2.0, 3.0])
+        assert_array_equal(np.negative(a), [-1.0, -2.0, -3.0])
+
+        saved = ncu_tests.replace_loop(np.negative)
+        try:
+            assert_array_equal(np.negative(a), [42.0, 42.0, 42.0])
+        finally:
+            ncu_tests.restore_loop(np.negative, saved)
+
+        assert_array_equal(np.negative(a), [-1.0, -2.0, -3.0])
+
+
 class TestAddDocstring:
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
     def test_add_same_docstring(self):

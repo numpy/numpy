@@ -1,1 +1,1 @@
-delvewheel==1.11.2 ; sys_platform == 'win32'
+delvewheel==1.12.0 ; sys_platform == 'win32'

@@ -1693,7 +1693,7 @@ _array_fromobject_generic(
     flags |= NPY_ARRAY_FORCECAST;
 
     ret = (PyArrayObject *)PyArray_CheckFromAny_int(
-            op, dtype, in_DType, 0, ndmax, flags, NULL);
+            op, dtype, in_DType, 0, ndmax, flags);
 
 finish:
     Py_XDECREF(dtype);

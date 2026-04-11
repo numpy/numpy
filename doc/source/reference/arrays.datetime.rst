@@ -284,6 +284,8 @@ Datetime units
 The Datetime and Timedelta data types support a large number of time
 units, as well as generic units which can be coerced into any of the
 other units based on input data.
+The generic units are deprecated since NumPy 2.5
+and will raise an error in the future. Migration guidance is provided in the `migration guide for deprecation of generic units`_ section below.
 
 Datetimes are always stored with
 an epoch of 1970-01-01T00:00. This means the supported dates are
@@ -344,6 +346,12 @@ The protocol is described in the following table:
     Y/M (Non-linear units)                 `datetime.date`                       ``int``
         Generic units                      `datetime.date`                       ``int``
 ================================ ================================= ==================================
+
+
+.. deprecated:: 2.5
+  The generic units of `timedelta64` are deprecated since NumPy 2.5 and
+  will raise an error in the future.
+
 
 .. admonition:: Example
 
@@ -635,3 +643,46 @@ given below.
       A 472, by Stephenson et.al. <https://doi.org/10.1098/rspa.2016.0404>`_. A
       sensible estimate is `50491112870 ± 90` seconds, with a difference of 10330
       seconds.
+
+
+.. _migration_guide_generic_units:
+
+Migration guide for deprecation of generic units
+================================================
+
+The generic units of `timedelta64` are deprecated since NumPy 2.5 
+and will raise an error in the future.
+This section provides guidance on how to update code
+that uses generic units of `timedelta64` to avoid future errors.
+
+The straight forward way is to replace the generic unit with a specific time unit such as 'D' (day), 'h' (hour), 'm' (minute), 's' (second), etc. The choice of the specific time unit will depend on the context of your code and the level of precision you require.
+
+
+.. admonition:: Example
+
+  .. try_examples::
+
+    >>> import numpy as np
+
+    >>> # Old code using generic units of timedelta64
+    >>> np.timedelta64(5, "s") + 1
+    DeprecationWarning: The 'generic' unit for NumPy timedelta is deprecated, and will raise an error in the future. This includes implicit conversion of bare integers (e.g. `+ 1`).Please use a specific unit instead.
+
+    >>> # Updated code using a specific time unit
+    >>> np.timedelta64(5, "s") + np.timedelta64(1, "s")
+    np.timedelta64(6,'s')
+
+
+    When comparing `timedelta64` objects, make sure to use the same specific time unit for both operands even if they are representing ``0``.
+
+    >>> np.timedelta64(0, "s") == 0
+    DeprecationWarning: The 'generic' unit for NumPy timedelta is deprecated, and will raise an error in the future. This includes implicit conversion of bare integers (e.g. `== 0`).Please use a specific unit instead.
+    np.True_
+
+    >>> np.timedelta64(0, "s") == np.timedelta64(0, "s")
+    np.True_
+
+    When using ``numpy.testing.assert_allclose`` to compare `timedelta64` objects, ensure to set a specific time unit to ``atol`` parameter as well.
+
+    >>> arr = np.ones(5, dtype='m8[s]')
+    >>> np.testing.assert_allclose(arr, np.timedelta64(1, "s"), atol=np.timedelta64(0, "s"))
