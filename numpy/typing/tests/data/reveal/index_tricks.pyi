@@ -16,6 +16,8 @@ AR_i8: npt.NDArray[np.int64]
 AR_f4: npt.NDArray[np.float32]
 AR_O: npt.NDArray[np.object_]
 
+type _intp_1d = np.ndarray[tuple[int], np.dtype[np.intp]]
+
 assert_type(np.ndenumerate(AR_i8), np.ndenumerate[np.int64])
 assert_type(np.ndenumerate(AR_LIKE_f), np.ndenumerate[np.float64])
 assert_type(np.ndenumerate(AR_LIKE_U), np.ndenumerate[np.str_])
@@ -128,7 +130,11 @@ assert_type(np.ix_(AR_LIKE_U), tuple[npt.NDArray[np.str_], ...])
 
 assert_type(np.fill_diagonal(AR_i8, 5), None)
 
-assert_type(np.diag_indices(4), tuple[npt.NDArray[np.int_], ...])
-assert_type(np.diag_indices(2, 3), tuple[npt.NDArray[np.int_], ...])
+assert_type(np.diag_indices(4), tuple[_intp_1d, _intp_1d])
+assert_type(np.diag_indices(4, 0), tuple[()])
+assert_type(np.diag_indices(4, 1), tuple[_intp_1d])
+assert_type(np.diag_indices(4, 2), tuple[_intp_1d, _intp_1d])
+assert_type(np.diag_indices(4, 3), tuple[_intp_1d, _intp_1d, _intp_1d])
+assert_type(np.diag_indices(4, 4), tuple[_intp_1d, ...])
 
 assert_type(np.diag_indices_from(AR_i8), tuple[npt.NDArray[np.int_], ...])
