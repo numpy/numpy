@@ -836,9 +836,20 @@ class TestRandomDist:
 
     def test_choice_nonuniform_noreplace(self):
         random = Generator(MT19937(self.seed))
-        actual = random.choice(4, 3, replace=False, p=[0.1, 0.3, 0.5, 0.1])
+        actual = random.choice(
+            4, 3, replace=False, p=[0.1, 0.3, 0.5, 0.1], shuffle=False
+        )
         desired = np.array([0, 2, 3], dtype=np.int64)
         assert_array_equal(actual, desired)
+
+    def test_choice_nonuniform_noreplace_shuffle(self):
+        p = np.ones(1000) / 1000
+        random = Generator(MT19937(self.seed))
+        actual = random.choice(1000, 200, replace=False, p=p, shuffle=True)
+        random = Generator(MT19937(self.seed))
+        desired = random.choice(1000, 200, replace=False, p=p, shuffle=False)
+        assert_(not np.array_equal(actual, desired))
+        assert_array_equal(np.sort(actual), np.sort(desired))
 
     def test_choice_noninteger(self):
         random = Generator(MT19937(self.seed))

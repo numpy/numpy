@@ -946,6 +946,11 @@ cdef class Generator:
                     new = new.take(unique_indices)
                     flat_found[n_uniq:n_uniq + new.size] = new
                     n_uniq += new.size
+                if shuffle:
+                    size_i = size
+                    idx_data = <int64_t*>np.PyArray_DATA(<np.ndarray>found)
+                    with self.lock, nogil:
+                        _shuffle_int(&self._bitgen, size_i, 1, idx_data)
                 idx = found
             else:
                 size_i = size
