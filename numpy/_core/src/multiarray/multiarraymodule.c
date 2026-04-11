@@ -4518,6 +4518,18 @@ _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
     Py_RETURN_NONE;
 }
 
+static PyObject *
+keep_0d(PyObject *self, PyObject *args)
+{
+    void PyArray_SetKeep0D(int value);
+    
+    int value;
+    if (!PyArg_ParseTuple(args, "i", &value)) {
+        return NULL;
+    }
+    PyArray_SetKeep0D(value);
+    Py_RETURN_NONE;
+}
 
 static struct PyMethodDef array_module_methods[] = {
     {"_get_implementing_args",
@@ -4732,6 +4744,8 @@ static struct PyMethodDef array_module_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"_unique_hash",  (PyCFunction)array__unique_hash,
         METH_FASTCALL | METH_KEYWORDS, "Collect unique values via a hash map."},
+    {"PyArray_SetKeep0D", keep_0d, 
+        METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 

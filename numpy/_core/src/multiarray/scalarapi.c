@@ -601,7 +601,13 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
     return obj;
 }
 
-/* Return Array Scalar if 0-d array object is encountered */
+int NPY_KEEP_0D = 0;
+void
+PyArray_SetKeep0D(int value)
+{
+    NPY_KEEP_0D = value;
+}
+/* Return Array Scalar if 0-d array object is encountered and NPY_PRESERVE_0D is non-zero */
 
 /*NUMPY_API
  *
@@ -623,7 +629,7 @@ PyArray_Return(PyArrayObject *mp)
     if (!PyArray_Check(mp)) {
         return (PyObject *)mp;
     }
-    if (PyArray_NDIM(mp) == 0) {
+    if (PyArray_NDIM(mp) == 0 && !NPY_KEEP_0D) {
         PyObject *ret;
         ret = PyArray_ToScalar(PyArray_DATA(mp), mp);
         Py_DECREF(mp);

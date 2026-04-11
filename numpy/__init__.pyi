@@ -7676,3 +7676,7 @@ def from_dlpack(
     device: L["cpu"] | None = None,
     copy: py_bool | None = None,
 ) -> NDArray[number | bool_]: ...
+
+
+from typing import ContextManager
+def keep_0D() -> ContextManager[None]: ...

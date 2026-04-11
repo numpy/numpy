@@ -914,6 +914,9 @@ else:
         from pathlib import Path
         return [str(Path(__file__).with_name("_pyinstaller").resolve())]
 
+from numpy._utils.keep import keep_0D
+keep_0D.__module__ = "numpy"
+__all__.append("keep_0D")
 
 # Remove symbols imported for internal use
 del os, sys, warnings
