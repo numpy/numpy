@@ -1429,7 +1429,6 @@ fail:
  * @param requested_dtype a requested dtype instance, may be NULL; The result
  *                       DType may be used, but is not enforced.
  * @param writeable whether the result must be writeable.
- * @param context Unused parameter, must be NULL (should be removed later).
  * @param copy Specifies the copy behavior.
  * @param was_copied_by__array__ Set to 1 if it can be assumed that a copy
  *        was made by implementor.
@@ -1440,7 +1439,7 @@ fail:
  */
 NPY_NO_EXPORT PyObject *
 _array_from_array_like(PyObject *op,
-        PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context,
+        PyArray_Descr *requested_dtype, npy_bool writeable,
         int copy, int *was_copied_by__array__) {
     PyObject* tmp;
 
@@ -1520,18 +1519,18 @@ NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                 int max_depth, int flags, PyObject *context)
 {
+    if (context != NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "'context' must be NULL");
+        Py_XDECREF(newtype);
+        return NULL;
+    }
+
     npy_dtype_info dt_info = {NULL, NULL};
 
-    int res = PyArray_ExtractDTypeAndDescriptor(
+    PyArray_ExtractDTypeAndDescriptor(
         newtype, &dt_info.descr, &dt_info.dtype);
 
     Py_XDECREF(newtype);
-
-    if (res < 0) {
-        Py_XDECREF(dt_info.descr);
-        Py_XDECREF(dt_info.dtype);
-        return NULL;
-    }
 
     /*
      * The internal implementation treats 0 as actually wanting a zero-dimensional
@@ -1546,7 +1545,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     int was_scalar;
     PyObject* ret =  PyArray_FromAny_int(
             op, dt_info.descr, dt_info.dtype,
-            min_depth, max_depth, flags, context, &was_scalar);
+            min_depth, max_depth, flags, &was_scalar);
 
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
@@ -1568,22 +1567,28 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
                     PyArray_DTypeMeta *in_DType, int min_depth, int max_depth,
-                    int flags, PyObject *context, int *was_scalar)
+                    int flags, int *was_scalar)
 {
     /*
      * This is the main code to make a NumPy array from a Python
      * Object.  It is called from many different places.
      */
+
+    /*
+     * Fast path: op is already an ndarray with no dtype, flags, or depth
+     * constraints.  Avoids DiscoverDTypeAndShape + PyArray_CanCastArrayTo.
+     */
+    if (in_descr == NULL && in_DType == NULL && flags == 0
+            && min_depth == 0 && PyArray_Check(op)) {
+        *was_scalar = 0;
+        return Py_NewRef(op);
+    }
+
     PyArrayObject *arr = NULL, *ret = NULL;
     PyArray_Descr *dtype = NULL;
     coercion_cache_obj *cache = NULL;
     int ndim = 0;
     npy_intp dims[NPY_MAXDIMS];
-
-    if (context != NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "'context' must be NULL");
-        return NULL;
-    }
 
     // Default is copy = None
     int copy = -1;
@@ -1817,18 +1822,18 @@ NPY_NO_EXPORT PyObject *
 PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
                      int max_depth, int requirements, PyObject *context)
 {
+    if (context != NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "'context' must be NULL");
+        Py_XDECREF(descr);
+        return NULL;
+    }
+
     npy_dtype_info dt_info = {NULL, NULL};
 
-    int res = PyArray_ExtractDTypeAndDescriptor(
+    PyArray_ExtractDTypeAndDescriptor(
         descr, &dt_info.descr, &dt_info.dtype);
 
     Py_XDECREF(descr);
-
-    if (res < 0) {
-        Py_XDECREF(dt_info.descr);
-        Py_XDECREF(dt_info.dtype);
-        return NULL;
-    }
 
     /* See comment in PyArray_FromAny for rationale */
     if (max_depth == 0 || max_depth > NPY_MAXDIMS) {
@@ -1836,8 +1841,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
     }
 
     PyObject* ret =  PyArray_CheckFromAny_int(
-        op, dt_info.descr, dt_info.dtype, min_depth, max_depth, requirements,
-        context);
+        op, dt_info.descr, dt_info.dtype, min_depth, max_depth, requirements);
 
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
@@ -1851,7 +1855,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
 NPY_NO_EXPORT PyObject *
 PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
                          PyArray_DTypeMeta *in_DType, int min_depth,
-                         int max_depth, int requirements, PyObject *context)
+                         int max_depth, int requirements)
 {
     PyObject *obj;
     Py_XINCREF(in_descr);  /* take ownership as we may replace it */
@@ -1870,7 +1874,7 @@ PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
 
     int was_scalar;
     obj = PyArray_FromAny_int(op, in_descr, in_DType, min_depth,
-                              max_depth, requirements, context, &was_scalar);
+                              max_depth, requirements, &was_scalar);
     Py_XDECREF(in_descr);
     if (obj == NULL) {
         return NULL;
@@ -3001,17 +3005,11 @@ PyArray_Zeros(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
 {
     npy_dtype_info dt_info = {NULL, NULL};
 
-    int res = PyArray_ExtractDTypeAndDescriptor(
+    PyArray_ExtractDTypeAndDescriptor(
         type, &dt_info.descr, &dt_info.dtype);
 
     // steal reference
     Py_XDECREF(type);
-
-    if (res < 0) {
-        Py_XDECREF(dt_info.descr);
-        Py_XDECREF(dt_info.dtype);
-        return NULL;
-    }
 
     PyObject *ret = PyArray_Zeros_int(nd, dims, dt_info.descr, dt_info.dtype,
                                       is_f_order);
@@ -3066,15 +3064,11 @@ PyArray_Empty(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
 {
     npy_dtype_info dt_info = {NULL, NULL};
 
-    int res = PyArray_ExtractDTypeAndDescriptor(
+    PyArray_ExtractDTypeAndDescriptor(
         type, &dt_info.descr, &dt_info.dtype);
 
     // steal reference
     Py_XDECREF(type);
-
-    if (res < 0) {
-        return NULL;
-    }
 
     PyObject *ret = PyArray_Empty_int(
         nd, dims, dt_info.descr, dt_info.dtype, is_f_order);
