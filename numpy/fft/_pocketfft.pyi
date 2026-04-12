@@ -28,7 +28,7 @@ type _NormKind = L["backward", "ortho", "forward"] | None
 
 ###
 
-# keep in sync with `ifft` below
+# keep in sync with `ifft`
 @overload  # Nd complexfloating
 def fft[ShapeT: _Shape, DTypeT: np.dtype[np.complexfloating]](
     a: np.ndarray[ShapeT, DTypeT],
@@ -111,7 +111,7 @@ def fft[ArrayT: NDArray[np.complexfloating]](
     out: ArrayT,
 ) -> ArrayT: ...
 
-# keep in sync with `fft` above
+# keep in sync with `fft`
 @overload  # Nd complexfloating
 def ifft[ShapeT: _Shape, DTypeT: np.dtype[np.complexfloating]](
     a: np.ndarray[ShapeT, DTypeT],
@@ -194,7 +194,7 @@ def ifft[ArrayT: NDArray[np.complexfloating]](
     out: ArrayT,
 ) -> ArrayT: ...
 
-#
+# keep in sync with `ihfft`
 @overload  # Nd float64 | +integer
 def rfft[ShapeT: _Shape](
     a: np.ndarray[ShapeT, np.dtype[np.float64 | np.integer | np.bool]],
@@ -261,7 +261,7 @@ def rfft[ArrayT: NDArray[np.complexfloating]](
     out: ArrayT,
 ) -> ArrayT: ...
 
-#
+# keep in sync with `hfft`
 @overload  # Nd floating
 def irfft[ShapeT: _Shape, DTypeT: np.dtype[np.floating]](
     a: np.ndarray[ShapeT, DTypeT],
@@ -344,14 +344,88 @@ def irfft[ArrayT: NDArray[np.floating]](
     out: ArrayT,
 ) -> ArrayT: ...
 
-# Input array must be compatible with `conjugate`
+# keep in sync with `irfft` above
+@overload  # Nd floating
+def hfft[ShapeT: _Shape, DTypeT: np.dtype[np.floating]](
+    a: np.ndarray[ShapeT, DTypeT],
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    out: None = None,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # Nd complex128 | +integer
+def hfft[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.complex128 | np.integer | np.bool]],
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    out: None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # Nd complex64
+def hfft[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.complex64]],
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    out: None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
+@overload  # Nd clongdouble
+def hfft[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.clongdouble]],
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    out: None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.longdouble]]: ...
+@overload  # 1d +complex
+def hfft(
+    a: Sequence[complex],
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    out: None = None,
+) -> np.ndarray[tuple[int], np.dtype[np.float64]]: ...
+@overload  # 2d +complex
+def hfft(
+    a: Sequence[Sequence[complex]],
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    out: None = None,
+) -> np.ndarray[tuple[int, int], np.dtype[np.float64]]: ...
+@overload  # ?d floating
+def hfft[ScalarT: np.floating](
+    a: _ArrayLike[ScalarT],
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    out: None = None,
+) -> NDArray[ScalarT]: ...
+@overload  # ?d +complex | complex128 | +integer
+def hfft(
+    a: _DualArrayLike[np.dtype[np.complex128 | np.integer | np.bool], complex],
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    out: None = None,
+) -> NDArray[np.float64]: ...
+@overload  # fallback
 def hfft(
     a: _ArrayLikeNumber_co,
     n: int | None = None,
     axis: int = -1,
     norm: _NormKind = None,
-    out: NDArray[float64] | None = None,
-) -> NDArray[float64]: ...
+    out: None = None,
+) -> NDArray[np.floating]: ...
+@overload  # out: <given>
+def hfft[ArrayT: NDArray[np.floating]](
+    a: _ArrayLikeNumber_co,
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    *,
+    out: ArrayT,
+) -> ArrayT: ...
 
 def ihfft(
     a: ArrayLike,
