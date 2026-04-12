@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from collections.abc import Container, Iterable
 from typing import Any, Literal as L, Protocol, overload, type_check_only
 from typing_extensions import deprecated
@@ -10,6 +9,7 @@ from numpy._typing import (
     _16Bit,
     _32Bit,
     _64Bit,
+    _AnyShape,
     _ArrayLike,
     _NestedSequence,
     _ScalarLike_co,
@@ -95,46 +95,110 @@ def iscomplexobj(x: _HasDType[Any] | ArrayLike) -> bool: ...
 def isrealobj(x: _HasDType[Any] | ArrayLike) -> bool: ...
 
 #
-@overload
-def nan_to_num[ScalarT: np.generic](
-    x: ScalarT,
+@overload  # np.generic | np.ndarray  (`ndarray` subclasses pass through)
+def nan_to_num[ScalarOrArrayT: np.generic | np.ndarray](
+    x: ScalarOrArrayT,
     copy: bool = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
-) -> ScalarT: ...
-@overload
+) -> ScalarOrArrayT: ...
+@overload  # >0-d <known dtype>
 def nan_to_num[ScalarT: np.generic](
-    x: NDArray[ScalarT] | _NestedSequence[_ArrayLike[ScalarT]],
+    x: _NestedSequence[_ArrayLike[ScalarT]],
     copy: bool = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
 ) -> NDArray[ScalarT]: ...
-@overload
-def nan_to_num[ScalarT: np.generic](
-    x: _SupportsArray[np.dtype[ScalarT]],
+@overload  # ?-d <known dtype>
+def nan_to_num[DTypeT: np.dtype](
+    x: _SupportsArray[DTypeT],
     copy: bool = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
-) -> ScalarT | NDArray[ScalarT]: ...
-@overload
+) -> np.ndarray[_AnyShape, DTypeT] | Any: ...
+@overload  # 0-d ~bool
+def nan_to_num(
+    x: bool,
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> np.bool: ...
+@overload  # 0-d +int
+def nan_to_num(
+    x: int,
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> np.int_ | Any: ...
+@overload  # 0-d +float
+def nan_to_num(
+    x: float,
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> np.float64 | Any: ...
+@overload  # 0-d +complex
+def nan_to_num(
+    x: complex,
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> np.complex128 | Any: ...
+@overload  # >0-d ~bool
+def nan_to_num(
+    x: _NestedSequence[bool],
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> NDArray[np.bool]: ...
+@overload  # >0-d ~int
+def nan_to_num(
+    x: _NestedSequence[list[int]] | list[int],
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> NDArray[np.int_]: ...
+@overload  # >0-d ~float
+def nan_to_num(
+    x: _NestedSequence[list[float]] | list[float],
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> NDArray[np.float64]: ...
+@overload  # >0-d ~complex
+def nan_to_num(
+    x: _NestedSequence[list[complex]] | list[complex],
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> NDArray[np.complex128]: ...
+@overload  # >0-d <unknown dtype>
 def nan_to_num(
     x: _NestedSequence[ArrayLike],
     copy: bool = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
-) -> NDArray[Incomplete]: ...
-@overload
+) -> np.ndarray: ...
+@overload  # ?-d <unknown dtype>
 def nan_to_num(
     x: ArrayLike,
     copy: bool = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
-) -> Incomplete: ...
+) -> np.ndarray | Any: ...
 
 #
 @overload
