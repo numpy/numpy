@@ -259,6 +259,16 @@ class TestDeprecatedArrayAttributeSetting(_DeprecationTestCase):
         x = np.eye(2)
         self.assert_deprecated(setattr, args=(x, "shape", (4, 1)))
 
+    def test_view_no_deprecation_on_subclass_with_setattr(self):
+        # gh-31192
+        class SubArray(np.ndarray):
+            def __setattr__(self, name, value):
+                super().__setattr__(name, value)
+
+        a = np.array([1, 2, 3]).view(SubArray)
+        self.assert_not_deprecated(lambda: a.view(np.int8))
+        assert a.view(np.int8).dtype == np.int8
+
 class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
     message = "Passing in a parenthesized single number"
 

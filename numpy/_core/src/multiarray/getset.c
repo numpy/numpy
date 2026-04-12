@@ -29,6 +29,8 @@
 #include "multiarraymodule.h"
 #include "array_api_standard.h"
 
+NPY_NO_EXPORT int _numpy_view_dtype_set_in_progress = 0;
+
 /*******************  array attribute get and set routines ******************/
 
 static PyObject *
@@ -512,10 +514,13 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
         return -1;
     }
 
-    if (non_unique_reference((PyObject *)self)) {
-         // this will not emit deprecation warnings for all cases, but for most it will
-         // we skip unique references, so that we will not get a deprecation warning
-         // when array.view(new_dtype) is called
+    /*
+     * Skip the deprecation when PyArray_View is setting .dtype internally
+     * Subclass __setattr__ adds extra refcounts during dispatch, which
+     * makes non_unique_reference() give a false positive (gh-31192).
+     */
+    if (!_numpy_view_dtype_set_in_progress
+            && non_unique_reference((PyObject *)self)) {
          /* DEPRECATED 2026-02-06, NumPy 2.5 */
          int ret = PyErr_WarnEx(PyExc_DeprecationWarning,
                     "Setting the dtype on a NumPy array has been deprecated in NumPy 2.5.\n"

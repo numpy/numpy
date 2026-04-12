@@ -23,6 +23,7 @@
 
 #include "convert.h"
 #include "array_coercion.h"
+#include "getset.h"
 #include "refcount.h"
 
 #if defined(HAVE_FALLOCATE) && defined(__linux__)
@@ -558,8 +559,11 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
     }
 
     if (type != NULL) {
-        if (PyObject_SetAttrString((PyObject *)ret, "dtype",
-                                   (PyObject *)type) < 0) {
+        _numpy_view_dtype_set_in_progress = 1;
+        int set_ret = PyObject_SetAttrString((PyObject *)ret, "dtype",
+                                             (PyObject *)type);
+        _numpy_view_dtype_set_in_progress = 0;
+        if (set_ret < 0) {
             Py_DECREF(ret);
             Py_DECREF(type);
             return NULL;
