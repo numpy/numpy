@@ -2692,7 +2692,7 @@ class TestUfuncs:
         assert_(amask.min(1)[0].mask)
 
     def test_ndarray_mask(self):
-        # Check that the mask of the result is a ndarray (not a MaskedArray...)
+        # Check that the mask of the result is an ndarray (not a MaskedArray...)
         a = masked_array([-1, 0, 1, 2, 3], mask=[0, 0, 0, 0, 1])
         test = np.sqrt(a)
         control = masked_array([-1, 0, 1, np.sqrt(2), -1],
@@ -4305,7 +4305,7 @@ class TestMaskedArrayMathMethods:
             method(out=mout)
             assert_(mout is not masked)
             assert_equal(mout.mask, True)
-            # Using a ndarray as explicit output
+            # Using an ndarray as explicit output
             method(out=nout)
             assert_(np.isnan(nout))
 
@@ -4320,7 +4320,7 @@ class TestMaskedArrayMathMethods:
             method(out=mout, ddof=1)
             assert_(mout is not masked)
             assert_equal(mout.mask, True)
-            # Using a ndarray as explicit output
+            # Using an ndarray as explicit output
             method(out=nout, ddof=1)
             assert_(np.isnan(nout))
 
@@ -4974,7 +4974,7 @@ class TestMaskedArrayFunctions:
         test = make_mask(mask)
         assert_equal(test.dtype, MaskType)
         assert_equal(test, [0, 1])
-        # w/ a ndarray as an input
+        # w/ an ndarray as an input
         mask = np.array([0, 1], dtype=bool)
         test = make_mask(mask)
         assert_equal(test.dtype, MaskType)

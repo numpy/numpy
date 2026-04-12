@@ -321,7 +321,7 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     Positive infinity is treated as a very large number and negative
     infinity is treated as a very small (i.e. negative) number.
 
-    If the input has a integer type the function is equivalent to np.min.
+    If the input has an integer type the function is equivalent to np.min.
 
     Examples
     --------
@@ -450,7 +450,7 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     Positive infinity is treated as a very large number and negative
     infinity is treated as a very small (i.e. negative) number.
 
-    If the input has a integer type the function is equivalent to np.max.
+    If the input has an integer type the function is equivalent to np.max.
 
     Examples
     --------

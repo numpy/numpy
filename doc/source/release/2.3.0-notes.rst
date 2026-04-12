@@ -212,7 +212,7 @@ Expired deprecations
 
   (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
  
-* Special handling of matrix is in np.outer is removed. Convert to a ndarray
+* Special handling of matrix is in np.outer is removed. Convert to an ndarray
   via ``matrix.A`` (deprecated since 1.20)
 
   (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
