@@ -6,6 +6,7 @@ from typing import (
     Final,
     Generic,
     Literal as L,
+    Never,
     Self,
     SupportsIndex,
     final,
@@ -23,6 +24,7 @@ from numpy._typing import (
     _AnyShape,
     _ArrayLike,
     _DTypeLike,
+    _IntLike_co,
     _NestedSequence,
     _ScalarLike_co,
     _SupportsArray,
@@ -58,7 +60,11 @@ type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 
+type _Int1D = _Array1D[np.intp]
+
 type _ToArray1D[ScalarT: np.generic] = _Array1D[ScalarT] | Sequence[ScalarT]
+
+type _JustAnyShape = tuple[Never, Never, Never, Never, Never]  # workaround for microsoft/pyright#10232
 
 ###
 
@@ -308,8 +314,28 @@ def ix_(
 def fill_diagonal(a: NDArray[Any], val: object, wrap: bool = False) -> None: ...
 
 #
-def diag_indices(n: int, ndim: int = 2) -> tuple[NDArray[np.intp], ...]: ...
-def diag_indices_from(arr: ArrayLike) -> tuple[NDArray[np.intp], ...]: ...
+@overload
+def diag_indices(n: _IntLike_co, ndim: L[0]) -> tuple[()]: ...
+@overload
+def diag_indices(n: _IntLike_co, ndim: L[1]) -> tuple[_Int1D]: ...
+@overload
+def diag_indices(n: _IntLike_co, ndim: L[2] = 2) -> tuple[_Int1D, _Int1D]: ...
+@overload
+def diag_indices(n: _IntLike_co, ndim: L[3]) -> tuple[_Int1D, _Int1D, _Int1D]: ...
+@overload
+def diag_indices(n: _IntLike_co, ndim: int) -> tuple[_Int1D, ...]: ...
+
+#
+@overload  # ?d  (workaround)
+def diag_indices_from(arr: np.ndarray[_JustAnyShape]) -> tuple[_Int1D, _Int1D, *tuple[_Int1D, ...]]: ...
+@overload  # 2d
+def diag_indices_from(arr: np.ndarray[tuple[int, int]]) -> tuple[_Int1D, _Int1D]: ...
+@overload  # 3d
+def diag_indices_from(arr: np.ndarray[tuple[int, int, int]]) -> tuple[_Int1D, _Int1D, _Int1D]: ...
+@overload  # 4d
+def diag_indices_from(arr: np.ndarray[tuple[int, int, int, int]]) -> tuple[_Int1D, _Int1D, _Int1D, _Int1D]: ...
+@overload  # >=2d (fallback)
+def diag_indices_from(arr: np.ndarray[tuple[int, int, *tuple[int, ...]]]) -> tuple[_Int1D, _Int1D, *tuple[_Int1D, ...]]: ...
 
 #
 mgrid: Final[MGridClass] = ...
