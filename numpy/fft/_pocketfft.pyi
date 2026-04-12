@@ -2,10 +2,14 @@ from collections.abc import Sequence
 from typing import Literal as L, overload
 
 import numpy as np
-from numpy import float64
-from numpy._typing import _ArrayLike, _ArrayLikeFloat_co, _ArrayLikeNumber_co, _Shape
+from numpy._typing import (
+    NDArray,
+    _ArrayLike,
+    _ArrayLikeFloat_co,
+    _ArrayLikeNumber_co,
+    _Shape,
+)
 from numpy._typing._array_like import _DualArrayLike
-from numpy.typing import ArrayLike, NDArray
 
 __all__ = [
     "fft",
@@ -1044,10 +1048,84 @@ def rfft2[ArrayT: NDArray[np.complexfloating]](
 ) -> ArrayT: ...
 
 #
-def irfft2(
-    a: ArrayLike,
+@overload  # Nd floating
+def irfft2[ShapeT: _Shape, DTypeT: np.dtype[np.floating]](
+    a: np.ndarray[ShapeT, DTypeT],
     s: Sequence[int] | None = None,
     axes: Sequence[int] | None = (-2, -1),
     norm: _NormKind = None,
-    out: NDArray[float64] | None = None,
-) -> NDArray[float64]: ...
+    out: None = None,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # Nd complex128 | +integer
+def irfft2[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.complex128 | np.integer | np.bool]],
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = (-2, -1),
+    norm: _NormKind = None,
+    out: None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # Nd complex64
+def irfft2[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.complex64]],
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = (-2, -1),
+    norm: _NormKind = None,
+    out: None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
+@overload  # Nd clongdouble
+def irfft2[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.clongdouble]],
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = (-2, -1),
+    norm: _NormKind = None,
+    out: None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.longdouble]]: ...
+@overload  # 1d +complex
+def irfft2(
+    a: Sequence[complex],
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = (-2, -1),
+    norm: _NormKind = None,
+    out: None = None,
+) -> np.ndarray[tuple[int], np.dtype[np.float64]]: ...
+@overload  # 2d +complex
+def irfft2(
+    a: Sequence[Sequence[complex]],
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = (-2, -1),
+    norm: _NormKind = None,
+    out: None = None,
+) -> np.ndarray[tuple[int, int], np.dtype[np.float64]]: ...
+@overload  # ?d floating
+def irfft2[ScalarT: np.floating](
+    a: _ArrayLike[ScalarT],
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = (-2, -1),
+    norm: _NormKind = None,
+    out: None = None,
+) -> NDArray[ScalarT]: ...
+@overload  # ?d +complex | complex128 | +integer
+def irfft2(
+    a: _DualArrayLike[np.dtype[np.complex128 | np.integer | np.bool], complex],
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = (-2, -1),
+    norm: _NormKind = None,
+    out: None = None,
+) -> NDArray[np.float64]: ...
+@overload  # fallback
+def irfft2(
+    a: _ArrayLikeNumber_co,
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = (-2, -1),
+    norm: _NormKind = None,
+    out: None = None,
+) -> NDArray[np.floating]: ...
+@overload  # out: <given>
+def irfft2[ArrayT: NDArray[np.floating]](
+    a: _ArrayLikeNumber_co,
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = (-2, -1),
+    norm: _NormKind = None,
+    *,
+    out: ArrayT,
+) -> ArrayT: ...
