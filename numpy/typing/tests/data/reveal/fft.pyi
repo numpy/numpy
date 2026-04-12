@@ -19,13 +19,13 @@ _c64: np.complex64
 _c160: np.clongdouble
 
 _i64_2d: _Array2D[np.int64]
-_f32_2d: _Array2D[np.float16]
+_f32_2d: _Array2D[np.float32]
 _f80_2d: _Array2D[np.longdouble]
 _c64_2d: _Array2D[np.complex64]
 _c160_2d: _Array2D[np.clongdouble]
 
 _i64_nd: npt.NDArray[np.int64]
-_f32_nd: npt.NDArray[np.float16]
+_f32_nd: npt.NDArray[np.float32]
 _f80_nd: npt.NDArray[np.longdouble]
 _c64_nd: npt.NDArray[np.complex64]
 _c160_nd: npt.NDArray[np.clongdouble]
@@ -34,12 +34,14 @@ _c160_nd: npt.NDArray[np.clongdouble]
 
 # fftshift
 
-assert_type(np.fft.fftshift(_f64_nd), npt.NDArray[np.float64])
 assert_type(np.fft.fftshift(_py_float_1d, axes=0), npt.NDArray[Any])
+assert_type(np.fft.fftshift(_f32_2d), _Array2D[np.float32])
+assert_type(np.fft.fftshift(_f64_nd), npt.NDArray[np.float64])
 
 # ifftshift
 
 assert_type(np.fft.ifftshift(_f64_nd), npt.NDArray[np.float64])
+assert_type(np.fft.ifftshift(_f32_2d), _Array2D[np.float32])
 assert_type(np.fft.ifftshift(_py_float_1d, axes=0), npt.NDArray[Any])
 
 # fftfreq
