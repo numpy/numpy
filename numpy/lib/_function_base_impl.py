@@ -3810,6 +3810,11 @@ def sinc(x):
     # Hope that 1e-20 is sufficient for objects...
     eps = np.finfo(x.dtype).eps if x.dtype.kind == "f" else 1e-20
     y = where(x, x, eps)
+    if x.dtype.kind == "f":
+        is_inf = np.isinf(x)
+        y = where(is_inf, 1, y)
+        return where(is_inf, 0.0, sin(y) / y)
+    
     return sin(y) / y
 
 

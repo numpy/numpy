@@ -2472,6 +2472,10 @@ class TestSinc:
         # resulting in nan
         assert_array_equal(sinc(x), np.asarray(1.0))
 
+    def test_inf(self):
+        assert(sinc(np.inf) == 0)
+        assert(sinc(-np.inf) == 0)
+
 
 class TestUnique:
 
