@@ -13,6 +13,7 @@ from numpy._typing import (
     _ArrayLike,
     _NestedSequence,
     _ScalarLike_co,
+    _Shape,
     _SupportsArray,
 )
 
@@ -135,15 +136,35 @@ def nan_to_num(
     neginf: float | None = None,
 ) -> Incomplete: ...
 
-# NOTE: The [overload-overlap] mypy error is a false positive
+#
+@overload
+def real_if_close[ShapeT: _Shape, DTypeT: np.dtype[_ToReal]](
+    a: np.ndarray[ShapeT, DTypeT],
+    tol: float = 100,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload
+def real_if_close[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.complex64]],
+    tol: float = 100,
+) -> np.ndarray[ShapeT, np.dtype[np.float32 | np.complex64]]: ...
+@overload
+def real_if_close[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.complex128]],
+    tol: float = 100,
+) -> np.ndarray[ShapeT, np.dtype[np.float64 | np.complex128]]: ...
+@overload
+def real_if_close[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.clongdouble]],
+    tol: float = 100,
+) -> np.ndarray[ShapeT, np.dtype[np.longdouble | np.clongdouble]]: ...
+@overload
+def real_if_close[RealT: _ToReal](a: _ArrayLike[RealT], tol: float = 100) -> NDArray[RealT]: ...
 @overload
 def real_if_close(a: _ArrayLike[np.complex64], tol: float = 100) -> NDArray[np.float32 | np.complex64]: ...
 @overload
 def real_if_close(a: _ArrayLike[np.complex128], tol: float = 100) -> NDArray[np.float64 | np.complex128]: ...
 @overload
 def real_if_close(a: _ArrayLike[np.clongdouble], tol: float = 100) -> NDArray[np.longdouble | np.clongdouble]: ...
-@overload
-def real_if_close[RealT: _ToReal](a: _ArrayLike[RealT], tol: float = 100) -> NDArray[RealT]: ...
 @overload
 def real_if_close(a: ArrayLike, tol: float = 100) -> NDArray[Any]: ...
 

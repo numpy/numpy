@@ -6,7 +6,6 @@ import numpy.typing as npt
 f8: np.float64
 f: float
 
-# NOTE: Avoid importing the platform specific `np.float128` type
 AR_i8: npt.NDArray[np.int64]
 AR_i4: npt.NDArray[np.int32]
 AR_f2: npt.NDArray[np.float16]
@@ -14,6 +13,11 @@ AR_f8: npt.NDArray[np.float64]
 AR_f16: npt.NDArray[np.longdouble]
 AR_c8: npt.NDArray[np.complex64]
 AR_c16: npt.NDArray[np.complex128]
+
+AR_f8_1d: np.ndarray[tuple[int], np.dtype[np.float64]]
+AR_f8_2d: np.ndarray[tuple[int, int], np.dtype[np.float64]]
+AR_c16_1d: np.ndarray[tuple[int], np.dtype[np.complex128]]
+AR_c16_2d: np.ndarray[tuple[int, int], np.dtype[np.complex128]]
 
 AR_LIKE_f: list[float]
 
@@ -49,10 +53,14 @@ assert_type(np.nan_to_num(f, copy=True), Any)
 assert_type(np.nan_to_num(AR_f8, nan=1.5), npt.NDArray[np.float64])
 assert_type(np.nan_to_num(AR_LIKE_f, posinf=9999), npt.NDArray[Any])
 
-assert_type(np.real_if_close(AR_f8), npt.NDArray[np.float64])
-assert_type(np.real_if_close(AR_c16), npt.NDArray[np.float64 | np.complex128])
-assert_type(np.real_if_close(AR_c8), npt.NDArray[np.float32 | np.complex64])
 assert_type(np.real_if_close(AR_LIKE_f), npt.NDArray[Any])
+assert_type(np.real_if_close(AR_f8), npt.NDArray[np.float64])
+assert_type(np.real_if_close(AR_c8), npt.NDArray[np.float32 | np.complex64])
+assert_type(np.real_if_close(AR_c16), npt.NDArray[np.float64 | np.complex128])
+assert_type(np.real_if_close(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.real_if_close(AR_f8_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(np.real_if_close(AR_c16_1d), np.ndarray[tuple[int], np.dtype[np.float64 | np.complex128]])
+assert_type(np.real_if_close(AR_c16_2d), np.ndarray[tuple[int, int], np.dtype[np.float64 | np.complex128]])
 
 assert_type(np.typename("h"), Literal["short"])  # type: ignore[deprecated]
 assert_type(np.typename("B"), Literal["unsigned char"])  # type: ignore[deprecated]
