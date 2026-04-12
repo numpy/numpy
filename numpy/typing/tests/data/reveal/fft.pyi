@@ -11,6 +11,7 @@ type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[Scalar
 _f64_nd: npt.NDArray[np.float64]
 _c128_nd: npt.NDArray[np.complex128]
 _py_float_1d: list[float]
+_py_complex_1d: list[complex]
 
 _i64: np.int64
 _f32: np.float16
@@ -19,6 +20,7 @@ _c64: np.complex64
 _c160: np.clongdouble
 
 _i64_2d: _Array2D[np.int64]
+_f16_2d: _Array2D[np.float16]
 _f32_2d: _Array2D[np.float32]
 _f80_2d: _Array2D[np.longdouble]
 _c64_2d: _Array2D[np.complex64]
@@ -116,7 +118,13 @@ assert_type(np.fft.rfft(_i64_2d), _Array2D[np.complex128])
 assert_type(np.fft.rfft(_f32_2d), _Array2D[np.complex64])
 assert_type(np.fft.rfft(_py_float_1d), _Array1D[np.complex128])
 
-assert_type(np.fft.irfft(_f64_nd, norm="ortho"), npt.NDArray[np.float64])
+assert_type(np.fft.irfft(_f64_nd), npt.NDArray[np.float64])
+assert_type(np.fft.irfft(_i64_2d), _Array2D[np.float64])
+assert_type(np.fft.irfft(_f16_2d), _Array2D[np.float16])
+assert_type(np.fft.irfft(_f32_2d), _Array2D[np.float32])
+assert_type(np.fft.irfft(_c64_2d), _Array2D[np.float32])
+assert_type(np.fft.irfft(_py_complex_1d), _Array1D[np.float64])
+
 assert_type(np.fft.hfft(_f64_nd, n=2), npt.NDArray[np.float64])
 assert_type(np.fft.ihfft(_f64_nd), npt.NDArray[np.complex128])
 
