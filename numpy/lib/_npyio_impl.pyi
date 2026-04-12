@@ -48,6 +48,8 @@ type _FNameRead = StrPath | SupportsRead[str] | SupportsRead[bytes]
 type _FNameWriteBytes = StrPath | SupportsWrite[bytes]
 type _FNameWrite = _FNameWriteBytes | SupportsWrite[str]
 
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+
 @type_check_only
 class _SupportsReadSeek[T](SupportsRead[T], Protocol):
     def seek(self, offset: int, whence: int, /) -> object: ...
@@ -186,14 +188,14 @@ def fromregex[ScalarT: np.generic](
     regexp: str | bytes | Pattern[Any],
     dtype: _DTypeLike[ScalarT],
     encoding: str | None = None,
-) -> NDArray[ScalarT]: ...
+) -> _Array1D[ScalarT]: ...
 @overload
 def fromregex(
     file: _FNameRead,
     regexp: str | bytes | Pattern[Any],
     dtype: DTypeLike | None,
     encoding: str | None = None,
-) -> NDArray[Any]: ...
+) -> _Array1D[Any]: ...
 
 @overload
 def genfromtxt(

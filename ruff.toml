@@ -74,7 +74,6 @@ ignore = [
     "F841",    # Local variable is assigned to but never used
     # pyupgrade
     "UP015" ,  # Unnecessary mode argument
-    "UP031",   # TODO: Use format specifiers instead of percent format
 ]
 
 [lint.per-file-ignores]
@@ -82,7 +81,6 @@ ignore = [
 "bench_*.py" = ["B015", "B018", "RUF012"]
 "test*.py" = ["B015", "B018", "E201", "E714", "RUF012"]
 
-"numpy/lib/tests/test_format.py" = ["E501"]
 "numpy/linalg/tests/test_linalg.py" = ["E501"]
 "numpy/f2py/*py" = ["E501"]
 "numpy*pyi" = ["E501"]

@@ -43,7 +43,7 @@ jobs:
 
     - name: Install pkg-config
       run: |
-        python -m pip install pkgconf
+        python -m pip install pkgconf==2.5.1.post1
         echo "PKG_CONFIG_PATH=${{ github.workspace }}/.openblas" >> $env:GITHUB_ENV
 
     - name: Install NumPy (Clang-cl)
@@ -153,7 +153,7 @@ jobs:
 
       - name: pkg-config
         run: |
-          python -m pip install pkgconf
+          python -m pip install pkgconf==2.5.1.post1
 
       - name: Dependencies
         run: |

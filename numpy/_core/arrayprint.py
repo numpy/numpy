@@ -530,8 +530,16 @@ def _get_format_function(data, **options):
     dtype_ = data.dtype
     dtypeobj = dtype_.type
     formatdict = _get_formatdict(data, **options)
+
     if dtypeobj is None:
         return formatdict["numpystr"]()
+    elif (getattr(dtypeobj, "__module__", None) != "numpy"
+            and not issubclass(dtypeobj, str)):
+        # Use `str()` as a default format for non-NumPy dtypes. This should be
+        # improved.  We use `str` assuming that `repr` is likely to duplicate
+        # information that is contained in the dtype.
+        # (Do this early, because e.g. quaddtype subclasses floating.)
+        return formatdict['void']()
     elif issubclass(dtypeobj, _nt.bool):
         return formatdict['bool']()
     elif issubclass(dtypeobj, _nt.integer):

@@ -895,6 +895,19 @@ class TestUfunc:
         expected3 = expected1.astype(object)
         assert_array_equal(actual3, expected3)
 
+    @pytest.mark.parametrize("func", [
+        lambda A, x, **kw: np.matvec(A, x, **kw),
+        lambda A, x, **kw: np.vecmat(x, A, **kw),
+    ])
+    def test_matvec_vecmat_out(self, func):
+        # overlapping memory: out=input should not produce zeros
+        a = np.arange(18, dtype=float).reshape(2, 3, 3)
+        b = np.arange(6, dtype=float).reshape(2, 3)
+        expected = func(a, b)
+        c = func(a, b, out=b)
+        assert c is b
+        assert_allclose(c, expected)
+
     def test_vecdot_subclass(self):
         class MySubclass(np.ndarray):
             pass
@@ -2860,7 +2873,7 @@ def test_ufunc_types(ufunc):
         if 'm' in inp:
             with pytest.warns(
                 DeprecationWarning,
-                match="Using 'generic' unit for NumPy timedelta is deprecated",
+                match="The 'generic' unit for NumPy timedelta is deprecated",
             ):
                 args = [np.ones((3, 3), t) for t in inp]
         else:

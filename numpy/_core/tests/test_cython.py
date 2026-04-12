@@ -88,7 +88,7 @@ def test_is_timedelta64_object(install_temp):
 
     with pytest.warns(
         DeprecationWarning,
-        match="Using 'generic' unit for NumPy timedelta is deprecated",
+        match="The 'generic' unit for NumPy timedelta is deprecated",
     ):
         assert checks.is_td64(np.timedelta64(1234))
 
@@ -113,7 +113,7 @@ def test_is_datetime64_object(install_temp):
 
     with pytest.warns(
         DeprecationWarning,
-        match="Using 'generic' unit for NumPy timedelta is deprecated",
+        match="The 'generic' unit for NumPy timedelta is deprecated",
     ):
         assert not checks.is_dt64(np.timedelta64(1234))
 

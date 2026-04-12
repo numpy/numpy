@@ -65,7 +65,7 @@ class TestLoadLibrary:
                          np._core._multiarray_umath.__file__)
         except ImportError as e:
             msg = ("ctypes is not available on this python: skipping the test"
-                   " (import error was: %s)" % str(e))
+                   f" (import error was: {e})")
             print(msg)
 
 

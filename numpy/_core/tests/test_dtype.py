@@ -6,6 +6,7 @@ import os
 import pickle
 import sys
 import types
+import warnings
 from itertools import permutations
 from typing import Any
 
@@ -1116,7 +1117,10 @@ class TestDtypeAttributes:
         arr = np.broadcast_to(arr, 10)
         assert arr.strides == (0,)
         with pytest.raises(ValueError):
-            arr.dtype = "i1"
+            with warnings.catch_warnings():  # gh-28901
+                warnings.filterwarnings(action="ignore",
+                                        category=DeprecationWarning)
+                arr.dtype = "i1"
 
 class TestDTypeMakeCanonical:
     def check_canonical(self, dtype, canonical):
@@ -1973,7 +1977,7 @@ def test_result_type_integers_and_unitless_timedelta64():
     # would cause a seg. fault.
     with pytest.warns(
         DeprecationWarning,
-        match="Using 'generic' unit for NumPy timedelta is deprecated",
+        match="The 'generic' unit for NumPy timedelta is deprecated",
     ):
         td = np.timedelta64(4)
         result = np.result_type(0, td)

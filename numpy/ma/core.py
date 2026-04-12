@@ -1989,7 +1989,7 @@ def masked_where(condition, a, copy=True):
     (cshape, ashape) = (cond.shape, a.shape)
     if cshape and cshape != ashape:
         raise IndexError("Inconsistent shape between the condition and the input"
-                         " (got %s and %s)" % (cshape, ashape))
+                         f" (got {cshape} and {ashape})")
     if hasattr(a, '_mask'):
         cond = mask_or(cond, a._mask)
         cls = type(a)
@@ -3495,7 +3495,7 @@ class MaskedArray(ndarray):
 
     @dtype.setter
     def dtype(self, dtype):
-        super(MaskedArray, type(self)).dtype.__set__(self, dtype)
+        self._set_dtype(dtype)
         if self._mask is not nomask:
             self._mask = self._mask.view(make_mask_descr(dtype), ndarray)
             # Try to reset the shape of the mask (if we don't have a void).
