@@ -427,14 +427,74 @@ def hfft[ArrayT: NDArray[np.floating]](
     out: ArrayT,
 ) -> ArrayT: ...
 
-def ihfft(
-    a: ArrayLike,
+# keep in sync with `rfft`
+@overload  # Nd float64 | +integer
+def ihfft[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.float64 | np.integer | np.bool]],
     n: int | None = None,
     axis: int = -1,
     norm: _NormKind = None,
-    out: NDArray[complex128] | None = None,
-) -> NDArray[complex128]: ...
+    out: None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.complex128]]: ...
+@overload  # Nd float32 | float16
+def ihfft[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.float32 | np.float16]],
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    out: None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.complex64]]: ...
+@overload  # Nd longdouble
+def ihfft[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.longdouble]],
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    out: None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.clongdouble]]: ...
+@overload  # 1d +float
+def ihfft(
+    a: Sequence[float],
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    out: None = None,
+) -> np.ndarray[tuple[int], np.dtype[np.complex128]]: ...
+@overload  # 2d +float
+def ihfft(
+    a: Sequence[Sequence[float]],
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    out: None = None,
+) -> np.ndarray[tuple[int, int], np.dtype[np.complex128]]: ...
+@overload  # ?d +float
+def ihfft(
+    a: _DualArrayLike[np.dtype[np.float64 | np.integer | np.bool], float],
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    out: None = None,
+) -> NDArray[np.complex128]: ...
+@overload  # fallback
+def ihfft(
+    a: _ArrayLikeFloat_co,
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    out: None = None,
+) -> NDArray[np.complexfloating]: ...
+@overload  # out: <given>
+def ihfft[ArrayT: NDArray[np.complexfloating]](
+    a: _ArrayLikeFloat_co,
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    *,
+    out: ArrayT,
+) -> ArrayT: ...
 
+#
 def fftn(
     a: ArrayLike,
     s: Sequence[int] | None = None,

@@ -133,6 +133,9 @@ assert_type(np.fft.hfft(_c64_2d), _Array2D[np.float32])
 assert_type(np.fft.hfft(_py_complex_1d), _Array1D[np.float64])
 
 assert_type(np.fft.ihfft(_f64_nd), npt.NDArray[np.complex128])
+assert_type(np.fft.ihfft(_i64_2d), _Array2D[np.complex128])
+assert_type(np.fft.ihfft(_f32_2d), _Array2D[np.complex64])
+assert_type(np.fft.ihfft(_py_float_1d), _Array1D[np.complex128])
 
 assert_type(np.fft.fftn(_f64_nd), npt.NDArray[np.complex128])
 assert_type(np.fft.ifftn(_f64_nd), npt.NDArray[np.complex128])
