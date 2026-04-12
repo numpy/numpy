@@ -287,6 +287,28 @@ def ix_(
     /,
     *args: Sequence[int],
 ) -> tuple[NDArray[np.int_], ...]: ...
+@overload  # N ScalarT
+def ix_[ScalarT: np.generic](
+    arg0: _ToArray1D[ScalarT],
+    arg1: _ToArray1D[ScalarT],
+    arg2: _ToArray1D[ScalarT],
+    /,
+    *args: _ToArray1D[ScalarT],
+) -> tuple[NDArray[ScalarT], ...]: ...
+@overload  # N float
+def ix_(arg0: list[float], /, *args: Sequence[float]) -> tuple[NDArray[np.float64], ...]: ...
+@overload  # N complex
+def ix_(arg0: list[complex], /, *args: Sequence[complex]) -> tuple[NDArray[np.complex128], ...]: ...
+@overload  # N bytes
+def ix_(arg0: Sequence[bytes], /, *args: Sequence[bytes]) -> tuple[NDArray[np.bytes_], ...]: ...
+@overload  # N str
+def ix_(arg0: Sequence[str], /, *args: Sequence[str]) -> tuple[NDArray[np.str_], ...]: ...
+@overload  # fallback
+def ix_(
+    arg0: Sequence[_ScalarLike_co] | _Array1D[Any],
+    /,
+    *args: Sequence[_ScalarLike_co] | _Array1D[Any],
+) -> tuple[NDArray[Any], ...]: ...
 
 #
 def fill_diagonal(a: NDArray[Any], val: object, wrap: bool = False) -> None: ...
