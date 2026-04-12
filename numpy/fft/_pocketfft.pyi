@@ -661,14 +661,73 @@ def ifftn[ArrayT: NDArray[np.complexfloating]](
 ) -> ArrayT: ...
 
 #
-def rfftn(
-    a: ArrayLike,
+@overload  # Nd float64 | +integer
+def rfftn[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.float64 | np.integer | np.bool]],
     s: Sequence[int] | None = None,
     axes: Sequence[int] | None = None,
     norm: _NormKind = None,
-    out: NDArray[complex128] | None = None,
-) -> NDArray[complex128]: ...
+    out: None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.complex128]]: ...
+@overload  # Nd float32 | float16
+def rfftn[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.float32 | np.float16]],
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = None,
+    norm: _NormKind = None,
+    out: None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.complex64]]: ...
+@overload  # Nd longdouble
+def rfftn[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.longdouble]],
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = None,
+    norm: _NormKind = None,
+    out: None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.clongdouble]]: ...
+@overload  # 1d +float
+def rfftn(
+    a: Sequence[float],
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = None,
+    norm: _NormKind = None,
+    out: None = None,
+) -> np.ndarray[tuple[int], np.dtype[np.complex128]]: ...
+@overload  # 2d +float
+def rfftn(
+    a: Sequence[Sequence[float]],
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = None,
+    norm: _NormKind = None,
+    out: None = None,
+) -> np.ndarray[tuple[int, int], np.dtype[np.complex128]]: ...
+@overload  # ?d +float
+def rfftn(
+    a: _DualArrayLike[np.dtype[np.float64 | np.integer | np.bool], float],
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = None,
+    norm: _NormKind = None,
+    out: None = None,
+) -> NDArray[np.complex128]: ...
+@overload  # fallback
+def rfftn(
+    a: _ArrayLikeFloat_co,
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = None,
+    norm: _NormKind = None,
+    out: None = None,
+) -> NDArray[np.complexfloating]: ...
+@overload  # out: <given>
+def rfftn[ArrayT: NDArray[np.complexfloating]](
+    a: _ArrayLikeFloat_co,
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = None,
+    norm: _NormKind = None,
+    *,
+    out: ArrayT,
+) -> ArrayT: ...
 
+#
 def irfftn(
     a: ArrayLike,
     s: Sequence[int] | None = None,
