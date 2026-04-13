@@ -6612,11 +6612,13 @@ class TestView:
         class MyArray(np.ndarray):
             def __array_finalize__(self, obj):
                 self.finalized_from = obj
+                self._dtype_at_finalize = self.dtype
 
         arr = np.arange(6).view(MyArray)
         result = arr.view("i1")
         assert isinstance(result, MyArray)
         assert result.dtype == np.dtype("i1")
+        assert result._dtype_at_finalize == np.dtype("i1")
         assert result.finalized_from is arr
 
 
