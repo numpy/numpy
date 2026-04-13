@@ -27,13 +27,17 @@
 #endif
 #endif
 
-/* Do not enable the alloc cache on the free-threaded build, or if ASAN or
- * MSAN instrumentation is enabled. CPython uses mimalloc on the free-threaded
- * build, which we trust to cache allocations better than we can. The cache
- * makes ASAN use-after-free or MSAN use-of-uninitialized-memory warnings less
- * useful. */
+
+/*
+ * CPython uses mimalloc on the free-threaded build, which we trust to cache
+ * allocations better than we can.
+ */
 #ifdef Py_GIL_DISABLED
 #    define USE_ALLOC_CACHE 0
+/*
+ * The cache makes ASAN use-after-free or MSAN use-of-uninitialized-memory
+ * warnings less useful.
+ */
 #elif defined(__has_feature)
 #    if __has_feature(address_sanitizer) || __has_feature(memory_sanitizer)
 #        define USE_ALLOC_CACHE 0
