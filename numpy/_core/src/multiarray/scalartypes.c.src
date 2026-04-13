@@ -2,6 +2,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
+#include <datetime.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #ifndef _MULTIARRAYMODULE
@@ -218,6 +219,33 @@ find_binary_operation_path(
     else if (attr != NULL) {
         Py_DECREF(attr);
         *other_op = Py_NewRef(other);
+        return 0;
+    }
+
+    if (PyArray_IsScalar(self, Datetime)) {
+        if (PyDateTimeAPI == NULL) {
+            PyDateTime_IMPORT;
+            if (PyDateTimeAPI == NULL) {
+                return -1;
+            }
+        }
+    }
+    if (PyArray_IsScalar(self, Datetime) &&
+            PyType_IsSubtype(Py_TYPE(other), PyDateTimeAPI->DateType) &&
+            !PyType_IsSubtype(Py_TYPE(other), PyDateTimeAPI->DateTimeType)) {
+        /*
+         * Preserve datetime.date comparisons in the datetime64 scalar unit
+         * instead of falling back through `.item()`, which depends on the
+         * scalar resolution.
+         */
+        PyArray_Descr *descr = PyArray_DescrFromScalar(self);
+        if (descr == NULL) {
+            return -1;
+        }
+        *other_op = PyArray_FromAny(other, descr, 0, 0, 0, NULL);
+        if (*other_op == NULL) {
+            return -1;
+        }
         return 0;
     }
 
