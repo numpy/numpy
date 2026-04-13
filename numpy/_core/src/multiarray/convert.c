@@ -6,6 +6,7 @@
 #include <structmember.h>
 
 #include "npy_config.h"
+#include "npy_pycompat.h"  // PyObject_GetOptionalAttr
 
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"

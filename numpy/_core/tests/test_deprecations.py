@@ -259,7 +259,7 @@ class TestDeprecatedArrayAttributeSetting(_DeprecationTestCase):
         self.assert_deprecated(setattr, args=(x, "shape", (4, 1)))
 
 class TestDeprecatedViewDtypePropertySetter(_DeprecationTestCase):
-    # gh-31192: view() with dtype change on a subclass that overrides the
+    # view() with dtype change on a subclass that overrides the
     # dtype property should warn to implement _set_dtype instead.
     message = r"numpy.ndarray.view\(\) used a custom `dtype` setter.*"
 
@@ -271,7 +271,7 @@ class TestDeprecatedViewDtypePropertySetter(_DeprecationTestCase):
 
             @dtype.setter
             def dtype(self, dtype):
-                super(MyArray, type(self)).dtype.__set__(self, dtype)
+                super(MyArray, type(self))._set_dtype(self, dtype)
 
         arr = np.arange(6).view(MyArray)
         self.assert_deprecated(arr.view, args=(np.float64,))
