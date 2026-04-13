@@ -6605,6 +6605,20 @@ class TestView:
         assert_array_equal(y, z)
         assert_array_equal(y, [67305985, 134678021])
 
+    def test_view_dtype_change_subclass_finalize(self):
+        # gh-31192: view() with dtype change on a subclass must call
+        # __array_finalize__ and return the correct subclass type.
+
+        class MyArray(np.ndarray):
+            def __array_finalize__(self, obj):
+                self.finalized_from = obj
+
+        arr = np.arange(6).view(MyArray)
+        result = arr.view("i1")
+        assert isinstance(result, MyArray)
+        assert result.dtype == np.dtype("i1")
+        assert result.finalized_from is arr
+
 
 def _mean(a, **args):
     return a.mean(**args)
