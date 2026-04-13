@@ -11,7 +11,7 @@ import pytest
 
 import numpy as np
 from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
-from numpy.testing import IS_PYPY, assert_raises
+from numpy.testing import assert_raises
 
 
 class _DeprecationTestCase:
@@ -243,6 +243,7 @@ class TestDeprecatedArrayWrap(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.negative(test2))
         assert test2.called
 
+
 class TestDeprecatedArrayAttributeSetting(_DeprecationTestCase):
     message = "Setting the .*on a NumPy array has been deprecated.*"
 
@@ -257,6 +258,7 @@ class TestDeprecatedArrayAttributeSetting(_DeprecationTestCase):
     def test_deprecated_shape_set(self):
         x = np.eye(2)
         self.assert_deprecated(setattr, args=(x, "shape", (4, 1)))
+
 
 class TestDeprecatedViewDtypePropertySetter(_DeprecationTestCase):
     # view() with dtype change on a subclass that overrides the
