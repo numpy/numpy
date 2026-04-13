@@ -8336,6 +8336,7 @@ class TestMinScalarType:
         assert_equal(np.min_scalar_type(65504.2), np.dtype('float32')) 
         assert_equal(np.min_scalar_type(f32_max), np.dtype('float32'))
         assert_equal(np.min_scalar_type(-f32_max), np.dtype('float32'))
+        assert_equal(np.min_scalar_type(3.4028e38), np.dtype('float32'))
         assert_equal(np.min_scalar_type(3.5e38), np.dtype('float64'))
         assert_equal(np.min_scalar_type(f64_max), np.dtype('float64'))
         assert_equal(np.min_scalar_type(-f64_max), np.dtype('float64'))
