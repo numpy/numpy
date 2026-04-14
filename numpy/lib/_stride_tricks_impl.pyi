@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import Any, SupportsIndex, overload
+from typing import Any, overload
 
 import numpy as np
 from numpy._typing import ArrayLike, NDArray, _AnyShape, _ArrayLike, _ShapeLike
