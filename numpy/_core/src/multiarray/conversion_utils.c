@@ -862,6 +862,10 @@ static int correlatemode_parser(char const *str, Py_ssize_t length, void *data)
         *val = NPY_FULL;
         is_exact = (length == 4 && strcmp(str, "full") == 0);
     }
+    else if (str[0] == 'L' || str[0] == 'l') {
+        *val = NPY_LAGS;
+        is_exact = (length == 4 && strcmp(str, "lags") == 0);
+    }
     else {
         return -1;
     }
@@ -871,7 +875,7 @@ static int correlatemode_parser(char const *str, Py_ssize_t length, void *data)
      */
     if (!is_exact) {
         PyErr_SetString(PyExc_ValueError,
-            "Use one of 'valid', 'same', or 'full' for convolve/correlate mode");
+            "Use one of 'valid', 'same', 'full', or 'lags' for convolve/correlate mode");
         return -1;
     }
 
@@ -887,7 +891,7 @@ PyArray_CorrelatemodeConverter(PyObject *object, NPY_CORRELATEMODE *val)
     if (PyUnicode_Check(object)) {
         return string_converter_helper(
             object, (void *)val, correlatemode_parser, "mode",
-            "must be one of 'valid', 'same', or 'full'");
+            "must be one of 'valid', 'same', 'full', or 'lags'");
     }
 
     else {
@@ -898,14 +902,14 @@ PyArray_CorrelatemodeConverter(PyObject *object, NPY_CORRELATEMODE *val)
                         "convolve/correlate mode not understood");
             return NPY_FAIL;
         }
-        if (number <= (int) NPY_FULL
+        if (number <= (int) NPY_LAGS
                 && number >= (int) NPY_VALID) {
             *val = (NPY_CORRELATEMODE) number;
             return NPY_SUCCEED;
         }
         else {
             PyErr_Format(PyExc_ValueError,
-                    "integer convolve/correlate mode must be 0, 1, or 2");
+                    "integer convolve/correlate mode must be 0, 1, 2, or 3");
             return NPY_FAIL;
         }
     }

@@ -409,6 +409,7 @@ multiarray_funcs_api = {
     # End 2.0 API
     # NpyIterGetTransferFlags (slot 223) added.
     # End 2.3 API
+    'PyArray_CorrelateLags':                   (369, MinVersion("2.6")),
 }
 
 ufunc_types_api = {

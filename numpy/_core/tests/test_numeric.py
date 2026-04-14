@@ -3603,8 +3603,10 @@ class TestCorrelate:
 
     def test_float(self):
         self._setup(float)
-        z = np.correlate(self.x, self.y, 'full')
+        z, lags = np.correlate(self.x, self.y, 'full', returns_lagvector=True)
         assert_array_almost_equal(z, self.z1)
+        assert_array_equal(lags, np.arange(-2, 5))
+        assert len(z) == len(lags)
         z = np.correlate(self.x, self.y[:-1], 'full')
         assert_array_almost_equal(z, self.z1_4)
         z = np.correlate(self.y, self.x, 'full')
@@ -3615,6 +3617,44 @@ class TestCorrelate:
         assert_array_almost_equal(z, self.z2r)
         z = np.correlate(self.xs, self.y, 'full')
         assert_array_almost_equal(z, self.zs)
+        # Test 'valid' mode - middle part where there's full overlap
+        z, lags = np.correlate(self.x, self.y, 'valid', returns_lagvector=True)
+        assert_array_almost_equal(z, self.z1[2:5])  # [-14., -20., -26.]
+        assert_array_equal(lags, np.arange(0, 3))
+        assert len(z) == len(lags)
+        # Test 'same' mode - same length as first input
+        z, lags = np.correlate(self.x, self.y, 'same', returns_lagvector=True)
+        assert_array_almost_equal(z, self.z1[1:6])  # [-8., -14., -20., -26., -14.]
+        assert_array_equal(lags, np.arange(-1, 4))
+        assert len(z) == len(lags)
+    
+    def test_int_lags(self):
+        self._setup(float)
+        # Test 'lags' mode
+        lagsin = 2
+        print(f"int lags: {lagsin=}")
+        z, lags = np.correlate(self.x, self.y, 'lags', lags=lagsin, returns_lagvector=True)
+        assert_array_almost_equal(z, self.z1[1:4])  # [-8., 14., -20.]
+        assert_array_equal(lags, np.arange(-lagsin+1, lagsin))
+        assert len(z) == len(lags)
+    
+    def test_two_tuple_lags(self):
+        self._setup(float)
+        lagsin = (-1, 3)
+        print(f"two tuple lags: {lagsin=}")
+        z, lags = np.correlate(self.x, self.y, 'lags', lags=lagsin, returns_lagvector=True)
+        assert_array_almost_equal(z, self.z1[1:5])  # [-8., -14., -20., -26.]
+        assert_array_equal(lags, np.arange(*lagsin))
+        assert len(z) == len(lags)
+
+    def test_three_tuple_lags(self):
+        self._setup(float)
+        lagsin = (-2, 5, 2)
+        print(f"three tuple lags: {lagsin=}")
+        z, lags = np.correlate(self.x, self.y, 'lags', lags=lagsin, returns_lagvector=True)
+        assert_array_almost_equal(z, self.z1[0::2])  # [-3, -14., -26., -5.]
+        assert_array_equal(lags, np.arange(*lagsin))
+        assert len(z) == len(lags)
 
     def test_object(self):
         self._setup(Decimal)

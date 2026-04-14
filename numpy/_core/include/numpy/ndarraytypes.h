@@ -270,7 +270,8 @@ typedef enum {
 typedef enum {
         NPY_VALID=0,
         NPY_SAME=1,
-        NPY_FULL=2
+        NPY_FULL=2,
+        NPY_LAGS=3
 } NPY_CORRELATEMODE;
 
 /* The special not-a-time (NaT) value */

@@ -85,3 +85,6 @@
 # General loop registration for ufuncs, sort, and argsort
 # Version 21 (NumPy 2.5.0) No change
 0x00000015 = fbd24fc5b2ba4f7cd3606ec6128de7a5
+# Version 22 (NumPy 2.6.0)
+# Added PyArray_CorrelateLags
+0x00000016 = c5f7b81de5f99f0df1320b4a5e64ea12

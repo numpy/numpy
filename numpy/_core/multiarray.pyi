@@ -128,6 +128,7 @@ __all__ = [
     "copyto",
     "correlate",
     "correlate2",
+    "correlatelags"
     "count_nonzero",
     "c_einsum",
     "datetime_as_string",
