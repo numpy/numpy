@@ -70,7 +70,7 @@ jobs:
           echo "CIBW_ENVIRONMENT_IOS=$CIBW" >> "$GITHUB_ENV"
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@9c00cb4f6b517705a3794b22395aedc36257242c  # v3.2.1
+        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
         env:
           CIBW_PLATFORM: ios
           CIBW_ARCHS: ${{ matrix.arch }}
