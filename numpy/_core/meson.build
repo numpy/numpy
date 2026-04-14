@@ -1113,7 +1113,7 @@ endif
 
 src_multiarray = multiarray_gen_headers + [
   'src/multiarray/abstractdtypes.c',
-  'src/multiarray/alloc.cpp',
+  'src/multiarray/alloc.c',
   'src/multiarray/arrayobject.c',
   'src/multiarray/array_coercion.c',
   'src/multiarray/array_converter.c',
@@ -1214,6 +1214,7 @@ src_umath = umath_gen_headers + [
   src_file.process('src/umath/scalarmath.c.src'),
   'src/umath/ufunc_object.c',
   'src/umath/umathmodule.c',
+  'src/umath/real_imag_ufuncs.cpp',
   'src/umath/special_integer_comparisons.cpp',
   'src/umath/string_ufuncs.cpp',
   'src/umath/stringdtype_ufuncs.cpp',

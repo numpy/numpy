@@ -93,7 +93,7 @@ _QuantileMethods = {
     # --- HYNDMAN and FAN METHODS
     # Discrete methods
     'inverted_cdf': {
-        'get_virtual_index': lambda n, quantiles: _inverted_cdf(n, quantiles),  # noqa: PLW0108
+        'get_virtual_index': lambda n, quantiles: _inverted_cdf(n, quantiles),
         'fix_gamma': None,  # should never be called
     },
     'averaged_inverted_cdf': {
@@ -105,7 +105,7 @@ _QuantileMethods = {
             where=gamma == 0),
     },
     'closest_observation': {
-        'get_virtual_index': lambda n, quantiles: _closest_observation(n, quantiles),  # noqa: PLW0108
+        'get_virtual_index': lambda n, quantiles: _closest_observation(n, quantiles),
         'fix_gamma': None,  # should never be called
     },
     # Continuous methods
@@ -1956,7 +1956,7 @@ def trim_zeros(filt, trim='fb', axis=None):
         returned that still contains all values which are not zero.
         If an axis is specified, `filt` will be sliced in that dimension only
         on the sides specified by `trim`. The remaining area will be the
-        smallest that still contains all values wich are not zero.
+        smallest that still contains all values which are not zero.
 
         .. versionadded:: 2.2.0
 
@@ -2114,11 +2114,11 @@ def place(arr, mask, vals):
     arr : ndarray
         Array to put data into.
     mask : array_like
-        Boolean mask array. Must have the same size as `a`.
+        Boolean mask array. Must have the same size as `arr`.
     vals : 1-D sequence
-        Values to put into `a`. Only the first N elements are used, where
+        Values to put into `arr`. Only the first N elements are used, where
         N is the number of True values in `mask`. If `vals` is smaller
-        than N, it will be repeated, and if elements of `a` are to be masked,
+        than N, it will be repeated, and if elements of `arr` are to be masked,
         this sequence must be non-empty.
 
     See Also
@@ -2190,17 +2190,17 @@ def _update_dim_sizes(dim_sizes, arg, core_dims):
     num_core_dims = len(core_dims)
     if arg.ndim < num_core_dims:
         raise ValueError(
-            '%d-dimensional argument does not have enough '
-            'dimensions for all core dimensions %r'
-            % (arg.ndim, core_dims))
+            f'{arg.ndim}-dimensional argument does not have enough '
+            f'dimensions for all core dimensions {core_dims!r}')
 
     core_shape = arg.shape[-num_core_dims:]
     for dim, size in zip(core_dims, core_shape):
         if dim in dim_sizes:
             if size != dim_sizes[dim]:
                 raise ValueError(
-                    'inconsistent size for core dimension %r: %r vs %r'
-                    % (dim, size, dim_sizes[dim]))
+                    f'inconsistent size for core dimension {dim!r}: {size!r} vs '
+                    f'{dim_sizes[dim]!r}'
+                )
         else:
             dim_sizes[dim] = size
 
@@ -2610,9 +2610,10 @@ class vectorize:
         input_core_dims, output_core_dims = self._in_and_out_core_dims
 
         if len(args) != len(input_core_dims):
-            raise TypeError('wrong number of positional arguments: '
-                            'expected %r, got %r'
-                            % (len(input_core_dims), len(args)))
+            raise TypeError(
+                'wrong number of positional arguments: '
+                f'expected {len(input_core_dims)!r}, got {len(args)!r}'
+            )
         args = tuple(asanyarray(arg) for arg in args)
 
         broadcast_shape, dim_sizes = _parse_input_dimensions(
@@ -2633,8 +2634,9 @@ class vectorize:
 
             if nout != n_results:
                 raise ValueError(
-                    'wrong number of outputs from pyfunc: expected %r, got %r'
-                    % (nout, n_results))
+                    f'wrong number of outputs from pyfunc: expected {nout!r}, '
+                    f'got {n_results!r}'
+                )
 
             if nout == 1:
                 results = (results,)
@@ -3071,15 +3073,14 @@ def blackman(M):
     "removing the foot", i.e. smoothing discontinuities at the beginning
     and end of the sampled signal) or tapering function. It is known as a
     "near optimal" tapering function, almost as good (by some measures)
-    as the kaiser window.
+    as the Kaiser window.
 
     References
     ----------
-    Blackman, R.B. and Tukey, J.W., (1958) The measurement of power spectra,
-    Dover Publications, New York.
-
-    Oppenheim, A.V., and R.W. Schafer. Discrete-Time Signal Processing.
-    Upper Saddle River, NJ: Prentice-Hall, 1999, pp. 468-471.
+    .. [1] Blackman, R.B. and Tukey, J.W., (1958)
+           The measurement of power spectra, Dover Publications, New York.
+    .. [2] Oppenheim, A.V., and R.W. Schafer. Discrete-Time Signal Processing.
+           Upper Saddle River, NJ: Prentice-Hall, 1999, pp. 468-471.
 
     Examples
     --------
@@ -4576,7 +4577,7 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
     gamma = method["fix_gamma"](gamma, virtual_indexes)
     # Ensure both that we have an array, and that we keep the dtype
     # (which may have been matched to the input array).
-    return np.asanyarray(gamma)
+    return np.asanyarray(gamma, dtype=virtual_indexes.dtype)
 
 
 def _lerp(a, b, t, out=None):
@@ -5069,7 +5070,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
         ``(1, ..., 1, Ni, 1, ..., 1)``.  These sparse coordinate grids are
         intended to be used with :ref:`basics.broadcasting`.  When all
         coordinates are used in an expression, broadcasting still leads to a
-        fully-dimensonal result array.
+        fully-dimensional result array.
 
         Default is False.
 
@@ -5194,6 +5195,9 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
     if copy:
         output = tuple(x.copy() for x in output)
+
+    if sparse and not copy:
+        return tuple(output)
 
     return output
 

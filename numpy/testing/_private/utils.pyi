@@ -10,7 +10,6 @@ from pathlib import Path
 from re import Pattern
 from typing import (
     Any,
-    AnyStr,
     ClassVar,
     Final,
     Generic,
@@ -35,7 +34,7 @@ from numpy._typing import (
     _ArrayLikeTD64_co,
 )
 
-__all__ = [  # noqa: RUF022
+__all__ = [
     "IS_EDITABLE",
     "IS_IOS",
     "IS_MUSL",
@@ -393,21 +392,21 @@ def tempdir(
     dir: None = None,
 ) -> _GeneratorContextManager[str]: ...
 @overload
-def tempdir(
+def tempdir[AnyStr: (bytes, str)](
     suffix: AnyStr | None = None,
     prefix: AnyStr | None = None,
     *,
     dir: GenericPath[AnyStr],
 ) -> _GeneratorContextManager[AnyStr]: ...
 @overload
-def tempdir(
+def tempdir[AnyStr: (bytes, str)](
     suffix: AnyStr | None = None,
     *,
     prefix: AnyStr,
     dir: GenericPath[AnyStr] | None = None,
 ) -> _GeneratorContextManager[AnyStr]: ...
 @overload
-def tempdir(
+def tempdir[AnyStr: (bytes, str)](
     suffix: AnyStr,
     prefix: AnyStr | None = None,
     dir: GenericPath[AnyStr] | None = None,
@@ -422,14 +421,14 @@ def temppath(
     text: bool = False,
 ) -> _GeneratorContextManager[str]: ...
 @overload
-def temppath(
+def temppath[AnyStr: (bytes, str)](
     suffix: AnyStr | None,
     prefix: AnyStr | None,
     dir: GenericPath[AnyStr],
     text: bool = False,
 ) -> _GeneratorContextManager[AnyStr]: ...
 @overload
-def temppath(
+def temppath[AnyStr: (bytes, str)](
     suffix: AnyStr | None = None,
     prefix: AnyStr | None = None,
     *,
@@ -437,14 +436,14 @@ def temppath(
     text: bool = False,
 ) -> _GeneratorContextManager[AnyStr]: ...
 @overload
-def temppath(
+def temppath[AnyStr: (bytes, str)](
     suffix: AnyStr | None,
     prefix: AnyStr,
     dir: GenericPath[AnyStr] | None = None,
     text: bool = False,
 ) -> _GeneratorContextManager[AnyStr]: ...
 @overload
-def temppath(
+def temppath[AnyStr: (bytes, str)](
     suffix: AnyStr | None = None,
     *,
     prefix: AnyStr,
@@ -452,7 +451,7 @@ def temppath(
     text: bool = False,
 ) -> _GeneratorContextManager[AnyStr]: ...
 @overload
-def temppath(
+def temppath[AnyStr: (bytes, str)](
     suffix: AnyStr,
     prefix: AnyStr | None = None,
     dir: GenericPath[AnyStr] | None = None,
@@ -500,7 +499,7 @@ def run_threaded[*Ts](
 ) -> None: ...
 
 #
-def runstring(astr: _StrLike | types.CodeType, dict: dict[str, Any] | None) -> Any: ...  # noqa: ANN401
+def runstring(astr: _StrLike | types.CodeType, dict: dict[str, Any] | None) -> Any: ...
 def rundocs(filename: StrPath | None = None, raise_on_error: bool = True) -> None: ...
 def measure(code_str: _StrLike | ast.AST, times: int = 1, label: str | None = None) -> float: ...
 def break_cycles() -> None: ...

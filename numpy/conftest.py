@@ -23,9 +23,9 @@ except ModuleNotFoundError:
 
 try:
     import pytest_run_parallel  # noqa: F401
-    PARALLEL_RUN_AVALIABLE = True
+    PARALLEL_RUN_AVAILABLE = True
 except ModuleNotFoundError:
-    PARALLEL_RUN_AVALIABLE = False
+    PARALLEL_RUN_AVAILABLE = False
 
 _old_fpu_mode = None
 _collect_results = {}
@@ -66,9 +66,7 @@ def pytest_configure(config):
         "leaks_references: Tests that are known to leak references.")
     config.addinivalue_line("markers",
         "slow: Tests that are very slow.")
-    config.addinivalue_line("markers",
-        "slow_pypy: Tests that are very slow on pypy.")
-    if not PARALLEL_RUN_AVALIABLE:
+    if not PARALLEL_RUN_AVAILABLE:
         config.addinivalue_line("markers",
             "parallel_threads(n): run the given test function in parallel "
             "using `n` threads.",
@@ -186,6 +184,9 @@ if HAVE_SCPDT:
                 "Arrays of 2-dimensional vectors",   # matlib.cross
                 "NumPy warning suppression and assertion utilities are deprecated.",
                 "numpy.fix is deprecated",  # fix -> trunc
+                "The chararray class is deprecated",  # char.chararray
+                "numpy.typename is deprecated",  # typename -> dtype.name
+                "numpy.ma.round_ is deprecated",  # ma.round_ -> ma.round
         ]
         msg = "|".join(msgs)
 

@@ -48,6 +48,11 @@ typedef struct npy_interned_str_struct {
     PyObject *copy;
     PyObject *dl_device;
     PyObject *max_version;
+    PyObject *array_dealloc;
+    PyObject *real;
+    PyObject *imag;
+    PyObject *sort;
+    PyObject *argsort;
 } npy_interned_str_struct;
 
 /*

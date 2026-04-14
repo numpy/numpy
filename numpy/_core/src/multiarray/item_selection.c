@@ -232,7 +232,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
                  PyArrayObject *out, NPY_CLIPMODE clipmode)
 {
-    PyArray_Descr *dtype;
+    PyArray_Descr *dtype, *out_dtype;
     PyArrayObject *obj = NULL, *self, *indices;
     npy_intp nd, i, n, m, max_item, chunk, itemsize, nelem;
     npy_intp shape[NPY_MAXDIMS];
@@ -310,6 +310,19 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             flags |= NPY_ARRAY_ENSURECOPY;
         }
         dtype = PyArray_DESCR(self);
+        out_dtype = PyArray_DESCR(out);
+        if (dtype != out_dtype) {
+            /* Deprecated NumPy 2.5, 2026-01 */
+            if (!PyArray_CanCastTypeTo(dtype, out_dtype, NPY_SAME_KIND_CASTING)) {
+                if (DEPRECATE(
+                        "Implicit casting of output to a different kind is deprecated. "
+                        "In a future version, this will result in an error. (Deprecated NumPy 2.5)") <
+                    0) {
+                    goto fail;
+                }
+            }
+            flags |= NPY_ARRAY_FORCECAST;
+        }
         Py_INCREF(dtype);
         obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
         if (obj == NULL) {
@@ -1371,7 +1384,6 @@ fail:
     if (needcopy) {
         PyArray_ClearBuffer(odescr, buffer, elsize, N, 1);
         PyDataMem_UserFREE(buffer, N * elsize, mem_handler);
-        Py_DECREF(odescr);
     }
     if (ret < 0 && !PyErr_Occurred()) {
         /* Out of memory during sorting or buffer creation */
@@ -1384,6 +1396,7 @@ fail:
     if (PyErr_Occurred() && ret == 0) {
         ret = -1;
     }
+    Py_XDECREF(odescr);
     Py_DECREF(it);
     Py_DECREF(mem_handler);
     NPY_cast_info_xfree(&to_cast_info);
@@ -1594,7 +1607,6 @@ fail:
     if (needcopy) {
         PyArray_ClearBuffer(odescr, valbuffer, elsize, N, 1);
         PyDataMem_UserFREE(valbuffer, N * elsize, mem_handler);
-        Py_DECREF(odescr);
     }
     PyDataMem_UserFREE(idxbuffer, N * sizeof(npy_intp), mem_handler);
     if (ret < 0) {
@@ -1605,6 +1617,7 @@ fail:
         Py_XDECREF(rop);
         rop = NULL;
     }
+    Py_XDECREF(odescr);
     Py_XDECREF(it);
     Py_XDECREF(rit);
     Py_DECREF(mem_handler);
@@ -2407,7 +2420,7 @@ count_nonzero_bytes_384(const npy_uint64 * w)
      */
     if (NPY_UNLIKELY(
              ((w1 | w2 | w3 | w4 | w5 | w6) & 0xFEFEFEFEFEFEFEFEULL) != 0)) {
-        /* reload from pointer to avoid a unnecessary stack spill with gcc */
+        /* reload from pointer to avoid an unnecessary stack spill with gcc */
         const char * c = (const char *)w;
         npy_uintp i, count = 0;
         for (i = 0; i < 48; i++) {
@@ -3170,7 +3183,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         PyArray_Descr *given_descrs[2] = {descr, descr};
         // Sort cannot be a view, so view_offset is unused
         npy_intp view_offset = 0;
-        
+
         if (sort_method->resolve_descriptors(
             sort_method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
             PyErr_SetString(PyExc_RuntimeError,
@@ -3280,7 +3293,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         PyArray_Descr *given_descrs[2] = {descr, odescr};
         // we can ignore the view_offset for sorting
         npy_intp view_offset = 0;
-        
+
         int resolve_ret = argsort_method->resolve_descriptors(
             argsort_method, dtypes, given_descrs, loop_descrs, &view_offset);
         Py_DECREF(odescr);

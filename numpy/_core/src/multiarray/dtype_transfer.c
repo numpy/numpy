@@ -821,14 +821,8 @@ _strided_to_strided_datetime_cast(
     while (N > 0) {
         memcpy(&dt, src, sizeof(dt));
 
-        if (dt != NPY_DATETIME_NAT) {
-            /* Apply the scaling */
-            if (dt < 0) {
-                dt = (dt * num - (denom - 1)) / denom;
-            }
-            else {
-                dt = dt * num / denom;
-            }
+        if (_datetime_scale_with_overflow_check(&dt, num, denom, "datetime64") < 0) {
+            return -1;
         }
 
         memcpy(dst, &dt, sizeof(dt));
@@ -857,14 +851,8 @@ _aligned_strided_to_strided_datetime_cast(
     while (N > 0) {
         dt = *(npy_int64 *)src;
 
-        if (dt != NPY_DATETIME_NAT) {
-            /* Apply the scaling */
-            if (dt < 0) {
-                dt = (dt * num - (denom - 1)) / denom;
-            }
-            else {
-                dt = dt * num / denom;
-            }
+        if (_datetime_scale_with_overflow_check(&dt, num, denom, "datetime64") < 0) {
+            return -1;
         }
 
         *(npy_int64 *)dst = dt;

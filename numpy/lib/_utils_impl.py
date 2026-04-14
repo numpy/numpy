@@ -348,7 +348,7 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
             print(f"Help for {object} not found.", file=output)
         else:
             print("\n     "
-                  "*** Total of %d references found. ***" % numfound,
+                  f"*** Total of {numfound} references found. ***",
                   file=output
                   )
 

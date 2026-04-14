@@ -1,4 +1,5 @@
-# ruff: noqa: ANN401
+# Aliases for builtins shadowed by classes to avoid annotations resolving to class members by ty
+from builtins import str as py_str, type as py_type
 from typing import (
     Any,
     Generic,
@@ -15,7 +16,7 @@ from typing_extensions import TypeVar
 
 import numpy as np
 
-__all__ = [  # noqa: RUF022
+__all__ = [
     "BoolDType",
     "Int8DType",
     "ByteDType",
@@ -60,7 +61,7 @@ _NaObjectT_co = TypeVar("_NaObjectT_co", default=Never, covariant=True)
 
 @type_check_only
 class _SimpleDType[ScalarT: np.generic](np.dtype[ScalarT]):  # type: ignore[misc]  # pyright: ignore[reportGeneralTypeIssues]
-    names: None  # pyright: ignore[reportIncompatibleVariableOverride]
+    names: None  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override]
     def __new__(cls, /) -> Self: ...
     def __getitem__(self, key: Any, /) -> NoReturn: ...
     @property
@@ -454,7 +455,7 @@ class VoidDType(  # type: ignore[misc]
     _TypeCodes[L["V"], L["V"], L[20]],
     _NoOrder,
     _NBit[L[1], _ItemSizeT_co],
-    np.dtype[np.void],  # pyright: ignore[reportGeneralTypeIssues]
+    np.dtype[np.void],  # pyright: ignore[reportGeneralTypeIssues]  # pyrefly: ignore[invalid-inheritance]
     Generic[_ItemSizeT_co],
 ):
     # NOTE: `VoidDType(...)` raises a `TypeError` at the moment
@@ -610,7 +611,7 @@ class StringDType(  # type: ignore[misc]
     @property
     def subdtype(self) -> None: ...
     @property
-    def type(self) -> type[str]: ...
+    def type(self) -> py_type[py_str]: ...
     @property
     def str(self) -> L["|T8", "|T16"]: ...
 

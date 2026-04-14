@@ -58,7 +58,7 @@ class _ndptr[OptionalDTypeT: np.dtype | None](ct.c_void_p):
 
     @overload  # type: ignore[override]
     @classmethod
-    def from_param(cls: type[_ndptr[None]], obj: np.ndarray) -> _ctypes[Any]: ...
+    def from_param(cls: type[_ndptr[None]], obj: np.ndarray) -> _ctypes[Any]: ...  # pyrefly: ignore[bad-override]
     @overload
     @classmethod
     def from_param[DTypeT: np.dtype](cls: type[_ndptr[DTypeT]], obj: np.ndarray[Any, DTypeT]) -> _ctypes[Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]

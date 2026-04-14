@@ -1,4 +1,3 @@
-import gc
 import gzip
 import locale
 import os
@@ -26,7 +25,6 @@ from numpy.lib._iotools import ConversionWarning, ConverterError
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     HAS_REFCOUNT,
-    IS_PYPY,
     IS_WASM,
     assert_,
     assert_allclose,
@@ -35,7 +33,6 @@ from numpy.testing import (
     assert_no_warnings,
     assert_raises,
     assert_raises_regex,
-    break_cycles,
     tempdir,
     temppath,
 )
@@ -185,7 +182,7 @@ class RoundtripTest:
 
     @pytest.mark.slow
     def test_format_2_0(self):
-        dt = [(("%d" % i) * 100, float) for i in range(500)]
+        dt = [(f"{i}" * 100, float) for i in range(500)]
         a = np.ones(1000, dtype=dt)
         with warnings.catch_warnings(record=True):
             warnings.filterwarnings('always', '', UserWarning)
@@ -205,7 +202,7 @@ class TestSavezLoad(RoundtripTest):
         arr, arr_reloaded = RoundtripTest.roundtrip(self, np.savez, *args, **kwargs)
         try:
             for n, a in enumerate(arr):
-                reloaded = arr_reloaded['arr_%d' % n]
+                reloaded = arr_reloaded[f'arr_{n}']
                 assert_equal(a, reloaded)
                 assert_equal(a.dtype, reloaded.dtype)
                 assert_equal(a.flags.fnc, reloaded.flags.fnc)
@@ -231,7 +228,6 @@ class TestSavezLoad(RoundtripTest):
                 assert len(npz["test2"]) == 10
                 assert npz["metadata"] == b"Name: Test"
 
-    @pytest.mark.skipif(IS_PYPY, reason="Hangs on PyPy")
     @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
     @pytest.mark.slow
     @pytest.mark.thread_unsafe(reason="crashes with low memory")
@@ -320,7 +316,6 @@ class TestSavezLoad(RoundtripTest):
                 fp.seek(0)
                 assert_(not fp.closed)
 
-    @pytest.mark.slow_pypy
     def test_closing_fid(self):
         # Test that issue #1517 (too many opened files) remains closed
         # It might be a "weak" test since failed to get triggered on
@@ -338,14 +333,7 @@ class TestSavezLoad(RoundtripTest):
                 # TODO: specify exact message
                 warnings.simplefilter('ignore', ResourceWarning)
                 for i in range(1, 1025):
-                    try:
-                        np.load(tmp)["data"]
-                    except Exception as e:
-                        msg = f"Failed to load data from a file: {e}"
-                        raise AssertionError(msg)
-                    finally:
-                        if IS_PYPY:
-                            gc.collect()
+                    np.load(tmp)["data"]
 
     def test_closing_zipfile_after_load(self):
         # Check that zipfile owns file and can close it.  This needs to
@@ -623,7 +611,7 @@ class TestSaveTxt:
         np.savetxt(s, a, fmt="%f")
         s.seek(0)
         if iotype is StringIO:
-            assert_equal(s.read(), "%f\n" % 1.)
+            assert_equal(s.read(), f"{1.:f}\n")
         else:
             assert_equal(s.read(), b"%f\n" % 1.)
 
@@ -646,7 +634,7 @@ class TestSaveTxt:
             except MemoryError:
                 memoryerror_raised.value = True
                 raise
-        # run in a subprocess to ensure memory is released on PyPy, see gh-15775
+        # run in a subprocess to ensure memory is released
         # Use an object in shared memory to re-raise the MemoryError exception
         # in our process if needed, see gh-16889
         memoryerror_raised = Value(c_bool)
@@ -1031,7 +1019,7 @@ class TestLoadTxt(LoadTxtBase):
     def test_uint64_type(self):
         tgt = (9223372043271415339, 9223372043271415853)
         c = TextIO()
-        c.write("%s %s" % tgt)
+        c.write(f'{tgt[0]} {tgt[1]}')
         c.seek(0)
         res = np.loadtxt(c, dtype=np.uint64)
         assert_equal(res, tgt)
@@ -1039,7 +1027,7 @@ class TestLoadTxt(LoadTxtBase):
     def test_int64_type(self):
         tgt = (-9223372036854775807, 9223372036854775807)
         c = TextIO()
-        c.write("%s %s" % tgt)
+        c.write(f'{tgt[0]} {tgt[1]}')
         c.seek(0)
         res = np.loadtxt(c, dtype=np.int64)
         assert_equal(res, tgt)
@@ -1081,7 +1069,7 @@ class TestLoadTxt(LoadTxtBase):
     def test_from_complex(self):
         tgt = (complex(1, 1), complex(1, -1))
         c = TextIO()
-        c.write("%s %s" % tgt)
+        c.write(f'{tgt[0]} {tgt[1]}')
         c.seek(0)
         res = np.loadtxt(c, dtype=complex)
         assert_equal(res, tgt)
@@ -1179,7 +1167,7 @@ class TestLoadTxt(LoadTxtBase):
     def test_generator_source(self):
         def count():
             for i in range(10):
-                yield "%d" % i
+                yield f"{i}"
 
         res = np.loadtxt(count())
         assert_array_equal(res, np.arange(10))
@@ -1281,20 +1269,16 @@ class TestLoadTxt(LoadTxtBase):
         if callable(data):
             data = data()
 
-        with pytest.warns(UserWarning,
-                    match=f"Input line 3.*max_rows={3 - skip}"):
-            res = np.loadtxt(data, dtype=int, skiprows=skip, delimiter=",",
-                             max_rows=3 - skip)
-            assert_array_equal(res, [[-1, 0], [1, 2], [3, 4]][skip:])
+        res = np.loadtxt(data, dtype=int, skiprows=skip, delimiter=",",
+                         max_rows=3 - skip)
+        assert_array_equal(res, [[-1, 0], [1, 2], [3, 4]][skip:])
 
         if isinstance(data, StringIO):
             data.seek(0)
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", UserWarning)
-            with pytest.raises(UserWarning):
-                np.loadtxt(data, dtype=int, skiprows=skip, delimiter=",",
-                           max_rows=3 - skip)
+        # gh-31113 old test checked the warning twice on `StringIO` inputs
+        x = np.loadtxt(data, dtype=int, skiprows=skip, delimiter=",",
+                       max_rows=3 - skip)
+        assert_array_equal(x, [[-1, 0], [1, 2], [3, 4]][skip:])
 
 class Testfromregex:
     def test_record(self):
@@ -2419,7 +2403,7 @@ M   33  21.99
         # gft doesn't work with unicode.
         def count():
             for i in range(10):
-                yield asbytes("%d" % i)
+                yield asbytes(f"{i}")
 
         res = np.genfromtxt(count())
         assert_array_equal(res, np.arange(10))
@@ -2441,9 +2425,9 @@ M   33  21.99
 
         assert_equal(test.dtype.names, ['f0', 'f1', 'f2'])
 
-        assert_(test.dtype['f0'] == float)
-        assert_(test.dtype['f1'] == np.int64)
-        assert_(test.dtype['f2'] == np.int_)
+        assert_(test.dtype['f0'].type is np.float64)
+        assert_(test.dtype['f1'].type is np.int64)
+        assert_(test.dtype['f2'].type is np.int_)
 
         assert_allclose(test['f0'], 73786976294838206464.)
         assert_equal(test['f1'], 17179869184)
@@ -2542,9 +2526,6 @@ class TestPathUsage:
             assert_array_equal(data, a)
             # close the mem-mapped file
             del data
-            if IS_PYPY:
-                break_cycles()
-                break_cycles()
 
     @pytest.mark.xfail(IS_WASM, reason="memmap doesn't work correctly")
     @pytest.mark.parametrize("filename_type", [Path, str])
@@ -2557,9 +2538,6 @@ class TestPathUsage:
             a[0][0] = 5
             b[0][0] = 5
             del b  # closes the file
-            if IS_PYPY:
-                break_cycles()
-                break_cycles()
             data = np.load(path)
             assert_array_equal(data, a)
 

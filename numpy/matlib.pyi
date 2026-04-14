@@ -2,7 +2,7 @@ from typing import Any, Literal, overload
 
 import numpy as np
 import numpy.typing as npt
-from numpy import (  # type: ignore[deprecated]  # noqa: F401
+from numpy import (  # noqa: F401
     False_,
     ScalarType,
     True_,
@@ -99,6 +99,7 @@ from numpy import (  # type: ignore[deprecated]  # noqa: F401
     common_type,
     complex64,
     complex128,
+    complex192,
     complex256,
     complexfloating,
     compress,
@@ -175,6 +176,7 @@ from numpy import (  # type: ignore[deprecated]  # noqa: F401
     float16,
     float32,
     float64,
+    float96,
     float128,
     float_power,
     floating,

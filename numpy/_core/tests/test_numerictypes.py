@@ -6,13 +6,7 @@ import pytest
 import numpy as np
 import numpy._core.numerictypes as nt
 from numpy._core.numerictypes import issctype, sctype2char, sctypes
-from numpy.testing import (
-    IS_PYPY,
-    assert_,
-    assert_equal,
-    assert_raises,
-    assert_raises_regex,
-)
+from numpy.testing import assert_, assert_equal, assert_raises, assert_raises_regex
 
 # This is the structure of the table used for plain objects:
 #
@@ -263,7 +257,7 @@ class ReadValuesNested:
             assert_equal(h['z'], np.array([self._buffer[0][5],
                                            self._buffer[1][5]], dtype='u1'))
 
-    def test_nested1_acessors(self):
+    def test_nested1_accessors(self):
         """Check reading the nested fields of a nested array (1st level)"""
         h = np.array(self._buffer, dtype=self._descr)
         if not self.multiple_rows:
@@ -293,7 +287,7 @@ class ReadValuesNested:
                                 self._buffer[1][3][1]],
                                dtype='c16'))
 
-    def test_nested2_acessors(self):
+    def test_nested2_accessors(self):
         """Check reading the nested fields of a nested array (2nd level)"""
         h = np.array(self._buffer, dtype=self._descr)
         if not self.multiple_rows:
@@ -341,7 +335,7 @@ class TestReadValuesNestedMultiple(ReadValuesNested):
 class TestEmptyField:
     def test_assign(self):
         a = np.arange(10, dtype=np.float32)
-        a.dtype = [("int",   "<0i4"), ("float", "<2f4")]
+        a = a.view(dtype=[("int", "<0i4"), ("float", "<2f4")])
         assert_(a['int'].shape == (5, 0))
         assert_(a['float'].shape == (5, 2))
 
@@ -547,10 +541,6 @@ def test_issctype(rep, expected):
     sys.flags.optimize > 1,
     reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1",
 )
-@pytest.mark.xfail(
-    IS_PYPY,
-    reason="PyPy cannot modify tp_doc after PyType_Ready",
-)
 class TestDocStrings:
     def test_platform_dependent_aliases(self):
         if np.int64 is np.int_:
@@ -583,7 +573,7 @@ class TestScalarTypeNames:
         assert getattr(np, t.__name__) is t
 
     @pytest.mark.parametrize('t', numeric_types)
-    def test_names_are_undersood_by_dtype(self, t):
+    def test_names_are_understood_by_dtype(self, t):
         """ Test the dtype constructor maps names back to the type """
         assert np.dtype(t.__name__).type is t
 

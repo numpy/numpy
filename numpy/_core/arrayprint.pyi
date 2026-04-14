@@ -1,3 +1,5 @@
+# Aliases for builtins shadowed by classes to avoid annotations resolving to class members by ty
+from builtins import object as py_object
 from collections.abc import Callable
 
 # Using a private class is by no means ideal, but it is simply a consequence
@@ -40,8 +42,8 @@ class _FormatDict(TypedDict, total=False):
     longcomplexfloat: Callable[[np.clongdouble], str]
     void: Callable[[np.void], str]
     numpystr: Callable[[_CharLike_co], str]
-    object: Callable[[object], str]
-    all: Callable[[object], str]
+    object: Callable[[py_object], str]
+    all: Callable[[py_object], str]
     int_kind: Callable[[np.integer], str]
     float_kind: Callable[[np.floating], str]
     complex_kind: Callable[[np.complexfloating], str]

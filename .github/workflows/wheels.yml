@@ -52,7 +52,7 @@ jobs:
       IS_32_BIT: ${{ matrix.buildplat[2] == 'win32' }}  # used in cibw_test_command.sh
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           submodules: true
           persist-credentials: false
@@ -63,14 +63,17 @@ jobs:
         with:
           architecture: 'x86'
 
-      - name: Setup LLVM for Windows ARM64
+      - name: win_arm64 - set environment variables
         if: ${{ matrix.buildplat[2] == 'win_arm64' }}
-        uses: ./.github/windows_arm64_steps
+        run: |
+            echo "C:\Program Files\LLVM\bin" >> $env:GIHUB_PATH
+            echo "CC=clang-cl" >> $env:GITHUB_ENV
+            echo "CXX=clang-cl" >> $env:GITHUB_ENV
+            echo "FC=flang" >> $env:GITHUB_ENV
 
       - name: pkg-config-for-win
         if: runner.os == 'windows'
         run: |
-          choco install -y --no-progress --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
           $CIBW = "${{ github.workspace }}/.openblas"
           # pkgconfig needs a complete path, and not just "./openblas since the
           # build is run in a tmp dir (?)
@@ -113,12 +116,12 @@ jobs:
           echo "CIBW_ENVIRONMENT_IOS=$CIBW" >> "$GITHUB_ENV"
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@298ed2fb2c105540f5ed055e8a6ad78d82dd3a7e  # v3.3.1
+        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
         env:
           CIBW_PLATFORM: ${{ matrix.buildplat[0] }}
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[2] }}
 
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: ${{ matrix.python }}-${{ matrix.buildplat[2] }}-${{ matrix.buildplat[3] }}
           path: ./wheelhouse/*.whl

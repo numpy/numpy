@@ -279,13 +279,13 @@ This example shows how to build the ``add`` extension from the ``add.f`` and ``a
 files described in the :ref:`f2py-examples` (note that you do not always need
 a ``.pyf`` file: in many cases ``f2py`` can figure out the annotations by itself).
 
-Project layout:
+Project layout::
 
-  f2py_examples/
-    meson.build
-    add.f
-    add.pyf (optional)
-    __init__.py  (can be empty)
+    f2py_examples/
+      meson.build
+      add.f
+      add.pyf (optional)
+      __init__.py  (can be empty)
 
 Example ``meson.build``:
 

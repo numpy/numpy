@@ -1603,9 +1603,9 @@ def _nanquantile_unchecked(
 
 
 def _nanquantile_ureduce_func(
-        a: np.array,
-        q: np.array,
-        weights: np.array,
+        a: np.ndarray,
+        q: np.ndarray,
+        weights: np.ndarray,
         axis: int | None = None,
         out=None,
         overwrite_input: bool = False,

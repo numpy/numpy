@@ -920,10 +920,7 @@ PyArray_AdaptDescriptorToArray(
         return descr;
     }
     if (dtype == NULL) {
-        res = PyArray_ExtractDTypeAndDescriptor(descr, &new_descr, &dtype);
-        if (res < 0) {
-            return NULL;
-        }
+        PyArray_ExtractDTypeAndDescriptor(descr, &new_descr, &dtype);
         if (new_descr != NULL) {
             Py_DECREF(dtype);
             return new_descr;
@@ -1034,7 +1031,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         }
         int was_copied_by__array__ = 0;
         arr = (PyArrayObject *)_array_from_array_like(obj,
-                requested_descr, 0, NULL, copy, &was_copied_by__array__);
+                requested_descr, 0, copy, &was_copied_by__array__);
         if (arr == NULL) {
             return -1;
         }
@@ -1138,7 +1135,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
 
   force_sequence_due_to_char_dtype:
 
-    /* Ensure we have a sequence (required for PyPy) */
+    /* Ensure we have a sequence */
     seq = PySequence_Fast(obj, "Could not convert object to sequence"); // noqa: borrowed-ref - manual fix needed
     if (seq == NULL) {
         /*
@@ -1420,9 +1417,8 @@ _discover_array_parameters(PyObject *NPY_UNUSED(self),
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments(
             "_discover_array_parameters", args, len_args, kwnames,
-            "", NULL, &obj,
-            "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
-            NULL, NULL, NULL) < 0) {
+            {"", NULL, &obj},
+            {"|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info}) < 0) {
         /* fixed is last to parse, so never necessary to clean up */
         return NULL;
     }

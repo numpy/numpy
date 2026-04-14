@@ -1,5 +1,7 @@
 import copy
+import datetime
 import gc
+import os
 import pickle
 import sys
 import tempfile
@@ -17,7 +19,6 @@ from numpy.lib.stride_tricks import as_strided
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
-    IS_PYPY,
     IS_WASM,
     _assert_valid_refcount,
     assert_,
@@ -35,6 +36,7 @@ from numpy.testing._private.utils import (
 )
 
 
+@pytest.mark.filterwarnings(r"ignore:\w+ chararray \w+:DeprecationWarning")
 class TestRegression:
     def test_invalid_round(self):
         # Ticket #3
@@ -1072,7 +1074,7 @@ class TestRegression:
         x = np.zeros((30, 40))
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             y = pickle.loads(pickle.dumps(x, protocol=proto))
-            # y is now typically not aligned on a 8-byte boundary
+            # y is now typically not aligned on an 8-byte boundary
             z = np.ones((1, y.shape[0]))
             # This shouldn't cause a segmentation fault:
             np.dot(z, y)
@@ -1092,18 +1094,24 @@ class TestRegression:
         assert_(xp.__array_interface__['data'][0] !=
                 xpd.__array_interface__['data'][0])
 
+    @pytest.mark.filterwarnings(
+        "error:Implicit casting of output.*:DeprecationWarning",
+    )
     def test_compress_small_type(self):
         # Ticket #789, changeset 5217.
         # compress with out argument segfaulted if cannot cast safely
         import numpy as np
         a = np.array([[1, 2], [3, 4]])
         b = np.zeros((2, 1), dtype=np.single)
+        a.compress([True, False], axis=1, out=b)
+        assert_equal(b, np.array([[1.0], [3.0]]))
         try:
-            a.compress([True, False], axis=1, out=b)
-            raise AssertionError("compress with an out which cannot be "
-                                 "safely casted should not return "
-                                 "successfully")
-        except TypeError:
+            # Previously the above already failed (and that is OK) but take
+            # currently allows same-kind casting for the output.
+            a.compress([True, False], axis=1, out=np.empty((2, 1), dtype=bool))
+            raise AssertionError("Expected TypeError due to unsafe out cast")
+        except DeprecationWarning:
+            # After deprecation remove TypeError the warnings filter.
             pass
 
     def test_attributes(self):
@@ -1199,8 +1207,8 @@ class TestRegression:
     def test_unaligned_unicode_access(self):
         # Ticket #825
         for i in range(1, 9):
-            msg = 'unicode offset: %d chars' % i
-            t = np.dtype([('a', 'S%d' % i), ('b', 'U2')])
+            msg = f'unicode offset: {i} chars'
+            t = np.dtype([('a', f'S{i}'), ('b', 'U2')])
             x = np.array([(b'a', 'b')], dtype=t)
             assert_equal(str(x), "[(b'a', 'b')]", err_msg=msg)
 
@@ -1293,15 +1301,9 @@ class TestRegression:
                 for k in range(3):
                     # Try to ensure that x->data contains non-zero floats
                     x = np.array([123456789e199], dtype=np.float64)
-                    if IS_PYPY:
-                        x.resize((m, 0), refcheck=False)
-                    else:
-                        x.resize((m, 0))
+                    x.resize((m, 0))
                     y = np.array([123456789e199], dtype=np.float64)
-                    if IS_PYPY:
-                        y.resize((0, n), refcheck=False)
-                    else:
-                        y.resize((0, n))
+                    y.resize((0, n))
 
                     # `dot` should just return zero (m, n) matrix
                     z = np.dot(x, y)
@@ -1851,7 +1853,7 @@ class TestRegression:
         s = b'0123456789abcdef'
         a = np.array([s] * 5)
         for i in range(1, 17):
-            a1 = np.array(a, "|S%d" % i)
+            a1 = np.array(a, f"|S{i}")
             a2 = np.array([s[:i]] * 5)
             assert_equal(a1, a2)
 
@@ -1914,6 +1916,7 @@ class TestRegression:
     @pytest.mark.filterwarnings(
         "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
     )
+    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
     def test_pickle_py2_array_latin1_hack(self):
         # Check that unpickling hacks in Py3 that support
         # encoding='latin1' work correctly.
@@ -2007,7 +2010,6 @@ class TestRegression:
         a[...] = [[1, 2]]
         assert_equal(a, [[1, 2], [1, 2]])
 
-    @pytest.mark.slow_pypy
     def test_memoryleak(self):
         # Ticket #1917 - ensure that array data doesn't leak
         for i in range(1000):
@@ -2333,6 +2335,7 @@ class TestRegression:
             np.bytes_: b"a",
             np.str_: "a",
             np.datetime64: "2017-08-25",
+            np.timedelta64: datetime.timedelta(days=1)
         }
         for sctype in scalar_types:
             item = sctype(values.get(sctype, 1))
@@ -2353,21 +2356,12 @@ class TestRegression:
         assert_(np.array([b'abc'], 'V3').astype('O') == b'abc')
         assert_(np.array([b'abcd'], 'V4').astype('O') == b'abcd')
 
-    def test_structarray_title(self):
-        # The following used to segfault on pypy, due to NPY_TITLE_KEY
-        # not working properly and resulting to double-decref of the
-        # structured array field items:
-        # See: https://bitbucket.org/pypy/pypy/issues/2789
-        for j in range(5):
-            structure = np.array([1], dtype=[(('x', 'X'), np.object_)])
-            structure[0]['x'] = np.array([2])
-            gc.collect()
-
     def test_dtype_scalar_squeeze(self):
         # gh-11384
         values = {
             'S': b"a",
             'M': "2018-06-20",
+            'm': datetime.timedelta(days=3),
         }
         for ch in np.typecodes['All']:
             if ch in 'O':
@@ -2549,7 +2543,6 @@ class TestRegression:
         expected = np.ones(size, dtype=np.bool)
         assert_array_equal(np.logical_and(a, b), expected)
 
-    @pytest.mark.skipif(IS_PYPY, reason="PyPy issue 2742")
     def test_gh_23737(self):
         with pytest.raises(TypeError, match="not an acceptable base type"):
             class Y(np.flexible):
