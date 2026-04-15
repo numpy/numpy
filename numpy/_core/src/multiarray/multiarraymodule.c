@@ -1136,7 +1136,8 @@ fail:
 static int _pyarray_revert(PyArrayObject *ret);
 
 /*
- * Core correlation computation.
+ * Core correlation computation - common between PyArray_Correlate
+ * and PyArray_Correlate2 and PyArray_CorrelateLags.
  *
  * Handles all input forms internally:
  *   - Swaps arrays if n1 < n2 (and negates lags)
@@ -1147,8 +1148,7 @@ static int _pyarray_revert(PyArrayObject *ret);
  * and receive a result aligned with their original array/lag order.
  */
 static PyArrayObject*
-_pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2,
-                   PyArray_Descr *typec,
+_pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, PyArray_Descr *typec,
                    npy_intp minlag, npy_intp maxlag, npy_intp lagstep)
 {
     PyArrayObject *ret, *swap;
@@ -1252,12 +1252,12 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2,
         op += os*((-n2+1) - lag);
         lag = -n2+1;
     }
+
+    /* Phase 1: lags where y is left of x, i.e. lag in [-(n2-1), 0).
+     * Overlap length is n2 + lag. */
     maxleft = (0 < maxlag ? 0 : maxlag);
     tmplag = lag;
     for (lag = tmplag; lag < maxleft; lag+=lagstep) {
-        /* for lags where y is left of x,
-         * overlap is length of y - lag
-         */
         n = n2 + lag;
         dot(ip1, is1, ip2 - lag*is2, is2, op, n, ret);
         if (needs_pyapi && PyErr_Occurred()) {
@@ -1266,9 +1266,10 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2,
         /* iterate over answer vector */
         op += os;
     }
-    n11 = n1;
+
     /* Phase 2: lags where y entirely overlaps with x, i.e. lag in [0, n1-n2].
      * Upper bound is the smaller of maxlag and the full-overlap boundary. */
+    n11 = n1;
     phase2_end = maxlag < (n11 - n2 + 1) ? maxlag : (n11 - n2 + 1);
     if (lagstep == 1 && lag < phase2_end &&
             small_correlate(ip1 + lag*is1, is1,
@@ -1287,12 +1288,14 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2,
             op += os;
         }
     }
+
+    /* Phase 3: lags where y is right of x, i.e. lag in [n1-n2+1, n1).
+     * Overlap length is n1 - lag. */
     maxright = (maxlag < n1) ? maxlag : n1;
     tmplag = lag;
     for (lag = tmplag;
             lag < maxright && (!needs_pyapi || !PyErr_Occurred());
             lag += lagstep) {
-        /* for lags where y is right of x */
         n = n1 - lag;
         dot(ip1 + lag*is1, is1, ip2, is2, op, n, ret);
         op += os;
