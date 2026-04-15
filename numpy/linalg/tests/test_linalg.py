@@ -917,6 +917,31 @@ def test_pinv_rtol_arg():
         np.linalg.pinv(a, rcond=0.5, rtol=0.5)
 
 
+def test_pinv_rtol_none_integer_dtypes():
+    # gh-30917: pinv with rtol=None should not crash for integer-dtype arrays.
+    # Previously raised: ValueError: data type <class 'numpy.int32'> not inexact
+    for dtype in [np.int16, np.int32, np.int64, np.uint32]:
+        a = np.array([[1, 2, 3], [4, 1, 1], [2, 3, 1]], dtype=dtype)
+        # Must not raise
+        B = np.linalg.pinv(a, rtol=None)
+
+        # Result must satisfy Moore-Penrose conditions (A B A == A)
+        a_f = a.astype(np.float64)
+        assert_almost_equal(a_f @ B @ a_f, a_f, double_decimal=10)
+
+        # Result must match pinv of the float-cast array with same rtol
+        B_ref = np.linalg.pinv(a_f, rtol=None)
+        assert_almost_equal(B, B_ref, double_decimal=10)
+
+
+def test_pinv_rtol_none_float_dtypes_unchanged():
+    # gh-30917: existing float dtype behaviour must be unaffected.
+    for dtype in [np.float32, np.float64]:
+        a = np.array([[1, 2, 3], [4, 1, 1], [2, 3, 1]], dtype=dtype)
+        B = np.linalg.pinv(a, rtol=None)
+        assert_almost_equal(a @ B @ a, a)
+
+
 class DetCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
     def do(self, a, b, tags):
