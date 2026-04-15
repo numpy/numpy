@@ -718,64 +718,75 @@ def flatnonzero(a):
     return np.nonzero(np.ravel(a))[0]
 
 
+_CorrModeDefault = object()
+
+_CORR_MODE_MAP = {
+    'valid': 0,
+    'same': 1,
+    'full': 2,
+    'lags': 3,
+}
+
+
 def _mode_from_name(mode):
-    if type(mode) not in (str, int):
-        raise TypeError("correlate/convolve mode argument must be unused or" +
-                         " one of {'valid', 'same', 'full', 'lags'}")
-
-    mode_map = {
-        'valid': 0,
-        'same': 1, 
-        'full': 2,
-        'lags': 3
-    }
-
-    if mode in mode_map.values():
-        return mode
-    
-    if mode in mode_map:
-        return mode_map[mode]
-    
-    raise ValueError("correlate/convolve mode argument must be unused or" +
-                     " one of {'valid', 'same', 'full', 'lags'}")
+    if isinstance(mode, int):
+        if mode in _CORR_MODE_MAP.values():
+            return mode
+    elif isinstance(mode, str):
+        if mode in _CORR_MODE_MAP:
+            return _CORR_MODE_MAP[mode]
+    else:
+        raise TypeError("correlate/convolve mode must be a string or int, "
+                        "one of 'valid', 'same', 'full', 'lags'")
+    raise ValueError("correlate/convolve mode must be "
+                     "one of 'valid', 'same', 'full', 'lags'")
 
 
 def _lags_from_lags(lag):
-    if type(lag) is int:          # maxlag
-        lags = (-lag+1, lag, 1)
-    elif type(lag) is tuple:      # minlag and maxlag
-        if len(lag) > 2:
-            lags = (int(lag[0]), int(lag[1]), int(lag[2]))
+    if isinstance(lag, (int, nt.integer)):
+        return (-lag + 1, int(lag), 1)
+    elif isinstance(lag, (tuple, list)):
+        if len(lag) == 3:
+            minlag, maxlag, lagstep = int(lag[0]), int(lag[1]), int(lag[2])
+        elif len(lag) == 2:
+            minlag, maxlag, lagstep = int(lag[0]), int(lag[1]), 1
         else:
-            lags = (int(lag[0]), int(lag[1]), 1)
+            raise ValueError("lags tuple must have 2 or 3 elements")
+        if lagstep == 0:
+            raise ValueError("lagstep must not be zero")
+        return (minlag, maxlag, lagstep)
     else:
-        raise ValueError("correlate/convolve lags argument must be " +
-                         "int or int tuple.")
-    return lags
+        raise TypeError("lags must be an int or a tuple of ints")
 
 
 def _lags_from_mode(alen, vlen, mode):
-    inverted = 0
+    """
+    Compute the lag range for a given mode.
+
+    Produces lags aligned with the caller's original (alen, vlen) order
+    (i.e. matches what ``np.correlate(a, v, mode)`` returns element-by-element).
+    """
+    inverted = False
     if alen < vlen:
         alen, vlen = vlen, alen
-        inverted = 1
+        inverted = True
 
     if mode == 0:
-        mode_lags = (0, alen-vlen+1, 1)
+        m0, m1 = 0, alen - vlen + 1
     elif mode == 1:
-        mode_lags = (-int(vlen/2), alen - int(vlen/2), 1)
+        half = int(vlen / 2)
+        m0, m1 = -half, alen - half
     elif mode == 2:
-        mode_lags = (-vlen+1, alen, 1)
+        m0, m1 = -vlen + 1, alen
     else:
-        raise ValueError("correlate/convolve mode argument must be unused or" +
-                         " one of {'valid', 'same', 'full', 'lags'}")
+        raise ValueError("correlate/convolve mode must be "
+                         "one of 'valid', 'same', 'full'")
 
     if inverted:
-        mode_lags = (-int(math.ceil((mode_lags[1]-mode_lags[0])/float(mode_lags[2])))
-                     *mode_lags[2]-mode_lags[0]+mode_lags[2],
-                     -mode_lags[0]+mode_lags[2], mode_lags[2])
+        count = m1 - m0  # lagstep is always 1 for mode-based lags
+        m0, m1 = -(m0 + count - 1), -m0 + 1
 
-    return mode_lags
+    return (m0, m1, 1)
 
 
 def _correlate_dispatcher(a, v, mode=None, lags=None, returns_lagvector=None):
@@ -783,7 +794,8 @@ def _correlate_dispatcher(a, v, mode=None, lags=None, returns_lagvector=None):
 
 
 @array_function_dispatch(_correlate_dispatcher)
-def correlate(a, v, mode='default', lags=None, returns_lagvector=False):
+def correlate(a, v, mode=_CorrModeDefault, lags=None,
+              returns_lagvector=False):
     r"""
     Cross-correlation of two 1-dimensional sequences.
 
@@ -801,7 +813,9 @@ def correlate(a, v, mode='default', lags=None, returns_lagvector=False):
         Input sequences.
     mode : {'valid', 'same', 'full', 'lags'}, optional
         Refer to the `convolve` docstring.  Note that the default
-        is 'default', unlike `convolve`, which uses 'full'.
+        is 'valid', unlike `convolve`, which uses 'full'.
+        If ``lags`` is provided and ``mode`` is not specified,
+        ``mode`` defaults to 'lags'.
     lags : int or int tuple, optional
         Refer to the `convolve` docstring.
         mode should be unset or set to 'lags' to use the lags argument
@@ -870,28 +884,28 @@ def correlate(a, v, mode='default', lags=None, returns_lagvector=False):
     array([ 0.0+0.j ,  3.0+1.j ,  1.5+1.5j,  1.0+0.j ,  0.5+0.5j])
 
     """
-    if mode == 'default':
-        if lags is not None:
-            mode = 'lags'
-        else:
-            mode = 'valid'
-    mode = _mode_from_name(mode)  # guaranteed a value in _mode_from_name_dict
+    # Resolve mode: if unset, infer from whether lags was provided
+    if mode is _CorrModeDefault:
+        mode = 'lags' if lags is not None else 'valid'
+    mode = _mode_from_name(mode)
+
     if mode in (0, 1, 2):
         if lags is not None:
-            raise ValueError("correlate mode keyword argument must be 'lags'" +
-                             " or unused if the lags keyword argument is used.")
+            raise ValueError("lags cannot be used with mode "
+                             "'valid', 'same', or 'full'")
         result = multiarray.correlate2(a, v, mode)
         if returns_lagvector:
-            alen, vlen = len(a), len(v)
-            lags_throuple = _lags_from_mode(alen, vlen, mode)
+            lags_tuple = _lags_from_mode(len(a), len(v), mode)
     elif mode == 3:
-        lags_throuple = _lags_from_lags(lags)
-        result = multiarray.correlatelags(a, v, lags_throuple[0], lags_throuple[1], lags_throuple[2])
+        if lags is None:
+            raise ValueError("lags argument is required for mode='lags'")
+        lags_tuple = _lags_from_lags(lags)
+        result = multiarray.correlatelags(
+            a, v, lags_tuple[0], lags_tuple[1], lags_tuple[2])
 
     if returns_lagvector:
-        return result, arange(lags_throuple[0], lags_throuple[1], lags_throuple[2])
-    else:
-        return result
+        return result, arange(lags_tuple[0], lags_tuple[1], lags_tuple[2])
+    return result
 
 
 def _convolve_dispatcher(a, v, mode=None, lags=None, returns_lagvector=None):
@@ -899,7 +913,8 @@ def _convolve_dispatcher(a, v, mode=None, lags=None, returns_lagvector=None):
 
 
 @array_function_dispatch(_convolve_dispatcher)
-def convolve(a, v, mode='full', lags=None, returns_lagvector=False):
+def convolve(a, v, mode=_CorrModeDefault, lags=None,
+             returns_lagvector=False):
     """
     Returns the discrete, linear convolution of two one-dimensional sequences.
 
@@ -917,7 +932,7 @@ def convolve(a, v, mode='full', lags=None, returns_lagvector=False):
         First one-dimensional input array.
     v : (M,) array_like
         Second one-dimensional input array.
-    mode : int, int tuple, or {'full', 'valid', 'same'}, optional
+    mode : {'full', 'valid', 'same', 'lags'}, optional
         'full':
           By default, mode is 'full'.  This returns the convolution
           at each point of overlap, with an output shape of (N+M-1,). At
@@ -930,7 +945,7 @@ def convolve(a, v, mode='full', lags=None, returns_lagvector=False):
           Mode `same` returns output of length ``max(M, N)``.  Boundary
           effects are still visible. This corresponds with a lag tuple of
           (-M/2, N-M/2, 1) for N>M or (-M+N/2+1, N/2+1, 1) for M>N.
- 
+
         'valid':
           Mode 'valid' returns output of length
           ``max(M, N) - min(M, N) + 1``.  The convolution product is only given
@@ -941,6 +956,8 @@ def convolve(a, v, mode='full', lags=None, returns_lagvector=False):
         'lags':
           Mode 'lags' uses the lags argument to define the lags for which
           to perform the convolution.
+          If ``lags`` is provided and ``mode`` is not specified,
+          ``mode`` defaults to 'lags'.
 
     lags : int or int tuple, optional
         Mode should be unset or set to 'lags' to use the lags argument.
@@ -1038,7 +1055,7 @@ def convolve(a, v, mode='full', lags=None, returns_lagvector=False):
     lag range tuple is non-inclusive, similar to np.arange()):
     >>> np.convolve([1,2,3,4,5],[0,1,0.5], mode='lags', lags=(-2,6,2), returns_lagvector=True)
     (array([ 0. ,  2.5,  5.5,  2.5]), array([-2,  0,  2,  4]))
- 
+
     """
     a, v = array(a, copy=None, ndmin=1), array(v, copy=None, ndmin=1)
     alen, vlen = len(a), len(v)
@@ -1049,28 +1066,29 @@ def convolve(a, v, mode='full', lags=None, returns_lagvector=False):
 
     if vlen > alen:
         a, v = v, a
-    
-    if mode == 'default':
-        if lags is not None:
-            mode = 'lags'
-        else:
-            mode = 'full'
-    mode = _mode_from_name(mode)  # guaranteed a value in _mode_from_name_dict
+
+    # Resolve mode: if unset, infer from whether lags was provided
+    if mode is _CorrModeDefault:
+        mode = 'lags' if lags is not None else 'full'
+    mode = _mode_from_name(mode)
+
     if mode in (0, 1, 2):
         if lags is not None:
-            raise ValueError("convolve mode keyword argument must be 'lags' " +
-                             "or unused if the lags keyword argument is used.")
+            raise ValueError("lags cannot be used with mode "
+                             "'valid', 'same', or 'full'")
         result = multiarray.correlate2(a, v[::-1], mode)
         if returns_lagvector:
-            lags = _lags_from_mode(alen, vlen, mode)
+            lags_tuple = _lags_from_mode(alen, vlen, mode)
     elif mode == 3:
-        lags = _lags_from_lags(lags)
-        result = multiarray.correlatelags(a, v[::-1], lags[0], lags[1], lags[2])
+        if lags is None:
+            raise ValueError("lags argument is required for mode='lags'")
+        lags_tuple = _lags_from_lags(lags)
+        result = multiarray.correlatelags(
+            a, v[::-1], lags_tuple[0], lags_tuple[1], lags_tuple[2])
 
     if returns_lagvector:
-        return result, arange(lags[0], lags[1], lags[2])
-    else:
-        return result
+        return result, arange(lags_tuple[0], lags_tuple[1], lags_tuple[2])
+    return result
 
 
 def _outer_dispatcher(a, b, out=None):
