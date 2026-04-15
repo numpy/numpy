@@ -34,9 +34,6 @@ jobs:
           - runs-on: "macos-14"
             accelerated: true
             arch: arm64_iphonesimulator
-          - runs-on: "macos-15-intel"
-            accelerated: true
-            arch: x86_64_iphonesimulator
 
           # Non-accelerated
           - runs-on: "macos-14"
@@ -45,9 +42,6 @@ jobs:
           - runs-on: "macos-14"
             accelerated: false
             arch: arm64_iphoneos
-          - runs-on: "macos-15-intel"
-            accelerated: false
-            arch: x86_64_iphonesimulator
 
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
@@ -61,7 +55,7 @@ jobs:
 
       - name: Setup iOS
         run: |
-          if [[ ${{ matrix.accelerated }} ]]; then
+          if ${{ matrix.accelerated }}; then
             # Accelerate with ILP64 requires iOS 16.4 or higher
             CIBW="IPHONEOS_DEPLOYMENT_TARGET=17.0 INSTALL_OPENBLAS=false RUNNER_OS=iOS"
           else

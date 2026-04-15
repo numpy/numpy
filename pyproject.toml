@@ -206,8 +206,8 @@ config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dallow-noblas=true bu
 before-build = []
 before-test = []
 test-requires = [
-    "hypothesis==6.81.1",
-    "pytest==8.4.1",
+    "hypothesis==6.151.9",
+    "pytest==9.0.2",
     "tzdata",
 ]
 test-sources = []
