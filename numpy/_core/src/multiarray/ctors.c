@@ -1885,6 +1885,7 @@ PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
         PyObject *ret;
         if (requirements & NPY_ARRAY_ENSURENOCOPY) {
             PyErr_SetString(PyExc_ValueError, npy_no_copy_err_msg);
+            Py_DECREF(obj);
             return NULL;
         }
         ret = PyArray_NewCopy((PyArrayObject *)obj, NPY_ANYORDER);
@@ -3620,6 +3621,10 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
         thisbuf += 1;
         dptr += dtype->elsize;
         if (num < 0 && thisbuf == size) {
+            if (totalbytes > NPY_MAX_INTP - bytes) {
+                err = 1;
+                break;
+            }
             totalbytes += bytes;
             /* The handler is always valid */
             tmp = PyDataMem_UserRENEW(PyArray_DATA(r), totalbytes,

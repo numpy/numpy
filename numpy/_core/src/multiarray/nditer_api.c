@@ -1738,7 +1738,12 @@ npyiter_allocate_buffers(NpyIter *iter, char **errmsg)
          */
         if (!(flags&NPY_OP_ITFLAG_BUFNEVER)) {
             npy_intp itemsize = op_dtype[iop]->elsize;
-            buffer = PyArray_malloc(itemsize*buffersize);
+            npy_intp alloc_size;
+            buffer = NULL;
+            if (!npy_mul_sizes_with_overflow(
+                        &alloc_size, itemsize, buffersize)) {
+                buffer = PyArray_malloc(alloc_size);
+            }
             if (buffer == NULL) {
                 if (errmsg == NULL) {
                     PyErr_NoMemory();
@@ -1749,7 +1754,7 @@ npyiter_allocate_buffers(NpyIter *iter, char **errmsg)
                 goto fail;
             }
             if (PyDataType_FLAGCHK(op_dtype[iop], NPY_NEEDS_INIT)) {
-                memset(buffer, '\0', itemsize*buffersize);
+                memset(buffer, '\0', alloc_size);
             }
             buffers[iop] = buffer;
         }
