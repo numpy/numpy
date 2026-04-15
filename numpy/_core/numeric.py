@@ -849,13 +849,14 @@ def correlate(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None,
         If ``maxlag`` or ``lags`` is provided and ``mode`` is not specified,
         ``mode`` defaults to 'lags'.
     maxlag : int, optional
-        Compute the cross-correlation at lags ``-maxlag, -maxlag+1, ..., maxlag``
-        (a symmetric inclusive window of ``2*maxlag+1`` lags around 0).
+        Compute the cross-correlation at lags
+        ``-maxlag, -maxlag+1, ..., maxlag`` (a symmetric inclusive window
+        of ``2*maxlag+1`` lags around 0).
         Mutually exclusive with ``lags``.
     lags : range, slice, or 1-D array_like of int, optional
         Explicit lag specification.  Accepts a Python ``range`` object, a
-        ``slice`` with explicit start and stop, or a 1-D array_like containing
-        an arithmetic progression of integer lag indices.
+        ``slice`` with explicit start and stop, or a 1-D array_like
+        containing an arithmetic progression of integer lag indices.
         Mutually exclusive with ``maxlag``.
     returns_lagvector : bool, optional
         If True, the function returns a lagvector array in addition to the

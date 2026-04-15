@@ -1,0 +1,24 @@
+``maxlag`` and ``lags`` parameters for `numpy.correlate` and `numpy.convolve`
+-----------------------------------------------------------------------------
+`numpy.correlate` and `numpy.convolve` now accept ``maxlag`` and ``lags``
+keyword arguments to compute the result at a restricted set of lag values
+instead of the full output, plus a ``returns_lagvector`` flag to return the
+corresponding lag indices alongside the result.
+
+* ``maxlag=M`` (int) computes a symmetric inclusive window
+  ``[-M, M]`` (``2*M+1`` lags), matching MATLAB's ``xcorr(x, y, M)``
+  convention.
+* ``lags=`` accepts a Python ``range``, a ``slice`` with explicit start/stop,
+  or a 1-D integer array_like containing an arithmetic progression of lag
+  indices.
+* ``returns_lagvector=True`` causes both functions to return a
+  ``(result, lagvector)`` tuple where ``lagvector`` enumerates the lags
+  corresponding to ``result``.
+
+These parameters are mutually exclusive and require ``mode='lags'`` (which is
+the default when either is supplied).
+
+Example::
+
+    >>> np.correlate([1, 2, 3], [0, 1, 0.5], maxlag=1, returns_lagvector=True)
+    (array([2. , 3.5, 3. ]), array([-1,  0,  1]))

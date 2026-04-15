@@ -3671,24 +3671,24 @@ class TestCorrelate:
 
     def test_maxlag_and_lags_mutually_exclusive(self):
         self._setup(float)
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError, match="cannot specify both"):
             np.correlate(self.x, self.y, maxlag=1, lags=range(-1, 2))
 
     def test_lags_with_non_lags_mode(self):
         self._setup(float)
-        with assert_raises(ValueError):
+        with pytest.raises(ValueError, match="cannot be used with mode"):
             np.correlate(self.x, self.y, mode='full', maxlag=1)
-        with assert_raises(ValueError):
+        with pytest.raises(ValueError, match="cannot be used with mode"):
             np.correlate(self.x, self.y, mode='valid', lags=range(0, 2))
 
     def test_lags_mode_without_lags(self):
         self._setup(float)
-        with assert_raises(ValueError):
+        with pytest.raises(ValueError, match="is required for mode='lags'"):
             np.correlate(self.x, self.y, mode='lags')
 
     def test_lags_non_arithmetic_array_rejected(self):
         self._setup(float)
-        with assert_raises(ValueError):
+        with pytest.raises(ValueError, match="arithmetic progression"):
             np.correlate(self.x, self.y, lags=np.array([0, 1, 3]))
 
     # --- Lag range geometry tests ---
@@ -3966,19 +3966,20 @@ class TestConvolve:
                                        lags=range(-1, 2)))
 
     def test_convolve_maxlag_lags_mutually_exclusive(self):
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError, match="cannot specify both"):
             np.convolve([1, 2, 3], [4, 5, 6],
                         maxlag=1, lags=range(-1, 2))
 
     def test_convolve_lags_with_non_lags_mode(self):
-        with assert_raises(ValueError):
+        with pytest.raises(ValueError, match="cannot be used with mode"):
             np.convolve([1, 2, 3], [4, 5, 6], mode='full', maxlag=1)
-        with assert_raises(ValueError):
+        with pytest.raises(ValueError, match="cannot be used with mode"):
             np.convolve([1, 2, 3], [4, 5, 6], mode='full',
                         lags=range(0, 2))
 
     def test_convolve_lags_mode_without_lags(self):
-        with assert_raises(ValueError):
+        with pytest.raises(ValueError,
+                           match="is required for mode='lags'"):
             np.convolve([1, 2, 3], [4, 5, 6], mode='lags')
 
 

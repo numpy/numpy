@@ -1280,14 +1280,18 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2,
     }
     else if (lag < phase2_end) {
         tmplag = lag;
-        for (lag = tmplag; lag < phase2_end && (!needs_pyapi || !PyErr_Occurred()); lag+=lagstep) {
+        for (lag = tmplag;
+                lag < phase2_end && (!needs_pyapi || !PyErr_Occurred());
+                lag += lagstep) {
             dot(ip1 + lag*is1, is1, ip2, is2, op, n2, ret);
             op += os;
         }
     }
-    maxright = (maxlag < n1  ? maxlag : n1 );
+    maxright = (maxlag < n1) ? maxlag : n1;
     tmplag = lag;
-    for (lag = tmplag; lag < maxright && (!needs_pyapi || !PyErr_Occurred()); lag+=lagstep) {
+    for (lag = tmplag;
+            lag < maxright && (!needs_pyapi || !PyErr_Occurred());
+            lag += lagstep) {
         /* for lags where y is right of x */
         n = n1 - lag;
         dot(ip1 + lag*is1, is1, ip2, is2, op, n, ret);
