@@ -1,0 +1,7 @@
+`numpy.linalg.pinv` with ``rtol=None`` and integer-dtype arrays
+----------------------------------------------------------------
+`numpy.linalg.pinv` no longer raises ``ValueError: data type not inexact``
+when called with an integer-dtype array and ``rtol=None``. The default
+``rcond`` is now computed using the promoted float type that ``pinv``
+actually operates on, matching the existing integer-to-float promotion
+behaviour of the function.
