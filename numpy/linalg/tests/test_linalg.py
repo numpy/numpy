@@ -329,7 +329,7 @@ def _stride_comb_iter(x):
         xi[...] = x
         xi = xi.view(x.__class__)
         assert_(np.all(xi == x))
-        yield xi, "stride_" + "_".join(["%+d" % j for j in repeats])
+        yield xi, "stride_" + "_".join(f"{j:+}" for j in repeats)
 
         # generate also zero strides if possible
         if x.ndim >= 1 and x.shape[-1] == 1:
@@ -604,7 +604,7 @@ class TestEigvals(EigvalsCases):
     @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
     def test_types(self, dtype):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-        assert_equal(linalg.eigvals(x).dtype, dtype)
+        assert_equal(linalg.eigvals(x).dtype, get_complex_dtype(dtype))
         x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
         assert_equal(linalg.eigvals(x).dtype, get_complex_dtype(dtype))
 
@@ -614,7 +614,7 @@ class TestEigvals(EigvalsCases):
             pass
         a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
         res = linalg.eigvals(a)
-        assert_(res.dtype.type is np.float64)
+        assert_(res.dtype.type is np.complex128)
         assert_equal((0, 1), res.shape)
         # This is just for documentation, it might make sense to change:
         assert_(isinstance(res, np.ndarray))
@@ -643,8 +643,8 @@ class TestEig(EigCases):
     def test_types(self, dtype):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
         w, v = np.linalg.eig(x)
-        assert_equal(w.dtype, dtype)
-        assert_equal(v.dtype, dtype)
+        assert_equal(w.dtype, get_complex_dtype(dtype))
+        assert_equal(v.dtype, get_complex_dtype(dtype))
 
         x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
         w, v = np.linalg.eig(x)
@@ -657,8 +657,8 @@ class TestEig(EigCases):
             pass
         a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
         res, res_v = linalg.eig(a)
-        assert_(res_v.dtype.type is np.float64)
-        assert_(res.dtype.type is np.float64)
+        assert_(res_v.dtype.type is np.complex128)
+        assert_(res.dtype.type is np.complex128)
         assert_equal(a.shape, res_v.shape)
         assert_equal((0, 1), res.shape)
         # This is just for documentation, it might make sense to change:
@@ -1000,8 +1000,8 @@ class LstsqCases(LinalgSquareTestCase, LinalgNonsquareTestCase):
                 np.asarray(abs(np.dot(a, x) - b)) ** 2).sum(axis=0)
             expect_resids = np.asarray(expect_resids)
             if np.asarray(b).ndim == 1:
-                expect_resids.shape = (1,)
-                assert_equal(residuals.shape, expect_resids.shape)
+                expect_resids = expect_resids.reshape((1,))
+            assert_equal(residuals.shape, expect_resids.shape)
         else:
             expect_resids = np.array([]).view(type(x))
         assert_almost_equal(residuals, expect_resids)
@@ -1091,7 +1091,7 @@ class TestMatrixPower:
 
         for mat in self.rshft_all:
             tz(mat.astype(dt))
-            if dt != object:
+            if np.dtype(dt).type is not np.object_:
                 tz(self.stacked.astype(dt))
 
     def test_power_is_one(self, dt):
@@ -1102,7 +1102,7 @@ class TestMatrixPower:
 
         for mat in self.rshft_all:
             tz(mat.astype(dt))
-            if dt != object:
+            if np.dtype(dt).type is not np.object_:
                 tz(self.stacked.astype(dt))
 
     def test_power_is_two(self, dt):
@@ -1114,7 +1114,7 @@ class TestMatrixPower:
 
         for mat in self.rshft_all:
             tz(mat.astype(dt))
-            if dt != object:
+            if np.dtype(dt).type is not np.object_:
                 tz(self.stacked.astype(dt))
 
     def test_power_is_minus_one(self, dt):
@@ -2440,3 +2440,22 @@ def test_vector_norm_empty():
         assert_equal(np.linalg.vector_norm(x, ord=1), 0)
         assert_equal(np.linalg.vector_norm(x, ord=2), 0)
         assert_equal(np.linalg.vector_norm(x, ord=np.inf), 0)
+
+def test_empty_matrix_rank():
+    assert_equal(matrix_rank(np.zeros((0, 0))), 0)
+    assert_equal(matrix_rank(np.zeros((0, 5))), 0)
+    assert_equal(matrix_rank(np.zeros((5, 0))), 0)
+
+    result = matrix_rank(np.zeros((0, 5, 5)))
+    assert_equal(result.shape, (0,))
+    assert_equal(result.dtype, np.intp)
+
+    result = matrix_rank(np.zeros((3, 0, 5)))
+    assert_equal(result, np.array([0, 0, 0]))
+
+    result = matrix_rank(np.zeros((2, 5, 0)))
+    assert_equal(result, np.array([0, 0]))
+
+    result = matrix_rank(np.zeros((2, 3, 0, 4)))
+    assert_equal(result.shape, (2, 3))
+    assert_equal(result, np.zeros((2, 3), dtype=np.intp))

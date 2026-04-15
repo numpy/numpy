@@ -414,11 +414,10 @@ array_dlpack(PyArrayObject *self,
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("__dlpack__", args, len_args, kwnames,
-            "$stream", NULL, &stream,
-            "$max_version", NULL, &max_version,
-            "$dl_device", &device_converter, &result_device,
-            "$copy", &PyArray_CopyConverter, &copy_mode,
-            NULL, NULL, NULL)) {
+            {"$stream", NULL, &stream},
+            {"$max_version", NULL, &max_version},
+            {"$dl_device", &device_converter, &result_device},
+            {"$copy", &PyArray_CopyConverter, &copy_mode})) {
         return NULL;
     }
 
@@ -493,10 +492,9 @@ from_dlpack(PyObject *NPY_UNUSED(self),
     PyObject *obj, *copy = Py_None, *device = Py_None;
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("from_dlpack", args, len_args, kwnames,
-            "obj", NULL, &obj,
-            "$copy", NULL, &copy,
-            "$device", NULL, &device,
-            NULL, NULL, NULL) < 0) {
+            {"obj", NULL, &obj},
+            {"$copy", NULL, &copy},
+            {"$device", NULL, &device}) < 0) {
         return NULL;
     }
 
@@ -579,7 +577,7 @@ from_dlpack(PyObject *NPY_UNUSED(self),
 
     const int ndim = dl_tensor.ndim;
     if (ndim > NPY_MAXDIMS) {
-        PyErr_SetString(PyExc_RuntimeError,
+        PyErr_SetString(PyExc_BufferError,
                 "maxdims of DLPack tensor is higher than the supported "
                 "maxdims.");
         Py_DECREF(capsule);
@@ -591,14 +589,14 @@ from_dlpack(PyObject *NPY_UNUSED(self),
             device_type != kDLCUDAHost &&
             device_type != kDLROCMHost &&
             device_type != kDLCUDAManaged) {
-        PyErr_SetString(PyExc_RuntimeError,
+        PyErr_SetString(PyExc_BufferError,
                 "Unsupported device in DLTensor.");
         Py_DECREF(capsule);
         return NULL;
     }
 
     if (dl_tensor.dtype.lanes != 1) {
-        PyErr_SetString(PyExc_RuntimeError,
+        PyErr_SetString(PyExc_BufferError,
                 "Unsupported lanes in DLTensor dtype.");
         Py_DECREF(capsule);
         return NULL;
@@ -649,7 +647,7 @@ from_dlpack(PyObject *NPY_UNUSED(self),
     }
 
     if (typenum == -1) {
-        PyErr_SetString(PyExc_RuntimeError,
+        PyErr_SetString(PyExc_BufferError,
                 "Unsupported dtype in DLTensor.");
         Py_DECREF(capsule);
         return NULL;

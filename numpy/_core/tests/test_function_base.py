@@ -21,7 +21,6 @@ from numpy import (
 from numpy._core import sctypes
 from numpy._core.function_base import add_newdoc
 from numpy.testing import (
-    IS_PYPY,
     assert_,
     assert_allclose,
     assert_array_equal,
@@ -487,7 +486,6 @@ class TestLinspace:
 class TestAdd_newdoc:
 
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-    @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
     def test_add_doc(self):
         # test that np.add_newdoc did attach a docstring successfully:
         tgt = "Current flat index into the array."

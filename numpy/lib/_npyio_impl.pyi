@@ -25,7 +25,6 @@ from typing_extensions import TypeVar
 import numpy as np
 from numpy._core.multiarray import packbits, unpackbits
 from numpy._typing import ArrayLike, DTypeLike, NDArray, _DTypeLike, _SupportsArrayFunc
-from numpy.ma.mrecords import MaskedRecords
 
 from ._datasource import DataSource as DataSource
 
@@ -48,6 +47,8 @@ type _FName = StrPath | Iterable[str] | Iterable[bytes]
 type _FNameRead = StrPath | SupportsRead[str] | SupportsRead[bytes]
 type _FNameWriteBytes = StrPath | SupportsWrite[bytes]
 type _FNameWrite = _FNameWriteBytes | SupportsWrite[str]
+
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 
 @type_check_only
 class _SupportsReadSeek[T](SupportsRead[T], Protocol):
@@ -92,7 +93,7 @@ class NpzFile(Mapping[str, NDArray[_ScalarT_co]]):
     #
     @override
     @overload
-    def get(self, key: str, default: None = None, /) -> NDArray[_ScalarT_co] | None: ...
+    def get(self, key: str, default: None = None, /) -> NDArray[_ScalarT_co] | None: ...  # pyrefly: ignore[bad-override]
     @overload
     def get[T](self, key: str, default: NDArray[_ScalarT_co] | T, /) -> NDArray[_ScalarT_co] | T: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
@@ -187,14 +188,14 @@ def fromregex[ScalarT: np.generic](
     regexp: str | bytes | Pattern[Any],
     dtype: _DTypeLike[ScalarT],
     encoding: str | None = None,
-) -> NDArray[ScalarT]: ...
+) -> _Array1D[ScalarT]: ...
 @overload
 def fromregex(
     file: _FNameRead,
     regexp: str | bytes | Pattern[Any],
     dtype: DTypeLike | None,
     encoding: str | None = None,
-) -> NDArray[Any]: ...
+) -> _Array1D[Any]: ...
 
 @overload
 def genfromtxt(
@@ -283,13 +284,3 @@ def genfromtxt(
     ndmin: L[0, 1, 2] = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Any]: ...
-
-@overload
-def recfromtxt(fname: _FName, *, usemask: L[False] = False, **kwargs: object) -> np.recarray[Any, np.dtype[np.record]]: ...
-@overload
-def recfromtxt(fname: _FName, *, usemask: L[True], **kwargs: object) -> MaskedRecords[Any, np.dtype[np.void]]: ...
-
-@overload
-def recfromcsv(fname: _FName, *, usemask: L[False] = False, **kwargs: object) -> np.recarray[Any, np.dtype[np.record]]: ...
-@overload
-def recfromcsv(fname: _FName, *, usemask: L[True], **kwargs: object) -> MaskedRecords[Any, np.dtype[np.void]]: ...

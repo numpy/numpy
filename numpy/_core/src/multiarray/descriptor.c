@@ -844,7 +844,7 @@ _try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj)
         return (PyArray_Descr *)Py_NotImplemented;
     }
     if (!PyDataType_ISLEGACY(type) || !PyDataType_ISLEGACY(conv)) {
-        /* 
+        /*
          * This specification should probably be never supported, but
          * certainly not for new-style DTypes.
          */
@@ -1412,8 +1412,9 @@ descr_is_legacy_parametric_instance(PyArray_Descr *descr,
     }
     /* Flexible descr with generic time unit (which can be adapted) */
     if (PyDataType_ISDATETIME(descr)) {
-        PyArray_DatetimeMetaData *meta;
-        meta = get_datetime_metadata_from_dtype(descr);
+        _PyArray_LegacyDescr *ldescr = (_PyArray_LegacyDescr *)descr;
+        PyArray_DatetimeMetaData *meta =
+                &(((PyArray_DatetimeDTypeMetaData *)ldescr->c_metadata)->meta);
         if (meta->base == NPY_FR_GENERIC) {
             return 1;
         }
@@ -1428,12 +1429,13 @@ descr_is_legacy_parametric_instance(PyArray_Descr *descr,
  * both results can be NULL (if the input is).  But it always sets the DType
  * when a descriptor is set.
  *
+ * This function cannot fail.
+ *
  * @param dtype Input descriptor to be converted
  * @param out_descr Output descriptor
  * @param out_DType DType of the output descriptor
- * @return 0 on success -1 on failure
  */
-NPY_NO_EXPORT int
+NPY_NO_EXPORT void
 PyArray_ExtractDTypeAndDescriptor(PyArray_Descr *dtype,
         PyArray_Descr **out_descr, PyArray_DTypeMeta **out_DType)
 {
@@ -1449,7 +1451,6 @@ PyArray_ExtractDTypeAndDescriptor(PyArray_Descr *dtype,
             Py_INCREF(*out_descr);
         }
     }
-    return 0;
 }
 
 
@@ -1493,12 +1494,8 @@ PyArray_DTypeOrDescrConverterRequired(PyObject *obj, npy_dtype_info *dt_info)
      * be considered an instance with actual 0 length.
      * TODO: It would be nice to fix that eventually.
      */
-    int res = PyArray_ExtractDTypeAndDescriptor(
-                descr, &dt_info->descr, &dt_info->dtype);
+    PyArray_ExtractDTypeAndDescriptor(descr, &dt_info->descr, &dt_info->dtype);
     Py_DECREF(descr);
-    if (res < 0) {
-        return NPY_FAIL;
-    }
     return NPY_SUCCEED;
 }
 
@@ -1829,14 +1826,6 @@ _convert_from_str(PyObject *obj, int align)
                     check_num = NPY_STRING;
                     break;
 
-                case NPY_DEPRECATED_STRINGLTR2:
-                    if (DEPRECATE("Data type alias 'a' was deprecated in NumPy 2.0. "
-                                  "Use the 'S' alias instead.") < 0) {
-                        return NULL;
-                    }
-                    check_num = NPY_STRING;
-                    break;
-
                 /*
                  * When specifying length of UNICODE
                  * the number of characters is given to match
@@ -1907,13 +1896,6 @@ _convert_from_str(PyObject *obj, int align)
             goto fail;
         }
 
-        if (strcmp(type, "a") == 0) {
-            if (DEPRECATE("Data type alias 'a' was deprecated in NumPy 2.0. "
-                          "Use the 'S' alias instead.") < 0) {
-                return NULL;
-            }
-        }
-
         /*
          * Probably only ever dispatches to `_convert_from_type`, but who
          * knows what users are injecting into `np.typeDict`.
@@ -1966,7 +1948,7 @@ NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrNew(PyArray_Descr *base_descr)
 {
     if (!PyDataType_ISLEGACY(base_descr)) {
-        /* 
+        /*
          * The main use of this function is mutating strings, so probably
          * disallowing this is fine in practice.
          */
@@ -2104,7 +2086,7 @@ arraydescr_subdescr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 NPY_NO_EXPORT PyObject *
 arraydescr_protocol_typestr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
-    if (!PyDataType_ISLEGACY(NPY_DTYPE(self))) {
+    if (!PyDataType_ISLEGACY(self)) {
         return (PyObject *) Py_TYPE(self)->tp_str((PyObject *)self);
     }
 
@@ -2544,6 +2526,7 @@ arraydescr_new(PyTypeObject *subtype,
 
     PyObject *odescr;
     PyObject *oalign = NULL;
+    PyObject *ocopy = NULL;
     PyObject *metadata = NULL;
     PyArray_Descr *conv;
     npy_bool align = NPY_FALSE;
@@ -2552,21 +2535,36 @@ arraydescr_new(PyTypeObject *subtype,
 
     static char *kwlist[] = {"dtype", "align", "copy", "metadata", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O!:dtype", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OOO!:dtype", kwlist,
                 &odescr,
                 &oalign,
-                PyArray_BoolConverter, &copy,
+                &ocopy,
                 &PyDict_Type, &metadata)) {
         return NULL;
     }
 
+    if (ocopy != NULL && !PyArray_BoolConverter(ocopy, &copy)) {
+        return NULL;
+    }
     if (oalign != NULL) {
         /*
          * In the future, reject non Python (or NumPy) boolean, including integers to avoid any
          * possibility of thinking that an integer alignment makes sense here.
+         * We omit the case of `oalign == 0` and `ocopy == 1` if there are exact ints.
+         * This can fail, in which case res is -1 and we enter the deprecation path.
          */
-        if (!PyBool_Check(oalign) && !PyArray_IsScalar(oalign, Bool)) {
+        int res = 0;
+        int overflow;
+        if (!PyBool_Check(oalign) && !PyArray_IsScalar(oalign, Bool) && !(
+                // Some old pickles use 0, 1 exactly, assume no user passes it
+                // (It may also be possible to use `copyreg` instead.)
+                PyLong_CheckExact(oalign) && (res = PyLong_IsZero(oalign)) == 1 &&
+                ocopy != NULL && PyLong_CheckExact(ocopy) &&
+                (res = PyLong_AsLongAndOverflow(ocopy, &overflow)) == 1)) {
             /* Deprecated 2025-07-01: NumPy 2.4 */
+            if (res == -1 && PyErr_Occurred()) {
+                return NULL;  // Should actually be impossible (as inputs are `long`)
+            }
             if (PyErr_WarnFormat(npy_static_pydata.VisibleDeprecationWarning, 1,
                         "dtype(): align should be passed as Python or NumPy boolean but got `align=%.100R`. "
                         "Did you mean to pass a tuple to create a subarray type? (Deprecated NumPy 2.4)",
@@ -2932,13 +2930,10 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         }
         break;
     default:
-        /* raise an error */
-        if (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0)) > 5) {
-            version = PyLong_AsLong(PyTuple_GET_ITEM(args, 0));
-        }
-        else {
-            version = -1;
-        }
+        PyErr_SetString(PyExc_ValueError,
+                        "Invalid state while unpickling. Is the pickle corrupted "
+                        "or created with a newer NumPy version?");
+        return NULL;
     }
 
     /*
@@ -3796,6 +3791,42 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
         return _subscript_by_index(lself, i);
     }
 }
+
+static PyObject *
+array_typestr_get(PyArray_Descr *self)
+{
+    return arraydescr_protocol_typestr_get(self, NULL);
+}
+
+
+NPY_NO_EXPORT PyObject *
+array_protocol_descr_get(PyArray_Descr *self)
+{
+    PyObject *res;
+    PyObject *dobj;
+
+    res = arraydescr_protocol_descr_get(self, NULL);
+    if (res) {
+        return res;
+    }
+    PyErr_Clear();
+
+    /* get default */
+    dobj = PyTuple_New(2);
+    if (dobj == NULL) {
+        return NULL;
+    }
+    PyTuple_SET_ITEM(dobj, 0, PyUnicode_FromString(""));
+    PyTuple_SET_ITEM(dobj, 1, array_typestr_get(self));
+    res = PyList_New(1);
+    if (res == NULL) {
+        Py_DECREF(dobj);
+        return NULL;
+    }
+    PyList_SET_ITEM(res, 0, dobj);
+    return res;
+}
+
 
 static PySequenceMethods descr_as_sequence = {
     (lenfunc) descr_length,                  /* sq_length */

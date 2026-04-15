@@ -32,9 +32,9 @@ class FunctionHtmlFormatter(HtmlFormatter):
         for i, (c, t) in enumerate(HtmlFormatter.wrap(self, source, outfile)):
             as_functions = self.lines.get(i - 1, None)
             if as_functions is not None:
-                yield 0, ('<div title=%s style="background: #ccffcc">[%2d]' %
-                          (quoteattr('as ' + ', '.join(as_functions)),
-                           len(as_functions)))
+                title = quoteattr('as ' + ', '.join(as_functions))
+                count = len(as_functions)
+                yield 0, f'<div title={title} style="background: #ccffcc">[{count:2}]'
             else:
                 yield 0, '    '
             yield c, t
@@ -84,7 +84,7 @@ class SourceFiles:
             if self.prefix is None:
                 self.prefix = path
             else:
-                self.prefix = os.path.commonprefix([self.prefix, path])
+                self.prefix = os.path.commonpath([self.prefix, path])
         return self.files[path]
 
     def clean_path(self, path):
@@ -107,9 +107,9 @@ class SourceFiles:
             fd.write("<html>")
             paths = sorted(self.files.keys())
             for path in paths:
-                fd.write('<p><a href="%s.html">%s</a></p>' %
-                         (self.clean_path(path),
-                          escape(path[len(self.prefix):])))
+                href = self.clean_path(path)
+                label = escape(path[len(self.prefix):])
+                fd.write(f'<p><a href="{href}.html">{label}</a></p>')
             fd.write("</html>")
 
 

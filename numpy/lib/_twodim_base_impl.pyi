@@ -57,7 +57,7 @@ type _ArrayLike1DNumber_co = _SupportsArray[np.dtype[_Number_co]] | Sequence[com
 type _MaskFunc[_T] = Callable[[NDArray[np.int_], _T], NDArray[_Number_co | np.timedelta64 | np.datetime64 | np.object_]]
 
 type _Indices2D = tuple[_Array1D[np.intp], _Array1D[np.intp]]
-type _Histogram2D[ScalarT: np.generic] = tuple[_Array1D[np.float64], _Array1D[ScalarT], _Array1D[ScalarT]]
+type _Histogram2D[ScalarT: np.generic] = tuple[_Array2D[np.float64], _Array1D[ScalarT], _Array1D[ScalarT]]
 
 @type_check_only
 class _HasShapeAndNDim(Protocol):
@@ -207,6 +207,7 @@ def triu[ScalarT: np.generic](m: _ArrayLike[ScalarT], k: int = 0) -> NDArray[Sca
 def triu(m: ArrayLike, k: int = 0) -> NDArray[Any]: ...
 
 # we use `list` (invariant) instead of `Sequence` (covariant) to avoid overlap
+# keep in sync with `ma.extras.vander`
 @overload
 def vander[ScalarT: np.number | np.object_](x: _ArrayLike1D[ScalarT], N: int | None = None, increasing: bool = False) -> _Array2D[ScalarT]: ...
 @overload

@@ -45,4 +45,4 @@ np.linalg.det(AR_O)  # type: ignore[arg-type]
 
 np.linalg.norm(AR_f8, ord="bob")  # type: ignore[call-overload]
 
-np.linalg.multi_dot([AR_M])  # type: ignore[list-item]
+np.linalg.multi_dot([AR_M])  # type: ignore[type-var]

@@ -669,7 +669,6 @@ dtype_kind_to_ordering(char kind)
             return 5;
         /* String kind */
         case 'S':
-        case 'a':
             return 6;
         /* Unicode kind */
         case 'U':
@@ -931,7 +930,7 @@ PyArray_CastDescrToDType(PyArray_Descr *descr, PyArray_DTypeMeta *given_DType)
         Py_INCREF(descr);
         return descr;
     }
-    if (!NPY_DT_is_parametric(given_DType)) {
+    if (!NPY_DT_is_parametric(given_DType) && !NPY_DT_is_abstract(given_DType)) {
         /*
          * Don't actually do anything, the default is always the result
          * of any cast.
@@ -994,10 +993,8 @@ PyArray_FindConcatenationDescriptor(
 
     PyArray_DTypeMeta *common_dtype;
     PyArray_Descr *result = NULL;
-    if (PyArray_ExtractDTypeAndDescriptor(
-            requested_dtype, &result, &common_dtype) < 0) {
-        return NULL;
-    }
+    PyArray_ExtractDTypeAndDescriptor(
+            requested_dtype, &result, &common_dtype);
     if (result != NULL) {
         if (PyDataType_SUBARRAY(result) != NULL) {
             PyErr_Format(PyExc_TypeError,
@@ -1817,7 +1814,7 @@ PyArray_Zero(PyArrayObject *arr)
         /* XXX this is dangerous, the caller probably is not
            aware that zeroval is actually a static PyObject*
            In the best case they will only use it as-is, but
-           if they simply memcpy it into a ndarray without using
+           if they simply memcpy it into an ndarray without using
            setitem(), refcount errors will occur
         */
         memcpy(zeroval, &npy_static_pydata.zero_obj, sizeof(PyObject *));
@@ -1856,7 +1853,7 @@ PyArray_One(PyArrayObject *arr)
         /* XXX this is dangerous, the caller probably is not
            aware that oneval is actually a static PyObject*
            In the best case they will only use it as-is, but
-           if they simply memcpy it into a ndarray without using
+           if they simply memcpy it into an ndarray without using
            setitem(), refcount errors will occur
         */
         memcpy(oneval, &npy_static_pydata.one_obj, sizeof(PyObject *));
@@ -2091,6 +2088,7 @@ PyArray_AddCastingImplementation_FromSpec(PyArrayMethod_Spec *spec, int private)
     if (meth == NULL) {
         return -1;
     }
+    meth->method->flags |= _NPY_METH_IS_CAST;
     int res = PyArray_AddCastingImplementation(meth);
     Py_DECREF(meth);
     if (res < 0) {

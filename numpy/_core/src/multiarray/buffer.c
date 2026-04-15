@@ -30,7 +30,7 @@
  *
  * - Don't add new members to ndarray or descr structs, to preserve binary
  *   compatibility. (Also, adding the items is actually not very useful,
- *   since mutability issues prevent an 1 to 1 relationship between arrays
+ *   since mutability issues prevent a one-to-one relationship between arrays
  *   and buffer views.)
  *
  * - Don't use bf_releasebuffer, because it prevents PyArg_ParseTuple("s#", ...
@@ -793,8 +793,10 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
     }
 
     /* Fill in information (and add it to _buffer_info if necessary) */
+    Py_BEGIN_CRITICAL_SECTION(self);
     info = _buffer_get_info(
             &((PyArrayObject_fields *)self)->_buffer_info, obj, flags);
+    Py_END_CRITICAL_SECTION();
     if (info == NULL) {
         goto fail;
     }
@@ -880,7 +882,10 @@ void_getbuffer(PyObject *self, Py_buffer *view, int flags)
      * to find the correct format.  This format must also be stored, since
      * at least in theory it can change (in practice it should never change).
      */
-    _buffer_info_t *info = _buffer_get_info(&scalar->_buffer_info, self, flags);
+    _buffer_info_t *info = NULL;
+    Py_BEGIN_CRITICAL_SECTION(scalar);
+    info = _buffer_get_info(&scalar->_buffer_info, self, flags);
+    Py_END_CRITICAL_SECTION();
     if (info == NULL) {
         Py_DECREF(self);
         return -1;

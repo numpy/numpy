@@ -17,7 +17,6 @@ from ._multiarray_umath import *
 # These imports are needed for the strip & replace implementations
 from ._multiarray_umath import (
     _UFUNC_API,
-    _add_newdoc_ufunc,
     _center,
     _expandtabs,
     _expandtabs_length,

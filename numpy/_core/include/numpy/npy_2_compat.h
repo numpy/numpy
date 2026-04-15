@@ -213,6 +213,11 @@ DESCR_ACCESSOR(SUBARRAY, subarray, PyArray_ArrayDescr *, 1)
 DESCR_ACCESSOR(NAMES, names, PyObject *, 1)
 DESCR_ACCESSOR(FIELDS, fields, PyObject *, 1)
 DESCR_ACCESSOR(C_METADATA, c_metadata, NpyAuxData *, 1)
+/* ABI compatible in 1.x and 2.x, but defined together with others */
+DESCR_ACCESSOR(TYPE, type, char, 0)
+DESCR_ACCESSOR(KIND, kind, char, 0)
+DESCR_ACCESSOR(BYTEORDER, byteorder, char, 0)
+DESCR_ACCESSOR(TYPEOBJ, typeobj, PyTypeObject *, 0)
 
 #undef DESCR_ACCESSOR
 

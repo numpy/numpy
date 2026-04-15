@@ -1,0 +1,92 @@
+name: Linux IBM tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
+      - 'tools/stubtest/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  native_ibm:
+    # These jobs runs only in the main NumPy repository.
+    # It requires a native ppc64le and s390x GHA runners, which are not available on forks.
+    # For more details, see: https://github.com/numpy/numpy/issues/29125
+    if: github.repository == 'numpy/numpy'
+    runs-on: ${{ matrix.config.runner }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: "ppc64le/gcc - baseline(default)"
+            args: "-Dallow-noblas=false"
+            runner: ubuntu-24.04-ppc64le-p10
+            compiler: "gcc"
+          - name: "ppc64le/clang - baseline(default)"
+            args: "-Dallow-noblas=false"
+            runner: ubuntu-24.04-ppc64le-p10
+            compiler: "clang"
+          - name: "s390x/gcc - baseline(default)"
+            args: "-Dallow-noblas=false"
+            runner: ubuntu-24.04-s390x
+            compiler: "gcc"
+          - name: "s390x/clang - baseline(default)"
+            args: "-Dallow-noblas=false"
+            runner: ubuntu-24.04-s390x
+            compiler: "clang"
+          - name: "s390x/gcc - baseline(Z15/VXE2)"
+            args: "-Dallow-noblas=false -Dcpu-baseline=vxe2"
+            runner: ubuntu-24.04-s390x
+            compiler: "gcc"
+          - name: "s390x/clang - baseline(Z15/VXE2)"
+            args: "-Dallow-noblas=false -Dcpu-baseline=vxe2"
+            runner: ubuntu-24.04-s390x
+            compiler: "clang"
+
+    name: "${{ matrix.config.name }}"
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        submodules: recursive
+        fetch-tags: true
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y python3.12 python3-pip python3-dev ninja-build gfortran \
+                            build-essential libopenblas-dev liblapack-dev pkg-config
+        pip install --upgrade pip
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        echo "/home/runner/.local/bin" >> $GITHUB_PATH
+
+    - name: Install clang
+      if: matrix.config.compiler == 'clang'
+      run: |
+        sudo apt install -y clang-20
+        echo CC=clang-20 >> $GITHUB_ENV
+        echo CXX=clang++-20 >> $GITHUB_ENV
+
+    - name: Meson Build
+      run: |
+        spin build -- ${{ matrix.config.args }}
+
+    - name: Meson Log
+      if: always()
+      run: cat build/meson-logs/meson-log.txt
+
+    - name: Run Tests
+      run: |
+        spin test -- --timeout=60 --durations=10

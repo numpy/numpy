@@ -72,8 +72,10 @@ Set up:
     >>>
     >>>
     >>> NbufferT = [
-    ...     ([3,2], (6j, 6., ('nn', [6j,4j], [6.,4.], [1,2]), 'NN', True), 'cc', ('NN', 6j), [[6.,4.],[6.,4.]], 8),
-    ...     ([4,3], (7j, 7., ('oo', [7j,5j], [7.,5.], [2,1]), 'OO', False), 'dd', ('OO', 7j), [[7.,5.],[7.,5.]], 9),
+    ...     ([3,2], (6j, 6., ('nn', [6j,4j], [6.,4.], [1,2]), 'NN', True), 'cc',
+    ...         ('NN', 6j), [[6.,4.],[6.,4.]], 8),
+    ...     ([4,3], (7j, 7., ('oo', [7j,5j], [7.,5.], [2,1]), 'OO', False), 'dd',
+    ...         ('OO', 7j), [[7.,5.],[7.,5.]], 9),
     ...     ]
     >>>
     >>>
@@ -110,7 +112,8 @@ Test the header writing.
 
     >>> for arr in basic_arrays + record_arrays:
     ...     f = BytesIO()
-    ...     format.write_array_header_1_0(f, arr)   # XXX: arr is not a dict, items gets called on it
+    ...     # XXX: arr is not a dict, items gets called on it
+    ...     format.write_array_header_1_0(f, arr)
     ...     print(repr(f.getvalue()))
     ...
     "F\x00{'descr': '|u1', 'fortran_order': False, 'shape': (0,)}              \n"
@@ -273,7 +276,7 @@ Test the header writing.
     "\x16\x02{'descr': [('x', '<i4', (2,)),\n           ('Info',\n            [('value', '<c16'),\n             ('y2', '<f8'),\n             ('Info2',\n              [('name', '|S2'),\n               ('value', '<c16', (2,)),\n               ('y3', '<f8', (2,)),\n               ('z3', '<u4', (2,))]),\n             ('name', '|S2'),\n             ('z2', '|b1')]),\n           ('color', '|S2'),\n           ('info', [('Name', '<U8'), ('Value', '<c16')]),\n           ('y', '<f8', (2, 2)),\n           ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}      \n"
     "v\x00{'descr': [('x', '>i4', (2,)), ('y', '>f8', (2, 2)), ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}         \n"
     "\x16\x02{'descr': [('x', '>i4', (2,)),\n           ('Info',\n            [('value', '>c16'),\n             ('y2', '>f8'),\n             ('Info2',\n              [('name', '|S2'),\n               ('value', '>c16', (2,)),\n               ('y3', '>f8', (2,)),\n               ('z3', '>u4', (2,))]),\n             ('name', '|S2'),\n             ('z2', '|b1')]),\n           ('color', '|S2'),\n           ('info', [('Name', '>U8'), ('Value', '>c16')]),\n           ('y', '>f8', (2, 2)),\n           ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}      \n"
-'''
+'''  # noqa: E501
 import os
 import sys
 import warnings
@@ -285,7 +288,6 @@ import numpy as np
 from numpy.lib import format
 from numpy.testing import (
     IS_64BIT,
-    IS_PYPY,
     IS_WASM,
     assert_,
     assert_array_equal,
@@ -552,16 +554,6 @@ def test_load_padded_dtype(tmpdir, dt):
     assert_array_equal(arr, arr1)
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 12), reason="see gh-23988")
-@pytest.mark.xfail(IS_WASM, reason="Emscripten NODEFS has a buggy dup")
-def test_python2_python3_interoperability():
-    fname = 'win64python2.npy'
-    path = os.path.join(os.path.dirname(__file__), 'data', fname)
-    with pytest.warns(UserWarning, match="Reading.*this warning\\."):
-        data = np.load(path)
-    assert_array_equal(data, np.ones(2))
-
-
 @pytest.mark.filterwarnings(
     "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning")
 def test_pickle_python2_python3():
@@ -685,7 +677,7 @@ def test_descr_to_dtype(dt):
 def test_version_2_0():
     f = BytesIO()
     # requires more than 2 byte for header
-    dt = [(("%d" % i) * 100, float) for i in range(500)]
+    dt = [(f"{i}" * 100, float) for i in range(500)]
     d = np.ones(1000, dtype=dt)
 
     format.write_array(f, d, version=(2, 0))
@@ -710,7 +702,7 @@ def test_version_2_0():
 @pytest.mark.skipif(IS_WASM, reason="memmap doesn't work correctly")
 def test_version_2_0_memmap(tmpdir):
     # requires more than 2 byte for header
-    dt = [(("%d" % i) * 100, float) for i in range(500)]
+    dt = [(f"{i}" * 100, float) for i in range(500)]
     d = np.ones(1000, dtype=dt)
     tf1 = os.path.join(tmpdir, 'version2_01.npy')
     tf2 = os.path.join(tmpdir, 'version2_02.npy')
@@ -953,7 +945,6 @@ def test_large_file_support(tmpdir):
     assert_array_equal(r, d)
 
 
-@pytest.mark.skipif(IS_PYPY, reason="flaky on PyPy")
 @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
 @pytest.mark.slow
 @requires_memory(free_bytes=2 * 2**30)

@@ -12,7 +12,6 @@ from numpy._core._multiarray_tests import array_indexing
 from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 from numpy.testing import (
     HAS_REFCOUNT,
-    IS_PYPY,
     assert_,
     assert_array_equal,
     assert_equal,
@@ -1677,7 +1676,6 @@ class TestFlatiterIndexing:
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
 @pytest.mark.parametrize("methodname", ["__array__", "copy"])
 def test_flatiter_method_signatures(methodname: str):
     method = getattr(np.flatiter, methodname)

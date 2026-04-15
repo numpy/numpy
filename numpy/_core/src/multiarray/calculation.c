@@ -654,7 +654,7 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
         op2 = n_ops.multiply;
         if (decimals == INT_MIN) {
             // not technically correct but it doesn't matter because no one in
-            // this millenium is using floating point numbers with enough
+            // this millennium is using floating point numbers with enough
             // accuracy for this to matter
             decimals = INT_MAX;
         }
@@ -829,7 +829,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
 {
     if (PyArray_ISCOMPLEX(self) || PyArray_ISOBJECT(self) ||
-            PyArray_ISUSERDEF(self)) {
+            PyArray_ISUSERDEF(self) || !NPY_DT_is_legacy(PyArray_DESCR(self))) {
         if (out == NULL) {
             return PyArray_GenericUnaryFunction(self,
                                                 n_ops.conjugate);

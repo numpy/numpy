@@ -12,7 +12,7 @@ import pytest
 
 import numpy as np
 from numpy._core import sctypes
-from numpy.testing import IS_PYPY, assert_equal, assert_raises
+from numpy.testing import assert_equal, assert_raises
 
 
 class TestAsIntegerRatio:
@@ -257,7 +257,6 @@ def test_array_wrap(scalar):
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-@pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
 class TestSignature:
     # test that scalar types have a valid __text_signature__ or __signature__ set
     @pytest.mark.parametrize(

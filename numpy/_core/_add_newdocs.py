@@ -2665,6 +2665,11 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('imag',
     """
     The imaginary part of the array.
 
+    Returns a view into the original array for complex arrays.
+    For non-complex arrays, returns a zero array of the same dtype.
+    For ``object`` arrays returns elementwise ``.imag`` or ``0``
+    if ``.imag`` is undefined.
+
     Examples
     --------
     >>> import numpy as np
@@ -2856,6 +2861,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('real',
     """
     The real part of the array.
 
+    Usually returns a view into the original array, but returns
+    elementwise ``.real`` for arrays of objects.
+
     Examples
     --------
     >>> import numpy as np
@@ -2885,7 +2893,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('shape',
 
     .. warning::
 
-        Setting ``arr.shape`` is discouraged and may be deprecated in the
+        Setting ``arr.shape`` is deprecated and may be removed in the
         future.  Using `ndarray.reshape` is the preferred approach.
 
     Examples
@@ -2897,20 +2905,6 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('shape',
     >>> y = np.zeros((2, 3, 4))
     >>> y.shape
     (2, 3, 4)
-    >>> y.shape = (3, 8)
-    >>> y
-    array([[ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.]])
-    >>> y.shape = (3, 6)
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    ValueError: cannot reshape array of size 24 into shape (3,6)
-    >>> np.zeros((4,2))[::2].shape = (-1,)
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    AttributeError: Incompatible shape for in-place modification. Use
-    `.reshape()` to make a copy with the desired shape.
 
     See Also
     --------
@@ -4178,6 +4172,7 @@ _array_method_doc('resize', "*new_shape, refcheck=True",
         Shape of resized array.
     refcheck : bool, optional
         If False, reference count will not be checked. Default is True.
+        See Notes below for more explanation.
 
     Returns
     -------
@@ -4186,15 +4181,7 @@ _array_method_doc('resize', "*new_shape, refcheck=True",
     Raises
     ------
     ValueError
-        If `a` does not own its own data or references or views to it exist,
-        and the data memory must be changed.
-        PyPy only: will always raise if the data memory must be changed, since
-        there is no reliable way to determine if references or views to it
-        exist.
-
-    SystemError
-        If the `order` keyword argument is specified. This behaviour is a
-        bug in NumPy.
+        If `a` does not own its own data or references or views to may exist.
 
     See Also
     --------
@@ -4207,12 +4194,29 @@ _array_method_doc('resize', "*new_shape, refcheck=True",
     Only contiguous arrays (data elements consecutive in memory) can be
     resized.
 
+    Reallocating arrays in-place can often lead to memory fragmentation and
+    should be avoided. If the goal is to reclaim over-allocated memory,
+    alternatives are to create a view or a copy of just the desired data, or
+    using two passes to build the array: one to cheaply determine the shape and
+    another to allocate and fill. Benchmark your use case to determine what is
+    optimum. You may be surprised to find ``resize`` actually slows down or
+    bloats your application.
+
     The purpose of the reference count check is to make sure you
     do not use this array as a buffer for another Python object and then
-    reallocate the memory. However, reference counts can increase in
-    other ways so if you are sure that you have not shared the memory
-    for this array with another Python object, then you may safely set
-    `refcheck` to False.
+    reallocate the memory.
+
+    On Python 3.13 and older, the check allows objects with exactly one
+    reference to be reallocated in-place. On Python 3.14 and newer, the array
+    must be uniquely referenced. See [1]_ for more details.
+
+    If you are sure that you have not shared the memory for this array with
+    another Python object, then you may safely set `refcheck` to False.
+
+
+    References
+    ----------
+    .. [1] Python 3.14 What's New, https://docs.python.org/3/whatsnew/3.14.html#whatsnew314-refcount
 
     Examples
     --------
@@ -4966,32 +4970,6 @@ add_newdoc('numpy._core.multiarray', 'add_docstring',
     If the obj already has a docstring raise a RuntimeError
     If this routine does not know how to add a docstring to the object
     raise a TypeError
-    """)
-
-add_newdoc('numpy._core.umath', '_add_newdoc_ufunc',
-    """
-    add_ufunc_docstring(ufunc, new_docstring)
-
-    Replace the docstring for a ufunc with new_docstring.
-    This method will only work if the current docstring for
-    the ufunc is NULL. (At the C level, i.e. when ufunc->doc is NULL.)
-
-    Parameters
-    ----------
-    ufunc : numpy.ufunc
-        A ufunc whose current doc is NULL.
-    new_docstring : string
-        The new docstring for the ufunc.
-
-    Notes
-    -----
-    This method allocates memory for new_docstring on
-    the heap. Technically this creates a memory leak, since this
-    memory will not be reclaimed until the end of the program
-    even if the ufunc itself is removed. However this will only
-    be a problem if the user is repeatedly creating ufuncs with
-    no documentation, adding documentation via add_newdoc_ufunc,
-    and then throwing away the ufunc.
     """)
 
 add_newdoc('numpy._core.multiarray', 'get_handler_name',

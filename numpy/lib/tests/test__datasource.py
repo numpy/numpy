@@ -289,7 +289,7 @@ class TestRepositoryExists:
 
     def test_CachedHTTPFile(self, tmp_path):
         localfile = valid_httpurl()
-        # Create a locally cached temp file with an URL based
+        # Create a locally cached temp file with a URL based
         # directory structure.  This is similar to what Repository.open
         # would do.
         repos = datasource.Repository(valid_baseurl(), tmp_path)

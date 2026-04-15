@@ -9,6 +9,7 @@ on:
       - '**.pyi'
       - '**.md'
       - '**.rst'
+      - 'tools/stubtest/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -25,14 +26,14 @@ jobs:
     if: github.repository == 'numpy/numpy'
     steps:
     - name: Checkout
-      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
 
     - name: Setup Python
-      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: "3.14t"
 
@@ -42,7 +43,7 @@ jobs:
 
     - name: Install pkg-config
       run: |
-        choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+        python -m pip install pkgconf==2.5.1.post1
         echo "PKG_CONFIG_PATH=${{ github.workspace }}/.openblas" >> $env:GITHUB_ENV
 
     - name: Install NumPy (Clang-cl)
@@ -83,14 +84,14 @@ jobs:
     if: github.repository == 'numpy/numpy'
     steps:
       - name: Checkout
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           submodules: recursive
           fetch-tags: true
           persist-credentials: false
 
       - name: Setup Python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '3.12'
           architecture: ${{ matrix.architecture }}
@@ -139,31 +140,32 @@ jobs:
     if: github.repository == 'numpy/numpy'
     steps:
       - name: Checkout
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           submodules: recursive
           fetch-tags: true
           persist-credentials: false
 
       - name: Setup Python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.pyver }}
 
       - name: pkg-config
         run: |
-          choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+          python -m pip install pkgconf==2.5.1.post1
 
       - name: Dependencies
         run: |
           python -m pip install -r requirements/test_requirements.txt
+          python -m pip install -r requirements/build_requirements.txt
 
       - name: Build and install
         run: |
           pip install -r requirements/ci_requirements.txt
           spin config-openblas --with-scipy-openblas=${{ matrix.BLAS }}
           $env:PKG_CONFIG_PATH="$pwd/.openblas"
-          python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args="-Dallow-noblas=false"
+          python -m pip install --no-build-isolation . -v -Csetup-args="--vsenv" -Csetup-args="-Dallow-noblas=false"
 
       - name: Run test suite ${{ matrix.TEST_MODE }}
         run: |

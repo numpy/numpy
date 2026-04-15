@@ -575,7 +575,6 @@ else:
         hsplit,
         kron,
         put_along_axis,
-        row_stack,
         split,
         take_along_axis,
         tile,
@@ -668,7 +667,7 @@ else:
     # import with `from numpy import *`.
     __future_scalars__ = {"str", "bytes", "object"}
 
-    __array_api_version__ = "2024.12"
+    __array_api_version__ = "2025.12"
 
     from ._array_api_info import __array_namespace_info__
 
@@ -766,14 +765,6 @@ else:
                 f"{__expired_attributes__[attr]}",
                 name=None
             )
-
-        if attr == "chararray":
-            warnings.warn(
-                "`np.chararray` is deprecated and will be removed from "
-                "the main namespace in the future. Use an array with a string "
-                "or bytes dtype instead.", DeprecationWarning, stacklevel=2)
-            import numpy.char as char
-            return char.chararray
 
         raise AttributeError(f"module {__name__!r} has no attribute {attr!r}")
 

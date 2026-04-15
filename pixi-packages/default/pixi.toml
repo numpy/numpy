@@ -1,0 +1,38 @@
+[workspace]
+channels = ["https://prefix.dev/conda-forge"]
+platforms = ["linux-64", "linux-aarch64", "osx-arm64"]
+preview = ["pixi-build"]
+
+[package]
+# Work-around to https://github.com/prefix-dev/pixi/issues/5557
+license-file = "LICENSE.txt"
+
+[package.build]
+source.path = "../.."
+
+[package.build.backend]
+name = "pixi-build-python"
+version = "*"
+
+[package.build.config]
+extra-input-globs = ["**/*.c.src"]
+compilers = ["c", "cxx"]
+extra-args = ["-Csetup-args=-Dbuildtype=debug"]
+
+[package.host-dependencies]
+# FIXME https://github.com/numpy/numpy/issues/30478
+# python = "*" prevents downstream from building cpython from sources.
+# Workaround: fork numpy, then uncomment one of the following and
+# comment  out the other.
+
+# Use latest cpython release from conda-forge
+python = "*"
+
+# Use cpython git tip
+# python.git = "https://github.com/python/cpython"
+# python.subdirectory = "Tools/pixi-packages/default"
+# python.rev = "15b216f30d0445469ec31bc7509fcc55a216ef7c"  # v3.15.0a6
+
+meson-python = "*"
+cython = "*"
+uv = "*" # used to invoke the wheel build

@@ -1,6 +1,6 @@
-from _typeshed import Incomplete
 from collections.abc import Container, Iterable
 from typing import Any, Literal as L, Protocol, overload, type_check_only
+from typing_extensions import deprecated
 
 import numpy as np
 from numpy._typing import (
@@ -9,9 +9,11 @@ from numpy._typing import (
     _16Bit,
     _32Bit,
     _64Bit,
+    _AnyShape,
     _ArrayLike,
     _NestedSequence,
     _ScalarLike_co,
+    _Shape,
     _SupportsArray,
 )
 
@@ -93,48 +95,134 @@ def iscomplexobj(x: _HasDType[Any] | ArrayLike) -> bool: ...
 def isrealobj(x: _HasDType[Any] | ArrayLike) -> bool: ...
 
 #
-@overload
-def nan_to_num[ScalarT: np.generic](
-    x: ScalarT,
+@overload  # np.generic | np.ndarray  (`ndarray` subclasses pass through)
+def nan_to_num[ScalarOrArrayT: np.generic | np.ndarray](
+    x: ScalarOrArrayT,
     copy: bool = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
-) -> ScalarT: ...
-@overload
+) -> ScalarOrArrayT: ...
+@overload  # >0-d <known dtype>
 def nan_to_num[ScalarT: np.generic](
-    x: NDArray[ScalarT] | _NestedSequence[_ArrayLike[ScalarT]],
+    x: _NestedSequence[_ArrayLike[ScalarT]],
     copy: bool = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
 ) -> NDArray[ScalarT]: ...
-@overload
-def nan_to_num[ScalarT: np.generic](
-    x: _SupportsArray[np.dtype[ScalarT]],
+@overload  # ?-d <known dtype>
+def nan_to_num[DTypeT: np.dtype](
+    x: _SupportsArray[DTypeT],
     copy: bool = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
-) -> ScalarT | NDArray[ScalarT]: ...
-@overload
+) -> np.ndarray[_AnyShape, DTypeT] | Any: ...
+@overload  # 0-d ~bool
+def nan_to_num(
+    x: bool,
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> np.bool: ...
+@overload  # 0-d +int
+def nan_to_num(
+    x: int,
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> np.int_ | Any: ...
+@overload  # 0-d +float
+def nan_to_num(
+    x: float,
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> np.float64 | Any: ...
+@overload  # 0-d +complex
+def nan_to_num(
+    x: complex,
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> np.complex128 | Any: ...
+@overload  # >0-d ~bool
+def nan_to_num(
+    x: _NestedSequence[bool],
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> NDArray[np.bool]: ...
+@overload  # >0-d ~int
+def nan_to_num(
+    x: _NestedSequence[list[int]] | list[int],
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> NDArray[np.int_]: ...
+@overload  # >0-d ~float
+def nan_to_num(
+    x: _NestedSequence[list[float]] | list[float],
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> NDArray[np.float64]: ...
+@overload  # >0-d ~complex
+def nan_to_num(
+    x: _NestedSequence[list[complex]] | list[complex],
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> NDArray[np.complex128]: ...
+@overload  # >0-d <unknown dtype>
 def nan_to_num(
     x: _NestedSequence[ArrayLike],
     copy: bool = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
-) -> NDArray[Incomplete]: ...
-@overload
+) -> np.ndarray: ...
+@overload  # ?-d <unknown dtype>
 def nan_to_num(
     x: ArrayLike,
     copy: bool = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
-) -> Incomplete: ...
+) -> np.ndarray | Any: ...
 
-# NOTE: The [overload-overlap] mypy error is a false positive
+#
+@overload
+def real_if_close[ShapeT: _Shape, DTypeT: np.dtype[_ToReal]](
+    a: np.ndarray[ShapeT, DTypeT],
+    tol: float = 100,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload
+def real_if_close[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.complex64]],
+    tol: float = 100,
+) -> np.ndarray[ShapeT, np.dtype[np.float32 | np.complex64]]: ...
+@overload
+def real_if_close[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.complex128]],
+    tol: float = 100,
+) -> np.ndarray[ShapeT, np.dtype[np.float64 | np.complex128]]: ...
+@overload
+def real_if_close[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.clongdouble]],
+    tol: float = 100,
+) -> np.ndarray[ShapeT, np.dtype[np.longdouble | np.clongdouble]]: ...
+@overload
+def real_if_close[RealT: _ToReal](a: _ArrayLike[RealT], tol: float = 100) -> NDArray[RealT]: ...
 @overload
 def real_if_close(a: _ArrayLike[np.complex64], tol: float = 100) -> NDArray[np.float32 | np.complex64]: ...
 @overload
@@ -142,54 +230,74 @@ def real_if_close(a: _ArrayLike[np.complex128], tol: float = 100) -> NDArray[np.
 @overload
 def real_if_close(a: _ArrayLike[np.clongdouble], tol: float = 100) -> NDArray[np.longdouble | np.clongdouble]: ...
 @overload
-def real_if_close[RealT: _ToReal](a: _ArrayLike[RealT], tol: float = 100) -> NDArray[RealT]: ...
-@overload
 def real_if_close(a: ArrayLike, tol: float = 100) -> NDArray[Any]: ...
 
 #
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["S1"]) -> L["character"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["?"]) -> L["bool"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["b"]) -> L["signed char"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["B"]) -> L["unsigned char"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["h"]) -> L["short"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["H"]) -> L["unsigned short"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["i"]) -> L["integer"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["I"]) -> L["unsigned integer"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["l"]) -> L["long integer"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["L"]) -> L["unsigned long integer"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["q"]) -> L["long long integer"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["Q"]) -> L["unsigned long long integer"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["f"]) -> L["single precision"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["d"]) -> L["double precision"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["g"]) -> L["long precision"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["F"]) -> L["complex single precision"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["D"]) -> L["complex double precision"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["G"]) -> L["complex long double precision"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["S"]) -> L["string"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["U"]) -> L["unicode"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["V"]) -> L["void"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["O"]) -> L["object"]: ...
 
 # NOTE: The [overload-overlap] mypy errors are false positives

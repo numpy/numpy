@@ -134,7 +134,7 @@ class TestScalarPEP3118:
         v = memoryview(s)
         assert self._as_dict(v) == expected
 
-        # integers of the paltform-appropriate endianness
+        # integers of the platform-appropriate endianness
         code_points = np.frombuffer(v, dtype='i4')
 
         assert_equal(code_points, [ord(c) for c in s])

@@ -274,7 +274,7 @@ def multiply(a, i):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array_like, with ``bytes_`` or ``str_`` dtype
 
     i : array_like, with any integer dtype
 
@@ -408,6 +408,10 @@ class chararray(ndarray):
               strides=None, order=None)
 
     Provides a convenient view on arrays of string and unicode values.
+
+    .. deprecated:: 2.5
+       ``chararray`` is deprecated. Use an ``ndarray`` with a string or
+       bytes dtype instead.
 
     .. note::
        The `chararray` class exists for backwards compatibility with
@@ -543,7 +547,7 @@ class chararray(ndarray):
                [b'abc', b'abc', b'abc']], dtype='|S5')
 
     """
-    def __new__(subtype, shape, itemsize=1, unicode=False, buffer=None,
+    def __new__(cls, shape, itemsize=1, unicode=False, buffer=None,
                 offset=0, strides=None, order='C'):
         if unicode:
             dtype = str_
@@ -563,10 +567,10 @@ class chararray(ndarray):
             filler = None
 
         if buffer is None:
-            self = ndarray.__new__(subtype, shape, (dtype, itemsize),
+            self = ndarray.__new__(cls, shape, (dtype, itemsize),
                                    order=order)
         else:
-            self = ndarray.__new__(subtype, shape, (dtype, itemsize),
+            self = ndarray.__new__(cls, shape, (dtype, itemsize),
                                    buffer=buffer,
                                    offset=offset, strides=strides,
                                    order=order)
@@ -1215,6 +1219,10 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
     """
     Create a `~numpy.char.chararray`.
 
+    .. deprecated:: 2.5
+       ``chararray`` is deprecated. Use an ``ndarray`` with a string or
+       bytes dtype instead.
+
     .. note::
        This class is provided for numarray backward-compatibility.
        New code (not concerned with numarray compatibility) should use
@@ -1358,6 +1366,10 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
     """
     Convert the input to a `~numpy.char.chararray`, copying the data only if
     necessary.
+
+    .. deprecated:: 2.5
+       ``chararray`` is deprecated. Use an ``ndarray`` with a string or
+       bytes dtype instead.
 
     Versus a NumPy array of dtype `bytes_` or `str_`, this
     class adds the following functionality:

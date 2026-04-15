@@ -64,17 +64,17 @@ except importlib.metadata.PackageNotFoundError:
 else:
     IS_INSTALLED = True
     try:
-        if sys.version_info >= (3, 13):
-            IS_EDITABLE = np_dist.origin.dir_info.editable
-        else:
+        if sys.version_info < (3, 13):
             # Backport importlib.metadata.Distribution.origin
-            import json  # noqa: E401
+            import json
             import types
             origin = json.loads(
                 np_dist.read_text('direct_url.json') or '{}',
                 object_hook=lambda data: types.SimpleNamespace(**data),
             )
             IS_EDITABLE = origin.dir_info.editable
+        else:
+            IS_EDITABLE = np_dist.origin.dir_info.editable
     except AttributeError:
         IS_EDITABLE = False
 
@@ -589,7 +589,7 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
         usecomplex = False
 
     def _build_err_msg():
-        header = ('Arrays are not almost equal to %d decimals' % decimal)
+        header = (f'Arrays are not almost equal to {decimal} decimals')
         return build_err_msg([actual, desired], err_msg, verbose=verbose,
                              header=header)
 
@@ -712,7 +712,7 @@ def assert_approx_equal(actual, desired, significant=7, err_msg='',
         sc_actual = 0.0
     msg = build_err_msg(
         [actual, desired], err_msg,
-        header='Items are not equal to %d significant digits:' % significant,
+        header=f'Items are not equal to {significant} significant digits:',
         verbose=verbose)
     try:
         # If one of desired/actual is not finite, handle it specially here:
@@ -744,7 +744,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     ox, oy = x, y
 
     def isnumber(x):
-        return x.dtype.char in '?bhilqpBHILQPefdgFDG'
+        return type(x.dtype)._is_numeric
 
     def istime(x):
         return x.dtype.char in "Mm"
@@ -784,8 +784,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         if robust_any_difference(x_id, y_id):
             msg = build_err_msg(
                 [x, y],
-                err_msg + '\n%s location mismatch:'
-                % (hasval), verbose=verbose, header=header,
+                err_msg + f'\n{hasval} location mismatch:',
+                verbose=verbose, header=header,
                 names=names,
                 precision=precision)
             raise AssertionError(msg)
@@ -905,8 +905,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             n_mismatch = reduced.size - reduced.sum(dtype=intp)
             n_elements = flagged.size if flagged.ndim != 0 else reduced.size
             percent_mismatch = 100 * n_mismatch / n_elements
-            remarks = [f'Mismatched elements: {n_mismatch} / {n_elements} '
-                       f'({percent_mismatch:.3g}%)']
+            remarks = [(f'Mismatched elements: {n_mismatch} / {n_elements} '
+                        f'({percent_mismatch:.3g}%)')]
             if invalids.ndim != 0:
                 if flagged.ndim > 0:
                     positions = np.argwhere(np.asarray(~flagged))[invalids]
@@ -955,7 +955,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                     # note: this definition of relative error matches that one
                     # used by assert_allclose (found in np.isclose)
                     # Filter values where the divisor would be zero
-                    nonzero = np.bool(y != 0)
+                    nonzero = np.bool(y != np.zeros_like(y))
                     nonzero_and_invalid = np.logical_and(invalids, nonzero)
 
                     if all(~nonzero_and_invalid):
@@ -1055,6 +1055,8 @@ def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
 
     Examples
     --------
+    >>> import numpy as np
+
     The first assert does not raise an exception:
 
     >>> np.testing.assert_array_equal([1.0,2.33333,np.nan],
@@ -1220,9 +1222,8 @@ def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
 
         return z < 1.5 * 10.0**(-decimal)
 
-    assert_array_compare(compare, actual, desired, err_msg=err_msg,
-                         verbose=verbose,
-             header=('Arrays are not almost equal to %d decimals' % decimal),
+    assert_array_compare(compare, actual, desired, err_msg=err_msg, verbose=verbose,
+             header=f'Arrays are not almost equal to {decimal} decimals',
              precision=decimal)
 
 
@@ -1463,7 +1464,8 @@ def rundocs(filename=None, raise_on_error=True):
         runner.run(test, out=out)
 
     if runner.failures > 0 and raise_on_error:
-        raise AssertionError("Some doctests failed:\n%s" % "\n".join(msg))
+        err_msg = '\n'.join(msg)
+        raise AssertionError(f"Some doctests failed:\n{err_msg}")
 
 
 def check_support_sve(__cache=[]):
@@ -1568,7 +1570,7 @@ def decorate_methods(cls, decorator, testmatch=None):
 
     """
     if testmatch is None:
-        testmatch = re.compile(r'(?:^|[\\b_\\.%s-])[Tt]est' % os.sep)
+        testmatch = re.compile(rf'(?:^|[\\b_\\.{os.sep}-])[Tt]est')
     else:
         testmatch = re.compile(testmatch)
     cls_attr = cls.__dict__
@@ -1687,7 +1689,7 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
         Array desired.
     rtol : float, optional
         Relative tolerance.
-    atol : float, optional
+    atol : float | np.timedelta64, optional
         Absolute tolerance.
     equal_nan : bool, optional.
         If True, NaNs will compare equal.
@@ -1766,7 +1768,11 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
                                        equal_nan=equal_nan)
 
     actual, desired = np.asanyarray(actual), np.asanyarray(desired)
-    header = f'Not equal to tolerance rtol={rtol:g}, atol={atol:g}'
+    if isinstance(atol, np.timedelta64):
+        atol_str = str(atol)
+    else:
+        atol_str = f"{atol:g}"
+    header = f'Not equal to tolerance rtol={rtol:g}, atol={atol_str}'
     assert_array_compare(compare, actual, desired, err_msg=str(err_msg),
                          verbose=verbose, header=header, equal_nan=equal_nan,
                          strict=strict)
@@ -1881,9 +1887,8 @@ def assert_array_max_ulp(a, b, maxulp=1, dtype=None):
     import numpy as np
     ret = nulp_diff(a, b, dtype)
     if not np.all(ret <= maxulp):
-        raise AssertionError("Arrays are not almost equal up to %g "
-                             "ULP (max difference is %g ULP)" %
-                             (maxulp, np.max(ret)))
+        raise AssertionError(f"Arrays are not almost equal up to {maxulp:g} "
+                             f"ULP (max difference is {np.max(ret):g} ULP)")
     return ret
 
 
@@ -2842,6 +2847,8 @@ def requires_deep_recursion(func):
             pytest.skip("Pyston disables recursion checking")
         if IS_WASM:
             pytest.skip("WASM has limited stack size")
+        if not IS_64BIT:
+            pytest.skip("32 bit Python has limited stack size")
         cflags = sysconfig.get_config_var('CFLAGS') or ''
         config_args = sysconfig.get_config_var('CONFIG_ARGS') or ''
         address_sanitizer = (
