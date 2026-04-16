@@ -1,0 +1,4 @@
+Support for free-threaded stable ABI
+------------------------------------
+NumPy now supports the stable ABI for free-threaded Python as described in
+:pep:`803`.
