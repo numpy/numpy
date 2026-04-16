@@ -299,6 +299,16 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                 }
             }
             byteobj = PyUnicode_AsASCIIString(strobj);
+            if (byteobj == NULL) {
+                Py_DECREF(strobj);
+                Py_DECREF(it);
+                if (n4 != 0) {
+                    PyErr_SetString(PyExc_ValueError,
+                            "The `format` parameter must contain only ASCII "
+                            "characters.");
+                }
+                return -1;
+            }
             NPY_BEGIN_ALLOW_THREADS;
             n2 = PyBytes_GET_SIZE(byteobj);
             n = fwrite(PyBytes_AS_STRING(byteobj), 1, n2, fp);
