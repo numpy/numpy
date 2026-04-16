@@ -189,7 +189,7 @@ typedef struct PyScalarObject PyScalarObject;
 typedef struct PyVoidScalarObject PyVoidScalarObject;
 #endif
 
-#define PyStringScalarObject PyBytesObject
+
 
 
 /* Macros
@@ -222,6 +222,7 @@ typedef struct PyVoidScalarObject PyVoidScalarObject;
         ((Py##cls##ScalarObject *)obj)->obval
 #define PyArrayScalar_ASSIGN(obj, cls, val) \
         PyArrayScalar_VAL(obj, cls) = val
+#define PyStringScalarObject PyBytesObject
 #endif
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_ARRAYSCALARS_H_ */
