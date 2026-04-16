@@ -1323,3 +1323,22 @@ _PyDatetimeScalarObject_GetMetadata(PyObject *self)
 {
     return ((PyDatetimeScalarObject *)self)->obmeta;
 }
+/*NUMPY_API*/
+NPY_NO_EXPORT PyArray_DatetimeMetaData
+_PyTimedeltaScalarObject_GetMetadata(PyObject *self)
+{
+    return ((PyTimedeltaScalarObject *)self)->obmeta;
+}
+/*NUMPY_API*/
+NPY_NO_EXPORT npy_datetime
+_PyDatetimeScalarObject_GetValue(PyObject *self)
+{
+    return ((PyDatetimeScalarObject *)self)->obval;
+}
+/*NUMPY_API*/
+NPY_NO_EXPORT npy_timedelta
+_PyTimedeltaScalarObject_GetValue(PyObject *self)
+{
+    return ((PyTimedeltaScalarObject *)self)->obval;
+}
+

@@ -416,6 +416,9 @@ multiarray_funcs_api = {
     '_PyArrayMultiIter_GET_ITEM_DATA':         (373, MinVersion("2.5")),
     '_PyArrayNeighborhoodIter_GET_ITEM_DATA':  (374, MinVersion("2.5")),
     '_PyDatetimeScalarObject_GetMetadata':         (375,),
+    '_PyTimedeltaScalarObject_GetMetadata':        (376,),
+    '_PyDatetimeScalarObject_GetValue':            (377,),
+    '_PyTimedeltaScalarObject_GetValue':           (378,),
 }
 
 ufunc_types_api = {
