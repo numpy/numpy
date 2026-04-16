@@ -697,6 +697,9 @@ NpyString_dup(const npy_packed_static_string *in,
     int used_malloc = 0;
     if (in_allocator == out_allocator && !is_short_string(in)) {
         in_buf = in_allocator->malloc(size);
+        if (in_buf == NULL) {
+            return -1;
+        }
         memcpy(in_buf, vstring_buffer(arena, in_u), size);
         used_malloc = 1;
     }

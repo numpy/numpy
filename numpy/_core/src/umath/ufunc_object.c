@@ -327,9 +327,11 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
     }
     len = strlen(signature);
     ufunc->core_signature = PyArray_malloc(sizeof(char) * (len+1));
-    if (ufunc->core_signature) {
-        strcpy(ufunc->core_signature, signature);
+    if (ufunc->core_signature == NULL) {
+        PyErr_NoMemory();
+        return -1;
     }
+    strcpy(ufunc->core_signature, signature);
     /* Allocate sufficient memory to store pointers to all dimension names */
     var_names = PyArray_malloc(sizeof(char const*) * len);
     if (var_names == NULL) {
@@ -479,14 +481,28 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
         parse_error = "incomplete signature: not all arguments found";
         goto fail;
     }
-    ufunc->core_dim_ixs = PyArray_realloc(ufunc->core_dim_ixs,
+    void *tmp;
+    tmp = PyArray_realloc(ufunc->core_dim_ixs,
             sizeof(int) * cur_core_dim);
-    ufunc->core_dim_sizes = PyArray_realloc(
-            ufunc->core_dim_sizes,
+    if (tmp == NULL) {
+        PyErr_NoMemory();
+        goto fail;
+    }
+    ufunc->core_dim_ixs = tmp;
+    tmp = PyArray_realloc(ufunc->core_dim_sizes,
             sizeof(npy_intp) * ufunc->core_num_dim_ix);
-    ufunc->core_dim_flags = PyArray_realloc(
-            ufunc->core_dim_flags,
+    if (tmp == NULL) {
+        PyErr_NoMemory();
+        goto fail;
+    }
+    ufunc->core_dim_sizes = tmp;
+    tmp = PyArray_realloc(ufunc->core_dim_flags,
             sizeof(npy_uint32) * ufunc->core_num_dim_ix);
+    if (tmp == NULL) {
+        PyErr_NoMemory();
+        goto fail;
+    }
+    ufunc->core_dim_flags = tmp;
 
     /* check for trivial core-signature, e.g. "(),()->()" */
     if (cur_core_dim == 0) {
@@ -6688,6 +6704,10 @@ ufunc_get_types(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
         return NULL;
     }
     t = PyArray_malloc(no+ni+2);
+    if (t == NULL) {
+        Py_DECREF(list);
+        return PyErr_NoMemory();
+    }
     n = 0;
     for (k = 0; k < nt; k++) {
         for (j = 0; j<ni; j++) {

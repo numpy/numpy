@@ -413,6 +413,7 @@ _convert_from_array_descr(PyObject *obj, int align)
     int totalsize = 0;
     PyObject *fields = PyDict_New();
     if (!fields) {
+        Py_DECREF(nameslist);
         return NULL;
     }
     for (int i = 0; i < n; i++) {
