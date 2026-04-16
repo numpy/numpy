@@ -303,6 +303,10 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                 Py_DECREF(strobj);
                 Py_DECREF(it);
                 if (n4 != 0) {
+                    /*
+                     * Without an explicit format string, preserve the
+                     * original UnicodeEncodeError from the element text.
+                     */
                     PyErr_SetString(PyExc_ValueError,
                             "The `format` parameter must contain only ASCII "
                             "characters.");

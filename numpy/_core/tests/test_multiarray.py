@@ -6190,6 +6190,14 @@ class TestIO:
             ):
                 x.tofile(f, sep=',', format='\N{MICRO SIGN}%.2f')
 
+    def test_tofile_non_ascii_element_without_format_raises_unicodeencodeerror(
+            self, tmp_path, param_filename):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
+        x = np.array(['\N{MICRO SIGN}'])
+        with open(tmp_filename, 'w') as f:
+            with pytest.raises(UnicodeEncodeError):
+                x.tofile(f, sep=',')
+
     def test_tofile_cleanup(self, tmp_path, param_filename):
         tmp_filename = normalize_filename(tmp_path, param_filename)
         x = np.zeros((10), dtype=object)
