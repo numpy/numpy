@@ -866,9 +866,14 @@ cdef extern from "numpy/arrayscalars.h":
         pass
 
     ctypedef struct PyDatetimeScalarObject:
-        pass
+        # PyObject_HEAD
+        npy_datetime obval
+        PyArray_DatetimeMetaData obmeta
+
     ctypedef struct PyTimedeltaScalarObject:
-        pass
+        # PyObject_HEAD
+        npy_timedelta obval
+        PyArray_DatetimeMetaData obmeta
 
     ctypedef enum NPY_DATETIMEUNIT:
         NPY_FR_Y
