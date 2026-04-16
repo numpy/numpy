@@ -54,7 +54,7 @@ dlpack_export_registry_lookup(PyArray_Descr *dtype,
 
 
 /*
- * Return a registered dtype or raise an error if non is found.
+ * Return a registered dtype or raise an error if none is found.
  */
 static PyArray_Descr *
 dlpack_dtype_registry_lookup(uint8_t code, uint8_t bits)
@@ -338,8 +338,8 @@ fill_dl_tensor_information(
         if (!reg_res) {
             PyErr_SetString(PyExc_BufferError,
                     "DLPack only supports signed/unsigned integers, float "
-                    "and complex dtypes (or dtypes registered via "
-                    "by importing external packages).");
+                    "and complex dtypes (or dtypes registered by third-party "
+                    "packages).");
             return -1;
         }
     }

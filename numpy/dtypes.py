@@ -26,10 +26,8 @@ like ``"float64"`` can be used.
 __all__ = ["register_dlpack_dtype"]
 
 
-def register_dlpack_dtype(dlpack_key, dtype):
+def register_dlpack_dtype(dlpack_key, dtype, /):
     """
-    register_dlpack_dtype(dlpack_key, dtype, /)
-
     Register a NumPy dtype for a DLPack ``(code, bits)`` pair so that
     `numpy.from_dlpack` can import it and ``ndarray.__dlpack__`` can export
     it.  Built-in dtype mappings take priority on import.
