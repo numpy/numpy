@@ -818,8 +818,8 @@ _register_dlpack_dtype(PyObject *NPY_UNUSED(self), PyObject *args)
 
     long code = 0;
     long bits_l = 0;
-    if (!PyArg_ParseTuple(args, "(ll)O&:register_dlpack_dtype", &code, &bits_l,
-            PyArray_DescrConverter, &descr)) {
+    if (!PyArg_ParseTuple(args, "(ll)O!:register_dlpack_dtype", &code, &bits_l,
+            &PyArrayDescr_Type, &descr)) {
         goto finish;
     }
 
@@ -874,7 +874,6 @@ _register_dlpack_dtype(PyObject *NPY_UNUSED(self), PyObject *args)
     ret = Py_NewRef(Py_None);
 
 finish:
-    Py_XDECREF((PyObject *)descr);
     Py_XDECREF(dlpack_tuple);
     Py_XDECREF(original);
     return ret;

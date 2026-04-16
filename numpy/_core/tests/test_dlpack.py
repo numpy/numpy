@@ -200,6 +200,7 @@ class TestRegisterDlpackDtype:
         ((2,), np.dtype("f4")),
         ((2, 2, 2), np.dtype(np.float16)),
         (None, np.dtype(np.float16)),
+        ((4, 16), "S2"),  # not a dtype instance
     ])
     def test_register_bad_dlpack_tuple(self, key, dtype):
         with pytest.raises(TypeError):
@@ -240,7 +241,7 @@ class TestRegisterDlpackDtype:
             np.from_dlpack(a)  # dtype not yet registered
 
         with pytest.raises(ValueError, match="already maps"):
-            np.dtypes.register_dlpack_dtype((4, 16), "S2")
+            np.dtypes.register_dlpack_dtype((4, 16), np.dtype("S2"))
 
         # But... accept that this now does get exported (but won't roundtrip)
         arr = np.from_dlpack(np.array(["12", "23"], dtype="S2"))
