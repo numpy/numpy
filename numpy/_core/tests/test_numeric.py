@@ -3635,7 +3635,7 @@ class TestCorrelate:
         assert_array_almost_equal(z, self.z1[1:6])  # [-8., -14., -20., -26., -14.]
         assert_array_equal(lags, np.arange(-1, 4))
         assert len(z) == len(lags)
-    
+
     def test_maxlag(self):
         self._setup(float)
         # maxlag=1 gives the symmetric inclusive window [-1, 0, 1]
@@ -3687,7 +3687,7 @@ class TestCorrelate:
         with pytest.raises(ValueError, match="cannot be used with mode"):
             np.correlate(self.x, self.y, mode='full', maxlag=1)
         with pytest.raises(ValueError, match="cannot be used with mode"):
-            np.correlate(self.x, self.y, mode='valid', lags=range(0, 2))
+            np.correlate(self.x, self.y, mode='valid', lags=range(2))
 
     def test_lags_mode_without_lags(self):
         self._setup(float)
@@ -3717,7 +3717,7 @@ class TestCorrelate:
     def test_lags_full_overlap_only(self):
         self._setup(float)
         # Only full-overlap lags [0, n1-n2] = [0, 2]
-        z = np.correlate(self.x, self.y, lags=range(0, 3))
+        z = np.correlate(self.x, self.y, lags=range(3))
         assert_array_almost_equal(z, self.z1[2:5])
 
     def test_lags_beyond_overlap(self):
@@ -3737,7 +3737,7 @@ class TestCorrelate:
 
     def test_lags_single_lag(self):
         self._setup(float)
-        z, lags = np.correlate(self.x, self.y, lags=range(0, 1),
+        z, lags = np.correlate(self.x, self.y, lags=range(1),
                                returns_lagvector=True)
         assert_array_almost_equal(z, [self.z1[2]])
         assert_array_equal(lags, np.array([0]))
@@ -3754,7 +3754,7 @@ class TestCorrelate:
 
     def test_lags_empty(self):
         self._setup(float)
-        z, lags = np.correlate(self.x, self.y, lags=range(0, 0),
+        z, lags = np.correlate(self.x, self.y, lags=range(0),
                                returns_lagvector=True)
         assert len(z) == 0
         assert len(lags) == 0
@@ -3798,7 +3798,7 @@ class TestCorrelate:
     def test_lags_matches_valid_mode(self):
         self._setup(float)
         z_mode = np.correlate(self.x, self.y, 'valid')
-        z_lags = np.correlate(self.x, self.y, lags=range(0, 3))
+        z_lags = np.correlate(self.x, self.y, lags=range(3))
         assert_array_almost_equal(z_mode, z_lags)
 
     # --- Type/dtype tests ---
@@ -3983,7 +3983,7 @@ class TestConvolve:
             np.convolve([1, 2, 3], [4, 5, 6], mode='full', maxlag=1)
         with pytest.raises(ValueError, match="cannot be used with mode"):
             np.convolve([1, 2, 3], [4, 5, 6], mode='full',
-                        lags=range(0, 2))
+                        lags=range(2))
 
     def test_convolve_lags_mode_without_lags(self):
         with pytest.raises(ValueError,
