@@ -4730,6 +4730,10 @@ static struct PyMethodDef array_module_methods[] = {
         "Give a warning on reload and big warning in sub-interpreters."},
     {"from_dlpack", (PyCFunction)from_dlpack,
         METH_FASTCALL | METH_KEYWORDS, NULL},
+    {"_register_dlpack_dtype", (PyCFunction)_register_dlpack_dtype,
+        METH_VARARGS, NULL},
+    {"_dlpack_registry_replace", (PyCFunction)_dlpack_registry_replace,
+        METH_VARARGS, "unsafe testing helper to swap out dlpack registry"},
     {"_unique_hash",  (PyCFunction)array__unique_hash,
         METH_FASTCALL | METH_KEYWORDS, "Collect unique values via a hash map."},
     {NULL, NULL, 0, NULL}                /* sentinel */

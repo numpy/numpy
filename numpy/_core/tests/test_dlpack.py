@@ -186,3 +186,62 @@ class TestDLPack:
             x.__dlpack__(dl_device=(10, 0))
         with pytest.raises(ValueError):
             np.from_dlpack(x, device="gpu")
+
+
+class TestRegisterDlpackDtype:
+    @pytest.fixture(scope="class", autouse=True)
+    @staticmethod
+    def dlpack_registry_clear():
+        prev = np._core._multiarray_umath._dlpack_registry_replace({}, {})
+        yield
+        np._core._multiarray_umath._dlpack_registry_replace(*prev)
+
+    @pytest.mark.parametrize("key,dtype", [
+        ((2,), np.dtype("f4")),
+        ((2, 2, 2), np.dtype(np.float16)),
+        (None, np.dtype(np.float16)),
+    ])
+    def test_register_bad_dlpack_tuple(self, key, dtype):
+        with pytest.raises(TypeError):
+            np.dtypes.register_dlpack_dtype(key, dtype)
+
+    @pytest.mark.parametrize("key,dtype", [
+        ((-1, 16), np.dtype(np.float16)),
+        ((256, 16), np.dtype(np.float16)),
+        ((4, 15), np.dtype(np.float16)),
+        ((4, 256), np.dtype(np.float16)),
+        ((4, 15), np.dtype(np.float32)),
+    ])
+    def test_register_bad_code_or_bits(self, key, dtype):
+        with pytest.raises(ValueError, match="0..255"):
+            np.dtypes.register_dlpack_dtype(key, dtype)
+
+    def test_register_idempotent(self):
+        dt = np.dtype(np.float16)
+        np.dtypes.register_dlpack_dtype((4, 16), dt)
+        np.dtypes.register_dlpack_dtype((4, 16), dt)
+
+    def test_roundtrip(self, dtype=np.dtype("S1")):
+        # Register "S1" as kDLFloat8_e3m4 == 7
+        # (use of kwarg ensure singleton in free-threading)
+        np.dtypes.register_dlpack_dtype((7, 8), dtype)
+        x = np.array([1.0, 2.0], dtype="S1")
+        y = np.from_dlpack(x)
+        assert y.dtype == "S1"
+        assert_array_equal(x, y)
+
+    def test_register_conflict(self):
+        np.dtypes.register_dlpack_dtype((4, 16), np.dtype(np.float16))
+        with pytest.raises(ValueError, match="already exported"):
+            np.dtypes.register_dlpack_dtype((5, 16), np.dtype(np.float16))
+
+        a = np.array(["12", "23"])
+        with pytest.raises(BufferError):
+            np.from_dlpack(a)  # dtype not yet registered
+
+        with pytest.raises(ValueError, match="already maps"):
+            np.dtypes.register_dlpack_dtype((4, 16), "S2")
+
+        # But... accept that this now does get exported (but won't roundtrip)
+        arr = np.from_dlpack(np.array(["12", "23"], dtype="S2"))
+        assert arr.dtype == np.float16
