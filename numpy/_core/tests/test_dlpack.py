@@ -222,7 +222,7 @@ class TestRegisterDlpackDtype:
         np.dtypes.register_dlpack_dtype((4, 16), dt)
         np.dtypes.register_dlpack_dtype((4, 16), dt)
 
-    def test_roundtrip(self, dtype=np.dtype("S1")):
+    def test_roundtrip(self, dtype=np.dtype("S1")):  # noqa: B008
         # Register "S1" as kDLFloat8_e3m4 == 7
         # (use of kwarg ensure singleton in free-threading)
         np.dtypes.register_dlpack_dtype((7, 8), dtype)
