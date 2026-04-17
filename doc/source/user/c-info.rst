@@ -8,3 +8,4 @@ Using NumPy C-API
    c-info.python-as-glue
    c-info.ufunc-tutorial
    c-info.beyond-basics
+   c-info.limited-api

@@ -39,7 +39,9 @@ Modules can also be safely built against NumPy 2.0 or later in
 building against a single (minimum-supported) version of Python but be
 forward compatible higher versions in the same series (e.g., ``3.x``).
 This can greatly reduce the number of wheels that need to be built and
-distributed. For more information and examples, see the
+distributed. For a full guide including build system examples and known
+limitations, see :ref:`c-info.limited-api`. For wheel distribution details,
+see the
 `cibuildwheel docs <https://cibuildwheel.pypa.io/en/stable/faq/#abi3>`__.
 
 .. _testing-prereleases:
