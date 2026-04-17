@@ -11,7 +11,7 @@ have been corrected:
   adds all four terms.
 
 * The leading coefficient had a digit-swap typo (``13680`` instead of ``13860``)
-  that was introduced when this code was first ported from Numeric's RANLIB.
+  that was introduced in the initial implementation.
 
 As a result, ``Generator.binomial`` may now return different samples for the
 same seed.
