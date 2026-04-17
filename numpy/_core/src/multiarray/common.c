@@ -371,6 +371,57 @@ _may_have_objects(PyArray_Descr *dtype)
 }
 
 /*
+ * Get a sub-array descriptor base, storing the subarray
+ * dimensions and strides, and updating the number of dimensions
+ * of the array.
+ *
+ * Strides are only stored if needed.
+ */
+NPY_NO_EXPORT PyArray_Descr*
+_get_subarray_base_and_dimensions(
+    const PyArray_Descr *descr,
+    const int nd, const npy_intp *dims, const npy_intp *strides,
+    int *new_nd, npy_intp *new_dims, npy_intp *new_strides)
+{
+    PyObject *shape = PyDataType_SUBARRAY(descr)->shape;
+    PyArray_Descr *base = PyDataType_SUBARRAY(descr)->base;
+    assert(shape && base);
+    npy_bool tuple = PyTuple_Check(shape);
+    int sub_nd = tuple ? PyTuple_GET_SIZE(shape) : 1;
+
+    if (nd + sub_nd > NPY_MAXDIMS) {
+        PyErr_Format(PyExc_ValueError,
+                "number of dimensions must be within [0, %d]", NPY_MAXDIMS);
+        return NULL;
+    }
+
+    *new_nd = nd + sub_nd;
+    memcpy(new_dims, dims, nd * sizeof(npy_intp));
+    if (tuple) {
+        for (int i = 0; i < sub_nd; i++) {
+            new_dims[i+nd] = (npy_intp)PyLong_AsLong(PyTuple_GET_ITEM(shape, i));
+        }
+    }
+    else {
+        new_dims[nd] = (npy_intp)PyLong_AsLong(shape);
+    }
+
+    if (strides) {
+        memcpy(new_strides, strides, nd * sizeof(npy_intp));
+        npy_intp tempsize;
+        /* Make new strides -- always C-contiguous */
+        tempsize = base->elsize;
+        for (int i = nd + sub_nd - 1; i >= nd; i--) {
+            new_strides[i] = tempsize;
+            tempsize *= new_dims[i] ? new_dims[i] : 1;
+        }
+    }
+
+    Py_INCREF(base);
+    return base;
+}
+
+/*
  * Check whether self can be viewed with the given dtype.
  * If so, return a new reference to the dtype (possibly changed).
  * If needed, also determine new dimensions and strides for the last axis.

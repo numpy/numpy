@@ -276,72 +276,6 @@ fromfile_skip_separator(FILE **fp, const char *sep, void *NPY_UNUSED(stream_data
     return result;
 }
 
-/*
- * Change a sub-array field to the base descriptor
- * and update the dimensions and strides
- * appropriately.  Dimensions and strides are added
- * to the end.
- *
- * Strides are only added if given (because data is given).
- */
-static int
-_update_descr_and_dimensions(PyArray_Descr **des, npy_intp *newdims,
-                             npy_intp *newstrides, int oldnd)
-{
-    _PyArray_LegacyDescr *old;
-    int newnd;
-    int numnew;
-    npy_intp *mydim;
-    int i;
-    int tuple;
-
-    old = (_PyArray_LegacyDescr *)*des;  /* guaranteed as it has subarray */
-    *des = old->subarray->base;
-
-
-    mydim = newdims + oldnd;
-    tuple = PyTuple_Check(old->subarray->shape);
-    if (tuple) {
-        numnew = PyTuple_GET_SIZE(old->subarray->shape);
-    }
-    else {
-        numnew = 1;
-    }
-
-
-    newnd = oldnd + numnew;
-    if (newnd > NPY_MAXDIMS) {
-        goto finish;
-    }
-    if (tuple) {
-        for (i = 0; i < numnew; i++) {
-            mydim[i] = (npy_intp) PyLong_AsLong(
-                    PyTuple_GET_ITEM(old->subarray->shape, i));
-        }
-    }
-    else {
-        mydim[0] = (npy_intp) PyLong_AsLong(old->subarray->shape);
-    }
-
-    if (newstrides) {
-        npy_intp tempsize;
-        npy_intp *mystrides;
-
-        mystrides = newstrides + oldnd;
-        /* Make new strides -- always C-contiguous */
-        tempsize = (*des)->elsize;
-        for (i = numnew - 1; i >= 0; i--) {
-            mystrides[i] = tempsize;
-            tempsize *= mydim[i] ? mydim[i] : 1;
-        }
-    }
-
- finish:
-    Py_INCREF(*des);
-    Py_DECREF(old);
-    return newnd;
-}
-
 NPY_NO_EXPORT void
 _unaligned_strided_byte_copy(char *dst, npy_intp outstrides, char *src,
                              npy_intp instrides, npy_intp N, int elsize)
@@ -703,18 +637,18 @@ PyArray_NewFromDescr_int(
     if (!(cflags & _NPY_ARRAY_ENSURE_DTYPE_IDENTITY)) {
         if (PyDataType_SUBARRAY(descr)) {
             PyObject *ret;
+            int newnd;
             npy_intp newdims[2*NPY_MAXDIMS];
-            npy_intp *newstrides = NULL;
-            memcpy(newdims, dims, nd*sizeof(npy_intp));
-            if (strides) {
-                newstrides = newdims + NPY_MAXDIMS;
-                memcpy(newstrides, strides, nd*sizeof(npy_intp));
+            npy_intp *newstrides = strides ? newdims + NPY_MAXDIMS : NULL;
+            Py_SETREF(descr, _get_subarray_base_and_dimensions(
+                          descr, nd, dims, strides,
+                          &newnd, newdims, newstrides));
+            if (descr == NULL) {
+                return NULL;
             }
-            nd =_update_descr_and_dimensions(&descr, newdims,
-                                            newstrides, nd);
             ret = PyArray_NewFromDescr_int(
                     subtype, descr,
-                    nd, newdims, newstrides, data,
+                    newnd, newdims, newstrides, data,
                     flags, obj, base, cflags);
             return ret;
         }

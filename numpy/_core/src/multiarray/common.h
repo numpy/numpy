@@ -95,6 +95,13 @@ _unpack_field_index(
 NPY_NO_EXPORT int
 _may_have_objects(PyArray_Descr *dtype);
 
+/* For use in viewing as a new descriptor */
+NPY_NO_EXPORT PyArray_Descr*
+_get_subarray_base_and_dimensions(
+    const PyArray_Descr *descr,
+    const int nd, const npy_intp *dims, const npy_intp *strides,
+    int *new_nd, npy_intp *new_dims, npy_intp *new_strides);
+
 /*
  * Check whether self can be viewed with the given dtype.
  * If so, return a new reference to the dtype (possibly changed).

@@ -364,40 +364,31 @@ array_descr_set_internal(PyArrayObject *self, PyObject *arg)
     /* Viewing as a subarray increases the number of dimensions */
     if (PyDataType_HASSUBARRAY(newtype)) {
         assert(newlastdim < 0);  /* not allowed for subarrays */
-        /*
-         * create new array object from data and update
-         * dimensions, strides and descr from it
-         */
-        PyArrayObject *temp;
-        /*
-         * We would decref newtype here.
-         * temp will steal a reference to it
-         */
-        temp = (PyArrayObject *)
-            PyArray_NewFromDescr(&PyArray_Type, newtype, PyArray_NDIM(self),
-                                 PyArray_DIMS(self), PyArray_STRIDES(self),
-                                 PyArray_DATA(self), PyArray_FLAGS(self), NULL);
-        if (temp == NULL) {
-            return -1;
-        }
+        PyObject *shape = PyDataType_SUBARRAY(newtype)->shape;
+        /* Just assert(PyTuple_Check(shape))?? */
+        int nd = PyArray_NDIM(self);
+        int new_nd = nd + (PyTuple_Check(shape) ? PyTuple_GET_SIZE(shape) : 1);
         /* create new dimensions cache and fill it */
-        npy_intp new_nd = PyArray_NDIM(temp);
         npy_intp *new_dims = npy_alloc_cache_dim(2 * new_nd);
         if (new_dims == NULL) {
-            Py_DECREF(temp);
             PyErr_NoMemory();
+            Py_DECREF(newtype);
             return -1;
         }
-        memcpy(new_dims, PyArray_DIMS(temp), new_nd * sizeof(npy_intp));
-        memcpy(new_dims + new_nd, PyArray_STRIDES(temp), new_nd * sizeof(npy_intp));
+        npy_intp *new_strides = new_dims + new_nd;
+        int chk_nd;
+        Py_SETREF(newtype, _get_subarray_base_and_dimensions(
+                      newtype, nd, PyArray_DIMS(self), PyArray_STRIDES(self),
+                      &chk_nd, new_dims, new_strides));
+        if (newtype == NULL) {
+            return -1;
+        }
+        assert(chk_nd == new_nd);
         /* Update self with new cache */
         npy_free_cache_dim_array(self);
         ((PyArrayObject_fields *)self)->nd = new_nd;
         ((PyArrayObject_fields *)self)->dimensions = new_dims;
-        ((PyArrayObject_fields *)self)->strides = new_dims + new_nd;
-        newtype = PyArray_DESCR(temp);
-        Py_INCREF(newtype);
-        Py_DECREF(temp);
+        ((PyArrayObject_fields *)self)->strides = new_strides;
     }
     else if (newlastdim >= 0) {
         int lastaxis = PyArray_NDIM(self) - 1;
