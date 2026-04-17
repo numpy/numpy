@@ -595,10 +595,8 @@ class TestConversion:
             assert_(np.datetime64('NaT') != None)  # noqa: E711
         assert_(len(w) == 0)
 
-        # For documentation purposes, this is why the datetime is dubious.
-        # At the time of deprecation this was no behaviour change, but
-        # it has to be considered when the deprecations are done.
-        assert_(np.equal(np.datetime64('NaT'), None))
+        # NaT is no longer converted to None by getitem, so this is False.
+        assert_(not np.equal(np.datetime64('NaT'), None))
 
 
 #class TestRepr:
