@@ -410,6 +410,7 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
 
     def test_raise_warning_for_default_constructor(self):
         self.assert_deprecated(lambda: np.timedelta64())
+        self.assert_deprecated(lambda: np.datetime64())
 
 
 class TestTriDeprecationWithNonInteger(_DeprecationTestCase):
