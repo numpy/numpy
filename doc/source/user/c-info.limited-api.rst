@@ -173,12 +173,12 @@ Not all NumPy C API features are available when ``Py_LIMITED_API`` is defined.
 
 **Types hidden under ``Py_LIMITED_API``:**
 
-- :c:type:`PyArrayScalar_VAL` and :c:type:`PyUnicodeScalarObject` are not
+- ``PyArrayScalar_VAL`` and ``PyUnicodeScalarObject`` are not
   accessible. Code that reads scalar values directly from the struct must be
   rewritten to use the NumPy Python API (e.g. :func:`numpy.asarray`) or the
   iterator API instead.
 
-- :c:type:`PyArray_DTypeMeta` is a ``typedef`` for ``PyTypeObject`` when
+- ``PyArray_DTypeMeta`` is a ``typedef`` for ``PyTypeObject`` when
   ``Py_LIMITED_API`` is set, because it contains ``PyHeapTypeObject`` which
   is not part of the stable ABI. Custom DType implementations cannot use
   the full ``PyArray_DTypeMeta`` struct layout in Limited API builds.
