@@ -373,6 +373,12 @@ class TestSFloat:
         np.testing.assert_array_equal(
             arr.view(np.float64), arr2.view(np.float64))
 
+    def test_conjugate(self):
+        # Also user dtype can just return self if conjugate should be no-op.
+        arr = np.array([1.0, 2.0, 3.0], dtype=SF(1.0))
+        assert arr.conjugate() is arr
+
+
 @pytest.mark.thread_unsafe(
     reason="_ScaledFloatTestDType setup is thread-unsafe (gh-29850)"
 )
