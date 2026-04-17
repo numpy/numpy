@@ -1428,8 +1428,13 @@ _lags_from_mode(int mode, npy_intp n1, npy_intp n2,
 /*NUMPY_API
  * correlate(a1,a2,mode)
  *
- * This function computes the usual correlation (correlate(a1, a2) !=
- * correlate(a2, a1), and conjugate the second argument for complex inputs
+ * Computes the cross-correlation of a1 with a2 using a fixed output mode
+ * ('valid', 'same', or 'full').  For complex inputs, the second array is
+ * conjugated before the computation (i.e. correlation semantics).
+ *
+ * This is the mode-based counterpart of PyArray_CorrelateLags with
+ * conjugate != 0.  For convolution (no conjugation), use
+ * PyArray_Correlate instead.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
@@ -1503,17 +1508,28 @@ clean_ap1:
 }
 
 /*NUMPY_API
- * correlate(a1,a2,minlag,maxlag,lagstep)
+ * correlate(a1,a2,minlag,maxlag,lagstep,conjugate)
  *
- * This function computes the cross-correlation of a1 with a2 at the
- * specified lag range.  The arrays and lag parameters may be provided in
- * any valid form; normalization is handled internally.
- * This function does not accept modes.
- * See _lags_from_mode() to convert modes to lags.
+ * Computes the sliding inner product of a1 with a2 at the specified lag
+ * range [minlag, maxlag) with step lagstep.  
+ * This function accepts vectors in either order.  This function
+ * does not accept modes; use _lags_from_mode() to convert a mode integer to
+ * (minlag, maxlag, lagstep).
+ *
+ * The conjugate flag selects the operation semantics:
+ *
+ *   conjugate != 0 -- correlation semantics (same as PyArray_Correlate2):
+ *                     out[k] = sum_n a1[n+k] * conj(a2[n])
+ *
+ *   conjugate == 0 -- no conjugation (same as PyArray_Correlate):
+ *                     out[k] = sum_n a1[n+k] * a2[n]
+ *                     For convolution the caller must pass a2 already
+ *                     reversed (a2[::-1]) before calling this function.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_CorrelateLags(PyObject *op1, PyObject *op2,
-                      npy_intp minlag, npy_intp maxlag, npy_intp lagstep)
+                      npy_intp minlag, npy_intp maxlag, npy_intp lagstep,
+                      int conjugate)
 {
     PyArrayObject *ap1, *ap2, *ret = NULL;
     PyArray_Descr *typec = NULL;
@@ -1546,7 +1562,7 @@ PyArray_CorrelateLags(PyObject *op1, PyObject *op2,
         goto clean_ap1;
     }
 
-    if (PyArray_ISCOMPLEX(ap2)) {
+    if (conjugate && PyArray_ISCOMPLEX(ap2)) {
         PyArrayObject *cap2;
         cap2 = (PyArrayObject *)PyArray_Conjugate(ap2, NULL);
         if (cap2 == NULL) {
@@ -1577,6 +1593,11 @@ clean_ap1:
 
 /*NUMPY_API
  * Numeric.correlate(a1,a2,mode)
+ *
+ * Legacy correlation function that does NOT conjugate the second array for
+ * complex inputs.  Equivalent to PyArray_CorrelateLags with conjugate == 0
+ * (convolution semantics) after the appropriate lag range is computed via
+ * _lags_from_mode().  Prefer PyArray_Correlate2 for standard correlation.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
@@ -3265,6 +3286,7 @@ array_correlatelags(PyObject *NPY_UNUSED(dummy),
 {
     PyObject *shape, *a0;
     npy_intp minlag = 0, maxlag = 0, lagstep = 0;
+    npy_bool conjugate = 1;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("correlate_lags", args, len_args, kwnames,
@@ -3272,14 +3294,15 @@ array_correlatelags(PyObject *NPY_UNUSED(dummy),
             {"v", NULL, &shape},
             {"minlag", &PyArray_IntpFromPyIntConverter, &minlag},
             {"maxlag", &PyArray_IntpFromPyIntConverter, &maxlag},
-            {"lagstep", &PyArray_IntpFromPyIntConverter, &lagstep}) < 0) {
+            {"lagstep", &PyArray_IntpFromPyIntConverter, &lagstep},
+            {"|conjugate", &PyArray_BoolConverter, &conjugate}) < 0) {
         return NULL;
     }
     if (minlag == 0 && maxlag == 0 && lagstep == 0) {
         /* if no lag parameters passed, use default: mode = 'valid' */
         return PyArray_Correlate2(a0, shape, 0);
-    }   
-    return PyArray_CorrelateLags(a0, shape, minlag, maxlag, lagstep);
+    }
+    return PyArray_CorrelateLags(a0, shape, minlag, maxlag, lagstep, conjugate);
 }
 
 static PyObject *

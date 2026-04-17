@@ -3990,6 +3990,22 @@ class TestConvolve:
                            match="is required for mode='lags'"):
             np.convolve([1, 2, 3], [4, 5, 6], mode='lags')
 
+    def test_complex_no_conjugation(self):
+        # Regression test: convolve must NOT conjugate either input.
+        # correlate(a, v) conjugates v; convolve(a, v) must not.
+        # For real inputs conjugation is a no-op, so only complex exposes
+        # the bug.  Expected values computed as scalar polynomial product:
+        #   (1+1j)*x^1 + 2*x^0  times  3*x^1 + (4+1j)*x^0
+        a = np.array([1 + 1j, 2])
+        v = np.array([3, 4 + 1j])
+        expected = np.array([3 + 3j, 9 + 5j, 8 + 2j])
+        assert_array_equal(np.convolve(a, v), expected)
+        # Same check via the lags path (maxlag=1 covers lags [-1, 0, 1],
+        # which is the full output for two length-2 inputs)
+        result, lags = np.convolve(a, v, maxlag=1, returns_lagvector=True)
+        assert_array_equal(result, expected)
+        assert_array_equal(lags, np.arange(-1, 2))
+
 
 class TestArgwhere:
 

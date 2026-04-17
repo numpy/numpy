@@ -1121,7 +1121,7 @@ def convolve(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None,
             raise ValueError(
                 "maxlag/lags cannot be used with mode "
                 "'valid', 'same', or 'full'")
-        result = multiarray.correlate2(a, v[::-1], mode)
+        result = multiarray.correlate(a, v[::-1], mode)
         if returns_lagvector:
             lags_tuple = _lags_from_mode(alen, vlen, mode)
     elif mode == 3:
@@ -1133,7 +1133,8 @@ def convolve(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None,
         else:
             lags_tuple = _lags_from_lags(lags)
         result = multiarray.correlatelags(
-            a, v[::-1], lags_tuple[0], lags_tuple[1], lags_tuple[2])
+            a, v[::-1], lags_tuple[0], lags_tuple[1], lags_tuple[2],
+            conjugate=False)
 
     if returns_lagvector:
         return result, arange(lags_tuple[0], lags_tuple[1], lags_tuple[2])
