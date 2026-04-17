@@ -179,7 +179,7 @@ typedef struct _tagPyUFuncObject {
          * but this was never implemented. (This is also why the above
          * selector is called the "legacy" selector.)
          */
-        #ifndef Py_LIMITED_API
+        #if !defined(Py_LIMITED_API) || Py_LIMITED_API >= 0x030C0000
             vectorcallfunc vectorcall;
         #else
             void *vectorcall;
