@@ -3,6 +3,7 @@ from collections.abc import Callable, Sequence
 from typing import (
     Any,
     Concatenate,
+    Never,
     Protocol,
     Self,
     SupportsIndex,
@@ -14,6 +15,7 @@ import numpy as np
 from numpy._typing import (
     ArrayLike,
     NDArray,
+    _AnyShape,
     _ArrayLike,
     _ArrayLikeBool_co,
     _ArrayLikeComplex_co,
@@ -22,6 +24,7 @@ from numpy._typing import (
     _ArrayLikeInt_co,
     _ArrayLikeObject_co,
     _ArrayLikeUInt_co,
+    _Shape,
     _ShapeLike,
 )
 
@@ -70,6 +73,8 @@ class _SupportsSplitOps(Protocol):
     def swapaxes(self, axis1: int, axis2: int, /) -> Self: ...
     def __getitem__(self, key: Any, /) -> Self: ...
 
+type _JustAnyShape = tuple[Never, Never, Never]  # workaround for microsoft/pyright#10232
+
 ###
 
 def take_along_axis[ScalarT: np.generic](
@@ -112,10 +117,53 @@ def apply_over_axes[ScalarT: np.generic](
 ) -> NDArray[ScalarT]: ...
 
 #
-@overload
-def expand_dims[ScalarT: np.generic](a: _ArrayLike[ScalarT], axis: _ShapeLike) -> NDArray[ScalarT]: ...
-@overload
-def expand_dims(a: ArrayLike, axis: _ShapeLike) -> NDArray[Incomplete]: ...
+@overload  # Nd -> Nd
+def expand_dims[ShapeT: _Shape, DTypeT: np.dtype](
+    a: np.ndarray[ShapeT, DTypeT],
+    axis: tuple[()],
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # ?d -> ?d  (workaround)
+def expand_dims[DTypeT: np.dtype](
+    a: np.ndarray[_JustAnyShape, DTypeT],
+    axis: int | tuple[int, ...],
+) -> np.ndarray[_AnyShape, DTypeT]: ...
+@overload  # 0d -> 1d
+def expand_dims[ScalarT: np.generic](
+    a: ScalarT | np.ndarray[tuple[()], np.dtype[ScalarT]],
+    axis: int | tuple[int],
+) -> np.ndarray[tuple[int], np.dtype[ScalarT]]: ...
+@overload  # 0d -> 2d
+def expand_dims[ScalarT: np.generic](
+    a: ScalarT | np.ndarray[tuple[()], np.dtype[ScalarT]],
+    axis: tuple[int, int],
+) -> np.ndarray[tuple[int, int], np.dtype[ScalarT]]: ...
+@overload  # 1d -> 2d
+def expand_dims[DTypeT: np.dtype](
+    a: np.ndarray[tuple[int], DTypeT],
+    axis: int | tuple[int],
+) -> np.ndarray[tuple[int, int], DTypeT]: ...
+@overload  # 1d -> 3d
+def expand_dims[DTypeT: np.dtype](
+    a: np.ndarray[tuple[int], DTypeT],
+    axis: tuple[int, int],
+) -> np.ndarray[tuple[int, int, int], DTypeT]: ...
+@overload  # 2d -> 3d
+def expand_dims[DTypeT: np.dtype](
+    a: np.ndarray[tuple[int, int], DTypeT],
+    axis: int | tuple[int],
+) -> np.ndarray[tuple[int, int, int], DTypeT]: ...
+@overload  # 2d -> 4d
+def expand_dims[DTypeT: np.dtype](
+    a: np.ndarray[tuple[int, int], DTypeT],
+    axis: tuple[int, int],
+) -> np.ndarray[tuple[int, int, int, int], DTypeT]: ...
+@overload  # Nd -> ?d
+def expand_dims[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    axis: int | tuple[int, ...],
+) -> NDArray[ScalarT]: ...
+@overload  # fallback
+def expand_dims(a: ArrayLike, axis: int | tuple[int, ...]) -> NDArray[Any]: ...
 
 # keep in sync with `numpy.ma.extras.column_stack`
 @overload
