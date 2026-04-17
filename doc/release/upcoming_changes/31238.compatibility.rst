@@ -16,7 +16,7 @@ have been corrected:
 As a result, ``Generator.binomial`` may now return different samples for the
 same seed.
 
-The legacy `numpy.random.RandomState.binomial` is not affected: its BTPE
-implementation preserves the original (incorrect) behavior, so existing streams
-remain reproducible.
-
+The legacy `numpy.random.RandomState.binomial` and
+`numpy.random.RandomState.multinomial` (which uses binomial internally)
+are not affected: they preserve the original (incorrect) behavior, so
+existing streams remain reproducible.
