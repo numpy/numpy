@@ -1340,7 +1340,7 @@ class TestLog2:
         # a good log2 implementation should provide this,
         # might fail on OS with bad libm
         v = np.log2(2.**i)
-        assert_equal(v, float(i), err_msg='at exponent %d' % i)
+        assert_equal(v, float(i), err_msg=f'at exponent {i}')
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_log2_special(self):
@@ -3653,6 +3653,19 @@ class TestSpecialMethods:
                               'axis': 'axis0',
                               'initial': 'init0',
                               'where': 'where0'})
+        # reduce, kwargs, out=None is removed
+        res = np.multiply.reduce(a, axis='axis0', dtype='dtype0', out=None,
+                                 keepdims='keep0', initial='init0',
+                                 where='where0')
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'reduce')
+        assert_equal(res[3], (a,))
+        assert_equal(res[4], {'dtype': 'dtype0',
+                              'keepdims': 'keep0',
+                              'axis': 'axis0',
+                              'initial': 'init0',
+                              'where': 'where0'})
 
         # reduce, output equal to None removed, but not other explicit ones,
         # even if they are at their default value.
@@ -5096,6 +5109,26 @@ def test_bad_legacy_gufunc_silent_errors(x1):
     # The signature of always_error_gufunc is '(i),()->()'.
     with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
         ncu_tests.always_error_gufunc(x1, 0.0)
+
+
+class TestReplaceLoopBySignature:
+    """Tests for PyUFunc_ReplaceLoopBySignature C API."""
+
+    @pytest.mark.thread_unsafe(reason="modifies ufunc within test")
+    def test_replace_loop(self):
+        # Call the ufunc first to populate any internal dispatch caches,
+        # then replace the float64 loop with one that outputs 42.0,
+        # verify the replacement is used, and restore the original.
+        a = np.array([1.0, 2.0, 3.0])
+        assert_array_equal(np.negative(a), [-1.0, -2.0, -3.0])
+
+        saved = ncu_tests.replace_loop(np.negative)
+        try:
+            assert_array_equal(np.negative(a), [42.0, 42.0, 42.0])
+        finally:
+            ncu_tests.restore_loop(np.negative, saved)
+
+        assert_array_equal(np.negative(a), [-1.0, -2.0, -3.0])
 
 
 class TestAddDocstring:

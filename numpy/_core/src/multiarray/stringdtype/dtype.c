@@ -101,6 +101,7 @@ new_stringdtype_instance(PyObject *na_object, int coerce)
         na_name.buf = PyMem_RawMalloc(size);
         if (na_name.buf == NULL) {
             Py_DECREF(na_pystr);
+            PyErr_NoMemory();
             goto fail;
         }
         memcpy((char *)na_name.buf, utf8_ptr, size);

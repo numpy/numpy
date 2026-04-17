@@ -8,6 +8,9 @@ f8: np.float64
 
 AR_b: npt.NDArray[np.bool]
 AR_i8: npt.NDArray[np.int64]
+AR_i8_0d: np.ndarray[tuple[()], np.dtype[np.int64]]
+AR_i8_1d: np.ndarray[tuple[int], np.dtype[np.int64]]
+AR_i8_2d: np.ndarray[tuple[int, int], np.dtype[np.int64]]
 AR_f8: npt.NDArray[np.float64]
 
 AR_LIKE_f8: list[float]
@@ -26,8 +29,23 @@ assert_type(np.take_along_axis(f8, AR_i8, axis=None), npt.NDArray[np.float64])
 
 assert_type(np.put_along_axis(AR_f8, AR_i8, "1.0", axis=1), None)
 
-assert_type(np.expand_dims(AR_i8, 2), npt.NDArray[np.int64])
-assert_type(np.expand_dims(AR_LIKE_f8, 2), npt.NDArray[Any])
+assert_type(np.expand_dims(AR_LIKE_f8, 0), np.ndarray)
+assert_type(np.expand_dims(AR_i8, ()), npt.NDArray[np.int64])
+assert_type(np.expand_dims(AR_i8, 0), npt.NDArray[np.int64])
+assert_type(np.expand_dims(AR_i8, (0,)), npt.NDArray[np.int64])
+assert_type(np.expand_dims(AR_i8, (0, 1)), npt.NDArray[np.int64])
+assert_type(np.expand_dims(AR_i8_0d, ()), np.ndarray[tuple[()], np.dtype[np.int64]])
+assert_type(np.expand_dims(AR_i8_0d, 0), np.ndarray[tuple[int], np.dtype[np.int64]])
+assert_type(np.expand_dims(AR_i8_0d, (0,)), np.ndarray[tuple[int], np.dtype[np.int64]])
+assert_type(np.expand_dims(AR_i8_0d, (0, 1)), np.ndarray[tuple[int, int], np.dtype[np.int64]])
+assert_type(np.expand_dims(AR_i8_1d, ()), np.ndarray[tuple[int], np.dtype[np.int64]])
+assert_type(np.expand_dims(AR_i8_1d, 0), np.ndarray[tuple[int, int], np.dtype[np.int64]])
+assert_type(np.expand_dims(AR_i8_1d, (0,)), np.ndarray[tuple[int, int], np.dtype[np.int64]])
+assert_type(np.expand_dims(AR_i8_1d, (0, 1)), np.ndarray[tuple[int, int, int], np.dtype[np.int64]])
+assert_type(np.expand_dims(AR_i8_2d, ()), np.ndarray[tuple[int, int], np.dtype[np.int64]])
+assert_type(np.expand_dims(AR_i8_2d, 0), np.ndarray[tuple[int, int, int], np.dtype[np.int64]])
+assert_type(np.expand_dims(AR_i8_2d, (0,)), np.ndarray[tuple[int, int, int], np.dtype[np.int64]])
+assert_type(np.expand_dims(AR_i8_2d, (0, 1)), np.ndarray[tuple[int, int, int, int], np.dtype[np.int64]])
 
 assert_type(np.column_stack([AR_i8]), npt.NDArray[np.int64])
 assert_type(np.column_stack([AR_LIKE_f8]), npt.NDArray[Any])

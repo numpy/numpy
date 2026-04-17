@@ -36,7 +36,7 @@ from numpy import (
     amax,
     amin,
     angle,
-    array as narray,  # noqa: F401
+    array as narray,
     bool_,
     expand_dims,
     finfo,  # noqa: F401
@@ -1989,7 +1989,7 @@ def masked_where(condition, a, copy=True):
     (cshape, ashape) = (cond.shape, a.shape)
     if cshape and cshape != ashape:
         raise IndexError("Inconsistent shape between the condition and the input"
-                         " (got %s and %s)" % (cshape, ashape))
+                         f" (got {cshape} and {ashape})")
     if hasattr(a, '_mask'):
         cond = mask_or(cond, a._mask)
         cls = type(a)
@@ -2590,7 +2590,7 @@ def flatten_structured_array(a):
 
         """
         for elm in iter(iterable):
-            if hasattr(elm, '__iter__'):
+            if hasattr(elm, "__iter__") and not isinstance(elm, (str, bytes)):
                 yield from flatten_sequence(elm)
             else:
                 yield elm
@@ -3495,7 +3495,7 @@ class MaskedArray(ndarray):
 
     @dtype.setter
     def dtype(self, dtype):
-        super(MaskedArray, type(self)).dtype.__set__(self, dtype)
+        self._set_dtype(dtype)
         if self._mask is not nomask:
             self._mask = self._mask.view(make_mask_descr(dtype), ndarray)
             # Try to reset the shape of the mask (if we don't have a void).
@@ -7941,7 +7941,7 @@ def where(condition, x=_NoValue, y=_NoValue):
     Returns
     -------
     out : MaskedArray
-        An masked array with `masked` elements where the condition is masked,
+        A masked array with `masked` elements where the condition is masked,
         elements from `x` where `condition` is True, and elements from `y`
         elsewhere.
 

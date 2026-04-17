@@ -2,9 +2,11 @@ import contextlib
 import ctypes
 import inspect
 import operator
+import os
 import pickle
 import sys
 import types
+import warnings
 from itertools import permutations
 from typing import Any
 
@@ -1115,7 +1117,10 @@ class TestDtypeAttributes:
         arr = np.broadcast_to(arr, 10)
         assert arr.strides == (0,)
         with pytest.raises(ValueError):
-            arr.dtype = "i1"
+            with warnings.catch_warnings():  # gh-28901
+                warnings.filterwarnings(action="ignore",
+                                        category=DeprecationWarning)
+                arr.dtype = "i1"
 
 class TestDTypeMakeCanonical:
     def check_canonical(self, dtype, canonical):
@@ -1198,7 +1203,7 @@ class TestDTypeMakeCanonical:
 
     def test_object_flag_not_inherited(self):
         # The following dtype still indicates "object", because its included
-        # in the unaccessible space (maybe this could change at some point):
+        # in the inaccessible space (maybe this could change at some point):
         arr = np.ones(3, "i,O,i")[["f0", "f2"]]
         assert arr.dtype.hasobject
         canonical_dt = np.result_type(arr.dtype)
@@ -1518,6 +1523,7 @@ class TestFromDTypeAttribute:
         with pytest.raises(ValueError):
             np.dtype(dt_instance)
 
+    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
     def test_void_subtype(self):
         class dt(np.void):
             # This code path is fully untested before, so it is unclear
@@ -1897,6 +1903,7 @@ class TestUserDType:
     @pytest.mark.thread_unsafe(
         reason="crashes when GIL disabled, dtype setup is thread-unsafe",
     )
+    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
     def test_custom_structured_dtype(self):
         class mytype:
             pass
@@ -1920,6 +1927,7 @@ class TestUserDType:
     @pytest.mark.thread_unsafe(
         reason="crashes when GIL disabled, dtype setup is thread-unsafe",
     )
+    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
     def test_custom_structured_dtype_errors(self):
         class mytype:
             pass
@@ -1967,9 +1975,13 @@ class TestClassGetItem:
 def test_result_type_integers_and_unitless_timedelta64():
     # Regression test for gh-20077.  The following call of `result_type`
     # would cause a seg. fault.
-    td = np.timedelta64(4)
-    result = np.result_type(0, td)
-    assert_dtype_equal(result, td.dtype)
+    with pytest.warns(
+        DeprecationWarning,
+        match="The 'generic' unit for NumPy timedelta is deprecated",
+    ):
+        td = np.timedelta64(4)
+        result = np.result_type(0, td)
+        assert_dtype_equal(result, td.dtype)
 
 
 def test_creating_dtype_with_dtype_class_errors():

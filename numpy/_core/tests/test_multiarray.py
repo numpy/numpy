@@ -13,11 +13,14 @@ import os
 import pathlib
 import pickle
 import re
+import subprocess
 import sys
 import tempfile
+import textwrap
+import tracemalloc
 import warnings
 import weakref
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 
 # Need to test an object that does not fully implement math interface
 from datetime import datetime, timedelta
@@ -299,17 +302,17 @@ class TestHash:
                           (np.int64, np.uint64, 64)]:
             for i in range(1, s):
                 assert_equal(hash(st(-2**i)), hash(-2**i),
-                             err_msg="%r: -2**%d" % (st, i))
+                             err_msg=f"{st!r}: -2**{i}")
                 assert_equal(hash(st(2**(i - 1))), hash(2**(i - 1)),
-                             err_msg="%r: 2**%d" % (st, i - 1))
+                             err_msg=f"{st!r}: 2**{i - 1}")
                 assert_equal(hash(st(2**i - 1)), hash(2**i - 1),
-                             err_msg="%r: 2**%d - 1" % (st, i))
+                             err_msg=f"{st!r}: 2**{i} - 1")
 
                 i = max(i - 1, 1)
                 assert_equal(hash(ut(2**(i - 1))), hash(2**(i - 1)),
-                             err_msg="%r: 2**%d" % (ut, i - 1))
+                             err_msg=f"{ut!r}: 2**{i - 1}")
                 assert_equal(hash(ut(2**i - 1)), hash(2**i - 1),
-                             err_msg="%r: 2**%d - 1" % (ut, i))
+                             err_msg=f"{ut!r}: 2**{i} - 1")
 
 
 class TestAttributes:
@@ -1040,6 +1043,20 @@ class TestCreation:
         with assert_raises(np._core._exceptions._ArrayMemoryError):
             np.empty(np.iinfo(np.intp).max, dtype=np.uint8)
 
+    @pytest.mark.thread_unsafe(reason="tracemalloc is not thread-safe")
+    def test_tracemalloc(self):
+        with ExitStack() as ctx:
+            if not tracemalloc.is_tracing():
+                tracemalloc.start()
+                ctx.callback(tracemalloc.stop)
+            pre_snapshot = tracemalloc.take_snapshot()
+            arr = np.zeros(1000000, dtype="uint8")
+            post_snapshot = tracemalloc.take_snapshot()
+            diff = post_snapshot.compare_to(pre_snapshot, "filename")
+        allocated_bytes = sum(d.size_diff for d in diff)
+        # Allow for some non-data allocations
+        assert_allclose(allocated_bytes, arr.nbytes, 1000)
+
     def test_zeros(self):
         types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
         for dt in types:
@@ -1383,7 +1400,7 @@ class TestCreation:
         with pytest.raises(ValueError, match="ndmax must be in the range"):
             np.array(data, ndmax=-1)
 
-    def test_ndmax_greather_than_NPY_MAXDIMS(self):
+    def test_ndmax_greater_than_NPY_MAXDIMS(self):
         data = [1, 2, 3]
         # current NPY_MAXDIMS is 64
         with pytest.raises(ValueError, match="ndmax must be in the range"):
@@ -1791,7 +1808,7 @@ class TestStructured:
     @pytest.mark.parametrize("align", [True, False])
     def test_structured_promotion_packs(self, dtype_dict, align):
         # Structured dtypes are packed when promoted (we consider the packed
-        # form to be "canonical"), so tere is no extra padding.
+        # form to be "canonical"), so there is no extra padding.
         dtype = np.dtype(dtype_dict, align=align)
         # Remove non "canonical" dtype options:
         dtype_dict.pop("itemsize", None)
@@ -2816,6 +2833,8 @@ class TestMethods:
         for dt in types:
             if dt == 'M':
                 dt = 'M8[D]'
+            if dt == 'm':
+                dt = 'm8[s]'
             if dt == '?':
                 a = np.arange(2, dtype=dt)
                 out = np.arange(2)
@@ -2916,6 +2935,8 @@ class TestMethods:
         for dt in types:
             if dt == 'M':
                 dt = 'M8[D]'
+            if dt == 'm':
+                dt = 'm8[s]'
             if dt == '?':
                 a = np.array([1, 0], dtype=dt)
                 # We want the sorter array to be of a type that is different
@@ -3205,9 +3226,9 @@ class TestMethods:
                     aae(p[:, i], np.array([i] * d1.shape[0], dtype=dt))
                     # array_less does not seem to work right
                     at((p[:, :i].T <= p[:, i]).all(),
-                       msg="%d: %r <= %r" % (i, p[:, i], p[:, :i].T))
+                       msg=f"{i}: {p[:, i]!r} <= {p[:, :i].T!r}")
                     at((p[:, i + 1:].T > p[:, i]).all(),
-                       msg="%d: %r < %r" % (i, p[:, i], p[:, i + 1:].T))
+                       msg=f"{i}: {p[:, i]!r} < {p[:, i + 1:].T!r}")
                     for row in range(p.shape[0]):
                         self.assert_partitioned(p[row], [i])
                         self.assert_partitioned(parg[row], [i])
@@ -3218,9 +3239,9 @@ class TestMethods:
                     aae(p[i, :], np.array([i] * d1.shape[0], dtype=dt))
                     # array_less does not seem to work right
                     at((p[:i, :] <= p[i, :]).all(),
-                       msg="%d: %r <= %r" % (i, p[i, :], p[:i, :]))
+                       msg=f"{i}: {p[i, :]!r} <= {p[:i, :]!r}")
                     at((p[i + 1:, :] > p[i, :]).all(),
-                       msg="%d: %r < %r" % (i, p[i, :], p[:, i + 1:]))
+                       msg=f"{i}: {p[i, :]!r} < {p[:, i + 1:]!r}")
                     for col in range(p.shape[1]):
                         self.assert_partitioned(p[:, col], [i])
                         self.assert_partitioned(parg[:, col], [i])
@@ -3240,9 +3261,9 @@ class TestMethods:
         prev = 0
         for k in np.sort(kth):
             assert_array_compare(operator.__le__, d[prev:k], d[k],
-                    err_msg='kth %d' % k)
+                    err_msg=f'kth {k}')
             assert_((d[k:] >= d[k]).all(),
-                    msg="kth %d, %r not greater equal %r" % (k, d[k:], d[k]))
+                    msg=f"kth {k}, {d[k:]!r} not greater equal {d[k]!r}")
             prev = k + 1
 
     def test_partition_iterative(self):
@@ -4094,8 +4115,8 @@ class TestBinop:
         def check(obj, binop_override_expected, ufunc_override_expected,
                   inplace_override_expected, check_scalar=True):
             for op, (ufunc, has_inplace, dtype) in ops.items():
-                err_msg = ('op: %s, ufunc: %s, has_inplace: %s, dtype: %s'
-                           % (op, ufunc, has_inplace, dtype))
+                err_msg = (f'op: {op}, ufunc: {ufunc}, '
+                           f'has_inplace: {has_inplace}, dtype: {dtype}')
                 check_objs = [np.arange(3, 7, dtype=dtype).reshape(2, 2)]
                 if check_scalar:
                     check_objs.append(check_objs[0][0])
@@ -4439,7 +4460,7 @@ class TestTemporaryElide:
         for dt in (np.complex64, np.complex128, np.clongdouble):
             c = np.ones(100000, dtype=dt)
             r = abs(c * 2.0)
-            assert_equal(r.dtype, np.dtype('f%d' % (c.itemsize // 2)))
+            assert_equal(r.dtype, np.dtype(f'f{c.itemsize // 2}'))
 
     def test_elide_broadcast(self):
         # test no elision on broadcast to higher dimension
@@ -4708,9 +4729,6 @@ class TestPickling:
 
     # version 0 pickles, using protocol=2 to pickle
     # version 0 doesn't have a version field
-    @pytest.mark.filterwarnings(
-        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
-    )
     def test_version0_int8(self):
         s = (
             b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\n"
@@ -4722,9 +4740,6 @@ class TestPickling:
         p = self._loads(s)
         assert_equal(a, p)
 
-    @pytest.mark.filterwarnings(
-        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
-    )
     def test_version0_float32(self):
         s = (
             b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\n"
@@ -4737,9 +4752,6 @@ class TestPickling:
         p = self._loads(s)
         assert_equal(a, p)
 
-    @pytest.mark.filterwarnings(
-        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
-    )
     def test_version0_object(self):
         s = (
             b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\n"
@@ -4753,9 +4765,6 @@ class TestPickling:
         assert_equal(a, p)
 
     # version 1 pickles, using protocol=2 to pickle
-    @pytest.mark.filterwarnings(
-        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
-    )
     def test_version1_int8(self):
         s = (
             b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\n"
@@ -4767,9 +4776,6 @@ class TestPickling:
         p = self._loads(s)
         assert_equal(a, p)
 
-    @pytest.mark.filterwarnings(
-        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
-    )
     def test_version1_float32(self):
         s = (
             b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\n"
@@ -4782,9 +4788,6 @@ class TestPickling:
         p = self._loads(s)
         assert_equal(a, p)
 
-    @pytest.mark.filterwarnings(
-        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
-    )
     def test_version1_object(self):
         s = (
             b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\n"
@@ -4797,9 +4800,6 @@ class TestPickling:
         p = self._loads(s)
         assert_equal(a, p)
 
-    @pytest.mark.filterwarnings(
-        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
-    )
     def test_subarray_int_shape(self):
         s = (
             b"cnumpy.core.multiarray\n_reconstruct\np0\n"
@@ -5923,7 +5923,7 @@ class TestIO:
                 f.write(b'\0')
 
             for mode in ['rb', 'r+b']:
-                err_msg = "%d %s" % (size, mode)
+                err_msg = f"{size} {mode}"
 
                 with open(tmp_filename, mode) as f:
                     f.read(2)
@@ -5939,7 +5939,7 @@ class TestIO:
         tmp_filename = normalize_filename(tmp_path, param_filename)
 
         for size in sizes:
-            err_msg = "%d" % (size,)
+            err_msg = str(size)
 
             with open(tmp_filename, 'wb') as f:
                 f.seek(size - 1)
@@ -6361,6 +6361,26 @@ class TestResize:
         x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         y = x
         assert_raises(ValueError, x.resize, (5, 1))
+
+    @pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
+    def test_check_reference_module_scope(self):
+        code = textwrap.dedent("""
+            import numpy as np
+
+            # See gh-30991
+            a = np.array([[0, 1], [2, 3]], order='C')
+            a.resize((2, 1))
+        """)
+        try:
+            subprocess.check_output([sys.executable, "-c", code],
+                                    stderr=subprocess.STDOUT, text=True)
+        except subprocess.CalledProcessError as e:
+            assert sys.version_info >= (3, 14)
+            assert "ValueError" in e.stdout
+            assert "It is possible that this is a false positive." in e.stdout
+        else:
+            if sys.version_info >= (3, 14):
+                raise AssertionError("Unexpected success of resize refcheck")
 
     def test_check_reference_2(self):
         # see gh-30265
@@ -7258,6 +7278,13 @@ class TestDot:
         assert_equal(np.dot(a, b), res)
         assert_equal(np.dot(b, a), res)
         assert_equal(np.dot(b, b), res)
+
+    def test_dot_has_native_byteorder(self):
+        # gh-30931
+        a = np.array([1, 2, 3], ">f8")
+        dot = a.dot([[], [], []])
+
+        assert_equal(dot.dtype, np.dtype("=f8"))
 
     def test_accelerate_framework_sgemv_fix(self):
 
@@ -8287,22 +8314,22 @@ class TestWarnings:
 
 class TestMinScalarType:
 
-    def test_usigned_shortshort(self):
+    def test_unsigned_shortshort(self):
         dt = np.min_scalar_type(2**8 - 1)
         wanted = np.dtype('uint8')
         assert_equal(wanted, dt)
 
-    def test_usigned_short(self):
+    def test_unsigned_short(self):
         dt = np.min_scalar_type(2**16 - 1)
         wanted = np.dtype('uint16')
         assert_equal(wanted, dt)
 
-    def test_usigned_int(self):
+    def test_unsigned_int(self):
         dt = np.min_scalar_type(2**32 - 1)
         wanted = np.dtype('uint32')
         assert_equal(wanted, dt)
 
-    def test_usigned_longlong(self):
+    def test_unsigned_longlong(self):
         dt = np.min_scalar_type(2**63 - 1)
         wanted = np.dtype('uint64')
         assert_equal(wanted, dt)
@@ -8329,7 +8356,7 @@ class TestPEP3118Dtype:
             if j == 0:
                 s = 'bi'
             else:
-                s = 'b%dxi' % j
+                s = f'b{j}xi'
             self._check('@' + s, {'f0': ('i1', 0),
                                 'f1': ('i', align * (1 + j // align))})
             self._check('=' + s, {'f0': ('i1', 0),
@@ -9617,6 +9644,13 @@ class TestWhere:
         b = np.ones((5, 5))
         assert_raises(ValueError, np.where, c, a, a)
         assert_raises(ValueError, np.where, c[0], a, b)
+
+    def test_scalar_overflow(self):
+        c = [True]
+        a = np.array([1], dtype=np.uint8)
+        b = 1000
+        assert_raises(OverflowError, np.where, c, a, b)
+        assert_raises(OverflowError, np.where, c, b, a)
 
     def test_string(self):
         # gh-4778 check strings are properly filled with nulls

@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import Any, SupportsIndex, overload
+from typing import Any, overload
 
 import numpy as np
 from numpy._typing import ArrayLike, NDArray, _AnyShape, _ArrayLike, _ShapeLike
@@ -22,6 +22,8 @@ def as_strided[ScalarT: np.generic](
     strides: Iterable[int] | None = None,
     subok: bool = False,
     writeable: bool = True,
+    *,
+    check_bounds: bool | None = None
 ) -> NDArray[ScalarT]: ...
 @overload
 def as_strided(
@@ -30,13 +32,15 @@ def as_strided(
     strides: Iterable[int] | None = None,
     subok: bool = False,
     writeable: bool = True,
+    *,
+    check_bounds: bool | None = None
 ) -> NDArray[Any]: ...
 
 @overload
 def sliding_window_view[ScalarT: np.generic](
     x: _ArrayLike[ScalarT],
     window_shape: int | Iterable[int],
-    axis: SupportsIndex | None = None,
+    axis: int | tuple[int, ...] | None = None,
     *,
     subok: bool = False,
     writeable: bool = False,
@@ -45,7 +49,7 @@ def sliding_window_view[ScalarT: np.generic](
 def sliding_window_view(
     x: ArrayLike,
     window_shape: int | Iterable[int],
-    axis: SupportsIndex | None = None,
+    axis: int | tuple[int, ...] | None = None,
     *,
     subok: bool = False,
     writeable: bool = False,

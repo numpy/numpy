@@ -4,7 +4,7 @@ The signatures of the ufuncs are too varied to reasonably type
 with a single class. So instead, `ufunc` has been expanded into
 four private subclasses, one for each combination of
 `~ufunc.nin` and `~ufunc.nout`.
-"""  # noqa: PYI021
+"""
 
 from _typeshed import Incomplete
 from types import EllipsisType

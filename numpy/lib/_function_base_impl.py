@@ -93,7 +93,7 @@ _QuantileMethods = {
     # --- HYNDMAN and FAN METHODS
     # Discrete methods
     'inverted_cdf': {
-        'get_virtual_index': lambda n, quantiles: _inverted_cdf(n, quantiles),  # noqa: PLW0108
+        'get_virtual_index': lambda n, quantiles: _inverted_cdf(n, quantiles),
         'fix_gamma': None,  # should never be called
     },
     'averaged_inverted_cdf': {
@@ -105,7 +105,7 @@ _QuantileMethods = {
             where=gamma == 0),
     },
     'closest_observation': {
-        'get_virtual_index': lambda n, quantiles: _closest_observation(n, quantiles),  # noqa: PLW0108
+        'get_virtual_index': lambda n, quantiles: _closest_observation(n, quantiles),
         'fix_gamma': None,  # should never be called
     },
     # Continuous methods
@@ -1956,7 +1956,7 @@ def trim_zeros(filt, trim='fb', axis=None):
         returned that still contains all values which are not zero.
         If an axis is specified, `filt` will be sliced in that dimension only
         on the sides specified by `trim`. The remaining area will be the
-        smallest that still contains all values wich are not zero.
+        smallest that still contains all values which are not zero.
 
         .. versionadded:: 2.2.0
 
@@ -2114,11 +2114,11 @@ def place(arr, mask, vals):
     arr : ndarray
         Array to put data into.
     mask : array_like
-        Boolean mask array. Must have the same size as `a`.
+        Boolean mask array. Must have the same size as `arr`.
     vals : 1-D sequence
-        Values to put into `a`. Only the first N elements are used, where
+        Values to put into `arr`. Only the first N elements are used, where
         N is the number of True values in `mask`. If `vals` is smaller
-        than N, it will be repeated, and if elements of `a` are to be masked,
+        than N, it will be repeated, and if elements of `arr` are to be masked,
         this sequence must be non-empty.
 
     See Also
@@ -5070,7 +5070,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
         ``(1, ..., 1, Ni, 1, ..., 1)``.  These sparse coordinate grids are
         intended to be used with :ref:`basics.broadcasting`.  When all
         coordinates are used in an expression, broadcasting still leads to a
-        fully-dimensonal result array.
+        fully-dimensional result array.
 
         Default is False.
 

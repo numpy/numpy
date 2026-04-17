@@ -475,7 +475,7 @@ def test_copyto_cast_safety():
         np.copyto(np.arange(3, dtype=np.float32), 2e300, casting="safe")
 
 
-def test_copyto_permut():
+def test_copyto_permute():
     # test explicit overflow case
     pad = 500
     l = [True] * pad + [True, True, True, True]
