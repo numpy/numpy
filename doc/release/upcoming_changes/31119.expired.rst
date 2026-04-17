@@ -1,0 +1,1 @@
+* ``__array_wrap__`` implementations must now accept ``context`` and ``return_scalar`` positional arguments; support for legacy signatures has been removed (deprecated since 2.0).
