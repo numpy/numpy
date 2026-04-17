@@ -619,7 +619,26 @@ int64_t legacy_random_geometric(bitgen_t *bitgen_state, double p) {
 void legacy_random_multinomial(bitgen_t *bitgen_state, RAND_INT_TYPE n,
                                RAND_INT_TYPE *mnix, double *pix, npy_intp d,
                                binomial_t *binomial) {
-  random_multinomial(bitgen_state, n, mnix, pix, d, binomial);
+  /*
+   * Mirrors random_multinomial but dispatches to legacy_random_binomial,
+   * since bug fixes to random_binomial would otherwise change the
+   * RandomState stream.
+   */
+  double remaining_p = 1.0;
+  npy_intp j;
+  RAND_INT_TYPE dn = n;
+  for (j = 0; j < (d - 1); j++) {
+    mnix[j] = (RAND_INT_TYPE)legacy_random_binomial(
+        bitgen_state, pix[j] / remaining_p, dn, binomial);
+    dn = dn - mnix[j];
+    if (dn <= 0) {
+      break;
+    }
+    remaining_p -= pix[j];
+  }
+  if (dn > 0) {
+      mnix[d - 1] = dn;
+  }
 }
 
 double legacy_vonmises(bitgen_t *bitgen_state, double mu, double kappa) {
