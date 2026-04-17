@@ -13,10 +13,9 @@ have been corrected:
 * The leading coefficient had a digit-swap typo (``13680`` instead of ``13860``)
   that was introduced in the initial implementation.
 
-As a result, ``Generator.binomial`` may now return different samples for the
-same seed.
+As a result, ``Generator.binomial`` and ``Generator.multinomial`` (which uses
+binomial internally) may now return different samples for the same seed.
 
 The legacy `numpy.random.RandomState.binomial` and
-`numpy.random.RandomState.multinomial` (which uses binomial internally)
-are not affected: they preserve the original (incorrect) behavior, so
-existing streams remain reproducible.
+`numpy.random.RandomState.multinomial` are not affected: they preserve the
+original (incorrect) behavior, so existing streams remain reproducible.
