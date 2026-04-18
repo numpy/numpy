@@ -222,7 +222,7 @@ class TestDateTime:
         # NaT < NaT should be False internally for
         # sort stability
         expected = np.arange(size)
-        arr = np.tile(np.datetime64('NaT'), size)
+        arr = np.tile(np.datetime64('NaT', 'D'), size)
         assert_equal(np.argsort(arr, kind='mergesort'), expected)
 
     @pytest.mark.parametrize("size", [
@@ -274,18 +274,19 @@ class TestDateTime:
             # Default construction means NaT
             assert_equal(np.datetime64(), np.datetime64('NaT'))
 
-        # Some basic strings and repr
-        assert_equal(str(np.datetime64('NaT')), 'NaT')
-        assert_equal(repr(np.datetime64('NaT')),
-                     "np.datetime64('NaT','generic')")
+            # Some basic strings and repr
+            assert_equal(str(np.datetime64('NaT')), 'NaT')
+            assert_equal(repr(np.datetime64('NaT')),
+                        "np.datetime64('NaT','generic')")
+
+            # None gets constructed as NaT
+            assert_equal(np.datetime64(None), np.datetime64('NaT'))
+
         assert_equal(str(np.datetime64('2011-02')), '2011-02')
         assert_equal(repr(np.datetime64('2011-02')),
                      "np.datetime64('2011-02')")
-        assert_equal(repr(np.datetime64('NaT').astype(np.dtype("datetime64[ns]"))),
+        assert_equal(repr(np.datetime64('NaT', 'D').astype(np.dtype("datetime64[ns]"))),
                      "np.datetime64('NaT','ns')")
-
-        # None gets constructed as NaT
-        assert_equal(np.datetime64(None), np.datetime64('NaT'))
 
         with pytest.warns(
             DeprecationWarning,
@@ -294,7 +295,7 @@ class TestDateTime:
             # Default construction of NaT is in generic units
             assert_equal(np.datetime64().dtype, np.dtype('M8'))
 
-        assert_equal(np.datetime64('NaT').dtype, np.dtype('M8'))
+            assert_equal(np.datetime64('NaT').dtype, np.dtype('M8'))
 
         # Construction from integers requires a specified unit
         assert_raises(ValueError, np.datetime64, 17)

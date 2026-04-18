@@ -278,7 +278,7 @@ class TestArray2String:
         try:
             # for issue #5692
             A = np.zeros(shape=10, dtype=[("A", "M8[s]")])
-            A[5:].fill(np.datetime64('NaT'))
+            A[5:].fill(np.datetime64('NaT', 'D'))
             date_string = '1970-01-01T00:00:00'
             assert_equal(
                 np.array2string(A),
@@ -303,7 +303,7 @@ class TestArray2String:
 
         # and again, with timedeltas
         A = np.full(10, 123456, dtype=[("A", "m8[s]")])
-        A[5:].fill(np.datetime64('NaT'))
+        A[5:].fill(np.datetime64('NaT', 'D'))
         assert_equal(
             np.array2string(A),
             textwrap.dedent("""\

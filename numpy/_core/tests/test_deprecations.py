@@ -412,6 +412,10 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.timedelta64())
         self.assert_deprecated(lambda: np.datetime64())
 
+    def test_raise_warning_for_NAT_construction(self):
+        self.assert_deprecated(lambda: np.datetime64('NaT'))
+        self.assert_deprecated(lambda: np.datetime64(None))
+
 
 class TestTriDeprecationWithNonInteger(_DeprecationTestCase):
     # Deprecation in NumPy 2.5, 2026-03

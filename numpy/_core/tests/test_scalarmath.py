@@ -587,18 +587,18 @@ class TestConversion:
             assert_(not np.float32(1) == None)  # noqa: E711
             assert_(not np.str_('test') == None)  # noqa: E711
             # This is dubious (see below):
-            assert_(not np.datetime64('NaT') == None)  # noqa: E711
+            assert_(not np.datetime64('NaT', 'D') == None)  # noqa: E711
 
             assert_(np.float32(1) != None)  # noqa: E711
             assert_(np.str_('test') != None)  # noqa: E711
             # This is dubious (see below):
-            assert_(np.datetime64('NaT') != None)  # noqa: E711
+            assert_(np.datetime64('NaT', 'D') != None)  # noqa: E711
         assert_(len(w) == 0)
 
         # For documentation purposes, this is why the datetime is dubious.
         # At the time of deprecation this was no behaviour change, but
         # it has to be considered when the deprecations are done.
-        assert_(np.equal(np.datetime64('NaT'), None))
+        assert_(np.equal(np.datetime64('NaT', 'D'), None))
 
 
 #class TestRepr:
