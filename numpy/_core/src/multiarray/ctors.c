@@ -135,7 +135,7 @@ swab_separator(const char *sep)
     int skip_space = 0;
     char *s, *start;
 
-    s = start = malloc(strlen(sep)+3);
+    s = start = PyMem_RawMalloc(strlen(sep)+3);
     if (s == NULL) {
         PyErr_NoMemory();
         return NULL;
@@ -3664,7 +3664,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
     }
     NPY_END_ALLOW_THREADS;
 
-    free(clean_sep);
+    PyMem_RawFree(clean_sep);
 
     if (stop_reading_flag == -2) {
         if (PyErr_Occurred()) {

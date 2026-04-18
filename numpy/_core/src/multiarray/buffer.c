@@ -934,7 +934,7 @@ _descriptor_from_pep3118_format(char const *s)
     }
 
     /* Strip whitespace, except from field names */
-    buf = malloc(strlen(s) + 1);
+    buf = PyMem_RawMalloc(strlen(s) + 1);
     if (buf == NULL) {
         PyErr_NoMemory();
         return NULL;
@@ -956,7 +956,7 @@ _descriptor_from_pep3118_format(char const *s)
 
     str = PyUnicode_FromStringAndSize(buf, strlen(buf));
     if (str == NULL) {
-        free(buf);
+        PyMem_RawFree(buf);
         return NULL;
     }
 
@@ -964,7 +964,7 @@ _descriptor_from_pep3118_format(char const *s)
     _numpy_internal = PyImport_ImportModule("numpy._core._internal");
     if (_numpy_internal == NULL) {
         Py_DECREF(str);
-        free(buf);
+        PyMem_RawFree(buf);
         return NULL;
     }
     descr = PyObject_CallMethod(
@@ -977,7 +977,7 @@ _descriptor_from_pep3118_format(char const *s)
         PyErr_Format(PyExc_ValueError,
                      "'%s' is not a valid PEP 3118 buffer format string", buf);
         npy_PyErr_ChainExceptionsCause(exc, val, tb);
-        free(buf);
+        PyMem_RawFree(buf);
         return NULL;
     }
     if (!PyArray_DescrCheck(descr)) {
@@ -985,10 +985,10 @@ _descriptor_from_pep3118_format(char const *s)
                      "internal error: numpy._core._internal._dtype_from_pep3118 "
                      "did not return a valid dtype, got %s", buf);
         Py_DECREF(descr);
-        free(buf);
+        PyMem_RawFree(buf);
         return NULL;
     }
-    free(buf);
+    PyMem_RawFree(buf);
     return (PyArray_Descr*)descr;
 }
 
