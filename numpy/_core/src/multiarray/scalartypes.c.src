@@ -3683,6 +3683,7 @@ static PyObject *
         ret->obval = NPY_DATETIME_NAT;
 #else
         ret->obval = 0;
+#endif
 
         if (ret->obmeta.base == NPY_FR_GENERIC) {
             if (DEPRECATE(
@@ -3693,7 +3694,7 @@ static PyObject *
                 return NULL;
             }
         }
-#endif
+
     }
     else if (convert_pyobject_to_@name@(&ret->obmeta, obj,
                             NPY_SAME_KIND_CASTING, &ret->obval) < 0) {

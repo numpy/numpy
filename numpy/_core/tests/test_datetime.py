@@ -267,8 +267,12 @@ class TestDateTime:
         assert_equal(np.datetime64('1950-03-12T13', 's'),
                      np.datetime64('1950-03-12T13', 'm'))
 
-        # Default construction means NaT
-        assert_equal(np.datetime64(), np.datetime64('NaT'))
+        with pytest.warns(
+            DeprecationWarning,
+            match=self.generic_unit_deprecation_message
+        ):
+            # Default construction means NaT
+            assert_equal(np.datetime64(), np.datetime64('NaT'))
 
         # Some basic strings and repr
         assert_equal(str(np.datetime64('NaT')), 'NaT')
@@ -283,8 +287,13 @@ class TestDateTime:
         # None gets constructed as NaT
         assert_equal(np.datetime64(None), np.datetime64('NaT'))
 
-        # Default construction of NaT is in generic units
-        assert_equal(np.datetime64().dtype, np.dtype('M8'))
+        with pytest.warns(
+            DeprecationWarning,
+            match=self.generic_unit_deprecation_message
+        ):
+            # Default construction of NaT is in generic units
+            assert_equal(np.datetime64().dtype, np.dtype('M8'))
+
         assert_equal(np.datetime64('NaT').dtype, np.dtype('M8'))
 
         # Construction from integers requires a specified unit
@@ -2366,12 +2375,12 @@ class TestDateTime:
                      np.datetime64('2007-02-25'))
 
         # NaT values when roll is not raise
-        assert_equal(np.busday_offset(np.datetime64('NaT'), 1, roll='nat'),
-                     np.datetime64('NaT'))
-        assert_equal(np.busday_offset(np.datetime64('NaT'), 1, roll='following'),
-                     np.datetime64('NaT'))
-        assert_equal(np.busday_offset(np.datetime64('NaT'), 1, roll='preceding'),
-                     np.datetime64('NaT'))
+        assert_equal(np.busday_offset(np.datetime64('NaT', 'D'), 1, roll='nat'),
+                     np.datetime64('NaT', 'D'))
+        assert_equal(np.busday_offset(np.datetime64('NaT', 'D'), 1, roll='following'),
+                     np.datetime64('NaT', 'D'))
+        assert_equal(np.busday_offset(np.datetime64('NaT', 'D'), 1, roll='preceding'),
+                     np.datetime64('NaT', 'D'))
 
     def test_datetime_busdaycalendar(self):
         # Check that it removes NaT, duplicates, and weekends
@@ -2795,11 +2804,15 @@ class TestDateTime:
         assert_array_equal(a.astype('U1'), ['1', '-', '1'])
 
     def test_datetime_hash_nat(self):
-        nat1 = np.datetime64()
-        nat2 = np.datetime64()
-        assert nat1 is not nat2
-        assert nat1 != nat2
-        assert hash(nat1) != hash(nat2)
+        with pytest.warns(
+            DeprecationWarning,
+            match=self.generic_unit_deprecation_message
+        ):
+            nat1 = np.datetime64()
+            nat2 = np.datetime64()
+            assert nat1 is not nat2
+            assert nat1 != nat2
+            assert hash(nat1) != hash(nat2)
 
     @pytest.mark.parametrize('unit', ('Y', 'M', 'W', 'D', 'h', 'm', 's', 'ms', 'us'))
     def test_datetime_hash_weeks(self, unit):

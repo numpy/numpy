@@ -2318,6 +2318,8 @@ class TestRegression:
         for t in all_types:
             if t is np.timedelta64:
                 val = t(0, 's')
+            elif t is np.datetime64:
+                val = t('NAT', 'D')
             else:
                 val = t()
 
