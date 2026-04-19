@@ -2580,10 +2580,14 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
     context.caller = (PyObject *)ufunc;
     context.method = ufuncimpl;
 
-    PyArrayObject *result = PyUFunc_ReduceWrapper(&context,
+    PyArrayObject *result = NULL;
+
+    result = PyUFunc_ReduceWrapper(&context,
             arr, out, wheremask, axis_flags, keepdims,
             initial, reduce_loop, buffersize, ufunc_name, errormask);
+    /* Fall through to shared cleanup of `descrs`. */
 
+  cleanup:
     for (int i = 0; i < 3; i++) {
         Py_DECREF(descrs[i]);
     }
