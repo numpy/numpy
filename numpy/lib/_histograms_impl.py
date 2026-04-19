@@ -980,11 +980,11 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
 
     try:
         # Sample is an ND-array.
-        N, D = sample.shape
+        _, D = sample.shape
     except (AttributeError, ValueError):
         # Sample is a sequence of 1D arrays.
         sample = np.atleast_2d(sample).T
-        N, D = sample.shape
+        _, D = sample.shape
 
     nbin = np.empty(D, np.intp)
     edges = D * [None]
@@ -994,12 +994,14 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
 
     try:
         M = len(bins)
+        if isinstance(bins, str):
+            raise TypeError
         if M != D:
             raise ValueError(
                 'The dimension of bins must be equal to the dimension of the '
                 'sample x.')
     except TypeError:
-        # bins is an integer
+        # bins is an integer or a string
         bins = D * [bins]
 
     # normalize the range argument
@@ -1010,29 +1012,7 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
 
     # Create edge arrays
     for i in _range(D):
-        if np.ndim(bins[i]) == 0:
-            if bins[i] < 1:
-                raise ValueError(
-                    f'`bins[{i}]` must be positive, when an integer')
-            smin, smax = _get_outer_edges(sample[:, i], range[i])
-            try:
-                n = operator.index(bins[i])
-
-            except TypeError as e:
-                raise TypeError(
-                    f"`bins[{i}]` must be an integer, when a scalar"
-                ) from e
-
-            edges[i] = np.linspace(smin, smax, n + 1)
-        elif np.ndim(bins[i]) == 1:
-            edges[i] = np.asarray(bins[i])
-            if np.any(edges[i][:-1] > edges[i][1:]):
-                raise ValueError(
-                    f'`bins[{i}]` must be monotonically increasing, when an array')
-        else:
-            raise ValueError(
-                f'`bins[{i}]` must be a scalar or 1d array')
-
+        edges[i], _ = _get_bin_edges(sample[:, i], bins[i], range[i], weights)
         nbin[i] = len(edges[i]) + 1  # includes an outlier on each end
         dedges[i] = np.diff(edges[i])
 

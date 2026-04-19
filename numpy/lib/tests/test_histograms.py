@@ -733,7 +733,7 @@ class TestHistogramdd:
         # when mixing those.
         x = np.arange(8).reshape(2, 4)
         assert_raises(ValueError, np.histogramdd, x, bins=[-1, 2, 4, 5])
-        assert_raises(ValueError, np.histogramdd, x, bins=[1, 0.99, 1, 1])
+        assert_raises(TypeError, np.histogramdd, x, bins=[1, 0.99, 1, 1])
         assert_raises(
             ValueError, np.histogramdd, x, bins=[1, 1, 1, [1, 2, 3, -3]])
         assert_(np.histogramdd(x, bins=[1, 1, 1, [1, 2, 3, 4]]))
