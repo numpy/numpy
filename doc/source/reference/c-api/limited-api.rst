@@ -1,8 +1,8 @@
 .. _c-api.limited-api:
 
-==================================================
+=================================================
 Using the NumPy C-API with the Python limited API
-==================================================
+=================================================
 
 .. versionadded:: 2.0
 
@@ -32,7 +32,7 @@ the NumPy C-API is stable across NumPy releases, so extensions must still be
 built and tested against NumPy versions they intend to support.
 
 *Opaque* means the C compiler can see that the type exists but cannot see its
-internal layout — you cannot read or write its fields directly, only call
+internal layout; you cannot read or write its fields directly, only call
 functions that accept a pointer to it.
 
 Key Constraints
@@ -45,7 +45,7 @@ in the full C-API become "opaque" in the limited API.
 For NumPy extension authors, this means:
 
 *   You cannot directly access fields of :c:type:`PyArrayObject`,
-    :c:type:`PyDescrObject`, or other NumPy structs.
+    ``PyDescrObject``, or other NumPy structs.
 *   You must use the provided accessor functions (e.g., :c:func:`PyArray_DATA`,
     :c:func:`PyArray_NDIM`, :c:func:`PyArray_STRIDES`) instead of direct struct
     access.
