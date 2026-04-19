@@ -466,6 +466,8 @@ class TestCasting:
                     match="The 'generic' unit for NumPy timedelta is deprecated",
                 ):
                     expected_out[0] = "NaT"
+            else:
+                expected_out[0] = "NaT"
         else:
             expected_out = np.empty_like(values)
             expected_out[...] = denom
