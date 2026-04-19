@@ -82,8 +82,17 @@ PyArray_Type and PyArrayObject
    of :c:type:`NPY_AO` (deprecated) which is defined to be equivalent to
    :c:type:`PyArrayObject`. Direct access to the struct fields are
    deprecated. Use the ``PyArray_*(arr)`` form instead.
-   As of NumPy 1.20, the size of this struct is not considered part of
-   the NumPy ABI (see note at the end of the member list).
+   .. note::
+
+      When building against the Python limited API (by defining
+      ``Py_LIMITED_API``), the :c:type:`PyArrayObject` structure becomes
+      opaque. Direct access to its members (e.g., ``arr->data``, ``arr->nd``)
+      is not permitted and will result in compilation errors. You **must**
+      use the provided accessor functions and macros (e.g.,
+      :c:func:`PyArray_DATA`, :c:func:`PyArray_NDIM`) instead.
+
+      For more information on using the NumPy C-API with the limited API,
+      see :ref:`c-api.limited-api`.
 
    .. code-block:: c
 
@@ -971,6 +980,13 @@ PyUFunc_Type and PyUFuncObject
    - Never declare a non-pointer instance of the struct
    - Never perform pointer arithmetic
    - Never use ``sizeof(PyUFuncObject)``
+
+   .. note::
+
+      When building against the Python limited API (by defining
+      ``Py_LIMITED_API``), the :c:type:`PyUFuncObject` structure becomes
+      opaque. Direct access to its members is not permitted. Use the
+      provided accessor functions instead.
 
    It has the following structure:
 

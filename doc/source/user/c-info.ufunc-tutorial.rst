@@ -222,6 +222,13 @@ With either of the above, one can build and install the ``spam`` package with,
 
    pip install .
 
+.. note::
+
+   To build this extension for the Python limited API (stable ABI), you can
+   modify these build files to specify ``Py_LIMITED_API``. For a detailed
+   guide and examples using Meson and setuptools, see
+   :ref:`c-api.limited-api`.
+
 Once the ``spam`` module is imported into python, you can call logit
 via ``spam.logit``. Note that the function used above cannot be applied
 as-is to numpy arrays. To do so we must call :py:func:`numpy.vectorize`
