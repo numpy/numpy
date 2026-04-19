@@ -2924,3 +2924,341 @@ atimsort_unicode(void *v, npy_intp *tosort, npy_intp num, void *varr)
 {
     return string_atimsort_<npy::unicode_tag>(v, tosort, num, varr);
 }
+
+/***************************************
+ * C > C++ dispatch - ArrayMethod loops
+ ***************************************/
+
+/* ---------- timsort ---------- */
+
+NPY_NO_EXPORT int
+timsort_bool_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                  char *const data[], npy_intp const dimensions[],
+                  npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return timsort_<npy::bool_tag>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+timsort_byte_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                  char *const data[], npy_intp const dimensions[],
+                  npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return timsort_<npy::byte_tag>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+timsort_ubyte_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                   char *const data[], npy_intp const dimensions[],
+                   npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return timsort_<npy::ubyte_tag>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+timsort_short_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                   char *const data[], npy_intp const dimensions[],
+                   npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return timsort_<npy::short_tag>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+timsort_ushort_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                    char *const data[], npy_intp const dimensions[],
+                    npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return timsort_<npy::ushort_tag>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+timsort_int_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                 char *const data[], npy_intp const dimensions[],
+                 npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return timsort_<npy::int_tag>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+timsort_uint_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                  char *const data[], npy_intp const dimensions[],
+                  npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return timsort_<npy::uint_tag>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+timsort_long_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                  char *const data[], npy_intp const dimensions[],
+                  npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return timsort_<npy::long_tag>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+timsort_ulong_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                   char *const data[], npy_intp const dimensions[],
+                   npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return timsort_<npy::ulong_tag>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+timsort_longlong_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                      char *const data[], npy_intp const dimensions[],
+                      npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return timsort_<npy::longlong_tag>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+timsort_ulonglong_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                       char *const data[], npy_intp const dimensions[],
+                       npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return timsort_<npy::ulonglong_tag>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+timsort_half_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                  char *const data[], npy_intp const dimensions[],
+                  npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return timsort_<npy::half_tag>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+timsort_float_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                   char *const data[], npy_intp const dimensions[],
+                   npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return timsort_<npy::float_tag>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+timsort_double_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                    char *const data[], npy_intp const dimensions[],
+                    npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return timsort_<npy::double_tag>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+timsort_longdouble_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                        char *const data[], npy_intp const dimensions[],
+                        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return timsort_<npy::longdouble_tag>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+timsort_cfloat_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                    char *const data[], npy_intp const dimensions[],
+                    npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return timsort_<npy::cfloat_tag>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+timsort_cdouble_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                     char *const data[], npy_intp const dimensions[],
+                     npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return timsort_<npy::cdouble_tag>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+timsort_clongdouble_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                         char *const data[], npy_intp const dimensions[],
+                         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return timsort_<npy::clongdouble_tag>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+timsort_datetime_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                      char *const data[], npy_intp const dimensions[],
+                      npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return timsort_<npy::datetime_tag>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+timsort_timedelta_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                       char *const data[], npy_intp const dimensions[],
+                       npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return timsort_<npy::timedelta_tag>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+timsort_string_loop(PyArrayMethod_Context *context,
+                    char *const data[], npy_intp const dimensions[],
+                    npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return string_timsort_<npy::string_tag>(data[0], dimensions[0],
+                                            context->descriptors[0]);
+}
+NPY_NO_EXPORT int
+timsort_unicode_loop(PyArrayMethod_Context *context,
+                     char *const data[], npy_intp const dimensions[],
+                     npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return string_timsort_<npy::unicode_tag>(data[0], dimensions[0],
+                                             context->descriptors[0]);
+}
+
+/* ---------- atimsort (argsort) ---------- */
+
+NPY_NO_EXPORT int
+atimsort_bool_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                   char *const data[], npy_intp const dimensions[],
+                   npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return atimsort_<npy::bool_tag>(data[0], (npy_intp *)data[1], dimensions[0]);
+}
+NPY_NO_EXPORT int
+atimsort_byte_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                   char *const data[], npy_intp const dimensions[],
+                   npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return atimsort_<npy::byte_tag>(data[0], (npy_intp *)data[1], dimensions[0]);
+}
+NPY_NO_EXPORT int
+atimsort_ubyte_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                    char *const data[], npy_intp const dimensions[],
+                    npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return atimsort_<npy::ubyte_tag>(data[0], (npy_intp *)data[1],
+                                     dimensions[0]);
+}
+NPY_NO_EXPORT int
+atimsort_short_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                    char *const data[], npy_intp const dimensions[],
+                    npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return atimsort_<npy::short_tag>(data[0], (npy_intp *)data[1],
+                                     dimensions[0]);
+}
+NPY_NO_EXPORT int
+atimsort_ushort_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                     char *const data[], npy_intp const dimensions[],
+                     npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return atimsort_<npy::ushort_tag>(data[0], (npy_intp *)data[1],
+                                      dimensions[0]);
+}
+NPY_NO_EXPORT int
+atimsort_int_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                  char *const data[], npy_intp const dimensions[],
+                  npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return atimsort_<npy::int_tag>(data[0], (npy_intp *)data[1], dimensions[0]);
+}
+NPY_NO_EXPORT int
+atimsort_uint_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                   char *const data[], npy_intp const dimensions[],
+                   npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return atimsort_<npy::uint_tag>(data[0], (npy_intp *)data[1], dimensions[0]);
+}
+NPY_NO_EXPORT int
+atimsort_long_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                   char *const data[], npy_intp const dimensions[],
+                   npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return atimsort_<npy::long_tag>(data[0], (npy_intp *)data[1], dimensions[0]);
+}
+NPY_NO_EXPORT int
+atimsort_ulong_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                    char *const data[], npy_intp const dimensions[],
+                    npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return atimsort_<npy::ulong_tag>(data[0], (npy_intp *)data[1],
+                                     dimensions[0]);
+}
+NPY_NO_EXPORT int
+atimsort_longlong_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                       char *const data[], npy_intp const dimensions[],
+                       npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return atimsort_<npy::longlong_tag>(data[0], (npy_intp *)data[1],
+                                        dimensions[0]);
+}
+NPY_NO_EXPORT int
+atimsort_ulonglong_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                        char *const data[], npy_intp const dimensions[],
+                        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return atimsort_<npy::ulonglong_tag>(data[0], (npy_intp *)data[1],
+                                         dimensions[0]);
+}
+NPY_NO_EXPORT int
+atimsort_half_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                   char *const data[], npy_intp const dimensions[],
+                   npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return atimsort_<npy::half_tag>(data[0], (npy_intp *)data[1], dimensions[0]);
+}
+NPY_NO_EXPORT int
+atimsort_float_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                    char *const data[], npy_intp const dimensions[],
+                    npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return atimsort_<npy::float_tag>(data[0], (npy_intp *)data[1],
+                                     dimensions[0]);
+}
+NPY_NO_EXPORT int
+atimsort_double_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                     char *const data[], npy_intp const dimensions[],
+                     npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return atimsort_<npy::double_tag>(data[0], (npy_intp *)data[1],
+                                      dimensions[0]);
+}
+NPY_NO_EXPORT int
+atimsort_longdouble_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                         char *const data[], npy_intp const dimensions[],
+                         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return atimsort_<npy::longdouble_tag>(data[0], (npy_intp *)data[1],
+                                          dimensions[0]);
+}
+NPY_NO_EXPORT int
+atimsort_cfloat_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                     char *const data[], npy_intp const dimensions[],
+                     npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return atimsort_<npy::cfloat_tag>(data[0], (npy_intp *)data[1],
+                                      dimensions[0]);
+}
+NPY_NO_EXPORT int
+atimsort_cdouble_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                      char *const data[], npy_intp const dimensions[],
+                      npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return atimsort_<npy::cdouble_tag>(data[0], (npy_intp *)data[1],
+                                       dimensions[0]);
+}
+NPY_NO_EXPORT int
+atimsort_clongdouble_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                          char *const data[], npy_intp const dimensions[],
+                          npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return atimsort_<npy::clongdouble_tag>(data[0], (npy_intp *)data[1],
+                                           dimensions[0]);
+}
+NPY_NO_EXPORT int
+atimsort_datetime_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                       char *const data[], npy_intp const dimensions[],
+                       npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return atimsort_<npy::datetime_tag>(data[0], (npy_intp *)data[1],
+                                        dimensions[0]);
+}
+NPY_NO_EXPORT int
+atimsort_timedelta_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                        char *const data[], npy_intp const dimensions[],
+                        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return atimsort_<npy::timedelta_tag>(data[0], (npy_intp *)data[1],
+                                         dimensions[0]);
+}
+NPY_NO_EXPORT int
+atimsort_string_loop(PyArrayMethod_Context *context,
+                     char *const data[], npy_intp const dimensions[],
+                     npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return string_atimsort_<npy::string_tag>(data[0], (npy_intp *)data[1],
+                                             dimensions[0],
+                                             context->descriptors[0]);
+}
+NPY_NO_EXPORT int
+atimsort_unicode_loop(PyArrayMethod_Context *context,
+                      char *const data[], npy_intp const dimensions[],
+                      npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return string_atimsort_<npy::unicode_tag>(data[0], (npy_intp *)data[1],
+                                              dimensions[0],
+                                              context->descriptors[0]);
+}

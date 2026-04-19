@@ -354,3 +354,169 @@ aradixsort_ulonglong(void *vec, npy_intp *ind, npy_intp cnt,
     return aradixsort<npy_ulonglong>(vec, ind, cnt);
 }
 }
+
+extern "C" {
+
+/* ---------- radixsort ---------- */
+
+NPY_NO_EXPORT int
+radixsort_bool_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                    char *const data[], npy_intp const dimensions[],
+                    npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return radixsort<npy_bool>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+radixsort_byte_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                    char *const data[], npy_intp const dimensions[],
+                    npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return radixsort<npy_byte>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+radixsort_ubyte_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                     char *const data[], npy_intp const dimensions[],
+                     npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return radixsort<npy_ubyte>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+radixsort_short_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                     char *const data[], npy_intp const dimensions[],
+                     npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return radixsort<npy_short>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+radixsort_ushort_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                      char *const data[], npy_intp const dimensions[],
+                      npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return radixsort<npy_ushort>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+radixsort_int_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                   char *const data[], npy_intp const dimensions[],
+                   npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return radixsort<npy_int>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+radixsort_uint_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                    char *const data[], npy_intp const dimensions[],
+                    npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return radixsort<npy_uint>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+radixsort_long_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                    char *const data[], npy_intp const dimensions[],
+                    npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return radixsort<npy_long>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+radixsort_ulong_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                     char *const data[], npy_intp const dimensions[],
+                     npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return radixsort<npy_ulong>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+radixsort_longlong_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                        char *const data[], npy_intp const dimensions[],
+                        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return radixsort<npy_longlong>(data[0], dimensions[0]);
+}
+NPY_NO_EXPORT int
+radixsort_ulonglong_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                         char *const data[], npy_intp const dimensions[],
+                         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return radixsort<npy_ulonglong>(data[0], dimensions[0]);
+}
+
+/* ---------- aradixsort (argsort) ---------- */
+
+NPY_NO_EXPORT int
+aradixsort_bool_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                     char *const data[], npy_intp const dimensions[],
+                     npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return aradixsort<npy_bool>(data[0], (npy_intp *)data[1], dimensions[0]);
+}
+NPY_NO_EXPORT int
+aradixsort_byte_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                     char *const data[], npy_intp const dimensions[],
+                     npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return aradixsort<npy_byte>(data[0], (npy_intp *)data[1], dimensions[0]);
+}
+NPY_NO_EXPORT int
+aradixsort_ubyte_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                      char *const data[], npy_intp const dimensions[],
+                      npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return aradixsort<npy_ubyte>(data[0], (npy_intp *)data[1], dimensions[0]);
+}
+NPY_NO_EXPORT int
+aradixsort_short_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                      char *const data[], npy_intp const dimensions[],
+                      npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return aradixsort<npy_short>(data[0], (npy_intp *)data[1], dimensions[0]);
+}
+NPY_NO_EXPORT int
+aradixsort_ushort_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                       char *const data[], npy_intp const dimensions[],
+                       npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return aradixsort<npy_ushort>(data[0], (npy_intp *)data[1], dimensions[0]);
+}
+NPY_NO_EXPORT int
+aradixsort_int_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                    char *const data[], npy_intp const dimensions[],
+                    npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return aradixsort<npy_int>(data[0], (npy_intp *)data[1], dimensions[0]);
+}
+NPY_NO_EXPORT int
+aradixsort_uint_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                     char *const data[], npy_intp const dimensions[],
+                     npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return aradixsort<npy_uint>(data[0], (npy_intp *)data[1], dimensions[0]);
+}
+NPY_NO_EXPORT int
+aradixsort_long_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                     char *const data[], npy_intp const dimensions[],
+                     npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return aradixsort<npy_long>(data[0], (npy_intp *)data[1], dimensions[0]);
+}
+NPY_NO_EXPORT int
+aradixsort_ulong_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                      char *const data[], npy_intp const dimensions[],
+                      npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return aradixsort<npy_ulong>(data[0], (npy_intp *)data[1], dimensions[0]);
+}
+NPY_NO_EXPORT int
+aradixsort_longlong_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                         char *const data[], npy_intp const dimensions[],
+                         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return aradixsort<npy_longlong>(data[0], (npy_intp *)data[1],
+                                    dimensions[0]);
+}
+NPY_NO_EXPORT int
+aradixsort_ulonglong_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+                          char *const data[], npy_intp const dimensions[],
+                          npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    return aradixsort<npy_ulonglong>(data[0], (npy_intp *)data[1],
+                                     dimensions[0]);
+}
+
+} // extern "C"
