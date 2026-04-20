@@ -711,21 +711,20 @@ class TestHistogramdd:
         # in simple cases i.e data behaves like 1D
         x = np.arange(10)
         x_2d = x[:, None]
-        for estimator in ['auto', 'fd', 'scott', 'rice', 'sturges', 'doane', 'sqrt', 'stone']:
+        for estimator in ['auto', 'fd', 'scott', 'rice', 'sturges',
+                          'doane', 'sqrt', 'stone']:
             res, _ = histogramdd(x_2d, bins=estimator)
-            res1, _ = histogramdd(x_2d, bins = [estimator])
+            res1, _ = histogramdd(x_2d, bins=[estimator])
             ans, _ = histogram(x, bins=estimator)
             assert_array_equal(res.astype(int), ans)
             assert_array_equal(res1.astype(int), ans)
 
-        x_3d = np.stack([x,x,x], axis=1)
+        x_3d = np.stack([x, x, x], axis=1)
         x_3d_ans = 2 * np.eye(5)[..., None] * np.eye(5)
         res, _ = histogramdd(x_3d, bins='auto')
         assert_array_equal(res, x_3d_ans)
-        res, _ = histogramdd(x_3d, bins=['auto']*3)
+        res, _ = histogramdd(x_3d, bins=['auto'] * 3)
         assert_array_equal(res, x_3d_ans)
-
-
 
     def test_weights(self):
         v = np.random.rand(100, 2)
@@ -759,8 +758,8 @@ class TestHistogramdd:
         assert_raises(
             ValueError, np.histogramdd, x, bins=[1, 1, 1, [1, 2, 3, -3]])
         assert_raises(ValueError, np.histogramdd, x, bins="gibberish")
-        assert_raises(ValueError, np.histogramdd, x, bins=["gibberish",2])
-        assert_raises(ValueError, np.histogramdd, x, bins=["auto",2])
+        assert_raises(ValueError, np.histogramdd, x, bins=["gibberish", 2])
+        assert_raises(ValueError, np.histogramdd, x, bins=["auto", 2])
 
         assert_(np.histogramdd(x, bins=[1, 1, 1, [1, 2, 3, 4]]))
         assert_(np.histogramdd(x, bins=["auto", 1, 1, [1, 2, 3, 4]]))

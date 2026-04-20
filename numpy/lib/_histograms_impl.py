@@ -1004,11 +1004,11 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
         if M != D:
             if any(isinstance(b, str) for b in bins):
                 raise ValueError(
-                        'If string values are used in ArrayLike, dimension of bins must be equal'
-                        'to the dimension of the sample x.'
+                        'If string values are used in ArrayLike, dimension of bins'
+                        'must be equal to the dimension of the sample x.'
                         )
             if np.ndim(bins) <= 1:
-                    raise TypeError
+                raise TypeError
             else:
                 raise ValueError(
                     'The dimension of bins must be equal to the dimension of the '

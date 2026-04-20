@@ -1,6 +1,14 @@
 from _typeshed import Incomplete
 from collections.abc import Callable, Sequence
-from typing import Any, Literal as L, Never,  SupportsIndex, Protocol, overload, type_check_only
+from typing import (
+    Any,
+    Literal as L,
+    Never,
+    Protocol,
+    SupportsIndex,
+    overload,
+    type_check_only,
+)
 
 import numpy as np
 from numpy import _OrderCF
