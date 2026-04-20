@@ -4527,11 +4527,8 @@ sort_resolve_descriptors(
     if (NPY_UNLIKELY(output_descrs[0] == NULL)) {
         return -1;
     }
-    output_descrs[1] = NPY_DT_CALL_ensure_canonical(input_descrs[1]);
-    if (NPY_UNLIKELY(output_descrs[1] == NULL)) {
-        Py_XDECREF(output_descrs[0]);
-        return -1;
-    }
+    Py_INCREF(output_descrs[0]);
+    output_descrs[1] = output_descrs[0];
 
     return method->casting;
 }
