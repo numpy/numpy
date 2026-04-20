@@ -1,0 +1,4 @@
+``histogramdd`` and ``histogram2d`` now supports string ``bins`` values similar to ``histogram``
+------------------------------------------------------------------------------------------------
+The string values such as ``bins='auto'`` are now possible to use in ``histogramdd`` and ``histogram2d``.
+
