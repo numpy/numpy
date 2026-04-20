@@ -706,6 +706,27 @@ class TestHistogramdd:
             H, edges = histogramdd(r, b)
             assert_(H.shape == b)
 
+    def test_bin_strings(self):
+        # These tests checks whether if histogramdd behaves like histogram
+        # in simple cases i.e data behaves like 1D
+        x = np.arange(10)
+        x_2d = x[:, None]
+        for estimator in ['auto', 'fd', 'scott', 'rice', 'sturges', 'doane', 'sqrt', 'stone']:
+            res, _ = histogramdd(x_2d, bins=estimator)
+            res1, _ = histogramdd(x_2d, bins = [estimator])
+            ans, _ = histogram(x, bins=estimator)
+            assert_array_equal(res.astype(int), ans)
+            assert_array_equal(res1.astype(int), ans)
+
+        x_3d = np.stack([x,x,x], axis=1)
+        x_3d_ans = 2 * np.eye(5)[..., None] * np.eye(5)
+        res, _ = histogramdd(x_3d, bins='auto')
+        assert_array_equal(res, x_3d_ans)
+        res, _ = histogramdd(x_3d, bins=['auto']*3)
+        assert_array_equal(res, x_3d_ans)
+
+
+
     def test_weights(self):
         v = np.random.rand(100, 2)
         hist, edges = histogramdd(v)
@@ -729,14 +750,23 @@ class TestHistogramdd:
         assert_array_max_ulp(a, np.zeros((2, 2, 2)))
 
     def test_bins_errors(self):
-        # There are two ways to specify bins. Check for the right errors
-        # when mixing those.
+        # There are three ways to specify bins:
+        # integers, strings and arraylike where it describes the edges
+        # Check for the right errors when mixing those.
         x = np.arange(8).reshape(2, 4)
         assert_raises(ValueError, np.histogramdd, x, bins=[-1, 2, 4, 5])
         assert_raises(TypeError, np.histogramdd, x, bins=[1, 0.99, 1, 1])
         assert_raises(
             ValueError, np.histogramdd, x, bins=[1, 1, 1, [1, 2, 3, -3]])
+        assert_raises(ValueError, np.histogramdd, x, bins="gibberish")
+        assert_raises(ValueError, np.histogramdd, x, bins=["gibberish",2])
+        assert_raises(ValueError, np.histogramdd, x, bins=["auto",2])
+
         assert_(np.histogramdd(x, bins=[1, 1, 1, [1, 2, 3, 4]]))
+        assert_(np.histogramdd(x, bins=["auto", 1, 1, [1, 2, 3, 4]]))
+        assert_(np.histogramdd(x, bins=[1, 2, 3, 4]))
+        assert_(np.histogramdd(x, bins="auto"))
+        assert_(np.histogramdd(x, bins=25))
 
     def test_inf_edges(self):
         # Test using +/-inf bin edges works. See #1788.
