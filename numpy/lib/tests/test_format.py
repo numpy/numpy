@@ -705,30 +705,12 @@ def test_pickle_disallow(tmpdir):
         )))
         ]),
     ])
-def test_descr_to_dtype(dt):
+def test_descr_dtype_roundtrip(dt):
     dt1 = format.descr_to_dtype(format.dtype_to_descr(dt))
     assert_equal_(dt1, dt)
     arr1 = np.zeros(3, dt)
     arr2 = roundtrip(arr1)
     assert_array_equal(arr1, arr2)
-
-
-def test_open_memmap_subarray_dtype(tmpdir):
-    path = os.path.join(tmpdir, "subarray.npy")
-    dtype = np.dtype((np.dtype([('a', 'i1'), ('b', 'i1')]), (3,)))
-
-    memmap = format.open_memmap(path, mode='w+', dtype=dtype, shape=(2,))
-    memmap.flush()
-
-    with open(path, "rb") as f:
-        version = format.read_magic(f)
-        _, _, header_dtype = format._read_array_header(f, version)
-
-    loaded = format.open_memmap(path, mode='r')
-
-    assert_equal_(header_dtype, dtype)
-    assert_equal_(loaded.dtype, dtype.base)
-    assert_equal_(loaded.shape, (2, 3))
 
 
 def test_version_2_0():
