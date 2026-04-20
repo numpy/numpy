@@ -998,15 +998,23 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
         weights = np.asarray(weights)
 
     try:
-        M = len(bins)
         if isinstance(bins, str):
             raise TypeError
+        M = len(bins)
         if M != D:
-            raise ValueError(
-                'The dimension of bins must be equal to the dimension of the '
-                'sample x.')
+            if any(isinstance(b, str) for b in bins):
+                raise ValueError(
+                        'If string values are used in ArrayLike, dimension of bins must be equal'
+                        'to the dimension of the sample x.'
+                        )
+            if np.ndim(bins) <= 1:
+                    raise TypeError
+            else:
+                raise ValueError(
+                    'The dimension of bins must be equal to the dimension of the '
+                    'sample x.')
     except TypeError:
-        # bins is an integer or a string
+        # bins is an integer or a string or an ArrayLike of edges.
         bins = D * [bins]
 
     # normalize the range argument

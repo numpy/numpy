@@ -856,14 +856,6 @@ def histogram2d(x, y, bins=10, range=None, density=None, weights=None):
     if len(x) != len(y):
         raise ValueError('x and y must have the same length.')
 
-    try:
-        N = len(bins)
-    except TypeError:
-        N = 1
-
-    if N not in {1, 2}:
-        xedges = yedges = asarray(bins)
-        bins = [xedges, yedges]
     hist, edges = histogramdd([x, y], bins, range, density, weights)
     return hist, edges[0], edges[1]
 
