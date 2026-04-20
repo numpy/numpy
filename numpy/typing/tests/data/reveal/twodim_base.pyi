@@ -170,6 +170,30 @@ assert_type(
     ],
 )
 assert_type(
+    np.histogram2d(_nd_f64, _nd_f64, bins="auto"),
+    tuple[
+        np.ndarray[_2D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.float64]],
+    ],
+)
+assert_type(
+    np.histogram2d(_nd_f64, _nd_f64, bins=("auto", "auto")),
+    tuple[
+        np.ndarray[_2D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.float64]],
+    ],
+)
+assert_type(
+    np.histogram2d(_nd_f64, _nd_f64, bins=("auto", 5)),
+    tuple[
+        np.ndarray[_2D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.float64]],
+    ],
+)
+assert_type(
     np.histogram2d(_nd_c128, _nd_i64, bins=_nd_u64),
     tuple[
         np.ndarray[_2D, np.dtype[np.float64]],
