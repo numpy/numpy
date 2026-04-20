@@ -518,6 +518,44 @@ def test_memmap_roundtrip(tmpdir):
         ma.flush()
 
 
+@pytest.mark.skipif(IS_WASM, reason="memmap doesn't work correctly")
+@pytest.mark.parametrize(
+    "i, dtype, shape, expected_dtype, expected_shape",
+    [
+        (0, np.dtype('<i4'), (3,), np.dtype('<i4'), (3,)),
+        # Plain top-level subarray dtypes expand into the memmap shape on read.
+        (1, np.dtype((np.int64, (8,))), (2,), np.dtype(np.int64), (2, 8)),
+        (
+            2,
+            np.dtype([('a', '<i4'), ('b', '<f8')]),
+            (4,),
+            np.dtype([('a', '<i4'), ('b', '<f8')]),
+            (4, ),
+        ),
+        # Structured base dtypes should behave the same when wrapped in a
+        # top-level subarray.
+        (
+            3,
+            np.dtype(([('a', '<i4'), ('b', '<f8')], (3,))),
+            (2,),
+            np.dtype([('a', '<i4'), ('b', '<f8')]),
+            (2, 3),
+        ),
+    ],
+)
+def test_memmap_user_dtype_roundtrip(
+    tmpdir, i, dtype, shape, expected_dtype, expected_shape
+):
+    path = os.path.join(tmpdir, f"user_dtype{i}.npy")
+    memmap = format.open_memmap(path, mode='w+', dtype=dtype, shape=shape)
+    memmap.flush()
+
+    loaded = format.open_memmap(path, mode='r')
+
+    assert_equal_(loaded.dtype, expected_dtype)
+    assert_equal_(loaded.shape, expected_shape)
+
+
 def test_compressed_roundtrip(tmpdir):
     arr = np.random.rand(200, 200)
     npz_file = os.path.join(tmpdir, 'compressed.npz')
@@ -620,14 +658,11 @@ def test_pickle_disallow(tmpdir):
 
 @pytest.mark.parametrize('dt', [
     np.dtype(('<i8', (8,))),
-    np.dtype('(2,3)<f8'),
-    np.dtype((np.dtype([('a', 'i1'), ('b', 'i1')]), (3,))),
-    # Plain subarray dtypes are checked via descriptor/header roundtrips below,
-    # since creating an array with such a dtype expands the subarray into shape.
     np.dtype([('a', np.int8),
               ('b', np.int16),
               ('c', np.int32),
              ], align=True),
+    np.dtype((np.dtype([('a', '<i4'), ('b', '<f8')]), (3,))),
     np.dtype([('x', np.dtype(({'names': ['a', 'b'],
                               'formats': ['i1', 'i1'],
                               'offsets': [0, 4],
@@ -673,10 +708,9 @@ def test_pickle_disallow(tmpdir):
 def test_descr_to_dtype(dt):
     dt1 = format.descr_to_dtype(format.dtype_to_descr(dt))
     assert_equal_(dt1, dt)
-    if dt.subdtype is None:
-        arr1 = np.zeros(3, dt)
-        arr2 = roundtrip(arr1)
-        assert_array_equal(arr1, arr2)
+    arr1 = np.zeros(3, dt)
+    arr2 = roundtrip(arr1)
+    assert_array_equal(arr1, arr2)
 
 
 def test_open_memmap_subarray_dtype(tmpdir):
