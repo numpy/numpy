@@ -307,7 +307,7 @@ def iscomplexobj(x):
 @array_function_dispatch(_is_type_dispatcher)
 def isrealobj(x):
     """
-    Return True if x is a not complex type or an array of complex numbers.
+    Return True if x is not a complex type or an array of complex numbers.
 
     The type of the input is checked, not the value. So even if the input
     has an imaginary part equal to zero, `isrealobj` evaluates to False
