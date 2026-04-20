@@ -252,21 +252,9 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             PyArray_IterNew((PyObject *)self);
         n4 = (format ? strlen((const char *)format) : 0);
         if (n4 != 0) {
-            /*
-             * Validate the explicit format string once so later ASCII
-             * conversion failures continue to reflect element data.
-             */
             formatobj = PyUnicode_FromString((const char *)format);
             if (formatobj == NULL) {
                 Py_DECREF(it);
-                return -1;
-            }
-            if (!PyUnicode_IS_ASCII(formatobj)) {
-                Py_DECREF(formatobj);
-                Py_DECREF(it);
-                PyErr_SetString(PyExc_ValueError,
-                        "The `format` parameter must contain only ASCII "
-                        "characters.");
                 return -1;
             }
         }

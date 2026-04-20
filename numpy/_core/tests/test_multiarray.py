@@ -6178,16 +6178,12 @@ class TestIO:
             s = f.read()
         assert_equal(s, '1.51,2.00,3.51,4.00')
 
-    def test_tofile_non_ascii_format_raises_valueerror(self, tmp_path,
-                                                        param_filename):
+    def test_tofile_non_ascii_format_raises_unicodeencodeerror(
+            self, tmp_path, param_filename):
         tmp_filename = normalize_filename(tmp_path, param_filename)
         x = np.array([1.51, 2, 3.51, 4], dtype=float)
         with open(tmp_filename, 'w') as f:
-            with pytest.raises(
-                ValueError,
-                match="The `format` parameter must contain only ASCII "
-                      "characters.",
-            ):
+            with pytest.raises(UnicodeEncodeError):
                 x.tofile(f, sep=',', format='\N{MICRO SIGN}%.2f')
 
     def test_tofile_non_ascii_element_without_format_raises_unicodeencodeerror(

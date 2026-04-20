@@ -2,4 +2,4 @@ Non-ASCII inputs no longer crash ``flags`` assignment or ``tofile``
 -------------------------------------------------------------------
 Passing a non-ASCII flag key to ``ndarray.flags[...] = ...`` now raises
 ``KeyError`` instead of crashing. Passing a non-ASCII ``format`` argument to
-`numpy.ndarray.tofile` now raises ``ValueError`` instead of crashing.
+``numpy.ndarray.tofile`` now raises ``UnicodeEncodeError`` instead of crashing.
