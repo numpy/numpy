@@ -119,8 +119,8 @@ to automatically select the unit from the inputs, by using the
 datetime type with generic units.
 
 .. deprecated:: 2.5
-  The generic units of `timedelta64` are deprecated since NumPy 2.5 and
-  will raise an error in the future. With this changes, `datetime64`'s ``NaT`` is now required to have an explicit time unit for consistency with other datetime and timedelta operations.
+  The generic units of `timedelta64` were deprecated in NumPy 2.5 and
+  will raise an error in the future. With this change, ``NaT`` in `datetime64` is now required to have an explicit time unit.
 
 
 .. admonition:: Example
@@ -354,7 +354,7 @@ The protocol is described in the following table:
 
 
 .. deprecated:: 2.5
-  The generic units of `timedelta64` are deprecated since NumPy 2.5 and
+  The generic units of `timedelta64` are deprecated in NumPy 2.5 and
   will raise an error in the future.
 
 
