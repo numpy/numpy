@@ -203,6 +203,7 @@ else:
         copysign,
         copyto,
         correlate,
+        correlate_lags,
         cos,
         cosh,
         count_nonzero,

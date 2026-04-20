@@ -3611,7 +3611,8 @@ class TestCorrelate:
 
     def test_float(self):
         self._setup(float)
-        z, lags = np.correlate(self.x, self.y, 'full', returns_lagvector=True)
+        z = np.correlate(self.x, self.y, 'full')
+        lags = np.correlate_lags(len(self.x), len(self.y), 'full')
         assert_array_almost_equal(z, self.z1)
         assert_array_equal(lags, np.arange(-2, 5))
         assert len(z) == len(lags)
@@ -3626,12 +3627,14 @@ class TestCorrelate:
         z = np.correlate(self.xs, self.y, 'full')
         assert_array_almost_equal(z, self.zs)
         # Test 'valid' mode - middle part where there's full overlap
-        z, lags = np.correlate(self.x, self.y, 'valid', returns_lagvector=True)
+        z = np.correlate(self.x, self.y, 'valid')
+        lags = np.correlate_lags(len(self.x), len(self.y), 'valid')
         assert_array_almost_equal(z, self.z1[2:5])  # [-14., -20., -26.]
         assert_array_equal(lags, np.arange(0, 3))
         assert len(z) == len(lags)
         # Test 'same' mode - same length as first input
-        z, lags = np.correlate(self.x, self.y, 'same', returns_lagvector=True)
+        z = np.correlate(self.x, self.y, 'same')
+        lags = np.correlate_lags(len(self.x), len(self.y), 'same')
         assert_array_almost_equal(z, self.z1[1:6])  # [-8., -14., -20., -26., -14.]
         assert_array_equal(lags, np.arange(-1, 4))
         assert len(z) == len(lags)
@@ -3639,41 +3642,41 @@ class TestCorrelate:
     def test_maxlag(self):
         self._setup(float)
         # maxlag=1 gives the symmetric inclusive window [-1, 0, 1]
-        z, lags = np.correlate(self.x, self.y, maxlag=1,
-                               returns_lagvector=True)
+        z = np.correlate(self.x, self.y, maxlag=1)
+        lags = np.correlate_lags(len(self.x), len(self.y), maxlag=1)
         assert_array_almost_equal(z, self.z1[1:4])  # [-8., -14., -20.]
         assert_array_equal(lags, np.arange(-1, 2))
         assert len(z) == len(lags)
 
     def test_lags_range(self):
         self._setup(float)
-        z, lags = np.correlate(self.x, self.y, lags=range(-1, 3),
-                               returns_lagvector=True)
+        z = np.correlate(self.x, self.y, lags=range(-1, 3))
+        lags = np.correlate_lags(len(self.x), len(self.y), lags=range(-1, 3))
         assert_array_almost_equal(z, self.z1[1:5])  # [-8., -14., -20., -26.]
         assert_array_equal(lags, np.arange(-1, 3))
         assert len(z) == len(lags)
 
     def test_lags_range_with_step(self):
         self._setup(float)
-        z, lags = np.correlate(self.x, self.y, lags=range(-2, 5, 2),
-                               returns_lagvector=True)
+        z = np.correlate(self.x, self.y, lags=range(-2, 5, 2))
+        lags = np.correlate_lags(len(self.x), len(self.y), lags=range(-2, 5, 2))
         assert_array_almost_equal(z, self.z1[0::2])  # [-3., -14., -26., -5.]
         assert_array_equal(lags, np.arange(-2, 5, 2))
         assert len(z) == len(lags)
 
     def test_lags_slice(self):
         self._setup(float)
-        z, lags = np.correlate(self.x, self.y, lags=slice(-1, 3),
-                               returns_lagvector=True)
+        z = np.correlate(self.x, self.y, lags=slice(-1, 3))
+        lags = np.correlate_lags(len(self.x), len(self.y), lags=slice(-1, 3))
         assert_array_almost_equal(z, self.z1[1:5])
         assert_array_equal(lags, np.arange(-1, 3))
 
     def test_lags_array(self):
         self._setup(float)
         # 1-D array of lags (must be an arithmetic progression)
-        z, lags = np.correlate(self.x, self.y,
-                               lags=np.array([-2, 0, 2, 4]),
-                               returns_lagvector=True)
+        z = np.correlate(self.x, self.y, lags=np.array([-2, 0, 2, 4]))
+        lags = np.correlate_lags(
+            len(self.x), len(self.y), lags=np.array([-2, 0, 2, 4]))
         assert_array_almost_equal(z, self.z1[0::2])
         assert_array_equal(lags, np.array([-2, 0, 2, 4]))
 
@@ -3737,16 +3740,17 @@ class TestCorrelate:
 
     def test_lags_single_lag(self):
         self._setup(float)
-        z, lags = np.correlate(self.x, self.y, lags=range(1),
-                               returns_lagvector=True)
+        z = np.correlate(self.x, self.y, lags=range(1))
+        lags = np.correlate_lags(len(self.x), len(self.y), lags=range(1))
         assert_array_almost_equal(z, [self.z1[2]])
         assert_array_equal(lags, np.array([0]))
 
     def test_lags_negative_step(self):
         self._setup(float)
         # Negative step: reversed lag order
-        z, lags = np.correlate(self.x, self.y, lags=slice(2, -3, -1),
-                               returns_lagvector=True)
+        z = np.correlate(self.x, self.y, lags=slice(2, -3, -1))
+        lags = np.correlate_lags(
+            len(self.x), len(self.y), lags=slice(2, -3, -1))
         # slice(2,-3,-1) -> [2, 1, 0, -1, -2]
         # corresponds to z1 indices [4, 3, 2, 1, 0]
         assert_array_almost_equal(z, self.z1[4::-1])
@@ -3754,8 +3758,8 @@ class TestCorrelate:
 
     def test_lags_empty(self):
         self._setup(float)
-        z, lags = np.correlate(self.x, self.y, lags=range(0),
-                               returns_lagvector=True)
+        z = np.correlate(self.x, self.y, lags=range(0))
+        lags = np.correlate_lags(len(self.x), len(self.y), lags=range(0))
         assert len(z) == 0
         assert len(lags) == 0
 
@@ -3918,30 +3922,32 @@ class TestConvolve:
     def test_convolve_maxlag(self):
         a = np.array([1, 2, 3], dtype=float)
         v = np.array([0, 1, 0.5], dtype=float)
-        z, lags = np.convolve(a, v, maxlag=1, returns_lagvector=True)
+        z = np.convolve(a, v, maxlag=1)
+        lags = np.correlate_lags(len(a), len(v), maxlag=1)
         assert_array_almost_equal(z, [1.0, 2.5, 4.0])
         assert_array_equal(lags, np.arange(-1, 2))
 
     def test_convolve_lags_range(self):
         a = np.array([1, 2, 3], dtype=float)
         v = np.array([0, 1, 0.5], dtype=float)
-        z, lags = np.convolve(a, v, lags=range(-1, 2),
-                              returns_lagvector=True)
+        z = np.convolve(a, v, lags=range(-1, 2))
+        lags = np.correlate_lags(len(a), len(v), lags=range(-1, 2))
         assert_array_almost_equal(z, [1.0, 2.5, 4.0])
         assert_array_equal(lags, np.arange(-1, 2))
 
     def test_convolve_lags_range_with_step(self):
         a = np.array([1, 2, 3, 4, 5], dtype=float)
         v = np.array([0, 1, 0.5], dtype=float)
-        z, lags = np.convolve(a, v, lags=range(-2, 6, 2),
-                              returns_lagvector=True)
+        z = np.convolve(a, v, lags=range(-2, 6, 2))
+        lags = np.correlate_lags(len(a), len(v), lags=range(-2, 6, 2))
         assert_array_almost_equal(z, [0.0, 2.5, 5.5, 2.5])
         assert_array_equal(lags, np.arange(-2, 6, 2))
 
-    def test_convolve_returns_lagvector(self):
+    def test_correlate_lags_full_mode(self):
         a = [1, 2, 3]
         v = [0, 1, 0.5]
-        z, lags = np.convolve(a, v, mode='full', returns_lagvector=True)
+        z = np.convolve(a, v, mode='full')
+        lags = np.correlate_lags(len(a), len(v), mode='full')
         assert len(z) == len(lags)
         assert_array_equal(lags, np.arange(-2, 3))
 
@@ -4002,7 +4008,8 @@ class TestConvolve:
         assert_array_equal(np.convolve(a, v), expected)
         # Same check via the lags path (maxlag=1 covers lags [-1, 0, 1],
         # which is the full output for two length-2 inputs)
-        result, lags = np.convolve(a, v, maxlag=1, returns_lagvector=True)
+        result = np.convolve(a, v, maxlag=1)
+        lags = np.correlate_lags(len(a), len(v), maxlag=1)
         assert_array_equal(result, expected)
         assert_array_equal(lags, np.arange(-1, 2))
 

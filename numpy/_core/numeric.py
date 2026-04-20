@@ -78,7 +78,7 @@ __all__ = [
     'argwhere', 'copyto', 'concatenate', 'lexsort', 'astype',
     'can_cast', 'promote_types', 'min_scalar_type',
     'result_type', 'isfortran', 'empty_like', 'zeros_like', 'ones_like',
-    'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
+    'correlate', 'correlate_lags', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
     'rollaxis', 'moveaxis', 'cross', 'tensordot', 'little_endian',
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
     'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
@@ -815,14 +815,95 @@ def _lags_from_mode(alen, vlen, mode):
     return (m0, m1, 1)
 
 
-def _correlate_dispatcher(a, v, mode=None, *, maxlag=None, lags=None,
-                          returns_lagvector=None):
+def _correlate_lags_dispatcher(a_len, v_len, mode=None, *, maxlag=None,
+                               lags=None):
+    return ()
+
+
+@array_function_dispatch(_correlate_lags_dispatcher)
+def correlate_lags(a_len, v_len, mode=_CorrModeDefault, *, maxlag=None,
+                   lags=None):
+    """
+    Return the lag indices for a `~numpy.correlate` call with the same
+    parameters.
+
+    Parameters
+    ----------
+    a_len : int
+        Length of the first input sequence (``len(a)`` in ``correlate(a, v, ...)``).
+    v_len : int
+        Length of the second input sequence (``len(v)`` in ``correlate(a, v, ...)``).
+    mode : {'valid', 'same', 'full'}, optional
+        The same mode that would be passed to `~numpy.correlate`.
+        If ``maxlag`` or ``lags`` is provided and ``mode`` is not specified,
+        ``mode`` defaults to 'lags'.
+    maxlag : int, optional
+        The same ``maxlag`` that would be passed to `~numpy.correlate`.
+        Mutually exclusive with ``lags``.
+    lags : range, slice, or 1-D array_like of int, optional
+        The same ``lags`` that would be passed to `~numpy.correlate`.
+        Mutually exclusive with ``maxlag``.
+
+    Returns
+    -------
+    lags : ndarray
+        Array of lag indices corresponding element-by-element to the output
+        of ``np.correlate(a, v, mode, maxlag=maxlag, lags=lags)``.
+
+    See Also
+    --------
+    correlate : Cross-correlation of two 1-D sequences.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> np.correlate_lags(5, 3, mode='full')
+    array([-2, -1,  0,  1,  2,  3,  4])
+    >>> np.correlate_lags(5, 3, mode='valid')
+    array([0, 1, 2])
+    >>> np.correlate_lags(5, 3, maxlag=2)
+    array([-2, -1,  0,  1,  2])
+
+    Pair the lag vector with a correlation result:
+
+    >>> a, v = [1, 2, 3, 4, 5], [0, 1, 0.5]
+    >>> r = np.correlate(a, v, mode='full')
+    >>> lag_vec = np.correlate_lags(len(a), len(v), mode='full')
+    >>> r[lag_vec == 0]
+    array([2.])
+    """
+    if maxlag is not None and lags is not None:
+        raise TypeError("cannot specify both maxlag and lags")
+    lags_given = maxlag is not None or lags is not None
+
+    if mode is _CorrModeDefault:
+        mode = 'lags' if lags_given else 'valid'
+    mode = _mode_from_name(mode)
+
+    if mode in (0, 1, 2):
+        if lags_given:
+            raise ValueError(
+                "maxlag/lags cannot be used with mode "
+                "'valid', 'same', or 'full'")
+        lags_tuple = _lags_from_mode(a_len, v_len, mode)
+    elif mode == 3:
+        if not lags_given:
+            raise ValueError(
+                "maxlag or lags is required for mode='lags'")
+        if maxlag is not None:
+            lags_tuple = _lags_from_maxlag(maxlag)
+        else:
+            lags_tuple = _lags_from_lags(lags)
+
+    return arange(lags_tuple[0], lags_tuple[1], lags_tuple[2])
+
+
+def _correlate_dispatcher(a, v, mode=None, *, maxlag=None, lags=None):
     return (a, v)
 
 
 @array_function_dispatch(_correlate_dispatcher)
-def correlate(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None,
-              returns_lagvector=False):
+def correlate(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None):
     r"""
     Cross-correlation of two 1-dimensional sequences.
 
@@ -853,23 +934,15 @@ def correlate(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None,
         ``slice`` with explicit start and stop, or a 1-D array_like
         containing an arithmetic progression of integer lag indices.
         Mutually exclusive with ``maxlag``.
-    returns_lagvector : bool, optional
-        If True, the function returns a lagvector array in addition to the
-        cross-correlation result.  The lagvector contains the indices of
-        the lags for which the cross-correlation was calculated.  It is
-        the same length as the return array, and corresponds one-to-one.
-        False is default.
 
     Returns
     -------
     out : ndarray
         Discrete cross-correlation of `a` and `v`.
-    lagvector : ndarray, optional
-        The indices of the lags for which the cross-correlation was calculated.
-        It is the same length as out, and corresponds one-to-one.
 
     See Also
     --------
+    correlate_lags : Return the lag indices corresponding to a `correlate` call.
     convolve : Discrete, linear convolution of two one-dimensional sequences.
     scipy.signal.correlate : uses FFT which has superior performance
         on large arrays.
@@ -898,13 +971,18 @@ def correlate(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None,
     array([3.5])
     >>> np.correlate([1, 2, 3], [0, 1, 0.5], mode="same")
     array([ 2. ,  3.5,  3. ])
-    >>> np.correlate([1, 2, 3], [0, 1, 0.5], mode="full", returns_lagvector=True)
-    (array([ 0.5,  2. ,  3.5,  3. ,  0. ]), array([-2, -1,  0,  1,  2]))
     >>> np.correlate([1, 2, 3], [0, 1, 0.5], maxlag=1)
     array([ 2. ,  3.5,  3. ])
-    >>> np.correlate([1, 2, 3], [0, 1, 0.5], lags=range(-1, 2, 2),
-    ...              returns_lagvector=True)
-    (array([ 2.,  3.]), array([-1,  1]))
+    >>> np.correlate([1, 2, 3], [0, 1, 0.5], lags=range(-1, 2, 2))
+    array([ 2.,  3.])
+
+    Pair the result with its lag indices using `correlate_lags`:
+
+    >>> a, v = [1, 2, 3], [0, 1, 0.5]
+    >>> r = np.correlate(a, v, mode="full")
+    >>> lag_vec = np.correlate_lags(len(a), len(v), mode="full")
+    >>> lag_vec
+    array([-2, -1,  0,  1,  2])
 
     Using complex sequences:
 
@@ -933,9 +1011,7 @@ def correlate(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None,
             raise ValueError(
                 "maxlag/lags cannot be used with mode "
                 "'valid', 'same', or 'full'")
-        result = multiarray.correlate2(a, v, mode)
-        if returns_lagvector:
-            lags_tuple = _lags_from_mode(len(a), len(v), mode)
+        return multiarray.correlate2(a, v, mode)
     elif mode == 3:
         if not lags_given:
             raise ValueError(
@@ -944,22 +1020,16 @@ def correlate(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None,
             lags_tuple = _lags_from_maxlag(maxlag)
         else:
             lags_tuple = _lags_from_lags(lags)
-        result = multiarray.correlatelags(
+        return multiarray.correlatelags(
             a, v, lags_tuple[0], lags_tuple[1], lags_tuple[2])
 
-    if returns_lagvector:
-        return result, arange(lags_tuple[0], lags_tuple[1], lags_tuple[2])
-    return result
 
-
-def _convolve_dispatcher(a, v, mode=None, *, maxlag=None, lags=None,
-                         returns_lagvector=None):
+def _convolve_dispatcher(a, v, mode=None, *, maxlag=None, lags=None):
     return (a, v)
 
 
 @array_function_dispatch(_convolve_dispatcher)
-def convolve(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None,
-             returns_lagvector=False):
+def convolve(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None):
     """
     Returns the discrete, linear convolution of two one-dimensional sequences.
 
@@ -1013,23 +1083,14 @@ def convolve(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None,
         ``slice`` with explicit start and stop, or a 1-D array_like containing
         an arithmetic progression of integer lag indices.
         Mutually exclusive with ``maxlag``.
-    returns_lagvector : bool, optional
-        If True, the function returns a lagvector array in addition to the
-        convolution result.  The lagvector contains the indices of
-        the lags for which the convolution was calculated.  It is
-        the same length as the return array, and corresponds one-to-one.
-        False is default.
-
     Returns
     -------
     out : ndarray
         Discrete, linear convolution of `a` and `v`.
-    lagvector : ndarray, optional
-        The indices of the lags for which the convolution was calculated.
-        It is the same length as out, and corresponds one-to-one.
 
     See Also
     --------
+    correlate_lags : Return the lag indices corresponding to a `correlate` call.
     scipy.signal.fftconvolve : Convolve two arrays using the Fast Fourier
                                Transform.
     scipy.linalg.toeplitz : Used to construct the convolution operator.
@@ -1070,31 +1131,31 @@ def convolve(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None,
     >>> np.convolve([1,2,3],[0,1,0.5], mode='same')
     array([1. ,  2.5,  4. ])
 
-    The two arrays are of the same length, so there
-    is only one position where they completely overlap,
-    corresponding to a lag of 0.  lagvector=True causes
-    the function to return the lagvector corresponding
-    to the convolution in addition to the convolution
-    itself:
+    The two arrays are of the same length, so there is only one position
+    where they completely overlap, corresponding to a lag of 0:
 
-    >>> np.convolve([1,2,3],[0,1,0.5], mode='valid', returns_lagvector=True)
-    (array([ 2.5]), array([0]))
+    >>> np.convolve([1,2,3],[0,1,0.5], mode='valid')
+    array([ 2.5])
 
     Find the convolution for lags ranging from -1 to 1
-    (0 is the lag for which the left sides of the arrays
-    are aligned, -1 has the second vector to the left of
-    the first, and +1 has the second vector to the right
-    of the first):
+    (lag 0 aligns the left sides of the arrays; negative lags shift the
+    second array left, positive lags shift it right):
 
-    >>> np.convolve([1,2,3],[0,1,0.5], maxlag=1, returns_lagvector=True)
-    (array([ 1. ,  2.5,  4. ]), array([-1,  0,  1]))
+    >>> np.convolve([1,2,3],[0,1,0.5], maxlag=1)
+    array([ 1. ,  2.5,  4. ])
 
-    Find the convolution for lags ranging from -2 to 4
-    with steps of length 2:
+    Find the convolution for lags ranging from -2 to 4 with steps of 2:
 
-    >>> np.convolve([1,2,3,4,5], [0,1,0.5], lags=range(-2, 6, 2),
-    ...             returns_lagvector=True)
-    (array([ 0. ,  2.5,  5.5,  2.5]), array([-2,  0,  2,  4]))
+    >>> np.convolve([1,2,3,4,5], [0,1,0.5], lags=range(-2, 6, 2))
+    array([ 0. ,  2.5,  5.5,  2.5])
+
+    Pair the result with lag indices using `correlate_lags`:
+
+    >>> a, v = [1, 2, 3], [0, 1, 0.5]
+    >>> r = np.convolve(a, v, mode='valid')
+    >>> lag_vec = np.correlate_lags(len(a), len(v), mode='valid')
+    >>> lag_vec
+    array([0])
 
     """
     a, v = array(a, copy=None, ndmin=1), array(v, copy=None, ndmin=1)
@@ -1121,9 +1182,7 @@ def convolve(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None,
             raise ValueError(
                 "maxlag/lags cannot be used with mode "
                 "'valid', 'same', or 'full'")
-        result = multiarray.correlate(a, v[::-1], mode)
-        if returns_lagvector:
-            lags_tuple = _lags_from_mode(alen, vlen, mode)
+        return multiarray.correlate(a, v[::-1], mode)
     elif mode == 3:
         if not lags_given:
             raise ValueError(
@@ -1132,13 +1191,9 @@ def convolve(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None,
             lags_tuple = _lags_from_maxlag(maxlag)
         else:
             lags_tuple = _lags_from_lags(lags)
-        result = multiarray.correlatelags(
+        return multiarray.correlatelags(
             a, v[::-1], lags_tuple[0], lags_tuple[1], lags_tuple[2],
             conjugate=False)
-
-    if returns_lagvector:
-        return result, arange(lags_tuple[0], lags_tuple[1], lags_tuple[2])
-    return result
 
 
 def _outer_dispatcher(a, b, out=None):
