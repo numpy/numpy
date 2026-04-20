@@ -141,7 +141,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
     npy_intp n, n2;
     size_t n3, n4;
     PyArrayIterObject *it;
-    PyObject *obj, *strobj, *tupobj, *byteobj;
+    PyObject *obj, *strobj, *tupobj, *byteobj, *formatobj = NULL;
 
     n3 = (sep ? strlen((const char *)sep) : 0);
     if (n3 == 0) {
@@ -251,6 +251,25 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
         it = (PyArrayIterObject *)
             PyArray_IterNew((PyObject *)self);
         n4 = (format ? strlen((const char *)format) : 0);
+        if (n4 != 0) {
+            /*
+             * Validate the explicit format string once so later ASCII
+             * conversion failures continue to reflect element data.
+             */
+            formatobj = PyUnicode_FromString((const char *)format);
+            if (formatobj == NULL) {
+                Py_DECREF(it);
+                return -1;
+            }
+            if (!PyUnicode_IS_ASCII(formatobj)) {
+                Py_DECREF(formatobj);
+                Py_DECREF(it);
+                PyErr_SetString(PyExc_ValueError,
+                        "The `format` parameter must contain only ASCII "
+                        "characters.");
+                return -1;
+            }
+        }
         while (it->index < it->size) {
             /*
              * This is as documented.  If we have a low precision float value
@@ -260,6 +279,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
              */
             obj = PyArray_GETITEM(self, it->dataptr);
             if (obj == NULL) {
+                Py_XDECREF(formatobj);
                 Py_DECREF(it);
                 return -1;
             }
@@ -270,6 +290,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                 strobj = PyObject_Str(obj);
                 Py_DECREF(obj);
                 if (strobj == NULL) {
+                    Py_XDECREF(formatobj);
                     Py_DECREF(it);
                     return -1;
                 }
@@ -280,20 +301,15 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                  */
                 tupobj = PyTuple_New(1);
                 if (tupobj == NULL) {
+                    Py_XDECREF(formatobj);
                     Py_DECREF(it);
                     return -1;
                 }
                 PyTuple_SET_ITEM(tupobj,0,obj);
-                obj = PyUnicode_FromString((const char *)format);
-                if (obj == NULL) {
-                    Py_DECREF(tupobj);
-                    Py_DECREF(it);
-                    return -1;
-                }
-                strobj = PyUnicode_Format(obj, tupobj);
-                Py_DECREF(obj);
+                strobj = PyUnicode_Format(formatobj, tupobj);
                 Py_DECREF(tupobj);
                 if (strobj == NULL) {
+                    Py_XDECREF(formatobj);
                     Py_DECREF(it);
                     return -1;
                 }
@@ -301,16 +317,8 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             byteobj = PyUnicode_AsASCIIString(strobj);
             if (byteobj == NULL) {
                 Py_DECREF(strobj);
+                Py_XDECREF(formatobj);
                 Py_DECREF(it);
-                if (n4 != 0) {
-                    /*
-                     * Without an explicit format string, preserve the
-                     * original UnicodeEncodeError from the element text.
-                     */
-                    PyErr_SetString(PyExc_ValueError,
-                            "The `format` parameter must contain only ASCII "
-                            "characters.");
-                }
                 return -1;
             }
             NPY_BEGIN_ALLOW_THREADS;
@@ -323,6 +331,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                         "problem writing element %" NPY_INTP_FMT
                         " to file", it->index);
                 Py_DECREF(strobj);
+                Py_XDECREF(formatobj);
                 Py_DECREF(it);
                 return -1;
             }
@@ -332,6 +341,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                     PyErr_Format(PyExc_OSError,
                             "problem writing separator to file");
                     Py_DECREF(strobj);
+                    Py_XDECREF(formatobj);
                     Py_DECREF(it);
                     return -1;
                 }
@@ -339,6 +349,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             Py_DECREF(strobj);
             PyArray_ITER_NEXT(it);
         }
+        Py_XDECREF(formatobj);
         Py_DECREF(it);
     }
     return 0;
