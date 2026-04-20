@@ -441,6 +441,60 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.datetime64(None))
 
 
+class TestDeprecatedIntegerTimedeltaArrayArithmetic(_DeprecationTestCase):
+    # Deprecation in NumPy 2.5, 2026-04
+    message = "Addition of integers to (timedelta64|datetime64) arrays is deprecated"
+
+    @pytest.mark.parametrize('timedelta_arr', [
+        np.array([1, 2, 3], dtype="m8[s]"),
+        np.array([1], dtype="m8[ms]"),
+    ])
+    @pytest.mark.parametrize('int_arr', [
+        np.array([1, 2, 3]),
+        np.array([1]),
+    ])
+    @pytest.mark.parametrize("op", [np.add, np.subtract])
+    def test_timedelta_array_integer_array_arithmetic(
+        self, timedelta_arr, int_arr, op
+    ):
+        """Test that timedelta64 array + integer array triggers deprecation."""
+        # timedelta + int (num=None allows any number of warnings)
+        self.assert_deprecated(op, num=None, args=(timedelta_arr, int_arr))
+        # int + timedelta (for add only, subtract is different)
+        if op == np.add:
+            self.assert_deprecated(op, num=None, args=(int_arr, timedelta_arr))
+
+    @pytest.mark.parametrize('datetime_arr', [
+        np.array(['2020-01-01', '2020-01-02'], dtype="M8[D]"),
+        np.array(['2020-01-01T00:00:00'], dtype="M8[s]"),
+    ])
+    @pytest.mark.parametrize('int_arr', [
+        np.array([1, 2]),
+        np.array([1]),
+    ])
+    @pytest.mark.parametrize("op", [np.add, np.subtract])
+    def test_datetime_array_integer_array_arithmetic(
+        self, datetime_arr, int_arr, op
+    ):
+        """Test that datetime64 array + integer array triggers deprecation."""
+        # datetime + int (num=None allows any number of warnings)
+        self.assert_deprecated(op, num=None, args=(datetime_arr, int_arr))
+        # int + datetime (for add only)
+        if op == np.add:
+            self.assert_deprecated(op, num=None, args=(int_arr, datetime_arr))
+
+    def test_non_associative_case_warns(self):
+        """Verify the specific non-associative case."""
+        a = np.array([1], dtype="m8[s]")
+        b = np.array([1])
+        c = np.array([1], dtype="m8[ms]")
+
+        # Both intermediate operations should trigger warnings
+        self.assert_deprecated(np.add, num=None, args=(a, b))
+        self.assert_deprecated(np.add, num=None, args=(b, c))
+        
+
+
 class TestTriDeprecationWithNonInteger(_DeprecationTestCase):
     # Deprecation in NumPy 2.5, 2026-03
 
