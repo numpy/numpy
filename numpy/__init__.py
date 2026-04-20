@@ -860,8 +860,9 @@ else:
                         "Spurious warnings given by blas but suppression not "
                         "set up on this platform. Please open a NumPy issue.",
                         UserWarning, stacklevel=2)
-
-    blas_fpe_check()
+    
+    if sys.platform == "darwin" and s.uname().machine == "arm64":        
+            blas_fpe_check()
     del blas_fpe_check
 
     def hugepage_setup():
