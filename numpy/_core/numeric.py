@@ -870,7 +870,7 @@ def correlate_lags(a_len, v_len, mode=_CorrModeDefault, *, maxlag=None,
     >>> r = np.correlate(a, v, mode='full')
     >>> lag_vec = np.correlate_lags(len(a), len(v), mode='full')
     >>> r[lag_vec == 0]
-    array([2.])
+    array([3.5])
     """
     if maxlag is not None and lags is not None:
         raise TypeError("cannot specify both maxlag and lags")
