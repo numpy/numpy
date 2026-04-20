@@ -280,6 +280,11 @@ def dtype_to_descr(dtype):
                       UserWarning, stacklevel=2)
     dtype = new_dtype
 
+    if dtype.subdtype is not None:
+        # Serialize subarray dtypes recursively so they can be reconstructed
+        # from the header instead of being flattened to their void storage.
+        base, shape = dtype.subdtype
+        return dtype_to_descr(base), shape
     if dtype.names is not None:
         # This is a record array. The .descr is fine.  XXX: parts of the
         # record array with an empty name, like padding bytes, still get

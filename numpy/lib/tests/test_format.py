@@ -619,8 +619,11 @@ def test_pickle_disallow(tmpdir):
                   allow_pickle=False)
 
 @pytest.mark.parametrize('dt', [
-    # Not testing a subarray only dtype, because it cannot be attached to an array
-    # (and would fail the test as of writing this.)
+    np.dtype(('<i8', (8,))),
+    np.dtype('(2,3)<f8'),
+    np.dtype((np.dtype([('a', 'i1'), ('b', 'i1')]), (3,))),
+    # Plain subarray dtypes are checked via descriptor/header roundtrips below,
+    # since creating an array with such a dtype expands the subarray into shape.
     np.dtype([('a', np.int8),
               ('b', np.int16),
               ('c', np.int32),
@@ -668,11 +671,31 @@ def test_pickle_disallow(tmpdir):
         ]),
     ])
 def test_descr_to_dtype(dt):
-    dt1 = format.descr_to_dtype(dt.descr)
+    dt1 = format.descr_to_dtype(format.dtype_to_descr(dt))
     assert_equal_(dt1, dt)
-    arr1 = np.zeros(3, dt)
-    arr2 = roundtrip(arr1)
-    assert_array_equal(arr1, arr2)
+    if dt.subdtype is None:
+        arr1 = np.zeros(3, dt)
+        arr2 = roundtrip(arr1)
+        assert_array_equal(arr1, arr2)
+
+
+def test_open_memmap_subarray_dtype(tmpdir):
+    path = os.path.join(tmpdir, "subarray.npy")
+    dtype = np.dtype((np.dtype([('a', 'i1'), ('b', 'i1')]), (3,)))
+
+    memmap = format.open_memmap(path, mode='w+', dtype=dtype, shape=(2,))
+    memmap.flush()
+
+    with open(path, "rb") as f:
+        version = format.read_magic(f)
+        _, _, header_dtype = format._read_array_header(f, version)
+
+    loaded = format.open_memmap(path, mode='r')
+
+    assert_equal_(header_dtype, dtype)
+    assert_equal_(loaded.dtype, dtype.base)
+    assert_equal_(loaded.shape, (2, 3))
+
 
 def test_version_2_0():
     f = BytesIO()
