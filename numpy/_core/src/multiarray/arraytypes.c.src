@@ -4565,12 +4565,6 @@ argsort_resolve_descriptors(
  *         half, float, double, longdouble,
  *         cfloat, cdouble, clongdouble,
  *         datetime, timedelta#
- * #NAME = Bool,
- *         Byte, UByte, Short, UShort, Int, UInt,
- *         Long, ULong, LongLong, ULongLong,
- *         Half, Float, Double, LongDouble,
- *         CFloat, CDouble, CLongDouble,
- *         Datetime, Timedelta#
  * #rsort = 1*5, 0*15#
  */
 
