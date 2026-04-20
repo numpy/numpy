@@ -4509,6 +4509,117 @@ static int
 }
 /**end repeat**/
 
+/*
+ *****************************************************************************
+ **                          SORTING ARRAYMETHODS                           **
+ *****************************************************************************
+ */
+
+static NPY_CASTING
+sort_resolve_descriptors(
+        PyArrayMethodObject *method,
+        PyArray_DTypeMeta *const *dtypes,
+        PyArray_Descr *const *input_descrs,
+        PyArray_Descr **output_descrs,
+        npy_intp *view_offset)
+{
+    output_descrs[0] = NPY_DT_CALL_ensure_canonical(input_descrs[0]);
+    if (NPY_UNLIKELY(output_descrs[0] == NULL)) {
+        return -1;
+    }
+    output_descrs[1] = NPY_DT_CALL_ensure_canonical(input_descrs[1]);
+    if (NPY_UNLIKELY(output_descrs[1] == NULL)) {
+        Py_XDECREF(output_descrs[0]);
+        return -1;
+    }
+
+    return method->casting;
+}
+
+static NPY_CASTING
+argsort_resolve_descriptors(
+        PyArrayMethodObject *method,
+        PyArray_DTypeMeta *const *dtypes,
+        PyArray_Descr *const *input_descrs,
+        PyArray_Descr **output_descrs,
+        npy_intp *view_offset)
+{
+    output_descrs[0] = NPY_DT_CALL_ensure_canonical(input_descrs[0]);
+    if (NPY_UNLIKELY(output_descrs[0] == NULL)) {
+        return -1;
+    }
+    output_descrs[1] = PyArray_DescrFromType(NPY_INTP);
+    if (NPY_UNLIKELY(output_descrs[1] == NULL)) {
+        Py_XDECREF(output_descrs[0]);
+        return -1;
+    }
+
+    return method->casting;
+}
+
+/**begin repeat
+ *
+ * #suff = bool,
+ *         byte, ubyte, short, ushort, int, uint,
+ *         long, ulong, longlong, ulonglong,
+ *         half, float, double, longdouble,
+ *         cfloat, cdouble, clongdouble,
+ *         datetime, timedelta#
+ * #NAME = Bool,
+ *         Byte, UByte, Short, UShort, Int, UInt,
+ *         Long, ULong, LongLong, ULongLong,
+ *         Half, Float, Double, LongDouble,
+ *         CFloat, CDouble, CLongDouble,
+ *         Datetime, Timedelta#
+ * #rsort = 1*5, 0*15#
+ */
+
+static int
+@suff@_sort_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    PyArrayMethod_SortParameters *params = (PyArrayMethod_SortParameters *)context->parameters;
+    switch (params->flags) {
+        case NPY_SORT_DEFAULT:
+            return quicksort_@suff@(data[0], dimensions[0], NULL);
+        case _NPY_SORT_HEAPSORT:
+        case NPY_SORT_STABLE:
+#if @rsort@
+            return radixsort_@suff@(data[0], dimensions[0], NULL);
+#else
+            return timsort_@suff@(data[0], dimensions[0], NULL);
+#endif
+        default:
+            PyErr_Format(PyExc_RuntimeError,
+                         "unknown sort kind %d for @suff@", (int)params->flags);
+            return -1;
+    }
+}
+static int
+@suff@_argsort_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    PyArrayMethod_SortParameters *params = (PyArrayMethod_SortParameters *)context->parameters;
+    switch (params->flags) {
+        case NPY_SORT_DEFAULT:
+            return aquicksort_@suff@(data[0], (npy_intp *)data[1], dimensions[0], NULL);
+        case _NPY_SORT_HEAPSORT:
+        case NPY_SORT_STABLE:
+#if @rsort@
+            return aradixsort_@suff@(data[0], (npy_intp *)data[1], dimensions[0], NULL);
+#else
+            return atimsort_@suff@(data[0], (npy_intp *)data[1], dimensions[0], NULL);
+#endif
+        default:
+            PyErr_Format(PyExc_RuntimeError,
+                         "unknown sort kind %d for @suff@", (int)params->flags);
+            return -1;
+    }
+}
+
+/**end repeat**/
 
 /*
  *****************************************************************************
@@ -4599,6 +4710,72 @@ set_typeinfo(PyObject *dict)
     /**end repeat**/
 
     initialize_legacy_dtypemeta_aliases(_builtin_descrs);
+
+    /*
+     * Add sorting array methods for the new types.
+     */
+    
+    /**begin repeat
+     * #name = bool,
+     *         byte, ubyte, short, ushort, int, uint,
+     *         long, ulong, longlong, ulonglong,
+     *         half, float, double, longdouble,
+     *         cfloat, cdouble, clongdouble,
+     *         datetime, timedelta#
+     * #NAME = BOOL,
+     *         BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+     *         LONG, ULONG, LONGLONG, ULONGLONG,
+     *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
+     *         CFLOAT, CDOUBLE, CLONGDOUBLE,
+     *         DATETIME, TIMEDELTA#
+     */
+    dtypemeta = NPY_DTYPE(_builtin_descrs[NPY_@NAME@]);
+
+    PyArray_DTypeMeta *sort_dtypes_@name@[2] = {dtypemeta, dtypemeta};
+    PyType_Slot sort_slots_@name@[3] = {
+        {NPY_METH_resolve_descriptors, sort_resolve_descriptors},
+        {NPY_METH_strided_loop, @name@_sort_loop},
+        {0, NULL}
+    };
+    PyArrayMethod_Spec sort_spec_@name@ = {
+            .name = "@name@_sort",
+            .nin = 1,
+            .nout = 1,
+            .dtypes = sort_dtypes_@name@,
+            .slots = sort_slots_@name@,
+            .flags = NPY_METH_NO_FLOATINGPOINT_ERRORS,
+    };
+    PyBoundArrayMethodObject *sort_method_@name@ = PyArrayMethod_FromSpec_int(
+            &sort_spec_@name@, 1);
+    if (sort_method_@name@ == NULL) {
+        return -1;
+    }
+    NPY_DT_SLOTS(dtypemeta)->sort_meth = sort_method_@name@->method;
+    Py_INCREF(sort_method_@name@->method);
+
+    PyArray_DTypeMeta *argsort_dtypes_@name@[2] = {dtypemeta, &PyArray_IntpDType};
+    PyType_Slot argsort_slots_@name@[3] = {
+        {NPY_METH_resolve_descriptors, argsort_resolve_descriptors},
+        {NPY_METH_strided_loop, @name@_argsort_loop},
+        {0, NULL}
+    };
+    PyArrayMethod_Spec argsort_spec_@name@ = {
+            .name = "@name@_argsort",
+            .nin = 1,
+            .nout = 1,
+            .dtypes = argsort_dtypes_@name@,
+            .slots = argsort_slots_@name@,
+            .flags = NPY_METH_NO_FLOATINGPOINT_ERRORS,
+    };
+    PyBoundArrayMethodObject *argsort_method_@name@ = PyArrayMethod_FromSpec_int(
+            &argsort_spec_@name@, 1);
+    if (argsort_method_@name@ == NULL) {
+        return -1;
+    }
+    NPY_DT_SLOTS(dtypemeta)->argsort_meth = argsort_method_@name@->method;
+    Py_INCREF(argsort_method_@name@->method);
+
+    /**end repeat**/
 
     /*
      * Add cast functions for the new types
