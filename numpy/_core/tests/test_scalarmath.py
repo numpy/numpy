@@ -587,18 +587,18 @@ class TestConversion:
             assert_(not np.float32(1) == None)  # noqa: E711
             assert_(not np.str_('test') == None)  # noqa: E711
             # This is dubious (see below):
-            assert_(not np.datetime64('NaT') == None)  # noqa: E711
+            assert_(not np.datetime64('NaT', 'D') == None)  # noqa: E711
 
             assert_(np.float32(1) != None)  # noqa: E711
             assert_(np.str_('test') != None)  # noqa: E711
             # This is dubious (see below):
-            assert_(np.datetime64('NaT') != None)  # noqa: E711
+            assert_(np.datetime64('NaT', 'D') != None)  # noqa: E711
         assert_(len(w) == 0)
 
         # For documentation purposes, this is why the datetime is dubious.
         # At the time of deprecation this was no behaviour change, but
         # it has to be considered when the deprecations are done.
-        assert_(np.equal(np.datetime64('NaT'), None))
+        assert_(np.equal(np.datetime64('NaT', 'D'), None))
 
 
 #class TestRepr:
@@ -663,8 +663,13 @@ class TestMultiply:
         # change.
         accepted_types = set(np.typecodes["AllInteger"])
         deprecated_types = {'?'}
+        datetime_types = set(np.typecodes['Datetime'])
         forbidden_types = (
-            set(np.typecodes["All"]) - accepted_types - deprecated_types)
+            set(np.typecodes["All"])
+            - accepted_types
+            - deprecated_types
+            - datetime_types
+        )
         forbidden_types -= {'V'}  # can't default-construct void scalars
 
         for seq_type in (list, tuple):
@@ -681,6 +686,11 @@ class TestMultiply:
 
             for numpy_type in forbidden_types:
                 i = np.dtype(numpy_type).type()
+                assert_raises(TypeError, operator.mul, seq, i)
+                assert_raises(TypeError, operator.mul, i, seq)
+
+            for numpy_type in datetime_types:
+                i = np.dtype(numpy_type).type(1, "D")
                 assert_raises(TypeError, operator.mul, seq, i)
                 assert_raises(TypeError, operator.mul, i, seq)
 

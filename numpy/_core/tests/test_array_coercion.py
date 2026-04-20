@@ -125,7 +125,7 @@ def scalar_instances(times=True, extended_precision=True, user_dtype=True):
         yield param(np.timedelta64(23, "s"), id="timedelta64[s]")
         yield param(np.timedelta64("NaT", "s"), id="timedelta64[s](NaT)")
 
-        yield param(np.datetime64("NaT"), id="datetime64[generic](NaT)")
+        yield param(np.datetime64("NaT", "D"), id="datetime64[D](NaT)")
         yield param(np.datetime64("2020-06-07 12:43", "ms"), id="datetime64[ms]")
 
     # Strings and unstructured void:
@@ -401,7 +401,7 @@ class TestTimeScalars:
     @pytest.mark.parametrize("scalar",
             [param(np.timedelta64("NaT", "s"), id="timedelta64[s](NaT)"),
              param(np.timedelta64(123, "s"), id="timedelta64[s]"),
-             param(np.datetime64("NaT", "generic"), id="datetime64[generic](NaT)"),
+             param(np.datetime64("NaT", "D"), id="datetime64[D](NaT)"),
              param(np.datetime64(1, "D"), id="datetime64[D]")],)
     def test_coercion_basic(self, dtype, scalar):
         # Note the `[scalar]` is there because np.array(scalar) uses stricter
