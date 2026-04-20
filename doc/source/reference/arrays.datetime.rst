@@ -95,8 +95,8 @@ as ``now``.
 
     NAT (not a time):
 
-    >>> np.datetime64('nat')
-    np.datetime64('NaT')
+    >>> np.datetime64('nat', 'D')
+    np.datetime64('NaT', 'D')
 
     The current time (UTC, default second precision):
 
@@ -117,6 +117,11 @@ as ``now``.
 When creating an array of datetimes from a string, it is still possible
 to automatically select the unit from the inputs, by using the
 datetime type with generic units.
+
+.. deprecated:: 2.5
+  The generic units of `timedelta64` are deprecated since NumPy 2.5 and
+  will raise an error in the future. With this changes, `datetime64`'s ``NaT`` is now required to have an explicit time unit for consistency with other datetime and timedelta operations.
+
 
 .. admonition:: Example
 
@@ -218,8 +223,8 @@ data type also accepts the string "NAT" in place of the number for a "Not A Time
     >>> np.timedelta64(4, 'h')
     np.timedelta64(4,'h')
 
-    >>> np.timedelta64('nAt')
-    np.timedelta64('NaT')
+    >>> np.timedelta64('nAt', 'D')
+    np.timedelta64('NaT', 'D')
 
 Datetimes and Timedeltas work together to provide ways for
 simple datetime calculations.
@@ -245,11 +250,11 @@ simple datetime calculations.
     >>> np.timedelta64(1,'W') % np.timedelta64(10,'D')
     np.timedelta64(7,'D')
 
-    >>> np.datetime64('nat') - np.datetime64('2009-01-01')
+    >>> np.datetime64('nat', 'D') - np.datetime64('2009-01-01')
     np.timedelta64('NaT','D')
 
-    >>> np.datetime64('2009-01-01') + np.timedelta64('nat')
-    np.datetime64('NaT')
+    >>> np.datetime64('2009-01-01') + np.timedelta64('nat', 'D')
+    np.datetime64('NaT', 'D')
 
 There are two Timedelta units ('Y', years and 'M', months) which are treated
 specially, because how much time they represent changes depending
@@ -359,10 +364,10 @@ The protocol is described in the following table:
 
     >>> import numpy as np
 
-    >>> type(np.datetime64('NaT').item())
+    >>> type(np.datetime64('NaT', 'D').item())
     <class 'NoneType'>
 
-    >>> type(np.timedelta64('NaT').item())
+    >>> type(np.timedelta64('NaT', 'D').item())
     <class 'NoneType'>
 
     >>> type(np.timedelta64(123, 'ns').item())
@@ -653,7 +658,7 @@ Migration guide for deprecation of generic units
 The generic units of `timedelta64` are deprecated since NumPy 2.5 
 and will raise an error in the future.
 This section provides guidance on how to update code
-that uses generic units of `timedelta64` to avoid future errors.
+that uses generic units of `timedelta64` and `datetime64` to avoid future errors.
 
 The straight forward way is to replace the generic unit with a specific time unit such as 'D' (day), 'h' (hour), 'm' (minute), 's' (second), etc. The choice of the specific time unit will depend on the context of your code and the level of precision you require.
 
@@ -686,3 +691,12 @@ The straight forward way is to replace the generic unit with a specific time uni
 
     >>> arr = np.ones(5, dtype='m8[s]')
     >>> np.testing.assert_allclose(arr, np.timedelta64(1, "s"), atol=np.timedelta64(0, "s"))
+
+    Previously, `datetime64` allowed `NaT` without specifying a time unit. 
+    With the deprecation of generic units, `NaT` is now required to have an explicit time unit for consistency with other datetime and timedelta operations.
+
+    >>> np.datetime64("NAT")
+    DeprecationWarning: The 'generic' unit for NumPy timedelta is deprecated, and will raise an error in the future. This includes implicit conversion of bare integers (e.g. `+ 1`).Please use a specific unit instead.
+
+    >>> np.datetime64("NAT", "D")
+    np.datetime64('NaT', 'D')
