@@ -964,6 +964,13 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         if dtype.hasobject:
             msg = "Array can't be memory-mapped: Python objects in dtype."
             raise ValueError(msg)
+        if dtype.subdtype is not None:
+            # Top-level subarrays are written canonically as extra array
+            # dimensions plus the base dtype, which keeps the file readable by
+            # the regular .npy loader.
+            base, subshape = dtype.subdtype
+            shape = tuple(shape) + tuple(subshape)
+            dtype = base
         d = {
             "descr": dtype_to_descr(dtype),
             "fortran_order": fortran_order,

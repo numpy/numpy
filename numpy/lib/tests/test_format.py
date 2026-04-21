@@ -520,40 +520,60 @@ def test_memmap_roundtrip(tmpdir):
 
 @pytest.mark.skipif(IS_WASM, reason="memmap doesn't work correctly")
 @pytest.mark.parametrize(
-    "i, dtype, shape, expected_dtype, expected_shape",
+    "i, dtype, shape, fortran_order, expected_dtype, expected_shape, "
+    "expected_c_contiguous, expected_f_contiguous",
     [
-        (0, np.dtype('<i4'), (3,), np.dtype('<i4'), (3,)),
+        (0, np.dtype('<i4'), (3,), False, np.dtype('<i4'), (3,), True, True),
         # Plain top-level subarray dtypes expand into the memmap shape on read.
-        (1, np.dtype((np.int64, (8,))), (2,), np.dtype(np.int64), (2, 8)),
+        (1, np.dtype((np.int64, (8,))), (2,), False, np.dtype(np.int64),
+         (2, 8), True, False),
+        (2, np.dtype((np.int64, (2, 3))), (4,), True, np.dtype(np.int64),
+         (4, 2, 3), False, True),
         (
-            2,
+            3,
             np.dtype([('a', '<i4'), ('b', '<f8')]),
             (4,),
+            False,
             np.dtype([('a', '<i4'), ('b', '<f8')]),
-            (4, ),
+            (4,),
+            True,
+            True,
         ),
         # Structured base dtypes should behave the same when wrapped in a
         # top-level subarray.
         (
-            3,
+            4,
             np.dtype(([('a', '<i4'), ('b', '<f8')], (3,))),
             (2,),
+            False,
             np.dtype([('a', '<i4'), ('b', '<f8')]),
             (2, 3),
+            True,
+            False,
         ),
     ],
 )
 def test_memmap_user_dtype_roundtrip(
-    tmpdir, i, dtype, shape, expected_dtype, expected_shape
+    tmpdir, i, dtype, shape, fortran_order, expected_dtype, expected_shape,
+    expected_c_contiguous, expected_f_contiguous
 ):
     path = os.path.join(tmpdir, f"user_dtype{i}.npy")
-    memmap = format.open_memmap(path, mode='w+', dtype=dtype, shape=shape)
+    # Writing through the explicit `dtype= path is the case that needs the
+    # top-level subarray normalization in open_memmap.
+    memmap = format.open_memmap(
+        path, mode='w+', dtype=dtype, shape=shape, fortran_order=fortran_order)
     memmap.flush()
 
     loaded = format.open_memmap(path, mode='r')
 
     assert_equal_(loaded.dtype, expected_dtype)
     assert_equal_(loaded.shape, expected_shape)
+    assert_equal_(loaded.flags.c_contiguous, expected_c_contiguous)
+    assert_equal_(loaded.flags.f_contiguous, expected_f_contiguous)
+
+    # np.load exercises the regular .npy reader instead of the memmap path.
+    arr = np.load(path)
+    assert_array_equal(arr, loaded)
 
 
 def test_compressed_roundtrip(tmpdir):
@@ -706,12 +726,13 @@ def test_pickle_disallow(tmpdir):
         ]),
     ])
 def test_descr_dtype_roundtrip(dt):
+    # Top-level subarray dtypes cannot be validated through arr.dtype after
+    # array creation, so check the descriptor helper roundtrip directly first.
     dt1 = format.descr_to_dtype(format.dtype_to_descr(dt))
     assert_equal_(dt1, dt)
     arr1 = np.zeros(3, dt)
     arr2 = roundtrip(arr1)
     assert_array_equal(arr1, arr2)
-
 
 def test_version_2_0():
     f = BytesIO()
