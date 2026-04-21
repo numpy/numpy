@@ -561,17 +561,24 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
     }
 
     /*
-     * Changing dtype on a subclass.  We support three paths:
+     * Changing dtype on a subclass.  We support 4 paths:
      *
      * 1. subclass overrides _set_dtype: create subclass view first,
      *    then call _set_dtype (subclass handles dtype change).
+     *    If _set_dtype is set to None, we use path 3 below.
      * 2. subclass overrides the dtype descriptor (e.g. property with
      *    setter): create subclass view first, use the setter, but
      *    emit a deprecation asking to implement _set_dtype instead.
-     * 3. Otherwise (including plain ndarray): create an ndarray base
-     *    view, set dtype internally, then create the subclass view
-     *    if needed.  __array_finalize__ sees the final dtype+shape.
+     * 3. If _set_dtype is None: create an ndarray base view, set dtype
+     *    internally, then create the subclass view if needed:
+     *    __array_finalize__ sees the final dtype+shape.
+     * 4. If _set_dtype (and dtype) are not set, call `__array_finalize__`
+     *    with the old dtype and forcibly update the dtype (a subclass will be
+     *    unaware of the change) which is the unfortunate historic behavior.
+     *
+     * (Base class ndarray has no __array_finalize__ so effectively uses path 4.)
      */
+    int use_dtype_in_finalize = 0;
     int use_set_dtype = 0;
     int use_dtype_prop = 0;
 
@@ -582,11 +589,16 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
                 npy_interned_str._set_dtype, &sub_set_dtype) < 0) {
             goto finish;
         }
-        use_set_dtype = (sub_set_dtype != NULL &&
-                sub_set_dtype != npy_static_pydata.ndarray_set_dtype);
+        if (sub_set_dtype == Py_None) {
+            use_dtype_in_finalize = 1;
+        }
+        else {
+            use_set_dtype = (sub_set_dtype != NULL &&
+                    sub_set_dtype != npy_static_pydata.ndarray_set_dtype);
+        }
         Py_XDECREF(sub_set_dtype);
 
-        if (!use_set_dtype) {
+        if (!use_set_dtype && !use_dtype_in_finalize) {
             PyObject *sub_dtype_descr;
             if (PyObject_GetOptionalAttr(
                     (PyObject *)subtype,
@@ -644,10 +656,10 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
         goto finish;
     }
 
-    /* Path 3: create ndarray base view and set dtype internally */
+    /* Path 3+4: create view and set dtype internally */
     Py_INCREF(dtype);
     ret = (PyArrayObject *)PyArray_NewFromDescr_int(
-            &PyArray_Type, dtype,
+            use_dtype_in_finalize ? &PyArray_Type : subtype, dtype,
             PyArray_NDIM(self), PyArray_DIMS(self),
             PyArray_STRIDES(self), PyArray_DATA(self),
             flags, (PyObject *)self, (PyObject *)self,
@@ -660,7 +672,12 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
         goto finish;
     }
 
-    if (subtype != &PyArray_Type) {
+    /*
+     * Path 3: `_set_dtype is None` and `ret` is a base-class array
+     * with correct dtype+shape, this will call `__array_finalize__`
+     * with the final dtype+shape.
+     */
+    if (use_dtype_in_finalize) {
         Py_INCREF(PyArray_DESCR(ret));
         Py_SETREF(ret, (PyArrayObject *)PyArray_NewFromDescr_int(
                 subtype, PyArray_DESCR(ret),
