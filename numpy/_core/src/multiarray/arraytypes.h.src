@@ -10,10 +10,6 @@ extern "C" {
 NPY_NO_EXPORT int
 set_typeinfo(PyObject *dict);
 
-/* sorting array methods */
-NPY_NO_EXPORT int
-set_sorts(PyObject *dict);
-
 /* needed for blasfuncs, matmul, and vecdot */
 /**begin repeat
  *
