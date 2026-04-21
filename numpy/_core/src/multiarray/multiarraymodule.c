@@ -5177,6 +5177,10 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
 
+    if (set_sorts(d) < 0) {
+        return -1;
+    }
+
     if (init_string_dtype() < 0) {
         return -1;
     }
