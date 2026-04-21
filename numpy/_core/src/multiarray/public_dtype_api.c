@@ -36,8 +36,12 @@ PyArrayInitDTypeMeta_FromSpec(
         return -1;
     }
 
-    if (((PyTypeObject *)DType)->tp_repr == PyArrayDescr_Type.tp_repr
-            || ((PyTypeObject *)DType)->tp_str == PyArrayDescr_Type.tp_str) {
+    int is_legacy = (spec->slots != NULL
+            && spec->slots[0].slot == NPY_DT_legacy_descriptor_proto);
+
+    if (!is_legacy
+            && (((PyTypeObject *)DType)->tp_repr == PyArrayDescr_Type.tp_repr
+                || ((PyTypeObject *)DType)->tp_str == PyArrayDescr_Type.tp_str)) {
         PyErr_SetString(PyExc_TypeError,
                 "A custom DType must implement `__repr__` and `__str__` since "
                 "the default inherited version (currently) fails.");
@@ -75,12 +79,14 @@ PyArrayInitDTypeMeta_FromSpec(
         return -1;
     }
 
-    if (NPY_DT_SLOTS(DType)->setitem == NULL
-            || NPY_DT_SLOTS(DType)->getitem == NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "A DType must provide a getitem/setitem (there may be an "
-                "exception here in the future if no scalar type is provided)");
-        return -1;
+    if (!NPY_DT_is_legacy(DType)) {
+        if (NPY_DT_SLOTS(DType)->setitem == NULL
+                || NPY_DT_SLOTS(DType)->getitem == NULL) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "A DType must provide a getitem/setitem (there may be an "
+                    "exception here in the future if no scalar type is provided)");
+            return -1;
+        }
     }
 
     if (NPY_DT_SLOTS(DType)->ensure_canonical == NULL) {

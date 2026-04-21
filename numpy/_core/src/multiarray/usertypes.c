@@ -83,7 +83,7 @@ _default_nonzero(void *ip, void *arr)
     return NPY_FALSE;
 }
 
-static void
+NPY_NO_EXPORT void
 _default_copyswapn(void *dst, npy_intp dstride, void *src,
                    npy_intp sstride, npy_intp n, int swap, void *arr)
 {

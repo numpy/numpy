@@ -8,6 +8,10 @@ extern NPY_NO_EXPORT _PyArray_LegacyDescr **userdescrs;
 NPY_NO_EXPORT void
 PyArray_InitArrFuncs(PyArray_ArrFuncs *f);
 
+NPY_NO_EXPORT void
+_default_copyswapn(void *dst, npy_intp dstride, void *src,
+                   npy_intp sstride, npy_intp n, int swap, void *arr);
+
 NPY_NO_EXPORT int
 PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
                         NPY_SCALARKIND scalar);

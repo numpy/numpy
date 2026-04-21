@@ -179,6 +179,18 @@ PyArray_ArrFuncs default_funcs = {
         .setitem = &legacy_setitem_using_DType,
 };
 
+/* Forward declarations for functions used in the legacy proto path */
+static PyObject *
+legacy_dtype_default_new(PyArray_DTypeMeta *self,
+        PyObject *args, PyObject *kwargs);
+static PyArray_Descr *
+nonparametric_discover_descr_from_pyobject(
+        PyArray_DTypeMeta *cls, PyObject *obj);
+static PyArray_Descr *
+nonparametric_default_descr(PyArray_DTypeMeta *cls);
+static PyArray_Descr *
+ensure_native_byteorder(PyArray_Descr *descr);
+
 /*
  * Internal version of PyArrayInitDTypeMeta_FromSpec.
  *
@@ -222,7 +234,43 @@ dtypemeta_initialize_struct_from_spec(
     NPY_DT_SLOTS(DType)->get_constant = default_get_constant;
     NPY_DT_SLOTS(DType)->f = default_funcs;
 
+    /*
+     * If the first slot is NPY_DT_legacy_descriptor_proto, this DType will
+     * be set up as a legacy dtype.  Consume that slot and amend the defaults
+     * to match the legacy path (dtypemeta_wrap_legacy_descriptor).
+     */
+    PyArray_DescrProto *legacy_proto = NULL;
     PyType_Slot *spec_slot = spec->slots;
+    if (spec_slot != NULL
+            && spec_slot->slot == NPY_DT_legacy_descriptor_proto) {
+        legacy_proto = (PyArray_DescrProto *)spec_slot->pfunc;
+        spec_slot++;  /* consumed; the slot loop starts after this one */
+
+        DType->flags |= NPY_DT_LEGACY;
+        ((PyTypeObject *)DType)->tp_basicsize = sizeof(_PyArray_LegacyDescr);
+        ((PyTypeObject *)DType)->tp_new = (newfunc)legacy_dtype_default_new;
+
+        NPY_DT_SLOTS(DType)->discover_descr_from_pyobject =
+                nonparametric_discover_descr_from_pyobject;
+        NPY_DT_SLOTS(DType)->default_descr = nonparametric_default_descr;
+        NPY_DT_SLOTS(DType)->common_dtype =
+                legacy_userdtype_common_dtype_function;
+        NPY_DT_SLOTS(DType)->ensure_canonical = ensure_native_byteorder;
+        NPY_DT_SLOTS(DType)->setitem = legacy_fallback_setitem;
+
+        /* Only take copyswap/copyswapn from the proto's arrfuncs */
+        if (legacy_proto->f != NULL) {
+            NPY_DT_SLOTS(DType)->f.copyswap = legacy_proto->f->copyswap;
+            if (legacy_proto->f->copyswapn != NULL) {
+                NPY_DT_SLOTS(DType)->f.copyswapn = legacy_proto->f->copyswapn;
+            }
+            else if (legacy_proto->f->copyswap != NULL) {
+                NPY_DT_SLOTS(DType)->f.copyswapn = _default_copyswapn;
+            }
+        }
+    }
+
+    /* Walk the remaining slots and fill in function pointers */
     while (1) {
         int slot = spec_slot->slot;
         void *pfunc = spec_slot->pfunc;
@@ -324,8 +372,89 @@ dtypemeta_initialize_struct_from_spec(
         }
     }
 
-    /* invalid type num. Ideally, we get away with it! */
-    DType->type_num = -1;
+    if (legacy_proto != NULL) {
+        /*
+         * Create the _PyArray_LegacyDescr singleton from the proto, assign
+         * a type number, and register in userdescrs.
+         */
+        if (spec->flags & NPY_DT_PARAMETRIC) {
+            PyErr_SetString(PyExc_TypeError,
+                    "legacy dtypes via NPY_DT_legacy_descriptor_proto "
+                    "must not be parametric");
+            return -1;
+        }
+        if (legacy_proto->metadata != NULL || legacy_proto->c_metadata != NULL) {
+            PyErr_SetString(PyExc_TypeError,
+                    "legacy dtypes via NPY_DT_legacy_descriptor_proto "
+                    "do not support metadata or c_metadata");
+            return -1;
+        }
+        if (legacy_proto->elsize == 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "legacy DType must have a fixed element size (elsize > 0)");
+            return -1;
+        }
+        if (legacy_proto->flags & (NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "legacy dtypes via NPY_DT_legacy_descriptor_proto "
+                    "do not support NPY_ITEM_IS_POINTER or NPY_ITEM_REFCOUNT");
+            return -1;
+        }
+
+        int typenum = NPY_USERDEF + NPY_NUMUSERTYPES;
+        if (typenum >= NPY_VSTRING) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Too many user defined dtypes registered");
+            return -1;
+        }
+
+        _PyArray_LegacyDescr *descr = PyObject_Malloc(
+                sizeof(_PyArray_LegacyDescr));
+        if (descr == NULL) {
+            PyErr_NoMemory();
+            return -1;
+        }
+        PyObject_INIT(descr, (PyTypeObject *)DType);
+
+        Py_XINCREF(legacy_proto->typeobj);
+        descr->typeobj = legacy_proto->typeobj;
+        descr->kind = legacy_proto->kind;
+        descr->type = legacy_proto->type;
+        descr->byteorder = legacy_proto->byteorder;
+        descr->_former_flags = 0;
+        descr->flags = legacy_proto->flags;
+        descr->elsize = legacy_proto->elsize;
+        descr->alignment = legacy_proto->alignment;
+        descr->metadata = NULL;
+        descr->hash = -1;
+        descr->reserved_null[0] = NULL;
+        descr->reserved_null[1] = NULL;
+        descr->subarray = legacy_proto->subarray;
+        Py_XINCREF(legacy_proto->fields);
+        descr->fields = legacy_proto->fields;
+        Py_XINCREF(legacy_proto->names);
+        descr->names = legacy_proto->names;
+        descr->c_metadata = NULL;
+
+        _PyArray_LegacyDescr **tmp = realloc(userdescrs,
+                (NPY_NUMUSERTYPES + 1) * sizeof(void *));
+        if (tmp == NULL) {
+            Py_DECREF(descr);
+            PyErr_NoMemory();
+            return -1;
+        }
+        userdescrs = tmp;
+        userdescrs[NPY_NUMUSERTYPES++] = descr;
+
+        descr->type_num = typenum;
+        legacy_proto->type_num = typenum;
+        DType->type_num = typenum;
+        DType->singleton = (PyArray_Descr *)descr;
+    }
+    else {
+        /* invalid type num. Ideally, we get away with it! */
+        DType->type_num = -1;
+    }
 
     /*
      * Handle the scalar type mapping.
@@ -339,7 +468,8 @@ dtypemeta_initialize_struct_from_spec(
             return -1;
         }
     }
-    if (_PyArray_MapPyTypeToDType(DType, DType->scalar_type, 0) < 0) {
+    if (_PyArray_MapPyTypeToDType(DType, DType->scalar_type,
+            legacy_proto != NULL) < 0) {
         Py_DECREF(DType);
         return -1;
     }
