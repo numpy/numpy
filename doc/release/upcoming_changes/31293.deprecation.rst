@@ -7,11 +7,12 @@ that do not see this ``DeprecationWarning`` may wish to update their code.
 
 A subclass that does any ``dtype`` specific logic (i.e. verifying the dtype
 in ``__array_finalize__`` or has a ``dtype`` property) should now:
+
 * Set ``_set_dtype = None`` in which case ``arr.view(dtype=new_dtype)``
   will call ``__array_finalize__`` with the new dtype, ensuring that
   any validation ``__array_finalize__`` will run is done.
-* Define ``_set_dtype`` as a function (calling ``ndarray._set_dtype()``
-  to avoid ``DeprecationWarnings`` as a quick fix.
+* Or, for a quick fix, define ``_set_dtype`` as a function (calling
+  ``ndarray._set_dtype()`` to avoid ``DeprecationWarnings``.
   (Future versions might migrate towards the ``_set_dtype = None`` path.)
 
 Ideally, follow NumPy's deprecation to prevent ``dtype`` mutation by users.

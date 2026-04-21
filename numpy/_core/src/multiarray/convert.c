@@ -569,12 +569,14 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
      * 2. subclass overrides the dtype descriptor (e.g. property with
      *    setter): create subclass view first, use the setter, but
      *    emit a deprecation asking to implement _set_dtype instead.
-     * 3. If _set_dtype is None (or base-class): create an ndarray base
-     *    view, set dtype internally, then create the subclass view
-     *    if needed.  __array_finalize__ sees the final dtype+shape.
-     * 4. Otherwise, call `__array_finalize__` with old dtype and forcibly
-     *    update the dtype (the subclass will be unaware of the change) which
-     *    is the unfortunate historic behavior.
+     * 3. If _set_dtype is None: create an ndarray base view, set dtype
+     *    internally, then create the subclass view if needed:
+     *    __array_finalize__ sees the final dtype+shape.
+     * 4. If _set_dtype (and dtype) are not set, call `__array_finalize__`
+     *    with the old dtype and forcibly update the dtype (a subclass will be
+     *    unaware of the change) which is the unfortunate historic behavior.
+     *
+     * (Base class ndarray has no __array_finalize__ so effectively uses path 4.)
      */
     int use_dtype_in_finalize = 0;
     int use_set_dtype = 0;
@@ -675,7 +677,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
      * with correct dtype+shape, this will call `__array_finalize__`
      * with the final dtype+shape.
      */
-    if (use_dtype_in_finalize && subtype != &PyArray_Type) {
+    if (use_dtype_in_finalize) {
         Py_INCREF(PyArray_DESCR(ret));
         Py_SETREF(ret, (PyArrayObject *)PyArray_NewFromDescr_int(
                 subtype, PyArray_DESCR(ret),
