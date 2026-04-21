@@ -120,7 +120,8 @@ datetime type with generic units.
 
 .. deprecated:: 2.5
   The generic units of `timedelta64` were deprecated in NumPy 2.5 and
-  will raise an error in the future. With this change, ``NaT`` in `datetime64` is now required to have an explicit time unit.
+  will raise an error in the future. With this change,
+  ``NaT`` in `datetime64` is now required to have an explicit time unit.
 
 
 .. admonition:: Example
