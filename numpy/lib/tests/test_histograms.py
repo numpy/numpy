@@ -706,9 +706,7 @@ class TestHistogramdd:
             H, edges = histogramdd(r, b)
             assert_(H.shape == b)
 
-    def test_bin_strings(self):
-        # These tests checks whether if histogramdd behaves like histogram
-        # in simple cases i.e data behaves like 1D
+    def test_bin_strings_simple(self):
         x = np.arange(10)
         x_2d = x[:, None]
         for estimator in ['auto', 'fd', 'scott', 'rice', 'sturges',
@@ -725,6 +723,20 @@ class TestHistogramdd:
         assert_array_equal(res, x_3d_ans)
         res, _ = histogramdd(x_3d, bins=['auto'] * 3)
         assert_array_equal(res, x_3d_ans)
+
+    def test_bin_strings_multi_dim(self):
+        x = np.array([[-.5, .5, 1.5], [-.5, 1.5, 2.5], [-.5, 2.5, .5],
+                      [.5,  .5, 1.5], [.5,  1.5, 2.5], [.5,  2.5, 2.5]])
+        # stone gives runtime warning about optimal bins,
+        # so it is skipped here since it is unrelated
+        for estimator in ['auto', 'fd', 'scott', 'rice', 'sturges',
+                          'doane', 'sqrt']:
+            _, edges_1 = histogram(x.T[2], estimator)
+            _, edges = histogramdd(x, (2, 3, estimator))
+            assert_array_equal(edges[2], edges_1)
+            _, edges = histogramdd(x, (2, [2, 3, 5, 21, 35, 123], estimator))
+            assert_array_equal(edges[2], edges_1)
+            assert_array_equal(edges[1], np.array([2, 3, 5, 21, 35, 123]))
 
     def test_weights(self):
         v = np.random.rand(100, 2)
