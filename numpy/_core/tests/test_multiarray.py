@@ -6610,6 +6610,8 @@ class TestView:
         # __array_finalize__ and return the correct subclass type.
 
         class MyArray(np.ndarray):
+            _set_dtype = None
+
             def __array_finalize__(self, obj):
                 self.finalized_from = obj
                 self._dtype_at_finalize = self.dtype

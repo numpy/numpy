@@ -255,6 +255,10 @@ class TestDeprecatedArrayAttributeSetting(_DeprecationTestCase):
         x = np.eye(2)
         self.assert_deprecated(setattr, args=(x, "dtype", int))
 
+    def test_deprecated_dtype_set_record(self):
+        x = np.zeros(2, dtype="i4,i4").view(np.recarray)
+        self.assert_deprecated(setattr, args=(x, "dtype", np.dtype("f4,f4")))
+
     def test_deprecated_shape_set(self):
         x = np.eye(2)
         self.assert_deprecated(setattr, args=(x, "shape", (4, 1)))
