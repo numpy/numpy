@@ -986,11 +986,11 @@ static GCC_CAST_OPT_LEVEL int
 #   pragma GCC diagnostic ignored "-Wtautological-compare"
 #   endif
 #  if !@is_bool1@
-   if (_TO_RTYPE1(src_value) > @type2max@) {
+   if (_TO_RTYPE1(src_value) > (@rtype1@)@type2max@) {
         _RETURN_SAME_VALUE_FAILURE;
    }
 #  if !@is_unsigned1@
-   if (_TO_RTYPE1(src_value) < @type2min@) {
+   if (_TO_RTYPE1(src_value) < (@rtype1@)@type2min@) {
         _RETURN_SAME_VALUE_FAILURE;
    }
 #  endif
