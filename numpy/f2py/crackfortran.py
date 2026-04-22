@@ -98,7 +98,7 @@ Usage:
      (see also fortran type declaration statement formats below)
 
 Fortran 90 type declaration statement format (F77 is subset of F90)
-====================================================================
+===================================================================
 (Main source: IBM XL Fortran 5.1 Language Reference Manual)
 type declaration = <typespec> [[<attrspec>]::] <entitydecl>
 <typespec> = byte                          |
