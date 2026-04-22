@@ -819,7 +819,7 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                                     PyTypeNum_ISBOOL(type_num2)) {
             if (DEPRECATE(
-                    "Addition of integers to timedelta64 arrays is deprecated, "
+                    "The 'generic' unit for NumPy timedelta is deprecated, "
                     "and will raise an error in the future. "
                     "Please convert the integer with an explicit unit.") < 0) {
                 return -1;
@@ -862,7 +862,7 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                     PyTypeNum_ISBOOL(type_num2)) {
             if (DEPRECATE(
-                    "Addition of integers to datetime64 arrays is deprecated, "
+                    "The 'generic' unit for NumPy timedelta is deprecated, "
                     "and will raise an error in the future. "
                     "Please convert the integer with an explicit unit.") < 0) {
                 return -1;
@@ -893,7 +893,7 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
         /* int + m8[<A>] => m8[<A>] + m8[<A>] */
         if (type_num2 == NPY_TIMEDELTA) {
             if (DEPRECATE(
-                    "Addition of integers to timedelta64 arrays is deprecated, "
+                    "The 'generic' unit for NumPy timedelta is deprecated, "
                     "and will raise an error in the future. "
                     "Please convert the integer with an explicit unit.") < 0) {
                 return -1;
@@ -912,7 +912,7 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
         }
         else if (type_num2 == NPY_DATETIME) {
             if (DEPRECATE(
-                    "Addition of integers to datetime64 arrays is deprecated, "
+                    "The 'generic' unit for NumPy timedelta is deprecated, "
                     "and will raise an error in the future. "
                     "Please convert the integer with an explicit unit.") < 0) {
                 return -1;
@@ -1016,7 +1016,7 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                                         PyTypeNum_ISBOOL(type_num2)) {
             if (DEPRECATE(
-                    "Subtraction of integers from timedelta64 arrays is deprecated, "
+                    "The 'generic' unit for NumPy timedelta is deprecated, "
                     "and will raise an error in the future. "
                     "Please convert the integer with an explicit unit.") < 0) {
                 return -1;
@@ -1059,7 +1059,7 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                     PyTypeNum_ISBOOL(type_num2)) {
             if (DEPRECATE(
-                    "Subtraction of integers from datetime64 arrays is deprecated, "
+                    "The 'generic' unit for NumPy timedelta is deprecated, "
                     "and will raise an error in the future. "
                     "Please convert the integer with an explicit unit.") < 0) {
                 return -1;
@@ -1106,7 +1106,7 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
         /* int - m8[<A>] => m8[<A>] - m8[<A>] */
         if (type_num2 == NPY_TIMEDELTA) {
             if (DEPRECATE(
-                    "Subtraction of integers from timedelta64 arrays is deprecated, "
+                    "The 'generic' unit for NumPy timedelta is deprecated, "
                     "and will raise an error in the future. "
                     "Please convert the integer with an explicit unit.") < 0) {
                 return -1;
