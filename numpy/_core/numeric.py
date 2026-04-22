@@ -11,6 +11,7 @@ import numpy as np
 from numpy.exceptions import AxisError
 
 from . import multiarray, numerictypes, numerictypes as nt, overrides, shape_base, umath
+from .._globals import _NoValue
 from ._ufunc_config import errstate
 from .multiarray import (  # noqa: F401
     ALLOW_THREADS,
@@ -713,8 +714,6 @@ def flatnonzero(a):
     return np.nonzero(np.ravel(a))[0]
 
 
-_CorrModeDefault = object()
-
 _CORR_MODE_MAP = {
     'valid': 0,
     'same': 1,
@@ -821,7 +820,7 @@ def _correlation_lags_dispatcher(a_len, v_len, mode=None, *, maxlag=None,
 
 
 @array_function_dispatch(_correlation_lags_dispatcher)
-def correlation_lags(a_len, v_len, mode=_CorrModeDefault, *, maxlag=None,
+def correlation_lags(a_len, v_len, mode=_NoValue, *, maxlag=None,
                    lags=None):
     """
     Return the lag indices for a `~numpy.correlate` call with the same
@@ -876,7 +875,7 @@ def correlation_lags(a_len, v_len, mode=_CorrModeDefault, *, maxlag=None,
         raise TypeError("cannot specify both maxlag and lags")
     lags_given = maxlag is not None or lags is not None
 
-    if mode is _CorrModeDefault:
+    if mode is _NoValue:
         mode = 'lags' if lags_given else 'valid'
     mode = _mode_from_name(mode)
 
@@ -903,7 +902,7 @@ def _correlate_dispatcher(a, v, mode=None, *, maxlag=None, lags=None):
 
 
 @array_function_dispatch(_correlate_dispatcher)
-def correlate(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None):
+def correlate(a, v, mode=_NoValue, *, maxlag=None, lags=None):
     r"""
     Cross-correlation of two 1-dimensional sequences.
 
@@ -1002,7 +1001,7 @@ def correlate(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None):
     lags_given = maxlag is not None or lags is not None
 
     # Resolve mode: if unset, infer from whether maxlag/lags was provided
-    if mode is _CorrModeDefault:
+    if mode is _NoValue:
         mode = 'lags' if lags_given else 'valid'
     mode = _mode_from_name(mode)
 
@@ -1029,7 +1028,7 @@ def _convolve_dispatcher(a, v, mode=None, *, maxlag=None, lags=None):
 
 
 @array_function_dispatch(_convolve_dispatcher)
-def convolve(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None):
+def convolve(a, v, mode=_NoValue, *, maxlag=None, lags=None):
     """
     Returns the discrete, linear convolution of two one-dimensional sequences.
 
@@ -1173,7 +1172,7 @@ def convolve(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None):
     lags_given = maxlag is not None or lags is not None
 
     # Resolve mode: if unset, infer from whether maxlag/lags was provided
-    if mode is _CorrModeDefault:
+    if mode is _NoValue:
         mode = 'lags' if lags_given else 'full'
     mode = _mode_from_name(mode)
 

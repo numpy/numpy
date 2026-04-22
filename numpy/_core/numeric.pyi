@@ -1049,88 +1049,127 @@ def flatnonzero(a: ArrayLike) -> _Array1D[np.intp]: ...
 
 # NOTE: we ignore UP047 because inlining `_AnyScalarT` would result in a lot of code duplication
 
-type _LagsArg = int | tuple[int, int] | tuple[int, int, int] | range | slice | ArrayLike | None
+type _LagsArg = int | tuple[int, int] | tuple[int, int, int] | range | slice | _ArrayLikeInt_co
 
 # keep in sync with `convolve` and `ma.core.correlate`
 @overload
 def correlate(  # noqa: UP047
-    a: _ArrayLike1D[_AnyNumericScalarT], v: _ArrayLike1D[_AnyNumericScalarT],
-    mode: _CorrelateMode | L["lags"] = ..., *, maxlag: int | None = ...,
-    lags: _LagsArg = ...,
+    a: _ArrayLike1D[_AnyNumericScalarT],
+    v: _ArrayLike1D[_AnyNumericScalarT],
+    mode: _CorrelateMode | L["lags"] = "valid",
+    *,
+    maxlag: int | None = None,
+    lags: _LagsArg | None = None,
 ) -> _Array1D[_AnyNumericScalarT]: ...
 @overload
 def correlate(
-    a: _ArrayLike1DBool_co, v: _ArrayLike1DBool_co,
-    mode: _CorrelateMode | L["lags"] = ..., *, maxlag: int | None = ...,
-    lags: _LagsArg = ...,
+    a: _ArrayLike1DBool_co,
+    v: _ArrayLike1DBool_co,
+    mode: _CorrelateMode | L["lags"] = "valid",
+    *,
+    maxlag: int | None = None,
+    lags: _LagsArg | None = None,
 ) -> _Array1D[np.bool]: ...
 @overload
 def correlate(
-    a: _ArrayLike1DInt_co, v: _ArrayLike1DInt_co,
-    mode: _CorrelateMode | L["lags"] = ..., *, maxlag: int | None = ...,
-    lags: _LagsArg = ...,
+    a: _ArrayLike1DInt_co,
+    v: _ArrayLike1DInt_co,
+    mode: _CorrelateMode | L["lags"] = "valid",
+    *,
+    maxlag: int | None = None,
+    lags: _LagsArg | None = None,
 ) -> _Array1D[np.int_ | Any]: ...
 @overload
 def correlate(
-    a: _ArrayLike1DFloat_co, v: _ArrayLike1DFloat_co,
-    mode: _CorrelateMode | L["lags"] = ..., *, maxlag: int | None = ...,
-    lags: _LagsArg = ...,
+    a: _ArrayLike1DFloat_co,
+    v: _ArrayLike1DFloat_co,
+    mode: _CorrelateMode | L["lags"] = "valid",
+    *,
+    maxlag: int | None = None,
+    lags: _LagsArg | None = None,
 ) -> _Array1D[np.float64 | Any]: ...
 @overload
 def correlate(
-    a: _ArrayLike1DNumber_co, v: _ArrayLike1DNumber_co,
-    mode: _CorrelateMode | L["lags"] = ..., *, maxlag: int | None = ...,
-    lags: _LagsArg = ...,
+    a: _ArrayLike1DNumber_co,
+    v: _ArrayLike1DNumber_co,
+    mode: _CorrelateMode | L["lags"] = "valid",
+    *,
+    maxlag: int | None = None,
+    lags: _LagsArg | None = None,
 ) -> _Array1D[np.complex128 | Any]: ...
 @overload
 def correlate(
-    a: _ArrayLike1DTD64_co, v: _ArrayLike1DTD64_co,
-    mode: _CorrelateMode | L["lags"] = ..., *, maxlag: int | None = ...,
-    lags: _LagsArg = ...,
+    a: _ArrayLike1DTD64_co,
+    v: _ArrayLike1DTD64_co,
+    mode: _CorrelateMode | L["lags"] = "valid",
+    *,
+    maxlag: int | None = None,
+    lags: _LagsArg | None = None,
 ) -> _Array1D[np.timedelta64 | Any]: ...
 
 def correlation_lags(
-    a_len: SupportsIndex, v_len: SupportsIndex,
-    mode: _CorrelateMode | L["lags"] = ..., *, maxlag: int | None = ...,
-    lags: _LagsArg = ...,
+    a_len: SupportsIndex,
+    v_len: SupportsIndex,
+    mode: _CorrelateMode | L["lags"] = "valid",
+    *,
+    maxlag: int | None = None,
+    lags: _LagsArg | None = None,
 ) -> _Array1D[np.intp]: ...
 
 # keep in sync with `correlate`
 @overload
 def convolve(  # noqa: UP047
-    a: _ArrayLike1D[_AnyNumericScalarT], v: _ArrayLike1D[_AnyNumericScalarT],
-    mode: _CorrelateMode | L["lags"] = ..., *, maxlag: int | None = ...,
-    lags: _LagsArg = ...,
+    a: _ArrayLike1D[_AnyNumericScalarT],
+    v: _ArrayLike1D[_AnyNumericScalarT],
+    mode: _CorrelateMode | L["lags"] = "full",
+    *,
+    maxlag: int | None = None,
+    lags: _LagsArg | None = None,
 ) -> _Array1D[_AnyNumericScalarT]: ...
 @overload
 def convolve(
-    a: _ArrayLike1DBool_co, v: _ArrayLike1DBool_co,
-    mode: _CorrelateMode | L["lags"] = ..., *, maxlag: int | None = ...,
-    lags: _LagsArg = ...,
+    a: _ArrayLike1DBool_co,
+    v: _ArrayLike1DBool_co,
+    mode: _CorrelateMode | L["lags"] = "full",
+    *,
+    maxlag: int | None = None,
+    lags: _LagsArg | None = None,
 ) -> _Array1D[np.bool]: ...
 @overload
 def convolve(
-    a: _ArrayLike1DInt_co, v: _ArrayLike1DInt_co,
-    mode: _CorrelateMode | L["lags"] = ..., *, maxlag: int | None = ...,
-    lags: _LagsArg = ...,
+    a: _ArrayLike1DInt_co,
+    v: _ArrayLike1DInt_co,
+    mode: _CorrelateMode | L["lags"] = "full",
+    *,
+    maxlag: int | None = None,
+    lags: _LagsArg | None = None,
 ) -> _Array1D[np.int_ | Any]: ...
 @overload
 def convolve(
-    a: _ArrayLike1DFloat_co, v: _ArrayLike1DFloat_co,
-    mode: _CorrelateMode | L["lags"] = ..., *, maxlag: int | None = ...,
-    lags: _LagsArg = ...,
+    a: _ArrayLike1DFloat_co,
+    v: _ArrayLike1DFloat_co,
+    mode: _CorrelateMode | L["lags"] = "full",
+    *,
+    maxlag: int | None = None,
+    lags: _LagsArg | None = None,
 ) -> _Array1D[np.float64 | Any]: ...
 @overload
 def convolve(
-    a: _ArrayLike1DNumber_co, v: _ArrayLike1DNumber_co,
-    mode: _CorrelateMode | L["lags"] = ..., *, maxlag: int | None = ...,
-    lags: _LagsArg = ...,
+    a: _ArrayLike1DNumber_co,
+    v: _ArrayLike1DNumber_co,
+    mode: _CorrelateMode | L["lags"] = "full",
+    *,
+    maxlag: int | None = None,
+    lags: _LagsArg | None = None,
 ) -> _Array1D[np.complex128 | Any]: ...
 @overload
 def convolve(
-    a: _ArrayLike1DTD64_co, v: _ArrayLike1DTD64_co,
-    mode: _CorrelateMode | L["lags"] = ..., *, maxlag: int | None = ...,
-    lags: _LagsArg = ...,
+    a: _ArrayLike1DTD64_co,
+    v: _ArrayLike1DTD64_co,
+    mode: _CorrelateMode | L["lags"] = "full",
+    *,
+    maxlag: int | None = None,
+    lags: _LagsArg | None = None,
 ) -> _Array1D[np.timedelta64 | Any]: ...
 
 # keep roughly in sync with `convolve` and `correlate`, but for 2-D output and an additional `out` overload,
