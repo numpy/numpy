@@ -28,7 +28,7 @@ python = "*"
 # Use cpython git tip
 # python.git = "https://github.com/python/cpython"
 # python.subdirectory = "Tools/pixi-packages/default"
-# python.rev = "15b216f30d0445469ec31bc7509fcc55a216ef7c"  # v3.15.0a6
+# python.rev = "55ea59e7dc35e1363b203ae4dd9cfc3a0ac0a844"  # v3.15.0a8
 
 meson-python = "*"
 cython = "*"
