@@ -1136,8 +1136,8 @@ fail:
 static int _pyarray_revert(PyArrayObject *ret);
 
 /*
- * Core correlation computation - common between PyArray_Correlate
- * and PyArray_Correlate2 and PyArray_CorrelateLags.
+ * Core correlation computation - common between PyArray_Correlate,
+ * PyArray_Correlate2, and array_correlatelags.
  *
  * Handles all input forms internally:
  *   - Swaps arrays if n1 < n2 (and negates lags)
@@ -1146,6 +1146,10 @@ static int _pyarray_revert(PyArrayObject *ret);
  *
  * Callers may pass any valid combination of (ap1, ap2, minlag, maxlag, lagstep)
  * and receive a result aligned with their original array/lag order.
+ *
+ * To derive (minlag, maxlag, lagstep) from a named mode ('valid', 'same',
+ * or 'full'), call _lags_from_mode(mode, n1, n2, &minlag, &maxlag, &lagstep)
+ * before calling this function.
  */
 static PyArrayObject*
 _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, PyArray_Descr *typec,
@@ -1432,9 +1436,9 @@ _lags_from_mode(int mode, npy_intp n1, npy_intp n2,
  * ('valid', 'same', or 'full').  For complex inputs, the second array is
  * conjugated before the computation (i.e. correlation semantics).
  *
- * This is the mode-based counterpart of PyArray_CorrelateLags with
- * conjugate != 0.  For convolution (no conjugation), use
- * PyArray_Correlate instead.
+ * For the lag-range variant with conjugation control, use the
+ * correlatelags() Python callable.  For convolution (no conjugation),
+ * use PyArray_Correlate instead.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
@@ -1507,97 +1511,13 @@ clean_ap1:
     return NULL;
 }
 
-/*NUMPY_API
- * correlate(a1,a2,minlag,maxlag,lagstep,conjugate)
- *
- * Computes the sliding inner product of a1 with a2 at the specified lag
- * range [minlag, maxlag) with step lagstep.  
- * This function accepts vectors in either order.  This function
- * does not accept modes; use _lags_from_mode() to convert a mode integer to
- * (minlag, maxlag, lagstep).
- *
- * The conjugate flag selects the operation semantics:
- *
- *   conjugate != 0 -- correlation semantics (same as PyArray_Correlate2):
- *                     out[k] = sum_n a1[n+k] * conj(a2[n])
- *
- *   conjugate == 0 -- no conjugation (same as PyArray_Correlate):
- *                     out[k] = sum_n a1[n+k] * a2[n]
- *                     For convolution the caller must pass a2 already
- *                     reversed (a2[::-1]) before calling this function.
- */
-NPY_NO_EXPORT PyObject *
-PyArray_CorrelateLags(PyObject *op1, PyObject *op2,
-                      npy_intp minlag, npy_intp maxlag, npy_intp lagstep,
-                      int conjugate)
-{
-    PyArrayObject *ap1, *ap2, *ret = NULL;
-    PyArray_Descr *typec = NULL;
-
-    if (PyArray_DTypeFromObject(op1, NPY_MAXDIMS, &typec) < 0) {
-        return NULL;
-    }
-    if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &typec) < 0) {
-        Py_XDECREF(typec);
-        return NULL;
-    }
-
-    if (typec == NULL) {
-        typec = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
-    }
-    Py_SETREF(typec, NPY_DT_CALL_ensure_canonical(typec));
-
-    Py_INCREF(typec);
-    ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1,
-                                        NPY_ARRAY_DEFAULT, NULL);
-    if (ap1 == NULL) {
-        Py_DECREF(typec);
-        return NULL;
-    }
-
-    Py_INCREF(typec);
-    ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 1, 1,
-                                        NPY_ARRAY_DEFAULT, NULL);
-    if (ap2 == NULL) {
-        goto clean_ap1;
-    }
-
-    if (conjugate && PyArray_ISCOMPLEX(ap2)) {
-        PyArrayObject *cap2;
-        cap2 = (PyArrayObject *)PyArray_Conjugate(ap2, NULL);
-        if (cap2 == NULL) {
-            goto clean_ap2;
-        }
-        Py_DECREF(ap2);
-        ap2 = cap2;
-    }
-
-    ret = _pyarray_correlate(ap1, ap2, typec,
-                             minlag, maxlag, lagstep);
-    if (ret == NULL) {
-        goto clean_ap2;
-    }
-
-    Py_DECREF(ap1);
-    Py_DECREF(ap2);
-    Py_DECREF(typec);
-    return (PyObject *)ret;
-
-clean_ap2:
-    Py_DECREF(ap2);
-clean_ap1:
-    Py_DECREF(ap1);
-    Py_DECREF(typec);
-    return NULL;
-}
 
 /*NUMPY_API
  * Numeric.correlate(a1,a2,mode)
  *
  * Legacy correlation function that does NOT conjugate the second array for
- * complex inputs.  Equivalent to PyArray_CorrelateLags with conjugate == 0
- * (convolution semantics) after the appropriate lag range is computed via
- * _lags_from_mode().  Prefer PyArray_Correlate2 for standard correlation.
+ * complex inputs (convolution semantics).  Prefer PyArray_Correlate2 for
+ * standard correlation.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
@@ -3280,18 +3200,40 @@ array_correlate2(PyObject *NPY_UNUSED(dummy),
     return PyArray_Correlate2(a0, shape, mode);
 }
 
+/*
+ * Implementation of multiarray.correlatelags(a, v, minlag, maxlag, lagstep,
+ *                                             conjugate=True)
+ *
+ * Computes the sliding inner product of a with v at lag range [minlag, maxlag)
+ * with step lagstep.  Accepts arrays in either order; internal swapping and
+ * output reversal are handled so the result is aligned with the caller's input
+ * order and lag direction.
+ *
+ * conjugate != 0 -- correlation semantics (default):
+ *                   out[k] = sum_n a[n+k] * conj(v[n])
+ * conjugate == 0 -- no conjugation (convolution semantics); the caller is
+ *                   responsible for reversing v before calling.
+ *
+ * To compute correlation or convolution using a named output mode ('valid',
+ * 'same', or 'full') rather than an explicit lag range, use
+ * PyArray_Correlate2 (with conjugation) or PyArray_Correlate (without).
+ * Internally those functions call _lags_from_mode to convert the mode to a
+ * (minlag, maxlag, lagstep) triple before passing it to _pyarray_correlate.
+ */
 static PyObject*
 array_correlatelags(PyObject *NPY_UNUSED(dummy),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    PyObject *shape, *a0;
+    PyObject *op1, *op2;
     npy_intp minlag = 0, maxlag = 0, lagstep = 0;
     npy_bool conjugate = 1;
+    PyArrayObject *ap1, *ap2, *ret = NULL;
+    PyArray_Descr *typec = NULL;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("correlate_lags", args, len_args, kwnames,
-            {"a", NULL, &a0},
-            {"v", NULL, &shape},
+            {"a", NULL, &op1},
+            {"v", NULL, &op2},
             {"minlag", &PyArray_IntpFromPyIntConverter, &minlag},
             {"maxlag", &PyArray_IntpFromPyIntConverter, &maxlag},
             {"lagstep", &PyArray_IntpFromPyIntConverter, &lagstep},
@@ -3300,9 +3242,61 @@ array_correlatelags(PyObject *NPY_UNUSED(dummy),
     }
     if (minlag == 0 && maxlag == 0 && lagstep == 0) {
         /* if no lag parameters passed, use default: mode = 'valid' */
-        return PyArray_Correlate2(a0, shape, 0);
+        return PyArray_Correlate2(op1, op2, 0);
     }
-    return PyArray_CorrelateLags(a0, shape, minlag, maxlag, lagstep, conjugate);
+
+    if (PyArray_DTypeFromObject(op1, NPY_MAXDIMS, &typec) < 0) {
+        return NULL;
+    }
+    if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &typec) < 0) {
+        Py_XDECREF(typec);
+        return NULL;
+    }
+    if (typec == NULL) {
+        typec = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+    }
+    Py_SETREF(typec, NPY_DT_CALL_ensure_canonical(typec));
+
+    Py_INCREF(typec);
+    ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1,
+                                           NPY_ARRAY_DEFAULT, NULL);
+    if (ap1 == NULL) {
+        Py_DECREF(typec);
+        return NULL;
+    }
+
+    Py_INCREF(typec);
+    ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 1, 1,
+                                           NPY_ARRAY_DEFAULT, NULL);
+    if (ap2 == NULL) {
+        goto clean_ap1;
+    }
+
+    if (conjugate && PyArray_ISCOMPLEX(ap2)) {
+        PyArrayObject *cap2 = (PyArrayObject *)PyArray_Conjugate(ap2, NULL);
+        if (cap2 == NULL) {
+            goto clean_ap2;
+        }
+        Py_DECREF(ap2);
+        ap2 = cap2;
+    }
+
+    ret = _pyarray_correlate(ap1, ap2, typec, minlag, maxlag, lagstep);
+    if (ret == NULL) {
+        goto clean_ap2;
+    }
+
+    Py_DECREF(ap1);
+    Py_DECREF(ap2);
+    Py_DECREF(typec);
+    return (PyObject *)ret;
+
+clean_ap2:
+    Py_DECREF(ap2);
+clean_ap1:
+    Py_DECREF(ap1);
+    Py_DECREF(typec);
+    return NULL;
 }
 
 static PyObject *
