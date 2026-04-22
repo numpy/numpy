@@ -154,8 +154,7 @@ buggy behavior.
 API
 ---
 
-ndarray
-~~~~~~~
+.. rubric:: ndarray
 
 The `numpy.ndarray` class is a `generic type`_ that accepts two type arguments:
 
