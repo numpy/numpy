@@ -78,7 +78,7 @@ __all__ = [
     'argwhere', 'copyto', 'concatenate', 'lexsort', 'astype',
     'can_cast', 'promote_types', 'min_scalar_type',
     'result_type', 'isfortran', 'empty_like', 'zeros_like', 'ones_like',
-    'correlate', 'correlate_lags', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
+    'correlate', 'correlation_lags', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
     'rollaxis', 'moveaxis', 'cross', 'tensordot', 'little_endian',
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
     'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
@@ -815,13 +815,13 @@ def _lags_from_mode(alen, vlen, mode):
     return (m0, m1, 1)
 
 
-def _correlate_lags_dispatcher(a_len, v_len, mode=None, *, maxlag=None,
+def _correlation_lags_dispatcher(a_len, v_len, mode=None, *, maxlag=None,
                                lags=None):
     return ()
 
 
-@array_function_dispatch(_correlate_lags_dispatcher)
-def correlate_lags(a_len, v_len, mode=_CorrModeDefault, *, maxlag=None,
+@array_function_dispatch(_correlation_lags_dispatcher)
+def correlation_lags(a_len, v_len, mode=_CorrModeDefault, *, maxlag=None,
                    lags=None):
     """
     Return the lag indices for a `~numpy.correlate` call with the same
@@ -857,18 +857,18 @@ def correlate_lags(a_len, v_len, mode=_CorrModeDefault, *, maxlag=None,
     Examples
     --------
     >>> import numpy as np
-    >>> np.correlate_lags(5, 3, mode='full')
+    >>> np.correlation_lags(5, 3, mode='full')
     array([-2, -1,  0,  1,  2,  3,  4])
-    >>> np.correlate_lags(5, 3, mode='valid')
+    >>> np.correlation_lags(5, 3, mode='valid')
     array([0, 1, 2])
-    >>> np.correlate_lags(5, 3, maxlag=2)
+    >>> np.correlation_lags(5, 3, maxlag=2)
     array([-2, -1,  0,  1,  2])
 
     Pair the lag vector with a correlation result:
 
     >>> a, v = [1, 2, 3, 4, 5], [0, 1, 0.5]
     >>> r = np.correlate(a, v, mode='full')
-    >>> lag_vec = np.correlate_lags(len(a), len(v), mode='full')
+    >>> lag_vec = np.correlation_lags(len(a), len(v), mode='full')
     >>> r[lag_vec == 0]
     array([3.5])
     """
@@ -942,7 +942,7 @@ def correlate(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None):
 
     See Also
     --------
-    correlate_lags : Return the lag indices corresponding to a `correlate` call.
+    correlation_lags : Return the lag indices corresponding to a `correlate` call.
     convolve : Discrete, linear convolution of two one-dimensional sequences.
     scipy.signal.correlate : uses FFT which has superior performance
         on large arrays.
@@ -976,11 +976,11 @@ def correlate(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None):
     >>> np.correlate([1, 2, 3], [0, 1, 0.5], lags=range(-1, 2, 2))
     array([ 2.,  3.])
 
-    Pair the result with its lag indices using `correlate_lags`:
+    Pair the result with its lag indices using `correlation_lags`:
 
     >>> a, v = [1, 2, 3], [0, 1, 0.5]
     >>> r = np.correlate(a, v, mode="full")
-    >>> lag_vec = np.correlate_lags(len(a), len(v), mode="full")
+    >>> lag_vec = np.correlation_lags(len(a), len(v), mode="full")
     >>> lag_vec
     array([-2, -1,  0,  1,  2])
 
@@ -1090,7 +1090,7 @@ def convolve(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None):
 
     See Also
     --------
-    correlate_lags : Return the lag indices corresponding to a `correlate` call.
+    correlation_lags : Return the lag indices corresponding to a `correlate` call.
     scipy.signal.fftconvolve : Convolve two arrays using the Fast Fourier
                                Transform.
     scipy.linalg.toeplitz : Used to construct the convolution operator.
@@ -1149,11 +1149,11 @@ def convolve(a, v, mode=_CorrModeDefault, *, maxlag=None, lags=None):
     >>> np.convolve([1,2,3,4,5], [0,1,0.5], lags=range(-2, 6, 2))
     array([ 0. ,  2.5,  5.5,  2.5])
 
-    Pair the result with lag indices using `correlate_lags`:
+    Pair the result with lag indices using `correlation_lags`:
 
     >>> a, v = [1, 2, 3], [0, 1, 0.5]
     >>> r = np.convolve(a, v, mode='valid')
-    >>> lag_vec = np.correlate_lags(len(a), len(v), mode='valid')
+    >>> lag_vec = np.correlation_lags(len(a), len(v), mode='valid')
     >>> lag_vec
     array([0])
 

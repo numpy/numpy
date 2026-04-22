@@ -40,7 +40,7 @@ Correlating
 
    corrcoef
    correlate
-   correlate_lags
+   correlation_lags
    cov
 
 Histograms
