@@ -443,7 +443,7 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
 
 class TestDeprecatedIntegerTimedeltaArrayArithmetic(_DeprecationTestCase):
     # Deprecation in NumPy 2.5, 2026-04
-    message = "Addition of integers to (timedelta64|datetime64) arrays is deprecated"
+    message = "The 'generic' unit for NumPy timedelta is deprecated"
 
     @pytest.mark.parametrize('timedelta_arr', [
         np.array([1, 2, 3], dtype="m8[s]"),
