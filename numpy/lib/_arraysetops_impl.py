@@ -493,6 +493,7 @@ def unique_all(x):
         return_inverse=True,
         return_counts=True,
         equal_nan=False,
+        sorted=False,
     )
     return UniqueAllResult(*result)
 
@@ -549,6 +550,7 @@ def unique_counts(x):
         return_inverse=False,
         return_counts=True,
         equal_nan=False,
+        sorted=False,
     )
     return UniqueCountsResult(*result)
 
@@ -606,6 +608,7 @@ def unique_inverse(x):
         return_inverse=True,
         return_counts=False,
         equal_nan=False,
+        sorted=False,
     )
     return UniqueInverseResult(*result)
 
