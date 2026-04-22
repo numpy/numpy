@@ -402,7 +402,13 @@ class recarray(ndarray):
             )
         return self
 
-    _set_dtype = None  # __array_finalize__ can deal with dtype changes
+    def _set_dtype(self, dtype):
+        """Set the dtype, wrapping in record type if needed."""
+        if (dtype.type is not record and
+                issubclass(dtype.type, nt.void) and
+                dtype.names is not None):
+            dtype = sb.dtype((record, dtype))
+        ndarray._set_dtype(self, dtype)
 
     def __array_finalize__(self, obj):
         if (self.dtype.type is not record and
