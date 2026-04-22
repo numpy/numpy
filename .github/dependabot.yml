@@ -16,7 +16,6 @@ updates:
     directory: /requirements
     schedule:
       interval: daily
-    python-version: "3.12"  # Dependencies are requiring newer python
     cooldown:
       default-days: 7     # optional
     groups:
