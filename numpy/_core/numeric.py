@@ -800,7 +800,7 @@ def _lags_from_mode(alen, vlen, mode):
     if mode == 0:
         m0, m1 = 0, alen - vlen + 1
     elif mode == 1:
-        half = int(vlen / 2)
+        half = vlen // 2
         m0, m1 = -half, alen - half
     elif mode == 2:
         m0, m1 = -vlen + 1, alen
