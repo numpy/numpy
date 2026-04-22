@@ -905,6 +905,16 @@ class TestDateTime:
         x[1] = np.timedelta64('nat', 's')
         assert np.isnat(x[1])
 
+    def test_generic_array_creation_valueerror(self):
+        # Regression test for gh-30903.
+        with pytest.raises(ValueError):
+            np.ones(1, "M8")
+        with pytest.warns(
+            DeprecationWarning,
+            match=self.generic_unit_deprecation_message,
+        ):
+            np.array(["NaT"], "M8")
+
     def test_pickle(self):
         # Check that pickle roundtripping works
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
