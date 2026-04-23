@@ -2561,7 +2561,7 @@ finish_loop:
  *     -1 on hard error during the fast path; ``*out_result`` is NULL and
  *        a Python error is set.
  */
-static int
+static inline int
 try_reduce_contiguous(
         PyArrayMethod_Context *context, PyArrayObject *arr,
         PyArray_Descr *const *descrs,
