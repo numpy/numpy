@@ -3058,7 +3058,7 @@ def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
 
     See Also
     --------
-    amin :
+    min :
         The minimum value of an array along a given axis, propagating any NaNs.
     nanmax :
         The maximum value of an array along a given axis, ignoring any NaNs.
@@ -3196,7 +3196,7 @@ def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
 
     See Also
     --------
-    amax :
+    max :
         The maximum value of an array along a given axis, propagating any NaNs.
     nanmin :
         The minimum value of an array along a given axis, ignoring any NaNs.
