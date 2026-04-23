@@ -1275,6 +1275,14 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     .tp_getset = array_getsetlist,
     .tp_new = (newfunc)array_new,
 };
+
+/*
+    The following *_GET_ITEM_DATA functions are used to get the pointer to the fields of the
+    corresponding struct from the given object. It is technically undefined behaviour
+    to access the fields of the struct through a pointer that is not of the same type,
+    but in our case it is not a problem in practice because this is used only in stable ABI
+    extensions where the original object layout is opaque.
+*/
 #undef _PyDataType_GET_ITEM_DATA
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArray_Descr_fields *
