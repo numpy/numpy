@@ -405,7 +405,8 @@ class TestRoundDeprecation(_DeprecationTestCase):
 
 class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
     # Deprecated in Numpy 2.5, 2025-11
-    # See gh-29619
+    # See gh-29619 for scalar operations
+    # See gh-31255 for array operations
     message = "The 'generic' unit for NumPy timedelta is deprecated"
 
     @pytest.mark.parametrize('value', [
@@ -430,7 +431,7 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
     def test_raise_warning_for_operation_with_generic_unit(
         self, value: int, generic_value: int, op: Callable
     ):
-        self.assert_deprecated(op, args=(value, generic_value))
+        self.assert_deprecated(op, num=None, args=(value, generic_value))
 
     def test_raise_warning_for_default_constructor(self):
         self.assert_deprecated(lambda: np.timedelta64())
@@ -440,11 +441,7 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.datetime64('NaT'))
         self.assert_deprecated(lambda: np.datetime64(None))
 
-
-class TestDeprecatedIntegerTimedeltaArrayArithmetic(_DeprecationTestCase):
-    # Deprecation in NumPy 2.5, 2026-04
-    message = "The 'generic' unit for NumPy timedelta is deprecated"
-
+    # Array operations
     @pytest.mark.parametrize('timedelta_arr', [
         np.array([1, 2, 3], dtype="m8[s]"),
         np.array([1], dtype="m8[ms]"),
@@ -458,11 +455,10 @@ class TestDeprecatedIntegerTimedeltaArrayArithmetic(_DeprecationTestCase):
         self, timedelta_arr, int_arr, op
     ):
         """Test that timedelta64 array + integer array triggers deprecation."""
-        # timedelta + int (num=None allows any number of warnings)
+        # timedelta op int
         self.assert_deprecated(op, num=None, args=(timedelta_arr, int_arr))
-        # int + timedelta (for add only, subtract is different)
-        if op == np.add:
-            self.assert_deprecated(op, num=None, args=(int_arr, timedelta_arr))
+        # int op timedelta
+        self.assert_deprecated(op, num=None, args=(int_arr, timedelta_arr))
 
     @pytest.mark.parametrize('datetime_arr', [
         np.array(['2020-01-01', '2020-01-02'], dtype="M8[D]"),
@@ -477,14 +473,14 @@ class TestDeprecatedIntegerTimedeltaArrayArithmetic(_DeprecationTestCase):
         self, datetime_arr, int_arr, op
     ):
         """Test that datetime64 array + integer array triggers deprecation."""
-        # datetime + int (num=None allows any number of warnings)
+        # datetime op int
         self.assert_deprecated(op, num=None, args=(datetime_arr, int_arr))
-        # int + datetime (for add only)
+        # int op datetime
         if op == np.add:
             self.assert_deprecated(op, num=None, args=(int_arr, datetime_arr))
 
     def test_non_associative_case_warns(self):
-        """Verify the specific non-associative case."""
+        """Verify the specific non-associative case from gh-31255 warns."""
         a = np.array([1], dtype="m8[s]")
         b = np.array([1])
         c = np.array([1], dtype="m8[ms]")
@@ -492,7 +488,6 @@ class TestDeprecatedIntegerTimedeltaArrayArithmetic(_DeprecationTestCase):
         # Both intermediate operations should trigger warnings
         self.assert_deprecated(np.add, num=None, args=(a, b))
         self.assert_deprecated(np.add, num=None, args=(b, c))
-        
 
 
 class TestTriDeprecationWithNonInteger(_DeprecationTestCase):
