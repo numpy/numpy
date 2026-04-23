@@ -2525,17 +2525,6 @@ finish_loop:
  * loop is called directly on the input buffer and writes into a freshly
  * allocated 0-d result.
  *
- * Conditions checked here (each one is required for correctness):
- *   - no `out=`, `wheremask=`, `initial=`, `keepdims=True`
- *   - `naxes == ndim` (full reduction)
- *   - input is C- or F-contiguous and aligned (`*ARRAY_RO` checks both)
- *   - input dtype already matches the loop's input dtype (no cast)
- *   - the op exposes an identity (`get_reduction_initial`)
- *   - output dtype has no Python references
- *   - for multi-axis reductions, the op is reorderable (the fast path
- *     visits elements in memory order, which differs from the iterator
- *     order for F-contiguous multi-D inputs)
- *
  * Returns:
  *      1 on success; ``*out_result`` holds the new 0-d result.
  *      0 if any precondition is unmet (caller should run the slow path);
