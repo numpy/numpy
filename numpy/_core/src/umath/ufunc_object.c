@@ -2680,8 +2680,6 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
                 initial, reduce_loop, buffersize, ufunc_name, errormask);
     }
     /* Fall through to shared cleanup of `descrs`. */
-
-  cleanup:
     for (int i = 0; i < 3; i++) {
         Py_DECREF(descrs[i]);
     }
