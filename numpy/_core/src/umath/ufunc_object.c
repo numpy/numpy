@@ -2519,24 +2519,6 @@ finish_loop:
 }
 
 /*
- * The implementation of the reduction operators with the new iterator
- * turned into a bit of a long function here, but I think the design
- * of this part needs to be changed to be more like einsum, so it may
- * not be worth refactoring it too much.  Consider this timing:
- *
- * >>> a = arange(10000)
- *
- * >>> timeit sum(a)
- * 10000 loops, best of 3: 17 us per loop
- *
- * >>> timeit einsum("i->",a)
- * 100000 loops, best of 3: 13.5 us per loop
- *
- * The axes must already be bounds-checked by the calling function,
- * this function does not validate them.
- */
-
-/*
  * Try a fast path that bypasses NpyIter / PyUFunc_ReduceWrapper for full
  * reductions (axis=None) over a contiguous, aligned input where no casting
  * is required and the operation has an identity value.  The strided reduce
