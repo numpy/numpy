@@ -3684,6 +3684,17 @@ static PyObject *
 #else
         ret->obval = 0;
 #endif
+
+        if (ret->obmeta.base == NPY_FR_GENERIC) {
+            if (DEPRECATE(
+                        "The 'generic' unit for NumPy timedelta is deprecated, "
+                        "and will raise an error in the future. "
+                        "Please use a specific unit instead.") < 0) {
+                Py_DECREF(ret);
+                return NULL;
+            }
+        }
+
     }
     else if (convert_pyobject_to_@name@(&ret->obmeta, obj,
                             NPY_SAME_KIND_CASTING, &ret->obval) < 0) {

@@ -2316,7 +2316,12 @@ class TestRegression:
         # gh-8887 - __hash__ would be None despite tp_hash being set
         all_types = set(np._core.sctypeDict.values()) - {np.void}
         for t in all_types:
-            val = t()
+            if t is np.timedelta64:
+                val = t(0, 's')
+            elif t is np.datetime64:
+                val = t('NAT', 'D')
+            else:
+                val = t()
 
             try:
                 hash(val)

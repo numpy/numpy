@@ -24,7 +24,7 @@ dependencies:
   - pytest-xdist
   - hypothesis
   # For type annotations
-  - mypy=1.20.0
+  - mypy==1.20.2
   - orjson # makes mypy faster
   # For building docs
   - sphinx>=4.5.0

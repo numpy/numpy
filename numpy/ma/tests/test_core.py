@@ -2242,7 +2242,8 @@ class TestMaskedArrayAttributes:
         a = np.zeros(4, dtype='f4,i4')
 
         m = np.ma.array(a)
-        m.dtype = np.dtype('f4')
+        with pytest.warns(DeprecationWarning, match="Setting the dtype.*MaskedArray"):
+            m.dtype = np.dtype('f4')
         repr(m)  # raises?
         assert_equal(m.dtype, np.dtype('f4'))
 
@@ -2250,7 +2251,9 @@ class TestMaskedArrayAttributes:
         # are not allowed
         def assign():
             m = np.ma.array(a)
-            m.dtype = np.dtype('f8')
+            with pytest.warns(DeprecationWarning,
+                              match="Setting the dtype.*MaskedArray"):
+                m.dtype = np.dtype('f8')
         assert_raises(ValueError, assign)
 
         b = a.view(dtype='f4', type=np.ma.MaskedArray)  # raises?
@@ -2259,7 +2262,8 @@ class TestMaskedArrayAttributes:
         # check that nomask is preserved
         a = np.zeros(4, dtype='f4')
         m = np.ma.array(a)
-        m.dtype = np.dtype('f4,i4')
+        with pytest.warns(DeprecationWarning, match="Setting the dtype.*MaskedArray"):
+            m.dtype = np.dtype('f4,i4')
         assert_equal(m.dtype, np.dtype('f4,i4'))
         assert_equal(m._mask, np.ma.nomask)
 

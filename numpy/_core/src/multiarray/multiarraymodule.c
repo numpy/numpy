@@ -1983,7 +1983,7 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
         PyArray_DTypeMeta *dst_DType = NPY_DTYPE(PyArray_DESCR(dst));
         bool is_npy_nan = PyFloat_Check(src_obj) && npy_isnan(PyFloat_AsDouble(src_obj));
         if (!is_npy_nan && dst_DType->type_num == NPY_TIMEDELTA) {
-            descr = PyArray_DESCR(dst); 
+            descr = PyArray_DESCR(dst);
             Py_INCREF(descr);
         } else {
             descr = npy_find_descr_for_scalar(src_obj, PyArray_DESCR(src), DType,
@@ -5227,6 +5227,16 @@ _multiarray_umath_exec(PyObject *m) {
     npy_static_pydata.ndarray_array_function = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_function__");
     if (npy_static_pydata.ndarray_array_function == NULL) {
+        return -1;
+    }
+    npy_static_pydata.ndarray_set_dtype = PyObject_GetAttrString(
+            (PyObject *)&PyArray_Type, "_set_dtype");
+    if (npy_static_pydata.ndarray_set_dtype == NULL) {
+        return -1;
+    }
+    npy_static_pydata.ndarray_dtype_descr = PyObject_GetAttrString(
+            (PyObject *)&PyArray_Type, "dtype");
+    if (npy_static_pydata.ndarray_dtype_descr == NULL) {
         return -1;
     }
 
