@@ -3256,28 +3256,12 @@ class MaskedArray(ndarray):
         results.
         """
 
-        if dtype is None:
-            if type is None:
-                output = ndarray.view(self)
-            else:
-                output = ndarray.view(self, type)
-        elif type is None:
-            try:
-                if issubclass(dtype, ndarray):
-                    output = ndarray.view(self, dtype)
-                    dtype = None
-                else:
-                    output = ndarray.view(self, dtype)
-            except TypeError:
-                output = ndarray.view(self, dtype)
-        else:
-            output = ndarray.view(self, dtype, type)
+        if type is None and (isinstance(dtype, builtins.type)
+                             and issubclass(dtype, ndarray)):
+            type = dtype
+            dtype = None
 
-        # also make the mask be a view (so attr changes to the view's
-        # mask do no affect original object's mask)
-        # (especially important to avoid affecting np.masked singleton)
-        if getmask(output) is not nomask:
-            output._mask = output._mask.view()
+        output = super().view(*[a for a in (dtype, type) if a is not None])
 
         # Make sure to reset the _fill_value if needed
         if getattr(output, '_fill_value', None) is not None:
