@@ -234,6 +234,29 @@ npy_free_cache_dim(void * p, npy_uintp sz)
                     &PyArray_free);
 }
 
+/*
+ * Clear all allocation caches so that every cached pointer is actually freed.
+ * This is useful for debugging memory leaks: cached-but-not-freed
+ * buffers would otherwise appear as phantom "leaks".
+ */
+NPY_NO_EXPORT PyObject *
+_clear_internal_caches(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
+{
+#if USE_ALLOC_CACHE
+    for (npy_uintp i = 0; i < NBUCKETS_DIM; i++) {
+        while (dimcache[i].available > 0) {
+            PyMem_RawFree(dimcache[i].ptrs[--(dimcache[i].available)]);
+        }
+    }
+    for (npy_uintp i = 0; i < NBUCKETS; i++) {
+        while (datacache[i].available > 0) {
+            PyDataMem_FREE(datacache[i].ptrs[--(datacache[i].available)]);
+        }
+    }
+#endif
+    Py_RETURN_NONE;
+}
+
 /* Similar to array_dealloc in arrayobject.c */
 static inline void
 WARN_NO_RETURN(PyObject* warning, const char * msg) {
