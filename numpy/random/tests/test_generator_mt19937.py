@@ -840,6 +840,17 @@ class TestRandomDist:
         desired = np.array([0, 2, 3], dtype=np.int64)
         assert_array_equal(actual, desired)
 
+    def test_choice_nonuniform_noreplace_shuffle_false(self):
+        # Non-regression test for gh-31210: shuffle=False was silently
+        # ignored when p is provided
+        random = Generator(MT19937(self.seed))
+        actual = random.choice(4, 4, replace=False, shuffle=False,
+                               p=[0.4, 0.3, 0.2, 0.1])
+        # When shuffle=False and p is provided, the drawn items should
+        # be returned without shuffling, in the order they were drawn
+        desired = np.array([0, 1, 2, 3], dtype=np.int64)
+        assert_array_equal(actual, desired)
+
     def test_choice_noninteger(self):
         random = Generator(MT19937(self.seed))
         actual = random.choice(['a', 'b', 'c', 'd'], 4)
