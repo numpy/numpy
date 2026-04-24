@@ -636,21 +636,22 @@ PyArray_NewFromDescr_int(
      */
     if (!(cflags & _NPY_ARRAY_ENSURE_DTYPE_IDENTITY)) {
         if (PyDataType_SUBARRAY(descr)) {
-            PyObject *ret;
+            /* For a subarray, get the base dtype and use that in a retry
+               with the subarray dimensions and strides appended to the
+               input ones (for strides, if the input strides are known). */
             int newnd;
             npy_intp newdims[2*NPY_MAXDIMS];
-            npy_intp *newstrides = strides ? newdims + NPY_MAXDIMS : NULL;
+            npy_intp *newstrides = (
+                (strides != NULL || nd == 0) ? newdims + NPY_MAXDIMS : NULL);
             Py_SETREF(descr, _get_subarray_base_and_dimensions(
                           descr, nd, dims, strides,
                           &newnd, newdims, newstrides));
             if (descr == NULL) {
                 return NULL;
             }
-            ret = PyArray_NewFromDescr_int(
-                    subtype, descr,
-                    newnd, newdims, newstrides, data,
+            return PyArray_NewFromDescr_int(
+                    subtype, descr, newnd, newdims, newstrides, data,
                     flags, obj, base, cflags);
-            return ret;
         }
 
         /* Check datatype element size */
