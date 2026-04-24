@@ -742,6 +742,103 @@ timedelta_dtype_with_copied_meta(PyArray_Descr *dtype)
 }
 
 /*
+ * Creates a new NPY_DATETIME dtype, copying the datetime metadata
+ * from the given dtype.
+ */
+static PyArray_Descr *
+datetime_dtype_with_copied_meta(PyArray_Descr *dtype)
+{
+    PyArray_Descr *ret;
+    PyArray_DatetimeMetaData *dst, *src;
+    PyArray_DatetimeDTypeMetaData *dst_dtmd, *src_dtmd;
+
+    ret = PyArray_DescrNewFromType(NPY_DATETIME);
+    if (ret == NULL) {
+        return NULL;
+    }
+
+    src_dtmd = (PyArray_DatetimeDTypeMetaData *)((_PyArray_LegacyDescr *)dtype)->c_metadata;
+    dst_dtmd = (PyArray_DatetimeDTypeMetaData *)((_PyArray_LegacyDescr *)ret)->c_metadata;
+    src = &(src_dtmd->meta);
+    dst = &(dst_dtmd->meta);
+
+    *dst = *src;
+
+    return ret;
+}
+
+/*
+ * For add/subtract resolvers only: if one operand is a datetime/timedelta
+ * array and the other is a 0-D object scalar, try coercing that scalar to
+ * datetime64/timedelta64 based on the datetime metadata of the other operand.
+ */
+static int
+maybe_coerce_object_datetime_scalar_operand(
+        PyArrayObject **operand, PyArrayObject *other_operand)
+{
+    if (PyArray_NDIM(*operand) != 0 || PyArray_TYPE(*operand) != NPY_OBJECT) {
+        return 0;
+    }
+
+    int other_type_num = PyArray_DESCR(other_operand)->type_num;
+    if (!PyTypeNum_ISDATETIME(other_type_num)) {
+        return 0;
+    }
+
+    PyObject *value = *(PyObject **)PyArray_DATA(*operand);
+    if (value == NULL) {
+        return 0;
+    }
+
+    PyArray_Descr *timedelta_descr = NULL;
+    PyArray_Descr *datetime_descr = NULL;
+
+    if (other_type_num == NPY_TIMEDELTA) {
+        timedelta_descr = PyArray_DescrNew(PyArray_DESCR(other_operand));
+        if (timedelta_descr == NULL) {
+            return -1;
+        }
+        datetime_descr = datetime_dtype_with_copied_meta(PyArray_DESCR(other_operand));
+        if (datetime_descr == NULL) {
+            Py_DECREF(timedelta_descr);
+            return -1;
+        }
+    }
+    else {
+        datetime_descr = PyArray_DescrNew(PyArray_DESCR(other_operand));
+        if (datetime_descr == NULL) {
+            return -1;
+        }
+        timedelta_descr = timedelta_dtype_with_copied_meta(PyArray_DESCR(other_operand));
+        if (timedelta_descr == NULL) {
+            Py_DECREF(datetime_descr);
+            return -1;
+        }
+    }
+
+    PyArrayObject *tmp = (PyArrayObject *)PyArray_FromAny(
+            value, timedelta_descr, 0, 0, 0, NULL);
+    timedelta_descr = NULL;  /* stolen by PyArray_FromAny */
+    if (tmp == NULL) {
+        PyErr_Clear();
+        tmp = (PyArrayObject *)PyArray_FromAny(
+                value, datetime_descr, 0, 0, 0, NULL);
+        datetime_descr = NULL;  /* stolen by PyArray_FromAny */
+    }
+
+    Py_XDECREF(timedelta_descr);
+    Py_XDECREF(datetime_descr);
+
+    if (tmp == NULL) {
+        PyErr_Clear();
+        return 0;
+    }
+
+    Py_SETREF(*operand, tmp);
+    return 1;
+}
+
+/*
  * This function applies the type resolution rules for addition.
  * In particular, there's special cases for string and unicodes, as
  * well as a number of special cases with datetime:
@@ -765,6 +862,13 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
 {
     int type_num1, type_num2;
     int i;
+
+    if (maybe_coerce_object_datetime_scalar_operand(&operands[0], operands[1]) < 0) {
+        return -1;
+    }
+    if (maybe_coerce_object_datetime_scalar_operand(&operands[1], operands[0]) < 0) {
+        return -1;
+    }
 
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     type_num2 = PyArray_DESCR(operands[1])->type_num;
@@ -951,6 +1055,13 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
 {
     int type_num1, type_num2;
     int i;
+
+    if (maybe_coerce_object_datetime_scalar_operand(&operands[0], operands[1]) < 0) {
+        return -1;
+    }
+    if (maybe_coerce_object_datetime_scalar_operand(&operands[1], operands[0]) < 0) {
+        return -1;
+    }
 
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     type_num2 = PyArray_DESCR(operands[1])->type_num;

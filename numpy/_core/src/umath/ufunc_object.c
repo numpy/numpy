@@ -67,7 +67,6 @@
 #include "multiarraymodule.h"
 #include "number.h"
 #include "scalartypes.h"  // for is_anyscalar_exact and scalar_value
-#include "_datetime.h"
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
@@ -632,13 +631,10 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
     int nout = ufunc->nout;
     int nop = ufunc->nargs;
     PyObject *obj;
-    PyArray_Descr *first_datetime_descr = NULL;
-    PyArray_Descr *first_timedelta_descr = NULL;
 
     /* Convert and fill in input arguments */
     npy_bool all_scalar = NPY_TRUE;
     npy_bool any_scalar = NPY_FALSE;
-    npy_bool has_array_datetime_or_timedelta = NPY_FALSE;
     *force_legacy_promotion = NPY_FALSE;
     *promoting_pyscalars = NPY_FALSE;
     for (int i = 0; i < nin; i++) {
@@ -678,19 +674,6 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
         }
         else {
             all_scalar = NPY_FALSE;
-            if (PyArray_ISDATETIME(out_op[i])) {
-                has_array_datetime_or_timedelta = NPY_TRUE;
-                if (PyArray_TYPE(out_op[i]) == NPY_DATETIME &&
-                        first_datetime_descr == NULL) {
-                    first_datetime_descr = PyArray_DESCR(out_op[i]);
-                    Py_INCREF(first_datetime_descr);
-                }
-                else if (PyArray_TYPE(out_op[i]) == NPY_TIMEDELTA &&
-                        first_timedelta_descr == NULL) {
-                    first_timedelta_descr = PyArray_DESCR(out_op[i]);
-                    Py_INCREF(first_timedelta_descr);
-                }
-            }
             continue;
         }
 
@@ -727,78 +710,6 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
     }
     if ((!all_scalar && any_scalar)) {
         *force_legacy_promotion = should_use_min_scalar(nin, out_op, 0, NULL);
-
-        /*
-         * If we have at least one datetime/timedelta array operand and a
-         * scalar Python datetime-like object, avoid keeping that scalar as
-         * object-dtype. Otherwise datetime/timedelta loops are never selected.
-         */
-        if (has_array_datetime_or_timedelta) {
-            for (int i = 0; i < nin; i++) {
-                PyArrayObject *arr = out_op[i];
-                if (arr == NULL || PyArray_NDIM(arr) != 0 || PyArray_TYPE(arr) != NPY_OBJECT) {
-                    continue;
-                }
-
-                PyObject *input = PyTuple_GET_ITEM(full_args.in, i);
-                if (!is_any_numpy_datetime_or_timedelta(input)) {
-                    continue;
-                }
-
-                PyArrayObject *tmp = NULL;
-                PyArray_Descr *timedelta_descr = NULL;
-                PyArray_Descr *datetime_descr = NULL;
-
-                if (first_timedelta_descr != NULL) {
-                    timedelta_descr = first_timedelta_descr;
-                    Py_INCREF(timedelta_descr);
-                }
-                else if (first_datetime_descr != NULL) {
-                    PyArray_DatetimeMetaData *meta =
-                            get_datetime_metadata_from_dtype(first_datetime_descr);
-                    if (meta != NULL) {
-                        timedelta_descr = create_datetime_dtype(NPY_TIMEDELTA, meta);
-                    }
-                }
-                if (timedelta_descr == NULL) {
-                    timedelta_descr = PyArray_DescrFromType(NPY_TIMEDELTA);
-                }
-
-                if (first_datetime_descr != NULL) {
-                    datetime_descr = first_datetime_descr;
-                    Py_INCREF(datetime_descr);
-                }
-                else {
-                    datetime_descr = PyArray_DescrFromType(NPY_DATETIME);
-                }
-
-                /* Try timedelta first to cover python datetime.timedelta. */
-                tmp = (PyArrayObject *)PyArray_FromAny(
-                        input, timedelta_descr,
-                        0, 0, 0, NULL);
-                timedelta_descr = NULL;
-                if (tmp == NULL) {
-                    PyErr_Clear();
-                    tmp = (PyArrayObject *)PyArray_FromAny(
-                            input, datetime_descr,
-                            0, 0, 0, NULL);
-                    datetime_descr = NULL;
-                }
-                if (tmp == NULL) {
-                    PyErr_Clear();
-                    Py_XDECREF(timedelta_descr);
-                    Py_XDECREF(datetime_descr);
-                    continue;
-                }
-
-                Py_XDECREF(timedelta_descr);
-                Py_XDECREF(datetime_descr);
-                Py_SETREF(out_op[i], tmp);
-                Py_DECREF(out_op_DTypes[i]);
-                out_op_DTypes[i] = NPY_DTYPE(PyArray_DESCR(out_op[i]));
-                Py_INCREF(out_op_DTypes[i]);
-            }
-        }
     }
 
     /* Convert and fill in output arguments */
@@ -835,13 +746,9 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
     if (subok_obj && !_subok_converter(subok_obj, out_subok)) {
         goto fail;
     }
-    Py_XDECREF(first_datetime_descr);
-    Py_XDECREF(first_timedelta_descr);
     return 0;
 
 fail:
-    Py_XDECREF(first_datetime_descr);
-    Py_XDECREF(first_timedelta_descr);
     if (out_wheremask != NULL) {
         Py_XSETREF(*out_wheremask, NULL);
     }
