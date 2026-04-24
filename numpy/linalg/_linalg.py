@@ -2238,7 +2238,8 @@ def pinv(a, rcond=None, hermitian=False, *, rtol=_NoValue):
         if rtol is _NoValue:
             rcond = 1e-15
         elif rtol is None:
-            rcond = max(a.shape[-2:]) * finfo(a.dtype).eps
+            _, rt = _commonType(a)
+            rcond = max(a.shape[-2:]) * finfo(rt).eps
         else:
             rcond = rtol
     elif rtol is not _NoValue:

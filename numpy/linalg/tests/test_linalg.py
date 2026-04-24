@@ -917,6 +917,25 @@ def test_pinv_rtol_arg():
         np.linalg.pinv(a, rcond=0.5, rtol=0.5)
 
 
+def test_pinv_rtol_none_integer():
+    # gh-30917: pinv with rtol=None should not crash on integer dtypes
+    a = np.array([[1, 2], [3, 4]], dtype=np.int32)
+    result = np.linalg.pinv(a, rtol=None)
+    # Result should be float64
+    assert result.dtype == np.float64
+    # Result should be approximately correct
+    expected = np.linalg.pinv(a.astype(np.float64))
+    assert_allclose(result, expected, atol=1e-14)
+
+    # Also test with int64, uint8
+    for dt in [np.int64, np.uint8, np.int16]:
+        a = np.array([[1, 2], [3, 4]], dtype=dt)
+        result = np.linalg.pinv(a, rtol=None)
+        assert result.dtype == np.float64
+        expected = np.linalg.pinv(a.astype(np.float64))
+        assert_allclose(result, expected, atol=1e-14)
+
+
 class DetCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
     def do(self, a, b, tags):
