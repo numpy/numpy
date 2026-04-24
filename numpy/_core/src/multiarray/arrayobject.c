@@ -449,10 +449,10 @@ _clear_array_attributes(PyArrayObject *self, npy_bool unraisable)
                 nbytes = 1;
             }
             PyDataMem_UserFREE(fa->data, nbytes, fa->mem_handler);
-            Py_CLEAR(fa->mem_handler);
         }
         fa->data = NULL;
     }
+    Py_CLEAR(fa->mem_handler);
 
     /* must match allocation in PyArray_NewFromDescr */
     npy_free_cache_dim(fa->dimensions, 2 * fa->nd);
