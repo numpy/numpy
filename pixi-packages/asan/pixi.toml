@@ -2,10 +2,7 @@
 channels = ["https://prefix.dev/conda-forge"]
 platforms = ["linux-64", "linux-aarch64", "osx-arm64"]
 preview = ["pixi-build"]
-
-[package]
-# Work-around to https://github.com/prefix-dev/pixi/issues/5557
-license-file = "LICENSE.txt"
+requires-pixi = ">=0.66.0"
 
 [package.build]
 source.path = "../.."
@@ -23,7 +20,7 @@ extra-args = ["-Csetup-args=-Db_sanitize=address", "-Csetup-args=-Dbuildtype=deb
 [package.host-dependencies]
 python.git = "https://github.com/python/cpython"
 python.subdirectory = "Tools/pixi-packages/asan"
-python.rev = "15b216f30d0445469ec31bc7509fcc55a216ef7c"  # v3.15.0a6
+python.rev = "55ea59e7dc35e1363b203ae4dd9cfc3a0ac0a844"  # v3.15.0a8
 
 meson-python = "*"
 cython = "*"

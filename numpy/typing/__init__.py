@@ -61,28 +61,6 @@ or explicitly type the array like object as `~typing.Any`:
     >>> np.array(array_like)
     array(<generator object <genexpr> at ...>, dtype=object)
 
-ndarray
-~~~~~~~
-
-The `numpy.ndarray` class is a `generic type`_ that accepts two type arguments:
-
-1. The type of `numpy.ndarray.shape`, which must be a `tuple` of `int`, e.g.
-   ``tuple[int, int]`` (2-D shape) or ``tuple[()]`` (0-D shape).
-   The default shape is ``tuple[Any, ...]``, which represents an unknown shape with
-   *any* number of dimensions.
-   Currently, ``Literal`` ints or other more specific types are not supported.
-2. The type of `numpy.ndarray.dtype`, which must be a subtype of `numpy.dtype` such as
-   ``numpy.dtype[numpy.float64]``. If omitted, it will default to ``numpy.dtype[Any]``.
-
-.. code-block:: python
-
-    >>> import numpy as np
-
-    >>> type ImageRGB = np.ndarray[tuple[int, int, int], np.dtype[np.uint8]]
-    >>> type Vector[S: np.generic] = np.ndarray[tuple[int], np.dtype[S]]
-
-.. _generic type: https://typing.python.org/en/latest/spec/generics.html
-
 DTypeLike
 ~~~~~~~~~
 
@@ -175,6 +153,27 @@ buggy behavior.
 
 API
 ---
+
+.. rubric:: ndarray
+
+The `numpy.ndarray` class is a `generic type`_ that accepts two type arguments:
+
+1. The type of `numpy.ndarray.shape`, which must be a `tuple` of `int`, e.g.
+   ``tuple[int, int]`` (2-D shape) or ``tuple[()]`` (0-D shape).
+   The default shape is ``tuple[Any, ...]``, which represents an unknown shape with
+   *any* number of dimensions.
+   Currently, ``Literal`` ints or other more specific types are not supported.
+2. The type of `numpy.ndarray.dtype`, which must be a subtype of `numpy.dtype` such as
+   ``numpy.dtype[numpy.float64]``. If omitted, it will default to ``numpy.dtype[Any]``.
+
+.. code-block:: python
+
+    >>> import numpy as np
+
+    >>> type ImageRGB = np.ndarray[tuple[int, int, int], np.dtype[np.uint8]]
+    >>> type Vector[S: np.generic] = np.ndarray[tuple[int], np.dtype[S]]
+
+.. _generic type: https://typing.python.org/en/latest/spec/generics.html
 
 """
 # NOTE: The API section will be appended with additional entries

@@ -371,6 +371,103 @@ _may_have_objects(PyArray_Descr *dtype)
 }
 
 /*
+ * Check whether self can be viewed with the given dtype.
+ * If so, return a new reference to the dtype (possibly changed).
+ * If needed, also determine new dimensions and strides for the last axis.
+ * If no change is needed, newlastdim is set to -1.
+ */
+NPY_NO_EXPORT PyArray_Descr*
+_check_compatibility_with_new_dtype(
+    PyArrayObject *self, PyArray_Descr *type,
+    npy_intp *newlastdim, npy_intp *newlaststride)
+{
+    PyArray_Descr *dtype = PyArray_DESCR(self);
+    *newlastdim = -1;  /* By default, no change needed. */
+
+    /* Check that we are not reinterpreting memory containing Objects. */
+    if (_may_have_objects(dtype) || _may_have_objects(type)) {
+        if (npy_cache_import_runtime(
+                "numpy._core._internal", "_view_is_safe",
+                &npy_runtime_imports._view_is_safe) == -1) {
+            return NULL;
+        }
+        PyObject *safe = PyObject_CallFunctionObjArgs(
+                npy_runtime_imports._view_is_safe, dtype, type, NULL);
+        if (safe == NULL) {
+            return NULL;
+        }
+        Py_DECREF(safe);
+    }
+
+    if (type->elsize != dtype->elsize) {
+        /*
+         * Viewing as an unsized void implies a void dtype matching
+         * the size of the current dtype.
+         */
+        if (type->type_num == NPY_VOID && PyDataType_ISUNSIZED(type)) {
+            PyArray_Descr *newtype = PyArray_DescrNew(type);
+            if (newtype == NULL) {
+                return NULL;
+            }
+            newtype->elsize = dtype->elsize;
+            return newtype;
+        }
+        /*
+         * Otherwise, changing the size of the dtype results in a shape change,
+         * which we signal by setting newlastdim and newlaststride.
+         */
+        /* Check forbidden cases. */
+        if (PyDataType_HASSUBARRAY(type)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Changing the dtype to a subarray type is only supported "
+                    "if the total itemsize is unchanged");
+            return NULL;
+        }
+        int nd = PyArray_NDIM(self);
+        if (nd == 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Changing the dtype of a 0d array is only supported "
+                    "if the itemsize is unchanged");
+            return NULL;
+        }
+        /* Resize on last axis only (we have nd>0 here). */
+        npy_intp lastdim = PyArray_DIMS(self)[nd-1];
+        if (lastdim != 1 && PyArray_SIZE(self) != 0 &&
+                PyArray_STRIDES(self)[nd-1] != dtype->elsize) {
+            PyErr_SetString(PyExc_ValueError,
+                    "To change to a dtype of a different size, the last axis "
+                    "must be contiguous");
+            return NULL;
+        }
+        if (type->elsize < dtype->elsize) {
+            /* If it is compatible, increase the size of the last axis. */
+            if (type->elsize == 0 || dtype->elsize % type->elsize != 0) {
+                PyErr_SetString(PyExc_ValueError,
+                        "When changing to a smaller dtype, its size must be a "
+                        "divisor of the size of original dtype");
+                return NULL;
+            }
+            *newlastdim = (dtype->elsize / type->elsize) * lastdim;
+        }
+        else /* type->elsize > dtype->elsize */ {
+            /* If it is compatible, decrease the size of the relevant axis. */
+            npy_intp lastsize = lastdim * dtype->elsize;
+            if (lastsize % type->elsize != 0) {
+                PyErr_SetString(PyExc_ValueError,
+                        "When changing to a larger dtype, its size must be a "
+                        "divisor of the total size in bytes of the last axis "
+                        "of the array.");
+                return NULL;
+            }
+            *newlastdim = lastsize / type->elsize;
+        }
+        *newlaststride = type->elsize;
+    }
+    Py_INCREF(type);
+    return type;
+}
+
+/*
  * Make a new empty array, of the passed size, of a type that takes the
  * priority of ap1 and ap2 into account.
  *
