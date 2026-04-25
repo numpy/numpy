@@ -3107,6 +3107,29 @@ class TestInterp:
         assert_raises(ValueError, interp, 0, [], [], period=360)
         assert_raises(ValueError, interp, 0, [0], [1, 2], period=360)
 
+    def test_empty_x_input(self):
+        # Empty x should return empty array without raising (gh-30316)
+        res = np.interp([], [], [])
+        assert_equal(res.size, 0)
+        assert res.dtype == np.float64
+
+        # Empty x with non-empty xp/fp
+        res = np.interp([], [1, 2], [3, 4])
+        assert_equal(res.size, 0)
+        assert res.dtype == np.float64
+
+        # Empty x with complex fp
+        res = np.interp([], [1, 2], np.array([1.0+0j, 2.0+1j]))
+        assert_equal(res.size, 0)
+        assert res.dtype == np.complex128
+
+        # Empty x with period
+        res = np.interp([], [190, -190], [5, 10], period=360)
+        assert_equal(res.size, 0)
+
+        # Non-empty x with empty xp still raises
+        assert_raises(ValueError, interp, [1, 2], [], [])
+
     def test_basic(self):
         x = np.linspace(0, 1, 5)
         y = np.linspace(0, 1, 5)

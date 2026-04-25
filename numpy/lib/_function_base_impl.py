@@ -1639,7 +1639,17 @@ def interp(x, xp, fp, left=None, right=None, period=None):
 
     """
 
+    x = np.asarray(x)
     fp = np.asarray(fp)
+
+    # If x is empty, return an empty array of the appropriate dtype
+    # without calling the C-level compiled_interp, which would reject
+    # empty xp/fp arrays.
+    if x.size == 0:
+        if np.iscomplexobj(fp):
+            return x.astype(np.complex128)
+        else:
+            return x.astype(np.float64)
 
     if np.iscomplexobj(fp):
         interp_func = compiled_interp_complex
