@@ -316,7 +316,7 @@ _convert_from_tuple(PyObject *obj, int align)
                                 "dimension smaller then zero.");
                 goto fail;
             }
-            if (shape.ptr[i] > NPY_MAX_INT) {
+            if (shape.ptr[i] > NPY_MAX_INTP) {
                 PyErr_SetString(PyExc_ValueError,
                                 "invalid shape in fixed-type tuple: "
                                 "dimension does not fit into a C int.");
@@ -325,13 +325,13 @@ _convert_from_tuple(PyObject *obj, int align)
         }
         npy_intp items = PyArray_OverflowMultiplyList(shape.ptr, shape.len);
         int overflowed;
-        int nbytes;
-        if (items < 0 || items > NPY_MAX_INT) {
+        long long nbytes;
+        if (items < 0 || items > NPY_MAX_INTP) {
             overflowed = 1;
         }
         else {
-            overflowed = npy_mul_with_overflow_int(
-                &nbytes, type->elsize, (int) items);
+            overflowed = npy_mul_with_overflow_longlong(
+                &nbytes, type->elsize, (npy_intp) items);
         }
         if (overflowed) {
             PyErr_SetString(PyExc_ValueError,
@@ -343,7 +343,7 @@ _convert_from_tuple(PyObject *obj, int align)
         if (newdescr == NULL) {
             goto fail;
         }
-        newdescr->elsize = nbytes;
+        newdescr->elsize = (int)nbytes;
         newdescr->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
         if (newdescr->subarray == NULL) {
             Py_DECREF(newdescr);

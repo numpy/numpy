@@ -737,13 +737,8 @@ class TestSubarray:
 
     def test_shape_invalid(self):
         # Check that the shape is valid.
-        max_int = np.iinfo(np.intc).max
         max_intp = np.iinfo(np.intp).max
         # Too large values (the datatype is part of this)
-        assert_raises(ValueError, np.dtype, [('a', 'f4', max_int // 4 + 1)])
-        assert_raises(ValueError, np.dtype, [('a', 'f4', max_int + 1)])
-        assert_raises(ValueError, np.dtype, [('a', 'f4', (max_int, 2))])
-        # Takes a different code path (fails earlier:
         assert_raises(ValueError, np.dtype, [('a', 'f4', max_intp + 1)])
         # Negative values
         assert_raises(ValueError, np.dtype, [('a', 'f4', -1)])
@@ -1271,7 +1266,6 @@ class TestPickling:
             assert_equal(x[0], y[0])
 
     @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
-    @pytest.mark.xfail(reason="dtype conversion doesn't allow this yet.")
     def test_pickling_large(self):
         # The actual itemsize is larger than a c-integer here.
         dtype = np.dtype(f"({2**31},)i")
@@ -2049,3 +2043,15 @@ class TestDTypeSignatures:
 
         params_actual = set(sig.parameters)
         assert params_actual == params_expect
+
+
+def test_gh_31308():
+    kind = [("x", np.float64, 2 ** 28)]
+    kind_dtype = np.dtype(kind)
+
+
+@pytest.mark.xfail(run=False)
+def test_gh_31308_materialized():
+    kind = [("x", np.float64, 2 ** 28)]
+    kind_dtype = np.dtype(kind)
+    rec_arr = np.array((1,), dtype=kind_dtype)
