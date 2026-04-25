@@ -38,7 +38,7 @@ def as_strided(
 def sliding_window_view(
     x: _ArrayLike[_ScalarT],
     window_shape: int | Iterable[int],
-    axis: SupportsIndex | None = None,
+    axis: int | tuple[int, ...] | None = None,
     *,
     subok: bool = False,
     writeable: bool = False,
@@ -47,7 +47,7 @@ def sliding_window_view(
 def sliding_window_view(
     x: ArrayLike,
     window_shape: int | Iterable[int],
-    axis: SupportsIndex | None = None,
+    axis: int | tuple[int, ...] | None = None,
     *,
     subok: bool = False,
     writeable: bool = False,
