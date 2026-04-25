@@ -88,8 +88,8 @@ The behavior for multidimensional arrays is the same as for .reduce(),
 as is the use of the axis keyword).
 
 **.reduceat(arr,indices)** allows one to apply reduce to selected parts
-  of an array. It is a difficult method to understand. See the documentation
-  at:
+  of an array. This method can be difficult to understand. 
+  Refer to the official NumPy documentation for detailed usage and examples.
 
 **.outer(arr1,arr2)** generates an outer operation on the two arrays arr1 and
   arr2. It will work on multidimensional arrays (the shape of the result is
@@ -122,17 +122,22 @@ output argument is used, the ufunc still returns a reference to the result.
 and & or as ufuncs
 ==================
 
-Invariably people try to use the python 'and' and 'or' as logical operators
-(and quite understandably). But these operators do not behave as normal
-operators since Python treats these quite differently. They cannot be
-overloaded with array equivalents. Thus using 'and' or 'or' with an array
-results in an error. There are two alternatives:
+Users often attempt to use Python's built-in `and` and `or` operators for
+element-wise logical operations on arrays. However, these operators do not
+behave as expected with NumPy arrays because they are not overloaded for
+element-wise evaluation.
 
- 1) use the ufunc functions logical_and() and logical_or().
- 2) use the bitwise operators & and \\|. The drawback of these is that if
-    the arguments to these operators are not boolean arrays, the result is
-    likely incorrect. On the other hand, most usages of logical_and and
-    logical_or are with boolean arrays. As long as one is careful, this is
-    a convenient way to apply these operators.
+Using `and` or `or` with arrays will result in an error.
 
+Instead, use one of the following alternatives:
+
+1) The ufunc functions `logical_and()` and `logical_or()`, which perform
+   element-wise logical operations.
+
+2) The bitwise operators `&` and `|`. These can also be used for element-wise
+   logical operations, but require the input arrays to be of boolean type.
+   Using them with non-boolean arrays may produce unexpected results.
+
+In most cases, `logical_and()` and `logical_or()` are the safer and more
+explicit choices.
 """
