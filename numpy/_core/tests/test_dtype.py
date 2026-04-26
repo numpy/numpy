@@ -26,7 +26,7 @@ from numpy.testing import (
     assert_equal,
     assert_raises,
 )
-from numpy.testing._private.utils import requires_deep_recursion
+from numpy.testing._private.utils import requires_deep_recursion, requires_memory
 
 
 def assert_dtype_equal(a, b):
@@ -2051,8 +2051,9 @@ def test_gh_31308():
     assert kind_dtype.itemsize == (2 ** 28) * 8
 
 
-@pytest.mark.xfail(run=False)
+@requires_memory(free_bytes=2e9)
 def test_gh_31308_materialized():
     kind = [("x", np.float64, 2 ** 28)]
     kind_dtype = np.dtype(kind)
     rec_arr = np.array((1,), dtype=kind_dtype)
+    assert rec_arr["x"].size == 2 ** 28
