@@ -1648,6 +1648,10 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         interp_func = compiled_interp
         input_dtype = np.float64
 
+    x = np.asarray(x)
+    if x.size == 0:
+        return np.empty(x.shape, dtype=input_dtype)
+
     if period is not None:
         if period == 0:
             raise ValueError("period must be a non-zero value")
