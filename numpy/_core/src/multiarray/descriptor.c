@@ -343,7 +343,7 @@ _convert_from_tuple(PyObject *obj, int align)
         if (newdescr == NULL) {
             goto fail;
         }
-        newdescr->elsize = (int)nbytes;
+        newdescr->elsize = (long long)nbytes;
         newdescr->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
         if (newdescr->subarray == NULL) {
             Py_DECREF(newdescr);
@@ -410,7 +410,7 @@ _convert_from_array_descr(PyObject *obj, int align)
     /* Types with fields need the Python C API for field access */
     npy_uint64 dtypeflags = NPY_NEEDS_PYAPI;
     int maxalign = 1;
-    int totalsize = 0;
+    npy_intp totalsize = 0;
     PyObject *fields = PyDict_New();
     if (!fields) {
         Py_DECREF(nameslist);

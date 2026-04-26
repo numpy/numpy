@@ -2048,6 +2048,7 @@ class TestDTypeSignatures:
 def test_gh_31308():
     kind = [("x", np.float64, 2 ** 28)]
     kind_dtype = np.dtype(kind)
+    assert kind_dtype.itemsize == (2 ** 28) * 8
 
 
 @pytest.mark.xfail(run=False)
