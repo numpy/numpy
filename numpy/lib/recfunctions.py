@@ -932,6 +932,23 @@ def _common_stride(offsets, counts, itemsize):
     return stride
 
 
+def _extract_fields(arr):
+    """
+    Recursively extract flat field arrays from a structured array.
+
+    Returns a list of ndarrays, one per flattened (non-nested) field,
+    in left-to-right order.
+    """
+    result = []
+    for name in arr.dtype.names:
+        vals = arr[name]
+        if vals.dtype.names is not None:
+            result.extend(_extract_fields(vals))
+        else:
+            result.append(vals)
+    return result
+
+
 def _structured_to_unstructured_dispatcher(arr, dtype=None, copy=None,
                                            casting=None):
     return (arr,)
@@ -952,7 +969,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     Parameters
     ----------
     arr : ndarray
-       Structured array or dtype to convert. Cannot contain object datatype.
+       Structured array or dtype to convert.
     dtype : dtype, optional
        The dtype of the output unstructured array.
     copy : bool, optional
@@ -1023,6 +1040,15 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
                                  'formats': dts,
                                  'offsets': offsets,
                                  'itemsize': arr.dtype.itemsize})
+    if arr.dtype.hasobject:
+        # View is not possible for object arrays; build the result by
+        # stacking fields along a new last axis.  This always returns a
+        # copy (matching the "copy=False" contract: "a view is returned
+        # if possible" — for object arrays it is not).
+        out = np.stack(_extract_fields(arr), axis=-1)
+        if out.dtype != out_dtype:
+            out = out.astype(out_dtype)
+        return out
     arr = arr.view(flattened_fields)
 
     # we only allow a few types to be unstructured by manipulating the
