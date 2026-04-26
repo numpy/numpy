@@ -909,11 +909,14 @@ class TestDateTime:
         # Regression test for gh-30903.
         with pytest.raises(ValueError):
             np.ones(1, "M8")
-        with pytest.warns(
-            DeprecationWarning,
-            match=self.generic_unit_deprecation_message,
-        ):
-            np.array(["NaT"], "M8")
+        with pytest.raises(ValueError):
+            np.zeros(1, "M8")
+        with pytest.raises(ValueError):
+            np.empty(1, "M8")
+        with pytest.raises(ValueError):
+            np.full(1, 42, dtype="M8")
+        with pytest.raises(ValueError):
+            np.array([1, 2, 3], dtype="M8")
 
     def test_pickle(self):
         # Check that pickle roundtripping works

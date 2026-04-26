@@ -611,6 +611,15 @@ create_datetime_dtype(int type_num, PyArray_DatetimeMetaData *meta)
     /* Copy the metadata */
     *dt_data = *meta;
 
+    /* Reject generic datetime64 construction */
+    if (dt_data->base == NPY_FR_GENERIC) {
+        PyErr_SetString(PyExc_ValueError,
+            "Cannot convert a NumPy datetime value "
+            "other than NaT with generic units");
+        Py_DECREF(dtype);
+        return NULL;
+    }
+
     return (PyArray_Descr *)dtype;
 }
 

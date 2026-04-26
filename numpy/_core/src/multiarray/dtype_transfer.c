@@ -1270,21 +1270,6 @@ get_legacy_dtype_cast_function(
         }
     }
 
-    /* Reject invalid datetime64 construction early, unless NaT */
-    if (PyDataType_ISDATETIME(dst_dtype) &&
-        PyTypeNum_ISNUMBER(src_dtype->type_num)) {
-        
-        PyArray_DatetimeMetaData *meta = 
-            get_datetime_metadata_from_dtype(dst_dtype);
-            
-        if (meta != NULL && meta->base == NPY_FR_GENERIC) {
-            PyErr_SetString(PyExc_ValueError,
-                "Cannot convert a NumPy datetime value "
-                "other than NaT with generic units");
-            return NPY_FAIL;
-        }
-    }
-
     /* Get the cast function */
     castfunc = PyArray_GetCastFunc(src_dtype, dst_dtype->type_num);
     if (!castfunc) {
