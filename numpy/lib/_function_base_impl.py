@@ -1672,6 +1672,10 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         xp = np.concatenate((xp[-1:] - period, xp, xp[0:1] + period))
         fp = np.concatenate((fp[-1:], fp, fp[0:1]))
 
+    # Handle empty inputs: when all arrays are empty, return empty array
+    if (np.asarray(x).size == 0 and np.asarray(xp).size == 0
+            and np.asarray(fp).size == 0):
+        return np.array([], dtype=input_dtype)
     return interp_func(x, xp, fp, left, right)
 
 

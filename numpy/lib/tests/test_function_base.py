@@ -3295,6 +3295,17 @@ class TestInterp:
         y = np.array(y, order='C').reshape(2, -1)
         assert_almost_equal(np.interp(x, xp, fp, period=360), y)
 
+    def test_empty_arrays(self):
+        # Regression test for gh-30316
+        # np.interp([], [], []) should return an empty array
+        result = np.interp([], [], [])
+        assert_equal(result, np.array([]))
+        assert_equal(result.dtype, np.float64)
+
+        # complex case
+        result_c = np.interp([], [], np.array([], dtype=complex))
+        assert_equal(result_c, np.array([], dtype=complex))
+
 
 quantile_methods = [
     'inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
