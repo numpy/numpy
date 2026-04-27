@@ -319,8 +319,8 @@ _convert_from_tuple(PyObject *obj, int align)
         }
         npy_intp items = PyArray_OverflowMultiplyList(shape.ptr, shape.len);
         int overflowed;
-        long long nbytes;
-        if (items < 0 || items > NPY_MAX_INTP) {
+        npy_intp nbytes;
+        if (items < 0) {
             overflowed = 1;
         }
         else {
