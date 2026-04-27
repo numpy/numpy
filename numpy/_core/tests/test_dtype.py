@@ -739,6 +739,8 @@ class TestSubarray:
         # Check that the shape is valid.
         max_intp = np.iinfo(np.intp).max
         # Too large values (the datatype is part of this)
+        assert_raises(ValueError, np.dtype, [('a', 'f8', max_intp // 8 + 1)])
+        assert_raises(ValueError, np.dtype, [('a', 'f4', max_intp // 4 + 1)])
         assert_raises(ValueError, np.dtype, [('a', 'f4', max_intp + 1)])
         # Negative values
         assert_raises(ValueError, np.dtype, [('a', 'f4', -1)])
