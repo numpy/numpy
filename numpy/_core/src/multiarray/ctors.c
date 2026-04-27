@@ -906,6 +906,13 @@ PyArray_NewFromDescr_int(
             raise_memory_error(fa->nd, fa->dimensions, descr);
             goto fail;
         }
+        /*
+         * Set fa->data and NPY_ARRAY_OWNDATA immediately after allocation so
+         * that the fail path (Py_DECREF(fa) -> dealloc) frees the buffer if
+         * the fill-zero loop below raises an error.
+         */
+        fa->data = data;
+        fa->flags |= NPY_ARRAY_OWNDATA;
 
         /*
          * If the array needs special dtype-specific zero-filling logic, do that
@@ -919,8 +926,6 @@ PyArray_NewFromDescr_int(
                 goto fail;
             }
         }
-
-        fa->flags |= NPY_ARRAY_OWNDATA;
     }
     else {
         /* The handlers should never be called in this case */
@@ -929,8 +934,8 @@ PyArray_NewFromDescr_int(
          * If data is passed in, this object won't own it.
          */
         fa->flags &= ~NPY_ARRAY_OWNDATA;
+        fa->data = data;
     }
-    fa->data = data;
 
     /*
      * Always update the aligned flag.  Not owned data or input strides may
@@ -998,7 +1003,6 @@ PyArray_NewFromDescr_int(
 
  fail:
     NPY_traverse_info_xfree(&fill_zero_info);
-    Py_XDECREF(fa->mem_handler);
     Py_DECREF(fa);
     return NULL;
 }
