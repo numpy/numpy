@@ -337,7 +337,7 @@ _convert_from_tuple(PyObject *obj, int align)
         if (newdescr == NULL) {
             goto fail;
         }
-        newdescr->elsize = (long long)nbytes;
+        newdescr->elsize = nbytes;
         newdescr->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
         if (newdescr->subarray == NULL) {
             Py_DECREF(newdescr);
