@@ -932,7 +932,9 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     return _wrapfunc(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
 
 
-def _sort_dispatcher(a, axis=None, kind=None, order=None, *, stable=None, descending=None):
+def _sort_dispatcher(
+    a, axis=None, kind=None, order=None, *, stable=None, descending=None
+):
     return (a,)
 
 
@@ -1093,7 +1095,9 @@ def sort(a, axis=-1, kind=None, order=None, *, stable=None, descending=None):
     return a
 
 
-def _argsort_dispatcher(a, axis=None, kind=None, order=None, *, stable=None, descending=None):
+def _argsort_dispatcher(
+    a, axis=None, kind=None, order=None, *, stable=None, descending=None
+):
     return (a,)
 
 
@@ -1211,7 +1215,13 @@ def argsort(a, axis=-1, kind=None, order=None, *, stable=None, descending=None):
 
     """
     return _wrapfunc(
-        a, 'argsort', axis=axis, kind=kind, order=order, stable=stable, descending=descending
+        a,
+        "argsort",
+        axis=axis,
+        kind=kind,
+        order=order,
+        stable=stable,
+        descending=descending,
     )
 
 def _argmax_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue):

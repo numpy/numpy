@@ -2794,7 +2794,9 @@ class TestMethods:
     @pytest.mark.parametrize('stable', [True, False])
     @pytest.mark.parametrize('descending', [True, False])
     def test_sort_descending_complex(self, dtype, stable, descending):
-        a = np.linspace(-50, 50, 101, dtype=dtype) + 1j * np.linspace(-50, 50, 101, dtype=dtype)
+        real = np.linspace(-50, 50, 101, dtype=dtype)
+        imag = np.linspace(-50, 50, 101, dtype=dtype)
+        a = real + 1j * imag
         if not descending:
             a = a[::-1]
         # add nans to check that they are sorted to the end

@@ -7207,7 +7207,7 @@ def power(a, b, third=None):
 
 
 def argsort(a, axis=np._NoValue, kind=None, order=None, endwith=True,
-            fill_value=None, *, stable=None):
+            fill_value=None, *, stable=None, descending=None):
     "Function version of the eponymous method."
     a = np.asanyarray(a)
 
@@ -7225,7 +7225,7 @@ def argsort(a, axis=np._NoValue, kind=None, order=None, endwith=True,
 argsort.__doc__ = MaskedArray.argsort.__doc__
 
 def sort(a, axis=-1, kind=None, order=None, endwith=True, fill_value=None, *,
-         stable=None):
+         stable=None, descending=None):
     """
     Return a sorted copy of the masked array.
 

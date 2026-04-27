@@ -740,7 +740,10 @@ class chararray(ndarray):
               dtype='|S5')
 
         """
-        return self.__array__().argsort(axis, kind, order, stable=stable, descending=descending)
+        return self.__array__().argsort(
+            axis, kind, order, stable=stable, descending=descending
+        )
+
     argsort.__doc__ = ndarray.argsort.__doc__
 
     def capitalize(self):
