@@ -316,12 +316,6 @@ _convert_from_tuple(PyObject *obj, int align)
                                 "dimension smaller then zero.");
                 goto fail;
             }
-            if (shape.ptr[i] > NPY_MAX_INTP) {
-                PyErr_SetString(PyExc_ValueError,
-                                "invalid shape in fixed-type tuple: "
-                                "dimension does not fit into a C int.");
-                goto fail;
-            }
         }
         npy_intp items = PyArray_OverflowMultiplyList(shape.ptr, shape.len);
         int overflowed;
