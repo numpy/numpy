@@ -2054,6 +2054,7 @@ def test_gh_31308():
     assert kind_dtype.itemsize == (2 ** 28) * 8
 
 
+@pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
 @requires_memory(free_bytes=2e9)
 def test_gh_31308_materialized():
     kind = [("x", np.float64, 2 ** 28)]
