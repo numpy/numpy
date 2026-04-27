@@ -324,8 +324,8 @@ _convert_from_tuple(PyObject *obj, int align)
             overflowed = 1;
         }
         else {
-            overflowed = npy_mul_with_overflow_longlong(
-                &nbytes, type->elsize, (npy_intp) items);
+            overflowed = npy_mul_sizes_with_overflow(
+                &nbytes, type->elsize, items);
         }
         if (overflowed) {
             PyErr_SetString(PyExc_ValueError,
