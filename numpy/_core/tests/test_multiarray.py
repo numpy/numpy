@@ -2747,6 +2747,79 @@ class TestMethods:
         assert_raises(ValueError, d.sort, kind=k)
         assert_raises(ValueError, d.argsort, kind=k)
 
+    @pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64])
+    @pytest.mark.parametrize('stable', [True, False])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_sort_descending_signed(self, dtype, stable, descending):
+        a = np.arange(-51, 50, dtype=dtype)
+        if not descending:
+            a = a[::-1]
+        b = a[::-1].copy()
+
+        msg = f"sort, dtype={dtype}, stable={stable}, descending={descending}"
+        a.sort(stable=stable, axis=-1, descending=descending)
+        assert_equal(a, b, msg)
+
+    @pytest.mark.parametrize('dtype', [np.uint8, np.uint16, np.uint32, np.uint64])
+    @pytest.mark.parametrize('stable', [True, False])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_sort_descending_unsigned(self, dtype, stable, descending):
+        a = np.arange(0, 101, dtype=dtype)
+        if not descending:
+            a = a[::-1]
+        b = a[::-1].copy()
+
+        msg = f"sort, dtype={dtype}, stable={stable}, descending={descending}"
+        a.sort(stable=stable, axis=-1, descending=descending)
+        assert_equal(a, b, msg)
+
+    @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64, np.longdouble])
+    @pytest.mark.parametrize('stable', [True, False])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_sort_descending_floats(self, dtype, stable, descending):
+        a = np.linspace(-50, 50, 101, dtype=dtype)
+        if not descending:
+            a = a[::-1]
+        # add nans to check that they are sorted to the end
+        a[::10] = np.nan
+
+        b = a[::-1].copy()
+        b = np.concatenate((b[~np.isnan(b)], b[np.isnan(b)]))
+
+        msg = f"sort, dtype={dtype}, stable={stable}, descending={descending}"
+        a.sort(stable=stable, axis=-1, descending=descending)
+        assert_equal(a, b, msg)
+
+    @pytest.mark.parametrize('dtype', [np.complex64, np.complex128, np.clongdouble])
+    @pytest.mark.parametrize('stable', [True, False])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_sort_descending_complex(self, dtype, stable, descending):
+        a = np.linspace(-50, 50, 101, dtype=dtype) + 1j * np.linspace(-50, 50, 101, dtype=dtype)
+        if not descending:
+            a = a[::-1]
+        # add nans to check that they are sorted to the end
+        a[::10] = np.nan + 1j * np.nan
+
+        b = a[::-1].copy()
+        b = np.concatenate((b[~np.isnan(b)], b[np.isnan(b)]))
+
+        msg = f"sort, dtype={dtype}, stable={stable}, descending={descending}"
+        a.sort(stable=stable, axis=-1, descending=descending)
+        assert_equal(a, b, msg)
+
+    @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
+    @pytest.mark.parametrize('stable', [True, False])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_sort_descending_datetime(self, dtype, stable, descending):
+        a = np.arange(0, 101, dtype=dtype)
+        if not descending:
+            a = a[::-1]
+        b = a[::-1].copy()
+        b = np.concatenate((b[~np.isnan(b)], b[np.isnan(b)]))
+        msg = f"sort, dtype={dtype}, stable={stable}, descending={descending}"
+        a.sort(stable=stable, axis=-1, descending=descending)
+        assert_equal(a, b, msg)
+
     @pytest.mark.parametrize('a', [
         np.array([0, 1, np.nan], dtype=np.float16),
         np.array([0, 1, np.nan], dtype=np.float32),

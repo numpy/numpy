@@ -48,6 +48,15 @@ NPY_NO_EXPORT int aheapsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void 
 NPY_NO_EXPORT int amergesort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 NPY_NO_EXPORT int atimsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 
+NPY_NO_EXPORT int quicksort_@suff@_descend(void *vec, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int heapsort_@suff@_descend(void *vec, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int mergesort_@suff@_descend(void *vec, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int timsort_@suff@_descend(void *vec, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int aquicksort_@suff@_descend(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int aheapsort_@suff@_descend(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int amergesort_@suff@_descend(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int atimsort_@suff@_descend(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+
 /**end repeat**/
 
 /**begin repeat

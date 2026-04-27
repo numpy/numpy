@@ -480,6 +480,7 @@ def sort(
     order: str | Sequence[str] | None = None,
     *,
     stable: bool | None = None,
+    descending: bool | None = None,
 ) -> NDArray[Any]: ...
 @overload
 def sort(
@@ -489,6 +490,7 @@ def sort(
     order: str | Sequence[str] | None = None,
     *,
     stable: bool | None = None,
+    descending: bool | None = None,
 ) -> _Array1D[Any]: ...
 
 #
@@ -509,6 +511,7 @@ def argsort(
     order: str | Sequence[str] | None = None,
     *,
     stable: bool | None = None,
+    descending: bool | None = None,
 ) -> NDArray[np.intp]: ...
 @overload
 def argsort(
@@ -518,6 +521,7 @@ def argsort(
     order: str | Sequence[str] | None = None,
     *,
     stable: bool | None = None,
+    descending: bool | None = None,
 ) -> _Array1D[np.intp]: ...
 
 # keep in sync with `argmin` below

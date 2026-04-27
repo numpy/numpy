@@ -1021,3 +1021,231 @@ aquicksort_unicode(void *vv, npy_intp *tosort, npy_intp n, void *varr)
     return string_aquicksort_<npy::unicode_tag>((npy_ucs4 *)vv, tosort, n,
                                                 varr);
 }
+
+/***************************************
+ * C > C++ dispatch (descending)
+ ***************************************/
+
+NPY_NO_EXPORT int
+quicksort_bool_descend(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return quicksort_<npy::reverse_tag<npy::bool_tag>>((npy_bool *)start, n);
+}
+NPY_NO_EXPORT int
+quicksort_byte_descend(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return quicksort_<npy::reverse_tag<npy::byte_tag>>((npy_byte *)start, n);
+}
+NPY_NO_EXPORT int
+quicksort_ubyte_descend(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return quicksort_<npy::reverse_tag<npy::ubyte_tag>>((npy_ubyte *)start, n);
+}
+NPY_NO_EXPORT int
+quicksort_short_descend(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return quicksort_<npy::reverse_tag<npy::short_tag>>((npy_short *)start, n);
+}
+NPY_NO_EXPORT int
+quicksort_ushort_descend(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return quicksort_<npy::reverse_tag<npy::ushort_tag>>((npy_ushort *)start, n);
+}
+NPY_NO_EXPORT int
+quicksort_int_descend(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return quicksort_<npy::reverse_tag<npy::int_tag>>((npy_int *)start, n);
+}
+NPY_NO_EXPORT int
+quicksort_uint_descend(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return quicksort_<npy::reverse_tag<npy::uint_tag>>((npy_uint *)start, n);
+}
+NPY_NO_EXPORT int
+quicksort_long_descend(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return quicksort_<npy::reverse_tag<npy::long_tag>>((npy_long *)start, n);
+}
+NPY_NO_EXPORT int
+quicksort_ulong_descend(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return quicksort_<npy::reverse_tag<npy::ulong_tag>>((npy_ulong *)start, n);
+}
+NPY_NO_EXPORT int
+quicksort_longlong_descend(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return quicksort_<npy::reverse_tag<npy::longlong_tag>>((npy_longlong *)start, n);
+}
+NPY_NO_EXPORT int
+quicksort_ulonglong_descend(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return quicksort_<npy::reverse_tag<npy::ulonglong_tag>>((npy_ulonglong *)start, n);
+}
+NPY_NO_EXPORT int
+quicksort_half_descend(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return quicksort_<npy::reverse_tag<npy::half_tag>>((npy_half *)start, n);
+}
+NPY_NO_EXPORT int
+quicksort_float_descend(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return quicksort_<npy::reverse_tag<npy::float_tag>>((npy_float *)start, n);
+}
+NPY_NO_EXPORT int
+quicksort_double_descend(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return quicksort_<npy::reverse_tag<npy::double_tag>>((npy_double *)start, n);
+}
+NPY_NO_EXPORT int
+quicksort_longdouble_descend(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return quicksort_<npy::reverse_tag<npy::longdouble_tag>>((npy_longdouble *)start, n);
+}
+NPY_NO_EXPORT int
+quicksort_cfloat_descend(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return quicksort_<npy::reverse_tag<npy::cfloat_tag>>((npy_cfloat *)start, n);
+}
+NPY_NO_EXPORT int
+quicksort_cdouble_descend(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return quicksort_<npy::reverse_tag<npy::cdouble_tag>>((npy_cdouble *)start, n);
+}
+NPY_NO_EXPORT int
+quicksort_clongdouble_descend(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return quicksort_<npy::reverse_tag<npy::clongdouble_tag>>((npy_clongdouble *)start, n);
+}
+NPY_NO_EXPORT int
+quicksort_datetime_descend(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return quicksort_<npy::reverse_tag<npy::datetime_tag>>((npy_datetime *)start, n);
+}
+NPY_NO_EXPORT int
+quicksort_timedelta_descend(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return quicksort_<npy::reverse_tag<npy::timedelta_tag>>((npy_timedelta *)start, n);
+}
+
+NPY_NO_EXPORT int
+aquicksort_bool_descend(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return aquicksort_<npy::reverse_tag<npy::bool_tag>>((npy_bool *)vv, tosort, n);
+}
+NPY_NO_EXPORT int
+aquicksort_byte_descend(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return aquicksort_<npy::reverse_tag<npy::byte_tag>>((npy_byte *)vv, tosort, n);
+}
+NPY_NO_EXPORT int
+aquicksort_ubyte_descend(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return aquicksort_<npy::reverse_tag<npy::ubyte_tag>>((npy_ubyte *)vv, tosort, n);
+}
+NPY_NO_EXPORT int
+aquicksort_short_descend(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return aquicksort_<npy::reverse_tag<npy::short_tag>>((npy_short *)vv, tosort, n);
+}
+NPY_NO_EXPORT int
+aquicksort_ushort_descend(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return aquicksort_<npy::reverse_tag<npy::ushort_tag>>((npy_ushort *)vv, tosort, n);
+}
+NPY_NO_EXPORT int
+aquicksort_int_descend(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return aquicksort_<npy::reverse_tag<npy::int_tag>>((npy_int *)vv, tosort, n);
+}
+NPY_NO_EXPORT int
+aquicksort_uint_descend(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return aquicksort_<npy::reverse_tag<npy::uint_tag>>((npy_uint *)vv, tosort, n);
+}
+NPY_NO_EXPORT int
+aquicksort_long_descend(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return aquicksort_<npy::reverse_tag<npy::long_tag>>((npy_long *)vv, tosort, n);
+}
+NPY_NO_EXPORT int
+aquicksort_ulong_descend(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return aquicksort_<npy::reverse_tag<npy::ulong_tag>>((npy_ulong *)vv, tosort, n);
+}
+NPY_NO_EXPORT int
+aquicksort_longlong_descend(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return aquicksort_<npy::reverse_tag<npy::longlong_tag>>((npy_longlong *)vv, tosort, n);
+}
+NPY_NO_EXPORT int
+aquicksort_ulonglong_descend(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return aquicksort_<npy::reverse_tag<npy::ulonglong_tag>>((npy_ulonglong *)vv, tosort, n);
+}
+NPY_NO_EXPORT int
+aquicksort_half_descend(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return aquicksort_<npy::reverse_tag<npy::half_tag>>((npy_half *)vv, tosort, n);
+}
+NPY_NO_EXPORT int
+aquicksort_float_descend(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return aquicksort_<npy::reverse_tag<npy::float_tag>>((npy_float *)vv, tosort, n);
+}
+NPY_NO_EXPORT int
+aquicksort_double_descend(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return aquicksort_<npy::reverse_tag<npy::double_tag>>((npy_double *)vv, tosort, n);
+}
+NPY_NO_EXPORT int
+aquicksort_longdouble_descend(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return aquicksort_<npy::reverse_tag<npy::longdouble_tag>>((npy_longdouble *)vv, tosort, n);
+}
+NPY_NO_EXPORT int
+aquicksort_cfloat_descend(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return aquicksort_<npy::reverse_tag<npy::cfloat_tag>>((npy_cfloat *)vv, tosort, n);
+}
+NPY_NO_EXPORT int
+aquicksort_cdouble_descend(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return aquicksort_<npy::reverse_tag<npy::cdouble_tag>>((npy_cdouble *)vv, tosort, n);
+}
+NPY_NO_EXPORT int
+aquicksort_clongdouble_descend(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return aquicksort_<npy::reverse_tag<npy::clongdouble_tag>>((npy_clongdouble *)vv, tosort, n);
+}
+NPY_NO_EXPORT int
+aquicksort_datetime_descend(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return aquicksort_<npy::reverse_tag<npy::datetime_tag>>((npy_datetime *)vv, tosort, n);
+}
+NPY_NO_EXPORT int
+aquicksort_timedelta_descend(void *vv, npy_intp *tosort, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return aquicksort_<npy::reverse_tag<npy::timedelta_tag>>((npy_timedelta *)vv, tosort, n);
+}
+
+NPY_NO_EXPORT int
+quicksort_string_descend(void *start, npy_intp n, void *varr)
+{
+    return string_quicksort_<npy::reverse_tag<npy::string_tag>>((npy_char *)start, n, varr);
+}
+NPY_NO_EXPORT int
+quicksort_unicode_descend(void *start, npy_intp n, void *varr)
+{
+    return string_quicksort_<npy::reverse_tag<npy::unicode_tag>>((npy_ucs4 *)start, n, varr);
+}
+
+NPY_NO_EXPORT int
+aquicksort_string_descend(void *vv, npy_intp *tosort, npy_intp n, void *varr)
+{
+    return string_aquicksort_<npy::reverse_tag<npy::string_tag>>((npy_char *)vv, tosort, n, varr);
+}
+NPY_NO_EXPORT int
+aquicksort_unicode_descend(void *vv, npy_intp *tosort, npy_intp n, void *varr)
+{
+    return string_aquicksort_<npy::reverse_tag<npy::unicode_tag>>((npy_ucs4 *)vv, tosort, n, varr);
+}

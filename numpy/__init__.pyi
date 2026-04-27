@@ -1733,6 +1733,7 @@ class _ArrayOrScalarCommon:
         order: str | Sequence[str] | None = ...,
         *,
         stable: py_bool | None = ...,
+        descending: py_bool | None = ...,
     ) -> NDArray[intp]: ...
 
     @overload  # axis=None (default), out=None (default), keepdims=False (default)
@@ -3741,6 +3742,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         order: str | Sequence[str] | None = None,
         *,
         stable: py_bool | None = None,
+        descending: py_bool | None = None,
     ) -> None: ...
 
     # Keep in sync with `MaskedArray.trace`

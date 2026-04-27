@@ -722,7 +722,7 @@ class chararray(ndarray):
     def __rmod__(self, other):
         return NotImplemented
 
-    def argsort(self, axis=-1, kind=None, order=None, *, stable=None):
+    def argsort(self, axis=-1, kind=None, order=None, *, stable=None, descending=None):
         """
         Return the indices that sort the array lexicographically.
 
@@ -740,7 +740,7 @@ class chararray(ndarray):
               dtype='|S5')
 
         """
-        return self.__array__().argsort(axis, kind, order, stable=stable)
+        return self.__array__().argsort(axis, kind, order, stable=stable, descending=descending)
     argsort.__doc__ = ndarray.argsort.__doc__
 
     def capitalize(self):

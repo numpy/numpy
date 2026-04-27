@@ -4571,9 +4571,11 @@ static int
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
     PyArrayMethod_SortParameters *params = (PyArrayMethod_SortParameters *)context->parameters;
-    switch (params->flags) {
+    switch ((int)params->flags) {
         case NPY_SORT_DEFAULT:
             return quicksort_@suff@(data[0], dimensions[0], NULL);
+        case NPY_SORT_DEFAULT | NPY_SORT_DESCENDING:
+            return quicksort_@suff@_descend(data[0], dimensions[0], NULL);
         case _NPY_SORT_HEAPSORT:
         case NPY_SORT_STABLE:
 #if @rsort@
@@ -4581,21 +4583,28 @@ static int
 #else
             return timsort_@suff@(data[0], dimensions[0], NULL);
 #endif
+        case _NPY_SORT_HEAPSORT | NPY_SORT_DESCENDING:
+        case NPY_SORT_STABLE | NPY_SORT_DESCENDING:
+            // radixsort doesn't have a descending implementation yet
+            return timsort_@suff@_descend(data[0], dimensions[0], NULL);
         default:
             PyErr_Format(PyExc_RuntimeError,
                          "unknown sort kind %d for @suff@", (int)params->flags);
             return -1;
     }
 }
+
 static int
 @suff@_argsort_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
     PyArrayMethod_SortParameters *params = (PyArrayMethod_SortParameters *)context->parameters;
-    switch (params->flags) {
+    switch ((int)params->flags) {
         case NPY_SORT_DEFAULT:
             return aquicksort_@suff@(data[0], (npy_intp *)data[1], dimensions[0], NULL);
+        case NPY_SORT_DEFAULT | NPY_SORT_DESCENDING:
+            return aquicksort_@suff@_descend(data[0], (npy_intp *)data[1], dimensions[0], NULL);
         case _NPY_SORT_HEAPSORT:
         case NPY_SORT_STABLE:
 #if @rsort@
@@ -4603,6 +4612,10 @@ static int
 #else
             return atimsort_@suff@(data[0], (npy_intp *)data[1], dimensions[0], NULL);
 #endif
+        case _NPY_SORT_HEAPSORT | NPY_SORT_DESCENDING:
+        case NPY_SORT_STABLE | NPY_SORT_DESCENDING:
+            // radixsort doesn't have a descending implementation yet
+            return atimsort_@suff@_descend(data[0], (npy_intp *)data[1], dimensions[0], NULL);
         default:
             PyErr_Format(PyExc_RuntimeError,
                          "unknown sort kind %d for @suff@", (int)params->flags);
