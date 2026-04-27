@@ -61,14 +61,6 @@ or explicitly type the array like object as `~typing.Any`:
     >>> np.array(array_like)
     array(<generator object <genexpr> at ...>, dtype=object)
 
-ndarray
-~~~~~~~
-
-It's possible (but deprecated) to mutate the dtype of an array at runtime.
-This sort of mutation is not allowed by the types. Users who want to
-write statically typed code should instead use the `numpy.ndarray.view`
-method to create a view of the array with a different dtype.
-
 DTypeLike
 ~~~~~~~~~
 
@@ -143,20 +135,6 @@ The `~numpy.timedelta64` class is not considered a subclass of
 `~numpy.signedinteger`, the former only inheriting from `~numpy.generic`
 while static type checking.
 
-0D arrays
-~~~~~~~~~
-
-During runtime numpy aggressively casts any passed 0D arrays into their
-corresponding `~numpy.generic` instance. Until the introduction of shape
-typing (see :pep:`646`) it is unfortunately not possible to make the
-necessary distinction between 0D and >0D arrays. While thus not strictly
-correct, all operations that can potentially perform a 0D-array -> scalar
-cast are currently annotated as exclusively returning an `~numpy.ndarray`.
-
-If it is known in advance that an operation *will* perform a
-0D-array -> scalar cast, then one can consider manually remedying the
-situation with either `typing.cast` or a ``# type: ignore`` comment.
-
 Record array dtypes
 ~~~~~~~~~~~~~~~~~~~
 
@@ -175,6 +153,27 @@ buggy behavior.
 
 API
 ---
+
+.. rubric:: ndarray
+
+The `numpy.ndarray` class is a `generic type`_ that accepts two type arguments:
+
+1. The type of `numpy.ndarray.shape`, which must be a `tuple` of `int`, e.g.
+   ``tuple[int, int]`` (2-D shape) or ``tuple[()]`` (0-D shape).
+   The default shape is ``tuple[Any, ...]``, which represents an unknown shape with
+   *any* number of dimensions.
+   Currently, ``Literal`` ints or other more specific types are not supported.
+2. The type of `numpy.ndarray.dtype`, which must be a subtype of `numpy.dtype` such as
+   ``numpy.dtype[numpy.float64]``. If omitted, it will default to ``numpy.dtype[Any]``.
+
+.. code-block:: python
+
+    >>> import numpy as np
+
+    >>> type ImageRGB = np.ndarray[tuple[int, int, int], np.dtype[np.uint8]]
+    >>> type Vector[S: np.generic] = np.ndarray[tuple[int], np.dtype[S]]
+
+.. _generic type: https://typing.python.org/en/latest/spec/generics.html
 
 """
 # NOTE: The API section will be appended with additional entries

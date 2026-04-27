@@ -413,6 +413,7 @@ _convert_from_array_descr(PyObject *obj, int align)
     int totalsize = 0;
     PyObject *fields = PyDict_New();
     if (!fields) {
+        Py_DECREF(nameslist);
         return NULL;
     }
     for (int i = 0; i < n; i++) {
@@ -1412,8 +1413,9 @@ descr_is_legacy_parametric_instance(PyArray_Descr *descr,
     }
     /* Flexible descr with generic time unit (which can be adapted) */
     if (PyDataType_ISDATETIME(descr)) {
-        PyArray_DatetimeMetaData *meta;
-        meta = get_datetime_metadata_from_dtype(descr);
+        _PyArray_LegacyDescr *ldescr = (_PyArray_LegacyDescr *)descr;
+        PyArray_DatetimeMetaData *meta =
+                &(((PyArray_DatetimeDTypeMetaData *)ldescr->c_metadata)->meta);
         if (meta->base == NPY_FR_GENERIC) {
             return 1;
         }
@@ -1428,12 +1430,13 @@ descr_is_legacy_parametric_instance(PyArray_Descr *descr,
  * both results can be NULL (if the input is).  But it always sets the DType
  * when a descriptor is set.
  *
+ * This function cannot fail.
+ *
  * @param dtype Input descriptor to be converted
  * @param out_descr Output descriptor
  * @param out_DType DType of the output descriptor
- * @return 0 on success -1 on failure
  */
-NPY_NO_EXPORT int
+NPY_NO_EXPORT void
 PyArray_ExtractDTypeAndDescriptor(PyArray_Descr *dtype,
         PyArray_Descr **out_descr, PyArray_DTypeMeta **out_DType)
 {
@@ -1449,7 +1452,6 @@ PyArray_ExtractDTypeAndDescriptor(PyArray_Descr *dtype,
             Py_INCREF(*out_descr);
         }
     }
-    return 0;
 }
 
 
@@ -1493,12 +1495,8 @@ PyArray_DTypeOrDescrConverterRequired(PyObject *obj, npy_dtype_info *dt_info)
      * be considered an instance with actual 0 length.
      * TODO: It would be nice to fix that eventually.
      */
-    int res = PyArray_ExtractDTypeAndDescriptor(
-                descr, &dt_info->descr, &dt_info->dtype);
+    PyArray_ExtractDTypeAndDescriptor(descr, &dt_info->descr, &dt_info->dtype);
     Py_DECREF(descr);
-    if (res < 0) {
-        return NPY_FAIL;
-    }
     return NPY_SUCCEED;
 }
 

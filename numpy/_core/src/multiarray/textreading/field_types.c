@@ -158,6 +158,7 @@ field_type_grow_recursive(PyArray_Descr *descr,
         field_type *new_ft = PyMem_Realloc(*ft, alloc_size);
         if (new_ft == NULL) {
             field_types_xclear(num_field_types, *ft);
+            PyErr_NoMemory();
             return -1;
         }
         *ft = new_ft;
@@ -195,6 +196,7 @@ field_types_create(PyArray_Descr *descr, field_type **ft)
     npy_intp ft_size = 4;
     *ft = PyMem_Malloc(ft_size * sizeof(field_type));
     if (*ft == NULL) {
+        PyErr_NoMemory();
         return -1;
     }
     return field_type_grow_recursive(descr, 0, ft, &ft_size, 0);

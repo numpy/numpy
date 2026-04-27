@@ -201,6 +201,7 @@ dtypemeta_initialize_struct_from_spec(
     DType->flags = spec->flags;
     DType->dt_slots = PyMem_Calloc(1, sizeof(NPY_DType_Slots));
     if (DType->dt_slots == NULL) {
+        PyErr_NoMemory();
         return -1;
     }
 
@@ -1121,6 +1122,7 @@ dtypemeta_wrap_legacy_descriptor(
 
     NPY_DType_Slots *dt_slots = PyMem_Malloc(sizeof(NPY_DType_Slots));
     if (dt_slots == NULL) {
+        PyErr_NoMemory();
         return NULL;
     }
     memset(dt_slots, '\0', sizeof(NPY_DType_Slots));
@@ -1129,6 +1131,7 @@ dtypemeta_wrap_legacy_descriptor(
     PyArray_DTypeMeta *dtype_class = PyMem_Malloc(sizeof(PyArray_DTypeMeta));
     if (dtype_class == NULL) {
         PyMem_Free(dt_slots);
+        PyErr_NoMemory();
         return NULL;
     }
 

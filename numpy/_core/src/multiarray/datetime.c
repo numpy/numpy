@@ -2367,6 +2367,16 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             return -1;
         }
 
+        if(meta->base == NPY_FR_GENERIC) {
+            if (DEPRECATE(
+                        "The 'generic' unit for NumPy timedelta is deprecated, "
+                        "and will raise an error in the future. "
+                        "This includes implicit conversion of bare integers (e.g. `+ 1`)."
+                        "Please use a specific unit instead.") < 0) {
+                return -1;
+            }
+        }
+
         Py_DECREF(utf8);
         return 0;
     }
@@ -2492,6 +2502,17 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             meta->num = 1;
         }
         *out = NPY_DATETIME_NAT;
+
+        if(meta->base == NPY_FR_GENERIC) {
+            if (DEPRECATE(
+                        "The 'generic' unit for NumPy timedelta is deprecated, "
+                        "and will raise an error in the future. "
+                        "This includes implicit conversion of bare integers (e.g. `+ 1`)."
+                        "Please use a specific unit instead.") < 0) {
+                return -1;
+            }
+        }
+
         return 0;
     }
     else {

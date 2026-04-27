@@ -190,6 +190,40 @@ class TestRegression:
         assert_array_equal(rng.binomial(1, [0, 0.25, 0.5, 0.75, 1]),
                            [0, 0, 0, 1, 1])
 
+    def test_binomial_btpe_legacy_stream(self):
+        # Regression test for the BTPE sign correction fix: RandomState
+        # must preserve the pre-fix stream for compatibility.
+        state = {
+            'bit_generator': 'PCG64',
+            'state': {
+                'state': 339225526786748945562563845880185242573,
+                'inc': 114135179160287400024908587472913682319,
+            },
+            'has_uint32': 0,
+            'uinteger': 0,
+        }
+        bg = random.PCG64()
+        bg.state = state
+        rs = random.RandomState(bg)
+        assert rs.binomial(500, 0.5) == 227
+
+    def test_multinomial_btpe_legacy_stream(self):
+        # See also test_binomial_btpe_legacy_stream.
+        # RandomState.multinomial relies on binomial internally.
+        state = {
+            'bit_generator': 'PCG64',
+            'state': {
+                'state': 339225526786748945562563845880185242573,
+                'inc': 114135179160287400024908587472913682319,
+            },
+            'has_uint32': 0,
+            'uinteger': 0,
+        }
+        bg = random.PCG64()
+        bg.state = state
+        rs = random.RandomState(bg)
+        assert_array_equal(rs.multinomial(500, [0.5, 0.5]), [227, 273])
+
     def test_n_zero_stream(self):
         # Regression test for gh-14522.  Ensure that future versions
         # generate the same variates as version 1.16.

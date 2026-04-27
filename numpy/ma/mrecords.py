@@ -12,7 +12,7 @@ and the masking of individual fields.
 #  or whatever restricted keywords.  An idea would be to no bother in the
 #  first place, and then rename the invalid fields with a trailing
 #  underscore. Maybe we could just overload the parser function ?
-
+import builtins
 import warnings
 
 import numpy as np
@@ -353,40 +353,17 @@ class MaskedRecords(ma.MaskedArray):
         Returns a view of the mrecarray.
 
         """
-        # OK, basic copy-paste from MaskedArray.view.
-        if dtype is None:
-            if type is None:
-                output = np.ndarray.view(self)
-            else:
-                output = np.ndarray.view(self, type)
-        # Here again.
-        elif type is None:
-            try:
-                if issubclass(dtype, np.ndarray):
-                    output = np.ndarray.view(self, dtype)
-                else:
-                    output = np.ndarray.view(self, dtype)
-            # OK, there's the change
-            except TypeError:
-                dtype = np.dtype(dtype)
-                # we need to revert to MaskedArray, but keeping the possibility
-                # of subclasses (eg, TimeSeriesRecords), so we'll force a type
-                # set to the first parent
-                if dtype.fields is None:
-                    basetype = self.__class__.__bases__[0]
-                    output = self.__array__().view(dtype, basetype)
-                    output._update_from(self)
-                else:
-                    output = np.ndarray.view(self, dtype)
-                output._fill_value = None
-        else:
-            output = np.ndarray.view(self, dtype, type)
-        # Update the mask, just like in MaskedArray.view
-        if (getattr(output, '_mask', ma.nomask) is not ma.nomask):
-            mdtype = ma.make_mask_descr(output.dtype)
-            output._mask = self._mask.view(mdtype, np.ndarray)
-            output._mask = output._mask.reshape(output.shape)
-        return output
+        # If the new dtype has no fields, we need to revert to MaskedArray,
+        # but keep the possibility of subclasses (eg, TimeSeriesRecords).
+        # So we'll force a type set to the first parent.
+        if (type is None
+                and dtype is not None
+                and not (isinstance(dtype, builtins.type)
+                         and issubclass(dtype, np.ndarray))
+                and (dtype := np.dtype(dtype)).fields is None):
+            type = self.__class__.__bases__[0]
+
+        return super().view(*[a for a in (dtype, type) if a is not None])
 
     def harden_mask(self):
         """

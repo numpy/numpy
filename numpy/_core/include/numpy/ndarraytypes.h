@@ -1669,8 +1669,9 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
                               ((type) <= NPY_LONGDOUBLE)) || \
                               ((type) == NPY_HALF))
 
-#define PyTypeNum_ISNUMBER(type) (((type) <= NPY_CLONGDOUBLE) || \
-                                  ((type) == NPY_HALF))
+#define PyTypeNum_ISNUMBER(type) (((type) >= 0) && \
+                                  (((type) <= NPY_CLONGDOUBLE) || \
+                                   ((type) == NPY_HALF)))
 
 #define PyTypeNum_ISSTRING(type) (((type) == NPY_STRING) ||    \
                                   ((type) == NPY_UNICODE))

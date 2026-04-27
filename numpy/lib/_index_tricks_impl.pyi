@@ -6,6 +6,7 @@ from typing import (
     Final,
     Generic,
     Literal as L,
+    Never,
     Self,
     SupportsIndex,
     final,
@@ -23,8 +24,9 @@ from numpy._typing import (
     _AnyShape,
     _ArrayLike,
     _DTypeLike,
-    _HasDType,
+    _IntLike_co,
     _NestedSequence,
+    _ScalarLike_co,
     _SupportsArray,
 )
 
@@ -53,6 +55,16 @@ _AxisT_co = TypeVar("_AxisT_co", bound=int, default=L[0], covariant=True)
 _MatrixT_co = TypeVar("_MatrixT_co", bound=bool, default=L[False], covariant=True)
 _NDMinT_co = TypeVar("_NDMinT_co", bound=int, default=L[1], covariant=True)
 _Trans1DT_co = TypeVar("_Trans1DT_co", bound=int, default=L[-1], covariant=True)
+
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+
+type _Int1D = _Array1D[np.intp]
+
+type _ToArray1D[ScalarT: np.generic] = _Array1D[ScalarT] | Sequence[ScalarT]
+
+type _JustAnyShape = tuple[Never, Never, Never, Never, Never]  # workaround for microsoft/pyright#10232
 
 ###
 
@@ -230,29 +242,100 @@ class IndexExpression(Generic[_BoolT_co]):
     @overload
     def __getitem__[T](self: IndexExpression[L[False]], item: T) -> T: ...
 
-@overload
-def ix_[DTypeT: np.dtype](
-    *args: _NestedSequence[_HasDType[DTypeT]] | _HasDType[DTypeT]
-) -> tuple[np.ndarray[_AnyShape, DTypeT], ...]: ...
-@overload
-def ix_(*args: str | _NestedSequence[str]) -> tuple[NDArray[np.str_], ...]: ...
-@overload
-def ix_(*args: bytes | _NestedSequence[bytes]) -> tuple[NDArray[np.bytes_], ...]: ...
-@overload
-def ix_(*args: bool | _NestedSequence[bool]) -> tuple[NDArray[np.bool], ...]: ...
-@overload
-def ix_(*args: int | _NestedSequence[int]) -> tuple[NDArray[np.intp], ...]: ...
-@overload
-def ix_(*args: float | _NestedSequence[float]) -> tuple[NDArray[np.float64], ...]: ...
-@overload
-def ix_(*args: complex | _NestedSequence[complex]) -> tuple[NDArray[np.complex128], ...]: ...
+# only the `int` sequences have special-cased shape-type overloads, because this is the
+# most common use case and the others would require too many overloads to be worth it.
+@overload  # 0
+def ix_() -> tuple[()]: ...
+@overload  # 1 +int
+def ix_(arg0: Sequence[int], /) -> tuple[_Array1D[np.int_]]: ...
+@overload  # 1 ScalarT
+def ix_[ScalarT: np.generic](
+    arg0: _ToArray1D[ScalarT],
+    /,
+) -> tuple[_Array1D[ScalarT]]: ...
+@overload  # 2 +int
+def ix_(
+    arg0: Sequence[int],
+    arg1: Sequence[int],
+    /,
+) -> tuple[_Array2D[np.int_], _Array2D[np.int_]]: ...
+@overload  # 2 ScalarT
+def ix_[ScalarT: np.generic](
+    arg0: _ToArray1D[ScalarT],
+    arg1: _ToArray1D[ScalarT],
+    /,
+) -> tuple[_Array2D[ScalarT], _Array2D[ScalarT]]: ...
+@overload  # 3 +int
+def ix_(
+    arg0: Sequence[int],
+    arg1: Sequence[int],
+    arg2: Sequence[int],
+    /,
+) -> tuple[_Array3D[np.int_], _Array3D[np.int_], _Array3D[np.int_]]: ...
+@overload  # 3 ScalarT
+def ix_[ScalarT: np.generic](
+    arg0: _ToArray1D[ScalarT],
+    arg1: _ToArray1D[ScalarT],
+    arg2: _ToArray1D[ScalarT],
+    /,
+) -> tuple[_Array3D[ScalarT], _Array3D[ScalarT], _Array3D[ScalarT]]: ...
+@overload  # N +int
+def ix_(
+    arg0: Sequence[int],
+    arg1: Sequence[int],
+    arg2: Sequence[int],
+    /,
+    *args: Sequence[int],
+) -> tuple[NDArray[np.int_], ...]: ...
+@overload  # N ScalarT
+def ix_[ScalarT: np.generic](
+    arg0: _ToArray1D[ScalarT],
+    arg1: _ToArray1D[ScalarT],
+    arg2: _ToArray1D[ScalarT],
+    /,
+    *args: _ToArray1D[ScalarT],
+) -> tuple[NDArray[ScalarT], ...]: ...
+@overload  # N float
+def ix_(arg0: list[float], /, *args: Sequence[float]) -> tuple[NDArray[np.float64], ...]: ...
+@overload  # N complex
+def ix_(arg0: list[complex], /, *args: Sequence[complex]) -> tuple[NDArray[np.complex128], ...]: ...
+@overload  # N bytes
+def ix_(arg0: Sequence[bytes], /, *args: Sequence[bytes]) -> tuple[NDArray[np.bytes_], ...]: ...
+@overload  # N str
+def ix_(arg0: Sequence[str], /, *args: Sequence[str]) -> tuple[NDArray[np.str_], ...]: ...
+@overload  # fallback
+def ix_(
+    arg0: Sequence[_ScalarLike_co] | _Array1D[Any],
+    /,
+    *args: Sequence[_ScalarLike_co] | _Array1D[Any],
+) -> tuple[NDArray[Any], ...]: ...
 
 #
 def fill_diagonal(a: NDArray[Any], val: object, wrap: bool = False) -> None: ...
 
 #
-def diag_indices(n: int, ndim: int = 2) -> tuple[NDArray[np.intp], ...]: ...
-def diag_indices_from(arr: ArrayLike) -> tuple[NDArray[np.intp], ...]: ...
+@overload
+def diag_indices(n: _IntLike_co, ndim: L[0]) -> tuple[()]: ...
+@overload
+def diag_indices(n: _IntLike_co, ndim: L[1]) -> tuple[_Int1D]: ...
+@overload
+def diag_indices(n: _IntLike_co, ndim: L[2] = 2) -> tuple[_Int1D, _Int1D]: ...
+@overload
+def diag_indices(n: _IntLike_co, ndim: L[3]) -> tuple[_Int1D, _Int1D, _Int1D]: ...
+@overload
+def diag_indices(n: _IntLike_co, ndim: int) -> tuple[_Int1D, ...]: ...
+
+#
+@overload  # ?d  (workaround)
+def diag_indices_from(arr: np.ndarray[_JustAnyShape]) -> tuple[_Int1D, _Int1D, *tuple[_Int1D, ...]]: ...
+@overload  # 2d
+def diag_indices_from(arr: np.ndarray[tuple[int, int]]) -> tuple[_Int1D, _Int1D]: ...
+@overload  # 3d
+def diag_indices_from(arr: np.ndarray[tuple[int, int, int]]) -> tuple[_Int1D, _Int1D, _Int1D]: ...
+@overload  # 4d
+def diag_indices_from(arr: np.ndarray[tuple[int, int, int, int]]) -> tuple[_Int1D, _Int1D, _Int1D, _Int1D]: ...
+@overload  # >=2d (fallback)
+def diag_indices_from(arr: np.ndarray[tuple[int, int, *tuple[int, ...]]]) -> tuple[_Int1D, _Int1D, *tuple[_Int1D, ...]]: ...
 
 #
 mgrid: Final[MGridClass] = ...

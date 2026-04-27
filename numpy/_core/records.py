@@ -402,11 +402,15 @@ class recarray(ndarray):
             )
         return self
 
+    _set_dtype = None  # __array_finalize__ can deal with dtype changes
+
     def __array_finalize__(self, obj):
-        if self.dtype.type is not record and self.dtype.names is not None:
+        if (self.dtype.type is not record and
+                issubclass(self.dtype.type, nt.void) and
+                self.dtype.names is not None):
             # if self.dtype is not np.record, invoke __setattr__ which will
             # convert it to a record if it is a void dtype.
-            self.dtype = self.dtype
+            ndarray._set_dtype(self, sb.dtype((record, self.dtype)))
 
     def __getattribute__(self, attr):
         # See if ndarray has this attr, and return it if so. (note that this
@@ -455,11 +459,7 @@ class recarray(ndarray):
 
         newattr = attr not in self.__dict__
         try:
-            if attr == 'dtype':
-                # gh-29244
-                ret = self._set_dtype(val)
-            else:
-                ret = object.__setattr__(self, attr, val)
+            ret = object.__setattr__(self, attr, val)
         except Exception:
             fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}
             if attr not in fielddict:
