@@ -1265,6 +1265,7 @@ class TestPickling:
             assert_equal(x, y)
             assert_equal(x[0], y[0])
 
+    @pytest.mark.slow()
     @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
     def test_pickling_large(self):
         # The actual itemsize is larger than a c-integer here.

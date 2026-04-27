@@ -2723,7 +2723,8 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     PyObject *ret, *mod, *obj;
     PyObject *state;
     char endian;
-    int elsize, alignment;
+    npy_intp elsize;
+    int alignment;
 
     ret = PyTuple_New(3);
     if (ret == NULL) {
