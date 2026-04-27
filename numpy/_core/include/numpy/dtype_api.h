@@ -415,7 +415,7 @@ typedef int (PyArrayMethod_PromoterFunction)(PyObject *ufunc,
  * NPY_DT_LEGACY flag.  Legacy-appropriate defaults are used for slots that
  * the user does not override.
  */
- #define NPY_DT_legacy_descriptor_proto _NPY_DT_ARRFUNCS_OFFSET - 1
+#define NPY_DT_legacy_descriptor_proto (_NPY_DT_ARRFUNCS_OFFSET - 1)
 
 // Cast is disabled
 // #define NPY_DT_PyArray_ArrFuncs_cast 0 + _NPY_DT_ARRFUNCS_OFFSET

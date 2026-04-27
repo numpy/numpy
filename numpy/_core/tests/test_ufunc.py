@@ -2169,6 +2169,7 @@ class TestUfunc:
     @pytest.mark.parametrize("a", (
                              np.arange(10, dtype=int),
                              np.arange(10, dtype=_rational_tests.rational),
+                             np.arange(10, dtype=_rational_tests.rational2),
                              ))
     def test_ufunc_at_basic(self, a):
 

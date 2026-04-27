@@ -1243,15 +1243,15 @@ User-defined data types
         The struct is not a valid Python object, so do not use ``Py_DECREF``
         on it.
 
-        **Transitioning to the new DType AP**
+        **Transitioning to the new DType API**
 
         Users currently using the old DType API may not be able to easily
         transition due to NumPy issues that would cause regressions.
         While new DTypes may reasonably limit themselves to newer NumPy
         versions, existing DTypes cannot do so.
 
-        You can transition to the new DType API by using
-        the `NPY_DT_legacy_descriptor_proto` slot when registering.
+        You can transition to the new DType API by using the
+        :c:macro:`NPY_DT_legacy_descriptor_proto` slot when registering.
         This slot is available when compiling with NumPy 2.5 and provides
         support for NumPy 2.0 and higher (it can also be vendored to compile
         on older versions of NumPy).
@@ -1292,7 +1292,8 @@ User-defined data types
 
     .. note::
         This function will eventually be deprecated. Please migrate to the new
-        DType API for casts.  See `NPY_DT_legacy_descriptor_proto` for details.
+        DType API for casts.  See :c:macro:`NPY_DT_legacy_descriptor_proto`
+        for details.
 
     .. c:type:: PyArray_VectorUnaryFunc
 
@@ -1309,9 +1310,9 @@ User-defined data types
 
     .. note::
         This function will eventually be deprecated. Please migrate to the new
-        DType API for casts.  See `NPY_DT_legacy_descriptor_proto` for details.
-        The new DType API provides more flexibility and speed even for dtypes
-        compatible with the legacy API.
+        DType API for casts.  See :c:macro:`NPY_DT_legacy_descriptor_proto`
+        for details.  The new DType API provides more flexibility and speed
+        even for dtypes compatible with the legacy API.
 
 
 Special functions for NPY_OBJECT
@@ -3609,17 +3610,18 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
 
    If used, this slot is required to be the first slot.
 
-    .. versionadded:: 2.5 (available starting NumPy 2.0)
+   .. versionadded:: 2.5
+
       This feature is added in NumPy 2.5, but is backported to be compatible
       with NumPy 2.0+.  You can vendor this backport from ``npy_2_compat.h``
       if you wish to compile with older NumPy versions.
 
    .. note::
-      This slot exists for DTypes that currently use ``PyArray_RegisterDataType``
-      allowing them to transition when otherwise regressions would block
-      them from doing so.
-      It is a path for deprecating ``PyArray_RegisterDataType`` and
-      ``PyArray_RegisterCastFunc`` and ``PyArray_RegisterCanCast`` and further
+      This slot exists for DTypes that currently use
+      ``PyArray_RegisterDataType`` allowing them to transition when otherwise
+      regressions would block them from doing so.
+      It is a path for deprecating ``PyArray_RegisterDataType``,
+      ``PyArray_RegisterCastFunc``, ``PyArray_RegisterCanCast`` and further
       slots in the future.
 
 .. c:macro:: NPY_DT_discover_descr_from_pyobject

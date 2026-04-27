@@ -507,9 +507,11 @@ class Test_sctype2char:
         assert_equal(sctype2char(np.ndarray), 'O')
 
     def test_third_party_scalar_type(self):
-        from numpy._core._rational_tests import rational
+        from numpy._core._rational_tests import rational, rational2
         assert_raises(KeyError, sctype2char, rational)
         assert_raises(KeyError, sctype2char, rational(1))
+        assert_raises(KeyError, sctype2char, rational2)
+        assert_raises(KeyError, sctype2char, rational2(1))
 
     def test_array_instance(self):
         assert_equal(sctype2char(np.array([1.0, 2.0])), 'd')

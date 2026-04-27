@@ -253,17 +253,30 @@ DESCR_ACCESSOR(TYPEOBJ, typeobj, PyTypeObject *, 0)
  * Backport of `NPY_DT_legacy_descriptor_proto` (and ABI fix for slot IDs).
  * This backport allows dtypes that are currently implemented as legacy
  * (i.e. have a kind, char, a character code, and only the byte-order parameter)
- * to work without only minor changes on NumPy 2.0+ but use any part of the new
+ * to work with only minor changes on NumPy 2.0+ but use any part of the new
  * DType API they want to.
  * This also will allow us to deprecate the weirder parts of it, i.e. cast
  * registration.
- * (Possible the only change may be poor `dtype=` printing in arrays, which can
- * be worked around possibly.)
+ * (Possibly the only remaining change may be poor `dtype=` printing in
+ * arrays, which can be worked around.)
  */
-#if NPY_TARGET_VERSION < 0x16 && NPY_TARGET_VERSION >= NPY_2_0_API_VERSION
+/*
+ * `NPY_2_4_API_VERSION` and `NPY_2_5_API_VERSION` may not be defined when
+ * this header is vendored alongside an older `numpyconfig.h`.  Provide
+ * fallback definitions so the rest of the backport can use named constants.
+ */
+#ifndef NPY_2_4_API_VERSION
+#define NPY_2_4_API_VERSION 0x00000015
+#endif
+#ifndef NPY_2_5_API_VERSION
+#define NPY_2_5_API_VERSION 0x00000016
+#endif
+
+#if NPY_TARGET_VERSION < NPY_2_5_API_VERSION \
+        && NPY_TARGET_VERSION >= NPY_2_0_API_VERSION
 
 #ifndef NPY_DT_legacy_descriptor_proto
-#define NPY_DT_legacy_descriptor_proto (1 << 11) - 1
+#define NPY_DT_legacy_descriptor_proto ((1 << 11) - 1)
 #endif
 
 #define _PyArrayInitDTypeMeta_FromSpec \
@@ -274,15 +287,17 @@ static inline int PyArrayInitDTypeMeta_FromSpec(
         PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *spec)
 {
     PyArray_DescrProto *proto = NULL;
-    if (spec->slots[0].slot == (1 << 11) - 1) {
+    if (spec->slots[0].slot == NPY_DT_legacy_descriptor_proto) {
         proto = (PyArray_DescrProto *)spec->slots[0].pfunc;
     }
 
-#if NPY_TARGET_VERSION < 0x15  /* < NumPy 2.4, slot IDs accidentally changed */
+#if NPY_TARGET_VERSION < NPY_2_4_API_VERSION
+    /* < NumPy 2.4, slot IDs accidentally changed: translate them. */
     PyType_Slot *slot = spec->slots;
-    /* Make copy-pastable for compiling with NumPy < 2.4: */
-    int bad_offset = (PyArray_RUNTIME_VERSION >= 0x15) ? (1 << 10) : (1 << 11);
-    int good_offset = (PyArray_RUNTIME_VERSION >= 0x15) ? (1 << 11) : (1 << 10);
+    int bad_offset = (PyArray_RUNTIME_VERSION >= NPY_2_4_API_VERSION)
+            ? (1 << 10) : (1 << 11);
+    int good_offset = (PyArray_RUNTIME_VERSION >= NPY_2_4_API_VERSION)
+            ? (1 << 11) : (1 << 10);
     while (slot->slot != 0 || slot->pfunc != NULL) {
         if (slot->slot >= bad_offset && slot->slot < bad_offset + 30) {
             slot->slot += good_offset - bad_offset;
@@ -291,7 +306,7 @@ static inline int PyArrayInitDTypeMeta_FromSpec(
     }
 #endif
 
-    if (proto == NULL || PyArray_RUNTIME_VERSION >= 0x16) {
+    if (proto == NULL || PyArray_RUNTIME_VERSION >= NPY_2_5_API_VERSION) {
         return _PyArrayInitDTypeMeta_FromSpec(DType, spec);
     }
 
