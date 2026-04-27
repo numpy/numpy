@@ -3,4 +3,4 @@
 -r test_requirements.txt
 
 mypy==1.20.2
-pyrefly==0.61.0
+pyrefly==0.62.0
