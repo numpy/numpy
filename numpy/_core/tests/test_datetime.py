@@ -732,6 +732,54 @@ class TestDateTime:
         assert_equal(np.array('2001-03-22', dtype='M8[D]').astype('O'),
                     datetime.date(2001, 3, 22))
 
+    @pytest.mark.parametrize("days_offset", [
+        -719162,    # 0001-01-01 (earliest date Python's datetime.date supports)
+        -25567,     # 1900-01-01 (non-leap century)
+        -1,         # 1969-12-31
+        0,          # epoch
+        1,          # 1970-01-02
+        59, 60,     # 1970-03-01 / 1970-03-02 (1970 is non-leap)
+        11017,      # 2000-02-29 (leap-year corner case)
+        11018,      # 2000-03-01
+        19815,      # 2024-04-28
+        2932896,    # 9999-12-31 (latest Python datetime.date supports)
+    ])
+    def test_days_to_ymd_anchor_dates(self, days_offset):
+        # Cross-check the days->y/m/d kernel against Python's stdlib at
+        # values that exercise the leap-year and century rules.
+        arr = np.array([days_offset], dtype='i8').view('M8[D]')
+        expected = datetime.date(1970, 1, 1) + datetime.timedelta(days=days_offset)
+        assert_equal(arr.astype(object)[0], expected)
+
+    def test_days_to_ymd_dense_sample(self):
+        # Strided cross-check against Python's stdlib over the full range
+        # supported by datetime.date.  Stride 1009 is prime to avoid
+        # aliasing with weekly / monthly / yearly cycles.
+        epoch = datetime.date(1970, 1, 1)
+        start = (datetime.date(1, 1, 1) - epoch).days
+        stop = (datetime.date(9999, 12, 31) - epoch).days
+        days = np.arange(start, stop, 1009, dtype='i8')
+        arr = days.view('M8[D]')
+        actual = arr.astype(object)
+        expected = np.array(
+            [epoch + datetime.timedelta(days=int(d)) for d in days],
+            dtype=object,
+        )
+        assert_array_equal(actual, expected)
+
+    @pytest.mark.parametrize("days_offset", [
+        6 * 10**14,    # ~1.6e12 years AD
+        -6 * 10**14,   # ~1.6e12 years BC
+    ])
+    def test_days_to_ymd_extreme_roundtrip(self, days_offset):
+        # Days beyond the fast-path bound exercise the slow-path fallback.
+        # Verify the result is internally consistent by round-tripping
+        # through datetime_as_string and the parser.
+        arr = np.array([days_offset], dtype='i8').view('M8[D]')
+        s = np.datetime_as_string(arr)
+        parsed = np.array([str(s[0])], dtype='M8[D]')
+        assert_array_equal(arr, parsed)
+
     def test_dtype_comparison(self):
         assert_(not (np.dtype('M8[us]') == np.dtype('M8[ms]')))
         assert_(np.dtype('M8[us]') != np.dtype('M8[ms]'))
