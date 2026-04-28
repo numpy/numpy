@@ -338,7 +338,7 @@ patch_cached_int_loop(PyUFuncObject *ufunc, PyArray_DTypeMeta *Int,
     if (key == NULL) {
         return -1;
     }
-    PyObject *info = PyDict_GetItemWithError(ufunc->_loops, key);
+    PyObject *info = PyDict_GetItemWithError(ufunc->_loops, key); // noqa: borrowed-ref OK
     Py_DECREF(key);
     if (info == NULL) {
         if (!PyErr_Occurred()) {
