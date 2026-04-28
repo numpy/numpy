@@ -22,56 +22,12 @@
 #include "ufunc_type_resolution.h"
 
 
-typedef struct {
-    NpyAuxData base;
-    /* The legacy loop and additional user data: */
-    PyUFuncGenericFunction loop;
-    void *user_data;
-    /* Whether to check for PyErr_Occurred(), must require GIL if used */
-    int pyerr_check;
-} legacy_array_method_auxdata;
-
-
-static NpyAuxData *
-get_new_loop_data(
-        PyUFuncGenericFunction loop, void *user_data, int pyerr_check)
-{
-    legacy_array_method_auxdata *data = PyMem_Malloc(
-            sizeof(legacy_array_method_auxdata));
-    if (data == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-    data->base.free = (void (*)(NpyAuxData *))PyMem_Free;
-    data->base.clone = NULL;
-    data->loop = loop;
-    data->user_data = user_data;
-    data->pyerr_check = pyerr_check;
-    return (NpyAuxData *)data;
-}
-
 /*
- * Thin wrapper around the legacy loop signature, used for userloops where
- * the loop is resolved at call time (no cached_loop available).
- */
-static int
-generic_wrapped_legacy_loop(PyArrayMethod_Context *NPY_UNUSED(context),
-        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
-        NpyAuxData *auxdata)
-{
-    legacy_array_method_auxdata *ldata = (legacy_array_method_auxdata *)auxdata;
-
-    ldata->loop((char **)data, dimensions, strides, ldata->user_data);
-    if (ldata->pyerr_check && PyErr_Occurred()) {
-        return -1;
-    }
-    return 0;
-}
-
-
-/*
- * Cached version: reads loop and user_data from the method object
- * instead of heap-allocated auxdata.
+ * The legacy loop is invoked via ``method->cached_loop``, which is
+ * populated at registration time by ``PyArrayMethod_FromSpec_int``,
+ * ``PyUFunc_RegisterLoopForType``, and (for the special-int comparison
+ * methods) ``patch_cached_int_loop``.  No auxdata is needed -- the loop
+ * pointer and user_data live on the ArrayMethod.
  */
 static int
 call_cached_loop(PyArrayMethod_Context *context,
@@ -183,16 +139,15 @@ simple_legacy_resolve_descriptors(
 
 
 /*
- * get_strided_loop for legacy-wrapped methods.
- *
- * The fast path uses ``method->cached_loop`` populated at registration
- * time -- this covers all built-in NumPy ufuncs, including
- * datetime/timedelta and the special-integer-comparison methods (which
- * are pre-patched in ``patch_cached_int_loop``).  The fallback below is
- * kept only for third-party ufuncs that register loops via
- * ``PyUFunc_RegisterLoopForType`` *after* their ArrayMethod is created
- * (e.g. extension modules with rational-style userloops), in which case
- * the loop is resolved dynamically per call.
+ * get_strided_loop for legacy-wrapped methods.  ``cached_loop`` is
+ * always populated by the time we get here:
+ *  - by ``PyArrayMethod_FromSpec_int`` for built-in numpy ufuncs and
+ *    third-party ufuncs created through the spec API;
+ *  - by ``PyUFunc_RegisterLoopForType`` for userloops registered after
+ *    the wrapping ArrayMethod is created;
+ *  - by ``patch_cached_int_loop`` for the special integer comparison
+ *    methods, where the same-type forward branch needs the underlying
+ *    int comparison loop.
  */
 NPY_NO_EXPORT int
 get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
@@ -204,39 +159,11 @@ get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
 {
     assert(aligned);
     assert(!move_references);
+    assert(context->method->cached_loop != NULL);
 
     *flags = context->method->flags & NPY_METH_RUNTIME_FLAGS;
-    if (context->method->cached_loop != NULL) {
-        *out_loop = &call_cached_loop;
-        *out_transferdata = NULL;
-        return 0;
-    }
-
-    /* Fallback for userloops registered after method creation. */
-    if (context->caller == NULL ||
-            !PyObject_TypeCheck(context->caller, &PyUFunc_Type)) {
-        PyErr_Format(PyExc_RuntimeError,
-                "cannot call %s without its ufunc as caller context.",
-                context->method->name);
-        return -1;
-    }
-    PyUFuncObject *ufunc = (PyUFuncObject *)context->caller;
-    void *user_data;
-    int needs_api = 0;
-    PyUFuncGenericFunction loop = NULL;
-    if (PyUFunc_DefaultLegacyInnerLoopSelector(ufunc,
-            context->descriptors, &loop, &user_data, &needs_api) < 0) {
-        return -1;
-    }
-    if (needs_api) {
-        *flags |= NPY_METH_REQUIRES_PYAPI;
-    }
-    *out_loop = &generic_wrapped_legacy_loop;
-    *out_transferdata = get_new_loop_data(
-            loop, user_data, (*flags & NPY_METH_REQUIRES_PYAPI) != 0);
-    if (*out_transferdata == NULL) {
-        return -1;
-    }
+    *out_loop = &call_cached_loop;
+    *out_transferdata = NULL;
     return 0;
 }
 

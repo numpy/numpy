@@ -5304,11 +5304,27 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
         /* The loop was already added */
         add_new_loop = 0;
     }
+    PyArrayMethodObject *registered_method = NULL;
     if (add_new_loop) {
         PyObject *info = add_and_return_legacy_wrapping_ufunc_loop(
                 ufunc, signature, 0);
         if (info == NULL) {
             goto fail;
+        }
+        registered_method = (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
+    }
+    else {
+        PyObject *info = PyDict_GetItemWithError(   // noqa: borrowed-ref OK
+                ufunc->_loops, signature_tuple);
+        if (info == NULL) {
+            if (!PyErr_Occurred()) {
+                PyErr_SetString(PyExc_RuntimeError,
+                        "internal error: registered loop missing from dispatch table");
+            }
+            goto fail;
+        }
+        if (PyObject_TypeCheck(PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type)) {
+            registered_method = (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
         }
     }
     /* Clearing sets it to NULL for the error paths */
@@ -5334,8 +5350,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
         }
         PyDict_SetItem(ufunc->userloops, key, cobj);
         Py_DECREF(cobj);
-        Py_DECREF(key);
-        return 0;
+        goto patch_and_return;
     }
     else {
         PyUFunc_Loop1d *current, *prev = NULL;
@@ -5380,6 +5395,18 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
                 prev->next = funcdata;
             }
         }
+    }
+  patch_and_return:
+    /*
+     * Patch the legacy-wrapping ArrayMethod's ``cached_loop`` so subsequent
+     * calls dispatch through ``call_cached_loop`` rather than re-resolving
+     * the loop on every call.  This is the only path that fills ``cached_loop``
+     * for userloops registered via ``PyUFunc_RegisterLoopForType`` after the
+     * wrapping ArrayMethod was created.
+     */
+    if (registered_method != NULL) {
+        registered_method->cached_loop = (void *)function;
+        registered_method->cached_loop_data = data;
     }
     Py_DECREF(key);
     return 0;
