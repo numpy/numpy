@@ -191,7 +191,7 @@ get_datetimestruct_minutes(const npy_datetimestruct *dts)
 
 /*
  * Modifies '*days_' to be the day offset within the year,
- * and returns the year.
+ * and returns the year.  Slow-path / fallback algorithm.
  */
 static npy_int64
 days_to_yearsdays(npy_int64 *days_)
@@ -222,12 +222,127 @@ days_to_yearsdays(npy_int64 *days_)
     return year + 2000;
 }
 
+/*
+ * Portable 64x64 -> 128 unsigned multiplication helpers used by the fast
+ * days->y/m/d path below.  npy_mul_hi_u64 returns the high 64 bits;
+ * npy_mul_full_u64 returns the low 64 bits and writes the high 64 to *hi.
+ *
+ * GCC/Clang: native __uint128_t.
+ * MSVC x64/ARM64: __umulh / _umul128 intrinsics from <intrin.h>.
+ * Other compilers: no fast path defined; the existing slow code is used.
+ */
+#if defined(__SIZEOF_INT128__)
+#  define NPY_HAVE_FAST_DAYS_TO_YMD 1
+static inline uint64_t
+npy_mul_hi_u64(uint64_t a, uint64_t b)
+{
+    return (uint64_t)(((__uint128_t)a * b) >> 64);
+}
+static inline uint64_t
+npy_mul_full_u64(uint64_t a, uint64_t b, uint64_t *hi)
+{
+    __uint128_t p = (__uint128_t)a * b;
+    *hi = (uint64_t)(p >> 64);
+    return (uint64_t)p;
+}
+#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
+#  define NPY_HAVE_FAST_DAYS_TO_YMD 1
+#  include <intrin.h>
+#  if defined(_M_X64)
+#    pragma intrinsic(__umulh, _umul128)
+#  else  /* _M_ARM64: _umul128 is x64-only; use __umulh + native multiply */
+#    pragma intrinsic(__umulh)
+#  endif
+static inline uint64_t
+npy_mul_hi_u64(uint64_t a, uint64_t b)
+{
+    return __umulh(a, b);
+}
+static inline uint64_t
+npy_mul_full_u64(uint64_t a, uint64_t b, uint64_t *hi)
+{
+#  if defined(_M_X64)
+    return _umul128(a, b, hi);
+#  else  /* _M_ARM64 */
+    *hi = __umulh(a, b);
+    return a * b;
+#  endif
+}
+#endif
+
+#ifdef NPY_HAVE_FAST_DAYS_TO_YMD
+/*
+ * Joffe's fast-date-64 algorithm — converts epoch days (since 1970-01-01)
+ * directly to (year, month, day) using four 64x64->128 multiplications.
+ * Branch-free; correct for the full numpy datetime64[D] usable range
+ * (well beyond +/-1e12 years).  Reference:
+ * https://www.benjoffe.com/fast-date-64
+ *
+ * Valid for any signed days such that (D_SHIFT - (uint64_t)days) does not
+ * cross the wrap point that would invalidate the unsigned arithmetic; the
+ * caller bounds inputs via days_in_joffe_range() before calling.
+ */
+static inline void
+days_to_ymd_fast(npy_int64 days_in,
+                 npy_int64 *out_year, int *out_month, int *out_day)
+{
+    const uint64_t ERAS    = 4726498270ULL;
+    const uint64_t D_SHIFT = 146097ULL * ERAS - 719469ULL;
+    const uint64_t Y_SHIFT = 400ULL * ERAS - 1ULL;
+    const uint64_t C1 = 505054698555331ULL;     /* floor(2^64 * 4 / 146097) */
+    const uint64_t C2 = 50504432782230121ULL;   /* ceil(2^64 * 4 / 1461)    */
+    const uint64_t C3 = 8619973866219416ULL;    /* floor(2^64 / 2140)       */
+
+    uint64_t rev = D_SHIFT - (uint64_t)days_in;
+    uint64_t cen = npy_mul_hi_u64(rev, C1);
+    uint64_t jul = rev + cen - cen / 4;
+
+    uint64_t num_hi;
+    uint64_t low = npy_mul_full_u64(jul, C2, &num_hi);
+    uint64_t yrs = Y_SHIFT - num_hi;
+
+    uint64_t ypt = npy_mul_hi_u64(782432ULL, low);
+
+    int      bump  = (ypt < 126464);
+    uint64_t shift = bump ? 191360ULL : 977792ULL;
+
+    uint64_t N = (yrs % 4) * 512 + shift - ypt;
+    uint64_t D = npy_mul_hi_u64(N % 65536, C3);
+
+    *out_day   = (int)(D + 1);
+    *out_month = (int)(N / 65536);
+    *out_year  = (npy_int64)(yrs + (uint64_t)bump);
+}
+
+/*
+ * Joffe's algorithm covers approximately +/-1.89e12 years from 1970.
+ * NumPy's documented datetime64[D] range exceeds this (+/-2.5e16 years), so
+ * gate the fast path with a conservative bound and fall through to the
+ * existing slow code outside that range.  +/-5e14 days ~ +/-1.37e12 years,
+ * comfortably inside Joffe's safe domain.
+ */
+#  define NPY_FAST_YMD_BOUND 500000000000000LL
+static inline int
+days_in_joffe_range(npy_int64 days)
+{
+    return days >= -NPY_FAST_YMD_BOUND && days <= NPY_FAST_YMD_BOUND;
+}
+#endif  /* NPY_HAVE_FAST_DAYS_TO_YMD */
+
 /* Extracts the month number from a 'datetime64[D]' value */
 NPY_NO_EXPORT int
 days_to_month_number(npy_datetime days)
 {
     npy_int64 year;
     int *month_lengths, i;
+
+#ifdef NPY_HAVE_FAST_DAYS_TO_YMD
+    if (days_in_joffe_range(days)) {
+        npy_int64 y; int m, d;
+        days_to_ymd_fast(days, &y, &m, &d);
+        return m;
+    }
+#endif
 
     year = days_to_yearsdays(&days);
     month_lengths = _days_per_month_table[is_leapyear(year)];
@@ -253,6 +368,17 @@ static void
 set_datetimestruct_days(npy_int64 days, npy_datetimestruct *dts)
 {
     int *month_lengths, i;
+
+#ifdef NPY_HAVE_FAST_DAYS_TO_YMD
+    if (days_in_joffe_range(days)) {
+        npy_int64 y; int m, d;
+        days_to_ymd_fast(days, &y, &m, &d);
+        dts->year = y;
+        dts->month = m;
+        dts->day = d;
+        return;
+    }
+#endif
 
     dts->year = days_to_yearsdays(&days);
     month_lengths = _days_per_month_table[is_leapyear(dts->year)];
