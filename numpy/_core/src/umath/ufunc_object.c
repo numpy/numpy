@@ -2537,9 +2537,10 @@ try_reduce_contiguous(
         PyArray_Descr *const *descrs,
         PyArrayObject *out, PyArrayObject *wheremask, PyObject *initial,
         int ndim, int naxes, int keepdims,
-        int errormask, const char *ufunc_name,
+        int errormask,
         PyArrayObject **out_result)
 {
+    NPY_BEGIN_THREADS_DEF;
     *out_result = NULL;
 
     PyArrayMethodObject *ufuncimpl = context->method;
@@ -2613,8 +2614,12 @@ try_reduce_contiguous(
     if (needs_fperr) {
         npy_clear_floatstatus_barrier((char *)context);
     }
+    if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
+        NPY_BEGIN_THREADS_THRESHOLDED(count);
+    }
     char *data[3] = {accum, src, accum};
     int res = strided_loop(context, data, &count, strides, auxdata);
+    NPY_END_THREADS;
     NPY_AUXDATA_FREE(auxdata);
     if (res == 0 && PyErr_Occurred()) {
         res = -1;
@@ -2680,7 +2685,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
 
     int fast_status = try_reduce_contiguous(
             &context, arr, descrs, out, wheremask, initial,
-            ndim, naxes, keepdims, errormask, ufunc_name, &result);
+            ndim, naxes, keepdims, errormask, &result);
     if (fast_status == 0) {
         /* Fast path did not apply; run the full reduction. */
         result = PyUFunc_ReduceWrapper(&context,
