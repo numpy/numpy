@@ -1223,7 +1223,7 @@ def bmm_einsum(eq, a, b, out=None, **kwargs):
     if (out is not None) and (not matmul_out_compatible):
         # handle case where out is specified, but we also needed
         # to reshape / transpose ``ab`` after the matmul
-        out[:] = ab
+        out[...] = ab
         ab = out
     elif output_order is not None:
         ab = asanyarray(ab, order=output_order)
