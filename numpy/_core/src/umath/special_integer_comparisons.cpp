@@ -1,5 +1,7 @@
 #include <Python.h>
 
+#include "npy_pycompat.h"  /* for PyDict_GetItemRef on Python < 3.13 */
+
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
