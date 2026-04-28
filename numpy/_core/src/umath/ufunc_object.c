@@ -2520,10 +2520,13 @@ finish_loop:
 
 /*
  * Try a fast path that bypasses NpyIter / PyUFunc_ReduceWrapper for full
- * reductions (axis=None) over a contiguous, aligned input where no casting
- * is required and the operation has an identity value.  The strided reduce
- * loop is called directly on the input buffer and writes into a freshly
- * allocated 0-d result.
+ * reductions (axis=None) over a trivially iterable, aligned input where no
+ * casting is required and the operation has an identity value.  The strided
+ * reduce loop is called directly on the input buffer and writes into a
+ * freshly allocated 0-d result.
+ *
+ * "Trivially iterable" covers any 1-D array (including non-contiguous slices
+ * such as ``a[::2]``) and any C/F-contiguous N-D array.
  *
  * Returns:
  *      1 on success; ``*out_result`` holds the new 0-d result.
@@ -2546,7 +2549,8 @@ try_reduce_contiguous(
     PyArrayMethodObject *ufuncimpl = context->method;
     if (!(out == NULL && wheremask == NULL && initial == NULL && keepdims == 0
             && naxes == ndim
-            && (PyArray_ISCARRAY_RO(arr) || PyArray_ISFARRAY_RO(arr))
+            && PyArray_TRIVIALLY_ITERABLE(arr)
+            && PyArray_ISALIGNED(arr)
             && PyArray_DESCR(arr) == descrs[1]
             && ufuncimpl->get_reduction_initial != NULL
             && !PyDataType_REFCHK(descrs[0])
@@ -2580,7 +2584,12 @@ try_reduce_contiguous(
         return 0;
     }
 
-    npy_intp strides[3] = {0, descrs[1]->elsize, 0};
+    /*
+     * For C/F-contiguous N-D arrays the stride is always elsize; for 1-D
+     * arrays we need the actual stride to handle non-contiguous slices.
+     */
+    npy_intp arr_stride = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(count, arr);
+    npy_intp strides[3] = {0, arr_stride, 0};
     PyArrayMethod_StridedLoop *strided_loop;
     NpyAuxData *auxdata = NULL;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
