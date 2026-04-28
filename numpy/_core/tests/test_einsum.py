@@ -770,7 +770,6 @@ class TestEinsum:
         np.einsum('i,i->', a, a, out=out, optimize='optimal')
         assert_equal(out, 7)
 
-
     def test_object_loop(self):
 
         class Mult:
