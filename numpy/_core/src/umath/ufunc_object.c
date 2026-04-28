@@ -84,24 +84,19 @@
 #endif
 /**********************************************/
 
-typedef struct {
-    PyObject *in;   /* The input arguments to the ufunc, a tuple */
-    PyObject *out;  /* The output arguments, a tuple. If no non-None outputs are
-                       provided, then this is NULL. */
-} ufunc_full_args;
-
-
 /* ---------------------------------------------------------------- */
 
-static PyObject *
-prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc);
+static int
+prepare_input_arguments_for_outer(
+        PyObject *const *ufunc_input, PyObject **ufunc_input_out,
+        PyUFuncObject *ufunc);
 
 static int
 resolve_descriptors(int nop,
         PyUFuncObject *ufunc, PyArrayMethodObject *ufuncimpl,
         PyArrayObject *operands[], PyArray_Descr *dtypes[],
         PyArray_DTypeMeta *signature[], PyArray_DTypeMeta *original_DTypes[],
-        PyObject *inputs_tup, NPY_CASTING casting);
+        PyObject *const *inputs, NPY_CASTING casting);
 
 
 /*UFUNC_API*/
@@ -633,7 +628,8 @@ _wheremask_converter(PyObject *obj, PyArrayObject **wheremask)
  */
 static int
 convert_ufunc_arguments(PyUFuncObject *ufunc,
-        ufunc_full_args full_args, PyArrayObject *out_op[],
+        PyObject *const *ufunc_input, PyObject **ufunc_output,
+        PyArrayObject *out_op[],
         PyArray_DTypeMeta *out_op_DTypes[],
         npy_bool *force_legacy_promotion,
         npy_bool *promoting_pyscalars,
@@ -654,7 +650,7 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
     *force_legacy_promotion = NPY_FALSE;
     *promoting_pyscalars = NPY_FALSE;
     for (int i = 0; i < nin; i++) {
-        obj = PyTuple_GET_ITEM(full_args.in, i);
+        obj = ufunc_input[i];
 
         if (PyArray_Check(obj)) {
             out_op[i] = (PyArrayObject *)obj;
@@ -730,9 +726,9 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
 
     /* Convert and fill in output arguments */
     memset(out_op_DTypes + nin, 0, nout * sizeof(*out_op_DTypes));
-    if (full_args.out != NULL) {
+    if (ufunc_output != NULL) {
         for (int i = 0; i < nout; i++) {
-            obj = PyTuple_GET_ITEM(full_args.out, i);
+            obj = ufunc_output[i];
             if (_set_out_array(obj, out_op + i + nin) < 0) {
                 goto fail;
             }
@@ -2584,9 +2580,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
             arr, out, wheremask, axis_flags, keepdims,
             initial, reduce_loop, buffersize, ufunc_name, errormask);
 
-    for (int i = 0; i < 3; i++) {
-        Py_DECREF(descrs[i]);
-    }
+    multi_DECREF((PyObject *const *)descrs, 3);
     return result;
 }
 
@@ -3411,9 +3405,20 @@ tuple_all_none(PyObject *tup) {
 }
 
 
+/*
+ * Parse the `out` argument and populate *ufunc_output with owned refs.
+ * On entry, *ufunc_output must point to a buffer of at least nout slots.
+ * On success, returns 0:
+ *   - if all outputs are None, *ufunc_output is set to NULL
+ *     (no references are written into the buffer);
+ *   - otherwise the buffer is filled with `nout` owned references.
+ * Returns -1 on error.
+ */
 static int
-_set_full_args_out(int nout, PyObject *out_obj, ufunc_full_args *full_args)
+_parse_out_arg(int nout, PyObject *out_obj, PyObject ***ufunc_output)
 {
+    assert(ufunc_output != NULL && *ufunc_output != NULL);
+
     if (PyTuple_CheckExact(out_obj)) {
         if (PyTuple_GET_SIZE(out_obj) != nout) {
             PyErr_SetString(PyExc_ValueError,
@@ -3422,22 +3427,23 @@ _set_full_args_out(int nout, PyObject *out_obj, ufunc_full_args *full_args)
             return -1;
         }
         if (tuple_all_none(out_obj)) {
+            *ufunc_output = NULL;
             return 0;
         }
-        else {
-            Py_INCREF(out_obj);
-            full_args->out = out_obj;
+        for (int i = 0; i < nout; i++) {
+            PyObject *item = PyTuple_GET_ITEM(out_obj, i);
+            (*ufunc_output)[i] = Py_NewRef(item);
         }
+        return 0;
     }
     else if (nout == 1) {
         if (out_obj == Py_None) {
+            *ufunc_output = NULL;
             return 0;
         }
         /* Can be an array if it only has one output */
-        full_args->out = PyTuple_FromArray(&out_obj, 1);
-        if (full_args->out == NULL) {
-            return -1;
-        }
+        (*ufunc_output)[0] = Py_NewRef(out_obj);
+        return 0;
     }
     else {
         PyErr_SetString(PyExc_TypeError,
@@ -3446,7 +3452,6 @@ _set_full_args_out(int nout, PyObject *out_obj, ufunc_full_args *full_args)
                         "a single array");
         return -1;
     }
-    return 0;
 }
 
 static inline int
@@ -3531,7 +3536,10 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     int ndim;
     int axes[NPY_MAXDIMS];
 
-    ufunc_full_args full_args = {NULL, NULL};
+    PyObject *ufunc_input[2] = {NULL, NULL};
+    PyObject *ufunc_output_storage = NULL;
+    PyObject **ufunc_output = NULL;
+    int nin_args = 0, nout_args = 0;
     PyObject *axes_obj = NULL;
     PyArrayObject *mp = NULL, *wheremask = NULL, *ret = NULL;
     PyObject *op = NULL;
@@ -3589,11 +3597,9 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
         /* Prepare inputs for PyUfunc_CheckOverride */
-        PyObject *reduce_in[] = {op, indices_obj};
-        full_args.in = PyTuple_FromArray(reduce_in, 2);
-        if (full_args.in == NULL) {
-            goto fail;
-        }
+        ufunc_input[0] = Py_NewRef(op);
+        ufunc_input[1] = Py_NewRef(indices_obj);
+        nin_args = 2;
         out_is_passed_by_position = len_args >= 5;
     }
     else if (operation == UFUNC_ACCUMULATE) {
@@ -3607,10 +3613,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
         /* Prepare input for PyUfunc_CheckOverride */
-        full_args.in = PyTuple_FromArray(&op, 1);
-        if (full_args.in == NULL) {
-            goto fail;
-        }
+        ufunc_input[0] = Py_NewRef(op);
+        nin_args = 1;
         out_is_passed_by_position = len_args >= 4;
     }
     else {
@@ -3627,10 +3631,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
         /* Prepare input for PyUfunc_CheckOverride */
-        full_args.in = PyTuple_FromArray(&op, 1);
-        if (full_args.in == NULL) {
-            goto fail;
-        }
+        ufunc_input[0] = Py_NewRef(op);
+        nin_args = 1;
         out_is_passed_by_position = len_args >= 4;
     }
 
@@ -3643,10 +3645,9 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
         if (out_obj != Py_None) {
-            full_args.out = PyTuple_FromArray(&out_obj, 1);
-            if (full_args.out == NULL) {
-                goto fail;
-            }
+            ufunc_output = &ufunc_output_storage;
+            ufunc_output[0] = Py_NewRef(out_obj);
+            nout_args = 1;
         }
     }
     else if (out_obj) {
@@ -3654,25 +3655,31 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             out_obj = NULL;
             return_scalar = NPY_FALSE;
         }
-        else if (_set_full_args_out(1, out_obj, &full_args) < 0) {
-            goto fail;
+        else {
+            ufunc_output = &ufunc_output_storage;
+            if (_parse_out_arg(1, out_obj, &ufunc_output) < 0) {
+                goto fail;
+            }
+            nout_args = (ufunc_output != NULL) ? 1 : 0;
         }
         /* Ensure that out_obj is the array, not the tuple: */
-        if (full_args.out != NULL) {
-            out_obj = PyTuple_GET_ITEM(full_args.out, 0);
+        if (nout_args != 0) {
+            out_obj = ufunc_output[0];
         }
     }
 
     /* We now have all the information required to check for Overrides */
     PyObject *override = NULL;
     int errval = PyUFunc_CheckOverride(ufunc, _reduce_type[operation],
-            full_args.in, full_args.out, wheremask_obj, args, len_args, kwnames, &override);
+            ufunc_input, nin_args,
+            ufunc_output, nout_args,
+            wheremask_obj, args, len_args, kwnames, &override);
     if (errval) {
         return NULL;
     }
     else if (override) {
-        Py_XDECREF(full_args.in);
-        Py_XDECREF(full_args.out);
+        multi_XDECREF(ufunc_input, nin_args);
+        multi_XDECREF(ufunc_output, nout_args);
         return override;
     }
 
@@ -3762,8 +3769,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     Py_DECREF(signature[2]);
 
     Py_DECREF(mp);
-    Py_XDECREF(full_args.in);
-    Py_XDECREF(full_args.out);
+    multi_XDECREF(ufunc_input, nin_args);
+    multi_XDECREF(ufunc_output, nout_args);
 
     /* Wrap and return the output */
     PyObject *wrap, *wrap_type;
@@ -3791,8 +3798,8 @@ fail:
     Py_XDECREF(mp);
     Py_XDECREF(wheremask);
     Py_XDECREF(indices);
-    Py_XDECREF(full_args.in);
-    Py_XDECREF(full_args.out);
+    multi_XDECREF(ufunc_input, nin_args);
+    multi_XDECREF(ufunc_output, nout_args);
     return NULL;
 }
 
@@ -4057,7 +4064,7 @@ resolve_descriptors(int nop,
         PyUFuncObject *ufunc, PyArrayMethodObject *ufuncimpl,
         PyArrayObject *operands[], PyArray_Descr *dtypes[],
         PyArray_DTypeMeta *signature[], PyArray_DTypeMeta *original_DTypes[],
-        PyObject *inputs_tup, NPY_CASTING casting)
+        PyObject *const *inputs, NPY_CASTING casting)
 {
     int retval = -1;
     NPY_CASTING safety;
@@ -4089,8 +4096,8 @@ resolve_descriptors(int nop,
              * We leave it to resolve_descriptors_with_scalars to deal
              * with, e.g., only doing something special for python scalars.
              */
-            if (i < nin && inputs_tup != NULL) {
-                PyObject *input = PyTuple_GET_ITEM(inputs_tup, i);
+            if (i < nin && inputs != NULL) {
+                PyObject *input = inputs[i];
                 input_scalars[i] = signature[i]->scalar_type == Py_TYPE(input) ?
                     input : NULL;
             }
@@ -4134,11 +4141,11 @@ resolve_descriptors(int nop,
          */
         if ((PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_LITERAL)) {
             PyObject *input;
-            if (inputs_tup == NULL) {
+            if (inputs == NULL) {
                 input = NULL;
             }
             else {
-                input = PyTuple_GET_ITEM(inputs_tup, i);
+                input = inputs[i];
             }
 
             PyArray_Descr *new_descr = npy_find_descr_for_scalar(
@@ -4200,9 +4207,7 @@ resolve_descriptors(int nop,
     retval = 0;
 
   finish:
-    for (int i = 0; i < n_cleanup; i++) {
-        Py_XDECREF(original_descrs[i]);
-    }
+    multi_XDECREF((PyObject *const *)original_descrs, n_cleanup);
     return retval;
 }
 
@@ -4227,14 +4232,19 @@ resolve_descriptors(int nop,
  * method --- the __array_wrap__ method to call.
  *
  * @param ufunc The universal function to be wrapped
- * @param full_args Original inputs and outputs
+ * @param ufunc_input Array of input arguments
+ * @param nin Number of input arguments
+ * @param ufunc_output Array of output arguments (or NULL)
+ * @param nout_args Number of output arguments (0 if ufunc_output is NULL)
  * @param subok Whether subclasses are allowed
  * @param result_arrays The ufunc result(s).  REFERENCES ARE STOLEN!
  * @param return_scalar Set to NPY_FALSE (out=...) to ensure array return.
  */
 static PyObject *
 replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
-        ufunc_full_args full_args, npy_bool subok,
+        PyObject *const *ufunc_input, int nin,
+        PyObject *const *ufunc_output, int nout_args,
+        npy_bool subok,
         PyArrayObject *result_arrays[], npy_bool return_scalar)
 {
     PyObject *result = NULL;
@@ -4248,7 +4258,7 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
         wrap_type = (PyObject *)&PyArray_Type;
     }
     else if (npy_find_array_wrap(
-            ufunc->nin, PySequence_Fast_ITEMS(full_args.in),
+            nin, ufunc_input,
             &wrap, &wrap_type) < 0) {
         goto fail;
     }
@@ -4256,7 +4266,11 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
     /* wrap outputs */
     NpyUFuncContext context = {
             .ufunc = (PyObject *)ufunc,
-            .in = full_args.in, .out = full_args.out};
+            .in = ufunc_input,
+            .nin = nin,
+            .out = ufunc_output,
+            .nout = nout_args,
+    };
 
     if (ufunc->nout != 1) {
         result = PyTuple_New(ufunc->nout);
@@ -4268,8 +4282,8 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
     for (int out_i = 0; out_i < ufunc->nout; out_i++) {
         context.out_i = out_i;
         PyObject *original_out = NULL;
-        if (full_args.out) {
-            original_out = PyTuple_GET_ITEM(full_args.out, out_i);
+        if (ufunc_output) {
+            original_out = ufunc_output[out_i];
         }
 
         PyObject *ret_i = npy_apply_wrap(
@@ -4462,32 +4476,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             return result;
         }
     }
-    /* All following variables are cleared in the `fail` error path */
-    ufunc_full_args full_args = {NULL, NULL};
-    PyArrayObject *wheremask = NULL;
-
-    /*
-     * Scratch space for operands, dtypes, etc.  Note that operands and
-     * operation_descrs may hold an entry for the wheremask.
-     */
-    NPY_ALLOC_WORKSPACE(scratch_objs, void *, UFUNC_STACK_NARGS * 4 + 2, nop * 4 + 2);
-    if (scratch_objs == NULL) {
-        return NULL;
-    }
-    memset(scratch_objs, 0, sizeof(void *) * (nop * 4 + 2));
-
-    PyArray_DTypeMeta **signature = (PyArray_DTypeMeta **)scratch_objs;
-    PyArrayObject **operands = (PyArrayObject **)(signature + nop);
-    PyArray_DTypeMeta **operand_DTypes = (PyArray_DTypeMeta **)(operands + nop + 1);
-    PyArray_Descr **operation_descrs = (PyArray_Descr **)(operand_DTypes + nop);
-
-    /*
-     * Note that the input (and possibly output) arguments are passed in as
-     * positional arguments. We extract these first and check for `out`
-     * passed by keyword later.
-     * Outputs and inputs are stored in `full_args.in` and `full_args.out`
-     * as tuples (or NULL when no outputs are passed).
-     */
 
     /* Check number of arguments */
     if (NPY_UNLIKELY((len_args < nin) || (len_args > nop))) {
@@ -4496,27 +4484,53 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             "%s() takes from %d to %d positional arguments but "
             "%zd %s given",
             ufunc_get_name_cstr(ufunc), nin, nop, len_args, verb);
-        goto fail;
+        return NULL;
     }
 
-    /* Fetch input arguments. */
-    full_args.in = PyArray_TupleFromItems(ufunc->nin, args, 0);
-    if (full_args.in == NULL) {
-        goto fail;
-    }
+    /* All following variables are cleared in the `fail` error path */
+    PyArrayObject *wheremask = NULL;
 
     /*
+     * Scratch space for operands, dtypes, etc.  Note that operands and
+     * operation_descrs may hold an entry for the wheremask.
+     * Also includes space for ufunc_input (nin slots, used by outer) and
+     * ufunc_output (nout slots).
+     */
+    NPY_ALLOC_WORKSPACE(scratch_objs, void *, UFUNC_STACK_NARGS * 5 + 2, nop * 5 + 2);
+    if (scratch_objs == NULL) {
+        return NULL;
+    }
+    memset(scratch_objs, 0, sizeof(void *) * (nop * 4 + 2 + nop));
+
+    PyArray_DTypeMeta **signature = (PyArray_DTypeMeta **)scratch_objs;
+    PyArrayObject **operands = (PyArrayObject **)(signature + nop);
+    PyArray_DTypeMeta **operand_DTypes = (PyArray_DTypeMeta **)(operands + nop + 1);
+    PyArray_Descr **operation_descrs = (PyArray_Descr **)(operand_DTypes + nop);
+
+    PyObject **args_scratch = (PyObject **)(operation_descrs + nop + 1);
+
+    /*
+     * Note that the input (and possibly output) arguments are passed in as
+     * positional arguments. We extract these first and check for `out`
+     * passed by keyword later.
+     * ufunc_input and ufunc_output are plain arrays (or NULL when no
+     * outputs are passed).
+     */
+    PyObject *const *ufunc_input = NULL;
+    PyObject **ufunc_output = NULL;
+    int nout_args = 0;
+
+    /* Borrowed references directly from vectorcall args */
+    ufunc_input = args;
+    /*
      * If there are more arguments, they define the out args. Otherwise
-     * full_args.out is NULL for now, and the `out` kwarg may still be passed.
+     * ufunc_output is NULL for now, and the `out` kwarg may still be passed.
      */
     npy_bool out_is_passed_by_position = len_args > nin;
     if (out_is_passed_by_position) {
         npy_bool all_none = NPY_TRUE;
+        ufunc_output = args_scratch + nin;
 
-        full_args.out = PyTuple_New(nout);
-        if (full_args.out == NULL) {
-            goto fail;
-        }
         for (int i = nin; i < nop; i++) {
             PyObject *tmp;
             if (i < (int)len_args) {
@@ -4533,8 +4547,8 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             else {
                 tmp = Py_None;
             }
-            Py_INCREF(tmp);
-            PyTuple_SET_ITEM(full_args.out, i-nin, tmp);
+            ufunc_output[i-nin] = Py_NewRef(tmp);
+            nout_args = i - nin + 1;
         }
 
         /* Extra positional args but no keywords */
@@ -4552,11 +4566,10 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         }
 
         if (all_none) {
-            Py_SETREF(full_args.out, NULL);
+            multi_DECREF(ufunc_output, nout);
+            ufunc_output = NULL;
+            nout_args = 0;
         }
-    }
-    else {
-        full_args.out = NULL;
     }
 
     /*
@@ -4622,8 +4635,12 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             if (out_obj == Py_Ellipsis) {
                 return_scalar = NPY_FALSE;
             }
-            else if (_set_full_args_out(nout, out_obj, &full_args) < 0) {
-                goto fail;
+            else {
+                ufunc_output = args_scratch + nin;
+                if (_parse_out_arg(nout, out_obj, &ufunc_output) < 0) {
+                    goto fail;
+                }
+                nout_args = (ufunc_output != NULL) ? nout : 0;
             }
         }
         /*
@@ -4645,22 +4662,26 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         method = "outer";
     }
     /* We now have all the information required to check for Overrides */
+
     PyObject *override = NULL;
     errval = PyUFunc_CheckOverride(ufunc, method,
-            full_args.in, full_args.out, where_obj,
+            ufunc_input, nin,
+            ufunc_output, nout_args,
+            where_obj,
             args, len_args, kwnames, &override);
     if (errval) {
         goto fail;
     }
     else if (override) {
-        Py_DECREF(full_args.in);
-        Py_XDECREF(full_args.out);
+        /* ufunc_input is still borrowed (args) here, no decref needed */
+        multi_XDECREF(ufunc_output, nout_args);
+        npy_free_workspace(scratch_objs);
         return override;
     }
 
     /* Warn if "where" is used without "out", issue 29561 */
     if ((where_obj != NULL && where_obj != Py_True)
-        && (full_args.out == NULL) && (out_obj == NULL)) {
+            && (ufunc_output == NULL) && (out_obj == NULL)) {
         if (PyErr_WarnEx(PyExc_UserWarning,
                 "'where' used without 'out', expect uninitialized memory in output. "
                 "If this is intentional, use out=None.", 1) < 0) {
@@ -4670,11 +4691,11 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 
     if (outer) {
         /* Outer uses special preparation of inputs (expand dims) */
-        PyObject *new_in = prepare_input_arguments_for_outer(full_args.in, ufunc);
-        if (new_in == NULL) {
+        if (prepare_input_arguments_for_outer(
+                ufunc_input, args_scratch, ufunc) < 0) {
             goto fail;
         }
-        Py_SETREF(full_args.in, new_in);
+        ufunc_input = args_scratch;
     }
 
     /*
@@ -4694,7 +4715,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     npy_bool promoting_pyscalars;
     if (convert_ufunc_arguments(ufunc,
             /* extract operand related information: */
-            full_args, operands,
+            ufunc_input, ufunc_output, operands,
             operand_DTypes,
             &force_legacy_promotion,
             &promoting_pyscalars,
@@ -4726,7 +4747,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     /* Find the correct descriptors for the operation */
     if (resolve_descriptors(nop, ufunc, ufuncimpl,
             operands, operation_descrs, signature, operand_DTypes,
-            full_args.in, casting) < 0) {
+            ufunc_input, casting) < 0) {
         goto fail;
     }
 
@@ -4760,18 +4781,26 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             Py_DECREF(operands[i]);
         }
     }
+
     /* The following steals the references to the outputs: */
     PyObject *result = replace_with_wrapped_result_and_return(ufunc,
-            full_args, subok, operands+nin, return_scalar);
-    Py_XDECREF(full_args.in);
-    Py_XDECREF(full_args.out);
+            ufunc_input, nin, ufunc_output, nout_args,
+            subok, operands+nin, return_scalar);
+
+    if (ufunc_input != args) {
+        multi_XDECREF(ufunc_input, nin);
+    }
+    multi_XDECREF(ufunc_output, nout_args);
 
     npy_free_workspace(scratch_objs);
+
     return result;
 
 fail:
-    Py_XDECREF(full_args.in);
-    Py_XDECREF(full_args.out);
+    if (ufunc_input != args) {
+        multi_XDECREF(ufunc_input, nin);
+    }
+    multi_XDECREF(ufunc_output, nout_args);
     Py_XDECREF(wheremask);
     for (int i = 0; i < ufunc->nargs; i++) {
         Py_XDECREF(operands[i]);
@@ -5458,8 +5487,10 @@ ufunc_outer(PyUFuncObject *ufunc,
 }
 
 
-static PyObject *
-prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
+static int
+prepare_input_arguments_for_outer(
+        PyObject *const *ufunc_input, PyObject **ufunc_input_out,
+        PyUFuncObject *ufunc)
 {
     PyArrayObject *ap1 = NULL;
     PyObject *tmp;
@@ -5471,33 +5502,33 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
             "Special handling of matrix is removed. Convert to a "
             "ndarray via 'matrix.A' ");
 
-    tmp = PyTuple_GET_ITEM(args, 0);
+    tmp = ufunc_input[0];
 
     if (PyObject_IsInstance(tmp, npy_runtime_imports.numpy_matrix)) {
         PyErr_Format(PyExc_TypeError,
                 matrix_deprecation_msg, ufunc->name, "first");
-        return NULL;
+        return -1;
     }
     else {
         ap1 = (PyArrayObject *) PyArray_FROM_O(tmp);
     }
     if (ap1 == NULL) {
-        return NULL;
+        return -1;
     }
 
     PyArrayObject *ap2 = NULL;
-    tmp = PyTuple_GET_ITEM(args, 1);
+    tmp = ufunc_input[1];
     if (PyObject_IsInstance(tmp, npy_runtime_imports.numpy_matrix)) {
         PyErr_Format(PyExc_TypeError,
                 matrix_deprecation_msg, ufunc->name, "second");
-        return NULL;
+        return -1;
     }
     else {
         ap2 = (PyArrayObject *) PyArray_FROM_O(tmp);
     }
     if (ap2 == NULL) {
         Py_DECREF(ap1);
-        return NULL;
+        return -1;
     }
     /* Construct new shape from ap1 and ap2 and then reshape */
     PyArray_Dims newdims;
@@ -5540,13 +5571,17 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
         goto fail;
     }
 
+    /* Write owned refs to the output buffer */
     Py_DECREF(ap1);
-    return Py_BuildValue("(NN)", ap_new, ap2);
+    ufunc_input_out[0] = (PyObject *)ap_new;
+    ufunc_input_out[1] = (PyObject *)ap2;
+
+    return 0;
 
  fail:
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
-    return NULL;
+    return -1;
 }
 
 
@@ -5960,8 +5995,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
                         "second operand provided when ufunc is unary");
         return NULL;
     }
+    int nin_at = (int)PyTuple_GET_SIZE(args);
     errval = PyUFunc_CheckOverride(ufunc, "at",
-            args, NULL, NULL, NULL, 0, NULL, &override);
+            PySequence_Fast_ITEMS(args), nin_at,
+            NULL, 0, NULL, NULL, 0, NULL, &override);
 
     if (errval) {
         return NULL;
@@ -6159,9 +6196,7 @@ fail:
 
     Py_XDECREF(op2_array);
     Py_XDECREF(iter2);
-    for (int i = 0; i < nop; i++) {
-        Py_XDECREF(operation_descrs[i]);
-    }
+    multi_XDECREF((PyObject *const *)operation_descrs, nop);
 
     /*
      * An error should only be possible if needs_api is true or `res != 0`,
@@ -6206,9 +6241,7 @@ free_ufunc_call_info(PyObject *self)
     PyArrayMethod_Context *context = call_info->context;
 
     int nargs = context->method->nin + context->method->nout;
-    for (int i = 0; i < nargs; i++) {
-        Py_DECREF(context->descriptors[i]);
-    }
+    multi_DECREF((PyObject *const *)context->descriptors, nargs);
     Py_DECREF(context->caller);
     Py_DECREF(context->method);
     NPY_AUXDATA_FREE(call_info->auxdata);
