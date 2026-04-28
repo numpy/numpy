@@ -762,6 +762,14 @@ class TestEinsum:
         # see issue gh-15776 and issue gh-15256
         assert_equal(np.einsum('i,j', [1], [2], out=None), [[2]])
 
+    def test_einsum_0d_out(self):
+        # Issue gh-31350, a zero-dimensional out must not cause an error
+        # with optimize='optimal'
+        a = np.ones(7)
+        out = np.array(0)
+        np.einsum('i,i->', a, a, out=out, optimize='optimal')
+        assert_equal(out, 7)
+
     def test_object_loop(self):
 
         class Mult:
