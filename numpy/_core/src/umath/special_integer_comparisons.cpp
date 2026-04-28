@@ -324,16 +324,10 @@ pyint_comparison_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
 
 
 /*
- * After registering a special-int comparison ArrayMethod with DType
- * signature like (Int, PyInt, Bool), look it up in ``ufunc->_loops`` and
- * pre-populate ``cached_loop`` with the same-type integer comparison loop
- * (e.g. for ``Int == Int``).  When ``get_loop<comp>`` runs and the
- * resolved descriptors at call time are both ``Int``, it forwards to
- * ``get_wrapped_legacy_ufunc_loop`` which finds the cached loop on
- * ``context->method`` directly -- no per-call linear search and no auxdata
- * allocation.  This is the only path where ``get_wrapped_legacy_ufunc_loop``
- * is reached via a method that doesn't itself wrap a same-type legacy loop;
- * patching the cache here lets us delete the slow fallback in that helper.
+ * Pre-populate ``cached_loop`` on the just-registered (Int, PyInt, Bool)
+ * (or reversed) ArrayMethod with the same-type ``(Int, Int, Bool)``
+ * comparison loop, so that the same-type forward branch in
+ * ``get_loop`` dispatches via the cached fast path.
  */
 static int
 patch_cached_int_loop(PyUFuncObject *ufunc, PyArray_DTypeMeta *Int,
@@ -349,23 +343,15 @@ patch_cached_int_loop(PyUFuncObject *ufunc, PyArray_DTypeMeta *Int,
     if (info == NULL) {
         if (!PyErr_Occurred()) {
             PyErr_SetString(PyExc_RuntimeError,
-                    "internal error: special-int loop not found in dispatch table");
+                    "internal error: special-int loop missing");
         }
         return -1;
     }
     PyArrayMethodObject *method =
             (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
-    if (!PyObject_TypeCheck(method, &PyArrayMethod_Type)) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "internal error: dispatch entry is not an ArrayMethod");
-        return -1;
-    }
+    assert(PyObject_TypeCheck(method, &PyArrayMethod_Type));
 
-    /*
-     * Resolve the same-type legacy comparison loop, e.g. (int32, int32, bool),
-     * by passing the concrete int-singleton three times to the legacy
-     * loop selector (it dispatches purely on type_num).
-     */
+    /* Concrete (Int, Int, Bool) loop: selector matches on type_num. */
     PyArray_Descr *descrs[3] = {
         Int->singleton, Int->singleton, d2->singleton,
     };
@@ -376,12 +362,9 @@ patch_cached_int_loop(PyUFuncObject *ufunc, PyArray_DTypeMeta *Int,
             ufunc, descrs, &loop, &user_data, &needs_api) < 0) {
         return -1;
     }
+    assert(!needs_api);  /* integer comparison loops don't use the Python API */
     method->cached_loop = (void *)loop;
     method->cached_loop_data = user_data;
-    if (needs_api) {
-        method->flags = (NPY_ARRAYMETHOD_FLAGS)(
-                method->flags | NPY_METH_REQUIRES_PYAPI);
-    }
     return 0;
 }
 

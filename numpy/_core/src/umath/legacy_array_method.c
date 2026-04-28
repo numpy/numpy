@@ -23,11 +23,8 @@
 
 
 /*
- * The legacy loop is invoked via ``method->cached_loop``, which is
- * populated at registration time by ``PyArrayMethod_FromSpec_int``,
- * ``PyUFunc_RegisterLoopForType``, and (for the special-int comparison
- * methods) ``patch_cached_int_loop``.  No auxdata is needed -- the loop
- * pointer and user_data live on the ArrayMethod.
+ * The legacy loop pointer and its user_data live on the ArrayMethod
+ * (in ``cached_loop`` / ``cached_loop_data``).  No auxdata is needed.
  */
 static int
 call_cached_loop(PyArrayMethod_Context *context,
@@ -139,15 +136,11 @@ simple_legacy_resolve_descriptors(
 
 
 /*
- * get_strided_loop for legacy-wrapped methods.  ``cached_loop`` is
- * always populated by the time we get here:
- *  - by ``PyArrayMethod_FromSpec_int`` for built-in numpy ufuncs and
- *    third-party ufuncs created through the spec API;
- *  - by ``PyUFunc_RegisterLoopForType`` for userloops registered after
- *    the wrapping ArrayMethod is created;
- *  - by ``patch_cached_int_loop`` for the special integer comparison
- *    methods, where the same-type forward branch needs the underlying
- *    int comparison loop.
+ * Legacy wrapper get_strided_loop.  ``cached_loop`` is populated at
+ * registration time -- either by ``PyArray_NewLegacyWrappingArrayMethod``
+ * (built-ins and spec-API ufuncs), by ``PyUFunc_RegisterLoopForType``
+ * (third-party userloops), or by ``patch_cached_int_loop`` (special-int
+ * comparison methods).
  */
 NPY_NO_EXPORT int
 get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
@@ -395,10 +388,11 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
 
 
     /*
-     * Cache the legacy loop function and user_data on the method, and
-     * promote to the new-style get_strided_loop path so that the hot path
-     * goes through npy_default_get_strided_loop instead of the legacy
-     * wrapper chain.
+     * Resolve and cache the inner loop now so that calls dispatch via
+     * ``call_cached_loop`` directly.  When the selector cannot find a loop
+     * (for userloops registered after this method is created),
+     * ``cached_loop`` is left NULL and ``PyUFunc_RegisterLoopForType``
+     * patches it later.
      */
     {
         void *user_data = NULL;
@@ -417,10 +411,6 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         else {
             res->cached_loop = loop;
             res->cached_loop_data = user_data;
-            /*
-             * Legacy loops handle strides themselves, so strided and
-             * contiguous variants are the same wrapper.
-             */
             res->strided_loop = &call_cached_loop;
             res->contiguous_loop = &call_cached_loop;
             res->get_strided_loop = &npy_default_get_strided_loop;
