@@ -2521,12 +2521,8 @@ finish_loop:
 /*
  * Try a fast path that bypasses NpyIter / PyUFunc_ReduceWrapper for full
  * reductions (axis=None) over a trivially iterable, aligned input where no
- * casting is required and the operation has an identity value.  The strided
- * reduce loop is called directly on the input buffer and writes into a
- * freshly allocated 0-d result.
- *
- * "Trivially iterable" covers any 1-D array (including non-contiguous slices
- * such as ``a[::2]``) and any C/F-contiguous N-D array.
+ * casting is required.  The strided reduce loop is called directly on the
+ * input buffer and writes into a freshly allocated 0-d result.
  *
  * Returns:
  *      1 on success; ``*out_result`` holds the new 0-d result.
@@ -2552,7 +2548,7 @@ try_reduce_contiguous(
             && PyArray_TRIVIALLY_ITERABLE(arr)
             && PyArray_ISALIGNED(arr)
             && PyArray_DESCR(arr) == descrs[1]
-            && ufuncimpl->get_reduction_initial != NULL
+            && descrs[0] == descrs[1]
             && !PyDataType_REFCHK(descrs[0])
             && (ndim <= 1
                 || (ufuncimpl->flags & NPY_METH_IS_REORDERABLE)))) {
@@ -2572,16 +2568,14 @@ try_reduce_contiguous(
         return -1;
     }
     char *accum = PyArray_BYTES(result);
-    int has_initial = ufuncimpl->get_reduction_initial(
-            context, /*reduction_is_empty=*/0, accum);
-    if (has_initial < 0) {
-        Py_DECREF(result);
-        return -1;
-    }
-    if (!has_initial) {
-        /* No identity available -- fall back to the slow path. */
-        Py_DECREF(result);
-        return 0;
+    int has_initial = 0;
+    if (ufuncimpl->get_reduction_initial != NULL) {
+        has_initial = ufuncimpl->get_reduction_initial(
+                context, /*reduction_is_empty=*/0, accum);
+        if (has_initial < 0) {
+            Py_DECREF(result);
+            return -1;
+        }
     }
 
     /*
@@ -2589,6 +2583,22 @@ try_reduce_contiguous(
      * arrays we need the actual stride to handle non-contiguous slices.
      */
     npy_intp arr_stride = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(count, arr);
+    char *src = PyArray_BYTES(arr);
+    if (!has_initial) {
+        /*
+         * No identity available -- seed the accumulator with arr[0] and
+         * reduce over arr[1:].
+         */
+        memcpy(accum, src, descrs[1]->elsize);
+        src += arr_stride;
+        count -= 1;
+    }
+    if (count == 0) {
+        /* Single-element input with no identity -- accum already holds arr[0]. */
+        *out_result = result;
+        return 1;
+    }
+
     npy_intp strides[3] = {0, arr_stride, 0};
     PyArrayMethod_StridedLoop *strided_loop;
     NpyAuxData *auxdata = NULL;
@@ -2603,7 +2613,7 @@ try_reduce_contiguous(
     if (needs_fperr) {
         npy_clear_floatstatus_barrier((char *)context);
     }
-    char *data[3] = {accum, PyArray_BYTES(arr), accum};
+    char *data[3] = {accum, src, accum};
     int res = strided_loop(context, data, &count, strides, auxdata);
     NPY_AUXDATA_FREE(auxdata);
     if (res == 0 && PyErr_Occurred()) {
