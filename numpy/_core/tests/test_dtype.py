@@ -2048,10 +2048,13 @@ class TestDTypeSignatures:
         assert params_actual == params_expect
 
 
-def test_gh_31308():
-    kind = [("x", np.float64, 2 ** 28)]
+@pytest.mark.parametrize("kind, exp", [
+    ([("x", np.float64, 2 ** 28)], (2 ** 28 * 8)),
+    ("2147483648i,2147483648i", 17179869184),
+])
+def test_gh_31308(kind, exp):
     kind_dtype = np.dtype(kind)
-    assert kind_dtype.itemsize == (2 ** 28) * 8
+    assert kind_dtype.itemsize == exp
 
 
 @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
