@@ -338,13 +338,15 @@ patch_cached_int_loop(PyUFuncObject *ufunc, PyArray_DTypeMeta *Int,
     if (key == NULL) {
         return -1;
     }
-    PyObject *info = PyDict_GetItemWithError(ufunc->_loops, key); // noqa: borrowed-ref OK
+    PyObject *info = NULL;
+    int found = PyDict_GetItemRef(ufunc->_loops, key, &info);
     Py_DECREF(key);
+    if (found < 0) {
+        return -1;
+    }
     if (info == NULL) {
-        if (!PyErr_Occurred()) {
-            PyErr_SetString(PyExc_RuntimeError,
-                    "internal error: special-int loop missing");
-        }
+        PyErr_SetString(PyExc_RuntimeError,
+                "internal error: special-int loop missing");
         return -1;
     }
     PyArrayMethodObject *method =
@@ -360,11 +362,13 @@ patch_cached_int_loop(PyUFuncObject *ufunc, PyArray_DTypeMeta *Int,
     int needs_api = 0;
     if (PyUFunc_DefaultLegacyInnerLoopSelector(
             ufunc, descrs, &loop, &user_data, &needs_api) < 0) {
+        Py_DECREF(info);
         return -1;
     }
     assert(!needs_api);  /* integer comparison loops don't use the Python API */
     method->cached_loop = (void *)loop;
     method->cached_loop_data = user_data;
+    Py_DECREF(info);
     return 0;
 }
 

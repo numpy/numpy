@@ -5237,6 +5237,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     PyObject *key, *cobj;
     PyArray_DTypeMeta *signature[NPY_MAXARGS];
     PyObject *signature_tuple = NULL;
+    PyObject *info = NULL;
     int i;
     int *newtypes=NULL;
 
@@ -5326,13 +5327,12 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
      * existed) so we can patch its cached_loop after the userloop is
      * threaded into ``ufunc->userloops`` below.
      */
-    PyObject *info = PyDict_GetItemWithError(   // noqa: borrowed-ref OK
-            ufunc->_loops, signature_tuple);
+    if (PyDict_GetItemRef(ufunc->_loops, signature_tuple, &info) < 0) {
+        goto fail;
+    }
     if (info == NULL) {
-        if (!PyErr_Occurred()) {
-            PyErr_SetString(PyExc_RuntimeError,
-                    "internal error: registered loop missing from dispatch table");
-        }
+        PyErr_SetString(PyExc_RuntimeError,
+                "internal error: registered loop missing from dispatch table");
         goto fail;
     }
     PyArrayMethodObject *registered_method =
@@ -5411,12 +5411,14 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     /* Patch the wrapping ArrayMethod so calls dispatch via call_cached_loop. */
     registered_method->cached_loop = (void *)function;
     registered_method->cached_loop_data = data;
+    Py_DECREF(info);
     Py_DECREF(key);
     return 0;
 
  fail:
     Py_DECREF(key);
     Py_XDECREF(signature_tuple);
+    Py_XDECREF(info);
     PyArray_free(funcdata);
     PyArray_free(newtypes);
     if (!PyErr_Occurred()) PyErr_NoMemory();
