@@ -39,6 +39,8 @@ jobs:
           - [ubuntu-22.04, musllinux_x86_64, ""]
           - [ubuntu-22.04-arm, manylinux_aarch64, ""]
           - [ubuntu-22.04-arm, musllinux_aarch64, ""]
+          - [ubuntu-22.04-arm, manylinux_armv7l, ""]
+          - [ubuntu-22.04-arm, musllinux_armv7l, ""]
           - [macos-15-intel, macosx_x86_64, openblas]
           - [macos-14, macosx_arm64, openblas]
           - [windows-2022, win_amd64, ""]
