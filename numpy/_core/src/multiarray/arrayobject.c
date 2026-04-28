@@ -442,9 +442,9 @@ array_dealloc(PyArrayObject *self)
                 nbytes = 1;
             }
             PyDataMem_UserFREE(fa->data, nbytes, fa->mem_handler);
-            Py_DECREF(fa->mem_handler);
         }
     }
+    Py_CLEAR(fa->mem_handler);
 
     /* must match allocation in PyArray_NewFromDescr */
     npy_free_cache_dim(fa->dimensions, 2 * fa->nd);
