@@ -12,6 +12,8 @@
 #include "dispatching.h"
 #include "dtypemeta.h"
 #include "convert_datatype.h"
+#include "array_method.h"
+#include "ufunc_type_resolution.h"
 
 #include "legacy_array_method.h"  /* For `get_wrapped_legacy_ufunc_loop`. */
 #include "special_integer_comparisons.h"
@@ -238,7 +240,11 @@ get_loop(PyArrayMethod_Context *context,
 {
     if (context->descriptors[1]->type_num == context->descriptors[0]->type_num) {
         /*
-         * Fall back to the current implementation, which wraps legacy loops.
+         * The Python int fits in the array dtype: forward to the legacy
+         * loop wrapper.  ``patch_cached_int_loop`` pre-populates
+         * ``method->cached_loop`` with the same-type integer comparison
+         * loop at registration time, so this dispatches via the cached
+         * fast path.
          */
         return get_wrapped_legacy_ufunc_loop(
                 context, aligned, move_references, strides,
@@ -318,6 +324,52 @@ pyint_comparison_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
 
 
 /*
+ * Pre-populate ``cached_loop`` on the just-registered (Int, PyInt, Bool)
+ * (or reversed) ArrayMethod with the same-type ``(Int, Int, Bool)``
+ * comparison loop, so that the same-type forward branch in
+ * ``get_loop`` dispatches via the cached fast path.
+ */
+static int
+patch_cached_int_loop(PyUFuncObject *ufunc, PyArray_DTypeMeta *Int,
+        PyArray_DTypeMeta *d0, PyArray_DTypeMeta *d1, PyArray_DTypeMeta *d2)
+{
+    PyObject *key = PyTuple_Pack(3, (PyObject *)d0, (PyObject *)d1,
+                                 (PyObject *)d2);
+    if (key == NULL) {
+        return -1;
+    }
+    PyObject *info = PyDict_GetItemWithError(ufunc->_loops, key);
+    Py_DECREF(key);
+    if (info == NULL) {
+        if (!PyErr_Occurred()) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "internal error: special-int loop missing");
+        }
+        return -1;
+    }
+    PyArrayMethodObject *method =
+            (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
+    assert(PyObject_TypeCheck(method, &PyArrayMethod_Type));
+
+    /* Concrete (Int, Int, Bool) loop: selector matches on type_num. */
+    PyArray_Descr *descrs[3] = {
+        Int->singleton, Int->singleton, d2->singleton,
+    };
+    PyUFuncGenericFunction loop = NULL;
+    void *user_data = NULL;
+    int needs_api = 0;
+    if (PyUFunc_DefaultLegacyInnerLoopSelector(
+            ufunc, descrs, &loop, &user_data, &needs_api) < 0) {
+        return -1;
+    }
+    assert(!needs_api);  /* integer comparison loops don't use the Python API */
+    method->cached_loop = (void *)loop;
+    method->cached_loop_data = user_data;
+    return 0;
+}
+
+
+/*
  * This function replaces the strided loop with the passed in one,
  * and registers it with the given ufunc.
  * It additionally adds a promoter for (pyint, pyint, bool) to use the
@@ -361,13 +413,24 @@ add_dtype_loops(PyObject *umath, PyArrayMethod_Spec *spec, PyObject *info)
             Py_DECREF(Int);
             goto fail;
         }
+        if (patch_cached_int_loop(
+                ufunc, Int, Int, PyInt, spec->dtypes[2]) < 0) {
+            Py_DECREF(Int);
+            goto fail;
+        }
         spec->dtypes[0] = PyInt;
         spec->dtypes[1] = Int;
         res = PyUFunc_AddLoopFromSpec_int((PyObject *)ufunc, spec, 1);
-        Py_DECREF(Int);
         if (res < 0) {
+            Py_DECREF(Int);
             goto fail;
         }
+        if (patch_cached_int_loop(
+                ufunc, Int, PyInt, Int, spec->dtypes[2]) < 0) {
+            Py_DECREF(Int);
+            goto fail;
+        }
+        Py_DECREF(Int);
     }
 
     /*

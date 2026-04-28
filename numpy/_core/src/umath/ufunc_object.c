@@ -4829,9 +4829,9 @@ PyUFunc_ReplaceLoopBySignature(PyUFuncObject *func,
         res = 0;
 
         /*
-         * If the method for this signature has a cached_loop, update it
-         * so that subsequent calls use the new function rather than the
-         * stale cached one.
+         * Keep the wrapping ArrayMethod's cached_loop in sync.  Best-effort:
+         * if the lookup fails, the legacy ``functions[]`` slot is still
+         * updated above and the next reduction-cache rebuild would pick it up.
          */
         if (func->_loops != NULL) {
             PyArray_DTypeMeta *sig_dtypes[NPY_MAXARGS];
@@ -4840,25 +4840,19 @@ PyUFunc_ReplaceLoopBySignature(PyUFuncObject *func,
             }
             PyObject *sig_tuple = PyArray_TupleFromItems(
                     func->nargs, (PyObject **)sig_dtypes, 0);
-            if (sig_tuple != NULL) {
-                PyObject *item;
-                if (PyDict_GetItemRef(func->_loops, sig_tuple, &item) == 1) {
-                    PyObject *method_obj = PyTuple_GET_ITEM(item, 1);
-                    if (PyObject_TypeCheck(method_obj, &PyArrayMethod_Type)) {
-                        PyArrayMethodObject *method =
-                                (PyArrayMethodObject *)method_obj;
-                        if (method->cached_loop != NULL) {
-                            method->cached_loop = newfunc;
-                            /* data stays the same; only the function changes */
-                        }
-                    }
-                    Py_DECREF(item);
+            if (sig_tuple == NULL) {
+                PyErr_Clear();
+                break;
+            }
+            PyObject *item;
+            if (PyDict_GetItemRef(func->_loops, sig_tuple, &item) == 1) {
+                PyObject *method_obj = PyTuple_GET_ITEM(item, 1);
+                if (PyObject_TypeCheck(method_obj, &PyArrayMethod_Type)) {
+                    ((PyArrayMethodObject *)method_obj)->cached_loop = newfunc;
                 }
-                Py_DECREF(sig_tuple);
+                Py_DECREF(item);
             }
-            else {
-                PyErr_Clear();  /* non-fatal: fallback path still works */
-            }
+            Py_DECREF(sig_tuple);
         }
         break;
     }
@@ -5327,6 +5321,23 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
             goto fail;
         }
     }
+    /*
+     * Look up the wrapping ArrayMethod we just added (or that already
+     * existed) so we can patch its cached_loop after the userloop is
+     * threaded into ``ufunc->userloops`` below.
+     */
+    PyObject *info = PyDict_GetItemWithError(   // noqa: borrowed-ref OK
+            ufunc->_loops, signature_tuple);
+    if (info == NULL) {
+        if (!PyErr_Occurred()) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "internal error: registered loop missing from dispatch table");
+        }
+        goto fail;
+    }
+    PyArrayMethodObject *registered_method =
+            (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
+    assert(PyObject_TypeCheck(registered_method, &PyArrayMethod_Type));
     /* Clearing sets it to NULL for the error paths */
     Py_CLEAR(signature_tuple);
 
@@ -5350,8 +5361,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
         }
         PyDict_SetItem(ufunc->userloops, key, cobj);
         Py_DECREF(cobj);
-        Py_DECREF(key);
-        return 0;
+        goto patch_and_return;
     }
     else {
         PyUFunc_Loop1d *current, *prev = NULL;
@@ -5397,6 +5407,10 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
             }
         }
     }
+  patch_and_return:
+    /* Patch the wrapping ArrayMethod so calls dispatch via call_cached_loop. */
+    registered_method->cached_loop = (void *)function;
+    registered_method->cached_loop_data = data;
     Py_DECREF(key);
     return 0;
 
