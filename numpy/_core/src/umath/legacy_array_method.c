@@ -51,7 +51,8 @@ get_new_loop_data(
 }
 
 /*
- * This is a thin wrapper around the legacy loop signature.
+ * Thin wrapper around the legacy loop signature, used for userloops where
+ * the loop is resolved at call time (no cached_loop available).
  */
 static int
 generic_wrapped_legacy_loop(PyArrayMethod_Context *NPY_UNUSED(context),
@@ -182,10 +183,16 @@ simple_legacy_resolve_descriptors(
 
 
 /*
- * Fallback get_strided_loop for legacy-wrapped methods that could not be
- * promoted to the new-style path at creation time (e.g. third-party ufuncs
- * with userloops).  Also called directly by special_integer_comparisons
- * when both operands share the same type.
+ * get_strided_loop for legacy-wrapped methods.
+ *
+ * The fast path uses ``method->cached_loop`` populated at registration
+ * time -- this covers all built-in NumPy ufuncs, including
+ * datetime/timedelta and the special-integer-comparison methods (which
+ * are pre-patched in ``patch_cached_int_loop``).  The fallback below is
+ * kept only for third-party ufuncs that register loops via
+ * ``PyUFunc_RegisterLoopForType`` *after* their ArrayMethod is created
+ * (e.g. extension modules with rational-style userloops), in which case
+ * the loop is resolved dynamically per call.
  */
 NPY_NO_EXPORT int
 get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
@@ -198,25 +205,6 @@ get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
     assert(aligned);
     assert(!move_references);
 
-    if (context->caller == NULL ||
-            !PyObject_TypeCheck(context->caller, &PyUFunc_Type)) {
-        PyErr_Format(PyExc_RuntimeError,
-                "cannot call %s without its ufunc as caller context.",
-                context->method->name);
-        return -1;
-    }
-
-    /*
-     * Use cached loop if available (set at method creation time).
-     * This avoids the PyUFunc_DefaultLegacyInnerLoopSelector linear search
-     * and the heap allocation of auxdata on every call.
-     *
-     * The cache succeeds for all built-in NumPy ufuncs (including
-     * datetime/timedelta) because PyUFunc_DefaultLegacyInnerLoopSelector
-     * only matches on type_num, and DType singletons always have valid
-     * type_nums. The fallback below is kept as a safety net for edge
-     * cases such as third-party ufuncs with userloops.
-     */
     *flags = context->method->flags & NPY_METH_RUNTIME_FLAGS;
     if (context->method->cached_loop != NULL) {
         *out_loop = &call_cached_loop;
@@ -224,16 +212,17 @@ get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
         return 0;
     }
 
-    /*
-     * Fallback: resolve loop at call time and heap-allocate auxdata.
-     * This is reached when get_wrapped_legacy_ufunc_loop is called
-     * directly (e.g. from special_integer_comparisons) rather than
-     * through a legacy-wrapped method with a cached loop.
-     */
+    /* Fallback for userloops registered after method creation. */
+    if (context->caller == NULL ||
+            !PyObject_TypeCheck(context->caller, &PyUFunc_Type)) {
+        PyErr_Format(PyExc_RuntimeError,
+                "cannot call %s without its ufunc as caller context.",
+                context->method->name);
+        return -1;
+    }
     PyUFuncObject *ufunc = (PyUFuncObject *)context->caller;
     void *user_data;
     int needs_api = 0;
-
     PyUFuncGenericFunction loop = NULL;
     if (PyUFunc_DefaultLegacyInnerLoopSelector(ufunc,
             context->descriptors, &loop, &user_data, &needs_api) < 0) {
@@ -242,7 +231,6 @@ get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
     if (needs_api) {
         *flags |= NPY_METH_REQUIRES_PYAPI;
     }
-
     *out_loop = &generic_wrapped_legacy_loop;
     *out_transferdata = get_new_loop_data(
             loop, user_data, (*flags & NPY_METH_REQUIRES_PYAPI) != 0);
