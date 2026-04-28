@@ -2620,7 +2620,7 @@ try_reduce_contiguous(
         res = -1;
     }
     if (res == 0 && needs_fperr) {
-        res = _check_ufunc_fperr(errormask, ufunc_name);
+        res = _check_ufunc_fperr(errormask, "reduce");
     }
     if (res < 0) {
         Py_DECREF(result);
