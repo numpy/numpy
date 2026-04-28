@@ -526,6 +526,127 @@ PyArray_NewCopy(PyArrayObject *obj, NPY_ORDER order)
     return (PyObject *)ret;
 }
 
+
+static int
+get_optional_set_dtype_and_dtype(
+    PyTypeObject *subtype,
+    PyObject **_set_dtype, PyObject **sub_dtype)
+{
+    if (PyObject_GetOptionalAttr(
+            (PyObject *)subtype, npy_interned_str._set_dtype,
+            _set_dtype) < 0) {
+        return -1;
+    }
+    if (PyObject_GetOptionalAttr(
+            (PyObject *)subtype, npy_interned_str.dtype, sub_dtype) < 0) {
+        Py_XDECREF(*_set_dtype);
+        return -1;
+    }
+    return 0;
+}
+
+
+/* Pick how a view() dtype change is propagated for `subtype`.
+ *
+ * Sets (at most) one of the three output flags; all three zero means
+ * the legacy in-place path (subclass can't observe).
+ *
+ *   use_dtype_in_finalize  -- `_set_dtype = None`: class wants
+ *                             __array_finalize__ to see the final dtype.
+ *   use_set_dtype          -- subclass `_set_dtype` method: call it
+ *                             as an adjust hook after viewing.
+ *   use_dtype_prop         -- subclass `dtype` descriptor wins over
+ *                             `_set_dtype`: call the setter (deprecated).
+ *
+ * Walk the MRO and see whether `_set_dtype` or `dtype` was overridden
+ * more specifically: whichever's resolved value diverges from what
+ * `subtype` sees at a lower MRO level wins.  Ties and "only
+ * `_set_dtype` was overridden" both go to `_set_dtype`, matching the
+ * direction numpy's deprecation points users toward.  Blind to
+ * `__setattr__` / odd MI. */
+static int
+decide_view_dtype_path(
+        PyTypeObject *subtype,
+        int *use_dtype_in_finalize,
+        int *use_set_dtype,
+        int *use_dtype_prop)
+{
+    int ret = -1;
+    *use_dtype_in_finalize = 1;  /* Future defaults. */
+    *use_set_dtype = 0;
+    *use_dtype_prop = 0;
+
+    if (subtype == &PyArray_Type) {
+        return 0;
+    }
+
+    PyObject *sub_set_dtype = NULL, *sub_dtype = NULL, *mro = NULL;
+    if (get_optional_set_dtype_and_dtype(
+            subtype, &sub_set_dtype, &sub_dtype) < 0) {
+        goto finish;
+    }
+
+    int set_overridden =
+            (sub_set_dtype != npy_static_pydata.ndarray_set_dtype);
+    int dtype_overridden =
+            (sub_dtype != npy_static_pydata.ndarray_dtype_descr);
+
+    /* Default: `_set_dtype` wins (either it was overridden, or nothing
+     * was); flipped only if the walk below finds `dtype` diverging
+     * first, or `dtype` was the sole override. */
+    int set_wins = set_overridden || !dtype_overridden;
+
+    if (set_overridden && dtype_overridden) {
+        /* Both overridden -- walk the MRO to see which was overridden
+         * more specifically.  Pin `tp_mro`; under free-threading
+         * `cls.__bases__ = ...` can replace it concurrently.  The tuple
+         * owns refs to its entries, so the base types stay alive too. */
+        mro = Py_XNewRef(subtype->tp_mro);
+        Py_ssize_t n = mro != NULL ? PyTuple_GET_SIZE(mro) : 0;
+        for (Py_ssize_t i = 1; i < n; i++) {
+            PyTypeObject *base = (PyTypeObject *)PyTuple_GET_ITEM(mro, i);
+            PyObject *v_set, *v_dtype;
+            if (get_optional_set_dtype_and_dtype(base, &v_set, &v_dtype) < 0) {
+                goto finish;
+            }
+            /* NULL means this base doesn't know the name at all (an MI
+             * sibling branch above ndarray).  That's "no information",
+             * not divergence -- ndarray sits deeper in the MRO and will
+             * provide the real baseline. */
+            int set_div = v_set != NULL && v_set != sub_set_dtype;
+            int dtype_div = v_dtype != NULL && v_dtype != sub_dtype;
+            Py_XDECREF(v_set);
+            Py_XDECREF(v_dtype);
+
+            if (set_div || dtype_div) {
+                /* First to diverge wins; tie (both) -> `_set_dtype`. */
+                set_wins = set_div;
+                break;
+            }
+        }
+    }
+
+    if (set_wins) {
+        if (sub_set_dtype != Py_None) {
+            *use_dtype_in_finalize = 0;
+            *use_set_dtype = set_overridden;
+        }
+    }
+    else {
+        *use_dtype_in_finalize = 0;
+        *use_dtype_prop = (sub_dtype != NULL
+                           && Py_TYPE(sub_dtype)->tp_descr_set != NULL);
+    }
+
+    ret = 0;
+  finish:
+    Py_XDECREF(sub_set_dtype);
+    Py_XDECREF(sub_dtype);
+    Py_XDECREF(mro);
+    return ret;
+}
+
+
 /*NUMPY_API
  * View
  * steals a reference to type -- accepts NULL
@@ -549,7 +670,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
     }
 
     if (type == NULL) {
-        /* No dtype change: just create the view */
+        /* No dtype change. */
         Py_INCREF(dtype);
         return PyArray_NewFromDescr_int(
                 subtype, dtype, nd, dims, strides, PyArray_DATA(self),
@@ -558,7 +679,9 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
     }
 
     /*
-     * Changing dtype on a subclass.  We support 4 paths:
+     * Changing dtype on a subclass.  We support 4 paths, based on whether
+     * a subclass overrides _set_dtype or the dtype setter (where whichever
+     * is overridden most recently wins):
      *
      * 1. If _set_dtype is None: create a new view with the new dtype.
      *    This is the future: __array_finalize__ sees final dtype and shape.
@@ -574,36 +697,11 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
      * (Base class ndarray uses path 1, but has no __array_finalize__,
      *  so it is the same as paths 2 and 4.)
      */
-    npy_bool use_dtype_in_finalize = NPY_TRUE;
-    npy_bool use_set_dtype = NPY_FALSE;
-    npy_bool use_dtype_prop = NPY_FALSE;
-
-    if (subtype != &PyArray_Type) {
-        PyObject *sub_set_dtype;
-        if (PyObject_GetOptionalAttr(
-                (PyObject *)subtype,
-                npy_interned_str._set_dtype, &sub_set_dtype) < 0) {
-            goto finish;
-        }
-        if (sub_set_dtype != Py_None) {
-            use_dtype_in_finalize = NPY_FALSE;
-            use_set_dtype = (sub_set_dtype != NULL &&
-                    sub_set_dtype != npy_static_pydata.ndarray_set_dtype);
-        }
-        Py_XDECREF(sub_set_dtype);
-
-        if (!use_set_dtype && !use_dtype_in_finalize) {
-            PyObject *sub_dtype_descr;
-            if (PyObject_GetOptionalAttr(
-                    (PyObject *)subtype,
-                    npy_interned_str.dtype, &sub_dtype_descr) < 0) {
-                goto finish;
-            }
-            use_dtype_prop = (sub_dtype_descr != NULL &&
-                    sub_dtype_descr != npy_static_pydata.ndarray_dtype_descr &&
-                    Py_TYPE(sub_dtype_descr)->tp_descr_set != NULL);
-            Py_XDECREF(sub_dtype_descr);
-        }
+    int use_dtype_in_finalize, use_set_dtype, use_dtype_prop;
+    if (decide_view_dtype_path(
+            subtype, &use_dtype_in_finalize,
+            &use_set_dtype, &use_dtype_prop) < 0) {
+        goto finish;
     }
 
     if (use_dtype_in_finalize) {
@@ -674,11 +772,18 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
             Py_CLEAR(ret);
             goto finish;
         }
-        /* DEPRECATED 2026-04-13, NumPy 2.5 */
+        /*
+         * Path 3: subclass overrides dtype property.
+         * DEPRECATED 2026-04-13, NumPy 2.5.
+         * After the deprecation, the decide_view_dtype_path helper isn't
+         * needed.  `_set_dtype` is used unless it is the base-class
+         * definition or None, which are the only 3 options left without
+         * need for MRO walking.
+         */
         if (DEPRECATE(
                 "numpy.ndarray.view() used a custom `dtype` setter "
                 "to change the dtype of the view.  Subclasses should "
-                "implement `_set_dtype` instead.") < 0) {
+                "implement `_set_dtype` instead. (Deprecated NumPy 2.5)") < 0) {
             Py_CLEAR(ret);
             goto finish;
         }
