@@ -11,7 +11,7 @@ import pytest
 
 import numpy as np
 from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
-from numpy.testing import IS_PYPY, assert_raises
+from numpy.testing import assert_raises
 
 
 class _DeprecationTestCase:
@@ -243,6 +243,7 @@ class TestDeprecatedArrayWrap(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.negative(test2))
         assert test2.called
 
+
 class TestDeprecatedArrayAttributeSetting(_DeprecationTestCase):
     message = "Setting the .*on a NumPy array has been deprecated.*"
 
@@ -250,14 +251,60 @@ class TestDeprecatedArrayAttributeSetting(_DeprecationTestCase):
         x = np.eye(2)
         self.assert_deprecated(setattr, args=(x, 'strides', x.strides))
 
-    @pytest.mark.skipif(IS_PYPY, reason="PyPy handles refcounts differently")
     def test_deprecated_dtype_set(self):
         x = np.eye(2)
         self.assert_deprecated(setattr, args=(x, "dtype", int))
 
+    def test_deprecated_dtype_set_record(self):
+        x = np.zeros(2, dtype="i4,i4").view(np.recarray)
+        self.assert_deprecated(setattr, args=(x, "dtype", np.dtype("f4,f4")))
+
     def test_deprecated_shape_set(self):
         x = np.eye(2)
         self.assert_deprecated(setattr, args=(x, "shape", (4, 1)))
+
+
+class TestDeprecatedViewDtypePropertySetter(_DeprecationTestCase):
+    # view() with dtype change on a subclass that overrides the
+    # dtype property should warn to implement _set_dtype instead.
+    message = r"numpy.ndarray.view\(\) used a custom `dtype` setter.*"
+
+    def test_view_dtype_property_setter(self):
+        class MyArray(np.ndarray):
+            @property
+            def dtype(self):
+                return super().dtype
+
+            @dtype.setter
+            def dtype(self, dtype):
+                super(MyArray, type(self))._set_dtype(self, dtype)
+
+        arr = np.arange(6).view(MyArray)
+        self.assert_deprecated(arr.view, args=(np.float64,))
+
+    def test_view_dtype_property_setter_recarray_subclass(self):
+        # Recarray subclasses without a `_set_dtype` should still work
+        # but warn until they implement it.  As recarray sets it to None
+        # such a subclass may have to do the same fix here (can't use super()).
+        class SideBranch:
+            pass
+
+        class MyRecArray(SideBranch, np.recarray):
+            @property
+            def dtype(self):
+                return super().dtype
+
+            @dtype.setter
+            def dtype(self, dtype):
+                # would need to call `np.ndarray._set_dtype` to avoid the warning
+                # (but that side-steps the recarray dtype handling.)
+                with pytest.warns(DeprecationWarning, match="Setting the dtype"):
+                    np.recarray.dtype.__set__(self, dtype)
+
+        arr = np.rec.fromarrays(
+                [np.arange(3, dtype=np.int32)], names='x').view(MyRecArray)
+        self.assert_deprecated(arr.view, args=([('y', 'i4')],))
+
 
 class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
     message = "Passing in a parenthesized single number"
@@ -407,6 +454,14 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
         self, value: int, generic_value: int, op: Callable
     ):
         self.assert_deprecated(op, args=(value, generic_value))
+
+    def test_raise_warning_for_default_constructor(self):
+        self.assert_deprecated(lambda: np.timedelta64())
+        self.assert_deprecated(lambda: np.datetime64())
+
+    def test_raise_warning_for_NAT_construction(self):
+        self.assert_deprecated(lambda: np.datetime64('NaT'))
+        self.assert_deprecated(lambda: np.datetime64(None))
 
 
 class TestTriDeprecationWithNonInteger(_DeprecationTestCase):

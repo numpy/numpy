@@ -53,6 +53,7 @@ typedef struct npy_interned_str_struct {
     PyObject *imag;
     PyObject *sort;
     PyObject *argsort;
+    PyObject *_set_dtype;
 } npy_interned_str_struct;
 
 /*
@@ -89,6 +90,13 @@ typedef struct npy_static_pydata_struct {
     PyObject *ndarray_array_ufunc;
     PyObject *ndarray_array_finalize;
     PyObject *ndarray_array_function;
+
+    /*
+     * References to ndarray._set_dtype and ndarray.dtype descriptor,
+     * used in PyArray_View to detect subclass overrides.
+     */
+    PyObject *ndarray_set_dtype;
+    PyObject *ndarray_dtype_descr;
 
     /*
      * References to the '1' and '0' PyLong objects

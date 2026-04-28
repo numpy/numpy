@@ -6,6 +6,7 @@
 #include <structmember.h>
 
 #include "npy_config.h"
+#include "npy_pycompat.h"  // PyObject_GetOptionalAttr
 
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
@@ -24,6 +25,8 @@
 #include "convert.h"
 #include "array_coercion.h"
 #include "refcount.h"
+#include "getset.h"
+#include "npy_static_data.h"
 
 #if defined(HAVE_FALLOCATE) && defined(__linux__)
 #include <fcntl.h>
@@ -352,17 +355,17 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
         || (PyArray_IS_F_CONTIGUOUS(self) && (order == NPY_FORTRANORDER))) {
         return PyBytes_FromStringAndSize(PyArray_DATA(self), (Py_ssize_t) numbytes);
     }
-    
+
     /* Avoid Ravel where possible for fewer copies. */
-    if (!PyDataType_REFCHK(PyArray_DESCR(self)) && 
+    if (!PyDataType_REFCHK(PyArray_DESCR(self)) &&
         ((PyArray_DESCR(self)->flags & NPY_NEEDS_INIT) == 0)) {
-        
+
         /* Allocate final Bytes Object */
         ret = PyBytes_FromStringAndSize(NULL, (Py_ssize_t) numbytes);
         if (ret == NULL) {
             return NULL;
         }
-        
+
         /* Writable Buffer */
         char* dest = PyBytes_AS_STRING(ret);
 
@@ -388,14 +391,14 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
             Py_DECREF(ret);
             return NULL;
         }
-        
+
         /* Copy directly from source to destination with proper ordering */
         if (PyArray_CopyInto(dest_array, self) < 0) {
             Py_DECREF(dest_array);
             Py_DECREF(ret);
             return NULL;
         }
-        
+
         Py_DECREF(dest_array);
         return ret;
 
@@ -406,7 +409,7 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
     if (contig == NULL) {
         return NULL;
     }
-    
+
     ret = PyBytes_FromStringAndSize(PyArray_DATA(contig), numbytes);
     Py_DECREF(contig);
     return ret;
@@ -523,6 +526,127 @@ PyArray_NewCopy(PyArrayObject *obj, NPY_ORDER order)
     return (PyObject *)ret;
 }
 
+
+static int
+get_optional_set_dtype_and_dtype(
+    PyTypeObject *subtype,
+    PyObject **_set_dtype, PyObject **sub_dtype)
+{
+    if (PyObject_GetOptionalAttr(
+            (PyObject *)subtype, npy_interned_str._set_dtype,
+            _set_dtype) < 0) {
+        return -1;
+    }
+    if (PyObject_GetOptionalAttr(
+            (PyObject *)subtype, npy_interned_str.dtype, sub_dtype) < 0) {
+        Py_XDECREF(*_set_dtype);
+        return -1;
+    }
+    return 0;
+}
+
+
+/* Pick how a view() dtype change is propagated for `subtype`.
+ *
+ * Sets (at most) one of the three output flags; all three zero means
+ * the legacy in-place path (subclass can't observe).
+ *
+ *   use_dtype_in_finalize  -- `_set_dtype = None`: class wants
+ *                             __array_finalize__ to see the final dtype.
+ *   use_set_dtype          -- subclass `_set_dtype` method: call it
+ *                             as an adjust hook after viewing.
+ *   use_dtype_prop         -- subclass `dtype` descriptor wins over
+ *                             `_set_dtype`: call the setter (deprecated).
+ *
+ * Walk the MRO and see whether `_set_dtype` or `dtype` was overridden
+ * more specifically: whichever's resolved value diverges from what
+ * `subtype` sees at a lower MRO level wins.  Ties and "only
+ * `_set_dtype` was overridden" both go to `_set_dtype`, matching the
+ * direction numpy's deprecation points users toward.  Blind to
+ * `__setattr__` / odd MI. */
+static int
+decide_view_dtype_path(
+        PyTypeObject *subtype,
+        int *use_dtype_in_finalize,
+        int *use_set_dtype,
+        int *use_dtype_prop)
+{
+    int ret = -1;
+    *use_dtype_in_finalize = 1;  /* Future defaults. */
+    *use_set_dtype = 0;
+    *use_dtype_prop = 0;
+
+    if (subtype == &PyArray_Type) {
+        return 0;
+    }
+
+    PyObject *sub_set_dtype = NULL, *sub_dtype = NULL, *mro = NULL;
+    if (get_optional_set_dtype_and_dtype(
+            subtype, &sub_set_dtype, &sub_dtype) < 0) {
+        goto finish;
+    }
+
+    int set_overridden =
+            (sub_set_dtype != npy_static_pydata.ndarray_set_dtype);
+    int dtype_overridden =
+            (sub_dtype != npy_static_pydata.ndarray_dtype_descr);
+
+    /* Default: `_set_dtype` wins (either it was overridden, or nothing
+     * was); flipped only if the walk below finds `dtype` diverging
+     * first, or `dtype` was the sole override. */
+    int set_wins = set_overridden || !dtype_overridden;
+
+    if (set_overridden && dtype_overridden) {
+        /* Both overridden -- walk the MRO to see which was overridden
+         * more specifically.  Pin `tp_mro`; under free-threading
+         * `cls.__bases__ = ...` can replace it concurrently.  The tuple
+         * owns refs to its entries, so the base types stay alive too. */
+        mro = Py_XNewRef(subtype->tp_mro);
+        Py_ssize_t n = mro != NULL ? PyTuple_GET_SIZE(mro) : 0;
+        for (Py_ssize_t i = 1; i < n; i++) {
+            PyTypeObject *base = (PyTypeObject *)PyTuple_GET_ITEM(mro, i);
+            PyObject *v_set, *v_dtype;
+            if (get_optional_set_dtype_and_dtype(base, &v_set, &v_dtype) < 0) {
+                goto finish;
+            }
+            /* NULL means this base doesn't know the name at all (an MI
+             * sibling branch above ndarray).  That's "no information",
+             * not divergence -- ndarray sits deeper in the MRO and will
+             * provide the real baseline. */
+            int set_div = v_set != NULL && v_set != sub_set_dtype;
+            int dtype_div = v_dtype != NULL && v_dtype != sub_dtype;
+            Py_XDECREF(v_set);
+            Py_XDECREF(v_dtype);
+
+            if (set_div || dtype_div) {
+                /* First to diverge wins; tie (both) -> `_set_dtype`. */
+                set_wins = set_div;
+                break;
+            }
+        }
+    }
+
+    if (set_wins) {
+        if (sub_set_dtype != Py_None) {
+            *use_dtype_in_finalize = 0;
+            *use_set_dtype = set_overridden;
+        }
+    }
+    else {
+        *use_dtype_in_finalize = 0;
+        *use_dtype_prop = (sub_dtype != NULL
+                           && Py_TYPE(sub_dtype)->tp_descr_set != NULL);
+    }
+
+    ret = 0;
+  finish:
+    Py_XDECREF(sub_set_dtype);
+    Py_XDECREF(sub_dtype);
+    Py_XDECREF(mro);
+    return ret;
+}
+
+
 /*NUMPY_API
  * View
  * steals a reference to type -- accepts NULL
@@ -530,10 +654,13 @@ PyArray_NewCopy(PyArrayObject *obj, NPY_ORDER order)
 NPY_NO_EXPORT PyObject *
 PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
 {
-    PyArrayObject *ret = NULL;
-    PyArray_Descr *dtype;
+    PyObject *ret = NULL;
+    int nd = PyArray_NDIM(self);
+    npy_intp *dims = PyArray_DIMS(self);
+    npy_intp *strides = PyArray_STRIDES(self);
+    PyArray_Descr *dtype = PyArray_DESCR(self);
+    int flags = PyArray_FLAGS(self);
     PyTypeObject *subtype;
-    int flags;
 
     if (pytype) {
         subtype = pytype;
@@ -542,29 +669,137 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
         subtype = Py_TYPE(self);
     }
 
-    dtype = PyArray_DESCR(self);
-    flags = PyArray_FLAGS(self);
+    if (type == NULL) {
+        /* No dtype change. */
+        Py_INCREF(dtype);
+        return PyArray_NewFromDescr_int(
+                subtype, dtype, nd, dims, strides, PyArray_DATA(self),
+                flags, (PyObject *)self, (PyObject *)self,
+                _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
+    }
 
+    /*
+     * Changing dtype on a subclass.  We support 4 paths, based on whether
+     * a subclass overrides _set_dtype or the dtype setter (where whichever
+     * is overridden most recently wins):
+     *
+     * 1. If _set_dtype is None: create a new view with the new dtype.
+     *    This is the future: __array_finalize__ sees final dtype and shape.
+     * 2. subclass overrides _set_dtype: create subclass view first,
+     *    then call _set_dtype (subclass handles dtype change).
+     * 3. subclass overrides the dtype descriptor (e.g. property with
+     *    setter): create subclass view first, use the setter, but
+     *    emit a deprecation asking to implement _set_dtype instead.
+     * 4. If _set_dtype and dtype are not set, call `__array_finalize__`
+     *    with the old dtype and forcibly update the dtype (a subclass will be
+     *    unaware of the change). This is the unfortunate historic behavior.
+     *
+     * (Base class ndarray uses path 1, but has no __array_finalize__,
+     *  so it is the same as paths 2 and 4.)
+     */
+    int use_dtype_in_finalize, use_set_dtype, use_dtype_prop;
+    if (decide_view_dtype_path(
+            subtype, &use_dtype_in_finalize,
+            &use_set_dtype, &use_dtype_prop) < 0) {
+        goto finish;
+    }
+
+    if (use_dtype_in_finalize) {
+        /*
+         * Path 1: subclass lives in the future and its __array_finalize__
+         * can handle getting the correct dtype+shape.
+         */
+        npy_intp newlastdim, newlaststride;
+        /* Check whether the type is compatible. */
+        Py_SETREF(type, _check_compatibility_with_new_dtype(
+                      self, type, &newlastdim, &newlaststride));
+        if (type == NULL) {
+            return NULL;
+        }
+        /* Take view with old or adjusted dims (steals reference to type) */
+        if (newlastdim < 0) {
+            return PyArray_NewFromDescr_int(subtype, type,
+                    nd, dims, strides, PyArray_DATA(self),
+                    flags, (PyObject *)self, (PyObject *)self, 0);
+        }
+        else {
+            NPY_ALLOC_WORKSPACE(newdims, npy_intp, 2 * 4, 2 * nd);
+            if (newdims == NULL) {
+                goto finish;
+            }
+            npy_intp *newstrides = newdims + nd;
+            memcpy(newdims, dims, (nd-1)*sizeof(npy_intp));
+            memcpy(newstrides, strides, (nd-1)*sizeof(npy_intp));
+            newdims[nd-1] = newlastdim;
+            newstrides[nd-1] = newlaststride;
+            ret = PyArray_NewFromDescr_int(subtype, type,
+                    nd, newdims, newstrides, PyArray_DATA(self),
+                    flags, (PyObject *)self, (PyObject *)self, 0);
+            npy_free_workspace(newdims);
+            return ret;
+        }
+    }
+    /*
+     * Other paths: first create a view with the old dtype.
+     */
     Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr_int(
-            subtype, dtype,
-            PyArray_NDIM(self), PyArray_DIMS(self), PyArray_STRIDES(self),
-            PyArray_DATA(self),
+    ret = PyArray_NewFromDescr_int(
+            subtype, dtype, nd, dims, strides, PyArray_DATA(self),
             flags, (PyObject *)self, (PyObject *)self,
             _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
     if (ret == NULL) {
-        Py_XDECREF(type);
-        return NULL;
+        goto finish;
     }
 
-    if (type != NULL) {
-        if (PyObject_SetAttrString((PyObject *)ret, "dtype",
-                                   (PyObject *)type) < 0) {
-            Py_DECREF(ret);
-            Py_DECREF(type);
-            return NULL;
+    if (use_set_dtype) {
+        /*
+         * Path 2: subclass lives in future but needs to set dtype itself.
+         */
+        PyObject *res = PyObject_CallMethodOneArg(
+                ret, npy_interned_str._set_dtype, (PyObject *)type);
+        if (res == NULL) {
+            Py_CLEAR(ret);
+            goto finish;
         }
-        Py_DECREF(type);
+        Py_DECREF(res);
     }
-    return (PyObject *)ret;
+    else if (use_dtype_prop) {
+        /*
+         * Path 3: subclass overrides dtype property.
+         */
+        if (PyObject_GenericSetAttr(
+                ret, npy_interned_str.dtype, (PyObject *)type) < 0) {
+            Py_CLEAR(ret);
+            goto finish;
+        }
+        /*
+         * Path 3: subclass overrides dtype property.
+         * DEPRECATED 2026-04-13, NumPy 2.5.
+         * After the deprecation, the decide_view_dtype_path helper isn't
+         * needed.  `_set_dtype` is used unless it is the base-class
+         * definition or None, which are the only 3 options left without
+         * need for MRO walking.
+         */
+        if (DEPRECATE(
+                "numpy.ndarray.view() used a custom `dtype` setter "
+                "to change the dtype of the view.  Subclasses should "
+                "implement `_set_dtype` instead. (Deprecated NumPy 2.5)") < 0) {
+            Py_CLEAR(ret);
+            goto finish;
+        }
+    }
+    else {
+        /*
+         * Path 4: set dtype internally.
+         */
+        if (array_descr_set_internal(
+                (PyArrayObject*)ret, (PyObject *)type) < 0) {
+            Py_CLEAR(ret);
+            goto finish;
+        }
+    }
+
+finish:
+    Py_DECREF(type);
+    return ret;
 }

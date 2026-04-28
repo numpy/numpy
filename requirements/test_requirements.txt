@@ -1,6 +1,6 @@
 Cython
-hypothesis==6.151.9
-pytest==9.0.2
+hypothesis==6.152.1
+pytest==9.0.3
 pytest-cov==7.1.0
 meson
 ninja; sys_platform != "emscripten"

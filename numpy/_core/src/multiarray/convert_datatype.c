@@ -232,6 +232,7 @@ PyArray_GetBoundCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
     res->dtypes = PyMem_Malloc(2 * sizeof(PyArray_DTypeMeta *));
     if (res->dtypes == NULL) {
         Py_DECREF(res);
+        PyErr_NoMemory();
         return NULL;
     }
     Py_INCREF(from);
@@ -993,10 +994,8 @@ PyArray_FindConcatenationDescriptor(
 
     PyArray_DTypeMeta *common_dtype;
     PyArray_Descr *result = NULL;
-    if (PyArray_ExtractDTypeAndDescriptor(
-            requested_dtype, &result, &common_dtype) < 0) {
-        return NULL;
-    }
+    PyArray_ExtractDTypeAndDescriptor(
+            requested_dtype, &result, &common_dtype);
     if (result != NULL) {
         if (PyDataType_SUBARRAY(result) != NULL) {
             PyErr_Format(PyExc_TypeError,
@@ -1937,14 +1936,21 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
     PyArray_Descr *common_descr = NULL;
     PyArrayObject **mps = NULL;
 
-    *retn = n = PySequence_Length(op);
-    if (n == 0) {
+    Py_ssize_t length = PySequence_Length(op);
+    if (length == 0) {
         PyErr_SetString(PyExc_ValueError, "0-length sequence.");
     }
     if (PyErr_Occurred()) {
         *retn = 0;
         return NULL;
     }
+    if (length > INT_MAX) {
+        PyErr_SetString(PyExc_ValueError,
+            "sequence too large to convert in common type.");
+        *retn = 0;
+        return NULL;
+    }
+    *retn = n = (int)length;
     mps = (PyArrayObject **)PyDataMem_NEW(n*sizeof(PyArrayObject *));
     if (mps == NULL) {
         *retn = 0;

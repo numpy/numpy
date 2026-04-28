@@ -538,6 +538,10 @@ NpyIter_Copy(NpyIter *iter)
     /* Allocate memory for the new iterator */
     size = NIT_SIZEOF_ITERATOR(itflags, ndim, nop);
     newiter = (NpyIter*)PyObject_Malloc(size);
+    if (newiter == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
 
     /* Copy the raw values to the new iterator */
     memcpy(newiter, iter, size);

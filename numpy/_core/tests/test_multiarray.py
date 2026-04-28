@@ -5154,15 +5154,15 @@ class TestArgmax:
           np.datetime64('1932-09-23T10:10:13'),
           np.datetime64('2014-10-10T03:50:30')], 3),
         # Assorted tests with NaTs
-        ([np.datetime64('NaT'),
-          np.datetime64('NaT'),
+        ([np.datetime64('NaT', 'D'),
+          np.datetime64('NaT', 'D'),
           np.datetime64('2010-01-03T05:14:12'),
-          np.datetime64('NaT'),
+          np.datetime64('NaT', 'D'),
           np.datetime64('2015-09-23T10:10:13'),
           np.datetime64('1932-10-10T03:50:30')], 0),
         ([np.datetime64('2059-03-14T12:43:12'),
           np.datetime64('1996-09-21T14:43:15'),
-          np.datetime64('NaT'),
+          np.datetime64('NaT', 'D'),
           np.datetime64('2022-12-25T16:02:16'),
           np.datetime64('1963-10-04T03:14:12'),
           np.datetime64('2013-05-08T18:15:23')], 2),
@@ -5298,15 +5298,15 @@ class TestArgmin:
           np.datetime64('2015-09-23T10:10:13'),
           np.datetime64('1932-10-10T03:50:30')], 5),
         # Assorted tests with NaTs
-        ([np.datetime64('NaT'),
-          np.datetime64('NaT'),
+        ([np.datetime64('NaT', 'D'),
+          np.datetime64('NaT', 'D'),
           np.datetime64('2010-01-03T05:14:12'),
-          np.datetime64('NaT'),
+          np.datetime64('NaT', 'D'),
           np.datetime64('2015-09-23T10:10:13'),
           np.datetime64('1932-10-10T03:50:30')], 0),
         ([np.datetime64('2059-03-14T12:43:12'),
           np.datetime64('1996-09-21T14:43:15'),
-          np.datetime64('NaT'),
+          np.datetime64('NaT', 'D'),
           np.datetime64('2022-12-25T16:02:16'),
           np.datetime64('1963-10-04T03:14:12'),
           np.datetime64('2013-05-08T18:15:23')], 2),
@@ -6604,6 +6604,24 @@ class TestView:
         z = x.view('<i4')
         assert_array_equal(y, z)
         assert_array_equal(y, [67305985, 134678021])
+
+    def test_view_dtype_change_subclass_finalize(self):
+        # gh-31192: view() with dtype change on a subclass must call
+        # __array_finalize__ and return the correct subclass type.
+
+        class MyArray(np.ndarray):
+            _set_dtype = None
+
+            def __array_finalize__(self, obj):
+                self.finalized_from = obj
+                self._dtype_at_finalize = self.dtype
+
+        arr = np.arange(6).view(MyArray)
+        result = arr.view("i1")
+        assert isinstance(result, MyArray)
+        assert result.dtype == np.dtype("i1")
+        assert result._dtype_at_finalize == np.dtype("i1")
+        assert result.finalized_from is arr
 
 
 def _mean(a, **args):

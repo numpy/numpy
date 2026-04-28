@@ -3256,28 +3256,12 @@ class MaskedArray(ndarray):
         results.
         """
 
-        if dtype is None:
-            if type is None:
-                output = ndarray.view(self)
-            else:
-                output = ndarray.view(self, type)
-        elif type is None:
-            try:
-                if issubclass(dtype, ndarray):
-                    output = ndarray.view(self, dtype)
-                    dtype = None
-                else:
-                    output = ndarray.view(self, dtype)
-            except TypeError:
-                output = ndarray.view(self, dtype)
-        else:
-            output = ndarray.view(self, dtype, type)
+        if type is None and (isinstance(dtype, builtins.type)
+                             and issubclass(dtype, ndarray)):
+            type = dtype
+            dtype = None
 
-        # also make the mask be a view (so attr changes to the view's
-        # mask do no affect original object's mask)
-        # (especially important to avoid affecting np.masked singleton)
-        if getmask(output) is not nomask:
-            output._mask = output._mask.view()
+        output = super().view(*[a for a in (dtype, type) if a is not None])
 
         # Make sure to reset the _fill_value if needed
         if getattr(output, '_fill_value', None) is not None:
@@ -3488,6 +3472,15 @@ class MaskedArray(ndarray):
             _mask[indx] = mindx
         return
 
+    def _set_dtype(self, dtype):
+        super()._set_dtype(dtype)
+        if self._mask is not nomask:
+            self._mask = self._mask.view(make_mask_descr(dtype), ndarray)
+            try:
+                self._mask = self._mask.reshape(self.shape)
+            except (AttributeError, TypeError):
+                pass
+
     # Define so that we can overwrite the setter.
     @property
     def dtype(self):
@@ -3495,15 +3488,13 @@ class MaskedArray(ndarray):
 
     @dtype.setter
     def dtype(self, dtype):
+        # DEPRECATED 2026-02-06, NumPy 2.5
+        warnings.warn(
+            "Setting the dtype on a MaskedArray has been deprecated in "
+            "NumPy 2.5.\nInstead of changing the dtype on an array x, "
+            "create a new array with x.view(new_dtype)",
+            DeprecationWarning, stacklevel=2)
         self._set_dtype(dtype)
-        if self._mask is not nomask:
-            self._mask = self._mask.view(make_mask_descr(dtype), ndarray)
-            # Try to reset the shape of the mask (if we don't have a void).
-            # This raises a ValueError if the dtype change won't work.
-            try:
-                self._mask = self._mask.reshape(self.shape)
-            except (AttributeError, TypeError):
-                pass
 
     @property
     def shape(self):

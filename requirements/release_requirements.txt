@@ -3,7 +3,7 @@
 
 # changelog.py
 pygithub
-gitpython>=3.1.30
+gitpython>=3.1.46
 
 # uploading release documentation
 packaging

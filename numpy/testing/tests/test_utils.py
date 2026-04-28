@@ -428,14 +428,15 @@ class TestEqual(TestArrayEqual):
 
     def test_nat_items(self):
         # not a datetime
-        nadt_no_unit = np.datetime64("NaT")
         nadt_s = np.datetime64("NaT", "s")
         nadt_d = np.datetime64("NaT", "ns")
+
         # not a timedelta
         with pytest.warns(
             DeprecationWarning,
             match="The 'generic' unit for NumPy timedelta is deprecated",
         ):
+            nadt_no_unit = np.datetime64("NaT")
             natd_no_unit = np.timedelta64("NaT")
         natd_s = np.timedelta64("NaT", "s")
         natd_d = np.timedelta64("NaT", "ns")
