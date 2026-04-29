@@ -354,55 +354,26 @@ array_descr_set_internal(PyArrayObject *self, PyObject *arg)
         return -1;
     }
     /* Check dtype and possibly give new dim & stride for last axis */
-    npy_intp newlastdim, newlaststride;
+    int newnd;
+    npy_intp *newdims = NULL;
+    npy_intp *newstrides = NULL;
+    /* Check whether the type is compatible, get pointers to dimensions and
+       strides (can be from input or to newly allocated dim_array). */
     Py_SETREF(newtype, _check_compatibility_with_new_dtype(
-                  self, newtype, &newlastdim, &newlaststride));
+                  self, newtype, &newnd, &newdims, &newstrides));
     if (newtype == NULL) {
         return -1;
     }
-
-    /* Viewing as a subarray increases the number of dimensions */
-    if (PyDataType_HASSUBARRAY(newtype)) {
-        assert(newlastdim < 0);  /* not allowed for subarrays */
-        /*
-         * create new array object from data and update
-         * dimensions, strides and descr from it
-         */
-        PyArrayObject *temp;
-        /*
-         * We would decref newtype here.
-         * temp will steal a reference to it
-         */
-        temp = (PyArrayObject *)
-            PyArray_NewFromDescr(&PyArray_Type, newtype, PyArray_NDIM(self),
-                                 PyArray_DIMS(self), PyArray_STRIDES(self),
-                                 PyArray_DATA(self), PyArray_FLAGS(self), NULL);
-        if (temp == NULL) {
-            return -1;
-        }
-        /* create new dimensions cache and fill it */
-        npy_intp new_nd = PyArray_NDIM(temp);
-        npy_intp *new_dims = npy_alloc_cache_dim(2 * new_nd);
-        if (new_dims == NULL) {
-            Py_DECREF(temp);
-            PyErr_NoMemory();
-            return -1;
-        }
-        memcpy(new_dims, PyArray_DIMS(temp), new_nd * sizeof(npy_intp));
-        memcpy(new_dims + new_nd, PyArray_STRIDES(temp), new_nd * sizeof(npy_intp));
-        /* Update self with new cache */
+    if (newnd != PyArray_NDIM(self)) {
+        /* Update self with new dim array created above (subarray dtype). */
+        assert(newdims != PyArray_DIMS(self));
         npy_free_cache_dim_array(self);
-        ((PyArrayObject_fields *)self)->nd = new_nd;
-        ((PyArrayObject_fields *)self)->dimensions = new_dims;
-        ((PyArrayObject_fields *)self)->strides = new_dims + new_nd;
-        newtype = PyArray_DESCR(temp);
-        Py_INCREF(newtype);
-        Py_DECREF(temp);
+        ((PyArrayObject_fields *)self)->nd = newnd;
+        ((PyArrayObject_fields *)self)->dimensions = newdims;
+        ((PyArrayObject_fields *)self)->strides = newstrides;
     }
-    else if (newlastdim >= 0) {
-        int lastaxis = PyArray_NDIM(self) - 1;
-        PyArray_DIMS(self)[lastaxis] = newlastdim;
-        PyArray_STRIDES(self)[lastaxis] = newlaststride;
+    else { /* We keep our old dims (possibly changed inplace) */
+        assert(newdims == PyArray_DIMS(self));
     }
     Py_DECREF(PyArray_DESCR(self));
     ((PyArrayObject_fields *)self)->descr = newtype;
