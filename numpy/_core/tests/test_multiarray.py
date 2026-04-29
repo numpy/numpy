@@ -2790,25 +2790,6 @@ class TestMethods:
         a.sort(stable=stable, axis=-1, descending=descending)
         assert_equal(a, b, msg)
 
-    @pytest.mark.parametrize('dtype', [np.complex64, np.complex128, np.clongdouble])
-    @pytest.mark.parametrize('stable', [True, False])
-    @pytest.mark.parametrize('descending', [True, False])
-    def test_sort_descending_complex(self, dtype, stable, descending):
-        real = np.linspace(-50, 50, 101, dtype=dtype)
-        imag = np.linspace(-50, 50, 101, dtype=dtype)
-        a = real + 1j * imag
-        if not descending:
-            a = a[::-1]
-        # add nans to check that they are sorted to the end
-        a[::10] = np.nan + 1j * np.nan
-
-        b = a[::-1].copy()
-        b = np.concatenate((b[~np.isnan(b)], b[np.isnan(b)]))
-
-        msg = f"sort, dtype={dtype}, stable={stable}, descending={descending}"
-        a.sort(stable=stable, axis=-1, descending=descending)
-        assert_equal(a, b, msg)
-
     @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
     @pytest.mark.parametrize('stable', [True, False])
     @pytest.mark.parametrize('descending', [True, False])

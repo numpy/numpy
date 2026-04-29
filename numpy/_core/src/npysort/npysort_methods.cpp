@@ -1,16 +1,12 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "npysort_common.h"
+#include "quicksort_generic.hpp"
+#include "timsort_generic.hpp"
 #include "numpy_tag.h"
 #include "npy_sort.h"
 
 #include <cstdlib>
-
-/*
- *****************************************************************************
- **                          SORTING ARRAYMETHODS                           **
- *****************************************************************************
- */
 
 static NPY_CASTING
 sort_resolve_descriptors(PyArrayMethodObject *method, PyArray_DTypeMeta *const *dtypes,
