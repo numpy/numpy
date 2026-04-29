@@ -1095,7 +1095,7 @@ _convert_from_dict(PyObject *obj, int align)
 
     /* Types with fields need the Python C API for field access */
     npy_uint64 dtypeflags = NPY_NEEDS_PYAPI;
-    int totalsize = 0;
+    npy_intp totalsize = 0;
     int maxalign = 1;
     int has_out_of_order_fields = 0;
     for (int i = 0; i < n; i++) {
