@@ -7219,7 +7219,8 @@ def argsort(a, axis=np._NoValue, kind=None, order=None, endwith=True,
         return a.argsort(axis=axis, kind=kind, order=order, endwith=endwith,
                          fill_value=fill_value, stable=None, descending=descending)
     else:
-        return a.argsort(axis=axis, kind=kind, order=order, stable=None, descending=descending)
+        return a.argsort(axis=axis, kind=kind, order=order, stable=None,
+                         descending=descending)
 
 
 argsort.__doc__ = MaskedArray.argsort.__doc__
