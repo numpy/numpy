@@ -475,6 +475,17 @@ class TestAttributes:
 
         assert_equal(arr, np.array(data, dtype=dtype))
 
+    def test_subarray_order_f(self):
+        # Subarrays are always C contiguous, but if we request Fortran,
+        # we should get it if the subarray is resolved away.
+        data = ([[1, 2, 3], [4, 5, 6]])
+        arr = np.full((), data, dtype=("f8", (2, 3)), order="F")
+        assert not arr.flags.c_contiguous
+        assert arr.flags.f_contiguous
+        arr2 = np.full((4, 5), data, dtype=("f8", (2, 3)), order="F")
+        assert not arr2.flags.c_contiguous
+        assert arr2.flags.f_contiguous
+
 
 class TestArrayConstruction:
     def test_array(self):

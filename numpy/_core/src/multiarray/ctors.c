@@ -641,8 +641,7 @@ PyArray_NewFromDescr_int(
                input ones (for strides, if the input strides are known). */
             int newnd;
             npy_intp newdims[2*NPY_MAXDIMS];
-            npy_intp *newstrides = (
-                (strides != NULL || nd == 0) ? newdims + NPY_MAXDIMS : NULL);
+            npy_intp *newstrides = strides ? newdims + NPY_MAXDIMS : NULL;
             Py_SETREF(descr, _get_subarray_base_and_dimensions(
                           descr, nd, dims, strides,
                           &newnd, newdims, newstrides));
