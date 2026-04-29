@@ -627,7 +627,7 @@ _convert_from_list(PyObject *obj, int align)
     /* Types with fields need the Python C API for field access */
     npy_uint64 dtypeflags = NPY_NEEDS_PYAPI;
     int maxalign = 1;
-    int totalsize = 0;
+    npy_intp totalsize = 0;
     for (int i = 0; i < n; i++) {
         PyArray_Descr *conv = _convert_from_any(
                 PyList_GET_ITEM(obj, i), align); // noqa: borrowed-ref OK
