@@ -1140,7 +1140,7 @@ _convert_from_dict(PyObject *obj, int align)
                 Py_DECREF(ind);
                 goto fail;
             }
-            long offset = PyArray_PyIntAsInt(off);
+            npy_intp offset = PyArray_PyIntAsIntp(off);
             if (error_converting(offset)) {
                 Py_DECREF(off);
                 Py_DECREF(tup);

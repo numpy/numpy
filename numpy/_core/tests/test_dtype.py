@@ -2052,6 +2052,9 @@ class TestDTypeSignatures:
     ([("x", np.float64, 2 ** 28)], (2 ** 28 * 8)),
     ("2147483648i,2147483648i", 17179869184),
     (dict(names=["a"], formats=["2147483648i"]), 8589934592),
+    (dict(names=["a"], formats=["2147483648i"], offsets=[1]), 8589934593),
+    (dict(names=["a"], formats=["2147483648i"], offsets=[2 ** 31 - 100]), 10737418140),
+    (dict(names=["a"], formats=["2147483648i"], offsets=[2 ** 31]), 10737418240),
 ])
 def test_gh_31308(kind, exp):
     kind_dtype = np.dtype(kind)
