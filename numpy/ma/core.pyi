@@ -2370,6 +2370,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         fill_value: _ScalarLike_co | None = None,
         *,
         stable: bool = False,
+        descending: bool = False,
     ) -> _MaskedArray[intp]: ...
 
     # keep in sync with `MaskedArray.argmin` (below) and `ndarray.argmax`
@@ -3641,6 +3642,7 @@ def argsort(
     fill_value: _ScalarLike_co | None = None,
     *,
     stable: bool | None = None,
+    descending: bool = False,
 ) -> _Array1D[np.intp]: ...
 @overload  # MaskedArray, axis: None
 def argsort(
@@ -3652,6 +3654,7 @@ def argsort(
     fill_value: _ScalarLike_co | None = None,
     *,
     stable: bool | None = None,
+    descending: bool = False,
 ) -> _Masked1D[np.intp]: ...
 @overload  # MaskedArray, axis: int-like
 def argsort(
@@ -3663,6 +3666,7 @@ def argsort(
     fill_value: _ScalarLike_co | None = None,
     *,
     stable: bool | None = None,
+    descending: bool = False,
 ) -> _MaskedArray[np.intp]: ...
 @overload  # array-like, axis: None
 def argsort(
@@ -3674,6 +3678,7 @@ def argsort(
     fill_value: _ScalarLike_co | None = None,
     *,
     stable: bool | None = None,
+    descending: bool = False,
 ) -> _Array1D[np.intp]: ...
 @overload  # array-like, axis: int-like
 def argsort(
@@ -3685,6 +3690,7 @@ def argsort(
     fill_value: _ScalarLike_co | None = None,
     *,
     stable: bool | None = None,
+    descending: bool = False,
 ) -> NDArray[np.intp]: ...
 
 #
