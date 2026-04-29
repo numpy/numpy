@@ -1649,7 +1649,8 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         input_dtype = np.float64
 
     x = np.asarray(x)
-    if x.size == 0:
+    xp = np.asarray(xp)
+    if x.size == 0 and xp.size == 0:
         return np.empty(x.shape, dtype=input_dtype)
 
     if period is not None:
