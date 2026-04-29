@@ -14,10 +14,11 @@ kw_unicode_true = {'unicode': True}  # make 2to3 work properly
 kw_unicode_false = {'unicode': False}
 
 ignore_charray_deprecation = pytest.mark.filterwarnings(
-    r"ignore:\w+ chararray \w+:DeprecationWarning"
+    r"ignore:\w+ (chararray|array|asarray) \w+:DeprecationWarning"
 )
 
 
+@ignore_charray_deprecation
 class TestBasic:
     def test_from_object_array(self):
         A = np.array([['abc', 2],

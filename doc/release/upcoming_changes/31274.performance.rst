@@ -1,0 +1,8 @@
+Faster reductions on small/medium contiguous arrays
+---------------------------------------------------
+`numpy.sum`, `numpy.prod`, `numpy.any`, `numpy.all`, and other reductions
+with an identity value now use a fast path when the input is a contiguous,
+aligned, non-object array and the reduction covers all axes
+(``axis=None``) with no special arguments. Typical speedup is ~1.3x on small
+arrays; `numpy.any` / `numpy.all` on contiguous boolean arrays can see speedup
+up to 1.9x.

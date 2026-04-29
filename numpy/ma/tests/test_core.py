@@ -998,6 +998,13 @@ class TestMaskedArray:
         control = np.array([[[1., 1.], ], [[2., 2.], ]], dtype=float)
         assert_equal(test, control)
         assert_equal(test.dtype, control.dtype)
+        # for strings
+        ndtype = [('a', 'U5'), ('b', [('c', 'U5')])]
+        arr = np.array([('NumPy', ('array',)), ('array', ('numpy',))], dtype=ndtype)
+        test = flatten_structured_array(arr)
+        control = np.array([['NumPy', 'array'], ['array', 'numpy']], dtype='U5')
+        assert_equal(test, control)
+        assert_equal(test.dtype, control.dtype)
 
     def test_void0d(self):
         # Test creating a mvoid object
@@ -2235,7 +2242,8 @@ class TestMaskedArrayAttributes:
         a = np.zeros(4, dtype='f4,i4')
 
         m = np.ma.array(a)
-        m.dtype = np.dtype('f4')
+        with pytest.warns(DeprecationWarning, match="Setting the dtype.*MaskedArray"):
+            m.dtype = np.dtype('f4')
         repr(m)  # raises?
         assert_equal(m.dtype, np.dtype('f4'))
 
@@ -2243,7 +2251,9 @@ class TestMaskedArrayAttributes:
         # are not allowed
         def assign():
             m = np.ma.array(a)
-            m.dtype = np.dtype('f8')
+            with pytest.warns(DeprecationWarning,
+                              match="Setting the dtype.*MaskedArray"):
+                m.dtype = np.dtype('f8')
         assert_raises(ValueError, assign)
 
         b = a.view(dtype='f4', type=np.ma.MaskedArray)  # raises?
@@ -2252,7 +2262,8 @@ class TestMaskedArrayAttributes:
         # check that nomask is preserved
         a = np.zeros(4, dtype='f4')
         m = np.ma.array(a)
-        m.dtype = np.dtype('f4,i4')
+        with pytest.warns(DeprecationWarning, match="Setting the dtype.*MaskedArray"):
+            m.dtype = np.dtype('f4,i4')
         assert_equal(m.dtype, np.dtype('f4,i4'))
         assert_equal(m._mask, np.ma.nomask)
 

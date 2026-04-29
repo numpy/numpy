@@ -26,6 +26,7 @@ from ._polytypes import (
     _FuncVal,
     _FuncVal2D,
     _FuncVal3D,
+    _FuncValND,
     _FuncVander,
     _FuncVander2D,
     _FuncVander3D,
@@ -62,6 +63,7 @@ __all__ = [
     "Chebyshev",
     "chebval2d",
     "chebval3d",
+    "chebvalnd",
     "chebgrid2d",
     "chebgrid3d",
     "chebvander2d",
@@ -102,6 +104,7 @@ chebint: Final[_FuncInteg] = ...
 chebval: Final[_FuncVal] = ...
 chebval2d: Final[_FuncVal2D] = ...
 chebval3d: Final[_FuncVal3D] = ...
+chebvalnd: Final[_FuncValND] = ...
 chebgrid2d: Final[_FuncVal2D] = ...
 chebgrid3d: Final[_FuncVal3D] = ...
 chebvander: Final[_FuncVander] = ...
@@ -136,7 +139,7 @@ def chebinterpolate[CoefScalarT: np.number | np.bool | np.object_](
 ) -> npt.NDArray[CoefScalarT]: ...
 
 class Chebyshev(ABCPolyBase[L["T"]]):
-    basis_name: ClassVar[L["T"]] = "T"  # pyright: ignore[reportIncompatibleMethodOverride]
+    basis_name: ClassVar[L["T"]] = "T"  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore[bad-override]
     domain: _Array2[np.float64 | Any] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
     window: _Array2[np.float64 | Any] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
 

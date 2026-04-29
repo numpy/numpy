@@ -449,10 +449,10 @@ _clear_array_attributes(PyArrayObject *self, npy_bool unraisable)
                 nbytes = 1;
             }
             PyDataMem_UserFREE(fa->data, nbytes, fa->mem_handler);
-            Py_CLEAR(fa->mem_handler);
         }
         fa->data = NULL;
     }
+    Py_CLEAR(fa->mem_handler);
 
     /* must match allocation in PyArray_NewFromDescr */
     npy_free_cache_dim(fa->dimensions, 2 * fa->nd);
@@ -961,6 +961,9 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         PyErr_Clear();
 
         PyArrayObject *array_other = (PyArrayObject *)PyArray_FROM_O(other);
+        if (array_other == NULL) {
+            return NULL;
+        }
         if (PyArray_TYPE(array_other) == NPY_VOID) {
             /*
             * Void arrays are currently not handled by ufuncs, so if the other

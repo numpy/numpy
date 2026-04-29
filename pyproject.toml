@@ -251,6 +251,7 @@ cli = 'vendored-meson/meson/meson.py'
   ".spin/cmds.py:build",
   ".spin/cmds.py:test",
   ".spin/cmds.py:mypy",
+  ".spin/cmds.py:pyrefly",
   ".spin/cmds.py:stubtest",
   ".spin/cmds.py:config_openblas",
   ".spin/cmds.py:lint",
@@ -270,3 +271,29 @@ cli = 'vendored-meson/meson/meson.py'
   ".spin/cmds.py:check_tutorials",
 ]
 "Metrics" = [".spin/cmds.py:bench"]
+
+
+[tool.pyrefly]
+project-includes = ["numpy/**/*.pyi"]
+project-excludes = ["numpy/typing/tests/**"]
+
+[tool.pyrefly.errors]
+implicit-any = "error"
+unannotated-parameter = "error"
+unannotated-return = "error"
+
+[[tool.pyrefly.sub-config]]
+matches = "numpy/__init__.pyi"
+errors = { bad-override = "ignore" }
+
+[[tool.pyrefly.sub-config]]
+matches = "numpy/_typing/_nbit_base.pyi"
+errors = { invalid-inheritance = "ignore" }
+
+[[tool.pyrefly.sub-config]]
+matches = "numpy/ma/core.pyi"
+errors = { bad-override = "ignore" }
+
+[[tool.pyrefly.sub-config]]
+matches = "numpy/matrixlib/defmatrix.pyi"
+errors = { bad-override = "ignore" }

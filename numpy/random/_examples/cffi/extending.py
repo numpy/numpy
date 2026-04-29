@@ -32,7 +32,7 @@ state = bit_gen.state
 
 interface = rng.bit_generator.cffi
 n = 100
-vals_cffi = ffi.new('double[%d]' % n)
+vals_cffi = ffi.new(f'double[{n}]')
 lib.random_standard_normal_fill(interface.bit_generator, n, vals_cffi)
 
 # reset the state

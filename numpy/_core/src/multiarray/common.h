@@ -96,6 +96,17 @@ NPY_NO_EXPORT int
 _may_have_objects(PyArray_Descr *dtype);
 
 /*
+ * Check whether self can be viewed with the given dtype.
+ * If so, return a new reference to the dtype (possibly changed).
+ * If needed, also determine new dimensions and strides for the last axis.
+ * If no change is needed, newlastdim is set to -1.
+ */
+NPY_NO_EXPORT PyArray_Descr*
+_check_compatibility_with_new_dtype(
+    PyArrayObject *self, PyArray_Descr *type,
+    npy_intp *newlastdim, npy_intp *newlaststride);
+
+/*
  * Returns -1 and sets an exception if *index is an invalid index for
  * an array of size max_item, otherwise adjusts it in place to be
  * 0 <= *index < max_item, and returns 0.
@@ -339,7 +350,7 @@ check_is_convertible_to_scalar(PyArrayObject *v);
  */
 NPY_NO_EXPORT PyArrayObject *
 new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
-                  int nd, npy_intp dimensions[], int typenum, PyArrayObject **result);
+                  int nd, npy_intp dimensions[], PyArray_Descr *descr, PyArrayObject **result);
 
 
 /*

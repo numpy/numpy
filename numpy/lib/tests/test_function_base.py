@@ -149,6 +149,14 @@ class TestRot90:
             assert_equal(rot90(a, k=k, axes=(2, 0)),
                          rot90(a_rot90_20, k=k - 1, axes=(2, 0)))
 
+    @pytest.mark.parametrize('k', [2.0, 2.25])
+    def test_noninteger_k_deprecation_warning(self, k):
+        a = np.array([[1, 2], [3, 4]])
+        with pytest.warns(DeprecationWarning,
+                          match="not an integer type has been deprecated"):
+            b = rot90(a, k=k)
+        assert_array_equal(b, np.rot90(a, k=2), strict=True)
+
 
 class TestFlip:
 
@@ -507,9 +515,9 @@ class TestAverage:
         assert_equal(type(rw), subclass)
 
     def test_upcasting(self):
-        typs = [('i4', 'i4', 'f8'), ('i4', 'f4', 'f8'), ('f4', 'i4', 'f8'),
+        types = [('i4', 'i4', 'f8'), ('i4', 'f4', 'f8'), ('f4', 'i4', 'f8'),
                  ('f4', 'f4', 'f4'), ('f4', 'f8', 'f8')]
-        for at, wt, rt in typs:
+        for at, wt, rt in types:
             a = np.array([[1, 2], [3, 4]], dtype=at)
             w = np.array([[1, 2], [3, 4]], dtype=wt)
             assert_equal(np.average(a, weights=w).dtype, np.dtype(rt))

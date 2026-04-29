@@ -208,21 +208,20 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("_load_from_filelike", args, len_args, kwnames,
-            "file", NULL, &file,
-            "|delimiter", &parse_control_character, &pc.delimiter,
-            "|comment", &parse_control_character, &pc.comment,
-            "|quote", &parse_control_character, &pc.quote,
-            "|imaginary_unit", &parse_control_character, &pc.imaginary_unit,
-            "|usecols", NULL, &usecols_obj,
-            "|skiplines", &PyArray_IntpFromPyIntConverter, &skiplines,
-            "|max_rows", &PyArray_IntpFromPyIntConverter, &max_rows,
-            "|converters", NULL, &converters,
-            "|dtype", NULL, &dtype,
-            "|encoding", NULL, &encoding_obj,
-            "|filelike", &PyArray_BoolConverter, &filelike,
-            "|byte_converters", &PyArray_BoolConverter, &pc.python_byte_converters,
-            "|c_byte_converters", PyArray_BoolConverter, &pc.c_byte_converters,
-            NULL, NULL, NULL) < 0) {
+            {"file", NULL, &file},
+            {"|delimiter", &parse_control_character, &pc.delimiter},
+            {"|comment", &parse_control_character, &pc.comment},
+            {"|quote", &parse_control_character, &pc.quote},
+            {"|imaginary_unit", &parse_control_character, &pc.imaginary_unit},
+            {"|usecols", NULL, &usecols_obj},
+            {"|skiplines", &PyArray_IntpFromPyIntConverter, &skiplines},
+            {"|max_rows", &PyArray_IntpFromPyIntConverter, &max_rows},
+            {"|converters", NULL, &converters},
+            {"|dtype", NULL, &dtype},
+            {"|encoding", NULL, &encoding_obj},
+            {"|filelike", &PyArray_BoolConverter, &filelike},
+            {"|byte_converters", &PyArray_BoolConverter, &pc.python_byte_converters},
+            {"|c_byte_converters", PyArray_BoolConverter, &pc.c_byte_converters}) < 0) {
         return NULL;
     }
 

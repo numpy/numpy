@@ -1,13 +1,13 @@
 Cython
-hypothesis==6.151.4
-pytest==9.0.2
-pytest-cov==7.0.0
+hypothesis==6.152.1
+pytest==9.0.3
+pytest-cov==7.1.0
 meson
 ninja; sys_platform != "emscripten"
 pytest-xdist
 pytest-timeout
-# For testing types
-mypy==1.19.1
 # for optional f2py encoding detection
 charset-normalizer
 tzdata
+# Ensure we install quaddtype in CI for some wheel setups (mac):
+numpy_quaddtype ; python_version<"3.15" and sys_platform=="darwin"

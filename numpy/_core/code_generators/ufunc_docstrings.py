@@ -1619,7 +1619,7 @@ add_newdoc('numpy._core.umath', 'invert',
     returned. In a two's-complement system, this operation effectively flips
     all the bits, resulting in a representation that corresponds to the
     negative of the input plus one. This is the most common method of
-    representing signed integers on computers [1]_. A N-bit two's-complement
+    representing signed integers on computers [1]_. An N-bit two's-complement
     system can represent every integer in the range :math:`-2^{N-1}` to
     :math:`+2^{N-1}-1`.
 
@@ -1870,7 +1870,7 @@ add_newdoc('numpy._core.umath', 'isnat',
     Examples
     --------
     >>> import numpy as np
-    >>> np.isnat(np.datetime64("NaT"))
+    >>> np.isnat(np.datetime64("NaT", "D"))
     True
     >>> np.isnat(np.datetime64("2016-01-01"))
     False
@@ -4519,6 +4519,62 @@ add_newdoc('numpy._core.umath', 'bitwise_count',
     >>> np.bitwise_count(a)
     array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15],
           dtype=uint8)
+
+    """)
+
+add_newdoc('numpy._core.umath', 'real',
+    """
+    Returns the real part of the elements in the array.
+
+    Parameters
+    ----------
+    x : array_like
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        Real part of input array.
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    ndarray.real
+    ndarray.imag
+
+    Notes
+    -----
+    This ufunc is used internally to implement the `ndarray.real`
+    attribute and the `np.real` function. It should not be used directly.
+
+    """)
+
+add_newdoc('numpy._core.umath', 'imag',
+    """
+    Returns the imaginary part of the elements in the array.
+
+    Unlike typical ufuncs, the return is typically a view into the original array.
+
+    Parameters
+    ----------
+    x : array_like
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        Complex part of input array or zeros.
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    ndarray.imag
+    ndarray.real
+
+    Notes
+    -----
+    This ufunc is used internally to implement the `ndarray.imag`
+    attribute and the `np.imag` function. It should not be used directly.
 
     """)
 

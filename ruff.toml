@@ -19,7 +19,7 @@ line-ending = "lf"
 
 [lint]
 preview = true
-extend-select = [
+select = [
     "B",    # flake8-bugbear
     "C4",   # flake8-comprehensions
     "ISC",  # flake8-implicit-str-concat
@@ -34,9 +34,12 @@ extend-select = [
     "PERF", # perflint
     "E",    # pycodestyle/error
     "W",    # pycodestyle/warning
+    "F",    # pyflakes
     "PGH",  # pygrep-hooks
     "PLE",  # pylint/error
     "UP",   # pyupgrade
+    "RUF012",  # ruff: mutable-class-default
+    "RUF100",  # ruff: unused-noqa
 ]
 ignore = [
     # flake8-bugbear
@@ -71,17 +74,15 @@ ignore = [
     "F841",    # Local variable is assigned to but never used
     # pyupgrade
     "UP015" ,  # Unnecessary mode argument
-    "UP031",   # TODO: Use format specifiers instead of percent format
 ]
 
 [lint.per-file-ignores]
-"_tempita.py" = ["B909"]
-"bench_*.py" = ["B015", "B018"]
-"test*.py" = ["B015", "B018", "E201", "E714"]
+"_tempita.py" = ["B909", "RUF012"]
+"bench_*.py" = ["B015", "B018", "RUF012"]
+"test*.py" = ["B015", "B018", "E201", "E714", "RUF012"]
 
 "numpy/_core/_add_newdocs.py" = ["E501"]
 "numpy/_core/_add_newdocs_scalars.py" = ["E501"]
-"numpy/lib/tests/test_format.py" = ["E501"]
 "numpy/f2py/*py" = ["E501"]
 "numpy*pyi" = ["E501"]
 # "useless assignments" aren't so useless when you're testing that they don't make type checkers scream

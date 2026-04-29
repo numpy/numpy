@@ -116,64 +116,31 @@ is_leapyear(npy_int64 year)
 
 /*
  * Calculates the days offset from the 1970 epoch.
+ *
+ * Adapted from Hinnant's days_from_civil algorithm (public domain).
+ * See: https://howardhinnant.github.io/date_algorithms.html#days_from_civil
+ *
+ * This is the same algorithm used by C++20 std::chrono
+ * (year_month_day to sys_days). See libstdc++:
+ * gcc/libstdc++-v3/include/std/chrono (operator sys_days)
+ *
+ * The March-1 epoch trick places the leap day at the end of the year,
+ * eliminating special cases for February.
  */
 NPY_NO_EXPORT npy_int64
 get_datetimestruct_days(const npy_datetimestruct *dts)
 {
-    int i, month;
-    npy_int64 year, days = 0;
-    int *month_lengths;
+    npy_int64 y = dts->year - (dts->month <= 2);
+    npy_int64 era = (y >= 0 ? y : y - 399) / 400;
+    npy_uint32 yoe = (npy_uint32)(y - era * 400);           /* [0, 399] */
+    npy_uint32 doy =
+        (153 * (npy_uint32)(dts->month > 2 ? dts->month - 3
+                                           : dts->month + 9) + 2) /
+            5 +
+        (npy_uint32)dts->day - 1;                            /* [0, 365] */
+    npy_uint32 doe = yoe * 365 + yoe / 4 - yoe / 100 + doy; /* [0, 146096] */
 
-    year = dts->year - 1970;
-    days = year * 365;
-
-    /* Adjust for leap years */
-    if (days >= 0) {
-        /*
-         * 1968 is the closest leap year before 1970.
-         * Exclude the current year, so add 1.
-         */
-        year += 1;
-        /* Add one day for each 4 years */
-        days += year / 4;
-        /* 1900 is the closest previous year divisible by 100 */
-        year += 68;
-        /* Subtract one day for each 100 years */
-        days -= year / 100;
-        /* 1600 is the closest previous year divisible by 400 */
-        year += 300;
-        /* Add one day for each 400 years */
-        days += year / 400;
-    }
-    else {
-        /*
-         * 1972 is the closest later year after 1970.
-         * Include the current year, so subtract 2.
-         */
-        year -= 2;
-        /* Subtract one day for each 4 years */
-        days += year / 4;
-        /* 2000 is the closest later year divisible by 100 */
-        year -= 28;
-        /* Add one day for each 100 years */
-        days -= year / 100;
-        /* 2000 is also the closest later year divisible by 400 */
-        /* Subtract one day for each 400 years */
-        days += year / 400;
-    }
-
-    month_lengths = _days_per_month_table[is_leapyear(dts->year)];
-    month = dts->month - 1;
-
-    /* Add the months */
-    for (i = 0; i < month; ++i) {
-        days += month_lengths[i];
-    }
-
-    /* Add the days */
-    days += dts->day - 1;
-
-    return days;
+    return era * (npy_int64)146097 + (npy_int64)doe - (npy_int64)719468;
 }
 
 /*
@@ -188,6 +155,9 @@ get_datetimestruct_minutes(const npy_datetimestruct *dts)
 
     return days;
 }
+
+static void
+set_datetimestruct_days(npy_int64 days, npy_datetimestruct *dts);
 
 /*
  * Modifies '*days_' to be the day offset within the year,
@@ -226,33 +196,71 @@ days_to_yearsdays(npy_int64 *days_)
 NPY_NO_EXPORT int
 days_to_month_number(npy_datetime days)
 {
-    npy_int64 year;
-    int *month_lengths, i;
-
-    year = days_to_yearsdays(&days);
-    month_lengths = _days_per_month_table[is_leapyear(year)];
-
-    for (i = 0; i < 12; ++i) {
-        if (days < month_lengths[i]) {
-            return i + 1;
-        }
-        else {
-            days -= month_lengths[i];
-        }
-    }
-
-    /* Should never get here */
-    return 1;
+    npy_datetimestruct dts;
+    set_datetimestruct_days(days, &dts);
+    return dts.month;
 }
 
 /*
  * Fills in the year, month, day in 'dts' based on the days
  * offset from 1970.
+ *
+ * Adapted from neri_schneider.hpp::to_date (MIT license) in:
+ * https://github.com/cassioneri/eaf
+ * SPDX-FileCopyrightText: 2022 Cassio Neri <cassio.neri@gmail.com>
+ * SPDX-FileCopyrightText: 2022 Lorenz Schneider <schneider@em-lyon.com>
+ *
+ * Algorithm: Neri C, Schneider L. "Euclidean Affine Functions and their
+ * Application to Calendar Algorithms." Software: Practice and Experience.
+ * 2023;53(4):937-970. doi:10.1002/spe.3172
+ *
+ * This is the same algorithm used by C++20 std::chrono
+ * (sys_days to year_month_day). See libstdc++:
+ * gcc/libstdc++-v3/include/std/chrono (year_month_day::_M_days_since_epoch)
+ *
+ * Falls back to the classical algorithm for dates beyond ~32K years
+ * before epoch or ~2.9M years after (effectively never reached in practice).
  */
 static void
 set_datetimestruct_days(npy_int64 days, npy_datetimestruct *dts)
 {
-    int *month_lengths, i;
+    /* Neri-Schneider valid range: [-12699422, 1061042401] (~year -32800..2906945)
+     * s = 82, K = 719468 + 146097 * s, L = 400 * s. */
+    if (days >= -12699422LL && days <= 1061042401LL) {
+        const npy_uint32 K = 12699422u;
+        const npy_uint32 L = 32800u;
+
+        /* Rata die shift. */
+        npy_uint32 N = (npy_uint32)(npy_int32)days + K;
+
+        /* Century. */
+        npy_uint32 N_1 = 4 * N + 3;
+        npy_uint32 C = N_1 / 146097;
+        npy_uint32 N_C = N_1 % 146097 / 4;
+
+        /* Year. */
+        npy_uint32 N_2 = 4 * N_C + 3;
+        npy_uint64 P_2 = (npy_uint64)2939745 * N_2;
+        npy_uint32 Z = (npy_uint32)(P_2 / 4294967296ULL);
+        npy_uint32 N_Y = (npy_uint32)(P_2 % 4294967296ULL) / 2939745 / 4;
+
+        /* Month and day. */
+        npy_uint32 N_3 = 2141 * N_Y + 197913;
+        npy_uint32 M = N_3 / 65536;
+        npy_uint32 D = N_3 % 65536 / 2141;
+
+        /* Map from March-based to January-based calendar. */
+        npy_uint32 J = N_Y >= 306;
+        npy_uint32 Y = 100 * C + Z;
+        dts->year = (npy_int64)((npy_int32)(Y - L) + (npy_int32)J);
+        dts->month = (npy_int32)(J ? M - 12 : M);
+        dts->day = (npy_int32)(D + 1);
+        return;
+    }
+
+    /* Fallback for extreme dates outside Neri-Schneider range */
+    const int *month_lengths;
+    int i;
 
     dts->year = days_to_yearsdays(&days);
     month_lengths = _days_per_month_table[is_leapyear(dts->year)];
@@ -444,8 +452,16 @@ NpyDatetime_ConvertDatetime64ToDatetimeStruct(
         return -1;
     }
 
-    /* TODO: Change to a mechanism that avoids the potential overflow */
-    dt *= meta->num;
+    /* Check for overflow and apply meta->num scaling */
+    if (meta->num > 1) {
+        if (_datetime_scale_with_overflow_check(
+                &dt, (npy_int64)meta->num, 1, "datetime64") < 0) {
+            return -1;
+        }
+    }
+    else {
+        dt *= meta->num;
+    }
 
     /*
      * Note that care must be taken with the / and % operators
@@ -2359,6 +2375,16 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             return -1;
         }
 
+        if(meta->base == NPY_FR_GENERIC) {
+            if (DEPRECATE(
+                        "The 'generic' unit for NumPy timedelta is deprecated, "
+                        "and will raise an error in the future. "
+                        "This includes implicit conversion of bare integers (e.g. `+ 1`)."
+                        "Please use a specific unit instead.") < 0) {
+                return -1;
+            }
+        }
+
         Py_DECREF(utf8);
         return 0;
     }
@@ -2484,6 +2510,17 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             meta->num = 1;
         }
         *out = NPY_DATETIME_NAT;
+
+        if(meta->base == NPY_FR_GENERIC) {
+            if (DEPRECATE(
+                        "The 'generic' unit for NumPy timedelta is deprecated, "
+                        "and will raise an error in the future. "
+                        "This includes implicit conversion of bare integers (e.g. `+ 1`)."
+                        "Please use a specific unit instead.") < 0) {
+                return -1;
+            }
+        }
+
         return 0;
     }
     else {
@@ -2559,6 +2596,16 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
                 meta->base = NPY_FR_GENERIC;
                 meta->num = 1;
             }
+            /* If output is NaT, skip this warning. */
+            if(meta->base == NPY_FR_GENERIC) {
+                if (DEPRECATE(
+                            "The 'generic' unit for NumPy timedelta is deprecated, "
+                            "and will raise an error in the future. "
+                            "This includes implicit conversion of bare integers (e.g. `+ 1`)."
+                            "Please use a specific unit instead.") < 0) {
+                    return -1;
+                }
+            }
 
             return 0;
         }
@@ -2575,6 +2622,17 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         if (error_converting(*out)) {
             return -1;
         }
+
+        if (meta->base == NPY_FR_GENERIC) {
+            if (DEPRECATE(
+                    "The 'generic' unit for NumPy timedelta is deprecated, "
+                    "and will raise an error in the future. "
+                    "This includes implicit conversion of bare integers (e.g. `+ 1`)."
+                    "Please use a specific unit instead.") < 0) {
+                return -1;
+            }
+        }
+
         return 0;
     }
     /* Timedelta scalar */
@@ -3157,13 +3215,11 @@ cast_timedelta_to_timedelta(PyArray_DatetimeMetaData *src_meta,
         return -1;
     }
 
-    /* Apply the scaling */
-    if (src_dt < 0) {
-        *dst_dt = (src_dt * num - (denom - 1)) / denom;
+    /* Apply the scaling, checking for overflow */
+    if (_datetime_scale_with_overflow_check(&src_dt, num, denom, "timedelta64") < 0) {
+        return -1;
     }
-    else {
-        *dst_dt = src_dt * num / denom;
-    }
+    *dst_dt = src_dt;
 
     return 0;
 }
@@ -4070,6 +4126,9 @@ time_to_string_resolve_descriptors(
         loop_descrs[1] = PyArray_DescrNewFromType(dtypes[1]->type_num);
         if (loop_descrs[1] == NULL) {
             return -1;
+        }
+        if (given_descrs[1] != NULL) {
+            size = (size < given_descrs[1]->elsize) ? size : given_descrs[1]->elsize;
         }
         loop_descrs[1]->elsize = size;
     }

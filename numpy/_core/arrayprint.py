@@ -78,7 +78,7 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
 
     if legacy is False:
         options['legacy'] = sys.maxsize
-    elif legacy == False:  # noqa: E712
+    elif legacy == False:
         warnings.warn(
             f"Passing `legacy={legacy!r}` is deprecated.",
             FutureWarning, stacklevel=3
@@ -530,8 +530,16 @@ def _get_format_function(data, **options):
     dtype_ = data.dtype
     dtypeobj = dtype_.type
     formatdict = _get_formatdict(data, **options)
+
     if dtypeobj is None:
         return formatdict["numpystr"]()
+    elif (getattr(dtypeobj, "__module__", None) != "numpy"
+            and not issubclass(dtypeobj, str)):
+        # Use `str()` as a default format for non-NumPy dtypes. This should be
+        # improved.  We use `str` assuming that `repr` is likely to duplicate
+        # information that is contained in the dtype.
+        # (Do this early, because e.g. quaddtype subclasses floating.)
+        return formatdict['void']()
     elif issubclass(dtypeobj, _nt.bool):
         return formatdict['bool']()
     elif issubclass(dtypeobj, _nt.integer):
@@ -1415,10 +1423,11 @@ class DatetimeFormat(_TimelikeFormat):
         return super().__call__(x)
 
     def _format_non_nat(self, x):
-        return "'%s'" % datetime_as_string(x,
-                                    unit=self.unit,
-                                    timezone=self.timezone,
-                                    casting=self.casting)
+        datetime_str = datetime_as_string(x,
+                                          unit=self.unit,
+                                          timezone=self.timezone,
+                                          casting=self.casting)
+        return f"'{datetime_str}'"
 
 
 class TimedeltaFormat(_TimelikeFormat):

@@ -155,7 +155,7 @@ cdef class MT19937(BitGenerator):
         seed : {None, int, array_like}
             Random seed initializing the pseudo-random number generator.
             Can be an integer in [0, 2**32-1], array of integers in
-            [0, 2**32-1], a `SeedSequence, or ``None``. If `seed`
+            [0, 2**32-1], a `SeedSequence`, or ``None``. If `seed`
             is ``None``, then fresh, unpredictable entropy will be pulled from
             the OS.
 

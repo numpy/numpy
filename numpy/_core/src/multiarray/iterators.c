@@ -129,11 +129,11 @@ PyArray_IterNew(PyObject *obj)
     }
 
     it = (PyArrayIterObject *)PyArray_malloc(sizeof(PyArrayIterObject));
-    PyObject_Init((PyObject *)it, &PyArrayIter_Type);
-    /* it = PyObject_New(PyArrayIterObject, &PyArrayIter_Type);*/
     if (it == NULL) {
+        PyErr_NoMemory();
         return NULL;
     }
+    PyObject_Init((PyObject *)it, &PyArrayIter_Type);
 
     Py_INCREF(ao);  /* PyArray_RawIterBaseInit steals a reference */
     PyArray_RawIterBaseInit(it, ao);

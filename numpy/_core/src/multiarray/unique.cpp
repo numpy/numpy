@@ -63,7 +63,7 @@ empty_array_like(PyArrayObject *arr, npy_intp length)
 
 template <typename T>
 size_t hash_integer(const T *value, npy_bool equal_nan) {
-    return std::hash<T>{}(*value);
+    return npy_fnv1a(reinterpret_cast<const unsigned char*>(value), sizeof(T));
 }
 
 template <typename S, typename T, S (*real)(T), S (*imag)(T)>
@@ -494,11 +494,8 @@ array__unique_hash(PyObject *NPY_UNUSED(module),
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("_unique_hash", args, len_args, kwnames,
-                            "arr", &PyArray_Converter, &arr,
-                            "|equal_nan",  &PyArray_BoolConverter, &equal_nan,
-                            NULL, NULL, NULL
-                            ) < 0
-    ) {
+            {"arr", (void *)&PyArray_Converter, &arr},
+            {"|equal_nan", (void *)&PyArray_BoolConverter, &equal_nan}) < 0) {
         Py_XDECREF(arr);
         return NULL;
     }

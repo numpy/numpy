@@ -529,7 +529,7 @@ def test_quoted_field(q):
 
 
 @pytest.mark.parametrize("q", ('"', "'", "`"))
-def test_quoted_field_with_whitepace_delimiter(q):
+def test_quoted_field_with_whitespace_delimiter(q):
     txt = StringIO(
         f"{q}alpha, x{q}     2.5\n{q}beta, y{q} 4.5\n{q}gamma, z{q}   5.0\n"
     )
