@@ -970,7 +970,7 @@ count_run_(type *arr, npy_intp l, npy_intp num, npy_intp minrun, type *vp,
     return sz;
 }
 
-template <typename Tag, bool reverse>
+template <typename Tag, typename type, bool reverse>
 static npy_intp
 gallop_right_(const typename Tag::type *arr, const npy_intp size,
               const typename Tag::type *key, size_t len)
@@ -1016,7 +1016,7 @@ gallop_right_(const typename Tag::type *arr, const npy_intp size,
     return ofs;
 }
 
-template <typename Tag, bool reverse>
+template <typename Tag, typename type, bool reverse>
 static npy_intp
 gallop_left_(const typename Tag::type *arr, const npy_intp size,
              const typename Tag::type *key, size_t len)
@@ -1064,13 +1064,11 @@ gallop_left_(const typename Tag::type *arr, const npy_intp size,
     return r;
 }
 
-template <typename Tag, bool reverse>
+template <typename Tag, typename type, bool reverse>
 static void
 merge_left_(typename Tag::type *p1, npy_intp l1, typename Tag::type *p2,
             npy_intp l2, typename Tag::type *p3, size_t len)
-{
-    using type = typename Tag::type;
-    type *end = p2 + l2 * len;
+{    type *end = p2 + l2 * len;
     memcpy(p3, p1, sizeof(type) * l1 * len);
     /* first element must be in p2 otherwise skipped in the caller */
     Tag::copy(p1, p2, len);
@@ -1281,11 +1279,10 @@ force_collapse_(type *arr, run *stack, npy_intp *stack_ptr,
     return 0;
 }
 
-template <typename Tag, bool reverse = false>
+template <typename Tag, typename type, bool reverse = false>
 NPY_NO_EXPORT int
 string_timsort_(void *start, npy_intp num, int elsize)
 {
-    using type = typename Tag::type;
     size_t len = elsize / sizeof(type);
     int ret;
     npy_intp l, n, stack_ptr, minrun;

@@ -1,10 +1,10 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
+#include "npy_sort.h"
 #include "npysort_common.h"
+#include "numpy_tag.h"
 #include "quicksort_generic.hpp"
 #include "timsort_generic.hpp"
-#include "numpy_tag.h"
-#include "npy_sort.h"
 
 #include <cstdlib>
 
@@ -106,7 +106,7 @@ sort_loop_string_(PyArrayMethod_Context *context, char *const data[],
 {
     PyArrayMethod_SortParameters *params =
             (PyArrayMethod_SortParameters *)context->parameters;
-    int elsize = (int)strides[0];
+    int elsize = context->descriptors[0]->elsize;
     switch ((int)params->flags) {
         case NPY_SORT_DEFAULT:
             return string_quicksort_<Tag, type, false>((type *)data[0], dimensions[0],
@@ -137,7 +137,7 @@ argsort_loop_string_(PyArrayMethod_Context *context, char *const data[],
 {
     PyArrayMethod_SortParameters *params =
             (PyArrayMethod_SortParameters *)context->parameters;
-    int elsize = (int)strides[0];
+    int elsize = context->descriptors[0]->elsize;
     switch ((int)params->flags) {
         case NPY_SORT_DEFAULT:
             return string_aquicksort_<Tag, type, false>(
@@ -162,15 +162,17 @@ argsort_loop_string_(PyArrayMethod_Context *context, char *const data[],
 
 template <typename Tag, typename type>
 NPY_NO_EXPORT int
-make_sorts_(PyArray_DTypeMeta *dtypemeta)
+make_sorts_(PyArray_DTypeMeta *dtypemeta, const char *name)
 {
+    std::string sort_name = std::string(name) + "_sort";
     PyArray_DTypeMeta *sort_dtypes[2] = {dtypemeta, dtypemeta};
     PyType_Slot sort_slots[3] = {
-            {NPY_METH_resolve_descriptors, reinterpret_cast<void *>(sort_resolve_descriptors)},
+            {NPY_METH_resolve_descriptors,
+             reinterpret_cast<void *>(sort_resolve_descriptors)},
             {NPY_METH_strided_loop, reinterpret_cast<void *>(sort_loop_<Tag, type>)},
             {0, NULL}};
     PyArrayMethod_Spec sort_spec = {
-            .name = "@name@_sort",
+            .name = sort_name.c_str(),
             .nin = 1,
             .nout = 1,
             .flags = NPY_METH_NO_FLOATINGPOINT_ERRORS,
@@ -185,13 +187,71 @@ make_sorts_(PyArray_DTypeMeta *dtypemeta)
     Py_INCREF(sort_method->method);
     Py_DECREF(sort_method);
 
+    std::string argsort_name = std::string(name) + "_argsort";
     PyArray_DTypeMeta *argsort_dtypes[2] = {dtypemeta, &PyArray_IntpDType};
     PyType_Slot argsort_slots[3] = {
-            {NPY_METH_resolve_descriptors, reinterpret_cast<void *>(argsort_resolve_descriptors)},
+            {NPY_METH_resolve_descriptors,
+             reinterpret_cast<void *>(argsort_resolve_descriptors)},
             {NPY_METH_strided_loop, reinterpret_cast<void *>(argsort_loop_<Tag, type>)},
             {0, NULL}};
     PyArrayMethod_Spec argsort_spec = {
-            .name = "@name@_argsort",
+            .name = argsort_name.c_str(),
+            .nin = 1,
+            .nout = 1,
+            .flags = NPY_METH_NO_FLOATINGPOINT_ERRORS,
+            .dtypes = argsort_dtypes,
+            .slots = argsort_slots,
+    };
+    PyBoundArrayMethodObject *argsort_method =
+            PyArrayMethod_FromSpec_int(&argsort_spec, 1);
+    if (argsort_method == NULL) {
+        return -1;
+    }
+    NPY_DT_SLOTS(dtypemeta)->argsort_meth = argsort_method->method;
+    Py_INCREF(argsort_method->method);
+    Py_DECREF(argsort_method);
+
+    return 0;
+}
+
+template <typename Tag, typename type>
+NPY_NO_EXPORT int
+make_string_sorts_(PyArray_DTypeMeta *dtypemeta, const char *name)
+{
+    std::string sort_name = std::string(name) + "_sort";
+    PyArray_DTypeMeta *sort_dtypes[2] = {dtypemeta, dtypemeta};
+    PyType_Slot sort_slots[3] = {
+            {NPY_METH_resolve_descriptors,
+             reinterpret_cast<void *>(sort_resolve_descriptors)},
+            {NPY_METH_strided_loop,
+             reinterpret_cast<void *>(sort_loop_string_<Tag, type>)},
+            {0, NULL}};
+    PyArrayMethod_Spec sort_spec = {
+            .name = sort_name.c_str(),
+            .nin = 1,
+            .nout = 1,
+            .flags = NPY_METH_NO_FLOATINGPOINT_ERRORS,
+            .dtypes = sort_dtypes,
+            .slots = sort_slots,
+    };
+    PyBoundArrayMethodObject *sort_method = PyArrayMethod_FromSpec_int(&sort_spec, 1);
+    if (sort_method == NULL) {
+        return -1;
+    }
+    NPY_DT_SLOTS(dtypemeta)->sort_meth = sort_method->method;
+    Py_INCREF(sort_method->method);
+    Py_DECREF(sort_method);
+
+    std::string argsort_name = std::string(name) + "_argsort";
+    PyArray_DTypeMeta *argsort_dtypes[2] = {dtypemeta, &PyArray_IntpDType};
+    PyType_Slot argsort_slots[3] = {
+            {NPY_METH_resolve_descriptors,
+             reinterpret_cast<void *>(argsort_resolve_descriptors)},
+            {NPY_METH_strided_loop,
+             reinterpret_cast<void *>(argsort_loop_string_<Tag, type>)},
+            {0, NULL}};
+    PyArrayMethod_Spec argsort_spec = {
+            .name = argsort_name.c_str(),
             .nin = 1,
             .nout = 1,
             .flags = NPY_METH_NO_FLOATINGPOINT_ERRORS,
@@ -214,112 +274,119 @@ extern "C" {
 NPY_NO_EXPORT int
 register_bool_sorts()
 {
-    return make_sorts_<npy::bool_tag, npy_bool>(&PyArray_BoolDType);
+    return make_sorts_<npy::bool_tag, npy_bool>(&PyArray_BoolDType, "bool");
 }
 NPY_NO_EXPORT int
 register_byte_sorts()
 {
-    return make_sorts_<npy::byte_tag, npy_byte>(&PyArray_ByteDType);
+    return make_sorts_<npy::byte_tag, npy_byte>(&PyArray_ByteDType, "byte");
 }
 NPY_NO_EXPORT int
 register_ubyte_sorts()
 {
-    return make_sorts_<npy::ubyte_tag, npy_ubyte>(&PyArray_UByteDType);
+    return make_sorts_<npy::ubyte_tag, npy_ubyte>(&PyArray_UByteDType, "ubyte");
 }
 NPY_NO_EXPORT int
 register_short_sorts()
 {
-    return make_sorts_<npy::short_tag, npy_short>(&PyArray_ShortDType);
+    return make_sorts_<npy::short_tag, npy_short>(&PyArray_ShortDType, "short");
 }
 NPY_NO_EXPORT int
 register_ushort_sorts()
 {
-    return make_sorts_<npy::ushort_tag, npy_ushort>(&PyArray_UShortDType);
+    return make_sorts_<npy::ushort_tag, npy_ushort>(&PyArray_UShortDType, "ushort");
 }
 NPY_NO_EXPORT int
 register_int_sorts()
 {
-    return make_sorts_<npy::int_tag, npy_int>(&PyArray_IntDType);
+    return make_sorts_<npy::int_tag, npy_int>(&PyArray_IntDType, "int");
 }
 NPY_NO_EXPORT int
 register_uint_sorts()
 {
-    return make_sorts_<npy::uint_tag, npy_uint>(&PyArray_UIntDType);
+    return make_sorts_<npy::uint_tag, npy_uint>(&PyArray_UIntDType, "uint");
 }
 NPY_NO_EXPORT int
 register_long_sorts()
 {
-    return make_sorts_<npy::long_tag, npy_long>(&PyArray_LongDType);
+    return make_sorts_<npy::long_tag, npy_long>(&PyArray_LongDType, "long");
 }
 NPY_NO_EXPORT int
 register_ulong_sorts()
 {
-    return make_sorts_<npy::ulong_tag, npy_ulong>(&PyArray_ULongDType);
+    return make_sorts_<npy::ulong_tag, npy_ulong>(&PyArray_ULongDType, "ulong");
 }
 NPY_NO_EXPORT int
 register_longlong_sorts()
 {
-    return make_sorts_<npy::longlong_tag, npy_longlong>(&PyArray_LongLongDType);
+    return make_sorts_<npy::longlong_tag, npy_longlong>(&PyArray_LongLongDType,
+                                                        "longlong");
 }
 NPY_NO_EXPORT int
 register_ulonglong_sorts()
 {
-    return make_sorts_<npy::ulonglong_tag, npy_ulonglong>(&PyArray_ULongLongDType);
+    return make_sorts_<npy::ulonglong_tag, npy_ulonglong>(&PyArray_ULongLongDType,
+                                                          "ulonglong");
 }
 NPY_NO_EXPORT int
 register_float_sorts()
 {
-    return make_sorts_<npy::float_tag, npy_float>(&PyArray_FloatDType);
+    return make_sorts_<npy::float_tag, npy_float>(&PyArray_FloatDType, "float");
 }
 NPY_NO_EXPORT int
 register_double_sorts()
 {
-    return make_sorts_<npy::double_tag, npy_double>(&PyArray_DoubleDType);
+    return make_sorts_<npy::double_tag, npy_double>(&PyArray_DoubleDType, "double");
 }
 NPY_NO_EXPORT int
 register_longdouble_sorts()
 {
-    return make_sorts_<npy::longdouble_tag, npy_longdouble>(&PyArray_LongDoubleDType);
+    return make_sorts_<npy::longdouble_tag, npy_longdouble>(&PyArray_LongDoubleDType,
+                                                            "longdouble");
 }
 NPY_NO_EXPORT int
 register_cfloat_sorts()
 {
-    return make_sorts_<npy::cfloat_tag, npy_cfloat>(&PyArray_CFloatDType);
+    return make_sorts_<npy::cfloat_tag, npy_cfloat>(&PyArray_CFloatDType, "cfloat");
 }
 NPY_NO_EXPORT int
 register_cdouble_sorts()
 {
-    return make_sorts_<npy::cdouble_tag, npy_cdouble>(&PyArray_CDoubleDType);
+    return make_sorts_<npy::cdouble_tag, npy_cdouble>(&PyArray_CDoubleDType, "cdouble");
 }
 NPY_NO_EXPORT int
 register_clongdouble_sorts()
 {
-    return make_sorts_<npy::clongdouble_tag, npy_clongdouble>(
-            &PyArray_CLongDoubleDType);
+    return make_sorts_<npy::clongdouble_tag, npy_clongdouble>(&PyArray_CLongDoubleDType,
+                                                              "clongdouble");
 }
 NPY_NO_EXPORT int
 register_datetime_sorts()
 {
-    return make_sorts_<npy::datetime_tag, npy_datetime>(&PyArray_DatetimeDType);
+    return make_sorts_<npy::datetime_tag, npy_datetime>(&PyArray_DatetimeDType,
+                                                        "datetime");
 }
 NPY_NO_EXPORT int
 register_timedelta_sorts()
 {
-    return make_sorts_<npy::timedelta_tag, npy_timedelta>(&PyArray_TimedeltaDType);
+    return make_sorts_<npy::timedelta_tag, npy_timedelta>(&PyArray_TimedeltaDType,
+                                                          "timedelta");
 }
 NPY_NO_EXPORT int
 register_string_sorts()
 {
-    return 0;
+    return make_string_sorts_<npy::string_tag, npy_char>(&PyArray_BytesDType,
+                                                         "string");
 }
 NPY_NO_EXPORT int
 register_unicode_sorts()
 {
-    return 0;
+    return make_string_sorts_<npy::unicode_tag, npy_ucs4>(&PyArray_UnicodeDType,
+                                                          "unicode");
 }
 NPY_NO_EXPORT int
 register_half_sorts()
 {
-    return make_sorts_<npy::half_tag, npy_half>(&PyArray_HalfDType);
+    return make_sorts_<npy::half_tag, npy_half>(&PyArray_HalfDType, "half");
 }
 }

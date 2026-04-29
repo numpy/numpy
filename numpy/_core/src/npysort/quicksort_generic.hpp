@@ -262,7 +262,7 @@ template <typename Tag, typename type, bool reverse = false>
 static int
 string_quicksort_(type *start, npy_intp num, int elsize)
 {
-    const size_t len = elsize;
+    const size_t len = elsize / sizeof(type);
     type *vp;
     type *pl = start;
     type *pr = pl + (num - 1) * len;
