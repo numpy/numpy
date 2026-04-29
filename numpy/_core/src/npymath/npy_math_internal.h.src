@@ -650,12 +650,24 @@ npy_lcm@c@(@type@ a, @type@ b)
  *
  * #type = (npy_int, npy_long, npy_longlong)*2#
  * #c = (,l,ll)*2#
+ * #utype = (npy_uint, npy_ulong, npy_ulonglong)*2#
  * #func=gcd*3,lcm*3#
  */
 NPY_INPLACE @type@
 npy_@func@@c@(@type@ a, @type@ b)
 {
+    #if defined(__s390__) || defined(__s390x__)
+    /*
+     * On s390x, negating INT_MIN results in a negative value due to how
+     * the architecture handles signed overflow. Cast to unsigned first
+     * to avoid this issue.git issue #31359
+     */
+    @utype@ a_abs = a < 0 ? (@utype@)(0) - (@utype@)a : (@utype@)a;
+    @utype@ b_abs = b < 0 ? (@utype@)(0) - (@utype@)b : (@utype@)b;
+    return (@type@)npy_@func@u@c@(a_abs, b_abs);
+#else
     return npy_@func@u@c@(a < 0 ? -a : a, b < 0 ? -b : b);
+#endif
 }
 /**end repeat**/
 
