@@ -172,12 +172,13 @@ make_sorts_(PyArray_DTypeMeta *dtypemeta, const char *name)
             {NPY_METH_strided_loop, reinterpret_cast<void *>(sort_loop_<Tag, type>)},
             {0, NULL}};
     PyArrayMethod_Spec sort_spec = {
-            .name = sort_name.c_str(),
-            .nin = 1,
-            .nout = 1,
-            .flags = NPY_METH_NO_FLOATINGPOINT_ERRORS,
-            .dtypes = sort_dtypes,
-            .slots = sort_slots,
+            sort_name.c_str(),
+            1,
+            1,
+            NPY_NO_CASTING,
+            NPY_METH_NO_FLOATINGPOINT_ERRORS,
+            sort_dtypes,
+            sort_slots,
     };
     PyBoundArrayMethodObject *sort_method = PyArrayMethod_FromSpec_int(&sort_spec, 1);
     if (sort_method == NULL) {
@@ -195,12 +196,13 @@ make_sorts_(PyArray_DTypeMeta *dtypemeta, const char *name)
             {NPY_METH_strided_loop, reinterpret_cast<void *>(argsort_loop_<Tag, type>)},
             {0, NULL}};
     PyArrayMethod_Spec argsort_spec = {
-            .name = argsort_name.c_str(),
-            .nin = 1,
-            .nout = 1,
-            .flags = NPY_METH_NO_FLOATINGPOINT_ERRORS,
-            .dtypes = argsort_dtypes,
-            .slots = argsort_slots,
+            argsort_name.c_str(),
+            1,
+            1,
+            NPY_NO_CASTING,
+            NPY_METH_NO_FLOATINGPOINT_ERRORS,
+            argsort_dtypes,
+            argsort_slots,
     };
     PyBoundArrayMethodObject *argsort_method =
             PyArrayMethod_FromSpec_int(&argsort_spec, 1);
@@ -227,12 +229,13 @@ make_string_sorts_(PyArray_DTypeMeta *dtypemeta, const char *name)
              reinterpret_cast<void *>(sort_loop_string_<Tag, type>)},
             {0, NULL}};
     PyArrayMethod_Spec sort_spec = {
-            .name = sort_name.c_str(),
-            .nin = 1,
-            .nout = 1,
-            .flags = NPY_METH_NO_FLOATINGPOINT_ERRORS,
-            .dtypes = sort_dtypes,
-            .slots = sort_slots,
+            sort_name.c_str(),
+            1,
+            1,
+            NPY_NO_CASTING,
+            NPY_METH_NO_FLOATINGPOINT_ERRORS,
+            sort_dtypes,
+            sort_slots,
     };
     PyBoundArrayMethodObject *sort_method = PyArrayMethod_FromSpec_int(&sort_spec, 1);
     if (sort_method == NULL) {
@@ -251,12 +254,13 @@ make_string_sorts_(PyArray_DTypeMeta *dtypemeta, const char *name)
              reinterpret_cast<void *>(argsort_loop_string_<Tag, type>)},
             {0, NULL}};
     PyArrayMethod_Spec argsort_spec = {
-            .name = argsort_name.c_str(),
-            .nin = 1,
-            .nout = 1,
-            .flags = NPY_METH_NO_FLOATINGPOINT_ERRORS,
-            .dtypes = argsort_dtypes,
-            .slots = argsort_slots,
+            argsort_name.c_str(),
+            1,
+            1,
+            NPY_NO_CASTING,
+            NPY_METH_NO_FLOATINGPOINT_ERRORS,
+            argsort_dtypes,
+            argsort_slots,
     };
     PyBoundArrayMethodObject *argsort_method =
             PyArrayMethod_FromSpec_int(&argsort_spec, 1);
