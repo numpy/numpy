@@ -15,7 +15,7 @@
  *****************************************************************************
  */
 
-template <typename Tag, typename type>
+template <typename Tag, typename type, bool reverse = false>
 inline NPY_NO_EXPORT
 int heapsort_(type *start, npy_intp n)
 {
@@ -28,10 +28,10 @@ int heapsort_(type *start, npy_intp n)
     for (l = n >> 1; l > 0; --l) {
         tmp = a[l];
         for (i = l, j = l << 1; j <= n;) {
-            if (j < n && Tag::less(a[j], a[j + 1])) {
+            if (j < n && Tag::template cmp<reverse>(a[j], a[j + 1])) {
                 j += 1;
             }
-            if (Tag::less(tmp, a[j])) {
+            if (Tag::template cmp<reverse>(tmp, a[j])) {
                 a[i] = a[j];
                 i = j;
                 j += j;
@@ -48,10 +48,10 @@ int heapsort_(type *start, npy_intp n)
         a[n] = a[1];
         n -= 1;
         for (i = 1, j = 2; j <= n;) {
-            if (j < n && Tag::less(a[j], a[j + 1])) {
+            if (j < n && Tag::template cmp<reverse>(a[j], a[j + 1])) {
                 j++;
             }
-            if (Tag::less(tmp, a[j])) {
+            if (Tag::template cmp<reverse>(tmp, a[j])) {
                 a[i] = a[j];
                 i = j;
                 j += j;
@@ -66,7 +66,7 @@ int heapsort_(type *start, npy_intp n)
     return 0;
 }
 
-template <typename Tag, typename type>
+template <typename Tag, typename type, bool reverse = false>
 inline NPY_NO_EXPORT
 int aheapsort_(type *vv, npy_intp *tosort, npy_intp n)
 {
@@ -78,10 +78,10 @@ int aheapsort_(type *vv, npy_intp *tosort, npy_intp n)
     for (l = n >> 1; l > 0; --l) {
         tmp = a[l];
         for (i = l, j = l << 1; j <= n;) {
-            if (j < n && Tag::less(v[a[j]], v[a[j + 1]])) {
+            if (j < n && Tag::template cmp<reverse>(v[a[j]], v[a[j + 1]])) {
                 j += 1;
             }
-            if (Tag::less(v[tmp], v[a[j]])) {
+            if (Tag::template cmp<reverse>(v[tmp], v[a[j]])) {
                 a[i] = a[j];
                 i = j;
                 j += j;
@@ -98,10 +98,10 @@ int aheapsort_(type *vv, npy_intp *tosort, npy_intp n)
         a[n] = a[1];
         n -= 1;
         for (i = 1, j = 2; j <= n;) {
-            if (j < n && Tag::less(v[a[j]], v[a[j + 1]])) {
+            if (j < n && Tag::template cmp<reverse>(v[a[j]], v[a[j + 1]])) {
                 j++;
             }
-            if (Tag::less(v[tmp], v[a[j]])) {
+            if (Tag::template cmp<reverse>(v[tmp], v[a[j]])) {
                 a[i] = a[j];
                 i = j;
                 j += j;
@@ -122,17 +122,16 @@ int aheapsort_(type *vv, npy_intp *tosort, npy_intp n)
  *****************************************************************************
  */
 
-template <typename Tag, typename type>
+template <typename Tag, typename type, bool reverse = false>
 inline NPY_NO_EXPORT
-int string_heapsort_(type *start, npy_intp n, void *varr)
+int string_heapsort_(type *start, npy_intp n, int elsize)
 {
-    PyArrayObject *arr = (PyArrayObject *)varr;
-    size_t len = PyArray_ITEMSIZE(arr) / sizeof(type);
+    size_t len = elsize / sizeof(type);
     if (len == 0) {
         return 0;  /* no need for sorting if strings are empty */
     }
 
-    type *tmp = (type *)malloc(PyArray_ITEMSIZE(arr));
+    type *tmp = (type *)malloc(elsize);
     type *a = (type *)start - len;
     npy_intp i, j, l;
 
@@ -143,9 +142,9 @@ int string_heapsort_(type *start, npy_intp n, void *varr)
     for (l = n >> 1; l > 0; --l) {
         Tag::copy(tmp, a + l * len, len);
         for (i = l, j = l << 1; j <= n;) {
-            if (j < n && Tag::less(a + j * len, a + (j + 1) * len, len))
+            if (j < n && Tag::template cmp<reverse>(a + j * len, a + (j + 1) * len, len))
                 j += 1;
-            if (Tag::less(tmp, a + j * len, len)) {
+            if (Tag::template cmp<reverse>(tmp, a + j * len, len)) {
                 Tag::copy(a + i * len, a + j * len, len);
                 i = j;
                 j += j;
@@ -162,9 +161,9 @@ int string_heapsort_(type *start, npy_intp n, void *varr)
         Tag::copy(a + n * len, a + len, len);
         n -= 1;
         for (i = 1, j = 2; j <= n;) {
-            if (j < n && Tag::less(a + j * len, a + (j + 1) * len, len))
+            if (j < n && Tag::template cmp<reverse>(a + j * len, a + (j + 1) * len, len))
                 j++;
-            if (Tag::less(tmp, a + j * len, len)) {
+            if (Tag::template cmp<reverse>(tmp, a + j * len, len)) {
                 Tag::copy(a + i * len, a + j * len, len);
                 i = j;
                 j += j;
@@ -180,13 +179,12 @@ int string_heapsort_(type *start, npy_intp n, void *varr)
     return 0;
 }
 
-template <typename Tag, typename type>
+template <typename Tag, typename type, bool reverse = false>
 inline NPY_NO_EXPORT
-int string_aheapsort_(type *vv, npy_intp *tosort, npy_intp n, void *varr)
+int string_aheapsort_(type *vv, npy_intp *tosort, npy_intp n, int elsize)
 {
     type *v = vv;
-    PyArrayObject *arr = (PyArrayObject *)varr;
-    size_t len = PyArray_ITEMSIZE(arr) / sizeof(type);
+    size_t len = elsize / sizeof(type);
     npy_intp *a, i, j, l, tmp;
 
     /* The array needs to be offset by one for heapsort indexing */
@@ -195,9 +193,9 @@ int string_aheapsort_(type *vv, npy_intp *tosort, npy_intp n, void *varr)
     for (l = n >> 1; l > 0; --l) {
         tmp = a[l];
         for (i = l, j = l << 1; j <= n;) {
-            if (j < n && Tag::less(v + a[j] * len, v + a[j + 1] * len, len))
+            if (j < n && Tag::template cmp<reverse>(v + a[j] * len, v + a[j + 1] * len, len))
                 j += 1;
-            if (Tag::less(v + tmp * len, v + a[j] * len, len)) {
+            if (Tag::template cmp<reverse>(v + tmp * len, v + a[j] * len, len)) {
                 a[i] = a[j];
                 i = j;
                 j += j;
@@ -214,9 +212,9 @@ int string_aheapsort_(type *vv, npy_intp *tosort, npy_intp n, void *varr)
         a[n] = a[1];
         n -= 1;
         for (i = 1, j = 2; j <= n;) {
-            if (j < n && Tag::less(v + a[j] * len, v + a[j + 1] * len, len))
+            if (j < n && Tag::template cmp<reverse>(v + a[j] * len, v + a[j + 1] * len, len))
                 j++;
-            if (Tag::less(v + tmp * len, v + a[j] * len, len)) {
+            if (Tag::template cmp<reverse>(v + tmp * len, v + a[j] * len, len)) {
                 a[i] = a[j];
                 i = j;
                 j += j;

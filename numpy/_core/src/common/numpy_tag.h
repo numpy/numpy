@@ -51,6 +51,9 @@ struct integral_type : integral_tag {
     static constexpr NPY_TYPES type_value = TypeNum;
     static int less(T a, T b) { return a < b; }
     static int less_equal(T a, T b) { return !(b < a); }
+
+    template <bool reverse = false>
+    static int cmp(T a, T b) { return reverse ? b < a : a < b; }
 };
 
 template <typename T, NPY_TYPES TypeNum>
@@ -61,6 +64,18 @@ struct floating_point_type : floating_point_tag {
     // either a < b or b is NaN.  ``x != x`` is the IEEE NaN test.
     static int less(T a, T b) { return a < b || (b != b && a == a); }
     static int less_equal(T a, T b) { return !less(b, a); }
+
+    template <bool reverse = false>
+    static int cmp(T a, T b)
+    {
+        if (reverse) {
+            // NaN sorts to the end in reverse too
+            return b < a || (b != b && a == a);
+        }
+        else {
+            return a < b || (b != b && a == a);
+        }
+    }
 };
 
 // Half is its own per-type tag; no template since there is only one half
@@ -98,6 +113,24 @@ struct half_tag {
         return !isnan(a) && lt_nonan(a, b);
     }
     static int less_equal(npy_half a, npy_half b) { return !less(b, a); }
+
+    template <bool reverse = false>
+    static int cmp(npy_half a, npy_half b)
+    {
+        if (reverse) {
+            // NaN sorts to the end in reverse too
+            if (isnan(b)) {
+                return !isnan(a);
+            }
+            return !isnan(a) && lt_nonan(b, a);
+        }
+        else {
+            if (isnan(b)) {
+                return !isnan(a);
+            }
+            return !isnan(a) && lt_nonan(a, b);
+        }
+    }
 };
 
 template <typename T, NPY_TYPES TypeNum>
@@ -136,6 +169,37 @@ struct complex_type : complex_tag {
         return rb != rb;
     }
     static int less_equal(T a, T b) { return !less(b, a); }
+
+    template <bool reverse = false>
+    static int cmp(T a, T b)
+    {
+        const auto ra = creal(a), rb = creal(b);
+        const auto ia = cimag(a), ib = cimag(b);
+        if (reverse) {
+            if (ra < rb) {
+                return ib != ib && ia == ia;
+            }
+            if (ra > rb) {
+                return ia == ia || ib != ib;
+            }
+            if (ra == rb || (ra != ra && rb != rb)) {
+                return ib < ia || (ia != ia && ib == ib);
+            }
+            return ra != ra;
+        }
+        else {
+            if (ra < rb) {
+                return ia == ia || ib != ib;
+            }
+            if (ra > rb) {
+                return ib != ib && ia == ia;
+            }
+            if (ra == rb || (ra != ra && rb != rb)) {
+                return ia < ib || (ib != ib && ia == ia);
+            }
+            return rb != rb;
+        }
+    }
 };
 
 template <typename T, NPY_TYPES TypeNum>
@@ -149,6 +213,21 @@ struct datetime_type : date_tag {
         return a < b;
     }
     static int less_equal(T a, T b) { return !less(b, a); }
+
+    template <bool reverse = false>
+    static int cmp(T a, T b)
+    {
+        if (reverse) {
+            if (a == NPY_DATETIME_NAT) return 0;
+            if (b == NPY_DATETIME_NAT) return 1;
+            return b < a;
+        }
+        else {
+            if (a == NPY_DATETIME_NAT) return 0;
+            if (b == NPY_DATETIME_NAT) return 1;
+            return a < b;
+        }
+    }
 };
 
 // String / unicode tags work on runtime-length blocks.  Comparison is
@@ -186,6 +265,20 @@ struct string_like_type {
     static void copy(T *a, T const *b, size_t n)
     {
         std::memcpy(a, b, n * sizeof(T));
+    }
+  
+    template <bool reverse = false>
+    static int cmp(T const *a, T const *b, size_t n)
+    {
+        using U = std::make_unsigned_t<T>;
+        const auto *ua = reinterpret_cast<const U *>(a);
+        const auto *ub = reinterpret_cast<const U *>(b);
+        for (size_t i = 0; i < n; ++i) {
+            if (ua[i] != ub[i]) {
+                return reverse ? ub[i] < ua[i] : ua[i] < ub[i];
+            }
+        }
+        return 0;
     }
 };
 

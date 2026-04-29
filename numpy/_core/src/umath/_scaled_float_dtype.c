@@ -792,7 +792,7 @@ sfloat_stable_sort_loop(
     npy_intp N = dimensions[0];
     char *in = data[0];
 
-    return timsort_double(in, N, NULL);
+    return npy_timsort(in, N, NULL);
 }
 
 
@@ -811,7 +811,7 @@ sfloat_default_sort_loop(
     npy_intp N = dimensions[0];
     char *in = data[0];
 
-    return quicksort_double(in, N, NULL);
+    return npy_quicksort(in, N, NULL);
 }
 
 
@@ -880,7 +880,7 @@ sfloat_stable_argsort_loop(
     char *in = data[0];
     npy_intp *out = (npy_intp *)data[1];
 
-    return atimsort_double(in, out, N, NULL);
+    return npy_atimsort(in, out, N, NULL);
 }
 
 
@@ -900,7 +900,7 @@ sfloat_default_argsort_loop(
     char *in = data[0];
     npy_intp *out = (npy_intp *)data[1];
 
-    return aquicksort_double(in, out, N, NULL);
+    return npy_aquicksort(in, out, N, NULL);
 }
 
 
