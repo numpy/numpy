@@ -2750,11 +2750,16 @@ class TestMethods:
     @pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64])
     @pytest.mark.parametrize('stable', [True, False])
     @pytest.mark.parametrize('descending', [True, False])
-    def test_sort_descending_signed(self, dtype, stable, descending):
+    @pytest.mark.parametrize('randomize', [True, False])
+    def test_sort_descending_signed(self, dtype, stable, descending, randomize):
         a = np.arange(-51, 50, dtype=dtype)
         if not descending:
             a = a[::-1]
         b = a[::-1].copy()
+
+        if randomize:
+            rng = np.random.default_rng(0)
+            rng.shuffle(a)
 
         msg = f"sort, dtype={dtype}, stable={stable}, descending={descending}"
         a.sort(stable=stable, axis=-1, descending=descending)
@@ -2763,11 +2768,16 @@ class TestMethods:
     @pytest.mark.parametrize('dtype', [np.uint8, np.uint16, np.uint32, np.uint64])
     @pytest.mark.parametrize('stable', [True, False])
     @pytest.mark.parametrize('descending', [True, False])
-    def test_sort_descending_unsigned(self, dtype, stable, descending):
+    @pytest.mark.parametrize('randomize', [True, False])
+    def test_sort_descending_unsigned(self, dtype, stable, descending, randomize):
         a = np.arange(0, 101, dtype=dtype)
         if not descending:
             a = a[::-1]
         b = a[::-1].copy()
+
+        if randomize:
+            rng = np.random.default_rng(0)
+            rng.shuffle(a)
 
         msg = f"sort, dtype={dtype}, stable={stable}, descending={descending}"
         a.sort(stable=stable, axis=-1, descending=descending)
@@ -2778,7 +2788,8 @@ class TestMethods:
     )
     @pytest.mark.parametrize("stable", [True, False])
     @pytest.mark.parametrize("descending", [True, False])
-    def test_sort_descending_floats(self, dtype, stable, descending):
+    @pytest.mark.parametrize("randomize", [True, False])
+    def test_sort_descending_floats(self, dtype, stable, descending, randomize):
         a = np.linspace(-50, 50, 101, dtype=dtype)
         if not descending:
             a = a[::-1]
@@ -2788,6 +2799,10 @@ class TestMethods:
         b = a[::-1].copy()
         b = np.concatenate((b[~np.isnan(b)], b[np.isnan(b)]))
 
+        if randomize:
+            rng = np.random.default_rng(0)
+            rng.shuffle(a)
+
         msg = f"sort, dtype={dtype}, stable={stable}, descending={descending}"
         a.sort(stable=stable, axis=-1, descending=descending)
         assert_equal(a, b, msg)
@@ -2795,12 +2810,36 @@ class TestMethods:
     @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
     @pytest.mark.parametrize('stable', [True, False])
     @pytest.mark.parametrize('descending', [True, False])
-    def test_sort_descending_datetime(self, dtype, stable, descending):
+    @pytest.mark.parametrize('randomize', [True, False])
+    def test_sort_descending_datetime(self, dtype, stable, descending, randomize):
         a = np.arange(0, 101, dtype=dtype)
         if not descending:
             a = a[::-1]
         b = a[::-1].copy()
         b = np.concatenate((b[~np.isnan(b)], b[np.isnan(b)]))
+
+        if randomize:
+            rng = np.random.default_rng(0)
+            rng.shuffle(a)
+
+        msg = f"sort, dtype={dtype}, stable={stable}, descending={descending}"
+        a.sort(stable=stable, axis=-1, descending=descending)
+        assert_equal(a, b, msg)
+
+    @pytest.mark.parametrize('dtype', [np.str_, np.bytes_])
+    @pytest.mark.parametrize('stable', [True, False])
+    @pytest.mark.parametrize('descending', [True, False])
+    @pytest.mark.parametrize('randomize', [True, False])
+    def test_sort_descending_string(self, dtype, stable, descending, randomize):
+        a = np.array([f'{i:03d}' for i in range(101)], dtype=dtype)
+        if not descending:
+            a = a[::-1]
+        b = a[::-1].copy()
+
+        if randomize:
+            rng = np.random.default_rng(0)
+            rng.shuffle(a)
+
         msg = f"sort, dtype={dtype}, stable={stable}, descending={descending}"
         a.sort(stable=stable, axis=-1, descending=descending)
         assert_equal(a, b, msg)
