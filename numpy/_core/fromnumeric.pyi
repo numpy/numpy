@@ -453,6 +453,7 @@ def sort[ArrayT: np.ndarray](
     order: str | Sequence[str] | None = None,
     *,
     stable: bool | None = None,
+    descending: bool | None = None,
 ) -> ArrayT: ...
 @overload
 def sort[ScalarT: np.generic](
@@ -462,6 +463,7 @@ def sort[ScalarT: np.generic](
     order: str | Sequence[str] | None = None,
     *,
     stable: bool | None = None,
+    descending: bool | None = None,
 ) -> NDArray[ScalarT]: ...
 @overload
 def sort[ScalarT: np.generic](
@@ -471,6 +473,7 @@ def sort[ScalarT: np.generic](
     order: str | Sequence[str] | None = None,
     *,
     stable: bool | None = None,
+    descending: bool | None = None,
 ) -> _Array1D[ScalarT]: ...
 @overload
 def sort(
@@ -502,6 +505,7 @@ def argsort[ShapeT: _Shape](
     order: str | Sequence[str] | None = None,
     *,
     stable: bool | None = None,
+    descending: bool | None = None,
 ) -> np.ndarray[ShapeT, np.dtype[np.intp]]: ...
 @overload
 def argsort(

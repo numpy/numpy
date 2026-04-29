@@ -3704,6 +3704,7 @@ def sort[ArrayT: np.ndarray](
     fill_value: _ScalarLike_co | None = None,
     *,
     stable: Literal[False] | None = None,
+    descending: Literal[False] | None = False,
 ) -> ArrayT: ...
 @overload
 def sort(
