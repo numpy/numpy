@@ -10,6 +10,10 @@
 /* For PyArray_ macros used below */
 #include "numpy/ndarrayobject.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * NOTE: This API should remain private for the time being, to allow
  *       for further refinement.  I think the 'aligned' mechanism
@@ -791,5 +795,9 @@ NPY_NO_EXPORT npy_bool
 nonzero_idxs_dispatcher(void const* data, npy_intp* idxs, int dim, const npy_intp* shape,
                         const npy_intp* strides, int dtype, npy_intp nonzero_count);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_COMMON_LOWLEVEL_STRIDED_LOOPS_H_ */

@@ -283,8 +283,7 @@ PyArray_HolidaysConverter(PyObject *dates_in, npy_holidayslist *holidays)
     else {
         PyArray_Descr *datetime_dtype;
 
-        /* Use the datetime dtype with generic units so it fills it in */
-        datetime_dtype = PyArray_DescrFromType(NPY_DATETIME);
+        datetime_dtype = create_datetime_dtype_with_unit(NPY_DATETIME, NPY_FR_D);
         if (datetime_dtype == NULL) {
             goto fail;
         }

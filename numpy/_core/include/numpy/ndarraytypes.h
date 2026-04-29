@@ -173,7 +173,7 @@ enum NPY_TYPECHAR {
  * should be downstream compatible, but the actual algorithms used may be
  * different than before. The new approach should be more flexible and easier
  * to update.
- * 
+ *
  * Names with a leading underscore are private, and should only be used
  * internally by NumPy.
  *
@@ -187,7 +187,7 @@ typedef enum {
         NPY_HEAPSORT = 1,
         NPY_MERGESORT = 2,
         NPY_STABLESORT = 2,
-        // new style names 
+        // new style names
         _NPY_SORT_HEAPSORT = 1,
         NPY_SORT_DEFAULT = 0,
         NPY_SORT_STABLE = 2,
@@ -596,13 +596,16 @@ typedef struct {
 #define NPY_USE_SETITEM     0x40
 /* A sticky flag specifically for structured arrays */
 #define NPY_ALIGNED_STRUCT  0x80
+/* Structured dtype has non-contiguous field layout */
+#define NPY_NOT_TRIVIALLY_COPYABLE  0x100
 
 /*
  *These are inherited for global data-type if any data-types in the
  * field have them
  */
 #define NPY_FROM_FIELDS    (NPY_NEEDS_INIT | NPY_LIST_PICKLE | \
-                            NPY_ITEM_REFCOUNT | NPY_NEEDS_PYAPI)
+                            NPY_ITEM_REFCOUNT | NPY_NEEDS_PYAPI | \
+                            NPY_NOT_TRIVIALLY_COPYABLE)
 
 #define NPY_OBJECT_DTYPE_FLAGS (NPY_LIST_PICKLE | NPY_USE_GETITEM | \
                                 NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT | \
@@ -734,6 +737,8 @@ typedef struct _arr_descr {
         PyArray_Descr *base;
         PyObject *shape;       /* a tuple */
 } PyArray_ArrayDescr;
+
+#define PyDataType_TYPENUM(descr) (((PyArray_Descr *)(descr))->type_num)
 
 /*
  * Memory handler structure for array data.
@@ -1597,7 +1602,7 @@ PyArray_FLAGS(const PyArrayObject *arr)
 static inline int
 PyArray_TYPE(const PyArrayObject *arr)
 {
-    return ((PyArrayObject_fields *)arr)->descr->type_num;
+    return PyDataType_TYPENUM(PyArray_DESCR(arr));
 }
 
 static inline int
@@ -1609,7 +1614,7 @@ PyArray_CHKFLAGS(const PyArrayObject *arr, int flags)
 static inline PyArray_Descr *
 PyArray_DTYPE(const PyArrayObject *arr)
 {
-    return ((PyArrayObject_fields *)arr)->descr;
+    return PyArray_DESCR(arr);
 }
 
 static inline npy_intp *
@@ -1667,8 +1672,9 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
                               ((type) <= NPY_LONGDOUBLE)) || \
                               ((type) == NPY_HALF))
 
-#define PyTypeNum_ISNUMBER(type) (((type) <= NPY_CLONGDOUBLE) || \
-                                  ((type) == NPY_HALF))
+#define PyTypeNum_ISNUMBER(type) (((type) >= 0) && \
+                                  (((type) <= NPY_CLONGDOUBLE) || \
+                                   ((type) == NPY_HALF)))
 
 #define PyTypeNum_ISSTRING(type) (((type) == NPY_STRING) ||    \
                                   ((type) == NPY_UNICODE))
@@ -1692,21 +1698,21 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 #define PyTypeNum_ISOBJECT(type) ((type) == NPY_OBJECT)
 
 
-#define PyDataType_ISLEGACY(dtype) ((dtype)->type_num < NPY_VSTRING && ((dtype)->type_num >= 0))
-#define PyDataType_ISBOOL(obj) PyTypeNum_ISBOOL(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISSIGNED(obj) PyTypeNum_ISSIGNED(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISINTEGER(obj) PyTypeNum_ISINTEGER(((PyArray_Descr*)(obj))->type_num )
-#define PyDataType_ISFLOAT(obj) PyTypeNum_ISFLOAT(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISNUMBER(obj) PyTypeNum_ISNUMBER(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISSTRING(obj) PyTypeNum_ISSTRING(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISDATETIME(obj) PyTypeNum_ISDATETIME(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISOBJECT(obj) PyTypeNum_ISOBJECT(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_MAKEUNSIZED(dtype) ((dtype)->elsize = 0)
+#define PyDataType_ISLEGACY(dtype) (PyDataType_TYPENUM(dtype) < NPY_VSTRING && (PyDataType_TYPENUM(dtype) >= 0))
+#define PyDataType_ISBOOL(obj) PyTypeNum_ISBOOL(PyDataType_TYPENUM(obj))
+#define PyDataType_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(PyDataType_TYPENUM(obj))
+#define PyDataType_ISSIGNED(obj) PyTypeNum_ISSIGNED(PyDataType_TYPENUM(obj))
+#define PyDataType_ISINTEGER(obj) PyTypeNum_ISINTEGER(PyDataType_TYPENUM(obj))
+#define PyDataType_ISFLOAT(obj) PyTypeNum_ISFLOAT(PyDataType_TYPENUM(obj))
+#define PyDataType_ISNUMBER(obj) PyTypeNum_ISNUMBER(PyDataType_TYPENUM(obj))
+#define PyDataType_ISSTRING(obj) PyTypeNum_ISSTRING(PyDataType_TYPENUM(obj))
+#define PyDataType_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(PyDataType_TYPENUM(obj))
+#define PyDataType_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(PyDataType_TYPENUM(obj))
+#define PyDataType_ISDATETIME(obj) PyTypeNum_ISDATETIME(PyDataType_TYPENUM(obj))
+#define PyDataType_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(PyDataType_TYPENUM(obj))
+#define PyDataType_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(PyDataType_TYPENUM(obj))
+#define PyDataType_ISOBJECT(obj) PyTypeNum_ISOBJECT(PyDataType_TYPENUM(obj))
+#define PyDataType_MAKEUNSIZED(dtype) PyDataType_SET_ELSIZE(dtype, 0)
 /*
  * PyDataType_* FLAGS, FLACHK, REFCHK, HASFIELDS, HASSUBARRAY, UNSIZED,
  * SUBARRAY, NAMES, FIELDS, C_METADATA, and METADATA require version specific
@@ -1755,7 +1761,7 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 
 #define PyArray_ISNBO(arg) ((arg) != NPY_OPPBYTE)
 #define PyArray_IsNativeByteOrder PyArray_ISNBO
-#define PyArray_ISNOTSWAPPED(m) PyArray_ISNBO(PyArray_DESCR(m)->byteorder)
+#define PyArray_ISNOTSWAPPED(m) PyArray_ISNBO(PyDataType_BYTEORDER(PyArray_DESCR(m)))
 #define PyArray_ISBYTESWAPPED(m) (!PyArray_ISNOTSWAPPED(m))
 
 #define PyArray_FLAGSWAP(m, flags) (PyArray_CHKFLAGS(m, flags) &&       \
@@ -1769,7 +1775,7 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 #define PyArray_ISBEHAVED_RO(m) PyArray_FLAGSWAP(m, NPY_ARRAY_ALIGNED)
 
 
-#define PyDataType_ISNOTSWAPPED(d) PyArray_ISNBO(((PyArray_Descr *)(d))->byteorder)
+#define PyDataType_ISNOTSWAPPED(d) PyArray_ISNBO(PyDataType_BYTEORDER(d))
 #define PyDataType_ISBYTESWAPPED(d) (!PyDataType_ISNOTSWAPPED(d))
 
 /************************************************************
@@ -1957,7 +1963,7 @@ typedef struct {
  * #endif
  * #ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_
  * #define NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_
- * 
+ *
  * #ifndef NPY_NO_DEPRECATED_API
  * #if defined(_WIN32)
  * #define _WARN___STR2__(x) #x

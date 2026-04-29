@@ -97,8 +97,11 @@ Usage:
      character(len=C['len'],kind=C['kind'], f2py_len=C['f2py_len'])
      (see also fortran type declaration statement formats below)
 
-Fortran 90 type declaration statement format (F77 is subset of F90)
-====================================================================
+Fortran 90 type declaration statement format
+============================================
+
+F77 is subset of F90
+
 (Main source: IBM XL Fortran 5.1 Language Reference Manual)
 type declaration = <typespec> [[<attrspec>]::] <entitydecl>
 <typespec> = byte                          |
@@ -243,7 +246,6 @@ def outmess(line, flag=1):
         sys.stdout.write(line)
 
 
-re._MAXCACHE = 50
 defaultimplicitrules = {}
 for c in "abcdefghopqrstuvwxyz$_":
     defaultimplicitrules[c] = {'typespec': 'real'}

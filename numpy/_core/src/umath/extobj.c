@@ -213,14 +213,13 @@ extobj_make_extobj(PyObject *NPY_UNUSED(mod),
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("_seterrobj", args, len_args, kwnames,
-            "$all", &errmodeconverter, &all_mode,
-            "$divide", &errmodeconverter, &divide_mode,
-            "$over", &errmodeconverter, &over_mode,
-            "$under", &errmodeconverter, &under_mode,
-            "$invalid", &errmodeconverter, &invalid_mode,
-            "$bufsize", &PyArray_IntpFromPyIntConverter, &bufsize,
-            "$call", NULL, &pyfunc,
-            NULL, NULL, NULL) < 0) {
+            {"$all", &errmodeconverter, &all_mode},
+            {"$divide", &errmodeconverter, &divide_mode},
+            {"$over", &errmodeconverter, &over_mode},
+            {"$under", &errmodeconverter, &under_mode},
+            {"$invalid", &errmodeconverter, &invalid_mode},
+            {"$bufsize", &PyArray_IntpFromPyIntConverter, &bufsize},
+            {"$call", NULL, &pyfunc}) < 0) {
         return NULL;
     }
 

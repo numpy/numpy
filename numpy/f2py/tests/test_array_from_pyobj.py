@@ -663,7 +663,7 @@ class TestSharedMemory:
         a = self.array(shape, intent.inplace, obj)
         # Spot check that they contain the same information initially.
         assert obj[1][2] == a.arr[1][2], repr((obj, a.arr))
-        # If we change a.arr, that will not immediatetly be reflected in obj.
+        # If we change a.arr, that will not immediately be reflected in obj.
         change_item = 54 if self.type.dtype != bool else False
         a.arr[1][2] = change_item
         assert a.arr[1][2] == np.array(change_item, dtype=self.type.dtype)
@@ -673,7 +673,7 @@ class TestSharedMemory:
         assert a.arr.base is obj
         # It has a different organization from obj.
         assert a.arr.flags["FORTRAN"] and not a.arr.flags["CONTIGUOUS"]
-        # If we resolve the write-back, obj will be propertly filled.
+        # If we resolve the write-back, obj will be properly filled.
         code = wrap.resolve_write_back_if_copy(a.arr)
         assert code == 1, "no write-back resolution was done!"
         assert obj[1][2] == np.array(change_item, dtype=self.type.dtype)

@@ -254,6 +254,7 @@ The rest of the story
 .. toctree::
    :maxdepth: 2
 
+   ai_policy
    development_environment
    spin
    howto_build_docs

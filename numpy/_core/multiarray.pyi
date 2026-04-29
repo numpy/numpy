@@ -8,6 +8,7 @@ from typing import (
     Final,
     Generic,
     Literal as L,
+    Never,
     Protocol,
     Self,
     SupportsIndex,
@@ -18,7 +19,7 @@ from typing import (
 from typing_extensions import CapsuleType, TypeVar
 
 import numpy as np
-from numpy import (  # type: ignore[attr-defined]  # Python >=3.12
+from numpy import (
     _CastingKind,
     _CopyMode,
     _ModeKind,
@@ -183,6 +184,14 @@ _ArrayT_co = TypeVar("_ArrayT_co", bound=np.ndarray, default=np.ndarray, covaria
 
 type _Array[ShapeT: _Shape, ScalarT: np.generic] = ndarray[ShapeT, dtype[ScalarT]]
 type _Array1D[ScalarT: np.generic] = ndarray[tuple[int], dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = ndarray[tuple[int, int], dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = ndarray[tuple[int, int, int], dtype[ScalarT]]
+# workaround for mypy's and pyright's typing spec non-compliance regarding overloads
+type _ArrayJustND[ScalarT: np.generic] = ndarray[tuple[Never, Never, Never, Never], dtype[ScalarT]]
+
+type _ToArray1D[ScalarT: np.generic] = _Array1D[ScalarT] | Sequence[ScalarT]
+type _ToArray2D[ScalarT: np.generic] = _Array2D[ScalarT] | Sequence[Sequence[ScalarT]]
+type _ToArray3D[ScalarT: np.generic] = _Array3D[ScalarT] | Sequence[Sequence[Sequence[ScalarT]]]
 
 # Valid time units
 type _UnitKind = L[
@@ -210,6 +219,8 @@ type _RollKind = L[  # `raise` is deliberately excluded
 ]
 
 type _ArangeScalar = np.integer | np.floating | np.datetime64 | np.timedelta64
+type _InnerScalar = np.number | np.bool | np.timedelta64
+type _DotScalar = np.number | np.bool
 
 # The datetime functions perform unsafe casts to `datetime64[D]`,
 # so a lot of different argument types are allowed here
@@ -671,26 +682,112 @@ def concatenate[OutT: np.ndarray](
 ) -> OutT: ...
 
 # keep in sync with `ma.core.inner`
-def inner(a: ArrayLike, b: ArrayLike, /) -> Incomplete: ...
+@overload  # (?d T, Nd T) -> 0d|Nd T  (workaround)
+def inner[ScalarT: _InnerScalar | np.object_](a: _ArrayJustND[ScalarT], b: _ArrayLike[ScalarT], /) -> NDArray[ScalarT] | Any: ...
+@overload  # (Nd T, ?d T) -> 0d|Nd T  (workaround)
+def inner[ScalarT: _InnerScalar | np.object_](a: _ArrayLike[ScalarT], b: _ArrayJustND[ScalarT], /) -> NDArray[ScalarT] | Any: ...
+@overload  # (1d T, 1d T) -> 0d T
+def inner[ScalarT: _InnerScalar](a: _ToArray1D[ScalarT], b: _ToArray1D[ScalarT], /) -> ScalarT: ...
+@overload  # (1d object_, 1d _) -> 0d object
+def inner(a: _Array1D[np.object_], b: _Array1D[np.object_] | _ToArray1D[_InnerScalar], /) -> Any: ...
+@overload  # (1d _, 1d object_) -> 0d object
+def inner(a: _ToArray1D[_InnerScalar], b: _Array1D[np.object_], /) -> Any: ...
+@overload  # (1d bool, 1d bool) -> bool_
+def inner(a: Sequence[bool], b: Sequence[bool], /) -> np.bool: ...
+@overload  # (1d ~int, 1d +int) -> int_
+def inner(a: list[int], b: Sequence[int], /) -> np.int_: ...
+@overload  # (1d +int, 1d ~int) -> int_
+def inner(a: Sequence[int], b: list[int], /) -> np.int_: ...
+@overload  # (1d ~float, 1d +float) -> float64
+def inner(a: list[float], b: Sequence[float], /) -> np.float64: ...
+@overload  # (1d +float, 1d ~float) -> float64
+def inner(a: Sequence[float], b: list[float], /) -> np.float64: ...
+@overload  # (1d ~complex, 1d +complex) -> complex128
+def inner(a: list[complex], b: Sequence[complex], /) -> np.complex128: ...
+@overload  # (1d +complex, 1d ~complex) -> complex128
+def inner(a: Sequence[complex], b: list[complex], /) -> np.complex128: ...
+@overload  # (1d T, 2d T) -> 1d T
+def inner[ScalarT: _InnerScalar | np.object_](a: _ToArray1D[ScalarT], b: _Array2D[ScalarT], /) -> _Array1D[ScalarT]: ...
+@overload  # (2d T, 1d T) -> 1d T
+def inner[ScalarT: _InnerScalar | np.object_](a: _ToArray2D[ScalarT], b: _Array1D[ScalarT], /) -> _Array1D[ScalarT]: ...
+@overload  # (2d T, 2d T) -> 2d T
+def inner[ScalarT: _InnerScalar | np.object_](a: _ToArray2D[ScalarT], b: _Array2D[ScalarT], /) -> _Array2D[ScalarT]: ...
+@overload  # fallback
+def inner(a: ArrayLike, b: ArrayLike, /) -> Any: ...
 
-# keep in sync with `ma.core.where`
+# keep in sync with `ma.core.dot`
+@overload  # (?d _, Nd _) -> 0d|Nd _  (workaround)
+def dot(a: _ArrayJustND[_DotScalar | np.object_], b: _ArrayLike[_DotScalar | np.object_], out: None = None) -> Any: ...
+@overload  # (Nd _, ?d _) -> 0d|Nd _  (workaround)
+def dot(a: _ArrayLike[_DotScalar | np.object_], b: _ArrayJustND[_DotScalar | np.object_], out: None = None) -> Any: ...
+@overload  # (1d T, 1d T) -> 0d T
+def dot[ScalarT: _DotScalar](a: _ToArray1D[ScalarT], b: _ToArray1D[ScalarT], out: None = None) -> ScalarT: ...
+@overload  # (1d object_, 1d _) -> 0d object
+def dot(a: _Array1D[np.object_], b: _Array1D[np.object_] | _ToArray1D[_DotScalar], out: None = None) -> Any: ...
+@overload  # (1d _, 1d object_) -> 0d object
+def dot(a: _ToArray1D[_DotScalar], b: _Array1D[np.object_], out: None = None) -> Any: ...
+@overload  # (1d bool, 1d bool) -> bool_
+def dot(a: Sequence[bool], b: Sequence[bool], out: None = None) -> np.bool: ...
+@overload  # (1d ~int, 1d +int) -> int_
+def dot(a: list[int], b: Sequence[int], out: None = None) -> np.int_: ...
+@overload  # (1d +int, 1d ~int) -> int_
+def dot(a: Sequence[int], b: list[int], out: None = None) -> np.int_: ...
+@overload  # (1d ~float, 1d +float) -> float64
+def dot(a: list[float], b: Sequence[float], out: None = None) -> np.float64: ...
+@overload  # (1d +float, 1d ~float) -> float64
+def dot(a: Sequence[float], b: list[float], out: None = None) -> np.float64: ...
+@overload  # (1d ~complex, 1d +complex) -> complex128
+def dot(a: list[complex], b: Sequence[complex], out: None = None) -> np.complex128: ...
+@overload  # (1d +complex, 1d ~complex) -> complex128
+def dot(a: Sequence[complex], b: list[complex], out: None = None) -> np.complex128: ...
+@overload  # (1d T, 2d T) -> 1d T
+def dot[ScalarT: _DotScalar | np.object_](
+    a: _ToArray1D[ScalarT], b: _ToArray2D[ScalarT], out: None = None
+) -> _Array1D[ScalarT]: ...
+@overload  # (2d T, 1d T) -> 1d T
+def dot[ScalarT: _DotScalar | np.object_](
+    a: _ToArray2D[ScalarT], b: _ToArray1D[ScalarT], out: None = None
+) -> _Array1D[ScalarT]: ...
+@overload  # (2d T, 2d T) -> 2d T
+def dot[ScalarT: _DotScalar | np.object_](
+    a: _ToArray2D[ScalarT], b: _ToArray2D[ScalarT], out: None = None
+) -> _Array2D[ScalarT]: ...
+@overload  # (2d T, ?d T) -> >=1d T
+def dot[ScalarT: _DotScalar | np.object_](
+    a: _ToArray2D[ScalarT], b: _ArrayLike[ScalarT], out: None = None
+) -> NDArray[ScalarT]: ...
+@overload  # (?d T, 2d T) -> >=1d T
+def dot[ScalarT: _DotScalar | np.object_](
+    a: _ArrayLike[ScalarT], b: _ToArray2D[ScalarT], out: None = None
+) -> NDArray[ScalarT]: ...
 @overload
-def where(condition: ArrayLike, x: None = None, y: None = None, /) -> tuple[NDArray[intp], ...]: ...
+def dot(a: ArrayLike, b: ArrayLike, out: None = None) -> Incomplete: ...
+@overload
+def dot[OutT: np.ndarray](a: ArrayLike, b: ArrayLike, out: OutT) -> OutT: ...
+
+# keep in sync with `ma.core.where` and the 1-arg overloads with `_core.fromnumeric.nonzerp`
+@overload  # (?d)  (workaround)
+def where(condition: _ArrayJustND[Any], x: None = None, y: None = None, /) -> tuple[_Array1D[np.intp], ...]: ...
+@overload  # (1d)
+def where(condition: _ToArray1D[Any], x: None = None, y: None = None, /) -> tuple[_Array1D[np.intp]]: ...
+@overload  # (2d)
+def where(condition: _ToArray2D[Any], x: None = None, y: None = None, /) -> tuple[_Array1D[np.intp], _Array1D[np.intp]]: ...
+@overload  # (3d)
+def where(
+    condition: _ToArray3D[Any], x: None = None, y: None = None, /
+) -> tuple[_Array1D[np.intp], _Array1D[np.intp], _Array1D[np.intp]]: ...
+@overload  # (Nd)  (fallback)
+def where(condition: _ArrayLike[Any], x: None = None, y: None = None, /) -> tuple[_Array1D[np.intp], ...]: ...
 @overload
 def where(condition: ArrayLike, x: ArrayLike, y: ArrayLike, /) -> NDArray[Incomplete]: ...
 
+#
 def lexsort(keys: ArrayLike, axis: SupportsIndex = -1) -> NDArray[intp]: ...
 
 def can_cast(from_: ArrayLike | DTypeLike, to: DTypeLike, casting: _CastingKind = "safe") -> bool: ...
 
 def min_scalar_type(a: ArrayLike, /) -> dtype: ...
 def result_type(*arrays_and_dtypes: ArrayLike | DTypeLike | None) -> dtype: ...
-
-# keep in sync with `ma.core.dot`
-@overload
-def dot(a: ArrayLike, b: ArrayLike, out: None = None) -> Incomplete: ...
-@overload
-def dot[OutT: np.ndarray](a: ArrayLike, b: ArrayLike, out: OutT) -> OutT: ...
 
 @overload
 def vdot(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co, /) -> np.bool: ...
@@ -742,37 +839,189 @@ def unpackbits(
 def shares_memory(a: object, b: object, /, max_work: _MaxWork = -1) -> bool: ...
 def may_share_memory(a: object, b: object, /, max_work: _MaxWork = 0) -> bool: ...
 
-@overload
+#
+@overload  # ndarray
+def asarray[ShapeT: _Shape, DTypeT: np.dtype](
+    a: np.ndarray[ShapeT, DTypeT],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # ndarray, dtype: <known>
+def asarray[ShapeT: _Shape, ScalarT: np.generic](
+    a: np.ndarray[ShapeT],
+    dtype: _DTypeLike[ScalarT],
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # ndarray, dtype: <unknown>
+def asarray[ShapeT: _Shape](
+    a: np.ndarray[ShapeT],
+    dtype: DTypeLike,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> np.ndarray[ShapeT]: ...
+@overload  # 1d bool
+def asarray(
+    a: Sequence[bool],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.bool]: ...
+@overload  # 1d ~int
+def asarray(
+    a: list[int],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.int_]: ...
+@overload  # 1d ~float
+def asarray(
+    a: list[float],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.float64]: ...
+@overload  # 1d ~complex
+def asarray(
+    a: list[complex],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.complex128]: ...
+@overload  # 1d _, dtype: <known>
+def asarray[ScalarT: np.generic](
+    a: Sequence[complex | np.generic],
+    dtype: _DTypeLike[ScalarT],
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[ScalarT]: ...
+@overload  # 1d _, dtype: <unknown>
+def asarray(
+    a: Sequence[complex | np.generic],
+    dtype: DTypeLike,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[Any]: ...
+@overload  # 2d bool
+def asarray(
+    a: Sequence[Sequence[bool]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[np.bool]: ...
+@overload  # 2d ~int
+def asarray(
+    a: Sequence[list[int]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[np.int_]: ...
+@overload  # 2d ~float
+def asarray(
+    a: Sequence[list[float]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[np.float64]: ...
+@overload  # 2d ~complex
+def asarray(
+    a: Sequence[list[complex]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[np.complex128]: ...
+@overload  # 2d _, dtype: <known>
+def asarray[ScalarT: np.generic](
+    a: Sequence[Sequence[complex | np.generic]],
+    dtype: _DTypeLike[ScalarT],
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[ScalarT]: ...
+@overload  # 2d _, dtype: <unknown>
+def asarray(
+    a: Sequence[Sequence[complex | np.generic]],
+    dtype: DTypeLike,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[Any]: ...
+@overload  # known array-like
 def asarray[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     dtype: None = None,
-    order: _OrderKACF = ...,
+    order: _OrderKACF = None,
     *,
-    device: L["cpu"] | None = ...,
-    copy: bool | None = ...,
-    like: _SupportsArrayFunc | None = ...,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # array-like, dtype: <known>
 def asarray[ScalarT: np.generic](
-    a: Any,
+    a: object,
     dtype: _DTypeLike[ScalarT],
-    order: _OrderKACF = ...,
+    order: _OrderKACF = None,
     *,
-    device: L["cpu"] | None = ...,
-    copy: bool | None = ...,
-    like: _SupportsArrayFunc | None = ...,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # fallback
 def asarray(
-    a: Any,
-    dtype: DTypeLike | None = ...,
-    order: _OrderKACF = ...,
+    a: object,
+    dtype: DTypeLike | None = None,
+    order: _OrderKACF = None,
     *,
-    device: L["cpu"] | None = ...,
-    copy: bool | None = ...,
-    like: _SupportsArrayFunc | None = ...,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Any]: ...
 
+#
 @overload
 def asanyarray[ArrayT: np.ndarray](
     a: ArrayT,  # Preserve subclass-information
@@ -814,50 +1063,67 @@ def asanyarray(
     like: _SupportsArrayFunc | None = ...,
 ) -> NDArray[Any]: ...
 
+#
+@overload
+def ascontiguousarray[ShapeT: _Shape, DTypeT: np.dtype](
+    a: np.ndarray[ShapeT, DTypeT],
+    dtype: None = None,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> np.ndarray[ShapeT, DTypeT]: ...
 @overload
 def ascontiguousarray[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     dtype: None = None,
     *,
-    like: _SupportsArrayFunc | None = ...,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
 @overload
 def ascontiguousarray[ScalarT: np.generic](
-    a: Any,
+    a: object,
     dtype: _DTypeLike[ScalarT],
     *,
-    like: _SupportsArrayFunc | None = ...,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
 @overload
 def ascontiguousarray(
-    a: Any,
-    dtype: DTypeLike | None = ...,
+    a: object,
+    dtype: DTypeLike | None = None,
     *,
-    like: _SupportsArrayFunc | None = ...,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Any]: ...
 
+#
+@overload
+def asfortranarray[ShapeT: _Shape, DTypeT: np.dtype](
+    a: np.ndarray[ShapeT, DTypeT],
+    dtype: None = None,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> np.ndarray[ShapeT, DTypeT]: ...
 @overload
 def asfortranarray[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     dtype: None = None,
     *,
-    like: _SupportsArrayFunc | None = ...,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
 @overload
 def asfortranarray[ScalarT: np.generic](
-    a: Any,
+    a: object,
     dtype: _DTypeLike[ScalarT],
     *,
-    like: _SupportsArrayFunc | None = ...,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
 @overload
 def asfortranarray(
-    a: Any,
-    dtype: DTypeLike | None = ...,
+    a: object,
+    dtype: DTypeLike | None = None,
     *,
-    like: _SupportsArrayFunc | None = ...,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Any]: ...
 
+#
 def promote_types(__type1: DTypeLike, __type2: DTypeLike) -> dtype: ...
 
 # `sep` is a de facto mandatory argument, as its default value is deprecated
@@ -994,23 +1260,65 @@ def fromfile(
     like: _SupportsArrayFunc | None = ...,
 ) -> _Array1D[Any]: ...
 
-@overload
+#
+@overload  # dtype=<known>
 def fromiter[ScalarT: np.generic](
-    iter: Iterable[Any],
+    iter: Iterable[object],
     dtype: _DTypeLike[ScalarT],
-    count: SupportsIndex = ...,
+    count: SupportsIndex = -1,
     *,
-    like: _SupportsArrayFunc | None = ...,
-) -> NDArray[ScalarT]: ...
-@overload
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[ScalarT]: ...
+@overload  # dtype=None
 def fromiter(
-    iter: Iterable[Any],
-    dtype: DTypeLike | None,
-    count: SupportsIndex = ...,
+    iter: Iterable[object],
+    dtype: None,
+    count: SupportsIndex = -1,
     *,
-    like: _SupportsArrayFunc | None = ...,
-) -> NDArray[Any]: ...
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.float64]: ...
+@overload  # dtype=bool
+def fromiter(
+    iter: Iterable[object],
+    dtype: type[bool],
+    count: SupportsIndex = -1,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.bool]: ...
+@overload  # dtype=int
+def fromiter(
+    iter: Iterable[object],
+    dtype: type[int],
+    count: SupportsIndex = -1,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.int_ | Any]: ...
+@overload  # dtype=float
+def fromiter(
+    iter: Iterable[object],
+    dtype: type[float],
+    count: SupportsIndex = -1,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.float64 | Any]: ...
+@overload  # dtype=complex
+def fromiter(
+    iter: Iterable[object],
+    dtype: type[complex],
+    count: SupportsIndex = -1,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.complex128 | Any]: ...
+@overload  # dtype=<unknown>
+def fromiter(
+    iter: Iterable[object],
+    dtype: DTypeLike,
+    count: SupportsIndex = -1,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[Any]: ...
 
+#
 @overload
 def frombuffer(
     buffer: Buffer,
@@ -1400,8 +1708,8 @@ class flagsobj:
     def num(self) -> int: ...
     @property
     def owndata(self) -> bool: ...
-    def __getitem__(self, key: _GetItemKeys) -> bool: ...
-    def __setitem__(self, key: _SetItemKeys, value: bool) -> None: ...
+    def __getitem__(self, key: _GetItemKeys, /) -> bool: ...
+    def __setitem__(self, key: _SetItemKeys, value: bool, /) -> None: ...
 
 @final
 class flatiter(Generic[_ArrayT_co]):
@@ -1506,10 +1814,10 @@ class nditer:
 
     #
     @overload
-    def __getitem__(self, index: SupportsIndex) -> NDArray[Incomplete]: ...
+    def __getitem__(self, index: SupportsIndex, /) -> NDArray[Incomplete]: ...
     @overload
-    def __getitem__(self, index: slice) -> tuple[NDArray[Incomplete], ...]: ...
-    def __setitem__(self, index: slice | SupportsIndex, value: ArrayLike) -> None: ...
+    def __getitem__(self, index: slice, /) -> tuple[NDArray[Incomplete], ...]: ...
+    def __setitem__(self, index: slice | SupportsIndex, value: ArrayLike, /) -> None: ...
 
     #
     def __copy__(self) -> Self: ...

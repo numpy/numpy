@@ -16,7 +16,18 @@ __all__ = [
     "vstack",
 ]
 
+type _Array0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]]
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+
 # keep in sync with `numpy.ma.extras.atleast_1d`
+@overload
+def atleast_1d[ArrayT: _Array1D[Any] | _Array2D[Any] | _Array3D[Any]](a0: ArrayT, /) -> ArrayT: ...
+@overload
+def atleast_1d[ScalarT: np.generic](a0: _Array0D[ScalarT], /) -> _Array1D[ScalarT]: ...
+@overload
+def atleast_1d[ScalarT: np.generic](a0: ScalarT, /) -> _Array1D[ScalarT]: ...
 @overload
 def atleast_1d[ScalarT: np.generic](a0: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
 @overload
@@ -36,6 +47,12 @@ def atleast_1d(a0: ArrayLike, a1: ArrayLike, /, *ai: ArrayLike) -> tuple[NDArray
 
 # keep in sync with `numpy.ma.extras.atleast_2d`
 @overload
+def atleast_2d[ArrayT: _Array2D[Any] | _Array3D[Any]](a0: ArrayT, /) -> ArrayT: ...
+@overload
+def atleast_2d[ScalarT: np.generic](a0: _Array0D[ScalarT] | _Array1D[ScalarT], /) -> _Array2D[ScalarT]: ...
+@overload
+def atleast_2d[ScalarT: np.generic](a0: ScalarT, /) -> _Array2D[ScalarT]: ...
+@overload
 def atleast_2d[ScalarT: np.generic](a0: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
 @overload
 def atleast_2d[ScalarT1: np.generic, ScalarT2: np.generic](
@@ -53,6 +70,12 @@ def atleast_2d(a0: ArrayLike, a1: ArrayLike, /) -> tuple[NDArray[Any], NDArray[A
 def atleast_2d(a0: ArrayLike, a1: ArrayLike, /, *ai: ArrayLike) -> tuple[NDArray[Any], ...]: ...
 
 # keep in sync with `numpy.ma.extras.atleast_3d`
+@overload
+def atleast_3d[ArrayT: _Array3D[Any]](a0: ArrayT, /) -> ArrayT: ...
+@overload
+def atleast_3d[ScalarT: np.generic](a0: _Array0D[ScalarT] | _Array1D[ScalarT] | _Array2D[ScalarT], /) -> _Array3D[ScalarT]: ...
+@overload
+def atleast_3d[ScalarT: np.generic](a0: ScalarT, /) -> _Array3D[ScalarT]: ...
 @overload
 def atleast_3d[ScalarT: np.generic](a0: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
 @overload

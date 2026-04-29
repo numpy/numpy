@@ -1989,7 +1989,7 @@ def masked_where(condition, a, copy=True):
     (cshape, ashape) = (cond.shape, a.shape)
     if cshape and cshape != ashape:
         raise IndexError("Inconsistent shape between the condition and the input"
-                         " (got %s and %s)" % (cshape, ashape))
+                         f" (got {cshape} and {ashape})")
     if hasattr(a, '_mask'):
         cond = mask_or(cond, a._mask)
         cls = type(a)
@@ -3256,28 +3256,12 @@ class MaskedArray(ndarray):
         results.
         """
 
-        if dtype is None:
-            if type is None:
-                output = ndarray.view(self)
-            else:
-                output = ndarray.view(self, type)
-        elif type is None:
-            try:
-                if issubclass(dtype, ndarray):
-                    output = ndarray.view(self, dtype)
-                    dtype = None
-                else:
-                    output = ndarray.view(self, dtype)
-            except TypeError:
-                output = ndarray.view(self, dtype)
-        else:
-            output = ndarray.view(self, dtype, type)
+        if type is None and (isinstance(dtype, builtins.type)
+                             and issubclass(dtype, ndarray)):
+            type = dtype
+            dtype = None
 
-        # also make the mask be a view (so attr changes to the view's
-        # mask do no affect original object's mask)
-        # (especially important to avoid affecting np.masked singleton)
-        if getmask(output) is not nomask:
-            output._mask = output._mask.view()
+        output = super().view(*[a for a in (dtype, type) if a is not None])
 
         # Make sure to reset the _fill_value if needed
         if getattr(output, '_fill_value', None) is not None:
@@ -3488,6 +3472,15 @@ class MaskedArray(ndarray):
             _mask[indx] = mindx
         return
 
+    def _set_dtype(self, dtype):
+        super()._set_dtype(dtype)
+        if self._mask is not nomask:
+            self._mask = self._mask.view(make_mask_descr(dtype), ndarray)
+            try:
+                self._mask = self._mask.reshape(self.shape)
+            except (AttributeError, TypeError):
+                pass
+
     # Define so that we can overwrite the setter.
     @property
     def dtype(self):
@@ -3495,15 +3488,13 @@ class MaskedArray(ndarray):
 
     @dtype.setter
     def dtype(self, dtype):
-        super(MaskedArray, type(self)).dtype.__set__(self, dtype)
-        if self._mask is not nomask:
-            self._mask = self._mask.view(make_mask_descr(dtype), ndarray)
-            # Try to reset the shape of the mask (if we don't have a void).
-            # This raises a ValueError if the dtype change won't work.
-            try:
-                self._mask = self._mask.reshape(self.shape)
-            except (AttributeError, TypeError):
-                pass
+        # DEPRECATED 2026-02-06, NumPy 2.5
+        warnings.warn(
+            "Setting the dtype on a MaskedArray has been deprecated in "
+            "NumPy 2.5.\nInstead of changing the dtype on an array x, "
+            "create a new array with x.view(new_dtype)",
+            DeprecationWarning, stacklevel=2)
+        self._set_dtype(dtype)
 
     @property
     def shape(self):
@@ -7941,7 +7932,7 @@ def where(condition, x=_NoValue, y=_NoValue):
     Returns
     -------
     out : MaskedArray
-        An masked array with `masked` elements where the condition is masked,
+        A masked array with `masked` elements where the condition is masked,
         elements from `x` where `condition` is True, and elements from `y`
         elsewhere.
 

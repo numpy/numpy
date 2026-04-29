@@ -96,6 +96,9 @@ typedef struct {
      */
     PyArrayMethodObject *sort_meth;
     PyArrayMethodObject *argsort_meth;
+    /* Definition for real and imaginary parts, and the (internal) ufuncs */
+    PyBoundArrayMethodObject *real_meth;
+    PyBoundArrayMethodObject *imag_meth;
 } NPY_DType_Slots;
 
 // This must be updated if new slots before within_dtype_castingimpl
@@ -287,7 +290,7 @@ PyDataType_GetArrFuncs(const PyArray_Descr *descr)
 static inline PyObject *
 PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 {
-    return PyDataType_GetArrFuncs(((PyArrayObject_fields *)arr)->descr)->getitem(
+    return PyDataType_GetArrFuncs(PyArray_DESCR(arr))->getitem(
             (void *)itemptr, (PyArrayObject *)arr);
 }
 
