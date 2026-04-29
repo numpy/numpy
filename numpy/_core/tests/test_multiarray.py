@@ -2844,6 +2844,118 @@ class TestMethods:
         a.sort(stable=stable, axis=-1, descending=descending)
         assert_equal(a, b, msg)
 
+    @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64])
+    @pytest.mark.parametrize("stable", [True, False])
+    @pytest.mark.parametrize("descending", [True, False])
+    def test_argsort_descending_signed(self, dtype, stable, descending):
+        a = np.arange(-51, 50, dtype=dtype)
+
+        expected = np.arange(len(a) - 1, -1, -1) if descending else np.arange(len(a))
+        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        msg = f"argsort, dtype={dtype}, stable={stable}, descending={descending}"
+        assert_equal(idx, expected, msg)
+
+        rng = np.random.default_rng(0)
+        rng.shuffle(a)
+        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        sorted_a = (
+            np.arange(49, -52, -1, dtype=dtype)
+            if descending
+            else np.arange(-51, 50, dtype=dtype)
+        )
+        assert_equal(a[idx], sorted_a, msg)
+
+    @pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32, np.uint64])
+    @pytest.mark.parametrize("stable", [True, False])
+    @pytest.mark.parametrize("descending", [True, False])
+    def test_argsort_descending_unsigned(self, dtype, stable, descending):
+        a = np.arange(0, 101, dtype=dtype)
+
+        expected = np.arange(len(a) - 1, -1, -1) if descending else np.arange(len(a))
+        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        msg = f"argsort, dtype={dtype}, stable={stable}, descending={descending}"
+        assert_equal(idx, expected, msg)
+
+        rng = np.random.default_rng(0)
+        rng.shuffle(a)
+        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        sorted_a = (
+            np.arange(100, -1, -1, dtype=dtype)
+            if descending
+            else np.arange(0, 101, dtype=dtype)
+        )
+        assert_equal(a[idx], sorted_a, msg)
+
+    @pytest.mark.parametrize(
+        "dtype", [np.float16, np.float32, np.float64, np.longdouble]
+    )
+    @pytest.mark.parametrize("stable", [True, False])
+    @pytest.mark.parametrize("descending", [True, False])
+    def test_argsort_descending_floats(self, dtype, stable, descending):
+        a = np.linspace(-50, 50, 101, dtype=dtype)
+        a[::10] = np.nan
+
+        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        msg = f"argsort, dtype={dtype}, stable={stable}, descending={descending}"
+        sorted_a = a[idx]
+        diff_sorted_a = np.diff(sorted_a[:-11])
+        assert_equal(np.isnan(sorted_a[-10:]), True, msg)  # nans at end
+        assert_equal(
+            (diff_sorted_a <= 0 if descending else diff_sorted_a >= 0),
+            True,
+            msg,
+        )
+
+        rng = np.random.default_rng(0)
+        rng.shuffle(a)
+        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        sorted_a = a[idx]
+        diff_sorted_a = np.diff(sorted_a[:-11])
+        assert_equal(np.isnan(sorted_a[-10:]), True, msg)
+        assert_equal(
+            (diff_sorted_a <= 0 if descending else diff_sorted_a >= 0),
+            True,
+            msg,
+        )
+
+    @pytest.mark.parametrize("dtype", ["datetime64[D]", "timedelta64[D]"])
+    @pytest.mark.parametrize("stable", [True, False])
+    @pytest.mark.parametrize("descending", [True, False])
+    def test_argsort_descending_datetime(self, dtype, stable, descending):
+        a = np.arange(0, 101, dtype=dtype)
+
+        expected = np.arange(len(a) - 1, -1, -1) if descending else np.arange(len(a))
+        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        msg = f"argsort, dtype={dtype}, stable={stable}, descending={descending}"
+        assert_equal(idx, expected, msg)
+
+        rng = np.random.default_rng(0)
+        rng.shuffle(a)
+        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        a_sorted = np.arange(0, 101, dtype=dtype)
+        if descending:
+            a_sorted = a_sorted[::-1].copy()
+        assert_equal(a[idx], a_sorted, msg)
+
+    @pytest.mark.parametrize("dtype", [np.str_, np.bytes_])
+    @pytest.mark.parametrize("stable", [True, False])
+    @pytest.mark.parametrize("descending", [True, False])
+    def test_argsort_descending_string(self, dtype, stable, descending):
+        a = np.array([f"{i:03d}" for i in range(101)], dtype=dtype)
+
+        expected = np.arange(len(a) - 1, -1, -1) if descending else np.arange(len(a))
+        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        msg = f"argsort, dtype={dtype}, stable={stable}, descending={descending}"
+        assert_equal(idx, expected, msg)
+
+        rng = np.random.default_rng(0)
+        rng.shuffle(a)
+        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        sorted_a = np.array([f"{i:03d}" for i in range(101)], dtype=dtype)
+        if descending:
+            sorted_a = sorted_a[::-1].copy()
+        assert_equal(a[idx], sorted_a, msg)
+
     @pytest.mark.parametrize('a', [
         np.array([0, 1, np.nan], dtype=np.float16),
         np.array([0, 1, np.nan], dtype=np.float32),
