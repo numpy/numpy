@@ -2519,22 +2519,123 @@ finish_loop:
 }
 
 /*
- * The implementation of the reduction operators with the new iterator
- * turned into a bit of a long function here, but I think the design
- * of this part needs to be changed to be more like einsum, so it may
- * not be worth refactoring it too much.  Consider this timing:
+ * Try a fast path that bypasses NpyIter / PyUFunc_ReduceWrapper for full
+ * reductions (axis=None) over a trivially iterable, aligned input where no
+ * casting is required.  The strided reduce loop is called directly on the
+ * input buffer and writes into a freshly allocated 0-d result.
  *
- * >>> a = arange(10000)
- *
- * >>> timeit sum(a)
- * 10000 loops, best of 3: 17 us per loop
- *
- * >>> timeit einsum("i->",a)
- * 100000 loops, best of 3: 13.5 us per loop
- *
- * The axes must already be bounds-checked by the calling function,
- * this function does not validate them.
+ * Returns:
+ *      1 on success; ``*out_result`` holds the new 0-d result.
+ *      0 if any precondition is unmet (caller should run the slow path);
+ *        ``*out_result`` is NULL and no error is set.
+ *     -1 on hard error during the fast path; ``*out_result`` is NULL and
+ *        a Python error is set.
  */
+static inline int
+try_reduce_contiguous(
+        PyArrayMethod_Context *context, PyArrayObject *arr,
+        PyArray_Descr *const *descrs,
+        PyArrayObject *out, PyArrayObject *wheremask, PyObject *initial,
+        int ndim, int naxes, int keepdims,
+        int errormask,
+        PyArrayObject **out_result)
+{
+    NPY_BEGIN_THREADS_DEF;
+    *out_result = NULL;
+
+    PyArrayMethodObject *ufuncimpl = context->method;
+    if (!(out == NULL && wheremask == NULL && initial == NULL && keepdims == 0
+            && naxes == ndim
+            && PyArray_TRIVIALLY_ITERABLE(arr)
+            && PyArray_ISALIGNED(arr)
+            && PyArray_DESCR(arr) == descrs[1]
+            && descrs[0] == descrs[1]
+            && !PyDataType_REFCHK(descrs[0])
+            && (ndim <= 1
+                || (ufuncimpl->flags & NPY_METH_IS_REORDERABLE)))) {
+        return 0;
+    }
+    npy_intp count = PyArray_SIZE(arr);
+    if (count == 0) {
+        /* Let the slow path handle empty (it knows the proper semantics). */
+        return 0;
+    }
+
+    /* Allocate the 0-d result first so the loop can write into it. */
+    Py_INCREF(descrs[0]);
+    PyArrayObject *result = (PyArrayObject *)PyArray_NewFromDescr(
+            &PyArray_Type, descrs[0], 0, NULL, NULL, NULL, 0, NULL);
+    if (result == NULL) {
+        return -1;
+    }
+    char *accum = PyArray_BYTES(result);
+    int has_initial = 0;
+    if (ufuncimpl->get_reduction_initial != NULL) {
+        has_initial = ufuncimpl->get_reduction_initial(
+                context, /*reduction_is_empty=*/0, accum);
+        if (has_initial < 0) {
+            Py_DECREF(result);
+            return -1;
+        }
+    }
+
+    /*
+     * For C/F-contiguous N-D arrays the stride is always elsize; for 1-D
+     * arrays we need the actual stride to handle non-contiguous slices.
+     */
+    npy_intp arr_stride = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(count, arr);
+    char *src = PyArray_BYTES(arr);
+    if (!has_initial) {
+        /*
+         * No identity available -- seed the accumulator with arr[0] and
+         * reduce over arr[1:].
+         */
+        memcpy(accum, src, descrs[1]->elsize);
+        src += arr_stride;
+        count -= 1;
+    }
+    if (count == 0) {
+        /* Single-element input with no identity -- accum already holds arr[0]. */
+        *out_result = result;
+        return 1;
+    }
+
+    npy_intp strides[3] = {0, arr_stride, 0};
+    PyArrayMethod_StridedLoop *strided_loop;
+    NpyAuxData *auxdata = NULL;
+    NPY_ARRAYMETHOD_FLAGS flags = 0;
+    if (ufuncimpl->get_strided_loop(context, /*aligned=*/1,
+            /*move_references=*/0, strides,
+            &strided_loop, &auxdata, &flags) < 0) {
+        Py_DECREF(result);
+        return -1;
+    }
+    int needs_fperr = !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS);
+    if (needs_fperr) {
+        npy_clear_floatstatus_barrier((char *)context);
+    }
+    if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
+        NPY_BEGIN_THREADS_THRESHOLDED(count);
+    }
+    char *data[3] = {accum, src, accum};
+    int res = strided_loop(context, data, &count, strides, auxdata);
+    NPY_END_THREADS;
+    NPY_AUXDATA_FREE(auxdata);
+    if (res == 0 && PyErr_Occurred()) {
+        res = -1;
+    }
+    if (res == 0 && needs_fperr) {
+        res = _check_ufunc_fperr(errormask, "reduce");
+    }
+    if (res < 0) {
+        Py_DECREF(result);
+        return -1;
+    }
+    *out_result = result;
+    return 1;
+}
+
+
 static PyArrayObject *
 PyUFunc_Reduce(PyUFuncObject *ufunc,
         PyArrayObject *arr, PyArrayObject *out,
@@ -2580,10 +2681,18 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
     context.caller = (PyObject *)ufunc;
     context.method = ufuncimpl;
 
-    PyArrayObject *result = PyUFunc_ReduceWrapper(&context,
-            arr, out, wheremask, axis_flags, keepdims,
-            initial, reduce_loop, buffersize, ufunc_name, errormask);
+    PyArrayObject *result = NULL;
 
+    int fast_status = try_reduce_contiguous(
+            &context, arr, descrs, out, wheremask, initial,
+            ndim, naxes, keepdims, errormask, &result);
+    if (fast_status == 0) {
+        /* Fast path did not apply; run the full reduction. */
+        result = PyUFunc_ReduceWrapper(&context,
+                arr, out, wheremask, axis_flags, keepdims,
+                initial, reduce_loop, buffersize, ufunc_name, errormask);
+    }
+    /* Fall through to shared cleanup of `descrs`. */
     for (int i = 0; i < 3; i++) {
         Py_DECREF(descrs[i]);
     }
