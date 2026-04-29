@@ -331,14 +331,12 @@ register_ulong_sorts()
 NPY_NO_EXPORT int
 register_longlong_sorts()
 {
-    return make_sorts_<npy::longlong_tag, npy_longlong>(&PyArray_LongLongDType,
-                                                        "longlong");
+    return make_sorts_<npy::longlong_tag, npy_longlong>(&PyArray_LongLongDType, "longlong");
 }
 NPY_NO_EXPORT int
 register_ulonglong_sorts()
 {
-    return make_sorts_<npy::ulonglong_tag, npy_ulonglong>(&PyArray_ULongLongDType,
-                                                          "ulonglong");
+    return make_sorts_<npy::ulonglong_tag, npy_ulonglong>(&PyArray_ULongLongDType, "ulonglong");
 }
 NPY_NO_EXPORT int
 register_float_sorts()
@@ -353,8 +351,7 @@ register_double_sorts()
 NPY_NO_EXPORT int
 register_longdouble_sorts()
 {
-    return make_sorts_<npy::longdouble_tag, npy_longdouble>(&PyArray_LongDoubleDType,
-                                                            "longdouble");
+    return make_sorts_<npy::longdouble_tag, npy_longdouble>(&PyArray_LongDoubleDType, "longdouble");
 }
 NPY_NO_EXPORT int
 register_cfloat_sorts()
@@ -369,32 +366,27 @@ register_cdouble_sorts()
 NPY_NO_EXPORT int
 register_clongdouble_sorts()
 {
-    return make_sorts_<npy::clongdouble_tag, npy_clongdouble>(&PyArray_CLongDoubleDType,
-                                                              "clongdouble");
+    return make_sorts_<npy::clongdouble_tag, npy_clongdouble>(&PyArray_CLongDoubleDType, "clongdouble");
 }
 NPY_NO_EXPORT int
 register_datetime_sorts()
 {
-    return make_sorts_<npy::datetime_tag, npy_datetime>(&PyArray_DatetimeDType,
-                                                        "datetime");
+    return make_sorts_<npy::datetime_tag, npy_datetime>(&PyArray_DatetimeDType, "datetime");
 }
 NPY_NO_EXPORT int
 register_timedelta_sorts()
 {
-    return make_sorts_<npy::timedelta_tag, npy_timedelta>(&PyArray_TimedeltaDType,
-                                                          "timedelta");
+    return make_sorts_<npy::timedelta_tag, npy_timedelta>(&PyArray_TimedeltaDType, "timedelta");
 }
 NPY_NO_EXPORT int
 register_string_sorts()
 {
-    return make_string_sorts_<npy::string_tag, npy_char>(&PyArray_BytesDType,
-                                                         "string");
+    return make_string_sorts_<npy::string_tag, npy_char>(&PyArray_BytesDType, "string");
 }
 NPY_NO_EXPORT int
 register_unicode_sorts()
 {
-    return make_string_sorts_<npy::unicode_tag, npy_ucs4>(&PyArray_UnicodeDType,
-                                                          "unicode");
+    return make_string_sorts_<npy::unicode_tag, npy_ucs4>(&PyArray_UnicodeDType, "unicode");
 }
 NPY_NO_EXPORT int
 register_half_sorts()

@@ -2773,9 +2773,11 @@ class TestMethods:
         a.sort(stable=stable, axis=-1, descending=descending)
         assert_equal(a, b, msg)
 
-    @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64, np.longdouble])
-    @pytest.mark.parametrize('stable', [True, False])
-    @pytest.mark.parametrize('descending', [True, False])
+    @pytest.mark.parametrize(
+        "dtype", [np.float16, np.float32, np.float64, np.longdouble]
+    )
+    @pytest.mark.parametrize("stable", [True, False])
+    @pytest.mark.parametrize("descending", [True, False])
     def test_sort_descending_floats(self, dtype, stable, descending):
         a = np.linspace(-50, 50, 101, dtype=dtype)
         if not descending:

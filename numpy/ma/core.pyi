@@ -2478,6 +2478,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         fill_value: _ScalarLike_co | None = None,
         *,
         stable: Literal[False] | None = False,
+        descending: Literal[False] | None = False,
     ) -> None: ...
 
     #
@@ -3708,6 +3709,7 @@ def sort(
     fill_value: _ScalarLike_co | None = None,
     *,
     stable: Literal[False] | None = None,
+    descending: Literal[False] | None = False,
 ) -> NDArray[Any]: ...
 
 #
