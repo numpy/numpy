@@ -2674,7 +2674,7 @@ def astype(x, dtype, /, *, copy=True, device=None):
             f' {device}'
         )
     if isscalar(x):
-        return np.asarray(x).astype(dtype, copy=copy)
+        return np.asarray(x).astype(dtype, copy=copy)[()]
     return x.astype(dtype, copy=copy)
 
 
