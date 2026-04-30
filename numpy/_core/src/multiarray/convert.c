@@ -709,35 +709,21 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
          * Path 1: subclass lives in the future and its __array_finalize__
          * can handle getting the correct dtype+shape.
          */
-        npy_intp newlastdim, newlaststride;
-        /* Check whether the type is compatible. */
+        npy_intp storage[2 * NPY_MAXDIMS];
+        int newnd;
+        npy_intp *newdims = storage;
+        npy_intp *newstrides = storage + NPY_MAXDIMS;
+        /* Check whether the type is compatible. dims and strides pointers
+           will be set to input ones if no change needed, otherwise filled. */
         Py_SETREF(type, _check_compatibility_with_new_dtype(
-                      self, type, &newlastdim, &newlaststride));
+                      self, type, &newnd, &newdims, &newstrides));
         if (type == NULL) {
             return NULL;
         }
         /* Take view with old or adjusted dims (steals reference to type) */
-        if (newlastdim < 0) {
-            return PyArray_NewFromDescr_int(subtype, type,
-                    nd, dims, strides, PyArray_DATA(self),
-                    flags, (PyObject *)self, (PyObject *)self, 0);
-        }
-        else {
-            NPY_ALLOC_WORKSPACE(newdims, npy_intp, 2 * 4, 2 * nd);
-            if (newdims == NULL) {
-                goto finish;
-            }
-            npy_intp *newstrides = newdims + nd;
-            memcpy(newdims, dims, (nd-1)*sizeof(npy_intp));
-            memcpy(newstrides, strides, (nd-1)*sizeof(npy_intp));
-            newdims[nd-1] = newlastdim;
-            newstrides[nd-1] = newlaststride;
-            ret = PyArray_NewFromDescr_int(subtype, type,
-                    nd, newdims, newstrides, PyArray_DATA(self),
-                    flags, (PyObject *)self, (PyObject *)self, 0);
-            npy_free_workspace(newdims);
-            return ret;
-        }
+        return PyArray_NewFromDescr_int(
+            subtype, type, newnd, newdims, newstrides, PyArray_DATA(self),
+            flags, (PyObject *)self, (PyObject *)self, 0);
     }
     /*
      * Other paths: first create a view with the old dtype.
