@@ -226,6 +226,15 @@ class TestDeprecatedDTypeAliases(_DeprecationTestCase):
             np.dtype(dtype_code)
 
 
+class TestIsDTypeDTypeInstanceKind(_DeprecationTestCase):
+    # Deprecated in NumPy 2.6, 2026-06
+    message = r"isdtype\(\) with a dtype instance as second argument"
+
+    def test_deprecated(self):
+        self.assert_deprecated(
+                lambda: np.isdtype(np.dtype(">f8"), np.dtype("<f8")))
+
+
 class TestDeprecatedArrayWrap(_DeprecationTestCase):
     message = "__array_wrap__.*"
 

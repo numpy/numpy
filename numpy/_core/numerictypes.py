@@ -77,9 +77,11 @@ Exported symbols include:
 
 """
 import numbers
+import warnings
 
 from numpy._utils import set_module
 
+import numpy as np
 from . import multiarray as ma
 from .multiarray import (
     busday_count,
@@ -305,17 +307,89 @@ class _PreprocessDTypeError(Exception):
     pass
 
 
-def _preprocess_dtype(dtype):
+
+
+def _preprocess_dtype(obj):
     """
-    Preprocess dtype argument by:
-      1. fetching type from a data type
-      2. verifying that types are built-in NumPy dtypes
+    Preprocess dtype argument to allow only NumPy dtypes and scalar
+    types.
     """
-    if isinstance(dtype, ma.dtype):
-        dtype = dtype.type
-    if isinstance(dtype, ndarray) or dtype not in allTypes.values():
-        raise _PreprocessDTypeError
-    return dtype
+    if isinstance(obj, ma.dtype):
+        return obj
+    if isinstance(obj, type):
+        try:
+            dtype = np.dtype(obj)
+        except TypeError:
+            pass
+        else:
+            # If the discovered dtype has the input type as
+            # it's type, then it should be a valid input.
+            # (rejects e.g. the abstract types)
+            if dtype.type is obj:
+                return dtype
+
+    raise TypeError(
+        "dtype argument must be a NumPy dtype or concrete scalar type, "
+        f"but it is a {type(obj)}."
+    ) from None
+
+
+_kind_to_dtypes = {
+    "bool": (np.dtypes.BoolDType,),
+    "signed integer": (np.dtypes.SignedIntegerAbstractDType,),
+    "unsigned integer": (np.dtypes.UnsignedIntegerAbstractDType,),
+    "integral": (np.dtypes.IntegerAbstractDType,),
+    "real floating": (np.dtypes.FloatAbstractDType,),
+    "complex floating": (np.dtypes.ComplexAbstractDType,),
+    # The Array API "numeric" kind excludes bool, so do not use
+    # NumericAbstractDType directly here.
+    "numeric": (
+        np.dtypes.IntegerAbstractDType,
+        np.dtypes.InexactAbstractDType,
+    ),
+}
+
+
+def _preprocess_kind(kind):
+    if isinstance(kind, str):
+        try:
+            return _kind_to_dtypes[kind]
+        except KeyError:
+            raise ValueError(
+                "kind argument is a string, but"
+                f" {kind!r} is not a known kind name."
+            ) from None
+    if isinstance(kind, type):
+        if issubclass(kind, np.dtype):
+            return kind
+
+        dt = np.dtype(kind)
+        if type(dt).type is kind:
+            # OK, the scalar type seems to map to a DType cleanly
+            # (works for all NumPy scalar types)
+            return type(dt)
+        elif dt.type is kind:
+            # Should be impossible, but just in case act as if the user
+            # passed in the concrete dtype.
+            kind = dt
+
+    if isinstance(kind, np.dtype):
+        # Not really OK, this would be an identity or equal check
+        # Deprecated in NumPy 2.6, 2026-06
+        warnings.warn(
+            "isdtype() with a dtype instance as second argument is deprecated "
+            "as it has no clear meaning.  Use `==` instead which also checks "
+            "byte-order or use a string/class from `numpy.dtypes.<kind>`. "
+            "Scalar classes (`np.int64`, etc.) can generally be used as well. "
+            "(Deprecated NumPy 2.6).",
+            DeprecationWarning, stacklevel=2
+        )
+        return type(kind)
+
+    raise TypeError(
+        "kind argument must be a DType class or string, "
+        f"but it is a {type(kind)}."
+    ) from None
 
 
 @set_module('numpy')
@@ -323,22 +397,22 @@ def isdtype(dtype, kind):
     """
     Determine if a provided dtype is of a specified data type ``kind``.
 
-    This function only supports built-in NumPy's data types.
-    Third-party dtypes are not yet supported.
-
     Parameters
     ----------
     dtype : dtype
         The input dtype.
-    kind : dtype or str or tuple of dtypes/strs.
-        dtype or dtype kind. Allowed dtype kinds are:
-        * ``'bool'`` : boolean kind
+    kind : DType class, str, or tuple of DType classes/strs.
+        The supported strings kinds are:
+        * ``'bool'`` : boolean DType
         * ``'signed integer'`` : signed integer data types
         * ``'unsigned integer'`` : unsigned integer data types
         * ``'integral'`` : integer data types
         * ``'real floating'`` : real-valued floating-point data types
         * ``'complex floating'`` : complex floating-point data types
         * ``'numeric'`` : numeric data types
+
+        Otherwise should be a dtype class from the `numpy.dtypes` namespace.
+        Concrete scalar types such as ``np.float64`` are also acceptable.
 
     Returns
     -------
@@ -351,61 +425,33 @@ def isdtype(dtype, kind):
     Examples
     --------
     >>> import numpy as np
-    >>> np.isdtype(np.float32, np.float64)
+    >>> arr = np.array([1.0], dtype=np.float32)
+    >>> np.isdtype(arr.dtype, np.float64)
     False
-    >>> np.isdtype(np.float32, "real floating")
+    >>> np.isdtype(arr.dtype, "real floating")
     True
-    >>> np.isdtype(np.complex128, ("real floating", "complex floating"))
+    >>> np.isdtype(arr.dtype, ("real floating", "complex floating"))
     True
+    >>> np.isdtype(np.dtype(">f8"), np.dtypes.Float64DType)
+    True
+
+    Notes
+    -----
+    After normalization of the input arguments, this function is equivalent to
+    ``isinstance(dtype, np.dtypes.<kind>)``.
+
+    User defined dtypes can pass a ``isdtype(dt, "real floating")`` check if
+    they register via ``numpy.dtypes.FloatAbstractDType.register(type(dt))``.
 
     """
-    try:
-        dtype = _preprocess_dtype(dtype)
-    except _PreprocessDTypeError:
-        raise TypeError(
-            "dtype argument must be a NumPy dtype, "
-            f"but it is a {type(dtype)}."
-        ) from None
+    dtype = _preprocess_dtype(dtype)
 
-    input_kinds = kind if isinstance(kind, tuple) else (kind,)
+    if isinstance(kind, tuple):
+        kind = tuple(_preprocess_kind(k) for k in kind)
+    else:
+        kind = _preprocess_kind(kind)
 
-    processed_kinds = set()
-
-    for kind in input_kinds:
-        if kind == "bool":
-            processed_kinds.add(allTypes["bool"])
-        elif kind == "signed integer":
-            processed_kinds.update(sctypes["int"])
-        elif kind == "unsigned integer":
-            processed_kinds.update(sctypes["uint"])
-        elif kind == "integral":
-            processed_kinds.update(sctypes["int"] + sctypes["uint"])
-        elif kind == "real floating":
-            processed_kinds.update(sctypes["float"])
-        elif kind == "complex floating":
-            processed_kinds.update(sctypes["complex"])
-        elif kind == "numeric":
-            processed_kinds.update(
-                sctypes["int"] + sctypes["uint"] +
-                sctypes["float"] + sctypes["complex"]
-            )
-        elif isinstance(kind, str):
-            raise ValueError(
-                "kind argument is a string, but"
-                f" {kind!r} is not a known kind name."
-            )
-        else:
-            try:
-                kind = _preprocess_dtype(kind)
-            except _PreprocessDTypeError:
-                raise TypeError(
-                    "kind argument must be comprised of "
-                    "NumPy dtypes or strings only, "
-                    f"but is a {type(kind)}."
-                ) from None
-            processed_kinds.add(kind)
-
-    return dtype in processed_kinds
+    return isinstance(dtype, kind)
 
 
 @set_module('numpy')
@@ -413,7 +459,12 @@ def issubdtype(arg1, arg2):
     r"""
     Returns True if first argument is a typecode lower/equal in type hierarchy.
 
-    This is like the builtin :func:`issubclass`, but for `dtype`\ s.
+    .. note::
+        This function relies on the scalar type hierarchy. This works in
+        practice for NumPy dtypes and some user-defines ones but does not
+        generalize necessarily.
+        ``isdtype()`` has slightly clearer semantics although NumPy 2.6 is
+        requires to work with user defined dtypes in general.
 
     Parameters
     ----------
@@ -426,6 +477,7 @@ def issubdtype(arg1, arg2):
 
     See Also
     --------
+    isdtype : Similar function with clearer defined semantics.
     :ref:`arrays.scalars` : Overview of the numpy type hierarchy.
 
     Examples
@@ -463,6 +515,12 @@ def issubdtype(arg1, arg2):
     >>> np.issubdtype('S1', np.bytes_)
     True
     >>> np.issubdtype('i4', np.signedinteger)
+    True
+
+    Abstract DType classes from :mod:`numpy.dtypes` are also accepted, in
+    which case the DType class hierarchy is consulted directly:
+
+    >>> np.issubdtype(np.dtype('int64'), np.dtypes.IntegerAbstractDType)
     True
 
     """
