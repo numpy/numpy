@@ -1262,12 +1262,12 @@ class TestPickling:
             assert_equal(pickled.itemsize, dtype.itemsize)
             if dtype.metadata is not None:
                 assert_equal(pickled.metadata, dtype.metadata)
-            # Check the reconstructed dtype is functional
-            x = np.zeros(3, dtype=dtype)
-            y = np.zeros(3, dtype=pickled)
             # some large structured dtypes are too large to
             # reasonably compare across all elements
             if arr_assert:
+                # Check the reconstructed dtype is functional
+                x = np.zeros(3, dtype=dtype)
+                y = np.zeros(3, dtype=pickled)
                 assert_equal(x, y)
                 assert_equal(x[0], y[0])
 
@@ -2067,6 +2067,7 @@ class TestDTypeSignatures:
     (dict(names=["a", "b", "c"], formats=["2147483648b", "16i", "12f"],
      offsets=[2 ** 31, 2 ** 32, 2 ** 32 + 69]), 4294967413),
 ])
+@pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
 def test_gh_31308(kind, exp):
     kind_dtype = np.dtype(kind)
     assert kind_dtype.itemsize == exp
