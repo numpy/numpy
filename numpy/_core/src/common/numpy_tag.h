@@ -16,8 +16,9 @@
  *
  *   - ``type``        -- the underlying C scalar type
  *   - ``type_value``  -- the corresponding ``NPY_TYPES`` enumerator
- *   - ``less`` / ``less_equal``  -- the sort-friendly comparisons that
- *     propagate NaN / NaT to the high end
+ *   - ``less`` / ``less_equal`` / ``greater`` -- the sort-friendly
+ *     comparisons that order NaN / NaT to the end (as if largest value
+ *     for less and as if smallest for greater).
  *
  * For the four numeric categories that need different NaN/NaT handling,
  * comparisons are implemented once at the ``*_type<T, NPY_TYPES>``
@@ -51,9 +52,7 @@ struct integral_type : integral_tag {
     static constexpr NPY_TYPES type_value = TypeNum;
     static int less(T a, T b) { return a < b; }
     static int less_equal(T a, T b) { return !(b < a); }
-
-    template <bool reverse = false>
-    static int cmp(T a, T b) { return reverse ? b < a : a < b; }
+    static int greater(T a, T b) { return a > b; }
 };
 
 template <typename T, NPY_TYPES TypeNum>
@@ -64,18 +63,9 @@ struct floating_point_type : floating_point_tag {
     // either a < b or b is NaN.  ``x != x`` is the IEEE NaN test.
     static int less(T a, T b) { return a < b || (b != b && a == a); }
     static int less_equal(T a, T b) { return !less(b, a); }
-
-    template <bool reverse = false>
-    static int cmp(T a, T b)
-    {
-        if (reverse) {
-            // NaN sorts to the end in reverse too
-            return b < a || (b != b && a == a);
-        }
-        else {
-            return a < b || (b != b && a == a);
-        }
-    }
+    // NaN sorts to the end in reverse too: ``a`` is "greater than" ``b``
+    // if ``a`` is non-NaN and either ``b < a`` or ``b`` is NaN.
+    static int greater(T a, T b) { return a > b || (b != b && a == a); }
 };
 
 // Half is its own per-type tag; no template since there is only one half
@@ -114,22 +104,13 @@ struct half_tag {
     }
     static int less_equal(npy_half a, npy_half b) { return !less(b, a); }
 
-    template <bool reverse = false>
-    static int cmp(npy_half a, npy_half b)
+    // NaN sorts to the end in reverse too.
+    static int greater(npy_half a, npy_half b)
     {
-        if (reverse) {
-            // NaN sorts to the end in reverse too
-            if (isnan(b)) {
-                return !isnan(a);
-            }
-            return !isnan(a) && lt_nonan(b, a);
+        if (isnan(b)) {
+            return !isnan(a);
         }
-        else {
-            if (isnan(b)) {
-                return !isnan(a);
-            }
-            return !isnan(a) && lt_nonan(a, b);
-        }
+        return !isnan(a) && lt_nonan(b, a);
     }
 };
 
@@ -170,35 +151,20 @@ struct complex_type : complex_tag {
     }
     static int less_equal(T a, T b) { return !less(b, a); }
 
-    template <bool reverse = false>
-    static int cmp(T a, T b)
+    static int greater(T a, T b)
     {
         const auto ra = creal(a), rb = creal(b);
         const auto ia = cimag(a), ib = cimag(b);
-        if (reverse) {
-            if (ra < rb) {
-                return ib != ib && ia == ia;
-            }
-            if (ra > rb) {
-                return ia == ia || ib != ib;
-            }
-            if (ra == rb || (ra != ra && rb != rb)) {
-                return ib < ia || (ia != ia && ib == ib);
-            }
-            return ra != ra;
+        if (ra > rb) {
+            return ia == ia || ib != ib;
         }
-        else {
-            if (ra < rb) {
-                return ia == ia || ib != ib;
-            }
-            if (ra > rb) {
-                return ib != ib && ia == ia;
-            }
-            if (ra == rb || (ra != ra && rb != rb)) {
-                return ia < ib || (ib != ib && ia == ia);
-            }
-            return rb != rb;
+        if (ra < rb) {
+            return ib != ib && ia == ia;
         }
+        if (ra == rb || (ra != ra && rb != rb)) {
+            return ia > ib || (ia != ia && ib == ib);
+        }
+        return ra != ra;
     }
 };
 
@@ -214,19 +180,12 @@ struct datetime_type : date_tag {
     }
     static int less_equal(T a, T b) { return !less(b, a); }
 
-    template <bool reverse = false>
-    static int cmp(T a, T b)
+    // NaT sorts to the end in reverse too.
+    static int greater(T a, T b)
     {
-        if (reverse) {
-            if (a == NPY_DATETIME_NAT) return 0;
-            if (b == NPY_DATETIME_NAT) return 1;
-            return b < a;
-        }
-        else {
-            if (a == NPY_DATETIME_NAT) return 0;
-            if (b == NPY_DATETIME_NAT) return 1;
-            return a < b;
-        }
+        if (a == NPY_DATETIME_NAT) return 0;
+        if (b == NPY_DATETIME_NAT) return 1;
+        return b < a;
     }
 };
 
@@ -266,19 +225,10 @@ struct string_like_type {
     {
         std::memcpy(a, b, n * sizeof(T));
     }
-  
-    template <bool reverse = false>
-    static int cmp(T const *a, T const *b, size_t n)
+
+    static int greater(T const *a, T const *b, size_t n)
     {
-        using U = std::make_unsigned_t<T>;
-        const auto *ua = reinterpret_cast<const U *>(a);
-        const auto *ub = reinterpret_cast<const U *>(b);
-        for (size_t i = 0; i < n; ++i) {
-            if (ua[i] != ub[i]) {
-                return reverse ? ub[i] < ua[i] : ua[i] < ub[i];
-            }
-        }
-        return 0;
+        return less(b, a, n);
     }
 };
 
@@ -311,6 +261,18 @@ template <typename... Tags>
 struct taglist {
     static constexpr unsigned size = sizeof...(Tags);
 };
+
+// Generic comparator dispatch used by the ascending/descending sort.
+template <typename Tag, bool reverse, typename... Args>
+inline int cmp(Args... args)
+{
+    if constexpr (reverse) {
+        return Tag::greater(args...);
+    }
+    else {
+        return Tag::less(args...);
+    }
+}
 
 }  // namespace npy
 

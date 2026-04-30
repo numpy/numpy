@@ -164,13 +164,13 @@ template <typename Tag, typename type>
 NPY_NO_EXPORT int
 make_sorts_(PyArray_DTypeMeta *dtypemeta, const char *name)
 {
-    NPY_DT_SLOTS(dtypemeta)->f.sort[0] = (PyArray_SortFunc *)quicksort_<Tag, type, false>;
-    NPY_DT_SLOTS(dtypemeta)->f.sort[1] = (PyArray_SortFunc *)heapsort_<Tag, type, true>;
-    NPY_DT_SLOTS(dtypemeta)->f.sort[2] = (PyArray_SortFunc *)timsort_<Tag, type, false>;
+    NPY_DT_SLOTS(dtypemeta)->f.sort[0] = quicksort_impl<Tag, type>;
+    NPY_DT_SLOTS(dtypemeta)->f.sort[1] = heapsort_impl<Tag, type>;
+    NPY_DT_SLOTS(dtypemeta)->f.sort[2] = timsort_impl<Tag, type>;
 
-    NPY_DT_SLOTS(dtypemeta)->f.argsort[0] = (PyArray_ArgSortFunc *)aquicksort_<Tag, type, false>;
-    NPY_DT_SLOTS(dtypemeta)->f.argsort[1] = (PyArray_ArgSortFunc *)aheapsort_<Tag, type, true>;
-    NPY_DT_SLOTS(dtypemeta)->f.argsort[2] = (PyArray_ArgSortFunc *)atimsort_<Tag, type, false>;
+    NPY_DT_SLOTS(dtypemeta)->f.argsort[0] = aquicksort_impl<Tag, type>;
+    NPY_DT_SLOTS(dtypemeta)->f.argsort[1] = aheapsort_impl<Tag, type>;
+    NPY_DT_SLOTS(dtypemeta)->f.argsort[2] = atimsort_impl<Tag, type>;
 
     std::string sort_name = std::string(name) + "_sort";
     PyArray_DTypeMeta *sort_dtypes[2] = {dtypemeta, dtypemeta};

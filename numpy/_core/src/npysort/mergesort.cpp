@@ -64,7 +64,7 @@ mergesort0_(type *pl, type *pr, type *pw)
         pj = pw;
         pk = pl;
         while (pj < pi && pm < pr) {
-            if (Tag::template cmp<reverse>(*pm, *pj)) {
+            if (npy::cmp<Tag, reverse>(*pm, *pj)) {
                 *pk++ = *pm++;
             }
             else {
@@ -81,7 +81,7 @@ mergesort0_(type *pl, type *pr, type *pw)
             vp = *pi;
             pj = pi;
             pk = pi - 1;
-            while (pj > pl && Tag::template cmp<reverse>(vp, *pk)) {
+            while (pj > pl && npy::cmp<Tag, reverse>(vp, *pk)) {
                 *pj-- = *pk--;
             }
             *pj = vp;
@@ -126,7 +126,7 @@ amergesort0_(npy_intp *pl, npy_intp *pr, type *v, npy_intp *pw)
         pj = pw;
         pk = pl;
         while (pj < pi && pm < pr) {
-            if (Tag::template cmp<reverse>(v[*pm], v[*pj])) {
+            if (npy::cmp<Tag, reverse>(v[*pm], v[*pj])) {
                 *pk++ = *pm++;
             }
             else {
@@ -144,7 +144,7 @@ amergesort0_(npy_intp *pl, npy_intp *pr, type *v, npy_intp *pw)
             vp = v[vi];
             pj = pi;
             pk = pi - 1;
-            while (pj > pl && Tag::template cmp<reverse>(vp, v[*pk])) {
+            while (pj > pl && npy::cmp<Tag, reverse>(vp, v[*pk])) {
                 *pj-- = *pk--;
             }
             *pj = vi;
@@ -193,7 +193,7 @@ mergesort0_(type *pl, type *pr, type *pw, type *vp, size_t len)
         pj = pw;
         pk = pl;
         while (pj < pi && pm < pr) {
-            if (Tag::template cmp<reverse>(pm, pj, len)) {
+            if (npy::cmp<Tag, reverse>(pm, pj, len)) {
                 Tag::copy(pk, pm, len);
                 pm += len;
                 pk += len;
@@ -212,7 +212,7 @@ mergesort0_(type *pl, type *pr, type *pw, type *vp, size_t len)
             Tag::copy(vp, pi, len);
             pj = pi;
             pk = pi - len;
-            while (pj > pl && Tag::template cmp<reverse>(vp, pk, len)) {
+            while (pj > pl && npy::cmp<Tag, reverse>(vp, pk, len)) {
                 Tag::copy(pj, pk, len);
                 pj -= len;
                 pk -= len;
@@ -275,7 +275,7 @@ amergesort0_(npy_intp *pl, npy_intp *pr, type *v, npy_intp *pw, size_t len)
         pj = pw;
         pk = pl;
         while (pj < pi && pm < pr) {
-            if (Tag::template cmp<reverse>(v + (*pm) * len, v + (*pj) * len, len)) {
+            if (npy::cmp<Tag, reverse>(v + (*pm) * len, v + (*pj) * len, len)) {
                 *pk++ = *pm++;
             }
             else {
@@ -293,7 +293,7 @@ amergesort0_(npy_intp *pl, npy_intp *pr, type *v, npy_intp *pw, size_t len)
             vp = v + vi * len;
             pj = pi;
             pk = pi - 1;
-            while (pj > pl && Tag::template cmp<reverse>(vp, v + (*pk) * len, len)) {
+            while (pj > pl && npy::cmp<Tag, reverse>(vp, v + (*pk) * len, len)) {
                 *pj-- = *pk--;
             }
             *pj = vi;

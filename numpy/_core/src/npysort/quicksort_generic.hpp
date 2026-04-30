@@ -102,13 +102,13 @@ quicksort_(type *start, npy_intp num)
         while ((pr - pl) > SMALL_QUICKSORT) {
             /* quicksort partition */
             pm = pl + ((pr - pl) >> 1);
-            if (Tag::template cmp<reverse>(*pm, *pl)) {
+            if (npy::cmp<Tag, reverse>(*pm, *pl)) {
                 std::swap(*pm, *pl);
             }
-            if (Tag::template cmp<reverse>(*pr, *pm)) {
+            if (npy::cmp<Tag, reverse>(*pr, *pm)) {
                 std::swap(*pr, *pm);
             }
-            if (Tag::template cmp<reverse>(*pm, *pl)) {
+            if (npy::cmp<Tag, reverse>(*pm, *pl)) {
                 std::swap(*pm, *pl);
             }
             vp = *pm;
@@ -118,10 +118,10 @@ quicksort_(type *start, npy_intp num)
             for (;;) {
                 do {
                     ++pi;
-                } while (Tag::template cmp<reverse>(*pi, vp));
+                } while (npy::cmp<Tag, reverse>(*pi, vp));
                 do {
                     --pj;
-                } while (Tag::template cmp<reverse>(vp, *pj));
+                } while (npy::cmp<Tag, reverse>(vp, *pj));
                 if (pi >= pj) {
                     break;
                 }
@@ -148,7 +148,7 @@ quicksort_(type *start, npy_intp num)
             vp = *pi;
             pj = pi;
             pk = pi - 1;
-            while (pj > pl && Tag::template cmp<reverse>(vp, *pk)) {
+            while (pj > pl && npy::cmp<Tag, reverse>(vp, *pk)) {
                 *pj-- = *pk--;
             }
             *pj = vp;
@@ -163,6 +163,14 @@ quicksort_(type *start, npy_intp num)
     }
 
     return 0;
+}
+
+// ``PyArray_SortFunc``-shaped trampoline.
+template <typename Tag, typename type, bool reverse = false>
+static int
+quicksort_impl(void *start, npy_intp num, void *NPY_UNUSED(varr))
+{
+    return quicksort_<Tag, type, reverse>((type *)start, num);
 }
 
 template <typename Tag, typename type, bool reverse = false>
@@ -188,13 +196,13 @@ aquicksort_(type *vv, npy_intp *tosort, npy_intp num)
         while ((pr - pl) > SMALL_QUICKSORT) {
             /* quicksort partition */
             pm = pl + ((pr - pl) >> 1);
-            if (Tag::template cmp<reverse>(v[*pm], v[*pl])) {
+            if (npy::cmp<Tag, reverse>(v[*pm], v[*pl])) {
                 std::swap(*pm, *pl);
             }
-            if (Tag::template cmp<reverse>(v[*pr], v[*pm])) {
+            if (npy::cmp<Tag, reverse>(v[*pr], v[*pm])) {
                 std::swap(*pr, *pm);
             }
-            if (Tag::template cmp<reverse>(v[*pm], v[*pl])) {
+            if (npy::cmp<Tag, reverse>(v[*pm], v[*pl])) {
                 std::swap(*pm, *pl);
             }
             vp = v[*pm];
@@ -204,10 +212,10 @@ aquicksort_(type *vv, npy_intp *tosort, npy_intp num)
             for (;;) {
                 do {
                     ++pi;
-                } while (Tag::template cmp<reverse>(v[*pi], vp));
+                } while (npy::cmp<Tag, reverse>(v[*pi], vp));
                 do {
                     --pj;
-                } while (Tag::template cmp<reverse>(vp, v[*pj]));
+                } while (npy::cmp<Tag, reverse>(vp, v[*pj]));
                 if (pi >= pj) {
                     break;
                 }
@@ -235,7 +243,7 @@ aquicksort_(type *vv, npy_intp *tosort, npy_intp num)
             vp = v[vi];
             pj = pi;
             pk = pi - 1;
-            while (pj > pl && Tag::template cmp<reverse>(vp, v[*pk])) {
+            while (pj > pl && npy::cmp<Tag, reverse>(vp, v[*pk])) {
                 *pj-- = *pk--;
             }
             *pj = vi;
@@ -250,6 +258,15 @@ aquicksort_(type *vv, npy_intp *tosort, npy_intp num)
     }
 
     return 0;
+}
+
+// ``PyArray_ArgSortFunc``-shaped trampoline.
+template <typename Tag, typename type, bool reverse = false>
+static int
+aquicksort_impl(void *vv, npy_intp *tosort, npy_intp num,
+                void *NPY_UNUSED(varr))
+{
+    return aquicksort_<Tag, type, reverse>((type *)vv, tosort, num);
 }
 
 /*
@@ -289,13 +306,13 @@ string_quicksort_(type *start, npy_intp num, int elsize)
         while ((size_t)(pr - pl) > SMALL_QUICKSORT * len) {
             /* quicksort partition */
             pm = pl + (((pr - pl) / len) >> 1) * len;
-            if (Tag::template cmp<reverse>(pm, pl, len)) {
+            if (npy::cmp<Tag, reverse>(pm, pl, len)) {
                 Tag::swap(pm, pl, len);
             }
-            if (Tag::template cmp<reverse>(pr, pm, len)) {
+            if (npy::cmp<Tag, reverse>(pr, pm, len)) {
                 Tag::swap(pr, pm, len);
             }
-            if (Tag::template cmp<reverse>(pm, pl, len)) {
+            if (npy::cmp<Tag, reverse>(pm, pl, len)) {
                 Tag::swap(pm, pl, len);
             }
             Tag::copy(vp, pm, len);
@@ -305,10 +322,10 @@ string_quicksort_(type *start, npy_intp num, int elsize)
             for (;;) {
                 do {
                     pi += len;
-                } while (Tag::template cmp<reverse>(pi, vp, len));
+                } while (npy::cmp<Tag, reverse>(pi, vp, len));
                 do {
                     pj -= len;
-                } while (Tag::template cmp<reverse>(vp, pj, len));
+                } while (npy::cmp<Tag, reverse>(vp, pj, len));
                 if (pi >= pj) {
                     break;
                 }
@@ -335,7 +352,7 @@ string_quicksort_(type *start, npy_intp num, int elsize)
             Tag::copy(vp, pi, len);
             pj = pi;
             pk = pi - len;
-            while (pj > pl && Tag::template cmp<reverse>(vp, pk, len)) {
+            while (pj > pl && npy::cmp<Tag, reverse>(vp, pk, len)) {
                 Tag::copy(pj, pk, len);
                 pj -= len;
                 pk -= len;
@@ -384,13 +401,13 @@ string_aquicksort_(type *vv, npy_intp *tosort, npy_intp num, int elsize)
         while ((pr - pl) > SMALL_QUICKSORT) {
             /* quicksort partition */
             pm = pl + ((pr - pl) >> 1);
-            if (Tag::template cmp<reverse>(v + (*pm) * len, v + (*pl) * len, len)) {
+            if (npy::cmp<Tag, reverse>(v + (*pm) * len, v + (*pl) * len, len)) {
                 std::swap(*pm, *pl);
             }
-            if (Tag::template cmp<reverse>(v + (*pr) * len, v + (*pm) * len, len)) {
+            if (npy::cmp<Tag, reverse>(v + (*pr) * len, v + (*pm) * len, len)) {
                 std::swap(*pr, *pm);
             }
-            if (Tag::template cmp<reverse>(v + (*pm) * len, v + (*pl) * len, len)) {
+            if (npy::cmp<Tag, reverse>(v + (*pm) * len, v + (*pl) * len, len)) {
                 std::swap(*pm, *pl);
             }
             vp = v + (*pm) * len;
@@ -400,10 +417,10 @@ string_aquicksort_(type *vv, npy_intp *tosort, npy_intp num, int elsize)
             for (;;) {
                 do {
                     ++pi;
-                } while (Tag::template cmp<reverse>(v + (*pi) * len, vp, len));
+                } while (npy::cmp<Tag, reverse>(v + (*pi) * len, vp, len));
                 do {
                     --pj;
-                } while (Tag::template cmp<reverse>(vp, v + (*pj) * len, len));
+                } while (npy::cmp<Tag, reverse>(vp, v + (*pj) * len, len));
                 if (pi >= pj) {
                     break;
                 }
@@ -431,7 +448,7 @@ string_aquicksort_(type *vv, npy_intp *tosort, npy_intp num, int elsize)
             vp = v + vi * len;
             pj = pi;
             pk = pi - 1;
-            while (pj > pl && Tag::template cmp<reverse>(vp, v + (*pk) * len, len)) {
+            while (pj > pl && npy::cmp<Tag, reverse>(vp, v + (*pk) * len, len)) {
                 *pj-- = *pk--;
             }
             *pj = vi;
