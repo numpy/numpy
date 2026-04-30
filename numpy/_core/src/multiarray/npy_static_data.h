@@ -56,6 +56,7 @@ typedef struct npy_interned_str_struct {
     PyObject *partition;
     PyObject *argpartition;
     PyObject *_set_dtype;
+    PyObject *register_;
 } npy_interned_str_struct;
 
 /*

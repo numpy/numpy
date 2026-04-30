@@ -77,6 +77,7 @@ intern_strings(void)
     INTERN_STRING(partition, "partition");
     INTERN_STRING(argpartition, "argpartition");
     INTERN_STRING(_set_dtype, "_set_dtype");
+    INTERN_STRING(register_, "register");
     return 0;
 }
 
