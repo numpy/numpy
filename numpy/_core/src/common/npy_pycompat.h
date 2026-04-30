@@ -6,7 +6,10 @@
 
 #define Npy_HashDouble _Py_HashDouble
 
-/* No-op fallback for ``PyUnstable_SetImmortal`` on Python < 3.13. */
+/*
+ * No-op fallback for ``PyUnstable_SetImmortal`` on Python < 3.13, use
+ * `PyUnstable_SetImmortal` directly when only targeting free-threaded.
+ */
 static inline int
 NpyUnstable_SetImmortal(PyObject *op)
 {
