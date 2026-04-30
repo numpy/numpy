@@ -7221,9 +7221,9 @@ def argsort(a, axis=np._NoValue, kind=None, order=None, endwith=True,
 
     if isinstance(a, MaskedArray):
         return a.argsort(axis=axis, kind=kind, order=order, endwith=endwith,
-                         fill_value=fill_value, stable=None, descending=descending)
+                         fill_value=fill_value, stable=stable, descending=descending)
     else:
-        return a.argsort(axis=axis, kind=kind, order=order, stable=None,
+        return a.argsort(axis=axis, kind=kind, order=order, stable=stable,
                          descending=descending)
 
 
