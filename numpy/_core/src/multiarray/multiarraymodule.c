@@ -5155,8 +5155,31 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
 
+    /* Create all abstract DType classes */
+    if (initialize_abstract_dtypes() < 0) {
+        return -1;
+    }
+
     /* Finalize scalar types and expose them via namespace or typeinfo dict */
     if (set_typeinfo(d) != 0) {
+        return -1;
+    }
+
+    /*
+     * Map ``str``/``bytes``/``bool`` to the matching legacy DTypes.  Done
+     * after ``set_typeinfo`` since that is what wraps those DTypes.
+     */
+    PyArray_DTypeMeta *dt;
+    dt = typenum_to_dtypemeta(NPY_UNICODE);
+    if (_PyArray_MapPyTypeToDType(dt, &PyUnicode_Type, NPY_FALSE) < 0) {
+        return -1;
+    }
+    dt = typenum_to_dtypemeta(NPY_STRING);
+    if (_PyArray_MapPyTypeToDType(dt, &PyBytes_Type, NPY_FALSE) < 0) {
+        return -1;
+    }
+    dt = typenum_to_dtypemeta(NPY_BOOL);
+    if (_PyArray_MapPyTypeToDType(dt, &PyBool_Type, NPY_FALSE) < 0) {
         return -1;
     }
 
@@ -5174,10 +5197,6 @@ _multiarray_umath_exec(PyObject *m) {
             d, "_array_converter",
             (PyObject *)&PyArrayArrayConverter_Type);
 
-    if (initialize_and_map_pytypes_to_dtypes() < 0) {
-        return -1;
-    }
-
     if (PyArray_InitializeCasts() < 0) {
         return -1;
     }
@@ -5194,13 +5213,11 @@ _multiarray_umath_exec(PyObject *m) {
     if (PyDataMem_DefaultHandler == NULL) {
         return -1;
     }
-#ifdef Py_GIL_DISABLED
-    if (PyUnstable_SetImmortal(PyDataMem_DefaultHandler) == 0) {
+    if (NpyUnstable_SetImmortal(PyDataMem_DefaultHandler) == 0) {
         PyErr_SetString(PyExc_RuntimeError,
                         "Could not mark memory handler capsule as immortal");
         return -1;
     }
-#endif
     /*
      * Initialize the context-local current handler
      * with the default PyDataMem_Handler capsule.

@@ -472,6 +472,8 @@ def _needs_add_docstring(obj):
 
 
 def _add_docstring(obj, doc, warn_on_python):
+    doc = inspect.cleandoc(doc)
+
     if warn_on_python and not _needs_add_docstring(obj):
         warnings.warn(
             f"add_newdoc was used on a pure-python object {obj}. "
@@ -479,7 +481,20 @@ def _add_docstring(obj, doc, warn_on_python):
             UserWarning,
             stacklevel=3)
 
-    doc = inspect.cleandoc(doc)
+    # For types, try to assign ``__doc__`` directly (works for heap types).
+    # When that succeeds, ``add_docstring`` only needs to populate
+    # ``__text_signature__`` from any ``"\n--\n\n"`` stub.  Static types
+    # (where ``__doc__`` is read-only) fall through unchanged.
+    if isinstance(obj, type):
+        head, sep, body = doc.partition("\n--\n\n")
+        try:
+            obj.__doc__ = body if sep else doc
+        except Exception:
+            pass  # just assume we should use add_docstring.
+        else:
+            if not sep:
+                return
+            doc = head + sep  # set only text-signature part
 
     try:
         add_docstring(obj, doc)

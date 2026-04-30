@@ -234,15 +234,7 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
         return -1;
     }
 
-    /*
-     * Legacy user DTypes classes cannot have a name, since the user never
-     * defined one.  So we create a name for them here. These DTypes are
-     * effectively static types.
-     *
-     * Note: we have no intention of freeing the memory again since this
-     * behaves identically to static type definition.
-     */
-
+    /* Build a name for the dynamically created new DType class. */
     const char *scalar_name = descr_proto->typeobj->tp_name;
     /*
      * We have to take only the name, and ignore the module to get
@@ -308,13 +300,13 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
     descr_proto->type_num = typenum;
     PyArray_DTypeMeta *wrapped_dtype = dtypemeta_wrap_legacy_descriptor(
         descr, descr_proto->f, &PyArrayDescr_Type, name, NULL);
+    PyMem_Free(name);
     if (wrapped_dtype == NULL) {
         descr->type_num = -1;
         NPY_NUMUSERTYPES--;
         /* Override the type, it might be wrong and then decref crashes */
         Py_SET_TYPE(descr, &PyArrayDescr_Type);
         Py_DECREF(descr);
-        PyMem_Free(name);  /* free the name only on failure */
         return -1;
     }
     if (use_void_clearimpl) {

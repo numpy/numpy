@@ -11,6 +11,7 @@
 #include <numpy/npy_math.h>
 
 #include "npy_import.h"
+#include "npy_pycompat.h"
 
 #include "abstractdtypes.h"
 #include "arraytypes.h"
@@ -43,32 +44,6 @@ dtypemeta_dealloc(PyArray_DTypeMeta *self) {
     Py_XDECREF(NPY_DT_SLOTS(self)->castingimpls);
     PyMem_Free(self->dt_slots);
     PyType_Type.tp_dealloc((PyObject *) self);
-}
-
-static PyObject *
-dtypemeta_alloc(PyTypeObject *NPY_UNUSED(type), Py_ssize_t NPY_UNUSED(items))
-{
-    PyErr_SetString(PyExc_TypeError,
-            "DTypes can only be created using the NumPy API.");
-    return NULL;
-}
-
-static PyObject *
-dtypemeta_new(PyTypeObject *NPY_UNUSED(type),
-        PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds))
-{
-    PyErr_SetString(PyExc_TypeError,
-            "Preliminary-API: Cannot subclass DType.");
-    return NULL;
-}
-
-static int
-dtypemeta_init(PyTypeObject *NPY_UNUSED(type),
-        PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds))
-{
-    PyErr_SetString(PyExc_TypeError,
-            "Preliminary-API: Cannot __init__ DType class.");
-    return -1;
 }
 
 static PyArray_DTypeMeta *
@@ -412,15 +387,6 @@ dtypemeta_is_gc(PyObject *dtype_class)
 static int
 dtypemeta_traverse(PyArray_DTypeMeta *type, visitproc visit, void *arg)
 {
-    /*
-     * We have to traverse the base class (if it is a HeapType).
-     * PyType_Type will handle this logic for us.
-     * This function is currently not used, but will probably be necessary
-     * in the future when we implement HeapTypes (python/dynamically
-     * defined types). It should be revised at that time.
-     */
-    assert(0);
-    assert(!NPY_DT_is_legacy(type) && (PyTypeObject *)type != &PyArrayDescr_Type);
     Py_VISIT(type->singleton);
     Py_VISIT(type->scalar_type);
     return PyType_Type.tp_traverse((PyObject *)type, visit, arg);
@@ -1060,26 +1026,7 @@ object_common_dtype(
 
 /**
  * This function takes a PyArray_Descr and replaces its base class with
- * a newly created dtype subclass (DTypeMeta instances).
- * There are some subtleties that need to be remembered when doing this,
- * first for the class objects itself it could be either a HeapType or not.
- * Since we are defining the DType from C, we will not make it a HeapType,
- * thus making it identical to a typical *static* type (except that we
- * malloc it). We could do it the other way, but there seems no reason to
- * do so.
- *
- * The DType instances (the actual dtypes or descriptors), are based on
- * prototypes which are passed in. These should not be garbage collected
- * and thus Py_TPFLAGS_HAVE_GC is not set. (We could allow this, but than
- * would have to allocate a new object, since the GC needs information before
- * the actual struct).
- *
- * The above is the reason why we should works exactly like we would for a
- * static type here.
- * Otherwise, we blurry the lines between C-defined extension classes
- * and Python subclasses. e.g. `class MyInt(int): pass` is very different
- * from our `class Float64(np.dtype): pass`, because the latter should not
- * be a HeapType and its instances should be exact PyArray_Descr structs.
+ * a newly created DType (a heap type subclass of ``PyArray_DTypeMeta``).
  *
  * @param descr The descriptor that should be wrapped.
  * @param name The name for the DType.
@@ -1128,46 +1075,27 @@ dtypemeta_wrap_legacy_descriptor(
     memset(dt_slots, '\0', sizeof(NPY_DType_Slots));
     dt_slots->get_constant = default_get_constant;
 
-    PyArray_DTypeMeta *dtype_class = PyMem_Malloc(sizeof(PyArray_DTypeMeta));
+    PyType_Slot type_slots[] = {
+        {Py_tp_new, (void *)legacy_dtype_default_new},
+        {Py_tp_base, dtype_super_class},
+        {0, NULL},
+    };
+    PyType_Spec spec = {
+        .name = name,
+        .basicsize = sizeof(_PyArray_LegacyDescr),
+        .itemsize = 0,
+        .flags = Py_TPFLAGS_DEFAULT|Py_TPFLAGS_IMMUTABLETYPE,
+        .slots = type_slots,
+    };
+    PyArray_DTypeMeta *dtype_class = (PyArray_DTypeMeta *)PyType_FromMetaclass(
+            &PyArrayDTypeMeta_Type, NULL, &spec, NULL);
     if (dtype_class == NULL) {
         PyMem_Free(dt_slots);
-        PyErr_NoMemory();
         return NULL;
     }
-
-    /*
-     * Initialize the struct fields identically to static code by copying
-     * a prototype instances for everything except our own fields which
-     * vary between the DTypes.
-     * In particular any Object initialization must be strictly copied from
-     * the untouched prototype to avoid complexities.
-     * Any Type slots need to be fixed before PyType_Ready, although most
-     * will be inherited automatically there.
-     */
-    static PyArray_DTypeMeta prototype = {
-        {{
-            PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
-            .tp_name = NULL,  /* set below */
-            .tp_basicsize = sizeof(_PyArray_LegacyDescr),
-            .tp_flags = Py_TPFLAGS_DEFAULT,
-            .tp_base = NULL,  /* set below */
-            .tp_new = (newfunc)legacy_dtype_default_new,
-            .tp_doc = NULL,  /* set in python */
-        },},
-        .flags = NPY_DT_LEGACY,
-        /* Further fields are not common between DTypes */
-    };
-    memcpy(dtype_class, &prototype, sizeof(PyArray_DTypeMeta));
-    /* Fix name and superclass of the Type*/
-    ((PyTypeObject *)dtype_class)->tp_name = name;
-    ((PyTypeObject *)dtype_class)->tp_base = dtype_super_class,
     dtype_class->dt_slots = dt_slots;
+    dtype_class->flags = NPY_DT_LEGACY;
 
-    /* Let python finish the initialization */
-    if (PyType_Ready((PyTypeObject *)dtype_class) < 0) {
-        Py_DECREF(dtype_class);
-        return NULL;
-    }
     dt_slots->castingimpls = PyDict_New();
     if (dt_slots->castingimpls == NULL) {
         Py_DECREF(dtype_class);
@@ -1284,6 +1212,7 @@ dtypemeta_wrap_legacy_descriptor(
         }
     }
 
+    NpyUnstable_SetImmortal((PyObject *)dtype_class);
     return dtype_class;
 }
 
@@ -1371,16 +1300,19 @@ NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
     .tp_name = "numpy._DTypeMeta",
     .tp_basicsize = sizeof(PyArray_DTypeMeta),
     .tp_dealloc = (destructor)dtypemeta_dealloc,
-    /* Types are garbage collected (see dtypemeta_is_gc documentation) */
-    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
+    /*
+     * Types are garbage collected (see dtypemeta_is_gc documentation).
+     * ``Py_TPFLAGS_DISALLOW_INSTANTIATION`` blocks Python-level subclassing;
+     * a custom ``tp_new`` is not allowed because ``PyType_FromMetaclass``
+     * forbids it on the metaclass.
+     */
+    .tp_flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC
+                 | Py_TPFLAGS_DISALLOW_INSTANTIATION),
     .tp_doc = "Preliminary NumPy API: The Type of NumPy DTypes (metaclass)",
     .tp_traverse = (traverseproc)dtypemeta_traverse,
     .tp_members = dtypemeta_members,
     .tp_getset = dtypemeta_getset,
     .tp_base = NULL,  /* set to PyType_Type at import time */
-    .tp_init = (initproc)dtypemeta_init,
-    .tp_alloc = dtypemeta_alloc,
-    .tp_new = dtypemeta_new,
     .tp_is_gc = dtypemeta_is_gc,
 };
 
