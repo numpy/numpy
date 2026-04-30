@@ -485,12 +485,10 @@ PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private)
         return NULL;
     }
     strcpy(res->method->name, spec->name);
-#ifdef Py_GIL_DISABLED
     // Mark immortal to reduce reference count contention in PyArray_GetCastingImpl
     // If we ever allow replacing ArrayMethod objects or cleanup it DTypes or ufuncs, this may need to be reconsidered.
     // An alternative that might help is to store cast methods in a PyArrayIdentityHash instead of a dict.
-    PyUnstable_SetImmortal((PyObject *)res->method);
-#endif
+    NpyUnstable_SetImmortal((PyObject *)res->method);
     return res;
 }
 
