@@ -5633,6 +5633,8 @@ class MaskedArray(ndarray):
             If ``fill_value`` is not None, it supersedes ``endwith``.
         stable : bool, optional
             Only for compatibility with ``np.argsort``. Ignored.
+        descending : bool, optional
+            Only for compatibility with ``np.sort``. Ignored.
 
         Returns
         -------
@@ -5805,6 +5807,8 @@ class MaskedArray(ndarray):
             Value used internally for the masked values.
             If ``fill_value`` is not None, it supersedes ``endwith``.
         stable : bool, optional
+            Only for compatibility with ``np.sort``. Ignored.
+        descending : bool, optional
             Only for compatibility with ``np.sort``. Ignored.
 
         See Also

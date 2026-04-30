@@ -968,6 +968,13 @@ def sort(a, axis=-1, kind=None, order=None, *, stable=None, descending=None):
         this option selects ``kind='stable'``. Default: ``None``.
 
         .. versionadded:: 2.0.0
+    descending : bool, optional
+        Sort order. If ``True``, the returned array will be sorted in
+        descending order. If ``False`` or ``None``, the returned array will
+        be sorted in ascending order. Values that are NaN are sorted to the
+        end for both orders. Default: ``None``.
+
+        .. versionadded:: 2.5.0
 
     Returns
     -------
@@ -1135,6 +1142,13 @@ def argsort(a, axis=-1, kind=None, order=None, *, stable=None, descending=None):
         this option selects ``kind='stable'``. Default: ``None``.
 
         .. versionadded:: 2.0.0
+    descending : bool, optional
+        Sort order. If ``True``, the returned array will be sorted in
+        descending order. If ``False`` or ``None``, the returned array will
+        be sorted in ascending order. Values that are NaN are sorted to the
+        end for both orders. Default: ``None``.
+
+        .. versionadded:: 2.5.0
 
     Returns
     -------
