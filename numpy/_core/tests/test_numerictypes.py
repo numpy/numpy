@@ -462,6 +462,39 @@ class TestIsDType:
         else:
             assert not np.isdtype(dtype, dtype_group)
 
+    def test_isdtype_abstract_dtype_kind(self):
+        # New pattern: ``kind`` may be an abstract DType class such as
+        # ``np.dtypes.IntegerAbstractDType``.
+        IA = np.dtypes.IntegerAbstractDType
+        FA = np.dtypes.FloatAbstractDType
+        NA = np.dtypes.NumericAbstractDType
+
+        # dtype instance and scalar type input forms:
+        for arg in [np.dtype('int64'), np.int64]:
+            assert np.isdtype(arg, IA)
+            assert np.isdtype(arg, NA)
+            assert not np.isdtype(arg, FA)
+            # Tuple containing both DType classes and string groups still
+            # works:
+            assert np.isdtype(arg, (FA, "integral"))
+            assert np.isdtype(arg, (FA, IA))
+            assert not np.isdtype(arg, (FA, "complex floating"))
+
+        # Concrete DType class as kind:
+        assert np.isdtype(np.int64, np.dtypes.Int64DType)
+        assert not np.isdtype(np.int64, np.dtypes.Int32DType)
+
+    def test_isdtype_string_kind_uses_dtype_hierarchy(self):
+        from numpy._core._rational_tests import rational
+
+        rational_dtype = type(np.dtype(rational))
+        np.dtypes.NumericAbstractDType.register(rational_dtype)
+        np.dtypes.IntegerAbstractDType.register(rational_dtype)
+
+        assert np.isdtype(np.dtype(rational), "integral")
+        assert np.isdtype(np.dtype(rational), "numeric")
+        assert not np.isdtype(np.dtype(rational), "real floating")
+
     def test_isdtype_invalid_args(self):
         with assert_raises_regex(TypeError, r".*must be a NumPy dtype.*"):
             np.isdtype("int64", np.int64)
