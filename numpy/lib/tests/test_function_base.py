@@ -3106,6 +3106,7 @@ class TestInterp:
         assert_raises(ValueError, interp, 0, [0, 1], [1, 2], period=0)
         assert_raises(ValueError, interp, 0, [], [], period=360)
         assert_raises(ValueError, interp, 0, [0], [1, 2], period=360)
+        assert_raises(ValueError, interp, [], [], [3, 4, 5])
 
     def test_empty_x(self):
         # gh-30316

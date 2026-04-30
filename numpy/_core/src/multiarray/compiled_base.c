@@ -573,10 +573,13 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
         goto fail;
     }
     lenxp = PyArray_SIZE(axp);
+    lenx = PyArray_SIZE(ax);
     if (lenxp == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                "array of sample points is empty");
-        goto fail;
+        if (lenx != 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "array of sample points is empty");
+            goto fail;
+        }
     }
     if (PyArray_SIZE(afp) != lenxp) {
         PyErr_SetString(PyExc_ValueError,
@@ -589,7 +592,12 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
     if (af == NULL) {
         goto fail;
     }
-    lenx = PyArray_SIZE(ax);
+    if (lenx == 0) {
+        Py_DECREF(afp);
+        Py_DECREF(axp);
+        Py_DECREF(ax);
+        return PyArray_Return(af);
+    }
 
     dy = (const npy_double *)PyArray_DATA(afp);
     dx = (const npy_double *)PyArray_DATA(axp);
@@ -746,10 +754,13 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
         goto fail;
     }
     lenxp = PyArray_SIZE(axp);
+    lenx = PyArray_SIZE(ax);
     if (lenxp == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                "array of sample points is empty");
-        goto fail;
+        if (lenx != 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "array of sample points is empty");
+            goto fail;
+        }
     }
     if (PyArray_SIZE(afp) != lenxp) {
         PyErr_SetString(PyExc_ValueError,
@@ -757,7 +768,6 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
         goto fail;
     }
 
-    lenx = PyArray_SIZE(ax);
     dx = (const npy_double *)PyArray_DATA(axp);
     dz = (const npy_double *)PyArray_DATA(ax);
 
@@ -765,6 +775,12 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
                                             PyArray_DIMS(ax), NPY_CDOUBLE);
     if (af == NULL) {
         goto fail;
+    }
+    if (lenx == 0) {
+        Py_DECREF(afp);
+        Py_DECREF(axp);
+        Py_DECREF(ax);
+        return PyArray_Return(af);
     }
 
     dy = (const npy_cdouble *)PyArray_DATA(afp);
