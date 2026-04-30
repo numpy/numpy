@@ -3642,7 +3642,7 @@ def argsort(
     fill_value: _ScalarLike_co | None = None,
     *,
     stable: bool | None = None,
-    descending: bool = False,
+    descending: bool | None = None,
 ) -> _Array1D[np.intp]: ...
 @overload  # MaskedArray, axis: None
 def argsort(
@@ -3654,7 +3654,7 @@ def argsort(
     fill_value: _ScalarLike_co | None = None,
     *,
     stable: bool | None = None,
-    descending: bool = False,
+    descending: bool | None = None,
 ) -> _Masked1D[np.intp]: ...
 @overload  # MaskedArray, axis: int-like
 def argsort(
@@ -3666,7 +3666,7 @@ def argsort(
     fill_value: _ScalarLike_co | None = None,
     *,
     stable: bool | None = None,
-    descending: bool = False,
+    descending: bool | None = None,
 ) -> _MaskedArray[np.intp]: ...
 @overload  # array-like, axis: None
 def argsort(
@@ -3678,7 +3678,7 @@ def argsort(
     fill_value: _ScalarLike_co | None = None,
     *,
     stable: bool | None = None,
-    descending: bool = False,
+    descending: bool | None = None,
 ) -> _Array1D[np.intp]: ...
 @overload  # array-like, axis: int-like
 def argsort(
@@ -3690,7 +3690,7 @@ def argsort(
     fill_value: _ScalarLike_co | None = None,
     *,
     stable: bool | None = None,
-    descending: bool = False,
+    descending: bool | None = None,
 ) -> NDArray[np.intp]: ...
 
 #
