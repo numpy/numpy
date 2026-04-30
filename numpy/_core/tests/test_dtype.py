@@ -1249,7 +1249,7 @@ class TestDTypeMakeCanonical:
 
 class TestPickling:
 
-    def check_pickling(self, dtype):
+    def check_pickling(self, dtype, arr_assert=True):
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             buf = pickle.dumps(dtype, proto)
             # The dtype pickling itself pickles `np.dtype` if it is pickled
@@ -1259,22 +1259,25 @@ class TestPickling:
             pickled = pickle.loads(buf)
             assert_equal(pickled, dtype)
             assert_equal(pickled.descr, dtype.descr)
+            assert_equal(pickled.itemsize, dtype.itemsize)
             if dtype.metadata is not None:
                 assert_equal(pickled.metadata, dtype.metadata)
             # Check the reconstructed dtype is functional
             x = np.zeros(3, dtype=dtype)
             y = np.zeros(3, dtype=pickled)
-            assert_equal(x, y)
-            assert_equal(x[0], y[0])
+            # some large structured dtypes are too large to
+            # reasonably compare across all elements
+            if arr_assert:
+                assert_equal(x, y)
+                assert_equal(x[0], y[0])
 
-    @pytest.mark.slow()
     @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
     def test_pickling_large(self):
         # The actual itemsize is larger than a c-integer here.
         dtype = np.dtype(f"({2**31},)i")
-        self.check_pickling(dtype)
+        self.check_pickling(dtype, False)
         dtype = np.dtype(f"({2**31},)i", metadata={"a": "b"})
-        self.check_pickling(dtype)
+        self.check_pickling(dtype, False)
 
     @pytest.mark.parametrize('t', [int, float, complex, np.int32, str, object,
                                    bool])
