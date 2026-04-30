@@ -2050,11 +2050,19 @@ class TestDTypeSignatures:
 
 @pytest.mark.parametrize("kind, exp", [
     ([("x", np.float64, 2 ** 28)], (2 ** 28 * 8)),
+    ([("x", np.float64, 2 ** 27), ("y", np.float64, 2 ** 27)], (2 ** 28 * 8)),
+    ([("x", np.float32, 2 ** 28), ("y", np.float64, 2 ** 27)], (2 ** 28 * 8)),
+    ([("x", np.float16, 2 ** 29), ("y", np.float64, 2 ** 27)], (2 ** 28 * 8)),
     ("2147483648i,2147483648i", 17179869184),
+    ("2147483648f,2147483648f", 17179869184),
+    ("2147483648d,2147483648d", 34359738368),
+    ("2b,2147483648b,2f,4i", 2147483674),
     (dict(names=["a"], formats=["2147483648i"]), 8589934592),
     (dict(names=["a"], formats=["2147483648i"], offsets=[1]), 8589934593),
     (dict(names=["a"], formats=["2147483648i"], offsets=[2 ** 31 - 100]), 10737418140),
     (dict(names=["a"], formats=["2147483648i"], offsets=[2 ** 31]), 10737418240),
+    (dict(names=["a", "b", "c"], formats=["2147483648b", "16i", "12f"],
+     offsets=[2 ** 31, 2 ** 32, 2 ** 32 + 69]), 4294967413),
 ])
 def test_gh_31308(kind, exp):
     kind_dtype = np.dtype(kind)
