@@ -84,6 +84,12 @@ template <typename Tag, typename type, bool reverse = false>
 static int
 quicksort_(type *start, npy_intp num)
 {
+    if constexpr (!reverse && Tag::has_sort_dispatch) {
+        if (quicksort_dispatch((type *)start, num)) {
+            return 0;
+        }
+    }
+
     type vp;
     type *pl = start;
     type *pr = pl + num - 1;
@@ -177,6 +183,12 @@ template <typename Tag, typename type, bool reverse = false>
 static int
 aquicksort_(type *vv, npy_intp *tosort, npy_intp num)
 {
+    if constexpr (!reverse && Tag::has_argsort_dispatch) {
+        if (aquicksort_dispatch((type *)vv, tosort, num)) {
+            return 0;
+        }
+    }
+
     type *v = vv;
     type vp;
     npy_intp *pl = tosort;
