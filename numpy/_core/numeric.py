@@ -2678,7 +2678,6 @@ def astype(x, dtype, /, *, copy=True, device=None):
     return x.astype(dtype, copy=copy)
 
 
-
 inf = PINF
 nan = NAN
 False_ = nt.bool(False)
