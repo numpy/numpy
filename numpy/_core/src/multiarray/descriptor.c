@@ -1315,6 +1315,13 @@ _convert_from_dict(PyObject *obj, int align)
             Py_DECREF(new);
             goto fail;
         }
+        if (itemsize != new->elsize) {
+            /*
+             * astropy relied on "holes" at the end not being used until this
+             * is fixed we cannot optimize the path as a full dtype copy.
+             */
+            new->flags |= NPY_NOT_TRIVIALLY_COPYABLE;
+        }
         /* Set the itemsize */
         new->elsize = itemsize;
     }
