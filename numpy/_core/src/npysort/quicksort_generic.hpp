@@ -85,8 +85,8 @@ static int
 quicksort_(type *start, npy_intp num)
 {
     if constexpr (!reverse && Tag::has_sort_dispatch) {
-        using dispatch_type = std::conditional_t<std::is_same_v<type, npy_half>, np::Half, type>;
-        if (quicksort_dispatch((dispatch_type *)start, num)) {
+        using T = typename std::conditional<std::is_same_v<Tag, npy::half_tag>, np::Half, typename Tag::type>::type;
+        if (quicksort_dispatch((T *)start, num)) {
             return 0;
         }
     }
