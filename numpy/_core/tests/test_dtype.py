@@ -2071,6 +2071,8 @@ class TestDTypeSignatures:
 def test_gh_31308(kind, exp):
     kind_dtype = np.dtype(kind)
     assert kind_dtype.itemsize == exp
+    for name in kind_dtype.names:
+        assert kind_dtype[name].shape[0] > 0
 
 
 @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
