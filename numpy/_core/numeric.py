@@ -2665,7 +2665,7 @@ def astype(x, dtype, /, *, copy=True, device=None):
     """
     if not isinstance(x, (np.ndarray, np.generic)):
         raise TypeError(
-            "Input should be a NumPy array or scalar. "
+            "Input should be a NumPy array or a NumPy scalar. "
             f"It is a {type(x)} instead."
         )
     if device is not None and device != "cpu":
