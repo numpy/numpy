@@ -628,6 +628,21 @@ class TestRecord:
         assert arr.dtype.hasobject  # but claims to contain objects
         del arr  # the deletion failed previously.
 
+    def test_structured_out_of_range(self):
+        # This test should be able to fail as an optimization, but astropy
+        # relied on the non-optimized behavior.
+        # A future version could force astropy to either fix the code or
+        # introduce a kwarg to disable the optimization default. But for now
+        # we avoid the astropy regression.
+        # The following dtype cannot be assumed to just include padding
+        dtype = np.dtype(dict(names=["a"], formats=["i4"], itemsize=8))
+        raw_arr = np.zeros(10, dtype="i8")
+        arr1 = raw_arr.view(dtype)
+        arr2 = np.full(10, -1, dtype="i8").view(dtype)
+        # This should only fill in the i4 field of `dtype`:
+        arr1[...] = arr2
+        assert (raw_arr.view("i4")[1::2] == 0).all()
+
 
 class TestSubarray:
     def test_single_subarray(self):
