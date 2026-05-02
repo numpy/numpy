@@ -1,12 +1,12 @@
 """ Test printing of scalar types.
 
 """
-import platform
 
 import pytest
 
 import numpy as np
 from numpy.testing import IS_MUSL, assert_, assert_equal, assert_raises
+from numpy.testing._private.utils import LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE
 
 
 class TestRealScalars:
@@ -329,8 +329,8 @@ class TestRealScalars:
         assert_equal(fsci(tp('1.0'), unique=False, precision=4),
                         "1.0000e+00")
 
-    @pytest.mark.skipif(not platform.machine().startswith("ppc64"),
-                        reason="only applies to ppc float128 values")
+    @pytest.mark.skipif(not LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE,
+                        reason="only applies to ppc double-double values")
     def test_ppc64_ibm_double_double128(self):
         # check that the precision decreases once we get into the subnormal
         # range. Unlike float64, this starts around 1e-292 instead of 1e-308,
