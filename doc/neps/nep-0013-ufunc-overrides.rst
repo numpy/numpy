@@ -632,28 +632,28 @@ Ufuncs used by :class:`ndarray` and
 ====== ============ =========================================
 Symbol Operator     NumPy Ufunc(s)
 ====== ============ =========================================
-``<``  ``lt``       ``less``
-``<=`` ``le``       ``less_equal``
-``==`` ``eq``       ``equal``
-``!=`` ``ne``       ``not_equal``
-``>``  ``gt``       ``greater``
-``>=`` ``ge``       ``greater_equal``
-``+``  ``add``      ``add``
-``-``  ``sub``      ``subtract``
-``*``  ``mul``      ``multiply``
-``/``  ``truediv``  ``true_divide``
+``<``  ``lt``       :func:`~numpy.less`
+``<=`` ``le``       :func:`~numpy.less_equal`
+``==`` ``eq``       :func:`~numpy.equal`
+``!=`` ``ne``       :func:`~numpy.not_equal`
+``>``  ``gt``       :func:`~numpy.greater`
+``>=`` ``ge``       :func:`~numpy.greater_equal`
+``+``  ``add``      :func:`~numpy.add`
+``-``  ``sub``      :func:`~numpy.subtract`
+``*``  ``mul``      :func:`~numpy.multiply`
+``/``  ``truediv``  :func:`~numpy.true_divide`
        (Python 3)
-``/``  ``div``      ``divide``
+``/``  ``div``      :func:`~numpy.divide`
        (Python 2)
-``//`` ``floordiv`` ``floor_divide``
-``%``  ``mod``      ``remainder``
-NA     ``divmod``   ``divmod``
-``**`` ``pow``      ``power`` [10]_
-``<<`` ``lshift``   ``left_shift``
-``>>`` ``rshift``   ``right_shift``
-``&``  ``and_``     ``bitwise_and``
-``^``  ``xor_``     ``bitwise_xor``
-``|``  ``or_``      ``bitwise_or``
+``//`` ``floordiv`` :func:`~numpy.floor_divide`
+``%``  ``mod``      :func:`~numpy.remainder`
+NA     ``divmod``   :func:`~numpy.divmod`
+``**`` ``pow``      :func:`~numpy.power` [10]_
+``<<`` ``lshift``   :func:`~numpy.left_shift`
+``>>`` ``rshift``   :func:`~numpy.right_shift`
+``&``  ``and_``     :func:`~numpy.bitwise_and`
+``^``  ``xor_``     :func:`~numpy.bitwise_xor`
+``|``  ``or_``      :func:`~numpy.bitwise_or`
 ``@``  ``matmul``   Not yet implemented as a ufunc [11]_
 ====== ============ =========================================
 
@@ -662,20 +662,21 @@ And here is the list of unary operators:
 ====== ============ =========================================
 Symbol Operator     NumPy Ufunc(s)
 ====== ============ =========================================
-``-``  ``neg``      ``negative``
-``+``  ``pos``      ``positive`` [12]_
-NA     ``abs``      ``absolute``
-``~``  ``invert``   ``invert``
+``-``  ``neg``      :func:`~numpy.negative`
+``+``  ``pos``      :func:`~numpy.positive` [12]_
+NA     ``abs``      :func:`~numpy.absolute`
+``~``  ``invert``   :func:`~numpy.invert`
 ====== ============ =========================================
 
 .. [10] class :class:`ndarray` takes short cuts for ``__pow__`` for the
-        cases where the power equals ``1`` (``positive``),
-        ``-1`` (``reciprocal``), ``2`` (``square``), ``0`` (an
-        otherwise private ``_ones_like`` ufunc), and ``0.5``
-        (``sqrt``), and the array is float or complex (or integer
+        cases where the power equals ``1`` (:func:`~numpy.positive`),
+        ``-1`` (:func:`~numpy.reciprocal`), ``2`` (:func:`~numpy.square`),
+        ``0`` (an otherwise private ``_ones_like`` ufunc), and ``0.5``
+        (:func:`~numpy.sqrt`), and the array is float or complex (or integer
         for square).
 
-.. [11] Because NumPy's ``matmul`` is not a ufunc, it is
+
+.. [11] Because NumPy's :func:`~numpy.matmul` is not a ufunc, it is
         `currently not possible <https://github.com/numpy/numpy/issues/9028>`_
         to override ``numpy_array @ other`` with ``other`` taking precedence
         if ``other`` implements ``__array_func__``.
@@ -687,7 +688,7 @@ Future extensions to other functions
 
 Some NumPy functions could be implemented as (generalized) Ufunc, in
 which case it would be possible for them to be overridden by the
-``__array_ufunc__`` method. A prime candidate is ``numpy.matmul``,
+``__array_ufunc__`` method.  A prime candidate is :func:`~numpy.matmul`,
 which currently is not a Ufunc, but could be relatively easily be
 rewritten as a (set of) generalized Ufuncs. The same may happen with
 functions such as :func:`~numpy.median`, :func:`~numpy.min`, and
