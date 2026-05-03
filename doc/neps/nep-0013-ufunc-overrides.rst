@@ -321,7 +321,7 @@ implicit type casting hierarchy.
    explicitly specified.
 
 Subclasses can be easily constructed if methods consistently use
-:func:``super`` to pass through the class hierarchy [7]_.  To support
+:py:class:`super` to pass through the class hierarchy [7]_.  To support
 this, :class:`ndarray` has its own ``__array_ufunc__`` method,
 equivalent to::
 
@@ -352,11 +352,11 @@ if they have not overridden the default `ndarray` implementation. As a
 consequence, calling `ndarray.__array_ufunc__` will not result to a
 nested ufunc dispatch cycle.
 
-The use of :func:``super`` should be particularly useful for subclasses of
+The use of :py:class:`super` should be particularly useful for subclasses of
 :class:`ndarray` that only add an attribute like a unit.  In their
 `__array_ufunc__` implementation, such classes can do possible
 adjustment of the arguments relevant to their own class, and pass on to
-the superclass implementation using :func:``super`` until the ufunc is
+the superclass implementation using :py:class:`super` until the ufunc is
 actually done, and then do possible adjustments of the outputs.
 
 In general, custom implementations of `__array_ufunc__` should avoid
@@ -392,7 +392,7 @@ which both override ``__array_ufunc__``, with specific instances ``q``
 and ``ma``, where the latter contains a regular array. Executing
 ``np.multiply(q, ma)``, the ufunc will first dispatch to
 ``q.__array_ufunc__``, which returns :obj:`NotImplemented` (since the
-quantity class turns itself into an array and calls :func:``super``, which
+quantity class turns itself into an array and calls :py:class:`super`, which
 passes on to ``ndarray.__array_ufunc__``, which sees the override on
 ``ma``). Next, ``ma.__array_ufunc__`` gets a chance. It does not know
 quantity, and if it were to just return :obj:`NotImplemented` as well,
@@ -668,7 +668,7 @@ NA     ``abs``      ``absolute``
 ``~``  ``invert``   ``invert``
 ====== ============ =========================================
 
-.. [10] class :`ndarray` takes short cuts for ``__pow__`` for the
+.. [10] class :class:`ndarray` takes short cuts for ``__pow__`` for the
         cases where the power equals ``1`` (``positive``),
         ``-1`` (``reciprocal``), ``2`` (``square``), ``0`` (an
         otherwise private ``_ones_like`` ufunc), and ``0.5``
@@ -690,7 +690,8 @@ which case it would be possible for them to be overridden by the
 ``__array_ufunc__`` method. A prime candidate is ``numpy.matmul``,
 which currently is not a Ufunc, but could be relatively easily be
 rewritten as a (set of) generalized Ufuncs. The same may happen with
-functions such as ``numpy.median``, ``numpy.min``, and ``numpy.argsort``.
+functions such as :func:`~numpy.median`, :func:`~numpy.min`, and
+:func:`~numpy.argsort`.
 
 
 .. Local Variables:
