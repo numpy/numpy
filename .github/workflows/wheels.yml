@@ -51,9 +51,9 @@ jobs:
     steps:
       - name: Setup Python for riscv64
         if: matrix.buildplat[1] == 'manylinux_riscv64'
-        run: |
-          echo "/opt/python-3.12/bin" >> "$GITHUB_PATH"
-          /opt/python-3.12/bin/python3.12 -m pip install cibuildwheel==3.4.1
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
       - name: Checkout numpy
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -116,7 +116,7 @@ jobs:
 
       - name: Build wheels (riscv64)
         if: matrix.buildplat[1] == 'manylinux_riscv64'
-        run: python3 -m cibuildwheel --output-dir wheelhouse
+        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
           CIBW_TEST_COMMAND: "python -c \"import numpy; print(numpy.__version__); numpy.show_config()\""
