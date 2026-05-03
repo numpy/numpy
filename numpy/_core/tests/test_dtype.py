@@ -629,12 +629,9 @@ class TestRecord:
         del arr  # the deletion failed previously.
 
     def test_structured_out_of_range(self):
-        # This test should be able to fail as an optimization, but astropy
-        # relied on the non-optimized behavior.
-        # A future version could force astropy to either fix the code or
-        # introduce a kwarg to disable the optimization default. But for now
-        # we avoid the astropy regression.
-        # The following dtype cannot be assumed to just include padding
+        # Regression test for gh-29270 against over-eager optimization of
+        # copying of structured dtype: do not copy when dtype has holes
+        # because the itemsize was explicitly given.
         dtype = np.dtype(dict(names=["a"], formats=["i4"], itemsize=8))
         raw_arr = np.zeros(10, dtype="i8")
         arr1 = raw_arr.view(dtype)
