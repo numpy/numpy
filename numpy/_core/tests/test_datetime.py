@@ -1093,100 +1093,115 @@ class TestDateTime:
         with pytest.raises(OverflowError, match="Overflow"):
             arr_2s_big.astype("datetime64[ns]")
 
-    def test_arithmetic_overflow_safe_add_sub(self):
+    def test_arithmetic_overflow_raises_add_sub(self):
         # Add/sub on datetime64/timedelta64 must raise OverflowError instead
-        # of silently wrapping into NPY_DATETIME_NAT (which is INT64_MIN).
+        # of silently wrapping past INT64 range.  Covers all six loops:
+        # Mm_M_add, mM_M_add, mm_m_add, Mm_M_subtract, MM_m_subtract,
+        # mm_m_subtract.  One array case is included so the actual ufunc
+        # loop (not only the scalar fast path) is exercised.
         big = np.iinfo(np.int64).max
-
-        # datetime64 + timedelta64
-        dt = np.datetime64(big - 1, "s")
+        dt_pos = np.datetime64(big - 1, "s")
+        dt_neg = np.datetime64(-big + 1, "s")
         td_pos = np.timedelta64(2, "s")
+        td_big = np.timedelta64(big - 1, "s")
+        td_neg = np.timedelta64(-big + 1, "s")
+
+        # datetime64 + timedelta64 (both operand orders)
         with pytest.raises(OverflowError, match="Overflow"):
-            dt + td_pos
+            dt_pos + td_pos
         with pytest.raises(OverflowError, match="Overflow"):
-            td_pos + dt
+            td_pos + dt_pos
 
         # datetime64 - timedelta64
-        dt_neg = np.datetime64(-big + 1, "s")
         with pytest.raises(OverflowError, match="Overflow"):
             dt_neg - td_pos
 
         # datetime64 - datetime64 (result is timedelta64)
         with pytest.raises(OverflowError, match="Overflow"):
-            np.datetime64(big, "s") - np.datetime64(-big + 1, "s")
+            np.datetime64(big, "s") - dt_neg
 
         # timedelta64 + timedelta64
-        td_big = np.timedelta64(big - 1, "s")
         with pytest.raises(OverflowError, match="Overflow"):
             td_big + td_pos
 
         # timedelta64 - timedelta64
-        td_neg = np.timedelta64(-big + 1, "s")
         with pytest.raises(OverflowError, match="Overflow"):
             td_neg - td_pos
 
-        # Result that lands exactly on NPY_DATETIME_NAT (INT64_MIN) must
-        # also raise rather than silently corrupt to NaT.
-        with pytest.raises(OverflowError, match="Overflow"):
-            np.timedelta64(-big, "s") + np.timedelta64(-1, "s")
-        with pytest.raises(OverflowError, match="Overflow"):
-            np.timedelta64(-big, "s") - np.timedelta64(1, "s")
-
-        # NaT must propagate without raising in any of the above.
-        nat_dt = np.datetime64("NaT", "s")
-        nat_td = np.timedelta64("NaT", "s")
-        assert np.isnat(nat_dt + td_pos)
-        assert np.isnat(td_pos + nat_dt)
-        assert np.isnat(dt + nat_td)
-        assert np.isnat(nat_dt - td_pos)
-        assert np.isnat(nat_dt - dt)
-        assert np.isnat(nat_td + td_pos)
-        assert np.isnat(nat_td - td_pos)
-
-        # Valid boundary values should still work.
-        ok_dt = np.datetime64(big - 1, "s") + np.timedelta64(1, "s")
-        assert ok_dt == np.datetime64(big, "s")
-        ok_td = np.timedelta64(big - 1, "s") + np.timedelta64(1, "s")
-        assert ok_td == np.timedelta64(big, "s")
-
-        # Array-shaped inputs (exercise the actual ufunc loop, not just scalar).
+        # Array path -- exercises the actual strided ufunc loop.
         arr = np.array([0, big - 1, -big + 1], dtype="timedelta64[s]")
         with pytest.raises(OverflowError, match="Overflow"):
-            arr + np.timedelta64(2, "s")
+            arr + td_pos
         with pytest.raises(OverflowError, match="Overflow"):
-            arr - np.timedelta64(2, "s")
+            arr - td_pos
 
-    def test_arithmetic_overflow_safe_multiply(self):
+    def test_arithmetic_overflow_raises_multiply(self):
         # Integer multiplication of timedelta64 must raise OverflowError on
-        # signed-integer overflow (or when the result would equal NaT).
+        # signed-integer overflow.  Covers TIMEDELTA_mq_m_multiply and
+        # TIMEDELTA_qm_m_multiply.
         big = np.iinfo(np.int64).max
-
         td = np.timedelta64(big // 2 + 1, "s")
+
         with pytest.raises(OverflowError, match="Overflow"):
             td * np.int64(2)
         with pytest.raises(OverflowError, match="Overflow"):
             np.int64(2) * td
 
-        # Result that lands exactly on NPY_DATETIME_NAT (INT64_MIN):
-        # (-2**62) * 2 == -2**63 == NaT — must raise rather than corrupt.
-        td_quarter = np.timedelta64(-(1 << 62), "s")
-        with pytest.raises(OverflowError, match="Overflow"):
-            td_quarter * np.int64(2)
-
-        # NaT propagates without raising.
-        nat = np.timedelta64("NaT", "s")
-        assert np.isnat(nat * np.int64(5))
-        assert np.isnat(np.int64(5) * nat)
-
-        # Valid multiplications still work.
-        small = np.timedelta64(3, "s")
-        assert small * np.int64(7) == np.timedelta64(21, "s")
-        assert np.int64(7) * small == np.timedelta64(21, "s")
-
-        # Array path.
+        # Array path -- exercises the actual strided ufunc loop.
         arr = np.array([1, big // 2 + 1], dtype="timedelta64[s]")
         with pytest.raises(OverflowError, match="Overflow"):
             arr * np.int64(2)
+
+    def test_arithmetic_result_equals_nat_raises(self):
+        # NPY_DATETIME_NAT == INT64_MIN.  An arithmetic result that lands
+        # exactly on INT64_MIN would be silently misinterpreted as NaT, so
+        # it must raise instead.
+        big = np.iinfo(np.int64).max
+
+        # add: (-big) + (-1) == INT64_MIN
+        with pytest.raises(OverflowError, match="Overflow"):
+            np.timedelta64(-big, "s") + np.timedelta64(-1, "s")
+        # sub: (-big) - 1 == INT64_MIN
+        with pytest.raises(OverflowError, match="Overflow"):
+            np.timedelta64(-big, "s") - np.timedelta64(1, "s")
+        # mul: (-2**62) * 2 == INT64_MIN
+        with pytest.raises(OverflowError, match="Overflow"):
+            np.timedelta64(-(1 << 62), "s") * np.int64(2)
+
+    def test_arithmetic_nat_propagation(self):
+        # NaT inputs must pass through every datetime/timedelta arithmetic
+        # ufunc without raising, even now that overflow checking is on.
+        dt = np.datetime64(0, "s")
+        td = np.timedelta64(2, "s")
+        nat_dt = np.datetime64("NaT", "s")
+        nat_td = np.timedelta64("NaT", "s")
+
+        # add/sub
+        assert np.isnat(nat_dt + td)
+        assert np.isnat(td + nat_dt)
+        assert np.isnat(dt + nat_td)
+        assert np.isnat(nat_dt - td)
+        assert np.isnat(nat_dt - dt)
+        assert np.isnat(nat_td + td)
+        assert np.isnat(nat_td - td)
+
+        # multiply
+        assert np.isnat(nat_td * np.int64(5))
+        assert np.isnat(np.int64(5) * nat_td)
+
+    def test_arithmetic_valid_boundary(self):
+        # Regression guard: overflow checks must not be too aggressive --
+        # values that just barely fit must continue to work.
+        big = np.iinfo(np.int64).max
+
+        ok_dt = np.datetime64(big - 1, "s") + np.timedelta64(1, "s")
+        assert ok_dt == np.datetime64(big, "s")
+        ok_td = np.timedelta64(big - 1, "s") + np.timedelta64(1, "s")
+        assert ok_td == np.timedelta64(big, "s")
+
+        small = np.timedelta64(3, "s")
+        assert small * np.int64(7) == np.timedelta64(21, "s")
+        assert np.int64(7) * small == np.timedelta64(21, "s")
 
     def test_pyobject_roundtrip(self):
         # All datetime types should be able to roundtrip through object
