@@ -28,29 +28,35 @@ template<typename T>
 inline bool quicksort_dispatch(T *start, npy_intp num)
 {
 #if !defined(__CYGWIN__)
-    using TF = typename np::meta::FixedWidth<T>::Type;
-    void (*dispfunc)(TF*, intptr_t) = nullptr;
-    if constexpr (sizeof(T) == sizeof(uint16_t)) {
-    #if defined(NPY_CPU_AMD64) || defined(NPY_CPU_X86) // x86 32-bit and 64-bit
-        #include "x86_simd_qsort_16bit.dispatch.h"
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
-    #else
-        #include "highway_qsort_16bit.dispatch.h"
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::highway::qsort_simd::template QSort, <TF>);
-    #endif
-    }
-    else if constexpr (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) {
-    #if defined(NPY_CPU_AMD64) || defined(NPY_CPU_X86) // x86 32-bit and 64-bit
-        #include "x86_simd_qsort.dispatch.h"
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
-    #else
-        #include "highway_qsort.dispatch.h"
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::highway::qsort_simd::template QSort, <TF>);
-    #endif
-    }
-    if (dispfunc) {
-        (*dispfunc)(reinterpret_cast<TF*>(start), static_cast<intptr_t>(num));
-        return true;
+    if constexpr (
+        std::is_base_of_v<npy::floating_point_tag, T> ||
+        std::is_base_of_v<npy::integral_tag, T> ||
+        std::is_same_v<T, np::Half>
+    ) {
+        using TF = typename np::meta::FixedWidth<T>::Type;
+        void (*dispfunc)(TF*, intptr_t) = nullptr;
+        if constexpr (sizeof(T) == sizeof(uint16_t)) {
+        #if defined(NPY_CPU_AMD64) || defined(NPY_CPU_X86) // x86 32-bit and 64-bit
+            #include "x86_simd_qsort_16bit.dispatch.h"
+            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
+        #else
+            #include "highway_qsort_16bit.dispatch.h"
+            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::highway::qsort_simd::template QSort, <TF>);
+        #endif
+        }
+        else if constexpr (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) {
+        #if defined(NPY_CPU_AMD64) || defined(NPY_CPU_X86) // x86 32-bit and 64-bit
+            #include "x86_simd_qsort.dispatch.h"
+            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
+        #else
+            #include "highway_qsort.dispatch.h"
+            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::highway::qsort_simd::template QSort, <TF>);
+        #endif
+        }
+        if (dispfunc) {
+            (*dispfunc)(reinterpret_cast<TF*>(start), static_cast<intptr_t>(num));
+            return true;
+        }
     }
 #endif // __CYGWIN__
     (void)start; (void)num; // to avoid unused arg warn
@@ -61,13 +67,20 @@ template<typename T>
 inline bool aquicksort_dispatch(T *start, npy_intp* arg, npy_intp num)
 {
 #if !defined(__CYGWIN__)
-    using TF = typename np::meta::FixedWidth<T>::Type;
-    void (*dispfunc)(TF*, npy_intp*, npy_intp) = nullptr;
-    #include "x86_simd_argsort.dispatch.h"
-    NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template ArgQSort, <TF>);
-    if (dispfunc) {
-        (*dispfunc)(reinterpret_cast<TF*>(start), arg, num);
-        return true;
+    if constexpr (
+        std::is_base_of_v<npy::floating_point_tag, T> ||
+        std::is_base_of_v<npy::integral_tag, T>
+    ) {
+        using TF = typename np::meta::FixedWidth<T>::Type;
+        void (*dispfunc)(TF*, npy_intp*, npy_intp) = nullptr;
+        if constexpr (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) {
+            #include "x86_simd_argsort.dispatch.h"
+            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template ArgQSort, <TF>);
+        }
+        if (dispfunc) {
+            (*dispfunc)(reinterpret_cast<TF*>(start), arg, num);
+            return true;
+        }
     }
 #endif // __CYGWIN__
     (void)start; (void)arg; (void)num; // to avoid unused arg warn
@@ -84,7 +97,7 @@ template <typename Tag, typename type, bool reverse = false>
 static int
 quicksort_(type *start, npy_intp num)
 {
-    if constexpr (!reverse && Tag::has_sort_dispatch) {
+    if constexpr (!reverse) {
         using T = typename std::conditional<std::is_same_v<Tag, npy::half_tag>, np::Half, typename Tag::type>::type;
         if (quicksort_dispatch((T *)start, num)) {
             return 0;
@@ -184,7 +197,7 @@ template <typename Tag, typename type, bool reverse = false>
 static int
 aquicksort_(type *vv, npy_intp *tosort, npy_intp num)
 {
-    if constexpr (!reverse && Tag::has_argsort_dispatch) {
+    if constexpr (!reverse){
         if (aquicksort_dispatch((type *)vv, tosort, num)) {
             return 0;
         }

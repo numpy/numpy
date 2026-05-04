@@ -46,18 +46,16 @@ struct floating_point_tag {};
 struct complex_tag {};
 struct date_tag {};
 
-template <typename T, NPY_TYPES TypeNum, bool HasSortDispatch = false, bool HasArgSortDispatch = false>
+template <typename T, NPY_TYPES TypeNum>
 struct integral_type : integral_tag {
     using type = T;
     static constexpr NPY_TYPES type_value = TypeNum;
     static int less(T a, T b) { return a < b; }
     static int less_equal(T a, T b) { return !(b < a); }
     static int greater(T a, T b) { return a > b; }
-    static constexpr bool has_sort_dispatch = HasSortDispatch;
-    static constexpr bool has_argsort_dispatch = HasArgSortDispatch;
 };
 
-template <typename T, NPY_TYPES TypeNum, bool HasSortDispatch = false, bool HasArgSortDispatch = false>
+template <typename T, NPY_TYPES TypeNum>
 struct floating_point_type : floating_point_tag {
     using type = T;
     static constexpr NPY_TYPES type_value = TypeNum;
@@ -68,8 +66,6 @@ struct floating_point_type : floating_point_tag {
     // NaN sorts to the end in reverse too: ``a`` is "greater than" ``b``
     // if ``a`` is non-NaN and either ``b < a`` or ``b`` is NaN.
     static int greater(T a, T b) { return a > b || (b != b && a == a); }
-    static constexpr bool has_sort_dispatch = HasSortDispatch;
-    static constexpr bool has_argsort_dispatch = HasArgSortDispatch;
 };
 
 // Half is its own per-type tag; no template since there is only one half
@@ -116,9 +112,6 @@ struct half_tag {
         }
         return !isnan(a) && lt_nonan(b, a);
     }
-
-    static constexpr bool has_sort_dispatch = true;
-    static constexpr bool has_argsort_dispatch = false;
 };
 
 template <typename T, NPY_TYPES TypeNum>
@@ -173,9 +166,6 @@ struct complex_type : complex_tag {
         }
         return ra != ra;
     }
-
-    static constexpr bool has_sort_dispatch = false;
-    static constexpr bool has_argsort_dispatch = false;
 };
 
 template <typename T, NPY_TYPES TypeNum>
@@ -197,9 +187,6 @@ struct datetime_type : date_tag {
         if (b == NPY_DATETIME_NAT) return 1;
         return b < a;
     }
-
-    static constexpr bool has_sort_dispatch = false;
-    static constexpr bool has_argsort_dispatch = false;
 };
 
 // String / unicode tags work on runtime-length blocks.  Comparison is
@@ -243,25 +230,22 @@ struct string_like_type {
     {
         return less(b, a, n);
     }
-
-    static constexpr bool has_sort_dispatch = false;
-    static constexpr bool has_argsort_dispatch = false;
 };
 
 // Concrete tags consumed by callers.
 using bool_tag        = integral_type<npy_bool,        NPY_BOOL>;
 using byte_tag        = integral_type<npy_byte,        NPY_BYTE>;
 using ubyte_tag       = integral_type<npy_ubyte,       NPY_UBYTE>;
-using short_tag       = integral_type<npy_short,       NPY_SHORT,           true, false>;
-using ushort_tag      = integral_type<npy_ushort,      NPY_USHORT,          true, false>;
-using int_tag         = integral_type<npy_int,         NPY_INT,             true,  true>;
-using uint_tag        = integral_type<npy_uint,        NPY_UINT,            true,  true>;
-using long_tag        = integral_type<npy_long,        NPY_LONG,            true,  true>;
-using ulong_tag       = integral_type<npy_ulong,       NPY_ULONG,           true,  true>;
-using longlong_tag    = integral_type<npy_longlong,    NPY_LONGLONG,        true,  true>;
-using ulonglong_tag   = integral_type<npy_ulonglong,   NPY_ULONGLONG,       true,  true>;
-using float_tag       = floating_point_type<npy_float,       NPY_FLOAT,     true,  true>;
-using double_tag      = floating_point_type<npy_double,      NPY_DOUBLE,    true,  true>;
+using short_tag       = integral_type<npy_short,       NPY_SHORT>;
+using ushort_tag      = integral_type<npy_ushort,      NPY_USHORT>;
+using int_tag         = integral_type<npy_int,         NPY_INT>;
+using uint_tag        = integral_type<npy_uint,        NPY_UINT>;
+using long_tag        = integral_type<npy_long,        NPY_LONG>;
+using ulong_tag       = integral_type<npy_ulong,       NPY_ULONG>;
+using longlong_tag    = integral_type<npy_longlong,    NPY_LONGLONG>;
+using ulonglong_tag   = integral_type<npy_ulonglong,   NPY_ULONGLONG>;
+using float_tag       = floating_point_type<npy_float,       NPY_FLOAT>;
+using double_tag      = floating_point_type<npy_double,      NPY_DOUBLE>;
 using longdouble_tag  = floating_point_type<npy_longdouble,  NPY_LONGDOUBLE>;
 using cfloat_tag      = complex_type<npy_cfloat,      NPY_CFLOAT>;
 using cdouble_tag     = complex_type<npy_cdouble,     NPY_CDOUBLE>;
