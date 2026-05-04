@@ -1315,24 +1315,19 @@ _convert_from_dict(PyObject *obj, int align)
             Py_DECREF(new);
             goto fail;
         }
-        if (itemsize != new->elsize) {
-            /*
-             * astropy relied on "holes" at the end not being used until this
-             * is fixed we cannot optimize the path as a full dtype copy.
-             */
-            new->flags |= NPY_NOT_TRIVIALLY_COPYABLE;
-        }
         /* Set the itemsize */
         new->elsize = itemsize;
     }
 
     /*
-     * Mark as not trivially copyable only if explicit offsets were provided
-     * and the layout has holes. Alignment padding (without explicit offsets)
-     * is safe to overwrite with memcpy.
+     * Check if anything prevents using memcpy for whole items for this dtype,
+     * i.e., whether there are any holes unrelated to alignment padding
+     * (since those holes might be used to avoid accessing/overwriting stuff).
+     * Such holes can be introduced due to choices of itemsize or offsets.
      */
-    if (offsets != NULL &&
-            !is_dtype_struct_simple_unaligned_layout((PyArray_Descr *)new)) {
+    if (new->elsize != totalsize
+        || (offsets != NULL && !is_dtype_struct_simple_unaligned_layout(
+                (PyArray_Descr *)new))) {
         new->flags |= NPY_NOT_TRIVIALLY_COPYABLE;
     }
 
