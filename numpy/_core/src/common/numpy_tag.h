@@ -169,7 +169,7 @@ struct complex_type : complex_tag {
             return ib != ib && ia == ia;
         }
         if (ra == rb || (ra != ra && rb != rb)) {
-            return ia > ib || (ia != ia && ib == ib);
+            return ia > ib || (ib != ib && ia == ia);
         }
         return ra != ra;
     }
