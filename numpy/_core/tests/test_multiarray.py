@@ -2807,6 +2807,28 @@ class TestMethods:
         a.sort(stable=stable, axis=-1, descending=descending)
         assert_equal(a, b, msg)
 
+    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
+    @pytest.mark.parametrize("stable", [True, False])
+    @pytest.mark.parametrize("descending", [True, False])
+    @pytest.mark.parametrize("randomize", [True, False])
+    def test_sort_descending_complex(self, dtype, stable, descending, randomize):
+        a = np.arange(-50, 51, dtype=dtype) + 1j * np.arange(-50, 51, dtype=dtype)
+        if not descending:
+            a = a[::-1]
+        # add nans to check that they are sorted to the end
+        a[::10] = np.nan + 1j * np.nan
+
+        b = a[::-1].copy()
+        b = np.concatenate((b[~np.isnan(b)], b[np.isnan(b)]))
+
+        if randomize:
+            rng = np.random.default_rng(0)
+            rng.shuffle(a)
+
+        msg = f"sort, dtype={dtype}, stable={stable}, descending={descending}"
+        a.sort(stable=stable, axis=-1, descending=descending)
+        assert_equal(a, b, msg)
+
     @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
     @pytest.mark.parametrize('stable', [True, False])
     @pytest.mark.parametrize('descending', [True, False])
@@ -2894,6 +2916,37 @@ class TestMethods:
     def test_argsort_descending_floats(self, dtype, stable, descending):
         a = np.linspace(-50, 50, 101, dtype=dtype)
         a[::10] = np.nan
+
+        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        msg = f"argsort, dtype={dtype}, stable={stable}, descending={descending}"
+        sorted_a = a[idx]
+        diff_sorted_a = np.diff(sorted_a[:-11])
+        assert_equal(np.isnan(sorted_a[-10:]), True, msg)  # nans at end
+        assert_equal(
+            (diff_sorted_a <= 0 if descending else diff_sorted_a >= 0),
+            True,
+            msg,
+        )
+
+        rng = np.random.default_rng(0)
+        rng.shuffle(a)
+        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        sorted_a = a[idx]
+        diff_sorted_a = np.diff(sorted_a[:-11])
+        assert_equal(np.isnan(sorted_a[-10:]), True, msg)
+        assert_equal(
+            (diff_sorted_a <= 0 if descending else diff_sorted_a >= 0),
+            True,
+            msg,
+        )
+
+    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
+    @pytest.mark.parametrize("stable", [True, False])
+    @pytest.mark.parametrize("descending", [True, False])
+    @pytest.mark.parametrize("randomize", [True, False])
+    def test_argsort_descending_complex(self, dtype, stable, descending, randomize):
+        a = np.arange(-50, 51, dtype=dtype) + 1j * np.arange(-50, 51, dtype=dtype)
+        a[::10] = np.nan + 1j * np.nan
 
         idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
         msg = f"argsort, dtype={dtype}, stable={stable}, descending={descending}"
