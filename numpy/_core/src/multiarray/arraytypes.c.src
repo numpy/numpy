@@ -4566,17 +4566,7 @@ set_typeinfo(PyObject *dict)
      * Add sorting array methods for the new types.
      */
     
-    /**begin repeat
-     * #name = bool,
-     *         byte, ubyte, short, ushort, int, uint,
-     *         long, ulong, longlong, ulonglong,
-     *         half, float, double, longdouble,
-     *         cfloat, cdouble, clongdouble,
-     *         datetime, timedelta, unicode, string#
-     */
-    register_@name@_sorts();
-
-    /**end repeat**/
+    register_all_sorts();
 
     /*
      * Add cast functions for the new types

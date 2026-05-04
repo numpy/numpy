@@ -286,115 +286,31 @@ make_string_sorts_(PyArray_DTypeMeta *dtypemeta, const char *name)
     return 0;
 }
 
-extern "C" {
-NPY_NO_EXPORT int
-register_bool_sorts()
-{
-    return make_sorts_<npy::bool_tag>(&PyArray_BoolDType, "bool");
-}
-NPY_NO_EXPORT int
-register_byte_sorts()
-{
-    return make_sorts_<npy::byte_tag>(&PyArray_ByteDType, "byte");
-}
-NPY_NO_EXPORT int
-register_ubyte_sorts()
-{
-    return make_sorts_<npy::ubyte_tag>(&PyArray_UByteDType, "ubyte");
-}
-NPY_NO_EXPORT int
-register_short_sorts()
-{
-    return make_sorts_<npy::short_tag>(&PyArray_ShortDType, "short");
-}
-NPY_NO_EXPORT int
-register_ushort_sorts()
-{
-    return make_sorts_<npy::ushort_tag>(&PyArray_UShortDType, "ushort");
-}
-NPY_NO_EXPORT int
-register_int_sorts()
-{
-    return make_sorts_<npy::int_tag>(&PyArray_IntDType, "int");
-}
-NPY_NO_EXPORT int
-register_uint_sorts()
-{
-    return make_sorts_<npy::uint_tag>(&PyArray_UIntDType, "uint");
-}
-NPY_NO_EXPORT int
-register_long_sorts()
-{
-    return make_sorts_<npy::long_tag>(&PyArray_LongDType, "long");
-}
-NPY_NO_EXPORT int
-register_ulong_sorts()
-{
-    return make_sorts_<npy::ulong_tag>(&PyArray_ULongDType, "ulong");
-}
-NPY_NO_EXPORT int
-register_longlong_sorts()
-{
-    return make_sorts_<npy::longlong_tag>(&PyArray_LongLongDType, "longlong");
-}
-NPY_NO_EXPORT int
-register_ulonglong_sorts()
-{
-    return make_sorts_<npy::ulonglong_tag>(&PyArray_ULongLongDType, "ulonglong");
-}
-NPY_NO_EXPORT int
-register_float_sorts()
-{
-    return make_sorts_<npy::float_tag>(&PyArray_FloatDType, "float");
-}
-NPY_NO_EXPORT int
-register_double_sorts()
-{
-    return make_sorts_<npy::double_tag>(&PyArray_DoubleDType, "double");
-}
-NPY_NO_EXPORT int
-register_longdouble_sorts()
-{
-    return make_sorts_<npy::longdouble_tag>(&PyArray_LongDoubleDType, "longdouble");
-}
-NPY_NO_EXPORT int
-register_cfloat_sorts()
-{
-    return make_sorts_<npy::cfloat_tag>(&PyArray_CFloatDType, "cfloat");
-}
-NPY_NO_EXPORT int
-register_cdouble_sorts()
-{
-    return make_sorts_<npy::cdouble_tag>(&PyArray_CDoubleDType, "cdouble");
-}
-NPY_NO_EXPORT int
-register_clongdouble_sorts()
-{
-    return make_sorts_<npy::clongdouble_tag>(&PyArray_CLongDoubleDType, "clongdouble");
-}
-NPY_NO_EXPORT int
-register_datetime_sorts()
-{
-    return make_sorts_<npy::datetime_tag>(&PyArray_DatetimeDType, "datetime");
-}
-NPY_NO_EXPORT int
-register_timedelta_sorts()
-{
-    return make_sorts_<npy::timedelta_tag>(&PyArray_TimedeltaDType, "timedelta");
-}
-NPY_NO_EXPORT int
-register_string_sorts()
-{
-    return make_string_sorts_<npy::string_tag>(&PyArray_BytesDType, "string");
-}
-NPY_NO_EXPORT int
-register_unicode_sorts()
-{
-    return make_string_sorts_<npy::unicode_tag>(&PyArray_UnicodeDType, "unicode");
-}
-NPY_NO_EXPORT int
-register_half_sorts()
-{
-    return make_sorts_<npy::half_tag>(&PyArray_HalfDType, "half");
-}
+int register_all_sorts() {
+    int r = 0;
+
+    r += make_sorts_<npy::bool_tag>(&PyArray_BoolDType, "bool");
+    r += make_sorts_<npy::byte_tag>(&PyArray_ByteDType, "byte");
+    r += make_sorts_<npy::ubyte_tag>(&PyArray_UByteDType, "ubyte");
+    r += make_sorts_<npy::short_tag>(&PyArray_ShortDType, "short");
+    r += make_sorts_<npy::ushort_tag>(&PyArray_UShortDType, "ushort");
+    r += make_sorts_<npy::int_tag>(&PyArray_IntDType, "int");
+    r += make_sorts_<npy::uint_tag>(&PyArray_UIntDType, "uint");
+    r += make_sorts_<npy::long_tag>(&PyArray_LongDType, "long");
+    r += make_sorts_<npy::ulong_tag>(&PyArray_ULongDType, "ulong");
+    r += make_sorts_<npy::longlong_tag>(&PyArray_LongLongDType, "longlong");
+    r += make_sorts_<npy::ulonglong_tag>(&PyArray_ULongLongDType, "ulonglong");
+    r += make_sorts_<npy::float_tag>(&PyArray_FloatDType, "float");
+    r += make_sorts_<npy::double_tag>(&PyArray_DoubleDType, "double");
+    r += make_sorts_<npy::longdouble_tag>(&PyArray_LongDoubleDType, "longdouble");
+    r += make_sorts_<npy::cfloat_tag>(&PyArray_CFloatDType, "cfloat");
+    r += make_sorts_<npy::cdouble_tag>(&PyArray_CDoubleDType, "cdouble");
+    r += make_sorts_<npy::clongdouble_tag>(&PyArray_CLongDoubleDType, "clongdouble");
+    r += make_sorts_<npy::datetime_tag>(&PyArray_DatetimeDType, "datetime");
+    r += make_sorts_<npy::timedelta_tag>(&PyArray_TimedeltaDType, "timedelta");
+    r += make_string_sorts_<npy::string_tag>(&PyArray_BytesDType, "string");
+    r += make_string_sorts_<npy::unicode_tag>(&PyArray_UnicodeDType, "unicode");
+    r += make_sorts_<npy::half_tag>(&PyArray_HalfDType, "half");
+
+    return r;
 }

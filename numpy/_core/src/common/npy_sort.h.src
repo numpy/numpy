@@ -30,18 +30,7 @@ extern "C" {
  *****************************************************************************
  */
 
-/**begin repeat
-    * #name = bool,
-    *         byte, ubyte, short, ushort, int, uint,
-    *         long, ulong, longlong, ulonglong,
-    *         half, float, double, longdouble,
-    *         cfloat, cdouble, clongdouble,
-    *         datetime, timedelta, unicode, string#
-    */
-
-NPY_NO_EXPORT int register_@name@_sorts(void);
-
-/**end repeat**/
+NPY_NO_EXPORT int register_all_sorts(void);
 
 
 /*
