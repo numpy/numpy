@@ -313,6 +313,7 @@ jobs:
         # add the expected .so -> .so.2 symlinks to fix linking
         cd ..
         for i in $( ls libmkl*.so.2 ); do ln -s $i ${i%.*}; done
+        for i in $( ls libmkl*.so.3 ); do ln -s $i ${i%.*}; done
 
     - name: Build with defaults (LP64)
       run: |
