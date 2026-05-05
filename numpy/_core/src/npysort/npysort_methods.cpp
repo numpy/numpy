@@ -3,8 +3,8 @@
 #include "npy_sort.h"
 #include "npysort_common.h"
 #include "numpy_tag.h"
-#include "quicksort_generic.hpp"
-#include "timsort_generic.hpp"
+#include "quicksort.hpp"
+#include "timsort.hpp"
 
 #include <cstdlib>
 

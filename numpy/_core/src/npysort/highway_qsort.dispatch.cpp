@@ -3,7 +3,7 @@
 #include "hwy/contrib/sort/vqsort-inl.h"
 
 #include "highway_qsort.hpp"
-#include "quicksort.hpp"
+#include "quicksort_generic.hpp"
 
 namespace np::highway::qsort_simd {
 template <typename T>
