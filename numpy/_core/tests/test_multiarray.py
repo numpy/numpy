@@ -2762,7 +2762,7 @@ class TestMethods:
             rng.shuffle(a)
 
         msg = f"sort, dtype={dtype}, stable={stable}, descending={descending}"
-        a.sort(stable=stable, axis=-1, descending=descending)
+        a.sort(stable=stable, descending=descending, axis=-1)
         assert_equal(a, b, msg)
 
     @pytest.mark.parametrize('dtype', [np.uint8, np.uint16, np.uint32, np.uint64])
@@ -2780,7 +2780,7 @@ class TestMethods:
             rng.shuffle(a)
 
         msg = f"sort, dtype={dtype}, stable={stable}, descending={descending}"
-        a.sort(stable=stable, axis=-1, descending=descending)
+        a.sort(stable=stable, descending=descending, axis=-1)
         assert_equal(a, b, msg)
 
     @pytest.mark.parametrize(
@@ -2804,7 +2804,7 @@ class TestMethods:
             rng.shuffle(a)
 
         msg = f"sort, dtype={dtype}, stable={stable}, descending={descending}"
-        a.sort(stable=stable, axis=-1, descending=descending)
+        a.sort(stable=stable, descending=descending, axis=-1)
         assert_equal(a, b, msg)
 
     @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
@@ -2826,8 +2826,45 @@ class TestMethods:
             rng.shuffle(a)
 
         msg = f"sort, dtype={dtype}, stable={stable}, descending={descending}"
-        a.sort(stable=stable, axis=-1, descending=descending)
+        a.sort(stable=stable, descending=descending, axis=-1)
         assert_equal(a, b, msg)
+
+    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
+    @pytest.mark.parametrize("stable", [True, False])
+    @pytest.mark.parametrize("descending", [True, False])
+    @pytest.mark.parametrize("random_seed", [0, 1])
+    def test_sort_descending_complex_nans(self, dtype, stable, descending, random_seed):
+        arange = np.arange(-50, 51, dtype=dtype) + 1j * np.arange(-50, 51, dtype=dtype)
+        nans = np.full(101, np.nan + 1j * np.nan, dtype=dtype)
+
+        no_nans = arange + 1j * arange
+        im_nans = arange + 1j * nans
+        re_nans = nans + 1j * arange
+        all_nans = nans + 1j * nans
+
+        a = np.concatenate((no_nans, im_nans, re_nans, all_nans))
+        immask = np.isnan(a.imag)
+        remask = np.isnan(a.real)
+
+        rng = np.random.default_rng(random_seed)
+        rng.shuffle(a)
+
+        # check that nans are sorted to the end with lexicographic ordering
+        # no nans -> imaginary nans only -> real nans only -> all nans
+        a.sort(stable=stable, descending=descending, axis=-1)
+        immask_sorted = np.isnan(a.imag)
+        remask_sorted = np.isnan(a.real)
+
+        assert_equal(
+            immask_sorted,
+            immask,
+            f"imag nans mask, dtype={dtype}, stable={stable}, descending={descending}",
+        )
+        assert_equal(
+            remask_sorted,
+            remask,
+            f"real nans mask, dtype={dtype}, stable={stable}, descending={descending}",
+        )
 
     @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
     @pytest.mark.parametrize('stable', [True, False])
@@ -2845,7 +2882,7 @@ class TestMethods:
             rng.shuffle(a)
 
         msg = f"sort, dtype={dtype}, stable={stable}, descending={descending}"
-        a.sort(stable=stable, axis=-1, descending=descending)
+        a.sort(stable=stable, descending=descending, axis=-1)
         assert_equal(a, b, msg)
 
     @pytest.mark.parametrize('dtype', [np.str_, np.bytes_])
@@ -2863,7 +2900,7 @@ class TestMethods:
             rng.shuffle(a)
 
         msg = f"sort, dtype={dtype}, stable={stable}, descending={descending}"
-        a.sort(stable=stable, axis=-1, descending=descending)
+        a.sort(stable=stable, descending=descending, axis=-1)
         assert_equal(a, b, msg)
 
     @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64])
@@ -2873,13 +2910,13 @@ class TestMethods:
         a = np.arange(-51, 50, dtype=dtype)
 
         expected = np.arange(len(a) - 1, -1, -1) if descending else np.arange(len(a))
-        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        idx = np.argsort(a, stable=stable, descending=descending, axis=-1)
         msg = f"argsort, dtype={dtype}, stable={stable}, descending={descending}"
         assert_equal(idx, expected, msg)
 
         rng = np.random.default_rng(0)
         rng.shuffle(a)
-        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        idx = np.argsort(a, stable=stable, descending=descending, axis=-1)
         sorted_a = (
             np.arange(49, -52, -1, dtype=dtype)
             if descending
@@ -2894,13 +2931,13 @@ class TestMethods:
         a = np.arange(0, 101, dtype=dtype)
 
         expected = np.arange(len(a) - 1, -1, -1) if descending else np.arange(len(a))
-        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        idx = np.argsort(a, stable=stable, descending=descending, axis=-1)
         msg = f"argsort, dtype={dtype}, stable={stable}, descending={descending}"
         assert_equal(idx, expected, msg)
 
         rng = np.random.default_rng(0)
         rng.shuffle(a)
-        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        idx = np.argsort(a, stable=stable, descending=descending, axis=-1)
         sorted_a = (
             np.arange(100, -1, -1, dtype=dtype)
             if descending
@@ -2917,7 +2954,7 @@ class TestMethods:
         a = np.linspace(-50, 50, 101, dtype=dtype)
         a[::10] = np.nan
 
-        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        idx = np.argsort(a, stable=stable, descending=descending, axis=-1)
         msg = f"argsort, dtype={dtype}, stable={stable}, descending={descending}"
         sorted_a = a[idx]
         diff_sorted_a = np.diff(sorted_a[:-11])
@@ -2930,7 +2967,7 @@ class TestMethods:
 
         rng = np.random.default_rng(0)
         rng.shuffle(a)
-        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        idx = np.argsort(a, stable=stable, descending=descending, axis=-1)
         sorted_a = a[idx]
         diff_sorted_a = np.diff(sorted_a[:-11])
         assert_equal(np.isnan(sorted_a[-10:]), True, msg)
@@ -2948,7 +2985,7 @@ class TestMethods:
         a = np.arange(-50, 51, dtype=dtype) + 1j * np.arange(-50, 51, dtype=dtype)
         a[::10] = np.nan + 1j * np.nan
 
-        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        idx = np.argsort(a, stable=stable, descending=descending, axis=-1)
         msg = f"argsort, dtype={dtype}, stable={stable}, descending={descending}"
         sorted_a = a[idx]
         diff_sorted_a = np.diff(sorted_a[:-11])
@@ -2961,7 +2998,7 @@ class TestMethods:
 
         rng = np.random.default_rng(0)
         rng.shuffle(a)
-        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        idx = np.argsort(a, stable=stable, descending=descending, axis=-1)
         sorted_a = a[idx]
         diff_sorted_a = np.diff(sorted_a[:-11])
         assert_equal(np.isnan(sorted_a[-10:]), True, msg)
@@ -2978,13 +3015,13 @@ class TestMethods:
         a = np.arange(0, 101, dtype=dtype)
 
         expected = np.arange(len(a) - 1, -1, -1) if descending else np.arange(len(a))
-        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        idx = np.argsort(a, stable=stable, descending=descending, axis=-1)
         msg = f"argsort, dtype={dtype}, stable={stable}, descending={descending}"
         assert_equal(idx, expected, msg)
 
         rng = np.random.default_rng(0)
         rng.shuffle(a)
-        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        idx = np.argsort(a, stable=stable, descending=descending, axis=-1)
         a_sorted = np.arange(0, 101, dtype=dtype)
         if descending:
             a_sorted = a_sorted[::-1].copy()
@@ -2997,13 +3034,13 @@ class TestMethods:
         a = np.array([f"{i:03d}" for i in range(101)], dtype=dtype)
 
         expected = np.arange(len(a) - 1, -1, -1) if descending else np.arange(len(a))
-        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        idx = np.argsort(a, stable=stable, descending=descending, axis=-1)
         msg = f"argsort, dtype={dtype}, stable={stable}, descending={descending}"
         assert_equal(idx, expected, msg)
 
         rng = np.random.default_rng(0)
         rng.shuffle(a)
-        idx = np.argsort(a, stable=stable, axis=-1, descending=descending)
+        idx = np.argsort(a, stable=stable, descending=descending, axis=-1)
         sorted_a = np.array([f"{i:03d}" for i in range(101)], dtype=dtype)
         if descending:
             sorted_a = sorted_a[::-1].copy()
