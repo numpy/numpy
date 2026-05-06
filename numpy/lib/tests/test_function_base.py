@@ -4456,6 +4456,38 @@ class TestLerp:
         assert nfb._lerp(a, b, t) == 2.6
 
 
+class TestGMean:
+
+    def test_basic(self):
+        a0 = np.array(1)
+        a1 = np.arange(1, 3)
+        a2 = np.arange(1, 7).reshape(2, 3)
+        assert_equal(np.gmean(a0), 1)
+        assert_allclose(np.gmean(a1), np.sqrt(2))
+        assert_allclose(np.gmean(a2), 2.605171084697352)
+        assert_allclose(np.gmean(a2, axis=0), [1.73205081, 2.44948974, 3.16227766])
+        assert_allclose(np.gmean(a2, axis=1), [1.81712059, 4.16016765])
+        assert_allclose(np.gmean(a2, axis=None), 2.605171084697352)
+
+    def test_axis_keyword(self):
+        a3 = np.array([[2, 3],
+                       [0, 1],
+                       [6, 7],
+                       [4, 5]])
+        for a in [a3, np.random.randint(1, 100, size=(2, 3, 4))]:
+            orig = a.copy()
+            np.gmean(a, axis=None)
+            for ax in range(a.ndim):
+                np.gmean(a, axis=ax)
+            assert_array_equal(a, orig)
+
+        assert_allclose(np.gmean(a3, axis=0), [2.88449914, 3.91486764])
+        assert_allclose(np.gmean(a3.T, axis=1), [2.88449914, 3.91486764])
+        assert_allclose(np.gmean(a3), 2.60517108)
+        assert_allclose(np.gmean(a3, axis=None), 2.60517108)
+        assert_allclose(np.gmean(a3.T), 2.60517108)
+
+
 class TestMedian:
 
     def test_basic(self):

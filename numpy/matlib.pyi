@@ -207,6 +207,7 @@ from numpy import (  # noqa: F401
     getbufsize,
     geterr,
     geterrcall,
+    gmean,
     gradient,
     greater,
     greater_equal,

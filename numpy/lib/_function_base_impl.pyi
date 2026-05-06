@@ -62,6 +62,7 @@ __all__ = [
     "digitize",
     "cov",
     "corrcoef",
+    "gmean",
     "median",
     "sinc",
     "hamming",
@@ -1352,6 +1353,123 @@ def sinc(x: _ArrayLikeComplex_co) -> np.ndarray | Any: ...
 
 # NOTE: We assume that `axis` is only provided for >=1-D arrays because for <1-D arrays
 # it has no effect, and would complicate the overloads significantly.
+@overload  # known scalar-type, keepdims=False (default)
+def gmean[ScalarT: np.inexact | np.timedelta64](
+    a: _ArrayLike[ScalarT],
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> ScalarT: ...
+@overload  # float array-like, keepdims=False (default)
+def gmean(
+    a: _ArrayLikeInt_co | _SeqND[float] | float,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> np.float64: ...
+@overload  # complex array-like, keepdims=False (default)
+def gmean(
+    a: _ListSeqND[complex],
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> np.complex128: ...
+@overload  # complex scalar, keepdims=False (default)
+def gmean(
+    a: complex,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> np.complex128 | Any: ...
+@overload  # known array-type, keepdims=True
+def gmean[ArrayT: NDArray[_ScalarNumeric]](
+    a: ArrayT,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    *,
+    keepdims: L[True],
+) -> ArrayT: ...
+@overload  # known scalar-type, keepdims=True
+def gmean[ScalarT: _ScalarNumeric](
+    a: _ArrayLike[ScalarT],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    *,
+    keepdims: L[True],
+) -> NDArray[ScalarT]: ...
+@overload  # known scalar-type, axis=<given>
+def gmean[ScalarT: _ScalarNumeric](
+    a: _ArrayLike[ScalarT],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> NDArray[ScalarT]: ...
+@overload  # float array-like, keepdims=True
+def gmean(
+    a: _SeqND[float],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    *,
+    keepdims: L[True],
+) -> NDArray[np.float64]: ...
+@overload  # float array-like, axis=<given>
+def gmean(
+    a: _SeqND[float],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> NDArray[np.float64]: ...
+@overload  # complex array-like, keepdims=True
+def gmean(
+    a: _ListSeqND[complex],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    *,
+    keepdims: L[True],
+) -> NDArray[np.complex128]: ...
+@overload  # complex array-like, axis=<given>
+def gmean(
+    a: _ListSeqND[complex],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> NDArray[np.complex128]: ...
+@overload  # out=<given> (keyword)
+def gmean[ArrayT: np.ndarray](
+    a: _ArrayLikeComplex_co | _ArrayLike[np.timedelta64 | np.object_],
+    axis: _ShapeLike | None = None,
+    *,
+    out: ArrayT,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> ArrayT: ...
+@overload  # out=<given> (positional)
+def gmean[ArrayT: np.ndarray](
+    a: _ArrayLikeComplex_co | _ArrayLike[np.timedelta64 | np.object_],
+    axis: _ShapeLike | None,
+    out: ArrayT,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> ArrayT: ...
+@overload  # fallback
+def gmean(
+    a: _ArrayLikeComplex_co | _ArrayLike[np.timedelta64 | np.object_],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> Incomplete: ...
 @overload  # known scalar-type, keepdims=False (default)
 def median[ScalarT: np.inexact | np.timedelta64](
     a: _ArrayLike[ScalarT],

@@ -22,6 +22,7 @@ Averages and variances
 .. autosummary::
    :toctree: generated/
 
+   gmean
    median
    average
    mean

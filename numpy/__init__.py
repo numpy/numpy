@@ -491,6 +491,7 @@ else:
         interp,
         iterable,
         kaiser,
+        gmean,
         median,
         meshgrid,
         percentile,
