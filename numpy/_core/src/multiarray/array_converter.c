@@ -348,8 +348,8 @@ array_converter_result_type(PyArrayArrayConverterObject *self,
                     "extra_dtype and ensure_inexact are mutually exclusive.");
             goto finish;
         }
-        Py_INCREF(&PyArray_PyFloatDType);
-        dt_info.dtype = &PyArray_PyFloatDType;
+        Py_INCREF(PyArray_PyFloatDTypePtr);
+        dt_info.dtype = PyArray_PyFloatDTypePtr;
     }
 
     if (dt_info.dtype != NULL) {

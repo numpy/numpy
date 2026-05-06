@@ -807,9 +807,9 @@ PyArrayMethod_Context and PyArrayMethod_Spec
 PyArray_DTypeMeta and PyArrayDTypeMeta_Spec
 -------------------------------------------
 
-.. c:var:: PyTypeObject PyArrayDTypeMeta_Type
+.. c:var:: PyTypeObject PyArrayDTypeMeta_TypePtr
 
-   The python type object corresponding to :c:type:`PyArray_DTypeMeta`.
+   A pointer to the python type object corresponding to :c:type:`PyArray_DTypeMeta`.
 
 .. c:type:: PyArray_DTypeMeta
 
@@ -919,10 +919,10 @@ Exposed DTypes classes (``PyArray_DTypeMeta`` objects)
 ------------------------------------------------------
 
 For use with promoters, NumPy exposes a number of Dtypes following the
-pattern ``PyArray_<Name>DType`` corresponding to those found in `np.dtypes`.
+pattern ``PyArray_<Name>DTypePtr`` corresponding to those found in `np.dtypes`.
 
-Additionally, the three DTypes, ``PyArray_PyLongDType``,
-``PyArray_PyFloatDType``, ``PyArray_PyComplexDType`` correspond to the
+Additionally, the three DTypes, ``PyArray_PyLongDTypePtr``,
+``PyArray_PyFloatDTypePtr``, ``PyArray_PyComplexDTypePtr`` correspond to the
 Python scalar values.  These cannot be used in all places, but do allow
 for example the common dtype operation and implementing promotion with them
 may be necessary.
@@ -930,14 +930,16 @@ may be necessary.
 Further, the following abstract DTypes are defined which cover both the
 builtin NumPy ones and the python ones, and users can in principle subclass
 from them (this does not inherit any DType specific functionality):
-* ``PyArray_IntAbstractDType``
-* ``PyArray_FloatAbstractDType``
-* ``PyArray_ComplexAbstractDType``
+* ``PyArray_IntAbstractDTypePtr``
+* ``PyArray_FloatAbstractDTypePtr``
+* ``PyArray_ComplexAbstractDTypePtr``
 
 .. warning::
     As of NumPy 2.0, the *only* valid use for these DTypes is registering a
     promoter conveniently to e.g. match "any integers" (and subclass checks).
-    Because of this, they are not exposed to Python.
+    Because of this, they are not exposed to Python. From NumPy 2.0 to 2.5 they
+    were exposed without the `Ptr` suffix, at some point the non-pointer version
+    will be removed.
 
 
 PyUFunc_Type and PyUFuncObject

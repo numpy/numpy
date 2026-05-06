@@ -1891,7 +1891,11 @@ typedef struct {
      * Part of this (at least the size) is expected to be public API without
      * further modifications.
      */
-    /* TODO: Make this definition public in the API, as soon as its settled */
+    NPY_NO_EXPORT extern PyTypeObject *PyArrayDTypeMeta_TypePtr;
+    /*
+     * This is made public in _public_dtype_api_table.h via the PyArray_API table,
+     * where it is a dereferenced pointer. Maybe deprecate at some point.
+     */
     NPY_NO_EXPORT extern PyTypeObject PyArrayDTypeMeta_Type;
 
     /*

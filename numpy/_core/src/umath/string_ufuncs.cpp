@@ -857,8 +857,8 @@ string_findlike_promoter(PyObject *NPY_UNUSED(ufunc),
     new_op_dtypes[0] = op_dtypes[0];
     Py_INCREF(op_dtypes[1]);
     new_op_dtypes[1] = op_dtypes[1];
-    new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_Int64DType);
-    new_op_dtypes[3] = NPY_DT_NewRef(&PyArray_Int64DType);
+    new_op_dtypes[2] = NPY_DT_NewRef(PyArray_Int64DTypePtr);
+    new_op_dtypes[3] = NPY_DT_NewRef(PyArray_Int64DTypePtr);
     new_op_dtypes[4] = PyArray_DTypeFromTypeNum(NPY_DEFAULT_INT);
     return 0;
 }
@@ -933,9 +933,9 @@ string_startswith_endswith_promoter(PyObject *NPY_UNUSED(ufunc),
     new_op_dtypes[0] = op_dtypes[0];
     Py_INCREF(op_dtypes[1]);
     new_op_dtypes[1] = op_dtypes[1];
-    new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_Int64DType);
-    new_op_dtypes[3] = NPY_DT_NewRef(&PyArray_Int64DType);
-    new_op_dtypes[4] = NPY_DT_NewRef(&PyArray_BoolDType);
+    new_op_dtypes[2] = NPY_DT_NewRef(PyArray_Int64DTypePtr);
+    new_op_dtypes[3] = NPY_DT_NewRef(PyArray_Int64DTypePtr);
+    new_op_dtypes[4] = NPY_DT_NewRef(PyArray_BoolDTypePtr);
     return 0;
 }
 
@@ -947,7 +947,7 @@ string_expandtabs_length_promoter(PyObject *NPY_UNUSED(ufunc),
 {
     Py_XINCREF(op_dtypes[0]);
     new_op_dtypes[0] = op_dtypes[0];
-    new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_Int64DType);
+    new_op_dtypes[1] = NPY_DT_NewRef(PyArray_Int64DTypePtr);
     new_op_dtypes[2] = PyArray_DTypeFromTypeNum(NPY_DEFAULT_INT);
     return 0;
 }
@@ -960,7 +960,7 @@ string_expandtabs_promoter(PyObject *NPY_UNUSED(ufunc),
 {
     Py_INCREF(op_dtypes[0]);
     new_op_dtypes[0] = op_dtypes[0];
-    new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_Int64DType);
+    new_op_dtypes[1] = NPY_DT_NewRef(PyArray_Int64DTypePtr);
     Py_INCREF(op_dtypes[0]);
     new_op_dtypes[2] = op_dtypes[0];
     return 0;
@@ -1008,7 +1008,7 @@ string_center_ljust_rjust_promoter(PyObject *NPY_UNUSED(ufunc),
 {
     Py_INCREF(op_dtypes[0]);
     new_op_dtypes[0] = op_dtypes[0];
-    new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_Int64DType);
+    new_op_dtypes[1] = NPY_DT_NewRef(PyArray_Int64DTypePtr);
     Py_INCREF(op_dtypes[0]);
     new_op_dtypes[2] = op_dtypes[0];
     Py_INCREF(op_dtypes[0]);
@@ -1063,7 +1063,7 @@ string_zfill_promoter(PyObject *NPY_UNUSED(ufunc),
 {
     Py_INCREF(op_dtypes[0]);
     new_op_dtypes[0] = op_dtypes[0];
-    new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_Int64DType);
+    new_op_dtypes[1] = NPY_DT_NewRef(PyArray_Int64DTypePtr);
     Py_INCREF(op_dtypes[0]);
     new_op_dtypes[2] = op_dtypes[0];
     return 0;
@@ -1114,7 +1114,7 @@ string_partition_promoter(PyObject *NPY_UNUSED(ufunc),
     Py_INCREF(op_dtypes[1]);
     new_op_dtypes[1] = op_dtypes[1];
 
-    new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_Int64DType);
+    new_op_dtypes[2] = NPY_DT_NewRef(PyArray_Int64DTypePtr);
 
     Py_INCREF(op_dtypes[0]);
     new_op_dtypes[3] = op_dtypes[0];
@@ -1160,9 +1160,9 @@ string_slice_promoter(PyObject *NPY_UNUSED(ufunc),
 {
     Py_INCREF(op_dtypes[0]);
     new_op_dtypes[0] = op_dtypes[0];
-    new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_IntpDType);
-    new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_IntpDType);
-    new_op_dtypes[3] = NPY_DT_NewRef(&PyArray_IntpDType);
+    new_op_dtypes[1] = NPY_DT_NewRef(PyArray_IntpDTypePtr);
+    new_op_dtypes[2] = NPY_DT_NewRef(PyArray_IntpDTypePtr);
+    new_op_dtypes[3] = NPY_DT_NewRef(PyArray_IntpDTypePtr);
     Py_INCREF(op_dtypes[0]);
     new_op_dtypes[4] = op_dtypes[0];
     return 0;
@@ -1278,9 +1278,9 @@ static int
 init_comparison(PyObject *umath)
 {
     int res = -1;
-    PyArray_DTypeMeta *String = &PyArray_BytesDType;
-    PyArray_DTypeMeta *Unicode = &PyArray_UnicodeDType;
-    PyArray_DTypeMeta *Bool = &PyArray_BoolDType;
+    PyArray_DTypeMeta *String = PyArray_BytesDTypePtr;
+    PyArray_DTypeMeta *Unicode = PyArray_UnicodeDTypePtr;
+    PyArray_DTypeMeta *Bool = PyArray_BoolDTypePtr;
 
     /* We start with the string loops: */
     PyArray_DTypeMeta *dtypes[] = {String, String, Bool};
@@ -1371,10 +1371,10 @@ init_ufunc(PyObject *umath, const char *name, int nin, int nout,
 
     for (int i = 0; i < nin+nout; i++) {
         if (typenums[i] == NPY_OBJECT && enc == ENCODING::UTF32) {
-            dtypes[i] = NPY_DT_NewRef(&PyArray_UnicodeDType);
+            dtypes[i] = NPY_DT_NewRef(PyArray_UnicodeDTypePtr);
         }
         else if (typenums[i] == NPY_OBJECT && enc == ENCODING::ASCII) {
-            dtypes[i] = NPY_DT_NewRef(&PyArray_BytesDType);
+            dtypes[i] = NPY_DT_NewRef(PyArray_BytesDTypePtr);
         }
         else {
             dtypes[i] = PyArray_DTypeFromTypeNum(typenums[i]);

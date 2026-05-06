@@ -4149,7 +4149,7 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
         method = PyObject_GetAttr((PyObject *)&PyBytes_Type, method_name);
     }
     else if (PyArray_TYPE(char_array) == NPY_UNICODE ||
-             NPY_DTYPE(PyArray_DTYPE(char_array)) == &PyArray_StringDType) {
+             NPY_DTYPE(PyArray_DTYPE(char_array)) == PyArray_StringDTypePtr) {
         method = PyObject_GetAttr((PyObject *)&PyUnicode_Type, method_name);
     }
     else {
@@ -4999,12 +4999,12 @@ _multiarray_umath_exec(PyObject *m) {
     }
 
     PyArrayDTypeMeta_Type.tp_base = &PyType_Type;
-    if (PyType_Ready(&PyArrayDTypeMeta_Type) < 0) {
+    if (PyType_Ready(PyArrayDTypeMeta_TypePtr) < 0) {
         return -1;
     }
 
     PyArrayDescr_Type.tp_hash = PyArray_DescrHash;
-    Py_SET_TYPE(&PyArrayDescr_Type, &PyArrayDTypeMeta_Type);
+    Py_SET_TYPE(&PyArrayDescr_Type, PyArrayDTypeMeta_TypePtr);
     if (PyType_Ready(&PyArrayDescr_Type) < 0) {
         return -1;
     }
@@ -5258,10 +5258,10 @@ _multiarray_umath_exec(PyObject *m) {
 
     if (PyObject_CallFunction(
             npy_runtime_imports._add_dtype_helper,
-            "Os", (PyObject *)&PyArray_StringDType, NULL) == NULL) {
+            "Os", PyArray_StringDTypePtr, NULL) == NULL) {
         return -1;
     }
-    PyDict_SetItemString(d, "StringDType", (PyObject *)&PyArray_StringDType);
+    PyDict_SetItemString(d, "StringDType", (PyObject *)PyArray_StringDTypePtr);
 
     // initialize static reference to a zero-like array
     npy_static_pydata.zero_pyint_like_arr = PyArray_ZEROS(

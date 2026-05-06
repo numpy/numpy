@@ -495,7 +495,7 @@ _convert_from_array_descr(PyObject *obj, int align)
                     "Field elements must be tuples with at most 3 elements, got '%R'", item);
             goto fail;
         }
-        if (PyObject_IsInstance((PyObject *)conv, (PyObject *)&PyArray_StringDType)) {
+        if (PyObject_IsInstance((PyObject *)conv, (PyObject *)PyArray_StringDTypePtr)) {
             PyErr_Format(PyExc_TypeError,
                          "StringDType is not currently supported for structured dtype fields.");
             goto fail;
@@ -1486,7 +1486,7 @@ PyArray_DTypeOrDescrConverterRequired(PyObject *obj, npy_dtype_info *dt_info)
     dt_info->dtype = NULL;
     dt_info->descr = NULL;
 
-    if (PyObject_TypeCheck(obj, &PyArrayDTypeMeta_Type)) {
+    if (PyObject_TypeCheck(obj, PyArrayDTypeMeta_TypePtr)) {
         if (obj == (PyObject *)&PyArrayDescr_Type) {
             PyErr_SetString(PyExc_TypeError,
                             "Cannot convert np.dtype into a dtype.");
@@ -2503,7 +2503,7 @@ arraydescr_new(PyTypeObject *subtype,
                 PyObject *args, PyObject *kwds)
 {
     if (subtype != &PyArrayDescr_Type) {
-        if (Py_TYPE(subtype) == &PyArrayDTypeMeta_Type &&
+        if (Py_TYPE(subtype) == PyArrayDTypeMeta_TypePtr &&
                 (NPY_DT_SLOTS((PyArray_DTypeMeta *)subtype)) != NULL &&
                 !NPY_DT_is_legacy((PyArray_DTypeMeta *)subtype) &&
                 subtype->tp_new != PyArrayDescr_Type.tp_new) {

@@ -196,7 +196,7 @@ _PyArray_MapPyTypeToDType(
     if (res < 0) {
         return -1;
     }
-    else if (DType == &PyArray_StringDType) {
+    else if (DType == PyArray_StringDTypePtr) {
         // PyArray_StringDType's scalar is str which we allow because it doesn't
         // participate in DType inference, so don't add it to the
         // pytype to type mapping
@@ -228,10 +228,10 @@ npy_discover_dtype_from_pytype(PyTypeObject *pytype)
         DType = Py_NewRef(Py_None);
     }
     else if (pytype == &PyFloat_Type) {
-        DType = Py_NewRef((PyObject *)&PyArray_PyFloatDType);
+        DType = Py_NewRef(PyArray_PyFloatDTypePtr);
     }
     else if (pytype == &PyLong_Type) {
-        DType = Py_NewRef((PyObject *)&PyArray_PyLongDType);
+        DType = Py_NewRef(PyArray_PyLongDTypePtr);
     }
     else {
         int res = PyDict_GetItemRef(_global_pytype_to_type_dict,
@@ -242,7 +242,7 @@ npy_discover_dtype_from_pytype(PyTypeObject *pytype)
             return NULL;
         }
     }
-    assert(DType == Py_None || PyObject_TypeCheck(DType, (PyTypeObject *)&PyArrayDTypeMeta_Type));
+    assert(DType == Py_None || PyObject_TypeCheck(DType, PyArrayDTypeMeta_TypePtr));
     return (PyArray_DTypeMeta *)DType;
 }
 
@@ -1271,7 +1271,7 @@ PyArray_DiscoverDTypeAndShape(
     /* Validate input of requested descriptor and DType */
     if (fixed_DType != NULL) {
         assert(PyObject_TypeCheck(
-                (PyObject *)fixed_DType, (PyTypeObject *)&PyArrayDTypeMeta_Type));
+                (PyObject *)fixed_DType, PyArrayDTypeMeta_TypePtr));
     }
 
     if (requested_descr != NULL) {

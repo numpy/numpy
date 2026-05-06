@@ -100,7 +100,7 @@ PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate)
     for (Py_ssize_t i = 0; i < PyTuple_GET_SIZE(DType_tuple); i++) {
         PyObject *item = PyTuple_GET_ITEM(DType_tuple, i);
         if (item != Py_None
-                && !PyObject_TypeCheck(item, &PyArrayDTypeMeta_Type)) {
+                && !PyObject_TypeCheck(item, PyArrayDTypeMeta_TypePtr)) {
             PyErr_SetString(PyExc_TypeError,
                     "DType tuple may only contain None and DType classes");
             return -1;
@@ -1245,7 +1245,7 @@ object_only_ufunc_promoter(PyObject *ufunc,
         PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    PyArray_DTypeMeta *object_DType = &PyArray_ObjectDType;
+    PyArray_DTypeMeta *object_DType = PyArray_ObjectDTypePtr;
 
     for (int i = 0; i < ((PyUFuncObject *)ufunc)->nargs; i++) {
         if (signature[i] == NULL) {
@@ -1286,7 +1286,7 @@ logical_ufunc_promoter(PyObject *NPY_UNUSED(ufunc),
         }
         else {
             /* Always override to boolean */
-            item = &PyArray_BoolDType;
+            item = PyArray_BoolDTypePtr;
             Py_INCREF(item);
             if (op_dtypes[i] != NULL && op_dtypes[i]->type_num == NPY_OBJECT) {
                 force_object = 1;
@@ -1311,7 +1311,7 @@ logical_ufunc_promoter(PyObject *NPY_UNUSED(ufunc),
         if (signature[i] != NULL) {
             continue;
         }
-        Py_SETREF(new_op_dtypes[i], NPY_DT_NewRef(&PyArray_ObjectDType));
+        Py_SETREF(new_op_dtypes[i], NPY_DT_NewRef(PyArray_ObjectDTypePtr));
     }
     return 0;
 }

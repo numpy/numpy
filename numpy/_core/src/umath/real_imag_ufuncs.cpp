@@ -168,7 +168,7 @@ template <auto component>
 static int
 register_one_object_loop(const char *name)
 {
-    PyArray_DTypeMeta *dtypes[2] = {&PyArray_ObjectDType, &PyArray_ObjectDType};
+    PyArray_DTypeMeta *dtypes[2] = {PyArray_ObjectDTypePtr, PyArray_ObjectDTypePtr};
     PyType_Slot meth_slots[] = {
         {NPY_METH_strided_loop, (void *)&object_get_comp_strided_loop<component>},
         {0, nullptr}
@@ -261,13 +261,13 @@ init_real_imag_ufuncs(PyObject *umath)
         goto finish;
     }
 
-    if (register_both_for_type<npy_float32>(&PyArray_CFloatDType, &PyArray_FloatDType) < 0) {
+    if (register_both_for_type<npy_float32>(PyArray_CFloatDTypePtr, PyArray_FloatDTypePtr) < 0) {
         goto finish;
     }
-    if (register_both_for_type<npy_float64>(&PyArray_CDoubleDType, &PyArray_DoubleDType) < 0) {
+    if (register_both_for_type<npy_float64>(PyArray_CDoubleDTypePtr, PyArray_DoubleDTypePtr) < 0) {
         goto finish;
     }
-    if (register_both_for_type<npy_longdouble>(&PyArray_CLongDoubleDType, &PyArray_LongDoubleDType) < 0) {
+    if (register_both_for_type<npy_longdouble>(PyArray_CLongDoubleDTypePtr, PyArray_LongDoubleDTypePtr) < 0) {
         goto finish;
     }
     if (register_one_object_loop<&npy_interned_str_struct::real>("real") < 0) {
