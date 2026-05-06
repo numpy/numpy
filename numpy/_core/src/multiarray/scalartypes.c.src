@@ -181,10 +181,14 @@ gentype_generic_vectorcall(PyObject *self, PyObject *const *args,
  *
  * It is not possible for both to be filled.  If `other` is also a generics,
  * it is returned.
+ *
+ * When `datetime_date_comparison` is set, Python date objects are converted
+ * to the datetime64 scalar unit for rich comparison only.
  */
 static inline int
 find_binary_operation_path(
-    PyObject *self, PyObject *other, PyObject **self_op, PyObject **other_op)
+    PyObject *self, PyObject *other, PyObject **self_op, PyObject **other_op,
+    int datetime_date_comparison)
 {
     multiarray_umath_state *state = _npy_module_state;
     *other_op = NULL;
@@ -219,7 +223,7 @@ find_binary_operation_path(
         return 0;
     }
 
-    if (PyArray_IsScalar(self, Datetime)) {
+    if (datetime_date_comparison && PyArray_IsScalar(self, Datetime)) {
         if (PyDateTimeAPI == NULL) {
             PyDateTime_IMPORT;
             if (PyDateTimeAPI == NULL) {
@@ -227,7 +231,8 @@ find_binary_operation_path(
             }
         }
     }
-    if (PyArray_IsScalar(self, Datetime) &&
+    if (datetime_date_comparison &&
+            PyArray_IsScalar(self, Datetime) &&
             PyType_IsSubtype(Py_TYPE(other), PyDateTimeAPI->DateType) &&
             !PyType_IsSubtype(Py_TYPE(other), PyDateTimeAPI->DateTimeType)) {
         /*
@@ -341,7 +346,7 @@ gentype_@name@@suff@(PyObject *m1, PyObject *m2)
         self = m2;
         other = m1;
     }
-    if (find_binary_operation_path(self, other, &self_op, &other_op) < 0) {
+    if (find_binary_operation_path(self, other, &self_op, &other_op, 0) < 0) {
         return NULL;
     }
     if (self_op != NULL) {
@@ -452,7 +457,7 @@ gentype_power(PyObject *m1, PyObject *m2, PyObject *modulo)
         self = m2;
         other = m1;
     }
-    if (find_binary_operation_path(self, other, &self_op, &other_op) < 0) {
+    if (find_binary_operation_path(self, other, &self_op, &other_op, 0) < 0) {
         return NULL;
     }
     if (self_op != NULL) {
@@ -1643,7 +1648,7 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
 
     PyObject *self_op;
     PyObject *other_op;
-    if (find_binary_operation_path(self, other, &self_op, &other_op) < 0) {
+    if (find_binary_operation_path(self, other, &self_op, &other_op, 1) < 0) {
         return NULL;
     }
 
