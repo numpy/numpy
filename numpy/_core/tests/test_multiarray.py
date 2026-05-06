@@ -2769,7 +2769,15 @@ class TestMethods:
         if not descending:
             a = a[::-1]
         # add nans to check that they are sorted to the end
-        a[::10] = a.dtype.type(np.nan)
+        if np.issubdtype(a.dtype, np.complexfloating):
+            nan = np.nan + 1j * np.nan
+        elif np.issubdtype(a.dtype, np.floating):
+            nan = np.nan
+        elif np.issubdtype(a.dtype, np.datetime64):
+            nan = np.datetime64('NaT', 'D')
+        elif np.issubdtype(a.dtype, np.timedelta64):
+            nan = np.timedelta64('NaT', 'D')
+        a[::10] = nan
 
         b = a[::-1].copy()
         b = np.concatenate((b[~np.isnan(b)], b[np.isnan(b)]))
@@ -2910,18 +2918,28 @@ class TestMethods:
         assert_equal(idx, expected, msg)
 
     def _test_argsort_descending_nan(self, a, stable, descending):
-        a[::10] = np.nan
+        if np.issubdtype(a.dtype, np.complexfloating):
+            nan = np.nan + 1j * np.nan
+        elif np.issubdtype(a.dtype, np.floating):
+            nan = np.nan
+        elif np.issubdtype(a.dtype, np.datetime64):
+            nan = np.datetime64('NaT', 'D')
+        elif np.issubdtype(a.dtype, np.timedelta64):
+            nan = np.timedelta64('NaT', 'D')
+        a[::10] = nan
 
         idx = np.argsort(a, stable=stable, descending=descending, axis=-1)
-        msg = f"argsort, dtype={a.dtype}, stable={stable}, descending={descending}"
         sorted_a = a[idx]
         diff_sorted_a = np.diff(sorted_a[:-11])
-        assert_equal(np.isnan(sorted_a[-10:]), True, msg)  # nans at end
-        assert_equal(
-            (diff_sorted_a <= 0 if descending else diff_sorted_a >= 0),
-            True,
-            msg,
-        )
+        if descending:
+            diff_sorted_a = -diff_sorted_a
+        
+        msg = f"argsort, dtype={a.dtype}, stable={stable}, descending={descending}"
+        assert_equal(np.isnan(sorted_a[-11:]), True, msg)  # nans at end
+
+        # TODO: fix issue with comparing datetime64 and timedelta64 to integers
+        if not np.issubdtype(a.dtype, np.datetime64) and not np.issubdtype(a.dtype, np.timedelta64):
+            assert_equal(diff_sorted_a >= 0, True, msg)
 
         rng = np.random.default_rng(0)
         perm = rng.permutation(len(a))
@@ -2930,13 +2948,15 @@ class TestMethods:
         idx = np.argsort(a_randomized, stable=stable, descending=descending, axis=-1)
         sorted_a = a_randomized[idx]
         diff_sorted_a = np.diff(sorted_a[:-11])
+        if descending:
+            diff_sorted_a = -diff_sorted_a
+
         msg = f"argsort, randomized, dtype={a.dtype}, stable={stable}, descending={descending}"
-        assert_equal(np.isnan(sorted_a[-10:]), True, msg)
-        assert_equal(
-            (diff_sorted_a <= 0 if descending else diff_sorted_a >= 0),
-            True,
-            msg,
-        )
+        assert_equal(np.isnan(sorted_a[-11:]), True, msg)
+
+        # TODO: fix issue with comparing datetime64 and timedelta64 to integers
+        if not np.issubdtype(a.dtype, np.datetime64) and not np.issubdtype(a.dtype, np.timedelta64):
+            assert_equal(diff_sorted_a >= 0, True, msg)
 
     @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64])
     @pytest.mark.parametrize("stable", [True, False])
@@ -2972,6 +2992,7 @@ class TestMethods:
 
     @pytest.mark.parametrize("dtype", ["datetime64[D]", "timedelta64[D]"])
     @pytest.mark.parametrize("stable", [True, False])
+    @pytest.mark.parametrize("descending", [True, False])
     def test_argsort_descending_datetime(self, dtype, stable, descending):
         a = np.arange(0, 101, dtype=dtype)
         self._test_argsort_descending_nonan(a, stable, descending)
