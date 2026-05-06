@@ -1486,7 +1486,7 @@ PyArray_DTypeOrDescrConverterRequired(PyObject *obj, npy_dtype_info *dt_info)
     dt_info->dtype = NULL;
     dt_info->descr = NULL;
 
-    if (PyObject_TypeCheck(obj, &PyArrayDTypeMeta_Type)) {
+    if (PyObject_TypeCheck(obj, PyArrayDTypeMeta_Type)) {
         if (obj == (PyObject *)&PyArrayDescr_Type) {
             PyErr_SetString(PyExc_TypeError,
                             "Cannot convert np.dtype into a dtype.");
@@ -2503,7 +2503,7 @@ arraydescr_new(PyTypeObject *subtype,
                 PyObject *args, PyObject *kwds)
 {
     if (subtype != &PyArrayDescr_Type) {
-        if (Py_TYPE(subtype) == &PyArrayDTypeMeta_Type &&
+        if (Py_TYPE(subtype) == PyArrayDTypeMeta_Type &&
                 (NPY_DT_SLOTS((PyArray_DTypeMeta *)subtype)) != NULL &&
                 !NPY_DT_is_legacy((PyArray_DTypeMeta *)subtype) &&
                 subtype->tp_new != PyArrayDescr_Type.tp_new) {

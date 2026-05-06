@@ -242,7 +242,7 @@ npy_discover_dtype_from_pytype(PyTypeObject *pytype)
             return NULL;
         }
     }
-    assert(DType == Py_None || PyObject_TypeCheck(DType, (PyTypeObject *)&PyArrayDTypeMeta_Type));
+    assert(DType == Py_None || PyObject_TypeCheck(DType, PyArrayDTypeMeta_Type));
     return (PyArray_DTypeMeta *)DType;
 }
 
@@ -1271,7 +1271,7 @@ PyArray_DiscoverDTypeAndShape(
     /* Validate input of requested descriptor and DType */
     if (fixed_DType != NULL) {
         assert(PyObject_TypeCheck(
-                (PyObject *)fixed_DType, (PyTypeObject *)&PyArrayDTypeMeta_Type));
+                (PyObject *)fixed_DType, PyArrayDTypeMeta_Type));
     }
 
     if (requested_descr != NULL) {

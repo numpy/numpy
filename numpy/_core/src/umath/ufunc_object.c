@@ -3959,7 +3959,7 @@ _check_and_copy_sig_to_signature(
  */
 static PyArray_DTypeMeta *
 _get_dtype(PyObject *dtype_obj) {
-    if (PyObject_TypeCheck(dtype_obj, &PyArrayDTypeMeta_Type)) {
+    if (PyObject_TypeCheck(dtype_obj, PyArrayDTypeMeta_Type)) {
         Py_INCREF(dtype_obj);
         return (PyArray_DTypeMeta *)dtype_obj;
     }
