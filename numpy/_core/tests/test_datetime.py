@@ -1718,9 +1718,15 @@ class TestDateTime:
         assert dt_day == pydate
         assert dt_day == dt_ns
         assert dt_ns == pydate
+        assert pydate == dt_ns
 
         # Keep the documented datetime.datetime behavior unchanged.
         assert not (dt_day == pydatetime)
+
+        # The coercion is limited to comparisons; keep arithmetic unchanged.
+        assert dt_day - pydate == datetime.timedelta(0)
+        with pytest.raises(TypeError):
+            dt_ns - pydate
 
     def test_datetime_compare_nat(self):
         dt_nat = np.datetime64('NaT', 'D')
