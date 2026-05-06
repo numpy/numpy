@@ -4464,10 +4464,10 @@ class TestGMean:
         a2 = np.arange(1, 7).reshape(2, 3)
         assert_equal(np.gmean(a0), 1)
         assert_allclose(np.gmean(a1), np.sqrt(2))
-        assert_allclose(np.gmean(a2), 2.605171084697352)
-        assert_allclose(np.gmean(a2, axis=0), [1.73205081, 2.44948974, 3.16227766])
-        assert_allclose(np.gmean(a2, axis=1), [1.81712059, 4.16016765])
-        assert_allclose(np.gmean(a2, axis=None), 2.605171084697352)
+        assert_allclose(np.gmean(a2), 2.993795165523909)
+        assert_allclose(np.gmean(a2, axis=0), [2.        , 3.16227766, 4.24264069])
+        assert_allclose(np.gmean(a2, axis=1), [1.81712059, 4.93242415])
+        assert_allclose(np.gmean(a2, axis=None), 2.993795165523909)
 
     def test_axis_keyword(self):
         a3 = np.array([[2, 3],
@@ -4481,11 +4481,11 @@ class TestGMean:
                 np.gmean(a, axis=ax)
             assert_array_equal(a, orig)
 
-        assert_allclose(np.gmean(a3, axis=0), [2.88449914, 3.91486764])
-        assert_allclose(np.gmean(a3.T, axis=1), [2.88449914, 3.91486764])
-        assert_allclose(np.gmean(a3), 2.60517108)
-        assert_allclose(np.gmean(a3, axis=None), 2.60517108)
-        assert_allclose(np.gmean(a3.T), 2.60517108)
+        assert_allclose(np.gmean(a3, axis=0), [0, 3.20108587])
+        assert_allclose(np.gmean(a3.T, axis=1), [0, 3.20108587])
+        assert_allclose(np.gmean(a3), 0)
+        assert_allclose(np.gmean(a3, axis=None), 0)
+        assert_allclose(np.gmean(a3.T), 0)
 
 
 class TestMedian:

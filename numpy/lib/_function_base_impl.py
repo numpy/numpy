@@ -68,7 +68,7 @@ __all__ = [
     'select', 'piecewise', 'trim_zeros', 'copy', 'iterable', 'percentile',
     'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'flip',
     'rot90', 'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
-    'bincount', 'digitize', 'cov', 'corrcoef',
+    'bincount', 'digitize', 'cov', 'corrcoef','gmean',
     'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapezoid', 'i0',
     'meshgrid', 'delete', 'insert', 'append', 'interp',
@@ -3959,13 +3959,13 @@ def gmean(a, axis=None, dtype=None, out=None, keepdims=False):
     >>> import numpy as np
     >>> a = np.array([[1, 2], [3, 4]])
     >>> np.gmean(a)
-    2.2133638394006434
+    2.213363839400643
     >>> np.gmean(a, axis=0)
     array([1.73205081, 2.82842712])
     >>> np.gmean(a, axis=1)
     array([1.41421356, 3.46410162])
     >>> np.gmean(a, axis=(0, 1))
-    2.2133638394006434
+    2.213363839400643
 
     """
     return _ureduce(a, func=_gmean, keepdims=keepdims, axis=axis,
@@ -3983,7 +3983,7 @@ def _gmean(a, axis=None, dtype=None, out=None):
 
     a = a.astype(dtype, copy=False)
 
-    # We have to check for NaNs (as of writing 'M' doesn't actually work).
+    # Check for NaNs
     supports_nans = np.issubdtype(a.dtype, np.inexact) or a.dtype.kind in 'Mm'
     if supports_nans:
         a = np.where(np.isnan(a), np.nan, a)
