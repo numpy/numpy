@@ -1,0 +1,4 @@
+``PyArray_BufferConverter`` is deprecated
+-----------------------------------------
+``PyArray_BufferConverter`` is now deprecated. Use the standard Python buffer
+protocol directly instead.

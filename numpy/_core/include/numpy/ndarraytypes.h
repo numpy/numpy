@@ -852,8 +852,6 @@ typedef struct tagPyArrayObject {
  * compatible with multiple NumPy versions.
  */
 
-/* Mirrors buffer object to ptr */
-
 typedef struct {
         PyObject_HEAD
         PyObject *base;
