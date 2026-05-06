@@ -45,6 +45,7 @@ from numpy._core.umath import (
     floor,
     frompyfunc,
     less_equal,
+    log,
     minimum,
     mod,
     not_equal,
@@ -3904,6 +3905,90 @@ def _ureduce(a, func, keepdims=False, **kwargs):
         r = r[(Ellipsis, ) + index_r]
 
     return r
+
+def _gmean_dispatcher(
+        a, axis=None, dtype=None, out=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_gmean_dispatcher)
+def gmean(a, axis=None, dtype=None, out=None, keepdims=False):
+    """
+    Compute the geometric mean along the specified axis.
+
+    Returns the geometric mean of the array elements.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array or object that can be converted to an array.
+    axis : {int, sequence of int, None}, optional
+        Axis or axes along which the geometric means are computed. The default,
+        axis=None, will compute the geometric mean along a flattened version of
+        the array.
+    dtype : dtype, optional
+        Type to use in computing the geometric mean. For arrays of integer
+        type the default is float64; for arrays of float types it is the same
+        as the array type.
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must have the
+        same shape and buffer length as the expected output, but the type (of
+        the output) will be cast if necessary.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left in the result
+        as dimensions with size one. With this option, the result will broadcast
+        correctly against the original `arr`.
+
+    Returns
+    -------
+    gmean : ndarray
+        A new array holding the result. If `out` is specified, that array is returned instead.
+
+    See Also
+    --------
+    mean
+
+    Notes
+    -----
+    Given a vector ``V`` of length ``N``, the geometric mean of ``V`` is
+
+    .. math:: \\left(\\prod_{i=1}^N V_i\\right)^{1/N}
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = np.array([[1, 2], [3, 4]])
+    >>> np.gmean(a)
+    2.2133638394006434
+    >>> np.gmean(a, axis=0)
+    array([1.73205081, 2.82842712])
+    >>> np.gmean(a, axis=1)
+    array([1.41421356, 3.46410162])
+    >>> np.gmean(a, axis=(0, 1))
+    2.2133638394006434
+
+    """
+    return _ureduce(a, func=_gmean, keepdims=keepdims, axis=axis,
+                    dtype=dtype, out=out)
+
+
+def _gmean(a, axis=None, dtype=None, out=None):
+    a = np.asanyarray(a)
+
+    if dtype is None:
+        if issubclass(a.dtype.type, np.integer):
+            dtype = np.float64
+        else:
+            dtype = a.dtype
+
+    a = a.astype(dtype, copy=False)
+
+    # We have to check for NaNs (as of writing 'M' doesn't actually work).
+    supports_nans = np.issubdtype(a.dtype, np.inexact) or a.dtype.kind in 'Mm'
+    if supports_nans:
+        a = np.where(np.isnan(a), np.nan, a)
+
+    return exp(np.mean(log(a), axis=axis, out=out))
 
 
 def _median_dispatcher(
