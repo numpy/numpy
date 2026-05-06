@@ -145,14 +145,14 @@ PyArray_ImportNumPyAPI(void)
     static inline void
     PyDataType_SET_ELSIZE(PyArray_Descr *dtype, npy_intp size)
     {
-        dtype->elsize = size;
+        _PyDataType_GET_ITEM_DATA(dtype)->elsize = size;
     }
 
     static inline npy_uint64
     PyDataType_FLAGS(const PyArray_Descr *dtype)
     {
     #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
-        return dtype->flags;
+        return _PyDataType_GET_ITEM_DATA(dtype)->flags;
     #else
         return (unsigned char)dtype->flags;  /* Need unsigned cast on 1.x */
     #endif
@@ -164,7 +164,7 @@ PyArray_ImportNumPyAPI(void)
             if (legacy_only && !PyDataType_ISLEGACY(dtype)) {  \
                 return (type)0;                                \
             }                                                  \
-            return ((_PyArray_LegacyDescr *)dtype)->field;     \
+            return _PyArray_LegacyDescr_GET_ITEM_DATA((const _PyArray_LegacyDescr *)dtype)->field;     \
         }
 #else  /* compiling for both 1.x and 2.x */
 
