@@ -10,8 +10,11 @@ template <typename T>
 void NPY_CPU_DISPATCH_CURFX(QSort)(T *arr, npy_intp size, bool descending)
 {
 #if VQSORT_ENABLED
-    hwy::HWY_NAMESPACE::VQSortStatic(arr, size,
-        descending ? hwy::SortDescending() : hwy::SortAscending());
+if (descending) {
+    hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortDescending());
+} else {
+    hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortAscending());
+}
 #else
     sort::Quick(arr, size);
 #endif
