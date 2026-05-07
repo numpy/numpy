@@ -24,14 +24,15 @@
 
 // Disable AVX512 sorting on CYGWIN until we can figure
 // out why it has test failures
-template<typename T>
+template<typename Tag, typename T>
 inline bool quicksort_dispatch(T *start, npy_intp num)
 {
 #if !defined(__CYGWIN__)
     if constexpr (
-        std::is_base_of_v<npy::floating_point_tag, T> ||
-        std::is_base_of_v<npy::integral_tag, T> ||
-        std::is_same_v<T, np::Half>
+        (std::is_base_of_v<npy::floating_point_tag, Tag>
+            && !std::is_same_v<Tag, npy::longdouble_tag>) ||
+        std::is_base_of_v<npy::integral_tag, Tag> ||
+        std::is_same_v<Tag, npy::half_tag>
     ) {
         using TF = typename np::meta::FixedWidth<T>::Type;
         void (*dispfunc)(TF*, intptr_t) = nullptr;
@@ -63,13 +64,14 @@ inline bool quicksort_dispatch(T *start, npy_intp num)
     return false;
 }
 
-template<typename T>
+template<typename Tag, typename T>
 inline bool aquicksort_dispatch(T *start, npy_intp* arg, npy_intp num)
 {
 #if !defined(__CYGWIN__)
     if constexpr (
-        std::is_base_of_v<npy::floating_point_tag, T> ||
-        std::is_base_of_v<npy::integral_tag, T>
+        (std::is_base_of_v<npy::floating_point_tag, Tag>
+            && !std::is_same_v<Tag, npy::longdouble_tag>) ||
+        std::is_base_of_v<npy::integral_tag, Tag>
     ) {
         using TF = typename np::meta::FixedWidth<T>::Type;
         void (*dispfunc)(TF*, npy_intp*, npy_intp) = nullptr;
@@ -99,7 +101,7 @@ quicksort_(type *start, npy_intp num)
 {
     if constexpr (!reverse) {
         using T = typename std::conditional<std::is_same_v<Tag, npy::half_tag>, np::Half, typename Tag::type>::type;
-        if (quicksort_dispatch((T *)start, num)) {
+        if (quicksort_dispatch<Tag>((T *)start, num)) {
             return 0;
         }
     }
@@ -198,7 +200,7 @@ static int
 aquicksort_(type *vv, npy_intp *tosort, npy_intp num)
 {
     if constexpr (!reverse){
-        if (aquicksort_dispatch((type *)vv, tosort, num)) {
+        if (aquicksort_dispatch<Tag>((type *)vv, tosort, num)) {
             return 0;
         }
     }
