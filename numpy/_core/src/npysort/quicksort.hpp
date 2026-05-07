@@ -42,7 +42,7 @@ inline bool quicksort_dispatch(T *start, npy_intp num)
                 #include "x86_simd_qsort_16bit.dispatch.h"
                 NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
             }
-        #else
+        #elif VQSORT_ENABLED
             #include "highway_qsort_16bit.dispatch.h"
             NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::highway::qsort_simd::template QSort, <TF>);
         #endif
@@ -53,7 +53,7 @@ inline bool quicksort_dispatch(T *start, npy_intp num)
                 #include "x86_simd_qsort.dispatch.h"
                 NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
             }
-        #else
+        #elif VQSORT_ENABLED
             #include "highway_qsort.dispatch.h"
             NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::highway::qsort_simd::template QSort, <TF>);
         #endif
