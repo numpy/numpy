@@ -4,6 +4,7 @@
 #include "npysort_common.h"
 #include "numpy_tag.h"
 #include "quicksort.hpp"
+#include "radixsort.hpp"
 #include "timsort.hpp"
 
 #include <cstdlib>
@@ -53,13 +54,26 @@ sort_loop_(PyArrayMethod_Context *context, char *const data[],
            npy_intp const dimensions[], npy_intp const strides[],
            NpyAuxData *NPY_UNUSED(auxdata))
 {
+    constexpr bool use_radixsort = (
+        std::is_same_v<Tag, npy::bool_tag> ||
+        std::is_same_v<Tag, npy::ubyte_tag> ||
+        std::is_same_v<Tag, npy::byte_tag> ||
+        std::is_same_v<Tag, npy::ushort_tag> ||
+        std::is_same_v<Tag, npy::short_tag>
+    );
+
     PyArrayMethod_SortParameters *params =
             (PyArrayMethod_SortParameters *)context->parameters;
     switch ((int)params->flags) {
         case NPY_SORT_DEFAULT:
             return quicksort_<Tag, type, false>((type *)data[0], dimensions[0]);
         case NPY_SORT_STABLE:
+        if constexpr (use_radixsort) {
+            return radixsort<type>(data[0], dimensions[0]);
+        }
+        else {
             return timsort_<Tag, type, false>((type *)data[0], dimensions[0]);
+        }
         case NPY_SORT_DEFAULT | NPY_SORT_DESCENDING:
             return quicksort_<Tag, type, true>((type *)data[0], dimensions[0]);
         case NPY_SORT_STABLE | NPY_SORT_DESCENDING:
@@ -77,6 +91,14 @@ argsort_loop_(PyArrayMethod_Context *context, char *const data[],
               npy_intp const dimensions[], npy_intp const strides[],
               NpyAuxData *NPY_UNUSED(auxdata))
 {
+    constexpr bool use_radixsort = (
+        std::is_same_v<Tag, npy::bool_tag> ||
+        std::is_same_v<Tag, npy::ubyte_tag> ||
+        std::is_same_v<Tag, npy::byte_tag> ||
+        std::is_same_v<Tag, npy::ushort_tag> ||
+        std::is_same_v<Tag, npy::short_tag>
+    );
+
     PyArrayMethod_SortParameters *params =
             (PyArrayMethod_SortParameters *)context->parameters;
     switch ((int)params->flags) {
@@ -84,8 +106,13 @@ argsort_loop_(PyArrayMethod_Context *context, char *const data[],
             return aquicksort_<Tag, type, false>((type *)data[0], (npy_intp *)data[1],
                                                  dimensions[0]);
         case NPY_SORT_STABLE:
+        if constexpr (use_radixsort) {
+            return aradixsort<type>(data[0], (npy_intp *)data[1], dimensions[0]);
+        }
+        else {
             return atimsort_<Tag, type, false>((type *)data[0], (npy_intp *)data[1],
                                                dimensions[0]);
+        }
         case NPY_SORT_DEFAULT | NPY_SORT_DESCENDING:
             return aquicksort_<Tag, type, true>((type *)data[0], (npy_intp *)data[1],
                                                 dimensions[0]);

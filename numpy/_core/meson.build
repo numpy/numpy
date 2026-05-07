@@ -1234,7 +1234,6 @@ src_multiarray = multiarray_gen_headers + [
   'src/npysort/mergesort.cpp',
   'src/npysort/timsort_generic.cpp',
   'src/npysort/heapsort.cpp',
-  'src/npysort/radixsort.cpp',
   'src/npysort/npysort_methods.cpp',
   'src/common/npy_partition.h',
   'src/npysort/selection.cpp',
