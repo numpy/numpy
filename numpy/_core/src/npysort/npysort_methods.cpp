@@ -33,7 +33,12 @@ argsort_resolve_descriptors(PyArrayMethodObject *method,
     if (NPY_UNLIKELY(output_descrs[0] == NULL)) {
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
-    output_descrs[1] = PyArray_DescrFromType(NPY_INTP);
+    if (input_descrs[1] == NULL) {
+        output_descrs[1] = PyArray_DescrFromType(NPY_INTP);
+    }
+    else {
+        output_descrs[1] = NPY_DT_CALL_ensure_canonical(input_descrs[1]);
+    }
     if (NPY_UNLIKELY(output_descrs[1] == NULL)) {
         Py_XDECREF(output_descrs[0]);
         return _NPY_ERROR_OCCURRED_IN_CAST;
@@ -53,12 +58,10 @@ sort_loop_(PyArrayMethod_Context *context, char *const data[],
     switch ((int)params->flags) {
         case NPY_SORT_DEFAULT:
             return quicksort_<Tag, type, false>((type *)data[0], dimensions[0]);
-        case _NPY_SORT_HEAPSORT:
         case NPY_SORT_STABLE:
             return timsort_<Tag, type, false>((type *)data[0], dimensions[0]);
         case NPY_SORT_DEFAULT | NPY_SORT_DESCENDING:
             return quicksort_<Tag, type, true>((type *)data[0], dimensions[0]);
-        case _NPY_SORT_HEAPSORT | NPY_SORT_DESCENDING:
         case NPY_SORT_STABLE | NPY_SORT_DESCENDING:
             return timsort_<Tag, type, true>((type *)data[0], dimensions[0]);
         default:
@@ -80,14 +83,12 @@ argsort_loop_(PyArrayMethod_Context *context, char *const data[],
         case NPY_SORT_DEFAULT:
             return aquicksort_<Tag, type, false>((type *)data[0], (npy_intp *)data[1],
                                                  dimensions[0]);
-        case _NPY_SORT_HEAPSORT:
         case NPY_SORT_STABLE:
             return atimsort_<Tag, type, false>((type *)data[0], (npy_intp *)data[1],
                                                dimensions[0]);
         case NPY_SORT_DEFAULT | NPY_SORT_DESCENDING:
             return aquicksort_<Tag, type, true>((type *)data[0], (npy_intp *)data[1],
                                                 dimensions[0]);
-        case _NPY_SORT_HEAPSORT | NPY_SORT_DESCENDING:
         case NPY_SORT_STABLE | NPY_SORT_DESCENDING:
             return atimsort_<Tag, type, true>((type *)data[0], (npy_intp *)data[1],
                                               dimensions[0]);
@@ -111,14 +112,12 @@ sort_loop_string_(PyArrayMethod_Context *context, char *const data[],
         case NPY_SORT_DEFAULT:
             return string_quicksort_<Tag, type, false>((type *)data[0], dimensions[0],
                                                        elsize);
-        case _NPY_SORT_HEAPSORT:
         case NPY_SORT_STABLE:
             return string_timsort_<Tag, type, false>((type *)data[0], dimensions[0],
                                                      elsize);
         case NPY_SORT_DEFAULT | NPY_SORT_DESCENDING:
             return string_quicksort_<Tag, type, true>((type *)data[0], dimensions[0],
                                                       elsize);
-        case _NPY_SORT_HEAPSORT | NPY_SORT_DESCENDING:
         case NPY_SORT_STABLE | NPY_SORT_DESCENDING:
             return string_timsort_<Tag, type, true>((type *)data[0], dimensions[0],
                                                     elsize);
@@ -142,14 +141,12 @@ argsort_loop_string_(PyArrayMethod_Context *context, char *const data[],
         case NPY_SORT_DEFAULT:
             return string_aquicksort_<Tag, type, false>(
                     (type *)data[0], (npy_intp *)data[1], dimensions[0], elsize);
-        case _NPY_SORT_HEAPSORT:
         case NPY_SORT_STABLE:
             return string_atimsort_<Tag, type, false>(
                     (type *)data[0], (npy_intp *)data[1], dimensions[0], elsize);
         case NPY_SORT_DEFAULT | NPY_SORT_DESCENDING:
             return string_aquicksort_<Tag, type, true>(
                     (type *)data[0], (npy_intp *)data[1], dimensions[0], elsize);
-        case _NPY_SORT_HEAPSORT | NPY_SORT_DESCENDING:
         case NPY_SORT_STABLE | NPY_SORT_DESCENDING:
             return string_atimsort_<Tag, type, true>(
                     (type *)data[0], (npy_intp *)data[1], dimensions[0], elsize);
