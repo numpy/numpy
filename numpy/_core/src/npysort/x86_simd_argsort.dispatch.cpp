@@ -8,9 +8,9 @@ template<> void NPY_CPU_DISPATCH_CURFX(ArgQSelect)(TYPE* arr, npy_intp* arg, npy
 { \
     x86simdsortStatic::argselect(arr, reinterpret_cast<size_t*>(arg), kth, num, true); \
 } \
-template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(TYPE* arr, npy_intp *arg, npy_intp size) \
+template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(TYPE* arr, npy_intp *arg, npy_intp size, bool descending) \
 { \
-    x86simdsortStatic::argsort(arr, reinterpret_cast<size_t*>(arg), size, true); \
+    x86simdsortStatic::argsort(arr, reinterpret_cast<size_t*>(arg), size, true, descending); \
 } \
 
 namespace np { namespace qsort_simd {

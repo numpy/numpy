@@ -37,7 +37,7 @@ template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(int16_t *arr, npy_intp num, npy_
 /*
  * QSort dispatch functions:
  */
-template<> void NPY_CPU_DISPATCH_CURFX(QSort)(Half *arr, npy_intp size)
+template<> void NPY_CPU_DISPATCH_CURFX(QSort)(Half *arr, npy_intp size, bool descending)
 {
 #if defined(NPY_HAVE_AVX512_SPR)
     x86simdsortStatic::qsort(reinterpret_cast<_Float16*>(arr), size, true);
@@ -45,13 +45,13 @@ template<> void NPY_CPU_DISPATCH_CURFX(QSort)(Half *arr, npy_intp size)
     avx512_qsort_fp16(reinterpret_cast<uint16_t*>(arr), size, true, false);
 #endif
 }
-template<> void NPY_CPU_DISPATCH_CURFX(QSort)(uint16_t *arr, npy_intp size)
+template<> void NPY_CPU_DISPATCH_CURFX(QSort)(uint16_t *arr, npy_intp size, bool descending)
 {
-    x86simdsortStatic::qsort(arr, size);
+    x86simdsortStatic::qsort(arr, size, true, descending);
 }
-template<> void NPY_CPU_DISPATCH_CURFX(QSort)(int16_t *arr, npy_intp size)
+template<> void NPY_CPU_DISPATCH_CURFX(QSort)(int16_t *arr, npy_intp size, bool descending)
 {
-    x86simdsortStatic::qsort(arr, size);
+    x86simdsortStatic::qsort(arr, size, true, descending);
 }
 
 }} // namespace np::qsort_simd

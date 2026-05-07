@@ -8,9 +8,9 @@ template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(TYPE *arr, npy_intp num, npy_int
 { \
     x86simdsortStatic::qselect(arr, kth, num, true); \
 } \
-template<> void NPY_CPU_DISPATCH_CURFX(QSort)(TYPE *arr, npy_intp num) \
+template<> void NPY_CPU_DISPATCH_CURFX(QSort)(TYPE *arr, npy_intp num, bool descending) \
 { \
-    x86simdsortStatic::qsort(arr, num, true); \
+    x86simdsortStatic::qsort(arr, num, true, descending); \
 } \
 
 namespace np { namespace qsort_simd {
