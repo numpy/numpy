@@ -401,6 +401,8 @@ optional_intrinsics = [
   ['__builtin_expect', '5, 0', [], []],
   # Test `long long` for arm+clang 13 (gh-22811, but we use all versions):
   ['__builtin_mul_overflow', '(long long)5, 5, (int*)5', [], []],
+  ['__builtin_add_overflow', '(long long)5, 5, (int*)5', [], []],
+  ['__builtin_sub_overflow', '(long long)5, 5, (int*)5', [], []],
   ['__builtin_prefetch', '(float*)0, 0, 3', [], []],
 ]
 foreach intrin: optional_intrinsics
