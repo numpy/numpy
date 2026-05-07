@@ -2932,6 +2932,14 @@ class TestMethods:
             nan = np.timedelta64("NaT", "D")
         a[::10] = nan
 
+        # comparing datetime types directly to numerical zero fails
+        zero = 0
+        if (
+            np.issubdtype(a.dtype, np.datetime64) or
+            np.issubdtype(a.dtype, np.timedelta64)
+        ):
+            zero = np.timedelta64(0, "D")
+
         idx = np.argsort(a, stable=stable, descending=descending, axis=-1)
         sorted_a = a[idx]
         diff_sorted_a = np.diff(sorted_a[:-11])
@@ -2941,11 +2949,10 @@ class TestMethods:
         msg = f"argsort, dtype={a.dtype}, stable={stable}, descending={descending}"
         assert_equal(np.isnan(sorted_a[-11:]), True, msg)  # nans at end
 
-        # TODO: fix issue with comparing datetime64 and timedelta64 to integers
         if not np.issubdtype(a.dtype, np.datetime64) and not np.issubdtype(
             a.dtype, np.timedelta64
         ):
-            assert_equal(diff_sorted_a >= 0, True, msg)
+            assert_equal(diff_sorted_a >= zero, True, msg)
 
         rng = np.random.default_rng(0)
         perm = rng.permutation(len(a))
@@ -2962,13 +2969,7 @@ class TestMethods:
             f"descending={descending}"
         )
         assert_equal(np.isnan(sorted_a[-11:]), True, msg)
-
-        # TODO: fix issue with comparing datetime64 and timedelta64 to integers
-        if not (
-            np.issubdtype(a.dtype, np.datetime64)
-            or np.issubdtype(a.dtype, np.timedelta64)
-        ):
-            assert_equal(diff_sorted_a >= 0, True, msg)
+        assert_equal(diff_sorted_a >= zero, True, msg)
 
     @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64])
     @pytest.mark.parametrize("stable", [True, False])
