@@ -176,8 +176,6 @@
     #define NPY_FEATURE_VERSION_STRING "2.4"
 #elif NPY_FEATURE_VERSION == NPY_2_5_API_VERSION
     #define NPY_FEATURE_VERSION_STRING "2.5"
-#elif NPY_FEATURE_VERSION == NPY_2_6_API_VERSION
-    #define NPY_FEATURE_VERSION_STRING "2.6"
 #else
     #error "Missing version string define for new NumPy version."
 #endif
