@@ -1,13 +1,19 @@
 """A module containing the `_NestedSequence` protocol."""
 
-from typing import TYPE_CHECKING, Any, Protocol, TypeVar, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from typing_extensions import TypeVar
+
+    _T_co = TypeVar("_T_co", covariant=True, default=Any)
+else:
+    from typing import TypeVar
+
+    _T_co = TypeVar("_T_co", covariant=True)
+
 
 __all__ = ["_NestedSequence"]
-
-_T_co = TypeVar("_T_co", covariant=True)
 
 
 @runtime_checkable
