@@ -3639,11 +3639,11 @@ class TestCorrelate:
         assert_array_equal(lags, np.arange(-1, 4))
         assert len(z) == len(lags)
 
-    def test_maxlag(self):
+    def test_max_lag(self):
         self._setup(float)
-        # maxlag=1 gives the symmetric inclusive window [-1, 0, 1]
-        z = np.correlate(self.x, self.y, maxlag=1)
-        lags = np.correlation_lags(len(self.x), len(self.y), maxlag=1)
+        # max_lag=1 gives the symmetric inclusive window [-1, 0, 1]
+        z = np.correlate(self.x, self.y, max_lag=1)
+        lags = np.correlation_lags(len(self.x), len(self.y), max_lag=1)
         assert_array_almost_equal(z, self.z1[1:4])  # [-8., -14., -20.]
         assert_array_equal(lags, np.arange(-1, 2))
         assert len(z) == len(lags)
@@ -3680,15 +3680,15 @@ class TestCorrelate:
         assert_array_almost_equal(z, self.z1[0::2])
         assert_array_equal(lags, np.array([-2, 0, 2, 4]))
 
-    def test_maxlag_and_lags_mutually_exclusive(self):
+    def test_max_lag_and_lags_mutually_exclusive(self):
         self._setup(float)
         with pytest.raises(TypeError, match="cannot specify both"):
-            np.correlate(self.x, self.y, maxlag=1, lags=range(-1, 2))
+            np.correlate(self.x, self.y, max_lag=1, lags=range(-1, 2))
 
     def test_lags_with_non_lags_mode(self):
         self._setup(float)
         with pytest.raises(ValueError, match="cannot be used with mode"):
-            np.correlate(self.x, self.y, mode='full', maxlag=1)
+            np.correlate(self.x, self.y, mode='full', max_lag=1)
         with pytest.raises(ValueError, match="cannot be used with mode"):
             np.correlate(self.x, self.y, mode='valid', lags=range(2))
 
@@ -3828,9 +3828,9 @@ class TestCorrelate:
         # No mode, no lags -> 'valid'
         assert_array_equal(np.correlate(self.x, self.y),
                            np.correlate(self.x, self.y, mode='valid'))
-        # No mode, with maxlag -> 'lags'
-        assert_array_equal(np.correlate(self.x, self.y, maxlag=1),
-                           np.correlate(self.x, self.y, mode='lags', maxlag=1))
+        # No mode, with max_lag -> 'lags'
+        assert_array_equal(np.correlate(self.x, self.y, max_lag=1),
+                           np.correlate(self.x, self.y, mode='lags', max_lag=1))
         # No mode, with lags -> 'lags'
         assert_array_equal(
             np.correlate(self.x, self.y, lags=range(-1, 2)),
@@ -3919,11 +3919,11 @@ class TestConvolve:
 
     # --- Convolve lags tests (mirror correlate API) ---
 
-    def test_convolve_maxlag(self):
+    def test_convolve_max_lag(self):
         a = np.array([1, 2, 3], dtype=float)
         v = np.array([0, 1, 0.5], dtype=float)
-        z = np.convolve(a, v, maxlag=1)
-        lags = np.correlation_lags(len(a), len(v), maxlag=1)
+        z = np.convolve(a, v, max_lag=1)
+        lags = np.correlation_lags(len(a), len(v), max_lag=1)
         assert_array_almost_equal(z, [1.0, 2.5, 4.0])
         assert_array_equal(lags, np.arange(-1, 2))
 
@@ -3971,22 +3971,22 @@ class TestConvolve:
         v = [0, 1, 0.5]
         # No mode, no lags -> 'full'
         assert_array_equal(np.convolve(a, v), np.convolve(a, v, mode='full'))
-        # No mode, with maxlag -> 'lags'
-        assert_array_equal(np.convolve(a, v, maxlag=1),
-                           np.convolve(a, v, mode='lags', maxlag=1))
+        # No mode, with max_lag -> 'lags'
+        assert_array_equal(np.convolve(a, v, max_lag=1),
+                           np.convolve(a, v, mode='lags', max_lag=1))
         # No mode, with lags -> 'lags'
         assert_array_equal(np.convolve(a, v, lags=range(-1, 2)),
                            np.convolve(a, v, mode='lags',
                                        lags=range(-1, 2)))
 
-    def test_convolve_maxlag_lags_mutually_exclusive(self):
+    def test_convolve_max_lag_lags_mutually_exclusive(self):
         with pytest.raises(TypeError, match="cannot specify both"):
             np.convolve([1, 2, 3], [4, 5, 6],
-                        maxlag=1, lags=range(-1, 2))
+                        max_lag=1, lags=range(-1, 2))
 
     def test_convolve_lags_with_non_lags_mode(self):
         with pytest.raises(ValueError, match="cannot be used with mode"):
-            np.convolve([1, 2, 3], [4, 5, 6], mode='full', maxlag=1)
+            np.convolve([1, 2, 3], [4, 5, 6], mode='full', max_lag=1)
         with pytest.raises(ValueError, match="cannot be used with mode"):
             np.convolve([1, 2, 3], [4, 5, 6], mode='full',
                         lags=range(2))
@@ -4006,10 +4006,10 @@ class TestConvolve:
         v = np.array([3, 4 + 1j])
         expected = np.array([3 + 3j, 9 + 5j, 8 + 2j])
         assert_array_equal(np.convolve(a, v), expected)
-        # Same check via the lags path (maxlag=1 covers lags [-1, 0, 1],
+        # Same check via the lags path (max_lag=1 covers lags [-1, 0, 1],
         # which is the full output for two length-2 inputs)
-        result = np.convolve(a, v, maxlag=1)
-        lags = np.correlation_lags(len(a), len(v), maxlag=1)
+        result = np.convolve(a, v, max_lag=1)
+        lags = np.correlation_lags(len(a), len(v), max_lag=1)
         assert_array_equal(result, expected)
         assert_array_equal(lags, np.arange(-1, 2))
 
