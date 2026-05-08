@@ -10,6 +10,7 @@ terms of the NumPy License.
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 import copy
+import re
 
 from ._isocbind import isoc_kindmap
 from .auxfuncs import (
@@ -82,6 +83,82 @@ def useiso_c_binding(rout):
         if kind_value in isoc_kindmap:
             return True
     return useisoc
+
+
+def _extract_cb_interface(saved_interface, cbname):
+    """Extract the interface block for callback ``cbname`` from *saved_interface*.
+
+    Returns the interface block as a string (including the surrounding
+    ``interface`` / ``end interface`` lines), or ``None`` when no such block
+    is found.
+    """
+    lines = saved_interface.split('\n')
+    collecting = False
+    depth = 0
+    collected = []
+    # Match nested "interface" block that contains "function <cbname>"
+    # or "subroutine <cbname>" immediately after "interface".
+    for line in lines:
+        stripped = line.strip().lower()
+        if not collecting:
+            if stripped == 'interface':
+                # Start of a candidate interface block -- peek ahead is
+                # hard, so just start collecting and verify afterwards.
+                collecting = True
+                depth = 1
+                collected = [line]
+                continue
+        else:
+            collected.append(line)
+            if re.match(r'\s*interface\b', stripped):
+                depth += 1
+            elif re.match(r'\s*end\s+interface\b', stripped):
+                depth -= 1
+                if depth == 0:
+                    # Check whether this block defines cbname
+                    block_text = '\n'.join(collected)
+                    pattern = (
+                        r'(?:function|subroutine)\s+' + re.escape(cbname)
+                        + r'\b'
+                    )
+                    if re.search(pattern, block_text, re.IGNORECASE):
+                        return block_text
+                    collecting = False
+                    collected = []
+    return None
+
+
+def _clean_saved_interface(saved_interface, cb_names):
+    """Remove ``external`` declarations from *saved_interface* for names that
+    have an interface block in the same scope.
+
+    When f2py expands ``use __user__routines`` into inline interface blocks,
+    the original ``external`` declaration becomes redundant and violates the
+    Fortran standard (diagnosed by Intel compilers).
+    """
+    if not cb_names:
+        return saved_interface
+    lines = saved_interface.split('\n')
+    result = []
+    for line in lines:
+        stripped = line.strip().lower()
+        if stripped.startswith('external'):
+            # Parse the names after 'external'
+            decl_part = line.split('external', 1)[1].strip()
+            # Could be "external f" or "external :: f" or "external f, g"
+            decl_part = decl_part.lstrip(':').strip()
+            names = [n.strip().lower() for n in decl_part.split(',')]
+            # Remove names that have interface blocks
+            remaining = [n for n in names if n not in cb_names]
+            if remaining:
+                result.append(
+                    line.replace(decl_part, ', '.join(remaining))
+                )
+            # else: skip the entire external line
+        else:
+            result.append(line)
+    return '\n'.join(result)
+
 
 def createfuncwrapper(rout, signature=0):
     assert isfunction(rout)
@@ -158,9 +235,31 @@ def createfuncwrapper(rout, signature=0):
 
     args = args[1:]
     dumped_args = []
+
+    # Collect names of external (callback) arguments that have a proper
+    # interface block inside saved_interface.  For those we emit the
+    # interface block instead of a bare ``external`` declaration to
+    # satisfy strict Fortran compilers (gh-20157).
+    cb_names_with_iface = set()
+    if need_interface and 'saved_interface' in rout:
+        for a in args:
+            if isexternal(vars[a]):
+                if _extract_cb_interface(rout['saved_interface'], a):
+                    cb_names_with_iface.add(a)
+
     for a in args:
         if isexternal(vars[a]):
-            add(f'external {a}')
+            if a in cb_names_with_iface:
+                # Emit the full interface block for this callback at the
+                # outer wrapper scope so the compiler knows its signature.
+                # The extracted text already includes the enclosing
+                # ``interface`` / ``end interface`` lines.
+                cb_iface = _extract_cb_interface(
+                    rout['saved_interface'], a)
+                for iline in cb_iface.split('\n'):
+                    add(iline.rstrip())
+            else:
+                add(f'external {a}')
             dumped_args.append(a)
     for a in args:
         if a in dumped_args:
@@ -188,8 +287,13 @@ def createfuncwrapper(rout, signature=0):
             # f90 module already defines needed interface
             pass
         else:
+            # Clean redundant ``external`` declarations from the saved
+            # interface when inline interface blocks already exist for
+            # those names (gh-20157).
+            cleaned = _clean_saved_interface(
+                rout['saved_interface'], cb_names_with_iface)
             add('interface')
-            add(rout['saved_interface'].lstrip())
+            add(cleaned.lstrip())
             add('end interface')
 
     sargs = ', '.join([a for a in args if a not in extra_args])
@@ -255,9 +359,25 @@ def createsubrwrapper(rout, signature=0):
                 add(line)
 
     dumped_args = []
+
+    # Collect names of external (callback) arguments that have a proper
+    # interface block inside saved_interface (gh-20157).
+    cb_names_with_iface = set()
+    if need_interface and 'saved_interface' in rout:
+        for a in args:
+            if isexternal(vars[a]):
+                if _extract_cb_interface(rout['saved_interface'], a):
+                    cb_names_with_iface.add(a)
+
     for a in args:
         if isexternal(vars[a]):
-            add(f'external {a}')
+            if a in cb_names_with_iface:
+                cb_iface = _extract_cb_interface(
+                    rout['saved_interface'], a)
+                for iline in cb_iface.split('\n'):
+                    add(iline.rstrip())
+            else:
+                add(f'external {a}')
             dumped_args.append(a)
     for a in args:
         if a in dumped_args:
@@ -275,8 +395,13 @@ def createsubrwrapper(rout, signature=0):
             # f90 module already defines needed interface
             pass
         else:
+            # Clean redundant ``external`` declarations from the saved
+            # interface when inline interface blocks already exist for
+            # those names (gh-20157).
+            cleaned = _clean_saved_interface(
+                rout['saved_interface'], cb_names_with_iface)
             add('interface')
-            for line in rout['saved_interface'].split('\n'):
+            for line in cleaned.split('\n'):
                 if line.lstrip().startswith('use ') and '__user__' in line:
                     continue
                 add(line)
