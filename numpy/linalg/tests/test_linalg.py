@@ -1498,6 +1498,13 @@ class _TestNorm2D(_TestNormBase):
     def test_matrix_empty(self):
         assert_equal(norm(self.array([[]], dtype=self.dt)), 0.0)
 
+    def test_matrix_empty_all_ords(self):
+        # gh-30916: norm with ord=-2 crashed on empty matrices
+        for shape in [(1, 0), (0, 1)]:
+            a = self.array(np.empty(shape, dtype=self.dt))
+            for order in [2, -2, 1, -1, np.inf, -np.inf, 'fro', 'nuc']:
+                assert_equal(norm(a, ord=order), 0.0)
+
     def test_matrix_return_type(self):
         a = self.array([[1, 0, 1], [0, 1, 1]])
 
@@ -2437,6 +2444,10 @@ def test_matrix_norm_empty():
             assert_equal(np.linalg.matrix_norm(x, ord=1), 0)
             assert_equal(np.linalg.matrix_norm(x, ord=2), 0)
             assert_equal(np.linalg.matrix_norm(x, ord=np.inf), 0)
+            # gh-30916
+            assert_equal(np.linalg.matrix_norm(x, ord=-1), 0)
+            assert_equal(np.linalg.matrix_norm(x, ord=-2), 0)
+            assert_equal(np.linalg.matrix_norm(x, ord=-np.inf), 0)
 
 def test_vector_norm():
     x = np.arange(9).reshape((3, 3))
