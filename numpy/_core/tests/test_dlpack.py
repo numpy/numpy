@@ -253,9 +253,9 @@ class TestRegisterDlpackDtype:
         # Register S3 as a nonsensical dtype
         np.dtypes.register_dlpack_dtype((123, 24), dtype)
         # Delete from import but not from export.
-        exp, imp = np._core._multiarray_umath._dlpack_registry_replace({}, {})
-        exp.pop((123, 24))
-        np._core._multiarray_umath._dlpack_registry_replace(exp, imp)
+        imp, exp = np._core._multiarray_umath._dlpack_registry_replace({}, {})
+        imp.pop((123, 24))
+        np._core._multiarray_umath._dlpack_registry_replace(imp, exp)
 
         arr = np.array(["1", "2"], dtype=dtype)
         arr.__dlpack__()  # passes

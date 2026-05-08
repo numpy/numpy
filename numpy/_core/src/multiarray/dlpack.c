@@ -813,7 +813,8 @@ _register_dlpack_dtype(PyObject *NPY_UNUSED(self), PyObject *args)
     PyObject *ret = NULL;
     PyArray_Descr *descr = NULL;
     PyObject *dlpack_tuple = NULL;
-    PyObject *original = NULL;  // Original value if in dict.
+    PyObject *original_tuple = NULL;  // Existing dlpack tuple for export
+    PyObject *original_descr = NULL;  // Existing dtype for import
 
     long code = 0;
     long bits_l = 0;
@@ -828,10 +829,11 @@ _register_dlpack_dtype(PyObject *NPY_UNUSED(self), PyObject *args)
                 "register_dlpack_dtype: DLPack code must be in 0..255.");
         goto finish;
     }
+    // Check bits fit into 255 bytes via elsize to avoid elsize * 8 overflow.
     if (descr->elsize > 255/8 || descr->elsize * 8 != bits_l) {
         PyErr_SetString(PyExc_ValueError,
                 "register_dlpack_dtype: number of bits must match the "
-                "dtypes and be <=255.");
+                "dtype's elsize and be <=255.");
         goto finish;
     }
 
@@ -842,13 +844,13 @@ _register_dlpack_dtype(PyObject *NPY_UNUSED(self), PyObject *args)
 
     int set_res = PyDict_SetDefaultRef(
             npy_static_pydata.dlpack_export_registry, (PyObject *)descr, dlpack_tuple,
-            &original);
+            &original_tuple);
     if (set_res < 0) {
         goto finish;
     }
     else if (set_res == 1) {
         /* Key was present, allow if the value is equal: */
-        int exp_same = PyObject_RichCompareBool(original, dlpack_tuple, Py_EQ);
+        int exp_same = PyObject_RichCompareBool(original_tuple, dlpack_tuple, Py_EQ);
         if (exp_same < 0) {
             goto finish;
         }
@@ -860,18 +862,17 @@ _register_dlpack_dtype(PyObject *NPY_UNUSED(self), PyObject *args)
         }
     }
 
-    Py_CLEAR(original);  // re-use original.
     if (PyDict_SetDefaultRef(
             npy_static_pydata.dlpack_dtype_registry, dlpack_tuple, (PyObject *)descr,
-            &original) < 0) {
+            &original_descr) < 0) {
         goto finish;
     }
-    if ((PyObject *)descr != original) {
+    if ((PyObject *)descr != original_descr) {
         PyErr_Format(PyExc_ValueError,
             "register_dlpack_dtype: the same (code, bits) already maps to a "
             "%R which is not identical (it may be equal). "
             "The dtype->(code, bits) was, however, established.",
-            original);
+            original_descr);
         goto finish;
     }
 
@@ -879,7 +880,8 @@ _register_dlpack_dtype(PyObject *NPY_UNUSED(self), PyObject *args)
 
 finish:
     Py_XDECREF(dlpack_tuple);
-    Py_XDECREF(original);
+    Py_XDECREF(original_tuple);
+    Py_XDECREF(original_descr);
     return ret;
 }
 
