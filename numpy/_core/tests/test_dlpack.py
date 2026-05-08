@@ -30,7 +30,8 @@ class TestDLPack:
         x = np.arange(5)
         x.__dlpack__(stream=None)
 
-        with pytest.raises(RuntimeError):
+        with pytest.raises(
+                ValueError, match="NumPy only supports stream=None."):
             x.__dlpack__(stream=1)
 
     def test_dunder_dlpack_copy(self):
@@ -210,11 +211,11 @@ class TestRegisterDlpackDtype:
         ((-1, 16), np.dtype(np.float16)),
         ((256, 16), np.dtype(np.float16)),
         ((4, 15), np.dtype(np.float16)),
-        ((4, 256), np.dtype(np.float16)),
+        ((4, 256), np.dtype("V256")),
         ((4, 15), np.dtype(np.float32)),
     ])
     def test_register_bad_code_or_bits(self, key, dtype):
-        with pytest.raises(ValueError, match="0..255"):
+        with pytest.raises(ValueError, match="(0..255|must match the dtype)"):
             np.dtypes.register_dlpack_dtype(key, dtype)
 
     def test_register_idempotent(self):
@@ -246,3 +247,17 @@ class TestRegisterDlpackDtype:
         # But... accept that this now does get exported (but won't roundtrip)
         arr = np.from_dlpack(np.array(["12", "23"], dtype="S2"))
         assert arr.dtype == np.float16
+
+    @pytest.mark.thread_unsafe(reason="dlpack registry is thread-unsafe")
+    def test_buffererror_bad_dtype(self, dtype=np.dtype("S3")):  # noqa: B008
+        # Register S3 as a nonsensical dtype
+        np.dtypes.register_dlpack_dtype((123, 24), dtype)
+        # Delete from import but not from export.
+        exp, imp = np._core._multiarray_umath._dlpack_registry_replace({}, {})
+        exp.pop((123, 24))
+        np._core._multiarray_umath._dlpack_registry_replace(exp, imp)
+
+        arr = np.array(["1", "2"], dtype=dtype)
+        arr.__dlpack__()  # passes
+        with pytest.raises(BufferError):
+            np.from_dlpack(arr)  # doesn't round-trip

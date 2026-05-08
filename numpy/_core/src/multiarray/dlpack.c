@@ -69,11 +69,10 @@ dlpack_dtype_registry_lookup(uint8_t code, uint8_t bits)
             npy_static_pydata.dlpack_dtype_registry, key, &reg_val);
     Py_DECREF(key);
     if (gres < 0) {
-        Py_XDECREF(reg_val);
         return NULL;
     }
     if (gres == 0) {
-        PyErr_SetString(PyExc_RuntimeError,
+        PyErr_SetString(PyExc_BufferError,
                 "Unsupported dtype in DLTensor.");
         return NULL;
     }
@@ -518,7 +517,7 @@ array_dlpack(PyArrayObject *self,
     }
 
     if (stream != Py_None) {
-        PyErr_SetString(PyExc_RuntimeError,
+        PyErr_SetString(PyExc_ValueError,
                 "NumPy only supports stream=None.");
         return NULL;
     }
@@ -823,11 +822,16 @@ _register_dlpack_dtype(PyObject *NPY_UNUSED(self), PyObject *args)
         goto finish;
     }
 
-    if (code < 0 || code > 255 || bits_l < 8 || bits_l > 255
-            || (bits_l % 8) != 0) {
+    /* Sanity check code and bits, if DLPack relaxes this we can do this also. */
+    if (code < 0 || code > 255) {
         PyErr_SetString(PyExc_ValueError,
-                "register_dlpack_dtype: DLPack code must be in 0..255 and "
-                "bits must be a multiple of 8 in 8..255.");
+                "register_dlpack_dtype: DLPack code must be in 0..255.");
+        goto finish;
+    }
+    if (descr->elsize > 255/8 || descr->elsize * 8 != bits_l) {
+        PyErr_SetString(PyExc_ValueError,
+                "register_dlpack_dtype: number of bits must match the "
+                "dtypes and be <=255.");
         goto finish;
     }
 
@@ -898,8 +902,8 @@ _dlpack_registry_replace(PyObject *NPY_UNUSED(self), PyObject *args)
     }
 
     /* Replace the currently used dicts in place. */
-    npy_static_pydata.dlpack_dtype_registry = Py_NewRef(imp);
-    npy_static_pydata.dlpack_export_registry = Py_NewRef(exp);
+    Py_SETREF(npy_static_pydata.dlpack_dtype_registry, Py_NewRef(imp));
+    Py_SETREF(npy_static_pydata.dlpack_export_registry, Py_NewRef(exp));
     return ret;
 }
 
