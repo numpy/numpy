@@ -346,12 +346,12 @@ static PyMethodDef limited_api_opaque_methods[] = {
 
 PyABIInfo_VAR(abi_info);
 
-static PyModuleDef_Slot limited_api_opaque_slots[] = {
-    {Py_mod_abi, &abi_info},
-    {Py_mod_name, "limited_api_opaque"},
-    {Py_mod_methods, limited_api_opaque_methods},
-    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
-    {0, NULL},
+static PySlot limited_api_opaque_slots[] = {
+    PySlot_STATIC_DATA(Py_mod_abi, &abi_info),
+    PySlot_STATIC_DATA(Py_mod_name, "limited_api_opaque"),
+    PySlot_STATIC_DATA(Py_mod_methods, limited_api_opaque_methods),
+    PySlot_STATIC_DATA(Py_mod_gil, Py_MOD_GIL_NOT_USED),
+    PySlot_END,
 };
 
 PyMODEXPORT_FUNC
