@@ -2439,6 +2439,7 @@ class TestSinc:
 
     def test_simple(self):
         assert_(sinc(0) == 1)
+        assert_(sinc(np.inf) == 0)
         w = sinc(np.linspace(-1, 1, 100))
         # check symmetry
         assert_array_almost_equal(w, flipud(w), 7)
