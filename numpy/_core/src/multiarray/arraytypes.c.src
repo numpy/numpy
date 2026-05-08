@@ -4817,6 +4817,19 @@ set_typeinfo(PyObject *dict)
     if (ret < 0) {
         return -1;
     }
+
+    /*
+     * Mark the builtin descriptors and their DTypeMeta types as immortal.
+     * These are singletons that live for the entire process lifetime, so
+     * making them immortal avoids refcount overhead on every dtype lookup
+     * (and avoids atomic refcount contention on free-threading builds).
+     */
+#ifdef Py_GIL_DISABLED
+    for (i = 0; i < NPY_NTYPES_LEGACY; i++) {
+        PyUnstable_SetImmortal((PyObject *)_builtin_descrs[i]);
+        PyUnstable_SetImmortal((PyObject *)Py_TYPE(_builtin_descrs[i]));
+    }
+#endif
     return 0;
 
   error:
