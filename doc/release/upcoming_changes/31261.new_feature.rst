@@ -1,5 +1,5 @@
 ``max_lag`` and ``lags`` parameters for `numpy.correlate` and `numpy.convolve`
------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 `numpy.correlate` and `numpy.convolve` now accept ``max_lag`` and ``lags``
 keyword arguments to compute the result at a restricted set of lag values
 instead of the full output, plus a ``returns_lagvector`` flag to return the
