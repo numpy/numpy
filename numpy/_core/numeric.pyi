@@ -24,6 +24,7 @@ from numpy import (
     newaxis,
     ufunc,
 )
+from numpy._globals import _NoValueType
 from numpy._typing import (
     ArrayLike,
     DTypeLike,
@@ -1056,7 +1057,7 @@ type _LagsArg = int | tuple[int, int] | tuple[int, int, int] | range | slice | _
 def correlate(  # noqa: UP047
     a: _ArrayLike1D[_AnyNumericScalarT],
     v: _ArrayLike1D[_AnyNumericScalarT],
-    mode: _CorrelateMode | L["lags"] = "valid",
+    mode: _CorrelateMode | L["lags"] | _NoValueType = ...,
     *,
     max_lag: int | None = None,
     lags: _LagsArg | None = None,
@@ -1065,7 +1066,7 @@ def correlate(  # noqa: UP047
 def correlate(
     a: _ArrayLike1DBool_co,
     v: _ArrayLike1DBool_co,
-    mode: _CorrelateMode | L["lags"] = "valid",
+    mode: _CorrelateMode | L["lags"] | _NoValueType = ...,
     *,
     max_lag: int | None = None,
     lags: _LagsArg | None = None,
@@ -1074,7 +1075,7 @@ def correlate(
 def correlate(
     a: _ArrayLike1DInt_co,
     v: _ArrayLike1DInt_co,
-    mode: _CorrelateMode | L["lags"] = "valid",
+    mode: _CorrelateMode | L["lags"] | _NoValueType = ...,
     *,
     max_lag: int | None = None,
     lags: _LagsArg | None = None,
@@ -1083,7 +1084,7 @@ def correlate(
 def correlate(
     a: _ArrayLike1DFloat_co,
     v: _ArrayLike1DFloat_co,
-    mode: _CorrelateMode | L["lags"] = "valid",
+    mode: _CorrelateMode | L["lags"] | _NoValueType = ...,
     *,
     max_lag: int | None = None,
     lags: _LagsArg | None = None,
@@ -1092,7 +1093,7 @@ def correlate(
 def correlate(
     a: _ArrayLike1DNumber_co,
     v: _ArrayLike1DNumber_co,
-    mode: _CorrelateMode | L["lags"] = "valid",
+    mode: _CorrelateMode | L["lags"] | _NoValueType = ...,
     *,
     max_lag: int | None = None,
     lags: _LagsArg | None = None,
@@ -1101,7 +1102,7 @@ def correlate(
 def correlate(
     a: _ArrayLike1DTD64_co,
     v: _ArrayLike1DTD64_co,
-    mode: _CorrelateMode | L["lags"] = "valid",
+    mode: _CorrelateMode | L["lags"] | _NoValueType = ...,
     *,
     max_lag: int | None = None,
     lags: _LagsArg | None = None,
@@ -1110,7 +1111,7 @@ def correlate(
 def correlation_lags(
     a_len: SupportsIndex,
     v_len: SupportsIndex,
-    mode: _CorrelateMode | L["lags"] = "valid",
+    mode: _CorrelateMode | L["lags"] | _NoValueType = ...,
     *,
     max_lag: int | None = None,
     lags: _LagsArg | None = None,
@@ -1121,7 +1122,7 @@ def correlation_lags(
 def convolve(  # noqa: UP047
     a: _ArrayLike1D[_AnyNumericScalarT],
     v: _ArrayLike1D[_AnyNumericScalarT],
-    mode: _CorrelateMode | L["lags"] = "full",
+    mode: _CorrelateMode | L["lags"] | _NoValueType = ...,
     *,
     max_lag: int | None = None,
     lags: _LagsArg | None = None,
@@ -1130,7 +1131,7 @@ def convolve(  # noqa: UP047
 def convolve(
     a: _ArrayLike1DBool_co,
     v: _ArrayLike1DBool_co,
-    mode: _CorrelateMode | L["lags"] = "full",
+    mode: _CorrelateMode | L["lags"] | _NoValueType = ...,
     *,
     max_lag: int | None = None,
     lags: _LagsArg | None = None,
@@ -1139,7 +1140,7 @@ def convolve(
 def convolve(
     a: _ArrayLike1DInt_co,
     v: _ArrayLike1DInt_co,
-    mode: _CorrelateMode | L["lags"] = "full",
+    mode: _CorrelateMode | L["lags"] | _NoValueType = ...,
     *,
     max_lag: int | None = None,
     lags: _LagsArg | None = None,
@@ -1148,7 +1149,7 @@ def convolve(
 def convolve(
     a: _ArrayLike1DFloat_co,
     v: _ArrayLike1DFloat_co,
-    mode: _CorrelateMode | L["lags"] = "full",
+    mode: _CorrelateMode | L["lags"] | _NoValueType = ...,
     *,
     max_lag: int | None = None,
     lags: _LagsArg | None = None,
@@ -1157,7 +1158,7 @@ def convolve(
 def convolve(
     a: _ArrayLike1DNumber_co,
     v: _ArrayLike1DNumber_co,
-    mode: _CorrelateMode | L["lags"] = "full",
+    mode: _CorrelateMode | L["lags"] | _NoValueType = ...,
     *,
     max_lag: int | None = None,
     lags: _LagsArg | None = None,
@@ -1166,7 +1167,7 @@ def convolve(
 def convolve(
     a: _ArrayLike1DTD64_co,
     v: _ArrayLike1DTD64_co,
-    mode: _CorrelateMode | L["lags"] = "full",
+    mode: _CorrelateMode | L["lags"] | _NoValueType = ...,
     *,
     max_lag: int | None = None,
     lags: _LagsArg | None = None,

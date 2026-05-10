@@ -8,10 +8,10 @@ import sys
 import warnings
 
 import numpy as np
+from numpy._globals import _NoValue
 from numpy.exceptions import AxisError
 
 from . import multiarray, numerictypes, numerictypes as nt, overrides, shape_base, umath
-from .._globals import _NoValue
 from ._ufunc_config import errstate
 from .multiarray import (  # noqa: F401
     ALLOW_THREADS,
@@ -79,7 +79,8 @@ __all__ = [
     'argwhere', 'copyto', 'concatenate', 'lexsort', 'astype',
     'can_cast', 'promote_types', 'min_scalar_type',
     'result_type', 'isfortran', 'empty_like', 'zeros_like', 'ones_like',
-    'correlate', 'correlation_lags', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
+    'correlate', 'correlation_lags', 'convolve', 'inner', 'dot',
+    'outer', 'vdot', 'roll',
     'rollaxis', 'moveaxis', 'cross', 'tensordot', 'little_endian',
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
     'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
