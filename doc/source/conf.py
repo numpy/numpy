@@ -442,6 +442,27 @@ phantom_import_file = 'dump.xml'
 # Make numpydoc to generate plots for example sections
 numpydoc_use_plots = True
 
+
+# numpydoc renders class attribute names as object links in the generated
+# attribute list. Qualify the dtype links so ``char`` resolves to
+# ``numpy.dtype.char`` instead of the legacy ``numpy.char`` module.
+from numpydoc.docscrape_sphinx import SphinxClassDoc as _NumpydocSphinxClassDoc
+
+if not getattr(_NumpydocSphinxClassDoc, "_numpy_dtype_link_patch", False):
+    _numpydoc_sphinx_class_doc_init = _NumpydocSphinxClassDoc.__init__
+
+    def _sphinx_class_doc_init_with_dtype_name(
+        self, obj, doc=None, func_doc=None, config=None
+    ):
+        _numpydoc_sphinx_class_doc_init(
+            self, obj, doc=doc, func_doc=func_doc, config=config
+        )
+        if obj is numpy.dtype and not getattr(self, "_name", None):
+            self._name = "numpy.dtype"
+
+    _NumpydocSphinxClassDoc.__init__ = _sphinx_class_doc_init_with_dtype_name
+    _NumpydocSphinxClassDoc._numpy_dtype_link_patch = True
+
 # -----------------------------------------------------------------------------
 # Autosummary
 # -----------------------------------------------------------------------------
