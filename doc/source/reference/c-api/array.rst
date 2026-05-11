@@ -3613,7 +3613,10 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
    I.e. NumPy will still consider this a "legacy" DType and use old code paths
    where applicable, but use new features as they become available.
 
-   If used, this slot is required to be the first slot.
+   If used, this slot is required to be the first slot.  The ``ArrFuncs``
+   fields are copied, but you may also set them via the slots below.
+   (This allows backporting e.g. sorts, although NumPy 2.4+ does support
+   a new way to implement sorts.)
 
    .. versionadded:: 2.5
 
