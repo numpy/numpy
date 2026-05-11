@@ -5,6 +5,11 @@
 
 extern NPY_NO_EXPORT _PyArray_LegacyDescr **userdescrs;
 
+NPY_NO_EXPORT _PyArray_LegacyDescr *
+_PyArray_LegacyDescrNewFromPrototype(
+        PyTypeObject *descr_type, PyArray_DescrProto *descr_proto,
+        npy_bool copy_metadata);
+
 NPY_NO_EXPORT void
 PyArray_InitArrFuncs(PyArray_ArrFuncs *f);
 

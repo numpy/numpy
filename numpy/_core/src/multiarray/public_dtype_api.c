@@ -79,14 +79,12 @@ PyArrayInitDTypeMeta_FromSpec(
         return -1;
     }
 
-    if (!NPY_DT_is_legacy(DType)) {
-        if (NPY_DT_SLOTS(DType)->setitem == NULL
-                || NPY_DT_SLOTS(DType)->getitem == NULL) {
-            PyErr_SetString(PyExc_RuntimeError,
-                    "A DType must provide a getitem/setitem (there may be an "
-                    "exception here in the future if no scalar type is provided)");
-            return -1;
-        }
+    if (NPY_DT_SLOTS(DType)->setitem == NULL
+            || NPY_DT_SLOTS(DType)->getitem == NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "A DType must provide a getitem/setitem (there may be an "
+                "exception here in the future if no scalar type is provided)");
+        return -1;
     }
 
     if (NPY_DT_SLOTS(DType)->ensure_canonical == NULL) {

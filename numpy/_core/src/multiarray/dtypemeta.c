@@ -142,7 +142,6 @@ legacy_fallback_setitem(PyArray_Descr *descr, PyObject *value, char *data)
     return PyDataType_GetArrFuncs(descr)->setitem(value, data, &arr_fields);
 }
 
-
 static int
 legacy_setitem_using_DType(PyObject *obj, void *data, void *arr)
 {
@@ -249,6 +248,11 @@ dtypemeta_initialize_struct_from_spec(
         DType->flags |= NPY_DT_LEGACY;
         ((PyTypeObject *)DType)->tp_basicsize = sizeof(_PyArray_LegacyDescr);
         ((PyTypeObject *)DType)->tp_new = (newfunc)legacy_dtype_default_new;
+        /*
+         * The type object is mutable during initialization, so update CPython's
+         * internal caches after changing slots inherited from np.dtype.
+         */
+        PyType_Modified((PyTypeObject *)DType);
 
         NPY_DT_SLOTS(DType)->discover_descr_from_pyobject =
                 nonparametric_discover_descr_from_pyobject;
@@ -256,15 +260,12 @@ dtypemeta_initialize_struct_from_spec(
         NPY_DT_SLOTS(DType)->common_dtype =
                 legacy_userdtype_common_dtype_function;
         NPY_DT_SLOTS(DType)->ensure_canonical = ensure_native_byteorder;
-        NPY_DT_SLOTS(DType)->setitem = legacy_fallback_setitem;
 
-        /* Only take copyswap/copyswapn from the proto's arrfuncs */
+        /* Initialize full legacy ArrFuncs from the descriptor prototype. */
         if (legacy_proto->f != NULL) {
-            NPY_DT_SLOTS(DType)->f.copyswap = legacy_proto->f->copyswap;
-            if (legacy_proto->f->copyswapn != NULL) {
-                NPY_DT_SLOTS(DType)->f.copyswapn = legacy_proto->f->copyswapn;
-            }
-            else if (legacy_proto->f->copyswap != NULL) {
+            NPY_DT_SLOTS(DType)->f = *(legacy_proto->f);
+            if (NPY_DT_SLOTS(DType)->f.copyswapn == NULL
+                    && NPY_DT_SLOTS(DType)->f.copyswap != NULL) {
                 NPY_DT_SLOTS(DType)->f.copyswapn = _default_copyswapn;
             }
         }
@@ -408,42 +409,24 @@ dtypemeta_initialize_struct_from_spec(
             return -1;
         }
 
-        _PyArray_LegacyDescr *descr = PyObject_Malloc(
-                sizeof(_PyArray_LegacyDescr));
-        if (descr == NULL) {
-            PyErr_NoMemory();
-            return -1;
-        }
-        PyObject_INIT(descr, (PyTypeObject *)DType);
-
-        Py_XINCREF(legacy_proto->typeobj);
-        descr->typeobj = legacy_proto->typeobj;
-        descr->kind = legacy_proto->kind;
-        descr->type = legacy_proto->type;
-        descr->byteorder = legacy_proto->byteorder;
-        descr->_former_flags = 0;
-        descr->flags = legacy_proto->flags;
-        descr->elsize = legacy_proto->elsize;
-        descr->alignment = legacy_proto->alignment;
-        descr->metadata = NULL;
-        descr->hash = -1;
-        descr->reserved_null[0] = NULL;
-        descr->reserved_null[1] = NULL;
-        descr->subarray = legacy_proto->subarray;
-        Py_XINCREF(legacy_proto->fields);
-        descr->fields = legacy_proto->fields;
-        Py_XINCREF(legacy_proto->names);
-        descr->names = legacy_proto->names;
-        descr->c_metadata = NULL;
-
+        /*
+         * Like PyArray_RegisterDataType, this mutates global userdescrs state
+         * and is expected to run during module import while single-threaded.
+         */
         _PyArray_LegacyDescr **tmp = realloc(userdescrs,
                 (NPY_NUMUSERTYPES + 1) * sizeof(void *));
         if (tmp == NULL) {
-            Py_DECREF(descr);
             PyErr_NoMemory();
             return -1;
         }
         userdescrs = tmp;
+
+        _PyArray_LegacyDescr *descr = _PyArray_LegacyDescrNewFromPrototype(
+                (PyTypeObject *)DType, legacy_proto, 0);
+        if (descr == NULL) {
+            return -1;
+        }
+
         userdescrs[NPY_NUMUSERTYPES++] = descr;
 
         descr->type_num = typenum;

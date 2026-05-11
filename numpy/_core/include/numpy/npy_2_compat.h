@@ -378,12 +378,42 @@ static inline int PyArrayInitDTypeMeta_FromSpec(
     descr->typeobj = proto->typeobj;
 
     /*
-     * Patch copyswap/copyswapn into the new DType's legacy f-slots.
+     * Initialize legacy ArrFuncs from the descriptor prototype.
      */
     if (proto->f != NULL) {
         PyArray_ArrFuncs *f = _PyDataType_GetArrFuncs(descr);
-        f->copyswap = proto->f->copyswap;
-        f->copyswapn = proto->f->copyswapn;
+        /*
+         * Preserve ArrFuncs that were explicitly set via the new API slots
+         * (step 2), and fill missing ones from the legacy prototype.
+         * getitem/setitem always come from the legacy descriptor path.
+         */
+         if (proto->f->getitem != NULL) {
+            f->getitem = proto->f->getitem;
+        }
+        if (proto->f->setitem != NULL) {
+            f->setitem = proto->f->setitem;
+        }
+#define NPY_PROTO_FILL_IF_NULL(FIELD) \
+        if (f->FIELD == NULL) { \
+            f->FIELD = proto->f->FIELD; \
+        }
+        NPY_PROTO_FILL_IF_NULL(copyswap);
+        NPY_PROTO_FILL_IF_NULL(copyswapn);
+        NPY_PROTO_FILL_IF_NULL(compare);
+        NPY_PROTO_FILL_IF_NULL(argmax);
+        NPY_PROTO_FILL_IF_NULL(dotfunc);
+        NPY_PROTO_FILL_IF_NULL(scanfunc);
+        NPY_PROTO_FILL_IF_NULL(fromstr);
+        NPY_PROTO_FILL_IF_NULL(nonzero);
+        NPY_PROTO_FILL_IF_NULL(fill);
+        NPY_PROTO_FILL_IF_NULL(fillwithscalar);
+        NPY_PROTO_FILL_IF_NULL(scalarkind);
+        NPY_PROTO_FILL_IF_NULL(argmin);
+#undef NPY_PROTO_FILL_IF_NULL
+        for (int i = 0; i < NPY_NSORTS; i++) {
+            f->sort[i] = proto->f->sort[i];
+            f->argsort[i] = proto->f->argsort[i];
+        }
     }
 #endif  /* Py_LIMITED_API */
     return 0;

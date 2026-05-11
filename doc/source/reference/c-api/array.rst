@@ -3565,6 +3565,11 @@ Also see :ref:`dtypemeta` for documentation on ``PyArray_DTypeMeta`` and
  the examples in the ``numpy-user-dtypes`` repository for usage with both
  parametric and non-parametric data types.
 
+ .. note::
+
+    Custom DType registration is expected to happen during module import.
+    The registration API mutates global state and is not thread-safe.
+
 .. _dtype-flags:
 
 Flags

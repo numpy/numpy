@@ -998,6 +998,23 @@ rational2_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
     return (PyArray_DTypeMeta *)Py_NotImplemented;
 }
 
+/*
+ * Minimal new-style getitem/setitem required by PyArrayInitDTypeMeta_FromSpec.
+ * Reuse the legacy rational conversion logic for now.
+ */
+static PyObject *
+rational2_getitem(PyArray_Descr *NPY_UNUSED(descr), char *data)
+{
+    return npyrational_getitem(data, NULL);
+}
+
+static int
+rational2_setitem(
+        PyArray_Descr *NPY_UNUSED(descr), PyObject *item, char *data)
+{
+    return npyrational_setitem(item, data, NULL);
+}
+
 #define DEFINE_CAST(From,To,statement) \
     static void \
     npycast_##From##_##To(void* from_, void* to_, npy_intp n, \
@@ -1391,6 +1408,8 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
         PyType_Slot dtype_slots[] = {
             {NPY_DT_legacy_descriptor_proto, &npyrational_descr_proto},
             {NPY_DT_common_dtype, rational2_common_dtype},
+            {NPY_DT_getitem, rational2_getitem},
+            {NPY_DT_setitem, rational2_setitem},
             {0, NULL},
         };
 
@@ -1434,10 +1453,6 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
     npy_rational2 = NPY_Rational2DType.type_num;
     npyrational2_descr = NPY_Rational2DType.singleton;
     Py_INCREF(npyrational2_descr);
-
-    /* The new path only propagates copyswap/copyswapn from the proto;
-     * install the remaining ArrFuncs (getitem/setitem, compare, etc.). */
-    *PyDataType_GetArrFuncs(npyrational2_descr) = npyrational_arrfuncs;
 
     /* Support `dtype(rational2)` */
     if (PyDict_SetItemString(PyRational2_Type.tp_dict, "dtype",
