@@ -3460,7 +3460,7 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nrea
 {
     PyArrayObject *r;
     npy_off_t start, numbytes;
-    int elsize;
+    npy_intp elsize;
 
     if (num < 0) {
         int fail = 0;
