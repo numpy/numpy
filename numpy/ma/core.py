@@ -5003,14 +5003,19 @@ class MaskedArray(ndarray):
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
 
         mask = _check_mask_axis(self._mask, axis, **kwargs)
+        if self._mask is nomask:
+            where_kwargs = {}
+        else:
+            where_kwargs = {'where': ~self._mask}
         if out is None:
-            d = self.filled(True).all(axis=axis, **kwargs).view(type(self))
+            d = np.all(self._data, axis=axis,
+                       **where_kwargs, **kwargs).view(type(self))
             if d.ndim:
                 d.__setmask__(mask)
             elif mask:
                 return masked
             return d
-        self.filled(True).all(axis=axis, out=out, **kwargs)
+        np.all(self._data, axis=axis, out=out, **where_kwargs, **kwargs)
         if isinstance(out, MaskedArray):
             if out.ndim or mask:
                 out.__setmask__(mask)
@@ -5033,14 +5038,19 @@ class MaskedArray(ndarray):
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
 
         mask = _check_mask_axis(self._mask, axis, **kwargs)
+        if self._mask is nomask:
+            where_kwargs = {}
+        else:
+            where_kwargs = {'where': ~self._mask}
         if out is None:
-            d = self.filled(False).any(axis=axis, **kwargs).view(type(self))
+            d = np.any(self._data, axis=axis,
+                       **where_kwargs, **kwargs).view(type(self))
             if d.ndim:
                 d.__setmask__(mask)
             elif mask:
                 d = masked
             return d
-        self.filled(False).any(axis=axis, out=out, **kwargs)
+        np.any(self._data, axis=axis, out=out, **where_kwargs, **kwargs)
         if isinstance(out, MaskedArray):
             if out.ndim or mask:
                 out.__setmask__(mask)
@@ -5239,9 +5249,14 @@ class MaskedArray(ndarray):
 
         _mask = self._mask
         newmask = _check_mask_axis(_mask, axis, **kwargs)
+        if _mask is nomask:
+            where_kwargs = {}
+        else:
+            where_kwargs = {'where': ~_mask, 'initial': 0}
         # No explicit output
         if out is None:
-            result = self.filled(0).sum(axis, dtype=dtype, **kwargs)
+            result = np.sum(self._data, axis=axis, dtype=dtype,
+                                **where_kwargs, **kwargs)
             rndim = getattr(result, 'ndim', 0)
             if rndim:
                 result = result.view(type(self))
@@ -5250,7 +5265,8 @@ class MaskedArray(ndarray):
                 result = masked
             return result
         # Explicit output
-        result = self.filled(0).sum(axis, dtype=dtype, out=out, **kwargs)
+        result = np.sum(self._data, axis=axis, dtype=dtype, out=out,
+                        **where_kwargs, **kwargs)
         if isinstance(out, MaskedArray):
             outmask = getmask(out)
             if outmask is nomask:
@@ -5322,9 +5338,14 @@ class MaskedArray(ndarray):
 
         _mask = self._mask
         newmask = _check_mask_axis(_mask, axis, **kwargs)
+        if _mask is nomask:
+            where_kwargs = {}
+        else:
+            where_kwargs = {'where': ~_mask, 'initial': 1}
         # No explicit output
         if out is None:
-            result = self.filled(1).prod(axis, dtype=dtype, **kwargs)
+            result = np.prod(self._data, axis=axis, dtype=dtype,
+                             **where_kwargs, **kwargs)
             rndim = getattr(result, 'ndim', 0)
             if rndim:
                 result = result.view(type(self))
@@ -5333,7 +5354,8 @@ class MaskedArray(ndarray):
                 result = masked
             return result
         # Explicit output
-        result = self.filled(1).prod(axis, dtype=dtype, out=out, **kwargs)
+        result = np.prod(self._data, axis=axis, dtype=dtype, out=out,
+                             **where_kwargs, **kwargs)
         if isinstance(out, MaskedArray):
             outmask = getmask(out)
             if outmask is nomask:
@@ -5928,10 +5950,15 @@ class MaskedArray(ndarray):
         newmask = _check_mask_axis(_mask, axis, **kwargs)
         if fill_value is None:
             fill_value = minimum_fill_value(self)
+        if _mask is nomask:
+            where_kwargs = {}
+        else:
+            where_kwargs = {'where': ~_mask, 'initial': fill_value}
         # No explicit output
         if out is None:
-            result = self.filled(fill_value).min(
-                axis=axis, out=out, **kwargs).view(type(self))
+            result = np.min(self._data, axis=axis,
+                            **where_kwargs, **kwargs)
+            result = result.view(type(self))
             if result.ndim:
                 # Set the mask
                 result.__setmask__(newmask)
@@ -5942,7 +5969,7 @@ class MaskedArray(ndarray):
                 result = masked
             return result
         # Explicit output
-        self.filled(fill_value).min(axis=axis, out=out, **kwargs)
+        np.min(self._data, axis=axis, out=out, **where_kwargs, **kwargs)
         if isinstance(out, MaskedArray):
             outmask = getmask(out)
             if outmask is nomask:
@@ -6033,10 +6060,16 @@ class MaskedArray(ndarray):
         newmask = _check_mask_axis(_mask, axis, **kwargs)
         if fill_value is None:
             fill_value = maximum_fill_value(self)
+        if _mask is nomask:
+            where_kwargs = {}
+        else:
+            where_kwargs = {'where': ~_mask, 'initial': fill_value}
         # No explicit output
         if out is None:
-            result = self.filled(fill_value).max(
-                axis=axis, out=out, **kwargs).view(type(self))
+            result = np.max(self._data, axis=axis,
+                            **where_kwargs, **kwargs)
+
+            result = result.view(type(self))
             if result.ndim:
                 # Set the mask
                 result.__setmask__(newmask)
@@ -6047,7 +6080,7 @@ class MaskedArray(ndarray):
                 result = masked
             return result
         # Explicit output
-        self.filled(fill_value).max(axis=axis, out=out, **kwargs)
+        np.max(self._data, axis=axis, out=out, **where_kwargs, **kwargs)
         if isinstance(out, MaskedArray):
             outmask = getmask(out)
             if outmask is nomask:
