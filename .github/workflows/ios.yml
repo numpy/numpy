@@ -1,0 +1,73 @@
+name: iOS tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
+
+env:
+  FORCE_COLOR: 3
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build-ios:
+    permissions:
+      contents: read  # to fetch code (actions/checkout)
+    name: Test (${{ matrix.arch }} ${{ matrix.accelerated && 'accelerated' || 'non-accelerated' }})
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Accelerated
+          - runs-on: "macos-14"
+            accelerated: true
+            arch: arm64_iphoneos
+          - runs-on: "macos-14"
+            accelerated: true
+            arch: arm64_iphonesimulator
+
+          # Non-accelerated
+          - runs-on: "macos-14"
+            accelerated: false
+            arch: arm64_iphonesimulator
+          - runs-on: "macos-14"
+            accelerated: false
+            arch: arm64_iphoneos
+
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    steps:
+      - name: Checkout NumPy
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+        with:
+          submodules: recursive
+          fetch-tags: true
+          persist-credentials: false
+
+      - name: Setup iOS
+        run: |
+          if ${{ matrix.accelerated }}; then
+            # Accelerate with ILP64 requires iOS 16.4 or higher
+            CIBW_ENV="IPHONEOS_DEPLOYMENT_TARGET=17.0"
+            echo "CIBW_ENVIRONMENT_IOS=$CIBW_ENV" >> "$GITHUB_ENV"
+          else
+            # On older iOS versions, disable ILP64, and set the BLAS prefix to empty
+            # to avoid linking the ACCELERATE_NEW_LAPACK LP64 versions.
+            CIBW_CONFIG="setup-args=-Dblas-symbol-suffix= setup-args=-Duse-ilp64=false setup-args=-Dallow-noblas=true build-dir=build"
+            echo "CIBW_CONFIG_IOS=$CIBW_CONFIG" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
+        env:
+          CIBW_PLATFORM: ios
+          CIBW_ARCHS: ${{ matrix.arch }}

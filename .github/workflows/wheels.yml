@@ -25,28 +25,30 @@ permissions:
 
 jobs:
   build_wheels:
-    name: Build wheel ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
+    name: Build wheel ${{ matrix.python }}-${{ matrix.buildplat[2] }}-${{ matrix.buildplat[3] }}
     # To enable this job on a fork, comment out:
     if: github.repository == 'numpy/numpy'
-    runs-on: ${{ matrix.buildplat[0] }}
+    runs-on: ${{ matrix.buildplat[1] }}
     strategy:
       fail-fast: false
       matrix:
         # Github Actions doesn't support pairing matrix values together, let's improvise
         # https://github.com/github/feedback/discussions/7835#discussioncomment-1769026
         buildplat:
-          - [ubuntu-22.04, manylinux_x86_64, ""]
-          - [ubuntu-22.04, musllinux_x86_64, ""]
-          - [ubuntu-22.04-arm, manylinux_aarch64, ""]
-          - [ubuntu-22.04-arm, musllinux_aarch64, ""]
-          - [macos-15-intel, macosx_x86_64, openblas]
-          - [macos-14, macosx_arm64, openblas]
-          - [windows-2022, win_amd64, ""]
-          - [windows-11-arm, win_arm64, ""]
-        python: ["cp312"]
+          - [linux, ubuntu-22.04, manylinux_x86_64, ""]
+          - [linux, ubuntu-22.04, musllinux_x86_64, ""]
+          - [linux, ubuntu-22.04-arm, manylinux_aarch64, ""]
+          - [linux, ubuntu-22.04-arm, musllinux_aarch64, ""]
+          - [macos, macos-15-intel, macosx_x86_64, openblas]
+          - [macos, macos-14, macosx_arm64, accelerate]
+          - [windows, windows-2022, win_amd64, ""]
+          - [windows, windows-11-arm, win_arm64, ""]
+          - [ios, macos-14, ios_arm64_iphonesimulator, accelerate]
+          - [ios, macos-14, ios_arm64_iphoneos, ""]
+        python: ["cp313"]
 
     env:
-      IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}  # used in cibw_test_command.sh
+      IS_32_BIT: ${{ matrix.buildplat[2] == 'win32' }}  # used in cibw_test_command.sh
     steps:
       - name: Checkout numpy
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -55,13 +57,13 @@ jobs:
           persist-credentials: false
 
       - name: Setup MSVC (32-bit)
-        if: ${{ matrix.buildplat[1] == 'win32' }}
+        if: ${{ matrix.buildplat[2] == 'win32' }}
         uses: bus1/cabuild/action/msdevshell@e22aba57d6e74891d059d66501b6b5aed8123c4d  # v1
         with:
           architecture: 'x86'
 
       - name: win_arm64 - set environment variables
-        if: ${{ matrix.buildplat[1] == 'win_arm64' }}
+        if: ${{ matrix.buildplat[2] == 'win_arm64' }}
         run: |
             echo "C:\Program Files\LLVM\bin" >> $env:GIHUB_PATH
             echo "CC=clang-cl" >> $env:GITHUB_ENV
@@ -80,14 +82,14 @@ jobs:
           echo "CIBW_ENVIRONMENT_WINDOWS=PKG_CONFIG_PATH=$CIBW" >> $env:GITHUB_ENV
 
       - name: Setup macOS
-        if: matrix.buildplat[0] == 'macos-15-intel' || matrix.buildplat[0] == 'macos-14'
+        if: matrix.buildplat[0] == 'macos'
         run: |
           # Needed due to https://github.com/actions/runner-images/issues/3371
           # Supported versions: https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md
           echo "FC=gfortran-13" >> "$GITHUB_ENV"
           echo "F77=gfortran-13" >> "$GITHUB_ENV"
           echo "F90=gfortran-13" >> "$GITHUB_ENV"
-          if [[ ${{ matrix.buildplat[2] }} == 'accelerate' ]]; then
+          if [[ "${{ matrix.buildplat[3] }}" == 'accelerate' ]]; then
             # macosx_arm64 and macosx_x86_64 with accelerate
             # only target Sonoma onwards
             CIBW="MACOSX_DEPLOYMENT_TARGET=14.0 INSTALL_OPENBLAS=false RUNNER_OS=macOS"
@@ -101,12 +103,27 @@ jobs:
             echo "CIBW_ENVIRONMENT_MACOS=$CIBW PKG_CONFIG_PATH=$PKG_CONFIG_PATH DYLD_LIBRARY_PATH=$DYLD" >> "$GITHUB_ENV"
           fi
 
+      - name: Setup iOS
+        if: matrix.buildplat[0] == 'ios'
+        run: |
+          if [[ "${{ matrix.buildplat[3] }}" == 'accelerate' ]]; then
+            # Accelerate with ILP64 requires iOS 16.4 or higher
+            CIBW_ENV="IPHONEOS_DEPLOYMENT_TARGET=17.0"
+            echo "CIBW_ENVIRONMENT_IOS=$CIBW_ENV" >> "$GITHUB_ENV"
+          else
+            # On older iOS versions, disable ILP64, and set the BLAS prefix to empty
+            # to avoid linking the ACCELERATE_NEW_LAPACK LP64 versions.
+            CIBW_CONFIG="setup-args=-Dblas-symbol-suffix= setup-args=-Duse-ilp64=false setup-args=-Dallow-noblas=true build-dir=build"
+            echo "CIBW_CONFIG_IOS=$CIBW_CONFIG" >> "$GITHUB_ENV"
+          fi
+
       - name: Build wheels
         uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
         env:
-          CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+          CIBW_PLATFORM: ${{ matrix.buildplat[0] }}
+          CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[2] }}
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
+          name: ${{ matrix.python }}-${{ matrix.buildplat[2] }}-${{ matrix.buildplat[3] }}
           path: ./wheelhouse/*.whl
