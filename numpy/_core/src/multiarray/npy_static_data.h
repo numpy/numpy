@@ -163,6 +163,9 @@ typedef struct npy_static_pydata_struct {
     PyObject *dl_call_kwnames;
     PyObject *dl_cpu_device_tuple;
     PyObject *dl_max_version;
+    /* dicts for implementing `register_dlpack_dtype` */
+    PyObject *dlpack_dtype_registry;
+    PyObject *dlpack_export_registry;
 } npy_static_pydata_struct;
 
 

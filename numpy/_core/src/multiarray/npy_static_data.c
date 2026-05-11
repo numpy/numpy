@@ -214,6 +214,16 @@ initialize_static_globals(void)
         return -1;
     }
 
+    npy_static_pydata.dlpack_dtype_registry = PyDict_New();
+    if (npy_static_pydata.dlpack_dtype_registry == NULL) {
+        return -1;
+    }
+
+    npy_static_pydata.dlpack_export_registry = PyDict_New();
+    if (npy_static_pydata.dlpack_export_registry == NULL) {
+        return -1;
+    }
+
     /*
      * Initialize contents of npy_static_cdata struct
      *

@@ -17,6 +17,7 @@ from typing_extensions import TypeVar
 import numpy as np
 
 __all__ = [
+    "register_dlpack_dtype",
     "BoolDType",
     "Int8DType",
     "ByteDType",
@@ -622,3 +623,5 @@ class StringDType(  # type: ignore[misc]
     def isalignedstruct(self) -> L[False]: ...
     @property
     def isnative(self) -> L[True]: ...
+
+def register_dlpack_dtype(dlpack_key: tuple[int, int], dtype: np.dtype, /) -> None: ...

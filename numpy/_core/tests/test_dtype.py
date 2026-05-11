@@ -1670,6 +1670,9 @@ class TestDTypeClasses:
 
     def test_scalar_helper_all_dtypes(self):
         for dtype in np.dtypes.__all__:
+            if dtype == "register_dlpack_dtype":
+                continue
+
             dt_class = getattr(np.dtypes, dtype)
             dt = np.dtype(dt_class)
             if dt.char not in 'OTVM':
@@ -2039,7 +2042,9 @@ class TestDTypeSignatures:
         assert sig.parameters["new_order"].kind is inspect.Parameter.POSITIONAL_ONLY
         assert sig.parameters["new_order"].default == "S"
 
-    @pytest.mark.parametrize("typename", np.dtypes.__all__)
+    @pytest.mark.parametrize("typename", [
+        n for n in np.dtypes.__all__ if n != "register_dlpack_dtype"
+    ])
     def test_signature_dtypes_classes(self, typename: str):
         dtype_type = getattr(np.dtypes, typename)
         sig = inspect.signature(dtype_type)
