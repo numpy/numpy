@@ -9,6 +9,7 @@ import pytest
 
 import numpy as np
 from numpy.testing import (
+    IS_64BIT,
     assert_,
     assert_array_almost_equal,
     assert_array_equal,
@@ -16,6 +17,7 @@ from numpy.testing import (
     assert_raises,
     temppath,
 )
+from numpy.testing._private.utils import requires_memory
 
 
 class TestFromrecords:
@@ -121,6 +123,17 @@ class TestFromrecords:
             ValueError, match="Arrays containing references are not supported"
         ):
             np.rec.fromstring(b"dummy data", formats="O", shape=1)
+
+    @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+    @requires_memory(free_bytes=2e9)
+    def test_recarray_fromfile_massive(self, tmpdir):
+        kind = [("x", np.float64, 2 ** 28)]
+        kind_dtype = np.dtype(kind)
+        rec_arr = np.array((1,), dtype=kind_dtype)
+        with tmpdir.as_cwd():
+            rec_arr.tofile("f.data")
+            actual = np.fromfile("f.data", dtype=kind_dtype)
+            assert actual.itemsize == 2 ** 28 * 8
 
     def test_recarray_from_obj(self):
         count = 10
