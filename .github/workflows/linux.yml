@@ -350,7 +350,7 @@ jobs:
       with:
         repository: jax-ml/ml_dtypes
         # Current ml_dtypes main, should be updated occasionally:
-        ref: '9fd1a480f1cdb23b3d28dfea5eadf3d84b6dfc62'  # v0.5.4
+        ref: '9b8b2471a5ec5fd4c223693f677fcc2416847970'  # main as of 2026-05-11
         submodules: 'true'
         path: 'ml_dtypes'
         persist-credentials: false
