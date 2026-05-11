@@ -189,14 +189,31 @@ NPY_NO_EXPORT int
 make_sorts_(PyArray_DTypeMeta *dtypemeta, const char *name)
 {
     using type = typename Tag::type;
+    constexpr bool use_radixsort = (
+        std::is_same_v<Tag, npy::bool_tag> ||
+        std::is_same_v<Tag, npy::ubyte_tag> ||
+        std::is_same_v<Tag, npy::byte_tag> ||
+        std::is_same_v<Tag, npy::ushort_tag> ||
+        std::is_same_v<Tag, npy::short_tag>
+    );
 
     NPY_DT_SLOTS(dtypemeta)->f.sort[0] = quicksort_impl<Tag, type>;
     NPY_DT_SLOTS(dtypemeta)->f.sort[1] = heapsort_impl<Tag, type>;
-    NPY_DT_SLOTS(dtypemeta)->f.sort[2] = timsort_impl<Tag, type>;
+    if constexpr (use_radixsort) {
+        NPY_DT_SLOTS(dtypemeta)->f.sort[2] = radixsort_impl<Tag, type>;
+    }
+    else {
+        NPY_DT_SLOTS(dtypemeta)->f.sort[2] = timsort_impl<Tag, type>;
+    }
 
     NPY_DT_SLOTS(dtypemeta)->f.argsort[0] = aquicksort_impl<Tag, type>;
     NPY_DT_SLOTS(dtypemeta)->f.argsort[1] = aheapsort_impl<Tag, type>;
-    NPY_DT_SLOTS(dtypemeta)->f.argsort[2] = atimsort_impl<Tag, type>;
+    if constexpr (use_radixsort) {
+        NPY_DT_SLOTS(dtypemeta)->f.argsort[2] = aradixsort_impl<Tag, type>;
+    }
+    else {
+        NPY_DT_SLOTS(dtypemeta)->f.argsort[2] = atimsort_impl<Tag, type>;
+    }
 
     std::string sort_name = std::string(name) + "_sort";
     PyArray_DTypeMeta *sort_dtypes[2] = {dtypemeta, dtypemeta};

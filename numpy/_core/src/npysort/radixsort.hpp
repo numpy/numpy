@@ -139,6 +139,14 @@ radixsort(void *start, npy_intp num)
     return radixsort_<T>((UT *)start, num);
 }
 
+// ``PyArray_SortFunc``-shaped trampoline.
+template <typename Tag, typename type>
+static int
+radixsort_impl(void *start, npy_intp num, void *NPY_UNUSED(varr))
+{
+    return radixsort_<Tag, type>((type *)start, num);
+}
+
 template <class T, class UT>
 static npy_intp *
 aradixsort0(UT *start, npy_intp *aux, npy_intp *tosort, npy_intp num)
@@ -234,4 +242,12 @@ aradixsort(void *start, npy_intp *tosort, npy_intp num)
 {
     using UT = typename std::make_unsigned<T>::type;
     return aradixsort_<T>((UT *)start, tosort, num);
+}
+
+// ``PyArray_ArgSortFunc``-shaped trampoline.
+template <typename Tag, typename type>
+static int
+aradixsort_impl(void *start, npy_intp *tosort, npy_intp num, void *NPY_UNUSED(varr))
+{
+    return aradixsort_<Tag, type>((type *)start, tosort, num);
 }
