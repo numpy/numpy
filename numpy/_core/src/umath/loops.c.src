@@ -15,6 +15,7 @@
 #include "lowlevel_strided_loops.h"
 #include "loops_utils.h"
 #include "gil_utils.h"
+#include "npy_extint128.h"
 
 #include "npy_pycompat.h"
 
@@ -807,6 +808,15 @@ NPY_NO_EXPORT void
 
 /**end repeat**/
 
+/*
+ * Overflow-checked arithmetic for datetime64/timedelta64.
+ *
+ * The datetime64/timedelta64 add, subtract, and integer-multiply loops
+ * defined below raise OverflowError on signed int64 overflow rather
+ * than silently wrapping.  NPY_DATETIME_NAT == NPY_MIN_INT64, so a
+ * valid arithmetic result that happens to equal NPY_MIN_INT64 would be
+ * silently misinterpreted as NaT; we treat that as overflow as well.
+ */
 NPY_NO_EXPORT void
 DATETIME_Mm_M_add(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
@@ -817,7 +827,14 @@ DATETIME_Mm_M_add(char **args, npy_intp const *dimensions, npy_intp const *steps
             *((npy_datetime *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            *((npy_datetime *)op1) = in1 + in2;
+            char overflow = 0;
+            const npy_int64 result = safe_add(in1, in2, &overflow);
+            if (overflow || result == NPY_DATETIME_NAT) {
+                npy_gil_error(PyExc_OverflowError,
+                        "Overflow in datetime64 + timedelta64 addition");
+                return;
+            }
+            *((npy_datetime *)op1) = result;
         }
     }
 }
@@ -832,7 +849,14 @@ DATETIME_mM_M_add(char **args, npy_intp const *dimensions, npy_intp const *steps
             *((npy_datetime *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            *((npy_datetime *)op1) = in1 + in2;
+            char overflow = 0;
+            const npy_int64 result = safe_add(in1, in2, &overflow);
+            if (overflow || result == NPY_DATETIME_NAT) {
+                npy_gil_error(PyExc_OverflowError,
+                        "Overflow in timedelta64 + datetime64 addition");
+                return;
+            }
+            *((npy_datetime *)op1) = result;
         }
     }
 }
@@ -847,7 +871,14 @@ TIMEDELTA_mm_m_add(char **args, npy_intp const *dimensions, npy_intp const *step
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            *((npy_timedelta *)op1) = in1 + in2;
+            char overflow = 0;
+            const npy_int64 result = safe_add(in1, in2, &overflow);
+            if (overflow || result == NPY_DATETIME_NAT) {
+                npy_gil_error(PyExc_OverflowError,
+                        "Overflow in timedelta64 + timedelta64 addition");
+                return;
+            }
+            *((npy_timedelta *)op1) = result;
         }
     }
 }
@@ -862,7 +893,14 @@ DATETIME_Mm_M_subtract(char **args, npy_intp const *dimensions, npy_intp const *
             *((npy_datetime *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            *((npy_datetime *)op1) = in1 - in2;
+            char overflow = 0;
+            const npy_int64 result = safe_sub(in1, in2, &overflow);
+            if (overflow || result == NPY_DATETIME_NAT) {
+                npy_gil_error(PyExc_OverflowError,
+                        "Overflow in datetime64 - timedelta64 subtraction");
+                return;
+            }
+            *((npy_datetime *)op1) = result;
         }
     }
 }
@@ -877,7 +915,14 @@ DATETIME_MM_m_subtract(char **args, npy_intp const *dimensions, npy_intp const *
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            *((npy_timedelta *)op1) = in1 - in2;
+            char overflow = 0;
+            const npy_int64 result = safe_sub(in1, in2, &overflow);
+            if (overflow || result == NPY_DATETIME_NAT) {
+                npy_gil_error(PyExc_OverflowError,
+                        "Overflow in datetime64 - datetime64 subtraction");
+                return;
+            }
+            *((npy_timedelta *)op1) = result;
         }
     }
 }
@@ -892,7 +937,14 @@ TIMEDELTA_mm_m_subtract(char **args, npy_intp const *dimensions, npy_intp const 
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            *((npy_timedelta *)op1) = in1 - in2;
+            char overflow = 0;
+            const npy_int64 result = safe_sub(in1, in2, &overflow);
+            if (overflow || result == NPY_DATETIME_NAT) {
+                npy_gil_error(PyExc_OverflowError,
+                        "Overflow in timedelta64 - timedelta64 subtraction");
+                return;
+            }
+            *((npy_timedelta *)op1) = result;
         }
     }
 }
@@ -908,7 +960,14 @@ TIMEDELTA_mq_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            *((npy_timedelta *)op1) = in1 * in2;
+            char overflow = 0;
+            const npy_int64 result = safe_mul(in1, in2, &overflow);
+            if (overflow || result == NPY_DATETIME_NAT) {
+                npy_gil_error(PyExc_OverflowError,
+                        "Overflow in timedelta64 * int64 multiplication");
+                return;
+            }
+            *((npy_timedelta *)op1) = result;
         }
     }
 }
@@ -924,7 +983,14 @@ TIMEDELTA_qm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            *((npy_timedelta *)op1) = in1 * in2;
+            char overflow = 0;
+            const npy_int64 result = safe_mul(in1, in2, &overflow);
+            if (overflow || result == NPY_DATETIME_NAT) {
+                npy_gil_error(PyExc_OverflowError,
+                        "Overflow in int64 * timedelta64 multiplication");
+                return;
+            }
+            *((npy_timedelta *)op1) = result;
         }
     }
 }
