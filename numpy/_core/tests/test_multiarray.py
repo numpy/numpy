@@ -270,6 +270,11 @@ class TestFlags:
         assert_equal(arr.flags['X'], False)
         assert_equal(arr.flags['WRITEBACKIFCOPY'], False)
 
+    def test_non_ascii_flag_setitem_raises_keyerror(self):
+        arr = np.arange(10)
+        with pytest.raises(KeyError, match="Unknown flag"):
+            arr.flags["\N{MICRO SIGN}"] = True
+
     def test_string_align(self):
         a = np.zeros(4, dtype=np.dtype('|S4'))
         assert_(a.flags.aligned)
@@ -6183,6 +6188,30 @@ class TestIO:
         with open(tmp_filename, 'r') as f:
             s = f.read()
         assert_equal(s, '1.51,2.00,3.51,4.00')
+
+    def test_tofile_non_ascii_format_raises_unicodeencodeerror(
+            self, tmp_path, param_filename):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
+        x = np.array([1.51, 2, 3.51, 4], dtype=float)
+        with open(tmp_filename, 'w') as f:
+            with pytest.raises(UnicodeEncodeError):
+                x.tofile(f, sep=',', format='\N{MICRO SIGN}%.2f')
+
+    def test_tofile_non_ascii_element_without_format_raises_unicodeencodeerror(
+            self, tmp_path, param_filename):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
+        x = np.array(['\N{MICRO SIGN}'])
+        with open(tmp_filename, 'w') as f:
+            with pytest.raises(UnicodeEncodeError):
+                x.tofile(f, sep=',')
+
+    def test_tofile_non_ascii_element_with_ascii_format_raises_unicodeencodeerror(
+            self, tmp_path, param_filename):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
+        x = np.array(['\N{MICRO SIGN}123'])
+        with open(tmp_filename, 'w') as f:
+            with pytest.raises(UnicodeEncodeError):
+                x.tofile(f, sep=',', format='%s')
 
     def test_tofile_cleanup(self, tmp_path, param_filename):
         tmp_filename = normalize_filename(tmp_path, param_filename)
