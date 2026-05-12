@@ -15,6 +15,9 @@ on:
       - '**.rst'
       - 'tools/stubtest/**'
   workflow_dispatch:
+  push:
+    branches:
+      - ci-check-riscv-job
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -36,14 +39,7 @@ jobs:
         # https://github.com/github/feedback/discussions/7835#discussioncomment-1769026
         buildplat:
           - [ubuntu-22.04, manylinux_x86_64, ""]
-          - [ubuntu-22.04, musllinux_x86_64, ""]
-          - [ubuntu-22.04-arm, manylinux_aarch64, ""]
-          - [ubuntu-22.04-arm, musllinux_aarch64, ""]
           - [ubuntu-24.04-riscv, manylinux_riscv64, ""]
-          - [macos-15-intel, macosx_x86_64, openblas]
-          - [macos-14, macosx_arm64, openblas]
-          - [windows-2022, win_amd64, ""]
-          - [windows-11-arm, win_arm64, ""]
         python: ["cp312"]
 
     env:
