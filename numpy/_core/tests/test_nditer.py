@@ -1531,10 +1531,12 @@ def test_iter_copy():
 @pytest.mark.parametrize("loop_dtype", np.typecodes["All"])
 @pytest.mark.filterwarnings(
     "ignore::numpy.exceptions.ComplexWarning",
-    "ignore::DeprecationWarning",
 )
 def test_iter_copy_casts(dtype, loop_dtype):
     # Ensure the dtype is never flexible:
+    if dtype.lower() == "m":
+        dtype = dtype + "8[D]"
+
     if loop_dtype.lower() == "m":
         loop_dtype = loop_dtype + "[ms]"
     elif np.dtype(loop_dtype).itemsize == 0:
