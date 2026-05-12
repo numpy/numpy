@@ -3,6 +3,7 @@
 #include "npy_sort.h"
 #include "npysort_common.h"
 #include "numpy_tag.h"
+#include "gil_utils.h"
 #include "quicksort.hpp"
 #include "radixsort.hpp"
 #include "timsort.hpp"
@@ -79,8 +80,8 @@ sort_loop_(PyArrayMethod_Context *context, char *const data[],
         case NPY_SORT_STABLE | NPY_SORT_DESCENDING:
             return timsort_<Tag, type, true>((type *)data[0], dimensions[0]);
         default:
-            PyErr_Format(PyExc_RuntimeError, "unknown sort kind %d",
-                         (int)params->flags);
+            npy_gil_error(PyExc_RuntimeError, "unknown sort kind %d",
+                          (int)params->flags);
             return -1;
     }
 }
@@ -120,8 +121,8 @@ argsort_loop_(PyArrayMethod_Context *context, char *const data[],
             return atimsort_<Tag, type, true>((type *)data[0], (npy_intp *)data[1],
                                               dimensions[0]);
         default:
-            PyErr_Format(PyExc_RuntimeError, "unknown sort kind %d",
-                         (int)params->flags);
+            npy_gil_error(PyExc_RuntimeError, "unknown sort kind %d",
+                          (int)params->flags);
             return -1;
     }
 }
@@ -149,8 +150,8 @@ sort_loop_string_(PyArrayMethod_Context *context, char *const data[],
             return string_timsort_<Tag, type, true>((type *)data[0], dimensions[0],
                                                     elsize);
         default:
-            PyErr_Format(PyExc_RuntimeError, "unknown sort kind %d",
-                         (int)params->flags);
+            npy_gil_error(PyExc_RuntimeError, "unknown sort kind %d",
+                          (int)params->flags);
             return -1;
     }
 }
@@ -178,8 +179,8 @@ argsort_loop_string_(PyArrayMethod_Context *context, char *const data[],
             return string_atimsort_<Tag, type, true>(
                     (type *)data[0], (npy_intp *)data[1], dimensions[0], elsize);
         default:
-            PyErr_Format(PyExc_RuntimeError, "unknown sort kind %d",
-                         (int)params->flags);
+            npy_gil_error(PyExc_RuntimeError, "unknown sort kind %d",
+                          (int)params->flags);
             return -1;
     }
 }
