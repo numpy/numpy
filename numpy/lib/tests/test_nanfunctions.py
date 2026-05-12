@@ -1273,6 +1273,7 @@ class TestNanFunctions_Percentile:
         assert_equal(q_weighted, result)
 
     @pytest.mark.parametrize("axis", [0, 1, 2])
+    @pytest.mark.slow
     def test_nan_value_with_weight_ndim(self, axis):
         # Create a multi-dimensional array to test
         np.random.seed(1)

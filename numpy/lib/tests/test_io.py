@@ -2684,6 +2684,7 @@ def test_npzfile_dict():
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 @pytest.mark.thread_unsafe(reason="garbage collector is global state")
+@pytest.mark.slow
 def test_load_refcount():
     # Check that objects returned by np.load are directly freed based on
     # their refcount, rather than needing the gc to collect them.
