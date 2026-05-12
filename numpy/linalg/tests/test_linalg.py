@@ -2004,6 +2004,9 @@ def test_generalized_raise_multiloop():
     assert_raises(np.linalg.LinAlgError, np.linalg.inv, x)
 
 
+@pytest.mark.filterwarnings(
+    r"ignore:.*fork\(\) may lead to deadlocks.*:DeprecationWarning"
+)
 @pytest.mark.skipif(
     threading.active_count() > 1,
     reason="skipping test that uses fork because there are multiple threads")
