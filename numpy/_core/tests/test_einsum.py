@@ -762,6 +762,14 @@ class TestEinsum:
         # see issue gh-15776 and issue gh-15256
         assert_equal(np.einsum('i,j', [1], [2], out=None), [[2]])
 
+    def test_einsum_0d_out(self):
+        # Issue gh-31350, a zero-dimensional out must not cause an error
+        # with optimize='optimal'
+        a = np.ones(7)
+        out = np.array(0)
+        np.einsum('i,i->', a, a, out=out, optimize='optimal')
+        assert_equal(out, 7)
+
     def test_object_loop(self):
 
         class Mult:
@@ -778,15 +786,21 @@ class TestEinsum:
         assert np.einsum("i,j", objMult, objMult) == 42
 
     def test_subscript_range(self):
-        # Issue #7741, make sure that all letters of Latin alphabet (both uppercase & lowercase) can be used
-        # when creating a subscript from arrays
+        # Issue #7741, make sure that all letters of Latin alphabet
+        # (both uppercase & lowercase) can be used when creating a subscript from arrays
         a = np.ones((2, 3))
         b = np.ones((3, 4))
         np.einsum(a, [0, 20], b, [20, 2], [0, 2], optimize=False)
         np.einsum(a, [0, 27], b, [27, 2], [0, 2], optimize=False)
         np.einsum(a, [0, 51], b, [51, 2], [0, 2], optimize=False)
-        assert_raises(ValueError, lambda: np.einsum(a, [0, 52], b, [52, 2], [0, 2], optimize=False))
-        assert_raises(ValueError, lambda: np.einsum(a, [-1, 5], b, [5, 2], [-1, 2], optimize=False))
+        assert_raises(
+            ValueError,
+            lambda: np.einsum(a, [0, 52], b, [52, 2], [0, 2], optimize=False),
+        )
+        assert_raises(
+            ValueError,
+            lambda: np.einsum(a, [-1, 5], b, [5, 2], [-1, 2], optimize=False),
+        )
 
     def test_einsum_broadcast(self):
         # Issue #2455 change in handling ellipsis
@@ -802,7 +816,8 @@ class TestEinsum:
         for opt in [True, False]:
             assert_equal(np.einsum('ij...,j...->ij...', A, B, optimize=opt), ref)
             assert_equal(np.einsum('ij...,...j->ij...', A, B, optimize=opt), ref)
-            assert_equal(np.einsum('ij...,j->ij...', A, B, optimize=opt), ref)  # used to raise error
+            # used to raise error
+            assert_equal(np.einsum('ij...,j->ij...', A, B, optimize=opt), ref)
 
         A = np.arange(12).reshape((4, 3))
         B = np.arange(6).reshape((3, 2))
@@ -810,8 +825,9 @@ class TestEinsum:
         for opt in [True, False]:
             assert_equal(np.einsum('ik...,k...->i...', A, B, optimize=opt), ref)
             assert_equal(np.einsum('ik...,...kj->i...j', A, B, optimize=opt), ref)
-            assert_equal(np.einsum('...k,kj', A, B, optimize=opt), ref)  # used to raise error
-            assert_equal(np.einsum('ik,k...->i...', A, B, optimize=opt), ref)  # used to raise error
+            # used to raise error
+            assert_equal(np.einsum('...k,kj', A, B, optimize=opt), ref)
+            assert_equal(np.einsum('ik,k...->i...', A, B, optimize=opt), ref)
 
         dims = [2, 3, 4, 5]
         a = np.arange(np.prod(dims)).reshape(dims)
@@ -819,16 +835,17 @@ class TestEinsum:
         ref = np.einsum('ijkl,k->ijl', a, v, optimize=False)
         for opt in [True, False]:
             assert_equal(np.einsum('ijkl,k', a, v, optimize=opt), ref)
-            assert_equal(np.einsum('...kl,k', a, v, optimize=opt), ref)  # used to raise error
             assert_equal(np.einsum('...kl,k...', a, v, optimize=opt), ref)
+            # used to raise error
+            assert_equal(np.einsum('...kl,k', a, v, optimize=opt), ref)
 
         J, K, M = 160, 160, 120
         A = np.arange(J * K * M).reshape(1, 1, 1, J, K, M)
         B = np.arange(J * K * M * 3).reshape(J, K, M, 3)
         ref = np.einsum('...lmn,...lmno->...o', A, B, optimize=False)
         for opt in [True, False]:
-            assert_equal(np.einsum('...lmn,lmno->...o', A, B,
-                                   optimize=opt), ref)  # used to raise error
+            # used to raise error
+            assert_equal(np.einsum("...lmn,lmno->...o", A, B, optimize=opt), ref)
 
     def test_einsum_fixedstridebug(self):
         # Issue #4485 obscure einsum bug
@@ -1175,7 +1192,7 @@ class TestEinsumPath:
             ret &= (comp[pos + 1] == benchmark[pos + 1])
         assert_(ret)
 
-    def test_memory_contraints(self):
+    def test_memory_constraints(self):
         # Ensure memory constraints are satisfied
 
         outer_test = self.build_operands('a,b,c->abc')

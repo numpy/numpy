@@ -29,4 +29,12 @@ NPY_NO_EXPORT PyObject *
 from_dlpack(PyObject *NPY_UNUSED(self),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames);
 
+
+NPY_NO_EXPORT PyObject *
+_register_dlpack_dtype(PyObject *NPY_UNUSED(self), PyObject *args);
+
+
+NPY_NO_EXPORT PyObject *
+_dlpack_registry_replace(PyObject *NPY_UNUSED(self), PyObject *args);
+
 #endif

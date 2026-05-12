@@ -1,0 +1,1 @@
+* ``numpy.cross`` no longer supports 2-dimensional vectors (deprecated since 2.0)

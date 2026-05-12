@@ -1,5 +1,5 @@
 from collections.abc import Collection
-from typing import Final, Literal as L, TypeAlias, TypedDict, type_check_only
+from typing import Final, Literal as L, TypedDict, type_check_only
 
 import numpy as np
 
@@ -35,7 +35,7 @@ class _CNamesDict(TypedDict):
 
 c_names_dict: Final[_CNamesDict]
 
-_AbstractTypeName: TypeAlias = L[
+type _AbstractTypeName = L[
     "generic",
     "flexible",
     "character",

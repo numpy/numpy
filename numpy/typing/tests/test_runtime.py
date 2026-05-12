@@ -3,7 +3,8 @@
 from typing import (
     Any,
     NamedTuple,
-    Union,  # pyright: ignore[reportDeprecated]
+    Self,
+    TypeAliasType,
     get_args,
     get_origin,
     get_type_hints,
@@ -17,31 +18,23 @@ import numpy.typing as npt
 
 
 class TypeTup(NamedTuple):
-    typ: type
-    args: tuple[type, ...]
-    origin: type | None
+    typ: type  # type expression
+    args: tuple[type, ...]  # generic type parameters or arguments
+    origin: type | None  # e.g. `UnionType` or `GenericAlias`
 
+    @classmethod
+    def from_type_alias(cls, alias: TypeAliasType, /) -> Self:
+        # PEP 695 `type _ = ...` aliases wrap the type expression as a
+        # `types.TypeAliasType` instance with a `__value__` attribute.
+        tp = alias.__value__
+        return cls(typ=tp, args=get_args(tp), origin=get_origin(tp))
 
-def _flatten_type_alias(t: Any) -> Any:
-    # "flattens" a TypeAliasType to its underlying type alias
-    return getattr(t, "__value__", t)
-
-
-NDArrayTup = TypeTup(npt.NDArray, npt.NDArray.__args__, np.ndarray)
 
 TYPES = {
-    "ArrayLike": TypeTup(
-        _flatten_type_alias(npt.ArrayLike),
-        _flatten_type_alias(npt.ArrayLike).__args__,
-        Union,
-    ),
-    "DTypeLike": TypeTup(
-        _flatten_type_alias(npt.DTypeLike),
-        _flatten_type_alias(npt.DTypeLike).__args__,
-        Union,
-    ),
+    "ArrayLike": TypeTup.from_type_alias(npt.ArrayLike),
+    "DTypeLike": TypeTup.from_type_alias(npt.DTypeLike),
     "NBitBase": TypeTup(npt.NBitBase, (), None),  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
-    "NDArray": NDArrayTup,
+    "NDArray": TypeTup.from_type_alias(npt.NDArray),
 }
 
 

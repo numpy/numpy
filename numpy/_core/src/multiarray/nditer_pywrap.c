@@ -1423,7 +1423,10 @@ npyiter_enable_external_loop(
         return NULL;
     }
 
-    NpyIter_EnableExternalLoop(self->iter);
+    if (NpyIter_EnableExternalLoop(self->iter) != NPY_SUCCEED) {
+        return NULL;
+    }
+
     /* EnableExternalLoop invalidates cached values */
     if (npyiter_cache_values(self) < 0) {
         return NULL;
@@ -1673,6 +1676,9 @@ npyiter_multi_index_set(
         }
         for (idim = 0; idim < ndim; ++idim) {
             PyObject *v = PySequence_GetItem(value, idim);
+            if (v == NULL) {
+                return -1;
+            }
             multi_index[idim] = PyLong_AsLong(v);
             Py_DECREF(v);
             if (error_converting(multi_index[idim])) {

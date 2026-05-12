@@ -1,6 +1,7 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY_ARRAYSCALARS_H_
 #define NUMPY_CORE_INCLUDE_NUMPY_ARRAYSCALARS_H_
 
+#ifndef Py_TARGET_ABI3T
 #ifndef _MULTIARRAYMODULE
 typedef struct {
         PyObject_HEAD
@@ -134,7 +135,7 @@ typedef struct {
         char obval;
 } PyScalarObject;
 
-#define PyStringScalarObject PyBytesObject
+
 #ifndef Py_LIMITED_API
 typedef struct {
         /* note that the PyObject_HEAD macro lives right here */
@@ -162,6 +163,34 @@ typedef struct {
         void *_buffer_info;  /* private buffer info, tagged to allow warning */
     #endif
 } PyVoidScalarObject;
+#else
+typedef struct PyBoolScalarObject PyBoolScalarObject;
+typedef struct PyByteScalarObject PyByteScalarObject;
+typedef struct PyShortScalarObject PyShortScalarObject;
+typedef struct PyIntScalarObject PyIntScalarObject;
+typedef struct PyLongScalarObject PyLongScalarObject;
+typedef struct PyLongLongScalarObject PyLongLongScalarObject;
+typedef struct PyUByteScalarObject PyUByteScalarObject;
+typedef struct PyUShortScalarObject PyUShortScalarObject;
+typedef struct PyUIntScalarObject PyUIntScalarObject;
+typedef struct PyULongScalarObject PyULongScalarObject;
+typedef struct PyULongLongScalarObject PyULongLongScalarObject;
+typedef struct PyHalfScalarObject PyHalfScalarObject;
+typedef struct PyFloatScalarObject PyFloatScalarObject;
+typedef struct PyDoubleScalarObject PyDoubleScalarObject;
+typedef struct PyLongDoubleScalarObject PyLongDoubleScalarObject;
+typedef struct PyCFloatScalarObject PyCFloatScalarObject;
+typedef struct PyCDoubleScalarObject PyCDoubleScalarObject;
+typedef struct PyCLongDoubleScalarObject PyCLongDoubleScalarObject;
+typedef struct PyObjectScalarObject PyObjectScalarObject;
+typedef struct PyDatetimeScalarObject PyDatetimeScalarObject;
+typedef struct PyTimedeltaScalarObject PyTimedeltaScalarObject;
+typedef struct PyScalarObject PyScalarObject;
+typedef struct PyVoidScalarObject PyVoidScalarObject;
+#endif
+
+
+
 
 /* Macros
      Py<Cls><bitsize>ScalarObject
@@ -173,9 +202,11 @@ typedef struct {
 #define PyArrayScalar_True ((PyObject *)(&(_PyArrayScalar_BoolValues[1])))
 #define PyArrayScalar_FromLong(i) \
         ((PyObject *)(&(_PyArrayScalar_BoolValues[((i)!=0)])))
-#define PyArrayScalar_RETURN_BOOL_FROM_LONG(i)                  \
-        return Py_INCREF(PyArrayScalar_FromLong(i)), \
-                PyArrayScalar_FromLong(i)
+#define PyArrayScalar_RETURN_BOOL_FROM_LONG(i) do {     \
+        PyObject *obj = PyArrayScalar_FromLong(i);      \
+        Py_INCREF(obj);                                 \
+        return obj;                                     \
+} while (0)
 #define PyArrayScalar_RETURN_FALSE              \
         return Py_INCREF(PyArrayScalar_False),  \
                 PyArrayScalar_False
@@ -191,6 +222,7 @@ typedef struct {
         ((Py##cls##ScalarObject *)obj)->obval
 #define PyArrayScalar_ASSIGN(obj, cls, val) \
         PyArrayScalar_VAL(obj, cls) = val
+#define PyStringScalarObject PyBytesObject
 #endif
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_ARRAYSCALARS_H_ */

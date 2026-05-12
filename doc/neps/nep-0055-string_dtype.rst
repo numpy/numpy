@@ -51,9 +51,7 @@ needs and then changes in the Python ecosystem.
 Support for strings was added to NumPy to support users of the NumArray
 ``chararray`` type. Remnants of this are still visible in the NumPy API:
 string-related functionality lives in ``np.char``, to support the
-``np.char.chararray`` class. This class is not formally deprecated, but has a
-had comment in the module docstring suggesting to use string dtypes instead
-since NumPy 1.4.
+``np.char.chararray`` class, which was deprecated in NumPy 2.5.
 
 NumPy's ``bytes_`` DType was originally used to represent the Python 2 ``str``
 type before Python 3 support was added to NumPy. The bytes DType makes the most
@@ -224,7 +222,7 @@ to fixed-width unicode arrays::
 
   In [3]: data = [str(i) * 10 for i in range(100_000)]
 
-  In [4]: %timeit arr_object = np.array(data, dtype=object)
+  In [4]: %timeit arr_object = np.array(data, dtype=np.object_)
   3.15 ms ± 74.4 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
 
   In [5]: %timeit arr_stringdtype = np.array(data, dtype=StringDType())
@@ -242,7 +240,7 @@ for strings, the string loading performance of ``StringDType`` should improve.
 
 String operations have similar performance::
 
-  In [7]: %timeit np.array([s.capitalize() for s in data], dtype=object)
+  In [7]: %timeit np.array([s.capitalize() for s in data], dtype=np.object_)
   31.6 ms ± 728 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
   In [8]: %timeit np.char.capitalize(arr_stringdtype)

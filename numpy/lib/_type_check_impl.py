@@ -2,6 +2,7 @@
 
 """
 import functools
+import warnings
 
 __all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
            'isreal', 'nan_to_num', 'real', 'real_if_close',
@@ -240,28 +241,22 @@ def isreal(x):
     Examples
     --------
     >>> import numpy as np
-    >>> a = np.array([1+1j, 1+0j, 4.5, 3, 2, 2j], dtype=complex)
+    >>> a = np.array([1+1j, 1+0j, 4.5, 3, 2, 2j], dtype=np.complex128)
     >>> np.isreal(a)
     array([False,  True,  True,  True,  True, False])
 
     The function does not work on string arrays.
 
-    >>> a = np.array([2j, "a"], dtype="U")
-    >>> np.isreal(a)  # Warns about non-elementwise comparison
-    False
+    >>> a = np.array([2j, "a"], dtype=np.str_)
+    >>> np.isreal(a)  # returns the result of `"" == 0` currently.
+    array([False, False])
 
-    Returns True for all elements in input array of ``dtype=object`` even if
-    any of the elements is complex.
+    Returns True for all elements that either have no ``.imag`` attribute
+    or for which that attribute is zero:
 
-    >>> a = np.array([1, "2", 3+4j], dtype=object)
+    >>> a = np.array([1, "2", 3+4j], dtype=np.object_)
     >>> np.isreal(a)
-    array([ True,  True,  True])
-
-    isreal should not be used with object arrays
-
-    >>> a = np.array([1+2j, 2+1j], dtype=object)
-    >>> np.isreal(a)
-    array([ True,  True])
+    array([ True,  True,  False])
 
     """
     return imag(x) == 0
@@ -587,6 +582,9 @@ def typename(char):
     """
     Return a description for the given data type code.
 
+    .. deprecated:: 2.5
+        `numpy.typename` is deprecated. Use `numpy.dtype.name` instead.
+
     Parameters
     ----------
     char : str
@@ -633,6 +631,12 @@ def typename(char):
     q  :  long long integer
 
     """
+    # Deprecated in NumPy 2.5, 2026-02-03
+    warnings.warn(
+        "numpy.typename is deprecated. Use numpy.dtype.name instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
     return _namefromtype[char]
 
 #-----------------------------------------------------------------------------

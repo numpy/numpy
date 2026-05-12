@@ -1,15 +1,6 @@
 from _typeshed import ConvertibleToInt
 from collections.abc import Callable, Iterable
-from typing import (
-    Any,
-    ClassVar,
-    Concatenate,
-    Final,
-    Literal as L,
-    Self,
-    TypeVar,
-    overload,
-)
+from typing import Any, ClassVar, Concatenate, Final, Literal as L, Self, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -35,6 +26,7 @@ from ._polytypes import (
     _FuncVal,
     _FuncVal2D,
     _FuncVal3D,
+    _FuncValND,
     _FuncVander,
     _FuncVander2D,
     _FuncVander3D,
@@ -71,6 +63,7 @@ __all__ = [
     "Chebyshev",
     "chebval2d",
     "chebval3d",
+    "chebvalnd",
     "chebgrid2d",
     "chebgrid3d",
     "chebvander2d",
@@ -81,15 +74,14 @@ __all__ = [
     "chebinterpolate",
 ]
 
-_NumberOrObjectT = TypeVar("_NumberOrObjectT", bound=np.number | np.object_)
-_CoefScalarT = TypeVar("_CoefScalarT", bound=np.number | np.bool | np.object_)
+###
 
-def _cseries_to_zseries(c: npt.NDArray[_NumberOrObjectT]) -> _Series[_NumberOrObjectT]: ...
-def _zseries_to_cseries(zs: npt.NDArray[_NumberOrObjectT]) -> _Series[_NumberOrObjectT]: ...
-def _zseries_mul(z1: npt.NDArray[_NumberOrObjectT], z2: npt.NDArray[_NumberOrObjectT]) -> _Series[_NumberOrObjectT]: ...
-def _zseries_div(z1: npt.NDArray[_NumberOrObjectT], z2: npt.NDArray[_NumberOrObjectT]) -> _Series[_NumberOrObjectT]: ...
-def _zseries_der(zs: npt.NDArray[_NumberOrObjectT]) -> _Series[_NumberOrObjectT]: ...
-def _zseries_int(zs: npt.NDArray[_NumberOrObjectT]) -> _Series[_NumberOrObjectT]: ...
+def _cseries_to_zseries[ScalarT: np.number | np.object_](c: npt.NDArray[ScalarT]) -> _Series[ScalarT]: ...
+def _zseries_to_cseries[ScalarT: np.number | np.object_](zs: npt.NDArray[ScalarT]) -> _Series[ScalarT]: ...
+def _zseries_mul[ScalarT: np.number | np.object_](z1: npt.NDArray[ScalarT], z2: npt.NDArray[ScalarT]) -> _Series[ScalarT]: ...
+def _zseries_div[ScalarT: np.number | np.object_](z1: npt.NDArray[ScalarT], z2: npt.NDArray[ScalarT]) -> _Series[ScalarT]: ...
+def _zseries_der[ScalarT: np.number | np.object_](zs: npt.NDArray[ScalarT]) -> _Series[ScalarT]: ...
+def _zseries_int[ScalarT: np.number | np.object_](zs: npt.NDArray[ScalarT]) -> _Series[ScalarT]: ...
 
 poly2cheb: Final[_FuncPoly2Ortho] = ...
 cheb2poly: Final[_FuncUnOp] = ...
@@ -112,6 +104,7 @@ chebint: Final[_FuncInteg] = ...
 chebval: Final[_FuncVal] = ...
 chebval2d: Final[_FuncVal2D] = ...
 chebval3d: Final[_FuncVal3D] = ...
+chebvalnd: Final[_FuncValND] = ...
 chebgrid2d: Final[_FuncVal2D] = ...
 chebgrid3d: Final[_FuncVal3D] = ...
 chebvander: Final[_FuncVander] = ...
@@ -133,20 +126,20 @@ def chebinterpolate(
     args: tuple[()] = (),
 ) -> npt.NDArray[np.float64 | np.complex128 | np.object_]: ...
 @overload
-def chebinterpolate(
-    func: Callable[[npt.NDArray[np.float64]], _CoefScalarT],
+def chebinterpolate[CoefScalarT: np.number | np.bool | np.object_](
+    func: Callable[[npt.NDArray[np.float64]], CoefScalarT],
     deg: _IntLike_co,
     args: tuple[()] = (),
-) -> npt.NDArray[_CoefScalarT]: ...
+) -> npt.NDArray[CoefScalarT]: ...
 @overload
-def chebinterpolate(
-    func: Callable[Concatenate[npt.NDArray[np.float64], ...], _CoefScalarT],
+def chebinterpolate[CoefScalarT: np.number | np.bool | np.object_](
+    func: Callable[Concatenate[npt.NDArray[np.float64], ...], CoefScalarT],
     deg: _IntLike_co,
     args: Iterable[Any],
-) -> npt.NDArray[_CoefScalarT]: ...
+) -> npt.NDArray[CoefScalarT]: ...
 
 class Chebyshev(ABCPolyBase[L["T"]]):
-    basis_name: ClassVar[L["T"]] = "T"  # pyright: ignore[reportIncompatibleMethodOverride]
+    basis_name: ClassVar[L["T"]] = "T"  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore[bad-override]
     domain: _Array2[np.float64 | Any] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
     window: _Array2[np.float64 | Any] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
 

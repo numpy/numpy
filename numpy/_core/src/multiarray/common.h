@@ -22,6 +22,10 @@ extern "C" {
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
 
+NPY_NO_EXPORT PyObject *
+build_array_interface(PyObject *dataptr, PyObject *descr, PyObject *strides,
+                      PyObject *typestr, PyObject *shape);
+
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_DTypeFromObjectStringDiscovery(
         PyObject *obj, PyArray_Descr *last_dtype, int string_type);
@@ -90,6 +94,40 @@ _unpack_field_index(
  */
 NPY_NO_EXPORT int
 _may_have_objects(PyArray_Descr *dtype);
+
+/*
+ * For a sub-array descriptor, return the base descriptor,
+ * set newnd to nd plus the number of subarray dimensions,
+ * and fill newdims by copying nd items from dims and appending
+ * newnd-nd items from the subarray.
+ * If newstrides != NULL, they are similarly filled.
+ *
+ * Note: caller has to ensure that descr is a subarray, and that
+ * newdims and newstrides are big enough (i.e., NPY_MAXDIMS if
+ * the new size is not yet known).
+ */
+NPY_NO_EXPORT PyArray_Descr*
+_get_subarray_base_and_dimensions(
+    const PyArray_Descr *descr,
+    const int nd, const npy_intp *dims, const npy_intp *strides,
+    int *newnd, npy_intp *newdims, npy_intp *newstrides);
+
+/*
+ * Check whether self can be viewed with the given dtype.
+ * If so, return a new reference to the dtype (possibly changed).
+ * If needed, also determine new dimensions and strides:
+ * - For views, *newdims and *newstrides hold storage.  If a change is
+ *   required, copy old dims and strides and make the change.
+ *   If no change is needed, set *dims and *strides to self's versions.
+ * - For _set_dtype, *newdims and *newstrides are NULL. Allocate a new
+ *   array if the number of dimensions increases (because type is a
+ *   subarray), and otherwise use self's dims and strides, possibly
+ *   changing the last element in-place.
+ */
+NPY_NO_EXPORT PyArray_Descr*
+_check_compatibility_with_new_dtype(
+    PyArrayObject *self, PyArray_Descr *type,
+    int *newnd, npy_intp **newdims, npy_intp **newstrides);
 
 /*
  * Returns -1 and sets an exception if *index is an invalid index for
@@ -335,7 +373,7 @@ check_is_convertible_to_scalar(PyArrayObject *v);
  */
 NPY_NO_EXPORT PyArrayObject *
 new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
-                  int nd, npy_intp dimensions[], int typenum, PyArrayObject **result);
+                  int nd, npy_intp dimensions[], PyArray_Descr *descr, PyArrayObject **result);
 
 
 /*

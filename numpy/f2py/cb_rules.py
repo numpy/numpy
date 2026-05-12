@@ -143,31 +143,15 @@ f2py_cb_start_clock();
         goto capi_fail;
     }
 #setdims#
-#ifdef PYPY_VERSION
-#define CAPI_ARGLIST_SETITEM(idx, value) PyList_SetItem((PyObject *)capi_arglist_list, idx, value)
-    capi_arglist_list = PySequence_List((PyObject *)capi_arglist);
-    if (capi_arglist_list == NULL) goto capi_fail;
-#else
 #define CAPI_ARGLIST_SETITEM(idx, value) PyTuple_SetItem((PyObject *)capi_arglist, idx, value)
-#endif
 #pyobjfrom#
 #undef CAPI_ARGLIST_SETITEM
-#ifdef PYPY_VERSION
-    CFUNCSMESSPY(\"cb:capi_arglist=\",capi_arglist_list);
-#else
-    CFUNCSMESSPY(\"cb:capi_arglist=\",capi_arglist);
-#endif
-    CFUNCSMESS(\"cb:Call-back calling Python function #argname#.\\n\");
+CFUNCSMESSPY(\"cb:capi_arglist=\",capi_arglist);
+CFUNCSMESS(\"cb:Call-back calling Python function #argname#.\\n\");
 #ifdef F2PY_REPORT_ATEXIT
 f2py_cb_start_call_clock();
 #endif
-#ifdef PYPY_VERSION
-    capi_return = PyObject_CallObject(cb->capi,(PyObject *)capi_arglist_list);
-    Py_DECREF(capi_arglist_list);
-    capi_arglist_list = NULL;
-#else
-    capi_return = PyObject_CallObject(cb->capi,(PyObject *)capi_arglist);
-#endif
+capi_return = PyObject_CallObject(cb->capi,(PyObject *)capi_arglist);
 #ifdef F2PY_REPORT_ATEXIT
 f2py_cb_stop_call_clock();
 #endif

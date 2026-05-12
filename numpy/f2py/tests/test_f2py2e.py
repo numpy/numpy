@@ -1,3 +1,4 @@
+import os
 import platform
 import re
 import shlex
@@ -232,10 +233,8 @@ def test_untitled_cli(capfd, hello_world_f90, monkeypatch):
         out, _ = capfd.readouterr()
         assert "untitledmodule.c" in out
 
-
-@pytest.mark.skipif((platform.system() != 'Linux') or (sys.version_info <= (3, 12)), reason='Compiler and 3.12 required')
-def test_no_py312_distutils_fcompiler(capfd, hello_world_f90, monkeypatch):
-    """Check that no distutils imports are performed on 3.12
+def test_no_distutils_backend(capfd, hello_world_f90, monkeypatch):
+    """Check that distutils backend and related options fail
     CLI :: --fcompiler --help-link --backend distutils
     """
     MNAME = "hi"
@@ -248,22 +247,23 @@ def test_no_py312_distutils_fcompiler(capfd, hello_world_f90, monkeypatch):
         compiler_check_f2pycli()
         out, _ = capfd.readouterr()
         assert "--fcompiler cannot be used with meson" in out
+
     monkeypatch.setattr(
         sys, "argv", ["f2py", "--help-link"]
     )
-    with util.switchdir(ipath.parent):
+    with pytest.raises(SystemExit):
         f2pycli()
         out, _ = capfd.readouterr()
-        assert "Use --dep for meson builds" in out
-    MNAME = "hi2"  # Needs to be different for a new -c
-    monkeypatch.setattr(
-        sys, "argv", f"f2py {ipath} -c -m {MNAME} --backend distutils".split()
-    )
-    with util.switchdir(ipath.parent):
-        f2pycli()
-        out, _ = capfd.readouterr()
-        assert "Cannot use distutils backend with Python>=3.12" in out
+        assert "Unknown option --help-link" in out
 
+    monkeypatch.setattr(
+        sys, "argv", ["f2py", "--backend", "distutils"]
+    )
+    with pytest.raises(SystemExit):
+        compiler_check_f2pycli()
+        f2pycli()
+        out, _ = capfd.readouterr()
+        assert "'distutils' backend was removed" in out
 
 @pytest.mark.xfail
 def test_f2py_skip(capfd, retreal_f77, monkeypatch):
@@ -506,6 +506,23 @@ def test_nolatexdoc(capfd, hello_world_f90, monkeypatch):
         f2pycli()
         out, _ = capfd.readouterr()
         assert "Documentation is saved to file" not in out
+
+def test_latex_doc_gh30268(tmp_path):
+
+    if not util.has_fortran_compiler():
+        pytest.skip("No Fortran compiler found")
+
+    fsource = textwrap.dedent("""
+        subroutine foo
+        end
+    """)
+
+    fpath = tmp_path / "test_latex.f90"
+    with open(fpath, "w") as f:
+        f.write(fsource)
+
+    cmd = [sys.executable, "-m", "numpy.f2py", "-c", str(fpath), "-m", "test_latex", "--latex-doc"]
+    subprocess.check_call(cmd, cwd=tmp_path)
 
 
 def test_shortlatex(capfd, hello_world_f90, monkeypatch):
@@ -832,7 +849,8 @@ def test_freethreading_compatible(hello_world_f90, monkeypatch):
         rout = subprocess.run(cmd_run, capture_output=True, encoding='UTF-8')
         eout = ' Hello World\n'
         assert rout.stdout == eout
-        assert rout.stderr == ""
+        if "LSAN_OPTIONS" not in os.environ:
+            assert rout.stderr == ""
         assert rout.returncode == 0
 
 

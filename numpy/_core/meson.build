@@ -51,8 +51,8 @@ C_ABI_VERSION = '0x02000000'
 # 0x00000013 - 2.2.x
 # 0x00000014 - 2.3.x
 # 0x00000015 - 2.4.x
-# 0x00000015 - 2.5.x
-C_API_VERSION = '0x00000015'
+# 0x00000016 - 2.5.x
+C_API_VERSION = '0x00000016'
 
 # Check whether we have a mismatch between the set C API VERSION and the
 # actual C API VERSION. Will raise a MismatchCAPIError if so.
@@ -179,7 +179,7 @@ if not cc.has_header('complex.h')
   error('"complex.h" header not found')
 endif
 
-if cc.get_argument_syntax() == 'msvc'
+if cc.get_id() == 'msvc' or cc.get_id() == 'clang-cl'
   complex_types_to_check = [
     ['NPY_SIZEOF_COMPLEX_FLOAT', '_Fcomplex'],
     ['NPY_SIZEOF_COMPLEX_DOUBLE', '_Dcomplex'],
@@ -200,9 +200,43 @@ foreach symbol_type: complex_types_to_check
   cdata.set(symbol_type[0], cc.sizeof(symbol_type[1], prefix: '#include <complex.h>'))
 endforeach
 
-# Mandatory functions: if not found, fail the build
-# Some of these can still be blocklisted if the C99 implementation
-# is buggy, see numpy/_core/src/common/npy_config.h
+# Mandatory and optional math functions are detected via batched cc.links()
+# probes that take each function's address through a static array, forcing the
+# linker to resolve the symbol. On failure we fall back to per-function probes
+# so a missing mandatory symbol is reported by name, and so optional functions
+# that are partially available on an unusual libm are still detected
+# individually.
+#
+# Platform-specific libm bugs are handled via `#undef HAVE_*` in
+# numpy/_core/src/common/npy_config.h.
+
+inc_curdir = include_directories('.')
+
+# Shared C-source boilerplate. '@INCLUDES@' and '@REFS@' are substituted
+# per-batch via .replace() below.
+_batch_probe_template = '''
+#include <stdint.h>
+#include <stddef.h>
+@INCLUDES@
+
+typedef void (*funcptr)(void);
+
+static const funcptr funcs[] = {
+@REFS@};
+
+int main(int argc, char **argv) {
+    volatile uintptr_t s = 0;
+    unsigned i;
+    (void)argc; (void)argv;
+    for (i = 0; i < sizeof(funcs)/sizeof(funcs[0]); i++) {
+        s ^= (uintptr_t)funcs[i];
+    }
+    return (int)(s & 1);
+}
+'''
+
+# Mandatory functions: if the batched link fails, fall back to per-function
+# checks to identify which symbol is actually missing.
 mandatory_math_funcs = [
   'sin', 'cos', 'tan', 'sinh', 'cosh', 'tanh', 'fabs',
   'floor', 'ceil', 'sqrt', 'log10', 'log', 'exp', 'asin',
@@ -211,26 +245,41 @@ mandatory_math_funcs = [
   'rint', 'trunc', 'exp2', 'copysign', 'nextafter', 'cbrt',
   'log2', 'pow', 'hypot', 'atan2',
 ]
-foreach func: mandatory_math_funcs
-  if not cc.has_function(func, prefix: '#include <math.h>', dependencies: m_dep)
-    error(f'Function `@func@` not found')
-  endif
-endforeach
-
 mandatory_complex_math_funcs = [
   'csin', 'csinh', 'ccos', 'ccosh', 'ctan', 'ctanh', 'creal', 'cimag', 'conj'
 ]
-foreach func: mandatory_complex_math_funcs
-  if not cc.has_function(func, prefix: '#include <complex.h>', dependencies: m_dep)
-    error(f'Function `@func@` not found')
-  endif
-endforeach
+mandatory_strto_funcs = ['strtoll', 'strtoull']
 
-foreach func: ['strtoll', 'strtoull']
-  if not cc.has_function(func, prefix: '#include <stdlib.h>')
-    error(f'Function `@func@` not found')
-  endif
+_mandatory_refs = ''
+foreach _f : mandatory_math_funcs + mandatory_complex_math_funcs + mandatory_strto_funcs
+  _mandatory_refs += '    (funcptr)' + _f + ',\n'
 endforeach
+_mandatory_src = _batch_probe_template.replace(
+  '@INCLUDES@',
+  '#include "feature_detection_math.h"\n#include "feature_detection_cmath.h"'
+).replace('@REFS@', _mandatory_refs)
+
+if not cc.links(_mandatory_src,
+    include_directories: inc_curdir,
+    dependencies: m_dep,
+    name: 'mandatory libm functions (batched)')
+  # Re-run per-function to name the missing symbol for the user.
+  foreach func: mandatory_math_funcs
+    if not cc.has_function(func, prefix: '#include <math.h>', dependencies: m_dep)
+      error(f'Function `@func@` not found')
+    endif
+  endforeach
+  foreach func: mandatory_complex_math_funcs
+    if not cc.has_function(func, prefix: '#include <complex.h>', dependencies: m_dep)
+      error(f'Function `@func@` not found')
+    endif
+  endforeach
+  foreach func: mandatory_strto_funcs
+    if not cc.has_function(func, prefix: '#include <stdlib.h>')
+      error(f'Function `@func@` not found')
+    endif
+  endforeach
+endif
 
 c99_complex_funcs = [
   'cabs', 'cacos', 'cacosh', 'carg', 'casin', 'casinh', 'catan',
@@ -239,19 +288,33 @@ c99_complex_funcs = [
   # but are missing in FreeBSD. Issue gh-22850
   'csin', 'csinh', 'ccos', 'ccosh', 'ctan', 'ctanh',
 ]
-foreach func: c99_complex_funcs
-  func_single = func + 'f'
-  func_longdouble = func + 'l'
-  if cc.has_function(func, prefix: '#include <complex.h>', dependencies: m_dep)
-    cdata.set10('HAVE_' + func.to_upper(), true)
-  endif
-  if cc.has_function(func_single, prefix: '#include <complex.h>', dependencies: m_dep)
-    cdata.set10('HAVE_' + func_single.to_upper(), true)
-  endif
-  if cc.has_function(func_longdouble, prefix: '#include <complex.h>', dependencies: m_dep)
-    cdata.set10('HAVE_' + func_longdouble.to_upper(), true)
-  endif
+c99_complex_funcs_all = []
+foreach _f : c99_complex_funcs
+  c99_complex_funcs_all += [_f, _f + 'f', _f + 'l']
 endforeach
+
+_c99cplx_refs = ''
+foreach _f : c99_complex_funcs_all
+  _c99cplx_refs += '    (funcptr)' + _f + ',\n'
+endforeach
+_c99cplx_src = _batch_probe_template.replace(
+  '@INCLUDES@', '#include "feature_detection_cmath.h"'
+).replace('@REFS@', _c99cplx_refs)
+
+if cc.links(_c99cplx_src,
+    include_directories: inc_curdir,
+    dependencies: m_dep,
+    name: 'C99 complex funcs (batched)')
+  foreach func: c99_complex_funcs_all
+    cdata.set10('HAVE_' + func.to_upper(), true)
+  endforeach
+else
+  foreach func: c99_complex_funcs_all
+    if cc.has_function(func, prefix: '#include <complex.h>', dependencies: m_dep)
+      cdata.set10('HAVE_' + func.to_upper(), true)
+    endif
+  endforeach
+endif
 
 # We require C99 so these should always be found at build time. But for
 # libnpymath as a C99 compat layer, these may still be relevant.
@@ -293,7 +356,6 @@ foreach optional_attr: optional_variable_attributes
   endif
 endforeach
 
-inc_curdir = include_directories('.')
 optional_file_funcs = ['fallocate', 'ftello', 'fseeko']
 foreach filefunc_maybe: optional_file_funcs
   config_value = 'HAVE_' + filefunc_maybe.to_upper()
@@ -402,6 +464,8 @@ optional_intrinsics = [
   ['__builtin_expect', '5, 0', [], []],
   # Test `long long` for arm+clang 13 (gh-22811, but we use all versions):
   ['__builtin_mul_overflow', '(long long)5, 5, (int*)5', [], []],
+  ['__builtin_add_overflow', '(long long)5, 5, (int*)5', [], []],
+  ['__builtin_sub_overflow', '(long long)5, 5, (int*)5', [], []],
   ['__builtin_prefetch', '(float*)0, 0, 3', [], []],
 ]
 foreach intrin: optional_intrinsics
@@ -605,33 +669,6 @@ npymath_lib = static_library('npymath',
   gnu_symbol_visibility: 'hidden',
 )
 
-dir_separator = '/'
-if build_machine.system() == 'windows'
-  dir_separator = '\\'
-endif
-configure_file(
-  input: 'npymath.ini.in',
-  output: 'npymath.ini',
-  configuration: configuration_data({
-    'pkgname' : 'numpy._core',
-    'sep' : dir_separator,
-  }),
-  install: true,
-  install_dir: np_dir / '_core/lib/npy-pkg-config',
-  install_tag: 'devel'
-)
-configure_file(
-  input: 'mlib.ini.in',
-  output: 'mlib.ini',
-  configuration: configuration_data({
-    'posix_mathlib' : mlib_linkflag,
-    'msvc_mathlib' : 'm.lib',
-  }),
-  install: true,
-  install_dir: np_dir / '_core/lib/npy-pkg-config',
-  install_tag: 'devel'
-)
-
 if false
   # This doesn't quite work (yet), it assumes we'll install headers under
   # include/, and trying to add the correct path with `extra_cflags` runs into
@@ -759,7 +796,7 @@ py.extension_module('_multiarray_tests',
     src_file.process('src/multiarray/_multiarray_tests.c.src'),
     'src/common/mem_overlap.c',
     'src/common/npy_argparse.c',
-    'src/common/npy_hashtable.cpp',
+    'src/common/npy_hashtable.c',
     'src/common/npy_import.c',
     src_file.process('src/common/templ_common.h.src')
   ],
@@ -1114,13 +1151,14 @@ src_multiarray_umath_common = [
   'src/common/gil_utils.c',
   'src/common/mem_overlap.c',
   'src/common/npy_argparse.c',
-  'src/common/npy_hashtable.cpp',
+  'src/common/npy_hashtable.c',
   'src/common/npy_import.c',
   'src/common/npy_longdouble.c',
   'src/common/ufunc_override.c',
   'src/common/numpyos.c',
   'src/common/npy_cpu_features.c',
   'src/common/npy_cpu_dispatch.c',
+  'src/common/npy_sort.c',
   src_file.process('src/common/templ_common.h.src')
 ]
 if have_blas
@@ -1233,6 +1271,7 @@ src_umath = umath_gen_headers + [
   src_file.process('src/umath/scalarmath.c.src'),
   'src/umath/ufunc_object.c',
   'src/umath/umathmodule.c',
+  'src/umath/real_imag_ufuncs.cpp',
   'src/umath/special_integer_comparisons.cpp',
   'src/umath/string_ufuncs.cpp',
   'src/umath/stringdtype_ufuncs.cpp',

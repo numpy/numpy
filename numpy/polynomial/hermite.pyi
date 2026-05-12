@@ -1,4 +1,4 @@
-from typing import Any, ClassVar, Final, Literal as L, TypeVar
+from typing import Any, ClassVar, Final, Literal as L
 
 import numpy as np
 from numpy._typing import _Shape
@@ -22,6 +22,7 @@ from ._polytypes import (
     _FuncVal,
     _FuncVal2D,
     _FuncVal3D,
+    _FuncValND,
     _FuncVander,
     _FuncVander2D,
     _FuncVander3D,
@@ -54,6 +55,7 @@ __all__ = [
     "Hermite",
     "hermval2d",
     "hermval3d",
+    "hermvalnd",
     "hermgrid2d",
     "hermgrid3d",
     "hermvander2d",
@@ -62,8 +64,6 @@ __all__ = [
     "hermgauss",
     "hermweight",
 ]
-
-_ShapeT = TypeVar("_ShapeT", bound=_Shape)
 
 poly2herm: Final[_FuncPoly2Ortho] = ...
 herm2poly: Final[_FuncUnOp] = ...
@@ -86,6 +86,7 @@ hermint: Final[_FuncInteg] = ...
 hermval: Final[_FuncVal] = ...
 hermval2d: Final[_FuncVal2D] = ...
 hermval3d: Final[_FuncVal3D] = ...
+hermvalnd: Final[_FuncValND] = ...
 hermgrid2d: Final[_FuncVal2D] = ...
 hermgrid3d: Final[_FuncVal3D] = ...
 hermvander: Final[_FuncVander] = ...
@@ -95,12 +96,15 @@ hermfit: Final[_FuncFit] = ...
 hermcompanion: Final[_FuncCompanion] = ...
 hermroots: Final[_FuncRoots] = ...
 
-def _normed_hermite_n(x: np.ndarray[_ShapeT, np.dtype[np.float64]], n: int) -> np.ndarray[_ShapeT, np.dtype[np.float64]]: ...
+def _normed_hermite_n[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.float64]],
+    n: int,
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
 
 hermgauss: Final[_FuncGauss] = ...
 hermweight: Final[_FuncWeight] = ...
 
 class Hermite(ABCPolyBase[L["H"]]):
-    basis_name: ClassVar[L["H"]] = "H"  # pyright: ignore[reportIncompatibleMethodOverride]
+    basis_name: ClassVar[L["H"]] = "H"  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore[bad-override]
     domain: _Array2[np.float64 | Any] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
     window: _Array2[np.float64 | Any] = ...  # pyright: ignore[reportIncompatibleMethodOverride]

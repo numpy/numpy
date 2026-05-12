@@ -637,46 +637,46 @@ class TestUnique:
         msg = base_msg.format('values', dt)
         v = unique(a)
         assert_array_equal(v, b, msg)
-        assert type(v) == type(b)
+        assert type(v) is type(b)
 
         msg = base_msg.format('return_index', dt)
         v, j = unique(a, True, False, False)
         assert_array_equal(v, b, msg)
         assert_array_equal(j, i1, msg)
-        assert type(v) == type(b)
+        assert type(v) is type(b)
 
         msg = base_msg.format('return_inverse', dt)
         v, j = unique(a, False, True, False)
         assert_array_equal(v, b, msg)
         assert_array_equal(j, i2, msg)
-        assert type(v) == type(b)
+        assert type(v) is type(b)
 
         msg = base_msg.format('return_counts', dt)
         v, j = unique(a, False, False, True)
         assert_array_equal(v, b, msg)
         assert_array_equal(j, c, msg)
-        assert type(v) == type(b)
+        assert type(v) is type(b)
 
         msg = base_msg.format('return_index and return_inverse', dt)
         v, j1, j2 = unique(a, True, True, False)
         assert_array_equal(v, b, msg)
         assert_array_equal(j1, i1, msg)
         assert_array_equal(j2, i2, msg)
-        assert type(v) == type(b)
+        assert type(v) is type(b)
 
         msg = base_msg.format('return_index and return_counts', dt)
         v, j1, j2 = unique(a, True, False, True)
         assert_array_equal(v, b, msg)
         assert_array_equal(j1, i1, msg)
         assert_array_equal(j2, c, msg)
-        assert type(v) == type(b)
+        assert type(v) is type(b)
 
         msg = base_msg.format('return_inverse and return_counts', dt)
         v, j1, j2 = unique(a, False, True, True)
         assert_array_equal(v, b, msg)
         assert_array_equal(j1, i2, msg)
         assert_array_equal(j2, c, msg)
-        assert type(v) == type(b)
+        assert type(v) is type(b)
 
         msg = base_msg.format(('return_index, return_inverse '
                                 'and return_counts'), dt)
@@ -685,9 +685,10 @@ class TestUnique:
         assert_array_equal(j1, i1, msg)
         assert_array_equal(j2, i2, msg)
         assert_array_equal(j3, c, msg)
-        assert type(v) == type(b)
+        assert type(v) is type(b)
 
     def get_types(self):
+
         types = []
         types.extend(np.typecodes['AllInteger'])
         types.extend(np.typecodes['AllFloat'])
@@ -695,6 +696,7 @@ class TestUnique:
         types.append('timedelta64[D]')
         return types
 
+    @pytest.mark.filterwarnings(r"ignore:\w+ chararray \w+:DeprecationWarning")
     def test_unique_1d(self):
 
         a = [5, 7, 1, 2, 1, 5, 7] * 10
@@ -783,7 +785,7 @@ class TestUnique:
         assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
 
         # test for ticket 2111 - datetime64
-        nat = np.datetime64('nat')
+        nat = np.datetime64('nat', 'D')
         a = [np.datetime64('2020-12-26'), nat, np.datetime64('2020-12-24'), nat]
         ua = [np.datetime64('2020-12-24'), np.datetime64('2020-12-26'), nat]
         ua_idx = [2, 0, 1]
@@ -795,7 +797,7 @@ class TestUnique:
         assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
 
         # test for ticket 2111 - timedelta
-        nat = np.timedelta64('nat')
+        nat = np.timedelta64('nat', 's')
         a = [np.timedelta64(1, 'D'), nat, np.timedelta64(1, 'h'), nat]
         ua = [np.timedelta64(1, 'h'), np.timedelta64(1, 'D'), nat]
         ua_idx = [2, 0, 1]

@@ -193,7 +193,7 @@ class _ndptr(_ndptr_base):
             raise TypeError(f"array must have data type {cls._dtype_}")
         if cls._ndim_ is not None \
                and obj.ndim != cls._ndim_:
-            raise TypeError("array must have %d dimension(s)" % cls._ndim_)
+            raise TypeError(f"array must have {cls._ndim_} dimension(s)")
         if cls._shape_ is not None \
                and obj.shape != cls._shape_:
             raise TypeError(f"array must have shape {str(cls._shape_)}")
@@ -333,7 +333,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     else:
         name = dtype.str
     if ndim is not None:
-        name += "_%dd" % ndim
+        name += f"_{ndim}d"
     if shape is not None:
         name += "_" + "x".join(str(x) for x in shape)
     if flags is not None:
@@ -502,7 +502,7 @@ if ctypes is not None:
         --------
         Converting a simple dtype:
 
-        >>> dt = np.dtype('int8')
+        >>> dt = np.dtype(np.int8)
         >>> ctype = np.ctypeslib.as_ctypes_type(dt)
         >>> ctype
         <class 'ctypes.c_byte'>

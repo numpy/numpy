@@ -1,18 +1,16 @@
-# ruff: noqa: ANN401
 # pyright: reportSelfClsParameterName=false
 from _typeshed import Incomplete, StrOrBytesPath
-from collections.abc import Iterable, Sequence
+from collections.abc import Buffer, Iterable, Sequence
 from typing import (
     Any,
     ClassVar,
     Literal,
     Protocol,
     SupportsIndex,
-    TypeAlias,
     overload,
     type_check_only,
 )
-from typing_extensions import Buffer, TypeVar
+from typing_extensions import TypeVar
 
 import numpy as np
 from numpy import _ByteOrder, _OrderKACF
@@ -39,12 +37,11 @@ __all__ = [
     "record",
 ]
 
-_T = TypeVar("_T")
-_ScalarT = TypeVar("_ScalarT", bound=np.generic)
+# Explicit covariant type variables are needed because mypy isn't very good at variance inference right now.
 _DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype, default=np.dtype, covariant=True)
 _ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_AnyShape, covariant=True)
 
-_RecArray: TypeAlias = recarray[_AnyShape, np.dtype[_ScalarT]]
+type _RecArray[_ScalarT: np.generic] = recarray[_AnyShape, np.dtype[_ScalarT]]
 
 @type_check_only
 class _SupportsReadInto(Protocol):
@@ -57,7 +54,7 @@ class _SupportsReadInto(Protocol):
 # exported in `numpy.rec`
 class record(np.void):  # type: ignore[misc]
     __name__: ClassVar[Literal["record"]] = "record"
-    __module__: Literal["numpy"] = "numpy"
+    __module__: Literal["numpy"] = "numpy"  # pyrefly: ignore[bad-override]
 
     def pprint(self) -> str: ...
 
@@ -66,18 +63,18 @@ class record(np.void):  # type: ignore[misc]
 
     #
     @overload  # type: ignore[override]
-    def __getitem__(self, key: str | SupportsIndex, /) -> Incomplete: ...
+    def __getitem__(self, key: str | SupportsIndex, /) -> Incomplete: ...  # pyrefly: ignore[bad-override]
     @overload
     def __getitem__(self, key: list[str], /) -> record: ...
 
 # exported in `numpy.rec`
 class recarray(np.ndarray[_ShapeT_co, _DTypeT_co]):
     __name__: ClassVar[Literal["recarray"]] = "recarray"
-    __module__: Literal["numpy.rec"] = "numpy.rec"
+    __module__: Literal["numpy.rec"] = "numpy.rec"  # pyrefly: ignore[bad-override]
 
     @overload
     def __new__(
-        subtype,
+        cls,
         shape: _ShapeLike,
         dtype: None = None,
         buf: Buffer | None = None,
@@ -93,7 +90,7 @@ class recarray(np.ndarray[_ShapeT_co, _DTypeT_co]):
     ) -> _RecArray[record]: ...
     @overload
     def __new__(
-        subtype,
+        cls,
         shape: _ShapeLike,
         dtype: DTypeLike | None,
         buf: Buffer | None = None,
@@ -236,8 +233,8 @@ def fromfile(
 
 # exported in `numpy.rec`
 @overload
-def array(
-    obj: _ScalarT | NDArray[_ScalarT],
+def array[ScalarT: np.generic](
+    obj: ScalarT | NDArray[ScalarT],
     dtype: None = None,
     shape: _ShapeLike | None = None,
     offset: int = 0,
@@ -248,7 +245,7 @@ def array(
     aligned: bool = False,
     byteorder: None = None,
     copy: bool = True,
-) -> _RecArray[_ScalarT]: ...
+) -> _RecArray[ScalarT]: ...
 @overload
 def array(
     obj: ArrayLike,
@@ -338,4 +335,4 @@ def array(
 ) -> _RecArray[record]: ...
 
 # exported in `numpy.rec`
-def find_duplicate(list: Iterable[_T]) -> list[_T]: ...
+def find_duplicate[T](list: Iterable[T]) -> list[T]: ...

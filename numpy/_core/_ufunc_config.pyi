@@ -1,7 +1,7 @@
 from _typeshed import SupportsWrite
 from collections.abc import Callable
 from types import TracebackType
-from typing import Any, Final, Literal, TypeAlias, TypedDict, TypeVar, type_check_only
+from typing import Any, Final, Literal, TypedDict, type_check_only
 
 __all__ = [
     "seterr",
@@ -13,10 +13,8 @@ __all__ = [
     "errstate",
 ]
 
-_ErrKind: TypeAlias = Literal["ignore", "warn", "raise", "call", "print", "log"]
-_ErrCall: TypeAlias = Callable[[str, int], Any] | SupportsWrite[str]
-
-_CallableT = TypeVar("_CallableT", bound=Callable[..., object])
+type _ErrKind = Literal["ignore", "warn", "raise", "call", "print", "log"]
+type _ErrCall = Callable[[str, int], Any] | SupportsWrite[str]
 
 @type_check_only
 class _ErrDict(TypedDict):
@@ -45,7 +43,7 @@ class errstate:
         under: _ErrKind | None = None,
         invalid: _ErrKind | None = None,
     ) -> None: ...
-    def __call__(self, /, func: _CallableT) -> _CallableT: ...
+    def __call__[FuncT: Callable[..., object]](self, /, func: FuncT) -> FuncT: ...
     def __enter__(self) -> None: ...
     def __exit__(
         self,

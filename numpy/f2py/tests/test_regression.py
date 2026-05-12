@@ -123,7 +123,7 @@ class TestF77Comments(util.F2PyTest):
         res = self.module.testsub2()
         npt.assert_allclose(expected, res)
 
-class TestF90Contiuation(util.F2PyTest):
+class TestF90Continuation(util.F2PyTest):
     # Check that comments are stripped from F90 continuation lines
     sources = [util.getpath("tests", "src", "regression", "f90continuation.f90")]
 
@@ -173,6 +173,23 @@ def test_gh25784():
         )
     except ImportError as rerr:
         assert "unknown_subroutine_" in str(rerr)
+
+
+@pytest.mark.slow
+class TestComplexStructCompat(util.F2PyTest):
+    # Check that .r/.i field access works on complex_double pointers in
+    # callstatements (scipy compatibility, gh-30966 follow-up)
+    sources = [
+        util.getpath("tests", "src", "regression", "complex_struct_compat.pyf"),
+        util.getpath("tests", "src", "regression", "complex_struct_compat.f90"),
+    ]
+    module_name = "_complex_struct_compat_test"
+
+    def test_complex_struct_field_access(self):
+        c = np.array([1 + 2j, 3 + 4j, 5 + 6j], dtype=np.complex128)
+        self.module.zero_imag(c)
+        npt.assert_array_equal(c.imag, [0.0, 0.0, 0.0])
+        npt.assert_array_equal(c.real, [1.0, 3.0, 5.0])
 
 
 @pytest.mark.slow

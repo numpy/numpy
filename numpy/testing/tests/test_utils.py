@@ -428,11 +428,16 @@ class TestEqual(TestArrayEqual):
 
     def test_nat_items(self):
         # not a datetime
-        nadt_no_unit = np.datetime64("NaT")
         nadt_s = np.datetime64("NaT", "s")
         nadt_d = np.datetime64("NaT", "ns")
+
         # not a timedelta
-        natd_no_unit = np.timedelta64("NaT")
+        with pytest.warns(
+            DeprecationWarning,
+            match="The 'generic' unit for NumPy timedelta is deprecated",
+        ):
+            nadt_no_unit = np.datetime64("NaT")
+            natd_no_unit = np.timedelta64("NaT")
         natd_s = np.timedelta64("NaT", "s")
         natd_d = np.timedelta64("NaT", "ns")
 
@@ -1337,8 +1342,12 @@ class TestAssertAllclose:
 
     def test_timedelta(self):
         # see gh-18286
-        a = np.array([[1, 2, 3, "NaT"]], dtype="m8[ns]")
-        assert_allclose(a, a)
+        with pytest.warns(
+            DeprecationWarning,
+            match="The 'generic' unit for NumPy timedelta is deprecated",
+        ):
+            a = np.array([[1, 2, 3, "NaT"]], dtype="m8[ns]")
+            assert_allclose(a, a)
 
     def test_error_message_unsigned(self):
         """Check the message is formatted correctly when overflow can occur

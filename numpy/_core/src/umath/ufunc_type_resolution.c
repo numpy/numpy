@@ -429,6 +429,34 @@ PyUFunc_NegativeTypeResolver(PyUFuncObject *ufunc,
     return ret;
 }
 
+/*
+ * This function applies special type resolution rules for the 'sign' ufunc.
+ * 'sign' converts timedelta64 to float64, so isn't covered by the simple
+ * unary type resolution.
+ *
+ * Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+PyUFunc_SignTypeResolver(PyUFuncObject *ufunc,
+                         NPY_CASTING casting,
+                         PyArrayObject **operands,
+                         PyObject *type_tup,
+                         PyArray_Descr **out_dtypes)
+{
+    if (PyArray_DESCR(operands[0])->type_num == NPY_TIMEDELTA) {
+        out_dtypes[0] = NPY_DT_CALL_ensure_canonical(PyArray_DESCR(operands[0]));
+        if (out_dtypes[0] == NULL) {
+            return -1;
+        }
+        out_dtypes[1] = PyArray_DescrFromType(NPY_DOUBLE);
+        return 0;
+    }
+    else {
+        return PyUFunc_SimpleUniformOperationTypeResolver(ufunc, casting,
+                    operands, type_tup, out_dtypes);
+    }
+}
+
 
 /*
  * The ones_like function shouldn't really be a ufunc, but while it
@@ -584,6 +612,9 @@ PyUFunc_SimpleUniformOperationTypeResolver(
             descr = PyArray_DESCR(operands[0]);
         }
         out_dtypes[0] = NPY_DT_CALL_ensure_canonical(descr);
+        if (out_dtypes[0] == NULL) {
+            return -1;
+        }
     }
 
     /* All types are the same - copy the first one to the rest */
@@ -650,6 +681,9 @@ PyUFunc_IsNaTTypeResolver(PyUFuncObject *ufunc,
     }
 
     out_dtypes[0] = NPY_DT_CALL_ensure_canonical(PyArray_DESCR(operands[0]));
+    if (out_dtypes[0] == NULL) {
+        return -1;
+    }
     out_dtypes[1] = PyArray_DescrFromType(NPY_BOOL);
 
     return 0;
@@ -669,6 +703,9 @@ PyUFunc_IsFiniteTypeResolver(PyUFuncObject *ufunc,
     }
 
     out_dtypes[0] = NPY_DT_CALL_ensure_canonical(PyArray_DESCR(operands[0]));
+    if (out_dtypes[0] == NULL) {
+        return -1;
+    }
     out_dtypes[1] = PyArray_DescrFromType(NPY_BOOL);
 
     return 0;
@@ -1121,7 +1158,7 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
 
-            // This is wrong agaian cause of elsize, but only the DType matters
+            // This is wrong again because of elsize, but only the DType matters
             // here (String or Unicode).
             out_dtypes[2] = out_dtypes[1];
             Py_INCREF(out_dtypes[1]);

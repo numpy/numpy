@@ -11,7 +11,7 @@ import pytest
 import numpy as np
 from numpy._core.tests._natype import pd_NA
 from numpy.dtypes import StringDType
-from numpy.testing import IS_PYPY, assert_array_equal
+from numpy.testing import assert_array_equal
 
 
 def random_unicode_string_list():
@@ -596,10 +596,7 @@ def test_concatenate(string_list):
 
 def test_resize_method(string_list):
     sarr = np.array(string_list, dtype="T")
-    if IS_PYPY:
-        sarr.resize(len(string_list) + 3, refcheck=False)
-    else:
-        sarr.resize(len(string_list) + 3)
+    sarr.resize(len(string_list) + 3)
     assert_array_equal(sarr, np.array(string_list + [''] * 3,  dtype="T"))
 
 
@@ -1144,7 +1141,7 @@ DATETIME_INPUT = [
     np.datetime64("1923-04-14T12:43:12"),
     np.datetime64("1994-06-21T14:43:15"),
     np.datetime64("2001-10-15T04:10:32"),
-    np.datetime64("NaT"),
+    np.datetime64("NaT", "D"),
     np.datetime64("1995-11-25T16:02:16"),
     np.datetime64("2005-01-04T03:14:12"),
     np.datetime64("2041-12-03T14:05:03"),
@@ -1155,7 +1152,7 @@ TIMEDELTA_INPUT = [
     np.timedelta64(12358, "s"),
     np.timedelta64(23, "s"),
     np.timedelta64(74, "s"),
-    np.timedelta64("NaT"),
+    np.timedelta64("NaT", "s"),
     np.timedelta64(23, "s"),
     np.timedelta64(73, "s"),
     np.timedelta64(7, "s"),
@@ -1206,8 +1203,8 @@ def test_nat_casts():
     s = 'nat'
     all_nats = itertools.product(*zip(s.upper(), s.lower()))
     all_nats = list(map(''.join, all_nats))
-    NaT_dt = np.datetime64('NaT')
-    NaT_td = np.timedelta64('NaT')
+    NaT_dt = np.datetime64('NaT', 'D')
+    NaT_td = np.timedelta64('NaT', 's')
     for na_object in [np._NoValue, None, np.nan, 'nat', '']:
         # numpy treats empty string and all case combinations of 'nat' as NaT
         dtype = StringDType(na_object=na_object)
@@ -1457,7 +1454,7 @@ PASSES_THROUGH_NAN_NULLS = [
     "strip",
     "lstrip",
     "rstrip",
-    "replace"
+    "replace",
     "zfill",
 ]
 

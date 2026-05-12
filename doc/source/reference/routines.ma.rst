@@ -247,8 +247,8 @@ Conversion operations
    ma.masked_where
 
 
-> to a ndarray
-~~~~~~~~~~~~~~
+> to an ndarray
+~~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
 

@@ -27,11 +27,17 @@
 #endif
 #endif
 
-/* Do not enable the alloc cache if the GIL is disabled, or if ASAN or MSAN
- * instrumentation is enabled. The cache makes ASAN use-after-free or MSAN
- * use-of-uninitialized-memory warnings less useful. */
+
+/*
+ * CPython uses mimalloc on the free-threaded build, which we trust to cache
+ * allocations better than we can.
+ */
 #ifdef Py_GIL_DISABLED
 #    define USE_ALLOC_CACHE 0
+/*
+ * The cache makes ASAN use-after-free or MSAN use-of-uninitialized-memory
+ * warnings less useful.
+ */
 #elif defined(__has_feature)
 #    if __has_feature(address_sanitizer) || __has_feature(memory_sanitizer)
 #        define USE_ALLOC_CACHE 0
@@ -64,7 +70,7 @@ NPY_NO_EXPORT PyObject *
 _get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 {
 #ifdef NPY_OS_LINUX
-    if (npy_thread_unsafe_state.madvise_hugepage) {
+    if (npy_global_state.madvise_hugepage) {
         Py_RETURN_TRUE;
     }
 #endif
@@ -82,12 +88,12 @@ _get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 NPY_NO_EXPORT PyObject *
 _set_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *enabled_obj)
 {
-    int was_enabled = npy_thread_unsafe_state.madvise_hugepage;
+    int was_enabled = npy_global_state.madvise_hugepage;
     int enabled = PyObject_IsTrue(enabled_obj);
     if (enabled < 0) {
         return NULL;
     }
-    npy_thread_unsafe_state.madvise_hugepage = enabled;
+    npy_global_state.madvise_hugepage = enabled;
     if (was_enabled) {
         Py_RETURN_TRUE;
     }
@@ -100,7 +106,7 @@ indicate_hugepages(void *p, size_t size) {
 #ifdef NPY_OS_LINUX
     /* allow kernel allocating huge pages for large arrays */
     if (NPY_UNLIKELY(size >= ((1u<<22u))) &&
-        npy_thread_unsafe_state.madvise_hugepage) {
+        npy_global_state.madvise_hugepage) {
         npy_uintp offset = 4096u - (npy_uintp)p % (4096u);
         npy_uintp length = size - offset;
         /**
@@ -138,9 +144,6 @@ _npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
 #endif
     p = alloc(nelem * esz);
     if (p) {
-#ifdef _PyPyGC_AddMemoryPressure
-        _PyPyPyGC_AddMemoryPressure(nelem * esz);
-#endif
         indicate_hugepages(p, nelem * esz);
     }
     return p;
@@ -182,7 +185,6 @@ npy_alloc_cache_zero(size_t nmemb, size_t size)
 {
     void * p;
     size_t sz = nmemb * size;
-    NPY_BEGIN_THREADS_DEF;
     if (sz < NBUCKETS) {
         p = _npy_alloc_cache(sz, 1, NBUCKETS, datacache, &PyDataMem_NEW);
         if (p) {
@@ -190,9 +192,7 @@ npy_alloc_cache_zero(size_t nmemb, size_t size)
         }
         return p;
     }
-    NPY_BEGIN_THREADS;
     p = PyDataMem_NEW_ZEROED(nmemb, size);
-    NPY_END_THREADS;
     if (p) {
         indicate_hugepages(p, sz);
     }
@@ -220,7 +220,7 @@ npy_alloc_cache_dim(npy_uintp sz)
         sz = 2;
     }
     return _npy_alloc_cache(sz, sizeof(npy_intp), NBUCKETS_DIM, dimcache,
-                            &PyArray_malloc);
+                            &PyMem_RawMalloc);
 }
 
 NPY_NO_EXPORT void
@@ -261,10 +261,18 @@ PyDataMem_NEW(size_t size)
     void *result;
 
     assert(size != 0);
-    result = malloc(size);
-    int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    result = PyMem_RawMalloc(size);
+    if (result == NULL) {
+        return NULL;
+    }
+    int ret = PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)result);
+    if (ret == -2) {
+        // tracemalloc is disabled
+        return result;
+    }
+    ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     if (ret == -1) {
-        free(result);
+        PyMem_RawFree(result);
         return NULL;
     }
     return result;
@@ -278,10 +286,18 @@ PyDataMem_NEW_ZEROED(size_t nmemb, size_t size)
 {
     void *result;
 
-    result = calloc(nmemb, size);
-    int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
+    result = PyMem_RawCalloc(nmemb, size);
+    if (result == NULL) {
+        return NULL;
+    }
+    int ret = PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)result);
+    if (ret == -2) {
+        // tracemalloc is disabled
+        return result;
+    }
+    ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
     if (ret == -1) {
-        free(result);
+        PyMem_RawFree(result);
         return NULL;
     }
     return result;
@@ -294,7 +310,7 @@ NPY_NO_EXPORT void
 PyDataMem_FREE(void *ptr)
 {
     PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
-    free(ptr);
+    PyMem_RawFree(ptr);
 }
 
 /*NUMPY_API
@@ -306,11 +322,21 @@ PyDataMem_RENEW(void *ptr, size_t size)
     void *result;
 
     assert(size != 0);
-    PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
-    result = realloc(ptr, size);
-    int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+
+    result = PyMem_RawRealloc(ptr, size);
+    if (result == NULL) {
+        // ptr is still valid here
+        return  NULL;
+    }
+    int ret = PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
+    if (ret == -2) {
+        // tracemalloc is disabled
+        return result;
+    }
+    ret = PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)result);
+    ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     if (ret == -1) {
-        free(result);
+        PyMem_RawFree(result);
         return NULL;
     }
     return result;
@@ -322,7 +348,16 @@ PyDataMem_RENEW(void *ptr, size_t size)
 static inline void *
 default_malloc(void *NPY_UNUSED(ctx), size_t size)
 {
-    return _npy_alloc_cache(size, 1, NBUCKETS, datacache, &malloc);
+    void *result;
+    result = _npy_alloc_cache(size, 1, NBUCKETS, datacache, &PyMem_RawMalloc);
+    if (result == NULL) {
+        // alloc failed, nothing more to do
+        return NULL;
+    }
+    // untrack the allocation from tracemalloc
+    // ignore return value, since we'd early return either way
+    PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)result);
+    return result;
 }
 
 // The default data mem allocator calloc routine does not make use of a ctx.
@@ -333,20 +368,25 @@ default_calloc(void *NPY_UNUSED(ctx), size_t nelem, size_t elsize)
 {
     void * p;
     size_t sz = nelem * elsize;
-    NPY_BEGIN_THREADS_DEF;
     if (sz < NBUCKETS) {
-        p = _npy_alloc_cache(sz, 1, NBUCKETS, datacache, &malloc);
-        if (p) {
-            memset(p, 0, sz);
+        p = _npy_alloc_cache(sz, 1, NBUCKETS, datacache, &PyMem_RawMalloc);
+        if (p == NULL) {
+            return NULL;
         }
-        return p;
-    }
-    NPY_BEGIN_THREADS;
-    p = calloc(nelem, elsize);
-    if (p) {
+        memset(p, 0, sz);
+    } else {
+        p = PyMem_RawCalloc(nelem, elsize);
+        if (p == NULL) {
+            return NULL;
+        }
         indicate_hugepages(p, sz);
     }
-    NPY_END_THREADS;
+    // untrack the allocation from tracemalloc
+    int ret = PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)p);
+    if (ret == -2) {
+        // tracemalloc is disabled
+        return p;
+    }
     return p;
 }
 
@@ -356,7 +396,19 @@ default_calloc(void *NPY_UNUSED(ctx), size_t nelem, size_t elsize)
 static inline void *
 default_realloc(void *NPY_UNUSED(ctx), void *ptr, size_t new_size)
 {
-    return realloc(ptr, new_size);
+    void *result;
+    result = PyMem_RawRealloc(ptr, new_size);
+    if (result == NULL) {
+        // realloc failed, nothing more to do
+        return NULL;
+    }
+    // untrack the reallocation from tracemalloc
+    int ret = PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)result);
+    if (ret == -2) {
+        // tracemalloc is disabled
+        return result;
+    }
+    return result;
 }
 
 // The default data mem allocator free routine does not make use of a ctx.
@@ -365,7 +417,7 @@ default_realloc(void *NPY_UNUSED(ctx), void *ptr, size_t new_size)
 static inline void
 default_free(void *NPY_UNUSED(ctx), void *ptr, size_t size)
 {
-    _npy_free_cache(ptr, size, NBUCKETS, datacache, &free);
+    _npy_free_cache(ptr, size, NBUCKETS, datacache, &PyMem_RawFree);
 }
 
 /* Memory handler global default */
@@ -399,6 +451,9 @@ PyDataMem_UserNEW(size_t size, PyObject *mem_handler)
     }
     assert(size != 0);
     result = handler->allocator.malloc(handler->allocator.ctx, size);
+    if (result == NULL) {
+        return NULL;
+    }
     int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     if (ret == -1) {
         handler->allocator.free(handler->allocator.ctx, result, size);
@@ -417,6 +472,9 @@ PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyObject *mem_handler)
         return NULL;
     }
     result = handler->allocator.calloc(handler->allocator.ctx, nmemb, size);
+    if (result == NULL) {
+        return NULL;
+    }
     int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
     if (ret == -1) {
         handler->allocator.free(handler->allocator.ctx, result, size);
@@ -436,6 +494,7 @@ PyDataMem_UserFREE(void *ptr, size_t size, PyObject *mem_handler)
                      "Could not get pointer to 'mem_handler' from PyCapsule");
         return;
     }
+    // ignore -2 return when tracemalloc is disabled
     PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     handler->allocator.free(handler->allocator.ctx, ptr, size);
 }
@@ -451,9 +510,17 @@ PyDataMem_UserRENEW(void *ptr, size_t size, PyObject *mem_handler)
     }
 
     assert(size != 0);
-    PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     result = handler->allocator.realloc(handler->allocator.ctx, ptr, size);
-    int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    if (result == NULL) {
+        // ptr is still valid here
+        return NULL;
+    }
+    int ret = PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
+    if (ret == -2) {
+        // tracemalloc is disabled
+        return result;
+    }
+    ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     if (ret == -1) {
         handler->allocator.free(handler->allocator.ctx, result, size);
         return NULL;

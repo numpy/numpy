@@ -157,7 +157,10 @@ CASES += apply_tag('square', [
                array([2. + 1j, 1. + 2j], dtype=cdouble)),
     LinalgCase("cdouble_2",
                array([[1. + 2j, 2 + 3j], [3 + 4j, 4 + 5j]], dtype=cdouble),
-               array([[2. + 1j, 1. + 2j, 1 + 3j], [1 - 2j, 1 - 3j, 1 - 6j]], dtype=cdouble)),
+               array(
+                   [[2. + 1j, 1. + 2j, 1 + 3j], [1 - 2j, 1 - 3j, 1 - 6j]],
+                   dtype=cdouble,
+               )),
     LinalgCase("0x0",
                np.empty((0, 0), dtype=double),
                np.empty((0,), dtype=double),
@@ -189,28 +192,43 @@ CASES += apply_tag('nonsquare', [
                array([2., 1., 3.], dtype=double)),
     LinalgCase("csingle_nsq_1",
                array(
-                   [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]], dtype=csingle),
+                   [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]],
+                   dtype=csingle,
+               ),
                array([2. + 1j, 1. + 2j], dtype=csingle)),
     LinalgCase("csingle_nsq_2",
                array(
-                   [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]], dtype=csingle),
+                    [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]],
+                    dtype=csingle,
+                ),
                array([2. + 1j, 1. + 2j, 3. - 3j], dtype=csingle)),
     LinalgCase("cdouble_nsq_1",
                array(
-                   [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]], dtype=cdouble),
+                    [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]],
+                    dtype=cdouble,
+                ),
                array([2. + 1j, 1. + 2j], dtype=cdouble)),
     LinalgCase("cdouble_nsq_2",
                array(
-                   [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]], dtype=cdouble),
+                    [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]],
+                    dtype=cdouble,
+                ),
                array([2. + 1j, 1. + 2j, 3. - 3j], dtype=cdouble)),
     LinalgCase("cdouble_nsq_1_2",
                array(
-                   [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]], dtype=cdouble),
+                    [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]],
+                    dtype=cdouble,
+                ),
                array([[2. + 1j, 1. + 2j], [1 - 1j, 2 - 2j]], dtype=cdouble)),
     LinalgCase("cdouble_nsq_2_2",
                array(
-                   [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]], dtype=cdouble),
-               array([[2. + 1j, 1. + 2j], [1 - 1j, 2 - 2j], [1 - 1j, 2 - 2j]], dtype=cdouble)),
+                    [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]],
+                    dtype=cdouble,
+                ),
+               array(
+                    [[2. + 1j, 1. + 2j], [1 - 1j, 2 - 2j], [1 - 1j, 2 - 2j]],
+                    dtype=cdouble,
+                )),
     LinalgCase("8x11",
                np.random.rand(8, 11),
                np.random.rand(8)),
@@ -329,7 +347,7 @@ def _stride_comb_iter(x):
         xi[...] = x
         xi = xi.view(x.__class__)
         assert_(np.all(xi == x))
-        yield xi, "stride_" + "_".join(["%+d" % j for j in repeats])
+        yield xi, "stride_" + "_".join(f"{j:+}" for j in repeats)
 
         # generate also zero strides if possible
         if x.ndim >= 1 and x.shape[-1] == 1:
@@ -604,7 +622,7 @@ class TestEigvals(EigvalsCases):
     @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
     def test_types(self, dtype):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-        assert_equal(linalg.eigvals(x).dtype, dtype)
+        assert_equal(linalg.eigvals(x).dtype, get_complex_dtype(dtype))
         x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
         assert_equal(linalg.eigvals(x).dtype, get_complex_dtype(dtype))
 
@@ -614,7 +632,7 @@ class TestEigvals(EigvalsCases):
             pass
         a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
         res = linalg.eigvals(a)
-        assert_(res.dtype.type is np.float64)
+        assert_(res.dtype.type is np.complex128)
         assert_equal((0, 1), res.shape)
         # This is just for documentation, it might make sense to change:
         assert_(isinstance(res, np.ndarray))
@@ -633,8 +651,8 @@ class EigCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
         res = linalg.eig(a)
         eigenvalues, eigenvectors = res.eigenvalues, res.eigenvectors
         assert_allclose(matmul(a, eigenvectors),
-                        np.asarray(eigenvectors) * np.asarray(eigenvalues)[..., None, :],
-                        rtol=get_rtol(eigenvalues.dtype))
+            np.asarray(eigenvectors) * np.asarray(eigenvalues)[..., None, :],
+            rtol=get_rtol(eigenvalues.dtype))
         assert_(consistent_subclass(eigenvectors, a))
 
 
@@ -643,8 +661,8 @@ class TestEig(EigCases):
     def test_types(self, dtype):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
         w, v = np.linalg.eig(x)
-        assert_equal(w.dtype, dtype)
-        assert_equal(v.dtype, dtype)
+        assert_equal(w.dtype, get_complex_dtype(dtype))
+        assert_equal(v.dtype, get_complex_dtype(dtype))
 
         x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
         w, v = np.linalg.eig(x)
@@ -657,8 +675,8 @@ class TestEig(EigCases):
             pass
         a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
         res, res_v = linalg.eig(a)
-        assert_(res_v.dtype.type is np.float64)
-        assert_(res.dtype.type is np.float64)
+        assert_(res_v.dtype.type is np.complex128)
+        assert_(res.dtype.type is np.complex128)
         assert_equal(a.shape, res_v.shape)
         assert_equal((0, 1), res.shape)
         # This is just for documentation, it might make sense to change:
@@ -735,8 +753,10 @@ class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
             axes[-1], axes[-2] = axes[-2], axes[-1]
             return np.conj(np.transpose(mat, axes=axes))
 
-        assert_almost_equal(np.matmul(u, hermitian(u)), np.broadcast_to(np.eye(u.shape[-1]), u.shape))
-        assert_almost_equal(np.matmul(vt, hermitian(vt)), np.broadcast_to(np.eye(vt.shape[-1]), vt.shape))
+        expected = np.broadcast_to(np.eye(u.shape[-1]), u.shape)
+        assert_almost_equal(np.matmul(u, hermitian(u)), expected)
+        expected = np.broadcast_to(np.eye(vt.shape[-1]), vt.shape)
+        assert_almost_equal(np.matmul(vt, hermitian(vt)), expected)
         assert_equal(np.sort(s)[..., ::-1], s)
         assert_(consistent_subclass(u, a))
         assert_(consistent_subclass(vt, a))
@@ -881,7 +901,8 @@ class PinvCases(LinalgSquareTestCase,
         a_ginv = linalg.pinv(a)
         # `a @ a_ginv == I` does not hold if a is singular
         dot = matmul
-        assert_almost_equal(dot(dot(a, a_ginv), a), a, single_decimal=5, double_decimal=11)
+        result = dot(dot(a, a_ginv), a)
+        assert_almost_equal(result, a, single_decimal=5, double_decimal=11)
         assert_(consistent_subclass(a_ginv, a))
 
 
@@ -895,7 +916,8 @@ class PinvHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
         a_ginv = linalg.pinv(a, hermitian=True)
         # `a @ a_ginv == I` does not hold if a is singular
         dot = matmul
-        assert_almost_equal(dot(dot(a, a_ginv), a), a, single_decimal=5, double_decimal=11)
+        result = dot(dot(a, a_ginv), a)
+        assert_almost_equal(result, a, single_decimal=5, double_decimal=11)
         assert_(consistent_subclass(a_ginv, a))
 
 
@@ -1000,8 +1022,8 @@ class LstsqCases(LinalgSquareTestCase, LinalgNonsquareTestCase):
                 np.asarray(abs(np.dot(a, x) - b)) ** 2).sum(axis=0)
             expect_resids = np.asarray(expect_resids)
             if np.asarray(b).ndim == 1:
-                expect_resids.shape = (1,)
-                assert_equal(residuals.shape, expect_resids.shape)
+                expect_resids = expect_resids.reshape((1,))
+            assert_equal(residuals.shape, expect_resids.shape)
         else:
             expect_resids = np.array([]).view(type(x))
         assert_almost_equal(residuals, expect_resids)
@@ -1091,7 +1113,7 @@ class TestMatrixPower:
 
         for mat in self.rshft_all:
             tz(mat.astype(dt))
-            if dt != object:
+            if np.dtype(dt).type is not np.object_:
                 tz(self.stacked.astype(dt))
 
     def test_power_is_one(self, dt):
@@ -1102,7 +1124,7 @@ class TestMatrixPower:
 
         for mat in self.rshft_all:
             tz(mat.astype(dt))
-            if dt != object:
+            if np.dtype(dt).type is not np.object_:
                 tz(self.stacked.astype(dt))
 
     def test_power_is_two(self, dt):
@@ -1114,7 +1136,7 @@ class TestMatrixPower:
 
         for mat in self.rshft_all:
             tz(mat.astype(dt))
-            if dt != object:
+            if np.dtype(dt).type is not np.object_:
                 tz(self.stacked.astype(dt))
 
     def test_power_is_minus_one(self, dt):
@@ -2440,3 +2462,22 @@ def test_vector_norm_empty():
         assert_equal(np.linalg.vector_norm(x, ord=1), 0)
         assert_equal(np.linalg.vector_norm(x, ord=2), 0)
         assert_equal(np.linalg.vector_norm(x, ord=np.inf), 0)
+
+def test_empty_matrix_rank():
+    assert_equal(matrix_rank(np.zeros((0, 0))), 0)
+    assert_equal(matrix_rank(np.zeros((0, 5))), 0)
+    assert_equal(matrix_rank(np.zeros((5, 0))), 0)
+
+    result = matrix_rank(np.zeros((0, 5, 5)))
+    assert_equal(result.shape, (0,))
+    assert_equal(result.dtype, np.intp)
+
+    result = matrix_rank(np.zeros((3, 0, 5)))
+    assert_equal(result, np.array([0, 0, 0]))
+
+    result = matrix_rank(np.zeros((2, 5, 0)))
+    assert_equal(result, np.array([0, 0]))
+
+    result = matrix_rank(np.zeros((2, 3, 0, 4)))
+    assert_equal(result.shape, (2, 3))
+    assert_equal(result, np.zeros((2, 3), dtype=np.intp))

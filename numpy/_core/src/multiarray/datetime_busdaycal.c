@@ -159,15 +159,15 @@ invalid_weekmask_string:
             int i;
 
             for (i = 0; i < 7; ++i) {
-                long val;
+                int val;
                 PyObject *f = PySequence_GetItem(obj, i);
                 if (f == NULL) {
                     Py_DECREF(obj);
                     return 0;
                 }
 
-                val = PyLong_AsLong(f);
-                if (error_converting(val)) {
+                val = PyObject_IsTrue(f);
+                if (val == -1) {
                     Py_DECREF(f);
                     Py_DECREF(obj);
                     return 0;
@@ -283,8 +283,7 @@ PyArray_HolidaysConverter(PyObject *dates_in, npy_holidayslist *holidays)
     else {
         PyArray_Descr *datetime_dtype;
 
-        /* Use the datetime dtype with generic units so it fills it in */
-        datetime_dtype = PyArray_DescrFromType(NPY_DATETIME);
+        datetime_dtype = create_datetime_dtype_with_unit(NPY_DATETIME, NPY_FR_D);
         if (datetime_dtype == NULL) {
             goto fail;
         }

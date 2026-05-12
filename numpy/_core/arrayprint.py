@@ -78,7 +78,7 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
 
     if legacy is False:
         options['legacy'] = sys.maxsize
-    elif legacy == False:  # noqa: E712
+    elif legacy == False:
         warnings.warn(
             f"Passing `legacy={legacy!r}` is deprecated.",
             FutureWarning, stacklevel=3
@@ -248,12 +248,15 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     --------
     get_printoptions, printoptions, array2string
 
+
     Notes
     -----
 
     * ``formatter`` is always reset with a call to `set_printoptions`.
     * Use `printoptions` as a context manager to set the values temporarily.
     * These print options apply only to NumPy ndarrays, not to scalars.
+
+    **Concurrency note:** see :ref:`text_formatting_options`
 
     Examples
     --------
@@ -357,6 +360,8 @@ def get_printoptions():
     -----
     These print options apply only to NumPy ndarrays, not to scalars.
 
+    **Concurrency note:** see :ref:`text_formatting_options`
+
     See Also
     --------
     set_printoptions, printoptions
@@ -418,6 +423,8 @@ def printoptions(*args, **kwargs):
     Notes
     -----
     These print options apply only to NumPy ndarrays, not to scalars.
+
+    **Concurrency note:** see :ref:`text_formatting_options`
 
     """
     token = _set_printoptions(*args, **kwargs)
@@ -523,8 +530,16 @@ def _get_format_function(data, **options):
     dtype_ = data.dtype
     dtypeobj = dtype_.type
     formatdict = _get_formatdict(data, **options)
+
     if dtypeobj is None:
         return formatdict["numpystr"]()
+    elif (getattr(dtypeobj, "__module__", None) != "numpy"
+            and not issubclass(dtypeobj, str)):
+        # Use `str()` as a default format for non-NumPy dtypes. This should be
+        # improved.  We use `str` assuming that `repr` is likely to duplicate
+        # information that is contained in the dtype.
+        # (Do this early, because e.g. quaddtype subclasses floating.)
+        return formatdict['void']()
     elif issubclass(dtypeobj, _nt.bool):
         return formatdict['bool']()
     elif issubclass(dtypeobj, _nt.integer):
@@ -957,7 +972,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
     finally:
         # recursive closures have a cyclic reference to themselves, which
         # requires gc to collect (gh-10620). To avoid this problem, for
-        # performance and PyPy friendliness, we break the cycle:
+        # performance, we break the cycle:
         recurser = None
 
 def _none_or_positive_arg(x, name):
@@ -1408,10 +1423,11 @@ class DatetimeFormat(_TimelikeFormat):
         return super().__call__(x)
 
     def _format_non_nat(self, x):
-        return "'%s'" % datetime_as_string(x,
-                                    unit=self.unit,
-                                    timezone=self.timezone,
-                                    casting=self.casting)
+        datetime_str = datetime_as_string(x,
+                                          unit=self.unit,
+                                          timezone=self.timezone,
+                                          casting=self.casting)
+        return f"'{datetime_str}'"
 
 
 class TimedeltaFormat(_TimelikeFormat):

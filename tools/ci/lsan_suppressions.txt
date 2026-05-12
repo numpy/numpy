@@ -1,0 +1,33 @@
+# This file contains suppressions for the LSAN tool
+#
+# Reference: https://github.com/google/sanitizers/wiki/AddressSanitizerLeakSanitizer#suppressions
+
+# 2 leaks when importing "numpy.exceptions" in initialize_static_globals
+# (check the duplicate frame number for the second leak)
+#0 0xffffb64476d0 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
+#1 0xffffb598e8d0 in PyFloat_FromDouble Objects/floatobject.c:128
+#2 0xffffb5dac0fc in fill_time Modules/posixmodule.c:2622
+#3 0xffffb5dc137c in _pystat_fromstructstat Modules/posixmodule.c:2740
+#3 0xffffb5dc13b4 in _pystat_fromstructstat Modules/posixmodule.c:2743
+#4 0xffffb5dc2d2c in posix_do_stat Modules/posixmodule.c:2868
+#5 0xffffb5dc331c in os_stat_impl Modules/posixmodule.c:3235
+#6 0xffffb5dc331c in os_stat Modules/clinic/posixmodule.c.h:105
+#7 0xffffb58484d8 in _PyEval_EvalFrameDefault Python/generated_cases.c.h:2383
+#8 0xffffb5c18174 in _PyEval_EvalFrame Include/internal/pycore_ceval.h:121
+#9 0xffffb5c18174 in _PyEval_Vector Python/ceval.c:2083
+#10 0xffffb593ccf4 in _PyObject_VectorcallTstate Include/internal/pycore_call.h:169
+#11 0xffffb593ccf4 in object_vacall Objects/call.c:819
+#12 0xffffb593d168 in PyObject_CallMethodObjArgs Objects/call.c:880
+#13 0xffffb5cbc6f0 in import_find_and_load Python/import.c:3737
+#14 0xffffb5cbc6f0 in PyImport_ImportModuleLevelObject Python/import.c:3819
+#15 0xffffb5bffca0 in builtin___import___impl Python/bltinmodule.c:285
+#16 0xffffb5bffca0 in builtin___import__ Python/clinic/bltinmodule.c.h:110
+#17 0xffffb593db9c in _PyObject_VectorcallTstate Include/internal/pycore_call.h:169
+#18 0xffffb593db9c in _PyObject_CallFunctionVa Objects/call.c:552
+#19 0xffffb593df38 in PyObject_CallFunction Objects/call.c:574
+#20 0xffffb5cbdb5c in PyImport_Import Python/import.c:4011
+#21 0xffffb5cbe17c in PyImport_ImportModule Python/import.c:3434
+#22 0xffffb1c61b44 in npy_import ../numpy/_core/src/common/npy_import.h:71
+#23 0xffffb1c61b44 in initialize_static_globals ../numpy/_core/src/multiarray/npy_static_data.c:124
+
+leak:initialize_static_globals

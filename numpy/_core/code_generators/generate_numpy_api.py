@@ -58,7 +58,7 @@ static int PyArray_RUNTIME_VERSION = 0;
 #include "numpy/_public_dtype_api_table.h"
 
 #if !defined(NO_IMPORT_ARRAY) && !defined(NO_IMPORT)
-static int
+static inline int
 _import_array(void)
 {
   int st;

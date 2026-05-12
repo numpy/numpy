@@ -206,18 +206,82 @@ Install all dependent packages using pip::
 
 To run lint checks before committing new code, run::
 
-    $ python tools/linter.py
+    $ spin lint
 
-To check all changes in newly added Python code of current branch with target branch, run::
+If there are no errors, the output will look like::
 
-    $ python tools/linter.py
+    $ spin lint
+    Running Ruff Check...
+    All checks passed!
 
-If there are no errors, the script exits with no message. In case of errors,
-check the error message for details::
+    Running C API borrow-reference linter...
+    Scanning 548 C/C++ source files...
 
-    $ python tools/linter.py
-    ./numpy/_core/tests/test_scalarmath.py:34:5: E303 too many blank lines (3)
-    1       E303 too many blank lines (3)
+    All checks passed! C API borrow-ref linter found no issues.
+
+
+    Running cython-lint...
+
+In case of errors, check the error message for details::
+
+    $ spin lint
+    Running Ruff Check...
+    I001 [*] Import block is un-sorted or un-formatted
+    --> numpy/matlib.py:12:1
+       |
+    10 |                 PendingDeprecationWarning, stacklevel=2)
+    11 |
+    12 | / import numpy as np
+    13 | |
+    14 | | # Matlib.py contains all functions in the numpy namespace with a few
+    15 | | # replacements. See doc/source/reference/routines.matlib.rst for details.
+    16 | | # Need * as we're copying the numpy namespace.
+    17 | | from numpy import *  # noqa: F403
+    18 | | from numpy.matrixlib.defmatrix import matrix, asmatrix
+       | |______________________________________________________^
+    19 |
+    20 |   __version__ = np.__version__
+       |
+       help: Organize imports
+    15 | # replacements. See doc/source/reference/routines.matlib.rst for details.
+    16 | # Need * as we're copying the numpy namespace.
+    17 | from numpy import *  # noqa: F403
+       - from numpy.matrixlib.defmatrix import matrix, asmatrix
+    18 + from numpy.matrixlib.defmatrix import asmatrix, matrix
+    19 |
+    20 | __version__ = np.__version__
+    21 |
+
+    E501 Line too long (127 > 88)
+    --> numpy/matlib.py:214:89
+        |
+    212 |     -------
+    213 |     I : matrix
+    214 |         A `n` x `M` matrix where all elements are equal to zero, except for the `k`-th diagonal, whose values are equal to one.
+        |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    215 |
+    216 |     See Also
+        |
+
+    Found 2 errors.
+    [*] 1 fixable with the `--fix` option.
+
+To automatically fix issues that can be fixed, run::
+
+    $ spin lint --fix
+    Running Ruff Check...
+    E501 Line too long (127 > 88)
+    --> numpy/matlib.py:214:89
+        |
+    212 |     -------
+    213 |     I : matrix
+    214 |         A `n` x `M` matrix where all elements are equal to zero, except for the `k`-th diagonal, whose values are equal to one.
+        |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    215 |
+    216 |     See Also
+        |
+
+    Found 2 errors (1 fixed, 1 remaining).
 
 It is advisable to run lint checks before pushing commits to a remote branch
 since the linter runs as part of the CI pipeline.

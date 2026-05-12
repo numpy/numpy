@@ -26,7 +26,7 @@ AR_M: npt.NDArray[np.datetime64]
 AR_O: npt.NDArray[np.object_]
 AR_b: npt.NDArray[np.bool]
 AR_U: npt.NDArray[np.str_]
-CHAR_AR_U: np.char.chararray[tuple[Any, ...], np.dtype[np.str_]]
+CHAR_AR_U: np.char.chararray[tuple[Any, ...], np.dtype[np.str_]]  # type: ignore[deprecated]
 
 AR_f8_1d: np.ndarray[tuple[int], np.dtype[np.float64]]
 AR_f8_2d: np.ndarray[tuple[int, int], np.dtype[np.float64]]
@@ -130,8 +130,8 @@ assert_type(np.place(AR_f8, mask=AR_i8, vals=5.0), None)
 # copy
 assert_type(np.copy(AR_LIKE_f8), np.ndarray)
 assert_type(np.copy(AR_U), npt.NDArray[np.str_])
-assert_type(np.copy(CHAR_AR_U, "K", subok=True), np.char.chararray[tuple[Any, ...], np.dtype[np.str_]])
-assert_type(np.copy(CHAR_AR_U, subok=True), np.char.chararray[tuple[Any, ...], np.dtype[np.str_]])
+assert_type(np.copy(CHAR_AR_U, "K", subok=True), np.char.chararray[tuple[Any, ...], np.dtype[np.str_]])  # type: ignore[deprecated]
+assert_type(np.copy(CHAR_AR_U, subok=True), np.char.chararray[tuple[Any, ...], np.dtype[np.str_]])  # type: ignore[deprecated]
 # pyright correctly infers `NDArray[str_]` here
 assert_type(np.copy(CHAR_AR_U), np.ndarray[Any, Any])  # pyright: ignore[reportAssertTypeFailure]
 
@@ -270,7 +270,8 @@ assert_type(np.sinc(AR_LIKE_c16), np.ndarray[tuple[int], np.dtype[np.complex128]
 # median
 assert_type(np.median(AR_f8, keepdims=False), np.float64)
 assert_type(np.median(AR_c16, overwrite_input=True), np.complex128)
-assert_type(np.median(AR_m), np.timedelta64)
+# NOTE: Mypy incorrectly infers `Any`, but pyright behaves correctly.
+assert_type(np.median(AR_m), np.timedelta64)  # type: ignore[assert-type]
 assert_type(np.median(AR_O), Any)
 assert_type(np.median(AR_f8, keepdims=True), npt.NDArray[np.float64])
 assert_type(np.median(AR_f8, axis=0), npt.NDArray[np.float64])
@@ -332,7 +333,8 @@ assert_type(np.trapezoid(AR_f8), np.float64 | npt.NDArray[np.float64])
 assert_type(np.trapezoid(AR_f8, AR_f8), np.float64 | npt.NDArray[np.float64])
 assert_type(np.trapezoid(AR_c16), np.complex128 | npt.NDArray[np.complex128])
 assert_type(np.trapezoid(AR_c16, AR_c16), np.complex128 | npt.NDArray[np.complex128])
-assert_type(np.trapezoid(AR_m), np.timedelta64 | npt.NDArray[np.timedelta64])
+# NOTE: Mypy incorrectly infers `Any`, but pyright behaves correctly.
+assert_type(np.trapezoid(AR_m), np.timedelta64 | npt.NDArray[np.timedelta64])  # type: ignore[assert-type]
 assert_type(np.trapezoid(AR_O), npt.NDArray[np.object_] | Any)
 assert_type(np.trapezoid(AR_O, AR_LIKE_f8), npt.NDArray[np.object_] | Any)
 

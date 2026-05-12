@@ -1,10 +1,10 @@
-from typing import Any, TypeAlias, assert_type
+from typing import Any, assert_type
 
 import numpy as np
 
-_ArrayND: TypeAlias = np.ndarray[tuple[Any, ...], np.dtypes.StrDType]
-_Array1D: TypeAlias = np.ndarray[tuple[int], np.dtypes.BytesDType]
-_Array2D: TypeAlias = np.ndarray[tuple[int, int], np.dtypes.Int8DType]
+type _ArrayND = np.ndarray[tuple[Any, ...], np.dtypes.StrDType]
+type _Array1D = np.ndarray[tuple[int], np.dtypes.BytesDType]
+type _Array2D = np.ndarray[tuple[int, int], np.dtypes.Int8DType]
 
 _a_nd: np.flatiter[_ArrayND]
 _a_1d: np.flatiter[_Array1D]

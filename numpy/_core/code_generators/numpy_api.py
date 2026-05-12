@@ -19,7 +19,7 @@ import os
 
 
 def get_annotations():
-    # Convoluted because we can't import from numpy.distutils
+    # Convoluted because we can't import numpy
     # (numpy is not yet built)
     genapi_py = os.path.join(os.path.dirname(__file__), 'genapi.py')
     spec = importlib.util.spec_from_file_location('conv_template', genapi_py)
@@ -409,6 +409,16 @@ multiarray_funcs_api = {
     # End 2.0 API
     # NpyIterGetTransferFlags (slot 223) added.
     # End 2.3 API
+    '_PyArray_GET_ITEM_DATA':                  (369, MinVersion("2.5")),
+    '_PyArrayIter_GET_ITEM_DATA':              (370, MinVersion("2.5")),
+    '_PyArray_LegacyDescr_GET_ITEM_DATA':      (371, MinVersion("2.5")),
+    '_PyDataType_GET_ITEM_DATA':               (372, MinVersion("2.5")),
+    '_PyArrayMultiIter_GET_ITEM_DATA':         (373, MinVersion("2.5")),
+    '_PyArrayNeighborhoodIter_GET_ITEM_DATA':  (374, MinVersion("2.5")),
+    '_PyDatetimeScalarObject_GetMetadata':         (375,),
+    '_PyTimedeltaScalarObject_GetMetadata':        (376,),
+    '_PyDatetimeScalarObject_GetValue':            (377,),
+    '_PyTimedeltaScalarObject_GetValue':           (378,),
 }
 
 ufunc_types_api = {
@@ -470,6 +480,7 @@ ufunc_funcs_api = {
     'PyUFunc_GiveFloatingpointErrors':               (46, MinVersion("2.0")),
     # End 2.0 API
     'PyUFunc_AddLoopsFromSpecs':                     (47, MinVersion("2.4")),
+    '_PyUFuncObject_GET_ITEM_DATA':                  (48, MinVersion("2.5")),
 }
 
 # List of all the dicts which define the C API

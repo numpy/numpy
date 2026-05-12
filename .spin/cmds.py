@@ -9,8 +9,6 @@ import click
 import spin
 from spin.cmds import meson
 
-IS_PYPY = (sys.implementation.name == 'pypy')
-
 # Check that the meson git submodule is present
 curdir = pathlib.Path(__file__).parent
 meson_import_dir = curdir.parent / 'vendored-meson' / 'meson' / 'mesonbuild'
@@ -79,10 +77,14 @@ def changelog(token, revision_range):
     help="Build with pre-installed scipy-openblas32 or scipy-openblas64 wheel"
 )
 @spin.util.extend_command(spin.cmds.meson.build)
-def build(*, parent_callback, with_scipy_openblas, **kwargs):
+def build(*, parent_callback, meson_args, with_scipy_openblas, **kwargs):
     if with_scipy_openblas:
         _config_openblas(with_scipy_openblas)
-    parent_callback(**kwargs)
+
+    # Avoid byte-compiling on every rebuild/reinstall, that's very expensive
+    meson_args += ("-Dpython.bytecompile=-1",)
+
+    parent_callback(**{'meson_args': meson_args, **kwargs})
 
 
 @spin.util.extend_command(spin.cmds.meson.docs)
@@ -129,10 +131,7 @@ def docs(*, parent_callback, **kwargs):
 jobs_param = next(p for p in docs.params if p.name == 'jobs')
 jobs_param.default = 1
 
-if IS_PYPY:
-    default = "not slow and not slow_pypy"
-else:
-    default = "not slow"
+default = "not slow"
 
 @click.option(
     "-m",
@@ -159,7 +158,7 @@ def test(*, parent_callback, pytest_args, tests, markexpr, parallel_threads, **k
 
     When pytest-run-parallel is avaliable, use `spin test -p auto` or
     `spin test -p <num_of_threads>` to run tests sequentional in parallel threads.
-    """  # noqa: E501
+    """
     if (not pytest_args) and (not tests):
         pytest_args = ('--pyargs', 'numpy')
 
@@ -206,10 +205,10 @@ def check_docs(*, parent_callback, pytest_args, **kwargs):
      - This command only doctests public objects: those which are accessible
        from the top-level `__init__.py` file.
 
-    """  # noqa: E501
+    """
     try:
         # prevent obscure error later
-        import scipy_doctest  # noqa: F401
+        import scipy_doctest
     except ModuleNotFoundError as e:
         raise ModuleNotFoundError("scipy-doctest not installed") from e
     if scipy_doctest.__version__ < '1.8.0':
@@ -252,7 +251,7 @@ def check_tutorials(*, parent_callback, pytest_args, **kwargs):
      - This command only doctests public objects: those which are accessible
        from the top-level `__init__.py` file.
 
-    """  # noqa: E501
+    """
     # handle all of
     #   - `spin check-tutorials` (pytest_args == ())
     #   - `spin check-tutorials path/to/rst`, and
@@ -397,6 +396,11 @@ def lint(ctx, fix):
     help="The factor above or below which a benchmark result is "
          "considered reportable. This is passed on to the asv command."
 )
+@click.option(
+    '--cpu-affinity', default=None, multiple=False,
+    help="Set CPU affinity for running the benchmark, in format: 0 or 0,1,2 or 0-3."
+         "Default: not set"
+)
 @click.argument(
     'commits', metavar='',
     required=False,
@@ -404,7 +408,8 @@ def lint(ctx, fix):
 )
 @meson.build_dir_option
 @click.pass_context
-def bench(ctx, tests, compare, verbose, quick, factor, commits, build_dir):
+def bench(ctx, tests, compare, verbose, quick, factor, cpu_affinity,
+          commits, build_dir):
     """🏋 Run benchmarks.
 
     \b
@@ -446,6 +451,9 @@ def bench(ctx, tests, compare, verbose, quick, factor, commits, build_dir):
 
     if quick:
         bench_args = ['--quick'] + bench_args
+
+    if cpu_affinity:
+        bench_args += ['--cpu-affinity', cpu_affinity]
 
     if not compare:
         # No comparison requested; we build and benchmark the current version
@@ -535,11 +543,19 @@ def ipython(*, ipython_args, build_dir):
 def mypy(ctx):
     """🦆 Run Mypy tests for NumPy
     """
+    ctx.invoke(build)
     env = os.environ
     env['NPY_RUN_MYPY_IN_TESTSUITE'] = '1'
     ctx.params['pytest_args'] = [os.path.join('numpy', 'typing')]
     ctx.params['markexpr'] = 'full'
     ctx.forward(test)
+
+
+@click.command()
+def pyrefly() -> None:
+    """🪲 Type-check the stubs with Pyrefly
+    """
+    spin.util.run(['pyrefly', 'check'])
 
 
 @click.command()
@@ -565,17 +581,13 @@ def stubtest(*, concise: bool, build_dir: str) -> None:
 
     stubtest_dir = curdir.parent / 'tools' / 'stubtest'
     mypy_config = stubtest_dir / 'mypy.ini'
-    allowlists = [stubtest_dir / 'allowlist.txt']
-    if sys.version_info < (3, 12):
-        allowlists.append(stubtest_dir / 'allowlist_py311.txt')
-    else:
-        allowlists.append(stubtest_dir / 'allowlist_py312.txt')
+    allowlist = stubtest_dir / 'allowlist.txt'
 
     cmd = [
         'stubtest',
         '--ignore-disjoint-bases',
         f'--mypy-config-file={mypy_config}',
-        *(f'--allowlist={allowlist}' for allowlist in allowlists),
+        f'--allowlist={allowlist}',
     ]
     if concise:
         cmd.append('--concise')

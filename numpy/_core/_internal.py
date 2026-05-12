@@ -20,8 +20,6 @@ try:
 except ImportError:
     ctypes = None
 
-IS_PYPY = sys.implementation.name == 'pypy'
-
 if sys.byteorder == 'little':
     _nbo = '<'
 else:
@@ -171,8 +169,8 @@ def _commastring(astr):
                 mo = sep_re.match(astr, pos=startindex)
                 if not mo:
                     raise ValueError(
-                        'format number %d of "%s" is not recognized' %
-                        (len(result) + 1, astr))
+                        f'format number {len(result) + 1} of "{astr}" '
+                        'is not recognized')
                 startindex = mo.end()
                 islist = True
 
@@ -691,7 +689,7 @@ def __dtype_from_pep3118(stream, is_subdtype):
             is_padding = (typechar == 'x')
             dtypechar = type_map[typechar]
             if dtypechar in 'USV':
-                dtypechar += '%d' % itemsize
+                dtypechar += f'{itemsize}'
                 itemsize = 1
             numpy_byteorder = {'@': '=', '^': '='}.get(
                 stream.byteorder, stream.byteorder)
@@ -949,12 +947,8 @@ def npy_ctypes_check(cls):
     try:
         # ctypes class are new-style, so have an __mro__. This probably fails
         # for ctypes classes with multiple inheritance.
-        if IS_PYPY:
-            # (..., _ctypes.basics._CData, Bufferable, object)
-            ctype_base = cls.__mro__[-3]
-        else:
-            # # (..., _ctypes._CData, object)
-            ctype_base = cls.__mro__[-2]
+        # # (..., _ctypes._CData, object)
+        ctype_base = cls.__mro__[-2]
         # right now, they're part of the _ctypes module
         return '_ctypes' in ctype_base.__module__
     except Exception:

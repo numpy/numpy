@@ -141,9 +141,7 @@ for dropping support for old Python and NumPy versions: :ref:`NEP29`. We
 recommend all packages depending on NumPy to follow the recommendations in NEP
 29.
 
-For *run-time dependencies*, specify version bounds using
-``install_requires`` in ``setup.py`` (assuming you use ``numpy.distutils`` or
-``setuptools`` to build).
+For *run-time dependencies*, specify version bounds in `pyproject.toml`.
 
 Most libraries that rely on NumPy will not need to set an upper
 version bound: NumPy is careful to preserve backward-compatibility.

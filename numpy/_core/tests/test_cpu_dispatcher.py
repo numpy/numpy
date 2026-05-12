@@ -20,9 +20,9 @@ def test_dispatcher():
     highest_sfx = ""  # no suffix for the baseline
     all_sfx = []
     for feature in reversed(targets):
-        # skip baseline features, by the default `CCompilerOpt` do not generate separated objects
-        # for the baseline,  just one object combined all of them via 'baseline' option
-        # within the configuration statements.
+        # skip baseline features, by the default `CCompilerOpt` do not generate
+        # separated objects for the baseline, just one object combined all of them
+        # via 'baseline' option within the configuration statements.
         if feature in __cpu_baseline__:
             continue
         # check compiler and running machine support

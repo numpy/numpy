@@ -7,12 +7,6 @@
  * On Mac OS X, because there is only one configuration stage for all the archs
  * in universal builds, any macro which depends on the arch needs to be
  * hardcoded.
- *
- * Note that distutils/pip will attempt a universal2 build when Python itself
- * is built as universal2, hence this hardcoding is needed even if we do not
- * support universal2 wheels anymore (see gh-22796).
- * This code block can be removed after we have dropped the setup.py based
- * build completely.
  */
 #ifdef __APPLE__
     #undef NPY_SIZEOF_LONG
@@ -128,6 +122,10 @@
 #else
     /* Use the default (increase when dropping Python 3.12 support) */
     #define NPY_FEATURE_VERSION NPY_1_25_API_VERSION
+#endif
+
+#if defined(Py_TARGET_ABI3T) && NPY_TARGET_VERSION < NPY_2_5_API_VERSION
+    #error "NumPy 2.5 or later is required when compiling Py_TARGET_ABI3T"
 #endif
 
 /* Sanity check the (requested) feature version */

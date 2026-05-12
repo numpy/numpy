@@ -109,6 +109,73 @@ doc/source/**/generated/
 doc/source/release/notes-towncrier.rst
 doc/source/.jupyterlite.doit.db
 
+# AI coding agent configuration files #
+#######################################
+# Personal/local config — not shared with the project.
+# Remove entries below if the project decides to check in shared
+# project-wide instructions (e.g. a team CLAUDE.md or AGENTS.md).
+
+# Claude Code (Anthropic)
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+.claudeignore
+
+# AGENTS.md (cross-tool standard: Codex, Cursor, Cline, Windsurf, etc.)
+AGENTS.md
+AGENTS.override.md
+
+# OpenAI Codex
+.codex/
+
+# Cursor
+.cursorrules
+.cursorignore
+.cursor/
+
+# Windsurf / Codeium
+.windsurfrules
+.windsurf/
+.codeiumignore
+
+# Warp
+WARP.md
+
+# Google Gemini CLI
+GEMINI.md
+.gemini/
+.geminiignore
+
+# Google Jules
+JULES.md
+
+# JetBrains Junie
+.junie/
+
+# Cline
+.clinerules
+.clinerules/
+
+# Roo Code
+.roorules
+.roo/
+
+# KiloCode
+.kilocoderules
+.kilocode/
+
+# Aider
+.aider*
+.aider.conf.yml
+
+# Continue.dev
+.continue/
+
+# Generic / cross-tool AI ignore files
+.aiignore
+.aiexclude
+.uignore
+
 # Things specific to this project #
 ###################################
 benchmarks/results

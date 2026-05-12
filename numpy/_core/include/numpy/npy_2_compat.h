@@ -145,14 +145,14 @@ PyArray_ImportNumPyAPI(void)
     static inline void
     PyDataType_SET_ELSIZE(PyArray_Descr *dtype, npy_intp size)
     {
-        dtype->elsize = size;
+        _PyDataType_GET_ITEM_DATA(dtype)->elsize = size;
     }
 
     static inline npy_uint64
     PyDataType_FLAGS(const PyArray_Descr *dtype)
     {
     #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
-        return dtype->flags;
+        return _PyDataType_GET_ITEM_DATA(dtype)->flags;
     #else
         return (unsigned char)dtype->flags;  /* Need unsigned cast on 1.x */
     #endif
@@ -164,7 +164,7 @@ PyArray_ImportNumPyAPI(void)
             if (legacy_only && !PyDataType_ISLEGACY(dtype)) {  \
                 return (type)0;                                \
             }                                                  \
-            return ((_PyArray_LegacyDescr *)dtype)->field;     \
+            return _PyArray_LegacyDescr_GET_ITEM_DATA((const _PyArray_LegacyDescr *)dtype)->field;     \
         }
 #else  /* compiling for both 1.x and 2.x */
 
@@ -213,6 +213,11 @@ DESCR_ACCESSOR(SUBARRAY, subarray, PyArray_ArrayDescr *, 1)
 DESCR_ACCESSOR(NAMES, names, PyObject *, 1)
 DESCR_ACCESSOR(FIELDS, fields, PyObject *, 1)
 DESCR_ACCESSOR(C_METADATA, c_metadata, NpyAuxData *, 1)
+/* ABI compatible in 1.x and 2.x, but defined together with others */
+DESCR_ACCESSOR(TYPE, type, char, 0)
+DESCR_ACCESSOR(KIND, kind, char, 0)
+DESCR_ACCESSOR(BYTEORDER, byteorder, char, 0)
+DESCR_ACCESSOR(TYPEOBJ, typeobj, PyTypeObject *, 0)
 
 #undef DESCR_ACCESSOR
 

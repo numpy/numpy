@@ -920,10 +920,7 @@ PyArray_AdaptDescriptorToArray(
         return descr;
     }
     if (dtype == NULL) {
-        res = PyArray_ExtractDTypeAndDescriptor(descr, &new_descr, &dtype);
-        if (res < 0) {
-            return NULL;
-        }
+        PyArray_ExtractDTypeAndDescriptor(descr, &new_descr, &dtype);
         if (new_descr != NULL) {
             Py_DECREF(dtype);
             return new_descr;
@@ -1034,7 +1031,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         }
         int was_copied_by__array__ = 0;
         arr = (PyArrayObject *)_array_from_array_like(obj,
-                requested_descr, 0, NULL, copy, &was_copied_by__array__);
+                requested_descr, 0, copy, &was_copied_by__array__);
         if (arr == NULL) {
             return -1;
         }
@@ -1138,7 +1135,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
 
   force_sequence_due_to_char_dtype:
 
-    /* Ensure we have a sequence (required for PyPy) */
+    /* Ensure we have a sequence */
     seq = PySequence_Fast(obj, "Could not convert object to sequence"); // noqa: borrowed-ref - manual fix needed
     if (seq == NULL) {
         /*
@@ -1159,6 +1156,10 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         return -1;
     }
 
+    int ret = -1;
+
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(obj);
+
     npy_intp size = PySequence_Fast_GET_SIZE(seq);
     PyObject **objects = PySequence_Fast_ITEMS(seq);
 
@@ -1166,17 +1167,19 @@ PyArray_DiscoverDTypeAndShape_Recursive(
                      out_shape, 1, &size, NPY_TRUE, flags) < 0) {
         /* But do update, if there this is a ragged case */
         *flags |= FOUND_RAGGED_ARRAY;
-        return max_dims;
+        ret = max_dims;
+        goto finish;
     }
     if (size == 0) {
         /* If the sequence is empty, this must be the last dimension */
         *flags |= MAX_DIMS_WAS_REACHED;
-        return curr_dims + 1;
+        ret = curr_dims + 1;
+        goto finish;
     }
 
     /* Allow keyboard interrupts. See gh issue 18117. */
     if (PyErr_CheckSignals() < 0) {
-        return -1;
+        goto finish;
     }
 
     /*
@@ -1196,10 +1199,16 @@ PyArray_DiscoverDTypeAndShape_Recursive(
                 flags, copy);
 
         if (max_dims < 0) {
-            return -1;
+            goto finish;
         }
     }
-    return max_dims;
+    ret = max_dims;
+
+  finish:;
+
+    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
+
+    return ret;
 }
 
 
@@ -1408,9 +1417,8 @@ _discover_array_parameters(PyObject *NPY_UNUSED(self),
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments(
             "_discover_array_parameters", args, len_args, kwnames,
-            "", NULL, &obj,
-            "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
-            NULL, NULL, NULL) < 0) {
+            {"", NULL, &obj},
+            {"|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info}) < 0) {
         /* fixed is last to parse, so never necessary to clean up */
         return NULL;
     }
