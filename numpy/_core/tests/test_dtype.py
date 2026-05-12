@@ -2077,8 +2077,11 @@ def test_gh_31308(kind, exp):
 
 @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
 @requires_memory(free_bytes=2e9)
-def test_gh_31308_materialized():
-    kind = [("x", np.float64, 2 ** 28)]
+@pytest.mark.parametrize("val, kind, exp", [
+    ((1,), [("x", np.float64, 2 ** 28)], 2 ** 28),
+    ((1, 1), [("x", np.float64, 2 ** 28), ("y", np.float64, 1)], 2 ** 28),
+])
+def test_gh_31308_materialized(val, kind, exp):
     kind_dtype = np.dtype(kind)
-    rec_arr = np.array((1,), dtype=kind_dtype)
-    assert rec_arr["x"].size == 2 ** 28
+    rec_arr = np.array(val, dtype=kind_dtype)
+    assert rec_arr["x"].size == exp
