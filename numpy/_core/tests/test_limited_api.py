@@ -91,6 +91,7 @@ def install_temp(tmpdir_factory):
     NOGIL_BUILD,
     reason="Py_GIL_DISABLED builds do not currently support the limited API",
 )
+@pytest.mark.slow
 def test_limited_api(install_temp):
     """Test building a third-party C extension with the limited API
     and building a cython extension with the limited API

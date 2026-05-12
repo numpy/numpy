@@ -3927,6 +3927,7 @@ class TestPercentile:
         assert z == one
         assert z.dtype == a.dtype
 
+    @pytest.mark.slow
     def test_percentile_gh_29003_Fraction(self):
         zero = Fraction(0)
         one = Fraction(1)
