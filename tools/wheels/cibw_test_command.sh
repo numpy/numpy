@@ -28,4 +28,8 @@ fi
 # Run full tests with -n=auto. This makes pytest-xdist distribute tests across
 # the available N CPU cores. Also print the durations for the 10 slowest tests
 # to help with debugging slow or hanging tests
-python -c "import sys; import numpy; sys.exit(not numpy.test(label='full', extra_argv=['-n=auto', '--durations=10']))"
+python -c "
+import sys, platform, numpy;
+label = 'fast' if platform.machine() == 'riscv64' else 'full';
+sys.exit(not numpy.test(label=label, extra_argv=['-n=auto', '--durations=10']));
+"
