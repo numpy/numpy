@@ -374,6 +374,7 @@ jobs:
     - name: Run ml_dtypes tests with current NumPy
       run: |
         python -m pip show numpy
+        cd ml_dtypes
         python -m pytest -n 2 ml_dtypes/tests
     - name: Replace NumPy with 2.0.x
       run: |
@@ -381,6 +382,7 @@ jobs:
         python -m pip show numpy
     - name: Run ml_dtypes tests with NumPy 2.0.x
       run: |
+        cd ml_dtypes
         python -m pytest -n 2 ml_dtypes/tests
 
   custom_checks:
