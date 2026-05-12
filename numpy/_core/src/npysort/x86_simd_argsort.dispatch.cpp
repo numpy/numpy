@@ -1,6 +1,7 @@
 #include "x86_simd_qsort.hpp"
 #ifndef __CYGWIN__
 
+#include <cassert>
 #include "x86-simd-sort/src/x86simdsort-static-incl.h"
 
 #define DISPATCH_ARG_METHODS(TYPE) \
@@ -8,9 +9,10 @@ template<> void NPY_CPU_DISPATCH_CURFX(ArgQSelect)(TYPE* arr, npy_intp* arg, npy
 { \
     x86simdsortStatic::argselect(arr, reinterpret_cast<size_t*>(arg), kth, num, true); \
 } \
-template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(TYPE* arr, npy_intp *arg, npy_intp size, bool descending) \
+template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(TYPE* arr, npy_intp *arg, npy_intp size, bool reverse) \
 { \
-    x86simdsortStatic::argsort(arr, reinterpret_cast<size_t*>(arg), size, true, descending); \
+    assert(!reverse); (void)reverse; \
+    x86simdsortStatic::argsort(arr, reinterpret_cast<size_t*>(arg), size, true); \
 } \
 
 namespace np { namespace qsort_simd {

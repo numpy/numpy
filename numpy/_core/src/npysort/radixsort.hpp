@@ -144,7 +144,7 @@ template <typename Tag, typename type>
 static int
 radixsort_impl(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return radixsort_<Tag, type>((type *)start, num);
+    return radixsort<type>(start, num);
 }
 
 template <class T, class UT>
@@ -249,5 +249,5 @@ template <typename Tag, typename type>
 static int
 aradixsort_impl(void *start, npy_intp *tosort, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return aradixsort_<Tag, type>((type *)start, tosort, num);
+    return aradixsort<type>(start, tosort, num);
 }

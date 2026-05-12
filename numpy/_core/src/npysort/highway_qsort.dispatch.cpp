@@ -7,25 +7,31 @@
 
 namespace np::highway::qsort_simd {
 template <typename T>
-void NPY_CPU_DISPATCH_CURFX(QSort)(T *arr, npy_intp size, bool descending)
+void NPY_CPU_DISPATCH_CURFX(QSort)(T *arr, npy_intp size, bool reverse)
 {
 #if VQSORT_ENABLED
-    if (descending) {
+    if (reverse) {
         hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortDescending());
-    } else {
+    }
+    else {
         hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortAscending());
+    }
+#else
+    if (reverse) {
+        sort::Quick<true>(arr, size);
+    }
+    else {
+        sort::Quick<false>(arr, size);
     }
 #endif
 }
 
-#if VQSORT_ENABLED
 template void NPY_CPU_DISPATCH_CURFX(QSort)<int32_t>(int32_t*, npy_intp, bool);
 template void NPY_CPU_DISPATCH_CURFX(QSort)<uint32_t>(uint32_t*, npy_intp, bool);
 template void NPY_CPU_DISPATCH_CURFX(QSort)<int64_t>(int64_t*, npy_intp, bool);
 template void NPY_CPU_DISPATCH_CURFX(QSort)<uint64_t>(uint64_t*, npy_intp, bool);
 template void NPY_CPU_DISPATCH_CURFX(QSort)<float>(float*, npy_intp, bool);
 template void NPY_CPU_DISPATCH_CURFX(QSort)<double>(double*, npy_intp, bool);
-#endif
 
 } // np::highway::qsort_simd
 

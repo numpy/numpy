@@ -5,23 +5,41 @@
 
 namespace np::sort {
 
-template <typename T>
-inline bool LessThan(const T &a, const T &b)
+// Strict-weak-less comparator: returns true iff ``a`` sorts before ``b``.
+// ``reverse=true`` flips the relational test (so it really means "greater"),
+// while keeping NaN-at-end semantics for floating-point types.
+template <bool reverse = false, typename T>
+inline bool Cmp(const T &a, const T &b)
 {
     if constexpr (std::is_floating_point_v<T>) {
-        return a < b || (b != b && a == a);
+        if constexpr (reverse) {
+            return a > b || (b != b && a == a);
+        }
+        else {
+            return a < b || (b != b && a == a);
+        }
     }
     else if constexpr(std::is_same_v<T, Half>) {
         bool a_nn = !a.IsNaN();
-        return b.IsNaN() ? a_nn : a_nn && a.Less(b);
+        if constexpr (reverse) {
+            return b.IsNaN() ? a_nn : a_nn && b.Less(a);
+        }
+        else {
+            return b.IsNaN() ? a_nn : a_nn && a.Less(b);
+        }
     }
     else {
-        return a < b;
+        if constexpr (reverse) {
+            return a > b;
+        }
+        else {
+            return a < b;
+        }
     }
 }
 
 // NUMERIC SORTS
-template <typename T>
+template <bool reverse = false, typename T>
 inline void Heap(T *start, SSize n)
 {
     SSize i, j, l;
@@ -31,10 +49,10 @@ inline void Heap(T *start, SSize n)
     for (l = n >> 1; l > 0; --l) {
         tmp = a[l];
         for (i = l, j = l << 1; j <= n;) {
-            if (j < n && LessThan(a[j], a[j + 1])) {
+            if (j < n && Cmp<reverse>(a[j], a[j + 1])) {
                 j += 1;
             }
-            if (LessThan(tmp, a[j])) {
+            if (Cmp<reverse>(tmp, a[j])) {
                 a[i] = a[j];
                 i = j;
                 j += j;
@@ -51,10 +69,10 @@ inline void Heap(T *start, SSize n)
         a[n] = a[1];
         n -= 1;
         for (i = 1, j = 2; j <= n;) {
-            if (j < n && LessThan(a[j], a[j + 1])) {
+            if (j < n && Cmp<reverse>(a[j], a[j + 1])) {
                 j++;
             }
-            if (LessThan(tmp, a[j])) {
+            if (Cmp<reverse>(tmp, a[j])) {
                 a[i] = a[j];
                 i = j;
                 j += j;

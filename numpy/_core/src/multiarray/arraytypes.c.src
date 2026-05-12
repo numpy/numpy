@@ -4565,8 +4565,9 @@ set_typeinfo(PyObject *dict)
     /*
      * Add sorting array methods for the new types.
      */
-    
-    register_all_sorts();
+    if (register_all_sorts() < 0) {
+        return -1;
+    }
 
     /*
      * Add cast functions for the new types

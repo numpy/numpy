@@ -12,7 +12,9 @@ constexpr size_t kQuickStack = sizeof(intptr_t) * 8 * 2;
 constexpr ptrdiff_t kQuickSmall = 15;
 
 // NUMERIC SORTS
-template <typename T>
+// ``reverse=true`` performs a descending sort using the same comparator,
+// preserving NaN-at-end semantics for floating-point inputs.
+template <bool reverse = false, typename T>
 inline void Quick(T *start, SSize num)
 {
     T vp;
@@ -26,19 +28,19 @@ inline void Quick(T *start, SSize num)
     int cdepth = BitScanReverse(static_cast<std::make_unsigned_t<SSize>>(num)) * 2;
     for (;;) {
         if (NPY_UNLIKELY(cdepth < 0)) {
-            Heap(pl, pr - pl + 1);
+            Heap<reverse>(pl, pr - pl + 1);
             goto stack_pop;
         }
         while ((pr - pl) > kQuickSmall) {
             // quicksort partition
             pm = pl + ((pr - pl) >> 1);
-            if (LessThan(*pm, *pl)) {
+            if (Cmp<reverse>(*pm, *pl)) {
                 std::swap(*pm, *pl);
             }
-            if (LessThan(*pr, *pm)) {
+            if (Cmp<reverse>(*pr, *pm)) {
                 std::swap(*pr, *pm);
             }
-            if (LessThan(*pm, *pl)) {
+            if (Cmp<reverse>(*pm, *pl)) {
                 std::swap(*pm, *pl);
             }
             vp = *pm;
@@ -48,10 +50,10 @@ inline void Quick(T *start, SSize num)
             for (;;) {
                 do {
                     ++pi;
-                } while (LessThan(*pi, vp));
+                } while (Cmp<reverse>(*pi, vp));
                 do {
                     --pj;
-                } while (LessThan(vp, *pj));
+                } while (Cmp<reverse>(vp, *pj));
                 if (pi >= pj) {
                     break;
                 }
@@ -78,7 +80,7 @@ inline void Quick(T *start, SSize num)
             vp = *pi;
             pj = pi;
             pk = pi - 1;
-            while (pj > pl && LessThan(vp, *pk)) {
+            while (pj > pl && Cmp<reverse>(vp, *pk)) {
                 *pj-- = *pk--;
             }
             *pj = vp;

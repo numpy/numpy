@@ -24,7 +24,7 @@
 
 // Disable AVX512 sorting on CYGWIN until we can figure
 // out why it has test failures
-template<typename Tag, typename T, bool descending>
+template<typename Tag, typename T, bool reverse>
 inline bool quicksort_dispatch(T *start, npy_intp num)
 {
 #if !defined(__CYGWIN__)
@@ -38,28 +38,28 @@ inline bool quicksort_dispatch(T *start, npy_intp num)
         void (*dispfunc)(TF*, intptr_t, bool) = nullptr;
         if constexpr (sizeof(T) == sizeof(uint16_t)) {
         #if defined(NPY_CPU_AMD64) || defined(NPY_CPU_X86) // x86 32-bit and 64-bit
-            if constexpr (!descending) { // use only ascending on x86 SIMD sort
+            if constexpr (!reverse) { // x86 SIMD sort is ascending-only
                 #include "x86_simd_qsort_16bit.dispatch.h"
                 NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
             }
-        #elif VQSORT_ENABLED
+        #else
             #include "highway_qsort_16bit.dispatch.h"
             NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::highway::qsort_simd::template QSort, <TF>);
         #endif
         }
         else if constexpr (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) {
         #if defined(NPY_CPU_AMD64) || defined(NPY_CPU_X86) // x86 32-bit and 64-bit
-            if constexpr (!descending) { // use only ascending on x86 SIMD sort
+            if constexpr (!reverse) { // x86 SIMD sort is ascending-only
                 #include "x86_simd_qsort.dispatch.h"
                 NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
             }
-        #elif VQSORT_ENABLED
+        #else
             #include "highway_qsort.dispatch.h"
             NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::highway::qsort_simd::template QSort, <TF>);
         #endif
         }
         if (dispfunc) {
-            (*dispfunc)(reinterpret_cast<TF*>(start), static_cast<intptr_t>(num), descending);
+            (*dispfunc)(reinterpret_cast<TF*>(start), static_cast<intptr_t>(num), reverse);
             return true;
         }
     }
@@ -68,7 +68,7 @@ inline bool quicksort_dispatch(T *start, npy_intp num)
     return false;
 }
 
-template<typename Tag, typename T, bool descending>
+template<typename Tag, typename T, bool reverse>
 inline bool aquicksort_dispatch(T *start, npy_intp* arg, npy_intp num)
 {
 #if !defined(__CYGWIN__)
@@ -76,7 +76,7 @@ inline bool aquicksort_dispatch(T *start, npy_intp* arg, npy_intp num)
         ((std::is_base_of_v<npy::floating_point_tag, Tag>
             && !std::is_same_v<Tag, npy::longdouble_tag>) ||
         std::is_base_of_v<npy::integral_tag, Tag>)
-        && !descending // use only ascending on x86 SIMD sort
+        && !reverse // x86 SIMD argsort is ascending-only
     ) {
         using TF = typename np::meta::FixedWidth<T>::Type;
         void (*dispfunc)(TF*, npy_intp*, npy_intp, bool) = nullptr;
@@ -85,7 +85,7 @@ inline bool aquicksort_dispatch(T *start, npy_intp* arg, npy_intp num)
             NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template ArgQSort, <TF>);
         }
         if (dispfunc) {
-            (*dispfunc)(reinterpret_cast<TF*>(start), arg, num, descending);
+            (*dispfunc)(reinterpret_cast<TF*>(start), arg, num, reverse);
             return true;
         }
     }

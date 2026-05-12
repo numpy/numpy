@@ -6,10 +6,10 @@
 namespace np::highway::qsort_simd {
 
 #include "highway_qsort.dispatch.h"
-NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSort, (T *arr, npy_intp size, bool descending))
+NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSort, (T *arr, npy_intp size, bool reverse))
 
 #include "highway_qsort_16bit.dispatch.h"
-NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSort, (T *arr, npy_intp size, bool descending))
+NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSort, (T *arr, npy_intp size, bool reverse))
 
 } // np::highway::qsort_simd
 
