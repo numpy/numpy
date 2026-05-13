@@ -693,10 +693,6 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
     }
 
     PyArray_free(slopes);
-    Py_DECREF(afp);
-    Py_DECREF(axp);
-    Py_DECREF(ax);
-    return PyArray_Return(af);
 
 finish:
     Py_DECREF(afp);
@@ -902,11 +898,6 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
         NPY_END_THREADS;
     }
     PyArray_free(slopes);
-
-    Py_DECREF(afp);
-    Py_DECREF(axp);
-    Py_DECREF(ax);
-    return PyArray_Return(af);
 
 finish:
     Py_DECREF(afp);
