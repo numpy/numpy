@@ -3112,8 +3112,10 @@ class TestInterp:
         # gh-30316
         assert_array_equal(interp([], [], []), np.array([], dtype=np.float64))
         assert_array_equal(interp([], [1, 2], [3, 4]), np.array([], dtype=np.float64))
-        assert_array_equal(interp([], [], [], period=360), np.array([], dtype=np.float64))
-        assert_array_equal(interp([], [1, 2], [3+4j, 5+6j]), np.array([], dtype=np.complex128))
+        assert_array_equal(
+            interp([], [], [], period=360), np.array([], dtype=np.float64))
+        assert_array_equal(
+            interp([], [1, 2], [3 + 4j, 5 + 6j]), np.array([], dtype=np.complex128))
 
     def test_basic(self):
         x = np.linspace(0, 1, 5)
