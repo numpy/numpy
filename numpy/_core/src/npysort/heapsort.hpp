@@ -9,7 +9,7 @@ namespace np::sort {
 // ``reverse=true`` flips the relational test (so it really means "greater"),
 // while keeping NaN-at-end semantics for floating-point types.
 template <bool reverse = false, typename T>
-inline bool Cmp(const T &a, const T &b)
+constexpr bool Cmp(const T &a, const T &b)
 {
     if constexpr (std::is_floating_point_v<T>) {
         if constexpr (reverse) {
