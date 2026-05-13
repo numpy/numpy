@@ -5148,6 +5148,13 @@ _multiarray_umath_exec(PyObject *m) {
                             (PyObject *)&NpyBusDayCalendar_Type);
     set_flaginfo(d);
 
+    if (PyType_Ready(&PyArrayMethod_Type) < 0) {
+        return -1;
+    }
+    if (PyType_Ready(&PyBoundArrayMethod_Type) < 0) {
+        return -1;
+    }
+
     /* Finalize scalar types and expose them via namespace or typeinfo dict */
     if (set_typeinfo(d) != 0) {
         return -1;
@@ -5167,12 +5174,6 @@ _multiarray_umath_exec(PyObject *m) {
             d, "_array_converter",
             (PyObject *)&PyArrayArrayConverter_Type);
 
-    if (PyType_Ready(&PyArrayMethod_Type) < 0) {
-        return -1;
-    }
-    if (PyType_Ready(&PyBoundArrayMethod_Type) < 0) {
-        return -1;
-    }
     if (initialize_and_map_pytypes_to_dtypes() < 0) {
         return -1;
     }

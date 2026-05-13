@@ -3151,7 +3151,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 {
     PyArrayMethodObject *sort_method = NULL;
     PyArrayMethod_StridedLoop *strided_loop = NULL;
-    PyArrayMethod_SortParameters sort_params = {.flags = flags};
+    PyArrayMethod_SortParameters sort_params;
     PyArrayMethod_Context context = {0};
     PyArray_Descr *loop_descrs[2];
     NpyAuxData *auxdata = NULL;
@@ -3172,6 +3172,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 
     // Zero the NPY_HEAPSORT bit, maps NPY_HEAPSORT to NPY_QUICKSORT
     flags &= ~_NPY_SORT_HEAPSORT;
+    sort_params = (PyArrayMethod_SortParameters){.flags = flags};
 
     // Look for type specific functions
     sort_method = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op)))->sort_meth;
@@ -3269,7 +3270,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     PyObject *ret;
     PyArrayMethodObject *argsort_method = NULL;
     PyArrayMethod_StridedLoop *strided_loop = NULL;
-    PyArrayMethod_SortParameters sort_params = {.flags = flags};
+    PyArrayMethod_SortParameters sort_params;
     PyArrayMethod_Context context = {0};
     PyArray_Descr *loop_descrs[2];
     NpyAuxData *auxdata = NULL;
@@ -3280,6 +3281,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 
     // Zero the NPY_HEAPSORT bit, maps NPY_HEAPSORT to NPY_QUICKSORT
     flags &= ~_NPY_SORT_HEAPSORT;
+    sort_params = (PyArrayMethod_SortParameters){.flags = flags};
 
     // Look for type specific functions
     argsort_method = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op)))->argsort_meth;

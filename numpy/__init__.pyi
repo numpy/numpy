@@ -1733,6 +1733,7 @@ class _ArrayOrScalarCommon:
         order: str | Sequence[str] | None = ...,
         *,
         stable: py_bool | None = ...,
+        descending: py_bool | None = ...,
     ) -> NDArray[intp]: ...
 
     @overload  # axis=None (default), out=None (default), keepdims=False (default)
@@ -3741,6 +3742,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         order: str | Sequence[str] | None = None,
         *,
         stable: py_bool | None = None,
+        descending: py_bool | None = None,
     ) -> None: ...
 
     # Keep in sync with `MaskedArray.trace`
@@ -5068,7 +5070,7 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     ) -> Never: ...
     def diagonal(self: Never, /, offset: L[0] = 0, axis1: L[0] = 0, axis2: L[1] = 1) -> Never: ...  # type: ignore[misc]
     def swapaxes(self: Never, axis1: Never, axis2: Never, /) -> Never: ...  # type: ignore[misc]
-    def sort(self: Never, /, axis: L[-1] = -1, kind: None = None, order: None = None, *, stable: None = None) -> Never: ...  # type: ignore[misc]
+    def sort(self: Never, /, axis: L[-1] = -1, kind: None = None, order: None = None, *, stable: None = None, descending: None = None) -> Never: ...  # type: ignore[misc]
     def nonzero(self: Never, /) -> Never: ...  # type: ignore[misc]
     def setfield(self: Never, val: Never, /, dtype: Never, offset: L[0] = 0) -> None: ...  # type: ignore[misc]
     def searchsorted(self: Never, v: Never, /, side: L["left"] = "left", sorter: None = None) -> Never: ...  # type: ignore[misc]

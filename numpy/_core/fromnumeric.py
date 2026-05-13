@@ -932,12 +932,14 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     return _wrapfunc(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
 
 
-def _sort_dispatcher(a, axis=None, kind=None, order=None, *, stable=None):
+def _sort_dispatcher(
+    a, axis=None, kind=None, order=None, *, stable=None, descending=None
+):
     return (a,)
 
 
 @array_function_dispatch(_sort_dispatcher)
-def sort(a, axis=-1, kind=None, order=None, *, stable=None):
+def sort(a, axis=-1, kind=None, order=None, *, stable=None, descending=None):
     """
     Return a sorted copy of an array.
 
@@ -966,6 +968,13 @@ def sort(a, axis=-1, kind=None, order=None, *, stable=None):
         this option selects ``kind='stable'``. Default: ``None``.
 
         .. versionadded:: 2.0.0
+    descending : bool, optional
+        Sort order. If ``True``, the returned array will be sorted in
+        descending order. If ``False`` or ``None``, the returned array will
+        be sorted in ascending order. Values that are NaN are sorted to the
+        end for both orders. Default: ``None``.
+
+        .. versionadded:: 2.5.0
 
     Returns
     -------
@@ -1089,16 +1098,18 @@ def sort(a, axis=-1, kind=None, order=None, *, stable=None):
         axis = -1
     else:
         a = asanyarray(a).copy(order="K")
-    a.sort(axis=axis, kind=kind, order=order, stable=stable)
+    a.sort(axis=axis, kind=kind, order=order, stable=stable, descending=descending)
     return a
 
 
-def _argsort_dispatcher(a, axis=None, kind=None, order=None, *, stable=None):
+def _argsort_dispatcher(
+    a, axis=None, kind=None, order=None, *, stable=None, descending=None
+):
     return (a,)
 
 
 @array_function_dispatch(_argsort_dispatcher)
-def argsort(a, axis=-1, kind=None, order=None, *, stable=None):
+def argsort(a, axis=-1, kind=None, order=None, *, stable=None, descending=None):
     """
     Returns the indices that would sort an array.
 
@@ -1131,6 +1142,13 @@ def argsort(a, axis=-1, kind=None, order=None, *, stable=None):
         this option selects ``kind='stable'``. Default: ``None``.
 
         .. versionadded:: 2.0.0
+    descending : bool, optional
+        Sort order. If ``True``, the returned array will be sorted in
+        descending order. If ``False`` or ``None``, the returned array will
+        be sorted in ascending order. Values that are NaN are sorted to the
+        end for both orders. Default: ``None``.
+
+        .. versionadded:: 2.5.0
 
     Returns
     -------
@@ -1211,7 +1229,13 @@ def argsort(a, axis=-1, kind=None, order=None, *, stable=None):
 
     """
     return _wrapfunc(
-        a, 'argsort', axis=axis, kind=kind, order=order, stable=stable
+        a,
+        "argsort",
+        axis=axis,
+        kind=kind,
+        order=order,
+        stable=stable,
+        descending=descending,
     )
 
 def _argmax_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue):
