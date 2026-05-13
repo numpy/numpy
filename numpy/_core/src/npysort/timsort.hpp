@@ -1,8 +1,26 @@
+/*
+ * The purpose of this module is to add faster sort functions
+ * that are type-specific.  This is done by altering the
+ * function table for the builtin descriptors.
+ *
+ * These sorting functions are copied almost directly from numarray
+ * with a few modifications (complex comparisons compare the imaginary
+ * part if the real parts are equal, for example), and the names
+ * are changed.
+ *
+ * The original sorting code is due to Charles R. Harris who wrote
+ * it for numarray.
+ */
+
+/* For details of Timsort, refer to
+ * https://github.com/python/cpython/blob/3.7/Objects/listsort.txt
+ */
+
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "npy_sort.h"
 #include "npysort_common.h"
-#include "numpy_tag.h"
+#include "numpy_tag.hpp"
 
 #include <cstdlib>
 #include <utility>

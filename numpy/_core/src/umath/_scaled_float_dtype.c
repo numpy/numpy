@@ -807,7 +807,7 @@ sfloat_stable_sort_loop(
     npy_intp N = dimensions[0];
     char *in = data[0];
 
-    return npy_mergesort_impl(in, N, NULL, strides[0], cmp);
+    return npy_timsort_impl(in, N, NULL, strides[0], cmp);
 }
 
 
@@ -895,7 +895,7 @@ sfloat_stable_argsort_loop(
     char *in = data[0];
     npy_intp *out = (npy_intp *)data[1];
 
-    return npy_amergesort_impl(in, out, N, NULL, strides[0], cmp);
+    return npy_atimsort_impl(in, out, N, NULL, strides[0], cmp);
 }
 
 
