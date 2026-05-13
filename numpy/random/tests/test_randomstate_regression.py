@@ -98,6 +98,7 @@ class TestRegression:
             assert_(c in a)
             assert_raises(ValueError, random.choice, a, p=probs * 0.9)
 
+    @pytest.mark.slow
     def test_shuffle_of_array_of_different_length_strings(self):
         # Test that permuting an array of different length strings
         # will not cause a segfault on garbage collection
@@ -113,6 +114,7 @@ class TestRegression:
         import gc
         gc.collect()
 
+    @pytest.mark.slow
     def test_shuffle_of_array_of_objects(self):
         # Test that permuting an array of objects will not cause
         # a segfault on garbage collection.

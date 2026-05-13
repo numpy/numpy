@@ -10301,6 +10301,7 @@ class TestCTypes:
         'empty-2d',
         'readonly'
     ])
+    @pytest.mark.slow
     def test_ctypes_data_as_holds_reference(self, arr):
         # gh-9647
         # create a copy to ensure that pytest does not mess with the refcounts

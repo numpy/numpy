@@ -239,6 +239,7 @@ SKIP_LIST_2 = [
 ]
 
 
+@pytest.mark.slow
 def test_all_modules_are_expected_2():
     """
     Method checking all objects. The pkgutil-based method in

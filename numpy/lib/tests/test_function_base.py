@@ -2124,6 +2124,7 @@ class TestLeaks:
     @pytest.mark.thread_unsafe(
         reason="test result depends on the reference count of a global object"
     )
+    @pytest.mark.slow
     def test_frompyfunc_leaks(self, name, incr):
         # exposed in gh-11867 as np.vectorized, but the problem stems from
         # frompyfunc.
@@ -3937,6 +3938,7 @@ class TestPercentile:
         assert z == one
         assert z.dtype == a.dtype
 
+    @pytest.mark.slow
     def test_percentile_gh_29003_Fraction(self):
         zero = Fraction(0)
         one = Fraction(1)
