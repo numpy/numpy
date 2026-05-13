@@ -255,6 +255,7 @@ class TestAsArray:
         check(as_array(pointer(c_array[0][0]), shape=(2, 3)))
 
     @pytest.mark.thread_unsafe(reason="garbage collector is global state")
+    @pytest.mark.slow
     def test_reference_cycles(self):
         # related to gh-6511
         import ctypes

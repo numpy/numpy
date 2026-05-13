@@ -2124,6 +2124,7 @@ class TestLeaks:
     @pytest.mark.thread_unsafe(
         reason="test result depends on the reference count of a global object"
     )
+    @pytest.mark.slow
     def test_frompyfunc_leaks(self, name, incr):
         # exposed in gh-11867 as np.vectorized, but the problem stems from
         # frompyfunc.
