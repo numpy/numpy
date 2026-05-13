@@ -6,6 +6,8 @@ import pytest
 from . import util
 
 
+# Note: do not mark as slow! This is one of a small set of f2py compile tests retained
+# in the default suite invocation for compile-path coverage.
 class TestAssumedShapeSumExample(util.F2PyTest):
     sources = [
         util.getpath("tests", "src", "assumed_shape", "foo_free.f90"),
@@ -15,7 +17,6 @@ class TestAssumedShapeSumExample(util.F2PyTest):
         util.getpath("tests", "src", "assumed_shape", ".f2py_f2cmap"),
     ]
 
-    @pytest.mark.slow
     def test_all(self):
         r = self.module.fsum([1, 2])
         assert r == 3
