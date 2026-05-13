@@ -1,3 +1,5 @@
+import multiprocessing
+
 import pytest
 
 import numpy as np
@@ -43,7 +45,8 @@ def test_read_write_bool_array():
     from multiprocessing import shared_memory
     n = 10000
     shm = shared_memory.SharedMemory(create=True, size=n)
-    with ProcessPoolExecutor(max_workers=2) as executor:
+    ctx = multiprocessing.get_context("spawn")
+    with ProcessPoolExecutor(max_workers=2, mp_context=ctx) as executor:
         f_writer = executor.submit(bool_array_writer, shm.name, n)
         f_reader = executor.submit(bool_array_reader, shm.name, n)
     shm.unlink()
