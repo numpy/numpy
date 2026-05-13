@@ -1,38 +1,14 @@
 /* -*- c -*- */
 
 /*
- * The purpose of this module is to add faster sort functions
- * that are type-specific.  This is done by altering the
- * function table for the builtin descriptors.
- *
- * These sorting functions are copied almost directly from numarray
- * with a few modifications (complex comparisons compare the imaginary
- * part if the real parts are equal, for example), and the names
- * are changed.
- *
- * The original sorting code is due to Charles R. Harris who wrote
- * it for numarray.
- */
-
-/*
- * Quick sort is usually the fastest, but the worst case scenario can
- * be slower than the merge and heap sorts.  The merge sort requires
- * extra memory and so for large arrays may not be useful.
- *
- * The merge sort is *stable*, meaning that equal components
- * are unmoved from their entry versions, so it can be used to
- * implement lexicographic sorting on multiple keys.
- *
- * The heap sort is included for completeness.
- */
-
-/* For details of Timsort, refer to
- * https://github.com/python/cpython/blob/3.7/Objects/listsort.txt
+ * Comparator-function-driven version of the timsort implemented in
+ * ``timsort.hpp``.  Used by dtypes that register a
+ * ``PyArray_CompareFunc`` rather than the type-specialised path.
+ * See ``timsort.hpp`` for the algorithm description.
  */
 
 #include "npy_sort.h"
 #include "npysort_common.h"
-#include "numpy_tag.h"
 
 #include <cstdlib>
 #include <utility>
@@ -494,16 +470,27 @@ npy_force_collapse(char *arr, run *stack, npy_intp *stack_ptr,
     return 0;
 }
 
+
 NPY_NO_EXPORT int
 npy_timsort(void *start, npy_intp num, void *varr)
 {
+    npy_intp elsize;
+    PyArray_CompareFunc *cmp;
+    get_sort_data_from_array(varr, &elsize, &cmp);
+
+    return npy_timsort_impl(start, num, varr, elsize, cmp);
+}
+
+NPY_NO_EXPORT int
+npy_timsort_impl(void *start, npy_intp num, void *varr, npy_intp elsize,
+                 PyArray_CompareFunc *cmp)
+{
     PyArrayObject *arr = reinterpret_cast<PyArrayObject *>(varr);
-    size_t len = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
     int ret;
     npy_intp l, n, stack_ptr, minrun;
     run stack[RUN_STACK_SIZE];
     buffer_char buffer;
+    size_t len = (size_t)elsize;
 
     /* Items that have zero size don't make sense to sort */
     if (len == 0) {
@@ -930,16 +917,28 @@ npy_aforce_collapse(char *arr, npy_intp *tosort, run *stack,
     return 0;
 }
 
+
 NPY_NO_EXPORT int
 npy_atimsort(void *start, npy_intp *tosort, npy_intp num, void *varr)
 {
+    npy_intp elsize;
+    PyArray_CompareFunc *cmp;
+    get_sort_data_from_array(varr, &elsize, &cmp);
+
+    return npy_atimsort_impl(start, tosort, num, varr, elsize, cmp);
+}
+
+
+NPY_NO_EXPORT int
+npy_atimsort_impl(void *start, npy_intp *tosort, npy_intp num, void *varr,
+                  npy_intp elsize, PyArray_CompareFunc *cmp)
+{
     PyArrayObject *arr = reinterpret_cast<PyArrayObject *>(varr);
-    size_t len = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
     int ret;
     npy_intp l, n, stack_ptr, minrun;
     run stack[RUN_STACK_SIZE];
     buffer_intp buffer;
+    size_t len = (size_t)elsize;
 
     /* Items that have zero size don't make sense to sort */
     if (len == 0) {

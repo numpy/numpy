@@ -7,7 +7,7 @@
 
 #include "npy_binsearch.h"
 #include "npy_sort.h"
-#include "numpy_tag.h"
+#include "numpy_tag.hpp"
 
 #include <array>
 #include <functional>  // for std::less and std::less_equal

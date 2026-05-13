@@ -852,7 +852,6 @@ endforeach
 # --------------------------------------
 multiarray_gen_headers = [
   src_file.process('src/multiarray/arraytypes.h.src'),
-  src_file.process('src/common/npy_sort.h.src'),
 ]
 foreach gen_mtargets : [
   [
@@ -1233,7 +1232,6 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/usertypes.c',
   'src/multiarray/vdot.c',
   'src/npysort/quicksort_generic.cpp',
-  'src/npysort/mergesort.cpp',
   'src/npysort/timsort_generic.cpp',
   'src/npysort/heapsort.cpp',
   'src/npysort/npysort_methods.cpp',

@@ -3,7 +3,7 @@
 #include "npy_sort.h"
 #include "npysort_common.h"
 
-#include "../common/numpy_tag.h"
+#include "../common/numpy_tag.hpp"
 #include <cstdlib>
 #include <type_traits>
 
