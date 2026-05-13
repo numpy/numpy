@@ -1,5 +1,5 @@
-from collections.abc import Sequence  # noqa: F811
-from typing import Any, Protocol, TypeAlias, TypedDict, TypeVar
+from collections.abc import Sequence
+from typing import Any, Protocol, TypeAlias, TypedDict, TypeVar, runtime_checkable
 
 import numpy as np
 
@@ -41,11 +41,13 @@ class _DTypeDict(_DTypeDictBase, total=False):
     aligned: bool
 
 
+@runtime_checkable
 class _HasDType(Protocol[_DTypeT_co]):
     @property
     def dtype(self) -> _DTypeT_co: ...
 
 
+@runtime_checkable
 class _HasNumPyDType(Protocol[_DTypeT_co]):
     @property
     def __numpy_dtype__(self, /) -> _DTypeT_co: ...
