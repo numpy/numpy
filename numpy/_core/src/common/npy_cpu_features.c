@@ -953,6 +953,12 @@ npy__cpu_init_features(void)
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 #ifdef __linux__
     #ifdef HAS_RISCV_HWPROBE
+        /*
+        * RISCV_HWPROBE_IMA_V reports the ratified RVV 1.0 extension.
+        * HWCAP's V bit may also be set for pre-standard vector extensions,
+        * so prefer hwprobe and keep HWCAP only as a compatibility fallback
+        * when hwprobe is unavailable or cannot answer the query.
+        */
         struct riscv_hwprobe probe;
         probe.key = RISCV_HWPROBE_KEY_IMA_EXT_0;
         probe.value = 0;
