@@ -243,9 +243,8 @@ struct object_tag {
         }
         int ret = PyObject_IsTrue(result);
         Py_DECREF(result);
-
         if (ret < 0) {
-            return 0;
+            return -1;
         }
         return ret;
     }
