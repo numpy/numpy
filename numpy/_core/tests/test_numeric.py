@@ -3789,6 +3789,26 @@ class TestCorrelate:
         assert_array_almost_equal(z, self.z1[4::-1])
         assert_array_equal(lags, np.arange(2, -3, -1))
 
+    def test_lags_negative_step_nonunit(self):
+        self._setup(float)
+        # Non-unit negative step exercises integer ceiling division in the
+        # inversion block of _pyarray_correlate.
+        # range(4, -3, -2) -> [4, 2, 0, -2]
+        z = np.correlate(self.x, self.y, lags=range(4, -3, -2))
+        assert_array_almost_equal(z, self.z1[[6, 4, 2, 0]])
+        lags = np.correlation_lags(len(self.x), len(self.y), lags=range(4, -3, -2))
+        assert_array_equal(lags, np.array([4, 2, 0, -2]))
+
+    def test_lags_v_longer_than_a_nonunit_step(self):
+        self._setup(float)
+        # n1=3 < n2=5 triggers the array-swap + inversion path; combining that
+        # with a non-unit step exercises ceiling division via the swap entry point.
+        # range(0, 5, 2) -> [0, 2, 4]; lag 4 exceeds n1-1=2 so it maps to 0.
+        z = np.correlate(self.y, self.x, lags=range(0, 5, 2))
+        assert_array_almost_equal(z, [self.z2[4], self.z2[6], 0.0])
+        lags = np.correlation_lags(len(self.y), len(self.x), lags=range(0, 5, 2))
+        assert_array_equal(lags, np.array([0, 2, 4]))
+
     def test_lags_empty(self):
         self._setup(float)
         z = np.correlate(self.x, self.y, lags=range(0))
