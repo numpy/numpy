@@ -223,6 +223,95 @@ struct string_like_type {
     }
 };
 
+// This tag is used to register object sorts, which replaces the old generic sort
+// that did not handle NaNs at all. It supposes that any object such that
+// obj != obj is NaN-like and should be sorted to the end as in other dtypes.
+struct object_tag {
+    using type = PyObject *;
+    static constexpr NPY_TYPES type_value = NPY_OBJECT;
+
+    static int isnan(PyObject *a) {
+        if (a == NULL) {
+            return 1;
+        }
+
+        /* PyObject_RichCompareBool is not used here because it takes a shortcut
+         * for identical objects, hence will return false for NaN != NaN. */
+        PyObject *result = PyObject_RichCompare(a, a, Py_NE);
+        if (result == NULL) {
+            return -1;
+        }
+        int ret = PyObject_IsTrue(result);
+        Py_DECREF(result);
+
+        if (ret < 0) {
+            return 0;
+        }
+        return ret;
+    }
+
+    static int less(PyObject *a, PyObject *b)
+    {
+        /*
+         * work around gh-3879, we cannot abort an in-progress quicksort
+         * so at least do not raise again
+         */
+        if (PyErr_Occurred()) {
+            return 0;
+        }
+
+        int isnan_a = isnan(a);
+        int isnan_b = isnan(b); 
+        if (isnan_a < 0 || isnan_b < 0) {
+            return 0;
+        }
+        if (isnan_b) {
+            return 1;
+        }
+        if (isnan_a) {
+            return 0;
+        }
+
+        int ret = PyObject_RichCompareBool(a, b, Py_LT);
+        if (ret < 0) {
+            return 0;
+        }
+        return ret;
+    }
+
+    static int less_equal(PyObject *a, PyObject *b) {
+        return !less(b, a);
+    }
+
+    static int greater(PyObject *a, PyObject *b) {
+        /*
+         * work around gh-3879, we cannot abort an in-progress quicksort
+         * so at least do not raise again
+         */
+        if (PyErr_Occurred()) {
+            return 0;
+        }
+
+        int isnan_a = isnan(a);
+        int isnan_b = isnan(b);
+        if (isnan_a < 0 || isnan_b < 0) {
+            return 0;
+        }
+        if (isnan_b) {
+            return 1;
+        }
+        if (isnan_a) {
+            return 0;
+        }
+
+        int ret = PyObject_RichCompareBool(a, b, Py_GT);
+        if (ret < 0) {
+            return 0;
+        }
+        return ret;
+    }
+};
+
 // Concrete tags consumed by callers.
 using bool_tag        = integral_type<npy_bool,        NPY_BOOL>;
 using byte_tag        = integral_type<npy_byte,        NPY_BYTE>;

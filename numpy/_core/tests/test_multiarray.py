@@ -2802,10 +2802,19 @@ class TestMethods:
             nan = np.datetime64('NaT', 'D')
         elif np.issubdtype(a.dtype, np.timedelta64):
             nan = np.timedelta64('NaT', 'D')
-        a[::10] = nan
+        elif np.issubdtype(a.dtype, np.object_):
+            nan = np.nan
+        else:
+            raise ValueError(f"Unsupported dtype for nan testing: {a.dtype}")
 
-        b = a[::-1].copy()
-        b = np.concatenate((b[~np.isnan(b)], b[np.isnan(b)]))
+        nanmask = np.arange(a.size) % 10 == 0
+        a[nanmask] = nan
+
+        b = np.concatenate((a[~nanmask][::-1], a[nanmask]))
+        if np.issubdtype(a.dtype, np.object_):
+            # cast to float for comparison, as object np.nan != np.nan
+            a = a.astype(float)
+            b = b.astype(float)
 
         msg = f"sort, descending={descending}, stable={stable}"
         a_sorted = np.sort(a, stable=stable, descending=descending, axis=-1)
@@ -2852,7 +2861,6 @@ class TestMethods:
         self._test_sort_descending_nonan(a, stable, descending)
         self._test_sort_descending_nan(a, stable, descending)
 
-    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
     @pytest.mark.parametrize("stable", [True, False])
     @pytest.mark.parametrize("descending", [True, False])
     @pytest.mark.parametrize("random_seed", [0, 1])
@@ -2907,10 +2915,15 @@ class TestMethods:
             f"descending={descending}",
         )
 
+    def test_sort_descending_object(self, stable, descending):
+        a = np.arange(101, dtype=float).astype(object)
+        self._test_sort_descending_nonan(a, stable, descending)
+        self._test_sort_descending_nan(a, stable, descending)
+
     @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
     @pytest.mark.parametrize('stable', [True, False])
     @pytest.mark.parametrize('descending', [True, False])
-    def test_sort_descending_datetime(self, dtype, stable, descending):
+    def test_sort_descending_dates(self, dtype, stable, descending):
         a = np.arange(0, 101, dtype=dtype)
         self._test_sort_descending_nonan(a, stable, descending)
         self._test_sort_descending_nan(a, stable, descending)
@@ -2954,6 +2967,10 @@ class TestMethods:
             nan = np.datetime64("NaT", "D")
         elif np.issubdtype(a.dtype, np.timedelta64):
             nan = np.timedelta64("NaT", "D")
+        elif np.issubdtype(a.dtype, np.object_):
+            nan = np.nan
+        else:
+            raise ValueError(f"Unsupported dtype for nan testing: {a.dtype}")
         a[::10] = nan
 
         # comparing datetime types directly to numerical zero fails
@@ -3063,6 +3080,13 @@ class TestMethods:
     def test_argsort_descending_string(self, dtype, stable, descending):
         a = np.array([f"{i:03d}" for i in range(101)], dtype=dtype)
         self._test_argsort_descending_nonan(a, stable, descending)
+
+    @pytest.mark.parametrize("stable", [True, False])
+    @pytest.mark.parametrize("descending", [True, False])
+    def test_argsort_descending_object(self, stable, descending):
+        a = np.arange(101, dtype=float).astype(object)
+        self._test_argsort_descending_nonan(a, stable, descending)
+        self._test_argsort_descending_nan(a, stable, descending)
 
     @pytest.mark.parametrize('a', [
         np.array([0, 1, np.nan], dtype=np.float16),
