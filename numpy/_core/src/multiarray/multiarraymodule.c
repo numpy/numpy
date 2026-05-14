@@ -1166,10 +1166,6 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, PyArray_Descr *typec,
 
     NPY_BEGIN_THREADS_DEF;
 
-    if (lag_step == 0) {
-        lag_step = 1;
-    }
-
     /* size of x (n1) and y (n2) */
     n1 = PyArray_DIMS(ap1)[0];
     n2 = PyArray_DIMS(ap2)[0];
@@ -1250,11 +1246,13 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, PyArray_Descr *typec,
 
     lag = min_lag;
     if (lag < -n2+1) {
-        /* if min_lag is before any overlap between the vectors,
-         * then skip to first relevant lag
+        /* If min_lag is before any overlap between the vectors, skip to the
+         * first lag on the user's grid (min_lag + k*lag_step) that is in the
+         * overlap region (>= -n2+1).
          */
-        op += os*((-n2+1) - lag);
-        lag = -n2+1;
+        npy_intp skip = ((-n2 + 1) - lag + lag_step - 1) / lag_step;
+        op += os * skip;
+        lag += skip * lag_step;
     }
 
     /* Phase 1: lags where y is left of x, i.e. lag in [-(n2-1), 0).

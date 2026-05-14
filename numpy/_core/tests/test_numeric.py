@@ -3702,6 +3702,13 @@ class TestCorrelate:
         with pytest.raises(ValueError, match="arithmetic progression"):
             np.correlate(self.x, self.y, lags=np.array([0, 1, 3]))
 
+    def test_lags_zero_step_rejected(self):
+        self._setup(float)
+        with pytest.raises(ValueError, match="lag_step must not be zero"):
+            np.correlate(self.x, self.y, lags=slice(0, 5, 0))
+        with pytest.raises(ValueError, match="lag_step must not be zero"):
+            np.correlate(self.x, self.y, lags=np.array([2, 2, 2]))
+
     # --- Lag range geometry tests ---
     # n1=5 (self.x), n2=3 (self.y), z1 covers lags [-2..4]
 
@@ -3736,6 +3743,32 @@ class TestCorrelate:
         # Lags partially outside overlap -> zeros at extremes
         z = np.correlate(self.x, self.y, lags=range(-5, 8))
         expected = np.concatenate([np.zeros(3), self.z1, np.zeros(3)])
+        assert_array_almost_equal(z, expected)
+
+    def test_lags_partial_beyond_overlap_with_step(self):
+        self._setup(float)
+        # min_lag < -(n2-1) with lag_step > 1: the leading skip into the
+        # overlap region must align to the user's grid, not to -(n2-1).
+        # n1=5, n2=3, z1 covers lags -2..4.
+        # grid: -5, -2, 1, 4, 7 -> [0, z1[0], z1[3], z1[6], 0]
+        z = np.correlate(self.x, self.y, lags=range(-5, 8, 3))
+        assert_array_almost_equal(z, [0, self.z1[0], self.z1[3], self.z1[6], 0])
+        # grid: -4, -1, 2 -> [0, z1[1], z1[4]]
+        z = np.correlate(self.x, self.y, lags=range(-4, 5, 3))
+        assert_array_almost_equal(z, [0, self.z1[1], self.z1[4]])
+        # Large repro from PR review (a=arange(100), v=arange(3), step 3):
+        # all-zero output was the symptom of the lag_step skip bug.
+        a = np.arange(100, dtype=float)
+        v = np.arange(3, dtype=float)
+        full = np.convolve(a, v, mode='full')  # lags -(n2-1)..n1-1 = -2..99
+        grid = range(-50, 50, 3)
+        # full[i] corresponds to lag i - (n2-1) = i - 2; map each requested
+        # lag back into full's index space, zero-fill anything out of range.
+        expected = np.array(
+            [full[lag + (len(v) - 1)] if 0 <= lag + (len(v) - 1) < len(full)
+             else 0.0
+             for lag in grid])
+        z = np.convolve(a, v, lags=grid)
         assert_array_almost_equal(z, expected)
 
     def test_lags_single_lag(self):
