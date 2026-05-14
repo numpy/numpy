@@ -1158,7 +1158,7 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, PyArray_Descr *typec,
     PyArrayObject *ret, *swap;
     npy_intp length;
     npy_intp i, i1, n1, n2, n;
-    npy_intp lag, tmplag, maxleft, maxright, phase2_end;
+    npy_intp lag, maxleft, maxright, phase2_end;
     npy_intp is1, is2, os;
     char *ip1, *ip2, *op;
     PyArray_DotFunc *dot;
@@ -1259,8 +1259,7 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, PyArray_Descr *typec,
     /* Phase 1: lags where y is left of x, i.e. lag in [-(n2-1), 0).
      * Overlap length is n2 + lag. */
     maxleft = (0 < max_lag ? 0 : max_lag);
-    tmplag = lag;
-    for (lag = tmplag; lag < maxleft; lag+=lag_step) {
+    for (; lag < maxleft; lag+=lag_step) {
         n = n2 + lag;
         dot(ip1, is1, ip2 - lag*is2, is2, op, n, ret);
         if (needs_pyapi && PyErr_Occurred()) {
@@ -1282,8 +1281,7 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, PyArray_Descr *typec,
         lag = phase2_end;
     }
     else if (lag < phase2_end) {
-        tmplag = lag;
-        for (lag = tmplag;
+        for (;
                 lag < phase2_end && (!needs_pyapi || !PyErr_Occurred());
                 lag += lag_step) {
             dot(ip1 + lag*is1, is1, ip2, is2, op, n2, ret);
@@ -1294,8 +1292,7 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, PyArray_Descr *typec,
     /* Phase 3: lags where y is right of x, i.e. lag in [n1-n2+1, n1).
      * Overlap length is n1 - lag. */
     maxright = (max_lag < n1) ? max_lag : n1;
-    tmplag = lag;
-    for (lag = tmplag;
+    for (;
             lag < maxright && (!needs_pyapi || !PyErr_Occurred());
             lag += lag_step) {
         n = n1 - lag;
