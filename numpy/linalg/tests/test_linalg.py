@@ -939,6 +939,15 @@ def test_pinv_rtol_arg():
         np.linalg.pinv(a, rcond=0.5, rtol=0.5)
 
 
+def test_pinv_integer_input_rtol_none():
+    a = np.array([[1, 2], [3, 4]], dtype=np.int32)
+
+    assert_almost_equal(
+        np.linalg.pinv(a, rtol=None),
+        np.linalg.pinv(a),
+    )
+
+
 class DetCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
     def do(self, a, b, tags):
