@@ -231,10 +231,6 @@ struct object_tag {
     static constexpr NPY_TYPES type_value = NPY_OBJECT;
 
     static int isnan(PyObject *a) {
-        if (a == NULL) {
-            return 1;
-        }
-
         /* PyObject_RichCompareBool is not used here because it takes a shortcut
          * for identical objects, hence will return false for NaN != NaN. */
         PyObject *result = PyObject_RichCompare(a, a, Py_NE);
@@ -259,23 +255,38 @@ struct object_tag {
             return 0;
         }
 
-        int isnan_a = isnan(a);
-        int isnan_b = isnan(b); 
-        if (isnan_a < 0 || isnan_b < 0) {
+        if (a == NULL) {
             return 0;
         }
-        if (isnan_b) {
+        if (b == NULL) {
             return 1;
-        }
-        if (isnan_a) {
-            return 0;
         }
 
         int ret = PyObject_RichCompareBool(a, b, Py_LT);
         if (ret < 0) {
             return 0;
         }
-        return ret;
+        if (ret) {
+            return 1;
+        }
+
+        ret = isnan(a);
+        if (ret < 0) {
+            return 0;
+        }
+        if (ret) {
+            return 0;
+        }
+
+        ret = isnan(b);
+        if (ret < 0) {
+            return 0;
+        }
+        if (ret) {
+            return 1;
+        }
+
+        return 0;
     }
 
     static int less_equal(PyObject *a, PyObject *b) {
@@ -291,23 +302,38 @@ struct object_tag {
             return 0;
         }
 
-        int isnan_a = isnan(a);
-        int isnan_b = isnan(b);
-        if (isnan_a < 0 || isnan_b < 0) {
+        if (a == NULL) {
             return 0;
         }
-        if (isnan_b) {
+        if (b == NULL) {
             return 1;
-        }
-        if (isnan_a) {
-            return 0;
         }
 
         int ret = PyObject_RichCompareBool(a, b, Py_GT);
         if (ret < 0) {
             return 0;
         }
-        return ret;
+        if (ret) {
+            return 1;
+        }
+
+        ret = isnan(a);
+        if (ret < 0) {
+            return 0;
+        }
+        if (ret) {
+            return 0;
+        }
+
+        ret = isnan(b);
+        if (ret < 0) {
+            return 0;
+        }
+        if (ret) {
+            return 1;
+        }
+
+        return 0;   
     }
 };
 
