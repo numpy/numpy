@@ -1157,7 +1157,7 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, PyArray_Descr *typec,
 {
     PyArrayObject *ret, *swap;
     npy_intp length;
-    npy_intp i, i1, n1, n2, n, n11;
+    npy_intp i, i1, n1, n2, n;
     npy_intp lag, tmplag, maxleft, maxright, phase2_end;
     npy_intp is1, is2, os;
     char *ip1, *ip2, *op;
@@ -1238,8 +1238,6 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, PyArray_Descr *typec,
 
     int needs_pyapi = PyDataType_FLAGCHK(PyArray_DESCR(ret), NPY_NEEDS_PYAPI);
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ret));
-    /* p is pointer to array start and s is stride */
-    /* i1 is x, i2, is y, o is answer */
     ip1 = PyArray_DATA(ap1);
     is1 = PyArray_STRIDES(ap1)[0];
     ip2 = PyArray_DATA(ap2);
@@ -1274,8 +1272,7 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, PyArray_Descr *typec,
 
     /* Phase 2: lags where y entirely overlaps with x, i.e. lag in [0, n1-n2].
      * Upper bound is the smaller of max_lag and the full-overlap boundary. */
-    n11 = n1;
-    phase2_end = max_lag < (n11 - n2 + 1) ? max_lag : (n11 - n2 + 1);
+    phase2_end = max_lag < (n1 - n2 + 1) ? max_lag : (n1 - n2 + 1);
     if (lag_step == 1 && lag < phase2_end &&
             small_correlate(ip1 + lag*is1, is1,
                             phase2_end - lag, PyArray_TYPE(ap1),
