@@ -81,6 +81,7 @@ typedef enum {
      */
     NPY_METH_IS_REORDERABLE = 1 << 3,
     _NPY_METH_IS_CAST = 1 << 4,  /* automatically set for casts */
+    NPY_METH_REQUIRES_CONTIGUOUS = 1 << 5,
     /*
      * Private flag for now for *logic* functions.  The logical functions
      * `logical_or` and `logical_and` can always cast the inputs to booleans

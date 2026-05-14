@@ -1726,10 +1726,15 @@ the functions that must be implemented for each slot.
 
    One dimensional strided loops implementing the behavior (either a
    ufunc or cast).  In most cases, ``NPY_METH_strided_loop`` is the
-   generic and only version that needs to be implemented.
+    required generic loop implementation.
    ``NPY_METH_contiguous_loop`` can be implemented additionally as a
    more light-weight/faster version and it is used when all inputs and
    outputs are contiguous.
+
+    When ``NPY_METH_REQUIRES_CONTIGUOUS`` is set, the iterator guarantees
+    contiguous strides for all operands. ``NPY_METH_strided_loop`` is still
+    required; for reductions, it may receive a stride of zero for the
+    accumulator operand.
 
    To deal with possibly unaligned data, NumPy needs to be able to copy
    unaligned to aligned data.  When implementing a new DType, the "cast"
