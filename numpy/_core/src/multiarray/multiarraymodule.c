@@ -1196,7 +1196,10 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, PyArray_Descr *typec,
     if (lag_step < 0) {
         inverted = 1;
         i = min_lag;
-        i1 = (npy_intp)(npy_ceil((max_lag - min_lag)/(float)lag_step))*lag_step;
+        npy_intp a = min_lag - max_lag;
+        npy_intp b = -lag_step;
+        npy_intp n = (max_lag < min_lag) ? (a + b - 1) / b : 0;
+        i1 = n * lag_step;
         min_lag = i1 + min_lag - lag_step;
         max_lag = i - lag_step;
         lag_step = -lag_step;
@@ -1417,7 +1420,7 @@ _lags_from_mode(int mode, npy_intp n1, npy_intp n2,
      * caller's original orientation. */
     if (inverted) {
         i = m0;
-        i1 = (npy_intp)(npy_ceil((m1 - m0)/(float)s))*s;
+        i1 = m1 - m0;  /* s is always 1 in this function */
         m0 = -(i1 + m0 - s);
         m1 = -(i - s);
     }
