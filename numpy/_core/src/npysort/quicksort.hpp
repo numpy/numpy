@@ -141,12 +141,22 @@ quicksort_(type *start, npy_intp num)
             pj = pr - 1;
             std::swap(*pm, *pj);
             for (;;) {
-                do {
-                    ++pi;
-                } while (npy::cmp<Tag, reverse>(*pi, vp));
-                do {
-                    --pj;
-                } while (npy::cmp<Tag, reverse>(vp, *pj));
+                if constexpr (std::is_same_v<Tag, npy::object_tag>) {
+                    do {
+                        ++pi;
+                    } while (pi < pj && npy::cmp<Tag, reverse>(*pi, vp));
+                    do {
+                        --pj;
+                    } while (pi < pj && npy::cmp<Tag, reverse>(vp, *pj));
+                }
+                else {
+                    do {
+                        ++pi;
+                    } while (npy::cmp<Tag, reverse>(*pi, vp));
+                    do {
+                        --pj;
+                    } while (npy::cmp<Tag, reverse>(vp, *pj));
+                }
                 if (pi >= pj) {
                     break;
                 }

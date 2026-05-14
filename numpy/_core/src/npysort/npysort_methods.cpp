@@ -216,6 +216,12 @@ make_sorts_(PyArray_DTypeMeta *dtypemeta, const char *name)
         NPY_DT_SLOTS(dtypemeta)->f.argsort[2] = atimsort_impl<Tag, type>;
     }
 
+    NPY_ARRAYMETHOD_FLAGS meth_flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+    if constexpr (std::is_same_v<Tag, npy::object_tag>) {
+        // lock the GIL for object sorts
+        meth_flags = (NPY_ARRAYMETHOD_FLAGS)(meth_flags | NPY_METH_REQUIRES_PYAPI);
+    }
+
     std::string sort_name = std::string(name) + "_sort";
     PyArray_DTypeMeta *sort_dtypes[2] = {dtypemeta, dtypemeta};
     PyType_Slot sort_slots[3] = {
@@ -228,7 +234,7 @@ make_sorts_(PyArray_DTypeMeta *dtypemeta, const char *name)
             1,
             1,
             NPY_NO_CASTING,
-            NPY_METH_NO_FLOATINGPOINT_ERRORS,
+            meth_flags,
             sort_dtypes,
             sort_slots,
     };
@@ -252,7 +258,7 @@ make_sorts_(PyArray_DTypeMeta *dtypemeta, const char *name)
             1,
             1,
             NPY_NO_CASTING,
-            NPY_METH_NO_FLOATINGPOINT_ERRORS,
+            meth_flags,
             argsort_dtypes,
             argsort_slots,
     };
@@ -353,6 +359,7 @@ int register_all_sorts() {
     r += make_string_sorts_<npy::string_tag>(&PyArray_BytesDType, "string");
     r += make_string_sorts_<npy::unicode_tag>(&PyArray_UnicodeDType, "unicode");
     r += make_sorts_<npy::half_tag>(&PyArray_HalfDType, "half");
+    r += make_sorts_<npy::object_tag>(&PyArray_ObjectDType, "object");
 
     return r;
 }

@@ -2782,10 +2782,19 @@ class TestMethods:
             nan = np.datetime64('NaT', 'D')
         elif np.issubdtype(a.dtype, np.timedelta64):
             nan = np.timedelta64('NaT', 'D')
-        a[::10] = nan
+        elif np.issubdtype(a.dtype, np.object_):
+            nan = np.nan
+        else:
+            raise ValueError(f"Unsupported dtype for nan testing: {a.dtype}")
 
-        b = a[::-1].copy()
-        b = np.concatenate((b[~np.isnan(b)], b[np.isnan(b)]))
+        nanmask = np.arange(a.size) % 10 == 0
+        a[nanmask] = nan
+
+        b = np.concatenate((a[~nanmask][::-1], a[nanmask]))
+        if np.issubdtype(a.dtype, np.object_):
+            # cast to float for comparison, as object np.nan != np.nan
+            a = a.astype(float)
+            b = b.astype(float)
 
         msg = f"sort, descending={descending}, stable={stable}"
         a_sorted = np.sort(a, stable=stable, descending=descending, axis=-1)
@@ -2832,66 +2841,17 @@ class TestMethods:
         self._test_sort_descending_nonan(a, stable, descending)
         self._test_sort_descending_nan(a, stable, descending)
 
-    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
     @pytest.mark.parametrize("stable", [True, False])
     @pytest.mark.parametrize("descending", [True, False])
-    @pytest.mark.parametrize("random_seed", [0, 1])
-    def test_sort_descending_complex_lexorder(self, dtype,
-                                              stable, descending, random_seed):
-        arange = np.tile(np.arange(25, dtype=dtype), 4)
-        nans = np.full(100, np.nan + 1j * np.nan, dtype=dtype)
-
-        no_nans = arange + 1j * arange
-        im_nans = arange + 1j * nans
-        re_nans = nans + 1j * arange
-        all_nans = nans + 1j * nans
-
-        a = np.concatenate((no_nans, im_nans, re_nans, all_nans))
-        immask = np.isnan(a.imag)
-        remask = np.isnan(a.real)
-
-        rng = np.random.default_rng(random_seed)
-        rng.shuffle(a)
-
-        # check that nans are sorted to the end with lexicographic ordering
-        # no nans -> imaginary nans only -> real nans only -> all nans
-        a.sort(stable=stable, descending=descending, axis=-1)
-        immask_sorted = np.isnan(a.imag)
-        remask_sorted = np.isnan(a.real)
-
-        assert_equal(
-            immask_sorted,
-            immask,
-            f"imag nans mask, dtype={dtype}, stable={stable}, descending={descending}",
-        )
-        assert_equal(
-            remask_sorted,
-            remask,
-            f"real nans mask, dtype={dtype}, stable={stable}, descending={descending}",
-        )
-
-        # check lexicographic ordering (real part is more significant)
-        # for no-nan values only
-        no_nans = a[~immask_sorted & ~remask_sorted]
-
-        real_diff = np.diff(no_nans.real)
-        imag_diff = np.diff(no_nans.imag)
-
-        if descending:
-            real_diff = -real_diff
-            imag_diff = -imag_diff
-
-        assert_equal(
-            (real_diff > 0) | ((real_diff == 0) & (imag_diff >= 0)),
-            True,
-            f"lexicographic order, dtype={dtype}, stable={stable}, "
-            f"descending={descending}",
-        )
+    def test_sort_descending_object(self, stable, descending):
+        a = np.arange(101, dtype=float).astype(object)
+        self._test_sort_descending_nonan(a, stable, descending)
+        self._test_sort_descending_nan(a, stable, descending)
 
     @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
     @pytest.mark.parametrize('stable', [True, False])
     @pytest.mark.parametrize('descending', [True, False])
-    def test_sort_descending_datetime(self, dtype, stable, descending):
+    def test_sort_descending_dates(self, dtype, stable, descending):
         a = np.arange(0, 101, dtype=dtype)
         self._test_sort_descending_nonan(a, stable, descending)
         self._test_sort_descending_nan(a, stable, descending)
@@ -2935,6 +2895,10 @@ class TestMethods:
             nan = np.datetime64("NaT", "D")
         elif np.issubdtype(a.dtype, np.timedelta64):
             nan = np.timedelta64("NaT", "D")
+        elif np.issubdtype(a.dtype, np.object_):
+            nan = np.nan
+        else:
+            raise ValueError(f"Unsupported dtype for nan testing: {a.dtype}")
         a[::10] = nan
 
         # comparing datetime types directly to numerical zero fails
@@ -3022,6 +2986,69 @@ class TestMethods:
     def test_argsort_descending_string(self, dtype, stable, descending):
         a = np.array([f"{i:03d}" for i in range(101)], dtype=dtype)
         self._test_argsort_descending_nonan(a, stable, descending)
+
+    @pytest.mark.parametrize("stable", [True, False])
+    @pytest.mark.parametrize("descending", [True, False])
+    def test_argsort_descending_object(self, stable, descending):
+        a = np.arange(101, dtype=float).astype(object)
+        self._test_argsort_descending_nonan(a, stable, descending)
+        self._test_argsort_descending_nan(a, stable, descending)
+
+    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
+    @pytest.mark.parametrize("stable", [True, False])
+    @pytest.mark.parametrize("descending", [True, False])
+    @pytest.mark.parametrize("random_seed", [0, 1])
+    def test_sort_descending_complex_lexorder(self, dtype,
+                                              stable, descending, random_seed):
+        arange = np.tile(np.arange(25, dtype=dtype), 4)
+        nans = np.full(100, np.nan + 1j * np.nan, dtype=dtype)
+
+        no_nans = arange + 1j * arange
+        im_nans = arange + 1j * nans
+        re_nans = nans + 1j * arange
+        all_nans = nans + 1j * nans
+
+        a = np.concatenate((no_nans, im_nans, re_nans, all_nans))
+        immask = np.isnan(a.imag)
+        remask = np.isnan(a.real)
+
+        rng = np.random.default_rng(random_seed)
+        rng.shuffle(a)
+
+        # check that nans are sorted to the end with lexicographic ordering
+        # no nans -> imaginary nans only -> real nans only -> all nans
+        a.sort(stable=stable, descending=descending, axis=-1)
+        immask_sorted = np.isnan(a.imag)
+        remask_sorted = np.isnan(a.real)
+
+        assert_equal(
+            immask_sorted,
+            immask,
+            f"imag nans mask, dtype={dtype}, stable={stable}, descending={descending}",
+        )
+        assert_equal(
+            remask_sorted,
+            remask,
+            f"real nans mask, dtype={dtype}, stable={stable}, descending={descending}",
+        )
+
+        # check lexicographic ordering (real part is more significant)
+        # for no-nan values only
+        no_nans = a[~immask_sorted & ~remask_sorted]
+
+        real_diff = np.diff(no_nans.real)
+        imag_diff = np.diff(no_nans.imag)
+
+        if descending:
+            real_diff = -real_diff
+            imag_diff = -imag_diff
+
+        assert_equal(
+            (real_diff > 0) | ((real_diff == 0) & (imag_diff >= 0)),
+            True,
+            f"lexicographic order, dtype={dtype}, stable={stable}, "
+            f"descending={descending}",
+        )
 
     @pytest.mark.parametrize('a', [
         np.array([0, 1, np.nan], dtype=np.float16),
