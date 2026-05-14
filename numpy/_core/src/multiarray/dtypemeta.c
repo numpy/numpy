@@ -233,15 +233,19 @@ dtypemeta_initialize_struct_from_spec(
     NPY_DT_SLOTS(DType)->get_constant = default_get_constant;
     NPY_DT_SLOTS(DType)->f = default_funcs;
 
+    PyType_Slot *spec_slot = spec->slots;
+    PyType_Slot null_slot = {0, NULL};
+    /* If user passes slots == NULL translate to finish sentinel slot. */
+    if (spec_slot == NULL) {
+        spec_slot = &null_slot;
+    }
     /*
      * If the first slot is NPY_DT_legacy_descriptor_proto, this DType will
      * be set up as a legacy dtype.  Consume that slot and amend the defaults
      * to match the legacy path (dtypemeta_wrap_legacy_descriptor).
      */
     PyArray_DescrProto *legacy_proto = NULL;
-    PyType_Slot *spec_slot = spec->slots;
-    if (spec_slot != NULL
-            && spec_slot->slot == NPY_DT_legacy_descriptor_proto) {
+    if (spec_slot->slot == NPY_DT_legacy_descriptor_proto) {
         legacy_proto = (PyArray_DescrProto *)spec_slot->pfunc;
         spec_slot++;  /* consumed; the slot loop starts after this one */
 

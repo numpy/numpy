@@ -287,12 +287,16 @@ static inline int PyArrayInitDTypeMeta_FromSpec(
         PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *spec)
 {
     PyArray_DescrProto *proto = NULL;
-    if (spec->slots[0].slot == NPY_DT_legacy_descriptor_proto) {
+    if (spec->slots != NULL && spec->slots[0].slot == NPY_DT_legacy_descriptor_proto) {
         proto = (PyArray_DescrProto *)spec->slots[0].pfunc;
     }
 
 #if NPY_TARGET_VERSION < NPY_2_4_API_VERSION
-    /* < NumPy 2.4, slot IDs accidentally changed: translate them. */
+    /*
+     * In NumPy 2.4 the slot IDs ABI was accidentally changed, so we translate
+     * them even if `NPY_DT_legacy_descriptor_proto` is unused. The translation
+     * is idempotent.
+     */
     PyType_Slot *slot = spec->slots;
     int bad_offset = (PyArray_RUNTIME_VERSION >= NPY_2_4_API_VERSION)
             ? (1 << 10) : (1 << 11);
