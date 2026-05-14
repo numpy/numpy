@@ -249,12 +249,22 @@ aquicksort_(type *vv, npy_intp *tosort, npy_intp num)
             pj = pr - 1;
             std::swap(*pm, *pj);
             for (;;) {
-                do {
-                    ++pi;
-                } while (npy::cmp<Tag, reverse>(v[*pi], vp));
-                do {
-                    --pj;
-                } while (npy::cmp<Tag, reverse>(vp, v[*pj]));
+                if constexpr (std::is_same_v<Tag, npy::object_tag>) {
+                    do {
+                        ++pi;
+                    } while (pi < pj && npy::cmp<Tag, reverse>(v[*pi], vp));
+                    do {
+                        --pj;
+                    } while (pi < pj && npy::cmp<Tag, reverse>(vp, v[*pj]));
+                }
+                else {
+                    do {
+                        ++pi;
+                    } while (npy::cmp<Tag, reverse>(v[*pi], vp));
+                    do {
+                        --pj;
+                    } while (npy::cmp<Tag, reverse>(vp, v[*pj]));
+                }
                 if (pi >= pj) {
                     break;
                 }
