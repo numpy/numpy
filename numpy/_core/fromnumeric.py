@@ -951,10 +951,10 @@ def sort(a, axis=-1, kind=None, order=None, *, stable=None, descending=None):
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
     kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
-        Please use the `stable` parameter instead. 'quicksort' and 'heapsort'
-        are mapped to the default ``stable=False``, while 'mergesort' and
-        'stable' are mapped to ``stable=True``. Fine grained algorithm control
-        has been removed.
+        Please use the `stable` parameter instead. This argument is retained
+        for backwards compatibility and provides no additional control.
+        'quicksort' and 'heapsort' are equivalent to ``stable=False``, while
+        'mergesort' and 'stable' are equivalent to ``stable=True``.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
         which fields to compare first, second, etc.  A single field can
@@ -1108,10 +1108,10 @@ def argsort(a, axis=-1, kind=None, order=None, *, stable=None, descending=None):
         Axis along which to sort.  The default is -1 (the last axis). If None,
         the flattened array is used.
     kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
-        Please use the `stable` parameter instead. 'quicksort' and 'heapsort'
-        are mapped to the default ``stable=False``, while 'mergesort' and
-        'stable' are mapped to ``stable=True``. Fine grained algorithm control
-        has been removed.
+        Please use the `stable` parameter instead. This argument is retained
+        for backwards compatibility and provides no additional control.
+        'quicksort' and 'heapsort' are equivalent to ``stable=False``, while
+        'mergesort' and 'stable' are equivalent to ``stable=True``.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
         which fields to compare first, second, etc.  A single field can
