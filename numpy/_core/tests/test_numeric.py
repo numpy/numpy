@@ -3976,6 +3976,24 @@ class TestConvolve:
         assert_array_almost_equal(z, [0.0, 2.5, 5.5, 2.5])
         assert_array_equal(lags, np.arange(-2, 6, 2))
 
+    def test_convolve_lags_large_step_not_all_zeros(self):
+        # Regression test: lags spanning before the overlap region with a
+        # non-unit step should still produce non-zero values for lags within
+        # the overlap, not silently return all zeros.
+        a = np.arange(100, dtype=float)
+        v = np.arange(3, dtype=float)
+        lag_range = range(-50, 50, 3)
+        result = np.convolve(a, v, lags=lag_range)
+        assert not np.all(result == 0), "result should not be all zeros"
+        # Cross-check against the full convolution for in-range lags.
+        z_full = np.convolve(a, v, 'full')  # lags -2 .. 99
+        n2 = len(v)
+        for i, lag in enumerate(lag_range):
+            if -(n2 - 1) <= lag < len(a):
+                assert_array_almost_equal(result[i], z_full[lag + (n2 - 1)])
+            else:
+                assert result[i] == 0, f"lag {lag} is out of range, expected 0"
+
     def test_correlation_lags_full_mode(self):
         a = [1, 2, 3]
         v = [0, 1, 0.5]
