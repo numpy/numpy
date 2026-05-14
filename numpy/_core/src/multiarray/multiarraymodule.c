@@ -3238,11 +3238,6 @@ array_correlatelags(PyObject *NPY_UNUSED(dummy),
             {"|conjugate", &PyArray_BoolConverter, &conjugate}) < 0) {
         return NULL;
     }
-    if (min_lag == 0 && max_lag == 0 && lag_step == 0) {
-        /* if no lag parameters passed, use default: mode = 'valid' */
-        return PyArray_Correlate2(op1, op2, 0);
-    }
-
     if (PyArray_DTypeFromObject(op1, NPY_MAXDIMS, &typec) < 0) {
         return NULL;
     }
