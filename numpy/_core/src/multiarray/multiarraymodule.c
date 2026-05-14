@@ -1196,10 +1196,9 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, PyArray_Descr *typec,
     if (lag_step < 0) {
         inverted = 1;
         i = min_lag;
-        npy_intp a = min_lag - max_lag;
-        npy_intp b = -lag_step;
-        npy_intp n = (max_lag < min_lag) ? (a + b - 1) / b : 0;
-        i1 = n * lag_step;
+        i1 = (max_lag < min_lag)
+            ? ((min_lag - max_lag + (-lag_step) - 1) / (-lag_step)) * lag_step
+            : 0;
         min_lag = i1 + min_lag - lag_step;
         max_lag = i - lag_step;
         lag_step = -lag_step;
@@ -1251,9 +1250,9 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, PyArray_Descr *typec,
          * first lag on the user's grid (min_lag + k*lag_step) that is in the
          * overlap region (>= -n2+1).
          */
-        npy_intp skip = ((-n2 + 1) - lag + lag_step - 1) / lag_step;
-        op += os * skip;
-        lag += skip * lag_step;
+        i = ((-n2 + 1) - lag + lag_step - 1) / lag_step;
+        op += os * i;
+        lag += i * lag_step;
     }
 
     /* Phase 1: lags where y is left of x, i.e. lag in [-(n2-1), 0).
