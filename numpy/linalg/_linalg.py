@@ -1038,11 +1038,6 @@ def qr(a, mode='reduced'):
 
     Subclasses of `ndarray` are preserved except for the 'raw' mode. So if
     `a` is of type `matrix`, all the return values will be matrices too.
-
-    New 'reduced', 'complete', and 'raw' options for mode were added in
-    NumPy 1.8.0 and the old option 'full' was made an alias of 'reduced'.
-    The deprecated 'full' and 'economic' modes were removed in NumPy 2.5.
-    Use 'reduced' instead of 'full', and 'raw' instead of 'economic'.
     The 'raw' option was added so that LAPACK routines that can multiply
     arrays by q using the Householder reflectors can be used. Note that in
     this case the returned arrays are of type np.double or np.cdouble and
