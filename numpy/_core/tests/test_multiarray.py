@@ -30,7 +30,7 @@ import pytest
 
 import numpy as np
 import numpy._core._multiarray_tests as _multiarray_tests
-from numpy._core._rational_tests import rational
+from numpy._core._rational_tests import rational, rational2
 from numpy._core.multiarray import _get_ndarray_c_version, dot
 from numpy._core.tests._locales import CommaDecimalPointLocale
 from numpy.exceptions import AxisError, ComplexWarning
@@ -9025,7 +9025,11 @@ class TestNewBufferProtocol:
 
     @pytest.mark.parametrize(["obj", "error"], [
             pytest.param(np.array([1, 2], dtype=rational), ValueError, id="array"),
-            pytest.param(rational(1, 2), TypeError, id="scalar")])
+            pytest.param(rational(1, 2), TypeError, id="scalar"),
+            pytest.param(np.array([1, 2], dtype=rational2),
+                         ValueError, id="array_new_api"),
+            pytest.param(rational2(1, 2), TypeError,
+                         id="scalar_new_api")])
     def test_export_and_pickle_user_dtype(self, obj, error):
         # User dtypes should export successfully when FORMAT was not requested.
         with pytest.raises(error):

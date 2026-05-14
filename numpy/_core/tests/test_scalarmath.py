@@ -11,7 +11,7 @@ from hypothesis.extra import numpy as hynp
 from hypothesis.strategies import sampled_from
 
 import numpy as np
-from numpy._core._rational_tests import rational
+from numpy._core._rational_tests import rational, rational2
 from numpy._utils import _pep440
 from numpy.exceptions import ComplexWarning
 from numpy.testing import (
@@ -869,7 +869,7 @@ def recursionlimit(n):
 
 @given(sampled_from(objecty_things),
        sampled_from(binary_operators_for_scalar_ints),
-       sampled_from(types + [rational]))
+       sampled_from(types + [rational, rational2]))
 @pytest.mark.thread_unsafe(reason="sets recursion limit globally")
 def test_operator_object_left(o, op, type_):
     try:
@@ -881,7 +881,7 @@ def test_operator_object_left(o, op, type_):
 
 @given(sampled_from(objecty_things),
        sampled_from(binary_operators_for_scalar_ints),
-       sampled_from(types + [rational]))
+       sampled_from(types + [rational, rational2]))
 @pytest.mark.thread_unsafe(reason="sets recursion limit globally")
 def test_operator_object_right(o, op, type_):
     try:

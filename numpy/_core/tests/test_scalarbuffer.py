@@ -5,7 +5,7 @@ import pytest
 
 import numpy as np
 from numpy._core._multiarray_tests import get_buffer_info
-from numpy._core._rational_tests import rational
+from numpy._core._rational_tests import rational, rational2
 from numpy.testing import assert_, assert_equal, assert_raises
 
 # PEP3118 format strings for native (standard alignment and byteorder) types
@@ -143,8 +143,9 @@ class TestScalarPEP3118:
         with pytest.raises(BufferError, match="scalar buffer is readonly"):
             get_buffer_info(s, ["WRITABLE"])
 
-    def test_user_scalar_fails_buffer(self):
-        r = rational(1)
+    @pytest.mark.parametrize("rat_cls", [rational, rational2])
+    def test_user_scalar_fails_buffer(self, rat_cls):
+        r = rat_cls(1)
         with assert_raises(TypeError):
             memoryview(r)
 

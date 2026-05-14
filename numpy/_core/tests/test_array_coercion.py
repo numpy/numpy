@@ -11,7 +11,7 @@ from pytest import param
 
 import numpy as np
 import numpy._core._multiarray_umath as ncu
-from numpy._core._rational_tests import rational
+from numpy._core._rational_tests import rational, rational2
 from numpy.testing import IS_64BIT, assert_array_equal
 
 
@@ -112,6 +112,7 @@ def scalar_instances(times=True, extended_precision=True, user_dtype=True):
     # Rational:
     if user_dtype:
         yield param(rational(1, 2), id="rational")
+        yield param(rational2(1, 2), id="rational2")
 
     # Cannot create a structured void scalar directly:
     structured = np.array([(1, 3)], "i,i")[0]
