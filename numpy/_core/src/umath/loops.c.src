@@ -1508,9 +1508,7 @@ LONGDOUBLE_absolute(char **args, npy_intp const *dimensions, npy_intp const *ste
 {
     UNARY_LOOP {
         const npy_longdouble in1 = *(npy_longdouble *)ip1;
-        const npy_longdouble tmp = in1 > 0 ? in1 : -in1;
-        /* add 0 to clear -0.0 */
-        *((npy_longdouble *)op1) = tmp + 0;
+        *((npy_longdouble *)op1) = npy_fabsl(in1);
     }
     npy_clear_floatstatus_barrier((char*)dimensions);
 }
