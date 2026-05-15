@@ -39,6 +39,7 @@ jobs:
           - [ubuntu-22.04, musllinux_x86_64, ""]
           - [ubuntu-22.04-arm, manylinux_aarch64, ""]
           - [ubuntu-22.04-arm, musllinux_aarch64, ""]
+          - [ubuntu-22.04-arm, manylinux_armv7l, ""]
           - [macos-15-intel, macosx_x86_64, openblas]
           - [macos-14, macosx_arm64, openblas]
           - [windows-2022, win_amd64, ""]
@@ -105,6 +106,7 @@ jobs:
         uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+          CIBW_ARCHS: ${{ endsWith(matrix.buildplat[1], 'armv7l') && 'armv7l' || 'auto' }}
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
