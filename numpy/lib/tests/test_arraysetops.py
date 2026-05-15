@@ -1,6 +1,8 @@
 """Test functions for 1D array set operations.
 
 """
+from unittest import mock
+
 import pytest
 
 import numpy as np
@@ -1217,15 +1219,19 @@ class TestUnique:
         for res_unique_array_api, res_unique in [
             (
                 np.unique_values(arr),
-                np.unique(arr, equal_nan=False)
+                np.unique(arr, equal_nan=False, sorted=False)
             ),
             (
                 np.unique_counts(arr),
-                np.unique(arr, return_counts=True, equal_nan=False)
+                np.unique(
+                    arr, return_counts=True, equal_nan=False, sorted=False
+                )
             ),
             (
                 np.unique_inverse(arr),
-                np.unique(arr, return_inverse=True, equal_nan=False)
+                np.unique(
+                    arr, return_inverse=True, equal_nan=False, sorted=False
+                )
             ),
             (
                 np.unique_all(arr),
@@ -1234,7 +1240,8 @@ class TestUnique:
                     return_index=True,
                     return_inverse=True,
                     return_counts=True,
-                    equal_nan=False
+                    equal_nan=False,
+                    sorted=False,
                 )
             )
         ]:
@@ -1247,6 +1254,27 @@ class TestUnique:
             for actual, expected in zip(res_unique_array_api, res_unique):
                 # Order of output is not guaranteed
                 assert_equal(np.sort(actual), np.sort(expected))
+
+    @pytest.mark.thread_unsafe(
+        reason="patches numpy.lib._arraysetops_impl.unique in-process"
+    )
+    @mock.patch("numpy.lib._arraysetops_impl.unique", wraps=np.unique)
+    def test_array_api_unique_forwards_sorted_false(self, m_unique):
+        # Array API helpers must call ``unique(..., sorted=False)`` as documented
+        # (avoids the default unique(sorted=True) and locks in the contract).
+        x = np.array([3, 1, 2, 1])
+        for helper in (
+            np.unique_values,
+            np.unique_counts,
+            np.unique_inverse,
+            np.unique_all,
+        ):
+            m_unique.reset_mock()
+            helper(x)
+            m_unique.assert_called_once()
+            assert m_unique.call_args.kwargs.get("sorted") is False, (
+                helper.__name__
+            )
 
     def test_unique_inverse_shape(self):
         # Regression test for https://github.com/numpy/numpy/issues/25552
