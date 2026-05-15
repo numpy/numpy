@@ -4751,7 +4751,7 @@ class MaskedArray(ndarray):
 
     def reshape(self, *s, **kwargs):
         """
-        Give a new shape to the array without changing its data.
+        Returns a reshaped masked array without changing its data.
 
         Returns a masked array containing the same data, but with a new shape.
         The result is a view on the original array; if this is not possible, a

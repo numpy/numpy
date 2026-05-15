@@ -4749,7 +4749,7 @@ _array_method_doc('transpose', "*axes",
     --------
     transpose : Equivalent function.
     ndarray.T : Array property returning the array transposed.
-    ndarray.reshape : Give a new shape to an array without changing its data.
+    ndarray.reshape : Return a reshaped ndarray without changing data.
 
     Examples
     --------

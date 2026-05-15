@@ -207,7 +207,7 @@ def _reshape_dispatcher(a, /, shape, order=None, *, copy=None):
 @array_function_dispatch(_reshape_dispatcher)
 def reshape(a, /, shape, order='C', *, copy=None):
     """
-    Gives a new shape to an array without changing its data.
+    Returns a reshaped ndarray without changing data.
 
     Parameters
     ----------
