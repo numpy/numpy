@@ -344,7 +344,7 @@ def _unsigned_subtract(a, b):
     try:
         unsigned_dt = signed_to_unsigned[dt.type]
     except KeyError:
-        return np.subtract(a, b, dtype=dt)
+        return np.subtract(a, b, dtype=type(dt))
     else:
         # we know the inputs are integers, and we are deliberately casting
         # signed to unsigned.  The input may be negative python integers so
