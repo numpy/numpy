@@ -927,6 +927,20 @@ class TestMetadata:
         d = np.dtype((np.void, np.dtype('i4,i4', metadata={'datum': 1})))
         assert_(d.metadata == {'datum': 1})
 
+    def test_metadata_preserved_zero_sized_void(self):
+        # gh-31436: array creation functions dropped metadata for unsized
+        # legacy dtypes (notably zero-sized void) because the descriptor was
+        # treated as a bare prototype and rebuilt from the DType singleton.
+        dt = np.dtype('V0', metadata={'type': 'struct_marker'})
+        assert dt.metadata == {'type': 'struct_marker'}
+        for arr in (np.zeros(5, dtype=dt),
+                    np.empty(5, dtype=dt),
+                    np.ones(5, dtype=dt),
+                    np.full(5, b'', dtype=dt)):
+            assert arr.dtype == dt
+            assert arr.dtype.metadata == {'type': 'struct_marker'}
+
+
 class TestString:
     def test_complex_dtype_str(self):
         dt = np.dtype([('top', [('tiles', ('>f4', (64, 64)), (1,)),
