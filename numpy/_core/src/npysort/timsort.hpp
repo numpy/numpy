@@ -104,13 +104,13 @@ count_run_(type *arr, npy_intp l, npy_intp num, npy_intp minrun)
     pl = arr + l;
 
     /* (not strictly) ascending sequence */
-    if (!NPY_CMP(*(pl + 1), *pl)) {
-        for (pi = pl + 1; pi < arr + num - 1 && !NPY_CMP(*(pi + 1), *pi);
+    if (!npy::cmp<Tag, reverse>(*(pl + 1), *pl)) {
+        for (pi = pl + 1; pi < arr + num - 1 && !npy::cmp<Tag, reverse>(*(pi + 1), *pi);
              ++pi) {
         }
     }
     else { /* (strictly) descending sequence */
-        for (pi = pl + 1; pi < arr + num - 1 && NPY_CMP(*(pi + 1), *pi);
+        for (pi = pl + 1; pi < arr + num - 1 && npy::cmp<Tag, reverse>(*(pi + 1), *pi);
              ++pi) {
         }
 
@@ -137,7 +137,7 @@ count_run_(type *arr, npy_intp l, npy_intp num, npy_intp minrun)
             vc = *pi;
             pj = pi;
 
-            while (pl < pj && NPY_CMP(vc, *(pj - 1))) {
+            while (pl < pj && npy::cmp<Tag, reverse>(vc, *(pj - 1))) {
                 *pj = *(pj - 1);
                 --pj;
             }
@@ -153,7 +153,7 @@ count_run_(type *arr, npy_intp l, npy_intp num, npy_intp minrun)
  * and merge from left to right
  */
 template <typename Tag, typename type, bool reverse>
-static int
+static void
 merge_left_(type *p1, npy_intp l1, type *p2, npy_intp l2, type *p3)
 {
     type *end = p2 + l2;
@@ -162,7 +162,7 @@ merge_left_(type *p1, npy_intp l1, type *p2, npy_intp l2, type *p3)
     *p1++ = *p2++;
 
     while (p1 < p2 && p2 < end) {
-        if (NPY_CMP(*p2, *p3)) {
+        if (npy::cmp<Tag, reverse>(*p2, *p3)) {
             *p1++ = *p2++;
         }
         else {
@@ -173,15 +173,13 @@ merge_left_(type *p1, npy_intp l1, type *p2, npy_intp l2, type *p3)
     if (p1 != p2) {
         memcpy(p1, p3, sizeof(type) * (p2 - p1));
     }
-
-    return 0;
 }
 
 /* when the right part of the array (p2) is smaller, copy p2 to buffer
  * and merge from right to left
  */
 template <typename Tag, typename type, bool reverse>
-static int
+static void
 merge_right_(type *p1, npy_intp l1, type *p2, npy_intp l2, type *p3)
 {
     npy_intp ofs;
@@ -194,7 +192,7 @@ merge_right_(type *p1, npy_intp l1, type *p2, npy_intp l2, type *p3)
     *p2-- = *p1--;
 
     while (p1 < p2 && start < p1) {
-        if (NPY_CMP(*p3, *p1)) {
+        if (npy::cmp<Tag, reverse>(*p3, *p1)) {
             *p2-- = *p1--;
         }
         else {
@@ -206,8 +204,6 @@ merge_right_(type *p1, npy_intp l1, type *p2, npy_intp l2, type *p3)
         ofs = p2 - start;
         memcpy(start + 1, p3 - ofs + 1, sizeof(type) * ofs);
     }
-
-    return 0;
 }
 
 /* Note: the naming convention of gallop functions are different from that of
@@ -221,7 +217,7 @@ gallop_right_(const type *arr, const npy_intp size, const type key)
 {
     npy_intp last_ofs, ofs, m;
 
-    if (NPY_CMP(key, arr[0])) {
+    if (npy::cmp<Tag, reverse>(key, arr[0])) {
         return 0;
     }
 
@@ -234,7 +230,7 @@ gallop_right_(const type *arr, const npy_intp size, const type key)
             break;
         }
 
-        if (NPY_CMP(key, arr[ofs])) {
+        if (npy::cmp<Tag, reverse>(key, arr[ofs])) {
             break;
         }
         else {
@@ -248,7 +244,7 @@ gallop_right_(const type *arr, const npy_intp size, const type key)
     while (last_ofs + 1 < ofs) {
         m = last_ofs + ((ofs - last_ofs) >> 1);
 
-        if (NPY_CMP(key, arr[m])) {
+        if (npy::cmp<Tag, reverse>(key, arr[m])) {
             ofs = m;
         }
         else {
@@ -266,7 +262,7 @@ gallop_left_(const type *arr, const npy_intp size, const type key)
 {
     npy_intp last_ofs, ofs, l, m, r;
 
-    if (NPY_CMP(arr[size - 1], key)) {
+    if (npy::cmp<Tag, reverse>(arr[size - 1], key)) {
         return size;
     }
 
@@ -279,7 +275,7 @@ gallop_left_(const type *arr, const npy_intp size, const type key)
             break;
         }
 
-        if (NPY_CMP(arr[size - ofs - 1], key)) {
+        if (npy::cmp<Tag, reverse>(arr[size - ofs - 1], key)) {
             break;
         }
         else {
@@ -295,7 +291,7 @@ gallop_left_(const type *arr, const npy_intp size, const type key)
     while (l + 1 < r) {
         m = l + ((r - l) >> 1);
 
-        if (NPY_CMP(arr[m], key)) {
+        if (npy::cmp<Tag, reverse>(arr[m], key)) {
             l = m;
         }
         else {
@@ -463,10 +459,6 @@ timsort_(void *start, npy_intp num)
 
     for (l = 0; l < num;) {
         n = count_run_<Tag, type, reverse>((type *)start, l, num, minrun);
-        if (NPY_UNLIKELY(n < 0)) {
-            ret = n;
-            goto cleanup;
-        }
         ret = found_new_run_<Tag, type, reverse>((type *)start, stack, &stack_ptr, n, num, &buffer);
         if (NPY_UNLIKELY(ret < 0))
             goto cleanup;
@@ -511,15 +503,15 @@ acount_run_(type *arr, npy_intp *tosort, npy_intp l, npy_intp num,
     pl = tosort + l;
 
     /* (not strictly) ascending sequence */
-    if (!NPY_CMP(arr[*(pl + 1)], arr[*pl])) {
+    if (!npy::cmp<Tag, reverse>(arr[*(pl + 1)], arr[*pl])) {
         for (pi = pl + 1;
-             pi < tosort + num - 1 && !NPY_CMP(arr[*(pi + 1)], arr[*pi]);
+             pi < tosort + num - 1 && !npy::cmp<Tag, reverse>(arr[*(pi + 1)], arr[*pi]);
              ++pi) {
         }
     }
     else { /* (strictly) descending sequence */
         for (pi = pl + 1;
-             pi < tosort + num - 1 && NPY_CMP(arr[*(pi + 1)], arr[*pi]);
+             pi < tosort + num - 1 && npy::cmp<Tag, reverse>(arr[*(pi + 1)], arr[*pi]);
              ++pi) {
         }
 
@@ -547,7 +539,7 @@ acount_run_(type *arr, npy_intp *tosort, npy_intp l, npy_intp num,
             vc = arr[*pi];
             pj = pi;
 
-            while (pl < pj && NPY_CMP(vc, arr[*(pj - 1)])) {
+            while (pl < pj && npy::cmp<Tag, reverse>(vc, arr[*(pj - 1)])) {
                 *pj = *(pj - 1);
                 --pj;
             }
@@ -566,7 +558,7 @@ agallop_right_(const type *arr, const npy_intp *tosort, const npy_intp size,
 {
     npy_intp last_ofs, ofs, m;
 
-    if (NPY_CMP(key, arr[tosort[0]])) {
+    if (npy::cmp<Tag, reverse>(key, arr[tosort[0]])) {
         return 0;
     }
 
@@ -579,7 +571,7 @@ agallop_right_(const type *arr, const npy_intp *tosort, const npy_intp size,
             break;
         }
 
-        if (NPY_CMP(key, arr[tosort[ofs]])) {
+        if (npy::cmp<Tag, reverse>(key, arr[tosort[ofs]])) {
             break;
         }
         else {
@@ -593,7 +585,7 @@ agallop_right_(const type *arr, const npy_intp *tosort, const npy_intp size,
     while (last_ofs + 1 < ofs) {
         m = last_ofs + ((ofs - last_ofs) >> 1);
 
-        if (NPY_CMP(key, arr[tosort[m]])) {
+        if (npy::cmp<Tag, reverse>(key, arr[tosort[m]])) {
             ofs = m;
         }
         else {
@@ -612,7 +604,7 @@ agallop_left_(const type *arr, const npy_intp *tosort, const npy_intp size,
 {
     npy_intp last_ofs, ofs, l, m, r;
 
-    if (NPY_CMP(arr[tosort[size - 1]], key)) {
+    if (npy::cmp<Tag, reverse>(arr[tosort[size - 1]], key)) {
         return size;
     }
 
@@ -625,7 +617,7 @@ agallop_left_(const type *arr, const npy_intp *tosort, const npy_intp size,
             break;
         }
 
-        if (NPY_CMP(arr[tosort[size - ofs - 1]], key)) {
+        if (npy::cmp<Tag, reverse>(arr[tosort[size - ofs - 1]], key)) {
             break;
         }
         else {
@@ -642,7 +634,7 @@ agallop_left_(const type *arr, const npy_intp *tosort, const npy_intp size,
     while (l + 1 < r) {
         m = l + ((r - l) >> 1);
 
-        if (NPY_CMP(arr[tosort[m]], key)) {
+        if (npy::cmp<Tag, reverse>(arr[tosort[m]], key)) {
             l = m;
         }
         else {
@@ -655,7 +647,7 @@ agallop_left_(const type *arr, const npy_intp *tosort, const npy_intp size,
 }
 
 template <typename Tag, typename type, bool reverse>
-static int
+static void
 amerge_left_(type *arr, npy_intp *p1, npy_intp l1, npy_intp *p2, npy_intp l2,
              npy_intp *p3)
 {
@@ -665,7 +657,7 @@ amerge_left_(type *arr, npy_intp *p1, npy_intp l1, npy_intp *p2, npy_intp l2,
     *p1++ = *p2++;
 
     while (p1 < p2 && p2 < end) {
-        if (NPY_CMP(arr[*p2], arr[*p3])) {
+        if (npy::cmp<Tag, reverse>(arr[*p2], arr[*p3])) {
             *p1++ = *p2++;
         }
         else {
@@ -676,12 +668,10 @@ amerge_left_(type *arr, npy_intp *p1, npy_intp l1, npy_intp *p2, npy_intp l2,
     if (p1 != p2) {
         memcpy(p1, p3, sizeof(npy_intp) * (p2 - p1));
     }
-
-    return 0;
 }
 
 template <typename Tag, typename type, bool reverse>
-static int
+static void
 amerge_right_(type *arr, npy_intp *p1, npy_intp l1, npy_intp *p2, npy_intp l2,
               npy_intp *p3)
 {
@@ -695,7 +685,7 @@ amerge_right_(type *arr, npy_intp *p1, npy_intp l1, npy_intp *p2, npy_intp l2,
     *p2-- = *p1--;
 
     while (p1 < p2 && start < p1) {
-        if (NPY_CMP(arr[*p3], arr[*p1])) {
+        if (npy::cmp<Tag, reverse>(arr[*p3], arr[*p1])) {
             *p2-- = *p1--;
         }
         else {
@@ -707,8 +697,6 @@ amerge_right_(type *arr, npy_intp *p1, npy_intp l1, npy_intp *p2, npy_intp l2,
         ofs = p2 - start;
         memcpy(start + 1, p3 - ofs + 1, sizeof(npy_intp) * ofs);
     }
-
-    return 0;
 }
 
 template <typename Tag, typename type, bool reverse>
@@ -951,15 +939,15 @@ count_run_(type *arr, npy_intp l, npy_intp num, npy_intp minrun, type *vp,
     pl = arr + l * len;
 
     /* (not strictly) ascending sequence */
-    if (!NPY_CMP(pl + len, pl, len)) {
+    if (!npy::cmp<Tag, reverse>(pl + len, pl, len)) {
         for (pi = pl + len;
-             pi < arr + (num - 1) * len && !NPY_CMP(pi + len, pi, len);
+             pi < arr + (num - 1) * len && !npy::cmp<Tag, reverse>(pi + len, pi, len);
              pi += len) {
         }
     }
     else { /* (strictly) descending sequence */
         for (pi = pl + len;
-             pi < arr + (num - 1) * len && NPY_CMP(pi + len, pi, len);
+             pi < arr + (num - 1) * len && npy::cmp<Tag, reverse>(pi + len, pi, len);
              pi += len) {
         }
 
@@ -986,7 +974,7 @@ count_run_(type *arr, npy_intp l, npy_intp num, npy_intp minrun, type *vp,
             Tag::copy(vp, pi, len);
             pj = pi;
 
-            while (pl < pj && NPY_CMP(vp, pj - len, len)) {
+            while (pl < pj && npy::cmp<Tag, reverse>(vp, pj - len, len)) {
                 Tag::copy(pj, pj - len, len);
                 pj -= len;
             }
@@ -1005,7 +993,7 @@ gallop_right_(const typename Tag::type *arr, const npy_intp size,
 {
     npy_intp last_ofs, ofs, m;
 
-    if (NPY_CMP(key, arr, len)) {
+    if (npy::cmp<Tag, reverse>(key, arr, len)) {
         return 0;
     }
 
@@ -1018,7 +1006,7 @@ gallop_right_(const typename Tag::type *arr, const npy_intp size,
             break;
         }
 
-        if (NPY_CMP(key, arr + ofs * len, len)) {
+        if (npy::cmp<Tag, reverse>(key, arr + ofs * len, len)) {
             break;
         }
         else {
@@ -1032,7 +1020,7 @@ gallop_right_(const typename Tag::type *arr, const npy_intp size,
     while (last_ofs + 1 < ofs) {
         m = last_ofs + ((ofs - last_ofs) >> 1);
 
-        if (NPY_CMP(key, arr + m * len, len)) {
+        if (npy::cmp<Tag, reverse>(key, arr + m * len, len)) {
             ofs = m;
         }
         else {
@@ -1051,7 +1039,7 @@ gallop_left_(const typename Tag::type *arr, const npy_intp size,
 {
     npy_intp last_ofs, ofs, l, m, r;
 
-    if (NPY_CMP(arr + (size - 1) * len, key, len)) {
+    if (npy::cmp<Tag, reverse>(arr + (size - 1) * len, key, len)) {
         return size;
     }
 
@@ -1064,7 +1052,7 @@ gallop_left_(const typename Tag::type *arr, const npy_intp size,
             break;
         }
 
-        if (NPY_CMP(arr + (size - ofs - 1) * len, key, len)) {
+        if (npy::cmp<Tag, reverse>(arr + (size - ofs - 1) * len, key, len)) {
             break;
         }
         else {
@@ -1080,7 +1068,7 @@ gallop_left_(const typename Tag::type *arr, const npy_intp size,
     while (l + 1 < r) {
         m = l + ((r - l) >> 1);
 
-        if (NPY_CMP(arr + m * len, key, len)) {
+        if (npy::cmp<Tag, reverse>(arr + m * len, key, len)) {
             l = m;
         }
         else {
@@ -1093,11 +1081,10 @@ gallop_left_(const typename Tag::type *arr, const npy_intp size,
 }
 
 template <typename Tag, typename type, bool reverse>
-static int
+static void
 merge_left_(typename Tag::type *p1, npy_intp l1, typename Tag::type *p2,
             npy_intp l2, typename Tag::type *p3, size_t len)
-{
-    type *end = p2 + l2 * len;
+{    type *end = p2 + l2 * len;
     memcpy(p3, p1, sizeof(type) * l1 * len);
     /* first element must be in p2 otherwise skipped in the caller */
     Tag::copy(p1, p2, len);
@@ -1105,7 +1092,7 @@ merge_left_(typename Tag::type *p1, npy_intp l1, typename Tag::type *p2,
     p2 += len;
 
     while (p1 < p2 && p2 < end) {
-        if (NPY_CMP(p2, p3, len)) {
+        if (npy::cmp<Tag, reverse>(p2, p3, len)) {
             Tag::copy(p1, p2, len);
             p1 += len;
             p2 += len;
@@ -1120,12 +1107,10 @@ merge_left_(typename Tag::type *p1, npy_intp l1, typename Tag::type *p2,
     if (p1 != p2) {
         memcpy(p1, p3, sizeof(type) * (p2 - p1));
     }
-
-    return 0;
 }
 
 template <typename Tag, typename type, bool reverse>
-static int
+static void
 merge_right_(type *p1, npy_intp l1, type *p2, npy_intp l2, type *p3,
              size_t len)
 {
@@ -1141,7 +1126,7 @@ merge_right_(type *p1, npy_intp l1, type *p2, npy_intp l2, type *p3,
     p1 -= len;
 
     while (p1 < p2 && start < p1) {
-        if (NPY_CMP(p3, p1, len)) {
+        if (npy::cmp<Tag, reverse>(p3, p1, len)) {
             Tag::copy(p2, p1, len);
             p2 -= len;
             p1 -= len;
@@ -1157,8 +1142,6 @@ merge_right_(type *p1, npy_intp l1, type *p2, npy_intp l2, type *p3,
         ofs = p2 - start;
         memcpy(start + len, p3 - ofs + len, sizeof(type) * ofs);
     }
-
-    return 0;
 }
 
 template <typename Tag, typename type, bool reverse>
@@ -1176,9 +1159,6 @@ merge_at_(type *arr, const run *stack, const npy_intp at,
     /* arr[s2] belongs to arr[s1+k] */
     Tag::copy(buffer->pw, arr + s2 * len, len);
     k = gallop_right_<Tag, type, reverse>(arr + s1 * len, l1, buffer->pw, len);
-    if (NPY_UNLIKELY(k < 0)) {
-        return k;
-    }
 
     if (l1 == k) {
         /* already sorted */
@@ -1191,31 +1171,24 @@ merge_at_(type *arr, const run *stack, const npy_intp at,
     /* arr[s2-1] belongs to arr[s2+l2] */
     Tag::copy(buffer->pw, arr + (s2 - 1) * len, len);
     l2 = gallop_left_<Tag, type, reverse>(arr + s2 * len, l2, buffer->pw, len);
-    if (NPY_UNLIKELY(l2 < 0)) {
-        return l2;
-    }
 
     if (l2 < l1) {
         ret = resize_buffer_<Tag>(buffer, l2);
+
         if (NPY_UNLIKELY(ret < 0)) {
             return ret;
         }
 
-        ret = merge_right_<Tag, type, reverse>(p1, l1, p2, l2, buffer->pw, len);
-        if (NPY_UNLIKELY(ret < 0)) {
-            return ret;
-        }
+        merge_right_<Tag, type, reverse>(p1, l1, p2, l2, buffer->pw, len);
     }
     else {
         ret = resize_buffer_<Tag>(buffer, l1);
+
         if (NPY_UNLIKELY(ret < 0)) {
             return ret;
         }
 
-        ret = merge_left_<Tag, type, reverse>(p1, l1, p2, l2, buffer->pw, len);
-        if (NPY_UNLIKELY(ret < 0)) {
-            return ret;
-        }
+        merge_left_<Tag, type, reverse>(p1, l1, p2, l2, buffer->pw, len);
     }
 
     return 0;
@@ -1398,17 +1371,17 @@ acount_run_(type *arr, npy_intp *tosort, npy_intp l, npy_intp num,
     pl = tosort + l;
 
     /* (not strictly) ascending sequence */
-    if (!NPY_CMP(arr + (*(pl + 1)) * len, arr + (*pl) * len, len)) {
+    if (!npy::cmp<Tag, reverse>(arr + (*(pl + 1)) * len, arr + (*pl) * len, len)) {
         for (pi = pl + 1;
              pi < tosort + num - 1 &&
-             !NPY_CMP(arr + (*(pi + 1)) * len, arr + (*pi) * len, len);
+             !npy::cmp<Tag, reverse>(arr + (*(pi + 1)) * len, arr + (*pi) * len, len);
              ++pi) {
         }
     }
     else { /* (strictly) descending sequence */
         for (pi = pl + 1;
              pi < tosort + num - 1 &&
-             NPY_CMP(arr + (*(pi + 1)) * len, arr + (*pi) * len, len);
+             npy::cmp<Tag, reverse>(arr + (*(pi + 1)) * len, arr + (*pi) * len, len);
              ++pi) {
         }
 
@@ -1436,7 +1409,7 @@ acount_run_(type *arr, npy_intp *tosort, npy_intp l, npy_intp num,
             pj = pi;
 
             while (pl < pj &&
-                   NPY_CMP(arr + vi * len, arr + (*(pj - 1)) * len, len)) {
+                   npy::cmp<Tag, reverse>(arr + vi * len, arr + (*(pj - 1)) * len, len)) {
                 *pj = *(pj - 1);
                 --pj;
             }
@@ -1455,7 +1428,7 @@ agallop_left_(const type *arr, const npy_intp *tosort, const npy_intp size,
 {
     npy_intp last_ofs, ofs, l, m, r;
 
-    if (NPY_CMP(arr + tosort[size - 1] * len, key, len)) {
+    if (npy::cmp<Tag, reverse>(arr + tosort[size - 1] * len, key, len)) {
         return size;
     }
 
@@ -1468,7 +1441,7 @@ agallop_left_(const type *arr, const npy_intp *tosort, const npy_intp size,
             break;
         }
 
-        if (NPY_CMP(arr + tosort[size - ofs - 1] * len, key, len)) {
+        if (npy::cmp<Tag, reverse>(arr + tosort[size - ofs - 1] * len, key, len)) {
             break;
         }
         else {
@@ -1485,7 +1458,7 @@ agallop_left_(const type *arr, const npy_intp *tosort, const npy_intp size,
     while (l + 1 < r) {
         m = l + ((r - l) >> 1);
 
-        if (NPY_CMP(arr + tosort[m] * len, key, len)) {
+        if (npy::cmp<Tag, reverse>(arr + tosort[m] * len, key, len)) {
             l = m;
         }
         else {
@@ -1504,7 +1477,7 @@ agallop_right_(const type *arr, const npy_intp *tosort, const npy_intp size,
 {
     npy_intp last_ofs, ofs, m;
 
-    if (NPY_CMP(key, arr + tosort[0] * len, len)) {
+    if (npy::cmp<Tag, reverse>(key, arr + tosort[0] * len, len)) {
         return 0;
     }
 
@@ -1517,7 +1490,7 @@ agallop_right_(const type *arr, const npy_intp *tosort, const npy_intp size,
             break;
         }
 
-        if (NPY_CMP(key, arr + tosort[ofs] * len, len)) {
+        if (npy::cmp<Tag, reverse>(key, arr + tosort[ofs] * len, len)) {
             break;
         }
         else {
@@ -1531,7 +1504,7 @@ agallop_right_(const type *arr, const npy_intp *tosort, const npy_intp size,
     while (last_ofs + 1 < ofs) {
         m = last_ofs + ((ofs - last_ofs) >> 1);
 
-        if (NPY_CMP(key, arr + tosort[m] * len, len)) {
+        if (npy::cmp<Tag, reverse>(key, arr + tosort[m] * len, len)) {
             ofs = m;
         }
         else {
@@ -1544,7 +1517,7 @@ agallop_right_(const type *arr, const npy_intp *tosort, const npy_intp size,
 }
 
 template <typename Tag, typename type, bool reverse>
-static int
+static void
 amerge_left_(type *arr, npy_intp *p1, npy_intp l1, npy_intp *p2, npy_intp l2,
              npy_intp *p3, size_t len)
 {
@@ -1554,7 +1527,7 @@ amerge_left_(type *arr, npy_intp *p1, npy_intp l1, npy_intp *p2, npy_intp l2,
     *p1++ = *p2++;
 
     while (p1 < p2 && p2 < end) {
-        if (NPY_CMP(arr + (*p2) * len, arr + (*p3) * len, len)) {
+        if (npy::cmp<Tag, reverse>(arr + (*p2) * len, arr + (*p3) * len, len)) {
             *p1++ = *p2++;
         }
         else {
@@ -1565,12 +1538,10 @@ amerge_left_(type *arr, npy_intp *p1, npy_intp l1, npy_intp *p2, npy_intp l2,
     if (p1 != p2) {
         memcpy(p1, p3, sizeof(npy_intp) * (p2 - p1));
     }
-
-    return 0;
 }
 
 template <typename Tag, typename type, bool reverse>
-static int
+static void
 amerge_right_(type *arr, npy_intp *p1, npy_intp l1, npy_intp *p2, npy_intp l2,
               npy_intp *p3, size_t len)
 {
@@ -1584,7 +1555,7 @@ amerge_right_(type *arr, npy_intp *p1, npy_intp l1, npy_intp *p2, npy_intp l2,
     *p2-- = *p1--;
 
     while (p1 < p2 && start < p1) {
-        if (NPY_CMP(arr + (*p3) * len, arr + (*p1) * len, len)) {
+        if (npy::cmp<Tag, reverse>(arr + (*p3) * len, arr + (*p1) * len, len)) {
             *p2-- = *p1--;
         }
         else {
@@ -1596,8 +1567,6 @@ amerge_right_(type *arr, npy_intp *p1, npy_intp l1, npy_intp *p2, npy_intp l2,
         ofs = p2 - start;
         memcpy(start + 1, p3 - ofs + 1, sizeof(npy_intp) * ofs);
     }
-
-    return 0;
 }
 
 template <typename Tag, typename type, bool reverse>
@@ -1614,9 +1583,6 @@ amerge_at_(type *arr, npy_intp *tosort, const run *stack, const npy_intp at,
     l2 = stack[at + 1].l;
     /* tosort[s2] belongs to tosort[s1+k] */
     k = agallop_right_<Tag, type, reverse>(arr, tosort + s1, l1, arr + tosort[s2] * len, len);
-    if (NPY_UNLIKELY(k < 0)) {
-        return k;
-    }
 
     if (l1 == k) {
         /* already sorted */
@@ -1629,31 +1595,24 @@ amerge_at_(type *arr, npy_intp *tosort, const run *stack, const npy_intp at,
     /* tosort[s2-1] belongs to tosort[s2+l2] */
     l2 = agallop_left_<Tag, type, reverse>(arr, tosort + s2, l2, arr + tosort[s2 - 1] * len,
                             len);
-    if (NPY_UNLIKELY(l2 < 0)) {
-        return l2;
-    }
 
     if (l2 < l1) {
         ret = resize_buffer_intp(buffer, l2);
+
         if (NPY_UNLIKELY(ret < 0)) {
             return ret;
         }
 
-        ret = amerge_right_<Tag, type, reverse>(arr, p1, l1, p2, l2, buffer->pw, len);
-        if (NPY_UNLIKELY(ret < 0)) {
-            return ret;
-        }
+        amerge_right_<Tag, type, reverse>(arr, p1, l1, p2, l2, buffer->pw, len);
     }
     else {
         ret = resize_buffer_intp(buffer, l1);
+
         if (NPY_UNLIKELY(ret < 0)) {
             return ret;
         }
 
-        ret = amerge_left_<Tag, type, reverse>(arr, p1, l1, p2, l2, buffer->pw, len);
-        if (NPY_UNLIKELY(ret < 0)) {
-            return ret;
-        }
+        amerge_left_<Tag, type, reverse>(arr, p1, l1, p2, l2, buffer->pw, len);
     }
 
     return 0;
