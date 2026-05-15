@@ -57,7 +57,7 @@ _append_new(int **p_types, int insert)
     while (types[n] != NPY_NOTYPE) {
         n++;
     }
-    newtypes = (int *)realloc(types, (n + 2)*sizeof(int));
+    newtypes = (int *)PyMem_RawRealloc(types, (n + 2)*sizeof(int));
     if (newtypes == NULL) {
         PyErr_NoMemory();
         return -1;
@@ -281,7 +281,7 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
         }
     }
 
-    userdescrs = realloc(userdescrs,
+    userdescrs = PyMem_RawRealloc(userdescrs,
                          (NPY_NUMUSERTYPES+1)*sizeof(void *));
     if (userdescrs == NULL) {
         PyErr_SetString(PyExc_MemoryError, "RegisterDataType");
@@ -484,7 +484,7 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
          * -- they become part of the data-type
          */
         if (PyDataType_GetArrFuncs(descr)->cancastto == NULL) {
-            PyDataType_GetArrFuncs(descr)->cancastto = (int *)malloc(1*sizeof(int));
+            PyDataType_GetArrFuncs(descr)->cancastto = (int *)PyMem_RawMalloc(1*sizeof(int));
             if (PyDataType_GetArrFuncs(descr)->cancastto == NULL) {
                 PyErr_NoMemory();
                 return -1;
@@ -498,7 +498,7 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
         if (PyDataType_GetArrFuncs(descr)->cancastscalarkindto == NULL) {
             int i;
             PyDataType_GetArrFuncs(descr)->cancastscalarkindto =
-                (int **)malloc(NPY_NSCALARKINDS* sizeof(int*));
+                (int **)PyMem_RawMalloc(NPY_NSCALARKINDS* sizeof(int*));
             if (PyDataType_GetArrFuncs(descr)->cancastscalarkindto == NULL) {
                 PyErr_NoMemory();
                 return -1;
@@ -509,7 +509,7 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
         }
         if (PyDataType_GetArrFuncs(descr)->cancastscalarkindto[scalar] == NULL) {
             PyDataType_GetArrFuncs(descr)->cancastscalarkindto[scalar] =
-                (int *)malloc(1*sizeof(int));
+                (int *)PyMem_RawMalloc(1*sizeof(int));
             if (PyDataType_GetArrFuncs(descr)->cancastscalarkindto[scalar] == NULL) {
                 PyErr_NoMemory();
                 return -1;
