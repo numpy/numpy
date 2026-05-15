@@ -239,13 +239,10 @@ struct object_tag {
         }
         int ret = PyObject_IsTrue(result);
         Py_DECREF(result);
-        if (ret < 0) {
-            return -1;
-        }
         return ret;
     }
 
-    static int less(PyObject *a, PyObject *b)
+    static int _cmp(PyObject *a, PyObject *b, int op)
     {
         /*
          * work around gh-3879, we cannot abort an in-progress quicksort
@@ -262,7 +259,7 @@ struct object_tag {
             return 1;
         }
 
-        int ret = PyObject_RichCompareBool(a, b, Py_LT);
+        int ret = PyObject_RichCompareBool(a, b, op);
         if (ret < 0) {
             return 0;
         }
@@ -289,51 +286,16 @@ struct object_tag {
         return 0;
     }
 
+    static int less(PyObject *a, PyObject *b) {
+        return _cmp(a, b, Py_LT);
+    }
+
     static int less_equal(PyObject *a, PyObject *b) {
         return !less(b, a);
     }
 
     static int greater(PyObject *a, PyObject *b) {
-        /*
-         * work around gh-3879, we cannot abort an in-progress quicksort
-         * so at least do not raise again
-         */
-        if (PyErr_Occurred()) {
-            return 0;
-        }
-
-        if (a == NULL) {
-            return 0;
-        }
-        if (b == NULL) {
-            return 1;
-        }
-
-        int ret = PyObject_RichCompareBool(a, b, Py_GT);
-        if (ret < 0) {
-            return 0;
-        }
-        if (ret) {
-            return 1;
-        }
-
-        ret = isnan(a);
-        if (ret < 0) {
-            return 0;
-        }
-        if (ret) {
-            return 0;
-        }
-
-        ret = isnan(b);
-        if (ret < 0) {
-            return 0;
-        }
-        if (ret) {
-            return 1;
-        }
-
-        return 0;   
+        return _cmp(a, b, Py_GT);
     }
 };
 
