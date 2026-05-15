@@ -249,7 +249,7 @@ three groups:
   (indirect) upcasting is possible.
 
 Note that the legacy behaviour of NumPy ufuncs is to try to convert
-unknown objects to :class:`ndarray` via :func:`np.asarray`.  This is
+unknown objects to :class:`ndarray` via :func:`numpy.asarray`.  This is
 equivalent to placing :class:`ndarray` above these objects in the graph.
 Since we above defined :class:`ndarray` to return `NotImplemented` for
 classes with custom ``__array_ufunc__``, this puts :class:`ndarray`
@@ -321,7 +321,7 @@ implicit type casting hierarchy.
    explicitly specified.
 
 Subclasses can be easily constructed if methods consistently use
-:func:`super` to pass through the class hierarchy [7]_.  To support
+:py:class:`super` to pass through the class hierarchy [7]_.  To support
 this, :class:`ndarray` has its own ``__array_ufunc__`` method,
 equivalent to::
 
@@ -352,18 +352,18 @@ if they have not overridden the default `ndarray` implementation. As a
 consequence, calling `ndarray.__array_ufunc__` will not result to a
 nested ufunc dispatch cycle.
 
-The use of :func:`super` should be particularly useful for subclasses of
+The use of :py:class:`super` should be particularly useful for subclasses of
 :class:`ndarray` that only add an attribute like a unit.  In their
 `__array_ufunc__` implementation, such classes can do possible
 adjustment of the arguments relevant to their own class, and pass on to
-the superclass implementation using :func:`super` until the ufunc is
+the superclass implementation using :py:class:`super` until the ufunc is
 actually done, and then do possible adjustments of the outputs.
 
 In general, custom implementations of `__array_ufunc__` should avoid
 nested dispatch cycles, where one not just calls the ufunc via
 ``getattr(ufunc, method)(*items, **kwargs)``, but catches possible
 exceptions, etc.  As always, there may be exceptions. For instance, for a
-class like :class:`MaskedArray`, which only cares that whatever
+class like :class:`numpy.ma.MaskedArray`, which only cares that whatever
 it contains is an :class:`ndarray` subclass, a reimplementation with
 ``__array_ufunc__`` may well be more easily done by directly applying
 the ufunc to its data, and then adjusting the mask.  Indeed, one can
@@ -392,7 +392,7 @@ which both override ``__array_ufunc__``, with specific instances ``q``
 and ``ma``, where the latter contains a regular array. Executing
 ``np.multiply(q, ma)``, the ufunc will first dispatch to
 ``q.__array_ufunc__``, which returns :obj:`NotImplemented` (since the
-quantity class turns itself into an array and calls :func:`super`, which
+quantity class turns itself into an array and calls :py:class:`super`, which
 passes on to ``ndarray.__array_ufunc__``, which sees the override on
 ``ma``). Next, ``ma.__array_ufunc__`` gets a chance. It does not know
 quantity, and if it were to just return :obj:`NotImplemented` as well,
@@ -406,7 +406,7 @@ a masked array and thus return a result (obviously, if it was not a
 array subclass, it could still return :obj:`NotImplemented`).
 
 Note that in the context of the type hierarchy discussed above this is a
-somewhat tricky example, since :class:`MaskedArray` has a strange
+somewhat tricky example, since :class:`numpy.ma.MaskedArray` has a strange
 position: it is above all subclasses of :class:`ndarray`, in that it can
 cast them to its own type, but it does not itself know how to interact
 with them in ufuncs.
@@ -632,28 +632,28 @@ Ufuncs used by :class:`ndarray` and
 ====== ============ =========================================
 Symbol Operator     NumPy Ufunc(s)
 ====== ============ =========================================
-``<``  ``lt``       :func:`less`
-``<=`` ``le``       :func:`less_equal`
-``==`` ``eq``       :func:`equal`
-``!=`` ``ne``       :func:`not_equal`
-``>``  ``gt``       :func:`greater`
-``>=`` ``ge``       :func:`greater_equal`
-``+``  ``add``      :func:`add`
-``-``  ``sub``      :func:`subtract`
-``*``  ``mul``      :func:`multiply`
-``/``  ``truediv``  :func:`true_divide`
+``<``  ``lt``       :func:`~numpy.less`
+``<=`` ``le``       :func:`~numpy.less_equal`
+``==`` ``eq``       :func:`~numpy.equal`
+``!=`` ``ne``       :func:`~numpy.not_equal`
+``>``  ``gt``       :func:`~numpy.greater`
+``>=`` ``ge``       :func:`~numpy.greater_equal`
+``+``  ``add``      :func:`~numpy.add`
+``-``  ``sub``      :func:`~numpy.subtract`
+``*``  ``mul``      :func:`~numpy.multiply`
+``/``  ``truediv``  :func:`~numpy.true_divide`
        (Python 3)
-``/``  ``div``      :func:`divide`
+``/``  ``div``      :func:`~numpy.divide`
        (Python 2)
-``//`` ``floordiv`` :func:`floor_divide`
-``%``  ``mod``      :func:`remainder`
-NA     ``divmod``   :func:`divmod`
-``**`` ``pow``      :func:`power` [10]_
-``<<`` ``lshift``   :func:`left_shift`
-``>>`` ``rshift``   :func:`right_shift`
-``&``  ``and_``     :func:`bitwise_and`
-``^``  ``xor_``     :func:`bitwise_xor`
-``|``  ``or_``      :func:`bitwise_or`
+``//`` ``floordiv`` :func:`~numpy.floor_divide`
+``%``  ``mod``      :func:`~numpy.remainder`
+NA     ``divmod``   :func:`~numpy.divmod`
+``**`` ``pow``      :func:`~numpy.power` [10]_
+``<<`` ``lshift``   :func:`~numpy.left_shift`
+``>>`` ``rshift``   :func:`~numpy.right_shift`
+``&``  ``and_``     :func:`~numpy.bitwise_and`
+``^``  ``xor_``     :func:`~numpy.bitwise_xor`
+``|``  ``or_``      :func:`~numpy.bitwise_or`
 ``@``  ``matmul``   Not yet implemented as a ufunc [11]_
 ====== ============ =========================================
 
@@ -662,22 +662,25 @@ And here is the list of unary operators:
 ====== ============ =========================================
 Symbol Operator     NumPy Ufunc(s)
 ====== ============ =========================================
-``-``  ``neg``      :func:`negative`
-``+``  ``pos``      :func:`positive` [12]_
-NA     ``abs``      :func:`absolute`
-``~``  ``invert``   :func:`invert`
+``-``  ``neg``      :func:`~numpy.negative`
+``+``  ``pos``      :func:`~numpy.positive` [12]_
+NA     ``abs``      :func:`~numpy.absolute`
+``~``  ``invert``   :func:`~numpy.invert`
 ====== ============ =========================================
 
-.. [10] class :`ndarray` takes short cuts for ``__pow__`` for the
-        cases where the power equals ``1`` (:func:`positive`),
-        ``-1`` (:func:`reciprocal`), ``2`` (:func:`square`), ``0`` (an
-        otherwise private ``_ones_like`` ufunc), and ``0.5``
-        (:func:`sqrt`), and the array is float or complex (or integer
+.. [10] class :class:`ndarray` takes short cuts for ``__pow__`` for the
+        cases where the power equals ``1`` (:func:`~numpy.positive`),
+        ``-1`` (:func:`~numpy.reciprocal`), ``2`` (:func:`~numpy.square`),
+        ``0`` (an otherwise private ``_ones_like`` ufunc), and ``0.5``
+        (:func:`~numpy.sqrt`), and the array is float or complex (or integer
         for square).
-.. [11] Because NumPy's :func:`matmul` is not a ufunc, it is
+
+
+.. [11] Because NumPy's :func:`~numpy.matmul` is not a ufunc, it is
         `currently not possible <https://github.com/numpy/numpy/issues/9028>`_
         to override ``numpy_array @ other`` with ``other`` taking precedence
         if ``other`` implements ``__array_func__``.
+
 .. [12] :class:`ndarray` currently does a copy instead of using this ufunc.
 
 Future extensions to other functions
