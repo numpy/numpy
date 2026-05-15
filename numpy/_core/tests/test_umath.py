@@ -31,7 +31,10 @@ from numpy.testing import (
     assert_raises,
     assert_raises_regex,
 )
-from numpy.testing._private.utils import _glibc_older_than
+from numpy.testing._private.utils import (
+    LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE,
+    _glibc_older_than,
+)
 
 UFUNCS = [obj for obj in np._core.umath.__dict__.values()
          if isinstance(obj, np.ufunc)]
@@ -4808,7 +4811,7 @@ def test_nextafterf():
 
 @pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
                     reason="long double is same as double")
-@pytest.mark.xfail(condition=platform.machine().startswith("ppc64"),
+@pytest.mark.xfail(condition=LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE,
                     reason="IBM double double")
 def test_nextafterl():
     return _test_nextafter(np.longdouble)
@@ -4847,7 +4850,7 @@ def test_spacingf():
 
 @pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
                     reason="long double is same as double")
-@pytest.mark.xfail(condition=platform.machine().startswith("ppc64"),
+@pytest.mark.xfail(condition=LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE,
                     reason="IBM double double")
 def test_spacingl():
     return _test_spacing(np.longdouble)
