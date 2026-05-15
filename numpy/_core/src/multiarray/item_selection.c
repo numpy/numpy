@@ -3138,11 +3138,6 @@ PyArray_MultiIndexSetItem(PyArrayObject *self, const npy_intp *multi_index,
 }
 
 
-/* Table of generic sort functions for use in PyArray_SortEx*/
-static PyArray_SortFunc* const generic_sort_table[] = {npy_quicksort,
-                                                       npy_heapsort,
-                                                       npy_timsort};
-
 /*NUMPY_API
  * Sort an array in-place with extended parameters
  */
@@ -3226,10 +3221,10 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
             }
             switch (flags) {
                 case NPY_SORT_DEFAULT:
-                    sort = generic_sort_table[NPY_QUICKSORT];
+                    sort = npy_quicksort;
                     break;
                 case NPY_SORT_STABLE:
-                    sort = generic_sort_table[NPY_STABLESORT];
+                    sort = npy_timsort;
                     break;
                 default:
                     break;
@@ -3255,10 +3250,6 @@ fail:
     return ret;
 }
 
-/* Table of generic argsort function for use by PyArray_ArgSortEx */
-static PyArray_ArgSortFunc* const generic_argsort_table[] = {npy_aquicksort,
-                                                             npy_aheapsort,
-                                                             npy_atimsort};
 
 /*NUMPY_API
  * ArgSort an array with extended parameters
@@ -3339,10 +3330,10 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
             }
             switch (flags) {
                 case NPY_SORT_DEFAULT:
-                    argsort = generic_argsort_table[NPY_QUICKSORT];
+                    argsort = npy_aquicksort;
                     break;
                 case NPY_SORT_STABLE:
-                    argsort = generic_argsort_table[NPY_STABLESORT];
+                    argsort = npy_atimsort;
                     break;
                 default:
                     break;
