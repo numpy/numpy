@@ -316,22 +316,16 @@ _convert_from_tuple(PyObject *obj, int align)
                                 "dimension smaller then zero.");
                 goto fail;
             }
-            if (shape.ptr[i] > NPY_MAX_INT) {
-                PyErr_SetString(PyExc_ValueError,
-                                "invalid shape in fixed-type tuple: "
-                                "dimension does not fit into a C int.");
-                goto fail;
-            }
         }
         npy_intp items = PyArray_OverflowMultiplyList(shape.ptr, shape.len);
         int overflowed;
-        int nbytes;
-        if (items < 0 || items > NPY_MAX_INT) {
+        npy_intp nbytes;
+        if (items < 0) {
             overflowed = 1;
         }
         else {
-            overflowed = npy_mul_with_overflow_int(
-                &nbytes, type->elsize, (int) items);
+            overflowed = npy_mul_sizes_with_overflow(
+                &nbytes, type->elsize, items);
         }
         if (overflowed) {
             PyErr_SetString(PyExc_ValueError,
@@ -370,7 +364,7 @@ _convert_from_tuple(PyObject *obj, int align)
         }
         for (int i=0; i < shape.len; i++) {
             PyTuple_SET_ITEM(newdescr->subarray->shape, i,
-                             PyLong_FromLong((long)shape.ptr[i]));
+                             PyLong_FromSsize_t(shape.ptr[i]));
 
             if (PyTuple_GET_ITEM(newdescr->subarray->shape, i) == NULL) {
                 Py_DECREF(newdescr);
@@ -410,7 +404,7 @@ _convert_from_array_descr(PyObject *obj, int align)
     /* Types with fields need the Python C API for field access */
     npy_uint64 dtypeflags = NPY_NEEDS_PYAPI;
     int maxalign = 1;
-    int totalsize = 0;
+    npy_intp totalsize = 0;
     PyObject *fields = PyDict_New();
     if (!fields) {
         Py_DECREF(nameslist);
@@ -527,7 +521,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             goto fail;
         }
         PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
-        PyTuple_SET_ITEM(tup, 1, PyLong_FromLong((long) totalsize));
+        PyTuple_SET_ITEM(tup, 1, PyLong_FromSsize_t(totalsize));
 
         /*
          * Title can be "meta-data".  Only insert it
@@ -633,7 +627,7 @@ _convert_from_list(PyObject *obj, int align)
     /* Types with fields need the Python C API for field access */
     npy_uint64 dtypeflags = NPY_NEEDS_PYAPI;
     int maxalign = 1;
-    int totalsize = 0;
+    npy_intp totalsize = 0;
     for (int i = 0; i < n; i++) {
         PyArray_Descr *conv = _convert_from_any(
                 PyList_GET_ITEM(obj, i), align); // noqa: borrowed-ref OK
@@ -648,7 +642,7 @@ _convert_from_list(PyObject *obj, int align)
             }
             maxalign = PyArray_MAX(maxalign, _align);
         }
-        PyObject *size_obj = PyLong_FromLong((long) totalsize);
+        PyObject *size_obj = PyLong_FromSsize_t(totalsize);
         if (!size_obj) {
             Py_DECREF(conv);
             goto fail;
@@ -1101,7 +1095,7 @@ _convert_from_dict(PyObject *obj, int align)
 
     /* Types with fields need the Python C API for field access */
     npy_uint64 dtypeflags = NPY_NEEDS_PYAPI;
-    int totalsize = 0;
+    npy_intp totalsize = 0;
     int maxalign = 1;
     int has_out_of_order_fields = 0;
     for (int i = 0; i < n; i++) {
@@ -1146,7 +1140,7 @@ _convert_from_dict(PyObject *obj, int align)
                 Py_DECREF(ind);
                 goto fail;
             }
-            long offset = PyArray_PyIntAsInt(off);
+            npy_intp offset = PyArray_PyIntAsIntp(off);
             if (error_converting(offset)) {
                 Py_DECREF(off);
                 Py_DECREF(tup);
@@ -1162,7 +1156,7 @@ _convert_from_dict(PyObject *obj, int align)
                 goto fail;
             }
 
-            PyTuple_SET_ITEM(tup, 1, PyLong_FromLong(offset));
+            PyTuple_SET_ITEM(tup, 1, PyLong_FromSsize_t(offset));
             /* Flag whether the fields are specified out of order */
             if (offset < totalsize) {
                 has_out_of_order_fields = 1;
@@ -1186,7 +1180,7 @@ _convert_from_dict(PyObject *obj, int align)
             if (align && _align > 1) {
                 totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align);
             }
-            PyTuple_SET_ITEM(tup, 1, PyLong_FromLong(totalsize));
+            PyTuple_SET_ITEM(tup, 1, PyLong_FromSsize_t(totalsize));
             totalsize += newdescr->elsize;
         }
         if (len == 3) {
@@ -1805,7 +1799,7 @@ _convert_from_str(PyObject *obj, int align)
     }
 
     int check_num = NPY_NOTYPE + 10;
-    int elsize = 0;
+    npy_intp elsize = 0;
     /* A typecode like 'd' */
     if (len == 1) {
         /* Python byte string characters are unsigned */
@@ -1818,7 +1812,7 @@ _convert_from_str(PyObject *obj, int align)
 
         /* Attempt to parse the integer, make sure it's the rest of the string */
         errno = 0;
-        long result = strtol(type + 1, &typeend, 10);
+        npy_intp result = strtol(type + 1, &typeend, 10);
         npy_bool some_parsing_happened = !(type == typeend);
         npy_bool entire_string_consumed = *typeend == '\0';
         npy_bool parsing_succeeded =
@@ -1828,7 +1822,7 @@ _convert_from_str(PyObject *obj, int align)
             goto fail;
         }
 
-        elsize = (int)result;
+        elsize = result;
 
 
         if (parsing_succeeded && typeend - type == len) {
@@ -2725,7 +2719,8 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     PyObject *ret, *mod, *obj;
     PyObject *state;
     char endian;
-    int elsize, alignment;
+    npy_intp elsize;
+    int alignment;
 
     ret = PyTuple_New(3);
     if (ret == NULL) {
@@ -2827,7 +2822,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         elsize = -1;
         alignment = -1;
     }
-    PyTuple_SET_ITEM(state, 5, PyLong_FromLong(elsize));
+    PyTuple_SET_ITEM(state, 5, PyLong_FromSsize_t(elsize));
     PyTuple_SET_ITEM(state, 6, PyLong_FromLong(alignment));
     PyTuple_SET_ITEM(state, 7, PyLong_FromUnsignedLongLong(
             self->flags & ~NPY_NOT_TRIVIALLY_COPYABLE));

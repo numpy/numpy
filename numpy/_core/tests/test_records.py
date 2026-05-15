@@ -9,13 +9,16 @@ import pytest
 
 import numpy as np
 from numpy.testing import (
+    IS_64BIT,
     assert_,
     assert_array_almost_equal,
     assert_array_equal,
     assert_equal,
+    assert_allclose,
     assert_raises,
     temppath,
 )
+from numpy.testing._private.utils import requires_memory
 
 
 class TestFromrecords:
@@ -107,6 +110,19 @@ class TestFromrecords:
         fd.close()
         assert_equal(r1, r2)
         assert_equal(r2, r3)
+
+    @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+    @requires_memory(free_bytes=4.3e9)
+    def test_recarray_fromfile_massive(self, tmpdir):
+        kind = [("x", np.float64, 2 ** 29)]
+        kind_dtype = np.dtype(kind)
+        rec_arr = np.array((1,), dtype=kind_dtype)
+        with tmpdir.as_cwd():
+            rec_arr.tofile("f.data")
+            actual = np.fromfile("f.data", dtype=kind_dtype)
+            assert actual.itemsize == 2 ** 29 * 8
+            item = actual["x"][0][1]
+            assert_allclose(item, 1)
 
     def test_recarray_from_obj(self):
         count = 10
