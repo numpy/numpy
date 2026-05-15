@@ -4890,16 +4890,18 @@ def test_pos_nan():
     """Check np.nan is a positive nan."""
     assert_(np.signbit(np.nan) == 0)
 def test_abs_nan_signbit():
-    """#31421 abs(nan) preserves positive sign bit correctly for longdouble."""
-    pos_nan = np.longdouble(np.nan)
-    assert_(np.signbit(np.abs(pos_nan)) == 0,
-            "abs(+nan) should have positive sign for longdouble")
+    """#31421 abs(nan) preserves positive sign bit correctly."""
+    for dtype in [np.float32, np.float64, np.longdouble]:
+        pos_nan = dtype(np.nan)
+        assert_(np.signbit(np.abs(pos_nan)) == 0,
+                f"abs(+nan) should have positive sign for {dtype.__name__}")
 
-    neg_nan = np.longdouble(-np.nan)
-    assert_(np.signbit(np.abs(neg_nan)) == 0,
-            "abs(-nan) should have positive sign for longdouble")
+        neg_nan = dtype(-np.nan)
+        assert_(np.signbit(np.abs(neg_nan)) == 0,
+                f"abs(-nan) should have positive sign for {dtype.__name__}")
 
-    arr = np.array([np.nan, -np.nan], dtype=np.longdouble)
+    # Test with array
+    arr = np.array([np.nan, -np.nan])
     result = np.signbit(np.abs(arr))
     assert_array_equal(result, [False, False],
                       "abs of NaN array should have all positive signs")
