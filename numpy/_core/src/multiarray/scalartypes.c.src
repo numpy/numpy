@@ -4240,6 +4240,40 @@ gen_arrtype_subscript(PyObject *self, PyObject *key)
 }
 
 
+/*
+ * String-like scalars support empty-tuple indexing like other NumPy scalars.
+ * This returns the scalar itself for scalar[()], while all other indexing
+ * is delegated to the underlying Python bytes/str mapping implementation.
+ */
+static PyObject *
+string_arrtype_subscript(PyObject *self, PyObject *key)
+{
+    if (PyTuple_CheckExact(key) && PyTuple_GET_SIZE(key) == 0) {
+        Py_INCREF(self);
+        return self;
+    }
+    return PyBytes_Type.tp_as_mapping->mp_subscript(self, key);
+}
+
+static PyObject *
+unicode_arrtype_subscript(PyObject *self, PyObject *key)
+{
+    if (PyTuple_CheckExact(key) && PyTuple_GET_SIZE(key) == 0) {
+        Py_INCREF(self);
+        return self;
+    }
+    return PyUnicode_Type.tp_as_mapping->mp_subscript(self, key);
+}
+
+static PyMappingMethods string_arrtype_as_mapping = {
+    .mp_subscript = (binaryfunc)string_arrtype_subscript,
+};
+
+static PyMappingMethods unicode_arrtype_as_mapping = {
+    .mp_subscript = (binaryfunc)unicode_arrtype_subscript,
+};
+
+
 /**begin repeat
  * #Name = Bool,
  *         Byte, Short, Int, Long, LongLong,
@@ -4490,9 +4524,11 @@ initialize_numeric_types(void)
     PyStringArrType_Type.tp_alloc = NULL;
     PyStringArrType_Type.tp_free = NULL;
 
+    PyStringArrType_Type.tp_as_mapping = &string_arrtype_as_mapping;
     PyStringArrType_Type.tp_repr = stringtype_repr;
     PyStringArrType_Type.tp_str = stringtype_str;
 
+    PyUnicodeArrType_Type.tp_as_mapping = &unicode_arrtype_as_mapping;
     PyUnicodeArrType_Type.tp_repr = unicodetype_repr;
     PyUnicodeArrType_Type.tp_str = unicodetype_str;
 

@@ -1164,3 +1164,17 @@ def test_scalar_matches_array_op_with_pyscalar(op, sctype, other_type, rop):
         assert np.array(res).dtype == expected.dtype
     else:
         assert res.dtype == expected.dtype
+
+class TestStringLikeScalars:
+    # Zero-dimensional NumPy scalars should support the empty-tuple
+    # scalar index and return themselves, like other NumPy scalars.
+    @pytest.mark.parametrize(
+        ("scalar", "expected"),
+        [
+            (np.str_("abc"), np.str_("abc")),
+            (np.bytes_(b"abc"), np.bytes_(b"abc")),
+        ],
+    )
+    def test_empty_tuple_index_returns_scalar(self, scalar, expected):
+        assert scalar.shape == ()
+        assert scalar[()] == expected
