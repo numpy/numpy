@@ -223,6 +223,74 @@ struct string_like_type {
     }
 };
 
+// This tag is used to register object sorts, which replaces the old generic sort
+// that did not handle NaNs at all. It supposes that any object such that
+// obj != obj is NaN-like and should be sorted to the end as in other dtypes.
+struct object_tag {
+    using type = PyObject *;
+    static constexpr NPY_TYPES type_value = NPY_OBJECT;
+
+    static int isnan(PyObject *a) {
+        /* PyObject_RichCompareBool is not used here because it takes a shortcut
+         * for identical objects, hence will return false for NaN != NaN. */
+        PyObject *result = PyObject_RichCompare(a, a, Py_NE);
+        if (result == NULL) {
+            return -1;
+        }
+        int ret = PyObject_IsTrue(result);
+        Py_DECREF(result);
+        return ret;
+    }
+
+    static int _cmp(PyObject *a, PyObject *b, int op)
+    {
+        if (a == NULL) {
+            return 0;
+        }
+        if (b == NULL) {
+            return 1;
+        }
+
+        int ret = PyObject_RichCompareBool(a, b, op);
+        if (ret < 0) {
+            return -1;
+        }
+        if (ret) {
+            return 1;
+        }
+
+        ret = isnan(a);
+        if (ret < 0) {
+            return -1;
+        }
+        if (ret) {
+            return 0;
+        }
+
+        ret = isnan(b);
+        if (ret < 0) {
+            return -1;
+        }
+        if (ret) {
+            return 1;
+        }
+
+        return 0;
+    }
+
+    static int less(PyObject *a, PyObject *b) {
+        return _cmp(a, b, Py_LT);
+    }
+
+    static int less_equal(PyObject *a, PyObject *b) {
+        return !less(b, a);
+    }
+
+    static int greater(PyObject *a, PyObject *b) {
+        return _cmp(a, b, Py_GT);
+    }
+};
+
 // Concrete tags consumed by callers.
 using bool_tag        = integral_type<npy_bool,        NPY_BOOL>;
 using byte_tag        = integral_type<npy_byte,        NPY_BYTE>;
