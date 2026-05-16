@@ -244,14 +244,6 @@ struct object_tag {
 
     static int _cmp(PyObject *a, PyObject *b, int op)
     {
-        /*
-         * work around gh-3879, we cannot abort an in-progress quicksort
-         * so at least do not raise again
-         */
-        if (PyErr_Occurred()) {
-            return 0;
-        }
-
         if (a == NULL) {
             return 0;
         }
@@ -261,7 +253,7 @@ struct object_tag {
 
         int ret = PyObject_RichCompareBool(a, b, op);
         if (ret < 0) {
-            return 0;
+            return -1;
         }
         if (ret) {
             return 1;
@@ -269,7 +261,7 @@ struct object_tag {
 
         ret = isnan(a);
         if (ret < 0) {
-            return 0;
+            return -1;
         }
         if (ret) {
             return 0;
@@ -277,7 +269,7 @@ struct object_tag {
 
         ret = isnan(b);
         if (ret < 0) {
-            return 0;
+            return -1;
         }
         if (ret) {
             return 1;
