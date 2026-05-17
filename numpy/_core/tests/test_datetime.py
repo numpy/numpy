@@ -3208,3 +3208,30 @@ def test_comparisons_return_not_implemented():
         assert item.__lt__(obj) is NotImplemented
         assert item.__ge__(obj) is NotImplemented
         assert item.__gt__(obj) is NotImplemented
+
+
+def test_array_timedelta_add_python_timedelta():
+    # gh-29201
+    arr = np.array([np.timedelta64(1, "D"), np.timedelta64(2, "D")])
+    py_td = datetime.timedelta(days=1)
+
+    expected = np.array([np.timedelta64(2, "D"), np.timedelta64(3, "D")])
+
+    assert_equal(arr + py_td, expected)
+    assert_equal(py_td + arr, expected)
+
+
+def test_array_datetime_ops_with_python_datetime_types():
+    # gh-29201
+    arr = np.array([np.datetime64("2000-01-01"), np.datetime64("2000-01-02")])
+    py_td = datetime.timedelta(days=1)
+    py_dt = datetime.datetime(2000, 1, 1)
+
+    assert_equal(
+        arr + py_td,
+        np.array([np.datetime64("2000-01-02"), np.datetime64("2000-01-03")]),
+    )
+    assert_equal(
+        arr - py_dt,
+        np.array([np.timedelta64(0, "D"), np.timedelta64(1, "D")]),
+    )
