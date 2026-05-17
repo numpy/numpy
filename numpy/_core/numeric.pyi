@@ -403,7 +403,6 @@ __all__ = [
     "copysign",
     "copyto",
     "correlate",
-    "correlation_lags",
     "cos",
     "cosh",
     "count_nonzero",
@@ -1106,15 +1105,6 @@ def correlate(
     max_lag: int | None = None,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.timedelta64 | Any]: ...
-
-def correlation_lags(
-    a_len: SupportsIndex,
-    v_len: SupportsIndex,
-    mode: _CorrelateMode | None = ...,
-    *,
-    max_lag: int | None = None,
-    lags: _LagsArg | None = None,
-) -> _Array1D[np.intp]: ...
 
 # keep in sync with `correlate`
 @overload

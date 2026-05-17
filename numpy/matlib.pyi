@@ -114,7 +114,6 @@ from numpy import (  # noqa: F401
     core,
     corrcoef,
     correlate,
-    correlation_lags,
     cos,
     cosh,
     count_nonzero,
