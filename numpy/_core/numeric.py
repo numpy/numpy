@@ -78,7 +78,8 @@ __all__ = [
     'argwhere', 'copyto', 'concatenate', 'lexsort', 'astype',
     'can_cast', 'promote_types', 'min_scalar_type',
     'result_type', 'isfortran', 'empty_like', 'zeros_like', 'ones_like',
-    'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
+    'correlate', 'convolve', 'inner', 'dot',
+    'outer', 'vdot', 'roll',
     'rollaxis', 'moveaxis', 'cross', 'tensordot', 'little_endian',
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
     'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
@@ -713,12 +714,103 @@ def flatnonzero(a):
     return np.nonzero(np.ravel(a))[0]
 
 
-def _correlate_dispatcher(a, v, mode=None):
+_CORR_MODE_MAP = {
+    'valid': 0,
+    'same': 1,
+    'full': 2,
+}
+
+
+def _mode_from_name(mode):
+    if isinstance(mode, int):
+        if mode in _CORR_MODE_MAP.values():
+            return mode
+    elif isinstance(mode, str):
+        if mode in _CORR_MODE_MAP:
+            return _CORR_MODE_MAP[mode]
+    else:
+        raise TypeError("correlate/convolve mode must be a string or int, "
+                        "one of 'valid', 'same', 'full'")
+    raise ValueError("correlate/convolve mode must be "
+                     "one of 'valid', 'same', 'full'")
+
+
+def _lags_from_lags(lag):
+    """Convert a lags specification to (min_lag, max_lag_exclusive, lag_step).
+
+    Accepts an ``int`` (symmetric window ``[-n, n]``), a ``range``, a
+    ``slice`` with explicit start/stop, or a 1-D array_like containing an
+    arithmetic progression of integers.
+    """
+    if isinstance(lag, (int, nt.integer)):
+        m = int(lag)
+        if m < 0:
+            raise ValueError("lags integer must be non-negative")
+        return (-m, m + 1, 1)
+    if isinstance(lag, range):
+        return (lag.start, lag.stop, lag.step)
+    if isinstance(lag, slice):
+        if lag.start is None or lag.stop is None:
+            raise ValueError("lags slice must have explicit start and stop")
+        step = 1 if lag.step is None else int(lag.step)
+        if step == 0:
+            raise ValueError("lag_step must not be zero")
+        return (int(lag.start), int(lag.stop), step)
+
+    arr = asanyarray(lag)
+    if arr.ndim != 1 or arr.size == 0:
+        raise ValueError("lags must be a 1-D non-empty sequence")
+    if not nt.issubdtype(arr.dtype, nt.integer):
+        raise TypeError("lags values must be integers")
+    if arr.size == 1:
+        return (int(arr[0]), int(arr[0]) + 1, 1)
+    step = int(arr[1] - arr[0])
+    if step == 0:
+        raise ValueError("lag_step must not be zero")
+    expected = arr[0] + step * arange(arr.size)
+    if not (arr == expected).all():
+        raise ValueError(
+            "lags array must be an arithmetic progression "
+            "(use a range or slice for non-arithmetic patterns)")
+    return (int(arr[0]), int(arr[-1]) + step, step)
+
+
+def _lags_from_mode(alen, vlen, mode):
+    """
+    Compute the lag range for a given mode.
+
+    Produces lags aligned with the caller's original (alen, vlen) order
+    (i.e. matches what ``np.correlate(a, v, mode)`` returns element-by-element).
+    """
+    inverted = False
+    if alen < vlen:
+        alen, vlen = vlen, alen
+        inverted = True
+
+    if mode == 0:
+        m0, m1 = 0, alen - vlen + 1
+    elif mode == 1:
+        half = vlen // 2
+        m0, m1 = -half, alen - half
+    elif mode == 2:
+        m0, m1 = -vlen + 1, alen
+    else:
+        raise ValueError("correlate/convolve mode must be "
+                         "one of 'valid', 'same', 'full'")
+
+    if inverted:
+        count = m1 - m0  # lag_step is always 1 for mode-based lags
+        m0, m1 = -(m0 + count - 1), -m0 + 1
+
+    return (m0, m1, 1)
+
+
+def _correlate_dispatcher(a, v, mode=None, *, lags=None):
     return (a, v)
 
 
 @array_function_dispatch(_correlate_dispatcher)
-def correlate(a, v, mode='valid'):
+def correlate(a, v, mode=None, *, lags=None):
     r"""
     Cross-correlation of two 1-dimensional sequences.
 
@@ -735,8 +827,17 @@ def correlate(a, v, mode='valid'):
     a, v : array_like
         Input sequences.
     mode : {'valid', 'same', 'full'}, optional
-        Refer to the `convolve` docstring.  Note that the default
-        is 'valid', unlike `convolve`, which uses 'full'.
+        Refer to the `convolve` docstring for the definitions of each mode.
+        When ``None`` (default), the function uses ``'valid'`` unless
+        ``lags`` is passed, in which case that argument controls the output
+        range.  Passing an explicit mode together with ``lags`` raises an
+        error.
+    lags : int, range, slice, or 1-D array_like of int, optional
+        Lag specification.  An ``int`` ``n`` requests the symmetric inclusive
+        window ``[-n, n]`` (``2*n+1`` lags total).  Also accepts a Python
+        ``range``, a ``slice`` with explicit start and stop, or a 1-D
+        array_like containing an arithmetic progression of integer lag
+        indices.
 
     Returns
     -------
@@ -769,13 +870,14 @@ def correlate(a, v, mode='valid'):
 
     Examples
     --------
-    >>> import numpy as np
     >>> np.correlate([1, 2, 3], [0, 1, 0.5])
     array([3.5])
-    >>> np.correlate([1, 2, 3], [0, 1, 0.5], "same")
-    array([2. ,  3.5,  3. ])
-    >>> np.correlate([1, 2, 3], [0, 1, 0.5], "full")
-    array([0.5,  2. ,  3.5,  3. ,  0. ])
+    >>> np.correlate([1, 2, 3], [0, 1, 0.5], mode="same")
+    array([ 2. ,  3.5,  3. ])
+    >>> np.correlate([1, 2, 3], [0, 1, 0.5], lags=1)
+    array([ 2. ,  3.5,  3. ])
+    >>> np.correlate([1, 2, 3], [0, 1, 0.5], lags=range(-1, 2, 2))
+    array([ 2.,  3.])
 
     Using complex sequences:
 
@@ -790,15 +892,24 @@ def correlate(a, v, mode='valid'):
     array([ 0.0+0.j ,  3.0+1.j ,  1.5+1.5j,  1.0+0.j ,  0.5+0.5j])
 
     """
-    return multiarray.correlate2(a, v, mode)
+    if lags is not None:
+        if mode is not None:
+            raise ValueError(
+                "lags cannot be used with an explicit mode")
+        lags_tuple = _lags_from_lags(lags)
+        return multiarray.correlatelags(
+            a, v, lags_tuple[0], lags_tuple[1], lags_tuple[2])
+
+    return multiarray.correlate2(
+        a, v, _mode_from_name(mode if mode is not None else 'valid'))
 
 
-def _convolve_dispatcher(a, v, mode=None):
+def _convolve_dispatcher(a, v, mode=None, *, lags=None):
     return (a, v)
 
 
 @array_function_dispatch(_convolve_dispatcher)
-def convolve(a, v, mode='full'):
+def convolve(a, v, mode=None, *, lags=None):
     """
     Returns the discrete, linear convolution of two one-dimensional sequences.
 
@@ -817,21 +928,36 @@ def convolve(a, v, mode='full'):
     v : (M,) array_like
         Second one-dimensional input array.
     mode : {'full', 'valid', 'same'}, optional
+        When ``None`` (default), the function uses ``'full'`` unless
+        ``lags`` is passed, in which case that argument controls the output
+        range.  Passing an explicit mode together with ``lags`` raises an
+        error.
+
         'full':
-          By default, mode is 'full'.  This returns the convolution
-          at each point of overlap, with an output shape of (N+M-1,). At
-          the end-points of the convolution, the signals do not overlap
-          completely, and boundary effects may be seen.
+          Returns the convolution at each point of overlap, with an output
+          shape of (N+M-1,). At the end-points of the convolution, the
+          signals do not overlap completely, and boundary effects may be
+          seen.  This corresponds with a lag tuple of (-M+1, N, 1) for
+          N>M or (-N+1, M, 1) for M>N.
 
         'same':
-          Mode 'same' returns output of length ``max(M, N)``.  Boundary
-          effects are still visible.
+          Mode `same` returns output of length ``max(M, N)``.  Boundary
+          effects are still visible. This corresponds with a lag tuple of
+          (-M/2, N-M/2, 1) for N>M or (-M+N/2+1, N/2+1, 1) for M>N.
 
         'valid':
           Mode 'valid' returns output of length
-          ``max(M, N) - min(M, N) + 1``.  The convolution product is only given
-          for points where the signals overlap completely.  Values outside
-          the signal boundary have no effect.
+          ``max(M, N) - min(M, N) + 1``.  The convolution product is only
+          given for points where the signals overlap completely.  Values
+          outside the signal boundary have no effect. This corresponds with
+          a lag tuple of (0, N-M+1, 1) for N>M or (-M+N, 1, 1) for M>N.
+
+    lags : int, range, slice, or 1-D array_like of int, optional
+        Lag specification.  An ``int`` ``n`` requests the symmetric inclusive
+        window ``[-n, n]`` (``2*n+1`` lags total).  Also accepts a Python
+        ``range``, a ``slice`` with explicit start and stop, or a 1-D
+        array_like containing an arithmetic progression of integer lag
+        indices.
 
     Returns
     -------
@@ -877,24 +1003,49 @@ def convolve(a, v, mode='full'):
     Contains boundary effects, where zeros are taken
     into account:
 
-    >>> np.convolve([1,2,3],[0,1,0.5], 'same')
+    >>> np.convolve([1,2,3],[0,1,0.5], mode='same')
     array([1. ,  2.5,  4. ])
 
-    The two arrays are of the same length, so there
-    is only one position where they completely overlap:
+    The two arrays are of the same length, so there is only one position
+    where they completely overlap, corresponding to a lag of 0:
 
-    >>> np.convolve([1,2,3],[0,1,0.5], 'valid')
-    array([2.5])
+    >>> np.convolve([1,2,3],[0,1,0.5], mode='valid')
+    array([ 2.5])
+
+    Find the convolution for lags ranging from -1 to 1
+    (lag 0 aligns the left sides of the arrays; negative lags shift the
+    second array left, positive lags shift it right):
+
+    >>> np.convolve([1,2,3],[0,1,0.5], lags=1)
+    array([ 1. ,  2.5,  4. ])
+
+    Find the convolution for lags ranging from -2 to 4 with steps of 2:
+
+    >>> np.convolve([1,2,3,4,5], [0,1,0.5], lags=range(-2, 6, 2))
+    array([ 0. ,  2.5,  5.5,  2.5])
 
     """
     a, v = array(a, copy=None, ndmin=1), array(v, copy=None, ndmin=1)
-    if len(a) == 0:
+    alen, vlen = len(a), len(v)
+    if alen == 0:
         raise ValueError('a cannot be empty')
-    if len(v) == 0:
+    if vlen == 0:
         raise ValueError('v cannot be empty')
-    if len(v) > len(a):
+
+    if vlen > alen:
         a, v = v, a
-    return multiarray.correlate(a, v[::-1], mode)
+
+    if lags is not None:
+        if mode is not None:
+            raise ValueError(
+                "lags cannot be used with an explicit mode")
+        lags_tuple = _lags_from_lags(lags)
+        return multiarray.correlatelags(
+            a, v[::-1], lags_tuple[0], lags_tuple[1], lags_tuple[2],
+            conjugate=False)
+
+    return multiarray.correlate(
+        a, v[::-1], _mode_from_name(mode if mode is not None else 'full'))
 
 
 def _outer_dispatcher(a, b, out=None):

@@ -150,6 +150,43 @@ class CorrConv(Benchmark):
         np.convolve(self.x1, self.x2, mode=mode)
 
 
+class CorrConvLags(Benchmark):
+    # Benchmarks for the max_lag / lags API on np.correlate / np.convolve.
+    # Demonstrates the speedup of computing only a window of lags vs.
+    # computing 'full' and slicing.
+    params = [[1000, int(1e5)],   # size1 (longer signal)
+              [10, 100, 1000]]    # size2 (shorter signal / kernel)
+    param_names = ['size1', 'size2']
+
+    def setup(self, size1, size2):
+        self.x1 = np.linspace(0, 1, num=size1)
+        self.x2 = np.cos(np.linspace(0, 2 * np.pi, num=size2))
+        # A typical "small lag window" use case: just lags around 0.
+        self.max_lag_small = 5
+        # And a moderate window.
+        self.max_lag_med = max(10, size2 // 2)
+
+    def time_correlate_max_lag_small(self, size1, size2):
+        np.correlate(self.x1, self.x2, max_lag=self.max_lag_small)
+
+    def time_correlate_max_lag_med(self, size1, size2):
+        np.correlate(self.x1, self.x2, max_lag=self.max_lag_med)
+
+    def time_correlate_lags_range(self, size1, size2):
+        np.correlate(self.x1, self.x2,
+                     lags=range(-self.max_lag_small, self.max_lag_small + 1))
+
+    def time_full_then_slice(self, size1, size2):
+        # The pre-existing way users had to do this: compute everything,
+        # throw away most of it.
+        full = np.correlate(self.x1, self.x2, mode='full')
+        center = len(full) // 2
+        _ = full[center - self.max_lag_small:center + self.max_lag_small + 1]
+
+    def time_convolve_max_lag_small(self, size1, size2):
+        np.convolve(self.x1, self.x2, max_lag=self.max_lag_small)
+
+
 class CountNonzero(Benchmark):
     param_names = ['numaxes', 'size', 'dtype']
     params = [
