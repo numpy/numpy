@@ -1,24 +1,18 @@
-``max_lag`` and ``lags`` parameters for `numpy.correlate` and `numpy.convolve`
-------------------------------------------------------------------------------
-`numpy.correlate` and `numpy.convolve` now accept ``max_lag`` and ``lags``
-keyword arguments to compute the result at a restricted set of lag values
-instead of the full output, plus a ``returns_lagvector`` flag to return the
-corresponding lag indices alongside the result.
+``lags`` parameter for `numpy.correlate` and `numpy.convolve`
+-------------------------------------------------------------
+`numpy.correlate` and `numpy.convolve` now accept a ``lags`` keyword
+argument to compute the result at a restricted set of lag values instead
+of the full output.
 
-* ``max_lag=M`` (int) computes a symmetric inclusive window
-  ``[-M, M]`` (``2*M+1`` lags), matching MATLAB's ``xcorr(x, y, M)``
-  convention.
-* ``lags=`` accepts a Python ``range``, a ``slice`` with explicit start/stop,
-  or a 1-D integer array_like containing an arithmetic progression of lag
-  indices.
-* ``returns_lagvector=True`` causes both functions to return a
-  ``(result, lagvector)`` tuple where ``lagvector`` enumerates the lags
-  corresponding to ``result``.
+* ``lags=n`` (int) computes a symmetric inclusive window ``[-n, n]``
+  (``2*n+1`` lags), matching MATLAB's ``xcorr(x, y, n)`` convention.
+* ``lags=`` also accepts a Python ``range``, a ``slice`` with explicit
+  start/stop, or a 1-D integer array_like containing an arithmetic
+  progression of lag indices.
 
-These parameters are mutually exclusive and require ``mode='lags'`` (which is
-the default when either is supplied).
+``lags`` is mutually exclusive with an explicit ``mode`` argument.
 
 Example::
 
-    >>> np.correlate([1, 2, 3], [0, 1, 0.5], max_lag=1, returns_lagvector=True)
-    (array([2. , 3.5, 3. ]), array([-1,  0,  1]))
+    >>> np.correlate([1, 2, 3], [0, 1, 0.5], lags=1)
+    array([2. , 3.5, 3. ])

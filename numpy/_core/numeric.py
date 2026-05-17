@@ -958,6 +958,7 @@ def convolve(a, v, mode=None, *, lags=None):
         ``range``, a ``slice`` with explicit start and stop, or a 1-D
         array_like containing an arithmetic progression of integer lag
         indices.
+
     Returns
     -------
     out : ndarray
