@@ -4,6 +4,7 @@ import inspect
 import operator
 import os
 import pickle
+import platform
 import sys
 import types
 import warnings
@@ -888,6 +889,10 @@ class TestMonsterType:
             np.dtype(l)
 
     @requires_deep_recursion
+    @pytest.mark.skipif(
+        sys.platform.startswith("darwin") and platform.machine() == "x86_64",
+        reason="test now segfaults on x86 macs",
+    )
     def test_tuple_recursion(self):
         d = np.int32
         for i in range(100000):

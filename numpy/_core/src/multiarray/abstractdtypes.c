@@ -12,6 +12,7 @@
 #include "abstractdtypes.h"
 #include "array_coercion.h"
 #include "common.h"
+#include "npy_pycompat.h"
 
 
 static inline PyArray_Descr *
@@ -82,79 +83,12 @@ discover_descriptor_from_pycomplex(
 }
 
 
-NPY_NO_EXPORT int
-initialize_and_map_pytypes_to_dtypes()
-{
-    if (PyType_Ready((PyTypeObject *)&PyArray_IntAbstractDType) < 0) {
-        return -1;
-    }
-    if (PyType_Ready((PyTypeObject *)&PyArray_FloatAbstractDType) < 0) {
-        return -1;
-    }
-    if (PyType_Ready((PyTypeObject *)&PyArray_ComplexAbstractDType) < 0) {
-        return -1;
-    }
-    /*
-     * Delayed assignments to avoid "error C2099: initializer is not a constant"
-     * in windows compilers.  Can hopefully be done in structs in the future.
-     */
-    ((PyTypeObject *)&PyArray_PyLongDType)->tp_base =
-        (PyTypeObject *)&PyArray_IntAbstractDType;
-    PyArray_PyLongDType.scalar_type = &PyLong_Type;
-    if (PyType_Ready((PyTypeObject *)&PyArray_PyLongDType) < 0) {
-        return -1;
-    }
-    ((PyTypeObject *)&PyArray_PyFloatDType)->tp_base =
-        (PyTypeObject *)&PyArray_FloatAbstractDType;
-    PyArray_PyFloatDType.scalar_type = &PyFloat_Type;
-    if (PyType_Ready((PyTypeObject *)&PyArray_PyFloatDType) < 0) {
-        return -1;
-    }
-    ((PyTypeObject *)&PyArray_PyComplexDType)->tp_base =
-        (PyTypeObject *)&PyArray_ComplexAbstractDType;
-    PyArray_PyComplexDType.scalar_type = &PyComplex_Type;
-    if (PyType_Ready((PyTypeObject *)&PyArray_PyComplexDType) < 0) {
-        return -1;
-    }
-
-    /* Register the new DTypes for discovery */
-    if (_PyArray_MapPyTypeToDType(
-            &PyArray_PyLongDType, &PyLong_Type, NPY_FALSE) < 0) {
-        return -1;
-    }
-    if (_PyArray_MapPyTypeToDType(
-            &PyArray_PyFloatDType, &PyFloat_Type, NPY_FALSE) < 0) {
-        return -1;
-    }
-    if (_PyArray_MapPyTypeToDType(
-            &PyArray_PyComplexDType, &PyComplex_Type, NPY_FALSE) < 0) {
-        return -1;
-    }
-
-    /*
-     * Map str, bytes, and bool, for which we do not need abstract versions
-     * to the NumPy DTypes. This is done here using the `is_known_scalar_type`
-     * function.
-     * TODO: The `is_known_scalar_type` function is considered preliminary,
-     *       the same could be achieved e.g. with additional abstract DTypes.
-     */
-    PyArray_DTypeMeta *dtype;
-    dtype = typenum_to_dtypemeta(NPY_UNICODE);
-    if (_PyArray_MapPyTypeToDType(dtype, &PyUnicode_Type, NPY_FALSE) < 0) {
-        return -1;
-    }
-
-    dtype = typenum_to_dtypemeta(NPY_STRING);
-    if (_PyArray_MapPyTypeToDType(dtype, &PyBytes_Type, NPY_FALSE) < 0) {
-        return -1;
-    }
-    dtype = typenum_to_dtypemeta(NPY_BOOL);
-    if (_PyArray_MapPyTypeToDType(dtype, &PyBool_Type, NPY_FALSE) < 0) {
-        return -1;
-    }
-
-    return 0;
-}
+NPY_NO_EXPORT PyArray_DTypeMeta *PyArray_IntAbstractDTypePtr = NULL;
+NPY_NO_EXPORT PyArray_DTypeMeta *PyArray_FloatAbstractDTypePtr = NULL;
+NPY_NO_EXPORT PyArray_DTypeMeta *PyArray_ComplexAbstractDTypePtr = NULL;
+NPY_NO_EXPORT PyArray_DTypeMeta *PyArray_PyLongDTypePtr = NULL;
+NPY_NO_EXPORT PyArray_DTypeMeta *PyArray_PyFloatDTypePtr = NULL;
+NPY_NO_EXPORT PyArray_DTypeMeta *PyArray_PyComplexDTypePtr = NULL;
 
 
 /*
@@ -286,102 +220,139 @@ complex_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 }
 
 
-/*
- * Define abstract numerical DTypes that all regular ones can inherit from
- * (in arraytypes.c.src).
- * Here, also define types corresponding to the python scalars.
- */
-NPY_NO_EXPORT PyArray_DTypeMeta PyArray_IntAbstractDType = {{{
-        PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
-        .tp_name = "numpy.dtypes._IntegerAbstractDType",
-        .tp_base = &PyArrayDescr_Type,
-        .tp_basicsize = sizeof(PyArray_Descr),
-        .tp_flags = Py_TPFLAGS_DEFAULT,
-    },},
-    .type_num = -1,
-    .flags = NPY_DT_ABSTRACT,
-};
-
-NPY_DType_Slots pylongdtype_slots = {
+static NPY_DType_Slots pylongdtype_slots = {
     .discover_descr_from_pyobject = discover_descriptor_from_pylong,
     .default_descr = int_default_descriptor,
     .common_dtype = int_common_dtype,
 };
 
-NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyLongDType = {{{
-        PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
-        .tp_name = "numpy.dtypes._PyLongDType",
-        .tp_base = NULL,  /* set in initialize_and_map_pytypes_to_dtypes */
-        .tp_basicsize = sizeof(PyArray_Descr),
-        .tp_flags = Py_TPFLAGS_DEFAULT,
-    },},
-    .type_num = -1,
-    .dt_slots = &pylongdtype_slots,
-    .scalar_type = NULL,  /* set in initialize_and_map_pytypes_to_dtypes */
-};
-
-NPY_NO_EXPORT PyArray_DTypeMeta PyArray_FloatAbstractDType = {{{
-        PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
-        .tp_name = "numpy.dtypes._FloatAbstractDType",
-        .tp_base = &PyArrayDescr_Type,
-        .tp_basicsize = sizeof(PyArray_Descr),
-       .tp_flags = Py_TPFLAGS_DEFAULT,
-    },},
-    .type_num = -1,
-    .flags = NPY_DT_ABSTRACT,
-};
-
-NPY_DType_Slots pyfloatdtype_slots = {
+static NPY_DType_Slots pyfloatdtype_slots = {
     .discover_descr_from_pyobject = discover_descriptor_from_pyfloat,
     .default_descr = float_default_descriptor,
     .common_dtype = float_common_dtype,
 };
 
-NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyFloatDType = {{{
-        PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
-        .tp_name = "numpy.dtypes._PyFloatDType",
-        .tp_base = NULL,  /* set in initialize_and_map_pytypes_to_dtypes */
-        .tp_basicsize = sizeof(PyArray_Descr),
-       .tp_flags = Py_TPFLAGS_DEFAULT,
-    },},
-    .type_num = -1,
-    .dt_slots = &pyfloatdtype_slots,
-    .scalar_type = NULL,  /* set in initialize_and_map_pytypes_to_dtypes */
-};
-
-NPY_NO_EXPORT PyArray_DTypeMeta PyArray_ComplexAbstractDType = {{{
-        PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
-        .tp_name = "numpy.dtypes._ComplexAbstractDType",
-        .tp_base = &PyArrayDescr_Type,
-        .tp_basicsize = sizeof(PyArray_Descr),
-         .tp_flags = Py_TPFLAGS_DEFAULT,
-    },},
-    .type_num = -1,
-    .flags = NPY_DT_ABSTRACT,
-};
-
-NPY_DType_Slots pycomplexdtype_slots = {
+static NPY_DType_Slots pycomplexdtype_slots = {
     .discover_descr_from_pyobject = discover_descriptor_from_pycomplex,
     .default_descr = complex_default_descriptor,
     .common_dtype = complex_common_dtype,
 };
 
-NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyComplexDType = {{{
-        PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
-        .tp_name = "numpy.dtypes._PyComplexDType",
-        .tp_base = NULL,  /* set in initialize_and_map_pytypes_to_dtypes */
-        .tp_basicsize = sizeof(PyArray_Descr),
-         .tp_flags = Py_TPFLAGS_DEFAULT,
-    },},
-    .type_num = -1,
-    .dt_slots = &pycomplexdtype_slots,
-    .scalar_type = NULL,  /* set in initialize_and_map_pytypes_to_dtypes */
-};
+
+/*
+ * Create a heap-type DType class via ``PyType_FromMetaclass`` and fill in
+ * the NumPy-specific fields.  If ``slots`` is NULL we allocate an empty
+ * ``NPY_DType_Slots`` (abstract DTypes have no functional slots; in
+ * principle we should route everything through ``DTypeMetaInitFromSpec``
+ * here, but for now we just allocate directly).  When ``scalar_type`` is
+ * non-NULL the new DType is also registered for scalar discovery.
+ */
+static PyArray_DTypeMeta *
+make_raw_dtype(const char *name, PyTypeObject *base,
+               npy_uint64 flags, NPY_DType_Slots *slots,
+               PyTypeObject *scalar_type)
+{
+    PyType_Slot type_slots[] = {
+        {Py_tp_base, base},
+        {0, NULL},
+    };
+    PyType_Spec spec = {
+        .name = name,
+        .basicsize = sizeof(PyArray_Descr),
+        .itemsize = 0,
+        .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_IMMUTABLETYPE,
+        .slots = type_slots,
+    };
+    if (flags & NPY_DT_ABSTRACT) {
+        /* abstract ones can subclass in C but also disallow instant here */
+        spec.flags |= Py_TPFLAGS_BASETYPE | Py_TPFLAGS_DISALLOW_INSTANTIATION;
+    }
+    PyArray_DTypeMeta *dt = (PyArray_DTypeMeta *)PyType_FromMetaclass(
+            &PyArrayDTypeMeta_Type, NULL, &spec, NULL);
+    if (dt == NULL) {
+        return NULL;
+    }
+    if (slots == NULL) {
+        slots = PyMem_Calloc(1, sizeof(NPY_DType_Slots));
+        if (slots == NULL) {
+            Py_DECREF(dt);
+            PyErr_NoMemory();
+            return NULL;
+        }
+    }
+    dt->dt_slots = slots;
+    dt->type_num = -1;
+    Py_XINCREF(scalar_type);
+    dt->scalar_type = scalar_type;
+    dt->singleton = NULL;
+    dt->flags = flags;
+
+    if (scalar_type != NULL) {
+        if (_PyArray_MapPyTypeToDType(dt, scalar_type, NPY_FALSE) < 0) {
+            Py_DECREF(dt);
+            return NULL;
+        }
+    }
+    NpyUnstable_SetImmortal((PyObject *)dt);
+    return dt;
+}
 
 
 /*
- * Additional functions to deal with Python literal int, float, complex
+ * Create the abstract integer/float/complex DType classes (which the
+ * legacy concrete DTypes inherit from in ``arraytypes.c.src``) and the
+ * implicit DType classes for Python ``int``/``float``/``complex``
+ * literals, and register the latter for scalar discovery.
+ *
+ * Must be called before ``set_typeinfo``: ``dtypemeta_wrap_legacy_descriptor``
+ * inherits from the abstract DTypes created here.
  */
+NPY_NO_EXPORT int
+initialize_abstract_dtypes(void)
+{
+    struct dtype_spec {
+        const char *name;
+        PyArray_DTypeMeta **out;
+        /* Indirected so Py-scalar entries below can reference an abstract
+         * DType created earlier in the same loop iteration. */
+        PyTypeObject **base_ptr;
+        npy_uint64 flags;
+        NPY_DType_Slots *slots;
+        PyTypeObject *scalar_type;
+    };
+    PyTypeObject *descr_base = (PyTypeObject *)&PyArrayDescr_Type;
+
+    struct dtype_spec specs[] = {
+        /* Abstract DTypes; concrete legacy DTypes may inherit from these. */
+        {"numpy.dtypes._IntegerAbstractDType", &PyArray_IntAbstractDTypePtr,
+            &descr_base, NPY_DT_ABSTRACT, NULL, NULL},
+        {"numpy.dtypes._FloatAbstractDType", &PyArray_FloatAbstractDTypePtr,
+            &descr_base, NPY_DT_ABSTRACT, NULL, NULL},
+        {"numpy.dtypes._ComplexAbstractDType", &PyArray_ComplexAbstractDTypePtr,
+            &descr_base, NPY_DT_ABSTRACT, NULL, NULL},
+        /* Py-scalar DTypes; bases are the abstract DTypes created above. */
+        {"numpy.dtypes._PyLongDType", &PyArray_PyLongDTypePtr,
+            (PyTypeObject **)&PyArray_IntAbstractDTypePtr,
+            0, &pylongdtype_slots, &PyLong_Type},
+        {"numpy.dtypes._PyFloatDType", &PyArray_PyFloatDTypePtr,
+            (PyTypeObject **)&PyArray_FloatAbstractDTypePtr,
+            0, &pyfloatdtype_slots, &PyFloat_Type},
+        {"numpy.dtypes._PyComplexDType", &PyArray_PyComplexDTypePtr,
+            (PyTypeObject **)&PyArray_ComplexAbstractDTypePtr,
+            0, &pycomplexdtype_slots, &PyComplex_Type},
+    };
+    for (size_t i = 0; i < sizeof(specs) / sizeof(specs[0]); i++) {
+        *specs[i].out = make_raw_dtype(
+                specs[i].name, *specs[i].base_ptr, specs[i].flags,
+                specs[i].slots, specs[i].scalar_type);
+        if (*specs[i].out == NULL) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+
 /*
  * This function takes an existing array operand and if the new descr does
  * not match, replaces it with a new array that has the correct descriptor

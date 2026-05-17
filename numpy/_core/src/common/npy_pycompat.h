@@ -6,6 +6,21 @@
 
 #define Npy_HashDouble _Py_HashDouble
 
+/*
+ * No-op fallback for ``PyUnstable_SetImmortal`` on Python < 3.13, use
+ * `PyUnstable_SetImmortal` directly when only targeting free-threaded.
+ */
+static inline int
+NpyUnstable_SetImmortal(PyObject *op)
+{
+#if PY_VERSION_HEX >= 0x030D0000
+    return PyUnstable_SetImmortal(op);
+#else
+    (void)op;
+    return 1;
+#endif
+}
+
 #ifdef Py_GIL_DISABLED
 // Specialized version of critical section locking to safely use
 // PySequence_Fast APIs without the GIL. For performance, the argument *to*

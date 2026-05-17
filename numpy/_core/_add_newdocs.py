@@ -7070,7 +7070,7 @@ for _dtype_name, _signature, _sctype_name in (
         {_extra_docs}
         See `numpy.dtype` for the typical way to create dtype instances
         and :ref:`arrays.dtypes` for additional information.
-        """)
+        """, warn_on_python=False)
 
     del _dtype_name, _signature, _sctype_name, _extra_docs  # avoid namespace pollution
 
