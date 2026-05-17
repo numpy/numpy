@@ -1057,7 +1057,6 @@ def correlate(  # noqa: UP047
     v: _ArrayLike1D[_AnyNumericScalarT],
     mode: _CorrelateMode | None = ...,
     *,
-    max_lag: int | None = None,
     lags: _LagsArg | None = None,
 ) -> _Array1D[_AnyNumericScalarT]: ...
 @overload
@@ -1066,7 +1065,6 @@ def correlate(
     v: _ArrayLike1DBool_co,
     mode: _CorrelateMode | None = ...,
     *,
-    max_lag: int | None = None,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.bool]: ...
 @overload
@@ -1075,7 +1073,6 @@ def correlate(
     v: _ArrayLike1DInt_co,
     mode: _CorrelateMode | None = ...,
     *,
-    max_lag: int | None = None,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.int_ | Any]: ...
 @overload
@@ -1084,7 +1081,6 @@ def correlate(
     v: _ArrayLike1DFloat_co,
     mode: _CorrelateMode | None = ...,
     *,
-    max_lag: int | None = None,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.float64 | Any]: ...
 @overload
@@ -1093,7 +1089,6 @@ def correlate(
     v: _ArrayLike1DNumber_co,
     mode: _CorrelateMode | None = ...,
     *,
-    max_lag: int | None = None,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.complex128 | Any]: ...
 @overload
@@ -1102,7 +1097,6 @@ def correlate(
     v: _ArrayLike1DTD64_co,
     mode: _CorrelateMode | None = ...,
     *,
-    max_lag: int | None = None,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.timedelta64 | Any]: ...
 
@@ -1113,7 +1107,6 @@ def convolve(  # noqa: UP047
     v: _ArrayLike1D[_AnyNumericScalarT],
     mode: _CorrelateMode | None = ...,
     *,
-    max_lag: int | None = None,
     lags: _LagsArg | None = None,
 ) -> _Array1D[_AnyNumericScalarT]: ...
 @overload
@@ -1122,7 +1115,6 @@ def convolve(
     v: _ArrayLike1DBool_co,
     mode: _CorrelateMode | None = ...,
     *,
-    max_lag: int | None = None,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.bool]: ...
 @overload
@@ -1131,7 +1123,6 @@ def convolve(
     v: _ArrayLike1DInt_co,
     mode: _CorrelateMode | None = ...,
     *,
-    max_lag: int | None = None,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.int_ | Any]: ...
 @overload
@@ -1140,7 +1131,6 @@ def convolve(
     v: _ArrayLike1DFloat_co,
     mode: _CorrelateMode | None = ...,
     *,
-    max_lag: int | None = None,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.float64 | Any]: ...
 @overload
@@ -1149,7 +1139,6 @@ def convolve(
     v: _ArrayLike1DNumber_co,
     mode: _CorrelateMode | None = ...,
     *,
-    max_lag: int | None = None,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.complex128 | Any]: ...
 @overload
@@ -1158,7 +1147,6 @@ def convolve(
     v: _ArrayLike1DTD64_co,
     mode: _CorrelateMode | None = ...,
     *,
-    max_lag: int | None = None,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.timedelta64 | Any]: ...
 

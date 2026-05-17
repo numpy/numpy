@@ -735,26 +735,18 @@ def _mode_from_name(mode):
                      "one of 'valid', 'same', 'full'")
 
 
-def _lags_from_max_lag(max_lag):
-    """Convert a max_lag int to a (min_lag, max_lag_exclusive, step) tuple.
-
-    ``max_lag=M`` requests the symmetric inclusive range ``[-M, M]``,
-    matching MATLAB's ``xcorr(x, y, M)`` convention (2*M+1 lags total).
-    """
-    if not isinstance(max_lag, (int, nt.integer)):
-        raise TypeError("max_lag must be an integer")
-    m = int(max_lag)
-    if m < 0:
-        raise ValueError("max_lag must be non-negative")
-    return (-m, m + 1, 1)
-
-
 def _lags_from_lags(lag):
     """Convert a lags specification to (min_lag, max_lag_exclusive, lag_step).
 
-    Accepts a ``range``, ``slice`` (with explicit start/stop), or a 1-D
-    array_like containing an arithmetic progression of integers.
+    Accepts an ``int`` (symmetric window ``[-n, n]``), a ``range``, a
+    ``slice`` with explicit start/stop, or a 1-D array_like containing an
+    arithmetic progression of integers.
     """
+    if isinstance(lag, (int, nt.integer)):
+        m = int(lag)
+        if m < 0:
+            raise ValueError("lags integer must be non-negative")
+        return (-m, m + 1, 1)
     if isinstance(lag, range):
         return (lag.start, lag.stop, lag.step)
     if isinstance(lag, slice):
@@ -813,12 +805,12 @@ def _lags_from_mode(alen, vlen, mode):
     return (m0, m1, 1)
 
 
-def _correlate_dispatcher(a, v, mode=None, *, max_lag=None, lags=None):
+def _correlate_dispatcher(a, v, mode=None, *, lags=None):
     return (a, v)
 
 
 @array_function_dispatch(_correlate_dispatcher)
-def correlate(a, v, mode=None, *, max_lag=None, lags=None):
+def correlate(a, v, mode=None, *, lags=None):
     r"""
     Cross-correlation of two 1-dimensional sequences.
 
@@ -837,19 +829,15 @@ def correlate(a, v, mode=None, *, max_lag=None, lags=None):
     mode : {'valid', 'same', 'full'}, optional
         Refer to the `convolve` docstring for the definitions of each mode.
         When ``None`` (default), the function uses ``'valid'`` unless
-        ``max_lag`` or ``lags`` is passed, in which case those arguments
-        control the output range.  Passing an explicit mode together with
-        ``max_lag``/``lags`` raises an error.
-    max_lag : int, optional
-        Compute the cross-correlation at lags
-        ``-max_lag, -max_lag+1, ..., max_lag`` (a symmetric inclusive window
-        of ``2*max_lag+1`` lags around 0).
-        Mutually exclusive with ``lags``.
-    lags : range, slice, or 1-D array_like of int, optional
-        Explicit lag specification.  Accepts a Python ``range`` object, a
-        ``slice`` with explicit start and stop, or a 1-D array_like
-        containing an arithmetic progression of integer lag indices.
-        Mutually exclusive with ``max_lag``.
+        ``lags`` is passed, in which case that argument controls the output
+        range.  Passing an explicit mode together with ``lags`` raises an
+        error.
+    lags : int, range, slice, or 1-D array_like of int, optional
+        Lag specification.  An ``int`` ``n`` requests the symmetric inclusive
+        window ``[-n, n]`` (``2*n+1`` lags total).  Also accepts a Python
+        ``range``, a ``slice`` with explicit start and stop, or a 1-D
+        array_like containing an arithmetic progression of integer lag
+        indices.
 
     Returns
     -------
@@ -886,7 +874,7 @@ def correlate(a, v, mode=None, *, max_lag=None, lags=None):
     array([3.5])
     >>> np.correlate([1, 2, 3], [0, 1, 0.5], mode="same")
     array([ 2. ,  3.5,  3. ])
-    >>> np.correlate([1, 2, 3], [0, 1, 0.5], max_lag=1)
+    >>> np.correlate([1, 2, 3], [0, 1, 0.5], lags=1)
     array([ 2. ,  3.5,  3. ])
     >>> np.correlate([1, 2, 3], [0, 1, 0.5], lags=range(-1, 2, 2))
     array([ 2.,  3.])
@@ -904,17 +892,11 @@ def correlate(a, v, mode=None, *, max_lag=None, lags=None):
     array([ 0.0+0.j ,  3.0+1.j ,  1.5+1.5j,  1.0+0.j ,  0.5+0.5j])
 
     """
-    if max_lag is not None and lags is not None:
-        raise TypeError("cannot specify both max_lag and lags")
-
-    if max_lag is not None or lags is not None:
+    if lags is not None:
         if mode is not None:
             raise ValueError(
-                "max_lag/lags cannot be used with an explicit mode")
-        if max_lag is not None:
-            lags_tuple = _lags_from_max_lag(max_lag)
-        else:
-            lags_tuple = _lags_from_lags(lags)
+                "lags cannot be used with an explicit mode")
+        lags_tuple = _lags_from_lags(lags)
         return multiarray.correlatelags(
             a, v, lags_tuple[0], lags_tuple[1], lags_tuple[2])
 
@@ -922,12 +904,12 @@ def correlate(a, v, mode=None, *, max_lag=None, lags=None):
         a, v, _mode_from_name(mode if mode is not None else 'valid'))
 
 
-def _convolve_dispatcher(a, v, mode=None, *, max_lag=None, lags=None):
+def _convolve_dispatcher(a, v, mode=None, *, lags=None):
     return (a, v)
 
 
 @array_function_dispatch(_convolve_dispatcher)
-def convolve(a, v, mode=None, *, max_lag=None, lags=None):
+def convolve(a, v, mode=None, *, lags=None):
     """
     Returns the discrete, linear convolution of two one-dimensional sequences.
 
@@ -947,9 +929,9 @@ def convolve(a, v, mode=None, *, max_lag=None, lags=None):
         Second one-dimensional input array.
     mode : {'full', 'valid', 'same'}, optional
         When ``None`` (default), the function uses ``'full'`` unless
-        ``max_lag`` or ``lags`` is passed, in which case those arguments
-        control the output range.  Passing an explicit mode together with
-        ``max_lag``/``lags`` raises an error.
+        ``lags`` is passed, in which case that argument controls the output
+        range.  Passing an explicit mode together with ``lags`` raises an
+        error.
 
         'full':
           Returns the convolution at each point of overlap, with an output
@@ -970,15 +952,12 @@ def convolve(a, v, mode=None, *, max_lag=None, lags=None):
           outside the signal boundary have no effect. This corresponds with
           a lag tuple of (0, N-M+1, 1) for N>M or (-M+N, 1, 1) for M>N.
 
-    max_lag : int, optional
-        Compute the convolution at lags ``-max_lag, -max_lag+1, ..., max_lag``
-        (a symmetric inclusive window of ``2*max_lag+1`` lags around 0).
-        Mutually exclusive with ``lags``.
-    lags : range, slice, or 1-D array_like of int, optional
-        Explicit lag specification.  Accepts a Python ``range`` object, a
-        ``slice`` with explicit start and stop, or a 1-D array_like containing
-        an arithmetic progression of integer lag indices.
-        Mutually exclusive with ``max_lag``.
+    lags : int, range, slice, or 1-D array_like of int, optional
+        Lag specification.  An ``int`` ``n`` requests the symmetric inclusive
+        window ``[-n, n]`` (``2*n+1`` lags total).  Also accepts a Python
+        ``range``, a ``slice`` with explicit start and stop, or a 1-D
+        array_like containing an arithmetic progression of integer lag
+        indices.
     Returns
     -------
     out : ndarray
@@ -1036,7 +1015,7 @@ def convolve(a, v, mode=None, *, max_lag=None, lags=None):
     (lag 0 aligns the left sides of the arrays; negative lags shift the
     second array left, positive lags shift it right):
 
-    >>> np.convolve([1,2,3],[0,1,0.5], max_lag=1)
+    >>> np.convolve([1,2,3],[0,1,0.5], lags=1)
     array([ 1. ,  2.5,  4. ])
 
     Find the convolution for lags ranging from -2 to 4 with steps of 2:
@@ -1055,17 +1034,11 @@ def convolve(a, v, mode=None, *, max_lag=None, lags=None):
     if vlen > alen:
         a, v = v, a
 
-    if max_lag is not None and lags is not None:
-        raise TypeError("cannot specify both max_lag and lags")
-
-    if max_lag is not None or lags is not None:
+    if lags is not None:
         if mode is not None:
             raise ValueError(
-                "max_lag/lags cannot be used with an explicit mode")
-        if max_lag is not None:
-            lags_tuple = _lags_from_max_lag(max_lag)
-        else:
-            lags_tuple = _lags_from_lags(lags)
+                "lags cannot be used with an explicit mode")
+        lags_tuple = _lags_from_lags(lags)
         return multiarray.correlatelags(
             a, v[::-1], lags_tuple[0], lags_tuple[1], lags_tuple[2],
             conjugate=False)
