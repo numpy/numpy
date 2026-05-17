@@ -67,3 +67,6 @@ assert_type(np.histogramdd(AR_i8), tuple[npt.NDArray[np.float64], tuple[_Array1D
 assert_type(np.histogramdd(AR_f4), tuple[npt.NDArray[np.float64], tuple[_Array1D[np.float32], ...]])
 assert_type(np.histogramdd(AR_c8), tuple[npt.NDArray[np.float64], tuple[_Array1D[np.complex64], ...]])
 assert_type(np.histogramdd(AR_c16), tuple[npt.NDArray[np.float64], tuple[_Array1D[np.complex128], ...]])
+assert_type(np.histogramdd(AR_i8, bins="auto"), tuple[npt.NDArray[np.float64], tuple[_Array1D[np.float64], ...]])
+assert_type(np.histogramdd(AR_i8, bins="rice"), tuple[npt.NDArray[np.float64], tuple[_Array1D[np.float64], ...]])
+assert_type(np.histogramdd(AR_i8, bins="scott"), tuple[npt.NDArray[np.float64], tuple[_Array1D[np.float64], ...]])

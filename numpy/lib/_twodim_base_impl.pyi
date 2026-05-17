@@ -58,6 +58,7 @@ type _MaskFunc[_T] = Callable[[NDArray[np.int_], _T], NDArray[_Number_co | np.ti
 
 type _Indices2D = tuple[_Array1D[np.intp], _Array1D[np.intp]]
 type _Histogram2D[ScalarT: np.generic] = tuple[_Array2D[np.float64], _Array1D[ScalarT], _Array1D[ScalarT]]
+type _BinKind = L["auto", "fd", "doane", "scott", "stone", "rice", "sturges", "sqrt"]
 
 @type_check_only
 class _HasShapeAndNDim(Protocol):
@@ -242,7 +243,7 @@ def histogram2d[ScalarT: np.complexfloating](
 def histogram2d[ScalarT: np.inexact](
     x: _ArrayLike1D[ScalarT],
     y: _ArrayLike1D[ScalarT | _Int_co],
-    bins: int | Sequence[int] = 10,
+    bins: int | _BinKind | Sequence[int | _BinKind] = 10,
     range: _ArrayLike2DFloat_co | None = None,
     density: bool | None = None,
     weights: _ArrayLike1DFloat_co | None = None,
@@ -251,7 +252,7 @@ def histogram2d[ScalarT: np.inexact](
 def histogram2d[ScalarT: np.inexact](
     x: _ArrayLike1D[ScalarT | _Int_co],
     y: _ArrayLike1D[ScalarT],
-    bins: int | Sequence[int] = 10,
+    bins: int | _BinKind | Sequence[int | _BinKind] = 10,
     range: _ArrayLike2DFloat_co | None = None,
     density: bool | None = None,
     weights: _ArrayLike1DFloat_co | None = None,
@@ -260,7 +261,7 @@ def histogram2d[ScalarT: np.inexact](
 def histogram2d(
     x: _ArrayLike1DInt_co | Sequence[float],
     y: _ArrayLike1DInt_co | Sequence[float],
-    bins: int | Sequence[int] = 10,
+    bins: int | _BinKind | Sequence[int | _BinKind] = 10,
     range: _ArrayLike2DFloat_co | None = None,
     density: bool | None = None,
     weights: _ArrayLike1DFloat_co | None = None,
@@ -287,7 +288,7 @@ def histogram2d[ScalarT: _Number_co](
 def histogram2d[ScalarT: np.inexact, BinsScalarT: _Number_co](
     x: _ArrayLike1D[ScalarT],
     y: _ArrayLike1D[ScalarT],
-    bins: Sequence[_ArrayLike1D[BinsScalarT] | int],
+    bins: Sequence[_ArrayLike1D[BinsScalarT] | int | _BinKind],
     range: _ArrayLike2DFloat_co | None = None,
     density: bool | None = None,
     weights: _ArrayLike1DFloat_co | None = None,
@@ -296,7 +297,7 @@ def histogram2d[ScalarT: np.inexact, BinsScalarT: _Number_co](
 def histogram2d[ScalarT: np.inexact](
     x: _ArrayLike1D[ScalarT],
     y: _ArrayLike1D[ScalarT],
-    bins: Sequence[_ArrayLike1DNumber_co | int],
+    bins: Sequence[_ArrayLike1DNumber_co | int | _BinKind],
     range: _ArrayLike2DFloat_co | None = None,
     density: bool | None = None,
     weights: _ArrayLike1DFloat_co | None = None,
@@ -305,7 +306,7 @@ def histogram2d[ScalarT: np.inexact](
 def histogram2d[ScalarT: _Number_co](
     x: _ArrayLike1DInt_co | Sequence[float],
     y: _ArrayLike1DInt_co | Sequence[float],
-    bins: Sequence[_ArrayLike1D[ScalarT] | int],
+    bins: Sequence[_ArrayLike1D[ScalarT] | int | _BinKind],
     range: _ArrayLike2DFloat_co | None = None,
     density: bool | None = None,
     weights: _ArrayLike1DFloat_co | None = None,
@@ -314,7 +315,7 @@ def histogram2d[ScalarT: _Number_co](
 def histogram2d(
     x: _ArrayLike1DInt_co | Sequence[float],
     y: _ArrayLike1DInt_co | Sequence[float],
-    bins: Sequence[_ArrayLike1DNumber_co | int],
+    bins: Sequence[_ArrayLike1DNumber_co | int | _BinKind],
     range: _ArrayLike2DFloat_co | None = None,
     density: bool | None = None,
     weights: _ArrayLike1DFloat_co | None = None,
@@ -368,7 +369,7 @@ def histogram2d(
 def histogram2d(
     x: _ArrayLike1DNumber_co,
     y: _ArrayLike1DNumber_co,
-    bins: Sequence[_ArrayLike1DNumber_co | int] | int,
+    bins: Sequence[_ArrayLike1DNumber_co | int | _BinKind] | int | _BinKind,
     range: _ArrayLike2DFloat_co | None = None,
     density: bool | None = None,
     weights: _ArrayLike1DFloat_co | None = None,
