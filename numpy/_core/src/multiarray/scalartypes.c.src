@@ -2080,6 +2080,7 @@ gentype_getarray(PyObject *scalar, PyObject *args)
 }
 
 static char doc_sc_wraparray[] = "__array_wrap__ implementation for scalar types";
+static char doc_scalar_complex[] = "__complex__($self, /)\n--\n\ncomplex(self)";
 
 /*
  * __array_wrap__ for scalars, returning a scalar if possible.
@@ -2517,13 +2518,28 @@ numbertype_class_getitem(PyObject *cls, PyObject *args)
  * #n = f, l#
  */
 static PyObject *
-@name@_complex(PyObject *self, PyObject *NPY_UNUSED(args),
-               PyObject *NPY_UNUSED(kwds))
+@name@_complex(PyObject *self, PyObject *NPY_UNUSED(args))
 {
     return PyComplex_FromDoubles(npy_creal@n@(PyArrayScalar_VAL(self, @Name@)),
                                  npy_cimag@n@(PyArrayScalar_VAL(self, @Name@)));
 }
 /**end repeat**/
+
+static PyObject *
+scalar_complex(PyObject *self, PyObject *NPY_UNUSED(args))
+{
+    PyObject *real_obj = PyNumber_Float(self);
+    if (real_obj == NULL) {
+        return NULL;
+    }
+    double real = PyFloat_AsDouble(real_obj);
+    Py_DECREF(real_obj);
+    if (real == -1.0 && PyErr_Occurred()) {
+        return NULL;
+    }
+
+    return PyComplex_FromDoubles(real, 0.0);
+}
 
 /**begin repeat
  *  #name = half, float, double, longdouble#
@@ -2895,7 +2911,20 @@ static PyMethodDef numbertype_methods[] = {
 };
 
 /**begin repeat
- * #name = boolean,datetime#
+ * #name = boolean#
+ */
+static PyMethodDef @name@type_methods[] = {
+    {"__complex__",
+        (PyCFunction)scalar_complex,
+        METH_NOARGS, doc_scalar_complex},
+    /* for typing */
+    {"__class_getitem__", Py_GenericAlias, METH_CLASS | METH_O, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
+/**end repeat**/
+
+/**begin repeat
+ * #name = datetime#
  */
 static PyMethodDef @name@type_methods[] = {
     /* for typing */
@@ -2910,7 +2939,7 @@ static PyMethodDef @name@type_methods[] = {
 static PyMethodDef @name@type_methods[] = {
     {"__complex__",
         (PyCFunction)@name@_complex,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_NOARGS, doc_scalar_complex},
     /* for typing */
     {"__class_getitem__",
         (PyCFunction)numbertype_class_getitem,
@@ -2942,6 +2971,9 @@ static PyMethodDef integertype_methods[] = {
  * #name = half,float,double,longdouble#
  */
 static PyMethodDef @name@type_methods[] = {
+    {"__complex__",
+        (PyCFunction)scalar_complex,
+        METH_NOARGS, doc_scalar_complex},
     {"as_integer_ratio",
         (PyCFunction)@name@_as_integer_ratio,
         METH_NOARGS, NULL},
@@ -2973,6 +3005,9 @@ static PyMethodDef @name@type_methods[] = {
  *         long, ulong, longlong, ulonglong#
  */
 static PyMethodDef @name@type_methods[] = {
+    {"__complex__",
+        (PyCFunction)scalar_complex,
+        METH_NOARGS, doc_scalar_complex},
     /* for typing */
     {"__class_getitem__",
         (PyCFunction)numbertype_class_getitem,

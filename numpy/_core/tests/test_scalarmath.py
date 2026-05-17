@@ -1164,3 +1164,29 @@ def test_scalar_matches_array_op_with_pyscalar(op, sctype, other_type, rop):
         assert np.array(res).dtype == expected.dtype
     else:
         assert res.dtype == expected.dtype
+
+@pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
+def test_complex_scalar_dunder_complex(dtype):
+    x = np.mean(np.asarray(4 + 2j, dtype=dtype))
+
+    y = x.__complex__()
+
+    assert isinstance(y, complex)
+    assert y == complex(x)
+    assert y == complex(4 + 2j)
+
+
+@pytest.mark.parametrize("dtype", [np.bool_, np.int32, np.int64, np.float32, np.float64])
+def test_real_scalar_dunder_complex(dtype):
+    if dtype is np.bool_:
+        x = np.all(np.asarray(True, dtype=dtype))
+    elif np.issubdtype(dtype, np.integer):
+        x = np.sum(np.asarray(4, dtype=dtype))
+    else:
+        x = np.mean(np.asarray(4, dtype=dtype))
+
+    y = x.__complex__()
+
+    assert isinstance(y, complex)
+    assert y == complex(x)
+    assert y.imag == 0.0
