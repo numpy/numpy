@@ -2673,7 +2673,14 @@ def astype(x, dtype, /, *, copy=True, device=None):
             'Device not understood. Only "cpu" is allowed, but received:'
             f' {device}'
         )
-    return x.astype(dtype, copy=copy)
+    try:
+        return x.astype(dtype, copy=copy)
+    except AttributeError:
+        raise TypeError(
+            "Input should be a NumPy array or scalar."
+            f"It is a {type(x)} instead. Python scalars are not supported. "
+        )
+
 
 
 inf = PINF
