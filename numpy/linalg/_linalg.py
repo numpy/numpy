@@ -1810,6 +1810,8 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
         if compute_uv:
             s, u = eigh(a)
             sgn = sign(s)
+            # avoid zero sign
+            sgn = np.where(sgn == 0, 1, sgn)
             s = abs(s)
             sidx = argsort(s)[..., ::-1]
             sgn = np.take_along_axis(sgn, sidx, axis=-1)

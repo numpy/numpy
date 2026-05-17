@@ -765,6 +765,12 @@ class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
 class TestSVDHermitian(SVDHermitianCases, SVDBaseTests):
     hermitian = True
 
+    def test_singular(self):
+        x = np.array([[1, 0], [0, 0]])
+        u, _, vh = linalg.svd(x, hermitian=self.hermitian)
+        assert_almost_equal(u @ u.T.conj(), np.eye(2))
+        assert_almost_equal(vh @ vh.T.conj(), np.eye(2))
+
 
 class CondCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
     # cond(x, p) for p in (None, 2, -2)
