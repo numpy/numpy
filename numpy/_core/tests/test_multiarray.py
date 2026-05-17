@@ -3918,6 +3918,17 @@ class TestMethods:
         assert_raises(TypeError, a.conj)
         assert_raises(TypeError, a.conjugate)
 
+    @pytest.mark.parametrize("dtype", ["?", "b", "h", "I"])
+    def test_conjugate_view(self, dtype):
+        a = np.ones(10, dtype=dtype)
+        assert a.conj() is a
+
+    @pytest.mark.parametrize("dtype", ["S", "U", "M8[ns]"])
+    def test_conjugate_error(self, dtype):
+        a = np.ones(10, dtype=dtype)
+        with pytest.raises(TypeError, match="cannot conjugate non-numeric dtype"):
+            a.conj()
+
     def test_conjugate_out(self):
         # Minimal test for the out argument being passed on correctly
         # NOTE: The ability to pass `out` is currently undocumented!
