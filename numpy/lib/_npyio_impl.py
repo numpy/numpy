@@ -1970,10 +1970,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         )
 
     if encoding == 'bytes':
-        encoding = None
-        byte_converters = True
-    else:
-        byte_converters = False
+        raise ValueError("encoding=`bytes` is no longer supported.")
 
     # Initialize the filehandle, the LineSplitter and the NameValidator
     if isinstance(fname, os.PathLike):
@@ -2222,15 +2219,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                 testing_value = None
             if conv is bytes:
                 user_conv = asbytes
-            elif byte_converters:
-                # Converters may use decode to workaround numpy's old
-                # behavior, so encode the string again before passing
-                # to the user converter.
-                def tobytes_first(x, conv):
-                    if type(x) is bytes:
-                        return conv(x)
-                    return conv(x.encode("latin1"))
-                user_conv = functools.partial(tobytes_first, conv=conv)
             else:
                 user_conv = conv
             converters[i].update(user_conv, locked=True,
@@ -2349,31 +2337,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if dtype is None:
         # Get the dtypes from the types of the converters
         column_types = [conv.type for conv in converters]
-        # Find the columns with strings...
-        strcolidx = [i for (i, v) in enumerate(column_types)
-                     if v == np.str_]
-
-        if byte_converters and strcolidx:
-            # convert strings back to bytes for backward compatibility
-            warnings.warn(
-                "Reading unicode strings without specifying the encoding "
-                "argument is deprecated. Set the encoding, use None for the "
-                "system default.",
-                np.exceptions.VisibleDeprecationWarning, stacklevel=2)
-
-            def encode_unicode_cols(row_tup):
-                row = list(row_tup)
-                for i in strcolidx:
-                    row[i] = row[i].encode('latin1')
-                return tuple(row)
-
-            try:
-                data = [encode_unicode_cols(r) for r in data]
-            except UnicodeEncodeError:
-                pass
-            else:
-                for i in strcolidx:
-                    column_types[i] = np.bytes_
 
         # Update string types to be the right length
         sized_column_types = column_types.copy()
