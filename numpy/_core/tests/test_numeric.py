@@ -3809,6 +3809,17 @@ class TestCorrelate:
         lags = np.correlation_lags(len(self.y), len(self.x), lags=range(0, 5, 2))
         assert_array_equal(lags, np.array([0, 2, 4]))
 
+    def test_lags_negative_step_partial_beyond_overlap(self):
+        self._setup(float)
+        # Negative non-unit step whose range extends outside the overlap on
+        # both sides: exercises inversion (ceiling division) followed by the
+        # pre-overlap skip (ceiling division again).
+        # range(5, -8, -3) -> [5, 2, -1, -4, -7]
+        # n1=5, n2=3: overlap is lags -2..4
+        # lag=5 past right edge -> 0; lag=-4,-7 before left edge -> 0
+        z = np.correlate(self.x, self.y, lags=range(5, -8, -3))
+        assert_array_almost_equal(z, [0., self.z1[4], self.z1[1], 0., 0.])
+
     def test_lags_empty(self):
         self._setup(float)
         z = np.correlate(self.x, self.y, lags=range(0))
