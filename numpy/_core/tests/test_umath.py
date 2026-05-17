@@ -2485,6 +2485,23 @@ class TestLdexp:
             assert_equal(ncu.ldexp(2., imax), np.inf)
             assert_equal(ncu.ldexp(2., imin), 0)
 
+    # TODO: at the time of writing, this still raises a warning on certain platforms
+    # (see gh-29597). Once that is fixed, there is no need to ignore the warnings here.
+    @pytest.mark.filterwarnings("ignore:overflow encountered in ldexp:RuntimeWarning")
+    @pytest.mark.filterwarnings("ignore:overflow encountered in cast:RuntimeWarning")
+    @pytest.mark.parametrize("type1", [int, np.int8, np.int16, np.int32, np.int64])
+    @pytest.mark.parametrize("type2", [int, np.int8, np.int16, np.int32, np.int64])
+    def test_ldexp_integer_scalar(self, type1, type2):
+        x1 = type1(1)
+        x2 = type2(16)
+
+        res = ncu.ldexp(x1, x2)
+        assert_almost_equal(res, 65536)
+
+        # Any integer should also go straight to the default float
+        # (at the time of writing this was not common for many ufuncs)
+        assert res.dtype == np.float64
+
 
 class TestMaximum(_FilterInvalids):
     def test_reduce(self):
