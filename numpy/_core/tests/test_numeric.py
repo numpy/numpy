@@ -3670,6 +3670,11 @@ class TestCorrelate:
         with pytest.raises(ValueError, match="cannot be used with an explicit mode"):
             np.correlate(self.x, self.y, mode='valid', lags=range(2))
 
+    def test_lags_negative_int_rejected(self):
+        self._setup(float)
+        with pytest.raises(ValueError, match="non-negative"):
+            np.correlate(self.x, self.y, lags=-1)
+
     def test_lags_non_arithmetic_array_rejected(self):
         self._setup(float)
         with pytest.raises(ValueError, match="arithmetic progression"):
