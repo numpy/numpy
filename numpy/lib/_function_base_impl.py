@@ -3821,6 +3821,30 @@ def sinc(x):
     # Hope that 1e-20 is sufficient for objects...
     eps = np.finfo(x.dtype).eps if x.dtype.kind == "f" else 1e-20
     y = where(x, x, eps)
+    if x.dtype.kind == "f":
+        is_inf = np.isinf(x)
+        y = where(is_inf, 1, y)
+        return where(is_inf, 0.0, sin(y) / y)
+    
+    if x.dtype.kind == "c":
+        real_inf = np.isinf(x.real)
+        imag_inf = np.isinf(x.imag)
+
+        # Case 1: infinite real part, finite imaginary part -> 0 
+        real_inf_only = real_inf & ~imag_inf
+        y = where(real_inf_only, 1.0 + 0.0j, y)
+        out = sin(y) / y
+        out = where(real_inf_only, 0.0 + 0.0j, out)
+
+        # Case 2: infinite imaginary part -> magnitude blows up
+        imag_pos = imag_inf & (x.imag > 0)
+        imag_neg = imag_inf & (x.imag < 0)
+
+        # Use a simple infinite complex formula.
+        out = where(imag_pos, np.inf + 1j * np.inf, out)
+        out = where(imag_neg, np.inf - 1j * np.inf, out)
+
+        return out
     return sin(y) / y
 
 

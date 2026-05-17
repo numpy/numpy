@@ -2481,6 +2481,17 @@ class TestSinc:
         # resulting in nan
         assert_array_equal(sinc(x), np.asarray(1.0))
 
+    def test_inf(self):
+        assert sinc(np.inf) == 0.0
+        assert sinc(-np.inf) == 0.0
+        assert sinc(np.inf + 0j) == 0.0 + 0.0j
+        assert sinc(-np.inf + 0j) == 0.0 + 0.0j
+
+    def test_complex_imag_inf(self):
+        out1 = sinc(1j * np.inf)
+        out2 = sinc(-1j * np.inf)
+        assert np.isinf(out1.real) or np.isinf(out1.imag)
+        assert np.isinf(out2.real) or np.isinf(out2.imag)
 
 class TestUnique:
 
