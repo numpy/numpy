@@ -1809,9 +1809,8 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
         # and related arrays to have the correct order
         if compute_uv:
             s, u = eigh(a)
-            sgn = sign(s)
             # avoid zero sign
-            sgn = np.where(sgn == 0, 1, sgn)
+            sgn = np.copysign(1.0, s)
             s = abs(s)
             sidx = argsort(s)[..., ::-1]
             sgn = np.take_along_axis(sgn, sidx, axis=-1)
