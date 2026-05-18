@@ -360,11 +360,16 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     else:
         # Slow, but safe for subclasses of ndarray
         a, mask = _replace_nan(a, +np.inf)
-        # Remove NaN initial to avoid propagation through np.amin
-        # (nanmin should ignore NaN in initial, same as in array elements)
-        initial = kwargs.pop("initial", np._NoValue)
-        if initial is not np._NoValue and not np.isnan(initial):
-            kwargs["initial"] = initial
+        # Replace NaN initial with +inf (identity of min) to avoid NaN
+        # propagation through np.amin. nanmin should ignore NaN in initial
+        # the same way it ignores NaN in array elements.
+        initial_is_nan = (
+            initial is not np._NoValue
+            and np.ndim(initial) == 0
+            and np.isnan(initial)
+        )
+        if initial_is_nan:
+            kwargs["initial"] = +np.inf
         res = np.amin(a, axis=axis, out=out, **kwargs)
         if mask is None:
             return res
@@ -373,8 +378,8 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         kwargs.pop("initial", None)
         mask = np.all(mask, axis=axis, **kwargs)
         if np.any(mask):
-            if initial is not np._NoValue and not np.isnan(initial):
-                # initial provides a valid fallback for all-NaN slices
+            if initial is not np._NoValue and not initial_is_nan:
+                # Non-NaN initial provides a valid fallback for all-NaN slices
                 res = _copyto(res, initial, mask)
             else:
                 res = _copyto(res, np.nan, mask)
@@ -498,11 +503,16 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     else:
         # Slow, but safe for subclasses of ndarray
         a, mask = _replace_nan(a, -np.inf)
-        # Remove NaN initial to avoid propagation through np.amax
-        # (nanmax should ignore NaN in initial, same as in array elements)
-        initial = kwargs.pop("initial", np._NoValue)
-        if initial is not np._NoValue and not np.isnan(initial):
-            kwargs["initial"] = initial
+        # Replace NaN initial with -inf (identity of max) to avoid NaN
+        # propagation through np.amax. nanmax should ignore NaN in initial
+        # the same way it ignores NaN in array elements.
+        initial_is_nan = (
+            initial is not np._NoValue
+            and np.ndim(initial) == 0
+            and np.isnan(initial)
+        )
+        if initial_is_nan:
+            kwargs["initial"] = -np.inf
         res = np.amax(a, axis=axis, out=out, **kwargs)
         if mask is None:
             return res
@@ -511,8 +521,8 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         kwargs.pop("initial", None)
         mask = np.all(mask, axis=axis, **kwargs)
         if np.any(mask):
-            if initial is not np._NoValue and not np.isnan(initial):
-                # initial provides a valid fallback for all-NaN slices
+            if initial is not np._NoValue and not initial_is_nan:
+                # Non-NaN initial provides a valid fallback for all-NaN slices
                 res = _copyto(res, initial, mask)
             else:
                 res = _copyto(res, np.nan, mask)
