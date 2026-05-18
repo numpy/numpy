@@ -768,8 +768,8 @@ class TestSVDHermitian(SVDHermitianCases, SVDBaseTests):
     def test_singular(self):
         x = np.array([[1, 0], [0, 0]])
         u, _, vh = linalg.svd(x, hermitian=self.hermitian)
-        assert_allclose(u @ u.T.conj(), np.eye(2))
-        assert_allclose(vh @ vh.T.conj(), np.eye(2))
+        assert_allclose(u @ u.T.conj(), np.eye(2), rtol=1e-14)
+        assert_allclose(vh @ vh.T.conj(), np.eye(2), rtol=1e-14)
 
 
 class CondCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
