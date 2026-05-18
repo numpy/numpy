@@ -270,13 +270,21 @@ class TestNanFunctions_MinMax:
         # should ignore a NaN ``initial`` and use a non-NaN ``initial``
         # as the fallback value for all-NaN or empty slices.
 
-        # NaN initial must not propagate.
+        # NaN initial must not propagate, including with multi-element input.
         assert np.nanmax([1.0], initial=np.nan) == 1.0
         assert np.nanmin([1.0], initial=np.nan) == 1.0
+        assert np.nanmax([1.0, 2.0, 3.0], initial=np.nan) == 3.0
+        assert np.nanmin([1.0, 2.0, 3.0], initial=np.nan) == 1.0
 
-        # Non-NaN initial provides a fallback for empty input.
+        # Non-NaN initial provides a fallback for empty or all-NaN input,
+        # without a RuntimeWarning.
         assert np.nanmax([], initial=1.0) == 1.0
         assert np.nanmin([], initial=1.0) == 1.0
+        for f in self.nanfuncs:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                assert f([np.nan, np.nan], initial=5.0) == 5.0
+                assert len(w) == 0
 
         # Empty input with a NaN initial preserves the existing
         # all-NaN behaviour: a RuntimeWarning is raised and NaN is returned.
