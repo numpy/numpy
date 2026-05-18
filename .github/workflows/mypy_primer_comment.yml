@@ -16,6 +16,9 @@ jobs:
     name: Comment PR from mypy_primer
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Download diffs
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0

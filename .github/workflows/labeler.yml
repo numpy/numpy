@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write  # to add labels
+      contents: read # to read .github/pr-prefix-labeler.yml
+      issues: write # to add labels
     steps:
     - name: Label the PR
       continue-on-error: true
