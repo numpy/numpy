@@ -260,6 +260,7 @@ def test_self_casts(dtype, dtype2, strings):
         ["this", "is", "an", "array"],
         ["€", "", "😊"],
         ["A¢☃€ 😊", " A☃€¢😊", "☃€😊 A¢", "😊☃A¢ €"],
+        ["short", "12345678"] * 1000,
     ],
 )
 class TestStringLikeCasts:
