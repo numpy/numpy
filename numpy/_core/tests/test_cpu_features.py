@@ -118,6 +118,12 @@ class AbstractTest:
             hwcap_value = [s.strip() for s in at.split(b':', 1)]
             if len(hwcap_value) == 2:
                 hwcap_decoded = hwcap_value[1].upper().decode().split()
+                # newer glibc versions output values in hex format
+                # instead of decoding all flags, like:
+                # AT_HWCAP: 0x67ffff
+                # Try detecting it. If there's only 1 value
+                # and it starts with 0X hex prefix,
+                # treat it as hex number
                 if len(hwcap_decoded) == 1 and hwcap_decoded[0].startswith("0X"):
                     hwcap_int = int(hwcap_decoded[0], 16)
                     for k, v in self.features_hwcap.items():
