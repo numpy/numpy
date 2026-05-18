@@ -3488,9 +3488,9 @@ _array_method_doc('argmin', "axis=None, out=None, *, keepdims=False",
     numpy.argmin : equivalent function
     """)
 
-_array_method_doc('argsort', "axis=-1, kind=None, order=None, *, stable=None",
+_array_method_doc('argsort', "axis=-1, kind=None, order=None, *, stable=None, descending=None",
     """
-    a.argsort(axis=-1, kind=None, order=None, *, stable=None)
+    a.argsort(axis=-1, kind=None, order=None, *, stable=None, descending=None)
 
     Returns the indices that would sort this array.
 
@@ -4413,9 +4413,9 @@ _array_method_doc('setflags', "*, write=None, align=None, uic=None",
     ValueError: cannot set WRITEBACKIFCOPY flag to True
     """)
 
-_array_method_doc('sort', "axis=-1, kind=None, order=None, *, stable=None",
+_array_method_doc('sort', "axis=-1, kind=None, order=None, *, stable=None, descending=None",
     """
-    a.sort(axis=-1, kind=None, order=None, *, stable=None)
+    a.sort(axis=-1, kind=None, order=None, *, stable=None, descending=None)
 
     Sort an array in-place. Refer to `numpy.sort` for full documentation.
 

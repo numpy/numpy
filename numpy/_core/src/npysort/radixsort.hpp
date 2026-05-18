@@ -139,6 +139,14 @@ radixsort(void *start, npy_intp num)
     return radixsort_<T>((UT *)start, num);
 }
 
+// ``PyArray_SortFunc``-shaped trampoline.
+template <typename Tag, typename type>
+static int
+radixsort_impl(void *start, npy_intp num, void *NPY_UNUSED(varr))
+{
+    return radixsort<type>(start, num);
+}
+
 template <class T, class UT>
 static npy_intp *
 aradixsort0(UT *start, npy_intp *aux, npy_intp *tosort, npy_intp num)
@@ -236,121 +244,10 @@ aradixsort(void *start, npy_intp *tosort, npy_intp num)
     return aradixsort_<T>((UT *)start, tosort, num);
 }
 
-extern "C" {
-NPY_NO_EXPORT int
-radixsort_bool(void *vec, npy_intp cnt, void *NPY_UNUSED(null))
+// ``PyArray_ArgSortFunc``-shaped trampoline.
+template <typename Tag, typename type>
+static int
+aradixsort_impl(void *start, npy_intp *tosort, npy_intp num, void *NPY_UNUSED(varr))
 {
-    return radixsort<npy_bool>(vec, cnt);
-}
-NPY_NO_EXPORT int
-radixsort_byte(void *vec, npy_intp cnt, void *NPY_UNUSED(null))
-{
-    return radixsort<npy_byte>(vec, cnt);
-}
-NPY_NO_EXPORT int
-radixsort_ubyte(void *vec, npy_intp cnt, void *NPY_UNUSED(null))
-{
-    return radixsort<npy_ubyte>(vec, cnt);
-}
-NPY_NO_EXPORT int
-radixsort_short(void *vec, npy_intp cnt, void *NPY_UNUSED(null))
-{
-    return radixsort<npy_short>(vec, cnt);
-}
-NPY_NO_EXPORT int
-radixsort_ushort(void *vec, npy_intp cnt, void *NPY_UNUSED(null))
-{
-    return radixsort<npy_ushort>(vec, cnt);
-}
-NPY_NO_EXPORT int
-radixsort_int(void *vec, npy_intp cnt, void *NPY_UNUSED(null))
-{
-    return radixsort<npy_int>(vec, cnt);
-}
-NPY_NO_EXPORT int
-radixsort_uint(void *vec, npy_intp cnt, void *NPY_UNUSED(null))
-{
-    return radixsort<npy_uint>(vec, cnt);
-}
-NPY_NO_EXPORT int
-radixsort_long(void *vec, npy_intp cnt, void *NPY_UNUSED(null))
-{
-    return radixsort<npy_long>(vec, cnt);
-}
-NPY_NO_EXPORT int
-radixsort_ulong(void *vec, npy_intp cnt, void *NPY_UNUSED(null))
-{
-    return radixsort<npy_ulong>(vec, cnt);
-}
-NPY_NO_EXPORT int
-radixsort_longlong(void *vec, npy_intp cnt, void *NPY_UNUSED(null))
-{
-    return radixsort<npy_longlong>(vec, cnt);
-}
-NPY_NO_EXPORT int
-radixsort_ulonglong(void *vec, npy_intp cnt, void *NPY_UNUSED(null))
-{
-    return radixsort<npy_ulonglong>(vec, cnt);
-}
-NPY_NO_EXPORT int
-aradixsort_bool(void *vec, npy_intp *ind, npy_intp cnt, void *NPY_UNUSED(null))
-{
-    return aradixsort<npy_bool>(vec, ind, cnt);
-}
-NPY_NO_EXPORT int
-aradixsort_byte(void *vec, npy_intp *ind, npy_intp cnt, void *NPY_UNUSED(null))
-{
-    return aradixsort<npy_byte>(vec, ind, cnt);
-}
-NPY_NO_EXPORT int
-aradixsort_ubyte(void *vec, npy_intp *ind, npy_intp cnt,
-                 void *NPY_UNUSED(null))
-{
-    return aradixsort<npy_ubyte>(vec, ind, cnt);
-}
-NPY_NO_EXPORT int
-aradixsort_short(void *vec, npy_intp *ind, npy_intp cnt,
-                 void *NPY_UNUSED(null))
-{
-    return aradixsort<npy_short>(vec, ind, cnt);
-}
-NPY_NO_EXPORT int
-aradixsort_ushort(void *vec, npy_intp *ind, npy_intp cnt,
-                  void *NPY_UNUSED(null))
-{
-    return aradixsort<npy_ushort>(vec, ind, cnt);
-}
-NPY_NO_EXPORT int
-aradixsort_int(void *vec, npy_intp *ind, npy_intp cnt, void *NPY_UNUSED(null))
-{
-    return aradixsort<npy_int>(vec, ind, cnt);
-}
-NPY_NO_EXPORT int
-aradixsort_uint(void *vec, npy_intp *ind, npy_intp cnt, void *NPY_UNUSED(null))
-{
-    return aradixsort<npy_uint>(vec, ind, cnt);
-}
-NPY_NO_EXPORT int
-aradixsort_long(void *vec, npy_intp *ind, npy_intp cnt, void *NPY_UNUSED(null))
-{
-    return aradixsort<npy_long>(vec, ind, cnt);
-}
-NPY_NO_EXPORT int
-aradixsort_ulong(void *vec, npy_intp *ind, npy_intp cnt,
-                 void *NPY_UNUSED(null))
-{
-    return aradixsort<npy_ulong>(vec, ind, cnt);
-}
-NPY_NO_EXPORT int
-aradixsort_longlong(void *vec, npy_intp *ind, npy_intp cnt,
-                    void *NPY_UNUSED(null))
-{
-    return aradixsort<npy_longlong>(vec, ind, cnt);
-}
-NPY_NO_EXPORT int
-aradixsort_ulonglong(void *vec, npy_intp *ind, npy_intp cnt,
-                     void *NPY_UNUSED(null))
-{
-    return aradixsort<npy_ulonglong>(vec, ind, cnt);
-}
+    return aradixsort<type>(start, tosort, num);
 }

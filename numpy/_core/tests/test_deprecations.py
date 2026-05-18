@@ -4,6 +4,7 @@ to document how deprecations should eventually be turned into errors.
 
 """
 import contextlib
+import re
 import warnings
 from collections.abc import Callable
 
@@ -86,6 +87,12 @@ class _DeprecationTestCase:
         for warning in w_context:
             if warning.category is self.warning_cls:
                 num_found += 1
+                if self.message:
+                    if not re.match(self.message, str(warning.message)):
+                        raise AssertionError(
+                            f"Warning message '{warning.message}' did not match "
+                            f"expected pattern '{self.message}'"
+                        )
             elif not ignore_others:
                 name = self.warning_cls.__name__
                 raise AssertionError(f"expected {name} but got: {warning.category}")
@@ -281,6 +288,29 @@ class TestDeprecatedViewDtypePropertySetter(_DeprecationTestCase):
 
         arr = np.arange(6).view(MyArray)
         self.assert_deprecated(arr.view, args=(np.float64,))
+
+    def test_view_dtype_property_setter_recarray_subclass(self):
+        # Recarray subclasses without a `_set_dtype` should still work
+        # but warn until they implement it.  As recarray sets it to None
+        # such a subclass may have to do the same fix here (can't use super()).
+        class SideBranch:
+            pass
+
+        class MyRecArray(SideBranch, np.recarray):
+            @property
+            def dtype(self):
+                return super().dtype
+
+            @dtype.setter
+            def dtype(self, dtype):
+                # would need to call `np.ndarray._set_dtype` to avoid the warning
+                # (but that side-steps the recarray dtype handling.)
+                with pytest.warns(DeprecationWarning, match="Setting the dtype"):
+                    np.recarray.dtype.__set__(self, dtype)
+
+        arr = np.rec.fromarrays(
+                [np.arange(3, dtype=np.int32)], names='x').view(MyRecArray)
+        self.assert_deprecated(arr.view, args=([('y', 'i4')],))
 
 
 class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):

@@ -1,6 +1,7 @@
 import builtins
 import collections.abc
 import functools
+import operator
 import re
 import warnings
 
@@ -246,6 +247,16 @@ def rot90(m, k=1, axes=(0, 1)):
     if (axes[0] >= m.ndim or axes[0] < -m.ndim
         or axes[1] >= m.ndim or axes[1] < -m.ndim):
         raise ValueError(f"Axes={axes} out of range for array of ndim={m.ndim}.")
+
+    try:
+        k = operator.index(k)
+    except TypeError:
+        # DEPRECATED 2026-04-27, NumPy 2.5
+        msg = (f"Passing a value for k ({k!r}) that is not an integer type has been "
+               "deprecated in NumPy 2.5. The value will be cast to an integer.  In "
+               "the future this will be an error.")
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        k = int(k)
 
     k %= 4
 

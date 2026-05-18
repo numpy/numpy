@@ -2060,6 +2060,7 @@ def test_clear_and_catch_warnings_inherit():
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 @pytest.mark.thread_unsafe(reason="garbage collector is global state")
+@pytest.mark.slow
 class TestAssertNoGcCycles:
     """ Test assert_no_gc_cycles """
 
@@ -2088,7 +2089,6 @@ class TestAssertNoGcCycles:
         with assert_raises(AssertionError):
             assert_no_gc_cycles(make_cycle)
 
-    @pytest.mark.slow
     def test_fails(self):
         """
         Test that in cases where the garbage cannot be collected, we raise an

@@ -79,7 +79,7 @@
 #define NPY_2_2_API_VERSION 0x00000013
 #define NPY_2_3_API_VERSION 0x00000014
 #define NPY_2_4_API_VERSION 0x00000015
-#define NPY_2_5_API_VERSION 0x00000015
+#define NPY_2_5_API_VERSION 0x00000016
 
 
 /*
@@ -122,6 +122,10 @@
 #else
     /* Use the default (increase when dropping Python 3.12 support) */
     #define NPY_FEATURE_VERSION NPY_1_25_API_VERSION
+#endif
+
+#if defined(Py_TARGET_ABI3T) && NPY_TARGET_VERSION < NPY_2_5_API_VERSION
+    #error "NumPy 2.5 or later is required when compiling Py_TARGET_ABI3T"
 #endif
 
 /* Sanity check the (requested) feature version */

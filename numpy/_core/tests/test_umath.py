@@ -4297,13 +4297,17 @@ class TestRationalFunctions:
         assert_equal(np.lcm(a, b), 10 * big)
 
     def test_gcd_overflow(self):
-        for dtype in (np.int32, np.int64):
-            # verify that we don't overflow when taking abs(x)
-            # not relevant for lcm, where the result is unrepresentable anyway
-            a = dtype(np.iinfo(dtype).min)  # negative power of two
+        # verify that we don't overflow when taking abs(x) for INT_MIN
+        # this was undefined behavior that manifested on s390x with GCC 11.5
+        for dtype in (np.int8, np.int16, np.int32, np.int64):
+            a = dtype(np.iinfo(dtype).min)  # INT_MIN
             q = -(a // 4)
+            # Test with INT_MIN as first argument
             assert_equal(np.gcd(a,  q * 3), q)
             assert_equal(np.gcd(a, -q * 3), q)
+            # Test with INT_MIN as second argument
+            assert_equal(np.gcd(q * 3,  a), q)
+            assert_equal(np.gcd(-q * 3, a), q)
 
     def test_decimal(self):
         from decimal import Decimal

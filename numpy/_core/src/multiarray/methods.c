@@ -1267,8 +1267,8 @@ array_sort(PyArrayObject *self,
             {"|axis", &PyArray_PythonPyIntFromInt, &axis},
             {"|kind", &PyArray_SortkindConverter, &sortkind},
             {"|order", NULL, &order},
-            {"$stable", &PyArray_OptionalBoolConverter, &stable}
-            // {"$descending", &PyArray_OptionalBoolConverter, &descending}
+            {"$stable", &PyArray_OptionalBoolConverter, &stable},
+            {"$descending", &PyArray_OptionalBoolConverter, &descending}
             ) < 0) {
         return NULL;
     }
@@ -1428,9 +1428,8 @@ array_argsort(PyArrayObject *self,
             {"|axis", &PyArray_AxisConverter, &axis},
             {"|kind", &PyArray_SortkindConverter, &sortkind},
             {"|order", NULL, &order},
-            {"$stable", &PyArray_OptionalBoolConverter, &stable}
-            // TODO: add descending sorts, gh-14728
-            // {"$descending", &PyArray_OptionalBoolConverter, &descending}
+            {"$stable", &PyArray_OptionalBoolConverter, &stable},
+            {"$descending", &PyArray_OptionalBoolConverter, &descending}
             ) < 0) {
         return NULL;
     }
