@@ -195,6 +195,26 @@ class TestSFloat:
         with pytest.raises(TypeError):
             np.add(a, a, out=c, casting="safe")
 
+    def test_sfloat_histogram_passes_dtype_class(self):
+        # Regression test for gh-31447: ``_unsigned_subtract`` used to
+        # forward a DType instance (from ``np.result_type``) to
+        # ``np.subtract``, which the ufunc dispatcher rejects for
+        # non-legacy user DTypes with "Cannot pass a new user DType
+        # instance ...". SF has no registered subtract loop, so the
+        # call still raises after the fix, but with the expected
+        # missing-loop error instead of the instance-rejection error.
+        # ``_unsigned_subtract`` is exercised directly because SF also
+        # lacks ``minimum``/``maximum`` loops, so a full
+        # ``np.histogram(arr)`` call fails earlier without ever
+        # reaching the fixed code path.
+        from numpy.lib._histograms_impl import _unsigned_subtract
+        a = np.array([3.]).view(SF(1.))
+        b = np.array([1.]).view(SF(1.))
+        try:
+            _unsigned_subtract(a, b)
+        except TypeError as e:
+            assert "Cannot pass a new user DType instance" not in str(e)
+
     @pytest.mark.parametrize("ufunc",
             [np.logical_and, np.logical_or, np.logical_xor])
     def test_logical_ufuncs_casts_to_bool(self, ufunc):
