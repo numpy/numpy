@@ -61,7 +61,6 @@ from numpy._core import (
     overrides,
     prod,
     reciprocal,
-    sign,
     single,
     sort,
     sqrt,
