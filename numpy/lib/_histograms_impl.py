@@ -876,13 +876,23 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
         cum_n = np.zeros(bin_edges.shape, ntype)
         if weights is None:
             for i in _range(0, len(a), BLOCK):
-                sa = np.sort(a[i:i + BLOCK])
+                tmp_a = a[i:i + BLOCK]
+                # nan != nan
+                not_nan = tmp_a == tmp_a
+                if not all(not_nan):
+                    tmp_a = tmp_a[not_nan]
+                sa = np.sort(tmp_a)
                 cum_n += _search_sorted_inclusive(sa, bin_edges)
         else:
             zero = np.zeros(1, dtype=ntype)
             for i in _range(0, len(a), BLOCK):
                 tmp_a = a[i:i + BLOCK]
                 tmp_w = weights[i:i + BLOCK]
+                # nan != nan
+                not_nan = tmp_a == tmp_a
+                if not all(not_nan):
+                    tmp_a = tmp_a[not_nan]
+                    tmp_w = tmp_w[not_nan]
                 sorting_index = np.argsort(tmp_a)
                 sa = tmp_a[sorting_index]
                 sw = tmp_w[sorting_index]
