@@ -162,6 +162,7 @@ quicksort_(type *start, npy_intp num)
     int *psdepth = depth;
     int cdepth = npy_get_msb(num) * 2;
     int ret;
+    constexpr bool is_object = std::is_same_v<Tag, npy::object_tag>;
 
     for (;;) {
         if (NPY_UNLIKELY(cdepth < 0)) {
@@ -194,34 +195,18 @@ quicksort_(type *start, npy_intp num)
             pj = pr - 1;
             std::swap(*pm, *pj);
             for (;;) {
-                if constexpr (std::is_same_v<Tag, npy::object_tag>) {
-                    do {
-                        ++pi;
+                do {
+                    ++pi;
 
-                        ret = npy::cmp<Tag, reverse>(*pi, vp);
-                        if (ret < 0) return ret;
-                    } while (pi < pj && ret);
-                    do {
-                        --pj;
+                    ret = npy::cmp<Tag, reverse>(*pi, vp);
+                    if (ret < 0) return ret;
+                } while ((!is_object || pi < pj) && ret);
+                do {
+                    --pj;
 
-                        ret = npy::cmp<Tag, reverse>(vp, *pj);
-                        if (ret < 0) return ret;
-                    } while (pi < pj && ret);
-                }
-                else {
-                    do {
-                        ++pi;
-
-                        ret = npy::cmp<Tag, reverse>(*pi, vp);
-                        if (ret < 0) return ret;
-                    } while (ret);
-                    do {
-                        --pj;
-
-                        ret = npy::cmp<Tag, reverse>(vp, *pj);
-                        if (ret < 0) return ret;
-                    } while (ret);
-                }
+                    ret = npy::cmp<Tag, reverse>(vp, *pj);
+                    if (ret < 0) return ret;
+                } while ((!is_object || pi < pj) && ret);
                 if (pi >= pj) {
                     break;
                 }
@@ -300,6 +285,7 @@ aquicksort_(type *vv, npy_intp *tosort, npy_intp num)
     int *psdepth = depth;
     int cdepth = npy_get_msb(num) * 2;
     int ret;
+    constexpr bool is_object = std::is_same_v<Tag, npy::object_tag>;
 
     for (;;) {
         if (NPY_UNLIKELY(cdepth < 0)) {
@@ -330,30 +316,16 @@ aquicksort_(type *vv, npy_intp *tosort, npy_intp num)
             pj = pr - 1;
             std::swap(*pm, *pj);
             for (;;) {
-                if constexpr (std::is_same_v<Tag, npy::object_tag>) {
-                    do {
-                        ++pi;
-                        ret = npy::cmp<Tag, reverse>(v[*pi], vp);
-                        if (ret < 0) return ret;
-                    } while (pi < pj && ret);
-                    do {
-                        --pj;
-                        ret = npy::cmp<Tag, reverse>(vp, v[*pj]);
-                        if (ret < 0) return ret;
-                    } while (pi < pj && ret);
-                }
-                else {
-                    do {
-                        ++pi;
-                        ret = npy::cmp<Tag, reverse>(v[*pi], vp);
-                        if (ret < 0) return ret;
-                    } while (ret);
-                    do {
-                        --pj;
-                        ret = npy::cmp<Tag, reverse>(vp, v[*pj]);
-                        if (ret < 0) return ret;
-                    } while (pi < pj && ret);
-                }
+                do {
+                    ++pi;
+                    ret = npy::cmp<Tag, reverse>(v[*pi], vp);
+                    if (ret < 0) return ret;
+                } while ((!is_object || pi < pj) && ret);
+                do {
+                    --pj;
+                    ret = npy::cmp<Tag, reverse>(vp, v[*pj]);
+                    if (ret < 0) return ret;
+                } while ((!is_object || pi < pj) && ret);
                 if (pi >= pj) {
                     break;
                 }
