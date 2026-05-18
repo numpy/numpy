@@ -245,10 +245,10 @@ struct object_tag {
     static int _cmp(PyObject *a, PyObject *b, int op)
     {
         if (a == NULL) {
-            return 0;
+            a = Py_None;
         }
         if (b == NULL) {
-            return 1;
+            b = Py_None;
         }
 
         int ret = PyObject_RichCompareBool(a, b, op);
