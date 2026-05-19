@@ -429,6 +429,23 @@ class TestHistogram:
         assert edges[0] == Z[0]
         assert edges[-1] == Z[-1]
 
+    def test_nan_values(self):
+        # gh 28730
+        # This is regression test to make sure nan values
+        # are handed properly in histogram's slow path.
+        non_uniform = np.arange(0,5)
+        w = np.array([1., 2., 99999.])
+        x1 = np.histogram(np.asarray([0., 1., np.nan], dtype=object), bins = non_uniform)
+        x2 = np.histogram(np.asarray([0., 1., np.nan], dtype=float), bins = non_uniform)
+        assert_equal(x1[0], x2[0])
+        x3 = histogram(np.asarray([np.nan, np.nan], dtype=object), bins = non_uniform)
+        assert x3[0].sum() == 0
+        x4 = np.histogram(np.asarray([0., 1., np.nan], dtype=object), bins =
+                          non_uniform, weights = w)
+        x5 = np.histogram(np.asarray([0., 1., np.nan], dtype=float), bins =
+                               non_uniform, weights = w)
+        assert_equal(x4[0], x5[0])
+
 class TestHistogramOptimBinNums:
     """
     Provide test coverage when using provided estimators for optimal number of
