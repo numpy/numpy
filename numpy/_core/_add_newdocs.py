@@ -1846,7 +1846,56 @@ add_newdoc('numpy._core.multiarray', 'from_dlpack',
     """)
 
 add_newdoc('numpy._core.multiarray', 'correlate',
-    """cross_correlate(a,v, mode=0)""")
+    """
+    correlate(a, v, mode='valid')
+
+    Cross-correlation of two 1-dimensional sequences.
+
+    This function computes the correlation as commonly defined in signal
+    processing contexts::
+
+        c[k] = sum_n a[n+k] * conj(v[n])
+
+    Note that this definition is not universal. Another common definition
+    swaps the roles of the two sequences::
+
+        c[k] = sum_n a[n] * conj(v[n+k])
+
+    which is related to the first by ``c[k] = c[-k]`` (i.e., the result is
+    reversed). NumPy uses the first definition above.
+
+    Parameters
+    ----------
+    a : array_like
+        First input sequence.
+    v : array_like
+        Second input sequence.
+    mode : {'valid', 'full', 'same'}, optional
+        Refer to the `convolve` docstring for full descriptions of the modes.
+        Default is 'valid'.
+
+    Returns
+    -------
+    out : ndarray
+        Discrete cross-correlation of `a` and `v`.
+
+    See Also
+    --------
+    convolve : Discrete, linear convolution of two sequences.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> np.correlate([1, 2, 3], [0, 1, 0.5])
+    array([3.5])
+
+    >>> np.correlate([1, 2, 3], [0, 1, 0.5], 'full')
+    array([0.5,  2. ,  3.5,  3. ,  0. ])
+
+    >>> np.correlate([1, 2], [1, 2, 3])
+    array([8, 5])
+
+    """)
 
 add_newdoc('numpy._core.multiarray', 'arange',
     """
