@@ -4891,7 +4891,7 @@ def test_pos_nan():
     assert_(np.signbit(np.nan) == 0)
 def test_abs_nan_signbit():
     """#31421 abs(nan) preserves positive sign bit correctly."""
-    for dtype in [np.float32, np.float64, np.longdouble]:
+    for dtype in [np.float16, np.float32, np.float64, np.longdouble]:
         pos_nan = dtype(np.nan)
         assert_(np.signbit(np.abs(pos_nan)) == 0,
                 f"abs(+nan) should have positive sign for {dtype.__name__}")
