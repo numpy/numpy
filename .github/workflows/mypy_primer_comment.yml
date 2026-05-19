@@ -7,9 +7,7 @@ on:
     types:
       - completed
 
-permissions:
-  contents: read
-  pull-requests: write
+permissions: {}
 
 jobs:
   comment:
