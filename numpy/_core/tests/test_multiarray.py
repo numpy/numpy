@@ -2752,6 +2752,26 @@ class TestMethods:
         assert_raises(ValueError, d.sort, kind=k)
         assert_raises(ValueError, d.argsort, kind=k)
 
+    @pytest.mark.parametrize("func", [np.sort, np.argsort])
+    def test_descending_kwarg_forwarding(self, func):
+        # NumPy currently calls the sort/argsort methods. The descending
+        # kwarg introduced in 2.5 is only forwarded if True.
+
+        class MyArray(np.ndarray):
+            def sort(self, **kwargs):
+                MyArray.kwargs = kwargs  # set on class (may use views)
+
+            def argsort(self, **kwargs):
+                MyArray.kwargs = kwargs  # set on class (may use views)
+
+        m = np.array([1, 2, 3]).view(MyArray)
+        func(m)
+        assert "descending" not in MyArray.kwargs
+        func(m, descending=False)  # OK if it was passed
+        assert not MyArray.kwargs["descending"]
+        func(m, descending=True)  # must be passed
+        assert MyArray.kwargs["descending"]
+
     def _test_sort_descending_nonan(self, a, stable, descending):
         if not descending:
             a = a[::-1]

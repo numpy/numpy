@@ -939,7 +939,7 @@ def _sort_dispatcher(
 
 
 @array_function_dispatch(_sort_dispatcher)
-def sort(a, axis=-1, kind=None, order=None, *, stable=None, descending=None):
+def sort(a, axis=-1, kind=None, order=None, *, stable=None, descending=np._NoValue):
     """
     Return a sorted copy of an array.
 
@@ -1098,7 +1098,11 @@ def sort(a, axis=-1, kind=None, order=None, *, stable=None, descending=None):
         axis = -1
     else:
         a = asanyarray(a).copy(order="K")
-    a.sort(axis=axis, kind=kind, order=order, stable=stable, descending=descending)
+    # Sanitize for backward-compatibility
+    if descending is not np._NoValue:
+        a.sort(axis=axis, kind=kind, order=order, stable=stable, descending=descending)
+    else:
+        a.sort(axis=axis, kind=kind, order=order, stable=stable)
     return a
 
 
@@ -1109,7 +1113,7 @@ def _argsort_dispatcher(
 
 
 @array_function_dispatch(_argsort_dispatcher)
-def argsort(a, axis=-1, kind=None, order=None, *, stable=None, descending=None):
+def argsort(a, axis=-1, kind=None, order=None, *, stable=None, descending=np._NoValue):
     """
     Returns the indices that would sort an array.
 
@@ -1228,6 +1232,17 @@ def argsort(a, axis=-1, kind=None, order=None, *, stable=None, descending=None):
     array([0, 1])
 
     """
+    # Sanitize for backward-compatibility
+    if descending is not np._NoValue:
+        return _wrapfunc(
+            a,
+            "argsort",
+            axis=axis,
+            kind=kind,
+            order=order,
+            stable=stable,
+            descending=descending,
+        )
     return _wrapfunc(
         a,
         "argsort",
@@ -1235,7 +1250,6 @@ def argsort(a, axis=-1, kind=None, order=None, *, stable=None, descending=None):
         kind=kind,
         order=order,
         stable=stable,
-        descending=descending,
     )
 
 def _argmax_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue):
