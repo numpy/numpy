@@ -2253,13 +2253,13 @@ _arraydescr_isnative(PyArray_Descr *self)
     else {
         PyObject *key, *value, *title = NULL;
         PyArray_Descr *new;
-        int offset;
+        npy_intp offset;
         Py_ssize_t pos = 0;
         while (PyDict_Next(PyDataType_FIELDS(self), &pos, &key, &value)) { // noqa: borrowed-ref OK
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
+            if (!PyArg_ParseTuple(value, "On|O", &new, &offset, &title)) {
                 return -1;
             }
             if (!_arraydescr_isnative(new)) {

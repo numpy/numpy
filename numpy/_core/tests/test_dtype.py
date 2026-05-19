@@ -2071,6 +2071,7 @@ class TestDTypeSignatures:
 def test_gh_31308(kind, exp):
     kind_dtype = np.dtype(kind)
     assert kind_dtype.itemsize == exp
+    assert kind_dtype.isnative
     for name in kind_dtype.names:
         assert kind_dtype[name].shape[0] > 0
 
