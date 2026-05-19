@@ -2086,3 +2086,7 @@ def test_gh_31308_materialized(val, kind, exp):
     kind_dtype = np.dtype(kind)
     rec_arr = np.array(val, dtype=kind_dtype)
     assert rec_arr["x"].size == exp
+    # avoid _ArrayMemoryError with proper handling
+    # of large structured dtypes:
+    with pytest.raises(TypeError, match="not ordered"):
+        np.argmax(rec_arr)
