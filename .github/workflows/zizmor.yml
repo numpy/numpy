@@ -29,3 +29,4 @@ jobs:
       uses: zizmorcore/zizmor-action@b1d7e1fb5de872772f31590499237e7cce841e8e # v0.5.3
       with:
         inputs: .github/
+        persona: pedantic
