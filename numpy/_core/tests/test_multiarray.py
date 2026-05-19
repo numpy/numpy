@@ -2768,7 +2768,7 @@ class TestMethods:
         func(m)
         assert "descending" not in MyArray.kwargs
         func(m, descending=False)  # OK if it was passed
-        assert "descending" not in MyArray.kwargs
+        assert not MyArray.kwargs["descending"]
         func(m, descending=True)  # must be passed
         assert MyArray.kwargs["descending"]
 
