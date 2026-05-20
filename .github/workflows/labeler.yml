@@ -1,4 +1,5 @@
 name: "Pull Request Labeler"
+# zizmor: ignore[dangerous-triggers] safe: no PR-head checkout, no code execution, labels only
 on:
   pull_request_target:
     types: [opened]
@@ -12,7 +13,6 @@ jobs:
     permissions:
       pull-requests: write  # to add labels
       contents: read # to read .github/pr-prefix-labeler.yml
-      issues: write # to add labels
     steps:
     - name: Label the PR
       continue-on-error: true

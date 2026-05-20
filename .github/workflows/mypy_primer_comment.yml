@@ -1,4 +1,5 @@
 name: Comment with mypy_primer diff
+# zizmor: ignore[dangerous-triggers] safe: no PR-head checkout, no code execution, only pull-requests: write
 
 on:
   workflow_run:

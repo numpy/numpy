@@ -1,5 +1,0 @@
-rules:
-  dangerous-triggers:
-    ignore:
-      - labeler.yml:2
-      - mypy_primer_comment.yml:3
