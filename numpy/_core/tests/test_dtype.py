@@ -2090,3 +2090,21 @@ def test_gh_31308_materialized(val, kind, exp):
     # of large structured dtypes:
     with pytest.raises(TypeError, match="not ordered"):
         np.argmax(rec_arr)
+
+
+@pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+@requires_memory(free_bytes=2e9)
+def test_gh_31308_getfield():
+    # for large structured dtypes, getfield
+    # needs to properly handle offsets that
+    # exceed the size of a C int
+    kind = [("x", np.float64, 2**28 + 1)]
+    kind_dtype = np.dtype(kind)
+    rec_arr = np.array((1,), dtype=kind_dtype)
+    # previously, this overflowed:
+    field = rec_arr.getfield(np.float64, offset=2**31)
+    assert field.size == 1
+    # exceeding the size of the large structured
+    # dtype should still error out
+    with pytest.raises(ValueError, match="is larger"):
+        field = rec_arr.getfield(np.float64, offset=2**31 + 1)
