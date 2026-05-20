@@ -3,6 +3,7 @@ import ctypes
 import inspect
 import operator
 import os
+from io import StringIO
 import pickle
 import sys
 import types
@@ -2121,3 +2122,14 @@ def test_gh_31308_setfield():
     rec_arr.setfield(7, np.float64, offset=2**31)
     actual = rec_arr.getfield(np.float64, offset=2**31)
     assert_allclose(actual, 7)
+
+@pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+@requires_memory(free_bytes=2e9)
+def test_gh_31308_loadtxt():
+    c = StringIO("1 2")
+    kind = {"names": ["x", "y"],
+            "formats": ["f8", "f8"],
+            "offsets": [0, 2 ** 28 * 8]}
+    kind_dtype = np.dtype(kind)
+    arr = np.loadtxt(c, dtype=kind_dtype)
+    assert arr.itemsize == 2 ** 28 * 8 + 8
