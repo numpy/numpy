@@ -78,7 +78,12 @@ sort_loop_(PyArrayMethod_Context *context, char *const data[],
         case NPY_SORT_DEFAULT | NPY_SORT_DESCENDING:
             return quicksort_<Tag, type, true>((type *)data[0], dimensions[0]);
         case NPY_SORT_STABLE | NPY_SORT_DESCENDING:
+        if constexpr (use_radixsort) {
+            return radixsort<type, true>(data[0], dimensions[0]);
+        }
+        else {
             return timsort_<Tag, type, true>((type *)data[0], dimensions[0]);
+        }
         default:
             npy_gil_error(PyExc_RuntimeError, "unknown sort kind %d",
                           (int)params->flags);
@@ -118,8 +123,14 @@ argsort_loop_(PyArrayMethod_Context *context, char *const data[],
             return aquicksort_<Tag, type, true>((type *)data[0], (npy_intp *)data[1],
                                                 dimensions[0]);
         case NPY_SORT_STABLE | NPY_SORT_DESCENDING:
+        if constexpr (use_radixsort) {
+            return aradixsort<type, true>(
+                    data[0], (npy_intp *)data[1], dimensions[0]);
+        }
+        else {
             return atimsort_<Tag, type, true>((type *)data[0], (npy_intp *)data[1],
                                               dimensions[0]);
+        }
         default:
             npy_gil_error(PyExc_RuntimeError, "unknown sort kind %d",
                           (int)params->flags);
