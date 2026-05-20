@@ -388,12 +388,12 @@ array_swapaxes(PyArrayObject *self, PyObject *const *args, Py_ssize_t len_args)
   steals reference to typed, must not be NULL
 */
 NPY_NO_EXPORT PyObject *
-PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
+PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, npy_intp offset)
 {
     multiarray_umath_state *state = _npy_module_state;
     PyObject *ret = NULL;
     PyObject *safe;
-    int self_elsize, typed_elsize;
+    npy_intp self_elsize, typed_elsize;
 
     if (self == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -417,8 +417,8 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
         }
 
         /* only returns True or raises */
-        safe = PyObject_CallFunction(state->runtime_imports._getfield_is_safe,
-                                     "OOi", PyArray_DESCR(self),
+        safe = PyObject_CallFunction(npy_runtime_imports._getfield_is_safe,
+                                     "OOn", PyArray_DESCR(self),
                                      typed, offset);
         if (safe == NULL) {
             Py_DECREF(typed);
@@ -461,7 +461,7 @@ array_getfield(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyArray_Descr *dtype = NULL;
-    int offset = 0;
+    npy_intp offset = 0;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("getfield", args, len_args, kwnames,
