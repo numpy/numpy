@@ -481,7 +481,7 @@ array_getfield(PyArrayObject *self,
 */
 NPY_NO_EXPORT int
 PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
-                 int offset, PyObject *val)
+                 npy_intp offset, PyObject *val)
 {
     PyObject *ret = NULL;
     int retval = 0;
@@ -519,7 +519,7 @@ array_setfield(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyArray_Descr *dtype = NULL;
-    int offset = 0;
+    npy_intp offset = 0;
     PyObject *value;
     NPY_PREPARE_ARGPARSER;
 
