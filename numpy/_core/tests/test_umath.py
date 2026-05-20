@@ -4834,8 +4834,8 @@ def test_nextafter_signed_zero(sctype):
     def _equal_signed_zero(a, b):
         return (a == b) and (np.signbit(a) == np.signbit(b))
 
-    pos_zero = dtype(+0.0)
-    neg_zero = dtype(-0.0)
+    pos_zero = sctype(+0.0)
+    neg_zero = sctype(-0.0)
 
     assert _equal_signed_zero(np.nextafter(pos_zero, neg_zero), neg_zero), \
         f"nextafter(+0.0, -0.0) != -0.0 for {dtype.__name__}"
