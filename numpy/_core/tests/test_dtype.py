@@ -25,6 +25,7 @@ from numpy.testing import (
     assert_array_equal,
     assert_equal,
     assert_raises,
+    assert_allclose,
 )
 from numpy.testing._private.utils import requires_deep_recursion, requires_memory
 
@@ -2108,3 +2109,15 @@ def test_gh_31308_getfield():
     # dtype should still error out
     with pytest.raises(ValueError, match="is larger"):
         field = rec_arr.getfield(np.float64, offset=2**31 + 1)
+
+@pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+@requires_memory(free_bytes=2e9)
+def test_gh_31308_setfield():
+    # avoid overflow when using ndarray.setfield
+    # with large structured dtypes
+    kind = [("x", np.float64, 2**28 + 1)]
+    kind_dtype = np.dtype(kind)
+    rec_arr = np.array((1,), dtype=kind_dtype)
+    rec_arr.setfield(7, np.float64, offset=2**31)
+    actual = rec_arr.getfield(np.float64, offset=2**31)
+    assert_allclose(actual, 7)

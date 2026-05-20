@@ -465,7 +465,7 @@ array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 */
 NPY_NO_EXPORT int
 PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
-                 int offset, PyObject *val)
+                 npy_intp offset, PyObject *val)
 {
     PyObject *ret = NULL;
     int retval = 0;
@@ -502,11 +502,11 @@ static PyObject *
 array_setfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     PyArray_Descr *dtype = NULL;
-    int offset = 0;
+    npy_intp offset = 0;
     PyObject *value;
     static char *kwlist[] = {"value", "dtype", "offset", 0};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|i:setfield", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|n:setfield", kwlist,
                                      &value,
                                      PyArray_DescrConverter, &dtype,
                                      &offset)) {
