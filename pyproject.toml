@@ -211,6 +211,9 @@ musllinux-aarch64-image = "musllinux_1_2"
 RUNNER_OS="Linux"
 # /project will be the $PWD equivalent inside the docker used to build the wheel
 PKG_CONFIG_PATH="/project/.openblas"
+# Enable ccache across rebuilds on CI
+CCACHE_BASEDIR="/project"
+CCACHE_COMPILERCHECK="content"
 
 [tool.cibuildwheel.windows]
 config-settings = {setup-args = ["--vsenv", "-Dallow-noblas=false"], build-dir="build"}

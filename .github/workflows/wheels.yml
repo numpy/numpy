@@ -47,6 +47,7 @@ jobs:
 
     env:
       IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}  # used in cibw_test_command.sh
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
     steps:
       - name: Checkout numpy
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -101,10 +102,39 @@ jobs:
             echo "CIBW_ENVIRONMENT_MACOS=$CIBW PKG_CONFIG_PATH=$PKG_CONFIG_PATH DYLD_LIBRARY_PATH=$DYLD" >> "$GITHUB_ENV"
           fi
 
+      - name: Restore compilation cache
+        if: startsWith(matrix.buildplat[1], 'musllinux_') || startsWith(matrix.buildplat[1], 'manylinux_')
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        id: ccache-restore
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-wheels-${{ matrix.buildplat[1] }}-${{ matrix.python }}-${{ github.run_id }}
+          restore-keys: |
+            ccache-wheels-${{ matrix.buildplat[1] }}-${{ matrix.python }}-
+
       - name: Build wheels
         uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+          CIBW_BEFORE_ALL_LINUX: |
+            set -eux
+            CCACHE_VERSION=4.13.6
+            curl -fsSL https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}-linux-$(uname -m)-musl-static.tar.gz | \
+              tar -xvzf - --strip-components 1 -C /usr/local/bin ccache-${CCACHE_VERSION}-linux-$(uname -m)-musl-static/ccache
+            ccache --version
+            ccache --zero-stats
+          CIBW_CONTAINER_ENGINE: "docker; create_args: --volume ${{ env.CCACHE_DIR }}:/root/.ccache"
+
+      - name: Save compilation cache
+        if: >-
+          always()
+          && (startsWith(matrix.buildplat[1], 'musllinux_') || startsWith(matrix.buildplat[1], 'manylinux_'))
+          && github.event_name == 'push'
+          && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-wheels-${{ matrix.buildplat[1] }}-${{ matrix.python }}-${{ github.run_id }}
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
