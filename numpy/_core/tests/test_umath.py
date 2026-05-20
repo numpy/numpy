@@ -4828,11 +4828,12 @@ def test_nextafter_0():
 
 
 @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64, np.longdouble])
-def test_nextafter_signed_zero(dtype):
-    def _equal_signed_zero(a, b):
-        return (a == b) & (np.signbit(a) == np.signbit(b))
+def test_nextafter_signed_zero(sctype):
+    """`nextafter(-0.0, +0.0)` must return the sign of the second parameter"""
 
-    """#31472 nextafter(-0.0, +0.0) changes the zero sign correctly."""
+    def _equal_signed_zero(a, b):
+        return (a == b) and (np.signbit(a) == np.signbit(b))
+
     pos_zero = dtype(+0.0)
     neg_zero = dtype(-0.0)
 
