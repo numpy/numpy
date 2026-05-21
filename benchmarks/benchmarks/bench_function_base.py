@@ -283,7 +283,10 @@ class Sort(Benchmark):
         np.sort(self.arr, stable=stable, descending=descending)
 
     def time_argsort(self, stable, descending, dtype, array_type):
-        np.argsort(self.arr, stable=stable, descending=descending)
+        if descending:
+            np.argsort(self.arr, stable=stable, descending=True)
+        else:
+            np.argsort(self.arr, stable=stable)
 
 
 class Partition(Benchmark):
