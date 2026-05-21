@@ -199,13 +199,6 @@ class SortGenerator:
         """
         Returns an array that's in descending order.
         """
-        if dtype not in SortGenerator.small_limits:
-            try:
-                with np.errstate(over="raise"):
-                    res = np.dtype(dtype).type(size - 1)
-            except (OverflowError, FloatingPointError):
-                raise SkipNotImplemented("Cannot construct arange for this size.")
-
         return SortGenerator.ordered_range(size, dtype=dtype)[::-1]
 
     @staticmethod
