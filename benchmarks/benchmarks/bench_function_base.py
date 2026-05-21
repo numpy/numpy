@@ -326,7 +326,7 @@ class Sort(Benchmark):
 
     # The size of the benchmarked arrays.
     ARRAY_SIZE = 1000000
-    
+
     small_dtypes = ['bool', 'uint8', 'int8', 'int16', 'float16']
 
     def setup(self, stable, descending, dtype, array_type):
