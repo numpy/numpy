@@ -134,6 +134,7 @@ class TestCharacterString(util.F2PyTest):
         assert_array_equal(f(a), expected)
 
 
+@pytest.mark.slow
 class TestCharacter(util.F2PyTest):
     # options = ['--debug-capi', '--build-dir', '/tmp/test-build-f2py']
     suffix = '.f90'
@@ -432,6 +433,7 @@ class TestCharacter(util.F2PyTest):
         assert_equal(f(b'B'), b"B")
 
 
+@pytest.mark.slow
 class TestMiscCharacter(util.F2PyTest):
     # options = ['--debug-capi', '--build-dir', '/tmp/test-build-f2py']
     suffix = '.f90'
@@ -515,7 +517,6 @@ class TestMiscCharacter(util.F2PyTest):
        end subroutine {fprefix}_character_bc_old
     """)
 
-    @pytest.mark.slow
     def test_gh18684(self):
         # Test character(len=5) and character*5 usages
         f = getattr(self.module, self.fprefix + '_gh18684')
@@ -575,6 +576,7 @@ class TestMiscCharacter(util.F2PyTest):
         assert_raises(Exception, lambda: f(b'c'))
 
 
+@pytest.mark.slow
 class TestStringScalarArr(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "scalar_string.f90")]
 
@@ -594,6 +596,7 @@ class TestStringScalarArr(util.F2PyTest):
             expected = '|S12'
             assert out.dtype == expected
 
+@pytest.mark.slow
 class TestStringAssumedLength(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "gh24008.f")]
 

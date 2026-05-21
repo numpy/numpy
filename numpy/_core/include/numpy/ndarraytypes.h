@@ -1487,7 +1487,7 @@ typedef struct {
      * it is a fairly complex construct which may be better to allow
      * refactoring of.
      */
-    typedef struct {
+    typedef struct PyArray_DTypeMeta_tag {
         PyHeapTypeObject super;
 
         /*

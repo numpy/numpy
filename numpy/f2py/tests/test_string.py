@@ -5,10 +5,10 @@ import numpy as np
 from . import util
 
 
+@pytest.mark.slow
 class TestString(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "char.f90")]
 
-    @pytest.mark.slow
     def test_char(self):
         strings = np.array(["ab", "cd", "ef"], dtype="c").T
         inp, out = self.module.char_test.change_strings(
@@ -19,6 +19,7 @@ class TestString(util.F2PyTest):
         assert out == pytest.approx(expected)
 
 
+@pytest.mark.slow
 class TestDocStringArguments(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "string.f")]
 
@@ -36,6 +37,7 @@ class TestDocStringArguments(util.F2PyTest):
         assert d.tobytes() == b"D23"
 
 
+@pytest.mark.slow
 class TestFixedString(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "fixed_string.f90")]
 

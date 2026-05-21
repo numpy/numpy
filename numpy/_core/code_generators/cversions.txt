@@ -84,5 +84,6 @@
 # Add 'same_value' casting, header additions.
 # General loop registration for ufuncs, sort, and argsort
 0x00000015 = fbd24fc5b2ba4f7cd3606ec6128de7a5
-# Version 22 (NumPy 2.5.0) Opaque PyObject ABI support
+# Version 22 (NumPy 2.5.0) Opaque PyObject ABI support and
+# NPY_DT_legacy_descriptor_proto support.
 0x00000016 = cdfba10e4e01454262d2293c394cbed5

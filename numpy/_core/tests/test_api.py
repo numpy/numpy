@@ -4,7 +4,7 @@ import pytest
 
 import numpy as np
 import numpy._core.umath as ncu
-from numpy._core._rational_tests import rational
+from numpy._core._rational_tests import rational, rational2
 from numpy.lib import stride_tricks
 from numpy.testing import (
     HAS_REFCOUNT,
@@ -190,11 +190,12 @@ def test___array___refcount():
     assert_equal(old_refcount2, sys.getrefcount(dt2))
 
 
+@pytest.mark.parametrize("rat_cls", [rational, rational2])
 @pytest.mark.parametrize("array", [True, False])
-def test_array_impossible_casts(array):
+def test_array_impossible_casts(array, rat_cls):
     # All builtin types can be forcibly cast, at least theoretically,
     # but user dtypes cannot necessarily.
-    rt = rational(1, 2)
+    rt = rat_cls(1, 2)
     if array:
         rt = np.array(rt)
     with assert_raises(TypeError):

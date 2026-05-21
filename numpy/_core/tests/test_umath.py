@@ -4826,6 +4826,28 @@ def test_nextafter_0():
                     0. < direction * np.nextafter(t(0), t(direction)) < tiny)
         assert_equal(np.nextafter(t(0), t(direction)) / t(2.1), direction * 0.0)
 
+
+@pytest.mark.parametrize("sctype", [np.float16, np.float32, np.float64, np.longdouble])
+def test_nextafter_signed_zero(sctype):
+    """`nextafter(-0.0, +0.0)` must return the sign of the second parameter"""
+
+    def _equal_signed_zero(a, b):
+        return (a == b) and (np.signbit(a) == np.signbit(b))
+
+    pos_zero = sctype(+0.0)
+    neg_zero = sctype(-0.0)
+
+    assert _equal_signed_zero(np.nextafter(pos_zero, neg_zero), neg_zero), \
+        f"nextafter(+0.0, -0.0) != -0.0 for {sctype.__name__}"
+    assert _equal_signed_zero(np.nextafter(neg_zero, pos_zero), pos_zero), \
+        f"nextafter(-0.0, +0.0) != +0.0 for {sctype.__name__}"
+
+    assert _equal_signed_zero(np.nextafter(pos_zero, pos_zero), pos_zero), \
+        f"nextafter(+0.0, +0.0) != +0.0 for {sctype.__name__}"
+    assert _equal_signed_zero(np.nextafter(neg_zero, neg_zero), neg_zero), \
+        f"nextafter(-0.0, -0.0) != -0.0 for {sctype.__name__}"
+
+
 def _test_spacing(t):
     one = t(1)
     eps = np.finfo(t).eps
@@ -4893,6 +4915,26 @@ def test_nextafter_vs_spacing():
 def test_pos_nan():
     """Check np.nan is a positive nan."""
     assert_(np.signbit(np.nan) == 0)
+
+@pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64, np.longdouble])
+def test_abs_nan_signbit(dtype):
+    """#31421 abs(nan) preserves positive sign bit correctly."""
+    pos_nan = dtype(np.nan)
+    assert not np.signbit(np.abs(pos_nan)), \
+        f"abs(+nan) should have positive sign for {dtype.__name__}"
+
+    neg_nan = dtype(-np.nan)
+    assert not np.signbit(np.abs(neg_nan)), \
+        f"abs(-nan) should have positive sign for {dtype.__name__}"
+
+
+def test_abs_nan_signbit_array():
+    """#31421 abs(nan) array preserves positive sign bit correctly."""
+    arr = np.array([np.nan, -np.nan])
+    result = np.signbit(np.abs(arr))
+    assert_array_equal(result, [False, False],
+                      "abs of NaN array should have all positive signs")
+
 
 def test_reduceat():
     """Test bug in reduceat when structured arrays are not copied."""

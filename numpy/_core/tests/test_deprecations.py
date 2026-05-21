@@ -4,6 +4,7 @@ to document how deprecations should eventually be turned into errors.
 
 """
 import contextlib
+import re
 import warnings
 from collections.abc import Callable
 
@@ -86,6 +87,12 @@ class _DeprecationTestCase:
         for warning in w_context:
             if warning.category is self.warning_cls:
                 num_found += 1
+                if self.message:
+                    if not re.match(self.message, str(warning.message)):
+                        raise AssertionError(
+                            f"Warning message '{warning.message}' did not match "
+                            f"expected pattern '{self.message}'"
+                        )
             elif not ignore_others:
                 name = self.warning_cls.__name__
                 raise AssertionError(f"expected {name} but got: {warning.category}")

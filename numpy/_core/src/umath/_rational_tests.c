@@ -4,10 +4,20 @@
 #include <structmember.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+/* Build as a downstream module targeting NumPy 2.0 to exercise the
+ * public DType API and the `NPY_DT_legacy_descriptor_proto` backport. */
+#if defined(NPY_INTERNAL_BUILD)
+#undef NPY_INTERNAL_BUILD
+#endif
+#define NPY_TARGET_VERSION NPY_2_0_API_VERSION
+
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
+#include "numpy/dtype_api.h"
 #include "numpy/npy_3kcompat.h"
-#include "common.h"  /* for error_converting */
+
+#define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
 #include <math.h>
 
@@ -373,8 +383,8 @@ PyRational_Check(PyObject* object) {
 }
 
 static PyObject*
-PyRational_FromRational(rational x) {
-    PyRational* p = (PyRational*)PyRational_Type.tp_alloc(&PyRational_Type,0);
+PyRational_FromRational(PyTypeObject* type, rational x) {
+    PyRational* p = (PyRational*)type->tp_alloc(type, 0);
     if (p) {
         p->r = x;
     }
@@ -403,21 +413,23 @@ pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
     if (size == 1) {
         x[0] = PyTuple_GET_ITEM(args, 0);
         if (PyRational_Check(x[0])) {
-            Py_INCREF(x[0]);
-            return x[0];
+            if (Py_TYPE(x[0]) == type) {
+                Py_INCREF(x[0]);
+                return x[0];
+            }
+            return PyRational_FromRational(type, ((PyRational*)x[0])->r);
         }
         // TODO: allow construction from unicode strings
         else if (PyBytes_Check(x[0])) {
             const char* s = PyBytes_AS_STRING(x[0]);
-            rational x;
-            if (scan_rational(&s,&x)) {
+            if (scan_rational(&s,&r)) {
                 const char* p;
                 for (p = s; *p; p++) {
                     if (!isspace(*p)) {
                         goto bad;
                     }
                 }
-                return PyRational_FromRational(x);
+                return PyRational_FromRational(type, r);
             }
             bad:
             PyErr_Format(PyExc_ValueError,
@@ -462,7 +474,7 @@ pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
     if (PyErr_Occurred()) {
         return 0;
     }
-    return PyRational_FromRational(r);
+    return PyRational_FromRational(type, r);
 }
 
 /*
@@ -568,7 +580,7 @@ pyrational_hash(PyObject* self) {
         if (PyErr_Occurred()) { \
             return 0; \
         } \
-        return PyRational_FromRational(z); \
+        return PyRational_FromRational(&PyRational_Type, z); \
     }
 #define RATIONAL_BINOP(name) RATIONAL_BINOP_2(name,rational_##name(x,y))
 RATIONAL_BINOP(add)
@@ -589,8 +601,18 @@ RATIONAL_BINOP_2(floor_divide,
         } \
         return convert(y); \
     }
-RATIONAL_UNOP(negative,rational,rational_negative(x),PyRational_FromRational)
-RATIONAL_UNOP(absolute,rational,rational_abs(x),PyRational_FromRational)
+#define RATIONAL_UNOP_RAT(name,exp) \
+    static PyObject* \
+    pyrational_##name(PyObject* self) { \
+        rational x = ((PyRational*)self)->r; \
+        rational y = exp; \
+        if (PyErr_Occurred()) { \
+            return 0; \
+        } \
+        return PyRational_FromRational(&PyRational_Type, y); \
+    }
+RATIONAL_UNOP_RAT(negative,rational_negative(x))
+RATIONAL_UNOP_RAT(absolute,rational_abs(x))
 RATIONAL_UNOP(int,long,rational_int(x),PyLong_FromLong)
 RATIONAL_UNOP(float,double,rational_double(x),PyFloat_FromDouble)
 
@@ -717,7 +739,7 @@ static PyObject*
 npyrational_getitem(void* data, void* arr) {
     rational r;
     memcpy(&r,data,sizeof(rational));
-    return PyRational_FromRational(r);
+    return PyRational_FromRational(&PyRational_Type, r);
 }
 
 static int
@@ -910,6 +932,89 @@ PyArray_DescrProto npyrational_descr_proto = {
     &npyrational_arrfuncs,  /* f */
 };
 
+/*
+ * A second rational variant registered via `PyArrayInitDTypeMeta_FromSpec`
+ * with `NPY_DT_legacy_descriptor_proto`.  Same data layout as `rational`
+ * (Python subclass of `PyRational_Type`), so all the existing C helpers,
+ * casts, and ufunc loops can be reused for the new typenum/descr.
+ */
+static PyTypeObject PyRational2_Type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "numpy._core._rational_tests.rational2",
+    sizeof(PyRational),
+    /* the rest is inherited from PyRational_Type via tp_base */
+};
+
+static PyArray_DTypeMeta NPY_Rational2DType = {{{
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name = "numpy._core._rational_tests.Rational2DType",
+}}};
+
+/*
+ * Within-DType identity cast (memcpy).  Required by
+ * `PyArrayInitDTypeMeta_FromSpec` since it rejects a NULL `casts`; for
+ * full legacy registrations this is otherwise built lazily from `copyswap`.
+ */
+static int
+rational2_within_dtype_loop(
+        PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    char *src = data[0], *dst = data[1];
+    npy_intp src_stride = strides[0], dst_stride = strides[1];
+    npy_intp N = dimensions[0];
+    for (npy_intp i = 0; i < N; i++) {
+        memcpy(dst, src, sizeof(rational));
+        src += src_stride;
+        dst += dst_stride;
+    }
+    return 0;
+}
+
+/*
+ * `common_dtype` slot offered only by the new DType API.  Promotes
+ * `rational2` with itself or any integer dtype to `rational2`; everything
+ * else returns `Py_NotImplemented`.
+ */
+static PyArray_DTypeMeta *
+rational2_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
+{
+    if (cls == other) {
+        Py_INCREF(cls);
+        return cls;
+    }
+    int t = other->type_num;
+    if (t == NPY_BOOL
+            || t == NPY_BYTE || t == NPY_UBYTE
+            || t == NPY_SHORT || t == NPY_USHORT
+            || t == NPY_INT || t == NPY_UINT
+            || t == NPY_LONG || t == NPY_ULONG
+            || t == NPY_LONGLONG || t == NPY_ULONGLONG) {
+        Py_INCREF(cls);
+        return cls;
+    }
+    Py_INCREF(Py_NotImplemented);
+    return (PyArray_DTypeMeta *)Py_NotImplemented;
+}
+
+/*
+ * Minimal new-style getitem/setitem required by PyArrayInitDTypeMeta_FromSpec.
+ * Reuse the legacy rational conversion logic for now.
+ */
+static PyObject *
+rational2_getitem(PyArray_Descr *NPY_UNUSED(descr), char *data)
+{
+    return npyrational_getitem(data, NULL);
+}
+
+static int
+rational2_setitem(
+        PyArray_Descr *NPY_UNUSED(descr), PyObject *item, char *data)
+{
+    return npyrational_setitem(item, data, NULL);
+}
+
 #define DEFINE_CAST(From,To,statement) \
     static void \
     npycast_##From##_##To(void* from_, void* to_, npy_intp n, \
@@ -1097,6 +1202,106 @@ rational_ufunc_test_add_rationals(char** args, npy_intp const *dimensions,
 }
 
 
+/* Register the rational <-> builtin casts and ufunc loops for `typenum`.
+ * Called once per variant since the data layout is identical. */
+static int
+register_rational_casts_and_ufuncs(int typenum,
+                                   PyArray_Descr *descr,
+                                   PyObject *numpy)
+{
+    #define REGISTER_CAST(From,To,from_descr,to_typenum,safe) { \
+            PyArray_Descr* from_descr_##From##_##To = (from_descr); \
+            if (PyArray_RegisterCastFunc(from_descr_##From##_##To, \
+                                         (to_typenum), \
+                                         npycast_##From##_##To) < 0) { \
+                return -1; \
+            } \
+            if (safe && PyArray_RegisterCanCast(from_descr_##From##_##To, \
+                                                (to_typenum), \
+                                                NPY_NOSCALAR) < 0) { \
+                return -1; \
+            } \
+        }
+    #define REGISTER_INT_CASTS(bits) \
+        REGISTER_CAST(npy_int##bits, rational, \
+                      PyArray_DescrFromType(NPY_INT##bits), typenum, 1) \
+        REGISTER_CAST(rational, npy_int##bits, descr, NPY_INT##bits, 0)
+    REGISTER_INT_CASTS(8)
+    REGISTER_INT_CASTS(16)
+    REGISTER_INT_CASTS(32)
+    REGISTER_INT_CASTS(64)
+    REGISTER_CAST(rational, float, descr, NPY_FLOAT, 0)
+    REGISTER_CAST(rational, double, descr, NPY_DOUBLE, 1)
+    REGISTER_CAST(npy_bool, rational,
+                  PyArray_DescrFromType(NPY_BOOL), typenum, 1)
+    REGISTER_CAST(rational, npy_bool, descr, NPY_BOOL, 0)
+    #undef REGISTER_CAST
+    #undef REGISTER_INT_CASTS
+
+    #define REGISTER_UFUNC(name,...) { \
+        PyUFuncObject* ufunc = \
+            (PyUFuncObject*)PyObject_GetAttrString(numpy, #name); \
+        int _types[] = __VA_ARGS__; \
+        if (!ufunc) { \
+            return -1; \
+        } \
+        if (sizeof(_types)/sizeof(int)!=ufunc->nargs) { \
+            PyErr_Format(PyExc_AssertionError, \
+                         "ufunc %s takes %d arguments, our loop takes %lu", \
+                         #name, ufunc->nargs, (unsigned long) \
+                         (sizeof(_types)/sizeof(int))); \
+            Py_DECREF(ufunc); \
+            return -1; \
+        } \
+        if (PyUFunc_RegisterLoopForType((PyUFuncObject*)ufunc, typenum, \
+                rational_ufunc_##name, _types, 0) < 0) { \
+            Py_DECREF(ufunc); \
+            return -1; \
+        } \
+        Py_DECREF(ufunc); \
+    }
+    #define REGISTER_UFUNC_BINARY_RATIONAL(name) \
+        REGISTER_UFUNC(name, {typenum, typenum, typenum})
+    #define REGISTER_UFUNC_BINARY_COMPARE(name) \
+        REGISTER_UFUNC(name, {typenum, typenum, NPY_BOOL})
+    #define REGISTER_UFUNC_UNARY(name) \
+        REGISTER_UFUNC(name, {typenum, typenum})
+    /* Binary */
+    REGISTER_UFUNC_BINARY_RATIONAL(add)
+    REGISTER_UFUNC_BINARY_RATIONAL(subtract)
+    REGISTER_UFUNC_BINARY_RATIONAL(multiply)
+    REGISTER_UFUNC_BINARY_RATIONAL(divide)
+    REGISTER_UFUNC_BINARY_RATIONAL(remainder)
+    REGISTER_UFUNC_BINARY_RATIONAL(true_divide)
+    REGISTER_UFUNC_BINARY_RATIONAL(floor_divide)
+    REGISTER_UFUNC_BINARY_RATIONAL(minimum)
+    REGISTER_UFUNC_BINARY_RATIONAL(maximum)
+    /* Comparisons */
+    REGISTER_UFUNC_BINARY_COMPARE(equal)
+    REGISTER_UFUNC_BINARY_COMPARE(not_equal)
+    REGISTER_UFUNC_BINARY_COMPARE(less)
+    REGISTER_UFUNC_BINARY_COMPARE(greater)
+    REGISTER_UFUNC_BINARY_COMPARE(less_equal)
+    REGISTER_UFUNC_BINARY_COMPARE(greater_equal)
+    /* Unary */
+    REGISTER_UFUNC_UNARY(negative)
+    REGISTER_UFUNC_UNARY(absolute)
+    REGISTER_UFUNC_UNARY(floor)
+    REGISTER_UFUNC_UNARY(ceil)
+    REGISTER_UFUNC_UNARY(trunc)
+    REGISTER_UFUNC_UNARY(rint)
+    REGISTER_UFUNC_UNARY(square)
+    REGISTER_UFUNC_UNARY(reciprocal)
+    REGISTER_UFUNC_UNARY(sign)
+    #undef REGISTER_UFUNC
+    #undef REGISTER_UFUNC_BINARY_RATIONAL
+    #undef REGISTER_UFUNC_BINARY_COMPARE
+    #undef REGISTER_UFUNC_UNARY
+
+    return 0;
+}
+
+
 static PyMethodDef module_methods[] = {
     {0} /* sentinel */
 };
@@ -1118,6 +1323,8 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
     PyObject* numpy_str;
     PyObject* numpy;
     int npy_rational;
+    int npy_rational2;
+    PyArray_Descr *npyrational2_descr = NULL;
 
     import_array();
     if (PyErr_Occurred()) {
@@ -1172,91 +1379,91 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
         goto fail;
     }
 
-    /* Register casts to and from rational */
-    #define REGISTER_CAST(From,To,from_descr,to_typenum,safe) { \
-            PyArray_Descr* from_descr_##From##_##To = (from_descr); \
-            if (PyArray_RegisterCastFunc(from_descr_##From##_##To, \
-                                         (to_typenum), \
-                                         npycast_##From##_##To) < 0) { \
-                goto fail; \
-            } \
-            if (safe && PyArray_RegisterCanCast(from_descr_##From##_##To, \
-                                                (to_typenum), \
-                                                NPY_NOSCALAR) < 0) { \
-                goto fail; \
-            } \
-        }
-    #define REGISTER_INT_CASTS(bits) \
-        REGISTER_CAST(npy_int##bits, rational, \
-                      PyArray_DescrFromType(NPY_INT##bits), npy_rational, 1) \
-        REGISTER_CAST(rational, npy_int##bits, npyrational_descr, \
-                      NPY_INT##bits, 0)
-    REGISTER_INT_CASTS(8)
-    REGISTER_INT_CASTS(16)
-    REGISTER_INT_CASTS(32)
-    REGISTER_INT_CASTS(64)
-    REGISTER_CAST(rational,float,npyrational_descr,NPY_FLOAT,0)
-    REGISTER_CAST(rational,double,npyrational_descr,NPY_DOUBLE,1)
-    REGISTER_CAST(npy_bool,rational, PyArray_DescrFromType(NPY_BOOL),
-                  npy_rational,1)
-    REGISTER_CAST(rational,npy_bool,npyrational_descr,NPY_BOOL,0)
-
-    /* Register ufuncs */
-    #define REGISTER_UFUNC(name,...) { \
-        PyUFuncObject* ufunc = \
-            (PyUFuncObject*)PyObject_GetAttrString(numpy, #name); \
-        int _types[] = __VA_ARGS__; \
-        if (!ufunc) { \
-            goto fail; \
-        } \
-        if (sizeof(_types)/sizeof(int)!=ufunc->nargs) { \
-            PyErr_Format(PyExc_AssertionError, \
-                         "ufunc %s takes %d arguments, our loop takes %lu", \
-                         #name, ufunc->nargs, (unsigned long) \
-                         (sizeof(_types)/sizeof(int))); \
-            Py_DECREF(ufunc); \
-            goto fail; \
-        } \
-        if (PyUFunc_RegisterLoopForType((PyUFuncObject*)ufunc, npy_rational, \
-                rational_ufunc_##name, _types, 0) < 0) { \
-            Py_DECREF(ufunc); \
-            goto fail; \
-        } \
-        Py_DECREF(ufunc); \
+    /* Register casts and ufunc loops for the legacy `rational` dtype. */
+    if (register_rational_casts_and_ufuncs(
+            npy_rational, npyrational_descr, numpy) < 0) {
+        goto fail;
     }
-    #define REGISTER_UFUNC_BINARY_RATIONAL(name) \
-        REGISTER_UFUNC(name, {npy_rational, npy_rational, npy_rational})
-    #define REGISTER_UFUNC_BINARY_COMPARE(name) \
-        REGISTER_UFUNC(name, {npy_rational, npy_rational, NPY_BOOL})
-    #define REGISTER_UFUNC_UNARY(name) \
-        REGISTER_UFUNC(name, {npy_rational, npy_rational})
-    /* Binary */
-    REGISTER_UFUNC_BINARY_RATIONAL(add)
-    REGISTER_UFUNC_BINARY_RATIONAL(subtract)
-    REGISTER_UFUNC_BINARY_RATIONAL(multiply)
-    REGISTER_UFUNC_BINARY_RATIONAL(divide)
-    REGISTER_UFUNC_BINARY_RATIONAL(remainder)
-    REGISTER_UFUNC_BINARY_RATIONAL(true_divide)
-    REGISTER_UFUNC_BINARY_RATIONAL(floor_divide)
-    REGISTER_UFUNC_BINARY_RATIONAL(minimum)
-    REGISTER_UFUNC_BINARY_RATIONAL(maximum)
-    /* Comparisons */
-    REGISTER_UFUNC_BINARY_COMPARE(equal)
-    REGISTER_UFUNC_BINARY_COMPARE(not_equal)
-    REGISTER_UFUNC_BINARY_COMPARE(less)
-    REGISTER_UFUNC_BINARY_COMPARE(greater)
-    REGISTER_UFUNC_BINARY_COMPARE(less_equal)
-    REGISTER_UFUNC_BINARY_COMPARE(greater_equal)
-    /* Unary */
-    REGISTER_UFUNC_UNARY(negative)
-    REGISTER_UFUNC_UNARY(absolute)
-    REGISTER_UFUNC_UNARY(floor)
-    REGISTER_UFUNC_UNARY(ceil)
-    REGISTER_UFUNC_UNARY(trunc)
-    REGISTER_UFUNC_UNARY(rint)
-    REGISTER_UFUNC_UNARY(square)
-    REGISTER_UFUNC_UNARY(reciprocal)
-    REGISTER_UFUNC_UNARY(sign)
+
+    /*
+     * Register a second rational dtype through the new DType API using the
+     * `NPY_DT_legacy_descriptor_proto` slot.  We reuse the proto above
+     * (already copied out by `PyArray_RegisterDataType`) and only patch
+     * the fields that must differ for the new variant.
+     *
+     * NOTE(seberg): Once parts of the legacy API are deprecated (e.g.
+     * adding casts) we can clean this up to only use the rational2 path.
+     */
+    PyRational2_Type.tp_base = &PyRational_Type;
+    PyRational2_Type.tp_basicsize = sizeof(PyRational);
+    if (PyType_Ready(&PyRational2_Type) < 0) {
+        goto fail;
+    }
+
+    npyrational_descr_proto.typeobj = &PyRational2_Type;
+    npyrational_descr_proto.type = 'R';
+    npyrational_descr_proto.type_num = 0;
+
+    {
+        PyType_Slot dtype_slots[] = {
+            {NPY_DT_legacy_descriptor_proto, &npyrational_descr_proto},
+            {NPY_DT_common_dtype, rational2_common_dtype},
+            {NPY_DT_getitem, rational2_getitem},
+            {NPY_DT_setitem, rational2_setitem},
+            {0, NULL},
+        };
+
+        /* Within-DType identity cast (NULL `dtypes` slots are filled in
+         * by `PyArrayInitDTypeMeta_FromSpec`). */
+        static PyType_Slot within_dtype_slots[] = {
+            {NPY_METH_strided_loop, rational2_within_dtype_loop},
+            {NPY_METH_unaligned_strided_loop, rational2_within_dtype_loop},
+            {0, NULL},
+        };
+        static PyArray_DTypeMeta *within_dtype_dtypes[2] = {NULL, NULL};
+        static PyArrayMethod_Spec within_dtype_cast = {
+            .name = "cast_rational2_within_dtype",
+            .nin = 1,
+            .nout = 1,
+            .casting = NPY_NO_CASTING,
+            .flags = NPY_METH_SUPPORTS_UNALIGNED,
+            .dtypes = within_dtype_dtypes,
+            .slots = within_dtype_slots,
+        };
+        static PyArrayMethod_Spec *casts[] = {&within_dtype_cast, NULL};
+
+        PyArrayDTypeMeta_Spec dtype_spec = {
+            .typeobj = &PyRational2_Type,
+            .flags = 0,
+            .casts = casts,
+            .slots = dtype_slots,
+            .baseclass = NULL,
+        };
+
+        Py_SET_TYPE(&NPY_Rational2DType, &PyArrayDTypeMeta_Type);
+        ((PyTypeObject *)&NPY_Rational2DType)->tp_base = &PyArrayDescr_Type;
+        if (PyType_Ready((PyTypeObject *)&NPY_Rational2DType) < 0) {
+            goto fail;
+        }
+        if (PyArrayInitDTypeMeta_FromSpec(
+                &NPY_Rational2DType, &dtype_spec) < 0) {
+            goto fail;
+        }
+    }
+    npy_rational2 = NPY_Rational2DType.type_num;
+    npyrational2_descr = NPY_Rational2DType.singleton;
+    Py_INCREF(npyrational2_descr);
+
+    /* Support `dtype(rational2)` */
+    if (PyDict_SetItemString(PyRational2_Type.tp_dict, "dtype",
+            (PyObject *)npyrational2_descr) < 0) {
+        goto fail;
+    }
+
+    if (register_rational_casts_and_ufuncs(
+            npy_rational2, npyrational2_descr, numpy) < 0) {
+        goto fail;
+    }
 
     /* Create module */
     m = PyModule_Create(&moduledef);
@@ -1268,6 +1475,12 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
     /* Add rational type */
     Py_INCREF(&PyRational_Type);
     PyModule_AddObject(m,"rational",(PyObject*)&PyRational_Type);
+
+    /* Add the new-API rational variant (subclass of `rational`) */
+    Py_INCREF(&PyRational2_Type);
+    PyModule_AddObject(m, "rational2", (PyObject *)&PyRational2_Type);
+    Py_INCREF((PyObject *)&NPY_Rational2DType);
+    PyModule_AddObject(m, "Rational2DType", (PyObject *)&NPY_Rational2DType);
 
     /* Create matrix multiply generalized ufunc */
     {

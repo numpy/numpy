@@ -765,6 +765,12 @@ class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
 class TestSVDHermitian(SVDHermitianCases, SVDBaseTests):
     hermitian = True
 
+    def test_singular(self):
+        x = np.array([[1, 0], [0, 0]])
+        u, _, vh = linalg.svd(x, hermitian=self.hermitian)
+        assert_allclose(u @ u.T.conj(), np.eye(2), rtol=1e-14)
+        assert_allclose(vh @ vh.T.conj(), np.eye(2), rtol=1e-14)
+
 
 class CondCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
     # cond(x, p) for p in (None, 2, -2)
@@ -2004,6 +2010,9 @@ def test_generalized_raise_multiloop():
     assert_raises(np.linalg.LinAlgError, np.linalg.inv, x)
 
 
+@pytest.mark.filterwarnings(
+    r"ignore:.*fork\(\) may lead to deadlocks.*:DeprecationWarning"
+)
 @pytest.mark.skipif(
     threading.active_count() > 1,
     reason="skipping test that uses fork because there are multiple threads")

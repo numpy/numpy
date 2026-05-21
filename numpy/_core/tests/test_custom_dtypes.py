@@ -195,6 +195,26 @@ class TestSFloat:
         with pytest.raises(TypeError):
             np.add(a, a, out=c, casting="safe")
 
+    def test_sfloat_histogram_passes_dtype_class(self):
+        # Regression test for gh-31447.
+        #
+        # ``_unsigned_subtract`` used to forward a DType instance (from
+        # ``np.result_type``) to ``np.subtract``; the ufunc dispatcher
+        # rejects instances of non-legacy user DTypes.
+        #
+        # Expected behaviour:
+        #   pre-fix:  TypeError "Cannot pass a new user DType instance ..."
+        #   post-fix: TypeError "ufunc 'subtract' did not contain a loop"
+        #             (SF has no subtract loop; once the dispatcher
+        #             accepts the DType class, the missing-loop error
+        #             surfaces.)
+        from numpy.lib._histograms_impl import _unsigned_subtract
+        a = np.array([3.]).view(SF(1.))
+        b = np.array([1.]).view(SF(1.))
+        with pytest.raises(TypeError,
+                match="ufunc 'subtract' did not contain a loop"):
+            _unsigned_subtract(a, b)
+
     @pytest.mark.parametrize("ufunc",
             [np.logical_and, np.logical_or, np.logical_xor])
     def test_logical_ufuncs_casts_to_bool(self, ufunc):

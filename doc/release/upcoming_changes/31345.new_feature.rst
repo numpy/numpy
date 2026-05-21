@@ -1,0 +1,7 @@
+New `descending` keyword argument for ``numpy.sort`` and ``numpy.argsort``
+--------------------------------------------------------------------------
+Users can now pass the `descending=True` keyword argument to ``numpy.sort`` and ``numpy.argsort``
+to sort and argsort arrays in descending order. NaN values, if present, are sorted to the end
+of the array in both ascending and descending sorts. This feature is available for all built-in
+dtypes except `void`, `object`, and `generic`. Note that SIMD optimizations for sorting are
+currently not available for descending sorts, so performance may be slower.

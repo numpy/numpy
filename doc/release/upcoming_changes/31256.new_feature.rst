@@ -1,0 +1,3 @@
+* It is now possible to register user-dtypes for dlpack export and import
+  via `numpy.dtypes.register_dlpack_dtype`. This functionality is meant to
+  be used with care by user-dtype authors.

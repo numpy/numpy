@@ -2183,7 +2183,7 @@ def test_iter_buffered_cast_structured_type_failure_with_cleanup():
 
     for intent in ["readwrite", "readonly", "writeonly"]:
         # This test was initially designed to test an error at a different
-        # place, but will now raise earlier to to the cast not being possible:
+        # place, but will now raise earlier due to the cast not being possible:
         # `assert np.can_cast(a.dtype, sdt2, casting="unsafe")` fails.
         # Without a faulty DType, there is probably no reliable
         # way to get the initial tested behaviour.

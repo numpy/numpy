@@ -464,6 +464,8 @@ optional_intrinsics = [
   ['__builtin_expect', '5, 0', [], []],
   # Test `long long` for arm+clang 13 (gh-22811, but we use all versions):
   ['__builtin_mul_overflow', '(long long)5, 5, (int*)5', [], []],
+  ['__builtin_add_overflow', '(long long)5, 5, (int*)5', [], []],
+  ['__builtin_sub_overflow', '(long long)5, 5, (int*)5', [], []],
   ['__builtin_prefetch', '(float*)0, 0, 3', [], []],
 ]
 foreach intrin: optional_intrinsics
@@ -1230,11 +1232,11 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/temp_elide.c',
   'src/multiarray/usertypes.c',
   'src/multiarray/vdot.c',
-  'src/npysort/quicksort.cpp',
+  'src/npysort/quicksort_generic.cpp',
   'src/npysort/mergesort.cpp',
-  'src/npysort/timsort.cpp',
+  'src/npysort/timsort_generic.cpp',
   'src/npysort/heapsort.cpp',
-  'src/npysort/radixsort.cpp',
+  'src/npysort/npysort_methods.cpp',
   'src/common/npy_partition.h',
   'src/npysort/selection.cpp',
   'src/common/npy_binsearch.h',
