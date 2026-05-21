@@ -4826,6 +4826,28 @@ def test_nextafter_0():
                     0. < direction * np.nextafter(t(0), t(direction)) < tiny)
         assert_equal(np.nextafter(t(0), t(direction)) / t(2.1), direction * 0.0)
 
+
+@pytest.mark.parametrize("sctype", [np.float16, np.float32, np.float64, np.longdouble])
+def test_nextafter_signed_zero(sctype):
+    """`nextafter(-0.0, +0.0)` must return the sign of the second parameter"""
+
+    def _equal_signed_zero(a, b):
+        return (a == b) and (np.signbit(a) == np.signbit(b))
+
+    pos_zero = sctype(+0.0)
+    neg_zero = sctype(-0.0)
+
+    assert _equal_signed_zero(np.nextafter(pos_zero, neg_zero), neg_zero), \
+        f"nextafter(+0.0, -0.0) != -0.0 for {sctype.__name__}"
+    assert _equal_signed_zero(np.nextafter(neg_zero, pos_zero), pos_zero), \
+        f"nextafter(-0.0, +0.0) != +0.0 for {sctype.__name__}"
+
+    assert _equal_signed_zero(np.nextafter(pos_zero, pos_zero), pos_zero), \
+        f"nextafter(+0.0, +0.0) != +0.0 for {sctype.__name__}"
+    assert _equal_signed_zero(np.nextafter(neg_zero, neg_zero), neg_zero), \
+        f"nextafter(-0.0, -0.0) != -0.0 for {sctype.__name__}"
+
+
 def _test_spacing(t):
     one = t(1)
     eps = np.finfo(t).eps
