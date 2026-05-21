@@ -239,8 +239,6 @@ class Sort(Benchmark):
     real-world applications.
     """
     params = [
-        # In NumPy 1.17 and newer, 'merge' can be one of several
-        # stable sorts, it isn't necessarily merge sort.
         [True, False],
         [True, False],
         [
