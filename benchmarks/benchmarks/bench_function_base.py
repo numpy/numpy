@@ -206,7 +206,7 @@ class SortGenerator:
             except (OverflowError, FloatingPointError):
                 raise SkipNotImplemented("Cannot construct arange for this size.")
 
-        return SortGenerator.ordered_range(size, dtype=dtype)[::-1]
+        return SortGenerator.ordered_range(size, dtype=dtype)[::-1].copy()
 
     @staticmethod
     @memoize
