@@ -2805,7 +2805,10 @@ def norm(x, ord=None, axis=None, keepdims=False):
         # None of the str-type keywords for ord ('fro', 'nuc')
         # are valid for vectors
         elif isinstance(ord, str):
-            raise ValueError(f"Invalid norm order '{ord}' for vectors")
+            raise ValueError(
+                f"Invalid norm order '{ord}' for vectors. "
+                f"Valid string values for vectors are: None, 'fro', 'f', 'nuc'."
+            )
         else:
             absx = abs(x)
             absx **= ord
@@ -2843,7 +2846,10 @@ def norm(x, ord=None, axis=None, keepdims=False):
         elif ord == 'nuc':
             ret = _multi_svd_norm(x, row_axis, col_axis, sum, 0)
         else:
-            raise ValueError("Invalid norm order for matrices.")
+            raise ValueError(
+                f"Invalid norm order '{ord}' for matrices. "
+                f"Valid string values for matrices are: None, 'fro', 'f', 'nuc'."
+            )
         if keepdims:
             ret_shape = list(x.shape)
             ret_shape[axis[0]] = 1
