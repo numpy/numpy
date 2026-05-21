@@ -362,12 +362,10 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         a, mask = _replace_nan(a, +np.inf)
         # Replace NaN initial with +inf (identity of min) to avoid NaN
         # propagation through np.amin. nanmin should ignore NaN in initial
-        # the same way it ignores NaN in array elements.
-        initial_is_nan = (
-            initial is not np._NoValue
-            and np.ndim(initial) == 0
-            and np.isnan(initial)
-        )
+        # the same way it ignores NaN in array elements. Comparing initial to
+        # itself detects NaN without going through np.isnan, which raises on
+        # non-numeric scalars such as decimal.Decimal.
+        initial_is_nan = initial is not np._NoValue and initial != initial
         if initial_is_nan:
             kwargs["initial"] = +np.inf
         res = np.amin(a, axis=axis, out=out, **kwargs)
@@ -505,12 +503,10 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         a, mask = _replace_nan(a, -np.inf)
         # Replace NaN initial with -inf (identity of max) to avoid NaN
         # propagation through np.amax. nanmax should ignore NaN in initial
-        # the same way it ignores NaN in array elements.
-        initial_is_nan = (
-            initial is not np._NoValue
-            and np.ndim(initial) == 0
-            and np.isnan(initial)
-        )
+        # the same way it ignores NaN in array elements. Comparing initial to
+        # itself detects NaN without going through np.isnan, which raises on
+        # non-numeric scalars such as decimal.Decimal.
+        initial_is_nan = initial is not np._NoValue and initial != initial
         if initial_is_nan:
             kwargs["initial"] = -np.inf
         res = np.amax(a, axis=axis, out=out, **kwargs)

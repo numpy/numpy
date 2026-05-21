@@ -309,6 +309,12 @@ class TestNanFunctions_MinMax:
                 assert len(w) == 1
                 assert issubclass(w[0].category, RuntimeWarning)
 
+        # A non-floating scalar such as ``decimal.Decimal`` should not raise
+        # in the NaN detection path.
+        from decimal import Decimal
+        assert np.nanmin([Decimal(1), Decimal(2)], initial=Decimal(0)) == Decimal(0)
+        assert np.nanmax([Decimal(1), Decimal(2)], initial=Decimal(0)) == Decimal(2)
+
 
 class TestNanFunctions_ArgminArgmax:
 
