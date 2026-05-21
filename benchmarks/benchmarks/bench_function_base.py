@@ -273,6 +273,8 @@ class Sort(Benchmark):
         array_class = array_type[0]
         generate_array_method = getattr(SortGenerator, array_class)
         self.arr = generate_array_method(self.ARRAY_SIZE, dtype, *array_type[1:], rnd)
+        if descending:
+            self.arr = self.arr[::-1]
 
     def time_sort(self, stable, descending, dtype, array_type):
         # Using np.sort(...) instead of arr.sort(...) because it makes a copy.
