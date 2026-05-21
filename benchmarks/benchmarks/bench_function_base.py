@@ -153,13 +153,33 @@ class SortGenerator:
     # The size of the "partially ordered" sub-arrays
     BUBBLE_SIZE = 100
 
+    small_limits = {
+        'bool': (0, 2),
+        'uint8': (0, 256),
+        'int8': (-128, 128),
+        'int16': (-32768, 32768),
+        'float16': (-1000, 1000),
+    }
+
+    @staticmethod
+    @memoize
+    def ordered_range(size, dtype):
+        """
+        Returns an ordered array of the given size and dtype.
+        """
+        if dtype in SortGenerator.small_limits:
+            arange = np.arange(*SortGenerator.small_limits[dtype], dtype=dtype)
+            return np.repeat(arange, size // arange.size + 1)[:size]
+        else:
+            return np.arange(size, dtype=dtype)
+
     @staticmethod
     @memoize
     def random(size, dtype, rnd):
         """
         Returns a randomly-shuffled array.
         """
-        arr = np.arange(size, dtype=dtype)
+        arr = SortGenerator.ordered_range(size, dtype=dtype)
         rnd = np.random.RandomState(1792364059)
         np.random.shuffle(arr)
         rnd.shuffle(arr)
@@ -171,7 +191,7 @@ class SortGenerator:
         """
         Returns an ordered array.
         """
-        return np.arange(size, dtype=dtype)
+        return SortGenerator.ordered_range(size, dtype=dtype)
 
     @staticmethod
     @memoize
@@ -179,14 +199,14 @@ class SortGenerator:
         """
         Returns an array that's in descending order.
         """
-        dtype = np.dtype(dtype)
-        try:
-            with np.errstate(over="raise"):
-                res = dtype.type(size - 1)
-        except (OverflowError, FloatingPointError):
-            raise SkipNotImplemented("Cannot construct arange for this size.")
+        if dtype not in SortGenerator.small_limits:
+            try:
+                with np.errstate(over="raise"):
+                    res = np.dtype(dtype).type(size - 1)
+            except (OverflowError, FloatingPointError):
+                raise SkipNotImplemented("Cannot construct arange for this size.")
 
-        return np.arange(size - 1, -1, -1, dtype=dtype)
+        return SortGenerator.ordered_range(size, dtype=dtype)[::-1]
 
     @staticmethod
     @memoize
@@ -202,84 +222,7 @@ class SortGenerator:
         """
         Returns an array with blocks that are all sorted.
         """
-        a = np.arange(size, dtype=dtype)
-        b = []
-        if size < block_size:
-            return a
-        block_num = size // block_size
-        for i in range(block_num):
-            b.extend(a[i::block_num])
-        return np.array(b)
-
-
-class SortGeneratorSmall:
-    # This is a separate class as for certain small dtypes we
-    # need to repeat elements to get the desired array size.
-
-    # The size of the unsorted area in the "random unsorted area"
-    # benchmarks
-    AREA_SIZE = 100
-    # The size of the "partially ordered" sub-arrays
-    BUBBLE_SIZE = 100
-
-    limits = {
-        'bool': (0, 2),
-        'uint8': (0, 256),
-        'int8': (-128, 128),
-        'int16': (-32768, 32768),
-        'float16': (-1000, 1000),
-    }
-
-    @staticmethod
-    @memoize
-    def arange(dtype):
-        return np.arange(*SortGeneratorSmall.limits[dtype], dtype=dtype)
-
-    @staticmethod
-    @memoize
-    def random(size, dtype, rnd):
-        """
-        Returns a randomly-shuffled array.
-        """
-        arange = SortGeneratorSmall.arange(dtype)
-        rnd = np.random.RandomState(1792364059)
-        arr = rnd.choice(arange, size=size, replace=True)
-        return arr
-
-    @staticmethod
-    @memoize
-    def ordered(size, dtype, rnd):
-        """
-        Returns an ordered array.
-        """
-        arange = SortGeneratorSmall.arange(dtype)
-        return np.repeat(arange, size // arange.size + 1)[:size]
-
-    @staticmethod
-    @memoize
-    def reversed(size, dtype, rnd):
-        """
-        Returns an array that's in descending order.
-        """
-        arange = SortGeneratorSmall.arange(dtype)
-        return np.repeat(arange[::-1], size // arange.size + 1)[:size]
-
-    @staticmethod
-    @memoize
-    def uniform(size, dtype, rnd):
-        """
-        Returns an array that has the same value everywhere.
-        """
-        return np.ones(size, dtype=dtype)
-
-    @staticmethod
-    @memoize
-    def sorted_block(size, dtype, block_size, rnd):
-        """
-        Returns an array with blocks that are all sorted.
-        """
-        a = SortGeneratorSmall.arange(dtype=dtype)
-        a = np.repeat(a, size // a.size + 1)[:size]
+        a = SortGenerator.ordered_range(size, dtype=dtype)
         b = []
         if size < block_size:
             return a
@@ -327,14 +270,10 @@ class Sort(Benchmark):
     # The size of the benchmarked arrays.
     ARRAY_SIZE = 1000000
 
-    small_dtypes = ['bool', 'uint8', 'int8', 'int16', 'float16']
-
     def setup(self, stable, descending, dtype, array_type):
         rnd = np.random.RandomState(507582308)
         array_class = array_type[0]
-
-        cls = SortGeneratorSmall if dtype in self.small_dtypes else SortGenerator
-        generate_array_method = getattr(cls, array_class)
+        generate_array_method = getattr(SortGenerator, array_class)
         self.arr = generate_array_method(self.ARRAY_SIZE, dtype, *array_type[1:], rnd)
 
     def time_sort(self, stable, descending, dtype, array_type):
