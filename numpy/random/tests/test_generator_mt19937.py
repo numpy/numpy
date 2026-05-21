@@ -462,7 +462,7 @@ class TestIntegers:
             except Exception as e:
                 raise AssertionError("No error should have been raised, "
                                      "but one was with the following "
-                                     "message:\n\n%s" % str(e))
+                                     f"message:\n\n{e}")
 
     def test_full_range_array(self, endpoint):
         # Test for ticket #1690
@@ -477,7 +477,7 @@ class TestIntegers:
             except Exception as e:
                 raise AssertionError("No error should have been raised, "
                                      "but one was with the following "
-                                     "message:\n\n%s" % str(e))
+                                     f"message:\n\n{e}")
 
     def test_in_bounds_fuzz(self, endpoint):
         # Don't use fixed seed
@@ -1685,7 +1685,7 @@ class TestRandomDist:
                             [1.093830802293668, 1.256977002164613]])
         assert_array_almost_equal(actual, desired, decimal=15)
 
-    def test_standard_expoential_type_error(self):
+    def test_standard_exponential_type_error(self):
         assert_raises(TypeError, random.standard_exponential, dtype=np.int32)
 
     def test_standard_gamma(self):

@@ -1,0 +1,11 @@
+Setting the ``shape`` attribute is deprecated
+---------------------------------------------
+Setting the shape attribute is now deprecated since mutating
+an array is unsafe if an array is shared, especially by multiple
+threads.  As an alternative, you can create a new view via
+`np.reshape` or `np.ndarray.reshape`. For example: ``x = np.arange(15); x = np.reshape(x, (3, 5))``.
+To ensure no copy is made from the data, one can use ``np.reshape(..., copy=False)``.
+
+Directly setting the shape on an array is discouraged, but for cases where it is difficult to work
+around, e.g., in ``__array_finalize__`` possible with the private method `np.ndarray._set_shape`.
+

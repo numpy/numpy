@@ -60,16 +60,9 @@ del PytestTester
 
 def __getattr__(attr):
     # Warn for deprecated/removed aliases
-    import math
     import warnings
 
-    if attr == "math":
-        warnings.warn(
-            "`np.lib.math` is a deprecated alias for the standard library "
-            "`math` module (Deprecated Numpy 1.25). Replace usages of "
-            "`numpy.lib.math` with `math`", DeprecationWarning, stacklevel=2)
-        return math
-    elif attr == "emath":
+    if attr == "emath":
         raise AttributeError(
             "numpy.lib.emath was an alias for emath module that was removed "
             "in NumPy 2.0. Replace usages of numpy.lib.emath with "

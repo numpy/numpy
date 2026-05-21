@@ -1,0 +1,6 @@
+Resizing a Numpy array inplace is deprecated
+--------------------------------------------
+Resizing a Numpy array inplace is deprecated since mutating
+an array is unsafe if an array is shared, especially by multiple
+threads.  As an alternative, you can create a resized array via ``np.resize``.
+

@@ -5,7 +5,6 @@ Functions to operate on polynomials.
 __all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
            'polysub', 'polymul', 'polydiv', 'polyval', 'poly1d',
            'polyfit']
-
 import functools
 import re
 import warnings
@@ -141,8 +140,7 @@ def poly(seq_of_zeros):
         seq_of_zeros = eigvals(seq_of_zeros)
     elif len(sh) == 1:
         dt = seq_of_zeros.dtype
-        # Let object arrays slip through, e.g. for arbitrary precision
-        if dt != object:
+        if dt.type is not NX.object_:
             seq_of_zeros = seq_of_zeros.astype(mintypecode(dt.char))
     else:
         raise ValueError("input must be 1d or non-empty square 2d array.")
@@ -252,6 +250,10 @@ def roots(p):
         A = diag(NX.ones((N - 2,), p.dtype), -1)
         A[0, :] = -p[1:] / p[0]
         roots = eigvals(A)
+
+        # backwards compat: return real values if possible
+        from numpy.linalg._linalg import _to_real_if_imag_zero
+        roots = _to_real_if_imag_zero(roots, A)
     else:
         roots = NX.array([])
 
@@ -1325,9 +1327,9 @@ class poly1d:
             elif coefstr == '0':
                 newstr = ''
             elif coefstr == 'b':
-                newstr = '%s**%d' % (var, power,)
+                newstr = f'{var}**{power}'
             else:
-                newstr = '%s %s**%d' % (coefstr, var, power)
+                newstr = f'{coefstr} {var}**{power}'
 
             if k > 0:
                 if newstr != '':

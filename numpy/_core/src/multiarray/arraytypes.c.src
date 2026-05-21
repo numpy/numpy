@@ -3997,7 +3997,6 @@ _create_datetime_metadata(NPY_DATETIMEUNIT base, int num)
  *
  * #from = VOID, STRING, UNICODE#
  * #suff = void, string, unicode#
- * #sort = 0, 1, 1#
  * #align = char, char, npy_ucs4#
  * #NAME = Void, String, Unicode#
  * #endian = |, |, =#
@@ -4039,25 +4038,12 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     (PyArray_NonzeroFunc*)@from@_nonzero,
     (PyArray_FillFunc*)NULL,
     (PyArray_FillWithScalarFunc*)NULL,
-#if @sort@
-    {
-        quicksort_@suff@,
-        heapsort_@suff@,
-        timsort_@suff@
-    },
-    {
-        aquicksort_@suff@,
-        aheapsort_@suff@,
-        atimsort_@suff@
-    },
-#else
     {
         NULL, NULL, NULL
     },
     {
         NULL, NULL, NULL
     },
-#endif
     NULL,
     (PyArray_ScalarKindFunc*)NULL,
     NULL,
@@ -4098,14 +4084,12 @@ static _PyArray_LegacyDescr @from@_Descr = {
  *         half, float, double, longdouble,
  *         cfloat, cdouble, clongdouble,
  *         object, datetime, timedelta#
- * #sort = 1*18, 0*1, 1*2#
  * #fromtype = npy_bool,
  *             npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *             npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *             npy_half, npy_float, npy_double, npy_longdouble,
  *             npy_cfloat, npy_cdouble, npy_clongdouble,
  *             PyObject *, npy_datetime, npy_timedelta#
- * #rsort = 1*5, 0*16#
  * #NAME = Bool,
  *         Byte, UByte, Short, UShort, Int, UInt,
  *         Long, ULong, LongLong, ULongLong,
@@ -4158,33 +4142,12 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     (PyArray_NonzeroFunc*)@from@_nonzero,
     (PyArray_FillFunc*)@from@_fill,
     (PyArray_FillWithScalarFunc*)@from@_fillwithscalar,
-#if @sort@
-    {
-        quicksort_@suff@,
-        heapsort_@suff@,
-        #if @rsort@
-            radixsort_@suff@
-        #else
-            timsort_@suff@
-        #endif
-    },
-    {
-        aquicksort_@suff@,
-        aheapsort_@suff@,
-        #if @rsort@
-            aradixsort_@suff@
-        #else
-            atimsort_@suff@
-        #endif
-    },
-#else
     {
         NULL, NULL, NULL
     },
     {
         NULL, NULL, NULL
     },
-#endif
     NULL,
     (PyArray_ScalarKindFunc*)NULL,
     NULL,
@@ -4380,7 +4343,7 @@ static int
 
 /* 
 Keeping Half macros consistent with standard C 
-Refernce: https://en.cppreference.com/w/c/types/limits.html
+Reference: https://en.cppreference.com/w/c/types/limits.html
 */
 #define HALF_MAX 31743       /* Bit pattern for 65504.0 */
 #define HALF_MIN 1024        /* Bit pattern for smallest positive normal: 2^-14 */
@@ -4476,7 +4439,7 @@ static int
             /*
             Definition: Minimum negative integer such that FLT_RADIX raised by power one less than that integer is a normalized float, double and long double respectively
 
-            refernce: https://en.cppreference.com/w/c/types/limits.html
+            reference: https://en.cppreference.com/w/c/types/limits.html
             */
             *(npy_intp *)ptr = @ABB@_MIN_EXP - 1;
             return 1;
@@ -4508,7 +4471,6 @@ static int
     return 0;
 }
 /**end repeat**/
-
 
 /*
  *****************************************************************************
@@ -4599,6 +4561,13 @@ set_typeinfo(PyObject *dict)
     /**end repeat**/
 
     initialize_legacy_dtypemeta_aliases(_builtin_descrs);
+
+    /*
+     * Add sorting array methods for the new types.
+     */
+    if (register_all_sorts() < 0) {
+        return -1;
+    }
 
     /*
      * Add cast functions for the new types
@@ -4716,7 +4685,7 @@ set_typeinfo(PyObject *dict)
       * #name = STRING, UNICODE, VOID#
       */
 
-    PyDataType_MAKEUNSIZED(&@name@_Descr);
+    PyDataType_MAKEUNSIZED((PyArray_Descr *)&@name@_Descr);
 
     /**end repeat**/
 

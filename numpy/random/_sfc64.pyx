@@ -34,8 +34,8 @@ cdef double sfc64_double(void* st) noexcept nogil:
 
 
 cdef class SFC64(BitGenerator):
-    """
-    SFC64(seed=None)
+    # the first line is used to populate `__text_signature__`
+    """SFC64(seed=None)\n--
 
     BitGenerator for Chris Doty-Humphrey's Small Fast Chaotic PRNG.
 

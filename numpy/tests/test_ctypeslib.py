@@ -65,7 +65,7 @@ class TestLoadLibrary:
                          np._core._multiarray_umath.__file__)
         except ImportError as e:
             msg = ("ctypes is not available on this python: skipping the test"
-                   " (import error was: %s)" % str(e))
+                   f" (import error was: {e})")
             print(msg)
 
 
@@ -255,6 +255,7 @@ class TestAsArray:
         check(as_array(pointer(c_array[0][0]), shape=(2, 3)))
 
     @pytest.mark.thread_unsafe(reason="garbage collector is global state")
+    @pytest.mark.slow
     def test_reference_cycles(self):
         # related to gh-6511
         import ctypes
@@ -381,3 +382,25 @@ class TestAsCtypesType:
             'formats': [np.uint32, np.uint32]
         })
         assert_raises(NotImplementedError, np.ctypeslib.as_ctypes_type, dt)
+
+    def test_cannot_convert_to_ctypes(self):
+
+        _type_to_value = {
+            np.str_: ("aa",),
+            np.bool: (True,),
+            np.datetime64: ("2026-01-01",),
+            np.timedelta64: (1, "s")
+        }
+        for _scalar_type in np.sctypeDict.values():
+            if _scalar_type == np.object_:
+                continue
+
+            if _scalar_type in _type_to_value:
+                numpy_scalar = _scalar_type(*_type_to_value[_scalar_type])
+            else:
+                numpy_scalar = _scalar_type(1)
+
+            with pytest.raises(
+                TypeError, match="readonly arrays unsupported"
+            ):
+                np.ctypeslib.as_ctypes(numpy_scalar)

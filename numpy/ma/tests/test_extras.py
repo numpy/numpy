@@ -5,6 +5,7 @@ Adapted from the original test_ma by Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
 
 """
+import inspect
 import itertools
 
 import pytest
@@ -1230,7 +1231,7 @@ class TestMedian:
         b[2] = np.nan
         assert_equal(np.ma.median(a, (0, 2)), b)
 
-    def test_ambigous_fill(self):
+    def test_ambiguous_fill(self):
         # 255 is max value, used as filler for sort
         a = np.array([[3, 3, 255], [3, 3, 255]], dtype=np.uint8)
         a = np.ma.masked_array(a, mask=a == 3)
@@ -1810,6 +1811,18 @@ class TestShapeBase:
         b = diagflat(1.0)
         assert_equal(b.shape, (1, 1))
         assert_equal(b.mask.shape, b.data.shape)
+
+    @pytest.mark.parametrize("fn", [atleast_1d, vstack, diagflat])
+    def test_inspect_signature(self, fn):
+        name = fn.__name__
+        assert getattr(np.ma, name) is fn
+
+        assert fn.__module__ == "numpy.ma.extras"
+
+        wrapped = getattr(np, fn.__name__)
+        sig_wrapped = inspect.signature(wrapped)
+        sig = inspect.signature(fn)
+        assert sig == sig_wrapped
 
 
 class TestNDEnumerate:

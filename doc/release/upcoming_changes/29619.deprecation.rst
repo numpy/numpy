@@ -1,0 +1,17 @@
+Deprecation of the ``generic`` unit in `numpy.timedelta64`
+----------------------------------------------------------
+
+Using the ``generic`` unit in `numpy.timedelta64` is now deprecated
+since this can lead to unexpected behavior such as non-transitive comparisons.
+(see `gh-28287 <https://github.com/numpy/numpy/issues/28287>`__ for details).  
+
+As an alternative, please specify an explicit unit such as ``'s'`` (seconds)
+or ``'D'`` (days) when constructing `numpy.timedelta64`.
+
+Due to this change, operations that implicitly rely on the ``generic`` unit are also deprecated.
+For example::
+
+    arr = np.array([1, 2, 3], dtype="m8[s]")
+
+    # `1` is implicitly converted to generic timedelta64
+    arr + 1

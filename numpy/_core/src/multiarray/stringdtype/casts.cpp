@@ -18,6 +18,7 @@
 #include "numpyos.h"
 #include "umathmodule.h"
 #include "gil_utils.h"
+#include "raii_utils.hpp"
 #include "static_string.h"
 #include "dtypemeta.h"
 #include "dtype.h"
@@ -1910,7 +1911,8 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
                 NpyAuxData *NPY_UNUSED(auxdata))
 {
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
-    npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
+    np::raii::NpyStringAcquireAllocator alloc(descr);
+
     int has_null = descr->na_object != NULL;
     int has_string_na = descr->has_string_na;
     const npy_static_string *default_string = &descr->default_string;
@@ -1926,22 +1928,22 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
         const npy_packed_static_string *ps = (npy_packed_static_string *)in;
         npy_static_string s = {0, NULL};
         if (load_nullable_string(ps, &s, has_null, has_string_na,
-                                 default_string, na_name, allocator,
+                                 default_string, na_name, alloc.allocator(),
                                  "in string to bytes cast") == -1) {
-            goto fail;
+            return -1;
         }
 
         for (size_t i=0; i<s.size; i++) {
             if (((unsigned char *)s.buf)[i] > 127) {
-                NPY_ALLOW_C_API_DEF;
-                NPY_ALLOW_C_API;
+                np::raii::EnsureGIL ensure_gil{};
+
                 PyObject *str = PyUnicode_FromStringAndSize(s.buf, s.size);
 
                 if (str == NULL) {
                     PyErr_SetString(
                         PyExc_UnicodeEncodeError, "Invalid character encountered during unicode encoding."
                     );
-                    goto fail;
+                    return -1;
                 }
 
                 PyObject *exc = PyObject_CallFunction(
@@ -1956,14 +1958,13 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
 
                 if (exc == NULL) {
                     Py_DECREF(str);
-                    goto fail;
+                    return -1;
                 }
 
                 PyErr_SetObject(PyExceptionInstance_Class(exc), exc);
                 Py_DECREF(exc);
                 Py_DECREF(str);
-                NPY_DISABLE_C_API;
-                goto fail;
+                return -1;
             }
         }
 
@@ -1976,15 +1977,7 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
         out += out_stride;
     }
 
-    NpyString_release_allocator(allocator);
-
     return 0;
-
-fail:
-
-    NpyString_release_allocator(allocator);
-
-    return -1;
 }
 
 static PyType_Slot s2bytes_slots[] = {

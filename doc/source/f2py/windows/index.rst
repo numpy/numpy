@@ -58,8 +58,7 @@ Windows Subsystem for Linux
    Windows applications, but is significantly more complicated.
 
 Conda
-   Windows support for compilers in ``conda`` is facilitated by pulling MSYS2
-   binaries, however these `are outdated`_, and therefore not recommended (as of 30-01-2022).
+   Windows support for GNU compilers in ``conda`` is provided by `conda-forge`_ channel.
 
 PGI Compilers (commercial)
    Unmaintained but sufficient if an existing license is present. Works
@@ -70,12 +69,6 @@ Cygwin (FOSS)
    Can also be used for ``gfortran``. However, the POSIX API compatibility layer provided by
    Cygwin is meant to compile UNIX software on Windows, instead of building
    native Windows programs. This means cross compilation is required.
-
-The compilation suites described so far are compatible with the `now
-deprecated`_ ``np.distutils`` build backend which is exposed by the F2PY CLI.
-Additional build system usage (``meson``, ``cmake``) as described in
-:ref:`f2py-bldsys` allows for a more flexible set of compiler
-backends including:
 
 Intel oneAPI
    The newer Intel compilers (``ifx``, ``icx``) are based on LLVM and can be
@@ -214,7 +207,7 @@ path using a hash. This needs to be added to the ``PATH`` variable.
 .. _JeanHeyd Meneide: https://thephd.dev/binary-banshees-digital-demons-abi-c-c++-help-me-god-please
 .. _legacy version of Flang: https://github.com/flang-compiler/flang
 .. _native Windows support: https://developer.nvidia.com/nvidia-hpc-sdk-downloads#collapseFour
-.. _are outdated: https://github.com/conda-forge/conda-forge.github.io/issues/1044
+.. _conda-forge: https://conda-forge.org/docs/maintainer/infrastructure/#compilers-supplied-by-conda-forge
 .. _now deprecated: https://github.com/numpy/numpy/pull/20875
 .. _LLVM Flang: https://releases.llvm.org/11.0.0/tools/flang/docs/ReleaseNotes.html
 .. _SciPy's documentation: https://scipy.github.io/devdocs/building/index.html#system-level-dependencies

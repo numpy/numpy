@@ -10,16 +10,7 @@ extern "C" {
 
 #include <Python.h>
 #include "ndarraytypes.h"
-#include "dtype_api.h"
 
-/* Includes the "function" C-API -- these are all stored in a
-   list of pointers --- one for each file
-   The two lists are concatenated into one in multiarray.
-
-   They are available as import_array()
-*/
-
-#include "__multiarray_api.h"
 
 /*
  * Include any definitions which are defined differently for 1.x and 2.x
@@ -32,7 +23,7 @@ extern "C" {
 #define PyArray_DescrCheck(op) PyObject_TypeCheck(op, &PyArrayDescr_Type)
 
 #define PyArray_Check(op) PyObject_TypeCheck(op, &PyArray_Type)
-#define PyArray_CheckExact(op) (((PyObject*)(op))->ob_type == &PyArray_Type)
+#define PyArray_CheckExact(op) (Py_TYPE((PyObject*)(op)) == &PyArray_Type)
 
 #define PyArray_HasArrayInterfaceType(op, type, context, out)                 \
         ((((out)=PyArray_FromStructInterface(op)) != Py_NotImplemented) ||    \
@@ -156,7 +147,7 @@ extern "C" {
 static inline void
 PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
 {
-    PyArrayObject_fields *fa = (PyArrayObject_fields *)arr;
+    PyArrayObject_fields *fa = _PyArray_GET_ITEM_DATA(arr);
     if (fa && fa->base) {
         if (fa->flags & NPY_ARRAY_WRITEBACKIFCOPY) {
             PyArray_ENABLEFLAGS((PyArrayObject*)fa->base, NPY_ARRAY_WRITEABLE);
@@ -220,15 +211,6 @@ NPY_TITLE_KEY_check(PyObject *key, PyObject *value)
     if (key == title) {
         return 1;
     }
-#ifdef PYPY_VERSION
-    /*
-     * On PyPy, dictionary keys do not always preserve object identity.
-     * Fall back to comparison by value.
-     */
-    if (PyUnicode_Check(title) && PyUnicode_Check(key)) {
-        return PyUnicode_Compare(title, key) == 0 ? 1 : 0;
-    }
-#endif
     return 0;
 }
 
@@ -248,12 +230,12 @@ NPY_TITLE_KEY_check(PyObject *key, PyObject *value)
 static inline npy_intp
 PyArray_ITEMSIZE(const PyArrayObject *arr)
 {
-    return PyDataType_ELSIZE(((PyArrayObject_fields *)arr)->descr);
+    return PyDataType_ELSIZE(PyArray_DESCR(arr));
 }
 
 #define PyDataType_HASFIELDS(obj) (PyDataType_ISLEGACY((PyArray_Descr*)(obj)) && PyDataType_NAMES((PyArray_Descr*)(obj)) != NULL)
 #define PyDataType_HASSUBARRAY(dtype) (PyDataType_ISLEGACY(dtype) && PyDataType_SUBARRAY(dtype) != NULL)
-#define PyDataType_ISUNSIZED(dtype) ((dtype)->elsize == 0 && \
+#define PyDataType_ISUNSIZED(dtype) (PyDataType_ELSIZE((PyArray_Descr*)(dtype)) == 0 && \
                                       !PyDataType_HASFIELDS(dtype))
 
 #define PyDataType_FLAGCHK(dtype, flag) \
@@ -261,6 +243,9 @@ PyArray_ITEMSIZE(const PyArrayObject *arr)
 
 #define PyDataType_REFCHK(dtype) \
         PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)
+
+#define PyDataType_ISTRIVIALLYCOPYABLE(dtype) \
+        (!(PyDataType_FLAGS(dtype) & (NPY_NOT_TRIVIALLY_COPYABLE | NPY_ITEM_REFCOUNT)))
 
 #define NPY_BEGIN_THREADS_DESCR(dtype) \
         do {if (!(PyDataType_FLAGCHK((dtype), NPY_NEEDS_PYAPI))) \
@@ -279,8 +264,7 @@ PyArray_ITEMSIZE(const PyArrayObject *arr)
 static inline PyObject *
 PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 {
-    return PyDataType_GetArrFuncs(((PyArrayObject_fields *)arr)->descr)->getitem(
-                                        (void *)itemptr, (PyArrayObject *)arr);
+    return PyDataType_GetArrFuncs(PyArray_DESCR(arr))->getitem((void *)itemptr, (PyArrayObject *)arr);
 }
 
 /*
@@ -291,7 +275,7 @@ PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 static inline int
 PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 {
-    return PyDataType_GetArrFuncs(((PyArrayObject_fields *)arr)->descr)->setitem(v, itemptr, arr);
+    return PyDataType_GetArrFuncs(PyArray_DESCR(arr))->setitem(v, itemptr, arr);
 }
 #endif  /* not internal */
 

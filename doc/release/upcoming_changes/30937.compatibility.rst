@@ -1,0 +1,8 @@
+``from_dlpack`` raises ``BufferError`` instead of ``RuntimeError``
+------------------------------------------------------------------
+
+``np.from_dlpack`` now raises ``BufferError`` instead of ``RuntimeError``
+when the incoming DLPack tensor has an unsupported device, dtype, or
+exceeds the maximum number of dimensions. This aligns with the DLPack
+and Array API specifications, which recommend ``BufferError`` for data
+that cannot be imported.

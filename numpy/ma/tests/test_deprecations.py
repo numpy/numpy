@@ -63,3 +63,11 @@ class TestMinimumMaximum:
         result = ma_max(data1d)
         assert_equal(result, ma_max(data1d, axis=None))
         assert_equal(result, ma_max(data1d, axis=0))
+
+
+class TestDtypeSet:
+    def test_deprecated_dtype_set(self):
+        # gh-31192: setting dtype on a MaskedArray should emit DeprecationWarning
+        x = np.ma.array([1, 2, 3], mask=[0, 1, 0], dtype=np.float64)
+        with pytest.warns(DeprecationWarning, match="Setting the dtype"):
+            x.dtype = np.int64

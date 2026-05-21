@@ -20,8 +20,8 @@ What is a masked array?
 -----------------------
 
 In many circumstances, datasets can be incomplete or tainted by the presence
-of invalid data. For example, a sensor may have failed to record a data, or
-recorded an invalid value. The :mod:`numpy.ma` module provides a convenient
+of invalid data. For example, a sensor may have failed to record a data point,
+or recorded an invalid value. The :mod:`numpy.ma` module provides a convenient
 way to address this issue, by introducing masked arrays.
 
 A masked array is the combination of a standard :class:`numpy.ndarray` and a

@@ -3,6 +3,6 @@ mod_features = import('features')
 
 LSX = mod_features.new(
   'LSX', 1, args: ['-mlsx'],
-  test_code: files(source_root + '/numpy/distutils/checks/cpu_lsx.c')[0]
+  test_code: files(source_root + '/numpy/_core/src/_simd/checks/cpu_lsx.c')[0]
 )
 LOONGARCH64_FEATURES = {'LSX': LSX}

@@ -1,3 +1,5 @@
+import pytest
+
 import numpy as np
 from numpy import fix, isneginf, isposinf
 from numpy.testing import assert_, assert_array_equal, assert_equal, assert_raises
@@ -35,6 +37,7 @@ class TestUfunclike:
         with assert_raises(TypeError):
             isneginf(a)
 
+    @pytest.mark.filterwarnings("ignore:numpy.fix is deprecated:DeprecationWarning")
     def test_fix(self):
         a = np.array([[1.0, 1.1, 1.5, 1.8], [-1.0, -1.1, -1.5, -1.8]])
         out = np.zeros(a.shape, float)
@@ -47,6 +50,7 @@ class TestUfunclike:
         assert_equal(out, tgt)
         assert_equal(fix(3.14), 3)
 
+    @pytest.mark.filterwarnings("ignore:numpy.fix is deprecated:DeprecationWarning")
     def test_fix_with_subclass(self):
         class MyArray(np.ndarray):
             def __new__(cls, data, metadata=None):
@@ -79,6 +83,7 @@ class TestUfunclike:
         assert_(isinstance(f0d, MyArray))
         assert_equal(f0d.metadata, 'bar')
 
+    @pytest.mark.filterwarnings("ignore:numpy.fix is deprecated:DeprecationWarning")
     def test_scalar(self):
         x = np.inf
         actual = np.isposinf(x)
@@ -95,3 +100,22 @@ class TestUfunclike:
         out = np.array(0.0)
         actual = np.fix(x, out=out)
         assert_(actual is out)
+
+
+class TestFixDeprecation:
+    """Test that numpy.fix emits a DeprecationWarning."""
+
+    def test_fix_emits_deprecation_warning(self):
+        a = np.array([1.5, 2.7, -1.5, -2.7])
+        with pytest.warns(DeprecationWarning, match="numpy.fix is deprecated"):
+            fix(a)
+
+    def test_fix_scalar_emits_deprecation_warning(self):
+        with pytest.warns(DeprecationWarning, match="numpy.fix is deprecated"):
+            fix(3.14)
+
+    def test_fix_with_out_emits_deprecation_warning(self):
+        a = np.array([1.5, 2.7])
+        out = np.zeros(a.shape)
+        with pytest.warns(DeprecationWarning, match="numpy.fix is deprecated"):
+            fix(a, out=out)

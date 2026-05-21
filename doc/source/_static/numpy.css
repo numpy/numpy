@@ -28,11 +28,14 @@ body {
 
 button.btn.version-switcher__button,
 button.btn.version-switcher__button:hover {
-  color: black;
   font-size: small;
 }
 
 /* Main index page overview cards */
+
+.sd-card {
+  background-color: var(--pst-color-on-background);
+}
 
 .sd-card .sd-card-img-top {
   height: 60px;
@@ -45,7 +48,8 @@ button.btn.version-switcher__button:hover {
 /* Main index page overview images */
 
 html[data-theme=dark] .sd-card img[src*='.svg'] {
-  filter: invert(0.82) brightness(0.8) contrast(1.2);
+  filter: invert(1.0) saturate(0.0);
+  background: none;
 }
 
 /* Legacy admonition */

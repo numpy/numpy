@@ -99,7 +99,7 @@ class TensorTestCase(unittest.TestCase):
         "Test max function with wrong dimensions"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         max = Tensor.__dict__[self.typeStr + "Max"]
-        self.assertRaises(TypeError, max, [0, -1, 2, -3])
+        self.assertRaises(TypeError, max, [0, 1, 2, 3])
 
     # Test (int DIM1, int DIM2, int DIM3, type* IN_ARRAY3) typemap
     def testMin(self):
@@ -379,18 +379,18 @@ if __name__ == "__main__":
 
     # Build the test suite
     suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(    scharTestCase))
-    suite.addTest(unittest.makeSuite(    ucharTestCase))
-    suite.addTest(unittest.makeSuite(    shortTestCase))
-    suite.addTest(unittest.makeSuite(   ushortTestCase))
-    suite.addTest(unittest.makeSuite(      intTestCase))
-    suite.addTest(unittest.makeSuite(     uintTestCase))
-    suite.addTest(unittest.makeSuite(     longTestCase))
-    suite.addTest(unittest.makeSuite(    ulongTestCase))
-    suite.addTest(unittest.makeSuite( longLongTestCase))
-    suite.addTest(unittest.makeSuite(ulongLongTestCase))
-    suite.addTest(unittest.makeSuite(    floatTestCase))
-    suite.addTest(unittest.makeSuite(   doubleTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    scharTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    ucharTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    shortTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(   ushortTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(      intTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(     uintTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(     longTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    ulongTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase( longLongTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ulongLongTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    floatTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(   doubleTestCase))
 
     # Execute the test suite
     print("Testing 3D Functions of Module Tensor")

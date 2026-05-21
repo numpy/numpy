@@ -87,11 +87,11 @@ that's just an arbitrary name we picked here)::
 
   meson install -C build
 
-It will then install to ``build-install/lib/python3.11/site-packages/numpy``,
+It will then install to ``build-install/lib/python3.12/site-packages/numpy``,
 which is not on your Python path, so to add it do (*again, this is for learning
 purposes, using ``PYTHONPATH`` explicitly is typically not the best idea*)::
 
-  export PYTHONPATH=$PWD/build-install/lib/python3.11/site-packages/
+  export PYTHONPATH=$PWD/build-install/lib/python3.12/site-packages/
 
 Now we should be able to import ``numpy`` and run the tests. Remembering that
 we need to move out of the root of the repo to ensure we pick up the package

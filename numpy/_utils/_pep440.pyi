@@ -7,17 +7,15 @@ from typing import (
     Generic,
     Literal as L,
     NamedTuple,
-    TypeVar,
     final,
     type_check_only,
 )
-from typing_extensions import TypeIs
+from typing_extensions import TypeIs, TypeVar
 
 __all__ = ["VERSION_PATTERN", "InvalidVersion", "LegacyVersion", "Version", "parse"]
 
 ###
 
-_CmpKeyT = TypeVar("_CmpKeyT", bound=tuple[object, ...])
 _CmpKeyT_co = TypeVar("_CmpKeyT_co", bound=tuple[object, ...], default=tuple[Any, ...], covariant=True)
 
 ###
@@ -71,7 +69,12 @@ class _BaseVersion(Generic[_CmpKeyT_co]):
     def __le__(self, other: _BaseVersion, /) -> bool: ...
     def __ge__(self, other: _BaseVersion, /) -> bool: ...
     def __gt__(self, other: _BaseVersion, /) -> bool: ...
-    def _compare(self, /, other: _BaseVersion[_CmpKeyT], method: Callable[[_CmpKeyT_co, _CmpKeyT], bool]) -> bool: ...
+    def _compare[CmpKeyT: tuple[object, ...]](
+        self,
+        /,
+        other: _BaseVersion[CmpKeyT],
+        method: Callable[[_CmpKeyT_co, CmpKeyT], bool],
+    ) -> bool: ...
 
 class LegacyVersion(_BaseVersion[tuple[L[-1], tuple[str, ...]]]):
     _version: Final[str]

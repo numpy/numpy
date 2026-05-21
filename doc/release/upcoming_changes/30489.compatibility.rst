@@ -1,0 +1,5 @@
+MSVC support
+------------
+NumPy now requires minimum MSVC 19.35 toolchain version on
+Windows platforms. This corresponds to Visual Studio 2022
+version 17.5 Preview 2 or newer.

@@ -2,8 +2,6 @@ import textwrap
 
 import pytest
 
-from numpy.testing import IS_PYPY
-
 from . import util
 
 
@@ -42,7 +40,6 @@ class TestModuleWithoutPublicEntities(util.F2PyTest):
 class TestModuleDocString(util.F2PyTest):
     sources = [util.getpath("tests", "src", "modules", "module_data_docstring.f90")]
 
-    @pytest.mark.xfail(IS_PYPY, reason="PyPy cannot modify tp_doc after PyType_Ready")
     def test_module_docstring(self):
         assert self.module.mod.__doc__ == textwrap.dedent(
             """\
@@ -61,11 +58,18 @@ class TestModuleAndSubroutine(util.F2PyTest):
     sources = [
         util.getpath("tests", "src", "modules", "gh25337", "data.f90"),
         util.getpath("tests", "src", "modules", "gh25337", "use_data.f90"),
+        util.getpath("tests", "src", "regression", "datonly.f90"),
     ]
 
     def test_gh25337(self):
         self.module.data.set_shift(3)
         assert "data" in dir(self.module)
+
+    def test_allocatable_in_dir(self):
+        # gh-27696: allocatable arrays should appear in dir()
+        names = dir(self.module.datonly)
+        assert "data_array" in names
+        assert "max_value" in names
 
 
 @pytest.mark.slow

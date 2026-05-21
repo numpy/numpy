@@ -106,10 +106,10 @@ class format_parser:
     titles will simply not appear. If `names` is empty, default field names
     will be used.
 
-    >>> np.rec.format_parser(['f8', 'i4', 'a5'], ['col1', 'col2', 'col3'],
+    >>> np.rec.format_parser(['f8', 'i4', 'S5'], ['col1', 'col2', 'col3'],
     ...                      []).dtype
     dtype([('col1', '<f8'), ('col2', '<i4'), ('col3', '<S5')])
-    >>> np.rec.format_parser(['<f8', '<i4', '<a5'], [], []).dtype
+    >>> np.rec.format_parser(['<f8', '<i4', '<S5'], [], []).dtype
     dtype([('f0', '<f8'), ('f1', '<i4'), ('f2', 'S5')])
 
     """
@@ -163,7 +163,7 @@ class format_parser:
         #  "f0, f1, f2,..."
         # if not enough names are specified, they will be assigned as "f[n],
         # f[n+1],..." etc. where n is the number of specified names..."
-        self._names += ['f%d' % i for i in range(len(self._names),
+        self._names += [f'f{i}' for i in range(len(self._names),
                                                  self._nfields)]
         # check for redundant names
         _dup = find_duplicate(self._names)
@@ -263,8 +263,7 @@ class record(nt.void):
         # pretty-print all fields
         names = self.dtype.names
         maxlen = max(len(name) for name in names)
-        fmt = '%% %ds: %%s' % maxlen
-        rows = [fmt % (name, getattr(self, name)) for name in names]
+        rows = [f"{name:>{maxlen}}: {getattr(self, name)}" for name in names]
         return "\n".join(rows)
 
 # The recarray is almost identical to a standard array (which supports
@@ -383,7 +382,7 @@ class recarray(ndarray):
 
     """
 
-    def __new__(subtype, shape, dtype=None, buf=None, offset=0, strides=None,
+    def __new__(cls, shape, dtype=None, buf=None, offset=0, strides=None,
                 formats=None, names=None, titles=None,
                 byteorder=None, aligned=False, order='C'):
 
@@ -395,21 +394,23 @@ class recarray(ndarray):
             ).dtype
 
         if buf is None:
-            self = ndarray.__new__(
-                subtype, shape, (record, descr), order=order
-            )
+            self = ndarray.__new__(cls, shape, (record, descr), order=order)
         else:
             self = ndarray.__new__(
-                subtype, shape, (record, descr), buffer=buf,
+                cls, shape, (record, descr), buffer=buf,
                 offset=offset, strides=strides, order=order
             )
         return self
 
+    _set_dtype = None  # __array_finalize__ can deal with dtype changes
+
     def __array_finalize__(self, obj):
-        if self.dtype.type is not record and self.dtype.names is not None:
+        if (self.dtype.type is not record and
+                issubclass(self.dtype.type, nt.void) and
+                self.dtype.names is not None):
             # if self.dtype is not np.record, invoke __setattr__ which will
             # convert it to a record if it is a void dtype.
-            self.dtype = self.dtype
+            ndarray._set_dtype(self, sb.dtype((record, self.dtype)))
 
     def __getattribute__(self, attr):
         # See if ndarray has this attr, and return it if so. (note that this
@@ -742,7 +743,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
         return _array
     else:
         if shape is not None and retval.shape != shape:
-            retval.shape = shape
+            retval = retval.reshape(shape)
 
     res = retval.view(recarray)
 
@@ -863,7 +864,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     Examples
     --------
     >>> from tempfile import TemporaryFile
-    >>> a = np.empty(10,dtype='f8,i4,a5')
+    >>> a = np.empty(10,dtype='f8,i4,S5')
     >>> a[5] = (0.5,10,'abcde')
     >>>
     >>> fd=TemporaryFile()
@@ -871,7 +872,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     >>> a.tofile(fd)
     >>>
     >>> _ = fd.seek(0)
-    >>> r=np.rec.fromfile(fd, formats='f8,i4,a5', shape=10,
+    >>> r=np.rec.fromfile(fd, formats='f8,i4,S5', shape=10,
     ... byteorder='<')
     >>> print(r[5])
     (0.5, 10, b'abcde')

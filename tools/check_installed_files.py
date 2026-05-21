@@ -46,8 +46,8 @@ def main(install_dir, tests_check):
 
     if tests_check == "--no-tests":
         if len(installed_test_files) > 0:
-            raise Exception("Test files aren't expected to be installed in %s"
-                        ", found %s" % (INSTALLED_DIR, installed_test_files))
+            raise Exception("Test files aren't expected to be installed in "
+                            f"{INSTALLED_DIR}, found {installed_test_files}")
         print("----------- No test files were installed --------------")
     else:
         # Check test files detected in repo are installed
@@ -83,11 +83,6 @@ def get_files(dir_to_check, kind='test'):
     for path in glob.glob(patterns[kind], recursive=True):
         relpath = os.path.relpath(path, dir_to_check)
         files[relpath] = path
-
-    if sys.version_info >= (3, 12):
-        files = {
-            k: v for k, v in files.items() if not k.startswith('distutils')
-        }
 
     # ignore python files in vendored pythoncapi-compat submodule
     files = {

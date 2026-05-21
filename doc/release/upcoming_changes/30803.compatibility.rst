@@ -1,0 +1,8 @@
+``numpy.where`` no longer truncates Python integers
+---------------------------------------------------
+
+Previously, if the ``x`` or ``y`` argument of ``numpy.where`` was a Python integer
+that was out of range of the output type, it would be silently truncated.
+Now, an `OverflowError` will be raised instead.
+
+This change also applies to the underlying C API function ``PyArray_Where``.

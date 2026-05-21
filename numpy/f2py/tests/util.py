@@ -161,7 +161,7 @@ def get_temp_module_name():
     # Assume single-threaded, and the module dir usable only by this thread
     global _module_num
     get_module_dir()
-    name = "_test_ext_module_%d" % _module_num
+    name = f"_test_ext_module_{_module_num}"
     _module_num += 1
     if name in sys.modules:
         # this should not be possible, but check anyway
@@ -358,9 +358,9 @@ def build_meson(source_files, module_name=None, **kwargs):
 class F2PyTest:
     code = None
     sources = None
-    options = []
-    skip = []
-    only = []
+    options = []  # noqa: RUF012
+    skip = []  # noqa: RUF012
+    only = []  # noqa: RUF012
     suffix = ".f"
     module = None
     _has_c_compiler = None

@@ -153,15 +153,34 @@ class SortGenerator:
     # The size of the "partially ordered" sub-arrays
     BUBBLE_SIZE = 100
 
+    small_limits = {
+        'bool': (0, 2),
+        'uint8': (0, 256),
+        'int8': (-128, 128),
+        'int16': (-32768, 32768),
+        'float16': (-1000, 1000),
+    }
+
+    @staticmethod
+    @memoize
+    def ordered_range(size, dtype):
+        """
+        Returns an ordered array of the given size and dtype.
+        """
+        if dtype in SortGenerator.small_limits:
+            arange = np.arange(*SortGenerator.small_limits[dtype], dtype=dtype)
+            return np.repeat(arange, size // arange.size + 1)[:size]
+        else:
+            return np.arange(size, dtype=dtype)
+
     @staticmethod
     @memoize
     def random(size, dtype, rnd):
         """
         Returns a randomly-shuffled array.
         """
-        arr = np.arange(size, dtype=dtype)
+        arr = SortGenerator.ordered_range(size, dtype=dtype)
         rnd = np.random.RandomState(1792364059)
-        np.random.shuffle(arr)
         rnd.shuffle(arr)
         return arr
 
@@ -171,7 +190,7 @@ class SortGenerator:
         """
         Returns an ordered array.
         """
-        return np.arange(size, dtype=dtype)
+        return SortGenerator.ordered_range(size, dtype=dtype)
 
     @staticmethod
     @memoize
@@ -179,14 +198,7 @@ class SortGenerator:
         """
         Returns an array that's in descending order.
         """
-        dtype = np.dtype(dtype)
-        try:
-            with np.errstate(over="raise"):
-                res = dtype.type(size - 1)
-        except (OverflowError, FloatingPointError):
-            raise SkipNotImplemented("Cannot construct arange for this size.")
-
-        return np.arange(size - 1, -1, -1, dtype=dtype)
+        return SortGenerator.ordered_range(size, dtype=dtype)[::-1]
 
     @staticmethod
     @memoize
@@ -202,7 +214,7 @@ class SortGenerator:
         """
         Returns an array with blocks that are all sorted.
         """
-        a = np.arange(size, dtype=dtype)
+        a = SortGenerator.ordered_range(size, dtype=dtype)
         b = []
         if size < block_size:
             return a
@@ -219,10 +231,20 @@ class Sort(Benchmark):
     real-world applications.
     """
     params = [
-        # In NumPy 1.17 and newer, 'merge' can be one of several
-        # stable sorts, it isn't necessarily merge sort.
-        ['quick', 'merge', 'heap'],
-        ['float64', 'int64', 'float32', 'uint32', 'int32', 'int16', 'float16'],
+        [True, False],
+        [True, False],
+        [
+            'float64',
+            'int64',
+            'float32',
+            'uint32',
+            'int32',
+            'int16',
+            'float16',
+            'uint8',
+            'int8',
+            'bool',
+        ],
         [
             ('random',),
             ('ordered',),
@@ -233,25 +255,36 @@ class Sort(Benchmark):
             ('sorted_block', 1000),
         ],
     ]
-    param_names = ['kind', 'dtype', 'array_type']
+    param_names = ['stable', 'descending', 'dtype', 'array_type']
 
     # The size of the benchmarked arrays.
     ARRAY_SIZE = 1000000
 
-    def setup(self, kind, dtype, array_type):
+    def setup(self, stable, descending, dtype, array_type):
         rnd = np.random.RandomState(507582308)
         array_class = array_type[0]
         generate_array_method = getattr(SortGenerator, array_class)
         self.arr = generate_array_method(self.ARRAY_SIZE, dtype, *array_type[1:], rnd)
+        if descending:
+            self.arr = self.arr[::-1]
+        self.arr = self.arr.copy()
 
-    def time_sort(self, kind, dtype, array_type):
+    def time_sort(self, stable, descending, dtype, array_type):
         # Using np.sort(...) instead of arr.sort(...) because it makes a copy.
         # This is important because the data is prepared once per benchmark, but
         # used across multiple runs.
-        np.sort(self.arr, kind=kind)
+        if descending:
+            np.sort(self.arr, stable=stable, descending=True)
+        else:
+            # for backward compatibility to NumPy 2.0
+            np.sort(self.arr, stable=stable)
 
-    def time_argsort(self, kind, dtype, array_type):
-        np.argsort(self.arr, kind=kind)
+    def time_argsort(self, stable, descending, dtype, array_type):
+        if descending:
+            np.argsort(self.arr, stable=stable, descending=True)
+        else:
+            # for backward compatibility to NumPy 2.0
+            np.argsort(self.arr, stable=stable)
 
 
 class Partition(Benchmark):

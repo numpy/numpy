@@ -3,16 +3,7 @@
 Status of ``numpy.distutils`` and migration advice
 ==================================================
 
-`numpy.distutils` has been deprecated in NumPy ``1.23.0``. It will be removed
-for Python 3.12; for Python <= 3.11 it will not be removed until 2 years after
-the Python 3.12 release (Oct 2025).
-
-
-.. warning::
-
-   ``numpy.distutils`` is only tested with ``setuptools < 60.0``, newer
-   versions may break. See :ref:`numpy-setuptools-interaction` for details.
-
+``numpy.distutils`` was removed in NumPy ``2.5.0``. 
 
 Migration advice
 ----------------
@@ -27,7 +18,7 @@ using a well-designed, modern and reliable build system, we recommend:
 
 If you have modest needs (only simple Cython/C extensions; no need for Fortran,
 BLAS/LAPACK, nested ``setup.py`` files, or other features of
-``numpy.distutils``) and have been happy with ``numpy.distutils`` so far, you
+``numpy.distutils``) and have been happy with ``numpy.distutils``,  you
 can also consider switching to ``setuptools``. Note that most functionality of
 ``numpy.distutils`` is unlikely to be ported to ``setuptools``.
 
@@ -47,7 +38,7 @@ migrating. For more details about the SciPy migration, see:
 - `RFC: switch to Meson as a build system <https://github.com/scipy/scipy/issues/13615>`__
 - `Tracking issue for Meson support <https://github.com/rgommers/scipy/issues/22>`__
 
-NumPy will migrate to Meson for the 1.26 release.
+NumPy migrated to Meson for the 1.26 release.
 
 
 Moving to CMake / scikit-build
@@ -73,15 +64,12 @@ present in ``setuptools``:
 - Support for a few other scientific libraries, like FFTW and UMFPACK
 - Better MinGW support
 - Per-compiler build flag customization (e.g. `-O3` and `SSE2` flags are default)
-- a simple user build config system, see `site.cfg.example <https://github.com/numpy/numpy/blob/master/site.cfg.example>`__
+- a simple user build config system, see `site.cfg.example <https://github.com/numpy/numpy/blob/v1.25.2/site.cfg.example>`__
 - SIMD intrinsics support
 - Support for the NumPy-specific ``.src`` templating format for ``.c``/``.h`` files
 
-The most widely used feature is nested ``setup.py`` files. This feature may
-perhaps still be ported to ``setuptools`` in the future (it needs a volunteer
-though, see `gh-18588 <https://github.com/numpy/numpy/issues/18588>`__ for
-status). Projects only using that feature could move to ``setuptools`` after
-that is done. In case a project uses only a couple of ``setup.py`` files, it
+The most widely used feature is nested ``setup.py`` files. In case a project
+uses only a couple of ``setup.py`` files, it
 also could make sense to simply aggregate all the content of those files into a
 single ``setup.py`` file and then move to ``setuptools``. This involves
 dropping all ``Configuration`` instances, and using ``Extension`` instead.
@@ -99,29 +87,6 @@ E.g.,::
 
 For more details, see the
 `setuptools documentation <https://setuptools.pypa.io/en/latest/setuptools.html>`__
-
-
-.. _numpy-setuptools-interaction:
-
-Interaction of ``numpy.distutils`` with ``setuptools``
-------------------------------------------------------
-
-It is recommended to use ``setuptools < 60.0``. Newer versions may work, but
-are not guaranteed to. The reason for this is that ``setuptools`` 60.0 enabled
-a vendored copy of ``distutils``, including backwards incompatible changes that
-affect some functionality in ``numpy.distutils``.
-
-If you are using only simple Cython or C extensions with minimal use of
-``numpy.distutils`` functionality beyond nested ``setup.py`` files (its most
-popular feature, see :class:`Configuration <numpy.distutils.misc_util.Configuration>`),
-then latest ``setuptools`` is likely to continue working. In case of problems,
-you can also try ``SETUPTOOLS_USE_DISTUTILS=stdlib`` to avoid the backwards
-incompatible changes in ``setuptools``.
-
-Whatever you do, it is recommended to put an upper bound on your ``setuptools``
-build requirement in ``pyproject.toml`` to avoid future breakage - see
-:ref:`for-downstream-package-authors`.
-
 
 .. _CMake: https://cmake.org/
 .. _Meson: https://mesonbuild.com/

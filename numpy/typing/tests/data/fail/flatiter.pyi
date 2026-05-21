@@ -1,22 +1,38 @@
-import numpy as np
-import numpy._typing as npt
+from typing import Any
 
-class Index:
+import numpy as np
+import numpy.typing as npt
+
+class _Index:
     def __index__(self) -> int: ...
 
-a: np.flatiter[npt.NDArray[np.float64]]
-supports_array: npt._SupportsArray[np.dtype[np.float64]]
+class _MyArray:
+    def __array__(self) -> np.ndarray[tuple[int], np.dtypes.Float64DType]: ...
 
-a.base = object()  # type: ignore[assignment, misc]
-a.coords = object()  # type: ignore[assignment, misc]
-a.index = object()  # type: ignore[assignment, misc]
-a.copy(order="C")  # type: ignore[call-arg]
+_index: _Index
+_my_array: _MyArray
+_something: Any
+_dtype: np.dtype[np.int8]
+
+_a_nd: np.flatiter[npt.NDArray[np.float64]]
+
+###
+
+_a_nd.base = _something  # type: ignore[misc]
+_a_nd.coords = _something  # type: ignore[misc]
+_a_nd.index = _something  # type: ignore[misc]
+
+_a_nd.copy("C")  # type: ignore[call-arg]
+_a_nd.copy(order="C")  # type: ignore[call-arg]
 
 # NOTE: Contrary to `ndarray.__getitem__` its counterpart in `flatiter`
 # does not accept objects with the `__array__` or `__index__` protocols;
 # boolean indexing is just plain broken (gh-17175)
-a[np.bool()]  # type: ignore[index]
-a[Index()]  # type: ignore[call-overload]
-a[supports_array]  # type: ignore[index]
+_a_nd[np.True_]  # type: ignore[call-overload]
+_a_nd[_index]  # type: ignore[call-overload]
+_a_nd[_my_array]  # type: ignore[call-overload]
 
-a[[0, 1, 2]]
+# `dtype` and `copy` are no-ops in `flatiter.__array__`
+_a_nd.__array__(_dtype)  # type: ignore[arg-type]
+_a_nd.__array__(dtype=_dtype)  # type: ignore[call-arg]
+_a_nd.__array__(copy=True)  # type: ignore[arg-type]

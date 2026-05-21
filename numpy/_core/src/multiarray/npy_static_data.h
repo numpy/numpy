@@ -24,6 +24,7 @@ typedef struct npy_interned_str_struct {
     PyObject *array_wrap;
     PyObject *array_finalize;
     PyObject *array_ufunc;
+    PyObject *numpy_dtype;
     PyObject *implementation;
     PyObject *axis1;
     PyObject *axis2;
@@ -43,9 +44,16 @@ typedef struct npy_interned_str_struct {
     PyObject *pyvals_name;
     PyObject *legacy;
     PyObject *__doc__;
+    PyObject *__signature__;
     PyObject *copy;
     PyObject *dl_device;
     PyObject *max_version;
+    PyObject *array_dealloc;
+    PyObject *real;
+    PyObject *imag;
+    PyObject *sort;
+    PyObject *argsort;
+    PyObject *_set_dtype;
 } npy_interned_str_struct;
 
 /*
@@ -82,6 +90,13 @@ typedef struct npy_static_pydata_struct {
     PyObject *ndarray_array_ufunc;
     PyObject *ndarray_array_finalize;
     PyObject *ndarray_array_function;
+
+    /*
+     * References to ndarray._set_dtype and ndarray.dtype descriptor,
+     * used in PyArray_View to detect subclass overrides.
+     */
+    PyObject *ndarray_set_dtype;
+    PyObject *ndarray_dtype_descr;
 
     /*
      * References to the '1' and '0' PyLong objects
@@ -148,6 +163,9 @@ typedef struct npy_static_pydata_struct {
     PyObject *dl_call_kwnames;
     PyObject *dl_cpu_device_tuple;
     PyObject *dl_max_version;
+    /* dicts for implementing `register_dlpack_dtype` */
+    PyObject *dlpack_dtype_registry;
+    PyObject *dlpack_export_registry;
 } npy_static_pydata_struct;
 
 

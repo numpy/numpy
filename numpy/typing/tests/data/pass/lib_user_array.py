@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
-from numpy.lib.user_array import container
+from numpy.lib.user_array import container  # type: ignore[deprecated]
 
 N = 10_000
 W = H = int(N**0.5)

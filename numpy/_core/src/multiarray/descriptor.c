@@ -15,6 +15,7 @@
 #include "npy_config.h"
 #include "npy_ctypes.h"
 #include "npy_import.h"
+#include "npy_pycompat.h"  // PyObject_GetOptionalAttr
 
 
 #include "_datetime.h"
@@ -84,63 +85,54 @@ _try_convert_from_ctypes_type(PyTypeObject *type)
 }
 
 /*
- * This function creates a dtype object when the object has a "dtype" attribute,
- * and it can be converted to a dtype object.
+ * This function creates a dtype object when the object has a "__numpy_dtype__"
+ * or "dtype" attribute which must be valid NumPy dtype instance.
  *
  * Returns `Py_NotImplemented` if this is not possible.
- * Currently the only failure mode for a NULL return is a RecursionError.
  */
 static PyArray_Descr *
 _try_convert_from_dtype_attr(PyObject *obj)
 {
+    int used_dtype_attr = 0;
     /* For arbitrary objects that have a "dtype" attribute */
-    PyObject *dtypedescr = PyObject_GetAttrString(obj, "dtype");
-    if (dtypedescr == NULL) {
-        /*
-         * This can be reached due to recursion limit being hit while fetching
-         * the attribute (tested for py3.7). This removes the custom message.
-         */
-        goto fail;
-    }
-
-    if (PyArray_DescrCheck(dtypedescr)) {
-        /* The dtype attribute is already a valid descriptor */
-        return (PyArray_Descr *)dtypedescr;
-    }
-
-    if (Py_EnterRecursiveCall(
-            " while trying to convert the given data type from its "
-            "`.dtype` attribute.") != 0) {
-        Py_DECREF(dtypedescr);
+    PyObject *attr;
+    int res = PyObject_GetOptionalAttr(obj, npy_interned_str.numpy_dtype, &attr);
+    if (res < 0) {
         return NULL;
     }
-
-    PyArray_Descr *newdescr = _convert_from_any(dtypedescr, 0);
-    Py_DECREF(dtypedescr);
-    Py_LeaveRecursiveCall();
-    if (newdescr == NULL) {
-        goto fail;
+    else if (res == 0) {
+        /*
+         * When "__numpy_dtype__" does not exist, also check "dtype". This should
+         * be removed in the future.
+         * We do however support a weird `class myclass(np.void): dtype = ...`
+         * syntax.
+         */
+        used_dtype_attr = 1;
+        int res = PyObject_GetOptionalAttr(obj, npy_interned_str.dtype, &attr);
+        if (res < 0) {
+            return NULL;
+        }
+        else if (res == 0) {
+            Py_INCREF(Py_NotImplemented);
+            return (PyArray_Descr *)Py_NotImplemented;
+        }
     }
-
-    Py_DECREF(newdescr);
-    PyErr_SetString(PyExc_ValueError, "dtype attribute is not a valid dtype instance");
-    return NULL;
-
-  fail:
-    /* Ignore all but recursion errors, to give ctypes a full try. */
-    if (!PyErr_ExceptionMatches(PyExc_RecursionError)) {
-        PyErr_Clear();
-        Py_INCREF(Py_NotImplemented);
-        return (PyArray_Descr *)Py_NotImplemented;
+    if (!PyArray_DescrCheck(attr)) {
+        if (PyType_Check(obj) && PyObject_HasAttrString(attr, "__get__")) {
+            /* If the object has a __get__, assume this is a class property. */
+            Py_DECREF(attr);
+            Py_INCREF(Py_NotImplemented);
+            return (PyArray_Descr *)Py_NotImplemented;
+        }
+        PyErr_Format(PyExc_ValueError,
+            "Could not convert %R to a NumPy dtype (via `.%S` value %R).", obj,
+            used_dtype_attr ? npy_interned_str.dtype : npy_interned_str.numpy_dtype,
+            attr);
+        Py_DECREF(attr);
+        return NULL;
     }
-    return NULL;
-}
-
-/* Expose to another file with a prefixed name */
-NPY_NO_EXPORT PyArray_Descr *
-_arraydescr_try_convert_from_dtype_attr(PyObject *obj)
-{
-    return _try_convert_from_dtype_attr(obj);
+    /* The dtype attribute is already a valid descriptor */
+    return (PyArray_Descr *)attr;
 }
 
 /*
@@ -416,11 +408,12 @@ _convert_from_array_descr(PyObject *obj, int align)
     }
 
     /* Types with fields need the Python C API for field access */
-    char dtypeflags = NPY_NEEDS_PYAPI;
+    npy_uint64 dtypeflags = NPY_NEEDS_PYAPI;
     int maxalign = 1;
     int totalsize = 0;
     PyObject *fields = PyDict_New();
     if (!fields) {
+        Py_DECREF(nameslist);
         return NULL;
     }
     for (int i = 0; i < n; i++) {
@@ -638,7 +631,7 @@ _convert_from_list(PyObject *obj, int align)
     }
 
     /* Types with fields need the Python C API for field access */
-    char dtypeflags = NPY_NEEDS_PYAPI;
+    npy_uint64 dtypeflags = NPY_NEEDS_PYAPI;
     int maxalign = 1;
     int totalsize = 0;
     for (int i = 0; i < n; i++) {
@@ -852,7 +845,7 @@ _try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj)
         return (PyArray_Descr *)Py_NotImplemented;
     }
     if (!PyDataType_ISLEGACY(type) || !PyDataType_ISLEGACY(conv)) {
-        /* 
+        /*
          * This specification should probably be never supported, but
          * certainly not for new-style DTypes.
          */
@@ -1107,7 +1100,7 @@ _convert_from_dict(PyObject *obj, int align)
     }
 
     /* Types with fields need the Python C API for field access */
-    char dtypeflags = NPY_NEEDS_PYAPI;
+    npy_uint64 dtypeflags = NPY_NEEDS_PYAPI;
     int totalsize = 0;
     int maxalign = 1;
     int has_out_of_order_fields = 0;
@@ -1326,6 +1319,18 @@ _convert_from_dict(PyObject *obj, int align)
         new->elsize = itemsize;
     }
 
+    /*
+     * Check if anything prevents using memcpy for whole items for this dtype,
+     * i.e., whether there are any holes unrelated to alignment padding
+     * (since those holes might be used to avoid accessing/overwriting stuff).
+     * Such holes can be introduced due to choices of itemsize or offsets.
+     */
+    if (new->elsize != totalsize
+        || (offsets != NULL && !is_dtype_struct_simple_unaligned_layout(
+                (PyArray_Descr *)new))) {
+        new->flags |= NPY_NOT_TRIVIALLY_COPYABLE;
+    }
+
     /* Add the metadata if provided */
     PyObject *metadata = PyMapping_GetItemString(obj, "metadata");
 
@@ -1420,8 +1425,9 @@ descr_is_legacy_parametric_instance(PyArray_Descr *descr,
     }
     /* Flexible descr with generic time unit (which can be adapted) */
     if (PyDataType_ISDATETIME(descr)) {
-        PyArray_DatetimeMetaData *meta;
-        meta = get_datetime_metadata_from_dtype(descr);
+        _PyArray_LegacyDescr *ldescr = (_PyArray_LegacyDescr *)descr;
+        PyArray_DatetimeMetaData *meta =
+                &(((PyArray_DatetimeDTypeMetaData *)ldescr->c_metadata)->meta);
         if (meta->base == NPY_FR_GENERIC) {
             return 1;
         }
@@ -1436,12 +1442,13 @@ descr_is_legacy_parametric_instance(PyArray_Descr *descr,
  * both results can be NULL (if the input is).  But it always sets the DType
  * when a descriptor is set.
  *
+ * This function cannot fail.
+ *
  * @param dtype Input descriptor to be converted
  * @param out_descr Output descriptor
  * @param out_DType DType of the output descriptor
- * @return 0 on success -1 on failure
  */
-NPY_NO_EXPORT int
+NPY_NO_EXPORT void
 PyArray_ExtractDTypeAndDescriptor(PyArray_Descr *dtype,
         PyArray_Descr **out_descr, PyArray_DTypeMeta **out_DType)
 {
@@ -1457,7 +1464,6 @@ PyArray_ExtractDTypeAndDescriptor(PyArray_Descr *dtype,
             Py_INCREF(*out_descr);
         }
     }
-    return 0;
 }
 
 
@@ -1501,12 +1507,8 @@ PyArray_DTypeOrDescrConverterRequired(PyObject *obj, npy_dtype_info *dt_info)
      * be considered an instance with actual 0 length.
      * TODO: It would be nice to fix that eventually.
      */
-    int res = PyArray_ExtractDTypeAndDescriptor(
-                descr, &dt_info->descr, &dt_info->dtype);
+    PyArray_ExtractDTypeAndDescriptor(descr, &dt_info->descr, &dt_info->dtype);
     Py_DECREF(descr);
-    if (res < 0) {
-        return NPY_FAIL;
-    }
     return NPY_SUCCEED;
 }
 
@@ -1837,14 +1839,6 @@ _convert_from_str(PyObject *obj, int align)
                     check_num = NPY_STRING;
                     break;
 
-                case NPY_DEPRECATED_STRINGLTR2:
-                    if (DEPRECATE("Data type alias 'a' was deprecated in NumPy 2.0. "
-                                  "Use the 'S' alias instead.") < 0) {
-                        return NULL;
-                    }
-                    check_num = NPY_STRING;
-                    break;
-
                 /*
                  * When specifying length of UNICODE
                  * the number of characters is given to match
@@ -1915,13 +1909,6 @@ _convert_from_str(PyObject *obj, int align)
             goto fail;
         }
 
-        if (strcmp(type, "a") == 0) {
-            if (DEPRECATE("Data type alias 'a' was deprecated in NumPy 2.0. "
-                          "Use the 'S' alias instead.") < 0) {
-                return NULL;
-            }
-        }
-
         /*
          * Probably only ever dispatches to `_convert_from_type`, but who
          * knows what users are injecting into `np.typeDict`.
@@ -1974,7 +1961,7 @@ NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrNew(PyArray_Descr *base_descr)
 {
     if (!PyDataType_ISLEGACY(base_descr)) {
-        /* 
+        /*
          * The main use of this function is mutating strings, so probably
          * disallowing this is fine in practice.
          */
@@ -2112,7 +2099,7 @@ arraydescr_subdescr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 NPY_NO_EXPORT PyObject *
 arraydescr_protocol_typestr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
-    if (!PyDataType_ISLEGACY(NPY_DTYPE(self))) {
+    if (!PyDataType_ISLEGACY(self)) {
         return (PyObject *) Py_TYPE(self)->tp_str((PyObject *)self);
     }
 
@@ -2552,6 +2539,7 @@ arraydescr_new(PyTypeObject *subtype,
 
     PyObject *odescr;
     PyObject *oalign = NULL;
+    PyObject *ocopy = NULL;
     PyObject *metadata = NULL;
     PyArray_Descr *conv;
     npy_bool align = NPY_FALSE;
@@ -2560,21 +2548,36 @@ arraydescr_new(PyTypeObject *subtype,
 
     static char *kwlist[] = {"dtype", "align", "copy", "metadata", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O!:dtype", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OOO!:dtype", kwlist,
                 &odescr,
                 &oalign,
-                PyArray_BoolConverter, &copy,
+                &ocopy,
                 &PyDict_Type, &metadata)) {
         return NULL;
     }
 
+    if (ocopy != NULL && !PyArray_BoolConverter(ocopy, &copy)) {
+        return NULL;
+    }
     if (oalign != NULL) {
         /*
          * In the future, reject non Python (or NumPy) boolean, including integers to avoid any
          * possibility of thinking that an integer alignment makes sense here.
+         * We omit the case of `oalign == 0` and `ocopy == 1` if there are exact ints.
+         * This can fail, in which case res is -1 and we enter the deprecation path.
          */
-        if (!PyBool_Check(oalign) && !PyArray_IsScalar(oalign, Bool)) {
+        int res = 0;
+        int overflow;
+        if (!PyBool_Check(oalign) && !PyArray_IsScalar(oalign, Bool) && !(
+                // Some old pickles use 0, 1 exactly, assume no user passes it
+                // (It may also be possible to use `copyreg` instead.)
+                PyLong_CheckExact(oalign) && (res = PyLong_IsZero(oalign)) == 1 &&
+                ocopy != NULL && PyLong_CheckExact(ocopy) &&
+                (res = PyLong_AsLongAndOverflow(ocopy, &overflow)) == 1)) {
             /* Deprecated 2025-07-01: NumPy 2.4 */
+            if (res == -1 && PyErr_Occurred()) {
+                return NULL;  // Should actually be impossible (as inputs are `long`)
+            }
             if (PyErr_WarnFormat(npy_static_pydata.VisibleDeprecationWarning, 1,
                         "dtype(): align should be passed as Python or NumPy boolean but got `align=%.100R`. "
                         "Did you mean to pass a tuple to create a subarray type? (Deprecated NumPy 2.4)",
@@ -2826,7 +2829,8 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     }
     PyTuple_SET_ITEM(state, 5, PyLong_FromLong(elsize));
     PyTuple_SET_ITEM(state, 6, PyLong_FromLong(alignment));
-    PyTuple_SET_ITEM(state, 7, PyLong_FromUnsignedLongLong(self->flags));
+    PyTuple_SET_ITEM(state, 7, PyLong_FromUnsignedLongLong(
+            self->flags & ~NPY_NOT_TRIVIALLY_COPYABLE));
 
     PyTuple_SET_ITEM(ret, 2, state);
     return ret;
@@ -2874,13 +2878,13 @@ _descr_find_object(PyArray_Descr *self)
 static PyObject *
 arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
 {
-    int elsize = -1, alignment = -1;
+    Py_ssize_t elsize = -1, alignment = -1;
     int version = 4;
     char endian;
     PyObject *endian_obj;
     PyObject *subarray, *fields, *names = NULL, *metadata=NULL;
     int incref_names = 1;
-    int int_dtypeflags = 0;
+    npy_int64 signed_dtypeflags = 0;
     npy_uint64 dtypeflags;
 
     if (!PyDataType_ISLEGACY(self)) {
@@ -2899,24 +2903,24 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
     }
     switch (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0))) {
     case 9:
-        if (!PyArg_ParseTuple(args, "(iOOOOiiiO):__setstate__",
+        if (!PyArg_ParseTuple(args, "(iOOOOnnkO):__setstate__",
                     &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
-                    &alignment, &int_dtypeflags, &metadata)) {
+                    &alignment, &signed_dtypeflags, &metadata)) {
             PyErr_Clear();
             return NULL;
         }
         break;
     case 8:
-        if (!PyArg_ParseTuple(args, "(iOOOOiii):__setstate__",
+        if (!PyArg_ParseTuple(args, "(iOOOOnnk):__setstate__",
                     &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
-                    &alignment, &int_dtypeflags)) {
+                    &alignment, &signed_dtypeflags)) {
             return NULL;
         }
         break;
     case 7:
-        if (!PyArg_ParseTuple(args, "(iOOOOii):__setstate__",
+        if (!PyArg_ParseTuple(args, "(iOOOOnn):__setstate__",
                     &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
                     &alignment)) {
@@ -2924,7 +2928,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         }
         break;
     case 6:
-        if (!PyArg_ParseTuple(args, "(iOOOii):__setstate__",
+        if (!PyArg_ParseTuple(args, "(iOOOnn):__setstate__",
                     &version,
                     &endian_obj, &subarray, &fields,
                     &elsize, &alignment)) {
@@ -2933,20 +2937,17 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         break;
     case 5:
         version = 0;
-        if (!PyArg_ParseTuple(args, "(OOOii):__setstate__",
+        if (!PyArg_ParseTuple(args, "(OOOnn):__setstate__",
                     &endian_obj, &subarray, &fields, &elsize,
                     &alignment)) {
             return NULL;
         }
         break;
     default:
-        /* raise an error */
-        if (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0)) > 5) {
-            version = PyLong_AsLong(PyTuple_GET_ITEM(args, 0));
-        }
-        else {
-            version = -1;
-        }
+        PyErr_SetString(PyExc_ValueError,
+                        "Invalid state while unpickling. Is the pickle corrupted "
+                        "or created with a newer NumPy version?");
+        return NULL;
     }
 
     /*
@@ -3181,12 +3182,12 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
      * flags as an int even though it actually was a char in the PyArray_Descr
      * structure
      */
-    if (int_dtypeflags < 0 && int_dtypeflags >= -128) {
+    if (signed_dtypeflags < 0 && signed_dtypeflags >= -128) {
         /* NumPy used to use a char. So normalize if signed. */
-        int_dtypeflags += 128;
+        signed_dtypeflags += 128;
     }
-    dtypeflags = int_dtypeflags;
-    if (dtypeflags != int_dtypeflags) {
+    dtypeflags = (npy_uint64)signed_dtypeflags;
+    if (dtypeflags != signed_dtypeflags) {
         PyErr_Format(PyExc_ValueError,
                      "incorrect value for flags variable (overflow)");
         return NULL;
@@ -3197,6 +3198,15 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
 
     if (version < 3) {
         self->flags = _descr_find_object((PyArray_Descr *)self);
+    }
+
+    /*
+     * Mark as not trivially copyable if layout is not simple (has padding).
+     * This flag is always recomputed on unpickle (not stored in pickle).
+     */
+    if (PyDataType_HASFIELDS((PyArray_Descr *)self) &&
+            !is_dtype_struct_simple_unaligned_layout((PyArray_Descr *)self)) {
+        self->flags |= NPY_NOT_TRIVIALLY_COPYABLE;
     }
 
     PyObject *old_metadata, *new_metadata;
@@ -3767,6 +3777,10 @@ arraydescr_field_subset_view(_PyArray_LegacyDescr *self, PyObject *ind)
     view_dtype->names = names;
     view_dtype->fields = fields;
     view_dtype->flags = self->flags;
+    /* Mark as not trivially copyable if layout is not simple (has padding) */
+    if (!is_dtype_struct_simple_unaligned_layout((PyArray_Descr *)view_dtype)) {
+        view_dtype->flags |= NPY_NOT_TRIVIALLY_COPYABLE;
+    }
     return (PyArray_Descr *)view_dtype;
 
 fail:
@@ -3804,6 +3818,42 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
         return _subscript_by_index(lself, i);
     }
 }
+
+static PyObject *
+array_typestr_get(PyArray_Descr *self)
+{
+    return arraydescr_protocol_typestr_get(self, NULL);
+}
+
+
+NPY_NO_EXPORT PyObject *
+array_protocol_descr_get(PyArray_Descr *self)
+{
+    PyObject *res;
+    PyObject *dobj;
+
+    res = arraydescr_protocol_descr_get(self, NULL);
+    if (res) {
+        return res;
+    }
+    PyErr_Clear();
+
+    /* get default */
+    dobj = PyTuple_New(2);
+    if (dobj == NULL) {
+        return NULL;
+    }
+    PyTuple_SET_ITEM(dobj, 0, PyUnicode_FromString(""));
+    PyTuple_SET_ITEM(dobj, 1, array_typestr_get(self));
+    res = PyList_New(1);
+    if (res == NULL) {
+        Py_DECREF(dobj);
+        return NULL;
+    }
+    PyList_SET_ITEM(res, 0, dobj);
+    return res;
+}
+
 
 static PySequenceMethods descr_as_sequence = {
     (lenfunc) descr_length,                  /* sq_length */

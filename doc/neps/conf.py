@@ -39,10 +39,10 @@ extensions = [
 templates_path = ['../source/_templates/']
 
 # The suffix(es) of source filenames.
-# You can specify multiple suffix as a list of string:
+# You can specify multiple suffix as a dict mapping suffixes to parsers:
 #
-# source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+# source_suffix = {'.rst': 'restructuredtext', '.md': 'markdown'}
+source_suffix = {'.rst': 'restructuredtext'}
 
 # The master toctree document.
 master_doc = 'content'

@@ -327,8 +327,6 @@ elements the data type consists of.)
 
 .. warning::
 
-   See :ref:`Note on string types<string-dtype-note>`.
-
    Numeric Compatibility: If you used old typecode characters in your
    Numeric code (which was never recommended), you will need to change
    some of them to the new characters. In particular, the needed

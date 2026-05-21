@@ -25,14 +25,16 @@
     #ifndef vec_neg
         #define vec_neg(a) (-(a))
     #endif
-    #ifndef vec_and
-        #define vec_and(a, b) ((a) & (b)) // Vector AND
-    #endif
-    #ifndef vec_or
-        #define vec_or(a, b) ((a) | (b)) // Vector OR
-    #endif
-    #ifndef vec_xor
-        #define vec_xor(a, b) ((a) ^ (b)) // Vector XOR
+    #if !(defined(__clang__) && __VEC__ >= 10305)
+        #ifndef vec_and
+            #define vec_and(a, b) ((a) & (b)) // Vector AND
+        #endif
+        #ifndef vec_or
+            #define vec_or(a, b) ((a) | (b)) // Vector OR
+        #endif
+        #ifndef vec_xor
+            #define vec_xor(a, b) ((a) ^ (b)) // Vector XOR
+        #endif
     #endif
     #ifndef vec_sl
         #define vec_sl(a, b) ((a) << (b)) // Vector Shift Left

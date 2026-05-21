@@ -24,8 +24,10 @@ from numpy._core import (
     uint32,
     uint64,
 )
+from numpy._utils import set_module
 
 
+@set_module('numpy')
 class __array_namespace_info__:
     """
     Get the array API inspection namespace for NumPy.
@@ -57,8 +59,6 @@ class __array_namespace_info__:
      'indexing': numpy.int64}
 
     """
-
-    __module__ = 'numpy'
 
     def capabilities(self):
         """
@@ -322,7 +322,7 @@ class __array_namespace_info__:
         """
         The devices supported by NumPy.
 
-        For NumPy, this always returns ``['cpu']``.
+        For NumPy, this always returns ``('cpu',)``.
 
         Returns
         -------
@@ -340,7 +340,7 @@ class __array_namespace_info__:
         --------
         >>> info = np.__array_namespace_info__()
         >>> info.devices()
-        ['cpu']
+        ('cpu',)
 
         """
-        return ["cpu"]
+        return ("cpu",)

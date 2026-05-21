@@ -26,7 +26,7 @@ NumPy is the fundamental package for scientific computing with Python.
 - **Source code:** https://github.com/numpy/numpy
 - **Contributing:** https://numpy.org/devdocs/dev/index.html
 - **Bug reports:** https://github.com/numpy/numpy/issues
-- **Report a security vulnerability:** https://tidelift.com/docs/security
+- **Report a security vulnerability:** https://github.com/numpy/numpy/security/policy (via Tidelift)
 
 It provides:
 

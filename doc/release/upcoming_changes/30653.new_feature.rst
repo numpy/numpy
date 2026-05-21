@@ -1,0 +1,6 @@
+``numpy.ndarray`` now supports structural pattern matching
+----------------------------------------------------------
+`numpy.ndarray` and its subclasses now have the ``Py_TPFLAGS_SEQUENCE`` flag
+set, enabling structural pattern matching (PEP 634) with ``match``/``case``
+statements. This also enables Cython to optimize integer indexing operations.
+See :ref:`arrays.ndarray.pattern-matching` for details.

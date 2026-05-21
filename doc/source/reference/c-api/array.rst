@@ -784,7 +784,7 @@ cannot not be accessed directly.
     Allows setting of the itemsize, this is *only* relevant for string/bytes
     datatypes as it is the current pattern to define one with a new size.
 
-.. c:function:: npy_intp PyDataType_ALIGNENT(PyArray_Descr *descr)
+.. c:function:: npy_intp PyDataType_ALIGNMENT(PyArray_Descr *descr)
 
     The alignment of the datatype.
 
@@ -841,6 +841,35 @@ cannot not be accessed directly.
             The shape (always C-style contiguous) of the sub-array as a Python
             tuple.
 
+.. c:function:: char PyDataType_TYPE(PyArray_Descr *descr)
+
+    .. versionadded:: 2.5
+
+    Data type character code. See `numpy.dtype.char`. Only set for built-in and
+    legacy user DTypes. Null character (``b'\x00'``) otherwise.
+
+.. c:function:: char PyDataType_KIND(PyArray_Descr *descr)
+
+    .. versionadded:: 2.5
+
+    Data type kind character code. See `numpy.dtype.kind`. Only set for built-in
+    and legacy user DTypes.  Null character (``b'\x00``) otherwise.
+
+.. c:function:: char PyDataType_BYTEORDER(PyArray_Descr *descr)
+
+    .. versionadded:: 2.5
+
+    Data type bytorder character code. One of ``'='`` (native), ``'<'``
+    (little-endian), ``'>'`` (big-endian), or ``'|'`` (not applicable). See
+    `numpy.dtype.byteorder`.
+
+.. c:function:: PyTypeObject *PyDataType_TYPEOBJ(PyArray_Descr *descr)
+
+    .. versionadded:: 2.5
+
+    The type object for the scalar type. See the ``typeobj`` member of the
+    ``PyArray_Descr`` struct. See :c:data:`PyArray_Descr` for a full description
+    of the ``PyArray_Descr`` struct layout.
 
 Data-type checking
 ~~~~~~~~~~~~~~~~~~
@@ -1214,6 +1243,19 @@ User-defined data types
         The struct is not a valid Python object, so do not use ``Py_DECREF``
         on it.
 
+        **Transitioning to the new DType API**
+
+        Users currently using the old DType API may not be able to easily
+        transition due to NumPy issues that would cause regressions.
+        While new DTypes may reasonably limit themselves to newer NumPy
+        versions, existing DTypes cannot do so.
+
+        You can transition to the new DType API by using the
+        :c:macro:`NPY_DT_legacy_descriptor_proto` slot when registering.
+        This slot is available when compiling with NumPy 2.5 and provides
+        support for NumPy 2.0 and higher (it can also be vendored to compile
+        on older versions of NumPy).
+
     Register a data-type as a new user-defined data type for
     arrays. The type must have most of its entries filled in. This is
     not always checked and errors can produce segfaults. In
@@ -1248,6 +1290,11 @@ User-defined data types
     *totype*. Any old casting function is over-written. A ``0`` is
     returned on success or a ``-1`` on failure.
 
+    .. note::
+        This function will eventually be deprecated. Please migrate to the new
+        DType API for casts.  See :c:macro:`NPY_DT_legacy_descriptor_proto`
+        for details.
+
     .. c:type:: PyArray_VectorUnaryFunc
 
         The function pointer type for low-level casting functions.
@@ -1260,6 +1307,12 @@ User-defined data types
     *scalar* = :c:data:`NPY_NOSCALAR` to register that an array of data-type
     *descr* can be cast safely to a data-type whose type_number is
     *totype*. The return value is 0 on success or -1 on failure.
+
+    .. note::
+        This function will eventually be deprecated. Please migrate to the new
+        DType API for casts.  See :c:macro:`NPY_DT_legacy_descriptor_proto`
+        for details.  The new DType API provides more flexibility and speed
+        even for dtypes compatible with the legacy API.
 
 
 Special functions for NPY_OBJECT
@@ -1786,9 +1839,9 @@ the functions that must be implemented for each slot.
    - ``0.0`` is the default for ``sum([])``.  But ``-0.0`` is the correct
      identity otherwise as it preserves the sign for ``sum([-0.0])``.
    - We use no identity for object, but return the default of ``0`` and
-     ``1`` for the empty ``sum([], dtype=object)`` and
-     ``prod([], dtype=object)``.
-     This allows ``np.sum(np.array(["a", "b"], dtype=object))`` to work.
+     ``1`` for the empty ``sum([], dtype=np.object_)`` and
+     ``prod([], dtype=np.object_)``.
+     This allows ``np.sum(np.array(["a", "b"], dtype=np.object_))`` to work.
    - ``-inf`` or ``INT_MIN`` for ``max`` is an identity, but at least
      ``INT_MIN`` not a good *default* when there are no items.
 
@@ -1899,6 +1952,9 @@ with the rest of the ArrayMethod API.
             entry points, ``(module ':')? (object '.')* name``, with ``numpy``
             the default module. Examples: ``sin``, ``strings.str_len``,
             ``numpy.strings:str_len``.
+            Note that some names are supported but do not directly correspond
+            to ufuncs: ``"sort"``, ``"argsort"``, ``"real"``, ``"imag"``.
+            (These do use ufunc-likes or even ufuncs internally.)
 
         .. c:member:: PyArrayMethod_Spec *spec
 
@@ -1911,7 +1967,9 @@ with the rest of the ArrayMethod API.
 
     Add multiple loops to ufuncs from ArrayMethod specs. This also
     handles the registration of methods for the ufunc-like functions
-    ``sort`` and ``argsort``. See :ref:`array-methods-sorting` for details.
+    ``sort`` and ``argsort`` (see :ref:`array-methods-sorting` for details),
+    as well as for the array attributes ``.real`` and ``.imag`` needed
+    for user defined complex DTypes (with ``"real"`` and ``"imag"`` as names).
 
     The ``slots`` argument must be a  NULL-terminated array of
     `PyUFunc_LoopSlot` (see above), which give the name of the
@@ -1941,6 +1999,22 @@ with the rest of the ArrayMethod API.
    operation and requested DType signatures and can mutate the signatures to
    attempt a search for a new loop or promoter that can accomplish the operation
    by casting the inputs to the "promoted" DTypes.
+
+    A promoter should honor ``signature[]`` (if set). A promoter must return ``-1``
+    on failure. A Python error may be set but is not required (a general error is
+    set in either paths, although the original error is chained).
+    A promoter must return ``0`` or ``1`` on success.  NumPy normally checks that
+    ``new_op_dtypes`` are different from ``op_dtypes`` to prevent recursion.
+    This check is skipped if the promoter returns ``1``, which allows the promoter
+    to add a new loop (when adding a new loop, ``new_op_dtypes`` should be identical
+    to ``op_dtypes``).
+
+    .. versionchanged:: 2.5
+        After 2.5 a return of ``1`` indicates that the promoter was successful
+        skipping a recursion protection step.
+        This mainly allows the promoter to add new loop to the ufunc that must
+        now match instead of the promoter itself.
+        (Normally, a promoter must modify the DTypes help find the right loop.)
 
 .. c:function:: int PyUFunc_GiveFloatingpointErrors( \
                         const char *name, int fpe_errors)
@@ -2248,18 +2322,29 @@ Shape Manipulation
         PyArrayObject* self, PyArray_Dims* newshape, int refcheck, \
         NPY_ORDER fortran)
 
-    Equivalent to :meth:`ndarray.resize<numpy.ndarray.resize>` (*self*, *newshape*, refcheck
-    ``=`` *refcheck*, order= fortran ). This function only works on
-    single-segment arrays. It changes the shape of *self* inplace and
-    will reallocate the memory for *self* if *newshape* has a
-    different total number of elements then the old shape. If
-    reallocation is necessary, then *self* must own its data, have
-    *self* - ``>base==NULL``, have *self* - ``>weakrefs==NULL``, and
-    (unless refcheck is 0) not be referenced by any other array.
-    The fortran argument can be :c:data:`NPY_ANYORDER`, :c:data:`NPY_CORDER`,
-    or :c:data:`NPY_FORTRANORDER`. It currently has no effect. Eventually
-    it could be used to determine how the resize operation should view
-    the data when constructing a differently-dimensioned array.
+    Equivalent to :meth:`ndarray.resize<numpy.ndarray.resize>` (*self*, *newshape*, *refcheck*).
+    This function only works on single-segment arrays. It changes the shape of
+    *self* inplace and will reallocate the memory for *self* if *newshape* has
+    a different total number of elements then the old shape. If reallocation is
+    necessary, then *self* must own its data, have *self* - ``>base==NULL``,
+    have *self* - ``>weakrefs==NULL``, and (unless refcheck is 0) not be
+    referenced by any other array. The *fortran* argument has no effect.
+
+    On Python 3.13 and older, the check allows uniquely referenced objects and
+    objects with exactly one reference to be reallocated in-place. On Python
+    3.14 and newer, the array must be uniquely referenced. See the Python 3.14
+    `What's New entry
+    <https://docs.python.org/3/whatsnew/3.14.html#whatsnew314-refcount>`_ on
+    this topic for more information on why there is a behavior difference.
+
+    Reallocating arrays in-place can often lead to memory fragmentation and
+    should be avoided. If the goal is to reclaim over-allocated memory,
+    alternatives are to create a view or a copy of just the desired data, or
+    using two passes to build the array: one to cheaply determine the shape and
+    another to allocate and fill. Benchmark your use case to determine what is
+    optimum. You may be surprised to find ``resize`` actually slows down or
+    bloats your application.
+
     Returns None on success and NULL on error.
 
 .. c:function:: PyObject* PyArray_Transpose( \
@@ -2366,7 +2451,7 @@ Item selection and manipulation
 
     Return an array with the items of ``self`` sorted along ``axis``. The array
     is sorted using an algorithm whose properties are specified by the value of
-    ``kind``, an integer/enum specifying the reguirements of the sorting
+    ``kind``, an integer/enum specifying the requirements of the sorting
     algorithm used. If ``self* ->descr`` is a data-type with fields defined,
     then ``self->descr->names`` is used to determine the sort order. A comparison
     where the first field is equal will use the second field and so on. To
@@ -2383,7 +2468,7 @@ Item selection and manipulation
     Return an array of indices such that selection of these indices along the
     given ``axis`` would return a sorted version of ``self``.  The array is
     sorted using an algorithm whose properties are specified by ``kind``, an
-    integer/enum specifying the reguirements of the sorting algorithm used. If
+    integer/enum specifying the requirements of the sorting algorithm used. If
     ``self->descr`` is a data-type with fields defined, then
     ``self->descr->names`` is used to determine the sort order. A comparison
     where the first field is equal will use the second field and so on. To
@@ -3480,6 +3565,11 @@ Also see :ref:`dtypemeta` for documentation on ``PyArray_DTypeMeta`` and
  the examples in the ``numpy-user-dtypes`` repository for usage with both
  parametric and non-parametric data types.
 
+ .. note::
+
+    Custom DType registration is expected to happen during module import.
+    The registration API mutates global state and is not thread-safe.
+
 .. _dtype-flags:
 
 Flags
@@ -3510,6 +3600,37 @@ Slot IDs and API Function Typedefs
 These IDs correspond to slots in the DType API and are used to identify
 implementations of each slot from the items of the ``slots`` array
 member of ``PyArrayDTypeMeta_Spec`` struct.
+
+.. c:macro:: NPY_DT_legacy_descriptor_proto
+
+   Compatibility slot to transition legacy dtypes to the new DType API.
+   Existing legacy dtypes that currently use ``PyArray_RegisterDataType``
+   should use this to transition to the new DType API.
+   The value of this slot is the ``PyArray_DescrProto`` struct.
+
+   This slot allows an *existing* legacy DType to use the new DType API
+   without breaking backwards compatibility (or with very minor changes).
+   I.e. NumPy will still consider this a "legacy" DType and use old code paths
+   where applicable, but use new features as they become available.
+
+   If used, this slot is required to be the first slot.  The ``ArrFuncs``
+   fields are copied, but you may also set them via the slots below.
+   (This allows backporting e.g. sorts, although NumPy 2.4+ does support
+   a new way to implement sorts.)
+
+   .. versionadded:: 2.5
+
+      This feature is added in NumPy 2.5, but is backported to be compatible
+      with NumPy 2.0+.  You can vendor this backport from ``npy_2_compat.h``
+      if you wish to compile with older NumPy versions.
+
+   .. note::
+      This slot exists for DTypes that currently use
+      ``PyArray_RegisterDataType`` allowing them to transition when otherwise
+      regressions would block them from doing so.
+      It is a path for deprecating ``PyArray_RegisterDataType``,
+      ``PyArray_RegisterCastFunc``, ``PyArray_RegisterCanCast`` and further
+      slots in the future.
 
 .. c:macro:: NPY_DT_discover_descr_from_pyobject
 
@@ -4262,9 +4383,9 @@ Memory management
 .. c:function:: int PyArray_ResolveWritebackIfCopy(PyArrayObject* obj)
 
     If ``obj->flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, this function
-    clears the flags, `DECREF` s
-    `obj->base` and makes it writeable, and sets ``obj->base`` to NULL. It then
-    copies ``obj->data`` to `obj->base->data`, and returns the error state of
+    clears the flags, ``DECREF`` s
+    ``obj->base`` and makes it writeable, and sets ``obj->base`` to NULL. It then
+    copies ``obj->data`` to ``obj->base->data``, and returns the error state of
     the copy operation. This is the opposite of
     :c:func:`PyArray_SetWritebackIfCopyBase`. Usually this is called once
     you are finished with ``obj``, just before ``Py_DECREF(obj)``. It may be called
@@ -4272,6 +4393,8 @@ Memory management
     :c:func:`PyArray_DiscardWritebackIfCopy`.
 
     Returns 0 if nothing was done, -1 on error, and 1 if action was taken.
+
+.. _array.ndarray.capi.threading:
 
 Threading support
 ~~~~~~~~~~~~~~~~~
@@ -4498,9 +4621,9 @@ Miscellaneous Macros
 
     If ``obj->flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, this function
     clears the flags, `DECREF` s
-    `obj->base` and makes it writeable, and sets ``obj->base`` to NULL. In
+    ``obj->base`` and makes it writeable, and sets ``obj->base`` to NULL. In
     contrast to :c:func:`PyArray_ResolveWritebackIfCopy` it makes no attempt
-    to copy the data from `obj->base`. This undoes
+    to copy the data from ``obj->base``. This undoes
     :c:func:`PyArray_SetWritebackIfCopyBase`. Usually this is called after an
     error when you are finished with ``obj``, just before ``Py_DECREF(obj)``.
     It may be called multiple times, or with ``NULL`` input.

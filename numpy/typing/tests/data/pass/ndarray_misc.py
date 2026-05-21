@@ -9,14 +9,15 @@ function-based counterpart in `../from_numeric.py`.
 from __future__ import annotations
 
 import operator
+from collections.abc import Hashable
 from typing import Any, cast
 
 import numpy as np
 import numpy.typing as npt
 
 
-class SubClass(npt.NDArray[np.float64]): ...
-class IntSubClass(npt.NDArray[np.intp]): ...
+class SubClass(np.ndarray[tuple[Any, ...], np.dtype[np.float64]]): ...
+class IntSubClass(np.ndarray[tuple[Any, ...], np.dtype[np.intp]]): ...
 
 
 i4 = np.int32(1)
@@ -192,3 +193,7 @@ A_float = np.array([[1, 5], [2, 4], [np.nan, np.nan]])
 A_void: npt.NDArray[np.void] = np.empty(3, [("yop", float), ("yap", float)])
 A_void["yop"] = A_float[:, 0]
 A_void["yap"] = A_float[:, 1]
+
+# regression test for https://github.com/numpy/numpy/issues/30445
+def f(x: np.generic) -> Hashable:
+    return x

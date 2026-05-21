@@ -14,7 +14,7 @@ Prerequisites
 
 Building NumPy requires the following installed software:
 
-1) Python__ 3.11.x or newer.
+1) Python__ 3.12.x or newer.
 
    Please note that the Python development headers also need to be installed,
    e.g., on Debian/Ubuntu one needs to install both `python3` and
@@ -82,7 +82,7 @@ Choosing compilers
 NumPy needs C and C++ compilers, and for development versions also needs
 Cython.  A Fortran compiler isn't needed to build NumPy itself; the
 ``numpy.f2py`` tests will be skipped when running the test suite if no Fortran
-compiler is available. 
+compiler is available.
 
 For more options including selecting compilers, setting custom compiler flags
 and controlling parallelism, see

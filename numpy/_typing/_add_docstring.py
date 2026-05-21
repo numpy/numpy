@@ -137,10 +137,10 @@ add_newdoc('NDArray', repr(NDArray),
         >>> import numpy.typing as npt
 
         >>> print(npt.NDArray)
-        numpy.ndarray[tuple[typing.Any, ...], numpy.dtype[~_ScalarT]]
+        NDArray
 
         >>> print(npt.NDArray[np.float64])
-        numpy.ndarray[tuple[typing.Any, ...], numpy.dtype[numpy.float64]]
+        NDArray[numpy.float64]
 
         >>> NDArrayInt = npt.NDArray[np.int_]
         >>> a: NDArrayInt = np.arange(10)

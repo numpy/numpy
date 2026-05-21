@@ -1,0 +1,5 @@
+Added N-D evaluation functions to the polynomial package
+--------------------------------------------------------
+New functions ``polyvalnd``, ``chebvalnd``, ``legvalnd``, ``hermvalnd``,
+``hermevalnd``, and ``lagvalnd`` have been added to evaluate polynomials
+in arbitrary dimensions, analogous to the existing 2D and 3D evaluators.

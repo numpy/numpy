@@ -342,7 +342,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         }
         /*
          * Set override arguments for each call since the tuple must
-         * not be mutated after use in PyPy
+         * not be mutated after use
          * We increase all references since SET_ITEM steals
          * them and they will be DECREF'd when the tuple is deleted.
          */

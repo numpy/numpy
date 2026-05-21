@@ -958,7 +958,9 @@ npy_uint64 _npy_halfbits_to_doublebits(npy_uint16 h){
  * Check various modes of failure to accurately cast src_value to dst
  */
 static GCC_CAST_OPT_LEVEL int
-@prefix@_check_same_value_@name1@_to_@name2@(@rtype1@ src_value) {
+@prefix@_check_same_value_@name1@_to_@name2@(@rtype1@ *src_valueP) {
+
+    @rtype1@ src_value = *src_valueP;
 
     /* 1. NaN/Infs always work for float to float and otherwise never */
 #if (@is_float1@ || @is_emu_half1@ || @is_double1@ || @is_native_half1@)
@@ -1097,10 +1099,10 @@ static GCC_CAST_OPT_LEVEL int
     dst_value[0] = _CONVERT_FN(src_value[0]);
     dst_value[1] = _CONVERT_FN(src_value[1]);
 #   if @same_value@
-        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[0]) < 0) {
+        if (@prefix@_check_same_value_@name1@_to_@name2@((@rtype1@ *)&src_value[0]) < 0) {
             return -1;
         }
-        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[1]) < 0) {
+        if (@prefix@_check_same_value_@name1@_to_@name2@((@rtype1@ *)&src_value[1]) < 0) {
             return -1;
         }
 #   endif //same_value
@@ -1110,7 +1112,7 @@ static GCC_CAST_OPT_LEVEL int
 #    else
        dst_value = _CONVERT_FN(src_value[0]);
 #      if @same_value@
-            if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[0]) < 0) {
+            if (@prefix@_check_same_value_@name1@_to_@name2@((@rtype1@ *)&src_value[0]) < 0) {
                 return -1;
             }
             if (src_value[1] != 0) {
@@ -1125,7 +1127,7 @@ static GCC_CAST_OPT_LEVEL int
 #    else
        *(_TYPE2 *)dst = _CONVERT_FN(src_value[0]);
 #      if @same_value@
-            if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[0]) < 0) {
+            if (@prefix@_check_same_value_@name1@_to_@name2@((@rtype1@ *)&src_value[0]) < 0) {
                 return -1;
             }
             if (src_value[1] != 0) {
@@ -1140,14 +1142,14 @@ static GCC_CAST_OPT_LEVEL int
 #    if !@aligned@
     dst_value[0] = _CONVERT_FN(src_value);
 #   if @same_value@
-        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value) < 0) {
+        if (@prefix@_check_same_value_@name1@_to_@name2@((@rtype1@ *)&src_value) < 0) {
             return -1;
         }
 #   endif //same_value
 #    else //!aligned
     dst_value[0] = _CONVERT_FN(*(_TYPE1 *)src);
 #     if @same_value@
-        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)src) < 0) {
+        if (@prefix@_check_same_value_@name1@_to_@name2@((@rtype1@ *)src) < 0) {
             return -1;
         }
 #     endif //same_value
@@ -1157,7 +1159,7 @@ static GCC_CAST_OPT_LEVEL int
     dst_value = _CONVERT_FN(src_value);
 #   if !@is_bool2@
 #     if @same_value@
-        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value) < 0) {
+        if (@prefix@_check_same_value_@name1@_to_@name2@((@rtype1@ *)&src_value) < 0) {
             return -1;
         }
 #     endif //same_value
@@ -1166,7 +1168,7 @@ static GCC_CAST_OPT_LEVEL int
     *(_TYPE2 *)dst = _CONVERT_FN(*(_TYPE1 *)src);
 #   if !@is_bool2@
 #     if @same_value@
-        if (@prefix@_check_same_value_@name1@_to_@name2@(*((@rtype1@ *)src)) < 0) {
+        if (@prefix@_check_same_value_@name1@_to_@name2@(((@rtype1@ *)src)) < 0) {
             return -1;
         }
 #     endif //same_value

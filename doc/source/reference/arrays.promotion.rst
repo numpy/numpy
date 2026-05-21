@@ -79,10 +79,10 @@ their precision when determining the result dtype. This is often convenient.
 For instance, when working with arrays of a low precision dtype, it is usually
 desirable for simple operations with Python scalars to preserve the dtype.
 
-  >>> arr_float32 = np.array([1, 2.5, 2.1], dtype="float32")
+  >>> arr_float32 = np.array([1, 2.5, 2.1], dtype=np.float32)
   >>> arr_float32 + 10.0  # undesirable to promote to float64
   array([11. , 12.5, 12.1], dtype=float32)
-  >>> arr_int16 = np.array([3, 5, 7], dtype="int16")
+  >>> arr_int16 = np.array([3, 5, 7], dtype=np.int16)
   >>> arr_int16 + 10  # undesirable to promote to int64
   array([13, 15, 17], dtype=int16)
 
@@ -130,7 +130,7 @@ overflows:
   ... RuntimeWarning: overflow encountered in scalar add
 
 Note that NumPy warns when overflows occur for scalars, but not for arrays;
-e.g., ``np.array(100, dtype="uint8") + 100`` will *not* warn.
+e.g., ``np.array(100, dtype=np.uint8) + 100`` will *not* warn.
 
 Numerical promotion
 -------------------

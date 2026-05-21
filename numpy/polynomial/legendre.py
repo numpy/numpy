@@ -42,6 +42,7 @@ Arithmetic
    legval
    legval2d
    legval3d
+   legvalnd
    leggrid2d
    leggrid3d
 
@@ -80,8 +81,6 @@ numpy.polynomial
 
 """
 import numpy as np
-import numpy.linalg as la
-from numpy.lib.array_utils import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -90,7 +89,7 @@ __all__ = [
     'legzero', 'legone', 'legx', 'legdomain', 'legline', 'legadd',
     'legsub', 'legmulx', 'legmul', 'legdiv', 'legpow', 'legval', 'legder',
     'legint', 'leg2poly', 'poly2leg', 'legfromroots', 'legvander',
-    'legfit', 'legtrim', 'legroots', 'Legendre', 'legval2d', 'legval3d',
+    'legfit', 'legtrim', 'legroots', 'Legendre', 'legval2d', 'legval3d', 'legvalnd',
     'leggrid2d', 'leggrid3d', 'legvander2d', 'legvander3d', 'legcompanion',
     'leggauss', 'legweight']
 
@@ -676,7 +675,7 @@ def legder(c, m=1, scl=1, axis=0):
     iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
@@ -799,7 +798,7 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("lbnd must be a scalar.")
     if np.ndim(scl) != 0:
         raise ValueError("scl must be a scalar.")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
@@ -1043,6 +1042,57 @@ def legval3d(x, y, z, c):
     legval, legval2d, leggrid2d, leggrid3d
     """
     return pu._valnd(legval, c, x, y, z)
+
+
+def legvalnd(pts, c):
+    r"""
+    Evaluate an N-D Legendre series at points.
+
+    This function returns the values:
+
+    .. math::
+        p(pts, c) = \sum_{i_1, i_2, \dots, i_n}
+        c_{i_1, i_2, \dots, i_n} * P_{i_1}(x_1) * P_{i_2}(x_2) \dots P_{i_n}(x_n)
+
+    where :math:`x_1, x_2, \dots, x_n = pts`.
+    Note that `pts` may also be an `(n, m)` array.
+
+    The parameters in `pts` are converted to arrays only if they are
+    tuples or lists, otherwise they are treated as scalars and
+    they must have the same shape after conversion. In either case, either
+    the elements of `pts` or their elements must support multiplication and
+    addition both with themselves and with the elements of `c`.
+
+    If `c` has fewer than N dimensions, ones are implicitly appended to its
+    shape to make it N-D. The shape of the result will be c.shape[N:] +
+    pts[0].shape.
+
+    Parameters
+    ----------
+    pts : tuple or list of array_like, compatible objects
+        The N-dimensional series is evaluated at the points
+        ``(x_1, x_2, ..., x_n)`` provided in the `pts` iterable, where
+        all elements must have the same shape. If any element is a list
+        or tuple, it is first converted to an ndarray, otherwise it is
+        left unchanged and if it isn't an ndarray it is treated as a scalar.
+    c : array_like
+        Array of coefficients ordered so that the coefficient of the term of
+        multi-degree i,j,k,... is contained in ``c[i,j,k,...]``. If `c` has
+        dimension greater than N, the remaining indices enumerate multiple
+        sets of coefficients.
+
+    Returns
+    -------
+    values : ndarray, compatible object
+        The values of the multidimensional Legendre series on points formed
+        with N-tuples of corresponding values from `pts`.
+
+    See Also
+    --------
+    legval, legval2d, legval3d
+
+    """
+    return pu._valnd(legval, c, *pts)
 
 
 def leggrid3d(x, y, z, c):
@@ -1374,7 +1424,7 @@ def legcompanion(c):
     """Return the scaled companion matrix of c.
 
     The basis polynomials are scaled so that the companion matrix is
-    symmetric when `c` is an Legendre basis polynomial. This provides
+    symmetric when `c` is a Legendre basis polynomial. This provides
     better eigenvalue estimates than the unscaled case and for basis
     polynomials the eigenvalues are guaranteed to be real if
     `numpy.linalg.eigvalsh` is used to obtain them.
@@ -1464,7 +1514,7 @@ def legroots(c):
 
     # rotated companion matrix reduces error
     m = legcompanion(c)[::-1, ::-1]
-    r = la.eigvals(m)
+    r = np.linalg.eigvals(m)
     r.sort()
     return r
 
@@ -1510,7 +1560,7 @@ def leggauss(deg):
     # matrix is symmetric in this case in order to obtain better zeros.
     c = np.array([0] * deg + [1])
     m = legcompanion(c)
-    x = la.eigvalsh(m)
+    x = np.linalg.eigvalsh(m)
 
     # improve roots by one application of Newton
     dy = legval(x, c)

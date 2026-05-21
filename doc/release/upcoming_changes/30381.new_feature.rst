@@ -1,0 +1,11 @@
+Pixi package definitions
+------------------------
+Pixi package definitions have been added for different kinds
+of from-source builds of NumPy. These can be used in
+downstream Pixi workspaces via the ``pixi-build`` feature.
+
+Definitions for both ``default`` and AddressSanitizer-instrumented
+(``asan``) builds are available in the source code under the
+``pixi-packages/`` directory.
+
+``linux-64`` and ``osx-arm64`` platforms are supported.

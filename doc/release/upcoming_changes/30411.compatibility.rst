@@ -1,0 +1,18 @@
+``linalg.eig`` and ``linalg.eigvals`` now always return complex arrays
+----------------------------------------------------------------------
+
+Previously, the return values depended on whether the eigenvalues happen to lie
+on the real line (which, for a general, non-symmetric matrix, is not guaranteed).
+
+The change makes consistent what was a value-dependent result. To retain the
+previous behavior, do::
+
+   w = eigvals(a)
+   if np.any(w.imag == 0):  # this is what NumPy used to do
+       w = w.real
+
+If your matrix is symmetrix/hermitian, use ``eigh`` and ``eigvalsh`` instead of
+``eig`` and ``eigvals``. These are guaranteed to return real values. A common
+case is covariance matrices, which are symmetric and positive definite by
+construction.
+

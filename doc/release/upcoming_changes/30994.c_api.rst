@@ -1,0 +1,4 @@
+* Added ``PyDataType_TYPE``, ``PyDataType_KIND``, ``PyDataType_BYTEORDER`` and
+  ``PyDataType_TYPEOBJ`` accessor macros to the C API. Together with the other
+  accessor macros added for the NumPy 2.0 transition, these allow accessing the
+  fields of ``PyArray_Descr`` structs without any direct field accesses.

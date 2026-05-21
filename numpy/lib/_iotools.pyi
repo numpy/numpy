@@ -5,7 +5,6 @@ from typing import (
     Final,
     Literal,
     TypedDict,
-    TypeVar,
     Unpack,
     overload,
     type_check_only,
@@ -14,8 +13,6 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 from numpy._typing._dtype_like import _DTypeLikeNested
-
-_T = TypeVar("_T")
 
 @type_check_only
 class _NameValidatorKwargs(TypedDict, total=False):
@@ -46,7 +43,7 @@ class LineSplitter:
         encoding: str | None = None,
     ) -> None: ...
     def __call__(self, /, line: str | bytes) -> list[str]: ...
-    def autostrip(self, /, method: Callable[[_T], Iterable[str]]) -> Callable[[_T], list[str]]: ...
+    def autostrip[T](self, /, method: Callable[[T], Iterable[str]]) -> Callable[[T], list[str]]: ...
 
 class NameValidator:
     defaultexcludelist: ClassVar[Sequence[str]] = ...

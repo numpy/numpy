@@ -43,8 +43,8 @@ cdef uint64_t mt19937_raw(void *st) noexcept nogil:
     return <uint64_t>mt19937_next32(<mt19937_state *> st)
 
 cdef class MT19937(BitGenerator):
-    """
-    MT19937(seed=None)
+    # the first line is used to populate `__text_signature__`
+    """MT19937(seed=None)\n--
 
     Container for the Mersenne Twister pseudo-random number generator.
 
@@ -155,7 +155,7 @@ cdef class MT19937(BitGenerator):
         seed : {None, int, array_like}
             Random seed initializing the pseudo-random number generator.
             Can be an integer in [0, 2**32-1], array of integers in
-            [0, 2**32-1], a `SeedSequence, or ``None``. If `seed`
+            [0, 2**32-1], a `SeedSequence`, or ``None``. If `seed`
             is ``None``, then fresh, unpredictable entropy will be pulled from
             the OS.
 

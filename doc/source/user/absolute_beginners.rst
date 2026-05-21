@@ -406,7 +406,7 @@ Can you reshape an array?
 
 **Yes!**
 
-Using ``arr.reshape()`` will give a new shape to an array without changing the
+Using ``arr.reshape()`` will return a reshaped array without changing the
 data. Just remember that when you use the reshape method, the array you want to
 produce needs to have the same number of elements as the original array. If you
 start with an array with 12 elements, you'll need to make sure that your new
@@ -779,7 +779,7 @@ You can add the arrays together with the plus sign.
 ::
 
   >>> data = np.array([1, 2])
-  >>> ones = np.ones(2, dtype=int)
+  >>> ones = np.ones(2, dtype=np.int_)
   >>> data + ones
   array([2, 3])
 
@@ -1348,7 +1348,7 @@ For example::
       With a single iterable argument, return its biggest item. The
       default keyword-only argument specifies an object to return if
       the provided iterable is empty.
-      With two or more arguments, return the largest argument.
+      With two or more ...arguments, return the largest argument.
   <BLANKLINE>
 
 

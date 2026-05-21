@@ -43,14 +43,14 @@ AVX512_ICL = mod_features.new(
   group: ['AVX512VBMI', 'AVX512VBMI2', 'AVX512VNNI', 'AVX512BITALG', 'AVX512VPOPCNTDQ',
           'AVX512IFMA', 'VAES', 'GFNI', 'VPCLMULQDQ'],
   detect: 'AVX512_ICL',
-  test_code: files(source_root + '/numpy/distutils/checks/cpu_avx512_icl.c')[0]
+  test_code: files(source_root + '/numpy/_core/src/_simd/checks/cpu_avx512_icl.c')[0]
 )
 AVX512_SPR = mod_features.new(
   'AVX512_SPR', 35, implies: AVX512_ICL, 
   args: ['-mavx512fp16', '-mavx512bf16'],
   group: ['AVX512FP16', 'AVX512BF16'],
   detect: 'AVX512_SPR',
-  test_code: files(source_root + '/numpy/distutils/checks/cpu_avx512_spr.c')[0]
+  test_code: files(source_root + '/numpy/_core/src/_simd/checks/cpu_avx512_spr.c')[0]
 )
 
 # Specializations for non unix-like compilers

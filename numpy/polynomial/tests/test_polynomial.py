@@ -10,7 +10,6 @@ import pytest
 
 import numpy as np
 import numpy.polynomial.polynomial as poly
-import numpy.polynomial.polyutils as pu
 from numpy.testing import (
     assert_,
     assert_almost_equal,
@@ -297,6 +296,28 @@ class TestEvaluation:
         z = np.ones((2, 3))
         res = poly.polyval3d(z, z, z, self.c3d)
         assert_(res.shape == (2, 3))
+
+    def test_polyvalnd(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+        pts = (x1, x2, x3)
+
+        # test exceptions
+        assert_raises_regex(ValueError, 'incompatible',
+                            poly.polyvalnd, (x1, x2, x3[:2]), self.c3d)
+
+        # test values
+        tgt = y1 * y2 * y3
+        res = poly.polyvalnd(pts, self.c3d)
+        assert_almost_equal(res, tgt)
+
+        # test shape
+        z = np.ones((2, 3))
+        res = poly.polyvalnd((z, z, z), self.c3d)
+        assert_(res.shape == (2, 3))
+
+        # test 1D fallback
+        assert_almost_equal(poly.polyvalnd((x1,), self.c1d), y1)
 
     def test_polygrid2d(self):
         x1, x2, x3 = self.x
@@ -657,7 +678,7 @@ class TestMisc:
         assert_equal(p.coef, [2.])
         p = poly.Polynomial.fit([1, 1], [2, 2.1], deg=0)
         assert_almost_equal(p.coef, [2.05])
-        with pytest.warns(pu.RankWarning):
+        with pytest.warns(np.exceptions.RankWarning):
             p = poly.Polynomial.fit([1, 1], [2, 2.1], deg=1)
 
     def test_result_type(self):

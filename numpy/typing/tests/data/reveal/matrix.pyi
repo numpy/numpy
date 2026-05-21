@@ -1,9 +1,9 @@
-from typing import Any, TypeAlias, assert_type
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
 
-_Shape2D: TypeAlias = tuple[int, int]
+type _Shape2D = tuple[int, int]
 
 mat: np.matrix[_Shape2D, np.dtype[np.int64]]
 ar_f8: npt.NDArray[np.float64]

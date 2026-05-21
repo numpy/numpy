@@ -1,0 +1,6 @@
+``numpy.fft`` typing improvements and preliminary shape-typing support
+----------------------------------------------------------------------
+The ``numpy.fft`` functions now support non-``float64``/``complex128`` dtypes and gain
+preliminary shape-typing support. For example, the return type of ``numpy.fft.fft`` now
+depends on the shape-type of its inputs, falling back to the backward-compatible return
+type when the shape-types are unknown at type-checking time.

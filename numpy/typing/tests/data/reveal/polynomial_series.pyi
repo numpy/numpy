@@ -1,15 +1,15 @@
 from collections.abc import Sequence
-from typing import Any, TypeAlias, assert_type
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.polynomial as npp
 import numpy.typing as npt
 
-_ArrFloat1D: TypeAlias = np.ndarray[tuple[int], np.dtype[np.floating]]
-_ArrFloat1D64: TypeAlias = np.ndarray[tuple[int], np.dtype[np.float64]]
-_ArrComplex1D: TypeAlias = np.ndarray[tuple[int], np.dtype[np.complexfloating]]
-_ArrComplex1D128: TypeAlias = np.ndarray[tuple[int], np.dtype[np.complex128]]
-_ArrObject1D: TypeAlias = np.ndarray[tuple[int], np.dtype[np.object_]]
+type _ArrFloat1D = np.ndarray[tuple[int], np.dtype[np.floating]]
+type _ArrFloat1D64 = np.ndarray[tuple[int], np.dtype[np.float64]]
+type _ArrComplex1D = np.ndarray[tuple[int], np.dtype[np.complexfloating]]
+type _ArrComplex1D128 = np.ndarray[tuple[int], np.dtype[np.complex128]]
+type _ArrObject1D = np.ndarray[tuple[int], np.dtype[np.object_]]
 
 AR_b: npt.NDArray[np.bool]
 AR_u4: npt.NDArray[np.uint32]

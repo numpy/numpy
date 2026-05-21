@@ -27,11 +27,11 @@ Details of these improvements can be found below.
 Build System Changes
 ====================
 
-* Numpy now uses ``setuptools`` for its builds instead of plain distutils.
+* NumPy now uses ``setuptools`` for its builds instead of plain distutils.
   This fixes usage of ``install_requires='numpy'`` in the ``setup.py`` files of
-  projects that depend on Numpy (see gh-6551).  It potentially affects the way
-  that build/install methods for Numpy itself behave though.  Please report any
-  unexpected behavior on the Numpy issue tracker.
+  projects that depend on NumPy (see gh-6551).  It potentially affects the way
+  that build/install methods for NumPy itself behave though.  Please report any
+  unexpected behavior on the NumPy issue tracker.
 * Bento build support and related files have been removed.
 * Single file build support and related files have been removed.
 
@@ -39,7 +39,7 @@ Build System Changes
 Future Changes
 ==============
 
-The following changes are scheduled for Numpy 1.12.0.
+The following changes are scheduled for NumPy 1.12.0.
 
 * Support for Python 2.6, 3.2, and 3.3 will be dropped.
 * Relaxed stride checking will become the default. See the 1.8.0 release
@@ -61,7 +61,7 @@ The following changes are scheduled for Numpy 1.12.0.
 In a future release the following changes will be made.
 
 * The ``rand`` function exposed in ``numpy.testing`` will be removed. That
-  function is left over from early Numpy and was implemented using the
+  function is left over from early NumPy and was implemented using the
   Python random module.  The random number generators from ``numpy.random``
   should be used instead.
 * The ``ndarray.view`` method will only allow c_contiguous arrays to be
@@ -124,7 +124,7 @@ non-integers for degree specification.
 
 *np.dot* now raises ``TypeError`` instead of ``ValueError``
 -----------------------------------------------------------
-This behaviour mimics that of other functions such as ``np.inner``. If the two
+This behavior mimics that of other functions such as ``np.inner``. If the two
 arguments cannot be cast to a common type, it could have raised a ``TypeError``
 or ``ValueError`` depending on their order. Now, ``np.dot`` will now always
 raise a ``TypeError``.
@@ -194,7 +194,7 @@ New Features
 
 * ``f2py.compile`` has a new ``extension`` keyword parameter that allows the
   fortran extension to be specified for generated temp files. For instance,
-  the files can be specifies to be ``*.f90``. The ``verbose`` argument is
+  the files can be specified to be ``*.f90``. The ``verbose`` argument is
   also activated, it was previously ignored.
 
 * A ``dtype`` parameter has been added to ``np.random.randint``
@@ -254,7 +254,7 @@ Memory and speed improvements for masked arrays
 -----------------------------------------------
 Creating a masked array with ``mask=True`` (resp. ``mask=False``) now uses
 ``np.ones`` (resp. ``np.zeros``) to create the mask, which is faster and
-avoid a big memory peak. Another optimization was done to avoid a memory
+avoids a big memory peak. Another optimization was done to avoid a memory
 peak and useless computations when printing a masked array.
 
 ``ndarray.tofile`` now uses fallocate on linux
@@ -304,13 +304,13 @@ Instead, ``np.broadcast`` can be used in all cases.
 
 ``np.trace`` now respects array subclasses
 ------------------------------------------
-This behaviour mimics that of other functions such as ``np.diagonal`` and
+This behavior mimics that of other functions such as ``np.diagonal`` and
 ensures, e.g., that for masked arrays ``np.trace(ma)`` and ``ma.trace()`` give
 the same result.
 
 ``np.dot`` now raises ``TypeError`` instead of ``ValueError``
 -------------------------------------------------------------
-This behaviour mimics that of other functions such as ``np.inner``. If the two
+This behavior is now consistent with other functions such as ``np.inner``. If the two
 arguments cannot be cast to a common type, it could have raised a ``TypeError``
 or ``ValueError`` depending on their order. Now, ``np.dot`` will now always
 raise a ``TypeError``.

@@ -472,9 +472,9 @@ class RClass(AxisConcatenator):
     Optional character strings placed as the first element of the index
     expression can be used to change the output. The strings 'r' or 'c' result
     in matrix output. If the result is 1-D and 'r' is specified a 1 x N (row)
-    matrix is produced. If the result is 1-D and 'c' is specified, then a N x 1
-    (column) matrix is produced. If the result is 2-D then both provide the
-    same matrix result.
+    matrix is produced. If the result is 1-D and 'c' is specified, then
+    an N x 1 (column) matrix is produced.
+    If the result is 2-D then both provide the same matrix result.
 
     A string integer specifies which axis to stack multiple comma separated
     arrays along. A string of two comma-separated integers allows indication
@@ -977,7 +977,7 @@ def diag_indices(n, ndim=2):
 
     And use it to set the diagonal of an array of zeros to 1:
 
-    >>> a = np.zeros((2, 2, 2), dtype=int)
+    >>> a = np.zeros((2, 2, 2), dtype=np.int_)
     >>> a[d3] = 1
     >>> a
     array([[[1, 0],

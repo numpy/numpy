@@ -47,11 +47,12 @@ def buildusevars(m, r):
     revmap = {}
     if 'map' in r:
         for k in r['map'].keys():
-            if r['map'][k] in revmap:
-                outmess('\t\t\tVariable "%s<=%s" is already mapped by "%s". Skipping.\n' % (
-                    r['map'][k], k, revmap[r['map'][k]]))
+            mapped_name = r['map'][k]
+            if mapped_name in revmap:
+                outmess(f'\t\t\tVariable "{mapped_name}<={k}" is already mapped by '
+                        f'"{revmap[mapped_name]}". Skipping.\n')
             else:
-                revmap[r['map'][k]] = k
+                revmap[mapped_name] = k
     if r.get('only'):
         for v in r['map'].keys():
             if r['map'][v] in m['vars']:
@@ -72,8 +73,8 @@ def buildusevars(m, r):
 
 
 def buildusevar(name, realname, vars, usemodulename):
-    outmess('\t\t\tConstructing wrapper function for variable "%s=>%s"...\n' % (
-        name, realname))
+    outmess('\t\t\tConstructing wrapper function for variable '
+            f'"{name}=>{realname}"...\n')
     ret = {}
     vrd = {'name': name,
            'realname': realname,

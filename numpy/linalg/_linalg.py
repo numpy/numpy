@@ -61,7 +61,6 @@ from numpy._core import (
     overrides,
     prod,
     reciprocal,
-    sign,
     single,
     sort,
     sqrt,
@@ -186,6 +185,19 @@ def _realType(t, default=double):
 def _complexType(t, default=cdouble):
     return _complex_types_map.get(t, default)
 
+
+def _to_real_if_imag_zero(w, t):
+    """Backwards compat helper: force w to be real if t.dtype is real and w.imag == 0
+    """
+    result_t = t.dtype.type
+    if not isComplexType(result_t) and all(w.imag == 0.0):
+        w = w.real
+        result_t = _realType(result_t)
+    else:
+        result_t = _complexType(result_t)
+    return w.astype(result_t, copy=False)
+
+
 def _commonType(*arrays):
     # in lite version, use higher precision (always double or cdouble)
     result_type = single
@@ -226,22 +238,22 @@ def _to_native_byte_order(*arrays):
 def _assert_2d(*arrays):
     for a in arrays:
         if a.ndim != 2:
-            raise LinAlgError('%d-dimensional array given. Array must be '
-                    'two-dimensional' % a.ndim)
+            raise LinAlgError(f'{a.ndim}-dimensional array given. Array must be '
+                              'two-dimensional')
 
 def _assert_stacked_2d(*arrays):
     for a in arrays:
         if a.ndim < 2:
-            raise LinAlgError('%d-dimensional array given. Array must be '
-                    'at least two-dimensional' % a.ndim)
+            raise LinAlgError(f'{a.ndim}-dimensional array given. Array must be '
+                              'at least two-dimensional')
 
 def _assert_stacked_square(*arrays):
     for a in arrays:
         try:
             m, n = a.shape[-2:]
         except ValueError:
-            raise LinAlgError('%d-dimensional array given. Array must be '
-                    'at least two-dimensional' % a.ndim)
+            raise LinAlgError(f'{a.ndim}-dimensional array given. Array must be '
+                              'at least two-dimensional')
         if m != n:
             raise LinAlgError('Last 2 dimensions of the array must be square')
 
@@ -352,8 +364,7 @@ def tensorsolve(a, b, axes=None):
     a = a.reshape(prod, prod)
     b = b.ravel()
     res = wrap(solve(a, b))
-    res.shape = oldshape
-    return res
+    return res.reshape(oldshape)
 
 
 def _solve_dispatcher(a, b):
@@ -938,7 +949,7 @@ def outer(x1, x2, /):
 
     An example using a "vector" of letters:
 
-    >>> x = np.array(['a', 'b', 'c'], dtype=object)
+    >>> x = np.array(['a', 'b', 'c'], dtype=np.object_)
     >>> np.linalg.outer(x, [1, 2, 3])
     array([['a', 'aa', 'aaa'],
            ['b', 'bb', 'bbb'],
@@ -995,9 +1006,6 @@ def qr(a, mode='reduced'):
 
     Returns
     -------
-    When mode is 'reduced' or 'complete', the result will be a namedtuple with
-    the attributes `Q` and `R`.
-
     Q : ndarray of float or complex, optional
         A matrix with orthonormal columns. When mode = 'complete' the
         result is an orthogonal/unitary matrix depending on whether or not
@@ -1026,6 +1034,9 @@ def qr(a, mode='reduced'):
 
     Notes
     -----
+    When mode is 'reduced' or 'complete', the result will be a namedtuple with
+    the attributes ``Q`` and ``R``.
+
     This is an interface to the LAPACK routines ``dgeqrf``, ``zgeqrf``,
     ``dorgqr``, and ``zungqr``.
 
@@ -1230,11 +1241,11 @@ def eigvals(a):
 
     >>> D = np.diag((-1,1))
     >>> LA.eigvals(D)
-    array([-1.,  1.])
+    array([-1. + 0.j,  1. + 0.j])
     >>> A = np.dot(Q, D)
     >>> A = np.dot(A, Q.T)
     >>> LA.eigvals(A)
-    array([ 1., -1.]) # random
+    array([ 1., -1.])  # random
 
     """
     a, wrap = _makearray(a)
@@ -1248,14 +1259,7 @@ def eigvals(a):
                   under='ignore'):
         w = _umath_linalg.eigvals(a, signature=signature)
 
-    if not isComplexType(t):
-        if all(w.imag == 0):
-            w = w.real
-            result_t = _realType(result_t)
-        else:
-            result_t = _complexType(result_t)
-
-    return w.astype(result_t, copy=False)
+    return w.astype(_complexType(result_t), copy=False)
 
 
 def _eigvalsh_dispatcher(a, UPLO=None):
@@ -1451,8 +1455,8 @@ def eig(a):
 
     >>> eigenvalues, eigenvectors = LA.eig(np.diag((1, 2, 3)))
     >>> eigenvalues
-    array([1., 2., 3.])
-    >>> eigenvectors
+    array([1. + 0j, 2. + 0j, 3. + 0j])
+    >>> eigenvectors.real
     array([[1., 0., 0.],
            [0., 1., 0.],
            [0., 0., 1.]])
@@ -1484,8 +1488,8 @@ def eig(a):
     >>> # Theor. eigenvalues are 1 +/- 1e-9
     >>> eigenvalues, eigenvectors = LA.eig(a)
     >>> eigenvalues
-    array([1., 1.])
-    >>> eigenvectors
+    array([1.+0j, 1.+0j])
+    >>> eigenvectors.real
     array([[1., 0.],
            [0., 1.]])
 
@@ -1501,15 +1505,9 @@ def eig(a):
                   under='ignore'):
         w, vt = _umath_linalg.eig(a, signature=signature)
 
-    if not isComplexType(t) and all(w.imag == 0.0):
-        w = w.real
-        vt = vt.real
-        result_t = _realType(result_t)
-    else:
-        result_t = _complexType(result_t)
-
-    vt = vt.astype(result_t, copy=False)
-    return EigResult(w.astype(result_t, copy=False), wrap(vt))
+    w = w.astype(_complexType(result_t), copy=False)
+    vt = vt.astype(_complexType(result_t), copy=False)
+    return EigResult(w, wrap(vt))
 
 
 @array_function_dispatch(_eigvalsh_dispatcher)
@@ -1696,9 +1694,6 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
 
     Returns
     -------
-    When `compute_uv` is True, the result is a namedtuple with the following
-    attribute names:
-
     U : { (..., M, M), (..., M, K) } array
         Unitary array(s). The first ``a.ndim - 2`` dimensions have the same
         size as those of the input `a`. The size of the last two dimensions
@@ -1726,6 +1721,9 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
 
     Notes
     -----
+    When `compute_uv` is True, the result is a namedtuple with the following
+    attribute names: `U`, `S`, and `Vh`.
+
     The decomposition is performed using LAPACK routine ``_gesdd``.
 
     SVD is usually described for the factorization of a 2D matrix :math:`A`.
@@ -1764,7 +1762,7 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
     ((9, 9), (6,), (6, 6))
     >>> np.allclose(a, np.dot(U[:, :6] * S, Vh))
     True
-    >>> smat = np.zeros((9, 6), dtype=complex)
+    >>> smat = np.zeros((9, 6), dtype=np.complex128)
     >>> smat[:6, :6] = np.diag(S)
     >>> np.allclose(a, np.dot(U, np.dot(smat, Vh)))
     True
@@ -1810,7 +1808,8 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
         # and related arrays to have the correct order
         if compute_uv:
             s, u = eigh(a)
-            sgn = sign(s)
+            # avoid zero sign
+            sgn = np.copysign(1.0, s)
             s = abs(s)
             sidx = argsort(s)[..., ::-1]
             sgn = np.take_along_axis(sgn, sidx, axis=-1)
@@ -2016,18 +2015,14 @@ def cond(x, p=None):
         r = r.astype(result_t, copy=False)
 
     # Convert nans to infs unless the original array had nan entries
-    r = asarray(r)
     nan_mask = isnan(r)
     if nan_mask.any():
         nan_mask &= ~isnan(x).any(axis=(-2, -1))
         if r.ndim > 0:
             r[nan_mask] = inf
         elif nan_mask:
-            r[()] = inf
-
-    # Convention is to return scalars instead of 0d arrays
-    if r.ndim == 0:
-        r = r[()]
+            # Convention is to return scalars instead of 0d arrays.
+            r = r.dtype.type(inf)
 
     return r
 
@@ -2134,6 +2129,7 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     A = asarray(A)
     if A.ndim < 2:
         return int(not all(A == 0))
+
     S = svd(A, compute_uv=False, hermitian=hermitian)
 
     if tol is None:
@@ -2141,7 +2137,7 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
             rtol = max(A.shape[-2:]) * finfo(S.dtype).eps
         else:
             rtol = asarray(rtol)[..., newaxis]
-        tol = S.max(axis=-1, keepdims=True) * rtol
+        tol = S.max(axis=-1, keepdims=True, initial=0) * rtol
     else:
         tol = asarray(tol)[..., newaxis]
 
@@ -2942,7 +2938,7 @@ def multi_dot(arrays, *, out=None):
             return A.shape[0] * A.shape[1] * B.shape[1]
 
     Assume we have three matrices
-    :math:`A_{10 \times 100}, B_{100 \times 5}, C_{5 \times 50}`.
+    :math:`A_{10 \\times 100}, B_{100 \\times 5}, C_{5 \\times 50}`.
 
     The costs for the two different parenthesizations are as follows::
 
@@ -3309,14 +3305,6 @@ def cross(x1, x2, /, *, axis=-1):
     """
     x1 = asanyarray(x1)
     x2 = asanyarray(x2)
-
-    if x1.shape[axis] != 3 or x2.shape[axis] != 3:
-        raise ValueError(
-            "Both input arrays must be (arrays of) 3-dimensional vectors, "
-            f"but they are {x1.shape[axis]} and {x2.shape[axis]} "
-            "dimensional instead."
-        )
-
     return _core_cross(x1, x2, axis=axis)
 
 

@@ -69,7 +69,7 @@ typedef struct PyArrayMethodObject_tag {
 
 
 /*
- * We will sometimes have to create a ArrayMethod and allow passing it around,
+ * We will sometimes have to create an ArrayMethod and allow passing it around,
  * similar to `instance.method` returning a bound method, e.g. a function like
  * `ufunc.resolve()` can return a bound object.
  * The current main purpose of the BoundArrayMethod is that it holds on to the

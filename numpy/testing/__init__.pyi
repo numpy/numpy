@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from . import _private as _private, overrides
 from ._private import extbuild as extbuild
-from ._private.utils import (
+from ._private.utils import (  # type: ignore[deprecated]
     BLAS_SUPPORTS_FPE,
     HAS_LAPACK64,
     HAS_REFCOUNT,
@@ -47,7 +47,7 @@ from ._private.utils import (
     run_threaded,
     rundocs,
     runstring,
-    suppress_warnings,
+    suppress_warnings,  # pyrefly: ignore[deprecated]
     tempdir,
     temppath,
     verbose,

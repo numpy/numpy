@@ -1,0 +1,7 @@
+* `numpy.take` now correctly checks if the result can be cast to
+  the provided ``out=out`` under the same-kind rule.
+  A ``DeprecationWarning`` is given now when this check fails.
+  Previously, ``take`` incorrectly checked if ``out`` could be cast to
+  the result (the wrong direction).
+  This deprecation also affects ``compress`` and possibly other functions.
+  (Future versions of NumPy may tighten the casting check further.)

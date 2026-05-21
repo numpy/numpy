@@ -105,16 +105,16 @@ np.datetime64(dt.date(2000, 5, 3), "as")
 np.datetime64(None)
 np.datetime64(None, "D")
 
-np.timedelta64()
-np.timedelta64(0)
+np.timedelta64()  # type: ignore[deprecated]
+np.timedelta64(0)  # type: ignore[deprecated]
 np.timedelta64(0, "D")
 np.timedelta64(0, ('ms', 3))
 np.timedelta64(0, b"D")
-np.timedelta64("3")
-np.timedelta64(b"5")
-np.timedelta64(np.timedelta64(2))
-np.timedelta64(dt.timedelta(2))
-np.timedelta64(None)
+np.timedelta64("3")  # type: ignore[deprecated]
+np.timedelta64(b"5")  # type: ignore[deprecated]
+np.timedelta64(np.timedelta64(2))  # type: ignore[deprecated]
+np.timedelta64(dt.timedelta(2))  # type: ignore[deprecated]
+np.timedelta64(None)  # type: ignore[deprecated]
 np.timedelta64(None, "D")
 
 np.void(1)
@@ -132,7 +132,7 @@ u8 = np.uint64()
 f8 = np.float64()
 c16 = np.complex128()
 b = np.bool()
-td = np.timedelta64()
+td = np.timedelta64(0, "ns")
 U = np.str_("1")
 S = np.bytes_("1")
 AR = np.array(1, dtype=np.float64)
@@ -247,3 +247,16 @@ f8.reshape(1)
 c16.reshape(1)
 U.reshape(1)
 S.reshape(1)
+
+# Indexing scalars with any of {None, ..., tuple[()], tuple[None], tuple[...],
+# tuple[None, ...]} should be valid
+b[None]
+i8[None]
+u8[None]
+f8[None]
+c16[None]
+c16[...]
+c16[()]
+c16[(None,)]
+c16[(...,)]
+c16[None, None]

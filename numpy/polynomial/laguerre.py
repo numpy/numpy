@@ -40,6 +40,7 @@ Arithmetic
    lagval
    lagval2d
    lagval3d
+   lagvalnd
    laggrid2d
    laggrid3d
 
@@ -76,8 +77,6 @@ See also
 
 """
 import numpy as np
-import numpy.linalg as la
-from numpy.lib.array_utils import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -86,7 +85,7 @@ __all__ = [
     'lagzero', 'lagone', 'lagx', 'lagdomain', 'lagline', 'lagadd',
     'lagsub', 'lagmulx', 'lagmul', 'lagdiv', 'lagpow', 'lagval', 'lagder',
     'lagint', 'lag2poly', 'poly2lag', 'lagfromroots', 'lagvander',
-    'lagfit', 'lagtrim', 'lagroots', 'Laguerre', 'lagval2d', 'lagval3d',
+    'lagfit', 'lagtrim', 'lagroots', 'Laguerre', 'lagval2d', 'lagval3d', 'lagvalnd',
     'laggrid2d', 'laggrid3d', 'lagvander2d', 'lagvander3d', 'lagcompanion',
     'laggauss', 'lagweight']
 
@@ -650,7 +649,7 @@ def lagder(c, m=1, scl=1, axis=0):
     iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
@@ -770,7 +769,7 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("lbnd must be a scalar.")
     if np.ndim(scl) != 0:
         raise ValueError("scl must be a scalar.")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
@@ -1045,6 +1044,57 @@ def lagval3d(x, y, z, c):
 
     """
     return pu._valnd(lagval, c, x, y, z)
+
+
+def lagvalnd(pts, c):
+    r"""
+    Evaluate an N-D Laguerre series at points.
+
+    This function returns the values:
+
+    .. math::
+        p(pts, c) = \sum_{i_1, i_2, \dots, i_n}
+        c_{i_1, i_2, \dots, i_n} * L_{i_1}(x_1) * L_{i_2}(x_2) \dots L_{i_n}(x_n)
+
+    where :math:`x_1, x_2, \dots, x_n = pts`.
+    Note that `pts` may also be an `(n, m)` array.
+
+    The parameters in `pts` are converted to arrays only if they are
+    tuples or lists, otherwise they are treated as scalars and
+    they must have the same shape after conversion. In either case, either
+    the elements of `pts` or their elements must support multiplication and
+    addition both with themselves and with the elements of `c`.
+
+    If `c` has fewer than N dimensions, ones are implicitly appended to its
+    shape to make it N-D. The shape of the result will be c.shape[N:] +
+    pts[0].shape.
+
+    Parameters
+    ----------
+    pts : tuple or list of array_like, compatible objects
+        The N-dimensional series is evaluated at the points
+        ``(x_1, x_2, ..., x_n)`` provided in the `pts` iterable, where
+        all elements must have the same shape. If any element is a list
+        or tuple, it is first converted to an ndarray, otherwise it is
+        left unchanged and if it isn't an ndarray it is treated as a scalar.
+    c : array_like
+        Array of coefficients ordered so that the coefficient of the term of
+        multi-degree i,j,k,... is contained in ``c[i,j,k,...]``. If `c` has
+        dimension greater than N, the remaining indices enumerate multiple
+        sets of coefficients.
+
+    Returns
+    -------
+    values : ndarray, compatible object
+        The values of the multidimensional polynomial on points formed with
+        N-tuples of corresponding values from `pts`.
+
+    See Also
+    --------
+    lagval, lagval2d, lagval3d
+
+    """
+    return pu._valnd(lagval, c, *pts)
 
 
 def laggrid3d(x, y, z, c):
@@ -1525,8 +1575,12 @@ def lagroots(c):
 
     # rotated companion matrix reduces error
     m = lagcompanion(c)[::-1, ::-1]
-    r = la.eigvals(m)
+    r = np.linalg.eigvals(m)
     r.sort()
+
+    # backwards compat: return real values if possible
+    from numpy.linalg._linalg import _to_real_if_imag_zero
+    r = _to_real_if_imag_zero(r, m)
     return r
 
 
@@ -1577,7 +1631,7 @@ def laggauss(deg):
     # matrix is symmetric in this case in order to obtain better zeros.
     c = np.array([0] * deg + [1])
     m = lagcompanion(c)
-    x = la.eigvalsh(m)
+    x = np.linalg.eigvalsh(m)
 
     # improve roots by one application of Newton
     dy = lagval(x, c)

@@ -205,13 +205,6 @@ these fragments in each commit message of a PR:
   settings.
   `See the configuration files for these checks. <https://github.com/numpy/numpy/tree/main/.github/workflows>`__
 
-* ``[skip azp]``: skip Azure jobs
-
-  `Azure <https://azure.microsoft.com/en-us/products/devops/pipelines>`__ is
-  where all comprehensive tests are run. This is an expensive run, and one you
-  could typically skip if you do documentation-only changes, for example.
-  `See the main configuration file for these checks. <https://github.com/numpy/numpy/blob/main/azure-pipelines.yml>`__
-
 * ``[skip circle]``: skip CircleCI jobs
 
   `CircleCI <https://circleci.com/>`__ is where we build the documentation and
@@ -275,6 +268,10 @@ If your changes involve modifications to the API or addition/modification of a
 function, add a release note to the ``doc/release/upcoming_changes/``
 directory, following the instructions and format in the
 ``doc/release/upcoming_changes/README.rst`` file.
+
+Use the same prefix convention for your pull request title as for commit
+messages (e.g., ``BUG:``, ``ENH:``, ``DOC:``). This enables automated labeling
+of your PR.
 
 
 .. _workflow_PR_timeline:

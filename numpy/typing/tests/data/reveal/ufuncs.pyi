@@ -99,44 +99,44 @@ assert_type(np.bitwise_count(i8), Any)
 assert_type(np.bitwise_count(AR_i8), npt.NDArray[Any])
 
 def test_absolute_outer_invalid() -> None:
-    assert_type(np.absolute.outer(), NoReturn)
+    assert_type(np.absolute.outer(AR_f8, AR_f8), NoReturn)  # type: ignore[arg-type]
 def test_frexp_outer_invalid() -> None:
-    assert_type(np.frexp.outer(), NoReturn)
+    assert_type(np.frexp.outer(AR_f8, AR_f8), NoReturn)  # type: ignore[arg-type]
 def test_divmod_outer_invalid() -> None:
-    assert_type(np.divmod.outer(), NoReturn)
+    assert_type(np.divmod.outer(AR_f8, AR_f8), NoReturn)  # type: ignore[arg-type]
 def test_matmul_outer_invalid() -> None:
-    assert_type(np.matmul.outer(), NoReturn)
+    assert_type(np.matmul.outer(AR_f8, AR_f8), NoReturn)  # type: ignore[arg-type]
 
 def test_absolute_reduceat_invalid() -> None:
-    assert_type(np.absolute.reduceat(), NoReturn)
+    assert_type(np.absolute.reduceat(AR_f8, AR_i8), NoReturn)  # type: ignore[arg-type]
 def test_frexp_reduceat_invalid() -> None:
-    assert_type(np.frexp.reduceat(), NoReturn)
+    assert_type(np.frexp.reduceat(AR_f8, AR_i8), NoReturn)  # type: ignore[arg-type]
 def test_divmod_reduceat_invalid() -> None:
-    assert_type(np.divmod.reduceat(), NoReturn)
+    assert_type(np.divmod.reduceat(AR_f8, AR_i8), NoReturn)  # type: ignore[arg-type]
 def test_matmul_reduceat_invalid() -> None:
-    assert_type(np.matmul.reduceat(), NoReturn)
+    assert_type(np.matmul.reduceat(AR_f8, AR_i8), NoReturn)  # type: ignore[arg-type]
 
 def test_absolute_reduce_invalid() -> None:
-    assert_type(np.absolute.reduce(), NoReturn)
+    assert_type(np.absolute.reduce(AR_f8), NoReturn)  # type: ignore[arg-type]
 def test_frexp_reduce_invalid() -> None:
-    assert_type(np.frexp.reduce(), NoReturn)
+    assert_type(np.frexp.reduce(AR_f8), NoReturn)  # type: ignore[arg-type]
 def test_divmod_reduce_invalid() -> None:
-    assert_type(np.divmod.reduce(), NoReturn)
+    assert_type(np.divmod.reduce(AR_f8), NoReturn)  # type: ignore[arg-type]
 def test_matmul_reduce_invalid() -> None:
-    assert_type(np.matmul.reduce(), NoReturn)
+    assert_type(np.matmul.reduce(AR_f8), NoReturn)  # type: ignore[arg-type]
 
 def test_absolute_accumulate_invalid() -> None:
-    assert_type(np.absolute.accumulate(), NoReturn)
+    assert_type(np.absolute.accumulate(AR_f8), NoReturn)  # type: ignore[arg-type]
 def test_frexp_accumulate_invalid() -> None:
-    assert_type(np.frexp.accumulate(), NoReturn)
+    assert_type(np.frexp.accumulate(AR_f8), NoReturn)  # type: ignore[arg-type]
 def test_divmod_accumulate_invalid() -> None:
-    assert_type(np.divmod.accumulate(), NoReturn)
+    assert_type(np.divmod.accumulate(AR_f8), NoReturn)  # type: ignore[arg-type]
 def test_matmul_accumulate_invalid() -> None:
-    assert_type(np.matmul.accumulate(), NoReturn)
+    assert_type(np.matmul.accumulate(AR_f8), NoReturn)  # type: ignore[arg-type]
 
 def test_frexp_at_invalid() -> None:
-    assert_type(np.frexp.at(), NoReturn)
+    assert_type(np.frexp.at(AR_f8, i8), NoReturn)  # type: ignore[arg-type]
 def test_divmod_at_invalid() -> None:
-    assert_type(np.divmod.at(), NoReturn)
+    assert_type(np.divmod.at(AR_f8, i8, AR_f8), NoReturn)  # type: ignore[arg-type]
 def test_matmul_at_invalid() -> None:
-    assert_type(np.matmul.at(), NoReturn)
+    assert_type(np.matmul.at(AR_f8, i8, AR_f8), NoReturn)  # type: ignore[arg-type]

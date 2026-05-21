@@ -34,7 +34,7 @@
         }                                                               \
     }
 #else
-#define NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(original) {
+#define NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(original) { do { (void)(original); } while (0)
 #define NPY_END_CRITICAL_SECTION_SEQUENCE_FAST() }
 #endif
 

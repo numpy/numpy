@@ -112,7 +112,7 @@ def test_weak_promotion_scalar_path(op):
     # Integer path:
     res = op(np.uint8(3), 5)
     assert res == op(3, 5)
-    assert res.dtype == np.uint8 or res.dtype == bool  # noqa: PLR1714
+    assert res.dtype == np.uint8 or res.dtype == bool
 
     with pytest.raises(OverflowError):
         op(np.uint8(3), 1000)
@@ -120,14 +120,14 @@ def test_weak_promotion_scalar_path(op):
     # Float path:
     res = op(np.float32(3), 5.)
     assert res == op(3., 5.)
-    assert res.dtype == np.float32 or res.dtype == bool  # noqa: PLR1714
+    assert res.dtype == np.float32 or res.dtype == bool
 
 
 def test_nep50_complex_promotion():
     with pytest.warns(RuntimeWarning, match=".*overflow"):
         res = np.complex64(3) + complex(2**300)
 
-    assert type(res) == np.complex64
+    assert type(res) is np.complex64
 
 
 def test_nep50_integer_conversion_errors():

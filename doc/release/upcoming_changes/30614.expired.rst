@@ -1,0 +1,1 @@
+* ``_add_newdoc_ufunc(ufunc, newdoc)`` has been removed in favor of ``ufunc.__doc__ = newdoc`` (deprecated in 2.2)

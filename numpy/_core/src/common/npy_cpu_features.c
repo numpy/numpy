@@ -235,14 +235,13 @@ npy__cpu_validate_baseline(void)
 
     #define NPY__CPU_VALIDATE_CB(FEATURE, DUMMY)                  \
         if (!npy__cpu_have[NPY_CAT(NPY_CPU_FEATURE_, FEATURE)]) { \
-            const int size = sizeof(NPY_TOSTRING(FEATURE));       \
+            const int size = sizeof(NPY_TOSTRING(FEATURE)) - 1;       \
             memcpy(fptr, NPY_TOSTRING(FEATURE), size);            \
             fptr[size] = ' '; fptr += size + 1;                   \
         }
     NPY_WITH_CPU_BASELINE_CALL(NPY__CPU_VALIDATE_CB, DUMMY) // extra arg for msvc
-    *fptr = '\0';
 
-    if (baseline_failure[0] != '\0') {
+    if (fptr > baseline_failure) {
         *(fptr-1) = '\0'; // trim the last space
         PyErr_Format(PyExc_RuntimeError,
             "NumPy was built with baseline optimizations: \n"
@@ -448,7 +447,7 @@ npy__cpu_cpuid_count(int reg[4], int func_id, int count)
 static void
 npy__cpu_cpuid(int reg[4], int func_id)
 {
-    return npy__cpu_cpuid_count(reg, func_id, 0);
+    npy__cpu_cpuid_count(reg, func_id, 0);
 }
 
 static void
@@ -503,7 +502,7 @@ npy__cpu_init_features(void)
     // long mode only
     npy__cpu_have[NPY_CPU_FEATURE_LAHF]  = (reg[2] & (1 << 0)) != 0;
 #else
-    // alawys available
+    // always available
     npy__cpu_have[NPY_CPU_FEATURE_LAHF]  = 1;
 #endif
     npy__cpu_have[NPY_CPU_FEATURE_LZCNT] = (reg[2] & (1 << 5))  != 0;
@@ -554,7 +553,9 @@ npy__cpu_init_features(void)
         // Skylake-X
         npy__cpu_have[NPY_CPU_FEATURE_AVX512DQ]        = (reg[1] & (1 << 17)) != 0;
         npy__cpu_have[NPY_CPU_FEATURE_AVX512BW]        = (reg[1] & (1 << 30)) != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_AVX512VL]        = (reg[1] & (1 << 31)) != 0;
+        // cast and use of unsigned int literal silences UBSan warning:
+        // "runtime error: left shift of 1 by 31 places cannot be represented in type 'int'"
+        npy__cpu_have[NPY_CPU_FEATURE_AVX512VL]        = (reg[1] & (int)(1u << 31)) != 0;
         // Cascade Lake
         npy__cpu_have[NPY_CPU_FEATURE_AVX512VNNI]      = (reg[2] & (1 << 11)) != 0;
         // Cannon Lake

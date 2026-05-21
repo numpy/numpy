@@ -9,7 +9,6 @@
 NPY_NO_EXPORT PyObject *
 get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args));
 
-PyObject * add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args);
 PyObject * ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kwds));
 
 

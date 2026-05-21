@@ -11,6 +11,9 @@ import pytest
 import numpy as np
 from numpy._core._multiarray_umath import _get_castingimpl as get_castingimpl
 
+# accessing `numpy.char.charray` will issue a deprecation warning
+from numpy._core.defchararray import chararray
+
 
 class TestResolveDescriptors:
     # Test mainly error paths of the resolve_descriptors function,
@@ -62,9 +65,7 @@ class TestSimpleStridedCall:
 
 
 @pytest.mark.parametrize(
-    "cls", [
-        np.ndarray, np.recarray, np.char.chararray, np.matrix, np.memmap
-    ]
+    "cls", [np.ndarray, np.recarray, chararray, np.matrix, np.memmap]
 )
 class TestClassGetItem:
     def test_class_getitem(self, cls: type[np.ndarray]) -> None:

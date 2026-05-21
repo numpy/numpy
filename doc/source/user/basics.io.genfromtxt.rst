@@ -201,16 +201,16 @@ The main way to control how the sequences of strings we have read from the
 file are converted to other types is to set the ``dtype`` argument.
 Acceptable values for this argument are:
 
-* a single type, such as ``dtype=float``.
+* a single type, such as ``dtype=np.float64``.
   The output will be 2D with the given dtype, unless a name has been
   associated with each column with the use of the ``names`` argument
-  (see below).  Note that ``dtype=float`` is the default for
+  (see below).  Note that ``dtype=np.float64`` is the default for
   :func:`~numpy.genfromtxt`.
-* a sequence of types, such as ``dtype=(int, float, float)``.
+* a sequence of types, such as ``dtype=(np.int_, np.float64, np.float64)``.
 * a comma-separated string, such as ``dtype="i4,f8,|U3"``.
 * a dictionary with two keys ``'names'`` and ``'formats'``.
 * a sequence of tuples ``(name, type)``, such as
-  ``dtype=[('A', int), ('B', float)]``.
+  ``dtype=[('A', np.int_), ('B', np.float64)]``.
 * an existing :class:`numpy.dtype` object.
 * the special value ``None``.
   In that case, the type of the columns will be determined from the data
@@ -243,7 +243,7 @@ each column.  A first possibility is to use an explicit structured dtype,
 as mentioned previously::
 
    >>> data = StringIO("1 2 3\n 4 5 6")
-   >>> np.genfromtxt(data, dtype=[(_, int) for _ in "abc"])
+   >>> np.genfromtxt(data, dtype=[(_, np.int_) for _ in "abc"])
    array([(1, 2, 3), (4, 5, 6)],
          dtype=[('a', '<i8'), ('b', '<i8'), ('c', '<i8')])
 
@@ -255,7 +255,7 @@ sequence of strings or a comma-separated string::
    array([(1., 2., 3.), (4., 5., 6.)],
          dtype=[('A', '<f8'), ('B', '<f8'), ('C', '<f8')])
 
-In the example above, we used the fact that by default, ``dtype=float``.
+In the example above, we used the fact that by default, ``dtype=np.float64``.
 By giving a sequence of names, we are forcing the output to a structured
 dtype.
 
@@ -274,7 +274,7 @@ value to the keyword, the new names will overwrite the field names we may
 have defined with the dtype::
 
    >>> data = StringIO("1 2 3\n 4 5 6")
-   >>> ndtype=[('a',int), ('b', float), ('c', int)]
+   >>> ndtype=[('a', np.int_), ('b', np.float64), ('c', np.int_)]
    >>> names = ["A", "B", "C"]
    >>> np.genfromtxt(data, names=names, dtype=ndtype)
    array([(1, 2., 3), (4, 5., 6)],
@@ -289,7 +289,7 @@ with the standard NumPy default of ``"f%i"``, yielding names like ``f0``,
 ``f1`` and so forth::
 
    >>> data = StringIO("1 2 3\n 4 5 6")
-   >>> np.genfromtxt(data, dtype=(int, float, int))
+   >>> np.genfromtxt(data, dtype=(np.int_, np.float64, np.int_))
    array([(1, 2., 3), (4, 5., 6)],
          dtype=[('f0', '<i8'), ('f1', '<f8'), ('f2', '<i8')])
 
@@ -297,7 +297,7 @@ In the same way, if we don't give enough names to match the length of the
 dtype, the missing names will be defined with this default template::
 
    >>> data = StringIO("1 2 3\n 4 5 6")
-   >>> np.genfromtxt(data, dtype=(int, float, int), names="a")
+   >>> np.genfromtxt(data, dtype=(np.int_, np.float64, np.int_), names="a")
    array([(1, 2., 3), (4, 5., 6)],
          dtype=[('a', '<i8'), ('f0', '<f8'), ('f1', '<i8')])
 
@@ -305,7 +305,7 @@ We can overwrite this default with the ``defaultfmt`` argument, that
 takes any format string::
 
    >>> data = StringIO("1 2 3\n 4 5 6")
-   >>> np.genfromtxt(data, dtype=(int, float, int), defaultfmt="var_%02i")
+   >>> np.genfromtxt(data, dtype=(np.int_, np.float64, np.int_), defaultfmt="var_%02i")
    array([(1, 2., 3), (4, 5., 6)],
          dtype=[('var_00', '<i8'), ('var_01', '<f8'), ('var_02', '<i8')])
 
@@ -374,7 +374,7 @@ representing a percentage to a float between 0 and 1::
    array([(1., nan, 45.), (6., nan, 0.)],
          dtype=[('i', '<f8'), ('p', '<f8'), ('n', '<f8')])
 
-We need to keep in mind that by default, ``dtype=float``.  A float is
+We need to keep in mind that by default, ``dtype=np.float64``.  A float is
 therefore expected for the second column.  However, the strings ``' 2.3%'``
 and ``' 78.9%'`` cannot be converted to float and we end up having
 ``np.nan`` instead.  Let's now use a converter::
@@ -481,7 +481,7 @@ and second column, and to -999 if they occur in the last column::
 
     >>> data = "N/A, 2, 3\n4, ,???"
     >>> kwargs = dict(delimiter=",",
-    ...               dtype=int,
+    ...               dtype=np.int_,
     ...               names="a,b,c",
     ...               missing_values={0:"N/A", 'b':" ", 2:"???"},
     ...               filling_values={0:0, 'b':0, 2:-999})

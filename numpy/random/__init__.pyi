@@ -16,7 +16,7 @@ from .mtrand import (
     f,
     gamma,
     geometric,
-    get_bit_generator,  # noqa: F401
+    get_bit_generator,
     get_state,
     gumbel,
     hypergeometric,
@@ -44,7 +44,7 @@ from .mtrand import (
     rayleigh,
     sample,
     seed,
-    set_bit_generator,  # noqa: F401
+    set_bit_generator,
     set_state,
     shuffle,
     standard_cauchy,
