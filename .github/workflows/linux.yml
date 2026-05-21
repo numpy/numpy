@@ -386,7 +386,7 @@ jobs:
     container:
        # There are few options for i686 images at https://quay.io/organization/pypa,
        # use the glibc2.28 one
-      image: quay.io/pypa/manylinux_2_28_i686
+      image: quay.io/pypa/manylinux_2_28_i686@sha256:507161df0a2b73759703b0d3e0dc08a841b2f8652f6da4e54ddaeda58df6778b
 
     steps:
     - name: Checkout and initialize submodules

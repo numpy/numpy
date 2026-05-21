@@ -1,6 +1,5 @@
 name: "Pull Request Labeler"
-# zizmor: ignore[dangerous-triggers] safe: no PR-head checkout, no code execution, labels only
-on:
+on: # zizmor: ignore[dangerous-triggers] safe: no PR-head checkout, no code execution, labels only
   pull_request_target:
     types: [opened]
 
