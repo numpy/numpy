@@ -212,6 +212,83 @@ class SortGenerator:
         return np.array(b)
 
 
+class SortGeneratorSmall:
+    # This is a separate class as for certain small dtypes we
+    # need to repeat elements to get the desired array size.
+
+    # The size of the unsorted area in the "random unsorted area"
+    # benchmarks
+    AREA_SIZE = 100
+    # The size of the "partially ordered" sub-arrays
+    BUBBLE_SIZE = 100
+
+    limits = {
+        'bool': (0, 2),
+        'uint8': (0, 256),
+        'int8': (-128, 128),
+        'int16': (-32768, 32768),
+        'float16': (-1000, 1000),
+    }
+
+    @staticmethod
+    @memoize
+    def arange(dtype):
+        return np.arange(*SortGeneratorSmall.limits[dtype], dtype=dtype)
+
+    @staticmethod
+    @memoize
+    def random(size, dtype, rnd):
+        """
+        Returns a randomly-shuffled array.
+        """
+        arange = SortGeneratorSmall.arange(dtype)
+        rnd = np.random.RandomState(1792364059)
+        arr = rnd.choice(arange, size=size, replace=True)
+        return arr
+
+    @staticmethod
+    @memoize
+    def ordered(size, dtype, rnd):
+        """
+        Returns an ordered array.
+        """
+        arange = SortGeneratorSmall.arange(dtype)
+        return np.repeat(arange, size // arange.size + 1)[:size]
+
+    @staticmethod
+    @memoize
+    def reversed(size, dtype, rnd):
+        """
+        Returns an array that's in descending order.
+        """
+        arange = SortGeneratorSmall.arange(dtype)
+        return np.repeat(arange[::-1], size // arange.size + 1)[:size]
+
+    @staticmethod
+    @memoize
+    def uniform(size, dtype, rnd):
+        """
+        Returns an array that has the same value everywhere.
+        """
+        return np.ones(size, dtype=dtype)
+
+    @staticmethod
+    @memoize
+    def sorted_block(size, dtype, block_size, rnd):
+        """
+        Returns an array with blocks that are all sorted.
+        """
+        a = SortGeneratorSmall.arange(dtype=dtype)
+        a = np.repeat(a, size // a.size + 1)[:size]
+        b = []
+        if size < block_size:
+            return a
+        block_num = size // block_size
+        for i in range(block_num):
+            b.extend(a[i::block_num])
+        return np.array(b)
+
+
 class Sort(Benchmark):
     """
     This benchmark tests sorting performance with several
@@ -221,8 +298,20 @@ class Sort(Benchmark):
     params = [
         # In NumPy 1.17 and newer, 'merge' can be one of several
         # stable sorts, it isn't necessarily merge sort.
-        ['quick', 'merge', 'heap'],
-        ['float64', 'int64', 'float32', 'uint32', 'int32', 'int16', 'float16'],
+        [True, False],
+        [True, False],
+        [
+            'float64',
+            'int64',
+            'float32',
+            'uint32',
+            'int32',
+            'int16',
+            'float16',
+            'uint8',
+            'int8',
+            'bool',
+        ],
         [
             ('random',),
             ('ordered',),
@@ -233,25 +322,29 @@ class Sort(Benchmark):
             ('sorted_block', 1000),
         ],
     ]
-    param_names = ['kind', 'dtype', 'array_type']
+    param_names = ['stable', 'descending', 'dtype', 'array_type']
 
     # The size of the benchmarked arrays.
     ARRAY_SIZE = 1000000
+    
+    small_dtypes = ['bool', 'uint8', 'int8', 'int16', 'float16']
 
-    def setup(self, kind, dtype, array_type):
+    def setup(self, stable, descending, dtype, array_type):
         rnd = np.random.RandomState(507582308)
         array_class = array_type[0]
-        generate_array_method = getattr(SortGenerator, array_class)
+
+        cls = SortGeneratorSmall if dtype in self.small_dtypes else SortGenerator
+        generate_array_method = getattr(cls, array_class)
         self.arr = generate_array_method(self.ARRAY_SIZE, dtype, *array_type[1:], rnd)
 
-    def time_sort(self, kind, dtype, array_type):
+    def time_sort(self, stable, descending, dtype, array_type):
         # Using np.sort(...) instead of arr.sort(...) because it makes a copy.
         # This is important because the data is prepared once per benchmark, but
         # used across multiple runs.
-        np.sort(self.arr, kind=kind)
+        np.sort(self.arr, stable=stable, descending=descending)
 
-    def time_argsort(self, kind, dtype, array_type):
-        np.argsort(self.arr, kind=kind)
+    def time_argsort(self, stable, descending, dtype, array_type):
+        np.argsort(self.arr, stable=stable, descending=descending)
 
 
 class Partition(Benchmark):
