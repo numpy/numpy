@@ -181,7 +181,6 @@ class SortGenerator:
         """
         arr = SortGenerator.ordered_range(size, dtype=dtype)
         rnd = np.random.RandomState(1792364059)
-        np.random.shuffle(arr)
         rnd.shuffle(arr)
         return arr
 
