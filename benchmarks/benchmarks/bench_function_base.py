@@ -206,7 +206,7 @@ class SortGenerator:
             except (OverflowError, FloatingPointError):
                 raise SkipNotImplemented("Cannot construct arange for this size.")
 
-        return SortGenerator.ordered_range(size, dtype=dtype)[::-1].copy()
+        return SortGenerator.ordered_range(size, dtype=dtype)[::-1]
 
     @staticmethod
     @memoize
@@ -275,6 +275,7 @@ class Sort(Benchmark):
         self.arr = generate_array_method(self.ARRAY_SIZE, dtype, *array_type[1:], rnd)
         if descending:
             self.arr = self.arr[::-1]
+        self.arr = self.arr.copy()
 
     def time_sort(self, stable, descending, dtype, array_type):
         # Using np.sort(...) instead of arr.sort(...) because it makes a copy.
