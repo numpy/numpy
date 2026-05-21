@@ -2103,6 +2103,14 @@ def test_gh_31308_array_itemsize_getter_large_dtype():
 
 
 @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+def test_gh_31308_binary_imports_reject_too_small_large_itemsize():
+    kind_dtype = np.dtype(dict(
+        names=["a"], formats=["i1"], itemsize=2 ** 31 + 1))
+    with pytest.raises(ValueError, match="buffer is smaller than requested size"):
+        np.frombuffer(b"\0", dtype=kind_dtype, count=1)
+
+
+@pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
 def test_gh_31308_out_of_order_object_fields_large_offsets():
     kind_dtype = np.dtype(dict(
         names=["b", "a"],

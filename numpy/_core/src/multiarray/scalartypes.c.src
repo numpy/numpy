@@ -1958,7 +1958,7 @@ gentype_imag_get(PyObject *self, void *NPY_UNUSED(ignored))
     }
     else {
         char *temp;
-        int elsize;
+        npy_intp elsize;
         typecode = PyArray_DescrFromScalar(self);
         elsize = typecode->elsize;
         temp = npy_alloc_cache_zero(1, elsize);
