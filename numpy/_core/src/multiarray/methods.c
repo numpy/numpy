@@ -1593,13 +1593,14 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
     else if (PyDataType_HASFIELDS(dtype)) {
         PyObject *key, *value, *title = NULL;
         PyArray_Descr *new;
-        int offset, res;
+        npy_intp offset;
+        int res;
         Py_ssize_t pos = 0;
         while (PyDict_Next(PyDataType_FIELDS(dtype), &pos, &key, &value)) { // noqa: borrowed-ref OK
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
+            if (!PyArg_ParseTuple(value, "On|O", &new, &offset,
                                   &title)) {
                 return -1;
             }

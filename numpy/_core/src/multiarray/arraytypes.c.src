@@ -1032,7 +1032,7 @@ static int
 VOID_setitem(PyArray_Descr *descr_, PyObject *op, char *ip)
 {
     _PyArray_LegacyDescr *descr = (_PyArray_LegacyDescr *)descr_;
-    int itemsize = descr->elsize;
+    npy_intp itemsize = descr->elsize;
     int res;
 
     if (PyDataType_HASFIELDS(descr)) {
@@ -1150,9 +1150,9 @@ VOID_setitem(PyArray_Descr *descr_, PyObject *op, char *ip)
         if (PyObject_GetBuffer(op, &view, PyBUF_SIMPLE) < 0) {
             return -1;
         }
-        memcpy(ip, view.buf, PyArray_MIN(view.len, itemsize));
+        memcpy(ip, view.buf, (size_t)PyArray_MIN(view.len, itemsize));
         if (itemsize > view.len) {
-            memset(ip + view.len, 0, itemsize - view.len);
+            memset(ip + view.len, 0, (size_t)(itemsize - view.len));
         }
         PyBuffer_Release(&view);
     }
@@ -1914,7 +1914,7 @@ static int
 
 static inline void
 _basic_copyn(void *dst, npy_intp dstride, void *src, npy_intp sstride,
-             npy_intp n, int elsize) {
+             npy_intp n, npy_intp elsize) {
     if (src == NULL) {
         return;
     }
@@ -1928,7 +1928,7 @@ _basic_copyn(void *dst, npy_intp dstride, void *src, npy_intp sstride,
 }
 
 static inline void
-_basic_copy(void *dst, void *src, int elsize) {
+_basic_copy(void *dst, void *src, npy_intp elsize) {
     if (src == NULL) {
         return;
     }
@@ -2383,7 +2383,7 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
     if (descr->subarray != NULL) {
         PyArray_Descr *new;
         npy_intp num;
-        int subitemsize;
+        npy_intp subitemsize;
         /*
          * In certain cases subarray copy can be optimized. This is when
          * swapping is unnecessary and the subarrays data type can certainly
@@ -2558,7 +2558,7 @@ count_nonzero_trivial_@name@(npy_intp count, const char *data, npy_int stride)
 /**end repeat**/
 
 NPY_NO_EXPORT npy_intp
-count_nonzero_trivial_dispatcher(npy_intp count, const char* data, npy_intp stride, int dtype_num) { 
+count_nonzero_trivial_dispatcher(npy_intp count, const char* data, npy_intp stride, int dtype_num) {
     switch(dtype_num) {
         /**begin repeat
          *
@@ -4378,8 +4378,8 @@ static int
 }
 /**end repeat**/
 
-/* 
-Keeping Half macros consistent with standard C 
+/*
+Keeping Half macros consistent with standard C
 Reference: https://en.cppreference.com/w/c/types/limits.html
 */
 #define HALF_MAX 31743       /* Bit pattern for 65504.0 */

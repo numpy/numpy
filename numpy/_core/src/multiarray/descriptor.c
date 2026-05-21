@@ -258,7 +258,7 @@ _convert_from_tuple(PyObject *obj, int align)
      */
     if (PyDataType_ISUNSIZED(type)) {
         /* interpret next item as a typesize */
-        int itemsize = PyArray_PyIntAsInt(PyTuple_GET_ITEM(obj,1));
+        npy_intp itemsize = PyArray_PyIntAsIntp(PyTuple_GET_ITEM(obj,1));
         if (type->type_num == NPY_UNICODE) {
             if (itemsize > NPY_MAX_INT / 4) {
                 itemsize = -1;
@@ -266,6 +266,9 @@ _convert_from_tuple(PyObject *obj, int align)
             else {
                 itemsize *= 4;
             }
+        }
+        else if (type->type_num == NPY_STRING && itemsize > NPY_MAX_INT) {
+            itemsize = -1;
         }
         if (itemsize < 0) {
             /* Error may or may not be set by PyIntAsInt. */
@@ -915,7 +918,7 @@ _validate_object_field_overlap(_PyArray_LegacyDescr *dtype)
     PyObject *names, *fields, *key, *tup, *title;
     Py_ssize_t i, j, names_size;
     PyArray_Descr *fld_dtype, *fld2_dtype;
-    int fld_offset, fld2_offset;
+    npy_intp fld_offset, fld2_offset;
 
     /* Get some properties from the dtype */
     names = dtype->names;
@@ -935,7 +938,7 @@ _validate_object_field_overlap(_PyArray_LegacyDescr *dtype)
             }
             return -1;
         }
-        if (!PyArg_ParseTuple(tup, "Oi|O", &fld_dtype, &fld_offset, &title)) {
+        if (!PyArg_ParseTuple(tup, "On|O", &fld_dtype, &fld_offset, &title)) {
             return -1;
         }
 
@@ -955,7 +958,7 @@ _validate_object_field_overlap(_PyArray_LegacyDescr *dtype)
                         }
                         return -1;
                     }
-                    if (!PyArg_ParseTuple(tup, "Oi|O", &fld2_dtype,
+                    if (!PyArg_ParseTuple(tup, "On|O", &fld2_dtype,
                                                 &fld2_offset, &title)) {
                         return -1;
                     }
@@ -1149,8 +1152,9 @@ _convert_from_dict(PyObject *obj, int align)
             }
             Py_DECREF(off);
             if (offset < 0) {
-                PyErr_Format(PyExc_ValueError, "offset %ld cannot be negative",
-                             offset);
+                PyErr_Format(PyExc_ValueError,
+                             "offset %zd cannot be negative",
+                             (Py_ssize_t)offset);
                 Py_DECREF(tup);
                 Py_DECREF(ind);
                 goto fail;
@@ -1164,10 +1168,10 @@ _convert_from_dict(PyObject *obj, int align)
             /* If align=True, enforce field alignment */
             if (align && offset % newdescr->alignment != 0) {
                 PyErr_Format(PyExc_ValueError,
-                        "offset %ld for NumPy dtype with fields is "
+                        "offset %zd for NumPy dtype with fields is "
                         "not divisible by the field alignment %d "
                         "with align=True",
-                        offset, newdescr->alignment);
+                        (Py_ssize_t)offset, newdescr->alignment);
                 Py_DECREF(ind);
                 Py_DECREF(tup);
                 goto fail;
@@ -1285,7 +1289,7 @@ _convert_from_dict(PyObject *obj, int align)
     if (tmp == NULL) {
         PyErr_Clear();
     } else {
-        int itemsize = (int)PyArray_PyIntAsInt(tmp);
+        npy_intp itemsize = PyArray_PyIntAsIntp(tmp);
         Py_DECREF(tmp);
         if (error_converting(itemsize)) {
             Py_DECREF(new);
@@ -1294,9 +1298,9 @@ _convert_from_dict(PyObject *obj, int align)
         /* Make sure the itemsize isn't made too small */
         if (itemsize < new->elsize) {
             PyErr_Format(PyExc_ValueError,
-                    "NumPy dtype descriptor requires %d bytes, "
-                    "cannot override to smaller itemsize of %d",
-                    new->elsize, itemsize);
+                    "NumPy dtype descriptor requires %zd bytes, "
+                    "cannot override to smaller itemsize of %zd",
+                    (Py_ssize_t)new->elsize, (Py_ssize_t)itemsize);
             Py_DECREF(new);
             goto fail;
         }
@@ -1304,8 +1308,8 @@ _convert_from_dict(PyObject *obj, int align)
         if (align && new->alignment > 0 && itemsize % new->alignment != 0) {
             PyErr_Format(PyExc_ValueError,
                     "NumPy dtype descriptor requires alignment of %d bytes, "
-                    "which is not divisible into the specified itemsize %d",
-                    new->alignment, itemsize);
+                    "which is not divisible into the specified itemsize %zd",
+                    new->alignment, (Py_ssize_t)itemsize);
             Py_DECREF(new);
             goto fail;
         }
@@ -1810,13 +1814,13 @@ _convert_from_str(PyObject *obj, int align)
 
         /* Attempt to parse the integer, make sure it's the rest of the string */
         errno = 0;
-        npy_intp result = strtol(type + 1, &typeend, 10);
+        long long result = strtoll(type + 1, &typeend, 10);
         npy_bool some_parsing_happened = !(type == typeend);
         npy_bool entire_string_consumed = *typeend == '\0';
         npy_bool parsing_succeeded =
                 (errno == 0) && some_parsing_happened && entire_string_consumed;
         // make sure it doesn't overflow or go negative
-        if (result > INT_MAX || result < 0) {
+        if (result > NPY_MAX_INTP || result < 0) {
             goto fail;
         }
 
@@ -1827,7 +1831,11 @@ _convert_from_str(PyObject *obj, int align)
 
             kind = type[0];
             switch (kind) {
+                // TODO(seberg): This currently limits strings to int size.
                 case NPY_STRINGLTR:
+                    if (elsize > NPY_MAX_INT) {
+                        goto fail;
+                    }
                     check_num = NPY_STRING;
                     break;
 
@@ -2097,7 +2105,7 @@ arraydescr_protocol_typestr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 
     char basic_ = self->kind;
     char endian = self->byteorder;
-    int size = self->elsize;
+    npy_intp size = self->elsize;
     PyObject *ret;
 
     if (endian == '=') {
@@ -2113,7 +2121,7 @@ arraydescr_protocol_typestr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
         ret = PyUnicode_FromFormat("%c%c", endian, basic_);
     }
     else {
-        ret = PyUnicode_FromFormat("%c%c%d", endian, basic_, size);
+        ret = PyUnicode_FromFormat("%c%c%zd", endian, basic_, (Py_ssize_t)size);
     }
     if (ret == NULL) {
         return NULL;
@@ -2754,7 +2762,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         if (self->type_num == NPY_UNICODE) {
             elsize >>= 2;
         }
-        obj = PyUnicode_FromFormat("%c%d",self->kind, elsize);
+        obj = PyUnicode_FromFormat("%c%zd", self->kind, (Py_ssize_t)elsize);
     }
     PyTuple_SET_ITEM(ret, 1, Py_BuildValue("(NOO)", obj, Py_False, Py_True));
 
@@ -2844,14 +2852,14 @@ _descr_find_object(PyArray_Descr *self)
     if (PyDataType_HASFIELDS(self)) {
         PyObject *key, *value, *title = NULL;
         PyArray_Descr *new;
-        int offset;
+        npy_intp offset;
         Py_ssize_t pos = 0;
 
         while (PyDict_Next(PyDataType_FIELDS(self), &pos, &key, &value)) { // noqa: borrowed-ref OK
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
+            if (!PyArg_ParseTuple(value, "On|O", &new, &offset, &title)) {
                 PyErr_Clear();
                 return 0;
             }
@@ -3457,7 +3465,7 @@ is_dtype_struct_simple_unaligned_layout(PyArray_Descr *dtype)
     PyObject *names, *fields, *key, *tup, *title;
     Py_ssize_t i, names_size;
     PyArray_Descr *fld_dtype;
-    int fld_offset;
+    npy_intp fld_offset;
     npy_intp total_offset;
 
     /* Get some properties from the dtype */
@@ -3477,7 +3485,7 @@ is_dtype_struct_simple_unaligned_layout(PyArray_Descr *dtype)
         if (tup == NULL) {
             return 0;
         }
-        if (!PyArg_ParseTuple(tup, "Oi|O", &fld_dtype, &fld_offset, &title)) {
+        if (!PyArg_ParseTuple(tup, "On|O", &fld_dtype, &fld_offset, &title)) {
             PyErr_Clear();
             return 0;
         }

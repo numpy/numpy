@@ -20,7 +20,7 @@
 #include "mapping.h"
 #include "ctors.h"
 #include "dtypemeta.h"
-#include "descriptor.h" 
+#include "descriptor.h"
 #include "usertypes.h"
 #include "number.h"
 #include "numpyos.h"
@@ -233,7 +233,7 @@ find_binary_operation_path(
     }
 
     if (!was_scalar || PyArray_DESCR(arr)->type_num != NPY_OBJECT) {
-        /* 
+        /*
          * The array is OK for usage and we can simply forward it.  There
          * is a theoretical subtlety here:  If the other object implements
          * `__array_wrap__`, we may ignore that.  However, this only matters
@@ -823,9 +823,8 @@ _void_to_hex(const char* argbuf, const Py_ssize_t arglen,
              const char *schars, const char *bprefix, const char *echars)
 {
     PyObject *retval;
-    int extrachars, slen;
+    Py_ssize_t i, j, extrachars, slen;
     char *retbuf;
-    Py_ssize_t i, j;
     char const *hexdigits = "0123456789ABCDEF";
 
     extrachars = strlen(schars) + strlen(echars);
@@ -1703,11 +1702,11 @@ gentype_itemsize_get(PyObject *self, void *NPY_UNUSED(ignored))
 {
     PyArray_Descr *typecode;
     PyObject *ret;
-    int elsize;
+    npy_intp elsize;
 
     typecode = PyArray_DescrFromScalar(self);
     elsize = typecode->elsize;
-    ret = PyLong_FromLong((long) elsize);
+    ret = PyArray_PyIntFromIntp(elsize);
     Py_DECREF(typecode);
     return ret;
 }
@@ -1827,7 +1826,7 @@ gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
     if (strides == NULL) {
         goto finish;
     }
-    
+
     /* descr */
     descr = array_protocol_descr_get(array_descr);
     if (descr == NULL) {

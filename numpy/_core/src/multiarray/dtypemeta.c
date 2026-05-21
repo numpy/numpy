@@ -730,7 +730,7 @@ void_ensure_canonical(_PyArray_LegacyDescr *self)
                         totalsize, field_descr->alignment);
                 maxalign = PyArray_MAX(maxalign, field_descr->alignment);
             }
-            PyObject *offset_obj = PyLong_FromLong(totalsize);
+            PyObject *offset_obj = PyLong_FromSsize_t(totalsize);
             if (offset_obj == NULL) {
                 Py_DECREF(new_tuple);
                 Py_DECREF(new);
