@@ -1,3 +1,5 @@
+from datetime import date, datetime, timedelta
+
 import numpy as np
 from numpy._typing import ArrayLike, NDArray, _SupportsArray
 
@@ -13,6 +15,9 @@ x9: ArrayLike = [1, 2, 3]
 x10: ArrayLike = (1, 2, 3)
 x11: ArrayLike = "foo"
 x12: ArrayLike = memoryview(b'foo')
+x13: ArrayLike = datetime.now()
+x14: ArrayLike = timedelta(seconds=1)
+x15: ArrayLike = date.today()
 
 
 class A:
@@ -20,7 +25,7 @@ class A:
         return np.array([1.0, 2.0, 3.0])
 
 
-x13: ArrayLike = A()
+x16: ArrayLike = A()
 
 scalar: _SupportsArray[np.dtype[np.int64]] = np.int64(1)
 scalar.__array__()

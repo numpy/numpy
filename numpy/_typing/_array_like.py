@@ -1,3 +1,4 @@
+import datetime
 from collections.abc import Buffer, Callable, Collection
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
@@ -52,7 +53,11 @@ type _DualArrayLike[DTypeT: np.dtype, BuiltinT] = (
     | _NestedSequence[BuiltinT]
 )
 
-type ArrayLike = Buffer | _DualArrayLike[np.dtype, complex | bytes | str]
+type ArrayLike = Buffer | _DualArrayLike[np.dtype, complex | bytes |
+                                         datetime.datetime |
+                                         datetime.timedelta |
+                                         datetime.date |
+                                         str]
 
 # `ArrayLike<X>_co`: array-like objects that can be coerced into `X`
 # given the casting rules `same_kind`
