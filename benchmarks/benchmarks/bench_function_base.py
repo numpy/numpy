@@ -280,12 +280,17 @@ class Sort(Benchmark):
         # Using np.sort(...) instead of arr.sort(...) because it makes a copy.
         # This is important because the data is prepared once per benchmark, but
         # used across multiple runs.
-        np.sort(self.arr, stable=stable, descending=descending)
+        if descending:
+            np.sort(self.arr, stable=stable, descending=True)
+        else:
+            # for backward compatibility to NumPy 2.0
+            np.sort(self.arr, stable=stable)
 
     def time_argsort(self, stable, descending, dtype, array_type):
         if descending:
             np.argsort(self.arr, stable=stable, descending=True)
         else:
+            # for backward compatibility to NumPy 2.0
             np.argsort(self.arr, stable=stable)
 
 
