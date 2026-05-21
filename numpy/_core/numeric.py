@@ -757,7 +757,7 @@ def correlate(a, v, mode='valid'):
     .. math:: c'_k = \sum_n a_{n} \cdot \overline{v_{n+k}}
 
     which is related to :math:`c_k` by :math:`c'_k = c_{-k}`.
-    
+
     NumPy uses the first definition above, where ``a`` is shifted by ``k``.
 
     `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5)
