@@ -2677,7 +2677,7 @@ def astype(x, dtype, /, *, copy=True, device=None):
         return x.astype(dtype, copy=copy)
     except AttributeError:
         raise TypeError(
-            "Input should be a NumPy array or scalar."
+            "Input should be a NumPy array, scalar, or other object with an `astype` implementation."
             f"It is a {type(x)} instead. Python scalars are not supported. "
         )
 
