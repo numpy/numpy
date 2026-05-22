@@ -4398,6 +4398,19 @@ class TestQuantile:
         assert value == q * 50_000
         assert value.dtype == np.float16
 
+    def test_float16_quantiles_large_array_gh_31487(self):
+        # Regression test for gh-31487: float16 quantiles overflow
+        # for arrays larger than float16 max (65504).
+        a = np.zeros(65521, dtype=np.float16)
+        a[:10] = 1
+        q = np.array([0.5, 1.0], dtype=np.float16)
+        # quantile with float16 quantiles
+        result = np.quantile(a, q)
+        assert not np.isnan(result).any()
+        # nanquantile with float16 quantiles
+        result = np.nanquantile(a, q)
+        assert not np.isnan(result).any()
+
     @pytest.mark.parametrize("method", interpolating_quantile_methods)
     @pytest.mark.parametrize("q", [0.5, 1])
     def test_q_weak_promotion(self, method, q):

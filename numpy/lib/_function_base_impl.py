@@ -4755,6 +4755,12 @@ def _quantile(
         np.issubdtype(arr.dtype, np.inexact) or arr.dtype.kind in 'Mm'
     )
 
+    # float16 can only represent up to 65504, which overflows for large arrays.
+    # Cast quantiles to a dtype that can represent all possible virtual indexes.
+    if (np.issubdtype(quantiles.dtype, np.floating)
+            and np.finfo(quantiles.dtype).max < values_count):
+        quantiles = quantiles.astype(np.result_type(quantiles, np.float64))
+
     if weights is None:
         # --- Computation of indexes
         # Index where to find the value in the sorted array.
