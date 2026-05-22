@@ -3938,6 +3938,20 @@ class TestPercentile:
         assert z == one
         assert z.dtype == a.dtype
 
+    @pytest.mark.parametrize(["function", "quantile"], [
+        (np.quantile, np.array([0.5], dtype=np.float16)),
+        (np.percentile, np.array([50], dtype=np.float16)),
+    ])
+    @pytest.mark.parametrize("method", quantile_methods)
+    def test_float16_array_quantile_gh_31487(self, function, quantile, method):
+        a = np.zeros(65521, dtype=np.float16)
+        a[:20_000] = 1
+
+        result = function(a, quantile, method=method)
+
+        assert_equal(result, np.array([0], dtype=np.float16))
+        assert result.dtype == a.dtype
+
     @pytest.mark.slow
     def test_percentile_gh_29003_Fraction(self):
         zero = Fraction(0)

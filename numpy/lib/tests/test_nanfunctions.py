@@ -1343,6 +1343,21 @@ class TestNanFunctions_Quantile:
         assert_equal(np.nanquantile(x, 1), 3.5)
         assert_equal(np.nanquantile(x, 0.5), 1.75)
 
+    @pytest.mark.parametrize(["function", "quantile"], [
+        (np.nanquantile, np.array([0.5], dtype=np.float16)),
+        (np.nanpercentile, np.array([0.5], dtype=np.float16)),
+        (np.nanpercentile, np.array([50], dtype=np.float16)),
+    ])
+    def test_float16_array_quantile_gh_31487(self, function, quantile):
+        x = np.zeros(65521, dtype=np.float16)
+        x[:10] = 1
+        x[20] = np.nan
+
+        result = function(x, quantile)
+
+        assert_equal(result, np.array([0], dtype=np.float16))
+        assert result.dtype == x.dtype
+
     def test_complex(self):
         arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='G')
         assert_raises(TypeError, np.nanquantile, arr_c, 0.5)

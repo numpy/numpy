@@ -1,0 +1,3 @@
+``quantile``, ``percentile``, ``nanquantile``, and ``nanpercentile`` now
+avoid overflow in internal index calculations when a large input array is
+combined with a low-precision floating-point array for ``q``.

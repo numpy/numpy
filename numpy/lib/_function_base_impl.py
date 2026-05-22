@@ -4567,7 +4567,7 @@ def _compute_virtual_index(n, quantiles, alpha: float, beta: float):
     ) - 1
 
 
-def _get_gamma(virtual_indexes, previous_indexes, method):
+def _get_gamma(virtual_indexes, previous_indexes, method, dtype):
     """
     Compute gamma (a.k.a 'm' or 'weight') for the linear interpolation
     of quantiles.
@@ -4588,7 +4588,7 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
     gamma = method["fix_gamma"](gamma, virtual_indexes)
     # Ensure both that we have an array, and that we keep the dtype
     # (which may have been matched to the input array).
-    return np.asanyarray(gamma, dtype=virtual_indexes.dtype)
+    return np.asanyarray(gamma, dtype=dtype)
 
 
 def _lerp(a, b, t, out=None):
@@ -4766,8 +4766,11 @@ def _quantile(
             raise ValueError(
                 f"{method!r} is not a valid method. Use one of: "
                 f"{_QuantileMethods.keys()}") from None
-        virtual_indexes = method_props["get_virtual_index"](values_count,
-                                                            quantiles)
+        gamma_dtype = np.asanyarray(
+            method_props["get_virtual_index"](1, quantiles)
+        ).dtype
+        virtual_indexes = method_props["get_virtual_index"](
+            np.intp(values_count), quantiles)
         virtual_indexes = np.asanyarray(virtual_indexes)
 
         if method_props["fix_gamma"] is None:
@@ -4810,7 +4813,7 @@ def _quantile(
             next = arr[next_indexes]
             # --- Linear interpolation
             gamma = _get_gamma(virtual_indexes, previous_indexes,
-                               method_props)
+                               method_props, gamma_dtype)
             if weak_q:
                 gamma = float(gamma)
             else:
