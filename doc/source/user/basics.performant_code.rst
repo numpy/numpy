@@ -49,9 +49,6 @@ General tips
 ++++++++++++
 
 The following are general tips for utilizing multiprocessing.
-For more details on thread safety guarantees for built-in types
-in Python's free-threaded build, see the Python documentation
-on `Thread Safety Guarantees <https://docs.python.org/3.15/library/threadsafety.html#thread-safety-guarantees>`__.
 
 
 Reduce creation overhead
@@ -129,6 +126,10 @@ General tips
 ++++++++++++
 
 The following are general tips for utilizing multithreading.
+For more details on thread safety guarantees for built-in types
+in Python's free-threaded build, see the Python documentation
+on `Thread Safety Guarantees <https://docs.python.org/3.15/library/threadsafety.html#thread-safety-guarantees>`__.
+
 
 Avoid race conditions
 ~~~~~~~~~~~~~~~~~~~~~
