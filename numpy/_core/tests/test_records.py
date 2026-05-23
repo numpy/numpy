@@ -11,10 +11,10 @@ import numpy as np
 from numpy.testing import (
     IS_64BIT,
     assert_,
+    assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
     assert_equal,
-    assert_allclose,
     assert_raises,
     temppath,
 )
