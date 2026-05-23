@@ -3,11 +3,11 @@ import ctypes
 import inspect
 import operator
 import os
-from io import StringIO
 import pickle
 import sys
 import types
 import warnings
+from io import StringIO
 from itertools import permutations
 from typing import Any
 
@@ -23,10 +23,10 @@ from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
     assert_,
+    assert_allclose,
     assert_array_equal,
     assert_equal,
     assert_raises,
-    assert_allclose,
 )
 from numpy.testing._private.utils import requires_deep_recursion, requires_memory
 
@@ -2213,9 +2213,9 @@ def test_gh_31308_deepcopy_and_scalar_object_large_offsets():
 @requires_memory(free_bytes=2e10)
 def test_gh_31308_huge_void_scalars():
     __tracebackhide__ = True  # locals too large to print nicely
-    dt = np.dtype(f"V{2**31+1}")
+    dt = np.dtype(f"V{2**31 + 1}")
     arr = np.zeros(1, dtype=dt)
-    assert arr.itemsize == 2**31+1
+    assert arr.itemsize == 2**31 + 1
     item = arr[0]
     assert item.dtype == dt
     # The following string conversion is just too slow to run in CI:
