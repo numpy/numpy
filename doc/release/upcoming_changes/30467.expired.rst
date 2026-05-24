@@ -1,1 +1,0 @@
-* ``recfromtxt`` and ``recfromcsv`` have been removed from ``numpy.lib._npyio`` in favor of ``numpy.genfromtxt`` (deprecated since 2.0).
