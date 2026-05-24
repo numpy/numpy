@@ -1,4 +1,5 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _UMATHMODULE
 #define _MULTIARRAYMODULE
 
 #define PY_SSIZE_T_CLEAN
@@ -8,6 +9,7 @@
 
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
+#include "numpy/ufuncobject.h"
 
 #include "numpy/npy_math.h"
 #include "numpy/npy_cpu.h"
@@ -17,6 +19,7 @@
 
 
 #include "npy_static_data.h"
+#include "npy_import.h"
 #include "common.h"
 #include "dtype_transfer.h"
 #include "dtypemeta.h"
@@ -33,6 +36,7 @@
 #include "alloc.h"
 #include "arraytypes.h"
 #include "array_coercion.h"
+#include "dispatching.h"
 #include "simd/simd.h"
 
 static NPY_GCC_OPT_3 inline int
@@ -2061,6 +2065,68 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 }
 
 
+/*
+ * Mirror `np.less.resolve_dtypes((dtype_a, dtype_v, None))` in C — reject
+ * pairings like int+str that would otherwise be silently promoted to string
+ * and yield wrong searchsorted results (gh-24032).
+ *
+ * Returns 0 if compatible, -1 with a TypeError set otherwise.
+ */
+static int
+searchsorted_check_dtypes(PyArray_Descr *dtype_a, PyArray_Descr *dtype_v)
+{
+    static PyObject *less_ufunc = NULL;
+    if (npy_cache_import_runtime("numpy", "less", &less_ufunc) < 0) {
+        return -1;
+    }
+
+    /* The legacy type resolver dereferences PyArray_DESCR(ops[i]), so we
+     * need real PyArrayObjects (0-d, no data). The third slot is for the
+     * output and is cleared by promote_and_get_ufuncimpl. */
+    PyArrayObject *ops[3] = {NULL, NULL, NULL};
+    PyArray_DTypeMeta *op_DTypes[3] = {NPY_DTYPE(dtype_a), NPY_DTYPE(dtype_v), NULL};
+    PyArray_DTypeMeta *signature[3] = {NULL, NULL, NULL};
+    PyArray_Descr *dtypes[2] = {dtype_a, dtype_v};
+    int rv = -1;
+
+    Py_INCREF(op_DTypes[0]);
+    Py_INCREF(op_DTypes[1]);
+    for (int i = 0; i < 2; i++) {
+        Py_INCREF(dtypes[i]);
+        ops[i] = (PyArrayObject *)PyArray_NewFromDescr_int(
+                &PyArray_Type, dtypes[i], 0, NULL, NULL, NULL, 0, NULL, NULL,
+                _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
+        if (ops[i] == NULL) {
+            goto cleanup;
+        }
+    }
+
+    PyArrayMethodObject *impl = promote_and_get_ufuncimpl(
+            (PyUFuncObject *)less_ufunc, ops, signature, op_DTypes,
+            NPY_FALSE, NPY_FALSE, NPY_FALSE);
+    if (impl == NULL) {
+        PyErr_Clear();
+        PyErr_Format(PyExc_TypeError,
+                "Incompatible types for searching: a (%S) and v (%S)",
+                dtype_a, dtype_v);
+    }
+    else {
+        rv = 0;
+    }
+
+cleanup:
+    Py_XDECREF(ops[0]);
+    Py_XDECREF(ops[1]);
+    Py_XDECREF(op_DTypes[0]);
+    Py_XDECREF(op_DTypes[1]);
+    Py_XDECREF(op_DTypes[2]);
+    Py_XDECREF(signature[0]);
+    Py_XDECREF(signature[1]);
+    Py_XDECREF(signature[2]);
+    return rv;
+}
+
+
 /*NUMPY_API
  *
  * Search the sorted array op1 for the location of the items in op2. The
@@ -2105,8 +2171,26 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     PyArray_ArgBinSearchFunc *argbinsearch = NULL;
     NPY_BEGIN_THREADS_DEF;
 
-    /* Find common type */
-    dtype = PyArray_DescrFromObject((PyObject *)op2, PyArray_DESCR(op1));
+    /* Discover op2's natural dtype, reject incompatible pairs (gh-24032),
+     * then promote. Same-DType and number/number pairs always have a less
+     * loop, so they skip the heavy check. */
+    PyArray_Descr *dtype_a = PyArray_DESCR(op1);
+    PyArray_Descr *dtype_v = NULL;
+    if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &dtype_v) < 0) {
+        return NULL;
+    }
+    if (dtype_v == NULL) {
+        dtype_v = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+    }
+    if (NPY_DTYPE(dtype_a) != NPY_DTYPE(dtype_v)
+            && !(PyTypeNum_ISNUMBER(dtype_a->type_num)
+                 && PyTypeNum_ISNUMBER(dtype_v->type_num))
+            && searchsorted_check_dtypes(dtype_a, dtype_v) < 0) {
+        Py_DECREF(dtype_v);
+        return NULL;
+    }
+    dtype = PyArray_PromoteTypes(dtype_a, dtype_v);
+    Py_DECREF(dtype_v);
     if (dtype == NULL) {
         return NULL;
     }
