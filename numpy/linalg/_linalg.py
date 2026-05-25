@@ -120,10 +120,6 @@ class LinAlgError(ValueError):
     Algebra-related condition would prevent further correct execution of the
     function.
 
-    Parameters
-    ----------
-    None
-
     Examples
     --------
     >>> from numpy import linalg as LA
@@ -277,6 +273,17 @@ def transpose(a):
     Parameters
     ----------
     a : (...,M,N) array_like
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+    >>> transpose(a)
+    array([[[1, 3],
+            [2, 4]],
+    <BLANKLINE>
+           [[5, 7],
+            [6, 8]]])
 
     Returns
     -------
@@ -3454,6 +3461,23 @@ def matrix_norm(x, /, *, keepdims=False, ord="fro"):
         The order of the norm. For details see the table under ``Notes``
         in `numpy.linalg.norm`.
 
+    Returns
+    -------
+    norm : float or real numeric type
+        The matrix norm of the input array. The returned value is either
+        a float or the same type as the input array if it is real-valued.
+        
+        The computed norm depends on the ``ord`` parameter:
+        
+        - ``ord=None`` or ``ord='fro'``: Frobenius norm
+        - ``ord='nuc'``: nuclear norm (trace norm)
+        - ``ord=1``: max sum of column absolute values
+        - ``ord=-1``: min sum of column absolute values
+        - ``ord=2``: 2-norm (largest singular value)
+        - ``ord=-2``: smallest singular value
+        - ``ord=np.inf``: max sum of row absolute values
+        - ``ord=-np.inf``: min sum of row absolute values
+
     See Also
     --------
     numpy.linalg.norm : Generic norm function
@@ -3522,6 +3546,21 @@ def vector_norm(x, /, *, axis=None, keepdims=False, ord=2):
     ord : {int, float, inf, -inf}, optional
         The order of the norm. For details see the table under ``Notes``
         in `numpy.linalg.norm`.
+
+    Returns
+    -------
+    norm : float or real numeric type
+        The vector norm of the input array. The returned value is either
+        a float or the same type as the input array if it is real-valued.
+        
+        The computed norm depends on the ``ord`` parameter:
+        
+        - ``ord=None`` or ``ord=2``: 2-norm (Euclidean distance)
+        - ``ord=1``: 1-norm (sum of absolute values)
+        - ``ord=np.inf``: inf-norm (max of absolute values)
+        - ``ord=-1``: min of absolute values
+        - ``ord=-np.inf``: min of absolute values
+        - For other ``ord``: sum(abs(x)**ord)**(1./ord)
 
     See Also
     --------
