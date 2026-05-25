@@ -718,6 +718,16 @@ def histogram2d(x, y, bins=10, range=None, density=None, weights=None):
         * A combination [int, array] or [array, int], where int
           is the number of bins and array is the bin edges.
 
+        .. note::
+            When ``bins=[m, n]`` where both values are integers,
+            they are interpreted as the **number of bins** per
+            dimension, not bin edge positions. For example,
+            ``bins=[3, 5]`` creates 3 bins along x and 5 bins
+            along y. This distinction can be easy to miss,
+            especially when using `histogramdd` with many
+            dimensions. To specify edges explicitly, pass arrays:
+            ``bins=[array1, array2]``.
+
     range : array_like, shape(2,2), optional
         The leftmost and rightmost edges of the bins along each dimension
         (if not specified explicitly in the `bins` parameters):
