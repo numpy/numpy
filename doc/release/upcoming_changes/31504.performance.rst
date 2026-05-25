@@ -1,0 +1,26 @@
+``np.partition`` is now faster on aarch64 and ppc64
+----------------------------------------------------
+`numpy.partition` on non-x86 platforms (aarch64, ppc64) now uses
+Highway's ``VQSelectStatic`` instead of the scalar quickselect.
+Applies to arrays with 16 384 or more elements of ``int16``,
+``uint16``, ``int32``, ``uint32``, ``int64``, ``uint64``, ``float32``,
+or ``float64`` dtype.
+
+Measured speedups vs scalar introselect on Apple M1 Pro (NEON, aarch64),
+arrays of 100k–1M elements, kth = N/2:
+
+* ``float32``: 2.2–5.0×
+* ``float64``: 1.8–2.7×
+* ``int32``: 6.4×
+* ``uint32``: 4.2–7.0×
+* ``int64``: 2.4–2.9×
+* ``uint64``: 2.5–2.9×
+* ``int16``: 9.1–11.6×
+* ``uint16``: 8.1–12.3×
+
+Speedup varies with array size and kth position; the lower end of each
+range is for N=1M and the upper for N=100k (or vice versa for float32).
+ppc64 (VSX2) benchmarks have not yet been measured.
+
+`numpy.argpartition` is not affected; Highway VQSelect operates on a
+keys-only array and cannot maintain a parallel index array.

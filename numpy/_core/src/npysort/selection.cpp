@@ -26,9 +26,9 @@
 #include <cstdlib>
 #include <utility>
 #include "x86_simd_qsort.hpp"
+#include "highway_qsort.hpp"
 
 #define NOT_USED NPY_UNUSED(unused)
-#define DISABLE_HIGHWAY_OPTIMIZATION (defined(__arm__) || defined(__aarch64__))
 
 template<typename T>
 inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
@@ -43,6 +43,7 @@ inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
         (sizeof(T) == sizeof(uint16_t) || sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t))) {
         using TF = typename np::meta::FixedWidth<T>::Type;
         void (*dispfunc)(TF*, npy_intp, npy_intp) = nullptr;
+#if defined(NPY_CPU_AMD64) || defined(NPY_CPU_X86)
         if constexpr (sizeof(T) == sizeof(uint16_t)) {
             #include "x86_simd_qsort_16bit.dispatch.h"
             NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSelect, <TF>);
@@ -51,6 +52,26 @@ inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
             #include "x86_simd_qsort.dispatch.h"
             NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSelect, <TF>);
         }
+#else
+        // Attempt Highway VQSelect on non-x86 platforms.  One dispatch handles
+        // all widths (16/32/64-bit ints and float/double); 16-bit integers are
+        // plain integers covered by base ASIMD, so no separate ASIMDHP target
+        // is needed.  Registered for ASIMD (aarch64 NEON) and VSX2 (ppc64); on
+        // other architectures dispfunc stays null and we fall through to scalar
+        // introselect below.
+        //
+        // Half (float16) is excluded: HWY_HAVE_FLOAT16 gating adds complexity
+        // and float16 partition is uncommon; scalar introselect is correct.
+        //
+        // Single threshold for all types; below it scalar introselect wins.
+        static constexpr npy_intp HWY_QSELECT_MIN_N = 16384;
+        if constexpr (!std::is_same_v<TF, np::Half>) {
+            if (num >= HWY_QSELECT_MIN_N) {
+                #include "highway_qselect.dispatch.h"
+                NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::highway::qsort_simd::template QSelect, <TF>);
+            }
+        }
+#endif
         if (dispfunc) {
             (*dispfunc)(reinterpret_cast<TF*>(v), num, kth);
             return true;
