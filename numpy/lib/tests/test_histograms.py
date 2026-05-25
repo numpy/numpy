@@ -432,11 +432,11 @@ class TestHistogram:
     def test_low_spread_big_data(self):
         # issue 8627
         for x in [2**53, 2**60, 2**61, 2**62, 2**63]:
-            for bins in [1,10,100,1000]:
+            for bins in [1, 10, 100, 1000]:
                 hist, _ = np.histogram([x], bins)
                 result = np.zeros(bins)
-                result[bins//2] = 1
-                assert_array_equal(hist,result)
+                result[bins // 2] = 1
+                assert_array_equal(hist, result)
         double_numbers = np.array([1e20] * 20)
         hist, _ = np.histogram(double_numbers, bins=100)
         result = np.zeros(100)
