@@ -652,7 +652,7 @@ UNICODE_getitem(void *ip, void *vap)
 
     /* swap and align if needed */
     if (swap || align) {
-        buf = (npy_ucs4 *)malloc(size);
+        buf = (npy_ucs4 *)PyMem_RawMalloc(size);
         if (buf == NULL) {
             PyErr_NoMemory();
             return NULL;
@@ -669,7 +669,7 @@ UNICODE_getitem(void *ip, void *vap)
         ucs4len--;
     }
     PyObject *ret = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, src, ucs4len);
-    free(buf);
+    PyMem_RawFree(buf);
     return ret;
 }
 

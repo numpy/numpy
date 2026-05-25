@@ -322,7 +322,7 @@ string_quicksort_(type *start, npy_intp num, int elsize)
         return 0;
     }
 
-    vp = (type *)malloc(elsize);
+    vp = (type *)PyMem_RawMalloc(elsize);
     if (vp == NULL) {
         return -NPY_ENOMEM;
     }
@@ -397,7 +397,7 @@ string_quicksort_(type *start, npy_intp num, int elsize)
         cdepth = *(--psdepth);
     }
 
-    free(vp);
+    PyMem_RawFree(vp);
     return 0;
 }
 
