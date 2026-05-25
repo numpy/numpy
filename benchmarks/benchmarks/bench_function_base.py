@@ -292,9 +292,9 @@ class Sort(Benchmark):
                 with np.errstate(over='raise'):
                     np.argsort(self.arr, stable=stable, descending=True)
             except TypeError:
-                    raise SkipNotImplemented(
-                        f"Descending argsort is not supported for {dtype}"
-                    )
+                raise SkipNotImplemented(
+                    f"Descending argsort is not supported for {dtype}"
+                )
         else:
             # for backward compatibility to NumPy 2.0
             np.argsort(self.arr, stable=stable)
