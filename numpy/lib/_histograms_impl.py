@@ -1,4 +1,4 @@
-X"""
+"""
 Histogram-related functions
 """
 import contextlib
