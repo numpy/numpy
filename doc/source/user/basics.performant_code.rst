@@ -113,8 +113,13 @@ For details on free-threaded Python builds, see the
 `Python Free-Threading Guide <https://py-free-threading.github.io/>`__.
 
 
-As a high-level API, Python provides the `concurrent.futures.ThreadPoolExecutor` class  for thread-based parallelism.
-Python also provides the `concurrent.futures.InterpreterPoolExecutor`, which uses multiple interpreters running in separate threads and avoids sharing Python objects between them. However, it is not yet available in NumPy. (See `gh-24755 <https://github.com/numpy/numpy/issues/24755>`__ for details.)
+As a high-level API, Python provides the `concurrent.futures.ThreadPoolExecutor` class 
+for thread-based parallelism.
+Python also provides the `concurrent.futures.InterpreterPoolExecutor`,
+which uses multiple interpreters running in separate threads
+and avoids sharing Python objects between them.
+However, it is not yet available in NumPy.
+(See `gh-24755 <https://github.com/numpy/numpy/issues/24755>`__ for details.)
 
 
 The main pros and cons of multithreading are as follows:
