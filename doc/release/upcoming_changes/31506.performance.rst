@@ -21,6 +21,3 @@ arrays of 100k–1M elements, kth = N/2:
 Speedup varies with array size and kth position; the lower end of each
 range is for N=1M and the upper for N=100k (or vice versa for float32).
 ppc64 (VSX2) benchmarks have not yet been measured.
-
-`numpy.argpartition` is not affected; Highway VQSelect operates on a
-keys-only array and cannot maintain a parallel index array.
