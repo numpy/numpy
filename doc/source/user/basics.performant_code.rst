@@ -10,7 +10,8 @@ Introduction
 ================
 
 NumPy is designed for high performance numerical computing in Python by leveraging vectorized operations.
-However, vectorization does not always fully utilize the capabilities of multi-core processors. To exploit parallelism, additional strategies are necessary.
+However, vectorization does not always fully utilize the capabilities of multi-core processors.
+To exploit parallelism, additional strategies are necessary.
 
 In this section, we cover the following topics:
 
@@ -28,8 +29,10 @@ General concepts for multi-core processors in Python
 Multiprocessing
 ----------------
 
-Multiprocessing is a technique that allows the execution of multiple processes simultaneously, each with its own Python interpreter and memory space.
-As a high-level API, Python provides the `concurrent.futures.ProcessPoolExecutor` class to facilitate multiprocessing.
+Multiprocessing is a technique that allows the execution of multiple processes simultaneously,
+each with its own Python interpreter and memory space.
+As a high-level API, Python provides the `concurrent.futures.ProcessPoolExecutor` class
+to facilitate multiprocessing.
 
 Firstly, we introduce brief Pros and Cons of multiprocessing:
 
@@ -57,8 +60,12 @@ Reduce creation overhead
 Process creation has a higher overhead compared to thread creation due to the need to initialize a new Python interpreter and memory space.
 To mitigate this overhead, consider the following strategies:
 
-* Use process pools to reuse existing processes instead of creating new ones for each task. `concurrent.futures.ProcessPoolExecutor` provides this feature.
-* Select appropriate startup methods. On Unix-like systems, the ``fork`` method can be faster than ``spawn`` or ``forkserver`` because it duplicates the parent process's memory space. However, ``fork`` may cause potential issues when using combined with threads or certain libraries. See the `multiprocessing documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods>`__ for more details.
+* Use process pools to reuse existing processes instead of creating new ones for each task.
+  `concurrent.futures.ProcessPoolExecutor` provides this feature.
+* Select appropriate startup methods. On Unix-like systems, the ``fork`` method can be faster
+  than ``spawn`` or ``forkserver`` because it duplicates the parent process's memory space.
+  However, ``fork`` may cause potential issues when using combined with threads or certain libraries. 
+  See the `multiprocessing documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods>`__ for more details.
 
 
 Reduce communication overhead
@@ -70,19 +77,28 @@ Due to this limitation, multiprocessing is not suitable for programs which need 
 To reduce communication overhead, consider the following strategies:
 
 * Minimize the amount of data transferred between processes.
-* Use shared memory constructs such as `multiprocessing.shared_memory`, `multiprocessing.Array` or `multiprocessing.Value` for large data that needs to be accessed by multiple processes.
-* Set appropriate ``chunksize`` when using methods like ``map`` or ``imap`` in process pools. ``chunksize`` determines the number of tasks assigned to each process at a time, which can help balance the trade-off between task granularity and communication overhead.
+* Use shared memory constructs such as `multiprocessing.shared_memory`, `multiprocessing.Array`
+  or `multiprocessing.Value` for large data that needs to be accessed by multiple processes.
+* Set appropriate ``chunksize`` when using methods like ``map`` or ``imap`` in process pools.
+  ``chunksize`` determines the number of tasks assigned to each process at a time,
+  which can help balance the trade-off between task granularity and communication overhead.
 
 
 Pickling considerations
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-The worker function and its arguments must be picklable when using multiprocessing. This requirement can become a limitation when working with complex data structures or dynamically defined functions.
+The worker function and its arguments must be picklable when using multiprocessing.
+This requirement can become a limitation when working with complex data structures or dynamically
+defined functions.
 
 If you encounter pickling-related issues, consider the following strategies:
 
-* Refactor your code to use simpler data structures or functions. For example, define worker functions at the top level of a module and avoid lambda or nested functions.
-* Consider third-party libraries such as `joblib <https://github.com/joblib/joblib>`__. ``joblib``'s default backend ``loky`` relies on `cloudpickle <https://github.com/cloudpipe/cloudpickle>`__ for serialization and can handle a wider range of Python objects than the standard ``pickle`` module. See the ``joblib`` documentaion on `Serialization of un-picklable objects <https://joblib.readthedocs.io/en/latest/auto_examples/serialization_and_wrappers.html>`__ for more details.
+* Refactor your code to use simpler data structures or functions.
+  For example, define worker functions at the top level of a module and avoid lambda or nested functions.
+* Consider third-party libraries such as `joblib <https://github.com/joblib/joblib>`__.
+  ``joblib``'s default backend ``loky`` relies on `cloudpickle <https://github.com/cloudpipe/cloudpickle>`__
+  for serialization and can handle a wider range of Python objects than the standard ``pickle`` module.
+  See the ``joblib`` documentaion on `Serialization of un-picklable objects <https://joblib.readthedocs.io/en/latest/auto_examples/serialization_and_wrappers.html>`__ for more details.
 
 
 
@@ -90,7 +106,9 @@ Multithreading
 -----------------
 
 Multithreading allows multiple threads to run within the same process, sharing the same memory space.
-Starting with Python 3.13, a free-threaded build of Python is available. When combined with libraries that are explicitly designed to be thread-safe, this can enable true parallel execution with threads.
+Starting with Python 3.13, a free-threaded build of Python is available.
+When combined with libraries that are explicitly designed to be thread-safe,
+this can enable true parallel execution with threads.
 For details on free-threaded Python builds, see the
 `Python Free-Threading Guide <https://py-free-threading.github.io/>`__.
 
@@ -123,12 +141,18 @@ on `Thread Safety Guarantees <https://docs.python.org/3.15/library/threadsafety.
 Avoid race conditions
 ~~~~~~~~~~~~~~~~~~~~~
 
-Race conditions occur when multiple threads update shared data simultaneously, leading to unpredictable results.
+Race conditions occur when multiple threads update shared data simultaneously,
+leading to unpredictable results.
 To avoid race conditions, consider the following strategies:
 
-* Minimize the amount of shared data between threads by designing your program to use thread-local storage or by passing data explicitly to threads. 
-* Prefer immutable NumPy arrays or read-only access patterns when possible, since they reduce the need for explicit synchronization.
-* Use thread-safe data structures or synchronization primitives like locks, semaphores, or condition variables to manage access to shared data. Note that improper use of these synchronization mechanisms can cause deadlocks, so they should be used with care.
+* Minimize the amount of shared data between threads by designing your program
+  to use thread-local storage or by passing data explicitly to threads. 
+* Prefer immutable NumPy arrays or read-only access patterns when possible,
+  since they reduce the need for explicit synchronization.
+* Use thread-safe data structures or synchronization primitives like locks, semaphores,
+  or condition variables to manage access to shared data.
+  Note that improper use of these synchronization mechanisms can cause deadlocks,
+  so they should be used with care.
 
 
 Common tips for both multiprocessing and multithreading
@@ -157,18 +181,23 @@ Using multi-core processors with Python standard libraries
 In this section, we demonstrate how to use Python's standard libraries to leverage multi-core processors with NumPy.
 
 As an example, we use `Mandelbrot set <https://en.wikipedia.org/wiki/Mandelbrot_set>`__ generation. 
-Mandelbrot set is defined as the set of complex numbers ``c`` for which the sequence defined by the iterative function does not diverge to infinity:
+Mandelbrot set is defined as the set of complex numbers ``c``
+for which the sequence defined by the iterative function does not diverge to infinity:
 
 .. math::
 
     z_{n+1} = z_n^2 + c, \quad z_0 = 0
 
 
-If the absolute value of :math:`z_n` remains bounded (i.e., does not exceed a certain threshold, typically ``2`` ) after a fixed number of iterations, then ``c`` is considered to be in the Mandelbrot set.
+If the absolute value of :math:`z_n` remains bounded
+(i.e., does not exceed a certain threshold, typically ``2`` ) after a fixed number of iterations,
+then ``c`` is considered to be in the Mandelbrot set.
 
-Following to this definition, we can calculate each point in the complex plane independently, making it suited for parallel computation.
+Following to this definition, we can calculate each point in the complex plane independently,
+making it suited for parallel computation.
 
-The hot colors in the image below represent the number of iterations it took for the sequence to diverge for each point in the complex plane.
+The hot colors in the image below represent the number of iterations
+it took for the sequence to diverge for each point in the complex plane.
 
 
 .. image:: images/np_mandelbrot.png
@@ -181,9 +210,12 @@ The hot colors in the image below represent the number of iterations it took for
 Multiprocessing Example
 ------------------------
 
-The following code demonstrates how to use `concurrent.futures.ProcessPoolExecutor` to parallelize the Mandelbrot set generation across multiple processes.
+The following code demonstrates how to use `concurrent.futures.ProcessPoolExecutor`
+to parallelize the Mandelbrot set generation across multiple processes.
 
-This example prioritizes clarity over efficiency. In practice, transferring large NumPy arrays between processes can be expensive. Defining shared-memory arrays or creating arrays within each process may be more efficient implementation.
+This example prioritizes clarity over efficiency.
+In practice, transferring large NumPy arrays between processes can be expensive.
+Defining shared-memory arrays or creating arrays within each process may be more efficient implementation.
 
 
 .. code-block:: python
@@ -242,8 +274,10 @@ This example prioritizes clarity over efficiency. In practice, transferring larg
 Multithreading Example
 ----------------------
 
-As in the multiprocessing example, we demonstrate how to use `concurrent.futures.ThreadPoolExecutor` to parallelize the Mandelbrot set generation across multiple threads.
-For more detailed explanations and additional examples, see `Examples Demonstrating Free-Threaded Python <https://py-free-threading.github.io/examples/>`__.
+As in the multiprocessing example, we demonstrate how to use `concurrent.futures.ThreadPoolExecutor`
+to parallelize the Mandelbrot set generation across multiple threads.
+For more detailed explanations and additional examples,
+see `Examples Demonstrating Free-Threaded Python <https://py-free-threading.github.io/examples/>`__.
 
 Setup
 +++++
@@ -252,7 +286,8 @@ Install a free-threaded build Python
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Before running the multithreading example, ensure you have a free-threaded build of Python 3.13 or later.
-For example, if you use ``pyenv``, you can install it and create a virtual environment naming ``numpy-multithreading`` as follows:
+For example, if you use ``pyenv``, you can install it and create a virtual environment
+naming ``numpy-multithreading`` as follows:
 
 .. code-block:: bash
 
@@ -270,19 +305,24 @@ According to the `Python documentation <https://docs.python.org/3/howto/free-thr
 Install NumPy from Source
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-NumPy includes ongoing work to improve compatibility and thread-safety when used with free-threaded Python builds.
+NumPy includes ongoing work to improve compatibility and thread-safety
+when used with free-threaded Python builds.
 (See https://github.com/numpy/numpy/issues/30494 for details.)
 
 Thus, to utilize multithreading parallelism fully, we may need to build NumPy from source.
-Please refer to the :ref:`Building from source to use NumPy <building-from-source>` section for detailed instructions.
+Please refer to the :ref:`Building from source to use NumPy <building-from-source>` section
+for detailed instructions.
 
 
 Code Example
 ++++++++++++
 
-The following code demonstrates how to use `concurrent.futures.ThreadPoolExecutor` to parallelize the Mandelbrot set generation across multiple threads.
+The following code demonstrates how to use `concurrent.futures.ThreadPoolExecutor`
+to parallelize the Mandelbrot set generation across multiple threads.
 
-This implementation shares several arrays between threads. For example, ``SHARED_readonly_arr`` is a read-only array that holds the complex numbers to be evaluated, and ``SHARED_updating_steps`` is an array that holds the number of iterations for each point.
+This implementation shares several arrays between threads.
+For example, ``SHARED_readonly_arr`` is a read-only array that holds the complex numbers to be evaluated,
+and ``SHARED_updating_steps`` is an array that holds the number of iterations for each point.
 
 
 
@@ -355,14 +395,17 @@ This implementation shares several arrays between threads. For example, ``SHARED
 Third Party Libraries for Multi-Core Processing
 ===============================================
 
-In many practical scenarios, third-party libraries can provide more convenient and efficient solutions than using Python's standard libraries.
+In many practical scenarios, third-party libraries can provide more convenient and efficient solutions
+than using Python's standard libraries.
 
 
 Dask
 ----
 
-Dask is an open-source library that provides parallel compuing features not only for a single machine but also for a cluster of machines.
-It also provides ``DaskArray`` which has a similar API to NumPy's ``ndarray``. If you are familiar with NumPy, you can easily get started with ``DaskArray``.
+Dask is an open-source library that provides parallel compuing features
+not only for a single machine but also for a cluster of machines.
+It also provides ``DaskArray`` which has a similar API to NumPy's ``ndarray``. 
+If you are familiar with NumPy, you can easily get started with ``DaskArray``.
 
 * Dask Documentaion: https://docs.dask.org/en/stable/
 * Dask GitHub Repository: https://github.com/dask/dask
