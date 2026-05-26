@@ -34,7 +34,7 @@ type _CastingUnsafe = Literal["unsafe"]
 # Something like `is_scalar = bool(__subscripts.partition("->")[-1])`
 @overload
 def einsum(
-    subscripts: str | _ArrayLikeInt_co,
+    subscripts: str | _ArrayLikeComplex_co,
     /,
     *operands: _ArrayLikeBool_co,
     out: None = None,
@@ -45,7 +45,7 @@ def einsum(
 ) -> Any: ...
 @overload
 def einsum(
-    subscripts: str | _ArrayLikeInt_co,
+    subscripts: str | _ArrayLikeComplex_co,
     /,
     *operands: _ArrayLikeUInt_co,
     out: None = None,
@@ -56,7 +56,7 @@ def einsum(
 ) -> Any: ...
 @overload
 def einsum(
-    subscripts: str | _ArrayLikeInt_co,
+    subscripts: str | _ArrayLikeComplex_co,
     /,
     *operands: _ArrayLikeInt_co,
     out: None = None,
@@ -67,7 +67,7 @@ def einsum(
 ) -> Any: ...
 @overload
 def einsum(
-    subscripts: str | _ArrayLikeInt_co,
+    subscripts: str | _ArrayLikeComplex_co,
     /,
     *operands: _ArrayLikeFloat_co,
     out: None = None,
@@ -78,7 +78,7 @@ def einsum(
 ) -> Any: ...
 @overload
 def einsum(
-    subscripts: str | _ArrayLikeInt_co,
+    subscripts: str | _ArrayLikeComplex_co,
     /,
     *operands: _ArrayLikeComplex_co,
     out: None = None,
@@ -89,7 +89,7 @@ def einsum(
 ) -> Any: ...
 @overload
 def einsum(
-    subscripts: str | _ArrayLikeInt_co,
+    subscripts: str | _ArrayLikeComplex_co,
     /,
     *operands: Any,
     casting: _CastingUnsafe,
@@ -100,7 +100,7 @@ def einsum(
 ) -> Any: ...
 @overload
 def einsum[OutT: NDArray[np.bool | np.number]](
-    subscripts: str | _ArrayLikeInt_co,
+    subscripts: str | _ArrayLikeComplex_co,
     /,
     *operands: _ArrayLikeComplex_co,
     out: OutT,
@@ -111,7 +111,7 @@ def einsum[OutT: NDArray[np.bool | np.number]](
 ) -> OutT: ...
 @overload
 def einsum[OutT: NDArray[np.bool | np.number]](
-    subscripts: str | _ArrayLikeInt_co,
+    subscripts: str | _ArrayLikeComplex_co,
     /,
     *operands: Any,
     out: OutT,
@@ -123,7 +123,7 @@ def einsum[OutT: NDArray[np.bool | np.number]](
 
 @overload
 def einsum(
-    subscripts: str | _ArrayLikeInt_co,
+    subscripts: str | _ArrayLikeComplex_co,
     /,
     *operands: _ArrayLikeObject_co,
     out: None = None,
@@ -134,7 +134,7 @@ def einsum(
 ) -> Any: ...
 @overload
 def einsum(
-    subscripts: str | _ArrayLikeInt_co,
+    subscripts: str | _ArrayLikeComplex_co,
     /,
     *operands: Any,
     casting: _CastingUnsafe,
@@ -145,7 +145,7 @@ def einsum(
 ) -> Any: ...
 @overload
 def einsum[OutT: NDArray[np.bool | np.number]](
-    subscripts: str | _ArrayLikeInt_co,
+    subscripts: str | _ArrayLikeComplex_co,
     /,
     *operands: _ArrayLikeObject_co,
     out: OutT,
@@ -156,7 +156,7 @@ def einsum[OutT: NDArray[np.bool | np.number]](
 ) -> OutT: ...
 @overload
 def einsum[OutT: NDArray[np.bool | np.number]](
-    subscripts: str | _ArrayLikeInt_co,
+    subscripts: str | _ArrayLikeComplex_co,
     /,
     *operands: Any,
     out: OutT,
@@ -171,7 +171,7 @@ def einsum[OutT: NDArray[np.bool | np.number]](
 # NOTE: In practice the list consists of a `str` (first element)
 # and a variable number of integer tuples.
 def einsum_path(
-    subscripts: str | _ArrayLikeInt_co,
+    subscripts: str | _ArrayLikeComplex_co,
     /,
     *operands: _ArrayLikeComplex_co | _DTypeLikeObject,
     optimize: _OptimizeKind = "greedy",
