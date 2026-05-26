@@ -12,6 +12,7 @@ import operator
 import os
 import pathlib
 import pickle
+import platform
 import re
 import subprocess
 import sys
@@ -25,8 +26,6 @@ from contextlib import ExitStack, contextmanager
 # Need to test an object that does not fully implement math interface
 from datetime import datetime, timedelta
 from decimal import Decimal
-
-import platform
 
 import pytest
 
