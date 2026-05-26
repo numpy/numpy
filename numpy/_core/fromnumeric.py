@@ -725,12 +725,12 @@ def matrix_transpose(x, /):
     return swapaxes(x, -1, -2)
 
 
-def _partition_dispatcher(a, kth, axis=None, kind=None, order=None):
+def _partition_dispatcher(a, kth, axis=None, kind=None, order=None, descending=None):
     return (a,)
 
 
 @array_function_dispatch(_partition_dispatcher)
-def partition(a, kth, axis=-1, kind='introselect', order=None):
+def partition(a, kth, axis=-1, kind=None, order=None, descending=np._NoValue):
     """
     Return a partitioned copy of an array.
 
@@ -837,16 +837,20 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
         axis = -1
     else:
         a = asanyarray(a).copy(order="K")
-    a.partition(kth, axis=axis, kind=kind, order=order)
+    # Sanitize for backward compatibility
+    if descending is not np._NoValue:
+        a.partition(kth, axis=axis, kind=kind, order=order, descending=descending)
+    else:
+        a.partition(kth, axis=axis, kind=kind, order=order)
     return a
 
 
-def _argpartition_dispatcher(a, kth, axis=None, kind=None, order=None):
+def _argpartition_dispatcher(a, kth, axis=None, kind=None, order=None, descending=None):
     return (a,)
 
 
 @array_function_dispatch(_argpartition_dispatcher)
-def argpartition(a, kth, axis=-1, kind='introselect', order=None):
+def argpartition(a, kth, axis=-1, kind=None, order=None, descending=np._NoValue):
     """
     Perform an indirect partition along the given axis using the
     algorithm specified by the `kind` keyword. It returns an array of
@@ -929,7 +933,23 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
            [1, 1, 3]])
 
     """
-    return _wrapfunc(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
+    if descending is not np._NoValue:
+        return _wrapfunc(
+            a,
+            'argpartition',
+            kth, axis=axis,
+            kind=kind,
+            order=order,
+            descending=descending
+        )
+    return _wrapfunc(
+        a,
+        'argpartition',
+        kth,
+        axis=axis,
+        kind=kind,
+        order=order
+    )
 
 
 def _sort_dispatcher(
