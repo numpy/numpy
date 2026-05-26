@@ -10,7 +10,7 @@ Introduction
 ================
 
 NumPy is designed for high performance numerical computing in Python by leveraging vectorized operations.
-However, vectorization does not always fully utilize the capabilities of multi-core processors. To realize multiprocessing and multithreading, additional strategies are necessary.
+However, vectorization does not always fully utilize the capabilities of multi-core processors. To exploit parallelism, additional strategies are necessary.
 
 In this section, we cover the following topics:
 
@@ -65,7 +65,7 @@ Reduce communication overhead
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Inter-process communication (IPC) can introduce significant overhead due to data serialization and transfer between processes. In Python, only picklable objects are allowed to be passed between processes.
-Due to this nature, multiprocessing is not suitable for the program which needs to synthesize data between processes frequently.
+Due to this limitation, multiprocessing is not suitable for programs which needs to serialize data between processes frequently.
 
 To reduce communication overhead, consider the following strategies:
 
@@ -349,7 +349,6 @@ Third Party Libraries for Multi-Core Processing
 ===============================================
 
 In many practical scenarios, third-party libraries can provide more convenient and efficient solutions than using Python's standard libraries.
-We will briefly introduce some third party libraries at the end of this introduction.
 
 
 Dask
