@@ -125,13 +125,13 @@ class nd_grid(Generic[_BoolT_co]):
 
 @final
 class MGridClass(nd_grid[L[False]]):
-    __slots__ = ()
+    __slots__ = ()  # pyrefly:ignore[implicit-any-attribute]
 
     def __init__(self) -> None: ...
 
 @final
 class OGridClass(nd_grid[L[True]]):
-    __slots__ = ()
+    __slots__ = ()  # pyrefly:ignore[implicit-any-attribute]
 
     def __init__(self) -> None: ...
 
@@ -220,13 +220,13 @@ class AxisConcatenator(Generic[_AxisT_co, _MatrixT_co, _NDMinT_co, _Trans1DT_co]
 
 @final
 class RClass(AxisConcatenator[L[0], L[False], L[1], L[-1]]):
-    __slots__ = ()
+    __slots__ = ()  # pyrefly:ignore[implicit-any-attribute]
 
     def __init__(self, /) -> None: ...
 
 @final
 class CClass(AxisConcatenator[L[-1], L[False], L[2], L[0]]):
-    __slots__ = ()
+    __slots__ = ()  # pyrefly:ignore[implicit-any-attribute]
 
     def __init__(self, /) -> None: ...
 
