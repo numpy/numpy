@@ -65,24 +65,13 @@ Reduce communication overhead
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Inter-process communication (IPC) can introduce significant overhead due to data serialization and transfer between processes. In Python, only picklable objects are allowed to be passed between processes.
-Due to this limitation, multiprocessing is not suitable for programs which needs to serialize data between processes frequently.
+Due to this limitation, multiprocessing is not suitable for programs which need to serialize data between processes frequently.
 
 To reduce communication overhead, consider the following strategies:
 
 * Minimize the amount of data transferred between processes.
 * Use shared memory constructs such as `multiprocessing.shared_memory`, `multiprocessing.Array` or `multiprocessing.Value` for large data that needs to be accessed by multiple processes.
 * Set appropriate ``chunksize`` when using methods like ``map`` or ``imap`` in process pools. ``chunksize`` determines the number of tasks assigned to each process at a time, which can help balance the trade-off between task granularity and communication overhead.
-
-
-Balance processing load
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-If the processing load is not evenly distributed among processes, some processes may finish their tasks earlier and remain idle while others are still working. It leads to inefficient use of resources and longer overall execution time.
-
-To achieve better load balancing, consider the following strategies:
-
-* Use dynamic task allocation where tasks are assigned to processes as they become available, rather than pre-allocating tasks.
-* Check ``chunksize`` parameter to ensure that tasks are neither too small (causing excessive overhead) nor too large (leading to load imbalance).
 
 
 Pickling considerations
@@ -140,6 +129,24 @@ To avoid race conditions, consider the following strategies:
 * Minimize the amount of shared data between threads by designing your program to use thread-local storage or by passing data explicitly to threads. 
 * Prefer immutable NumPy arrays or read-only access patterns when possible, since they reduce the need for explicit synchronization.
 * Use thread-safe data structures or synchronization primitives like locks, semaphores, or condition variables to manage access to shared data. Note that improper use of these synchronization mechanisms can cause deadlocks, so they should be used with care.
+
+
+Common tips for both multiprocessing and multithreading
+-------------------------------------------------------
+
+Balance processing load
++++++++++++++++++++++++
+
+If the processing load is not evenly distributed among workers,
+some workers may finish their tasks earlier and remain idle while others are still working.
+It leads to inefficient use of resources and longer overall execution time.
+
+To achieve better load balancing, consider the following strategies:
+
+* Use dynamic task allocation where tasks are assigned to workers as they become available,
+  rather than pre-allocating tasks.
+* Check ``chunksize`` parameter to ensure that tasks are neither too small (causing excessive overhead)
+  nor too large (leading to load imbalance).
 
 
 .. _basics.performant_code.multi_core_with_standard_libraries:
