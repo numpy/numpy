@@ -1,4 +1,4 @@
-"""
+X"""
 Histogram-related functions
 """
 import contextlib
@@ -936,6 +936,13 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
           edges along each dimension.
         * The number of bins for each dimension (nx, ny, ... =bins)
         * The number of bins for all dimensions (nx=ny=...=bins).
+
+    .. note::
+        When ``bins`` is a sequence of integers, e.g. ``bins=[3, 5, 4]``,
+        each value is interpreted as the **number of bins** for that
+        dimension, not bin edge positions. This can be easy to miss
+        with many dimensions. To specify bin edges explicitly, pass
+        a sequence of arrays instead.
 
     range : sequence, optional
         A sequence of length D, each an optional (lower, upper) tuple giving
