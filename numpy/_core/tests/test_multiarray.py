@@ -11275,6 +11275,7 @@ def test_partition_int(N, dtype):
             np.partition(arr, k, kind='introselect'))
     assert_arr_partitioned(np.sort(arr)[k], k,
             arr[np.argpartition(arr, k, kind='introselect')])
+            
 
     # (2) random data with max value at the end of array
     arr = rnd.randint(low=minv, high=maxv, size=N, dtype=dtype)
@@ -11284,6 +11285,74 @@ def test_partition_int(N, dtype):
     assert_arr_partitioned(np.sort(arr)[k], k,
             arr[np.argpartition(arr, k, kind='introselect')])
 
+@pytest.mark.parametrize("N", np.arange(2, 512))
+@pytest.mark.parametrize("dtype", [np.int16, np.uint16,
+                        np.int32, np.uint32, np.int64, np.uint64])
+def test_partition_int(N, dtype):
+    rnd = np.random.RandomState(1100710816)
+
+    # (1) random data with min and max values
+    minv = np.iinfo(dtype).min
+    maxv = np.iinfo(dtype).max
+    arr = rnd.randint(low=minv, high=maxv, size=N, dtype=dtype)
+    i, j = rnd.choice(N, 2, replace=False)
+    arr[i] = minv
+    arr[j] = maxv
+    k = rnd.choice(N, 1)[0]
+
+    assert_arr_partitioned(np.sort(arr)[k], k,
+            np.partition(arr, k, kind='introselect'))
+    assert_arr_partitioned(np.sort(arr)[k], k,
+            arr[np.argpartition(arr, k, kind='introselect')])
+
+    # (2) random data with max value at the end of array
+    arr = rnd.randint(low=minv, high=maxv, size=N, dtype=dtype)
+    arr[N - 1] = maxv
+
+    assert_arr_partitioned(np.sort(arr)[k], k,
+            np.partition(arr, k, kind='introselect'))
+    assert_arr_partitioned(np.sort(arr)[k], k,
+            arr[np.argpartition(arr, k, kind='introselect')])
+
+
+@pytest.mark.parametrize("N", np.arange(2, 512))
+@pytest.mark.parametrize("dtype", [np.int16, np.uint16,
+                        np.int32, np.uint32, np.int64, np.uint64])
+def test_partition_descending_int(N, dtype):
+    rnd = np.random.RandomState(1100710816)
+
+    minv = np.iinfo(dtype).min
+    maxv = np.iinfo(dtype).max
+
+    arr = rnd.randint(low=minv, high=maxv, size=N, dtype=dtype)
+
+    i, j = rnd.choice(N, 2, replace=False)
+    arr[i] = minv
+    arr[j] = maxv
+
+    k = rnd.choice(N, 1)[0]
+
+    sorted_desc = np.sort(arr)[::-1]
+
+    part = np.partition(arr, k, descending=True)
+    assert part[k] == sorted_desc[k]
+
+    if k > 0:
+        assert np.all(part[:k] >= part[k])
+
+    if k < N - 1:
+        assert np.all(part[k:] <= part[k])
+
+    argpart_idx = np.argpartition(arr, k, descending=True)
+    argpart = arr[argpart_idx]
+
+    assert argpart[k] == sorted_desc[k]
+
+    if k > 0:
+        assert np.all(argpart[:k] >= argpart[k])
+
+    if k < N - 1:
+        assert np.all(argpart[k:] <= argpart[k])
 
 @pytest.mark.parametrize("N", np.arange(2, 512))
 @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
