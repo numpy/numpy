@@ -5,6 +5,14 @@
 name: Linux-riscv64 Wheel builder
 
 on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
+      - 'tools/stubtest/**'
   pull_request:
     branches:
       - main
@@ -71,7 +79,7 @@ jobs:
           CIBW_CONTAINER_ENGINE: "docker; create_args: --volume ${{ env.CCACHE_DIR }}:/root/.ccache"
 
       - name: Save compilation cache
-        if: always() && github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        if: always() && github.ref == 'refs/heads/main'
         uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ${{ env.CCACHE_DIR }}
