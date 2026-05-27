@@ -927,6 +927,18 @@ class TestMetadata:
         d = np.dtype((np.void, np.dtype('i4,i4', metadata={'datum': 1})))
         assert_(d.metadata == {'datum': 1})
 
+    def test_zero_sized_void_dtype_metadata_preserved(self):
+        # Regression test for gh#31436
+        # Metadata on zero-sized void dtypes was silently dropped when
+        # using np.zeros(), np.empty(), and similar array creation functions.
+        d = np.dtype(np.void, 0, metadata={'test': 42})
+        d_zeros = np.zeros(3, dtype=d)
+        d_empty = np.empty(3, dtype=d)
+        d_ones = np.ones(3, dtype=d)
+        assert_(d_zeros.dtype.metadata == {'test': 42}, d_zeros.dtype.metadata)
+        assert_(d_empty.dtype.metadata == {'test': 42}, d_empty.dtype.metadata)
+        assert_(d_ones.dtype.metadata == {'test': 42}, d_ones.dtype.metadata)
+
 class TestString:
     def test_complex_dtype_str(self):
         dt = np.dtype([('top', [('tiles', ('>f4', (64, 64)), (1,)),

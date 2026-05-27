@@ -1458,11 +1458,14 @@ PyArray_ExtractDTypeAndDescriptor(PyArray_Descr *dtype,
     if (dtype != NULL) {
         *out_DType = NPY_DTYPE(dtype);
         Py_INCREF(*out_DType);
-        if (!descr_is_legacy_parametric_instance((PyArray_Descr *)dtype,
-                                                    *out_DType)) {
-            *out_descr = (PyArray_Descr *)dtype;
-            Py_INCREF(*out_descr);
-        }
+        /* Always preserve the descriptor when provided by the user.
+         * Previously, legacy parametric instances (e.g., unsized void dtypes)
+         * were discarded here, but this caused user-specified metadata to be
+         * lost in callers like PyArray_Zeros_int which fall back to
+         * _infer_descr_from_dtype() -- returning the dtype's singleton without
+         * the user's metadata. */
+        *out_descr = (PyArray_Descr *)dtype;
+        Py_INCREF(*out_descr);
     }
 }
 
