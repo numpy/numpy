@@ -37,6 +37,13 @@ accum(npy_cdouble &out, const npy_cdouble *w, npy_intp i)
     npy_csetimag(&out, npy_cimag(out) + npy_cimag(w[i]));
 }
 
+static inline void
+accum(npy_clongdouble &out, const npy_clongdouble *w, npy_intp i)
+{
+    npy_csetreall(&out, npy_creall(out) + npy_creall(w[i]));
+    npy_csetimagl(&out, npy_cimagl(out) + npy_cimagl(w[i]));
+}
+
 
 // Helper function to find in which (indiced) uniform bins the data lies
 template <typename FP, typename T>
@@ -126,9 +133,10 @@ histogram_uniform_impl(PyArrayObject *a, PyArrayObject *bin_edges_obj,
         case NPY_HALF:    return make_weighted_digitize<FP, npy_half>   (a, bin_edges, weights, n_bins);
         case NPY_FLOAT:   return make_weighted_digitize<FP, npy_float>  (a, bin_edges, weights, n_bins);
         case NPY_DOUBLE:  return make_weighted_digitize<FP, npy_double> (a, bin_edges, weights, n_bins);
+        case NPY_LONGDOUBLE: return make_weighted_digitize<FP, npy_longdouble>   (a, bin_edges, weights, n_bins);
         case NPY_CFLOAT:  return make_weighted_digitize<FP, npy_cfloat> (a, bin_edges, weights, n_bins);
         case NPY_CDOUBLE:    return make_weighted_digitize<FP, npy_cdouble>   (a, bin_edges, weights, n_bins);
-        case NPY_LONGDOUBLE: return make_weighted_digitize<FP, npy_longdouble>(a, bin_edges, weights, n_bins);
+        case NPY_CLONGDOUBLE:   return make_weighted_digitize<FP, npy_clongdouble>  (a, bin_edges, weights, n_bins);
         default:
             PyErr_SetString(PyExc_TypeError, "unsupported weights dtype");
             return NULL;
