@@ -811,37 +811,8 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
     )
 
     if uniform_bins is not None and simple_weights:
-        first_edge, last_edge, n_equal_bins = uniform_bins
-
-        # When bin_edges are longdouble, preserve that precision end-to-end so
-        # that values within one longdouble-epsilon of a boundary land in the
-        # correct bin.  Otherwise cast everything to float64.
-        if bin_edges.dtype == np.longdouble:
-            a_cast = a.astype(np.longdouble, copy=False)
-            bin_edges_cast = bin_edges
-            if weights is None:
-                w_cast = None
-            elif ntype.kind == 'c':
-                w_cast = weights.astype(np.complex128, copy=False)
-            else:
-                w_cast = weights.astype(np.longdouble, copy=False)
-        else:
-            a_cast = a.astype(np.float64, copy=False)
-            bin_edges_cast = bin_edges.astype(np.float64, copy=False)
-            if weights is None:
-                w_cast = None
-            elif ntype.kind == 'c':
-                w_cast = weights.astype(np.complex128, copy=False)
-            else:
-                w_cast = weights.astype(np.float64, copy=False)
-
-        n = _histogram_uniform(a_cast, n_equal_bins, bin_edges_cast, w_cast)
-
-        # _histogram_uniform returns intp (no weights), float64/longdouble
-        # (real weights), or complex128 (complex weights).  Cast back when the
-        # caller requested a narrower dtype.
-        if weights is not None:
-            n = n.astype(ntype, copy=False)
+        n_equal_bins = uniform_bins[2]
+        n = _histogram_uniform(a, n_equal_bins, bin_edges, weights)
     else:
         # Compute via cumulative histogram
         cum_n = np.zeros(bin_edges.shape, ntype)

@@ -13,12 +13,22 @@ extern "C" {
 
 #include "histogram.h"
 
-static inline void
-accum(npy_intp &out, const npy_intp *, npy_intp) { out++; }
-
 template <typename T>
 static inline void
-accum(T &out, const T *w, npy_intp i) { out += w[i]; }
+accum(T &out, const T *w, npy_intp i)
+{
+    if (w != nullptr)
+        out += w[i];
+    else
+        out++;
+}
+
+static inline void
+accum(npy_cfloat &out, const npy_cfloat *w, npy_intp i)
+{
+    npy_csetrealf(&out, npy_crealf(out) + npy_crealf(w[i]));
+    npy_csetimagf(&out, npy_cimagf(out) + npy_cimagf(w[i]));
+}
 
 static inline void
 accum(npy_cdouble &out, const npy_cdouble *w, npy_intp i)
@@ -58,12 +68,12 @@ digitize_uniform(
 template <typename FP, typename T>
 static PyObject *
 make_weighted_digitize(PyArrayObject *a, const FP *bin_edges,
-                   PyArrayObject *weights, npy_intp n_bins,
-                   int typenum)
+                   PyArrayObject *weights, npy_intp n_bins)
 {
     const npy_intp len_a = PyArray_SIZE(a);
 
-    PyArrayObject *out = (PyArrayObject *)PyArray_ZEROS(1, &n_bins, typenum, 0);
+    PyArrayObject *out = (PyArrayObject *)PyArray_ZEROS(
+            1, &n_bins, PyArray_TYPE(weights), 0);
     if (out == NULL) return NULL;
 
     NPY_BEGIN_THREADS_DEF;
@@ -80,12 +90,11 @@ make_weighted_digitize(PyArrayObject *a, const FP *bin_edges,
 template <typename FP>
 static PyObject *
 histogram_uniform_impl(PyArrayObject *a, PyArrayObject *bin_edges_obj,
-                       PyArrayObject *weights, npy_intp n_bins,
-                       int dtype_num)
+                       PyArrayObject *weights, npy_intp n_bins)
 {
     const FP *bin_edges = (const FP *)PyArray_DATA(bin_edges_obj);
 
-    if (weights == NULL) 
+    if (weights == NULL)
     {
         const npy_intp len_a = PyArray_SIZE(a);
         PyArrayObject *out =
@@ -102,13 +111,27 @@ histogram_uniform_impl(PyArrayObject *a, PyArrayObject *bin_edges_obj,
         NPY_END_THREADS;
         return (PyObject *)out;
     }
-    if (PyArray_TYPE(weights) == NPY_CDOUBLE) 
+
+    switch (PyArray_TYPE(weights))
     {
-        return make_weighted_digitize<FP, npy_cdouble>(
-                a, bin_edges, weights, n_bins, NPY_CDOUBLE);
+        case NPY_BOOL:    return make_weighted_digitize<FP, npy_bool>   (a, bin_edges, weights, n_bins);
+        case NPY_INT8:    return make_weighted_digitize<FP, npy_int8>   (a, bin_edges, weights, n_bins);
+        case NPY_INT16:   return make_weighted_digitize<FP, npy_int16>  (a, bin_edges, weights, n_bins);
+        case NPY_INT32:   return make_weighted_digitize<FP, npy_int32>  (a, bin_edges, weights, n_bins);
+        case NPY_INT64:   return make_weighted_digitize<FP, npy_int64>  (a, bin_edges, weights, n_bins);
+        case NPY_UINT8:   return make_weighted_digitize<FP, npy_uint8>  (a, bin_edges, weights, n_bins);
+        case NPY_UINT16:  return make_weighted_digitize<FP, npy_uint16> (a, bin_edges, weights, n_bins);
+        case NPY_UINT32:  return make_weighted_digitize<FP, npy_uint32> (a, bin_edges, weights, n_bins);
+        case NPY_UINT64:  return make_weighted_digitize<FP, npy_uint64> (a, bin_edges, weights, n_bins);
+        case NPY_HALF:    return make_weighted_digitize<FP, npy_half>   (a, bin_edges, weights, n_bins);
+        case NPY_FLOAT:   return make_weighted_digitize<FP, npy_float>  (a, bin_edges, weights, n_bins);
+        case NPY_DOUBLE:  return make_weighted_digitize<FP, npy_double> (a, bin_edges, weights, n_bins);
+        case NPY_CFLOAT:  return make_weighted_digitize<FP, npy_cfloat> (a, bin_edges, weights, n_bins);
+        case NPY_CDOUBLE: return make_weighted_digitize<FP, npy_cdouble>(a, bin_edges, weights, n_bins);
+        default:
+            PyErr_SetString(PyExc_TypeError, "unsupported weights dtype");
+            return NULL;
     }
-    else return make_weighted_digitize<FP, FP>(
-            a, bin_edges, weights, n_bins, dtype_num);
 }
 
 NPY_NO_EXPORT PyObject *
@@ -128,7 +151,7 @@ arr_histogram_uniform(PyObject *NPY_UNUSED(self), PyObject *const *args,
                 {"a",            NULL, &a_obj},
                 {"n_equal_bins", NULL, &n_equal_bins_obj},
                 {"bin_edges",    NULL, &bin_edges_obj},
-                {"weights",     NULL, &weights_obj}) < 0) 
+                {"weights",     NULL, &weights_obj}) < 0)
     {
         return NULL;
     }
@@ -143,39 +166,29 @@ arr_histogram_uniform(PyObject *NPY_UNUSED(self), PyObject *const *args,
     bin_edges = (PyArrayObject *)PyArray_FROMANY(bin_edges_obj, dtype, 1, 1, flags);
     if (bin_edges == NULL) goto fail;
 
-    if (weights_obj != Py_None) 
+    if (weights_obj != Py_None)
     {
-        int w_typenum;
-        if (PyArray_Check(weights_obj) &&
-                PyArray_TYPE((PyArrayObject *)weights_obj) == NPY_CDOUBLE)
-            w_typenum = NPY_CDOUBLE;
-        else
-            w_typenum = dtype;
-        weights = (PyArrayObject *)PyArray_FROMANY(
-                weights_obj, w_typenum, 1, 1, flags);
+        weights = (PyArrayObject *)PyArray_FROM_OF(weights_obj, flags);
         if (weights == NULL) goto fail;
     }
 
     n_bins = PyArray_PyIntAsIntp(n_equal_bins_obj);
     if (error_converting(n_bins)) goto fail;
 
-    if (n_bins <= 0) 
+    if (n_bins <= 0)
     {
         PyErr_SetString(PyExc_ValueError, "n_equal_bins must be at least 1");
         goto fail;
     }
-    if (PyArray_SIZE(bin_edges) != n_bins + 1) 
+    if (PyArray_SIZE(bin_edges) != n_bins + 1)
     {
         PyErr_SetString(PyExc_ValueError, "length of bin_edges must be n_bins + 1");
         goto fail;
     }
 
-    if (PyArray_SIZE(a) == 0) 
+    if (PyArray_SIZE(a) == 0)
     {
-        int out_typenum;
-        if (weights == NULL) out_typenum = NPY_INTP;
-        else if (PyArray_TYPE(weights) == NPY_CDOUBLE) out_typenum = NPY_CDOUBLE;
-        else out_typenum = dtype;
+        int out_typenum = (weights == NULL) ? NPY_INTP : PyArray_TYPE(weights);
         PyObject *out = PyArray_ZEROS(1, &n_bins, out_typenum, 0);
         Py_DECREF(a);
         Py_DECREF(bin_edges);
@@ -186,11 +199,9 @@ arr_histogram_uniform(PyObject *NPY_UNUSED(self), PyObject *const *args,
     {
         PyObject *out;
         if (use_ld)
-            out = histogram_uniform_impl<npy_longdouble>(
-                    a, bin_edges, weights, n_bins, NPY_LONGDOUBLE);
+            out = histogram_uniform_impl<npy_longdouble>(a, bin_edges, weights, n_bins);
         else
-            out = histogram_uniform_impl<npy_double>(
-                    a, bin_edges, weights, n_bins, NPY_DOUBLE);
+            out = histogram_uniform_impl<npy_double>(a, bin_edges, weights, n_bins);
         Py_DECREF(a);
         Py_DECREF(bin_edges);
         Py_XDECREF(weights);
