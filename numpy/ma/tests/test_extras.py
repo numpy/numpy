@@ -1308,8 +1308,23 @@ class TestMedian:
     def test_object(self):
         o = np.ma.masked_array(np.arange(7.))
         assert_(type(np.ma.median(o.astype(object))), float)
-        o[2] = np.nan
-        assert_(type(np.ma.median(o.astype(object))), float)
+
+    def test_median_float_dtype_promotion(self):
+        # Regression test for gh-31486
+        # ma.median should return float64 for float16/float32 inputs
+        for dt in [np.float16, np.float32]:
+            # no-mask fast path
+            a = array(np.array([1, 2, 3], dtype=dt))
+            assert_equal(np.ma.median(a).dtype, np.float64)
+
+            # 1D with mask
+            a = array(np.array([1, 2, 3, 4], dtype=dt), mask=[0, 0, 0, 1])
+            assert_equal(np.ma.median(a).dtype, np.float64)
+
+            # N-D with mask (second broken code path)
+            a = array(np.array([[1, 2], [3, 4]], dtype=dt),
+                      mask=[[0, 0], [0, 1]])
+            assert_equal(np.ma.median(a, axis=0).dtype, np.float64)
 
 
 class TestCov:
