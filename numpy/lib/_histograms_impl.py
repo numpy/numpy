@@ -806,7 +806,7 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
     # of weight
     simple_weights = (
         weights is None or
-        np.can_cast(weights.dtype, np.double) or
+        np.can_cast(weights.dtype, np.longdouble) or
         np.can_cast(weights.dtype, complex)
     )
 
