@@ -8,6 +8,7 @@ import warnings
 
 import numpy as np
 from numpy._core import overrides
+from numpy._core._multiarray_umath import _histogram_uniform
 
 __all__ = ['histogram', 'histogramdd', 'histogram_bin_edges']
 
@@ -810,67 +811,37 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
     )
 
     if uniform_bins is not None and simple_weights:
-        # Fast algorithm for equal bins
-        # We now convert values of a to bin indices, under the assumption of
-        # equal bin widths (which is valid here).
         first_edge, last_edge, n_equal_bins = uniform_bins
 
-        # Initialize empty histogram
-        n = np.zeros(n_equal_bins, ntype)
-
-        # Pre-compute histogram scaling factor
-        norm_numerator = n_equal_bins
-        norm_denom = _unsigned_subtract(last_edge, first_edge)
-
-        # We iterate over blocks here for two reasons: the first is that for
-        # large arrays, it is actually faster (for example for a 10^8 array it
-        # is 2x as fast) and it results in a memory footprint 3x lower in the
-        # limit of large arrays.
-        for i in _range(0, len(a), BLOCK):
-            tmp_a = a[i:i + BLOCK]
+        # When bin_edges are longdouble, preserve that precision end-to-end so
+        # that values within one longdouble-epsilon of a boundary land in the
+        # correct bin.  Otherwise cast everything to float64.
+        if bin_edges.dtype == np.longdouble:
+            a_cast = a.astype(np.longdouble, copy=False)
+            bin_edges_cast = bin_edges
             if weights is None:
-                tmp_w = None
+                w_cast = None
+            elif ntype.kind == 'c':
+                w_cast = weights.astype(np.complex128, copy=False)
             else:
-                tmp_w = weights[i:i + BLOCK]
-
-            # Only include values in the right range
-            keep = (tmp_a >= first_edge)
-            keep &= (tmp_a <= last_edge)
-            if not np.logical_and.reduce(keep):
-                tmp_a = tmp_a[keep]
-                if tmp_w is not None:
-                    tmp_w = tmp_w[keep]
-
-            # This cast ensures no type promotions occur below, which gh-10322
-            # make unpredictable. Getting it wrong leads to precision errors
-            # like gh-8123.
-            tmp_a = tmp_a.astype(bin_edges.dtype, copy=False)
-
-            # Compute the bin indices, and for values that lie exactly on
-            # last_edge we need to subtract one
-            f_indices = ((_unsigned_subtract(tmp_a, first_edge) / norm_denom)
-                         * norm_numerator)
-            indices = f_indices.astype(np.intp)
-            indices[indices == n_equal_bins] -= 1
-
-            # The index computation is not guaranteed to give exactly
-            # consistent results within ~1 ULP of the bin edges.
-            decrement = tmp_a < bin_edges[indices]
-            indices[decrement] -= 1
-            # The last bin includes the right edge. The other bins do not.
-            increment = ((tmp_a >= bin_edges[indices + 1])
-                         & (indices != n_equal_bins - 1))
-            indices[increment] += 1
-
-            # We now compute the histogram using bincount
-            if ntype.kind == 'c':
-                n.real += np.bincount(indices, weights=tmp_w.real,
-                                      minlength=n_equal_bins)
-                n.imag += np.bincount(indices, weights=tmp_w.imag,
-                                      minlength=n_equal_bins)
+                w_cast = weights.astype(np.longdouble, copy=False)
+        else:
+            a_cast = a.astype(np.float64, copy=False)
+            bin_edges_cast = bin_edges.astype(np.float64, copy=False)
+            if weights is None:
+                w_cast = None
+            elif ntype.kind == 'c':
+                w_cast = weights.astype(np.complex128, copy=False)
             else:
-                n += np.bincount(indices, weights=tmp_w,
-                                 minlength=n_equal_bins).astype(ntype)
+                w_cast = weights.astype(np.float64, copy=False)
+
+        n = _histogram_uniform(a_cast, n_equal_bins, bin_edges_cast, w_cast)
+
+        # _histogram_uniform returns intp (no weights), float64/longdouble
+        # (real weights), or complex128 (complex weights).  Cast back when the
+        # caller requested a narrower dtype.
+        if weights is not None:
+            n = n.astype(ntype, copy=False)
     else:
         # Compute via cumulative histogram
         cum_n = np.zeros(bin_edges.shape, ntype)
