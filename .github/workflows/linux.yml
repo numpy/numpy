@@ -144,6 +144,7 @@ jobs:
         # TODO: gcov
       env:
         PYTHONOPTIMIZE: 2
+        PYTHONSAFEPATH: 1  # regression check for gh-24907
 
   armhf_test:
     # Tests NumPy on 32-bit ARM hard-float (armhf) via compatibility mode
