@@ -1,5 +1,5 @@
 # keep in sync with `environment.yml`
 cython-lint
-ruff==0.15.13
+ruff==0.15.14
 GitPython>=3.1.50
 spin
