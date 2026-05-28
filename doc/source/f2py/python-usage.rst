@@ -244,6 +244,23 @@ In Python:
 .. literalinclude:: ./code/results/extcallback_session.dat
   :language: python
 
+Two-stage callback workflows
+----------------------------
+
+For larger Fortran codebases, it is common to keep most host-side logic in a
+prebuilt Fortran library and expose only the Python-facing entry points through
+F2PY. A callback-facing interface can still be used in this setup:
+
+* Python callback registration happens at the final Python/F2PY boundary.
+* Callback invocation may happen later in deeper Fortran routines.
+* The callback-facing interface can participate in both the host-library build
+  and the final F2PY wrapping step.
+
+In this pattern, the generated ``.pyf`` typically needs to expose the
+Python-facing entry point(s) and callback-facing interface signatures, while
+deeper host-side routines remain outside signature generation and are linked in
+as part of the host library.
+
 .. note::
 
    When using modified Fortran code via ``callstatement`` or other directives,
