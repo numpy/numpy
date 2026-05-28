@@ -148,7 +148,7 @@ int string_heapsort_(type *start, npy_intp n, int elsize)
         return 0;  /* no need for sorting if strings are empty */
     }
 
-    type *tmp = (type *)malloc(elsize);
+    type *tmp = (type *)PyMem_RawMalloc(elsize);
     type *a = (type *)start - len;
     npy_intp i, j, l;
 
@@ -192,7 +192,7 @@ int string_heapsort_(type *start, npy_intp n, int elsize)
         Tag::copy(a + i * len, tmp, len);
     }
 
-    free(tmp);
+    PyMem_RawFree(tmp);
     return 0;
 }
 

@@ -58,7 +58,7 @@ npy_heapsort(void *start, npy_intp num, void *varr)
     if (elsize == 0) {
         return 0;  /* no need for sorting elements of no size */
     }
-    char *tmp = (char *)malloc(elsize);
+    char *tmp = (char *)PyMem_RawMalloc(elsize);
     char *a = (char *)start - elsize;
     npy_intp i, j, l;
 
@@ -106,7 +106,7 @@ npy_heapsort(void *start, npy_intp num, void *varr)
         GENERIC_COPY(a + i * elsize, tmp, elsize);
     }
 
-    free(tmp);
+    PyMem_RawFree(tmp);
     return 0;
 }
 
