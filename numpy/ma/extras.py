@@ -741,7 +741,14 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
 
     """
     if not hasattr(a, 'mask'):
-        m = np.median(getdata(a, subok=True), axis=axis,
+        # Promote dtype so float16/float32 are upcast to float64, matching
+        # documented return-type behaviour.
+        a_data = getdata(a, subok=True)
+        out_dtype = np.result_type(a_data.dtype, np.float64)
+        if a_data.dtype != out_dtype:
+            a_data = a_data.astype(out_dtype)
+            overwrite_input = False  # new array – overwriting has no effect
+        m = np.median(a_data, axis=axis,
                       out=out, overwrite_input=overwrite_input,
                       keepdims=keepdims)
         if isinstance(m, np.ndarray) and 1 <= m.ndim:
@@ -754,6 +761,13 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
 
 
 def _median(a, axis=None, out=None, overwrite_input=False):
+    # Promote dtype to match documented behavior: integers and floats smaller
+    # than float64 are upcast to float64; larger types keep their dtype.
+    out_dtype = np.result_type(a.dtype, np.float64)
+    if a.dtype != out_dtype:
+        a = a.astype(out_dtype)
+        overwrite_input = False  # new array – safe to ignore caller's flag
+
     # when an unmasked NaN is present return it, so we need to sort the NaN
     # values behind the mask
     if np.issubdtype(a.dtype, np.inexact):
@@ -829,7 +843,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     if np.issubdtype(asorted.dtype, np.inexact):
         # avoid inf / x = masked
         s = np.ma.sum(low_high, axis=axis, out=out)
-        np.true_divide(s.data, 2., casting='unsafe', out=s.data)
+        np.true_divide(s.data, 2., casting='same_kind', out=s.data)
 
         s = np.lib._utils_impl._median_nancheck(asorted, s, axis)
     else:
