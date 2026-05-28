@@ -1960,7 +1960,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
             PyDataMem_FREE(valbuffer);
             goto fail;
         }
-        swaps = malloc(NPY_LIKELY(n > 0) ? n * sizeof(int) : 1);
+        swaps = PyMem_RawMalloc(NPY_LIKELY(n > 0) ? n * sizeof(int) : 1);
         if (swaps == NULL) {
             PyDataMem_FREE(valbuffer);
             PyDataMem_FREE(indbuffer);
@@ -1993,7 +1993,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                             && PyErr_Occurred())) {
                     PyDataMem_FREE(valbuffer);
                     PyDataMem_FREE(indbuffer);
-                    free(swaps);
+                    PyMem_RawFree(swaps);
                     goto fail;
                 }
                 PyArray_ITER_NEXT(its[j]);
@@ -2004,7 +2004,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         }
         PyDataMem_FREE(valbuffer);
         PyDataMem_FREE(indbuffer);
-        free(swaps);
+        PyMem_RawFree(swaps);
     }
     else {
         while (size--) {

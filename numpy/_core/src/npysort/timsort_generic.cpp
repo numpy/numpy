@@ -81,7 +81,7 @@ resize_buffer_intp(buffer_intp *buffer, npy_intp new_size)
         return 0;
     }
 
-    npy_intp *new_pw = (npy_intp *)realloc(buffer->pw, new_size * sizeof(npy_intp));
+    npy_intp *new_pw = (npy_intp *)PyMem_RawRealloc(buffer->pw, new_size * sizeof(npy_intp));
 
     buffer->size = new_size;
 
@@ -113,7 +113,7 @@ resize_buffer_char(buffer_char *buffer, npy_intp new_size)
         return 0;
     }
 
-    char *new_pw = (char *)realloc(buffer->pw, sizeof(char) * new_size * buffer->len);
+    char *new_pw = (char *)PyMem_RawRealloc(buffer->pw, sizeof(char) * new_size * buffer->len);
     buffer->size = new_size;
 
     if (NPY_UNLIKELY(new_pw == NULL)) {
@@ -552,7 +552,7 @@ npy_timsort(void *start, npy_intp num, void *varr)
 
 cleanup:
     if (buffer.pw != NULL) {
-        free(buffer.pw);
+        PyMem_RawFree(buffer.pw);
     }
     return ret;
 }
@@ -979,7 +979,7 @@ npy_atimsort(void *start, npy_intp *tosort, npy_intp num, void *varr)
 
 cleanup:
     if (buffer.pw != NULL) {
-        free(buffer.pw);
+        PyMem_RawFree(buffer.pw);
     }
     return ret;
 }
