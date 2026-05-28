@@ -107,7 +107,7 @@ npy_quicksort_impl(void *start, npy_intp num, void *varr,
         return 0;
     }
 
-    vp = (char *)malloc(elsize);
+    vp = (char *)PyMem_RawMalloc(elsize);
     if (vp == NULL) {
         return -NPY_ENOMEM;
     }
@@ -186,7 +186,7 @@ npy_quicksort_impl(void *start, npy_intp num, void *varr,
         cdepth = *(--psdepth);
     }
 
-    free(vp);
+    PyMem_RawFree(vp);
     return 0;
 }
 

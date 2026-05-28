@@ -417,7 +417,7 @@ dtypemeta_initialize_struct_from_spec(
          * Like PyArray_RegisterDataType, this mutates global userdescrs state
          * and is expected to run during module import while single-threaded.
          */
-        _PyArray_LegacyDescr **tmp = realloc(userdescrs,
+        _PyArray_LegacyDescr **tmp = PyMem_RawRealloc(userdescrs,
                 (NPY_NUMUSERTYPES + 1) * sizeof(void *));
         if (tmp == NULL) {
             PyErr_NoMemory();

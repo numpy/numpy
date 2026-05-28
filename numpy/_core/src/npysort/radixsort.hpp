@@ -115,7 +115,7 @@ radixsort_(UT *start, npy_intp num)
         return 0;
     }
 
-    UT *aux = (UT *)malloc(num * sizeof(UT));
+    UT *aux = (UT *)PyMem_RawMalloc(num * sizeof(UT));
     if (aux == nullptr) {
         return -NPY_ENOMEM;
     }
@@ -125,7 +125,7 @@ radixsort_(UT *start, npy_intp num)
         memcpy(start, sorted, num * sizeof(UT));
     }
 
-    free(aux);
+    PyMem_RawFree(aux);
     return 0;
 }
 
@@ -220,7 +220,7 @@ aradixsort_(UT *start, npy_intp *tosort, npy_intp num)
         return 0;
     }
 
-    aux = (npy_intp *)malloc(num * sizeof(npy_intp));
+    aux = (npy_intp *)PyMem_RawMalloc(num * sizeof(npy_intp));
     if (aux == NULL) {
         return -NPY_ENOMEM;
     }
@@ -230,7 +230,7 @@ aradixsort_(UT *start, npy_intp *tosort, npy_intp num)
         memcpy(tosort, sorted, num * sizeof(npy_intp));
     }
 
-    free(aux);
+    PyMem_RawFree(aux);
     return 0;
 }
 
