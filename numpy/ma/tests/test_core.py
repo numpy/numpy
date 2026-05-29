@@ -3844,6 +3844,30 @@ class TestMaskedArrayMethods:
         a = array([1, 5, 2, 4, 3], mask=[1, 0, 0, 1, 0])
         assert_equal(np.argsort(a), argsort(a))
 
+    def test_sort_stable_or_descending_throws(self):
+        a = array([1, 5, 2, 4, 3], mask=[1, 0, 0, 1, 0])
+        with pytest.raises(
+            ValueError, match="`stable` parameter is not supported for masked arrays."
+        ):
+            sort(a, stable=True)
+        with pytest.raises(
+            ValueError,
+            match="`descending` parameter is not supported for masked arrays.",
+        ):
+            sort(a, descending=True)
+
+    def test_argsort_stable_or_descending_throws(self):
+        a = array([1, 5, 2, 4, 3], mask=[1, 0, 0, 1, 0])
+        with pytest.raises(
+            ValueError, match="`stable` parameter is not supported for masked arrays."
+        ):
+            argsort(a, stable=True)
+        with pytest.raises(
+            ValueError,
+            match="`descending` parameter is not supported for masked arrays.",
+        ):
+            argsort(a, descending=True)
+
     def test_squeeze(self):
         # Check squeeze
         data = masked_array([[1, 2, 3]])

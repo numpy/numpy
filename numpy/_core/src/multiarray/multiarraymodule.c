@@ -3851,7 +3851,7 @@ format_longfloat(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
  */
 static int _is_user_defined_string_array(PyArrayObject* array)
 {
-    if (NPY_DT_is_user_defined(PyArray_DESCR(array))) {
+    if (NPY_DT_is_user_defined(NPY_DTYPE(PyArray_DESCR(array)))) {
         PyTypeObject* scalar_type = NPY_DTYPE(PyArray_DESCR(array))->scalar_type;
         if (PyType_IsSubtype(scalar_type, &PyBytes_Type) ||
             PyType_IsSubtype(scalar_type, &PyUnicode_Type)) {
@@ -5148,6 +5148,13 @@ _multiarray_umath_exec(PyObject *m) {
                             (PyObject *)&NpyBusDayCalendar_Type);
     set_flaginfo(d);
 
+    if (PyType_Ready(&PyArrayMethod_Type) < 0) {
+        return -1;
+    }
+    if (PyType_Ready(&PyBoundArrayMethod_Type) < 0) {
+        return -1;
+    }
+
     /* Finalize scalar types and expose them via namespace or typeinfo dict */
     if (set_typeinfo(d) != 0) {
         return -1;
@@ -5167,12 +5174,6 @@ _multiarray_umath_exec(PyObject *m) {
             d, "_array_converter",
             (PyObject *)&PyArrayArrayConverter_Type);
 
-    if (PyType_Ready(&PyArrayMethod_Type) < 0) {
-        return -1;
-    }
-    if (PyType_Ready(&PyBoundArrayMethod_Type) < 0) {
-        return -1;
-    }
     if (initialize_and_map_pytypes_to_dtypes() < 0) {
         return -1;
     }

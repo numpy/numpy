@@ -3,7 +3,7 @@ import sys
 import pytest
 
 import numpy as np
-from numpy._core._rational_tests import rational
+from numpy._core._rational_tests import rational, rational2
 from numpy.testing import HAS_REFCOUNT, assert_array_equal
 
 
@@ -97,7 +97,8 @@ def test_cleanup_with_refs_non_contig():
 
 
 @pytest.mark.parametrize("dtype",
-    list("?bhilqnpBHILQNPefdgSUV") + ["M8[ns]", "m8[ns]", rational])
+    list("?bhilqnpBHILQNPefdgSUV") +
+    ["M8[ns]", "m8[ns]", rational, rational2])
 def test_real_imag_attributes_non_complex(dtype):
     dtype = np.dtype(dtype)
 

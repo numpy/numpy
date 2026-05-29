@@ -13,6 +13,7 @@ from numpy.f2py.crackfortran import markinnerspaces, nameargspattern
 from . import util
 
 
+@pytest.mark.slow
 class TestNoSpace(util.F2PyTest):
     # issue gh-15035: add handling for endsubroutine, endfunction with no space
     # between "end" and the block name
@@ -96,6 +97,7 @@ class TestModuleProcedure:
         assert mod['vars']['seta']['attrspec'] == ['public', ]
 
 
+@pytest.mark.slow
 class TestExternal(util.F2PyTest):
     # issue gh-17859: add external attribute support
     sources = [util.getpath("tests", "src", "crackfortran", "gh17859.f")]
@@ -115,6 +117,7 @@ class TestExternal(util.F2PyTest):
         assert r == 123
 
 
+@pytest.mark.slow
 class TestCrackFortran(util.F2PyTest):
     # gh-2848: commented lines between parameters in subroutine parameter lists
     sources = [util.getpath("tests", "src", "crackfortran", "gh2848.f90"),
@@ -149,6 +152,7 @@ class TestMarkinnerspaces:
         assert markinnerspaces(r'a "b c" "d e"') == r'a "b@_@c" "d@_@e"'
 
 
+@pytest.mark.slow
 class TestDimSpec(util.F2PyTest):
     """This test suite tests various expressions that are used as dimension
     specifications.
@@ -218,7 +222,6 @@ class TestDimSpec(util.F2PyTest):
         )
 
     @pytest.mark.parametrize("dimspec", all_dimspecs)
-    @pytest.mark.slow
     def test_array_size(self, dimspec):
 
         count = self.all_dimspecs.index(dimspec)
@@ -260,6 +263,7 @@ class TestModuleDeclaration:
         assert mod[0]["vars"]["abar"]["="] == "bar('abar')"
 
 
+@pytest.mark.slow
 class TestEval(util.F2PyTest):
     def test_eval_scalar(self):
         eval_scalar = crackfortran._eval_scalar
@@ -270,6 +274,7 @@ class TestEval(util.F2PyTest):
         assert eval_scalar('"123"', {}) == "'123'"
 
 
+@pytest.mark.slow
 class TestFortranReader(util.F2PyTest):
     @pytest.mark.parametrize("encoding",
                              ['ascii', 'utf-8', 'utf-16', 'utf-32'])
@@ -333,15 +338,16 @@ class TestNameArgsPatternBacktracking:
             good_version_of_adversary = repeated_adversary + '@)@'
             assert nameargspattern.search(good_version_of_adversary)
 
+@pytest.mark.slow
 class TestFunctionReturn(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "gh23598.f90")]
 
-    @pytest.mark.slow
     def test_function_rettype(self):
         # gh-23598
         assert self.module.intproduct(3, 4) == 12
 
 
+@pytest.mark.slow
 class TestFortranGroupCounters(util.F2PyTest):
     def test_end_if_comment(self):
         # gh-23533

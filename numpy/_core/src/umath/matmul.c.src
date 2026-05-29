@@ -493,7 +493,7 @@ NPY_NO_EXPORT void
                  op_size = oblasable ? 0 : sz * dm * dp,
                  total_size = ip1_size + ip2_size + op_size;
 
-        tmp_ip12op = (uint8_t*)malloc(total_size);
+        tmp_ip12op = (uint8_t*)PyMem_RawMalloc(total_size);
 
         if (tmp_ip12op == NULL) {
             PyGILState_STATE gil_state = PyGILState_Ensure();
@@ -637,7 +637,7 @@ NPY_NO_EXPORT void
         npy_clear_floatstatus_barrier((char*)args);
     }
 #endif
-    if (allocate_buffer) free(tmp_ip12op);
+    if (allocate_buffer) PyMem_RawFree(tmp_ip12op);
 #endif
 }
 

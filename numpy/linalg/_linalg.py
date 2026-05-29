@@ -61,7 +61,6 @@ from numpy._core import (
     overrides,
     prod,
     reciprocal,
-    sign,
     single,
     sort,
     sqrt,
@@ -1809,7 +1808,8 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
         # and related arrays to have the correct order
         if compute_uv:
             s, u = eigh(a)
-            sgn = sign(s)
+            # avoid zero sign
+            sgn = np.copysign(1.0, s)
             s = abs(s)
             sidx = argsort(s)[..., ::-1]
             sgn = np.take_along_axis(sgn, sidx, axis=-1)

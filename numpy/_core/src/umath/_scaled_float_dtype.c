@@ -777,6 +777,21 @@ promote_to_sfloat(PyUFuncObject *NPY_UNUSED(ufunc),
 }
 
 
+static inline int
+cmp(const void *av, const void *bv, void *NPY_UNUSED(arr))
+{
+    npy_float64 a = *(const npy_float64 *)av;
+    npy_float64 b = *(const npy_float64 *)bv;
+    if (a < b || (b != b && a == a)) {
+        return -1;
+    }
+    if (a > b || (a != a && b == b)) {
+        return 1;
+    }
+    return 0;
+}
+
+
 NPY_NO_EXPORT int
 sfloat_stable_sort_loop(
         PyArrayMethod_Context *context,
@@ -792,7 +807,7 @@ sfloat_stable_sort_loop(
     npy_intp N = dimensions[0];
     char *in = data[0];
 
-    return timsort_double(in, N, NULL);
+    return npy_mergesort_impl(in, N, NULL, strides[0], cmp);
 }
 
 
@@ -811,7 +826,7 @@ sfloat_default_sort_loop(
     npy_intp N = dimensions[0];
     char *in = data[0];
 
-    return quicksort_double(in, N, NULL);
+    return npy_quicksort_impl(in, N, NULL, strides[0], cmp);
 }
 
 
@@ -880,7 +895,7 @@ sfloat_stable_argsort_loop(
     char *in = data[0];
     npy_intp *out = (npy_intp *)data[1];
 
-    return atimsort_double(in, out, N, NULL);
+    return npy_amergesort_impl(in, out, N, NULL, strides[0], cmp);
 }
 
 
@@ -900,7 +915,7 @@ sfloat_default_argsort_loop(
     char *in = data[0];
     npy_intp *out = (npy_intp *)data[1];
 
-    return aquicksort_double(in, out, N, NULL);
+    return npy_aquicksort_impl(in, out, N, NULL, strides[0], cmp);
 }
 
 

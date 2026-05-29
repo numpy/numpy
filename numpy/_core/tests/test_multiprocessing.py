@@ -30,6 +30,7 @@ def bool_array_reader(shm_name, n):
 
 @pytest.mark.skipif(IS_WASM,
                     reason="WASM does not support _posixshmem")
+@pytest.mark.slow
 def test_read_write_bool_array():
     # See: gh-30389
     #

@@ -36,4 +36,11 @@ assert_type(np.einsum_path("i,i->i", AR_LIKE_b, AR_LIKE_i), tuple[list[Any], str
 assert_type(np.einsum_path("i,i,i,i->i", AR_LIKE_b, AR_LIKE_u, AR_LIKE_i, AR_LIKE_c), tuple[list[Any], str])
 
 assert_type(np.einsum([[1, 1], [1, 1]], AR_LIKE_i, AR_LIKE_i), Any)
+
 assert_type(np.einsum_path([[1, 1], [1, 1]], AR_LIKE_i, AR_LIKE_i), tuple[list[Any], str])
+
+# subscript-free calling convention with float and complex arrays
+AR_f: npt.NDArray[np.float64]
+AR_c: npt.NDArray[np.complex128]
+assert_type(np.einsum(AR_f, [0, 1], AR_f, [1, 0], [0]), Any)
+assert_type(np.einsum(AR_c, [0, 1], AR_c, [1, 0], [0]), Any)

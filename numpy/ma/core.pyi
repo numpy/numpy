@@ -2370,6 +2370,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         fill_value: _ScalarLike_co | None = None,
         *,
         stable: bool = False,
+        descending: bool = False,
     ) -> _MaskedArray[intp]: ...
 
     # keep in sync with `MaskedArray.argmin` (below) and `ndarray.argmax`
@@ -2478,6 +2479,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         fill_value: _ScalarLike_co | None = None,
         *,
         stable: Literal[False] | None = False,
+        descending: Literal[False] | None = False,
     ) -> None: ...
 
     #
@@ -3640,6 +3642,7 @@ def argsort(
     fill_value: _ScalarLike_co | None = None,
     *,
     stable: bool | None = None,
+    descending: bool | None = None,
 ) -> _Array1D[np.intp]: ...
 @overload  # MaskedArray, axis: None
 def argsort(
@@ -3651,6 +3654,7 @@ def argsort(
     fill_value: _ScalarLike_co | None = None,
     *,
     stable: bool | None = None,
+    descending: bool | None = None,
 ) -> _Masked1D[np.intp]: ...
 @overload  # MaskedArray, axis: int-like
 def argsort(
@@ -3662,6 +3666,7 @@ def argsort(
     fill_value: _ScalarLike_co | None = None,
     *,
     stable: bool | None = None,
+    descending: bool | None = None,
 ) -> _MaskedArray[np.intp]: ...
 @overload  # array-like, axis: None
 def argsort(
@@ -3673,6 +3678,7 @@ def argsort(
     fill_value: _ScalarLike_co | None = None,
     *,
     stable: bool | None = None,
+    descending: bool | None = None,
 ) -> _Array1D[np.intp]: ...
 @overload  # array-like, axis: int-like
 def argsort(
@@ -3684,6 +3690,7 @@ def argsort(
     fill_value: _ScalarLike_co | None = None,
     *,
     stable: bool | None = None,
+    descending: bool | None = None,
 ) -> NDArray[np.intp]: ...
 
 #
@@ -3697,6 +3704,7 @@ def sort[ArrayT: np.ndarray](
     fill_value: _ScalarLike_co | None = None,
     *,
     stable: Literal[False] | None = None,
+    descending: Literal[False] | None = False,
 ) -> ArrayT: ...
 @overload
 def sort(
@@ -3708,6 +3716,7 @@ def sort(
     fill_value: _ScalarLike_co | None = None,
     *,
     stable: Literal[False] | None = None,
+    descending: Literal[False] | None = False,
 ) -> NDArray[Any]: ...
 
 #
