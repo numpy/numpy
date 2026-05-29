@@ -286,6 +286,7 @@ make_raw_dtype(const char *name, PyTypeObject *base,
     dt->scalar_type = scalar_type;
     dt->singleton = NULL;
     dt->flags = flags;
+    NpyUnstable_SetImmortal((PyObject *)dt);
 
     if (scalar_type != NULL) {
         if (_PyArray_MapPyTypeToDType(dt, scalar_type, NPY_FALSE) < 0) {
@@ -293,7 +294,6 @@ make_raw_dtype(const char *name, PyTypeObject *base,
             return NULL;
         }
     }
-    NpyUnstable_SetImmortal((PyObject *)dt);
     return dt;
 }
 
