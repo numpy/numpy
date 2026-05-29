@@ -3270,6 +3270,16 @@ class TestMethods:
         self._test_argpartition_descending(a, k, None, descending)
         self._test_argpartition_descending(a, k, nan, descending)
 
+    @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]',
+                                       np.str_, np.bytes_, np.object_])
+    def test_partition_and_argpartition_raise_on_descending(self, dtype):
+        a = np.arange(10, dtype=np.float64).astype(dtype)
+
+        with assert_raises(TypeError, msg="type does not have descending partition"):
+            np.partition(a, 5, descending=True)
+        with assert_raises(TypeError, msg="type does not have descending partition"):
+            np.argpartition(a, 5, descending=True)
+
     @pytest.mark.parametrize('a', [
         np.array([0, 1, np.nan], dtype=np.float16),
         np.array([0, 1, np.nan], dtype=np.float32),
