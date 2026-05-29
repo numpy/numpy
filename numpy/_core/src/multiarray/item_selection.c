@@ -1723,7 +1723,7 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
         }
         else if (which & NPY_SELECT_DESCENDING) {
             PyErr_SetString(PyExc_TypeError,
-                            "type does not have descending partition");
+                            "type does not support descending partition");
             return -1;
         }
         else {
@@ -1779,7 +1779,7 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
         }
         else if (which & NPY_SELECT_DESCENDING) {
             PyErr_SetString(PyExc_TypeError,
-                            "type does not have descending partition");
+                            "type does not support descending partition");
             return NULL;
         }
         else {

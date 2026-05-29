@@ -3275,9 +3275,9 @@ class TestMethods:
     def test_partition_and_argpartition_raise_on_descending(self, dtype):
         a = np.arange(10, dtype=np.float64).astype(dtype)
 
-        with assert_raises(TypeError, msg="type does not have descending partition"):
+        with assert_raises(TypeError, msg="type does not support descending partition"):
             np.partition(a, 5, descending=True)
-        with assert_raises(TypeError, msg="type does not have descending partition"):
+        with assert_raises(TypeError, msg="type does not support descending partition"):
             np.argpartition(a, 5, descending=True)
 
     @pytest.mark.parametrize('a', [
