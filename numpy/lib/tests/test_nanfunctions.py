@@ -948,7 +948,11 @@ class TestNanFunctions_Median:
         mat = np.full((3, 3), np.nan, dtype=dtype)
         with pytest.warns((RuntimeWarning, DeprecationWarning)) as r:
             output = np.nanmedian(mat, axis=axis)
-            expected_dtype = np.result_type(mat.dtype, np.float64) if np.issubdtype(mat.dtype, np.inexact) else mat.dtype
+            expected_dtype = (
+                np.result_type(mat.dtype, np.float64)
+                if np.issubdtype(mat.dtype, np.inexact)
+                else mat.dtype
+            )
             assert output.dtype == expected_dtype
             assert np.isnan(output).all()
 
@@ -965,7 +969,11 @@ class TestNanFunctions_Median:
             # Check scalar
             scalar = np.full((1, 1), np.nan, dtype=dtype)[0, 0]
             output_scalar = np.nanmedian(scalar)
-            expected_scalar_dtype = np.result_type(scalar.dtype, np.float64) if np.issubdtype(scalar.dtype, np.inexact) else scalar.dtype
+            expected_scalar_dtype = (
+                np.result_type(scalar.dtype, np.float64)
+                if np.issubdtype(scalar.dtype, np.inexact)
+                else scalar.dtype
+            )
             assert output_scalar.dtype == expected_scalar_dtype
             assert np.isnan(output_scalar)
 
