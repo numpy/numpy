@@ -3162,7 +3162,6 @@ class TestMethods:
         a = np.array([f"{i:03d}" for i in range(101)], dtype=dtype)
         self._test_partition_descending(a, k, None, descending)
 
-    @pytest.mark.skip(reason="descending partitions not supported for date types yet")
     @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
     @pytest.mark.parametrize('k', [2, 15, 50, 95])
     @pytest.mark.parametrize('descending', [True, False])
@@ -3257,7 +3256,6 @@ class TestMethods:
         a = np.array([f"{i:03d}" for i in range(101)], dtype=dtype)
         self._test_argpartition_descending(a, k, None, descending)
 
-    @pytest.mark.skip(reason="descending partitions not supported for date types yet")
     @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
     @pytest.mark.parametrize('k', [2, 15, 50, 80])
     @pytest.mark.parametrize('descending', [True, False])
@@ -3270,8 +3268,7 @@ class TestMethods:
         self._test_argpartition_descending(a, k, None, descending)
         self._test_argpartition_descending(a, k, nan, descending)
 
-    @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]',
-                                       np.str_, np.bytes_, np.object_])
+    @pytest.mark.parametrize('dtype', [np.str_, np.bytes_, np.object_])
     def test_partition_and_argpartition_raise_on_descending(self, dtype):
         a = np.arange(10, dtype=np.float64).astype(dtype)
 

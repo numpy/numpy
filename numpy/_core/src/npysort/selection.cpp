@@ -27,7 +27,7 @@
 #include <utility>
 #include "x86_simd_qsort.hpp"
 
-template<typename T>
+template<typename Tag, typename T>
 inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
 {
 #ifndef __CYGWIN__
@@ -36,8 +36,12 @@ inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
      * int64_t, uint64_t, double
      */
     if constexpr (
-        (std::is_integral_v<T> || std::is_floating_point_v<T> || std::is_same_v<T, np::Half>) &&
-        (sizeof(T) == sizeof(uint16_t) || sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t))) {
+        (std::is_base_of_v<npy::floating_point_tag, Tag>
+            || std::is_base_of_v<npy::integral_tag, Tag>
+            || std::is_base_of_v<npy::half_tag, Tag>) &&
+        (sizeof(T) == sizeof(uint16_t)
+            || sizeof(T) == sizeof(uint32_t)
+            || sizeof(T) == sizeof(uint64_t))) {
         using TF = typename np::meta::FixedWidth<T>::Type;
         void (*dispfunc)(TF*, npy_intp, npy_intp) = nullptr;
         if constexpr (sizeof(T) == sizeof(uint16_t)) {
@@ -58,7 +62,7 @@ inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
     return false;
 }
 
-template<typename T>
+template<typename Tag, typename T>
 inline bool argquickselect_dispatch(T* v, npy_intp* arg, npy_intp num, npy_intp kth)
 {
 #ifndef __CYGWIN__
@@ -66,7 +70,8 @@ inline bool argquickselect_dispatch(T* v, npy_intp* arg, npy_intp num, npy_intp 
      * Only defined for int32_t, uint32_t, float32, int64_t, uint64_t, double
      */
     if constexpr (
-        (std::is_integral_v<T> || std::is_floating_point_v<T>) &&
+        (std::is_base_of_v<npy::floating_point_tag, Tag>
+        || std::is_base_of_v<npy::integral_tag, Tag>) &&
         (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t))) {
         using TF = typename np::meta::FixedWidth<T>::Type;
         #include "x86_simd_argsort.dispatch.h"
@@ -454,7 +459,7 @@ introselect_noarg(void *v, npy_intp num, npy_intp kth, npy_intp *pivots,
 {
     using T = typename std::conditional<std::is_same_v<Tag, npy::half_tag>, np::Half, typename Tag::type>::type;
     if constexpr (!reverse) {
-        if ((nkth == 1) && (quickselect_dispatch((T *)v, num, kth))) {
+        if ((nkth == 1) && (quickselect_dispatch<Tag>((T *)v, num, kth))) {
             return 0;
         }
     }
@@ -469,7 +474,7 @@ introselect_arg(void *v, npy_intp *tosort, npy_intp num, npy_intp kth,
 {
     using T = typename Tag::type;
     if constexpr (!reverse) {
-        if ((nkth == 1) && (argquickselect_dispatch((T *)v, tosort, num, kth))) {
+        if ((nkth == 1) && (argquickselect_dispatch<Tag>((T *)v, tosort, num, kth))) {
             return 0;
         }
     }
@@ -500,8 +505,8 @@ struct partition_t {
                          npy::uint_tag, npy::long_tag, npy::ulong_tag,
                          npy::longlong_tag, npy::ulonglong_tag, npy::half_tag,
                          npy::float_tag, npy::double_tag, npy::longdouble_tag,
-                         npy::cfloat_tag, npy::cdouble_tag,
-                         npy::clongdouble_tag>;
+                         npy::cfloat_tag, npy::cdouble_tag, npy::clongdouble_tag,
+                         npy::datetime_tag, npy::timedelta_tag>;
 
     static constexpr std::array<arg_map, taglist::size> map =
             make_partition_map(taglist());
