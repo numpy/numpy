@@ -738,23 +738,25 @@ def partition(a, kth, axis=-1, kind=None, order=None, descending=np._NoValue):
 
     Creates a copy of the array and partially sorts it in such a way that
     the value of the element in k-th position is in the position it would be
-    in a sorted array. In the output array, all elements smaller than the k-th
-    element are located to the left of this element and all equal or greater
-    are located to its right. The ordering of the elements in the two
-    partitions on the either side of the k-th element in the output array is
-    undefined.
+    in a sorted array. In the output array, all elements that would be to the left
+    of the k-th element in a sorted array are located to the left of this element and
+    all that would be to the right are located to its right. The ordering of the
+    elements in the two partitions on the either side of the k-th element in the
+    output array is undefined.
 
     Parameters
     ----------
     a : array_like
         Array to be sorted.
     kth : int or sequence of ints
-        Element index to partition by. The k-th value of the element
-        will be in its final sorted position and all smaller elements
-        will be moved before it and all equal or greater elements behind
-        it. The order of all elements in the partitions is undefined. If
-        provided with a sequence of k-th it will partition all elements
-        indexed by k-th  of them into their sorted position at once.
+        Element index to partition by. In the returned array, the k-th
+        value of the array will be in the position it would be in a
+        sorted array, all elements that would be sorted before it will
+        be moved before it, and all elements that would be sorted after
+        it will be moved after it. The order of all elements within the
+        partitions is undefined. If provided with a sequence of k-th it
+        will partition all elements indexed by k-th of them into their
+        sorted position at once.
 
     axis : int or None, optional
         Axis along which to sort. If None, the array is flattened before
@@ -767,6 +769,17 @@ def partition(a, kth, axis=-1, kind=None, order=None, descending=np._NoValue):
         field can be specified as a string.  Not all fields need be
         specified, but unspecified fields will still be used, in the
         order in which they come up in the dtype, to break ties.
+    descending : bool, optional
+        Partition order. If ``True``, the left partition would contain
+        values less than or equal to the k-th element and the right partition
+        will contain values greater than or equal to the k-th element.
+        If ``False`` or ``None``, the left partition will contain values
+        less than or equal to the k-th element and the right partition
+        will contain values greater than or equal to the k-th element. Values
+        that are NaN are partitioned towards the end of the array regardless of
+        order. Default: ``None``.
+
+        .. versionadded:: 2.6.0
 
     Returns
     -------
@@ -803,7 +816,8 @@ def partition(a, kth, axis=-1, kind=None, order=None, descending=np._NoValue):
     the real parts except when they are equal, in which case the order
     is determined by the imaginary parts.
 
-    The sort order of ``np.nan`` is bigger than ``np.inf``.
+    Regardless of sort order, `np.nan` is partitioned to the right of
+    any other value.
 
     Examples
     --------
@@ -864,12 +878,14 @@ def argpartition(a, kth, axis=-1, kind=None, order=None, descending=np._NoValue)
     a : array_like
         Array to sort.
     kth : int or sequence of ints
-        Element index to partition by. The k-th element will be in its
-        final sorted position and all smaller elements will be moved
-        before it and all larger elements behind it. The order of all
-        elements in the partitions is undefined. If provided with a
-        sequence of k-th it will partition all of them into their sorted
-        position at once.
+        Element index to partition by. In the returned array, the k-th
+        value of the array will be in the position it would be in a
+        sorted array, all elements that would be sorted before it will
+        be moved before it, and all elements that would be sorted after
+        it will be moved after it. The order of all elements within the
+        partitions is undefined. If provided with a sequence of k-th it
+        will partition all elements indexed by k-th of them into their
+        sorted position at once.
 
     axis : int or None, optional
         Axis along which to sort. The default is -1 (the last axis). If
@@ -882,6 +898,17 @@ def argpartition(a, kth, axis=-1, kind=None, order=None, descending=np._NoValue)
         field can be specified as a string, and not all fields need be
         specified, but unspecified fields will still be used, in the
         order in which they come up in the dtype, to break ties.
+    descending : bool, optional
+        Partition order. If ``True``, the left partition would contain
+        indices of elements less than or equal to the k-th element and the
+        right partition will contain indices of elements greater than or
+        equal to the k-th element. If ``False`` or ``None``, the left partition
+        will contain indices of elements less than or equal to the k-th element
+        and the right partition will contain indices of elements greater than or
+        equal to the k-th element. Indices of values that are NaN are partitioned
+        towards the end of the array regardless of order. Default: ``None``.
+
+        .. versionadded:: 2.6.0
 
     Returns
     -------

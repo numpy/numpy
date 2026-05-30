@@ -2594,8 +2594,9 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         /,
         kth: _ArrayLikeInt,
         axis: SupportsIndex = -1,
-        kind: _PartitionKind = "introselect",
-        order: None = None
+        kind: _PartitionKind | None = None,
+        order: None = None,
+        descending: bool | None = None,
     ) -> None: ...
     @overload
     def partition(
@@ -2603,8 +2604,9 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         /,
         kth: _ArrayLikeInt,
         axis: SupportsIndex = -1,
-        kind: _PartitionKind = "introselect",
+        kind: _PartitionKind | None = None,
         order: str | Sequence[str] | None = None,
+        descending: bool | None = None,
     ) -> None: ...
 
     # keep in sync with ndarray.argpartition
@@ -2615,8 +2617,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         kth: _ArrayLikeInt,
         /,
         axis: None,
-        kind: _PartitionKind = "introselect",
-        order: None = None,
+        kind: _PartitionKind | None = None,        order: None = None,
+        descending: bool | None = None,
     ) -> MaskedArray[tuple[int], np.dtype[intp]]: ...
     @overload  # axis: index (default)
     def argpartition(
@@ -2624,8 +2626,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         kth: _ArrayLikeInt,
         /,
         axis: SupportsIndex = -1,
-        kind: _PartitionKind = "introselect",
-        order: None = None,
+        kind: _PartitionKind | None = None,        order: None = None,
+        descending: bool | None = None,
     ) -> MaskedArray[_ShapeT_co, np.dtype[intp]]: ...
     @overload  # void, axis: None
     def argpartition(
@@ -2633,8 +2635,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         kth: _ArrayLikeInt,
         /,
         axis: None,
-        kind: _PartitionKind = "introselect",
-        order: str | Sequence[str] | None = None,
+        kind: _PartitionKind | None = None,        order: str | Sequence[str] | None = None,
+        descending: bool | None = None,
     ) -> MaskedArray[tuple[int], np.dtype[intp]]: ...
     @overload  # void, axis: index (default)
     def argpartition(
@@ -2642,8 +2644,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         kth: _ArrayLikeInt,
         /,
         axis: SupportsIndex = -1,
-        kind: _PartitionKind = "introselect",
-        order: str | Sequence[str] | None = None,
+        kind: _PartitionKind | None = None,        order: str | Sequence[str] | None = None,
+        descending: bool | None = None,
     ) -> MaskedArray[_ShapeT_co, np.dtype[intp]]: ...
 
     # Keep in-sync with np.ma.take
