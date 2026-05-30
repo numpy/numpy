@@ -290,33 +290,16 @@ Setup
 Install a free-threaded build Python
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Before running the multithreading example, ensure you have a free-threaded build of Python 3.13 or later.
-For example, if you use ``pyenv``, you can install it and create a virtual environment
-naming ``numpy-multithreading`` as follows:
+Before running the multithreading example, ensure you have
+a free-threaded build of Python 3.13 or later.
+About how to install a free-threaded build of Python,
+please refer to the `Installing Free-Threaded Python  <https://py-free-threading.github.io/installing-cpython/>`__.
 
-.. code-block:: bash
-
-    pyenv install 3.14t-dev
-    pyenv virtualenv 3.14t-dev numpy-multithreading
-    pyenv activate numpy-multithreading
-
-
-According to the `Python documentation <https://docs.python.org/3/howto/free-threading-python.html>`__, there are several ways to verify if your Python build is free-threaded. 
+According to the `Python documentation <https://docs.python.org/3/howto/free-threading-python.html>`__,
+there are several ways to verify if your Python build is free-threaded. 
 
 * Run ``python -VV`` in your terminal and check ``free-threading build`` is shown
 * Check the value of `sys._is_gil_enabled()` in a Python shell, which should return `False`.
-
-
-Install NumPy from Source
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-NumPy includes ongoing work to improve compatibility and thread-safety
-when used with free-threaded Python builds.
-(See https://github.com/numpy/numpy/issues/30494 for details.)
-
-Thus, to utilize multithreading parallelism fully, we may need to build NumPy from source.
-Please refer to the :ref:`Building from source to use NumPy <building-from-source>` section
-for detailed instructions.
 
 
 Code Example
@@ -414,3 +397,43 @@ If you are familiar with NumPy, you can easily get started with ``DaskArray``.
 
 * Dask Documentaion: https://docs.dask.org/en/stable/
 * Dask GitHub Repository: https://github.com/dask/dask
+
+
+
+joblib
+------
+
+
+``joblib`` is a library that provides tools for parallel computing in Python.
+It offers helper functions which make it easy to parallelize tasks.
+For example,
+
+* ``joblib``'s default backend ``loky`` relies on `cloudpickle <https://github.com/cloudpipe/cloudpickle>`__
+  for serialization and can handle a wider range of Python objects than the standard ``pickle`` module.
+  (e.g., lambda functions)
+
+* `joblib.cpu_count() <https://joblib.readthedocs.io/en/latest/generated/joblib.cpu_count.html>`__
+  returns the number of CPUs available to the current process, taking into
+  account constraints such as CPU affinity settings and Linux CFS scheduler
+  quotas. This may provide a more accurate value than
+  `os.cpu_count() <https://docs.python.org/3/library/os.html#os.cpu_count>`__
+  in Docker containers and other resource-constrained environments.
+
+
+For more details on ``joblib``, see the following resources:
+
+* joblib Documentation: https://joblib.readthedocs.io/en/latest/
+* joblib GitHub Repository: https://github.com/joblib/joblib
+
+
+
+threadpoolctl
+--------------
+
+``threadpoolctl`` is a library that provides utilities to control the behavior
+of thread pools in Python, including nested thread pools used by libraries
+such as BLAS and OpenMP.
+It allows you to avoid oversubscription of CPU resources
+when using multiple libraries that utilize thread pools.
+
+* threadpoolctl GitHub Repository: https://github.com/joblib/threadpoolctl
