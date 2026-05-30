@@ -233,6 +233,9 @@ Tier 3 platforms:
 | Emscripten/Pyodide | We currently provide nightly wheels,   | Agriya Khetarpal, Gyeongjae Choi |
 |                    | used for interactive docs              |                                  |
 +--------------------+----------------------------------------+----------------------------------+
+| RISC-V             | Runs on RISE-provided self-hosted      | Ludovic Henry, Bruno Verachten   |
+|                    | runners, see gh-30216_                 |                                  |
++--------------------+----------------------------------------+----------------------------------+
 
 
 Unsupported platforms
@@ -274,8 +277,6 @@ Unsupported platforms (known interest in moving to a higher tier):
 | iOS      | See gh-28759_    |
 +----------+------------------+
 | Android  | See gh-30412_    |
-+----------+------------------+
-| RISC-V   | See gh-30216_    |
 +----------+------------------+
 | WASI     | See gh-25859_    |
 +----------+------------------+
