@@ -52,7 +52,7 @@ General tips
 ++++++++++++
 
 The following are general tips for utilizing multiprocessing.
-
+Some of these tips are used in the `Multiprocessing Example <#multiprocessing-example>`__.
 
 Reduce creation overhead
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -79,9 +79,8 @@ To reduce communication overhead, consider the following strategies:
 * Minimize the amount of data transferred between processes.
 * Use shared memory constructs such as `multiprocessing.shared_memory`, `multiprocessing.Array`
   or `multiprocessing.Value` for large data that needs to be accessed by multiple processes.
-* Set appropriate ``chunksize`` when using methods like ``map`` or ``imap`` in process pools.
-  ``chunksize`` determines the number of tasks assigned to each process at a time,
-  which can help balance the trade-off between task granularity and communication overhead.
+* `Balance processing load <#balance-processing-load>`__ to ensure
+  that all processes are utilized efficiently and avoid idle time.
 
 
 Pickling considerations
@@ -115,7 +114,8 @@ For details on free-threaded Python builds, see the
 
 As a high-level API, Python provides the `concurrent.futures.ThreadPoolExecutor` class 
 for thread-based parallelism.
-Python also provides the `concurrent.futures.InterpreterPoolExecutor`,
+Python also provides the
+`concurrent.futures.InterpreterPoolExecutor <https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.InterpreterPoolExecutor>`__,
 which uses multiple interpreters running in separate threads
 and avoids sharing Python objects between them.
 However, it is not yet available in NumPy.
@@ -141,7 +141,7 @@ The following are general tips for utilizing multithreading.
 For more details on thread safety guarantees for built-in types
 in Python's free-threaded build, see the Python documentation
 on `Thread Safety Guarantees <https://docs.python.org/3.15/library/threadsafety.html#thread-safety-guarantees>`__.
-
+Some of these tips are used in the `Multithreading Example <#multithreading-example>`__.
 
 Avoid race conditions
 ~~~~~~~~~~~~~~~~~~~~~
