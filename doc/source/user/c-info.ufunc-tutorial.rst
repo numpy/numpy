@@ -874,3 +874,82 @@ Sample usage::
     >>> npufunc.add_triplet(a, a)
     array([(2,  4,  6), (8, 10, 12)],
           dtype=[('f0', '<u8'), ('f1', '<u8'), ('f2', '<u8')])
+
+Alternatives to writing your own ufunc
+======================================
+
+While most people like the speed benefits that come from writing a ufunc
+using the Numpy C API, not everyone enjoys writing C code. Fortunately
+there are a few alternatives that can create ufuncs with C-like speed
+but without having to understand the Numpy C API.
+
+Numba
+-----
+
+The `Numba vectorize decorator
+<https://numba.pydata.org/numba-doc/dev/user/vectorize.html>`_ provides
+a quick way to compile a subset of Python to an accelerated function that
+behaves like a ufunc. It can be used without arguments to support any
+numeric type (compiled on a "just in time" basis as you use them):
+
+    .. code-block:: python
+
+        from numba import vectorize
+
+        @vectorize
+        def f(x, y):
+            return x * y
+
+or with arguments to support only specific numeric types (compiled when
+you define the function):
+
+    .. code-block:: python
+
+        @vectorize([int32(int32, int32),
+                    int64(int64, int64),
+                    float32(float32, float32),
+                    float64(float64, float64)])
+        def f(x, y):
+            return x + y
+
+In addition to simple ufuncs, Numba can also be used to generate
+generalized ufuncs in a very similar way.
+
+Numba is a run-time dependency (i.e. users of your library will need to
+have Numba installed), and the way that it dynamically compiles the ufuncs
+can cause a noticeable pause either on import or the first time you use
+a function with a particular set of argument types.
+
+One (usually) minor detail is that Numba ufuncs are not "true" Numpy
+ufuncs. This would only matter if you try to use them as a
+:c:type:`PyUFuncObject` from within C.
+
+Cython
+------
+
+Cython provides a `ufunc decorator
+<https://cython.readthedocs.io/en/latest/src/userguide/numpy_ufuncs.html>`_
+which can transform functions written with Python-like syntax into
+Numpy ufuncs. For example:
+
+    .. code-block:: cython
+
+        cimport cython
+
+        @cython.ufunc
+        cdef double add_one(double x):
+            return x+1
+
+To support multiple numeric types, use "fused types" as the argument types
+or return types (in the example above, ``double`` could be replaced with
+``cython.numeric`` to support the most widely available standard C integer,
+floating and complex numeric types).
+
+Cython functions need to be compiled ahead of time (and thus Cython is
+a compile-time dependency, but users of your function do not need to
+have Cython installed themselves). Numpy will be both a compile-time and
+a runtime dependency for your compiled module, since Cython itself uses
+the ufunc C API described earlier in this section.
+
+As of May 2026, only simple ufuncs are supported and generic ufuncs are
+not yet supported.
