@@ -887,7 +887,7 @@ Numba
 -----
 
 The `Numba vectorize decorator
-<https://numba.pydata.org/numba-doc/dev/user/vectorize.html>`_ provides
+<https://numba.readthedocs.io/en/stable/user/vectorize.html>`_ provides
 a quick way to compile a subset of Python to an accelerated function that
 behaves like a ufunc. It can be used without arguments to support any
 numeric type (compiled on a "just in time" basis as you use them):
