@@ -905,6 +905,8 @@ you define the function):
 
     .. code-block:: python
 
+        from numba import vectorize, int32, int64, float32, float64
+
         @vectorize([int32(int32, int32),
                     int64(int64, int64),
                     float32(float32, float32),
