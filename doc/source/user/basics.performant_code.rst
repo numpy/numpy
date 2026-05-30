@@ -62,9 +62,13 @@ To mitigate this overhead, consider the following strategies:
 
 * Use process pools to reuse existing processes instead of creating new ones for each task.
   `concurrent.futures.ProcessPoolExecutor` provides this feature.
-* Select appropriate startup methods. On Unix-like systems, the ``fork`` method can be faster
-  than ``spawn`` or ``forkserver`` because it duplicates the parent process's memory space.
-  However, ``fork`` may cause potential issues when using combined with threads or certain libraries. 
+* Select appropriate startup methods. Avoid explicitly selecting ``fork``
+  unless you know that it is safe in your application.
+  Forking a multithreaded process is problematic and
+  can lead to deadlocks or crashes.
+  Python 3.14 changed the default start method on POSIX platforms
+  from ``fork`` to ``forkserver`` to avoid common multithreaded process
+  incompatibilities.
   See the `multiprocessing documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods>`__ for more details.
 
 
@@ -104,8 +108,11 @@ If you encounter pickling-related issues, consider the following strategies:
 Multithreading
 -----------------
 
-Multithreading allows multiple threads to run within the same process, sharing the same memory space.
-Starting with Python 3.13, a free-threaded build of Python is available.
+Multithreading allows multiple threads to run within the same process,
+sharing the same memory space.
+
+Free-threaded Python was introduced experimentally in Python 3.13
+and became a supported (non-experimental) feature in Python 3.14.
 When combined with libraries that are explicitly designed to be thread-safe,
 this can enable true parallel execution with threads.
 For details on free-threaded Python builds, see the
@@ -131,7 +138,7 @@ Pros
 
 Cons
 ++++
-* Possibility of race conditions when mutating shared data simultaneously with reads.
+* Possibility of race conditions when mutating shared data simultaneously with reads in other threads
 * Limited performance improvement if using Python libraries are not thread-safe or have limited support for free-threaded Python builds
 
 General tips
@@ -142,6 +149,7 @@ For more details on thread safety guarantees for built-in types
 in Python's free-threaded build, see the Python documentation
 on `Thread Safety Guarantees <https://docs.python.org/3.15/library/threadsafety.html#thread-safety-guarantees>`__.
 Some of these tips are used in the `Multithreading Example <#multithreading-example>`__.
+
 
 Avoid race conditions
 ~~~~~~~~~~~~~~~~~~~~~
@@ -160,6 +168,26 @@ To avoid race conditions, consider the following strategies:
   so they should be used with care.
 
 
+Avoid CPU oversubscription
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Some NumPy operations, such as matrix multiplication and linear algebra functions
+(See :ref:`Linear Algebra <routines.linalg>`),
+may use multiple threads provided
+by the underlying BLAS library (e.g. OpenBLAS, MKL).
+
+If these operations are executed from another thread pool that already uses
+all available CPU cores, CPU oversubscription can occur. In this situation,
+both the outer thread pool and the BLAS threads compete for the same CPU
+resources, which can reduce performance.
+
+To avoid CPU oversubscription, consider the following strategies:
+
+* Limit the number of threads in BLAS to 1, for example using
+  `threadpoolctl <https://github.com/joblib/threadpoolctl>`__
+
+
+
 Common tips for both multiprocessing and multithreading
 -------------------------------------------------------
 
@@ -176,6 +204,21 @@ To achieve better load balancing, consider the following strategies:
   rather than pre-allocating tasks.
 * Check ``chunksize`` parameter to ensure that tasks are neither too small (causing excessive overhead)
   nor too large (leading to load imbalance).
+
+
+Determine the correct number of cpus
++++++++++++++++++++++++++++++++++++++
+
+Pythons provides `os.cpu_count` and `os.process_cpu_count <https://docs.python.org/3/library/os.html#os.process_cpu_count>`__
+functions to get the number of CPUs in the system and the current process, respectively.
+However, in some environments (e.g., Docker containers or HPC clusters),
+this may not reflect the actual number of CPUs available to the process.
+
+To get a more accurate count of available CPUs, consider the following strategies:
+
+* Use `joblib.cpu_count() <https://joblib.readthedocs.io/en/latest/generated/joblib.cpu_count.html>`__,
+  which takes into account constraints such as CPU affinity settings and Linux CFS scheduler quotas.
+  (See `joblib <#joblib>`__ section for more details about joblib.)
 
 
 .. _basics.performant_code.multi_core_with_standard_libraries:
@@ -404,8 +447,9 @@ joblib
 ------
 
 
-``joblib`` is a library that provides tools for parallel computing in Python.
-It offers helper functions which make it easy to parallelize tasks.
+``joblib`` is a library that provides helper functions
+which make it easy to parallelize tasks.
+
 For example,
 
 * ``joblib``'s default backend ``loky`` relies on `cloudpickle <https://github.com/cloudpipe/cloudpickle>`__
@@ -416,8 +460,8 @@ For example,
   returns the number of CPUs available to the current process, taking into
   account constraints such as CPU affinity settings and Linux CFS scheduler
   quotas. This may provide a more accurate value than
-  `os.cpu_count() <https://docs.python.org/3/library/os.html#os.cpu_count>`__
-  in Docker containers and other resource-constrained environments.
+  `os.cpu_count` and `os.process_cpu_count <https://docs.python.org/3/library/os.html#os.process_cpu_count>`__
+  functions in Docker containers and other resource-constrained environments.
 
 
 For more details on ``joblib``, see the following resources:
@@ -431,9 +475,11 @@ threadpoolctl
 --------------
 
 ``threadpoolctl`` is a library that provides utilities to control the behavior
-of thread pools in Python, including nested thread pools used by libraries
+of thread pools in Python, including other thread pools used by libraries
 such as BLAS and OpenMP.
-It allows you to avoid oversubscription of CPU resources
-when using multiple libraries that utilize thread pools.
+It allows you to avoid CPU oversubscription
+when using multiple libraries that utilize threads.
+
+For more details on ``threadpoolctl``, see the following resources:
 
 * threadpoolctl GitHub Repository: https://github.com/joblib/threadpoolctl
