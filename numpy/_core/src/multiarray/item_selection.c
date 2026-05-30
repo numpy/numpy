@@ -35,6 +35,8 @@
 #include "array_coercion.h"
 #include "simd/simd.h"
 
+#include "stringdtype/dtype.h"
+
 static NPY_GCC_OPT_3 inline int
 npy_fasttake_impl(
         char *dest, char *src, const npy_intp *indices,
@@ -2061,6 +2063,16 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 }
 
 
+static int
+binsearch_compare_default(const void *a, const void *b,
+                          PyArrayObject *arr_a, PyArrayObject *NPY_UNUSED(arr_b))
+{
+    PyArray_CompareFunc *compare =
+            PyDataType_GetArrFuncs(PyArray_DESCR(arr_a))->compare;
+    return compare(a, b, arr_a);
+}
+
+
 /*NUMPY_API
  *
  * Search the sorted array op1 for the location of the items in op2. The
@@ -2193,21 +2205,36 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         goto fail;
     }
 
+    /*
+     * TODO: add a way to register per-dtype searchsorted loops and move all this
+     * stringdtype-specific code into a loop defined for StringDType
+     */
+    int error = 0;
+    PyArray_Descr *cmp_descrs[2] = {PyArray_DESCR(ap1), PyArray_DESCR(ap2)};
+    npy_string_allocator *allocators[2] = {NULL, NULL};
+
+    PyArray_BinSearchCompareFunc *cmp_func = &binsearch_compare_default;
+    if (NPY_DTYPE(PyArray_DESCR(ap2)) == &PyArray_StringDType) {
+        cmp_func = &stringdtype_binsearch_compare;
+    }
+
+    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
+
+    if (NPY_DTYPE(PyArray_DESCR(ap2)) == &PyArray_StringDType) {
+        NpyString_acquire_allocators(2, cmp_descrs, allocators);
+    }
+
     if (ap3 == NULL) {
         /* do regular binsearch */
-        NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
         binsearch((const char *)PyArray_DATA(ap1),
                   (const char *)PyArray_DATA(ap2),
                   (char *)PyArray_DATA(ret),
                   PyArray_SIZE(ap1), PyArray_SIZE(ap2),
                   PyArray_STRIDES(ap1)[0], PyArray_ITEMSIZE(ap2),
-                  NPY_SIZEOF_INTP, ap2);
-        NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
+                  NPY_SIZEOF_INTP, ap2, ap1, cmp_func);
     }
     else {
         /* do binsearch with a sorter array */
-        int error = 0;
-        NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
         error = argbinsearch((const char *)PyArray_DATA(ap1),
                              (const char *)PyArray_DATA(ap2),
                              (const char *)PyArray_DATA(sorter),
@@ -2215,13 +2242,21 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
                              PyArray_SIZE(ap1), PyArray_SIZE(ap2),
                              PyArray_STRIDES(ap1)[0],
                              PyArray_ITEMSIZE(ap2),
-                             PyArray_STRIDES(sorter)[0], NPY_SIZEOF_INTP, ap2);
-        NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
-        if (error < 0) {
-            PyErr_SetString(PyExc_ValueError,
-                        "Sorter index out of range.");
-            goto fail;
-        }
+                             PyArray_STRIDES(sorter)[0], NPY_SIZEOF_INTP, ap2,
+                             ap1, cmp_func);
+    }
+
+    if (NPY_DTYPE(PyArray_DESCR(ap2)) == &PyArray_StringDType) {
+        NpyString_release_allocators(2, allocators);
+    }
+
+    NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
+
+    if (error < 0) {
+        PyErr_SetString(PyExc_ValueError, "Sorter index out of range.");
+        goto fail;
+    }
+    if (ap3 != NULL) {
         Py_DECREF(ap3);
         Py_DECREF(sorter);
     }
