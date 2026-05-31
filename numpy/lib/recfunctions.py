@@ -681,6 +681,25 @@ def append_fields(base, names, data, dtypes=None,
     asrecarray : {False, True}, optional
         Whether to return a recarray (MaskedRecords) or not.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from numpy.lib.recfunctions import append_fields
+    >>> base = np.array([(1, 2.0), (3, 4.0)], dtype=[('x', int), ('y', float)])
+    >>> new_field = np.array([10, 20])
+    >>> append_fields(base, 'z', new_field, usemask=False)
+    array([(1, 2., 10), (3, 4., 20)],
+          dtype=[('x', '<i4'), ('y', '<f8'), ('z', '<i4')])
+
+    Append multiple fields at once:
+
+    >>> a = np.array([1, 2, 3])
+    >>> b = np.array([4.0, 5.0, 6.0])
+    >>> base = np.array([(1,), (2,), (3,)], dtype=[('x', int)])
+    >>> append_fields(base, ['a', 'b'], [a, b], usemask=False)
+    array([(1, 1, 4.), (2, 2, 5.), (3, 3, 6.)],
+          dtype=[('x', '<i4'), ('a', '<i4'), ('b', '<f8')])
+
     """
     # Check the names
     if isinstance(names, (tuple, list)):
