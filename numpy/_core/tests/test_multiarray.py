@@ -2257,6 +2257,29 @@ class TestMethods:
         assert_raises(ValueError, a.squeeze, axis=(1,))
         assert_equal(a.squeeze(axis=(2,)), [[1, 2, 3]])
 
+    def test_squeeze_scalar_returns_0d_array(self):
+        # np.squeeze should always return an ndarray, even for
+        # np.generic scalar inputs (gh-27709)
+        for scalar in [np.int_(1), np.float64(2.5), np.complex128(1+2j)]:
+            result = np.squeeze(scalar)
+            assert isinstance(result, np.ndarray), (
+                f"np.squeeze({scalar!r}) returned {type(result)}, "
+                f"expected np.ndarray"
+            )
+            assert result.ndim == 0
+            assert result.dtype == scalar.dtype
+            assert result[()] == scalar
+
+        # axis=0 should also work for scalar inputs
+        result = np.squeeze(np.int_(1), axis=0)
+        assert isinstance(result, np.ndarray)
+        assert result.ndim == 0
+
+        # plain Python scalars should still return 0d arrays too
+        result = np.squeeze(1)
+        assert isinstance(result, np.ndarray)
+        assert result.ndim == 0
+
     def test_transpose(self):
         a = np.array([[1, 2], [3, 4]])
         assert_equal(a.transpose(), [[1, 3], [2, 4]])
