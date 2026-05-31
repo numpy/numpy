@@ -728,6 +728,13 @@ def array_split(ary, indices_or_sections, axis=0):
     into n sections, it returns l % n sub-arrays of size l//n + 1
     and the rest of size l//n.
 
+    .. note::
+        If `indices_or_sections` is a floating-point number, it will be
+        truncated towards zero (equivalent to ``int()``) before splitting.
+        For example, ``3.9`` is treated as ``3``. To avoid ambiguity,
+        it is recommended to pass integer values. Unlike ``array_split``,
+        ``split`` raises a ``ValueError`` when given a float.
+
     See Also
     --------
     split : Split array into multiple sub-arrays of equal size.
