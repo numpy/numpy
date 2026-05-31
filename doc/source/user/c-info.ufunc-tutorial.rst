@@ -953,5 +953,5 @@ have Cython installed themselves). Numpy will be both a compile-time and
 a runtime dependency for your compiled module, since Cython itself uses
 the ufunc C API described earlier in this section.
 
-As of May 2026, only simple ufuncs are supported and generic ufuncs are
-not yet supported.
+As of May 2026, only simple ufuncs are supported and generalized ufuncs
+are not yet supported.
