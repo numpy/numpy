@@ -770,7 +770,7 @@ def partition(a, kth, axis=-1, kind=None, order=None, descending=np._NoValue):
         specified, but unspecified fields will still be used, in the
         order in which they come up in the dtype, to break ties.
     descending : bool, optional
-        Partition order. If ``True``, the left partition will contain
+        Sort order. If ``True``, the left partition will contain
         values greater than the k-th element and the right partition
         will contain values less than or equal to the k-th element.
         If ``False`` or ``None``, the left partition will contain values
@@ -899,7 +899,7 @@ def argpartition(a, kth, axis=-1, kind=None, order=None, descending=np._NoValue)
         specified, but unspecified fields will still be used, in the
         order in which they come up in the dtype, to break ties.
     descending : bool, optional
-        Partition order. If ``True``, the left partition will contain
+        Sort order. If ``True``, the left partition will contain
         values greater than the k-th element and the right partition
         will contain values less than or equal to the k-th element.
         If ``False`` or ``None``, the left partition will contain values
