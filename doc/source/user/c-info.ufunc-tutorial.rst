@@ -894,25 +894,25 @@ numeric type (compiled on a "just in time" basis as you use them):
 
     .. code-block:: python
 
-        from numba import vectorize
+        import numba as nb
 
-        @vectorize
-        def f(x, y):
-            return x * y
+        @nb.vectorize
+        def logit(p):
+            return log(p/(1-p))
 
 or with arguments to support only specific numeric types (compiled when
 you define the function):
 
     .. code-block:: python
 
-        from numba import vectorize, int32, int64, float32, float64
+        import numba as nb
 
-        @vectorize([int32(int32, int32),
-                    int64(int64, int64),
-                    float32(float32, float32),
-                    float64(float64, float64)])
-        def f(x, y):
-            return x + y
+        @nb.vectorize([nb.int32(nb.int32),
+                       nb.int64(nb.int64),
+                       nb.float32(nb.float32),
+                       nb.float64(nb.float64)])
+        def logit(p):
+            return log(p/(1-p))
 
 In addition to simple ufuncs, Numba can also be used to generate
 generalized ufuncs in a very similar way.
@@ -923,8 +923,10 @@ can cause a noticeable pause either on import or the first time you use
 a function with a particular set of argument types.
 
 One (usually) minor detail is that Numba ufuncs are not "true" Numpy
-ufuncs. This would only matter if you try to use them as a
-:c:type:`PyUFuncObject` from within C.
+ufuncs. This would normally only matter if you try to use them as a
+:c:type:`PyUFuncObject` from within C. They support most of the same
+behavior as Numpy ufuncs, including the ``__array_ufunc__``
+interoperability protocol that lets them handle other array types.
 
 Cython
 ------
@@ -937,10 +939,18 @@ Numpy ufuncs. For example:
     .. code-block:: cython
 
         cimport cython
+        from libc.math cimport log
 
         @cython.ufunc
-        cdef double add_one(double x):
-            return x+1
+        @cython.cdivision(True)
+        cdef double logit(double p) noexcept:
+            return log(p/(1-p))
+
+Here ``log`` is taken from the C standard library. The ``cdivision``
+dectorator and ``noexcept`` exception specification are Cython extensions
+and ensure that a divide by zero will not raise a Python exception.
+They are useful for this specific example but not necessary for ufuncs
+generally.
 
 To support multiple numeric types, use "fused types" as the argument types
 or return types (in the example above, ``double`` could be replaced with
