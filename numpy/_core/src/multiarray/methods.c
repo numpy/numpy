@@ -1529,7 +1529,7 @@ array_argpartition(PyArrayObject *self,
             {"|axis", &PyArray_AxisConverter, &axis},
             {"|kind", &PyArray_SelectkindConverter, &sortkind},
             {"|order", NULL, &order},
-            {"|descending", &PyArray_OptionalBoolConverter, &descending}) < 0) {
+            {"$descending", &PyArray_OptionalBoolConverter, &descending}) < 0) {
         return NULL;
     }
 
