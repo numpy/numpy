@@ -3316,8 +3316,6 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('partition',
 
     Parameters
     ----------
-    a : array_like
-        Array to be sorted.
     kth : int or sequence of ints
         Element index to partition by. The k-th value of the array will
         be in the position it would be in a sorted array, all elements that
