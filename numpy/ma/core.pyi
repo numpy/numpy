@@ -2617,7 +2617,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         kth: _ArrayLikeInt,
         /,
         axis: None,
-        kind: _PartitionKind | None = None,        order: None = None,
+        kind: _PartitionKind | None = None,
+        order: None = None,
         descending: bool | None = None,
     ) -> MaskedArray[tuple[int], np.dtype[intp]]: ...
     @overload  # axis: index (default)
@@ -2626,7 +2627,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         kth: _ArrayLikeInt,
         /,
         axis: SupportsIndex = -1,
-        kind: _PartitionKind | None = None,        order: None = None,
+        kind: _PartitionKind | None = None,
+        order: None = None,
         descending: bool | None = None,
     ) -> MaskedArray[_ShapeT_co, np.dtype[intp]]: ...
     @overload  # void, axis: None
@@ -2635,7 +2637,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         kth: _ArrayLikeInt,
         /,
         axis: None,
-        kind: _PartitionKind | None = None,        order: str | Sequence[str] | None = None,
+        kind: _PartitionKind | None = None,
+        order: str | Sequence[str] | None = None,
         descending: bool | None = None,
     ) -> MaskedArray[tuple[int], np.dtype[intp]]: ...
     @overload  # void, axis: index (default)
@@ -2644,7 +2647,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         kth: _ArrayLikeInt,
         /,
         axis: SupportsIndex = -1,
-        kind: _PartitionKind | None = None,        order: str | Sequence[str] | None = None,
+        kind: _PartitionKind | None = None,
+        order: str | Sequence[str] | None = None,
         descending: bool | None = None,
     ) -> MaskedArray[_ShapeT_co, np.dtype[intp]]: ...
 

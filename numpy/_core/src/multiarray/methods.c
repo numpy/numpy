@@ -1364,7 +1364,7 @@ array_partition(PyArrayObject *self,
 
     if (sortkind == _NPY_SELECT_UNDEFINED) {
         // keywords only if sortkind not passed
-        sortkind = descending > 0? NPY_SELECT_DESCENDING: NPY_SELECT_DEFAULT;
+        sortkind = descending > 0 ? NPY_SELECT_DESCENDING : NPY_SELECT_DEFAULT;
     }
     else {
         // Check that no keywords are used
@@ -1535,7 +1535,7 @@ array_argpartition(PyArrayObject *self,
 
     if (sortkind == _NPY_SELECT_UNDEFINED) {
         // keywords only if sortkind not passed
-        sortkind = descending > 0? NPY_SELECT_DESCENDING: NPY_SELECT_DEFAULT;
+        sortkind = descending > 0 ? NPY_SELECT_DESCENDING : NPY_SELECT_DEFAULT;
     }
     else {
         // Check that no keywords are used

@@ -3341,14 +3341,14 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('partition',
         but unspecified fields will still be used, in the order in which
         they come up in the dtype, to break ties.
     descending : bool, optional
-        Partition order. If ``True``, the left partition would contain
-        values less than or equal to the k-th element and the right partition
-        will contain values greater than or equal to the k-th element.
+        Partition order. If ``True``, the left partition will contain
+        values greater than the k-th element and the right partition
+        will contain values less than or equal to the k-th element.
         If ``False`` or ``None``, the left partition will contain values
-        less than or equal to the k-th element and the right partition
-        will contain values greater than or equal to the k-th element. Values
-        that are NaN are partitioned towards the end of the array regardless of
-        order. Default: ``None``.
+        less than the k-th element and the right partition will contain values
+        greater than or equal to the k-th element. Values that are NaN
+        are partitioned towards the end of the array regardless of order.
+        Default: ``None``.
 
         .. versionadded:: 2.6.0
 
