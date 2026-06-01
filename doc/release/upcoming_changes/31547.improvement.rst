@@ -1,0 +1,5 @@
+PEP 3118 structured dtype trailing padding now round-trips
+-----------------------------------------------------------
+Structured dtypes with trailing padding now expose that padding in their
+PEP 3118 buffer format and round-trip through ``memoryview`` without adding
+an explicit unnamed void field.

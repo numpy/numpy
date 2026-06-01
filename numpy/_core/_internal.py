@@ -628,6 +628,8 @@ def _dtype_from_pep3118(spec):
     return dtype
 
 def __dtype_from_pep3118(stream, is_subdtype):
+    # numpy interprets PEP 3118 formats which include named fields as
+    # structured dtypes, even if not enclosed by "T{}".
     field_spec = {
         'names': [],
         'formats': [],
@@ -678,8 +680,7 @@ def __dtype_from_pep3118(stream, is_subdtype):
         is_padding = False
 
         if stream.consume('T{'):
-            value, align = __dtype_from_pep3118(
-                stream, is_subdtype=True)
+            value, align = __dtype_from_pep3118(stream, is_subdtype=True)
         elif stream.next in type_map_chars:
             if stream.next == 'Z':
                 typechar = stream.advance(2)
@@ -704,12 +705,10 @@ def __dtype_from_pep3118(stream, is_subdtype):
                 f"Unknown PEP 3118 data type specifier {stream.s!r}"
             )
 
-        #
         # Native alignment may require padding
         #
         # Here we assume that the presence of a '@' character implicitly
         # implies that the start of the array is *already* aligned.
-        #
         extra_offset = 0
         if stream.byteorder == '@':
             start_padding = (-offset) % align
@@ -729,6 +728,19 @@ def __dtype_from_pep3118(stream, is_subdtype):
             # Update common alignment
             common_alignment = _lcm(align, common_alignment)
 
+        # Field name
+        if stream.consume(':'):
+            name = stream.consume_until(':')
+        else:
+            name = None
+
+        # The struct docs define repeat-0 elements as a way to add alignment
+        # padding. Treat them as padding only for unnamed fields.
+        if name is None and itemsize == 0:
+            offset += extra_offset
+            field_spec['itemsize'] = offset
+            continue
+
         # Convert itemsize to sub-array
         if itemsize != 1:
             value = dtype((value, (itemsize,)))
@@ -736,12 +748,6 @@ def __dtype_from_pep3118(stream, is_subdtype):
         # Sub-arrays (2)
         if shape is not None:
             value = dtype((value, shape))
-
-        # Field name
-        if stream.consume(':'):
-            name = stream.consume_until(':')
-        else:
-            name = None
 
         if not (is_padding and name is None):
             if name is not None and name in field_spec['names']:
@@ -757,8 +763,9 @@ def __dtype_from_pep3118(stream, is_subdtype):
 
         field_spec['itemsize'] = offset
 
-    # extra final padding for aligned types
-    if stream.byteorder == '@':
+    # Extra final padding for aligned types. Outside of T{}, match the struct
+    # module docs: no implicit trailing padding is added.
+    if is_subdtype and stream.byteorder == '@':
         field_spec['itemsize'] += (-offset) % common_alignment
 
     # Check if this was a simple 1-item type, and unwrap it

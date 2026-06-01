@@ -90,6 +90,19 @@ _append_str(_tmp_string_t *s, char const *p)
     return 0;
 }
 
+static int
+_append_int(_tmp_string_t *s, npy_intp n)
+{
+    char buf[64];
+    int nw = PyOS_snprintf(buf, sizeof(buf), "%" NPY_INTP_FMT, n);
+    if (nw < 0 || (size_t)nw >= sizeof(buf)) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "error formatting buffer padding size");
+        return -1;
+    }
+    return _append_str(s, buf);
+}
+
 /*
  * Append a PEP3118-formatted field name, ":name:", to str
  */
@@ -287,9 +300,15 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
                 );
                 return -1;
             }
-            while (*offset < new_offset) {
+            /* Add padding bytes: repeat count plus 'x'. */
+            if (*offset < new_offset) {
+                if (new_offset - *offset > 1) {
+                    if (_append_int(str, (npy_intp)(new_offset - *offset)) < 0) {
+                        return -1;
+                    }
+                }
                 if (_append_char(str, 'x') < 0) return -1;
-                ++*offset;
+                *offset = new_offset;
             }
 
             /* Insert child item */
@@ -302,6 +321,17 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             /* Insert field name */
             if (_append_field_name(str, name) < 0) return -1;
         }
+
+        /* Add any trailing padding. */
+        if (*offset < base_offset + descr->elsize) {
+            Py_ssize_t padding = base_offset + descr->elsize - *offset;
+            if (padding > 1) {
+                if (_append_int(str, (npy_intp)padding) < 0) return -1;
+            }
+            if (_append_char(str, 'x') < 0) return -1;
+            *offset = base_offset + descr->elsize;
+        }
+
         if (_append_char(str, '}') < 0) return -1;
     }
     else {
