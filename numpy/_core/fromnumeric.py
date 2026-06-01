@@ -737,7 +737,7 @@ def partition(a, kth, axis=-1, kind=None, order=None, descending=np._NoValue):
     Return a partitioned copy of an array.
 
     Creates a copy of the array and partially sorts it in such a way that
-    the value of the element in k-th position is in the position it would be
+    the value of the element in the k-th position is in the position it would be
     in a sorted array. In the output array, all elements that would be to the left
     of the k-th element in a sorted array are located to the left of this element and
     all that would be to the right are located to its right. The ordering of the

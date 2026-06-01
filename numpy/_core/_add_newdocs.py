@@ -3307,7 +3307,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('partition',
 
     a.partition(kth, axis=-1, kind='introselect', order=None, descending=None)
 
-    Partially sorts the array in such a way that the value of the element in k-th
+    Partially sorts the array in such a way that the value of the element in the k-th
     position is in the position it would be in a sorted array. In the output array,
     all elements that would be to the left of the k-th element in a sorted array are
     located to the left of this element and all that would be to the right are located
