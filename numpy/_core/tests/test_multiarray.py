@@ -4072,7 +4072,7 @@ class TestMethods:
         # Some dtypes use BLAS for 'dot' operation and
         # not all BLAS support floating-point errors.
         if not BLAS_SUPPORTS_FPE and dtype == np.double:
-            pytest.mark.skip("BLAS does not support FPE")
+            pytest.skip("BLAS does not support FPE")
 
         a = np.array([1, 1], dtype=dtype)
         b = np.array([-np.inf, np.inf], dtype=dtype)
@@ -9470,10 +9470,7 @@ class TestNewBufferProtocol:
         _multiarray_tests.corrupt_or_fix_bufferinfo(obj)
 
     def test_no_suboffsets(self):
-        try:
-            import _testbuffer
-        except ImportError:
-            raise pytest.mark.skip("_testbuffer is not available")
+        _testbuffer = pytest.importskip("_testbuffer")
 
         for shape in [(2, 3), (2, 3, 4)]:
             data = list(range(np.prod(shape)))
