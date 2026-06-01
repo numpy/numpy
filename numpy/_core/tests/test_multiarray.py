@@ -9470,7 +9470,7 @@ class TestNewBufferProtocol:
         _multiarray_tests.corrupt_or_fix_bufferinfo(obj)
 
     def test_no_suboffsets(self):
-        _testbuffer = pytest.importskip("_testbuffer")
+        _testbuffer = pytest.importorskip("_testbuffer")
 
         for shape in [(2, 3), (2, 3, 4)]:
             data = list(range(np.prod(shape)))
