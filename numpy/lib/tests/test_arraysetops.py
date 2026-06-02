@@ -7,6 +7,7 @@ import numpy as np
 from numpy import ediff1d, intersect1d, isin, setdiff1d, setxor1d, union1d, unique
 from numpy.dtypes import StringDType
 from numpy.exceptions import AxisError
+from numpy.lib import _arraysetops_impl
 from numpy.testing import (
     assert_array_equal,
     assert_equal,
@@ -830,6 +831,60 @@ class TestUnique:
             i2 = np.array([], np.int64)
             c = np.array([], np.int64)
             self.check_all(a, b, i1, i2, c, dt)
+
+    @pytest.mark.parametrize("dtype", [np.int16, np.int64, np.uint32])
+    def test_unique_dense_integer_fast_path(self, dtype):
+        arr = np.array([12, 15, 12, 13, 15, 14, 12, 14], dtype=dtype)
+        values = np.array([12, 13, 14, 15], dtype=dtype)
+        inverse = np.array([0, 3, 0, 1, 3, 2, 0, 2], dtype=np.intp)
+        counts = np.array([3, 1, 2, 2], dtype=np.intp)
+
+        assert_array_equal(np.unique(arr), values)
+        assert_equal(np.unique(arr, return_inverse=True), (values, inverse))
+        assert_equal(np.unique(arr, return_counts=True), (values, counts))
+        assert_equal(
+            np.unique(arr, return_inverse=True, return_counts=True),
+            (values, inverse, counts),
+        )
+
+    def test_unique_dense_integer_negative_values(self):
+        arr = np.array([-3, -1, -3, -2, -1, -2, -3], dtype=np.int64)
+        values = np.array([-3, -2, -1], dtype=np.int64)
+        inverse = np.array([0, 2, 0, 1, 2, 1, 0], dtype=np.intp)
+        counts = np.array([3, 2, 2], dtype=np.intp)
+
+        assert_equal(np.unique(arr, return_inverse=True), (values, inverse))
+        assert_equal(np.unique(arr, return_counts=True), (values, counts))
+
+    def test_unique_dense_integer_bool(self):
+        arr = np.array([True, False, True, True, False], dtype=bool)
+        values = np.array([False, True], dtype=bool)
+        inverse = np.array([1, 0, 1, 1, 0], dtype=np.intp)
+        counts = np.array([2, 3], dtype=np.intp)
+
+        assert_array_equal(np.unique(arr), values)
+        assert_equal(np.unique(arr, return_inverse=True), (values, inverse))
+        assert_equal(np.unique(arr, return_counts=True), (values, counts))
+
+    def test_unique_dense_integer_large_uint_offset(self):
+        base = np.uint64(2**63 + 100)
+        arr = np.array([base + 2, base, base + 1, base + 2, base], dtype=np.uint64)
+        values = np.array([base, base + 1, base + 2], dtype=np.uint64)
+        inverse = np.array([2, 0, 1, 2, 0], dtype=np.intp)
+        counts = np.array([2, 1, 2], dtype=np.intp)
+
+        assert_equal(np.unique(arr, return_inverse=True), (values, inverse))
+        assert_equal(np.unique(arr, return_counts=True), (values, counts))
+
+    def test_unique_dense_integer_fast_path_skips_wide_range(self):
+        arr = np.array([0, 100], dtype=np.int64)
+        result = _arraysetops_impl._unique1d_dense_ints(arr, return_counts=True)
+        assert result is NotImplemented
+
+    def test_unique_dense_integer_fast_path_skips_range_above_intp(self):
+        arr = np.array([0, np.iinfo(np.intp).max + 1], dtype=np.uint64)
+        result = _arraysetops_impl._unique1d_dense_ints(arr, return_counts=True)
+        assert result is NotImplemented
 
     def test_unique_subclass(self):
         class Subclass(np.ndarray):
