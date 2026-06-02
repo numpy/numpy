@@ -340,6 +340,25 @@ class TestHistogram:
         self.do_signed_overflow_bounds(np.int_)
         self.do_signed_overflow_bounds(np.longlong)
 
+    def test_cumulative_overflow(self):
+        #when summation in block base method cause overflow
+        w = np.array([1] * (2 ** 17), dtype=np.uint8)
+        a = np.array([128] * (2 ** 17), dtype=np.uint8)
+        bins = np.arange(256)
+        with suppress_warnings() as sup:
+            rec = sup.record(RuntimeWarning, 'Overflow.*')
+            hist, _ = np.histogram(a=a, bins=bins, weights=w)
+        assert_equal(len(rec), 1)
+
+        #when cumsum cause overflow
+        a = np.array([0, 0.5, 1, 1.5], dtype=float)
+        w = np.array([65534, 2, 65534, 65534], dtype='uint16')  # uint16: 0~65535
+        bins = [0, 1, 2]
+        with suppress_warnings() as sup:
+            rec = sup.record(RuntimeWarning, 'Overflow.*')
+            hist, _ = np.histogram(a=a, bins=bins, weights=w)
+        assert_equal(len(rec), 1)
+
     def do_precision_lower_bound(self, float_small, float_large):
         eps = np.finfo(float_large).eps
 
