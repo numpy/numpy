@@ -1,0 +1,6 @@
+`sort_compare` DType slot
+-------------------------
+A `sort_compare` slot has been added to the DType API to allow registering a
+comparison function to be used for sorting and argsorting arrays of the DType
+using the ArrayMethod API. This slot overrides the use of
+`NPY_DT_PyArray_ArrFuncs_compare` which may be deprecated in the future.
