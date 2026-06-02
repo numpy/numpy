@@ -26,7 +26,7 @@ if cc.get_id() == 'gcc'
   endif
 elif cc.get_id() == 'msvc'
   if not cc.version().version_compare('>=19.35')
-    error('NumPy requires at least vc142 (default with Visual Studio 2019) ' + \
+    error('NumPy requires at least vc143 (default with Visual Studio 2022) ' + \
           'when building with MSVC')
   endif
   add_project_arguments('/experimental:c11atomics', language: 'c')
