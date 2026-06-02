@@ -3154,6 +3154,39 @@ class TestMethods:
         a = np.arange(-50, 51, dtype=dtype) + 1j * np.arange(-50, 51, dtype=dtype)
         self._test_partition_descending(a, k, nan, descending)
 
+    @pytest.mark.parametrize('dtype', [np.complex64, np.complex128, np.clongdouble])
+    @pytest.mark.parametrize('k', [2, 15, 50, 95])
+    @pytest.mark.parametrize('descending', [True, False])
+    @pytest.mark.parametrize('random_seed', [0, 1])
+    def test_partition_descending_complex_lexorder(
+        self, dtype, k, descending, random_seed
+    ):
+        arange = np.tile(np.arange(25, dtype=dtype), 4)
+        nans = np.full(100, np.nan + 1j * np.nan, dtype=dtype)
+
+        no_nans = arange + 1j * arange
+        im_nans = arange + 1j * nans
+        re_nans = nans + 1j * arange
+        all_nans = nans + 1j * nans
+
+        a = np.concatenate((no_nans, im_nans, re_nans, all_nans))
+        rng = np.random.default_rng(random_seed)
+        rng.shuffle(a)
+
+        # use sorts as a proxy for checking partitions
+        a_sort = np.sort(a, descending=descending, stable=True)
+        a_part = np.partition(a, k, descending=descending)
+
+        before_sort, after_sort = np.split(a_sort, [k])
+        before_part, after_part = np.split(a_part, [k])
+        before_part.sort(descending=descending, stable=True)
+        after_part.sort(descending=descending, stable=True)
+
+        msg = (f"complex partition lexorder, dtype={dtype}, k={k}, "
+               f"descending={descending}")
+        assert_equal(before_part, before_sort, msg)
+        assert_equal(after_part, after_sort, msg)
+
     @pytest.mark.skip(reason="descending partitions not supported for string types yet")
     @pytest.mark.parametrize('dtype', [np.str_, np.bytes_])
     @pytest.mark.parametrize('k', [2, 15, 50, 95])
