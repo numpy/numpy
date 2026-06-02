@@ -34,6 +34,7 @@ class Arrayterator(np.ndarray[_ShapeT_co, _DTypeT_co]):
 
     #
     def __init__(self, /, var: np.ndarray[_ShapeT_co, _DTypeT_co], buf_size: int | None = None) -> None: ...
+    def __getattr__(self, attr: str, /) -> Any: ...
     def __getitem__(self, index: _AnyIndex, /) -> Arrayterator[_AnyShape, _DTypeT_co]: ...  # type: ignore[override]
     def __iter__(self) -> Generator[np.ndarray[_AnyShape, _DTypeT_co]]: ...  # pyrefly: ignore[bad-override]
 
