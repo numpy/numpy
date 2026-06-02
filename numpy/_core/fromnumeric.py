@@ -751,18 +751,21 @@ def partition(a, kth, axis=-1, kind=None, order=None, descending=np._NoValue):
     kth : int or sequence of ints
         Element index to partition by. In the returned array, the k-th
         value of the array will be in the position it would be in a
-        sorted array, all elements that would be sorted before it will
-        be moved before it, and all elements that would be sorted after
-        it will be moved after it. The order of all elements within the
-        partitions is undefined. If provided with a sequence of k-th it
-        will partition all elements indexed by k-th of them into their
-        sorted position at once.
+        sorted array, all elements that are less than this element (or
+        greater if `descending` is True) will be moved before it, and
+        all elements that are greater than or equal to this element
+        (or less than or equal if `descending` is True) will be moved after it.
+        The order of all elements within each partition is undefined. If
+        provided with a sequence of k-th it will partition all elements
+        indexed by k-th of them into their sorted position at once.
 
     axis : int or None, optional
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
     kind : {'introselect'}, optional
-        Selection algorithm. Default is 'introselect'.
+        NumPy currently offers only one selection algorithm, 'introselect',
+        and this parameter provides no additional functionality. Default
+        is ``None``.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument
         specifies which fields to compare first, second, etc.  A single
@@ -770,14 +773,10 @@ def partition(a, kth, axis=-1, kind=None, order=None, descending=np._NoValue):
         specified, but unspecified fields will still be used, in the
         order in which they come up in the dtype, to break ties.
     descending : bool, optional
-        Sort order. If ``True``, the left partition will contain
-        values greater than the k-th element and the right partition
-        will contain values less than or equal to the k-th element.
-        If ``False`` or ``None``, the left partition will contain values
-        less than the k-th element and the right partition will contain values
-        greater than or equal to the k-th element. Values that are NaN
-        are partitioned towards the end of the array regardless of order.
-        Default: ``None``.
+        Sort order. If ``True``, the array will be partitioned in
+        descending order. If ``False`` or ``None``, the array will be
+        partitioned in ascending order. Values that are NaN are partitioned
+        towards the end of the array regardless of order. Default: ``None``.
 
         .. versionadded:: 2.6.0
 
@@ -880,18 +879,21 @@ def argpartition(a, kth, axis=-1, kind=None, order=None, descending=np._NoValue)
     kth : int or sequence of ints
         Element index to partition by. In the returned array, the k-th
         value of the array will be in the position it would be in a
-        sorted array, all elements that would be sorted before it will
-        be moved before it, and all elements that would be sorted after
-        it will be moved after it. The order of all elements within the
-        partitions is undefined. If provided with a sequence of k-th it
-        will partition all elements indexed by k-th of them into their
-        sorted position at once.
+        sorted array, all elements that are less than this element (or
+        greater if `descending` is True) will be moved before it, and
+        all elements that are greater than or equal to this element
+        (or less than or equal if `descending` is True) will be moved after it.
+        The order of all elements within each partition is undefined. If
+        provided with a sequence of k-th it will partition all elements
+        indexed by k-th of them into their sorted position at once.
 
     axis : int or None, optional
         Axis along which to sort. The default is -1 (the last axis). If
         None, the flattened array is used.
     kind : {'introselect'}, optional
-        Selection algorithm. Default is 'introselect'
+        NumPy currently offers only one selection algorithm, 'introselect',
+        and this parameter provides no additional functionality. Default
+        is ``None``.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument
         specifies which fields to compare first, second, etc. A single
@@ -899,14 +901,10 @@ def argpartition(a, kth, axis=-1, kind=None, order=None, descending=np._NoValue)
         specified, but unspecified fields will still be used, in the
         order in which they come up in the dtype, to break ties.
     descending : bool, optional
-        Sort order. If ``True``, the left partition will contain
-        values greater than the k-th element and the right partition
-        will contain values less than or equal to the k-th element.
-        If ``False`` or ``None``, the left partition will contain values
-        less than the k-th element and the right partition will contain values
-        greater than or equal to the k-th element. Values that are NaN
-        are partitioned towards the end of the array regardless of order.
-        Default: ``None``.
+        Sort order. If ``True``, the array will be partitioned in
+        descending order. If ``False`` or ``None``, the array will be
+        partitioned in ascending order. Values that are NaN are partitioned
+        towards the end of the array regardless of order. Default: ``None``.
 
         .. versionadded:: 2.6.0
 
