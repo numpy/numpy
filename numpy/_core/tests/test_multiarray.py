@@ -2851,7 +2851,7 @@ class TestMethods:
     def test_sort_descending_complex(self, dtype, stable, descending):
         a = np.arange(-50, 51, dtype=dtype) + 1j * np.arange(-50, 51, dtype=dtype)
         self._test_sort_descending_nonan(a, stable, descending)
-        self._test_sort_descending_nan(a, np.nan + 1j * np.nan, stable, descending)
+        self._test_sort_descending_nan(a, complex(np.nan, np.nan), stable, descending)
 
     @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
     @pytest.mark.parametrize("stable", [True, False])
