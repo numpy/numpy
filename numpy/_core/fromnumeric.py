@@ -732,7 +732,7 @@ def _partition_dispatcher(a, kth, axis=None, kind=None, order=None, descending=N
 
 
 @array_function_dispatch(_partition_dispatcher)
-def partition(a, kth, axis=-1, kind=None, order=None, descending=np._NoValue):
+def partition(a, kth, axis=-1, kind=np._NoValue, order=None, descending=np._NoValue):
     """
     Return a partitioned copy of an array.
 
@@ -852,11 +852,15 @@ def partition(a, kth, axis=-1, kind=None, order=None, descending=np._NoValue):
         axis = -1
     else:
         a = asanyarray(a).copy(order="K")
+
     # Sanitize for backward compatibility
+    extra_kwargs = {}
     if descending is not np._NoValue:
-        a.partition(kth, axis=axis, kind=kind, order=order, descending=descending)
-    else:
-        a.partition(kth, axis=axis, kind=kind, order=order)
+        extra_kwargs['descending'] = descending
+    if kind is not np._NoValue:
+        extra_kwargs['kind'] = kind
+
+    a.partition(kth, axis=axis, order=order, **extra_kwargs)
     return a
 
 
@@ -865,7 +869,7 @@ def _argpartition_dispatcher(a, kth, axis=None, kind=None, order=None, descendin
 
 
 @array_function_dispatch(_argpartition_dispatcher)
-def argpartition(a, kth, axis=-1, kind=None, order=None, descending=np._NoValue):
+def argpartition(a, kth, axis=-1, kind=np._NoValue, order=None, descending=np._NoValue):
     """
     Perform an indirect partition along the given axis using the
     algorithm specified by the `kind` keyword. It returns an array of
@@ -935,7 +939,7 @@ def argpartition(a, kth, axis=-1, kind=None, order=None, descending=np._NoValue)
     see `partition` for notes on the enhanced sort order and
     different selection algorithms.
 
-    Examples
+    ExamplesNone
     --------
     One dimensional array:
 
@@ -960,23 +964,14 @@ def argpartition(a, kth, axis=-1, kind=None, order=None, descending=np._NoValue)
            [1, 1, 3]])
 
     """
+    # Sanitize for backward compatibility
+    kwargs = {}
     if descending is not np._NoValue:
-        return _wrapfunc(
-            a,
-            'argpartition',
-            kth, axis=axis,
-            kind=kind,
-            order=order,
-            descending=descending
-        )
-    return _wrapfunc(
-        a,
-        'argpartition',
-        kth,
-        axis=axis,
-        kind=kind,
-        order=order
-    )
+        kwargs['descending'] = descending
+    if kind is not np._NoValue:
+        kwargs['kind'] = kind
+
+    return _wrapfunc(a, "argpartition", kth, axis=axis, order=order, **kwargs)
 
 
 def _sort_dispatcher(
