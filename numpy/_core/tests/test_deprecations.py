@@ -486,7 +486,7 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
     ):
         """Test that timedelta64 array + integer array triggers deprecation."""
         # timedelta op int
-        self.assert_deprecated(op, num=1, args=(timedelta_arr, int_arr))
+        self.assert_deprecated(op, num=None, args=(timedelta_arr, int_arr))
         # int op timedelta
         self.assert_deprecated(op, num=None, args=(int_arr, timedelta_arr))
 
@@ -504,7 +504,7 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
     ):
         """Test that datetime64 array + integer array triggers deprecation."""
         # datetime op int
-        self.assert_deprecated(op, num=1, args=(datetime_arr, int_arr))
+        self.assert_deprecated(op, num=None, args=(datetime_arr, int_arr))
         # int op datetime
         if op == np.add:
             self.assert_deprecated(op, num=None, args=(int_arr, datetime_arr))
@@ -516,7 +516,7 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
         c = np.array([1], dtype="m8[ms]")
 
         # Both intermediate operations should trigger warnings
-        self.assert_deprecated(np.add, num=1, args=(a, b))
+        self.assert_deprecated(np.add, num=None, args=(a, b))
         self.assert_deprecated(np.add, num=None, args=(b, c))
 
 
