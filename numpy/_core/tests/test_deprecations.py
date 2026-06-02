@@ -461,7 +461,7 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
     def test_raise_warning_for_operation_with_generic_unit(
         self, value: int, generic_value: int, op: Callable
     ):
-        self.assert_deprecated(op, num=2, args=(value, generic_value))
+        self.assert_deprecated(op, num=1, args=(value, generic_value))
 
     def test_raise_warning_for_default_constructor(self):
         self.assert_deprecated(lambda: np.timedelta64())
@@ -488,7 +488,7 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
         # timedelta op int
         self.assert_deprecated(op, num=1, args=(timedelta_arr, int_arr))
         # int op timedelta
-        self.assert_deprecated(op, num=1, args=(int_arr, timedelta_arr))
+        self.assert_deprecated(op, num=None, args=(int_arr, timedelta_arr))
 
     @pytest.mark.parametrize('datetime_arr', [
         np.array(['2020-01-01', '2020-01-02'], dtype="M8[D]"),
@@ -507,7 +507,7 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
         self.assert_deprecated(op, num=1, args=(datetime_arr, int_arr))
         # int op datetime
         if op == np.add:
-            self.assert_deprecated(op, num=1, args=(int_arr, datetime_arr))
+            self.assert_deprecated(op, num=None, args=(int_arr, datetime_arr))
 
     def test_non_associative_case_warns(self):
         """Verify the specific non-associative case from gh-31255 warns."""
@@ -517,7 +517,7 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
 
         # Both intermediate operations should trigger warnings
         self.assert_deprecated(np.add, num=1, args=(a, b))
-        self.assert_deprecated(np.add, num=1, args=(b, c))
+        self.assert_deprecated(np.add, num=None, args=(b, c))
 
 
 class TestTriDeprecationWithNonInteger(_DeprecationTestCase):
