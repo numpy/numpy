@@ -25,11 +25,7 @@ jobs:
           - default
           - freethreading
           - asan
-          # TSan CI runs for longer than 30 minutes due to slow
-          # stdlib bytecode compilation step. Disable or parallelize
-          # byte compilation once rattler-build has support.
-          # See https://github.com/prefix-dev/pixi/pull/5737
-          # - tsan-freethreading
+          - tsan-freethreading
     if: github.repository == 'numpy/numpy'
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -40,8 +36,8 @@ jobs:
 
     - uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
       with:
-        pixi-version: v0.66.0
+        pixi-version: v0.71.1
         run-install: false
 
     - name: Build
-      run: pixi build --path="pixi-packages/${{ matrix.package_variant }}"
+      run: pixi publish --path="pixi-packages/${{ matrix.package_variant }}"
