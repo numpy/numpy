@@ -939,7 +939,7 @@ def argpartition(a, kth, axis=-1, kind=np._NoValue, order=None, descending=np._N
     see `partition` for notes on the enhanced sort order and
     different selection algorithms.
 
-    ExamplesNone
+    Examples
     --------
     One dimensional array:
 
