@@ -3167,13 +3167,6 @@ array_correlate(PyObject *NPY_UNUSED(dummy),
             {"|mode", &PyArray_CorrelatemodeConverter, &mode}) < 0) {
         return NULL;
     }
-    if (mode == 3) {
-        PyErr_SetString(PyExc_ValueError,
-                        "correlate() accepts only modes 0, 1, and 2 "
-                        "(valid, same and full). "
-                        "Use correlatelags() for mode 3 (lags).");
-        return NULL;
-    }
     return PyArray_Correlate(a0, shape, mode);
 }
 
