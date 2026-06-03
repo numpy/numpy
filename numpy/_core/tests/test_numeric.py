@@ -3640,220 +3640,22 @@ class TestCorrelate:
         assert_array_almost_equal(z, self.z1[1:4])  # [-8., -14., -20.]
         assert len(z) == 3
 
-    def test_lags_range(self):
-        self._setup(float)
-        z = np.correlate(self.x, self.y, lags=range(-1, 3))
-        assert_array_almost_equal(z, self.z1[1:5])  # [-8., -14., -20., -26.]
-        assert len(z) == 4
-
-    def test_lags_range_with_step(self):
-        self._setup(float)
-        z = np.correlate(self.x, self.y, lags=range(-2, 5, 2))
-        assert_array_almost_equal(z, self.z1[0::2])  # [-3., -14., -26., -5.]
-        assert len(z) == 4
-
-    def test_lags_slice(self):
-        self._setup(float)
-        z = np.correlate(self.x, self.y, lags=slice(-1, 3))
-        assert_array_almost_equal(z, self.z1[1:5])
-
-    def test_lags_array(self):
-        self._setup(float)
-        # 1-D array of lags (must be an arithmetic progression)
-        z = np.correlate(self.x, self.y, lags=np.array([-2, 0, 2, 4]))
-        assert_array_almost_equal(z, self.z1[0::2])
-
     def test_lags_with_explicit_mode_rejected(self):
         self._setup(float)
         with pytest.raises(ValueError, match="cannot be used with an explicit mode"):
             np.correlate(self.x, self.y, mode='full', lags=1)
-        with pytest.raises(ValueError, match="cannot be used with an explicit mode"):
-            np.correlate(self.x, self.y, mode='valid', lags=range(2))
 
     def test_lags_negative_int_rejected(self):
         self._setup(float)
         with pytest.raises(ValueError, match="non-negative"):
             np.correlate(self.x, self.y, lags=-1)
 
-    def test_lags_arbitrary_array(self):
+    def test_lags_non_int_rejected(self):
         self._setup(float)
-        # Non-arithmetic index array — loops in Python, one C call per lag
-        # z1 covers lags [-2..4]; pick lags [0, 1, 3] -> z1 indices [2, 3, 5]
-        z = np.correlate(self.x, self.y, lags=np.array([0, 1, 3]))
-        assert_array_almost_equal(z, self.z1[[2, 3, 5]])
-        # Order is preserved as given
-        z_rev = np.correlate(self.x, self.y, lags=np.array([3, 0]))
-        assert_array_almost_equal(z_rev, self.z1[[5, 2]])
-
-    def test_lags_zero_step_rejected(self):
-        self._setup(float)
-        with pytest.raises(ValueError, match="lag_step must not be zero"):
-            np.correlate(self.x, self.y, lags=slice(0, 5, 0))
-
-    # --- Lag range geometry tests ---
-    # n1=5 (self.x), n2=3 (self.y), z1 covers lags [-2..4]
-
-    def test_lags_left_partial_only(self):
-        self._setup(float)
-        # All requested lags < 0 (left partial overlap region only)
-        z = np.correlate(self.x, self.y, lags=range(-2, 0))
-        assert_array_almost_equal(z, self.z1[0:2])  # [-3, -8]
-
-    def test_lags_right_partial_only(self):
-        self._setup(float)
-        # All requested lags >= n1-n2+1=3 (right partial overlap region only)
-        z = np.correlate(self.x, self.y, lags=range(3, 5))
-        assert_array_almost_equal(z, self.z1[5:7])  # [-14, -5]
-
-    def test_lags_full_overlap_only(self):
-        self._setup(float)
-        # Only full-overlap lags [0, n1-n2] = [0, 2]
-        z = np.correlate(self.x, self.y, lags=range(3))
-        assert_array_almost_equal(z, self.z1[2:5])
-
-    def test_lags_beyond_overlap(self):
-        self._setup(float)
-        # Lags entirely outside any overlap -> all zeros
-        z = np.correlate(self.x, self.y, lags=range(-10, -5))
-        assert_array_almost_equal(z, np.zeros(5))
-        z = np.correlate(self.x, self.y, lags=range(10, 15))
-        assert_array_almost_equal(z, np.zeros(5))
-
-    def test_lags_partial_beyond_overlap(self):
-        self._setup(float)
-        # Lags partially outside overlap -> zeros at extremes
-        z = np.correlate(self.x, self.y, lags=range(-5, 8))
-        expected = np.concatenate([np.zeros(3), self.z1, np.zeros(3)])
-        assert_array_almost_equal(z, expected)
-
-    def test_lags_partial_beyond_overlap_with_step(self):
-        self._setup(float)
-        # min_lag < -(n2-1) with lag_step > 1: the leading skip into the
-        # overlap region must align to the user's grid, not to -(n2-1).
-        # n1=5, n2=3, z1 covers lags -2..4.
-        # grid: -5, -2, 1, 4, 7 -> [0, z1[0], z1[3], z1[6], 0]
-        z = np.correlate(self.x, self.y, lags=range(-5, 8, 3))
-        assert_array_almost_equal(z, [0, self.z1[0], self.z1[3], self.z1[6], 0])
-        # grid: -4, -1, 2 -> [0, z1[1], z1[4]]
-        z = np.correlate(self.x, self.y, lags=range(-4, 5, 3))
-        assert_array_almost_equal(z, [0, self.z1[1], self.z1[4]])
-        # Large repro from PR review (a=arange(100), v=arange(3), step 3):
-        # all-zero output was the symptom of the lag_step skip bug.
-        a = np.arange(100, dtype=float)
-        v = np.arange(3, dtype=float)
-        full = np.convolve(a, v, mode='full')  # lags -(n2-1)..n1-1 = -2..99
-        grid = range(-50, 50, 3)
-        # full[i] corresponds to lag i - (n2-1) = i - 2; map each requested
-        # lag back into full's index space, zero-fill anything out of range.
-        expected = np.array(
-            [full[lag + (len(v) - 1)] if 0 <= lag + (len(v) - 1) < len(full)
-             else 0.0
-             for lag in grid])
-        z = np.convolve(a, v, lags=grid)
-        assert_array_almost_equal(z, expected)
-
-    def test_lags_single_lag(self):
-        self._setup(float)
-        z = np.correlate(self.x, self.y, lags=range(1))
-        assert_array_almost_equal(z, [self.z1[2]])
-
-    def test_lags_negative_step(self):
-        self._setup(float)
-        # Negative step: reversed lag order
-        z = np.correlate(self.x, self.y, lags=slice(2, -3, -1))
-        # slice(2,-3,-1) -> [2, 1, 0, -1, -2]
-        # corresponds to z1 indices [4, 3, 2, 1, 0]
-        assert_array_almost_equal(z, self.z1[4::-1])
-
-    def test_lags_negative_step_nonunit(self):
-        self._setup(float)
-        # Non-unit negative step exercises integer ceiling division in the
-        # inversion block of _pyarray_correlate.
-        # range(4, -3, -2) -> [4, 2, 0, -2]
-        z = np.correlate(self.x, self.y, lags=range(4, -3, -2))
-        assert_array_almost_equal(z, self.z1[[6, 4, 2, 0]])
-
-    def test_lags_v_longer_than_a_nonunit_step(self):
-        self._setup(float)
-        # n1=3 < n2=5 triggers the array-swap + inversion path; combining that
-        # with a non-unit step exercises ceiling division via the swap entry point.
-        # range(0, 5, 2) -> [0, 2, 4]; lag 4 exceeds n1-1=2 so it maps to 0.
-        z = np.correlate(self.y, self.x, lags=range(0, 5, 2))
-        assert_array_almost_equal(z, [self.z2[4], self.z2[6], 0.0])
-
-    def test_lags_negative_step_partial_beyond_overlap(self):
-        self._setup(float)
-        # Negative non-unit step whose range extends outside the overlap on
-        # both sides: exercises inversion (ceiling division) followed by the
-        # pre-overlap skip (ceiling division again).
-        # range(5, -8, -3) -> [5, 2, -1, -4, -7]
-        # n1=5, n2=3: overlap is lags -2..4
-        # lag=5 past right edge -> 0; lag=-4,-7 before left edge -> 0
-        z = np.correlate(self.x, self.y, lags=range(5, -8, -3))
-        assert_array_almost_equal(z, [0., self.z1[4], self.z1[1], 0., 0.])
-
-    def test_lags_empty(self):
-        self._setup(float)
-        z = np.correlate(self.x, self.y, lags=range(0))
-        assert len(z) == 0
-
-    # --- Array geometry tests ---
-
-    def test_lags_v_longer_than_a(self):
-        self._setup(float)
-        # When len(a) < len(v): correlate(y, x) is the time-reversal of
-        # correlate(x, y) for real inputs.
-        z = np.correlate(self.y, self.x, lags=range(-4, 3))
-        assert_array_almost_equal(z, self.z1[::-1])
-
-    def test_lags_equal_length(self):
-        a = np.array([1, 2, 3], dtype=float)
-        v = np.array([4, 5, 6], dtype=float)
-        z_mode = np.correlate(a, v, 'full')
-        z_lags = np.correlate(a, v, lags=range(-2, 3))
-        assert_array_almost_equal(z_mode, z_lags)
-
-    def test_lags_autocorrelation(self):
-        # a == v: result should be symmetric for real arrays
-        a = np.array([1.0, 2.0, 3.0])
-        z = np.correlate(a, a, lags=range(-2, 3))
-        assert_array_almost_equal(z, z[::-1])
-
-    # --- Equivalence between mode and explicit lag range ---
-
-    def test_lags_matches_full_mode(self):
-        self._setup(float)
-        z_mode = np.correlate(self.x, self.y, 'full')
-        z_lags = np.correlate(self.x, self.y, lags=range(-2, 5))
-        assert_array_almost_equal(z_mode, z_lags)
-
-    def test_lags_matches_same_mode(self):
-        self._setup(float)
-        z_mode = np.correlate(self.x, self.y, 'same')
-        z_lags = np.correlate(self.x, self.y, lags=range(-1, 4))
-        assert_array_almost_equal(z_mode, z_lags)
-
-    def test_lags_matches_valid_mode(self):
-        self._setup(float)
-        z_mode = np.correlate(self.x, self.y, 'valid')
-        z_lags = np.correlate(self.x, self.y, lags=range(3))
-        assert_array_almost_equal(z_mode, z_lags)
-
-    # --- Type/dtype tests ---
-
-    def test_complex_with_lags(self):
-        x = np.array([1, 2, 3, 4 + 1j], dtype=complex)
-        y = np.array([-1, -2j, 3 + 1j], dtype=complex)
-        # Lags-mode equals subset of full-mode for complex arrays
-        z_full = np.correlate(y, x, mode='full')
-        z_lags = np.correlate(y, x, lags=range(-3, 3))
-        assert_array_almost_equal(z_full, z_lags)
-
-    def test_object_with_lags(self):
-        self._setup(Decimal)
-        z_full = np.correlate(self.x, self.y, mode='full')
-        z_lags = np.correlate(self.x, self.y, lags=range(-2, 5))
-        assert_array_almost_equal(z_full, z_lags)
+        with pytest.raises(TypeError, match="lags must be an integer"):
+            np.correlate(self.x, self.y, lags=range(-1, 2))
+        with pytest.raises(TypeError, match="lags must be an integer"):
+            np.correlate(self.x, self.y, lags=slice(-1, 2))
 
     # --- Default mode resolution ---
 
@@ -3867,8 +3669,6 @@ class TestCorrelate:
                            np.correlate(self.x, self.y, mode='valid'))
         # lags with mode=None -> lags path
         assert_array_almost_equal(np.correlate(self.x, self.y, lags=1),
-                                  self.z1[1:4])
-        assert_array_almost_equal(np.correlate(self.x, self.y, lags=range(-1, 2)),
                                   self.z1[1:4])
 
     def test_object(self):
@@ -3958,51 +3758,6 @@ class TestConvolve:
         z = np.convolve(a, v, lags=1)
         assert_array_almost_equal(z, [1.0, 2.5, 4.0])
 
-    def test_convolve_lags_range(self):
-        a = np.array([1, 2, 3], dtype=float)
-        v = np.array([0, 1, 0.5], dtype=float)
-        z = np.convolve(a, v, lags=range(-1, 2))
-        assert_array_almost_equal(z, [1.0, 2.5, 4.0])
-
-    def test_convolve_lags_range_with_step(self):
-        a = np.array([1, 2, 3, 4, 5], dtype=float)
-        v = np.array([0, 1, 0.5], dtype=float)
-        z = np.convolve(a, v, lags=range(-2, 6, 2))
-        assert_array_almost_equal(z, [0.0, 2.5, 5.5, 2.5])
-
-    def test_convolve_lags_large_step_not_all_zeros(self):
-        # Regression test: lags spanning before the overlap region with a
-        # non-unit step should still produce non-zero values for lags within
-        # the overlap, not silently return all zeros.
-        a = np.arange(100, dtype=float)
-        v = np.arange(3, dtype=float)
-        lag_range = range(-50, 50, 3)
-        result = np.convolve(a, v, lags=lag_range)
-        assert not np.all(result == 0), "result should not be all zeros"
-        # Cross-check against the full convolution for in-range lags.
-        z_full = np.convolve(a, v, 'full')  # lags -2 .. 99
-        n2 = len(v)
-        for i, lag in enumerate(lag_range):
-            if -(n2 - 1) <= lag < len(a):
-                assert_array_almost_equal(result[i], z_full[lag + (n2 - 1)])
-            else:
-                assert result[i] == 0, f"lag {lag} is out of range, expected 0"
-
-    def test_convolve_lags_matches_full_mode(self):
-        a = np.array([1, 2, 3, 4, 5], dtype=float)
-        v = np.array([6, 7, 8], dtype=float)
-        z_mode = np.convolve(a, v, 'full')
-        z_lags = np.convolve(a, v, lags=range(-2, 5))
-        assert_array_almost_equal(z_mode, z_lags)
-
-    def test_convolve_vs_correlate_reversed(self):
-        # convolve(a, v, lags=L) == correlate(a, v[::-1], lags=L)
-        a = np.array([1, 2, 3, 4, 5], dtype=float)
-        v = np.array([6, 7, 8], dtype=float)
-        z_conv = np.convolve(a, v, lags=range(-3, 6))
-        z_corr = np.correlate(a, v[::-1], lags=range(-3, 6))
-        assert_array_almost_equal(z_conv, z_corr)
-
     def test_convolve_default_mode_resolution(self):
         a = [1, 2, 3]
         v = [0, 1, 0.5]
@@ -4014,15 +3769,14 @@ class TestConvolve:
         # lags with mode=None -> lags path
         assert_array_almost_equal(np.convolve(a, v, lags=1),
                                   np.convolve(a, v, mode='full')[1:4])
-        assert_array_almost_equal(np.convolve(a, v, lags=range(-1, 2)),
-                                  np.convolve(a, v, mode='full')[1:4])
 
     def test_convolve_lags_with_explicit_mode_rejected(self):
         with pytest.raises(ValueError, match="cannot be used with an explicit mode"):
             np.convolve([1, 2, 3], [4, 5, 6], mode='full', lags=1)
-        with pytest.raises(ValueError, match="cannot be used with an explicit mode"):
-            np.convolve([1, 2, 3], [4, 5, 6], mode='full',
-                        lags=range(2))
+
+    def test_convolve_lags_non_int_rejected(self):
+        with pytest.raises(TypeError, match="lags must be an integer"):
+            np.convolve([1, 2, 3], [4, 5, 6], lags=range(-1, 2))
 
     def test_complex_no_conjugation(self):
         # Regression test: convolve must NOT conjugate either input.
