@@ -800,7 +800,8 @@ def correlate(a, v, mode=None, *, lags=None):
         When ``None`` (default), the function uses ``'valid'`` unless
         ``lags`` is passed, in which case that argument controls the output
         range.  Passing an explicit mode together with ``lags`` raises an
-        error.
+        error.  Note that the default is ``'valid'``, unlike `convolve`,
+        which uses ``'full'``.
     lags : int, optional
         Lag window half-width.  An integer ``n`` requests the symmetric
         inclusive window ``[-n, n]`` (``2*n+1`` lags total).
