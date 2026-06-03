@@ -1212,7 +1212,6 @@ dtypemeta_wrap_legacy_descriptor(
         }
     }
 
-    NpyUnstable_SetImmortal((PyObject *)dtype_class);
     return dtype_class;
 }
 
