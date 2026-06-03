@@ -1,14 +1,11 @@
 ``lags`` parameter for `numpy.correlate` and `numpy.convolve`
 -------------------------------------------------------------
 `numpy.correlate` and `numpy.convolve` now accept a ``lags`` keyword
-argument to compute the result at a restricted set of lag values instead
-of the full output.
+argument (integer) to compute the result over a symmetric window of lag
+values instead of the full output.
 
-* ``lags=n`` (int) computes a symmetric inclusive window ``[-n, n]``
-  (``2*n+1`` lags), matching MATLAB's ``xcorr(x, y, n)`` convention.
-* ``lags=`` also accepts a Python ``range``, a ``slice`` with explicit
-  start/stop, or a 1-D integer array_like containing an arithmetic
-  progression of lag indices.
+``lags=n`` computes the window ``[-n, n]`` (``2*n+1`` lags total),
+matching MATLAB's ``xcorr(x, y, n)`` convention.
 
 ``lags`` is mutually exclusive with an explicit ``mode`` argument.
 
