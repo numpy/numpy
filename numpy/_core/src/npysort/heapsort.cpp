@@ -1,47 +1,18 @@
 /* -*- c -*- */
 
 /*
- * The purpose of this module is to add faster sort functions
- * that are type-specific.  This is done by altering the
- * function table for the builtin descriptors.
- *
- * These sorting functions are copied almost directly from numarray
- * with a few modifications (complex comparisons compare the imaginary
- * part if the real parts are equal, for example), and the names
- * are changed.
- *
- * The original sorting code is due to Charles R. Harris who wrote
- * it for numarray.
- */
-
-/*
- * Quick sort is usually the fastest, but the worst case scenario can
- * be slower than the merge and heap sorts.  The merge sort requires
- * extra memory and so for large arrays may not be useful.
- *
- * The merge sort is *stable*, meaning that equal components
- * are unmoved from their entry versions, so it can be used to
- * implement lexicographic sorting on multiple keys.
- *
- * The heap sort is included for completeness.
+ * Comparator-function-driven version of the heapsort implemented in
+ * ``npysort_heapsort.hpp``.  Used by dtypes that register a
+ * ``PyArray_CompareFunc`` rather than the type-specialised path.
+ * See ``npysort_heapsort.hpp`` for the algorithm description.
  */
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "npy_sort.h"
 #include "npysort_common.h"
-#include "numpy_tag.h"
-
-#include "npysort_heapsort.h"
 
 #include <cstdlib>
-
-#define NOT_USED NPY_UNUSED(unused)
-#define PYA_QS_STACK 100
-#define SMALL_QUICKSORT 15
-#define SMALL_MERGESORT 20
-#define SMALL_STRING 16
-
 
 /*
  *****************************************************************************
@@ -50,11 +21,10 @@
  */
 
 NPY_NO_EXPORT int
-npy_heapsort(void *start, npy_intp num, void *varr)
+npy_heapsort_impl(void *start, npy_intp num, void *varr, npy_intp elsize,
+                  PyArray_CompareFunc *cmp)
 {
-    PyArrayObject *arr = (PyArrayObject *)varr;
-    npy_intp elsize = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+    void *arr = varr;
     if (elsize == 0) {
         return 0;  /* no need for sorting elements of no size */
     }
@@ -111,12 +81,11 @@ npy_heapsort(void *start, npy_intp num, void *varr)
 }
 
 NPY_NO_EXPORT int
-npy_aheapsort(void *vv, npy_intp *tosort, npy_intp n, void *varr)
+npy_aheapsort_impl(void *vv, npy_intp *tosort, npy_intp n, void *varr,
+                   npy_intp elsize, PyArray_CompareFunc *cmp)
 {
+    void *arr = varr;
     char *v = (char *)vv;
-    PyArrayObject *arr = (PyArrayObject *)varr;
-    npy_intp elsize = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
     npy_intp *a, i, j, l, tmp;
 
     /* The array needs to be offset by one for heapsort indexing */

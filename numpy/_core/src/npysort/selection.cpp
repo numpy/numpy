@@ -20,15 +20,12 @@
 #include "npy_partition.h"
 #include "npy_sort.h"
 #include "npysort_common.h"
-#include "numpy_tag.h"
+#include "numpy_tag.hpp"
 
 #include <array>
 #include <cstdlib>
 #include <utility>
 #include "x86_simd_qsort.hpp"
-
-#define NOT_USED NPY_UNUSED(unused)
-#define DISABLE_HIGHWAY_OPTIMIZATION (defined(__arm__) || defined(__aarch64__))
 
 template<typename T>
 inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)

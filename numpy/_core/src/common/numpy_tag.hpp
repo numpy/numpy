@@ -1,5 +1,5 @@
-#ifndef NUMPY_CORE_SRC_COMMON_NUMPY_TAG_H_
-#define NUMPY_CORE_SRC_COMMON_NUMPY_TAG_H_
+#ifndef NUMPY_CORE_SRC_COMMON_NUMPY_TAG_HPP_
+#define NUMPY_CORE_SRC_COMMON_NUMPY_TAG_HPP_
 
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_common.h"
@@ -267,4 +267,4 @@ constexpr int cmp(Args... args)
 
 }  // namespace npy
 
-#endif  // NUMPY_CORE_SRC_COMMON_NUMPY_TAG_H_
+#endif  // NUMPY_CORE_SRC_COMMON_NUMPY_TAG_HPP_

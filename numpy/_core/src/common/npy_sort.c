@@ -18,13 +18,13 @@ npy_default_sort_loop(PyArrayMethod_Context *context,
     PyArrayMethod_SortParameters *sort_params =
         (PyArrayMethod_SortParameters *)context->parameters;
     PyArray_SortImpl *sort_func = NULL;
-    
+
     switch (sort_params->flags) {
         case NPY_SORT_DEFAULT:
             sort_func = npy_quicksort_impl;
             break;
         case NPY_SORT_STABLE:
-            sort_func = npy_mergesort_impl;
+            sort_func = npy_timsort_impl;
             break;
         default:
             PyErr_SetString(PyExc_ValueError, "Invalid sort kind");
@@ -45,13 +45,13 @@ npy_default_argsort_loop(PyArrayMethod_Context *context,
     PyArrayMethod_SortParameters *sort_params =
         (PyArrayMethod_SortParameters *)context->parameters;
     PyArray_ArgSortImpl *argsort_func = NULL;
-    
+
     switch (sort_params->flags) {
         case NPY_SORT_DEFAULT:
             argsort_func = npy_aquicksort_impl;
             break;
         case NPY_SORT_STABLE:
-            argsort_func = npy_amergesort_impl;
+            argsort_func = npy_atimsort_impl;
             break;
         default:
             PyErr_SetString(PyExc_ValueError, "Invalid sort kind");

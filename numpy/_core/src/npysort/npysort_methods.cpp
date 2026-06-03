@@ -2,7 +2,7 @@
 
 #include "npy_sort.h"
 #include "npysort_common.h"
-#include "numpy_tag.h"
+#include "numpy_tag.hpp"
 #include "gil_utils.h"
 #include "quicksort.hpp"
 #include "radixsort.hpp"

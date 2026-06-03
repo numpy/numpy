@@ -1,17 +1,62 @@
+/*
+ * The purpose of this module is to add faster sort functions
+ * that are type-specific.  This is done by altering the
+ * function table for the builtin descriptors.
+ *
+ * These sorting functions are copied almost directly from numarray
+ * with a few modifications (complex comparisons compare the imaginary
+ * part if the real parts are equal, for example), and the names
+ * are changed.
+ *
+ * The original sorting code is due to Charles R. Harris who wrote
+ * it for numarray.
+ */
+
+/*
+ * Quick sort is usually the fastest, but the worst case scenario is O(N^2) so
+ * the code switches to the O(NlogN) worst case heapsort if not enough progress
+ * is made on the large side of the two quicksort partitions. This improves the
+ * worst case while still retaining the speed of quicksort for the common case.
+ * This is variant known as introsort.
+ *
+ *
+ * def introsort(lower, higher, recursion_limit=log2(higher - lower + 1) * 2):
+ *   # sort remainder with heapsort if we are not making enough progress
+ *   # we arbitrarily choose 2 * log(n) as the cutoff point
+ *   if recursion_limit < 0:
+ *       heapsort(lower, higher)
+ *       return
+ *
+ *   if lower < higher:
+ *      pivot_pos = partition(lower, higher)
+ *      # recurse into smaller first and leave larger on stack
+ *      # this limits the required stack space
+ *      if (pivot_pos - lower > higher - pivot_pos):
+ *          quicksort(pivot_pos + 1, higher, recursion_limit - 1)
+ *          quicksort(lower, pivot_pos, recursion_limit - 1)
+ *      else:
+ *          quicksort(lower, pivot_pos, recursion_limit - 1)
+ *          quicksort(pivot_pos + 1, higher, recursion_limit - 1)
+ *
+ *
+ * the below code implements this converted to an iteration and as an
+ * additional minor optimization skips the recursion depth checking on the
+ * smaller partition as it is always less than half of the remaining data and
+ * will thus terminate fast enough
+ */
+
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "npy_cpu_features.h"
 #include "npy_sort.h"
 #include "npysort_common.h"
-#include "npysort_heapsort.h"
-#include "numpy_tag.h"
+#include "npysort_heapsort.hpp"
+#include "numpy_tag.hpp"
 #include "x86_simd_qsort.hpp"
 #include "highway_qsort.hpp"
 
 #include <cstdlib>
 #include <utility>
-
-#define NOT_USED NPY_UNUSED(unused)
 
 /*
  * pushing largest partition has upper bound of log2(n) space
@@ -19,8 +64,6 @@
  */
 #define PYA_QS_STACK (NPY_BITSOF_INTP * 2)
 #define SMALL_QUICKSORT 15
-#define SMALL_MERGESORT 20
-#define SMALL_STRING 16
 
 // Disable AVX512 sorting on CYGWIN until we can figure
 // out why it has test failures
