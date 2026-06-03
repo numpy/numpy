@@ -2254,6 +2254,46 @@ static PyObject *
 /**end repeat**/
 
 static PyObject *
+realtype_dunder_trunc(PyObject *self, PyObject *NPY_UNUSED(args))
+{
+    return PyNumber_Long(self);
+}
+
+static PyObject *
+floatingtype_dunder_unary_to_int(PyObject *self, PyObject *op)
+{
+    PyArrayObject *arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
+    PyObject *res;
+    PyObject *ret;
+
+    if (arr == NULL) {
+        return NULL;
+    }
+
+    res = PyArray_GenericUnaryFunction(arr, op);
+    Py_DECREF(arr);
+    if (res == NULL) {
+        return NULL;
+    }
+
+    ret = PyNumber_Long(res);
+    Py_DECREF(res);
+    return ret;
+}
+
+static PyObject *
+floatingtype_dunder_floor(PyObject *self, PyObject *NPY_UNUSED(args))
+{
+    return floatingtype_dunder_unary_to_int(self, n_ops.floor);
+}
+
+static PyObject *
+floatingtype_dunder_ceil(PyObject *self, PyObject *NPY_UNUSED(args))
+{
+    return floatingtype_dunder_unary_to_int(self, n_ops.ceil);
+}
+
+static PyObject *
 voidtype_getfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 {
     /* Use ndarray's getfield to obtain the field safely */
@@ -2920,6 +2960,15 @@ static PyMethodDef @name@type_methods[] = {
 /**end repeat**/
 
 static PyMethodDef floatingtype_methods[] = {
+    {"__trunc__",
+        (PyCFunction)realtype_dunder_trunc,
+        METH_NOARGS, NULL},
+    {"__floor__",
+        (PyCFunction)floatingtype_dunder_floor,
+        METH_NOARGS, NULL},
+    {"__ceil__",
+        (PyCFunction)floatingtype_dunder_ceil,
+        METH_NOARGS, NULL},
     /* Hook for the round() builtin */
     {"__round__",
         (PyCFunction)floatingtype_dunder_round,
@@ -2928,6 +2977,15 @@ static PyMethodDef floatingtype_methods[] = {
 };
 
 static PyMethodDef integertype_methods[] = {
+    {"__trunc__",
+        (PyCFunction)realtype_dunder_trunc,
+        METH_NOARGS, NULL},
+    {"__floor__",
+        (PyCFunction)realtype_dunder_trunc,
+        METH_NOARGS, NULL},
+    {"__ceil__",
+        (PyCFunction)realtype_dunder_trunc,
+        METH_NOARGS, NULL},
     /* Hook for the round() builtin */
     {"__round__",
         (PyCFunction)integertype_dunder_round,
