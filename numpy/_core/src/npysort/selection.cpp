@@ -484,8 +484,8 @@ introselect_arg(void *v, npy_intp *tosort, npy_intp num, npy_intp kth,
 
 struct arg_map {
     int typenum;
-    PyArray_PartitionFunc *part[NPY_NSELECTS];
-    PyArray_ArgPartitionFunc *argpart[NPY_NSELECTS];
+    PyArray_PartitionFunc *part[2];
+    PyArray_ArgPartitionFunc *argpart[2];
 };
 
 template <class... Tags>
@@ -518,13 +518,15 @@ _get_partition_func(int type, NPY_SELECTKIND which)
 {
     npy_intp i;
     npy_intp ntypes = partition_t::map.size();
+    int idx = which & NPY_SELECT_DESCENDING ? 1 : 0;
 
     if ((int)which < 0 || (int)which >= NPY_NSELECTS) {
         return NULL;
     }
+
     for (i = 0; i < ntypes; i++) {
         if (type == partition_t::map[i].typenum) {
-            return partition_t::map[i].part[which];
+            return partition_t::map[i].part[idx];
         }
     }
     return NULL;
@@ -535,10 +537,11 @@ _get_argpartition_func(int type, NPY_SELECTKIND which)
 {
     npy_intp i;
     npy_intp ntypes = partition_t::map.size();
+    int idx = which & NPY_SELECT_DESCENDING ? 1 : 0;
 
     for (i = 0; i < ntypes; i++) {
         if (type == partition_t::map[i].typenum) {
-            return partition_t::map[i].argpart[which];
+            return partition_t::map[i].argpart[idx];
         }
     }
     return NULL;
