@@ -11,6 +11,9 @@ NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSort, (T *arr, npy_intp siz
 #include "highway_qsort_16bit.dispatch.h"
 NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSort, (T *arr, npy_intp size, bool reverse))
 
+#include "highway_qselect.dispatch.h"
+NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSelect, (T *arr, npy_intp num, npy_intp kth))
+
 } // np::highway::qsort_simd
 
 #endif // NUMPY_SRC_COMMON_NPYSORT_HWY_SIMD_QSORT_HPP

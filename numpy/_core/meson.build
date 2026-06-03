@@ -946,6 +946,15 @@ foreach gen_mtargets : [
       ASIMDHP, VSX2,  # VXE FIXME: disable VXE due to runtime segfault
     ] : []
   ],
+  [
+    'highway_qselect.dispatch.h',
+    'src/npysort/highway_qselect.dispatch.cpp',
+    use_highway ? [
+      # VQSelect for non-x86, all widths: aarch64 (NEON) and ppc64.
+      # 16-bit ints need only base ASIMD (no ASIMDHP); float16 is excluded.
+      ASIMD, VSX2,
+    ] : []
+  ],
 ]
 
 

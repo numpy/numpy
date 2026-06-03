@@ -12,6 +12,7 @@ import operator
 import os
 import pathlib
 import pickle
+import platform
 import re
 import subprocess
 import sys
@@ -11227,6 +11228,125 @@ def test_argsort_largearrays(dtype):
     rnd = np.random.RandomState(1100710816)
     arr = -0.5 + rnd.random(N).astype(dtype)
     assert_arg_sorted(arr, np.argsort(arr, kind='quick'))
+
+
+def _is_highway_qselect_platform():
+    """True on platforms where the Highway VQSelect dispatch is active."""
+    m = platform.machine()
+    # Linux reports "aarch64"; macOS Apple Silicon reports "arm64".
+    return m in ("aarch64", "arm64") or m.startswith("ppc64")
+
+
+@pytest.mark.parametrize("dtype", [
+    np.int32, np.uint32, np.int64, np.uint64, np.float32, np.float64,
+])
+@pytest.mark.parametrize("N,kth", [
+    (16384, 0),          # threshold boundary, minimum
+    (16384, 16383),      # threshold boundary, maximum
+    (100_000, 10),       # small k (ORDER BY … LIMIT pattern)
+    (100_000, 99_999),   # large k
+    (100_000, 50_000),   # median
+    (1_000_000, 100),    # large array
+])
+def test_partition_highway(dtype, N, kth):
+    rng = np.random.default_rng(1100710816)
+    if np.issubdtype(dtype, np.floating):
+        arr = rng.random(N).astype(dtype)
+    else:
+        info = np.iinfo(dtype)
+        arr = rng.integers(info.min, info.max, size=N, dtype=dtype)
+    result = np.partition(arr, kth)
+    assert_equal(result[kth], np.sort(arr)[kth])
+    assert np.all(result[:kth] <= result[kth]), (
+        f"Elements before kth={kth} not all <= result[kth]"
+    )
+    assert np.all(result[kth:] >= result[kth]), (
+        f"Elements after kth={kth} not all >= result[kth]"
+    )
+
+
+@pytest.mark.skipif(
+    not _is_highway_qselect_platform(),
+    reason="Highway VQSelect dispatch only active on aarch64/ppc64"
+)
+@pytest.mark.parametrize("dtype", [
+    np.int32, np.uint32, np.int64, np.uint64, np.float32, np.float64,
+])
+@pytest.mark.parametrize("N,kth", [
+    (16384, 0),
+    (100_000, 50_000),
+    (1_000_000, 100),
+])
+def test_partition_highway_native(dtype, N, kth):
+    """Skipped on x86 so on-target CI shows an explicit pass for the new path."""
+    rng = np.random.default_rng(42)
+    if np.issubdtype(dtype, np.floating):
+        arr = rng.random(N).astype(dtype)
+    else:
+        info = np.iinfo(dtype)
+        arr = rng.integers(info.min, info.max, size=N, dtype=dtype)
+    result = np.partition(arr, kth)
+    assert_equal(result[kth], np.sort(arr)[kth])
+    assert np.all(result[:kth] <= result[kth])
+    assert np.all(result[kth:] >= result[kth])
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_partition_highway_nan(dtype):
+    # NaNs must be partitioned to the end, matching NumPy's contract.
+    N = 100_000
+    rng = np.random.default_rng(42)
+    arr = rng.random(N).astype(dtype)
+    arr[rng.choice(N, 500, replace=False)] = np.nan
+    result = np.partition(arr, N - 501)
+    # The last 500 elements should all be NaN (Highway/NumPy contract: NaNs
+    # are treated as greater than all finite values and sort to the end).
+    assert np.all(np.isnan(result[-500:])), "NaN not at end of partitioned array"
+    # No NaNs should appear before the NaN region.
+    assert np.all(~np.isnan(result[:-500])), "NaN found before expected range"
+
+
+# float16 (Half) is excluded from the Highway path; it falls back to scalar
+# introselect.  int16/uint16 ride the same ASIMD/VSX2 dispatch as wider types.
+@pytest.mark.parametrize("dtype", [np.int16, np.uint16])
+@pytest.mark.parametrize("N,kth", [
+    (16384, 0),          # threshold boundary, minimum
+    (16384, 16383),      # threshold boundary, maximum
+    (100_000, 10),       # small k (ORDER BY … LIMIT pattern)
+    (100_000, 99_999),   # large k
+    (100_000, 50_000),   # median
+])
+def test_partition_highway_16bit(dtype, N, kth):
+    rng = np.random.default_rng(42)
+    info = np.iinfo(dtype)
+    arr = rng.integers(info.min, info.max, size=N, dtype=dtype)
+    result = np.partition(arr, kth)
+    assert_equal(result[kth], np.sort(arr)[kth])
+    assert np.all(result[:kth] <= result[kth]), (
+        f"Elements before kth={kth} not all <= result[kth]"
+    )
+    assert np.all(result[kth:] >= result[kth]), (
+        f"Elements after kth={kth} not all >= result[kth]"
+    )
+
+
+@pytest.mark.skipif(
+    not _is_highway_qselect_platform(),
+    reason="Highway 16-bit VQSelect dispatch only active on aarch64/ppc64"
+)
+@pytest.mark.parametrize("dtype", [np.int16, np.uint16])
+def test_partition_highway_16bit_native(dtype):
+    """Skipped on x86 so on-target CI shows an explicit pass for the 16-bit path."""
+    N = 100_000
+    kth = N // 2
+    rng = np.random.default_rng(42)
+    info = np.iinfo(dtype)
+    arr = rng.integers(info.min, info.max, size=N, dtype=dtype)
+    result = np.partition(arr, kth)
+    assert_equal(result[kth], np.sort(arr)[kth])
+    assert np.all(result[:kth] <= result[kth])
+    assert np.all(result[kth:] >= result[kth])
+
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 @pytest.mark.thread_unsafe(
