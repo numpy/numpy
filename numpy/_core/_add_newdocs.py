@@ -3318,14 +3318,13 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('partition',
     ----------
     kth : int or sequence of ints
         Element index to partition by. The k-th value of the array will
-        be in the position it would be in a sorted array, all elements that
-        sorted array, all elements that are less than this element (or
-        greater if `descending` is True) will be moved before it, and
-        all elements that are greater than or equal to this element
-        (or less than or equal if `descending` is True) will be moved after it.
-        The order of all elements within each partition is undefined. If
-        provided with a sequence of k-th it will partition all elements
-        indexed by k-th of them into their sorted position at once.
+        be in the position it would be in a sorted array, all elements
+        that are less than this element (or greater if `descending` is True)
+        will be moved before it, and all elements that are greater than or
+        equal to this element (or less than or equal if `descending` is True)
+        will be moved after it. The order of all elements within each partition
+        is undefined. If provided with a sequence of k-th it will partition all
+        elements indexed by k-th of them into their sorted position at once.
 
         .. deprecated:: 1.22.0
             Passing booleans as index is deprecated.
