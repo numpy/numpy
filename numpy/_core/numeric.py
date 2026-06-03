@@ -736,11 +736,14 @@ def _mode_from_name(mode):
 
 
 def _lags_from_lags(lag):
-    """Convert a lags specification to (min_lag, max_lag_exclusive, lag_step).
+    """Convert a lags specification to (min_lag, max_lag_exclusive, lag_step)
+    or a 1-D integer ndarray of arbitrary lag indices.
 
     Accepts an ``int`` (symmetric window ``[-n, n]``), a ``range``, a
-    ``slice`` with explicit start/stop, or a 1-D array_like containing an
-    arithmetic progression of integers.
+    ``slice`` with explicit start/stop, or a 1-D integer array_like.
+    Arrays that form an arithmetic progression return a tuple for a single
+    C call; non-arithmetic arrays return the raw ndarray for the caller to
+    loop over.
     """
     if isinstance(lag, (int, nt.integer)):
         m = int(lag)
@@ -765,14 +768,11 @@ def _lags_from_lags(lag):
     if arr.size == 1:
         return (int(arr[0]), int(arr[0]) + 1, 1)
     step = int(arr[1] - arr[0])
-    if step == 0:
-        raise ValueError("lag_step must not be zero")
-    expected = arr[0] + step * arange(arr.size)
-    if not (arr == expected).all():
-        raise ValueError(
-            "lags array must be an arithmetic progression "
-            "(use a range or slice for non-arithmetic patterns)")
-    return (int(arr[0]), int(arr[-1]) + step, step)
+    if step != 0:
+        expected = arr[0] + step * arange(arr.size)
+        if (arr == expected).all():
+            return (int(arr[0]), int(arr[-1]) + step, step)
+    return arr  # arbitrary indices — caller loops
 
 
 def _lags_from_mode(alen, vlen, mode):
@@ -835,9 +835,9 @@ def correlate(a, v, mode=None, *, lags=None):
     lags : int, range, slice, or 1-D array_like of int, optional
         Lag specification.  An ``int`` ``n`` requests the symmetric inclusive
         window ``[-n, n]`` (``2*n+1`` lags total).  Also accepts a Python
-        ``range``, a ``slice`` with explicit start and stop, or a 1-D
-        array_like containing an arithmetic progression of integer lag
-        indices.
+        ``range``, a ``slice`` with explicit start and stop, or an arbitrary
+        1-D array_like of integer lag indices (arithmetic progressions use a
+        single fast C call; other arrays loop in Python).
 
     Returns
     -------
@@ -896,9 +896,14 @@ def correlate(a, v, mode=None, *, lags=None):
         if mode is not None:
             raise ValueError(
                 "lags cannot be used with an explicit mode")
-        lags_tuple = _lags_from_lags(lags)
-        return multiarray.correlatelags(
-            a, v, lags_tuple[0], lags_tuple[1], lags_tuple[2])
+        lags_spec = _lags_from_lags(lags)
+        if isinstance(lags_spec, tuple):
+            return multiarray.correlatelags(
+                a, v, lags_spec[0], lags_spec[1], lags_spec[2])
+        return concatenate([
+            multiarray.correlatelags(a, v, int(lag), int(lag) + 1, 1)
+            for lag in lags_spec
+        ])
 
     return multiarray.correlate2(
         a, v, _mode_from_name(mode if mode is not None else 'valid'))
@@ -956,8 +961,8 @@ def convolve(a, v, mode=None, *, lags=None):
         Lag specification.  An ``int`` ``n`` requests the symmetric inclusive
         window ``[-n, n]`` (``2*n+1`` lags total).  Also accepts a Python
         ``range``, a ``slice`` with explicit start and stop, or a 1-D
-        array_like containing an arithmetic progression of integer lag
-        indices.
+        array_like of integer lag indices (arithmetic progressions use a
+        single fast C call; other arrays loop in Python).
 
     Returns
     -------
@@ -1039,10 +1044,16 @@ def convolve(a, v, mode=None, *, lags=None):
         if mode is not None:
             raise ValueError(
                 "lags cannot be used with an explicit mode")
-        lags_tuple = _lags_from_lags(lags)
-        return multiarray.correlatelags(
-            a, v[::-1], lags_tuple[0], lags_tuple[1], lags_tuple[2],
-            conjugate=False)
+        lags_spec = _lags_from_lags(lags)
+        if isinstance(lags_spec, tuple):
+            return multiarray.correlatelags(
+                a, v[::-1], lags_spec[0], lags_spec[1], lags_spec[2],
+                conjugate=False)
+        return concatenate([
+            multiarray.correlatelags(
+                a, v[::-1], int(lag), int(lag) + 1, 1, conjugate=False)
+            for lag in lags_spec
+        ])
 
     return multiarray.correlate(
         a, v[::-1], _mode_from_name(mode if mode is not None else 'full'))

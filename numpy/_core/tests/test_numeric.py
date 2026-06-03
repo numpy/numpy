@@ -3675,17 +3675,20 @@ class TestCorrelate:
         with pytest.raises(ValueError, match="non-negative"):
             np.correlate(self.x, self.y, lags=-1)
 
-    def test_lags_non_arithmetic_array_rejected(self):
+    def test_lags_arbitrary_array(self):
         self._setup(float)
-        with pytest.raises(ValueError, match="arithmetic progression"):
-            np.correlate(self.x, self.y, lags=np.array([0, 1, 3]))
+        # Non-arithmetic index array — loops in Python, one C call per lag
+        # z1 covers lags [-2..4]; pick lags [0, 1, 3] -> z1 indices [2, 3, 5]
+        z = np.correlate(self.x, self.y, lags=np.array([0, 1, 3]))
+        assert_array_almost_equal(z, self.z1[[2, 3, 5]])
+        # Order is preserved as given
+        z_rev = np.correlate(self.x, self.y, lags=np.array([3, 0]))
+        assert_array_almost_equal(z_rev, self.z1[[5, 2]])
 
     def test_lags_zero_step_rejected(self):
         self._setup(float)
         with pytest.raises(ValueError, match="lag_step must not be zero"):
             np.correlate(self.x, self.y, lags=slice(0, 5, 0))
-        with pytest.raises(ValueError, match="lag_step must not be zero"):
-            np.correlate(self.x, self.y, lags=np.array([2, 2, 2]))
 
     # --- Lag range geometry tests ---
     # n1=5 (self.x), n2=3 (self.y), z1 covers lags [-2..4]
