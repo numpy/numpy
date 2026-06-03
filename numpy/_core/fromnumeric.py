@@ -854,13 +854,13 @@ def partition(a, kth, axis=-1, kind=np._NoValue, order=None, descending=np._NoVa
         a = asanyarray(a).copy(order="K")
 
     # Sanitize for backward compatibility
-    extra_kwargs = {}
+    kwargs = {}
     if descending is not np._NoValue:
-        extra_kwargs['descending'] = descending
+        kwargs['descending'] = descending
     if kind is not np._NoValue:
-        extra_kwargs['kind'] = kind
+        kwargs['kind'] = kind
 
-    a.partition(kth, axis=axis, order=order, **extra_kwargs)
+    a.partition(kth, axis=axis, order=order, **kwargs)
     return a
 
 
