@@ -158,6 +158,7 @@ jobs:
     - name: Install as editable
       env:
         PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
+        PYTHONSAFEPATH: 1  # regression check for gh-24907
       run: |
         pip install -e . --no-build-isolation
     - name: Run full test suite
@@ -166,6 +167,7 @@ jobs:
         # TODO: gcov
       env:
         PYTHONOPTIMIZE: 2
+        PYTHONSAFEPATH: 1
 
   armhf_test:
     # Tests NumPy on 32-bit ARM hard-float (armhf) via compatibility mode

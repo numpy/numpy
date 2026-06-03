@@ -7,7 +7,7 @@ requires = [
 
 [project]
 name = "numpy"
-version = "2.5.0.dev0"
+version = "2.6.0.dev0"
 description = "Fundamental package for array computing in Python"
 authors = [{name = "Travis E. Oliphant et al."}]
 maintainers = [
@@ -202,6 +202,7 @@ build-dir = "build"
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
+manylinux-riscv64-image = "manylinux_2_39"
 musllinux-x86_64-image = "musllinux_1_2"
 musllinux-aarch64-image = "musllinux_1_2"
 

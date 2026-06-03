@@ -122,15 +122,15 @@ def show(mode=DisplayModes.stdout.value):
 
     Parameters
     ----------
-    mode : {`'stdout'`, `'dicts'`}, optional.
+    mode : {'stdout', 'dicts'}, optional.
         Indicates how to display the config information.
-        `'stdout'` prints to console, `'dicts'` returns a dictionary
+        ``'stdout'`` prints to console, ``'dicts'`` returns a dictionary
         of the configuration.
 
     Returns
     -------
-    out : {`dict`, `None`}
-        If mode is `'dicts'`, a dict is returned, else None
+    out : {dict, None}
+        If mode is ``'dicts'``, a dict is returned, else None
 
     See Also
     --------
@@ -139,7 +139,7 @@ def show(mode=DisplayModes.stdout.value):
 
     Notes
     -----
-    1. The `'stdout'` mode will give more readable
+    1. The ``'stdout'`` mode will give more readable
        output if ``pyyaml`` is installed
 
     """

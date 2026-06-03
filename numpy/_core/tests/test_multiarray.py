@@ -3011,6 +3011,28 @@ class TestMethods:
         self._test_argsort_descending_nonan(a, stable, descending)
 
     @pytest.mark.parametrize(
+        "dtype", [
+            np.bool, np.int8, np.uint8, np.int16, np.uint16,
+            np.int32, np.uint32, np.int64, np.uint64]
+    )
+    @pytest.mark.parametrize("descending", [False, True])
+    def test_argsort_stable_bool_int_duplicates(self, dtype, descending):
+        if dtype is np.bool:
+            values = [False, True]
+        else:
+            info = np.iinfo(dtype)
+            values = [info.min, 1, info.max]
+
+        a = np.array(values * 2, dtype=dtype)
+        expected = np.array(
+            sorted(range(a.size), key=lambda i: a[i], reverse=descending)
+        )
+
+        idx = np.argsort(a, stable=True, descending=descending)
+        assert_equal(idx, expected)
+        assert_equal(np.sort(a, stable=True, descending=descending), a[expected])
+
+    @pytest.mark.parametrize(
         "dtype", [np.float16, np.float32, np.float64, np.longdouble]
     )
     @pytest.mark.parametrize("stable", [True, False])

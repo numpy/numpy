@@ -512,6 +512,15 @@ _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
     return NpyString_cmp(&s_a, &s_b);
 }
 
+NPY_NO_EXPORT int
+stringdtype_binsearch_compare(const void *a, const void *b,
+                              PyArrayObject *arr_a, PyArrayObject *arr_b)
+{
+    return _compare((void *)a, (void *)b,
+                    (PyArray_StringDTypeObject *)PyArray_DESCR(arr_a),
+                    (PyArray_StringDTypeObject *)PyArray_DESCR(arr_b));
+}
+
 int
 _sort_compare(const void *a, const void *b, void *context)
 {

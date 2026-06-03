@@ -97,13 +97,13 @@ mergesort_(type *start, npy_intp num)
 
     pl = start;
     pr = pl + num;
-    pw = (type *)malloc((num / 2) * sizeof(type));
+    pw = (type *)PyMem_RawMalloc((num / 2) * sizeof(type));
     if (pw == NULL) {
         return -NPY_ENOMEM;
     }
     mergesort0_<Tag, type, reverse>(pl, pr, pw);
 
-    free(pw);
+    PyMem_RawFree(pw);
     return 0;
 }
 
@@ -160,18 +160,18 @@ amergesort_(type *v, npy_intp *tosort, npy_intp num)
 
     pl = tosort;
     pr = pl + num;
-    pw = (npy_intp *)malloc((num / 2) * sizeof(npy_intp));
+    pw = (npy_intp *)PyMem_RawMalloc((num / 2) * sizeof(npy_intp));
     if (pw == NULL) {
         return -NPY_ENOMEM;
     }
     amergesort0_<Tag, type, reverse>(pl, pr, v, pw);
-    free(pw);
+    PyMem_RawFree(pw);
 
     return 0;
 }
 
 /*
- 
+
  *****************************************************************************
  **                             STRING SORTS                                **
  *****************************************************************************
@@ -237,21 +237,21 @@ string_mergesort_(type *start, npy_intp num, int elsize)
 
     pl = start;
     pr = pl + num * len;
-    pw = (type *)malloc((num / 2) * elsize);
+    pw = (type *)PyMem_RawMalloc((num / 2) * elsize);
     if (pw == NULL) {
         err = -NPY_ENOMEM;
         goto fail_0;
     }
-    vp = (type *)malloc(elsize);
+    vp = (type *)PyMem_RawMalloc(elsize);
     if (vp == NULL) {
         err = -NPY_ENOMEM;
         goto fail_1;
     }
     mergesort0_<Tag, type, reverse>(pl, pr, pw, vp, len);
 
-    free(vp);
+    PyMem_RawFree(vp);
 fail_1:
-    free(pw);
+    PyMem_RawFree(pw);
 fail_0:
     return err;
 }
@@ -317,12 +317,12 @@ string_amergesort_(type *v, npy_intp *tosort, npy_intp num, void *varr)
 
     pl = tosort;
     pr = pl + num;
-    pw = (npy_intp *)malloc((num / 2) * sizeof(npy_intp));
+    pw = (npy_intp *)PyMem_RawMalloc((num / 2) * sizeof(npy_intp));
     if (pw == NULL) {
         return -NPY_ENOMEM;
     }
     amergesort0_<Tag, type, reverse>(pl, pr, v, pw, len);
-    free(pw);
+    PyMem_RawFree(pw);
 
     return 0;
 }
@@ -405,16 +405,16 @@ npy_mergesort_impl(void *start, npy_intp num, void *varr,
         return 0;
     }
 
-    pw = (char *)malloc((num >> 1) * elsize);
-    vp = (char *)malloc(elsize);
+    pw = (char *)PyMem_RawMalloc((num >> 1) * elsize);
+    vp = (char *)PyMem_RawMalloc(elsize);
 
     if (pw != NULL && vp != NULL) {
         npy_mergesort0(pl, pr, pw, vp, elsize, cmp, arr);
         err = 0;
     }
 
-    free(vp);
-    free(pw);
+    PyMem_RawFree(vp);
+    PyMem_RawFree(pw);
 
     return err;
 }
@@ -489,12 +489,12 @@ npy_amergesort_impl(void *v, npy_intp *tosort, npy_intp num, void *varr,
 
     pl = tosort;
     pr = pl + num;
-    pw = (npy_intp *)malloc((num >> 1) * sizeof(npy_intp));
+    pw = (npy_intp *)PyMem_RawMalloc((num >> 1) * sizeof(npy_intp));
     if (pw == NULL) {
         return -NPY_ENOMEM;
     }
     npy_amergesort0(pl, pr, (char *)v, pw, elsize, cmp, arr);
-    free(pw);
+    PyMem_RawFree(pw);
 
     return 0;
 }

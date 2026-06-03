@@ -44,7 +44,7 @@ resize_buffer_intp(buffer_intp *buffer, npy_intp new_size)
         return 0;
     }
 
-    npy_intp *new_pw = (npy_intp *)realloc(buffer->pw, new_size * sizeof(npy_intp));
+    npy_intp *new_pw = (npy_intp *)PyMem_RawRealloc(buffer->pw, new_size * sizeof(npy_intp));
 
     buffer->size = new_size;
 
@@ -78,7 +78,7 @@ resize_buffer_(buffer_<Tag> *buffer, npy_intp new_size)
         return 0;
     }
 
-    type *new_pw = (type *)realloc(buffer->pw, new_size * sizeof(type));
+    type *new_pw = (type *)PyMem_RawRealloc(buffer->pw, new_size * sizeof(type));
     buffer->size = new_size;
 
     if (NPY_UNLIKELY(new_pw == NULL)) {
@@ -479,7 +479,7 @@ timsort_(void *start, npy_intp num)
     ret = 0;
 cleanup:
 
-    free(buffer.pw);
+    PyMem_RawFree(buffer.pw);
 
     return ret;
 }
@@ -856,7 +856,7 @@ atimsort_(void *v, npy_intp *tosort, npy_intp num)
 cleanup:
 
     if (buffer.pw != NULL) {
-        free(buffer.pw);
+        PyMem_RawFree(buffer.pw);
     }
 
     return ret;
@@ -912,7 +912,7 @@ resize_buffer_(string_buffer_<Tag> *buffer, npy_intp new_size)
         return 0;
     }
 
-    type *new_pw = (type *)realloc(buffer->pw, sizeof(type) * new_size * buffer->len);
+    type *new_pw = (type *)PyMem_RawRealloc(buffer->pw, sizeof(type) * new_size * buffer->len);
     buffer->size = new_size;
 
     if (NPY_UNLIKELY(new_pw == NULL)) {
@@ -1348,7 +1348,7 @@ string_timsort_(void *start, npy_intp num, int elsize)
 
 cleanup:
     if (buffer.pw != NULL) {
-        free(buffer.pw);
+        PyMem_RawFree(buffer.pw);
     }
     return ret;
 }
@@ -1768,7 +1768,7 @@ string_atimsort_(void *start, npy_intp *tosort, npy_intp num, int elsize)
 
 cleanup:
     if (buffer.pw != NULL) {
-        free(buffer.pw);
+        PyMem_RawFree(buffer.pw);
     }
     return ret;
 }

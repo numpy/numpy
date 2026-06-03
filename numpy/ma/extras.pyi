@@ -621,7 +621,7 @@ def cov(
 def corrcoef(x: ArrayLike, y: ArrayLike | None = None, rowvar: bool = True, allow_masked: bool = True) -> _MArray[Incomplete]: ...
 
 class MAxisConcatenator(AxisConcatenator):
-    __slots__ = ()
+    __slots__ = ()  # pyrefly:ignore[implicit-any-attribute]
 
     # keep in sync with `ma.core.concatenate`
     @override  # type: ignore[override]
@@ -638,7 +638,7 @@ class MAxisConcatenator(AxisConcatenator):
     def makemat(cls, /, arr: ArrayLike) -> _MArray[Incomplete]: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleVariableOverride]
 
 class mr_class(MAxisConcatenator):
-    __slots__ = ()
+    __slots__ = ()  # pyrefly:ignore[implicit-any-attribute]
     def __init__(self) -> None: ...
 
 mr_: Final[mr_class] = ...

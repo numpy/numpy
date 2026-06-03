@@ -60,7 +60,8 @@ template <class Tag, side_t side>
 static void
 binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
           npy_intp key_len, npy_intp arr_str, npy_intp key_str,
-          npy_intp ret_str, PyArrayObject *)
+          npy_intp ret_str, PyArrayObject *, PyArrayObject *,
+          PyArray_BinSearchCompareFunc *)
 {
     using T = typename Tag::type;
     auto cmp = side_to_cmp<Tag, side>::value;
@@ -177,7 +178,7 @@ static int
 argbinsearch(const char *arr, const char *key, const char *sort, char *ret,
              npy_intp arr_len, npy_intp key_len, npy_intp arr_str,
              npy_intp key_str, npy_intp sort_str, npy_intp ret_str,
-             PyArrayObject *)
+             PyArrayObject *, PyArrayObject *, PyArray_BinSearchCompareFunc *)
 {
     using T = typename Tag::type;
     auto cmp = side_to_cmp<Tag, side>::value;
@@ -244,10 +245,10 @@ template <side_t side>
 static void
 npy_binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
               npy_intp key_len, npy_intp arr_str, npy_intp key_str,
-              npy_intp ret_str, PyArrayObject *cmp)
+              npy_intp ret_str, PyArrayObject *key_arr, PyArrayObject *arr_arr,
+              PyArray_BinSearchCompareFunc *compare)
 {
     using Cmp = typename side_to_generic_cmp<side>::type;
-    PyArray_CompareFunc *compare = PyDataType_GetArrFuncs(PyArray_DESCR(cmp))->compare;
     npy_intp min_idx = 0;
     npy_intp max_idx = arr_len;
     const char *last_key = key;
@@ -258,7 +259,8 @@ npy_binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
          * gives the search a big boost when keys are sorted, but slightly
          * slows down things for purely random ones.
          */
-        if (Cmp{}(compare(last_key, key, cmp), 0)) {
+        /* last_key and key are both elements of the key array */
+        if (Cmp{}(compare(last_key, key, key_arr, key_arr), 0)) {
             max_idx = arr_len;
         }
         else {
@@ -272,7 +274,8 @@ npy_binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
             const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
             const char *arr_ptr = arr + mid_idx * arr_str;
 
-            if (Cmp{}(compare(arr_ptr, key, cmp), 0)) {
+            /* arr_ptr belongs to the haystack, key to the key array */
+            if (Cmp{}(compare(arr_ptr, key, arr_arr, key_arr), 0)) {
                 min_idx = mid_idx + 1;
             }
             else {
@@ -288,10 +291,10 @@ static int
 npy_argbinsearch(const char *arr, const char *key, const char *sort, char *ret,
                  npy_intp arr_len, npy_intp key_len, npy_intp arr_str,
                  npy_intp key_str, npy_intp sort_str, npy_intp ret_str,
-                 PyArrayObject *cmp)
+                 PyArrayObject *key_arr, PyArrayObject *arr_arr,
+                 PyArray_BinSearchCompareFunc *compare)
 {
     using Cmp = typename side_to_generic_cmp<side>::type;
-    PyArray_CompareFunc *compare = PyDataType_GetArrFuncs(PyArray_DESCR(cmp))->compare;
     npy_intp min_idx = 0;
     npy_intp max_idx = arr_len;
     const char *last_key = key;
@@ -302,7 +305,8 @@ npy_argbinsearch(const char *arr, const char *key, const char *sort, char *ret,
          * gives the search a big boost when keys are sorted, but slightly
          * slows down things for purely random ones.
          */
-        if (Cmp{}(compare(last_key, key, cmp), 0)) {
+        /* last_key and key are both elements of the key array */
+        if (Cmp{}(compare(last_key, key, key_arr, key_arr), 0)) {
             max_idx = arr_len;
         }
         else {
@@ -323,7 +327,8 @@ npy_argbinsearch(const char *arr, const char *key, const char *sort, char *ret,
 
             arr_ptr = arr + sort_idx * arr_str;
 
-            if (Cmp{}(compare(arr_ptr, key, cmp), 0)) {
+            /* arr_ptr belongs to the haystack, key to the key array */
+            if (Cmp{}(compare(arr_ptr, key, arr_arr, key_arr), 0)) {
                 min_idx = mid_idx + 1;
             }
             else {
