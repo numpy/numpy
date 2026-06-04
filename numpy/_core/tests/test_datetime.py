@@ -397,6 +397,34 @@ class TestDateTime:
         assert_equal(arr.dtype, np.dtype('M8[us]'))
 
     @pytest.mark.parametrize("unit", [
+        "Y", "M", "W", "D", "h", "m",
+        "s", "ms", "us", "ns", "ps", "fs", "as",
+    ])
+    @pytest.mark.parametrize("int_type", [
+        np.int8, np.int16, np.int32, np.int64, np.intp,
+        np.uint8, np.uint16, np.uint32, np.uint64, np.uintp,
+    ])
+    def test_datetime_np_int_construction(self, unit, int_type):
+        # regression test for gh-10004
+        actual = np.datetime64(int_type(123), unit)
+        expected = np.datetime64(123, unit)
+        assert_equal(actual, expected)
+        assert_equal(actual.dtype, expected.dtype)
+
+    @pytest.mark.parametrize("value", [np.int64(123), np.uint64(123)])
+    def test_datetime_np_int_construction_requires_unit(self, value):
+        # Construction from integers requires a specified unit including
+        # NumPy integer scalars.
+        with pytest.raises(ValueError, match="requires a specified unit"):
+            np.datetime64(value)
+        with pytest.raises(ValueError, match="requires a specified unit"):
+            np.datetime64(value, "generic")
+
+    def test_datetime_np_uint_construction_overflow(self):
+        with pytest.raises(OverflowError):
+            np.datetime64(np.uint64(2**63), "s")
+
+    @pytest.mark.parametrize("unit", [
     # test all date / time units and use
     # "generic" to select generic unit
     ("Y"), ("M"), ("W"), ("D"), ("h"), ("m"),

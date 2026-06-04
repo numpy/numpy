@@ -2402,6 +2402,19 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
         return 0;
     }
+    /* Do no conversion on NumPy integer scalars */
+    else if (PyArray_IsScalar(obj, Integer)) {
+        if (meta->base == NPY_FR_ERROR || meta->base == NPY_FR_GENERIC) {
+            PyErr_SetString(PyExc_ValueError, "Converting an integer to a "
+                            "NumPy datetime requires a specified unit");
+            return -1;
+        }
+        *out = PyLong_AsLongLong(obj);
+        if (error_converting(*out)) {
+            return -1;
+        }
+        return 0;
+    }
     /* Datetime scalar */
     else if (PyArray_IsScalar(obj, Datetime)) {
         PyDatetimeScalarObject *dts = (PyDatetimeScalarObject *)obj;
