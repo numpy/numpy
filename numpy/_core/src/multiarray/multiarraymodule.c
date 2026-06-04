@@ -4416,8 +4416,9 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
                 goto fail;
             }
             if (res == 0) {
-                buffer_data += elsize;  // Move to next element
-                continue;
+                PyErr_Format(PyExc_ValueError,
+                    "data type %R not compatible with finfo", descr);
+                goto fail;
             }
             // Return as 0-d array item to preserve numpy scalar type
             value_obj = PyArray_ToScalar(buffer_data, buffer_array);

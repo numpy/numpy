@@ -66,7 +66,12 @@ class TestFinfo:
         for dt1, dt2 in dts:
             assert_finfo_equal(finfo(dt1), finfo(dt2))
 
-        assert_raises(ValueError, finfo, 'i4')
+    @pytest.mark.parametrize('dt', [np.int8, "V3", "S3", "f,f"])
+    def test_rejects_others(self, dt):
+        dtype = np.dtype(dt)
+        with pytest.raises(ValueError,
+                match=r"data type .* not compatible with finfo"):
+            finfo(dtype)
 
     def test_regression_gh23108(self):
         # np.float32(1.0) and np.float64(1.0) have the same hash and are
