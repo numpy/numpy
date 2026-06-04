@@ -393,106 +393,127 @@ def _unsigned_subtract(a, b):
 
 def _get_bin_edges(a, bins, range, weights):
     """
-    Computes the bins used internally by `histogram`, `histogramdd` and `histogram2d`.
+    Compute the bin edges used internally by `histogram`, `histogramdd` and
+    `histogram2d`.
 
     Parameters
-    ==========
-    a : ndarray
-        Ravelled data array
-    bins, range
-        Forwarded arguments from `histogram` or from current dimension of `histogramdd`
-        or `histogram2d`
+    ----------
+    a : ndarray, shape (M, D)
+        Sample of M points in D dimensions.
+    bins : sequence of length D
+        Per-dimension ``bins`` specification. Each entry is a string naming an
+        automatic estimator, an integer number of equal-width bins, or a 1D
+        array of explicit bin edges.
+    range : sequence of length D
+        Per-dimension ``(lower, upper)`` pairs, or ``None`` to autodetect that
+        dimension from the data.
     weights : ndarray, optional
-        Ravelled weights array, or None
+        Ravelled weights array, or None.
 
     Returns
-    =======
-    bin_edges : ndarray
-        Array of bin edges
-    uniform_bins : (Number, Number, int):
-        The upper bound, lowerbound, and number of bins, used in the optimized
-        implementation of `histogram` that works on uniform bins.
+    -------
+    bin_edges : list of D ndarrays
+        Per-dimension array of bin edges.
+    uniform_bins : list of D tuples or None
+        For each dimension with equal-width bins, the ``(first_edge,
+        last_edge, n_equal_bins)`` triple used by the optimized `histogram`
+        implementation; ``None`` for dimensions given explicit edges.
     """
-    # parse the overloaded bins argument
-    n_equal_bins = None
-    bin_edges = None
+    _, D = a.shape
 
-    if isinstance(bins, str):
-        bin_name = bins
-        # if `bins` is a string for an automatic method,
-        # this will replace it with the number of bins calculated
-        if bin_name not in _hist_bin_selectors:
-            raise ValueError(
-                f"{bin_name!r} is not a valid estimator for `bins`")
-        if weights is not None:
-            raise TypeError("Automated estimation of the number of "
-                            "bins is not supported for weighted data")
+    n_equal_bins = [None] * D
+    bin_edges = [None] * D
+    uniform_bins = [None] * D
+    first_edge = [None] * D
+    last_edge = [None] * D
+    cols = [d for d in _range(D)
+            if isinstance(bins[d], str) or np.ndim(bins[d]) == 0]
+    if cols:
+        first_edg, last_edg = _get_outer_edges(a[:, cols], [range[dim] for dim in cols])
+        for k, d in enumerate(cols):
+            first_edge[d] = first_edg[k]
+            last_edge[d] = last_edg[k]
 
-        first_edge, last_edge = _get_outer_edges(a[:, np.newaxis], [range])
-        first_edge, last_edge = first_edge[0], last_edge[0]
+    for d in _range(D):
+        b = bins[d]
+        if isinstance(b, str):
+            if b not in _hist_bin_selectors:
+                raise ValueError(
+                    f"{b!r} is not a valid estimator for `bins`")
+            if weights is not None:
+                raise TypeError("Automated estimation of the number of "
+                                "bins is not supported for weighted data")
 
-        # truncate the range if needed
-        if range is not None:
-            keep = (a >= first_edge)
-            keep &= (a <= last_edge)
-            if not np.logical_and.reduce(keep):
-                a = a[keep]
+            col = a[:, d]
+            f_edge, l_edge = first_edge[d], last_edge[d]
 
-        if a.size == 0:
-            n_equal_bins = 1
-        else:
-            # Do not call selectors on empty arrays
-            width = _hist_bin_selectors[bin_name](a, (first_edge, last_edge))
-            if width:
-                if np.issubdtype(a.dtype, np.integer) and width < 1:
-                    width = 1
-                delta = _unsigned_subtract(last_edge, first_edge)
-                n_equal_bins = int(np.ceil(delta / width))
+            # truncate the range if possible
+            if range[d] is not None:
+                keep = (col >= f_edge)
+                keep &= (col <= l_edge)
+                if not np.logical_and.reduce(keep):
+                    col = col[keep]
+
+            if col.size == 0:
+                n_equal_bins[d] = 1
             else:
-                # Width can be zero for some estimators, e.g. FD when
-                # the IQR of the data is zero.
-                n_equal_bins = 1
+                # Do not call selectors on empty arrays
+                width = _hist_bin_selectors[b](col, (f_edge, l_edge))
+                if width:
+                    if np.issubdtype(col.dtype, np.integer) and width < 1:
+                        width = 1
+                    delta = _unsigned_subtract(l_edge, f_edge)
+                    n_equal_bins[d] = int(np.ceil(delta / width))
+                else:
+                    # Width can be zero for some estimators, e.g. FD when
+                    # the IQR of the data is zero.
+                    n_equal_bins[d] = 1
 
-    elif np.ndim(bins) == 0:
-        try:
-            n_equal_bins = operator.index(bins)
-        except TypeError as e:
-            raise TypeError(
-                '`bins` must be an integer, a string, or an array') from e
-        if n_equal_bins < 1:
-            raise ValueError('`bins` must be positive, when an integer')
+        elif np.ndim(b) == 0:
+            try:
+                n = operator.index(b)
+            except TypeError as e:
+                raise TypeError(
+                    '`bins` must be an integer, a string, or an array') from e
+            if n < 1:
+                raise ValueError('`bins` must be positive, when an integer')
+            n_equal_bins[d] = n
 
-        first_edge, last_edge = _get_outer_edges(a[:, np.newaxis], [range])
-        first_edge, last_edge = first_edge[0], last_edge[0]
+        elif np.ndim(b) == 1:
+            edges = np.asarray(b)
+            if np.any(edges[:-1] > edges[1:]):
+                raise ValueError(
+                    '`bins` must increase monotonically, when an array')
+            bin_edges[d] = edges
 
-    elif np.ndim(bins) == 1:
-        bin_edges = np.asarray(bins)
-        if np.any(bin_edges[:-1] > bin_edges[1:]):
-            raise ValueError(
-                '`bins` must increase monotonically, when an array')
+        else:
+            raise ValueError('`bins` must be 1d, when an array')
 
-    else:
-        raise ValueError('`bins` must be 1d, when an array')
+    for d in _range(D):
+        n = n_equal_bins[d]
+        if n is None:
+            continue
+        f_edge, l_edge = first_edge[d], last_edge[d]
 
-    if n_equal_bins is not None:
         # gh-10322 means that type resolution rules are dependent on array
         # shapes. To avoid this causing problems, we pick a type now and stick
         # with it throughout.
-        bin_type = np.result_type(first_edge, last_edge, a)
+        bin_type = np.result_type(f_edge, l_edge, a)
         if np.issubdtype(bin_type, np.integer):
             bin_type = np.result_type(bin_type, float)
 
         # bin edges must be computed
-        bin_edges = np.linspace(
-            first_edge, last_edge, n_equal_bins + 1,
+        edges = np.linspace(
+            f_edge, l_edge, n + 1,
             endpoint=True, dtype=bin_type)
-        if np.any(bin_edges[:-1] >= bin_edges[1:]):
+        if np.any(edges[:-1] >= edges[1:]):
             raise ValueError(
-                f'Too many bins for data range. Cannot create {n_equal_bins} '
+                f'Too many bins for data range. Cannot create {n} '
                 f'finite-sized bins.')
-        return bin_edges, (first_edge, last_edge, n_equal_bins)
-    else:
-        return bin_edges, None
+        bin_edges[d] = edges
+        uniform_bins[d] = (f_edge, l_edge, n)
+
+    return bin_edges, uniform_bins
 
 
 def _search_sorted_inclusive(a, v):
@@ -714,8 +735,8 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
 
     """
     a, weights = _ravel_and_check_weights(a, weights)
-    bin_edges, _ = _get_bin_edges(a, bins, range, weights)
-    return bin_edges
+    bin_edges, _ = _get_bin_edges(a[:, np.newaxis], [bins], [range], weights)
+    return bin_edges[0]
 
 
 def _histogram_dispatcher(
@@ -830,7 +851,10 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
     """
     a, weights = _ravel_and_check_weights(a, weights)
 
-    bin_edges, uniform_bins = _get_bin_edges(a, bins, range, weights)
+    bin_edges, uniform_bins = _get_bin_edges(
+        a[:, np.newaxis], [bins], [range], weights)
+    bin_edges = bin_edges[0]
+    uniform_bins = uniform_bins[0]
 
     # Histogram is an integer or a float array depending on the weights.
     if weights is None:
@@ -1062,8 +1086,8 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
         raise ValueError('range argument must have one entry per dimension')
 
     # Create edge arrays
+    edges, _ = _get_bin_edges(sample, bins, range, weights)
     for i in _range(D):
-        edges[i], _ = _get_bin_edges(sample[:, i], bins[i], range[i], weights)
         nbin[i] = len(edges[i]) + 1  # includes an outlier on each end
         dedges[i] = np.diff(edges[i])
 
