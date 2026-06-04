@@ -6,8 +6,6 @@ on: # zizmor: ignore[dangerous-triggers] safe: no PR-head checkout, no code exec
     types:
       - completed
 
-permissions: {}
-
 jobs:
   comment:
     name: Comment PR from mypy_primer
