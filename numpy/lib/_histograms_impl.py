@@ -297,30 +297,68 @@ def _ravel_and_check_weights(a, weights):
 
 def _get_outer_edges(a, range):
     """
-    Determine the outer bin edges to use, from either the data or the range
-    argument
-    """
-    if range is not None:
-        first_edge, last_edge = range
-        if first_edge > last_edge:
-            raise ValueError(
-                'max must be larger than min in range parameter.')
-        if not (np.isfinite(first_edge) and np.isfinite(last_edge)):
-            raise ValueError(
-                f"supplied range of [{first_edge}, {last_edge}] is not finite")
-    elif a.size == 0:
-        # handle empty arrays. Can't determine range, so use 0-1.
-        first_edge, last_edge = 0, 1
-    else:
-        first_edge, last_edge = a.min(), a.max()
-        if not (np.isfinite(first_edge) and np.isfinite(last_edge)):
-            raise ValueError(
-                f"autodetected range of [{first_edge}, {last_edge}] is not finite")
+    Determine the outer bin edges to use for each dimension.
 
-    # expand empty range to avoid divide by zero
-    if first_edge == last_edge:
-        first_edge = first_edge - 0.5
-        last_edge = last_edge + 0.5
+    Parameters
+    ----------
+    a : ndarray, shape (M, D)
+        Sample of M points in D dimensions.
+    range : sequence of length D, or None
+        Per-dimension ``(lower, upper)`` pairs. The whole argument, or any
+        individual entry, may be ``None`` to autodetect that dimension from
+        the data.
+
+    Returns
+    -------
+    first_edge, last_edge : ndarray, shape (D,)
+        Lower and upper outer edge for each dimension.
+    """
+    M, D = a.shape
+    edge_dtype = a.dtype if np.issubdtype(a.dtype, np.floating) else np.float64
+
+    if range is not None:
+        bounds = [b for r in range if r is not None for b in r]
+        if bounds:
+            edge_dtype = np.result_type(edge_dtype, *bounds)
+            if not np.issubdtype(edge_dtype, np.floating):
+                edge_dtype = np.float64
+
+    first_edge = np.empty(D, dtype=edge_dtype)
+    last_edge = np.empty(D, dtype=edge_dtype)
+    no_rangeval = np.ones(D, dtype=bool)
+
+    if range is not None:
+        for dim, r in enumerate(range):
+            if r is None:
+                continue
+            lo, hi = r
+            if lo > hi:
+                raise ValueError(
+                    'max must be larger than min in range parameter '
+                    f'(dimension {dim}).')
+            first_edge[dim] = lo
+            last_edge[dim] = hi
+            no_rangeval[dim] = False
+
+    if no_rangeval.any():
+        if M == 0:
+            first_edge[no_rangeval] = 0
+            last_edge[no_rangeval] = 1
+        else:
+            first_edge[no_rangeval] = a[:, no_rangeval].min(axis=0)
+            last_edge[no_rangeval] = a[:, no_rangeval].max(axis=0)
+
+    finite = np.isfinite(first_edge) & np.isfinite(last_edge)
+    if not finite.all():
+        dim = int(np.argmin(finite))
+        raise ValueError(
+            f"range of [{first_edge[dim]}, {last_edge[dim]}] is not finite "
+            f"(dimension {dim})")
+
+    # expand empty ranges to avoid divide by zero
+    empty = first_edge == last_edge
+    first_edge[empty] -= 0.5
+    last_edge[empty] += 0.5
 
     return first_edge, last_edge
 
@@ -390,7 +428,8 @@ def _get_bin_edges(a, bins, range, weights):
             raise TypeError("Automated estimation of the number of "
                             "bins is not supported for weighted data")
 
-        first_edge, last_edge = _get_outer_edges(a, range)
+        first_edge, last_edge = _get_outer_edges(a[:, np.newaxis], [range])
+        first_edge, last_edge = first_edge[0], last_edge[0]
 
         # truncate the range if needed
         if range is not None:
@@ -423,7 +462,8 @@ def _get_bin_edges(a, bins, range, weights):
         if n_equal_bins < 1:
             raise ValueError('`bins` must be positive, when an integer')
 
-        first_edge, last_edge = _get_outer_edges(a, range)
+        first_edge, last_edge = _get_outer_edges(a[:, np.newaxis], [range])
+        first_edge, last_edge = first_edge[0], last_edge[0]
 
     elif np.ndim(bins) == 1:
         bin_edges = np.asarray(bins)
