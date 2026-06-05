@@ -75,6 +75,14 @@ intern_strings(void)
     INTERN_STRING(sort, "sort");
     INTERN_STRING(argsort, "argsort");
     INTERN_STRING(_set_dtype, "_set_dtype");
+    INTERN_STRING(year, "year");
+    INTERN_STRING(month, "month");
+    INTERN_STRING(day, "day");
+    INTERN_STRING(hour, "hour");
+    INTERN_STRING(minute, "minute");
+    INTERN_STRING(second, "second");
+    INTERN_STRING(microsecond, "microsecond");
+    INTERN_STRING(tzinfo, "tzinfo");
     return 0;
 }
 

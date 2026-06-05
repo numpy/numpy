@@ -54,6 +54,14 @@ typedef struct npy_interned_str_struct {
     PyObject *sort;
     PyObject *argsort;
     PyObject *_set_dtype;
+    PyObject *year;
+    PyObject *month;
+    PyObject *day;
+    PyObject *hour;
+    PyObject *minute;
+    PyObject *second;
+    PyObject *microsecond;
+    PyObject *tzinfo;
 } npy_interned_str_struct;
 
 /*
