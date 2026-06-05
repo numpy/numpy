@@ -107,6 +107,10 @@ if 'musl' in _v:
 NOGIL_BUILD = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
 IS_64BIT = np.dtype(np.intp).itemsize == 8
 
+LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE = (platform.machine().startswith("ppc")
+                                    and str(np.finfo(np.longdouble).max)
+                                    == "1.79769313486231580793728971405301e+308")
+
 def assert_(val, msg=''):
     """
     Assert that works in release mode.
