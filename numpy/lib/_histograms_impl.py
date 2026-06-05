@@ -493,6 +493,9 @@ def _get_bin_edges(a, bins, range, weights):
         for d in _range(D):
             b = bins[d]
             if np.ndim(b) == 0:
+                if isinstance(b, str):
+                    raise ValueError(
+                        'bins must not contain a strig, when an array')
                 try:
                     n = operator.index(b)
                 except TypeError as e:
