@@ -105,6 +105,9 @@ def _hist_bin_scott(x, range):
     and inversely proportional to a power of data size that depends on
     the number of dimensions (asymptotically optimal).
 
+    The rule comes from the book Multivariate Density Estimation: Theory, Practice,
+    and Visualization by David W. Scott.
+
     Parameters
     ----------
     x : ndarray, shape (N, D)
@@ -118,7 +121,7 @@ def _hist_bin_scott(x, range):
     """
     del range  # unused
     N, D = x.shape
-    return (12 * 2**D * np.pi**(D / 2) / N)**(1 / (D + 2)) * np.std(x, axis=0)
+    return 3.5 * np.std(x, axis=0) * N**(-1/(2+D))
 
 
 def _hist_bin_stone(x, range):
