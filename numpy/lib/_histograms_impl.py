@@ -121,7 +121,7 @@ def _hist_bin_scott(x, range):
     """
     del range  # unused
     N, D = x.shape
-    return 2 * (3 * np.pi**(D/2) / N)**(1/(D+2)) * np.std(x, axis=0)
+    return 2 * (3 * np.pi**(D / 2) / N)**(1 / (D + 2)) * np.std(x, axis=0)
 
 
 def _hist_bin_stone(x, range):

@@ -255,7 +255,8 @@ class TestHistogram:
         # gracefully handle bins object > 1 dimension
         vals = np.linspace(0.0, 1.0, num=100)
         bins = np.array([[0, 0.5], [0.6, 1.0]])
-        with assert_raises_regex(ValueError, "The dimension of bins must be equal to the "
+        with assert_raises_regex(ValueError, "The dimension of bins must be "
+                                             "equal to the "
                                              "dimension of the sample x"):
             np.histogram(vals, bins=bins)
 
