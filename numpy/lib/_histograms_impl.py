@@ -308,7 +308,7 @@ def _get_outer_edges(a, range):
 
     Parameters
     ----------
-    a : ndarray, shape (M, D)
+    a : ndarray, shape (N, D)
         Sample of M points in D dimensions.
     range : sequence of length D, or None
         Per-dimension ``(lower, upper)`` pairs. The whole argument, or any
@@ -320,7 +320,7 @@ def _get_outer_edges(a, range):
     first_edge, last_edge : ndarray, shape (D,)
         Lower and upper outer edge for each dimension.
     """
-    M, D = a.shape
+    N, D = a.shape
     edge_dtype = a.dtype if np.issubdtype(a.dtype, np.floating) else np.float64
 
     if range is not None:
@@ -348,7 +348,7 @@ def _get_outer_edges(a, range):
             no_rangeval[dim] = False
 
     if no_rangeval.any():
-        if M == 0:
+        if N == 0:
             first_edge[no_rangeval] = 0
             last_edge[no_rangeval] = 1
         else:
