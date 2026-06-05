@@ -434,28 +434,18 @@ def _get_bin_edges(a, bins, range, weights):
     uniform_bins = [None] * D
     first_edge = [None] * D
     last_edge = [None] * D
-    cols = [d for d in _range(D)
-            if isinstance(bins[d], str) or np.ndim(bins[d]) == 0]
-    if cols:
-        first_edg, last_edg = _get_outer_edges(a[:, cols], [range[dim] for dim in cols])
-        for k, d in enumerate(cols):
-            first_edge[d] = first_edg[k]
-            last_edge[d] = last_edg[k]
 
-    if isinstance(bins[0], str):
-        estimator_name = bins[0]
-        if estimator_name not in _hist_bin_selectors:
+    if isinstance(bins, str):
+        if bins not in _hist_bin_selectors:
             raise ValueError(
-                f"{estimator_name!r} is not a valid estimator for `bins`")
+                f"{bins!r} is not a valid estimator for `bins`")
         if weights is not None:
             raise TypeError("Automated estimation of the number of "
                             "bins is not supported for weighted data")
 
-        keep = np.ones(len(a), dtype=bool)
-        for d in _range(D):
-            if range[d] is not None:
-                keep &= (a[:, d] >= first_edge[d]) & (a[:, d] <= last_edge[d])
+        first_edge, last_edge = _get_outer_edges(a, range)
 
+        keep = ((a >= first_edge) & (a <= last_edge)).all(axis=1)
         data = a[keep] if not keep.all() else a
 
         if data.shape[0] == 0:
@@ -464,8 +454,7 @@ def _get_bin_edges(a, bins, range, weights):
         else:
             range_arg = (float(first_edge[0]), float(last_edge[0])) if D == 1 else None
             widths = np.broadcast_to(
-                np.atleast_1d(
-                    _hist_bin_selectors[estimator_name](data, range_arg)),
+                np.atleast_1d(_hist_bin_selectors[bins](data, range_arg)),
                 (D,))
             for d in _range(D):
                 width = float(widths[d])
@@ -479,29 +468,49 @@ def _get_bin_edges(a, bins, range, weights):
                     # the IQR of the data is zero.
                     n_equal_bins[d] = 1
 
-    for d in _range(D):
-        b = bins[d]
-        if isinstance(b, str):
-            continue  # handled in the pre-pass above
-        elif np.ndim(b) == 0:
-            try:
-                n = operator.index(b)
-            except TypeError as e:
-                raise TypeError(
-                    '`bins` must be an integer, a string, or an array') from e
-            if n < 1:
-                raise ValueError('`bins` must be positive, when an integer')
-            n_equal_bins[d] = n
+    else:
+        try:
+            M = len(bins)
+            if M != D:
+                if np.ndim(bins) == 1:
+                    bins = D * [bins]
+                else:
+                    raise ValueError(
+                        'The dimension of bins must be equal to the '
+                        'dimension of the sample x.')
+        except TypeError:
+            bins = D * [bins]
 
-        elif np.ndim(b) == 1:
-            edges = np.asarray(b)
-            if np.any(edges[:-1] > edges[1:]):
-                raise ValueError(
-                    '`bins` must increase monotonically, when an array')
-            bin_edges[d] = edges
+        cols = [d for d in _range(D) if np.ndim(bins[d]) == 0]
+        if cols:
+            first_edg, last_edg = _get_outer_edges(
+                a[:, cols], [range[dim] for dim in cols])
+            for k, d in enumerate(cols):
+                first_edge[d] = first_edg[k]
+                last_edge[d] = last_edg[k]
 
-        else:
-            raise ValueError('`bins` must be 1d, when an array')
+    if not isinstance(bins, str):
+        for d in _range(D):
+            b = bins[d]
+            if np.ndim(b) == 0:
+                try:
+                    n = operator.index(b)
+                except TypeError as e:
+                    raise TypeError(
+                        '`bins` must be an integer, a string, or an array') from e
+                if n < 1:
+                    raise ValueError('`bins` must be positive, when an integer')
+                n_equal_bins[d] = n
+
+            elif np.ndim(b) == 1:
+                edges = np.asarray(b)
+                if np.any(edges[:-1] > edges[1:]):
+                    raise ValueError(
+                        '`bins` must increase monotonically, when an array')
+                bin_edges[d] = edges
+
+            else:
+                raise ValueError('`bins` must be 1d, when an array')
 
     for d in _range(D):
         n = n_equal_bins[d]
@@ -516,10 +525,7 @@ def _get_bin_edges(a, bins, range, weights):
         if np.issubdtype(bin_type, np.integer):
             bin_type = np.result_type(bin_type, float)
 
-        # bin edges must be computed
-        edges = np.linspace(
-            f_edge, l_edge, n + 1,
-            endpoint=True, dtype=bin_type)
+        edges = np.linspace(f_edge, l_edge, n + 1, dtype=bin_type)
         if np.any(edges[:-1] >= edges[1:]):
             raise ValueError(
                 f'Too many bins for data range. Cannot create {n} '
@@ -749,7 +755,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
 
     """
     a, weights = _ravel_and_check_weights(a, weights)
-    bin_edges, _ = _get_bin_edges(a[:, np.newaxis], [bins], [range], weights)
+    bin_edges, _ = _get_bin_edges(a[:, np.newaxis], bins, [range], weights)
     return bin_edges[0]
 
 
@@ -866,7 +872,7 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
     a, weights = _ravel_and_check_weights(a, weights)
 
     bin_edges, uniform_bins = _get_bin_edges(
-        a[:, np.newaxis], [bins], [range], weights)
+        a[:, np.newaxis], bins, [range], weights)
     bin_edges = bin_edges[0]
     uniform_bins = uniform_bins[0]
 
@@ -1072,24 +1078,6 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
     dedges = D * [None]
     if weights is not None:
         weights = np.asarray(weights)
-
-    if isinstance(bins, str):
-        # bins is a string
-        bins = D * [bins]
-    else:
-        try:
-            M = len(bins)
-            if M != D:
-                if np.ndim(bins) == 1:
-                    # bins is an arraylike
-                    bins = D * [bins]
-                else:
-                    raise ValueError(
-                        'The dimension of bins must be equal to the dimension of the '
-                        'sample x.')
-        except TypeError:
-            # bins is an integer
-            bins = D * [bins]
 
     # normalize the range argument
     if range is None:
