@@ -64,8 +64,10 @@ class NpzFile(Mapping[str, NDArray[_ScalarT_co]]):
 
     zip: zipfile.ZipFile | None = None
     fid: IO[str] | None = None
+
     files: list[str]
     allow_pickle: bool
+    max_header_size: int
     pickle_kwargs: Mapping[str, Any] | None
     f: BagObj[NpzFile[_ScalarT_co]]
 
