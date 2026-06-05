@@ -122,14 +122,14 @@ count_run_(type *arr, npy_intp l, npy_intp num, npy_intp minrun)
     pl = arr + l;
 
     /* (not strictly) ascending sequence */
-    int ret = npy::cmp<Tag, reverse>(*(pl + 1), *pl);
+    int ret = npy::cmp_eq<Tag, reverse>(*pl, *(pl + 1));
     if (ret < 0) return ret;
     
-    if (!ret) {
+    if (ret) {
         for (pi = pl + 1; pi < arr + num - 1; ++pi) {
-            ret = npy::cmp<Tag, reverse>(*(pi + 1), *pi);
+            ret = npy::cmp_eq<Tag, reverse>(*pi, *(pi + 1));
             if (ret < 0) return ret;
-            if (ret) break;
+            if (!ret) break;
         }
     }
     else { /* (strictly) descending sequence */
@@ -562,13 +562,13 @@ acount_run_(type *arr, npy_intp *tosort, npy_intp l, npy_intp num,
     pl = tosort + l;
 
     /* (not strictly) ascending sequence */
-    int ret = npy::cmp<Tag, reverse>(arr[*(pl + 1)], arr[*pl]);
+    int ret = npy::cmp_eq<Tag, reverse>(arr[*pl], arr[*(pl + 1)]);
     if (ret < 0) return ret;
-    if (!ret) {
+    if (ret) {
         for (pi = pl + 1; pi < tosort + num - 1; ++pi) {
-            ret = npy::cmp<Tag, reverse>(arr[*(pi + 1)], arr[*pi]);
+            ret = npy::cmp_eq<Tag, reverse>(arr[*pi], arr[*(pi + 1)]);
             if (ret < 0) return ret;
-            if (ret) break;
+            if (!ret) break;
         }
     }
     else { /* (strictly) descending sequence */

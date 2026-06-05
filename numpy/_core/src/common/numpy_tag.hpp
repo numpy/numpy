@@ -53,6 +53,7 @@ struct integral_type : integral_tag {
     static constexpr int less(T a, T b) { return a < b; }
     static constexpr int less_equal(T a, T b) { return !(b < a); }
     static constexpr int greater(T a, T b) { return a > b; }
+    static constexpr int greater_equal(T a, T b) { return !(a < b); }
 };
 
 template <typename T, NPY_TYPES TypeNum>
@@ -66,6 +67,7 @@ struct floating_point_type : floating_point_tag {
     // NaN sorts to the end in reverse too: ``a`` is "greater than" ``b``
     // if ``a`` is non-NaN and either ``b < a`` or ``b`` is NaN.
     static constexpr int greater(T a, T b) { return a > b || (b != b && a == a); }
+    static constexpr int greater_equal(T a, T b) { return !greater(b, a); }
 };
 
 // Half is its own per-type tag; no template since there is only one half
@@ -112,6 +114,7 @@ struct half_tag {
         }
         return !isnan(a) && lt_nonan(b, a);
     }
+    static constexpr int greater_equal(npy_half a, npy_half b) { return !greater(b, a); }
 };
 
 template <typename T, NPY_TYPES TypeNum>
@@ -157,6 +160,7 @@ struct complex_type : complex_tag {
         }
         return rb != rb;
     }
+    static constexpr int greater_equal(T a, T b) { return !greater(b, a); }
 };
 
 template <typename T, NPY_TYPES TypeNum>
@@ -178,6 +182,7 @@ struct datetime_type : date_tag {
         if (b == NPY_DATETIME_NAT) return 1;
         return b < a;
     }
+    static constexpr int greater_equal(T a, T b) { return !greater(b, a); }
 };
 
 // String / unicode tags work on runtime-length blocks.  Comparison is
@@ -283,11 +288,15 @@ struct object_tag {
     }
 
     static int less_equal(PyObject *a, PyObject *b) {
-        return !less(b, a);
+        return _cmp(a, b, Py_LE);
     }
 
     static int greater(PyObject *a, PyObject *b) {
         return _cmp(a, b, Py_GT);
+    }
+
+    static int greater_equal(PyObject *a, PyObject *b) {
+        return _cmp(a, b, Py_GE);
     }
 };
 
@@ -330,6 +339,17 @@ constexpr int cmp(Args... args)
     }
     else {
         return Tag::less(args...);
+    }
+}
+
+template <typename Tag, bool reverse, typename T>
+constexpr int cmp_eq(T a, T b)
+{
+    if constexpr (reverse) {
+        return Tag::greater_equal(a, b);
+    }
+    else {
+        return Tag::less_equal(a, b);
     }
 }
 
