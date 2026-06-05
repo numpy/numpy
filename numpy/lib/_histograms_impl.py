@@ -216,22 +216,26 @@ def _hist_bin_fd(x, range):
     long tailed distributions.
 
     If the IQR is 0, this function returns 0 for the bin width.
-    Binwidth is inversely proportional to the cube root of data size
-    (asymptotically optimal).
+    Binwidth is inversely proportional to a power of data size that depends on
+    the number of dimensions (asymptotically optimal).
 
     Parameters
     ----------
-    x : array_like
+    x : ndarray, shape (N, D)
         Input data that is to be histogrammed, trimmed to range. May not
         be empty.
 
     Returns
     -------
-    h : An estimate of the optimal bin width for the given data.
+    h : ndarray, shape (D,)
+        Per-dimension estimates of the optimal bin widths.
     """
     del range  # unused
-    iqr = np.subtract(*np.percentile(x, [75, 25]))
-    return 2.0 * iqr * x.size ** (-1.0 / 3.0)
+    x = x.reshape(-1, 1) if x.ndim == 1 else x
+    N, D = x.shape
+    iqr = np.subtract(*np.percentile(x, [75, 25], axis=0))
+    h = 2.0 * iqr * N ** (-1.0 / (D + 2))
+    return h[0] if D == 1 else h
 
 
 def _hist_bin_auto(x, range):
