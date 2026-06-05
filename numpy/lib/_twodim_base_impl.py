@@ -705,8 +705,7 @@ def histogram2d(x, y, bins=10, range=None, density=None, weights=None):
     y : array_like, shape (N,)
         An array containing the y coordinates of the points to be
         histogrammed.
-    bins : int or array_like or str or [int, int] or [array, array] or
-        [str, str], optional
+    bins : int or array_like or str or [int, int] or [array, array], optional
         The bin specification:
 
         * If int, the number of bins for the two dimensions (nx=ny=bins).
@@ -718,11 +717,8 @@ def histogram2d(x, y, bins=10, range=None, density=None, weights=None):
           (nx, ny = bins).
         * If [array, array], the bin edges in each dimension
           (x_edges, y_edges = bins).
-        * If [str, str], the method used to calculate optimal bin
-            width for each dimension as defined by `histogram_bin_edges`
-        * A combination of the above like [int, array] or [array, str],
-            where int is the number of bins, array is the bin edges and str
-            is the bin width estimator.
+        * A combination of the above like [int, array],
+            where int is the number of bins, array is the bin edges.
 
     range : array_like, shape(2,2), optional
         The leftmost and rightmost edges of the bins along each dimension
