@@ -120,8 +120,10 @@ def _hist_bin_scott(x, range):
         Per-dimension estimates of the optimal bin widths.
     """
     del range  # unused
+    x = x.reshape(-1, 1) if x.ndim == 1 else x
     N, D = x.shape
-    return 3.5 * np.std(x, axis=0) * N**(-1/(2+D))
+    h = 2 * (3 * np.pi**(D/2) / N)**(1/(D+2)) * np.std(x, axis=0)
+    return h[0] if D == 1 else h
 
 
 def _hist_bin_stone(x, range):
