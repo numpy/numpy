@@ -229,7 +229,6 @@ def _hist_bin_fd(x, range):
         Per-dimension estimates of the optimal bin widths.
     """
     del range  # unused
-    x = x.reshape(-1, 1) if x.ndim == 1 else x
     N, D = x.shape
     iqr = np.subtract(*np.percentile(x, [75, 25], axis=0))
     return 2.0 * iqr * N ** (-1.0 / (D + 2))
