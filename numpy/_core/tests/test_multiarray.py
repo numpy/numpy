@@ -2861,6 +2861,7 @@ class TestMethods:
         self._test_sort_descending_nonan(a, stable, descending)
         self._test_sort_descending_nan(a, stable, descending)
 
+    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
     @pytest.mark.parametrize("stable", [True, False])
     @pytest.mark.parametrize("descending", [True, False])
     @pytest.mark.parametrize("random_seed", [0, 1])
@@ -2915,6 +2916,8 @@ class TestMethods:
             f"descending={descending}",
         )
 
+    @pytest.mark.parametrize("stable", [True, False])
+    @pytest.mark.parametrize("descending", [True, False])
     def test_sort_descending_object(self, stable, descending):
         a = np.arange(101, dtype=float).astype(object)
         self._test_sort_descending_nonan(a, stable, descending)
