@@ -120,10 +120,8 @@ def _hist_bin_scott(x, range):
         Per-dimension estimates of the optimal bin widths.
     """
     del range  # unused
-    x = x.reshape(-1, 1) if x.ndim == 1 else x
     N, D = x.shape
-    h = 2 * (3 * np.pi**(D/2) / N)**(1/(D+2)) * np.std(x, axis=0)
-    return h[0] if D == 1 else h
+    return 2 * (3 * np.pi**(D/2) / N)**(1/(D+2)) * np.std(x, axis=0)
 
 
 def _hist_bin_stone(x, range):
@@ -234,8 +232,7 @@ def _hist_bin_fd(x, range):
     x = x.reshape(-1, 1) if x.ndim == 1 else x
     N, D = x.shape
     iqr = np.subtract(*np.percentile(x, [75, 25], axis=0))
-    h = 2.0 * iqr * N ** (-1.0 / (D + 2))
-    return h[0] if D == 1 else h
+    return 2.0 * iqr * N ** (-1.0 / (D + 2))
 
 
 def _hist_bin_auto(x, range):
@@ -445,41 +442,47 @@ def _get_bin_edges(a, bins, range, weights):
             first_edge[d] = first_edg[k]
             last_edge[d] = last_edg[k]
 
-    for d in _range(D):
-        b = bins[d]
-        if isinstance(b, str):
-            if b not in _hist_bin_selectors:
-                raise ValueError(
-                    f"{b!r} is not a valid estimator for `bins`")
-            if weights is not None:
-                raise TypeError("Automated estimation of the number of "
-                                "bins is not supported for weighted data")
+    if isinstance(bins[0], str):
+        estimator_name = bins[0]
+        if estimator_name not in _hist_bin_selectors:
+            raise ValueError(
+                f"{estimator_name!r} is not a valid estimator for `bins`")
+        if weights is not None:
+            raise TypeError("Automated estimation of the number of "
+                            "bins is not supported for weighted data")
 
-            col = a[:, d]
-            f_edge, l_edge = first_edge[d], last_edge[d]
-
-            # truncate the range if possible
+        keep = np.ones(len(a), dtype=bool)
+        for d in _range(D):
             if range[d] is not None:
-                keep = (col >= f_edge)
-                keep &= (col <= l_edge)
-                if not np.logical_and.reduce(keep):
-                    col = col[keep]
+                keep &= (a[:, d] >= first_edge[d]) & (a[:, d] <= last_edge[d])
 
-            if col.size == 0:
+        data = a[keep] if not keep.all() else a
+
+        if data.shape[0] == 0:
+            for d in _range(D):
                 n_equal_bins[d] = 1
-            else:
-                # Do not call selectors on empty arrays
-                width = _hist_bin_selectors[b](col, (f_edge, l_edge))
+        else:
+            range_arg = (float(first_edge[0]), float(last_edge[0])) if D == 1 else None
+            widths = np.broadcast_to(
+                np.atleast_1d(
+                    _hist_bin_selectors[estimator_name](data, range_arg)),
+                (D,))
+            for d in _range(D):
+                width = float(widths[d])
                 if width:
-                    if np.issubdtype(col.dtype, np.integer) and width < 1:
+                    if np.issubdtype(a.dtype, np.integer) and width < 1:
                         width = 1
-                    delta = _unsigned_subtract(l_edge, f_edge)
+                    delta = _unsigned_subtract(last_edge[d], first_edge[d])
                     n_equal_bins[d] = int(np.ceil(delta / width))
                 else:
                     # Width can be zero for some estimators, e.g. FD when
                     # the IQR of the data is zero.
                     n_equal_bins[d] = 1
 
+    for d in _range(D):
+        b = bins[d]
+        if isinstance(b, str):
+            continue  # handled in the pre-pass above
         elif np.ndim(b) == 0:
             try:
                 n = operator.index(b)
@@ -1012,10 +1015,8 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
           edges along each dimension.
         * The number of bins for each dimension (nx, ny, ... =bins)
         * The number of bins for all dimensions (nx=ny=...=bins).
-        * A sequence of strings defining the method to calculate the optimal
-          bin width for each dimension as defined by `histogram_bin_edges`.
-        * A string defining the methodused to calculate the
-          optimal bin width, as defined by `histogram_bin_edges`.
+        * A string defining the method used to calculate the optimal bin
+          width for all dimensions, as defined by `histogram_bin_edges`.
 
     range : sequence, optional
         A sequence of length D, each an optional (lower, upper) tuple giving
