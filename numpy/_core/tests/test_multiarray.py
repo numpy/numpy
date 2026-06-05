@@ -2859,12 +2859,11 @@ class TestMethods:
     def test_sort_descending_complex_lexorder(self, dtype,
                                               stable, descending, random_seed):
         arange = np.tile(np.arange(25, dtype=dtype), 4)
-        nans = np.full(100, np.nan + 1j * np.nan, dtype=dtype)
 
         no_nans = arange + 1j * arange
-        im_nans = arange + 1j * nans
-        re_nans = nans + 1j * arange
-        all_nans = nans + 1j * nans
+        im_nans = arange + complex(0, np.nan)
+        re_nans = complex(np.nan, 0) + 1j * arange
+        all_nans = np.full(100, complex(np.nan, np.nan), dtype=dtype)
 
         a = np.concatenate((no_nans, im_nans, re_nans, all_nans))
         immask = np.isnan(a.imag)
