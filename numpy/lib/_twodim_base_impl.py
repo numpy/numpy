@@ -717,8 +717,8 @@ def histogram2d(x, y, bins=10, range=None, density=None, weights=None):
           (nx, ny = bins).
         * If [array, array], the bin edges in each dimension
           (x_edges, y_edges = bins).
-        * A combination of the above like [int, array],
-            where int is the number of bins, array is the bin edges.
+        * A combination [int, array] or [array, int], where int
+          is the number of bins and array is the bin edges.
 
     range : array_like, shape(2,2), optional
         The leftmost and rightmost edges of the bins along each dimension
