@@ -8348,6 +8348,111 @@ class TestInner:
             assert_equal(np.inner(b, a).transpose(2, 3, 0, 1), desired)
 
 
+class TestDotFamilyFallback:
+    # The dot family (dot/inner/vdot/tensordot/correlate) historically requires
+    # a legacy ``dotfunc`` ArrFuncs slot, which new-style user DTypes cannot
+    # provide.  For such DTypes numpy falls back to the ``matmul``/``multiply``
+    # gufuncs via the private helpers in ``numpy._core.numeric``.  These tests
+    # exercise the helpers directly (against the legacy ``np.dot`` oracle) and,
+    # when available, end-to-end through a real new-style DType (quaddtype).
+
+    @pytest.mark.parametrize("sa,sb", [
+        ((), ()), ((), (3, 4)), ((4, 3), ()), ((5,), (5,)), ((3,), (3, 4)),
+        ((4, 3), (3,)), ((4, 3), (3, 5)), ((2, 3, 4), (4,)), ((4,), (2, 4, 5)),
+        ((2, 3, 4), (6, 4, 5)), ((0, 3), (3, 4)), ((4, 0), (0, 5)),
+    ])
+    def test_dot_fallback_matches_dot(self, sa, sb):
+        from numpy._core.numeric import _dot_fallback
+        rng = np.random.default_rng(1)
+        a = rng.integers(-4, 5, sa).astype(np.float64)
+        b = rng.integers(-4, 5, sb).astype(np.float64)
+        ref = np.dot(a, b)
+        got = _dot_fallback(a, b)
+        assert_array_equal(got, ref)
+        assert got.shape == np.shape(ref)
+
+    def test_dot_fallback_out(self):
+        from numpy._core.numeric import _dot_fallback
+        a = np.arange(12, dtype=np.float64).reshape(4, 3)
+        b = np.arange(15, dtype=np.float64).reshape(3, 5)
+        out = np.empty((4, 5), dtype=np.float64)
+        ret = _dot_fallback(a, b, out=out)
+        assert ret is out
+        assert_array_equal(out, np.dot(a, b))
+        # strict out= contract, mirroring legacy np.dot
+        assert_raises(ValueError, _dot_fallback, a, b, out=np.empty((4, 4)))
+        assert_raises(ValueError, _dot_fallback, a, b,
+                      out=np.asfortranarray(np.empty((4, 5))))
+
+    def test_vdot_fallback_matches_vdot(self):
+        from numpy._core.numeric import _vdot_fallback
+        rng = np.random.default_rng(2)
+        a = rng.integers(-4, 5, (2, 3)).astype(np.float64)
+        b = rng.integers(-4, 5, (2, 3)).astype(np.float64)
+        assert_array_equal(_vdot_fallback(a, b), np.vdot(a, b))
+        ac = (a + 1j * b).astype(np.complex128)
+        bc = (b - 1j * a).astype(np.complex128)
+        assert_array_equal(_vdot_fallback(ac, bc), np.vdot(ac, bc))
+
+    @pytest.mark.parametrize("mode,code", [("valid", 0), ("same", 1), ("full", 2)])
+    @pytest.mark.parametrize("n2", [1, 2, 3, 4, 5])
+    def test_correlate_fallback_matches_correlate(self, mode, code, n2):
+        # the helper assumes len(a) >= len(v) (the C layer handles the swap),
+        # so test the forward correlation against the legacy oracle
+        from numpy._core.numeric import _correlate_fallback
+        a = np.arange(1, 9, dtype=np.float64)
+        v = (np.arange(1, n2 + 1, dtype=np.float64) * 0.5 + 1)
+        assert_array_equal(_correlate_fallback(a, v, code),
+                           np.correlate(a, v, mode))
+
+    def test_quaddtype_dot_family(self):
+        numpy_quaddtype = pytest.importorskip("numpy_quaddtype")
+        QuadPrecDType = numpy_quaddtype.QuadPrecDType
+        QuadPrecision = numpy_quaddtype.QuadPrecision
+        qd = QuadPrecDType()
+
+        def q(arr):
+            arr = np.asarray(arr, dtype=np.float64)
+            out = np.empty(arr.shape, dtype=qd)
+            for idx in np.ndindex(arr.shape):
+                out[idx] = QuadPrecision(repr(float(arr[idx])))
+            return out
+
+        def f(arr):
+            arr = np.asarray(arr)
+            flat = np.array([float(v) for v in arr.ravel()])
+            return flat.reshape(arr.shape)
+
+        rng = np.random.default_rng(3)
+        a = rng.integers(-4, 5, (3,)).astype(np.float64)
+        b = rng.integers(-4, 5, (3,)).astype(np.float64)
+        A = rng.integers(-4, 5, (4, 3)).astype(np.float64)
+        B = rng.integers(-4, 5, (3, 5)).astype(np.float64)
+        C = rng.integers(-4, 5, (5, 2)).astype(np.float64)
+
+        # 1-D . 1-D returns a scalar, exactly like legacy np.dot
+        scalar = np.dot(q(a), q(b))
+        assert np.ndim(scalar) == 0
+        assert float(scalar) == np.dot(a, b)
+
+        assert_array_equal(f(np.dot(q(A), q(B))), np.dot(A, B))
+        assert_array_equal(f(np.inner(q(A), q(A))), np.inner(A, A))
+        assert float(np.vdot(q(a), q(b))) == np.vdot(a, b)
+        assert_array_equal(f(np.tensordot(q(A), q(B), axes=1)),
+                           np.tensordot(A, B, axes=1))
+        assert_array_equal(f(np.linalg.multi_dot([q(A), q(B), q(C)])),
+                           np.linalg.multi_dot([A, B, C]))
+        for mode in ("valid", "same", "full"):
+            assert_array_equal(f(np.correlate(q(a), q(b), mode)),
+                               np.correlate(a, b, mode))
+            assert_array_equal(f(np.convolve(q(A.ravel()), q(b), mode)),
+                               np.convolve(A.ravel(), b, mode))
+
+        # empty-input error messages come from the C layer, unchanged
+        with pytest.raises(ValueError, match="first array argument"):
+            np.correlate(q(np.empty(0)), q(a))
+
+
 class TestChoose:
     def _create_data(self):
         x = 2 * np.ones((3,), dtype=int)
