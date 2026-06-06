@@ -17,6 +17,7 @@ class MesonTemplate:
     fortran_args: Final[list[str]]
     pipeline: Final[list[Callable[[], None]]]
     build_type: Final[str]
+    limited_api: Final[str|None]
     python_exe: Final[str]
     indent: Final[str]
 
@@ -33,6 +34,7 @@ class MesonTemplate:
         linker_args: list[str],
         fortran_args: list[str],
         build_type: str,
+        limited_api: str|None,
         python_exe: str,
     ) -> None: ...
 

@@ -341,6 +341,7 @@ def build_meson(source_files, module_name=None, **kwargs):
         setup_flags=kwargs.get("setup_flags", []),
         remove_build_dir=kwargs.get("remove_build_dir", False),
         extra_dat=kwargs.get("extra_dat", {}),
+        limited_api=kwargs.get("limited_api", None),
     )
 
     backend.compile()

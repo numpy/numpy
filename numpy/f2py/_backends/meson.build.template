@@ -60,4 +60,5 @@ ${lib_list}
 ${lib_dir_list}
                      ],
 ${fortran_args}
+${limited_api_args}
                      install : true)
