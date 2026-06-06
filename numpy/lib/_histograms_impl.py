@@ -321,14 +321,9 @@ def _get_outer_edges(a, range):
         Lower and upper outer edge for each dimension.
     """
     N, D = a.shape
-    edge_dtype = a.dtype if np.issubdtype(a.dtype, np.floating) else np.float64
-
-    if range is not None:
-        bounds = [b for r in range if r is not None for b in r]
-        if bounds:
-            edge_dtype = np.result_type(edge_dtype, *bounds)
-            if not np.issubdtype(edge_dtype, np.floating):
-                edge_dtype = np.float64
+    bounds = [r[0] for r in range if r is not None] if range is not None else []
+    dt = np.result_type(a.dtype, *bounds) if bounds else a.dtype
+    edge_dtype = dt if np.issubdtype(dt, np.floating) else np.float64
 
     first_edge = np.empty(D, dtype=edge_dtype)
     last_edge = np.empty(D, dtype=edge_dtype)
