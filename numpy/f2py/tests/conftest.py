@@ -1,5 +1,6 @@
-import pytest
 import sys
+
+import pytest
 
 
 def _f2py_limited_api(request: pytest.FixtureRequest):
@@ -13,8 +14,9 @@ def _f2py_limited_api(request: pytest.FixtureRequest):
             return
     return request.param
 
-_limited_api_versions = [None]+[
-    f"3.{x}" for x in range(12, sys.version_info[1]+1)
+
+_limited_api_versions = [None] + [
+    f"3.{x}" for x in range(12, sys.version_info[1] + 1)
 ]
 
 @pytest.fixture(scope='function', params=_limited_api_versions)

@@ -50,4 +50,3 @@ class TestF2cmapOption(TestAssumedShapeSumExample):
         yield from super()._setup_method_fixture(f2py_limited_api)
 
         os.unlink(self.f2cmap_file.name)
-

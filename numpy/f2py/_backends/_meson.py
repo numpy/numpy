@@ -26,7 +26,7 @@ class MesonTemplate:
         linker_args: list[str],
         fortran_args: list[str],
         build_type: str,
-        limited_api: str|None,
+        limited_api: str | None,
         python_exe: str,
     ):
         self.modulename = modulename

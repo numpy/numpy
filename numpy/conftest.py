@@ -66,7 +66,7 @@ def pytest_configure(config):
         "leaks_references: Tests that are known to leak references.")
     config.addinivalue_line("markers",
         "slow: Tests that are very slow.")
-    # f2py_stable_abi_good is expected to go away if/when limited API is actually working
+    # f2py_stable_abi_good is expected to go away if/when limited API actually works
     config.addinivalue_line("markers",
         "f2py_stable_abi_good: Tests known to work in the Stable ABI")
     config.addinivalue_line("markers",
