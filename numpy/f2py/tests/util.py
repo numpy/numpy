@@ -195,7 +195,7 @@ def _memoize(func):
 
 
 @_memoize
-def build_module(source_files, options=[], skip=[], only=[], module_name=None):
+def build_module(source_files, options=[], skip=[], only=[], module_name=None, limited_api=None):
     """
     Compile and import a f2py module, built from the given files.
 
@@ -231,7 +231,10 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     if '--freethreading-compatible' not in options and '--no-freethreading-compatible' not in options:
         # default to disabling the GIL if unset in options
         gil_options = ['--freethreading-compatible']
-    f2py_opts = ["-c", "-m", module_name] + options + gil_options + f2py_sources
+    limited_api_options = []
+    if limited_api:
+        limited_api_options = ['--experimental-limited-api', limited_api]
+    f2py_opts = ["-c", "-m", module_name] + options + gil_options + limited_api_options + f2py_sources
     f2py_opts += ["--backend", "meson"]
     if skip:
         f2py_opts += ["skip:"] + skip
@@ -279,7 +282,8 @@ def build_code(source_code,
                skip=[],
                only=[],
                suffix=None,
-               module_name=None):
+               module_name=None,
+               limited_api=None):
     """
     Compile and import Fortran code using f2py.
 
@@ -293,7 +297,8 @@ def build_code(source_code,
                             options=options,
                             skip=skip,
                             only=only,
-                            module_name=module_name)
+                            module_name=module_name,
+                            limited_api=limited_api)
 
 
 #
@@ -382,7 +387,11 @@ class F2PyTest:
         F2PyTest._has_f90_compiler = has_f90_compiler()
         F2PyTest._has_fortran_compiler = has_fortran_compiler()
 
-    def setup_method(self):
+    @pytest.fixture(scope="function", autouse=True)
+    def setup_method_fixture(self, f2py_limited_api):
+        yield from self._setup_method_fixture(f2py_limited_api)
+
+    def _setup_method_fixture(self, f2py_limited_api):
         if self.module is not None:
             return
 
@@ -410,6 +419,7 @@ class F2PyTest:
                 only=self.only,
                 suffix=self.suffix,
                 module_name=self.module_name,
+                limited_api=f2py_limited_api
             )
 
         if self.sources is not None:
@@ -419,7 +429,10 @@ class F2PyTest:
                 skip=self.skip,
                 only=self.only,
                 module_name=self.module_name,
+                limited_api=f2py_limited_api
             )
+
+        yield
 
 
 #

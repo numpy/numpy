@@ -33,7 +33,8 @@ class TestAssumedShapeSumExample(util.F2PyTest):
 
 @pytest.mark.slow
 class TestF2cmapOption(TestAssumedShapeSumExample):
-    def setup_method(self):
+    @pytest.fixture(scope="function", autouse=True)
+    def setup_method_fixture(self, f2py_limited_api):
         # Use a custom file name for .f2py_f2cmap
         self.sources = list(self.sources)
         f2cmap_src = self.sources.pop(-1)
@@ -46,7 +47,7 @@ class TestF2cmapOption(TestAssumedShapeSumExample):
         self.sources.append(self.f2cmap_file.name)
         self.options = ["--f2cmap", self.f2cmap_file.name]
 
-        super().setup_method()
+        yield from super()._setup_method_fixture(f2py_limited_api)
 
-    def teardown_method(self):
         os.unlink(self.f2cmap_file.name)
+
