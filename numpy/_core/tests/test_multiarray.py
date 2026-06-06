@@ -8407,16 +8407,10 @@ class TestDotFamilyFallback:
 
     def test_quaddtype_dot_family(self):
         numpy_quaddtype = pytest.importorskip("numpy_quaddtype")
-        QuadPrecDType = numpy_quaddtype.QuadPrecDType
-        QuadPrecision = numpy_quaddtype.QuadPrecision
-        qd = QuadPrecDType()
+        qd = numpy_quaddtype.QuadPrecDType()
 
         def q(arr):
-            arr = np.asarray(arr, dtype=np.float64)
-            out = np.empty(arr.shape, dtype=qd)
-            for idx in np.ndindex(arr.shape):
-                out[idx] = QuadPrecision(repr(float(arr[idx])))
-            return out
+            return np.array(arr, dtype=qd)
 
         def f(arr):
             arr = np.asarray(arr)
