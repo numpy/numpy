@@ -475,21 +475,13 @@ def _get_bin_edges(a, bins, range, weights):
         except TypeError:
             bins = D * [bins]
 
-        cols = [d for d in _range(D) if np.ndim(bins[d]) == 0]
-        if cols:
-            first_edg, last_edg = _get_outer_edges(
-                a[:, cols], [range[dim] for dim in cols])
-            for k, d in enumerate(cols):
-                first_edge[d] = first_edg[k]
-                last_edge[d] = last_edg[k]
-
-    if not isinstance(bins, str):
         for d in _range(D):
             b = bins[d]
-            if np.ndim(b) == 0:
-                if isinstance(b, str):
-                    raise ValueError(
-                        'bins must not contain a strig, when an array')
+            if isinstance(b, str):
+                raise ValueError(
+                        '`bins` cannot contain a string, when an array'
+                        )
+            elif np.ndim(b) == 0:
                 try:
                     n = operator.index(b)
                 except TypeError as e:
@@ -498,6 +490,8 @@ def _get_bin_edges(a, bins, range, weights):
                 if n < 1:
                     raise ValueError('`bins` must be positive, when an integer')
                 n_equal_bins[d] = n
+                f_edg, l_edg = _get_outer_edges(a[:, d:d+1], [range[d]])
+                first_edge[d], last_edge[d] = f_edg[0], l_edg[0]
 
             elif np.ndim(b) == 1:
                 edges = np.asarray(b)
