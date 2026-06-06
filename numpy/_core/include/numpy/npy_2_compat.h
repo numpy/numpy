@@ -371,7 +371,7 @@ static inline int PyArrayInitDTypeMeta_FromSpec(
     DType->flags |= 1;
 
     /* Re-type the descriptor so it belongs to the user's DType class. */
-    Py_INCREF(DType);
+    Py_INCREF((PyObject*)DType);
     Py_SET_TYPE(descr, (PyTypeObject *)(DType));
     Py_DECREF(old_meta);
 
@@ -380,8 +380,8 @@ static inline int PyArrayInitDTypeMeta_FromSpec(
      * PyBaseObject_Type in step 1 by PyArray_RegisterDataType copying
      * proto->typeobj).
      */
-    Py_INCREF(proto->typeobj);
-    Py_XDECREF(descr->typeobj);
+    Py_INCREF((PyObject*)proto->typeobj);
+    Py_XDECREF((PyObject*)descr->typeobj);
     descr->typeobj = proto->typeobj;
 
     /*
