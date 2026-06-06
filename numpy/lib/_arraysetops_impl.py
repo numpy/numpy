@@ -386,7 +386,19 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         aux = ar
     mask = np.empty(aux.shape, dtype=np.bool)
     mask[:1] = True
-    if (equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and
+    if (equal_nan and aux.shape[0] > 0 and aux.dtype.names is not None and
+        any(aux[name].dtype.kind in "cfmM" for name in aux.dtype.names)):
+        # Structured dtype: compare field by field, treating NaNs as equal
+        mask[1:] = np.zeros(aux.shape[0] - 1, dtype=np.bool)
+        for name in aux.dtype.names:
+            col = aux[name]
+            col_diff = col[1:] != col[:-1]
+            if col.dtype.kind in "cfmM":
+                # Floating, complex, or datetime/timedelta: handle NaN values
+                is_nan = np.isnan(col)
+                col_diff = col_diff & ~(is_nan[1:] & is_nan[:-1])
+            mask[1:] = mask[1:] | col_diff
+    elif (equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and
             np.isnan(aux[-1])):
         if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent
             aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
