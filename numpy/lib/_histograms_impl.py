@@ -29,6 +29,13 @@ def _ptp(x):
     return _unsigned_subtract(x.max(), x.min())
 
 
+def _check_1d(x, name):
+    if x.shape[1] > 1:
+        raise NotImplementedError(
+            f"the {name!r} bin estimator is not implemented for "
+            "multidimensional data")
+
+
 def _hist_bin_sqrt(x, range):
     """
     Square root histogram bin estimator.
@@ -38,16 +45,18 @@ def _hist_bin_sqrt(x, range):
 
     Parameters
     ----------
-    x : array_like
+    x : ndarray, shape (N, 1)
         Input data that is to be histogrammed, trimmed to range. May not
         be empty.
 
     Returns
     -------
-    h : An estimate of the optimal bin width for the given data.
+    h : ndarray, shape (1,)
+        An estimate of the optimal bin width for the given data.
     """
     del range  # unused
-    return _ptp(x) / np.sqrt(x.size)
+    _check_1d(x, 'sqrt')
+    return np.array([_ptp(x) / np.sqrt(x.size)])
 
 
 def _hist_bin_sturges(x, range):
@@ -61,16 +70,18 @@ def _hist_bin_sturges(x, range):
 
     Parameters
     ----------
-    x : array_like
+    x : ndarray, shape (N, 1)
         Input data that is to be histogrammed, trimmed to range. May not
         be empty.
 
     Returns
     -------
-    h : An estimate of the optimal bin width for the given data.
+    h : ndarray, shape (1,)
+        An estimate of the optimal bin width for the given data.
     """
     del range  # unused
-    return _ptp(x) / (np.log2(x.size) + 1.0)
+    _check_1d(x, 'sturges')
+    return np.array([_ptp(x) / (np.log2(x.size) + 1.0)])
 
 
 def _hist_bin_rice(x, range):
@@ -85,16 +96,18 @@ def _hist_bin_rice(x, range):
 
     Parameters
     ----------
-    x : array_like
+    x : ndarray, shape (N, 1)
         Input data that is to be histogrammed, trimmed to range. May not
         be empty.
 
     Returns
     -------
-    h : An estimate of the optimal bin width for the given data.
+    h : ndarray, shape (1,)
+        An estimate of the optimal bin width for the given data.
     """
     del range  # unused
-    return _ptp(x) / (2.0 * x.size ** (1.0 / 3))
+    _check_1d(x, 'rice')
+    return np.array([_ptp(x) / (2.0 * x.size ** (1.0 / 3))])
 
 
 def _hist_bin_scott(x, range):
@@ -138,25 +151,29 @@ def _hist_bin_stone(x, range):
 
     Parameters
     ----------
-    x : array_like
+    x : ndarray, shape (N, 1)
         Input data that is to be histogrammed, trimmed to range. May not
         be empty.
-    range : (float, float)
-        The lower and upper range of the bins.
+    range : sequence of (float, float)
+        Per-dimension ``(lower, upper)`` ranges for the bins.
 
     Returns
     -------
-    h : An estimate of the optimal bin width for the given data.
+    h : ndarray, shape (1,)
+        An estimate of the optimal bin width for the given data.
     """  # noqa: E501
 
+    _check_1d(x, 'stone')
     n = x.size
     ptp_x = _ptp(x)
     if n <= 1 or ptp_x == 0:
-        return 0
+        return np.array([0])
+
+    rang = range[0] if range is not None else None
 
     def jhat(nbins):
         hh = ptp_x / nbins
-        p_k = np.histogram(x, bins=nbins, range=range)[0] / n
+        p_k = np.histogram(x, bins=nbins, range=rang)[0] / n
         return (2 - (n + 1) * p_k.dot(p_k)) / hh
 
     nbins_upper_bound = max(100, int(np.sqrt(n)))
@@ -164,7 +181,7 @@ def _hist_bin_stone(x, range):
     if nbins == nbins_upper_bound:
         warnings.warn("The number of bins estimated may be suboptimal.",
                       RuntimeWarning, stacklevel=3)
-    return ptp_x / nbins
+    return np.array([ptp_x / nbins])
 
 
 def _hist_bin_doane(x, range):
@@ -177,15 +194,17 @@ def _hist_bin_doane(x, range):
 
     Parameters
     ----------
-    x : array_like
+    x : ndarray, shape (N, 1)
         Input data that is to be histogrammed, trimmed to range. May not
         be empty.
 
     Returns
     -------
-    h : An estimate of the optimal bin width for the given data.
+    h : ndarray, shape (1,)
+        An estimate of the optimal bin width for the given data.
     """
     del range  # unused
+    _check_1d(x, 'doane')
     if x.size > 2:
         sg1 = np.sqrt(6.0 * (x.size - 2) / ((x.size + 1.0) * (x.size + 3)))
         sigma = np.std(x)
@@ -197,9 +216,9 @@ def _hist_bin_doane(x, range):
             np.true_divide(temp, sigma, temp)
             np.power(temp, 3, temp)
             g1 = np.mean(temp)
-            return _ptp(x) / (1.0 + np.log2(x.size) +
-                                    np.log2(1.0 + np.absolute(g1) / sg1))
-    return 0.0
+            return np.array([_ptp(x) / (1.0 + np.log2(x.size) +
+                                    np.log2(1.0 + np.absolute(g1) / sg1))])
+    return np.array([0.0])
 
 
 def _hist_bin_fd(x, range):
@@ -250,25 +269,28 @@ def _hist_bin_auto(x, range):
 
     Parameters
     ----------
-    x : array_like
+    x : ndarray, shape (N, 1)
         Input data that is to be histogrammed, trimmed to range. May not
         be empty.
-    range : Tuple with range for the histogram
+    range : sequence of (float, float)
+        Per-dimension ``(lower, upper)`` ranges for the bins.
 
     Returns
     -------
-    h : An estimate of the optimal bin width for the given data.
+    h : ndarray, shape (1,)
+        An estimate of the optimal bin width for the given data.
 
     See Also
     --------
     _hist_bin_fd, _hist_bin_sturges
     """
+    _check_1d(x, 'auto')
     fd_bw = _hist_bin_fd(x, range)
     sturges_bw = _hist_bin_sturges(x, range)
     sqrt_bw = _hist_bin_sqrt(x, range)
     # heuristic to limit the maximal number of bins
-    fd_bw_corrected = max(fd_bw, sqrt_bw / 2)
-    return min(fd_bw_corrected, sturges_bw)
+    fd_bw_corrected = np.maximum(fd_bw, sqrt_bw / 2)
+    return np.minimum(fd_bw_corrected, sturges_bw)
 
 
 # Private dict initialized at module load time
@@ -446,10 +468,7 @@ def _get_bin_edges(a, bins, range, weights):
             for d in _range(D):
                 n_equal_bins[d] = 1
         else:
-            range_arg = (float(first_edge[0]), float(last_edge[0])) if D == 1 else None
-            widths = np.broadcast_to(
-                np.atleast_1d(_hist_bin_selectors[bins](data, range_arg)),
-                (D,))
+            widths = _hist_bin_selectors[bins](data, range)
             for d in _range(D):
                 width = float(widths[d])
                 if width:
