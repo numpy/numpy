@@ -509,7 +509,7 @@ def _get_bin_edges(a, bins, range, weights):
                 if n < 1:
                     raise ValueError('`bins` must be positive, when an integer')
                 n_equal_bins[d] = n
-                f_edg, l_edg = _get_outer_edges(a[:, d:d+1], [range[d]])
+                f_edg, l_edg = _get_outer_edges(a[:, d:d + 1], [range[d]])
                 first_edge[d], last_edge[d] = f_edg[0], l_edg[0]
 
             elif np.ndim(b) == 1:
