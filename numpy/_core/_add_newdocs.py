@@ -5791,6 +5791,23 @@ add_newdoc('numpy._core', 'ufunc', ('at',
     >>> a
     array([2, 4, 3, 4])
 
+    When indexing a multidimensional array, a tuple separates indexes
+    for different dimensions. A list or array is treated as indexes for
+    a single dimension:
+
+    >>> a = np.zeros((3, 3), dtype=int)
+    >>> np.add.at(a, ([0, 1, 2], [0, 1, 2]), 1)
+    >>> a
+    array([[1, 0, 0],
+           [0, 1, 0],
+           [0, 0, 1]])
+    >>> a = np.zeros((3, 3), dtype=int)
+    >>> np.add.at(a, [[0, 1, 2], [0, 1, 2]], 1)
+    >>> a
+    array([[2, 2, 2],
+           [2, 2, 2],
+           [2, 2, 2]])
+
     """))
 
 add_newdoc('numpy._core', 'ufunc', ('resolve_dtypes',
