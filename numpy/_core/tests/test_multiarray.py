@@ -8460,7 +8460,8 @@ class TestDotFamilyFallback:
             _correlate_fallback(np.ones(1), np.empty(0), 2, True)
 
     def test_quaddtype_dot_family(self):
-        numpy_quaddtype = pytest.importorskip("numpy_quaddtype")
+        from numpy._core.tests._quaddtype import importorskip_quaddtype
+        numpy_quaddtype = importorskip_quaddtype()
         qd = numpy_quaddtype.QuadPrecDType()
 
         def q(arr):

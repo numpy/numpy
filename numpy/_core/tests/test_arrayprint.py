@@ -8,7 +8,6 @@ from hypothesis.extra import numpy as hynp
 
 import numpy as np
 from numpy._core.arrayprint import _typelessdata
-from numpy._utils import _pep440
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_WASM,
@@ -1331,20 +1330,9 @@ def test_user_defined_floating_dtype_printing_does_not_corrupt_precision():
     for user-defined floating dtypes, which would silently truncate
     precision to float64.
     """
-    # Quaddtype (<=1.0.0) may have a bug that leads to test failures elsewhere
-    # (this may also be an interplay of numpy/quaddtype but let's hope new
-    # quaddtype versions will fix it.)
-    from importlib.metadata import version
-
-    try:
-        quaddtype_version = version("numpy_quaddtype")
-    except Exception:
-        pytest.skip("numpy_quaddtype not installed")
-    else:
-        if _pep440.Version(quaddtype_version) <= _pep440.Version("1.0.0"):
-            pytest.skip("critical bug in quaddtype during import")
-
-    numpy_quaddtype = pytest.importorskip("numpy_quaddtype")
+    from numpy._core.tests._quaddtype import importorskip_quaddtype
+    numpy_quaddtype = importorskip_quaddtype()
+    QuadPrecDType = numpy_quaddtype.QuadPrecDType
 
     pi_str = "3.14159265358979323846264338327950288"
     arr = np.array([pi_str], dtype=QuadPrecDType())
