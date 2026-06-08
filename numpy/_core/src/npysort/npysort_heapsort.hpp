@@ -45,10 +45,10 @@ int heapsort_(type *start, npy_intp n)
     for (l = n >> 1; l > 0; --l) {
         tmp = a[l];
         for (i = l, j = l << 1; j <= n;) {
-            ret = npy::cmp<Tag, reverse>(a[j], a[j + 1]);
-            if (ret < 0) return ret;
-            if (j < n && ret) {
-                j += 1;
+            if (j < n) {
+                ret = npy::cmp<Tag, reverse>(a[j], a[j + 1]);
+                if (ret < 0) return ret;
+                if (ret) { j += 1; }
             }
 
             ret = npy::cmp<Tag, reverse>(tmp, a[j]);
@@ -70,10 +70,10 @@ int heapsort_(type *start, npy_intp n)
         a[n] = a[1];
         n -= 1;
         for (i = 1, j = 2; j <= n;) {
-            ret = npy::cmp<Tag, reverse>(a[j], a[j + 1]);
-            if (ret < 0) return ret;
-            if (j < n && ret) {
-                j++;
+            if (j < n) {
+                ret = npy::cmp<Tag, reverse>(a[j], a[j + 1]);
+                if (ret < 0) return ret;
+                if (ret) { j++; }
             }
 
             ret = npy::cmp<Tag, reverse>(tmp, a[j]);
@@ -114,10 +114,10 @@ int aheapsort_(type *vv, npy_intp *tosort, npy_intp n)
     for (l = n >> 1; l > 0; --l) {
         tmp = a[l];
         for (i = l, j = l << 1; j <= n;) {
-            ret = npy::cmp<Tag, reverse>(v[a[j]], v[a[j + 1]]);
-            if (ret < 0) return ret;
-            if (j < n && ret) {
-                j += 1;
+            if (j < n) {
+                ret = npy::cmp<Tag, reverse>(v[a[j]], v[a[j + 1]]);
+                if (ret < 0) return ret;
+                if (ret) { j += 1; }
             }
 
             ret = npy::cmp<Tag, reverse>(v[tmp], v[a[j]]);
@@ -139,10 +139,10 @@ int aheapsort_(type *vv, npy_intp *tosort, npy_intp n)
         a[n] = a[1];
         n -= 1;
         for (i = 1, j = 2; j <= n;) {
-            ret = npy::cmp<Tag, reverse>(v[a[j]], v[a[j + 1]]);
-            if (ret < 0) return ret;
-            if (j < n && ret) {
-                j++;
+            if (j < n) {
+                ret = npy::cmp<Tag, reverse>(v[a[j]], v[a[j + 1]]);
+                if (ret < 0) return ret;
+                if (ret) { j++; }
             }
 
             ret = npy::cmp<Tag, reverse>(v[tmp], v[a[j]]);
