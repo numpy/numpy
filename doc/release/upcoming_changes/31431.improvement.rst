@@ -1,0 +1,6 @@
+object array sorting supports `descending=True`
+-----------------------------------------------
+`np.sort` and `np.argsort` with arrays of dtype `object`
+now support passing `descending=True` to sort in descending order.
+Unordered objects, i.e. `obj` such that `obj != obj`, are sorted
+to the end of the array regardless of the value of `descending`.
