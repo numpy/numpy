@@ -104,8 +104,7 @@ def test_limited_api_abi3(install_temp):
     sys.version_info < (3, 15), reason="opaque PyObject requires Python 3.15+"
 )
 @pytest.mark.skipif(
-    (sys.platform == "win32" and not
-     sysconfig.get_config_var('Py_GIL_DISABLED')),
+    sys.platform == "win32" and not sysconfig.get_config_var('Py_GIL_DISABLED'),
     reason=("Meson does not yet support building abi3t extensions on the "
             "GIL-enabled build")
 )
