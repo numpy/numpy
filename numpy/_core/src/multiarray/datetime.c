@@ -2291,15 +2291,15 @@ validate_and_return:
 
 invalid_date:
     PyErr_Format(PyExc_ValueError,
-            "Invalid date (%" NPY_INT64_FMT ",%" NPY_INT32_FMT ",%" NPY_INT32_FMT ") when converting to NumPy datetime",
-            out->year, out->month, out->day);
+            "Invalid date (%lld,%d,%d) when converting to NumPy datetime",
+            (long long)out->year, (int)out->month, (int)out->day);
     return -1;
 
 invalid_time:
     PyErr_Format(PyExc_ValueError,
-            "Invalid time (%" NPY_INT32_FMT ",%" NPY_INT32_FMT ",%" NPY_INT32_FMT ",%" NPY_INT32_FMT ") when converting "
+            "Invalid time (%d,%d,%d,%d) when converting "
             "to NumPy datetime",
-            out->hour, out->min, out->sec, out->us);
+            (int)out->hour, (int)out->min, (int)out->sec, (int)out->us);
     return -1;
 }
 
