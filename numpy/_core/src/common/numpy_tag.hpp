@@ -16,13 +16,9 @@
  *
  *   - ``type``        -- the underlying C scalar type
  *   - ``type_value``  -- the corresponding ``NPY_TYPES`` enumerator
- *   - ``less`` / ``greater`` -- the sort-friendly
+ *   - ``less`` / ``less_equal`` / ``greater`` -- the sort-friendly
  *     comparisons that order NaN / NaT to the end (as if largest value
  *     for less and as if smallest for greater).
- *   - ``less_equal`` / ``greater_equal`` -- the corresponding non-strict
- *     comparisons that are consistent with the strict ones, such that
- *     ``less_equal(a, b)`` is equivalent to ``!less(b, a)`` and
- *     similarly for greater.
  *
  * For the four numeric categories that need different NaN/NaT handling,
  * comparisons are implemented once at the ``*_type<T, NPY_TYPES>``
@@ -108,12 +104,7 @@ struct half_tag {
         }
         return !isnan(a) && lt_nonan(a, b);
     }
-    static constexpr int less_equal(npy_half a, npy_half b) {
-        if (isnan(b)) {
-            return 1;
-        }
-        return !lt_nonan(b, a) && !isnan(a);
-    }
+    static constexpr int less_equal(npy_half a, npy_half b) { return !less(b, a); }
 
     // NaN sorts to the end in reverse too.
     static constexpr int greater(npy_half a, npy_half b)
@@ -123,12 +114,7 @@ struct half_tag {
         }
         return !isnan(a) && lt_nonan(b, a);
     }
-    static constexpr int greater_equal(npy_half a, npy_half b) {
-        if (isnan(b)) {
-            return 1;
-        }
-        return !lt_nonan(a, b) && !isnan(a);
-    }
+    static constexpr int greater_equal(npy_half a, npy_half b) { return !greater(b, a); }
 };
 
 template <typename T, NPY_TYPES TypeNum>
