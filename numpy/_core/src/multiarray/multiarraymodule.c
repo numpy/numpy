@@ -1152,7 +1152,7 @@ fail:
  */
 static PyArrayObject*
 _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, PyArray_Descr *typec,
-                   int mode, int *inverted)
+                   int mode, int conjugate, int *inverted)
 {
     PyArrayObject *ret;
     npy_intp length;
@@ -1162,6 +1162,17 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, PyArray_Descr *typec,
     PyArray_DotFunc *dot;
 
     NPY_BEGIN_THREADS_DEF;
+
+    if (PyDataType_GetArrFuncs(typec)->dotfunc == NULL) {
+        *inverted = 0;
+        if (npy_cache_import_runtime("numpy._core.numeric", "_correlate_fallback",
+                                     &npy_runtime_imports._correlate_fallback) == -1) {
+            return NULL;
+        }
+        return (PyArrayObject *)PyObject_CallFunction(
+                npy_runtime_imports._correlate_fallback, "OOii",
+                (PyObject *)ap1, (PyObject *)ap2, mode, conjugate);
+    }
 
     n1 = PyArray_DIMS(ap1)[0];
     n2 = PyArray_DIMS(ap2)[0];
@@ -1217,14 +1228,9 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, PyArray_Descr *typec,
     }
     dot = PyDataType_GetArrFuncs(PyArray_DESCR(ret))->dotfunc;
     if (dot == NULL) {
-        Py_DECREF(ret);
-        if (npy_cache_import_runtime("numpy._core.numeric", "_correlate_fallback",
-                                     &npy_runtime_imports._correlate_fallback) == -1) {
-            return NULL;
-        }
-        return (PyArrayObject *)PyObject_CallFunction(
-                npy_runtime_imports._correlate_fallback, "OOi",
-                (PyObject *)ap1, (PyObject *)ap2, mode);
+        PyErr_SetString(PyExc_ValueError,
+                        "function not available for this data type");
+        goto clean_ret;
     }
 
     int needs_pyapi = PyDataType_FLAGCHK(PyArray_DESCR(ret), NPY_NEEDS_PYAPI);
@@ -1378,7 +1384,7 @@ PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
         ap2 = cap2;
     }
 
-    ret = _pyarray_correlate(ap1, ap2, typec, mode, &inverted);
+    ret = _pyarray_correlate(ap1, ap2, typec, mode, 1, &inverted);
     if (ret == NULL) {
         goto clean_ap2;
     }
@@ -1448,7 +1454,7 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
         goto fail;
     }
 
-    ret = _pyarray_correlate(ap1, ap2, typec, mode, &unused);
+    ret = _pyarray_correlate(ap1, ap2, typec, mode, 0, &unused);
     if (ret == NULL) {
         goto fail;
     }

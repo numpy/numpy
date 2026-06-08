@@ -1237,14 +1237,17 @@ def _dot_check_out(out, shape, dtype):
         )
 
 
-def _dot_contract(a, b, axis_a, axis_b):
+def _dot_contract(a, b, axis_a, axis_b, out=None):
     notin_a = [k for k in range(a.ndim) if k != axis_a]
     notin_b = [k for k in range(b.ndim) if k != axis_b]
     n = a.shape[axis_a]
     m = math.prod(a.shape[ax] for ax in notin_a)
     p = math.prod(b.shape[ax] for ax in notin_b)
-    at = ascontiguousarray(a.transpose(notin_a + [axis_a]).reshape(m, n))
-    bt = ascontiguousarray(b.transpose([axis_b] + notin_b).reshape(n, p))
+    at = a.transpose(notin_a + [axis_a]).reshape(m, n)
+    bt = b.transpose([axis_b] + notin_b).reshape(n, p)
+    if out is not None:
+        np.matmul(at, bt, out=out.reshape(m, p))
+        return out
     res = np.matmul(at, bt)
     return res.reshape([a.shape[ax] for ax in notin_a]
                        + [b.shape[ax] for ax in notin_b])
@@ -1259,20 +1262,15 @@ def _dot_fallback(a, b, out=None):
     if out is not None:
         _dot_check_out(out, res_shape, res_dtype)
     if a.ndim == 0 or b.ndim == 0:
-        # 0-D: scalar multiply
-        res = np.multiply(a, b)
+        res = asarray(np.multiply(a, b), order='C')
     elif a.shape[-1] == 0 or 0 in res_shape:
-        # empty contraction or empty result: all-zeros, no matmul
         res = np.zeros(res_shape, dtype=res_dtype)
     elif a.ndim == 1 and b.ndim == 1:
-        # 1-D x 1-D: inner product
-        res = np.matmul(ascontiguousarray(a), ascontiguousarray(b))
+        return np.matmul(a, b, out=out)
     elif b.ndim == 1:
-        # N-D x 1-D: over last axis of a
-        res = _dot_contract(a, b, a.ndim - 1, 0)
+        return _dot_contract(a, b, a.ndim - 1, 0, out)
     else:
-        # N-D x M-D: last of a, 2nd-last of b
-        res = _dot_contract(a, b, a.ndim - 1, b.ndim - 2)
+        return _dot_contract(a, b, a.ndim - 1, b.ndim - 2, out)
     if out is not None:
         out[...] = res
         return out
@@ -1280,33 +1278,45 @@ def _dot_fallback(a, b, out=None):
 
 
 def _vdot_fallback(a, b):
-    a = np.asarray(a).ravel()
-    b = np.asarray(b).ravel()
-    if a.dtype.kind == "c":
-        a = np.conjugate(a)
-    return np.matmul(a, b)
+    return np.vecdot(np.asarray(a).ravel(), np.asarray(b).ravel())
 
 
-def _correlate_fallback(a, v, mode):
-    """Forward correlation via ``matmul`` for dtypes without a legacy dotfunc.
+def _correlate_fallback(a, v, mode, conjugate):
+    """``correlate``/``convolve`` via ``vecdot``/``matmul`` for dtypes with no dotfunc.
 
-    ``_pyarray_correlate`` already handles empty checks, complex conjugation
-    and the ``len(a) < len(v)`` swap/reverse, so ``a`` is the longer operand.
+    ``conjugate`` selects ``vecdot`` (conjugates the kernel, as ``correlate``
+    does) over ``matmul`` (no conjugation, as ``convolve`` does).
     """
-    a = ascontiguousarray(np.asarray(a).ravel())
-    v = ascontiguousarray(np.asarray(v).ravel())
-    res_dtype = np.result_type(a.dtype, v.dtype)
+    a = np.asarray(a).ravel()
+    v = np.asarray(v).ravel()
+    if a.size == 0:
+        raise ValueError("first array argument cannot be empty")
+    if v.size == 0:
+        raise ValueError("second array argument cannot be empty")
+    inverted = a.size < v.size
+    if inverted:
+        a, v = v, a
     n1, n2 = a.size, v.size
-    pad = zeros(n2 - 1, dtype=res_dtype)
+    pad = zeros(n2 - 1, dtype=np.result_type(a.dtype, v.dtype))
     apad = concatenate([pad, a, pad])
     win = apad[arange(n1 + n2 - 1)[:, None] + arange(n2)]
-    full = np.matmul(win, v)
+    # vecdot conjugates its first operand: correlate conjugates the kernel,
+    # convolve does not. The conjugated operand is always the original kernel,
+    # so the vecdot argument flips under the swap.
+    if conjugate:
+        full = np.vecdot(win, v) if inverted else np.vecdot(v, win)
+    else:
+        full = np.matmul(win, v)
     if mode == 0:
-        return ascontiguousarray(full[n2 - 1:n1])  # valid
-    if mode == 1:
+        res = full[n2 - 1:n1]   # valid
+    elif mode == 1:
         s = (n2 - 1) // 2
-        return ascontiguousarray(full[s:s + n1])    # same
-    return full                                      # full
+        res = full[s:s + n1]    # same
+    else:
+        res = full              # full
+    # ascontiguousarray makes the reversed view C-contiguous, matching the
+    # legacy correlate.
+    return ascontiguousarray(res[::-1]) if inverted else res
 
 
 def _roll_dispatcher(a, shift, axis=None):
