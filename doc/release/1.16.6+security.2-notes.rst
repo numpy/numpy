@@ -1,0 +1,61 @@
+==================================
+NumPy 1.16.6+security.2 Release Notes
+==================================
+
+The NumPy 1.16.6+security.2 release backports a CVE fix for the f2py
+``array_from_pyobj`` function. It is an ActiveState security release on the
+1.16.6 line (the prior security release, tagged 1.16.6.1, is treated as
+``+security.1``).
+
+Downstream developers building this release should use Cython >= 0.29.2 and, if
+using OpenBLAS, OpenBLAS >= v0.3.7. The supported Python versions are 2.7 and
+3.5-3.7.
+
+- Deal with CVE-2021-41496
+
+Two further advisories were assessed for this release and found not to require
+a code change (both are documented for tracking purposes):
+
+- CVE-2021-33430 (GHSA-6p56-wp2h-9hxr) -- the ``PyArray_NewFromDescr_int``
+  stack-buffer bounds check is already present in this line ahead of the
+  ``descr->subarray`` ``memcpy``; not applicable.
+- CVE-2021-34141 (GHSA-fpfv-jqm9-f5jm) -- disputed; the deprecated
+  Numeric-style typecode comparison only affects a ``DeprecationWarning``, not
+  the resolved dtype, so there is no security impact and no upstream fix to
+  backport.
+
+Highlights
+==========
+
+- Fix for CVE-2021-41496: a stack buffer overflow in the f2py
+  ``array_from_pyobj`` error path when an intent(cache|hide)|optional array is
+  passed negative dimensions. Backported from numpy/numpy PR #20630
+  (commit 271010f1037150e9, closes gh-19000).
+
+
+New functions
+=============
+
+
+Compatibility notes
+===================
+
+
+Improvements
+============
+
+
+Contributors
+============
+
+A total of 1 person contributed to this release.
+
+* Warren Weckesser
+
+
+Pull requests merged
+====================
+
+A total of 1 pull request was merged for this release.
+
+* `#20630 <https://github.com/numpy/numpy/pull/20630>`__: BUG: f2py: Simplify creation of an exception message. Closes gh-19000.

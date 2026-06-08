@@ -64,6 +64,10 @@ MINOR               = 16
 MICRO               = 6
 ISRELEASED          = True
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
+# ActiveState security release: PEP 440 local version label. N counts the
+# ActiveState security releases on this line (1.16.6.1 was security.1).
+AS_SECURITY         = '+security.2'
+VERSION             = VERSION + AS_SECURITY
 
 
 # Return the git revision as a string

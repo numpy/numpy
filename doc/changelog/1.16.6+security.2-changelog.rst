@@ -1,0 +1,15 @@
+
+Contributors
+============
+
+A total of 1 person contributed to this release.
+
+* Warren Weckesser
+
+
+Pull requests merged
+====================
+
+A total of 1 pull request was merged for this release.
+
+* `#20630 <https://github.com/numpy/numpy/pull/20630>`__: BUG: f2py: Simplify creation of an exception message. Closes gh-19000.
