@@ -2829,7 +2829,7 @@ class TestMethods:
         a_sorted = np.sort(a_randomized, stable=stable, descending=descending, axis=-1)
         if np.issubdtype(a.dtype, np.object_):
             a_sorted = a_sorted.astype(float)
-            
+
         assert_equal(a_sorted, b, msg)
 
     @pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64])
