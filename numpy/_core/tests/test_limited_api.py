@@ -103,6 +103,12 @@ def test_limited_api(install_temp):
 @pytest.mark.skipif(
     sys.version_info < (3, 15), reason="opaque PyObject requires Python 3.15+"
 )
+@pytest.mark.skipif(
+    (sys.platform == "win32" and not
+     sysconfig.get_config_var('Py_GIL_DISABLED')),
+    reason=("Meson does not yet support building abi3t extensions on the "
+            "GIL-enabled build")
+)
 def test_limited_opaque(install_temp):
     import limited_api_opaque
 
