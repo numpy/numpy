@@ -3889,6 +3889,14 @@ class TestMethods:
         assert_raises(TypeError, np.dot, c, A)
         assert_raises(TypeError, np.dot, A, c)
 
+    def test_dot_object_unsupported_multiply(self):
+        # gh-29688: an unsupported object multiply must raise the real error
+        # (TypeError), not a SystemError.
+        a = np.zeros((2, 2), dtype=complex)
+        b = np.array([[np.timedelta64(123, "s")],
+                      [np.timedelta64(321, "s")]], dtype=object)
+        assert_raises(TypeError, np.dot, a, b)
+
     def test_dot_out_mem_overlap(self):
         np.random.seed(1)
 
