@@ -247,8 +247,7 @@ struct object_tag {
         return ret;
     }
 
-    template <int op>
-    static int _cmp(PyObject *a, PyObject *b)
+    static int _cmp(PyObject *a, PyObject *b, int op)
     {
         if (a == NULL) {
             a = Py_None;
@@ -284,57 +283,20 @@ struct object_tag {
         return 0;
     }
 
-    template <int op>
-    static int _cmp_invert(PyObject *a, PyObject *b)
-    {
-        if (a == NULL) {
-            a = Py_None;
-        }
-        if (b == NULL) {
-            b = Py_None;
-        }
-
-        int ret = isnan(a);
-        if (ret < 0) {
-            return -1;
-        }
-        if (ret) {
-            return 0;
-        }
-
-        ret = PyObject_RichCompareBool(a, b, op);
-        if (ret < 0) {
-            return -1;
-        }
-        if (!ret) {
-            return 1;
-        }
-
-        ret = isnan(b);
-        if (ret < 0) {
-            return -1;
-        }
-        if (ret) {
-            return 0;
-        }
-
-        return 0;
-    }
-
     static int less(PyObject *a, PyObject *b) {
-        return _cmp<Py_LT>(a, b);
+        return _cmp(a, b, Py_LT);
     }
 
     static int less_equal(PyObject *a, PyObject *b) {
-        return _cmp_invert<Py_GT>(a, b);
+        return _cmp(a, b, Py_LE);
     }
 
     static int greater(PyObject *a, PyObject *b) {
-        return _cmp<Py_GT>(a, b);
+        return _cmp(a, b, Py_GT);
     }
 
     static int greater_equal(PyObject *a, PyObject *b) {
-        return _cmp_invert<Py_LT>(a, b);
+        return _cmp(a, b, Py_GE);
     }
 };
 

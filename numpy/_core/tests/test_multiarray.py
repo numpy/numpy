@@ -2455,6 +2455,9 @@ class TestMethods:
             def __lt__(self, other):
                 return True
 
+            def __le__(self, other):
+                return True
+
         a = np.array([Boom()] * 100, dtype=object)
         for kind in self.sort_kinds:
             msg = f"kind={kind}"
