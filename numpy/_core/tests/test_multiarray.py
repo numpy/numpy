@@ -2811,13 +2811,13 @@ class TestMethods:
         a[nanmask] = nan
 
         b = np.concatenate((a[~nanmask][::-1], a[nanmask]))
-        if np.issubdtype(a.dtype, np.object_):
-            # cast to float for comparison, as object np.nan != np.nan
-            a = a.astype(float)
-            b = b.astype(float)
 
         msg = f"sort, descending={descending}, stable={stable}"
         a_sorted = np.sort(a, stable=stable, descending=descending, axis=-1)
+        if np.issubdtype(a.dtype, np.object_):
+            # cast to float for comparison, as object np.nan != np.nan
+            a_sorted = a_sorted.astype(float)
+            b = b.astype(float)
         assert_equal(a_sorted, b, msg)
 
         # randomized input
@@ -2827,6 +2827,9 @@ class TestMethods:
 
         msg = f"sort, randomized, descending={descending}, stable={stable}"
         a_sorted = np.sort(a_randomized, stable=stable, descending=descending, axis=-1)
+        if np.issubdtype(a.dtype, np.object_):
+            a_sorted = a_sorted.astype(float)
+            
         assert_equal(a_sorted, b, msg)
 
     @pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64])
