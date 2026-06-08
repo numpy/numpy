@@ -212,7 +212,8 @@ class finfo:
         if obj is not None:
             return obj
         dtypes = [dtype]
-        newdtype = ntypes.obj2sctype(dtype)
+        # Call result_type to normalize to e.g. native byte-order:
+        newdtype = numeric.result_type(dtype)
         if newdtype is not dtype:
             dtypes.append(newdtype)
             dtype = newdtype
@@ -220,7 +221,9 @@ class finfo:
         obj = cls._finfo_cache.get(dtype)
         if obj is not None:
             return obj
-        if not issubclass(dtype, numeric.floating):
+
+        sctype = newdtype.type
+        if sctype is not None and not issubclass(sctype, numeric.floating):
             newdtype = _convert_to_float_if_complex(dtype)
             if newdtype is not dtype:
                 # dtype changed, for example from complex128 to float64
