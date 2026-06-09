@@ -274,7 +274,7 @@ static int f2py_module_exec(PyObject *m) {
         PyDict_SetItemString(d, f2py_routine_defs[i].name, tmp);
         Py_DECREF(tmp);
     }
-   
+
 #initf2pywraphooks#
 #initf90modhooks#
 #initcommonhooks#

@@ -1,5 +1,6 @@
 from . import util
 
+
 class TestUserCode(util.F2PyTest):
     suffix = ".pyf"
     module_name = "user_code_success"
