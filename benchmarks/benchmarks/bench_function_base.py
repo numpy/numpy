@@ -276,8 +276,7 @@ class Sort(Benchmark):
         # used across multiple runs.
         if descending:
             try:
-                with np.errstate(over='raise'):
-                    np.sort(self.arr, stable=stable, descending=True)
+                np.sort(self.arr, stable=stable, descending=True)
             except TypeError:
                 raise SkipNotImplemented(
                     f"Descending sort is not supported for {dtype}"
@@ -289,8 +288,7 @@ class Sort(Benchmark):
     def time_argsort(self, stable, descending, dtype, array_type):
         if descending:
             try:
-                with np.errstate(over='raise'):
-                    np.argsort(self.arr, stable=stable, descending=True)
+                np.argsort(self.arr, stable=stable, descending=True)
             except TypeError:
                 raise SkipNotImplemented(
                     f"Descending argsort is not supported for {dtype}"
