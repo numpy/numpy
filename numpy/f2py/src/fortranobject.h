@@ -76,16 +76,22 @@ typedef struct {
 } FortranDataDef;
 
 typedef struct {
+#ifndef Py_TARGET_ABI3T
     PyObject_HEAD
+#endif
     int len;              /* Number of attributes */
     FortranDataDef *defs; /* An array of FortranDataDef's */
     PyObject *dict;       /* Fortran object attribute dictionary */
 } PyFortranObject;
 
-#define PyFortran_Check(op) (Py_TYPE(op) == &PyFortran_Type)
+#define PyFortran_Check(op) (Py_TYPE(op) == PyFortran_TypePtr)
 #define PyFortran_Check1(op) (0 == strcmp(Py_TYPE(op)->tp_name, "fortran"))
 
-extern PyTypeObject PyFortran_Type;
+extern PyTypeObject* PyFortran_TypePtr;
+// Use PyFortran_TypePtr. PyFortran_Type is only provided for some level of source compatibility.
+#define PyFortran_Type (*PyFortran_TypePtr)
+extern int F2Py_InitializePyFortranType(void);
+
 extern int
 F2PyDict_SetItemString(PyObject *dict, char *name, PyObject *obj);
 extern PyObject *
