@@ -584,11 +584,13 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     ----------
     a : array_like
         Input data. The histogram is computed over the flattened array.
-    bins : int or sequence of scalars or str, optional
+    bins : int or sequence or str, optional
         If `bins` is an int, it defines the number of equal-width
-        bins in the given range (10, by default). If `bins` is a
-        sequence, it defines the bin edges, including the rightmost
-        edge, allowing for non-uniform bin widths.
+        bins in the given range (10, by default) for each dimension.
+        If `bins` is a sequence of scalars, it defines the bin edges, including the rightmost
+        edge, for all the dimensions, allowing for non-uniform bin widths.
+        If `bins` is a sequence of sequence of scalars, it defines the bin edges,
+        icnluding the rightmost edge, for each dimension seperately.
 
         If `bins` is a string from the list below, `histogram_bin_edges` will
         use the method chosen to calculate the optimal bin width and
@@ -601,12 +603,14 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         supported for automated bin size selection.
 
         'auto'
-            Minimum bin width between the 'sturges' and 'fd' estimators.
+            In 1-D, minimum bin width between the 'sturges' and 'fd' estimators.
             Provides good all-around performance.
+            In D>1, minimum bin width between the "scott" and an heuristic
+            on each dimension.
 
         'fd' (Freedman Diaconis Estimator)
             Robust (resilient to outliers) estimator that takes into
-            account data variability and data size.
+            account data variability and data size. Works on any dimensions.
 
         'doane'
             An improved version of Sturges' estimator that works better
@@ -614,7 +618,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
 
         'scott'
             Less robust estimator that takes into account data variability
-            and data size.
+            and data size. Works on any dimensions.
 
         'stone'
             Estimator based on leave-one-out cross-validation estimate of
@@ -634,7 +638,10 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
             Square root (of data size) estimator, used by Excel and
             other programs for its speed and simplicity.
 
-    range : (float, float), optional
+    range : sequence, optional
+        A sequence of length D, each an optional (lower, upper) tuple giving
+        the outer bin edges to be used if the edges are not given explicitly in
+        `bins`.
         The lower and upper range of the bins.  If not provided, range
         is simply ``(a.min(), a.max())``.  Values outside the range are
         ignored. The first element of the range must be less than or
@@ -651,12 +658,12 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
 
     Returns
     -------
-    bin_edges : array of dtype float
-        The edges to pass into `histogram`
+    bin_edges : tuple of ndarrays.
+        The edges to pass into `histogram`, `histogram2d` or `histogramdd`
 
     See Also
     --------
-    histogram
+    histogram, `histogram2d, `histogramdd`
 
     Notes
     -----
@@ -680,7 +687,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         Switchover point is usually :math:`a.size \approx 1000`.
 
     'fd' (Freedman Diaconis Estimator)
-        .. math:: h = 2 \frac{IQR}{n^{1/3}}
+        .. math:: h = 2 \frac{IQR_i}{n^{1/(D+2)}}
 
         The binwidth is proportional to the interquartile range (IQR)
         and inversely proportional to cube root of a.size. Can be too
@@ -688,7 +695,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         datasets. The IQR is very robust to outliers.
 
     'scott'
-        .. math:: h = \sigma \sqrt[3]{\frac{24 \sqrt{\pi}}{n}}
+        .. math:: h = \sigma_i \sqrt[D+2]{\frac{24 \sqrt{\pi}}{n}}
 
         The binwidth is proportional to the standard deviation of the
         data and inversely proportional to cube root of ``x.size``. Can
