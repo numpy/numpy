@@ -16,6 +16,20 @@
  *
  * The actual functions are defined using macro templating below.
  */
+
+/*
+ * ctype isdigit() is only defined for inputs representable as an unsigned char
+ * (or EOF).  These parsers run over Py_UCS4 code points which can exceed that
+ * range, so a non-ASCII code point would index the ctype table out of bounds.
+ * Restrict the test to the ASCII range, which is all these integer parsers
+ * accept anyway.
+ */
+NPY_FINLINE bool
+is_ascii_digit(Py_UCS4 c)
+{
+    return c < 128 && isdigit((int)c);
+}
+
 NPY_FINLINE int
 str_to_int64(
         const Py_UCS4 *p_item, const Py_UCS4 *p_end,
@@ -40,7 +54,7 @@ str_to_int64(
     }
 
     // Check that there is a first digit.
-    if (!isdigit(*p)) {
+    if (!is_ascii_digit(*p)) {
         return -1;
     }
 
@@ -52,7 +66,7 @@ str_to_int64(
 
         // Process the digits.
         int d = *p;
-        while (isdigit(d)) {
+        while (is_ascii_digit(d)) {
             if ((number > pre_min) || ((number == pre_min) && (d - '0' <= dig_pre_min))) {
                 number = number * 10 - (d - '0');
                 d = *++p;
@@ -70,7 +84,7 @@ str_to_int64(
 
         // Process the digits.
         int d = *p;
-        while (isdigit(d)) {
+        while (is_ascii_digit(d)) {
             if ((number < pre_max) || ((number == pre_max) && (d - '0' <= dig_pre_max))) {
                 number = number * 10 + (d - '0');
                 d = *++p;
@@ -119,7 +133,7 @@ str_to_uint64(
     }
 
     // Check that there is a first digit.
-    if (!isdigit(*p)) {
+    if (!is_ascii_digit(*p)) {
         return -1;
     }
 
@@ -130,7 +144,7 @@ str_to_uint64(
 
     // Process the digits.
     d = *p;
-    while (isdigit(d)) {
+    while (is_ascii_digit(d)) {
         if ((number < pre_max) || ((number == pre_max) && (d - '0' <= dig_pre_max))) {
             number = number * 10 + (d - '0');
             d = *++p;
