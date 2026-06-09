@@ -266,10 +266,15 @@ def _hist_bin_auto(x, range):
     and is the default in the R language. This method gives good off-the-shelf
     behaviour.
 
+    For multidimensional data (D > 1), the Sturges and sqrt estimators are
+    replaced by Scott's rule. Because of the curse of dimensionaly, i.e as dimension
+    increases the data needs to increase exponentionally for bins to be meaningful,
+    in higher dimensions the type of data does not matter as long as the data is not
+    large.
 
     Parameters
     ----------
-    x : ndarray, shape (N, 1)
+    x : ndarray, shape (N, D)
         Input data that is to be histogrammed, trimmed to range. May not
         be empty.
     range : sequence of (float, float)
@@ -277,20 +282,27 @@ def _hist_bin_auto(x, range):
 
     Returns
     -------
-    h : ndarray, shape (1,)
-        An estimate of the optimal bin width for the given data.
+    h : ndarray, shape (D,)
+        Per-dimension estimates of the optimal bin widths.
 
     See Also
     --------
-    _hist_bin_fd, _hist_bin_sturges
+    _hist_bin_fd, _hist_bin_sturges, _hist_bin_scott
     """
-    _check_1d(x, 'auto')
+    N, D = x.shape
+    if D == 1:
+        _check_1d(x, 'auto')
+        fd_bw = _hist_bin_fd(x, range)
+        sturges_bw = _hist_bin_sturges(x, range)
+        sqrt_bw = _hist_bin_sqrt(x, range)
+        # heuristic to limit the maximal number of bins
+        fd_bw_corrected = np.maximum(fd_bw, sqrt_bw / 2)
+        return np.minimum(fd_bw_corrected, sturges_bw)
     fd_bw = _hist_bin_fd(x, range)
-    sturges_bw = _hist_bin_sturges(x, range)
-    sqrt_bw = _hist_bin_sqrt(x, range)
-    # heuristic to limit the maximal number of bins
-    fd_bw_corrected = np.maximum(fd_bw, sqrt_bw / 2)
-    return np.minimum(fd_bw_corrected, sturges_bw)
+    scott_bw = _hist_bin_scott(x, range)
+    # heuristic to limit the maximal number of bins, similar to 1-D
+    floor_bw = (x.max(axis=0) - x.min(axis=0)) / (2 * N ** (1/(D+2)))
+    return np.minimum(np.maximum(fd_bw, floor_bw), scott_bw)
 
 
 # Private dict initialized at module load time
