@@ -8349,7 +8349,7 @@ class TestInner:
 
 
 class TestDotFamilyFallback:
-    # The dot family (dot/inner/vdot/tensordot/correlate) historically requires
+    # The dot family (dot/inner/vdot/tensordot/multi_dot) historically requires
     # a legacy ``dotfunc`` ArrFuncs slot, which new-style user DTypes cannot
     # provide.  For such DTypes numpy falls back to the ``matmul``/``multiply``
     # gufuncs via the private helpers in ``numpy._core.numeric``.  These tests
@@ -8428,37 +8428,6 @@ class TestDotFamilyFallback:
         bc = (b - 1j * a).astype(np.complex128)
         assert _vdot_fallback(ac, bc) == np.vdot(ac, bc)
 
-    @pytest.mark.parametrize("mode,code", [("valid", 0), ("same", 1), ("full", 2)])
-    @pytest.mark.parametrize("na,nv", [(8, 1), (8, 3), (8, 8), (3, 5), (1, 4)])
-    def test_correlate_fallback_matches_oracle(self, mode, code, na, nv):
-        # correlate (conjugate=True -> vecdot) and convolve (conjugate=False ->
-        # matmul); convolve pre-swaps to len(a) >= len(v) like numpy does
-        from numpy._core.numeric import _correlate_fallback
-        a = np.arange(1, na + 1, dtype=np.float64) * 0.5 + 1
-        v = np.arange(1, nv + 1, dtype=np.float64) * 0.5 + 1
-        assert_array_equal(_correlate_fallback(a, v, code, True),
-                           np.correlate(a, v, mode), strict=True)
-        sa, sv = (v, a) if nv > na else (a, v)
-        assert_array_equal(_correlate_fallback(sa, sv[::-1], code, False),
-                           np.convolve(a, v, mode), strict=True)
-
-    @pytest.mark.parametrize("mode,code", [("valid", 0), ("same", 1), ("full", 2)])
-    def test_correlate_fallback_complex_conjugates(self, mode, code):
-        # correlate conjugates the kernel for complex input (via vecdot)
-        from numpy._core.numeric import _correlate_fallback
-        a = (np.arange(1, 6) + 1j * np.arange(5, 0, -1)).astype(np.complex128)
-        v = (np.arange(1, 4) - 1j * np.arange(1, 4)).astype(np.complex128)
-        assert_array_equal(_correlate_fallback(a, v, code, True),
-                           np.correlate(a, v, mode))
-
-    def test_correlate_fallback_empty(self):
-        # the fallback raises the same messages as the legacy C path
-        from numpy._core.numeric import _correlate_fallback
-        with pytest.raises(ValueError, match="first array argument"):
-            _correlate_fallback(np.empty(0), np.ones(1), 2, True)
-        with pytest.raises(ValueError, match="second array argument"):
-            _correlate_fallback(np.ones(1), np.empty(0), 2, True)
-
     def test_quaddtype_dot_family(self):
         from numpy._core.tests._quaddtype import importorskip_quaddtype
         numpy_quaddtype = importorskip_quaddtype()
@@ -8503,16 +8472,6 @@ class TestDotFamilyFallback:
         for chain in ([A, B, C], [A, B, C, D], [vL, A, B], [A, B, vR]):
             assert_array_equal(f(np.linalg.multi_dot([q(m) for m in chain])),
                                np.linalg.multi_dot(chain))
-
-        for mode in ("valid", "same", "full"):
-            assert_array_equal(f(np.correlate(q(a), q(b), mode)),
-                               np.correlate(a, b, mode))
-            assert_array_equal(f(np.convolve(q(A.ravel()), q(b), mode)),
-                               np.convolve(A.ravel(), b, mode))
-
-        # empty-input error messages come from the C layer, unchanged
-        with pytest.raises(ValueError, match="first array argument"):
-            np.correlate(q(np.empty(0)), q(a))
 
 
 class TestChoose:

@@ -29,7 +29,6 @@ typedef struct npy_runtime_imports_struct {
     PyObject *_clip;
     PyObject *_commastring;
     PyObject *_convert_to_stringdtype_kwargs;
-    PyObject *_correlate_fallback;
     PyObject *_default_array_repr;
     PyObject *_default_array_str;
     PyObject *_dot_fallback;

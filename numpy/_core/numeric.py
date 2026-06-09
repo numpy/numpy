@@ -1281,44 +1281,6 @@ def _vdot_fallback(a, b):
     return np.vecdot(np.asarray(a).ravel(), np.asarray(b).ravel())
 
 
-def _correlate_fallback(a, v, mode, conjugate):
-    """``correlate``/``convolve`` via ``vecdot``/``matmul`` for dtypes with no dotfunc.
-
-    ``conjugate`` selects ``vecdot`` (conjugates the kernel, as ``correlate``
-    does) over ``matmul`` (no conjugation, as ``convolve`` does).
-    """
-    a = np.asarray(a).ravel()
-    v = np.asarray(v).ravel()
-    if a.size == 0:
-        raise ValueError("first array argument cannot be empty")
-    if v.size == 0:
-        raise ValueError("second array argument cannot be empty")
-    inverted = a.size < v.size
-    if inverted:
-        a, v = v, a
-    n1, n2 = a.size, v.size
-    pad = zeros(n2 - 1, dtype=np.result_type(a.dtype, v.dtype))
-    apad = concatenate([pad, a, pad])
-    win = apad[arange(n1 + n2 - 1)[:, None] + arange(n2)]
-    # vecdot conjugates its first operand: correlate conjugates the kernel,
-    # convolve does not. The conjugated operand is always the original kernel,
-    # so the vecdot argument flips under the swap.
-    if conjugate:
-        full = np.vecdot(win, v) if inverted else np.vecdot(v, win)
-    else:
-        full = np.matmul(win, v)
-    if mode == 0:
-        res = full[n2 - 1:n1]   # valid
-    elif mode == 1:
-        s = (n2 - 1) // 2
-        res = full[s:s + n1]    # same
-    else:
-        res = full              # full
-    # ascontiguousarray makes the reversed view C-contiguous, matching the
-    # legacy correlate.
-    return ascontiguousarray(res[::-1]) if inverted else res
-
-
 def _roll_dispatcher(a, shift, axis=None):
     return (a,)
 
