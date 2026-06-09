@@ -301,7 +301,7 @@ def _hist_bin_auto(x, range):
     fd_bw = _hist_bin_fd(x, range)
     scott_bw = _hist_bin_scott(x, range)
     # heuristic to limit the maximal number of bins, similar to 1-D
-    floor_bw = (x.max(axis=0) - x.min(axis=0)) / (2 * N ** (1/(D+2)))
+    floor_bw = (x.max(axis=0) - x.min(axis=0)) / (2 * N ** (1 / (D + 2)))
     return np.minimum(np.maximum(fd_bw, floor_bw), scott_bw)
 
 

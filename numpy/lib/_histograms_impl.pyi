@@ -4,7 +4,6 @@ from typing import Any, Literal as L, SupportsIndex, overload
 
 import numpy as np
 from numpy._typing import (
-    ArrayLike,
     NDArray,
     _ArrayLike,
     _ArrayLikeComplex_co,
