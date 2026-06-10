@@ -79,6 +79,7 @@ subdir('s390x')
 subdir('arm')
 subdir('riscv64')
 subdir('loongarch64')
+subdir('e2k')
 
 CPU_FEATURES = {}
 CPU_FEATURES += ARM_FEATURES
@@ -87,6 +88,7 @@ CPU_FEATURES += PPC64_FEATURES
 CPU_FEATURES += S390X_FEATURES
 CPU_FEATURES += RV64_FEATURES
 CPU_FEATURES += LOONGARCH64_FEATURES
+CPU_FEATURES += E2K_FEATURES
 
 CPU_FEATURES_REDIRECT = {}
 CPU_FEATURES_REDIRECT += X86_REDIRECT
@@ -105,6 +107,7 @@ min_features = {
   'riscv64': [],
   'wasm32': [],
   'loongarch64': [LSX],
+  'e2k': [X86_V2],
 }.get(cpu_family, [])
 if host_machine.endian() == 'little' and cpu_family == 'ppc64'
   min_features = [VSX2]
@@ -121,6 +124,7 @@ max_features_dict = {
   'riscv64': RV64_FEATURES,
   'wasm32': {},
   'loongarch64': LOONGARCH64_FEATURES,
+  'e2k': E2K_FEATURES
 }.get(cpu_family, {})
 max_features = []
 foreach fet_name, fet_obj : max_features_dict
