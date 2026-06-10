@@ -945,9 +945,18 @@ static PyTypeObject PyRational2_Type = {
     /* the rest is inherited from PyRational_Type via tp_base */
 };
 
+
+static PyObject *
+rational2_repr(PyObject *self) {
+    // Just forward, but old versions of NumPy require a repr
+    // although for "legacy" dtypes the default one works.
+    return PyArrayDescr_Type.tp_repr(self);
+}
+
 static PyArray_DTypeMeta NPY_Rational2DType = {{{
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy._core._rational_tests.Rational2DType",
+    .tp_repr = (reprfunc)rational2_repr,
 }}};
 
 /*
