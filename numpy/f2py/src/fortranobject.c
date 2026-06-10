@@ -144,7 +144,7 @@ PyFortranObject_New(FortranDataDef *defs, f2py_void_func init)
     if (init != NULL) { /* Initialize F90 module objects */
         (*(init))();
     }
-    fpo = PyObject_New(PyObject, PyFortran_TypePtr);
+    fpo = PyObject_GC_New(PyObject, PyFortran_TypePtr);
     if (fpo == NULL) {
         return NULL;
     }
@@ -200,12 +200,12 @@ PyFortranObject_NewAsAttr(FortranDataDef *defs)
 { /* used for calling F90 module routines */
     PyObject *fpo = NULL;
     PyFortranObject *fp;
-    fpo = PyObject_New(PyObject, PyFortran_TypePtr);
+    fpo = PyObject_GC_New(PyObject, PyFortran_TypePtr);
     if (fpo == NULL)
         return NULL;
     fp = to_fortran_object(fpo);
     if ((fp->dict = PyDict_New()) == NULL) {
-        PyObject_Del(fpo);
+        PyObject_GC_Del(fpo);
         return NULL;
     }
     fp->len = 1;
@@ -249,8 +249,11 @@ fortran_traverse(PyObject *fpo, visitproc visit, void *arg) {
 static void
 fortran_dealloc(PyObject *fpo)
 {
+    PyTypeObject *tp = Py_TYPE(fpo);
+    PyObject_GC_UnTrack(fpo);
     fortran_clear(fpo);
-    PyObject_Del(fpo);
+    PyObject_GC_Del(fpo);
+    Py_DECREF((PyObject*)tp);
 }
 
 /* Returns number of bytes consumed from buf, or -1 on error. */
