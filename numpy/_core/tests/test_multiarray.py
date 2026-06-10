@@ -2913,7 +2913,7 @@ class TestMethods:
     def test_sort_descending_object(self, stable, descending):
         a = np.arange(101, dtype=float).astype(object)
         self._test_sort_descending_nonan(a, stable, descending)
-        self._test_sort_descending_nan(a, stable, descending)
+        self._test_sort_descending_nan(a, np.nan, stable, descending)
 
     @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
     @pytest.mark.parametrize('stable', [True, False])
@@ -3085,7 +3085,7 @@ class TestMethods:
     def test_argsort_descending_object(self, stable, descending):
         a = np.arange(101, dtype=float).astype(object)
         self._test_argsort_descending_nonan(a, stable, descending)
-        self._test_argsort_descending_nan(a, stable, descending)
+        self._test_argsort_descending_nan(a, np.nan, stable, descending)
 
     def _test_partition_descending(self, a, k, nan, descending):
         if nan is not None:
