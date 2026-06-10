@@ -518,10 +518,17 @@ _get_partition_func(int type, NPY_SELECTKIND which)
 {
     npy_intp i;
     npy_intp ntypes = partition_t::map.size();
-    int idx = which & NPY_SELECT_DESCENDING ? 1 : 0;
+    int idx;
 
-    if ((int)which < 0 || (int)which >= NPY_NSELECTS) {
-        return NULL;
+    switch (which) {
+        case NPY_SELECT_DEFAULT:
+            idx = 0;
+            break;
+        case NPY_SELECT_DESCENDING:
+            idx = 1;
+            break;
+        default:
+            return NULL;
     }
 
     for (i = 0; i < ntypes; i++) {
