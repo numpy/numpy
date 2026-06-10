@@ -298,7 +298,7 @@ static PyModuleDef_Slot f2py_module_slots[] = {
 #ifdef Py_GIL_DISABLED
     {Py_mod_gil, (void*)#gil_used#},
 #endif
-#if (defined(Py_LIMITED_API) && Py_LIMITED_API >= 0x030C0000) || PY_VERSION_HEX >= 0x030C0000
+#if (defined(Py_LIMITED_API) && Py_LIMITED_API >= 0x030C0000) || (!defined(Py_LIMITED_API) && PY_VERSION_HEX >= 0x030C0000)
     {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
 #endif
     {0, NULL}
@@ -321,7 +321,7 @@ PyMODINIT_FUNC PyInit_#modulename#(void) {
 }
 #endif
 
-#if PY_VERSION_HEX >= 0x030F0000
+#if (defined(Py_LIMITED_API) && Py_LIMITED_API >= 0x030F0000) || (!defined(Py_LIMITED_API) && PY_VERSION_HEX >= 0x030F0000)
 PyABIInfo_VAR(f2py_abi_info);
 
 static PySlot f2py_module_pyslots[] = {
