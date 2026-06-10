@@ -139,7 +139,9 @@ static struct {
                 {NPY_CPU_FEATURE_ASIMDFHM, "ASIMDFHM"},
                 {NPY_CPU_FEATURE_SVE, "SVE"},
                 {NPY_CPU_FEATURE_RVV, "RVV"},
-                {NPY_CPU_FEATURE_LSX, "LSX"}};
+                {NPY_CPU_FEATURE_LSX, "LSX"},
+                {NPY_CPU_FEATURE_E2K_SSE, "E2K_SSE"},
+                {NPY_CPU_FEATURE_E2K_AVX, "E2K_AVX"}};
 
 
 NPY_VISIBILITY_HIDDEN PyObject *
@@ -986,6 +988,17 @@ npy__cpu_init_features(void)
 #endif
 
 #endif
+}
+
+/************** Elbrus2000 ***************/
+
+#elif defined(NPY_CPU_E2K)
+
+static void
+npy__cpu_init_features(void)
+{
+    npy__cpu_have[NPY_CPU_FEATURE_E2K_SSE] = 1;
+    npy__cpu_have[NPY_CPU_FEATURE_E2K_AVX] = 1;
 }
 
 /*********** Unsupported ARCH ***********/
