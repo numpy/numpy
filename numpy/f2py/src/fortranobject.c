@@ -26,7 +26,7 @@ extern "C" {
     #define TP_NAME_FMT "%T"
     #define DECREF_TP_NAME(tp_name)
 #else
-    #define GET_TP_NAME(obj) PyType_GetFullyQualifiedName(Py_TYPE(obj));
+    #define GET_TP_NAME(obj) PyType_GetQualName(Py_TYPE(obj));
     #define TP_NAME_FMT "%S"
     #define DECREF_TP_NAME(tp_name) Py_DECREF(tp_name)
 #endif
@@ -880,7 +880,7 @@ ndarray_from_pyobj(const int type_num,
       if (tp_name) {
         PyErr_Format(PyExc_SystemError, "%s -- failed to determine element size from " TP_NAME_FMT,
                      errmess, tp_name);
-        DECREF_TP_NAME(tp_name)
+        DECREF_TP_NAME(tp_name);
       }
       return NULL;
     }
@@ -1088,7 +1088,7 @@ ndarray_from_pyobj(const int type_num,
                         "failed to initialize intent(inout|inplace|cache) "
                         "array, input '" TP_NAME_FMT "' object is not an array",
                         tp_name);
-            DECREF_TP_NAME(tp_name)
+            DECREF_TP_NAME(tp_name);
         }
         Py_DECREF(descr);
         return NULL;
