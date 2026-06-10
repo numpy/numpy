@@ -255,7 +255,7 @@ format_def(FortranDataDef def)
         def.dims.d[0], ranks_str,
         def.data == NULL ? ", not allocated" : "");
     end:
-    Py_DECREF(ranks_str);
+    Py_XDECREF(ranks_str);
     return out;
 }
 
@@ -284,8 +284,8 @@ fortran_doc(FortranDataDef def)
         d = PyArray_DescrFromType(def.type);
         if (d) {
             s = PyUnicode_FromFormat("%s : '%c'-%U\n", def.name, d->type, formatted_def);
+            Py_DECREF(d);
         }
-        Py_DECREF(d);
         Py_DECREF(formatted_def);
         return s;
     }
@@ -1372,8 +1372,9 @@ PyObject *f2py_describe_obj(PyObject *obj) {
             if (!dims_str) goto end;
         }
         result = PyUnicode_FromFormat(
-            "(%U)-%c%" NPY_INTP_FMT "-%s",
+            "(%U)-%c%" NPY_INTP_FMT "-" TP_NAME_FMT,
             dims_str, PyArray_DESCR(arr)->kind, PyArray_ITEMSIZE(arr), tp_name);
+        Py_DECREF(dims_str);
     } else if (PySequence_Check(obj)) {
         Py_ssize_t len = PySequence_Length(obj);
         if (len == -1 && PyErr_Occurred()) goto end;

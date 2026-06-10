@@ -1400,7 +1400,7 @@ create_cb_arglist(PyObject* fun, PyTupleObject* xa , const int maxnofargs,
             if (!tp_name_obj) goto capi_fail;
             tp_name = PyUnicode_AsUTF8AndSize(tp_name_obj, NULL);
             if (tp_name == NULL) {
-                Py_DECREF(tp_name_obj); goto capi_fail
+                Py_DECREF(tp_name_obj); goto capi_fail;
             }
 #else
             tp_name = Py_TYPE(fun)->tp_name;
