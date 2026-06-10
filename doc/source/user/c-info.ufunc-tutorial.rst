@@ -590,7 +590,7 @@ is the primary thing that must be changed to create your own ufunc.
                 return NULL;
             }
 
-            logit = PyUFunc_FromFuncAndData(funcs, NULL, types, 4, 1, 1,
+            logit = PyUFunc_FromFuncAndData(funcs, NULL, types, 3, 1, 1,
                                             PyUFunc_None, "logit",
                                             "logit_docstring", 0);
 
