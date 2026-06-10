@@ -1576,7 +1576,7 @@ def dtype_short_repr(dtype):
     >>> dt = np.int64([1, 2]).dtype
     >>> assert eval(dtype_short_repr(dt)) == dt
     """
-    if type(dtype).__repr__ != np.dtype.__repr__:
+    if not type(dtype)._legacy:
         # TODO: Custom repr for user DTypes, logic should likely move.
         return repr(dtype)
     if dtype.names is not None:
