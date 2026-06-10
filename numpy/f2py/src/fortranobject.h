@@ -47,7 +47,6 @@ Author: Pearu Peterson <pearu@cens.ioc.ee>
 */
 
 #define F2PY_MAX_DIMS 40
-#define F2PY_MESSAGE_BUFFER_SIZE 300  // Increase on "stack smashing detected"
 
 typedef void (*f2py_set_data_func)(char *, npy_intp *);
 typedef void (*f2py_void_func)(void);
@@ -150,7 +149,7 @@ extern void
 dump_attrs(const PyArrayObject *arr);
 #endif
 
-  extern int f2py_describe(PyObject *obj, char *buf);
+extern PyObject *f2py_describe_obj(PyObject *obj);
 
   /* Utility CPP macros and functions that can be used in signature file
      expressions. See signature-file.rst for documentation.
