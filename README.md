@@ -1,3 +1,11 @@
+
+<!-- AUTO-PACKAGE-BADGES:START -->
+<!-- Auto-generated package badges -->
+
+![PyPI version](https://img.shields.io/pypi/v/numpy?style=flat-square&logo=pypi&color=green) ![PyPI downloads](https://img.shields.io/pypi/dm/numpy?style=flat-square&color=brightgreen) ![PyPI license](https://img.shields.io/pypi/l/numpy?style=flat-square) [![Deployed](https://img.shields.io/badge/deployed-2.6.0.dev0-blue?style=flat-square)](https://pypi.org/project/numpy)
+
+<!-- AUTO-PACKAGE-BADGES:END -->
+
 <h1 align="center">
 <img src="https://raw.githubusercontent.com/numpy/numpy/main/branding/logo/primary/numpylogo.svg" width="300">
 </h1><br>
