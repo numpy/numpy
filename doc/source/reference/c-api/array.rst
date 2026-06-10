@@ -4677,8 +4677,6 @@ Enumerated Types
     .. c:enumerator:: NPY_SORT_DESCENDING
 
         (Requirement) Specifies that the sort must be in descending order.
-        This functionality is not yet implemented for any of the NumPy types
-        and cannot yet be set from the Python interface.
 
 .. c:enum:: NPY_SCALARKIND
 
@@ -4759,9 +4757,21 @@ Enumerated Types
 
 .. c:enum:: NPY_SELECTKIND
 
-    A variable type indicating the selection algorithm being used.
+    A variable type indicating the selection algorithm options for
+    the partitioning functions, see also :c:type:`NPY_SORTKIND`.
+
+    .. c:enumerator:: NPY_SELECT_DEFAULT
+
+        The default selection algorithm.
+
+    .. c:enumerator:: NPY_SELECT_DESCENDING
+
+        (Requirement) Flag that changes the partition/sort order to descending.
 
     .. c:enumerator:: NPY_INTROSELECT
+
+        Identical to ``NPY_SELECT_DEFAULT`` but defined prior to NumPy 2.5.
+        Prefer ``NPY_SELECT_DEFAULT`` if compiling with NumPy 2.5 or later.
 
 .. c:enum:: NPY_CASTING
 

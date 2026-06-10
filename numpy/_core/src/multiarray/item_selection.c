@@ -1717,8 +1717,14 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
     part = get_partition_func(PyArray_TYPE(op), which);
     if (part == NULL) {
         /* Use sorting, slower but equivalent */
-        if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
+        if ((PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare)
+            && !(which & NPY_SELECT_DESCENDING)) { // TODO: descending sorts for partition
             sort = npy_quicksort;
+        }
+        else if (which & NPY_SELECT_DESCENDING) {
+            PyErr_SetString(PyExc_TypeError,
+                            "type does not support descending partition");
+            return -1;
         }
         else {
             PyErr_SetString(PyExc_TypeError,
@@ -1767,8 +1773,14 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
     argpart = get_argpartition_func(PyArray_TYPE(op), which);
     if (argpart == NULL) {
         /* Use sorting, slower but equivalent */
-        if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
+        if ((PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) &&
+            !(which & NPY_SELECT_DESCENDING)) { // TODO: descending sorts for partition
             argsort = npy_aquicksort;
+        }
+        else if (which & NPY_SELECT_DESCENDING) {
+            PyErr_SetString(PyExc_TypeError,
+                            "type does not support descending partition");
+            return NULL;
         }
         else {
             PyErr_SetString(PyExc_TypeError,

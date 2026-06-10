@@ -197,9 +197,14 @@ typedef enum {
 
 
 typedef enum {
-        NPY_INTROSELECT=0
+        _NPY_SELECT_UNDEFINED = -1,
+        NPY_INTROSELECT = 0,
+        // new style names
+        NPY_SELECT_DEFAULT = 0,
+        NPY_SELECT_STABLE = 2,
+        NPY_SELECT_DESCENDING = 4,
 } NPY_SELECTKIND;
-#define NPY_NSELECTS (NPY_INTROSELECT + 1)
+#define NPY_NSELECTS (NPY_SELECT_DESCENDING + 1)
 
 
 typedef enum {
