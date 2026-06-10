@@ -222,7 +222,7 @@ class TestF77Callback(util.F2PyTest):
     @pytest.mark.parametrize("name", ["t", "t2"])
     @pytest.mark.parametrize("cb, args",
         [((lambda x: x), ()),
-         ((lambda x, y=1: x+y), ()),
+         ((lambda x, y=1: x + y), ()),
          (C().meth, ()),
          (C().meth_with_default, ())])
     def test_wrong_arg_count(self, cb, args, name):
