@@ -65,7 +65,7 @@ fgetdims2 = """\
          end do
       end if
       flag = 1
-      call f2pysetdata(d,allocated(d))"""
+      call f2pysetdata(d,allocated(d), out_data)"""
 
 fgetdims2_sa = """\
       end if
@@ -76,7 +76,7 @@ fgetdims2_sa = """\
          !s(r) must be equal to len(d(1))
       end if
       flag = 2
-      call f2pysetdata(d,allocated(d))"""
+      call f2pysetdata(d,allocated(d), out_data)"""
 
 
 def buildhooks(pymod):
@@ -171,10 +171,10 @@ def buildhooks(pymod):
                 fargs.append(f"f2py_{m['name']}_getdims_{n}")
                 efargs.append(fargs[-1])
                 sargs.append(
-                    f'void (*{n})(int*,npy_intp*,void(*)(char*,npy_intp*),int*)')
-                sargsp.append('void (*)(int*,npy_intp*,void(*)(char*,npy_intp*),int*)')
+                    f'f2py_init_func {n}')
+                sargsp.append('f2py_init_func')
                 iadd(f"\tf2py_{m['name']}_def[i_f2py++].func = {n};")
-                fadd(f'subroutine {fargs[-1]}(r,s,f2pysetdata,flag)')
+                fadd(f'subroutine {fargs[-1]}(r,s,f2pysetdata,flag, out_data)')
                 fadd(f"use {m['name']}, only: d => {undo_rmbadname1(n)}\n")
                 fadd('integer flag\n')
                 fhooks[0] = fhooks[0] + fgetdims1
