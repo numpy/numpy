@@ -16,6 +16,7 @@
 #include "ctors.h"
 #include "common.h"
 #include "dtypemeta.h"
+#include "dtype_transfer.h"
 #include "simd/simd.h"
 
 #include <string.h>
@@ -392,19 +393,59 @@ arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     src = PyArray_DATA(values);
     j = 0;
 
-    copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(array))->copyswap;
-    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(array));
-    for (i = 0; i < ni; i++) {
-        if (mask_data[i]) {
-            if (j >= nv) {
-                j = 0;
-            }
+    if (PyDataType_REFCHK(PyArray_DESCR(array))) {
+        /* dtypes with references may not define copyswap */
+        NPY_cast_info cast_info;
+        NPY_ARRAYMETHOD_FLAGS flags;
+        const npy_intp one = 1;
+        const npy_intp strides[2] = {chunk, chunk};
 
-            copyswap(dest + i*chunk, src + j*chunk, 0, array);
-            j++;
+        NPY_cast_info_init(&cast_info);
+        if (PyArray_GetDTypeTransferFunction(
+                PyArray_ISALIGNED(values) && PyArray_ISALIGNED(array),
+                chunk, chunk,
+                PyArray_DESCR(values), PyArray_DESCR(array), 0,
+                &cast_info, &flags) < 0) {
+            goto fail;
         }
+        if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
+            NPY_BEGIN_THREADS;
+        }
+        for (i = 0; i < ni; i++) {
+            if (mask_data[i]) {
+                if (j >= nv) {
+                    j = 0;
+                }
+
+                char *data[2] = {src + j*chunk, dest + i*chunk};
+                if (cast_info.func(
+                        &cast_info.context, data, &one, strides,
+                        cast_info.auxdata) < 0) {
+                    NPY_END_THREADS;
+                    NPY_cast_info_xfree(&cast_info);
+                    goto fail;
+                }
+                j++;
+            }
+        }
+        NPY_END_THREADS;
+        NPY_cast_info_xfree(&cast_info);
     }
-    NPY_END_THREADS;
+    else {
+        copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(array))->copyswap;
+        NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(array));
+        for (i = 0; i < ni; i++) {
+            if (mask_data[i]) {
+                if (j >= nv) {
+                    j = 0;
+                }
+
+                copyswap(dest + i*chunk, src + j*chunk, 0, array);
+                j++;
+            }
+        }
+        NPY_END_THREADS;
+    }
 
     Py_XDECREF(values);
     Py_XDECREF(mask);

@@ -12,10 +12,13 @@
 
 #include "npy_import.h"
 
+#include "array_assign.h"
 #include "common.h"
 #include "conversion_utils.h"
 #include "ctors.h"
+#include "dtype_transfer.h"
 #include "dtypemeta.h"
+#include "lowlevel_strided_loops.h"
 #include "scalartypes.h"
 #include "descriptor.h"
 #include "flagsobject.h"
@@ -671,15 +674,28 @@ array_flat_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
         retval = 0;
         goto exit;
     }
-    swap = PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(arr);
-    copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(self))->copyswap;
     if (PyDataType_REFCHK(PyArray_DESCR(self))) {
+        /* dtypes with references may not define copyswap */
+        NPY_cast_info cast_info;
+        NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
+        npy_intp one = 1;
+        npy_intp itemsize = PyArray_ITEMSIZE(self);
+        npy_intp transfer_strides[2] = {itemsize, itemsize};
+
+        NPY_cast_info_init(&cast_info);
+        if (PyArray_GetDTypeTransferFunction(
+                IsUintAligned(self) && IsUintAligned(arr),
+                itemsize, itemsize,
+                PyArray_DESCR(arr), PyArray_DESCR(self), 0,
+                &cast_info, &transfer_flags) < 0) {
+            goto exit;
+        }
         while (selfit->index < selfit->size) {
-            PyArray_Item_XDECREF(selfit->dataptr, PyArray_DESCR(self));
-            PyArray_Item_INCREF(arrit->dataptr, PyArray_DESCR(arr));
-            memmove(selfit->dataptr, arrit->dataptr, sizeof(PyObject **));
-            if (swap) {
-                copyswap(selfit->dataptr, NULL, swap, self);
+            char *args[2] = {arrit->dataptr, selfit->dataptr};
+            if (cast_info.func(&cast_info.context, args, &one,
+                               transfer_strides, cast_info.auxdata) < 0) {
+                NPY_cast_info_xfree(&cast_info);
+                goto exit;
             }
             PyArray_ITER_NEXT(selfit);
             PyArray_ITER_NEXT(arrit);
@@ -687,10 +703,13 @@ array_flat_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
                 PyArray_ITER_RESET(arrit);
             }
         }
+        NPY_cast_info_xfree(&cast_info);
         retval = 0;
         goto exit;
     }
 
+    swap = PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(arr);
+    copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(self))->copyswap;
     while(selfit->index < selfit->size) {
         copyswap(selfit->dataptr, arrit->dataptr, swap, self);
         PyArray_ITER_NEXT(selfit);

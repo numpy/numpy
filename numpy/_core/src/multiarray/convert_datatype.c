@@ -648,6 +648,30 @@ PyArray_SafeCast(PyArray_Descr *type1, PyArray_Descr *type2,
 }
 
 
+/*
+ * Python-level helper answering whether reinterpreting data of dtype *from*
+ * as dtype *to* is a view. Unlike descriptor equality or `np.can_cast` with
+ * "no" casting, this distinguishes equivalent descriptor instances with
+ * separate internal state (e.g. StringDType allocators).
+ */
+NPY_NO_EXPORT PyObject *
+_is_view_safe_cast(PyObject *NPY_UNUSED(module), PyObject *args)
+{
+    PyArray_Descr *from, *to;
+    if (!PyArg_ParseTuple(args, "O!O!:_is_view_safe_cast",
+            &PyArrayDescr_Type, &from, &PyArrayDescr_Type, &to)) {
+        return NULL;
+    }
+    npy_intp view_offset = NPY_MIN_INTP;
+    npy_intp is_safe = PyArray_SafeCast(from, to, &view_offset,
+                                        NPY_NO_CASTING, 0);
+    if (is_safe < 0) {
+        return NULL;
+    }
+    return PyBool_FromLong(is_safe && view_offset == 0);
+}
+
+
 /* Provides an ordering for the dtype 'kind' character codes */
 NPY_NO_EXPORT int
 dtype_kind_to_ordering(char kind)
