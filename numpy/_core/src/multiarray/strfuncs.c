@@ -71,8 +71,8 @@ array_str(PyArrayObject *self)
 NPY_NO_EXPORT PyObject *
 array_format(PyArrayObject *self, PyObject *args)
 {
-    PyObject *format;
-    if (!PyArg_ParseTuple(args, "O:__format__", &format))
+    PyObject *format_spec;
+    if (!PyArg_ParseTuple(args, "O:__format__", &format_spec))
         return NULL;
 
     /* 0d arrays - forward to the scalar type */
@@ -83,15 +83,26 @@ array_format(PyArrayObject *self, PyObject *args)
         if (item == NULL) {
             return NULL;
         }
-        res = PyObject_Format(item, format);
+        res = PyObject_Format(item, format_spec);
         Py_DECREF(item);
         return res;
     }
-    /* Everything else - use the builtin */
-    else {
-        return PyObject_CallMethod(
-            (PyObject *)&PyBaseObject_Type, "__format__", "OO",
-            (PyObject *)self, format
-        );
+
+    /* if len(format_spec) == 0 this function is equivalent to __str__ */
+    if (PyUnicode_GET_LENGTH(format_spec) == 0) {
+        // use the builtin
+        return PyObject_Str((PyObject *)self);
     }
+
+    /* nd arrays - forward to _default_array_format */
+    // ndim > 0
+    PyObject *format_func = NULL;
+
+    npy_cache_import_runtime("numpy._core.arrayprint", "_default_array_format", &format_func);
+    if (format_func == NULL) {
+        npy_PyErr_SetStringChained(PyExc_RuntimeError,
+                "Unable to configure default ndarray.__format__");
+        return NULL;
+    }
+    return PyObject_CallFunctionObjArgs(format_func, self, format_spec, NULL);
 }
