@@ -701,12 +701,8 @@ def common_type(*arrays):
         try:
             t = a.dtype.type
         except AttributeError:
-            if isinstance(a, _nx.dtype):
-                name = repr(a)
-            else:
-                name = repr(getattr(a, "__name__", None) or type(a).__name__)
             raise TypeError(
-                f"common_type takes array inputs, not {name}. "
+                f"common_type takes array inputs, not '{a}'. "
                 "To find a common type for dtypes or scalar types use "
                 "np.result_type or np.promote_types instead."
             ) from None

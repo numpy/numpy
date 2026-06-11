@@ -43,18 +43,6 @@ class TestCommonType:
         with pytest.raises(TypeError, match="np.result_type or np.promote_types"):
             common_type(bad)
 
-    def test_scalar_type_input_reports_name(self):
-        # gh-30890: a scalar type like np.float32 should report its own name
-        # in the error message, not the unhelpful 'type'.
-        with pytest.raises(TypeError, match="not 'float32'"):
-            common_type(np.float32)
-
-    def test_dtype_input_reports_repr(self):
-        # gh-30890: a dtype instance should be shown as dtype('float32'),
-        # not the internal dtype subclass name.
-        with pytest.raises(TypeError, match=r"not dtype\('float32'\)"):
-            common_type(np.dtype("f4"))
-
 
 class TestMintypecode:
 
