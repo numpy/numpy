@@ -1420,6 +1420,16 @@ descr_is_legacy_parametric_instance(PyArray_Descr *descr,
         return 0;
     }
 
+    /*
+     * A descriptor with user-attached metadata is not a bare prototype:
+     * the metadata is explicit state that must round-trip through array
+     * creation, so keep it rather than collapsing to the DType singleton
+     * (gh-31436).
+     */
+    if (((_PyArray_LegacyDescr *)descr)->metadata != NULL) {
+        return 0;
+    }
+
     if (PyDataType_ISUNSIZED(descr)) {
         return 1;
     }
