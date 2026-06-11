@@ -69,8 +69,8 @@ jobs:
 
 
   #=======================================================================================
-  msvc_python32bit_no_openblas:
-    name: MSVC, ${{ matrix.architecture }}, fast, no BLAS
+  msvc_python_x86_arm64_no_openblas:
+    name: MSVC, ${{ matrix.os }} ${{ matrix.architecture }}, fast, no BLAS, ${{ matrix.python_version }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -78,8 +78,10 @@ jobs:
         include:
           - os: windows-2022
             architecture: x86
+            python_version: '3.15t-dev'
           - os: windows-11-arm
             architecture: arm64
+            python_version: '3.12'
     # To enable this job on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     steps:
@@ -93,7 +95,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
-          python-version: '3.12'
+          python-version: ${{ matrix.python_version }}
           architecture: ${{ matrix.architecture }}
 
       - name: Setup MSVC
