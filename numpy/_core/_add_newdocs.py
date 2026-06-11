@@ -3284,10 +3284,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('dot',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('argpartition',
     """
-    argpartition($self, kth, /, axis=-1, kind='introselect', order=None)
+    argpartition($self, kth, /, axis=-1, kind='introselect', order=None, descending=None)
     --
 
-    a.argpartition(kth, axis=-1, kind='introselect', order=None)
+    a.argpartition(kth, axis=-1, kind='introselect', order=None, descending=None)
 
     Returns the indices that would partition this array.
 
@@ -3302,27 +3302,29 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('argpartition',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('partition',
     """
-    partition($self, kth, /, axis=-1, kind='introselect', order=None)
+    partition($self, kth, /, axis=-1, kind='introselect', order=None, descending=None)
     --
 
-    a.partition(kth, axis=-1, kind='introselect', order=None)
+    a.partition(kth, axis=-1, kind='introselect', order=None, descending=None)
 
-    Partially sorts the elements in the array in such a way that the value of
-    the element in k-th position is in the position it would be in a sorted
-    array. In the output array, all elements smaller than the k-th element
-    are located to the left of this element and all equal or greater are
-    located to its right. The ordering of the elements in the two partitions
-    on the either side of the k-th element in the output array is undefined.
+    Partially sorts the array in such a way that the value of the element in the k-th
+    position is in the position it would be in a sorted array. In the output array,
+    all elements that would be to the left of the k-th element in a sorted array are
+    located to the left of this element and all that would be to the right are located
+    to its right. The ordering of the elements in the two partitions on the either side
+    of the k-th element in the output array is undefined.
 
     Parameters
     ----------
     kth : int or sequence of ints
-        Element index to partition by. The kth element value will be in its
-        final sorted position and all smaller elements will be moved before it
-        and all equal or greater elements behind it.
-        The order of all elements in the partitions is undefined.
-        If provided with a sequence of kth it will partition all elements
-        indexed by kth of them into their sorted position at once.
+        Element index to partition by. The k-th value of the array will
+        be in the position it would be in a sorted array, all elements
+        that are less than this element (or greater if `descending` is True)
+        will be moved before it, and all elements that are greater than or
+        equal to this element (or less than or equal if `descending` is True)
+        will be moved after it. The order of all elements within each partition
+        is undefined. If provided with a sequence of k-th it will partition all
+        elements indexed by k-th of them into their sorted position at once.
 
         .. deprecated:: 1.22.0
             Passing booleans as index is deprecated.
@@ -3330,13 +3332,22 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('partition',
         Axis along which to sort. Default is -1, which means sort along the
         last axis.
     kind : {'introselect'}, optional
-        Selection algorithm. Default is 'introselect'.
+        NumPy currently offers only one selection algorithm, 'introselect',
+        and this parameter provides no additional functionality. Default
+        is ``None``.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
         which fields to compare first, second, etc. A single field can
         be specified as a string, and not all fields need to be specified,
         but unspecified fields will still be used, in the order in which
         they come up in the dtype, to break ties.
+    descending : bool, optional
+        Sort order. If ``True``, the array will be partitioned in
+        descending order. If ``False`` or ``None``, the array will be
+        partitioned in ascending order. Values that are NaN are partitioned
+        towards the end of the array regardless of order. Default: ``None``.
+
+        .. versionadded:: 2.6.0
 
     See Also
     --------

@@ -1,5 +1,5 @@
-#ifndef NUMPY_CORE_SRC_COMMON_NUMPY_TAG_H_
-#define NUMPY_CORE_SRC_COMMON_NUMPY_TAG_H_
+#ifndef NUMPY_CORE_SRC_COMMON_NUMPY_TAG_HPP_
+#define NUMPY_CORE_SRC_COMMON_NUMPY_TAG_HPP_
 
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_common.h"
@@ -146,16 +146,16 @@ struct complex_type : complex_tag {
     {
         const auto ra = creal(a), rb = creal(b);
         const auto ia = cimag(a), ib = cimag(b);
-        if (ra > rb || (ra == ra && rb != rb)) {
+        if (ra > rb) {
             return ia == ia || ib != ib;
         }
-        if (ra < rb || (ra != ra && rb == rb)) {
+        if (ra < rb) {
             return ib != ib && ia == ia;
         }
         if (ra == rb || (ra != ra && rb != rb)) {
             return ia > ib || (ib != ib && ia == ia);
         }
-        return ra != ra;
+        return rb != rb;
     }
 };
 
@@ -223,6 +223,74 @@ struct string_like_type {
     }
 };
 
+// This tag is used to register object sorts, which replaces the old generic sort
+// that did not handle NaNs at all. It supposes that any object such that
+// obj != obj is NaN-like and should be sorted to the end as in other dtypes.
+struct object_tag {
+    using type = PyObject *;
+    static constexpr NPY_TYPES type_value = NPY_OBJECT;
+
+    static int isnan(PyObject *a) {
+        /* PyObject_RichCompareBool is not used here because it takes a shortcut
+         * for identical objects, hence will return false for NaN != NaN. */
+        PyObject *result = PyObject_RichCompare(a, a, Py_NE);
+        if (result == NULL) {
+            return -1;
+        }
+        int ret = PyObject_IsTrue(result);
+        Py_DECREF(result);
+        return ret;
+    }
+
+    static int _cmp(PyObject *a, PyObject *b, int op)
+    {
+        if (a == NULL) {
+            a = Py_None;
+        }
+        if (b == NULL) {
+            b = Py_None;
+        }
+
+        int ret = PyObject_RichCompareBool(a, b, op);
+        if (ret < 0) {
+            return -1;
+        }
+        if (ret) {
+            return 1;
+        }
+
+        ret = isnan(a);
+        if (ret < 0) {
+            return -1;
+        }
+        if (ret) {
+            return 0;
+        }
+
+        ret = isnan(b);
+        if (ret < 0) {
+            return -1;
+        }
+        if (ret) {
+            return 1;
+        }
+
+        return 0;
+    }
+
+    static int less(PyObject *a, PyObject *b) {
+        return _cmp(a, b, Py_LT);
+    }
+
+    static int less_equal(PyObject *a, PyObject *b) {
+        return !less(b, a);
+    }
+
+    static int greater(PyObject *a, PyObject *b) {
+        return _cmp(a, b, Py_GT);
+    }
+};
+
 // Concrete tags consumed by callers.
 using bool_tag        = integral_type<npy_bool,        NPY_BOOL>;
 using byte_tag        = integral_type<npy_byte,        NPY_BYTE>;
@@ -267,4 +335,4 @@ constexpr int cmp(Args... args)
 
 }  // namespace npy
 
-#endif  // NUMPY_CORE_SRC_COMMON_NUMPY_TAG_H_
+#endif  // NUMPY_CORE_SRC_COMMON_NUMPY_TAG_HPP_

@@ -1982,10 +1982,12 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
         PyArray_Descr *descr;
         PyArray_DTypeMeta *dst_DType = NPY_DTYPE(PyArray_DESCR(dst));
         bool is_npy_nan = PyFloat_Check(src_obj) && npy_isnan(PyFloat_AsDouble(src_obj));
-        if (!is_npy_nan && dst_DType->type_num == NPY_TIMEDELTA) {
+        if (!is_npy_nan && (dst_DType->type_num == NPY_TIMEDELTA ||
+                            dst_DType->type_num == NPY_DATETIME)) {
             descr = PyArray_DESCR(dst);
             Py_INCREF(descr);
-        } else {
+        }
+        else {
             descr = npy_find_descr_for_scalar(src_obj, PyArray_DESCR(src), DType,
                                               dst_DType);
         }

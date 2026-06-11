@@ -2790,25 +2790,23 @@ class TestMethods:
         a_sorted = np.sort(a_randomized, stable=stable, descending=descending, axis=-1)
         assert_equal(a_sorted, b, msg)
 
-    def _test_sort_descending_nan(self, a, stable, descending):
+    def _test_sort_descending_nan(self, a, nan, stable, descending):
         if not descending:
             a = a[::-1]
         # add nans to check that they are sorted to the end
-        if np.issubdtype(a.dtype, np.complexfloating):
-            nan = np.nan + 1j * np.nan
-        elif np.issubdtype(a.dtype, np.floating):
-            nan = np.nan
-        elif np.issubdtype(a.dtype, np.datetime64):
-            nan = np.datetime64('NaT', 'D')
-        elif np.issubdtype(a.dtype, np.timedelta64):
-            nan = np.timedelta64('NaT', 'D')
         a[::10] = nan
 
-        b = a[::-1].copy()
-        b = np.concatenate((b[~np.isnan(b)], b[np.isnan(b)]))
+        nanmask = np.arange(a.size) % 10 == 0
+        a[nanmask] = nan
+
+        b = np.concatenate((a[~nanmask][::-1], a[nanmask]))
 
         msg = f"sort, descending={descending}, stable={stable}"
         a_sorted = np.sort(a, stable=stable, descending=descending, axis=-1)
+        if np.issubdtype(a.dtype, np.object_):
+            # cast to float for comparison, as object np.nan != np.nan
+            a_sorted = a_sorted.astype(float)
+            b = b.astype(float)
         assert_equal(a_sorted, b, msg)
 
         # randomized input
@@ -2818,6 +2816,9 @@ class TestMethods:
 
         msg = f"sort, randomized, descending={descending}, stable={stable}"
         a_sorted = np.sort(a_randomized, stable=stable, descending=descending, axis=-1)
+        if np.issubdtype(a.dtype, np.object_):
+            a_sorted = a_sorted.astype(float)
+
         assert_equal(a_sorted, b, msg)
 
     @pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64])
@@ -2842,7 +2843,7 @@ class TestMethods:
     def test_sort_descending_floats(self, dtype, stable, descending):
         a = np.linspace(-50, 50, 101, dtype=dtype)
         self._test_sort_descending_nonan(a, stable, descending)
-        self._test_sort_descending_nan(a, stable, descending)
+        self._test_sort_descending_nan(a, np.nan, stable, descending)
 
     @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
     @pytest.mark.parametrize("stable", [True, False])
@@ -2850,7 +2851,7 @@ class TestMethods:
     def test_sort_descending_complex(self, dtype, stable, descending):
         a = np.arange(-50, 51, dtype=dtype) + 1j * np.arange(-50, 51, dtype=dtype)
         self._test_sort_descending_nonan(a, stable, descending)
-        self._test_sort_descending_nan(a, stable, descending)
+        self._test_sort_descending_nan(a, complex(np.nan, np.nan), stable, descending)
 
     @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
     @pytest.mark.parametrize("stable", [True, False])
@@ -2859,12 +2860,11 @@ class TestMethods:
     def test_sort_descending_complex_lexorder(self, dtype,
                                               stable, descending, random_seed):
         arange = np.tile(np.arange(25, dtype=dtype), 4)
-        nans = np.full(100, np.nan + 1j * np.nan, dtype=dtype)
 
         no_nans = arange + 1j * arange
-        im_nans = arange + 1j * nans
-        re_nans = nans + 1j * arange
-        all_nans = nans + 1j * nans
+        im_nans = arange + complex(0, np.nan)
+        re_nans = complex(np.nan, 0) + 1j * arange
+        all_nans = np.full(100, complex(np.nan, np.nan), dtype=dtype)
 
         a = np.concatenate((no_nans, im_nans, re_nans, all_nans))
         immask = np.isnan(a.imag)
@@ -2908,13 +2908,24 @@ class TestMethods:
             f"descending={descending}",
         )
 
+    @pytest.mark.parametrize("stable", [True, False])
+    @pytest.mark.parametrize("descending", [True, False])
+    def test_sort_descending_object(self, stable, descending):
+        a = np.arange(101, dtype=float).astype(object)
+        self._test_sort_descending_nonan(a, stable, descending)
+        self._test_sort_descending_nan(a, np.nan, stable, descending)
+
     @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
     @pytest.mark.parametrize('stable', [True, False])
     @pytest.mark.parametrize('descending', [True, False])
-    def test_sort_descending_datetime(self, dtype, stable, descending):
+    def test_sort_descending_dates(self, dtype, stable, descending):
         a = np.arange(0, 101, dtype=dtype)
+        if dtype == 'datetime64[D]':
+            nan = np.datetime64('NaT', 'D')
+        else:
+            nan = np.timedelta64('NaT', 'D')
         self._test_sort_descending_nonan(a, stable, descending)
-        self._test_sort_descending_nan(a, stable, descending)
+        self._test_sort_descending_nan(a, nan, stable, descending)
 
     @pytest.mark.parametrize('dtype', [np.str_, np.bytes_])
     @pytest.mark.parametrize('stable', [True, False])
@@ -2946,15 +2957,7 @@ class TestMethods:
         idx = np.argsort(a_randomized, stable=stable, descending=descending, axis=-1)
         assert_equal(idx, expected, msg)
 
-    def _test_argsort_descending_nan(self, a, stable, descending):
-        if np.issubdtype(a.dtype, np.complexfloating):
-            nan = np.nan + 1j * np.nan
-        elif np.issubdtype(a.dtype, np.floating):
-            nan = np.nan
-        elif np.issubdtype(a.dtype, np.datetime64):
-            nan = np.datetime64("NaT", "D")
-        elif np.issubdtype(a.dtype, np.timedelta64):
-            nan = np.timedelta64("NaT", "D")
+    def _test_argsort_descending_nan(self, a, nan, stable, descending):
         a[::10] = nan
 
         # comparing datetime types directly to numerical zero fails
@@ -2967,6 +2970,10 @@ class TestMethods:
 
         idx = np.argsort(a, stable=stable, descending=descending, axis=-1)
         sorted_a = a[idx]
+        if np.issubdtype(a.dtype, np.object_):
+            # cast to float for comparison, as object does not support isnan
+            sorted_a = sorted_a.astype(float)
+
         diff_sorted_a = np.diff(sorted_a[:-11])
         if descending:
             diff_sorted_a = -diff_sorted_a
@@ -2985,6 +2992,10 @@ class TestMethods:
 
         idx = np.argsort(a_randomized, stable=stable, descending=descending, axis=-1)
         sorted_a = a_randomized[idx]
+        if np.issubdtype(a.dtype, np.object_):
+            # cast to float for comparison, as object does not support isnan
+            sorted_a = sorted_a.astype(float)
+
         diff_sorted_a = np.diff(sorted_a[:-11])
         if descending:
             diff_sorted_a = -diff_sorted_a
@@ -3040,7 +3051,7 @@ class TestMethods:
     def test_argsort_descending_floats(self, dtype, stable, descending):
         a = np.linspace(-50, 50, 101, dtype=dtype)
         self._test_argsort_descending_nonan(a, stable, descending)
-        self._test_argsort_descending_nan(a, stable, descending)
+        self._test_argsort_descending_nan(a, np.nan, stable, descending)
 
     @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
     @pytest.mark.parametrize("stable", [True, False])
@@ -3048,15 +3059,19 @@ class TestMethods:
     def test_argsort_descending_complex(self, dtype, stable, descending):
         a = np.arange(-50, 51, dtype=dtype) + 1j * np.arange(-50, 51, dtype=dtype)
         self._test_argsort_descending_nonan(a, stable, descending)
-        self._test_argsort_descending_nan(a, stable, descending)
+        self._test_argsort_descending_nan(a, np.nan + 1j * np.nan, stable, descending)
 
     @pytest.mark.parametrize("dtype", ["datetime64[D]", "timedelta64[D]"])
     @pytest.mark.parametrize("stable", [True, False])
     @pytest.mark.parametrize("descending", [True, False])
     def test_argsort_descending_datetime(self, dtype, stable, descending):
         a = np.arange(0, 101, dtype=dtype)
+        if dtype == "datetime64[D]":
+            nan = np.datetime64('NaT', 'D')
+        else:
+            nan = np.timedelta64('NaT', 'D')
         self._test_argsort_descending_nonan(a, stable, descending)
-        self._test_argsort_descending_nan(a, stable, descending)
+        self._test_argsort_descending_nan(a, nan, stable, descending)
 
     @pytest.mark.parametrize("dtype", [np.str_, np.bytes_])
     @pytest.mark.parametrize("stable", [True, False])
@@ -3064,6 +3079,235 @@ class TestMethods:
     def test_argsort_descending_string(self, dtype, stable, descending):
         a = np.array([f"{i:03d}" for i in range(101)], dtype=dtype)
         self._test_argsort_descending_nonan(a, stable, descending)
+
+    @pytest.mark.parametrize("stable", [True, False])
+    @pytest.mark.parametrize("descending", [True, False])
+    def test_argsort_descending_object(self, stable, descending):
+        a = np.arange(101, dtype=float).astype(object)
+        self._test_argsort_descending_nonan(a, stable, descending)
+        self._test_argsort_descending_nan(a, np.nan, stable, descending)
+
+    def _test_partition_descending(self, a, k, nan, descending):
+        if nan is not None:
+            a[::10] = nan
+        if not descending:
+            a = a[::-1]
+
+        expected = a.copy()[::-1]
+        if nan is not None:
+            # nans sort to the end regardless of sort order
+            expected = np.concatenate((expected[~np.isnan(expected)],
+                                       expected[np.isnan(expected)]))
+
+        part = np.partition(a, k, descending=descending)
+        before, after = np.split(part, [k])
+        before.sort(descending=descending)
+        after.sort(descending=descending)
+
+        msg = f"partition, dtype={a.dtype}, k={k}, descending={descending}"
+        assert_equal(before, expected[:k], msg)
+        assert_equal(after, expected[k:], msg)
+
+        # randomized input
+        rng = np.random.default_rng(0)
+        a_randomized = a.copy()
+        rng.shuffle(a_randomized)
+
+        part = np.partition(a_randomized, k, descending=descending)
+        before, after = np.split(part, [k])
+        before.sort(descending=descending)
+        after.sort(descending=descending)
+
+        msg = f"partition, randomized, dtype={a.dtype}, k={k}, descending={descending}"
+        assert_equal(before, expected[:k], msg)
+        assert_equal(after, expected[k:], msg)
+
+    @pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64])
+    @pytest.mark.parametrize('k', [2, 15, 50, 95])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_partition_descending_signed(self, dtype, k, descending):
+        a = np.arange(-51, 50, dtype=dtype)
+        self._test_partition_descending(a, k, None, descending)
+
+    @pytest.mark.parametrize('dtype', [np.uint8, np.uint16, np.uint32, np.uint64])
+    @pytest.mark.parametrize('k', [2, 15, 50, 95])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_partition_descending_unsigned(self, dtype, k, descending):
+        a = np.arange(0, 101, dtype=dtype)
+        self._test_partition_descending(a, k, None, descending)
+
+    @pytest.mark.parametrize(
+        'dtype', [np.float16, np.float32, np.float64, np.longdouble]
+    )
+    @pytest.mark.parametrize('k', [2, 15, 50, 95])
+    @pytest.mark.parametrize('descending', [True, False])
+    @pytest.mark.parametrize('nan', [np.nan, None])
+    def test_partition_descending_floats(self, dtype, k, descending, nan):
+        a = np.linspace(-50, 50, 101, dtype=dtype)
+        self._test_partition_descending(a, k, nan, descending)
+
+    @pytest.mark.parametrize('dtype', [np.complex64, np.complex128, np.clongdouble])
+    @pytest.mark.parametrize('k', [2, 15, 50, 95])
+    @pytest.mark.parametrize('descending', [True, False])
+    @pytest.mark.parametrize('nan', [np.nan + 1j * np.nan, None])
+    def test_partition_descending_complex(self, dtype, k, descending, nan):
+        a = np.arange(-50, 51, dtype=dtype) + 1j * np.arange(-50, 51, dtype=dtype)
+        self._test_partition_descending(a, k, nan, descending)
+
+    @pytest.mark.parametrize('dtype', [np.complex64, np.complex128, np.clongdouble])
+    @pytest.mark.parametrize('k', [2, 15, 50, 95])
+    @pytest.mark.parametrize('descending', [True, False])
+    @pytest.mark.parametrize('random_seed', [0, 1])
+    def test_partition_descending_complex_lexorder(
+        self, dtype, k, descending, random_seed
+    ):
+        arange = np.tile(np.arange(25, dtype=dtype), 4)
+
+        no_nans = arange + 1j * arange
+        im_nans = arange + complex(0, np.nan)
+        re_nans = complex(np.nan, 0) + 1j * arange
+        all_nans = np.full(100, complex(np.nan, np.nan), dtype=dtype)
+
+        a = np.concatenate((no_nans, im_nans, re_nans, all_nans))
+        rng = np.random.default_rng(random_seed)
+        rng.shuffle(a)
+
+        # use sorts as a proxy for checking partitions
+        a_sort = np.sort(a, descending=descending, stable=True)
+        a_part = np.partition(a, k, descending=descending)
+
+        before_sort, after_sort = np.split(a_sort, [k])
+        before_part, after_part = np.split(a_part, [k])
+        before_part.sort(descending=descending, stable=True)
+        after_part.sort(descending=descending, stable=True)
+
+        msg = (f"complex partition lexorder, dtype={dtype}, k={k}, "
+               f"descending={descending}")
+        assert_equal(before_part, before_sort, msg)
+        assert_equal(after_part, after_sort, msg)
+
+    @pytest.mark.skip(reason="descending partitions not supported for string types yet")
+    @pytest.mark.parametrize('dtype', [np.str_, np.bytes_])
+    @pytest.mark.parametrize('k', [2, 15, 50, 95])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_partition_descending_strings(self, dtype, k, descending):
+        a = np.array([f"{i:03d}" for i in range(101)], dtype=dtype)
+        self._test_partition_descending(a, k, None, descending)
+
+    @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
+    @pytest.mark.parametrize('k', [2, 15, 50, 95])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_partition_descending_datetime(self, dtype, k, descending):
+        a = np.arange(0, 101, dtype=dtype)
+        if dtype == 'datetime64[D]':
+            nan = np.datetime64('NaT', 'D')
+        else:
+            nan = np.timedelta64('NaT', 'D')
+        self._test_partition_descending(a, k, None, descending)
+        self._test_partition_descending(a, k, nan, descending)
+
+    def _test_argpartition_descending(self, a, k, nan, descending):
+        if nan is not None:
+            # because of this decimation, we only test with k values < 90
+            # so that all nans are in the "after" partition
+            a[::10] = nan
+        if not descending:
+            a = a[::-1]
+
+        expected = np.arange(len(a))[::-1]
+        if nan is not None:
+            expected = np.concatenate((expected[~np.isnan(a)], expected[np.isnan(a)]))
+        # nan indices are not ordered, so sort for set-like comparison
+        expected_before = np.sort(expected[:k])
+        expected_after = np.sort(expected[k:])
+
+        idx = np.argpartition(a, k, descending=descending)
+        before, after = np.split(idx, [k])
+        before.sort()
+        after.sort()
+
+        msg = f"argpartition, dtype={a.dtype}, k={k}, descending={descending}"
+        assert_equal(before, expected_before, msg)
+        assert_equal(after, expected_after, msg)
+
+        # randomized input
+        rng = np.random.default_rng(0)
+        perm = rng.permutation(len(a))
+        a = a[perm]
+        perm_inv = np.argsort(perm)
+        expected_before = np.sort(perm_inv[expected[:k]])
+        expected_after = np.sort(perm_inv[expected[k:]])
+
+        idx = np.argpartition(a, k, descending=descending)
+        before, after = np.split(idx, [k])
+        before.sort()
+        after.sort()
+
+        msg = (f"argpartition, randomized, dtype={a.dtype}, k={k}, "
+               f"descending={descending}")
+        assert_equal(before, expected_before, msg)
+        assert_equal(after, expected_after, msg)
+
+    @pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64])
+    @pytest.mark.parametrize('k', [2, 15, 50, 80])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_argpartition_descending_signed(self, dtype, k, descending):
+        a = np.arange(-51, 50, dtype=dtype)
+        self._test_argpartition_descending(a, k, None, descending)
+
+    @pytest.mark.parametrize('dtype', [np.uint8, np.uint16, np.uint32, np.uint64])
+    @pytest.mark.parametrize('k', [2, 15, 50, 80])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_argpartition_descending_unsigned(self, dtype, k, descending):
+        a = np.arange(0, 101, dtype=dtype)
+        self._test_argpartition_descending(a, k, None, descending)
+
+    @pytest.mark.parametrize(
+        'dtype', [np.float16, np.float32, np.float64, np.longdouble]
+    )
+    @pytest.mark.parametrize('k', [2, 15, 50, 80])
+    @pytest.mark.parametrize('descending', [True, False])
+    @pytest.mark.parametrize('nan', [np.nan, None])
+    def test_argpartition_descending_floats(self, dtype, k, descending, nan):
+        a = np.linspace(-50, 50, 101, dtype=dtype)
+        self._test_argpartition_descending(a, k, nan, descending)
+
+    @pytest.mark.parametrize('dtype', [np.complex64, np.complex128, np.clongdouble])
+    @pytest.mark.parametrize('k', [2, 15, 50, 80])
+    @pytest.mark.parametrize('descending', [True, False])
+    @pytest.mark.parametrize('nan', [np.nan + 1j * np.nan, None])
+    def test_argpartition_descending_complex(self, dtype, k, descending, nan):
+        a = np.arange(-50, 51, dtype=dtype) + 1j * np.arange(-50, 51, dtype=dtype)
+        self._test_argpartition_descending(a, k, nan, descending)
+
+    @pytest.mark.skip(reason="descending partitions not supported for string types yet")
+    @pytest.mark.parametrize('dtype', [np.str_, np.bytes_])
+    @pytest.mark.parametrize('k', [2, 15, 50, 80])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_argpartition_descending_strings(self, dtype, k, descending):
+        a = np.array([f"{i:03d}" for i in range(101)], dtype=dtype)
+        self._test_argpartition_descending(a, k, None, descending)
+
+    @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
+    @pytest.mark.parametrize('k', [2, 15, 50, 80])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_argpartition_descending_datetime(self, dtype, k, descending):
+        a = np.arange(0, 101, dtype=dtype)
+        if dtype == 'datetime64[D]':
+            nan = np.datetime64('NaT', 'D')
+        else:
+            nan = np.timedelta64('NaT', 'D')
+        self._test_argpartition_descending(a, k, None, descending)
+        self._test_argpartition_descending(a, k, nan, descending)
+
+    @pytest.mark.parametrize('dtype', [np.str_, np.bytes_, np.object_])
+    def test_partition_and_argpartition_raise_on_descending(self, dtype):
+        a = np.arange(10, dtype=np.float64).astype(dtype)
+
+        with assert_raises(TypeError, msg="type does not support descending partition"):
+            np.partition(a, 5, descending=True)
+        with assert_raises(TypeError, msg="type does not support descending partition"):
+            np.argpartition(a, 5, descending=True)
 
     @pytest.mark.parametrize('a', [
         np.array([0, 1, np.nan], dtype=np.float16),
@@ -3889,6 +4133,14 @@ class TestMethods:
 
         assert_raises(TypeError, np.dot, c, A)
         assert_raises(TypeError, np.dot, A, c)
+
+    def test_dot_object_unsupported_multiply(self):
+        # gh-29688: an unsupported object multiply must raise the real error
+        # (TypeError), not a SystemError.
+        a = np.zeros((2, 2), dtype=complex)
+        b = np.array([[np.timedelta64(123, "s")],
+                      [np.timedelta64(321, "s")]], dtype=object)
+        assert_raises(TypeError, np.dot, a, b)
 
     def test_dot_out_mem_overlap(self):
         np.random.seed(1)
@@ -9250,10 +9502,7 @@ class TestNewBufferProtocol:
         _multiarray_tests.corrupt_or_fix_bufferinfo(obj)
 
     def test_no_suboffsets(self):
-        try:
-            import _testbuffer
-        except ImportError:
-            raise pytest.skip("_testbuffer is not available")
+        _testbuffer = pytest.importorskip("_testbuffer")
 
         for shape in [(2, 3), (2, 3, 4)]:
             data = list(range(np.prod(shape)))

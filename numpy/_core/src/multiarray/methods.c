@@ -1343,20 +1343,37 @@ array_partition(PyArrayObject *self,
 {
     int axis=-1;
     int val;
-    NPY_SELECTKIND sortkind = NPY_INTROSELECT;
+    NPY_SELECTKIND sortkind = _NPY_SELECT_UNDEFINED;
     PyObject *order = NULL;
     PyArray_Descr *saved = NULL;
     PyArray_Descr *newd;
     PyArrayObject * ktharray;
     PyObject * kthobj;
+    int descending = -1;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("partition", args, len_args, kwnames,
             {"kth", NULL, &kthobj},
             {"|axis", &PyArray_PythonPyIntFromInt, &axis},
             {"|kind", &PyArray_SelectkindConverter, &sortkind},
-            {"|order", NULL, &order}) < 0) {
+            {"|order", NULL, &order},
+            {"$descending", &PyArray_OptionalBoolConverter, &descending}
+            ) < 0) {
         return NULL;
+    }
+
+    if (sortkind == _NPY_SELECT_UNDEFINED) {
+        // keywords only if sortkind not passed
+        sortkind = descending > 0 ? NPY_SELECT_DESCENDING : NPY_SELECT_DEFAULT;
+    }
+    else {
+        // Check that no keywords are used
+        if (descending != -1) {
+            PyErr_SetString(PyExc_ValueError,
+                    "`kind` and keyword parameters can't be provided at "
+                    "the same time. Use only one of them.");
+            return NULL;
+        }
     }
 
     if (order == Py_None) {
@@ -1499,20 +1516,37 @@ array_argpartition(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     int axis = -1;
-    NPY_SELECTKIND sortkind = NPY_INTROSELECT;
+    NPY_SELECTKIND sortkind = _NPY_SELECT_UNDEFINED;
     PyObject *order = NULL, *res;
     PyArray_Descr *newd, *saved=NULL;
     PyObject * kthobj;
     PyArrayObject * ktharray;
+    int descending = -1;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("argpartition", args, len_args, kwnames,
             {"kth", NULL, &kthobj},
             {"|axis", &PyArray_AxisConverter, &axis},
             {"|kind", &PyArray_SelectkindConverter, &sortkind},
-            {"|order", NULL, &order}) < 0) {
+            {"|order", NULL, &order},
+            {"$descending", &PyArray_OptionalBoolConverter, &descending}) < 0) {
         return NULL;
     }
+
+    if (sortkind == _NPY_SELECT_UNDEFINED) {
+        // keywords only if sortkind not passed
+        sortkind = descending > 0 ? NPY_SELECT_DESCENDING : NPY_SELECT_DEFAULT;
+    }
+    else {
+        // Check that no keywords are used
+        if (descending != -1) {
+            PyErr_SetString(PyExc_ValueError,
+                    "`kind` and keyword parameters can't be provided at "
+                    "the same time. Use only one of them.");
+            return NULL;
+        }
+    }
+
     if (order == Py_None) {
         order = NULL;
     }

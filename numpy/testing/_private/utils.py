@@ -176,7 +176,7 @@ elif sys.platform[:5] == 'linux':
         """
         _proc_pid_stat = _proc_pid_stat or f'/proc/{os.getpid()}/stat'
         try:
-            with open(_proc_pid_stat) as f:
+            with open(_proc_pid_stat, encoding='utf-8') as f:
                 l = f.readline().split(' ')
             return int(l[22])
         except Exception:
@@ -205,7 +205,7 @@ if sys.platform[:5] == 'linux':
         if not _load_time:
             _load_time.append(time.time())
         try:
-            with open(_proc_pid_stat) as f:
+            with open(_proc_pid_stat, encoding='utf-8') as f:
                 l = f.readline().split(' ')
             return int(l[13])
         except Exception:
@@ -1483,7 +1483,7 @@ def check_support_sve(__cache=[]):
     import subprocess
     cmd = 'lscpu'
     try:
-        output = subprocess.run(cmd, capture_output=True, text=True)
+        output = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
         result = 'sve' in output.stdout
     except (OSError, subprocess.SubprocessError):
         result = False
@@ -2760,7 +2760,7 @@ def _get_mem_available():
 
     if sys.platform.startswith('linux'):
         info = {}
-        with open('/proc/meminfo') as f:
+        with open('/proc/meminfo', encoding='utf-8') as f:
             for line in f:
                 p = line.split()
                 info[p[0].strip(':').lower()] = int(p[1]) * 1024

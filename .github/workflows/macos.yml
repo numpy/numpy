@@ -33,7 +33,7 @@ jobs:
         python-version: ["3.12"]
 
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         submodules: recursive
         fetch-tags: true
@@ -119,10 +119,10 @@ jobs:
         build_runner:
           - [ macos-15-intel, "macos_x86_64" ]
           - [ macos-14, "macos_arm64" ]
-        version: ["3.12", "3.14t"]
+        version: ["3.12", "3.15t-dev"]
 
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         submodules: recursive
         fetch-tags: true

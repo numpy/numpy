@@ -1,0 +1,9 @@
+New ``descending`` keyword argument for `numpy.partition` and `numpy.argpartition`
+----------------------------------------------------------------------------------
+Users can now pass the ``descending=True`` keyword argument to `numpy.partition` and
+`numpy.argpartition` to partition and argpartition arrays in descending order.
+NaN values, if present, are partitioned to the end of the array in both ascending and
+descending sorts. This feature is available for all built-in dtypes except
+``string``, ``unicode``, ``void``, ``object``, and ``generic``. Note that SIMD
+optimizations for partitioning are currently not available for descending order,
+so performance may be slower.

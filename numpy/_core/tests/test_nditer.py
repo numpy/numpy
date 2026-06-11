@@ -1531,12 +1531,17 @@ def test_iter_copy():
 @pytest.mark.parametrize("loop_dtype", np.typecodes["All"])
 @pytest.mark.filterwarnings(
     "ignore::numpy.exceptions.ComplexWarning",
-    "ignore::DeprecationWarning",
 )
 def test_iter_copy_casts(dtype, loop_dtype):
-    # Ensure the dtype is never flexible:
+    if dtype.lower() == "m":
+        dtype = dtype + "8[D]"
+
+    is_datetimelike = False
     if loop_dtype.lower() == "m":
-        loop_dtype = loop_dtype + "[ms]"
+        loop_dtype = loop_dtype + "8[ms]"
+        is_datetimelike = True
+
+    # Ensure the dtype is never flexible:
     elif np.dtype(loop_dtype).itemsize == 0:
         loop_dtype = loop_dtype + "50"
 
@@ -1545,13 +1550,13 @@ def test_iter_copy_casts(dtype, loop_dtype):
     try:
         expected = arr.astype(loop_dtype)
     except Exception:
-        # Some casts are not possible, do not worry about them
+        pytest.xfail(reason=f"{dtype} -> {loop_dtype} cast intentionally skipped")
         return
 
     it = np.nditer((arr,), ["buffered", "external_loop", "refs_ok"],
                    op_dtypes=[loop_dtype], casting="unsafe")
 
-    if np.issubdtype(np.dtype(loop_dtype), np.number):
+    if np.issubdtype(np.dtype(loop_dtype), np.number) and not is_datetimelike:
         # Casting to strings may be strange, but for simple dtypes do not rely
         # on the cast being correct:
         assert_array_equal(expected, np.ones(1000, dtype=loop_dtype))

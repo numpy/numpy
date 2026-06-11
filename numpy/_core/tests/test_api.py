@@ -590,6 +590,21 @@ def test_copy_order():
     res = np.copy(c, order='K')
     check_copy_result(res, c, ccontig=False, fcontig=False, strides=True)
 
+
+def test_forbid_to_copyto_generic_datetime():
+    # See gh-30903
+    with pytest.warns(
+        DeprecationWarning,
+        match="The 'generic' unit for NumPy timedelta is deprecated",
+    ):
+        a = np.array(["NaT"], dtype='M8')
+
+    with pytest.raises(
+        ValueError,
+        match="Converting an integer to a NumPy datetime requires a specified unit",
+    ):
+        np.copyto(a, 1, casting="unsafe")
+
 def test_contiguous_flags():
     a = np.ones((4, 4, 1))[::2, :, :]
     a = stride_tricks.as_strided(a, strides=a.strides[:2] + (-123,))

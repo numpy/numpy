@@ -3171,6 +3171,14 @@ class TestDateTime:
         with pytest.raises(AssertionError):
             np.testing.assert_allclose(a, b, atol=atol)
 
+    def test_forbid_ones_for_generic_datetime(self):
+        # gh-30903
+        with pytest.raises(
+            ValueError,
+            match="Converting an integer to a NumPy datetime requires a specified unit",
+        ):
+            np.ones(3, dtype="M8")
+
 class TestDateTimeData:
 
     def test_basic(self):

@@ -89,9 +89,9 @@ def install_temp(tmpdir_factory):
 )
 @pytest.mark.xfail(
     NOGIL_BUILD,
-    reason="Py_GIL_DISABLED builds do not currently support the limited API",
+    reason="Py_GIL_DISABLED builds do not currently support abi3",
 )
-def test_limited_api(install_temp):
+def test_limited_api_abi3(install_temp):
     """Test building a third-party C extension with the limited API
     and building a cython extension with the limited API
     """
@@ -102,6 +102,11 @@ def test_limited_api(install_temp):
 
 @pytest.mark.skipif(
     sys.version_info < (3, 15), reason="opaque PyObject requires Python 3.15+"
+)
+@pytest.mark.skipif(
+    sys.platform == "win32" and not sysconfig.get_config_var('Py_GIL_DISABLED'),
+    reason=("Meson does not yet support building abi3t extensions on the "
+            "GIL-enabled build")
 )
 def test_limited_opaque(install_temp):
     import limited_api_opaque

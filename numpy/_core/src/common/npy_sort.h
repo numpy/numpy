@@ -41,12 +41,8 @@ NPY_NO_EXPORT int register_all_sorts(void);
 
 
 NPY_NO_EXPORT int npy_quicksort(void *vec, npy_intp cnt, void *arr);
-NPY_NO_EXPORT int npy_heapsort(void *vec, npy_intp cnt, void *arr);
-NPY_NO_EXPORT int npy_mergesort(void *vec, npy_intp cnt, void *arr);
 NPY_NO_EXPORT int npy_timsort(void *vec, npy_intp cnt, void *arr);
 NPY_NO_EXPORT int npy_aquicksort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
-NPY_NO_EXPORT int npy_aheapsort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
-NPY_NO_EXPORT int npy_amergesort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
 NPY_NO_EXPORT int npy_atimsort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
 
 /*
@@ -76,12 +72,16 @@ typedef int (PyArray_ArgSortImpl)(void *vv, npy_intp *tosort, npy_intp n,
 
 NPY_NO_EXPORT int npy_quicksort_impl(void *start, npy_intp num, void *varr,
                                      npy_intp elsize, PyArray_CompareFunc *cmp);
-NPY_NO_EXPORT int npy_mergesort_impl(void *start, npy_intp num, void *varr,
-                                     npy_intp elsize, PyArray_CompareFunc *cmp);
+NPY_NO_EXPORT int npy_heapsort_impl(void *start, npy_intp num, void *varr,
+                                    npy_intp elsize, PyArray_CompareFunc *cmp);
+NPY_NO_EXPORT int npy_timsort_impl(void *start, npy_intp num, void *varr,
+                                   npy_intp elsize, PyArray_CompareFunc *cmp);
 NPY_NO_EXPORT int npy_aquicksort_impl(void *vv, npy_intp *tosort, npy_intp num, void *varr,
                                       npy_intp elsize, PyArray_CompareFunc *cmp);
-NPY_NO_EXPORT int npy_amergesort_impl(void *v, npy_intp *tosort, npy_intp num, void *varr,
-                                      npy_intp elsize, PyArray_CompareFunc *cmp);
+NPY_NO_EXPORT int npy_aheapsort_impl(void *vv, npy_intp *tosort, npy_intp num, void *varr,
+                                     npy_intp elsize, PyArray_CompareFunc *cmp);
+NPY_NO_EXPORT int npy_atimsort_impl(void *v, npy_intp *tosort, npy_intp num, void *varr,
+                                    npy_intp elsize, PyArray_CompareFunc *cmp);
 
 
 #ifdef __cplusplus

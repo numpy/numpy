@@ -350,40 +350,45 @@ def partition[ArrayT: np.ndarray](
     a: ArrayT,
     kth: _ArrayLikeInt,
     axis: SupportsIndex = -1,
-    kind: _PartitionKind = "introselect",
+    kind: _PartitionKind | _NoValueType = ...,
     order: str | Sequence[str] | None = None,
+    descending: bool | _NoValueType = ...,
 ) -> ArrayT: ...
 @overload  # ?d
 def partition[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     kth: _ArrayLikeInt,
     axis: SupportsIndex = -1,
-    kind: _PartitionKind = "introselect",
+    kind: _PartitionKind | _NoValueType = ...,
     order: str | Sequence[str] | None = None,
+    descending: bool | _NoValueType = ...,
 ) -> NDArray[ScalarT]: ...
 @overload  # axis: None
 def partition[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     kth: _ArrayLikeInt,
     axis: None,
-    kind: _PartitionKind = "introselect",
+    kind: _PartitionKind | _NoValueType = ...,
     order: str | Sequence[str] | None = None,
+    descending: bool | _NoValueType = ...,
 ) -> _Array1D[ScalarT]: ...
 @overload  # fallback
 def partition(
     a: ArrayLike,
     kth: _ArrayLikeInt,
     axis: SupportsIndex = -1,
-    kind: _PartitionKind = "introselect",
+    kind: _PartitionKind | _NoValueType = ...,
     order: str | Sequence[str] | None = None,
+    descending: bool | _NoValueType = ...,
 ) -> NDArray[Any]: ...
 @overload  # fallback, axis: None
 def partition(
     a: ArrayLike,
     kth: _ArrayLikeInt,
     axis: None,
-    kind: _PartitionKind = "introselect",
+    kind: _PartitionKind | _NoValueType = ...,
     order: str | Sequence[str] | None = None,
+    descending: bool | _NoValueType = ...,
 ) -> _Array1D[Any]: ...
 
 # keep roughly in sync with `ndarray.argpartition`
@@ -392,56 +397,63 @@ def argpartition(
     a: ArrayLike,
     kth: _ArrayLikeInt,
     axis: None,
-    kind: _PartitionKind = "introselect",
+    kind: _PartitionKind | _NoValueType = ...,
     order: None = None,
+    descending: bool | _NoValueType = ...,
 ) -> np.ndarray[tuple[int], np.dtype[np.intp]]: ...
 @overload  # known shape, axis: index (default)
 def argpartition[ShapeT: _Shape](
     a: np.ndarray[ShapeT],
     kth: _ArrayLikeInt,
     axis: SupportsIndex = -1,
-    kind: _PartitionKind = "introselect",
+    kind: _PartitionKind | _NoValueType = ...,
     order: None = None,
+    descending: bool | _NoValueType = ...,
 ) -> np.ndarray[ShapeT, np.dtype[np.intp]]: ...
 @overload  # 1d array-like, axis: index (default)
 def argpartition(
     a: Sequence[np.generic | complex],
     kth: _ArrayLikeInt,
     axis: SupportsIndex = -1,
-    kind: _PartitionKind = "introselect",
+    kind: _PartitionKind | _NoValueType = ...,
     order: None = None,
+    descending: bool | _NoValueType = ...,
 ) -> np.ndarray[tuple[int], np.dtype[np.intp]]: ...
 @overload  # 2d array-like, axis: index (default)
 def argpartition(
     a: Sequence[Sequence[np.generic | complex]],
     kth: _ArrayLikeInt,
     axis: SupportsIndex = -1,
-    kind: _PartitionKind = "introselect",
+    kind: _PartitionKind | _NoValueType = ...,
     order: None = None,
+    descending: bool | _NoValueType = ...,
 ) -> np.ndarray[tuple[int, int], np.dtype[np.intp]]: ...
 @overload  # ?d array-like, axis: index (default)
 def argpartition(
     a: ArrayLike,
     kth: _ArrayLikeInt,
     axis: SupportsIndex = -1,
-    kind: _PartitionKind = "introselect",
+    kind: _PartitionKind | _NoValueType = ...,
     order: None = None,
+    descending: bool | _NoValueType = ...,
 ) -> NDArray[np.intp]: ...
 @overload  # void, axis: None
 def argpartition(
     a: _SupportsArray[np.dtype[np.void]],
     kth: _ArrayLikeInt,
     axis: None,
-    kind: _PartitionKind = "introselect",
+    kind: _PartitionKind | _NoValueType = ...,
     order: str | Sequence[str] | None = None,
+    descending: bool | _NoValueType = ...,
 ) -> np.ndarray[tuple[int], np.dtype[intp]]: ...
 @overload  # void, axis: index (default)
 def argpartition[ShapeT: _Shape](
     a: np.ndarray[ShapeT, np.dtype[np.void]],
     kth: _ArrayLikeInt,
     axis: SupportsIndex = -1,
-    kind: _PartitionKind = "introselect",
+    kind: _PartitionKind | _NoValueType = ...,
     order: str | Sequence[str] | None = None,
+    descending: bool | _NoValueType = ...,
 ) -> np.ndarray[ShapeT, np.dtype[np.intp]]: ...
 
 #

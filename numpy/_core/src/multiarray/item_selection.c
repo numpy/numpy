@@ -1717,8 +1717,14 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
     part = get_partition_func(PyArray_TYPE(op), which);
     if (part == NULL) {
         /* Use sorting, slower but equivalent */
-        if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
+        if ((PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare)
+            && !(which & NPY_SELECT_DESCENDING)) { // TODO: descending sorts for partition
             sort = npy_quicksort;
+        }
+        else if (which & NPY_SELECT_DESCENDING) {
+            PyErr_SetString(PyExc_TypeError,
+                            "type does not support descending partition");
+            return -1;
         }
         else {
             PyErr_SetString(PyExc_TypeError,
@@ -1767,8 +1773,14 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
     argpart = get_argpartition_func(PyArray_TYPE(op), which);
     if (argpart == NULL) {
         /* Use sorting, slower but equivalent */
-        if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
+        if ((PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) &&
+            !(which & NPY_SELECT_DESCENDING)) { // TODO: descending sorts for partition
             argsort = npy_aquicksort;
+        }
+        else if (which & NPY_SELECT_DESCENDING) {
+            PyErr_SetString(PyExc_TypeError,
+                            "type does not support descending partition");
+            return NULL;
         }
         else {
             PyErr_SetString(PyExc_TypeError,
@@ -3173,11 +3185,6 @@ PyArray_MultiIndexSetItem(PyArrayObject *self, const npy_intp *multi_index,
 }
 
 
-/* Table of generic sort functions for use in PyArray_SortEx*/
-static PyArray_SortFunc* const generic_sort_table[] = {npy_quicksort,
-                                                       npy_heapsort,
-                                                       npy_timsort};
-
 /*NUMPY_API
  * Sort an array in-place with extended parameters
  */
@@ -3261,10 +3268,10 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
             }
             switch (flags) {
                 case NPY_SORT_DEFAULT:
-                    sort = generic_sort_table[NPY_QUICKSORT];
+                    sort = npy_quicksort;
                     break;
                 case NPY_SORT_STABLE:
-                    sort = generic_sort_table[NPY_STABLESORT];
+                    sort = npy_timsort;
                     break;
                 default:
                     break;
@@ -3290,10 +3297,6 @@ fail:
     return ret;
 }
 
-/* Table of generic argsort function for use by PyArray_ArgSortEx */
-static PyArray_ArgSortFunc* const generic_argsort_table[] = {npy_aquicksort,
-                                                             npy_aheapsort,
-                                                             npy_atimsort};
 
 /*NUMPY_API
  * ArgSort an array with extended parameters
@@ -3374,10 +3377,10 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
             }
             switch (flags) {
                 case NPY_SORT_DEFAULT:
-                    argsort = generic_argsort_table[NPY_QUICKSORT];
+                    argsort = npy_aquicksort;
                     break;
                 case NPY_SORT_STABLE:
-                    argsort = generic_argsort_table[NPY_STABLESORT];
+                    argsort = npy_atimsort;
                     break;
                 default:
                     break;
