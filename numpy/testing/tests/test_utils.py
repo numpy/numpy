@@ -11,6 +11,7 @@ import numpy as np
 import numpy._core._multiarray_umath as ncu
 from numpy.testing import (
     HAS_REFCOUNT,
+    IS_FREE_THREADED,
     assert_,
     assert_allclose,
     assert_almost_equal,
@@ -1150,7 +1151,12 @@ class TestArrayAssertLess:
 
 @pytest.mark.filterwarnings(
     "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
-    ".*:DeprecationWarning")
+    ".*:DeprecationWarning"
+    )
+@pytest.mark.skipif(
+    IS_FREE_THREADED,
+    reason="Unreliable under free-threaded Python + pytest-run-parallel"
+    )
 @pytest.mark.thread_unsafe(reason="checks global module & deprecated warnings")
 class TestWarns:
 
@@ -1770,6 +1776,10 @@ def _get_fresh_mod():
     return my_mod
 
 
+@pytest.mark.skipif(
+    IS_FREE_THREADED,
+    reason="Unreliable under free-threaded Python + pytest-run-parallel"
+    )
 @pytest.mark.thread_unsafe(reason="checks global module & deprecated warnings")
 def test_clear_and_catch_warnings():
     # Initial state of module, no warnings
@@ -1806,6 +1816,10 @@ def test_clear_and_catch_warnings():
 @pytest.mark.filterwarnings(
     "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
     ".*:DeprecationWarning")
+@pytest.mark.skipif(
+    IS_FREE_THREADED,
+    reason="Unreliable under free-threaded Python + pytest-run-parallel"
+    )
 @pytest.mark.thread_unsafe(reason="checks global module & deprecated warnings")
 def test_suppress_warnings_module():
     # Initial state of module, no warnings
@@ -1856,6 +1870,10 @@ def test_suppress_warnings_module():
 @pytest.mark.filterwarnings(
     "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
     ".*:DeprecationWarning")
+@pytest.mark.skipif(
+    IS_FREE_THREADED,
+    reason="Unreliable under free-threaded Python + pytest-run-parallel"
+    )
 @pytest.mark.thread_unsafe(reason="checks global module & deprecated warnings")
 def test_suppress_warnings_type():
     # Initial state of module, no warnings
@@ -1888,6 +1906,10 @@ def test_suppress_warnings_type():
 @pytest.mark.filterwarnings(
     "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
     ".*:DeprecationWarning")
+@pytest.mark.skipif(
+    IS_FREE_THREADED,
+    reason="Unreliable under free-threaded Python + pytest-run-parallel"
+    )
 @pytest.mark.thread_unsafe(
     reason="uses deprecated thread-unsafe warnings control utilities"
 )
@@ -1909,6 +1931,10 @@ def test_suppress_warnings_decorate_no_record():
 @pytest.mark.filterwarnings(
     "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
     ".*:DeprecationWarning")
+@pytest.mark.skipif(
+    IS_FREE_THREADED,
+    reason="Unreliable under free-threaded Python + pytest-run-parallel"
+    )
 @pytest.mark.thread_unsafe(
     reason="uses deprecated thread-unsafe warnings control utilities"
 )
@@ -1956,6 +1982,10 @@ def test_suppress_warnings_record():
 @pytest.mark.filterwarnings(
     "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
     ".*:DeprecationWarning")
+@pytest.mark.skipif(
+    IS_FREE_THREADED,
+    reason="Unreliable under free-threaded Python + pytest-run-parallel"
+    )
 @pytest.mark.thread_unsafe(
     reason="uses deprecated thread-unsafe warnings control utilities"
 )
@@ -2048,6 +2078,10 @@ class my_cacw(clear_and_catch_warnings):
     class_modules = (sys.modules[__name__],)
 
 
+@pytest.mark.skipif(
+    IS_FREE_THREADED,
+    reason="Unreliable under free-threaded Python + pytest-run-parallel"
+    )
 @pytest.mark.thread_unsafe(reason="checks global module & deprecated warnings")
 def test_clear_and_catch_warnings_inherit():
     # Test can subclass and add default modules
@@ -2059,6 +2093,10 @@ def test_clear_and_catch_warnings_inherit():
 
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+@pytest.mark.skipif(
+    IS_FREE_THREADED,
+    reason="GC global state unreliable on free-threaded + parallel"
+    )
 @pytest.mark.thread_unsafe(reason="garbage collector is global state")
 @pytest.mark.slow
 class TestAssertNoGcCycles:

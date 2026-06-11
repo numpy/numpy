@@ -43,7 +43,7 @@ __all__ = [
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
         'IS_MUSL', 'check_support_sve', 'NOGIL_BUILD',
         'IS_EDITABLE', 'IS_INSTALLED', 'NUMPY_ROOT', 'run_threaded', 'IS_64BIT',
-        'BLAS_SUPPORTS_FPE',
+        'BLAS_SUPPORTS_FPE', 'IS_FREE_THREADED',
         ]
 
 
@@ -110,6 +110,12 @@ IS_64BIT = np.dtype(np.intp).itemsize == 8
 LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE = (platform.machine().startswith("ppc")
                                     and str(np.finfo(np.longdouble).max)
                                     == "1.79769313486231580793728971405301e+308")
+
+# Runtime detection for free-threaded Python (GIL disabled)
+# Used for skipping tests that are unreliable under pytest-run-parallel on 3.15t+
+IS_FREE_THREADED = (
+    hasattr(sys, "_is_gil_enabled") and not sys._is_gil_enabled()
+)
 
 def assert_(val, msg=''):
     """
