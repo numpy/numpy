@@ -414,7 +414,7 @@ arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
  fail:
     Py_XDECREF(mask);
-    PyArray_ResolveWritebackIfCopy(array);
+    PyArray_DiscardWritebackIfCopy(array);
     Py_XDECREF(array);
     Py_XDECREF(values);
     return NULL;
