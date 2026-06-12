@@ -6904,6 +6904,14 @@ class TestFlat:
         assert_(testpassed)
         assert_(b.flat[4] == 12.0)
 
+    def test_assignment_structured_with_objects(self):
+        # whole elements must be copied, not just the leading object field
+        dt = np.dtype([('x', 'O'), ('y', 'i8')])
+        a = np.array([('A', 1), ('B', 2)], dtype=dt)
+        b = np.zeros(2, dtype=dt)
+        b.flat = a
+        assert_array_equal(b, a)
+
     def test___array__(self):
         a0 = np.arange(20.0)
         a = a0.reshape(4, 5)
