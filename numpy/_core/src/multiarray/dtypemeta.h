@@ -96,6 +96,12 @@ typedef struct {
      */
     PyArrayMethodObject *sort_meth;
     PyArrayMethodObject *argsort_meth;
+    /*
+     * Hidden slots for the partition and argpartition arraymethods.
+     */
+    PyArrayMethodObject *part_meth;
+    PyArrayMethodObject *argpart_meth;
+
     /* Definition for real and imaginary parts, and the (internal) ufuncs */
     PyBoundArrayMethodObject *real_meth;
     PyBoundArrayMethodObject *imag_meth;
