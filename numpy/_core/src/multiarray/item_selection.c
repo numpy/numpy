@@ -781,14 +781,14 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
                 }
             }
         }
+        NPY_END_THREADS;
         NPY_cast_info_xfree(&cast_info);
     }
     else {
         NPY_BEGIN_THREADS;
         npy_fastputmask(dest, src, mask_data, ni, nv, itemsize);
+        NPY_END_THREADS;
     }
-
-    NPY_END_THREADS;
 
     Py_XDECREF(values);
     Py_XDECREF(mask);
