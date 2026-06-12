@@ -2171,6 +2171,36 @@ and not set any of the other loop slots.
 These specs can be registered using :c:func:`PyUFunc_AddLoopsFromSpecs`
 along with other ufunc loops.
 
+Partitioning and Argpartitioning
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Similarly to sorting and argsorting, partitioning and argpartitioning methods
+can be registered using the ArrayMethod API. This is done by adding an
+ArrayMethod spec with the name ``"partition"`` or ``"argpartition"`` respectively.
+The spec must have ``nin=2`` and ``nout=1`` for both partition and argpartition,
+where the first input ``data[0]`` is the array to partition and the second input
+``data[1]`` is the kth array of indices to partition by. Partitioning is
+inplace, hence we enforce  that ``data[0] == data[2]``. Argpartitioning
+returns a new array of indices, so the output must be of ``NPY_INTP`` type.
+
+The ``context`` passed to the loop contains the ``parameters`` field which
+for these operations is a ``PyArrayMethod_PartitionParameters *`` struct. This
+struct contains a ``flags`` field which is a bitwise OR of ``NPY_SELECTKIND``
+values indicating the kind of partition to perform (that is, whether it is a
+descending partition). If the strided loop depends on the flags, a good way
+to deal with this is to define :c:macro:`NPY_METH_get_loop`, and not set any
+of the other loop slots.
+
+.. c:struct:: PyArrayMethod_PartitionParameters
+
+    .. c:member:: NPY_SELECTKIND flags
+
+        The flags passed to the partition operation. This is a bitwise OR of
+        ``NPY_SELECTKIND`` values indicating the kind of partition to perform.
+
+These specs can be registered using :c:func:`PyUFunc_AddLoopsFromSpecs`
+along with other ufunc loops.
+
 API for calling array methods
 -----------------------------
 
