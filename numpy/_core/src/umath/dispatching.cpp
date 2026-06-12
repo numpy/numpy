@@ -735,9 +735,18 @@ legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
      * difference.  Whether the actual operands can be casts must be checked
      * during the type resolution step (which may _also_ calls this!).
      */
-    if (ufunc->type_resolver(ufunc,
+    PyObject *promotion_token = npy_begin_legacy_resolver_promotion();
+    if (promotion_token == NULL) {
+        Py_XDECREF(type_tuple);
+        return -1;
+    }
+    int resolver_result = ufunc->type_resolver(ufunc,
             NPY_UNSAFE_CASTING, (PyArrayObject **)ops, type_tuple,
-            out_descrs) < 0) {
+            out_descrs);
+    if (npy_end_legacy_resolver_promotion(promotion_token) < 0) {
+        resolver_result = -1;
+    }
+    if (resolver_result < 0) {
         Py_XDECREF(type_tuple);
         /* Not all legacy resolvers clean up on failures: */
         for (int i = 0; i < nargs; i++) {

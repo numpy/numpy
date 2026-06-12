@@ -5,6 +5,9 @@ to document how deprecations should eventually be turned into errors.
 """
 import contextlib
 import re
+import subprocess
+import sys
+import textwrap
 import warnings
 from collections.abc import Callable
 
@@ -12,7 +15,7 @@ import pytest
 
 import numpy as np
 from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
-from numpy.testing import assert_raises
+from numpy.testing import IS_WASM, assert_raises
 
 
 class _DeprecationTestCase:
@@ -518,6 +521,27 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
         # Both intermediate operations should trigger warnings
         self.assert_deprecated(np.add, num=None, args=(a, b))
         self.assert_deprecated(np.add, num=None, args=(b, c))
+
+    @pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for subprocess")
+    def test_first_call_warns_once(self):
+        # The legacy type resolver used to also warn when invoked to populate
+        # the ufunc promotion cache, so the first call in a process emitted
+        # two warnings and later calls one.  Use a fresh process to test with
+        # a cold cache.
+        code = textwrap.dedent("""
+            import warnings
+            import numpy as np
+
+            for args in [(np.timedelta64(3, "s"), 5),
+                         (np.array([3], dtype="m8[s]"), np.array([5]))]:
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter("always")
+                    np.subtract(*args)
+                assert len(w) == 1, [str(x.message) for x in w]
+            """)
+        p = subprocess.run([sys.executable, "-c", code],
+                           capture_output=True, text=True)
+        assert p.returncode == 0, p.stderr
 
 
 class TestTriDeprecationWithNonInteger(_DeprecationTestCase):

@@ -180,6 +180,12 @@ initialize_static_globals(void)
         return -1;
     }
 
+    npy_static_pydata.legacy_resolver_promoting =
+            PyContextVar_New("numpy._legacy_resolver_promoting", Py_False);
+    if (npy_static_pydata.legacy_resolver_promoting == NULL) {
+        return -1;
+    }
+
     npy_static_pydata.kwnames_is_copy =
             Py_BuildValue("(O)", npy_interned_str.copy);
     if (npy_static_pydata.kwnames_is_copy == NULL) {
