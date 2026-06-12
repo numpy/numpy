@@ -121,7 +121,7 @@ jobs:
       - name: Run test suite (fast)
         run: |
           cd tools
-          python -m pytest --pyargs numpy -m "not slow" -n2 --timeout=600 --durations=10
+          python -m pytest --pyargs numpy -m "not slow" -n auto --timeout=600 --durations=10
 
   #=======================================================================================
   msvc_python64bit_openblas:
