@@ -1890,6 +1890,26 @@ class TestDateTime:
         assert_equal(np.greater(a, b), [0, 1, 0, 1, 0])
         assert_equal(np.greater_equal(a, b), [1, 1, 0, 1, 0])
 
+    def test_datetime_compare_python_date_transitivity(self):
+        pydate = datetime.date(2026, 3, 28)
+        pydatetime = datetime.datetime(2026, 3, 28)
+
+        dt_day = np.datetime64(pydate, 'D')
+        dt_ns = dt_day.astype('datetime64[ns]')
+
+        assert dt_day == pydate
+        assert dt_day == dt_ns
+        assert dt_ns == pydate
+        assert pydate == dt_ns
+
+        # Keep the documented datetime.datetime behavior unchanged.
+        assert not (dt_day == pydatetime)
+
+        # The coercion is limited to comparisons; keep arithmetic unchanged.
+        assert dt_day - pydate == datetime.timedelta(0)
+        with pytest.raises(TypeError):
+            dt_ns - pydate
+
     def test_datetime_compare_nat(self):
         dt_nat = np.datetime64('NaT', 'D')
         dt_other = np.datetime64('2000-01-01')

@@ -2,6 +2,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
+#include <datetime.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #ifndef _MULTIARRAYMODULE
@@ -184,10 +185,14 @@ gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
  *
  * It is not possible for both to be filled.  If `other` is also a generics,
  * it is returned.
+ *
+ * When `datetime_date_comparison` is set, Python date objects are converted
+ * to the datetime64 scalar unit for rich comparison only.
  */
 static inline int
 find_binary_operation_path(
-    PyObject *self, PyObject *other, PyObject **self_op, PyObject **other_op)
+    PyObject *self, PyObject *other, PyObject **self_op, PyObject **other_op,
+    int datetime_date_comparison)
 {
     *other_op = NULL;
     *self_op = NULL;
@@ -218,6 +223,34 @@ find_binary_operation_path(
     else if (attr != NULL) {
         Py_DECREF(attr);
         *other_op = Py_NewRef(other);
+        return 0;
+    }
+
+    if (datetime_date_comparison && PyArray_IsScalar(self, Datetime)) {
+        if (PyDateTimeAPI == NULL) {
+            PyDateTime_IMPORT;
+            if (PyDateTimeAPI == NULL) {
+                return -1;
+            }
+        }
+    }
+    if (datetime_date_comparison &&
+            PyArray_IsScalar(self, Datetime) &&
+            PyType_IsSubtype(Py_TYPE(other), PyDateTimeAPI->DateType) &&
+            !PyType_IsSubtype(Py_TYPE(other), PyDateTimeAPI->DateTimeType)) {
+        /*
+         * Preserve datetime.date comparisons in the datetime64 scalar unit
+         * instead of falling back through `.item()`, which depends on the
+         * scalar resolution.
+         */
+        PyArray_Descr *descr = PyArray_DescrFromScalar(self);
+        if (descr == NULL) {
+            return -1;
+        }
+        *other_op = PyArray_FromAny(other, descr, 0, 0, 0, NULL);
+        if (*other_op == NULL) {
+            return -1;
+        }
         return 0;
     }
 
@@ -314,7 +347,7 @@ gentype_@name@@suff@(PyObject *m1, PyObject *m2)
         self = m2;
         other = m1;
     }
-    if (find_binary_operation_path(self, other, &self_op, &other_op) < 0) {
+    if (find_binary_operation_path(self, other, &self_op, &other_op, 0) < 0) {
         return NULL;
     }
     if (self_op != NULL) {
@@ -424,7 +457,7 @@ gentype_power(PyObject *m1, PyObject *m2, PyObject *modulo)
         self = m2;
         other = m1;
     }
-    if (find_binary_operation_path(self, other, &self_op, &other_op) < 0) {
+    if (find_binary_operation_path(self, other, &self_op, &other_op, 0) < 0) {
         return NULL;
     }
     if (self_op != NULL) {
@@ -1614,7 +1647,7 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
 
     PyObject *self_op;
     PyObject *other_op;
-    if (find_binary_operation_path(self, other, &self_op, &other_op) < 0) {
+    if (find_binary_operation_path(self, other, &self_op, &other_op, 1) < 0) {
         return NULL;
     }
 
