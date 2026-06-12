@@ -3411,6 +3411,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
                         if (x_cast_info.func(
                                 &x_cast_info.context, args, &one,
                                 x_strides, x_cast_info.auxdata) < 0) {
+                            NPY_END_THREADS;
                             goto fail;
                         }
                     }
@@ -3420,6 +3421,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
                         if (y_cast_info.func(
                                 &y_cast_info.context, args, &one,
                                 y_strides, y_cast_info.auxdata) < 0) {
+                            NPY_END_THREADS;
                             goto fail;
                         }
                     }
