@@ -121,7 +121,7 @@ jobs:
       - name: Run test suite (full)
         run: |
           cd tools
-          python -m pytest --pyargs numpy -m "full" -n auto --timeout=600 --durations=10
+          python -c "import sys; import numpy; sys.exit(not numpy.test(label='full', extra_argv=['-n=auto', '--durations=10']))"
 
   #=======================================================================================
   msvc_python64bit_openblas:
