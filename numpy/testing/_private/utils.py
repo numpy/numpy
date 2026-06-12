@@ -2868,3 +2868,21 @@ def requires_deep_recursion(func):
                         "deep recursion")
         return func(*args, **kwargs)
     return wrapper
+
+
+def run_meson(args, build_dir):
+    """Run a meson command, failing the test with the captured output if it
+    fails: output merely inherited by the subprocess is lost in pytest-xdist
+    workers."""
+    import subprocess
+
+    import pytest
+
+    res = subprocess.run(["meson", *args], cwd=build_dir,
+                         capture_output=True, text=True, errors="replace")
+    if res.returncode != 0:
+        pytest.fail(
+            f"meson {args[0]} failed (exit {res.returncode}) in {build_dir}\n"
+            f"----- stdout -----\n{res.stdout}\n"
+            f"----- stderr -----\n{res.stderr}",
+            pytrace=False)

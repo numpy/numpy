@@ -8,6 +8,7 @@ import pytest
 
 import numpy as np
 from numpy.testing import IS_EDITABLE, IS_WASM, assert_array_equal
+from numpy.testing._private.utils import run_meson
 
 # This import is copied from random.tests.test_extending
 try:
@@ -58,27 +59,16 @@ def install_temp(tmpdir_factory):
     if sysconfig.get_platform() == "win-arm64":
         pytest.skip("Meson unable to find MSVC linker on win-arm64")
     if sys.platform == "win32":
-        subprocess.check_call(["meson", "setup",
-                               "--buildtype=release",
-                               "--vsenv", "--native-file", native_file,
-                               str(srcdir)],
-                              cwd=build_dir,
-                              )
+        run_meson(["setup",
+                   "--buildtype=release",
+                   "--vsenv", "--native-file", native_file,
+                   str(srcdir)],
+                  build_dir)
     else:
-        subprocess.check_call(["meson", "setup",
-                               "--native-file", native_file, str(srcdir)],
-                              cwd=build_dir
-                              )
-    try:
-        subprocess.check_call(["meson", "compile", "-vv"], cwd=build_dir)
-    except subprocess.CalledProcessError:
-        print("----------------")
-        print("meson build failed when doing")
-        print(f"'meson setup --native-file {native_file} {srcdir}'")
-        print("'meson compile -vv'")
-        print(f"in {build_dir}")
-        print("----------------")
-        raise
+        run_meson(["setup",
+                   "--native-file", native_file, str(srcdir)],
+                  build_dir)
+    run_meson(["compile", "-vv"], build_dir)
 
     sys.path.append(str(build_dir))
 
