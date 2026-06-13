@@ -1716,6 +1716,8 @@ def squeeze(a, axis=None):
     1234
 
     """
+    if isinstance(a, np.generic):
+        a = a[...]
     try:
         squeeze = a.squeeze
     except AttributeError:
