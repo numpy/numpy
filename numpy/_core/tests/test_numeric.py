@@ -1194,6 +1194,27 @@ class TestTypes:
         self.check_promotion_cases(np.result_type)
         assert_(np.result_type(None) == np.dtype(None))
 
+    @pytest.mark.parametrize("py_type, zero", [
+        (int, 0), (float, 0.0), (complex, 0j),
+    ])
+    @pytest.mark.parametrize("np_dtype", [
+        np.int8, np.int16, np.int32, np.int64,
+        np.float16, np.float32, np.float64,
+        np.complex64, np.complex128,
+    ])
+    def test_result_type_python_type_weak_promotion(self, np_dtype, py_type,
+                                                    zero):
+        # gh-31037: passing a Python builtin type (int/float/complex) to
+        # result_type should behave like passing its zero-value instance,
+        # i.e. as weak/abstract under NEP 50 promotion rules.
+        from_type = np.result_type(np_dtype, py_type)
+        from_instance = np.result_type(np_dtype, zero)
+        assert from_type == from_instance, (
+            f"result_type({np_dtype.__name__}, {py_type.__name__}) = "
+            f"{from_type} but result_type({np_dtype.__name__}, "
+            f"{py_type.__name__}({zero!r})) = {from_instance}"
+        )
+
     def test_promote_types_endian(self):
         # promote_types should always return native-endian types
         assert_equal(np.promote_types('<i8', '<i8'), np.dtype('i8'))
