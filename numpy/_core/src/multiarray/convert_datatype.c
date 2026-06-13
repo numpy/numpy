@@ -2091,6 +2091,13 @@ PyArray_AddCastingImplementation(PyBoundArrayMethodObject *meth)
 NPY_NO_EXPORT int
 PyArray_AddCastingImplementation_FromSpec(PyArrayMethod_Spec *spec, int private)
 {
+    if (spec->flags & NPY_METH_REQUIRES_CONTIGUOUS) {
+        PyErr_SetString(PyExc_ValueError,
+                "The NPY_METH_REQUIRES_CONTIGUOUS flag is not yet supported "
+                "for casting operations.");
+        return -1;
+    }
+
     /* Create a bound method, unbind and store it */
     PyBoundArrayMethodObject *meth = PyArrayMethod_FromSpec_int(spec, private);
     if (meth == NULL) {
