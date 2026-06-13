@@ -137,8 +137,19 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     else:
         integer_dtype = _nx.issubdtype(dtype, _nx.integer)
 
-    # Use `dtype=type(dt)` to enforce a floating point evaluation:
-    delta = np.subtract(stop, start, dtype=type(dt))
+    # Use `dtype=type(dt)` to enforce a floating point evaluation.
+    # Equal endpoints (including equal infinities) must produce a zero step,
+    # so skip the subtraction there: `inf - inf` would otherwise yield a
+    # spurious nan and an "invalid value" warning.  Using `where=` avoids the
+    # bad element entirely rather than suppressing warnings globally, so
+    # genuine invalid operations (e.g. mixed infinities) still warn.
+    equal = start == stop
+    if equal.ndim == 0:
+        delta = dt.type(0) if equal else np.subtract(
+            stop, start, dtype=type(dt))
+    else:
+        delta = np.subtract(stop, start, dtype=type(dt), where=~equal,
+                            out=np.zeros(equal.shape, dtype=type(dt)))
     y = _nx.arange(
         0, num, dtype=dt, device=device
     ).reshape((-1,) + (1,) * ndim(delta))
