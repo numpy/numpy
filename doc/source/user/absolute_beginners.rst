@@ -152,7 +152,7 @@ data in the original array. The original array can be mutated using the view.
 
     >>> b = a[3:]
     >>> b
-    array([4, 5, 6])
+    array([40, 5, 6])
     >>> b[0] = 40
     >>> a
     array([ 10,  2,  3, 40,  5,  6])
