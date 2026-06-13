@@ -172,6 +172,10 @@ def _remove_nan_1d(arr1d, second_arr1d=None, overwrite_input=False):
     else:
         c = np.isnan(arr1d)
 
+    # For masked arrays, also treat masked values as if they are NaN (gh-29117).
+    if isinstance(arr1d, np.ma.MaskedArray):
+        c = np.asarray(c) | np.ma.getmaskarray(arr1d)
+
     s = np.nonzero(c)[0]
     if s.size == arr1d.size:
         warnings.warn("All-NaN slice encountered", RuntimeWarning,
@@ -229,6 +233,9 @@ def _divide_by_count(a, b, out=None):
     with np.errstate(invalid='ignore', divide='ignore'):
         if isinstance(a, np.ndarray):
             if out is None:
+                # Skip in-place divide for read-only arrays (gh-29117).
+                if not a.flags.writeable:
+                    return np.divide(a, b, casting='unsafe')
                 return np.divide(a, b, out=a, casting='unsafe')
             else:
                 return np.divide(a, b, out=out, casting='unsafe')
@@ -1998,7 +2005,11 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
                  keepdims=keepdims, where=where, mean=mean,
                  correction=correction)
     if isinstance(var, np.ndarray):
-        std = np.sqrt(var, out=var)
+        # Skip in-place sqrt for read-only arrays (gh-29117).
+        if not var.flags.writeable:
+            std = np.sqrt(var)
+        else:
+            std = np.sqrt(var, out=var)
     elif hasattr(var, 'dtype'):
         std = var.dtype.type(np.sqrt(var))
     else:
