@@ -1820,6 +1820,7 @@ fail:
         NPY_AUXDATA_FREE(auxdata);
         Py_DECREF(context.descriptors[0]);
         Py_DECREF(context.descriptors[1]);
+        Py_DECREF(context.descriptors[2]);
     }
     return ret;
 }
@@ -1933,6 +1934,7 @@ fail:
         NPY_AUXDATA_FREE(auxdata);
         Py_DECREF(context.descriptors[0]);
         Py_DECREF(context.descriptors[1]);
+        Py_DECREF(context.descriptors[2]);
     }
     return ret;
 }
