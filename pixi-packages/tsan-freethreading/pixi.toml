@@ -2,7 +2,7 @@
 channels = ["https://prefix.dev/conda-forge"]
 platforms = ["linux-64", "linux-aarch64", "osx-arm64"]
 preview = ["pixi-build"]
-requires-pixi = ">=0.66.0"
+requires-pixi = ">=0.70.0"
 
 [package.build]
 source.path = "../.."
@@ -16,8 +16,7 @@ extra-input-globs = ["**/*.c.src"]
 compilers = ["c", "cxx"]
 env.TSAN_OPTIONS = "halt_on_error=0:allocator_may_return_null=1"
 extra-args = ["-Csetup-args=-Db_sanitize=thread", "-Csetup-args=-Dbuildtype=debug"]
-# TODO: skip slow bytecode compilation step, see https://github.com/prefix-dev/pixi/pull/5737
-# skip-pyc-compilation = ["**/*.py"]
+skip-pyc-compilation = ["**/*.py"]
 
 [package.host-dependencies]
 python.git = "https://github.com/python/cpython"
