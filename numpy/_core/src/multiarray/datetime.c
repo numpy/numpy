@@ -17,6 +17,8 @@
 
 #include "npy_config.h"
 
+#include "numpy/npy_math.h"
+
 
 #include "common.h"
 #include "numpy/arrayscalars.h"
@@ -2095,6 +2097,20 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
     if (tmp == NULL) {
         return -1;
     }
+    /*
+     * NaT-like objects (e.g. pandas NaT) duck-type as datetimes but expose
+     * year/month/day as NaN floats instead of integers. Represent these as
+     * NaT (year == NPY_DATETIME_NAT); downstream conversion turns this into
+     * a datetime64 NaT value instead of raising a TypeError. 
+     */
+    if (PyFloat_Check(tmp) && npy_isnan(PyFloat_AS_DOUBLE(tmp))) {
+        Py_DECREF(tmp);
+        out->year = NPY_DATETIME_NAT;
+        if (out_bestunit != NULL) {
+            *out_bestunit = NPY_FR_GENERIC;
+        }
+        return 0;
+    }
     out->year = PyLong_AsLong(tmp);
     if (error_converting(out->year)) {
         Py_DECREF(tmp);
@@ -2477,6 +2493,19 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             return -1;
         }
         else if (code == 0) {
+            /*
+             * Allow NaT-like objects (e.g. pandas NaT) to convert to NaT,
+             * bypassing the unit cast-safety checks just like NaT scalars
+             * do. 
+             */
+             if (dts.year == NPY_DATETIME_NAT) {
+                if (meta->base == NPY_FR_ERROR) {
+                    meta->base = NPY_FR_GENERIC;
+                    meta->num = 1;
+                }
+                *out = NPY_DATETIME_NAT;
+                return 0;
+            }
             /* Use the detected unit if none was specified */
             if (meta->base == NPY_FR_ERROR) {
                 meta->base = bestunit;
