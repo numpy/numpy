@@ -3337,7 +3337,12 @@ class MaskedArray(ndarray):
                 # We should always re-cast to mvoid, otherwise users can
                 # change masks on rows that already have masked values, but not
                 # on rows that have no masked values, which is inconsistent.
-                return mvoid(dout, mask=mout, hardmask=self._hardmask)
+                return mvoid(
+                    dout,
+                    mask=mout,
+                    hardmask=self._hardmask,
+                    fill_value=self._fill_value
+                )
 
             # special case introduced in gh-5962
             elif (self.dtype.type is np.object_ and
