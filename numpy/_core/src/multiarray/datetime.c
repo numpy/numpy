@@ -2388,15 +2388,24 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         Py_DECREF(utf8);
         return 0;
     }
-    /* Do no conversion on raw integers */
-    else if (PyLong_Check(obj)) {
+    /* Do no conversion on integers (Python int, NumPy integer scalars, 0-D integer arrays) */
+    else if (PyLong_Check(obj) ||
+             PyArray_IsScalar(obj, Integer) ||
+             (PyArray_Check(obj) &&
+              PyArray_NDIM((PyArrayObject *)obj) == 0 &&
+              PyArray_ISINTEGER((PyArrayObject *)obj))) {
         /* Don't allow conversion from an integer without specifying a unit */
         if (meta->base == NPY_FR_ERROR || meta->base == NPY_FR_GENERIC) {
             PyErr_SetString(PyExc_ValueError, "Converting an integer to a "
                             "NumPy datetime requires a specified unit");
             return -1;
         }
-        *out = PyLong_AsLongLong(obj);
+        PyObject *as_long = PyNumber_Index(obj);
+        if (as_long == NULL) {
+            return -1;
+        }
+        *out = PyLong_AsLongLong(as_long);
+        Py_DECREF(as_long);
         if (error_converting(*out)) {
             return -1;
         }

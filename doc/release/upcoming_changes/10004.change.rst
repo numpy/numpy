@@ -1,0 +1,5 @@
+``datetime64`` accepts NumPy integer scalars
+------------------------------------------------
+``np.datetime64`` can now be constructed from NumPy integer scalars
+when an explicit datetime unit is provided, matching construction from
+Python integers.
