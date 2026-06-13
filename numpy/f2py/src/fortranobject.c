@@ -291,21 +291,44 @@ fortran_doc(FortranDataDef def)
     }
 }
 
-static FortranDataDef *save_def; /* save pointer of an allocatable array */
 static void
-set_data(char *d, npy_intp *f)
+set_data(char *d, npy_intp *f, char **out_data)
 {           /* callback from Fortran */
     if (*f) /* In fortran f=allocated(d) */
-        save_def->data = d;
+        *out_data = d;
     else
-        save_def->data = NULL;
+        *out_data = NULL;
     /* printf("set_data: d=%p,f=%d\n",d,*f); */
+}
+
+static PyObject *
+fortran_getattr_allocatable(PyFortranObject *fp, FortranDataDef *fp_defs_i) {
+    int k, flag;
+    for (k = 0; k < fp_defs_i->rank; ++k) fp_defs_i->dims.d[k] = -1;
+    (*(fp_defs_i->func))(&fp_defs_i->rank, fp_defs_i->dims.d,
+                            set_data, &flag, &fp_defs_i->data);
+    if (flag == 2)
+        k = fp_defs_i->rank + 1;
+    else
+        k = fp_defs_i->rank;
+    if (fp_defs_i->data != NULL) { /* array is allocated */
+        PyObject *v = PyArray_New(
+                &PyArray_Type, k, fp_defs_i->dims.d, fp_defs_i->type,
+                NULL, fp_defs_i->data, 0, NPY_ARRAY_FARRAY, NULL);
+        if (v == NULL)
+            return NULL;
+        return v;
+    }
+    else { /* array is not allocated */
+        Py_RETURN_NONE;
+    }
 }
 
 static PyObject *
 fortran_getattr(PyFortranObject *fp, char *name)
 {
-    int i, j, k, flag;
+    int i, j;
+    PyObject *result;
     if (fp->dict != NULL) {
         // python 3.13 added PyDict_GetItemRef
 #if PY_VERSION_HEX < 0x030D0000
@@ -336,26 +359,14 @@ fortran_getattr(PyFortranObject *fp, char *name)
         if (fp->defs[i].rank != -1) { /* F90 allocatable array */
             if (fp->defs[i].func == NULL)
                 return NULL;
-            for (k = 0; k < fp->defs[i].rank; ++k) fp->defs[i].dims.d[k] = -1;
-            save_def = &fp->defs[i];
-            (*(fp->defs[i].func))(&fp->defs[i].rank, fp->defs[i].dims.d,
-                                  set_data, &flag);
-            if (flag == 2)
-                k = fp->defs[i].rank + 1;
-            else
-                k = fp->defs[i].rank;
-            if (fp->defs[i].data != NULL) { /* array is allocated */
-                PyObject *v = PyArray_New(
-                        &PyArray_Type, k, fp->defs[i].dims.d, fp->defs[i].type,
-                        NULL, fp->defs[i].data, 0, NPY_ARRAY_FARRAY, NULL);
-                if (v == NULL)
-                    return NULL;
-                /* Py_INCREF(v); */
-                return v;
-            }
-            else { /* array is not allocated */
-                Py_RETURN_NONE;
-            }
+            #ifdef Py_GIL_DISABLED
+            Py_BEGIN_CRITICAL_SECTION(fp);
+            #endif
+            result = fortran_getattr_allocatable(fp, &fp->defs[i]);
+            #ifdef Py_GIL_DISABLED
+            Py_END_CRITICAL_SECTION()
+            #endif
+            return result;
         }
     if (strcmp(name, "__dict__") == 0) {
         Py_INCREF(fp->dict);
@@ -397,10 +408,70 @@ fortran_getattr(PyFortranObject *fp, char *name)
 }
 
 static int
+fortran_setattr_array(FortranDataDef *fp_defs_i, PyObject *v)
+{
+    int k, flag;
+    npy_intp dims[F2PY_MAX_DIMS];
+    PyArrayObject *arr = NULL;
+
+    if (fp_defs_i->func != NULL) { /* is allocatable array */
+        if (v != Py_None) { /* set new value (reallocate if needed --
+                            see f2py generated code for more
+                            details ) */
+            for (k = 0; k < fp_defs_i->rank; k++) dims[k] = -1;
+            if ((arr = array_from_pyobj(fp_defs_i->type, dims,
+                                        fp_defs_i->rank, F2PY_INTENT_IN,
+                                        v)) == NULL)
+                return -1;
+            (*(fp_defs_i->func))(&fp_defs_i->rank, PyArray_DIMS(arr),
+                                    set_data, &flag, &fp_defs_i->data);
+        }
+        else { /* deallocate */
+            for (k = 0; k < fp_defs_i->rank; k++) dims[k] = 0;
+            (*(fp_defs_i->func))(&fp_defs_i->rank, dims, set_data,
+                                    &flag, &fp_defs_i->data);
+            for (k = 0; k < fp_defs_i->rank; k++) dims[k] = -1;
+        }
+        memcpy(fp_defs_i->dims.d, dims,
+                fp_defs_i->rank * sizeof(npy_intp));
+    }
+    else { /* not allocatable array */
+        if ((arr = array_from_pyobj(fp_defs_i->type, fp_defs_i->dims.d,
+                                    fp_defs_i->rank, F2PY_INTENT_IN,
+                                    v)) == NULL)
+            return -1;
+    }
+    if (fp_defs_i->data !=
+        NULL) { /* copy Python object to Fortran array */
+        npy_intp s = PyArray_MultiplyList(fp_defs_i->dims.d,
+                                            PyArray_NDIM(arr));
+        if (s == -1)
+            s = PyArray_MultiplyList(PyArray_DIMS(arr), PyArray_NDIM(arr));
+        if (s < 0 || (memcpy(fp_defs_i->data, PyArray_DATA(arr),
+                                s * PyArray_ITEMSIZE(arr))) == NULL) {
+            if ((PyObject *)arr != v) {
+                Py_DECREF(arr);
+            }
+            return -1;
+        }
+        if ((PyObject *)arr != v) {
+            Py_DECREF(arr);
+        }
+    }
+    else if (fp_defs_i->func == NULL) {
+        PyErr_SetString(
+            PyExc_AttributeError,
+            "Attempt to set non-allocatable fortran array failed"
+        );
+        return -1;
+    }
+    return 0; /* successful */
+}
+
+static int
 fortran_setattr(PyFortranObject *fp, char *name, PyObject *v)
 {
-    int i, j, flag;
-    PyArrayObject *arr = NULL;
+    int i, j, result;
     for (i = 0, j = 1; i < fp->len && (j = strcmp(name, fp->defs[i].name));
          i++)
         ;
@@ -410,56 +481,14 @@ fortran_setattr(PyFortranObject *fp, char *name, PyObject *v)
                             "over-writing fortran routine");
             return -1;
         }
-        if (fp->defs[i].func != NULL) { /* is allocatable array */
-            npy_intp dims[F2PY_MAX_DIMS];
-            int k;
-            save_def = &fp->defs[i];
-            if (v != Py_None) { /* set new value (reallocate if needed --
-                                   see f2py generated code for more
-                                   details ) */
-                for (k = 0; k < fp->defs[i].rank; k++) dims[k] = -1;
-                if ((arr = array_from_pyobj(fp->defs[i].type, dims,
-                                            fp->defs[i].rank, F2PY_INTENT_IN,
-                                            v)) == NULL)
-                    return -1;
-                (*(fp->defs[i].func))(&fp->defs[i].rank, PyArray_DIMS(arr),
-                                      set_data, &flag);
-            }
-            else { /* deallocate */
-                for (k = 0; k < fp->defs[i].rank; k++) dims[k] = 0;
-                (*(fp->defs[i].func))(&fp->defs[i].rank, dims, set_data,
-                                      &flag);
-                for (k = 0; k < fp->defs[i].rank; k++) dims[k] = -1;
-            }
-            memcpy(fp->defs[i].dims.d, dims,
-                   fp->defs[i].rank * sizeof(npy_intp));
-        }
-        else { /* not allocatable array */
-            if ((arr = array_from_pyobj(fp->defs[i].type, fp->defs[i].dims.d,
-                                        fp->defs[i].rank, F2PY_INTENT_IN,
-                                        v)) == NULL)
-                return -1;
-        }
-        if (fp->defs[i].data !=
-            NULL) { /* copy Python object to Fortran array */
-            npy_intp s = PyArray_MultiplyList(fp->defs[i].dims.d,
-                                              PyArray_NDIM(arr));
-            if (s == -1)
-                s = PyArray_MultiplyList(PyArray_DIMS(arr), PyArray_NDIM(arr));
-            if (s < 0 || (memcpy(fp->defs[i].data, PyArray_DATA(arr),
-                                 s * PyArray_ITEMSIZE(arr))) == NULL) {
-                if ((PyObject *)arr != v) {
-                    Py_DECREF(arr);
-                }
-                return -1;
-            }
-            if ((PyObject *)arr != v) {
-                Py_DECREF(arr);
-            }
-        }
-        else
-            return (fp->defs[i].func == NULL ? -1 : 0);
-        return 0; /* successful */
+        #if Py_GIL_DISABLED
+        Py_BEGIN_CRITICAL_SECTION(fp);
+        #endif
+        result = fortran_setattr_array(&fp->defs[i], v);
+        #if Py_GIL_DISABLED
+        Py_END_CRITICAL_SECTION()
+        #endif
+        return result;
     }
     if (fp->dict == NULL) {
         fp->dict = PyDict_New();
