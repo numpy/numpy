@@ -1042,6 +1042,22 @@ def polydiv(u, v):
     >>> np.polydiv(x, y)
     (array([1.5 , 1.75]), array([0.25]))
 
+    The case where the divisor has higher degree than the dividend returns
+    a zero quotient and the dividend as remainder:
+
+    >>> x = np.array([1.0, 2.0])
+    >>> y = np.array([1.0, 2.0, 3.0])
+    >>> np.polydiv(x, y)
+    (array([0.]), array([1., 2.]))
+
+    A perfect factoring case with zero remainder, since
+    :math:`x^2 - 1 = (x-1)(x+1)`:
+
+    >>> x = np.array([1.0, 0.0, -1.0])
+    >>> y = np.array([1.0, -1.0])
+    >>> np.polydiv(x, y)
+    (array([1., 1.]), array([0.]))
+
     """
     truepoly = (isinstance(u, poly1d) or isinstance(v, poly1d))
     u = atleast_1d(u) + 0.0
