@@ -1365,6 +1365,22 @@ class TestBooleanIndexing:
             "size of axis is 1 but size of corresponding boolean axis is 2",
             lambda: a[idx])
 
+    def test_assignment_cast_error_aborts_iteration(self):
+        # A failing cast must abort the assignment: no further chunks may
+        # be processed and the error must be raised. The iteration used to
+        # continue after a failed chunk, relying on every later cast call
+        # failing fast on the pending exception to keep the error alive.
+        a = np.zeros((40, 30))[:, ::2]
+        mask = np.zeros(a.shape, dtype=bool)
+        mask[:2] = True
+        mask[2:, :5] = True
+        vals = np.arange(float(mask.sum())).astype(object)
+        vals[29] = object()
+        with pytest.raises(TypeError):
+            a[mask] = vals
+        # rows after the failing chunk are untouched
+        assert not a[2:].any()
+
 
 class TestArrayToIndexDeprecation:
     """Creating an index from array not 0-D is an error.
