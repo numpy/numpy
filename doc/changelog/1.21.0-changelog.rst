@@ -659,7 +659,7 @@ A total of 581 pull requests were merged for this release.
 * `#18880 <https://github.com/numpy/numpy/pull/18880>`__: API: Ensure that casting does not affect ufunc loop
 * `#18882 <https://github.com/numpy/numpy/pull/18882>`__: ENH: Add min values comparison for floating point
 * `#18885 <https://github.com/numpy/numpy/pull/18885>`__: MAINT: Remove unsafe unions and ABCs from return-annotations
-* `#18889 <https://github.com/numpy/numpy/pull/18889>`__: ENH: Add SIMD operations for min and max value comparision
+* `#18889 <https://github.com/numpy/numpy/pull/18889>`__: ENH: Add SIMD operations for min and max value comparison
 * `#18890 <https://github.com/numpy/numpy/pull/18890>`__: MAINT: ssize_t -> Py_ssize_t and other fixes for Python v3.10.0
 * `#18891 <https://github.com/numpy/numpy/pull/18891>`__: MAINT: Bump typing-extensions from 3.7.4.3 to 3.10.0.0
 * `#18893 <https://github.com/numpy/numpy/pull/18893>`__: DOC: Add a set of standard replies.
