@@ -1227,6 +1227,7 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/flagsobject.c',
   'src/multiarray/getset.c',
   'src/multiarray/hashdescr.c',
+  'src/multiarray/histogram.cpp',
   'src/multiarray/item_selection.c',
   'src/multiarray/iterators.c',
   'src/multiarray/legacy_dtype_implementation.c',
