@@ -27,11 +27,30 @@ def _fr1(a):
     return a
 
 
-_convert_to_float = {
-    ntypes.csingle: ntypes.single,
-    ntypes.complex128: ntypes.float64,
-    ntypes.clongdouble: ntypes.longdouble
-    }
+def _convert_to_float_if_complex(dtype):
+    # At this point, we assume the array may be a complex array for which we
+    # need to find the real dtype counterpart.
+    # In C, we could short-circuit but this is cached so create an array and
+    # check arr.real and arr.imag.
+    # A complex compsed of (real, imag) will:
+    # - return a view for both arr.real and arr.imag
+    #   (non-complex will not do this)
+    # - return the identical dtype for both arr.real and arr.imag
+    #   (might reject theoretical crazy complex dtypes with mixed precision)
+    # This may be over-careful, but let's err on the safe side.
+    try:
+        arr = numeric.empty(1, dtype=dtype)
+        imag_part = arr.imag
+        real_part = arr.real
+    except Exception:
+        # if array creation or arr.imag fails, assume it's not a complex.
+        pass
+    else:
+        if (imag_part.base is real_part.base is arr
+                and imag_part.dtype == real_part.dtype):
+            return imag_part.dtype
+    return dtype
+
 
 # Parameters for creating MachAr / MachAr-like objects
 _title_fmt = 'numpy {} precision floating point number'
@@ -193,17 +212,19 @@ class finfo:
         if obj is not None:
             return obj
         dtypes = [dtype]
-        newdtype = ntypes.obj2sctype(dtype)
+        # Call result_type to normalize to e.g. native byte-order:
+        newdtype = numeric.result_type(dtype)
         if newdtype is not dtype:
             dtypes.append(newdtype)
             dtype = newdtype
-        if not issubclass(dtype, numeric.inexact):
-            raise ValueError(f"data type {dtype!r} not inexact")
+
         obj = cls._finfo_cache.get(dtype)
         if obj is not None:
             return obj
-        if not issubclass(dtype, numeric.floating):
-            newdtype = _convert_to_float[dtype]
+
+        sctype = newdtype.type
+        if sctype is not None and not issubclass(sctype, numeric.floating):
+            newdtype = _convert_to_float_if_complex(dtype)
             if newdtype is not dtype:
                 # dtype changed, for example from complex128 to float64
                 dtypes.append(newdtype)
