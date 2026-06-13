@@ -482,6 +482,30 @@ class TestLinspace:
         y = linspace(start, stop, 3)
         assert_array_equal(y, array([[0.0, 1.0], [1.0, 1.0], [2.0, 1.0]]))
 
+    def test_inf_equal_endpoints(self):
+        # Regression test for gh-26699, equal infinite endpoint were returning NaN.
+        for inf in [np.inf, -np.inf]:
+            assert_array_equal(linspace(inf, inf, 0), array([]))
+            assert_array_equal(linspace(inf, inf, 1), array([inf]))
+            for num in [2, 5, 50]:
+                assert_array_equal(linspace(inf, inf, num), np.full(num, inf))
+
+        assert_array_equal(linspace(np.inf, np.inf, 5, endpoint=False),
+                           np.full(5, np.inf))
+
+        y, step = linspace(np.inf, np.inf, 2, retstep=True)
+        assert_array_equal(y, array([np.inf, np.inf]))
+        assert_equal(step, 0.0)
+
+        start = array([np.inf, 1.0])
+        stop = array([np.inf, 3.0])
+        result = linspace(start, stop, 3)
+        assert_array_equal(result,
+                           array([[np.inf, 1.0], [np.inf, 2.0], [np.inf, 3.0]]))
+
+        mixed = linspace(np.inf, -np.inf, 3)
+        assert not np.all(np.isfinite(mixed))
+
 
 class TestAdd_newdoc:
 

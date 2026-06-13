@@ -138,7 +138,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         integer_dtype = _nx.issubdtype(dtype, _nx.integer)
 
     # Use `dtype=type(dt)` to enforce a floating point evaluation:
-    delta = np.subtract(stop, start, dtype=type(dt))
+    with np.errstate(invalid='ignore'):
+        delta = np.subtract(stop, start, dtype=type(dt))
+    if _nx.any(_nx.isnan(delta)):
+        delta = _nx.where(start == stop, _nx.zeros_like(delta), delta)
     y = _nx.arange(
         0, num, dtype=dt, device=device
     ).reshape((-1,) + (1,) * ndim(delta))
@@ -152,25 +155,30 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         step = delta / div
         any_step_zero = (
             step == 0 if _mult_inplace else _nx.asanyarray(step == 0).any())
-        if any_step_zero:
-            # Special handling for denormal numbers, gh-5437
-            y /= div
-            if _mult_inplace:
-                y *= delta
+        # Use errstate to suppress warnings from 0*inf or 0*nan that can arise
+        # when step or delta is infinite (e.g. linspace(inf, -inf, N)).
+        with np.errstate(invalid='ignore'):
+            if any_step_zero:
+                # Special handling for denormal numbers, gh-5437
+                y /= div
+                if _mult_inplace:
+                    y *= delta
+                else:
+                    y = y * delta
+            elif _mult_inplace:
+                y *= step
             else:
-                y = y * delta
-        elif _mult_inplace:
-            y *= step
-        else:
-            y = y * step
+                y = y * step
     else:
         # sequences with 0 items or 1 item with endpoint=True (i.e. div <= 0)
         # have an undefined step
         step = nan
         # Multiply with delta to allow possible override of output class.
-        y = y * delta
+        with np.errstate(invalid='ignore'):
+            y = y * delta
 
-    y += start
+    with np.errstate(invalid='ignore'):
+        y += start
 
     if endpoint and num > 1:
         y[-1, ...] = stop
