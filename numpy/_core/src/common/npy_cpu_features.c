@@ -988,6 +988,17 @@ npy__cpu_init_features(void)
 #endif
 }
 
+/************** Elbrus2000 ***************/
+
+#elif defined(NPY_CPU_E2K)
+
+static void
+npy__cpu_init_features(void)
+{
+    npy__cpu_have[NPY_CPU_FEATURE_X86_V2] = 1;
+    npy__cpu_have[NPY_CPU_FEATURE_X86_V3] = 1;
+}
+
 /*********** Unsupported ARCH ***********/
 #else
 static void
