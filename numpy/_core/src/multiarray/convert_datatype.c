@@ -38,6 +38,7 @@
 #include "arrayobject.h"
 #include "npy_static_data.h"
 #include "multiarraymodule.h"
+#include "numpy/halffloat.h"
 
 /*
  * Required length of string when converting from unsigned integer type.
@@ -1319,30 +1320,30 @@ static int min_scalar_type_num(char *valueptr, int type_num,
         }
         case NPY_FLOAT: {
             float value = *(float *)valueptr;
-            if ((value > -65000 && value < 65000) || !npy_isfinite(value)) {
+            if ((value > -NPY_MAX_HALF_NUM && value < NPY_MAX_HALF_NUM) || !npy_isfinite(value)) {
                 return NPY_HALF;
             }
             break;
         }
         case NPY_DOUBLE: {
             double value = *(double *)valueptr;
-            if ((value > -65000 && value < 65000) || !npy_isfinite(value)) {
+            if ((value > -NPY_MAX_HALF_NUM && value < NPY_MAX_HALF_NUM) || !npy_isfinite(value)) {
                 return NPY_HALF;
             }
-            else if (value > -3.4e38 && value < 3.4e38) {
+            else if (value > -__FLT_MAX__ && value < __FLT_MAX__) {
                 return NPY_FLOAT;
             }
             break;
         }
         case NPY_LONGDOUBLE: {
             npy_longdouble value = *(npy_longdouble *)valueptr;
-            if ((value > -65000 && value < 65000) || !npy_isfinite(value)) {
+            if ((value > -NPY_MAX_HALF_NUM && value < NPY_MAX_HALF_NUM) || !npy_isfinite(value)) {
                 return NPY_HALF;
             }
-            else if (value > -3.4e38 && value < 3.4e38) {
+            else if (value > -__FLT_MAX__ && value < __FLT_MAX__) {
                 return NPY_FLOAT;
             }
-            else if (value > -1.7e308 && value < 1.7e308) {
+            else if (value > -__DBL_MAX__ && value < __DBL_MAX__) {
                 return NPY_DOUBLE;
             }
             break;
