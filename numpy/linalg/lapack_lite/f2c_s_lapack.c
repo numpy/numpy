@@ -31271,7 +31271,7 @@ L80:
     =====================================================================
 
 
-       Test the input paramters.
+       Test the input parameters.
 */
 
     /* Parameter adjustments */
