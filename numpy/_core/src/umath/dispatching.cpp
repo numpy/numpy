@@ -226,6 +226,12 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
         else if (strcmp(slot->name, "argsort") == 0) {
             Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.argsort));
         }
+        else if (strcmp(slot->name, "partition") == 0) {
+            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.partition));
+        }
+        else if (strcmp(slot->name, "argpartition") == 0) {
+            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.argpartition));
+        }
         else {
             Py_XSETREF(ufunc, npy_import_entry_point(slot->name));
             if (ufunc == NULL) {
@@ -250,6 +256,16 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
         }
         else if (ufunc == npy_interned_str.argsort) {
             if (set_static_method<&NPY_DType_Slots::argsort_meth, false>(slot->spec) < 0) {
+                goto finish;
+            }
+        }
+        else if (ufunc == npy_interned_str.partition) {
+            if (set_static_method<&NPY_DType_Slots::part_meth, false>(slot->spec) < 0) {
+                goto finish;
+            }
+        }
+        else if (ufunc == npy_interned_str.argpartition) {
+            if (set_static_method<&NPY_DType_Slots::argpart_meth, false>(slot->spec) < 0) {
                 goto finish;
             }
         }
