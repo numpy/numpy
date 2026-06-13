@@ -1,7 +1,8 @@
-import numpy as np
 import pytest
 
 from . import util
+
+import numpy as np
 
 
 @pytest.mark.slow
@@ -52,15 +53,15 @@ class TestAllocatable(util.F2PyTest):
         assert v == -1
 
         self.module.mod.three_d = (
-            np.linspace(0, 27-27j, 27, dtype=np.complex64)
+            np.linspace(0, 27 - 27j, 27, dtype=np.complex64)
         ).reshape(3, 3, 3)
 
         v = self.module.mod.probe_three_d(1, 1, 1)
         assert np.allclose(v, 0)
         v = self.module.mod.probe_three_d(2, 2, 2)
-        assert np.allclose(v, 13.5-13.5j)
+        assert np.allclose(v, 13.5 - 13.5j)
         v = self.module.mod.probe_three_d(3, 3, 3)
-        assert np.allclose(v, 27-27.j)
+        assert np.allclose(v, 27 - 27.j)
 
         self.module.mod.three_d[1, 1, 1] = 42j
         v = self.module.mod.probe_three_d(2, 2, 2)
