@@ -2880,7 +2880,7 @@ def array[ScalarT: np.generic](
     ndmin: int = 0,
 ) -> _MaskedArray[ScalarT]: ...
 @overload
-def array[ScalarT: np.generic](
+def array(
     data: object,
     dtype: DTypeLike | None = None,
     copy: bool = False,
@@ -2892,7 +2892,7 @@ def array[ScalarT: np.generic](
     shrink: bool = True,
     subok: bool = True,
     ndmin: int = 0,
-) -> _MaskedArray[ScalarT]: ...
+) -> _MaskedArray[Any]: ...
 
 # keep in sync with `array`
 @overload
@@ -2908,11 +2908,11 @@ def asarray[ScalarT: np.generic](
     order: _OrderKACF | None = None,
 ) -> _MaskedArray[ScalarT]: ...
 @overload
-def asarray[ScalarT: np.generic](
+def asarray(
     a: object,
     dtype: DTypeLike | None = None,
     order: _OrderKACF | None = None,
-) -> _MaskedArray[ScalarT]: ...
+) -> _MaskedArray[Any]: ...
 
 # keep in sync with `asarray` (but note the additional first overload)
 @overload
@@ -2930,11 +2930,11 @@ def asanyarray[ScalarT: np.generic](
     order: _OrderKACF | None = None,
 ) -> _MaskedArray[ScalarT]: ...
 @overload
-def asanyarray[ScalarT: np.generic](
+def asanyarray(
     a: object,
     dtype: DTypeLike | None = None,
     order: _OrderKACF | None = None,
-) -> _MaskedArray[ScalarT]: ...
+) -> _MaskedArray[Any]: ...
 
 #
 def is_masked(x: object) -> bool: ...
