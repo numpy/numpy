@@ -446,11 +446,11 @@ static PyObject *
 
 /**begin repeat
  *
- * #NAME = CFLOAT, CDOUBLE, CLONGDOUBLE#
- * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
- * #ftype = npy_float, npy_double, npy_longdouble#
- * #kind = CFloat, CDouble, CLongDouble#
- * #suffix = f, , l#
+ * #NAME = CFLOAT, CDOUBLE#
+ * #type = npy_cfloat, npy_cdouble#
+ * #ftype = npy_float, npy_double#
+ * #kind = CFloat, CDouble#
+ * #suffix = f, #
  */
 NPY_NO_EXPORT int
 @NAME@_setitem(PyArray_Descr *descr, PyObject *op, char *ov)
@@ -528,6 +528,7 @@ NPY_NO_EXPORT int
 }
 
 /**end repeat**/
+
 
 static inline npy_longdouble
 string_to_long_double(PyObject*op)
@@ -628,6 +629,177 @@ LONGDOUBLE_setitem(PyArray_Descr *descr, PyObject *op, char *ov)
     }
     // Support descr == NULL for scalarmath paths
     LONGDOUBLE_copyswap(
+        ov, &temp, descr != NULL && PyDataType_ISBYTESWAPPED(descr), NULL);
+    return 0;
+}
+
+static inline npy_clongdouble
+string_to_clong_double(PyObject *op)
+{
+    char *s;
+    char *start;
+    char *end;
+    npy_clongdouble temp;
+    npy_csetreall(&temp, 0);
+    npy_csetimagl(&temp, 0);
+    PyObject *b;
+
+    if (PyUnicode_Check(op)) {
+        b = PyUnicode_AsUTF8String(op);
+        if(!b) {
+            return temp;
+        }
+    }
+    else {
+        b = op;
+        Py_XINCREF(b);
+    }
+    s = PyBytes_AsString(b);
+    if (s) {
+        npy_bool has_brackets = NPY_FALSE;
+        start = s;
+
+        while (isspace((unsigned char) *s)) {
+            ++s;
+        }
+        if (*s == '(') {
+            has_brackets = NPY_TRUE;
+            s++;
+        }
+
+        errno = 0;
+        npy_longdouble real = NumPyOS_ascii_strtold(s, &end);
+        if (errno == ERANGE) {
+            if (PyErr_Warn(PyExc_RuntimeWarning,
+                    "overflow encountered in conversion from string") < 0) {
+                Py_XDECREF(b);
+                return temp;
+            }
+        }
+        else if (errno) {
+            goto parse_failure;
+        }
+
+        /* Nothing parsed */
+        if (end == s) {
+            goto parse_failure;
+        }
+
+        const char *p = end;
+        if (*p != '+' && *p != '-') {
+            // Case 1: Pure imaginary or pure real (e.g., "2j")
+            if(*p == 'j' || *p == 'J') {
+                p++;
+                npy_csetreall(&temp, 0);
+                npy_csetimagl(&temp, real);
+            } else {
+                npy_csetreall(&temp, real);
+                npy_csetimagl(&temp, 0);
+            }
+            end = (char *)p;
+        }
+        else {
+            // Case 2: Complex (e.g., "2+2j")
+            errno = 0;
+            npy_longdouble imag = NumPyOS_ascii_strtold(p, &end);
+            if (errno == ERANGE) {
+                if (PyErr_Warn(PyExc_RuntimeWarning,
+                      "overflow encountered in conversion from string") < 0) {
+                Py_XDECREF(b);
+                return temp;
+                }
+            }
+            else if (errno) {
+                goto parse_failure;
+            }
+
+            if (end == p) {
+                goto parse_failure;
+            }
+
+            if (*end != 'j' && *end != 'J') {
+                goto parse_failure;
+            }
+            end++;
+            npy_csetreall(&temp, real);
+            npy_csetimagl(&temp, imag);
+        }
+
+        while (*end != '\0' && isspace((unsigned char)*end)) {
+            end++;
+        }
+
+        if (has_brackets == NPY_TRUE) {
+            if (*end != ')') {
+                goto parse_failure;
+            }
+            end++;
+            while(isspace((unsigned char)*end)) {
+                end++;
+            }
+        }
+        
+        if (*end != '\0') {
+            goto parse_failure;
+        }
+        
+        Py_XDECREF(b);
+        return temp;
+    }
+    else {
+        PyErr_Clear();
+        Py_XDECREF(b);
+        return temp;
+    }
+
+parse_failure:
+    PyErr_Format(PyExc_ValueError,
+                "invalid literal for complex long double: %s",
+                start);
+    Py_XDECREF(b);
+    return temp;
+}
+
+NPY_NO_EXPORT int
+CLONGDOUBLE_setitem(PyArray_Descr *descr, PyObject *op, char *ov)
+{
+    npy_clongdouble temp;
+
+    if (PyArray_IsZeroDim(op)) {
+        return convert_to_scalar_and_retry(descr, op, ov, CLONGDOUBLE_setitem);
+    }
+
+    if (PyArray_IsScalar(op, CLongDouble)) {
+        temp = PyArrayScalar_VAL(op, CLongDouble);
+    }
+    else {
+        if (op == Py_None) {
+            npy_csetreall(&temp, NPY_NAN);
+            npy_csetimagl(&temp, NPY_NAN);
+        }
+        else if (PyBytes_Check(op) || PyUnicode_Check(op)) {
+            temp = string_to_clong_double(op);
+        }
+        else if ((PyLong_Check(op) && !PyBool_Check(op))) {
+            npy_longdouble real = npy_longdouble_from_PyLong(op);
+            npy_csetreall(&temp, real);
+            npy_csetimagl(&temp, 0);
+        }
+        else {
+            Py_complex oop = PyComplex_AsCComplex(op);
+            if (error_converting(oop.real)) {
+                return -1;
+            }
+            npy_csetreall(&temp, (npy_longdouble) oop.real);
+            npy_csetimagl(&temp, (npy_longdouble) oop.imag);
+        }
+    }
+    if (PyErr_Occurred()) {
+        return -1;
+    }
+    
+    memcpy(ov, &temp, NPY_SIZEOF_CLONGDOUBLE);
+    CLONGDOUBLE_copyswap(
         ov, &temp, descr != NULL && PyDataType_ISBYTESWAPPED(descr), NULL);
     return 0;
 }
