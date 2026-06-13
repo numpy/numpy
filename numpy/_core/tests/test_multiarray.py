@@ -8616,6 +8616,132 @@ class TestInner:
             assert_equal(np.inner(b, a).transpose(2, 3, 0, 1), desired)
 
 
+class TestDotFamilyFallback:
+    # The dot family (dot/inner/vdot/tensordot/multi_dot) historically requires
+    # a legacy ``dotfunc`` ArrFuncs slot, which new-style user DTypes cannot
+    # provide.  For such DTypes numpy falls back to the ``matmul``/``multiply``
+    # gufuncs via the private helpers in ``numpy._core.numeric``.  These tests
+    # exercise the helpers directly (against the legacy ``np.dot`` oracle) and,
+    # when available, end-to-end through a real new-style DType (quaddtype).
+
+    @pytest.mark.parametrize("sa,sb", [
+        ((), ()), ((), (3, 4)), ((4, 3), ()), ((5,), (5,)), ((3,), (3, 4)),
+        ((4, 3), (3,)), ((4, 3), (3, 5)), ((2, 3, 4), (4,)), ((4,), (2, 4, 5)),
+        ((2, 3, 4), (6, 4, 5)), ((0, 3), (3, 4)), ((4, 0), (0, 5)),
+    ])
+    def test_dot_fallback_matches_dot(self, sa, sb):
+        from numpy._core.numeric import _dot_fallback
+        rng = np.random.default_rng(1)
+        a = rng.integers(-4, 5, sa).astype(np.float64)
+        b = rng.integers(-4, 5, sb).astype(np.float64)
+        ref = np.dot(a, b)
+        got = _dot_fallback(a, b)
+        assert_array_equal(got, ref, strict=True)
+
+    def test_dot_fallback_noncontiguous_inputs(self):
+        # matmul handles strided operands, so the fallback needs no input copy:
+        # verify correct values for F-contiguous and sliced (strided) inputs,
+        # and a C-contiguous output like np.dot (incl the 0-D scalar*array
+        # branch, where elementwise multiply would keep the operand's F order).
+        from numpy._core.numeric import _dot_fallback
+        a = np.arange(12, dtype=np.float64).reshape(4, 3)
+        b = np.arange(15, dtype=np.float64).reshape(3, 5)
+        inputs = [
+            (np.array(3.0), np.asfortranarray(a)),
+            (np.asfortranarray(a), np.asfortranarray(b)),
+            (np.arange(24.).reshape(4, 6)[:, ::2],
+             np.arange(30.).reshape(6, 5)[::2]),
+        ]
+        for x, y in inputs:
+            ref = np.dot(x, y)
+            got = _dot_fallback(x, y)
+            assert_array_equal(got, ref, strict=True)
+            assert got.flags["C_CONTIGUOUS"]
+            assert got.strides == ref.strides
+
+    def test_dot_fallback_does_not_conjugate(self):
+        # dot (unlike vdot) must not conjugate, even for complex input
+        from numpy._core.numeric import _dot_fallback
+        a = np.array([1 + 2j, 3 + 4j])
+        b = np.array([5 + 6j, 7 + 8j])
+        assert _dot_fallback(a, b) == np.dot(a, b)
+
+    def test_dot_fallback_out(self):
+        from numpy._core.numeric import _dot_fallback
+        a = np.arange(12, dtype=np.float64).reshape(4, 3)
+        b = np.arange(15, dtype=np.float64).reshape(3, 5)
+        out = np.empty((4, 5), dtype=np.float64)
+        ret = _dot_fallback(a, b, out=out)
+        assert ret is out
+        assert_array_equal(out, np.dot(a, b))
+        # 1-D . 1-D writes the scalar result into a 0-D out
+        s = np.empty(())
+        assert _dot_fallback(a[0], b[:, 0], out=s) is s
+        assert s == np.dot(a[0], b[:, 0])
+        # strict out= contract: wrong shape / dtype / non-C-contiguous all reject
+        assert_raises(ValueError, _dot_fallback, a, b, out=np.empty((4, 4)))
+        assert_raises(ValueError, _dot_fallback, a, b,
+                      out=np.empty((4, 5), dtype=np.float32))
+        assert_raises(ValueError, _dot_fallback, a, b,
+                      out=np.asfortranarray(np.empty((4, 5))))
+
+    def test_vdot_fallback_matches_vdot(self):
+        # vdot conjugates the first argument; vecdot reproduces that on 1-D
+        from numpy._core.numeric import _vdot_fallback
+        rng = np.random.default_rng(2)
+        a = rng.integers(-4, 5, (2, 3)).astype(np.float64)
+        b = rng.integers(-4, 5, (2, 3)).astype(np.float64)
+        assert _vdot_fallback(a, b) == np.vdot(a, b)
+        ac = (a + 1j * b).astype(np.complex128)
+        bc = (b - 1j * a).astype(np.complex128)
+        assert _vdot_fallback(ac, bc) == np.vdot(ac, bc)
+
+    def test_quaddtype_dot_family(self):
+        from numpy._core.tests._quaddtype import importorskip_quaddtype
+        numpy_quaddtype = importorskip_quaddtype()
+        qd = numpy_quaddtype.QuadPrecDType()
+
+        def q(arr):
+            return np.array(arr, dtype=qd)
+
+        def f(arr):
+            arr = np.asarray(arr)
+            flat = np.array([float(v) for v in arr.ravel()])
+            return flat.reshape(arr.shape)
+
+        rng = np.random.default_rng(3)
+        a = rng.integers(-4, 5, (3,)).astype(np.float64)
+        b = rng.integers(-4, 5, (3,)).astype(np.float64)
+        A = rng.integers(-4, 5, (4, 3)).astype(np.float64)
+        B = rng.integers(-4, 5, (3, 5)).astype(np.float64)
+        C = rng.integers(-4, 5, (5, 2)).astype(np.float64)
+        D = rng.integers(-4, 5, (2, 6)).astype(np.float64)
+        T = rng.integers(-4, 5, (2, 3, 4)).astype(np.float64)
+        U = rng.integers(-4, 5, (4, 3, 2)).astype(np.float64)
+        vL = rng.integers(-4, 5, (4,)).astype(np.float64)
+        vR = rng.integers(-4, 5, (5,)).astype(np.float64)
+
+        # 1-D . 1-D returns a scalar, exactly like legacy np.dot
+        scalar = np.dot(q(a), q(b))
+        assert np.ndim(scalar) == 0
+        assert float(scalar) == np.dot(a, b)
+
+        assert_array_equal(f(np.dot(q(A), q(B))), np.dot(A, B))
+        assert_array_equal(f(np.inner(q(A), q(A))), np.inner(A, A))
+        assert float(np.vdot(q(a), q(b))) == np.vdot(a, b)
+
+        for axes in (0, 1):
+            assert_array_equal(f(np.tensordot(q(A), q(B), axes=axes)),
+                               np.tensordot(A, B, axes=axes))
+        for axes in (([1, 2], [1, 0]), ([2], [0])):
+            assert_array_equal(f(np.tensordot(q(T), q(U), axes=axes)),
+                               np.tensordot(T, U, axes=axes))
+
+        for chain in ([A, B, C], [A, B, C, D], [vL, A, B], [A, B, vR]):
+            assert_array_equal(f(np.linalg.multi_dot([q(m) for m in chain])),
+                               np.linalg.multi_dot(chain))
+
+
 class TestChoose:
     def _create_data(self):
         x = 2 * np.ones((3,), dtype=int)
