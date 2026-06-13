@@ -234,6 +234,44 @@ class TestArrayEqual(_GenericTest):
             self._test_equal(a, b)
             self._test_equal(b, a)
 
+    def test_equal_mask(self):
+        # Mask mismatch should fail with equal_mask=True
+        a = np.ma.MaskedArray([4.0], mask=[True])
+        b = np.array([3.0])
+        with pytest.raises(AssertionError, match="mask mismatch"):
+            self._assert_func(a, b, equal_mask=True)
+
+        c = np.ma.MaskedArray([1.0, 2.0, 3.0], mask=[True, False, False])
+        d = np.ma.MaskedArray([1.0, 2.0, 3.0], mask=[False, True, False])
+        with pytest.raises(AssertionError, match="mask mismatch"):
+            self._assert_func(c, d, equal_mask=True)
+
+        # Mask differences ignored by default
+        self._assert_func(a, b)
+        self._assert_func(c, d)
+
+    def test_equal_mask_ignores_masked_values(self):
+        # Masked values can differ when masks match
+        a = np.ma.MaskedArray([4.0, 2.0], mask=[True, False])
+        b = np.ma.MaskedArray([3.0, 2.0], mask=[True, False])
+        self._assert_func(a, b, equal_mask=True)
+
+        # Unmasked values must match
+        c = np.ma.MaskedArray([1.0, 2.0], mask=[True, False])
+        d = np.ma.MaskedArray([999.0, 5.0], mask=[True, False])
+        with pytest.raises(AssertionError, match="Mismatched elements"):
+            self._assert_func(c, d, equal_mask=True)
+
+        # 2D arrays
+        e = np.ma.MaskedArray([[1, 2], [3, 4]], mask=[[True, False], [False, False]])
+        f = np.ma.MaskedArray([[999, 2], [3, 4]], mask=[[True, False], [False, False]])
+        self._assert_func(e, f, equal_mask=True)
+
+        # Fully masked arrays
+        g = np.ma.MaskedArray([1.0, 2.0], mask=[True, True])
+        h = np.ma.MaskedArray([999.0, -999.0], mask=[True, True])
+        self._assert_func(g, h, equal_mask=True)
+
     def test_subclass_that_overrides_eq(self):
         # While we cannot guarantee testing functions will always work for
         # subclasses, the tests should ideally rely only on subclasses having
