@@ -826,7 +826,7 @@ void_ensure_canonical(_PyArray_LegacyDescr *self)
         int aligned = PyDataType_FLAGCHK((PyArray_Descr *)new, NPY_ALIGNED_STRUCT);
         new->flags = new->flags & ~NPY_FROM_FIELDS;
         new->flags |= NPY_NEEDS_PYAPI;  /* always needed for field access */
-        int totalsize = 0;
+        npy_intp totalsize = 0;
         int maxalign = 1;
         for (Py_ssize_t i = 0; i < field_num; i++) {
             PyObject *name = PyTuple_GET_ITEM(self->names, i);
@@ -847,7 +847,7 @@ void_ensure_canonical(_PyArray_LegacyDescr *self)
                         totalsize, field_descr->alignment);
                 maxalign = PyArray_MAX(maxalign, field_descr->alignment);
             }
-            PyObject *offset_obj = PyLong_FromLong(totalsize);
+            PyObject *offset_obj = PyLong_FromSsize_t(totalsize);
             if (offset_obj == NULL) {
                 Py_DECREF(new_tuple);
                 Py_DECREF(new);

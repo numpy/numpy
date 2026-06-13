@@ -2921,7 +2921,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
 
-        int itemsize = descrs[0]->elsize;
+        npy_intp itemsize = descrs[0]->elsize;
 
         /* Get the variables needed for the loop */
         iternext = NpyIter_GetIterNext(iter, NULL);
@@ -2967,7 +2967,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
                 }
             }
             else {
-                memmove(dataptr_copy[2], dataptr_copy[1], itemsize);
+                memmove(dataptr_copy[2], dataptr_copy[1], (size_t)itemsize);
             }
 
             if (count_m1 > 0) {
@@ -2986,7 +2986,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     else if (iter == NULL) {
         char *dataptr_copy[3];
 
-        int itemsize = descrs[0]->elsize;
+        npy_intp itemsize = descrs[0]->elsize;
 
         /* Execute the loop with no iterators */
         npy_intp count = PyArray_DIM(op[1], axis);
@@ -3026,7 +3026,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
             }
         }
         else {
-            memmove(dataptr_copy[2], dataptr_copy[1], itemsize);
+            memmove(dataptr_copy[2], dataptr_copy[1], (size_t)itemsize);
         }
 
         if (count > 1) {
@@ -3340,7 +3340,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         npy_intp stride0, stride1;
         npy_intp stride0_ind = PyArray_STRIDE(op[0], axis);
 
-        int itemsize = descrs[0]->elsize;
+        npy_intp itemsize = descrs[0]->elsize;
 
         /* Get the variables needed for the loop */
         iternext = NpyIter_GetIterNext(iter, NULL);
@@ -3393,7 +3393,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                                         *(PyObject **)dataptr_copy[1];
                 }
                 else {
-                    memmove(dataptr_copy[0], dataptr_copy[1], itemsize);
+                    memmove(dataptr_copy[0], dataptr_copy[1], (size_t)itemsize);
                 }
 
                 if (count > 1) {
@@ -3413,7 +3413,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     else if (iter == NULL) {
         char *dataptr_copy[3];
 
-        int itemsize = descrs[0]->elsize;
+        npy_intp itemsize = descrs[0]->elsize;
 
         npy_intp stride0_ind = PyArray_STRIDE(op[0], axis);
         npy_intp stride1 = PyArray_STRIDE(op[1], axis);
@@ -3452,7 +3452,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                                     *(PyObject **)dataptr_copy[1];
             }
             else {
-                memmove(dataptr_copy[0], dataptr_copy[1], itemsize);
+                memmove(dataptr_copy[0], dataptr_copy[1], (size_t)itemsize);
             }
 
             if (count > 1) {
