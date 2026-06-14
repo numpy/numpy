@@ -1791,56 +1791,55 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
         }
     }
     else {
-        /* Use sorting, slower but equivalent */
-        method = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op)))->sort_meth;
-        if (method != NULL) {
-            PyArray_Descr *descr = PyArray_DESCR(op);
-            PyArray_DTypeMeta *dt = NPY_DTYPE(descr);
-
-            PyArray_DTypeMeta *dtypes[2] = {dt, dt};
-            PyArray_Descr *given_descrs[2] = {descr, descr};
-            npy_intp view_offset = 0;
-
-            if (method->resolve_descriptors(
-                method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
-                PyErr_SetString(PyExc_TypeError,
-                                "unable to resolve descriptors for partition");
-                return -1;
-            }
-            context.descriptors = loop_descrs;
-            context.parameters = (PyArrayMethod_SortParameters *) &part_params;
-            context.method = method;
-
-            npy_intp strides[2] = {loop_descrs[0]->elsize, loop_descrs[1]->elsize};
-
-            if (method->get_strided_loop(
-                &context, 1, 0, strides, &strided_loop, &auxdata, &method_flags) < 0) {
-                    ret = -1;
-                    goto fail;
-            }
-            is_partition = 0;
-        }
+        part = get_partition_func(PyArray_TYPE(op), which);
     }
 
-    if (method == NULL) {
-        part = get_partition_func(PyArray_TYPE(op), which);
-        if (part == NULL) {
-            /* Use sorting, slower but equivalent */
-            if ((PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare)
-                && !(which & NPY_SELECT_DESCENDING)) { // TODO: descending sorts for partition
-                sort = npy_quicksort;
-            }
-            else if (which & NPY_SELECT_DESCENDING) {
-                PyErr_SetString(PyExc_TypeError,
-                                "type does not support descending partition");
-                return -1;
-            }
-            else {
-                PyErr_SetString(PyExc_TypeError,
-                                "type does not have compare function");
-                return -1;
-            }
-            is_partition = 0;
+    if (method == NULL && part == NULL) {
+        /* Use sorting, slower but equivalent */
+        is_partition = 0;
+        method = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op)))->sort_meth;
+    }
+
+    if (!is_partition && method != NULL) {
+        PyArray_Descr *descr = PyArray_DESCR(op);
+        PyArray_DTypeMeta *dt = NPY_DTYPE(descr);
+
+        PyArray_DTypeMeta *dtypes[2] = {dt, dt};
+        PyArray_Descr *given_descrs[2] = {descr, descr};
+        npy_intp view_offset = 0;
+
+        if (method->resolve_descriptors(
+            method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
+            PyErr_SetString(PyExc_TypeError,
+                            "unable to resolve descriptors for partition");
+            return -1;
+        }
+        context.descriptors = loop_descrs;
+        context.parameters = (PyArrayMethod_SortParameters *) &part_params;
+        context.method = method;
+
+        npy_intp strides[2] = {loop_descrs[0]->elsize, loop_descrs[1]->elsize};
+
+        if (method->get_strided_loop(
+            &context, 1, 0, strides, &strided_loop, &auxdata, &method_flags) < 0) {
+                ret = -1;
+                goto fail;
+        }
+    }
+    else if (!is_partition) {
+        if ((PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare)
+            && !(which & NPY_SELECT_DESCENDING)) {
+            sort = npy_quicksort;
+        }
+        else if (which & NPY_SELECT_DESCENDING) {
+            PyErr_SetString(PyExc_TypeError,
+                            "type does not support descending partition");
+            return -1;
+        }
+        else {
+            PyErr_SetString(PyExc_TypeError,
+                            "type does not have compare function");
+            return -1;
         }
     }
 
@@ -1934,60 +1933,59 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
         }
     }
     else {
-        /* Use sorting, slower but equivalent */
-        method = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op)))->argsort_meth;
-        if (method != NULL) {
-            PyArray_Descr *descr = PyArray_DESCR(op);
-            PyArray_Descr *odescr = PyArray_DescrFromType(NPY_INTP);
-            PyArray_DTypeMeta *dt = NPY_DTYPE(descr);
-            PyArray_DTypeMeta *odt = NPY_DTYPE(odescr);
-
-            PyArray_DTypeMeta *dtypes[2] = {dt, odt};
-            PyArray_Descr *given_descrs[2] = {descr, odescr};
-            npy_intp view_offset = 0;
-
-            int resolve_ret = method->resolve_descriptors(
-                method, dtypes, given_descrs, loop_descrs, &view_offset);
-            Py_DECREF(odescr);
-            if (resolve_ret < 0) {
-                PyErr_SetString(PyExc_RuntimeError,
-                                "unable to resolve descriptors for argpartition");
-                return NULL;
-            }
-            context.descriptors = loop_descrs;
-            context.parameters = (PyArrayMethod_SortParameters *) &part_params;
-            context.method = method;
-
-            npy_intp strides[2] = {loop_descrs[0]->elsize, loop_descrs[1]->elsize};
-
-            if (method->get_strided_loop(
-                &context, 1, 0, strides, &strided_loop, &auxdata, &method_flags) < 0) {
-                ret = NULL;
-                goto fail;
-            }
-            is_partition = 0;
-        }
+        argpart = get_argpartition_func(PyArray_TYPE(op), which);
     }
 
-    if (method == NULL) {
-        argpart = get_argpartition_func(PyArray_TYPE(op), which);
-        if (argpart == NULL) {
-            /* Use sorting, slower but equivalent */
-            if ((PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) &&
-                !(which & NPY_SELECT_DESCENDING)) { // TODO: descending sorts for partition
-                argsort = npy_aquicksort;
-            }
-            else if (which & NPY_SELECT_DESCENDING) {
-                PyErr_SetString(PyExc_TypeError,
-                                "type does not support descending partition");
-                return NULL;
-            }
-            else {
-                PyErr_SetString(PyExc_TypeError,
-                                "type does not have compare function");
-                return NULL;
-            }
-            is_partition = 0;
+    if (method == NULL && argpart == NULL) {
+        /* Use sorting, slower but equivalent */
+        is_partition = 0;
+        method = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op)))->argsort_meth;
+    }
+
+    if (!is_partition && method != NULL) {
+        PyArray_Descr *descr = PyArray_DESCR(op);
+        PyArray_Descr *odescr = PyArray_DescrFromType(NPY_INTP);
+        PyArray_DTypeMeta *dt = NPY_DTYPE(descr);
+        PyArray_DTypeMeta *odt = NPY_DTYPE(odescr);
+
+        PyArray_DTypeMeta *dtypes[2] = {dt, odt};
+        PyArray_Descr *given_descrs[2] = {descr, odescr};
+        npy_intp view_offset = 0;
+
+        int resolve_ret = method->resolve_descriptors(
+            method, dtypes, given_descrs, loop_descrs, &view_offset);
+        Py_DECREF(odescr);
+        if (resolve_ret < 0) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "unable to resolve descriptors for argpartition");
+            return NULL;
+        }
+        context.descriptors = loop_descrs;
+        context.parameters = (PyArrayMethod_SortParameters *) &part_params;
+        context.method = method;
+
+        npy_intp strides[2] = {loop_descrs[0]->elsize, loop_descrs[1]->elsize};
+
+        if (method->get_strided_loop(
+            &context, 1, 0, strides, &strided_loop, &auxdata, &method_flags) < 0) {
+            ret = NULL;
+            goto fail;
+        }
+    }
+    else if (!is_partition) {
+        if ((PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) &&
+            !(which & NPY_SELECT_DESCENDING)) {
+            argsort = npy_aquicksort;
+        }
+        else if (which & NPY_SELECT_DESCENDING) {
+            PyErr_SetString(PyExc_TypeError,
+                            "type does not support descending partition");
+            return NULL;
+        }
+        else {
+            PyErr_SetString(PyExc_TypeError,
+                            "type does not have compare function");
+            return NULL;
         }
     }
 
