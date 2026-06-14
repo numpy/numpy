@@ -30,8 +30,6 @@ else:
     NO_MYPY = False
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
-
     # We need this as annotation, but it's located in a private namespace.
     # As a compromise, do *not* import it during runtime
     from _pytest.mark.structures import ParameterSet
@@ -116,7 +114,8 @@ def run_mypy() -> None:
                 filename = None
 
 
-def get_test_cases(*directories: str) -> "Iterator[ParameterSet]":
+def get_test_cases(*directories: str) -> list["ParameterSet"]:
+    test_cases = []
     for directory in directories:
         for root, _, files in os.walk(directory):
             for fname in files:
@@ -125,7 +124,9 @@ def get_test_cases(*directories: str) -> "Iterator[ParameterSet]":
                     continue
 
                 fullpath = os.path.join(root, fname)
-                yield pytest.param(fullpath, id=short_fname)
+                test_cases.append(pytest.param(fullpath, id=short_fname))
+
+    return test_cases
 
 
 _FAIL_INDENT = " " * 4
