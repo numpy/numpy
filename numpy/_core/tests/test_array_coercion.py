@@ -16,16 +16,15 @@ from numpy.testing import IS_64BIT, assert_array_equal
 
 
 def arraylikes():
-    """
-    Generator for functions converting an array into various array-likes.
-    If full is True (default) it includes array-likes not capable of handling
-    all dtypes.
-    """
+    """Test parameters for functions converting an array into various array-likes."""
+
+    params = []
+
     # base array:
     def ndarray(a):
         return a
 
-    yield param(ndarray, id="ndarray")
+    params.append(param(ndarray, id="ndarray"))
 
     # subclass:
     class MyArr(np.ndarray):
@@ -34,7 +33,7 @@ def arraylikes():
     def subclass(a):
         return a.view(MyArr)
 
-    yield subclass
+    params.append(subclass)
 
     class _SequenceLike:
         # Older NumPy versions, sometimes cared whether a protocol array was
@@ -56,10 +55,10 @@ def arraylikes():
                 return self.a
             return self.a.astype(dtype)
 
-    yield param(ArrayDunder, id="__array__")
+    params.append(param(ArrayDunder, id="__array__"))
 
     # memory-view
-    yield param(memoryview, id="memoryview")
+    params.append(param(memoryview, id="memoryview"))
 
     # Array-interface
     class ArrayInterface:
@@ -67,7 +66,7 @@ def arraylikes():
             self.a = a  # need to hold on to keep interface valid
             self.__array_interface__ = a.__array_interface__
 
-    yield param(ArrayInterface, id="__array_interface__")
+    params.append(param(ArrayInterface, id="__array_interface__"))
 
     # Array-Struct
     class ArrayStruct:
@@ -75,7 +74,9 @@ def arraylikes():
             self.a = a  # need to hold on to keep struct valid
             self.__array_struct__ = a.__array_struct__
 
-    yield param(ArrayStruct, id="__array_struct__")
+    params.append(param(ArrayStruct, id="__array_struct__"))
+
+    return params
 
 
 def scalar_instances(times=True, extended_precision=True, user_dtype=True):
@@ -227,7 +228,7 @@ class TestScalarDiscovery:
         assert arr.shape == ()
         assert arr.dtype == np.dtype("O")
 
-    @pytest.mark.parametrize("scalar", scalar_instances())
+    @pytest.mark.parametrize("scalar", list(scalar_instances()))
     def test_scalar(self, scalar):
         arr = np.array(scalar)
         assert arr.shape == ()
@@ -259,7 +260,7 @@ class TestScalarDiscovery:
                 # Will currently always go to object dtype
                 assert arr.dtype == np.dtype("O")
 
-    @pytest.mark.parametrize("scalar", scalar_instances())
+    @pytest.mark.parametrize("scalar", list(scalar_instances()))
     def test_scalar_coercion(self, scalar):
         # This tests various scalar coercion paths, mainly for the numerical
         # types. It includes some paths not directly related to `np.array`.
@@ -284,7 +285,7 @@ class TestScalarDiscovery:
         assert_array_equal(arr, arr4)
 
     @pytest.mark.filterwarnings("ignore::numpy.exceptions.ComplexWarning")
-    @pytest.mark.parametrize("cast_to", scalar_instances())
+    @pytest.mark.parametrize("cast_to", list(scalar_instances()))
     def test_scalar_coercion_same_as_cast_and_assignment(self, cast_to):
         """
         Test that in most cases:
