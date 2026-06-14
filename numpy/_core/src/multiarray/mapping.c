@@ -1076,7 +1076,7 @@ array_boolean_subscript(PyArrayObject *self,
                 self_data += subloopsize * self_stride;
                 ret_data += subloopsize * itemsize;
             }
-        } while (iternext(iter));
+        } while (res == 0 && iternext(iter));
 
         NPY_END_THREADS;
 
@@ -1274,7 +1274,7 @@ array_assign_boolean_subscript(PyArrayObject *self,
                 self_data += subloopsize * self_stride;
                 v_data += subloopsize * v_stride;
             }
-        } while (iternext(iter));
+        } while (res == 0 && iternext(iter));
 
         if (!(cast_flags & NPY_METH_REQUIRES_PYAPI)) {
             NPY_END_THREADS;

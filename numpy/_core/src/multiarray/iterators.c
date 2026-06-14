@@ -849,8 +849,8 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     /* set up cast to handle single-element copies into arrval */
     NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
     npy_intp one = 1;
-    /* We can assume the newly allocated array is aligned */
-    int is_aligned = IsUintAligned(self->ao);
+    /* arrval can be the caller's array, so its alignment must be checked */
+    int is_aligned = IsUintAligned(self->ao) && IsUintAligned(arrval);
     if (PyArray_GetDTypeTransferFunction(
                 is_aligned, dtype_size, dtype_size, PyArray_DESCR(arrval), dtype, 0,
                 &cast_info, &transfer_flags) < 0) {
