@@ -1929,7 +1929,7 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
         return NULL;
     }
 
-    ret = _new_argsortlike(op, axis, argsort, argpart, PyArray_DATA(kthrvl), PyArray_SIZE(kthrvl),
+    ret = _new_argsortlike(op2, axis, argsort, argpart, PyArray_DATA(kthrvl), PyArray_SIZE(kthrvl),
                            strided_loop, &context, auxdata, &method_flags, argsort == NULL);
 
     Py_DECREF(kthrvl);
