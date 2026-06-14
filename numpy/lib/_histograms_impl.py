@@ -784,6 +784,13 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     array([0.  , 1.25, 2.5 , 3.75, 5.  ])
 
     """
+    a = np.asarray(a)
+    if a.ndim == 2 and a.shape[1] > 1:
+        if weights is not None:
+            weights = np.asarray(weights)
+        bin_edges, _ = _get_bin_edges(a, bins, range, weights)
+        return bin_edges
+
     a, weights = _ravel_and_check_weights(a, weights)
     bin_edges, _ = _get_bin_edges(a[:, np.newaxis], bins, [range], weights)
     return bin_edges[0]
