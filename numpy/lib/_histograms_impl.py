@@ -587,10 +587,11 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     bins : int or sequence or str, optional
         If `bins` is an int, it defines the number of equal-width
         bins in the given range (10, by default) for each dimension.
-        If `bins` is a sequence of scalars, it defines the bin edges, including the rightmost
-        edge, for all the dimensions, allowing for non-uniform bin widths.
-        If `bins` is a sequence of sequence of scalars, it defines the bin edges,
-        icnluding the rightmost edge, for each dimension seperately.
+        If `bins` is a sequence of scalars, it defines the bin edges,
+        including the rightmost edge, for all the dimensions, allowing
+        for non-uniform bin widths. If `bins` is a sequence of sequence of
+        scalars, it defines the bin edges, including the rightmost edge,
+        for each dimension seperately.
 
         If `bins` is a string from the list below, `histogram_bin_edges` will
         use the method chosen to calculate the optimal bin width and
