@@ -2478,8 +2478,8 @@ class suppress_warnings:
             raise RuntimeError("cannot enter suppress_warnings twice.")
 
         self._orig_show = warnings.showwarning
-        self._filters = warnings.filters
-        warnings.filters = self._filters[:]
+        self._catch_warnings = warnings.catch_warnings()
+        self._catch_warnings.__enter__()
 
         self._entered = True
         self._tmp_suppressions = []
@@ -2507,11 +2507,11 @@ class suppress_warnings:
 
     def __exit__(self, *exc_info):
         warnings.showwarning = self._orig_show
-        warnings.filters = self._filters
+        self._catch_warnings.__exit__(*exc_info)
         self._clear_registries()
         self._entered = False
         del self._orig_show
-        del self._filters
+        del self._catch_warnings
 
     def _showwarning(self, message, category, filename, lineno,
                      *args, use_warnmsg=None, **kwargs):
