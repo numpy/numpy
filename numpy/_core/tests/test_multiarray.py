@@ -3237,7 +3237,8 @@ class TestMethods:
         if nan is not None:
             # cast to float for comparison, as object does not support isnan
             a_cast = a.astype(float) if np.issubdtype(a.dtype, np.object_) else a
-            expected = np.concatenate((expected[~np.isnan(a_cast)], expected[np.isnan(a_cast)]))
+            expected = np.concatenate((expected[~np.isnan(a_cast)],
+                                       expected[np.isnan(a_cast)]))
 
         # nan indices are not ordered, so sort for set-like comparison
         expected_before = np.sort(expected[:k])
