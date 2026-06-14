@@ -5802,6 +5802,25 @@ add_newdoc('numpy._core', 'ufunc', ('at',
     >>> a
     array([2, 4, 3, 4])
 
+    Note that tuple indices and list or array indices behave differently
+    for multidimensional arrays. A tuple separates indices by dimension
+    (row, column). In contrast, a list or array provides multiple indices
+    along the first dimension:
+
+    >>> a = np.zeros((3, 3))
+    >>> np.add.at(a, ([0, 1, 2], [0, 1, 2]), 1)
+    >>> a
+    array([[1., 0., 0.],
+           [0., 1., 0.],
+           [0., 0., 1.]])
+
+    >>> a = np.zeros((3, 3))
+    >>> np.add.at(a, [[0, 1, 2], [0, 1, 2]], 1)
+    >>> a
+    array([[2., 2., 2.],
+           [2., 2., 2.],
+           [2., 2., 2.]])
+
     """))
 
 add_newdoc('numpy._core', 'ufunc', ('resolve_dtypes',
