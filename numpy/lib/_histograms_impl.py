@@ -664,7 +664,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
 
     See Also
     --------
-    histogram, `histogram2d, `histogramdd`
+    histogram, histogram2d, histogramdd
 
     Notes
     -----
