@@ -232,8 +232,8 @@ def top_k(a, k, /, *, axis=-1, largest=True):
     If ``largest`` is false, then the ``k`` smallest elements are returned.
 
     A tuple of ``(values, indices)`` is returned, where ``values`` and
-    ``indices`` of the largest/smallest elements of each row of the input
-    array in the given ``axis``.
+    ``indices`` are the values and indices, respectively, of the largest/smallest
+    elements of each row of the input array in the given ``axis``.
 
     Parameters
     ----------
@@ -248,21 +248,19 @@ def top_k(a, k, /, *, axis=-1, largest=True):
         The default is -1 (the last axis).
         If None, a flattened array is used.
     largest: bool, optional
-        If True, largest elements are returned.
-        Otherwise the smallest are returned.
-        For floats and complex, ``np.nan``, and values containing
-        ``np.nan`` (e.g., ``nan+0j``), are pushed to the back of
-        the array.
-        Otherwise, ``np.top_k`` follows the ``np.nan`` sort order
-        of `sort`.
+        If True, the largest elements are returned. If False,
+        the smallest elements are returned. The default is True.
+
+        Similarly to sorts, NaN values are pushed to the end, and
+        therefore are only returned at the end of the array if they are
+        among the top ``k`` values.
 
     Returns
     -------
     tuple_of_array: tuple
         The output tuple of ``(topk_values, topk_indices)``, where
-        ``topk_values`` are returned elements from the source array
-        (not necessarily in sorted order), and ``topk_indices`` are
-        the corresponding indices.
+        ``topk_values`` are the top ``k`` values and ``topk_indices``
+        are the corresponding indices.
 
     See Also
     --------
