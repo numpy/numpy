@@ -221,6 +221,7 @@ def test_gen_pyf_no_overwrite(capfd, hello_world_f90, monkeypatch):
 
 
 @pytest.mark.skipif(sys.version_info <= (3, 12), reason="Python 3.12 required")
+@pytest.mark.slow
 def test_untitled_cli(capfd, hello_world_f90, monkeypatch):
     """Check that modules are named correctly
 
@@ -233,6 +234,7 @@ def test_untitled_cli(capfd, hello_world_f90, monkeypatch):
         out, _ = capfd.readouterr()
         assert "untitledmodule.c" in out
 
+@pytest.mark.slow
 def test_no_distutils_backend(capfd, hello_world_f90, monkeypatch):
     """Check that distutils backend and related options fail
     CLI :: --fcompiler --help-link --backend distutils
@@ -507,6 +509,24 @@ def test_nolatexdoc(capfd, hello_world_f90, monkeypatch):
         out, _ = capfd.readouterr()
         assert "Documentation is saved to file" not in out
 
+@pytest.mark.slow
+def test_latex_doc_gh30268(tmp_path):
+
+    if not util.has_fortran_compiler():
+        pytest.skip("No Fortran compiler found")
+
+    fsource = textwrap.dedent("""
+        subroutine foo
+        end
+    """)
+
+    fpath = tmp_path / "test_latex.f90"
+    with open(fpath, "w") as f:
+        f.write(fsource)
+
+    cmd = [sys.executable, "-m", "numpy.f2py", "-c", str(fpath), "-m", "test_latex", "--latex-doc"]
+    subprocess.check_call(cmd, cwd=tmp_path)
+
 
 def test_shortlatex(capfd, hello_world_f90, monkeypatch):
     """Ensures that truncated documentation is written out
@@ -674,6 +694,7 @@ def test_inclheader(capfd, hello_world_f90, monkeypatch):
             assert "#include <stdio.h>" in ocmr
 
 @pytest.mark.skipif((platform.system() != 'Linux'), reason='Compiler required')
+@pytest.mark.slow
 def test_cli_obj(capfd, hello_world_f90, monkeypatch):
     """Ensures that the extra object can be specified when using meson backend
     """
@@ -789,6 +810,7 @@ def test_npdistop(hello_world_f90, monkeypatch):
 
 @pytest.mark.skipif((platform.system() != 'Linux') or sys.version_info <= (3, 12),
                     reason='Compiler and Python 3.12 or newer required')
+@pytest.mark.slow
 def test_no_freethreading_compatible(hello_world_f90, monkeypatch):
     """
     CLI :: --no-freethreading-compatible

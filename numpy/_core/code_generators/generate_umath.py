@@ -1589,7 +1589,7 @@ def make_ufuncs(funcdict):
             mlist.append(rf"((PyUFuncObject *)f)->type_resolver = &{uf.typereso};")
         for c in uf.indexed:
             # Handle indexed loops by getting the underlying ArrayMethodObject
-            # from the list in f._loops and setting its field appropriately
+            # from the dict in f._loops and setting its field appropriately
             fmt = textwrap.dedent("""
             {{
                 PyArray_DTypeMeta *dtype = PyArray_DTypeFromTypeNum({typenum});

@@ -66,7 +66,7 @@ jobs:
 
     name: "${{ matrix.BUILD_PROP[0] }}"
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         submodules: recursive
         fetch-tags: true
@@ -82,7 +82,7 @@ jobs:
         sudo apt install -y ninja-build gcc-${TOOLCHAIN_NAME} g++-${TOOLCHAIN_NAME} gfortran-${TOOLCHAIN_NAME}
 
     - name: Cache docker container
-      uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       id: container-cache
       with:
         path: ~/docker_${{ matrix.BUILD_PROP[1] }}
@@ -177,7 +177,7 @@ jobs:
 
     name: "${{ matrix.BUILD_PROP[0] }}"
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         submodules: recursive
         fetch-tags: true
@@ -192,7 +192,7 @@ jobs:
         sudo apt install -y ninja-build gcc-14-${TOOLCHAIN_NAME} g++-14-${TOOLCHAIN_NAME} gfortran-14-${TOOLCHAIN_NAME}
 
     - name: Cache docker container
-      uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       id: container-cache
       with:
         path: ~/docker_${{ matrix.BUILD_PROP[1] }}

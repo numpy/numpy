@@ -1119,6 +1119,11 @@ string_lrstrip_chars_strided_loop(
         }
         {
             char *new_buf = (char *)PyMem_RawCalloc(s1.size, 1);
+            if (new_buf == NULL) {
+                npy_gil_error(PyExc_MemoryError,
+                              "Failed to allocate string in %s", ufunc_name);
+                goto fail;
+            }
             Buffer<ENCODING::UTF8> buf1((char *)s1.buf, s1.size);
             Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
             Buffer<ENCODING::UTF8> outbuf(new_buf, s1.size);
@@ -1241,6 +1246,11 @@ string_lrstrip_whitespace_strided_loop(
         }
         {
             char *new_buf = (char *)PyMem_RawCalloc(s.size, 1);
+            if (new_buf == NULL) {
+                npy_gil_error(PyExc_MemoryError,
+                              "Failed to allocate string in %s", ufunc_name);
+                goto fail;
+            }
             Buffer<ENCODING::UTF8> buf((char *)s.buf, s.size);
             Buffer<ENCODING::UTF8> outbuf(new_buf, s.size);
             size_t new_buf_size = string_lrstrip_whitespace(
@@ -1249,6 +1259,7 @@ string_lrstrip_whitespace_strided_loop(
             if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
                 npy_gil_error(PyExc_MemoryError, "Failed to pack string in %s",
                               ufunc_name);
+                PyMem_RawFree(new_buf);
                 goto fail;
             }
 
@@ -1444,18 +1455,30 @@ string_replace_strided_loop(
             Buffer<ENCODING::UTF8> buf3((char *)i3s.buf, i3s.size);
 
             // conservatively overallocate
-            // TODO check overflow
-            size_t max_size;
+            size_t num_repl, growth;
             if (i2s.size == 0) {
                 // interleaving
-                max_size = i1s.size + (i1s.size + 1)*(i3s.size);
+                num_repl = (size_t)i1s.size + 1;
+                growth = i3s.size;
             }
             else {
                 // replace i2 with i3
-                size_t change = i2s.size >= i3s.size ? 0 : i3s.size - i2s.size;
-                max_size = i1s.size + count * change;
+                num_repl = (size_t)count;
+                growth = i2s.size >= i3s.size ? 0 : i3s.size - i2s.size;
             }
-            char *new_buf = (char *)PyMem_RawCalloc(max_size, 1);
+            char *new_buf = NULL;
+            size_t max_size;
+            if (!npy_mul_with_overflow_size_t(&max_size, num_repl, growth)) {
+                max_size += i1s.size;
+                if (max_size >= i1s.size) {
+                    new_buf = (char *)PyMem_RawCalloc(max_size, 1);
+                }
+            }
+            if (new_buf == NULL) {
+                npy_gil_error(PyExc_MemoryError,
+                              "Failed to allocate string in replace");
+                goto fail;
+            }
             Buffer<ENCODING::UTF8> outbuf(new_buf, max_size);
 
             size_t new_buf_size = string_replace(
@@ -1463,6 +1486,7 @@ string_replace_strided_loop(
 
             if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
                 npy_gil_error(PyExc_MemoryError, "Failed to pack string in replace");
+                PyMem_RawFree(new_buf);
                 goto fail;
             }
 
@@ -1575,6 +1599,11 @@ string_expandtabs_strided_loop(PyArrayMethod_Context *context,
         }
 
         char *new_buf = (char *)PyMem_RawCalloc(new_buf_size, 1);
+        if (new_buf == NULL) {
+            npy_gil_error(PyExc_MemoryError,
+                          "Failed to allocate string in expandtabs");
+            goto fail;
+        }
         Buffer<ENCODING::UTF8> outbuf(new_buf, new_buf_size);
 
         string_expandtabs(buf, tabsize, outbuf);
@@ -1582,6 +1611,7 @@ string_expandtabs_strided_loop(PyArrayMethod_Context *context,
         if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
             npy_gil_error(
                     PyExc_MemoryError, "Failed to pack string in expandtabs");
+            PyMem_RawFree(new_buf);
             goto fail;
         }
 

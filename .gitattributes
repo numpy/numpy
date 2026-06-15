@@ -1,3 +1,9 @@
+# We want all text files to be /n
+# Specific settings below this can still override it
+# e.g.
+# *.bat   text eol=crlf
+* text=auto eol=lf
+
 # Highlight our custom templating language as C, since it's hopefully better
 # than nothing. This also affects repo statistics.
 *.c.src   text linguist-language=C

@@ -74,6 +74,7 @@ intern_strings(void)
     INTERN_STRING(imag, "imag");
     INTERN_STRING(sort, "sort");
     INTERN_STRING(argsort, "argsort");
+    INTERN_STRING(_set_dtype, "_set_dtype");
     return 0;
 }
 
@@ -210,6 +211,16 @@ initialize_static_globals(void)
 
     npy_static_pydata.dl_max_version = Py_BuildValue("(i,i)", 1, 0);
     if (npy_static_pydata.dl_max_version == NULL) {
+        return -1;
+    }
+
+    npy_static_pydata.dlpack_dtype_registry = PyDict_New();
+    if (npy_static_pydata.dlpack_dtype_registry == NULL) {
+        return -1;
+    }
+
+    npy_static_pydata.dlpack_export_registry = PyDict_New();
+    if (npy_static_pydata.dlpack_export_registry == NULL) {
         return -1;
     }
 

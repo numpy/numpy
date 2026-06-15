@@ -1019,6 +1019,7 @@ def tensordot(a, b, axes=2):
           second to `b`. Both elements array_like must be of the same length.
           Each axis may appear at most once; repeated axes are not allowed.
           For example, ``axes=([1, 1], [0, 0])`` is invalid.
+
     Returns
     -------
     output : ndarray

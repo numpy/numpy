@@ -857,6 +857,72 @@ static void *const conv1d_full_data[] = {NULL};
 static const char conv1d_full_typecodes[] = {NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE};
 
 
+/*
+ * Test helpers for PyUFunc_ReplaceLoopBySignature.
+ *
+ * _constant42_loop: unary float64 loop that always writes 42.0.
+ */
+static void
+_constant42_loop(char **args, npy_intp const *dimensions,
+                 npy_intp const *steps, void *NPY_UNUSED(data))
+{
+    npy_intp n = dimensions[0];
+    char *out = args[1];
+    npy_intp out_step = steps[1];
+    for (npy_intp i = 0; i < n; i++) {
+        *(double *)out = 42.0;
+        out += out_step;
+    }
+}
+
+/*
+ * replace_loop(ufunc): Replace the dd->d loop with _constant42_loop.
+ * Only works for unary ufuncs.  Returns a capsule holding the old loop.
+ */
+static PyObject *
+UMath_Tests_replace_loop(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    PyUFuncObject *ufunc;
+    if (!PyArg_ParseTuple(args, "O!", &PyUFunc_Type, &ufunc)) {
+        return NULL;
+    }
+    if (ufunc->nin != 1 || ufunc->nout != 1) {
+        PyErr_SetString(PyExc_ValueError,
+                "replace_loop only supports unary ufuncs");
+        return NULL;
+    }
+    int signature[2] = {NPY_DOUBLE, NPY_DOUBLE};
+    PyUFuncGenericFunction oldfunc = NULL;
+    if (PyUFunc_ReplaceLoopBySignature(
+            ufunc, _constant42_loop, signature, &oldfunc) < 0) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "failed to find a float64 loop");
+        return NULL;
+    }
+    return PyCapsule_New((void *)oldfunc, "oldfunc", NULL);
+}
+
+/*
+ * restore_loop(ufunc, capsule): Restore the loop saved by replace_loop.
+ */
+static PyObject *
+UMath_Tests_restore_loop(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    PyUFuncObject *ufunc;
+    PyObject *capsule;
+    if (!PyArg_ParseTuple(args, "O!O", &PyUFunc_Type, &ufunc, &capsule)) {
+        return NULL;
+    }
+    PyUFuncGenericFunction oldfunc = (PyUFuncGenericFunction)
+            PyCapsule_GetPointer(capsule, "oldfunc");
+    if (oldfunc == NULL) {
+        return NULL;
+    }
+    int signature[2] = {NPY_DOUBLE, NPY_DOUBLE};
+    PyUFunc_ReplaceLoopBySignature(ufunc, oldfunc, signature, NULL);
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef UMath_TestsMethods[] = {
     {"test_signature",  UMath_Tests_test_signature, METH_VARARGS,
      "Test signature parsing of ufunc. \n"
@@ -865,6 +931,12 @@ static PyMethodDef UMath_TestsMethods[] = {
      "internals. \n",
      },
     {"test_dispatch", UMath_Tests_test_dispatch, METH_NOARGS, NULL},
+    {"replace_loop", UMath_Tests_replace_loop, METH_VARARGS,
+     "Replace the float64 loop of a ufunc with one that outputs 42.0.\n"
+     "Returns a capsule holding the old loop for restore_loop().\n"},
+    {"restore_loop", UMath_Tests_restore_loop, METH_VARARGS,
+     "Restore a ufunc loop previously replaced by replace_loop().\n"
+     "Arguments: ufunc, capsule\n"},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

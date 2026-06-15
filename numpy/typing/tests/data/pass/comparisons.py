@@ -20,7 +20,7 @@ td = np.timedelta64(0, "D")
 b_ = np.bool()
 
 b = False
-c = complex()
+c = 0j
 f = 0.0
 i = 0
 

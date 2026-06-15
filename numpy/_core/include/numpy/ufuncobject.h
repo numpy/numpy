@@ -100,7 +100,9 @@ typedef int (PyUFunc_ProcessCoreDimsFunc)(
                                 npy_intp *core_dim_sizes);
 
 typedef struct _tagPyUFuncObject {
+#ifndef Py_TARGET_ABI3T
         PyObject_HEAD
+#endif
         /*
          * nin: Number of inputs
          * nout: Number of outputs
@@ -179,7 +181,7 @@ typedef struct _tagPyUFuncObject {
          * but this was never implemented. (This is also why the above
          * selector is called the "legacy" selector.)
          */
-        #ifndef Py_LIMITED_API
+        #if !defined(Py_LIMITED_API) || Py_LIMITED_API >= 0x030C0000
             vectorcallfunc vectorcall;
         #else
             void *vectorcall;
@@ -223,7 +225,7 @@ typedef struct _tagPyUFuncObject {
     #if NPY_FEATURE_VERSION >= NPY_1_22_API_VERSION
         /* New private fields related to dispatching */
         void *_dispatch_cache;
-        /* A PyListObject of `(tuple of DTypes, ArrayMethod/Promoter)` */
+        /* Ordered dict `tuple of DTypes -> (tuple of DTypes, ArrayMethod/Promoter)` */
         PyObject *_loops;
     #endif
     #if NPY_FEATURE_VERSION >= NPY_2_1_API_VERSION
@@ -234,7 +236,6 @@ typedef struct _tagPyUFuncObject {
     #endif
 } PyUFuncObject_fields;
 
-typedef PyUFuncObject_fields PyUFuncObject;
 
 #include "arrayobject.h"
 /* Generalized ufunc; 0x0001 reserved for possible use as CORE_ENABLED */
@@ -345,13 +346,18 @@ typedef struct _loop1d_info {
 #endif
 #endif
 
+#ifndef Py_TARGET_ABI3T
+typedef struct _tagPyUFuncObject PyUFuncObject;
+#else
+typedef struct tagPyUFuncObject PyUFuncObject;
+#endif
+
 #include "__ufunc_api.h"
 
-// In future, when adding support for opaque PyObject, this would become
-// a ABI function call to get the ufunc struct fields from the PyObject.
-static inline PyUFuncObject_fields *_PyUFuncObject_GET_ITEM_DATA(PyUFuncObject *ufunc) {
-    return (PyUFuncObject_fields *)ufunc;
-}
+#ifndef Py_TARGET_ABI3T
+#undef _PyUFuncObject_GET_ITEM_DATA
+#define _PyUFuncObject_GET_ITEM_DATA(ufunc) ((PyUFuncObject_fields *)(ufunc))
+#endif
 
 #ifdef __cplusplus
 }

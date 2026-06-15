@@ -1,7 +1,7 @@
 import pytest
 
 import numpy as np
-from numpy.random import MT19937, Generator
+from numpy.random import MT19937, PCG64, Generator
 from numpy.testing import assert_, assert_array_equal
 
 
@@ -219,3 +219,22 @@ class TestRegression:
         # discrete distribution truncated to signed 64 bit integers, more
         # than half should be less than 2**62.
         assert np.count_nonzero(sample < 2**62) > n / 2
+
+    def test_binomial_btpe_sign_fix(self):
+        # Regression test guarding the BTPE sign correction fix in
+        # distributions.c. The PCG64 state below exercises the rejection
+        # window where the corrected error terms flip the accept/reject
+        # outcome.
+        state = {
+            'bit_generator': 'PCG64',
+            'state': {
+                'state': 339225526786748945562563845880185242573,
+                'inc': 114135179160287400024908587472913682319,
+            },
+            'has_uint32': 0,
+            'uinteger': 0,
+        }
+        bg = PCG64()
+        bg.state = state
+        rng = Generator(bg)
+        assert rng.binomial(500, 0.5) == 238

@@ -65,7 +65,7 @@ class TestLoadLibrary:
                          np._core._multiarray_umath.__file__)
         except ImportError as e:
             msg = ("ctypes is not available on this python: skipping the test"
-                   " (import error was: %s)" % str(e))
+                   f" (import error was: {e})")
             print(msg)
 
 
@@ -255,6 +255,7 @@ class TestAsArray:
         check(as_array(pointer(c_array[0][0]), shape=(2, 3)))
 
     @pytest.mark.thread_unsafe(reason="garbage collector is global state")
+    @pytest.mark.slow
     def test_reference_cycles(self):
         # related to gh-6511
         import ctypes

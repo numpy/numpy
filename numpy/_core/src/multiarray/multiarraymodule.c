@@ -1693,7 +1693,7 @@ _array_fromobject_generic(
     flags |= NPY_ARRAY_FORCECAST;
 
     ret = (PyArrayObject *)PyArray_CheckFromAny_int(
-            op, dtype, in_DType, 0, ndmax, flags, NULL);
+            op, dtype, in_DType, 0, ndmax, flags);
 
 finish:
     Py_XDECREF(dtype);
@@ -1982,10 +1982,12 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
         PyArray_Descr *descr;
         PyArray_DTypeMeta *dst_DType = NPY_DTYPE(PyArray_DESCR(dst));
         bool is_npy_nan = PyFloat_Check(src_obj) && npy_isnan(PyFloat_AsDouble(src_obj));
-        if (!is_npy_nan && dst_DType->type_num == NPY_TIMEDELTA) {
-            descr = PyArray_DESCR(dst); 
+        if (!is_npy_nan && (dst_DType->type_num == NPY_TIMEDELTA ||
+                            dst_DType->type_num == NPY_DATETIME)) {
+            descr = PyArray_DESCR(dst);
             Py_INCREF(descr);
-        } else {
+        }
+        else {
             descr = npy_find_descr_for_scalar(src_obj, PyArray_DESCR(src), DType,
                                               dst_DType);
         }
@@ -3851,7 +3853,7 @@ format_longfloat(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
  */
 static int _is_user_defined_string_array(PyArrayObject* array)
 {
-    if (NPY_DT_is_user_defined(PyArray_DESCR(array))) {
+    if (NPY_DT_is_user_defined(NPY_DTYPE(PyArray_DESCR(array)))) {
         PyTypeObject* scalar_type = NPY_DTYPE(PyArray_DESCR(array))->scalar_type;
         if (PyType_IsSubtype(scalar_type, &PyBytes_Type) ||
             PyType_IsSubtype(scalar_type, &PyUnicode_Type)) {
@@ -4730,6 +4732,10 @@ static struct PyMethodDef array_module_methods[] = {
         "Give a warning on reload and big warning in sub-interpreters."},
     {"from_dlpack", (PyCFunction)from_dlpack,
         METH_FASTCALL | METH_KEYWORDS, NULL},
+    {"_register_dlpack_dtype", (PyCFunction)_register_dlpack_dtype,
+        METH_VARARGS, NULL},
+    {"_dlpack_registry_replace", (PyCFunction)_dlpack_registry_replace,
+        METH_VARARGS, "unsafe testing helper to swap out dlpack registry"},
     {"_unique_hash",  (PyCFunction)array__unique_hash,
         METH_FASTCALL | METH_KEYWORDS, "Collect unique values via a hash map."},
     {NULL, NULL, 0, NULL}                /* sentinel */
@@ -5144,6 +5150,13 @@ _multiarray_umath_exec(PyObject *m) {
                             (PyObject *)&NpyBusDayCalendar_Type);
     set_flaginfo(d);
 
+    if (PyType_Ready(&PyArrayMethod_Type) < 0) {
+        return -1;
+    }
+    if (PyType_Ready(&PyBoundArrayMethod_Type) < 0) {
+        return -1;
+    }
+
     /* Finalize scalar types and expose them via namespace or typeinfo dict */
     if (set_typeinfo(d) != 0) {
         return -1;
@@ -5163,12 +5176,6 @@ _multiarray_umath_exec(PyObject *m) {
             d, "_array_converter",
             (PyObject *)&PyArrayArrayConverter_Type);
 
-    if (PyType_Ready(&PyArrayMethod_Type) < 0) {
-        return -1;
-    }
-    if (PyType_Ready(&PyBoundArrayMethod_Type) < 0) {
-        return -1;
-    }
     if (initialize_and_map_pytypes_to_dtypes() < 0) {
         return -1;
     }
@@ -5227,6 +5234,16 @@ _multiarray_umath_exec(PyObject *m) {
     npy_static_pydata.ndarray_array_function = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_function__");
     if (npy_static_pydata.ndarray_array_function == NULL) {
+        return -1;
+    }
+    npy_static_pydata.ndarray_set_dtype = PyObject_GetAttrString(
+            (PyObject *)&PyArray_Type, "_set_dtype");
+    if (npy_static_pydata.ndarray_set_dtype == NULL) {
+        return -1;
+    }
+    npy_static_pydata.ndarray_dtype_descr = PyObject_GetAttrString(
+            (PyObject *)&PyArray_Type, "dtype");
+    if (npy_static_pydata.ndarray_dtype_descr == NULL) {
         return -1;
     }
 

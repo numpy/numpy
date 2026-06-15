@@ -6,8 +6,8 @@
  *
  * - operand_DTypes:  The datatypes as passed in by the user.
  * - signature: The DTypes fixed by the user with `dtype=` or `signature=`.
- * - ufunc._loops: A list of all ArrayMethods and promoters, it contains
- *   tuples `(dtypes, ArrayMethod)` or `(dtypes, promoter)`.
+ * - ufunc._loops: Ordered dict of all ArrayMethods and promoters, mapping
+ *   `dtypes` to tuples `(dtypes, ArrayMethod)` or `(dtypes, promoter)`.
  * - ufunc._dispatch_cache: A cache to store previous promotion and/or
  *   dispatching results.
  * - The actual arrays are used to support the old code paths where necessary.
@@ -70,8 +70,8 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
 
 
 /**
- * Function to add a new loop to the ufunc.  This mainly appends it to the
- * list (as it currently is just a list).
+ * Function to add a new loop to the ufunc.  This adds it to the
+ * _loops dict keyed by the DType tuple.
  *
  * @param ufunc The universal function to add the loop to.
  * @param info The tuple (dtype_tuple, ArrayMethod/promoter).
@@ -114,36 +114,14 @@ PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate)
         return -1;
     }
 
-    if (ufunc->_loops == NULL) {
-        ufunc->_loops = PyList_New(0);
-        if (ufunc->_loops == NULL) {
-            return -1;
-        }
+    int found = PyDict_SetDefaultRef(ufunc->_loops, DType_tuple, info, NULL);
+    if (found < 0) {
+        return -1;
     }
-
-    PyObject *loops = ufunc->_loops;
-    Py_ssize_t length = PyList_Size(loops);
-    for (Py_ssize_t i = 0; i < length; i++) {
-        PyObject *item = PyList_GetItemRef(loops, i);
-        PyObject *cur_DType_tuple = PyTuple_GetItem(item, 0);
-        Py_DECREF(item);
-        int cmp = PyObject_RichCompareBool(cur_DType_tuple, DType_tuple, Py_EQ);
-        if (cmp < 0) {
-            return -1;
-        }
-        if (cmp == 0) {
-            continue;
-        }
-        if (ignore_duplicate) {
-            return 0;
-        }
+    if (found && !ignore_duplicate) {
         PyErr_Format(PyExc_TypeError,
                 "A loop/promoter has already been registered with '%s' for %R",
                 ufunc_get_name_cstr(ufunc), DType_tuple);
-        return -1;
-    }
-
-    if (PyList_Append(loops, info) < 0) {
         return -1;
     }
     return 0;
@@ -332,7 +310,13 @@ resolve_implementation_info(PyUFuncObject *ufunc,
         PyObject **out_info)
 {
     int nin = ufunc->nin, nargs = ufunc->nargs;
-    Py_ssize_t size = PySequence_Length(ufunc->_loops);
+    int ret = -1;
+    /* PyDict_Values returns a snapshot, safe against concurrent additions. */
+    PyObject *loops = PyDict_Values(ufunc->_loops);
+    if (loops == NULL) {
+        return -1;
+    }
+    Py_ssize_t size = PySequence_Length(loops);
     PyObject *best_dtypes = NULL;
     PyObject *best_resolver_info = NULL;
 
@@ -349,8 +333,7 @@ resolve_implementation_info(PyUFuncObject *ufunc,
 
     for (Py_ssize_t res_idx = 0; res_idx < size; res_idx++) {
         /* Test all resolvers  */
-        PyObject *resolver_info = PySequence_Fast_GET_ITEM(
-                ufunc->_loops, res_idx);
+        PyObject *resolver_info = PySequence_Fast_GET_ITEM(loops, res_idx);
 
         if (only_promoters && PyObject_TypeCheck(
                     PyTuple_GET_ITEM(resolver_info, 1), &PyArrayMethod_Type)) {
@@ -411,7 +394,7 @@ resolve_implementation_info(PyUFuncObject *ufunc,
             int subclass = PyObject_IsSubclass(
                     (PyObject *)given_dtype, (PyObject *)resolver_dtype);
             if (subclass < 0) {
-                return -1;
+                goto finish;
             }
             if (!subclass) {
                 matches = NPY_FALSE;
@@ -509,7 +492,7 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                             "a better match is not yet implemented.  This "
                             "will pick the better (or bail) in the future.");
                     *out_info = NULL;
-                    return -1;
+                    goto finish;
                 }
 
                 if (best == -1) {
@@ -541,8 +524,9 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                  * We just redo it anyway for simplicity.)
                  */
                 if (!only_promoters) {
-                    return resolve_implementation_info(ufunc,
-                            op_dtypes, NPY_TRUE, out_info);
+                    ret = resolve_implementation_info(
+                            ufunc, op_dtypes, NPY_TRUE, out_info);
+                    goto finish;
                 }
                 /*
                  * If this is already the retry, we are out of luck.  Promoters
@@ -564,7 +548,8 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                     Py_DECREF(given);
                 }
                 *out_info = NULL;
-                return 0;
+                ret = 0;
+                goto finish;
             }
             else if (current_best == 0) {
                 /* The new match is not better, continue looking. */
@@ -578,11 +563,15 @@ resolve_implementation_info(PyUFuncObject *ufunc,
     if (best_dtypes == NULL) {
         /* The non-legacy lookup failed */
         *out_info = NULL;
-        return 0;
     }
+    else {
+        *out_info = best_resolver_info;
+    }
+    ret = 0;
 
-    *out_info = best_resolver_info;
-    return 0;
+finish:
+    Py_DECREF(loops);
+    return ret;
 }
 
 
@@ -816,7 +805,7 @@ legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
 
 
 /*
- * Note, this function returns a BORROWED references to info since it adds
+ * Note, this function returns a BORROWED reference to info since it adds
  * it to the loops.
  */
 NPY_NO_EXPORT PyObject *
@@ -845,8 +834,11 @@ add_and_return_legacy_wrapping_ufunc_loop(PyUFuncObject *ufunc,
         Py_DECREF(info);
         return NULL;
     }
-    Py_DECREF(info);  /* now borrowed from the ufunc's list of loops */
-    return info;
+    /* Loop currently borrowed from the _loops (use original if not replaced) */
+    PyObject *result = PyDict_GetItemWithError(  // noqa: borrowed-ref OK
+        ufunc->_loops, PyTuple_GET_ITEM(info, 0));
+    Py_DECREF(info);
+    return result;
 }
 
 
@@ -1369,28 +1361,20 @@ get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
         return NULL;
     }
     for (int i=0; i < ndtypes; i++) {
-        PyTuple_SetItem(t_dtypes, i, (PyObject *)op_dtype);
+        Py_INCREF(op_dtype);
+        PyTuple_SET_ITEM(t_dtypes, i, (PyObject *)op_dtype);
     }
-    PyObject *loops = ufunc->_loops;
-    Py_ssize_t length = PyList_Size(loops);
-    for (Py_ssize_t i = 0; i < length; i++) {
-        PyObject *item = PyList_GetItemRef(loops, i);
-        PyObject *cur_DType_tuple = PyTuple_GetItem(item, 0);
-        Py_DECREF(item);
-        int cmp = PyObject_RichCompareBool(cur_DType_tuple,
-                                           t_dtypes, Py_EQ);
-        if (cmp < 0) {
-            Py_DECREF(t_dtypes);
-            return NULL;
-        }
-        if (cmp == 0) {
-            continue;
-        }
-        /* Got the match */
+    PyObject *info;
+    if (PyDict_GetItemRef(ufunc->_loops, t_dtypes, &info) < 0) {
         Py_DECREF(t_dtypes);
-        return PyTuple_GetItem(item, 1);
+        return NULL;
     }
     Py_DECREF(t_dtypes);
+    if (info != NULL) {
+        PyObject *result = PyTuple_GET_ITEM(info, 1);
+        Py_DECREF(info);
+        return result;
+    }
     Py_RETURN_NONE;
 }
 

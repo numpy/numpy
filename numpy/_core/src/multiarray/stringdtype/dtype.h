@@ -26,6 +26,10 @@ _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
          PyArray_StringDTypeObject *descr_b);
 
 NPY_NO_EXPORT int
+stringdtype_binsearch_compare(const void *a, const void *b,
+                              PyArrayObject *arr_a, PyArrayObject *arr_b);
+
+NPY_NO_EXPORT int
 init_string_na_object(PyObject *mod);
 
 NPY_NO_EXPORT int

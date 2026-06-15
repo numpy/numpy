@@ -27,6 +27,7 @@ from ._polytypes import (
     _FuncVal,
     _FuncVal2D,
     _FuncVal3D,
+    _FuncValND,
     _FuncVander,
     _FuncVander2D,
     _FuncVander3D,
@@ -57,6 +58,7 @@ __all__ = [
     "Polynomial",
     "polyval2d",
     "polyval3d",
+    "polyvalnd",
     "polygrid2d",
     "polygrid3d",
     "polyvander2d",
@@ -82,6 +84,7 @@ polyint: Final[_FuncInteg] = ...
 polyval: Final[_FuncVal] = ...
 polyval2d: Final[_FuncVal2D] = ...
 polyval3d: Final[_FuncVal3D] = ...
+polyvalnd: Final[_FuncValND] = ...
 
 @overload
 def polyvalfromroots(x: _FloatLike_co, r: _FloatLike_co, tensor: bool = True) -> np.float64 | Any: ...

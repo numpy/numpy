@@ -981,6 +981,7 @@ static GCC_CAST_OPT_LEVEL int
 #   pragma GCC diagnostic push
 #   ifdef __clang__
 #   pragma GCC diagnostic ignored "-Wtautological-constant-out-of-range-compare"
+#   pragma GCC diagnostic ignored "-Wimplicit-const-int-float-conversion"
 #   endif
 #   pragma GCC diagnostic ignored "-Wtautological-compare"
 #   endif

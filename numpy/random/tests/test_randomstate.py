@@ -333,8 +333,7 @@ class TestRandint:
                 rng.randint(lbnd, ubnd, dtype=dt)
             except Exception as e:
                 raise AssertionError("No error should have been raised, "
-                                     "but one was with the following "
-                                     "message:\n\n%s" % str(e))
+                                     f"but one was with the following message:\n\n{e}")
 
     def test_in_bounds_fuzz(self):
         # Don't use fixed seed

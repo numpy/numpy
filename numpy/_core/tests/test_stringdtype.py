@@ -260,6 +260,7 @@ def test_self_casts(dtype, dtype2, strings):
         ["this", "is", "an", "array"],
         ["€", "", "😊"],
         ["A¢☃€ 😊", " A☃€¢😊", "☃€😊 A¢", "😊☃A¢ €"],
+        ["short", "12345678"] * 1000,
     ],
 )
 class TestStringLikeCasts:
@@ -489,6 +490,24 @@ def test_sort(dtype, strings):
         arr_sorted = np.array(sorted(strings), dtype=dtype)
 
     test_sort(strings, arr_sorted)
+
+
+def test_searchsorted_gh31533():
+    n = 100_000
+    # all > 15 bytes -> arena
+    values = [f"{i:020d}" for i in range(n)]
+    haystack = np.array(values, dtype="T")
+    # a handful of needles -> tiny arena
+    needle_values = values[:: n // 23]
+    expected = np.searchsorted(
+        np.array(values, dtype="U20"), np.array(needle_values, dtype="U20")
+    )
+
+    needles = np.array(needle_values, dtype="T")
+    assert_array_equal(np.searchsorted(haystack, needles), expected)
+    assert_array_equal(
+        np.searchsorted(haystack, needles, sorter=np.arange(n)), expected
+    )
 
 
 @pytest.mark.parametrize(
@@ -1141,7 +1160,7 @@ DATETIME_INPUT = [
     np.datetime64("1923-04-14T12:43:12"),
     np.datetime64("1994-06-21T14:43:15"),
     np.datetime64("2001-10-15T04:10:32"),
-    np.datetime64("NaT"),
+    np.datetime64("NaT", "D"),
     np.datetime64("1995-11-25T16:02:16"),
     np.datetime64("2005-01-04T03:14:12"),
     np.datetime64("2041-12-03T14:05:03"),
@@ -1203,7 +1222,7 @@ def test_nat_casts():
     s = 'nat'
     all_nats = itertools.product(*zip(s.upper(), s.lower()))
     all_nats = list(map(''.join, all_nats))
-    NaT_dt = np.datetime64('NaT')
+    NaT_dt = np.datetime64('NaT', 'D')
     NaT_td = np.timedelta64('NaT', 's')
     for na_object in [np._NoValue, None, np.nan, 'nat', '']:
         # numpy treats empty string and all case combinations of 'nat' as NaT

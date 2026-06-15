@@ -272,10 +272,12 @@ def test_stringdtype_multithreaded_access_and_mutation():
     not IS_64BIT,
     reason="Sometimes causes failures or crashes due to OOM on 32 bit runners"
 )
-def test_legacy_usertype_cast_init_thread_safety():
+@pytest.mark.parametrize("rat_cls", [
+    _rational_tests.rational, _rational_tests.rational2])
+def test_legacy_usertype_cast_init_thread_safety(rat_cls):
     def closure(b):
         b.wait()
-        np.full((10, 10), 1, _rational_tests.rational)
+        np.full((10, 10), 1, rat_cls)
 
     run_threaded(closure, 250, pass_barrier=True)
 

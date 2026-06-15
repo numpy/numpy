@@ -1791,7 +1791,7 @@ class TestUfunc:
         a = a[1:, 1:, 1:]
         yield a
 
-    @pytest.mark.parametrize("arrs", identityless_reduce_arrs())
+    @pytest.mark.parametrize("arrs", list(identityless_reduce_arrs()))
     @pytest.mark.parametrize("pos", [(1, 0, 0), (0, 1, 0), (0, 0, 1)])
     def test_identityless_reduction(self, arrs, pos):
         # np.minimum.reduce is an identityless reduction
@@ -2169,6 +2169,7 @@ class TestUfunc:
     @pytest.mark.parametrize("a", (
                              np.arange(10, dtype=int),
                              np.arange(10, dtype=_rational_tests.rational),
+                             np.arange(10, dtype=_rational_tests.rational2),
                              ))
     def test_ufunc_at_basic(self, a):
 
@@ -2870,14 +2871,8 @@ def test_ufunc_types(ufunc):
         if 'O' in typ or '?' in typ:
             continue
         inp, out = typ.split('->')
-        if 'm' in inp:
-            with pytest.warns(
-                DeprecationWarning,
-                match="Using 'generic' unit for NumPy timedelta is deprecated",
-            ):
-                args = [np.ones((3, 3), t) for t in inp]
-        else:
-            args = [np.ones((3, 3), t) for t in inp]
+        _inp_dtypes = [t if t.lower() != 'm' else t + "8[D]" for t in inp]
+        args = [np.ones((3, 3), t) for t in _inp_dtypes]
         with warnings.catch_warnings(record=True):
             warnings.filterwarnings("always")
             res = ufunc(*args)
@@ -2885,9 +2880,9 @@ def test_ufunc_types(ufunc):
             outs = tuple(out)
             assert len(res) == len(outs)
             for r, t in zip(res, outs):
-                assert r.dtype == np.dtype(t)
+                assert r.dtype.char == t
         else:
-            assert res.dtype == np.dtype(out)
+            assert res.dtype.char == out
 
 @pytest.mark.parametrize('ufunc', [getattr(np, x) for x in dir(np)
                                 if isinstance(getattr(np, x), np.ufunc)])

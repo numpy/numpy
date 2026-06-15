@@ -11,7 +11,7 @@ from hypothesis.extra import numpy as hynp
 from hypothesis.strategies import sampled_from
 
 import numpy as np
-from numpy._core._rational_tests import rational
+from numpy._core._rational_tests import rational, rational2
 from numpy._utils import _pep440
 from numpy.exceptions import ComplexWarning
 from numpy.testing import (
@@ -23,6 +23,7 @@ from numpy.testing import (
     assert_raises,
     check_support_sve,
 )
+from numpy.testing._private.utils import LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE
 
 types = [np.bool, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.int_, np.uint, np.longlong, np.ulonglong,
@@ -521,7 +522,7 @@ class TestConversion:
 
     @pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
                         reason="long double is same as double")
-    @pytest.mark.skipif(platform.machine().startswith("ppc"),
+    @pytest.mark.skipif(LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE,
                         reason="IBM double double")
     def test_int_from_huge_longdouble(self):
         # Produce a longdouble that would overflow a double,
@@ -587,18 +588,18 @@ class TestConversion:
             assert_(not np.float32(1) == None)  # noqa: E711
             assert_(not np.str_('test') == None)  # noqa: E711
             # This is dubious (see below):
-            assert_(not np.datetime64('NaT') == None)  # noqa: E711
+            assert_(not np.datetime64('NaT', 'D') == None)  # noqa: E711
 
             assert_(np.float32(1) != None)  # noqa: E711
             assert_(np.str_('test') != None)  # noqa: E711
             # This is dubious (see below):
-            assert_(np.datetime64('NaT') != None)  # noqa: E711
+            assert_(np.datetime64('NaT', 'D') != None)  # noqa: E711
         assert_(len(w) == 0)
 
         # For documentation purposes, this is why the datetime is dubious.
         # At the time of deprecation this was no behaviour change, but
         # it has to be considered when the deprecations are done.
-        assert_(np.equal(np.datetime64('NaT'), None))
+        assert_(np.equal(np.datetime64('NaT', 'D'), None))
 
 
 #class TestRepr:
@@ -663,8 +664,13 @@ class TestMultiply:
         # change.
         accepted_types = set(np.typecodes["AllInteger"])
         deprecated_types = {'?'}
+        datetime_types = set(np.typecodes['Datetime'])
         forbidden_types = (
-            set(np.typecodes["All"]) - accepted_types - deprecated_types)
+            set(np.typecodes["All"])
+            - accepted_types
+            - deprecated_types
+            - datetime_types
+        )
         forbidden_types -= {'V'}  # can't default-construct void scalars
 
         for seq_type in (list, tuple):
@@ -681,6 +687,11 @@ class TestMultiply:
 
             for numpy_type in forbidden_types:
                 i = np.dtype(numpy_type).type()
+                assert_raises(TypeError, operator.mul, seq, i)
+                assert_raises(TypeError, operator.mul, i, seq)
+
+            for numpy_type in datetime_types:
+                i = np.dtype(numpy_type).type(1, "D")
                 assert_raises(TypeError, operator.mul, seq, i)
                 assert_raises(TypeError, operator.mul, i, seq)
 
@@ -859,7 +870,7 @@ def recursionlimit(n):
 
 @given(sampled_from(objecty_things),
        sampled_from(binary_operators_for_scalar_ints),
-       sampled_from(types + [rational]))
+       sampled_from(types + [rational, rational2]))
 @pytest.mark.thread_unsafe(reason="sets recursion limit globally")
 def test_operator_object_left(o, op, type_):
     try:
@@ -871,7 +882,7 @@ def test_operator_object_left(o, op, type_):
 
 @given(sampled_from(objecty_things),
        sampled_from(binary_operators_for_scalar_ints),
-       sampled_from(types + [rational]))
+       sampled_from(types + [rational, rational2]))
 @pytest.mark.thread_unsafe(reason="sets recursion limit globally")
 def test_operator_object_right(o, op, type_):
     try:
