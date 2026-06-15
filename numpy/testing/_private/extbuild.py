@@ -10,7 +10,7 @@ import sys
 import sysconfig
 import textwrap
 
-from .utils import run_meson
+from .utils import run_subprocess
 
 __all__ = ['build_and_import_extension', 'compile_extension_module']
 
@@ -226,17 +226,17 @@ def build(cfile, outputfilename, compile_extra, link_extra,
             python = '{sys.executable}'
         """))
     if sys.platform == "win32":
-        run_meson(["setup",
-                   "--buildtype=release",
-                   "--vsenv", ".."],
-                  build_dir)
+        run_subprocess(["meson", "setup",
+                        "--buildtype=release",
+                        "--vsenv", ".."],
+                       build_dir)
     else:
-        run_meson(["setup", "--vsenv",
-                   "..", f'--native-file={os.fspath(native_file_name)}'],
-                  build_dir)
+        run_subprocess(["meson", "setup", "--vsenv",
+                        "..", f'--native-file={os.fspath(native_file_name)}'],
+                       build_dir)
 
     so_name = outputfilename.parts[-1] + get_so_suffix()
-    run_meson(["compile"], build_dir)
+    run_subprocess(["meson", "compile"], build_dir)
     os.rename(str(build_dir / so_name), cfile.parent / so_name)
     return cfile.parent / so_name
 

@@ -9,7 +9,7 @@ import pytest
 
 import numpy as np
 from numpy.testing import IS_EDITABLE, IS_WASM
-from numpy.testing._private.utils import run_meson
+from numpy.testing._private.utils import run_subprocess
 
 try:
     import cffi
@@ -77,16 +77,16 @@ def test_cython(tmp_path):
         f.write(f"python = '{sys.executable}'\n")
         f.write(f"python3 = '{sys.executable}'")
     if sys.platform == "win32":
-        run_meson(["setup",
-                   "--buildtype=release",
-                   "--vsenv", "--native-file", native_file,
-                   str(build_dir)],
-                  target_dir)
+        run_subprocess(["meson", "setup",
+                        "--buildtype=release",
+                        "--vsenv", "--native-file", native_file,
+                        str(build_dir)],
+                       target_dir)
     else:
-        run_meson(["setup",
-                   "--native-file", native_file, str(build_dir)],
-                  target_dir)
-    run_meson(["compile", "-vv"], target_dir)
+        run_subprocess(["meson", "setup",
+                        "--native-file", native_file, str(build_dir)],
+                       target_dir)
+    run_subprocess(["meson", "compile", "-vv"], target_dir)
 
     # gh-16162: make sure numpy's __init__.pxd was used for cython
     # not really part of this test, but it is a convenient place to check

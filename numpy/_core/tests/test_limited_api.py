@@ -7,7 +7,7 @@ import sysconfig
 import pytest
 
 from numpy.testing import IS_EDITABLE, IS_WASM, NOGIL_BUILD
-from numpy.testing._private.utils import run_meson
+from numpy.testing._private.utils import run_subprocess
 
 # This import is copied from random.tests.test_extending
 try:
@@ -67,17 +67,17 @@ def install_temp(tmpdir_factory):
     if sysconfig.get_platform() == "win-arm64":
         pytest.skip("Meson unable to find MSVC linker on win-arm64")
     if sys.platform == "win32":
-        run_meson(["setup",
-                   "--werror",
-                   "--buildtype=release",
-                   "--vsenv", "--native-file", native_file,
-                   str(srcdir)],
-                  build_dir)
+        run_subprocess(["meson", "setup",
+                        "--werror",
+                        "--buildtype=release",
+                        "--vsenv", "--native-file", native_file,
+                        str(srcdir)],
+                       build_dir)
     else:
-        run_meson(["setup", "--werror",
-                   "--native-file", native_file, str(srcdir)],
-                  build_dir)
-    run_meson(["compile", "-vv"], build_dir)
+        run_subprocess(["meson", "setup", "--werror",
+                        "--native-file", native_file, str(srcdir)],
+                       build_dir)
+    run_subprocess(["meson", "compile", "-vv"], build_dir)
 
     sys.path.append(str(build_dir))
 

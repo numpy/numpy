@@ -2870,19 +2870,30 @@ def requires_deep_recursion(func):
     return wrapper
 
 
-def run_meson(args, build_dir):
-    """Run a meson command, failing the test with the captured output if it
-    fails: output merely inherited by the subprocess is lost in pytest-xdist
-    workers."""
+def run_subprocess(cmd, cwd=None, **kwargs):
+    """Run ``cmd`` in a subprocess, failing the test with its captured output
+    if it exits with a nonzero status.
+
+    Output that a subprocess merely inherits is lost in pytest-xdist workers
+    when a test fails, making CI failures hard to debug.  Routing a
+    build/compile/run step through this helper captures the child's stdout and
+    stderr and folds them into the failure message so they reach the report.
+    Returns the ``subprocess.CompletedProcess`` for callers that want to
+    inspect the output.  Extra keyword arguments are passed to
+    ``subprocess.run``.
+    """
     import subprocess
 
     import pytest
 
-    res = subprocess.run(["meson", *args], cwd=build_dir,
-                         capture_output=True, text=True, errors="replace")
+    res = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True,
+                         errors="replace", **kwargs)
     if res.returncode != 0:
+        cmd_str = cmd if isinstance(cmd, str) else " ".join(map(str, cmd))
+        in_dir = f" in {cwd}" if cwd is not None else ""
         pytest.fail(
-            f"meson {args[0]} failed (exit {res.returncode}) in {build_dir}\n"
+            f"`{cmd_str}` failed (exit {res.returncode}){in_dir}\n"
             f"----- stdout -----\n{res.stdout}\n"
             f"----- stderr -----\n{res.stderr}",
             pytrace=False)
+    return res

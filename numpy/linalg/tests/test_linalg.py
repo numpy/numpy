@@ -3,7 +3,6 @@
 """
 import itertools
 import os
-import subprocess
 import sys
 import textwrap
 import threading
@@ -44,6 +43,7 @@ from numpy.testing import (
     assert_raises,
     assert_raises_regex,
 )
+from numpy.testing._private.utils import run_subprocess
 
 try:
     import numpy.linalg.lapack_lite
@@ -2096,12 +2096,12 @@ def test_sdot_bug_8577():
     for bad_lib in bad_libs:
         code = template.format(before="import numpy as np", after="",
                                bad_lib=bad_lib)
-        subprocess.check_call([sys.executable, "-c", code])
+        run_subprocess([sys.executable, "-c", code])
 
         # Swapped import order
         code = template.format(after="import numpy as np", before="",
                                bad_lib=bad_lib)
-        subprocess.check_call([sys.executable, "-c", code])
+        run_subprocess([sys.executable, "-c", code])
 
 
 class TestMultiDot:
