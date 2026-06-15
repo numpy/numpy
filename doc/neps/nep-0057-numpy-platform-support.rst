@@ -173,8 +173,6 @@ Tier 1 platforms:
 +---------------------------+--------------------------------------------------------------------------+
 | Windows arm64             |                                                                          |
 +---------------------------+--------------------------------------------------------------------------+
-| Windows x86               | 32-bit Python: note this is shipped without BLAS, it's legacy            |
-+---------------------------+--------------------------------------------------------------------------+
 | Linux x86-64 (manylinux)  |                                                                          |
 +---------------------------+--------------------------------------------------------------------------+
 | Linux aarch64 (manylinux) |                                                                          |
@@ -235,7 +233,9 @@ Tier 3 platforms:
 | Emscripten/Pyodide | We currently provide nightly wheels,   | Agriya Khetarpal, Gyeongjae Choi |
 |                    | used for interactive docs              |                                  |
 +--------------------+----------------------------------------+----------------------------------+
-
+| Windows x86        | 32-bit Python, see the                 | Nathan Goldbaum                  |
+|                    | `discussion board`_ for more details   |                                  |
++--------------------+----------------------------------------+----------------------------------+
 
 Unsupported platforms
 ~~~~~~~~~~~~~~~~~~~~~
@@ -320,6 +320,7 @@ References and footnotes
 .. _gh-30216: https://github.com/numpy/numpy/issues/30216
 .. _gh-30412: https://github.com/numpy/numpy/pull/30412
 .. _gh-30416: https://github.com/numpy/numpy/issues/30416
+.. _discussion board: https://mail.python.org/archives/list/numpy-discussion@python.org/thread/FGVCDS5JICVIUVBISGWZNQ46QZ3XX5PB/#TTSOQQ3XLXXK52CZYMN7MALJQEI65U
 
 
 Copyright
