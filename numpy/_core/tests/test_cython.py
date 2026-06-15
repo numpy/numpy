@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 import sys
 import sysconfig
@@ -8,6 +9,7 @@ import pytest
 
 import numpy as np
 from numpy.testing import IS_EDITABLE, IS_WASM, assert_array_equal
+from numpy.testing._private.utils import run_subprocess
 
 # This import is copied from random.tests.test_extending
 try:
@@ -40,8 +42,17 @@ def install_temp(tmpdir_factory):
     if IS_WASM:
         pytest.skip("No subprocess")
 
-    srcdir = os.path.join(os.path.dirname(__file__), 'examples', 'cython')
-    build_dir = tmpdir_factory.mktemp("cython_test") / "build"
+    # Build against a copy of the sources placed next to the build dir:
+    # meson refers to sources via paths relative to the build dir, and on
+    # Windows the unnormalized cwd + `..` chain joining the deeply nested
+    # pytest tmp dir and site-packages can exceed MAX_PATH, failing the
+    # compile with "Cannot open source file".
+    tmp_root = tmpdir_factory.mktemp("cython_test")
+    srcdir = str(tmp_root / "src")
+    shutil.copytree(
+        os.path.join(os.path.dirname(__file__), 'examples', 'cython'),
+        srcdir)
+    build_dir = tmp_root / "build"
     os.makedirs(build_dir, exist_ok=True)
     # Ensure we use the correct Python interpreter even when `meson` is
     # installed in a different Python environment (see gh-24956)
@@ -58,27 +69,16 @@ def install_temp(tmpdir_factory):
     if sysconfig.get_platform() == "win-arm64":
         pytest.skip("Meson unable to find MSVC linker on win-arm64")
     if sys.platform == "win32":
-        subprocess.check_call(["meson", "setup",
-                               "--buildtype=release",
-                               "--vsenv", "--native-file", native_file,
-                               str(srcdir)],
-                              cwd=build_dir,
-                              )
+        run_subprocess(["meson", "setup",
+                        "--buildtype=release",
+                        "--vsenv", "--native-file", native_file,
+                        str(srcdir)],
+                       build_dir)
     else:
-        subprocess.check_call(["meson", "setup",
-                               "--native-file", native_file, str(srcdir)],
-                              cwd=build_dir
-                              )
-    try:
-        subprocess.check_call(["meson", "compile", "-vv"], cwd=build_dir)
-    except subprocess.CalledProcessError:
-        print("----------------")
-        print("meson build failed when doing")
-        print(f"'meson setup --native-file {native_file} {srcdir}'")
-        print("'meson compile -vv'")
-        print(f"in {build_dir}")
-        print("----------------")
-        raise
+        run_subprocess(["meson", "setup",
+                        "--native-file", native_file, str(srcdir)],
+                       build_dir)
+    run_subprocess(["meson", "compile", "-vv"], build_dir)
 
     sys.path.append(str(build_dir))
 
