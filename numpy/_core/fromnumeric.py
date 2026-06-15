@@ -287,36 +287,22 @@ def top_k(a, k, /, *, axis=-1, largest=True):
     if k <= 0:
         raise ValueError(f'k(={k}) provided must be positive.')
 
-    _arr = np.asanyarray(a)
+    arr = np.asanyarray(a)
 
-    to_negate = largest and (
-        np.dtype(_arr.dtype).char in np.typecodes["AllFloat"])
-    if to_negate:
-        # Push nans to the back of the array
-        topk_values, topk_indices = top_k(-_arr, k, axis=axis, largest=False)
-        return -topk_values, topk_indices
-
-    positive_axis: int
     if axis is None:
-        arr = _arr.ravel()
-        positive_axis = 0
-    else:
-        arr = _arr
-        positive_axis = axis if axis > 0 else axis % arr.ndim
+        arr = arr.ravel()
+        axis = 0
+    elif axis <= 0:
+        axis = axis % arr.ndim
 
-    slice_start = (np.s_[:],) * positive_axis
-    if largest:
-        indices_array = np.argpartition(arr, -k, axis=axis)
-        slice = slice_start + (np.s_[-k:],)
-        topk_indices = indices_array[slice]
-    else:
-        indices_array = np.argpartition(arr, k-1, axis=axis)
-        slice = slice_start + (np.s_[:k],)
-        topk_indices = indices_array[slice]
+    indices = np.argpartition(arr, k - 1, axis=axis, descending=largest)
 
-    topk_values = np.take_along_axis(arr, topk_indices, axis=axis)
+    slice_ = (np.s_[:],) * axis + (np.s_[:k],)
+    indices = indices[slice_]
 
-    return (topk_values, topk_indices)
+    values = np.take_along_axis(arr, indices, axis=axis)
+
+    return (values, indices)
 
 
 def _reshape_dispatcher(a, /, shape, order=None, *, copy=None):
