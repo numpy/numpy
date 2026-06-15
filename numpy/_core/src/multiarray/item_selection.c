@@ -1218,7 +1218,7 @@ static int
 _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
               PyArray_PartitionFunc *part, npy_intp const *kth, npy_intp nkth,
               PyArrayMethod_StridedLoop *strided_loop, PyArrayMethod_Context *context,
-              NpyAuxData *auxdata, NPY_ARRAYMETHOD_FLAGS *method_flags, int is_part)
+              NpyAuxData *auxdata, NPY_ARRAYMETHOD_FLAGS *method_flags)
 {
     npy_intp N = PyArray_DIM(op, axis);
     npy_intp elsize = (npy_intp)PyArray_ITEMSIZE(op);
@@ -1339,7 +1339,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
          * sort or part, the unswapping is still done before returning.
          */
 
-        if (!is_part) {
+        if (kth == NULL) {
             if (strided_loop != NULL) {
                 char *const data[2] = {bufptr, bufptr};
                 npy_intp strides[2] = {elsize, elsize};
@@ -1431,7 +1431,7 @@ static PyObject*
 _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
                  PyArray_ArgPartitionFunc *argpart, npy_intp const *kth, npy_intp nkth,
                  PyArrayMethod_StridedLoop *strided_loop, PyArrayMethod_Context *context,
-                 NpyAuxData *auxdata, NPY_ARRAYMETHOD_FLAGS *method_flags, int is_part)
+                 NpyAuxData *auxdata, NPY_ARRAYMETHOD_FLAGS *method_flags)
 {
     npy_intp N = PyArray_DIM(op, axis);
     npy_intp elsize = (npy_intp)PyArray_ITEMSIZE(op);
@@ -1574,7 +1574,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
             *iptr++ = i;
         }
 
-        if (!is_part) {
+        if (kth == NULL) {
             if (strided_loop != NULL) {
                 char *const data[2] = {valptr, (char *)idxptr};
                 npy_intp strides[2] = {elsize, sizeof(npy_intp)};
@@ -1805,7 +1805,7 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
     else {
         ret = _new_sortlike(op, axis, NULL, part,
             PyArray_DATA(kthrvl), PyArray_SIZE(kthrvl),
-            strided_loop, &context, auxdata, &method_flags, 1);
+            strided_loop, &context, auxdata, &method_flags);
     }
 
     Py_DECREF(kthrvl);
@@ -1907,7 +1907,7 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
     else {
         ret = _new_argsortlike(op2, axis, NULL, argpart,
             PyArray_DATA(kthrvl), PyArray_SIZE(kthrvl),
-            strided_loop, &context, auxdata, &method_flags, 1);
+            strided_loop, &context, auxdata, &method_flags);
     }
     Py_DECREF(kthrvl);
     Py_DECREF(op2);
@@ -3398,7 +3398,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     }
 
     ret = _new_sortlike(op, axis, sort, NULL, NULL, 0,
-                        strided_loop, &context, auxdata, &method_flags, 0);
+                        strided_loop, &context, auxdata, &method_flags);
 
 fail:
     if (sort_method != NULL) {
@@ -3513,7 +3513,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     }
 
     ret = _new_argsortlike(op2, axis, argsort, NULL, NULL, 0,
-                           strided_loop, &context, auxdata, &method_flags, 0);
+                           strided_loop, &context, auxdata, &method_flags);
     Py_DECREF(op2);
 
 fail:
