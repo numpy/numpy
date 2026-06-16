@@ -3959,14 +3959,23 @@ class TestMethods:
         p = np.argpartition(d, kth)
         self.assert_partitioned(np.array(d)[p], [1])
 
-    def assert_top_k(self, a, axis: int, x, y):
-        x_value, x_ind = x
-        y_value, y_ind = y
-        assert_equal(np.sort(x_value, axis=axis), np.sort(y_value, axis=axis))
-        assert_equal(np.sort(x_ind, axis=axis), np.sort(y_ind, axis=axis))
+    def assert_top_k(self, a, k, axis, y, largest=True, sorted=True):
+        x_value, x_ind = np.top_k(a, k, axis=axis, largest=largest, sorted=sorted)
         assert_equal(np.take_along_axis(a, x_ind, axis=axis), x_value)
 
-    def test_top_k(self):
+        if not sorted:
+            x_value = np.sort(x_value, axis=axis, descending=largest)
+        x_ind = np.sort(x_ind, axis=axis)
+
+        y_value, y_ind = y
+        y_value = np.sort(y_value, axis=axis, descending=largest)
+        y_ind = np.sort(y_ind, axis=axis)
+
+        assert_equal(x_value, y_value)
+        assert_equal(x_ind, y_ind)
+
+    @pytest.mark.parametrize("sorted", [True, False])
+    def test_top_k(self, sorted):
         a = np.array([
             [1, 2, 3, 4, 5],
             [5, 4, 2, 3, 1],
@@ -3983,8 +3992,8 @@ class TestMethods:
             np.array([[4, 5], [4, 5], [4, 5]], dtype=np.int8),
             np.array([[3, 4], [0, 1], [1, 2]], dtype=np.intp)
         )
-        self.assert_top_k(a, -1, np.top_k(a, 2), y)
-        self.assert_top_k(a, 1, np.top_k(a, 2), y)
+        self.assert_top_k(a, 2, -1, y, sorted=sorted)
+        self.assert_top_k(a, 2, 1, y, sorted=sorted)
 
         axis = 0
         y = (
@@ -3993,14 +4002,14 @@ class TestMethods:
             np.array([[1, 1, 0, 0, 0],
                       [2, 2, 2, 1, 2]], dtype=np.int8)
         )
-        self.assert_top_k(a, axis, np.top_k(a, 2, axis=axis), y)
+        self.assert_top_k(a, 2, axis, y, sorted=sorted)
 
         y = (
             np.array([[1, 2], [1, 2], [1, 2]], dtype=np.int8),
             np.array([[0, 1], [2, 4], [3, 4]], dtype=np.intp)
         )
-        self.assert_top_k(a, -1, np.top_k(a, 2, largest=False), y)
-        self.assert_top_k(a, 1, np.top_k(a, 2, largest=False), y)
+        self.assert_top_k(a, 2, -1, y, largest=False, sorted=sorted)
+        self.assert_top_k(a, 2, 1, y, largest=False, sorted=sorted)
 
         y_val, y_ind = np.top_k(a, 2, axis=None)
         assert_equal(y_val, np.array([5, 5], dtype=np.int8))
