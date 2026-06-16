@@ -201,12 +201,12 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     return _wrapfunc(a, 'take', indices, axis=axis, out=out, mode=mode)
 
 
-def _top_k_dispatcher(a, k, /, *, axis=-1, largest=True):
+def _top_k_dispatcher(a, k, /, *, axis=-1, largest=True, sorted=True):
     return (a,)
 
 
 @array_function_dispatch(_top_k_dispatcher)
-def top_k(a, k, /, *, axis=-1, largest=True):
+def top_k(a, k, /, *, axis=-1, largest=True, sorted=True):
     """
     Returns the ``k`` largest/smallest elements and corresponding
     indices along the given ``axis``.
@@ -235,9 +235,12 @@ def top_k(a, k, /, *, axis=-1, largest=True):
         If True, the largest elements are returned. If False,
         the smallest elements are returned. The default is True.
 
-        Similarly to sorts, NaN values are pushed to the end, and
-        therefore are only returned at the end of the array if they are
-        among the top ``k`` values.
+        Similarly to sorts, NaN values are pushed to the end and
+        therefore only present in the output if they are among the
+        top ``k`` values.
+    sorted: bool, optional
+        If True, the top ``k`` elements are returned in sorted order.
+        If False, sorted order is not guaranteed. The default is True.
 
     Returns
     -------
@@ -246,39 +249,37 @@ def top_k(a, k, /, *, axis=-1, largest=True):
         ``topk_values`` are the top ``k`` values and ``topk_indices``
         are the corresponding indices.
 
+    Notes
+    -----
+    The returned indices are not guaranteed to be stable, i.e., the order
+    of the returned for any duplicate values is not guaranteed to be the
+    same as their order in the input array. This is the case regardless
+    of the value of the ``sorted`` parameter.
+
     See Also
     --------
     argpartition : Indirect partition.
     sort : Full sorting.
 
-    Notes
-    -----
-    The returned indices are not guaranteed to be sorted according to
-    the values. Furthermore, the returned indices are not guaranteed
-    to be the earliest/latest occurrence of the element. E.g.,
-    ``np.top_k([3,3,3], 1)`` can return ``(array([3]), array([1]))``
-    rather than ``(array([3]), array([0]))`` or
-    ``(array([3]), array([2]))``.
-
     Examples
     --------
     >>> a = np.array([[1,2,3,4,5], [5,4,3,2,1], [3,4,5,1,2]])
     >>> np.top_k(a, 2)
-    (array([[4, 5],
-            [4, 5],
-            [4, 5]]),
-     array([[3, 4],
-            [1, 0],
-            [1, 2]]))
+    (array([[5, 4],
+            [5, 4],
+            [5, 4]]),
+     array([[4, 3],
+            [0, 1],
+            [2, 1]]))
     >>> np.top_k(a, 2, axis=0)
-    (array([[3, 4, 3, 2, 2],
-            [5, 4, 5, 4, 5]]),
-     array([[2, 1, 1, 1, 2],
-            [1, 2, 2, 0, 0]]))
+    (array([[5, 4, 5, 4, 5],
+            [3, 4, 3, 2, 2]]),
+     array([[1, 1, 2, 0, 0],
+            [2, 2, 1, 1, 2]]))
     >>> a.flatten()
     array([1, 2, 3, 4, 5, 5, 4, 3, 2, 1, 3, 4, 5, 1, 2])
     >>> np.top_k(a, 2, axis=None)
-    (array([5, 5]), array([ 4, 12]))
+    (array([5, 5]), array([4, 5]))
     >>> np.top_k(np.array([1., 2., 3., np.nan]), 2)
     (array([3., 2.]), array([2, 1]))
     """
@@ -299,6 +300,11 @@ def top_k(a, k, /, *, axis=-1, largest=True):
     indices = indices[slice_]
 
     values = np.take_along_axis(arr, indices, axis=axis)
+
+    if sorted:
+        sort_indices = np.argsort(values, axis=axis, descending=largest, stable=False)
+        values = np.take_along_axis(values, sort_indices, axis=axis)
+        indices = np.take_along_axis(indices, sort_indices, axis=axis)
 
     return (values, indices)
 
