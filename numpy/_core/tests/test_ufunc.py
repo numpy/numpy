@@ -1791,7 +1791,7 @@ class TestUfunc:
         a = a[1:, 1:, 1:]
         yield a
 
-    @pytest.mark.parametrize("arrs", identityless_reduce_arrs())
+    @pytest.mark.parametrize("arrs", list(identityless_reduce_arrs()))
     @pytest.mark.parametrize("pos", [(1, 0, 0), (0, 1, 0), (0, 0, 1)])
     def test_identityless_reduction(self, arrs, pos):
         # np.minimum.reduce is an identityless reduction

@@ -22,7 +22,7 @@ on:
       - '**.rst'
       - '.circlecl/**'
       - '.devcontainer/**'
-      - '.spin/**'
+      - '.spin/LICENSE'
       - 'benchmarks/**'
       - 'branding/**'
       - 'doc/**'
@@ -54,7 +54,7 @@ jobs:
         os_python:
           - [macos-latest, '3.14']
           - [ubuntu-latest, '3.13']
-          - [windows-latest, '3.12']
+          - [windows-2022, '3.12']
     steps:
     - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:

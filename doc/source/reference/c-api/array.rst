@@ -2050,7 +2050,7 @@ with the rest of the ArrayMethod API.
     The new descriptors MUST be viewable with the old ones, `NULL` must be
     supported (for output arguments) and should normally be forwarded.
 
-    The output of of this function will be used to construct
+    The output of this function will be used to construct
     views of the arguments as if they were the translated dtypes and
     does not use a cast. This means this mechanism is mostly useful for
     DTypes that "wrap" another DType implementation. For example, a unit
