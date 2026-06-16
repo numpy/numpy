@@ -94,6 +94,7 @@ __all__ = [
     "sum",
     "swapaxes",
     "take",
+    "top_k",
     "trace",
     "transpose",
     "var",
