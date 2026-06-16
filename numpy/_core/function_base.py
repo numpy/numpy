@@ -179,6 +179,12 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         y = _nx.moveaxis(y, 0, axis)
 
     if integer_dtype:
+        if not _nx.isfinite(y).all():
+            raise ValueError(
+                "Cannot convert non-finite values (inf, -inf, or NaN) to "
+                "integer dtype. Use a floating-point dtype or ensure that "
+                "start and stop are finite."
+            )
         _nx.floor(y, out=y)
 
     y = conv.wrap(y.astype(dtype, copy=False))

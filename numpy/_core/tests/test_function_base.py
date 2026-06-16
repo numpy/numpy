@@ -482,6 +482,22 @@ class TestLinspace:
         y = linspace(start, stop, 3)
         assert_array_equal(y, array([[0.0, 1.0], [1.0, 1.0], [2.0, 1.0]]))
 
+    def test_integer_dtype_non_finite_raises(self):
+        # gh-31651: non-finite start/stop with integer dtype must raise
+        # ValueError instead of silently returning INT_MIN.
+        with pytest.raises(ValueError, match="non-finite"):
+            linspace(np.inf, np.inf, 5, dtype=int)
+        with pytest.raises(ValueError, match="non-finite"):
+            linspace(np.inf, -np.inf, 5, dtype=int)
+        with pytest.raises(ValueError, match="non-finite"):
+            linspace(-np.inf, 0, 3, dtype=int)
+        with pytest.raises(ValueError, match="non-finite"):
+            linspace(float('nan'), 5, 3, dtype=np.int32)
+        # finite values with integer dtype must still work
+        y = linspace(0, 10, 5, dtype=int)
+        assert_equal(y.dtype, dtype('int64'))
+        assert_array_equal(y, [0, 2, 5, 7, 10])
+
 
 class TestAdd_newdoc:
 
