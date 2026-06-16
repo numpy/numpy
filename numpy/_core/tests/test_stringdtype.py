@@ -827,15 +827,15 @@ def test_float_nan_cast_na_object():
     ],
 )
 def test_cfloat_casts(typename):
-    inp = [1.1 + 1.1j, 2.8 + 2.8j, -3.2 - 3.2j, 2.7e4 + 2.7e4j]
+    inp = [1.25 + 0.5j, 2.75 - 3.5j, -3.125 + 4.25j, 2.7e4 - 8j]
     ainp = np.array(inp, dtype=typename)
     assert_array_equal(ainp, ainp.astype("T").astype(typename))
 
-    inp = [0.1 + 0.1j]
+    inp = [0.125 - 0.5j]
     sres = np.array(inp, dtype=typename).astype("T")
     res = sres.astype(typename)
     assert_array_equal(np.array(inp, dtype=typename), res)
-    assert sres[0] == "(0.1+0.1j)"
+    assert sres[0] == "(0.125-0.5j)"
 
 
 def test_take(string_list):
