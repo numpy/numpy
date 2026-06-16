@@ -89,6 +89,21 @@ def test_eigvalsh_thread_safety():
                  pass_count=True)
 
 
+def _detected_blas():
+    blas = np.show_config('dicts').get('Build Dependencies', {}).get('blas', {})
+    return blas.get('name', 'unknown'), blas.get('version', 'unknown')
+
+
+def _openblas_predates_gemm_fix(name, version):
+    if 'openblas' not in name:
+        return False
+    try:
+        parsed = tuple(int(p) for p in version.split('.'))
+    except ValueError:
+        return False
+    return parsed < (0, 3, 33, 112)
+
+
 def test_blas_gemm_thread_safety():
     # gh-31618: concurrently run transpose and no-transpose GEMM variants to
     # exercise possible thread safety issues due to lock sharding between
@@ -124,8 +139,16 @@ def test_blas_gemm_thread_safety():
 
     run_threaded(closure, num_threads, pass_count=True, pass_barrier=True)
 
+    blas_name, blas_version = _detected_blas()
+    if mismatches and _openblas_predates_gemm_fix(blas_name, blas_version):
+        pytest.xfail(
+            f"OpenBLAS version ({blas_version}) predates first OpenBLAS "
+            "version with a fix (0.3.33.112)"
+        )
+
     assert mismatches == 0, (
-        f"{mismatches} concurrent matmul results were corrupted (gh-31618)"
+        f"{mismatches} concurrent matmul results were corrupted "
+        f"({blas_name} {blas_version})"
     )
 
 
