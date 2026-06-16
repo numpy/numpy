@@ -2638,13 +2638,6 @@ class TestUfuncs:
         return (array([1.0, 0, -1, pi / 2] * 2, mask=[0, 1] + [0] * 6),
                   array([1.0, 0, -1, pi / 2] * 2, mask=[1, 0] + [0] * 6),)
 
-    @pytest.fixture(autouse=True, scope="class")
-    def err_status(self):
-        err = np.geterr()
-        np.seterr(divide='ignore', invalid='ignore')
-        yield err
-        np.seterr(**err)
-
     def test_testUfuncRegression(self):
         # Tests new ufuncs on MaskedArrays.
         for f in ['sqrt', 'log', 'log10', 'exp', 'conjugate',

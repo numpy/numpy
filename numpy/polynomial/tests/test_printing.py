@@ -14,6 +14,7 @@ from numpy.testing import assert_, assert_equal
 class TestStrUnicodeSuperSubscripts:
 
     @pytest.fixture(scope='class', autouse=True)
+    @classmethod
     def use_unicode(self):
         poly.set_default_printstyle('unicode')
 
@@ -97,6 +98,7 @@ class TestStrUnicodeSuperSubscripts:
 class TestStrAscii:
 
     @pytest.fixture(scope='class', autouse=True)
+    @classmethod
     def use_ascii(self):
         poly.set_default_printstyle('ascii')
 
@@ -183,6 +185,7 @@ class TestStrAscii:
 class TestLinebreaking:
 
     @pytest.fixture(scope='class', autouse=True)
+    @classmethod
     def use_ascii(self):
         poly.set_default_printstyle('ascii')
 
@@ -507,6 +510,7 @@ class TestPrintOptions:
     """
 
     @pytest.fixture(scope='class', autouse=True)
+    @classmethod
     def use_ascii(self):
         poly.set_default_printstyle('ascii')
 
