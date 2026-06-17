@@ -511,6 +511,7 @@ dtypemeta_traverse(PyArray_DTypeMeta *type, visitproc visit, void *arg)
 {
     Py_VISIT(type->singleton);
     Py_VISIT(type->scalar_type);
+    Py_VISIT(NPY_DT_SLOTS(type)->castingimpls);
     return PyType_Type.tp_traverse((PyObject *)type, visit, arg);
 }
 
