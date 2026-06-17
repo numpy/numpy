@@ -10,7 +10,7 @@ from functools import cached_property
 from numpy._utils import set_module
 
 from . import numeric, numerictypes as ntypes
-from ._multiarray_umath import _populate_finfo_constants
+from ._multiarray_umath import _finfo_get_realdtype, _populate_finfo_constants
 
 
 def _fr0(a):
@@ -25,31 +25,6 @@ def _fr1(a):
     if a.size == 1:
         a = a.reshape(())
     return a
-
-
-def _convert_to_float_if_complex(dtype):
-    # At this point, we assume the array may be a complex array for which we
-    # need to find the real dtype counterpart.
-    # In C, we could short-circuit but this is cached so create an array and
-    # check arr.real and arr.imag.
-    # A complex compsed of (real, imag) will:
-    # - return a view for both arr.real and arr.imag
-    #   (non-complex will not do this)
-    # - return the identical dtype for both arr.real and arr.imag
-    #   (might reject theoretical crazy complex dtypes with mixed precision)
-    # This may be over-careful, but let's err on the safe side.
-    try:
-        arr = numeric.empty(1, dtype=dtype)
-        imag_part = arr.imag
-        real_part = arr.real
-    except Exception:
-        # if array creation or arr.imag fails, assume it's not a complex.
-        pass
-    else:
-        if (imag_part.base is real_part.base is arr
-                and imag_part.dtype == real_part.dtype):
-            return imag_part.dtype
-    return dtype
 
 
 # Parameters for creating MachAr / MachAr-like objects
@@ -224,7 +199,7 @@ class finfo:
 
         sctype = newdtype.type
         if sctype is not None and not issubclass(sctype, numeric.floating):
-            newdtype = _convert_to_float_if_complex(dtype)
+            newdtype = _finfo_get_realdtype(dtype)
             if newdtype is not dtype:
                 # dtype changed, for example from complex128 to float64
                 dtypes.append(newdtype)
