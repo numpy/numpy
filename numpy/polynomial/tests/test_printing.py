@@ -15,7 +15,7 @@ class TestStrUnicodeSuperSubscripts:
 
     @pytest.fixture(scope='class', autouse=True)
     @classmethod
-    def use_unicode(self):
+    def use_unicode(cls):
         poly.set_default_printstyle('unicode')
 
     @pytest.mark.parametrize(('inp', 'tgt'), (
@@ -99,7 +99,7 @@ class TestStrAscii:
 
     @pytest.fixture(scope='class', autouse=True)
     @classmethod
-    def use_ascii(self):
+    def use_ascii(cls):
         poly.set_default_printstyle('ascii')
 
     @pytest.mark.parametrize(('inp', 'tgt'), (
@@ -186,7 +186,7 @@ class TestLinebreaking:
 
     @pytest.fixture(scope='class', autouse=True)
     @classmethod
-    def use_ascii(self):
+    def use_ascii(cls):
         poly.set_default_printstyle('ascii')
 
     def test_single_line_one_less(self):
@@ -511,7 +511,7 @@ class TestPrintOptions:
 
     @pytest.fixture(scope='class', autouse=True)
     @classmethod
-    def use_ascii(self):
+    def use_ascii(cls):
         poly.set_default_printstyle('ascii')
 
     def test_str(self):
