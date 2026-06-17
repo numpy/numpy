@@ -14,7 +14,7 @@ extern "C" {
  * These are mainly needed for value based promotion in ufuncs.  It
  * may be necessary to make them (partially) public, to allow user-defined
  * dtypes to perform value based casting.
- * Since types are histrocically not defined as references we define
+ * Since types are historically not defined as references we define
  * dereferenced macro versions below for `&Type` style use.
  */
 NPY_NO_EXPORT extern PyArray_DTypeMeta *PyArray_IntAbstractDTypePtr;

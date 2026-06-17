@@ -264,7 +264,7 @@ make_raw_dtype(const char *name, PyTypeObject *base,
         .slots = type_slots,
     };
     if (flags & NPY_DT_ABSTRACT) {
-        /* abstract ones can subclass in C but also disallow instant here */
+        /* abstract ones can subclass in C but also disallow instantiation here */
         spec.flags |= Py_TPFLAGS_BASETYPE | Py_TPFLAGS_DISALLOW_INSTANTIATION;
     }
     PyArray_DTypeMeta *dt = (PyArray_DTypeMeta *)PyType_FromMetaclass(
@@ -272,15 +272,16 @@ make_raw_dtype(const char *name, PyTypeObject *base,
     if (dt == NULL) {
         return NULL;
     }
-    if (slots == NULL) {
-        slots = PyMem_Calloc(1, sizeof(NPY_DType_Slots));
-        if (slots == NULL) {
-            Py_DECREF(dt);
-            PyErr_NoMemory();
-            return NULL;
-        }
+    NPY_DType_Slots *dtype_slots = PyMem_Calloc(1, sizeof(NPY_DType_Slots));
+    if (dtype_slots == NULL) {
+        Py_DECREF(dt);
+        PyErr_NoMemory();
+        return NULL;
     }
-    dt->dt_slots = slots;
+    if (slots != NULL) {
+        *dtype_slots = *slots;
+    }
+    dt->dt_slots = dtype_slots;
     dt->type_num = -1;
     Py_XINCREF(scalar_type);
     dt->scalar_type = scalar_type;

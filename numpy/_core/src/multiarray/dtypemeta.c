@@ -38,11 +38,16 @@ static void
 dtypemeta_dealloc(PyArray_DTypeMeta *self) {
     /* Do not accidentally delete a statically defined DType: */
     assert(((PyTypeObject *)self)->tp_flags & Py_TPFLAGS_HEAPTYPE);
+    NPY_DType_Slots *dt_slots = self->dt_slots;
+
+    PyObject_GC_UnTrack(self);
 
     Py_XDECREF(self->scalar_type);
     Py_XDECREF(self->singleton);
-    Py_XDECREF(NPY_DT_SLOTS(self)->castingimpls);
-    PyMem_Free(self->dt_slots);
+    if (dt_slots != NULL) {
+        Py_XDECREF(dt_slots->castingimpls);
+        PyMem_Free(dt_slots);
+    }
     PyType_Type.tp_dealloc((PyObject *) self);
 }
 
@@ -1215,8 +1220,7 @@ dtypemeta_wrap_legacy_descriptor(
 
     dt_slots->castingimpls = PyDict_New();
     if (dt_slots->castingimpls == NULL) {
-        Py_DECREF(dtype_class);
-        return NULL;
+        goto fail;
     }
 
     /*
@@ -1302,8 +1306,7 @@ dtypemeta_wrap_legacy_descriptor(
 
     if (_PyArray_MapPyTypeToDType(dtype_class, descr->typeobj,
             PyTypeNum_ISUSERDEF(dtype_class->type_num)) < 0) {
-        Py_DECREF(dtype_class);
-        return NULL;
+        goto fail;
     }
 
     /* Finally, replace the current class of the descr */
@@ -1313,23 +1316,26 @@ dtypemeta_wrap_legacy_descriptor(
     if (!PyTypeNum_ISUSERDEF(descr->type_num)) {
         if (npy_cache_import_runtime("numpy.dtypes", "_add_dtype_helper",
                                      &npy_runtime_imports._add_dtype_helper) == -1) {
-            return NULL;
+            goto fail;
         }
 
         if (PyObject_CallFunction(
                 npy_runtime_imports._add_dtype_helper,
                 "Os", (PyObject *)dtype_class, alias) == NULL) {
-            return NULL;
+            goto fail;
         }
     }
     else {
         // ensure the within dtype cast is populated for legacy user dtypes
         if (PyArray_GetCastingImpl(dtype_class, dtype_class) == NULL) {
-            return NULL;
+            goto fail;
         }
     }
 
     return dtype_class;
+  fail:
+    Py_DECREF(dtype_class);
+    return NULL;
 }
 
 
