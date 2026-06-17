@@ -306,7 +306,7 @@ npyv_pack_isfinite_f64(npyv_f64 v0, npyv_f64 v1, npyv_f64 v2, npyv_f64 v3,
 NPY_FINLINE npyv_u32
 npyv_signbit_f32(npyv_f32 v)
 {
-    return npyv_shri_u32(npyv_reinterpret_u32_f32(v), (sizeof(npyv_lanetype_f32)*8)-1);
+    return npyv_reinterpret_u32_s32(npyv_shri_s32(npyv_reinterpret_s32_f32(v), (sizeof(npyv_lanetype_f32)*8)-1));
 }
 NPY_FINLINE npyv_u8
 npyv_pack_signbit_f32(npyv_f32 v0, npyv_f32 v1, npyv_f32 v2, npyv_f32 v3)
@@ -338,7 +338,7 @@ npyv_pack_signbit_f32(npyv_f32 v0, npyv_f32 v1, npyv_f32 v2, npyv_f32 v3)
 NPY_FINLINE npyv_u64
 npyv_signbit_f64(npyv_f64 v)
 {
-    return npyv_shri_u64(npyv_reinterpret_u64_f64(v), (sizeof(npyv_lanetype_f64)*8)-1);
+    return npyv_reinterpret_u64_s64(npyv_shri_s64(npyv_reinterpret_s64_f64(v), (sizeof(npyv_lanetype_f64)*8)-1));
 }
 NPY_FINLINE npyv_u8
 npyv_pack_signbit_f64(npyv_f64 v0, npyv_f64 v1, npyv_f64 v2, npyv_f64 v3,
