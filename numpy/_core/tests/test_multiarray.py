@@ -9210,7 +9210,7 @@ class TestNewBufferProtocol:
         self._check_roundtrip(x)
 
     def test_roundtrip_single_types(self):
-        for typ in np._core.sctypeDict.values():
+        for typ in np.typecodes["All"]:
             dtype = np.dtype(typ)
 
             if dtype.char in 'Mm':
