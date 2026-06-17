@@ -4431,7 +4431,9 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
                 goto fail;
             }
             if (res == 0) {
-                continue;
+                PyErr_Format(PyExc_ValueError,
+                    "data type %R not compatible with finfo", descr);
+                goto fail;
             }
             value_obj = PyLong_FromSsize_t(int_value);
         }
