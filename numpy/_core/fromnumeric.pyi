@@ -206,9 +206,9 @@ def top_k(
     k: int,
     /,
     *,
-    axis: None | int = ...,
-    largest: bool = ...,
-    sorted: bool = ...,
+    axis: int | None = -1,
+    largest: bool = True,
+    sorted: bool = True,
 ) -> tuple[NDArray[Any], NDArray[intp]]: ...
 
 # keep in sync with `ma.core.reshape`
