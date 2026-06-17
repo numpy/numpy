@@ -10,7 +10,7 @@ from numpy._utils import set_module
 
 from . import _methods, multiarray as mu, numerictypes as nt, overrides, umath as um
 from ._multiarray_umath import _array_converter
-from .multiarray import asanyarray, asarray, concatenate
+from .multiarray import asanyarray, asarray, concatenate, normalize_axis_index
 
 _dt_ = nt.sctype2char
 
@@ -208,12 +208,10 @@ def _top_k_dispatcher(a, k, /, *, axis=-1, largest=True, sorted=True):
 @array_function_dispatch(_top_k_dispatcher)
 def top_k(a, k, /, *, axis=-1, largest=True, sorted=True):
     """
-    Returns the ``k`` largest/smallest elements and corresponding
-    indices along the given ``axis``.
+    Returns the ``k`` largest or smallest elements and their indices
+    indices along an axis.
 
     When ``axis`` is None, a flattened array is used.
-
-    If ``largest`` is false, then the ``k`` smallest elements are returned.
 
     A tuple of ``(values, indices)`` is returned, where ``values`` and
     ``indices`` are the values and indices, respectively, of the largest/smallest
@@ -247,14 +245,17 @@ def top_k(a, k, /, *, axis=-1, largest=True, sorted=True):
     tuple_of_array: tuple
         The output tuple of ``(topk_values, topk_indices)``, where
         ``topk_values`` are the top ``k`` values and ``topk_indices``
-        are the corresponding indices.
+        are the corresponding indices. Both arrays are of the shape
+        of the input array with the dimension along ``axis`` replaced
+        by ``k``.
+
 
     Notes
     -----
     The returned indices are not guaranteed to be stable, i.e., the order
-    of the returned for any duplicate values is not guaranteed to be the
-    same as their order in the input array. This is the case regardless
-    of the value of the ``sorted`` parameter.
+    of the returned indices for any duplicate values is not guaranteed to
+    be the same as their order in the input array. This is the case
+    regardless of the value of the ``sorted`` parameter.
 
     See Also
     --------
@@ -263,23 +264,22 @@ def top_k(a, k, /, *, axis=-1, largest=True, sorted=True):
 
     Examples
     --------
-    >>> a = np.array([[1,2,3,4,5], [5,4,3,2,1], [3,4,5,1,2]])
+    >>> a = np.array([[1,2,3,4,5], [5,4,3,2,1]])
     >>> np.top_k(a, 2)
     (array([[5, 4],
-            [5, 4],
             [5, 4]]),
      array([[4, 3],
-            [0, 1],
-            [2, 1]]))
+            [0, 1]]))
     >>> np.top_k(a, 2, axis=0)
-    (array([[5, 4, 5, 4, 5],
-            [3, 4, 3, 2, 2]]),
-     array([[1, 1, 2, 0, 0],
-            [2, 2, 1, 1, 2]]))
-    >>> a.flatten()
-    array([1, 2, 3, 4, 5, 5, 4, 3, 2, 1, 3, 4, 5, 1, 2])
-    >>> np.top_k(a, 2, axis=None)
-    (array([5, 5]), array([4, 5]))
+    (array([[5, 4, 3, 4, 5],
+           [1, 2, 3, 2, 1]]),
+     array([[1, 1, 0, 0, 0],
+           [0, 0, 1, 1, 1]]))
+    >>> np.top_k(a, 2, axis=1, largest=False)
+    (array([[1, 2],
+            [1, 2]]),
+     array([[0, 1],
+            [4, 3]]))
     >>> np.top_k(np.array([1., 2., 3., np.nan]), 2)
     (array([3., 2.]), array([2, 1]))
     """
@@ -287,12 +287,10 @@ def top_k(a, k, /, *, axis=-1, largest=True, sorted=True):
         raise ValueError(f'k(={k}) provided must be positive.')
 
     arr = np.asanyarray(a)
-
     if axis is None:
         arr = arr.ravel()
         axis = 0
-    elif axis <= 0:
-        axis = axis % arr.ndim
+    axis = normalize_axis_index(axis, arr.ndim)
 
     indices = np.argpartition(arr, k - 1, axis=axis, descending=largest)
 
