@@ -5263,9 +5263,11 @@ class TestArgmaxArgminCommon:
              (3, 4, 1, 2), (4, 1, 2, 3),
              (64,), (128,), (256,)]
 
-    @pytest.mark.parametrize("size, axis", itertools.chain(*[[(size, axis)
-        for axis in list(range(-len(size), len(size))) + [None]]
-        for size in sizes]))
+    @pytest.mark.parametrize("size, axis", [
+        (size, axis)
+        for size in sizes
+        for axis in [*range(-len(size), len(size)), None]
+    ])
     @pytest.mark.parametrize('method', [np.argmax, np.argmin])
     def test_np_argmin_argmax_keepdims(self, size, axis, method):
 
