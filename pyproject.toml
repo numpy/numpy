@@ -226,7 +226,12 @@ repair-wheel-command = ""
 before-test = "pip install -r {project}/requirements/emscripten_test_requirements.txt"
 # Pyodide ensures that the wheels are already repaired by auditwheel-emscripten
 repair-wheel-command = ""
-test-command = "python -m pytest --pyargs numpy -m 'not slow'"
+test-command = """
+    python -m pytest --pyargs numpy \
+        -m 'not slow' \
+        -W ignore::PendingDeprecationWarning \
+        -p no:cacheprovider
+"""
 
 [tool.cibuildwheel.pyodide.config-settings]
 build-dir = "build"
