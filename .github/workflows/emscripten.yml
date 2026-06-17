@@ -40,3 +40,4 @@ jobs:
         env:
           CIBW_PLATFORM: pyodide
           CIBW_BUILD: cp312-*
+
