@@ -728,7 +728,7 @@ NpyString_cmp(const npy_static_string *s1, const npy_static_string *s2)
     int cmp = 0;
 
     if (minsize != 0) {
-        cmp = strncmp(s1->buf, s2->buf, minsize);
+        cmp = memcmp(s1->buf, s2->buf, minsize);
     }
 
     if (cmp == 0) {
