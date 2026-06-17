@@ -2025,6 +2025,18 @@ def test_suppress_warnings_forwarding():
             assert_equal(len(sup.log), 3)
 
 
+def test_no_warnings_message_reports_warning():
+    def f():
+        warnings.warn("a very specific warning text", UserWarning)
+
+    with pytest.raises(AssertionError) as exc_info:
+        assert_no_warnings(f)
+
+    msg = str(exc_info.value)
+    assert "a very specific warning text" in msg
+    assert "WarningMessage" not in msg
+
+
 def test_tempdir():
     with tempdir() as tdir:
         fpath = os.path.join(tdir, 'tmp')

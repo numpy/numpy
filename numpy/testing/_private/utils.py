@@ -2074,7 +2074,7 @@ def _assert_no_warnings_context(name=None):
         yield
         if len(l) > 0:
             name_str = f' when calling {name}' if name is not None else ''
-            raise AssertionError(f'Got warnings{name_str}: {l}')
+            raise AssertionError(f'Got warnings{name_str}: {[e.message for e in l]}')
 
 
 def assert_no_warnings(*args, **kwargs):
