@@ -2010,10 +2010,7 @@ def test_suppress_warnings_forwarding():
         assert_equal(len(sup.log), 3)
 
 
-@pytest.mark.thread_unsafe(
-    reason="uses deprecated thread-unsafe warnings control utilities"
-)
-def test_no_warnings_message_reports_warning(self):
+def test_no_warnings_message_reports_warning():
     def f():
         warnings.warn("a very specific warning text", UserWarning)
 
