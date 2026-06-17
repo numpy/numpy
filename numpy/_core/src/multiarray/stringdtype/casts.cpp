@@ -1116,6 +1116,12 @@ string_to_float<npy_longdouble, NPY_LONGDOUBLE>(
 
         // allocate temporary null-terminated copy
         char *buf = (char *)PyMem_RawMalloc(s.size + 1);
+        if (buf == NULL) {
+            npy_gil_error(PyExc_MemoryError,
+                          "Failed to allocate string buffer while converting "
+                          "to a long double.");
+            goto fail;
+        }
         memcpy(buf, s.buf, s.size);
         buf[s.size] = '\0';
 
@@ -1123,6 +1129,15 @@ string_to_float<npy_longdouble, NPY_LONGDOUBLE>(
         errno = 0;
         npy_longdouble longdouble_value = NumPyOS_ascii_strtold(buf, &end);
 
+        if (end == buf || end != buf + s.size ||
+                (errno != 0 && errno != ERANGE)) {
+            npy_gil_error(PyExc_ValueError,
+                         "invalid literal for long double: %s (%s)",
+                         buf,
+                         strerror(errno));
+            PyMem_RawFree(buf);
+            goto fail;
+        }
         if (errno == ERANGE) {
             /* strtold returns INFINITY of the correct sign. */
             if (
@@ -1135,14 +1150,6 @@ string_to_float<npy_longdouble, NPY_LONGDOUBLE>(
                 PyMem_RawFree(buf);
                 goto fail;
             }
-        }
-        else if (errno || end == buf || *end) {
-            npy_gil_error(PyExc_ValueError,
-                         "invalid literal for long double: %s (%s)",
-                         buf,
-                         strerror(errno));
-            PyMem_RawFree(buf);
-            goto fail;
         }
         PyMem_RawFree(buf);
         *out = longdouble_value;

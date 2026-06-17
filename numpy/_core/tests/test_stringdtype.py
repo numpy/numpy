@@ -317,6 +317,30 @@ def test_additional_unicode_cast(dtype):
     assert_array_equal(arr, arr.astype(string_list.dtype))
 
 
+@pytest.mark.parametrize(
+    "dtype",
+    [
+        "int64",
+        "float16",
+        "float32",
+        "float64",
+        "longdouble",
+        "complex64",
+        "complex128",
+        "clongdouble",
+    ],
+)
+@pytest.mark.parametrize(
+    "invalid",
+    ["", "spam", "1abc", "1.0abc", "\0", "1\0", "1\0abc"],
+)
+def test_invalid_numeric_casts_error(dtype, invalid):
+    arr = np.array([invalid], dtype="T")
+
+    with pytest.raises(ValueError):
+        arr.astype(dtype)
+
+
 def test_insert_scalar(dtype, string_list):
     """Test that inserting a scalar works."""
     arr = np.array(string_list, dtype=dtype)
