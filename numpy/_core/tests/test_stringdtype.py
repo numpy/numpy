@@ -1,5 +1,7 @@
+import bisect
 import copy
 import itertools
+import operator
 import os
 import pickle
 import string
@@ -164,6 +166,61 @@ def test_null_roundtripping():
     arr = np.array(data, dtype="T")
     assert data[0] == arr[0]
     assert data[1] == arr[1]
+
+
+@pytest.mark.parametrize(
+    "op, pyop",
+    [
+        (np.equal, operator.eq),
+        (np.not_equal, operator.ne),
+        (np.greater, operator.gt),
+        (np.greater_equal, operator.ge),
+        (np.less, operator.lt),
+        (np.less_equal, operator.le),
+    ],
+)
+def test_embedded_null_comparisons(op, pyop):
+    lhs = ["a\0b", "a\0b", "a\0c", "\0b", "long\0b"]
+    rhs = ["a\0c", "a\0b", "a\0b", "\0a", "long\0c"]
+
+    expected = [pyop(left, right) for left, right in zip(lhs, rhs)]
+    result = op(np.array(lhs, dtype="T"), np.array(rhs, dtype="T"))
+
+    assert result.tolist() == expected
+
+
+def test_embedded_null_sorting_and_search():
+    values = [
+        "a\0c",
+        "a\0b",
+        "a",
+        "\0b",
+        "\0a",
+        "long prefix\0c",
+        "long prefix\0b",
+    ]
+    expected_sorted = sorted(values)
+
+    arr = np.array(values, dtype="T")
+    assert np.sort(arr).tolist() == expected_sorted
+    assert arr[np.argsort(arr)].tolist() == expected_sorted
+    assert np.minimum(arr[:2], arr[1::-1]).tolist() == ["a\0b", "a\0b"]
+    assert np.maximum(arr[:2], arr[1::-1]).tolist() == ["a\0c", "a\0c"]
+
+    haystack = np.array(expected_sorted, dtype="T")
+    needles = ["\0b", "a\0c", "long prefix\0b"]
+    expected = [bisect.bisect_left(expected_sorted, needle) for needle in needles]
+    result = np.searchsorted(haystack, np.array(needles, dtype="T"))
+    assert result.tolist() == expected
+
+
+@pytest.mark.parametrize("dtype", [object, "U20", "S20", "V20"])
+def test_embedded_null_string_like_casts(dtype):
+    strings = ["a\0b", "\0leading", "multi\0null\0inside"]
+    arr = np.array(strings, dtype="T")
+    roundtripped = arr.astype(dtype).astype("T")
+
+    assert roundtripped.tolist() == strings
 
 
 def test_string_too_large_error():
