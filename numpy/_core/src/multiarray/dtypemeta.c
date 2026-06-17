@@ -1203,6 +1203,11 @@ dtypemeta_wrap_legacy_descriptor(
         {Py_tp_base, dtype_super_class},
         {0, NULL},
     };
+    if (PyTypeNum_ISSTRING(descr->type_num)) {
+        /* string and unicode new supports the size explicitly. */
+        type_slots[0].pfunc = (void *)string_unicode_new;
+    }
+
     PyType_Spec spec = {
         .name = name,
         .basicsize = sizeof(_PyArray_LegacyDescr),
@@ -1297,7 +1302,6 @@ dtypemeta_wrap_legacy_descriptor(
                     string_discover_descr_from_pyobject);
             dt_slots->common_dtype = string_unicode_common_dtype;
             dt_slots->common_instance = string_unicode_common_instance;
-            ((PyTypeObject*)dtype_class)->tp_new = (newfunc)string_unicode_new;
         }
     }
 
