@@ -1911,7 +1911,7 @@ class TestFromCTypes:
         self.check(ctypes.c_uint8.__ctype_be__, np.dtype('u1'))
 
     all_types = set(np.typecodes['All'])
-    all_pairs = permutations(all_types, 2)
+    all_pairs = list(permutations(all_types, 2))
 
     @pytest.mark.parametrize("pair", all_pairs)
     def test_pairs(self, pair):

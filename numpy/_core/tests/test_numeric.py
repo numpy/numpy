@@ -1327,12 +1327,14 @@ class TestTypes:
 
     @pytest.mark.slow
     @pytest.mark.filterwarnings('ignore:Promotion of numbers:FutureWarning')
-    @pytest.mark.parametrize(["dtype1", "dtype2"],
-            itertools.product(
-                list(np.typecodes["All"]) +
-                ["i,i", "S3", "S100", "U3", "U100",
-                 rational, rational2],
-                repeat=2))
+    @pytest.mark.parametrize(
+        "dtype1",
+        [*np.typecodes["All"], "i,i", "S3", "S100", "U3", "U100", rational, rational2],
+    )
+    @pytest.mark.parametrize(
+        "dtype2",
+        [*np.typecodes["All"], "i,i", "S3", "S100", "U3", "U100", rational, rational2],
+    )
     def test_promote_types_metadata(self, dtype1, dtype2):
         """Metadata handling in promotion does not appear formalized
         right now in NumPy. This test should thus be considered to
@@ -2218,7 +2220,7 @@ def _test_array_equal_parametrizations():
 
 class TestArrayComparisons:
     @pytest.mark.parametrize(
-        "bx,by,equal_nan,expected", _test_array_equal_parametrizations()
+        "bx,by,equal_nan,expected", list(_test_array_equal_parametrizations())
     )
     def test_array_equal_equal_nan(self, bx, by, equal_nan, expected):
         """
