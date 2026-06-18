@@ -5801,6 +5801,27 @@ add_newdoc('numpy._core', 'ufunc', ('at',
     >>> np.add.at(a, [0, 1], b)
     >>> a
     array([2, 4, 3, 4])
+    
+    Note the difference between passing a tuple of lists versus a list of 
+    lists as indices for a multi-dimensional array. Passing a tuple of 
+    lists indexes across multiple dimensions:
+
+    >>> a = np.arange(1, 10).reshape(3, 3)
+    >>> np.add.at(a, ([0, 1], [2, 2]), 10)
+    >>> a
+    array([[ 1,  2, 13],
+           [ 4,  5, 16],
+           [ 7,  8,  9]])
+
+    Conversely, passing a list of lists treats the input as a single index 
+    array operating row-wise along the first dimension:
+
+    >>> b = np.arange(1, 10).reshape(3, 3)
+    >>> np.add.at(b, [[0, 1], [2, 2]], 10)
+    >>> b
+    array([[11, 12, 13],
+           [14, 15, 16],
+           [27, 28, 29]])
 
     """))
 
