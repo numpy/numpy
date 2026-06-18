@@ -1778,6 +1778,7 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
             method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
             PyErr_SetString(PyExc_TypeError,
                             "unable to resolve descriptors for partition");
+            Py_DECREF(kthrvl);
             return -1;
         }
         context.descriptors = loop_descrs;
@@ -1808,9 +1809,9 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
             strided_loop, &context, auxdata, &method_flags);
     }
 
+fail:
     Py_DECREF(kthrvl);
 
-fail:
     if (method != NULL) {
         NPY_AUXDATA_FREE(auxdata);
         Py_DECREF(context.descriptors[0]);
@@ -1885,6 +1886,8 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
             method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
             PyErr_SetString(PyExc_TypeError,
                             "unable to resolve descriptors for argpartition");
+            Py_DECREF(kthrvl);
+            Py_DECREF(op2);
             return NULL;
         }
         context.descriptors = loop_descrs;
@@ -1914,10 +1917,11 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
             PyArray_DATA(kthrvl), PyArray_SIZE(kthrvl),
             strided_loop, &context, auxdata, &method_flags);
     }
+
+fail:
     Py_DECREF(kthrvl);
     Py_DECREF(op2);
 
-fail:
     if (method != NULL) {
         NPY_AUXDATA_FREE(auxdata);
         Py_DECREF(context.descriptors[0]);
