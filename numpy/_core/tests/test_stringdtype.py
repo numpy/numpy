@@ -892,6 +892,37 @@ def test_float_nan_cast_na_object():
     assert arr[0] == '1.2'
 
 
+@pytest.mark.parametrize("typename", ["float16", "float32", "float64",
+                                      "longdouble"])
+@pytest.mark.parametrize("na_object", [np.nan, float("nan"), pd_NA],
+                         ids=["np.nan", "float('nan')", "pandas.NA"])
+def test_float_to_string_nan_na_consistent(typename, na_object):
+    dt = StringDType(na_object=na_object)
+    arr = np.array([1.5, np.nan, -2.0], dtype=typename).astype(dt)
+    assert arr[0] == "1.5"
+    assert arr[2] == "-2.0"
+    # the NaN element is the missing value (returned by identity), not "nan"
+    assert arr[1] is na_object
+
+
+@pytest.mark.parametrize("typename", ["complex64", "complex128", "clongdouble"])
+@pytest.mark.parametrize("na_object", [np.nan, pd_NA],
+                         ids=["np.nan", "pandas.NA"])
+def test_cfloat_to_string_nan_na_not_missing(typename, na_object):
+    # complex inputs never map to a NaN-like na_object on cast -- a
+    # real NaN sentinel has no complex equivalent -- so NaN components are
+    # stringified rather than stored as the missing value. This matches both the
+    # historical behavior and stringdtype_setitem.
+    dt = StringDType(na_object=na_object)
+    vals = [complex(np.nan, 0), complex(0, np.nan), complex(np.nan, np.nan),
+            1.5 + 2j]
+    arr = np.array(vals, dtype=typename).astype(dt)
+    for el in arr:
+        assert isinstance(el, str)
+    assert "nan" in arr[0] and "nan" in arr[1] and "nan" in arr[2]
+    assert arr[3] == "(1.5+2j)"
+
+
 @pytest.mark.parametrize(
     "typename",
     [

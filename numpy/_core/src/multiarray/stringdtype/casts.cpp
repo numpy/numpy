@@ -1201,6 +1201,25 @@ static PyType_Slot s2float_slots[] = {
         {NPY_METH_strided_loop, (void *)&string_to_float<NpyType, typenum, npy_is_inf, double_is_inf, double_to_float>},
         {0, NULL}};
 
+// Whether a raw floating-point value should be stored as the null/NA string
+// when the StringDType uses a NaN-like missing-data sentinel (has_nan_na).
+template <typename NpyType>
+static inline bool
+float_is_nan_na(NpyType val)
+{
+    if constexpr (std::is_same_v<NpyType, npy_half>) {
+        return npy_half_isnan(val);
+    }
+    else if constexpr (std::is_same_v<NpyType, npy_cfloat> ||
+                       std::is_same_v<NpyType, npy_cdouble> ||
+                       std::is_same_v<NpyType, npy_clongdouble>) {
+        return false;
+    }
+    else {
+        return npy_isnan(val);
+    }
+}
+
 template<typename NpyType>
 static int
 float_to_string(
@@ -1221,35 +1240,24 @@ float_to_string(
     PyArray_StringDTypeObject *descr =
             (PyArray_StringDTypeObject *)context->descriptors[1];
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
-    // borrowed reference
-    PyObject *na_object = descr->na_object;
 
     while (N--) {
-        PyObject *scalar_val = PyArray_Scalar(in, float_descr, NULL);
-        if (descr->has_nan_na) {
-            // check for case when scalar_val is the na_object and store a null string
-            int na_cmp = na_eq_cmp(scalar_val, na_object);
-            if (na_cmp < 0) {
-                Py_DECREF(scalar_val);
+        if (descr->has_nan_na && float_is_nan_na(*in)) {
+            if (NpyString_pack_null(allocator, (npy_packed_static_string *)out) < 0) {
+                PyErr_SetString(PyExc_MemoryError,
+                                "Failed to pack null string during float "
+                                "to string cast");
                 goto fail;
             }
-            if (na_cmp) {
-                Py_DECREF(scalar_val);
-                if (NpyString_pack_null(allocator, (npy_packed_static_string *)out) < 0) {
-                    PyErr_SetString(PyExc_MemoryError,
-                                    "Failed to pack null string during float "
-                                    "to string cast");
-                    goto fail;
-                }
-                goto next_step;
+        }
+        else {
+            PyObject *scalar_val = PyArray_Scalar(in, float_descr, NULL);
+            // steals reference to scalar_val
+            if (pyobj_to_string(scalar_val, out, allocator) == -1) {
+                goto fail;
             }
         }
-        // steals reference to scalar_val
-        if (pyobj_to_string(scalar_val, out, allocator) == -1) {
-            goto fail;
-        }
 
-      next_step:
         in += in_stride;
         out += out_stride;
     }
@@ -1918,8 +1926,6 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
                 NpyAuxData *NPY_UNUSED(auxdata))
 {
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
-    np::raii::NpyStringAcquireAllocator alloc(descr);
-
     int has_null = descr->na_object != NULL;
     int has_string_na = descr->has_string_na;
     const npy_static_string *default_string = &descr->default_string;
@@ -1930,48 +1936,30 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
     npy_intp in_stride = strides[0];
     npy_intp out_stride = strides[1];
     size_t max_out_size = context->descriptors[1]->elsize;
+    char *invalid_ascii_buf = NULL;
+    size_t invalid_ascii_size = 0;
+    size_t invalid_ascii_pos = 0;
 
+    npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
     while (N--) {
         const npy_packed_static_string *ps = (npy_packed_static_string *)in;
         npy_static_string s = {0, NULL};
         if (load_nullable_string(ps, &s, has_null, has_string_na,
-                                 default_string, na_name, alloc.allocator(),
+                                 default_string, na_name, allocator,
                                  "in string to bytes cast") == -1) {
-            return -1;
+            goto fail;
         }
 
         for (size_t i=0; i<s.size; i++) {
             if (((unsigned char *)s.buf)[i] > 127) {
-                np::raii::EnsureGIL ensure_gil{};
-
-                PyObject *str = PyUnicode_FromStringAndSize(s.buf, s.size);
-
-                if (str == NULL) {
-                    PyErr_SetString(
-                        PyExc_UnicodeEncodeError, "Invalid character encountered during unicode encoding."
-                    );
-                    return -1;
+                invalid_ascii_buf = (char *)PyMem_RawMalloc(s.size);
+                if (invalid_ascii_buf == NULL) {
+                    goto memory_error;
                 }
-
-                PyObject *exc = PyObject_CallFunction(
-                    PyExc_UnicodeEncodeError,
-                    "sOnns",
-                    "ascii",
-                    str,
-                    (Py_ssize_t)i,
-                    (Py_ssize_t)(i+1),
-                    "ordinal not in range(128)"
-                );
-
-                if (exc == NULL) {
-                    Py_DECREF(str);
-                    return -1;
-                }
-
-                PyErr_SetObject(PyExceptionInstance_Class(exc), exc);
-                Py_DECREF(exc);
-                Py_DECREF(str);
-                return -1;
+                memcpy(invalid_ascii_buf, s.buf, s.size);
+                invalid_ascii_size = s.size;
+                invalid_ascii_pos = i;
+                goto invalid_ascii;
             }
         }
 
@@ -1984,7 +1972,56 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
         out += out_stride;
     }
 
+    NpyString_release_allocator(allocator);
     return 0;
+
+fail:
+    NpyString_release_allocator(allocator);
+    return -1;
+
+memory_error:
+    NpyString_release_allocator(allocator);
+    npy_gil_error(PyExc_MemoryError,
+                  "Failed to allocate memory for unicode encoding error");
+    return -1;
+
+invalid_ascii:
+    NpyString_release_allocator(allocator);
+
+    {
+        np::raii::EnsureGIL ensure_gil{};
+
+        PyObject *str = PyUnicode_FromStringAndSize(
+                invalid_ascii_buf, invalid_ascii_size);
+        PyMem_RawFree(invalid_ascii_buf);
+
+        if (str == NULL) {
+            PyErr_SetString(
+                    PyExc_UnicodeEncodeError,
+                    "Invalid character encountered during unicode encoding.");
+            return -1;
+        }
+
+        PyObject *exc = PyObject_CallFunction(
+                PyExc_UnicodeEncodeError,
+                "sOnns",
+                "ascii",
+                str,
+                (Py_ssize_t)invalid_ascii_pos,
+                (Py_ssize_t)(invalid_ascii_pos + 1),
+                "ordinal not in range(128)");
+
+        if (exc == NULL) {
+            Py_DECREF(str);
+            return -1;
+        }
+
+        PyErr_SetObject(PyExceptionInstance_Class(exc), exc);
+        Py_DECREF(exc);
+        Py_DECREF(str);
+    }
+
+    return -1;
 }
 
 static PyType_Slot s2bytes_slots[] = {
