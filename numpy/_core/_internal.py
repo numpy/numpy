@@ -463,15 +463,6 @@ def _promote_fields(dt1, dt2):
     return res
 
 
-def _check_stringdtype_view(oldtype, newtype):
-    # equal StringDType instances can still own separate allocators
-    if oldtype.kind == "T" and not _is_view_safe_cast(oldtype, newtype):
-        raise TypeError(
-            "Cannot view StringDType array data through a different dtype "
-            "instance; use astype to copy the data to the new dtype "
-            "instance")
-
-
 def _getfield_is_safe(oldtype, newtype, offset):
     """ Checks safety of getfield for object arrays.
 
@@ -494,8 +485,7 @@ def _getfield_is_safe(oldtype, newtype, offset):
 
     """
     if newtype.hasobject or oldtype.hasobject:
-        if offset == 0 and newtype == oldtype:
-            _check_stringdtype_view(oldtype, newtype)
+        if offset == 0 and _is_view_safe_cast(oldtype, newtype):
             return
         if oldtype.names is not None:
             for name in oldtype.names:
@@ -525,10 +515,10 @@ def _view_is_safe(oldtype, newtype):
 
     """
 
-    # if the types are equivalent, there is no problem.
-    # for example: dtype((np.record, 'i4,i4')) == dtype((np.void, 'i4,i4'))
-    if oldtype == newtype:
-        _check_stringdtype_view(oldtype, newtype)
+    # more precise than ``oldtype == newtype``: e.g. dtype((np.record, 'i4,i4'))
+    # views safely as dtype((np.void, 'i4,i4')), while two equal StringDType
+    # instances with separate allocators do not
+    if _is_view_safe_cast(oldtype, newtype):
         return
 
     if newtype.hasobject or oldtype.hasobject:

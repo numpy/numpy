@@ -674,8 +674,10 @@ array_flat_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
         retval = 0;
         goto exit;
     }
-    if (PyDataType_REFCHK(PyArray_DESCR(self))) {
-        /* dtypes with references may not define copyswap */
+    copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(self))->copyswap;
+    if (copyswap == NULL || PyDataType_REFCHK(PyArray_DESCR(self))) {
+        /* reference dtypes have copyswap, but the transfer path handles
+           refcounts and is better for structured dtypes */
         NPY_cast_info cast_info;
         NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
         npy_intp one = 1;
@@ -709,7 +711,6 @@ array_flat_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
     }
 
     swap = PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(arr);
-    copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(self))->copyswap;
     while(selfit->index < selfit->size) {
         copyswap(selfit->dataptr, arrit->dataptr, swap, self);
         PyArray_ITER_NEXT(selfit);

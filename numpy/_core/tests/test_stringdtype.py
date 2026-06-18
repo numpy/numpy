@@ -2006,12 +2006,13 @@ def test_view_distinct_instance():
 
     assert_array_equal(a.view(a.dtype), a)
 
-    # a view through any other instance would attach an unrelated allocator
-    with pytest.raises(TypeError, match="different dtype instance"):
+    # a view through any other instance would attach an unrelated allocator,
+    # which the generalized reference-safety check rejects
+    with pytest.raises(TypeError, match="Cannot change data-type"):
         a.view(StringDType())
-    with pytest.raises(TypeError, match="different dtype instance"):
+    with pytest.raises(TypeError, match="Cannot get/set field"):
         a.getfield(StringDType())
-    with pytest.raises(TypeError, match="different dtype instance"):
+    with pytest.raises(TypeError, match="Cannot change data-type"):
         with pytest.warns(DeprecationWarning, match="Setting the dtype"):
             a.dtype = StringDType()
 

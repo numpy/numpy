@@ -3258,6 +3258,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 
     NPY_cast_info x_cast_info = {.func = NULL};
     NPY_cast_info y_cast_info = {.func = NULL};
+    NPY_BEGIN_THREADS_DEF;
 
     ax = (PyArrayObject*)PyArray_FROM_O(x);
     if (ax == NULL) {
@@ -3322,8 +3323,6 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     }
     /* `PyArray_DescrFromType` cannot fail for simple builtin types: */
     PyArray_Descr * op_dt[4] = {common_dt, PyArray_DescrFromType(NPY_BOOL), x_dt, y_dt};
-
-    NPY_BEGIN_THREADS_DEF;
 
     iter =  NpyIter_MultiNew(
             4, op_in, flags, NPY_KEEPORDER, NPY_UNSAFE_CASTING,
@@ -3411,7 +3410,6 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
                         if (x_cast_info.func(
                                 &x_cast_info.context, args, &one,
                                 x_strides, x_cast_info.auxdata) < 0) {
-                            NPY_END_THREADS;
                             goto fail;
                         }
                     }
@@ -3421,7 +3419,6 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
                         if (y_cast_info.func(
                                 &y_cast_info.context, args, &one,
                                 y_strides, y_cast_info.auxdata) < 0) {
-                            NPY_END_THREADS;
                             goto fail;
                         }
                     }
@@ -3452,6 +3449,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     return ret;
 
 fail:
+    NPY_END_THREADS;
     Py_DECREF(arr);
     Py_XDECREF(ax);
     Py_XDECREF(ay);
@@ -4699,7 +4697,7 @@ static struct PyMethodDef array_module_methods[] = {
     {"_get_castingimpl",  (PyCFunction)_get_castingimpl,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"_is_view_safe_cast",  (PyCFunction)_is_view_safe_cast,
-        METH_VARARGS, NULL},
+        METH_FASTCALL, NULL},
     {"_load_from_filelike", (PyCFunction)_load_from_filelike,
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"_populate_finfo_constants", (PyCFunction)_populate_finfo_constants,

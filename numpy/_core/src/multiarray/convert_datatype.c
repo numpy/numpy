@@ -655,19 +655,25 @@ PyArray_SafeCast(PyArray_Descr *type1, PyArray_Descr *type2,
  * separate internal state (e.g. StringDType allocators).
  */
 NPY_NO_EXPORT PyObject *
-_is_view_safe_cast(PyObject *NPY_UNUSED(module), PyObject *args)
+_is_view_safe_cast(PyObject *NPY_UNUSED(module), PyObject *const *args,
+                   Py_ssize_t len_args)
 {
-    PyArray_Descr *from, *to;
-    if (!PyArg_ParseTuple(args, "O!O!:_is_view_safe_cast",
-            &PyArrayDescr_Type, &from, &PyArrayDescr_Type, &to)) {
+    if (len_args != 2) {
+        PyErr_SetString(PyExc_TypeError,
+                "_is_view_safe_cast() takes exactly two arguments");
         return NULL;
     }
+    if (!PyArray_DescrCheck(args[0]) || !PyArray_DescrCheck(args[1])) {
+        PyErr_SetString(PyExc_TypeError,
+                "_is_view_safe_cast() arguments must be dtype instances");
+        return NULL;
+    }
+    PyArray_Descr *from = (PyArray_Descr *)args[0];
+    PyArray_Descr *to = (PyArray_Descr *)args[1];
     npy_intp view_offset = NPY_MIN_INTP;
+    /* ignore_error=1: dtype pairs with no resolvable cast are simply not views */
     npy_intp is_safe = PyArray_SafeCast(from, to, &view_offset,
-                                        NPY_NO_CASTING, 0);
-    if (is_safe < 0) {
-        return NULL;
-    }
+                                        NPY_NO_CASTING, 1);
     return PyBool_FromLong(is_safe && view_offset == 0);
 }
 

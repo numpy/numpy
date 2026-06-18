@@ -1027,7 +1027,10 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     PyArrayObject **mps, *ap;
     PyArrayMultiIterObject *multi = NULL;
     npy_intp mi;
-    NPY_cast_info *cast_infos = NULL;
+    /* PyArray_MultiIterFromObjects below bounds n by NPY_MAXARGS */
+    NPY_cast_info cast_infos[NPY_MAXARGS];
+    int needs_transfer = 0;
+    NPY_BEGIN_THREADS_DEF;
     ap = NULL;
 
     /*
@@ -1121,13 +1124,9 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     npy_intp transfer_strides[2] = {elsize, elsize};
     npy_intp one = 1;
     NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
-    if (PyDataType_REFCHK(dtype)) {
+    needs_transfer = PyDataType_REFCHK(dtype);
+    if (needs_transfer) {
         PyArray_Descr *obj_dtype = PyArray_DESCR(obj);
-        cast_infos = PyMem_New(NPY_cast_info, n);
-        if (cast_infos == NULL) {
-            PyErr_NoMemory();
-            goto fail;
-        }
         for (i = 0; i < n; i++) {
             NPY_cast_info_init(&cast_infos[i]);
         }
@@ -1145,11 +1144,15 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
         }
     }
 
+    if (!(transfer_flags & NPY_METH_REQUIRES_PYAPI)) {
+        NPY_BEGIN_THREADS_THRESHOLDED(multi->size);
+    }
     while (PyArray_MultiIter_NOTDONE(multi)) {
         mi = *((npy_intp *)PyArray_MultiIter_DATA(multi, n));
         if (mi < 0 || mi >= n) {
             switch(clipmode) {
             case NPY_RAISE:
+                NPY_END_THREADS;
                 PyErr_SetString(PyExc_ValueError,
                         "invalid entry in choice "\
                         "array");
@@ -1176,7 +1179,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
                 break;
             }
         }
-        if (cast_infos == NULL) {
+        if (!needs_transfer) {
             /* We ensure memory doesn't overlap, so can use memcpy */
             memcpy(ret_data, PyArray_MultiIter_DATA(multi, mi), elsize);
         }
@@ -1191,12 +1194,12 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
         ret_data += elsize;
         PyArray_MultiIter_NEXT(multi);
     }
+    NPY_END_THREADS;
 
-    if (cast_infos != NULL) {
+    if (needs_transfer) {
         for (i = 0; i < n; i++) {
             NPY_cast_info_xfree(&cast_infos[i]);
         }
-        PyMem_Free(cast_infos);
     }
     Py_DECREF(multi);
     for (i = 0; i < n; i++) {
@@ -1215,11 +1218,11 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     return (PyObject *)obj;
 
  fail:
-    if (cast_infos != NULL) {
+    NPY_END_THREADS;
+    if (needs_transfer) {
         for (i = 0; i < n; i++) {
             NPY_cast_info_xfree(&cast_infos[i]);
         }
-        PyMem_Free(cast_infos);
     }
     Py_XDECREF(multi);
     for (i = 0; i < n; i++) {

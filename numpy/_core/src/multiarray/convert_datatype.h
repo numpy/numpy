@@ -16,7 +16,8 @@ NPY_NO_EXPORT PyObject *
 _get_castingimpl(PyObject *NPY_UNUSED(module), PyObject *args);
 
 NPY_NO_EXPORT PyObject *
-_is_view_safe_cast(PyObject *NPY_UNUSED(module), PyObject *args);
+_is_view_safe_cast(PyObject *NPY_UNUSED(module), PyObject *const *args,
+                   Py_ssize_t len_args);
 
 NPY_NO_EXPORT PyArray_VectorUnaryFunc *
 PyArray_GetCastFunc(PyArray_Descr *descr, int type_num);
