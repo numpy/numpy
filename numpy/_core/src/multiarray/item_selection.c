@@ -1337,7 +1337,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
             if (strided_loop != NULL) {
                 char *const data[2] = {bufptr, bufptr};
                 npy_intp strides[2] = {elsize, elsize};
-                ret = strided_loop(context, data, &N, strides, NULL);
+                ret = strided_loop(context, data, &N, strides, auxdata);
             }
             else {
                 ret = sort(bufptr, N, op);
@@ -1558,7 +1558,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
             if (strided_loop != NULL) {
                 char *const data[2] = {valptr, (char *)idxptr};
                 npy_intp strides[2] = {elsize, sizeof(npy_intp)};
-                ret = strided_loop(context, data, &N, strides, NULL);
+                ret = strided_loop(context, data, &N, strides, auxdata);
             }
             else {
                 ret = argsort(valptr, idxptr, N, op);
