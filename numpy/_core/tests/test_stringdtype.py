@@ -895,6 +895,19 @@ def test_cfloat_casts(typename):
     assert sres[0] == "(0.1+0.1j)"
 
 
+@pytest.mark.parametrize("typename", ["csingle", "cdouble", "clongdouble"])
+def test_string_to_cfloat_cast_distinct_components(typename):
+    inp = np.array(
+        ["1.25+0.5j", "2.75-3.5j", "-3.125+4.25j", "27000-8j"],
+        dtype="T",
+    )
+    expected = np.array(
+        [1.25 + 0.5j, 2.75 - 3.5j, -3.125 + 4.25j, 2.7e4 - 8j],
+        dtype=typename,
+    )
+    assert_array_equal(inp.astype(typename), expected)
+
+
 def test_take(string_list):
     sarr = np.array(string_list, dtype="T")
     res = sarr.take(np.arange(len(string_list)))

@@ -1323,7 +1323,7 @@ string_to_complex_float(
         }
 
         npy_csetrealfunc(out, (NpyFloatType) complex_value.real);
-        npy_csetimagfunc(out, (NpyFloatType) complex_value.real);
+        npy_csetimagfunc(out, (NpyFloatType) complex_value.imag);
         in += in_stride;
         out += out_stride;
     }
