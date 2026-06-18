@@ -1085,7 +1085,6 @@ sfloat_argpartition_resolve_descriptors(
     if (loop_descrs[2] == NULL) {
         return -1;
     }
-    Py_INCREF(loop_descrs[2]);
 
     return NPY_NO_CASTING;
 }

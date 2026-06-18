@@ -1360,7 +1360,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
                 char *const data[3] = {bufptr, (char *)kth, bufptr};
                 npy_intp strides[3] = {elsize, sizeof(npy_intp), elsize};
                 npy_intp dimensions[2] = {N, nkth};
-                ret = strided_loop(context, data, dimensions, strides, NULL);
+                ret = strided_loop(context, data, dimensions, strides, auxdata);
                 if (needs_api && PyErr_Occurred()) {
                     ret = -1;
                 }
@@ -1596,7 +1596,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
                 char *const data[3] = {valptr, (char *)kth, (char *)idxptr};
                 npy_intp strides[3] = {elsize, sizeof(npy_intp), sizeof(npy_intp)};
                 npy_intp dimensions[2] = {N, nkth};
-                ret = strided_loop(context, data, dimensions, strides, NULL);
+                ret = strided_loop(context, data, dimensions, strides, auxdata);
                 if (needs_api && PyErr_Occurred()) {
                     ret = -1;
                 }
@@ -1756,6 +1756,12 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
         return -1;
     }
 
+    /* Process ktharray even if using sorting to do bounds checking */
+    kthrvl = partition_prep_kth_array(ktharray, op, axis);
+    if (kthrvl == NULL) {
+        return -1;
+    }
+
     method = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op)))->part_meth;
     if (method != NULL) {
         PyArray_Descr *descr = PyArray_DESCR(op);
@@ -1790,12 +1796,6 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
     }
     else {
         part = get_partition_func(PyArray_TYPE(op), which);
-    }
-
-    /* Process ktharray even if using sorting to do bounds checking */
-    kthrvl = partition_prep_kth_array(ktharray, op, axis);
-    if (kthrvl == NULL) {
-        return -1;
     }
 
     if (method == NULL && part == NULL) {
@@ -1850,11 +1850,28 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
         return NULL;
     }
 
+    op2 = (PyArrayObject *)PyArray_CheckAxis(op, &axis, 0);
+    if (op2 == NULL) {
+        return NULL;
+    }
+
+    /* Process ktharray even if using sorting to do bounds checking */
+    kthrvl = partition_prep_kth_array(ktharray, op2, axis);
+    if (kthrvl == NULL) {
+        Py_DECREF(op2);
+        return NULL;
+    }
+
     method = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op)))->argpart_meth;
     if (method != NULL) {
         PyArray_Descr *descr = PyArray_DESCR(op);
         PyArray_Descr *kdescr = PyArray_DESCR(ktharray);
         PyArray_Descr *odescr = PyArray_DescrFromType(NPY_INTP);
+        if (odescr == NULL) {
+            Py_DECREF(kthrvl);
+            Py_DECREF(op2);
+            return NULL;
+        }
         PyArray_DTypeMeta *dt = NPY_DTYPE(descr);
         PyArray_DTypeMeta *kdt = NPY_DTYPE(kdescr);
         PyArray_DTypeMeta *odt = NPY_DTYPE(odescr);
@@ -1886,18 +1903,6 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
     }
     else {
         argpart = get_argpartition_func(PyArray_TYPE(op), which);
-    }
-
-    op2 = (PyArrayObject *)PyArray_CheckAxis(op, &axis, 0);
-    if (op2 == NULL) {
-        return NULL;
-    }
-
-    /* Process ktharray even if using sorting to do bounds checking */
-    kthrvl = partition_prep_kth_array(ktharray, op2, axis);
-    if (kthrvl == NULL) {
-        Py_DECREF(op2);
-        return NULL;
     }
 
     if (method == NULL && argpart == NULL) {
