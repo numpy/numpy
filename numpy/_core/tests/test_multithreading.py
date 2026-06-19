@@ -491,9 +491,15 @@ def assert_no_deadlock(workload, *, args=(), helpers=(), timeout=30,
         textwrap.dedent(inspect.getsource(helper)) for helper in helpers
     )
     source += "\n" + textwrap.dedent(inspect.getsource(workload))
-    script = f"{source}\n{workload.__name__}(*{args!r})\n"
+    script = (
+        "import faulthandler\n"
+        f"faulthandler.dump_traceback_later({timeout}, exit=True)\n"
+        f"{source}\n"
+        f"{workload.__name__}(*{args!r})\n"
+        "faulthandler.cancel_dump_traceback_later()\n"
+    )
     try:
-        run_subprocess([sys.executable, "-c", script], timeout=timeout)
+        run_subprocess([sys.executable, "-c", script], timeout=timeout + 15)
     except subprocess.TimeoutExpired:
         raise AssertionError(
             f"subprocess did not finish within {timeout}s -- likely {reason}"
@@ -501,6 +507,7 @@ def assert_no_deadlock(workload, *, args=(), helpers=(), timeout=30,
 
 
 def threaded_deadlock_reproducer(operation, nworkers, niters, stall):
+    import faulthandler
     import os
     import sys
     import threading
@@ -535,9 +542,10 @@ def threaded_deadlock_reproducer(operation, nworkers, niters, stall):
         if total != last_total:
             last_total, last_change = total, now
         elif now - last_change > stall:
-            # os._exit avoids a shutdown hang on the wedged daemon threads;
-            # flush first so the message survives.
+            # dump the wedged threads' tracebacks, then os._exit to avoid a
+            # shutdown hang on the daemon threads.
             sys.stderr.write("Probably deadlocked!\n")
+            faulthandler.dump_traceback()
             sys.stderr.flush()
             os._exit(1)
     if errors:

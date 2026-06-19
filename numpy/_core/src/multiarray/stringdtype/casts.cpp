@@ -1261,9 +1261,9 @@ float_to_string(
     while (N--) {
         if (descr->has_nan_na && float_is_nan_na(*in)) {
             if (NpyString_pack_null(allocator, (npy_packed_static_string *)out) < 0) {
-                PyErr_SetString(PyExc_MemoryError,
-                                "Failed to pack null string during float "
-                                "to string cast");
+                npy_gil_error(PyExc_MemoryError,
+                              "Failed to pack null string during float "
+                              "to string cast");
                 goto fail;
             }
         }
