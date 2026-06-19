@@ -6329,7 +6329,7 @@ free_ufunc_call_info(PyObject *self)
     Py_DECREF(context->method);
     NPY_AUXDATA_FREE(call_info->auxdata);
 
-    PyObject_Free(call_info);
+    PyMem_Free(call_info);
 }
 
 
@@ -6528,8 +6528,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
 
     /* We may have to return the context: */
     ufunc_call_info *call_info;
-    call_info = PyObject_Malloc(sizeof(ufunc_call_info)
-                              + ufunc->nargs * sizeof(PyArray_Descr *));
+    call_info = PyMem_Malloc(sizeof(ufunc_call_info)
+                             + ufunc->nargs * sizeof(PyArray_Descr *));
     if (call_info == NULL) {
         PyErr_NoMemory();
         goto finish;
@@ -6547,7 +6547,7 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
     PyObject *capsule = PyCapsule_New(
             call_info, "numpy_1.24_ufunc_call_info", &free_ufunc_call_info);
     if (capsule == NULL) {
-        PyObject_Free(call_info);
+        PyMem_Free(call_info);
         goto finish;
     }
 
