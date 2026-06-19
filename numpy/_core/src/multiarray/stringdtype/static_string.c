@@ -312,7 +312,8 @@ NpyString_free_allocator(npy_string_allocator *allocator)
  * by this function exactly once.
  *
  * Note that functions requiring the GIL should not be called while the
- * allocator mutex is held, as doing so may cause deadlocks.
+ * allocator mutex is held and reentrant calls are possible, as doing so may
+ * cause deadlocks.
  */
 NPY_NO_EXPORT npy_string_allocator *
 NpyString_acquire_allocator(const PyArray_StringDTypeObject *descr)
@@ -344,7 +345,8 @@ NpyString_acquire_allocator(const PyArray_StringDTypeObject *descr)
  * NpyString_release_allocators.
  *
  * Note that functions requiring the GIL should not be called while the
- * allocator mutex is held, as doing so may cause deadlocks.
+ * allocator mutex is held and reentrant calls are possible, as doing so may
+ * cause deadlocks.
  */
 NPY_NO_EXPORT void
 NpyString_acquire_allocators(size_t n_descriptors,
