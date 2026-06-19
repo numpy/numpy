@@ -3948,10 +3948,9 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     Returns
     -------
     median : ndarray
-        A new array holding the result. Return data-type is "float64" 
-        for integer input. For floating-point input, the return data-type 
-        is the same as the input data-type. If `out` is specified, that 
-        array is returned instead.
+        A new array holding the result. Return data-type is ``float64``
+        for integer input, or the input data-type, otherwise. If `out` is
+        specified, that array is returned instead.
 
     See Also
     --------
@@ -4146,10 +4145,9 @@ def percentile(a,
         is a scalar. If multiple percentiles are given, first axis of
         the result corresponds to the percentiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
-        contains integers or floats smaller than ``float64``, the output
-        data-type is ``float64``. Otherwise, the output data-type is the
-        same as that of the input. If `out` is specified, that array is
-        returned instead.
+        contains integers, the output data-type is ``float64``. Otherwise,
+        the output data-type is the same as that of the input. If `out` 
+        is specified, that array is returned instead.
 
     See Also
     --------
@@ -4349,10 +4347,9 @@ def quantile(a,
         is a scalar. If multiple probability levels are given, first axis
         of the result corresponds to the quantiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
-        contains integers or floats smaller than ``float64``, the output
-        data-type is ``float64``. Otherwise, the output data-type is the
-        same as that of the input. If `out` is specified, that array is
-        returned instead.
+        contains integers, the output data-type is ``float64``. Otherwise,
+        the output data-type is the same as that of the input. If `out` is
+        specified, that array is returned instead.
 
     See Also
     --------
