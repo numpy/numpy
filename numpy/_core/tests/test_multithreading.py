@@ -618,7 +618,6 @@ def allocator_lock_order_workload(case_):
     )
 
 
-@pytest.mark.skipif(IS_WASM, reason="no subprocess")
 def test_setitem_reentrant_no_deadlock():
     def workload():
         import numpy as np
@@ -641,7 +640,6 @@ def test_setitem_reentrant_no_deadlock():
     )
 
 
-@pytest.mark.skipif(IS_WASM, reason="no threads/subprocess")
 @pytest.mark.parametrize(
     "case_",
     ["two-allocator", "three-allocator", "four-allocator",
@@ -655,4 +653,35 @@ def test_concurrent_allocator_acquire_no_deadlock(case_):
         args=(case_,),
         helpers=(threaded_deadlock_reproducer,),
         reason=f"allocator lock-ordering in {case_}",
+    )
+
+
+def unique_deadlock_workload():
+    import numpy as np
+    from numpy._core._multiarray_umath import _unique_hash
+
+    NWORKERS = 8
+    NITERS = 200
+    STALL = 2.0
+
+    # _unique_hash (the engine under np.unique) rather than np.unique itself:
+    # it spends almost all its time in the GIL-released, allocator-locked load
+    # loop, so workers reliably overlap there. A single shared array with many
+    # duplicates concentrates contention on one allocator.
+    data = np.array([f"v{i % 128}" for i in range(50_000)], dtype="T")
+
+    def operation(idx):
+        _unique_hash(data, equal_nan=False)
+
+    threaded_deadlock_reproducer(operation, NWORKERS, NITERS, stall=STALL)
+
+
+def test_concurrent_unique_no_deadlock():
+    # Concurrent unique on a shared array deadlocks the allocator lock against
+    # the GIL unless unique_vstring releases the GIL before locking. Only
+    # reproduces on Python <= 3.12; PyMutex detaches on 3.13+.
+    assert_no_deadlock(
+        unique_deadlock_workload,
+        helpers=(threaded_deadlock_reproducer,),
+        reason="unique allocator lock vs GIL",
     )

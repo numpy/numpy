@@ -923,6 +923,60 @@ def test_cfloat_to_string_nan_na_not_missing(typename, na_object):
     assert arr[3] == "(1.5+2j)"
 
 
+@pytest.mark.parametrize("typename", ["float16", "float32", "float64",
+                                      "longdouble"])
+@pytest.mark.parametrize("na_object", [np.nan, float("nan"), pd_NA],
+                         ids=["np.nan", "float('nan')", "pandas.NA"])
+def test_setitem_nan_na_matches_float_cast(typename, na_object):
+    dt = StringDType(na_object=na_object)
+    nan_scalar = np.dtype(typename).type("nan")
+
+    arr = np.empty(3, dtype=dt)
+    arr[0] = nan_scalar       # NumPy scalar of the parametrized width
+    arr[1] = float("nan")     # plain Python float
+    arr[2] = np.dtype(typename).type("1.5")
+    assert arr[0] is na_object
+    assert arr[1] is na_object
+    assert arr[2] == "1.5"
+
+    # the float-to-string cast of the same values agrees element for element
+    cast = np.array([nan_scalar, float("nan"), 1.5], dtype=typename).astype(dt)
+    assert cast[0] is na_object
+    assert cast[1] is na_object
+    assert cast[2] == arr[2]
+
+
+@pytest.mark.parametrize("typename", ["complex64", "complex128", "clongdouble"])
+@pytest.mark.parametrize("na_object", [np.nan, pd_NA],
+                         ids=["np.nan", "pandas.NA"])
+def test_setitem_cfloat_nan_not_missing(typename, na_object):
+    # complex NaN is never the missing value, on setitem as on the cast.
+    dt = StringDType(na_object=na_object)
+    arr = np.empty(1, dtype=dt)
+    arr[0] = np.dtype(typename).type(complex(np.nan, 0))
+    assert isinstance(arr[0], str)
+    assert "nan" in arr[0]
+
+
+def test_string_to_bytes_invalid_ascii_error():
+    # The cast builds this UnicodeEncodeError only after releasing the allocator
+    # lock and copying the offending bytes out of the arena; check the reported
+    # character and position survive that.
+    arr = np.array(["abc", "café", "xy"], dtype="T")
+    with pytest.raises(UnicodeEncodeError) as excinfo:
+        arr.astype("S10")
+    exc = excinfo.value
+    assert exc.encoding == "ascii"
+    assert exc.object == "café"
+    assert exc.start == 3
+    assert exc.end == 4
+    assert exc.reason == "ordinal not in range(128)"
+    assert_array_equal(
+        np.array(["abc", "xy"], dtype="T").astype("S3"),
+        np.array([b"abc", b"xy"], dtype="S3"),
+    )
+
+
 @pytest.mark.parametrize(
     "typename",
     [

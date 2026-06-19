@@ -325,6 +325,10 @@ stringdtype_setitem(PyArray_StringDTypeObject *descr, PyObject *obj, char **data
         return -1;
     }
 
+    if (!na_cmp && descr->has_nan_na) {
+        na_cmp = pyobj_is_nan_na(obj);
+    }
+
     if (na_object != NULL && na_cmp) {
         npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
         int pack_status = NpyString_pack_null(allocator, sdata);

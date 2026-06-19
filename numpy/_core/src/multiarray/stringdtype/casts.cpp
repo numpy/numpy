@@ -1220,6 +1220,23 @@ float_is_nan_na(NpyType val)
     }
 }
 
+// PyObject entry point to float_is_nan_na for stringdtype_setitem, which has a
+// Python object rather than a raw value. Complex scalars fail the type check,
+// matching float_is_nan_na's complex branch.
+NPY_NO_EXPORT int
+pyobj_is_nan_na(PyObject *obj)
+{
+    if (PyFloat_Check(obj) || PyArray_IsScalar(obj, Floating)) {
+        double value = PyFloat_AsDouble(obj);
+        if (value == -1.0 && PyErr_Occurred()) {
+            PyErr_Clear();  // out-of-double-range longdouble: finite, not NaN
+            return 0;
+        }
+        return float_is_nan_na<npy_double>(value) ? 1 : 0;
+    }
+    return 0;
+}
+
 template<typename NpyType>
 static int
 float_to_string(
