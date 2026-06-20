@@ -2100,7 +2100,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     Py_INCREF(typecode);
     nd = PyArray_IntpFromSequence(shape, dimensions, NPY_MAXDIMS);
     if (nd < 0) {
-        return NULL;
+        goto fail_typecode;
     }
     /*
      * We should do two things here:
@@ -2115,12 +2115,13 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (dimensions[i] < 0) {
             PyErr_SetString(PyExc_TypeError,
                     "impossible dimension while unpickling array");
-            return NULL;
+            goto fail_typecode;
         }
         overflowed = npy_mul_sizes_with_overflow(
                 &nbytes, nbytes, dimensions[i]);
         if (overflowed) {
-            return PyErr_NoMemory();
+            PyErr_NoMemory();
+            goto fail_typecode;
         }
     }
 
@@ -2128,7 +2129,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (!PyList_Check(rawdata)) {
             PyErr_SetString(PyExc_TypeError,
                             "object pickle not returning list");
-            return NULL;
+            goto fail_typecode;
         }
     }
     else {
@@ -2149,20 +2150,17 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (!PyBytes_Check(rawdata)) {
             PyErr_SetString(PyExc_TypeError,
                             "pickle not returning string");
-            Py_DECREF(rawdata);
-            return NULL;
+            goto fail_rawdata;
         }
 
         if (PyBytes_AsStringAndSize(rawdata, &datastr, &len) < 0) {
-            Py_DECREF(rawdata);
-            return NULL;
+            goto fail_rawdata;
         }
 
         if (len != nbytes) {
             PyErr_SetString(PyExc_ValueError,
                     "buffer size does not match array size");
-            Py_DECREF(rawdata);
-            return NULL;
+            goto fail_rawdata;
         }
     }
     /*
@@ -2286,6 +2284,12 @@ array_setstate(PyArrayObject *self, PyObject *args)
     PyArray_UpdateFlags(self, NPY_ARRAY_UPDATE_ALL);
 
     Py_RETURN_NONE;
+
+fail_rawdata:
+    Py_DECREF(rawdata);
+fail_typecode:
+    Py_DECREF(typecode);
+    return NULL;
 }
 
 /*NUMPY_API*/
