@@ -392,6 +392,18 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind,
         return NULL;
     }
     if (count > 0) {
+        /* set up a cast to handle item copying */
+        NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
+        /* We can assume the newly allocated output array is aligned */
+        int is_aligned = IsUintAligned(self->ao);
+        if (PyArray_GetDTypeTransferFunction(
+                    is_aligned, itemsize, itemsize,
+                    dtype, PyArray_DESCR(ret), 0,
+                    cast_info, &transfer_flags) < 0) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+
         /* Set up loop */
         optr = PyArray_DATA(ret);
         counter = PyArray_DIMS(ind)[0];
@@ -403,6 +415,7 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind,
                 npy_intp transfer_strides[2] = {itemsize, itemsize};
                 if (cast_info->func(&cast_info->context, args, &one,
                                     transfer_strides, cast_info->auxdata) < 0) {
+                    Py_DECREF(ret);
                     return NULL;
                 }
                 optr += itemsize;
@@ -452,6 +465,19 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind,
     if (ret == NULL) {
         return NULL;
     }
+
+    /* set up a cast to handle item copying */
+    NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
+    /* We can assume the newly allocated output array is aligned */
+    int is_aligned = IsUintAligned(self->ao);
+    if (PyArray_GetDTypeTransferFunction(
+                is_aligned, dtype->elsize, dtype->elsize,
+                dtype, PyArray_DESCR(ret), 0,
+                cast_info, &transfer_flags) < 0) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+
     optr = PyArray_DATA(ret);
     ind_it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)ind);
     if (ind_it == NULL) {
@@ -565,17 +591,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         goto finish;
     }
 
-    /* set up a cast to handle item copying */
-    NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
     npy_intp one = 1;
-
-    /* We can assume the newly allocated output array is aligned */
-    int is_aligned = IsUintAligned(self->ao);
-    if (PyArray_GetDTypeTransferFunction(
-                is_aligned, dtype_size, dtype_size, dtype, dtype, 0, &cast_info,
-                &transfer_flags) < 0) {
-        goto finish;
-    }
 
     if (index_type == HAS_SLICE) {
         if (PySlice_GetIndicesEx(indices[0].object,
@@ -595,12 +611,25 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
             goto finish;
         }
 
+        /* set up a cast to handle item copying */
+        NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
+        /* We can assume the newly allocated output array is aligned */
+        int is_aligned = IsUintAligned(self->ao);
+        if (PyArray_GetDTypeTransferFunction(
+                    is_aligned, dtype_size, dtype_size,
+                    dtype, PyArray_DESCR((PyArrayObject *)ret), 0,
+                    &cast_info, &transfer_flags) < 0) {
+            Py_CLEAR(ret);
+            goto finish;
+        }
+
         char *dptr = PyArray_DATA((PyArrayObject *) ret);
         while (n_steps--) {
             char *args[2] = {self->dataptr, dptr};
             npy_intp transfer_strides[2] = {dtype_size, dtype_size};
             if (cast_info.func(&cast_info.context, args, &one,
                                transfer_strides, cast_info.auxdata) < 0) {
+                Py_CLEAR(ret);
                 goto finish;
             }
             start += step;

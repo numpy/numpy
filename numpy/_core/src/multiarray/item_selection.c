@@ -457,9 +457,10 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         NPY_BEGIN_THREADS_THRESHOLDED(ni);
     }
     else {
-        PyArray_Descr *dtype = PyArray_DESCR(self);
         if (PyArray_GetDTypeTransferFunction(
-                PyArray_ISALIGNED(self), itemsize, itemsize, dtype, dtype, 0,
+                PyArray_ISALIGNED(self) && PyArray_ISALIGNED(values),
+                itemsize, itemsize,
+                PyArray_DESCR(values), PyArray_DESCR(self), 0,
                 &cast_info, &flags) < 0) {
             goto fail;
         }
@@ -755,7 +756,9 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
 
         NPY_cast_info_init(&cast_info);
         if (PyArray_GetDTypeTransferFunction(
-                PyArray_ISALIGNED(self), itemsize, itemsize, dtype, dtype, 0,
+                PyArray_ISALIGNED(self) && PyArray_ISALIGNED(values),
+                itemsize, itemsize,
+                PyArray_DESCR(values), PyArray_DESCR(self), 0,
                 &cast_info, &flags) < 0) {
             goto fail;
         }
@@ -778,14 +781,14 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
                 }
             }
         }
+        NPY_END_THREADS;
         NPY_cast_info_xfree(&cast_info);
     }
     else {
         NPY_BEGIN_THREADS;
         npy_fastputmask(dest, src, mask_data, ni, nv, itemsize);
+        NPY_END_THREADS;
     }
-
-    NPY_END_THREADS;
 
     Py_XDECREF(values);
     Py_XDECREF(mask);
@@ -1024,7 +1027,10 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     PyArrayObject **mps, *ap;
     PyArrayMultiIterObject *multi = NULL;
     npy_intp mi;
-    NPY_cast_info cast_info = {.func = NULL};
+    /* PyArray_MultiIterFromObjects below bounds n by NPY_MAXARGS */
+    NPY_cast_info cast_infos[NPY_MAXARGS];
+    int needs_transfer = 0;
+    NPY_BEGIN_THREADS_DEF;
     ap = NULL;
 
     /*
@@ -1118,23 +1124,35 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     npy_intp transfer_strides[2] = {elsize, elsize};
     npy_intp one = 1;
     NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
-    if (PyDataType_REFCHK(dtype)) {
-        int is_aligned = IsUintAligned(obj);
+    needs_transfer = PyDataType_REFCHK(dtype);
+    if (needs_transfer) {
         PyArray_Descr *obj_dtype = PyArray_DESCR(obj);
-        PyArray_GetDTypeTransferFunction(
-                    is_aligned,
-                    dtype->elsize,
-                    obj_dtype->elsize,
-                    dtype,
-                    obj_dtype, 0, &cast_info,
-                    &transfer_flags);
+        for (i = 0; i < n; i++) {
+            NPY_cast_info_init(&cast_infos[i]);
+        }
+        for (i = 0; i < n; i++) {
+            int is_aligned = IsUintAligned(obj) && IsUintAligned(mps[i]);
+            if (PyArray_GetDTypeTransferFunction(
+                        is_aligned,
+                        PyArray_DESCR(mps[i])->elsize,
+                        obj_dtype->elsize,
+                        PyArray_DESCR(mps[i]),
+                        obj_dtype, 0, &cast_infos[i],
+                        &transfer_flags) < 0) {
+                goto fail;
+            }
+        }
     }
 
+    if (!(transfer_flags & NPY_METH_REQUIRES_PYAPI)) {
+        NPY_BEGIN_THREADS_THRESHOLDED(multi->size);
+    }
     while (PyArray_MultiIter_NOTDONE(multi)) {
         mi = *((npy_intp *)PyArray_MultiIter_DATA(multi, n));
         if (mi < 0 || mi >= n) {
             switch(clipmode) {
             case NPY_RAISE:
+                NPY_END_THREADS;
                 PyErr_SetString(PyExc_ValueError,
                         "invalid entry in choice "\
                         "array");
@@ -1161,22 +1179,28 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
                 break;
             }
         }
-        if (cast_info.func == NULL) {
+        if (!needs_transfer) {
             /* We ensure memory doesn't overlap, so can use memcpy */
             memcpy(ret_data, PyArray_MultiIter_DATA(multi, mi), elsize);
         }
         else {
             char *args[2] = {PyArray_MultiIter_DATA(multi, mi), ret_data};
-            if (cast_info.func(&cast_info.context, args, &one,
-                                transfer_strides, cast_info.auxdata) < 0) {
+            if (cast_infos[mi].func(&cast_infos[mi].context, args, &one,
+                                    transfer_strides,
+                                    cast_infos[mi].auxdata) < 0) {
                 goto fail;
             }
         }
         ret_data += elsize;
         PyArray_MultiIter_NEXT(multi);
     }
+    NPY_END_THREADS;
 
-    NPY_cast_info_xfree(&cast_info);
+    if (needs_transfer) {
+        for (i = 0; i < n; i++) {
+            NPY_cast_info_xfree(&cast_infos[i]);
+        }
+    }
     Py_DECREF(multi);
     for (i = 0; i < n; i++) {
         Py_XDECREF(mps[i]);
@@ -1194,7 +1218,12 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     return (PyObject *)obj;
 
  fail:
-    NPY_cast_info_xfree(&cast_info);
+    NPY_END_THREADS;
+    if (needs_transfer) {
+        for (i = 0; i < n; i++) {
+            NPY_cast_info_xfree(&cast_infos[i]);
+        }
+    }
     Py_XDECREF(multi);
     for (i = 0; i < n; i++) {
         Py_XDECREF(mps[i]);
