@@ -1397,15 +1397,104 @@ class TestEinsumExpression:
         assert_(result is out)
         assert_allclose(out, expected)
 
-    def test_wrong_operand_count(self):
+    def test_trace(self):
+        a = np.random.rand(5, 5)
+        expr = np.EinsumExpression('ii->', (5, 5))
+        result = expr(a)
+        expected = np.einsum('ii->', a)
+        assert_allclose(result, expected)
+
+    def test_diagonal(self):
+        a = np.random.rand(4, 4)
+        expr = np.EinsumExpression('ii->i', (4, 4))
+        result = expr(a)
+        expected = np.einsum('ii->i', a)
+        assert_allclose(result, expected)
+
+    def test_outer_product(self):
+        a = np.random.rand(3)
+        b = np.random.rand(4)
+        expr = np.EinsumExpression('i,j->ij', (3,), (4,))
+        result = expr(a, b)
+        expected = np.einsum('i,j->ij', a, b)
+        assert_allclose(result, expected)
+
+    def test_dtype_kwarg(self):
+        a = np.ones((3, 3), dtype=np.float32)
+        b = np.ones((3, 3), dtype=np.float32)
+        expr = np.EinsumExpression('ij,jk->ik', (3, 3), (3, 3))
+        result = expr(a, b, dtype=np.float64)
+        assert_equal(result.dtype, np.float64)
+
+    def test_repeated_calls_same_result(self):
         expr = np.EinsumExpression('ij,jk->ik', (4, 5), (5, 3))
-        assert_raises(ValueError, expr, np.zeros((4, 5)))
+        for _ in range(5):
+            a = np.random.rand(4, 5)
+            b = np.random.rand(5, 3)
+            result = expr(a, b)
+            expected = np.einsum('ij,jk->ik', a, b)
+            assert_allclose(result, expected)
+
+    def test_wrong_operand_count(self):
+        # number of operands must match count provided at construction
+        expr = np.EinsumExpression('ij,jk->ik', (4, 5), (5, 3))
+        assert_raises_regex(ValueError, "expected 2 operands, got 1",
+                            expr, np.zeros((4, 5)))
+        assert_raises_regex(ValueError, "expected 2 operands, got 3",
+                            expr, np.zeros((4, 5)), np.zeros((5, 3)),
+                            np.zeros((3, 2)))
 
     def test_subscripts_must_be_string(self):
-        assert_raises(TypeError, np.EinsumExpression, 0, (3, 3))
+        # subscripts must be a string
+        assert_raises_regex(TypeError, "subscripts must be a string",
+                            np.EinsumExpression, 0, (3, 3))
+
+    def test_shapes_must_be_tuples(self):
+        # each shape must be a tuple
+        assert_raises_regex(TypeError, "shape 0 must be a tuple",
+                            np.EinsumExpression, 'ij,jk->ik',
+                            [3, 4], (4, 5))
 
     def test_no_shapes_raises(self):
-        assert_raises(ValueError, np.EinsumExpression, 'ij->ij')
+        # at least one operand shape is required
+        assert_raises_regex(ValueError, "at least one operand shape",
+                            np.EinsumExpression, 'ij->ij')
+
+    def test_optimize_false_raises(self):
+        # optimize=False is not supported
+        assert_raises_regex(ValueError, "optimize must be",
+                            np.EinsumExpression, 'ij->ij',
+                            (3, 3), optimize=False)
+
+    def test_optimize_none_raises(self):
+        # optimize=None is not supported
+        assert_raises_regex(ValueError, "optimize must be",
+                            np.EinsumExpression, 'ij->ij',
+                            (3, 3), optimize=None)
+
+    def test_optimize_invalid_string_raises(self):
+        # arbitrary strings should be rejected
+        assert_raises_regex(ValueError, "optimize must be",
+                            np.EinsumExpression, 'ij->ij',
+                            (3, 3), optimize='random')
+
+    def test_unknown_kwargs(self):
+        # unknown keyword arguments should raise
+        expr = np.EinsumExpression('ij,jk->ik', (3, 4), (4, 5))
+        assert_raises_regex(TypeError, "Did not understand",
+                            expr, np.zeros((3, 4)), np.zeros((4, 5)),
+                            bad_kwarg=True)
+
+    def test_optimize_optimal(self):
+        a = np.random.rand(3, 4)
+        b = np.random.rand(4, 5)
+        c = np.random.rand(5, 2)
+        expr = np.EinsumExpression('ij,jk,kl->il',
+                                   (3, 4), (4, 5), (5, 2),
+                                   optimize='optimal')
+        result = expr(a, b, c)
+        expected = np.einsum('ij,jk,kl->il', a, b, c, optimize='optimal')
+        assert_allclose(result, expected)
 
     def test_repr(self):
         expr = np.EinsumExpression('ij,jk->ik', (3, 4), (4, 5))
@@ -1413,3 +1502,9 @@ class TestEinsumExpression:
             repr(expr),
             "EinsumExpression('ij,jk->ik', (3, 4), (4, 5), "
             "optimize='greedy')")
+        expr_opt = np.EinsumExpression('ij,jk->ik', (3, 4), (4, 5),
+                                       optimize='optimal')
+        assert_equal(
+            repr(expr_opt),
+            "EinsumExpression('ij,jk->ik', (3, 4), (4, 5), "
+            "optimize='optimal')")

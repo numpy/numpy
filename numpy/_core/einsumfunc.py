@@ -1680,9 +1680,22 @@ class EinsumExpression:
             raise TypeError("subscripts must be a string")
         if not shapes:
             raise ValueError("at least one operand shape is required")
+        for i, shape in enumerate(shapes):
+            if not isinstance(shape, tuple):
+                raise TypeError(
+                    f"shape {i} must be a tuple, got {type(shape).__name__}")
 
+        if optimize is False or optimize is None:
+            raise ValueError(
+                "optimize must be True, 'greedy', or 'optimal' for "
+                "EinsumExpression; use np.einsum directly for "
+                "unoptimized contractions")
         if optimize is True:
             optimize = 'greedy'
+        if optimize not in ('greedy', 'optimal'):
+            raise ValueError(
+                f"optimize must be True, 'greedy', or 'optimal', "
+                f"got {optimize!r}")
 
         self._subscripts = subscripts
         self._num_operands = len(shapes)
@@ -1708,6 +1721,12 @@ class EinsumExpression:
             raise ValueError(
                 f"expected {self._num_operands} operands, "
                 f"got {len(operands)}")
+
+        valid_kwargs = ['dtype', 'order', 'casting']
+        unknown = [k for k in kwargs if k not in valid_kwargs]
+        if unknown:
+            raise TypeError(
+                f"Did not understand the following kwargs: {unknown}")
 
         operands = [asanyarray(op) for op in operands]
         specified_out = out is not None
