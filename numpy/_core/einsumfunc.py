@@ -1757,3 +1757,10 @@ class EinsumExpression:
         shapes_str = ', '.join(str(s) for s in self._shapes)
         return (f"EinsumExpression('{self._subscripts}', {shapes_str}, "
                 f"optimize='{self._optimize}')")
+
+    def __getstate__(self):
+        return {slot: getattr(self, slot) for slot in self.__slots__}
+
+    def __setstate__(self, state):
+        for slot, value in state.items():
+            object.__setattr__(self, slot, value)

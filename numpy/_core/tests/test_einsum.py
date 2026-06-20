@@ -1,4 +1,5 @@
 import itertools
+import pickle
 import warnings
 
 import pytest
@@ -1508,3 +1509,112 @@ class TestEinsumExpression:
             repr(expr_opt),
             "EinsumExpression('ij,jk->ik', (3, 4), (4, 5), "
             "optimize='optimal')")
+
+    def test_five_operand_contraction(self):
+        a = np.ones(64).reshape(2, 4, 8)
+        expr = np.EinsumExpression('ijk,ilm,njm,nlk,abc->',
+                                   (2, 4, 8), (2, 4, 8), (2, 4, 8),
+                                   (2, 4, 8), (2, 4, 8))
+        result = expr(a, a, a, a, a)
+        expected = np.einsum('ijk,ilm,njm,nlk,abc->', a, a, a, a, a,
+                             optimize='greedy')
+        assert_allclose(result, expected)
+
+    def test_ellipsis_subscripts(self):
+        a = np.random.rand(3, 4, 5)
+        b = np.random.rand(5, 2)
+        expr = np.EinsumExpression('...j,jk->...k', (3, 4, 5), (5, 2))
+        result = expr(a, b)
+        expected = np.einsum('...j,jk->...k', a, b, optimize='greedy')
+        assert_allclose(result, expected)
+
+    def test_scalar_operands(self):
+        # scalar (0-d) operand
+        expr = np.EinsumExpression(',->',  (), ())
+        a = np.float64(3.0)
+        b = np.float64(4.0)
+        result = expr(a, b)
+        expected = np.einsum(',->',  a, b)
+        assert_allclose(result, expected)
+
+    def test_out_multi_step(self):
+        a = np.random.rand(3, 4)
+        b = np.random.rand(4, 5)
+        c = np.random.rand(5, 2)
+        out = np.zeros((3, 2))
+        expr = np.EinsumExpression('ij,jk,kl->il',
+                                   (3, 4), (4, 5), (5, 2))
+        result = expr(a, b, c, out=out)
+        expected = np.einsum('ij,jk,kl->il', a, b, c, optimize='greedy')
+        assert_(result is out)
+        assert_allclose(out, expected)
+
+    def test_order_kwarg(self):
+        a = np.random.rand(3, 4)
+        b = np.random.rand(4, 5)
+        expr = np.EinsumExpression('ij,jk->ik', (3, 4), (4, 5))
+        result = expr(a, b, order='F')
+        assert_(result.flags.f_contiguous)
+
+    def test_casting_kwarg(self):
+        a = np.ones((3, 3), dtype=np.int32)
+        b = np.ones((3, 3), dtype=np.float64)
+        expr = np.EinsumExpression('ij,jk->ik', (3, 3), (3, 3))
+        result = expr(a, b, dtype=np.float32, casting='unsafe')
+        assert_equal(result.dtype, np.float32)
+
+    def test_integer_dtypes(self):
+        a = np.arange(12, dtype=np.int32).reshape(3, 4)
+        b = np.arange(8, dtype=np.int32).reshape(4, 2)
+        expr = np.EinsumExpression('ij,jk->ik', (3, 4), (4, 2))
+        result = expr(a, b)
+        expected = np.einsum('ij,jk->ik', a, b)
+        assert_array_equal(result, expected)
+        assert_equal(result.dtype, np.int32)
+
+    def test_complex_dtypes(self):
+        a = np.array([[1 + 2j, 3 + 4j], [5 + 6j, 7 + 8j]],
+                     dtype=np.complex128)
+        b = np.array([[1 + 0j, 0 + 1j], [0 + 1j, 1 + 0j]],
+                     dtype=np.complex128)
+        expr = np.EinsumExpression('ij,jk->ik', (2, 2), (2, 2))
+        result = expr(a, b)
+        expected = np.einsum('ij,jk->ik', a, b)
+        assert_array_equal(result, expected)
+
+    def test_scalar_result(self):
+        a = np.arange(6.0).reshape(2, 3)
+        expr = np.EinsumExpression('ij->', (2, 3))
+        result = expr(a)
+        expected = np.einsum('ij->', a)
+        assert_allclose(result, expected)
+
+    def test_zero_length_dimension(self):
+        a = np.zeros((0, 4))
+        b = np.zeros((4, 3))
+        expr = np.EinsumExpression('ij,jk->ik', (0, 4), (4, 3))
+        result = expr(a, b)
+        assert_equal(result.shape, (0, 3))
+
+    def test_optimize_true(self):
+        a = np.random.rand(3, 4)
+        b = np.random.rand(4, 5)
+        expr_true = np.EinsumExpression('ij,jk->ik', (3, 4), (4, 5),
+                                        optimize=True)
+        expr_greedy = np.EinsumExpression('ij,jk->ik', (3, 4), (4, 5),
+                                          optimize='greedy')
+        result_true = expr_true(a, b)
+        result_greedy = expr_greedy(a, b)
+        assert_allclose(result_true, result_greedy)
+
+    def test_pickle_roundtrip(self):
+        expr = np.EinsumExpression('ij,jk,kl->il',
+                                   (3, 4), (4, 5), (5, 2))
+        a = np.random.rand(3, 4)
+        b = np.random.rand(4, 5)
+        c = np.random.rand(5, 2)
+        expected = expr(a, b, c)
+        for protocol in range(pickle.HIGHEST_PROTOCOL + 1):
+            expr2 = pickle.loads(pickle.dumps(expr, protocol))
+            result = expr2(a, b, c)
+            assert_allclose(result, expected)
