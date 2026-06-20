@@ -1366,3 +1366,50 @@ def test_einsum_chunking_precision():
 
     # At with GROWINNER 11 decimals succeed (larger will be less)
     assert_almost_equal(res, value, decimal=15)
+
+
+class TestEinsumExpression:
+    def test_basic_matmul(self):
+        a = np.random.rand(4, 5)
+        b = np.random.rand(5, 3)
+        expr = np.EinsumExpression('ij,jk->ik', (4, 5), (5, 3))
+        result = expr(a, b)
+        expected = np.einsum('ij,jk->ik', a, b)
+        assert_allclose(result, expected)
+
+    def test_chain_matmul(self):
+        a = np.random.rand(3, 4)
+        b = np.random.rand(4, 5)
+        c = np.random.rand(5, 2)
+        expr = np.EinsumExpression('ij,jk,kl->il',
+                                   (3, 4), (4, 5), (5, 2))
+        result = expr(a, b, c)
+        expected = np.einsum('ij,jk,kl->il', a, b, c, optimize='greedy')
+        assert_allclose(result, expected)
+
+    def test_out_parameter(self):
+        a = np.random.rand(3, 4)
+        b = np.random.rand(4, 5)
+        out = np.zeros((3, 5))
+        expr = np.EinsumExpression('ij,jk->ik', (3, 4), (4, 5))
+        result = expr(a, b, out=out)
+        expected = np.einsum('ij,jk->ik', a, b)
+        assert_(result is out)
+        assert_allclose(out, expected)
+
+    def test_wrong_operand_count(self):
+        expr = np.EinsumExpression('ij,jk->ik', (4, 5), (5, 3))
+        assert_raises(ValueError, expr, np.zeros((4, 5)))
+
+    def test_subscripts_must_be_string(self):
+        assert_raises(TypeError, np.EinsumExpression, 0, (3, 3))
+
+    def test_no_shapes_raises(self):
+        assert_raises(ValueError, np.EinsumExpression, 'ij->ij')
+
+    def test_repr(self):
+        expr = np.EinsumExpression('ij,jk->ik', (3, 4), (4, 5))
+        assert_equal(
+            repr(expr),
+            "EinsumExpression('ij,jk->ik', (3, 4), (4, 5), "
+            "optimize='greedy')")
