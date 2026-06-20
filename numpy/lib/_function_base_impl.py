@@ -3948,10 +3948,11 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     Returns
     -------
     median : ndarray
-        A new array holding the result. Return data-type is ``float64``
-        for integer input, or the input data-type, otherwise. If `out` is
-        specified, that array is returned instead.
-
+        A new array holding the result. If the input contains integers,
+        the output data-type is ``float64``. Otherwise, the output data-type
+        is the same as that of the input. If `out` is specified, that array is
+        returned instead.
+        
     See Also
     --------
     mean, percentile

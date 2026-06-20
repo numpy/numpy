@@ -710,10 +710,9 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     median : ndarray
         A new array holding the result is returned unless out is
         specified, in which case a reference to out is returned.
-        Return data-type is "float64" for integer input. For 
-        floating-point input, the return data-type is the same as 
-        the input data-type.
-
+        If the input contains integers, the output data-type is ``float64``.
+        Otherwise, the output data-type is the same as that of the input.
+        If `out` is specified, that array is returned instead.
     See Also
     --------
     mean
