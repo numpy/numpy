@@ -1717,6 +1717,27 @@ class EinsumExpression:
         self._contraction_list = contraction_list
 
     def __call__(self, *operands, out=None, **kwargs):
+        """
+        Execute the pre-compiled einsum contraction.
+
+        Paramters
+        ----------
+        *operands : array_like
+            The input arrays. Must match the number of shapes provided
+            at construction time. Providing arrays whose shapes differ
+            from the construction shapes may result in a suboptimal
+            contraction order.
+        out : ndarray, optional
+            If provided, the result is placed into this array.
+        **kwargs
+            Additional keyword arguments passed to einsum (dtype, order,
+            casting).
+
+        Returns
+        -------
+        output : numpy array
+            The result of the einsum contraction.
+        """
         if len(operands) != self._num_operands:
             raise ValueError(
                 f"expected {self._num_operands} operands, "
