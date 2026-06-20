@@ -684,7 +684,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
 
     See Also
     --------
-    einsum, linalg.multi_dot
+    einsum, EinsumExpression, linalg.multi_dot
 
     Examples
     --------
@@ -1306,7 +1306,8 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
 
     See Also
     --------
-    einsum_path, dot, inner, outer, tensordot, linalg.multi_dot
+    einsum_path, EinsumExpression, dot, inner, outer, tensordot,
+    linalg.multi_dot
     einsum:
         Similar verbose interface is provided by the
         `einops <https://github.com/arogozhnikov/einops>`_ package to cover
@@ -1657,6 +1658,12 @@ class EinsumExpression:
     different operands of the same shapes, avoiding the overhead of
     re-parsing subscripts and recomputing the contraction path on each call.
 
+    This is useful when performing the same einsum contraction many times
+    with different data but identical shapes, as the path computation and
+    subscript parsing are done once at construction time.
+
+    .. versionadded:: 2.6.0
+
     Parameters
     ----------
     subscripts : str
@@ -1665,11 +1672,45 @@ class EinsumExpression:
     *shapes : tuple of int
         The shapes of the operands. One shape tuple per operand.
     optimize : {True, 'greedy', 'optimal'}, optional
-        Choose the type of path. Default is 'greedy'.
+        Choose the type of path.
+
+        * if True defaults to the 'greedy' algorithm
+        * 'optimal' An algorithm that combinatorially explores all possible
+          ways of contracting the listed tensors and chooses the least costly
+          path.
+        * 'greedy' An algorithm that chooses the best pair contraction
+          at each step.
+
+        Default is 'greedy'.
 
     See Also
     --------
     einsum, einsum_path
+
+    Notes
+    -----
+    The expression object stores the pre-computed contraction path and
+    subscript strings for each step. When called, it executes the stored
+    plan without re-parsing or re-optimizing.
+
+    Examples
+    --------
+    Pre-compile a matrix chain multiplication:
+
+    >>> import numpy as np
+    >>> expr = np.EinsumExpression('ij,jk,kl->il',
+    ...                            (10, 20), (20, 5), (5, 10))
+    >>> a = np.random.rand(10, 20)
+    >>> b = np.random.rand(20, 5)
+    >>> c = np.random.rand(5, 10)
+    >>> result = expr(a, b, c)
+    >>> result.shape
+    (10, 10)
+
+    The pre-compiled expression avoids repeated path computation:
+
+    >>> for _ in range(1000):  # doctest: +SKIP
+    ...     result = expr(a, b, c)
     """
 
     __slots__ = ('_subscripts', '_num_operands', '_shapes',
@@ -1721,7 +1762,7 @@ class EinsumExpression:
         """
         Execute the pre-compiled einsum contraction.
 
-        Paramters
+        Parameters
         ----------
         *operands : array_like
             The input arrays. Must match the number of shapes provided
@@ -1736,7 +1777,7 @@ class EinsumExpression:
 
         Returns
         -------
-        output : numpy array
+        output : ndarray
             The result of the einsum contraction.
         """
         if len(operands) != self._num_operands:
@@ -1764,9 +1805,9 @@ class EinsumExpression:
 
             if len(tmp_operands) == 2 and not self._single_step:
                 # For multi-step contractions, bmm_einsum (matmul) is
-                # faster for 2-operand intermedate steps.  For single-step
-                # contractions, c_einsum avoids the Python overhead of
-                # bmm_einsum (lru_cache, reshape).
+                # faster for 2-operand intermediate steps.  For single-step
+                # contractions, c_einsum is faster because it avoids the
+                # Python overhead of bmm_einsum (lru_cache, reshape).
                 new_view = bmm_einsum(einsum_str, *tmp_operands, **kwargs)
             else:
                 new_view = c_einsum(einsum_str, *tmp_operands, **kwargs)
