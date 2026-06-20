@@ -222,7 +222,9 @@ jobs:
           # No need to build ninja from source, the host ninja is used for the build
           grep -v ninja /numpy/requirements/build_requirements.txt > /tmp/build_requirements.txt &&
           grep -v ninja /numpy/requirements/test_requirements.txt > /tmp/test_requirements.txt &&
-          python -m pip install --break-system-packages uv --extra-index-url https://mirrors.loong64.com/pypi/simple &&
+          python -m pip install --break-system-packages \
+              --extra-index-url https://mirrors.loong64.com/pypi/simple \
+              --only-binary=":all:" uv &&
           export PATH="/root/.local/bin:$PATH" &&
           uv venv --python 3.12 .venv &&
           source .venv/bin/activate &&
