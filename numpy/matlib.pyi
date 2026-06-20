@@ -148,6 +148,7 @@ from numpy import (  # noqa: F401
     dtypes,
     e,
     ediff1d,
+    EinsumExpression,
     einsum,
     einsum_path,
     emath,
