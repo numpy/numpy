@@ -1673,7 +1673,7 @@ class EinsumExpression:
     """
 
     __slots__ = ('_subscripts', '_num_operands', '_shapes',
-                 '_contraction_list', '_optimize')
+                 '_contraction_list', '_optimize', '_single_step')
 
     def __init__(self, subscripts, /, *shapes, optimize='greedy'):
         if not isinstance(subscripts, str):
@@ -1715,6 +1715,7 @@ class EinsumExpression:
         _, contraction_list = einsum_path(
             subscripts, *fake_operands, optimize=optimize, einsum_call=True)
         self._contraction_list = contraction_list
+        self._single_step = len(contraction_list) == 1
 
     def __call__(self, *operands, out=None, **kwargs):
         """
@@ -1761,7 +1762,11 @@ class EinsumExpression:
             if handle_out:
                 kwargs["out"] = out
 
-            if len(tmp_operands) == 2:
+            if len(tmp_operands) == 2 and not self._single_step:
+                # For multi-step contractions, bmm_einsum (matmul) is
+                # faster for 2-operand intermedate steps.  For single-step
+                # contractions, c_einsum avoids the Python overhead of
+                # bmm_einsum (lru_cache, reshape).
                 new_view = bmm_einsum(einsum_str, *tmp_operands, **kwargs)
             else:
                 new_view = c_einsum(einsum_str, *tmp_operands, **kwargs)
@@ -1783,5 +1788,10 @@ class EinsumExpression:
         return {slot: getattr(self, slot) for slot in self.__slots__}
 
     def __setstate__(self, state):
-        for slot, value in state.items():
-            object.__setattr__(self, slot, value)
+        for slot in self.__slots__:
+            if slot in state:
+                object.__setattr__(self, slot, state[slot])
+        if '_single_step' not in state:
+            object.__setattr__(
+                self, '_single_step',
+                len(self._contraction_list) == 1)
