@@ -3952,7 +3952,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
         the output data-type is ``float64``. Otherwise, the output data-type
         is the same as that of the input. If `out` is specified, that array is
         returned instead.
-        
+
     See Also
     --------
     mean, percentile
