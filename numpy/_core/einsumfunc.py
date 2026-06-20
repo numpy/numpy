@@ -10,8 +10,9 @@ from numpy._core.multiarray import c_einsum, matmul
 from numpy._core.numeric import asanyarray, reshape
 from numpy._core.overrides import array_function_dispatch
 from numpy._core.umath import multiply
+from numpy._utils import set_module
 
-__all__ = ['einsum', 'einsum_path']
+__all__ = ['EinsumExpression', 'einsum', 'einsum_path']
 
 # importing string for string.ascii_letters would be too slow
 # the first import before caching has been measured to take 800 µs (#23777)
@@ -1645,3 +1646,95 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
         return out
     else:
         return operands[0]
+
+
+@set_module('numpy')
+class EinsumExpression:
+    """
+    EinsumExpression(subscripts, *shapes, optimize='greedy')
+
+    A pre-compiled einsum expression that can be called repeatedly with
+    different operands of the same shapes, avoiding the overhead of
+    re-parsing subscripts and recomputing the contraction path on each call.
+
+    Parameters
+    ----------
+    subscripts : str
+        Specifies the subscripts for summation as a comma-separated list of
+        subscript labels. An explicit output can be specified with '->'.
+    *shapes : tuple of int
+        The shapes of the operands. One shape tuple per operand.
+    optimize : {True, 'greedy', 'optimal'}, optional
+        Choose the type of path. Default is 'greedy'.
+
+    See Also
+    --------
+    einsum, einsum_path
+    """
+
+    __slots__ = ('_subscripts', '_num_operands', '_shapes',
+                 '_contraction_list', '_optimize')
+
+    def __init__(self, subscripts, /, *shapes, optimize='greedy'):
+        if not isinstance(subscripts, str):
+            raise TypeError("subscripts must be a string")
+        if not shapes:
+            raise ValueError("at least one operand shape is required")
+
+        if optimize is True:
+            optimize = 'greedy'
+
+        self._subscripts = subscripts
+        self._num_operands = len(shapes)
+        self._shapes = shapes
+        self._optimize = optimize
+
+        # Build fake zero-strided arrays sharing a single element of memory
+        # per array, avoiding large allocations for big shapes.
+        from numpy.lib._stride_tricks_impl import as_strided
+        fake_operands = []
+        for shape in shapes:
+            buf = asanyarray([0.0])
+            fake = as_strided(
+                buf, shape=shape, strides=(0,) * len(shape))
+            fake_operands.append(fake)
+
+        _, contraction_list = einsum_path(
+            subscripts, *fake_operands, optimize=optimize, einsum_call=True)
+        self._contraction_list = contraction_list
+
+    def __call__(self, *operands, out=None, **kwargs):
+        if len(operands) != self._num_operands:
+            raise ValueError(
+                f"expected {self._num_operands} operands, "
+                f"got {len(operands)}")
+
+        operands = [asanyarray(op) for op in operands]
+        specified_out = out is not None
+
+        for num, contraction in enumerate(self._contraction_list):
+            inds, einsum_str, _ = contraction
+            tmp_operands = [operands.pop(x) for x in inds]
+
+            handle_out = specified_out and (
+                (num + 1) == len(self._contraction_list))
+            if handle_out:
+                kwargs["out"] = out
+
+            if len(tmp_operands) == 2:
+                new_view = bmm_einsum(einsum_str, *tmp_operands, **kwargs)
+            else:
+                new_view = c_einsum(einsum_str, *tmp_operands, **kwargs)
+
+            operands.append(new_view)
+            del tmp_operands, new_view
+
+        if specified_out:
+            return out
+        else:
+            return operands[0]
+
+    def __repr__(self):
+        shapes_str = ', '.join(str(s) for s in self._shapes)
+        return (f"EinsumExpression('{self._subscripts}', {shapes_str}, "
+                f"optimize='{self._optimize}')")
