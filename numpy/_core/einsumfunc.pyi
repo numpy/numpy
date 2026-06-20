@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any, Literal, overload
+from typing import Any, ClassVar, Literal, overload
 
 import numpy as np
 from numpy import _OrderKACF
@@ -20,7 +20,7 @@ from numpy._typing import (
     _DTypeLikeUInt,
 )
 
-__all__ = ["einsum", "einsum_path"]
+__all__ = ["EinsumExpression", "einsum", "einsum_path"]
 
 type _OptimizeKind = bool | Literal["greedy", "optimal"] | Sequence[Any] | None
 type _CastingSafe = Literal["no", "equiv", "safe", "same_kind"]
@@ -177,3 +177,88 @@ def einsum_path(
     optimize: _OptimizeKind = "greedy",
     einsum_call: Literal[False] = False,
 ) -> tuple[list[Any], str]: ...
+
+class EinsumExpression:
+    __slots__: ClassVar[tuple[str, ...]]
+    def __init__(
+        self,
+        subscripts: str,
+        /,
+        *shapes: tuple[int, ...],
+        optimize: Literal[True, "greedy", "optimal"] = "greedy",
+    ) -> None: ...
+    def __repr__(self) -> str: ...
+    def __getstate__(self) -> dict[str, Any]: ...
+    def __setstate__(self, state: dict[str, Any]) -> None: ...
+    @overload
+    def __call__(
+        self,
+        *operands: _ArrayLikeComplex_co,
+        out: None = None,
+        dtype: _DTypeLikeComplex_co | None = ...,
+        order: _OrderKACF = ...,
+        casting: _CastingSafe = ...,
+    ) -> Any: ...
+    @overload
+    def __call__[OutT: NDArray[np.bool | np.number]](
+        self,
+        *operands: _ArrayLikeComplex_co,
+        out: OutT,
+        dtype: _DTypeLikeComplex_co | None = ...,
+        order: _OrderKACF = ...,
+        casting: _CastingSafe = ...,
+    ) -> OutT: ...
+    @overload
+    def __call__(
+        self,
+        *operands: Any,
+        casting: _CastingUnsafe,
+        dtype: _DTypeLikeComplex_co | None = ...,
+        out: None = None,
+        order: _OrderKACF = ...,
+    ) -> Any: ...
+    @overload
+    def __call__[OutT: NDArray[np.bool | np.number]](
+        self,
+        *operands: Any,
+        out: OutT,
+        casting: _CastingUnsafe,
+        dtype: _DTypeLikeComplex_co | None = ...,
+        order: _OrderKACF = ...,
+    ) -> OutT: ...
+    @overload
+    def __call__(
+        self,
+        *operands: _ArrayLikeObject_co,
+        out: None = None,
+        dtype: _DTypeLikeObject | None = ...,
+        order: _OrderKACF = ...,
+        casting: _CastingSafe = ...,
+    ) -> Any: ...
+    @overload
+    def __call__[OutT: NDArray[np.bool | np.number]](
+        self,
+        *operands: _ArrayLikeObject_co,
+        out: OutT,
+        dtype: _DTypeLikeObject | None = ...,
+        order: _OrderKACF = ...,
+        casting: _CastingSafe = ...,
+    ) -> OutT: ...
+    @overload
+    def __call__(
+        self,
+        *operands: Any,
+        casting: _CastingUnsafe,
+        dtype: _DTypeLikeObject | None = ...,
+        out: None = None,
+        order: _OrderKACF = ...,
+    ) -> Any: ...
+    @overload
+    def __call__[OutT: NDArray[np.bool | np.number]](
+        self,
+        *operands: Any,
+        out: OutT,
+        casting: _CastingUnsafe,
+        dtype: _DTypeLikeObject | None = ...,
+        order: _OrderKACF = ...,
+    ) -> OutT: ...

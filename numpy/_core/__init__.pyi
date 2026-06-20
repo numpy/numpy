@@ -20,7 +20,7 @@ from .arrayprint import (
     printoptions,
     set_printoptions,
 )
-from .einsumfunc import einsum, einsum_path
+from .einsumfunc import EinsumExpression, einsum, einsum_path
 from .fromnumeric import (
     all,
     amax,
@@ -445,6 +445,7 @@ __all__ = [
     "double",
     "dtype",
     "e",
+    "EinsumExpression",
     "einsum",
     "einsum_path",
     "empty",

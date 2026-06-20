@@ -44,3 +44,8 @@ AR_f: npt.NDArray[np.float64]
 AR_c: npt.NDArray[np.complex128]
 assert_type(np.einsum(AR_f, [0, 1], AR_f, [1, 0], [0]), Any)
 assert_type(np.einsum(AR_c, [0, 1], AR_c, [1, 0], [0]), Any)
+
+expr: np.EinsumExpression
+assert_type(np.EinsumExpression("ij,jk->ik", (3, 4), (4, 5)), np.EinsumExpression)
+assert_type(expr(AR_f, AR_f), Any)
+assert_type(expr(AR_f, AR_f, out=OUT_f), npt.NDArray[np.float64])
