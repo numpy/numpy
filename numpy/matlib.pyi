@@ -3,6 +3,7 @@ from typing import Any, Literal, overload
 import numpy as np
 import numpy.typing as npt
 from numpy import (  # noqa: F401
+    EinsumExpression,
     False_,
     ScalarType,
     True_,
@@ -148,7 +149,6 @@ from numpy import (  # noqa: F401
     dtypes,
     e,
     ediff1d,
-    EinsumExpression,
     einsum,
     einsum_path,
     emath,
