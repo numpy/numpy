@@ -4,11 +4,12 @@
 NumPy 2.5.0 Release Notes
 ==========================
 
-Numpy 3.5.0 is a transitional release. It drops support for Python 3.11,
+Numpy 2.5.0 is a transitional release. It drops support for Python 3.11,
 marking the end of distutils, and expires a large number of deprecations made
 in the 2.0.x release. It also improves free threading and brings sorting into
 compliance with the array-api standard with the addition of descending sorts.
-Python 3.15 will be supported when it is released.
+There is also a fair amount of preparation for Python 3.15, which will be
+supported starting with the first rc.
 
 This release supports Python versions 3.12-3.14.
 
@@ -19,9 +20,9 @@ Highlights
 * Distutils has been removed,
 * Many expired deprecations, see below,
 * Many new deprecations, see below,
-* Many static typing improvements.
+* Many static typing improvements,
 * Improved support for free threading,
-* Support for descending sorts,
+* Support for descending sorts.
 
 See New Features below for other additions.
 
@@ -29,7 +30,8 @@ See New Features below for other additions.
 Deprecations
 ============
 
-* ``numpy.char.chararray`` is deprecated. Use an ``ndarray`` with a string or bytes dtype instead.
+* ``numpy.char.chararray`` is deprecated. Use an ``ndarray`` with a string or
+  bytes dtype instead.
 
   (`gh-30605 <https://github.com/numpy/numpy/pull/30605>`__)
 
@@ -55,10 +57,9 @@ Deprecations
 
 * Setting the ``shape`` attribute is deprecated because mutating an array is
   unsafe if an array is shared, especially by multiple threads.  As an
-  alternative, you can create a new view via ``np.reshape`` or
-  ``np.ndarray.reshape``. For example: ``x = np.arange(15); x = np.reshape(x,
-  (3, 5))``.  To ensure no copy is made from the data, one can use
-  ``np.reshape(..., copy=False)``.
+  alternative, you can create a new view via ``np.reshape`` or ``np.ndarray.reshape``.
+  For example: ``x = np.arange(15); x = np.reshape(x, (3, 5))``. To ensure
+  that no copy is made from the data, one can use ``np.reshape(..., copy=False)``.
 
   While setting the shape on an array is discouraged, for cases where it is
   difficult to work around, e.g., in ``__array_finalize__``, it is possible
@@ -597,8 +598,9 @@ arguments.
 
 ``numpy.triu_indices`` now accepts ``unsigned integers``
 --------------------------------------------------------
-``numpy.triu_indices`` previously used to error in some cases when ``unsigned
-integers`` were given as arguments. Now, it accepts them in all cases.
+``numpy.triu_indices`` previously used to error in some cases when
+``unsigned integers`` were given as arguments. Now, it accepts them in all
+cases.
 
 (`gh-30869 <https://github.com/numpy/numpy/pull/30869>`__)
 

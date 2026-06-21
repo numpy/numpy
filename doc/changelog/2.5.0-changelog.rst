@@ -1,8 +1,9 @@
+Generating change log for range v2.5.0.dev0..maintenance/2.5.x
 
 Contributors
 ============
 
-A total of 129 people contributed to this release.  People with a "+" by their
+A total of 132 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * !EarlMilktea
@@ -46,6 +47,7 @@ names contributed a patch for the first time.
 * Daniel Haag +
 * Daniel Koronthály +
 * Daniel Tang +
+* Daniele Parmeggiani +
 * David Cortes
 * David Woods +
 * Davis Bennett +
@@ -85,6 +87,7 @@ names contributed a patch for the first time.
 * Maanas Arora
 * Maarten Baert +
 * Majianhan +
+* Manuel Jacob +
 * Marco Edward Gorelli
 * Marten van Kerkwijk
 * Matthias Bussonnier
@@ -101,6 +104,7 @@ names contributed a patch for the first time.
 * Nathan Legendre +
 * Nathaniel Starkman +
 * Nikita Zamuldinov +
+* Nishidh +
 * Noa Levi +
 * Peter Hawkins
 * Pey Lian Lim
@@ -138,7 +142,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 528 pull requests were merged for this release.
+A total of 555 pull requests were merged for this release.
 
 * `#25103 <https://github.com/numpy/numpy/pull/25103>`__: MAINT: Use ``spin lint`` in CI
 * `#26574 <https://github.com/numpy/numpy/pull/26574>`__: CI: replace pkgconfig-lite from Chocolatey with ``pip install``...
@@ -668,4 +672,31 @@ A total of 528 pull requests were merged for this release.
 * `#31537 <https://github.com/numpy/numpy/pull/31537>`__: BUG: Avoid heap buffer overflow for stringdtype searchsorted
 * `#31538 <https://github.com/numpy/numpy/pull/31538>`__: BUG: Avoid hwcap for RVV version detection due to faulty v0.7/v1.0...
 * `#31539 <https://github.com/numpy/numpy/pull/31539>`__: BLD: fix build failure with PYTHONSAFEPATH=1 (#30731)
+* `#31548 <https://github.com/numpy/numpy/pull/31548>`__: REL: Prepare for the NumPy 2.5.0rc1 release.
+* `#31569 <https://github.com/numpy/numpy/pull/31569>`__: DOC: add Python-level parallelism tips section (#30820)
+* `#31570 <https://github.com/numpy/numpy/pull/31570>`__: TYP: Annotate untyped attributes and dunder methods (#31550)
+* `#31571 <https://github.com/numpy/numpy/pull/31571>`__: BUG,TST: Fix condition for whether long double is “IBM double...
+* `#31572 <https://github.com/numpy/numpy/pull/31572>`__: BUG: Fix order of real and imaginary NaNs when sorting complex...
+* `#31629 <https://github.com/numpy/numpy/pull/31629>`__: TYP: Fix ``ma.[as[any]]array`` fallback overloads (#31482)
+* `#31630 <https://github.com/numpy/numpy/pull/31630>`__: BUG: For new-style wrapped legacy dtypes use old array printing...
+* `#31631 <https://github.com/numpy/numpy/pull/31631>`__: BUG: fix incorrect alignment handling and error handling in several...
+* `#31632 <https://github.com/numpy/numpy/pull/31632>`__: TST: Use pytest.warns as ignore filters+suppress_warnings interfere...
+* `#31634 <https://github.com/numpy/numpy/pull/31634>`__: BUG: fix suppress_warnings when context-aware warnings is on...
+* `#31636 <https://github.com/numpy/numpy/pull/31636>`__: MAINT, TST: Pin pytest to 9.0.3
+* `#31646 <https://github.com/numpy/numpy/pull/31646>`__: TST, TYP: Pin to windows-2022 for typecheck on windows.
+* `#31668 <https://github.com/numpy/numpy/pull/31668>`__: MAINT: Update pytest pins to 9.1.0
+* `#31671 <https://github.com/numpy/numpy/pull/31671>`__: TST: add 3.15t win32 CI and fix issues seen in that build (#31607)
+* `#31672 <https://github.com/numpy/numpy/pull/31672>`__: BUG: raise error when casting from StringDType to longdouble...
+* `#31673 <https://github.com/numpy/numpy/pull/31673>`__: BUG: NpyString comparison should use memcmp instead of strncmp...
+* `#31674 <https://github.com/numpy/numpy/pull/31674>`__: BUG: fix casts from StringDType to complex float (#31663)
+* `#31675 <https://github.com/numpy/numpy/pull/31675>`__: BUG: fix StringDType embedded and trailing NULL handling in several...
+* `#31679 <https://github.com/numpy/numpy/pull/31679>`__: DOC: Prevent arrow ligatures in generalized ufunc signatures
+* `#31683 <https://github.com/numpy/numpy/pull/31683>`__: MAINT: Clean up use for PyObject_\* APIs when PyMem_\* would...
+* `#31684 <https://github.com/numpy/numpy/pull/31684>`__: TST: Avoid sctypeDict in tests as e.g. ml_dtypes may mutate it...
+* `#31685 <https://github.com/numpy/numpy/pull/31685>`__: BUG: Use ``auxdata`` in (arg)sort ``strided_loop``\ s (#31670)
+* `#31697 <https://github.com/numpy/numpy/pull/31697>`__: MAINT: Avoid compiling uv for loongarch
+* `#31698 <https://github.com/numpy/numpy/pull/31698>`__: MAINT: Fix emscripten wheel build.
+* `#31700 <https://github.com/numpy/numpy/pull/31700>`__: MAINT: Bump pypa/cibuildwheel from 3.4.1 to 4.1.0
+* `#31703 <https://github.com/numpy/numpy/pull/31703>`__: BUG: fix StringDType distinct-allocator bugs and add tests (#31609)
+* `#31704 <https://github.com/numpy/numpy/pull/31704>`__: MAINT: update openblas to 0.3.33.112.0 (#31649)
 
