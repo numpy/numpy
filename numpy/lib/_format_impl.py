@@ -280,6 +280,11 @@ def dtype_to_descr(dtype):
                       UserWarning, stacklevel=2)
     dtype = new_dtype
 
+    if dtype.subdtype is not None:
+        # Serialize subarray dtypes recursively so they can be reconstructed
+        # from the header instead of being flattened to their void storage.
+        base, shape = dtype.subdtype
+        return dtype_to_descr(base), shape
     if dtype.names is not None:
         # This is a record array. The .descr is fine.  XXX: parts of the
         # record array with an empty name, like padding bytes, still get
@@ -959,6 +964,20 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         if dtype.hasobject:
             msg = "Array can't be memory-mapped: Python objects in dtype."
             raise ValueError(msg)
+        if dtype.subdtype is not None:
+            # Collapse all nested top-level subarray layers so the written
+            # header never retains a top-level subarray descriptor, which
+            # keeps the file readable by the regular .npy loader.
+            if shape is None:
+                shape = ()
+            elif numpy.isscalar(shape):
+                shape = (shape,)
+            else:
+                shape = tuple(shape)
+            while dtype.subdtype is not None:
+                base, subshape = dtype.subdtype
+                shape = shape + tuple(subshape)
+                dtype = base
         d = {
             "descr": dtype_to_descr(dtype),
             "fortran_order": fortran_order,
