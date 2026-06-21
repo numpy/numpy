@@ -197,29 +197,11 @@ class EinsumExpression:
     @overload
     def __call__(
         self,
-        *operands: _ArrayLikeComplex_co,
-        out: None = None,
-        dtype: _DTypeLikeComplex_co | None = None,
-        order: _OrderKACF = "K",
-        casting: _CastingSafe = "safe",
-    ) -> Any: ...
-    @overload
-    def __call__(
-        self,
-        *operands: _ArrayLikeObject_co,
-        out: None = None,
-        dtype: _DTypeLikeObject | None = None,
-        order: _OrderKACF = "K",
-        casting: _CastingSafe = "safe",
-    ) -> Any: ...
-    @overload
-    def __call__(
-        self,
         *operands: Any,
-        casting: _CastingUnsafe,
-        dtype: _DTypeLikeComplex_co | _DTypeLikeObject | None = None,
         out: None = None,
+        dtype: _DTypeLikeComplex_co | _DTypeLikeObject | None = None,
         order: _OrderKACF = "K",
+        casting: _CastingSafe | _CastingUnsafe = "safe",
     ) -> Any: ...
     @overload
     def __call__[OutT: NDArray[np.bool | np.number]](
