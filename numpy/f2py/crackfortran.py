@@ -2437,6 +2437,11 @@ def _selected_real_kind_func(p, r=0, radix=0):
     if machine.startswith(('aarch64', 'alpha', 'arm64', 'loongarch', 'mips', 'power', 'ppc', 'riscv', 's390x', 'sparc')):
         if p <= 33:
             return 16
+    elif machine.startswith(('armv6', 'armv7', 'armv8')):
+        # 32-bit ARM (armv6l, armv7l, armv8l on aarch64 host, etc.) supports
+        # only real*4 and real*8; neither 80-bit extended (real*10) nor
+        # 128-bit quad (real*16) exist
+        pass
     elif p < 19:
         return 10
     elif p <= 33:
