@@ -2064,6 +2064,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     int nd;
     npy_intp nbytes;
     int overflowed;
+    PyObject *result = NULL;
 
     PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
 
@@ -2098,9 +2099,10 @@ array_setstate(PyArrayObject *self, PyObject *args)
     }
 
     Py_INCREF(typecode);
+    Py_INCREF(rawdata);
     nd = PyArray_IntpFromSequence(shape, dimensions, NPY_MAXDIMS);
     if (nd < 0) {
-        goto fail_typecode;
+        goto end;
     }
     /*
      * We should do two things here:
@@ -2115,13 +2117,13 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (dimensions[i] < 0) {
             PyErr_SetString(PyExc_TypeError,
                     "impossible dimension while unpickling array");
-            goto fail_typecode;
+            goto end;
         }
         overflowed = npy_mul_sizes_with_overflow(
                 &nbytes, nbytes, dimensions[i]);
         if (overflowed) {
             PyErr_NoMemory();
-            goto fail_typecode;
+            goto end;
         }
     }
 
@@ -2129,11 +2131,10 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (!PyList_Check(rawdata)) {
             PyErr_SetString(PyExc_TypeError,
                             "object pickle not returning list");
-            goto fail_typecode;
+            goto end;
         }
     }
     else {
-        Py_INCREF(rawdata);
 
         /* Backward compatibility with Python 2 NumPy pickles */
         if (PyUnicode_Check(rawdata)) {
@@ -2143,32 +2144,33 @@ array_setstate(PyArrayObject *self, PyObject *args)
                 PyErr_SetString(PyExc_ValueError,
                                 ("Failed to encode latin1 string when unpickling a Numpy array. "
                                  "pickle.load(a, encoding='latin1') is assumed."));
-                return NULL;
+                goto end;
             }
         }
 
         if (!PyBytes_Check(rawdata)) {
             PyErr_SetString(PyExc_TypeError,
                             "pickle not returning string");
-            goto fail_rawdata;
+            goto end;
         }
 
         if (PyBytes_AsStringAndSize(rawdata, &datastr, &len) < 0) {
-            goto fail_rawdata;
+            goto end;
         }
 
         if (len != nbytes) {
             PyErr_SetString(PyExc_ValueError,
                     "buffer size does not match array size");
-            goto fail_rawdata;
+            goto end;
         }
     }
     /*
      * Get rid of everything on self, and then populate with pickle data.
      */
     if (clear_array_attributes(self) < 0) {
-        return NULL;
+        goto end;
     }
+    Py_INCREF(typecode);
     fa->descr = typecode;
     fa->flags = NPY_ARRAY_DEFAULT;
 
@@ -2177,7 +2179,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
     if (nd > 0) {
         fa->dimensions = npy_alloc_cache_dim(2 * nd);
         if (fa->dimensions == NULL) {
-            return PyErr_NoMemory();
+            PyErr_NoMemory();
+            goto end;
         }
         fa->strides = PyArray_DIMS(self) + nd;
         if (nd) {
@@ -2201,14 +2204,13 @@ array_setstate(PyArrayObject *self, PyObject *args)
             }
             fa->mem_handler = PyDataMem_GetHandler();
             if (fa->mem_handler == NULL) {
-                Py_DECREF(rawdata);
-                return NULL;
+                goto end;
             }
             fa->data = PyDataMem_UserNEW(num, PyArray_HANDLER(self));
             if (PyArray_DATA(self) == NULL) {
                 Py_CLEAR(fa->mem_handler);
-                Py_DECREF(rawdata);
-                return PyErr_NoMemory();
+                PyErr_NoMemory();
+                goto end;
             }
             if (swap) {
                 /* byte-swap on pickle-read */
@@ -2220,40 +2222,45 @@ array_setstate(PyArrayObject *self, PyObject *args)
                 if (!(PyArray_ISEXTENDED(self) ||
                       PyArray_DESCR(self)->metadata ||
                       PyDataType_C_METADATA(PyArray_DESCR(self)))) {
-                    fa->descr = PyArray_DescrFromType(
+                    PyArray_Descr *swapped = PyArray_DescrFromType(
                                     PyArray_DESCR(self)->type_num);
+                    Py_DECREF(fa->descr);
+                    fa->descr = swapped;
                 }
                 else {
-                    fa->descr = PyArray_DescrNew(typecode);
-                    if (fa->descr == NULL) {
+                    PyArray_Descr *swapped = PyArray_DescrNew(typecode);
+                    if (swapped == NULL) {
                         Py_CLEAR(fa->mem_handler);
-                        Py_DECREF(rawdata);
-                        return NULL;
+                        goto end;
                     }
-                    if (PyArray_DESCR(self)->byteorder == NPY_BIG) {
-                        PyArray_DESCR(self)->byteorder = NPY_LITTLE;
+                    if (swapped->byteorder == NPY_BIG) {
+                        swapped->byteorder = NPY_LITTLE;
                     }
-                    else if (PyArray_DESCR(self)->byteorder == NPY_LITTLE) {
-                        PyArray_DESCR(self)->byteorder = NPY_BIG;
+                    else if (swapped->byteorder == NPY_LITTLE) {
+                        swapped->byteorder = NPY_BIG;
                     }
+                    Py_DECREF(fa->descr);
+                    fa->descr = swapped;
                 }
-                Py_DECREF(typecode);
             }
             else {
                 memcpy(PyArray_DATA(self), datastr, PyArray_NBYTES(self));
             }
             PyArray_ENABLEFLAGS(self, NPY_ARRAY_OWNDATA);
             fa->base = NULL;
-            Py_DECREF(rawdata);
         }
         else {
-            /* The handlers should never be called in this case */
+            /*
+             * Direct pointer path: PyArray_SetBaseObject steals the rawdata
+             * reference. NULL rawdata afterward so Py_XDECREF at the end
+             * label does not double-decref a stolen ref.
+             */
             fa->mem_handler = NULL;
             fa->data = datastr;
             if (PyArray_SetBaseObject(self, rawdata) < 0) {
-                Py_DECREF(rawdata);
-                return NULL;
+                goto end;
             }
+            rawdata = NULL;
         }
     }
     else {
@@ -2264,12 +2271,13 @@ array_setstate(PyArrayObject *self, PyObject *args)
         /* Store the functions in case the default handler is modified */
         fa->mem_handler = PyDataMem_GetHandler();
         if (fa->mem_handler == NULL) {
-            return NULL;
+            goto end;
         }
         fa->data = PyDataMem_UserNEW(num, PyArray_HANDLER(self));
         if (PyArray_DATA(self) == NULL) {
             Py_CLEAR(fa->mem_handler);
-            return PyErr_NoMemory();
+            PyErr_NoMemory();
+            goto end;
         }
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_NEEDS_INIT)) {
             memset(PyArray_DATA(self), 0, PyArray_NBYTES(self));
@@ -2277,19 +2285,18 @@ array_setstate(PyArrayObject *self, PyObject *args)
         PyArray_ENABLEFLAGS(self, NPY_ARRAY_OWNDATA);
         fa->base = NULL;
         if (_setlist_pkl(self, rawdata) < 0) {
-            return NULL;
+            goto end;
         }
     }
 
     PyArray_UpdateFlags(self, NPY_ARRAY_UPDATE_ALL);
+    result = Py_None;
+    Py_INCREF(result);
 
-    Py_RETURN_NONE;
-
-fail_rawdata:
-    Py_DECREF(rawdata);
-fail_typecode:
-    Py_DECREF(typecode);
-    return NULL;
+end:
+    Py_XDECREF((PyObject *)typecode);
+    Py_XDECREF(rawdata);
+    return result;
 }
 
 /*NUMPY_API*/
