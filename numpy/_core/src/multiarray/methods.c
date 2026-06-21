@@ -2224,8 +2224,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
                       PyDataType_C_METADATA(PyArray_DESCR(self)))) {
                     PyArray_Descr *swapped = PyArray_DescrFromType(
                                     PyArray_DESCR(self)->type_num);
-                    Py_DECREF(fa->descr);
-                    fa->descr = swapped;
+                    Py_SETREF(fa->descr, swapped);
                 }
                 else {
                     PyArray_Descr *swapped = PyArray_DescrNew(typecode);
@@ -2239,8 +2238,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
                     else if (swapped->byteorder == NPY_LITTLE) {
                         swapped->byteorder = NPY_BIG;
                     }
-                    Py_DECREF(fa->descr);
-                    fa->descr = swapped;
+                    Py_SETREF(fa->descr, swapped);
                 }
             }
             else {
@@ -2250,17 +2248,15 @@ array_setstate(PyArrayObject *self, PyObject *args)
             fa->base = NULL;
         }
         else {
-            /*
-             * Direct pointer path: PyArray_SetBaseObject steals the rawdata
-             * reference. NULL rawdata afterward so Py_XDECREF at the end
-             * label does not double-decref a stolen ref.
-             */
             fa->mem_handler = NULL;
             fa->data = datastr;
-            if (PyArray_SetBaseObject(self, rawdata) < 0) {
+
+            PyObject *base = rawdata;
+            rawdata = NULL;
+
+            if (PyArray_SetBaseObject(self, base) < 0) {
                 goto end;
             }
-            rawdata = NULL;
         }
     }
     else {
