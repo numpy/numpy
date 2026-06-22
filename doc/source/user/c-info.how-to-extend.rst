@@ -84,13 +84,8 @@ A minimal ``PyInit_{name}`` method looks like:
     PyMODINIT_FUNC
     PyInit_{name}(void)
     {
-       PyObject *m;
        import_array();
-       m = PyModule_Create(&moduledef);
-       if (!m) {
-           return NULL;
-       }
-       return m;
+       return PyModule_Create(&moduledef);
     }
 
 The mymethods must be an array (usually statically declared) of
