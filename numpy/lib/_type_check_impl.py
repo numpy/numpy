@@ -388,11 +388,14 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
     ----------
     x : scalar or array_like
         Input data.
-    copy : bool, optional
-        Whether to create a copy of `x` (True) or to replace values
-        in-place (False). The in-place operation only occurs if
-        casting to an array does not require a copy.
-        Default is True.
+    copy : bool or None, optional
+        Whether to copy `x` or to replace values in-place. If ``True``
+        (default), the input is always copied. If ``None``, a copy is only
+        made when one is required, for example when `x` is not already an
+        array or when a cast is needed; otherwise the values are replaced
+        in-place. If ``False``, a ``ValueError`` is raised when a copy
+        cannot be avoided.
+        Default: ``True``.
     nan : int, float, or bool or array_like of int, float, or bool, optional
         Values to be used to fill NaN values. If no values are passed
         then NaN values will be replaced with 0.0.
