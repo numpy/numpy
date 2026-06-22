@@ -140,3 +140,69 @@ def test_divmod_at_invalid() -> None:
     assert_type(np.divmod.at(AR_f8, i8, AR_f8), NoReturn)  # type: ignore[arg-type]
 def test_matmul_at_invalid() -> None:
     assert_type(np.matmul.at(AR_f8, i8, AR_f8), NoReturn)  # type: ignore[arg-type]
+
+###
+
+_py_i_0d: int
+_py_i_1d: list[int]
+_py_i_2d: list[list[int]]
+_py_f_0d: float
+_py_f_1d: list[float]
+_py_f_2d: list[list[float]]
+_py_c_0d: complex
+_py_c_1d: list[complex]
+_py_c_2d: list[list[complex]]
+
+_i16_0d: np.int64
+_i16_1d: np.ndarray[tuple[int], np.dtype[np.int16]]
+_i16_2d: np.ndarray[tuple[int, int], np.dtype[np.int16]]
+_i16_nd: npt.NDArray[np.int16]
+_f32_0d: np.float32
+_f32_1d: np.ndarray[tuple[int], np.dtype[np.float32]]
+_f32_2d: np.ndarray[tuple[int, int], np.dtype[np.float32]]
+_f32_nd: npt.NDArray[np.float32]
+_c64_0d: np.complex64
+_c64_1d: np.ndarray[tuple[int], np.dtype[np.complex64]]
+_c64_2d: np.ndarray[tuple[int, int], np.dtype[np.complex64]]
+_c64_nd: npt.NDArray[np.complex64]
+_obj_1d: np.ndarray[tuple[int], np.dtype[np.object_]]
+_obj_2d: np.ndarray[tuple[int, int], np.dtype[np.object_]]
+_obj_nd: npt.NDArray[np.object_]
+
+# _ufunc_11_fco
+
+assert_type(np.sin(_py_i_0d), np.float64)
+assert_type(np.sin(_py_i_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.sin(_py_i_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(np.sin(_py_f_0d), np.float64)
+assert_type(np.sin(_py_f_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.sin(_py_f_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(np.sin(_py_c_0d), np.complex128 | Any)  # `complex` overlaps with `float`, hence the `Any`
+assert_type(np.sin(_py_c_1d), np.ndarray[tuple[int], np.dtype[np.complex128]])
+assert_type(np.sin(_py_c_2d), np.ndarray[tuple[int, int], np.dtype[np.complex128]])
+
+assert_type(np.sin(_i16_0d), np.float64)
+assert_type(np.sin(_i16_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.sin(_i16_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(np.sin(_i16_nd), npt.NDArray[np.float64])
+assert_type(np.sin(_f32_0d), np.float32)
+assert_type(np.sin(_f32_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.sin(_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.sin(_f32_nd), npt.NDArray[np.float32])
+assert_type(np.sin(_c64_0d), np.complex64)
+assert_type(np.sin(_c64_1d), np.ndarray[tuple[int], np.dtype[np.complex64]])
+assert_type(np.sin(_c64_2d), np.ndarray[tuple[int, int], np.dtype[np.complex64]])
+assert_type(np.sin(_c64_nd), npt.NDArray[np.complex64])
+assert_type(np.sin(_obj_1d), np.ndarray[tuple[int], np.dtype[np.object_]])
+assert_type(np.sin(_obj_2d), np.ndarray[tuple[int, int], np.dtype[np.object_]])
+assert_type(np.sin(_obj_nd), npt.NDArray[np.object_])
+
+assert_type(np.sin(_py_i_0d, dtype=np.float32), np.float32)
+assert_type(np.sin(_py_i_1d, dtype=np.float32), npt.NDArray[np.float32])
+assert_type(np.sin(_i16_2d, dtype=np.float32), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+
+assert_type(np.sin(_py_i_0d, dtype="f4"), Any)
+assert_type(np.sin(_py_i_1d, dtype="f4"), np.ndarray)
+assert_type(np.sin(_i16_2d, dtype="f4"), np.ndarray[tuple[int, int]])
+
+assert_type(np.sin(_py_i_2d, out=_c64_2d), np.ndarray[tuple[int, int], np.dtype[np.complex64]])
