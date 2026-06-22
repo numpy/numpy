@@ -4350,6 +4350,97 @@ normalize_axis_index(PyObject *NPY_UNUSED(self),
 }
 
 
+static int
+resolve_part_view_descr(
+        PyBoundArrayMethodObject *meth, PyArray_Descr *descr,
+        PyArray_Descr **part_descr, npy_intp *view_offset)
+{
+    PyArray_Descr *descrs[2] = {descr, NULL};
+    PyArray_Descr *loop_descrs[2] = {NULL, NULL};
+    int res = meth->method->resolve_descriptors(
+            meth->method, meth->dtypes, descrs, loop_descrs, view_offset);
+    if (res < 0) {
+        return -1;
+    }
+
+    Py_DECREF(loop_descrs[0]);
+    *part_descr = loop_descrs[1];
+    return 0;
+}
+
+
+/*
+ * Resolve the descriptor for a dtype's `.real` or `.imag` method and
+ * indicate whether the result is a view (1), not a view (0), or errored (-1).
+ */
+static int
+resolve_view_part_descr(
+        PyBoundArrayMethodObject *meth, PyArray_Descr *descr,
+        PyArray_Descr **part_descr)
+{
+    if (meth == NULL) {
+        return 0;
+    }
+    npy_intp view_offset = NPY_MIN_INTP;
+    if (resolve_part_view_descr(meth, descr, part_descr, &view_offset) < 0) {
+        return -1;
+    }
+    return view_offset != NPY_MIN_INTP;
+}
+
+
+/*
+ * Resolve the real counterpart dtype for dtypes that expose compatible
+ * `.real`/`.imag` views. If not available, returns the input dtype unchanged
+ * (i.e. assume already a real dtype).
+ */
+static PyObject *
+_finfo_get_realdtype(PyObject *NPY_UNUSED(self), PyObject *descr_obj)
+{
+    if (!PyArray_DescrCheck(descr_obj)) {
+        PyErr_SetString(PyExc_TypeError, "Argument must be a dtype");
+        return NULL;
+    }
+    PyArray_Descr *descr = (PyArray_Descr *)descr_obj;
+    PyArray_Descr *real_descr = NULL;
+    PyArray_Descr *imag_descr = NULL;
+    PyArray_Descr *ret = NULL;
+
+    int real_is_view = resolve_view_part_descr(
+            NPY_DT_SLOTS(NPY_DTYPE(descr))->real_meth, descr, &real_descr);
+    if (real_is_view < 0) {
+        goto finish;
+    }
+    if (!real_is_view) {
+        ret = descr;
+        goto finish;
+    }
+
+    int imag_is_view = resolve_view_part_descr(
+            NPY_DT_SLOTS(NPY_DTYPE(descr))->imag_meth, descr, &imag_descr);
+    if (imag_is_view < 0) {
+        goto finish;
+    }
+    if (!imag_is_view) {
+        ret = descr;
+        goto finish;
+    }
+
+    if (PyArray_EquivTypes(real_descr, imag_descr)) {
+        ret = real_descr;
+    }
+    else {
+        ret = descr;
+    }
+
+  finish:
+    Py_XINCREF(ret);
+    Py_XDECREF(real_descr);
+    Py_XDECREF(imag_descr);
+    return (PyObject *)ret;
+}
+
+
 static PyObject *
 _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
 {
@@ -4416,8 +4507,9 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
                 goto fail;
             }
             if (res == 0) {
-                buffer_data += elsize;  // Move to next element
-                continue;
+                PyErr_Format(PyExc_ValueError,
+                    "data type %R not compatible with finfo", descr);
+                goto fail;
             }
             // Return as 0-d array item to preserve numpy scalar type
             value_obj = PyArray_ToScalar(buffer_data, buffer_array);
@@ -4430,7 +4522,9 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
                 goto fail;
             }
             if (res == 0) {
-                continue;
+                PyErr_Format(PyExc_ValueError,
+                    "data type %R not compatible with finfo", descr);
+                goto fail;
             }
             value_obj = PyLong_FromSsize_t(int_value);
         }
@@ -4702,6 +4796,8 @@ static struct PyMethodDef array_module_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"_populate_finfo_constants", (PyCFunction)_populate_finfo_constants,
         METH_VARARGS, NULL},
+    {"_finfo_get_realdtype", (PyCFunction)_finfo_get_realdtype,
+        METH_O, NULL},
     /* from umath */
     {"frompyfunc",
         (PyCFunction) ufunc_frompyfunc,

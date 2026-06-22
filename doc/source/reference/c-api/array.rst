@@ -3732,6 +3732,11 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
    Returns 1 on success, 0 if the constant is not available,
    or -1 with an error set.
 
+   Implementing all ``finfo`` constants allows the DType to be used together
+   with `numpy.finfo`. Complex dtypes can support ``finfo`` by implementing the
+   ``imag`` and ``real`` slots (see  :c:func:`PyUFunc_AddLoopFromSpec`) when
+   the corresponding real DType implements it.
+
    **Constant IDs**:
 
     The following constant IDs are defined for retrieving dtype-specific values:
