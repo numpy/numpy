@@ -2164,8 +2164,27 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     PyArray_ArgBinSearchFunc *argbinsearch = NULL;
     NPY_BEGIN_THREADS_DEF;
 
-    /* Find common type */
-    dtype = PyArray_DescrFromObject((PyObject *)op2, PyArray_DESCR(op1));
+    /* Discover op2's natural dtype, then promote.  Reject the specific
+     * string-vs-non-string mixture that would otherwise silently promote
+     * to a string dtype and return wrong indices (gh-24032). */
+    PyArray_Descr *dtype_a = PyArray_DESCR(op1);
+    PyArray_Descr *dtype_v = NULL;
+    if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &dtype_v) < 0) {
+        return NULL;
+    }
+    if (dtype_v == NULL) {
+        dtype_v = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+    }
+    if (PyTypeNum_ISSTRING(dtype_a->type_num)
+            != PyTypeNum_ISSTRING(dtype_v->type_num)) {
+        PyErr_Format(PyExc_TypeError,
+                "Incompatible types for searching: a (%S) and v (%S)",
+                dtype_a, dtype_v);
+        Py_DECREF(dtype_v);
+        return NULL;
+    }
+    dtype = PyArray_PromoteTypes(dtype_a, dtype_v);
+    Py_DECREF(dtype_v);
     if (dtype == NULL) {
         return NULL;
     }
