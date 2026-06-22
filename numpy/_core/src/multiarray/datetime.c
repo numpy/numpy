@@ -174,13 +174,9 @@ days_to_yearsdays(npy_int64 *days_)
 
     if (*days_ < NPY_MIN_INT64 + days_offset) {
         /* Extract 400-year cycles first to reduce magnitude */
-        days = *days_;
+        days = *days_ + (days_per_400years - days_offset);
         year = 400 * extract_unit_64(&days, days_per_400years);
-        days -= days_offset;
-        if (days < 0) {
-            days += days_per_400years;
-            year -= 400;
-        }
+        year -= 400;
     }
     else {
         days = (*days_) - days_offset;

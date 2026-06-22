@@ -1268,18 +1268,12 @@ class TestDateTime:
     def test_datetime64_item_int64_min_edge_case(self):
         info = np.iinfo(np.int64)
 
-        # Test INT64_MIN + 1
-        dt64 = np.datetime64(info.min + 1, "D")
-        result = dt64.item()
-        # For dates outside Python's datetime range (year 1-9999),
-        # NumPy returns the raw integer value
-        assert isinstance(result, (int, datetime.date))
-
-        # Test a few more extreme negative values
         for offset in [1, 2, 100, 1000, 10000]:
             dt64 = np.datetime64(info.min + offset, "D")
             result = dt64.item()
-            assert isinstance(result, (int, datetime.date))
+            # expected integer value
+            assert result == info.min + offset
+            assert isinstance(result, int)
 
     def test_pyobject_roundtrip(self):
         # All datetime types should be able to roundtrip through object
