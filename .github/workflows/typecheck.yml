@@ -76,19 +76,14 @@ jobs:
         -r requirements/build_requirements.txt
         -r requirements/typing_requirements.txt
         orjson
-        basedpyright
     - name: Build
       run: |
         spin build -j2 -- -Dallow-noblas=true -Ddisable-optimization=true --vsenv
     - name: Run Mypy
       run: |
         spin mypy
-    - name: Check basedpyright's type completeness is at least 100%
-      run: >-
-        spin run python tools/pyright_completeness.py
-        --verifytypes numpy
-        --ignoreexternal
-        --exclude-like '*.tests.*' '*.conftest.*'
+    - name: Pyrefly type coverage is 100%
+      run: pyrefly coverage check --public-only
 
   pyrefly:
     runs-on: ubuntu-latest
