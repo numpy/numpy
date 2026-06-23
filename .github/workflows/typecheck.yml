@@ -83,12 +83,7 @@ jobs:
       run: |
         spin mypy
     - name: Pyrefly type coverage is 100%
-      run: >-
-        pyrefly coverage check
-        --public-only
-        --project-excludes='numpy/**/tests/**'
-        --project-excludes='numpy/conftest.py'
-        numpy
+      run: pyrefly coverage check --public-only
 
   pyrefly:
     runs-on: ubuntu-latest
