@@ -28,25 +28,12 @@ if [[ "$INSTALL_OPENBLAS" = "true" ]] ; then
     fi
 
     if [[ $OPENBLAS == "android" ]]; then
-        openblas_version=0.2.20
         pip install \
             --target $PKG_CONFIG_PATH \
-            --extra-index-url https://chaquo.com/pypi-13.1/ \
-            chaquopy-openblas==$openblas_version
+            --index-url https://chaquo.com/pypi-upstream/ \
+            chaquopy-openblas==0.3.33
         mv $PKG_CONFIG_PATH/chaquopy/* $PKG_CONFIG_PATH
         rmdir $PKG_CONFIG_PATH/chaquopy
-
-        # There is a pkgconfig file, but it's not usable because it doesn't use the
-        # `prefix` variable, so overwrite it.
-        cat <<EOF > $PKG_CONFIG_PATH/lib/pkgconfig/openblas.pc
-prefix=/usr
-Name: openblas
-Description: OpenBLAS
-Version: ${openblas_version}
-Cflags: -I\${prefix}/include
-Libs: -L\${prefix}/lib -lopenblas
-EOF
-
     else
         # The PKG_CONFIG_PATH environment variable will be pointed to this path in
         # pyproject.toml and .github/workflows/wheels.yml. Note that
