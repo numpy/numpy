@@ -3779,6 +3779,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     int errval = PyUFunc_CheckOverride(ufunc, _reduce_type[operation],
             full_args.in, full_args.out, wheremask_obj, args, len_args, kwnames, &override);
     if (errval) {
+        Py_XDECREF(full_args.in);
+        Py_XDECREF(full_args.out);
         return NULL;
     }
     else if (override) {
