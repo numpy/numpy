@@ -13,11 +13,11 @@ import numpy as np
 from . import util
 
 
+@pytest.mark.slow
 class TestF77Callback(util.F2PyTest):
     sources = [util.getpath("tests", "src", "callback", "foo.f")]
 
     @pytest.mark.parametrize("name", ["t", "t2"])
-    @pytest.mark.slow
     def test_all(self, name):
         self.check_function(name)
 
@@ -194,6 +194,7 @@ class TestF77Callback(util.F2PyTest):
         assert r == 3
 
 
+@pytest.mark.slow
 class TestF77CallbackPythonTLS(TestF77Callback):
     """
     Callback tests using Python thread-local storage instead of
@@ -203,10 +204,10 @@ class TestF77CallbackPythonTLS(TestF77Callback):
     options = ["-DF2PY_USE_PYTHON_TLS"]
 
 
+@pytest.mark.slow
 class TestF90Callback(util.F2PyTest):
     sources = [util.getpath("tests", "src", "callback", "gh17797.f90")]
 
-    @pytest.mark.slow
     def test_gh17797(self):
         def incr(x):
             return x + 123
@@ -216,6 +217,7 @@ class TestF90Callback(util.F2PyTest):
         assert r == 123 + 1 + 2 + 3
 
 
+@pytest.mark.slow
 class TestGH18335(util.F2PyTest):
     """The reproduction of the reported issue requires specific input that
     extensions may break the issue conditions, so the reproducer is
@@ -224,7 +226,6 @@ class TestGH18335(util.F2PyTest):
     """
     sources = [util.getpath("tests", "src", "callback", "gh18335.f90")]
 
-    @pytest.mark.slow
     def test_gh18335(self):
         def foo(x):
             x[0] += 1
@@ -233,6 +234,7 @@ class TestGH18335(util.F2PyTest):
         assert r == 123 + 1
 
 
+@pytest.mark.slow
 class TestGH25211(util.F2PyTest):
     sources = [util.getpath("tests", "src", "callback", "gh25211.f"),
                util.getpath("tests", "src", "callback", "gh25211.pyf")]

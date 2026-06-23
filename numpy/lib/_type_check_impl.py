@@ -698,7 +698,14 @@ def common_type(*arrays):
     is_complex = False
     precision = 0
     for a in arrays:
-        t = a.dtype.type
+        try:
+            t = a.dtype.type
+        except AttributeError:
+            raise TypeError(
+                f"common_type takes array inputs, not '{a}'. "
+                "To find a common type for dtypes or scalar types use "
+                "np.result_type or np.promote_types instead."
+            ) from None
         if iscomplexobj(a):
             is_complex = True
         if issubclass(t, _nx.integer):

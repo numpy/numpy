@@ -207,7 +207,7 @@ def _reshape_dispatcher(a, /, shape, order=None, *, copy=None):
 @array_function_dispatch(_reshape_dispatcher)
 def reshape(a, /, shape, order='C', *, copy=None):
     """
-    Gives a new shape to an array without changing its data.
+    Returns a reshaped ndarray without changing data.
 
     Parameters
     ----------
@@ -466,6 +466,8 @@ def repeat(a, repeats, axis=None):
     >>> import numpy as np
     >>> np.repeat(3, 4)
     array([3, 3, 3, 3])
+    >>> np.repeat([4, 5, 6], [1, 2, 3])
+    array([4, 5, 5, 6, 6, 6])
     >>> x = np.array([[1,2],[3,4]])
     >>> np.repeat(x, 2)
     array([1, 1, 2, 2, 3, 3, 4, 4])
@@ -725,46 +727,58 @@ def matrix_transpose(x, /):
     return swapaxes(x, -1, -2)
 
 
-def _partition_dispatcher(a, kth, axis=None, kind=None, order=None):
+def _partition_dispatcher(a, kth, axis=None, kind=None, order=None, descending=None):
     return (a,)
 
 
 @array_function_dispatch(_partition_dispatcher)
-def partition(a, kth, axis=-1, kind='introselect', order=None):
+def partition(a, kth, axis=-1, kind=np._NoValue, order=None, descending=np._NoValue):
     """
     Return a partitioned copy of an array.
 
     Creates a copy of the array and partially sorts it in such a way that
-    the value of the element in k-th position is in the position it would be
-    in a sorted array. In the output array, all elements smaller than the k-th
-    element are located to the left of this element and all equal or greater
-    are located to its right. The ordering of the elements in the two
-    partitions on the either side of the k-th element in the output array is
-    undefined.
+    the value of the element in the k-th position is in the position it would be
+    in a sorted array. In the output array, all elements that would be to the left
+    of the k-th element in a sorted array are located to the left of this element and
+    all that would be to the right are located to its right. The ordering of the
+    elements in the two partitions on the either side of the k-th element in the
+    output array is undefined.
 
     Parameters
     ----------
     a : array_like
         Array to be sorted.
     kth : int or sequence of ints
-        Element index to partition by. The k-th value of the element
-        will be in its final sorted position and all smaller elements
-        will be moved before it and all equal or greater elements behind
-        it. The order of all elements in the partitions is undefined. If
+        Element index to partition by. In the returned array, the k-th
+        value of the array will be in the position it would be in a
+        sorted array, all elements that are less than this element (or
+        greater if `descending` is True) will be moved before it, and
+        all elements that are greater than or equal to this element
+        (or less than or equal if `descending` is True) will be moved after it.
+        The order of all elements within each partition is undefined. If
         provided with a sequence of k-th it will partition all elements
-        indexed by k-th  of them into their sorted position at once.
+        indexed by k-th of them into their sorted position at once.
 
     axis : int or None, optional
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
     kind : {'introselect'}, optional
-        Selection algorithm. Default is 'introselect'.
+        NumPy currently offers only one selection algorithm, 'introselect',
+        and this parameter provides no additional functionality. Default
+        is ``None``.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument
         specifies which fields to compare first, second, etc.  A single
         field can be specified as a string.  Not all fields need be
         specified, but unspecified fields will still be used, in the
         order in which they come up in the dtype, to break ties.
+    descending : bool, optional
+        Sort order. If ``True``, the array will be partitioned in
+        descending order. If ``False`` or ``None``, the array will be
+        partitioned in ascending order. Values that are NaN are partitioned
+        towards the end of the array regardless of order. Default: ``None``.
+
+        .. versionadded:: 2.6.0
 
     Returns
     -------
@@ -801,7 +815,8 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     the real parts except when they are equal, in which case the order
     is determined by the imaginary parts.
 
-    The sort order of ``np.nan`` is bigger than ``np.inf``.
+    Regardless of sort order, `np.nan` is partitioned to the right of
+    any other value.
 
     Examples
     --------
@@ -837,16 +852,24 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
         axis = -1
     else:
         a = asanyarray(a).copy(order="K")
-    a.partition(kth, axis=axis, kind=kind, order=order)
+
+    # Sanitize for backward compatibility
+    kwargs = {}
+    if descending is not np._NoValue:
+        kwargs['descending'] = descending
+    if kind is not np._NoValue:
+        kwargs['kind'] = kind
+
+    a.partition(kth, axis=axis, order=order, **kwargs)
     return a
 
 
-def _argpartition_dispatcher(a, kth, axis=None, kind=None, order=None):
+def _argpartition_dispatcher(a, kth, axis=None, kind=None, order=None, descending=None):
     return (a,)
 
 
 @array_function_dispatch(_argpartition_dispatcher)
-def argpartition(a, kth, axis=-1, kind='introselect', order=None):
+def argpartition(a, kth, axis=-1, kind=np._NoValue, order=None, descending=np._NoValue):
     """
     Perform an indirect partition along the given axis using the
     algorithm specified by the `kind` keyword. It returns an array of
@@ -858,24 +881,36 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     a : array_like
         Array to sort.
     kth : int or sequence of ints
-        Element index to partition by. The k-th element will be in its
-        final sorted position and all smaller elements will be moved
-        before it and all larger elements behind it. The order of all
-        elements in the partitions is undefined. If provided with a
-        sequence of k-th it will partition all of them into their sorted
-        position at once.
+        Element index to partition by. In the returned array, the k-th
+        value of the array will be in the position it would be in a
+        sorted array, all elements that are less than this element (or
+        greater if `descending` is True) will be moved before it, and
+        all elements that are greater than or equal to this element
+        (or less than or equal if `descending` is True) will be moved after it.
+        The order of all elements within each partition is undefined. If
+        provided with a sequence of k-th it will partition all elements
+        indexed by k-th of them into their sorted position at once.
 
     axis : int or None, optional
         Axis along which to sort. The default is -1 (the last axis). If
         None, the flattened array is used.
     kind : {'introselect'}, optional
-        Selection algorithm. Default is 'introselect'
+        NumPy currently offers only one selection algorithm, 'introselect',
+        and this parameter provides no additional functionality. Default
+        is ``None``.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument
         specifies which fields to compare first, second, etc. A single
         field can be specified as a string, and not all fields need be
         specified, but unspecified fields will still be used, in the
         order in which they come up in the dtype, to break ties.
+    descending : bool, optional
+        Sort order. If ``True``, the array will be partitioned in
+        descending order. If ``False`` or ``None``, the array will be
+        partitioned in ascending order. Values that are NaN are partitioned
+        towards the end of the array regardless of order. Default: ``None``.
+
+        .. versionadded:: 2.6.0
 
     Returns
     -------
@@ -929,15 +964,24 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
            [1, 1, 3]])
 
     """
-    return _wrapfunc(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
+    # Sanitize for backward compatibility
+    kwargs = {}
+    if descending is not np._NoValue:
+        kwargs['descending'] = descending
+    if kind is not np._NoValue:
+        kwargs['kind'] = kind
+
+    return _wrapfunc(a, "argpartition", kth, axis=axis, order=order, **kwargs)
 
 
-def _sort_dispatcher(a, axis=None, kind=None, order=None, *, stable=None):
+def _sort_dispatcher(
+    a, axis=None, kind=None, order=None, *, stable=None, descending=None
+):
     return (a,)
 
 
 @array_function_dispatch(_sort_dispatcher)
-def sort(a, axis=-1, kind=None, order=None, *, stable=None):
+def sort(a, axis=-1, kind=None, order=None, *, stable=None, descending=np._NoValue):
     """
     Return a sorted copy of an array.
 
@@ -949,10 +993,10 @@ def sort(a, axis=-1, kind=None, order=None, *, stable=None):
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
     kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
-        Sorting algorithm. The default is 'quicksort'. Note that both 'stable'
-        and 'mergesort' use timsort or radix sort under the covers and,
-        in general, the actual implementation will vary with data type.
-        The 'mergesort' option is retained for backwards compatibility.
+        Please use the `stable` parameter instead. This argument is retained
+        for backwards compatibility and provides no additional control.
+        'quicksort' and 'heapsort' are equivalent to ``stable=False``, while
+        'mergesort' and 'stable' are equivalent to ``stable=True``.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
         which fields to compare first, second, etc.  A single field can
@@ -966,6 +1010,13 @@ def sort(a, axis=-1, kind=None, order=None, *, stable=None):
         this option selects ``kind='stable'``. Default: ``None``.
 
         .. versionadded:: 2.0.0
+    descending : bool, optional
+        Sort order. If ``True``, the returned array will be sorted in
+        descending order. If ``False`` or ``None``, the returned array will
+        be sorted in ascending order. Values that are NaN are sorted to the
+        end for both orders. Default: ``None``.
+
+        .. versionadded:: 2.5.0
 
     Returns
     -------
@@ -982,24 +1033,19 @@ def sort(a, axis=-1, kind=None, order=None, *, stable=None):
 
     Notes
     -----
-    The various sorting algorithms are characterized by their average speed,
-    worst case performance, work space size, and whether they are stable. A
-    stable sort keeps items with the same key in the same relative
-    order. The four algorithms implemented in NumPy have the following
-    properties:
+    NumPy uses different sorting algorithms depending on whether the sort is
+    stable and which data types are used.  These are characterized by their
+    worst case performance, work space size, and whether they are stable.
+    A stable sort keeps items with the same key in the same relative
+    order.  NumPy chooses between three algorithms:
 
-    =========== ======= ============= ============ ========
-       kind      speed   worst case    work space   stable
-    =========== ======= ============= ============ ========
-    'quicksort'    1     O(n^2)            0          no
-    'heapsort'     3     O(n*log(n))       0          no
-    'mergesort'    2     O(n*log(n))      ~n/2        yes
-    'timsort'      2     O(n*log(n))      ~n/2        yes
-    =========== ======= ============= ============ ========
-
-    .. note:: The datatype determines which of 'mergesort' or 'timsort'
-       is actually used, even if 'mergesort' is specified. User selection
-       at a finer scale is not currently available.
+    ======== ============ ============= ============ ================================
+     stable   algorithm    worst case    work space              note
+    ======== ============ ============= ============ ================================
+      no      Introsort    O(n*log(n))        0
+      yes     Timsort      O(n*log(n))      ~n/2
+      yes     Radix sort   O(n)               n       bools and narrow integers [1]_
+    ======== ============ ============= ============ ================================
 
     For performance, ``sort`` makes a temporary copy if needed to make the data
     `contiguous <https://numpy.org/doc/stable/glossary.html#term-contiguous>`_
@@ -1023,32 +1069,20 @@ def sort(a, axis=-1, kind=None, order=None, *, stable=None):
     placements are sorted according to the non-nan part if it exists.
     Non-nan values are sorted as before.
 
-    quicksort has been changed to:
-    `introsort <https://en.wikipedia.org/wiki/Introsort>`_.
-    When sorting does not make enough progress it switches to
-    `heapsort <https://en.wikipedia.org/wiki/Heapsort>`_.
-    This implementation makes quicksort O(n*log(n)) in the worst case.
+    NumPy uses `introsort <https://en.wikipedia.org/wiki/Introsort>`_
+    by default for unstable sorting.
 
-    'stable' automatically chooses the best stable sorting algorithm
-    for the data type being sorted.
-    It, along with 'mergesort' is currently mapped to
-    `timsort <https://en.wikipedia.org/wiki/Timsort>`_
+    For stable sorting, NumPy automatically chooses the best stable sorting
+    algorithm for the data type being sorted.
+    It is currently mapped to `timsort <https://en.wikipedia.org/wiki/Timsort>`_
     or `radix sort <https://en.wikipedia.org/wiki/Radix_sort>`_
-    depending on the data type.
-    API forward compatibility currently limits the
-    ability to select the implementation and it is hardwired for the different
-    data types.
+    for bools and integer types with a width of 16 bits or less.
 
-    Timsort is added for better performance on already or nearly
-    sorted data. On random data timsort is almost identical to
-    mergesort. It is now used for stable sort while quicksort is still the
-    default sort if none is chosen. For timsort details, refer to
-    `CPython listsort.txt
-    <https://github.com/python/cpython/blob/3.7/Objects/listsort.txt>`_
-    'mergesort' and 'stable' are mapped to radix sort for integer data types.
-    Radix sort is an O(n) sort instead of O(n log n).
+    For numerical sorts, NaT and NaN always sort to the end of the array for
+    both ascending and descending sort order.
 
-    NaT now sorts to the end of arrays for consistency with NaN.
+    .. [1] Radix sort is used for stable sorting of bools and narrow integer
+       types (up to 16 bits). For these it performs better than Timsort.
 
     Examples
     --------
@@ -1089,16 +1123,22 @@ def sort(a, axis=-1, kind=None, order=None, *, stable=None):
         axis = -1
     else:
         a = asanyarray(a).copy(order="K")
-    a.sort(axis=axis, kind=kind, order=order, stable=stable)
+    # Sanitize for backward-compatibility
+    if descending is not np._NoValue:
+        a.sort(axis=axis, kind=kind, order=order, stable=stable, descending=descending)
+    else:
+        a.sort(axis=axis, kind=kind, order=order, stable=stable)
     return a
 
 
-def _argsort_dispatcher(a, axis=None, kind=None, order=None, *, stable=None):
+def _argsort_dispatcher(
+    a, axis=None, kind=None, order=None, *, stable=None, descending=None
+):
     return (a,)
 
 
 @array_function_dispatch(_argsort_dispatcher)
-def argsort(a, axis=-1, kind=None, order=None, *, stable=None):
+def argsort(a, axis=-1, kind=None, order=None, *, stable=None, descending=np._NoValue):
     """
     Returns the indices that would sort an array.
 
@@ -1114,10 +1154,10 @@ def argsort(a, axis=-1, kind=None, order=None, *, stable=None):
         Axis along which to sort.  The default is -1 (the last axis). If None,
         the flattened array is used.
     kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
-        Sorting algorithm. The default is 'quicksort'. Note that both 'stable'
-        and 'mergesort' use timsort under the covers and, in general, the
-        actual implementation will vary with data type. The 'mergesort' option
-        is retained for backwards compatibility.
+        Please use the `stable` parameter instead. This argument is retained
+        for backwards compatibility and provides no additional control.
+        'quicksort' and 'heapsort' are equivalent to ``stable=False``, while
+        'mergesort' and 'stable' are equivalent to ``stable=True``.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
         which fields to compare first, second, etc.  A single field can
@@ -1131,6 +1171,13 @@ def argsort(a, axis=-1, kind=None, order=None, *, stable=None):
         this option selects ``kind='stable'``. Default: ``None``.
 
         .. versionadded:: 2.0.0
+    descending : bool, optional
+        Sort order. If ``True``, the returned array will be sorted in
+        descending order. If ``False`` or ``None``, the returned array will
+        be sorted in ascending order. Values that are NaN are sorted to the
+        end for both orders. Default: ``None``.
+
+        .. versionadded:: 2.5.0
 
     Returns
     -------
@@ -1210,8 +1257,24 @@ def argsort(a, axis=-1, kind=None, order=None, *, stable=None):
     array([0, 1])
 
     """
+    # Sanitize for backward-compatibility
+    if descending is not np._NoValue:
+        return _wrapfunc(
+            a,
+            "argsort",
+            axis=axis,
+            kind=kind,
+            order=order,
+            stable=stable,
+            descending=descending,
+        )
     return _wrapfunc(
-        a, 'argsort', axis=axis, kind=kind, order=order, stable=stable
+        a,
+        "argsort",
+        axis=axis,
+        kind=kind,
+        order=order,
+        stable=stable,
     )
 
 def _argmax_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue):

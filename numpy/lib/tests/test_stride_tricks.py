@@ -1,7 +1,7 @@
 import pytest
 
 import numpy as np
-from numpy._core._rational_tests import rational
+from numpy._core._rational_tests import rational, rational2
 from numpy.lib._stride_tricks_impl import (
     _broadcast_shape,
     as_strided,
@@ -400,6 +400,13 @@ def test_as_strided():
     # Custom dtypes should not be lost (gh-9161)
     r = [rational(i) for i in range(4)]
     a = np.array(r, dtype=rational)
+    a_view = as_strided(a, shape=(3, 4), strides=(0, a.itemsize))
+    assert_equal(a.dtype, a_view.dtype)
+    assert_array_equal([r] * 3, a_view)
+
+    # Also exercise the new-DType-API rational variant.
+    r = [rational2(i) for i in range(4)]
+    a = np.array(r, dtype=rational2)
     a_view = as_strided(a, shape=(3, 4), strides=(0, a.itemsize))
     assert_equal(a.dtype, a_view.dtype)
     assert_array_equal([r] * 3, a_view)

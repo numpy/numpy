@@ -16,6 +16,7 @@
 #include "ctors.h"
 #include "common.h"
 #include "dtypemeta.h"
+#include "dtype_transfer.h"
 #include "simd/simd.h"
 
 #include <string.h>
@@ -393,18 +394,58 @@ arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     j = 0;
 
     copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(array))->copyswap;
-    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(array));
-    for (i = 0; i < ni; i++) {
-        if (mask_data[i]) {
-            if (j >= nv) {
-                j = 0;
-            }
+    if (copyswap == NULL) {
+        NPY_cast_info cast_info;
+        NPY_ARRAYMETHOD_FLAGS flags;
+        const npy_intp one = 1;
+        const npy_intp elsize = chunk;
+        const npy_intp strides[2] = {elsize, elsize};
 
-            copyswap(dest + i*chunk, src + j*chunk, 0, array);
-            j++;
+        NPY_cast_info_init(&cast_info);
+        if (PyArray_GetDTypeTransferFunction(
+                PyArray_ISALIGNED(values) && PyArray_ISALIGNED(array),
+                strides[0], strides[1],
+                PyArray_DESCR(values), PyArray_DESCR(array), 0,
+                &cast_info, &flags) < 0) {
+            goto fail;
         }
+        if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
+            NPY_BEGIN_THREADS;
+        }
+        for (i = 0; i < ni; i++) {
+            if (mask_data[i]) {
+                if (j >= nv) {
+                    j = 0;
+                }
+
+                char *data[2] = {src + j*chunk, dest + i*chunk};
+                if (cast_info.func(
+                        &cast_info.context, data, &one, strides,
+                        cast_info.auxdata) < 0) {
+                    NPY_END_THREADS;
+                    NPY_cast_info_xfree(&cast_info);
+                    goto fail;
+                }
+                j++;
+            }
+        }
+        NPY_END_THREADS;
+        NPY_cast_info_xfree(&cast_info);
     }
-    NPY_END_THREADS;
+    else {
+        NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(array));
+        for (i = 0; i < ni; i++) {
+            if (mask_data[i]) {
+                if (j >= nv) {
+                    j = 0;
+                }
+
+                copyswap(dest + i*chunk, src + j*chunk, 0, array);
+                j++;
+            }
+        }
+        NPY_END_THREADS;
+    }
 
     Py_XDECREF(values);
     Py_XDECREF(mask);
@@ -414,7 +455,7 @@ arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
  fail:
     Py_XDECREF(mask);
-    PyArray_ResolveWritebackIfCopy(array);
+    PyArray_DiscardWritebackIfCopy(array);
     Py_XDECREF(array);
     Py_XDECREF(values);
     return NULL;
@@ -573,7 +614,8 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
         goto fail;
     }
     lenxp = PyArray_SIZE(axp);
-    if (lenxp == 0) {
+    lenx = PyArray_SIZE(ax);
+    if (lenxp == 0 && lenx != 0) {
         PyErr_SetString(PyExc_ValueError,
                 "array of sample points is empty");
         goto fail;
@@ -589,7 +631,9 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
     if (af == NULL) {
         goto fail;
     }
-    lenx = PyArray_SIZE(ax);
+    if (lenx == 0) {
+        goto finish;
+    }
 
     dy = (const npy_double *)PyArray_DATA(afp);
     dx = (const npy_double *)PyArray_DATA(axp);
@@ -690,6 +734,8 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
     }
 
     PyArray_free(slopes);
+
+finish:
     Py_DECREF(afp);
     Py_DECREF(axp);
     Py_DECREF(ax);
@@ -746,7 +792,8 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
         goto fail;
     }
     lenxp = PyArray_SIZE(axp);
-    if (lenxp == 0) {
+    lenx = PyArray_SIZE(ax);
+    if (lenxp == 0 && lenx != 0) {
         PyErr_SetString(PyExc_ValueError,
                 "array of sample points is empty");
         goto fail;
@@ -757,7 +804,6 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
         goto fail;
     }
 
-    lenx = PyArray_SIZE(ax);
     dx = (const npy_double *)PyArray_DATA(axp);
     dz = (const npy_double *)PyArray_DATA(ax);
 
@@ -765,6 +811,9 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
                                             PyArray_DIMS(ax), NPY_CDOUBLE);
     if (af == NULL) {
         goto fail;
+    }
+    if (lenx == 0) {
+        goto finish;
     }
 
     dy = (const npy_cdouble *)PyArray_DATA(afp);
@@ -891,6 +940,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
     }
     PyArray_free(slopes);
 
+finish:
     Py_DECREF(afp);
     Py_DECREF(axp);
     Py_DECREF(ax);

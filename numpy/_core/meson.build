@@ -51,8 +51,8 @@ C_ABI_VERSION = '0x02000000'
 # 0x00000013 - 2.2.x
 # 0x00000014 - 2.3.x
 # 0x00000015 - 2.4.x
-# 0x00000015 - 2.5.x
-C_API_VERSION = '0x00000015'
+# 0x00000016 - 2.5.x
+C_API_VERSION = '0x00000016'
 
 # Check whether we have a mismatch between the set C API VERSION and the
 # actual C API VERSION. Will raise a MismatchCAPIError if so.
@@ -179,7 +179,7 @@ if not cc.has_header('complex.h')
   error('"complex.h" header not found')
 endif
 
-if cc.get_argument_syntax() == 'msvc'
+if cc.get_id() == 'msvc' or cc.get_id() == 'clang-cl'
   complex_types_to_check = [
     ['NPY_SIZEOF_COMPLEX_FLOAT', '_Fcomplex'],
     ['NPY_SIZEOF_COMPLEX_DOUBLE', '_Dcomplex'],
@@ -464,6 +464,8 @@ optional_intrinsics = [
   ['__builtin_expect', '5, 0', [], []],
   # Test `long long` for arm+clang 13 (gh-22811, but we use all versions):
   ['__builtin_mul_overflow', '(long long)5, 5, (int*)5', [], []],
+  ['__builtin_add_overflow', '(long long)5, 5, (int*)5', [], []],
+  ['__builtin_sub_overflow', '(long long)5, 5, (int*)5', [], []],
   ['__builtin_prefetch', '(float*)0, 0, 3', [], []],
 ]
 foreach intrin: optional_intrinsics
@@ -692,23 +694,44 @@ endif
 # building, but we can't add it to the sources of that extension (this C file
 # doesn't compile, it's only included in another r file. Hence use the slightly
 # hacky --ignore argument to the next custom_target().
+codegen_files = [
+  'code_generators/__init__.py',
+  'code_generators/genapi.py',
+  'code_generators/generate_numpy_api.py',
+  'code_generators/generate_ufunc_api.py',
+  'code_generators/generate_umath_doc.py',
+  'code_generators/generate_umath.py',
+  'code_generators/numpy_api.py',
+  'code_generators/ufunc_docstrings.py',
+]
+codegen_env = {
+  # Explicitly set PYTHONPATH to avoid depending on the current working directory
+  # at build time, and on unsafe paths that may be prepended to sys.path and can be
+  # disabled by PYTHONSAFEPATH. See:
+  # [1] https://github.com/numpy/numpy/issues/24907
+  # [2] https://docs.python.org/3/library/sys.html#sys.path
+  'PYTHONPATH': meson.current_source_dir(),
+}
+
 src_umath_api_c = custom_target('__umath_generated',
   output : '__umath_generated.c',
-  input : 'code_generators/generate_umath.py',
-  command: [py, '@INPUT@', '-o', '@OUTPUT@'],
+  depend_files: codegen_files,
+  command: [py, '-m', 'code_generators.generate_umath', '-o', '@OUTPUT@'],
+  env: codegen_env,
 )
 
 src_umath_doc_h = custom_target('_umath_doc_generated',
   output : '_umath_doc_generated.h',
-  input : ['code_generators/generate_umath_doc.py',
-           'code_generators/ufunc_docstrings.py'],
-  command: [py, '@INPUT0@', '-o', '@OUTPUT@'],
+  depend_files: codegen_files,
+  command: [py, '-m', 'code_generators.generate_umath_doc', '-o', '@OUTPUT@'],
+  env: codegen_env,
 )
 
 src_numpy_api = custom_target('__multiarray_api',
   output : ['__multiarray_api.c', '__multiarray_api.h'],
-  input : 'code_generators/generate_numpy_api.py',
-  command: [py, '@INPUT@', '-o', '@OUTDIR@', '--ignore', src_umath_api_c],
+  depend_files: codegen_files,
+  command: [py, '-m', 'code_generators.generate_numpy_api', '-o', '@OUTDIR@', '--ignore', src_umath_api_c],
+  env: codegen_env,
   install: true,  # NOTE: setup.py build installs all, but just need .h?
   install_dir: np_dir / '_core/include/numpy',
   install_tag: 'devel'
@@ -716,8 +739,9 @@ src_numpy_api = custom_target('__multiarray_api',
 
 src_ufunc_api = custom_target('__ufunc_api',
   output : ['__ufunc_api.c', '__ufunc_api.h'],
-  input : 'code_generators/generate_ufunc_api.py',
-  command: [py, '@INPUT@', '-o', '@OUTDIR@'],
+  depend_files: codegen_files,
+  command: [py, '-m', 'code_generators.generate_ufunc_api', '-o', '@OUTDIR@'],
+  env: codegen_env,
   install: true,  # NOTE: setup.py build installs all, but just need .h?
   install_dir: np_dir / '_core/include/numpy',
   install_tag: 'devel'
@@ -850,7 +874,6 @@ endforeach
 # --------------------------------------
 multiarray_gen_headers = [
   src_file.process('src/multiarray/arraytypes.h.src'),
-  src_file.process('src/common/npy_sort.h.src'),
 ]
 foreach gen_mtargets : [
   [
@@ -1230,11 +1253,10 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/temp_elide.c',
   'src/multiarray/usertypes.c',
   'src/multiarray/vdot.c',
-  'src/npysort/quicksort.cpp',
-  'src/npysort/mergesort.cpp',
-  'src/npysort/timsort.cpp',
+  'src/npysort/quicksort_generic.cpp',
+  'src/npysort/timsort_generic.cpp',
   'src/npysort/heapsort.cpp',
-  'src/npysort/radixsort.cpp',
+  'src/npysort/npysort_methods.cpp',
   'src/common/npy_partition.h',
   'src/npysort/selection.cpp',
   'src/common/npy_binsearch.h',

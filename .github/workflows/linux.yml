@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         submodules: recursive
         fetch-depth: 0
@@ -69,7 +69,7 @@ jobs:
       matrix:
         version: ["3.12", "3.14t"]
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         submodules: recursive
         fetch-tags: true
@@ -84,7 +84,7 @@ jobs:
     runs-on: ubuntu-24.04
     if: github.event_name != 'push'
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         submodules: recursive
         fetch-tags: true
@@ -119,7 +119,7 @@ jobs:
       matrix:
         version: ["3.13", "3.14", "3.15-dev", "3.15t-dev"]
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         submodules: recursive
         fetch-tags: true
@@ -134,7 +134,7 @@ jobs:
     needs: [smoke_test]
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         submodules: recursive
         fetch-tags: true
@@ -158,6 +158,7 @@ jobs:
     - name: Install as editable
       env:
         PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
+        PYTHONSAFEPATH: 1  # regression check for gh-24907
       run: |
         pip install -e . --no-build-isolation
     - name: Run full test suite
@@ -166,6 +167,7 @@ jobs:
         # TODO: gcov
       env:
         PYTHONOPTIMIZE: 2
+        PYTHONSAFEPATH: 1
 
   armhf_test:
     # Tests NumPy on 32-bit ARM hard-float (armhf) via compatibility mode
@@ -174,7 +176,7 @@ jobs:
     if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-24.04-arm
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         submodules: recursive
         fetch-tags: true
@@ -219,7 +221,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         submodules: recursive
         fetch-tags: true
@@ -258,7 +260,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         submodules: recursive
         fetch-tags: true
@@ -299,13 +301,13 @@ jobs:
     if: github.event_name != 'push'
     steps:
     - name: Checkout NumPy
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
     - name: Checkout array-api-tests
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         repository: data-apis/array-api-tests
         ref: '41379d15d26d67a1e66c840e775d41a8a7fb1516'  # v2026.02.26
@@ -332,12 +334,65 @@ jobs:
         cd ${GITHUB_WORKSPACE}/array-api-tests
         pytest array_api_tests -v -c pytest.ini -n 4 --max-examples=1000 --derandomize --disable-deadline --xfails-file ${GITHUB_WORKSPACE}/tools/ci/array-api-xfails.txt
 
+  ml_dtypes_compat:
+    # Check a downstream dtype-extension project on both the current branch
+    # and also NumPy 2.0.x runtime (but still built with current).
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push'
+    steps:
+    - name: Checkout NumPy
+      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - name: Checkout ml_dtypes
+      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      with:
+        repository: jax-ml/ml_dtypes
+        # Current ml_dtypes main, should be updated occasionally:
+        ref: '9b8b2471a5ec5fd4c223693f677fcc2416847970'  # main as of 2026-05-11
+        submodules: 'true'
+        path: 'ml_dtypes'
+        persist-credentials: false
+    - name: Set up Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: '3.12'
+    - name: Install build and test dependencies from PyPI
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements/build_requirements.txt
+        python -m pip install -r requirements/test_requirements.txt
+        python -m pip install --upgrade scikit-build-core cmake wheel
+    - name: Build and install NumPy
+      run: |
+        python -m pip install . -v -Csetup-args=-Dallow-noblas=true -Csetup-args=-Dcpu-baseline=none -Csetup-args=-Dcpu-dispatch=none
+    - name: Build and install ml_dtypes
+      run: |
+        cd ml_dtypes
+        python -m pip install -e ".[dev]" --no-build-isolation
+    - name: Run ml_dtypes tests with current NumPy
+      run: |
+        python -m pip show numpy
+        cd ml_dtypes
+        python -m pytest -n 2 ml_dtypes/tests
+    - name: Replace NumPy with 2.0.x
+      run: |
+        python -m pip install --force-reinstall "numpy==2.0.*"
+        python -m pip show numpy
+    - name: Run ml_dtypes tests with NumPy 2.0.x
+      run: |
+        cd ml_dtypes
+        python -m pytest -n 2 ml_dtypes/tests
+
   custom_checks:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         submodules: recursive
         fetch-tags: true
@@ -345,7 +400,7 @@ jobs:
     - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: '3.12'
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         repository: numpy/numpy-release
         path: numpy-release
@@ -377,7 +432,6 @@ jobs:
         rm -rf build-install
         ./vendored-meson/meson/meson.py install -C build --destdir ../build-install --tags=runtime,python-runtime,devel
         python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy') --no-tests
-
 
   Linux_Python_312_32bit_full:
     name: i686, cp312, full

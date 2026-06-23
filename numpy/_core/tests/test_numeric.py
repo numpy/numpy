@@ -13,7 +13,7 @@ from hypothesis.extra import numpy as hynp
 import numpy as np
 from numpy import ma
 from numpy._core import sctypes
-from numpy._core._rational_tests import rational
+from numpy._core._rational_tests import rational, rational2
 from numpy._core.numerictypes import obj2sctype
 from numpy.exceptions import AxisError
 from numpy.random import rand, randint, randn
@@ -1298,7 +1298,8 @@ class TestTypes:
 
     @pytest.mark.parametrize("dtype",
             list(np.typecodes["All"]) +
-            ["i,i", "10i", "S3", "S100", "U3", "U100", rational])
+            ["i,i", "10i", "S3", "S100", "U3", "U100",
+             rational, rational2])
     def test_promote_identical_types_metadata(self, dtype):
         # The same type passed in twice to promote types always
         # preserves metadata
@@ -1326,11 +1327,14 @@ class TestTypes:
 
     @pytest.mark.slow
     @pytest.mark.filterwarnings('ignore:Promotion of numbers:FutureWarning')
-    @pytest.mark.parametrize(["dtype1", "dtype2"],
-            itertools.product(
-                list(np.typecodes["All"]) +
-                ["i,i", "S3", "S100", "U3", "U100", rational],
-                repeat=2))
+    @pytest.mark.parametrize(
+        "dtype1",
+        [*np.typecodes["All"], "i,i", "S3", "S100", "U3", "U100", rational, rational2],
+    )
+    @pytest.mark.parametrize(
+        "dtype2",
+        [*np.typecodes["All"], "i,i", "S3", "S100", "U3", "U100", rational, rational2],
+    )
     def test_promote_types_metadata(self, dtype1, dtype2):
         """Metadata handling in promotion does not appear formalized
         right now in NumPy. This test should thus be considered to
@@ -1506,7 +1510,7 @@ class TestTypes:
             np.can_cast(4j, "complex128", casting="unsafe")
 
     @pytest.mark.parametrize("dtype",
-            list("?bhilqBHILQefdgFDG") + [rational])
+            list("?bhilqBHILQefdgFDG") + [rational, rational2])
     def test_can_cast_scalars(self, dtype):
         # Basic test to ensure that scalars are supported in can-cast
         # (does not check behavior exhaustively).
@@ -2216,7 +2220,7 @@ def _test_array_equal_parametrizations():
 
 class TestArrayComparisons:
     @pytest.mark.parametrize(
-        "bx,by,equal_nan,expected", _test_array_equal_parametrizations()
+        "bx,by,equal_nan,expected", list(_test_array_equal_parametrizations())
     )
     def test_array_equal_equal_nan(self, bx, by, equal_nan, expected):
         """
