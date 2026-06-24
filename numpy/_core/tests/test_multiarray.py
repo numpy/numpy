@@ -7682,6 +7682,13 @@ class TestVdot:
         assert_(np.isscalar(res))
         assert_equal(np.vdot(b, b), True)
 
+    def test_vdot_object_empty(self):
+        x = np.empty((0,), dtype=object)
+        assert np.vdot(x, x) == 0
+
+        x2 = np.empty((1, 0), dtype=object)
+        assert_array_equal(np.vdot(x2, x2), np.array([0], dtype=object))
+
     def test_vdot_array_order(self):
         a = np.array([[1, 2], [3, 4]], order='C')
         b = np.array([[1, 2], [3, 4]], order='F')
