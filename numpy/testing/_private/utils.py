@@ -111,6 +111,10 @@ if 'musl' in _v:
 NOGIL_BUILD = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
 IS_64BIT = np.dtype(np.intp).itemsize == 8
 
+LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE = (platform.machine().startswith("ppc")
+                                    and str(np.finfo(np.longdouble).max)
+                                    == "1.79769313486231580793728971405301e+308")
+
 def assert_(val, msg=''):
     """
     Assert that works in release mode.
@@ -176,7 +180,7 @@ elif sys.platform[:5] == 'linux':
         """
         _proc_pid_stat = _proc_pid_stat or f'/proc/{os.getpid()}/stat'
         try:
-            with open(_proc_pid_stat) as f:
+            with open(_proc_pid_stat, encoding='utf-8') as f:
                 l = f.readline().split(' ')
             return int(l[22])
         except Exception:
@@ -205,7 +209,7 @@ if sys.platform[:5] == 'linux':
         if not _load_time:
             _load_time.append(time.time())
         try:
-            with open(_proc_pid_stat) as f:
+            with open(_proc_pid_stat, encoding='utf-8') as f:
                 l = f.readline().split(' ')
             return int(l[13])
         except Exception:
@@ -1483,7 +1487,7 @@ def check_support_sve(__cache=[]):
     import subprocess
     cmd = 'lscpu'
     try:
-        output = subprocess.run(cmd, capture_output=True, text=True)
+        output = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
         result = 'sve' in output.stdout
     except (OSError, subprocess.SubprocessError):
         result = False
@@ -2074,7 +2078,7 @@ def _assert_no_warnings_context(name=None):
         yield
         if len(l) > 0:
             name_str = f' when calling {name}' if name is not None else ''
-            raise AssertionError(f'Got warnings{name_str}: {l}')
+            raise AssertionError(f'Got warnings{name_str}: {[e.message for e in l]}')
 
 
 def assert_no_warnings(*args, **kwargs):
@@ -2478,8 +2482,8 @@ class suppress_warnings:
             raise RuntimeError("cannot enter suppress_warnings twice.")
 
         self._orig_show = warnings.showwarning
-        self._filters = warnings.filters
-        warnings.filters = self._filters[:]
+        self._catch_warnings = warnings.catch_warnings()
+        self._catch_warnings.__enter__()
 
         self._entered = True
         self._tmp_suppressions = []
@@ -2507,11 +2511,11 @@ class suppress_warnings:
 
     def __exit__(self, *exc_info):
         warnings.showwarning = self._orig_show
-        warnings.filters = self._filters
+        self._catch_warnings.__exit__(*exc_info)
         self._clear_registries()
         self._entered = False
         del self._orig_show
-        del self._filters
+        del self._catch_warnings
 
     def _showwarning(self, message, category, filename, lineno,
                      *args, use_warnmsg=None, **kwargs):
@@ -2760,7 +2764,7 @@ def _get_mem_available():
 
     if sys.platform.startswith('linux'):
         info = {}
-        with open('/proc/meminfo') as f:
+        with open('/proc/meminfo', encoding='utf-8') as f:
             for line in f:
                 p = line.split()
                 info[p[0].strip(':').lower()] = int(p[1]) * 1024
@@ -2868,3 +2872,32 @@ def requires_deep_recursion(func):
                         "deep recursion")
         return func(*args, **kwargs)
     return wrapper
+
+
+def run_subprocess(cmd, cwd=None, **kwargs):
+    """Run ``cmd`` in a subprocess, failing the test with its captured output
+    if it exits with a nonzero status.
+
+    Output that a subprocess merely inherits is lost in pytest-xdist workers
+    when a test fails, making CI failures hard to debug.  Routing a
+    build/compile/run step through this helper captures the child's stdout and
+    stderr and folds them into the failure message so they reach the report.
+    Returns the ``subprocess.CompletedProcess`` for callers that want to
+    inspect the output.  Extra keyword arguments are passed to
+    ``subprocess.run``.
+    """
+    import subprocess
+
+    import pytest
+
+    res = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True,
+                         errors="replace", **kwargs)
+    if res.returncode != 0:
+        cmd_str = cmd if isinstance(cmd, str) else " ".join(map(str, cmd))
+        in_dir = f" in {cwd}" if cwd is not None else ""
+        pytest.fail(
+            f"`{cmd_str}` failed (exit {res.returncode}){in_dir}\n"
+            f"----- stdout -----\n{res.stdout}\n"
+            f"----- stderr -----\n{res.stderr}",
+            pytrace=False)
+    return res

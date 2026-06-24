@@ -231,6 +231,7 @@ def get_module(tmp_path):
                                                more_init=more_init)
 
 
+@pytest.mark.slow
 def test_set_policy(get_module):
 
     get_handler_name = np._core.multiarray.get_handler_name

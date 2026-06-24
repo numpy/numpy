@@ -390,6 +390,45 @@ from numpy._core.shape_base import (
     vstack,
     unstack,
 )
+from numpy._core.umath import (
+    arccos,
+    arccos as acos,
+    arccosh,
+    arccosh as acosh,
+    arcsin,
+    arcsin as asin,
+    arcsinh,
+    arcsinh as asinh,
+    arctan,
+    arctan as atan,
+    arctanh,
+    arctanh as atanh,
+    cbrt,
+    ceil,
+    cos,
+    cosh,
+    deg2rad,
+    degrees,
+    exp,
+    exp2,
+    expm1,
+    fabs,
+    floor,
+    invert,
+    log,
+    log10,
+    log1p,
+    log2,
+    rad2deg,
+    radians,
+    rint,
+    sin,
+    sinh,
+    sqrt,
+    tan,
+    tanh,
+    trunc,
+)
 
 from ._expired_attrs_2_0 import __expired_attributes__ as __expired_attributes__
 from ._globals import _CopyMode as _CopyMode
@@ -1733,6 +1772,7 @@ class _ArrayOrScalarCommon:
         order: str | Sequence[str] | None = ...,
         *,
         stable: py_bool | None = ...,
+        descending: py_bool | None = ...,
     ) -> NDArray[intp]: ...
 
     @overload  # axis=None (default), out=None (default), keepdims=False (default)
@@ -3613,8 +3653,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         kth: _ArrayLikeInt,
         /,
         axis: SupportsIndex = -1,
-        kind: _PartitionKind = "introselect",
+        kind: _PartitionKind | None = None,
         order: None = None,
+        descending: py_bool | None = None,
     ) -> None: ...
     @overload
     def partition(
@@ -3622,8 +3663,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         kth: _ArrayLikeInt,
         /,
         axis: SupportsIndex = -1,
-        kind: _PartitionKind = "introselect",
+        kind: _PartitionKind | None = None,
         order: str | Sequence[str] | None = None,
+        descending: py_bool | None = None,
     ) -> None: ...
 
     # keep in sync with `ma.core.MaskedArray.argpartition`
@@ -3634,8 +3676,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         kth: _ArrayLikeInt,
         /,
         axis: None,
-        kind: _PartitionKind = "introselect",
+        kind: _PartitionKind | None = None,
         order: None = None,
+        descending: py_bool | None = None,
     ) -> ndarray[tuple[int], _dtype[intp]]: ...
     @overload  # axis: index (default)
     def argpartition(
@@ -3643,8 +3686,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         kth: _ArrayLikeInt,
         /,
         axis: SupportsIndex = -1,
-        kind: _PartitionKind = "introselect",
+        kind: _PartitionKind | None = None,
         order: None = None,
+        descending: py_bool | None = None,
     ) -> ndarray[_ShapeT_co, _dtype[intp]]: ...
     @overload  # void, axis: None
     def argpartition(
@@ -3652,8 +3696,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         kth: _ArrayLikeInt,
         /,
         axis: None,
-        kind: _PartitionKind = "introselect",
+        kind: _PartitionKind | None = None,
         order: str | Sequence[str] | None = None,
+        descending: py_bool | None = None,
     ) -> ndarray[tuple[int], _dtype[intp]]: ...
     @overload  # void, axis: index (default)
     def argpartition(
@@ -3661,8 +3706,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         kth: _ArrayLikeInt,
         /,
         axis: SupportsIndex = -1,
-        kind: _PartitionKind = "introselect",
+        kind: _PartitionKind | None = None,
         order: str | Sequence[str] | None = None,
+        descending: py_bool | None = None,
     ) -> ndarray[_ShapeT_co, _dtype[intp]]: ...
 
     # keep in sync with `ma.MaskedArray.diagonal`
@@ -3741,6 +3787,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         order: str | Sequence[str] | None = None,
         *,
         stable: py_bool | None = None,
+        descending: py_bool | None = None,
     ) -> None: ...
 
     # Keep in sync with `MaskedArray.trace`
@@ -5068,7 +5115,7 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     ) -> Never: ...
     def diagonal(self: Never, /, offset: L[0] = 0, axis1: L[0] = 0, axis2: L[1] = 1) -> Never: ...  # type: ignore[misc]
     def swapaxes(self: Never, axis1: Never, axis2: Never, /) -> Never: ...  # type: ignore[misc]
-    def sort(self: Never, /, axis: L[-1] = -1, kind: None = None, order: None = None, *, stable: None = None) -> Never: ...  # type: ignore[misc]
+    def sort(self: Never, /, axis: L[-1] = -1, kind: None = None, order: None = None, *, stable: None = None, descending: None = None) -> Never: ...  # type: ignore[misc]
     def nonzero(self: Never, /) -> Never: ...  # type: ignore[misc]
     def setfield(self: Never, val: Never, /, dtype: Never, offset: L[0] = 0) -> None: ...  # type: ignore[misc]
     def searchsorted(self: Never, v: Never, /, side: L["left"] = "left", sorter: None = None) -> Never: ...  # type: ignore[misc]
@@ -7537,34 +7584,17 @@ class ufunc:
 # Parameters: `__name__`, `ntypes` and `identity`
 absolute: _UFunc_Nin1_Nout1[L["absolute"], L[20], None]
 add: _UFunc_Nin2_Nout1[L["add"], L[22], L[0]]
-arccos: _UFunc_Nin1_Nout1[L["arccos"], L[8], None]
-arccosh: _UFunc_Nin1_Nout1[L["arccosh"], L[8], None]
-arcsin: _UFunc_Nin1_Nout1[L["arcsin"], L[8], None]
-arcsinh: _UFunc_Nin1_Nout1[L["arcsinh"], L[8], None]
 arctan2: _UFunc_Nin2_Nout1[L["arctan2"], L[5], None]
-arctan: _UFunc_Nin1_Nout1[L["arctan"], L[8], None]
-arctanh: _UFunc_Nin1_Nout1[L["arctanh"], L[8], None]
 bitwise_and: _UFunc_Nin2_Nout1[L["bitwise_and"], L[12], L[-1]]
 bitwise_count: _UFunc_Nin1_Nout1[L["bitwise_count"], L[11], None]
 bitwise_or: _UFunc_Nin2_Nout1[L["bitwise_or"], L[12], L[0]]
 bitwise_xor: _UFunc_Nin2_Nout1[L["bitwise_xor"], L[12], L[0]]
-cbrt: _UFunc_Nin1_Nout1[L["cbrt"], L[5], None]
-ceil: _UFunc_Nin1_Nout1[L["ceil"], L[7], None]
 conjugate: _UFunc_Nin1_Nout1[L["conjugate"], L[18], None]
 copysign: _UFunc_Nin2_Nout1[L["copysign"], L[4], None]
-cos: _UFunc_Nin1_Nout1[L["cos"], L[9], None]
-cosh: _UFunc_Nin1_Nout1[L["cosh"], L[8], None]
-deg2rad: _UFunc_Nin1_Nout1[L["deg2rad"], L[5], None]
-degrees: _UFunc_Nin1_Nout1[L["degrees"], L[5], None]
 divide: _UFunc_Nin2_Nout1[L["divide"], L[11], None]
 divmod: _UFunc_Nin2_Nout2[L["divmod"], L[15], None]
 equal: _UFunc_Nin2_Nout1[L["equal"], L[23], None]
-exp2: _UFunc_Nin1_Nout1[L["exp2"], L[8], None]
-exp: _UFunc_Nin1_Nout1[L["exp"], L[10], None]
-expm1: _UFunc_Nin1_Nout1[L["expm1"], L[8], None]
-fabs: _UFunc_Nin1_Nout1[L["fabs"], L[5], None]
 float_power: _UFunc_Nin2_Nout1[L["float_power"], L[4], None]
-floor: _UFunc_Nin1_Nout1[L["floor"], L[7], None]
 floor_divide: _UFunc_Nin2_Nout1[L["floor_divide"], L[21], None]
 fmax: _UFunc_Nin2_Nout1[L["fmax"], L[21], None]
 fmin: _UFunc_Nin2_Nout1[L["fmin"], L[21], None]
@@ -7575,7 +7605,6 @@ greater: _UFunc_Nin2_Nout1[L["greater"], L[23], None]
 greater_equal: _UFunc_Nin2_Nout1[L["greater_equal"], L[23], None]
 heaviside: _UFunc_Nin2_Nout1[L["heaviside"], L[4], None]
 hypot: _UFunc_Nin2_Nout1[L["hypot"], L[5], L[0]]
-invert: _UFunc_Nin1_Nout1[L["invert"], L[12], None]
 isfinite: _UFunc_Nin1_Nout1[L["isfinite"], L[20], None]
 isinf: _UFunc_Nin1_Nout1[L["isinf"], L[20], None]
 isnan: _UFunc_Nin1_Nout1[L["isnan"], L[20], None]
@@ -7585,10 +7614,6 @@ ldexp: _UFunc_Nin2_Nout1[L["ldexp"], L[8], None]
 left_shift: _UFunc_Nin2_Nout1[L["left_shift"], L[11], None]
 less: _UFunc_Nin2_Nout1[L["less"], L[23], None]
 less_equal: _UFunc_Nin2_Nout1[L["less_equal"], L[23], None]
-log10: _UFunc_Nin1_Nout1[L["log10"], L[8], None]
-log1p: _UFunc_Nin1_Nout1[L["log1p"], L[8], None]
-log2: _UFunc_Nin1_Nout1[L["log2"], L[8], None]
-log: _UFunc_Nin1_Nout1[L["log"], L[10], None]
 logaddexp2: _UFunc_Nin2_Nout1[L["logaddexp2"], L[4], float]
 logaddexp: _UFunc_Nin2_Nout1[L["logaddexp"], L[4], float]
 logical_and: _UFunc_Nin2_Nout1[L["logical_and"], L[20], L[True]]
@@ -7606,33 +7631,18 @@ nextafter: _UFunc_Nin2_Nout1[L["nextafter"], L[4], None]
 not_equal: _UFunc_Nin2_Nout1[L["not_equal"], L[23], None]
 positive: _UFunc_Nin1_Nout1[L["positive"], L[19], None]
 power: _UFunc_Nin2_Nout1[L["power"], L[18], None]
-rad2deg: _UFunc_Nin1_Nout1[L["rad2deg"], L[5], None]
-radians: _UFunc_Nin1_Nout1[L["radians"], L[5], None]
 reciprocal: _UFunc_Nin1_Nout1[L["reciprocal"], L[18], None]
 remainder: _UFunc_Nin2_Nout1[L["remainder"], L[16], None]
 right_shift: _UFunc_Nin2_Nout1[L["right_shift"], L[11], None]
-rint: _UFunc_Nin1_Nout1[L["rint"], L[10], None]
 sign: _UFunc_Nin1_Nout1[L["sign"], L[19], None]
 signbit: _UFunc_Nin1_Nout1[L["signbit"], L[4], None]
-sin: _UFunc_Nin1_Nout1[L["sin"], L[9], None]
-sinh: _UFunc_Nin1_Nout1[L["sinh"], L[8], None]
 spacing: _UFunc_Nin1_Nout1[L["spacing"], L[4], None]
-sqrt: _UFunc_Nin1_Nout1[L["sqrt"], L[10], None]
 square: _UFunc_Nin1_Nout1[L["square"], L[18], None]
 subtract: _UFunc_Nin2_Nout1[L["subtract"], L[21], None]
-tan: _UFunc_Nin1_Nout1[L["tan"], L[8], None]
-tanh: _UFunc_Nin1_Nout1[L["tanh"], L[8], None]
-trunc: _UFunc_Nin1_Nout1[L["trunc"], L[7], None]
 vecdot: _GUFunc_Nin2_Nout1[L["vecdot"], L[19], None, L["(n),(n)->()"]]
 vecmat: _GUFunc_Nin2_Nout1[L["vecmat"], L[19], None, L["(n),(n,m)->(m)"]]
 
 abs = absolute
-acos = arccos
-acosh = arccosh
-asin = arcsin
-asinh = arcsinh
-atan = arctan
-atanh = arctanh
 atan2 = arctan2
 concat = concatenate
 bitwise_left_shift = left_shift

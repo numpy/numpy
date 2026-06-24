@@ -529,7 +529,7 @@ PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
         return -1;
     }
 
-    char *data = PyObject_Malloc(tmp_descr->elsize);
+    char *data = PyMem_Malloc(tmp_descr->elsize);
     if (data == NULL) {
         PyErr_NoMemory();
         Py_DECREF(tmp_descr);
@@ -539,7 +539,7 @@ PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
         memset(data, 0, tmp_descr->elsize);
     }
     if (NPY_DT_CALL_setitem(tmp_descr, value, data) < 0) {
-        PyObject_Free(data);
+        PyMem_Free(data);
         Py_DECREF(tmp_descr);
         return -1;
     }
@@ -551,7 +551,7 @@ PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
         }
     }
 
-    PyObject_Free(data);
+    PyMem_Free(data);
     Py_DECREF(tmp_descr);
     return res;
 }

@@ -51,7 +51,7 @@ jobs:
       IS_32_BIT: ${{ matrix.buildplat[2] == 'win32' }}  # used in cibw_test_command.sh
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: true
           persist-credentials: false
@@ -118,12 +118,12 @@ jobs:
           fi
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
+        uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55  # v4.1.0
         env:
           CIBW_PLATFORM: ${{ matrix.buildplat[0] }}
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[2] }}
 
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ matrix.python }}-${{ matrix.buildplat[2] }}-${{ matrix.buildplat[3] }}
           path: ./wheelhouse/*.whl

@@ -1,0 +1,71 @@
+.. currentmodule:: numpy
+
+=========================
+NumPy 2.4.5 Release Notes
+=========================
+
+NumPy 2.4.5 is a patch release that fixes bugs discovered after the 2.4.4
+release, has some typing improvements, and maintains infrastructure.
+
+This release supports Python versions 3.11-3.14
+
+
+Contributors
+============
+
+A total of 17 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Aleksei Nikiforov
+* Anarion Zuo +
+* Ankit Ahlawat
+* Breno Favaretto +
+* Charles Harris
+* Igor Krivenko +
+* Ijtihed Kilani +
+* Joren Hammudoglu
+* Maarten Baert +
+* Matti Picus
+* Nathan Goldbaum
+* Praneeth Kodumagulla +
+* Ralf Gommers
+* RoomWithOutRoof +
+* Sebastian Berg
+* Warren Weckesser
+* div +
+
+
+Pull requests merged
+====================
+
+A total of 28 pull requests were merged for this release.
+
+* `#31093 <https://github.com/numpy/numpy/pull/31093>`__: MAINT: Prepare 2.4.x for further development
+* `#31182 <https://github.com/numpy/numpy/pull/31182>`__: TYP: fix ``np.shape`` assignability issue for python lists (#31171)
+* `#31197 <https://github.com/numpy/numpy/pull/31197>`__: ENH: Return rank 0 for empty matrices in matrix_rank (#30422)
+* `#31198 <https://github.com/numpy/numpy/pull/31198>`__: CI/BUG: add native jobs for s390x, fix bug in ``pack_inner``...
+* `#31199 <https://github.com/numpy/numpy/pull/31199>`__: BUG: f2py map complex_long_double to NPY_CLONGDOUBLE
+* `#31205 <https://github.com/numpy/numpy/pull/31205>`__: MAINT: f2py: Stop setting re._MAXCACHE to 50.
+* `#31206 <https://github.com/numpy/numpy/pull/31206>`__: BUG: fix heap buffer overflow in timedelta to string casts
+* `#31207 <https://github.com/numpy/numpy/pull/31207>`__: MAINT: Rename ppc64le and s390x workflow (#31121)
+* `#31208 <https://github.com/numpy/numpy/pull/31208>`__: BUG: Fix matvec/vecmat in-place aliasing (out=input produces...
+* `#31209 <https://github.com/numpy/numpy/pull/31209>`__: TYP: ``tile``\ : accept numpy scalars and arrays as second argument...
+* `#31211 <https://github.com/numpy/numpy/pull/31211>`__: DEP: Undo deprecation for np.dtype() signature used by old pickles...
+* `#31212 <https://github.com/numpy/numpy/pull/31212>`__: REV: Manual revert of float16 svml use (#31178)
+* `#31222 <https://github.com/numpy/numpy/pull/31222>`__: TYP: ``ix_`` fix for boolean and non-1d input (#31218)
+* `#31329 <https://github.com/numpy/numpy/pull/31329>`__: BUG: incorrect temp elision for new-style (NEP 43) user-defined...
+* `#31330 <https://github.com/numpy/numpy/pull/31330>`__: TYP: fix sliding_window_view axis parameter typing
+* `#31335 <https://github.com/numpy/numpy/pull/31335>`__: BUG: Prevent deadlock due to downstream importing NumPy in dlopen...
+* `#31336 <https://github.com/numpy/numpy/pull/31336>`__: BUG: Fix segfault in nditer.multi_index when __getitem__ raises...
+* `#31338 <https://github.com/numpy/numpy/pull/31338>`__: TYP: Fix ruff lint error
+* `#31357 <https://github.com/numpy/numpy/pull/31357>`__: BUG: fix memory leak in np.zeros when fill-zero loop raises (#31320)
+* `#31358 <https://github.com/numpy/numpy/pull/31358>`__: BUG: np.einsum() fails with a 0-dimensional out argument and...
+* `#31379 <https://github.com/numpy/numpy/pull/31379>`__: BUG: Fix signed overflow issue in npy_gcd for INT_MIN on s390x...
+* `#31383 <https://github.com/numpy/numpy/pull/31383>`__: CI: remove Cirrus CI FreeBSD job (#31380)
+* `#31390 <https://github.com/numpy/numpy/pull/31390>`__: BUILD: newer MKL uses so.3
+* `#31391 <https://github.com/numpy/numpy/pull/31391>`__: BLD/MAINT: improve support for Intel LLVM compilers
+* `#31401 <https://github.com/numpy/numpy/pull/31401>`__: BUG: Avoid UB in safe_[add,sub,mul] helpers (#31396)
+* `#31402 <https://github.com/numpy/numpy/pull/31402>`__: BUG: exclude __pycache__ directories from wheels (#31397)
+* `#31404 <https://github.com/numpy/numpy/pull/31404>`__: TYP: ``_NestedSequence`` type parameter default to work around...
+* `#31426 <https://github.com/numpy/numpy/pull/31426>`__: TYP: Fix ``DTypeLike`` runtime type-checker support (#31425)
+

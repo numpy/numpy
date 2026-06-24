@@ -1,0 +1,86 @@
+# Workflow to build and test wheels, similarly to numpy/numpy-release.
+# To work on these jobs in a fork, comment out:
+#
+#     if: github.repository == 'numpy/numpy'
+name: Linux-riscv64 Wheel builder
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
+      - 'tools/stubtest/**'
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  build_wheels:
+    name: Build wheel ${{ matrix.python }}-manylinux_riscv64-
+    # To enable this job on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    runs-on: ubuntu-24.04-riscv
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["cp312"]
+
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_BASEDIR: "/project"
+      CCACHE_COMPILERCHECK: "content"
+    steps:
+      - name: Checkout numpy
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          submodules: true
+          persist-credentials: false
+
+      - name: Restore compilation cache
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        id: ccache-restore
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-wheels-manylinux_riscv64-${{ matrix.python }}-${{ github.run_id }}
+          restore-keys: |
+            ccache-wheels-manylinux_riscv64-${{ matrix.python }}-
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55  # v4.1.0
+        env:
+          CIBW_BUILD: ${{ matrix.python }}-manylinux_riscv64
+          CIBW_BEFORE_ALL_LINUX: |
+            set -eux
+            CCACHE_VERSION=4.13.6
+            curl -fsSL https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}-linux-$(uname -m)-musl-static.tar.gz | \
+              tar -xvzf - --strip-components 1 -C /usr/local/bin ccache-${CCACHE_VERSION}-linux-$(uname -m)-musl-static/ccache
+            ccache --version
+            ccache --zero-stats
+          CIBW_ENVIRONMENT_PASS_LINUX: >-
+            CCACHE_BASEDIR
+            CCACHE_COMPILERCHECK
+          CIBW_CONTAINER_ENGINE: "docker; create_args: --volume ${{ env.CCACHE_DIR }}:/root/.ccache"
+
+      - name: Save compilation cache
+        if: always() && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-wheels-manylinux_riscv64-${{ matrix.python }}-${{ github.run_id }}
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ matrix.python }}-manylinux_riscv64-
+          path: ./wheelhouse/*.whl

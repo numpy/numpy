@@ -39,6 +39,7 @@ class _HasDType[DTypeT: np.dtype](Protocol):
     def dtype(self) -> DTypeT: ...
 
 
+@runtime_checkable
 class _HasNumPyDType[DTypeT: np.dtype](Protocol):
     @property
     def __numpy_dtype__(self, /) -> DTypeT: ...

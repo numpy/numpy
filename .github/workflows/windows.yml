@@ -26,7 +26,7 @@ jobs:
     if: github.repository == 'numpy/numpy'
     steps:
     - name: Checkout
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         submodules: recursive
         fetch-tags: true
@@ -35,7 +35,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
-        python-version: "3.14t"
+        python-version: "3.15t-dev"
 
     - name: Install build dependencies from PyPI
       run: |
@@ -69,8 +69,8 @@ jobs:
 
 
   #=======================================================================================
-  msvc_python32bit_no_openblas:
-    name: MSVC, ${{ matrix.architecture }}, fast, no BLAS
+  msvc_python_x86_arm64_no_openblas:
+    name: MSVC, ${{ matrix.os }} ${{ matrix.architecture }}, full, no BLAS, ${{ matrix.python_version }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -78,13 +78,15 @@ jobs:
         include:
           - os: windows-2022
             architecture: x86
+            python_version: '3.15t-dev'
           - os: windows-11-arm
             architecture: arm64
+            python_version: '3.12'
     # To enable this job on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: recursive
           fetch-tags: true
@@ -93,7 +95,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
-          python-version: '3.12'
+          python-version: ${{ matrix.python_version }}
           architecture: ${{ matrix.architecture }}
 
       - name: Setup MSVC
@@ -116,10 +118,10 @@ jobs:
         run: |
           python -m pip install -r requirements/test_requirements.txt
 
-      - name: Run test suite (fast)
+      - name: Run test suite (full)
         run: |
           cd tools
-          python -m pytest --pyargs numpy -m "not slow" -n2 --timeout=600 --durations=10
+          python -m pytest --pyargs numpy -n auto --timeout=600 --durations=10
 
   #=======================================================================================
   msvc_python64bit_openblas:
@@ -131,7 +133,7 @@ jobs:
         include:
           - BLAS: 64
             TEST_MODE: full
-            pyver: '3.14'
+            pyver: '3.15-dev'
           - BLAS: 32
             TEST_MODE: fast
             pyver: '3.12'
@@ -140,7 +142,7 @@ jobs:
     if: github.repository == 'numpy/numpy'
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: recursive
           fetch-tags: true

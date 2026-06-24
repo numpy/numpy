@@ -1982,10 +1982,12 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
         PyArray_Descr *descr;
         PyArray_DTypeMeta *dst_DType = NPY_DTYPE(PyArray_DESCR(dst));
         bool is_npy_nan = PyFloat_Check(src_obj) && npy_isnan(PyFloat_AsDouble(src_obj));
-        if (!is_npy_nan && dst_DType->type_num == NPY_TIMEDELTA) {
-            descr = PyArray_DESCR(dst); 
+        if (!is_npy_nan && (dst_DType->type_num == NPY_TIMEDELTA ||
+                            dst_DType->type_num == NPY_DATETIME)) {
+            descr = PyArray_DESCR(dst);
             Py_INCREF(descr);
-        } else {
+        }
+        else {
             descr = npy_find_descr_for_scalar(src_obj, PyArray_DESCR(src), DType,
                                               dst_DType);
         }
@@ -3256,6 +3258,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 
     NPY_cast_info x_cast_info = {.func = NULL};
     NPY_cast_info y_cast_info = {.func = NULL};
+    NPY_BEGIN_THREADS_DEF;
 
     ax = (PyArrayObject*)PyArray_FROM_O(x);
     if (ax == NULL) {
@@ -3320,8 +3323,6 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     }
     /* `PyArray_DescrFromType` cannot fail for simple builtin types: */
     PyArray_Descr * op_dt[4] = {common_dt, PyArray_DescrFromType(NPY_BOOL), x_dt, y_dt};
-
-    NPY_BEGIN_THREADS_DEF;
 
     iter =  NpyIter_MultiNew(
             4, op_in, flags, NPY_KEEPORDER, NPY_UNSAFE_CASTING,
@@ -3448,6 +3449,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     return ret;
 
 fail:
+    NPY_END_THREADS;
     Py_DECREF(arr);
     Py_XDECREF(ax);
     Py_XDECREF(ay);
@@ -3851,7 +3853,7 @@ format_longfloat(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
  */
 static int _is_user_defined_string_array(PyArrayObject* array)
 {
-    if (NPY_DT_is_user_defined(PyArray_DESCR(array))) {
+    if (NPY_DT_is_user_defined(NPY_DTYPE(PyArray_DESCR(array)))) {
         PyTypeObject* scalar_type = NPY_DTYPE(PyArray_DESCR(array))->scalar_type;
         if (PyType_IsSubtype(scalar_type, &PyBytes_Type) ||
             PyType_IsSubtype(scalar_type, &PyUnicode_Type)) {
@@ -4348,6 +4350,97 @@ normalize_axis_index(PyObject *NPY_UNUSED(self),
 }
 
 
+static int
+resolve_part_view_descr(
+        PyBoundArrayMethodObject *meth, PyArray_Descr *descr,
+        PyArray_Descr **part_descr, npy_intp *view_offset)
+{
+    PyArray_Descr *descrs[2] = {descr, NULL};
+    PyArray_Descr *loop_descrs[2] = {NULL, NULL};
+    int res = meth->method->resolve_descriptors(
+            meth->method, meth->dtypes, descrs, loop_descrs, view_offset);
+    if (res < 0) {
+        return -1;
+    }
+
+    Py_DECREF(loop_descrs[0]);
+    *part_descr = loop_descrs[1];
+    return 0;
+}
+
+
+/*
+ * Resolve the descriptor for a dtype's `.real` or `.imag` method and
+ * indicate whether the result is a view (1), not a view (0), or errored (-1).
+ */
+static int
+resolve_view_part_descr(
+        PyBoundArrayMethodObject *meth, PyArray_Descr *descr,
+        PyArray_Descr **part_descr)
+{
+    if (meth == NULL) {
+        return 0;
+    }
+    npy_intp view_offset = NPY_MIN_INTP;
+    if (resolve_part_view_descr(meth, descr, part_descr, &view_offset) < 0) {
+        return -1;
+    }
+    return view_offset != NPY_MIN_INTP;
+}
+
+
+/*
+ * Resolve the real counterpart dtype for dtypes that expose compatible
+ * `.real`/`.imag` views. If not available, returns the input dtype unchanged
+ * (i.e. assume already a real dtype).
+ */
+static PyObject *
+_finfo_get_realdtype(PyObject *NPY_UNUSED(self), PyObject *descr_obj)
+{
+    if (!PyArray_DescrCheck(descr_obj)) {
+        PyErr_SetString(PyExc_TypeError, "Argument must be a dtype");
+        return NULL;
+    }
+    PyArray_Descr *descr = (PyArray_Descr *)descr_obj;
+    PyArray_Descr *real_descr = NULL;
+    PyArray_Descr *imag_descr = NULL;
+    PyArray_Descr *ret = NULL;
+
+    int real_is_view = resolve_view_part_descr(
+            NPY_DT_SLOTS(NPY_DTYPE(descr))->real_meth, descr, &real_descr);
+    if (real_is_view < 0) {
+        goto finish;
+    }
+    if (!real_is_view) {
+        ret = descr;
+        goto finish;
+    }
+
+    int imag_is_view = resolve_view_part_descr(
+            NPY_DT_SLOTS(NPY_DTYPE(descr))->imag_meth, descr, &imag_descr);
+    if (imag_is_view < 0) {
+        goto finish;
+    }
+    if (!imag_is_view) {
+        ret = descr;
+        goto finish;
+    }
+
+    if (PyArray_EquivTypes(real_descr, imag_descr)) {
+        ret = real_descr;
+    }
+    else {
+        ret = descr;
+    }
+
+  finish:
+    Py_XINCREF(ret);
+    Py_XDECREF(real_descr);
+    Py_XDECREF(imag_descr);
+    return (PyObject *)ret;
+}
+
+
 static PyObject *
 _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
 {
@@ -4414,8 +4507,9 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
                 goto fail;
             }
             if (res == 0) {
-                buffer_data += elsize;  // Move to next element
-                continue;
+                PyErr_Format(PyExc_ValueError,
+                    "data type %R not compatible with finfo", descr);
+                goto fail;
             }
             // Return as 0-d array item to preserve numpy scalar type
             value_obj = PyArray_ToScalar(buffer_data, buffer_array);
@@ -4428,7 +4522,9 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
                 goto fail;
             }
             if (res == 0) {
-                continue;
+                PyErr_Format(PyExc_ValueError,
+                    "data type %R not compatible with finfo", descr);
+                goto fail;
             }
             value_obj = PyLong_FromSsize_t(int_value);
         }
@@ -4694,10 +4790,14 @@ static struct PyMethodDef array_module_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"_get_castingimpl",  (PyCFunction)_get_castingimpl,
         METH_VARARGS | METH_KEYWORDS, NULL},
+    {"_is_view_safe_cast",  (PyCFunction)_is_view_safe_cast,
+        METH_FASTCALL, NULL},
     {"_load_from_filelike", (PyCFunction)_load_from_filelike,
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"_populate_finfo_constants", (PyCFunction)_populate_finfo_constants,
         METH_VARARGS, NULL},
+    {"_finfo_get_realdtype", (PyCFunction)_finfo_get_realdtype,
+        METH_O, NULL},
     /* from umath */
     {"frompyfunc",
         (PyCFunction) ufunc_frompyfunc,
@@ -4730,6 +4830,10 @@ static struct PyMethodDef array_module_methods[] = {
         "Give a warning on reload and big warning in sub-interpreters."},
     {"from_dlpack", (PyCFunction)from_dlpack,
         METH_FASTCALL | METH_KEYWORDS, NULL},
+    {"_register_dlpack_dtype", (PyCFunction)_register_dlpack_dtype,
+        METH_VARARGS, NULL},
+    {"_dlpack_registry_replace", (PyCFunction)_dlpack_registry_replace,
+        METH_VARARGS, "unsafe testing helper to swap out dlpack registry"},
     {"_unique_hash",  (PyCFunction)array__unique_hash,
         METH_FASTCALL | METH_KEYWORDS, "Collect unique values via a hash map."},
     {NULL, NULL, 0, NULL}                /* sentinel */
@@ -5144,8 +5248,38 @@ _multiarray_umath_exec(PyObject *m) {
                             (PyObject *)&NpyBusDayCalendar_Type);
     set_flaginfo(d);
 
+    if (PyType_Ready(&PyArrayMethod_Type) < 0) {
+        return -1;
+    }
+    if (PyType_Ready(&PyBoundArrayMethod_Type) < 0) {
+        return -1;
+    }
+
+    /* Create all abstract DType classes */
+    if (initialize_abstract_dtypes() < 0) {
+        return -1;
+    }
+
     /* Finalize scalar types and expose them via namespace or typeinfo dict */
     if (set_typeinfo(d) != 0) {
+        return -1;
+    }
+
+    /*
+     * Map ``str``/``bytes``/``bool`` to the matching legacy DTypes.  Done
+     * after ``set_typeinfo`` since that is what wraps those DTypes.
+     */
+    PyArray_DTypeMeta *dt;
+    dt = typenum_to_dtypemeta(NPY_UNICODE);
+    if (_PyArray_MapPyTypeToDType(dt, &PyUnicode_Type, NPY_FALSE) < 0) {
+        return -1;
+    }
+    dt = typenum_to_dtypemeta(NPY_STRING);
+    if (_PyArray_MapPyTypeToDType(dt, &PyBytes_Type, NPY_FALSE) < 0) {
+        return -1;
+    }
+    dt = typenum_to_dtypemeta(NPY_BOOL);
+    if (_PyArray_MapPyTypeToDType(dt, &PyBool_Type, NPY_FALSE) < 0) {
         return -1;
     }
 
@@ -5162,16 +5296,6 @@ _multiarray_umath_exec(PyObject *m) {
     PyDict_SetItemString(
             d, "_array_converter",
             (PyObject *)&PyArrayArrayConverter_Type);
-
-    if (PyType_Ready(&PyArrayMethod_Type) < 0) {
-        return -1;
-    }
-    if (PyType_Ready(&PyBoundArrayMethod_Type) < 0) {
-        return -1;
-    }
-    if (initialize_and_map_pytypes_to_dtypes() < 0) {
-        return -1;
-    }
 
     if (PyArray_InitializeCasts() < 0) {
         return -1;
@@ -5227,6 +5351,16 @@ _multiarray_umath_exec(PyObject *m) {
     npy_static_pydata.ndarray_array_function = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_function__");
     if (npy_static_pydata.ndarray_array_function == NULL) {
+        return -1;
+    }
+    npy_static_pydata.ndarray_set_dtype = PyObject_GetAttrString(
+            (PyObject *)&PyArray_Type, "_set_dtype");
+    if (npy_static_pydata.ndarray_set_dtype == NULL) {
+        return -1;
+    }
+    npy_static_pydata.ndarray_dtype_descr = PyObject_GetAttrString(
+            (PyObject *)&PyArray_Type, "dtype");
+    if (npy_static_pydata.ndarray_dtype_descr == NULL) {
         return -1;
     }
 

@@ -135,7 +135,7 @@ swab_separator(const char *sep)
     int skip_space = 0;
     char *s, *start;
 
-    s = start = malloc(strlen(sep)+3);
+    s = start = PyMem_RawMalloc(strlen(sep)+3);
     if (s == NULL) {
         PyErr_NoMemory();
         return NULL;
@@ -274,72 +274,6 @@ fromfile_skip_separator(FILE **fp, const char *sep, void *NPY_UNUSED(stream_data
         }
     }
     return result;
-}
-
-/*
- * Change a sub-array field to the base descriptor
- * and update the dimensions and strides
- * appropriately.  Dimensions and strides are added
- * to the end.
- *
- * Strides are only added if given (because data is given).
- */
-static int
-_update_descr_and_dimensions(PyArray_Descr **des, npy_intp *newdims,
-                             npy_intp *newstrides, int oldnd)
-{
-    _PyArray_LegacyDescr *old;
-    int newnd;
-    int numnew;
-    npy_intp *mydim;
-    int i;
-    int tuple;
-
-    old = (_PyArray_LegacyDescr *)*des;  /* guaranteed as it has subarray */
-    *des = old->subarray->base;
-
-
-    mydim = newdims + oldnd;
-    tuple = PyTuple_Check(old->subarray->shape);
-    if (tuple) {
-        numnew = PyTuple_GET_SIZE(old->subarray->shape);
-    }
-    else {
-        numnew = 1;
-    }
-
-
-    newnd = oldnd + numnew;
-    if (newnd > NPY_MAXDIMS) {
-        goto finish;
-    }
-    if (tuple) {
-        for (i = 0; i < numnew; i++) {
-            mydim[i] = (npy_intp) PyLong_AsLong(
-                    PyTuple_GET_ITEM(old->subarray->shape, i));
-        }
-    }
-    else {
-        mydim[0] = (npy_intp) PyLong_AsLong(old->subarray->shape);
-    }
-
-    if (newstrides) {
-        npy_intp tempsize;
-        npy_intp *mystrides;
-
-        mystrides = newstrides + oldnd;
-        /* Make new strides -- always C-contiguous */
-        tempsize = (*des)->elsize;
-        for (i = numnew - 1; i >= 0; i--) {
-            mystrides[i] = tempsize;
-            tempsize *= mydim[i] ? mydim[i] : 1;
-        }
-    }
-
- finish:
-    Py_INCREF(*des);
-    Py_DECREF(old);
-    return newnd;
 }
 
 NPY_NO_EXPORT void
@@ -702,21 +636,21 @@ PyArray_NewFromDescr_int(
      */
     if (!(cflags & _NPY_ARRAY_ENSURE_DTYPE_IDENTITY)) {
         if (PyDataType_SUBARRAY(descr)) {
-            PyObject *ret;
+            /* For a subarray, get the base dtype and use that in a retry
+               with the subarray dimensions and strides appended to the
+               input ones (for strides, if the input strides are known). */
+            int newnd;
             npy_intp newdims[2*NPY_MAXDIMS];
-            npy_intp *newstrides = NULL;
-            memcpy(newdims, dims, nd*sizeof(npy_intp));
-            if (strides) {
-                newstrides = newdims + NPY_MAXDIMS;
-                memcpy(newstrides, strides, nd*sizeof(npy_intp));
+            npy_intp *newstrides = strides ? newdims + NPY_MAXDIMS : NULL;
+            Py_SETREF(descr, _get_subarray_base_and_dimensions(
+                          descr, nd, dims, strides,
+                          &newnd, newdims, newstrides));
+            if (descr == NULL) {
+                return NULL;
             }
-            nd =_update_descr_and_dimensions(&descr, newdims,
-                                            newstrides, nd);
-            ret = PyArray_NewFromDescr_int(
-                    subtype, descr,
-                    nd, newdims, newstrides, data,
+            return PyArray_NewFromDescr_int(
+                    subtype, descr, newnd, newdims, newstrides, data,
                     flags, obj, base, cflags);
-            return ret;
         }
 
         /* Check datatype element size */
@@ -906,6 +840,13 @@ PyArray_NewFromDescr_int(
             raise_memory_error(fa->nd, fa->dimensions, descr);
             goto fail;
         }
+        /*
+         * Set fa->data and NPY_ARRAY_OWNDATA immediately after allocation so
+         * that the fail path (Py_DECREF(fa) -> dealloc) frees the buffer if
+         * the fill-zero loop below raises an error.
+         */
+        fa->data = data;
+        fa->flags |= NPY_ARRAY_OWNDATA;
 
         /*
          * If the array needs special dtype-specific zero-filling logic, do that
@@ -919,8 +860,6 @@ PyArray_NewFromDescr_int(
                 goto fail;
             }
         }
-
-        fa->flags |= NPY_ARRAY_OWNDATA;
     }
     else {
         /* The handlers should never be called in this case */
@@ -929,8 +868,8 @@ PyArray_NewFromDescr_int(
          * If data is passed in, this object won't own it.
          */
         fa->flags &= ~NPY_ARRAY_OWNDATA;
+        fa->data = data;
     }
-    fa->data = data;
 
     /*
      * Always update the aligned flag.  Not owned data or input strides may
@@ -998,7 +937,6 @@ PyArray_NewFromDescr_int(
 
  fail:
     NPY_traverse_info_xfree(&fill_zero_info);
-    Py_XDECREF(fa->mem_handler);
     Py_DECREF(fa);
     return NULL;
 }
@@ -1885,6 +1823,7 @@ PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
         PyObject *ret;
         if (requirements & NPY_ARRAY_ENSURENOCOPY) {
             PyErr_SetString(PyExc_ValueError, npy_no_copy_err_msg);
+            Py_DECREF(obj);
             return NULL;
         }
         ret = PyArray_NewCopy((PyArrayObject *)obj, NPY_ANYORDER);
@@ -3620,6 +3559,10 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
         thisbuf += 1;
         dptr += dtype->elsize;
         if (num < 0 && thisbuf == size) {
+            if (totalbytes > NPY_MAX_INTP - bytes) {
+                err = 1;
+                break;
+            }
             totalbytes += bytes;
             /* The handler is always valid */
             tmp = PyDataMem_UserRENEW(PyArray_DATA(r), totalbytes,
@@ -3659,7 +3602,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
     }
     NPY_END_ALLOW_THREADS;
 
-    free(clean_sep);
+    PyMem_RawFree(clean_sep);
 
     if (stop_reading_flag == -2) {
         if (PyErr_Occurred()) {

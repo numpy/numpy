@@ -741,15 +741,21 @@ Step52:
   f2 = f1 * f1;
   z2 = z * z;
   w2 = w * w;
+  /*
+   * Note that the third and fourth error terms are subtracted.
+   * This is a correction from the original 1988 paper
+   * (Kachitvichyanukul & Schmeiser) which erroneously adds
+   * all four terms
+   */
   if (A > (xm * log(f1 / x1) + (n - m + 0.5) * log(z / w) +
            (y - m) * log(w * r / (x1 * q)) +
-           (13680. - (462. - (132. - (99. - 140. / f2) / f2) / f2) / f2) / f1 /
+           (13860. - (462. - (132. - (99. - 140. / f2) / f2) / f2) / f2) / f1 /
                166320. +
-           (13680. - (462. - (132. - (99. - 140. / z2) / z2) / z2) / z2) / z /
-               166320. +
-           (13680. - (462. - (132. - (99. - 140. / x2) / x2) / x2) / x2) / x1 /
-               166320. +
-           (13680. - (462. - (132. - (99. - 140. / w2) / w2) / w2) / w2) / w /
+           (13860. - (462. - (132. - (99. - 140. / z2) / z2) / z2) / z2) / z /
+               166320. -
+           (13860. - (462. - (132. - (99. - 140. / x2) / x2) / x2) / x2) / x1 /
+               166320. -
+           (13860. - (462. - (132. - (99. - 140. / w2) / w2) / w2) / w2) / w /
                166320.)) {
     goto Step10;
   }

@@ -10,7 +10,7 @@ from functools import cached_property
 from numpy._utils import set_module
 
 from . import numeric, numerictypes as ntypes
-from ._multiarray_umath import _populate_finfo_constants
+from ._multiarray_umath import _finfo_get_realdtype, _populate_finfo_constants
 
 
 def _fr0(a):
@@ -26,12 +26,6 @@ def _fr1(a):
         a = a.reshape(())
     return a
 
-
-_convert_to_float = {
-    ntypes.csingle: ntypes.single,
-    ntypes.complex128: ntypes.float64,
-    ntypes.clongdouble: ntypes.longdouble
-    }
 
 # Parameters for creating MachAr / MachAr-like objects
 _title_fmt = 'numpy {} precision floating point number'
@@ -193,17 +187,19 @@ class finfo:
         if obj is not None:
             return obj
         dtypes = [dtype]
-        newdtype = ntypes.obj2sctype(dtype)
+        # Call result_type to normalize to e.g. native byte-order:
+        newdtype = numeric.result_type(dtype)
         if newdtype is not dtype:
             dtypes.append(newdtype)
             dtype = newdtype
-        if not issubclass(dtype, numeric.inexact):
-            raise ValueError(f"data type {dtype!r} not inexact")
+
         obj = cls._finfo_cache.get(dtype)
         if obj is not None:
             return obj
-        if not issubclass(dtype, numeric.floating):
-            newdtype = _convert_to_float[dtype]
+
+        sctype = newdtype.type
+        if sctype is not None and not issubclass(sctype, numeric.floating):
+            newdtype = _finfo_get_realdtype(dtype)
             if newdtype is not dtype:
                 # dtype changed, for example from complex128 to float64
                 dtypes.append(newdtype)

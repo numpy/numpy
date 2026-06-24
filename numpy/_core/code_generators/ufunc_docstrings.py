@@ -1870,7 +1870,7 @@ add_newdoc('numpy._core.umath', 'isnat',
     Examples
     --------
     >>> import numpy as np
-    >>> np.isnat(np.datetime64("NaT"))
+    >>> np.isnat(np.datetime64("NaT", "D"))
     True
     >>> np.isnat(np.datetime64("2016-01-01"))
     False

@@ -828,8 +828,8 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
 NPY_NO_EXPORT PyObject *
 PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
 {
-    if (PyArray_ISCOMPLEX(self) || PyArray_ISOBJECT(self) ||
-            PyArray_ISUSERDEF(self) || !NPY_DT_is_legacy(PyArray_DESCR(self))) {
+    if (NPY_DT_SLOTS(NPY_DTYPE(PyArray_DTYPE(self)))->imag_meth != NULL) {
+        /* The dtype has `arr.imag` so `conjugate` must exist (or error) */
         if (out == NULL) {
             return PyArray_GenericUnaryFunction(self,
                                                 n_ops.conjugate);
@@ -841,12 +841,14 @@ PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
         }
     }
     else {
-        PyArrayObject *ret;
-        if (!PyArray_ISNUMBER(self)) {
+        if (!NPY_DT_is_numeric(NPY_DTYPE(PyArray_DTYPE(self)))) {
             PyErr_SetString(PyExc_TypeError,
-                "cannot conjugate non-numeric dtype");
+                            "cannot conjugate non-numeric dtype");
             return NULL;
         }
+
+        /* Numeric but no `.imag`: real-valued (or `.imag` should error) */
+        PyArrayObject *ret;
         if (out) {
             if (PyArray_AssignArray(out, self,
                         NULL, NPY_DEFAULT_ASSIGN_CASTING) < 0) {

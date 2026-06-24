@@ -271,7 +271,9 @@ class TestFromrecords:
         assert_(type(ra.mean) is type(ra.var))
         ra = ra.reshape((1, 3))
         assert_(ra.shape == (1, 3))
-        ra.shape = ['A', 'B', 'C']
+        # gh-29536: setting .shape on an ndarray is deprecated
+        with pytest.warns(DeprecationWarning, match="Setting the shape"):
+            ra.shape = ['A', 'B', 'C']
         assert_array_equal(ra['shape'], [['A', 'B', 'C']])
         ra.field = 5
         assert_array_equal(ra['field'], [[5, 5, 5]])
@@ -497,7 +499,8 @@ class TestRecord:
         assert dt.type != np.record
 
         # ensure that the dtype remains a record even when assigned
-        data.dtype = dt
+        with pytest.warns(DeprecationWarning, match="Setting the dtype"):
+            data.dtype = dt
         assert data.dtype.type == np.record
 
     @pytest.mark.parametrize('nfields', [0, 1, 2])
