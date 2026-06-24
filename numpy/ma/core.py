@@ -8321,7 +8321,10 @@ def inner(a, b):
         fa = fa.reshape((1,))
     if fb.ndim == 0:
         fb = fb.reshape((1,))
-    return np.inner(fa, fb).view(MaskedArray)
+    d = np.inner(fa, fb)
+    if np.ndim(d) == 0:
+        d = np.asarray(d)
+    return d.view(MaskedArray)
 
 
 inner.__doc__ = doc_note(np.inner.__doc__,

@@ -4202,6 +4202,16 @@ class TestMaskedArrayMathMethods:
         assert_equal(a.mean(), 2)
         assert_equal(a.anom(), [-1, 0, 1])
 
+    def test_innerproduct_object(self):
+        a = np.array([1, 2, 3], dtype=object)
+        b = np.array([0, 1, 0], dtype=object)
+
+        expected = np.inner(a, b)
+        result = np.ma.innerproduct(a, b)
+
+        assert_equal(result, expected)
+        assert_(isinstance(result, MaskedArray))
+
     def test_anom_shape(self):
         a = masked_array([1, 2, 3])
         assert_equal(a.anom().shape, a.shape)
