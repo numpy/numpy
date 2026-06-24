@@ -250,6 +250,42 @@ assert_type(np.sin(_i16_2d, dtype="f4"), np.ndarray[tuple[int, int]])
 
 assert_type(np.sin(_py_i_2d, out=_c64_2d), np.ndarray[tuple[int, int], np.dtype[np.complex64]])
 
+# _ufunc_11_bio
+# (invert)
+
+assert_type(np.invert(_py_b_0d), np.bool)
+assert_type(np.invert(_py_b_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.invert(_py_b_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.invert(_py_i_0d), np.int_ | Any)
+assert_type(np.invert(_py_i_1d), np.ndarray[tuple[int], np.dtype[np.int_]])
+assert_type(np.invert(_py_i_2d), np.ndarray[tuple[int, int], np.dtype[np.int_]])
+
+assert_type(np.invert(_bool_0d), np.bool)
+assert_type(np.invert(_bool_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.invert(_bool_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.invert(_bool_nd), npt.NDArray[np.bool])
+assert_type(np.invert(_u8_0d), np.uint8)
+assert_type(np.invert(_u8_1d), np.ndarray[tuple[int], np.dtype[np.uint8]])
+assert_type(np.invert(_u8_2d), np.ndarray[tuple[int, int], np.dtype[np.uint8]])
+assert_type(np.invert(_u8_nd), npt.NDArray[np.uint8])
+assert_type(np.invert(_i16_0d), np.int16)
+assert_type(np.invert(_i16_1d), np.ndarray[tuple[int], np.dtype[np.int16]])
+assert_type(np.invert(_i16_2d), np.ndarray[tuple[int, int], np.dtype[np.int16]])
+assert_type(np.invert(_i16_nd), npt.NDArray[np.int16])
+assert_type(np.invert(_obj_1d), np.ndarray[tuple[int], np.dtype[np.object_]])
+assert_type(np.invert(_obj_2d), np.ndarray[tuple[int, int], np.dtype[np.object_]])
+assert_type(np.invert(_obj_nd), npt.NDArray[np.object_])
+
+assert_type(np.invert(_py_b_0d, dtype=np.uint8), np.uint8)
+assert_type(np.invert(_py_i_1d, dtype=np.int16), npt.NDArray[np.int16])
+assert_type(np.invert(_u8_2d, dtype=np.bool), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+
+assert_type(np.invert(_py_b_0d, dtype="i4"), Any)
+assert_type(np.invert(_py_i_1d, dtype="i4"), np.ndarray)
+assert_type(np.invert(_u8_2d, dtype="i4"), np.ndarray[tuple[int, int]])
+
+assert_type(np.invert(_py_b_1d, out=_i16_1d), np.ndarray[tuple[int], np.dtype[np.int16]])
+
 # _ufunc_11_bifo
 # (ceil, floor, trunc)
 
