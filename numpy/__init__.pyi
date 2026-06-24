@@ -421,6 +421,8 @@ from numpy._core.umath import (
     log10,
     log1p,
     log2,
+    positive,
+    negative,
     rad2deg,
     radians,
     reciprocal,
@@ -7629,10 +7631,8 @@ maximum: _UFunc_Nin2_Nout1[L["maximum"], L[21], None]
 minimum: _UFunc_Nin2_Nout1[L["minimum"], L[21], None]
 modf: _UFunc_Nin1_Nout2[L["modf"], L[4], None]
 multiply: _UFunc_Nin2_Nout1[L["multiply"], L[23], L[1]]
-negative: _UFunc_Nin1_Nout1[L["negative"], L[19], None]
 nextafter: _UFunc_Nin2_Nout1[L["nextafter"], L[4], None]
 not_equal: _UFunc_Nin2_Nout1[L["not_equal"], L[23], None]
-positive: _UFunc_Nin1_Nout1[L["positive"], L[19], None]
 power: _UFunc_Nin2_Nout1[L["power"], L[18], None]
 remainder: _UFunc_Nin2_Nout1[L["remainder"], L[16], None]
 right_shift: _UFunc_Nin2_Nout1[L["right_shift"], L[11], None]
