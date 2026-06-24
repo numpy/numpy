@@ -405,6 +405,8 @@ from numpy._core.umath import (
     arctanh as atanh,
     cbrt,
     ceil,
+    conjugate,
+    conjugate as conj,
     cos,
     cosh,
     deg2rad,
@@ -421,9 +423,11 @@ from numpy._core.umath import (
     log2,
     rad2deg,
     radians,
+    reciprocal,
     rint,
     sin,
     sinh,
+    square,
     sqrt,
     tan,
     tanh,
@@ -7589,7 +7593,6 @@ bitwise_and: _UFunc_Nin2_Nout1[L["bitwise_and"], L[12], L[-1]]
 bitwise_count: _UFunc_Nin1_Nout1[L["bitwise_count"], L[11], None]
 bitwise_or: _UFunc_Nin2_Nout1[L["bitwise_or"], L[12], L[0]]
 bitwise_xor: _UFunc_Nin2_Nout1[L["bitwise_xor"], L[12], L[0]]
-conjugate: _UFunc_Nin1_Nout1[L["conjugate"], L[18], None]
 copysign: _UFunc_Nin2_Nout1[L["copysign"], L[4], None]
 divide: _UFunc_Nin2_Nout1[L["divide"], L[11], None]
 divmod: _UFunc_Nin2_Nout2[L["divmod"], L[15], None]
@@ -7631,13 +7634,11 @@ nextafter: _UFunc_Nin2_Nout1[L["nextafter"], L[4], None]
 not_equal: _UFunc_Nin2_Nout1[L["not_equal"], L[23], None]
 positive: _UFunc_Nin1_Nout1[L["positive"], L[19], None]
 power: _UFunc_Nin2_Nout1[L["power"], L[18], None]
-reciprocal: _UFunc_Nin1_Nout1[L["reciprocal"], L[18], None]
 remainder: _UFunc_Nin2_Nout1[L["remainder"], L[16], None]
 right_shift: _UFunc_Nin2_Nout1[L["right_shift"], L[11], None]
 sign: _UFunc_Nin1_Nout1[L["sign"], L[19], None]
 signbit: _UFunc_Nin1_Nout1[L["signbit"], L[4], None]
 spacing: _UFunc_Nin1_Nout1[L["spacing"], L[4], None]
-square: _UFunc_Nin1_Nout1[L["square"], L[18], None]
 subtract: _UFunc_Nin2_Nout1[L["subtract"], L[21], None]
 vecdot: _GUFunc_Nin2_Nout1[L["vecdot"], L[19], None, L["(n),(n)->()"]]
 vecmat: _GUFunc_Nin2_Nout1[L["vecmat"], L[19], None, L["(n),(n,m)->(m)"]]
@@ -7649,7 +7650,6 @@ bitwise_left_shift = left_shift
 bitwise_not = invert
 bitwise_invert = invert
 bitwise_right_shift = right_shift
-conj = conjugate
 mod = remainder
 permute_dims = transpose
 pow = power
