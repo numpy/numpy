@@ -870,6 +870,16 @@ def asarray[ShapeT: _Shape](
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> np.ndarray[ShapeT]: ...
+@overload  # 1d ~float  (must be above the `bool` overload to catch empty lists)
+def asarray(
+    a: list[float],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.float64]: ...
 @overload  # 1d bool
 def asarray(
     a: Sequence[bool],
@@ -890,16 +900,6 @@ def asarray(
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array1D[np.int_]: ...
-@overload  # 1d ~float
-def asarray(
-    a: list[float],
-    dtype: None = None,
-    order: _OrderKACF = None,
-    *,
-    device: L["cpu"] | None = None,
-    copy: bool | None = None,
-    like: _SupportsArrayFunc | None = None,
-) -> _Array1D[np.float64]: ...
 @overload  # 1d ~complex
 def asarray(
     a: list[complex],
@@ -930,6 +930,16 @@ def asarray(
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array1D[Any]: ...
+@overload  # 2d ~float  (must be above the `bool` overload to catch empty lists)
+def asarray(
+    a: Sequence[list[float]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[np.float64]: ...
 @overload  # 2d bool
 def asarray(
     a: Sequence[Sequence[bool]],
@@ -950,16 +960,6 @@ def asarray(
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array2D[np.int_]: ...
-@overload  # 2d ~float
-def asarray(
-    a: Sequence[list[float]],
-    dtype: None = None,
-    order: _OrderKACF = None,
-    *,
-    device: L["cpu"] | None = None,
-    copy: bool | None = None,
-    like: _SupportsArrayFunc | None = None,
-) -> _Array2D[np.float64]: ...
 @overload  # 2d ~complex
 def asarray(
     a: Sequence[list[complex]],
