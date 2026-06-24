@@ -403,15 +403,21 @@ from numpy._core.umath import (
     arctan as atan,
     arctanh,
     arctanh as atanh,
+    cbrt,
     cos,
     cosh,
+    deg2rad,
+    degrees,
     exp,
     exp2,
     expm1,
+    fabs,
     log,
     log10,
     log1p,
     log2,
+    rad2deg,
+    radians,
     rint,
     sin,
     sinh,
@@ -7579,16 +7585,12 @@ bitwise_and: _UFunc_Nin2_Nout1[L["bitwise_and"], L[12], L[-1]]
 bitwise_count: _UFunc_Nin1_Nout1[L["bitwise_count"], L[11], None]
 bitwise_or: _UFunc_Nin2_Nout1[L["bitwise_or"], L[12], L[0]]
 bitwise_xor: _UFunc_Nin2_Nout1[L["bitwise_xor"], L[12], L[0]]
-cbrt: _UFunc_Nin1_Nout1[L["cbrt"], L[5], None]
 ceil: _UFunc_Nin1_Nout1[L["ceil"], L[7], None]
 conjugate: _UFunc_Nin1_Nout1[L["conjugate"], L[18], None]
 copysign: _UFunc_Nin2_Nout1[L["copysign"], L[4], None]
-deg2rad: _UFunc_Nin1_Nout1[L["deg2rad"], L[5], None]
-degrees: _UFunc_Nin1_Nout1[L["degrees"], L[5], None]
 divide: _UFunc_Nin2_Nout1[L["divide"], L[11], None]
 divmod: _UFunc_Nin2_Nout2[L["divmod"], L[15], None]
 equal: _UFunc_Nin2_Nout1[L["equal"], L[23], None]
-fabs: _UFunc_Nin1_Nout1[L["fabs"], L[5], None]
 float_power: _UFunc_Nin2_Nout1[L["float_power"], L[4], None]
 floor: _UFunc_Nin1_Nout1[L["floor"], L[7], None]
 floor_divide: _UFunc_Nin2_Nout1[L["floor_divide"], L[21], None]
@@ -7628,8 +7630,6 @@ nextafter: _UFunc_Nin2_Nout1[L["nextafter"], L[4], None]
 not_equal: _UFunc_Nin2_Nout1[L["not_equal"], L[23], None]
 positive: _UFunc_Nin1_Nout1[L["positive"], L[19], None]
 power: _UFunc_Nin2_Nout1[L["power"], L[18], None]
-rad2deg: _UFunc_Nin1_Nout1[L["rad2deg"], L[5], None]
-radians: _UFunc_Nin1_Nout1[L["radians"], L[5], None]
 reciprocal: _UFunc_Nin1_Nout1[L["reciprocal"], L[18], None]
 remainder: _UFunc_Nin2_Nout1[L["remainder"], L[16], None]
 right_shift: _UFunc_Nin2_Nout1[L["right_shift"], L[11], None]

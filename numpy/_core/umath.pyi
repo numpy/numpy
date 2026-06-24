@@ -29,19 +29,15 @@ from numpy import (
     bitwise_count,
     bitwise_or,
     bitwise_xor,
-    cbrt,
     ceil,
     conj,
     conjugate,
     copysign,
-    deg2rad,
-    degrees,
     divide,
     divmod,
     e,
     equal,
     euler_gamma,
-    fabs,
     float_power,
     floor,
     floor_divide,
@@ -84,8 +80,6 @@ from numpy import (
     pi,
     positive,
     power,
-    rad2deg,
-    radians,
     reciprocal,
     remainder,
     right_shift,
@@ -101,6 +95,7 @@ from numpy import (
 )
 from numpy._typing import (
     _ArrayLikeBool_co,
+    _ArrayLikeFloat_co,
     _ArrayLikeInt,
     _ArrayLikeNumber_co,
     _DTypeLike,
@@ -244,9 +239,16 @@ class _CanUfuncAt1[IxT, OutT](Protocol):
 # mypy: disable-error-code=override
 # pyright: reportIncompatibleMethodOverride=false
 
-# efdgFDGO => efdgFDGO
 @type_check_only
-class _ufunc_11_fco(np.ufunc):  # type: ignore[misc]
+class _Kwargs11(TypedDict, total=False):
+    where: _ArrayLikeBool_co  # = True
+    casting: _CastingKind  # = "same_kind"
+    order: _OrderKACF  # = "K",
+    subok: bool  # = True,
+    signature: _Signature1
+
+@type_check_only
+class _ufunc_11(np.ufunc):  # type: ignore[misc]
     @property
     @override
     def identity(self) -> None: ...
@@ -265,19 +267,27 @@ class _ufunc_11_fco(np.ufunc):  # type: ignore[misc]
 
     #
     @override
+    def accumulate(self, array: Never, /) -> Never: ...  # pyrefly:ignore[bad-override]
+    @override
+    def reduce(self, array: Never, /) -> Never: ...  # pyrefly:ignore[bad-override]
+    @override
+    def reduceat(self, array: Never, /, indices: Never) -> Never: ...  # pyrefly:ignore[bad-override]
+    @override
+    def outer(self, A: Never, B: Never, /) -> Never: ...  # pyrefly:ignore[bad-override]
+
+# efdgO => efdgO
+@type_check_only
+class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
+    @override
     @overload  # known shape, known scalar/array
-    def __call__[T: np.inexact | npt.NDArray[np.inexact | np.object_]](
+    def __call__[T: np.floating | npt.NDArray[np.floating | np.object_]](
         self,
         x: T,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> T: ...
     @overload  # Nd, +f64
     def __call__[ShapeT: _Shape](
@@ -287,11 +297,7 @@ class _ufunc_11_fco(np.ufunc):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # scalar, float | +f64
     def __call__(
@@ -301,11 +307,7 @@ class _ufunc_11_fco(np.ufunc):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> np.float64: ...
     @overload  # 1d, +float
     def __call__(
@@ -315,26 +317,8 @@ class _ufunc_11_fco(np.ufunc):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> _Array1D[np.float64]: ...
-    @overload  # 1d, ~complex
-    def __call__(
-        self,
-        x: list[complex],
-        /,
-        *,
-        out: None = None,
-        dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
-    ) -> _Array1D[np.complex128]: ...
     @overload  # 2d, +float
     def __call__(
         self,
@@ -343,151 +327,87 @@ class _ufunc_11_fco(np.ufunc):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> _Array2D[np.float64]: ...
-    @overload  # 2d, ~complex
-    def __call__(
-        self,
-        x: Sequence[list[complex]],
-        /,
-        *,
-        out: None = None,
-        dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
-    ) -> _Array2D[np.complex128]: ...
-    @overload  # scalar, +complex  (overlaps with float)
-    def __call__(
-        self,
-        x: complex,
-        /,
-        *,
-        out: None = None,
-        dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
-    ) -> np.complex128 | Any: ...
     @overload  # scalar, dtype=<known>
-    def __call__[ScalarT: np.inexact](
+    def __call__[ScalarT: np.floating](
         self,
         x: _NumberLike_co,
         /,
         *,
         out: None = None,
         dtype: _DTypeLike[ScalarT],
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> ScalarT: ...
     @overload  # Nd, dtype=<known>
-    def __call__[ShapeT: _Shape, ScalarT: np.inexact](
+    def __call__[ShapeT: _Shape, ScalarT: np.floating](
         self,
-        x: np.ndarray[ShapeT, np.dtype[np.number | np.bool | np.object_]],
+        x: np.ndarray[ShapeT, np.dtype[np.floating | np.integer | np.bool | np.object_]],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
     @overload  # Nd, dtype=<unknown>
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[np.number | np.bool | np.object_]],
+        x: np.ndarray[ShapeT, np.dtype[np.floating | np.integer | np.bool | np.object_]],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> np.ndarray[ShapeT]: ...
     @overload  # Nd, dtype=<known>
-    def __call__[ScalarT: np.inexact | np.object_](
+    def __call__[ScalarT: np.floating | np.object_](
         self,
-        x: _NestedSequence[complex],
+        x: _NestedSequence[float],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd, dtype=<unknown>
     def __call__(
         self,
-        x: _NestedSequence[complex],
+        x: _NestedSequence[float],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> np.ndarray: ...
     @overload  # ?d, dtype=<known>
-    def __call__[ScalarT: np.inexact | np.object_](
+    def __call__[ScalarT: np.floating | np.object_](
         self,
-        x: _ArrayLikeNumber_co,
+        x: _ArrayLikeFloat_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
     @overload  # ?d, dtype=<unknown>
     def __call__(
         self,
-        x: _ArrayLikeNumber_co,
+        x: _ArrayLikeFloat_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> Any: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
         self,
-        x: _ArrayLikeNumber_co,
+        x: _ArrayLikeFloat_co,
         /,
         out: OutT,
         *,
         dtype: npt.DTypeLike | None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> OutT: ...
     @overload  # out=<given>
     def __call__[OutT](
@@ -497,11 +417,189 @@ class _ufunc_11_fco(np.ufunc):  # type: ignore[misc]
         out: object | None = None,
         *,
         dtype: npt.DTypeLike | None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> OutT: ...
+
+    #
+    @override
+    @overload
+    def at(self, a: npt.NDArray[np.floating | np.object_], indices: _ArrayLikeInt, /) -> None: ...  # pyrefly:ignore[bad-override]
+    @overload
+    def at[IxT, OutT](self, a: _CanUfuncAt1[IxT, OutT], indices: IxT, /) -> OutT: ...
+
+# efdgFDGO => efdgFDGO
+@type_check_only
+class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
+    @override
+    @overload  # known shape, known scalar/array
+    def __call__[T: np.inexact | npt.NDArray[np.inexact | np.object_]](
+        self,
+        x: T,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> T: ...
+    @overload  # Nd, +f64
+    def __call__[ShapeT: _Shape](
+        self,
+        x: np.ndarray[ShapeT, np.dtype[np.integer | np.bool]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    @overload  # scalar, float | +f64
+    def __call__(
+        self,
+        x: float | np.integer | np.bool,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.float64: ...
+    @overload  # 1d, +float
+    def __call__(
+        self,
+        x: Sequence[float],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array1D[np.float64]: ...
+    @overload  # 1d, ~complex
+    def __call__(
+        self,
+        x: list[complex],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array1D[np.complex128]: ...
+    @overload  # 2d, +float
+    def __call__(
+        self,
+        x: Sequence[Sequence[float]],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array2D[np.float64]: ...
+    @overload  # 2d, ~complex
+    def __call__(
+        self,
+        x: Sequence[list[complex]],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array2D[np.complex128]: ...
+    @overload  # scalar, +complex  (overlaps with float)
+    def __call__(
+        self,
+        x: complex,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.complex128 | Any: ...
+    @overload  # scalar, dtype=<known>
+    def __call__[ScalarT: np.inexact](
+        self,
+        x: _NumberLike_co,
+        /,
+        *,
+        out: None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs11],
+    ) -> ScalarT: ...
+    @overload  # Nd, dtype=<known>
+    def __call__[ShapeT: _Shape, ScalarT: np.inexact](
+        self,
+        x: np.ndarray[ShapeT, np.dtype[np.number | np.bool | np.object_]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+    @overload  # Nd, dtype=<unknown>
+    def __call__[ShapeT: _Shape](
+        self,
+        x: np.ndarray[ShapeT, np.dtype[np.number | np.bool | np.object_]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: npt.DTypeLike,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.ndarray[ShapeT]: ...
+    @overload  # Nd, dtype=<known>
+    def __call__[ScalarT: np.inexact | np.object_](
+        self,
+        x: _NestedSequence[complex],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs11],
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # Nd, dtype=<unknown>
+    def __call__(
+        self,
+        x: _NestedSequence[complex],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: npt.DTypeLike,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.ndarray: ...
+    @overload  # ?d, dtype=<known>
+    def __call__[ScalarT: np.inexact | np.object_](
+        self,
+        x: _ArrayLikeNumber_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs11],
+    ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
+    @overload  # ?d, dtype=<unknown>
+    def __call__(
+        self,
+        x: _ArrayLikeNumber_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: npt.DTypeLike,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> Any: ...
+    @overload  # out=<given>
+    def __call__[OutT: np.ndarray](
+        self,
+        x: _ArrayLikeNumber_co,
+        /,
+        out: OutT,
+        *,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> OutT: ...
+    @overload  # out=<given>
+    def __call__[OutT](
+        self,
+        x: _CanUfuncCall1[OutT],
+        /,
+        out: object | None = None,
+        *,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> OutT: ...
 
     #
@@ -511,15 +609,12 @@ class _ufunc_11_fco(np.ufunc):  # type: ignore[misc]
     @overload
     def at[IxT, OutT](self, a: _CanUfuncAt1[IxT, OutT], indices: IxT, /) -> OutT: ...
 
-    #
-    @override
-    def accumulate(self, array: Never, /) -> Never: ...  # pyrefly:ignore[bad-override]
-    @override
-    def reduce(self, array: Never, /) -> Never: ...  # pyrefly:ignore[bad-override]
-    @override
-    def reduceat(self, array: Never, /, indices: Never) -> Never: ...  # pyrefly:ignore[bad-override]
-    @override
-    def outer(self, A: Never, B: Never, /) -> Never: ...  # pyrefly:ignore[bad-override]
+cbrt: Final[_ufunc_11_fo] = ...
+deg2rad: Final[_ufunc_11_fo] = ...
+degrees: Final[_ufunc_11_fo] = ...
+fabs: Final[_ufunc_11_fo] = ...
+rad2deg: Final[_ufunc_11_fo] = ...
+radians: Final[_ufunc_11_fo] = ...
 
 arccos: Final[_ufunc_11_fco] = ...
 arccosh: Final[_ufunc_11_fco] = ...
