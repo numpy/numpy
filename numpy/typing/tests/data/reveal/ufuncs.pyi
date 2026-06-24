@@ -143,6 +143,9 @@ def test_matmul_at_invalid() -> None:
 
 ###
 
+_py_b_0d: bool
+_py_b_1d: list[bool]
+_py_b_2d: list[list[bool]]
 _py_i_0d: int
 _py_i_1d: list[int]
 _py_i_2d: list[list[int]]
@@ -153,7 +156,15 @@ _py_c_0d: complex
 _py_c_1d: list[complex]
 _py_c_2d: list[list[complex]]
 
-_i16_0d: np.int64
+_bool_0d: np.bool
+_bool_1d: np.ndarray[tuple[int], np.dtype[np.bool]]
+_bool_2d: np.ndarray[tuple[int, int], np.dtype[np.bool]]
+_bool_nd: npt.NDArray[np.bool]
+_u8_0d: np.uint8
+_u8_1d: np.ndarray[tuple[int], np.dtype[np.uint8]]
+_u8_2d: np.ndarray[tuple[int, int], np.dtype[np.uint8]]
+_u8_nd: npt.NDArray[np.uint8]
+_i16_0d: np.int16
 _i16_1d: np.ndarray[tuple[int], np.dtype[np.int16]]
 _i16_2d: np.ndarray[tuple[int, int], np.dtype[np.int16]]
 _i16_nd: npt.NDArray[np.int16]
@@ -238,3 +249,47 @@ assert_type(np.sin(_py_i_1d, dtype="f4"), np.ndarray)
 assert_type(np.sin(_i16_2d, dtype="f4"), np.ndarray[tuple[int, int]])
 
 assert_type(np.sin(_py_i_2d, out=_c64_2d), np.ndarray[tuple[int, int], np.dtype[np.complex64]])
+
+# _ufunc_11_bifo
+# (ceil, floor, trunc)
+
+assert_type(np.ceil(_py_b_0d), np.bool)
+assert_type(np.ceil(_py_b_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.ceil(_py_b_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.ceil(_py_i_0d), np.int_ | Any)
+assert_type(np.ceil(_py_i_1d), np.ndarray[tuple[int], np.dtype[np.int_]])
+assert_type(np.ceil(_py_i_2d), np.ndarray[tuple[int, int], np.dtype[np.int_]])
+assert_type(np.ceil(_py_f_0d), np.float64 | Any)
+assert_type(np.ceil(_py_f_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.ceil(_py_f_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+
+assert_type(np.ceil(_bool_0d), np.bool)
+assert_type(np.ceil(_bool_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.ceil(_bool_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.ceil(_bool_nd), npt.NDArray[np.bool])
+assert_type(np.ceil(_u8_0d), np.uint8)
+assert_type(np.ceil(_u8_1d), np.ndarray[tuple[int], np.dtype[np.uint8]])
+assert_type(np.ceil(_u8_2d), np.ndarray[tuple[int, int], np.dtype[np.uint8]])
+assert_type(np.ceil(_u8_nd), npt.NDArray[np.uint8])
+assert_type(np.ceil(_i16_0d), np.int16)
+assert_type(np.ceil(_i16_1d), np.ndarray[tuple[int], np.dtype[np.int16]])
+assert_type(np.ceil(_i16_2d), np.ndarray[tuple[int, int], np.dtype[np.int16]])
+assert_type(np.ceil(_i16_nd), npt.NDArray[np.int16])
+assert_type(np.ceil(_f32_0d), np.float32)
+assert_type(np.ceil(_f32_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.ceil(_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.ceil(_f32_nd), npt.NDArray[np.float32])
+assert_type(np.ceil(_obj_1d), np.ndarray[tuple[int], np.dtype[np.object_]])
+assert_type(np.ceil(_obj_2d), np.ndarray[tuple[int, int], np.dtype[np.object_]])
+assert_type(np.ceil(_obj_nd), npt.NDArray[np.object_])
+
+assert_type(np.ceil(_py_b_0d, dtype=np.uint8), np.uint8)
+assert_type(np.ceil(_py_i_1d, dtype=np.float32), npt.NDArray[np.float32])
+assert_type(np.ceil(_u8_2d, dtype=np.bool), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+
+assert_type(np.ceil(_py_b_0d, dtype="f4"), Any)
+assert_type(np.ceil(_py_i_1d, dtype="f4"), np.ndarray)
+assert_type(np.ceil(_u8_2d, dtype="f4"), np.ndarray[tuple[int, int]])
+
+assert_type(np.ceil(_py_b_1d, out=_i16_1d), np.ndarray[tuple[int], np.dtype[np.int16]])
+assert_type(np.ceil(_py_i_2d, out=_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
