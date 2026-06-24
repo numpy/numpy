@@ -302,6 +302,51 @@ assert_type(np.square(_py_b_0d, out=_i16_1d), np.ndarray[tuple[int], np.dtype[np
 assert_type(np.square(_py_i_1d, out=_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 assert_type(np.square(_py_f_2d, out=_c64_2d), np.ndarray[tuple[int, int], np.dtype[np.complex64]])
 
+# _ufunc_11_ifcmo_ifco
+# (sign)
+
+assert_type(np.sign(_py_i_0d), np.int_)
+assert_type(np.sign(_py_i_1d), np.ndarray[tuple[int], np.dtype[np.int_]])
+assert_type(np.sign(_py_i_2d), np.ndarray[tuple[int, int], np.dtype[np.int_]])
+assert_type(np.sign(_py_f_0d), np.float64 | Any)  # `complex` overlaps with `int`
+assert_type(np.sign(_py_f_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.sign(_py_f_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(np.sign(_py_c_0d), np.complex128 | Any)  # `complex` overlaps with `float`
+assert_type(np.sign(_py_c_1d), np.ndarray[tuple[int], np.dtype[np.complex128]])
+assert_type(np.sign(_py_c_2d), np.ndarray[tuple[int, int], np.dtype[np.complex128]])
+
+assert_type(np.sign(_i16_0d), np.int16)
+assert_type(np.sign(_i16_1d), np.ndarray[tuple[int], np.dtype[np.int16]])
+assert_type(np.sign(_i16_2d), np.ndarray[tuple[int, int], np.dtype[np.int16]])
+assert_type(np.sign(_i16_nd), npt.NDArray[np.int16])
+assert_type(np.sign(_f32_0d), np.float32)
+assert_type(np.sign(_f32_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.sign(_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.sign(_f32_nd), npt.NDArray[np.float32])
+assert_type(np.sign(_c64_0d), np.complex64)
+assert_type(np.sign(_c64_1d), np.ndarray[tuple[int], np.dtype[np.complex64]])
+assert_type(np.sign(_c64_2d), np.ndarray[tuple[int, int], np.dtype[np.complex64]])
+assert_type(np.sign(_c64_nd), npt.NDArray[np.complex64])
+assert_type(np.sign(_td_ns_0d), np.float64)
+assert_type(np.sign(_td_ns_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.sign(_td_ns_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(np.sign(_td_ns_nd), npt.NDArray[np.float64])
+assert_type(np.sign(_obj_1d), np.ndarray[tuple[int], np.dtype[np.object_]])
+assert_type(np.sign(_obj_2d), np.ndarray[tuple[int, int], np.dtype[np.object_]])
+assert_type(np.sign(_obj_nd), npt.NDArray[np.object_])
+
+assert_type(np.sign(_py_i_0d, dtype=np.float32), np.float32)
+assert_type(np.sign(_py_f_1d, dtype=np.float32), npt.NDArray[np.float32])
+assert_type(np.sign(_i16_2d, dtype=np.float32), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+
+assert_type(np.sign(_py_i_0d, dtype="f4"), Any)
+assert_type(np.sign(_py_f_1d, dtype="f4"), np.ndarray)
+assert_type(np.sign(_i16_2d, dtype="f4"), np.ndarray[tuple[int, int]])
+
+assert_type(np.sign(_py_i_0d, out=_i16_1d), np.ndarray[tuple[int], np.dtype[np.int16]])
+assert_type(np.sign(_py_f_1d, out=_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.sign(_py_c_2d, out=_c64_2d), np.ndarray[tuple[int, int], np.dtype[np.complex64]])
+
 # _ufunc_11_ifcmo
 # (positive, negative)
 

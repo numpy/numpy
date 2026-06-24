@@ -427,6 +427,7 @@ from numpy._core.umath import (
     radians,
     reciprocal,
     rint,
+    sign,
     sin,
     sinh,
     square,
@@ -7636,7 +7637,6 @@ not_equal: _UFunc_Nin2_Nout1[L["not_equal"], L[23], None]
 power: _UFunc_Nin2_Nout1[L["power"], L[18], None]
 remainder: _UFunc_Nin2_Nout1[L["remainder"], L[16], None]
 right_shift: _UFunc_Nin2_Nout1[L["right_shift"], L[11], None]
-sign: _UFunc_Nin1_Nout1[L["sign"], L[19], None]
 signbit: _UFunc_Nin1_Nout1[L["signbit"], L[4], None]
 spacing: _UFunc_Nin1_Nout1[L["spacing"], L[4], None]
 subtract: _UFunc_Nin2_Nout1[L["subtract"], L[21], None]
