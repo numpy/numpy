@@ -22,7 +22,6 @@ import numpy.typing as npt
 from numpy import (
     _CastingKind,
     _OrderKACF,
-    absolute,
     add,
     arctan2,
     bitwise_and,
@@ -210,9 +209,11 @@ type _ErrCall = Callable[[str, int], Any] | SupportsWrite[str]
 type _to_integer = np.integer | np.bool
 type _to_floating = np.floating | _to_integer
 type _to_number = np.number | np.bool
+type _to_numeric = _to_number | np.timedelta64
 type _numeric = np.number | np.timedelta64
 
 type _ArrayLikeNumericObj = _DualArrayLike[np.dtype[_numeric | np.object_], complex]
+type _ArrayLikeNumericObj_co = _DualArrayLike[np.dtype[_to_numeric | np.object_], complex]
 
 @type_check_only
 class _ExtOjbDict(TypedDict, total=False):
@@ -1690,6 +1691,288 @@ class _ufunc_11_bifo(_ufunc_11):  # type: ignore[misc]
     @overload
     def at[IxT, OutT](self, a: _CanUfuncAt1[IxT, OutT], indices: IxT, /) -> OutT: ...
 
+# ?bBhHiIlLqQefdgmFDGO => ?bBhHiIlLqQefdgmO, where F => f, D => d, G => g
+@type_check_only
+class _ufunc_11_bifcmo(_ufunc_11):  # type: ignore[misc]
+    @override
+    @overload  # known shape, known scalar/array
+    def __call__[T: _to_floating | np.timedelta64 | npt.NDArray[_to_floating | np.timedelta64 | np.object_]](
+        self,
+        x: T,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> T: ...
+    @overload  # Nd, c128 -> f64
+    def __call__[ShapeT: _Shape](
+        self,
+        x: np.ndarray[ShapeT, np.dtype[np.complex128]],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    @overload  # Nd, c64 -> f32
+    def __call__[ShapeT: _Shape](
+        self,
+        x: np.ndarray[ShapeT, np.dtype[np.complex64]],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
+    @overload  # Nd, c160 -> f80
+    def __call__[ShapeT: _Shape](
+        self,
+        x: np.ndarray[ShapeT, np.dtype[np.clongdouble]],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.ndarray[ShapeT, np.dtype[np.longdouble]]: ...
+    @overload  # scalar, c128 -> f64
+    def __call__(
+        self,
+        x: np.complex128,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.float64: ...
+    @overload  # scalar, c64 -> f32
+    def __call__(
+        self,
+        x: np.complex64,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.float32: ...
+    @overload  # scalar, c160 -> f80
+    def __call__(
+        self,
+        x: np.clongdouble,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.longdouble: ...
+    @overload  # scalar, bool
+    def __call__(
+        self,
+        x: bool,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.bool: ...
+    @overload  # scalar, int (overlaps with bool)
+    def __call__(
+        self,
+        x: int,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.int_ | Any: ...
+    @overload  # scalar, float | complex (overlaps with int)
+    def __call__(
+        self,
+        x: float | complex,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.float64 | Any: ...
+    @overload  # 1d, bool
+    def __call__(
+        self,
+        x: Sequence[bool],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array1D[np.bool]: ...
+    @overload  # 1d, ~int
+    def __call__(
+        self,
+        x: list[int],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array1D[np.int_]: ...
+    @overload  # 1d, ~float | ~complex
+    def __call__(
+        self,
+        x: list[float] | list[complex],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array1D[np.float64]: ...
+    @overload  # 1d, +complex
+    def __call__(
+        self,
+        x: Sequence[complex],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array1D[np.float64 | Any]: ...
+    @overload  # 2d, bool
+    def __call__(
+        self,
+        x: Sequence[Sequence[bool]],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array2D[np.bool]: ...
+    @overload  # 2d, ~int
+    def __call__(
+        self,
+        x: Sequence[list[int]],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array2D[np.int_]: ...
+    @overload  # 2d, ~float | ~complex
+    def __call__(
+        self,
+        x: Sequence[list[float]] | Sequence[list[complex]],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array2D[np.float64]: ...
+    @overload  # 2d, +complex
+    def __call__(
+        self,
+        x: Sequence[Sequence[complex]],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array2D[np.float64 | Any]: ...
+    @overload  # scalar, dtype=<known>
+    def __call__[ScalarT: _to_floating | np.timedelta64](
+        self,
+        x: complex | _to_numeric,
+        /,
+        *,
+        out: None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs11],
+    ) -> ScalarT: ...
+    @overload  # Nd, dtype=<known>
+    def __call__[ShapeT: _Shape, ScalarT: _to_floating | np.timedelta64 | np.object_](
+        self,
+        x: np.ndarray[ShapeT, np.dtype[_to_numeric]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+    @overload  # Nd, dtype=<unknown>
+    def __call__[ShapeT: _Shape](
+        self,
+        x: np.ndarray[ShapeT, np.dtype[_to_numeric | np.object_]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: npt.DTypeLike,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.ndarray[ShapeT]: ...
+    @overload  # Nd, dtype=<known>
+    def __call__[ScalarT: _to_floating | np.object_](
+        self,
+        x: _NestedSequence[complex | _to_numeric],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs11],
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # Nd, dtype=<unknown>
+    def __call__(
+        self,
+        x: _NestedSequence[complex | _to_numeric],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: npt.DTypeLike,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.ndarray: ...
+    @overload  # ?d, dtype=<known>
+    def __call__[ScalarT: _to_floating | np.object_](
+        self,
+        x: _ArrayLikeNumericObj_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs11],
+    ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
+    @overload  # ?d, dtype=<unknown>
+    def __call__(
+        self,
+        x: _ArrayLikeNumericObj_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> Any: ...
+    @overload  # out=<given>
+    def __call__[OutT: np.ndarray](
+        self,
+        x: _ArrayLikeNumericObj_co,
+        /,
+        out: OutT,
+        *,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> OutT: ...
+    @overload  # out=<given>
+    def __call__[OutT](
+        self,
+        x: _CanUfuncCall1[OutT],
+        /,
+        out: object | None = None,
+        *,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> OutT: ...
+
+    #
+    @override
+    @overload
+    def at(self, a: npt.NDArray[_to_floating | np.timedelta64 | np.object_], indices: _ArrayLikeInt, /) -> None: ...  # pyrefly:ignore[bad-override]
+    @overload
+    def at[IxT, OutT](self, a: _CanUfuncAt1[IxT, OutT], indices: IxT, /) -> OutT: ...
+
 cbrt: Final[_ufunc_11_fo] = ...
 deg2rad: Final[_ufunc_11_fo] = ...
 degrees: Final[_ufunc_11_fo] = ...
@@ -1733,6 +2016,8 @@ invert: Final[_ufunc_11_bio] = ...
 ceil: Final[_ufunc_11_bifo] = ...
 floor: Final[_ufunc_11_bifo] = ...
 trunc: Final[_ufunc_11_bifo] = ...
+
+absolute: Final[_ufunc_11_bifcmo] = ...
 
 ###
 # re-exports from `_core._multiarray_umath` that are used by `_core._ufunc_config`

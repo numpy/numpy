@@ -391,6 +391,8 @@ from numpy._core.shape_base import (
     unstack,
 )
 from numpy._core.umath import (
+    absolute,
+    absolute as abs,
     arccos,
     arccos as acos,
     arccosh,
@@ -7589,7 +7591,6 @@ class ufunc:
     ) -> tuple[dtype, ...]: ...
 
 # Parameters: `__name__`, `ntypes` and `identity`
-absolute: _UFunc_Nin1_Nout1[L["absolute"], L[20], None]
 add: _UFunc_Nin2_Nout1[L["add"], L[22], L[0]]
 arctan2: _UFunc_Nin2_Nout1[L["arctan2"], L[5], None]
 bitwise_and: _UFunc_Nin2_Nout1[L["bitwise_and"], L[12], L[-1]]
@@ -7643,7 +7644,6 @@ subtract: _UFunc_Nin2_Nout1[L["subtract"], L[21], None]
 vecdot: _GUFunc_Nin2_Nout1[L["vecdot"], L[19], None, L["(n),(n)->()"]]
 vecmat: _GUFunc_Nin2_Nout1[L["vecmat"], L[19], None, L["(n),(n,m)->(m)"]]
 
-abs = absolute
 atan2 = arctan2
 concat = concatenate
 bitwise_left_shift = left_shift
