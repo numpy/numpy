@@ -404,6 +404,7 @@ from numpy._core.umath import (
     arctanh,
     arctanh as atanh,
     cbrt,
+    ceil,
     cos,
     cosh,
     deg2rad,
@@ -412,6 +413,8 @@ from numpy._core.umath import (
     exp2,
     expm1,
     fabs,
+    floor,
+    invert,
     log,
     log10,
     log1p,
@@ -424,6 +427,7 @@ from numpy._core.umath import (
     sqrt,
     tan,
     tanh,
+    trunc,
 )
 
 from ._expired_attrs_2_0 import __expired_attributes__ as __expired_attributes__
@@ -7585,14 +7589,12 @@ bitwise_and: _UFunc_Nin2_Nout1[L["bitwise_and"], L[12], L[-1]]
 bitwise_count: _UFunc_Nin1_Nout1[L["bitwise_count"], L[11], None]
 bitwise_or: _UFunc_Nin2_Nout1[L["bitwise_or"], L[12], L[0]]
 bitwise_xor: _UFunc_Nin2_Nout1[L["bitwise_xor"], L[12], L[0]]
-ceil: _UFunc_Nin1_Nout1[L["ceil"], L[7], None]
 conjugate: _UFunc_Nin1_Nout1[L["conjugate"], L[18], None]
 copysign: _UFunc_Nin2_Nout1[L["copysign"], L[4], None]
 divide: _UFunc_Nin2_Nout1[L["divide"], L[11], None]
 divmod: _UFunc_Nin2_Nout2[L["divmod"], L[15], None]
 equal: _UFunc_Nin2_Nout1[L["equal"], L[23], None]
 float_power: _UFunc_Nin2_Nout1[L["float_power"], L[4], None]
-floor: _UFunc_Nin1_Nout1[L["floor"], L[7], None]
 floor_divide: _UFunc_Nin2_Nout1[L["floor_divide"], L[21], None]
 fmax: _UFunc_Nin2_Nout1[L["fmax"], L[21], None]
 fmin: _UFunc_Nin2_Nout1[L["fmin"], L[21], None]
@@ -7603,7 +7605,6 @@ greater: _UFunc_Nin2_Nout1[L["greater"], L[23], None]
 greater_equal: _UFunc_Nin2_Nout1[L["greater_equal"], L[23], None]
 heaviside: _UFunc_Nin2_Nout1[L["heaviside"], L[4], None]
 hypot: _UFunc_Nin2_Nout1[L["hypot"], L[5], L[0]]
-invert: _UFunc_Nin1_Nout1[L["invert"], L[12], None]
 isfinite: _UFunc_Nin1_Nout1[L["isfinite"], L[20], None]
 isinf: _UFunc_Nin1_Nout1[L["isinf"], L[20], None]
 isnan: _UFunc_Nin1_Nout1[L["isnan"], L[20], None]
@@ -7638,7 +7639,6 @@ signbit: _UFunc_Nin1_Nout1[L["signbit"], L[4], None]
 spacing: _UFunc_Nin1_Nout1[L["spacing"], L[4], None]
 square: _UFunc_Nin1_Nout1[L["square"], L[18], None]
 subtract: _UFunc_Nin2_Nout1[L["subtract"], L[21], None]
-trunc: _UFunc_Nin1_Nout1[L["trunc"], L[7], None]
 vecdot: _GUFunc_Nin2_Nout1[L["vecdot"], L[19], None, L["(n),(n)->()"]]
 vecmat: _GUFunc_Nin2_Nout1[L["vecmat"], L[19], None, L["(n),(n,m)->(m)"]]
 
