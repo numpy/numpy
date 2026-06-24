@@ -240,6 +240,14 @@ class _CanUfuncAt1[IxT, OutT](Protocol):
 # pyright: reportIncompatibleMethodOverride=false
 
 @type_check_only
+class _Kwargs11(TypedDict, total=False):
+    where: _ArrayLikeBool_co  # = True
+    casting: _CastingKind  # = "same_kind"
+    order: _OrderKACF  # = "K",
+    subok: bool  # = True,
+    signature: _Signature1
+
+@type_check_only
 class _ufunc_11(np.ufunc):  # type: ignore[misc]
     @property
     @override
@@ -279,11 +287,7 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> T: ...
     @overload  # Nd, +f64
     def __call__[ShapeT: _Shape](
@@ -293,11 +297,7 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # scalar, float | +f64
     def __call__(
@@ -307,11 +307,7 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> np.float64: ...
     @overload  # 1d, +float
     def __call__(
@@ -321,11 +317,7 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> _Array1D[np.float64]: ...
     @overload  # 2d, +float
     def __call__(
@@ -335,11 +327,7 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> _Array2D[np.float64]: ...
     @overload  # scalar, dtype=<known>
     def __call__[ScalarT: np.floating](
@@ -349,11 +337,7 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: _DTypeLike[ScalarT],
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> ScalarT: ...
     @overload  # Nd, dtype=<known>
     def __call__[ShapeT: _Shape, ScalarT: np.floating](
@@ -363,11 +347,7 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
     @overload  # Nd, dtype=<unknown>
     def __call__[ShapeT: _Shape](
@@ -377,11 +357,7 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> np.ndarray[ShapeT]: ...
     @overload  # Nd, dtype=<known>
     def __call__[ScalarT: np.floating | np.object_](
@@ -391,11 +367,7 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd, dtype=<unknown>
     def __call__(
@@ -405,11 +377,7 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> np.ndarray: ...
     @overload  # ?d, dtype=<known>
     def __call__[ScalarT: np.floating | np.object_](
@@ -419,11 +387,7 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
     @overload  # ?d, dtype=<unknown>
     def __call__(
@@ -433,11 +397,7 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> Any: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
@@ -447,11 +407,7 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
         out: OutT,
         *,
         dtype: npt.DTypeLike | None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> OutT: ...
     @overload  # out=<given>
     def __call__[OutT](
@@ -461,11 +417,7 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
         out: object | None = None,
         *,
         dtype: npt.DTypeLike | None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> OutT: ...
 
     #
@@ -487,11 +439,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> T: ...
     @overload  # Nd, +f64
     def __call__[ShapeT: _Shape](
@@ -501,11 +449,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # scalar, float | +f64
     def __call__(
@@ -515,11 +459,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> np.float64: ...
     @overload  # 1d, +float
     def __call__(
@@ -529,11 +469,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> _Array1D[np.float64]: ...
     @overload  # 1d, ~complex
     def __call__(
@@ -543,11 +479,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> _Array1D[np.complex128]: ...
     @overload  # 2d, +float
     def __call__(
@@ -557,11 +489,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> _Array2D[np.float64]: ...
     @overload  # 2d, ~complex
     def __call__(
@@ -571,11 +499,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> _Array2D[np.complex128]: ...
     @overload  # scalar, +complex  (overlaps with float)
     def __call__(
@@ -585,11 +509,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> np.complex128 | Any: ...
     @overload  # scalar, dtype=<known>
     def __call__[ScalarT: np.inexact](
@@ -599,11 +519,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: _DTypeLike[ScalarT],
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> ScalarT: ...
     @overload  # Nd, dtype=<known>
     def __call__[ShapeT: _Shape, ScalarT: np.inexact](
@@ -613,11 +529,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
     @overload  # Nd, dtype=<unknown>
     def __call__[ShapeT: _Shape](
@@ -627,11 +539,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> np.ndarray[ShapeT]: ...
     @overload  # Nd, dtype=<known>
     def __call__[ScalarT: np.inexact | np.object_](
@@ -641,11 +549,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd, dtype=<unknown>
     def __call__(
@@ -655,11 +559,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> np.ndarray: ...
     @overload  # ?d, dtype=<known>
     def __call__[ScalarT: np.inexact | np.object_](
@@ -669,11 +569,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
     @overload  # ?d, dtype=<unknown>
     def __call__(
@@ -683,11 +579,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> Any: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
@@ -697,11 +589,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         out: OutT,
         *,
         dtype: npt.DTypeLike | None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> OutT: ...
     @overload  # out=<given>
     def __call__[OutT](
@@ -711,11 +599,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         out: object | None = None,
         *,
         dtype: npt.DTypeLike | None = None,
-        where: _ArrayLikeBool_co = True,
-        casting: _CastingKind = "same_kind",
-        order: _OrderKACF = "K",
-        subok: bool = True,
-        signature: _Signature1 | None = None,
+        **kwargs: Unpack[_Kwargs11],
     ) -> OutT: ...
 
     #
