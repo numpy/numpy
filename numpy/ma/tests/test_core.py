@@ -1122,14 +1122,31 @@ class TestMaskedArray:
         mx[1].data[0] = 0.
         assert_(mx2[0] == 0.)
 
-    def test_maskedarray_tofile_raises_notimplementederror(self):
+    def test_maskedarray_tofile(self):
         xm = masked_array([1, 2, 3], mask=[False, True, False])
-        # Test case to check the NotImplementedError.
-        # It is not implemented at this point of time. We can change this in future
-        with temppath(suffix='.npy') as path:
-            with pytest.raises(NotImplementedError):
+        # Binary mode: masked value replaced by fill_value
+        with temppath(suffix='.bin') as path:
+            xm.tofile(path)
+            result = np.fromfile(path, dtype=xm.dtype)
+            assert_equal(result, [1, xm.fill_value, 3])
 
-                np.save(path, xm)
+        # Binary mode: explicit fill_value
+        with temppath(suffix='.bin') as path:
+            xm.tofile(path, fill_value=0)
+            result = np.fromfile(path, dtype=xm.dtype)
+            assert_equal(result, [1, 0, 3])
+
+        # Text mode
+        with temppath(suffix='.txt') as path:
+            xm.tofile(path, sep=",")
+            with open(path) as f:
+                assert_equal(f.read(), f"1,{xm.fill_value},3")
+
+        # np.save now works (mask info is lost on load)
+        with temppath(suffix='.npy') as path:
+            np.save(path, xm)
+            result = np.load(path)
+            assert_equal(result, [1, xm.fill_value, 3])
 
 
 @pytest.fixture(autouse=True, scope="class")

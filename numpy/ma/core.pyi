@@ -2,7 +2,7 @@
 
 import datetime as dt
 import types
-from _typeshed import Incomplete, SupportsLenAndGetItem
+from _typeshed import Incomplete, StrOrBytesPath, SupportsLenAndGetItem
 from collections.abc import Buffer, Callable, Iterator, Sequence
 from typing import (
     Any,
@@ -36,6 +36,7 @@ from numpy import (
     _OrderKACF,
     _PartitionKind,
     _SortKind,
+    _SupportsFileMethods,
     _ToIndices,
     amax,
     amin,
@@ -2780,9 +2781,15 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def tolist(self, /, fill_value: _ScalarLike_co | None = None) -> Any: ...
 
-    # NOTE: will raise `NotImplementedError`
     @override
-    def tofile(self, /, fid: Never, sep: str = "", format: str = "%s") -> NoReturn: ...  # type: ignore[override]
+    def tofile(
+        self,
+        /,
+        fid: StrOrBytesPath | _SupportsFileMethods,
+        sep: str = "",
+        format: str = "%s",
+        fill_value: ArrayLike | None = None,
+    ) -> None: ...
 
     #
     @override

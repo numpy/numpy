@@ -6403,20 +6403,52 @@ class MaskedArray(ndarray):
         """
         return self.filled(fill_value).tobytes(order=order)
 
-    def tofile(self, fid, sep="", format="%s"):
+    def tofile(self, fid, sep="", format="%s", fill_value=None):
         """
-        Save a masked array to a file in binary format.
+        Save a masked array to a file in binary or text format.
 
-        .. warning::
-          This function is not implemented yet.
+        Masked values are replaced by `fill_value` before writing.
 
-        Raises
-        ------
-        NotImplementedError
-            When `tofile` is called.
+        Parameters
+        ----------
+        fid : str, bytes, os.PathLike, or file-like object
+            An open file object, or a string containing a filename.
+        sep : str, optional
+            Separator between array items for text output. If '' (empty)
+            or '\\n', a binary file is written, equivalent to
+            ``file.write(a.tobytes())``.
+        format : str, optional
+            Format string for text file output. Each entry in the array
+            is formatted to text by first converting it to the closest
+            Python type, and then using "format" % item.
+        fill_value : scalar, optional
+            Value used to fill in the masked values. Default is None, in
+            which case `MaskedArray.fill_value` is used.
+
+        Notes
+        -----
+        The mask and `fill_value` are not stored in the file. Mask
+        information is lost: loading the file back will yield an unmasked
+        array with fill values where masked entries were.
+
+        See Also
+        --------
+        numpy.ndarray.tofile
+        tobytes, tolist
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import tempfile
+        >>> x = np.ma.array([1, 2, 3], mask=[False, True, False])
+        >>> with tempfile.TemporaryFile() as f:
+        ...     x.tofile(f)
+        ...     _ = f.seek(0)
+        ...     np.fromfile(f, dtype=x.dtype)
+        array([1, 999999,      3])
 
         """
-        raise NotImplementedError("MaskedArray.tofile() not implemented yet.")
+        self.filled(fill_value).tofile(fid, sep=sep, format=format)
 
     def toflex(self):
         """
