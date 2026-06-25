@@ -14,7 +14,7 @@ from numpy._typing import (
     _SupportsArray,
 )
 
-from .defchararray import mod, str_len
+from .defchararray import mod
 from .umath import (
     isalnum,
     isalpha,
@@ -25,6 +25,7 @@ from .umath import (
     isspace,
     istitle,
     isupper,
+    str_len,
 )
 
 __all__ = [

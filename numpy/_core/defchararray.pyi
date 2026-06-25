@@ -30,6 +30,7 @@ from .strings import (
     isspace,
     istitle,
     isupper,
+    str_len,
 )
 
 __all__ = [
@@ -626,8 +627,6 @@ def index(a: U_co, sub: U_co, start: i_co = 0, end: i_co | None = None) -> NDArr
 def index(a: S_co, sub: S_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
 @overload
 def index(a: T_co, sub: T_co, start: i_co = 0, end: i_co | None = None) -> NDArray[np.int_]: ...
-
-str_len: Final[_UFunc_Nin1_Nout1[L["str_len"], L[0], L[0]]] = ...
 
 @overload
 def rfind(a: U_co, sub: U_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
