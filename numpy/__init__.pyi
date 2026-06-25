@@ -391,6 +391,8 @@ from numpy._core.shape_base import (
     unstack,
 )
 from numpy._core.umath import (
+    absolute,
+    absolute as abs,
     arccos,
     arccos as acos,
     arccosh,
@@ -421,10 +423,13 @@ from numpy._core.umath import (
     log10,
     log1p,
     log2,
+    positive,
+    negative,
     rad2deg,
     radians,
     reciprocal,
     rint,
+    sign,
     sin,
     sinh,
     square,
@@ -7586,7 +7591,6 @@ class ufunc:
     ) -> tuple[dtype, ...]: ...
 
 # Parameters: `__name__`, `ntypes` and `identity`
-absolute: _UFunc_Nin1_Nout1[L["absolute"], L[20], None]
 add: _UFunc_Nin2_Nout1[L["add"], L[22], L[0]]
 arctan2: _UFunc_Nin2_Nout1[L["arctan2"], L[5], None]
 bitwise_and: _UFunc_Nin2_Nout1[L["bitwise_and"], L[12], L[-1]]
@@ -7629,21 +7633,17 @@ maximum: _UFunc_Nin2_Nout1[L["maximum"], L[21], None]
 minimum: _UFunc_Nin2_Nout1[L["minimum"], L[21], None]
 modf: _UFunc_Nin1_Nout2[L["modf"], L[4], None]
 multiply: _UFunc_Nin2_Nout1[L["multiply"], L[23], L[1]]
-negative: _UFunc_Nin1_Nout1[L["negative"], L[19], None]
 nextafter: _UFunc_Nin2_Nout1[L["nextafter"], L[4], None]
 not_equal: _UFunc_Nin2_Nout1[L["not_equal"], L[23], None]
-positive: _UFunc_Nin1_Nout1[L["positive"], L[19], None]
 power: _UFunc_Nin2_Nout1[L["power"], L[18], None]
 remainder: _UFunc_Nin2_Nout1[L["remainder"], L[16], None]
 right_shift: _UFunc_Nin2_Nout1[L["right_shift"], L[11], None]
-sign: _UFunc_Nin1_Nout1[L["sign"], L[19], None]
 signbit: _UFunc_Nin1_Nout1[L["signbit"], L[4], None]
 spacing: _UFunc_Nin1_Nout1[L["spacing"], L[4], None]
 subtract: _UFunc_Nin2_Nout1[L["subtract"], L[21], None]
 vecdot: _GUFunc_Nin2_Nout1[L["vecdot"], L[19], None, L["(n),(n)->()"]]
 vecmat: _GUFunc_Nin2_Nout1[L["vecmat"], L[19], None, L["(n),(n,m)->(m)"]]
 
-abs = absolute
 atan2 = arctan2
 concat = concatenate
 bitwise_left_shift = left_shift

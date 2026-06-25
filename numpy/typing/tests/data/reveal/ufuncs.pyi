@@ -8,22 +8,6 @@ f8: np.float64
 AR_f8: npt.NDArray[np.float64]
 AR_i8: npt.NDArray[np.int64]
 
-assert_type(np.absolute.__doc__, str)
-assert_type(np.absolute.types, list[str])
-
-assert_type(np.absolute.__name__, Literal["absolute"])
-assert_type(np.absolute.__qualname__, Literal["absolute"])
-assert_type(np.absolute.ntypes, Literal[20])
-assert_type(np.absolute.identity, None)
-assert_type(np.absolute.nin, Literal[1])
-assert_type(np.absolute.nin, Literal[1])
-assert_type(np.absolute.nout, Literal[1])
-assert_type(np.absolute.nargs, Literal[2])
-assert_type(np.absolute.signature, None)
-assert_type(np.absolute(f8), Any)
-assert_type(np.absolute(AR_f8), npt.NDArray[Any])
-assert_type(np.absolute.at(AR_f8, AR_i8), None)
-
 assert_type(np.add.__name__, Literal["add"])
 assert_type(np.add.__qualname__, Literal["add"])
 assert_type(np.add.ntypes, Literal[22])
@@ -176,6 +160,10 @@ _c64_0d: np.complex64
 _c64_1d: np.ndarray[tuple[int], np.dtype[np.complex64]]
 _c64_2d: np.ndarray[tuple[int, int], np.dtype[np.complex64]]
 _c64_nd: npt.NDArray[np.complex64]
+_td_ns_0d: np.timedelta64[int]
+_td_ns_1d: np.ndarray[tuple[int], np.dtype[np.timedelta64[int]]]
+_td_ns_2d: np.ndarray[tuple[int, int], np.dtype[np.timedelta64[int]]]
+_td_ns_nd: npt.NDArray[np.timedelta64[int]]
 _obj_1d: np.ndarray[tuple[int], np.dtype[np.object_]]
 _obj_2d: np.ndarray[tuple[int, int], np.dtype[np.object_]]
 _obj_nd: npt.NDArray[np.object_]
@@ -298,6 +286,96 @@ assert_type(np.square(_py_b_0d, out=_i16_1d), np.ndarray[tuple[int], np.dtype[np
 assert_type(np.square(_py_i_1d, out=_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 assert_type(np.square(_py_f_2d, out=_c64_2d), np.ndarray[tuple[int, int], np.dtype[np.complex64]])
 
+# _ufunc_11_ifcmo_ifco
+# (sign)
+
+assert_type(np.sign(_py_i_0d), np.int_)
+assert_type(np.sign(_py_i_1d), np.ndarray[tuple[int], np.dtype[np.int_]])
+assert_type(np.sign(_py_i_2d), np.ndarray[tuple[int, int], np.dtype[np.int_]])
+assert_type(np.sign(_py_f_0d), np.float64 | Any)  # `complex` overlaps with `int`
+assert_type(np.sign(_py_f_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.sign(_py_f_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(np.sign(_py_c_0d), np.complex128 | Any)  # `complex` overlaps with `float`
+assert_type(np.sign(_py_c_1d), np.ndarray[tuple[int], np.dtype[np.complex128]])
+assert_type(np.sign(_py_c_2d), np.ndarray[tuple[int, int], np.dtype[np.complex128]])
+
+assert_type(np.sign(_i16_0d), np.int16)
+assert_type(np.sign(_i16_1d), np.ndarray[tuple[int], np.dtype[np.int16]])
+assert_type(np.sign(_i16_2d), np.ndarray[tuple[int, int], np.dtype[np.int16]])
+assert_type(np.sign(_i16_nd), npt.NDArray[np.int16])
+assert_type(np.sign(_f32_0d), np.float32)
+assert_type(np.sign(_f32_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.sign(_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.sign(_f32_nd), npt.NDArray[np.float32])
+assert_type(np.sign(_c64_0d), np.complex64)
+assert_type(np.sign(_c64_1d), np.ndarray[tuple[int], np.dtype[np.complex64]])
+assert_type(np.sign(_c64_2d), np.ndarray[tuple[int, int], np.dtype[np.complex64]])
+assert_type(np.sign(_c64_nd), npt.NDArray[np.complex64])
+assert_type(np.sign(_td_ns_0d), np.float64)
+assert_type(np.sign(_td_ns_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.sign(_td_ns_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(np.sign(_td_ns_nd), npt.NDArray[np.float64])
+assert_type(np.sign(_obj_1d), np.ndarray[tuple[int], np.dtype[np.object_]])
+assert_type(np.sign(_obj_2d), np.ndarray[tuple[int, int], np.dtype[np.object_]])
+assert_type(np.sign(_obj_nd), npt.NDArray[np.object_])
+
+assert_type(np.sign(_py_i_0d, dtype=np.float32), np.float32)
+assert_type(np.sign(_py_f_1d, dtype=np.float32), npt.NDArray[np.float32])
+assert_type(np.sign(_i16_2d, dtype=np.float32), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+
+assert_type(np.sign(_py_i_0d, dtype="f4"), Any)
+assert_type(np.sign(_py_f_1d, dtype="f4"), np.ndarray)
+assert_type(np.sign(_i16_2d, dtype="f4"), np.ndarray[tuple[int, int]])
+
+assert_type(np.sign(_py_i_0d, out=_i16_1d), np.ndarray[tuple[int], np.dtype[np.int16]])
+assert_type(np.sign(_py_f_1d, out=_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.sign(_py_c_2d, out=_c64_2d), np.ndarray[tuple[int, int], np.dtype[np.complex64]])
+
+# _ufunc_11_ifcmo
+# (positive, negative)
+
+assert_type(np.negative(_py_i_0d), np.int_)
+assert_type(np.negative(_py_i_1d), np.ndarray[tuple[int], np.dtype[np.int_]])
+assert_type(np.negative(_py_i_2d), np.ndarray[tuple[int, int], np.dtype[np.int_]])
+assert_type(np.negative(_py_f_0d), np.float64 | Any)  # `complex` overlaps with `int`
+assert_type(np.negative(_py_f_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.negative(_py_f_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(np.negative(_py_c_0d), np.complex128 | Any)  # `complex` overlaps with `float`
+assert_type(np.negative(_py_c_1d), np.ndarray[tuple[int], np.dtype[np.complex128]])
+assert_type(np.negative(_py_c_2d), np.ndarray[tuple[int, int], np.dtype[np.complex128]])
+
+assert_type(np.negative(_i16_0d), np.int16)
+assert_type(np.negative(_i16_1d), np.ndarray[tuple[int], np.dtype[np.int16]])
+assert_type(np.negative(_i16_2d), np.ndarray[tuple[int, int], np.dtype[np.int16]])
+assert_type(np.negative(_i16_nd), npt.NDArray[np.int16])
+assert_type(np.negative(_f32_0d), np.float32)
+assert_type(np.negative(_f32_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.negative(_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.negative(_f32_nd), npt.NDArray[np.float32])
+assert_type(np.negative(_c64_0d), np.complex64)
+assert_type(np.negative(_c64_1d), np.ndarray[tuple[int], np.dtype[np.complex64]])
+assert_type(np.negative(_c64_2d), np.ndarray[tuple[int, int], np.dtype[np.complex64]])
+assert_type(np.negative(_c64_nd), npt.NDArray[np.complex64])
+assert_type(np.negative(_td_ns_0d), np.timedelta64[int])
+assert_type(np.negative(_td_ns_1d), np.ndarray[tuple[int], np.dtype[np.timedelta64[int]]])
+assert_type(np.negative(_td_ns_2d), np.ndarray[tuple[int, int], np.dtype[np.timedelta64[int]]])
+assert_type(np.negative(_td_ns_nd), npt.NDArray[np.timedelta64[int]])
+assert_type(np.negative(_obj_1d), np.ndarray[tuple[int], np.dtype[np.object_]])
+assert_type(np.negative(_obj_2d), np.ndarray[tuple[int, int], np.dtype[np.object_]])
+assert_type(np.negative(_obj_nd), npt.NDArray[np.object_])
+
+assert_type(np.negative(_py_i_0d, dtype=np.float32), np.float32)
+assert_type(np.negative(_py_f_1d, dtype=np.float32), npt.NDArray[np.float32])
+assert_type(np.negative(_i16_2d, dtype=np.float32), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+
+assert_type(np.negative(_py_i_0d, dtype="f4"), Any)
+assert_type(np.negative(_py_f_1d, dtype="f4"), np.ndarray)
+assert_type(np.negative(_i16_2d, dtype="f4"), np.ndarray[tuple[int, int]])
+
+assert_type(np.negative(_py_i_0d, out=_i16_1d), np.ndarray[tuple[int], np.dtype[np.int16]])
+assert_type(np.negative(_py_f_1d, out=_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.negative(_py_c_2d, out=_c64_2d), np.ndarray[tuple[int, int], np.dtype[np.complex64]])
+
 # _ufunc_11_bio
 # (invert)
 
@@ -377,3 +455,58 @@ assert_type(np.ceil(_u8_2d, dtype="f4"), np.ndarray[tuple[int, int]])
 
 assert_type(np.ceil(_py_b_1d, out=_i16_1d), np.ndarray[tuple[int], np.dtype[np.int16]])
 assert_type(np.ceil(_py_i_2d, out=_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+
+# _ufunc_11_bifcmo
+# (abs[olute])
+
+assert_type(np.abs(_py_b_0d), np.bool)
+assert_type(np.abs(_py_b_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.abs(_py_b_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.abs(_py_i_0d), np.int_ | Any)
+assert_type(np.abs(_py_i_1d), np.ndarray[tuple[int], np.dtype[np.int_]])
+assert_type(np.abs(_py_i_2d), np.ndarray[tuple[int, int], np.dtype[np.int_]])
+assert_type(np.abs(_py_f_0d), np.float64 | Any)
+assert_type(np.abs(_py_f_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.abs(_py_f_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(np.abs(_py_c_0d), np.float64 | Any)
+assert_type(np.abs(_py_c_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.abs(_py_c_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+
+assert_type(np.abs(_bool_0d), np.bool)
+assert_type(np.abs(_bool_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.abs(_bool_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.abs(_bool_nd), npt.NDArray[np.bool])
+assert_type(np.abs(_u8_0d), np.uint8)
+assert_type(np.abs(_u8_1d), np.ndarray[tuple[int], np.dtype[np.uint8]])
+assert_type(np.abs(_u8_2d), np.ndarray[tuple[int, int], np.dtype[np.uint8]])
+assert_type(np.abs(_u8_nd), npt.NDArray[np.uint8])
+assert_type(np.abs(_i16_0d), np.int16)
+assert_type(np.abs(_i16_1d), np.ndarray[tuple[int], np.dtype[np.int16]])
+assert_type(np.abs(_i16_2d), np.ndarray[tuple[int, int], np.dtype[np.int16]])
+assert_type(np.abs(_i16_nd), npt.NDArray[np.int16])
+assert_type(np.abs(_f32_0d), np.float32)
+assert_type(np.abs(_f32_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.abs(_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.abs(_f32_nd), npt.NDArray[np.float32])
+assert_type(np.abs(_c64_0d), np.float32)
+assert_type(np.abs(_c64_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.abs(_c64_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.abs(_c64_nd), npt.NDArray[np.float32])
+assert_type(np.abs(_td_ns_0d), np.timedelta64[int])
+assert_type(np.abs(_td_ns_1d), np.ndarray[tuple[int], np.dtype[np.timedelta64[int]]])
+assert_type(np.abs(_td_ns_2d), np.ndarray[tuple[int, int], np.dtype[np.timedelta64[int]]])
+assert_type(np.abs(_td_ns_nd), npt.NDArray[np.timedelta64[int]])
+assert_type(np.abs(_obj_1d), np.ndarray[tuple[int], np.dtype[np.object_]])
+assert_type(np.abs(_obj_2d), np.ndarray[tuple[int, int], np.dtype[np.object_]])
+assert_type(np.abs(_obj_nd), npt.NDArray[np.object_])
+
+assert_type(np.abs(_py_b_0d, dtype=np.uint8), np.uint8)
+assert_type(np.abs(_py_c_1d, dtype=np.float32), npt.NDArray[np.float32])
+assert_type(np.abs(_u8_2d, dtype=np.bool), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+
+assert_type(np.abs(_py_b_0d, dtype="f4"), Any)
+assert_type(np.abs(_py_i_1d, dtype="f4"), np.ndarray)
+assert_type(np.abs(_u8_2d, dtype="f4"), np.ndarray[tuple[int, int]])
+
+assert_type(np.abs(_py_b_1d, out=_i16_1d), np.ndarray[tuple[int], np.dtype[np.int16]])
+assert_type(np.abs(_py_i_2d, out=_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
