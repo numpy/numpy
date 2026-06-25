@@ -111,9 +111,8 @@ jobs:
             CIBW_ENV="IPHONEOS_DEPLOYMENT_TARGET=17.0"
             echo "CIBW_ENVIRONMENT_IOS=$CIBW_ENV" >> "$GITHUB_ENV"
           else
-            # On older iOS versions, disable ILP64, and set the BLAS prefix to empty
-            # to avoid linking the ACCELERATE_NEW_LAPACK LP64 versions.
-            CIBW_CONFIG="setup-args=-Dblas-symbol-suffix= setup-args=-Duse-ilp64=false setup-args=-Dallow-noblas=true build-dir=build"
+            # On older iOS versions, disable ILP64.
+            CIBW_CONFIG="setup-args=-Duse-ilp64=false setup-args=-Dallow-noblas=true build-dir=build"
             echo "CIBW_CONFIG_IOS=$CIBW_CONFIG" >> "$GITHUB_ENV"
           fi
 
