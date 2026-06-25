@@ -4147,7 +4147,7 @@ def percentile(a,
         the result corresponds to the percentiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
         contains integers, the output data-type is ``float64``. Otherwise,
-        the output data-type is the same as that of the input. If `out` 
+        the output data-type is the same as that of the input. If `out`
         is specified, that array is returned instead.
 
     See Also

@@ -1164,9 +1164,8 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
     -------
     median : ndarray
         A new array holding the result. If the input contains integers
-        or floats smaller than ``float64``, then the output data-type is
-        ``np.float64``.  Otherwise, the data-type of the output is the
-        same as that of the input. If `out` is specified, that array is
+        output data-type is ``float64``.  Otherwise, the output data-type
+        is the same as that of the input. If `out` is specified, that array is
         returned instead.
 
     See Also
@@ -1320,7 +1319,7 @@ def nanpercentile(
         the result corresponds to the percentiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
         contains integers, the output data-type is ``float64``. Otherwise,
-        the output data-type is the same as that of the input. If `out` is 
+        the output data-type is the same as that of the input. If `out` is
         specified, that array is returned instead.
 
     See Also
@@ -1496,7 +1495,7 @@ def nanquantile(
         the result corresponds to the quantiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
         contains integers, the output data-type is ``float64``. Otherwise,
-        the output data-type is the same as that of the input. If `out` is specified, 
+        the output data-type is the same as that of the input. If `out` is specified,
         that array is returned instead.
 
     See Also
