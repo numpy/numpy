@@ -5,6 +5,7 @@ from types import EllipsisType
 from typing import (
     Any,
     Final,
+    Generic,
     Literal,
     Never,
     Protocol,
@@ -15,7 +16,7 @@ from typing import (
     override,
     type_check_only,
 )
-from typing_extensions import CapsuleType
+from typing_extensions import CapsuleType, TypeVar
 
 import numpy as np
 import numpy.typing as npt
@@ -82,12 +83,15 @@ from numpy import (
     vecmat,
 )
 from numpy._typing import (
+    _ArrayLikeAnyString_co,
     _ArrayLikeBool_co,
     _ArrayLikeFloat_co,
     _ArrayLikeInt,
     _ArrayLikeInt_co,
     _ArrayLikeNumber_co,
+    _CharLike_co,
     _DTypeLike,
+    _DTypeLikeBool,
     _FloatLike_co,
     _IntLike_co,
     _NestedSequence,
@@ -198,6 +202,7 @@ __all__ = [
 
 ###
 
+type _Array0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]]
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
@@ -248,11 +253,13 @@ class _Kwargs11(TypedDict, total=False):
     subok: bool  # = True,
     signature: _Signature1
 
+_IdT_co = TypeVar("_IdT_co", covariant=True, default=None)
+
 @type_check_only
-class _ufunc_11(np.ufunc):  # type: ignore[misc]
+class _ufunc_11(np.ufunc, Generic[_IdT_co]):  # type: ignore[misc]
     @property
     @override
-    def identity(self) -> None: ...
+    def identity(self) -> _IdT_co: ...
     @property
     @override
     def nin(self) -> Literal[1]: ...
@@ -2124,6 +2131,98 @@ class _ufunc_11_bifcmo(_ufunc_11):  # type: ignore[misc]
     @overload
     def at[IxT, OutT](self, a: _CanUfuncAt1[IxT, OutT], indices: IxT, /) -> OutT: ...
 
+# SUT => ?;  identity=False
+@type_check_only
+class _ufunc_11_sut_b(_ufunc_11[Literal[False]]):  # type: ignore[misc]
+    @override
+    @overload  # Nd, known shape
+    def __call__[ShapeT: _Shape](
+        self,
+        x: np.ndarray[ShapeT, np.dtype[np.character] | np.dtypes.StringDType],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+    @overload  # scalar
+    def __call__(
+        self,
+        x: _CharLike_co,
+        /,
+        *,
+        out: None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.bool: ...
+    @overload  # scalar, out=...
+    def __call__(
+        self,
+        x: _CharLike_co,
+        /,
+        *,
+        out: EllipsisType,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array0D[np.bool]: ...
+    @overload  # 1d
+    def __call__(
+        self,
+        x: Sequence[_CharLike_co],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array1D[np.bool]: ...
+    @overload  # 2d
+    def __call__(
+        self,
+        x: Sequence[Sequence[_CharLike_co]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array2D[np.bool]: ...
+    @overload  # 3d
+    def __call__(
+        self,
+        x: Sequence[Sequence[Sequence[_CharLike_co]]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array3D[np.bool]: ...
+    @overload  # out=<given>
+    def __call__[OutT: np.ndarray](
+        self,
+        x: _ArrayLikeAnyString_co,
+        /,
+        out: OutT,
+        *,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> OutT: ...
+    @overload  # x.__array_ufunc__(...) -> OutT
+    def __call__[OutT](
+        self,
+        x: _CanUfuncCall1[OutT],
+        /,
+        *,
+        out: object | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> OutT: ...
+
+    #
+    @override
+    @overload
+    def at(self, a: np.ndarray[_Shape, np.dtype[np.character] | np.dtypes.StringDType], indices: _ArrayLikeInt, /) -> None: ...  # pyrefly:ignore[bad-override]
+    @overload
+    def at[IxT, OutT](self, a: _CanUfuncAt1[IxT, OutT], indices: IxT, /) -> OutT: ...
+
 spacing: Final[_ufunc_11_f] = ...
 
 cbrt: Final[_ufunc_11_fo] = ...
@@ -2171,6 +2270,14 @@ floor: Final[_ufunc_11_bifo] = ...
 trunc: Final[_ufunc_11_bifo] = ...
 
 absolute: Final[_ufunc_11_bifcmo] = ...
+
+isalnum: Final[_ufunc_11_sut_b] = ...
+isalpha: Final[_ufunc_11_sut_b] = ...
+isdigit: Final[_ufunc_11_sut_b] = ...
+islower: Final[_ufunc_11_sut_b] = ...
+isspace: Final[_ufunc_11_sut_b] = ...
+istitle: Final[_ufunc_11_sut_b] = ...
+isupper: Final[_ufunc_11_sut_b] = ...
 
 ###
 # re-exports from `_core._multiarray_umath` that are used by `_core._ufunc_config`

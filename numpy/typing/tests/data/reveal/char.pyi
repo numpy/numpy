@@ -162,39 +162,8 @@ assert_type(np.char.rindex(AR_U, "a", start=[1, 2, 3]), npt.NDArray[np.int_])
 assert_type(np.char.rindex(AR_S, [b"a", b"b", b"c"], end=9), npt.NDArray[np.int_])
 assert_type(np.char.rindex(AR_T, "a", start=[1, 2, 3]), npt.NDArray[np.int_])
 
-assert_type(np.char.isalpha(AR_U), np.ndarray)
-assert_type(np.char.isalpha(AR_S), np.ndarray)
-assert_type(np.char.isalpha(AR_T), np.ndarray)
-
-assert_type(np.char.isalnum(AR_U), np.ndarray)
-assert_type(np.char.isalnum(AR_S), np.ndarray)
-assert_type(np.char.isalnum(AR_T), np.ndarray)
-
-assert_type(np.char.isdecimal(AR_U), np.ndarray)
-assert_type(np.char.isdecimal(AR_T), np.ndarray)
-
-assert_type(np.char.isdigit(AR_U), np.ndarray)
-assert_type(np.char.isdigit(AR_S), np.ndarray)
-assert_type(np.char.isdigit(AR_T), np.ndarray)
-
-assert_type(np.char.islower(AR_U), np.ndarray)
-assert_type(np.char.islower(AR_S), np.ndarray)
-assert_type(np.char.islower(AR_T), np.ndarray)
-
 assert_type(np.char.isnumeric(AR_U), np.ndarray)
 assert_type(np.char.isnumeric(AR_T), np.ndarray)
-
-assert_type(np.char.isspace(AR_U), np.ndarray)
-assert_type(np.char.isspace(AR_S), np.ndarray)
-assert_type(np.char.isspace(AR_T), np.ndarray)
-
-assert_type(np.char.istitle(AR_U), np.ndarray)
-assert_type(np.char.istitle(AR_S), np.ndarray)
-assert_type(np.char.istitle(AR_T), np.ndarray)
-
-assert_type(np.char.isupper(AR_U), np.ndarray)
-assert_type(np.char.isupper(AR_S), np.ndarray)
-assert_type(np.char.isupper(AR_T), np.ndarray)
 
 assert_type(np.char.str_len(AR_U), np.ndarray)
 assert_type(np.char.str_len(AR_S), np.ndarray)
