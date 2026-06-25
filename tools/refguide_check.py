@@ -41,10 +41,20 @@ from docutils.parsers.rst import directives
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'doc', 'sphinxext'))
 from numpydoc.docscrape_sphinx import get_doc_object
 
-# Enable specific Sphinx directives
-from sphinx.directives.other import Only, SeeAlso
+# Enable specific Sphinx directives (Sphinx 8+)
+# Make seealso more lenient for numpydoc content (Sphinx 8+)
+from docutils.parsers.rst.directives.misc import Directive
+class LenientSeeAlso(Directive):
+    has_content = True
+    required_arguments = 0
+    optional_arguments = 1
+    final_argument_whitespace = True
+    option_spec = {}
+    def run(self):
+        return []
+directives.register_directive('seealso', LenientSeeAlso)
 
-directives.register_directive('seealso', SeeAlso)
+from sphinx.directives.other import Only
 directives.register_directive('only', Only)
 
 
