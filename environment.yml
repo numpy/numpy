@@ -27,7 +27,7 @@ dependencies:
   - mypy==2.1.0
   - orjson # makes mypy faster
   # For building docs
-  - sphinx>=4.5.0
+  - sphinx>=8.0
   - sphinx-copybutton
   - sphinx-design
   - numpydoc=1.4.0
