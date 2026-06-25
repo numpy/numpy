@@ -407,11 +407,11 @@ class TestRandint:
             assert_array_equal(x, desired if size is not None else desired[0])
 
     def test_int64_uint64_corner_case(self):
-        # When stored in Numpy arrays, `lbnd` is casted
+        # When stored in NumPy arrays, `lbnd` is casted
         # as np.int64, and `ubnd` is casted as np.uint64.
         # Checking whether `lbnd` >= `ubnd` used to be
         # done solely via direct comparison, which is incorrect
-        # because when Numpy tries to compare both numbers,
+        # because when NumPy tries to compare both numbers,
         # it casts both to np.float64 because there is
         # no integer superset of np.int64 and np.uint64. However,
         # `ubnd` is too large to be represented in np.float64,

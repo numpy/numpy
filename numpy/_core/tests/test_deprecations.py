@@ -322,7 +322,7 @@ class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
 
 
 class TestDTypeAlignBool(_VisibleDeprecationTestCase):
-    # Deprecated in Numpy 2.4, 2025-07
+    # Deprecated in NumPy 2.4, 2025-07
     # NOTE: As you can see, finalizing this deprecation breaks some (very) old
     # pickle files.  This may be fine, but needs to be done with some care since
     # it breaks all of them and not just some.
@@ -349,7 +349,7 @@ class TestDTypeAlignBool(_VisibleDeprecationTestCase):
 
 
 class TestFlatiterIndexing0dBoolIndex(_DeprecationTestCase):
-    # Deprecated in Numpy 2.4, 2025-07
+    # Deprecated in NumPy 2.4, 2025-07
     message = r"Indexing flat iterators with a 0-dimensional boolean index"
 
     def test_0d_boolean_index_deprecated(self):
@@ -407,7 +407,7 @@ class TestWarningUtilityDeprecations(_DeprecationTestCase):
 
 
 class TestTooManyArgsExtremum(_DeprecationTestCase):
-    # Deprecated in Numpy 2.4, 2025-08, gh-27639
+    # Deprecated in NumPy 2.4, 2025-08, gh-27639
     message = "Passing more than 2 positional arguments to np.maximum and np.minimum "
 
     @pytest.mark.parametrize("ufunc", [np.minimum, np.maximum])
@@ -416,7 +416,7 @@ class TestTooManyArgsExtremum(_DeprecationTestCase):
 
 
 class TestTypenameDeprecation(_DeprecationTestCase):
-    # Deprecation in Numpy 2.5, 2026-02
+    # Deprecation in NumPy 2.5, 2026-02
 
     def test_typename_emits_deprecation_warning(self):
         self.assert_deprecated(lambda: np.typename("S1"))
@@ -434,7 +434,7 @@ class TestRoundDeprecation(_DeprecationTestCase):
 
 
 class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
-    # Deprecated in Numpy 2.5, 2025-11
+    # Deprecated in NumPy 2.5, 2025-11
     # See gh-29619 for scalar operations
     # See gh-31255 for array operations
     message = "The 'generic' unit for NumPy timedelta is deprecated"
@@ -549,7 +549,7 @@ class TestTriDeprecationWithNonInteger(_DeprecationTestCase):
 
 
 class TestTakeOutDtype(_DeprecationTestCase):
-    # Deprecated in Numpy 2.5, 2026-01
+    # Deprecated in NumPy 2.5, 2026-01
     message = "Implicit casting of output to a different kind."
 
     def test_out_dtype_deprecated(self):

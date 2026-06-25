@@ -3,7 +3,7 @@ from .common import Benchmark
 try:
     from numpy._core.overrides import array_function_dispatch
 except ImportError:
-    # Don't fail at import time with old Numpy versions
+    # Don't fail at import time with old NumPy versions
     def array_function_dispatch(*args, **kwargs):
         def wrap(*args, **kwargs):
             return None

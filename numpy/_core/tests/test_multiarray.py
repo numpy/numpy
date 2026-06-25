@@ -9246,7 +9246,7 @@ class TestNewBufferProtocol:
 
     def test_invalid_buffer_format(self):
         # datetime64 cannot be used fully in a buffer yet
-        # Should be fixed in the next Numpy major release
+        # Should be fixed in the next NumPy major release
         dt = np.dtype([('a', 'uint16'), ('b', 'M8[s]')])
         a = np.empty(3, dt)
         assert_raises((ValueError, BufferError), memoryview, a)
