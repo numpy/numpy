@@ -89,6 +89,8 @@ from numpy._typing import (
     _ArrayLikeInt,
     _ArrayLikeInt_co,
     _ArrayLikeNumber_co,
+    _ArrayLikeStr_co,
+    _ArrayLikeString_co,
     _CharLike_co,
     _DTypeLike,
     _DTypeLikeBool,
@@ -2131,6 +2133,98 @@ class _ufunc_11_bifcmo(_ufunc_11):  # type: ignore[misc]
     @overload
     def at[IxT, OutT](self, a: _CanUfuncAt1[IxT, OutT], indices: IxT, /) -> OutT: ...
 
+# UT => ?;  identity=False
+@type_check_only
+class _ufunc_11_ut_b(_ufunc_11[Literal[False]]):  # type: ignore[misc]
+    @override
+    @overload  # Nd, known shape
+    def __call__[ShapeT: _Shape](
+        self,
+        x: np.ndarray[ShapeT, np.dtype[np.str_] | np.dtypes.StringDType],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+    @overload  # scalar
+    def __call__(
+        self,
+        x: str,
+        /,
+        *,
+        out: None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.bool: ...
+    @overload  # scalar, out=...
+    def __call__(
+        self,
+        x: str,
+        /,
+        *,
+        out: EllipsisType,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array0D[np.bool]: ...
+    @overload  # 1d  (`list` because `Sequence[str] :> str` would cause overlap)
+    def __call__(
+        self,
+        x: list[str],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array1D[np.bool]: ...
+    @overload  # 2d
+    def __call__(
+        self,
+        x: Sequence[list[str]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array2D[np.bool]: ...
+    @overload  # 3d
+    def __call__(
+        self,
+        x: Sequence[Sequence[list[str]]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array3D[np.bool]: ...
+    @overload  # out=<given>
+    def __call__[OutT: np.ndarray](
+        self,
+        x: _ArrayLikeStr_co | _ArrayLikeString_co,
+        /,
+        out: OutT,
+        *,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> OutT: ...
+    @overload  # x.__array_ufunc__(...) -> OutT
+    def __call__[OutT](
+        self,
+        x: _CanUfuncCall1[OutT],
+        /,
+        *,
+        out: object | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> OutT: ...
+
+    #
+    @override
+    @overload
+    def at(self, a: np.ndarray[_Shape, np.dtype[np.str_] | np.dtypes.StringDType], indices: _ArrayLikeInt, /) -> None: ...  # pyrefly:ignore[bad-override]
+    @overload
+    def at[IxT, OutT](self, a: _CanUfuncAt1[IxT, OutT], indices: IxT, /) -> OutT: ...
+
 # SUT => ?;  identity=False
 @type_check_only
 class _ufunc_11_sut_b(_ufunc_11[Literal[False]]):  # type: ignore[misc]
@@ -2270,6 +2364,9 @@ floor: Final[_ufunc_11_bifo] = ...
 trunc: Final[_ufunc_11_bifo] = ...
 
 absolute: Final[_ufunc_11_bifcmo] = ...
+
+isdecimal: Final[_ufunc_11_ut_b] = ...
+isnumeric: Final[_ufunc_11_ut_b] = ...
 
 isalnum: Final[_ufunc_11_sut_b] = ...
 isalpha: Final[_ufunc_11_sut_b] = ...

@@ -162,9 +162,6 @@ assert_type(np.char.rindex(AR_U, "a", start=[1, 2, 3]), npt.NDArray[np.int_])
 assert_type(np.char.rindex(AR_S, [b"a", b"b", b"c"], end=9), npt.NDArray[np.int_])
 assert_type(np.char.rindex(AR_T, "a", start=[1, 2, 3]), npt.NDArray[np.int_])
 
-assert_type(np.char.isnumeric(AR_U), np.ndarray)
-assert_type(np.char.isnumeric(AR_T), np.ndarray)
-
 assert_type(np.char.str_len(AR_U), np.ndarray)
 assert_type(np.char.str_len(AR_S), np.ndarray)
 assert_type(np.char.str_len(AR_T), np.ndarray)

@@ -20,7 +20,17 @@ from numpy._typing import (
     _UFunc_Nin1_Nout1,
 )
 
-from .strings import isalnum, isalpha, isdigit, islower, isspace, istitle, isupper
+from .strings import (
+    isalnum,
+    isalpha,
+    isdecimal,
+    isdigit,
+    islower,
+    isnumeric,
+    isspace,
+    istitle,
+    isupper,
+)
 
 __all__ = [
     "equal",
@@ -616,9 +626,6 @@ def index(a: U_co, sub: U_co, start: i_co = 0, end: i_co | None = None) -> NDArr
 def index(a: S_co, sub: S_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
 @overload
 def index(a: T_co, sub: T_co, start: i_co = 0, end: i_co | None = None) -> NDArray[np.int_]: ...
-
-isdecimal: Final[_UFunc_Nin1_Nout1[L["isdecimal"], L[0], L[False]]] = ...
-isnumeric: Final[_UFunc_Nin1_Nout1[L["isnumeric"], L[0], L[False]]] = ...
 
 str_len: Final[_UFunc_Nin1_Nout1[L["str_len"], L[0], L[0]]] = ...
 

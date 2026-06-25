@@ -149,12 +149,6 @@ assert_type(np.strings.rindex(AR_U, "a", start=[1, 2, 3]), npt.NDArray[np.int_])
 assert_type(np.strings.rindex(AR_S, [b"a", b"b", b"c"], end=9), npt.NDArray[np.int_])
 assert_type(np.strings.rindex(AR_T, "a", start=[1, 2, 3]), npt.NDArray[np.int_])
 
-assert_type(np.strings.isdecimal(AR_U), np.ndarray)
-assert_type(np.strings.isdecimal(AR_T), np.ndarray)
-
-assert_type(np.strings.isnumeric(AR_U), np.ndarray)
-assert_type(np.strings.isnumeric(AR_T), np.ndarray)
-
 assert_type(np.strings.str_len(AR_U), np.ndarray)
 assert_type(np.strings.str_len(AR_S), np.ndarray)
 assert_type(np.strings.str_len(AR_T), np.ndarray)
@@ -189,6 +183,38 @@ _t_2d: np.ndarray[tuple[int, int], np.dtypes.StringDType]
 _t_nd: np.ndarray[_AnyShape, np.dtypes.StringDType]
 
 _b_1d: np.ndarray[tuple[int], np.dtype[np.bool]]
+
+# _ufunc_11_ut_b
+# (isdecimal, isnumeric)
+
+assert_type(np.strings.isdecimal.identity, Literal[False])
+
+assert_type(np.strings.isdecimal(_py_u_0d), np.bool)
+assert_type(np.strings.isdecimal(_py_u_0d, out=...), np.ndarray[tuple[()], np.dtype[np.bool]])
+assert_type(np.strings.isdecimal(_py_u_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.strings.isdecimal(_py_u_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+
+assert_type(np.strings.isdecimal(_u_0d), np.bool)
+assert_type(np.strings.isdecimal(_u_0d, out=...), np.ndarray[tuple[()], np.dtype[np.bool]])
+assert_type(np.strings.isdecimal(_u_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.strings.isdecimal(_t_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.strings.isdecimal(_u_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.strings.isdecimal(_t_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.strings.isdecimal(_u_nd), np.ndarray[_AnyShape, np.dtype[np.bool]])
+assert_type(np.strings.isdecimal(_t_nd), np.ndarray[_AnyShape, np.dtype[np.bool]])
+
+assert_type(np.strings.isdecimal(_py_u_1d, dtype=bool), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.strings.isdecimal(_py_u_1d, dtype="?"), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.strings.isdecimal(_py_u_1d, dtype="b1"), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.strings.isdecimal(_py_u_1d, dtype=np.bool), np.ndarray[tuple[int], np.dtype[np.bool]])
+
+assert_type(np.strings.isdecimal(_py_u_0d, out=_b_1d), np.ndarray[tuple[int], np.dtype[np.bool_]])
+assert_type(np.strings.isdecimal(_py_u_1d, out=_t_1d), np.ndarray[tuple[int], np.dtypes.StringDType])
+
+assert_type(np.strings.isdecimal.at(_u_1d, 1), None)
+assert_type(np.strings.isdecimal.at(_u_1d, (1, 1)), None)
+assert_type(np.strings.isdecimal.at(_t_1d, 1), None)
+assert_type(np.strings.isdecimal.at(_t_1d, (1, 1)), None)
 
 # _ufunc_11_sut_b
 # (isalnum, isalpha, isdigit, islower, isspace, istitle, isupper)
@@ -225,3 +251,10 @@ assert_type(np.strings.isdigit(_py_s_1d, dtype=np.bool), np.ndarray[tuple[int], 
 
 assert_type(np.strings.isdigit(_py_s_0d, out=_b_1d), np.ndarray[tuple[int], np.dtype[np.bool_]])
 assert_type(np.strings.isdigit(_py_u_1d, out=_t_1d), np.ndarray[tuple[int], np.dtypes.StringDType])
+
+assert_type(np.strings.isdigit.at(_s_1d, 1), None)
+assert_type(np.strings.isdigit.at(_s_1d, (1, 1)), None)
+assert_type(np.strings.isdigit.at(_u_1d, 1), None)
+assert_type(np.strings.isdigit.at(_u_1d, (1, 1)), None)
+assert_type(np.strings.isdigit.at(_t_1d, 1), None)
+assert_type(np.strings.isdigit.at(_t_1d, (1, 1)), None)

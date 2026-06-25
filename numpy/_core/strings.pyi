@@ -14,8 +14,18 @@ from numpy._typing import (
     _SupportsArray,
 )
 
-from .defchararray import isdecimal, isnumeric, mod, str_len
-from .umath import isalnum, isalpha, isdigit, islower, isspace, istitle, isupper
+from .defchararray import mod, str_len
+from .umath import (
+    isalnum,
+    isalpha,
+    isdecimal,
+    isdigit,
+    islower,
+    isnumeric,
+    isspace,
+    istitle,
+    isupper,
+)
 
 __all__ = [
     "add",
