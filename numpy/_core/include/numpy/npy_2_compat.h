@@ -151,7 +151,11 @@ PyArray_ImportNumPyAPI(void)
     static inline npy_uint64
     PyDataType_FLAGS(const PyArray_Descr *dtype)
     {
-    #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
+    #if defined(Py_TARGET_ABI3T)
+        /* flags is stored as two 32-bit halves here (see ndarraytypes.h). */
+        const PyArray_Descr_fields *_f = _PyDataType_GET_ITEM_DATA(dtype);
+        return ((npy_uint64)_f->_flags_hi << 32) | (npy_uint64)_f->_flags_lo;
+    #elif NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
         return _PyDataType_GET_ITEM_DATA(dtype)->flags;
     #else
         return (unsigned char)dtype->flags;  /* Need unsigned cast on 1.x */

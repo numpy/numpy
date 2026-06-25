@@ -2522,6 +2522,19 @@ static struct PyModuleDef moduledef = {
     .m_slots = _multiarray_tests_slots,
 };
 
+#ifdef Py_GIL_DISABLED
+/*
+ * The abi3t ABI splits the descriptor's `flags` into 32-bit halves (see
+ * NPY_DT_FLAGS_FIELD in ndarraytypes.h); that only matches the real layout while
+ * `flags` immediately follows `type_num`.  Catch a future sizeof(PyObject) change
+ * here instead of letting it silently corrupt 32-bit free-threaded reads.
+ */
+_Static_assert(
+    offsetof(_PyArray_LegacyDescr_fields, flags) ==
+        offsetof(_PyArray_LegacyDescr_fields, type_num) + sizeof(int),
+    "abi3t flags split assumes no padding between type_num and flags");
+#endif
+
 PyMODINIT_FUNC PyInit__multiarray_tests(void)
 {
     return PyModuleDef_Init(&moduledef);

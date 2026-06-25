@@ -616,6 +616,23 @@ typedef struct {
                                 NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT | \
                                 NPY_NEEDS_INIT | NPY_NEEDS_PYAPI)
 
+/*
+ * Under Py_TARGET_ABI3T these field structs are overlaid at
+ * `(char *)obj + sizeof(PyObject)`, which is only pointer-aligned on 32-bit
+ * free-threaded builds (there sizeof(PyObject) is 20 bytes). An 8-byte
+ * `npy_uint64 flags` member would be over-aligned and packing bytes would shift
+ * every later field, so expose it as two 32-bit halves.
+ */
+#if defined(Py_TARGET_ABI3T)
+    #if NPY_BYTE_ORDER == NPY_BIG_ENDIAN
+        #define NPY_DT_FLAGS_FIELD npy_uint32 _flags_hi; npy_uint32 _flags_lo;
+    #else
+        #define NPY_DT_FLAGS_FIELD npy_uint32 _flags_lo; npy_uint32 _flags_hi;
+    #endif
+#else
+    #define NPY_DT_FLAGS_FIELD npy_uint64 flags;
+#endif
+
 #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
 /*
  * Public version of the Descriptor struct as of 2.x
@@ -647,7 +664,7 @@ typedef struct _PyArray_Descr_fields {
         /* number representing this type */
         int type_num;
         /* Space for dtype instance specific flags. */
-        npy_uint64 flags;
+        NPY_DT_FLAGS_FIELD
         /* element size (itemsize) for this type */
         npy_intp elsize;
         /* alignment needed for this type */
@@ -708,7 +725,7 @@ typedef struct {
         char byteorder;
         char _former_flags;
         int type_num;
-        npy_uint64 flags;
+        NPY_DT_FLAGS_FIELD
         npy_intp elsize;
         npy_intp alignment;
         PyObject *metadata;
