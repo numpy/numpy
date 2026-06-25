@@ -1163,8 +1163,8 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
     Returns
     -------
     median : ndarray
-        A new array holding the result. If the input contains integers
-        output data-type is ``float64``.  Otherwise, the output data-type
+        A new array holding the result. If the input contains integers,
+        the output data-type is ``float64``. Otherwise, the output data-type
         is the same as that of the input. If `out` is specified, that array is
         returned instead.
 
