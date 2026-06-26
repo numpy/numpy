@@ -3745,8 +3745,9 @@ def sinc(x):
     Return the normalized sinc function.
 
     The sinc function is equal to :math:`\sin(\pi x)/(\pi x)` for any argument
-    :math:`x\ne 0`. ``sinc(0)`` takes the limit value 1, making ``sinc`` not
-    only everywhere continuous but also infinitely differentiable.
+    :math:`x\ne 0` and :math:`x\ne \pm infinity`. ``sinc(0)`` takes the limit
+    value 1 and ``sinc(infinity)`` takes the limit value 0, making ``sinc``
+    not only everywhere continuous but also infinitely differentiable.
 
     .. note::
 
@@ -3821,7 +3822,8 @@ def sinc(x):
     # Hope that 1e-20 is sufficient for objects...
     eps = np.finfo(x.dtype).eps if x.dtype.kind == "f" else 1e-20
     y = where(x, x, eps)
-    return sin(y) / y
+    z = where(abs(y) != np.inf, y, 0)
+    return sin(z) / y
 
 
 def _ureduce(a, func, keepdims=False, **kwargs):
