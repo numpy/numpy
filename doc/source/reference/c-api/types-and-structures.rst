@@ -985,7 +985,7 @@ PyUFunc_Type and PyUFuncObject
           PyUFuncGenericFunction *functions;
           void **data;
           int ntypes;
-          int reserved1;
+          int _ufunc_flags;
           const char *name;
           char *types;
           const char *doc;

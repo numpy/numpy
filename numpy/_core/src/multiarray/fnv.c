@@ -72,14 +72,15 @@ npy_fnv1a_64(const void *buf, size_t len, npy_uint64 hval)
 
 /*
  * Compute a size_t FNV-1a hash of the given data
- * This will use 32-bit or 64-bit hash depending on the size of size_t
+ * This will use 32-bit or 64-bit hash depending on the size of npy_uintp.
+ * npy_uintp has the same size as size_t.
  */
 size_t 
 npy_fnv1a(const void *buf, size_t len)
 {
-#if NPY_SIZEOF_SIZE_T == 8
+#if NPY_SIZEOF_UINTP == 8
     return (size_t)npy_fnv1a_64(buf, len, FNV1A_64_INIT);
-#else /* NPY_SIZEOF_SIZE_T == 4 */
+#else /* NPY_SIZEOF_UINTP == 4 */
     return (size_t)npy_fnv1a_32(buf, len, FNV1A_32_INIT);
 #endif
 }

@@ -49,25 +49,6 @@ jobs:
       matrix:
         BUILD_PROP:
           - [
-              "s390x",
-              "s390x-linux-gnu",
-              "s390x/ubuntu:22.04",
-              "-Dallow-noblas=true",
-              # Skipping TestRationalFunctions.test_gcd_overflow test
-              # because of a possible qemu bug that appears to be related to int64 overflow in absolute operation.
-              # TODO(@seiko2plus): Confirm the bug and provide a minimal reproducer, then report it to upstream.
-              "(test_kind or test_multiarray or test_simd or test_umath or test_ufunc) and not test_gcd_overflow",
-              "s390x"
-            ]
-          - [
-              "s390x - baseline(Z13)",
-              "s390x-linux-gnu",
-              "s390x/ubuntu:22.04",
-              "-Dallow-noblas=true -Dcpu-baseline=vx",
-              "(test_kind or test_multiarray or test_simd or test_umath or test_ufunc) and not test_gcd_overflow",
-              "s390x"
-            ]
-          - [
               "riscv64",
               "riscv64-linux-gnu",
               "riscv64/ubuntu:22.04",
@@ -85,7 +66,7 @@ jobs:
 
     name: "${{ matrix.BUILD_PROP[0] }}"
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         submodules: recursive
         fetch-tags: true
@@ -101,7 +82,7 @@ jobs:
         sudo apt install -y ninja-build gcc-${TOOLCHAIN_NAME} g++-${TOOLCHAIN_NAME} gfortran-${TOOLCHAIN_NAME}
 
     - name: Cache docker container
-      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       id: container-cache
       with:
         path: ~/docker_${{ matrix.BUILD_PROP[1] }}
@@ -133,9 +114,10 @@ jobs:
           git config --global --add safe.directory /numpy &&
           # No need to build ninja from source, the host ninja is used for the build
           grep -v ninja /numpy/requirements/build_requirements.txt > /tmp/build_requirements.txt &&
+          grep -v ninja /numpy/requirements/test_requirements.txt > /tmp/test_requirements.txt &&
           uv venv --python 3.12 .venv &&
           source .venv/bin/activate &&
-          uv pip install -r /tmp/build_requirements.txt pytest pytest-xdist hypothesis pytest-timeout
+          uv pip install -r /tmp/build_requirements.txt -r /tmp/test_requirements.txt
           rm -f /usr/local/bin/ninja && mkdir -p /usr/local/bin && ln -s /host/usr/bin/ninja /usr/local/bin/ninja
         "
         docker commit the_container the_container
@@ -196,7 +178,7 @@ jobs:
 
     name: "${{ matrix.BUILD_PROP[0] }}"
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         submodules: recursive
         fetch-tags: true
@@ -211,7 +193,7 @@ jobs:
         sudo apt install -y ninja-build gcc-14-${TOOLCHAIN_NAME} g++-14-${TOOLCHAIN_NAME} gfortran-14-${TOOLCHAIN_NAME}
 
     - name: Cache docker container
-      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       id: container-cache
       with:
         path: ~/docker_${{ matrix.BUILD_PROP[1] }}
@@ -239,11 +221,14 @@ jobs:
           git config --global --add safe.directory /numpy &&
           # No need to build ninja from source, the host ninja is used for the build
           grep -v ninja /numpy/requirements/build_requirements.txt > /tmp/build_requirements.txt &&
-          python -m pip install --break-system-packages uv --extra-index-url https://mirrors.loong64.com/pypi/simple &&
+          grep -v ninja /numpy/requirements/test_requirements.txt > /tmp/test_requirements.txt &&
+          python -m pip install --break-system-packages \
+              --extra-index-url https://mirrors.loong64.com/pypi/simple \
+              --only-binary=":all:" uv &&
           export PATH="/root/.local/bin:$PATH" &&
           uv venv --python 3.12 .venv &&
           source .venv/bin/activate &&
-          uv pip install -r /tmp/build_requirements.txt pytest pytest-xdist hypothesis &&
+          uv pip install -r /tmp/build_requirements.txt -r /tmp/test_requirements.txt &&
           rm -f /usr/local/bin/ninja && mkdir -p /usr/local/bin && ln -s /host/usr/bin/ninja /usr/local/bin/ninja
         "
         docker commit the_container the_container

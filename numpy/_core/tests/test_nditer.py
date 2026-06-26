@@ -820,8 +820,8 @@ def test_iter_broadcasting_errors():
         assert_(msg.find('(2,3)->(2,3)') >= 0,
             f'Message "{msg}" doesn\'t contain operand shape (2,3)->(2,3)')
         assert_(msg.find('(2,)->(2,newaxis)') >= 0,
-                ('Message "%s" doesn\'t contain remapped operand shape'
-                '(2,)->(2,newaxis)') % msg)
+                f'Message "{msg}" doesn\'t contain remapped operand shape'
+                '(2,)->(2,newaxis)')
         # The message should contain the itershape parameter
         assert_(msg.find('(4,3)') >= 0,
                 f'Message "{msg}" doesn\'t contain itershape parameter (4,3)')
@@ -1529,11 +1529,19 @@ def test_iter_copy():
 
 @pytest.mark.parametrize("dtype", np.typecodes["All"])
 @pytest.mark.parametrize("loop_dtype", np.typecodes["All"])
-@pytest.mark.filterwarnings("ignore::numpy.exceptions.ComplexWarning")
+@pytest.mark.filterwarnings(
+    "ignore::numpy.exceptions.ComplexWarning",
+)
 def test_iter_copy_casts(dtype, loop_dtype):
-    # Ensure the dtype is never flexible:
+    if dtype.lower() == "m":
+        dtype = dtype + "8[D]"
+
+    is_datetimelike = False
     if loop_dtype.lower() == "m":
-        loop_dtype = loop_dtype + "[ms]"
+        loop_dtype = loop_dtype + "8[ms]"
+        is_datetimelike = True
+
+    # Ensure the dtype is never flexible:
     elif np.dtype(loop_dtype).itemsize == 0:
         loop_dtype = loop_dtype + "50"
 
@@ -1542,13 +1550,13 @@ def test_iter_copy_casts(dtype, loop_dtype):
     try:
         expected = arr.astype(loop_dtype)
     except Exception:
-        # Some casts are not possible, do not worry about them
+        pytest.xfail(reason=f"{dtype} -> {loop_dtype} cast intentionally skipped")
         return
 
     it = np.nditer((arr,), ["buffered", "external_loop", "refs_ok"],
                    op_dtypes=[loop_dtype], casting="unsafe")
 
-    if np.issubdtype(np.dtype(loop_dtype), np.number):
+    if np.issubdtype(np.dtype(loop_dtype), np.number) and not is_datetimelike:
         # Casting to strings may be strange, but for simple dtypes do not rely
         # on the cast being correct:
         assert_array_equal(expected, np.ones(1000, dtype=loop_dtype))
@@ -2180,7 +2188,7 @@ def test_iter_buffered_cast_structured_type_failure_with_cleanup():
 
     for intent in ["readwrite", "readonly", "writeonly"]:
         # This test was initially designed to test an error at a different
-        # place, but will now raise earlier to to the cast not being possible:
+        # place, but will now raise earlier due to the cast not being possible:
         # `assert np.can_cast(a.dtype, sdt2, casting="unsafe")` fails.
         # Without a faulty DType, there is probably no reliable
         # way to get the initial tested behaviour.
@@ -3657,3 +3665,19 @@ def test_signature_methods(method):
 
     assert "self" in sig.parameters
     assert sig.parameters["self"].kind is inspect.Parameter.POSITIONAL_ONLY
+
+
+def test_nditer_multi_index_no_segfault():
+    class BadSequence:
+        def __len__(self):
+            return 2
+
+        def __getitem__(self, i):
+            if i == 1:
+                raise RuntimeError("intentional error")
+            return 0
+
+    arr = np.zeros((3, 4))
+    it = np.nditer(arr, flags=["multi_index"])
+    with pytest.raises(RuntimeError, match="intentional error"):
+        it.multi_index = BadSequence()

@@ -101,6 +101,7 @@ new_stringdtype_instance(PyObject *na_object, int coerce)
         na_name.buf = PyMem_RawMalloc(size);
         if (na_name.buf == NULL) {
             Py_DECREF(na_pystr);
+            PyErr_NoMemory();
             goto fail;
         }
         memcpy((char *)na_name.buf, utf8_ptr, size);
@@ -509,6 +510,15 @@ _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
         }
     }
     return NpyString_cmp(&s_a, &s_b);
+}
+
+NPY_NO_EXPORT int
+stringdtype_binsearch_compare(const void *a, const void *b,
+                              PyArrayObject *arr_a, PyArrayObject *arr_b)
+{
+    return _compare((void *)a, (void *)b,
+                    (PyArray_StringDTypeObject *)PyArray_DESCR(arr_a),
+                    (PyArray_StringDTypeObject *)PyArray_DESCR(arr_b));
 }
 
 int

@@ -1128,7 +1128,16 @@ class TestMaskedArray:
         # It is not implemented at this point of time. We can change this in future
         with temppath(suffix='.npy') as path:
             with pytest.raises(NotImplementedError):
+
                 np.save(path, xm)
+
+
+@pytest.fixture(autouse=True, scope="class")
+def err_status():
+    err = np.geterr()
+    np.seterr(divide='ignore', invalid='ignore')
+    yield err
+    np.seterr(**err)
 
 
 class TestMaskedArrayArithmetic:
@@ -1147,13 +1156,6 @@ class TestMaskedArrayArithmetic:
         xf = np.where(m1, 1e+20, x)
         xm.set_fill_value(1e+20)
         return x, y, a10, m1, m2, xm, ym, z, zm, xf
-
-    @pytest.fixture(autouse=True, scope="class")
-    def err_status(self):
-        err = np.geterr()
-        np.seterr(divide='ignore', invalid='ignore')
-        yield err
-        np.seterr(**err)
 
     def test_basic_arithmetic(self):
         # Test of basic arithmetic.
@@ -2242,7 +2244,8 @@ class TestMaskedArrayAttributes:
         a = np.zeros(4, dtype='f4,i4')
 
         m = np.ma.array(a)
-        m.dtype = np.dtype('f4')
+        with pytest.warns(DeprecationWarning, match="Setting the dtype.*MaskedArray"):
+            m.dtype = np.dtype('f4')
         repr(m)  # raises?
         assert_equal(m.dtype, np.dtype('f4'))
 
@@ -2250,7 +2253,9 @@ class TestMaskedArrayAttributes:
         # are not allowed
         def assign():
             m = np.ma.array(a)
-            m.dtype = np.dtype('f8')
+            with pytest.warns(DeprecationWarning,
+                              match="Setting the dtype.*MaskedArray"):
+                m.dtype = np.dtype('f8')
         assert_raises(ValueError, assign)
 
         b = a.view(dtype='f4', type=np.ma.MaskedArray)  # raises?
@@ -2259,7 +2264,8 @@ class TestMaskedArrayAttributes:
         # check that nomask is preserved
         a = np.zeros(4, dtype='f4')
         m = np.ma.array(a)
-        m.dtype = np.dtype('f4,i4')
+        with pytest.warns(DeprecationWarning, match="Setting the dtype.*MaskedArray"):
+            m.dtype = np.dtype('f4,i4')
         assert_equal(m.dtype, np.dtype('f4,i4'))
         assert_equal(m._mask, np.ma.nomask)
 
@@ -2633,13 +2639,6 @@ class TestUfuncs:
         # Base data definition.
         return (array([1.0, 0, -1, pi / 2] * 2, mask=[0, 1] + [0] * 6),
                   array([1.0, 0, -1, pi / 2] * 2, mask=[1, 0] + [0] * 6),)
-
-    @pytest.fixture(autouse=True, scope="class")
-    def err_status(self):
-        err = np.geterr()
-        np.seterr(divide='ignore', invalid='ignore')
-        yield err
-        np.seterr(**err)
 
     def test_testUfuncRegression(self):
         # Tests new ufuncs on MaskedArrays.
@@ -3372,7 +3371,7 @@ class TestMaskedArrayMethods:
         # Allclose currently works for timedelta64 as long as `atol` is
         # an integer or also a timedelta64
         a = np.array([[1, 2, 3, 4]], dtype="m8[ns]")
-        assert allclose(a, a, atol=0)
+        assert allclose(a, a, atol=np.timedelta64(0, "ns"))
         assert allclose(a, a, atol=np.timedelta64(1, "ns"))
 
     def test_allany(self):
@@ -3839,6 +3838,30 @@ class TestMaskedArrayMethods:
         # Test argsort
         a = array([1, 5, 2, 4, 3], mask=[1, 0, 0, 1, 0])
         assert_equal(np.argsort(a), argsort(a))
+
+    def test_sort_stable_or_descending_throws(self):
+        a = array([1, 5, 2, 4, 3], mask=[1, 0, 0, 1, 0])
+        with pytest.raises(
+            ValueError, match="`stable` parameter is not supported for masked arrays."
+        ):
+            sort(a, stable=True)
+        with pytest.raises(
+            ValueError,
+            match="`descending` parameter is not supported for masked arrays.",
+        ):
+            sort(a, descending=True)
+
+    def test_argsort_stable_or_descending_throws(self):
+        a = array([1, 5, 2, 4, 3], mask=[1, 0, 0, 1, 0])
+        with pytest.raises(
+            ValueError, match="`stable` parameter is not supported for masked arrays."
+        ):
+            argsort(a, stable=True)
+        with pytest.raises(
+            ValueError,
+            match="`descending` parameter is not supported for masked arrays.",
+        ):
+            argsort(a, descending=True)
 
     def test_squeeze(self):
         # Check squeeze

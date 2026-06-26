@@ -70,7 +70,7 @@ c2capi_map = {'double': 'NPY_DOUBLE',
                 'unsigned_long_long': 'NPY_ULONGLONG',
                 'complex_float': 'NPY_CFLOAT',
                 'complex_double': 'NPY_CDOUBLE',
-                'complex_long_double': 'NPY_CDOUBLE',
+                'complex_long_double': 'NPY_CLONGDOUBLE',
                 'string': 'NPY_STRING',
                 'character': 'NPY_STRING'}
 

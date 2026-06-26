@@ -96,6 +96,9 @@ typedef struct {
      */
     PyArrayMethodObject *sort_meth;
     PyArrayMethodObject *argsort_meth;
+    /* Definition for real and imaginary parts, and the (internal) ufuncs */
+    PyBoundArrayMethodObject *real_meth;
+    PyBoundArrayMethodObject *imag_meth;
 } NPY_DType_Slots;
 
 // This must be updated if new slots before within_dtype_castingimpl
@@ -108,11 +111,22 @@ typedef struct {
 
 #define NPY_DT_SLOTS(dtype) ((NPY_DType_Slots *)(dtype)->dt_slots)
 
-#define NPY_DT_is_legacy(dtype) (((dtype)->flags & NPY_DT_LEGACY) != 0)
-#define NPY_DT_is_abstract(dtype) (((dtype)->flags & NPY_DT_ABSTRACT) != 0)
-#define NPY_DT_is_parametric(dtype) (((dtype)->flags & NPY_DT_PARAMETRIC) != 0)
-#define NPY_DT_is_numeric(dtype) (((dtype)->flags & NPY_DT_NUMERIC) != 0)
-#define NPY_DT_is_user_defined(dtype) (((dtype)->type_num == -1))
+static inline int NPY_DT_is_legacy(PyArray_DTypeMeta *dtype) {
+    return (dtype->flags & NPY_DT_LEGACY) != 0;
+}
+static inline int NPY_DT_is_abstract(PyArray_DTypeMeta *dtype) {
+    return (dtype->flags & NPY_DT_ABSTRACT) != 0;
+}
+static inline int NPY_DT_is_parametric(PyArray_DTypeMeta *dtype) {
+    return (dtype->flags & NPY_DT_PARAMETRIC) != 0;
+}
+static inline int NPY_DT_is_numeric(PyArray_DTypeMeta *dtype) {
+    return (dtype->flags & NPY_DT_NUMERIC) != 0;
+}
+static inline int NPY_DT_is_user_defined(PyArray_DTypeMeta *dtype) {
+    // New-style user defined dtypes have a type_num of -1 also on DType
+    return dtype->type_num == -1;
+}
 
 /*
  * Macros for convenient classmethod calls, since these require
@@ -287,7 +301,7 @@ PyDataType_GetArrFuncs(const PyArray_Descr *descr)
 static inline PyObject *
 PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 {
-    return PyDataType_GetArrFuncs(((PyArrayObject_fields *)arr)->descr)->getitem(
+    return PyDataType_GetArrFuncs(PyArray_DESCR(arr))->getitem(
             (void *)itemptr, (PyArrayObject *)arr);
 }
 

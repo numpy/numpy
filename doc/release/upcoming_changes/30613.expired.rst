@@ -1,1 +1,0 @@
-* Data type alias ``'a'`` was removed in favor of ``'S'`` (deprecated since 2.0).

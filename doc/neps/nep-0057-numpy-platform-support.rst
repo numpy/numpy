@@ -173,8 +173,6 @@ Tier 1 platforms:
 +---------------------------+--------------------------------------------------------------------------+
 | Windows arm64             |                                                                          |
 +---------------------------+--------------------------------------------------------------------------+
-| Windows x86               | 32-bit Python: note this is shipped without BLAS, it's legacy            |
-+---------------------------+--------------------------------------------------------------------------+
 | Linux x86-64 (manylinux)  |                                                                          |
 +---------------------------+--------------------------------------------------------------------------+
 | Linux aarch64 (manylinux) |                                                                          |
@@ -227,15 +225,18 @@ Tier 3 platforms:
 +--------------------+----------------------------------------+----------------------------------+
 | Platform           | Notes                                  | Contacts                         |
 +====================+========================================+==================================+
-| FreeBSD            | Runs on Cirrus CI                      | Ralf Gommers                     |
-+--------------------+----------------------------------------+----------------------------------+
 | Linux ppc64le      | Runs on IBM-provided self-hosted       | Sandeep Gupta                    |
 |                    | runners, see gh-22318_                 |                                  |
 +--------------------+----------------------------------------+----------------------------------+
 | Emscripten/Pyodide | We currently provide nightly wheels,   | Agriya Khetarpal, Gyeongjae Choi |
 |                    | used for interactive docs              |                                  |
 +--------------------+----------------------------------------+----------------------------------+
-
+| Windows x86        | 32-bit Python, see the                 | Nathan Goldbaum                  |
+|                    | `discussion board`_ for more details   |                                  |
++--------------------+----------------------------------------+----------------------------------+
+| RISC-V             | Runs on RISE-provided self-hosted      | Ludovic Henry, Bruno Verachten   |
+|                    | runners, see gh-30216_                 |                                  |
++--------------------+----------------------------------------+----------------------------------+
 
 Unsupported platforms
 ~~~~~~~~~~~~~~~~~~~~~
@@ -257,6 +258,8 @@ list):
 +------------------------------------+--------------------------------------------------+
 | Platform                           | Notes                                            |
 +====================================+==================================================+
+| FreeBSD                            | Was Tier 3, ran on Cirrus CI                     |
++--------------------+----------------------------------------+-------------------------+
 | PyPy                               | Was Tier 2 for releases <=2.4.x, see gh-30416_   |
 +------------------------------------+--------------------------------------------------+
 | macOS ppc64, universal, universal2 |                                                  |
@@ -274,8 +277,6 @@ Unsupported platforms (known interest in moving to a higher tier):
 | iOS      | See gh-28759_    |
 +----------+------------------+
 | Android  | See gh-30412_    |
-+----------+------------------+
-| RISC-V   | See gh-30216_    |
 +----------+------------------+
 | WASI     | See gh-25859_    |
 +----------+------------------+
@@ -320,6 +321,7 @@ References and footnotes
 .. _gh-30216: https://github.com/numpy/numpy/issues/30216
 .. _gh-30412: https://github.com/numpy/numpy/pull/30412
 .. _gh-30416: https://github.com/numpy/numpy/issues/30416
+.. _discussion board: https://mail.python.org/archives/list/numpy-discussion@python.org/thread/FGVCDS5JICVIUVBISGWZNQ46QZ3XX5PB/#TTSOQQ3XLXXK52CZYMN7MALJQEI65U
 
 
 Copyright

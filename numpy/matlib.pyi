@@ -2,7 +2,7 @@ from typing import Any, Literal, overload
 
 import numpy as np
 import numpy.typing as npt
-from numpy import (  # type: ignore[deprecated]  # noqa: F401
+from numpy import (  # noqa: F401
     False_,
     ScalarType,
     True_,

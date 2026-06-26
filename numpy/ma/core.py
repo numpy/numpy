@@ -1989,7 +1989,7 @@ def masked_where(condition, a, copy=True):
     (cshape, ashape) = (cond.shape, a.shape)
     if cshape and cshape != ashape:
         raise IndexError("Inconsistent shape between the condition and the input"
-                         " (got %s and %s)" % (cshape, ashape))
+                         f" (got {cshape} and {ashape})")
     if hasattr(a, '_mask'):
         cond = mask_or(cond, a._mask)
         cls = type(a)
@@ -3256,28 +3256,12 @@ class MaskedArray(ndarray):
         results.
         """
 
-        if dtype is None:
-            if type is None:
-                output = ndarray.view(self)
-            else:
-                output = ndarray.view(self, type)
-        elif type is None:
-            try:
-                if issubclass(dtype, ndarray):
-                    output = ndarray.view(self, dtype)
-                    dtype = None
-                else:
-                    output = ndarray.view(self, dtype)
-            except TypeError:
-                output = ndarray.view(self, dtype)
-        else:
-            output = ndarray.view(self, dtype, type)
+        if type is None and (isinstance(dtype, builtins.type)
+                             and issubclass(dtype, ndarray)):
+            type = dtype
+            dtype = None
 
-        # also make the mask be a view (so attr changes to the view's
-        # mask do no affect original object's mask)
-        # (especially important to avoid affecting np.masked singleton)
-        if getmask(output) is not nomask:
-            output._mask = output._mask.view()
+        output = super().view(*[a for a in (dtype, type) if a is not None])
 
         # Make sure to reset the _fill_value if needed
         if getattr(output, '_fill_value', None) is not None:
@@ -3488,6 +3472,15 @@ class MaskedArray(ndarray):
             _mask[indx] = mindx
         return
 
+    def _set_dtype(self, dtype):
+        super()._set_dtype(dtype)
+        if self._mask is not nomask:
+            self._mask = self._mask.view(make_mask_descr(dtype), ndarray)
+            try:
+                self._mask = self._mask.reshape(self.shape)
+            except (AttributeError, TypeError):
+                pass
+
     # Define so that we can overwrite the setter.
     @property
     def dtype(self):
@@ -3495,15 +3488,13 @@ class MaskedArray(ndarray):
 
     @dtype.setter
     def dtype(self, dtype):
-        super(MaskedArray, type(self)).dtype.__set__(self, dtype)
-        if self._mask is not nomask:
-            self._mask = self._mask.view(make_mask_descr(dtype), ndarray)
-            # Try to reset the shape of the mask (if we don't have a void).
-            # This raises a ValueError if the dtype change won't work.
-            try:
-                self._mask = self._mask.reshape(self.shape)
-            except (AttributeError, TypeError):
-                pass
+        # DEPRECATED 2026-02-06, NumPy 2.5
+        warnings.warn(
+            "Setting the dtype on a MaskedArray has been deprecated in "
+            "NumPy 2.5.\nInstead of changing the dtype on an array x, "
+            "create a new array with x.view(new_dtype)",
+            DeprecationWarning, stacklevel=2)
+        self._set_dtype(dtype)
 
     @property
     def shape(self):
@@ -4760,7 +4751,7 @@ class MaskedArray(ndarray):
 
     def reshape(self, *s, **kwargs):
         """
-        Give a new shape to the array without changing its data.
+        Returns a reshaped masked array without changing its data.
 
         Returns a masked array containing the same data, but with a new shape.
         The result is a view on the original array; if this is not possible, a
@@ -5614,7 +5605,7 @@ class MaskedArray(ndarray):
         return out
 
     def argsort(self, axis=np._NoValue, kind=None, order=None, endwith=True,
-                fill_value=None, *, stable=False):
+                fill_value=None, *, stable=False, descending=False):
         """
         Return an ndarray of indices that sort the array along the
         specified axis.  Masked values are filled beforehand to
@@ -5642,6 +5633,8 @@ class MaskedArray(ndarray):
             If ``fill_value`` is not None, it supersedes ``endwith``.
         stable : bool, optional
             Only for compatibility with ``np.argsort``. Ignored.
+        descending : bool, optional
+            Only for compatibility with ``np.sort``. Ignored.
 
         Returns
         -------
@@ -5674,6 +5667,11 @@ class MaskedArray(ndarray):
         if stable:
             raise ValueError(
                 "`stable` parameter is not supported for masked arrays."
+            )
+
+        if descending:
+            raise ValueError(
+                "`descending` parameter is not supported for masked arrays."
             )
 
         # 2017-04-11, Numpy 1.13.0, gh-8701: warn on axis default
@@ -5782,7 +5780,7 @@ class MaskedArray(ndarray):
         return d.argmax(axis, out=out, keepdims=keepdims)
 
     def sort(self, axis=-1, kind=None, order=None, endwith=True,
-             fill_value=None, *, stable=False):
+             fill_value=None, *, stable=False, descending=False):
         """
         Sort the array, in-place
 
@@ -5809,6 +5807,8 @@ class MaskedArray(ndarray):
             Value used internally for the masked values.
             If ``fill_value`` is not None, it supersedes ``endwith``.
         stable : bool, optional
+            Only for compatibility with ``np.sort``. Ignored.
+        descending : bool, optional
             Only for compatibility with ``np.sort``. Ignored.
 
         See Also
@@ -5853,6 +5853,11 @@ class MaskedArray(ndarray):
         if stable:
             raise ValueError(
                 "`stable` parameter is not supported for masked arrays."
+            )
+
+        if descending:
+            raise ValueError(
+                "`descending` parameter is not supported for masked arrays."
             )
 
         if self._mask is nomask:
@@ -7206,7 +7211,7 @@ def power(a, b, third=None):
 
 
 def argsort(a, axis=np._NoValue, kind=None, order=None, endwith=True,
-            fill_value=None, *, stable=None):
+            fill_value=None, *, stable=None, descending=None):
     "Function version of the eponymous method."
     a = np.asanyarray(a)
 
@@ -7216,15 +7221,16 @@ def argsort(a, axis=np._NoValue, kind=None, order=None, endwith=True,
 
     if isinstance(a, MaskedArray):
         return a.argsort(axis=axis, kind=kind, order=order, endwith=endwith,
-                         fill_value=fill_value, stable=None)
+                         fill_value=fill_value, stable=stable, descending=descending)
     else:
-        return a.argsort(axis=axis, kind=kind, order=order, stable=None)
+        return a.argsort(axis=axis, kind=kind, order=order, stable=stable,
+                         descending=descending)
 
 
 argsort.__doc__ = MaskedArray.argsort.__doc__
 
 def sort(a, axis=-1, kind=None, order=None, endwith=True, fill_value=None, *,
-         stable=None):
+         stable=None, descending=None):
     """
     Return a sorted copy of the masked array.
 
@@ -7260,9 +7266,9 @@ def sort(a, axis=-1, kind=None, order=None, endwith=True, fill_value=None, *,
 
     if isinstance(a, MaskedArray):
         a.sort(axis=axis, kind=kind, order=order, endwith=endwith,
-               fill_value=fill_value, stable=stable)
+               fill_value=fill_value, stable=stable, descending=descending)
     else:
-        a.sort(axis=axis, kind=kind, order=order, stable=stable)
+        a.sort(axis=axis, kind=kind, order=order, stable=stable, descending=descending)
     return a
 
 
@@ -7941,7 +7947,7 @@ def where(condition, x=_NoValue, y=_NoValue):
     Returns
     -------
     out : MaskedArray
-        An masked array with `masked` elements where the condition is masked,
+        A masked array with `masked` elements where the condition is masked,
         elements from `x` where `condition` is True, and elements from `y`
         elsewhere.
 

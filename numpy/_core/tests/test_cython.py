@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 import sys
 import sysconfig
@@ -8,6 +9,7 @@ import pytest
 
 import numpy as np
 from numpy.testing import IS_EDITABLE, IS_WASM, assert_array_equal
+from numpy.testing._private.utils import run_subprocess
 
 # This import is copied from random.tests.test_extending
 try:
@@ -40,8 +42,17 @@ def install_temp(tmpdir_factory):
     if IS_WASM:
         pytest.skip("No subprocess")
 
-    srcdir = os.path.join(os.path.dirname(__file__), 'examples', 'cython')
-    build_dir = tmpdir_factory.mktemp("cython_test") / "build"
+    # Build against a copy of the sources placed next to the build dir:
+    # meson refers to sources via paths relative to the build dir, and on
+    # Windows the unnormalized cwd + `..` chain joining the deeply nested
+    # pytest tmp dir and site-packages can exceed MAX_PATH, failing the
+    # compile with "Cannot open source file".
+    tmp_root = tmpdir_factory.mktemp("cython_test")
+    srcdir = str(tmp_root / "src")
+    shutil.copytree(
+        os.path.join(os.path.dirname(__file__), 'examples', 'cython'),
+        srcdir)
+    build_dir = tmp_root / "build"
     os.makedirs(build_dir, exist_ok=True)
     # Ensure we use the correct Python interpreter even when `meson` is
     # installed in a different Python environment (see gh-24956)
@@ -58,27 +69,16 @@ def install_temp(tmpdir_factory):
     if sysconfig.get_platform() == "win-arm64":
         pytest.skip("Meson unable to find MSVC linker on win-arm64")
     if sys.platform == "win32":
-        subprocess.check_call(["meson", "setup",
-                               "--buildtype=release",
-                               "--vsenv", "--native-file", native_file,
-                               str(srcdir)],
-                              cwd=build_dir,
-                              )
+        run_subprocess(["meson", "setup",
+                        "--buildtype=release",
+                        "--vsenv", "--native-file", native_file,
+                        str(srcdir)],
+                       build_dir)
     else:
-        subprocess.check_call(["meson", "setup",
-                               "--native-file", native_file, str(srcdir)],
-                              cwd=build_dir
-                              )
-    try:
-        subprocess.check_call(["meson", "compile", "-vv"], cwd=build_dir)
-    except subprocess.CalledProcessError:
-        print("----------------")
-        print("meson build failed when doing")
-        print(f"'meson setup --native-file {native_file} {srcdir}'")
-        print("'meson compile -vv'")
-        print(f"in {build_dir}")
-        print("----------------")
-        raise
+        run_subprocess(["meson", "setup",
+                        "--native-file", native_file, str(srcdir)],
+                       build_dir)
+    run_subprocess(["meson", "compile", "-vv"], build_dir)
 
     sys.path.append(str(build_dir))
 
@@ -86,7 +86,12 @@ def install_temp(tmpdir_factory):
 def test_is_timedelta64_object(install_temp):
     import checks
 
-    assert checks.is_td64(np.timedelta64(1234))
+    with pytest.warns(
+        DeprecationWarning,
+        match="The 'generic' unit for NumPy timedelta is deprecated",
+    ):
+        assert checks.is_td64(np.timedelta64(1234))
+
     assert checks.is_td64(np.timedelta64(1234, "ns"))
     assert checks.is_td64(np.timedelta64("NaT", "ns"))
 
@@ -105,7 +110,12 @@ def test_is_datetime64_object(install_temp):
     assert not checks.is_dt64(1)
     assert not checks.is_dt64(None)
     assert not checks.is_dt64("foo")
-    assert not checks.is_dt64(np.timedelta64(1234))
+
+    with pytest.warns(
+        DeprecationWarning,
+        match="The 'generic' unit for NumPy timedelta is deprecated",
+    ):
+        assert not checks.is_dt64(np.timedelta64(1234))
 
 
 def test_get_datetime64_value(install_temp):
@@ -350,3 +360,18 @@ def test_npystring_allocators_other_dtype(install_temp):
 def test_npy_uintp_type_enum(install_temp):
     import checks
     assert checks.check_npy_uintp_type_enum()
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 14),
+    reason="Tests behavior that happens on Python 3.14 and newer"
+)
+@pytest.mark.skipif(
+    sysconfig.get_platform() == 'win-arm64',
+    reason='no checks module on win-arm64'
+)
+def test_resize_refcheck(install_temp):
+    import checks
+    msg = "It is possible that this is a false positive."
+    with pytest.raises(ValueError, match=msg):
+        checks.resize_refcheck_test()

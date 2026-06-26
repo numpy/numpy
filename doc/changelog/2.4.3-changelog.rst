@@ -1,0 +1,39 @@
+
+Contributors
+============
+
+A total of 11 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Antareep Sarkar +
+* Charles Harris
+* Joren Hammudoglu
+* Matthieu Darbois
+* Matti Picus
+* Nathan Goldbaum
+* Peter Hawkins
+* Pieter Eendebak
+* Sebastian Berg
+* Warren Weckesser
+* stratakis +
+
+Pull requests merged
+====================
+
+A total of 14 pull requests were merged for this release.
+
+* `#30759 <https://github.com/numpy/numpy/pull/30759>`__: MAINT: Prepare 2.4.x for further development
+* `#30827 <https://github.com/numpy/numpy/pull/30827>`__: BUG: Fix some leaks found via LeakSanitizer (#30756)
+* `#30841 <https://github.com/numpy/numpy/pull/30841>`__: MAINT: Synchronize 2.4.x submodules with main
+* `#30849 <https://github.com/numpy/numpy/pull/30849>`__: TYP: ``matlib``\ : missing extended precision imports
+* `#30850 <https://github.com/numpy/numpy/pull/30850>`__: BUG: Fix weak hash function in np.isin(). (#30840)
+* `#30921 <https://github.com/numpy/numpy/pull/30921>`__: BUG: fix infinite recursion in np.ma.flatten_structured_array...
+* `#30922 <https://github.com/numpy/numpy/pull/30922>`__: BUG: Fix buffer overrun in CPU baseline validation (#30877)
+* `#30923 <https://github.com/numpy/numpy/pull/30923>`__: BUG: Fix busdaycalendar's handling of a bool array weekmask....
+* `#30924 <https://github.com/numpy/numpy/pull/30924>`__: BUG: Fix reference leaks and NULL pointer dereferences (#30908)
+* `#30925 <https://github.com/numpy/numpy/pull/30925>`__: MAINT: fix two minor issues noticed when touching the C API setup
+* `#30955 <https://github.com/numpy/numpy/pull/30955>`__: ENH: Test .kind not .char in np.testing.assert_equal (#30879)
+* `#30957 <https://github.com/numpy/numpy/pull/30957>`__: BUG: fix type issues in uses if PyDataType macros
+* `#30958 <https://github.com/numpy/numpy/pull/30958>`__: MAINT: Don't use vulture 2.15, it has false positives
+* `#30973 <https://github.com/numpy/numpy/pull/30973>`__: MAINT: update openblas (#30961)
+

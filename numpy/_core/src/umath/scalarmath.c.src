@@ -700,7 +700,7 @@ static inline int
  *   - The reverse should work, so we return NotImplemented to defer.
  *     (If self is a subclass, this will end up in the "unknown" path.)
  *   - Neither works (e.g. `uint8 + int8`):  We currently use the array path.
- * - The other object is a unknown.  It could be either a scalar, an array,
+ * - The other object is an unknown.  It could be either a scalar, an array,
  *   or an array-like (including a list!).  Because NumPy scalars pretend to be
  *   arrays we fall into the array fallback path here _normally_ (through
  *   the generic scalar path).

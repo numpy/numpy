@@ -163,7 +163,7 @@ class format_parser:
         #  "f0, f1, f2,..."
         # if not enough names are specified, they will be assigned as "f[n],
         # f[n+1],..." etc. where n is the number of specified names..."
-        self._names += ['f%d' % i for i in range(len(self._names),
+        self._names += [f'f{i}' for i in range(len(self._names),
                                                  self._nfields)]
         # check for redundant names
         _dup = find_duplicate(self._names)
@@ -263,8 +263,7 @@ class record(nt.void):
         # pretty-print all fields
         names = self.dtype.names
         maxlen = max(len(name) for name in names)
-        fmt = '%% %ds: %%s' % maxlen
-        rows = [fmt % (name, getattr(self, name)) for name in names]
+        rows = [f"{name:>{maxlen}}: {getattr(self, name)}" for name in names]
         return "\n".join(rows)
 
 # The recarray is almost identical to a standard array (which supports
@@ -403,11 +402,15 @@ class recarray(ndarray):
             )
         return self
 
+    _set_dtype = None  # __array_finalize__ can deal with dtype changes
+
     def __array_finalize__(self, obj):
-        if self.dtype.type is not record and self.dtype.names is not None:
+        if (self.dtype.type is not record and
+                issubclass(self.dtype.type, nt.void) and
+                self.dtype.names is not None):
             # if self.dtype is not np.record, invoke __setattr__ which will
             # convert it to a record if it is a void dtype.
-            self.dtype = self.dtype
+            ndarray._set_dtype(self, sb.dtype((record, self.dtype)))
 
     def __getattribute__(self, attr):
         # See if ndarray has this attr, and return it if so. (note that this

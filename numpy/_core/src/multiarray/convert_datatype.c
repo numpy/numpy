@@ -232,6 +232,7 @@ PyArray_GetBoundCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
     res->dtypes = PyMem_Malloc(2 * sizeof(PyArray_DTypeMeta *));
     if (res->dtypes == NULL) {
         Py_DECREF(res);
+        PyErr_NoMemory();
         return NULL;
     }
     Py_INCREF(from);
@@ -647,6 +648,36 @@ PyArray_SafeCast(PyArray_Descr *type1, PyArray_Descr *type2,
 }
 
 
+/*
+ * Python-level helper answering whether reinterpreting data of dtype *from*
+ * as dtype *to* is a view. Unlike descriptor equality or `np.can_cast` with
+ * "no" casting, this distinguishes equivalent descriptor instances with
+ * separate internal state (e.g. StringDType allocators).
+ */
+NPY_NO_EXPORT PyObject *
+_is_view_safe_cast(PyObject *NPY_UNUSED(module), PyObject *const *args,
+                   Py_ssize_t len_args)
+{
+    if (len_args != 2) {
+        PyErr_SetString(PyExc_TypeError,
+                "_is_view_safe_cast() takes exactly two arguments");
+        return NULL;
+    }
+    if (!PyArray_DescrCheck(args[0]) || !PyArray_DescrCheck(args[1])) {
+        PyErr_SetString(PyExc_TypeError,
+                "_is_view_safe_cast() arguments must be dtype instances");
+        return NULL;
+    }
+    PyArray_Descr *from = (PyArray_Descr *)args[0];
+    PyArray_Descr *to = (PyArray_Descr *)args[1];
+    npy_intp view_offset = NPY_MIN_INTP;
+    /* ignore_error=1: dtype pairs with no resolvable cast are simply not views */
+    npy_intp is_safe = PyArray_SafeCast(from, to, &view_offset,
+                                        NPY_NO_CASTING, 1);
+    return PyBool_FromLong(is_safe && view_offset == 0);
+}
+
+
 /* Provides an ordering for the dtype 'kind' character codes */
 NPY_NO_EXPORT int
 dtype_kind_to_ordering(char kind)
@@ -930,7 +961,7 @@ PyArray_CastDescrToDType(PyArray_Descr *descr, PyArray_DTypeMeta *given_DType)
         Py_INCREF(descr);
         return descr;
     }
-    if (!NPY_DT_is_parametric(given_DType)) {
+    if (!NPY_DT_is_parametric(given_DType) && !NPY_DT_is_abstract(given_DType)) {
         /*
          * Don't actually do anything, the default is always the result
          * of any cast.
@@ -993,10 +1024,8 @@ PyArray_FindConcatenationDescriptor(
 
     PyArray_DTypeMeta *common_dtype;
     PyArray_Descr *result = NULL;
-    if (PyArray_ExtractDTypeAndDescriptor(
-            requested_dtype, &result, &common_dtype) < 0) {
-        return NULL;
-    }
+    PyArray_ExtractDTypeAndDescriptor(
+            requested_dtype, &result, &common_dtype);
     if (result != NULL) {
         if (PyDataType_SUBARRAY(result) != NULL) {
             PyErr_Format(PyExc_TypeError,
@@ -1937,14 +1966,21 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
     PyArray_Descr *common_descr = NULL;
     PyArrayObject **mps = NULL;
 
-    *retn = n = PySequence_Length(op);
-    if (n == 0) {
+    Py_ssize_t length = PySequence_Length(op);
+    if (length == 0) {
         PyErr_SetString(PyExc_ValueError, "0-length sequence.");
     }
     if (PyErr_Occurred()) {
         *retn = 0;
         return NULL;
     }
+    if (length > INT_MAX) {
+        PyErr_SetString(PyExc_ValueError,
+            "sequence too large to convert in common type.");
+        *retn = 0;
+        return NULL;
+    }
+    *retn = n = (int)length;
     mps = (PyArrayObject **)PyDataMem_NEW(n*sizeof(PyArrayObject *));
     if (mps == NULL) {
         *retn = 0;
@@ -2090,6 +2126,7 @@ PyArray_AddCastingImplementation_FromSpec(PyArrayMethod_Spec *spec, int private)
     if (meth == NULL) {
         return -1;
     }
+    meth->method->flags |= _NPY_METH_IS_CAST;
     int res = PyArray_AddCastingImplementation(meth);
     Py_DECREF(meth);
     if (res < 0) {
@@ -3274,7 +3311,22 @@ void_to_void_get_loop(
 {
     if (PyDataType_NAMES(context->descriptors[0]) != NULL ||
             PyDataType_NAMES(context->descriptors[1]) != NULL) {
-        if (get_fields_transfer_function(
+        /*
+         * Fast path: if dtypes are equivalent and the destination is
+         * trivially copyable, use memcpy instead of field-by-field transfer.
+         */
+        if ((context->descriptors[0] == context->descriptors[1] ||
+                    PyArray_EquivTypes(context->descriptors[0], context->descriptors[1])) &&
+                PyDataType_ISTRIVIALLYCOPYABLE(context->descriptors[1])) {
+            if (PyArray_GetStridedZeroPadCopyFn(
+                    0, 0, strides[0], strides[1],
+                    context->descriptors[0]->elsize, context->descriptors[1]->elsize,
+                    out_loop, out_transferdata) == NPY_FAIL) {
+                return -1;
+            }
+            *flags = PyArrayMethod_MINIMAL_FLAGS;
+        }
+        else if (get_fields_transfer_function(
                 aligned, strides[0], strides[1],
                 context->descriptors[0], context->descriptors[1],
                 move_references, out_loop, out_transferdata,

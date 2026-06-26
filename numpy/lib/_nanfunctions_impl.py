@@ -1504,7 +1504,7 @@ def nanquantile(
     See Also
     --------
     quantile
-    nanmean, nanmedian
+    nanmean
     nanmedian : equivalent to ``nanquantile(..., 0.5)``
     nanpercentile : same as nanquantile, but with q in the range [0, 100].
 

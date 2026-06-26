@@ -48,6 +48,8 @@ EOF
 fi
 
 if [[ $RUNNER_OS == "Windows" ]]; then
-    # delvewheel is the equivalent of delocate/auditwheel for windows.
-    python -m pip install delvewheel wheel
+    python -m pip install -r $PROJECT_DIR/requirements/delvewheel_requirements.txt
+    # pkgconf - carries out the role of pkg-config.
+    # Alternative is pkgconfiglite that you have to install with choco
+    python -m pip install -r $PROJECT_DIR/requirements/pkgconf_requirements.txt
 fi

@@ -9,11 +9,11 @@ import numpy.testing as npt
 from . import util
 
 
+@pytest.mark.slow
 class TestIntentInOut(util.F2PyTest):
     # Check that intent(in out) translates as intent(inout)
     sources = [util.getpath("tests", "src", "regression", "inout.f90")]
 
-    @pytest.mark.slow
     def test_inout(self):
         # non-contiguous should raise error
         x = np.arange(6, dtype=np.float32)[::2]
@@ -25,11 +25,11 @@ class TestIntentInOut(util.F2PyTest):
         assert np.allclose(x, [3, 1, 2])
 
 
+@pytest.mark.slow
 class TestDataOnlyMultiModule(util.F2PyTest):
     # Check that modules without subroutines work
     sources = [util.getpath("tests", "src", "regression", "datonly.f90")]
 
-    @pytest.mark.slow
     def test_mdat(self):
         assert self.module.datonly.max_value == 100
         assert self.module.dat.max_ == 1009
@@ -37,21 +37,21 @@ class TestDataOnlyMultiModule(util.F2PyTest):
         assert self.module.simple_subroutine(5) == 1014
 
 
+@pytest.mark.slow
 class TestModuleWithDerivedType(util.F2PyTest):
     # Check that modules with derived types work
     sources = [util.getpath("tests", "src", "regression", "mod_derived_types.f90")]
 
-    @pytest.mark.slow
     def test_mtypes(self):
         assert self.module.no_type_subroutine(10) == 110
         assert self.module.type_subroutine(10) == 210
 
 
+@pytest.mark.slow
 class TestNegativeBounds(util.F2PyTest):
     # Check that negative bounds work correctly
     sources = [util.getpath("tests", "src", "negative_bounds", "issue_20853.f90")]
 
-    @pytest.mark.slow
     def test_negbound(self):
         xvec = np.arange(12)
         xlow = -6
@@ -68,12 +68,12 @@ class TestNegativeBounds(util.F2PyTest):
         assert np.allclose(rval, expval)
 
 
+@pytest.mark.slow
 class TestNumpyVersionAttribute(util.F2PyTest):
     # Check that th attribute __f2py_numpy_version__ is present
     # in the compiled module and that has the value np.__version__.
     sources = [util.getpath("tests", "src", "regression", "inout.f90")]
 
-    @pytest.mark.slow
     def test_numpy_version_attribute(self):
 
         # Check that self.module has an attribute named "__f2py_numpy_version__"
@@ -93,22 +93,22 @@ def test_include_path():
         assert fname in fnames_in_dir
 
 
+@pytest.mark.slow
 class TestIncludeFiles(util.F2PyTest):
     sources = [util.getpath("tests", "src", "regression", "incfile.f90")]
     options = [f"-I{util.getpath('tests', 'src', 'regression')}",
                f"--include-paths {util.getpath('tests', 'src', 'regression')}"]
 
-    @pytest.mark.slow
     def test_gh25344(self):
         exp = 7.0
         res = self.module.add(3.0, 4.0)
         assert exp == res
 
+@pytest.mark.slow
 class TestF77Comments(util.F2PyTest):
     # Check that comments are stripped from F77 continuation lines
     sources = [util.getpath("tests", "src", "regression", "f77comments.f")]
 
-    @pytest.mark.slow
     def test_gh26148(self):
         x1 = np.array(3, dtype=np.int32)
         x2 = np.array(5, dtype=np.int32)
@@ -116,18 +116,17 @@ class TestF77Comments(util.F2PyTest):
         assert res[0] == 8
         assert res[1] == 15
 
-    @pytest.mark.slow
     def test_gh26466(self):
         # Check that comments after PARAMETER directions are stripped
         expected = np.arange(1, 11, dtype=np.float32) * 2
         res = self.module.testsub2()
         npt.assert_allclose(expected, res)
 
-class TestF90Contiuation(util.F2PyTest):
+@pytest.mark.slow
+class TestF90Continuation(util.F2PyTest):
     # Check that comments are stripped from F90 continuation lines
     sources = [util.getpath("tests", "src", "regression", "f90continuation.f90")]
 
-    @pytest.mark.slow
     def test_gh26148b(self):
         x1 = np.array(3, dtype=np.int32)
         x2 = np.array(5, dtype=np.int32)
@@ -135,11 +134,11 @@ class TestF90Contiuation(util.F2PyTest):
         assert res[0] == 8
         assert res[1] == 15
 
+@pytest.mark.slow
 class TestLowerF2PYDirectives(util.F2PyTest):
     # Check variables are cased correctly
     sources = [util.getpath("tests", "src", "regression", "lower_f2py_fortran.f90")]
 
-    @pytest.mark.slow
     def test_gh28014(self):
         self.module.inquire_next(3)
         assert True
@@ -176,11 +175,27 @@ def test_gh25784():
 
 
 @pytest.mark.slow
+class TestComplexStructCompat(util.F2PyTest):
+    # Check that .r/.i field access works on complex_double pointers in
+    # callstatements (scipy compatibility, gh-30966 follow-up)
+    sources = [
+        util.getpath("tests", "src", "regression", "complex_struct_compat.pyf"),
+        util.getpath("tests", "src", "regression", "complex_struct_compat.f90"),
+    ]
+    module_name = "_complex_struct_compat_test"
+
+    def test_complex_struct_field_access(self):
+        c = np.array([1 + 2j, 3 + 4j, 5 + 6j], dtype=np.complex128)
+        self.module.zero_imag(c)
+        npt.assert_array_equal(c.imag, [0.0, 0.0, 0.0])
+        npt.assert_array_equal(c.real, [1.0, 3.0, 5.0])
+
+
+@pytest.mark.slow
 class TestAssignmentOnlyModules(util.F2PyTest):
     # Ensure that variables are exposed without functions or subroutines in a module
     sources = [util.getpath("tests", "src", "regression", "assignOnlyModule.f90")]
 
-    @pytest.mark.slow
     def test_gh27167(self):
         assert (self.module.f_globals.n_max == 16)
         assert (self.module.f_globals.i_max == 18)

@@ -5,7 +5,7 @@ updates:
     schedule:
       interval: daily
     cooldown:
-      default-days: 7
+      default-days: 7     # optional
     commit-message:
       prefix: "MAINT"
     labels:
@@ -17,7 +17,12 @@ updates:
     schedule:
       interval: daily
     cooldown:
-      default-days: 7
+      default-days: 7     # optional
+    groups:
+      python-deps:
+        patterns:
+          - "*"           # catches EVERY dependency in ALL requirements files
+        applies-to: "version-updates"
     commit-message:
       prefix: "MAINT"
     labels:

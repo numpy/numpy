@@ -21,7 +21,7 @@ f8.argpartition(0)  # type: ignore[attr-defined]
 f8.partition(0)  # type: ignore[attr-defined]
 f8.dot(1)  # type: ignore[attr-defined]
 
-# NOTE: The following functions retur `Never`, causing mypy to stop analysis at that
+# NOTE: The following functions return `Never`, causing mypy to stop analysis at that
 # point, which we circumvent by wrapping them in a function.
 
 def f8_diagonal(x: np.float64) -> Never:

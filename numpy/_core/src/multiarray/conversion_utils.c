@@ -634,6 +634,10 @@ static int selectkind_parser(char const *str, Py_ssize_t length, void *data)
 NPY_NO_EXPORT int
 PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind)
 {
+    /* Leave the desired default from the caller for Py_None */
+    if (obj == Py_None) {
+        return NPY_SUCCEED;
+    }
     return string_converter_helper(
         obj, (void *)selectkind, selectkind_parser, "select kind",
         "must be 'introselect'");

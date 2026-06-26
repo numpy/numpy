@@ -529,7 +529,7 @@ PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
         return -1;
     }
 
-    char *data = PyObject_Malloc(tmp_descr->elsize);
+    char *data = PyMem_Malloc(tmp_descr->elsize);
     if (data == NULL) {
         PyErr_NoMemory();
         Py_DECREF(tmp_descr);
@@ -539,7 +539,7 @@ PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
         memset(data, 0, tmp_descr->elsize);
     }
     if (NPY_DT_CALL_setitem(tmp_descr, value, data) < 0) {
-        PyObject_Free(data);
+        PyMem_Free(data);
         Py_DECREF(tmp_descr);
         return -1;
     }
@@ -551,7 +551,7 @@ PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
         }
     }
 
-    PyObject_Free(data);
+    PyMem_Free(data);
     Py_DECREF(tmp_descr);
     return res;
 }
@@ -920,10 +920,7 @@ PyArray_AdaptDescriptorToArray(
         return descr;
     }
     if (dtype == NULL) {
-        res = PyArray_ExtractDTypeAndDescriptor(descr, &new_descr, &dtype);
-        if (res < 0) {
-            return NULL;
-        }
+        PyArray_ExtractDTypeAndDescriptor(descr, &new_descr, &dtype);
         if (new_descr != NULL) {
             Py_DECREF(dtype);
             return new_descr;
@@ -1034,7 +1031,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         }
         int was_copied_by__array__ = 0;
         arr = (PyArrayObject *)_array_from_array_like(obj,
-                requested_descr, 0, NULL, copy, &was_copied_by__array__);
+                requested_descr, 0, copy, &was_copied_by__array__);
         if (arr == NULL) {
             return -1;
         }
@@ -1420,9 +1417,8 @@ _discover_array_parameters(PyObject *NPY_UNUSED(self),
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments(
             "_discover_array_parameters", args, len_args, kwnames,
-            "", NULL, &obj,
-            "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
-            NULL, NULL, NULL) < 0) {
+            {"", NULL, &obj},
+            {"|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info}) < 0) {
         /* fixed is last to parse, so never necessary to clean up */
         return NULL;
     }

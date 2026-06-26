@@ -2,7 +2,6 @@ import functools
 import importlib
 import inspect
 import pkgutil
-import subprocess
 import sys
 import sysconfig
 import types
@@ -13,6 +12,7 @@ import pytest
 import numpy
 import numpy as np
 from numpy.testing import IS_WASM
+from numpy.testing._private.utils import run_subprocess
 
 try:
     import ctypes
@@ -62,8 +62,8 @@ def test_import_lazy_import(name):
 
     """
     exe = (sys.executable, '-c', "import numpy; numpy." + name)
-    result = subprocess.check_output(exe)
-    assert not result
+    result = run_subprocess(exe)
+    assert not result.stdout
 
     # Make sure they are still in the __dir__
     assert name in dir(np)
@@ -239,6 +239,7 @@ SKIP_LIST_2 = [
 ]
 
 
+@pytest.mark.slow
 def test_all_modules_are_expected_2():
     """
     Method checking all objects. The pkgutil-based method in

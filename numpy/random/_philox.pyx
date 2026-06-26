@@ -307,7 +307,7 @@ cdef class Philox(BitGenerator):
 
         Notes
         -----
-        Advancing a RNG updates the underlying RNG state as-if a given
+        Advancing an RNG updates the underlying RNG state as-if a given
         number of calls to the underlying RNG have been made. In general
         there is not a one-to-one relationship between the number output
         random values from a particular distribution and the number of

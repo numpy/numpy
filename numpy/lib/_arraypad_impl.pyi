@@ -1,7 +1,7 @@
 from typing import Any, Literal as L, Protocol, overload, type_check_only
 
 import numpy as np
-from numpy._typing import ArrayLike, NDArray, _ArrayLike, _ArrayLikeInt
+from numpy._typing import ArrayLike, NDArray, _ArrayLike, _ArrayLikeInt, _Shape
 
 __all__ = ["pad"]
 
@@ -44,6 +44,17 @@ type _PadWidth = (
 
 # Expand `**kwargs` into explicit keyword-only arguments
 @overload
+def pad[ShapeT: _Shape, DTypeT: np.dtype](
+    array: np.ndarray[ShapeT, DTypeT],
+    pad_width: _PadWidth,
+    mode: _ModeKind = "constant",
+    *,
+    stat_length: _ArrayLikeInt | None = None,
+    constant_values: ArrayLike = 0,
+    end_values: ArrayLike = 0,
+    reflect_type: L["odd", "even"] = "even",
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload
 def pad[ScalarT: np.generic](
     array: _ArrayLike[ScalarT],
     pad_width: _PadWidth,
@@ -65,6 +76,13 @@ def pad(
     end_values: ArrayLike = 0,
     reflect_type: L["odd", "even"] = "even",
 ) -> NDArray[Any]: ...
+@overload
+def pad[ShapeT: _Shape, DTypeT: np.dtype](
+    array: np.ndarray[ShapeT, DTypeT],
+    pad_width: _PadWidth,
+    mode: _ModeFunc,
+    **kwargs: Any,
+) -> np.ndarray[ShapeT, DTypeT]: ...
 @overload
 def pad[ScalarT: np.generic](
     array: _ArrayLike[ScalarT],

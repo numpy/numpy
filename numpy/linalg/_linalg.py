@@ -18,7 +18,6 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
 
 import functools
 import operator
-import warnings
 from typing import Any, NamedTuple
 
 from numpy._core import (
@@ -61,7 +60,6 @@ from numpy._core import (
     overrides,
     prod,
     reciprocal,
-    sign,
     single,
     sort,
     sqrt,
@@ -239,22 +237,22 @@ def _to_native_byte_order(*arrays):
 def _assert_2d(*arrays):
     for a in arrays:
         if a.ndim != 2:
-            raise LinAlgError('%d-dimensional array given. Array must be '
-                    'two-dimensional' % a.ndim)
+            raise LinAlgError(f'{a.ndim}-dimensional array given. Array must be '
+                              'two-dimensional')
 
 def _assert_stacked_2d(*arrays):
     for a in arrays:
         if a.ndim < 2:
-            raise LinAlgError('%d-dimensional array given. Array must be '
-                    'at least two-dimensional' % a.ndim)
+            raise LinAlgError(f'{a.ndim}-dimensional array given. Array must be '
+                              'at least two-dimensional')
 
 def _assert_stacked_square(*arrays):
     for a in arrays:
         try:
             m, n = a.shape[-2:]
         except ValueError:
-            raise LinAlgError('%d-dimensional array given. Array must be '
-                    'at least two-dimensional' % a.ndim)
+            raise LinAlgError(f'{a.ndim}-dimensional array given. Array must be '
+                              'at least two-dimensional')
         if m != n:
             raise LinAlgError('Last 2 dimensions of the array must be square')
 
@@ -994,15 +992,8 @@ def qr(a, mode='reduced'):
         * 'r'        : returns R only with dimensions (..., K, N)
         * 'raw'      : returns h, tau with dimensions (..., N, M), (..., K,)
 
-        The options 'reduced', 'complete, and 'raw' are new in numpy 1.8,
-        see the notes for more information. The default is 'reduced', and to
-        maintain backward compatibility with earlier versions of numpy both
-        it and the old default 'full' can be omitted. Note that array h
-        returned in 'raw' mode is transposed for calling Fortran. The
-        'economic' mode is deprecated.  The modes 'full' and 'economic' may
-        be passed using only the first letter for backwards compatibility,
-        but all others must be spelled out. See the Notes for more
-        explanation.
+        The default is 'reduced'. Note that array h returned in 'raw' mode
+        is transposed for calling Fortran. See the Notes for more explanation.
 
 
     Returns
@@ -1021,7 +1012,7 @@ def qr(a, mode='reduced'):
     (h, tau) : ndarrays of np.double or np.cdouble, optional
         The array h contains the Householder reflectors that generate q
         along with r. The tau array contains scaling factors for the
-        reflectors. In the deprecated  'economic' mode only h is returned.
+        reflectors.
 
     Raises
     ------
@@ -1046,12 +1037,6 @@ def qr(a, mode='reduced'):
 
     Subclasses of `ndarray` are preserved except for the 'raw' mode. So if
     `a` is of type `matrix`, all the return values will be matrices too.
-
-    New 'reduced', 'complete', and 'raw' options for mode were added in
-    NumPy 1.8.0 and the old option 'full' was made an alias of 'reduced'.  In
-    addition the options 'full' and 'economic' were deprecated.  Because
-    'full' was the previous default and 'reduced' is the new default,
-    backward compatibility can be maintained by letting `mode` default.
     The 'raw' option was added so that LAPACK routines that can multiply
     arrays by q using the Householder reflectors can be used. Note that in
     this case the returned arrays are of type np.double or np.cdouble and
@@ -1068,7 +1053,7 @@ def qr(a, mode='reduced'):
     >>> np.allclose(a, np.dot(Q, R))  # a does equal QR
     True
     >>> R2 = np.linalg.qr(a, mode='r')
-    >>> np.allclose(R, R2)  # mode='r' returns the same R as mode='full'
+    >>> np.allclose(R, R2)  # mode='r' returns the same R as mode='reduced'
     True
     >>> a = np.random.normal(size=(3, 2, 2)) # Stack of 2 x 2 matrices as input
     >>> Q, R = np.linalg.qr(a)
@@ -1109,19 +1094,12 @@ def qr(a, mode='reduced'):
 
     """
     if mode not in ('reduced', 'complete', 'r', 'raw'):
-        if mode in ('f', 'full'):
-            # 2013-04-01, 1.8
-            msg = (
-                "The 'full' option is deprecated in favor of 'reduced'.\n"
-                "For backward compatibility let mode default."
+        if mode in ('f', 'full', 'e', 'economic'):
+            raise ValueError(
+                f"The '{mode}' option was deprecated in NumPy 1.8 and has been "
+                f"removed. Use 'reduced' instead of 'full'/'f', and 'raw' instead "
+                f"of 'economic'/'e'."
             )
-            warnings.warn(msg, DeprecationWarning, stacklevel=2)
-            mode = 'reduced'
-        elif mode in ('e', 'economic'):
-            # 2013-04-01, 1.8
-            msg = "The 'economic' option is deprecated."
-            warnings.warn(msg, DeprecationWarning, stacklevel=2)
-            mode = 'economic'
         else:
             raise ValueError(f"Unrecognized mode '{mode}'")
 
@@ -1149,10 +1127,6 @@ def qr(a, mode='reduced'):
         q = q.astype(result_t, copy=False)
         tau = tau.astype(result_t, copy=False)
         return wrap(q), tau
-
-    if mode == 'economic':
-        a = a.astype(result_t, copy=False)
-        return wrap(a)
 
     # mc is the number of columns in the resulting q
     # matrix. If the mode is complete then it is
@@ -1809,7 +1783,8 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
         # and related arrays to have the correct order
         if compute_uv:
             s, u = eigh(a)
-            sgn = sign(s)
+            # avoid zero sign
+            sgn = np.copysign(1.0, s)
             s = abs(s)
             sidx = argsort(s)[..., ::-1]
             sgn = np.take_along_axis(sgn, sidx, axis=-1)
@@ -3400,13 +3375,14 @@ def matmul(x1, x2, /):
 
 # tensordot
 
-def _tensordot_dispatcher(x1, x2, /, *, axes=None):
-    return (x1, x2)
+
+def _tensordot_dispatcher(a, b, /, *, axes=None):
+    return (a, b)
 
 
 @array_function_dispatch(_tensordot_dispatcher)
-def tensordot(x1, x2, /, *, axes=2):
-    return _core_tensordot(x1, x2, axes=axes)
+def tensordot(a, b, /, *, axes=2):
+    return _core_tensordot(a, b, axes=axes)
 
 
 tensordot.__doc__ = _core_tensordot.__doc__

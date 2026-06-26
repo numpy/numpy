@@ -48,6 +48,8 @@ type _FNameRead = StrPath | SupportsRead[str] | SupportsRead[bytes]
 type _FNameWriteBytes = StrPath | SupportsWrite[bytes]
 type _FNameWrite = _FNameWriteBytes | SupportsWrite[str]
 
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+
 @type_check_only
 class _SupportsReadSeek[T](SupportsRead[T], Protocol):
     def seek(self, offset: int, whence: int, /) -> object: ...
@@ -62,8 +64,10 @@ class NpzFile(Mapping[str, NDArray[_ScalarT_co]]):
 
     zip: zipfile.ZipFile | None = None
     fid: IO[str] | None = None
+
     files: list[str]
     allow_pickle: bool
+    max_header_size: int
     pickle_kwargs: Mapping[str, Any] | None
     f: BagObj[NpzFile[_ScalarT_co]]
 
@@ -91,7 +95,7 @@ class NpzFile(Mapping[str, NDArray[_ScalarT_co]]):
     #
     @override
     @overload
-    def get(self, key: str, default: None = None, /) -> NDArray[_ScalarT_co] | None: ...  # pyrefly: ignore[bad-override]
+    def get(self, key: str, default: None = None, /) -> NDArray[_ScalarT_co] | None: ...
     @overload
     def get[T](self, key: str, default: NDArray[_ScalarT_co] | T, /) -> NDArray[_ScalarT_co] | T: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
@@ -186,14 +190,14 @@ def fromregex[ScalarT: np.generic](
     regexp: str | bytes | Pattern[Any],
     dtype: _DTypeLike[ScalarT],
     encoding: str | None = None,
-) -> NDArray[ScalarT]: ...
+) -> _Array1D[ScalarT]: ...
 @overload
 def fromregex(
     file: _FNameRead,
     regexp: str | bytes | Pattern[Any],
     dtype: DTypeLike | None,
     encoding: str | None = None,
-) -> NDArray[Any]: ...
+) -> _Array1D[Any]: ...
 
 @overload
 def genfromtxt(

@@ -49,8 +49,6 @@ typedef struct npy_runtime_imports_struct {
     PyObject *_var;
     PyObject *_view_is_safe;
     PyObject *_void_scalar_to_string;
-    PyObject *sort;
-    PyObject *argsort;
 } npy_runtime_imports_struct;
 
 NPY_VISIBILITY_HIDDEN extern npy_runtime_imports_struct npy_runtime_imports;

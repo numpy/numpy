@@ -6,13 +6,13 @@ from numpy.testing import assert_allclose
 from . import util
 
 
+@pytest.mark.slow
 class TestISOC(util.F2PyTest):
     sources = [
         util.getpath("tests", "src", "isocintrin", "isoCtests.f90"),
     ]
 
     # gh-24553
-    @pytest.mark.slow
     def test_c_double(self):
         out = self.module.coddity.c_add(1, 2)
         exp_out = 3
