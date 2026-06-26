@@ -4766,8 +4766,13 @@ def _quantile(
             raise ValueError(
                 f"{method!r} is not a valid method. Use one of: "
                 f"{_QuantileMethods.keys()}") from None
+
+        idx_quantiles = quantiles
+        if np.issubdtype(quantiles.dtype, np.inexact):
+            idx_quantiles = quantiles.astype(np.float64, copy=False)
+
         virtual_indexes = method_props["get_virtual_index"](values_count,
-                                                            quantiles)
+                                                            idx_quantiles)
         virtual_indexes = np.asanyarray(virtual_indexes)
 
         if method_props["fix_gamma"] is None:
@@ -4814,6 +4819,8 @@ def _quantile(
             if weak_q:
                 gamma = float(gamma)
             else:
+                if np.issubdtype(quantiles.dtype, np.inexact):
+                    gamma = gamma.astype(quantiles.dtype, copy=False)
                 result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
                 gamma = gamma.reshape(result_shape)
             result = _lerp(previous,
