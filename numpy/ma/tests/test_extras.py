@@ -456,6 +456,14 @@ class TestAverage:
         assert_almost_equal(avg_masked, avg_expected)
         assert_equal(avg_masked.mask, avg_expected.mask)
 
+    def test_average_object(self):
+        a = np.ma.array([1, 2, 3], dtype=object)
+
+        result = np.ma.average(a)
+
+        assert result.shape == ()
+        assert result.item() == 2
+
 
 class TestConcatenator:
     # Tests for mr_, the equivalent of r_ for masked arrays.

@@ -660,6 +660,8 @@ def average(a, axis=None, weights=None, returned=False, *,
 
     if weights is None:
         avg = a.mean(axis, **keepdims_kw)
+        if np.ndim(avg) == 0:
+            avg = np.asarray(avg)
         scl = avg.dtype.type(a.count(axis))
     else:
         wgt = asarray(weights)
