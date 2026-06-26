@@ -335,4 +335,45 @@ datetime_hash(PyArray_DatetimeMetaData *meta, npy_datetime dt);
 NPY_NO_EXPORT npy_hash_t
 timedelta_hash(PyArray_DatetimeMetaData *meta, npy_timedelta td);
 
+/*
+ * Scale a datetime or timedelta value by num/denom, checking for overflow.
+ *
+ * Positive values compute *dt * num / denom.
+ * Negative values compute (*dt * num - (denom - 1)) / denom to round
+ * toward negative infinity.
+ *
+ * NPY_DATETIME_NAT is NPY_MIN_INT64 (i.e. -NPY_MAX_INT64 - 1).
+ * The asymmetric neg_limit formula ensures that a valid *dt * num never
+ * produces NPY_MIN_INT64, which would be misinterpreted as NaT.
+ *
+ * NaT values pass through unchanged.
+ *
+ * Returns 0 on success, -1 on overflow (with PyExc_OverflowError set).
+ */
+static inline int
+_datetime_scale_with_overflow_check(
+        npy_int64 *dt, npy_int64 num, npy_int64 denom,
+        const char *type_name)
+{
+    if (*dt == NPY_DATETIME_NAT) {
+        return 0;
+    }
+    npy_int64 pos_limit = NPY_MAX_INT64 / num;
+    npy_int64 neg_limit = (NPY_MAX_INT64 - denom + 1) / num;
+
+    if (*dt > pos_limit || *dt < -neg_limit) {
+        PyErr_Format(PyExc_OverflowError,
+                "Overflow when converting between "
+                "%s units", type_name);
+        return -1;
+    }
+    if (*dt < 0) {
+        *dt = (*dt * num - (denom - 1)) / denom;
+    }
+    else {
+        *dt = *dt * num / denom;
+    }
+    return 0;
+}
+
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY__DATETIME_H_ */

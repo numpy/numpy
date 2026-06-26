@@ -155,7 +155,7 @@ cdef class MT19937(BitGenerator):
         seed : {None, int, array_like}
             Random seed initializing the pseudo-random number generator.
             Can be an integer in [0, 2**32-1], array of integers in
-            [0, 2**32-1], a `SeedSequence, or ``None``. If `seed`
+            [0, 2**32-1], a `SeedSequence`, or ``None``. If `seed`
             is ``None``, then fresh, unpredictable entropy will be pulled from
             the OS.
 
@@ -205,8 +205,8 @@ cdef class MT19937(BitGenerator):
         iter : integer, positive
             Number of times to jump the state of the rng.
         """
-        cdef np.npy_intp i
-        for i in range(iter):
+        cdef np.npy_intp _i
+        for _i in range(iter):
             mt19937_jump(&self.rng_state)
 
 

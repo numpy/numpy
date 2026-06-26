@@ -294,6 +294,51 @@ class _FuncVal3D(Protocol):
     ) -> _SupportsCoefOps[Any]: ...
 
 @type_check_only
+class _FuncValND(Protocol):
+    @overload
+    def __call__(
+        self,
+        /,
+        pts: Sequence[_FloatLike_co],
+        c: _SeriesLikeFloat_co,
+    ) -> np.floating: ...
+    @overload
+    def __call__(
+        self,
+        /,
+        pts: Sequence[_NumberLike_co],
+        c: _SeriesLikeComplex_co,
+    ) -> np.complexfloating: ...
+    @overload
+    def __call__(
+        self,
+        /,
+        pts: Sequence[_ArrayLikeFloat_co],
+        c: _ArrayLikeFloat_co,
+    ) -> _FloatArray: ...
+    @overload
+    def __call__(
+        self,
+        /,
+        pts: Sequence[_ArrayLikeComplex_co],
+        c: _ArrayLikeComplex_co,
+    ) -> _ComplexArray: ...
+    @overload
+    def __call__(
+        self,
+        /,
+        pts: Sequence[_ArrayLikeCoef_co],
+        c: _ArrayLikeCoef_co,
+    ) -> _ObjectArray: ...
+    @overload
+    def __call__(
+        self,
+        /,
+        pts: Sequence[_CoefLike_co],
+        c: _SeriesLikeCoef_co,
+    ) -> _SupportsCoefOps[Any]: ...
+
+@type_check_only
 class _FuncVander(Protocol):
     @overload
     def __call__(self, /, x: _ArrayLikeFloat_co, deg: SupportsIndex) -> _FloatArray: ...

@@ -89,6 +89,77 @@ def test_eigvalsh_thread_safety():
                  pass_count=True)
 
 
+def _detected_blas():
+    blas = np.show_config('dicts').get('Build Dependencies', {}).get('blas', {})
+    return blas.get('name', 'unknown'), blas.get('version', 'unknown')
+
+
+def _openblas_predates_gemm_fix(name, version):
+    name = (name or '').lower().strip()
+    # Assume failures using wrapper BLAS packages are buggy OpenBLAS.
+    # This may ignore a genuine bug but we can't do anything more fine-grained.
+    if name in ('blas', 'cblas', 'flexiblas', 'unknown', ''):
+        return True
+    if 'openblas' not in name:
+        # e.g. MKL, accelerate, where we'd want to know about a new failure
+        return False
+    try:
+        parsed = tuple(int(p) for p in version.split('.'))
+    except ValueError:
+        # unparseable OpenBLAS version so assume an old buggy version
+        return True
+    return parsed < (0, 3, 33, 112)
+
+
+def test_blas_gemm_thread_safety():
+    # gh-31618: concurrently run transpose and no-transpose GEMM variants to
+    # exercise possible thread safety issues due to lock sharding between
+    # kernels, see OpenBLAS issue #5836.
+    num_threads = 8
+    num_iters = 10
+    M = 512 * 512
+
+    rng = np.random.default_rng(0x9e3779b9)
+    no_trans = rng.random((M, 4))            # C-contiguous -> NoTrans GEMM
+    no_trans_w = rng.random((4, 2))
+    trans = rng.random((2, M)).T             # F-contiguous -> Trans GEMM
+    trans_w = rng.random((2, 2))
+    expected_no_trans = no_trans @ no_trans_w
+    expected_trans = trans @ trans_w
+
+    mismatches = 0
+    lock = threading.Lock()
+
+    def closure(i, b):
+        nonlocal mismatches
+        count = 0
+        for _ in range(num_iters):
+            b.wait()
+            if i % 2:
+                ok = np.array_equal(no_trans @ no_trans_w, expected_no_trans)
+            else:
+                ok = np.array_equal(trans @ trans_w, expected_trans)
+            if not ok:
+                count += 1
+        with lock:
+            mismatches += count
+
+    run_threaded(closure, num_threads, pass_count=True, pass_barrier=True)
+
+    blas_name, blas_version = _detected_blas()
+    if mismatches and _openblas_predates_gemm_fix(blas_name, blas_version):
+        pytest.xfail(
+            f"OpenBLAS version ({blas_version}) predates first OpenBLAS "
+            "version with a fix (0.3.33.112) or BLAS metadata is not "
+            "sufficient to identify the BLAS implementation."
+        )
+
+    assert mismatches == 0, (
+        f"{mismatches} concurrent matmul results were corrupted "
+        f"({blas_name} {blas_version})"
+    )
+
+
 def test_printoptions_thread_safety():
     # until NumPy 2.1 the printoptions state was stored in globals
     # this verifies that they are now stored in a context variable
@@ -272,10 +343,12 @@ def test_stringdtype_multithreaded_access_and_mutation():
     not IS_64BIT,
     reason="Sometimes causes failures or crashes due to OOM on 32 bit runners"
 )
-def test_legacy_usertype_cast_init_thread_safety():
+@pytest.mark.parametrize("rat_cls", [
+    _rational_tests.rational, _rational_tests.rational2])
+def test_legacy_usertype_cast_init_thread_safety(rat_cls):
     def closure(b):
         b.wait()
-        np.full((10, 10), 1, _rational_tests.rational)
+        np.full((10, 10), 1, rat_cls)
 
     run_threaded(closure, 250, pass_barrier=True)
 

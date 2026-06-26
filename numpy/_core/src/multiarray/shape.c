@@ -77,26 +77,39 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
             return -1;
         }
 
+        static const char *msg =
+                "cannot resize an array that references or is referenced\n"
+                "by another object in this way.\n"
+                "Use the np.resize function to get a new resized copy or\n "
+                "set refcheck=False to disable this check";
         if (PyArray_BASE(self) != NULL
               || (((PyArrayObject_fields *)self)->weakreflist != NULL)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "cannot resize an array that "
-                    "references or is referenced\n"
-                    "by another array in this way. Use the np.resize function.");
+            PyErr_SetString(PyExc_ValueError, msg);
             return -1;
         }
         if (refcheck) {
 #if PY_VERSION_HEX >= 0x030E00B0
+            // Python 3.14 changed reference counting semantics for function-
+            // local variables. There is no way to tell if the calling function
+            // has been optimized (because it might be implemented in C or Cython)
+            //
+            // Instead, warn if the refcount is exactly 2 that this might be a
+            // false positive
             if (!PyUnstable_Object_IsUniquelyReferenced((PyObject *)self)) {
+                if (Py_REFCNT(self) == 2) {
+                    PyErr_SetString(
+                            PyExc_ValueError,
+                            "cannot resize an array that may be referenced "
+                            "by another object.\n"
+                            "It is possible that this is a false positive.\n"
+                            "If you are sure that the array is uniquely referenced, "
+                            "set refcheck=False.");
+                    return -1;
+                }
 #else
             if (Py_REFCNT(self) > 2) {
 #endif
-                PyErr_SetString(
-                        PyExc_ValueError,
-                        "cannot resize an array that "
-                        "references or is referenced\n"
-                        "by another array in this way.\n"
-                        "Use the np.resize function or refcheck=False");
+                PyErr_SetString(PyExc_ValueError, msg);
                 return -1;
             }
         }
@@ -175,6 +188,12 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
  * array and it is contiguous.  If refcheck is 0, then the reference count is
  * not checked and assumed to be 1.  You still must own this data and have no
  * weak-references and no base object.
+ *
+ * On Python 3.13 and older, the check allows objects with exactly one
+ * reference to be reallocated in-place. On Python 3.14 and newer, the array
+ * must be uniquely referenced. In some cases this can lead to spurious
+ * ValueErrors.
+ *
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,

@@ -6,6 +6,7 @@ import os
 import pickle
 import sys
 import types
+import warnings
 from itertools import permutations
 from typing import Any
 
@@ -16,7 +17,7 @@ from hypothesis.extra import numpy as hynp
 import numpy as np
 import numpy.dtypes
 from numpy._core._multiarray_tests import create_custom_field_dtype
-from numpy._core._rational_tests import rational
+from numpy._core._rational_tests import rational, rational2
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
@@ -627,6 +628,18 @@ class TestRecord:
         assert arr.dtype.hasobject  # but claims to contain objects
         del arr  # the deletion failed previously.
 
+    def test_structured_out_of_range(self):
+        # Regression test for gh-29270 against over-eager optimization of
+        # copying of structured dtype: do not copy when dtype has holes
+        # because the itemsize was explicitly given.
+        dtype = np.dtype(dict(names=["a"], formats=["i4"], itemsize=8))
+        raw_arr = np.zeros(10, dtype="i8")
+        arr1 = raw_arr.view(dtype)
+        arr2 = np.full(10, -1, dtype="i8").view(dtype)
+        # This should only fill in the i4 field of `dtype`:
+        arr1[...] = arr2
+        assert (raw_arr.view("i4")[1::2] == 0).all()
+
 
 class TestSubarray:
     def test_single_subarray(self):
@@ -875,6 +888,10 @@ class TestMonsterType:
             np.dtype(l)
 
     @requires_deep_recursion
+    @pytest.mark.skipif(
+        sys.platform.startswith("darwin"),
+        reason="test now segfaults on some mac setups",
+    )
     def test_tuple_recursion(self):
         d = np.int32
         for i in range(100000):
@@ -1116,7 +1133,10 @@ class TestDtypeAttributes:
         arr = np.broadcast_to(arr, 10)
         assert arr.strides == (0,)
         with pytest.raises(ValueError):
-            arr.dtype = "i1"
+            with warnings.catch_warnings():  # gh-28901
+                warnings.filterwarnings(action="ignore",
+                                        category=DeprecationWarning)
+                arr.dtype = "i1"
 
 class TestDTypeMakeCanonical:
     def check_canonical(self, dtype, canonical):
@@ -1199,7 +1219,7 @@ class TestDTypeMakeCanonical:
 
     def test_object_flag_not_inherited(self):
         # The following dtype still indicates "object", because its included
-        # in the unaccessible space (maybe this could change at some point):
+        # in the inaccessible space (maybe this could change at some point):
         arr = np.ones(3, "i,O,i")[["f0", "f2"]]
         assert arr.dtype.hasobject
         canonical_dt = np.result_type(arr.dtype)
@@ -1322,7 +1342,7 @@ class TestPickling:
 
     @pytest.mark.parametrize("DType",
         [type(np.dtype(t)) for t in np.typecodes['All']] +
-        [type(np.dtype(rational)), np.dtype])
+        [type(np.dtype(rational)), type(np.dtype(rational2)), np.dtype])
     def test_pickle_dtype_class(self, DType):
         # Check that DTypes (the classes/types) roundtrip when pickling
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
@@ -1331,7 +1351,7 @@ class TestPickling:
 
     @pytest.mark.parametrize("dt",
         [np.dtype(t) for t in np.typecodes['All']] +
-        [np.dtype(rational)])
+        [np.dtype(rational), np.dtype(rational2)])
     def test_pickle_dtype(self, dt):
         # Check that dtype instances roundtrip when pickling and that pickling
         # doesn't change the hash value
@@ -1418,14 +1438,15 @@ class TestPromotion:
         res = np.minimum(np.ones(3, dtype=other), complex_scalar).dtype
         assert res == expected
 
-    def test_complex_pyscalar_promote_rational(self):
+    @pytest.mark.parametrize("rat_cls", [rational, rational2])
+    def test_complex_pyscalar_promote_rational(self, rat_cls):
         with pytest.raises(TypeError,
                 match=r".* no common DType exists for the given inputs"):
-            np.result_type(1j, rational)
+            np.result_type(1j, rat_cls)
 
         with pytest.raises(TypeError,
                 match=r".* no common DType exists for the given inputs"):
-            np.result_type(1j, rational(1, 2))
+            np.result_type(1j, rat_cls(1, 2))
 
     @pytest.mark.parametrize("val", [2, 2**32, 2**63, 2**64, 2 * 100])
     def test_python_integer_promotion(self, val):
@@ -1468,14 +1489,24 @@ class TestPromotion:
             assert np.result_type(*perm) == expected
 
 
-def test_rational_dtype():
+def test_rational2_uses_new_dtype_api():
+    # ``rational2`` provides its own ``common_dtype`` slot (which the
+    # legacy ``rational`` cannot), and that slot rejects floats.
+    assert np.result_type(rational, 1.0) == np.float64
+    with pytest.raises(TypeError,
+            match=r".* no common DType exists for the given inputs"):
+        np.result_type(rational2, 1.0)
+
+
+@pytest.mark.parametrize("rat_cls", [rational, rational2])
+def test_rational_dtype(rat_cls):
     # test for bug gh-5719
-    a = np.array([1111], dtype=rational).astype
+    a = np.array([1111], dtype=rat_cls).astype
     assert_raises(OverflowError, a, 'int8')
 
     # test that dtype detection finds user-defined types
-    x = rational(1)
-    assert_equal(np.array([x, x]).dtype, np.dtype(rational))
+    x = rat_cls(1)
+    assert np.array([x, x]).dtype.type is rat_cls
 
 
 def test_dtypes_are_true():
@@ -1583,14 +1614,15 @@ class TestFromDTypeProtocol:
 
 
 class TestDTypeClasses:
-    @pytest.mark.parametrize("dtype", list(np.typecodes['All']) + [rational])
+    @pytest.mark.parametrize(
+        "dtype", list(np.typecodes['All']) + [rational, rational2])
     def test_basic_dtypes_subclass_properties(self, dtype):
         # Note: Except for the isinstance and type checks, these attributes
         #       are considered currently private and may change.
         dtype = np.dtype(dtype)
         assert isinstance(dtype, np.dtype)
         assert type(dtype) is not np.dtype
-        if dtype.type.__name__ != "rational":
+        if dtype.type.__name__ not in ("rational", "rational2"):
             dt_name = type(dtype).__name__.lower().removesuffix("dtype")
             if dt_name in {"uint", "int"}:
                 # The scalar names has a `c` attached because "int" is Python
@@ -1601,7 +1633,7 @@ class TestDTypeClasses:
             assert type(dtype).__module__ == "numpy.dtypes"
 
             assert getattr(numpy.dtypes, type(dtype).__name__) is type(dtype)
-        else:
+        elif dtype.type.__name__ == "rational":
             assert type(dtype).__name__ == "dtype[rational]"
             assert type(dtype).__module__ == "numpy"
 
@@ -1654,6 +1686,9 @@ class TestDTypeClasses:
 
     def test_scalar_helper_all_dtypes(self):
         for dtype in np.dtypes.__all__:
+            if dtype == "register_dlpack_dtype":
+                continue
+
             dt_class = getattr(np.dtypes, dtype)
             dt = np.dtype(dt_class)
             if dt.char not in 'OTVM':
@@ -1880,7 +1915,7 @@ class TestFromCTypes:
         self.check(ctypes.c_uint8.__ctype_be__, np.dtype('u1'))
 
     all_types = set(np.typecodes['All'])
-    all_pairs = permutations(all_types, 2)
+    all_pairs = list(permutations(all_types, 2))
 
     @pytest.mark.parametrize("pair", all_pairs)
     def test_pairs(self, pair):
@@ -1971,9 +2006,13 @@ class TestClassGetItem:
 def test_result_type_integers_and_unitless_timedelta64():
     # Regression test for gh-20077.  The following call of `result_type`
     # would cause a seg. fault.
-    td = np.timedelta64(4)
-    result = np.result_type(0, td)
-    assert_dtype_equal(result, td.dtype)
+    with pytest.warns(
+        DeprecationWarning,
+        match="The 'generic' unit for NumPy timedelta is deprecated",
+    ):
+        td = np.timedelta64(4)
+        result = np.result_type(0, td)
+        assert_dtype_equal(result, td.dtype)
 
 
 def test_creating_dtype_with_dtype_class_errors():
@@ -2019,7 +2058,9 @@ class TestDTypeSignatures:
         assert sig.parameters["new_order"].kind is inspect.Parameter.POSITIONAL_ONLY
         assert sig.parameters["new_order"].default == "S"
 
-    @pytest.mark.parametrize("typename", np.dtypes.__all__)
+    @pytest.mark.parametrize("typename", [
+        n for n in np.dtypes.__all__ if n != "register_dlpack_dtype"
+    ])
     def test_signature_dtypes_classes(self, typename: str):
         dtype_type = getattr(np.dtypes, typename)
         sig = inspect.signature(dtype_type)

@@ -895,6 +895,19 @@ class TestUfunc:
         expected3 = expected1.astype(object)
         assert_array_equal(actual3, expected3)
 
+    @pytest.mark.parametrize("func", [
+        lambda A, x, **kw: np.matvec(A, x, **kw),
+        lambda A, x, **kw: np.vecmat(x, A, **kw),
+    ])
+    def test_matvec_vecmat_out(self, func):
+        # overlapping memory: out=input should not produce zeros
+        a = np.arange(18, dtype=float).reshape(2, 3, 3)
+        b = np.arange(6, dtype=float).reshape(2, 3)
+        expected = func(a, b)
+        c = func(a, b, out=b)
+        assert c is b
+        assert_allclose(c, expected)
+
     def test_vecdot_subclass(self):
         class MySubclass(np.ndarray):
             pass
@@ -908,6 +921,13 @@ class TestUfunc:
         arr = np.array(["1", "2"], dtype=object)
         with pytest.raises(AttributeError, match="conjugate"):
             np.vecdot(arr, arr)
+
+    def test_vecdot_object_empty_is_zero(self):
+        x = np.empty((0,), dtype=object)
+        assert np.vecdot(x, x) == 0
+
+        x2 = np.empty((1, 0), dtype=object)
+        assert_array_equal(np.vecdot(x2, x2), np.array([0], dtype=object))
 
     def test_vecdot_object_breaks_outer_loop_on_error(self):
         arr1 = np.ones((3, 3)).astype(object)
@@ -1749,6 +1769,10 @@ class TestUfunc:
         # Sanity check
         assert np.all(result1[::2] == [0, 4, 8, 12])
         assert np.all(result2[::2] == [0, 4, 8, 12])
+        # Also no warning for where=True
+        result3 = np.add(a, a, where=True)
+        # Sanity check
+        assert_array_equal(result3, a + a)
 
     @staticmethod
     def identityless_reduce_arrs():
@@ -1767,7 +1791,7 @@ class TestUfunc:
         a = a[1:, 1:, 1:]
         yield a
 
-    @pytest.mark.parametrize("arrs", identityless_reduce_arrs())
+    @pytest.mark.parametrize("arrs", list(identityless_reduce_arrs()))
     @pytest.mark.parametrize("pos", [(1, 0, 0), (0, 1, 0), (0, 0, 1)])
     def test_identityless_reduction(self, arrs, pos):
         # np.minimum.reduce is an identityless reduction
@@ -2145,6 +2169,7 @@ class TestUfunc:
     @pytest.mark.parametrize("a", (
                              np.arange(10, dtype=int),
                              np.arange(10, dtype=_rational_tests.rational),
+                             np.arange(10, dtype=_rational_tests.rational2),
                              ))
     def test_ufunc_at_basic(self, a):
 
@@ -2708,6 +2733,18 @@ class TestUfunc:
         with pytest.raises(ValueError, match="(shape|size)"):
             np.add.accumulate(arr, out=out)
 
+    def test_reduceat_and_accumulate_out_dtype_resolution_failure(self):
+        # gh-31691: the out= error path leaked a reference to out when the
+        # ufunc dtype resolution failed (no matching loop for the out dtype).
+        arr = np.arange(3)
+        out = np.empty(3, dtype="U5")  # no add loop resolves to this
+
+        with pytest.raises(np._core._exceptions._UFuncNoLoopError):
+            np.add.reduceat(arr, [0, 1, 2], out=out)
+
+        with pytest.raises(np._core._exceptions._UFuncNoLoopError):
+            np.add.accumulate(arr, out=out)
+
     @pytest.mark.parametrize('out_shape',
                              [(), (1,), (3,), (1, 1), (1, 3), (4, 3)])
     @pytest.mark.parametrize('keepdims', [True, False])
@@ -2760,21 +2797,27 @@ class TestUfunc:
         # minimally check the exception text
         assert exc.match('loop of ufunc does not support')
 
-    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    @pytest.mark.parametrize(
+        "nat", [np.datetime64("nat", "s"), np.timedelta64("nat", "ns")]
+    )
     def test_nat_is_not_finite(self, nat):
         try:
             assert not np.isfinite(nat)
         except TypeError:
             pass  # ok, just not implemented
 
-    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    @pytest.mark.parametrize(
+        "nat", [np.datetime64("nat", "s"), np.timedelta64("nat", "ns")]
+    )
     def test_nat_is_nan(self, nat):
         try:
             assert np.isnan(nat)
         except TypeError:
             pass  # ok, just not implemented
 
-    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    @pytest.mark.parametrize(
+        "nat", [np.datetime64("nat", "s"), np.timedelta64("nat", "ns")]
+    )
     def test_nat_is_not_inf(self, nat):
         try:
             assert not np.isinf(nat)
@@ -2840,7 +2883,8 @@ def test_ufunc_types(ufunc):
         if 'O' in typ or '?' in typ:
             continue
         inp, out = typ.split('->')
-        args = [np.ones((3, 3), t) for t in inp]
+        _inp_dtypes = [t if t.lower() != 'm' else t + "8[D]" for t in inp]
+        args = [np.ones((3, 3), t) for t in _inp_dtypes]
         with warnings.catch_warnings(record=True):
             warnings.filterwarnings("always")
             res = ufunc(*args)
@@ -2848,9 +2892,9 @@ def test_ufunc_types(ufunc):
             outs = tuple(out)
             assert len(res) == len(outs)
             for r, t in zip(res, outs):
-                assert r.dtype == np.dtype(t)
+                assert r.dtype.char == t
         else:
-            assert res.dtype == np.dtype(out)
+            assert res.dtype.char == out
 
 @pytest.mark.parametrize('ufunc', [getattr(np, x) for x in dir(np)
                                 if isinstance(getattr(np, x), np.ufunc)])

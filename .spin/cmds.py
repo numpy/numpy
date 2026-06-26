@@ -77,10 +77,14 @@ def changelog(token, revision_range):
     help="Build with pre-installed scipy-openblas32 or scipy-openblas64 wheel"
 )
 @spin.util.extend_command(spin.cmds.meson.build)
-def build(*, parent_callback, with_scipy_openblas, **kwargs):
+def build(*, parent_callback, meson_args, with_scipy_openblas, **kwargs):
     if with_scipy_openblas:
         _config_openblas(with_scipy_openblas)
-    parent_callback(**kwargs)
+
+    # Avoid byte-compiling on every rebuild/reinstall, that's very expensive
+    meson_args += ("-Dpython.bytecompile=-1",)
+
+    parent_callback(**{'meson_args': meson_args, **kwargs})
 
 
 @spin.util.extend_command(spin.cmds.meson.docs)

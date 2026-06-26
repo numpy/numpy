@@ -458,7 +458,7 @@ class TestPCG64(Base):
         assert val_neg == val_pos
         assert val_big == val_pos
 
-    def test_advange_large(self):
+    def test_advance_large(self):
         rs = Generator(self.bit_generator(38219308213743))
         pcg = rs.bit_generator
         state = pcg.state["state"]
@@ -497,7 +497,7 @@ class TestPCG64DXSM(Base):
         assert val_neg == val_pos
         assert val_big == val_pos
 
-    def test_advange_large(self):
+    def test_advance_large(self):
         rs = Generator(self.bit_generator(38219308213743))
         pcg = rs.bit_generator
         state = pcg.state

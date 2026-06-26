@@ -1,44 +1,193 @@
-#ifndef NUMPY_SRC_COMMON_NPYSORT_QUICKSORT_HPP
-#define NUMPY_SRC_COMMON_NPYSORT_QUICKSORT_HPP
+/*
+ * The purpose of this module is to add faster sort functions
+ * that are type-specific.  This is done by altering the
+ * function table for the builtin descriptors.
+ *
+ * These sorting functions are copied almost directly from numarray
+ * with a few modifications (complex comparisons compare the imaginary
+ * part if the real parts are equal, for example), and the names
+ * are changed.
+ *
+ * The original sorting code is due to Charles R. Harris who wrote
+ * it for numarray.
+ */
 
-#include "heapsort.hpp"
-#include "common.hpp"
+/*
+ * Quick sort is usually the fastest, but the worst case scenario is O(N^2) so
+ * the code switches to the O(NlogN) worst case heapsort if not enough progress
+ * is made on the large side of the two quicksort partitions. This improves the
+ * worst case while still retaining the speed of quicksort for the common case.
+ * This is variant known as introsort.
+ *
+ *
+ * def introsort(lower, higher, recursion_limit=log2(higher - lower + 1) * 2):
+ *   # sort remainder with heapsort if we are not making enough progress
+ *   # we arbitrarily choose 2 * log(n) as the cutoff point
+ *   if recursion_limit < 0:
+ *       heapsort(lower, higher)
+ *       return
+ *
+ *   if lower < higher:
+ *      pivot_pos = partition(lower, higher)
+ *      # recurse into smaller first and leave larger on stack
+ *      # this limits the required stack space
+ *      if (pivot_pos - lower > higher - pivot_pos):
+ *          quicksort(pivot_pos + 1, higher, recursion_limit - 1)
+ *          quicksort(lower, pivot_pos, recursion_limit - 1)
+ *      else:
+ *          quicksort(lower, pivot_pos, recursion_limit - 1)
+ *          quicksort(pivot_pos + 1, higher, recursion_limit - 1)
+ *
+ *
+ * the below code implements this converted to an iteration and as an
+ * additional minor optimization skips the recursion depth checking on the
+ * smaller partition as it is always less than half of the remaining data and
+ * will thus terminate fast enough
+ */
 
-namespace np::sort {
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
-// pushing largest partition has upper bound of log2(n) space
-// we store two pointers each time
-constexpr size_t kQuickStack = sizeof(intptr_t) * 8 * 2;
-constexpr ptrdiff_t kQuickSmall = 15;
+#include "npy_cpu_features.h"
+#include "npy_sort.h"
+#include "npysort_common.h"
+#include "npysort_heapsort.hpp"
+#include "numpy_tag.hpp"
+#include "x86_simd_qsort.hpp"
+#include "highway_qsort.hpp"
 
-// NUMERIC SORTS
-template <typename T>
-inline void Quick(T *start, SSize num)
+#include <cstdlib>
+#include <utility>
+
+/*
+ * pushing largest partition has upper bound of log2(n) space
+ * we store two pointers each time
+ */
+#define PYA_QS_STACK (NPY_BITSOF_INTP * 2)
+#define SMALL_QUICKSORT 15
+
+// Disable AVX512 sorting on CYGWIN until we can figure
+// out why it has test failures
+template<typename Tag, typename T, bool reverse>
+inline bool quicksort_dispatch(T *start, npy_intp num)
 {
-    T vp;
-    T *pl = start;
-    T *pr = pl + num - 1;
-    T *stack[kQuickStack];
-    T **sptr = stack;
-    T *pm, *pi, *pj, *pk;
-    int depth[kQuickStack];
+#if !defined(__CYGWIN__)
+    if constexpr (
+        (std::is_base_of_v<npy::floating_point_tag, Tag>
+            && !std::is_same_v<Tag, npy::longdouble_tag>) ||
+        std::is_base_of_v<npy::integral_tag, Tag> ||
+        std::is_same_v<Tag, npy::half_tag>
+    ) {
+        using TF = typename np::meta::FixedWidth<T>::Type;
+        void (*dispfunc)(TF*, intptr_t, bool) = nullptr;
+        if constexpr (sizeof(T) == sizeof(uint16_t)) {
+        #if defined(NPY_CPU_AMD64) || defined(NPY_CPU_X86) // x86 32-bit and 64-bit
+            if constexpr (!reverse) { // x86 SIMD sort is ascending-only
+                #include "x86_simd_qsort_16bit.dispatch.h"
+                NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
+            }
+        #else
+            #include "highway_qsort_16bit.dispatch.h"
+            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::highway::qsort_simd::template QSort, <TF>);
+        #endif
+        }
+        else if constexpr (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) {
+        #if defined(NPY_CPU_AMD64) || defined(NPY_CPU_X86) // x86 32-bit and 64-bit
+            if constexpr (!reverse) { // x86 SIMD sort is ascending-only
+                #include "x86_simd_qsort.dispatch.h"
+                NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
+            }
+        #else
+            #include "highway_qsort.dispatch.h"
+            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::highway::qsort_simd::template QSort, <TF>);
+        #endif
+        }
+        if (dispfunc) {
+            (*dispfunc)(reinterpret_cast<TF*>(start), static_cast<intptr_t>(num), reverse);
+            return true;
+        }
+    }
+#endif // __CYGWIN__
+    (void)start; (void)num; // to avoid unused arg warn
+    return false;
+}
+
+template<typename Tag, typename T, bool reverse>
+inline bool aquicksort_dispatch(T *start, npy_intp* arg, npy_intp num)
+{
+#if !defined(__CYGWIN__)
+    if constexpr (
+        ((std::is_base_of_v<npy::floating_point_tag, Tag>
+            && !std::is_same_v<Tag, npy::longdouble_tag>) ||
+        std::is_base_of_v<npy::integral_tag, Tag>)
+        && !reverse // x86 SIMD argsort is ascending-only
+    ) {
+        using TF = typename np::meta::FixedWidth<T>::Type;
+        void (*dispfunc)(TF*, npy_intp*, npy_intp, bool) = nullptr;
+        if constexpr (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) {
+            #include "x86_simd_argsort.dispatch.h"
+            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template ArgQSort, <TF>);
+        }
+        if (dispfunc) {
+            (*dispfunc)(reinterpret_cast<TF*>(start), arg, num, reverse);
+            return true;
+        }
+    }
+#endif // __CYGWIN__
+    (void)start; (void)arg; (void)num; // to avoid unused arg warn
+    return false;
+}
+
+/*
+ *****************************************************************************
+ **                            NUMERIC SORTS                                **
+ *****************************************************************************
+ */
+
+template <typename Tag, typename type, bool reverse = false>
+static int
+quicksort_(type *start, npy_intp num)
+{
+    using T = typename std::conditional<std::is_same_v<Tag, npy::half_tag>, np::Half, typename Tag::type>::type;
+    if (quicksort_dispatch<Tag, T, reverse>((T *)start, num)) {
+        return 0;
+    }
+
+    type vp;
+    type *pl = start;
+    type *pr = pl + num - 1;
+    type *stack[PYA_QS_STACK];
+    type **sptr = stack;
+    type *pm, *pi, *pj, *pk;
+    int depth[PYA_QS_STACK];
     int *psdepth = depth;
-    int cdepth = BitScanReverse(static_cast<std::make_unsigned_t<SSize>>(num)) * 2;
+    int cdepth = npy_get_msb(num) * 2;
+    int ret;
+    constexpr bool is_object = std::is_same_v<Tag, npy::object_tag>;
+
     for (;;) {
         if (NPY_UNLIKELY(cdepth < 0)) {
-            Heap(pl, pr - pl + 1);
+            ret = heapsort_<Tag, type, reverse>(pl, pr - pl + 1);
+            if (NPY_UNLIKELY(ret < 0)) {
+                return ret;
+            }
             goto stack_pop;
         }
-        while ((pr - pl) > kQuickSmall) {
-            // quicksort partition
+        while ((pr - pl) > SMALL_QUICKSORT) {
+            /* quicksort partition */
             pm = pl + ((pr - pl) >> 1);
-            if (LessThan(*pm, *pl)) {
+            ret = npy::cmp<Tag, reverse>(*pm, *pl);
+            if (ret < 0) return ret;
+            if (ret) {
                 std::swap(*pm, *pl);
             }
-            if (LessThan(*pr, *pm)) {
+            ret = npy::cmp<Tag, reverse>(*pr, *pm);
+            if (ret < 0) return ret;
+            if (ret) {
                 std::swap(*pr, *pm);
             }
-            if (LessThan(*pm, *pl)) {
+            ret = npy::cmp<Tag, reverse>(*pm, *pl);
+            if (ret < 0) return ret;
+            if (ret) {
                 std::swap(*pm, *pl);
             }
             vp = *pm;
@@ -48,10 +197,16 @@ inline void Quick(T *start, SSize num)
             for (;;) {
                 do {
                     ++pi;
-                } while (LessThan(*pi, vp));
+
+                    ret = npy::cmp<Tag, reverse>(*pi, vp);
+                    if (ret < 0) return ret;
+                } while ((!is_object || pi < pj) && ret);
                 do {
                     --pj;
-                } while (LessThan(vp, *pj));
+
+                    ret = npy::cmp<Tag, reverse>(vp, *pj);
+                    if (ret < 0) return ret;
+                } while ((!is_object || pi < pj) && ret);
                 if (pi >= pj) {
                     break;
                 }
@@ -59,7 +214,7 @@ inline void Quick(T *start, SSize num)
             }
             pk = pr - 1;
             std::swap(*pi, *pk);
-            // push largest partition on stack
+            /* push largest partition on stack */
             if (pi - pl < pr - pi) {
                 *sptr++ = pi + 1;
                 *sptr++ = pr;
@@ -78,8 +233,16 @@ inline void Quick(T *start, SSize num)
             vp = *pi;
             pj = pi;
             pk = pi - 1;
-            while (pj > pl && LessThan(vp, *pk)) {
+
+            ret = npy::cmp<Tag, reverse>(vp, *pk);
+            if (ret < 0) return ret;
+            while (pj > pl && ret) {
                 *pj-- = *pk--;
+
+                if (pj > pl) {
+                    ret = npy::cmp<Tag, reverse>(vp, *pk);
+                    if (ret < 0) return ret;
+                }
             }
             *pj = vp;
         }
@@ -91,6 +254,331 @@ inline void Quick(T *start, SSize num)
         pl = *(--sptr);
         cdepth = *(--psdepth);
     }
+
+    return 0;
 }
-} // np::sort
-#endif // NUMPY_SRC_COMMON_NPYSORT_QUICK_HPP
+
+// ``PyArray_SortFunc``-shaped trampoline.
+template <typename Tag, typename type, bool reverse = false>
+static int
+quicksort_impl(void *start, npy_intp num, void *NPY_UNUSED(varr))
+{
+    return quicksort_<Tag, type, reverse>((type *)start, num);
+}
+
+template <typename Tag, typename type, bool reverse = false>
+static int
+aquicksort_(type *vv, npy_intp *tosort, npy_intp num)
+{
+    if (aquicksort_dispatch<Tag, type, reverse>((type *)vv, tosort, num)) {
+        return 0;
+    }
+
+    type *v = vv;
+    type vp;
+    npy_intp *pl = tosort;
+    npy_intp *pr = tosort + num - 1;
+    npy_intp *stack[PYA_QS_STACK];
+    npy_intp **sptr = stack;
+    npy_intp *pm, *pi, *pj, *pk, vi;
+    int depth[PYA_QS_STACK];
+    int *psdepth = depth;
+    int cdepth = npy_get_msb(num) * 2;
+    int ret;
+    constexpr bool is_object = std::is_same_v<Tag, npy::object_tag>;
+
+    for (;;) {
+        if (NPY_UNLIKELY(cdepth < 0)) {
+            ret = aheapsort_<Tag, type, reverse>(vv, pl, pr - pl + 1);
+            if (ret < 0) return ret;
+            goto stack_pop;
+        }
+        while ((pr - pl) > SMALL_QUICKSORT) {
+            /* quicksort partition */
+            pm = pl + ((pr - pl) >> 1);
+            ret = npy::cmp<Tag, reverse>(v[*pm], v[*pl]);
+            if (ret < 0) return ret;
+            if (ret) {
+                std::swap(*pm, *pl);
+            }
+            ret = npy::cmp<Tag, reverse>(v[*pr], v[*pm]);
+            if (ret < 0) return ret;
+            if (ret) {
+                std::swap(*pr, *pm);
+            }
+            ret = npy::cmp<Tag, reverse>(v[*pm], v[*pl]);
+            if (ret < 0) return ret;
+            if (ret) {
+                std::swap(*pm, *pl);
+            }
+            vp = v[*pm];
+            pi = pl;
+            pj = pr - 1;
+            std::swap(*pm, *pj);
+            for (;;) {
+                do {
+                    ++pi;
+                    ret = npy::cmp<Tag, reverse>(v[*pi], vp);
+                    if (ret < 0) return ret;
+                } while ((!is_object || pi < pj) && ret);
+                do {
+                    --pj;
+                    ret = npy::cmp<Tag, reverse>(vp, v[*pj]);
+                    if (ret < 0) return ret;
+                } while ((!is_object || pi < pj) && ret);
+                if (pi >= pj) {
+                    break;
+                }
+                std::swap(*pi, *pj);
+            }
+            pk = pr - 1;
+            std::swap(*pi, *pk);
+            /* push largest partition on stack */
+            if (pi - pl < pr - pi) {
+                *sptr++ = pi + 1;
+                *sptr++ = pr;
+                pr = pi - 1;
+            }
+            else {
+                *sptr++ = pl;
+                *sptr++ = pi - 1;
+                pl = pi + 1;
+            }
+            *psdepth++ = --cdepth;
+        }
+
+        /* insertion sort */
+        for (pi = pl + 1; pi <= pr; ++pi) {
+            vi = *pi;
+            vp = v[vi];
+            pj = pi;
+            pk = pi - 1;
+
+            ret = npy::cmp<Tag, reverse>(vp, v[*pk]);
+            if (ret < 0) return ret;
+            while (pj > pl && ret) {
+                *pj-- = *pk--;
+
+                if (pj > pl) {
+                    ret = npy::cmp<Tag, reverse>(vp, v[*pk]);
+                if (ret < 0) return ret;
+                }
+            }
+            *pj = vi;
+        }
+    stack_pop:
+        if (sptr == stack) {
+            break;
+        }
+        pr = *(--sptr);
+        pl = *(--sptr);
+        cdepth = *(--psdepth);
+    }
+
+    return 0;
+}
+
+// ``PyArray_ArgSortFunc``-shaped trampoline.
+template <typename Tag, typename type, bool reverse = false>
+static int
+aquicksort_impl(void *vv, npy_intp *tosort, npy_intp num,
+                void *NPY_UNUSED(varr))
+{
+    return aquicksort_<Tag, type, reverse>((type *)vv, tosort, num);
+}
+
+/*
+ *****************************************************************************
+ **                             STRING SORTS                                **
+ *****************************************************************************
+ */
+
+template <typename Tag, typename type, bool reverse = false>
+static int
+string_quicksort_(type *start, npy_intp num, int elsize)
+{
+    const size_t len = elsize / sizeof(type);
+    type *vp;
+    type *pl = start;
+    type *pr = pl + (num - 1) * len;
+    type *stack[PYA_QS_STACK], **sptr = stack, *pm, *pi, *pj, *pk;
+    int depth[PYA_QS_STACK];
+    int *psdepth = depth;
+    int cdepth = npy_get_msb(num) * 2;
+
+    /* Items that have zero size don't make sense to sort */
+    if (len == 0) {
+        return 0;
+    }
+
+    vp = (type *)PyMem_RawMalloc(elsize);
+    if (vp == NULL) {
+        return -NPY_ENOMEM;
+    }
+
+    for (;;) {
+        if (NPY_UNLIKELY(cdepth < 0)) {
+            string_heapsort_<Tag, type, reverse>(pl, (pr - pl) / len + 1, elsize);
+            goto stack_pop;
+        }
+        while ((size_t)(pr - pl) > SMALL_QUICKSORT * len) {
+            /* quicksort partition */
+            pm = pl + (((pr - pl) / len) >> 1) * len;
+            if (npy::cmp<Tag, reverse>(pm, pl, len)) {
+                Tag::swap(pm, pl, len);
+            }
+            if (npy::cmp<Tag, reverse>(pr, pm, len)) {
+                Tag::swap(pr, pm, len);
+            }
+            if (npy::cmp<Tag, reverse>(pm, pl, len)) {
+                Tag::swap(pm, pl, len);
+            }
+            Tag::copy(vp, pm, len);
+            pi = pl;
+            pj = pr - len;
+            Tag::swap(pm, pj, len);
+            for (;;) {
+                do {
+                    pi += len;
+                } while (npy::cmp<Tag, reverse>(pi, vp, len));
+                do {
+                    pj -= len;
+                } while (npy::cmp<Tag, reverse>(vp, pj, len));
+                if (pi >= pj) {
+                    break;
+                }
+                Tag::swap(pi, pj, len);
+            }
+            pk = pr - len;
+            Tag::swap(pi, pk, len);
+            /* push largest partition on stack */
+            if (pi - pl < pr - pi) {
+                *sptr++ = pi + len;
+                *sptr++ = pr;
+                pr = pi - len;
+            }
+            else {
+                *sptr++ = pl;
+                *sptr++ = pi - len;
+                pl = pi + len;
+            }
+            *psdepth++ = --cdepth;
+        }
+
+        /* insertion sort */
+        for (pi = pl + len; pi <= pr; pi += len) {
+            Tag::copy(vp, pi, len);
+            pj = pi;
+            pk = pi - len;
+            while (pj > pl && npy::cmp<Tag, reverse>(vp, pk, len)) {
+                Tag::copy(pj, pk, len);
+                pj -= len;
+                pk -= len;
+            }
+            Tag::copy(pj, vp, len);
+        }
+    stack_pop:
+        if (sptr == stack) {
+            break;
+        }
+        pr = *(--sptr);
+        pl = *(--sptr);
+        cdepth = *(--psdepth);
+    }
+
+    PyMem_RawFree(vp);
+    return 0;
+}
+
+template <typename Tag, typename type, bool reverse = false>
+static int
+string_aquicksort_(type *vv, npy_intp *tosort, npy_intp num, int elsize)
+{
+    type *v = vv;
+    size_t len = elsize / sizeof(type);
+    type *vp;
+    npy_intp *pl = tosort;
+    npy_intp *pr = tosort + num - 1;
+    npy_intp *stack[PYA_QS_STACK];
+    npy_intp **sptr = stack;
+    npy_intp *pm, *pi, *pj, *pk, vi;
+    int depth[PYA_QS_STACK];
+    int *psdepth = depth;
+    int cdepth = npy_get_msb(num) * 2;
+
+    /* Items that have zero size don't make sense to sort */
+    if (len == 0) {
+        return 0;
+    }
+
+    for (;;) {
+        if (NPY_UNLIKELY(cdepth < 0)) {
+            string_aheapsort_<Tag, type, reverse>(vv, pl, pr - pl + 1, elsize);
+            goto stack_pop;
+        }
+        while ((pr - pl) > SMALL_QUICKSORT) {
+            /* quicksort partition */
+            pm = pl + ((pr - pl) >> 1);
+            if (npy::cmp<Tag, reverse>(v + (*pm) * len, v + (*pl) * len, len)) {
+                std::swap(*pm, *pl);
+            }
+            if (npy::cmp<Tag, reverse>(v + (*pr) * len, v + (*pm) * len, len)) {
+                std::swap(*pr, *pm);
+            }
+            if (npy::cmp<Tag, reverse>(v + (*pm) * len, v + (*pl) * len, len)) {
+                std::swap(*pm, *pl);
+            }
+            vp = v + (*pm) * len;
+            pi = pl;
+            pj = pr - 1;
+            std::swap(*pm, *pj);
+            for (;;) {
+                do {
+                    ++pi;
+                } while (npy::cmp<Tag, reverse>(v + (*pi) * len, vp, len));
+                do {
+                    --pj;
+                } while (npy::cmp<Tag, reverse>(vp, v + (*pj) * len, len));
+                if (pi >= pj) {
+                    break;
+                }
+                std::swap(*pi, *pj);
+            }
+            pk = pr - 1;
+            std::swap(*pi, *pk);
+            /* push largest partition on stack */
+            if (pi - pl < pr - pi) {
+                *sptr++ = pi + 1;
+                *sptr++ = pr;
+                pr = pi - 1;
+            }
+            else {
+                *sptr++ = pl;
+                *sptr++ = pi - 1;
+                pl = pi + 1;
+            }
+            *psdepth++ = --cdepth;
+        }
+
+        /* insertion sort */
+        for (pi = pl + 1; pi <= pr; ++pi) {
+            vi = *pi;
+            vp = v + vi * len;
+            pj = pi;
+            pk = pi - 1;
+            while (pj > pl && npy::cmp<Tag, reverse>(vp, v + (*pk) * len, len)) {
+                *pj-- = *pk--;
+            }
+            *pj = vi;
+        }
+    stack_pop:
+        if (sptr == stack) {
+            break;
+        }
+        pr = *(--sptr);
+        pl = *(--sptr);
+        cdepth = *(--psdepth);
+    }
+
+    return 0;
+}

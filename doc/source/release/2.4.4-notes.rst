@@ -1,0 +1,41 @@
+.. currentmodule:: numpy
+
+=========================
+NumPy 2.4.4 Release Notes
+=========================
+
+The NumPy 2.4.4 is a patch release that fixes bugs discovered after the 2.4.3
+release. It should finally close issue #30816, the OpenBLAS threading problem
+on ARM.
+
+This release supports Python versions 3.11-3.14
+
+
+Contributors
+============
+
+A total of 8 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Daniel Haag +
+* Denis Prokopenko +
+* Harshith J +
+* Koki Watanabe
+* Marten van Kerkwijk
+* Matti Picus
+* Nathan Goldbaum
+
+
+Pull requests merged
+====================
+
+A total of 7 pull requests were merged for this release.
+
+* `#30978 <https://github.com/numpy/numpy/pull/30978>`__: MAINT: Prepare 2.4.x for further development
+* `#31049 <https://github.com/numpy/numpy/pull/31049>`__: BUG: Add test to reproduce problem described in #30816 (#30818)
+* `#31052 <https://github.com/numpy/numpy/pull/31052>`__: BUG: fix FNV-1a 64-bit selection by using NPY_SIZEOF_UINTP (#31035)
+* `#31053 <https://github.com/numpy/numpy/pull/31053>`__: BUG: avoid warning on ufunc with where=True and no output
+* `#31058 <https://github.com/numpy/numpy/pull/31058>`__: DOC: document caveats of ndarray.resize on 3.14 and newer
+* `#31079 <https://github.com/numpy/numpy/pull/31079>`__: TST: fix POWER VSX feature mapping (#30801)
+* `#31084 <https://github.com/numpy/numpy/pull/31084>`__: MAINT: numpy.i: Replace deprecated ``sprintf`` with ``snprintf``...

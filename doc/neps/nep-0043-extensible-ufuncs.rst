@@ -316,7 +316,7 @@ the following:
 .. code-block:: python
 
     def promote_timedelta_integer(ufunc, dtypes):
-        new_dtypes = (Timdelta64, Int64, dtypes[-1])
+        new_dtypes = (Timedelta64, Int64, dtypes[-1])
         # Resolve again, using Int64:
         return ufunc.resolve_impl(new_dtypes)
 
@@ -609,7 +609,7 @@ definitions (see also :ref:`NEP 42 <NEP42>` ``CastingImpl``):
             int nin, nout;
 
             PyArray_DTypeMeta **dtypes;
-            /* Operand descriptors, filled in by resolve_desciptors */
+            /* Operand descriptors, filled in by resolve_descriptors */
             PyArray_Descr **descriptors;
 
             void *reserved;  // For Potential in threading (Interpreter state)

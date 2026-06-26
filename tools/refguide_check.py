@@ -460,7 +460,7 @@ def validate_rst_syntax(text, name, dots=True):
     if not success:
         output += "    " + "-" * 72 + "\n"
         for lineno, line in enumerate(text.splitlines()):
-            output += "    %-4d    %s\n" % (lineno + 1, line)
+            output += f"    {lineno + 1:<4}    {line}\n"
         output += "    " + "-" * 72 + "\n\n"
 
     if dots:
@@ -522,8 +522,8 @@ def check_rest(module, names, dots=True):
 
         m = re.search("([\x00-\x09\x0b-\x1f])", text)
         if m:
-            msg = ("Docstring contains a non-printable character %r! "
-                   "Maybe forgot r\"\"\"?" % (m.group(1),))
+            msg = (f"Docstring contains a non-printable character {m.group(1)!r}! "
+                   "Maybe forgot r\"\"\"?")
             results.append((full_name, False, msg))
             continue
 

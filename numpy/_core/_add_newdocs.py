@@ -2665,6 +2665,11 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('imag',
     """
     The imaginary part of the array.
 
+    Returns a view into the original array for complex arrays.
+    For non-complex arrays, returns a zero array of the same dtype.
+    For ``object`` arrays returns elementwise ``.imag`` or ``0``
+    if ``.imag`` is undefined.
+
     Examples
     --------
     >>> import numpy as np
@@ -2855,6 +2860,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('ndim',
 add_newdoc('numpy._core.multiarray', 'ndarray', ('real',
     """
     The real part of the array.
+
+    Usually returns a view into the original array, but returns
+    elementwise ``.real`` for arrays of objects.
 
     Examples
     --------
@@ -3276,10 +3284,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('dot',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('argpartition',
     """
-    argpartition($self, kth, /, axis=-1, kind='introselect', order=None)
+    argpartition($self, kth, /, axis=-1, kind='introselect', order=None, descending=None)
     --
 
-    a.argpartition(kth, axis=-1, kind='introselect', order=None)
+    a.argpartition(kth, axis=-1, kind='introselect', order=None, descending=None)
 
     Returns the indices that would partition this array.
 
@@ -3294,27 +3302,29 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('argpartition',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('partition',
     """
-    partition($self, kth, /, axis=-1, kind='introselect', order=None)
+    partition($self, kth, /, axis=-1, kind='introselect', order=None, descending=None)
     --
 
-    a.partition(kth, axis=-1, kind='introselect', order=None)
+    a.partition(kth, axis=-1, kind='introselect', order=None, descending=None)
 
-    Partially sorts the elements in the array in such a way that the value of
-    the element in k-th position is in the position it would be in a sorted
-    array. In the output array, all elements smaller than the k-th element
-    are located to the left of this element and all equal or greater are
-    located to its right. The ordering of the elements in the two partitions
-    on the either side of the k-th element in the output array is undefined.
+    Partially sorts the array in such a way that the value of the element in the k-th
+    position is in the position it would be in a sorted array. In the output array,
+    all elements that would be to the left of the k-th element in a sorted array are
+    located to the left of this element and all that would be to the right are located
+    to its right. The ordering of the elements in the two partitions on the either side
+    of the k-th element in the output array is undefined.
 
     Parameters
     ----------
     kth : int or sequence of ints
-        Element index to partition by. The kth element value will be in its
-        final sorted position and all smaller elements will be moved before it
-        and all equal or greater elements behind it.
-        The order of all elements in the partitions is undefined.
-        If provided with a sequence of kth it will partition all elements
-        indexed by kth of them into their sorted position at once.
+        Element index to partition by. The k-th value of the array will
+        be in the position it would be in a sorted array, all elements
+        that are less than this element (or greater if `descending` is True)
+        will be moved before it, and all elements that are greater than or
+        equal to this element (or less than or equal if `descending` is True)
+        will be moved after it. The order of all elements within each partition
+        is undefined. If provided with a sequence of k-th it will partition all
+        elements indexed by k-th of them into their sorted position at once.
 
         .. deprecated:: 1.22.0
             Passing booleans as index is deprecated.
@@ -3322,13 +3332,22 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('partition',
         Axis along which to sort. Default is -1, which means sort along the
         last axis.
     kind : {'introselect'}, optional
-        Selection algorithm. Default is 'introselect'.
+        NumPy currently offers only one selection algorithm, 'introselect',
+        and this parameter provides no additional functionality. Default
+        is ``None``.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
         which fields to compare first, second, etc. A single field can
         be specified as a string, and not all fields need to be specified,
         but unspecified fields will still be used, in the order in which
         they come up in the dtype, to break ties.
+    descending : bool, optional
+        Sort order. If ``True``, the array will be partitioned in
+        descending order. If ``False`` or ``None``, the array will be
+        partitioned in ascending order. Values that are NaN are partitioned
+        towards the end of the array regardless of order. Default: ``None``.
+
+        .. versionadded:: 2.6.0
 
     See Also
     --------
@@ -3480,9 +3499,9 @@ _array_method_doc('argmin', "axis=None, out=None, *, keepdims=False",
     numpy.argmin : equivalent function
     """)
 
-_array_method_doc('argsort', "axis=-1, kind=None, order=None, *, stable=None",
+_array_method_doc('argsort', "axis=-1, kind=None, order=None, *, stable=None, descending=None",
     """
-    a.argsort(axis=-1, kind=None, order=None, *, stable=None)
+    a.argsort(axis=-1, kind=None, order=None, *, stable=None, descending=None)
 
     Returns the indices that would sort this array.
 
@@ -4164,6 +4183,7 @@ _array_method_doc('resize', "*new_shape, refcheck=True",
         Shape of resized array.
     refcheck : bool, optional
         If False, reference count will not be checked. Default is True.
+        See Notes below for more explanation.
 
     Returns
     -------
@@ -4172,12 +4192,7 @@ _array_method_doc('resize', "*new_shape, refcheck=True",
     Raises
     ------
     ValueError
-        If `a` does not own its own data or references or views to it exist,
-        and the data memory must be changed.
-
-    SystemError
-        If the `order` keyword argument is specified. This behaviour is a
-        bug in NumPy.
+        If `a` does not own its own data or references or views to may exist.
 
     See Also
     --------
@@ -4190,12 +4205,29 @@ _array_method_doc('resize', "*new_shape, refcheck=True",
     Only contiguous arrays (data elements consecutive in memory) can be
     resized.
 
+    Reallocating arrays in-place can often lead to memory fragmentation and
+    should be avoided. If the goal is to reclaim over-allocated memory,
+    alternatives are to create a view or a copy of just the desired data, or
+    using two passes to build the array: one to cheaply determine the shape and
+    another to allocate and fill. Benchmark your use case to determine what is
+    optimum. You may be surprised to find ``resize`` actually slows down or
+    bloats your application.
+
     The purpose of the reference count check is to make sure you
     do not use this array as a buffer for another Python object and then
-    reallocate the memory. However, reference counts can increase in
-    other ways so if you are sure that you have not shared the memory
-    for this array with another Python object, then you may safely set
-    `refcheck` to False.
+    reallocate the memory.
+
+    On Python 3.13 and older, the check allows objects with exactly one
+    reference to be reallocated in-place. On Python 3.14 and newer, the array
+    must be uniquely referenced. See [1]_ for more details.
+
+    If you are sure that you have not shared the memory for this array with
+    another Python object, then you may safely set `refcheck` to False.
+
+
+    References
+    ----------
+    .. [1] Python 3.14 What's New, https://docs.python.org/3/whatsnew/3.14.html#whatsnew314-refcount
 
     Examples
     --------
@@ -4392,9 +4424,9 @@ _array_method_doc('setflags', "*, write=None, align=None, uic=None",
     ValueError: cannot set WRITEBACKIFCOPY flag to True
     """)
 
-_array_method_doc('sort', "axis=-1, kind=None, order=None, *, stable=None",
+_array_method_doc('sort', "axis=-1, kind=None, order=None, *, stable=None, descending=None",
     """
-    a.sort(axis=-1, kind=None, order=None, *, stable=None)
+    a.sort(axis=-1, kind=None, order=None, *, stable=None, descending=None)
 
     Sort an array in-place. Refer to `numpy.sort` for full documentation.
 
@@ -4728,7 +4760,7 @@ _array_method_doc('transpose', "*axes",
     --------
     transpose : Equivalent function.
     ndarray.T : Array property returning the array transposed.
-    ndarray.reshape : Give a new shape to an array without changing its data.
+    ndarray.reshape : Return a reshaped ndarray without changing data.
 
     Examples
     --------
@@ -7049,7 +7081,7 @@ for _dtype_name, _signature, _sctype_name in (
         {_extra_docs}
         See `numpy.dtype` for the typical way to create dtype instances
         and :ref:`arrays.dtypes` for additional information.
-        """)
+        """, warn_on_python=False)
 
     del _dtype_name, _signature, _sctype_name, _extra_docs  # avoid namespace pollution
 

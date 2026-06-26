@@ -523,7 +523,7 @@ in the array and:
 
 If ``dtype=...`` is given, this dtype is used unmodified, unless
 it is an unspecific *parametric dtype instance* which means "S0", "V0", "U0",
-"datetime64", and "timdelta64".
+"datetime64", and "timedelta64".
 These are thus flexible datatypes without length 0 – considered to be unsized –
 and datetimes or timedelta without a unit attached ("generic unit").
 

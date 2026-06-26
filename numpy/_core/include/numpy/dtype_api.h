@@ -80,6 +80,7 @@ typedef enum {
      * assume that if set, it also applies to normal operations though!
      */
     NPY_METH_IS_REORDERABLE = 1 << 3,
+    _NPY_METH_IS_CAST = 1 << 4,  /* automatically set for casts */
     /*
      * Private flag for now for *logic* functions.  The logical functions
      * `logical_or` and `logical_and` can always cast the inputs to booleans
@@ -114,18 +115,18 @@ typedef struct PyArrayMethod_Context_tag {
     PyArray_Descr *const *descriptors;
  #if NPY_FEATURE_VERSION > NPY_2_3_API_VERSION
     void * _reserved;
-    /* 
+    /*
      * Optional flag to pass information into the inner loop
      * NPY_ARRAYMETHOD_CONTEXT_FLAGS
      */
     uint64_t flags;
-    
+
     /*
      * Optional run-time parameters to pass to the loop (currently used in sorting).
      * Fixed parameters are expected to be passed via auxdata.
      */
     void *parameters;
-    
+
     /* Structure may grow (this is harmless for DType authors) */
  #endif
 } PyArrayMethod_Context;
@@ -406,6 +407,16 @@ typedef int (PyArrayMethod_PromoterFunction)(PyObject *ufunc,
 // intended only for internal use but defined here for clarity
 #define _NPY_DT_ARRFUNCS_OFFSET (1 << 11)
 
+/*
+ * Special slot (must be the first slot if used) to indicate that this DType
+ * is a "simple legacy" dtype backed by a PyArray_DescrProto.  When present,
+ * pfunc must point to a PyArray_DescrProto.  NumPy will create a
+ * _PyArray_LegacyDescr singleton, assign a type number, and set the
+ * NPY_DT_LEGACY flag.  Legacy-appropriate defaults are used for slots that
+ * the user does not override.
+ */
+#define NPY_DT_legacy_descriptor_proto (_NPY_DT_ARRFUNCS_OFFSET - 1)
+
 // Cast is disabled
 // #define NPY_DT_PyArray_ArrFuncs_cast 0 + _NPY_DT_ARRFUNCS_OFFSET
 
@@ -438,7 +449,6 @@ typedef int (PyArrayMethod_PromoterFunction)(PyObject *ufunc,
 // #define NPY_DT_PyArray_ArrFuncs_fastputmask 20 + _NPY_DT_ARRFUNCS_OFFSET
 // #define NPY_DT_PyArray_ArrFuncs_fasttake 21 + _NPY_DT_ARRFUNCS_OFFSET
 #define NPY_DT_PyArray_ArrFuncs_argmin 22 + _NPY_DT_ARRFUNCS_OFFSET
-
 
 // TODO: These slots probably still need some thought, and/or a way to "grow"?
 typedef struct {
@@ -495,7 +505,7 @@ typedef PyArray_Descr *(PyArrayDTypeMeta_EnsureCanonical)(PyArray_Descr *dtype);
 typedef PyArray_Descr *(PyArrayDTypeMeta_FinalizeDescriptor)(PyArray_Descr *dtype);
 
 /*
- * Constants that can be queried and used e.g. by reduce identies defaults.
+ * Constants that can be queried and used e.g. by reducing identities defaults.
  * These are also used to expose .finfo and .iinfo for example.
  */
 /* Numerical constants */

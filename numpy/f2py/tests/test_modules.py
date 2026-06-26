@@ -46,7 +46,7 @@ class TestModuleDocString(util.F2PyTest):
                      i : 'i'-scalar
                      x : 'i'-array(4)
                      a : 'f'-array(2,3)
-                     b : 'f'-array(-1,-1), not allocated\x00
+                     b : 'f'-array(-1,-1), not allocated
                      foo()\n
                      Wrapper for ``foo``.\n\n"""
         )
@@ -58,11 +58,18 @@ class TestModuleAndSubroutine(util.F2PyTest):
     sources = [
         util.getpath("tests", "src", "modules", "gh25337", "data.f90"),
         util.getpath("tests", "src", "modules", "gh25337", "use_data.f90"),
+        util.getpath("tests", "src", "regression", "datonly.f90"),
     ]
 
     def test_gh25337(self):
         self.module.data.set_shift(3)
         assert "data" in dir(self.module)
+
+    def test_allocatable_in_dir(self):
+        # gh-27696: allocatable arrays should appear in dir()
+        names = dir(self.module.datonly)
+        assert "data_array" in names
+        assert "max_value" in names
 
 
 @pytest.mark.slow

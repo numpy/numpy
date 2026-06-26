@@ -269,6 +269,10 @@ function, add a release note to the ``doc/release/upcoming_changes/``
 directory, following the instructions and format in the
 ``doc/release/upcoming_changes/README.rst`` file.
 
+Use the same prefix convention for your pull request title as for commit
+messages (e.g., ``BUG:``, ``ENH:``, ``DOC:``). This enables automated labeling
+of your PR.
+
 
 .. _workflow_PR_timeline:
 

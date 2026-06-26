@@ -12,7 +12,7 @@
   #define NPY__SVML_IS_ENABLED 0
 #endif
 
-#if NPY__SVML_IS_ENABLED && !defined(NPY_HAVE_AVX512_SPR)
+#if NPY__SVML_IS_ENABLED
 
 typedef __m256i npyvh_f16;
 #define npyv_cvt_f16_f32 _mm512_cvtph_ps
@@ -80,11 +80,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(HALF_@func@)
     if (!is_mem_overlap(src, steps[0], dst, steps[1], len) &&
         (steps[0] == sizeof(npy_half)) &&
         (steps[1] == sizeof(npy_half))) {
-    #ifdef NPY_HAVE_AVX512_SPR
-        __svml_@intrin@s32(src, dst, len);
-    #else
         avx512_@intrin@_f16(src, dst, len);
-    #endif
         return;
     }
 #endif // NPY__SVML_IS_ENABLED

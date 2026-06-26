@@ -4,14 +4,6 @@ import numpy.typing as npt
 AR_U: npt.NDArray[np.str_]
 AR_S: npt.NDArray[np.bytes_]
 
-np.strings.equal(AR_U, AR_S)  # type: ignore[arg-type]
-np.strings.not_equal(AR_U, AR_S)  # type: ignore[arg-type]
-
-np.strings.greater_equal(AR_U, AR_S)  # type: ignore[arg-type]
-np.strings.less_equal(AR_U, AR_S)  # type: ignore[arg-type]
-np.strings.greater(AR_U, AR_S)  # type: ignore[arg-type]
-np.strings.less(AR_U, AR_S)  # type: ignore[arg-type]
-
 np.strings.encode(AR_S)  # type: ignore[arg-type]
 np.strings.decode(AR_U)  # type: ignore[arg-type]
 
@@ -44,9 +36,6 @@ np.strings.index(AR_U, b"a", start=[1, 2, 3])  # type: ignore[arg-type]
 np.strings.index(AR_S, "a", end=9)  # type: ignore[arg-type]
 np.strings.rindex(AR_U, b"a", start=[1, 2, 3])  # type: ignore[arg-type]
 np.strings.rindex(AR_S, "a", end=9)  # type: ignore[arg-type]
-
-np.strings.isdecimal(AR_S)  # type: ignore[arg-type]
-np.strings.isnumeric(AR_S)  # type: ignore[arg-type]
 
 np.strings.replace(AR_U, b"_", b"-", 10)  # type: ignore[arg-type]
 np.strings.replace(AR_S, "_", "-", 1)  # type: ignore[arg-type]
