@@ -1125,6 +1125,9 @@ class _MaskedBinaryOperation(_MaskedUFunc):
         else:
             tr = self.f.reduce(t, axis, dtype=dtype)
             mr = umath.logical_and.reduce(m, axis)
+        
+        if np.ndim(tr) == 0:
+            tr = np.asarray(tr)
 
         if not tr.shape:
             if mr:
@@ -5154,6 +5157,8 @@ class MaskedArray(ndarray):
         if m is nomask:
             result = super().trace(offset=offset, axis1=axis1, axis2=axis2,
                                    out=out)
+            if np.ndim(result) == 0:
+                result = np.asarray(result)
             return result.astype(dtype)
         else:
             D = self.diagonal(offset=offset, axis1=axis1, axis2=axis2)
@@ -5945,7 +5950,11 @@ class MaskedArray(ndarray):
         # No explicit output
         if out is None:
             result = self.filled(fill_value).min(
-                axis=axis, out=out, **kwargs).view(type(self))
+                axis=axis, out=out, **kwargs
+            )
+            if np.ndim(result) == 0:
+                result = np.asarray(result)
+            result = result.view(type(self))
             if result.ndim:
                 # Set the mask
                 result.__setmask__(newmask)
@@ -6050,7 +6059,11 @@ class MaskedArray(ndarray):
         # No explicit output
         if out is None:
             result = self.filled(fill_value).max(
-                axis=axis, out=out, **kwargs).view(type(self))
+                axis=axis, out=out, **kwargs
+            )
+            if np.ndim(result) == 0:
+                result = np.asarray(result)
+            result = result.view(type(self))
             if result.ndim:
                 # Set the mask
                 result.__setmask__(newmask)

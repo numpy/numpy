@@ -2679,6 +2679,22 @@ class TestUfuncs:
         assert_equal(product(a, axis=0), 0)
         assert_equal(add.reduce(a), pi)
 
+    def test_alltrue_object():
+        a = np.ma.array([True, True], dtype=object)
+
+        result = np.ma.alltrue(a)
+
+        assert result.shape == ()
+        assert result.item() is True
+
+    def test_sometrue_object():
+        a = np.ma.array([False, True], dtype=object)
+
+        result = np.ma.sometrue(a)
+
+        assert result.shape == ()
+        assert result.item() is True
+
     def test_minmax(self):
         # Tests extrema on MaskedArrays.
         a = arange(1, 13).reshape(3, 4)
@@ -4162,6 +4178,24 @@ class TestMaskedArrayMathMethods:
             result = xmmeth(axis=0, out=output)
             assert_(result is output)
 
+    def test_max_object(self):
+        a = np.ma.array([1, 2, 3], dtype=object)
+
+        result = np.ma.max(a)
+
+        assert isinstance(result, np.ma.MaskedArray)
+        assert result.shape == ()
+        assert result.item() == 3
+
+    def test_min_object(self):
+        a = np.ma.array([1, 2, 3], dtype=object)
+
+        result = np.ma.min(a)
+
+        assert isinstance(result, np.ma.MaskedArray)
+        assert result.shape == ()
+        assert result.item() == 1
+
     def test_ptp(self):
         # Tests ptp on MaskedArrays.
         _, X, _, m, mx, mX, _, _, _, _ = self._create_data()
@@ -4175,6 +4209,15 @@ class TestMaskedArrayMathMethods:
             rows[k] = np.ptp(mX[k].compressed())
         assert_equal(mX.ptp(0), cols)
         assert_equal(mX.ptp(1), rows)
+
+    def test_ptp_object(self):
+        a = np.ma.array([1, 2, 3], dtype=object)
+
+        result = np.ma.ptp(a)
+
+        assert isinstance(result, np.ma.MaskedArray)
+        assert result.shape == ()
+        assert result.item() == 2
 
     def test_add_object(self):
         x = masked_array(['a', 'b'], mask=[1, 0], dtype=object)
@@ -4208,6 +4251,16 @@ class TestMaskedArrayMathMethods:
 
         expected = np.inner(a, b)
         result = np.ma.innerproduct(a, b)
+
+        assert_equal(result, expected)
+        assert_(isinstance(result, MaskedArray))
+
+    def test_inner_object(self):
+        a = np.array([1, 2, 3], dtype=object)
+        b = np.array([0, 1, 0], dtype=object)
+
+        expected = np.inner(a, b)
+        result = np.ma.inner(a, b)
 
         assert_equal(result, expected)
         assert_(isinstance(result, MaskedArray))
@@ -4250,6 +4303,15 @@ class TestMaskedArrayMathMethods:
         arr = np.arange(2 * 4 * 4).reshape(2, 4, 4)
         m_arr = np.ma.masked_array(arr, False)
         assert_equal(arr.trace(axis1=1, axis2=2), m_arr.trace(axis1=1, axis2=2))
+
+    def test_trace_object(self):
+        a = np.ma.array([[1, 2], [3, 4]], dtype=object)
+
+        result = np.ma.trace(a)
+
+        assert isinstance(result, np.ma.MaskedArray)
+        assert result.shape == ()
+        assert result.item() == 5
 
     def test_dot(self):
         # Tests dot on MaskedArrays.
