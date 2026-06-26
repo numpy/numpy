@@ -358,9 +358,9 @@ def build_meson(source_files, module_name=None, **kwargs):
 class F2PyTest:
     code = None
     sources = None
-    options = []  # noqa: RUF012
-    skip = []  # noqa: RUF012
-    only = []  # noqa: RUF012
+    options = []
+    skip = []
+    only = []
     suffix = ".f"
     module = None
     _has_c_compiler = None

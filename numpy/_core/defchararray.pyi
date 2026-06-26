@@ -1,5 +1,5 @@
 from collections.abc import Buffer
-from typing import Any, Final, Literal as L, Self, SupportsIndex, SupportsInt, overload
+from typing import Any, Literal as L, Self, SupportsIndex, SupportsInt, overload
 from typing_extensions import TypeVar, deprecated
 
 import numpy as np
@@ -17,7 +17,6 @@ from numpy._typing import (
     _Shape,
     _ShapeLike,
     _SupportsArray,
-    _UFunc_Nin1_Nout1,
 )
 
 from .strings import (
