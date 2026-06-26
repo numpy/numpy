@@ -5900,7 +5900,7 @@ add_newdoc('numpy._core', 'ufunc', ('resolve_dtypes',
 add_newdoc('numpy._core', 'ufunc', ('_resolve_dtypes_and_context',
     """
     _resolve_dtypes_and_context($self, dtypes, *, signature=None, 
-    casting=None, reduction=False) # noqa: E501
+                                                    casting=None, reduction=False) # noqa: E501
     --
 
     _resolve_dtypes_and_context(dtypes, *, signature=None, 
