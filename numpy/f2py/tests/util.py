@@ -356,16 +356,17 @@ def build_meson(source_files, module_name=None, **kwargs):
 
 
 class F2PyTest:
-    code = None
-    sources = None
-    options = []
-    skip = []
-    only = []
-    suffix = ".f"
-    module = None
-    _has_c_compiler = None
-    _has_f77_compiler = None
-    _has_f90_compiler = None
+    def __init__(self):
+        code = None
+        sources = None
+        options = []
+        skip = []
+        only = []
+        suffix = ".f"
+        module = None
+        _has_c_compiler = None
+        _has_f77_compiler = None
+        _has_f90_compiler = None
 
     @property
     def module_name(self):
