@@ -1288,14 +1288,14 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
 NPY_NO_EXPORT PyArray_Descr_fields *
 _PyDataType_GET_ITEM_DATA(const PyArray_Descr *dtype)
 {
-    return (PyArray_Descr_fields *)(((char *)dtype) + sizeof(PyObject));
+    return (PyArray_Descr_fields *)(((char *)dtype) + offsetof(PyArray_Descr, typeobj));
 }
 #undef _PyArray_LegacyDescr_GET_ITEM_DATA
 /*NUMPY_API*/
 NPY_NO_EXPORT _PyArray_LegacyDescr_fields *
 _PyArray_LegacyDescr_GET_ITEM_DATA(const _PyArray_LegacyDescr *dtype)
 {
-    return (_PyArray_LegacyDescr_fields *)(((char *)dtype) + sizeof(PyObject));
+    return (_PyArray_LegacyDescr_fields *)(((char *)dtype) + offsetof(_PyArray_LegacyDescr, typeobj));
 }
 #undef _PyArray_GET_ITEM_DATA
 /*NUMPY_API*/

@@ -632,7 +632,7 @@ typedef struct _PyArray_Descr_fields {
          * be two type_numbers with the same type
          * object.
          */
-        PyTypeObject *typeobj;
+        NPY_DECL_ALIGNED(8) PyTypeObject *typeobj;
         /* kind for this type */
         char kind;
         /* unique-character representing this type */
@@ -664,7 +664,7 @@ typedef struct _PyArray_Descr_fields {
 
 typedef struct _PyArray_Descr {
         PyObject_HEAD
-        PyTypeObject *typeobj;
+        NPY_DECL_ALIGNED(8) PyTypeObject *typeobj;
         char kind;
         char type;
         char byteorder;
@@ -675,7 +675,7 @@ typedef struct _PyArray_Descr {
 /* To access modified fields, define the full 2.0 struct: */
 typedef struct {
         PyObject_HEAD
-        PyTypeObject *typeobj;
+        NPY_DECL_ALIGNED(8) PyTypeObject *typeobj;
         char kind;
         char type;
         char byteorder;
@@ -702,7 +702,7 @@ typedef struct {
 #ifndef Py_TARGET_ABI3T
         PyObject_HEAD
 #endif
-        PyTypeObject *typeobj;
+        NPY_DECL_ALIGNED(8) PyTypeObject *typeobj;
         char kind;
         char type;
         char byteorder;
