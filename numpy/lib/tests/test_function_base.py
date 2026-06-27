@@ -4760,6 +4760,132 @@ class TestMedian:
         assert_array_equal(np.isnat(res), [False, True, False])
 
 
+class TestMedianSortedArrays:
+
+    def test_odd_total_length(self):
+        a = np.array([1, 3, 5])
+        b = np.array([2, 4])
+        # merged sorted = [1,2,3,4,5], median = 3
+        assert_equal(np.median_sorted_arrays(a, b), 3.0)
+
+    def test_even_total_length(self):
+        a = np.array([1, 2])
+        b = np.array([3, 4])
+        # merged sorted = [1,2,3,4], median = 2.5
+        assert_equal(np.median_sorted_arrays(a, b), 2.5)
+
+    def test_one_empty_array_a(self):
+        a = np.array([])
+        b = np.array([1, 2, 3])
+        assert_equal(np.median_sorted_arrays(a, b), 2.0)
+
+    def test_one_empty_array_b(self):
+        a = np.array([1, 2, 3, 4])
+        b = np.array([])
+        assert_equal(np.median_sorted_arrays(a, b), 2.5)
+
+    def test_both_empty_raises(self):
+        a = np.array([])
+        b = np.array([])
+        assert_raises(ValueError, np.median_sorted_arrays, a, b)
+
+    def test_duplicate_values(self):
+        a = np.array([1, 1, 1])
+        b = np.array([1, 1, 1])
+        assert_equal(np.median_sorted_arrays(a, b), 1.0)
+
+    def test_duplicate_mixed(self):
+        a = np.array([1, 2, 2])
+        b = np.array([2, 3, 3])
+        # merged = [1,2,2,2,3,3], median = (2+2)/2 = 2.0
+        assert_equal(np.median_sorted_arrays(a, b), 2.0)
+
+    def test_negative_values(self):
+        a = np.array([-5, -3, -1])
+        b = np.array([-4, -2, 0])
+        # merged = [-5,-4,-3,-2,-1,0], median = (-3+-2)/2 = -2.5
+        assert_equal(np.median_sorted_arrays(a, b), -2.5)
+
+    def test_float_arrays(self):
+        a = np.array([1.1, 2.2, 3.3])
+        b = np.array([4.4, 5.5])
+        # merged = [1.1, 2.2, 3.3, 4.4, 5.5], median = 3.3
+        assert_almost_equal(np.median_sorted_arrays(a, b), 3.3)
+
+    def test_different_sizes(self):
+        a = np.array([1])
+        b = np.array([2, 3, 4, 5, 6])
+        # merged = [1,2,3,4,5,6], median = (3+4)/2 = 3.5
+        assert_equal(np.median_sorted_arrays(a, b), 3.5)
+
+    def test_very_large_size_imbalance(self):
+        a = np.array([50])
+        b = np.arange(1, 101)  # 1..100
+        # merged = 1..100 with 50 already in it -> 101 elements
+        # Actually a has [50] and b has [1..100], combined 101 elements
+        expected = np.median(np.concatenate((a, b)))
+        assert_almost_equal(
+            np.median_sorted_arrays(a, b), float(expected))
+
+    def test_invalid_2d_input(self):
+        a = np.array([[1, 2], [3, 4]])
+        b = np.array([5, 6])
+        assert_raises(ValueError, np.median_sorted_arrays, a, b)
+
+    def test_invalid_both_2d(self):
+        a = np.array([[1, 2]])
+        b = np.array([[3, 4]])
+        assert_raises(ValueError, np.median_sorted_arrays, a, b)
+
+    def test_single_element_each(self):
+        a = np.array([1])
+        b = np.array([2])
+        assert_equal(np.median_sorted_arrays(a, b), 1.5)
+
+    def test_single_element_one(self):
+        a = np.array([3])
+        b = np.array([])
+        assert_equal(np.median_sorted_arrays(a, b), 3.0)
+
+    def test_returns_python_float(self):
+        a = np.array([1, 2, 3])
+        b = np.array([4, 5, 6])
+        result = np.median_sorted_arrays(a, b)
+        assert isinstance(result, float)
+
+    def test_int_dtypes(self):
+        for dtype in [np.int8, np.int16, np.int32, np.int64]:
+            a = np.array([1, 3, 5], dtype=dtype)
+            b = np.array([2, 4], dtype=dtype)
+            assert_equal(np.median_sorted_arrays(a, b), 3.0)
+
+    def test_float_dtypes(self):
+        for dtype in [np.float32, np.float64]:
+            a = np.array([1.0, 3.0, 5.0], dtype=dtype)
+            b = np.array([2.0, 4.0], dtype=dtype)
+            assert_almost_equal(np.median_sorted_arrays(a, b), 3.0)
+
+    def test_agreement_with_naive_median(self):
+        # Verify against np.median(np.concatenate(...)) on random sorted data
+        rng = np.random.RandomState(42)
+        for _ in range(20):
+            m = rng.randint(0, 50)
+            n = rng.randint(0, 50)
+            if m == 0 and n == 0:
+                n = 1
+            a = np.sort(rng.randn(m))
+            b = np.sort(rng.randn(n))
+            expected = float(np.median(np.concatenate((a, b))))
+            result = np.median_sorted_arrays(a, b)
+            assert_almost_equal(result, expected)
+
+    def test_large_arrays(self):
+        a = np.arange(0, 100000, 2)     # 50000 even numbers
+        b = np.arange(1, 100000, 2)     # 50000 odd numbers
+        expected = float(np.median(np.concatenate((a, b))))
+        assert_almost_equal(np.median_sorted_arrays(a, b), expected)
+
+
 class TestSortComplex:
 
     @pytest.mark.parametrize("type_in, type_out", [

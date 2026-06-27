@@ -63,6 +63,7 @@ __all__ = [
     "cov",
     "corrcoef",
     "median",
+    "median_sorted_arrays",
     "sinc",
     "hamming",
     "hanning",
@@ -1469,6 +1470,11 @@ def median(
     overwrite_input: bool = False,
     keepdims: bool = False,
 ) -> Incomplete: ...
+
+def median_sorted_arrays(
+    a: ArrayLike,
+    b: ArrayLike,
+) -> float: ...
 
 # NOTE: keep in sync with `quantile`
 @overload  # inexact, scalar, axis=None

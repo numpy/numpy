@@ -105,6 +105,24 @@ class Median(Benchmark):
         np.median(self.wide, axis=0)
 
 
+class MedianSortedArrays(Benchmark):
+    params = [
+        [(1000, 1000), (100000, 100000), (10, 100000), (1, 1000000)],
+    ]
+    param_names = ['sizes']
+
+    def setup(self, sizes):
+        m, n = sizes
+        self.a = np.sort(np.random.random(m))
+        self.b = np.sort(np.random.random(n))
+
+    def time_median_sorted_arrays(self, sizes):
+        np.median_sorted_arrays(self.a, self.b)
+
+    def time_median_concatenate(self, sizes):
+        np.median(np.concatenate((self.a, self.b)))
+
+
 class Percentile(Benchmark):
     def setup(self):
         self.e = np.arange(10000, dtype=np.float32)

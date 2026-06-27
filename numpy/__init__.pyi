@@ -488,6 +488,7 @@ from numpy.lib._function_base_impl import (
     cov,
     corrcoef,
     median,
+    median_sorted_arrays,
     sinc,
     hamming,
     hanning,
@@ -720,7 +721,7 @@ __all__ = [
     "select", "piecewise", "trim_zeros", "copy", "iterable", "percentile", "diff",
     "gradient", "angle", "unwrap", "sort_complex", "flip", "rot90", "extract", "place",
     "vectorize", "asarray_chkfinite", "average", "bincount", "digitize", "cov",
-    "corrcoef", "median", "sinc", "hamming", "hanning", "bartlett", "blackman",
+    "corrcoef", "median", "median_sorted_arrays", "sinc", "hamming", "hanning", "bartlett", "blackman",
     "kaiser", "trapezoid", "i0", "meshgrid", "delete", "insert", "append",
     "interp", "quantile",
     # lib._twodim_base_impl.__all__

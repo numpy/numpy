@@ -492,6 +492,7 @@ else:
         iterable,
         kaiser,
         median,
+        median_sorted_arrays,
         meshgrid,
         percentile,
         piecewise,

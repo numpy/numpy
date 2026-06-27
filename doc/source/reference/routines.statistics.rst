@@ -23,6 +23,7 @@ Averages and variances
    :toctree: generated/
 
    median
+   median_sorted_arrays
    average
    mean
    std

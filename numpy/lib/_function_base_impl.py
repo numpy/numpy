@@ -4056,6 +4056,129 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     return rout
 
 
+def _median_sorted_arrays_dispatcher(a, b):
+    return (a, b)
+
+
+@array_function_dispatch(_median_sorted_arrays_dispatcher)
+def median_sorted_arrays(a, b):
+    """
+    Compute the median of two sorted 1-D arrays without merging them.
+
+    Uses the binary-search partition algorithm to find the median in
+    O(log(min(m, n))) time and O(1) extra space, where *m* and *n* are
+    the lengths of `a` and `b` respectively.
+
+    Both input arrays must already be sorted in ascending order.
+    The function does **not** verify that the inputs are sorted.
+
+    Parameters
+    ----------
+    a : array_like
+        First sorted 1-D input array.
+    b : array_like
+        Second sorted 1-D input array.
+
+    Returns
+    -------
+    median : float
+        The median value of the combined data as a Python float.
+
+    Raises
+    ------
+    ValueError
+        If both input arrays are empty, or if either input is not
+        one-dimensional.
+
+    See Also
+    --------
+    median : Compute the median along the specified axis.
+    nanmedian : Compute the median along the specified axis, ignoring NaNs.
+
+    Notes
+    -----
+    The algorithm partitions the two arrays such that the left halves
+    contain elements that are all less than or equal to the elements in
+    the right halves.  A binary search is performed on the shorter array
+    to achieve O(log(min(m, n))) time complexity.
+
+    Unlike `median`, this function assumes the inputs are already sorted
+    and avoids the O((m + n) log(m + n)) cost of sorting or the O(m + n)
+    cost of merging.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = np.array([1, 3])
+    >>> b = np.array([2])
+    >>> np.median_sorted_arrays(a, b)
+    2.0
+
+    >>> a = np.array([1, 2])
+    >>> b = np.array([3, 4])
+    >>> np.median_sorted_arrays(a, b)
+    2.5
+
+    >>> a = np.array([])
+    >>> b = np.array([1, 2, 3])
+    >>> np.median_sorted_arrays(a, b)
+    2.0
+
+    """
+    a = np.asarray(a)
+    b = np.asarray(b)
+
+    # Validate dimensions
+    if a.ndim != 1 or b.ndim != 1:
+        raise ValueError(
+            "Both input arrays must be one-dimensional, got arrays with "
+            f"dimensions {a.ndim} and {b.ndim}."
+        )
+
+    m, n = len(a), len(b)
+    total = m + n
+
+    if total == 0:
+        raise ValueError(
+            "Both input arrays are empty; cannot compute the median of "
+            "an empty set of values."
+        )
+
+    # Always binary-search the smaller array.
+    if m > n:
+        a, b = b, a
+        m, n = n, m
+
+    half = (total + 1) // 2  # size of the combined left partition
+
+    lo, hi = 0, m  # binary search bounds on partition index in `a`
+
+    while lo <= hi:
+        i = (lo + hi) // 2   # elements taken from `a`
+        j = half - i          # elements taken from `b`
+
+        a_left  = a[i - 1] if i > 0 else -np.inf
+        a_right = a[i]     if i < m else  np.inf
+        b_left  = b[j - 1] if j > 0 else -np.inf
+        b_right = b[j]     if j < n else  np.inf
+
+        if a_left <= b_right and b_left <= a_right:
+            # Correct partition found
+            if total % 2 == 1:
+                return float(max(a_left, b_left))
+            else:
+                max_left  = max(a_left, b_left)
+                min_right = min(a_right, b_right)
+                return float((max_left + min_right) / 2)
+        elif a_left > b_right:
+            hi = i - 1   # take fewer from `a`
+        else:
+            lo = i + 1   # take more from `a`
+
+    # Should never reach here for valid sorted input
+    raise RuntimeError("Unexpected error in median_sorted_arrays")  # pragma: no cover
+
+
 def _percentile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
                            method=None, keepdims=None, *, weights=None):
     return (a, q, out, weights)
