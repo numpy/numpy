@@ -751,7 +751,7 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         the product of the flattened array.
     dtype : data-type, optional
         The type of the returned array and of the accumulator in which the
-        elements are summed.  By default, the dtype of `a` is used.  An
+        elements are multiplied.  By default, the dtype of `a` is used.  An
         exception is when `a` has an integer type with less precision than
         the platform (u)intp. In that case, the default will be either
         (u)int32 or (u)int64 depending on whether the platform is 32 or 64
