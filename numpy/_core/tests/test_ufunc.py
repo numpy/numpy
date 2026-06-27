@@ -908,6 +908,12 @@ class TestUfunc:
         assert c is b
         assert_allclose(c, expected)
 
+    def test_matvec_empty_object_is_zero(self):
+        A = np.empty((3, 0), dtype=object)
+        v = np.empty((0,), dtype=object)
+        result = np.matvec(A, v)
+        assert_array_equal(result, np.zeros(3, dtype=object))
+
     def test_vecdot_subclass(self):
         class MySubclass(np.ndarray):
             pass
