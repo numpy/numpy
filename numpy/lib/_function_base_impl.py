@@ -4157,17 +4157,17 @@ def median_sorted_arrays(a, b):
         i = (lo + hi) // 2   # elements taken from `a`
         j = half - i          # elements taken from `b`
 
-        a_left  = a[i - 1] if i > 0 else -np.inf
-        a_right = a[i]     if i < m else  np.inf
-        b_left  = b[j - 1] if j > 0 else -np.inf
-        b_right = b[j]     if j < n else  np.inf
+        a_left = a[i - 1] if i > 0 else -np.inf
+        a_right = a[i] if i < m else np.inf
+        b_left = b[j - 1] if j > 0 else -np.inf
+        b_right = b[j] if j < n else np.inf
 
         if a_left <= b_right and b_left <= a_right:
             # Correct partition found
             if total % 2 == 1:
                 return float(max(a_left, b_left))
             else:
-                max_left  = max(a_left, b_left)
+                max_left = max(a_left, b_left)
                 min_right = min(a_right, b_right)
                 return float((max_left + min_right) / 2)
         elif a_left > b_right:
