@@ -703,6 +703,11 @@ class TestInsert:
         with pytest.raises(IndexError, match='out of bounds'):
             np.insert([0, 1, 2], [idx], [3, 4])
 
+    def test_insert_negative_oob_multi_element(self):
+        a = np.arange(5)
+        with pytest.raises(IndexError, match="out of bounds"):
+            np.insert(a, [-6, 0], [9, 8])
+
 
 class TestAmax:
 
