@@ -142,9 +142,16 @@ def _coerce_to_uint32_array(x):
     else:
         if len(x) == 0:
             return np.array([], dtype=np.uint32)
+        
         # Should be a sequence of interpretable-as-ints. Convert each one to
         # a uint32 array and concatenate.
-        subseqs = [_coerce_to_uint32_array(v) for v in x]
+        subseqs = []
+        for v in x:
+            if hasattr(v, '__len__') and not isinstance(v, str):
+                raise TypeError("SeedSequence does not accept nested sequences.")
+            
+            subseqs.append(_coerce_to_uint32_array(v))
+            
         return np.concatenate(subseqs)
 
 
@@ -249,18 +256,6 @@ cdef class SeedlessSeedSequence:
 # We cannot directly subclass a `cdef class` type from an `ABC` in Cython, so
 # we must register it after the fact.
 ISpawnableSeedSequence.register(SeedlessSeedSequence)
-def _has_cycle(obj, visited=None):
-    if visited is None:
-        visited = set()
-    if id(obj) in visited:
-        return True
-    visited.add(id(obj))
-    if isinstance(obj, list):
-        for item in obj:
-            if _has_cycle(item, visited):
-                return True
-        visited.remove(id(obj))
-    return False
 
 
 cdef class SeedSequence:
@@ -313,10 +308,6 @@ cdef class SeedSequence:
     def __init__(self, entropy=None, *, spawn_key=(),
                  pool_size=DEFAULT_POOL_SIZE, n_children_spawned=0):
         
-        # --- OUR FIX ---
-        if isinstance(entropy, list) and _has_cycle(entropy):
-            raise ValueError("Seed (entropy) cannot be a recursive or self-referencing list.")
-        # ---------------
 
         if pool_size < DEFAULT_POOL_SIZE:
             raise ValueError("The size of the entropy pool should be at least "
