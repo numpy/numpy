@@ -1,11 +1,6 @@
-[workspace]
-channels = ["https://prefix.dev/conda-forge"]
-platforms = ["linux-64", "linux-aarch64", "osx-arm64"]
-preview = ["pixi-build"]
-requires-pixi = ">=0.66.0"
-
 [package.build]
 source.path = "../.."
+flags = ["asan"]
 
 [package.build.backend]
 name = "pixi-build-python"
@@ -18,9 +13,10 @@ env.ASAN_OPTIONS = "detect_leaks=0:symbolize=1:strict_init_order=true:allocator_
 extra-args = ["-Csetup-args=-Db_sanitize=address", "-Csetup-args=-Dbuildtype=debug"] 
 
 [package.host-dependencies]
-python.git = "https://github.com/python/cpython"
-python.subdirectory = "Tools/pixi-packages/asan"
-python.rev = "55ea59e7dc35e1363b203ae4dd9cfc3a0ac0a844"  # v3.15.0a8
+python.flags = ["asan"]
+python.git = "https://github.com/lucascolley/cpython"
+python.subdirectory = "Tools/pixi-packages"
+python.rev = "abdd7aea18bde039fe35983b5c0d8036bc16f1a7"
 
 meson-python = "*"
 cython = "*"
