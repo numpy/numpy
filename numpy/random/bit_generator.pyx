@@ -307,8 +307,6 @@ cdef class SeedSequence:
 
     def __init__(self, entropy=None, *, spawn_key=(),
                  pool_size=DEFAULT_POOL_SIZE, n_children_spawned=0):
-        
-
         if pool_size < DEFAULT_POOL_SIZE:
             raise ValueError("The size of the entropy pool should be at least "
                              f"{DEFAULT_POOL_SIZE}")
