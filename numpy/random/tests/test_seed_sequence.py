@@ -1,6 +1,11 @@
 import numpy as np
 from numpy.random import SeedSequence
-from numpy.testing import assert_array_compare, assert_array_equal, assert_raises, assert_raises_regex
+from numpy.testing import (
+    assert_array_compare,
+    assert_array_equal,
+    assert_raises,
+    assert_raises_regex,
+)
 
 
 def test_reference_data():
@@ -82,17 +87,17 @@ def test_zero_padding():
 def test_seedsequence_rejects_nested_sequence():
     with assert_raises(TypeError):
         SeedSequence(SeedSequence(42))
-    
-    # Prevents infinite recursion (Issue #28822) and rejects invalid types (Issue #27380)
+
+    # Prevents infinite recursion (Issue #28822) and rejects
+    # invalid types (Issue #27380)
     match_str = "SeedSequence does not accept nested sequences."
-    
+
     # Test standard nested lists
     with assert_raises_regex(TypeError, match_str):
         SeedSequence([[1, 2], [3, 4]])
-        
+
     # Test self-referencing/cyclic lists
     with assert_raises_regex(TypeError, match_str):
         cyclic_seed = []
         cyclic_seed.append(cyclic_seed)
-        SeedSequence(cyclic_seed)    
-        
+        SeedSequence(cyclic_seed)
