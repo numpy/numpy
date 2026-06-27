@@ -51,22 +51,21 @@ This flag is checked at import time.
 SIMD feature selection
 ----------------------
 
-Setting ``NPY_DISABLE_CPU_FEATURES`` will exclude simd features at runtime.
-See :ref:`runtime-simd-dispatch`.
+Setting ``NPY_DISABLE_CPU_FEATURES`` will exclude SIMD features at runtime.
 
+This environment variable lets you turn off specific CPU features that NumPy
+would normally use to speed things up. You might need this for debugging,
+testing, or if some CPU instructions are unstable on your system.
 
-Debugging-related options
-=========================
+To use it, set the variable to a list of CPU feature names separated by commas.
+For example::
 
-Warn if no memory allocation policy when deallocating data
-----------------------------------------------------------
+    export NPY_DISABLE_CPU_FEATURES="AVX2,AVX512F"
 
-Some users might pass ownership of the data pointer to the ``ndarray`` by
-setting the ``OWNDATA`` flag. If they do this without setting (manually) a
-memory allocation policy, the default will be to call ``free``. If
-``NUMPY_WARN_IF_NO_MEM_POLICY`` is set to ``"1"``, a ``RuntimeWarning`` will
-be emitted. A better alternative is to use a ``PyCapsule`` with a deallocator
-and set the ``ndarray.base``.
+You must set this variable before you import NumPy for it to work.
 
-.. versionchanged:: 1.25.2
-    This variable is only checked on the first import.
+To see which CPU features are available on your system, run::
+
+    python -c "import numpy as np; print(np.__cpu_features__)"
+
+For more details, see :ref:`runtime-simd-dispatch`.
