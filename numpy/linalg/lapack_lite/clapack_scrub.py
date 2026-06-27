@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # WARNING! This a Python 2 script. Read README.rst for rationale.
 import os
 import re

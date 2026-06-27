@@ -1009,7 +1009,7 @@ def _read_bytes(fp, size, error_template="ran out of data"):
     data = b""
     while True:
         # io files (default in python3) return None or raise on
-        # would-block, python2 file will truncate, probably nothing can be
+        # would-block, Python2 file will truncate, probably nothing can be
         # done about that.  note that regular files can't be non-blocking
         try:
             r = fp.read(size - len(data))

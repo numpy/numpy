@@ -1413,7 +1413,7 @@ initialize_legacy_dtypemeta_aliases(_PyArray_LegacyDescr **_builtin_descrs) {
     _CFloat_dtype = NPY_DTYPE(_builtin_descrs[NPY_CFLOAT]);
     _CDouble_dtype = NPY_DTYPE(_builtin_descrs[NPY_CDOUBLE]);
     _CLongDouble_dtype = NPY_DTYPE(_builtin_descrs[NPY_CLONGDOUBLE]);
-    // NPY_STRING is the legacy python2 name
+    // NPY_STRING is the legacy Python 2 name
     _Bytes_dtype = NPY_DTYPE(_builtin_descrs[NPY_STRING]);
     _Unicode_dtype = NPY_DTYPE(_builtin_descrs[NPY_UNICODE]);
     _Datetime_dtype = NPY_DTYPE(_builtin_descrs[NPY_DATETIME]);

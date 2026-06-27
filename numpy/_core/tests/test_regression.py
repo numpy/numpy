@@ -1943,7 +1943,7 @@ class TestRegression:
 
         # Python2 output for pickle.dumps(...)
         datas = [
-            # (original, python2_pickle, koi8r_validity)
+            # (original, legacy_pickle , koi8r_validity)
             (np.str_('\u6bd2'),
              b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\nI0\ntp6\nbS'\\xd2k\\x00\\x00'\np7\ntp8\nRp9\n.",
              'invalid'),

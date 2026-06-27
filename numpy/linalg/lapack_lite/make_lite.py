@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # WARNING! This a Python 2 script. Read README.rst for rationale.
 """
 Usage: make_lite.py <wrapped_routines_file> <lapack_dir>

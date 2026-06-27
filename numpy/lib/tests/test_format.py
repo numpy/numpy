@@ -556,7 +556,7 @@ def test_load_padded_dtype(tmpdir, dt):
 
 @pytest.mark.filterwarnings(
     "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning")
-def test_pickle_python2_python3():
+def test_pickle_compat():
     # Test that loading object arrays saved on Python 2 works both on
     # Python 2 and Python 3 and vice versa
     data_dir = os.path.join(os.path.dirname(__file__), 'data')

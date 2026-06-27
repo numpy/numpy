@@ -529,7 +529,7 @@ Some examples::
     >>> np.mean(a)
     NA(dtype='<f8')
     >>> np.mean(a, skipna=True)
-    /home/mwiebe/virtualenvs/dev/lib/python2.7/site-packages/numpy/core/fromnumeric.py:2374: RuntimeWarning: invalid value encountered in double_scalars
+    /home/mwiebe/virtualenvs/dev/lib/python3 /site-packages/numpy/core/fromnumeric.py:2374: RuntimeWarning: invalid value encountered in double_scalars
       return mean(axis, dtype, out)
     nan
 
