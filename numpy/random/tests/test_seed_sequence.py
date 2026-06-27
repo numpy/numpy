@@ -77,3 +77,20 @@ def test_zero_padding():
         np.not_equal,
         SeedSequence(42, spawn_key=(0,)).generate_state(4),
         expected42)
+def test_seedsequence_rejects_nested_sequence():
+    import pytest  # <-- We just added this line!
+    from numpy.random import SeedSequence
+    
+    # Prevents infinite recursion (Issue #28822) and rejects invalid types (Issue #27380)
+    match_str = "SeedSequence does not accept nested sequences."
+    
+    # Test standard nested lists
+    with pytest.raises(TypeError, match=match_str):
+        SeedSequence([[1, 2], [3, 4]])
+        
+    # Test self-referencing/cyclic lists
+    with pytest.raises(TypeError, match=match_str):
+        cyclic_seed = []
+        cyclic_seed.append(cyclic_seed)
+        SeedSequence(cyclic_seed)    
+        
