@@ -276,7 +276,7 @@ Once everything seems satisfactory, update, commit and upload the changes::
 
     $ git checkout -b v2.5
     $ git add 2.5/*.pdf
-    $ git commit -a -m"Add documentation for v2.4.0"
+    $ git commit -a -m"Add documentation for v2.5.0"
     $ git push git@github.com:numpy/doc
     $ popd
 
