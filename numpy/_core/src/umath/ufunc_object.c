@@ -5489,6 +5489,12 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 #undef _SETCPTR
 
 #undef _PyUFuncObject_GET_ITEM_DATA
+/*
+ * Aligning the first member to 8 bytes only keeps the layouts consistent if the
+ * struct does not need stricter than 8-byte alignment. Guard that assumption.
+ */
+static_assert(NPY_ALIGNOF(PyUFuncObject_fields) <= 8,
+              "PyUFuncObject must not require more than 8-byte alignment");
 /*UFUNC_API*/
 NPY_NO_EXPORT PyUFuncObject_fields *
 _PyUFuncObject_GET_ITEM_DATA(const PyUFuncObject *obj)
