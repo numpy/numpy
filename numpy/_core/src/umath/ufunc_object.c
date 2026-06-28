@@ -5493,7 +5493,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 NPY_NO_EXPORT PyUFuncObject_fields *
 _PyUFuncObject_GET_ITEM_DATA(const PyUFuncObject *obj)
 {
-    return (PyUFuncObject_fields *)((char *)obj + sizeof(PyObject));
+    return (PyUFuncObject_fields *)((char *)obj + offsetof(PyUFuncObject_fields, nin));
 }
 
 static void

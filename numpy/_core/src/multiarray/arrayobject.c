@@ -1282,6 +1282,10 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     to access the fields of the struct through a pointer that is not of the same type,
     but in our case it is not a problem in practice because this is used only in stable ABI
     extensions where the original object layout is opaque.
+
+    To calculate the correct offset for the fields, we use offsetof with the first member
+    of the struct because there can be padding before the first member of the struct and the object header,
+    and we want to skip that padding.
 */
 #undef _PyDataType_GET_ITEM_DATA
 /*NUMPY_API*/
@@ -1302,28 +1306,28 @@ _PyArray_LegacyDescr_GET_ITEM_DATA(const _PyArray_LegacyDescr *dtype)
 NPY_NO_EXPORT PyArrayObject_fields *
 _PyArray_GET_ITEM_DATA(const PyArrayObject *arr)
 {
-    return (PyArrayObject_fields *)(((char *)arr) + sizeof(PyObject));
+    return (PyArrayObject_fields *)(((char *)arr) + offsetof(PyArrayObject_fields, data));
 }
 #undef _PyArrayMultiIter_GET_ITEM_DATA
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArrayMultiIterObject_fields *
 _PyArrayMultiIter_GET_ITEM_DATA(const PyArrayMultiIterObject *multi)
 {
-    return (PyArrayMultiIterObject_fields *)(((char *)multi) + sizeof(PyObject));
+    return (PyArrayMultiIterObject_fields *)(((char *)multi) + offsetof(PyArrayMultiIterObject_fields, numiter));
 }
 #undef _PyArrayIter_GET_ITEM_DATA
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArrayIterObject_fields *
 _PyArrayIter_GET_ITEM_DATA(const PyArrayIterObject *iter)
 {
-    return (PyArrayIterObject_fields *)(((char *)iter) + sizeof(PyObject));
+    return (PyArrayIterObject_fields *)(((char *)iter) + offsetof(PyArrayIterObject_fields, nd_m1));
 }
 #undef _PyArrayNeighborhoodIter_GET_ITEM_DATA
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArrayNeighborhoodIterObject_fields *
 _PyArrayNeighborhoodIter_GET_ITEM_DATA(const PyArrayNeighborhoodIterObject *iter)
 {
-    return (PyArrayNeighborhoodIterObject_fields *)(((char *)iter) + sizeof(PyObject));
+    return (PyArrayNeighborhoodIterObject_fields *)(((char *)iter) + offsetof(PyArrayNeighborhoodIterObject_fields, nd_m1));
 }
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArray_DatetimeMetaData
