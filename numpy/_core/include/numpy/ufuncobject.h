@@ -3,6 +3,7 @@
 
 #include <numpy/npy_math.h>
 #include <numpy/npy_common.h>
+#include <numpy/utils.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -108,7 +109,8 @@ typedef struct _tagPyUFuncObject {
          * nout: Number of outputs
          * nargs: Always nin + nout (Why is it stored?)
          */
-        int nin, nout, nargs;
+        NPY_DECL_ALIGNED(8) int nin;
+        int nout, nargs;
 
         /*
          * Identity for reduction, any of PyUFunc_One, PyUFunc_Zero

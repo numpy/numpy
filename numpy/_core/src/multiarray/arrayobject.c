@@ -1283,6 +1283,13 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     but in our case it is not a problem in practice because this is used only in stable ABI
     extensions where the original object layout is opaque.
 
+    The first member of the structs are aligned to 8 bytes, because on 32 bit free-threaded builds,
+    sizeof(PyObject) is not a multiple of 8 so the compiler will add padding to the struct and if we
+    don't align the first member to 8 bytes, the offsets of fields structs i.e. `PyArray_Descr_fields`
+    will differ from `PyArray_Descr` which is the actual layout. The alignment of 8 bytes is important
+    because older abi3 extensions have sizeof(PyObject) which a multiple of 8 so the added alignment of 8
+    does not change the offsets of the fields structs for those extensions.
+
     To calculate the correct offset for the fields, we use offsetof with the first member
     of the struct because there can be padding before the first member of the struct and the object header,
     and we want to skip that padding.
