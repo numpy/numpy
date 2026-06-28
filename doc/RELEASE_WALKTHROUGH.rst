@@ -233,14 +233,23 @@ and most patch releases. ``make merge-doc`` clones the ``numpy/doc`` repo into
 ``doc/build/merge`` and updates it with the new documentation::
 
     $ git clean -xdfq
-    $ git co v2.4.0
+    $ git co v2.5.0
     $ rm -rf doc/build  # want version to be current
     $ python -m spin docs merge-doc --build
-    $ pushd doc/build/merge
+
+
+Then if needed build the pdf documentation::
+
+    $ python -m spin docs latex
+    $ pushd doc/build/latex
+    $ make all-pdf
+    $ popd
+    $ cp doc/build/latex/numpy-user.pdf doc/build/latex/numpy-ref.pdf doc/build/merge/2.5/
 
 If the release series is a new one, you will need to add a new section to the
 ``doc/build/merge/index.html`` front page just after the "insert here" comment::
 
+    $ pushd doc/build/merge
     $ gvim index.html +/'insert here'
 
 Further, update the version-switcher json file to add the new release and
@@ -260,11 +269,13 @@ from ``numpy.org``::
 
 Update the stable link and update::
 
-    $ ln -sfn 2.4 stable
-    $ ls -l  # check the link
+    $ ln -sfn 2.5 stable
+    $ ls -l stable # check the link
 
 Once everything seems satisfactory, update, commit and upload the changes::
 
+    $ git checkout -b v2.5
+    $ git add 2.5/*.pdf
     $ git commit -a -m"Add documentation for v2.4.0"
     $ git push git@github.com:numpy/doc
     $ popd
