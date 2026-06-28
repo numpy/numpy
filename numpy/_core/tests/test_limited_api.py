@@ -158,7 +158,6 @@ def test_limited_opaque(install_temp):
     # Advance iter 0 by 3 steps → flat index 3 → value 3.0
     assert limited_api_opaque.multi_iter_nexti(a, b, 3) == 3.0
 
-
     # Regression test for descriptor field access via the opaque ABI: on 32-bit
     # free-threaded builds c_metadata used to read back as NULL (flags alignment).
     dt = np.dtype("timedelta64[s]")
