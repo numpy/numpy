@@ -671,3 +671,39 @@ assert_type(np.abs(_u8_2d, dtype="f4"), np.ndarray[tuple[int, int]])
 
 assert_type(np.abs(_py_b_1d, out=_i16_1d), np.ndarray[tuple[int], np.dtype[np.int16]])
 assert_type(np.abs(_py_i_2d, out=_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+
+# _ufunc_12_modf
+
+type _tuple2[T] = tuple[T, T]
+
+assert_type(np.modf(_py_i_0d), _tuple2[np.float64])
+assert_type(np.modf(_py_i_1d), _tuple2[np.ndarray[tuple[int], np.dtype[np.float64]]])
+assert_type(np.modf(_py_i_2d), _tuple2[np.ndarray[tuple[int, int], np.dtype[np.float64]]])
+assert_type(np.modf(_py_f_0d), _tuple2[np.float64])
+assert_type(np.modf(_py_f_1d), _tuple2[np.ndarray[tuple[int], np.dtype[np.float64]]])
+assert_type(np.modf(_py_f_2d), _tuple2[np.ndarray[tuple[int, int], np.dtype[np.float64]]])
+
+assert_type(np.modf(_i16_0d), _tuple2[np.float64])
+assert_type(np.modf(_i16_1d), _tuple2[np.ndarray[tuple[int], np.dtype[np.float64]]])
+assert_type(np.modf(_i16_2d), _tuple2[np.ndarray[tuple[int, int], np.dtype[np.float64]]])
+assert_type(np.modf(_i16_nd), _tuple2[npt.NDArray[np.float64]])
+assert_type(np.modf(_f32_0d), _tuple2[np.float32])
+assert_type(np.modf(_f32_1d), _tuple2[np.ndarray[tuple[int], np.dtype[np.float32]]])
+assert_type(np.modf(_f32_2d), _tuple2[np.ndarray[tuple[int, int], np.dtype[np.float32]]])
+assert_type(np.modf(_f32_nd), _tuple2[npt.NDArray[np.float32]])
+
+assert_type(np.modf(_py_i_0d, dtype=np.float32), _tuple2[np.float32])
+assert_type(np.modf(_py_i_1d, dtype=np.float32), _tuple2[npt.NDArray[np.float32]])
+assert_type(np.modf(_i16_2d, dtype=np.float32), _tuple2[np.ndarray[tuple[int, int], np.dtype[np.float32]]])
+
+assert_type(np.modf(_py_i_0d, dtype="f4"), _tuple2[Any])
+assert_type(np.modf(_py_i_1d, dtype="f4"), _tuple2[np.ndarray])
+assert_type(np.modf(_i16_2d, dtype="f4"), _tuple2[np.ndarray[tuple[int, int]]])
+
+assert_type(
+    np.modf(_py_i_2d, out=(_f32_2d, _i16_2d)),
+    tuple[
+        np.ndarray[tuple[int, int], np.dtype[np.float32]],
+        np.ndarray[tuple[int, int], np.dtype[np.int16]],
+    ]
+)
