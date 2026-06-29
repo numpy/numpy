@@ -74,7 +74,15 @@ typedef struct PyArrayMethodObject_tag {
      */
     void *cached_loop;  /* really a PyUFuncGenericFunction */
     void *cached_loop_data;
+    PyArrayMethod_GetLoop *get_reduction_loop;
 } PyArrayMethodObject;
+
+
+static inline PyArrayMethod_GetLoop *
+reduction_get_loop_func(PyArrayMethodObject *meth)
+{
+    return meth->get_reduction_loop != NULL ? meth->get_reduction_loop : meth->get_strided_loop;
+}
 
 
 /*
@@ -118,6 +126,15 @@ PyArrayMethod_GetMaskedStridedLoop(
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags);
 
+
+NPY_NO_EXPORT int
+PyArrayMethod_GetMaskedReductionLoop(
+        PyArrayMethod_Context *context,
+        int aligned,
+        npy_intp *fixed_strides,
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags);
 
 
 NPY_NO_EXPORT PyObject *

@@ -171,6 +171,7 @@ typedef struct {
 #define NPY_METH_unaligned_contiguous_loop 8
 #define NPY_METH_contiguous_indexed_loop 9
 #define _NPY_METH_static_data 10
+#define NPY_METH_get_reduction_loop 11
 
 /*
  * The resolve descriptors function, must be able to handle NULL values for
