@@ -74,6 +74,8 @@ intern_strings(void)
     INTERN_STRING(imag, "imag");
     INTERN_STRING(sort, "sort");
     INTERN_STRING(argsort, "argsort");
+    INTERN_STRING(partition, "partition");
+    INTERN_STRING(argpartition, "argpartition");
     INTERN_STRING(_set_dtype, "_set_dtype");
     return 0;
 }

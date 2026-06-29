@@ -22,6 +22,7 @@
 #include "common.h"
 #include "numpy/npy_math.h"
 #include "npy_sort.h"
+#include "npy_partition.h"
 #include "convert_datatype.h"
 #include "dtypemeta.h"
 #include "dispatching.h"
@@ -969,6 +970,126 @@ sfloat_argsort_resolve_descriptors(
 }
 
 
+NPY_NO_EXPORT int
+sfloat_partition_loop(
+        PyArrayMethod_Context *context,
+        char *const *data,
+        const npy_intp *dimensions,
+        const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(auxdata))
+{
+    assert(strides[0] == sizeof(npy_float64));
+    assert(strides[1] == sizeof(npy_intp));
+
+    npy_intp *kth = (npy_intp *)data[1];
+    
+    NPY_SELECTKIND which = ((PyArrayMethod_PartitionParameters *)context->parameters)->flags;
+    PyArray_PartitionFunc *partition_func = get_partition_func(NPY_DOUBLE, which);
+    if (partition_func == NULL) {
+        return -1;
+    }
+    
+    npy_intp pivots[NPY_MAX_PIVOT_STACK];
+    npy_intp npiv = 0;
+    npy_intp i;
+
+    int ret = 0;
+    for (i = 0; i < dimensions[1] && ret == 0; ++i) {
+        ret = partition_func(
+            data[0], dimensions[0], kth[i], pivots, &npiv, dimensions[1], NULL);
+    }
+
+    return ret;
+}
+
+
+NPY_NO_EXPORT NPY_CASTING
+sfloat_partition_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *dtypes[3],
+        PyArray_Descr *given_descrs[3],
+        PyArray_Descr *loop_descrs[3],
+        npy_intp *view_offset)
+{
+    assert(!(given_descrs[2] != given_descrs[0] && given_descrs[2] != NULL));
+    assert(PyArray_IsNativeByteOrder(given_descrs[0]->byteorder));
+    assert(given_descrs[1]->type_num == NPY_INTP);
+
+    loop_descrs[0] = given_descrs[0];
+    Py_INCREF(loop_descrs[0]);
+
+    loop_descrs[1] = given_descrs[1];
+    Py_INCREF(loop_descrs[1]);
+
+    loop_descrs[2] = loop_descrs[0];
+    Py_INCREF(loop_descrs[2]);
+
+    return NPY_NO_CASTING;
+}
+
+
+NPY_NO_EXPORT int
+sfloat_argpartition_loop(
+        PyArrayMethod_Context *context,
+        char *const *data,
+        const npy_intp *dimensions,
+        const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(auxdata))
+{
+    assert(strides[0] == sizeof(npy_float64));
+    assert(strides[1] == sizeof(npy_intp));
+    assert(strides[2] == sizeof(npy_intp));
+
+    npy_intp *kth = (npy_intp *)data[1];
+    npy_intp *out = (npy_intp *)data[2];
+
+    NPY_SELECTKIND which = ((PyArrayMethod_PartitionParameters *)context->parameters)->flags;
+    PyArray_ArgPartitionFunc *argpartition_func = get_argpartition_func(NPY_DOUBLE, which);
+    if (argpartition_func == NULL) {
+        return -1;
+    }
+
+    npy_intp pivots[NPY_MAX_PIVOT_STACK];
+    npy_intp npiv = 0;
+    npy_intp i;
+
+    int ret = 0;
+    for (i = 0; i < dimensions[1] && ret == 0; ++i) {
+        ret = argpartition_func(
+            data[0], out, dimensions[0], kth[i], pivots, &npiv, dimensions[1], NULL);
+    }
+
+    return ret;
+}
+
+
+NPY_NO_EXPORT NPY_CASTING
+sfloat_argpartition_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *dtypes[3],
+        PyArray_Descr *given_descrs[3],
+        PyArray_Descr *loop_descrs[3],
+        npy_intp *view_offset)
+{
+    assert(PyArray_IsNativeByteOrder(given_descrs[0]->byteorder));
+    assert(given_descrs[1]->type_num == NPY_INTP);
+    assert(given_descrs[2] == NULL || given_descrs[2]->type_num == NPY_INTP);
+    
+    loop_descrs[0] = given_descrs[0];
+    Py_INCREF(loop_descrs[0]);
+
+    loop_descrs[1] = given_descrs[1];
+    Py_INCREF(loop_descrs[1]);
+
+    loop_descrs[2] = PyArray_DescrFromType(NPY_INTP);
+    if (loop_descrs[2] == NULL) {
+        return -1;
+    }
+
+    return NPY_NO_CASTING;
+}
+
+
 /*
  * Add new ufunc loops (this is somewhat clumsy as of writing it, but should
  * get less so with the introduction of public API).
@@ -1037,6 +1158,38 @@ sfloat_init_ufuncs(void) {
     argsort_spec.casting = NPY_NO_CASTING;
     argsort_spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
+    PyArray_DTypeMeta *partition_dtypes[3] = {&PyArray_SFloatDType, &PyArray_IntpDType, &PyArray_SFloatDType};
+    PyType_Slot partition_slots[3] = {
+        {NPY_METH_resolve_descriptors, &sfloat_partition_resolve_descriptors},
+        {NPY_METH_strided_loop, &sfloat_partition_loop},
+        {0, NULL}
+    };
+    PyArrayMethod_Spec partition_spec = {
+        .nin = 2,
+        .nout = 1,
+        .dtypes = partition_dtypes,
+        .slots = partition_slots,
+    };
+    partition_spec.name = "sfloat_partition";
+    partition_spec.casting = NPY_NO_CASTING;
+    partition_spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+
+    PyArray_DTypeMeta *argpartition_dtypes[3] = {&PyArray_SFloatDType, &PyArray_IntpDType, &PyArray_IntpDType};
+    PyType_Slot argpartition_slots[3] = {
+        {NPY_METH_resolve_descriptors, &sfloat_argpartition_resolve_descriptors},
+        {NPY_METH_strided_loop, &sfloat_argpartition_loop},
+        {0, NULL}
+    };
+    PyArrayMethod_Spec argpartition_spec = {
+        .nin = 2,
+        .nout = 1,
+        .dtypes = argpartition_dtypes,
+        .slots = argpartition_slots,
+    };
+    argpartition_spec.name = "sfloat_argpartition";
+    argpartition_spec.casting = NPY_NO_CASTING;
+    argpartition_spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+
     /* here we chose weirdish names to test the lookup mechanism */
     PyUFunc_LoopSlot loops[] = {
         {"multiply", &multiply_spec},
@@ -1044,6 +1197,8 @@ sfloat_init_ufuncs(void) {
         // These names must match exactly right now (not ufuncs)
         {"sort", &sort_spec},
         {"argsort", &argsort_spec},
+        {"partition", &partition_spec},
+        {"argpartition", &argpartition_spec},
         {NULL, NULL}
     };
     if (PyUFunc_AddLoopsFromSpecs(loops) < 0) {
