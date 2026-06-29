@@ -211,7 +211,7 @@ assert_type(np.signbit(_f32_nd), npt.NDArray[np.bool])
 assert_type(np.signbit(_py_i_2d, out=_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 
 # _ufunc_11_bifgcm_b
-# (isfinite, isinf)
+# (isfinite, isinf, isnan)
 
 assert_type(np.isinf(_py_b_0d), np.bool)
 assert_type(np.isinf(_py_b_1d), np.ndarray[tuple[int], np.dtype[np.bool]])

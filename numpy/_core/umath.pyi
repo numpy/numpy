@@ -48,7 +48,6 @@ from numpy import (
     greater_equal,
     heaviside,
     hypot,
-    isnan,
     lcm,
     ldexp,
     left_shift,
@@ -2689,6 +2688,7 @@ signbit: Final[_ufunc_11_f_b] = ...
 
 isfinite: Final[_ufunc_11_bifgcm_b] = ...
 isinf: Final[_ufunc_11_bifgcm_b] = ...
+isnan: Final[_ufunc_11_bifgcm_b] = ...  # TODO: StringDType[?] support
 
 spacing: Final[_ufunc_11_f] = ...
 
