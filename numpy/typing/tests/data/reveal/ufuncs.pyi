@@ -70,18 +70,6 @@ assert_type(np.vecdot.signature, Literal["(n),(n)->()"])
 assert_type(np.vecdot.identity, None)
 assert_type(np.vecdot(AR_f8, AR_f8), Any)
 
-assert_type(np.bitwise_count.__name__, Literal["bitwise_count"])
-assert_type(np.bitwise_count.__qualname__, Literal["bitwise_count"])
-assert_type(np.bitwise_count.ntypes, Literal[11])
-assert_type(np.bitwise_count.identity, None)
-assert_type(np.bitwise_count.nin, Literal[1])
-assert_type(np.bitwise_count.nout, Literal[1])
-assert_type(np.bitwise_count.nargs, Literal[2])
-assert_type(np.bitwise_count.signature, None)
-assert_type(np.bitwise_count.identity, None)
-assert_type(np.bitwise_count(i8), Any)
-assert_type(np.bitwise_count(AR_i8), npt.NDArray[Any])
-
 def test_absolute_outer_invalid() -> None:
     assert_type(np.absolute.outer(AR_f8, AR_f8), NoReturn)  # type: ignore[arg-type]
 def test_frexp_outer_invalid() -> None:
@@ -290,6 +278,27 @@ assert_type(np.isinf(_td_ns_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
 assert_type(np.isinf(_td_ns_nd), npt.NDArray[np.bool])
 
 assert_type(np.isinf(_py_i_2d, out=_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+
+# _ufunc_11_io
+# (bitwise_count)
+
+assert_type(np.bitwise_count(_py_b_0d), np.uint8)
+assert_type(np.bitwise_count(_py_b_1d), np.ndarray[tuple[int], np.dtype[np.uint8]])
+assert_type(np.bitwise_count(_py_b_2d), np.ndarray[tuple[int, int], np.dtype[np.uint8]])
+assert_type(np.bitwise_count(_py_i_0d), np.uint8)
+assert_type(np.bitwise_count(_py_i_1d), np.ndarray[tuple[int], np.dtype[np.uint8]])
+assert_type(np.bitwise_count(_py_i_2d), np.ndarray[tuple[int, int], np.dtype[np.uint8]])
+
+assert_type(np.bitwise_count(_bool_0d), np.uint8)
+assert_type(np.bitwise_count(_bool_1d), np.ndarray[tuple[int], np.dtype[np.uint8]])
+assert_type(np.bitwise_count(_bool_2d), np.ndarray[tuple[int, int], np.dtype[np.uint8]])
+assert_type(np.bitwise_count(_bool_nd), npt.NDArray[np.uint8])
+assert_type(np.bitwise_count(_i16_0d), np.uint8)
+assert_type(np.bitwise_count(_i16_1d), np.ndarray[tuple[int], np.dtype[np.uint8]])
+assert_type(np.bitwise_count(_i16_2d), np.ndarray[tuple[int, int], np.dtype[np.uint8]])
+assert_type(np.bitwise_count(_i16_nd), npt.NDArray[np.uint8])
+
+assert_type(np.bitwise_count(_py_i_2d, out=_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 
 # _ufunc_11_f
 # (spacing)

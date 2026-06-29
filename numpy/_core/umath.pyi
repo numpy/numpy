@@ -26,7 +26,6 @@ from numpy import (
     add,
     arctan2,
     bitwise_and,
-    bitwise_count,
     bitwise_or,
     bitwise_xor,
     conj,
@@ -656,6 +655,108 @@ class _ufunc_11_bifgco_bo(_ufunc_11):  # type: ignore[misc]
     @override
     @overload
     def at(self, a: np.ndarray[_Shape, np.dtype[_to_number | np.object_]], indices: _ArrayLikeInt, /) -> None: ...  # pyrefly:ignore[bad-override]
+    @overload
+    def at[IxT, OutT](self, a: _CanUfuncAt1[IxT, OutT], indices: IxT, /) -> OutT: ...
+
+# bBhHiIlLqQO => BO, where bBhHiIlLqQ => B and O => O
+@type_check_only
+class _ufunc_11_io(_ufunc_11):  # type: ignore[misc]
+    @override
+    @overload  # Nd, known shape
+    def __call__[ShapeT: _Shape](
+        self,
+        x: np.ndarray[ShapeT, np.dtype[_to_integer]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.ndarray[ShapeT, np.dtype[np.uint8]]: ...
+    @overload  # Nd object, known shape
+    def __call__[ShapeT: _Shape](
+        self,
+        x: np.ndarray[ShapeT, np.dtype[np.object_]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.ndarray[ShapeT, np.dtype[np.object_]]: ...
+    @overload  # scalar
+    def __call__(
+        self,
+        x: int | _to_integer,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.uint8: ...
+    @overload  # scalar, out=...
+    def __call__(
+        self,
+        x: int | _to_integer,
+        /,
+        *,
+        out: EllipsisType,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array0D[np.uint8]: ...
+    @overload  # 1d
+    def __call__(
+        self,
+        x: Sequence[int | _to_integer],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array1D[np.uint8]: ...
+    @overload  # 2d
+    def __call__(
+        self,
+        x: Sequence[Sequence[int | _to_integer]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array2D[np.uint8]: ...
+    @overload  # 3d
+    def __call__(
+        self,
+        x: Sequence[Sequence[Sequence[int | _to_integer]]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array3D[np.uint8]: ...
+    @overload  # out=<given>
+    def __call__[OutT: np.ndarray](
+        self,
+        x: _ArrayLikeInt_co,
+        /,
+        out: OutT,
+        *,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> OutT: ...
+    @overload  # x.__array_ufunc__(...) -> OutT
+    def __call__[OutT](
+        self,
+        x: _CanUfuncCall1[OutT],
+        /,
+        *,
+        out: object | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> OutT: ...
+
+    #
+    @override
+    @overload
+    def at(self, a: np.ndarray[_Shape, np.dtype[_to_integer]], indices: _ArrayLikeInt, /) -> None: ...  # pyrefly:ignore[bad-override]
     @overload
     def at[IxT, OutT](self, a: _CanUfuncAt1[IxT, OutT], indices: IxT, /) -> OutT: ...
 
@@ -2792,6 +2893,8 @@ isinf: Final[_ufunc_11_bifgcm_b] = ...
 isnan: Final[_ufunc_11_bifgcm_b] = ...  # TODO: StringDType[?] support
 
 logical_not: Final[_ufunc_11_bifgco_bo] = ...
+
+bitwise_count: Final[_ufunc_11_io] = ...
 
 spacing: Final[_ufunc_11_f] = ...
 
