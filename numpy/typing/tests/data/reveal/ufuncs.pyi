@@ -160,6 +160,10 @@ _c64_0d: np.complex64
 _c64_1d: np.ndarray[tuple[int], np.dtype[np.complex64]]
 _c64_2d: np.ndarray[tuple[int, int], np.dtype[np.complex64]]
 _c64_nd: npt.NDArray[np.complex64]
+_dt_ns_0d: np.datetime64[int]
+_dt_ns_1d: np.ndarray[tuple[int], np.dtype[np.datetime64[int]]]
+_dt_ns_2d: np.ndarray[tuple[int, int], np.dtype[np.datetime64[int]]]
+_dt_ns_nd: npt.NDArray[np.datetime64[int]]
 _td_ns_0d: np.timedelta64[int]
 _td_ns_1d: np.ndarray[tuple[int], np.dtype[np.timedelta64[int]]]
 _td_ns_2d: np.ndarray[tuple[int, int], np.dtype[np.timedelta64[int]]]
@@ -167,6 +171,20 @@ _td_ns_nd: npt.NDArray[np.timedelta64[int]]
 _obj_1d: np.ndarray[tuple[int], np.dtype[np.object_]]
 _obj_2d: np.ndarray[tuple[int, int], np.dtype[np.object_]]
 _obj_nd: npt.NDArray[np.object_]
+
+# _ufunc_11_m_b
+# (isnat)
+
+assert_type(np.isnat(_dt_ns_0d), np.bool)
+assert_type(np.isnat(_dt_ns_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.isnat(_dt_ns_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.isnat(_dt_ns_nd), npt.NDArray[np.bool])
+assert_type(np.isnat(_td_ns_0d), np.bool)
+assert_type(np.isnat(_td_ns_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.isnat(_td_ns_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.isnat(_td_ns_nd), npt.NDArray[np.bool])
+
+assert_type(np.isnat(_dt_ns_2d, out=_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 
 # _ufunc_11_f_b
 # (signbit)
