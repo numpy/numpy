@@ -168,6 +168,30 @@ _obj_1d: np.ndarray[tuple[int], np.dtype[np.object_]]
 _obj_2d: np.ndarray[tuple[int, int], np.dtype[np.object_]]
 _obj_nd: npt.NDArray[np.object_]
 
+# _ufunc_11_f_b
+# (signbit)
+
+assert_type(np.signbit(_py_b_0d), np.bool)
+assert_type(np.signbit(_py_b_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.signbit(_py_b_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.signbit(_py_i_0d), np.bool)
+assert_type(np.signbit(_py_i_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.signbit(_py_i_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.signbit(_py_f_0d), np.bool)
+assert_type(np.signbit(_py_f_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.signbit(_py_f_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+
+assert_type(np.signbit(_i16_0d), np.bool)
+assert_type(np.signbit(_i16_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.signbit(_i16_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.signbit(_i16_nd), npt.NDArray[np.bool])
+assert_type(np.signbit(_f32_0d), np.bool)
+assert_type(np.signbit(_f32_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.signbit(_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.signbit(_f32_nd), npt.NDArray[np.bool])
+
+assert_type(np.signbit(_py_i_2d, out=_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+
 # _ufunc_11_f
 # (spacing)
 

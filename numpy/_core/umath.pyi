@@ -76,7 +76,6 @@ from numpy import (
     power,
     remainder,
     right_shift,
-    signbit,
     subtract,
     true_divide,
     vecdot,
@@ -284,6 +283,98 @@ class _ufunc_11(np.ufunc, Generic[_IdT_co]):  # type: ignore[misc]
     def reduceat(self, array: Never, /, indices: Never) -> Never: ...  # pyrefly:ignore[bad-override]
     @override
     def outer(self, A: Never, B: Never, /) -> Never: ...  # pyrefly:ignore[bad-override]
+
+# efdg => ?
+@type_check_only
+class _ufunc_11_f_b(_ufunc_11):  # type: ignore[misc]
+    @override
+    @overload  # Nd, known shape
+    def __call__[ShapeT: _Shape](
+        self,
+        x: np.ndarray[ShapeT, np.dtype[_to_floating]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+    @overload  # scalar
+    def __call__(
+        self,
+        x: float | _to_floating,
+        /,
+        *,
+        out: None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> np.bool: ...
+    @overload  # scalar, out=...
+    def __call__(
+        self,
+        x: float | _to_floating,
+        /,
+        *,
+        out: EllipsisType,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array0D[np.bool]: ...
+    @overload  # 1d
+    def __call__(
+        self,
+        x: Sequence[float | _to_floating],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array1D[np.bool]: ...
+    @overload  # 2d
+    def __call__(
+        self,
+        x: Sequence[Sequence[float | _to_floating]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array2D[np.bool]: ...
+    @overload  # 3d
+    def __call__(
+        self,
+        x: Sequence[Sequence[Sequence[float | _to_floating]]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> _Array3D[np.bool]: ...
+    @overload  # out=<given>
+    def __call__[OutT: np.ndarray](
+        self,
+        x: _ArrayLikeFloat_co,
+        /,
+        out: OutT,
+        *,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> OutT: ...
+    @overload  # x.__array_ufunc__(...) -> OutT
+    def __call__[OutT](
+        self,
+        x: _CanUfuncCall1[OutT],
+        /,
+        *,
+        out: object | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> OutT: ...
+
+    #
+    @override
+    @overload
+    def at(self, a: np.ndarray[_Shape, np.dtype[_to_floating]], indices: _ArrayLikeInt, /) -> None: ...  # pyrefly:ignore[bad-override]
+    @overload
+    def at[IxT, OutT](self, a: _CanUfuncAt1[IxT, OutT], indices: IxT, /) -> OutT: ...
 
 # efdg => efdg
 @type_check_only
@@ -2408,6 +2499,8 @@ class _ufunc_11_sut_i(_ufunc_11[Literal[0]]):  # type: ignore[misc]
     def at(self, a: np.ndarray[_Shape, np.dtype[np.character] | np.dtypes.StringDType], indices: _ArrayLikeInt, /) -> None: ...  # pyrefly:ignore[bad-override]
     @overload
     def at[IxT, OutT](self, a: _CanUfuncAt1[IxT, OutT], indices: IxT, /) -> OutT: ...
+
+signbit: Final[_ufunc_11_f_b] = ...
 
 spacing: Final[_ufunc_11_f] = ...
 

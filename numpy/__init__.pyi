@@ -430,6 +430,7 @@ from numpy._core.umath import (
     reciprocal,
     rint,
     sign,
+    signbit,
     sin,
     sinh,
     spacing,
@@ -7639,7 +7640,6 @@ not_equal: _UFunc_Nin2_Nout1[L["not_equal"], L[23], None]
 power: _UFunc_Nin2_Nout1[L["power"], L[18], None]
 remainder: _UFunc_Nin2_Nout1[L["remainder"], L[16], None]
 right_shift: _UFunc_Nin2_Nout1[L["right_shift"], L[11], None]
-signbit: _UFunc_Nin1_Nout1[L["signbit"], L[4], None]
 subtract: _UFunc_Nin2_Nout1[L["subtract"], L[21], None]
 vecdot: _GUFunc_Nin2_Nout1[L["vecdot"], L[19], None, L["(n),(n)->()"]]
 vecmat: _GUFunc_Nin2_Nout1[L["vecmat"], L[19], None, L["(n),(n,m)->(m)"]]
