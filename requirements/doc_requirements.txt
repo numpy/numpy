@@ -1,11 +1,11 @@
 # doxygen required, use apt-get or dnf
 sphinx==8.2.3
 numpydoc==1.10.0
-pydata-sphinx-theme>=0.16.1
+pydata-sphinx-theme>=0.19.0
 sphinx-copybutton
 sphinx-design
 scipy
-matplotlib>=3.10.8
+matplotlib>=3.10.9
 pandas
 breathe>=4.36.0
 ipython>=9.12.0
