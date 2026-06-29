@@ -419,6 +419,8 @@ from numpy._core.umath import (
     fabs,
     floor,
     invert,
+    isfinite,
+    isinf,
     isnat,
     log,
     log10,
@@ -7615,8 +7617,6 @@ greater: _UFunc_Nin2_Nout1[L["greater"], L[23], None]
 greater_equal: _UFunc_Nin2_Nout1[L["greater_equal"], L[23], None]
 heaviside: _UFunc_Nin2_Nout1[L["heaviside"], L[4], None]
 hypot: _UFunc_Nin2_Nout1[L["hypot"], L[5], L[0]]
-isfinite: _UFunc_Nin1_Nout1[L["isfinite"], L[20], None]
-isinf: _UFunc_Nin1_Nout1[L["isinf"], L[20], None]
 isnan: _UFunc_Nin1_Nout1[L["isnan"], L[20], None]
 lcm: _UFunc_Nin2_Nout1[L["lcm"], L[11], None]
 ldexp: _UFunc_Nin2_Nout1[L["ldexp"], L[8], None]
