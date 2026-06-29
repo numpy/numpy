@@ -2287,8 +2287,12 @@ PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc,
  *      which is what the downstream reduce machinery and the (N+1)->N loop
  *      consume.
  *
- * The reduction is assumed homogeneous: accumulators, the streamed input and
- * the outputs all share one dtype (true for min/max-like reductions).
+ * The outputs need not share a dtype: each `out_i` (and its aliased
+ * accumulator `acc_i`) takes the i-th resolved *forward output* descriptor,
+ * so they can differ from one another.  Only the single streamed input has a
+ * separate dtype, taken from the resolved forward *input* descriptor (the
+ * forward inputs all correspond to the array being reduced).  The sole
+ * cross-operand constraint is the structural one that `acc_i` aliases `out_i`.
  */
 static PyArrayMethodObject *
 reducelike_promote_and_resolve_multi(PyUFuncObject *ufunc,
@@ -2300,18 +2304,9 @@ reducelike_promote_and_resolve_multi(PyUFuncObject *ufunc,
     int nin = ufunc->nin;
     int nout = ufunc->nout;
     int fwd_nargs = nin + nout;
-    int rnargs = 2 * nout + 1;
 
-    PyArray_DTypeMeta *res_DType;
-    if (out[0] != NULL) {
-        res_DType = NPY_DTYPE(PyArray_DESCR(out[0]));
-    }
-    else if (signature[0] != NULL) {
-        res_DType = signature[0];
-    }
-    else {
-        res_DType = NPY_DTYPE(PyArray_DESCR(arr));
-    }
+    /* The forward inputs all correspond to the array being reduced. */
+    PyArray_DTypeMeta *stream_DType = NPY_DTYPE(PyArray_DESCR(arr));
 
     PyArrayObject *ops[NPY_MAXARGS];
     PyArray_DTypeMeta *operation_DTypes[NPY_MAXARGS] = {NULL};
@@ -2319,13 +2314,25 @@ reducelike_promote_and_resolve_multi(PyUFuncObject *ufunc,
 
     for (int i = 0; i < nin; i++) {
         ops[i] = arr;
-        Py_INCREF(res_DType);
-        operation_DTypes[i] = res_DType;
+        Py_INCREF(stream_DType);
+        operation_DTypes[i] = stream_DType;
     }
+    /*
+     * Each forward output may have its own dtype: prefer the provided out[i]'s
+     * dtype, else a user-supplied `dtype=` (signature[0]) seeds it, else leave
+     * NULL so promotion decides.
+     */
     for (int i = 0; i < nout; i++) {
         ops[nin + i] = out[i];
-        Py_INCREF(res_DType);
-        operation_DTypes[nin + i] = res_DType;
+        PyArray_DTypeMeta *out_DType = NULL;
+        if (out[i] != NULL) {
+            out_DType = NPY_DTYPE(PyArray_DESCR(out[i]));
+        }
+        else if (signature[0] != NULL) {
+            out_DType = signature[0];
+        }
+        Py_XINCREF(out_DType);
+        operation_DTypes[nin + i] = out_DType;
     }
 
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
@@ -2369,15 +2376,23 @@ reducelike_promote_and_resolve_multi(PyUFuncObject *ufunc,
     }
 
     /*
-     * Expand the resolved forward descriptors into the reduction layout
-     * [acc_0..acc_{n-1}, stream, out_0..out_{n-1}].  Homogeneous reduction:
-     * every reduction operand shares the first resolved output descriptor.
+     * Expand the resolved forward descriptors
+     *     [in_0 .. in_{nin-1}, out_0 .. out_{nout-1}]
+     * into the reduction layout
+     *     [acc_0 .. acc_{nout-1}, stream, out_0 .. out_{nout-1}].
+     * Each acc_i and out_i take the i-th forward *output* descriptor (so the
+     * outputs keep their individual dtypes), while the single streamed input
+     * takes the forward *input* descriptor.
      */
-    PyArray_Descr *res_descr = fwd_descrs[nin];
-    for (int i = 0; i < rnargs; i++) {
-        Py_INCREF(res_descr);
-        out_descrs[i] = res_descr;
+    for (int i = 0; i < nout; i++) {
+        PyArray_Descr *out_descr = fwd_descrs[nin + i];
+        Py_INCREF(out_descr);
+        out_descrs[i] = out_descr;            /* acc_i */
+        Py_INCREF(out_descr);
+        out_descrs[nout + 1 + i] = out_descr; /* out_i (aliased to acc_i) */
     }
+    Py_INCREF(fwd_descrs[0]);
+    out_descrs[nout] = fwd_descrs[0];         /* stream */
     for (int i = 0; i < fwd_nargs; i++) {
         Py_DECREF(fwd_descrs[i]);
     }
