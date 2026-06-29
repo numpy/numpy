@@ -834,6 +834,11 @@ def pad(array, pad_width, mode='constant', **kwargs):
         raise ValueError("unsupported keyword arguments for mode "
                          f"'{mode}': {unsupported_kwargs}")
 
+    if mode in {"reflect", "symmetric", "wrap"} and array.size == 1:
+        padded, _ = _pad_simple(array, pad_width)
+        padded[...] = array.reshape(())
+        return padded
+
     stat_functions = {"maximum": np.amax, "minimum": np.amin,
                       "mean": np.mean, "median": np.median}
 
