@@ -41,7 +41,6 @@ from numpy import (
     fmax,
     fmin,
     fmod,
-    frexp,
     frompyfunc,
     gcd,
     greater,
@@ -3000,6 +2999,101 @@ isupper: Final[_ufunc_11_sut_b] = ...
 
 str_len: Final[_ufunc_11_sut_i] = ...
 
+# efdg => (efdg, i)
+@type_check_only
+class _ufunc_12_frexp(_ufunc_12):  # type: ignore[misc]
+    @override
+    @overload  # Nd, known dtype
+    def __call__[ShapeT: _Shape, DTypeT: np.dtype[np.floating]](
+        self,
+        x: np.ndarray[ShapeT, DTypeT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs12],
+    ) -> tuple[np.ndarray[ShapeT, DTypeT], np.ndarray[ShapeT, np.dtype[np.int32]]]: ...
+    @overload  # Nd, +f64
+    def __call__[ShapeT: _Shape](
+        self,
+        x: np.ndarray[ShapeT, np.dtype[_to_integer]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs12],
+    ) -> tuple[np.ndarray[ShapeT, np.dtype[np.float64]], np.ndarray[ShapeT, np.dtype[np.int32]]]: ...
+    @overload  # scalar, known dtype
+    def __call__[ScalarT: np.floating](
+        self,
+        x: ScalarT,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs12],
+    ) -> tuple[ScalarT, np.int32]: ...
+    @overload  # scalar, float | +f64
+    def __call__(
+        self,
+        x: float | _to_integer,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs12],
+    ) -> tuple[np.float64, np.int32]: ...
+    @overload  # 1d, +float
+    def __call__(
+        self,
+        x: Sequence[float],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs12],
+    ) -> tuple[_Array1D[np.float64], _Array1D[np.int32]]: ...
+    @overload  # 2d, +float
+    def __call__(
+        self,
+        x: Sequence[Sequence[float]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs12],
+    ) -> tuple[_Array2D[np.float64], _Array2D[np.int32]]: ...
+    @overload  # ?d, unknown dtype
+    def __call__(
+        self,
+        x: _ArrayLikeFloat_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs12],
+    ) -> _tuple2[Any]: ...
+    @overload  # out=<given>
+    def __call__[OutT1: np.ndarray, OutT2: np.ndarray](
+        self,
+        x: _ArrayLikeFloat_co,
+        /,
+        out: tuple[OutT1, OutT2],
+        *,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs12],
+    ) -> tuple[OutT1, OutT2]: ...
+    @overload  # out=<given>
+    def __call__[OutT](
+        self,
+        x: _CanUfuncCall1[OutT],
+        /,
+        out: object | None = None,
+        *,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs12],
+    ) -> OutT: ...
+
 # efdg => (efdg, efdg)
 @type_check_only
 class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
@@ -3012,7 +3106,7 @@ class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
-        **kwargs: Unpack[_Kwargs11],
+        **kwargs: Unpack[_Kwargs12],
     ) -> _tuple2[T]: ...
     @overload  # Nd, +f64
     def __call__[ShapeT: _Shape](
@@ -3022,7 +3116,7 @@ class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
-        **kwargs: Unpack[_Kwargs11],
+        **kwargs: Unpack[_Kwargs12],
     ) -> _tuple2[np.ndarray[ShapeT, np.dtype[np.float64]]]: ...
     @overload  # scalar, float | +f64
     def __call__(
@@ -3032,7 +3126,7 @@ class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
-        **kwargs: Unpack[_Kwargs11],
+        **kwargs: Unpack[_Kwargs12],
     ) -> _tuple2[np.float64]: ...
     @overload  # 1d, +float
     def __call__(
@@ -3042,7 +3136,7 @@ class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
-        **kwargs: Unpack[_Kwargs11],
+        **kwargs: Unpack[_Kwargs12],
     ) -> _tuple2[_Array1D[np.float64]]: ...
     @overload  # 2d, +float
     def __call__(
@@ -3052,7 +3146,7 @@ class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
-        **kwargs: Unpack[_Kwargs11],
+        **kwargs: Unpack[_Kwargs12],
     ) -> _tuple2[_Array2D[np.float64]]: ...
     @overload  # scalar, dtype=<known>
     def __call__[ScalarT: np.floating](
@@ -3072,7 +3166,7 @@ class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
-        **kwargs: Unpack[_Kwargs11],
+        **kwargs: Unpack[_Kwargs12],
     ) -> _tuple2[np.ndarray[ShapeT, np.dtype[ScalarT]]]: ...
     @overload  # Nd, dtype=<unknown>
     def __call__[ShapeT: _Shape](
@@ -3082,7 +3176,7 @@ class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
-        **kwargs: Unpack[_Kwargs11],
+        **kwargs: Unpack[_Kwargs12],
     ) -> _tuple2[np.ndarray[ShapeT]]: ...
     @overload  # Nd, dtype=<known>
     def __call__[ScalarT: np.floating](
@@ -3092,7 +3186,7 @@ class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
-        **kwargs: Unpack[_Kwargs11],
+        **kwargs: Unpack[_Kwargs12],
     ) -> _tuple2[npt.NDArray[ScalarT]]: ...
     @overload  # Nd, dtype=<unknown>
     def __call__(
@@ -3102,7 +3196,7 @@ class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
-        **kwargs: Unpack[_Kwargs11],
+        **kwargs: Unpack[_Kwargs12],
     ) -> _tuple2[np.ndarray]: ...
     @overload  # ?d, dtype=<known>
     def __call__[ScalarT: np.floating](
@@ -3112,7 +3206,7 @@ class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
-        **kwargs: Unpack[_Kwargs11],
+        **kwargs: Unpack[_Kwargs12],
     ) -> _tuple2[npt.NDArray[ScalarT] | Any]: ...  # `| Any` because of overlap
     @overload  # ?d, dtype=<unknown>
     def __call__(
@@ -3122,7 +3216,7 @@ class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike | None = None,
-        **kwargs: Unpack[_Kwargs11],
+        **kwargs: Unpack[_Kwargs12],
     ) -> _tuple2[Any]: ...
     @overload  # out=<given>
     def __call__[OutT1: np.ndarray, OutT2: np.ndarray](
@@ -3132,7 +3226,7 @@ class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
         out: tuple[OutT1, OutT2],
         *,
         dtype: npt.DTypeLike | None = None,
-        **kwargs: Unpack[_Kwargs11],
+        **kwargs: Unpack[_Kwargs12],
     ) -> tuple[OutT1, OutT2]: ...
     @overload  # out=<given>
     def __call__[OutT](
@@ -3142,9 +3236,10 @@ class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
         out: object | None = None,
         *,
         dtype: npt.DTypeLike | None = None,
-        **kwargs: Unpack[_Kwargs11],
+        **kwargs: Unpack[_Kwargs12],
     ) -> OutT: ...
 
+frexp: Final[_ufunc_12_frexp] = ...
 modf: Final[_ufunc_12_modf] = ...
 
 ###

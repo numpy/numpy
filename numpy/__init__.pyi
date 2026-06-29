@@ -418,6 +418,7 @@ from numpy._core.umath import (
     expm1,
     fabs,
     floor,
+    frexp,
     invert,
     isfinite,
     isinf,
@@ -7613,7 +7614,6 @@ floor_divide: _UFunc_Nin2_Nout1[L["floor_divide"], L[21], None]
 fmax: _UFunc_Nin2_Nout1[L["fmax"], L[21], None]
 fmin: _UFunc_Nin2_Nout1[L["fmin"], L[21], None]
 fmod: _UFunc_Nin2_Nout1[L["fmod"], L[15], None]
-frexp: _UFunc_Nin1_Nout2[L["frexp"], L[4], None]
 gcd: _UFunc_Nin2_Nout1[L["gcd"], L[11], L[0]]
 greater: _UFunc_Nin2_Nout1[L["greater"], L[23], None]
 greater_equal: _UFunc_Nin2_Nout1[L["greater_equal"], L[23], None]
