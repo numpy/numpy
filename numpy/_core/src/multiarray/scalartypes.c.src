@@ -4217,27 +4217,26 @@ NPY_NO_EXPORT PyTypeObject PyObjectArrType_Type = {
 };
 
 static PyObject *
-gen_arrtype_subscript(PyObject *self, PyObject *key)
+stringtype_subscript(PyObject *self, PyObject *key)
 {
-    /*
-     * Only [...], [...,<???>], [<???>, ...],
-     * is allowed for indexing a scalar
-     *
-     * These return a new N-d array with a copy of
-     * the data where N is the number of None's in <???>.
-     */
-    PyObject *res, *ret;
-
-    res = PyArray_FromScalar(self, NULL);
-
-    ret = array_subscript((PyArrayObject *)res, key);
-    Py_DECREF(res);
-    if (ret == NULL) {
-        PyErr_SetString(PyExc_IndexError,
-                        "invalid index to scalar variable.");
+    if (PyTuple_Check(key) && PyTuple_GET_SIZE(key) == 0) {
+        return PyObject_CallMethod(self, "item", NULL);
     }
+    /* For all other keys, convert to 0-d array and use array subscript */
+    PyObject *res = PyArray_FromScalar(self, NULL);
+    if (res == NULL) {
+        return NULL;
+    }
+    PyObject *ret = array_subscript((PyArrayObject *)res, key);
+    Py_DECREF(res);
     return ret;
 }
+
+static PyMappingMethods stringtype_as_mapping = {
+    NULL,
+    (binaryfunc)stringtype_subscript,
+    NULL,
+};
 
 
 /**begin repeat
@@ -4267,7 +4266,7 @@ NPY_NO_EXPORT PyTypeObject Py@Name@ArrType_Type = {
 
 
 static PyMappingMethods gentype_as_mapping = {
-    .mp_subscript = (binaryfunc)gen_arrtype_subscript,
+    .mp_subscript = (binaryfunc)stringtype_subscript,
 };
 
 
@@ -4492,9 +4491,15 @@ initialize_numeric_types(void)
 
     PyStringArrType_Type.tp_repr = stringtype_repr;
     PyStringArrType_Type.tp_str = stringtype_str;
+    PyStringArrType_Type.tp_as_mapping = &stringtype_as_mapping;
+
 
     PyUnicodeArrType_Type.tp_repr = unicodetype_repr;
     PyUnicodeArrType_Type.tp_str = unicodetype_str;
+    PyUnicodeArrType_Type.tp_as_mapping = &stringtype_as_mapping;
+
+
+
 
     PyVoidArrType_Type.tp_methods = voidtype_methods;
     PyVoidArrType_Type.tp_getset = voidtype_getsets;
