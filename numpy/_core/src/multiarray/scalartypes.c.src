@@ -823,9 +823,8 @@ _void_to_hex(const char* argbuf, const Py_ssize_t arglen,
              const char *schars, const char *bprefix, const char *echars)
 {
     PyObject *retval;
-    int extrachars, slen;
+    Py_ssize_t i, j, extrachars, slen;
     char *retbuf;
-    Py_ssize_t i, j;
     char const *hexdigits = "0123456789ABCDEF";
 
     extrachars = strlen(schars) + strlen(echars);
@@ -1703,11 +1702,11 @@ gentype_itemsize_get(PyObject *self, void *NPY_UNUSED(ignored))
 {
     PyArray_Descr *typecode;
     PyObject *ret;
-    int elsize;
+    npy_intp elsize;
 
     typecode = PyArray_DescrFromScalar(self);
     elsize = typecode->elsize;
-    ret = PyLong_FromLong((long) elsize);
+    ret = PyArray_PyIntFromIntp(elsize);
     Py_DECREF(typecode);
     return ret;
 }
@@ -1959,7 +1958,7 @@ gentype_imag_get(PyObject *self, void *NPY_UNUSED(ignored))
     }
     else {
         char *temp;
-        int elsize;
+        npy_intp elsize;
         typecode = PyArray_DescrFromScalar(self);
         elsize = typecode->elsize;
         temp = npy_alloc_cache_zero(1, elsize);

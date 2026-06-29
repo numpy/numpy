@@ -689,11 +689,11 @@ class TestCasting:
             assert data2.copy()[()] == element
 
     def test_void_to_string_special_case(self):
-        # Cover a small special case in void to string casting that could
-        # probably just as well be turned into an error (compare
-        # `test_object_to_parametric_internal_error` below).
-        assert np.array([], dtype="V5").astype("S").dtype.itemsize == 5
-        assert np.array([], dtype="V5").astype("U").dtype.itemsize == 4 * 5
+        # These used to succeed for empty arrays, but now we reject them:
+        with pytest.raises(TypeError, match="cannot cast"):
+            np.array([], dtype="V5").astype("S")  # was S5
+        with pytest.raises(TypeError, match="cannot cast"):
+            np.array([], dtype="V5").astype("U")  # was U5
 
     def test_object_to_parametric_internal_error(self):
         # We reject casting from object to a parametric type, without
