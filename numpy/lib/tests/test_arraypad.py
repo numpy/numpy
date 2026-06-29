@@ -132,6 +132,15 @@ class TestConditionalShortcuts:
         assert_array_equal(np.pad(test, pad_amt, mode=mode),
                            np.pad(test, pad_amt, mode=mode, stat_length=30))
 
+    @pytest.mark.parametrize("mode", ["reflect", "symmetric", "wrap"])
+    def test_singleton_shortcut(self, mode):
+        test = np.array([[[[[4]]]]])
+        pad_amt = [(0, 32) for _ in test.shape]
+        assert_array_equal(
+            np.pad(test, pad_amt, mode=mode),
+            np.full((33,) * test.ndim, 4),
+        )
+
 
 class TestStatistic:
     def test_check_mean_stat_length(self):
