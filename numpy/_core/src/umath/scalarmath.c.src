@@ -429,11 +429,14 @@ static inline int
  * TODO: Mark as  to work around FPEs not being issues on clang 12.
  *       This should be removed when possible.
  */
+/* Use the ufunc loop directly to avoid duplicating the complicated logic */
 static inline int
-@name@_ctype_multiply( @type@ a, @type@ b, @type@ *out)
+@name@_ctype_multiply(@type@ a, @type@ b, @type@ *out)
 {
-    npy_csetreal@c@(out, npy_creal@c@(a) * npy_creal@c@(b) - npy_cimag@c@(a) * npy_cimag@c@(b));
-    npy_csetimag@c@(out, npy_creal@c@(a) * npy_cimag@c@(b) + npy_cimag@c@(a) * npy_creal@c@(b));
+    char *args[3] = {(char *)&a, (char *)&b, (char *)out};
+    npy_intp steps[3] = {0, 0, 0};
+    npy_intp size = 1;
+    @TYPE@_multiply(args, &size, steps, NULL);
     return 0;
 }
 
