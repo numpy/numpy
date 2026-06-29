@@ -112,7 +112,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     _CharacterCodes,
     # Ufuncs
     _UFunc_Nin2_Nout1,
-    _UFunc_Nin1_Nout2,
     _UFunc_Nin2_Nout2,
     _GUFunc_Nin2_Nout1,
 )
