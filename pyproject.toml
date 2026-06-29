@@ -199,9 +199,14 @@ enable = ["cpython-prerelease"]
 setup-args = ["-Duse-ilp64=true", "-Dallow-noblas=false"]
 build-dir = "build"
 
+[tool.cibuildwheel.android.config-settings]
+# ILP64 causes many failures on Android, for unknown reasons.
+setup-args = ["-Duse-ilp64=false", "-Dallow-noblas=false"]
+build-dir = "build"
+
 [tool.cibuildwheel.android.environment]
-PKG_CONFIG_PATH = "$(pwd)/.openblas/lib/pkgconfig"
-AUDITWHEEL_LD_LIBRARY_PATH = "$(pwd)/.openblas/lib"
+PKG_CONFIG_PATH = "$(pwd)/.openblas/chaquopy/lib/pkgconfig"
+AUDITWHEEL_LD_LIBRARY_PATH = "$(pwd)/.openblas/chaquopy/lib"
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
@@ -249,7 +254,6 @@ test-command = """
 """
 
 [tool.cibuildwheel.pyodide]
-before-test = "pip install -r {project}/requirements/emscripten_test_requirements.txt"
 # Pyodide ensures that the wheels are already repaired by auditwheel-emscripten
 repair-wheel-command = ""
 

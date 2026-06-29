@@ -27,21 +27,20 @@ if [[ "$INSTALL_OPENBLAS" = "true" ]] ; then
         OPENBLAS=openblas32
     fi
 
+    # The PKG_CONFIG_PATH environment variable will be pointed to this path in
+    # pyproject.toml and .github/workflows/wheels.yml. Note that
+    # `pkgconf_path` here is only a bash variable local to this file.
+    pkgconf_path=$PROJECT_DIR/.openblas
+    echo pkgconf_path is $pkgconf_path, OPENBLAS is ${OPENBLAS}
+    rm -rf $pkgconf_path
+    mkdir -p $pkgconf_path
+
     if [[ $OPENBLAS == "android" ]]; then
-        pip install \
-            --target $PKG_CONFIG_PATH \
+        python -m pip install \
+            --target $pkgconf_path \
             --index-url https://chaquo.com/pypi-upstream/ \
             chaquopy-openblas==0.3.33
-        mv $PKG_CONFIG_PATH/chaquopy/* $PKG_CONFIG_PATH
-        rmdir $PKG_CONFIG_PATH/chaquopy
     else
-        # The PKG_CONFIG_PATH environment variable will be pointed to this path in
-        # pyproject.toml and .github/workflows/wheels.yml. Note that
-        # `pkgconf_path` here is only a bash variable local to this file.
-        pkgconf_path=$PROJECT_DIR/.openblas
-        echo pkgconf_path is $pkgconf_path, OPENBLAS is ${OPENBLAS}
-        rm -rf $pkgconf_path
-        mkdir -p $pkgconf_path
         python -m pip install -r $PROJECT_DIR/requirements/ci_requirements.txt
         python -c "import scipy_${OPENBLAS}; print(scipy_${OPENBLAS}.get_pkg_config())" > $pkgconf_path/scipy-openblas.pc
 
