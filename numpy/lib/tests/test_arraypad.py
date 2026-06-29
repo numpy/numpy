@@ -118,6 +118,14 @@ class TestConditionalShortcuts:
         pad_amt = [(0, 0) for _ in test.shape]
         assert_array_equal(test, np.pad(test, pad_amt, mode=mode))
 
+    @pytest.mark.parametrize("mode", _all_modes.keys())
+    def test_zero_padding_shortcuts_copy(self, mode):
+        test = np.arange(120).reshape(4, 5, 6)
+        result = np.pad(test, 0, mode=mode)
+        assert_array_equal(test, result)
+        assert result is not test
+        assert not np.shares_memory(result, test)
+
     @pytest.mark.parametrize("mode", ['maximum', 'mean', 'median', 'minimum',])
     def test_shallow_statistic_range(self, mode):
         test = np.arange(120).reshape(4, 5, 6)

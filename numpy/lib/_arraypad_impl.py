@@ -837,6 +837,22 @@ def pad(array, pad_width, mode='constant', **kwargs):
     stat_functions = {"maximum": np.amax, "minimum": np.amin,
                       "mean": np.mean, "median": np.median}
 
+    if mode == "linear_ramp" and not np.any(pad_width):
+        _as_pairs(kwargs.get("end_values", 0), array.ndim)
+        order = 'F' if array.flags.fnc else 'C'
+        return array.copy(order=order)
+
+    if mode in stat_functions and not np.any(pad_width):
+        length = _as_pairs(
+            kwargs.get("stat_length"), array.ndim, as_index=True)
+        has_zero_length = array.size and any(
+            0 in length_pair for length_pair in length)
+        if mode in {"maximum", "minimum"} and has_zero_length:
+            raise ValueError("stat_length of 0 yields no value for padding")
+        if not has_zero_length:
+            order = 'F' if array.flags.fnc else 'C'
+            return array.copy(order=order)
+
     # Create array with final shape and original values
     # (padded area is undefined)
     padded, original_area_slice = _pad_simple(array, pad_width)
