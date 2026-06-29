@@ -160,6 +160,10 @@ _c64_0d: np.complex64
 _c64_1d: np.ndarray[tuple[int], np.dtype[np.complex64]]
 _c64_2d: np.ndarray[tuple[int, int], np.dtype[np.complex64]]
 _c64_nd: npt.NDArray[np.complex64]
+_dt_ns_0d: np.datetime64[int]
+_dt_ns_1d: np.ndarray[tuple[int], np.dtype[np.datetime64[int]]]
+_dt_ns_2d: np.ndarray[tuple[int, int], np.dtype[np.datetime64[int]]]
+_dt_ns_nd: npt.NDArray[np.datetime64[int]]
 _td_ns_0d: np.timedelta64[int]
 _td_ns_1d: np.ndarray[tuple[int], np.dtype[np.timedelta64[int]]]
 _td_ns_2d: np.ndarray[tuple[int, int], np.dtype[np.timedelta64[int]]]
@@ -167,6 +171,125 @@ _td_ns_nd: npt.NDArray[np.timedelta64[int]]
 _obj_1d: np.ndarray[tuple[int], np.dtype[np.object_]]
 _obj_2d: np.ndarray[tuple[int, int], np.dtype[np.object_]]
 _obj_nd: npt.NDArray[np.object_]
+
+# _ufunc_11_m_b
+# (isnat)
+
+assert_type(np.isnat(_dt_ns_0d), np.bool)
+assert_type(np.isnat(_dt_ns_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.isnat(_dt_ns_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.isnat(_dt_ns_nd), npt.NDArray[np.bool])
+assert_type(np.isnat(_td_ns_0d), np.bool)
+assert_type(np.isnat(_td_ns_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.isnat(_td_ns_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.isnat(_td_ns_nd), npt.NDArray[np.bool])
+
+assert_type(np.isnat(_dt_ns_2d, out=_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+
+# _ufunc_11_f_b
+# (signbit)
+
+assert_type(np.signbit(_py_b_0d), np.bool)
+assert_type(np.signbit(_py_b_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.signbit(_py_b_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.signbit(_py_i_0d), np.bool)
+assert_type(np.signbit(_py_i_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.signbit(_py_i_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.signbit(_py_f_0d), np.bool)
+assert_type(np.signbit(_py_f_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.signbit(_py_f_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+
+assert_type(np.signbit(_i16_0d), np.bool)
+assert_type(np.signbit(_i16_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.signbit(_i16_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.signbit(_i16_nd), npt.NDArray[np.bool])
+assert_type(np.signbit(_f32_0d), np.bool)
+assert_type(np.signbit(_f32_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.signbit(_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.signbit(_f32_nd), npt.NDArray[np.bool])
+
+assert_type(np.signbit(_py_i_2d, out=_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+
+# _ufunc_11_bifgco_bo
+# (logical_not)
+
+assert_type(np.logical_not(_py_b_0d), np.bool)
+assert_type(np.logical_not(_py_b_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.logical_not(_py_b_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.logical_not(_py_i_0d), np.bool)
+assert_type(np.logical_not(_py_i_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.logical_not(_py_i_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.logical_not(_py_f_0d), np.bool)
+assert_type(np.logical_not(_py_f_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.logical_not(_py_f_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.logical_not(_py_c_0d), np.bool)
+assert_type(np.logical_not(_py_c_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.logical_not(_py_c_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+
+assert_type(np.logical_not(_bool_0d), np.bool)
+assert_type(np.logical_not(_bool_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.logical_not(_bool_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.logical_not(_bool_nd), npt.NDArray[np.bool])
+assert_type(np.logical_not(_i16_0d), np.bool)
+assert_type(np.logical_not(_i16_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.logical_not(_i16_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.logical_not(_i16_nd), npt.NDArray[np.bool])
+assert_type(np.logical_not(_f32_0d), np.bool)
+assert_type(np.logical_not(_f32_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.logical_not(_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.logical_not(_f32_nd), npt.NDArray[np.bool])
+assert_type(np.logical_not(_c64_0d), np.bool)
+assert_type(np.logical_not(_c64_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.logical_not(_c64_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.logical_not(_c64_nd), npt.NDArray[np.bool])
+assert_type(np.logical_not(_obj_1d), np.ndarray[tuple[int], np.dtype[np.object_]])
+assert_type(np.logical_not(_obj_2d), np.ndarray[tuple[int, int], np.dtype[np.object_]])
+assert_type(np.logical_not(_obj_nd), npt.NDArray[np.object_])
+
+assert_type(np.logical_not(_py_i_2d, out=_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+
+# _ufunc_11_bifgcm_b
+# (isfinite, isinf, isnan)
+
+assert_type(np.isinf(_py_b_0d), np.bool)
+assert_type(np.isinf(_py_b_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.isinf(_py_b_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.isinf(_py_i_0d), np.bool)
+assert_type(np.isinf(_py_i_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.isinf(_py_i_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.isinf(_py_f_0d), np.bool)
+assert_type(np.isinf(_py_f_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.isinf(_py_f_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.isinf(_py_c_0d), np.bool)
+assert_type(np.isinf(_py_c_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.isinf(_py_c_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+
+assert_type(np.isinf(_bool_0d), np.bool)
+assert_type(np.isinf(_bool_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.isinf(_bool_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.isinf(_bool_nd), npt.NDArray[np.bool])
+assert_type(np.isinf(_i16_0d), np.bool)
+assert_type(np.isinf(_i16_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.isinf(_i16_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.isinf(_i16_nd), npt.NDArray[np.bool])
+assert_type(np.isinf(_f32_0d), np.bool)
+assert_type(np.isinf(_f32_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.isinf(_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.isinf(_f32_nd), npt.NDArray[np.bool])
+assert_type(np.isinf(_c64_0d), np.bool)
+assert_type(np.isinf(_c64_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.isinf(_c64_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.isinf(_c64_nd), npt.NDArray[np.bool])
+assert_type(np.isinf(_dt_ns_0d), np.bool)
+assert_type(np.isinf(_dt_ns_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.isinf(_dt_ns_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.isinf(_dt_ns_nd), npt.NDArray[np.bool])
+assert_type(np.isinf(_td_ns_0d), np.bool)
+assert_type(np.isinf(_td_ns_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.isinf(_td_ns_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.isinf(_td_ns_nd), npt.NDArray[np.bool])
+
+assert_type(np.isinf(_py_i_2d, out=_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 
 # _ufunc_11_f
 # (spacing)

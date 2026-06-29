@@ -419,10 +419,15 @@ from numpy._core.umath import (
     fabs,
     floor,
     invert,
+    isfinite,
+    isinf,
+    isnan,
+    isnat,
     log,
     log10,
     log1p,
     log2,
+    logical_not,
     positive,
     negative,
     rad2deg,
@@ -430,6 +435,7 @@ from numpy._core.umath import (
     reciprocal,
     rint,
     sign,
+    signbit,
     sin,
     sinh,
     spacing,
@@ -7613,10 +7619,6 @@ greater: _UFunc_Nin2_Nout1[L["greater"], L[23], None]
 greater_equal: _UFunc_Nin2_Nout1[L["greater_equal"], L[23], None]
 heaviside: _UFunc_Nin2_Nout1[L["heaviside"], L[4], None]
 hypot: _UFunc_Nin2_Nout1[L["hypot"], L[5], L[0]]
-isfinite: _UFunc_Nin1_Nout1[L["isfinite"], L[20], None]
-isinf: _UFunc_Nin1_Nout1[L["isinf"], L[20], None]
-isnan: _UFunc_Nin1_Nout1[L["isnan"], L[20], None]
-isnat: _UFunc_Nin1_Nout1[L["isnat"], L[2], None]
 lcm: _UFunc_Nin2_Nout1[L["lcm"], L[11], None]
 ldexp: _UFunc_Nin2_Nout1[L["ldexp"], L[8], None]
 left_shift: _UFunc_Nin2_Nout1[L["left_shift"], L[11], None]
@@ -7625,7 +7627,6 @@ less_equal: _UFunc_Nin2_Nout1[L["less_equal"], L[23], None]
 logaddexp2: _UFunc_Nin2_Nout1[L["logaddexp2"], L[4], float]
 logaddexp: _UFunc_Nin2_Nout1[L["logaddexp"], L[4], float]
 logical_and: _UFunc_Nin2_Nout1[L["logical_and"], L[20], L[True]]
-logical_not: _UFunc_Nin1_Nout1[L["logical_not"], L[20], None]
 logical_or: _UFunc_Nin2_Nout1[L["logical_or"], L[20], L[False]]
 logical_xor: _UFunc_Nin2_Nout1[L["logical_xor"], L[19], L[False]]
 matmul: _GUFunc_Nin2_Nout1[L["matmul"], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]]
@@ -7639,7 +7640,6 @@ not_equal: _UFunc_Nin2_Nout1[L["not_equal"], L[23], None]
 power: _UFunc_Nin2_Nout1[L["power"], L[18], None]
 remainder: _UFunc_Nin2_Nout1[L["remainder"], L[16], None]
 right_shift: _UFunc_Nin2_Nout1[L["right_shift"], L[11], None]
-signbit: _UFunc_Nin1_Nout1[L["signbit"], L[4], None]
 subtract: _UFunc_Nin2_Nout1[L["subtract"], L[21], None]
 vecdot: _GUFunc_Nin2_Nout1[L["vecdot"], L[19], None, L["(n),(n)->()"]]
 vecmat: _GUFunc_Nin2_Nout1[L["vecmat"], L[19], None, L["(n),(n,m)->(m)"]]
