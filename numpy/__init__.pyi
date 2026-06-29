@@ -427,6 +427,7 @@ from numpy._core.umath import (
     log10,
     log1p,
     log2,
+    logical_not,
     positive,
     negative,
     rad2deg,
@@ -7626,7 +7627,6 @@ less_equal: _UFunc_Nin2_Nout1[L["less_equal"], L[23], None]
 logaddexp2: _UFunc_Nin2_Nout1[L["logaddexp2"], L[4], float]
 logaddexp: _UFunc_Nin2_Nout1[L["logaddexp"], L[4], float]
 logical_and: _UFunc_Nin2_Nout1[L["logical_and"], L[20], L[True]]
-logical_not: _UFunc_Nin1_Nout1[L["logical_not"], L[20], None]
 logical_or: _UFunc_Nin2_Nout1[L["logical_or"], L[20], L[False]]
 logical_xor: _UFunc_Nin2_Nout1[L["logical_xor"], L[19], L[False]]
 matmul: _GUFunc_Nin2_Nout1[L["matmul"], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]]
