@@ -8,15 +8,15 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
     paths-ignore:
       - '**.pyi'
       - '**.md'
       - '**.rst'
       - 'tools/stubtest/**'
-  pull_request:
-    branches:
-      - main
-      - maintenance/**
   workflow_dispatch:
 
 concurrency:
