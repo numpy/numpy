@@ -1379,6 +1379,19 @@ class TestNanFunctions_Quantile:
         assert np.isnan(out).all()
         assert out.dtype == array.dtype
 
+    @pytest.mark.parametrize("func", [np.nanquantile, np.nanpercentile])
+    def test_float16_gh_31487(self, func):
+        # gh-31487: nanquantile/nanpercentile overflowed on large float16 arrays
+        a = np.zeros(65521, dtype=np.float16)
+        a[:20_000] = 1.0
+        scale = 100 if func is np.nanpercentile else 1
+        z = func(a, np.float16(0.5 * scale))
+        assert z == np.float16(0.0)
+        assert z.dtype == np.float16
+        z = func(a, np.float16(0.99 * scale))
+        assert z == np.float16(1.0)
+        assert z.dtype == np.float16
+
 @pytest.mark.parametrize("arr, expected", [
     # array of floats with some nans
     (np.array([np.nan, 5.0, np.nan, np.inf]),
