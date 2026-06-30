@@ -3995,6 +3995,12 @@ class TestMethods:
         ):
             np.top_k(a, 2, mode="invalid")
 
+        with assert_raises_regex(
+            ValueError,
+            r"axis=None is not supported. Please provide a valid axis."
+        ):
+            np.top_k(a, 2, axis=None)
+
         y = (
             np.array([[4, 5], [4, 5], [4, 5]], dtype=np.int8),
             np.array([[3, 4], [0, 1], [1, 2]], dtype=np.intp)
