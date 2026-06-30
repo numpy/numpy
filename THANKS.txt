@@ -62,3 +62,4 @@ Enthought for providing resources and finances for development of NumPy.
 UC Berkeley for providing travel money and hosting numerous sprints.
 The University of Central Florida for funding the 2008 Documentation Marathon.
 The University of Stellenbosch for hosting the buildbot.
+And specially, THANK YOU, reader.
