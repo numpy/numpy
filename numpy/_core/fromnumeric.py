@@ -211,8 +211,6 @@ def top_k(a, k, /, *, axis=-1, mode="largest", sorted=True):
     Returns the ``k`` largest or smallest elements and their indices
     indices along an axis.
 
-    When ``axis`` is None, a flattened array is used.
-
     A tuple of ``(values, indices)`` is returned, where ``values`` and
     ``indices`` are the values and indices, respectively, of the largest/smallest
     elements of each row of the input array in the given ``axis``.
@@ -228,7 +226,6 @@ def top_k(a, k, /, *, axis=-1, mode="largest", sorted=True):
     axis: int, optional
         Axis along which to find the largest/smallest elements.
         The default is -1 (the last axis).
-        If None, a flattened array is used.
     mode: {"largest", "smallest"}, optional
         If "largest", the largest elements are returned. If "smallest",
         the smallest elements are returned. The default is "largest".
@@ -285,7 +282,8 @@ def top_k(a, k, /, *, axis=-1, mode="largest", sorted=True):
     """
     if k <= 0:
         raise ValueError(f'k(={k}) provided must be positive.')
-
+    if axis is None:
+        raise ValueError('axis=None is not supported. Please provide a valid axis.')
     if mode not in ["largest", "smallest"]:
         raise ValueError(f'mode(="{mode}") must be either "largest" or "smallest".')
     largest = mode == "largest"
