@@ -5,7 +5,6 @@ to document how deprecations should eventually be turned into errors.
 """
 import contextlib
 import re
-import subprocess
 import sys
 import textwrap
 import warnings
@@ -15,8 +14,8 @@ import pytest
 
 import numpy as np
 from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
-from numpy.testing._private.utils import run_subprocess
 from numpy.testing import IS_WASM, assert_raises
+from numpy.testing._private.utils import run_subprocess
 
 
 class _DeprecationTestCase:
