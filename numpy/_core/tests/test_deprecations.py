@@ -15,6 +15,7 @@ import pytest
 
 import numpy as np
 from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
+from numpy.testing._private.utils import run_subprocess
 from numpy.testing import IS_WASM, assert_raises
 
 
@@ -539,8 +540,7 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
                     np.subtract(*args)
                 assert len(w) == 1, [str(x.message) for x in w]
             """)
-        p = subprocess.run([sys.executable, "-c", code],
-                           capture_output=True, text=True)
+        p = run_subprocess([sys.executable, "-c", code])
         assert p.returncode == 0, p.stderr
 
 
