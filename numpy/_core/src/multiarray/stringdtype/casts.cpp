@@ -1201,42 +1201,6 @@ static PyType_Slot s2float_slots[] = {
         {NPY_METH_strided_loop, (void *)&string_to_float<NpyType, typenum, npy_is_inf, double_is_inf, double_to_float>},
         {0, NULL}};
 
-// Whether a raw floating-point value should be stored as the null/NA string
-// when the StringDType uses a NaN-like missing-data sentinel (has_nan_na).
-template <typename NpyType>
-static inline bool
-float_is_nan_na(NpyType val)
-{
-    if constexpr (std::is_same_v<NpyType, npy_half>) {
-        return npy_half_isnan(val);
-    }
-    else if constexpr (std::is_same_v<NpyType, npy_cfloat> ||
-                       std::is_same_v<NpyType, npy_cdouble> ||
-                       std::is_same_v<NpyType, npy_clongdouble>) {
-        return false;
-    }
-    else {
-        return npy_isnan(val);
-    }
-}
-
-// PyObject entry point to float_is_nan_na for stringdtype_setitem, which has a
-// Python object rather than a raw value. Complex scalars fail the type check,
-// matching float_is_nan_na's complex branch.
-NPY_NO_EXPORT int
-pyobj_is_nan_na(PyObject *obj)
-{
-    if (PyFloat_Check(obj) || PyArray_IsScalar(obj, Floating)) {
-        double value = PyFloat_AsDouble(obj);
-        if (value == -1.0 && PyErr_Occurred()) {
-            PyErr_Clear();  // out-of-double-range longdouble: finite, not NaN
-            return 0;
-        }
-        return float_is_nan_na<npy_double>(value) ? 1 : 0;
-    }
-    return 0;
-}
-
 template<typename NpyType>
 static int
 float_to_string(
@@ -1257,24 +1221,35 @@ float_to_string(
     PyArray_StringDTypeObject *descr =
             (PyArray_StringDTypeObject *)context->descriptors[1];
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
+    // borrowed reference
+    PyObject *na_object = descr->na_object;
 
     while (N--) {
-        if (descr->has_nan_na && float_is_nan_na(*in)) {
-            if (NpyString_pack_null(allocator, (npy_packed_static_string *)out) < 0) {
-                npy_gil_error(PyExc_MemoryError,
-                              "Failed to pack null string during float "
-                              "to string cast");
+        PyObject *scalar_val = PyArray_Scalar(in, float_descr, NULL);
+        if (descr->has_nan_na) {
+            // check for case when scalar_val is the na_object and store a null string
+            int na_cmp = na_eq_cmp(scalar_val, na_object);
+            if (na_cmp < 0) {
+                Py_DECREF(scalar_val);
                 goto fail;
+            }
+            if (na_cmp) {
+                Py_DECREF(scalar_val);
+                if (NpyString_pack_null(allocator, (npy_packed_static_string *)out) < 0) {
+                    PyErr_SetString(PyExc_MemoryError,
+                                    "Failed to pack null string during float "
+                                    "to string cast");
+                    goto fail;
+                }
+                goto next_step;
             }
         }
-        else {
-            PyObject *scalar_val = PyArray_Scalar(in, float_descr, NULL);
-            // steals reference to scalar_val
-            if (pyobj_to_string(scalar_val, out, allocator) == -1) {
-                goto fail;
-            }
+        // steals reference to scalar_val
+        if (pyobj_to_string(scalar_val, out, allocator) == -1) {
+            goto fail;
         }
 
+      next_step:
         in += in_stride;
         out += out_stride;
     }
