@@ -25,17 +25,6 @@ assert_type(np.add.reduceat(AR_f8, AR_i8), npt.NDArray[Any])
 assert_type(np.add.outer(f8, f8), Any)
 assert_type(np.add.outer(AR_f8, f8), npt.NDArray[Any])
 
-assert_type(np.frexp.__name__, Literal["frexp"])
-assert_type(np.frexp.__qualname__, Literal["frexp"])
-assert_type(np.frexp.ntypes, Literal[4])
-assert_type(np.frexp.identity, None)
-assert_type(np.frexp.nin, Literal[1])
-assert_type(np.frexp.nout, Literal[2])
-assert_type(np.frexp.nargs, Literal[3])
-assert_type(np.frexp.signature, None)
-assert_type(np.frexp(f8), tuple[Any, Any])
-assert_type(np.frexp(AR_f8), tuple[npt.NDArray[Any], npt.NDArray[Any]])
-
 assert_type(np.divmod.__name__, Literal["divmod"])
 assert_type(np.divmod.__qualname__, Literal["divmod"])
 assert_type(np.divmod.ntypes, Literal[15])
@@ -671,3 +660,113 @@ assert_type(np.abs(_u8_2d, dtype="f4"), np.ndarray[tuple[int, int]])
 
 assert_type(np.abs(_py_b_1d, out=_i16_1d), np.ndarray[tuple[int], np.dtype[np.int16]])
 assert_type(np.abs(_py_i_2d, out=_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+
+# _ufunc_12_frexp
+
+assert_type(np.frexp(_py_i_0d), tuple[np.float64, np.int32])
+assert_type(
+    np.frexp(_py_i_1d),
+    tuple[
+        np.ndarray[tuple[int], np.dtype[np.float64]],
+        np.ndarray[tuple[int], np.dtype[np.int32]],
+    ],
+)
+assert_type(
+    np.frexp(_py_i_2d),
+    tuple[
+        np.ndarray[tuple[int, int], np.dtype[np.float64]],
+        np.ndarray[tuple[int, int], np.dtype[np.int32]],
+    ],
+)
+assert_type(np.frexp(_py_f_0d), tuple[np.float64, np.int32])
+assert_type(
+    np.frexp(_py_f_1d),
+    tuple[
+        np.ndarray[tuple[int], np.dtype[np.float64]],
+        np.ndarray[tuple[int], np.dtype[np.int32]],
+    ],
+)
+assert_type(
+    np.frexp(_py_f_2d),
+    tuple[
+        np.ndarray[tuple[int, int], np.dtype[np.float64]],
+        np.ndarray[tuple[int, int], np.dtype[np.int32]],
+    ],
+)
+
+assert_type(np.frexp(_i16_0d), tuple[np.float64, np.int32])
+assert_type(
+    np.frexp(_i16_1d),
+    tuple[
+        np.ndarray[tuple[int], np.dtype[np.float64]],
+        np.ndarray[tuple[int], np.dtype[np.int32]],
+    ],
+)
+assert_type(
+    np.frexp(_i16_2d),
+    tuple[
+        np.ndarray[tuple[int, int], np.dtype[np.float64]],
+        np.ndarray[tuple[int, int], np.dtype[np.int32]],
+    ],
+)
+assert_type(np.frexp(_i16_nd), tuple[npt.NDArray[np.float64], npt.NDArray[np.int32]])
+assert_type(np.frexp(_f32_0d), tuple[np.float32, np.int32])
+assert_type(
+    np.frexp(_f32_1d),
+    tuple[
+        np.ndarray[tuple[int], np.dtype[np.float32]],
+        np.ndarray[tuple[int], np.dtype[np.int32]],
+    ],
+)
+assert_type(
+    np.frexp(_f32_2d),
+    tuple[
+        np.ndarray[tuple[int, int], np.dtype[np.float32]],
+        np.ndarray[tuple[int, int], np.dtype[np.int32]],
+    ],
+)
+assert_type(np.frexp(_f32_nd), tuple[npt.NDArray[np.float32], npt.NDArray[np.int32]])
+
+assert_type(
+    np.frexp(_py_i_2d, out=(_f32_2d, _i16_2d)),
+    tuple[
+        np.ndarray[tuple[int, int], np.dtype[np.float32]],
+        np.ndarray[tuple[int, int], np.dtype[np.int16]],
+    ]
+)
+
+# _ufunc_12_modf
+
+type _tuple2[T] = tuple[T, T]
+
+assert_type(np.modf(_py_i_0d), _tuple2[np.float64])
+assert_type(np.modf(_py_i_1d), _tuple2[np.ndarray[tuple[int], np.dtype[np.float64]]])
+assert_type(np.modf(_py_i_2d), _tuple2[np.ndarray[tuple[int, int], np.dtype[np.float64]]])
+assert_type(np.modf(_py_f_0d), _tuple2[np.float64])
+assert_type(np.modf(_py_f_1d), _tuple2[np.ndarray[tuple[int], np.dtype[np.float64]]])
+assert_type(np.modf(_py_f_2d), _tuple2[np.ndarray[tuple[int, int], np.dtype[np.float64]]])
+
+assert_type(np.modf(_i16_0d), _tuple2[np.float64])
+assert_type(np.modf(_i16_1d), _tuple2[np.ndarray[tuple[int], np.dtype[np.float64]]])
+assert_type(np.modf(_i16_2d), _tuple2[np.ndarray[tuple[int, int], np.dtype[np.float64]]])
+assert_type(np.modf(_i16_nd), _tuple2[npt.NDArray[np.float64]])
+assert_type(np.modf(_f32_0d), _tuple2[np.float32])
+assert_type(np.modf(_f32_1d), _tuple2[np.ndarray[tuple[int], np.dtype[np.float32]]])
+assert_type(np.modf(_f32_2d), _tuple2[np.ndarray[tuple[int, int], np.dtype[np.float32]]])
+assert_type(np.modf(_f32_nd), _tuple2[npt.NDArray[np.float32]])
+
+assert_type(np.modf(_py_i_0d, dtype=np.float32), _tuple2[np.float32])
+assert_type(np.modf(_py_i_1d, dtype=np.float32), _tuple2[npt.NDArray[np.float32]])
+assert_type(np.modf(_i16_2d, dtype=np.float32), _tuple2[np.ndarray[tuple[int, int], np.dtype[np.float32]]])
+
+assert_type(np.modf(_py_i_0d, dtype="f4"), _tuple2[Any])
+assert_type(np.modf(_py_i_1d, dtype="f4"), _tuple2[np.ndarray])
+assert_type(np.modf(_i16_2d, dtype="f4"), _tuple2[np.ndarray[tuple[int, int]]])
+
+assert_type(
+    np.modf(_py_i_2d, out=(_f32_2d, _i16_2d)),
+    tuple[
+        np.ndarray[tuple[int, int], np.dtype[np.float32]],
+        np.ndarray[tuple[int, int], np.dtype[np.int16]],
+    ]
+)

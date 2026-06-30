@@ -112,7 +112,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     _CharacterCodes,
     # Ufuncs
     _UFunc_Nin2_Nout1,
-    _UFunc_Nin1_Nout2,
     _UFunc_Nin2_Nout2,
     _GUFunc_Nin2_Nout1,
 )
@@ -418,6 +417,7 @@ from numpy._core.umath import (
     expm1,
     fabs,
     floor,
+    frexp,
     invert,
     isfinite,
     isinf,
@@ -428,6 +428,7 @@ from numpy._core.umath import (
     log1p,
     log2,
     logical_not,
+    modf,
     positive,
     negative,
     rad2deg,
@@ -7612,7 +7613,6 @@ floor_divide: _UFunc_Nin2_Nout1[L["floor_divide"], L[21], None]
 fmax: _UFunc_Nin2_Nout1[L["fmax"], L[21], None]
 fmin: _UFunc_Nin2_Nout1[L["fmin"], L[21], None]
 fmod: _UFunc_Nin2_Nout1[L["fmod"], L[15], None]
-frexp: _UFunc_Nin1_Nout2[L["frexp"], L[4], None]
 gcd: _UFunc_Nin2_Nout1[L["gcd"], L[11], L[0]]
 greater: _UFunc_Nin2_Nout1[L["greater"], L[23], None]
 greater_equal: _UFunc_Nin2_Nout1[L["greater_equal"], L[23], None]
@@ -7632,7 +7632,6 @@ matmul: _GUFunc_Nin2_Nout1[L["matmul"], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]
 matvec: _GUFunc_Nin2_Nout1[L["matvec"], L[19], None, L["(m,n),(n)->(m)"]]
 maximum: _UFunc_Nin2_Nout1[L["maximum"], L[21], None]
 minimum: _UFunc_Nin2_Nout1[L["minimum"], L[21], None]
-modf: _UFunc_Nin1_Nout2[L["modf"], L[4], None]
 multiply: _UFunc_Nin2_Nout1[L["multiply"], L[23], L[1]]
 nextafter: _UFunc_Nin2_Nout1[L["nextafter"], L[4], None]
 not_equal: _UFunc_Nin2_Nout1[L["not_equal"], L[23], None]
