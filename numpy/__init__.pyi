@@ -111,7 +111,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     _InexactCodes,
     _CharacterCodes,
     # Ufuncs
-    _UFunc_Nin1_Nout1,
     _UFunc_Nin2_Nout1,
     _UFunc_Nin1_Nout2,
     _UFunc_Nin2_Nout2,
@@ -405,6 +404,7 @@ from numpy._core.umath import (
     arctan as atan,
     arctanh,
     arctanh as atanh,
+    bitwise_count,
     cbrt,
     ceil,
     conjugate,
@@ -7601,7 +7601,6 @@ class ufunc:
 add: _UFunc_Nin2_Nout1[L["add"], L[22], L[0]]
 arctan2: _UFunc_Nin2_Nout1[L["arctan2"], L[5], None]
 bitwise_and: _UFunc_Nin2_Nout1[L["bitwise_and"], L[12], L[-1]]
-bitwise_count: _UFunc_Nin1_Nout1[L["bitwise_count"], L[11], None]
 bitwise_or: _UFunc_Nin2_Nout1[L["bitwise_or"], L[12], L[0]]
 bitwise_xor: _UFunc_Nin2_Nout1[L["bitwise_xor"], L[12], L[0]]
 copysign: _UFunc_Nin2_Nout1[L["copysign"], L[4], None]
