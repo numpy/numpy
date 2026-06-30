@@ -207,7 +207,7 @@ def top_k(
     /,
     *,
     axis: int | None = -1,
-    largest: bool = True,
+    mode: Literal["largest", "smallest"] = "largest",
     sorted: bool = True,
 ) -> tuple[NDArray[Any], NDArray[intp]]: ...
 
