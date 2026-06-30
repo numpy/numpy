@@ -353,7 +353,7 @@ NpyString_acquire_allocators(size_t n_descriptors,
                              PyArray_Descr *const descrs[],
                              npy_string_allocator *allocators[])
 {
-    for (size_t i=0; i<n_descriptors; i++) {
+    for (size_t i = 0; i < n_descriptors; i++) {
         if (NPY_DTYPE(descrs[i]) != &PyArray_StringDType) {
             allocators[i] = NULL;
             continue;
@@ -368,7 +368,7 @@ NpyString_acquire_allocators(size_t n_descriptors,
         npy_string_allocator *next_allocator = NULL;
         uintptr_t next_addr = UINTPTR_MAX;
 
-        for (size_t i=0; i<n_descriptors; i++) {
+        for (size_t i = 0; i < n_descriptors; i++) {
             npy_string_allocator *allocator = allocators[i];
 
             if (allocator == NULL || allocator_seen(allocator, allocators, i)) {

@@ -1928,30 +1928,68 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
     npy_intp in_stride = strides[0];
     npy_intp out_stride = strides[1];
     size_t max_out_size = context->descriptors[1]->elsize;
-    char *invalid_ascii_buf = NULL;
-    size_t invalid_ascii_size = 0;
-    size_t invalid_ascii_pos = 0;
 
-    npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
+    np::raii::NpyStringAcquireAllocator alloc(descr);
+
     while (N--) {
         const npy_packed_static_string *ps = (npy_packed_static_string *)in;
         npy_static_string s = {0, NULL};
         if (load_nullable_string(ps, &s, has_null, has_string_na,
-                                 default_string, na_name, allocator,
+                                 default_string, na_name, alloc.allocator(),
                                  "in string to bytes cast") == -1) {
-            goto fail;
+            return -1;
         }
 
-        for (size_t i=0; i<s.size; i++) {
+        for (size_t i = 0; i < s.size; i++) {
             if (((unsigned char *)s.buf)[i] > 127) {
-                invalid_ascii_buf = (char *)PyMem_RawMalloc(s.size);
-                if (invalid_ascii_buf == NULL) {
-                    goto memory_error;
+                // Building the UnicodeEncodeError needs the GIL and must not
+                // run while the allocator is held (re-entrant Python could
+                // deadlock on it), so copy the offending bytes out, release the
+                // allocator, then raise.
+                char *bad = (char *)PyMem_RawMalloc(s.size);
+                if (bad == NULL) {
+                    alloc.release();
+                    npy_gil_error(PyExc_MemoryError,
+                                  "Failed to allocate memory for unicode "
+                                  "encoding error");
+                    return -1;
                 }
-                memcpy(invalid_ascii_buf, s.buf, s.size);
-                invalid_ascii_size = s.size;
-                invalid_ascii_pos = i;
-                goto invalid_ascii;
+                memcpy(bad, s.buf, s.size);
+                size_t bad_size = s.size;
+                size_t bad_pos = i;
+                alloc.release();
+
+                np::raii::EnsureGIL ensure_gil{};
+
+                PyObject *str = PyUnicode_FromStringAndSize(bad, bad_size);
+                PyMem_RawFree(bad);
+
+                if (str == NULL) {
+                    PyErr_SetString(
+                        PyExc_UnicodeEncodeError, "Invalid character encountered during unicode encoding."
+                    );
+                    return -1;
+                }
+
+                PyObject *exc = PyObject_CallFunction(
+                    PyExc_UnicodeEncodeError,
+                    "sOnns",
+                    "ascii",
+                    str,
+                    (Py_ssize_t)bad_pos,
+                    (Py_ssize_t)(bad_pos + 1),
+                    "ordinal not in range(128)"
+                );
+
+                if (exc == NULL) {
+                    Py_DECREF(str);
+                    return -1;
+                }
+
+                PyErr_SetObject(PyExceptionInstance_Class(exc), exc);
+                Py_DECREF(exc);
+                Py_DECREF(str);
+                return -1;
             }
         }
 
@@ -1964,56 +2002,7 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
         out += out_stride;
     }
 
-    NpyString_release_allocator(allocator);
     return 0;
-
-fail:
-    NpyString_release_allocator(allocator);
-    return -1;
-
-memory_error:
-    NpyString_release_allocator(allocator);
-    npy_gil_error(PyExc_MemoryError,
-                  "Failed to allocate memory for unicode encoding error");
-    return -1;
-
-invalid_ascii:
-    NpyString_release_allocator(allocator);
-
-    {
-        np::raii::EnsureGIL ensure_gil{};
-
-        PyObject *str = PyUnicode_FromStringAndSize(
-                invalid_ascii_buf, invalid_ascii_size);
-        PyMem_RawFree(invalid_ascii_buf);
-
-        if (str == NULL) {
-            PyErr_SetString(
-                    PyExc_UnicodeEncodeError,
-                    "Invalid character encountered during unicode encoding.");
-            return -1;
-        }
-
-        PyObject *exc = PyObject_CallFunction(
-                PyExc_UnicodeEncodeError,
-                "sOnns",
-                "ascii",
-                str,
-                (Py_ssize_t)invalid_ascii_pos,
-                (Py_ssize_t)(invalid_ascii_pos + 1),
-                "ordinal not in range(128)");
-
-        if (exc == NULL) {
-            Py_DECREF(str);
-            return -1;
-        }
-
-        PyErr_SetObject(PyExceptionInstance_Class(exc), exc);
-        Py_DECREF(exc);
-        Py_DECREF(str);
-    }
-
-    return -1;
 }
 
 static PyType_Slot s2bytes_slots[] = {
