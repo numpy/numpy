@@ -7,8 +7,6 @@ from numpy._typing import _Shape
 
 type MaskedArray[ScalarT: np.generic] = np.ma.MaskedArray[_Shape, np.dtype[ScalarT]]
 
-# mypy: disable-error-code=no-untyped-call
-
 MAR_b: MaskedArray[np.bool] = np.ma.MaskedArray([True])
 MAR_u: MaskedArray[np.uint32] = np.ma.MaskedArray([1], dtype=np.uint32)
 MAR_i: MaskedArray[np.int64] = np.ma.MaskedArray([1])
@@ -196,3 +194,6 @@ MAR_c **= AR_LIKE_u
 MAR_c **= AR_LIKE_i
 MAR_c **= AR_LIKE_f
 MAR_c **= AR_LIKE_c
+
+# https://github.com/numpy/numpy/issues/31737
+np.ma.masked_array([1])

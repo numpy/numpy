@@ -479,31 +479,30 @@ class TestDivision:
         assert_equal(x % 100, [5, 10, 90, 0, 95, 90, 10, 0, 80])
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
-    @pytest.mark.parametrize("dtype,ex_val", itertools.product(
-        sctypes['int'] + sctypes['uint'], (
-            (
-                # dividend
-                "np.array(range(fo.max-lsize, fo.max)).astype(dtype),"
-                # divisors
-                "np.arange(lsize).astype(dtype),"
-                # scalar divisors
-                "range(15)"
-            ),
-            (
-                # dividend
-                "np.arange(fo.min, fo.min+lsize).astype(dtype),"
-                # divisors
-                "np.arange(lsize//-2, lsize//2).astype(dtype),"
-                # scalar divisors
-                "range(fo.min, fo.min + 15)"
-            ), (
-                # dividend
-                "np.array(range(fo.max-lsize, fo.max)).astype(dtype),"
-                # divisors
-                "np.arange(lsize).astype(dtype),"
-                # scalar divisors
-                "[1,3,9,13,neg, fo.min+1, fo.min//2, fo.max//3, fo.max//4]"
-            )
+    @pytest.mark.parametrize("dtype", sctypes['int'] + sctypes['uint'])
+    @pytest.mark.parametrize("ex_val", (
+        (
+            # dividend
+            "np.array(range(fo.max-lsize, fo.max)).astype(dtype),"
+            # divisors
+            "np.arange(lsize).astype(dtype),"
+            # scalar divisors
+            "range(15)"
+        ),
+        (
+            # dividend
+            "np.arange(fo.min, fo.min+lsize).astype(dtype),"
+            # divisors
+            "np.arange(lsize//-2, lsize//2).astype(dtype),"
+            # scalar divisors
+            "range(fo.min, fo.min + 15)"
+        ), (
+            # dividend
+            "np.array(range(fo.max-lsize, fo.max)).astype(dtype),"
+            # divisors
+            "np.arange(lsize).astype(dtype),"
+            # scalar divisors
+            "[1,3,9,13,neg, fo.min+1, fo.min//2, fo.max//3, fo.max//4]"
         )
     ))
     def test_division_int_boundary(self, dtype, ex_val):
@@ -565,13 +564,12 @@ class TestDivision:
             np.array([], dtype=dtype) // 0
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
-    @pytest.mark.parametrize("dtype,ex_val", itertools.product(
-        sctypes['int'] + sctypes['uint'], (
-            "np.array([fo.max, 1, 2, 1, 1, 2, 3], dtype=dtype)",
-            "np.array([fo.min, 1, -2, 1, 1, 2, -3]).astype(dtype)",
-            "np.arange(fo.min, fo.min+(100*10), 10, dtype=dtype)",
-            "np.array(range(fo.max-(100*7), fo.max, 7)).astype(dtype)",
-        )
+    @pytest.mark.parametrize("dtype", sctypes['int'] + sctypes['uint'])
+    @pytest.mark.parametrize("ex_val", (
+        "np.array([fo.max, 1, 2, 1, 1, 2, 3], dtype=dtype)",
+        "np.array([fo.min, 1, -2, 1, 1, 2, -3]).astype(dtype)",
+        "np.arange(fo.min, fo.min+(100*10), 10, dtype=dtype)",
+        "np.array(range(fo.max-(100*7), fo.max, 7)).astype(dtype)",
     ))
     def test_division_int_reduce(self, dtype, ex_val):
         fo = np.iinfo(dtype)
@@ -2966,7 +2964,7 @@ class TestBitwiseUFuncs:
             assert_(type(f.reduce(btype)) is bool, msg)
 
     @pytest.mark.parametrize("input_dtype_obj, bitsize",
-            zip(bitwise_types, bitwise_bits))
+            list(zip(bitwise_types, bitwise_bits)))
     def test_bitwise_count(self, input_dtype_obj, bitsize):
         input_dtype = input_dtype_obj.type
 
@@ -3955,6 +3953,21 @@ class TestSpecialMethods:
                "out=(1,)): 'A', 'object', 'int'")
         with assert_raises_regex(TypeError, fnmatch.translate(msg)):
             np.add(A(), object(), out=1)
+
+    def test_ufunc_override_reduction_not_implemented_leak(self):
+        # gh-31677: the reduction override error path leaked references to
+        # the internal full_args.in/out tuples when __array_ufunc__ returned
+        # NotImplemented (or raised). No refcount assertion is made here; a
+        # leak sanitizer build is expected to catch the regression.
+
+        class A:
+            def __array_ufunc__(self, *args, **kwargs):
+                return NotImplemented
+
+        a = A()
+        assert_raises(TypeError, np.add.reduce, a)
+        assert_raises(TypeError, np.add.accumulate, a)
+        assert_raises(TypeError, np.add.reduceat, a, [0])
 
     def test_ufunc_override_disabled(self):
 

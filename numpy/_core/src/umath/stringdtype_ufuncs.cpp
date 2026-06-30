@@ -2273,11 +2273,6 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
             const char *inbuf_ptr = is.buf;
             const char *inbuf_ptr_end = is.buf + is.size;
 
-            // ignore trailing nulls
-            while (inbuf_ptr < inbuf_ptr_end && *(inbuf_ptr_end - 1) == 0) {
-                inbuf_ptr_end--;
-            }
-
             while (inbuf_ptr < inbuf_ptr_end) {
                 num_codepoints++;
                 int num_bytes = num_bytes_for_utf8_character(

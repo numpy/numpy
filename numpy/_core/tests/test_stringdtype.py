@@ -1,5 +1,7 @@
+import bisect
 import copy
 import itertools
+import operator
 import os
 import pickle
 import string
@@ -166,6 +168,61 @@ def test_null_roundtripping():
     assert data[1] == arr[1]
 
 
+@pytest.mark.parametrize(
+    "op, pyop",
+    [
+        (np.equal, operator.eq),
+        (np.not_equal, operator.ne),
+        (np.greater, operator.gt),
+        (np.greater_equal, operator.ge),
+        (np.less, operator.lt),
+        (np.less_equal, operator.le),
+    ],
+)
+def test_embedded_null_comparisons(op, pyop):
+    lhs = ["a\0b", "a\0b", "a\0c", "\0b", "long\0b"]
+    rhs = ["a\0c", "a\0b", "a\0b", "\0a", "long\0c"]
+
+    expected = [pyop(left, right) for left, right in zip(lhs, rhs)]
+    result = op(np.array(lhs, dtype="T"), np.array(rhs, dtype="T"))
+
+    assert result.tolist() == expected
+
+
+def test_embedded_null_sorting_and_search():
+    values = [
+        "a\0c",
+        "a\0b",
+        "a",
+        "\0b",
+        "\0a",
+        "long prefix\0c",
+        "long prefix\0b",
+    ]
+    expected_sorted = sorted(values)
+
+    arr = np.array(values, dtype="T")
+    assert np.sort(arr).tolist() == expected_sorted
+    assert arr[np.argsort(arr)].tolist() == expected_sorted
+    assert np.minimum(arr[:2], arr[1::-1]).tolist() == ["a\0b", "a\0b"]
+    assert np.maximum(arr[:2], arr[1::-1]).tolist() == ["a\0c", "a\0c"]
+
+    haystack = np.array(expected_sorted, dtype="T")
+    needles = ["\0b", "a\0c", "long prefix\0b"]
+    expected = [bisect.bisect_left(expected_sorted, needle) for needle in needles]
+    result = np.searchsorted(haystack, np.array(needles, dtype="T"))
+    assert result.tolist() == expected
+
+
+@pytest.mark.parametrize("dtype", [object, "U20", "S20", "V20"])
+def test_embedded_null_string_like_casts(dtype):
+    strings = ["a\0b", "\0leading", "multi\0null\0inside"]
+    arr = np.array(strings, dtype="T")
+    roundtripped = arr.astype(dtype).astype("T")
+
+    assert roundtripped.tolist() == strings
+
+
 def test_string_too_large_error():
     arr = np.array(["a", "b", "c"], dtype=StringDType())
     with pytest.raises(OverflowError):
@@ -315,6 +372,30 @@ def test_additional_unicode_cast(dtype):
     assert_array_equal(arr, arr.astype(arr.dtype))
     # tests the casts via the comparison promoter
     assert_array_equal(arr, arr.astype(string_list.dtype))
+
+
+@pytest.mark.parametrize(
+    "dtype",
+    [
+        "int64",
+        "float16",
+        "float32",
+        "float64",
+        "longdouble",
+        "complex64",
+        "complex128",
+        "clongdouble",
+    ],
+)
+@pytest.mark.parametrize(
+    "invalid",
+    ["", "spam", "1abc", "1.0abc", "\0", "1\0", "1\0abc"],
+)
+def test_invalid_numeric_casts_error(dtype, invalid):
+    arr = np.array([invalid], dtype="T")
+
+    with pytest.raises(ValueError):
+        arr.astype(dtype)
 
 
 def test_insert_scalar(dtype, string_list):
@@ -836,6 +917,19 @@ def test_cfloat_casts(typename):
     res = sres.astype(typename)
     assert_array_equal(np.array(inp, dtype=typename), res)
     assert sres[0] == "(0.1+0.1j)"
+
+
+@pytest.mark.parametrize("typename", ["csingle", "cdouble", "clongdouble"])
+def test_string_to_cfloat_cast_distinct_components(typename):
+    inp = np.array(
+        ["1.25+0.5j", "2.75-3.5j", "-3.125+4.25j", "27000-8j"],
+        dtype="T",
+    )
+    expected = np.array(
+        [1.25 + 0.5j, 2.75 - 3.5j, -3.125 + 4.25j, 2.7e4 - 8j],
+        dtype=typename,
+    )
+    assert_array_equal(inp.astype(typename), expected)
 
 
 def test_take(string_list):
@@ -1577,6 +1671,33 @@ def test_replace_non_default_repeat(count):
     assert_array_equal(result, np.array(["🐍--", "🦜†🦜†"], "T"))
 
 
+def test_trailing_null_is_not_padding():
+    arr = np.array(["x\0", "\0", "x\0y\0", "abc"], dtype=StringDType())
+    nul = np.array("\0", dtype=StringDType())
+
+    assert_array_equal(np.strings.str_len(arr), [2, 1, 4, 3])
+    assert_array_equal(np.strings.find(arr, nul), [1, 0, 1, -1])
+    assert_array_equal(np.strings.rfind(arr, nul), [1, 0, 3, -1])
+    assert_array_equal(np.strings.count(arr, nul), [1, 1, 2, 0])
+    assert_array_equal(np.strings.endswith(arr, nul),
+                       [True, True, True, False])
+    assert_array_equal(np.strings.slice(arr, -1, None),
+                       np.array(["\0", "\0", "\0", "c"],
+                                dtype=StringDType()))
+
+
+def test_trailing_null_is_not_stripped_as_whitespace():
+    arr = np.array(["x\0", "\0 ", " \0", "x\0 \t"],
+                   dtype=StringDType())
+
+    assert_array_equal(
+            np.strings.rstrip(arr),
+            np.array(["x\0", "\0", " \0", "x\0"], dtype=StringDType()))
+    assert_array_equal(
+            np.strings.strip(arr),
+            np.array(["x\0", "\0", "\0", "x\0"], dtype=StringDType()))
+
+
 def test_strip_ljust_rjust_consistency(string_array, unicode_array):
     rjs = np.char.rjust(string_array, 1000)
     rju = np.char.rjust(unicode_array, 1000)
@@ -1869,3 +1990,405 @@ class TestImplementation:
         assert_array_equal(c, self.a)
         assert_array_equal(self.in_arena(c), False)
         assert_array_equal(self.is_on_heap(c), self.in_arena(self.a))
+
+
+# Tests for operations that mix several StringDType arrays. Independently
+# created arrays always have distinct descriptor instances, each owning the
+# allocator and arena backing its strings; see _make_distinct_arena_arrays
+# for how the test data makes misdirected reads detectable.
+
+
+def _make_distinct_arena_arrays(n, prefix_a="A", prefix_b="B"):
+    """Make two arrays with distinct dtype instances and equal arena layouts.
+
+    All strings are longer than 15 bytes, so every entry lives in its
+    descriptor's arena. Lengths match between the two arrays but contents
+    differ, so an entry resolved through the wrong descriptor's arena reads
+    detectably wrong data.
+    """
+    a_list = [f"{prefix_a * 10}{i:06d}" for i in range(n)]
+    b_list = [f"{prefix_b * 10}{i:06d}" for i in range(n)]
+    a = np.array(a_list, dtype="T")
+    b = np.array(b_list, dtype="T")
+    assert a.dtype is not b.dtype
+    return a, b, np.array(a_list, dtype=object), np.array(b_list, dtype=object)
+
+
+@pytest.mark.parametrize("mode", ["raise", "wrap", "clip"])
+def test_put_distinct_allocators(mode):
+    a, b, a_obj, b_obj = _make_distinct_arena_arrays(100)
+    inds = np.arange(0, 100, 2)
+    np.put(a, inds, b[:50], mode=mode)
+    np.put(a_obj, inds, b_obj[:50], mode=mode)
+    assert_array_equal(a, a_obj)
+
+    # values must cycle when there are fewer of them than indices
+    np.put(a, inds, b[:3], mode=mode)
+    np.put(a_obj, inds, b_obj[:3], mode=mode)
+    assert_array_equal(a, a_obj)
+
+    # all-short-string destination, so its arena is empty
+    c = np.array(["x"] * 100, dtype="T")
+    np.put(c, inds, b[:50], mode=mode)
+    assert_array_equal(c[inds], b_obj[:50])
+    assert_array_equal(c[1::2], "x")
+
+    # a non-contiguous destination is written through a writeback copy
+    d, _, d_obj, _ = _make_distinct_arena_arrays(100, prefix_a="D")
+    np.put(d[::2], np.arange(50), b[:50], mode=mode)
+    np.put(d_obj[::2], np.arange(50), b_obj[:50], mode=mode)
+    assert_array_equal(d, d_obj)
+
+
+def test_putmask_distinct_allocators():
+    a, b, a_obj, b_obj = _make_distinct_arena_arrays(100)
+    mask = np.arange(100) % 3 == 0
+    np.putmask(a, mask, b)
+    np.putmask(a_obj, mask, b_obj)
+    assert_array_equal(a, a_obj)
+
+    # fewer values than mask entries exercises value cycling
+    np.putmask(a, ~mask, b[:7])
+    np.putmask(a_obj, ~mask, b_obj[:7])
+    assert_array_equal(a, a_obj)
+
+    # all-short-string destination, so its arena is empty
+    c = np.array(["x"] * 100, dtype="T")
+    np.putmask(c, mask, b)
+    assert_array_equal(c[mask], b_obj[mask])
+    assert_array_equal(c[~mask], "x")
+
+    # a non-contiguous destination is written through a writeback copy
+    d, _, d_obj, _ = _make_distinct_arena_arrays(100, prefix_a="D")
+    np.putmask(d[::2], mask[::2], b[:50])
+    np.putmask(d_obj[::2], mask[::2], b_obj[:50])
+    assert_array_equal(d, d_obj)
+
+
+def test_putmask_distinct_allocators_na(string_list):
+    dt_a = get_dtype(None)
+    dt_b = get_dtype(None)
+    a = np.array(string_list, dtype=dt_a)
+    b = np.array([None] + string_list[:0:-1], dtype=dt_b)
+    assert a.dtype is not b.dtype
+    mask = np.arange(len(string_list)) % 2 == 0
+    np.putmask(a, mask, b)
+    for i in range(len(string_list)):
+        if i == 0:
+            assert a[i] is None
+        elif mask[i]:
+            assert a[i] == string_list[-i]
+        else:
+            assert a[i] == string_list[i]
+
+
+@pytest.mark.parametrize("mode", ["raise", "wrap"])
+def test_choose_distinct_allocators(mode):
+    n = 100
+    idx = np.arange(n) % 2
+    # an all-short-string choice mixed with arena-string choices
+    c0 = np.array(["x"] * n, dtype="T")
+    c1, c2, c1_obj, c2_obj = _make_distinct_arena_arrays(n)
+    c0_obj = np.array(["x"] * n, dtype=object)
+
+    expected = np.choose(idx, [c0_obj, c1_obj], mode=mode)
+    assert_array_equal(np.choose(idx, [c0, c1], mode=mode), expected)
+
+    expected = np.choose(idx, [c1_obj, c2_obj], mode=mode)
+    assert_array_equal(np.choose(idx, [c1, c2], mode=mode), expected)
+
+    # out= with its own independently created instance
+    out = np.empty(n, dtype="T")
+    np.choose(idx, [c1, c2], mode=mode, out=out)
+    assert_array_equal(out, expected)
+
+
+def test_place_distinct_allocators():
+    a = np.array(["ab", "cd", "ef"], dtype="T")
+    np.place(a, [True, False, True], np.array(["xy", "zw"], dtype="T"))
+    assert_array_equal(a, ["xy", "cd", "zw"])
+
+    a, b, a_obj, b_obj = _make_distinct_arena_arrays(100)
+    mask = np.arange(100) % 3 == 0
+    # fewer values than selected entries exercises value cycling
+    np.place(a, mask, b[:7])
+    np.place(a_obj, mask, b_obj[:7])
+    assert_array_equal(a, a_obj)
+
+    # all-short-string destination, so its arena is empty
+    c = np.array(["x"] * 100, dtype="T")
+    np.place(c, mask, b)
+    assert_array_equal(c[mask], b_obj[: mask.sum()])
+    assert_array_equal(c[~mask], "x")
+
+
+def test_view_distinct_instance():
+    a = np.array(["a" * 20, "b" * 20], dtype="T")
+
+    assert_array_equal(a.view(a.dtype), a)
+
+    # a view through any other instance would attach an unrelated allocator,
+    # which the generalized reference-safety check rejects
+    with pytest.raises(TypeError, match="Cannot change data-type"):
+        a.view(StringDType())
+    with pytest.raises(TypeError, match="Cannot get/set field"):
+        a.getfield(StringDType())
+    with pytest.raises(TypeError, match="Cannot change data-type"):
+        with pytest.warns(DeprecationWarning, match="Setting the dtype"):
+            a.dtype = StringDType()
+
+    res = a.astype(StringDType())
+    assert res.dtype is not a.dtype
+    assert_array_equal(res, a)
+
+
+def test_concatenate_distinct_allocators():
+    a, b, a_obj, b_obj = _make_distinct_arena_arrays(50)
+    expected = np.concatenate([a_obj, b_obj])
+    assert_array_equal(np.concatenate([a, b]), expected)
+    assert_array_equal(np.concatenate([a, b], axis=None), expected)
+
+    out = np.empty(100, dtype="T")
+    np.concatenate([a, b], out=out)
+    assert_array_equal(out, expected)
+
+    assert_array_equal(np.stack([a, b]), np.stack([a_obj, b_obj]))
+    assert_array_equal(np.vstack([a, b]), np.vstack([a_obj, b_obj]))
+    assert_array_equal(np.hstack([a, b]), expected)
+
+
+def test_where_distinct_allocators():
+    a, b, a_obj, b_obj = _make_distinct_arena_arrays(101)
+    mask = np.arange(101) % 3 == 0
+    assert_array_equal(np.where(mask, a, b), np.where(mask, a_obj, b_obj))
+
+
+def test_indexing_ops_distinct_allocators():
+    a, b, a_obj, b_obj = _make_distinct_arena_arrays(60)
+    idx = np.array([5, 3, 50, 7] * 3)
+
+    out = np.empty(len(idx), dtype="T")
+    np.take(a, idx, out=out)
+    assert_array_equal(out, a_obj[idx])
+
+    assert_array_equal(np.tile(a[:5], 3), np.tile(a_obj[:5], 3))
+    assert_array_equal(np.roll(a, 7), np.roll(a_obj, 7))
+    assert_array_equal(np.repeat(a[:10], 3), np.repeat(a_obj[:10], 3))
+    assert_array_equal(np.delete(a, idx[:4]), np.delete(a_obj, idx[:4]))
+    assert_array_equal(
+        np.insert(a, 3, b[:4]), np.insert(a_obj, 3, b_obj[:4])
+    )
+    assert_array_equal(np.append(a, b), np.append(a_obj, b_obj))
+
+
+def test_setops_distinct_allocators():
+    vals = [f"{'v' * 16}{i:04d}" for i in range(90)]
+    a = np.array(vals[:60], dtype="T")
+    b = np.array(vals[30:], dtype="T")
+    assert a.dtype is not b.dtype
+    au = np.array(vals[:60], dtype="U20")
+    bu = np.array(vals[30:], dtype="U20")
+
+    assert_array_equal(np.isin(a, b), np.isin(au, bu))
+    assert_array_equal(np.union1d(a, b), np.union1d(au, bu))
+    assert_array_equal(np.intersect1d(a, b), np.intersect1d(au, bu))
+    assert_array_equal(np.setdiff1d(a, b), np.setdiff1d(au, bu))
+    assert_array_equal(np.setxor1d(a, b), np.setxor1d(au, bu))
+
+    # StringDType has hasobject set, so isin always takes the
+    # element-comparison loop and 'table' only supports integers
+    assert_array_equal(
+        np.isin(a, b, invert=True), np.isin(au, bu, invert=True)
+    )
+    assert_array_equal(np.isin(a, b[:4]), np.isin(au, bu[:4]))
+    with pytest.raises(ValueError, match="table"):
+        np.isin(a, b, kind="table")
+
+    assert_array_equal(
+        np.intersect1d(a, b, assume_unique=True),
+        np.intersect1d(au, bu, assume_unique=True),
+    )
+
+    # duplicated entries exercise the sort-based unique path that
+    # return_indices uses internally
+    a_dup = np.array((vals[:40] * 2)[::-1], dtype="T")
+    b_dup = np.array(vals[20:] + vals[60:], dtype="T")
+    res = np.intersect1d(a_dup, b_dup, return_indices=True)
+    expected = np.intersect1d(
+        a_dup.astype("U20"), b_dup.astype("U20"), return_indices=True
+    )
+    for r, e in zip(res, expected):
+        assert_array_equal(r, e)
+
+
+def test_unique_arena_strings():
+    # _unique_hash has a dedicated StringDType loop
+    vals = [f"{'u' * 16}{i % 7:04d}" for i in range(50)] + ["ab", "ab", ""]
+    arr = np.array(vals, dtype="T")
+    arr_u = arr.astype("U20")
+    assert_array_equal(np.unique(arr), np.unique(arr_u))
+    assert_array_equal(np.sort(np.unique_values(arr)), np.unique(arr_u))
+
+    # index/inverse/counts go through the sort-based path
+    res = np.unique(
+        arr, return_index=True, return_inverse=True, return_counts=True
+    )
+    expected = np.unique(
+        arr_u, return_index=True, return_inverse=True, return_counts=True
+    )
+    for r, e in zip(res, expected):
+        assert_array_equal(r, e)
+
+
+def test_lexsort_distinct_allocators():
+    n = 40
+    # ties in the primary key so the secondary key matters
+    prim = np.array([f"{'p' * 20}{i % 5:03d}" for i in range(n)], dtype="T")
+    sec = np.array(
+        [f"{'s' * 20}{(7 * i) % n:03d}" for i in range(n)], dtype="T"
+    )
+    assert prim.dtype is not sec.dtype
+    expected = np.lexsort((sec.astype("U30"), prim.astype("U30")))
+    assert_array_equal(np.lexsort((sec, prim)), expected)
+
+
+def test_strings_ufuncs_distinct_allocators():
+    n = 50
+    a_list = [f"{'AB' * 10}{i:06d}" for i in range(n)]
+    # equal to a in every other entry, all arena strings
+    b_list = [s if i % 2 else s[:-1] + "Z" for i, s in enumerate(a_list)]
+    a = np.array(a_list, dtype="T")
+    b = np.array(b_list, dtype="T")
+    assert a.dtype is not b.dtype
+    au = a.astype("U40")
+    bu = b.astype("U40")
+
+    expected = np.add(np.array(a_list, dtype=object),
+                      np.array(b_list, dtype=object))
+    assert_array_equal(np.add(a, b), expected)
+    out = np.empty(n, dtype="T")
+    np.add(a, b, out=out)
+    assert_array_equal(out, expected)
+
+    for op in [
+        np.equal, np.not_equal, np.less, np.less_equal, np.greater,
+        np.greater_equal,
+    ]:
+        assert_array_equal(op(a, b), op(au, bu))
+
+    # no fixed-width unicode loops for maximum/minimum, so use object
+    a_obj = np.array(a_list, dtype=object)
+    b_obj = np.array(b_list, dtype=object)
+    assert_array_equal(np.maximum(a, b), np.maximum(a_obj, b_obj))
+    assert_array_equal(np.minimum(a, b), np.minimum(a_obj, b_obj))
+    np.maximum(a, b, out=out)
+    assert_array_equal(out, np.maximum(a_obj, b_obj))
+
+    # needles long enough to live in the arena, found in half the entries
+    needles_list = [
+        a_list[i][:16] if i % 3 else "Z" * 16 for i in range(n)
+    ]
+    needles = np.array(needles_list, dtype="T")
+    needles_u = needles.astype("U20")
+    for func in [
+        np.strings.find, np.strings.count, np.strings.startswith,
+        np.strings.endswith,
+    ]:
+        assert_array_equal(func(a, needles), func(au, needles_u))
+
+    # three distinct instances feeding one ufunc
+    old = np.array(["AB" * 8] * n, dtype="T")
+    new = np.array(["xy" * 9] * n, dtype="T")
+    assert_array_equal(
+        np.strings.replace(a, old, new),
+        np.strings.replace(au, old.astype("U16"), new.astype("U18")),
+    )
+
+    chars = np.array(["BA0123456789" + "C" * 8] * n, dtype="T")
+    assert_array_equal(
+        np.strings.strip(a, chars), np.strings.strip(au, chars.astype("U20"))
+    )
+
+    sep = np.array(["AB" * 8] * n, dtype="T")
+    for part, part_u in zip(
+        np.strings.partition(a, sep),
+        np.strings.partition(au, sep.astype("U16")),
+    ):
+        assert_array_equal(part, part_u)
+
+
+def test_assignment_distinct_allocators():
+    a, b, a_obj, b_obj = _make_distinct_arena_arrays(40)
+    mask = np.arange(40) % 4 == 0
+
+    a[mask] = b[mask]
+    a_obj[mask] = b_obj[mask]
+    assert_array_equal(a, a_obj)
+
+    idx = np.array([1, 2, 3])
+    a[idx] = b[:3]
+    a_obj[idx] = b_obj[:3]
+    assert_array_equal(a, a_obj)
+
+    np.copyto(a, b, where=~mask)
+    np.copyto(a_obj, b_obj, where=~mask)
+    assert_array_equal(a, a_obj)
+
+    res = np.select([mask, ~mask], [a, b], default="d" * 20)
+    expected = np.select([mask, ~mask], [a_obj, b_obj], default="d" * 20)
+    assert_array_equal(res, expected)
+
+
+def test_ufunc_at_distinct_allocators():
+    a, b, a_obj, b_obj = _make_distinct_arena_arrays(10)
+    idx = np.array([0, 3, 3, 7])
+
+    np.maximum.at(a, idx, b[:4])
+    np.maximum.at(a_obj, idx, b_obj[:4])
+    assert_array_equal(a, a_obj)
+
+    c, d, c_obj, d_obj = _make_distinct_arena_arrays(10, "C", "D")
+    np.add.at(c, idx, d[:4])
+    np.add.at(c_obj, idx, d_obj[:4])
+    assert_array_equal(c, c_obj)
+
+
+def test_flatiter_subscript_distinct_allocators():
+    a, _, a_obj, _ = _make_distinct_arena_arrays(20)
+
+    assert_array_equal(np.array(a.flat[:1]), a_obj[:1])
+
+    for index in [
+        slice(None, 1), slice(1, None), slice(None, None, 3),
+        np.array([3, 0, 17]),
+        np.arange(20) % 3 == 0,
+    ]:
+        res = a.flat[index]
+        expected = a_obj[index]
+        assert_array_equal(res, expected)
+        # element reads resolve through res's own descriptor
+        for i in range(len(expected)):
+            assert res[i] == expected[i]
+
+    assert a.flat[3] == a_obj[3]
+    assert_array_equal(np.array(a.flat), a_obj)
+    assert_array_equal(a.flat.copy(), a_obj)
+
+
+def test_flat_assignment_distinct_allocators():
+    a, b, a_obj, b_obj = _make_distinct_arena_arrays(20)
+    b.flat = a
+    b_obj.flat = a_obj
+    assert_array_equal(b, b_obj)
+
+    # fewer values than elements exercises value cycling
+    c, _, c_obj, _ = _make_distinct_arena_arrays(20, prefix_a="C")
+    c.flat = a[:3]
+    c_obj.flat = a_obj[:3]
+    assert_array_equal(c, c_obj)
+
+    # short (inline) values into an arena-string destination
+    d, _, d_obj, _ = _make_distinct_arena_arrays(20, prefix_a="D")
+    d.flat = ["xy"]
+    d_obj.flat = ["xy"]
+    assert_array_equal(d, d_obj)
