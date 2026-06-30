@@ -44,7 +44,7 @@ __all__ = [
     "IS_64BIT",
     "HAS_LAPACK64",
     "HAS_REFCOUNT",
-    "HAS_SUBPROCESS",
+    "HAS_SUBPROCESSES",
     "BLAS_SUPPORTS_FPE",
     "NOGIL_BUILD",
     "NUMPY_ROOT",

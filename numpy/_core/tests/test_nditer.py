@@ -14,7 +14,6 @@ from numpy.testing import (
     HAS_REFCOUNT,
     HAS_SUBPROCESSES,
     IS_64BIT,
-    IS_WASM,
     assert_,
     assert_array_equal,
     assert_equal,
