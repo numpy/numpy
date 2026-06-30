@@ -17,10 +17,9 @@
 #include <numpy/npy_common.h>
 #include <numpy/arrayobject.h>
 
-#include <array_assign.h>   //PyArray_AssignRawScalar
-
 #include <ctype.h>
 extern "C" {
+#include <array_assign.h>   //PyArray_AssignRawScalar
 #include "convert.h"
 #include "common.h"
 #include "ctors.h"
@@ -1055,10 +1054,28 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         goto fail;
     }
 
-    /* Initialize the output to all zeros or None*/
+    /*
+     * Initialize the output: zeros for numeric loops, but None when the
+     * sum-of-products itself runs in object dtype. Object dtype has no universal
+     * additive zero — a hard int 0 made `0 + element` raise TypeError for
+     * str/list/etc. (gh-29200). None is a "no value yet" sentinel the object loop
+     * replaces with the first contribution. The decision keys on the LOOP dtype,
+     * not the output array's: `einsum(..., dtype='f8', out=object_array)` reduces
+     * in f8 and must still seed 0 (else the f8 buffer casts None to nan).
+     */
     ret = NpyIter_GetOperandArray(iter)[nop];
-    if (PyArray_AssignZero(ret, NULL) < 0) {
-        goto fail;
+    {
+        PyArray_Descr *loop_dtype = NpyIter_GetDescrArray(iter)[nop];
+        if (loop_dtype->type_num == NPY_OBJECT && PyArray_ISOBJECT(ret)) {
+            PyObject *none = Py_None;
+            if (PyArray_AssignRawScalar(ret, PyArray_DESCR(ret), (char *)&none,
+                                        NULL, NPY_SAFE_CASTING) < 0) {
+                goto fail;
+            }
+        }
+        else if (PyArray_AssignZero(ret, NULL) < 0) {
+            goto fail;
+        }
     }
 
     /***************************/
@@ -1161,6 +1178,22 @@ finish:
         ret = out;
     }
     Py_INCREF(ret);
+
+    /*
+     * An empty object reduction (a contracted axis of size 0, so the whole
+     * iteration is empty) never reaches the sum-of-products and keeps its None
+     * identity. Collapse that to 0 so empty object sums match np.dot/np.sum
+     * (gh-29200). einsum contracts the same axes for every output element, so a
+     * zero iteration size means ALL outputs are empty — never the data-None case,
+     * where the loop ran (iter size > 0) and already used real contributions.
+     */
+    if (PyArray_ISOBJECT(ret) && PyArray_SIZE(ret) > 0
+            && NpyIter_GetIterSize(iter) == 0) {
+        if (PyArray_AssignZero(ret, NULL) < 0) {
+            Py_DECREF(ret);
+            goto fail;
+        }
+    }
 
     NpyIter_Deallocate(iter);
     for (iop = 0; iop < nop; ++iop) {

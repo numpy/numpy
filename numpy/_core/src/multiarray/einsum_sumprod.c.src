@@ -1062,7 +1062,20 @@ static void
             }
         }
 
-        PyObject *sum = PyNumber_Add(*(PyObject **)dataptr[nop], prod);
+        PyObject *accum = *(PyObject **)dataptr[nop];
+        PyObject *sum;
+        if (accum == NULL || accum == Py_None) {
+            /*
+             * Identity element for object reductions: the first contribution
+             * wins instead of being forced through `0 + prod`, so str/list/etc.
+             * object elements reduce correctly (gh-29200).
+             */
+            sum = prod;
+            Py_INCREF(sum);
+        }
+        else {
+            sum = PyNumber_Add(accum, prod);
+        }
         Py_DECREF(prod);
         if (!sum) {
             return;

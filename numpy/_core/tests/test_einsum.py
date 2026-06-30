@@ -724,6 +724,29 @@ class TestEinsum:
         self.check_einsum_sums('object')
         self.check_einsum_sums('object', True)
 
+    def test_einsum_object_dtype_non_numeric(self):
+        # gh-29200: object-dtype reductions must use each element's own additive
+        # identity, not a hard int 0 -- which made `0 + element` raise TypeError
+        # for str/list/etc. object elements.
+        a = np.arange(1, 9).reshape(2, 2, 2)
+        A = np.array(('a', 'b', 'c', 'd'), dtype=object).reshape(2, 2)
+        # einsum must agree with tensordot, which already handles object dtype
+        assert_equal(np.einsum('ijk,jk->i', a, A), np.tensordot(a, A))
+        # a plain string-concatenation reduction
+        assert_equal(np.einsum('i->', np.array(['x', 'y', 'z'], dtype=object)),
+                     'xyz')
+        # numeric object reductions are unchanged
+        assert_equal(np.einsum('ijk,jk->i', a,
+                               np.array([[1, 10], [100, 1000]], dtype=object)),
+                     np.array([4321, 8765], dtype=object))
+        # out= is fully reinitialized, not used as an accumulator seed
+        out = np.array(['', ''], dtype=object)
+        np.einsum('ijk,jk->i', a, A, out=out)
+        assert_equal(out, np.tensordot(a, A))
+        # an empty object reduction yields the additive identity 0 (as np.sum/dot)
+        empty = np.array([], dtype=object)
+        assert_equal(np.einsum('i,i', empty, empty), 0)
+
     def test_einsum_misc(self):
         # This call used to crash because of a bug in
         # PyArray_AssignZero
