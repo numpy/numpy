@@ -217,12 +217,12 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     return _wrapfunc(a, 'take', indices, axis=axis, out=out, mode=mode)
 
 
-def _top_k_dispatcher(a, k, /, *, axis=-1, largest=True, sorted=True):
+def _top_k_dispatcher(a, k, /, *, axis=-1, mode="largest", sorted=True):
     return (a,)
 
 
 @array_function_dispatch(_top_k_dispatcher)
-def top_k(a, k, /, *, axis=-1, largest=True, sorted=True):
+def top_k(a, k, /, *, axis=-1, mode="largest", sorted=True):
     """
     Returns the ``k`` largest or smallest elements and their indices
     indices along an axis.
@@ -245,13 +245,13 @@ def top_k(a, k, /, *, axis=-1, largest=True, sorted=True):
         Axis along which to find the largest/smallest elements.
         The default is -1 (the last axis).
         If None, a flattened array is used.
-    largest: bool, optional
-        If True, the largest elements are returned. If False,
-        the smallest elements are returned. The default is True.
+    mode: {"largest", "smallest"}, optional
+        If "largest", the largest elements are returned. If "smallest",
+        the smallest elements are returned. The default is "largest".
 
         Similarly to sorts, NaN values are pushed to the end and
         therefore only present in the output if they are among the
-        top ``k`` values.
+        top ``k`` values, regardless of the value of ``mode``.
     sorted: bool, optional
         If True, the top ``k`` elements are returned in sorted order.
         If False, sorted order is not guaranteed. The default is True.
@@ -291,7 +291,7 @@ def top_k(a, k, /, *, axis=-1, largest=True, sorted=True):
            [1, 2, 3, 2, 1]]),
      array([[1, 1, 0, 0, 0],
            [0, 0, 1, 1, 1]]))
-    >>> np.top_k(a, 2, axis=1, largest=False)
+    >>> np.top_k(a, 2, axis=1, mode="smallest")
     (array([[1, 2],
             [1, 2]]),
      array([[0, 1],
@@ -302,10 +302,11 @@ def top_k(a, k, /, *, axis=-1, largest=True, sorted=True):
     if k <= 0:
         raise ValueError(f'k(={k}) provided must be positive.')
 
+    if mode not in ["largest", "smallest"]:
+        raise ValueError(f'mode(="{mode}") must be either "largest" or "smallest".')
+    largest = mode == "largest"
+
     arr = np.asanyarray(a)
-    if axis is None:
-        arr = arr.ravel()
-        axis = 0
     axis = normalize_axis_index(axis, arr.ndim)
 
     indices = np.argpartition(arr, k - 1, axis=axis, descending=largest)
