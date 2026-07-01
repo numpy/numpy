@@ -57,7 +57,6 @@ if py.get_variable('Py_GIL_DISABLED', 0) == 0
             c_args: [
               '-DNPY_NO_DEPRECATED_API=0',
               '-DNPY_TARGET_VERSION=' + npy_macro,
-              '-DCYTHON_LIMITED_API=1',
             ],
             include_directories: [npy_include_path],
             limited_api: py_ver,
