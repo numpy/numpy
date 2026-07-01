@@ -7714,6 +7714,13 @@ class TestVdot:
             assert_equal(np.vdot(a, b.copy('F')),
                          np.vdot(a.flatten(), b.flatten()))
 
+    def test_vdot_object_empty_is_zero(self):
+        x = np.empty((0,), dtype=object)
+        assert np.vdot(x, x) == 0
+
+        x2 = np.empty((1, 0), dtype=object)
+        assert_array_equal(np.vdot(x2, x2), np.array([0], dtype=object))
+
 
 class TestDot:
     N = 7
