@@ -1219,6 +1219,68 @@ def tensordot(a, b, axes=2):
     return res.reshape(olda + oldb)
 
 
+def _dot_result_shape(a, b):
+    if a.ndim == 0 or b.ndim == 0:
+        return np.broadcast_shapes(a.shape, b.shape)
+    if b.ndim == 1:
+        return a.shape[:-1]
+    return a.shape[:-1] + b.shape[:-2] + b.shape[-1:]
+
+
+def _dot_check_out(out, shape, dtype):
+    if out.shape != tuple(shape):
+        raise ValueError("output array has wrong dimensions")
+    if out.dtype != dtype or not out.flags["C_CONTIGUOUS"]:
+        raise ValueError(
+            "output array is not acceptable (must have the right datatype, "
+            "number of dimensions, and be a C-Array)"
+        )
+
+
+def _dot_contract(a, b, axis_a, axis_b, out=None):
+    notin_a = [k for k in range(a.ndim) if k != axis_a]
+    notin_b = [k for k in range(b.ndim) if k != axis_b]
+    n = a.shape[axis_a]
+    m = math.prod(a.shape[ax] for ax in notin_a)
+    p = math.prod(b.shape[ax] for ax in notin_b)
+    at = a.transpose(notin_a + [axis_a]).reshape(m, n)
+    bt = b.transpose([axis_b] + notin_b).reshape(n, p)
+    if out is not None:
+        np.matmul(at, bt, out=out.reshape(m, p))
+        return out
+    res = np.matmul(at, bt)
+    return res.reshape([a.shape[ax] for ax in notin_a]
+                       + [b.shape[ax] for ax in notin_b])
+
+
+def _dot_fallback(a, b, out=None):
+    """``dot`` via ``matmul``/``multiply`` for dtypes without a legacy dotfunc."""
+    a = np.asarray(a)
+    b = np.asarray(b)
+    res_dtype = np.result_type(a.dtype, b.dtype)
+    res_shape = _dot_result_shape(a, b)
+    if out is not None:
+        _dot_check_out(out, res_shape, res_dtype)
+    if a.ndim == 0 or b.ndim == 0:
+        res = asarray(np.multiply(a, b), order='C')
+    elif a.shape[-1] == 0 or 0 in res_shape:
+        res = np.zeros(res_shape, dtype=res_dtype)
+    elif a.ndim == 1 and b.ndim == 1:
+        return np.matmul(a, b, out=out)
+    elif b.ndim == 1:
+        return _dot_contract(a, b, a.ndim - 1, 0, out)
+    else:
+        return _dot_contract(a, b, a.ndim - 1, b.ndim - 2, out)
+    if out is not None:
+        out[...] = res
+        return out
+    return res
+
+
+def _vdot_fallback(a, b):
+    return np.vecdot(np.asarray(a).ravel(), np.asarray(b).ravel())
+
+
 def _roll_dispatcher(a, shift, axis=None):
     return (a,)
 
