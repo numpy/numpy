@@ -39,6 +39,7 @@ from numpy.lib.recfunctions import repack_fields
 from numpy.testing import (
     BLAS_SUPPORTS_FPE,
     HAS_REFCOUNT,
+    HAS_SUBPROCESSES,
     IS_64BIT,
     IS_WASM,
     assert_,
@@ -7003,7 +7004,9 @@ class TestResize:
         y = x
         assert_raises(ValueError, x.resize, (5, 1))
 
-    @pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
+    @pytest.mark.skipif(
+        not HAS_SUBPROCESSES, reason="platform cannot start subprocesses"
+    )
     def test_check_reference_module_scope(self):
         code = textwrap.dedent("""
             import numpy as np
