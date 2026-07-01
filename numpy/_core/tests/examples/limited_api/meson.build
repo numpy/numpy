@@ -29,21 +29,15 @@ npy_path = run_command(py, [
 add_project_arguments('-I', npy_path, language : 'cython')
 
 py_limited_api_versions = ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14', '3.15']
-npy_target_versions = {
-  '2_0': 'NPY_2_0_API_VERSION',
-  '2_1': 'NPY_2_1_API_VERSION',
-  '2_2': 'NPY_2_2_API_VERSION',
-  '2_3': 'NPY_2_3_API_VERSION',
-  '2_4': 'NPY_2_4_API_VERSION',
-  '2_5': 'NPY_2_5_API_VERSION',
-}
+npy_target_versions = ['2.0', '2.1', '2.2', '2.3', '2.4', '2.5']
 
 if py.get_variable('Py_GIL_DISABLED', 0) == 0
   foreach py_ver : py_limited_api_versions
     # skip abi3 version higher than the current interpreter version
     if py.language_version().version_compare('>=' + py_ver)
-      foreach npy_key, npy_macro : npy_target_versions
-        modname = 'limited_api_' + py_ver.replace('.', '_') + '_npy' + npy_key
+      foreach npy_ver : npy_target_versions
+        modname = 'limited_api_' + py_ver.replace('.', '_') + '_npy' + npy_ver.replace('.', '_')
+        npy_macro = 'NPY_' + npy_ver.replace('.', '_') + '_API_VERSION'
         py.extension_module(
             modname,
             'limited_api.c',
@@ -54,7 +48,7 @@ if py.get_variable('Py_GIL_DISABLED', 0) == 0
             include_directories: [npy_include_path],
             limited_api: py_ver,
         )
-        modname = 'limited_api_cython_' + py_ver.replace('.', '_') + '_npy' + npy_key
+        modname = 'limited_api_cython_' + py_ver.replace('.', '_') + '_npy' + npy_ver.replace('.', '_')
         py.extension_module(
             modname,
             'limited_api_cython.pyx',

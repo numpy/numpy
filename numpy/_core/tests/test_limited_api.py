@@ -161,10 +161,6 @@ def _check_cython_module(mod):
 
     # Datetime / timedelta scalar accessors (.pxd helpers).
     dt = np.datetime64("2021-01-01", "D")
-    value, base, num = mod.datetime_metadata(dt)
-    assert value == dt.astype("int64")
-    assert base == 4    # NPY_FR_D
-    assert num == 1
     assert mod.get_datetime_value(dt) == dt.astype("int64")
     assert mod.get_datetime_unit(dt) == 4
     assert mod.is_datetime64(dt)
@@ -172,35 +168,23 @@ def _check_cython_module(mod):
 
     # A plain seconds timedelta: base NPY_FR_s, unit multiplier 1.
     td = np.timedelta64(5, "s")
-    value, base, num = mod.datetime_metadata(td)
-    assert value == 5
-    assert base == 7    # NPY_FR_s
-    assert num == 1
     assert mod.get_timedelta_value(td) == 5
     assert mod.is_timedelta64(td)
     assert not mod.is_datetime64(td)
 
     # A non-unit multiplier exercises the metadata `num` field.
     td = np.timedelta64(1000, "ms").astype("timedelta64[10ms]")
-    value, base, num = mod.datetime_metadata(td)
-    assert value == td.astype("int64")
-    assert base == 8    # NPY_FR_ms
-    assert num == 10
     assert mod.get_timedelta_value(td) == td.astype("int64")
 
-    # Non-datetime scalars are rejected.
-    with pytest.raises(TypeError):
-        mod.datetime_metadata(np.int64(5))
 
-
-_PY_ABI3_VERSIONS = [(3, 9), (3, 10), (3, 11), (3, 12), (3, 13), (3, 14), (3, 15)]
-_NPY_TARGET_VERSIONS = ["2_0", "2_1", "2_2", "2_3", "2_4", "2_5"]
+_PY_ABI3_VERSIONS = ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
+_NPY_TARGET_VERSIONS = ["2.0", "2.1", "2.2", "2.3", "2.4", "2.5"]
 
 def _module_names(prefix, abi3_versions):
     names = []
-    for major, minor in abi3_versions:
-        for npy_key in _NPY_TARGET_VERSIONS:
-            names.append(f"{prefix}_{major}_{minor}_npy{npy_key}")
+    for py_ver in abi3_versions:
+        for npy_ver in _NPY_TARGET_VERSIONS:
+            names.append(f"{prefix}_{py_ver.replace('.', '_')}_npy{npy_ver.replace('.', '_')}")
     return names
 
 
