@@ -727,46 +727,58 @@ def matrix_transpose(x, /):
     return swapaxes(x, -1, -2)
 
 
-def _partition_dispatcher(a, kth, axis=None, kind=None, order=None):
+def _partition_dispatcher(a, kth, axis=None, kind=None, order=None, descending=None):
     return (a,)
 
 
 @array_function_dispatch(_partition_dispatcher)
-def partition(a, kth, axis=-1, kind='introselect', order=None):
+def partition(a, kth, axis=-1, kind=np._NoValue, order=None, descending=np._NoValue):
     """
     Return a partitioned copy of an array.
 
     Creates a copy of the array and partially sorts it in such a way that
-    the value of the element in k-th position is in the position it would be
-    in a sorted array. In the output array, all elements smaller than the k-th
-    element are located to the left of this element and all equal or greater
-    are located to its right. The ordering of the elements in the two
-    partitions on the either side of the k-th element in the output array is
-    undefined.
+    the value of the element in the k-th position is in the position it would be
+    in a sorted array. In the output array, all elements that would be to the left
+    of the k-th element in a sorted array are located to the left of this element and
+    all that would be to the right are located to its right. The ordering of the
+    elements in the two partitions on the either side of the k-th element in the
+    output array is undefined.
 
     Parameters
     ----------
     a : array_like
         Array to be sorted.
     kth : int or sequence of ints
-        Element index to partition by. The k-th value of the element
-        will be in its final sorted position and all smaller elements
-        will be moved before it and all equal or greater elements behind
-        it. The order of all elements in the partitions is undefined. If
+        Element index to partition by. In the returned array, the k-th
+        value of the array will be in the position it would be in a
+        sorted array, all elements that are less than this element (or
+        greater if `descending` is True) will be moved before it, and
+        all elements that are greater than or equal to this element
+        (or less than or equal if `descending` is True) will be moved after it.
+        The order of all elements within each partition is undefined. If
         provided with a sequence of k-th it will partition all elements
-        indexed by k-th  of them into their sorted position at once.
+        indexed by k-th of them into their sorted position at once.
 
     axis : int or None, optional
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
     kind : {'introselect'}, optional
-        Selection algorithm. Default is 'introselect'.
+        NumPy currently offers only one selection algorithm, 'introselect',
+        and this parameter provides no additional functionality. Default
+        is ``None``.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument
         specifies which fields to compare first, second, etc.  A single
         field can be specified as a string.  Not all fields need be
         specified, but unspecified fields will still be used, in the
         order in which they come up in the dtype, to break ties.
+    descending : bool, optional
+        Sort order. If ``True``, the array will be partitioned in
+        descending order. If ``False`` or ``None``, the array will be
+        partitioned in ascending order. Values that are NaN are partitioned
+        towards the end of the array regardless of order. Default: ``None``.
+
+        .. versionadded:: 2.6.0
 
     Returns
     -------
@@ -803,7 +815,8 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     the real parts except when they are equal, in which case the order
     is determined by the imaginary parts.
 
-    The sort order of ``np.nan`` is bigger than ``np.inf``.
+    Regardless of sort order, `np.nan` is partitioned to the right of
+    any other value.
 
     Examples
     --------
@@ -839,16 +852,24 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
         axis = -1
     else:
         a = asanyarray(a).copy(order="K")
-    a.partition(kth, axis=axis, kind=kind, order=order)
+
+    # Sanitize for backward compatibility
+    kwargs = {}
+    if descending is not np._NoValue:
+        kwargs['descending'] = descending
+    if kind is not np._NoValue:
+        kwargs['kind'] = kind
+
+    a.partition(kth, axis=axis, order=order, **kwargs)
     return a
 
 
-def _argpartition_dispatcher(a, kth, axis=None, kind=None, order=None):
+def _argpartition_dispatcher(a, kth, axis=None, kind=None, order=None, descending=None):
     return (a,)
 
 
 @array_function_dispatch(_argpartition_dispatcher)
-def argpartition(a, kth, axis=-1, kind='introselect', order=None):
+def argpartition(a, kth, axis=-1, kind=np._NoValue, order=None, descending=np._NoValue):
     """
     Perform an indirect partition along the given axis using the
     algorithm specified by the `kind` keyword. It returns an array of
@@ -860,24 +881,36 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     a : array_like
         Array to sort.
     kth : int or sequence of ints
-        Element index to partition by. The k-th element will be in its
-        final sorted position and all smaller elements will be moved
-        before it and all larger elements behind it. The order of all
-        elements in the partitions is undefined. If provided with a
-        sequence of k-th it will partition all of them into their sorted
-        position at once.
+        Element index to partition by. In the returned array, the k-th
+        value of the array will be in the position it would be in a
+        sorted array, all elements that are less than this element (or
+        greater if `descending` is True) will be moved before it, and
+        all elements that are greater than or equal to this element
+        (or less than or equal if `descending` is True) will be moved after it.
+        The order of all elements within each partition is undefined. If
+        provided with a sequence of k-th it will partition all elements
+        indexed by k-th of them into their sorted position at once.
 
     axis : int or None, optional
         Axis along which to sort. The default is -1 (the last axis). If
         None, the flattened array is used.
     kind : {'introselect'}, optional
-        Selection algorithm. Default is 'introselect'
+        NumPy currently offers only one selection algorithm, 'introselect',
+        and this parameter provides no additional functionality. Default
+        is ``None``.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument
         specifies which fields to compare first, second, etc. A single
         field can be specified as a string, and not all fields need be
         specified, but unspecified fields will still be used, in the
         order in which they come up in the dtype, to break ties.
+    descending : bool, optional
+        Sort order. If ``True``, the array will be partitioned in
+        descending order. If ``False`` or ``None``, the array will be
+        partitioned in ascending order. Values that are NaN are partitioned
+        towards the end of the array regardless of order. Default: ``None``.
+
+        .. versionadded:: 2.6.0
 
     Returns
     -------
@@ -931,7 +964,14 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
            [1, 1, 3]])
 
     """
-    return _wrapfunc(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
+    # Sanitize for backward compatibility
+    kwargs = {}
+    if descending is not np._NoValue:
+        kwargs['descending'] = descending
+    if kind is not np._NoValue:
+        kwargs['kind'] = kind
+
+    return _wrapfunc(a, "argpartition", kth, axis=axis, order=order, **kwargs)
 
 
 def _sort_dispatcher(

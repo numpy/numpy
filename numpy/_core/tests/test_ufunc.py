@@ -1791,7 +1791,7 @@ class TestUfunc:
         a = a[1:, 1:, 1:]
         yield a
 
-    @pytest.mark.parametrize("arrs", identityless_reduce_arrs())
+    @pytest.mark.parametrize("arrs", list(identityless_reduce_arrs()))
     @pytest.mark.parametrize("pos", [(1, 0, 0), (0, 1, 0), (0, 0, 1)])
     def test_identityless_reduction(self, arrs, pos):
         # np.minimum.reduce is an identityless reduction
@@ -2731,6 +2731,18 @@ class TestUfunc:
             np.add.reduceat(arr, [0, 3], out=out)
 
         with pytest.raises(ValueError, match="(shape|size)"):
+            np.add.accumulate(arr, out=out)
+
+    def test_reduceat_and_accumulate_out_dtype_resolution_failure(self):
+        # gh-31691: the out= error path leaked a reference to out when the
+        # ufunc dtype resolution failed (no matching loop for the out dtype).
+        arr = np.arange(3)
+        out = np.empty(3, dtype="U5")  # no add loop resolves to this
+
+        with pytest.raises(np._core._exceptions._UFuncNoLoopError):
+            np.add.reduceat(arr, [0, 1, 2], out=out)
+
+        with pytest.raises(np._core._exceptions._UFuncNoLoopError):
             np.add.accumulate(arr, out=out)
 
     @pytest.mark.parametrize('out_shape',

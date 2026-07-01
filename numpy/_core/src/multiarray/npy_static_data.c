@@ -188,8 +188,13 @@ initialize_static_globals(void)
         return -1;
     }
 
-    npy_static_pydata.kwnames_is_copy =
-            Py_BuildValue("(O)", npy_interned_str.copy);
+    npy_static_pydata.legacy_resolver_promoting =
+            PyContextVar_New("numpy._legacy_resolver_promoting", Py_False);
+    if (npy_static_pydata.legacy_resolver_promoting == NULL) {
+        return -1;
+    }
+
+    npy_static_pydata.kwnames_is_copy = PyTuple_Pack(1, npy_interned_str.copy);
     if (npy_static_pydata.kwnames_is_copy == NULL) {
         return -1;
     }
@@ -205,9 +210,9 @@ initialize_static_globals(void)
     }
 
     npy_static_pydata.dl_call_kwnames =
-            Py_BuildValue("(OOO)", npy_interned_str.dl_device,
-                                   npy_interned_str.copy,
-                                   npy_interned_str.max_version);
+            PyTuple_Pack(3, npy_interned_str.dl_device,
+                            npy_interned_str.copy,
+                            npy_interned_str.max_version);
     if (npy_static_pydata.dl_call_kwnames == NULL) {
         return -1;
     }

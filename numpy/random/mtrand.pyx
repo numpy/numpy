@@ -3464,7 +3464,7 @@ cdef class RandomState:
         cdef double _dp = 0
         cdef np.npy_intp _in = 0
         cdef bint is_scalar = True
-        cdef np.npy_intp i, cnt
+        cdef np.npy_intp _i, i, cnt
         cdef np.ndarray randoms
         cdef long *randoms_data
         cdef np.broadcast it
@@ -3488,7 +3488,7 @@ cdef class RandomState:
             it = np.PyArray_MultiIterNew3(randoms, p_arr, n_arr)
             validate_output_shape(it.shape, randoms)
             with self.lock, nogil:
-                for i in range(cnt):
+                for _i in range(cnt):
                     _dp = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
                     _in = (<np.npy_intp*>np.PyArray_MultiIter_DATA(it, 2))[0]
                     (<long*>np.PyArray_MultiIter_DATA(it, 0))[0] = \
@@ -4365,7 +4365,7 @@ cdef class RandomState:
         ValueError: pvals < 0, pvals > 1 or pvals contains NaNs
 
         """
-        cdef np.npy_intp d, i, sz, offset, niter
+        cdef np.npy_intp d, _i, sz, offset, niter
         cdef np.ndarray parr, mnarr
         cdef double *pix
         cdef long *mnix
@@ -4411,7 +4411,7 @@ cdef class RandomState:
         # gh-20483: Avoids divide by 0
         niter = sz // d if d else 0
         with self.lock, nogil:
-            for i in range(niter):
+            for _i in range(niter):
                 legacy_random_multinomial(&self._bitgen, ni, &mnix[offset], pix, d, &self._binomial)
                 offset += d
 

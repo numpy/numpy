@@ -82,8 +82,7 @@ NpyString_newemptysize(size_t size, npy_packed_static_string *out,
 NPY_NO_EXPORT int
 NpyString_isnull(const npy_packed_static_string *in);
 
-// Compare two strings. Has the same semantics as if strcmp were passed
-// null-terminated C strings with the contents of *s1* and *s2*.
+// Compare two strings lexicographically using all bytes in *s1* and *s2*.
 NPY_NO_EXPORT int
 NpyString_cmp(const npy_static_string *s1, const npy_static_string *s2);
 

@@ -8,15 +8,15 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
     paths-ignore:
       - '**.pyi'
       - '**.md'
       - '**.rst'
       - 'tools/stubtest/**'
-  pull_request:
-    branches:
-      - main
-      - maintenance/**
   workflow_dispatch:
 
 concurrency:
@@ -43,13 +43,13 @@ jobs:
       CCACHE_COMPILERCHECK: "content"
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: true
           persist-credentials: false
 
       - name: Restore compilation cache
-        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: ccache-restore
         with:
           path: ${{ env.CCACHE_DIR }}
@@ -58,7 +58,7 @@ jobs:
             ccache-wheels-manylinux_riscv64-${{ matrix.python }}-
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
+        uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55  # v4.1.0
         env:
           CIBW_BUILD: ${{ matrix.python }}-manylinux_riscv64
           CIBW_BEFORE_ALL_LINUX: |
@@ -75,7 +75,7 @@ jobs:
 
       - name: Save compilation cache
         if: always() && github.ref == 'refs/heads/main'
-        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ccache-wheels-manylinux_riscv64-${{ matrix.python }}-${{ github.run_id }}

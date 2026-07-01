@@ -197,9 +197,14 @@ typedef enum {
 
 
 typedef enum {
-        NPY_INTROSELECT=0
+        _NPY_SELECT_UNDEFINED = -1,
+        NPY_INTROSELECT = 0,
+        // new style names
+        NPY_SELECT_DEFAULT = 0,
+        NPY_SELECT_STABLE = 2,
+        NPY_SELECT_DESCENDING = 4,
 } NPY_SELECTKIND;
-#define NPY_NSELECTS (NPY_INTROSELECT + 1)
+#define NPY_NSELECTS (NPY_SELECT_DESCENDING + 1)
 
 
 typedef enum {
@@ -1542,6 +1547,14 @@ typedef struct {
 #define _PyDataType_GET_ITEM_DATA(descr) ((PyArray_Descr_fields *)(descr))
 #undef _PyArray_LegacyDescr_GET_ITEM_DATA
 #define _PyArray_LegacyDescr_GET_ITEM_DATA(descr) ((_PyArray_LegacyDescr_fields *)(descr))
+#undef _PyDatetimeScalarObject_GetMetadata
+#define _PyDatetimeScalarObject_GetMetadata(self) ((PyDatetimeScalarObject *)self)->obmeta
+#undef _PyTimedeltaScalarObject_GetMetadata
+#define _PyTimedeltaScalarObject_GetMetadata(self) ((PyTimedeltaScalarObject *)self)->obmeta
+#undef _PyDatetimeScalarObject_GetValue
+#define _PyDatetimeScalarObject_GetValue(self) ((PyDatetimeScalarObject *)self)->obval
+#undef _PyTimedeltaScalarObject_GetValue
+#define _PyTimedeltaScalarObject_GetValue(self) (((PyTimedeltaScalarObject *)self)->obval)
 #endif
 
 /*

@@ -95,7 +95,7 @@ class NpzFile(Mapping[str, NDArray[_ScalarT_co]]):
     #
     @override
     @overload
-    def get(self, key: str, default: None = None, /) -> NDArray[_ScalarT_co] | None: ...  # pyrefly: ignore[bad-override]
+    def get(self, key: str, default: None = None, /) -> NDArray[_ScalarT_co] | None: ...
     @overload
     def get[T](self, key: str, default: NDArray[_ScalarT_co] | T, /) -> NDArray[_ScalarT_co] | T: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 

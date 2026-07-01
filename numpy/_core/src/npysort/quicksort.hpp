@@ -161,22 +161,33 @@ quicksort_(type *start, npy_intp num)
     int depth[PYA_QS_STACK];
     int *psdepth = depth;
     int cdepth = npy_get_msb(num) * 2;
+    int ret;
+    constexpr bool is_object = std::is_same_v<Tag, npy::object_tag>;
 
     for (;;) {
         if (NPY_UNLIKELY(cdepth < 0)) {
-            heapsort_<Tag, type, reverse>(pl, pr - pl + 1);
+            ret = heapsort_<Tag, type, reverse>(pl, pr - pl + 1);
+            if (NPY_UNLIKELY(ret < 0)) {
+                return ret;
+            }
             goto stack_pop;
         }
         while ((pr - pl) > SMALL_QUICKSORT) {
             /* quicksort partition */
             pm = pl + ((pr - pl) >> 1);
-            if (npy::cmp<Tag, reverse>(*pm, *pl)) {
+            ret = npy::cmp<Tag, reverse>(*pm, *pl);
+            if (ret < 0) return ret;
+            if (ret) {
                 std::swap(*pm, *pl);
             }
-            if (npy::cmp<Tag, reverse>(*pr, *pm)) {
+            ret = npy::cmp<Tag, reverse>(*pr, *pm);
+            if (ret < 0) return ret;
+            if (ret) {
                 std::swap(*pr, *pm);
             }
-            if (npy::cmp<Tag, reverse>(*pm, *pl)) {
+            ret = npy::cmp<Tag, reverse>(*pm, *pl);
+            if (ret < 0) return ret;
+            if (ret) {
                 std::swap(*pm, *pl);
             }
             vp = *pm;
@@ -186,10 +197,16 @@ quicksort_(type *start, npy_intp num)
             for (;;) {
                 do {
                     ++pi;
-                } while (npy::cmp<Tag, reverse>(*pi, vp));
+
+                    ret = npy::cmp<Tag, reverse>(*pi, vp);
+                    if (ret < 0) return ret;
+                } while ((!is_object || pi < pj) && ret);
                 do {
                     --pj;
-                } while (npy::cmp<Tag, reverse>(vp, *pj));
+
+                    ret = npy::cmp<Tag, reverse>(vp, *pj);
+                    if (ret < 0) return ret;
+                } while ((!is_object || pi < pj) && ret);
                 if (pi >= pj) {
                     break;
                 }
@@ -216,8 +233,16 @@ quicksort_(type *start, npy_intp num)
             vp = *pi;
             pj = pi;
             pk = pi - 1;
-            while (pj > pl && npy::cmp<Tag, reverse>(vp, *pk)) {
+
+            ret = npy::cmp<Tag, reverse>(vp, *pk);
+            if (ret < 0) return ret;
+            while (pj > pl && ret) {
                 *pj-- = *pk--;
+
+                if (pj > pl) {
+                    ret = npy::cmp<Tag, reverse>(vp, *pk);
+                    if (ret < 0) return ret;
+                }
             }
             *pj = vp;
         }
@@ -259,22 +284,31 @@ aquicksort_(type *vv, npy_intp *tosort, npy_intp num)
     int depth[PYA_QS_STACK];
     int *psdepth = depth;
     int cdepth = npy_get_msb(num) * 2;
+    int ret;
+    constexpr bool is_object = std::is_same_v<Tag, npy::object_tag>;
 
     for (;;) {
         if (NPY_UNLIKELY(cdepth < 0)) {
-            aheapsort_<Tag, type, reverse>(vv, pl, pr - pl + 1);
+            ret = aheapsort_<Tag, type, reverse>(vv, pl, pr - pl + 1);
+            if (ret < 0) return ret;
             goto stack_pop;
         }
         while ((pr - pl) > SMALL_QUICKSORT) {
             /* quicksort partition */
             pm = pl + ((pr - pl) >> 1);
-            if (npy::cmp<Tag, reverse>(v[*pm], v[*pl])) {
+            ret = npy::cmp<Tag, reverse>(v[*pm], v[*pl]);
+            if (ret < 0) return ret;
+            if (ret) {
                 std::swap(*pm, *pl);
             }
-            if (npy::cmp<Tag, reverse>(v[*pr], v[*pm])) {
+            ret = npy::cmp<Tag, reverse>(v[*pr], v[*pm]);
+            if (ret < 0) return ret;
+            if (ret) {
                 std::swap(*pr, *pm);
             }
-            if (npy::cmp<Tag, reverse>(v[*pm], v[*pl])) {
+            ret = npy::cmp<Tag, reverse>(v[*pm], v[*pl]);
+            if (ret < 0) return ret;
+            if (ret) {
                 std::swap(*pm, *pl);
             }
             vp = v[*pm];
@@ -284,10 +318,14 @@ aquicksort_(type *vv, npy_intp *tosort, npy_intp num)
             for (;;) {
                 do {
                     ++pi;
-                } while (npy::cmp<Tag, reverse>(v[*pi], vp));
+                    ret = npy::cmp<Tag, reverse>(v[*pi], vp);
+                    if (ret < 0) return ret;
+                } while ((!is_object || pi < pj) && ret);
                 do {
                     --pj;
-                } while (npy::cmp<Tag, reverse>(vp, v[*pj]));
+                    ret = npy::cmp<Tag, reverse>(vp, v[*pj]);
+                    if (ret < 0) return ret;
+                } while ((!is_object || pi < pj) && ret);
                 if (pi >= pj) {
                     break;
                 }
@@ -315,8 +353,16 @@ aquicksort_(type *vv, npy_intp *tosort, npy_intp num)
             vp = v[vi];
             pj = pi;
             pk = pi - 1;
-            while (pj > pl && npy::cmp<Tag, reverse>(vp, v[*pk])) {
+
+            ret = npy::cmp<Tag, reverse>(vp, v[*pk]);
+            if (ret < 0) return ret;
+            while (pj > pl && ret) {
                 *pj-- = *pk--;
+
+                if (pj > pl) {
+                    ret = npy::cmp<Tag, reverse>(vp, v[*pk]);
+                if (ret < 0) return ret;
+                }
             }
             *pj = vi;
         }

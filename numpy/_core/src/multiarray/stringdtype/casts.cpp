@@ -1116,6 +1116,12 @@ string_to_float<npy_longdouble, NPY_LONGDOUBLE>(
 
         // allocate temporary null-terminated copy
         char *buf = (char *)PyMem_RawMalloc(s.size + 1);
+        if (buf == NULL) {
+            npy_gil_error(PyExc_MemoryError,
+                          "Failed to allocate string buffer while converting "
+                          "to a long double.");
+            goto fail;
+        }
         memcpy(buf, s.buf, s.size);
         buf[s.size] = '\0';
 
@@ -1123,6 +1129,15 @@ string_to_float<npy_longdouble, NPY_LONGDOUBLE>(
         errno = 0;
         npy_longdouble longdouble_value = NumPyOS_ascii_strtold(buf, &end);
 
+        if (end == buf || end != buf + s.size ||
+                (errno != 0 && errno != ERANGE)) {
+            npy_gil_error(PyExc_ValueError,
+                         "invalid literal for long double: %s (%s)",
+                         buf,
+                         strerror(errno));
+            PyMem_RawFree(buf);
+            goto fail;
+        }
         if (errno == ERANGE) {
             /* strtold returns INFINITY of the correct sign. */
             if (
@@ -1135,14 +1150,6 @@ string_to_float<npy_longdouble, NPY_LONGDOUBLE>(
                 PyMem_RawFree(buf);
                 goto fail;
             }
-        }
-        else if (errno || end == buf || *end) {
-            npy_gil_error(PyExc_ValueError,
-                         "invalid literal for long double: %s (%s)",
-                         buf,
-                         strerror(errno));
-            PyMem_RawFree(buf);
-            goto fail;
         }
         PyMem_RawFree(buf);
         *out = longdouble_value;
@@ -1323,7 +1330,7 @@ string_to_complex_float(
         }
 
         npy_csetrealfunc(out, (NpyFloatType) complex_value.real);
-        npy_csetimagfunc(out, (NpyFloatType) complex_value.real);
+        npy_csetimagfunc(out, (NpyFloatType) complex_value.imag);
         in += in_stride;
         out += out_stride;
     }
@@ -1911,8 +1918,6 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
                 NpyAuxData *NPY_UNUSED(auxdata))
 {
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
-    np::raii::NpyStringAcquireAllocator alloc(descr);
-
     int has_null = descr->na_object != NULL;
     int has_string_na = descr->has_string_na;
     const npy_static_string *default_string = &descr->default_string;
@@ -1924,6 +1929,8 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
     npy_intp out_stride = strides[1];
     size_t max_out_size = context->descriptors[1]->elsize;
 
+    np::raii::NpyStringAcquireAllocator alloc(descr);
+
     while (N--) {
         const npy_packed_static_string *ps = (npy_packed_static_string *)in;
         npy_static_string s = {0, NULL};
@@ -1933,11 +1940,29 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
             return -1;
         }
 
-        for (size_t i=0; i<s.size; i++) {
+        for (size_t i = 0; i < s.size; i++) {
             if (((unsigned char *)s.buf)[i] > 127) {
+                // Building the UnicodeEncodeError needs the GIL and must not
+                // run while the allocator is held (re-entrant Python could
+                // deadlock on it), so copy the offending bytes out, release the
+                // allocator, then raise.
+                char *bad = (char *)PyMem_RawMalloc(s.size);
+                if (bad == NULL) {
+                    alloc.release();
+                    npy_gil_error(PyExc_MemoryError,
+                                  "Failed to allocate memory for unicode "
+                                  "encoding error");
+                    return -1;
+                }
+                memcpy(bad, s.buf, s.size);
+                size_t bad_size = s.size;
+                size_t bad_pos = i;
+                alloc.release();
+
                 np::raii::EnsureGIL ensure_gil{};
 
-                PyObject *str = PyUnicode_FromStringAndSize(s.buf, s.size);
+                PyObject *str = PyUnicode_FromStringAndSize(bad, bad_size);
+                PyMem_RawFree(bad);
 
                 if (str == NULL) {
                     PyErr_SetString(
@@ -1951,8 +1976,8 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
                     "sOnns",
                     "ascii",
                     str,
-                    (Py_ssize_t)i,
-                    (Py_ssize_t)(i+1),
+                    (Py_ssize_t)bad_pos,
+                    (Py_ssize_t)(bad_pos + 1),
                     "ordinal not in range(128)"
                 );
 

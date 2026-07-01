@@ -64,7 +64,10 @@ if py.get_variable('Py_GIL_DISABLED', 0) == 0
 )
 endif
 
-if py.language_version().version_compare('>=3.15')
+if (
+     py.language_version().version_compare('>=3.15') and
+     (host_machine.system() != 'windows' or (py.get_variable('Py_GIL_DISABLED', 0) == 1))
+)
   py.extension_module(
       'limited_api_opaque',
       'limited_api_opaque.c',

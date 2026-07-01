@@ -2050,7 +2050,7 @@ with the rest of the ArrayMethod API.
     The new descriptors MUST be viewable with the old ones, `NULL` must be
     supported (for output arguments) and should normally be forwarded.
 
-    The output of of this function will be used to construct
+    The output of this function will be used to construct
     views of the arguments as if they were the translated dtypes and
     does not use a cast. This means this mechanism is mostly useful for
     DTypes that "wrap" another DType implementation. For example, a unit
@@ -3732,6 +3732,11 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
    Returns 1 on success, 0 if the constant is not available,
    or -1 with an error set.
 
+   Implementing all ``finfo`` constants allows the DType to be used together
+   with `numpy.finfo`. Complex dtypes can support ``finfo`` by implementing the
+   ``imag`` and ``real`` slots (see  :c:func:`PyUFunc_AddLoopFromSpec`) when
+   the corresponding real DType implements it.
+
    **Constant IDs**:
 
     The following constant IDs are defined for retrieving dtype-specific values:
@@ -4083,7 +4088,7 @@ Other conversions
 
     Convert any Python sequence (or single Python number) passed in as
     *seq* to (up to) *maxvals* pointer-sized integers and place them
-    in the *vals* array. The sequence can be smaller then *maxvals* as
+    in the *vals* array. The sequence can be smaller than *maxvals* as
     the number of converted objects is returned.
 
 .. _including-the-c-api:
@@ -4677,8 +4682,6 @@ Enumerated Types
     .. c:enumerator:: NPY_SORT_DESCENDING
 
         (Requirement) Specifies that the sort must be in descending order.
-        This functionality is not yet implemented for any of the NumPy types
-        and cannot yet be set from the Python interface.
 
 .. c:enum:: NPY_SCALARKIND
 
@@ -4759,9 +4762,21 @@ Enumerated Types
 
 .. c:enum:: NPY_SELECTKIND
 
-    A variable type indicating the selection algorithm being used.
+    A variable type indicating the selection algorithm options for
+    the partitioning functions, see also :c:type:`NPY_SORTKIND`.
+
+    .. c:enumerator:: NPY_SELECT_DEFAULT
+
+        The default selection algorithm.
+
+    .. c:enumerator:: NPY_SELECT_DESCENDING
+
+        (Requirement) Flag that changes the partition/sort order to descending.
 
     .. c:enumerator:: NPY_INTROSELECT
+
+        Identical to ``NPY_SELECT_DEFAULT`` but defined prior to NumPy 2.5.
+        Prefer ``NPY_SELECT_DEFAULT`` if compiling with NumPy 2.5 or later.
 
 .. c:enum:: NPY_CASTING
 
