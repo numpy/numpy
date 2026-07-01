@@ -1294,6 +1294,9 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     of the struct because there can be padding before the first member of the struct and the object header,
     and we want to skip that padding.
 */
+static_assert(offsetof(PyArray_Descr, typeobj) % 8 == 0,
+"typeobj must be aligned to 8 bytes in PyArray_Descr to be compatible with older abi3 extensions,"
+"if this fails check if something has changed in CPython");
 
 static_assert(NPY_ALIGNOF(PyArray_Descr_fields) <= 8,
               "PyArray_Descr must not require more than 8-byte alignment");
