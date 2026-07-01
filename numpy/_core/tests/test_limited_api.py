@@ -226,7 +226,6 @@ def limited_api_cython_module_names():
 )
 @pytest.mark.parametrize("module_name", limited_api_module_names())
 def test_limited_api_abi3(install_temp, module_name):
-    """Exercise the NumPy C-API through each limited-API matrix module."""
     mod = pytest.importorskip(module_name)
     _check_c_api_module(mod)
 

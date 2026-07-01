@@ -119,8 +119,8 @@ def multi_iter_goto1d(cnp.ndarray a, cnp.ndarray b, cnp.npy_intp index):
 def multi_iter_nexti(cnp.ndarray a, cnp.ndarray b, int steps):
     """Advance only iterator 0 by N steps using PyArray_MultiIter_NEXTi."""
     cdef cnp.broadcast multi = cnp.PyArray_MultiIterNew2(a, b)
-    cdef int i
-    for i in range(steps):
+    cdef int _i
+    for _i in range(steps):
         cnp.PyArray_MultiIter_NEXTi(multi, 0)
     return (<double *>cnp.PyArray_MultiIter_DATA(multi, 0))[0]
 
