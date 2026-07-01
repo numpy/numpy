@@ -183,8 +183,10 @@ _NPY_TARGET_VERSIONS = ["2.0", "2.1", "2.2", "2.3", "2.4", "2.5"]
 def _module_names(prefix, abi3_versions):
     names = []
     for py_ver in abi3_versions:
+        py = py_ver.replace('.', '_')
         for npy_ver in _NPY_TARGET_VERSIONS:
-            names.append(f"{prefix}_{py_ver.replace('.', '_')}_npy{npy_ver.replace('.', '_')}")
+            npy = npy_ver.replace('.', '_')
+            names.append(f"{prefix}_{py}_npy{npy}")
     return names
 
 
