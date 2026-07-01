@@ -1542,6 +1542,14 @@ typedef struct {
 #define _PyDataType_GET_ITEM_DATA(descr) ((PyArray_Descr_fields *)(descr))
 #undef _PyArray_LegacyDescr_GET_ITEM_DATA
 #define _PyArray_LegacyDescr_GET_ITEM_DATA(descr) ((_PyArray_LegacyDescr_fields *)(descr))
+#undef _PyDatetimeScalarObject_GetMetadata
+#define _PyDatetimeScalarObject_GetMetadata(self) ((PyDatetimeScalarObject *)self)->obmeta
+#undef _PyTimedeltaScalarObject_GetMetadata
+#define _PyTimedeltaScalarObject_GetMetadata(self) ((PyTimedeltaScalarObject *)self)->obmeta
+#undef _PyDatetimeScalarObject_GetValue
+#define _PyDatetimeScalarObject_GetValue(self) ((PyDatetimeScalarObject *)self)->obval
+#undef _PyTimedeltaScalarObject_GetValue
+#define _PyTimedeltaScalarObject_GetValue(self) (((PyTimedeltaScalarObject *)self)->obval)
 #endif
 
 /*
