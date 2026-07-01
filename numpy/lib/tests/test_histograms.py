@@ -255,7 +255,9 @@ class TestHistogram:
         # gracefully handle bins object > 1 dimension
         vals = np.linspace(0.0, 1.0, num=100)
         bins = np.array([[0, 0.5], [0.6, 1.0]])
-        with assert_raises_regex(ValueError, "must be 1d"):
+        with assert_raises_regex(ValueError, "The dimension of bins must be "
+                                             "equal to the "
+                                             "dimension of the sample x"):
             np.histogram(vals, bins=bins)
 
     def test_unsigned_monotonicity_check(self):
@@ -729,14 +731,21 @@ class TestHistogramdd:
         assert_array_max_ulp(a, np.zeros((2, 2, 2)))
 
     def test_bins_errors(self):
-        # There are two ways to specify bins. Check for the right errors
-        # when mixing those.
+        # There are three ways to specify bins:
+        # integers, strings and arraylike where it describes the edges
+        # Check for the right errors when mixing those.
         x = np.arange(8).reshape(2, 4)
         assert_raises(ValueError, np.histogramdd, x, bins=[-1, 2, 4, 5])
-        assert_raises(ValueError, np.histogramdd, x, bins=[1, 0.99, 1, 1])
+        assert_raises(TypeError, np.histogramdd, x, bins=[1, 0.99, 1, 1])
         assert_raises(
             ValueError, np.histogramdd, x, bins=[1, 1, 1, [1, 2, 3, -3]])
+        assert_raises(ValueError, np.histogramdd, x, bins="gibberish")
+        assert_raises(ValueError, np.histogramdd, x, bins=["gibberish", 2])
+        assert_raises(ValueError, np.histogramdd, x, bins=["auto", 2])
+        assert_raises(ValueError, np.histogramdd, x, bins=["auto", 1, 1, [1, 2, 3, 4]])
         assert_(np.histogramdd(x, bins=[1, 1, 1, [1, 2, 3, 4]]))
+        assert_(np.histogramdd(x, bins=[1, 2, 3, 4]))
+        assert_(np.histogramdd(x, bins=25))
 
     def test_inf_edges(self):
         # Test using +/-inf bin edges works. See #1788.
