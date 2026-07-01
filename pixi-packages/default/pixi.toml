@@ -20,7 +20,7 @@ extra-args = ["-Csetup-args=-Dbuildtype=debug"]
 # FIXME https://github.com/numpy/numpy/issues/30478
 # python = "*" prevents downstream from building cpython from sources.
 # Workaround: fork numpy, then uncomment one of the following and
-# comment  out the other.
+# comment out the other.
 
 # Use latest cpython release from conda-forge
 python = "*"
@@ -32,4 +32,3 @@ python = "*"
 
 meson-python = "*"
 cython = "*"
-uv = "*" # used to invoke the wheel build
