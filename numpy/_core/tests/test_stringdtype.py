@@ -892,6 +892,25 @@ def test_float_nan_cast_na_object():
     assert arr[0] == '1.2'
 
 
+def test_string_to_bytes_invalid_ascii_error():
+    # The cast builds this UnicodeEncodeError only after releasing the allocator
+    # lock and copying the offending bytes out of the arena; check the reported
+    # character and position survive that.
+    arr = np.array(["abc", "café", "xy"], dtype="T")
+    with pytest.raises(UnicodeEncodeError) as excinfo:
+        arr.astype("S10")
+    exc = excinfo.value
+    assert exc.encoding == "ascii"
+    assert exc.object == "café"
+    assert exc.start == 3
+    assert exc.end == 4
+    assert exc.reason == "ordinal not in range(128)"
+    assert_array_equal(
+        np.array(["abc", "xy"], dtype="T").astype("S3"),
+        np.array([b"abc", b"xy"], dtype="S3"),
+    )
+
+
 @pytest.mark.parametrize(
     "typename",
     [
