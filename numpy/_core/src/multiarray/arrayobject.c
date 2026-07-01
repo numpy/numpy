@@ -1349,24 +1349,28 @@ _PyArrayNeighborhoodIter_GET_ITEM_DATA(const PyArrayNeighborhoodIterObject *iter
 {
     return (PyArrayNeighborhoodIterObject_fields *)(((char *)iter) + offsetof(PyArrayNeighborhoodIterObject_fields, nd_m1));
 }
+#undef _PyDatetimeScalarObject_GetMetadata
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArray_DatetimeMetaData
 _PyDatetimeScalarObject_GetMetadata(PyObject *self)
 {
     return ((PyDatetimeScalarObject *)self)->obmeta;
 }
+#undef _PyTimedeltaScalarObject_GetMetadata
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArray_DatetimeMetaData
 _PyTimedeltaScalarObject_GetMetadata(PyObject *self)
 {
     return ((PyTimedeltaScalarObject *)self)->obmeta;
 }
+#undef _PyDatetimeScalarObject_GetValue
 /*NUMPY_API*/
 NPY_NO_EXPORT npy_datetime
 _PyDatetimeScalarObject_GetValue(PyObject *self)
 {
     return ((PyDatetimeScalarObject *)self)->obval;
 }
+#undef _PyTimedeltaScalarObject_GetValue
 /*NUMPY_API*/
 NPY_NO_EXPORT npy_timedelta
 _PyTimedeltaScalarObject_GetValue(PyObject *self)

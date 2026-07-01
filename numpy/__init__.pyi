@@ -111,9 +111,7 @@ from numpy._typing import (  # type: ignore[deprecated]
     _InexactCodes,
     _CharacterCodes,
     # Ufuncs
-    _UFunc_Nin1_Nout1,
     _UFunc_Nin2_Nout1,
-    _UFunc_Nin1_Nout2,
     _UFunc_Nin2_Nout2,
     _GUFunc_Nin2_Nout1,
 )
@@ -405,6 +403,7 @@ from numpy._core.umath import (
     arctan as atan,
     arctanh,
     arctanh as atanh,
+    bitwise_count,
     cbrt,
     ceil,
     conjugate,
@@ -413,16 +412,31 @@ from numpy._core.umath import (
     cosh,
     deg2rad,
     degrees,
+    equal,
     exp,
     exp2,
     expm1,
     fabs,
     floor,
+    frexp,
+    greater,
+    greater_equal,
     invert,
+    invert as bitwise_invert,
+    invert as bitwise_not,
+    isfinite,
+    isinf,
+    isnan,
+    isnat,
+    less,
+    less_equal,
     log,
     log10,
     log1p,
     log2,
+    logical_not,
+    modf,
+    not_equal,
     positive,
     negative,
     rad2deg,
@@ -430,6 +444,7 @@ from numpy._core.umath import (
     reciprocal,
     rint,
     sign,
+    signbit,
     sin,
     sinh,
     spacing,
@@ -7595,51 +7610,36 @@ class ufunc:
 add: _UFunc_Nin2_Nout1[L["add"], L[22], L[0]]
 arctan2: _UFunc_Nin2_Nout1[L["arctan2"], L[5], None]
 bitwise_and: _UFunc_Nin2_Nout1[L["bitwise_and"], L[12], L[-1]]
-bitwise_count: _UFunc_Nin1_Nout1[L["bitwise_count"], L[11], None]
 bitwise_or: _UFunc_Nin2_Nout1[L["bitwise_or"], L[12], L[0]]
 bitwise_xor: _UFunc_Nin2_Nout1[L["bitwise_xor"], L[12], L[0]]
 copysign: _UFunc_Nin2_Nout1[L["copysign"], L[4], None]
 divide: _UFunc_Nin2_Nout1[L["divide"], L[11], None]
 divmod: _UFunc_Nin2_Nout2[L["divmod"], L[15], None]
-equal: _UFunc_Nin2_Nout1[L["equal"], L[23], None]
 float_power: _UFunc_Nin2_Nout1[L["float_power"], L[4], None]
 floor_divide: _UFunc_Nin2_Nout1[L["floor_divide"], L[21], None]
 fmax: _UFunc_Nin2_Nout1[L["fmax"], L[21], None]
 fmin: _UFunc_Nin2_Nout1[L["fmin"], L[21], None]
 fmod: _UFunc_Nin2_Nout1[L["fmod"], L[15], None]
-frexp: _UFunc_Nin1_Nout2[L["frexp"], L[4], None]
 gcd: _UFunc_Nin2_Nout1[L["gcd"], L[11], L[0]]
-greater: _UFunc_Nin2_Nout1[L["greater"], L[23], None]
-greater_equal: _UFunc_Nin2_Nout1[L["greater_equal"], L[23], None]
 heaviside: _UFunc_Nin2_Nout1[L["heaviside"], L[4], None]
 hypot: _UFunc_Nin2_Nout1[L["hypot"], L[5], L[0]]
-isfinite: _UFunc_Nin1_Nout1[L["isfinite"], L[20], None]
-isinf: _UFunc_Nin1_Nout1[L["isinf"], L[20], None]
-isnan: _UFunc_Nin1_Nout1[L["isnan"], L[20], None]
-isnat: _UFunc_Nin1_Nout1[L["isnat"], L[2], None]
 lcm: _UFunc_Nin2_Nout1[L["lcm"], L[11], None]
 ldexp: _UFunc_Nin2_Nout1[L["ldexp"], L[8], None]
 left_shift: _UFunc_Nin2_Nout1[L["left_shift"], L[11], None]
-less: _UFunc_Nin2_Nout1[L["less"], L[23], None]
-less_equal: _UFunc_Nin2_Nout1[L["less_equal"], L[23], None]
 logaddexp2: _UFunc_Nin2_Nout1[L["logaddexp2"], L[4], float]
 logaddexp: _UFunc_Nin2_Nout1[L["logaddexp"], L[4], float]
 logical_and: _UFunc_Nin2_Nout1[L["logical_and"], L[20], L[True]]
-logical_not: _UFunc_Nin1_Nout1[L["logical_not"], L[20], None]
 logical_or: _UFunc_Nin2_Nout1[L["logical_or"], L[20], L[False]]
 logical_xor: _UFunc_Nin2_Nout1[L["logical_xor"], L[19], L[False]]
 matmul: _GUFunc_Nin2_Nout1[L["matmul"], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]]
 matvec: _GUFunc_Nin2_Nout1[L["matvec"], L[19], None, L["(m,n),(n)->(m)"]]
 maximum: _UFunc_Nin2_Nout1[L["maximum"], L[21], None]
 minimum: _UFunc_Nin2_Nout1[L["minimum"], L[21], None]
-modf: _UFunc_Nin1_Nout2[L["modf"], L[4], None]
 multiply: _UFunc_Nin2_Nout1[L["multiply"], L[23], L[1]]
 nextafter: _UFunc_Nin2_Nout1[L["nextafter"], L[4], None]
-not_equal: _UFunc_Nin2_Nout1[L["not_equal"], L[23], None]
 power: _UFunc_Nin2_Nout1[L["power"], L[18], None]
 remainder: _UFunc_Nin2_Nout1[L["remainder"], L[16], None]
 right_shift: _UFunc_Nin2_Nout1[L["right_shift"], L[11], None]
-signbit: _UFunc_Nin1_Nout1[L["signbit"], L[4], None]
 subtract: _UFunc_Nin2_Nout1[L["subtract"], L[21], None]
 vecdot: _GUFunc_Nin2_Nout1[L["vecdot"], L[19], None, L["(n),(n)->()"]]
 vecmat: _GUFunc_Nin2_Nout1[L["vecmat"], L[19], None, L["(n),(n,m)->(m)"]]
@@ -7647,8 +7647,6 @@ vecmat: _GUFunc_Nin2_Nout1[L["vecmat"], L[19], None, L["(n),(n,m)->(m)"]]
 atan2 = arctan2
 concat = concatenate
 bitwise_left_shift = left_shift
-bitwise_not = invert
-bitwise_invert = invert
 bitwise_right_shift = right_shift
 mod = remainder
 permute_dims = transpose

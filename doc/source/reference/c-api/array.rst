@@ -4088,7 +4088,7 @@ Other conversions
 
     Convert any Python sequence (or single Python number) passed in as
     *seq* to (up to) *maxvals* pointer-sized integers and place them
-    in the *vals* array. The sequence can be smaller then *maxvals* as
+    in the *vals* array. The sequence can be smaller than *maxvals* as
     the number of converted objects is returned.
 
 .. _including-the-c-api:

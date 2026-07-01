@@ -1918,8 +1918,6 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
                 NpyAuxData *NPY_UNUSED(auxdata))
 {
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
-    np::raii::NpyStringAcquireAllocator alloc(descr);
-
     int has_null = descr->na_object != NULL;
     int has_string_na = descr->has_string_na;
     const npy_static_string *default_string = &descr->default_string;
@@ -1931,6 +1929,8 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
     npy_intp out_stride = strides[1];
     size_t max_out_size = context->descriptors[1]->elsize;
 
+    np::raii::NpyStringAcquireAllocator alloc(descr);
+
     while (N--) {
         const npy_packed_static_string *ps = (npy_packed_static_string *)in;
         npy_static_string s = {0, NULL};
@@ -1940,11 +1940,29 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
             return -1;
         }
 
-        for (size_t i=0; i<s.size; i++) {
+        for (size_t i = 0; i < s.size; i++) {
             if (((unsigned char *)s.buf)[i] > 127) {
+                // Building the UnicodeEncodeError needs the GIL and must not
+                // run while the allocator is held (re-entrant Python could
+                // deadlock on it), so copy the offending bytes out, release the
+                // allocator, then raise.
+                char *bad = (char *)PyMem_RawMalloc(s.size);
+                if (bad == NULL) {
+                    alloc.release();
+                    npy_gil_error(PyExc_MemoryError,
+                                  "Failed to allocate memory for unicode "
+                                  "encoding error");
+                    return -1;
+                }
+                memcpy(bad, s.buf, s.size);
+                size_t bad_size = s.size;
+                size_t bad_pos = i;
+                alloc.release();
+
                 np::raii::EnsureGIL ensure_gil{};
 
-                PyObject *str = PyUnicode_FromStringAndSize(s.buf, s.size);
+                PyObject *str = PyUnicode_FromStringAndSize(bad, bad_size);
+                PyMem_RawFree(bad);
 
                 if (str == NULL) {
                     PyErr_SetString(
@@ -1958,8 +1976,8 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
                     "sOnns",
                     "ascii",
                     str,
-                    (Py_ssize_t)i,
-                    (Py_ssize_t)(i+1),
+                    (Py_ssize_t)bad_pos,
+                    (Py_ssize_t)(bad_pos + 1),
                     "ordinal not in range(128)"
                 );
 
