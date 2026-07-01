@@ -6,6 +6,7 @@ import sysconfig
 
 import pytest
 
+import numpy as np
 from numpy.testing import IS_EDITABLE, IS_WASM, NOGIL_BUILD
 from numpy.testing._private.utils import run_subprocess
 
@@ -82,6 +83,135 @@ def install_temp(tmpdir_factory):
     sys.path.append(str(build_dir))
 
 
+def _check_c_api_module(mod):
+    arr = np.ones((200, 200))
+    assert mod.nonzero(arr) == 200 * 200
+
+    # Legacy single-array iterator: PyArray_ITER_NEXT / _DATA / _NOTDONE.
+    arr = np.arange(12.0).reshape(3, 4)
+    assert mod.iter_next(arr) == 66.0
+    assert mod.iter_goto1d(arr, 5) == 5.0
+    assert mod.iter_goto1d(arr, -1) == 11.0
+    assert mod.iter_reset(arr) == 66.0
+    assert mod.iter_goto(arr, (1, 2)) == 6.0
+    assert mod.iter_goto(arr, (2, 3)) == 11.0
+
+    # Broadcasting multi-iterator.
+    a = np.arange(3.0).reshape(3, 1)
+    b = np.arange(4.0).reshape(1, 4)
+    assert mod.multi_iter_next(a, b) == float(np.sum(a + b))
+    va, vb = mod.multi_iter_goto(a, b, (1, 2))
+    assert va == 1.0 and vb == 2.0
+    va, vb = mod.multi_iter_goto1d(a, b, 6)
+    assert va == 1.0 and vb == 2.0
+
+    a = np.arange(6.0).reshape(2, 3)
+    b = np.zeros((2, 3))
+    assert mod.multi_iter_nexti(a, b, 3) == 3.0
+
+    # PyDataType_FLAGS / PyDataType_C_METADATA on datetime descriptors.
+    dt = np.array(["2021-01-01"], dtype="datetime64[D]")
+    flags, base, num = mod.datetime_metadata(dt)
+    assert flags == dt.dtype.flags
+    assert base == 4    # NPY_FR_D
+    assert num == 1
+
+    # A plain seconds timedelta: base NPY_FR_s, unit multiplier 1.
+    td = np.array([5], dtype="timedelta64[s]")
+    flags, base, num = mod.datetime_metadata(td)
+    assert flags == td.dtype.flags
+    assert base == 7    # NPY_FR_s
+    assert num == 1
+
+    # A non-unit multiplier exercises the metadata `num` field.
+    td = np.array([1000], dtype="timedelta64[ms]").astype("timedelta64[10ms]")
+    flags, base, num = mod.datetime_metadata(td)
+    assert flags == td.dtype.flags
+    assert base == 8    # NPY_FR_ms
+    assert num == 10
+
+    # Non-datetime descriptors have no c_metadata and are rejected.
+    with pytest.raises(RuntimeError):
+        mod.datetime_metadata(np.arange(3))
+
+
+def _check_cython_module(mod):
+    arr = np.ones((200, 200))
+    assert mod.nonzero(arr) == 200 * 200
+
+    # Legacy single-array iterator.
+    arr = np.arange(12.0).reshape(3, 4)
+    assert mod.iter_next(arr) == 66.0
+    assert mod.iter_goto1d(arr, 5) == 5.0
+    assert mod.iter_goto1d(arr, -1) == 11.0
+    assert mod.iter_reset(arr) == 66.0
+    assert mod.iter_goto(arr, (1, 2)) == 6.0
+    assert mod.iter_goto(arr, (2, 3)) == 11.0
+
+    # Broadcasting multi-iterator.
+    a = np.arange(3.0).reshape(3, 1)
+    b = np.arange(4.0).reshape(1, 4)
+    assert mod.multi_iter_next(a, b) == float(np.sum(a + b))
+    va, vb = mod.multi_iter_goto1d(a, b, 6)
+    assert va == 1.0 and vb == 2.0
+
+    a = np.arange(6.0).reshape(2, 3)
+    b = np.zeros((2, 3))
+    assert mod.multi_iter_nexti(a, b, 3) == 3.0
+
+    # Datetime / timedelta scalar accessors (.pxd helpers).
+    dt = np.datetime64("2021-01-01", "D")
+    value, base, num = mod.datetime_metadata(dt)
+    assert value == dt.astype("int64")
+    assert base == 4    # NPY_FR_D
+    assert num == 1
+    assert mod.get_datetime_value(dt) == dt.astype("int64")
+    assert mod.get_datetime_unit(dt) == 4
+    assert mod.is_datetime64(dt)
+    assert not mod.is_timedelta64(dt)
+
+    # A plain seconds timedelta: base NPY_FR_s, unit multiplier 1.
+    td = np.timedelta64(5, "s")
+    value, base, num = mod.datetime_metadata(td)
+    assert value == 5
+    assert base == 7    # NPY_FR_s
+    assert num == 1
+    assert mod.get_timedelta_value(td) == 5
+    assert mod.is_timedelta64(td)
+    assert not mod.is_datetime64(td)
+
+    # A non-unit multiplier exercises the metadata `num` field.
+    td = np.timedelta64(1000, "ms").astype("timedelta64[10ms]")
+    value, base, num = mod.datetime_metadata(td)
+    assert value == td.astype("int64")
+    assert base == 8    # NPY_FR_ms
+    assert num == 10
+    assert mod.get_timedelta_value(td) == td.astype("int64")
+
+    # Non-datetime scalars are rejected.
+    with pytest.raises(TypeError):
+        mod.datetime_metadata(np.int64(5))
+
+
+_PY_ABI3_VERSIONS = [(3, 9), (3, 10), (3, 11), (3, 12), (3, 13), (3, 14), (3, 15)]
+_NPY_TARGET_VERSIONS = ["2_0", "2_1", "2_2", "2_3", "2_4", "2_5"]
+
+def _module_names(prefix, abi3_versions):
+    names = []
+    for major, minor in abi3_versions:
+        for npy_key in _NPY_TARGET_VERSIONS:
+            names.append(f"{prefix}_{major}_{minor}_npy{npy_key}")
+    return names
+
+
+def limited_api_module_names():
+    return _module_names("limited_api", _PY_ABI3_VERSIONS)
+
+
+def limited_api_cython_module_names():
+    return _module_names("limited_api_cython", _PY_ABI3_VERSIONS)
+
+
 @pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
 @pytest.mark.xfail(
     sysconfig.get_config_var("Py_DEBUG"),
@@ -94,14 +224,30 @@ def install_temp(tmpdir_factory):
     NOGIL_BUILD,
     reason="Py_GIL_DISABLED builds do not currently support abi3",
 )
-def test_limited_api_abi3(install_temp):
-    """Test building a third-party C extension with the limited API
-    and building a cython extension with the limited API
-    """
+@pytest.mark.parametrize("module_name", limited_api_module_names())
+def test_limited_api_abi3(install_temp, module_name):
+    """Exercise the NumPy C-API through each limited-API matrix module."""
+    mod = pytest.importorskip(module_name)
+    _check_c_api_module(mod)
 
-    import limited_api1  # Earliest (3.6)  # noqa: F401
-    import limited_api2  # cython  # noqa: F401
-    import limited_api_latest  # Latest version (current Python)  # noqa: F401
+
+@pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
+@pytest.mark.xfail(
+    sysconfig.get_config_var("Py_DEBUG"),
+    reason=(
+        "Py_LIMITED_API is incompatible with Py_DEBUG, Py_TRACE_REFS, "
+        "and Py_REF_DEBUG"
+    ),
+)
+@pytest.mark.xfail(
+    NOGIL_BUILD,
+    reason="Py_GIL_DISABLED builds do not currently support abi3",
+)
+@pytest.mark.parametrize("module_name", limited_api_cython_module_names())
+def test_limited_api_cython(install_temp, module_name):
+    mod = pytest.importorskip(module_name)
+    _check_cython_module(mod)
+
 
 @pytest.mark.skipif(
     sys.version_info < (3, 15), reason="opaque PyObject requires Python 3.15+"
@@ -114,46 +260,4 @@ def test_limited_api_abi3(install_temp):
 def test_limited_opaque(install_temp):
     import limited_api_opaque
 
-    import numpy as np
-    arr = np.ones((200, 200))
-    assert limited_api_opaque.nonzero(arr) == 200 * 200
-
-    # Test PyArray_ITER_NEXT / PyArray_ITER_DATA / PyArray_ITER_NOTDONE
-    arr = np.arange(12.0).reshape(3, 4)
-    assert limited_api_opaque.iter_next(arr) == 66.0
-
-    # Test PyArray_ITER_GOTO1D
-    assert limited_api_opaque.iter_goto1d(arr, 5) == 5.0
-    assert limited_api_opaque.iter_goto1d(arr, -1) == 11.0
-
-    # Test PyArray_ITER_RESET
-    assert limited_api_opaque.iter_reset(arr) == 66.0
-
-    # Test PyArray_MultiIter_NEXT / RESET / DATA with broadcasting
-    a = np.arange(3.0).reshape(3, 1)   # shape (3, 1)
-    b = np.arange(4.0).reshape(1, 4)   # shape (1, 4)
-    # Each broadcast element is a[i] + b[j], total sum:
-    expected = float(np.sum(a + b))
-    assert limited_api_opaque.multi_iter_next(a, b) == expected
-
-    # Test PyArray_ITER_GOTO
-    arr = np.arange(12.0).reshape(3, 4)
-    assert limited_api_opaque.iter_goto(arr, (1, 2)) == 6.0
-    assert limited_api_opaque.iter_goto(arr, (2, 3)) == 11.0
-
-    # Test PyArray_MultiIter_GOTO
-    a = np.arange(3.0).reshape(3, 1)
-    b = np.arange(4.0).reshape(1, 4)
-    va, vb = limited_api_opaque.multi_iter_goto(a, b, (1, 2))
-    assert va == 1.0 and vb == 2.0
-
-    # Test PyArray_MultiIter_GOTO1D
-    # flat index 6 in (3,4) broadcast → row 1, col 2
-    va, vb = limited_api_opaque.multi_iter_goto1d(a, b, 6)
-    assert va == 1.0 and vb == 2.0
-
-    # Test PyArray_MultiIter_NEXTi
-    a = np.arange(6.0).reshape(2, 3)
-    b = np.zeros((2, 3))
-    # Advance iter 0 by 3 steps → flat index 3 → value 3.0
-    assert limited_api_opaque.multi_iter_nexti(a, b, 3) == 3.0
+    _check_c_api_module(limited_api_opaque)

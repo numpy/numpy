@@ -28,40 +28,49 @@ npy_path = run_command(py, [
 # where cython may not find the right __init__.pyd file.
 add_project_arguments('-I', npy_path, language : 'cython')
 
+py_limited_api_versions = ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14', '3.15']
+npy_target_versions = {
+  '2_0': 'NPY_2_0_API_VERSION',
+  '2_1': 'NPY_2_1_API_VERSION',
+  '2_2': 'NPY_2_2_API_VERSION',
+  '2_3': 'NPY_2_3_API_VERSION',
+  '2_4': 'NPY_2_4_API_VERSION',
+  '2_5': 'NPY_2_5_API_VERSION',
+}
+
 if py.get_variable('Py_GIL_DISABLED', 0) == 0
-  py.extension_module(
-      'limited_api1',
-      'limited_api1.c',
-      c_args: [
-        '-DNPY_NO_DEPRECATED_API=NPY_1_21_API_VERSION',
-      ],
-      include_directories: [npy_include_path],
-      limited_api: '3.9',
-  )
-
-  py.extension_module(
-      'limited_api_latest',
-      'limited_api_latest.c',
-      c_args: [
-        '-DNPY_NO_DEPRECATED_API=NPY_1_21_API_VERSION',
-      ],
-      include_directories: [npy_include_path],
-      limited_api: py.language_version(),
-  )
-
-  py.extension_module(
-      'limited_api2',
-      'limited_api2.pyx',
-      install: false,
-      c_args: [
-        '-DNPY_NO_DEPRECATED_API=0',
-        # Require 1.25+ to test datetime additions
-        '-DNPY_TARGET_VERSION=NPY_2_0_API_VERSION',
-        '-DCYTHON_LIMITED_API=1',
-      ],
-      include_directories: [npy_include_path],
-      limited_api: '3.9',
-)
+  foreach py_ver : py_limited_api_versions
+    # skip abi3 version higher than the current interpreter version
+    if py.language_version().version_compare('>=' + py_ver)
+      foreach npy_key, npy_macro : npy_target_versions
+        modname = 'limited_api_' + py_ver.replace('.', '_') + '_npy' + npy_key
+        py.extension_module(
+            modname,
+            'limited_api.c',
+            c_args: [
+              '-DMODULE_NAME=' + modname,
+              '-DNPY_TARGET_VERSION=' + npy_macro,
+            ],
+            include_directories: [npy_include_path],
+            limited_api: py_ver,
+        )
+        modname = 'limited_api_cython_' + py_ver.replace('.', '_') + '_npy' + npy_key
+        py.extension_module(
+            modname,
+            'limited_api_cython.pyx',
+            install: false,
+            cython_args: ['--module-name', modname],
+            c_args: [
+              '-DNPY_NO_DEPRECATED_API=0',
+              '-DNPY_TARGET_VERSION=' + npy_macro,
+              '-DCYTHON_LIMITED_API=1',
+            ],
+            include_directories: [npy_include_path],
+            limited_api: py_ver,
+        )
+      endforeach
+    endif
+  endforeach
 endif
 
 if (
@@ -70,8 +79,9 @@ if (
 )
   py.extension_module(
       'limited_api_opaque',
-      'limited_api_opaque.c',
+      'limited_api.c',
       c_args: [
+        '-DMODULE_NAME=limited_api_opaque',
         '-DNPY_TARGET_VERSION=NPY_2_5_API_VERSION',
         '-DPy_TARGET_ABI3T=0x030F0000',
       ],
