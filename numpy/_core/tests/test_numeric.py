@@ -3617,6 +3617,7 @@ class TestCorrelate:
         self._setup(float)
         z = np.correlate(self.x, self.y, 'full')
         assert_array_almost_equal(z, self.z1)
+        assert len(z) == 7
         z = np.correlate(self.x, self.y[:-1], 'full')
         assert_array_almost_equal(z, self.z1_4)
         z = np.correlate(self.y, self.x, 'full')
@@ -3627,6 +3628,52 @@ class TestCorrelate:
         assert_array_almost_equal(z, self.z2r)
         z = np.correlate(self.xs, self.y, 'full')
         assert_array_almost_equal(z, self.zs)
+        # Test 'valid' mode - middle part where there's full overlap
+        z = np.correlate(self.x, self.y, 'valid')
+        assert_array_almost_equal(z, self.z1[2:5])  # [-14., -20., -26.]
+        assert len(z) == 3
+        # Test 'same' mode - same length as first input
+        z = np.correlate(self.x, self.y, 'same')
+        assert_array_almost_equal(z, self.z1[1:6])  # [-8., -14., -20., -26., -14.]
+        assert len(z) == 5
+
+    def test_lags_int(self):
+        self._setup(float)
+        # lags=1 gives the symmetric inclusive window [-1, 0, 1]
+        z = np.correlate(self.x, self.y, lags=1)
+        assert_array_almost_equal(z, self.z1[1:4])  # [-8., -14., -20.]
+        assert len(z) == 3
+
+    def test_lags_with_explicit_mode_rejected(self):
+        self._setup(float)
+        with pytest.raises(ValueError, match="cannot be used with an explicit mode"):
+            np.correlate(self.x, self.y, mode='full', lags=1)
+
+    def test_lags_negative_int_rejected(self):
+        self._setup(float)
+        with pytest.raises(ValueError, match="non-negative"):
+            np.correlate(self.x, self.y, lags=-1)
+
+    def test_lags_non_int_rejected(self):
+        self._setup(float)
+        with pytest.raises(TypeError, match="lags must be an integer"):
+            np.correlate(self.x, self.y, lags=range(-1, 2))
+        with pytest.raises(TypeError, match="lags must be an integer"):
+            np.correlate(self.x, self.y, lags=slice(-1, 2))
+
+    # --- Default mode resolution ---
+
+    def test_default_mode_resolution(self):
+        self._setup(float)
+        # No mode, no lags -> 'valid'
+        assert_array_equal(np.correlate(self.x, self.y),
+                           np.correlate(self.x, self.y, mode='valid'))
+        # mode=None identical to omitting mode
+        assert_array_equal(np.correlate(self.x, self.y, mode=None),
+                           np.correlate(self.x, self.y, mode='valid'))
+        # lags with mode=None -> lags path
+        assert_array_almost_equal(np.correlate(self.x, self.y, lags=1),
+                                  self.z1[1:4])
 
     def test_object(self):
         self._setup(Decimal)
@@ -3666,9 +3713,8 @@ class TestCorrelate:
         with assert_raises(ValueError):
             np.correlate(d, k, mode=-1)
         # assert_array_equal(np.correlate(d, k, mode=), default_mode)
-        # illegal arguments
-        with assert_raises(TypeError):
-            np.correlate(d, k, mode=None)
+        # None is equivalent to omitting mode (uses the default)
+        assert_array_equal(np.correlate(d, k, mode=None), default_mode)
 
 
 class TestConvolve:
@@ -3694,9 +3740,8 @@ class TestConvolve:
         with assert_raises(ValueError):
             np.convolve(d, k, mode=-1)
         assert_array_equal(np.convolve(d, k, mode=2), default_mode)
-        # illegal arguments
-        with assert_raises(TypeError):
-            np.convolve(d, k, mode=None)
+        # None is equivalent to omitting mode (uses the default)
+        assert_array_equal(np.convolve(d, k, mode=None), default_mode)
 
     def test_convolve_empty_input_error_message(self):
         """
@@ -3708,6 +3753,50 @@ class TestConvolve:
 
         with pytest.raises(ValueError, match="v cannot be empty"):
             np.convolve(np.array([1, 2]), np.array([]))
+
+    # --- Convolve lags tests (mirror correlate API) ---
+
+    def test_convolve_lags_int(self):
+        a = np.array([1, 2, 3], dtype=float)
+        v = np.array([0, 1, 0.5], dtype=float)
+        z = np.convolve(a, v, lags=1)
+        assert_array_almost_equal(z, [1.0, 2.5, 4.0])
+
+    def test_convolve_default_mode_resolution(self):
+        a = [1, 2, 3]
+        v = [0, 1, 0.5]
+        # No mode, no lags -> 'full'
+        assert_array_equal(np.convolve(a, v), np.convolve(a, v, mode='full'))
+        # mode=None identical to omitting mode
+        assert_array_equal(np.convolve(a, v, mode=None),
+                           np.convolve(a, v, mode='full'))
+        # lags with mode=None -> lags path
+        assert_array_almost_equal(np.convolve(a, v, lags=1),
+                                  np.convolve(a, v, mode='full')[1:4])
+
+    def test_convolve_lags_with_explicit_mode_rejected(self):
+        with pytest.raises(ValueError, match="cannot be used with an explicit mode"):
+            np.convolve([1, 2, 3], [4, 5, 6], mode='full', lags=1)
+
+    def test_convolve_lags_non_int_rejected(self):
+        with pytest.raises(TypeError, match="lags must be an integer"):
+            np.convolve([1, 2, 3], [4, 5, 6], lags=range(-1, 2))
+
+    def test_complex_no_conjugation(self):
+        # Regression test: convolve must NOT conjugate either input.
+        # correlate(a, v) conjugates v; convolve(a, v) must not.
+        # For real inputs conjugation is a no-op, so only complex exposes
+        # the bug.  Expected values computed as scalar polynomial product:
+        #   (1+1j)*x^1 + 2*x^0  times  3*x^1 + (4+1j)*x^0
+        a = np.array([1 + 1j, 2])
+        v = np.array([3, 4 + 1j])
+        expected = np.array([3 + 3j, 9 + 5j, 8 + 2j])
+        assert_array_equal(np.convolve(a, v), expected)
+        # Same check via the lags path (lags=1 covers lags [-1, 0, 1],
+        # which is the full output for two length-2 inputs)
+        result = np.convolve(a, v, lags=1)
+        assert_array_equal(result, expected)
+
 
 class TestArgwhere:
 
