@@ -45,11 +45,13 @@ dtypemeta_dealloc(PyArray_DTypeMeta *self) {
     Py_XDECREF(self->scalar_type);
     Py_XDECREF(self->singleton);
     if (dt_slots != NULL) {
+        Py_XDECREF(dt_slots->subclass_pos_cache);
         Py_XDECREF(dt_slots->castingimpls);
         PyMem_Free(dt_slots);
     }
     PyType_Type.tp_dealloc((PyObject *) self);
 }
+
 
 static PyArray_DTypeMeta *
 dtype_does_not_promote(
@@ -509,9 +511,13 @@ dtypemeta_is_gc(PyObject *dtype_class)
 static int
 dtypemeta_traverse(PyArray_DTypeMeta *type, visitproc visit, void *arg)
 {
-    Py_VISIT(type->singleton);
-    Py_VISIT(type->scalar_type);
-    Py_VISIT(NPY_DT_SLOTS(type)->castingimpls);
+    if (type->dt_slots != NULL) {
+        NPY_DType_Slots *slots = NPY_DT_SLOTS(type);
+        Py_VISIT(slots->subclass_pos_cache);
+        Py_VISIT(slots->castingimpls);
+    }
+    Py_VISIT((PyObject *)type->singleton);
+    Py_VISIT((PyObject *)type->scalar_type);
     return PyType_Type.tp_traverse((PyObject *)type, visit, arg);
 }
 
@@ -1344,6 +1350,196 @@ dtypemeta_wrap_legacy_descriptor(
 }
 
 
+/*
+ * Abstract DTypes keep optional positive / negative caches (Python sets) in
+ * dt_slots for issubclass() results and register().
+ */
+/*
+ * Lazily allocate the positive subclass cache (the set of DType classes
+ * registered as virtual subclasses via ``register()``).  No-op if it
+ * already exists.
+ */
+static int
+dtypemeta_ensure_subclass_cache_sets(PyArray_DTypeMeta *self)
+{
+    if (self->dt_slots == NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "abstract DType classes require dt_slots for subclass caches");
+        return -1;
+    }
+    NPY_DType_Slots *slots = NPY_DT_SLOTS(self);
+    if (slots->subclass_pos_cache != NULL) {
+        return 0;
+    }
+    slots->subclass_pos_cache = PySet_New(NULL);
+    if (slots->subclass_pos_cache == NULL) {
+        return -1;
+    }
+    return 0;
+}
+
+static PyObject *
+dtypemeta_subclasscheck(PyArray_DTypeMeta *self, PyObject *arg)
+{
+    if (!PyType_Check(arg)) {
+        PyErr_SetString(PyExc_TypeError,
+                "issubclass() arg 2 must be a class, type, or tuple of types");
+        return NULL;
+    }
+    /*
+     * Real C-level inheritance check first.  This handles all non-abstract
+     * DTypes and the common case for abstracts (``arg`` is a real subtype).
+     */
+    if (PyType_IsSubtype((PyTypeObject *)arg, (PyTypeObject *)self)) {
+        Py_RETURN_TRUE;
+    }
+    if (!NPY_DT_is_abstract(self)) {
+        Py_RETURN_FALSE;
+    }
+    /*
+     * For abstracts, ``arg`` must itself be a DType class to qualify as a
+     * (virtual) subclass.
+     */
+    if (!PyType_IsSubtype((PyTypeObject *)arg, &PyArrayDescr_Type)) {
+        Py_RETURN_FALSE;
+    }
+    /*
+     * NumericAbstractDType: any DType class with the ``NPY_DT_NUMERIC`` flag
+     * is considered a (virtual) subclass.
+     */
+    if (self == &PyArray_NumericAbstractDType) {
+        if (NPY_DT_is_numeric((PyArray_DTypeMeta *)arg)) {
+            Py_RETURN_TRUE;
+        }
+        Py_RETURN_FALSE;
+    }
+    /*
+     * Otherwise consult the ``register()``-populated positive cache.
+     */
+    NPY_DType_Slots *sl = NPY_DT_SLOTS(self);
+    if (sl->subclass_pos_cache == NULL) {
+        Py_RETURN_FALSE;
+    }
+    int rc = PySet_Contains(sl->subclass_pos_cache, arg);
+    if (rc < 0) {
+        return NULL;
+    }
+    if (rc) {
+        Py_RETURN_TRUE;
+    }
+    Py_RETURN_FALSE;
+}
+
+static PyObject *
+dtypemeta_instancecheck(PyArray_DTypeMeta *self, PyObject *arg)
+{
+    /*
+     * Defer to ``__subclasscheck__`` so ``isinstance()`` honors virtual
+     * subclasses registered via ``register()`` on abstract DType classes.
+     * The default ``type.__instancecheck__`` only consults the C-level
+     * ``tp_base`` chain, which doesn't include cache-registered subclasses.
+     */
+    return dtypemeta_subclasscheck(self, (PyObject *)Py_TYPE(arg));
+}
+
+
+/*
+ * If self's direct tp_base is an abstract DTypeMeta, call register(arg) on it.
+ * That base's register will in turn call its own base, so the chain propagates
+ * naturally without us walking the whole hierarchy here.
+ */
+static int
+dtypemeta_register_abstract_base(PyArray_DTypeMeta *self, PyObject *arg)
+{
+    PyTypeObject *bt = ((PyTypeObject *)self)->tp_base;
+
+    if (bt != NULL && bt != &PyArrayDescr_Type
+            && Py_TYPE(bt) == &PyArrayDTypeMeta_Type
+            && NPY_DT_is_abstract((PyArray_DTypeMeta *)bt)) {
+        PyObject *res = PyObject_CallMethodObjArgs(
+                (PyObject *)bt,
+                npy_interned_str.register_,
+                arg,
+                NULL);
+        if (res == NULL) {
+            return -1;
+        }
+        Py_DECREF(res);
+    }
+    return 0;
+}
+
+static PyObject *
+dtypemeta_register(PyArray_DTypeMeta *self, PyObject *arg)
+{
+    if (!NPY_DT_is_abstract(self)) {
+        PyErr_SetString(PyExc_TypeError,
+                "register() is only supported on abstract DTypes");
+        return NULL;
+    }
+    if (!PyType_Check(arg)) {
+        PyErr_SetString(PyExc_TypeError, "register() argument must be a class");
+        return NULL;
+    }
+    if (!PyType_IsSubtype((PyTypeObject *)arg, &PyArrayDescr_Type)) {
+        PyErr_Format(PyExc_TypeError,
+                "can only register NumPy dtype types (subclasses of "
+                "numpy.dtype), got %R",
+                arg);
+        return NULL;
+    }
+    if (!PyType_IsSubtype(Py_TYPE((PyTypeObject *)arg),
+            &PyArrayDTypeMeta_Type)) {
+        PyErr_SetString(PyExc_TypeError,
+                "register() argument must be a numpy.dtype class "
+                "(metaclass numpy.dtypes.DTypeMeta)");
+        return NULL;
+    }
+    if (NPY_DT_is_abstract((PyArray_DTypeMeta *)arg)) {
+        PyErr_Format(PyExc_TypeError,
+                "cannot register abstract DType class %R", arg);
+        return NULL;
+    }
+    /*
+     * Register with the direct abstract base first, so that if it rejects
+     * the argument we don't update our own state.  The base's register will
+     * in turn call its own base, propagating up the chain.
+     * If updating our own cache fails afterwards, the DType may remain
+     * registered with an abstract superclass.  That partial state still
+     * respects the hierarchy, and unwinding it would add complexity for an
+     * allocation-failure path.
+     */
+    if (dtypemeta_register_abstract_base(self, arg) < 0) {
+        return NULL;
+    }
+    /*
+     * NumericAbstractDType.register: no-op when NPY_DT_NUMERIC is already set.
+     * Otherwise set the flag, but only allow it for legacy user-defined dtypes.
+     */
+    if (self == &PyArray_NumericAbstractDType) {
+        PyArray_DTypeMeta *dt = (PyArray_DTypeMeta *)arg;
+
+        if (NPY_DT_is_numeric(dt)) {
+            Py_RETURN_NONE;
+        }
+        if (!NPY_DT_is_legacy(dt) || !PyTypeNum_ISUSERDEF(dt->type_num)) {
+            PyErr_Format(PyExc_TypeError,
+                    "Use `NPY_DT_NUMERIC` flag rather than register() for %R.",
+                    arg);
+            return NULL;
+        }
+        dt->flags |= NPY_DT_NUMERIC;
+        Py_RETURN_NONE;
+    }
+    if (dtypemeta_ensure_subclass_cache_sets(self) < 0) {
+        return NULL;
+    }
+    if (PySet_Add(NPY_DT_SLOTS(self)->subclass_pos_cache, arg) < 0) {
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
+
 static PyObject *
 dtypemeta_get_abstract(PyArray_DTypeMeta *self, void *NPY_UNUSED(ignored)) {
     return PyBool_FromLong(NPY_DT_is_abstract(self));
@@ -1380,6 +1576,25 @@ static PyMemberDef dtypemeta_members[] = {
         T_OBJECT, offsetof(PyArray_DTypeMeta, scalar_type), READONLY,
         "scalar type corresponding to the DType."},
     {NULL, 0, 0, 0, NULL},
+};
+
+static PyMethodDef dtypemeta_methods[] = {
+    {"__subclasscheck__",
+            (PyCFunction)(void *)dtypemeta_subclasscheck,
+            METH_O,
+            "Return whether another dtype type is considered a subclass."},
+    {"__instancecheck__",
+            (PyCFunction)(void *)dtypemeta_instancecheck,
+            METH_O,
+            "Return whether the argument is an instance of this dtype "
+            "type, including virtual subclasses registered via "
+            "``register()``."},
+    {"register",
+            (PyCFunction)(void *)dtypemeta_register,
+            METH_O,
+            "Register a concrete, non-abstract DType class as a virtual "
+            "subclass (abstract DTypes only)."},
+    {NULL, NULL, 0, NULL}
 };
 
 NPY_NO_EXPORT void
@@ -1439,6 +1654,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
     .tp_traverse = (traverseproc)dtypemeta_traverse,
     .tp_members = dtypemeta_members,
     .tp_getset = dtypemeta_getset,
+    .tp_methods = dtypemeta_methods,
     .tp_base = NULL,  /* set to PyType_Type at import time */
     .tp_is_gc = dtypemeta_is_gc,
 };

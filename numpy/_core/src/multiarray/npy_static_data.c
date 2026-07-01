@@ -75,6 +75,7 @@ intern_strings(void)
     INTERN_STRING(sort, "sort");
     INTERN_STRING(argsort, "argsort");
     INTERN_STRING(_set_dtype, "_set_dtype");
+    INTERN_STRING(register_, "register");
     return 0;
 }
 
