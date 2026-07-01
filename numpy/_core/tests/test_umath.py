@@ -5229,3 +5229,54 @@ class TestHypotErrorMessages:
     def test_hypot_error_message_multiple_args(self):
         with pytest.raises(TypeError, match="hypot\\(\\) takes .* but 4 were given"):
             np.hypot(1, 2, 3, 4)
+
+class TestHighwayUnaryFPLoops:
+
+    @pytest.fixture(autouse=True)
+    def setup_arrays(self):
+        self.sizes = [3, 7, 16, 32, 35, 1000]
+        
+        np.random.seed(42)
+
+
+    @pytest.mark.parametrize("dtype", [np.float32, np.float64])
+    def test_highway_contiguous_accuracy(self, dtype):
+        for size in self.sizes:
+            arr = (np.random.rand(size) * 100 + 1).astype(dtype)
+            
+            # Operações normais (Caminho Contíguo -> Ativa o Highway)
+            assert_array_almost_equal(np.absolute(-arr), arr, decimal=6)
+            assert_array_almost_equal(np.square(arr), arr * arr, decimal=6)
+            assert_array_almost_equal(np.sqrt(arr), np.sqrt(arr), decimal=6)
+            assert_array_almost_equal(np.reciprocal(arr), 1.0 / arr, decimal=6)
+
+
+    @pytest.mark.parametrize("dtype", [np.float32, np.float64])
+    def test_highway_rounding_ops(self, dtype):
+        data = np.array([-2.5, -1.7, -1.2, -0.5, 0.0, 0.5, 1.2, 1.7, 2.5], dtype=dtype)
+        
+        assert_array_equal(np.floor(data), np.array([-3, -2, -2, -1, 0, 0, 1, 1, 2], dtype=dtype))
+        assert_array_equal(np.ceil(data),  np.array([-2, -1, -1,  0, 0, 1, 2, 2, 3], dtype=dtype))
+        assert_array_equal(np.trunc(data), np.array([-2, -1, -1,  0, 0, 0, 1, 1, 2], dtype=dtype))
+        assert_array_equal(np.rint(data),  np.array([-2, -2, -1,  0, 0, 0, 1, 2, 2], dtype=dtype))
+
+
+    @pytest.mark.parametrize("dtype", [np.float32, np.float64])
+    def test_highway_stride_fallback(self, dtype):
+        arr = (np.random.rand(100) * 10).astype(dtype)
+        
+        sliced_arr = arr[::2]
+        
+        assert_array_almost_equal(np.absolute(-sliced_arr), sliced_arr, decimal=6)
+        assert_array_almost_equal(np.square(sliced_arr), sliced_arr * sliced_arr, decimal=6)
+
+
+    def test_highway_float_status_barrier(self):
+        invalid_data = np.array([-1.0, -4.0, 9.0], dtype=np.float32)
+        
+        with pytest.warns(RuntimeWarning, match="invalid value encountered in sqrt"):
+            np.sqrt(invalid_data)
+            
+        res = np.absolute(invalid_data)
+        assert_array_equal(res, np.array([1.0, 4.0, 9.0], dtype=np.float32))
+    
