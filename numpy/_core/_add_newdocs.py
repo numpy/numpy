@@ -5776,6 +5776,13 @@ add_newdoc('numpy._core', 'ufunc', ('at',
         Second operand for ufuncs requiring two operands. Operand must be
         broadcastable over first operand after indexing or slicing.
 
+    Notes
+    -----
+    The distinction between tuple and list indices follows the same
+    rules as standard NumPy array indexing: a tuple separates indices
+    by dimension (row, column), while a list or array provides multiple
+    indices along the first dimension. This is not specific to ``at``.
+
     Examples
     --------
     Set items 0 and 1 to their negative values:
@@ -5801,6 +5808,23 @@ add_newdoc('numpy._core', 'ufunc', ('at',
     >>> np.add.at(a, [0, 1], b)
     >>> a
     array([2, 4, 3, 4])
+
+    Tuple indices select across dimensions, while list or array
+    indices select along the first dimension only:
+
+    >>> a = np.zeros((3, 3))
+    >>> np.add.at(a, ([0, 1, 2], [0, 1, 2]), 1)
+    >>> a
+    array([[1., 0., 0.],
+           [0., 1., 0.],
+           [0., 0., 1.]])
+
+    >>> a = np.zeros((3, 3))
+    >>> np.add.at(a, [[0, 1, 2], [0, 1, 2]], 1)
+    >>> a
+    array([[2., 2., 2.],
+           [2., 2., 2.],
+           [2., 2., 2.]])
 
     """))
 
