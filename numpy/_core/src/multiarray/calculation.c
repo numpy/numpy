@@ -828,8 +828,16 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
 NPY_NO_EXPORT PyObject *
 PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
 {
-    if (NPY_DT_SLOTS(NPY_DTYPE(PyArray_DTYPE(self)))->imag_meth != NULL) {
-        /* The dtype has `arr.imag` so `conjugate` must exist (or error) */
+    if (NPY_DT_SLOTS(NPY_DTYPE(PyArray_DTYPE(self)))->imag_meth != NULL
+            || PyArray_ISUSERDEF(self)) {
+        /*
+         * The dtype has `arr.imag` so `conjugate` must exist (or error).
+         * Legacy user-defined dtypes (`type_num >= NPY_USERDEF`) have no
+         * `imag_meth` and are not flagged numeric, but they may register a
+         * `conjugate` ufunc loop (e.g., quaternion), so dispatch to the ufunc
+         * for them as well, preserving the pre-2.5 behavior.  (New-style
+         * user dtypes have `type_num == -1` and are unaffected by this.)
+         */
         if (out == NULL) {
             return PyArray_GenericUnaryFunction(self,
                                                 n_ops.conjugate);
