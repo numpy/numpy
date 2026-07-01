@@ -595,13 +595,13 @@ def average(a, axis=None, weights=None, returned=False, *,
         else:
             result_dtype = np.result_type(a.dtype, wgt.dtype)
 
-        scl = wgt.sum(axis=axis, dtype=result_dtype, **keepdims_kw)
+        scl = wgt.sum(axis=axis, dtype=type(result_dtype), **keepdims_kw)
         if np.any(scl == 0.0):
             raise ZeroDivisionError(
                 "Weights sum to zero, can't be normalized")
 
         avg = avg_as_array = np.multiply(a, wgt,
-                          dtype=result_dtype).sum(axis, **keepdims_kw) / scl
+                      dtype=type(result_dtype)).sum(axis, **keepdims_kw) / scl
 
     if returned:
         if scl.shape != avg_as_array.shape:

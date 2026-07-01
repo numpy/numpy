@@ -538,6 +538,21 @@ class TestAverage:
         a = np.array([Fraction(1, 5), Fraction(3, 5)])
         assert_equal(np.average(a), Fraction(2, 5))
 
+    def test_new_style_user_dtype(self):
+        # average forwarded a DType instance (from result_type) to the
+        # weight sum / multiply ufuncs, which reject instances of non-legacy
+        # user DTypes.  It must pass the DType class instead.
+        numpy_quaddtype = pytest.importorskip("numpy_quaddtype")
+        qd = numpy_quaddtype.QuadPrecDType()
+
+        a = np.array([1, 2, 3, 4], dtype=qd)
+        w = np.array([4, 3, 2, 1], dtype=qd)
+        assert float(np.average(a)) == 2.5
+        assert float(np.average(a, weights=w)) == 2.0
+        avg, scl = np.average(a, weights=w, returned=True)
+        assert float(avg) == 2.0
+        assert float(scl) == 10.0
+
 
 class TestSelect:
     choices = [np.array([1, 2, 3]),
