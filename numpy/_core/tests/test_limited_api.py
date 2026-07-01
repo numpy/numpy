@@ -7,7 +7,7 @@ import sysconfig
 import pytest
 
 import numpy as np
-from numpy.testing import IS_EDITABLE, IS_WASM, NOGIL_BUILD
+from numpy.testing import IS_64BIT, IS_EDITABLE, IS_WASM, NOGIL_BUILD
 from numpy.testing._private.utils import run_subprocess
 
 # This import is copied from random.tests.test_extending
@@ -236,6 +236,9 @@ def test_limited_api_cython(install_temp, module_name):
 
 @pytest.mark.skipif(
     sys.version_info < (3, 15), reason="opaque PyObject requires Python 3.15+"
+)
+@pytest.mark.skipif(
+    not IS_64BIT, reason="opaque abi3t extensions are broken on 32-bit"
 )
 @pytest.mark.skipif(
     sys.platform == "win32" and not sysconfig.get_config_var('Py_GIL_DISABLED'),
