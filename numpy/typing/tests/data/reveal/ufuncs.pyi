@@ -924,3 +924,51 @@ assert_type(np.less.reduceat(_bool_1d, (0,)), np.ndarray[tuple[int], np.dtype[np
 assert_type(np.less.reduceat(_bool_2d, (0,)), np.ndarray[tuple[int, int], np.dtype[np.bool]])
 assert_type(np.less.reduceat(_py_b_1d, (0,)), npt.NDArray[np.bool])
 assert_type(np.less.reduceat(_py_b_1d, (0,), out=_bool_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+
+# _ufunc_21_ldexp
+# (ldexp)
+
+assert_type(np.ldexp(_py_b_0d, _py_b_0d), np.float64)
+assert_type(np.ldexp(_py_b_1d, _py_b_1d), npt.NDArray[np.float64])
+assert_type(np.ldexp(_py_b_2d, _py_b_2d), npt.NDArray[np.float64])
+assert_type(np.ldexp(_py_i_0d, _py_i_0d), np.float64)
+assert_type(np.ldexp(_py_i_1d, _py_i_1d), npt.NDArray[np.float64])
+assert_type(np.ldexp(_py_i_2d, _py_i_2d), npt.NDArray[np.float64])
+assert_type(np.ldexp(_py_f_0d, _py_i_0d), np.float64)
+assert_type(np.ldexp(_py_f_1d, _py_i_1d), npt.NDArray[np.float64])
+assert_type(np.ldexp(_py_f_2d, _py_i_2d), npt.NDArray[np.float64])
+
+assert_type(np.ldexp(_bool_0d, _bool_0d), np.float64)
+assert_type(np.ldexp(_bool_1d, _bool_1d), npt.NDArray[np.float64])
+assert_type(np.ldexp(_bool_2d, _bool_2d), npt.NDArray[np.float64])
+assert_type(np.ldexp(_bool_nd, _bool_nd), npt.NDArray[np.float64])
+assert_type(np.ldexp(_i16_0d, _i16_0d), np.float64)
+assert_type(np.ldexp(_i16_1d, _i16_1d), npt.NDArray[np.float64])
+assert_type(np.ldexp(_i16_2d, _i16_2d), npt.NDArray[np.float64])
+assert_type(np.ldexp(_i16_nd, _i16_nd), npt.NDArray[np.float64])
+assert_type(np.ldexp(_f32_0d, _i16_0d), np.float32)
+assert_type(np.ldexp(_f32_1d, _i16_1d), npt.NDArray[np.float32])
+assert_type(np.ldexp(_f32_2d, _i16_2d), npt.NDArray[np.float32])
+assert_type(np.ldexp(_f32_nd, _i16_nd), npt.NDArray[np.float32])
+
+assert_type(np.ldexp(_py_i_2d, _py_i_2d, out=_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+
+assert_type(np.ldexp.outer(_py_f_0d, _py_i_0d), np.float64)
+assert_type(np.ldexp.outer(_py_f_1d, _py_i_0d), npt.NDArray[np.float64])
+assert_type(np.ldexp.outer(_py_f_0d, _py_i_1d), npt.NDArray[np.float64])
+assert_type(np.ldexp.outer(_py_f_1d, _py_i_1d), npt.NDArray[np.float64])
+assert_type(np.ldexp.outer(_f32_0d, _py_i_0d), np.float32)
+assert_type(np.ldexp.outer(_f32_1d, _py_i_0d), npt.NDArray[np.float32])
+assert_type(np.ldexp.outer(_f32_0d, _py_i_1d), npt.NDArray[np.float32])
+assert_type(np.ldexp.outer(_f32_1d, _py_i_1d), npt.NDArray[np.float32])
+
+assert_type(np.ldexp.at(_f32_2d, 1, _py_i_1d), None)
+
+assert_type(np.ldexp.reduce(_i16_1d), npt.NDArray[np.float64] | np.float64)
+assert_type(np.ldexp.reduce(_i16_2d), npt.NDArray[np.float64] | np.float64)
+assert_type(np.ldexp.reduce(_i16_1d, axis=None), np.float64)
+assert_type(np.ldexp.reduce(_i16_1d, keepdims=True), npt.NDArray[np.float64])
+assert_type(np.ldexp.reduce(_i16_1d, out=...), npt.NDArray[np.float64])
+assert_type(np.ldexp.reduce(_i16_1d, out=_f32_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
+
+# ldexp doesn't support reduceat / accumulate
