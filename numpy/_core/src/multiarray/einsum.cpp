@@ -228,15 +228,6 @@ parse_output_subscripts(char *subscripts, int length,
         }
     }
 
-    /* If no ellipsis was found there should be no broadcast dimensions. */
-    if (!ellipsis && ndim_broadcast > 0) {
-        PyErr_SetString(PyExc_ValueError,
-                        "output has more dimensions than subscripts "
-                        "given in einstein sum, but no '...' ellipsis "
-                        "provided to broadcast the extra dimensions.");
-        return -1;
-    }
-
     return ndim;
 }
 
@@ -281,13 +272,12 @@ get_single_op_view(PyArrayObject *op, char *labels,
             /* The next output label that's a broadcast dimension */
             for (; ibroadcast < ndim_output; ++ibroadcast) {
                 if (output_labels[ibroadcast] == 0) {
+                    /* Reduction */
                     break;
                 }
             }
             if (ibroadcast == ndim_output) {
-                PyErr_SetString(PyExc_ValueError,
-                        "output had too few broadcast dimensions");
-                return -1;
+                break;
             }
             new_dims[ibroadcast] = PyArray_DIM(op, idim);
             new_strides[ibroadcast] = PyArray_STRIDE(op, idim);
@@ -987,6 +977,18 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
                 goto fail;
             }
             iter_labels[ndim_iter++] = label;
+        }
+    }
+
+    /* Add broadcast dimensions (represented as zeros) that aren't in output */
+    if (memchr(output_labels, 0, ndim_output) == NULL && ndim_broadcast > 0) {
+        for (int i = 0; i < ndim_broadcast; ++i) {
+            if (ndim_iter >= NPY_MAXDIMS) {
+                PyErr_SetString(PyExc_ValueError,
+                            "too many subscripts in einsum");
+                goto fail;
+            }
+            iter_labels[ndim_iter++] = 0;
         }
     }
 
