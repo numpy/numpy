@@ -118,6 +118,7 @@ else:
 
     from . import _core
     from ._core import (
+        EinsumExpression,
         False_,
         ScalarType,
         True_,

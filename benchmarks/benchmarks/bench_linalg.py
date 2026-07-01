@@ -273,3 +273,141 @@ class MatmulStrided(Benchmark):
 
     def time_matmul(self, configuration):
         return np.matmul(self.a1, self.a2)
+
+
+class EinsumExpressionOverhead(Benchmark):
+    """Benchmark EinsumExpression vs einsum for repeated calls."""
+
+    def setup(self):
+        # Small 2-op matmul
+        self.a_small = np.arange(16.0).reshape(4, 4)
+        self.b_small = np.arange(16.0).reshape(4, 4)
+        self.expr_small = np.EinsumExpression(
+            'ij,jk->ik', (4, 4), (4, 4))
+
+        # Medium 2-op matmul
+        self.a_100 = np.arange(10000.0).reshape(100, 100)
+        self.b_100 = np.arange(10000.0).reshape(100, 100)
+        self.expr_100 = np.EinsumExpression(
+            'ij,jk->ik', (100, 100), (100, 100))
+
+        # 3-op chain
+        self.c1 = np.arange(600.0).reshape(20, 30)
+        self.c2 = np.arange(1200.0).reshape(30, 40)
+        self.c3 = np.arange(800.0).reshape(40, 20)
+        self.expr_chain = np.EinsumExpression(
+            'ij,jk,kl->il', (20, 30), (30, 40), (40, 20))
+
+        # 5-op contraction
+        self.o1 = np.arange(8.0).reshape(2, 4)
+        self.o2 = np.arange(32.0).reshape(4, 8)
+        self.o3 = np.arange(16.0).reshape(8, 2)
+        self.o4 = np.arange(8.0).reshape(2, 4)
+        self.o5 = np.arange(32.0).reshape(4, 8)
+        self.expr_5op = np.EinsumExpression(
+            'ij,jk,kl,lm,mn->in',
+            (2, 4), (4, 8), (8, 2), (2, 4), (4, 8))
+
+        # Large 2-op
+        self.a_large = np.arange(60000.0).reshape(200, 300)
+        self.b_large = np.arange(60000.0).reshape(300, 200)
+        self.expr_large = np.EinsumExpression(
+            'ij,jk->ik', (200, 300), (300, 200))
+
+        # Pre-computed paths for baseline comparison
+        self.path_small = np.einsum_path(
+            'ij,jk->ik', self.a_small, self.b_small,
+            optimize='greedy')[0]
+        self.path_chain = np.einsum_path(
+            'ij,jk,kl->il', self.c1, self.c2, self.c3,
+            optimize='greedy')[0]
+        self.path_5op = np.einsum_path(
+            'ij,jk,kl,lm,mn->in',
+            self.o1, self.o2, self.o3, self.o4, self.o5,
+            optimize='greedy')[0]
+
+    # --- No optimization baselines ---
+
+    def time_einsum_small_noopt(self):
+        np.einsum('ij,jk->ik', self.a_small, self.b_small,
+                  optimize=False)
+
+    def time_einsum_100_noopt(self):
+        np.einsum('ij,jk->ik', self.a_100, self.b_100,
+                  optimize=False)
+
+    def time_einsum_chain_noopt(self):
+        np.einsum('ij,jk,kl->il', self.c1, self.c2, self.c3,
+                  optimize=False)
+
+    def time_einsum_5op_noopt(self):
+        np.einsum('ij,jk,kl,lm,mn->in',
+                  self.o1, self.o2, self.o3, self.o4, self.o5,
+                  optimize=False)
+
+    def time_einsum_large_noopt(self):
+        np.einsum('ij,jk->ik', self.a_large, self.b_large,
+                  optimize=False)
+
+    # --- Greedy optimization baselines ---
+
+    def time_einsum_small_greedy(self):
+        np.einsum('ij,jk->ik', self.a_small, self.b_small,
+                  optimize='greedy')
+
+    def time_einsum_100_greedy(self):
+        np.einsum('ij,jk->ik', self.a_100, self.b_100,
+                  optimize='greedy')
+
+    def time_einsum_chain_greedy(self):
+        np.einsum('ij,jk,kl->il', self.c1, self.c2, self.c3,
+                  optimize='greedy')
+
+    def time_einsum_5op_greedy(self):
+        np.einsum('ij,jk,kl,lm,mn->in',
+                  self.o1, self.o2, self.o3, self.o4, self.o5,
+                  optimize='greedy')
+
+    def time_einsum_large_greedy(self):
+        np.einsum('ij,jk->ik', self.a_large, self.b_large,
+                  optimize='greedy')
+
+    # --- Pre-computed path baselines ---
+
+    def time_einsum_small_path(self):
+        np.einsum('ij,jk->ik', self.a_small, self.b_small,
+                  optimize=self.path_small)
+
+    def time_einsum_chain_path(self):
+        np.einsum('ij,jk,kl->il', self.c1, self.c2, self.c3,
+                  optimize=self.path_chain)
+
+    def time_einsum_5op_path(self):
+        np.einsum('ij,jk,kl,lm,mn->in',
+                  self.o1, self.o2, self.o3, self.o4, self.o5,
+                  optimize=self.path_5op)
+
+    # --- EinsumExpression ---
+
+    def time_expression_small(self):
+        self.expr_small(self.a_small, self.b_small)
+
+    def time_expression_100(self):
+        self.expr_100(self.a_100, self.b_100)
+
+    def time_expression_chain(self):
+        self.expr_chain(self.c1, self.c2, self.c3)
+
+    def time_expression_5op(self):
+        self.expr_5op(self.o1, self.o2, self.o3, self.o4, self.o5)
+
+    def time_expression_large(self):
+        self.expr_large(self.a_large, self.b_large)
+
+    # --- matmul controls ---
+
+    def time_matmul_small(self):
+        self.a_small @ self.b_small
+
+    def time_matmul_large(self):
+        self.a_large @ self.b_large

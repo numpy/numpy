@@ -20,7 +20,7 @@ from numpy._typing import (
     _DTypeLikeUInt,
 )
 
-__all__ = ["einsum", "einsum_path"]
+__all__ = ["EinsumExpression", "einsum", "einsum_path"]
 
 type _OptimizeKind = bool | Literal["greedy", "optimal"] | Sequence[Any] | None
 type _CastingSafe = Literal["no", "equiv", "safe", "same_kind"]
@@ -177,3 +177,38 @@ def einsum_path(
     optimize: _OptimizeKind = "greedy",
     einsum_call: Literal[False] = False,
 ) -> tuple[list[Any], str]: ...
+
+class EinsumExpression:
+    _subscripts: str
+    _num_operands: int
+    _shapes: tuple[tuple[int, ...], ...]
+    _contraction_list: list[Any]
+    _optimize: str
+    _single_step: bool
+    def __init__(
+        self,
+        subscripts: str,
+        /,
+        *shapes: tuple[int, ...],
+        optimize: Literal[True, "greedy", "optimal"] = "greedy",
+    ) -> None: ...
+    def __getstate__(self) -> dict[str, Any]: ...
+    def __setstate__(self, state: dict[str, Any]) -> None: ...
+    @overload
+    def __call__(
+        self,
+        *operands: Any,
+        out: None = None,
+        dtype: _DTypeLikeComplex_co | _DTypeLikeObject | None = None,
+        order: _OrderKACF = "K",
+        casting: _CastingSafe | _CastingUnsafe = "safe",
+    ) -> Any: ...
+    @overload
+    def __call__[OutT: NDArray[np.bool | np.number]](
+        self,
+        *operands: Any,
+        out: OutT,
+        dtype: _DTypeLikeComplex_co | _DTypeLikeObject | None = None,
+        order: _OrderKACF = "K",
+        casting: _CastingSafe | _CastingUnsafe = "safe",
+    ) -> OutT: ...

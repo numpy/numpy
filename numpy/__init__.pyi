@@ -288,6 +288,7 @@ from numpy._core.arrayprint import (
 )
 
 from numpy._core.einsumfunc import (
+    EinsumExpression,
     einsum,
     einsum_path,
 )
@@ -722,7 +723,7 @@ __all__ = [
     "atleast_1d", "atleast_2d", "atleast_3d", "block", "hstack", "stack", "unstack",
     "vstack",
     # _core.einsumfunc.__all__
-    "einsum", "einsum_path",
+    "EinsumExpression", "einsum", "einsum_path",
     # matrixlib.__all__
     "matrix", "bmat", "asmatrix",
     # lib._histograms_impl.__all__

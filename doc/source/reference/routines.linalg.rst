@@ -69,6 +69,7 @@ Matrix and vector products
    linalg.tensordot (Array API compatible location)
    einsum
    einsum_path
+   EinsumExpression
    linalg.matrix_power
    kron
    linalg.cross

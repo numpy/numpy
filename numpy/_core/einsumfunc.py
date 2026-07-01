@@ -10,8 +10,9 @@ from numpy._core.multiarray import c_einsum, matmul
 from numpy._core.numeric import asanyarray, reshape
 from numpy._core.overrides import array_function_dispatch
 from numpy._core.umath import multiply
+from numpy._utils import set_module
 
-__all__ = ['einsum', 'einsum_path']
+__all__ = ['EinsumExpression', 'einsum', 'einsum_path']
 
 # importing string for string.ascii_letters would be too slow
 # the first import before caching has been measured to take 800 µs (#23777)
@@ -683,7 +684,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
 
     See Also
     --------
-    einsum, linalg.multi_dot
+    einsum, EinsumExpression, linalg.multi_dot
 
     Examples
     --------
@@ -1317,7 +1318,8 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
 
     See Also
     --------
-    einsum_path, dot, inner, outer, tensordot, linalg.multi_dot
+    einsum_path, EinsumExpression, dot, inner, outer, tensordot,
+    linalg.multi_dot
     einsum:
         Similar verbose interface is provided by the
         `einops <https://github.com/arogozhnikov/einops>`_ package to cover
@@ -1657,3 +1659,192 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
         return out
     else:
         return operands[0]
+
+
+@set_module('numpy')
+class EinsumExpression:
+    """
+    EinsumExpression(subscripts, *shapes, optimize='greedy')
+
+    A pre-compiled einsum expression that can be called repeatedly with
+    different operands of the same shapes, avoiding the overhead of
+    re-parsing subscripts and recomputing the contraction path on each call.
+
+    This is useful when performing the same einsum contraction many times
+    with different data but identical shapes, as the path computation and
+    subscript parsing are done once at construction time.
+
+    .. versionadded:: 2.6.0
+
+    Parameters
+    ----------
+    subscripts : str
+        Specifies the subscripts for summation as a comma-separated list of
+        subscript labels. An explicit output can be specified with '->'.
+    *shapes : tuple of int
+        The shapes of the operands. One shape tuple per operand.
+    optimize : {True, 'greedy', 'optimal'}, optional
+        Choose the type of path.
+
+        * if True defaults to the 'greedy' algorithm
+        * 'optimal' An algorithm that combinatorially explores all possible
+          ways of contracting the listed tensors and chooses the least costly
+          path.
+        * 'greedy' An algorithm that chooses the best pair contraction
+          at each step.
+
+        Default is 'greedy'.
+
+    See Also
+    --------
+    einsum, einsum_path
+
+    Notes
+    -----
+    The expression object stores the pre-computed contraction path and
+    subscript strings for each step. When called, it executes the stored
+    plan without re-parsing or re-optimizing.
+
+    Examples
+    --------
+    Pre-compile a matrix chain multiplication:
+
+    >>> import numpy as np
+    >>> expr = np.EinsumExpression('ij,jk,kl->il',
+    ...                            (10, 20), (20, 5), (5, 10))
+    >>> a = np.random.rand(10, 20)
+    >>> b = np.random.rand(20, 5)
+    >>> c = np.random.rand(5, 10)
+    >>> result = expr(a, b, c)
+    >>> result.shape
+    (10, 10)
+
+    The pre-compiled expression avoids repeated path computation:
+
+    >>> for _ in range(1000):  # doctest: +SKIP
+    ...     result = expr(a, b, c)
+    """
+
+    __slots__ = ('_subscripts', '_num_operands', '_shapes',
+                 '_contraction_list', '_optimize', '_single_step')
+
+    def __init__(self, subscripts, /, *shapes, optimize='greedy'):
+        if not isinstance(subscripts, str):
+            raise TypeError("subscripts must be a string")
+        if not shapes:
+            raise ValueError("at least one operand shape is required")
+        for i, shape in enumerate(shapes):
+            if not isinstance(shape, tuple):
+                raise TypeError(
+                    f"shape {i} must be a tuple, got {type(shape).__name__}")
+
+        if optimize is False or optimize is None:
+            raise ValueError(
+                "optimize must be True, 'greedy', or 'optimal' for "
+                "EinsumExpression; use np.einsum directly for "
+                "unoptimized contractions")
+        if optimize is True:
+            optimize = 'greedy'
+        if optimize not in ('greedy', 'optimal'):
+            raise ValueError(
+                f"optimize must be True, 'greedy', or 'optimal', "
+                f"got {optimize!r}")
+
+        self._subscripts = subscripts
+        self._num_operands = len(shapes)
+        self._shapes = shapes
+        self._optimize = optimize
+
+        # Build fake zero-strided arrays sharing a single element of memory
+        # per array, avoiding large allocations for big shapes.
+        from numpy.lib._stride_tricks_impl import as_strided
+        fake_operands = []
+        for shape in shapes:
+            buf = asanyarray([0.0])
+            fake = as_strided(
+                buf, shape=shape, strides=(0,) * len(shape))
+            fake_operands.append(fake)
+
+        _, contraction_list = einsum_path(
+            subscripts, *fake_operands, optimize=optimize, einsum_call=True)
+        self._contraction_list = contraction_list
+        self._single_step = len(contraction_list) == 1
+
+    def __call__(self, *operands, out=None, **kwargs):
+        """
+        Execute the pre-compiled einsum contraction.
+
+        Parameters
+        ----------
+        *operands : array_like
+            The input arrays. Must match the number of shapes provided
+            at construction time. Providing arrays whose shapes differ
+            from the construction shapes may result in a suboptimal
+            contraction order.
+        out : ndarray, optional
+            If provided, the result is placed into this array.
+        **kwargs
+            Additional keyword arguments passed to einsum (dtype, order,
+            casting).
+
+        Returns
+        -------
+        output : ndarray
+            The result of the einsum contraction.
+        """
+        if len(operands) != self._num_operands:
+            raise ValueError(
+                f"expected {self._num_operands} operands, "
+                f"got {len(operands)}")
+
+        valid_kwargs = ['dtype', 'order', 'casting']
+        unknown = [k for k in kwargs if k not in valid_kwargs]
+        if unknown:
+            raise TypeError(
+                f"Did not understand the following kwargs: {unknown}")
+
+        operands = [asanyarray(op) for op in operands]
+        specified_out = out is not None
+
+        for num, contraction in enumerate(self._contraction_list):
+            inds, einsum_str, _ = contraction
+            tmp_operands = [operands.pop(x) for x in inds]
+
+            handle_out = specified_out and (
+                (num + 1) == len(self._contraction_list))
+            if handle_out:
+                kwargs["out"] = out
+
+            if len(tmp_operands) == 2 and not self._single_step:
+                # For multi-step contractions, bmm_einsum (matmul) is
+                # faster for 2-operand intermediate steps.  For single-step
+                # contractions, c_einsum is faster because it avoids the
+                # Python overhead of bmm_einsum (lru_cache, reshape).
+                new_view = bmm_einsum(einsum_str, *tmp_operands, **kwargs)
+            else:
+                new_view = c_einsum(einsum_str, *tmp_operands, **kwargs)
+
+            operands.append(new_view)
+            del tmp_operands, new_view
+
+        if specified_out:
+            return out
+        else:
+            return operands[0]
+
+    def __repr__(self):
+        shapes_str = ', '.join(str(s) for s in self._shapes)
+        return (f"EinsumExpression('{self._subscripts}', {shapes_str}, "
+                f"optimize='{self._optimize}')")
+
+    def __getstate__(self):
+        return {slot: getattr(self, slot) for slot in self.__slots__}
+
+    def __setstate__(self, state):
+        for slot in self.__slots__:
+            if slot in state:
+                object.__setattr__(self, slot, state[slot])
+        if '_single_step' not in state:
+            object.__setattr__(
+                self, '_single_step',
+                len(self._contraction_list) == 1)
