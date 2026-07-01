@@ -34,7 +34,7 @@
 
 // special optimization for fp scalars propagates NaNs
 // since there're no C99 support for it
-#ifndef NPY_DISABLE_OPTIMIZATION
+#if 0 // benchmark: disable manual scalar optimization, use naive ternary SCALAR_OP
 /**begin repeat
  * #type = npy_float, npy_double#
  * #sfx = f32, f64#
@@ -321,7 +321,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
     npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2],
              len = dimensions[0];
     npy_intp i = 0;
-#ifdef TO_SIMD_SFX
+#if 0 // benchmark: manual SIMD path disabled, naive loop only
     #undef STYPE
     #define STYPE TO_SIMD_SFX(npyv_lanetype)
     if (IS_BINARY_REDUCE) {
@@ -359,7 +359,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
     #endif
     }
 #endif // TO_SIMD_SFX
-#ifndef NPY_DISABLE_OPTIMIZATION
+#if 0 // benchmark: scalar unrolls disabled, naive loop only
     // scalar unrolls
     if (IS_BINARY_REDUCE) {
         // Note, 8x unroll was chosen for best results on Apple M1
@@ -436,7 +436,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
         const @type@ in2 = *(@type@ *)ip2;
         *((@type@ *)op1) = SCALAR_OP(in1, in2);
     }
-#ifdef TO_SIMD_SFX
+#if 0 // benchmark: SIMD cleanup removed (no goto targets remain)
 clear_fp:
     npyv_cleanup();
 #endif
