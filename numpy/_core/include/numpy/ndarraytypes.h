@@ -632,7 +632,7 @@ typedef struct _PyArray_Descr_fields {
          * be two type_numbers with the same type
          * object.
          */
-        PyTypeObject *typeobj;
+        NPY_DECL_ALIGNED(8) PyTypeObject *typeobj;
         /* kind for this type */
         char kind;
         /* unique-character representing this type */
@@ -664,7 +664,7 @@ typedef struct _PyArray_Descr_fields {
 
 typedef struct _PyArray_Descr {
         PyObject_HEAD
-        PyTypeObject *typeobj;
+        NPY_DECL_ALIGNED(8) PyTypeObject *typeobj;
         char kind;
         char type;
         char byteorder;
@@ -675,7 +675,7 @@ typedef struct _PyArray_Descr {
 /* To access modified fields, define the full 2.0 struct: */
 typedef struct {
         PyObject_HEAD
-        PyTypeObject *typeobj;
+        NPY_DECL_ALIGNED(8) PyTypeObject *typeobj;
         char kind;
         char type;
         char byteorder;
@@ -702,7 +702,7 @@ typedef struct {
 #ifndef Py_TARGET_ABI3T
         PyObject_HEAD
 #endif
-        PyTypeObject *typeobj;
+        NPY_DECL_ALIGNED(8) PyTypeObject *typeobj;
         char kind;
         char type;
         char byteorder;
@@ -797,7 +797,7 @@ typedef struct tagPyArrayObject_fields {
     PyObject_HEAD
 #endif
     /* Pointer to the raw data buffer */
-    char *data;
+    NPY_DECL_ALIGNED(8) char *data;
     /* The number of dimensions, also called 'ndim' */
     int nd;
     /* The size in each dimension, also called 'shape' */
@@ -1224,7 +1224,7 @@ typedef struct PyArrayIterObject_fields {
 #ifndef Py_TARGET_ABI3T
         PyObject_HEAD
 #endif
-        int               nd_m1;            /* number of dimensions - 1 */
+        NPY_DECL_ALIGNED(8) int nd_m1;      /* number of dimensions - 1 */
         npy_intp          index, size;
         npy_intp          coordinates[NPY_MAXDIMS_LEGACY_ITERS];/* N-dimensional loop */
         npy_intp          dims_m1[NPY_MAXDIMS_LEGACY_ITERS];    /* ao->dimensions - 1 */
@@ -1250,7 +1250,7 @@ typedef struct {
 #ifndef Py_TARGET_ABI3T
         PyObject_HEAD
 #endif
-        int                  numiter;                 /* number of iters */
+        NPY_DECL_ALIGNED(8) int numiter;              /* number of iters */
         npy_intp             size;                    /* broadcasted size */
         npy_intp             index;                   /* current index */
         int                  nd;                      /* number of dims */
@@ -1297,7 +1297,7 @@ typedef struct {
     /*
      * PyArrayIterObject part: keep this in this exact order
      */
-    int               nd_m1;            /* number of dimensions - 1 */
+    NPY_DECL_ALIGNED(8) int nd_m1;      /* number of dimensions - 1 */
     npy_intp          index, size;
     npy_intp          coordinates[NPY_MAXDIMS_LEGACY_ITERS];/* N-dimensional loop */
     npy_intp          dims_m1[NPY_MAXDIMS_LEGACY_ITERS];    /* ao->dimensions - 1 */

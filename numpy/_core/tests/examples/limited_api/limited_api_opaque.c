@@ -318,6 +318,30 @@ limited_api_opaque_multi_iter_nexti(PyObject *mod, PyObject *args)
     return PyFloat_FromDouble(val);
 }
 
+
+/*
+ * Read a datetime descriptor's flags and c_metadata through the opaque accessors
+ * and return (flags, unit, num).  Regression test for the 32-bit free-threaded
+ * field layout, where c_metadata previously read back as NULL.
+ */
+static PyObject *limited_api_opaque_datetime_metadata(PyObject *mod,
+                                                      PyArrayObject *arr)
+{
+    PyArray_Descr *descr = PyArray_DESCR(arr);
+    npy_uint64 flags = PyDataType_FLAGS(descr);
+    PyArray_DatetimeDTypeMetaData *dt_meta =
+            (PyArray_DatetimeDTypeMetaData *)PyDataType_C_METADATA(descr);
+    if (dt_meta == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError,
+            "PyDataType_C_METADATA() returned NULL for a datetime descriptor");
+        return NULL;
+    }
+    return Py_BuildValue("Kii", (unsigned long long)flags,
+                         (int)dt_meta->meta.base, dt_meta->meta.num);
+}
+
+
 static PyMethodDef limited_api_opaque_methods[] = {
     {"nonzero", (PyCFunction)limited_api_opaque_nonzero, METH_O,
      "Count the number of non-zero elements in the array."},
@@ -341,6 +365,10 @@ static PyMethodDef limited_api_opaque_methods[] = {
     {"multi_iter_nexti", (PyCFunction)limited_api_opaque_multi_iter_nexti,
      METH_VARARGS,
      "Advance only iter 0 N steps using PyArray_MultiIter_NEXTi."},
+    {"datetime_metadata", (PyCFunction)limited_api_opaque_datetime_metadata,
+     METH_O,
+     "Return (flags, unit, num) read from a datetime array's descriptor via the "
+     "opaque descr accessors."},
     {NULL, NULL, 0, NULL}  /* Sentinel */
 };
 

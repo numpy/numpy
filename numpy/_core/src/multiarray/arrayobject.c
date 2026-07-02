@@ -1282,48 +1282,75 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     to access the fields of the struct through a pointer that is not of the same type,
     but in our case it is not a problem in practice because this is used only in stable ABI
     extensions where the original object layout is opaque.
+
+    The first member of the structs are aligned to 8 bytes, because on 32 bit free-threaded builds,
+    sizeof(PyObject) is not a multiple of 8 so the compiler will add padding to the struct and if we
+    don't align the first member to 8 bytes, the offsets of fields structs i.e. `PyArray_Descr_fields`
+    will differ from `PyArray_Descr` which is the actual layout. The alignment of 8 bytes is important
+    because older abi3 extensions have sizeof(PyObject) which a multiple of 8 so the added alignment of 8
+    does not change the offsets of the fields structs for those extensions.
+
+    To calculate the correct offset for the fields, we use offsetof with the first member
+    of the struct because there can be padding before the first member of the struct and the object header,
+    and we want to skip that padding.
 */
+static_assert(offsetof(PyArray_Descr, typeobj) % 8 == 0,
+"typeobj must be aligned to 8 bytes in PyArray_Descr to be compatible with older abi3 extensions,"
+"if this fails check if something has changed in CPython");
+
+static_assert(NPY_ALIGNOF(PyArray_Descr_fields) <= 8,
+              "PyArray_Descr must not require more than 8-byte alignment");
+static_assert(NPY_ALIGNOF(_PyArray_LegacyDescr_fields) <= 8,
+              "_PyArray_LegacyDescr must not require more than 8-byte alignment");
+static_assert(NPY_ALIGNOF(PyArrayObject_fields) <= 8,
+              "PyArrayObject must not require more than 8-byte alignment");
+static_assert(NPY_ALIGNOF(PyArrayMultiIterObject_fields) <= 8,
+              "PyArrayMultiIterObject must not require more than 8-byte alignment");
+static_assert(NPY_ALIGNOF(PyArrayIterObject_fields) <= 8,
+              "PyArrayIterObject must not require more than 8-byte alignment");
+static_assert(NPY_ALIGNOF(PyArrayNeighborhoodIterObject_fields) <= 8,
+              "PyArrayNeighborhoodIterObject must not require more than 8-byte alignment");
 #undef _PyDataType_GET_ITEM_DATA
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArray_Descr_fields *
 _PyDataType_GET_ITEM_DATA(const PyArray_Descr *dtype)
 {
-    return (PyArray_Descr_fields *)(((char *)dtype) + sizeof(PyObject));
+    return (PyArray_Descr_fields *)(((char *)dtype) + offsetof(PyArray_Descr, typeobj));
 }
 #undef _PyArray_LegacyDescr_GET_ITEM_DATA
 /*NUMPY_API*/
 NPY_NO_EXPORT _PyArray_LegacyDescr_fields *
 _PyArray_LegacyDescr_GET_ITEM_DATA(const _PyArray_LegacyDescr *dtype)
 {
-    return (_PyArray_LegacyDescr_fields *)(((char *)dtype) + sizeof(PyObject));
+    return (_PyArray_LegacyDescr_fields *)(((char *)dtype) + offsetof(_PyArray_LegacyDescr, typeobj));
 }
 #undef _PyArray_GET_ITEM_DATA
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArrayObject_fields *
 _PyArray_GET_ITEM_DATA(const PyArrayObject *arr)
 {
-    return (PyArrayObject_fields *)(((char *)arr) + sizeof(PyObject));
+    return (PyArrayObject_fields *)(((char *)arr) + offsetof(PyArrayObject_fields, data));
 }
 #undef _PyArrayMultiIter_GET_ITEM_DATA
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArrayMultiIterObject_fields *
 _PyArrayMultiIter_GET_ITEM_DATA(const PyArrayMultiIterObject *multi)
 {
-    return (PyArrayMultiIterObject_fields *)(((char *)multi) + sizeof(PyObject));
+    return (PyArrayMultiIterObject_fields *)(((char *)multi) + offsetof(PyArrayMultiIterObject_fields, numiter));
 }
 #undef _PyArrayIter_GET_ITEM_DATA
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArrayIterObject_fields *
 _PyArrayIter_GET_ITEM_DATA(const PyArrayIterObject *iter)
 {
-    return (PyArrayIterObject_fields *)(((char *)iter) + sizeof(PyObject));
+    return (PyArrayIterObject_fields *)(((char *)iter) + offsetof(PyArrayIterObject_fields, nd_m1));
 }
 #undef _PyArrayNeighborhoodIter_GET_ITEM_DATA
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArrayNeighborhoodIterObject_fields *
 _PyArrayNeighborhoodIter_GET_ITEM_DATA(const PyArrayNeighborhoodIterObject *iter)
 {
-    return (PyArrayNeighborhoodIterObject_fields *)(((char *)iter) + sizeof(PyObject));
+    return (PyArrayNeighborhoodIterObject_fields *)(((char *)iter) + offsetof(PyArrayNeighborhoodIterObject_fields, nd_m1));
 }
 #undef _PyDatetimeScalarObject_GetMetadata
 /*NUMPY_API*/

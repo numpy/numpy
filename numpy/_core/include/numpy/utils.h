@@ -17,8 +17,10 @@
     #define NPY_DECL_ALIGNED(x) __attribute__ ((aligned (x)))
 #elif defined(_MSC_VER)
     #define NPY_DECL_ALIGNED(x) __declspec(align(x))
+#elif defined(__cplusplus)
+    #define NPY_DECL_ALIGNED(x) alignas(x)
 #else
-    #define NPY_DECL_ALIGNED(x)
+    #define NPY_DECL_ALIGNED(x) _Alignas(x)
 #endif
 
 /* Use this to tag a variable as not used. It will remove unused variable
