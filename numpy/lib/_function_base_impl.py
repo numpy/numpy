@@ -5566,8 +5566,9 @@ def insert(arr, obj, values, axis=None):
         indices = indices.astype(intp)
 
     if indices.size > 0 and (indices.min() < -N or indices.max() > N):
+        oob = indices.min() if indices.min() < -N else indices.max()
         raise IndexError(
-            f"index {indices[oob][0]} is out of bounds "
+            f"index {oob} is out of bounds "
             f"for axis {axis} with size {N}"
         )
     indices[indices < 0] += N
