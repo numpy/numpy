@@ -208,7 +208,7 @@ def limited_api_cython_module_names():
 )
 @pytest.mark.xfail(
     NOGIL_BUILD,
-    reason="Py_GIL_DISABLED builds do not currently support abi3",
+    reason="Py_GIL_DISABLED builds do not support abi3",
 )
 @pytest.mark.parametrize("module_name", limited_api_module_names())
 def test_limited_api_abi3(install_temp, module_name):
