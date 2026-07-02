@@ -69,6 +69,7 @@ class AbstractTest:
     features_groups = {}
     features_map = {}
     features_flags = set()
+    features_hwcap = dict()
 
     def load_flags(self):
         # a hook
@@ -116,9 +117,20 @@ class AbstractTest:
                 continue
             hwcap_value = [s.strip() for s in at.split(b':', 1)]
             if len(hwcap_value) == 2:
-                self.features_flags = self.features_flags.union(
-                    hwcap_value[1].upper().decode().split()
-                )
+                hwcap_decoded = hwcap_value[1].upper().decode().split()
+                # newer glibc versions output values in hex format
+                # instead of decoding all flags, like:
+                # AT_HWCAP: 0x67ffff
+                # Try detecting it. If there's only 1 value
+                # and it starts with 0X hex prefix,
+                # treat it as hex number
+                if len(hwcap_decoded) == 1 and hwcap_decoded[0].startswith("0X"):
+                    hwcap_int = int(hwcap_decoded[0], 16)
+                    for k, v in self.features_hwcap.items():
+                        if (hwcap_int & k) != 0:
+                            self.features_flags.add(v)
+                else:
+                    self.features_flags = self.features_flags.union(hwcap_decoded)
 
 @pytest.mark.skipif(
     sys.platform == 'emscripten',
@@ -429,9 +441,10 @@ is_zarch = re.match(r"^(s390x)", machine, re.IGNORECASE)
                     reason="Only for Linux and IBM Z")
 class Test_ZARCH_Features(AbstractTest):
     features = ["VX", "VXE", "VXE2"]
+    features_hwcap = { (1 << 11): "VX", (1 << 13): "VXE", (1 << 15): "VXE2"}
 
     def load_flags(self):
-        self.load_flags_cpuinfo("features")
+        self.load_flags_auxv()
 
 
 is_arm = re.match(r"^(arm|aarch64)", machine, re.IGNORECASE)
@@ -483,12 +496,8 @@ is_riscv = re.match(r"^(riscv)", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_riscv, reason="Only for Linux and RISC-V")
 class Test_RISCV_Features(AbstractTest):
     features = ["RVV"]
+    # (1 << 21) = HWCAP_RISCV_V
+    features_hwcap = { (1 << 21): "RVV"}
 
     def load_flags(self):
         self.load_flags_auxv()
-        if not self.features_flags:
-            # Let the test fail and dump if we cannot read HWCAP.
-            return
-        hwcap = int(next(iter(self.features_flags)), 16)
-        if hwcap & (1 << 21):  # HWCAP_RISCV_V
-            self.features_flags.add("RVV")
