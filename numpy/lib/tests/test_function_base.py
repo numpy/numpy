@@ -703,6 +703,13 @@ class TestInsert:
         with pytest.raises(IndexError, match='out of bounds'):
             np.insert([0, 1, 2], [idx], [3, 4])
 
+    @pytest.mark.parametrize('bad', [6, -6])
+    def test_index_out_of_bounds_multi(self, bad):
+        # A multi-element obj must reject out-of-bounds indices, matching the
+        # scalar/single-element path (gh-31777).
+        with pytest.raises(IndexError, match='out of bounds'):
+            np.insert(np.arange(5), [bad, 0], [9, 8])
+
 
 class TestAmax:
 
