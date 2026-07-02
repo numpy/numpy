@@ -1,3 +1,4 @@
+import importlib
 import os
 import shutil
 import subprocess
@@ -83,7 +84,7 @@ def install_temp(tmpdir_factory):
     sys.path.append(str(build_dir))
 
 
-def _check_c_api_module(mod):
+def _check_api_module(mod, cython=False):
     arr = np.ones((200, 200))
     assert mod.nonzero(arr) == 200 * 200
 
@@ -100,8 +101,9 @@ def _check_c_api_module(mod):
     a = np.arange(3.0).reshape(3, 1)
     b = np.arange(4.0).reshape(1, 4)
     assert mod.multi_iter_next(a, b) == float(np.sum(a + b))
-    va, vb = mod.multi_iter_goto(a, b, (1, 2))
-    assert va == 1.0 and vb == 2.0
+    if not cython:
+        va, vb = mod.multi_iter_goto(a, b, (1, 2))
+        assert va == 1.0 and vb == 2.0
     va, vb = mod.multi_iter_goto1d(a, b, 6)
     assert va == 1.0 and vb == 2.0
 
@@ -109,72 +111,49 @@ def _check_c_api_module(mod):
     b = np.zeros((2, 3))
     assert mod.multi_iter_nexti(a, b, 3) == 3.0
 
-    # PyDataType_FLAGS / PyDataType_C_METADATA on datetime descriptors.
-    dt = np.array(["2021-01-01"], dtype="datetime64[D]")
-    flags, base, num = mod.datetime_metadata(dt)
-    assert flags == dt.dtype.flags
-    assert base == 4    # NPY_FR_D
-    assert num == 1
+    if cython:
+        # Datetime / timedelta scalar accessors (.pxd helpers).
+        dt = np.datetime64("2021-01-01", "D")
+        assert mod.get_datetime_value(dt) == dt.astype("int64")
+        assert mod.get_datetime_unit(dt) == 4
+        assert mod.is_datetime64(dt)
+        assert not mod.is_timedelta64(dt)
 
-    # A plain seconds timedelta: base NPY_FR_s, unit multiplier 1.
-    td = np.array([5], dtype="timedelta64[s]")
-    flags, base, num = mod.datetime_metadata(td)
-    assert flags == td.dtype.flags
-    assert base == 7    # NPY_FR_s
-    assert num == 1
+        # A plain seconds timedelta: base NPY_FR_s, unit multiplier 1.
+        td = np.timedelta64(5, "s")
+        assert mod.get_timedelta_value(td) == 5
+        assert mod.is_timedelta64(td)
+        assert not mod.is_datetime64(td)
 
-    # A non-unit multiplier exercises the metadata `num` field.
-    td = np.array([1000], dtype="timedelta64[ms]").astype("timedelta64[10ms]")
-    flags, base, num = mod.datetime_metadata(td)
-    assert flags == td.dtype.flags
-    assert base == 8    # NPY_FR_ms
-    assert num == 10
+        # A non-unit multiplier exercises the metadata `num` field.
+        td = np.timedelta64(1000, "ms").astype("timedelta64[10ms]")
+        assert mod.get_timedelta_value(td) == td.astype("int64")
+    else:
+        # PyDataType_FLAGS / PyDataType_C_METADATA on datetime descriptors.
+        dt = np.array(["2021-01-01"], dtype="datetime64[D]")
+        flags, base, num = mod.datetime_metadata(dt)
+        assert flags == dt.dtype.flags
+        assert base == 4    # NPY_FR_D
+        assert num == 1
 
-    # Non-datetime descriptors have no c_metadata and are rejected.
-    with pytest.raises(RuntimeError):
-        mod.datetime_metadata(np.arange(3))
+        # A plain seconds timedelta: base NPY_FR_s, unit multiplier 1.
+        td = np.array([5], dtype="timedelta64[s]")
+        flags, base, num = mod.datetime_metadata(td)
+        assert flags == td.dtype.flags
+        assert base == 7    # NPY_FR_s
+        assert num == 1
 
+        # A non-unit multiplier exercises the metadata `num` field.
+        td = np.array([1000], dtype="timedelta64[ms]").astype(
+            "timedelta64[10ms]")
+        flags, base, num = mod.datetime_metadata(td)
+        assert flags == td.dtype.flags
+        assert base == 8    # NPY_FR_ms
+        assert num == 10
 
-def _check_cython_module(mod):
-    arr = np.ones((200, 200))
-    assert mod.nonzero(arr) == 200 * 200
-
-    # Legacy single-array iterator.
-    arr = np.arange(12.0).reshape(3, 4)
-    assert mod.iter_next(arr) == 66.0
-    assert mod.iter_goto1d(arr, 5) == 5.0
-    assert mod.iter_goto1d(arr, -1) == 11.0
-    assert mod.iter_reset(arr) == 66.0
-    assert mod.iter_goto(arr, (1, 2)) == 6.0
-    assert mod.iter_goto(arr, (2, 3)) == 11.0
-
-    # Broadcasting multi-iterator.
-    a = np.arange(3.0).reshape(3, 1)
-    b = np.arange(4.0).reshape(1, 4)
-    assert mod.multi_iter_next(a, b) == float(np.sum(a + b))
-    va, vb = mod.multi_iter_goto1d(a, b, 6)
-    assert va == 1.0 and vb == 2.0
-
-    a = np.arange(6.0).reshape(2, 3)
-    b = np.zeros((2, 3))
-    assert mod.multi_iter_nexti(a, b, 3) == 3.0
-
-    # Datetime / timedelta scalar accessors (.pxd helpers).
-    dt = np.datetime64("2021-01-01", "D")
-    assert mod.get_datetime_value(dt) == dt.astype("int64")
-    assert mod.get_datetime_unit(dt) == 4
-    assert mod.is_datetime64(dt)
-    assert not mod.is_timedelta64(dt)
-
-    # A plain seconds timedelta: base NPY_FR_s, unit multiplier 1.
-    td = np.timedelta64(5, "s")
-    assert mod.get_timedelta_value(td) == 5
-    assert mod.is_timedelta64(td)
-    assert not mod.is_datetime64(td)
-
-    # A non-unit multiplier exercises the metadata `num` field.
-    td = np.timedelta64(1000, "ms").astype("timedelta64[10ms]")
-    assert mod.get_timedelta_value(td) == td.astype("int64")
+        # Non-datetime descriptors have no c_metadata and are rejected.
+        with pytest.raises(RuntimeError):
+            mod.datetime_metadata(np.arange(3))
 
 
 _PY_ABI3_VERSIONS = ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
@@ -183,6 +162,8 @@ _NPY_TARGET_VERSIONS = ["2.0", "2.1", "2.2", "2.3", "2.4", "2.5"]
 def _module_names(prefix, abi3_versions):
     names = []
     for py_ver in abi3_versions:
+        if sys.version_info < tuple(map(int, py_ver.split('.'))):
+            continue
         py = py_ver.replace('.', '_')
         for npy_ver in _NPY_TARGET_VERSIONS:
             npy = npy_ver.replace('.', '_')
@@ -212,8 +193,8 @@ def limited_api_cython_module_names():
 )
 @pytest.mark.parametrize("module_name", limited_api_module_names())
 def test_limited_api_abi3(install_temp, module_name):
-    mod = pytest.importorskip(module_name)
-    _check_c_api_module(mod)
+    mod = importlib.import_module(module_name)
+    _check_api_module(mod)
 
 
 @pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
@@ -230,8 +211,8 @@ def test_limited_api_abi3(install_temp, module_name):
 )
 @pytest.mark.parametrize("module_name", limited_api_cython_module_names())
 def test_limited_api_cython(install_temp, module_name):
-    mod = pytest.importorskip(module_name)
-    _check_cython_module(mod)
+    mod = importlib.import_module(module_name)
+    _check_api_module(mod, cython=True)
 
 
 @pytest.mark.skipif(
@@ -248,4 +229,4 @@ def test_limited_api_cython(install_temp, module_name):
 def test_limited_opaque(install_temp):
     import limited_api_opaque
 
-    _check_c_api_module(limited_api_opaque)
+    _check_api_module(limited_api_opaque)

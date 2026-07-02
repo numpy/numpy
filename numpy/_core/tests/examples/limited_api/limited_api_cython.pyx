@@ -29,7 +29,12 @@ def nonzero(cnp.ndarray arr):
         arr,
         cnp.NPY_ITER_READONLY | cnp.NPY_ITER_EXTERNAL_LOOP | cnp.NPY_ITER_REFS_OK,
         cnp.NPY_KEEPORDER, cnp.NPY_NO_CASTING, <cnp.dtype>NULL)
+    if it == NULL:
+        raise RuntimeError("NpyIter_New failed")
     iternext = cnp.NpyIter_GetIterNext(it, NULL)
+    if iternext == NULL:
+        cnp.NpyIter_Deallocate(it)
+        raise RuntimeError("NpyIter_GetIterNext failed")
     dataptr = cnp.NpyIter_GetDataPtrArray(it)
     strideptr = cnp.NpyIter_GetInnerStrideArray(it)
     innersizeptr = cnp.NpyIter_GetInnerLoopSizePtr(it)
