@@ -2848,7 +2848,8 @@ class MaskedConstant(MaskedArray[tuple[()], dtype[float64]]):
 masked: Final[MaskedConstant] = ...
 masked_singleton: Final[MaskedConstant] = ...
 
-type masked_array = MaskedArray
+# this should NOT be a (PEP 695) type alias, see https://github.com/numpy/numpy/issues/31737
+masked_array = MaskedArray
 
 # keep in sync with `MaskedArray.__new__`
 @overload
