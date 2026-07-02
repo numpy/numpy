@@ -23,6 +23,17 @@
     #define NPY_DECL_ALIGNED(x) _Alignas(x)
 #endif
 
+/*
+ * Force the first field of a struct to be 8-byte aligned on Python 3.15+.
+ * On older versions, this is a no-op. This is needed to avoid breaking ABI for
+ * older abi3 or 3.14t wheels that are built older versions of numpy.
+ */
+#if PY_VERSION_HEX >= 0x030f0000
+    #define _NPY_OPAQUE_FIRST_FIELD NPY_DECL_ALIGNED(8)
+#else
+    #define _NPY_OPAQUE_FIRST_FIELD
+#endif
+
 /* Use this to tag a variable as not used. It will remove unused variable
  * warning on support platforms (see __COM_NPY_UNUSED) and mangle the variable
  * to avoid accidental use */

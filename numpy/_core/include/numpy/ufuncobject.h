@@ -109,7 +109,7 @@ typedef struct _tagPyUFuncObject {
          * nout: Number of outputs
          * nargs: Always nin + nout (Why is it stored?)
          */
-        NPY_DECL_ALIGNED(8) int nin;
+        _NPY_OPAQUE_FIRST_FIELD int nin;
         int nout, nargs;
 
         /*
