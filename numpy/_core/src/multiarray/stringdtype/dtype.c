@@ -315,62 +315,55 @@ stringdtype_setitem(PyArray_StringDTypeObject *descr, PyObject *obj, char **data
 {
     npy_packed_static_string *sdata = (npy_packed_static_string *)dataptr;
 
-    // borrow reference
+    // borrowed reference
     PyObject *na_object = descr->na_object;
 
-    // We need the result of the comparison after acquiring the allocator, but
-    // cannot use functions requiring the GIL when the allocator is acquired,
-    // so we do the comparison before acquiring the allocator.
-
+    // We need the result of the comparison before packing below, but cannot
+    // use functions requiring the GIL when the allocator is acquired.
     int na_cmp = na_eq_cmp(obj, na_object);
     if (na_cmp == -1) {
         return -1;
     }
 
-    npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
-
-    if (na_object != NULL) {
-        if (na_cmp) {
-            if (NpyString_pack_null(allocator, sdata) < 0) {
-                PyErr_SetString(PyExc_MemoryError,
-                                "Failed to pack null string during StringDType "
-                                "setitem");
-                goto fail;
-            }
-            goto success;
+    if (na_object != NULL && na_cmp) {
+        npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
+        int pack_status = NpyString_pack_null(allocator, sdata);
+        NpyString_release_allocator(allocator);
+        if (pack_status < 0) {
+            PyErr_SetString(PyExc_MemoryError,
+                            "Failed to pack null string during StringDType "
+                            "setitem");
+            return -1;
         }
+        return 0;
     }
+
     PyObject *val_obj = as_pystring(obj, descr->coerce);
 
     if (val_obj == NULL) {
-        goto fail;
+        return -1;
     }
 
     Py_ssize_t length = 0;
     const char *val = PyUnicode_AsUTF8AndSize(val_obj, &length);
     if (val == NULL) {
         Py_DECREF(val_obj);
-        goto fail;
+        return -1;
     }
 
-    if (NpyString_pack(allocator, sdata, val, length) < 0) {
+    npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
+    int pack_status = NpyString_pack(allocator, sdata, val, length);
+    NpyString_release_allocator(allocator);
+    Py_DECREF(val_obj);
+
+    if (pack_status < 0) {
         PyErr_SetString(PyExc_MemoryError,
                         "Failed to pack string during StringDType "
                         "setitem");
-        Py_DECREF(val_obj);
-        goto fail;
+        return -1;
     }
-    Py_DECREF(val_obj);
-
-success:
-    NpyString_release_allocator(allocator);
 
     return 0;
-
-fail:
-    NpyString_release_allocator(allocator);
-
-    return -1;
 }
 
 static PyObject *
