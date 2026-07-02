@@ -2733,6 +2733,18 @@ class TestUfunc:
         with pytest.raises(ValueError, match="(shape|size)"):
             np.add.accumulate(arr, out=out)
 
+    def test_reduceat_and_accumulate_out_dtype_resolution_failure(self):
+        # gh-31691: the out= error path leaked a reference to out when the
+        # ufunc dtype resolution failed (no matching loop for the out dtype).
+        arr = np.arange(3)
+        out = np.empty(3, dtype="U5")  # no add loop resolves to this
+
+        with pytest.raises(np._core._exceptions._UFuncNoLoopError):
+            np.add.reduceat(arr, [0, 1, 2], out=out)
+
+        with pytest.raises(np._core._exceptions._UFuncNoLoopError):
+            np.add.accumulate(arr, out=out)
+
     @pytest.mark.parametrize('out_shape',
                              [(), (1,), (3,), (1, 1), (1, 3), (4, 3)])
     @pytest.mark.parametrize('keepdims', [True, False])
