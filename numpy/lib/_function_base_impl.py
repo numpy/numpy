@@ -5562,6 +5562,10 @@ def insert(arr, obj, values, axis=None):
         # Can safely cast the empty list to intp
         indices = indices.astype(intp)
 
+    if indices.size and (indices.min() < -N or indices.max() > N):
+        bad = indices[(indices < -N) | (indices > N)][0]
+        raise IndexError(f"index {bad} is out of bounds for axis {axis} "
+                         f"with size {N}")
     indices[indices < 0] += N
 
     numnew = len(indices)
