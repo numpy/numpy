@@ -138,7 +138,13 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         integer_dtype = _nx.issubdtype(dtype, _nx.integer)
 
     # Use `dtype=type(dt)` to enforce a floating point evaluation:
-    delta = np.subtract(stop, start, dtype=type(dt))
+    with np.errstate(invalid='ignore'):
+        delta = np.subtract(stop, start, dtype=type(dt))
+    if _nx.isscalar(delta):
+        if start == stop:
+            delta = type(delta)(0)
+    else:
+        delta[start == stop] = 0
     y = _nx.arange(
         0, num, dtype=dt, device=device
     ).reshape((-1,) + (1,) * ndim(delta))
