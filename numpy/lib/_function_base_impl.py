@@ -38,6 +38,7 @@ from numpy._core.numeric import (
 )
 from numpy._core.numerictypes import typecodes
 from numpy._core.umath import (
+    _unwrap,
     add,
     arctan2,
     cos,
@@ -1773,7 +1774,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
         larger than ``period/2``.
     axis : int, optional
         Axis along which unwrap will operate, default is the last axis.
-    period : float, optional
+    period : float or int, optional
         Size of the range over which the input wraps. By default, it is
         ``2 pi``.
 
@@ -1782,7 +1783,10 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     Returns
     -------
     out : ndarray
-        Output array.
+        Output array. Its dtype is ``numpy.result_type(p, period)``; in
+        particular an integer array unwrapped with an integer `period` keeps
+        its integer dtype, while any float `period` (including the default
+        ``2 pi``) produces a floating-point result.
 
     See Also
     --------
@@ -1833,34 +1837,37 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     >>> plt.legend(framealpha=1, shadow=True)
     >>> plt.show()
     """
-    p = asarray(p)
-    nd = p.ndim
-    dd = diff(p, axis=axis)
+    p = asanyarray(p)
     if discont is None:
         discont = period / 2
-    slice1 = [slice(None, None)] * nd     # full slices
-    slice1[axis] = slice(1, None)
-    slice1 = tuple(slice1)
-    dtype = np.result_type(dd, period)
-    if _nx.issubdtype(dtype, _nx.integer):
-        interval_high, rem = divmod(period, 2)
-        boundary_ambiguous = rem == 0
-    else:
-        interval_high = period / 2
-        boundary_ambiguous = True
-    interval_low = -interval_high
-    ddmod = mod(dd - interval_low, period) + interval_low
-    if boundary_ambiguous:
-        # for `mask = (abs(dd) == period/2)`, the above line made
-        # `ddmod[mask] == -period/2`. correct these such that
-        # `ddmod[mask] == sign(dd[mask])*period/2`.
-        _nx.copyto(ddmod, interval_high,
-                   where=(ddmod == interval_low) & (dd > 0))
-    ph_correct = ddmod - dd
-    _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
-    up = array(p, copy=True, dtype=dtype)
-    up[slice1] = p[slice1] + ph_correct.cumsum(axis)
-    return up
+    dtype = np.result_type(p, period)
+    if p.dtype == object:
+        nd = p.ndim
+        dd = diff(p, axis=axis)
+        slice1 = [slice(None, None)] * nd     # full slices
+        slice1[axis] = slice(1, None)
+        slice1 = tuple(slice1)
+        if _nx.issubdtype(dtype, _nx.integer):
+            interval_high, rem = divmod(period, 2)
+            boundary_ambiguous = rem == 0
+        else:
+            interval_high = period / 2
+            boundary_ambiguous = True
+        interval_low = -interval_high
+        ddmod = mod(dd - interval_low, period) + interval_low
+        if boundary_ambiguous:
+            # for `mask = (abs(dd) == period/2)`, the above line made
+            # `ddmod[mask] == -period/2`. correct these such that
+            # `ddmod[mask] == sign(dd[mask])*period/2`.
+            _nx.copyto(ddmod, interval_high,
+                    where=(ddmod == interval_low) & (dd > 0))
+        ph_correct = ddmod - dd
+        _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
+        up = array(p, copy=True, dtype=dtype)
+        up[slice1] = p[slice1] + ph_correct.cumsum(axis)
+        return up
+    return _unwrap(p, discont, period,
+                   signature=(dtype, np.float64, dtype, dtype), axis=axis)
 
 
 def _sort_complex(a):
