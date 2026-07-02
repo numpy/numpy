@@ -1055,13 +1055,12 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     }
 
     /*
-     * Initialize the output: zeros for numeric loops, but None when the
-     * sum-of-products itself runs in object dtype. Object dtype has no universal
-     * additive zero — a hard int 0 made `0 + element` raise TypeError for
-     * str/list/etc. (gh-29200). None is a "no value yet" sentinel the object loop
-     * replaces with the first contribution. The decision keys on the LOOP dtype,
-     * not the output array's: `einsum(..., dtype='f8', out=object_array)` reduces
-     * in f8 and must still seed 0 (else the f8 buffer casts None to nan).
+     * Initialize the output: zeros for numeric loops, None for object-dtype
+     * loops. Object dtype has no universal additive identity, so the object
+     * sum-of-products loop treats None as "no value yet" and seeds the
+     * reduction with the first contribution. Key on the loop dtype, not the
+     * output array's dtype: einsum(..., dtype='f8', out=object_array) reduces
+     * in f8 and must seed 0 (the f8 buffer cannot hold None).
      */
     ret = NpyIter_GetOperandArray(iter)[nop];
     {
@@ -1180,12 +1179,12 @@ finish:
     Py_INCREF(ret);
 
     /*
-     * An empty object reduction (a contracted axis of size 0, so the whole
-     * iteration is empty) never reaches the sum-of-products and keeps its None
-     * identity. Collapse that to 0 so empty object sums match np.dot/np.sum
-     * (gh-29200). einsum contracts the same axes for every output element, so a
-     * zero iteration size means ALL outputs are empty — never the data-None case,
-     * where the loop ran (iter size > 0) and already used real contributions.
+     * When the iteration is empty (a contracted axis of size 0) the
+     * sum-of-products loop never runs, so an object output still holds the
+     * None seed. Collapse it to 0 to match np.sum/np.dot on empty object
+     * arrays. A zero iteration size means every output element is empty
+     * (einsum contracts the same axes for all of them), so this cannot
+     * overwrite real contributions.
      */
     if (PyArray_ISOBJECT(ret) && PyArray_SIZE(ret) > 0
             && NpyIter_GetIterSize(iter) == 0) {

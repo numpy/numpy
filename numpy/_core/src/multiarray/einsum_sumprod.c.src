@@ -1065,11 +1065,8 @@ static void
         PyObject *accum = *(PyObject **)dataptr[nop];
         PyObject *sum;
         if (accum == NULL || accum == Py_None) {
-            /*
-             * Identity element for object reductions: the first contribution
-             * wins instead of being forced through `0 + prod`, so str/list/etc.
-             * object elements reduce correctly (gh-29200).
-             */
+            /* None/NULL means no contribution yet; the first one is used
+             * as-is since object dtype has no universal additive zero. */
             sum = prod;
             Py_INCREF(sum);
         }
