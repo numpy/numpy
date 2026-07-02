@@ -155,7 +155,9 @@ def _check_api_module(mod, cython=False):
         with pytest.raises(RuntimeError):
             mod.datetime_metadata(np.arange(3))
 
-
+# Test limited API extension modules for all supported Python and NumPy versions
+# The _PY_ABI3_VERSIONS and _NPY_TARGET_VERSIONS lists should be kept in sync
+# with the lists defined in meson.build, and the test should be updated if new versions are added here.
 _PY_ABI3_VERSIONS = ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
 _NPY_TARGET_VERSIONS = ["2.0", "2.1", "2.2", "2.3", "2.4", "2.5"]
 
