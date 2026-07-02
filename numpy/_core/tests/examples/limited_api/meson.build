@@ -58,7 +58,7 @@ if py.get_variable('Py_GIL_DISABLED', 0) == 0
             install: false,
             cython_args: ['--module-name', modname],
             c_args: [
-              '-DNPY_NO_DEPRECATED_API=0',
+              '-DNPY_NO_DEPRECATED_API=NPY_1_21_API_VERSION',
               '-DNPY_TARGET_VERSION=' + npy_macro,
             ],
             include_directories: [npy_include_path],
