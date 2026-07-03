@@ -43,7 +43,11 @@ jobs:
           - [macos-14, macosx_arm64, openblas]
           - [windows-2022, win_amd64, ""]
           - [windows-11-arm, win_arm64, ""]
-        python: ["cp312"]
+          # GitHub Actions doesn’t currently support the Android emulator on any ARM
+          # runner. So we build for ARM on a non-ARM runner, which will skip the tests.
+          - [ubuntu-22.04, android_arm64_v8a]
+          - [ubuntu-22.04, android_x86_64]
+        python: ["cp313"]
 
     env:
       IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}  # used in cibw_test_command.sh
@@ -103,8 +107,8 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55  # v4.1.0
-        env:
-          CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+        with:
+          only: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
