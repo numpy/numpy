@@ -1863,7 +1863,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
                     where=(ddmod == interval_low) & (dd > 0))
         ph_correct = ddmod - dd
         _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
-        up = array(p, copy=True, dtype=dtype)
+        up = asanyarray(p, dtype=dtype, copy=True)
         up[slice1] = p[slice1] + ph_correct.cumsum(axis)
         return up
     return _unwrap(p, discont, period,
