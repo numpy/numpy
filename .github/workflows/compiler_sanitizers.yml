@@ -42,7 +42,7 @@ jobs:
         persist-credentials: false
     - name: Set up pyenv
       run: |
-        git clone --branch v2.6.25 --depth 1 https://github.com/pyenv/pyenv.git "$HOME/.pyenv"
+        git clone --branch v2.7.3 --depth 1 https://github.com/pyenv/pyenv.git "$HOME/.pyenv"
         PYENV_ROOT="$HOME/.pyenv"
         PYENV_BIN="$PYENV_ROOT/bin"
         PYENV_SHIMS="$PYENV_ROOT/shims"
@@ -62,7 +62,7 @@ jobs:
         echo CPPFLAGS="-I$LLVM_PREFIX/include" >> $GITHUB_ENV
     - name: Build Python with address sanitizer
       run: |
-        CONFIGURE_OPTS="--with-address-sanitizer" pyenv install 3.14
+        CONFIGURE_OPTS="--with-address-sanitizer" pyenv install -v 3.14
         pyenv global 3.14
     - name: Install dependencies
       run: |
