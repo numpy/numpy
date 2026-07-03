@@ -66,16 +66,13 @@ def _wrapfunc(obj, method, *args, **kwds):
 
 def _wrapreduction(obj, ufunc, method, axis, dtype, out, *,
                    keepdims=_NoValue, initial=_NoValue, where=_NoValue):
-    if keepdims is _NoValue and initial is _NoValue and where is _NoValue:
-        passkwargs = None
-    else:
-        passkwargs = {}
-        if keepdims is not _NoValue:
-            passkwargs["keepdims"] = keepdims
-        if initial is not _NoValue:
-            passkwargs["initial"] = initial
-        if where is not _NoValue:
-            passkwargs["where"] = where
+    passkwargs = {}
+    if keepdims is not _NoValue:
+        passkwargs["keepdims"] = keepdims
+    if initial is not _NoValue:
+        passkwargs["initial"] = initial
+    if where is not _NoValue:
+        passkwargs["where"] = where
 
     if type(obj) is not mu.ndarray:
         try:
@@ -86,31 +83,21 @@ def _wrapreduction(obj, ufunc, method, axis, dtype, out, *,
             # This branch is needed for reductions like any which don't
             # support a dtype.
             if dtype is not None:
-                if passkwargs is None:
-                    return reduction(axis=axis, dtype=dtype, out=out)
-                return reduction(axis=axis, dtype=dtype, out=out,
-                                 **passkwargs)
+                return reduction(axis=axis, dtype=dtype, out=out, **passkwargs)
             else:
-                if passkwargs is None:
-                    return reduction(axis=axis, out=out)
                 return reduction(axis=axis, out=out, **passkwargs)
 
-    if passkwargs is None:
-        return ufunc.reduce(obj, axis, dtype, out)
     return ufunc.reduce(obj, axis, dtype, out, **passkwargs)
 
 
 def _wrapreduction_any_all(obj, ufunc, method, axis, out, *,
                            keepdims=_NoValue, where=_NoValue):
     # Same as above function, but dtype is always bool (but never passed on)
-    if keepdims is _NoValue and where is _NoValue:
-        passkwargs = None
-    else:
-        passkwargs = {}
-        if keepdims is not _NoValue:
-            passkwargs["keepdims"] = keepdims
-        if where is not _NoValue:
-            passkwargs["where"] = where
+    passkwargs = {}
+    if keepdims is not _NoValue:
+        passkwargs["keepdims"] = keepdims
+    if where is not _NoValue:
+        passkwargs["where"] = where
 
     if type(obj) is not mu.ndarray:
         try:
@@ -118,12 +105,8 @@ def _wrapreduction_any_all(obj, ufunc, method, axis, out, *,
         except AttributeError:
             pass
         else:
-            if passkwargs is None:
-                return reduction(axis=axis, out=out)
             return reduction(axis=axis, out=out, **passkwargs)
 
-    if passkwargs is None:
-        return ufunc.reduce(obj, axis, bool, out)
     return ufunc.reduce(obj, axis, bool, out, **passkwargs)
 
 
