@@ -2319,22 +2319,29 @@ class TestUnwrap:
         assert_array_equal(unwrap(np.zeros(0)), np.zeros(0))
         assert_array_equal(unwrap(np.array([3.5])), np.array([3.5]))
 
-    @pytest.mark.parametrize("dtype", [np.complex128, "O"])
-    def test_complex_raises(self, dtype):
-        p = np.arange(5, dtype=np.complex128).astype(dtype)
-        assert_raises(TypeError, unwrap, p)
+    def test_complex_raises(self):
+        p = np.arange(5, dtype=np.complex128)
+        with pytest.raises(np._core._exceptions._UFuncNoLoopError):
+            unwrap(p)
+
+    def test_complex_object_dtype_raises(self):
+        p = np.arange(5, dtype=np.complex128).astype(object)
+        with pytest.raises(TypeError, match="unsupported operand type"):
+            unwrap(p)
 
     @pytest.mark.parametrize("dtype", [np.uint8, np.uint32, np.uint64])
     def test_unsigned_integer_period_raises(self, dtype):
         # unsigned + integer period needs the negative bound ``-period // 2``,
         # which is out of range for the unsigned dtype
         p = np.array([0, 3, 6, 1, 4], dtype=dtype)
-        assert_raises((OverflowError, TypeError), unwrap, p, period=8)
+        with pytest.raises(np._core._exceptions._UFuncNoLoopError):
+            unwrap(p, period=8)
 
     @pytest.mark.parametrize("dtype", ["datetime64[D]", "timedelta64[D]"])
     def test_temporal_raises(self, dtype):
         # datetime/timedelta have no meaningful modular wrap
-        assert_raises(TypeError, unwrap, np.arange(5).astype(dtype))
+        with pytest.raises(np.exceptions.DTypePromotionError):
+            unwrap(np.arange(5).astype(dtype))
 
 
 @pytest.mark.parametrize(
