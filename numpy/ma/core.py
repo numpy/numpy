@@ -8451,6 +8451,26 @@ def convolve(a, v, mode='full', propagate_mask=True):
     See Also
     --------
     numpy.convolve : Equivalent function in the top-level NumPy module.
+
+    Examples
+    --------
+    Basic convolution:
+
+    >>> a = np.ma.array([1, 1, 1, 1], mask=[0, 0, 1, 0])
+    >>> np.ma.convolve(a, [1, 1])
+    masked_array(data=[1, 2, --, --, 1],
+                 mask=[False, False,  True,  True, False],
+           fill_value=999999)
+
+    By default ``propagate_mask=True``, so every output element whose sum
+    includes a masked input is itself masked. With ``propagate_mask=False``
+    the masked input is ignored instead, and an output element is masked only
+    if no unmasked input contributes to it:
+
+    >>> np.ma.convolve(a, [1, 1], propagate_mask=False)
+    masked_array(data=[1, 2, 1, 1, 1],
+                 mask=[False, False, False, False, False],
+           fill_value=999999)
     """
     return _convolve_or_correlate(np.convolve, a, v, mode, propagate_mask)
 
