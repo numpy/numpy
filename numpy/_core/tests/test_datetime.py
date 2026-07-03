@@ -1265,6 +1265,16 @@ class TestDateTime:
         assert small * np.int64(7) == np.timedelta64(21, "s")
         assert np.int64(7) * small == np.timedelta64(21, "s")
 
+    def test_datetime64_item_int64_min_edge_case(self):
+        info = np.iinfo(np.int64)
+
+        for offset in [1, 2, 100, 1000, 10000]:
+            dt64 = np.datetime64(info.min + offset, "D")
+            result = dt64.item()
+            # expected integer value
+            assert result == info.min + offset
+            assert isinstance(result, int)
+
     def test_pyobject_roundtrip(self):
         # All datetime types should be able to roundtrip through object
         a = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0,
