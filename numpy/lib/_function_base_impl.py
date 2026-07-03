@@ -1841,7 +1841,13 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     if discont is None:
         discont = period / 2
     dtype = np.result_type(p, period)
-    if p.dtype == object or dtype.isbuiltin != 1:
+    try:
+        return _unwrap(p, discont, period,
+                       signature=(type(dtype), np.float64, type(dtype), type(dtype)),
+                       axis=axis)
+    except np._core._exceptions._UFuncNoLoopError:
+        if dtype.isbuiltin == 1 and p.dtype != object:
+            raise
         nd = p.ndim
         dd = diff(p, axis=axis)
         slice1 = [slice(None, None)] * nd     # full slices
@@ -1866,8 +1872,6 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
         up = asanyarray(p, dtype=dtype, copy=True)
         up[slice1] = p[slice1] + ph_correct.cumsum(axis)
         return up
-    return _unwrap(p, discont, period,
-                   signature=(dtype, np.float64, dtype, dtype), axis=axis)
 
 
 def _sort_complex(a):
