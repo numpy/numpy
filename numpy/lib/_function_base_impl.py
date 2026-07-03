@@ -1841,7 +1841,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     if discont is None:
         discont = period / 2
     dtype = np.result_type(p, period)
-    if p.dtype == object:
+    if p.dtype == object or dtype.isbuiltin != 1:
         nd = p.ndim
         dd = diff(p, axis=axis)
         slice1 = [slice(None, None)] * nd     # full slices
