@@ -21,8 +21,8 @@ cy = meson.get_compiler('cython')
 
 # Check compiler is recent enough (see the SciPy Toolchain Roadmap for details)
 if cc.get_id() == 'gcc'
-  if not cc.version().version_compare('>=9.3')
-    error('NumPy requires GCC >= 9.3')
+  if not cc.version().version_compare('>=10.3')
+    error('NumPy requires GCC >= 10.3')
   endif
 elif cc.get_id() == 'msvc'
   if not cc.version().version_compare('>=19.35')
