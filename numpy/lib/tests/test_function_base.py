@@ -2261,6 +2261,81 @@ class TestUnwrap:
         assert_array_equal(sm_discont, [0, 75, 150, 225, 300, 430])
         assert sm_discont.dtype == wrap_uneven.dtype
 
+    @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int8, np.int32,
+                                       np.int64, object])
+    def test_dtype_preserved(self, dtype):
+        # integer array + integer period keeps the integer dtype; float stays
+        p = np.array([0, 1, 2, -1, 0], dtype=dtype)
+        out = unwrap(p, period=4)
+        assert out.dtype == dtype
+        assert_array_equal(out, [0, 1, 2, 3, 4])
+
+    @pytest.mark.parametrize("dtype", [np.int8, np.int32, np.int64])
+    def test_int_float_period_promotes(self, dtype):
+        # a float period turns an integer array into a float64 result
+        out = unwrap(np.array([0, 1, 2, -1, 0], dtype=dtype), period=2 * np.pi)
+        assert out.dtype == np.float64
+
+    @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int8, np.int32,
+                                       np.int64, np.bool_, object])
+    def test_subclass_preserved(self, dtype):
+        class MyArray(np.ndarray):
+            pass
+        p = np.array([0, 1, 2, -1, 0], dtype=dtype).view(MyArray)
+        out = unwrap(p)
+        assert isinstance(out, MyArray)
+        # same code path with/without the subclass, so results are exactly equal
+        assert_array_equal(np.asarray(out), unwrap(np.asarray(p)))
+
+    def test_object_matches_float(self):
+        # object arrays go through the Python fall-back; result matches the
+        # float computation, stays object, and preserves subclasses
+        base = np.array([0., 1., 2., 2 + 2 * np.pi, 3 + 2 * np.pi, 3.1, 3.2])
+        obj = base.astype(object)
+        out = unwrap(obj)
+        assert out.dtype == object
+        assert_allclose(out.astype(float), unwrap(base))
+        # custom discont on the object path leaves sub-discont jumps untouched
+        assert_array_equal(unwrap(obj, discont=10).astype(float), base)
+
+    def test_object_boundary_and_fraction(self):
+        # exact +period/2 upward jump exercises the boundary correction; the
+        # values stay exact Python objects (Fractions)
+        p = np.array([Fraction(0), Fraction(2), Fraction(4), Fraction(1),
+                      Fraction(0)], dtype=object)
+        out = unwrap(p, period=4)
+        assert out.dtype == object
+        assert_array_equal(out.astype(float),
+                           unwrap(np.array([0., 2., 4., 1., 0.]), period=4))
+
+    def test_object_2d_axis(self):
+        base = np.linspace(0, 20 * np.pi, 24).reshape(4, 6)
+        obj = base.astype(object)
+        for axis in (0, 1):
+            assert_allclose(unwrap(obj, axis=axis).astype(float),
+                            unwrap(base, axis=axis))
+
+    def test_empty_and_single(self):
+        assert_array_equal(unwrap(np.zeros(0)), np.zeros(0))
+        assert_array_equal(unwrap(np.array([3.5])), np.array([3.5]))
+
+    @pytest.mark.parametrize("dtype", [np.complex128, "O"])
+    def test_complex_raises(self, dtype):
+        p = np.arange(5, dtype=np.complex128).astype(dtype)
+        assert_raises(TypeError, unwrap, p)
+
+    @pytest.mark.parametrize("dtype", [np.uint8, np.uint32, np.uint64])
+    def test_unsigned_integer_period_raises(self, dtype):
+        # unsigned + integer period needs the negative bound ``-period // 2``,
+        # which is out of range for the unsigned dtype
+        p = np.array([0, 3, 6, 1, 4], dtype=dtype)
+        assert_raises((OverflowError, TypeError), unwrap, p, period=8)
+
+    @pytest.mark.parametrize("dtype", ["datetime64[D]", "timedelta64[D]"])
+    def test_temporal_raises(self, dtype):
+        # datetime/timedelta have no meaningful modular wrap
+        assert_raises(TypeError, unwrap, np.arange(5).astype(dtype))
+
 
 @pytest.mark.parametrize(
     "dtype", "O" + np.typecodes["AllInteger"] + np.typecodes["Float"]
