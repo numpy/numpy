@@ -45,7 +45,6 @@ from numpy import (
     heaviside,
     hypot,
     lcm,
-    ldexp,
     left_shift,
     logaddexp,
     logaddexp2,
@@ -4138,6 +4137,353 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
+# efdg, il => efdg
+@type_check_only
+class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
+    # TODO(@jorenham): shape-typing
+
+    @override
+    @overload  # 0d T@floating, 0d
+    def __call__[ScalarT: np.floating](
+        self,
+        x1: ScalarT,
+        x2: _IntLike_co,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> ScalarT: ...
+    @overload  # 0d <f64, 0d
+    def __call__[ScalarT: np.floating](
+        self,
+        x1: float | _to_integer,
+        x2: _IntLike_co,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> np.float64: ...
+    @overload  # >0d T@floating, >=0d
+    def __call__[ScalarT: np.floating](
+        self,
+        x1: npt.NDArray[ScalarT] | _NestedSequence[ScalarT],
+        x2: _ArrayLikeInt_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # >0d <f64, >=0d
+    def __call__(
+        self,
+        x1: npt.NDArray[_to_integer] | _NestedSequence[float | _to_integer],
+        x2: _ArrayLikeInt_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # >=0d T@floating, >0d
+    def __call__[ScalarT: np.floating](
+        self,
+        x1: _ArrayLike[ScalarT],
+        x2: npt.NDArray[_to_integer] | _NestedSequence[_IntLike_co],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # >=0d <f64, >0d
+    def __call__(
+        self,
+        x1: _DualArrayLike[np.dtype[_to_integer], float],
+        x2: npt.NDArray[_to_integer] | _NestedSequence[_IntLike_co],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # >=0d T@floating, >=0d, out=...
+    def __call__[ScalarT: np.floating](
+        self,
+        x1: _ArrayLike[ScalarT],
+        x2: _ArrayLikeInt_co,
+        /,
+        *,
+        out: EllipsisType,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # >=0d <f64, >=0d, out=...
+    def __call__(
+        self,
+        x1: _DualArrayLike[np.dtype[_to_integer], float],
+        x2: _ArrayLikeInt_co,
+        /,
+        *,
+        out: EllipsisType,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # out=<given>
+    def __call__[OutT: np.ndarray](
+        self,
+        x1: _ArrayLikeFloat_co,
+        x2: _ArrayLikeInt_co,
+        /,
+        out: OutT,
+        *,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> OutT: ...
+    @overload  # x1.__array_ufunc__(self, "__call__", x1, x2, ...)
+    def __call__[OtherT, OutT](
+        self,
+        x1: _CanUfuncCall2L[OtherT, OutT],
+        x2: OtherT,
+        /,
+        *,
+        out: object | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> OutT: ...
+    @overload  # x2.__array_ufunc__(self, "__call__", x1, x2, ...)
+    def __call__[OtherT, OutT](
+        self,
+        x1: OtherT,
+        x2: _CanUfuncCall2R[OtherT, OutT],
+        /,
+        *,
+        out: object | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> OutT: ...
+
+    #
+    @override
+    @overload  # 0d T@floating, 0d
+    def outer[ScalarT: np.floating](  # pyrefly:ignore[bad-override]
+        self,
+        x1: ScalarT,
+        x2: _IntLike_co,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> ScalarT: ...
+    @overload  # 0d <f64, 0d
+    def outer[ScalarT: np.floating](
+        self,
+        x1: float | _to_integer,
+        x2: _IntLike_co,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> np.float64: ...
+    @overload  # >0d T@floating, >=0d
+    def outer[ScalarT: np.floating](
+        self,
+        x1: npt.NDArray[ScalarT] | _NestedSequence[ScalarT],
+        x2: _ArrayLikeInt_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # >0d <f64, >=0d
+    def outer(
+        self,
+        x1: npt.NDArray[_to_integer] | _NestedSequence[float | _to_integer],
+        x2: _ArrayLikeInt_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # >=0d T@floating, >0d
+    def outer[ScalarT: np.floating](
+        self,
+        x1: _ArrayLike[ScalarT],
+        x2: npt.NDArray[_to_integer] | _NestedSequence[_IntLike_co],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # >=0d <f64, >0d
+    def outer(
+        self,
+        x1: _DualArrayLike[np.dtype[_to_integer], float],
+        x2: npt.NDArray[_to_integer] | _NestedSequence[_IntLike_co],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # >=0d T@floating, >=0d, out=...
+    def outer[ScalarT: np.floating](
+        self,
+        x1: _ArrayLike[ScalarT],
+        x2: _ArrayLikeInt_co,
+        /,
+        *,
+        out: EllipsisType,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # >=0d <f64, >=0d, out=...
+    def outer(
+        self,
+        x1: _DualArrayLike[np.dtype[_to_integer], float],
+        x2: _ArrayLikeInt_co,
+        /,
+        *,
+        out: EllipsisType,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # out=<given>
+    def outer[OutT: np.ndarray](
+        self,
+        x1: _ArrayLikeFloat_co,
+        x2: _ArrayLikeInt_co,
+        /,
+        out: OutT,
+        *,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> OutT: ...
+    @overload  # x1.__array_ufunc__(self, "outer", x1, x2, ...)
+    def outer[OtherT, OutT](
+        self,
+        x1: _CanUfuncCall2L[OtherT, OutT],
+        x2: OtherT,
+        /,
+        *,
+        out: object | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> OutT: ...
+    @overload  # x2.__array_ufunc__(self, "outer", x1, x2, ...)
+    def outer[OtherT, OutT](
+        self,
+        x1: OtherT,
+        x2: _CanUfuncCall2R[OtherT, OutT],
+        /,
+        *,
+        out: object | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> OutT: ...
+
+    #
+    @override
+    @overload
+    def at(self, a: npt.NDArray[_to_floating], indices: _ArrayLikeInt, b: _ArrayLikeInt_co, /) -> None: ...  # pyrefly:ignore[bad-override]
+    @overload
+    def at[OtherT, IxT, OutT](self, a: _CanUfuncAt2L[OtherT, IxT, OutT], indices: IxT, b: OtherT, /) -> OutT: ...
+    @overload
+    def at[OtherT, IxT, OutT](self, a: OtherT, indices: IxT, b: _CanUfuncAt2R[OtherT, IxT, OutT], /) -> OutT: ...
+
+    #
+    @override
+    @overload  # unknown shape
+    def reduce(  # pyrefly:ignore[bad-override]
+        self,
+        array: _ArrayLikeInt,
+        /,
+        *,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: bool | np.bool = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.float64] | np.float64: ...
+    @overload  # unknown shape, axis=None
+    def reduce(
+        self,
+        array: _ArrayLikeInt,
+        /,
+        *,
+        axis: None,
+        dtype: None = None,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: bool | np.bool = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> np.float64: ...
+    @overload  # unknown shape, keepdims=True
+    def reduce(
+        self,
+        array: _ArrayLikeInt,
+        /,
+        *,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        out: None = None,
+        keepdims: Literal[True],
+        initial: bool | np.bool = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # unknown shape, out=...
+    def reduce(
+        self,
+        array: _ArrayLikeInt,
+        /,
+        *,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        out: EllipsisType,
+        keepdims: bool = False,
+        initial: bool | np.bool = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # out=<given>
+    def reduce[OutT: np.ndarray](
+        self,
+        array: _ArrayLikeInt,
+        /,
+        *,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        out: OutT,
+        keepdims: bool = False,
+        initial: bool | np.bool = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> OutT: ...
+    @overload  # array.__array_ufunc__(self, "reduce", array, ...)
+    def reduce[OutT](
+        self,
+        array: _CanUfuncReduce[OutT],
+        /,
+        *,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: npt.DTypeLike | None = None,
+        out: np.ndarray | EllipsisType | None = None,
+        keepdims: bool = False,
+        initial: bool | np.bool = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> OutT: ...
+
+    @override
+    def reduceat(self, array: Never, /, indices: Never) -> Never: ...  # pyrefly:ignore[bad-override]
+    @override
+    def accumulate(self, array: Never, /) -> Never: ...  # pyrefly:ignore[bad-override]
+
 logical_and: Final[_ufunc_21_logical[Literal[True]]] = ...
 logical_or: Final[_ufunc_21_logical[Literal[False]]] = ...
 logical_xor: Final[_ufunc_21_logical[Literal[False]]] = ...
@@ -4148,6 +4494,8 @@ greater_equal: Final[_ufunc_21_cmp] = ...
 less: Final[_ufunc_21_cmp] = ...
 less_equal: Final[_ufunc_21_cmp] = ...
 not_equal: Final[_ufunc_21_cmp] = ...
+
+ldexp: Final[_ufunc_21_ldexp] = ...
 
 ###
 # re-exports from `_core._multiarray_umath` that are used by `_core._ufunc_config`

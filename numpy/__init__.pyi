@@ -428,6 +428,7 @@ from numpy._core.umath import (
     isinf,
     isnan,
     isnat,
+    ldexp,
     less,
     less_equal,
     log,
@@ -7627,7 +7628,6 @@ gcd: _UFunc_Nin2_Nout1[L["gcd"], L[11], L[0]]
 heaviside: _UFunc_Nin2_Nout1[L["heaviside"], L[4], None]
 hypot: _UFunc_Nin2_Nout1[L["hypot"], L[5], L[0]]
 lcm: _UFunc_Nin2_Nout1[L["lcm"], L[11], None]
-ldexp: _UFunc_Nin2_Nout1[L["ldexp"], L[8], None]
 left_shift: _UFunc_Nin2_Nout1[L["left_shift"], L[11], None]
 logaddexp2: _UFunc_Nin2_Nout1[L["logaddexp2"], L[4], float]
 logaddexp: _UFunc_Nin2_Nout1[L["logaddexp"], L[4], float]
