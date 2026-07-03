@@ -99,12 +99,19 @@ def _detected_blas():
 
 
 def _openblas_predates_gemm_fix(name, version):
+    name = (name or '').lower().strip()
+    # Assume failures using wrapper BLAS packages are buggy OpenBLAS.
+    # This may ignore a genuine bug but we can't do anything more fine-grained.
+    if name in ('blas', 'cblas', 'flexiblas', 'unknown', ''):
+        return True
     if 'openblas' not in name:
+        # e.g. MKL, accelerate, where we'd want to know about a new failure
         return False
     try:
         parsed = tuple(int(p) for p in version.split('.'))
     except ValueError:
-        return False
+        # unparseable OpenBLAS version so assume an old buggy version
+        return True
     return parsed < (0, 3, 33, 112)
 
 
@@ -147,7 +154,8 @@ def test_blas_gemm_thread_safety():
     if mismatches and _openblas_predates_gemm_fix(blas_name, blas_version):
         pytest.xfail(
             f"OpenBLAS version ({blas_version}) predates first OpenBLAS "
-            "version with a fix (0.3.33.112)"
+            "version with a fix (0.3.33.112) or BLAS metadata is not "
+            "sufficient to identify the BLAS implementation."
         )
 
     assert mismatches == 0, (
