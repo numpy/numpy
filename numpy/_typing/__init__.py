@@ -140,8 +140,6 @@ from ._shape import _AnyShape as _AnyShape, _Shape as _Shape, _ShapeLike as _Sha
 #
 from ._ufunc import (
     _GUFunc_Nin2_Nout1 as _GUFunc_Nin2_Nout1,
-    _UFunc_Nin1_Nout1 as _UFunc_Nin1_Nout1,
-    _UFunc_Nin1_Nout2 as _UFunc_Nin1_Nout2,
     _UFunc_Nin2_Nout1 as _UFunc_Nin2_Nout1,
     _UFunc_Nin2_Nout2 as _UFunc_Nin2_Nout2,
 )

@@ -20,7 +20,7 @@
 #include "mapping.h"
 #include "ctors.h"
 #include "dtypemeta.h"
-#include "descriptor.h" 
+#include "descriptor.h"
 #include "usertypes.h"
 #include "number.h"
 #include "numpyos.h"
@@ -233,7 +233,7 @@ find_binary_operation_path(
     }
 
     if (!was_scalar || PyArray_DESCR(arr)->type_num != NPY_OBJECT) {
-        /* 
+        /*
          * The array is OK for usage and we can simply forward it.  There
          * is a theoretical subtlety here:  If the other object implements
          * `__array_wrap__`, we may ignore that.  However, this only matters
@@ -1827,7 +1827,7 @@ gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
     if (strides == NULL) {
         goto finish;
     }
-    
+
     /* descr */
     descr = array_protocol_descr_get(array_descr);
     if (descr == NULL) {
@@ -2177,7 +2177,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
         descr = PyArray_DescrFromScalar(self);
         data = (void *)scalar_value(self, descr);
 
-        newmem = PyObject_Malloc(descr->elsize);
+        newmem = PyMem_Malloc(descr->elsize);
         if (newmem == NULL) {
             Py_DECREF(descr);
             return PyErr_NoMemory();
@@ -2186,7 +2186,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
             PyDataType_GetArrFuncs(descr)->copyswap(newmem, data, 1, NULL);
         }
         new = PyArray_Scalar(newmem, descr, NULL);
-        PyObject_Free(newmem);
+        PyMem_Free(newmem);
         Py_DECREF(descr);
         return new;
     }

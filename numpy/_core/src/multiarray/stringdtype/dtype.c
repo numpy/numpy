@@ -230,7 +230,7 @@ common_instance(PyArray_StringDTypeObject *dtype1, PyArray_StringDTypeObject *dt
     }
 
     return (PyArray_StringDTypeObject *)new_stringdtype_instance(
-            out_na_object, dtype1->coerce && dtype1->coerce);
+            out_na_object, dtype1->coerce && dtype2->coerce);
 }
 
 /*
@@ -265,6 +265,13 @@ as_pystring(PyObject *scalar, int coerce)
     if (scalar_type == &PyUnicode_Type) {
         Py_INCREF(scalar);
         return scalar;
+    }
+    // str subclasses (e.g. np.str_) are string data even when coercion is
+    // disabled; convert to an exact str, preserving embedded and trailing
+    // nulls that a round-trip through a fixed-width unicode descriptor
+    // would strip
+    if (PyUnicode_Check(scalar)) {
+        return PyUnicode_FromObject(scalar);
     }
     if (coerce == 0) {
         PyErr_SetString(PyExc_ValueError,
@@ -315,62 +322,55 @@ stringdtype_setitem(PyArray_StringDTypeObject *descr, PyObject *obj, char **data
 {
     npy_packed_static_string *sdata = (npy_packed_static_string *)dataptr;
 
-    // borrow reference
+    // borrowed reference
     PyObject *na_object = descr->na_object;
 
-    // We need the result of the comparison after acquiring the allocator, but
-    // cannot use functions requiring the GIL when the allocator is acquired,
-    // so we do the comparison before acquiring the allocator.
-
+    // We need the result of the comparison before packing below, but cannot
+    // use functions requiring the GIL when the allocator is acquired.
     int na_cmp = na_eq_cmp(obj, na_object);
     if (na_cmp == -1) {
         return -1;
     }
 
-    npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
-
-    if (na_object != NULL) {
-        if (na_cmp) {
-            if (NpyString_pack_null(allocator, sdata) < 0) {
-                PyErr_SetString(PyExc_MemoryError,
-                                "Failed to pack null string during StringDType "
-                                "setitem");
-                goto fail;
-            }
-            goto success;
+    if (na_object != NULL && na_cmp) {
+        npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
+        int pack_status = NpyString_pack_null(allocator, sdata);
+        NpyString_release_allocator(allocator);
+        if (pack_status < 0) {
+            PyErr_SetString(PyExc_MemoryError,
+                            "Failed to pack null string during StringDType "
+                            "setitem");
+            return -1;
         }
+        return 0;
     }
+
     PyObject *val_obj = as_pystring(obj, descr->coerce);
 
     if (val_obj == NULL) {
-        goto fail;
+        return -1;
     }
 
     Py_ssize_t length = 0;
     const char *val = PyUnicode_AsUTF8AndSize(val_obj, &length);
     if (val == NULL) {
         Py_DECREF(val_obj);
-        goto fail;
+        return -1;
     }
 
-    if (NpyString_pack(allocator, sdata, val, length) < 0) {
+    npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
+    int pack_status = NpyString_pack(allocator, sdata, val, length);
+    NpyString_release_allocator(allocator);
+    Py_DECREF(val_obj);
+
+    if (pack_status < 0) {
         PyErr_SetString(PyExc_MemoryError,
                         "Failed to pack string during StringDType "
                         "setitem");
-        Py_DECREF(val_obj);
-        goto fail;
+        return -1;
     }
-    Py_DECREF(val_obj);
-
-success:
-    NpyString_release_allocator(allocator);
 
     return 0;
-
-fail:
-    NpyString_release_allocator(allocator);
-
-    return -1;
 }
 
 static PyObject *
@@ -642,6 +642,11 @@ stringdtype_is_known_scalar_type(PyArray_DTypeMeta *cls,
     {
         return 1;
     }
+    // otherwise np.str_ discovers its fixed-width 'U' descriptor, whose
+    // cast into StringDType strips trailing NULs setitem would preserve
+    else if (pytype == &PyUnicodeArrType_Type) {
+        return 1;
+    }
     return 0;
 }
 
@@ -661,6 +666,9 @@ stringdtype_finalize_descr(PyArray_Descr *dtype)
     NpyString_release_allocator(allocator);
     PyArray_StringDTypeObject *ret = (PyArray_StringDTypeObject *)new_stringdtype_instance(
             sdtype->na_object, sdtype->coerce);
+    if (ret == NULL) {
+        return NULL;
+    }
     ret->array_owned = 1;
     return (PyArray_Descr *)ret;
 }

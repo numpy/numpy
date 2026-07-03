@@ -881,7 +881,7 @@ def mask_indices(n, mask_func, k=0):
         A function whose call signature is similar to that of `triu`, `tril`.
         That is, ``mask_func(x, k)`` returns a boolean array, shaped like `x`.
         `k` is an optional argument to the function.
-    k : scalar
+    k : scalar, optional
         An optional argument which is passed through to `mask_func`. Functions
         like `triu`, `tril` take a second argument that is interpreted as an
         offset.
