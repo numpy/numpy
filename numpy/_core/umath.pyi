@@ -49,9 +49,6 @@ from numpy import (
     left_shift,
     logaddexp,
     logaddexp2,
-    logical_and,
-    logical_or,
-    logical_xor,
     matmul,
     matvec,
     maximum,
@@ -81,6 +78,7 @@ from numpy._typing import (
     _CharLike_co,
     _DTypeLike,
     _DTypeLikeBool,
+    _DTypeLikeObject,
     _FloatLike_co,
     _IntLike_co,
     _NestedSequence,
@@ -208,9 +206,13 @@ type _to_number = np.number | np.bool
 type _to_numeric = _to_number | np.timedelta64
 type _numeric = np.number | np.timedelta64
 type _time = np.datetime64 | np.timedelta64
+type _non_object = _to_number | _time | np.flexible  # np.generic - np.object_
 
 type _ArrayLikeNumericObj = _DualArrayLike[np.dtype[_numeric | np.object_], complex]
 type _ArrayLikeNumericObj_co = _DualArrayLike[np.dtype[_to_numeric | np.object_], complex]
+
+type _ArrayUnlikeObject = _DualArrayLike[np.dtype[_non_object] | np.dtypes.StringDType, complex | bytes | str]
+type _ScalarUnlikeObject = complex | bytes | str | np.generic  # bare `np.object_` don't exist
 
 @type_check_only
 class _ExtOjbDict(TypedDict, total=False):
@@ -3304,6 +3306,489 @@ class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
 frexp: Final[_ufunc_12_frexp] = ...
 modf: Final[_ufunc_12_modf] = ...
 
+# ?bBhHiIlLqQefdgFDGOSUVT, ?bBhHiIlLqQefdgFDGOSUVT => ?O;  (also supports `mM` input)
+@type_check_only
+class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
+    # TODO(@jorenham): shape-typing
+
+    @override
+    @overload  # 0d, 0d
+    def __call__(
+        self,
+        x1: _ScalarUnlikeObject,
+        x2: _ScalarUnlikeObject,
+        /,
+        *,
+        out: None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> np.bool: ...
+    @overload  # >0d, >=0d
+    def __call__(
+        self,
+        x1: np.ndarray[Any, np.dtype[_non_object] | np.dtypes.StringDType] | _NestedSequence[_ScalarUnlikeObject],
+        x2: _ArrayUnlikeObject,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.bool]: ...
+    @overload  # >=0d, >0d
+    def __call__(
+        self,
+        x1: _ArrayUnlikeObject,
+        x2: np.ndarray[Any, np.dtype[_non_object] | np.dtypes.StringDType] | _NestedSequence[_ScalarUnlikeObject],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.bool]: ...
+    @overload  # >0d object_, >=0d
+    def __call__(
+        self,
+        x1: npt.NDArray[np.object_],
+        x2: npt.ArrayLike,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeObject | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.object_]: ...
+    @overload  # >=0d, >0d object_
+    def __call__(
+        self,
+        x1: npt.ArrayLike,
+        x2: npt.NDArray[np.object_],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeObject | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.object_]: ...
+    @overload  # >=0d, >=0d, out=...
+    def __call__(
+        self,
+        x1: _ArrayUnlikeObject,
+        x2: _ArrayUnlikeObject,
+        /,
+        *,
+        out: EllipsisType,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.bool]: ...
+    @overload  # out=<given>
+    def __call__[OutT: np.ndarray](
+        self,
+        x1: npt.ArrayLike,
+        x2: npt.ArrayLike,
+        /,
+        out: OutT,
+        *,
+        dtype: _DTypeLikeBool | _DTypeLikeObject | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> OutT: ...
+    @overload  # x1.__array_ufunc__(self, "__call__", x1, x2, ...)
+    def __call__[OtherT, OutT](
+        self,
+        x1: _CanUfuncCall2L[OtherT, OutT],
+        x2: OtherT,
+        /,
+        *,
+        out: object | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> OutT: ...
+    @overload  # x2.__array_ufunc__(self, "__call__", x1, x2, ...)
+    def __call__[OtherT, OutT](
+        self,
+        x1: OtherT,
+        x2: _CanUfuncCall2R[OtherT, OutT],
+        /,
+        *,
+        out: object | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> OutT: ...
+    @overload  # +object, +object (overlaps with, well, everything...)
+    def __call__(
+        self,
+        x1: object,
+        x2: object,
+        /,
+        *,
+        out: None = None,
+        dtype: _DTypeLikeObject | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> Any: ...
+
+    #
+    @override
+    @overload  # 0d, 0d
+    def outer(
+        self,
+        x1: _ScalarUnlikeObject,
+        x2: _ScalarUnlikeObject,
+        /,
+        *,
+        out: None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> np.bool: ...
+    @overload  # >0d, >=0d
+    def outer(
+        self,
+        x1: np.ndarray[Any, np.dtype[_non_object] | np.dtypes.StringDType] | _NestedSequence[_ScalarUnlikeObject],
+        x2: _ArrayUnlikeObject,
+        /,
+        *,
+        out: None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.bool]: ...
+    @overload  # >=0d, >0d
+    def outer(
+        self,
+        x1: _ArrayUnlikeObject,
+        x2: np.ndarray[Any, np.dtype[_non_object] | np.dtypes.StringDType] | _NestedSequence[_ScalarUnlikeObject],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.bool]: ...
+    @overload  # >0d object, >=0d
+    def outer(
+        self,
+        x1: npt.NDArray[np.object_],
+        x2: npt.ArrayLike,
+        /,
+        *,
+        out: None = None,
+        dtype: _DTypeLikeObject | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.object_]: ...
+    @overload  # >=0d, >0d object
+    def outer(
+        self,
+        x1: npt.ArrayLike,
+        x2: npt.NDArray[np.object_],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeObject | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.object_]: ...
+    @overload  # >=0d, >=0d, out=<given>
+    def outer[OutT: np.ndarray](
+        self,
+        x1: npt.ArrayLike,
+        x2: npt.ArrayLike,
+        /,
+        *,
+        out: OutT,
+        dtype: _DTypeLikeBool | _DTypeLikeObject | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> OutT: ...
+    @overload  # >=0d, >=0d  (fallback)
+    def outer(
+        self,
+        x1: _ArrayUnlikeObject,
+        x2: _ArrayUnlikeObject,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.bool] | Any: ...
+    @overload  # x1.__array_ufunc__(self, "outer", x1, x2, ...)
+    def outer[OtherT, OutT](
+        self,
+        x1: _CanUfuncOuterL[OtherT, OutT],
+        x2: OtherT,
+        /,
+        *,
+        out: object | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> OutT: ...
+    @overload  # x2.__array_ufunc__(self, "outer", x1, x2, ...)
+    def outer[OtherT, OutT](
+        self,
+        x1: OtherT,
+        x2: _CanUfuncOuterR[OtherT, OutT],
+        /,
+        *,
+        out: object | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> OutT: ...
+    @overload  # +object, +object (overlaps with everything...)
+    def outer(
+        self,
+        x1: object,
+        x2: object,
+        /,
+        *,
+        out: None = None,
+        dtype: _DTypeLikeObject | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> Any: ...
+
+    #
+    @override
+    @overload
+    def at(self, a: np.ndarray, indices: _ArrayLikeInt, b: npt.ArrayLike, /) -> None: ...  # pyrefly:ignore[bad-override]
+    @overload
+    def at[OtherT, IxT, OutT](self, a: _CanUfuncAt2L[OtherT, IxT, OutT], indices: IxT, b: OtherT, /) -> OutT: ...
+    @overload
+    def at[OtherT, IxT, OutT](self, a: OtherT, indices: IxT, b: _CanUfuncAt2R[OtherT, IxT, OutT], /) -> OutT: ...
+
+    #
+    @override
+    @overload  # unknown shape, not object_
+    def reduce(  # pyrefly:ignore[bad-override]
+        self,
+        array: _ArrayUnlikeObject,
+        /,
+        *,
+        axis: int | tuple[int, ...] = 0,
+        dtype: _DTypeLikeBool | None = None,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: bool | np.bool = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.bool] | Any: ...
+    @overload  # unknown shape, not object_, axis=None
+    def reduce(
+        self,
+        array: _ArrayUnlikeObject,
+        /,
+        *,
+        axis: None,
+        dtype: _DTypeLikeBool | None = None,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: bool | np.bool = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> np.bool: ...
+    @overload  # unknown shape, not object_ keepdims=True
+    def reduce(
+        self,
+        array: _ArrayUnlikeObject,
+        /,
+        *,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: _DTypeLikeBool | None = None,
+        out: None = None,
+        keepdims: Literal[True],
+        initial: bool | np.bool = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.bool]: ...
+    @overload  # unknown shape, not object_, out=...
+    def reduce(
+        self,
+        array: _ArrayUnlikeObject,
+        /,
+        *,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: _DTypeLikeBool | None = None,
+        out: EllipsisType,
+        keepdims: bool = False,
+        initial: bool | np.bool = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.bool]: ...
+    @overload  # unknown shape, object_
+    def reduce(
+        self,
+        array: npt.NDArray[np.object_],
+        /,
+        *,
+        axis: int | tuple[int, ...] = 0,
+        dtype: _DTypeLikeObject | None = None,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: bool | np.bool = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.object_] | Any: ...
+    @overload  # unknown shape, object_, axis=None
+    def reduce(
+        self,
+        array: npt.NDArray[np.object_],
+        /,
+        *,
+        axis: None,
+        dtype: _DTypeLikeObject | None = None,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: bool | np.bool = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> Any: ...
+    @overload  # unknown shape, not object_ keepdims=True
+    def reduce(
+        self,
+        array: npt.NDArray[np.object_],
+        /,
+        *,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: _DTypeLikeObject | None = None,
+        out: None = None,
+        keepdims: Literal[True],
+        initial: bool | np.bool = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.object_]: ...
+    @overload  # unknown shape, object_, out=...
+    def reduce(
+        self,
+        array: npt.NDArray[np.object_],
+        /,
+        *,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: _DTypeLikeBool | None = None,
+        out: EllipsisType,
+        keepdims: bool = False,
+        initial: bool | np.bool = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.object_]: ...
+    @overload  # out=<given>
+    def reduce[OutT: np.ndarray](
+        self,
+        array: npt.ArrayLike,
+        /,
+        *,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: _DTypeLikeBool | _DTypeLikeObject | None = None,
+        out: OutT,
+        keepdims: bool = False,
+        initial: bool | np.bool = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> OutT: ...
+    @overload  # array.__array_ufunc__(self, "reduceat", array, ...)
+    def reduce[OutT](
+        self,
+        array: _CanUfuncReduce[OutT],
+        /,
+        *,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: npt.DTypeLike | None = None,
+        out: np.ndarray | EllipsisType | None = None,
+        keepdims: bool = False,
+        initial: bool | np.bool = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> OutT: ...
+
+    #
+    @override
+    @overload  # known shape
+    def reduceat[ShapeT: _Shape](  # pyrefly:ignore[bad-override]
+        self,
+        array: np.ndarray[ShapeT, np.dtype[_non_object] | np.dtypes.StringDType],
+        /,
+        indices: tuple[int, ...],
+        *,
+        axis: int = 0,
+        dtype: _DTypeLikeBool | None = None,
+        out: None = None,
+    ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+    @overload  # known shape, object_
+    def reduceat[ShapeT: _Shape](  # pyrefly:ignore[bad-override]
+        self,
+        array: np.ndarray[ShapeT, np.dtype[np.object_]],
+        /,
+        indices: tuple[int, ...],
+        *,
+        axis: int = 0,
+        dtype: _DTypeLikeObject | None = None,
+        out: None = None,
+    ) -> np.ndarray[ShapeT, np.dtype[np.object_]]: ...
+    @overload  # unknown shape
+    def reduceat(
+        self,
+        array: _ArrayUnlikeObject,
+        /,
+        indices: tuple[int, ...],
+        *,
+        axis: int = 0,
+        dtype: _DTypeLikeBool | None = None,
+        out: None = None,
+    ) -> npt.NDArray[np.bool]: ...
+    @overload  # out=<given>
+    def reduceat[OutT: np.ndarray](
+        self,
+        array: npt.ArrayLike,
+        /,
+        indices: tuple[int, ...],
+        *,
+        axis: int = 0,
+        dtype: _DTypeLikeBool | _DTypeLikeObject | None = None,
+        out: OutT,
+    ) -> OutT: ...
+    @overload  # array.__array_ufunc__(self, "reduceat", array, ...)
+    def reduceat[IxT, OutT](
+        self,
+        array: _CanUfuncReduceAt[IxT, OutT],
+        /,
+        indices: IxT,
+        *,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        out: np.ndarray | None = None,
+    ) -> OutT: ...
+
+    # TODO
+    @override
+    @overload  # known shape
+    def accumulate[ShapeT: _Shape](  # pyrefly:ignore[bad-override]
+        self,
+        array: np.ndarray[ShapeT, np.dtype[_non_object] | np.dtypes.StringDType],
+        /,
+        *,
+        axis: int = 0,
+        dtype: _DTypeLikeBool | None = None,
+        out: None = None,
+    ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+    @overload  # known shape, OBJECT_
+    def accumulate[ShapeT: _Shape](
+        self,
+        array: np.ndarray[ShapeT, np.dtype[np.object_]],
+        /,
+        *,
+        axis: int = 0,
+        dtype: _DTypeLikeObject | None = None,
+        out: None = None,
+    ) -> np.ndarray[ShapeT, np.dtype[np.object_]]: ...
+    @overload  # unknown shape
+    def accumulate(
+        self,
+        array: _ArrayUnlikeObject,
+        /,
+        *,
+        axis: int = 0,
+        dtype: _DTypeLikeBool | None = None,
+        out: None = None,
+    ) -> npt.NDArray[np.bool]: ...
+    @overload  # out=<given>
+    def accumulate[OutT: np.ndarray](
+        self,
+        array: npt.ArrayLike,
+        /,
+        *,
+        axis: int = 0,
+        dtype: _DTypeLikeBool | _DTypeLikeObject | None = None,
+        out: OutT,
+    ) -> OutT: ...
+    @overload  # array.__array_ufunc__(self, "accumulate", array, ...)
+    def accumulate[OutT](
+        self,
+        array: _CanUfuncAccumulate[OutT],
+        /,
+        *,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        out: np.ndarray | None = None,
+    ) -> OutT: ...
+
 # ?bBhHiIlLqQefdgFDGMmOSUT => ?O
 # NOTE: These theoretically also supports O => O but that's an unlikely usecase because
 # that'd require something incompatible with `bool` or `np.bool` to be returned from the
@@ -3652,6 +4137,10 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         dtype: npt.DTypeLike | None = None,
         out: np.ndarray | None = None,
     ) -> OutT: ...
+
+logical_and: Final[_ufunc_21_logical[Literal[True]]] = ...
+logical_or: Final[_ufunc_21_logical[Literal[False]]] = ...
+logical_xor: Final[_ufunc_21_logical[Literal[False]]] = ...
 
 equal: Final[_ufunc_21_cmp] = ...
 greater: Final[_ufunc_21_cmp] = ...
