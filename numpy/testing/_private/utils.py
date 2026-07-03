@@ -56,6 +56,19 @@ class KnownFailureException(Exception):
 KnownFailureTest = KnownFailureException  # backwards compat
 verbose = 0
 
+
+try:
+    import pytest
+except ImportError:
+    pass  # This is only used by NumPy's own test suite.
+else:
+    longdouble_fpe_mark = pytest.mark.xfail(
+        any(name in sys.platform for name in ["android", "bsd"]),
+        reason="(c)longdouble may not raise FPE errors as expected on this platform, "
+        "see gh-24876, gh-23379",
+    )
+
+
 NUMPY_ROOT = pathlib.Path(np.__file__).parent
 
 try:

@@ -29,6 +29,7 @@ from numpy.testing import (
     assert_raises,
     assert_raises_regex,
 )
+from numpy.testing._private.utils import longdouble_fpe_mark
 
 
 class TestResize:
@@ -979,13 +980,14 @@ class TestFloatExceptions:
 
     # Test for all real and complex float types
     @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
-    @pytest.mark.parametrize("typecode", np.typecodes["AllFloat"])
+    @pytest.mark.parametrize(
+        "typecode",
+        [
+            pytest.param(code, marks=[longdouble_fpe_mark] if code in "gG" else [])
+            for code in np.typecodes["AllFloat"]
+        ],
+    )
     def test_floating_exceptions(self, typecode):
-        if 'bsd' in sys.platform and typecode in 'gG':
-            pytest.skip(reason="Fallback impl for (c)longdouble may not raise "
-                               "FPE errors as expected on BSD OSes, "
-                               "see gh-24876, gh-23379")
-
         # Test basic arithmetic function errors
         with np.errstate(all='raise'):
             ftype = obj2sctype(typecode)

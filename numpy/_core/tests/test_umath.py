@@ -34,6 +34,7 @@ from numpy.testing import (
 from numpy.testing._private.utils import (
     LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE,
     _glibc_older_than,
+    longdouble_fpe_mark,
 )
 
 UFUNCS = [obj for obj in np._core.umath.__dict__.values()
@@ -678,7 +679,13 @@ class TestDivision:
     @pytest.mark.skipif(hasattr(np.__config__, "blas_ssl2_info"),
             reason="gh-22982")
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
-    @pytest.mark.parametrize('dtype', np.typecodes['Float'])
+    @pytest.mark.parametrize(
+        'dtype',
+        [
+            pytest.param(code, marks=[longdouble_fpe_mark] if code == 'g' else [])
+            for code in np.typecodes['Float']
+        ],
+    )
     def test_floor_division_errors(self, dtype):
         fnan = np.array(np.nan, dtype=dtype)
         fone = np.array(1.0, dtype=dtype)
@@ -797,9 +804,10 @@ class TestRemainder:
                         assert_(b > rem >= 0, msg)
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
-    @pytest.mark.xfail(sys.platform.startswith("darwin"),
-            reason="MacOS seems to not give the correct 'invalid' warning for "
-                   "`fmod`.  Hopefully, others always do.")
+    @pytest.mark.xfail(
+        sys.platform in ["android", "darwin"],
+        reason="This platform seems to not give the correct 'invalid' warning"
+    )
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     def test_float_divmod_errors(self, dtype):
         # Check valid errors raised for divmod and remainder
@@ -826,9 +834,10 @@ class TestRemainder:
     @pytest.mark.skipif(hasattr(np.__config__, "blas_ssl2_info"),
             reason="gh-22982")
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
-    @pytest.mark.xfail(sys.platform.startswith("darwin"),
-           reason="MacOS seems to not give the correct 'invalid' warning for "
-                  "`fmod`.  Hopefully, others always do.")
+    @pytest.mark.xfail(
+        sys.platform in ["android", "darwin"],
+        reason="This platform seems to not give the correct 'invalid' warning"
+    )
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     @pytest.mark.parametrize('fn', [np.fmod, np.remainder])
     def test_float_remainder_errors(self, dtype, fn):
@@ -1689,19 +1698,24 @@ class TestSpecialFloats:
                           np.array(1E200, dtype='d'))
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
-    def test_reciprocal_values(self):
+    @pytest.mark.parametrize(
+        'dt',
+        [
+            pytest.param(code, marks=[longdouble_fpe_mark] if code == 'g' else [])
+            for code in np.typecodes['Float']
+        ],
+    )
+    def test_reciprocal_values(self, dt):
         with np.errstate(all='ignore'):
             x = [np.nan,  np.nan, 0.0, -0.0, np.inf, -np.inf]
             y = [np.nan, -np.nan, np.inf, -np.inf, 0., -0.]
-            for dt in ['e', 'f', 'd', 'g']:
-                xf = np.array(x, dtype=dt)
-                yf = np.array(y, dtype=dt)
-                assert_equal(np.reciprocal(yf), xf)
+            xf = np.array(x, dtype=dt)
+            yf = np.array(y, dtype=dt)
+            assert_equal(np.reciprocal(yf), xf)
 
         with np.errstate(divide='raise'):
-            for dt in ['e', 'f', 'd', 'g']:
-                assert_raises(FloatingPointError, np.reciprocal,
-                              np.array(-0.0, dtype=dt))
+            assert_raises(FloatingPointError, np.reciprocal,
+                            np.array(-0.0, dtype=dt))
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_tan(self):
@@ -1765,8 +1779,8 @@ class TestSpecialFloats:
                           np.array(1200.0, dtype='d'))
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
-    @pytest.mark.skipif('bsd' in sys.platform,
-            reason="fallback implementation may not raise, see gh-2487")
+    @pytest.mark.xfail(any(name in sys.platform for name in ["android", "bsd"]),
+            reason="fallback implementation may not raise, see gh-24876")
     def test_cosh(self):
         in_ = [np.nan, -np.nan, np.inf, -np.inf]
         out = [np.nan, np.nan, np.inf, np.inf]

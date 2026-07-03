@@ -59,6 +59,7 @@ from numpy.testing import (
 )
 from numpy.testing._private.utils import (
     _no_tracing,
+    longdouble_fpe_mark,
     requires_deep_recursion,
     requires_memory,
 )
@@ -4099,7 +4100,10 @@ class TestMethods:
         a.dot(b=b, out=c)
         assert_equal(c, np.dot(a, b))
 
-    @pytest.mark.parametrize("dtype", [np.half, np.double, np.longdouble])
+    @pytest.mark.parametrize(
+        "dtype",
+        [np.half, np.double, pytest.param(np.longdouble, marks=longdouble_fpe_mark)],
+    )
     @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
     def test_dot_errstate(self, dtype):
         # Some dtypes use BLAS for 'dot' operation and
