@@ -30,3 +30,4 @@ updates:
       - dependency-name: "scipy-openblas64"
       - dependency-name: "jupyterlite-pyodide-kernel"
       - dependency-name: "sphinx"
+      - dependency-name: "pkgconf"

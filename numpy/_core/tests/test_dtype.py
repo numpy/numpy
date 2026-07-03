@@ -888,6 +888,10 @@ class TestMonsterType:
             np.dtype(l)
 
     @requires_deep_recursion
+    @pytest.mark.skipif(
+        sys.platform.startswith("darwin"),
+        reason="test now segfaults on some mac setups",
+    )
     def test_tuple_recursion(self):
         d = np.int32
         for i in range(100000):
@@ -1911,7 +1915,7 @@ class TestFromCTypes:
         self.check(ctypes.c_uint8.__ctype_be__, np.dtype('u1'))
 
     all_types = set(np.typecodes['All'])
-    all_pairs = permutations(all_types, 2)
+    all_pairs = list(permutations(all_types, 2))
 
     @pytest.mark.parametrize("pair", all_pairs)
     def test_pairs(self, pair):

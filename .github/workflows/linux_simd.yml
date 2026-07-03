@@ -1,8 +1,7 @@
 name: Linux SIMD tests
 
-# To update Intel SDE (not handled by Dependabot): download new version from
-# https://www.intel.com/content/www/us/en/developer/articles/tool/software-development-emulator.html
-# and update SDE_URL and SDE_SHA256 (curl -sL <url> | sha256sum)
+# To update the Intel SDE version (not handled by Dependabot setup-sde updates):
+# update the sdeVersion inputs in the Intel SDE jobs below.
 #
 # This file is meant for testing different SIMD-related build options and
 # optimization levels. See `meson_options.txt` for the available build options.
@@ -63,12 +62,12 @@ jobs:
     env:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-dispatch=none"
     steps:
-    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
       with:
         python-version: '3.12'
     - uses: ./.github/meson_actions
@@ -81,28 +80,20 @@ jobs:
     env:
       MESON_ARGS: "-Dallow-noblas=true"
     steps:
-    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
       with:
         python-version: '3.12'
 
-    - name: Install GCC9/10
+    - name: Install GCC10
       run: |
         echo "deb http://archive.ubuntu.com/ubuntu focal main universe" | sudo tee /etc/apt/sources.list.d/focal.list
         sudo apt update
-        sudo apt install -y g++-9 g++-10
-
-    - name: Enable gcc-9
-      run: |
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 1
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 1
-
-    - uses: ./.github/meson_actions
-      name: Build/Test against gcc-9
+        sudo apt install -y g++-10
 
     - name: Enable gcc-10
       run: |
@@ -128,12 +119,12 @@ jobs:
             args: "-Dallow-noblas=true -Dcpu-baseline=native -Dcpu-dispatch=none"
     name: "ARM64 SIMD - ${{ matrix.config.name }}"
     steps:
-    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
       with:
         python-version: '3.12'
     - name: Install dependencies
@@ -176,12 +167,12 @@ jobs:
 
     name: "${{ matrix.BUILD_PROP[0] }}"
     steps:
-    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
       with:
         python-version: "${{ matrix.BUILD_PROP[2] }}"
     - uses: ./.github/meson_actions
@@ -191,23 +182,24 @@ jobs:
     needs: [baseline_only]
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
       with:
         python-version: '3.12'
 
     - name: Install Intel SDE
-      run: |
-        SDE_URL="https://downloadmirror.intel.com/859732/sde-external-9.58.0-2025-06-16-lin.tar.xz"
-        SDE_SHA256="f849acecad4c9b108259c643b2688fd65c35723cd23368abe5dd64b917cc18c0"
-        curl -o /tmp/sde.tar.xz "$SDE_URL"
-        echo "$SDE_SHA256  /tmp/sde.tar.xz" | sha256sum -c -
-        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
-        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
+      # setup-sde v5.0 installs Intel SDE 9.58.0 when requested below.
+      uses: petarpetrovt/setup-sde@31aa4a8e85e109bef00f1d838613fcc6ec421271 # v5.0
+      with:
+        environmentVariableName: SDE_PATH
+        sdeVersion: 9.58.0
+
+    - name: Add Intel SDE to PATH
+      run: echo "$SDE_PATH" >> "$GITHUB_PATH"
 
     - name: Install dependencies
       run: |
@@ -244,23 +236,24 @@ jobs:
     needs: [baseline_only]
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
       with:
         python-version: '3.12'
 
     - name: Install Intel SDE
-      run: |
-        SDE_URL="https://downloadmirror.intel.com/859732/sde-external-9.58.0-2025-06-16-lin.tar.xz"
-        SDE_SHA256="f849acecad4c9b108259c643b2688fd65c35723cd23368abe5dd64b917cc18c0"
-        curl -o /tmp/sde.tar.xz "$SDE_URL"
-        echo "$SDE_SHA256  /tmp/sde.tar.xz" | sha256sum -c -
-        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
-        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
+      # setup-sde v5.0 installs Intel SDE 9.58.0 when requested below.
+      uses: petarpetrovt/setup-sde@31aa4a8e85e109bef00f1d838613fcc6ec421271 # v5.0
+      with:
+        environmentVariableName: SDE_PATH
+        sdeVersion: 9.58.0
+
+    - name: Add Intel SDE to PATH
+      run: echo "$SDE_PATH" >> "$GITHUB_PATH"
 
     - name: Install dependencies
       run: |

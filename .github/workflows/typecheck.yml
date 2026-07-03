@@ -22,7 +22,7 @@ on:
       - '**.rst'
       - '.circlecl/**'
       - '.devcontainer/**'
-      - '.spin/**'
+      - '.spin/LICENSE'
       - 'benchmarks/**'
       - 'branding/**'
       - 'doc/**'
@@ -54,9 +54,9 @@ jobs:
         os_python:
           - [macos-latest, '3.14']
           - [ubuntu-latest, '3.13']
-          - [windows-latest, '3.12']
+          - [windows-2022, '3.12']
     steps:
-    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         submodules: recursive
         fetch-tags: true
@@ -76,24 +76,19 @@ jobs:
         -r requirements/build_requirements.txt
         -r requirements/typing_requirements.txt
         orjson
-        basedpyright
     - name: Build
       run: |
         spin build -j2 -- -Dallow-noblas=true -Ddisable-optimization=true --vsenv
     - name: Run Mypy
       run: |
         spin mypy
-    - name: Check basedpyright's type completeness is at least 100%
-      run: >-
-        spin run python tools/pyright_completeness.py
-        --verifytypes numpy
-        --ignoreexternal
-        --exclude-like '*.tests.*' '*.conftest.*'
+    - name: Pyrefly type coverage is 100%
+      run: pyrefly coverage check --public-only
 
   pyrefly:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         persist-credentials: false
     - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
