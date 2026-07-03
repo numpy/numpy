@@ -3,7 +3,7 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: daily
+      interval: weekly
     cooldown:
       default-days: 7     # optional
     commit-message:
@@ -16,6 +16,7 @@ updates:
     directory: /requirements
     schedule:
       interval: daily
+    versioning-strategy: increase-if-necessary
     cooldown:
       default-days: 7     # optional
     groups:
