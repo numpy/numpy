@@ -1469,11 +1469,9 @@ def normalize_axis_tuple(axis, ndim, argname=None, allow_duplicate=False):
     # Optimization to speed-up the most common cases.
     if not isinstance(axis, (tuple, list)):
         try:
-            axis = operator.index(axis)
+            axis = [operator.index(axis)]
         except TypeError:
             pass
-        else:
-            return (normalize_axis_index(axis, ndim, argname),)
     # Going via an iterator directly is slower than via list comprehension.
     axis = tuple(normalize_axis_index(ax, ndim, argname) for ax in axis)
     if not allow_duplicate and len(set(axis)) != len(axis):
