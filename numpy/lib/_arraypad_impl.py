@@ -837,23 +837,6 @@ def pad(array, pad_width, mode='constant', **kwargs):
     stat_functions = {"maximum": np.amax, "minimum": np.amin,
                       "mean": np.mean, "median": np.median}
 
-    zero_pad_width = not np.any(pad_width)
-    if mode == "linear_ramp" and zero_pad_width:
-        _as_pairs(kwargs.get("end_values", 0), array.ndim)
-        order = 'F' if array.flags.fnc else 'C'
-        return array.copy(order=order)
-
-    if mode in stat_functions and zero_pad_width:
-        length = _as_pairs(
-            kwargs.get("stat_length"), array.ndim, as_index=True)
-        has_zero_length = array.size and any(
-            0 in length_pair for length_pair in length)
-        if mode in {"maximum", "minimum"} and has_zero_length:
-            raise ValueError("stat_length of 0 yields no value for padding")
-        if not has_zero_length:
-            order = 'F' if array.flags.fnc else 'C'
-            return array.copy(order=order)
-
     # Create array with final shape and original values
     # (padded area is undefined)
     padded, original_area_slice = _pad_simple(array, pad_width)
@@ -894,6 +877,8 @@ def pad(array, pad_width, mode='constant', **kwargs):
         end_values = kwargs.get("end_values", 0)
         end_values = _as_pairs(end_values, padded.ndim)
         for axis, width_pair, value_pair in zip(axes, pad_width, end_values):
+            if not any(width_pair):
+                continue
             roi = _view_roi(padded, original_area_slice, axis)
             ramp_pair = _get_linear_ramps(roi, axis, width_pair, value_pair)
             _set_pad_area(roi, axis, width_pair, ramp_pair)
@@ -903,6 +888,11 @@ def pad(array, pad_width, mode='constant', **kwargs):
         length = kwargs.get("stat_length")
         length = _as_pairs(length, padded.ndim, as_index=True)
         for axis, width_pair, length_pair in zip(axes, pad_width, length):
+            if not any(width_pair):
+                if mode in {"maximum", "minimum"} and 0 in length_pair:
+                    raise ValueError(
+                        "stat_length of 0 yields no value for padding")
+                continue
             roi = _view_roi(padded, original_area_slice, axis)
             stat_pair = _get_stats(roi, axis, width_pair, length_pair, func)
             _set_pad_area(roi, axis, width_pair, stat_pair)

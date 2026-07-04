@@ -126,6 +126,27 @@ class TestConditionalShortcuts:
         assert result is not test
         assert not np.shares_memory(result, test)
 
+    @pytest.mark.parametrize(
+        "mode, kwargs",
+        [
+            ("linear_ramp", {"end_values": [1, 2, 3]}),
+            ("mean", {"stat_length": -1}),
+            ("median", {"stat_length": -1}),
+            ("maximum", {"stat_length": -1}),
+            ("minimum", {"stat_length": -1}),
+        ],
+    )
+    def test_zero_padding_empty_array_skips_mode_validation(self, mode, kwargs):
+        test = np.empty((0, 3))
+        result = np.pad(test, 0, mode=mode, **kwargs)
+        assert_array_equal(test, result)
+
+    @pytest.mark.parametrize("mode", ["maximum", "minimum"])
+    def test_zero_padding_stat_length_zero_errors(self, mode):
+        test = np.arange(12).reshape(3, 4)
+        with pytest.raises(ValueError, match="stat_length of 0"):
+            np.pad(test, 0, mode=mode, stat_length=0)
+
     @pytest.mark.parametrize("mode", ['maximum', 'mean', 'median', 'minimum',])
     def test_shallow_statistic_range(self, mode):
         test = np.arange(120).reshape(4, 5, 6)
