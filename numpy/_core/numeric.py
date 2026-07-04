@@ -535,13 +535,7 @@ def count_nonzero(a, axis=None, *, keepdims=False):
         return multiarray.count_nonzero(a)
 
     a = asanyarray(a)
-
-    # TODO: this works around .astype(bool) not working properly (gh-9847)
-    if np.issubdtype(a.dtype, np.character):
-        a_bool = a != a.dtype.type()
-    else:
-        a_bool = a.astype(np.bool, copy=False)
-
+    a_bool = a.astype(np.bool, copy=False)
     return a_bool.sum(axis=axis, dtype=np.intp, keepdims=keepdims)
 
 
