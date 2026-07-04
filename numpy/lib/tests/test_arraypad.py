@@ -147,6 +147,29 @@ class TestConditionalShortcuts:
         with pytest.raises(ValueError, match="stat_length of 0"):
             np.pad(test, 0, mode=mode, stat_length=0)
 
+    def test_zero_padding_linear_ramp_validates_end_values(self):
+        test = np.arange(12, dtype=float).reshape(3, 4)
+        with pytest.raises(np.exceptions.DTypePromotionError):
+            np.pad(test, 0, mode="linear_ramp", end_values="abc")
+
+    def test_zero_padding_linear_ramp_warns_on_complex_cast(self):
+        test = np.arange(12, dtype=float).reshape(3, 4)
+        with pytest.warns(np.exceptions.ComplexWarning):
+            result = np.pad(test, 0, mode="linear_ramp", end_values=1 + 2j)
+        assert_array_equal(test, result)
+
+    @pytest.mark.parametrize("mode", ["maximum", "mean", "median", "minimum"])
+    def test_zero_padding_stat_modes_validate_string_dtype(self, mode):
+        test = np.array(["a", "b"])
+        with pytest.raises(TypeError):
+            np.pad(test, 0, mode=mode)
+
+    @pytest.mark.parametrize("mode", ["maximum", "mean", "median", "minimum"])
+    def test_zero_padding_stat_modes_validate_object_dtype(self, mode):
+        test = np.array([object(), object()], dtype=object)
+        with pytest.raises(TypeError):
+            np.pad(test, 0, mode=mode)
+
     @pytest.mark.parametrize("mode", ['maximum', 'mean', 'median', 'minimum',])
     def test_shallow_statistic_range(self, mode):
         test = np.arange(120).reshape(4, 5, 6)

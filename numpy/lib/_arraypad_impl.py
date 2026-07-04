@@ -228,6 +228,26 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
     return left_ramp, right_ramp
 
 
+def _validate_zero_width_linear_ramp(padded, axis, end_value_pair):
+    """
+    Preserve zero-width linear_ramp validation without constructing ramps.
+    """
+    if padded.dtype.hasobject:
+        _get_linear_ramps(padded, axis, (0, 0), end_value_pair)
+        return
+
+    edge = np.zeros((1,) * (padded.ndim - 1), dtype=padded.dtype)
+    for end_value in end_value_pair:
+        np.linspace(
+            start=end_value,
+            stop=edge,
+            num=0,
+            endpoint=False,
+            dtype=padded.dtype,
+            axis=axis
+        )
+
+
 def _get_stats(padded, axis, width_pair, length_pair, stat_func):
     """
     Calculate statistic for the empty-padded array in given dimension.
@@ -292,6 +312,18 @@ def _get_stats(padded, axis, width_pair, length_pair, stat_func):
     _round_if_needed(right_stat, padded.dtype)
 
     return left_stat, right_stat
+
+
+def _validate_zero_width_stat(padded, axis, length_pair, stat_func):
+    """
+    Preserve zero-width statistic validation without reducing full arrays.
+    """
+    if padded.dtype.hasobject:
+        _get_stats(padded, axis, (0, 0), length_pair, stat_func)
+        return
+
+    validation_slice = (slice(0, 1),) * padded.ndim
+    _get_stats(padded[validation_slice], axis, (0, 0), length_pair, stat_func)
 
 
 def _set_reflect_both(padded, axis, width_pair, method,
@@ -878,6 +910,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
         end_values = _as_pairs(end_values, padded.ndim)
         for axis, width_pair, value_pair in zip(axes, pad_width, end_values):
             if not any(width_pair):
+                _validate_zero_width_linear_ramp(padded, axis, value_pair)
                 continue
             roi = _view_roi(padded, original_area_slice, axis)
             ramp_pair = _get_linear_ramps(roi, axis, width_pair, value_pair)
@@ -889,9 +922,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
         length = _as_pairs(length, padded.ndim, as_index=True)
         for axis, width_pair, length_pair in zip(axes, pad_width, length):
             if not any(width_pair):
-                if mode in {"maximum", "minimum"} and 0 in length_pair:
-                    raise ValueError(
-                        "stat_length of 0 yields no value for padding")
+                _validate_zero_width_stat(padded, axis, length_pair, func)
                 continue
             roi = _view_roi(padded, original_area_slice, axis)
             stat_pair = _get_stats(roi, axis, width_pair, length_pair, func)
