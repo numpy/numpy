@@ -1,24 +1,3 @@
-.. currentmodule:: numpy
-
-=========================
-NumPy 2.5.1 Release Notes
-=========================
-
-The NumPy 2.5.1 is a patch release that fixes bugs discovered after the 2.5.0
-release. The most noticeable is the fix is to the numpy datetime cython API
-which should allow downstream to support NumPy versions older than 2.5.
-Preparation for Python 3.15 continues along with typing improvements.
-
-This release supports Python versions 3.12-3.14
-
-
-Changes
-=======
-
-* The minimum supported GCC version has been updated from 9.3.0 to 10.3.0
-
-  (`gh-31843 <https://github.com/numpy/numpy/pull/31843>`__)
-
 
 Contributors
 ============
@@ -36,7 +15,6 @@ names contributed a patch for the first time.
 * Sebastian Berg
 * Ties Jan Hefting +
 * Vineet Kumar
-
 
 Pull requests merged
 ====================
