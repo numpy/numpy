@@ -1,5 +1,5 @@
-meson-python>=0.20.0
-Cython>=3.2.5
+meson-python>=0.18.0
+Cython>=3.0.6
 ninja
 spin
 build

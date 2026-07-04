@@ -142,9 +142,16 @@ def _coerce_to_uint32_array(x):
     else:
         if len(x) == 0:
             return np.array([], dtype=np.uint32)
+        
         # Should be a sequence of interpretable-as-ints. Convert each one to
         # a uint32 array and concatenate.
-        subseqs = [_coerce_to_uint32_array(v) for v in x]
+        subseqs = []
+        for v in x:
+            if hasattr(v, '__len__') and not isinstance(v, str):
+                raise TypeError("SeedSequence does not accept nested sequences.")
+            
+            subseqs.append(_coerce_to_uint32_array(v))
+            
         return np.concatenate(subseqs)
 
 
