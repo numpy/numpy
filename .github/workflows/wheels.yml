@@ -45,8 +45,8 @@ jobs:
           - [windows-11-arm, win_arm64, ""]
           # GitHub Actions doesn’t currently support the Android emulator on any ARM
           # runner. So we build for ARM on a non-ARM runner, which will skip the tests.
-          - [ubuntu-22.04, android_arm64_v8a]
-          - [ubuntu-22.04, android_x86_64]
+          - [ubuntu-24.04, android_arm64_v8a]
+          - [ubuntu-24.04, android_x86_64]
         python: ["cp313"]
 
     env:
