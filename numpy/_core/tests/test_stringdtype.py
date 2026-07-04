@@ -1858,6 +1858,27 @@ def test_coerce_promotion_commutative():
     assert np.promote_types(dt_no_coerce, dt_no_coerce) == dt_no_coerce
 
 
+@pytest.mark.parametrize(
+    "coerce_a, coerce_b",
+    [(True, False), (False, True)],
+)
+def test_add_preserves_coerce_false(coerce_a, coerce_b):
+    # Mixing coerce=True and coerce=False under ufuncs should promote to
+    # coerce=False (same as np.promote_types), so assignment of non-strings
+    # remains strict.
+    a = np.array(["a"], dtype=StringDType(coerce=coerce_a))
+    b = np.array(["b"], dtype=StringDType(coerce=coerce_b))
+
+    c = np.add(a, b)
+    assert c.dtype == StringDType(coerce=False)
+    assert c.dtype.coerce is False
+    assert_array_equal(c, np.array(["ab"], dtype=StringDType(coerce=False)))
+
+    # Same error as a direct StringDType(coerce=False) array.
+    with pytest.raises(ValueError, match="string coercion is disabled"):
+        c[0] = object()
+
+
 def test_repeat(string_array):
     res = string_array.repeat(1000)
     # Create an empty array with expanded dimension, and fill it.  Then,
