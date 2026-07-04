@@ -1949,14 +1949,16 @@ class TestSpecialFloats:
         #  - ceil/float16 on MSVC:32-bit
         #  - spacing/float16 on almost all platforms
         #  - spacing/float32,float64 on Windows MSVC with VS2022
+        #  - arccos/float16,float32 on Android
         if ufunc in (np.spacing, np.ceil) and dtype == 'e':
             return
         # Skip spacing tests with NaN on Windows MSVC (all dtypes)
         import platform
-        if (ufunc == np.spacing and
-            platform.system() == 'Windows' and
+        if ((ufunc, platform.system()) in [
+                (np.spacing, 'Windows'), (np.arccos, 'Android')
+            ] and
             any(np.isnan(d) if isinstance(d, (int, float)) else False for d in data)):
-            pytest.skip("spacing with NaN generates warnings on Windows/VS2022")
+            pytest.skip(f"{ufunc} with NaN generates warnings on this platform")
         array = np.array(data, dtype=dtype)
         with assert_no_warnings():
             ufunc(array)

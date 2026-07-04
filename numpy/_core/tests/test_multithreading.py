@@ -10,7 +10,7 @@ import pytest
 import numpy as np
 from numpy._core import _rational_tests
 from numpy._core.tests.test_stringdtype import random_unicode_string_list
-from numpy.testing import IS_64BIT, IS_WASM
+from numpy.testing import HAS_SUBPROCESSES, IS_64BIT, IS_WASM
 from numpy.testing._private.utils import run_subprocess, run_threaded
 
 if IS_WASM:
@@ -495,6 +495,9 @@ def assert_no_deadlock(workload, *, args=(), helpers=(), timeout=30,
     ``reason`` if the child is killed.
 
     """
+    if not HAS_SUBPROCESSES:
+        pytest.skip("platform cannot start subprocesses")
+
     source = "\n".join(
         textwrap.dedent(inspect.getsource(helper)) for helper in helpers
     )
