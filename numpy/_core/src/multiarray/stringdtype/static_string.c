@@ -229,6 +229,37 @@ arena_free(npy_string_arena *arena, _npy_static_string_u *str)
 
 static npy_string_arena NEW_ARENA = {0, 0, NULL};
 
+static void
+acquire_allocator_lock(npy_string_allocator *allocator)
+{
+#if PY_VERSION_HEX < 0x30d00b3
+    if (!PyThread_acquire_lock(allocator->allocator_lock, NOWAIT_LOCK)) {
+        if (PyGILState_Check()) {
+            Py_BEGIN_ALLOW_THREADS
+            PyThread_acquire_lock(allocator->allocator_lock, WAIT_LOCK);
+            Py_END_ALLOW_THREADS
+        }
+        else {
+            PyThread_acquire_lock(allocator->allocator_lock, WAIT_LOCK);
+        }
+    }
+#else
+    PyMutex_Lock(&allocator->allocator_lock);
+#endif
+}
+
+static int
+allocator_seen(npy_string_allocator *allocator,
+               npy_string_allocator *allocators[], size_t end)
+{
+    for (size_t i = 0; i < end; i++) {
+        if (allocators[i] == allocator) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 NPY_NO_EXPORT npy_string_allocator *
 NpyString_new_allocator(npy_string_malloc_func m, npy_string_free_func f,
                         npy_string_realloc_func r)
@@ -281,18 +312,13 @@ NpyString_free_allocator(npy_string_allocator *allocator)
  * by this function exactly once.
  *
  * Note that functions requiring the GIL should not be called while the
- * allocator mutex is held, as doing so may cause deadlocks.
+ * allocator mutex is held and reentrant calls are possible, as doing so may
+ * cause deadlocks.
  */
 NPY_NO_EXPORT npy_string_allocator *
 NpyString_acquire_allocator(const PyArray_StringDTypeObject *descr)
 {
-#if PY_VERSION_HEX < 0x30d00b3
-    if (!PyThread_acquire_lock(descr->allocator->allocator_lock, NOWAIT_LOCK)) {
-        PyThread_acquire_lock(descr->allocator->allocator_lock, WAIT_LOCK);
-    }
-#else
-    PyMutex_Lock(&descr->allocator->allocator_lock);
-#endif
+    acquire_allocator_lock(descr->allocator);
     return descr->allocator;
 }
 
@@ -309,42 +335,64 @@ NpyString_acquire_allocator(const PyArray_StringDTypeObject *descr)
  * ignored. A buffer overflow will happen if the *descrs* array does not
  * contain n_descriptors elements.
  *
- * If pointers to the same descriptor are passed multiple times, only acquires
+ * If pointers to the same allocator are passed multiple times, only acquires
  * the allocator mutex once but sets identical allocator pointers appropriately.
+ * Distinct allocator mutexes are acquired in ascending allocator address order
+ * to avoid lock-ordering deadlocks when callers pass different descriptor
+ * orders.
  *
  * The allocator mutexes must be released after this function returns, see
  * NpyString_release_allocators.
  *
  * Note that functions requiring the GIL should not be called while the
- * allocator mutex is held, as doing so may cause deadlocks.
+ * allocator mutex is held and reentrant calls are possible, as doing so may
+ * cause deadlocks.
  */
 NPY_NO_EXPORT void
 NpyString_acquire_allocators(size_t n_descriptors,
                              PyArray_Descr *const descrs[],
                              npy_string_allocator *allocators[])
 {
-    for (size_t i=0; i<n_descriptors; i++) {
+    for (size_t i = 0; i < n_descriptors; i++) {
         if (NPY_DTYPE(descrs[i]) != &PyArray_StringDType) {
             allocators[i] = NULL;
             continue;
         }
-        int allocators_match = 0;
-        for (size_t j=0; j<i; j++) {
-            if (allocators[j] == NULL) {
+        allocators[i] = ((PyArray_StringDTypeObject *)descrs[i])->allocator;
+    }
+
+    uintptr_t last_locked_addr = 0;
+    int have_last_locked_addr = 0;
+
+    for (;;) {
+        npy_string_allocator *next_allocator = NULL;
+        uintptr_t next_addr = UINTPTR_MAX;
+
+        for (size_t i = 0; i < n_descriptors; i++) {
+            npy_string_allocator *allocator = allocators[i];
+
+            if (allocator == NULL || allocator_seen(allocator, allocators, i)) {
                 continue;
             }
-            if (((PyArray_StringDTypeObject *)descrs[i])->allocator ==
-                ((PyArray_StringDTypeObject *)descrs[j])->allocator)
-            {
-                allocators[i] = allocators[j];
-                allocators_match = 1;
-                break;
+
+            uintptr_t addr = (uintptr_t)allocator;
+
+            if (have_last_locked_addr && addr <= last_locked_addr) {
+                continue;
+            }
+            if (next_allocator == NULL || addr < next_addr) {
+                next_allocator = allocator;
+                next_addr = addr;
             }
         }
-        if (!allocators_match) {
-            allocators[i] = NpyString_acquire_allocator(
-                    (PyArray_StringDTypeObject *)descrs[i]);
+
+        if (next_allocator == NULL) {
+            break;
         }
+
+        acquire_allocator_lock(next_allocator);
+        last_locked_addr = next_addr;
+        have_last_locked_addr = 1;
     }
 }
 

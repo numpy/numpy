@@ -1,4 +1,8 @@
 import concurrent.futures
+import inspect
+import subprocess
+import sys
+import textwrap
 import threading
 
 import pytest
@@ -7,7 +11,7 @@ import numpy as np
 from numpy._core import _rational_tests
 from numpy._core.tests.test_stringdtype import random_unicode_string_list
 from numpy.testing import IS_64BIT, IS_WASM
-from numpy.testing._private.utils import run_threaded
+from numpy.testing._private.utils import run_subprocess, run_threaded
 
 if IS_WASM:
     pytest.skip(allow_module_level=True, reason="no threading support in wasm")
@@ -95,12 +99,19 @@ def _detected_blas():
 
 
 def _openblas_predates_gemm_fix(name, version):
+    name = (name or '').lower().strip()
+    # Assume failures using wrapper BLAS packages are buggy OpenBLAS.
+    # This may ignore a genuine bug but we can't do anything more fine-grained.
+    if name in ('blas', 'cblas', 'flexiblas', 'unknown', ''):
+        return True
     if 'openblas' not in name:
+        # e.g. MKL, accelerate, where we'd want to know about a new failure
         return False
     try:
         parsed = tuple(int(p) for p in version.split('.'))
     except ValueError:
-        return False
+        # unparseable OpenBLAS version so assume an old buggy version
+        return True
     return parsed < (0, 3, 33, 112)
 
 
@@ -143,7 +154,8 @@ def test_blas_gemm_thread_safety():
     if mismatches and _openblas_predates_gemm_fix(blas_name, blas_version):
         pytest.xfail(
             f"OpenBLAS version ({blas_version}) predates first OpenBLAS "
-            "version with a fix (0.3.33.112)"
+            "version with a fix (0.3.33.112) or BLAS metadata is not "
+            "sufficient to identify the BLAS implementation."
         )
 
     assert mismatches == 0, (
@@ -466,3 +478,226 @@ def test_void_dtype__buffer__thread_safety():
             x.__buffer__(flags[i % 2])
 
     run_threaded(func, max_workers=8, pass_barrier=True)
+
+
+def assert_no_deadlock(workload, *, args=(), helpers=(), timeout=30,
+                       reason="deadlock"):
+    """Run ``workload`` in a fresh subprocess; fail if it does not finish in time.
+
+    ``workload`` is a self-contained function: its source is extracted with
+    ``inspect.getsource`` and executed in a clean interpreter. It must do its
+    own imports and may only reference arguments and helpers explicitly passed
+    to this function.
+
+    For regression tests whose failure mode is a hang. Delegates to
+    ``run_subprocess`` (which folds the child's output into the failure on a
+    nonzero exit); this only adds the timeout watchdog, reporting a likely
+    ``reason`` if the child is killed.
+
+    """
+    source = "\n".join(
+        textwrap.dedent(inspect.getsource(helper)) for helper in helpers
+    )
+    source += "\n" + textwrap.dedent(inspect.getsource(workload))
+    script = (
+        "import faulthandler\n"
+        f"faulthandler.dump_traceback_later({timeout}, exit=True)\n"
+        f"{source}\n"
+        f"{workload.__name__}(*{args!r})\n"
+        "faulthandler.cancel_dump_traceback_later()\n"
+    )
+    try:
+        run_subprocess([sys.executable, "-c", script], timeout=timeout + 15)
+    except subprocess.TimeoutExpired:
+        raise AssertionError(
+            f"subprocess did not finish within {timeout}s -- likely {reason}"
+        ) from None
+
+
+def threaded_deadlock_reproducer(operation, nworkers, niters, stall):
+    import faulthandler
+    import os
+    import sys
+    import threading
+    import time
+
+    progress = [0] * nworkers
+    errors = []
+    barrier = threading.Barrier(nworkers)
+
+    def worker(idx):
+        try:
+            barrier.wait()
+            for _ in range(niters):
+                operation(idx)
+                progress[idx] += 1
+        except BaseException as exc:
+            errors.append(exc)
+            raise
+
+    workers = [threading.Thread(target=worker, args=(i,), daemon=True)
+               for i in range(nworkers)]
+    for t in workers:
+        t.start()
+
+    last_total, last_change = 0, time.monotonic()
+    while any(t.is_alive() for t in workers):
+        time.sleep(0.05)
+        if errors:
+            raise AssertionError(f"worker failed: {errors[0]!r}") from errors[0]
+        total = sum(progress)
+        now = time.monotonic()
+        if total != last_total:
+            last_total, last_change = total, now
+        elif now - last_change > stall:
+            # dump the wedged threads' tracebacks, then os._exit to avoid a
+            # shutdown hang on the daemon threads.
+            sys.stderr.write("Probably deadlocked!\n")
+            faulthandler.dump_traceback()
+            sys.stderr.flush()
+            os._exit(1)
+    if errors:
+        raise AssertionError(f"worker failed: {errors[0]!r}") from errors[0]
+
+
+def allocator_lock_order_workload(case_):
+    import numpy as np
+
+    N = 1_000
+    NWORKERS = 8
+    NITERS = 1000
+    STALL = 2.0
+
+    if case_ == "two-allocator":
+        a = np.array(["alpha"] * N, dtype="T")
+        b = np.array(["bravo"] * N, dtype="T")
+
+        def operation(idx):
+            if idx % 2 == 0:
+                np.less(a, b)   # locks alloc(a) then alloc(b)
+            else:
+                np.less(b, a)   # locks alloc(b) then alloc(a)
+
+    elif case_ == "three-allocator":
+        a = np.array(["alpha"] * N, dtype="T")
+        b = np.array(["bravo"] * N, dtype="T")
+        c = np.array(["charlie"] * N, dtype="T")
+
+        def operation(idx):
+            order = idx % 3
+            if order == 0:
+                np.maximum(a, b, out=c)   # locks alloc(a), alloc(b), alloc(c)
+            elif order == 1:
+                np.maximum(b, c, out=a)   # locks alloc(b), alloc(c), alloc(a)
+            else:
+                np.maximum(c, a, out=b)   # locks alloc(c), alloc(a), alloc(b)
+
+    elif case_ == "four-allocator":
+        from numpy._core.umath import _replace
+
+        a = np.array(["a"] * N, dtype="T")
+        b = np.array(["b"] * N, dtype="T")
+        c = np.array(["c"] * N, dtype="T")
+        d = np.array(["d"] * N, dtype="T")
+        counts = np.ones(N, dtype=np.int64)
+
+        def operation(idx):
+            order = idx % 4
+            if order == 0:
+                _replace(a, b, c, counts, out=d)
+            elif order == 1:
+                _replace(b, c, d, counts, out=a)
+            elif order == 2:
+                _replace(c, d, a, counts, out=b)
+            else:
+                _replace(d, a, b, counts, out=c)
+
+    elif case_ == "duplicate-allocator":
+        from numpy._core.umath import _replace
+
+        a = np.array(["same"] * N, dtype="T")
+        b = np.array(["other"] * N, dtype="T")
+        c = np.array(["out"] * N, dtype="T")
+        counts = np.ones(N, dtype=np.int64)
+
+        def operation(idx):
+            if idx % 2 == 0:
+                np.maximum(a, a, out=b)
+            else:
+                _replace(a, a, b, counts, out=c)
+
+    else:
+        raise ValueError(f"unknown allocator deadlock case: {case_}")
+
+    threaded_deadlock_reproducer(
+        operation, NWORKERS, NITERS, stall=STALL,
+    )
+
+
+def test_setitem_reentrant_no_deadlock():
+    def workload():
+        import numpy as np
+
+        arr = np.empty(2, dtype="T")
+
+        class Reenter:
+            def __str__(self):
+                # re-enters stringdtype_setitem and re-acquires the allocator
+                arr[1] = "inner"
+                return "outer"
+
+        arr[0] = Reenter()
+        assert arr[0] == "outer"
+        assert arr[1] == "inner"
+
+    assert_no_deadlock(
+        workload,
+        reason="re-entrant allocator acquire in stringdtype_setitem",
+    )
+
+
+@pytest.mark.parametrize(
+    "case_",
+    ["two-allocator", "three-allocator", "four-allocator",
+     "duplicate-allocator"],
+)
+def test_concurrent_allocator_acquire_no_deadlock(case_):
+    # NpyString_acquire_allocators must lock distinct allocators in a
+    # canonical order, otherwise deadlocks are possible from ABBA cycles
+    assert_no_deadlock(
+        allocator_lock_order_workload,
+        args=(case_,),
+        helpers=(threaded_deadlock_reproducer,),
+        reason=f"allocator lock-ordering in {case_}",
+    )
+
+
+def unique_deadlock_workload():
+    import numpy as np
+    from numpy._core._multiarray_umath import _unique_hash
+
+    NWORKERS = 8
+    NITERS = 200
+    STALL = 2.0
+
+    # _unique_hash (the engine under np.unique) rather than np.unique itself:
+    # it spends almost all its time in the GIL-released, allocator-locked load
+    # loop, so workers reliably overlap there. A single shared array with many
+    # duplicates concentrates contention on one allocator.
+    data = np.array([f"v{i % 128}" for i in range(50_000)], dtype="T")
+
+    def operation(idx):
+        _unique_hash(data, equal_nan=False)
+
+    threaded_deadlock_reproducer(operation, NWORKERS, NITERS, stall=STALL)
+
+
+def test_concurrent_unique_no_deadlock():
+    # Concurrent unique on a shared array deadlocks the allocator lock against
+    # the GIL unless unique_vstring releases the GIL before locking. Only
+    # reproduces on Python <= 3.12; PyMutex detaches on 3.13+.
+    assert_no_deadlock(
+        unique_deadlock_workload,
+        helpers=(threaded_deadlock_reproducer,),
+        reason="unique allocator lock vs GIL",
+    )

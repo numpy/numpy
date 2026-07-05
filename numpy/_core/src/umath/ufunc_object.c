@@ -2749,6 +2749,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
             arr, out, signature, NPY_TRUE, descrs, NPY_UNSAFE_CASTING,
             "accumulate");
     if (ufuncimpl == NULL) {
+        Py_XDECREF(out);
         return NULL;
     }
 
@@ -3172,6 +3173,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
             arr, out, signature, NPY_TRUE, descrs, NPY_UNSAFE_CASTING,
             "reduceat");
     if (ufuncimpl == NULL) {
+        Py_XDECREF(out);
         return NULL;
     }
 
@@ -3777,7 +3779,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     int errval = PyUFunc_CheckOverride(ufunc, _reduce_type[operation],
             full_args.in, full_args.out, wheremask_obj, args, len_args, kwnames, &override);
     if (errval) {
-        return NULL;
+        goto fail;
     }
     else if (override) {
         Py_XDECREF(full_args.in);

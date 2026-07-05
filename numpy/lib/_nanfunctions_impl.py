@@ -751,7 +751,7 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         the product of the flattened array.
     dtype : data-type, optional
         The type of the returned array and of the accumulator in which the
-        elements are summed.  By default, the dtype of `a` is used.  An
+        elements are multiplied.  By default, the dtype of `a` is used.  An
         exception is when `a` has an integer type with less precision than
         the platform (u)intp. In that case, the default will be either
         (u)int32 or (u)int64 depending on whether the platform is 32 or 64
@@ -1163,10 +1163,9 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
     Returns
     -------
     median : ndarray
-        A new array holding the result. If the input contains integers
-        or floats smaller than ``float64``, then the output data-type is
-        ``np.float64``.  Otherwise, the data-type of the output is the
-        same as that of the input. If `out` is specified, that array is
+        A new array holding the result. If the input contains integers,
+        the output data-type is ``float64``. Otherwise, the output data-type
+        is the same as that of the input. If `out` is specified, that array is
         returned instead.
 
     See Also
@@ -1319,10 +1318,9 @@ def nanpercentile(
         is a scalar. If multiple percentiles are given, first axis of
         the result corresponds to the percentiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
-        contains integers or floats smaller than ``float64``, the output
-        data-type is ``float64``. Otherwise, the output data-type is the
-        same as that of the input. If `out` is specified, that array is
-        returned instead.
+        contains integers, the output data-type is ``float64``. Otherwise,
+        the output data-type is the same as that of the input. If `out` is
+        specified, that array is returned instead.
 
     See Also
     --------
@@ -1496,10 +1494,9 @@ def nanquantile(
         is a scalar. If multiple probability levels are given, first axis of
         the result corresponds to the quantiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
-        contains integers or floats smaller than ``float64``, the output
-        data-type is ``float64``. Otherwise, the output data-type is the
-        same as that of the input. If `out` is specified, that array is
-        returned instead.
+        contains integers, the output data-type is ``float64``. Otherwise,
+        the output data-type is the same as that of the input. If `out` is specified,
+        that array is returned instead.
 
     See Also
     --------
