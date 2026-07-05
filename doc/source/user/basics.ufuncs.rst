@@ -76,7 +76,7 @@ so calling its methods raises an error::
    >>> np.divmod.reduce([1, 2, 3])
    Traceback (most recent call last):
        ...
-   ValueError: reduce only supported for functions returning a single value
+   ValueError: divmod.reduce is not supported: the resolved loop does not register a reduction loop
 
 The reduce-like methods all take an *axis* keyword, a *dtype*
 keyword, and an *out* keyword, and the arrays must all have dimension >= 1.
