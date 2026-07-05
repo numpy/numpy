@@ -6424,56 +6424,38 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
             Py_INCREF(DTypes[i]);
         }
         /* Explicitly allow int, float, and complex for the "weak" types. */
-        else if (descr_obj == (PyObject *)&PyLong_Type) {
+        else if (descr_obj == (PyObject *)&PyLong_Type && i < ufunc -> nin) {
             descr = PyArray_DescrFromType(NPY_INTP);
             dummy_arrays[i] = (PyArrayObject *)PyArray_Empty(0, NULL, descr, 0);
             if (dummy_arrays[i] == NULL) {
                 goto finish;
             }
-            if (i < ufunc->nin) {
-                PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_INT);
-                Py_INCREF(&PyArray_PyLongDType);
-                DTypes[i] = &PyArray_PyLongDType;
-                promoting_pyscalars = NPY_TRUE;
-            }
-            else {
-                DTypes[i] = NPY_DTYPE(PyArray_DESCR(dummy_arrays[i]));
-                Py_INCREF(DTypes[i]);
-            }
+            PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_INT);
+            Py_INCREF(&PyArray_PyLongDType);
+            DTypes[i] = &PyArray_PyLongDType;
+            promoting_pyscalars = NPY_TRUE;
         }
-        else if (descr_obj == (PyObject *)&PyFloat_Type) {
+        else if (descr_obj == (PyObject *)&PyFloat_Type && i < ufunc -> nin) {
             descr = PyArray_DescrFromType(NPY_DOUBLE);
             dummy_arrays[i] = (PyArrayObject *)PyArray_Empty(0, NULL, descr, 0);
             if (dummy_arrays[i] == NULL) {
                 goto finish;
             }
-            if (i < ufunc->nin) {
-                PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_FLOAT);
-                Py_INCREF(&PyArray_PyFloatDType);
-                DTypes[i] = &PyArray_PyFloatDType;
-                promoting_pyscalars = NPY_TRUE;
-            }
-            else {
-                DTypes[i] = NPY_DTYPE(PyArray_DESCR(dummy_arrays[i]));
-                Py_INCREF(DTypes[i]);
-            }
+            PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_FLOAT);
+            Py_INCREF(&PyArray_PyFloatDType);
+            DTypes[i] = &PyArray_PyFloatDType;
+            promoting_pyscalars = NPY_TRUE;
         }
-        else if (descr_obj == (PyObject *)&PyComplex_Type) {
+        else if (descr_obj == (PyObject *)&PyComplex_Type && i < ufunc -> nin) {
             descr = PyArray_DescrFromType(NPY_CDOUBLE);
             dummy_arrays[i] = (PyArrayObject *)PyArray_Empty(0, NULL, descr, 0);
             if (dummy_arrays[i] == NULL) {
                 goto finish;
             }
-            if (i < ufunc->nin) {
-                PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_COMPLEX);
-                Py_INCREF(&PyArray_PyComplexDType);
-                DTypes[i] = &PyArray_PyComplexDType;
-                promoting_pyscalars = NPY_TRUE;
-            }
-            else {
-                DTypes[i] = NPY_DTYPE(PyArray_DESCR(dummy_arrays[i]));
-                Py_INCREF(DTypes[i]);
-            }
+            PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_COMPLEX);
+            Py_INCREF(&PyArray_PyComplexDType);
+            DTypes[i] = &PyArray_PyComplexDType;
+            promoting_pyscalars = NPY_TRUE;
         }
         else if (descr_obj == Py_None) {
             if (i < ufunc->nin && !(reduction && i == 0)) {
