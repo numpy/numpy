@@ -122,9 +122,15 @@ def _resolve_dispatcher_arg_indices(implementation, dispatcher_names):
 
     Returns
     -------
-    tuple of int
-        The positional indices corresponding to each argument name.
+    tuple of (int, str)
+        The positional indices and names corresponding to each argument name.
     """
+    if not dispatcher_names:
+        raise RuntimeError(
+            "dispatcher tuple-spec must contain at least one argument name")
+    if not all(isinstance(name, str) for name in dispatcher_names):
+        raise RuntimeError("dispatcher tuple-spec must be a tuple of strings")
+    
     sig = inspect.signature(implementation)
     params = list(sig.parameters.keys())
     indices = []

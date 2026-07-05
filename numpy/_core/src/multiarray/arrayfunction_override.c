@@ -412,9 +412,10 @@ typedef struct {
     PyObject *relevant_arg_func;
     PyObject *default_impl;
     /*
-     * Tuple of int indices for the tuple-spec fast path.
-     * When non-NULL, relevant_arg_func is NULL and we extract
-     * relevant args by index directly from the vectorcall args.
+     * Tuple-spec data for the fast path.
+     * When non-NULL, relevant_arg_func is NULL and we extract relevant args
+     * directly from the vectorcall args using a tuple of (index, name) pairs
+     * (the name is used to find keyword arguments).
      */
     PyObject *arg_indices;
     /* The following fields are used to clean up TypeError messages only: */
@@ -545,21 +546,21 @@ dispatcher_vectorcall(PyArray_ArrayFunctionDispatcherObject *self,
 
     int num_implementing_args;
 
+    if (self->arg_indices != NULL || self->relevant_arg_func != NULL) {
+        if (all_args_are_ndarray_or_scalar(args, len_args, kwnames)) {
+            return PyObject_Vectorcall(
+                    self->default_impl, args, len_args, kwnames);
+        }
+    }
+
     if (self->arg_indices != NULL) {
         /*
-         * Tuple-spec fast path: arg_indices is a tuple of int positions
+         * Tuple-spec fast path: arg_indices is a tuple of (index, name) pairs
          * identifying which arguments are relevant for dispatch.
          * We extract those args directly from the vectorcall arrays,
          * avoiding the Python-level dispatcher function call entirely.
          */
         public_api = (PyObject *)self;
-
-        /* Fast path: if all args are exact ndarray or basic scalars,
-         * no override is possible — skip dispatch entirely. */
-        if (all_args_are_ndarray_or_scalar(args, len_args, kwnames)) {
-            return PyObject_Vectorcall(
-                    self->default_impl, args, len_args, kwnames);
-        }
 
         Py_ssize_t nargs = PyVectorcall_NARGS(len_args);
         Py_ssize_t n_indices = PyTuple_GET_SIZE(self->arg_indices);
@@ -573,6 +574,9 @@ dispatcher_vectorcall(PyArray_ArrayFunctionDispatcherObject *self,
         for (Py_ssize_t i = 0; i < n_indices; i++) {
             PyObject *spec = PyTuple_GET_ITEM(self->arg_indices, i);
             Py_ssize_t idx = PyLong_AsSsize_t(PyTuple_GET_ITEM(spec, 0));
+            if (idx == -1 && PyErr_Occurred()) {
+                return NULL;
+            }
             PyObject *name_obj = PyTuple_GET_ITEM(spec, 1);
             PyObject *arg = NULL;
 
@@ -592,8 +596,8 @@ dispatcher_vectorcall(PyArray_ArrayFunctionDispatcherObject *self,
                         arg = args[nargs + j];
                         break;
                     }
-                    else if (cmp == -1) {
-                        PyErr_Clear();
+                    else if (cmp < 0) {
+                        return NULL;
                     }
                 }
             }

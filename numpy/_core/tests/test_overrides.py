@@ -413,15 +413,18 @@ class TestArrayFunctionImplementation:
         # If the dispatcher raises an error, we must not attempt to mutate it
         error = TypeError(value)
 
-        def dispatcher():
+        def dispatcher(obj):
             raise error
 
         @array_function_dispatch(dispatcher)
-        def func():
+        def func(obj):
             return 3
 
+        class Dummy:
+            pass
+
         try:
-            func()
+            func(Dummy())
             raise AssertionError("must fail")
         except TypeError as exc:
             assert exc is error  # unmodified exception
