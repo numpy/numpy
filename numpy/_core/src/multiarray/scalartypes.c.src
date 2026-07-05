@@ -4217,25 +4217,55 @@ NPY_NO_EXPORT PyTypeObject PyObjectArrType_Type = {
 };
 
 static PyObject *
-stringtype_subscript(PyObject *self, PyObject *key)
+gen_arrtype_subscript(PyObject *self, PyObject *key)
 {
-    if (PyTuple_Check(key) && PyTuple_GET_SIZE(key) == 0) {
-        return PyObject_CallMethod(self, "item", NULL);
-    }
-    /* For all other keys, convert to 0-d array and use array subscript */
-    PyObject *res = PyArray_FromScalar(self, NULL);
-    if (res == NULL) {
-        return NULL;
-    }
-    PyObject *ret = array_subscript((PyArrayObject *)res, key);
+    /*
+     * Only [...], [...,<???>], [<???>, ...],
+     * is allowed for indexing a scalar
+     *
+     * These return a new N-d array with a copy of
+     * the data where N is the number of None's in <???>.
+     */
+    PyObject *res, *ret;
+
+    res = PyArray_FromScalar(self, NULL);
+
+    ret = array_subscript((PyArrayObject *)res, key);
     Py_DECREF(res);
+    if (ret == NULL) {
+        PyErr_SetString(PyExc_IndexError,
+                        "invalid index to scalar variable.");
+    }
     return ret;
 }
 
+
+static PyObject *
+stringtype_subscript(PyObject *self, PyObject *key)
+{
+    if (PyTuple_Check(key) && PyTuple_GET_SIZE(key) == 0) {
+        /* scalar[()] returns the scalar value itself */
+        return PyObject_CallMethod(self, "item", NULL);
+    }
+
+    /*
+     * For every other key (int, slice, etc.), defer to the base type's
+     * own __getitem__ (str.__getitem__ / bytes.__getitem__) rather than
+     * routing through ndarray subscripting, which does not support
+     * positional indexing on a 0-d array.
+     */
+    PyTypeObject *base = Py_TYPE(self)->tp_base;
+    if (base != NULL && base->tp_as_mapping != NULL &&
+            base->tp_as_mapping->mp_subscript != NULL) {
+        return base->tp_as_mapping->mp_subscript(self, key);
+    }
+
+    PyErr_SetString(PyExc_TypeError, "invalid index for scalar");
+    return NULL;
+}
+
 static PyMappingMethods stringtype_as_mapping = {
-    NULL,
-    (binaryfunc)stringtype_subscript,
-    NULL,
+    .mp_subscript = (binaryfunc)stringtype_subscript,
 };
 
 
@@ -4266,7 +4296,7 @@ NPY_NO_EXPORT PyTypeObject Py@Name@ArrType_Type = {
 
 
 static PyMappingMethods gentype_as_mapping = {
-    .mp_subscript = (binaryfunc)stringtype_subscript,
+    .mp_subscript = (binaryfunc)gen_arrtype_subscript,
 };
 
 
