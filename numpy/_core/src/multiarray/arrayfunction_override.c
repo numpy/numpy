@@ -52,18 +52,15 @@ pyobject_array_insert(PyObject **array, int length, int index, PyObject *item)
 /*
  * Collects arguments with __array_function__ and their corresponding methods
  * in the order in which they should be tried (i.e., skipping redundant types).
- * `relevant_args` is expected to have been produced by PySequence_Fast.
+ * `items` is a C array of `length` borrowed references.
  * Returns the number of arguments, or -1 on failure.
  */
 static int
-get_implementing_args_and_methods(PyObject *relevant_args,
-                                  PyObject **implementing_args,
-                                  PyObject **methods)
+get_implementing_args_and_methods(
+        PyObject **items, Py_ssize_t length,
+        PyObject **implementing_args, PyObject **methods)
 {
     int num_implementing_args = 0;
-
-    PyObject **items = PySequence_Fast_ITEMS(relevant_args);
-    Py_ssize_t length = PySequence_Fast_GET_SIZE(relevant_args);
 
     for (Py_ssize_t i = 0; i < length; i++) {
         int new_class = 1;
@@ -378,8 +375,11 @@ array__get_implementing_args(
         return NULL;
     }
 
+    PyObject **items = PySequence_Fast_ITEMS(relevant_args);
+    Py_ssize_t length = PySequence_Fast_GET_SIZE(relevant_args);
+
     int num_implementing_args = get_implementing_args_and_methods(
-        relevant_args, implementing_args, array_function_methods);
+        items, length, implementing_args, array_function_methods);
     if (num_implementing_args == -1) {
         goto cleanup;
     }
@@ -411,10 +411,46 @@ typedef struct {
     PyObject *dict;
     PyObject *relevant_arg_func;
     PyObject *default_impl;
+    /*
+     * Tuple of int indices for the tuple-spec fast path.
+     * When non-NULL, relevant_arg_func is NULL and we extract
+     * relevant args by index directly from the vectorcall args.
+     */
+    PyObject *arg_indices;
     /* The following fields are used to clean up TypeError messages only: */
     PyObject *dispatcher_name;
     PyObject *public_name;
 } PyArray_ArrayFunctionDispatcherObject;
+
+
+/*
+ * Check if all positional and keyword arguments are exact ndarrays
+ * or basic Python scalar types.  If so, no __array_function__ override
+ * is possible and we can skip dispatch entirely.
+ */
+static int
+all_args_are_ndarray_or_scalar(
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    Py_ssize_t nargs = PyVectorcall_NARGS(len_args);
+    Py_ssize_t nkwargs = (kwnames != NULL) ? PyTuple_GET_SIZE(kwnames) : 0;
+    Py_ssize_t total = nargs + nkwargs;
+
+    for (Py_ssize_t i = 0; i < total; i++) {
+        PyObject *arg = args[i];
+        if (PyArray_CheckExact(arg)) {
+            continue;
+        }
+        PyTypeObject *tp = Py_TYPE(arg);
+        if (tp == &PyLong_Type || tp == &PyFloat_Type
+                || tp == &PyBool_Type || tp == &PyUnicode_Type
+                || arg == Py_None) {
+            continue;
+        }
+        return 0;
+    }
+    return 1;
+}
 
 
 static void
@@ -423,6 +459,7 @@ dispatcher_dealloc(PyArray_ArrayFunctionDispatcherObject *self)
     Py_CLEAR(self->relevant_arg_func);
     Py_CLEAR(self->default_impl);
     Py_CLEAR(self->dict);
+    Py_CLEAR(self->arg_indices);
     Py_CLEAR(self->dispatcher_name);
     Py_CLEAR(self->public_name);
     PyObject_FREE(self);
@@ -508,10 +545,80 @@ dispatcher_vectorcall(PyArray_ArrayFunctionDispatcherObject *self,
 
     int num_implementing_args;
 
-    if (self->relevant_arg_func != NULL) {
+    if (self->arg_indices != NULL) {
+        /*
+         * Tuple-spec fast path: arg_indices is a tuple of int positions
+         * identifying which arguments are relevant for dispatch.
+         * We extract those args directly from the vectorcall arrays,
+         * avoiding the Python-level dispatcher function call entirely.
+         */
         public_api = (PyObject *)self;
 
-        /* Typical path, need to call the relevant_arg_func and unpack them */
+        /* Fast path: if all args are exact ndarray or basic scalars,
+         * no override is possible — skip dispatch entirely. */
+        if (all_args_are_ndarray_or_scalar(args, len_args, kwnames)) {
+            return PyObject_Vectorcall(
+                    self->default_impl, args, len_args, kwnames);
+        }
+
+        Py_ssize_t nargs = PyVectorcall_NARGS(len_args);
+        Py_ssize_t n_indices = PyTuple_GET_SIZE(self->arg_indices);
+        Py_ssize_t nkwargs = (kwnames != NULL) ?
+                PyTuple_GET_SIZE(kwnames) : 0;
+
+        /* Build a small C array of the relevant args */
+        PyObject *relevant_items[NPY_MAXARGS];
+        Py_ssize_t n_relevant = 0;
+
+        for (Py_ssize_t i = 0; i < n_indices; i++) {
+            PyObject *spec = PyTuple_GET_ITEM(self->arg_indices, i);
+            Py_ssize_t idx = PyLong_AsSsize_t(PyTuple_GET_ITEM(spec, 0));
+            PyObject *name_obj = PyTuple_GET_ITEM(spec, 1);
+            PyObject *arg = NULL;
+
+            if (idx < nargs) {
+                /* Positional argument */
+                arg = args[idx];
+            }
+            else if (nkwargs > 0) {
+                /*
+                 * Check if the argument was passed as a keyword.
+                 * The implementation's parameter might have been passed by name.
+                 */
+                for (Py_ssize_t j = 0; j < nkwargs; j++) {
+                    PyObject *kwname = PyTuple_GET_ITEM(kwnames, j);
+                    int cmp = PyObject_RichCompareBool(name_obj, kwname, Py_EQ);
+                    if (cmp == 1) {
+                        arg = args[nargs + j];
+                        break;
+                    }
+                    else if (cmp == -1) {
+                        PyErr_Clear();
+                    }
+                }
+            }
+
+            if (arg != NULL && arg != Py_None) {
+                if (n_relevant >= NPY_MAXARGS) {
+                    PyErr_SetString(PyExc_TypeError,
+                            "too many relevant arguments");
+                    return NULL;
+                }
+                relevant_items[n_relevant++] = arg;
+            }
+        }
+
+        num_implementing_args = get_implementing_args_and_methods(
+                relevant_items, n_relevant,
+                implementing_args, array_function_methods);
+        if (num_implementing_args < 0) {
+            return NULL;
+        }
+    }
+    else if (self->relevant_arg_func != NULL) {
+        public_api = (PyObject *)self;
+
+        /* Legacy path: call the relevant_arg_func and unpack them */
         relevant_args = PyObject_Vectorcall(
                 self->relevant_arg_func, args, len_args, kwnames);
         if (relevant_args == NULL) {
@@ -524,8 +631,12 @@ dispatcher_vectorcall(PyArray_ArrayFunctionDispatcherObject *self,
             return NULL;
         }
 
+        PyObject **items = PySequence_Fast_ITEMS(relevant_args);
+        Py_ssize_t length = PySequence_Fast_GET_SIZE(relevant_args);
+
         num_implementing_args = get_implementing_args_and_methods(
-                relevant_args, implementing_args, array_function_methods);
+                items, length,
+                implementing_args, array_function_methods);
         if (num_implementing_args < 0) {
             Py_DECREF(relevant_args);
             return NULL;
@@ -660,12 +771,22 @@ dispatcher_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwargs)
     self->vectorcall = (vectorcallfunc)dispatcher_vectorcall;
     Py_INCREF(self->default_impl);
     self->dict = NULL;
+    self->arg_indices = NULL;
     self->dispatcher_name = NULL;
     self->public_name = NULL;
 
     if (self->relevant_arg_func == Py_None) {
         /* NULL in the relevant arg function means we use `like=` */
         Py_CLEAR(self->relevant_arg_func);
+    }
+    else if (PyTuple_Check(self->relevant_arg_func)) {
+        /*
+         * Tuple-spec mode: relevant_arg_func is a tuple of int indices.
+         * Store as arg_indices and clear relevant_arg_func.
+         */
+        self->arg_indices = self->relevant_arg_func;
+        Py_INCREF(self->arg_indices);
+        self->relevant_arg_func = NULL;
     }
     else {
         /* Fetch names to clean up TypeErrors (show actual name) */

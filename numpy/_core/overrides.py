@@ -105,6 +105,40 @@ def verify_matching_signatures(implementation, dispatcher):
                                'default argument values')
 
 
+def _resolve_dispatcher_arg_indices(implementation, dispatcher_names):
+    """Resolve a tuple of argument names to their positional indices.
+
+    Given a tuple of argument name strings (e.g. ("a", "out")) and the
+    implementation function, return a tuple of ints representing the
+    positional index of each named parameter in the implementation's
+    signature.
+
+    Parameters
+    ----------
+    implementation : callable
+        The actual function implementation whose signature we inspect.
+    dispatcher_names : tuple of str
+        Argument names that are relevant for __array_function__ dispatch.
+
+    Returns
+    -------
+    tuple of int
+        The positional indices corresponding to each argument name.
+    """
+    sig = inspect.signature(implementation)
+    params = list(sig.parameters.keys())
+    indices = []
+    for name in dispatcher_names:
+        try:
+            idx = params.index(name)
+        except ValueError:
+            raise RuntimeError(
+                f"dispatcher argument name '{name}' not found in "
+                f"signature of {implementation}: {params}")
+        indices.append((idx, name))
+    return tuple(indices)
+
+
 def array_function_dispatch(dispatcher=None, module=None, verify=True,
                             docs_from_dispatcher=False):
     """Decorator for adding dispatch with the __array_function__ protocol.
@@ -113,10 +147,15 @@ def array_function_dispatch(dispatcher=None, module=None, verify=True,
 
     Parameters
     ----------
-    dispatcher : callable or None
+    dispatcher : callable, tuple of str, or None
         Function that when called like ``dispatcher(*args, **kwargs)`` with
         arguments from the NumPy function call returns an iterable of
         array-like arguments to check for ``__array_function__``.
+
+        If a tuple of strings, each string names a parameter of the
+        decorated function whose value is relevant for dispatch.  The
+        names are resolved to positional indices at decoration time and
+        the dispatcher function call is avoided entirely at call time.
 
         If `None`, the first argument is used as the single `like=` argument
         and not passed on.  A function implementing `like=` must call its
@@ -143,10 +182,19 @@ def array_function_dispatch(dispatcher=None, module=None, verify=True,
 
     """
     def decorator(implementation):
+        # Determine the dispatcher to pass to _ArrayFunctionDispatcher
+        if isinstance(dispatcher, tuple):
+            # Tuple-spec mode: resolve names to positional indices
+            arg_indices = _resolve_dispatcher_arg_indices(
+                    implementation, dispatcher)
+            actual_dispatcher = arg_indices
+        else:
+            actual_dispatcher = dispatcher
+
         if verify:
-            if dispatcher is not None:
-                verify_matching_signatures(implementation, dispatcher)
-            else:
+            if actual_dispatcher is not None and not isinstance(dispatcher, tuple):
+                verify_matching_signatures(implementation, actual_dispatcher)
+            elif actual_dispatcher is None:
                 # Using __code__ directly similar to verify_matching_signature
                 co = implementation.__code__
                 last_arg = co.co_argcount + co.co_kwonlyargcount - 1
@@ -157,14 +205,16 @@ def array_function_dispatch(dispatcher=None, module=None, verify=True,
                         "argument and a keyword-only argument. "
                         f"{implementation} does not seem to comply.")
 
-        if docs_from_dispatcher and dispatcher.__doc__ is not None:
+        if (docs_from_dispatcher and not isinstance(dispatcher, tuple)
+                and dispatcher is not None and dispatcher.__doc__ is not None):
             doc = inspect.cleandoc(dispatcher.__doc__)
             add_docstring(implementation, doc)
 
-        public_api = _ArrayFunctionDispatcher(dispatcher, implementation)
+        public_api = _ArrayFunctionDispatcher(actual_dispatcher, implementation)
         functools.update_wrapper(public_api, implementation)
 
-        if not verify and not getattr(implementation, "__text_signature__", None):
+        if (not verify and not isinstance(dispatcher, tuple)
+                and not getattr(implementation, "__text_signature__", None)):
             public_api.__signature__ = inspect.signature(dispatcher)
 
         if module is not None:

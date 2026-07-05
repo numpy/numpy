@@ -798,3 +798,155 @@ def test_function_like():
     bound = np.mean.__get__(MyClass)  # classmethod
     with pytest.raises(TypeError, match="unsupported operand type"):
         bound()
+
+
+# --- Tests for the tuple-spec form of array_function_dispatch ---
+
+# Define tuple-spec dispatched functions at module level for testing.
+@array_function_dispatch(("array",))
+def dispatched_tuple_one_arg(array):
+    """Docstring for tuple-spec one arg."""
+    return 'original'
+
+
+@array_function_dispatch(("array1", "array2"))
+def dispatched_tuple_two_arg(array1, array2):
+    """Docstring for tuple-spec two arg."""
+    return 'original'
+
+
+@array_function_dispatch(("a", "out"))
+def dispatched_tuple_with_optional(a, axis=None, out=None):
+    """Docstring for tuple-spec with optional args."""
+    return 'original'
+
+
+class TestTupleSpecDispatch:
+    """Tests for the tuple-spec form of @array_function_dispatch."""
+
+    def test_basic_ndarray(self):
+        """Tuple-spec dispatchers should work with plain ndarrays."""
+        array = np.array([1, 2, 3])
+        result = dispatched_tuple_one_arg(array)
+        assert_equal(result, 'original')
+
+    def test_two_arg(self):
+        """Tuple-spec dispatchers should work with two ndarray args."""
+        a = np.array([1])
+        b = np.array([2])
+        result = dispatched_tuple_two_arg(a, b)
+        assert_equal(result, 'original')
+
+    def test_with_keyword_args(self):
+        """Tuple-spec dispatchers should work when relevant args
+        are passed as keywords."""
+        a = np.array([1, 2, 3])
+        result = dispatched_tuple_with_optional(a, axis=0)
+        assert_equal(result, 'original')
+
+    def test_with_out_keyword(self):
+        """Tuple-spec dispatchers should work when 'out' is an ndarray."""
+        a = np.array([1, 2, 3])
+        out = np.empty(3)
+        result = dispatched_tuple_with_optional(a, out=out)
+        assert_equal(result, 'original')
+
+    def test_dispatch_override(self):
+        """Tuple-spec dispatchers should still call __array_function__
+        on custom array types."""
+
+        class MyArray:
+            def __array_function__(self, func, types, args, kwargs):
+                return (self, func, types, args, kwargs)
+
+        original = MyArray()
+        (obj, func, types, args, kwargs) = dispatched_tuple_one_arg(original)
+        assert_(obj is original)
+        assert_(func is dispatched_tuple_one_arg)
+        assert_equal(set(types), {MyArray})
+        assert_(args == (original,))
+        assert_equal(kwargs, {})
+
+    def test_not_implemented_override(self):
+        """Tuple-spec dispatchers should raise TypeError when
+        __array_function__ returns NotImplemented."""
+
+        class MyArray:
+            def __array_function__(self, func, types, args, kwargs):
+                return NotImplemented
+
+        obj = MyArray()
+        with assert_raises(TypeError):
+            dispatched_tuple_one_arg(obj)
+
+    def test_ndarray_subclass_dispatch(self):
+        """Tuple-spec dispatchers should dispatch to ndarray subclasses."""
+
+        class OverrideSub(np.ndarray):
+            def __array_function__(self, func, types, args, kwargs):
+                return 'overridden'
+
+        array = np.array([1, 2, 3]).view(OverrideSub)
+        result = dispatched_tuple_one_arg(array)
+        assert_equal(result, 'overridden')
+
+    def test_fast_path_scalars(self):
+        """Tuple-spec dispatchers should work with basic scalar types
+        alongside ndarrays (exercising the fast-path)."""
+        a = np.array([1, 2, 3])
+        # axis=0 (int), out=None should all take the fast path
+        result = dispatched_tuple_with_optional(a, axis=0, out=None)
+        assert_equal(result, 'original')
+
+    def test_name_and_docstring(self):
+        """Tuple-spec dispatched functions should preserve name and docstring."""
+        assert_equal(dispatched_tuple_one_arg.__name__, 'dispatched_tuple_one_arg')
+        if sys.flags.optimize < 2:
+            assert_equal(dispatched_tuple_one_arg.__doc__,
+                         'Docstring for tuple-spec one arg.')
+
+    def test_numpy_functions_with_tuple_spec(self):
+        """Verify that converted numpy functions still work correctly."""
+        # np.sum (converted to tuple-spec)
+        a = np.array([1, 2, 3, 4, 5])
+        assert_equal(np.sum(a), 15)
+        assert_equal(np.sum(a, axis=0), 15)
+
+        # np.prod
+        assert_equal(np.prod(a), 120)
+
+        # np.max / np.min
+        assert_equal(np.max(a), 5)
+        assert_equal(np.min(a), 1)
+
+        # np.any / np.all
+        b = np.array([True, False, True])
+        assert_equal(np.any(b), True)
+        assert_equal(np.all(b), False)
+
+        # np.mean
+        c = np.array([1.0, 2.0, 3.0])
+        assert_equal(np.mean(c), 2.0)
+
+        # np.reshape
+        d = np.arange(6)
+        assert_equal(np.reshape(d, (2, 3)).shape, (2, 3))
+
+    def test_numpy_functions_with_out(self):
+        """Verify that converted functions work with out= parameter."""
+        a = np.array([1, 2, 3, 4, 5])
+        out = np.empty(())
+        np.sum(a, out=out)
+        assert_equal(out, 15)
+
+    def test_numpy_functions_with_subclass(self):
+        """Verify converted functions still dispatch to subclasses."""
+
+        class MySubArray(np.ndarray):
+            def __array_function__(self, func, types, args, kwargs):
+                return 'subclass_override'
+
+        arr = np.array([1, 2, 3]).view(MySubArray)
+        result = np.sum(arr)
+        assert_equal(result, 'subclass_override')
+
