@@ -28,11 +28,10 @@ least two releases. For more details, see :ref:`NEP23`.
 
 NumPy provides both a Python API and a C-API. The C-API can be accessed
 directly or through tools like Cython or f2py. If your package uses the
-C-API, it's important to understand NumPy's application binary interface
-(ABI) compatibility: NumPy's ABI is forward compatible but not backward
-compatible. This means that binaries compiled against an older version of
-NumPy will still work with newer versions, but binaries compiled against a
-newer version will not necessarily work with older ones.
+NumPy C-API this will generally be backwards compatible to all relevant older
+NumPy versions and forward compatible within the same major NumPy version.
+For more details, for example if you wish to use API added in newer NumPy versions,
+see :ref:`depending_on_numpy`.
 
 Modules can also be safely built against NumPy 2.0 or later in
 :ref:`CPython's abi3 mode <python:stable-abi>`, which allows
@@ -100,7 +99,8 @@ NumPy 1.25 will, when using defaults, expose a C-API compatible with NumPy
 1.19. (the exact version is set within NumPy-internal header files).
 
 NumPy is also forward compatible for all minor releases, but a major release
-will require recompilation (see NumPy 2.0-specific advice further down).
+is expected to require recompilation (see NumPy 2.0-specific advice further down).\
+[#major-transition]_
 
 The default behavior can be customized for example by adding::
 
@@ -109,7 +109,7 @@ The default behavior can be customized for example by adding::
 before including any NumPy headers (or the equivalent ``-D`` compiler flag) in
 every extension module that requires the NumPy C-API.
 This is mainly useful if you need to use newly added API at the cost of not
-being compatible with older versions.
+being compatible with older versions.\ [#future-api]_
 
 If for some reason you wish to compile for the currently installed NumPy
 version by default you can add::
@@ -132,6 +132,21 @@ For conda-forge packages, please see
 for instructions on how to declare a dependency on ``numpy`` when using the C
 API.
 
+.. [#major-transition] Improving on the NumPy 2 transition, if a NumPy 3.0
+    release happens we may release NumPy 2.x versions that can compile modules
+    compatible with NumPy 3.0 when deprecated APIs are disabled.
+
+.. [#future-api] We do not provide a mechanism to compile a single extension
+    module that is compatible with old NumPy versions but uses new NumPy API
+    when running with a newer NumPy version.
+    This can be achieved via ``PyArray_RUNTIME_VERSION`` and manually
+    backported API although it means that you may not recieve fixes in NumPy
+    headers. We advise to only backport when ``NPY_FEATURE_VERSION`` is
+    smaller than the given API so that you recieve fixes when it is.
+    (Eventually, this will happen and, even without bugs, at that point your
+    definitions could become incorrect.)
+
+
 
 Runtime dependency & version ranges
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -150,19 +165,19 @@ That said, if you are (a) a project that is guaranteed to release
 frequently, (b) use a large part of NumPy's API surface, and (c) is
 worried that changes in NumPy may break your code, you can set an
 upper bound of ``<MAJOR.MINOR + N`` with N no less than 3, and
-``MAJOR.MINOR`` being the current release of NumPy [*]_. If you use the NumPy
+``MAJOR.MINOR`` being the current release of NumPy.\ [#N]_ If you use the NumPy
 C-API (directly or via Cython), you can also pin the current major
 version to prevent ABI breakage. Note that setting an upper bound on
 NumPy may `affect the ability of your library to be installed
 alongside other, newer packages
 <https://iscinumpy.dev/post/bound-version-constraints/>`__.
 
-.. [*] The reason for setting ``N=3`` is that NumPy will, on the
-       rare occasion where it makes breaking changes, raise warnings
-       for at least two releases. (NumPy releases about once every six
-       months, so this translates to a window of at least a year;
-       hence the subsequent requirement that your project releases at
-       least on that cadence.)
+.. [#N] The reason for setting ``N=3`` is that NumPy will, on the
+    rare occasion where it makes breaking changes, raise warnings
+    for at least two releases. (NumPy releases about once every six
+    months, so this translates to a window of at least a year;
+    hence the subsequent requirement that your project releases at
+    least on that cadence.)
 
 .. note::
 
