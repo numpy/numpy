@@ -534,8 +534,7 @@ def count_nonzero(a, axis=None, *, keepdims=False):
     if axis is None and not keepdims:
         return multiarray.count_nonzero(a)
 
-    a = asanyarray(a)
-    a_bool = a.astype(np.bool, copy=False)
+    a_bool = asanyarray(a, dtype=np.bool)
     return a_bool.sum(axis=axis, dtype=np.intp, keepdims=keepdims)
 
 
