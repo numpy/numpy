@@ -688,17 +688,28 @@ class Generator:
     def permuted[ArrayT: np.ndarray](self, /, x: ArrayLike, *, axis: int | None = None, out: ArrayT) -> ArrayT: ...
 
     #
-    @overload  # >=0d int, size=None (default)
+    @overload  # 0d int, size=None (default)
     def choice(
         self,
         /,
-        a: int | _NestedSequence[int],
+        a: int,
         size: None = None,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
         axis: int = 0,
         shuffle: bool = True,
     ) -> int: ...
+    @overload  # >0d int, size=None (default)
+    def choice(
+        self,
+        /,
+        a: _NestedSequence[int],
+        size: None = None,
+        replace: bool = True,
+        p: _ArrayLikeFloat_co | None = None,
+        axis: int = 0,
+        shuffle: bool = True,
+    ) -> np.int_: ...
     @overload  # >=0d known, size=None (default)
     def choice[ScalarT: np.generic](
         self,
