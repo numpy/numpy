@@ -1,0 +1,6 @@
+Faster ``numpy.pad`` for zero-width padding
+-------------------------------------------
+``numpy.pad`` is now faster for zero-width padding with ``mode="linear_ramp"``
+and the statistic modes ``"maximum"``, ``"mean"``, ``"median"``, and
+``"minimum"``. These modes now skip unnecessary mode-specific work for axes
+where the requested pad width is ``(0, 0)``.
