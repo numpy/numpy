@@ -7437,6 +7437,13 @@ class bytes_(character[bytes], bytes):  # type: ignore[misc]
     @override
     def __hash__(self, /) -> int: ...
 
+    # re-declare inherited `bytes.__getitem__` shadowed by `generic.__getitem__`
+    @override  # type: ignore[override]
+    @overload
+    def __getitem__(self, key: SupportsIndex, /) -> int: ...
+    @overload
+    def __getitem__(self, key: slice[SupportsIndex | None], /) -> bytes: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
     #
     def __bytes__(self, /) -> bytes: ...
 
@@ -7449,6 +7456,10 @@ class str_(character[str], str):  # type: ignore[misc]
     #
     @override
     def __hash__(self, /) -> int: ...
+
+    # re-declare inherited `str.__getitem__` shadowed by `generic.__getitem__`
+    @override
+    def __getitem__(self, key: SupportsIndex | slice[SupportsIndex | None], /) -> str: ...  # type: ignore[override]
 
 # See `numpy._typing._ufunc` for more concrete nin-/nout-specific stubs
 @final
