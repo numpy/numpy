@@ -1744,6 +1744,33 @@ def angle(z, deg=False):
         a *= 180 / pi
     return a
 
+def _unwrap_fallback(p, discont, period, axis):
+    nd = p.ndim
+    dd = diff(p, axis=axis)
+    slice1 = [slice(None, None)] * nd     # full slices
+    slice1[axis] = slice(1, None)
+    slice1 = tuple(slice1)
+    dtype = np.result_type(dd, period)
+    if _nx.issubdtype(dtype, _nx.integer):
+        interval_high, rem = divmod(period, 2)
+        boundary_ambiguous = rem == 0
+    else:
+        interval_high = period / 2
+        boundary_ambiguous = True
+    interval_low = -interval_high
+    ddmod = mod(dd - interval_low, period) + interval_low
+    if boundary_ambiguous:
+        # for `mask = (abs(dd) == period/2)`, the above line made
+        # `ddmod[mask] == -period/2`. correct these such that
+        # `ddmod[mask] == sign(dd[mask])*period/2`.
+        _nx.copyto(ddmod, interval_high,
+                where=(ddmod == interval_low) & (dd > 0))
+    ph_correct = ddmod - dd
+    _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
+    up = asanyarray(p, dtype=dtype, copy=True)
+    up[slice1] = p[slice1] + ph_correct.cumsum(axis)
+    return up
+
 
 def _unwrap_dispatcher(p, discont=None, axis=None, *, period=None):
     return (p,)
@@ -1848,31 +1875,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     except np._core._exceptions._UFuncNoLoopError:
         if dtype.isbuiltin == 1 and p.dtype != object:
             raise
-        nd = p.ndim
-        dd = diff(p, axis=axis)
-        slice1 = [slice(None, None)] * nd     # full slices
-        slice1[axis] = slice(1, None)
-        slice1 = tuple(slice1)
-        dtype = np.result_type(dd, period)
-        if _nx.issubdtype(dtype, _nx.integer):
-            interval_high, rem = divmod(period, 2)
-            boundary_ambiguous = rem == 0
-        else:
-            interval_high = period / 2
-            boundary_ambiguous = True
-        interval_low = -interval_high
-        ddmod = mod(dd - interval_low, period) + interval_low
-        if boundary_ambiguous:
-            # for `mask = (abs(dd) == period/2)`, the above line made
-            # `ddmod[mask] == -period/2`. correct these such that
-            # `ddmod[mask] == sign(dd[mask])*period/2`.
-            _nx.copyto(ddmod, interval_high,
-                    where=(ddmod == interval_low) & (dd > 0))
-        ph_correct = ddmod - dd
-        _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
-        up = asanyarray(p, dtype=dtype, copy=True)
-        up[slice1] = p[slice1] + ph_correct.cumsum(axis)
-        return up
+        return _unwrap_fallback(p, discont, period, axis)
 
 
 def _sort_complex(a):
