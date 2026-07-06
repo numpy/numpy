@@ -248,7 +248,7 @@ binary_resolve_descriptors(struct PyArrayMethodObject_tag *NPY_UNUSED(method),
 {
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
     PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
-    int out_coerce = descr1->coerce && descr1->coerce;
+    int out_coerce = descr1->coerce && descr2->coerce;
     PyObject *out_na_object = NULL;
 
     if (stringdtype_compatible_na(
