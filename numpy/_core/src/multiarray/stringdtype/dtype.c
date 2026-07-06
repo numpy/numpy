@@ -230,7 +230,7 @@ common_instance(PyArray_StringDTypeObject *dtype1, PyArray_StringDTypeObject *dt
     }
 
     return (PyArray_StringDTypeObject *)new_stringdtype_instance(
-            out_na_object, dtype1->coerce && dtype1->coerce);
+            out_na_object, dtype1->coerce && dtype2->coerce);
 }
 
 /*
@@ -265,6 +265,13 @@ as_pystring(PyObject *scalar, int coerce)
     if (scalar_type == &PyUnicode_Type) {
         Py_INCREF(scalar);
         return scalar;
+    }
+    // str subclasses (e.g. np.str_) are string data even when coercion is
+    // disabled; convert to an exact str, preserving embedded and trailing
+    // nulls that a round-trip through a fixed-width unicode descriptor
+    // would strip
+    if (PyUnicode_Check(scalar)) {
+        return PyUnicode_FromObject(scalar);
     }
     if (coerce == 0) {
         PyErr_SetString(PyExc_ValueError,
@@ -644,6 +651,11 @@ stringdtype_is_known_scalar_type(PyArray_DTypeMeta *cls,
     {
         return 1;
     }
+    // otherwise np.str_ discovers its fixed-width 'U' descriptor, whose
+    // cast into StringDType strips trailing NULs setitem would preserve
+    else if (pytype == &PyUnicodeArrType_Type) {
+        return 1;
+    }
     return 0;
 }
 
@@ -663,6 +675,9 @@ stringdtype_finalize_descr(PyArray_Descr *dtype)
     NpyString_release_allocator(allocator);
     PyArray_StringDTypeObject *ret = (PyArray_StringDTypeObject *)new_stringdtype_instance(
             sdtype->na_object, sdtype->coerce);
+    if (ret == NULL) {
+        return NULL;
+    }
     ret->array_owned = 1;
     return (PyArray_Descr *)ret;
 }

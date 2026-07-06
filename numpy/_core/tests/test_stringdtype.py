@@ -154,6 +154,35 @@ def test_create_with_na(dtype):
     assert arr[1] is dtype.na_object
 
 
+def test_create_with_failing_na_comparison():
+    # An error raised while re-creating an array-owned descriptor used to
+    # crash with a NULL dereference in stringdtype_finalize_descr instead
+    # of propagating.
+    class Flaky:
+        def __init__(self):
+            self.calls = 0
+
+        def __eq__(self, other):
+            return self is other
+
+        def __ne__(self, other):
+            self.calls += 1
+            if self.calls > 1:
+                raise RuntimeError("boom")
+            return False
+
+        def __hash__(self):
+            return 0
+
+    dt = StringDType(na_object=Flaky())
+    # the first array takes ownership of the descriptor
+    np.array(["x"], dtype=dt)
+    # the second array creation re-creates the descriptor, re-running the
+    # na object classification, which fails
+    with pytest.raises(RuntimeError, match="boom"):
+        np.array(["y"], dtype=dt)
+
+
 @pytest.mark.parametrize("i", list(range(5)))
 def test_set_replace_na(i):
     # Test strings of various lengths can be set to NaN and then replaced.
@@ -176,6 +205,18 @@ def test_null_roundtripping():
     arr = np.array(data, dtype="T")
     assert data[0] == arr[0]
     assert data[1] == arr[1]
+
+
+@pytest.mark.parametrize("coerce", [True, False])
+def test_np_str_trailing_nul_preserved(coerce):
+    dtype = StringDType(coerce=coerce)
+    value = np.str_("q\x00")
+    arr = np.empty(1, dtype=dtype)
+    arr[0] = value
+    assert arr[0] == "q\x00"
+    arr[0:1] = [value]
+    assert arr[0] == "q\x00"
+    assert np.array([value], dtype=dtype)[0] == "q\x00"
 
 
 @pytest.mark.parametrize(
@@ -319,6 +360,17 @@ def test_self_casts(dtype, dtype2, strings):
                 arr[:-1] == newarr[:-1]
             return
     assert_array_equal(arr[:-1], newarr[:-1])
+
+
+def test_cast_method_names():
+    get_castingimpl = np._core._multiarray_umath._get_castingimpl
+    string_DT = type(StringDType())
+    for other_DT, name in [(np.dtypes.BoolDType, "bool"),
+                           (np.dtypes.Float64DType, "double")]:
+        to_string = get_castingimpl(other_DT, string_DT)
+        assert f"cast_{name}_to_StringDType" in repr(to_string)
+        from_string = get_castingimpl(string_DT, other_DT)
+        assert f"cast_StringDType_to_{name}" in repr(from_string)
 
 
 @pytest.mark.parametrize(
@@ -1029,6 +1081,15 @@ def test_roundtrip_float_through_complex_and_string(order, nan_like_na_object):
         for name in (*order, "float64"):
             arr = arr.astype(specs[name])
     assert_array_equal(arr, original)
+
+
+def test_void_to_string_invalid_utf8_error():
+    # invalid UTF-8 in a void buffer used to surface as a confusing
+    # MemoryError because the error return of utf8_buffer_size was
+    # stored in an unsigned variable
+    varr = np.array([b"\xff\xff\xff\xff"], dtype="V4")
+    with pytest.raises(TypeError, match="Invalid UTF-8"):
+        varr.astype(StringDType())
 
 
 @pytest.mark.parametrize(
@@ -1879,10 +1940,13 @@ def test_unset_na_coercion():
                      StringDType(na_object=None)]:
         if op_dtype is None:
             op = "2"
+            expected = StringDType(na_object=None)  # coerce defaults to True
         else:
             op = np.array("2", dtype=op_dtype)
+            expected = StringDType(na_object=None, coerce=op_dtype.coerce)
         res = arr + op
         assert_array_equal(res, ["hello2", "world2"])
+        assert res.dtype == expected
 
     # dtype instances with distinct explicitly set NA objects are incompatible
     for op_dtype in [StringDType(na_object=pd_NA), StringDType(na_object="")]:
@@ -1904,6 +1968,17 @@ def test_unset_na_coercion():
         op = np.array(inp, dtype=op_dtype)
         with pytest.raises(TypeError):
             arr == op
+
+
+def test_coerce_promotion_commutative():
+    # promoting a coerce=False instance with a coerce=True instance
+    # used to depend on the argument order
+    dt = StringDType()
+    dt_no_coerce = StringDType(coerce=False)
+    assert np.promote_types(dt, dt_no_coerce) == dt_no_coerce
+    assert np.promote_types(dt_no_coerce, dt) == dt_no_coerce
+    assert np.promote_types(dt, dt) == dt
+    assert np.promote_types(dt_no_coerce, dt_no_coerce) == dt_no_coerce
 
 
 def test_repeat(string_array):

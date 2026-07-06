@@ -8451,6 +8451,8 @@ def convolve(a, v, mode='full', propagate_mask=True):
     See Also
     --------
     numpy.convolve : Equivalent function in the top-level NumPy module.
+    numpy.ma.correlate : Cross-correlation of two 1-D sequences; see its
+        examples for ``propagate_mask`` behaviour.
     """
     return _convolve_or_correlate(np.convolve, a, v, mode, propagate_mask)
 
