@@ -32,6 +32,7 @@ AR_f8: npt.NDArray[np.float64]
 AR_i8: npt.NDArray[np.int64]
 AR_u1: npt.NDArray[np.uint8]
 AR_c8: npt.NDArray[np.complex64]
+AR_c16: npt.NDArray[np.complex128]
 AR_m: npt.NDArray[np.timedelta64]
 AR_U: npt.NDArray[np.str_]
 AR_V: npt.NDArray[np.void]
@@ -236,12 +237,16 @@ assert_type(AR_f8_2d.mean(dtype=np.float32, axis=0), npt.NDArray[np.float32])
 assert_type(AR_f8_2d.mean(dtype=np.float32, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 assert_type(AR_f8_2d.mean(dtype=np.float32, axis=0, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 
-# same as above
+# as above, but returns floating for complexfloating input
 assert_type(f8.std(), Any)
 assert_type(AR_f8.std(), np.float64)
 assert_type(AR_f8.std(keepdims=True), npt.NDArray[np.float64])
 assert_type(AR_f8.std(axis=0), npt.NDArray[np.float64])
 assert_type(AR_f8.std(axis=0, keepdims=True), npt.NDArray[np.float64])
+assert_type(AR_c16.std(), np.float64)
+assert_type(AR_c16.std(keepdims=True), npt.NDArray[np.float64])
+assert_type(AR_c16.std(axis=0), npt.NDArray[np.float64])
+assert_type(AR_c16.std(axis=0, keepdims=True), npt.NDArray[np.float64])
 assert_type(AR_f8.std(dtype=np.float32), np.float32)
 assert_type(AR_f8.std(dtype=np.float32, axis=0), npt.NDArray[np.float32])
 assert_type(AR_f8.std(dtype=np.float32, keepdims=True), npt.NDArray[np.float32])
@@ -262,6 +267,10 @@ assert_type(AR_f8.var(), np.float64)
 assert_type(AR_f8.var(keepdims=True), npt.NDArray[np.float64])
 assert_type(AR_f8.var(axis=0), npt.NDArray[np.float64])
 assert_type(AR_f8.var(axis=0, keepdims=True), npt.NDArray[np.float64])
+assert_type(AR_c16.var(), np.float64)
+assert_type(AR_c16.var(keepdims=True), npt.NDArray[np.float64])
+assert_type(AR_c16.var(axis=0), npt.NDArray[np.float64])
+assert_type(AR_c16.var(axis=0, keepdims=True), npt.NDArray[np.float64])
 assert_type(AR_f8.var(dtype=np.float32), np.float32)
 assert_type(AR_f8.var(dtype=np.float32, axis=0), npt.NDArray[np.float32])
 assert_type(AR_f8.var(dtype=np.float32, keepdims=True), npt.NDArray[np.float32])
