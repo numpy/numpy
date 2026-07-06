@@ -129,6 +129,10 @@ _i16_0d: np.int16
 _i16_1d: np.ndarray[tuple[int], np.dtype[np.int16]]
 _i16_2d: np.ndarray[tuple[int, int], np.dtype[np.int16]]
 _i16_nd: npt.NDArray[np.int16]
+_i32_0d: np.int32
+_i32_1d: np.ndarray[tuple[int], np.dtype[np.int32]]
+_i32_2d: np.ndarray[tuple[int, int], np.dtype[np.int32]]
+_i32_nd: npt.NDArray[np.int32]
 _f32_0d: np.float32
 _f32_1d: np.ndarray[tuple[int], np.dtype[np.float32]]
 _f32_2d: np.ndarray[tuple[int, int], np.dtype[np.float32]]
@@ -299,10 +303,18 @@ assert_type(np.spacing(_py_f_0d), np.float64)
 assert_type(np.spacing(_py_f_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.spacing(_py_f_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
 
-assert_type(np.spacing(_i16_0d), np.float64)
-assert_type(np.spacing(_i16_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
-assert_type(np.spacing(_i16_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
-assert_type(np.spacing(_i16_nd), npt.NDArray[np.float64])
+assert_type(np.spacing(_bool_0d), np.float16)
+assert_type(np.spacing(_bool_1d), np.ndarray[tuple[int], np.dtype[np.float16]])
+assert_type(np.spacing(_bool_2d), np.ndarray[tuple[int, int], np.dtype[np.float16]])
+assert_type(np.spacing(_bool_nd), npt.NDArray[np.float16])
+assert_type(np.spacing(_i16_0d), np.float32)
+assert_type(np.spacing(_i16_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.spacing(_i16_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.spacing(_i16_nd), npt.NDArray[np.float32])
+assert_type(np.spacing(_i32_0d), np.float64)
+assert_type(np.spacing(_i32_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.spacing(_i32_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(np.spacing(_i32_nd), npt.NDArray[np.float64])
 assert_type(np.spacing(_f32_0d), np.float32)
 assert_type(np.spacing(_f32_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
 assert_type(np.spacing(_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
@@ -328,10 +340,18 @@ assert_type(np.cbrt(_py_f_0d), np.float64)
 assert_type(np.cbrt(_py_f_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.cbrt(_py_f_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
 
-assert_type(np.cbrt(_i16_0d), np.float64)
-assert_type(np.cbrt(_i16_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
-assert_type(np.cbrt(_i16_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
-assert_type(np.cbrt(_i16_nd), npt.NDArray[np.float64])
+assert_type(np.cbrt(_bool_0d), np.float16)
+assert_type(np.cbrt(_bool_1d), np.ndarray[tuple[int], np.dtype[np.float16]])
+assert_type(np.cbrt(_bool_2d), np.ndarray[tuple[int, int], np.dtype[np.float16]])
+assert_type(np.cbrt(_bool_nd), npt.NDArray[np.float16])
+assert_type(np.cbrt(_i16_0d), np.float32)
+assert_type(np.cbrt(_i16_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.cbrt(_i16_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.cbrt(_i16_nd), npt.NDArray[np.float32])
+assert_type(np.cbrt(_i32_0d), np.float64)
+assert_type(np.cbrt(_i32_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.cbrt(_i32_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(np.cbrt(_i32_nd), npt.NDArray[np.float64])
 assert_type(np.cbrt(_f32_0d), np.float32)
 assert_type(np.cbrt(_f32_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
 assert_type(np.cbrt(_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
@@ -362,10 +382,14 @@ assert_type(np.sin(_py_c_0d), np.complex128 | Any)  # `complex` overlaps with `f
 assert_type(np.sin(_py_c_1d), np.ndarray[tuple[int], np.dtype[np.complex128]])
 assert_type(np.sin(_py_c_2d), np.ndarray[tuple[int, int], np.dtype[np.complex128]])
 
-assert_type(np.sin(_i16_0d), np.float64)
-assert_type(np.sin(_i16_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
-assert_type(np.sin(_i16_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
-assert_type(np.sin(_i16_nd), npt.NDArray[np.float64])
+assert_type(np.sin(_i16_0d), np.float32)
+assert_type(np.sin(_i16_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.sin(_i16_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.sin(_i16_nd), npt.NDArray[np.float32])
+assert_type(np.sin(_i32_0d), np.float64)
+assert_type(np.sin(_i32_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.sin(_i32_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(np.sin(_i32_nd), npt.NDArray[np.float64])
 assert_type(np.sin(_f32_0d), np.float32)
 assert_type(np.sin(_f32_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
 assert_type(np.sin(_f32_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
@@ -694,22 +718,54 @@ assert_type(
     ],
 )
 
-assert_type(np.frexp(_i16_0d), tuple[np.float64, np.int32])
+assert_type(np.frexp(_bool_0d), tuple[np.float16, np.int32])
+assert_type(
+    np.frexp(_bool_1d),
+    tuple[
+        np.ndarray[tuple[int], np.dtype[np.float16]],
+        np.ndarray[tuple[int], np.dtype[np.int32]],
+    ],
+)
+assert_type(
+    np.frexp(_bool_2d),
+    tuple[
+        np.ndarray[tuple[int, int], np.dtype[np.float16]],
+        np.ndarray[tuple[int, int], np.dtype[np.int32]],
+    ],
+)
+assert_type(np.frexp(_bool_nd), tuple[npt.NDArray[np.float16], npt.NDArray[np.int32]])
+assert_type(np.frexp(_i16_0d), tuple[np.float32, np.int32])
 assert_type(
     np.frexp(_i16_1d),
     tuple[
-        np.ndarray[tuple[int], np.dtype[np.float64]],
+        np.ndarray[tuple[int], np.dtype[np.float32]],
         np.ndarray[tuple[int], np.dtype[np.int32]],
     ],
 )
 assert_type(
     np.frexp(_i16_2d),
     tuple[
+        np.ndarray[tuple[int, int], np.dtype[np.float32]],
+        np.ndarray[tuple[int, int], np.dtype[np.int32]],
+    ],
+)
+assert_type(np.frexp(_i16_nd), tuple[npt.NDArray[np.float32], npt.NDArray[np.int32]])
+assert_type(np.frexp(_i32_0d), tuple[np.float64, np.int32])
+assert_type(
+    np.frexp(_i32_1d),
+    tuple[
+        np.ndarray[tuple[int], np.dtype[np.float64]],
+        np.ndarray[tuple[int], np.dtype[np.int32]],
+    ],
+)
+assert_type(
+    np.frexp(_i32_2d),
+    tuple[
         np.ndarray[tuple[int, int], np.dtype[np.float64]],
         np.ndarray[tuple[int, int], np.dtype[np.int32]],
     ],
 )
-assert_type(np.frexp(_i16_nd), tuple[npt.NDArray[np.float64], npt.NDArray[np.int32]])
+assert_type(np.frexp(_i32_nd), tuple[npt.NDArray[np.float64], npt.NDArray[np.int32]])
 assert_type(np.frexp(_f32_0d), tuple[np.float32, np.int32])
 assert_type(
     np.frexp(_f32_1d),
@@ -746,10 +802,18 @@ assert_type(np.modf(_py_f_0d), _tuple2[np.float64])
 assert_type(np.modf(_py_f_1d), _tuple2[np.ndarray[tuple[int], np.dtype[np.float64]]])
 assert_type(np.modf(_py_f_2d), _tuple2[np.ndarray[tuple[int, int], np.dtype[np.float64]]])
 
-assert_type(np.modf(_i16_0d), _tuple2[np.float64])
-assert_type(np.modf(_i16_1d), _tuple2[np.ndarray[tuple[int], np.dtype[np.float64]]])
-assert_type(np.modf(_i16_2d), _tuple2[np.ndarray[tuple[int, int], np.dtype[np.float64]]])
-assert_type(np.modf(_i16_nd), _tuple2[npt.NDArray[np.float64]])
+assert_type(np.modf(_bool_0d), _tuple2[np.float16])
+assert_type(np.modf(_bool_1d), _tuple2[np.ndarray[tuple[int], np.dtype[np.float16]]])
+assert_type(np.modf(_bool_2d), _tuple2[np.ndarray[tuple[int, int], np.dtype[np.float16]]])
+assert_type(np.modf(_bool_nd), _tuple2[npt.NDArray[np.float16]])
+assert_type(np.modf(_i16_0d), _tuple2[np.float32])
+assert_type(np.modf(_i16_1d), _tuple2[np.ndarray[tuple[int], np.dtype[np.float32]]])
+assert_type(np.modf(_i16_2d), _tuple2[np.ndarray[tuple[int, int], np.dtype[np.float32]]])
+assert_type(np.modf(_i16_nd), _tuple2[npt.NDArray[np.float32]])
+assert_type(np.modf(_i32_0d), _tuple2[np.float64])
+assert_type(np.modf(_i32_1d), _tuple2[np.ndarray[tuple[int], np.dtype[np.float64]]])
+assert_type(np.modf(_i32_2d), _tuple2[np.ndarray[tuple[int, int], np.dtype[np.float64]]])
+assert_type(np.modf(_i32_nd), _tuple2[npt.NDArray[np.float64]])
 assert_type(np.modf(_f32_0d), _tuple2[np.float32])
 assert_type(np.modf(_f32_1d), _tuple2[np.ndarray[tuple[int], np.dtype[np.float32]]])
 assert_type(np.modf(_f32_2d), _tuple2[np.ndarray[tuple[int, int], np.dtype[np.float32]]])
@@ -938,14 +1002,18 @@ assert_type(np.ldexp(_py_f_0d, _py_i_0d), np.float64)
 assert_type(np.ldexp(_py_f_1d, _py_i_1d), npt.NDArray[np.float64])
 assert_type(np.ldexp(_py_f_2d, _py_i_2d), npt.NDArray[np.float64])
 
-assert_type(np.ldexp(_bool_0d, _bool_0d), np.float64)
-assert_type(np.ldexp(_bool_1d, _bool_1d), npt.NDArray[np.float64])
-assert_type(np.ldexp(_bool_2d, _bool_2d), npt.NDArray[np.float64])
-assert_type(np.ldexp(_bool_nd, _bool_nd), npt.NDArray[np.float64])
-assert_type(np.ldexp(_i16_0d, _i16_0d), np.float64)
-assert_type(np.ldexp(_i16_1d, _i16_1d), npt.NDArray[np.float64])
-assert_type(np.ldexp(_i16_2d, _i16_2d), npt.NDArray[np.float64])
-assert_type(np.ldexp(_i16_nd, _i16_nd), npt.NDArray[np.float64])
+assert_type(np.ldexp(_bool_0d, _bool_0d), np.float16)
+assert_type(np.ldexp(_bool_1d, _bool_1d), npt.NDArray[np.float16])
+assert_type(np.ldexp(_bool_2d, _bool_2d), npt.NDArray[np.float16])
+assert_type(np.ldexp(_bool_nd, _bool_nd), npt.NDArray[np.float16])
+assert_type(np.ldexp(_i16_0d, _i16_0d), np.float32)
+assert_type(np.ldexp(_i16_1d, _i16_1d), npt.NDArray[np.float32])
+assert_type(np.ldexp(_i16_2d, _i16_2d), npt.NDArray[np.float32])
+assert_type(np.ldexp(_i16_nd, _i16_nd), npt.NDArray[np.float32])
+assert_type(np.ldexp(_i32_0d, _i32_0d), np.float64)
+assert_type(np.ldexp(_i32_1d, _i32_1d), npt.NDArray[np.float64])
+assert_type(np.ldexp(_i32_2d, _i32_2d), npt.NDArray[np.float64])
+assert_type(np.ldexp(_i32_nd, _i32_nd), npt.NDArray[np.float64])
 assert_type(np.ldexp(_f32_0d, _i16_0d), np.float32)
 assert_type(np.ldexp(_f32_1d, _i16_1d), npt.NDArray[np.float32])
 assert_type(np.ldexp(_f32_2d, _i16_2d), npt.NDArray[np.float32])
@@ -964,11 +1032,21 @@ assert_type(np.ldexp.outer(_f32_1d, _py_i_1d), npt.NDArray[np.float32])
 
 assert_type(np.ldexp.at(_f32_2d, 1, _py_i_1d), None)
 
-assert_type(np.ldexp.reduce(_i16_1d), npt.NDArray[np.float64] | np.float64)
-assert_type(np.ldexp.reduce(_i16_2d), npt.NDArray[np.float64] | np.float64)
-assert_type(np.ldexp.reduce(_i16_1d, axis=None), np.float64)
-assert_type(np.ldexp.reduce(_i16_1d, keepdims=True), npt.NDArray[np.float64])
-assert_type(np.ldexp.reduce(_i16_1d, out=...), npt.NDArray[np.float64])
-assert_type(np.ldexp.reduce(_i16_1d, out=_f32_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.ldexp.reduce(_bool_1d), npt.NDArray[np.float16] | np.float16)
+assert_type(np.ldexp.reduce(_bool_2d), npt.NDArray[np.float16] | np.float16)
+assert_type(np.ldexp.reduce(_bool_1d, axis=None), np.float16)
+assert_type(np.ldexp.reduce(_bool_1d, keepdims=True), npt.NDArray[np.float16])
+assert_type(np.ldexp.reduce(_bool_1d, out=...), npt.NDArray[np.float16])
+assert_type(np.ldexp.reduce(_i16_1d), npt.NDArray[np.float32] | np.float32)
+assert_type(np.ldexp.reduce(_i16_2d), npt.NDArray[np.float32] | np.float32)
+assert_type(np.ldexp.reduce(_i16_1d, axis=None), np.float32)
+assert_type(np.ldexp.reduce(_i16_1d, keepdims=True), npt.NDArray[np.float32])
+assert_type(np.ldexp.reduce(_i16_1d, out=...), npt.NDArray[np.float32])
+assert_type(np.ldexp.reduce(_i32_1d), npt.NDArray[np.float64] | np.float64)
+assert_type(np.ldexp.reduce(_i32_2d), npt.NDArray[np.float64] | np.float64)
+assert_type(np.ldexp.reduce(_i32_1d, axis=None), np.float64)
+assert_type(np.ldexp.reduce(_i32_1d, keepdims=True), npt.NDArray[np.float64])
+assert_type(np.ldexp.reduce(_i32_1d, out=...), npt.NDArray[np.float64])
+assert_type(np.ldexp.reduce(_i32_1d, out=_f32_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
 
 # ldexp doesn't support reduceat / accumulate
