@@ -1277,28 +1277,29 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
 };
 
 /*
-    The following *_GET_ITEM_DATA functions are used to get the pointer to the fields of the
-    corresponding struct from the given object. It is technically undefined behaviour
-    to access the fields of the struct through a pointer that is not of the same type,
-    but in our case it is not a problem in practice because this is used only in stable ABI
-    extensions where the original object layout is opaque.
+ * Python stable ABI compatible object field accessor functions.
+ *
+ * The following *_GET_ITEM_DATA functions are used to get the pointer to the fields of the
+ * corresponding struct from the given object. It is technically undefined behaviour
+ * to access the fields of the struct through a pointer that is not of the same type,
+ * but in our case it is not a problem in practice because this is used only in stable ABI
+ * extensions where the original object layout is opaque.
+ *
+ * To expose the struct this way alignment guarantees must be met, see `utils.h` and the
+ * definition of `_NPY_OPAQUE_FIRST_FIELD`.
+ */
 
-    The first member of the structs are aligned to 8 bytes, because on 32 bit free-threaded builds,
-    sizeof(PyObject) is not a multiple of 8 so the compiler will add padding to the struct and if we
-    don't align the first member to 8 bytes, the offsets of fields structs i.e. `PyArray_Descr_fields`
-    will differ from `PyArray_Descr` which is the actual layout. The alignment of 8 bytes is important
-    because older abi3 extensions have sizeof(PyObject) which a multiple of 8 so the added alignment of 8
-    does not change the offsets of the fields structs for those extensions.
-
-    To calculate the correct offset for the fields, we use offsetof with the first member
-    of the struct because there can be padding before the first member of the struct and the object header,
-    and we want to skip that padding.
-*/
-#if PY_VERSION_HEX >= 0x030f0000
-static_assert(offsetof(PyArray_Descr, typeobj) % 8 == 0,
-"typeobj must be aligned to 8 bytes in PyArray_Descr to be compatible with older abi3 extensions,"
-"if this fails check if something has changed in CPython");
+#if SIZEOF_VOID_P != 4  // not a 32bit build
+/*
+ * If this assert fails then Python changed the sizeof(PyObject). If we simply remove the
+ * assert we lose flexibility to add 16byte aligned fields to the stable ABI fields.
+ * We can choose that this is fine or increase the padding to 16/max_align_t when it happens.
+ * (See comments in `ndarraytypes.h` for more details.)
+ */
+static_assert(sizeof(PyObject) % 16 == 0,
+    "Expected sizeof(PyObject) to be multiple of 16 on 64bit builds.");
 #endif
+
 static_assert(NPY_ALIGNOF(PyArray_Descr_fields) <= 8,
               "PyArray_Descr must not require more than 8-byte alignment");
 static_assert(NPY_ALIGNOF(_PyArray_LegacyDescr_fields) <= 8,
