@@ -1016,7 +1016,7 @@ type _TimeUnit = L[_NativeTimeUnit, _IntTimeUnit]
 type _NativeTD64Unit = L[_DayUnit, _NativeTimeUnit]
 type _IntTD64Unit = L[_MonthUnit, _IntTimeUnit]
 type _TD64Unit = L[_DateUnit, _TimeUnit]
-type _TimeUnitSpec[UnitT: _TD64Unit] = _TD64Unit | tuple[_TD64Unit, SupportsIndex]
+type _TimeUnitSpec[UnitT: _TD64Unit] = UnitT | tuple[UnitT, SupportsIndex]
 
 ### TypedDict's (for internal use only)
 
@@ -7334,11 +7334,11 @@ class datetime64(_RealMixin, generic[_DT64ItemT_co], Generic[_DT64ItemT_co]):
     @overload
     def __new__(cls, value: int | bytes | str | dt.date, format: _TimeUnitSpec[_IntTimeUnit], /) -> datetime64[int]: ...
     @overload
-    def __new__(  # type: ignore[overload-cannot-match]
+    def __new__(
         cls, value: int | bytes | str | dt.date, format: _TimeUnitSpec[_NativeTimeUnit], /
     ) -> datetime64[dt.datetime]: ...
     @overload
-    def __new__(cls, value: int | bytes | str | dt.date, format: _TimeUnitSpec[_DateUnit], /) -> datetime64[dt.date]: ...  # type: ignore[overload-cannot-match]
+    def __new__(cls, value: int | bytes | str | dt.date, format: _TimeUnitSpec[_DateUnit], /) -> datetime64[dt.date]: ...
     @overload
     def __new__(cls, value: bytes | str | dt.date | None, format: _TimeUnitSpec[_TD64Unit] = ..., /) -> Self: ...
 
