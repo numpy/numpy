@@ -1853,6 +1853,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
         slice1 = [slice(None, None)] * nd     # full slices
         slice1[axis] = slice(1, None)
         slice1 = tuple(slice1)
+        dtype = np.result_type(dd, period)
         if _nx.issubdtype(dtype, _nx.integer):
             interval_high, rem = divmod(period, 2)
             boundary_ambiguous = rem == 0
