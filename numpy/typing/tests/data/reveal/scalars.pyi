@@ -1,3 +1,4 @@
+import datetime as dt
 from typing import Any, Literal, assert_type
 
 import numpy as np
@@ -249,6 +250,24 @@ assert_type(O.imag, np.object_)
 assert_type(int(O), int)
 assert_type(float(O), float)
 assert_type(complex(O), complex)
+
+assert_type(np.datetime64(), np.datetime64[None])
+assert_type(np.datetime64("now", "ns"), np.datetime64[int])
+assert_type(np.datetime64("now", "s"), np.datetime64[dt.datetime])
+assert_type(np.datetime64("now", "Y"), np.datetime64[dt.date])
+# unit-swapping
+assert_type(np.datetime64(np.datetime64(), "ns"), np.datetime64[int])
+assert_type(np.datetime64(np.datetime64("now", "ns"), "ns"), np.datetime64[int])
+assert_type(np.datetime64(np.datetime64("now", "s"), "ns"), np.datetime64[int])
+assert_type(np.datetime64(np.datetime64("now", "Y"), "ns"), np.datetime64[int])
+assert_type(np.datetime64(np.datetime64(), "s"), np.datetime64[dt.datetime])
+assert_type(np.datetime64(np.datetime64("now", "ns"), "s"), np.datetime64[dt.datetime])
+assert_type(np.datetime64(np.datetime64("now", "s"), "s"), np.datetime64[dt.datetime])
+assert_type(np.datetime64(np.datetime64("now", "Y"), "s"), np.datetime64[dt.datetime])
+assert_type(np.datetime64(np.datetime64(), "Y"), np.datetime64[dt.date])
+assert_type(np.datetime64(np.datetime64("now", "ns"), "Y"), np.datetime64[dt.date])
+assert_type(np.datetime64(np.datetime64("now", "s"), "Y"), np.datetime64[dt.date])
+assert_type(np.datetime64(np.datetime64("now", "Y"), "Y"), np.datetime64[dt.date])
 
 # These fail fail because of a mypy __new__ bug:
 # https://github.com/python/mypy/issues/15182
