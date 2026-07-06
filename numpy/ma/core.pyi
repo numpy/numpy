@@ -2073,7 +2073,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     # Keep in sync with `ndarray.cumprod`
     @override  # type: ignore[override]
     @overload
-    def cumprod[DTypeT: dtype[number | object_]](
+    def cumprod[DTypeT: dtype[inexact | object_]](
         self: MaskedArray[Any, DTypeT],
         axis: None = None,
         dtype: None = None,
@@ -2081,7 +2081,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     ) -> MaskedArray[tuple[int], DTypeT]: ...
     @overload  # bool_
     def cumprod(
-        self: _MaskedArray[np.bool],
+        self: _MaskedArray[np.integer | np.bool],
         axis: None = None,
         dtype: None = None,
         out: None = None,
@@ -2117,15 +2117,15 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         out: None = None,
     ) -> _Masked1D[Any]: ...
     @overload  # axis: <given>
-    def cumprod[ArrayT: _MaskedArray[number | object_]](
+    def cumprod[ArrayT: _MaskedArray[np.inexact | object_]](
         self: ArrayT,
         axis: SupportsIndex,
         dtype: None = None,
         out: None = None,
     ) -> ArrayT: ...
-    @overload  # bool_, axis: <given>
+    @overload  # +integer, axis: <given>
     def cumprod[ShapeT: _Shape](
-        self: MaskedArray[ShapeT, np.dtype[np.bool]],
+        self: MaskedArray[ShapeT, np.dtype[np.integer | np.bool]],
         axis: SupportsIndex,
         dtype: None = None,
         out: None = None,
@@ -2163,7 +2163,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     # Keep in sync with `ndarray.cumsum`
     @override  # type: ignore[override]
     @overload
-    def cumsum[DTypeT: dtype[number | timedelta64 | object_]](
+    def cumsum[DTypeT: dtype[inexact | timedelta64 | object_]](
         self: MaskedArray[Any, DTypeT],
         axis: None = None,
         dtype: None = None,
@@ -2171,7 +2171,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     ) -> MaskedArray[tuple[int], DTypeT]: ...
     @overload  # bool_
     def cumsum(
-        self: _MaskedArray[np.bool],
+        self: _MaskedArray[np.integer | np.bool],
         axis: None = None,
         dtype: None = None,
         out: None = None,
@@ -2213,9 +2213,9 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         dtype: None = None,
         out: None = None,
     ) -> ArrayT: ...
-    @overload  # bool_, axis: <given>
+    @overload  # +integer, axis: <given>
     def cumsum[ShapeT: _Shape](
-        self: MaskedArray[ShapeT, np.dtype[np.bool]],
+        self: MaskedArray[ShapeT, np.dtype[np.integer | np.bool]],
         axis: SupportsIndex,
         dtype: None = None,
         out: None = None,
