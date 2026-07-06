@@ -295,6 +295,12 @@ cdef class RandomState:
         random distributions in NumPy. If the internal state is manually altered,
         the user should know exactly what he/she is doing.
 
+        The returned state is a snapshot that is not updated by subsequent
+        draws. See :ref:`random-bit-generator-state` for copy semantics when
+        saving and restoring state. When using legacy ``RandomState``, prefer
+        these methods over ``RandomState.bit_generator.state`` so that extra
+        state required by some distributions is included.
+
         """
         st = self._bit_generator.state
         if st['bit_generator'] != 'MT19937' and legacy:
@@ -354,6 +360,10 @@ cdef class RandomState:
         `set_state` and `get_state` are not needed to work with any of the
         random distributions in NumPy. If the internal state is manually altered,
         the user should know exactly what he/she is doing.
+
+        Assigning a saved state restores the generator from that snapshot.
+        See :ref:`random-bit-generator-state` for copy semantics when saving
+        and restoring state.
 
         For backwards compatibility, the form (str, array of 624 uints, int) is
         also accepted although it is missing some information about the cached

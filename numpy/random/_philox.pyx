@@ -211,6 +211,14 @@ cdef class Philox(BitGenerator):
         state : dict
             Dictionary containing the information required to describe the
             state of the PRNG
+
+        Notes
+        -----
+        The getter returns a snapshot of the internal state. Subsequent
+        random draws do not modify a previously retrieved state object.
+        Assigning a saved state restores the PRNG from that snapshot.
+        See :ref:`random-bit-generator-state` for copy semantics and
+        guidance on when :func:`copy.deepcopy` may be needed.
         """
         ctr = np.empty(4, dtype=np.uint64)
         key = np.empty(2, dtype=np.uint64)

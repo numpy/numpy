@@ -160,6 +160,47 @@ by a tuple of elements. Here we use a base entropy value and an integer
 Note that the sequences produced by the latter method will be distinct from
 those constructed via `~SeedSequence.spawn`.
 
+.. _random-bit-generator-state:
+
+Saving and restoring state
+--------------------------
+
+All BitGenerators expose a ``state`` property that can be used to capture
+the current PRNG state and restore it later::
+
+    state = bit_generator.state
+    values_before = generator.random(5)
+    bit_generator.state = state
+    values_again = generator.random(5)
+    assert (values_before == values_again).all()
+
+The ``state`` getter returns a **snapshot** of the internal PRNG state. Each
+access returns a new ``dict``; continuing to draw random numbers from the
+generator does **not** update a previously retrieved state object.
+
+Setting ``bit_generator.state`` copies the values from the provided ``dict``
+into the internal PRNG state. Assigning a previously saved state dict always
+restores that saved state, even if it is the same Python object that was
+returned by an earlier call to the getter.
+
+No additional copy is required to save and restore state within the same
+session, provided the saved state dict (and any arrays it contains) is not
+modified. Some BitGenerators (``MT19937``, ``Philox``, and ``SFC64``) include
+NumPy arrays in the state dict. These arrays are copies of the internal state,
+not views, but in-place modifications to the saved arrays will change the
+saved checkpoint. Use :func:`copy.deepcopy` if you need to modify a state dict
+without affecting a saved checkpoint.
+
+``PCG64`` and ``PCG64DXSM`` store their core state using Python integers and
+so their snapshots contain only immutable values.
+
+For legacy :class:`~RandomState`, use :meth:`~RandomState.get_state` and
+:meth:`~RandomState.set_state` rather than the underlying
+``RandomState.bit_generator.state``. ``RandomState`` adds extra state needed
+for some distributions (for example, Box-Muller normals). The same snapshot
+semantics apply: the returned state is independent of subsequent draws until
+it is restored with :meth:`~RandomState.set_state`.
+
 
 .. autosummary::
     :toctree: generated/

@@ -17,6 +17,8 @@ to the state which is required when using Box-Muller normals since these
 are produced in pairs. It is important to use
 `RandomState.get_state`, and not the underlying bit generators
 `state`, when accessing the state so that these extra values are saved.
+See :ref:`random-bit-generator-state` for a general discussion of state
+copy semantics.
 
 Although we provide the `MT19937` BitGenerator for use independent of
 `RandomState`, note that its default seeding uses `SeedSequence`
