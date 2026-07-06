@@ -4323,7 +4323,7 @@ For details about NumPy C-API compatibility see
     NumPy API features available or, in principle, to be compatible with
     older NumPy versions.
 
-.. c:data:: PyArray_RUNTIME_VERSION
+.. c:macro:: PyArray_RUNTIME_VERSION
 
     After the C-API has been imported ``PyArray_RUNTIME_VERSION`` is set to
     the current runtime C-API version. ``PyArray_RUNTIME_VERSION`` is
