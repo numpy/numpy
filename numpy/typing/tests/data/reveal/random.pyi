@@ -700,6 +700,7 @@ assert_type(def_gen.bit_generator, np.random.BitGenerator)
 assert_type(def_gen.bytes(2), bytes)
 
 assert_type(def_gen.choice(5), int)
+assert_type(def_gen.choice([1, 2]), np.int_)
 assert_type(def_gen.choice(5, 3), npt.NDArray[np.int64])
 assert_type(def_gen.choice(5, 3, replace=True), npt.NDArray[np.int64])
 assert_type(def_gen.choice(5, 3, p=[1 / 5] * 5), npt.NDArray[np.int64])
