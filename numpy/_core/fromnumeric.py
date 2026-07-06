@@ -64,6 +64,11 @@ def _wrapfunc(obj, method, *args, **kwds):
         return _wrapit(obj, method, *args, **kwds)
 
 
+# The positional-only signature and unrolled _NoValue checks (rather than
+# **kwargs with a dict comprehension) are deliberate: these helpers are on
+# the hot path of every reduction (sum, prod, min, max, any, all), and
+# avoiding the creation and iteration of a temporary kwargs dict measurably
+# reduces call overhead for small arrays.  See gh-31845.
 def _wrapreduction(obj, ufunc, method, axis, dtype, out,
                    keepdims=_NoValue, initial=_NoValue, where=_NoValue, /):
     passkwargs = {}
