@@ -3087,7 +3087,9 @@ class TestSign:
 
         assert_raises(TypeError, test_nan)
 
-    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64, np.longdouble])
+    @pytest.mark.parametrize(
+        "dtype", [np.float16, np.float32, np.float64, np.longdouble]
+    )
     def test_sign_negative_zero_signbit(self, dtype):
         """gh-29485: np.sign(-0.0) must preserve the sign bit of -0.0."""
         neg_zero = dtype(-0.0)
