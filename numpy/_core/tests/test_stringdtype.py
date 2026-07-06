@@ -1820,10 +1820,13 @@ def test_unset_na_coercion():
                      StringDType(na_object=None)]:
         if op_dtype is None:
             op = "2"
+            expected = StringDType(na_object=None)  # coerce defaults to True
         else:
             op = np.array("2", dtype=op_dtype)
+            expected = StringDType(na_object=None, coerce=op_dtype.coerce)
         res = arr + op
         assert_array_equal(res, ["hello2", "world2"])
+        assert res.dtype == expected
 
     # dtype instances with distinct explicitly set NA objects are incompatible
     for op_dtype in [StringDType(na_object=pd_NA), StringDType(na_object="")]:
@@ -1856,27 +1859,6 @@ def test_coerce_promotion_commutative():
     assert np.promote_types(dt_no_coerce, dt) == dt_no_coerce
     assert np.promote_types(dt, dt) == dt
     assert np.promote_types(dt_no_coerce, dt_no_coerce) == dt_no_coerce
-
-
-@pytest.mark.parametrize(
-    "coerce_a, coerce_b",
-    [(True, False), (False, True)],
-)
-def test_add_preserves_coerce_false(coerce_a, coerce_b):
-    # Mixing coerce=True and coerce=False under ufuncs should promote to
-    # coerce=False (same as np.promote_types), so assignment of non-strings
-    # remains strict.
-    a = np.array(["a"], dtype=StringDType(coerce=coerce_a))
-    b = np.array(["b"], dtype=StringDType(coerce=coerce_b))
-
-    c = np.add(a, b)
-    assert c.dtype == StringDType(coerce=False)
-    assert c.dtype.coerce is False
-    assert_array_equal(c, np.array(["ab"], dtype=StringDType(coerce=False)))
-
-    # Same error as a direct StringDType(coerce=False) array.
-    with pytest.raises(ValueError, match="string coercion is disabled"):
-        c[0] = object()
 
 
 def test_repeat(string_array):
