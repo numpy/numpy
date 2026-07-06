@@ -3087,6 +3087,47 @@ class TestSign:
 
         assert_raises(TypeError, test_nan)
 
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64, np.longdouble])
+    def test_sign_negative_zero_signbit(self, dtype):
+        """gh-29485: np.sign(-0.0) must preserve the sign bit of -0.0."""
+        neg_zero = dtype(-0.0)
+        result = np.sign(neg_zero)
+        assert np.signbit(result), \
+            f"np.sign(-0.0) lost the sign bit for {dtype.__name__}"
+
+        pos_zero = dtype(0.0)
+        result_pos = np.sign(pos_zero)
+        assert not np.signbit(result_pos), \
+            f"np.sign(0.0) unexpectedly set the sign bit for {dtype.__name__}"
+
+        arr = np.array([-0.0, 0.0, -1.0, 1.0], dtype=dtype)
+        assert_array_equal(np.signbit(np.sign(arr)), [True, False, True, False])
+
+        # out= path
+        out = np.zeros(1, dtype=dtype)
+        np.sign(np.array([-0.0], dtype=dtype), out)
+        assert np.signbit(out)[0], \
+            f"np.sign(-0.0, out=...) lost the sign bit for {dtype.__name__}"
+
+    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
+    @pytest.mark.parametrize("real, imag, expect_real_neg, expect_imag_neg", [
+        (-0.0, -0.0, True, True),
+        (0.0, -0.0, False, True),
+        (-0.0, 0.0, True, False),
+        (0.0, 0.0, False, False),
+    ])
+    def test_sign_complex_negative_zero_signbit(
+        self, dtype, real, imag, expect_real_neg, expect_imag_neg
+    ):
+        """gh-29485: np.sign(complex) preserves each zero component's sign."""
+        z = dtype(complex(real, imag))
+        result = np.sign(z)
+        assert np.signbit(result.real) == expect_real_neg, \
+            f"np.sign({z!r}).real signbit wrong for {dtype.__name__}"
+        assert np.signbit(result.imag) == expect_imag_neg, \
+            f"np.sign({z!r}).imag signbit wrong for {dtype.__name__}"
+
+
 class TestMinMax:
     def test_minmax_blocked(self):
         # simd tests on max/min, test all alignments, slow but important

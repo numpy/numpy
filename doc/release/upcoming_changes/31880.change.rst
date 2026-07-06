@@ -1,0 +1,8 @@
+``numpy.sign`` now preserves the sign of zero
+----------------------------------------------
+``numpy.sign`` previously returned ``+0.0`` for any zero input, discarding
+the sign bit of ``-0.0``. It now returns a zero with the same sign as the
+input for ``float16``, ``float32``, ``float64``, ``longdouble``,
+``complex64``, ``complex128``, and ``clongdouble`` (the real and imaginary
+components of a complex zero are handled independently). ``object`` arrays
+are unaffected.

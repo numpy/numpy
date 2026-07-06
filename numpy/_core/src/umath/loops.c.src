@@ -1435,7 +1435,7 @@ NPY_NO_EXPORT void
     /* Sign of nan is nan */
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = in1 > 0 ? 1 : (in1 < 0 ? -1 : (in1 == 0 ? 0 : in1));
+        *((@type@ *)op1) = in1 > 0 ? 1 : (in1 < 0 ? -1 : in1);
     }
     npy_clear_floatstatus_barrier((char*)dimensions);
 }
@@ -1968,7 +1968,7 @@ HALF_sign(char **args, npy_intp const *dimensions, npy_intp const *steps, void *
     UNARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
         *((npy_half *)op1) = npy_half_isnan(in1) ? in1 :
-                    (((in1&0x7fffu) == 0) ? 0 :
+                    (((in1&0x7fffu) == 0) ? in1 :
                       (((in1&0x8000u) == 0) ? NPY_HALF_ONE : NPY_HALF_NEGONE));
     }
 }
@@ -2375,8 +2375,8 @@ NPY_NO_EXPORT void
             }
         }
         else if (NPY_UNLIKELY(in_abs == 0)) {
-            ((@ftype@ *)op1)[0] = 0.@C@;
-            ((@ftype@ *)op1)[1] = 0.@C@;
+            ((@ftype@ *)op1)[0] = in_r;
+            ((@ftype@ *)op1)[1] = in_i;
         }
         else{
             ((@ftype@ *)op1)[0] = in_r / in_abs;
