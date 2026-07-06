@@ -4264,7 +4264,24 @@ stringtype_subscript(PyObject *self, PyObject *key)
     return NULL;
 }
 
+static Py_ssize_t
+stringtype_length(PyObject *self)
+{
+    PyTypeObject *base = Py_TYPE(self)->tp_base;
+    if (base != NULL && base->tp_as_mapping != NULL &&
+            base->tp_as_mapping->mp_length != NULL) {
+        return base->tp_as_mapping->mp_length(self);
+    }
+    if (base != NULL && base->tp_as_sequence != NULL &&
+            base->tp_as_sequence->sq_length != NULL) {
+        return base->tp_as_sequence->sq_length(self);
+    }
+    PyErr_SetString(PyExc_TypeError, "object has no len()");
+    return -1;
+}
+
 static PyMappingMethods stringtype_as_mapping = {
+    .mp_length = (lenfunc)stringtype_length,
     .mp_subscript = (binaryfunc)stringtype_subscript,
 };
 
@@ -4298,6 +4315,8 @@ NPY_NO_EXPORT PyTypeObject Py@Name@ArrType_Type = {
 static PyMappingMethods gentype_as_mapping = {
     .mp_subscript = (binaryfunc)gen_arrtype_subscript,
 };
+
+
 
 
 /*
