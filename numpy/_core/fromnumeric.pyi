@@ -2747,10 +2747,10 @@ def mean(
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[Any]: ...
 
-# keep in sync with `mean` above
-@overload  # +integer | ~object_ | +builtins.float
+#
+@overload  # ~complex128 | +integer | ~object_ | +builtins.float
 def std(
-    a: _DualArrayLike[np.dtype[np.integer | np.bool | np.object_], float],
+    a: _DualArrayLike[np.dtype[np.complex128 | np.integer | np.bool | np.object_], complex],
     axis: None = None,
     dtype: None = None,
     out: None = None,
@@ -2761,9 +2761,9 @@ def std(
     mean: _ArrayLikeFloat_co | _NoValueType = ...,
     correction: float | _NoValueType = ...,
 ) -> np.float64: ...
-@overload  # +integer | +builtins.float, axis: <given>
+@overload  # ~complex128 | +integer | +builtins.float, axis: <given>
 def std(
-    a: _DualArrayLike[np.dtype[np.integer | np.bool], float],
+    a: _DualArrayLike[np.dtype[np.complex128 | np.integer | np.bool], complex],
     axis: int | tuple[int, ...],
     dtype: None = None,
     out: None = None,
@@ -2776,7 +2776,7 @@ def std(
 ) -> NDArray[np.float64]: ...
 @overload  # +integer, keepdims=True
 def std[ShapeT: _Shape](
-    a: np.ndarray[ShapeT, np.dtype[np.integer | np.bool]],
+    a: np.ndarray[ShapeT, np.dtype[np.complex128 | np.integer | np.bool]],
     axis: int | tuple[int, ...] | None = None,
     dtype: None = None,
     out: None = None,
@@ -2787,21 +2787,8 @@ def std[ShapeT: _Shape](
     mean: _ArrayLikeComplex_co | _NoValueType = ...,
     correction: float | _NoValueType = ...,
 ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
-@overload  # ~complex  (`list` ensures invariance to avoid overlap with the previous overload)
-def std(
-    a: _NestedSequence[list[complex]] | list[complex],
-    axis: None = None,
-    dtype: None = None,
-    out: None = None,
-    ddof: float = 0,
-    keepdims: Literal[False] | _NoValueType = ...,
-    *,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-    mean: _ArrayLikeComplex_co | _NoValueType = ...,
-    correction: float | _NoValueType = ...,
-) -> np.complex128: ...
-@overload  # ~inexact | timedelta64
-def std[ScalarT: np.inexact | np.timedelta64](
+@overload  # ~floating | timedelta64
+def std[ScalarT: np.floating | np.timedelta64](
     a: _ArrayLike[ScalarT],
     axis: None = None,
     dtype: None = None,
@@ -2813,8 +2800,8 @@ def std[ScalarT: np.inexact | np.timedelta64](
     mean: _ArrayLikeComplex_co | _NoValueType = ...,
     correction: float | _NoValueType = ...,
 ) -> ScalarT: ...
-@overload  # ~inexact | timedelta64 | object_, axis: <given>
-def std[ScalarT: np.inexact | np.timedelta64 | np.object_](
+@overload  # ~floating | timedelta64 | object_, axis: <given>
+def std[ScalarT: np.floating | np.timedelta64 | np.object_](
     a: _ArrayLike[ScalarT],
     axis: int | tuple[int, ...],
     dtype: None = None,
@@ -2826,8 +2813,8 @@ def std[ScalarT: np.inexact | np.timedelta64 | np.object_](
     mean: _ArrayLikeComplex_co | _NoValueType = ...,
     correction: float | _NoValueType = ...,
 ) -> NDArray[ScalarT]: ...
-@overload  # ~inexact | timedelta64 | object_, keepdims=True
-def std[ArrayT: NDArray[np.inexact | np.timedelta64 | np.object_]](
+@overload  # ~floating | timedelta64 | object_, keepdims=True
+def std[ArrayT: NDArray[np.floating | np.timedelta64 | np.object_]](
     a: ArrayT,
     axis: int | tuple[int, ...] | None = None,
     dtype: None = None,
@@ -2958,9 +2945,9 @@ def std(
 ) -> NDArray[Any]: ...
 
 # keep in sync with `std` above
-@overload  # +integer | ~object_ | +builtins.float
+@overload  # ~complex128 | +integer | ~object_ | +builtins.float
 def var(
-    a: _DualArrayLike[np.dtype[np.integer | np.bool | np.object_], float],
+    a: _DualArrayLike[np.dtype[np.complex128 | np.integer | np.bool | np.object_], complex],
     axis: None = None,
     dtype: None = None,
     out: None = None,
@@ -2971,9 +2958,9 @@ def var(
     mean: _ArrayLikeFloat_co | _NoValueType = ...,
     correction: float | _NoValueType = ...,
 ) -> np.float64: ...
-@overload  # +integer | +builtins.float, axis: <given>
+@overload  # ~complex128 | +integer | +builtins.float, axis: <given>
 def var(
-    a: _DualArrayLike[np.dtype[np.integer | np.bool], float],
+    a: _DualArrayLike[np.dtype[np.complex128 | np.integer | np.bool], complex],
     axis: int | tuple[int, ...],
     dtype: None = None,
     out: None = None,
@@ -2986,7 +2973,7 @@ def var(
 ) -> NDArray[np.float64]: ...
 @overload  # +integer, keepdims=True
 def var[ShapeT: _Shape](
-    a: np.ndarray[ShapeT, np.dtype[np.integer | np.bool]],
+    a: np.ndarray[ShapeT, np.dtype[np.complex128 | np.integer | np.bool]],
     axis: int | tuple[int, ...] | None = None,
     dtype: None = None,
     out: None = None,
@@ -2997,21 +2984,8 @@ def var[ShapeT: _Shape](
     mean: _ArrayLikeComplex_co | _NoValueType = ...,
     correction: float | _NoValueType = ...,
 ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
-@overload  # ~complex  (`list` ensures invariance to avoid overlap with the previous overload)
-def var(
-    a: _NestedSequence[list[complex]] | list[complex],
-    axis: None = None,
-    dtype: None = None,
-    out: None = None,
-    ddof: float = 0,
-    keepdims: Literal[False] | _NoValueType = ...,
-    *,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-    mean: _ArrayLikeComplex_co | _NoValueType = ...,
-    correction: float | _NoValueType = ...,
-) -> np.complex128: ...
-@overload  # ~inexact | timedelta64
-def var[ScalarT: np.inexact | np.timedelta64](
+@overload  # ~floating | timedelta64
+def var[ScalarT: np.floating | np.timedelta64](
     a: _ArrayLike[ScalarT],
     axis: None = None,
     dtype: None = None,
@@ -3023,8 +2997,8 @@ def var[ScalarT: np.inexact | np.timedelta64](
     mean: _ArrayLikeComplex_co | _NoValueType = ...,
     correction: float | _NoValueType = ...,
 ) -> ScalarT: ...
-@overload  # ~inexact | timedelta64 | object_, axis: <given>
-def var[ScalarT: np.inexact | np.timedelta64 | np.object_](
+@overload  # ~floating | timedelta64 | object_, axis: <given>
+def var[ScalarT: np.floating | np.timedelta64 | np.object_](
     a: _ArrayLike[ScalarT],
     axis: int | tuple[int, ...],
     dtype: None = None,
@@ -3036,8 +3010,8 @@ def var[ScalarT: np.inexact | np.timedelta64 | np.object_](
     mean: _ArrayLikeComplex_co | _NoValueType = ...,
     correction: float | _NoValueType = ...,
 ) -> NDArray[ScalarT]: ...
-@overload  # ~inexact | timedelta64 | object_, keepdims=True
-def var[ArrayT: NDArray[np.inexact | np.timedelta64 | np.object_]](
+@overload  # ~floating | timedelta64 | object_, keepdims=True
+def var[ArrayT: NDArray[np.floating | np.timedelta64 | np.object_]](
     a: ArrayT,
     axis: int | tuple[int, ...] | None = None,
     dtype: None = None,
