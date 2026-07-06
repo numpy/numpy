@@ -31,23 +31,31 @@ add_project_arguments('-I', npy_path, language : 'cython')
 # Build limited API extension modules for all supported Python and NumPy versions
 # The _PY_ABI3_VERSIONS and _NPY_TARGET_VERSIONS lists should be kept in sync
 # with the lists defined in test_limited_api.py, and the test should be updated if new versions are added here.
+# The special 'default' entry builds without defining NPY_TARGET_VERSION at all,
+# which exercises the path where numpyconfig.h picks the current API version.
 _PY_ABI3_VERSIONS = ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14', '3.15']
-_NPY_TARGET_VERSIONS = ['2.0', '2.1', '2.2', '2.3', '2.4', '2.5']
+_NPY_TARGET_VERSIONS = ['2.0', '2.1', '2.2', '2.3', '2.4', '2.5', 'default']
 
 if py.get_variable('Py_GIL_DISABLED', 0) == 0
   foreach py_ver : _PY_ABI3_VERSIONS
     # skip abi3 version higher than the current interpreter version
     if py.language_version().version_compare('>=' + py_ver)
       foreach npy_ver : _NPY_TARGET_VERSIONS
+        # 'default' leaves NPY_TARGET_VERSION undefined
+        if npy_ver == 'default'
+          npy_target_args = []
+        else
+          npy_macro = 'NPY_' + npy_ver.replace('.', '_') + '_API_VERSION'
+          npy_target_args = ['-DNPY_TARGET_VERSION=' + npy_macro]
+        endif
         modname = 'limited_api_' + py_ver.replace('.', '_') + '_npy' + npy_ver.replace('.', '_')
-        npy_macro = 'NPY_' + npy_ver.replace('.', '_') + '_API_VERSION'
         py.extension_module(
             modname,
             'limited_api.c',
             c_args: [
+              '-DNPY_NO_DEPRECATED_API=NPY_1_21_API_VERSION',
               '-DMODULE_NAME=' + modname,
-              '-DNPY_TARGET_VERSION=' + npy_macro,
-            ],
+            ] + npy_target_args,
             include_directories: [npy_include_path],
             limited_api: py_ver,
         )
@@ -59,8 +67,7 @@ if py.get_variable('Py_GIL_DISABLED', 0) == 0
             cython_args: ['--module-name', modname],
             c_args: [
               '-DNPY_NO_DEPRECATED_API=NPY_1_21_API_VERSION',
-              '-DNPY_TARGET_VERSION=' + npy_macro,
-            ],
+            ] + npy_target_args,
             include_directories: [npy_include_path],
             limited_api: py_ver,
         )

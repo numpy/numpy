@@ -88,7 +88,7 @@ def iter_reset(cnp.ndarray arr):
 def iter_goto(cnp.ndarray arr, tuple coord):
     """Get element at a coordinate using PyArray_ITER_GOTO."""
     cdef int nd = cnp.PyArray_NDIM(arr)
-    cdef cnp.npy_intp destination[NPY_MAXDIMS_LEGACY_ITERS]
+    cdef cnp.npy_intp destination[32]
     cdef cnp.flatiter it
     cdef int i
     if len(coord) != nd:
