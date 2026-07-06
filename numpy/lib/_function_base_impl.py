@@ -1873,6 +1873,9 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
                        signature=(type(dtype), np.float64, type(dtype), type(dtype)),
                        axis=axis)
     except np._core._exceptions._UFuncNoLoopError:
+        # We could implement a gufunc loop for object dtype
+        # but it's not worth the burden of all the extra c++ code.
+        # We let object dtype go through the fallback.
         if dtype.isbuiltin == 1 and p.dtype != object:
             raise
         return _unwrap_fallback(p, discont, period, axis)

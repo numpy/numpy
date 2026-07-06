@@ -277,6 +277,10 @@ init_unwrap_ufunc(PyObject *umath)
         {NPY_INT, unwrap_loop<npy_int>},
         {NPY_LONG, unwrap_loop<npy_long>},
         {NPY_LONGLONG, unwrap_loop<npy_longlong>},
+        /*
+         * We could implement a gufunc loop for object dtype
+         * but it's not worth the burden of all the extra c++ code.
+        */
         // {NPY_OBJECT, object_unwrap_loop},
     };
 
