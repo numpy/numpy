@@ -2312,10 +2312,14 @@ reducelike_promote_and_resolve_multi(PyUFuncObject *ufunc,
     PyArray_DTypeMeta *operation_DTypes[NPY_MAXARGS] = {NULL};
     PyArray_DTypeMeta *fwd_signature[NPY_MAXARGS] = {NULL};
 
+    /* A `dtype=` (signature[0]), if given, is forced across every operand. */
     for (int i = 0; i < nin; i++) {
         ops[i] = arr;
-        Py_INCREF(stream_DType);
-        operation_DTypes[i] = stream_DType;
+        PyArray_DTypeMeta *in_DType = signature[0] ? signature[0] : stream_DType;
+        Py_INCREF(in_DType);
+        operation_DTypes[i] = in_DType;
+        Py_XINCREF(signature[0]);
+        fwd_signature[i] = signature[0];
     }
     /*
      * Each forward output may have its own dtype: prefer the provided out[i]'s
@@ -2333,21 +2337,19 @@ reducelike_promote_and_resolve_multi(PyUFuncObject *ufunc,
         }
         Py_XINCREF(out_DType);
         operation_DTypes[nin + i] = out_DType;
+        Py_XINCREF(signature[0]);
+        fwd_signature[nin + i] = signature[0];
     }
 
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
             ops, fwd_signature, operation_DTypes, NPY_FALSE, NPY_FALSE, NPY_FALSE);
 
     if (ufuncimpl == NULL) {
+        /* Let promotion's standard "no loop matching" error propagate. */
         for (int i = 0; i < fwd_nargs; i++) {
             Py_XDECREF(operation_DTypes[i]);
             Py_XDECREF(fwd_signature[i]);
         }
-        PyErr_Clear();
-        PyErr_Format(PyExc_ValueError,
-                "%s does not support reduction over input type %s",
-                ufunc_get_name_cstr(ufunc),
-                NPY_DTYPE(PyArray_DESCR(arr))->singleton->typeobj->tp_name);
         return NULL;
     }
 
