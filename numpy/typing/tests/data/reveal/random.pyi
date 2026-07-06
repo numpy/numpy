@@ -1336,7 +1336,7 @@ assert_type(random_st.seed([0, 1]), None)
 random_st_get_state = random_st.get_state()
 assert_type(random_st_state, dict[str, Any])
 random_st_get_state_legacy = random_st.get_state(legacy=True)
-assert_type(random_st_get_state_legacy, dict[str, Any] | tuple[str, npt.NDArray[np.uint32], int, int, float])
+assert_type(random_st_get_state_legacy, tuple[str, npt.NDArray[np.uint32], int, int, float])
 assert_type(random_st.set_state(random_st_get_state), None)
 
 assert_type(random_st.rand(), float)
