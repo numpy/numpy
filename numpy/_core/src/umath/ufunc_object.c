@@ -6465,6 +6465,11 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
                 goto finish;
             }
         }
+        else if (i >= ufunc -> nin) {
+            PyErr_SetString(PyExc_TypeError,
+                    "Output descriptors must be NumPy dtypes or None.");
+            goto finish;
+        }
         else {
             PyErr_SetString(PyExc_TypeError,
                     "Provided dtype must be a valid NumPy dtype, "

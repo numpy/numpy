@@ -3256,7 +3256,7 @@ class TestLowlevelAPIAccess:
     def test_resolve_dtypes_unary_weak_scalar(self):
         assert np.sin.resolve_dtypes((int, None)) == (
             np.dtype("f8"), np.dtype("f8"))
-        with pytest.raises(TypeError, match=r".*weak.*scalar|.*output"):
+        with pytest.raises(TypeError, match=r".*[Oo]utput"):
             np.sin.resolve_dtypes((int, int))
 
     def test_resolve_dtypes_comparison(self):
