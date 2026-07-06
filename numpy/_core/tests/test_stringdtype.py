@@ -1820,10 +1820,13 @@ def test_unset_na_coercion():
                      StringDType(na_object=None)]:
         if op_dtype is None:
             op = "2"
+            expected = StringDType(na_object=None)  # coerce defaults to True
         else:
             op = np.array("2", dtype=op_dtype)
+            expected = StringDType(na_object=None, coerce=op_dtype.coerce)
         res = arr + op
         assert_array_equal(res, ["hello2", "world2"])
+        assert res.dtype == expected
 
     # dtype instances with distinct explicitly set NA objects are incompatible
     for op_dtype in [StringDType(na_object=pd_NA), StringDType(na_object="")]:
