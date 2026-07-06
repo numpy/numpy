@@ -1017,26 +1017,47 @@ def any[ArrayT: np.ndarray](
 
 # keep in sync with `cumprod` below
 @overload
-def cumsum[ScalarT: np.generic](
+def cumsum[ScalarT: np.inexact | np.timedelta64 | np.object_](
     a: _ArrayLike[ScalarT],
     axis: None = None,
     dtype: None = None,
     out: None = None,
 ) -> _Array1D[ScalarT]: ...
 @overload
-def cumsum[ArrayT: np.ndarray](
+def cumsum[ArrayT: np.ndarray[Any, np.dtype[np.inexact | np.timedelta64 | np.object_] | np.dtypes.StringDType]](
     a: ArrayT,
     axis: SupportsIndex,
     dtype: None = None,
     out: None = None,
 ) -> ArrayT: ...
 @overload
-def cumsum[ScalarT: np.generic](
+def cumsum[ScalarT: np.inexact | np.timedelta64 | np.object_](
     a: _ArrayLike[ScalarT],
     axis: SupportsIndex,
     dtype: None = None,
     out: None = None,
 ) -> NDArray[ScalarT]: ...
+@overload
+def cumsum(
+    a: _ArrayLikeInt_co,
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+) -> _Array1D[np.int_]: ...
+@overload
+def cumsum[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.bool | np.integer]],
+    axis: SupportsIndex,
+    dtype: None = None,
+    out: None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.int_]]: ...
+@overload
+def cumsum(
+    a: _ArrayLikeInt_co,
+    axis: SupportsIndex,
+    dtype: None = None,
+    out: None = None,
+) -> NDArray[np.int_]: ...
 @overload
 def cumsum(
     a: ArrayLike,
@@ -1105,7 +1126,7 @@ def cumsum[ArrayT: np.ndarray](
 
 # keep in sync with `cumulative_prod` below
 @overload
-def cumulative_sum[ScalarT: np.generic](
+def cumulative_sum[ScalarT: np.inexact | np.timedelta64 | np.object_](
     x: _ArrayLike[ScalarT],
     /,
     *,
@@ -1115,7 +1136,7 @@ def cumulative_sum[ScalarT: np.generic](
     include_initial: bool = False,
 ) -> _Array1D[ScalarT]: ...
 @overload
-def cumulative_sum[ArrayT: np.ndarray](
+def cumulative_sum[ArrayT: np.ndarray[Any, np.dtype[np.inexact | np.timedelta64 | np.object_] | np.dtypes.StringDType]](
     x: ArrayT,
     /,
     *,
@@ -1125,7 +1146,7 @@ def cumulative_sum[ArrayT: np.ndarray](
     include_initial: bool = False,
 ) -> ArrayT: ...
 @overload
-def cumulative_sum[ScalarT: np.generic](
+def cumulative_sum[ScalarT: np.inexact | np.timedelta64 | np.object_](
     x: _ArrayLike[ScalarT],
     /,
     *,
@@ -1134,6 +1155,36 @@ def cumulative_sum[ScalarT: np.generic](
     out: None = None,
     include_initial: bool = False,
 ) -> NDArray[ScalarT]: ...
+@overload
+def cumulative_sum(
+    x: _ArrayLikeInt_co,
+    /,
+    *,
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+    include_initial: bool = False,
+) -> _Array1D[np.int_]: ...
+@overload
+def cumulative_sum[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.bool | np.integer]],
+    /,
+    *,
+    axis: SupportsIndex,
+    dtype: None = None,
+    out: None = None,
+    include_initial: bool = False,
+) -> np.ndarray[ShapeT, np.dtype[np.int_]]: ...
+@overload
+def cumulative_sum(
+    x: _ArrayLikeInt_co,
+    /,
+    *,
+    axis: SupportsIndex,
+    dtype: None = None,
+    out: None = None,
+    include_initial: bool = False,
+) -> NDArray[np.int_]: ...
 @overload
 def cumulative_sum(
     x: ArrayLike,
@@ -1754,28 +1805,49 @@ def amin(
 
 min = amin
 
-# keep in sync with `cumsum` above
+# keep in sync with `cumsum` above (minus `timedelta64` and `StringDType`)
 @overload
-def cumprod[ScalarT: np.number | np.bool | np.object_](
+def cumprod[ScalarT: np.inexact | np.object_](
     a: _ArrayLike[ScalarT],
     axis: None = None,
     dtype: None = None,
     out: None = None,
 ) -> _Array1D[ScalarT]: ...
 @overload
-def cumprod[ArrayT: NDArray[np.number | np.bool | np.object_]](
+def cumprod[ArrayT: NDArray[np.inexact | np.object_]](
     a: ArrayT,
     axis: SupportsIndex,
     dtype: None = None,
     out: None = None,
 ) -> ArrayT: ...
 @overload
-def cumprod[ScalarT: np.number | np.bool | np.object_](
+def cumprod[ScalarT: np.inexact | np.object_](
     a: _ArrayLike[ScalarT],
     axis: SupportsIndex,
     dtype: None = None,
     out: None = None,
 ) -> NDArray[ScalarT]: ...
+@overload
+def cumprod(
+    a: _ArrayLikeInt_co,
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+) -> _Array1D[np.int_]: ...
+@overload
+def cumprod[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.bool | np.integer]],
+    axis: SupportsIndex,
+    dtype: None = None,
+    out: None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.int_]]: ...
+@overload
+def cumprod(
+    a: _ArrayLikeInt_co,
+    axis: SupportsIndex,
+    dtype: None = None,
+    out: None = None,
+) -> NDArray[np.int_]: ...
 @overload
 def cumprod(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
@@ -1842,9 +1914,9 @@ def cumprod[ArrayT: np.ndarray](
     out: ArrayT,
 ) -> ArrayT: ...
 
-# keep in sync with `cumulative_sum` above
+# keep in sync with `cumulative_sum` above (minus `timedelta64` and `StringDType`)
 @overload
-def cumulative_prod[ScalarT: np.number | np.bool | np.object_](
+def cumulative_prod[ScalarT: np.inexact | np.object_](
     x: _ArrayLike[ScalarT],
     /,
     *,
@@ -1854,7 +1926,7 @@ def cumulative_prod[ScalarT: np.number | np.bool | np.object_](
     include_initial: bool = False,
 ) -> _Array1D[ScalarT]: ...
 @overload
-def cumulative_prod[ArrayT: NDArray[np.number | np.bool | np.object_]](
+def cumulative_prod[ArrayT: NDArray[np.inexact | np.object_]](
     x: ArrayT,
     /,
     *,
@@ -1864,7 +1936,7 @@ def cumulative_prod[ArrayT: NDArray[np.number | np.bool | np.object_]](
     include_initial: bool = False,
 ) -> ArrayT: ...
 @overload
-def cumulative_prod[ScalarT: np.generic](
+def cumulative_prod[ScalarT: np.inexact | np.object_](
     x: _ArrayLike[ScalarT],
     /,
     *,
@@ -1875,7 +1947,37 @@ def cumulative_prod[ScalarT: np.generic](
 ) -> NDArray[ScalarT]: ...
 @overload
 def cumulative_prod(
-    x: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    x: _ArrayLikeInt_co,
+    /,
+    *,
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+    include_initial: bool = False,
+) -> _Array1D[np.int_]: ...
+@overload
+def cumulative_prod[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.bool | np.integer]],
+    /,
+    *,
+    axis: SupportsIndex,
+    dtype: None = None,
+    out: None = None,
+    include_initial: bool = False,
+) -> np.ndarray[ShapeT, np.dtype[np.int_]]: ...
+@overload
+def cumulative_prod(
+    x: _ArrayLikeInt_co,
+    /,
+    *,
+    axis: SupportsIndex,
+    dtype: None = None,
+    out: None = None,
+    include_initial: bool = False,
+) -> NDArray[np.int_]: ...
+@overload
+def cumulative_prod(
+    x: ArrayLike,
     /,
     *,
     axis: None = None,
@@ -2062,8 +2164,8 @@ def prod(
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.complex128]: ...
-@overload  # ~number
-def prod[ScalarT: np.number](
+@overload  # ~inexact
+def prod[ScalarT: np.inexact](
     a: _ArrayLike[ScalarT],
     axis: None = None,
     dtype: None = None,
@@ -2072,8 +2174,8 @@ def prod[ScalarT: np.number](
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ScalarT: ...
-@overload  # ~number | timedelta64 | object_, axis: <given>
-def prod[ScalarT: np.number | np.object_](
+@overload  # ~inexact | timedelta64 | object_, axis: <given>
+def prod[ScalarT: np.inexact | np.object_](
     a: _ArrayLike[ScalarT],
     axis: int | tuple[int, ...],
     dtype: None = None,
@@ -2082,8 +2184,8 @@ def prod[ScalarT: np.number | np.object_](
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[ScalarT]: ...
-@overload  # ~number | object_, keepdims=True
-def prod[ArrayT: NDArray[np.number | np.object_]](
+@overload  # ~inexact | object_, keepdims=True
+def prod[ArrayT: NDArray[np.inexact | np.object_]](
     a: ArrayT,
     axis: int | tuple[int, ...] | None = None,
     dtype: None = None,
@@ -2093,9 +2195,9 @@ def prod[ArrayT: NDArray[np.number | np.object_]](
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ArrayT: ...
-@overload  # bool_ | +builtins.int
+@overload  # bool | integer | +builtins.int
 def prod(
-    a: _DualArrayLike[np.dtype[np.bool], int],
+    a: _DualArrayLike[np.dtype[np.bool | np.integer], int],
     axis: None = None,
     dtype: None = None,
     out: None = None,
@@ -2103,9 +2205,9 @@ def prod(
     initial: _IntLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> np.int_: ...
-@overload  # bool_ | +builtins.int, axis: <given>
+@overload  # bool | np.integer | +builtins.int, axis: <given>
 def prod(
-    a: _DualArrayLike[np.dtype[np.bool], int],
+    a: _DualArrayLike[np.dtype[np.bool | np.integer], int],
     axis: int | tuple[int, ...],
     dtype: None = None,
     out: None = None,
@@ -2113,9 +2215,9 @@ def prod(
     initial: _IntLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.int_]: ...
-@overload  # bool_, keepdims=True
+@overload  # bool | np.integer, keepdims=True
 def prod[ShapeT: _Shape](
-    a: np.ndarray[ShapeT, np.dtype[np.bool]],
+    a: np.ndarray[ShapeT, np.dtype[np.bool | np.integer]],
     axis: int | tuple[int, ...] | None = None,
     dtype: None = None,
     out: None = None,
@@ -2304,8 +2406,8 @@ def sum(
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.complex128]: ...
-@overload  # ~number | timedelta64
-def sum[ScalarT: np.number | np.timedelta64](
+@overload  # ~inexact | timedelta64
+def sum[ScalarT: np.inexact | np.timedelta64](
     a: _ArrayLike[ScalarT],
     axis: None = None,
     dtype: None = None,
@@ -2314,8 +2416,8 @@ def sum[ScalarT: np.number | np.timedelta64](
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ScalarT: ...
-@overload  # ~number | timedelta64 | object_, axis: <given>
-def sum[ScalarT: np.number | np.timedelta64 | np.object_](
+@overload  # ~inexact | timedelta64 | object_, axis: <given>
+def sum[ScalarT: np.inexact | np.timedelta64 | np.object_](
     a: _ArrayLike[ScalarT],
     axis: int | tuple[int, ...],
     dtype: None = None,
@@ -2325,7 +2427,7 @@ def sum[ScalarT: np.number | np.timedelta64 | np.object_](
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[ScalarT]: ...
 @overload  # ~number | timedelta64 | object_, keepdims=True
-def sum[ArrayT: NDArray[np.number | np.timedelta64 | np.object_]](
+def sum[ArrayT: NDArray[np.inexact | np.timedelta64 | np.object_]](
     a: ArrayT,
     axis: int | tuple[int, ...] | None = None,
     dtype: None = None,
@@ -2335,9 +2437,9 @@ def sum[ArrayT: NDArray[np.number | np.timedelta64 | np.object_]](
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ArrayT: ...
-@overload  # bool_ | +builtins.int
+@overload  # bool | integer | +builtins.int
 def sum(
-    a: _DualArrayLike[np.dtype[np.bool], int],
+    a: _DualArrayLike[np.dtype[np.bool | np.integer], int],
     axis: None = None,
     dtype: None = None,
     out: None = None,
@@ -2345,9 +2447,9 @@ def sum(
     initial: _IntLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> np.int_: ...
-@overload  # bool_ | +builtins.int, axis: <given>
+@overload  # bool | integer | +builtins.int, axis: <given>
 def sum(
-    a: _DualArrayLike[np.dtype[np.bool], int],
+    a: _DualArrayLike[np.dtype[np.bool | np.integer], int],
     axis: int | tuple[int, ...],
     dtype: None = None,
     out: None = None,
@@ -2355,9 +2457,9 @@ def sum(
     initial: _IntLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.int_]: ...
-@overload  # bool_, keepdims=True
+@overload  # bool | integer, keepdims=True
 def sum[ShapeT: _Shape](
-    a: np.ndarray[ShapeT, np.dtype[np.bool]],
+    a: np.ndarray[ShapeT, np.dtype[np.bool | np.integer]],
     axis: int | tuple[int, ...] | None = None,
     dtype: None = None,
     out: None = None,
