@@ -29,6 +29,7 @@ __all__ = [
 _gentype = types.GeneratorType
 # save away Python sum
 _sum_ = sum
+_NoValue = np._NoValue
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -63,9 +64,20 @@ def _wrapfunc(obj, method, *args, **kwds):
         return _wrapit(obj, method, *args, **kwds)
 
 
-def _wrapreduction(obj, ufunc, method, axis, dtype, out, **kwargs):
-    passkwargs = {k: v for k, v in kwargs.items()
-                  if v is not np._NoValue}
+# The positional-only signature and unrolled _NoValue checks (rather than
+# **kwargs with a dict comprehension) are deliberate: these helpers are on
+# the hot path of every reduction (sum, prod, min, max, any, all), and
+# avoiding the creation and iteration of a temporary kwargs dict measurably
+# reduces call overhead for small arrays.  See gh-31845.
+def _wrapreduction(obj, ufunc, method, axis, dtype, out,
+                   keepdims=_NoValue, initial=_NoValue, where=_NoValue, /):
+    passkwargs = {}
+    if keepdims is not _NoValue:
+        passkwargs["keepdims"] = keepdims
+    if initial is not _NoValue:
+        passkwargs["initial"] = initial
+    if where is not _NoValue:
+        passkwargs["where"] = where
 
     if type(obj) is not mu.ndarray:
         try:
@@ -83,10 +95,14 @@ def _wrapreduction(obj, ufunc, method, axis, dtype, out, **kwargs):
     return ufunc.reduce(obj, axis, dtype, out, **passkwargs)
 
 
-def _wrapreduction_any_all(obj, ufunc, method, axis, out, **kwargs):
+def _wrapreduction_any_all(obj, ufunc, method, axis, out,
+                           keepdims=_NoValue, where=_NoValue, /):
     # Same as above function, but dtype is always bool (but never passed on)
-    passkwargs = {k: v for k, v in kwargs.items()
-                  if v is not np._NoValue}
+    passkwargs = {}
+    if keepdims is not _NoValue:
+        passkwargs["keepdims"] = keepdims
+    if where is not _NoValue:
+        passkwargs["where"] = where
 
     if type(obj) is not mu.ndarray:
         try:
@@ -2486,8 +2502,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         )
 
     return _wrapreduction(
-        a, np.add, 'sum', axis, dtype, out,
-        keepdims=keepdims, initial=initial, where=where
+        a, np.add, 'sum', axis, dtype, out, keepdims, initial, where
     )
 
 
@@ -2600,7 +2615,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
 
     """
     return _wrapreduction_any_all(a, np.logical_or, 'any', axis, out,
-                                  keepdims=keepdims, where=where)
+                                  keepdims, where)
 
 
 def _all_dispatcher(a, axis=None, out=None, keepdims=None, *,
@@ -2695,7 +2710,7 @@ def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
 
     """
     return _wrapreduction_any_all(a, np.logical_and, 'all', axis, out,
-                                  keepdims=keepdims, where=where)
+                                  keepdims, where)
 
 
 def _cumulative_func(x, func, axis, dtype, out, include_initial):
@@ -3184,7 +3199,7 @@ def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     5
     """
     return _wrapreduction(a, np.maximum, 'max', axis, None, out,
-                          keepdims=keepdims, initial=initial, where=where)
+                          keepdims, initial, where)
 
 
 @array_function_dispatch(_max_dispatcher)
@@ -3201,7 +3216,7 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     ndarray.max : equivalent method
     """
     return _wrapreduction(a, np.maximum, 'max', axis, None, out,
-                          keepdims=keepdims, initial=initial, where=where)
+                          keepdims, initial, where)
 
 
 def _min_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
@@ -3322,7 +3337,7 @@ def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     6
     """
     return _wrapreduction(a, np.minimum, 'min', axis, None, out,
-                          keepdims=keepdims, initial=initial, where=where)
+                          keepdims, initial, where)
 
 
 @array_function_dispatch(_min_dispatcher)
@@ -3339,7 +3354,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     ndarray.min : equivalent method
     """
     return _wrapreduction(a, np.minimum, 'min', axis, None, out,
-                          keepdims=keepdims, initial=initial, where=where)
+                          keepdims, initial, where)
 
 
 def _prod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
@@ -3465,7 +3480,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     10
     """
     return _wrapreduction(a, np.multiply, 'prod', axis, dtype, out,
-                          keepdims=keepdims, initial=initial, where=where)
+                          keepdims, initial, where)
 
 
 def _cumprod_dispatcher(a, axis=None, dtype=None, out=None):
