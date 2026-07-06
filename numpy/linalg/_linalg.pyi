@@ -196,8 +196,8 @@ class SVDResult(NamedTuple, Generic[_FloatingT_co, _InexactT_co]):
     Vh: NDArray[_InexactT_co]
 
 class SlogdetResult(NamedTuple, Generic[_FloatingOrArrayT_co, _InexactOrArrayT_co]):
-    sign: _FloatingOrArrayT_co
-    logabsdet: _InexactOrArrayT_co
+    sign: _InexactOrArrayT_co
+    logabsdet: _FloatingOrArrayT_co
 
 # keep in sync with `solve`
 @overload  # ~float64, +float64
