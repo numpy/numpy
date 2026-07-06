@@ -89,19 +89,11 @@ jobs:
       with:
         python-version: '3.12'
 
-    - name: Install GCC9/10
+    - name: Install GCC10
       run: |
         echo "deb http://archive.ubuntu.com/ubuntu focal main universe" | sudo tee /etc/apt/sources.list.d/focal.list
         sudo apt update
-        sudo apt install -y g++-9 g++-10
-
-    - name: Enable gcc-9
-      run: |
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 1
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 1
-
-    - uses: ./.github/meson_actions
-      name: Build/Test against gcc-9
+        sudo apt install -y g++-10
 
     - name: Enable gcc-10
       run: |

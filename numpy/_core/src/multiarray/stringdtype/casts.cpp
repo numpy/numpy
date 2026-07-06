@@ -147,6 +147,9 @@ string_to_string_resolve_descriptors(PyObject *NPY_UNUSED(self),
 {
     if (given_descrs[1] == NULL) {
         loop_descrs[1] = stringdtype_finalize_descr(given_descrs[0]);
+        if (loop_descrs[1] == NULL) {
+            return (NPY_CASTING)-1;
+        }
     }
     else {
         Py_INCREF(given_descrs[1]);
@@ -852,9 +855,13 @@ make_type2s_name(NPY_TYPES typenum) {
     size_t nlen = strlen(type_name);
 
     const char suffix[] = "_to_StringDType";
-    size_t slen = sizeof(prefix)/sizeof(char) - 1;
+    size_t slen = sizeof(suffix)/sizeof(char) - 1;
 
     char *buf = (char *)PyMem_RawCalloc(sizeof(char), plen + nlen + slen + 1);
+    if (buf == NULL) {
+        npy_gil_error(PyExc_MemoryError, "Failed allocate memory for cast");
+        return NULL;
+    }
 
     // memcpy instead of strcpy/strncat to avoid stringop-truncation warning,
     // since we are not including the trailing null character
@@ -1873,7 +1880,7 @@ void_to_string(PyArrayMethod_Context *context, char *const data[],
     npy_intp out_stride = strides[1];
 
     while(N--) {
-        size_t out_num_bytes = utf8_buffer_size(in, max_in_size);
+        Py_ssize_t out_num_bytes = utf8_buffer_size(in, max_in_size);
         if (out_num_bytes < 0) {
             npy_gil_error(PyExc_TypeError,
                           "Invalid UTF-8 bytes found, cannot convert to UTF-8");
@@ -1881,7 +1888,7 @@ void_to_string(PyArrayMethod_Context *context, char *const data[],
         }
         npy_static_string out_ss = {0, NULL};
         if (load_new_string((npy_packed_static_string *)out,
-                            &out_ss, out_num_bytes, allocator,
+                            &out_ss, (size_t)out_num_bytes, allocator,
                             "void to string cast") == -1) {
             goto fail;
         }
@@ -1918,8 +1925,6 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
                 NpyAuxData *NPY_UNUSED(auxdata))
 {
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
-    np::raii::NpyStringAcquireAllocator alloc(descr);
-
     int has_null = descr->na_object != NULL;
     int has_string_na = descr->has_string_na;
     const npy_static_string *default_string = &descr->default_string;
@@ -1931,6 +1936,8 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
     npy_intp out_stride = strides[1];
     size_t max_out_size = context->descriptors[1]->elsize;
 
+    np::raii::NpyStringAcquireAllocator alloc(descr);
+
     while (N--) {
         const npy_packed_static_string *ps = (npy_packed_static_string *)in;
         npy_static_string s = {0, NULL};
@@ -1940,11 +1947,29 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
             return -1;
         }
 
-        for (size_t i=0; i<s.size; i++) {
+        for (size_t i = 0; i < s.size; i++) {
             if (((unsigned char *)s.buf)[i] > 127) {
+                // Building the UnicodeEncodeError needs the GIL and must not
+                // run while the allocator is held (re-entrant Python could
+                // deadlock on it), so copy the offending bytes out, release the
+                // allocator, then raise.
+                char *bad = (char *)PyMem_RawMalloc(s.size);
+                if (bad == NULL) {
+                    alloc.release();
+                    npy_gil_error(PyExc_MemoryError,
+                                  "Failed to allocate memory for unicode "
+                                  "encoding error");
+                    return -1;
+                }
+                memcpy(bad, s.buf, s.size);
+                size_t bad_size = s.size;
+                size_t bad_pos = i;
+                alloc.release();
+
                 np::raii::EnsureGIL ensure_gil{};
 
-                PyObject *str = PyUnicode_FromStringAndSize(s.buf, s.size);
+                PyObject *str = PyUnicode_FromStringAndSize(bad, bad_size);
+                PyMem_RawFree(bad);
 
                 if (str == NULL) {
                     PyErr_SetString(
@@ -1958,8 +1983,8 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
                     "sOnns",
                     "ascii",
                     str,
-                    (Py_ssize_t)i,
-                    (Py_ssize_t)(i+1),
+                    (Py_ssize_t)bad_pos,
+                    (Py_ssize_t)(bad_pos + 1),
                     "ordinal not in range(128)"
                 );
 

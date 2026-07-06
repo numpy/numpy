@@ -428,13 +428,17 @@ from numpy._core.umath import (
     isinf,
     isnan,
     isnat,
+    ldexp,
     less,
     less_equal,
     log,
     log10,
     log1p,
     log2,
+    logical_and,
     logical_not,
+    logical_or,
+    logical_xor,
     modf,
     not_equal,
     positive,
@@ -7624,13 +7628,9 @@ gcd: _UFunc_Nin2_Nout1[L["gcd"], L[11], L[0]]
 heaviside: _UFunc_Nin2_Nout1[L["heaviside"], L[4], None]
 hypot: _UFunc_Nin2_Nout1[L["hypot"], L[5], L[0]]
 lcm: _UFunc_Nin2_Nout1[L["lcm"], L[11], None]
-ldexp: _UFunc_Nin2_Nout1[L["ldexp"], L[8], None]
 left_shift: _UFunc_Nin2_Nout1[L["left_shift"], L[11], None]
 logaddexp2: _UFunc_Nin2_Nout1[L["logaddexp2"], L[4], float]
 logaddexp: _UFunc_Nin2_Nout1[L["logaddexp"], L[4], float]
-logical_and: _UFunc_Nin2_Nout1[L["logical_and"], L[20], L[True]]
-logical_or: _UFunc_Nin2_Nout1[L["logical_or"], L[20], L[False]]
-logical_xor: _UFunc_Nin2_Nout1[L["logical_xor"], L[19], L[False]]
 matmul: _GUFunc_Nin2_Nout1[L["matmul"], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]]
 matvec: _GUFunc_Nin2_Nout1[L["matvec"], L[19], None, L["(m,n),(n)->(m)"]]
 maximum: _UFunc_Nin2_Nout1[L["maximum"], L[21], None]
