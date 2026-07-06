@@ -948,7 +948,7 @@ type _TimeUnit = L[_NativeTimeUnit, _IntTimeUnit]
 type _NativeTD64Unit = L[_DayUnit, _NativeTimeUnit]
 type _IntTD64Unit = L[_MonthUnit, _IntTimeUnit]
 type _TD64Unit = L[_DateUnit, _TimeUnit]
-type _TimeUnitSpec[UnitT: _TD64Unit] = _TD64Unit | tuple[_TD64Unit, SupportsIndex]
+type _TimeUnitSpec[UnitT: _TD64Unit] = UnitT | tuple[UnitT, SupportsIndex]
 
 ### TypedDict's (for internal use only)
 
@@ -2452,8 +2452,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 
     # keep in sync with `sum` below (but without `timedelta64`)
     @override  # type: ignore[override]
-    @overload  # ~number
-    def prod[ScalarT: number](
+    @overload  # ~inexact
+    def prod[ScalarT: inexact](
         self: NDArray[ScalarT],
         axis: None = None,
         dtype: None = None,
@@ -2463,8 +2463,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         initial: _NumberLike_co | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> ScalarT: ...
-    @overload  # ~number, axis: <given>
-    def prod[ScalarT: number | object_](
+    @overload  # ~inexact | object_, axis: <given>
+    def prod[ScalarT: inexact | object_](
         self: NDArray[ScalarT],
         axis: int | tuple[int, ...],
         dtype: None = None,
@@ -2474,8 +2474,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         initial: _NumberLike_co | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> NDArray[ScalarT]: ...
-    @overload  # ~number | object_, keepdims=True
-    def prod[ArrayT: NDArray[number | object_]](
+    @overload  # ~inexact | object_, keepdims=True
+    def prod[ArrayT: NDArray[inexact | object_]](
         self: ArrayT,
         axis: int | tuple[int, ...] | None = None,
         dtype: None = None,
@@ -2485,9 +2485,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         initial: _NumberLike_co | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> ArrayT: ...
-    @overload  # bool_
+    @overload  # +integer
     def prod(
-        self: NDArray[bool_],
+        self: NDArray[integer | bool_],
         axis: None = None,
         dtype: None = None,
         out: None = None,
@@ -2496,9 +2496,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         initial: _IntLike_co | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> int_: ...
-    @overload  # bool_, axis: <given>
+    @overload  # +integer, axis: <given>
     def prod(
-        self: NDArray[bool_],
+        self: NDArray[integer | bool_],
         axis: int | tuple[int, ...],
         dtype: None = None,
         out: None = None,
@@ -2507,9 +2507,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         initial: _IntLike_co | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> NDArray[int_]: ...
-    @overload  # bool_, keepdims=True
+    @overload  # +integer, keepdims=True
     def prod(
-        self: NDArray[bool_],
+        self: NDArray[integer | bool_],
         axis: int | tuple[int, ...] | None = None,
         dtype: None = None,
         out: None = None,
@@ -2631,8 +2631,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 
     # keep in sync with `prod` above (but also accept `timedelta64`)
     @override  # type: ignore[override]
-    @overload  # ~number | timedelta64
-    def sum[ScalarT: number | timedelta64](
+    @overload  # ~inexact | timedelta64
+    def sum[ScalarT: inexact | timedelta64](
         self: NDArray[ScalarT],
         axis: None = None,
         dtype: None = None,
@@ -2642,8 +2642,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         initial: _NumberLike_co | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> ScalarT: ...
-    @overload  # ~number | timedelta64, axis: <given>
-    def sum[ScalarT: number | timedelta64 | object_](
+    @overload  # ~inexact | timedelta64, axis: <given>
+    def sum[ScalarT: inexact | timedelta64 | object_](
         self: NDArray[ScalarT],
         axis: int | tuple[int, ...],
         dtype: None = None,
@@ -2653,8 +2653,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         initial: _NumberLike_co | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> NDArray[ScalarT]: ...
-    @overload  # ~number | timedelta64 | object_, keepdims=True
-    def sum[ArrayT: NDArray[number | timedelta64 | object_]](
+    @overload  # ~inexact | timedelta64 | object_, keepdims=True
+    def sum[ArrayT: NDArray[inexact | timedelta64 | object_]](
         self: ArrayT,
         axis: int | tuple[int, ...] | None = None,
         dtype: None = None,
@@ -2664,9 +2664,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         initial: _NumberLike_co | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> ArrayT: ...
-    @overload  # bool_
+    @overload  # +integer
     def sum(
-        self: NDArray[bool_],
+        self: NDArray[integer | bool_],
         axis: None = None,
         dtype: None = None,
         out: None = None,
@@ -2675,9 +2675,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         initial: _IntLike_co | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> int_: ...
-    @overload  # bool_, axis: <given>
+    @overload  # +integer, axis: <given>
     def sum(
-        self: NDArray[bool_],
+        self: NDArray[integer | bool_],
         axis: int | tuple[int, ...],
         dtype: None = None,
         out: None = None,
@@ -2686,9 +2686,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         initial: _IntLike_co | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> NDArray[int_]: ...
-    @overload  # bool_, keepdims=True
+    @overload  # +integer, keepdims=True
     def sum(
-        self: NDArray[bool_],
+        self: NDArray[integer | bool_],
         axis: int | tuple[int, ...] | None = None,
         dtype: None = None,
         out: None = None,
@@ -2810,16 +2810,16 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 
     # keep in sync with `MaskedArray.cumprod`
     @override  # type: ignore[override]
-    @overload  # number | object_
-    def cumprod[DTypeT: dtype[number | object_]](
+    @overload  # inexact | object_
+    def cumprod[DTypeT: dtype[inexact | object_]](
         self: ndarray[Any, DTypeT],
         axis: None = None,
         dtype: None = None,
         out: None = None,
     ) -> ndarray[_1D, DTypeT]: ...
-    @overload  # bool_
+    @overload  # +integer
     def cumprod(
-        self: NDArray[bool_],
+        self: NDArray[integer | bool_],
         axis: None = None,
         dtype: None = None,
         out: None = None,
@@ -2854,16 +2854,16 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         dtype: DTypeLike,
         out: None = None,
     ) -> ndarray[_1D]: ...
-    @overload  # axis: <given>
-    def cumprod[ArrayT: NDArray[number | object_]](
+    @overload  # inexact | object_, axis: <given>
+    def cumprod[ArrayT: NDArray[inexact | object_]](
         self: ArrayT,
         axis: SupportsIndex,
         dtype: None = None,
         out: None = None,
     ) -> ArrayT: ...
-    @overload  # bool_, axis: <given>
+    @overload  # +integer, axis: <given>
     def cumprod[ShapeT: _Shape](
-        self: ndarray[ShapeT, dtype[bool_]],
+        self: ndarray[ShapeT, dtype[integer | bool_]],
         axis: SupportsIndex,
         dtype: None = None,
         out: None = None,
@@ -2900,16 +2900,16 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 
     # keep in sync with `MaskedArray.cumsum`
     @override  # type: ignore[override]
-    @overload  # number | timedelta64 | object_
-    def cumsum[DTypeT: dtype[number | timedelta64 | object_]](
+    @overload  # inexact | timedelta64 | object_
+    def cumsum[DTypeT: dtype[inexact | timedelta64 | object_]](
         self: ndarray[Any, DTypeT],
         axis: None = None,
         dtype: None = None,
         out: None = None,
     ) -> ndarray[_1D, DTypeT]: ...
-    @overload  # bool_
+    @overload  # +integer
     def cumsum(
-        self: NDArray[bool_],
+        self: NDArray[integer | bool_],
         axis: None = None,
         dtype: None = None,
         out: None = None,
@@ -2944,16 +2944,16 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         dtype: DTypeLike,
         out: None = None,
     ) -> ndarray[_1D]: ...
-    @overload  # axis: <given>
-    def cumsum[ArrayT: NDArray[number | timedelta64 | object_]](
+    @overload  # inexact | timedelta64 | object_, axis: <given>
+    def cumsum[ArrayT: NDArray[inexact | timedelta64 | object_]](
         self: ArrayT,
         axis: SupportsIndex,
         dtype: None = None,
         out: None = None,
     ) -> ArrayT: ...
-    @overload  # bool_, axis: <given>
+    @overload  # +integer, axis: <given>
     def cumsum[ShapeT: _Shape](
-        self: ndarray[ShapeT, dtype[bool_]],
+        self: ndarray[ShapeT, dtype[integer | bool_]],
         axis: SupportsIndex,
         dtype: None = None,
         out: None = None,
@@ -3133,9 +3133,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 
     # keep in sync with `ndarray.mean` above
     @override  # type: ignore[override]
-    @overload  # +integer | ~object_
+    @overload  # ~complex128 | +integer | ~object_
     def std(
-        self: NDArray[integer | bool_ | object_],
+        self: NDArray[complex128 | integer | bool_ | object_],
         axis: None = None,
         dtype: None = None,
         out: None = None,
@@ -3146,9 +3146,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         mean: _ArrayLikeNumber_co | _NoValueType = ...,
         correction: float | _NoValueType = ...,
     ) -> float64: ...
-    @overload  # +integer, axis: <given>
+    @overload  # ~complex128 | +integer, axis: <given>
     def std(
-        self: NDArray[integer | bool_],
+        self: NDArray[complex128 | integer | bool_],
         axis: int | tuple[int, ...],
         dtype: None = None,
         out: None = None,
@@ -3159,9 +3159,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         mean: _ArrayLikeNumber_co | _NoValueType = ...,
         correction: float | _NoValueType = ...,
     ) -> NDArray[float64]: ...
-    @overload  # +integer, keepdims=True
+    @overload  # ~complex128 | +integer, keepdims=True
     def std(
-        self: NDArray[integer | bool_],
+        self: NDArray[complex128 | integer | bool_],
         axis: int | tuple[int, ...] | None = None,
         dtype: None = None,
         out: None = None,
@@ -3172,8 +3172,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         mean: _ArrayLikeNumber_co | _NoValueType = ...,
         correction: float | _NoValueType = ...,
     ) -> ndarray[_ShapeT_co, dtype[float64]]: ...
-    @overload  # ~inexact | timedelta64
-    def std[ScalarT: inexact | timedelta64](
+    @overload  # ~floating | timedelta64
+    def std[ScalarT: floating | timedelta64](
         self: NDArray[ScalarT],
         axis: None = None,
         dtype: None = None,
@@ -3185,8 +3185,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         mean: _ArrayLikeNumber_co | _NoValueType = ...,
         correction: float | _NoValueType = ...,
     ) -> ScalarT: ...
-    @overload  # ~inexact | timedelta64, axis: <given>
-    def std[ScalarT: inexact | timedelta64 | object_](
+    @overload  # ~floating | timedelta64, axis: <given>
+    def std[ScalarT: floating | timedelta64 | object_](
         self: NDArray[ScalarT],
         axis: int | tuple[int, ...],
         dtype: None = None,
@@ -3198,8 +3198,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         mean: _ArrayLikeNumber_co | _NoValueType = ...,
         correction: float | _NoValueType = ...,
     ) -> NDArray[ScalarT]: ...
-    @overload  # ~inexact | timedelta64 | object_, keepdims=True
-    def std[ArrayT: NDArray[inexact | timedelta64 | object_]](
+    @overload  # ~floating | timedelta64 | object_, keepdims=True
+    def std[ArrayT: NDArray[floating | timedelta64 | object_]](
         self: ArrayT,
         axis: int | tuple[int, ...] | None = None,
         dtype: None = None,
@@ -3318,9 +3318,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 
     # keep in sync with `ndarray.std` above
     @override  # type: ignore[override]
-    @overload  # +integer | ~object_
+    @overload  # ~complex128 | +integer | ~object_
     def var(
-        self: NDArray[integer | bool_ | object_],
+        self: NDArray[complex128 | integer | bool_ | object_],
         axis: None = None,
         dtype: None = None,
         out: None = None,
@@ -3331,9 +3331,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         mean: _ArrayLikeNumber_co | _NoValueType = ...,
         correction: float | _NoValueType = ...,
     ) -> float64: ...
-    @overload  # +integer, axis: <given>
+    @overload  # ~complex128 | +integer, axis: <given>
     def var(
-        self: NDArray[integer | bool_],
+        self: NDArray[complex128 | integer | bool_],
         axis: int | tuple[int, ...],
         dtype: None = None,
         out: None = None,
@@ -3344,9 +3344,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         mean: _ArrayLikeNumber_co | _NoValueType = ...,
         correction: float | _NoValueType = ...,
     ) -> NDArray[float64]: ...
-    @overload  # +integer, keepdims=True
+    @overload  # ~complex128 | +integer, keepdims=True
     def var(
-        self: NDArray[integer | bool_],
+        self: NDArray[complex128 | integer | bool_],
         axis: int | tuple[int, ...] | None = None,
         dtype: None = None,
         out: None = None,
@@ -3357,8 +3357,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         mean: _ArrayLikeNumber_co | _NoValueType = ...,
         correction: float | _NoValueType = ...,
     ) -> ndarray[_ShapeT_co, dtype[float64]]: ...
-    @overload  # ~inexact | timedelta64
-    def var[ScalarT: inexact | timedelta64](
+    @overload  # ~floating | timedelta64
+    def var[ScalarT: floating | timedelta64](
         self: NDArray[ScalarT],
         axis: None = None,
         dtype: None = None,
@@ -3370,8 +3370,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         mean: _ArrayLikeNumber_co | _NoValueType = ...,
         correction: float | _NoValueType = ...,
     ) -> ScalarT: ...
-    @overload  # ~inexact | timedelta64, axis: <given>
-    def var[ScalarT: inexact | timedelta64 | object_](
+    @overload  # ~floating | timedelta64, axis: <given>
+    def var[ScalarT: floating | timedelta64 | object_](
         self: NDArray[ScalarT],
         axis: int | tuple[int, ...],
         dtype: None = None,
@@ -3383,8 +3383,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         mean: _ArrayLikeNumber_co | _NoValueType = ...,
         correction: float | _NoValueType = ...,
     ) -> NDArray[ScalarT]: ...
-    @overload  # ~inexact | timedelta64 | object_, keepdims=True
-    def var[ArrayT: NDArray[inexact | timedelta64 | object_]](
+    @overload  # ~floating | timedelta64 | object_, keepdims=True
+    def var[ArrayT: NDArray[floating | timedelta64 | object_]](
         self: ArrayT,
         axis: int | tuple[int, ...] | None = None,
         dtype: None = None,
@@ -7258,13 +7258,13 @@ class datetime64(_RealMixin, generic[_DT64ItemT_co], Generic[_DT64ItemT_co]):
     @overload
     def __new__(cls, value: _DT64Date, format: _TimeUnitSpec[_DateUnit] = ..., /) -> datetime64[dt.date]: ...
     @overload
-    def __new__(cls, value: int | bytes | str | dt.date, format: _TimeUnitSpec[_IntTimeUnit], /) -> datetime64[int]: ...
+    def __new__(cls, value: int | bytes | str | dt.date | datetime64, format: _TimeUnitSpec[_IntTimeUnit], /) -> datetime64[int]: ...
     @overload
-    def __new__(  # type: ignore[overload-cannot-match]
-        cls, value: int | bytes | str | dt.date, format: _TimeUnitSpec[_NativeTimeUnit], /
+    def __new__(
+        cls, value: int | bytes | str | dt.date | datetime64, format: _TimeUnitSpec[_NativeTimeUnit], /
     ) -> datetime64[dt.datetime]: ...
     @overload
-    def __new__(cls, value: int | bytes | str | dt.date, format: _TimeUnitSpec[_DateUnit], /) -> datetime64[dt.date]: ...  # type: ignore[overload-cannot-match]
+    def __new__(cls, value: int | bytes | str | dt.date | datetime64, format: _TimeUnitSpec[_DateUnit], /) -> datetime64[dt.date]: ...
     @overload
     def __new__(cls, value: bytes | str | dt.date | None, format: _TimeUnitSpec[_TD64Unit] = ..., /) -> Self: ...
 
@@ -7437,6 +7437,13 @@ class bytes_(character[bytes], bytes):  # type: ignore[misc]
     @override
     def __hash__(self, /) -> int: ...
 
+    # re-declare inherited `bytes.__getitem__` shadowed by `generic.__getitem__`
+    @override  # type: ignore[override]
+    @overload
+    def __getitem__(self, key: SupportsIndex, /) -> int: ...
+    @overload
+    def __getitem__(self, key: slice[SupportsIndex | None], /) -> bytes: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
     #
     def __bytes__(self, /) -> bytes: ...
 
@@ -7449,6 +7456,10 @@ class str_(character[str], str):  # type: ignore[misc]
     #
     @override
     def __hash__(self, /) -> int: ...
+
+    # re-declare inherited `str.__getitem__` shadowed by `generic.__getitem__`
+    @override
+    def __getitem__(self, key: SupportsIndex | slice[SupportsIndex | None], /) -> str: ...  # type: ignore[override]
 
 # See `numpy._typing._ufunc` for more concrete nin-/nout-specific stubs
 @final

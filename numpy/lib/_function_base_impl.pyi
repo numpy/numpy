@@ -470,6 +470,12 @@ def asarray_chkfinite(a: object, dtype: DTypeLike | None = None, order: _OrderKA
 # `[condlist]`. And even though the documentation says these should be boolean, in
 # practice anything that `np.array(condlist, dtype=bool)` accepts will work, i.e. any
 # array-like.
+@overload  # this overload is required to avoid pyright rejecting all-scalar `funclist`
+def piecewise[ShapeT: _Shape, ScalarT: np.generic](
+    x: _Array[ShapeT, ScalarT],
+    condlist: ArrayLike,
+    funclist: _SizedIterable[_ScalarLike_co],
+) -> _Array[ShapeT, ScalarT]: ...
 @overload
 def piecewise[ShapeT: _Shape, ScalarT: np.generic, **Tss](
     x: _Array[ShapeT, ScalarT],
