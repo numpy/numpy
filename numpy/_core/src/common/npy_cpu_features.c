@@ -285,7 +285,7 @@ npy__cpu_check_env(int disable, const char *env) {
     char nexist[NPY__MAX_VAR_LEN];
     char *nexist_cur = &nexist[0];
 
-    char notsupp[sizeof(NPY_WITH_CPU_DISPATCH) + 1];
+    char notsupp[NPY__MAX_VAR_LEN];
     char *notsupp_cur = &notsupp[0];
 
     //comma and space including (htab, vtab, CR, LF, FF)
@@ -318,8 +318,11 @@ npy__cpu_check_env(int disable, const char *env) {
         // check if the feature supported by the running machine
         if (!npy__cpu_have[feature_id]) {
             int flen = strlen(feature);
+            if (notsupp_cur != notsupp) {
+                *notsupp_cur++ = ' ';
+            }
             memcpy(notsupp_cur, feature, flen);
-            notsupp_cur[flen] = ' '; notsupp_cur += flen + 1;
+            notsupp_cur += flen;
             goto next;
         }
         // Finally we can disable or mark for enabling
@@ -356,7 +359,6 @@ npy__cpu_check_env(int disable, const char *env) {
 
     *notsupp_cur = '\0';
     if (notsupp[0] != '\0') {
-        *(notsupp_cur-1) = '\0'; // trim the last space
         if (!disable){
             PyErr_Format(PyExc_RuntimeError, NOTSUPP_BODY);
             return -1;

@@ -352,6 +352,28 @@ if __name__ == "__main__":
             )
             self._expect_error(msg, err_type)
 
+    @pytest.mark.parametrize("action", ["ENABLE", "DISABLE"])
+    def test_repeated_unavailable_feature(self, action):
+        """
+        Test that repeated unavailable features can be processed without
+        overflowing the diagnostic buffer.
+        """
+        if self.UNAVAILABLE_FEAT is None:
+            pytest.skip("There are no unavailable features to test with")
+
+        bad_feature = self.UNAVAILABLE_FEAT
+        feature_repeats = 1024 // (len(bad_feature) + 1)
+        self.env[f'NPY_{action}_CPU_FEATURES'] = ",".join(
+            [bad_feature] * feature_repeats
+        )
+
+        if action == "ENABLE":
+            msg = "You cannot enable CPU features"
+            err_type = "RuntimeError"
+            self._expect_error(msg, err_type)
+        else:
+            self._run()
+
 
 is_linux = sys.platform.startswith('linux')
 is_cygwin = sys.platform.startswith('cygwin')
