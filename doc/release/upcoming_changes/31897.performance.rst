@@ -1,0 +1,3 @@
+``np.diff`` is faster for large ``n`` values
+--------------------------------------------
+``np.diff`` now returns early when ``n`` is at least the input length, avoiding repeated work for empty results.
