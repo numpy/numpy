@@ -189,10 +189,11 @@ __all__ = [
 
 ###
 
-type _Array0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]]
-type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
-type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
-type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+type _Array[ShapeT: _Shape, ScalarT: np.generic] = np.ndarray[ShapeT, np.dtype[ScalarT]]
+type _Array0D[ScalarT: np.generic] = _Array[tuple[()], ScalarT]
+type _Array1D[ScalarT: np.generic] = _Array[tuple[int], ScalarT]
+type _Array2D[ScalarT: np.generic] = _Array[tuple[int, int], ScalarT]
+type _Array3D[ScalarT: np.generic] = _Array[tuple[int, int, int], ScalarT]
 
 type _tuple2[T] = tuple[T, T]
 
@@ -397,13 +398,13 @@ class _ufunc_11_m_b(_ufunc_11):  # type: ignore[misc]
     @overload  # Nd, known shape
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_time]],
+        x: _Array[ShapeT, _time],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+    ) -> _Array[ShapeT, np.bool]: ...
     @overload  # scalar
     def __call__(
         self,
@@ -478,7 +479,7 @@ class _ufunc_11_m_b(_ufunc_11):  # type: ignore[misc]
     #
     @override
     @overload
-    def at(self, a: np.ndarray[_Shape, np.dtype[_time]], indices: _ArrayLikeInt, /) -> None: ...  # pyrefly:ignore[bad-override]
+    def at(self, a: npt.NDArray[_time], indices: _ArrayLikeInt, /) -> None: ...  # pyrefly:ignore[bad-override]
     @overload
     def at[IxT, OutT](self, a: _CanUfuncAt1[IxT, OutT], indices: IxT, /) -> OutT: ...
 
@@ -489,13 +490,13 @@ class _ufunc_11_f_b(_ufunc_11):  # type: ignore[misc]
     @overload  # Nd, known shape
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_to_floating]],
+        x: _Array[ShapeT, _to_floating],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+    ) -> _Array[ShapeT, np.bool]: ...
     @overload  # scalar
     def __call__(
         self,
@@ -570,7 +571,7 @@ class _ufunc_11_f_b(_ufunc_11):  # type: ignore[misc]
     #
     @override
     @overload
-    def at(self, a: np.ndarray[_Shape, np.dtype[np.floating]], indices: _ArrayLikeInt, /) -> None: ...  # pyrefly:ignore[bad-override]
+    def at(self, a: npt.NDArray[np.floating], indices: _ArrayLikeInt, /) -> None: ...  # pyrefly:ignore[bad-override]
     @overload
     def at[IxT, OutT](self, a: _CanUfuncAt1[IxT, OutT], indices: IxT, /) -> OutT: ...
 
@@ -581,13 +582,13 @@ class _ufunc_11_bifgcm_b(_ufunc_11):  # type: ignore[misc]
     @overload  # Nd, known shape
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_to_number | _time]],
+        x: _Array[ShapeT, _to_number | _time],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+    ) -> _Array[ShapeT, np.bool]: ...
     @overload  # scalar
     def __call__(
         self,
@@ -662,7 +663,7 @@ class _ufunc_11_bifgcm_b(_ufunc_11):  # type: ignore[misc]
     #
     @override
     @overload
-    def at(self, a: np.ndarray[_Shape, np.dtype[_to_number]], indices: _ArrayLikeInt, /) -> None: ...  # pyrefly:ignore[bad-override]
+    def at(self, a: npt.NDArray[_to_number], indices: _ArrayLikeInt, /) -> None: ...  # pyrefly:ignore[bad-override]
     @overload
     def at[IxT, OutT](self, a: _CanUfuncAt1[IxT, OutT], indices: IxT, /) -> OutT: ...
 
@@ -673,23 +674,23 @@ class _ufunc_11_bifgco_bo(_ufunc_11):  # type: ignore[misc]
     @overload  # Nd, known shape
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_to_number]],
+        x: _Array[ShapeT, _to_number],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+    ) -> _Array[ShapeT, np.bool]: ...
     @overload  # Nd object, known shape
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[np.object_]],
+        x: _Array[ShapeT, np.object_],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.object_]]: ...
+    ) -> _Array[ShapeT, np.object_]: ...
     @overload  # scalar
     def __call__(
         self,
@@ -764,7 +765,7 @@ class _ufunc_11_bifgco_bo(_ufunc_11):  # type: ignore[misc]
     #
     @override
     @overload
-    def at(self, a: np.ndarray[_Shape, np.dtype[_to_number | np.object_]], indices: _ArrayLikeInt, /) -> None: ...  # pyrefly:ignore[bad-override]
+    def at(self, a: npt.NDArray[_to_number | np.object_], indices: _ArrayLikeInt, /) -> None: ...  # pyrefly:ignore[bad-override]
     @overload
     def at[IxT, OutT](self, a: _CanUfuncAt1[IxT, OutT], indices: IxT, /) -> OutT: ...
 
@@ -775,23 +776,23 @@ class _ufunc_11_io(_ufunc_11):  # type: ignore[misc]
     @overload  # Nd, known shape
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_to_integer]],
+        x: _Array[ShapeT, _to_integer],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.uint8]]: ...
+    ) -> _Array[ShapeT, np.uint8]: ...
     @overload  # Nd object, known shape
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[np.object_]],
+        x: _Array[ShapeT, np.object_],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.object_]]: ...
+    ) -> _Array[ShapeT, np.object_]: ...
     @overload  # scalar
     def __call__(
         self,
@@ -866,7 +867,7 @@ class _ufunc_11_io(_ufunc_11):  # type: ignore[misc]
     #
     @override
     @overload
-    def at(self, a: np.ndarray[_Shape, np.dtype[_to_integer]], indices: _ArrayLikeInt, /) -> None: ...  # pyrefly:ignore[bad-override]
+    def at(self, a: npt.NDArray[_to_integer], indices: _ArrayLikeInt, /) -> None: ...  # pyrefly:ignore[bad-override]
     @overload
     def at[IxT, OutT](self, a: _CanUfuncAt1[IxT, OutT], indices: IxT, /) -> OutT: ...
 
@@ -887,33 +888,33 @@ class _ufunc_11_f(_ufunc_11):  # type: ignore[misc]
     @overload  # Nd, +f64
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_as_f64]],
+        x: _Array[ShapeT, _as_f64],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    ) -> _Array[ShapeT, np.float64]: ...
     @overload  # Nd, +f32
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_as_f32]],
+        x: _Array[ShapeT, _as_f32],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
+    ) -> _Array[ShapeT, np.float32]: ...
     @overload  # Nd, +f16
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_as_f16]],
+        x: _Array[ShapeT, _as_f16],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.float16]]: ...
+    ) -> _Array[ShapeT, np.float16]: ...
     @overload  # scalar, float | +f64
     def __call__(
         self,
@@ -977,23 +978,23 @@ class _ufunc_11_f(_ufunc_11):  # type: ignore[misc]
     @overload  # Nd, dtype=<known>
     def __call__[ShapeT: _Shape, ScalarT: np.floating](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_to_floating]],
+        x: _Array[ShapeT, _to_floating],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+    ) -> _Array[ShapeT, ScalarT]: ...
     @overload  # Nd, dtype=<unknown>
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_to_floating]],
+        x: _Array[ShapeT, _to_floating],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT]: ...
+    ) -> _Array[ShapeT, Any]: ...
     @overload  # Nd, dtype=<known>
     def __call__[ScalarT: np.floating](
         self,
@@ -1079,33 +1080,33 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
     @overload  # Nd, +f64
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_as_f64]],
+        x: _Array[ShapeT, _as_f64],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    ) -> _Array[ShapeT, np.float64]: ...
     @overload  # Nd, +f32
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_as_f32]],
+        x: _Array[ShapeT, _as_f32],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
+    ) -> _Array[ShapeT, np.float32]: ...
     @overload  # Nd, +f16
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_as_f16]],
+        x: _Array[ShapeT, _as_f16],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.float16]]: ...
+    ) -> _Array[ShapeT, np.float16]: ...
     @overload  # scalar, float | +f64
     def __call__(
         self,
@@ -1169,23 +1170,23 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
     @overload  # Nd, dtype=<known>
     def __call__[ShapeT: _Shape, ScalarT: np.floating](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_to_floating | np.object_]],
+        x: _Array[ShapeT, _to_floating | np.object_],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+    ) -> _Array[ShapeT, ScalarT]: ...
     @overload  # Nd, dtype=<unknown>
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_to_floating | np.object_]],
+        x: _Array[ShapeT, _to_floating | np.object_],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT]: ...
+    ) -> _Array[ShapeT, Any]: ...
     @overload  # Nd, dtype=<known>
     def __call__[ScalarT: np.floating | np.object_](
         self,
@@ -1205,7 +1206,7 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray: ...
+    ) -> npt.NDArray[Any]: ...
     @overload  # ?d, dtype=<known>
     def __call__[ScalarT: np.floating | np.object_](
         self,
@@ -1271,33 +1272,33 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
     @overload  # Nd, +f64
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_as_f64]],
+        x: _Array[ShapeT, _as_f64],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    ) -> _Array[ShapeT, np.float64]: ...
     @overload  # Nd, +f32
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_as_f32]],
+        x: _Array[ShapeT, _as_f32],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
+    ) -> _Array[ShapeT, np.float32]: ...
     @overload  # Nd, +f16
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_as_f16]],
+        x: _Array[ShapeT, _as_f16],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.float16]]: ...
+    ) -> _Array[ShapeT, np.float16]: ...
     @overload  # scalar, float | +f64
     def __call__(
         self,
@@ -1391,23 +1392,23 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
     @overload  # Nd, dtype=<known>
     def __call__[ShapeT: _Shape, ScalarT: np.inexact](
         self,
-        x: np.ndarray[ShapeT, np.dtype[np.number | np.bool | np.object_]],
+        x: _Array[ShapeT, np.number | np.bool | np.object_],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+    ) -> _Array[ShapeT, ScalarT]: ...
     @overload  # Nd, dtype=<unknown>
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[np.number | np.bool | np.object_]],
+        x: _Array[ShapeT, np.number | np.bool | np.object_],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT]: ...
+    ) -> _Array[ShapeT, Any]: ...
     @overload  # Nd, dtype=<known>
     def __call__[ScalarT: np.inexact | np.object_](
         self,
@@ -1493,13 +1494,13 @@ class _ufunc_11_ifco(_ufunc_11):  # type: ignore[misc]
     @overload  # Nd, bool->i8
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[np.bool]],
+        x: _Array[ShapeT, np.bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.int8]]: ...
+    ) -> _Array[ShapeT, np.int8]: ...
     @overload  # scalar, bool->i8
     def __call__(
         self,
@@ -1633,23 +1634,23 @@ class _ufunc_11_ifco(_ufunc_11):  # type: ignore[misc]
     @overload  # Nd, dtype=<known>
     def __call__[ShapeT: _Shape, ScalarT: np.number | np.object_](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_to_number | np.object_]],
+        x: _Array[ShapeT, _to_number | np.object_],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+    ) -> _Array[ShapeT, ScalarT]: ...
     @overload  # Nd, dtype=<unknown>
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_to_number | np.object_]],
+        x: _Array[ShapeT, _to_number | np.object_],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT]: ...
+    ) -> _Array[ShapeT, Any]: ...
     @overload  # Nd, dtype=<known>
     def __call__[ScalarT: np.number | np.object_](
         self,
@@ -1735,13 +1736,13 @@ class _ufunc_11_ifcmo_ifco(_ufunc_11):  # type: ignore[misc]
     @overload  # Nd, timedelta64
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[np.timedelta64]],
+        x: _Array[ShapeT, np.timedelta64],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    ) -> _Array[ShapeT, np.float64]: ...
     @overload  # scalar, int
     def __call__(
         self,
@@ -1855,23 +1856,23 @@ class _ufunc_11_ifcmo_ifco(_ufunc_11):  # type: ignore[misc]
     @overload  # Nd, dtype=<known>
     def __call__[ShapeT: _Shape, ScalarT: np.number | np.object_](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_numeric | np.object_]],
+        x: _Array[ShapeT, _numeric | np.object_],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+    ) -> _Array[ShapeT, ScalarT]: ...
     @overload  # Nd, dtype=<unknown>
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_numeric | np.object_]],
+        x: _Array[ShapeT, _numeric | np.object_],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT]: ...
+    ) -> _Array[ShapeT, Any]: ...
     @overload  # Nd, dtype=<known>
     def __call__[ScalarT: np.number | np.object_](
         self,
@@ -2057,23 +2058,23 @@ class _ufunc_11_ifcmo(_ufunc_11):  # type: ignore[misc]
     @overload  # Nd, dtype=<known>
     def __call__[ShapeT: _Shape, ScalarT: _numeric | np.object_](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_numeric | np.object_]],
+        x: _Array[ShapeT, _numeric | np.object_],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+    ) -> _Array[ShapeT, ScalarT]: ...
     @overload  # Nd, dtype=<unknown>
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_numeric | np.object_]],
+        x: _Array[ShapeT, _numeric | np.object_],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT]: ...
+    ) -> _Array[ShapeT, Any]: ...
     @overload  # Nd, dtype=<known>
     def __call__[ScalarT: _numeric | np.object_](
         self,
@@ -2249,23 +2250,23 @@ class _ufunc_11_bio(_ufunc_11):  # type: ignore[misc]
     @overload  # Nd, dtype=<known>
     def __call__[ShapeT: _Shape, ScalarT: _to_integer | np.object_](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_to_integer | np.object_]],
+        x: _Array[ShapeT, _to_integer | np.object_],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+    ) -> _Array[ShapeT, ScalarT]: ...
     @overload  # Nd, dtype=<unknown>
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_to_integer | np.object_]],
+        x: _Array[ShapeT, _to_integer | np.object_],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT]: ...
+    ) -> _Array[ShapeT, Any]: ...
     @overload  # Nd, dtype=<known>
     def __call__[ScalarT: _to_integer | np.object_](
         self,
@@ -2471,23 +2472,23 @@ class _ufunc_11_bifo(_ufunc_11):  # type: ignore[misc]
     @overload  # Nd, dtype=<known>
     def __call__[ShapeT: _Shape, ScalarT: _to_floating | np.object_](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_to_floating | np.object_]],
+        x: _Array[ShapeT, _to_floating | np.object_],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+    ) -> _Array[ShapeT, ScalarT]: ...
     @overload  # Nd, dtype=<unknown>
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_to_floating | np.object_]],
+        x: _Array[ShapeT, _to_floating | np.object_],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT]: ...
+    ) -> _Array[ShapeT, Any]: ...
     @overload  # Nd, dtype=<known>
     def __call__[ScalarT: _to_floating | np.object_](
         self,
@@ -2573,33 +2574,33 @@ class _ufunc_11_bifcmo(_ufunc_11):  # type: ignore[misc]
     @overload  # Nd, c128 -> f64
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[np.complex128]],
+        x: _Array[ShapeT, np.complex128],
         /,
         *,
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    ) -> _Array[ShapeT, np.float64]: ...
     @overload  # Nd, c64 -> f32
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[np.complex64]],
+        x: _Array[ShapeT, np.complex64],
         /,
         *,
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
+    ) -> _Array[ShapeT, np.float32]: ...
     @overload  # Nd, c160 -> f80
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[np.clongdouble]],
+        x: _Array[ShapeT, np.clongdouble],
         /,
         *,
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.longdouble]]: ...
+    ) -> _Array[ShapeT, np.longdouble]: ...
     @overload  # scalar, c128 -> f64
     def __call__(
         self,
@@ -2753,23 +2754,23 @@ class _ufunc_11_bifcmo(_ufunc_11):  # type: ignore[misc]
     @overload  # Nd, dtype=<known>
     def __call__[ShapeT: _Shape, ScalarT: _to_floating | np.timedelta64 | np.object_](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_to_numeric]],
+        x: _Array[ShapeT, _to_numeric],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+    ) -> _Array[ShapeT, ScalarT]: ...
     @overload  # Nd, dtype=<unknown>
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_to_numeric | np.object_]],
+        x: _Array[ShapeT, _to_numeric | np.object_],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT]: ...
+    ) -> _Array[ShapeT, Any]: ...
     @overload  # Nd, dtype=<known>
     def __call__[ScalarT: _to_floating | np.object_](
         self,
@@ -2851,7 +2852,7 @@ class _ufunc_11_ut_b(_ufunc_11[Literal[False]]):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+    ) -> _Array[ShapeT, np.bool]: ...
     @overload  # scalar
     def __call__(
         self,
@@ -2943,7 +2944,7 @@ class _ufunc_11_sut_b(_ufunc_11[Literal[False]]):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+    ) -> _Array[ShapeT, np.bool]: ...
     @overload  # scalar
     def __call__(
         self,
@@ -3035,7 +3036,7 @@ class _ufunc_11_sut_i(_ufunc_11[Literal[0]]):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> np.ndarray[ShapeT, np.dtype[np.int_]]: ...
+    ) -> _Array[ShapeT, np.int_]: ...
     @overload  # scalar
     def __call__(
         self,
@@ -3199,37 +3200,37 @@ class _ufunc_12_frexp(_ufunc_12):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs12],
-    ) -> tuple[np.ndarray[ShapeT, DTypeT], np.ndarray[ShapeT, np.dtype[np.int32]]]: ...
+    ) -> tuple[np.ndarray[ShapeT, DTypeT], _Array[ShapeT, np.int32]]: ...
     @overload  # Nd, +f64
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_as_f64]],
+        x: _Array[ShapeT, _as_f64],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs12],
-    ) -> tuple[np.ndarray[ShapeT, np.dtype[np.float64]], np.ndarray[ShapeT, np.dtype[np.int32]]]: ...
+    ) -> tuple[_Array[ShapeT, np.float64], _Array[ShapeT, np.int32]]: ...
     @overload  # Nd, +f32
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_as_f32]],
+        x: _Array[ShapeT, _as_f32],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs12],
-    ) -> tuple[np.ndarray[ShapeT, np.dtype[np.float32]], np.ndarray[ShapeT, np.dtype[np.int32]]]: ...
+    ) -> tuple[_Array[ShapeT, np.float32], _Array[ShapeT, np.int32]]: ...
     @overload  # Nd, +f16
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_as_f16]],
+        x: _Array[ShapeT, _as_f16],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs12],
-    ) -> tuple[np.ndarray[ShapeT, np.dtype[np.float16]], np.ndarray[ShapeT, np.dtype[np.int32]]]: ...
+    ) -> tuple[_Array[ShapeT, np.float16], _Array[ShapeT, np.int32]]: ...
     @overload  # scalar, known dtype
     def __call__[ScalarT: np.floating](
         self,
@@ -3338,33 +3339,33 @@ class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
     @overload  # Nd, +f64
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_as_f64]],
+        x: _Array[ShapeT, _as_f64],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs12],
-    ) -> _tuple2[np.ndarray[ShapeT, np.dtype[np.float64]]]: ...
+    ) -> _tuple2[_Array[ShapeT, np.float64]]: ...
     @overload  # Nd, +f32
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_as_f32]],
+        x: _Array[ShapeT, _as_f32],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs12],
-    ) -> _tuple2[np.ndarray[ShapeT, np.dtype[np.float32]]]: ...
+    ) -> _tuple2[_Array[ShapeT, np.float32]]: ...
     @overload  # Nd, +f16
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_as_f16]],
+        x: _Array[ShapeT, _as_f16],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs12],
-    ) -> _tuple2[np.ndarray[ShapeT, np.dtype[np.float16]]]: ...
+    ) -> _tuple2[_Array[ShapeT, np.float16]]: ...
     @overload  # scalar, float | +f64
     def __call__(
         self,
@@ -3428,23 +3429,23 @@ class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
     @overload  # Nd, dtype=<known>
     def __call__[ShapeT: _Shape, ScalarT: np.floating](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_to_floating]],
+        x: _Array[ShapeT, _to_floating],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
         **kwargs: Unpack[_Kwargs12],
-    ) -> _tuple2[np.ndarray[ShapeT, np.dtype[ScalarT]]]: ...
+    ) -> _tuple2[_Array[ShapeT, ScalarT]]: ...
     @overload  # Nd, dtype=<unknown>
     def __call__[ShapeT: _Shape](
         self,
-        x: np.ndarray[ShapeT, np.dtype[_to_floating]],
+        x: _Array[ShapeT, _to_floating],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs12],
-    ) -> _tuple2[np.ndarray[ShapeT]]: ...
+    ) -> _tuple2[_Array[ShapeT, Any]]: ...
     @overload  # Nd, dtype=<known>
     def __call__[ScalarT: np.floating](
         self,
@@ -3893,18 +3894,18 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         axis: int = 0,
         dtype: _DTypeLikeBool | None = None,
         out: None = None,
-    ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+    ) -> _Array[ShapeT, np.bool]: ...
     @overload  # known shape, object_
     def reduceat[ShapeT: _Shape](  # pyrefly:ignore[bad-override]
         self,
-        array: np.ndarray[ShapeT, np.dtype[np.object_]],
+        array: _Array[ShapeT, np.object_],
         /,
         indices: tuple[int, ...],
         *,
         axis: int = 0,
         dtype: _DTypeLikeObject | None = None,
         out: None = None,
-    ) -> np.ndarray[ShapeT, np.dtype[np.object_]]: ...
+    ) -> _Array[ShapeT, np.object_]: ...
     @overload  # unknown shape
     def reduceat(
         self,
@@ -3950,17 +3951,17 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         axis: int = 0,
         dtype: _DTypeLikeBool | None = None,
         out: None = None,
-    ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+    ) -> _Array[ShapeT, np.bool]: ...
     @overload  # known shape, OBJECT_
     def accumulate[ShapeT: _Shape](
         self,
-        array: np.ndarray[ShapeT, np.dtype[np.object_]],
+        array: _Array[ShapeT, np.object_],
         /,
         *,
         axis: int = 0,
         dtype: _DTypeLikeObject | None = None,
         out: None = None,
-    ) -> np.ndarray[ShapeT, np.dtype[np.object_]]: ...
+    ) -> _Array[ShapeT, np.object_]: ...
     @overload  # unknown shape
     def accumulate(
         self,
@@ -4256,14 +4257,14 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # known shape
     def reduceat[ShapeT: _Shape](  # pyrefly:ignore[bad-override]
         self,
-        array: np.ndarray[ShapeT, np.dtype[np.bool]],
+        array: _Array[ShapeT, np.bool],
         /,
         indices: tuple[int, ...],
         *,
         axis: int = 0,
         dtype: _DTypeLikeBool | None = None,
         out: None = None,
-    ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+    ) -> _Array[ShapeT, np.bool]: ...
     @overload  # unknown shape
     def reduceat(
         self,
@@ -4303,13 +4304,13 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # known shape
     def accumulate[ShapeT: _Shape](  # pyrefly:ignore[bad-override]
         self,
-        array: np.ndarray[ShapeT, np.dtype[np.bool]],
+        array: _Array[ShapeT, np.bool],
         /,
         *,
         axis: int = 0,
         dtype: _DTypeLikeBool | None = None,
         out: None = None,
-    ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+    ) -> _Array[ShapeT, np.bool]: ...
     @overload  # unknown shape
     def accumulate(
         self,
