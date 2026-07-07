@@ -5117,6 +5117,18 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
         /,
     ) -> ScalarT | ndarray[ShapeT, _dtype[ScalarT]]: ...
 
+    #
+    def __dlpack__(
+        self,
+        /,
+        *,
+        stream: int | Any | None = None,
+        max_version: tuple[int, int] | None = None,
+        dl_device: tuple[int, int] | None = None,
+        copy: py_bool | None = None,
+    ) -> CapsuleType: ...
+    def __dlpack_device__(self, /) -> tuple[L[1], L[0]]: ...
+
     @property
     def base(self) -> None: ...
     @property

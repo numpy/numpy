@@ -568,6 +568,27 @@ array_dlpack_device(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     return Py_BuildValue("ii", device.device_type, device.device_id);
 }
 
+// for scalar __dlpack__ we create a 0-dim array and call the array version
+NPY_NO_EXPORT PyObject *
+gentype_dlpack(PyObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    PyObject *array = PyArray_FromScalar(self, NULL);
+    if (array == NULL) {
+        return NULL;
+    }
+
+    PyObject *result = array_dlpack((PyArrayObject *)array, args, len_args, kwnames);
+    Py_DECREF(array);
+    return result;
+}
+
+NPY_NO_EXPORT PyObject *
+gentype_dlpack_device(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
+{
+    return Py_BuildValue("ii", kDLCPU, 0);
+}
+
 NPY_NO_EXPORT PyObject *
 from_dlpack(PyObject *NPY_UNUSED(self),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
