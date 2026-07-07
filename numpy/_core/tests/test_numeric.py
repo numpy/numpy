@@ -1840,6 +1840,17 @@ class TestNonzero:
                 assert_equal(np.count_nonzero(m),
                              expected, err_msg=err_msg)
 
+    @pytest.mark.parametrize("dtype", ["S5", "U5", "T"])
+    def test_count_nonzero_character_axis(self, dtype):
+        a = np.array([
+            ["", "0", " "],
+            ["1", "", "False"],
+        ], dtype=dtype)
+
+        assert_array_equal(np.count_nonzero(a, axis=1), [2, 2])
+        assert_array_equal(np.count_nonzero(a, axis=0), [1, 1, 2])
+        assert np.count_nonzero(a) == 4
+
     def test_count_nonzero_axis_consistent(self):
         # Check that the axis behaviour for valid axes in
         # non-special cases is consistent (and therefore
