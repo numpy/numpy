@@ -1444,6 +1444,7 @@ typedef struct npy_unpacked_static_string {
  */
 typedef struct npy_string_allocator npy_string_allocator;
 
+#ifndef Py_TARGET_ABI3T
 typedef struct {
     PyArray_Descr_fields base;
     // The object representing a null value
@@ -1466,6 +1467,15 @@ typedef struct {
     // no longer needed
     npy_string_allocator *allocator;
 } PyArray_StringDTypeObject;
+#else
+/*
+ * Accessing StringDType instance fields is not supported under the abi3t
+ * stable ABI. The NpyString allocator API still works with the opaque
+ * struct: pass the descriptor object pointer, i.e.
+ * NpyString_acquire_allocator((PyArray_StringDTypeObject *)descr).
+ */
+typedef struct PyArray_StringDTypeObject PyArray_StringDTypeObject;
+#endif
 
 /*
  * PyArray_DTypeMeta related definitions.
