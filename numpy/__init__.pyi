@@ -408,6 +408,7 @@ from numpy._core.umath import (
     ceil,
     conjugate,
     conjugate as conj,
+    copysign,
     cos,
     cosh,
     deg2rad,
@@ -421,6 +422,7 @@ from numpy._core.umath import (
     frexp,
     greater,
     greater_equal,
+    heaviside,
     invert,
     invert as bitwise_invert,
     invert as bitwise_not,
@@ -435,11 +437,14 @@ from numpy._core.umath import (
     log10,
     log1p,
     log2,
+    logaddexp,
+    logaddexp2,
     logical_and,
     logical_not,
     logical_or,
     logical_xor,
     modf,
+    nextafter,
     not_equal,
     positive,
     negative,
@@ -7627,7 +7632,6 @@ arctan2: _UFunc_Nin2_Nout1[L["arctan2"], L[5], None]
 bitwise_and: _UFunc_Nin2_Nout1[L["bitwise_and"], L[12], L[-1]]
 bitwise_or: _UFunc_Nin2_Nout1[L["bitwise_or"], L[12], L[0]]
 bitwise_xor: _UFunc_Nin2_Nout1[L["bitwise_xor"], L[12], L[0]]
-copysign: _UFunc_Nin2_Nout1[L["copysign"], L[4], None]
 divide: _UFunc_Nin2_Nout1[L["divide"], L[11], None]
 divmod: _UFunc_Nin2_Nout2[L["divmod"], L[15], None]
 float_power: _UFunc_Nin2_Nout1[L["float_power"], L[4], None]
@@ -7636,18 +7640,14 @@ fmax: _UFunc_Nin2_Nout1[L["fmax"], L[21], None]
 fmin: _UFunc_Nin2_Nout1[L["fmin"], L[21], None]
 fmod: _UFunc_Nin2_Nout1[L["fmod"], L[15], None]
 gcd: _UFunc_Nin2_Nout1[L["gcd"], L[11], L[0]]
-heaviside: _UFunc_Nin2_Nout1[L["heaviside"], L[4], None]
 hypot: _UFunc_Nin2_Nout1[L["hypot"], L[5], L[0]]
 lcm: _UFunc_Nin2_Nout1[L["lcm"], L[11], None]
 left_shift: _UFunc_Nin2_Nout1[L["left_shift"], L[11], None]
-logaddexp2: _UFunc_Nin2_Nout1[L["logaddexp2"], L[4], float]
-logaddexp: _UFunc_Nin2_Nout1[L["logaddexp"], L[4], float]
 matmul: _GUFunc_Nin2_Nout1[L["matmul"], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]]
 matvec: _GUFunc_Nin2_Nout1[L["matvec"], L[19], None, L["(m,n),(n)->(m)"]]
 maximum: _UFunc_Nin2_Nout1[L["maximum"], L[21], None]
 minimum: _UFunc_Nin2_Nout1[L["minimum"], L[21], None]
 multiply: _UFunc_Nin2_Nout1[L["multiply"], L[23], L[1]]
-nextafter: _UFunc_Nin2_Nout1[L["nextafter"], L[4], None]
 power: _UFunc_Nin2_Nout1[L["power"], L[18], None]
 remainder: _UFunc_Nin2_Nout1[L["remainder"], L[16], None]
 right_shift: _UFunc_Nin2_Nout1[L["right_shift"], L[11], None]
