@@ -54,7 +54,7 @@ jobs:
         os_python:
           - [macos-latest, '3.14']
           - [ubuntu-latest, '3.13']
-          - [windows-2022, '3.12']
+          - [windows-latest, '3.12']
     steps:
     - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
