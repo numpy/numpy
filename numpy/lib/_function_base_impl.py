@@ -1528,6 +1528,13 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     if len(combined) > 1:
         a = np.concatenate(combined, axis)
 
+    op = not_equal if a.dtype == np.bool else subtract
+    if n >= a.shape[axis] and not a.dtype.hasobject:
+        empty = [slice(None)] * nd
+        empty[axis] = slice(0, 0)
+        empty = tuple(empty)
+        return op(a[empty], a[empty])
+
     slice1 = [slice(None)] * nd
     slice2 = [slice(None)] * nd
     slice1[axis] = slice(1, None)
@@ -1535,7 +1542,6 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     slice1 = tuple(slice1)
     slice2 = tuple(slice2)
 
-    op = not_equal if a.dtype == np.bool else subtract
     for _ in range(n):
         a = op(a[slice1], a[slice2])
 

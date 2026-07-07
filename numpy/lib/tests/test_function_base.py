@@ -920,6 +920,36 @@ class TestDiff:
             assert_array_equal(out, exp)
             assert_equal(out.dtype, exp.dtype)
 
+    @pytest.mark.parametrize(
+        "array, expected_dtype",
+        [
+            (np.arange(3, dtype=np.int64), np.dtype(np.int64)),
+            (np.arange(3, dtype=np.uint8), np.dtype(np.uint8)),
+            (np.array([True, False, True]), np.dtype(bool)),
+            (
+                np.arange("1066-10-13", "1066-10-16", dtype="datetime64[D]"),
+                np.dtype("timedelta64[D]"),
+            ),
+        ],
+    )
+    def test_large_n_empty_result_dtype(self, array, expected_dtype):
+        out = diff(array, n=100)
+        assert_array_equal(out, [])
+        assert_equal(out.dtype, expected_dtype)
+
+        out = diff(array.reshape(1, -1), n=100, axis=1)
+        assert_equal(out.shape, (1, 0))
+        assert_equal(out.dtype, expected_dtype)
+
+    def test_large_n_object_subtraction_error(self):
+        class NoSub:
+            def __sub__(self, other):
+                raise TypeError("no subtraction")
+
+        array = np.array([NoSub(), NoSub()], dtype=object)
+        with pytest.raises(TypeError, match="no subtraction"):
+            diff(array, n=100)
+
     def test_subclass(self):
         x = ma.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]],
                      mask=[[False, False], [True, False],

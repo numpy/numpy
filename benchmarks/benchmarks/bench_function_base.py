@@ -120,6 +120,20 @@ class Percentile(Benchmark):
         np.percentile(self.o, [25, 75])
 
 
+class Diff(Benchmark):
+    params = [
+        [(10,), (10, 10)],
+        [10, 1000],
+    ]
+    param_names = ["shape", "n"]
+
+    def setup(self, shape, n):
+        self.arr = np.arange(np.prod(shape)).reshape(shape)
+
+    def time_large_n(self, shape, n):
+        np.diff(self.arr, n=n)
+
+
 class Select(Benchmark):
     def setup(self):
         self.d = np.arange(20000)
