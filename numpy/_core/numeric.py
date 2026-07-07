@@ -1309,19 +1309,28 @@ def roll(a, shift, axis=None):
         if broadcasted.ndim > 1:
             raise ValueError(
                 "'shift' and 'axis' should be scalars or 1D sequences")
+        if len(axis) == 0:
+            return a
+
         shifts = dict.fromkeys(range(a.ndim), 0)
         for sh, ax in broadcasted:
             shifts[ax] += int(sh)
 
         rolls = [((slice(None), slice(None)),)] * a.ndim
+        roll_needed = False
         for ax, offset in shifts.items():
             offset %= a.shape[ax] or 1  # If `a` is empty, nothing matters.
             if offset:
+                roll_needed = True
                 # (original, result), (original, result)
                 rolls[ax] = ((slice(None, -offset), slice(offset, None)),
                              (slice(-offset, None), slice(None, offset)))
 
         result = empty_like(a)
+        if not roll_needed:
+            result[...] = a
+            return result
+
         for indices in itertools.product(*rolls):
             arr_index, res_index = zip(*indices)
             result[res_index] = a[arr_index]
