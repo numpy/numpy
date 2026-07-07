@@ -145,13 +145,26 @@ class TestAsType:
         b = a.astype(np.float64, copy=True)
         assert id(a) == id(b)
 
-    def test_copy_structured(self) -> None:
-        a = np.array([('AB'), ('CD')], dtype=[('name', 'U5')])
+class TestAsTypeStructuredCopy:
+    # Regression test for gh-31025: astype on a structured scalar
+    # must return an independent object, not a mutable view into the parent array.
+    def test_copy_true_is_independent(self) -> None:
+        a = np.array([('AB',), ('CD',)], dtype=[('name', 'U5')])
         b = a[1]
+
+        c = b.astype(b, copy=True)
+        assert c is not b
+        c['name'] = 'ZZ'
+        assert a[1]['name'] == 'CD'
+
+    def test_default_copy_is_independent(self) -> None:
+        # copy defaults to True, so the same guarantee holds without the kwarg
+        a = np.array([('AB',), ('CD',)], dtype=[('name', 'U5')])
+        b = a[1]
+
         c = b.astype(b)
-        assert id(c) != id(b)
-        c = b.astype(b, copy=False)
-        assert id(c) == id(b)
+        c['name'] = 'ZZ'
+        assert a[1]['name'] == 'CD'
 
 class TestClassGetItem:
     @pytest.mark.parametrize("cls", [

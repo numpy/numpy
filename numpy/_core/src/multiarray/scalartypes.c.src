@@ -2256,32 +2256,26 @@ static PyObject *
 static PyObject *
 gentype_astype(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    PyObject *temp = NULL;
-    if (kwds != NULL){
-        PyDict_GetItemStringRef(kwds, "copy", &temp);
-    }      
-    PyArray_Descr *dtype1 = PyArray_DescrFromScalar(self);
-    assert(dtype1 != NULL);
-    if((PyDataType_NAMES(dtype1) != NULL) && (temp == NULL)){
+    if (PyObject_IsInstance(self, (PyObject *)&PyVoidArrType_Type)) {
         // guard for structured data types
-        Py_DECREF(dtype1);
-        Py_XDECREF(temp);
         return gentype_generic_method(self, args, kwds, "astype");
     }
-    PyArray_Descr *dtype2 = NULL;
-    if(PyTuple_Size(args)==1){ 
-        PyObject *arg = PyTuple_GET_ITEM(args, 0);
-        PyArray_DescrConverter(arg, &dtype2);
+    PyArray_Descr *from = PyArray_DescrFromScalar(self);
+    if (from == NULL) {
+        return NULL;
     }
-    int same_dtype = (dtype1 == dtype2);
-    Py_DECREF(dtype1);
-    Py_XDECREF(dtype2); 
-    if (same_dtype) {
-        // dtypes are equal, scalars are immutable so no copy is needed
-        Py_XDECREF(temp);
+    PyArray_Descr *to = NULL;
+    if (PyTuple_GET_SIZE(args) >= 1
+            && !PyArray_DescrConverter(PyTuple_GET_ITEM(args, 0), &to)) {
+        Py_DECREF(from);
+        return NULL;
+    }
+    int equiv = (to != NULL) && PyArray_EquivTypes(from, to);
+    Py_DECREF(from);
+    Py_XDECREF(to);
+    if (equiv) {
         return Py_NewRef(self);
     }
-    Py_XDECREF(temp);
     return gentype_generic_method(self, args, kwds, "astype");
 }
 
