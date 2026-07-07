@@ -308,8 +308,11 @@ npy__cpu_check_env(int disable, const char *env) {
         int feature_id = npy__cpu_dispatch_fid(feature);
         if (feature_id == 0) {
             int flen = strlen(feature);
+            if (nexist_cur != nexist) {
+                *nexist_cur++ = ' ';
+            }
             memcpy(nexist_cur, feature, flen);
-            nexist_cur[flen] = ' '; nexist_cur += flen + 1;
+            nexist_cur += flen;
             goto next;
         }
         // check if the feature supported by the running machine
@@ -335,7 +338,6 @@ npy__cpu_check_env(int disable, const char *env) {
 
     *nexist_cur = '\0';
     if (nexist[0] != '\0') {
-        *(nexist_cur-1) = '\0'; // trim the last space
         if (PyErr_WarnFormat(PyExc_ImportWarning, 1,
             "%sYou cannot %s CPU features (%s), since "
             "they are not part of the dispatched optimizations\n"

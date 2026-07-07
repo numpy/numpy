@@ -281,6 +281,23 @@ if __name__ == "__main__":
             "`__cpu_dispatch__` is non-empty"
         )
     )
+    @pytest.mark.parametrize("action", ["ENABLE", "DISABLE"])
+    def test_max_length_nonexistent_feature(self, action):
+        """
+        Test that the maximum accepted environment variable length can be
+        processed even if the whole value is an invalid feature name.
+        """
+        MAX_VAR_LENGTH = 1024
+        self.env[f'NPY_{action}_CPU_FEATURES'] = "t" * (MAX_VAR_LENGTH - 1)
+        self._run()
+
+    @pytest.mark.skipif(
+        not __cpu_dispatch__,
+        reason=(
+            "NPY_*_CPU_FEATURES only parsed if "
+            "`__cpu_dispatch__` is non-empty"
+        )
+    )
     def test_impossible_feature_disable(self):
         """
         Test that a RuntimeError is thrown if an impossible feature-disabling
