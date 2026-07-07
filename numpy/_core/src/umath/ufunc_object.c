@@ -852,6 +852,15 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
     int nop = nin + 1;
     assert(context->method->nout == 1);
 
+    if (context->method->flags & NPY_METH_REQUIRES_CONTIGUOUS) {
+        /*
+         * This fast path calls the inner loop with the raw operand strides,
+         * but the method requires the iterator to deliver contiguous
+         * (buffered) operands, so defer to the full iterator path.
+         */
+        return -2;
+    }
+
     /* The order of all N-D contiguous operands, can be fixed by `order` */
     int operation_order = 0;
     if (order == NPY_CORDER) {
@@ -2666,10 +2675,6 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
                   NPY_ITER_NO_SUBTYPE;
     op_flags[1] = NPY_ITER_READONLY;
 
-    if (context.method->flags & NPY_METH_REQUIRES_CONTIGUOUS) {
-        op_flags[0] |= NPY_ITER_CONTIG;
-        op_flags[1] |= NPY_ITER_CONTIG;
-    }
     op[0] = out;
     op[1] = arr;
 
@@ -2678,8 +2683,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     if (!PyArray_ISALIGNED(arr) || (out && !PyArray_ISALIGNED(out)) ||
             !PyArray_EquivTypes(descrs[1], PyArray_DESCR(arr)) ||
             (out &&
-            !PyArray_EquivTypes(descrs[0], PyArray_DESCR(out))) ||
-            (context.method->flags & NPY_METH_REQUIRES_CONTIGUOUS)) {
+            !PyArray_EquivTypes(descrs[0], PyArray_DESCR(out)))) {
         need_outer_iterator = 1;
     }
     /* If input and output overlap in memory, use iterator to figure it out */
@@ -3109,8 +3113,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     op[2] = ind;
 
     if (out != NULL || ndim > 1 || !PyArray_ISALIGNED(arr) ||
-            !PyArray_EquivTypes(descrs[0], PyArray_DESCR(arr)) ||
-            (context.method->flags & NPY_METH_REQUIRES_CONTIGUOUS)) {
+            !PyArray_EquivTypes(descrs[0], PyArray_DESCR(arr))) {
         need_outer_iterator = 1;
     }
 
@@ -3139,12 +3142,6 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                       NPY_ITER_COPY|
                       NPY_ITER_ALIGNED;
         op_flags[2] = NPY_ITER_READONLY;
-
-        if (context.method->flags & NPY_METH_REQUIRES_CONTIGUOUS) {
-            op_flags[0] |= NPY_ITER_CONTIG;
-            op_flags[1] |= NPY_ITER_CONTIG;
-            op_flags[2] |= NPY_ITER_CONTIG;
-        }
 
         op_dtypes[1] = op_dtypes[0];
 

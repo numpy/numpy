@@ -585,6 +585,7 @@ add_sfloats(PyArrayMethod_Context *context,
      * should remain contiguous under NPY_METH_REQUIRES_CONTIGUOUS.
      */
     if (dimensions[0] > 1 &&
+        data[2] != data[0] + strides[2] &&
         ((strides[0] != sizeof(double) && strides[0] != 0) ||
          (strides[1] != sizeof(double) && strides[1] != 0) ||
          (strides[2] != sizeof(double) && strides[2] != 0))) {

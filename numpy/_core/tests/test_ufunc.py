@@ -3358,45 +3358,55 @@ class TestLowlevelAPIAccess:
         tc = np.cos(t)
         assert_equal(tc[0][0], tc[28][414])
 
-def test_ufunc_non_contiguous_basic():
-    # gh-30413
-    a = np.arange(20.0)[::2]
-    b = np.ones(10)
-
-    result = np.add(a, b)
-    expected = np.arange(0, 20, 2) + 1.0
-    assert_array_equal(result, expected)
-
 def test_ufunc_requires_contiguous_flag_sfloat():
-    # gh-30413
-    _scaled_float_dtype = pytest.importorskip("numpy._core._scaled_float_dtype")
+    # gh-30413:
+    from numpy._core._multiarray_umath import _get_sfloat_dtype
 
-    dt = _scaled_float_dtype.scaled_float64
+    SF = _get_sfloat_dtype()
+    dt = SF(1.0)
 
     a_raw = np.arange(10.)
     a = a_raw.astype(dt)
-
     a_non_contig = a[::2]
     assert not a_non_contig.flags.c_contiguous
 
+    # elementwise
     res = np.add(a_non_contig, a_non_contig)
-    expected = (a_raw[::2] + a_raw[::2]).astype(dt)
-    assert_equal(res, expected)
+    assert res.dtype == dt
+    assert_array_equal(res.view(np.float64), a_raw[::2] + a_raw[::2])
+
+    # broadcast (stride-0) input
+    res = np.add(a_non_contig, a[:1])
+    assert_array_equal(res.view(np.float64), a_raw[::2] + a_raw[0])
+
+    # non-contiguous out=
+    out = np.empty(10, dtype=dt)[::2]
+    np.add(a_non_contig, a_non_contig, out=out)
+    assert_array_equal(out.view(np.float64), a_raw[::2] + a_raw[::2])
 
     # accumulate
     res = np.add.accumulate(a_non_contig)
-    expected = np.add.accumulate(a_raw[::2]).astype(dt)
-    assert_equal(res, expected)
+    assert_array_equal(res.view(np.float64), np.add.accumulate(a_raw[::2]))
 
-    # reduce
+    # reduce (scalar result)
     res = np.add.reduce(a_non_contig)
-    expected = np.add.reduce(a_raw[::2]).astype(dt)
-    assert_equal(res, expected)
+    assert res == np.add.reduce(a_raw[::2])
+
+    # reduce along an axis: non-reduced operand is NOT contiguous even
+    # with the flag set (see review discussion)
+    m_raw = np.arange(24.).reshape(4, 6)
+    m = m_raw.astype(dt)[::2, ::2]
+    res = np.add.reduce(m, axis=0)
+    assert_array_equal(res.view(np.float64), np.add.reduce(m_raw[::2, ::2], axis=0))
+
+    # reduceat
+    res = np.add.reduceat(a_non_contig, [0, 2])
+    assert_array_equal(res.view(np.float64), np.add.reduceat(a_raw[::2], [0, 2]))
 
     # outer
     res = np.add.outer(a_non_contig, a_non_contig)
-    expected = np.add.outer(a_raw[::2], a_raw[::2]).astype(dt)
-    assert_equal(res, expected)
+    assert_array_equal(res.view(np.float64),
+                       np.add.outer(a_raw[::2], a_raw[::2]))
 
 class TestUFuncInspectSignature:
     PARAMS_COMMON = {
