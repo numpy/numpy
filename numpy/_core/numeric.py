@@ -534,7 +534,15 @@ def count_nonzero(a, axis=None, *, keepdims=False):
     if axis is None and not keepdims:
         return multiarray.count_nonzero(a)
 
-    a_bool = asanyarray(a, dtype=np.bool)
+    a = asanyarray(a)
+
+    # This is a performance optimization for character dtypes
+    # TODO: this can be removed if the legacy fixed-width string dtypes are ever removed
+    if np.issubdtype(a.dtype, np.character):
+        a_bool = a != a.dtype.type()
+    else:
+        a_bool = a.astype(np.bool, copy=False)
+
     return a_bool.sum(axis=axis, dtype=np.intp, keepdims=keepdims)
 
 
