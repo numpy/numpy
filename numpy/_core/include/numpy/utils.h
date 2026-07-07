@@ -13,6 +13,10 @@
     #endif
 #endif
 
+// Older compilers may name `_Alignas` differently; to allow compilation on such
+// unsupported platforms, we don't redefine NPY_DECL_ALIGNED if it's already
+// defined similar to CPython's _Py_ALIGNED_DEF.
+#ifndef NPY_DECL_ALIGNED
 #if defined(__GNUC__) || defined(__ICC) || defined(__clang__)
     #define NPY_DECL_ALIGNED(x) __attribute__ ((aligned (x)))
 #elif defined(_MSC_VER)
@@ -22,7 +26,7 @@
 #else
     #define NPY_DECL_ALIGNED(x) _Alignas(x)
 #endif
-
+#endif
 /*
  * Force the first field of a struct to be 8-byte aligned on Python 3.15+ to achieve
  * ABI compatibility of `_fields` structs with and without `PyObject_HEAD`.
