@@ -11,6 +11,7 @@
  */
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
+#define Py_LIMITED_API 0x030c0000  /* Python 3.12: NumPy's minimum supported version */
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <assert.h>
@@ -419,10 +420,10 @@ _pocketfft_umath_exec(PyObject *m)
 
 static struct PyModuleDef_Slot _pocketfft_umath_slots[] = {
     {Py_mod_exec, (void*)_pocketfft_umath_exec},
-#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+#if PY_VERSION_HEX >= 0x030c00f0 && (!defined(Py_LIMITED_API) || Py_LIMITED_API >= 0x030c0000) // Python 3.12+
     {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
 #endif
-#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+#if PY_VERSION_HEX >= 0x030d00f0 && (!defined(Py_LIMITED_API) || Py_LIMITED_API >= 0x030d0000) // Python 3.13+
     // signal that this module supports running without an active GIL
     {Py_mod_gil, Py_MOD_GIL_NOT_USED},
 #endif
