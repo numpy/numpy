@@ -482,7 +482,7 @@ device_converter(PyObject *obj, DLDevice *result_device)
 
 
 NPY_NO_EXPORT PyObject *
-array_dlpack_impl(PyArrayObject *self,
+array_dlpack_int(PyArrayObject *self,
     PyObject *stream, PyObject *max_version, DLDevice *result_device,
     NPY_COPYMODE copy_mode)
 {
@@ -564,7 +564,7 @@ array_dlpack(PyArrayObject *self,
         return NULL;
     }
 
-    return array_dlpack_impl(self,
+    return array_dlpack_int(self,
         stream, max_version, &result_device, copy_mode);
 }
 
@@ -615,7 +615,7 @@ gentype_dlpack(PyObject *self,
         return NULL;
     }
 
-    PyObject *result = array_dlpack_impl((PyArrayObject *)array,
+    PyObject *result = array_dlpack_int((PyArrayObject *)array,
         stream, max_version, &result_device, NPY_COPY_IF_NEEDED);
     Py_DECREF(array);
     return result;
