@@ -28,6 +28,8 @@ from typing_extensions import TypeIs, TypeVar, deprecated
 
 import numpy as np
 from numpy import (
+    _CastingKind,
+    _CopyMode,
     _HasDType,
     _HasDTypeWithRealAndImag,
     _ModeKind,
@@ -1879,6 +1881,27 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def put(self, indices: _ArrayLikeInt_co, values: ArrayLike, mode: _ModeKind = "raise") -> None: ...
     def ids(self) -> tuple[int, int]: ...
     def iscontiguous(self) -> bool: ...
+
+    # keep in sync with ndarray.astype
+    @override
+    @overload
+    def astype[ScalarT: generic](
+        self,
+        dtype: _DTypeLike[ScalarT],
+        order: _OrderKACF = "K",
+        casting: _CastingKind = "unsafe",
+        subok: bool = True,
+        copy: bool | _CopyMode = True,
+    ) -> MaskedArray[_ShapeT_co, np.dtype[ScalarT]]: ...
+    @overload
+    def astype(
+        self,
+        dtype: DTypeLike | None,
+        order: _OrderKACF = "K",
+        casting: _CastingKind = "unsafe",
+        subok: bool = True,
+        copy: bool | _CopyMode = True,
+    ) -> MaskedArray[_ShapeT_co, np.dtype]: ...
 
     # Keep in sync with `ma.core.all`
     @overload  # type: ignore[override]
