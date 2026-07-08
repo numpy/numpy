@@ -2297,5 +2297,3 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         return np.polyfit(x[not_m], y[not_m], deg, rcond, full, w, cov)
     else:
         return np.polyfit(x, y, deg, rcond, full, w, cov)
-
-
