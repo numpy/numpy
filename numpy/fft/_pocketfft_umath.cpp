@@ -11,7 +11,6 @@
  */
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
-#define Py_LIMITED_API 0x030c0000  /* Python 3.12: NumPy's minimum supported version */
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <assert.h>
