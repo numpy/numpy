@@ -4840,6 +4840,9 @@ PyUFunc_ReplaceLoopBySignature(PyUFuncObject *func,
             }
             PyObject *sig_tuple = PyArray_TupleFromItems(
                     func->nargs, (PyObject **)sig_dtypes, 0);
+            for (j = 0; j < func->nargs; j++) {
+                Py_DECREF(sig_dtypes[j]);
+            }
             if (sig_tuple == NULL) {
                 PyErr_Clear();
                 break;
