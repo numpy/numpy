@@ -1827,6 +1827,10 @@ def test_unset_na_coercion():
         res = arr + op
         assert_array_equal(res, ["hello2", "world2"])
         assert res.dtype == expected
+        # the promotion must not depend on the operand order
+        res = op + arr
+        assert_array_equal(res, ["2hello", "2world"])
+        assert res.dtype == expected
 
     # dtype instances with distinct explicitly set NA objects are incompatible
     for op_dtype in [StringDType(na_object=pd_NA), StringDType(na_object="")]:
@@ -1859,6 +1863,76 @@ def test_coerce_promotion_commutative():
     assert np.promote_types(dt_no_coerce, dt) == dt_no_coerce
     assert np.promote_types(dt, dt) == dt
     assert np.promote_types(dt_no_coerce, dt_no_coerce) == dt_no_coerce
+
+
+def test_mixed_instance_null_handling():
+    # the rules for picking a result dtype when mixing dtype instances
+    # shouldn't depend on the input order
+    nan_dt = StringDType(na_object=np.nan)
+    plain = np.array(["x", "y"], dtype=StringDType())
+    withna = np.array(["z", np.nan], dtype=nan_dt)
+
+    # missing values propagate through add in both operand orders
+    res = np.add(plain, withna)
+    assert res.dtype == nan_dt
+    assert res[0] == "xz" and np.isnan(res[1])
+    res = np.add(withna, plain)
+    assert res.dtype == nan_dt
+    assert res[0] == "zx" and np.isnan(res[1])
+
+    # nulls sort to the end with a nan-like NA, in both operand orders
+    assert np.isnan(np.maximum(plain, withna)[1])
+    assert np.isnan(np.maximum(withna, plain)[1])
+    assert np.minimum(plain, withna)[1] == "y"
+    assert np.minimum(withna, plain)[1] == "y"
+
+    # a missing value never compares equal to or smaller than a string
+    empty = np.array(["", ""], dtype=StringDType())
+    assert_array_equal(empty == withna, [False, False])
+    assert_array_equal(withna == empty, [False, False])
+    assert_array_equal(empty < withna, [True, False])
+    assert_array_equal(withna < empty, [False, False])
+
+    # operations that reject non-string nulls do so in both orders
+    for a, b in [(plain, withna), (withna, plain)]:
+        with pytest.raises(ValueError, match="not supported"):
+            np.strings.find(a, b)
+
+
+@pytest.mark.parametrize("op", [
+    lambda a, b: np.add(a, b),
+    lambda a, b: np.maximum(a, b),
+    lambda a, b: np.minimum(a, b),
+    lambda a, b: a == b,
+    lambda a, b: a < b,
+    lambda a, b: np.strings.find(a, b),
+    lambda a, b: np.strings.count(a, b),
+    lambda a, b: np.strings.startswith(a, b),
+    lambda a, b: np.strings.endswith(a, b),
+    lambda a, b: np.strings.lstrip(a, b),
+    lambda a, b: np.strings.strip(a, b),
+    lambda a, b: np.strings.replace(a, b, "R"),
+    lambda a, b: np.strings.center(a, 4, b),
+    lambda a, b: np.strings.partition(a, b),
+    lambda a, b: np.strings.rpartition(a, b),
+])
+def test_mixed_instance_string_na_matches_common_instance(op):
+    # with a string na_object, nulls behave like the na string; mixing an
+    # instance that has an na_object with one that does not must give the
+    # same result as casting both operands to the common instance,
+    # regardless of the operand order
+    sdt = StringDType(na_object="M")
+    plain = np.array(["M", "n"], dtype=StringDType())
+    withna = np.array(["M", "q"], dtype=sdt)
+
+    for left, right in [(plain, withna), (withna, plain)]:
+        expected = op(left.astype(sdt), right.astype(sdt))
+        result = op(left, right)
+        if not isinstance(expected, tuple):
+            expected, result = (expected,), (result,)
+        for e, r in zip(expected, result):
+            assert r.dtype == e.dtype
+            assert_array_equal(r, e)
 
 
 def test_repeat(string_array):

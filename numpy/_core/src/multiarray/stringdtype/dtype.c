@@ -211,6 +211,62 @@ stringdtype_compatible_na(PyObject *na1, PyObject *na2, PyObject **out_na) {
     return 0;
 }
 
+// Combine the na_object and coerce attributes of the string descriptors in
+// descrs, ignoring descriptors of other dtypes. The na_objects must be
+// compatible, and coercion is only enabled if it is enabled for all string
+// descriptors. Returns -1 with an error set if two descriptors have
+// incompatible na_objects. out_na_object (a borrowed reference) and
+// out_coerce may be NULL if only the compatibility check is needed.
+NPY_NO_EXPORT int
+stringdtype_common_na_coerce(int ndescrs, PyArray_Descr *const descrs[],
+                             PyObject **out_na_object, int *out_coerce)
+{
+    PyObject *na_object = NULL;
+    int coerce = 1;
+    for (int i = 0; i < ndescrs; i++) {
+        if (NPY_DTYPE(descrs[i]) != &PyArray_StringDType) {
+            continue;
+        }
+        PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)descrs[i];
+        if (stringdtype_compatible_na(na_object, descr->na_object, &na_object) == -1) {
+            return -1;
+        }
+        coerce = coerce && descr->coerce;
+    }
+    if (out_na_object != NULL) {
+        *out_na_object = na_object;
+    }
+    if (out_coerce != NULL) {
+        *out_coerce = coerce;
+    }
+    return 0;
+}
+
+// Select the descriptor that determines how nulls are handled in an
+// operation accepting several string operands whose descriptors may differ,
+// ignoring descriptors of other dtypes. The caller has already checked that
+// the na_objects are compatible, so the first string descriptor with a set
+// na_object determines the null-handling behavior for the whole operation.
+// Returns the first string descriptor if none has an na_object set.
+NPY_NO_EXPORT PyArray_StringDTypeObject *
+stringdtype_effective_na_descr(int ndescrs, PyArray_Descr *const descrs[])
+{
+    PyArray_StringDTypeObject *first = NULL;
+    for (int i = 0; i < ndescrs; i++) {
+        if (NPY_DTYPE(descrs[i]) != &PyArray_StringDType) {
+            continue;
+        }
+        PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)descrs[i];
+        if (descr->na_object != NULL) {
+            return descr;
+        }
+        if (first == NULL) {
+            first = descr;
+        }
+    }
+    return first;
+}
+
 /*
  * This is used to determine the correct dtype to return when dealing
  * with a mix of different dtypes (for example when creating an array
@@ -219,10 +275,11 @@ stringdtype_compatible_na(PyObject *na1, PyObject *na2, PyObject **out_na) {
 static PyArray_StringDTypeObject *
 common_instance(PyArray_StringDTypeObject *dtype1, PyArray_StringDTypeObject *dtype2)
 {
+    PyArray_Descr *descrs[2] = {(PyArray_Descr *)dtype1, (PyArray_Descr *)dtype2};
     PyObject *out_na_object = NULL;
+    int out_coerce = 1;
 
-    if (stringdtype_compatible_na(
-                dtype1->na_object, dtype2->na_object, &out_na_object) == -1) {
+    if (stringdtype_common_na_coerce(2, descrs, &out_na_object, &out_coerce) == -1) {
         PyErr_Format(PyExc_TypeError,
                      "Cannot find common instance for incompatible dtypes "
                      "'%R' and '%R'", (PyObject *)dtype1, (PyObject *)dtype2);
@@ -230,7 +287,7 @@ common_instance(PyArray_StringDTypeObject *dtype1, PyArray_StringDTypeObject *dt
     }
 
     return (PyArray_StringDTypeObject *)new_stringdtype_instance(
-            out_na_object, dtype1->coerce && dtype2->coerce);
+            out_na_object, out_coerce);
 }
 
 /*
@@ -461,17 +518,12 @@ _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
 {
     npy_string_allocator *allocator_a = descr_a->allocator;
     npy_string_allocator *allocator_b = descr_b->allocator;
-    // descr_a and descr_b are either the same object or objects
-    // that are equal, so we can safely refer only to descr_a.
-    // This is enforced in the resolve_descriptors for comparisons
-    //
-    // Note that even though the default_string isn't checked in comparisons,
-    // it will still be the same for both descrs because the value of
-    // default_string is always the empty string unless na_object is a string.
-    int has_null = descr_a->na_object != NULL;
-    int has_string_na = descr_a->has_string_na;
-    int has_nan_na = descr_a->has_nan_na;
-    npy_static_string *default_string = &descr_a->default_string;
+    PyArray_Descr *descrs[2] = {(PyArray_Descr *)descr_a, (PyArray_Descr *)descr_b};
+    PyArray_StringDTypeObject *nadescr = stringdtype_effective_na_descr(2, descrs);
+    int has_null = nadescr->na_object != NULL;
+    int has_string_na = nadescr->has_string_na;
+    int has_nan_na = nadescr->has_nan_na;
+    npy_static_string *default_string = &nadescr->default_string;
     const npy_packed_static_string *ps_a = (npy_packed_static_string *)a;
     npy_static_string s_a = {0, NULL};
     int a_is_null = NpyString_load(allocator_a, ps_a, &s_a);
