@@ -608,7 +608,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str or pathlib.Path
+        path : str or path-like
             Can be a local file or a remote URL. This may, but does not
             have to, include the `baseurl` with which the `Repository` was
             initialized.
@@ -635,7 +635,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str or pathlib.Path
+        path : str or path-like
             Can be a local file or a remote URL. This may, but does not
             have to, include the `baseurl` with which the `Repository` was
             initialized.
@@ -664,7 +664,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str or pathlib.Path
+        path : str or path-like
             Local file path or URL to open. This may, but does not have to,
             include the `baseurl` with which the `Repository` was
             initialized.
@@ -693,7 +693,7 @@ class Repository (DataSource):
 
         Returns
         -------
-        files : list of str or pathlib.Path
+        files : list of str
             List of file names (not containing a directory part).
 
         Notes
