@@ -1792,7 +1792,7 @@ class nditer:
         /,
         op: ArrayLike,
         flags: Sequence[_NDIterFlagsKind] | None = None,
-        op_flags: Sequence[_NDIterFlagsOp] | None = None,
+        op_flags: Sequence[_NDIterFlagsOp] | Sequence[Sequence[_NDIterFlagsOp]] | None = None,
         op_dtypes: DTypeLike | None = None,
         order: _OrderKACF = "K",
         casting: _CastingKind = "safe",
