@@ -221,6 +221,7 @@ assert_type(np.vdot(AR_u1, 1), np.signedinteger)
 assert_type(np.vdot(1.5j, 1), np.complexfloating)
 
 assert_type(np.bincount(AR_i8), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.bincount(AR_i8, weights=AR_i8), np.ndarray[tuple[int], np.dtype[np.float64]])
 
 assert_type(np.copyto(AR_f8, [1., 1.5, 1.6]), None)
 
