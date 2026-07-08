@@ -30,6 +30,10 @@ elif cc.get_id() == 'msvc'
           'when building with MSVC')
   endif
   add_project_arguments('/experimental:c11atomics', language: 'c')
+
+  # Add these for FP environment consistency on newer toolsets
+  add_project_arguments(['/fp:precise', '/fp:except'], language: ['c', 'cpp'])
+  # Alternative if needed: ['/fp:strict']  (stronger but no FMA contractions)
 endif
 if not cy.version().version_compare('>=3.1.0')
   error('NumPy requires Cython >= 3.1.0')
