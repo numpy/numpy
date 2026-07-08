@@ -5489,11 +5489,13 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 #undef _SETCPTR
 
 #undef _PyUFuncObject_GET_ITEM_DATA
+static_assert(NPY_ALIGNOF(PyUFuncObject_fields) <= 8,
+              "PyUFuncObject must not require more than 8-byte alignment");
 /*UFUNC_API*/
 NPY_NO_EXPORT PyUFuncObject_fields *
 _PyUFuncObject_GET_ITEM_DATA(const PyUFuncObject *obj)
 {
-    return (PyUFuncObject_fields *)((char *)obj + sizeof(PyObject));
+    return (PyUFuncObject_fields *)((char *)obj + offsetof(PyUFuncObject_fields, nin));
 }
 
 static void
