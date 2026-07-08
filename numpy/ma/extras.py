@@ -2231,7 +2231,42 @@ vander.__doc__ = ma.doc_note(np.vander.__doc__, vander.__doc__)
 
 def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     """
-    Any masked values in x is propagated in y, and vice-versa.
+    Least squares polynomial fit to data with possible masked values.
+
+    This function is the equivalent of `numpy.polyfit` that takes masked
+    values into account, see `numpy.polyfit` for details.
+
+    Notes
+    -----
+    Any masked values in `x` are propagated to `y`, and vice-versa.
+    A data point is excluded from the fit if either coordinate is masked.
+
+    See Also
+    --------
+    numpy.polyfit : Equivalent function for ndarrays.
+
+    Examples
+    --------
+    >>> import numpy as np
+
+    Fit a line to data with a masked outlier in ``y``:
+
+    >>> x = np.ma.array([0., 1., 2., 3., 4.])
+    >>> y = np.ma.array([1., 3., 5., 7., 999.], mask=[0, 0, 0, 0, 1])
+    >>> np.ma.polyfit(x, y, 1)
+    array([2., 1.])
+
+    Masking a value in ``x`` also excludes the corresponding ``y`` point:
+
+    >>> x = np.ma.array([0., 1., 999., 3., 4.], mask=[0, 0, 1, 0, 0])
+    >>> y = np.ma.array([1., 3., 5., 7., 9.])
+    >>> np.ma.polyfit(x, y, 1)
+    array([2., 1.])
+
+    Without masking, an outlier distorts the fit significantly:
+
+    >>> np.polyfit([0., 1., 2., 3., 4.], [1., 3., 5., 7., 999.], 1)
+    array([ 200., -197.])
 
     """
     x = asarray(x)
@@ -2264,4 +2299,3 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         return np.polyfit(x, y, deg, rcond, full, w, cov)
 
 
-polyfit.__doc__ = ma.doc_note(np.polyfit.__doc__, polyfit.__doc__)
