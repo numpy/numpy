@@ -1,6 +1,6 @@
 import os
-from pathlib import Path
 import urllib.request as urllib_request
+from pathlib import Path
 from shutil import rmtree
 from tempfile import NamedTemporaryFile, mkdtemp, mkstemp
 from urllib.error import URLError
