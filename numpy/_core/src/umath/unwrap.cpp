@@ -71,6 +71,17 @@ floor_mod(npy_longdouble a, npy_longdouble b)
     return m;
 }
 #endif
+/* integer floor-modulo into [0, b); the caller guarantees b > 0. */
+template <typename T>
+static inline std::enable_if_t<std::is_integral_v<T>, T>
+floor_mod(T a, T b)
+{
+    T m = a % b;
+    if (m < 0) {
+        m += b;
+    }
+    return m;
+}
 
 /*
  * One strided loop per real dtype.  `T` is both the storage and the compute
@@ -127,18 +138,9 @@ unwrap_loop(PyArrayMethod_Context *NPY_UNUSED(context), char *const data[],
             op += op_step;
             T cur = *(const T *)ip;
             T dd = cur - prev;
-            T ddmod;
-            if constexpr (std::is_integral_v<T>) {
-                /* floor-modulo into [0, period); period > 0 so a single fixup */
-                T m = (T)((dd - interval_low) % period);
-                if (m < 0) {
-                    m += period;
-                }
-                ddmod = m + interval_low;
-            }
-            else {
-                ddmod = floor_mod(dd - interval_low, period) + interval_low;
-            }
+            /* wrap the raw diff into [interval_low, interval_low + period);
+             * floor_mod dispatches to the integer or floating overload on T. */
+            T ddmod = (T)(floor_mod((T)(dd - interval_low), period) + interval_low);
             if (boundary_ambiguous && ddmod == interval_low && dd > 0) {
                 ddmod = interval_high;
             }
