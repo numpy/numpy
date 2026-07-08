@@ -276,6 +276,12 @@ class TestScalarDLPack:
         x = np.float64(2)
         assert x.__dlpack_device__() == (1, 0)
 
+    def test_dlpack_cannot_view(self):
+        x = np.float64(2)
+
+        with pytest.raises(BufferError, match="copy=False"):
+            np.from_dlpack(x, copy=False)
+
     @pytest.mark.parametrize("dtype", [np.str_, np.datetime64])
     def test_invalid_dtype(self, dtype):
         x = dtype('2021-05-27')

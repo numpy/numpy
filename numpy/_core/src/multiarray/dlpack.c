@@ -482,28 +482,11 @@ device_converter(PyObject *obj, DLDevice *result_device)
 
 
 NPY_NO_EXPORT PyObject *
-array_dlpack(PyArrayObject *self,
-        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+array_dlpack_impl(PyArrayObject *self,
+    PyObject *stream, PyObject *max_version, DLDevice *result_device,
+    NPY_COPYMODE copy_mode)
 {
-    PyObject *stream = Py_None;
-    PyObject *max_version = Py_None;
-    NPY_COPYMODE copy_mode = NPY_COPY_IF_NEEDED;
     long major_version = 0;
-    /* We allow the user to request a result device in principle. */
-    DLDevice result_device = array_get_dl_device(self);
-    if (PyErr_Occurred()) {
-        return NULL;
-    }
-
-    NPY_PREPARE_ARGPARSER;
-    if (npy_parse_arguments("__dlpack__", args, len_args, kwnames,
-            {"$stream", NULL, &stream},
-            {"$max_version", NULL, &max_version},
-            {"$dl_device", &device_converter, &result_device},
-            {"$copy", &PyArray_CopyConverter, &copy_mode})) {
-        return NULL;
-    }
-
     if (max_version != Py_None) {
         if (!PyTuple_Check(max_version) || PyTuple_GET_SIZE(max_version) != 2) {
             PyErr_SetString(PyExc_TypeError,
@@ -551,11 +534,38 @@ array_dlpack(PyArrayObject *self,
      * can then be removed again.
      */
     PyObject *res = create_dlpack_capsule(
-            self, major_version >= 1, &result_device,
+            self, major_version >= 1, result_device,
             copy_mode == NPY_COPY_ALWAYS);
     Py_DECREF(self);
 
     return res;
+}
+
+NPY_NO_EXPORT PyObject *
+array_dlpack(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    PyObject *stream = Py_None;
+    PyObject *max_version = Py_None;
+    NPY_COPYMODE copy_mode = NPY_COPY_IF_NEEDED;
+
+    /* We allow the user to request a result device in principle. */
+    DLDevice result_device = array_get_dl_device(self);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
+
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("__dlpack__", args, len_args, kwnames,
+            {"$stream", NULL, &stream},
+            {"$max_version", NULL, &max_version},
+            {"$dl_device", &device_converter, &result_device},
+            {"$copy", &PyArray_CopyConverter, &copy_mode})) {
+        return NULL;
+    }
+
+    return array_dlpack_impl(self,
+        stream, max_version, &result_device, copy_mode);
 }
 
 NPY_NO_EXPORT PyObject *
@@ -573,12 +583,40 @@ NPY_NO_EXPORT PyObject *
 gentype_dlpack(PyObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
+    PyObject *stream = Py_None;
+    PyObject *max_version = Py_None;
+    NPY_COPYMODE copy_mode = NPY_COPY_IF_NEEDED;
+    DLDevice result_device = {kDLCPU, 0};
+
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("__dlpack__", args, len_args, kwnames,
+            {"$stream", NULL, &stream},
+            {"$max_version", NULL, &max_version},
+            {"$dl_device", &device_converter, &result_device},
+            {"$copy", &PyArray_CopyConverter, &copy_mode})) {
+        return NULL;
+    }
+    if (result_device.device_type != kDLCPU ||
+        result_device.device_id != 0) {
+        PyErr_SetString(PyExc_BufferError,
+            "Cannot export a scalar to DLPack on a non-CPU device.");
+        return NULL;
+    }
+    // scalars cannot be viewed, so reject copy=False otherwise
+    // pass copy=None to the array version
+    if (copy_mode == NPY_COPY_NEVER) {
+        PyErr_SetString(PyExc_BufferError,
+            "Cannot export a scalar to DLPack with copy=False.");
+        return NULL;
+    }
+
     PyObject *array = PyArray_FromScalar(self, NULL);
     if (array == NULL) {
         return NULL;
     }
 
-    PyObject *result = array_dlpack((PyArrayObject *)array, args, len_args, kwnames);
+    PyObject *result = array_dlpack_impl((PyArrayObject *)array,
+        stream, max_version, &result_device, NPY_COPY_IF_NEEDED);
     Py_DECREF(array);
     return result;
 }
