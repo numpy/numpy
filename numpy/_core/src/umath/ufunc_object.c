@@ -4838,8 +4838,8 @@ PyUFunc_ReplaceLoopBySignature(PyUFuncObject *func,
             for (j = 0; j < func->nargs; j++) {
                 sig_dtypes[j] = PyArray_DTypeFromTypeNum(signature[j]);
             }
-            PyObject *sig_tuple = PyArray_TupleFromItems(
-                    func->nargs, (PyObject **)sig_dtypes, 0);
+            PyObject *sig_tuple = PyTuple_FromArray(
+                    (PyObject **)sig_dtypes, func->nargs);
             for (j = 0; j < func->nargs; j++) {
                 Py_DECREF(sig_dtypes[j]);
             }
