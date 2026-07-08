@@ -166,7 +166,7 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
         Mode to open `path`. Mode 'r' for reading, 'w' for writing, 'a' to
         append. Available modes depend on the type of object specified by
         path.  Default is 'r'.
-    destpath : str, optional
+    destpath : str, path-like, or None, optional
         Path to the directory where the source file gets downloaded to for
         use.  If `destpath` is None, a temporary directory will be created.
         The default path is the current directory.
