@@ -238,6 +238,9 @@ assert_type(MAR_f4.ids(), tuple[int, int])
 
 assert_type(MAR_f4.iscontiguous(), bool)
 
+assert_type(np.ma.where(MAR_b), tuple[np.ndarray[tuple[int], np.dtype[np.intp]], ...])
+assert_type(np.ma.where(MAR_b, 0, 1), MaskedArray[Any])
+
 assert_type(MAR_f4 >= 3, MaskedArray[np.bool])
 assert_type(MAR_i8 >= AR_td64, MaskedArray[np.bool])
 assert_type(MAR_b >= AR_td64, MaskedArray[np.bool])
