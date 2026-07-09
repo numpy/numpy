@@ -756,6 +756,76 @@ class TestDateTime:
         assert_equal(np.array(datetime.date(1960, 3, 12), dtype='M8[s]'),
                      np.array(np.datetime64('1960-03-12T00:00:00')))
 
+    def test_pydatetime_subclass_and_duck_typing(self):
+        # Exact datetime.datetime/datetime.date objects are read directly from
+        # the CPython struct via the datetime C-API, while subclasses and
+        # arbitrary duck-typed objects fall back to attribute access.  All
+        # paths must agree.
+
+        # A datetime.datetime subclass goes through the attribute fallback but
+        # still converts to the same value
+        class MyDateTime(datetime.datetime):
+            pass
+        assert_equal(np.datetime64(MyDateTime(2021, 5, 17, 13, 14, 15, 678901)),
+                     np.datetime64('2021-05-17T13:14:15.678901'))
+
+        # A datetime.date subclass likewise, resolving to best unit 'D'
+        class MyDate(datetime.date):
+            pass
+        assert_equal(np.datetime64(MyDate(1999, 12, 31)),
+                     np.datetime64('1999-12-31'))
+        assert_equal(np.datetime64(MyDate(1999, 12, 31)).dtype, np.dtype('M8[D]'))
+
+        # A subclass that overrides an attribute is honored via the fallback,
+        # rather than reading the raw C struct (which would ignore the override)
+        class ShiftedYear(datetime.datetime):
+            @property
+            def year(self):
+                return super().year + 1
+        assert_equal(np.datetime64(ShiftedYear(2021, 5, 17, 13, 14, 15)),
+                     np.datetime64('2022-05-17T13:14:15'))
+
+        # A duck-typed object (not a date/datetime instance) still works via
+        # the attribute-lookup fallback path
+        class DuckDateTime:
+            year, month, day = 2000, 2, 29
+            hour, minute, second, microsecond = 1, 2, 3, 4
+            tzinfo = None
+        assert_equal(np.datetime64(DuckDateTime()),
+                     np.datetime64('2000-02-29T01:02:03.000004'))
+
+        # A duck-typed object with only date attributes -> best unit 'D'
+        class DuckDate:
+            year, month, day = 2010, 4, 16
+        assert_equal(np.datetime64(DuckDate()), np.datetime64('2010-04-16'))
+        assert_equal(np.datetime64(DuckDate()).dtype, np.dtype('M8[D]'))
+
+        # A duck-typed object with only *some* time attributes resolves as a
+        # pure date
+        class DuckPartialTime:
+            year, month, day, hour = 2010, 4, 16, 5  # no minute/second/us
+        assert_equal(np.datetime64(DuckPartialTime()), np.datetime64('2010-04-16'))
+        assert_equal(np.datetime64(DuckPartialTime()).dtype, np.dtype('M8[D]'))
+        assert_equal(np.array([DuckPartialTime()], dtype=object).astype('M8[us]')[0],
+                     np.datetime64('2010-04-16T00:00:00', 'us'))
+
+        # Invalid dates are rejected on both the fast and the fallback path
+        class DuckBadDate:
+            year, month, day = 2001, 2, 29  # not a leap year
+        with assert_raises(ValueError):
+            np.datetime64(DuckBadDate())
+
+    def test_pydatetime_timezone_fast_path(self):
+        # tz-aware datetimes take the fast field-extraction path and then
+        # apply the utcoffset (with the usual deprecation-style warning).
+        tz = datetime.timezone(datetime.timedelta(hours=-8))
+        msg = "no explicit representation of timezones available for " \
+              "np.datetime64"
+        with pytest.warns(UserWarning, match=msg):
+            assert_equal(
+                np.datetime64(datetime.datetime(2000, 1, 1, 0, tzinfo=tz)),
+                np.datetime64('2000-01-01T08'))
+
     def test_datetime_string_conversion(self):
         a = ['2011-03-16', '1920-01-01', '2013-05-19']
         str_a = np.array(a, dtype='S')

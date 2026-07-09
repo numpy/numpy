@@ -16,7 +16,8 @@
 #include "numpyos.h"
 
 #include "npy_config.h"
-
+#include "npy_pycompat.h"  // PyObject_GetOptionalAttr
+#include "npy_static_data.h"
 
 #include "common.h"
 #include "numpy/arrayscalars.h"
@@ -2051,6 +2052,28 @@ add_minutes_to_datetimestruct(npy_datetimestruct *dts, int minutes)
     }
 }
 
+/*
+ * Reads attribute 'name' from 'obj' and converts it to a C long in '*value'.
+ *
+ * Returns 1 on success, 0 if the attribute is absent ('*value' untouched),
+ * and -1 with an exception set on error.
+ */
+static inline int
+pydatetime_attr_to_long(PyObject *obj, PyObject *name, long *value)
+{
+    PyObject *tmp;
+    int found = PyObject_GetOptionalAttr(obj, name, &tmp);
+    if (found <= 0) {
+        return found;  /* 0: absent, -1: error */
+    }
+    *value = PyLong_AsLong(tmp);
+    Py_DECREF(tmp);
+    if (error_converting(*value)) {
+        return -1;
+    }
+    return 1;
+}
+
 /*NUMPY_API
  *
  * Tests for and converts a Python datetime.datetime or datetime.date
@@ -2077,55 +2100,93 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
 {
     PyObject *tmp;
     int isleap;
+    int has_time;
 
     /* Initialize the output to all zeros */
     memset(out, 0, sizeof(npy_datetimestruct));
     out->month = 1;
     out->day = 1;
 
-    /* Need at least year/month/day attributes */
-    if (!PyObject_HasAttrString(obj, "year") ||
-            !PyObject_HasAttrString(obj, "month") ||
-            !PyObject_HasAttrString(obj, "day")) {
+    /*
+     * Fast path for exact datetime.date / datetime.datetime objects: read the
+     * fields straight from the C struct via the datetime C-API macros.
+     * Subclasses may override attribute access, so they take the duck-typed
+     * fallback below instead.
+     */
+    if (PyDate_CheckExact(obj) || PyDateTime_CheckExact(obj)) {
+        out->year = PyDateTime_GET_YEAR(obj);
+        out->month = PyDateTime_GET_MONTH(obj);
+        out->day = PyDateTime_GET_DAY(obj);
+
+        has_time = PyDateTime_CheckExact(obj);
+        if (has_time) {
+            out->hour = PyDateTime_DATE_GET_HOUR(obj);
+            out->min = PyDateTime_DATE_GET_MINUTE(obj);
+            out->sec = PyDateTime_DATE_GET_SECOND(obj);
+            out->us = PyDateTime_DATE_GET_MICROSECOND(obj);
+        }
+        goto validate_and_return;
+    }
+
+    /*
+     * Generic duck-typed fallback for objects that expose date/datetime
+     * attributes without being an exact datetime.date / datetime.datetime
+     * instance (this includes date/datetime subclasses).
+     */
+    long val;
+    int found = pydatetime_attr_to_long(obj, npy_interned_str.year, &val);
+    if (found < 0) {
+        return -1;
+    }
+    if (found == 0) {
         return 1;
     }
+    out->year = val;
 
-    /* Get the year */
-    tmp = PyObject_GetAttrString(obj, "year");
-    if (tmp == NULL) {
+    found = pydatetime_attr_to_long(obj, npy_interned_str.month, &val);
+    if (found < 0) {
         return -1;
     }
-    out->year = PyLong_AsLong(tmp);
-    if (error_converting(out->year)) {
-        Py_DECREF(tmp);
-        return -1;
+    if (found == 0) {
+        return 1;
     }
-    Py_DECREF(tmp);
+    out->month = val;
 
-    /* Get the month */
-    tmp = PyObject_GetAttrString(obj, "month");
-    if (tmp == NULL) {
+    found = pydatetime_attr_to_long(obj, npy_interned_str.day, &val);
+    if (found < 0) {
         return -1;
     }
-    out->month = PyLong_AsLong(tmp);
-    if (error_converting(out->month)) {
-        Py_DECREF(tmp);
-        return -1;
+    if (found == 0) {
+        return 1;
     }
-    Py_DECREF(tmp);
+    out->day = val;
 
-    /* Get the day */
-    tmp = PyObject_GetAttrString(obj, "day");
-    if (tmp == NULL) {
-        return -1;
+    /* Read the time attributes into locals, committing them only if all four
+     * are present. */
+    long time_vals[4];
+    PyObject *const time_names[4] = {
+        npy_interned_str.hour, npy_interned_str.minute,
+        npy_interned_str.second, npy_interned_str.microsecond,
+    };
+    has_time = 1;
+    for (int i = 0; i < 4; i++) {
+        found = pydatetime_attr_to_long(obj, time_names[i], &time_vals[i]);
+        if (found < 0) {
+            return -1;
+        }
+        if (found == 0) {
+            has_time = 0;
+            break;
+        }
     }
-    out->day = PyLong_AsLong(tmp);
-    if (error_converting(out->day)) {
-        Py_DECREF(tmp);
-        return -1;
+    if (has_time) {
+        out->hour = time_vals[0];
+        out->min = time_vals[1];
+        out->sec = time_vals[2];
+        out->us = time_vals[3];
     }
-    Py_DECREF(tmp);
 
+validate_and_return:
     /* Validate that the month and day are valid for the year */
     if (out->month < 1 || out->month > 12) {
         goto invalid_date;
@@ -2136,66 +2197,15 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
         goto invalid_date;
     }
 
-    /* Check for time attributes (if not there, return success as a date) */
-    if (!PyObject_HasAttrString(obj, "hour") ||
-            !PyObject_HasAttrString(obj, "minute") ||
-            !PyObject_HasAttrString(obj, "second") ||
-            !PyObject_HasAttrString(obj, "microsecond")) {
-        /* The best unit for date is 'D' */
+    /* A date with no time component resolves to the 'D' unit */
+    if (!has_time) {
         if (out_bestunit != NULL) {
             *out_bestunit = NPY_FR_D;
         }
         return 0;
     }
 
-    /* Get the hour */
-    tmp = PyObject_GetAttrString(obj, "hour");
-    if (tmp == NULL) {
-        return -1;
-    }
-    out->hour = PyLong_AsLong(tmp);
-    if (error_converting(out->hour)) {
-        Py_DECREF(tmp);
-        return -1;
-    }
-    Py_DECREF(tmp);
-
-    /* Get the minute */
-    tmp = PyObject_GetAttrString(obj, "minute");
-    if (tmp == NULL) {
-        return -1;
-    }
-    out->min = PyLong_AsLong(tmp);
-    if (error_converting(out->min)) {
-        Py_DECREF(tmp);
-        return -1;
-    }
-    Py_DECREF(tmp);
-
-    /* Get the second */
-    tmp = PyObject_GetAttrString(obj, "second");
-    if (tmp == NULL) {
-        return -1;
-    }
-    out->sec = PyLong_AsLong(tmp);
-    if (error_converting(out->sec)) {
-        Py_DECREF(tmp);
-        return -1;
-    }
-    Py_DECREF(tmp);
-
-    /* Get the microsecond */
-    tmp = PyObject_GetAttrString(obj, "microsecond");
-    if (tmp == NULL) {
-        return -1;
-    }
-    out->us = PyLong_AsLong(tmp);
-    if (error_converting(out->us)) {
-        Py_DECREF(tmp);
-        return -1;
-    }
-    Py_DECREF(tmp);
-
+    /* Validate the time */
     if (out->hour < 0 || out->hour >= 24 ||
             out->min < 0 || out->min >= 60 ||
             out->sec < 0 || out->sec >= 60 ||
@@ -2204,20 +2214,18 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
     }
 
     /* Apply the time zone offset if it exists */
-    if (apply_tzinfo && PyObject_HasAttrString(obj, "tzinfo")) {
-        tmp = PyObject_GetAttrString(obj, "tzinfo");
-        if (tmp == NULL) {
+    if (apply_tzinfo) {
+        found = PyObject_GetOptionalAttr(obj, npy_interned_str.tzinfo, &tmp);
+        if (found < 0) {
             return -1;
         }
-        if (tmp == Py_None) {
-            Py_DECREF(tmp);
-        }
-        else {
+        if (found && tmp != Py_None) {
             PyObject *offset;
             int seconds_offset, minutes_offset;
             if (PyErr_WarnEx(PyExc_UserWarning,
                 "no explicit representation of timezones available for np.datetime64",
                 1) < 0) {
+                    Py_DECREF(tmp);
                     return -1;
                 }
 
@@ -2253,6 +2261,10 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
 
             add_minutes_to_datetimestruct(out, -minutes_offset);
         }
+        else {
+            /* tmp is None (or NULL when the attribute is absent) */
+            Py_XDECREF(tmp);
+        }
     }
 
     /* The resolution of Python's datetime is 'us' */
@@ -2264,15 +2276,15 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
 
 invalid_date:
     PyErr_Format(PyExc_ValueError,
-            "Invalid date (%" NPY_INT64_FMT ",%" NPY_INT32_FMT ",%" NPY_INT32_FMT ") when converting to NumPy datetime",
-            out->year, out->month, out->day);
+            "Invalid date (%lld,%d,%d) when converting to NumPy datetime",
+            (long long)out->year, (int)out->month, (int)out->day);
     return -1;
 
 invalid_time:
     PyErr_Format(PyExc_ValueError,
-            "Invalid time (%" NPY_INT32_FMT ",%" NPY_INT32_FMT ",%" NPY_INT32_FMT ",%" NPY_INT32_FMT ") when converting "
+            "Invalid time (%d,%d,%d,%d) when converting "
             "to NumPy datetime",
-            out->hour, out->min, out->sec, out->us);
+            (int)out->hour, (int)out->min, (int)out->sec, (int)out->us);
     return -1;
 }
 
