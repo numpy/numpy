@@ -7,25 +7,14 @@ if not fs.exists('pocketfft/README.md')
   error('Missing the `pocketfft` git submodule! Run `git submodule update --init` to fix this.')
 endif
 
-if py.get_variable('Py_GIL_DISABLED', 0) == 0
-  # Limited API is not supported in free-threaded builds
-  py.extension_module('_pocketfft_umath',
-    ['_pocketfft_umath.cpp'],
-    c_args: largefile_define,
-    dependencies: np_core_dep,
-    install: true,
-    subdir: 'numpy/fft',
-    limited_api: '3.12',
-  )
-else
-  py.extension_module('_pocketfft_umath',
-    ['_pocketfft_umath.cpp'],
-    c_args: largefile_define,
-    dependencies: np_core_dep,
-    install: true,
-    subdir: 'numpy/fft',
-  )
-endif
+py.extension_module('_pocketfft_umath',
+  ['_pocketfft_umath.cpp'],
+  c_args: largefile_define,
+  dependencies: np_core_dep,
+  install: true,
+  subdir: 'numpy/fft',
+  limited_api: py_limited_api,
+)
 
 py.install_sources(
   [
