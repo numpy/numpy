@@ -307,7 +307,7 @@ def top_k(a, k, /, *, axis=-1, mode="largest", sorted=True):
     arr = np.asanyarray(a)
     axis = normalize_axis_index(axis, arr.ndim)
 
-    kth = k - 1 if k > 0 else 0
+    kth = k - 1 if k > 0 else np.array([], dtype=np.intp)
     indices = np.argpartition(arr, kth, axis=axis, descending=largest)
 
     slice_ = (np.s_[:],) * axis + (np.s_[:k],)
