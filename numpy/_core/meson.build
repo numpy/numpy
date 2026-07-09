@@ -856,6 +856,7 @@ test_modules_src = [
   ['_rational_tests', 'src/umath/_rational_tests.c', []],
   ['_struct_ufunc_tests', 'src/umath/_struct_ufunc_tests.c', []],
   ['_operand_flag_tests', 'src/umath/_operand_flag_tests.c', []],
+  ['_reduction_loop_tests', 'src/umath/_reduction_loop_tests.c', []],
 ]
 foreach gen: test_modules_src
   py.extension_module(gen[0],
