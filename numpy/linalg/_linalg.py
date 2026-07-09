@@ -2745,10 +2745,9 @@ def norm(x, ord=None, axis=None, keepdims=False):
             # input: empty or object-dtype arrays don't have this problem and
             # don't support the scalar float()/max() checks, so they fall
             # through with the naive result.
-            if isComplexType(x.dtype.type):
-                sqnorm = vdot(x, x).real
-            else:
-                sqnorm = x.dot(x)
+            # vdot(x, x).real is the sum of squared magnitudes in a single
+            # pass; for real input it is equivalent to x.dot(x).
+            sqnorm = vdot(x, x).real
             ret = sqrt(sqnorm)
             if (x.size and issubclass(x.dtype.type, inexact)
                     and (not math.isfinite(float(ret)) or ret == 0)):
@@ -2758,11 +2757,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
                 # genuinely 0); leave the naive result alone in those cases.
                 if math.isfinite(float(max_abs)) and max_abs != 0:
                     scaled = x / max_abs
-                    if isComplexType(x.dtype.type):
-                        sqnorm = vdot(scaled, scaled).real
-                    else:
-                        sqnorm = scaled.dot(scaled)
-                    ret = max_abs * sqrt(sqnorm)
+                    ret = max_abs * sqrt(vdot(scaled, scaled).real)
             if keepdims:
                 ret = ret.reshape(ndim * [1])
             return ret
