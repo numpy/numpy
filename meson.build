@@ -10,9 +10,6 @@ project(
     'c_std=c11',
     'cpp_std=c++17',
     'pkgconfig.relocatable=true',
-    # Opt-in to build abi3 wheels via `-Dpython.allow_limited_api=true`.
-    # FIXME: Set to true once all extensions are migrated, and add
-    # `limited-api = true` to [tool.meson-python] in pyproject.toml.
     'python.allow_limited_api=false',
   ],
 )
