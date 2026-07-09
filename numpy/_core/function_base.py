@@ -10,6 +10,7 @@ from numpy._core._multiarray_umath import _array_converter
 from numpy._core.multiarray import add_docstring
 
 from . import numeric as _nx
+from .getlimits import iinfo
 from .numeric import asanyarray, nan, ndim, result_type
 
 __all__ = ['logspace', 'linspace', 'geomspace']
@@ -191,6 +192,15 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
 
     if integer_dtype:
         _nx.floor(y, out=y)
+        info = iinfo(dtype)
+        lo = _nx.float64(info.min)
+        hi = _nx.float64(int(info.max) + 1)
+        if not ((y >= lo) & (y < hi)).all():
+            raise ValueError(
+                f"linspace: computed values are not representable in integer "
+                f"dtype {dtype} (values are non-finite or out of range); use a "
+                f"floating-point dtype instead."
+            )
 
     y = conv.wrap(y.astype(dtype, copy=False))
     if retstep:

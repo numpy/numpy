@@ -477,6 +477,30 @@ class TestLinspace:
         t = array([-1, -1, 0, 0, 1, 1, 2, 3], dtype=int)
         assert_array_equal(y, t)
 
+    def test_integer_dtype_representability(self):
+        # Regression tests for gh-31651 and float16 intermediate overflows.
+        with errstate(invalid='ignore', over='ignore'):
+            assert_raises(ValueError, linspace, np.inf, np.inf, 5, dtype=int)
+            assert_raises(ValueError, linspace, np.inf, -np.inf, 5, dtype=int)
+            assert_raises(ValueError, linspace, -np.inf, 0, 5, dtype=int)
+            assert_raises(ValueError, linspace, np.nan, 5, 5, dtype=np.int32)
+            assert_raises(ValueError, linspace, 0, 1e30, 5, dtype=np.int32)
+            assert_raises(ValueError, linspace, 0, 2**63, 2, dtype=np.int64)
+            assert_raises(ValueError, linspace, np.float16(0),
+                          np.float16(-65504), 2081, dtype=np.int32)
+            assert_array_equal(linspace(0, 10, 5, dtype=int),
+                               [0, 2, 5, 7, 10])
+            assert_array_equal(linspace(0, 2**62, 3, dtype=np.int64),
+                               [0, 2305843009213693952,
+                                4611686018427387904])
+            assert_array_equal(
+                linspace(np.longdouble(0), np.longdouble(2**62), 3,
+                         dtype=np.int64),
+                [0, 2305843009213693952, 4611686018427387904])
+            assert_array_equal(linspace(0, 10, 0, dtype=int),
+                               array([], dtype=int))
+            assert_array_equal(linspace(0, 10, 1, dtype=int), [0])
+
     def test_any_step_zero_and_not_mult_inplace(self):
         # any_step_zero is True, _mult_inplace is False
         start = array([0.0, 1.0])

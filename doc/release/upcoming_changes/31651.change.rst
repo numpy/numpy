@@ -1,0 +1,8 @@
+New behavior for linspace with integer dtypes
+--------------------------------------------------
+
+``np.linspace`` with an integer dtype now raises ``ValueError`` when any
+computed value is non-finite (``inf``, ``NaN``) or outside the representable
+range of the requested integer type, instead of silently returning saturated or
+platform-dependent garbage values. Use a floating-point dtype to retain the
+old lossy behavior.
