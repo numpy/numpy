@@ -832,7 +832,7 @@ PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
     /*
      * If a dtype doesn't define `imag_meth` and is numeric, we assume it isn't
      * a complex dtype (`conjugate()` does nothing).
-     * For user defined legacy dtypes we always try the ufunc unless for backwards
+     * For user defined legacy dtypes we always try the ufunc for backwards
      * compatibility (could be deprecated). Unless they flag "numeric" because if
      * they do they live in a future where they could set `imag_meth` as well.
      */
