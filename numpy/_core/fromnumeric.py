@@ -237,7 +237,7 @@ def top_k(a, k, /, *, axis=-1, mode="largest", sorted=True):
         The source array
     k: int
         The number of largest/smallest elements to return. ``k`` must
-        be a positive integer and within indexable range specified by
+        be a non-negative integer and within indexable range specified by
         ``axis``.
     axis: int, optional
         Axis along which to find the largest/smallest elements.
@@ -296,8 +296,8 @@ def top_k(a, k, /, *, axis=-1, mode="largest", sorted=True):
     >>> np.top_k(np.array([1., 2., 3., np.nan]), 2)
     (array([3., 2.]), array([2, 1]))
     """
-    if k <= 0:
-        raise ValueError(f'k(={k}) provided must be positive.')
+    if k < 0:
+        raise ValueError(f'k(={k}) provided must be a non-negative integer.')
     if axis is None:
         raise ValueError('axis=None is not supported. Please provide a valid axis.')
     if mode not in ["largest", "smallest"]:
@@ -307,7 +307,8 @@ def top_k(a, k, /, *, axis=-1, mode="largest", sorted=True):
     arr = np.asanyarray(a)
     axis = normalize_axis_index(axis, arr.ndim)
 
-    indices = np.argpartition(arr, k - 1, axis=axis, descending=largest)
+    kth = k - 1 if k > 0 else 0
+    indices = np.argpartition(arr, kth, axis=axis, descending=largest)
 
     slice_ = (np.s_[:],) * axis + (np.s_[:k],)
     indices = indices[slice_]

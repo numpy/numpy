@@ -3985,9 +3985,9 @@ class TestMethods:
 
         with pytest.raises(
             ValueError,
-            match=r"k\(=0\) provided must be positive."
+            match=r"k\(=-2\) provided must be a non-negative integer."
         ):
-            np.top_k(a, 0)
+            np.top_k(a, -2)
 
         with pytest.raises(
             ValueError,
@@ -4000,6 +4000,12 @@ class TestMethods:
             match=r"axis=None is not supported. Please provide a valid axis."
         ):
             np.top_k(a, 2, axis=None)
+
+        y = (
+            np.array([[], [], []], dtype=np.int8),
+            np.array([[], [], []], dtype=np.intp)
+        )
+        self.assert_top_k(a, 0, -1, y, sorted=sorted)
 
         y = (
             np.array([[4, 5], [4, 5], [4, 5]], dtype=np.int8),
