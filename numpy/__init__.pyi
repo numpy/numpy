@@ -54,8 +54,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     _ScalarLike_co,
     # `number` precision
     NBitBase,
-    # NOTE: Do not remove the extended precision bit-types even if seemingly unused;
-    # they're used by the mypy plugin
     _128Bit,
     _96Bit,
     _64Bit,
@@ -68,9 +66,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     _NBitIntP,
     _NBitLong,
     _NBitLongLong,
-    _NBitHalf,
-    _NBitSingle,
-    _NBitDouble,
     _NBitLongDouble,
     # Character codes
     _BoolCodes,
@@ -123,14 +118,6 @@ from numpy._typing._char_codes import (
     _TD64Codes_any,
     _TD64Codes_int,
     _TD64Codes_timedelta,
-)
-
-# NOTE: Numpy's mypy plugin is used for removing the types unavailable to the specific platform
-from numpy._typing._extended_precision import (
-    float96,
-    float128,
-    complex192,
-    complex256,
 )
 
 from numpy._array_api_info import __array_namespace_info__
@@ -6789,6 +6776,9 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
     def __divmod__(self, other: _Float64_co, /) -> _2Tuple[float64]: ...
     def __rdivmod__(self, other: _Float64_co, /) -> _2Tuple[float64]: ...  # type: ignore[misc]
 
+float96 = floating[_96Bit]
+float128 = floating[_128Bit]
+
 half = float16
 single = float32
 double = float64
@@ -6951,6 +6941,9 @@ class complex128(complexfloating[_64Bit, _64Bit], complex):
     @overload
     def __pow__[NBitT: NBitBase](self, other: complexfloating[NBitT], mod: None = None, /) -> complexfloating[NBitT | _64Bit]: ...
     def __rpow__(self, other: _Complex128_co, mod: None = None, /) -> complex128: ...  # type: ignore[override]
+
+complex192 = complexfloating[_96Bit]
+complex256 = complexfloating[_128Bit]
 
 csingle = complex64
 cdouble = complex128
