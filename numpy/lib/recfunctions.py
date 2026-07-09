@@ -24,11 +24,7 @@ __all__ = [
     ]
 
 
-def _recursive_fill_fields_dispatcher(input, output):
-    return (input, output)
-
-
-@array_function_dispatch(_recursive_fill_fields_dispatcher)
+@array_function_dispatch(("input", "output"))
 def recursive_fill_fields(input, output):
     """
     Fills fields from output with fields from input,
@@ -497,11 +493,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
     return output
 
 
-def _drop_fields_dispatcher(base, drop_names, usemask=None, asrecarray=None):
-    return (base,)
-
-
-@array_function_dispatch(_drop_fields_dispatcher)
+@array_function_dispatch(("base",))
 def drop_fields(base, drop_names, usemask=True, asrecarray=False):
     """
     Return a new array with fields in `drop_names` dropped.
@@ -588,11 +580,7 @@ def _keep_fields(base, keep_names, usemask=True, asrecarray=False):
     return _fix_output(output, usemask=usemask, asrecarray=asrecarray)
 
 
-def _rec_drop_fields_dispatcher(base, drop_names):
-    return (base,)
-
-
-@array_function_dispatch(_rec_drop_fields_dispatcher)
+@array_function_dispatch(("base",))
 def rec_drop_fields(base, drop_names):
     """
     Returns a new numpy.recarray with fields in `drop_names` dropped.
@@ -600,11 +588,7 @@ def rec_drop_fields(base, drop_names):
     return drop_fields(base, drop_names, usemask=False, asrecarray=True)
 
 
-def _rename_fields_dispatcher(base, namemapper):
-    return (base,)
-
-
-@array_function_dispatch(_rename_fields_dispatcher)
+@array_function_dispatch(("base",))
 def rename_fields(base, namemapper):
     """
     Rename the fields from a flexible-datatype ndarray or recarray.
@@ -762,11 +746,7 @@ def rec_append_fields(base, names, data, dtypes=None):
                          asrecarray=True, usemask=False)
 
 
-def _repack_fields_dispatcher(a, align=None, recurse=None):
-    return (a,)
-
-
-@array_function_dispatch(_repack_fields_dispatcher)
+@array_function_dispatch(("a",))
 def repack_fields(a, align=False, recurse=False):
     """
     Re-pack the fields of a structured array or dtype in memory.
@@ -932,11 +912,7 @@ def _common_stride(offsets, counts, itemsize):
     return stride
 
 
-def _structured_to_unstructured_dispatcher(arr, dtype=None, copy=None,
-                                           casting=None):
-    return (arr,)
-
-@array_function_dispatch(_structured_to_unstructured_dispatcher)
+@array_function_dispatch(("arr",))
 def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     """
     Converts an n-D structured array into an (n+1)-D unstructured array.
@@ -1067,11 +1043,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     return arr.view((out_dtype, (sum(counts),)))
 
 
-def _unstructured_to_structured_dispatcher(arr, dtype=None, names=None,
-                                           align=None, copy=None, casting=None):
-    return (arr,)
-
-@array_function_dispatch(_unstructured_to_structured_dispatcher)
+@array_function_dispatch(("arr",))
 def unstructured_to_structured(arr, dtype=None, names=None, align=False,
                                copy=False, casting='unsafe'):
     """
@@ -1179,10 +1151,8 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
     # finally view as the final nested dtype and remove the last axis
     return arr.view(out_dtype)[..., 0]
 
-def _apply_along_fields_dispatcher(func, arr):
-    return (arr,)
 
-@array_function_dispatch(_apply_along_fields_dispatcher)
+@array_function_dispatch(("arr",))
 def apply_along_fields(func, arr):
     """
     Apply function 'func' as a reduction across fields of a structured array.
@@ -1226,10 +1196,8 @@ def apply_along_fields(func, arr):
     # works and avoids axis requirement, but very, very slow:
     #return np.apply_along_axis(func, -1, uarr)
 
-def _assign_fields_by_name_dispatcher(dst, src, zero_unassigned=None):
-    return dst, src
 
-@array_function_dispatch(_assign_fields_by_name_dispatcher)
+@array_function_dispatch(("dst", "src"))
 def assign_fields_by_name(dst, src, zero_unassigned=True):
     """
     Assigns values from one structured array to another by field name.
@@ -1267,10 +1235,8 @@ def assign_fields_by_name(dst, src, zero_unassigned=True):
             assign_fields_by_name(dst[name], src[name],
                                   zero_unassigned)
 
-def _require_fields_dispatcher(array, required_dtype):
-    return (array,)
 
-@array_function_dispatch(_require_fields_dispatcher)
+@array_function_dispatch(("array",))
 def require_fields(array, required_dtype):
     """
     Casts a structured array to a new dtype using assignment by field-name.
@@ -1408,12 +1374,7 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
                        usemask=usemask, asrecarray=asrecarray)
 
 
-def _find_duplicates_dispatcher(
-        a, key=None, ignoremask=None, return_index=None):
-    return (a,)
-
-
-@array_function_dispatch(_find_duplicates_dispatcher)
+@array_function_dispatch(("a",))
 def find_duplicates(a, key=None, ignoremask=True, return_index=False):
     """
     Find the duplicates in a structured array along a given key
@@ -1472,13 +1433,7 @@ def find_duplicates(a, key=None, ignoremask=True, return_index=False):
         return duplicates
 
 
-def _join_by_dispatcher(
-        key, r1, r2, jointype=None, r1postfix=None, r2postfix=None,
-        defaults=None, usemask=None, asrecarray=None):
-    return (r1, r2)
-
-
-@array_function_dispatch(_join_by_dispatcher)
+@array_function_dispatch(("r1", "r2"))
 def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
             defaults=None, usemask=True, asrecarray=False):
     """
@@ -1656,13 +1611,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     return _fix_output(_fix_defaults(output, defaults), **kwargs)
 
 
-def _rec_join_dispatcher(
-        key, r1, r2, jointype=None, r1postfix=None, r2postfix=None,
-        defaults=None):
-    return (r1, r2)
-
-
-@array_function_dispatch(_rec_join_dispatcher)
+@array_function_dispatch(("r1", "r2"))
 def rec_join(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
              defaults=None):
     """

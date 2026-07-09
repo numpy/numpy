@@ -497,11 +497,7 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
                     f"Failed to interpret file {file!r} as a pickle") from e
 
 
-def _save_dispatcher(file, arr, allow_pickle=None):
-    return (arr,)
-
-
-@array_function_dispatch(_save_dispatcher)
+@array_function_dispatch(("arr",))
 def save(file, arr, allow_pickle=True):
     """
     Save an array to a binary file in NumPy ``.npy`` format.
@@ -1389,13 +1385,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 _loadtxt_with_like = array_function_dispatch()(loadtxt)
 
 
-def _savetxt_dispatcher(fname, X, fmt=None, delimiter=None, newline=None,
-                        header=None, footer=None, comments=None,
-                        encoding=None):
-    return (X,)
-
-
-@array_function_dispatch(_savetxt_dispatcher)
+@array_function_dispatch(("X",))
 def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             footer='', comments='# ', encoding=None):
     """

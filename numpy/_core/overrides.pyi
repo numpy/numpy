@@ -29,7 +29,7 @@ def verify_matching_signatures[**Tss](implementation: Callable[Tss, object], dis
 # specifies. Since the dispatcher only returns an iterable of passed array-like args,
 # this overridable behaviour is impossible to annotate.
 def array_function_dispatch[**Tss, FuncLikeT: _FuncLike](
-    dispatcher: _Dispatcher[Tss] | None = None,
+    dispatcher: _Dispatcher[Tss] | tuple[str, ...] | None = None,
     module: str | None = None,
     verify: bool = True,
     docs_from_dispatcher: bool = False,
