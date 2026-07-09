@@ -69,6 +69,7 @@ from numpy._core import (
     tensordot as _core_tensordot,
     trace as _core_trace,
     transpose as _core_transpose,
+    vdot,
     vecdot as _core_vecdot,
     zeros,
 )
@@ -2735,28 +2736,29 @@ def norm(x, ord=None, axis=None, keepdims=False):
             (ord == 2 and ndim == 1)
         ):
             x = x.ravel(order='K')
-            # The naive sum of squares below overflows once it exceeds the
-            # input dtype's maximum, even when the norm itself is
-            # representable - e.g. float16([600, 800]), and for any float
-            # type float64([1e200, 1e200]). Detect that (a non-finite result
-            # from all-finite input) and recompute with a max-scaled sum of
-            # squares, which cannot overflow. See gh-8775.
+            # The naive sum of squares can overflow to inf when the values
+            # exceed the dtype's maximum, or underflow to 0 when they are
+            # tiny, even though the norm itself is representable - e.g.
+            # float16([600, 800]) or float64([1e-200, 1e-200]). When the
+            # naive result is non-finite or zero, recompute with a max-scaled
+            # sum of squares, which is immune to both. See gh-8775.
             if isComplexType(x.dtype.type):
-                x_real = x.real
-                x_imag = x.imag
-                sqnorm = x_real.dot(x_real) + x_imag.dot(x_imag)
+                sqnorm = vdot(x, x).real
             else:
                 sqnorm = x.dot(x)
             ret = sqrt(sqnorm)
-            if not math.isfinite(float(ret)) and isfinite(x).all():
+            if not math.isfinite(float(ret)) or ret == 0:
                 max_abs = abs(x).max()
-                scaled = x / max_abs
-                if isComplexType(x.dtype.type):
-                    sqnorm = (scaled.real.dot(scaled.real)
-                              + scaled.imag.dot(scaled.imag))
-                else:
-                    sqnorm = scaled.dot(scaled)
-                ret = max_abs * sqrt(sqnorm)
+                # A non-finite or zero max means the input itself is
+                # non-finite (inf/nan should propagate) or all-zero (norm is
+                # genuinely 0); leave the naive result alone in those cases.
+                if math.isfinite(float(max_abs)) and max_abs != 0:
+                    scaled = x / max_abs
+                    if isComplexType(x.dtype.type):
+                        sqnorm = vdot(scaled, scaled).real
+                    else:
+                        sqnorm = scaled.dot(scaled)
+                    ret = max_abs * sqrt(sqnorm)
             if keepdims:
                 ret = ret.reshape(ndim * [1])
             return ret
