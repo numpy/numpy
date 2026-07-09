@@ -349,7 +349,36 @@ def flatten_inplace(seq):
 
 def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     """
-    (This docstring should be overwritten)
+    Apply a function to 1-D slices of a masked array along an axis.
+
+    This function is the equivalent of `numpy.apply_along_axis` that returns
+    a masked array.  See `numpy.apply_along_axis` for the full documentation.
+
+    See Also
+    --------
+    numpy.apply_along_axis : Equivalent function for ndarrays.
+
+    Examples
+    --------
+    >>> import numpy as np
+
+    Sum each column, skipping masked values:
+
+    >>> a = np.ma.array([[1, 2, 3],
+    ...                  [4, 5, 6]], mask=[[0, 1, 0],
+    ...                                    [0, 0, 1]])
+    >>> np.ma.apply_along_axis(np.ma.sum, 0, a)
+    masked_array(data=[5, 5, 3],
+                 mask=False,
+           fill_value=999999)
+
+    Compute the mean of each row, ignoring masked values:
+
+    >>> np.ma.apply_along_axis(np.ma.mean, 1, a)
+    masked_array(data=[2. , 4.5],
+                 mask=False,
+           fill_value=1e+20)
+
     """
     arr = array(arr, copy=False, subok=True)
     nd = arr.ndim
@@ -429,7 +458,6 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     return result
 
 
-apply_along_axis.__doc__ = np.apply_along_axis.__doc__
 
 
 def apply_over_axes(func, a, axes):
