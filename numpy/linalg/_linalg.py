@@ -2734,13 +2734,29 @@ def norm(x, ord=None, axis=None, keepdims=False):
             (ord == 2 and ndim == 1)
         ):
             x = x.ravel(order='K')
-            if isComplexType(x.dtype.type):
-                x_real = x.real
-                x_imag = x.imag
-                sqnorm = x_real.dot(x_real) + x_imag.dot(x_imag)
-            else:
-                sqnorm = x.dot(x)
-            ret = sqrt(sqnorm)
+            # The naive sum of squares below overflows once it exceeds the
+            # input dtype's maximum, even when the norm itself is
+            # representable - e.g. float16([600, 800]), and for any float
+            # type float64([1e200, 1e200]). Suppress that overflow warning
+            # and, when it happens, recompute with a max-scaled sum of
+            # squares, which cannot overflow. See gh-8775.
+            with errstate(over='ignore'):
+                if isComplexType(x.dtype.type):
+                    x_real = x.real
+                    x_imag = x.imag
+                    sqnorm = x_real.dot(x_real) + x_imag.dot(x_imag)
+                else:
+                    sqnorm = x.dot(x)
+                ret = sqrt(sqnorm)
+            if not isfinite(ret) and isfinite(x).all():
+                max_abs = abs(x).max()
+                scaled = x / max_abs
+                if isComplexType(x.dtype.type):
+                    sqnorm = (scaled.real.dot(scaled.real)
+                              + scaled.imag.dot(scaled.imag))
+                else:
+                    sqnorm = scaled.dot(scaled)
+                ret = max_abs * sqrt(sqnorm)
             if keepdims:
                 ret = ret.reshape(ndim * [1])
             return ret
