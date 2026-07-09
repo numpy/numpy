@@ -945,6 +945,16 @@ def test_pinv_rtol_arg():
         np.linalg.pinv(a, rcond=0.5, rtol=0.5)
 
 
+@pytest.mark.parametrize("dtype", [np.int32, np.int64])
+def test_pinv_rtol_none_integer(dtype):
+    a = np.array([[1, 2], [3, 4]], dtype=dtype)
+
+    assert_allclose(
+        np.linalg.pinv(a, rtol=None),
+        np.linalg.pinv(a.astype(np.float64), rtol=None),
+    )
+
+
 class DetCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
     def do(self, a, b, tags):
