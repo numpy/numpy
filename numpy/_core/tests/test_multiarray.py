@@ -3983,21 +3983,21 @@ class TestMethods:
             [3, 5, 4, 1, 2]
         ], dtype=np.int8)
 
-        with assert_raises_regex(
+        with pytest.raises(
             ValueError,
-            r"k\(=0\) provided must be positive."
+            match=r"k\(=0\) provided must be positive."
         ):
             np.top_k(a, 0)
 
-        with assert_raises_regex(
+        with pytest.raises(
             ValueError,
-            r'mode\(="invalid"\) must be either "largest" or "smallest".'
+            match=r'mode\(="invalid"\) must be either "largest" or "smallest".'
         ):
             np.top_k(a, 2, mode="invalid")
 
-        with assert_raises_regex(
+        with pytest.raises(
             ValueError,
-            r"axis=None is not supported. Please provide a valid axis."
+            match=r"axis=None is not supported. Please provide a valid axis."
         ):
             np.top_k(a, 2, axis=None)
 
