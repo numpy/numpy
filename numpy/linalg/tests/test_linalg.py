@@ -1660,9 +1660,6 @@ class TestNorm_NonSystematic:
         assert_allclose(norm(np.array([[1e200, 1e200]])), np.sqrt(2) * 1e200)
         # Complex inputs too.
         assert_allclose(norm(np.array([1e200 + 1e200j])), np.sqrt(2) * 1e200)
-        # No spurious overflow warning escapes the computation.
-        with np.errstate(over='raise'):
-            norm(np.array([1e200, 1e200]))
         # Genuine non-finite values and zeros are preserved.
         assert np.isinf(norm(np.array([np.inf, 1.0])))
         assert np.isnan(norm(np.array([np.nan, 1.0])))

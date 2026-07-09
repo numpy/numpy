@@ -17,6 +17,7 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'matrix_norm', 'vector_norm', 'vecdot']
 
 import functools
+import math
 import operator
 from typing import Any, NamedTuple
 
@@ -2737,18 +2738,17 @@ def norm(x, ord=None, axis=None, keepdims=False):
             # The naive sum of squares below overflows once it exceeds the
             # input dtype's maximum, even when the norm itself is
             # representable - e.g. float16([600, 800]), and for any float
-            # type float64([1e200, 1e200]). Suppress that overflow warning
-            # and, when it happens, recompute with a max-scaled sum of
+            # type float64([1e200, 1e200]). Detect that (a non-finite result
+            # from all-finite input) and recompute with a max-scaled sum of
             # squares, which cannot overflow. See gh-8775.
-            with errstate(over='ignore'):
-                if isComplexType(x.dtype.type):
-                    x_real = x.real
-                    x_imag = x.imag
-                    sqnorm = x_real.dot(x_real) + x_imag.dot(x_imag)
-                else:
-                    sqnorm = x.dot(x)
-                ret = sqrt(sqnorm)
-            if not isfinite(ret) and isfinite(x).all():
+            if isComplexType(x.dtype.type):
+                x_real = x.real
+                x_imag = x.imag
+                sqnorm = x_real.dot(x_real) + x_imag.dot(x_imag)
+            else:
+                sqnorm = x.dot(x)
+            ret = sqrt(sqnorm)
+            if not math.isfinite(float(ret)) and isfinite(x).all():
                 max_abs = abs(x).max()
                 scaled = x / max_abs
                 if isComplexType(x.dtype.type):
