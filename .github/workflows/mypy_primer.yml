@@ -58,10 +58,12 @@ jobs:
           echo ''
           cd ..
           # fail action if exit code isn't zero or one
+          # (dedupe is temporarily disabled: https://github.com/dedupeio/dedupe/pull/1229)
           (
             mypy_primer \
             --new v${MYPY_VERSION} --old v${MYPY_VERSION} \
             --known-dependency-selector numpy \
+            --project-selector '^(?!.*dedupeio/dedupe)' \
             --old-prepend-path numpy_base --new-prepend-path numpy_to_test \
             --num-shards 1 --shard-index ${{ matrix.shard-index }} \
             --additional-flags="--python-version=3.12" \
