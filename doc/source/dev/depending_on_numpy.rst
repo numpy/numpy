@@ -201,8 +201,9 @@ NumPy 2.0 ABI handling
 NumPy 2.0 changed the C ABI. The important rule for binary wheels is:
 
 1. Wheels built against NumPy 1.xx **will not work** with NumPy 2.0 or later.
-2. Wheels built against NumPy 2.x **will work** with NumPy 1.xx at runtime
-   (within the exposed feature subset).
+2. Wheels built against NumPy 2.x **will work** with NumPy 1.xx at runtime.
+   How old NumPy versions are supported can be customized with ``NPY_TARGET_VERSION``,
+   see :ref:`depending_on_numpy`.
 
 If your package uses the NumPy C-API (directly or via Cython), you need to
 rebuild and release wheels compiled against NumPy 2.x. Pure Python packages
