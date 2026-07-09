@@ -302,15 +302,6 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         if (arrays_overlap(out, self)) {
             flags |= NPY_ARRAY_ENSURECOPY;
         }
-
-        if (clipmode == NPY_RAISE) {
-            /*
-             * we need to make sure and get a copy
-             * so the input array is not changed
-             * before the error is called
-             */
-            flags |= NPY_ARRAY_ENSURECOPY;
-        }
         dtype = PyArray_DESCR(self);
         out_dtype = PyArray_DESCR(out);
         if (dtype != out_dtype) {

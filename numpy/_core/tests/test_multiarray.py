@@ -6268,6 +6268,38 @@ class TestTake:
         ret = np.take(x, inds, out=out)
         assert ret is out
 
+    def test_out_matches_no_out(self):
+        # gh-28636: with out=, take now writes directly into out instead of
+        # through a temporary copy. The result must match a plain take.
+        rng = np.random.default_rng(1)
+        for dtype in (np.float64, np.int32, np.complex128, np.uint8):
+            x = (rng.random((4, 5, 6)) * 100).astype(dtype)
+            for axis in (0, 1, 2, -1):
+                idx = rng.integers(0, x.shape[axis], size=7)
+                expected = np.take(x, idx, axis=axis)
+                out = np.empty_like(expected)
+                ret = np.take(x, idx, axis=axis, out=out)
+                assert ret is out
+                assert_array_equal(out, expected)
+
+    def test_out_raise_still_raises(self):
+        # gh-28636: an out-of-bounds index must still raise with out=.
+        x = np.arange(10.0)
+        out = np.empty(3)
+        assert_raises(IndexError, np.take, x, [1, 20, 3], out=out)
+        assert_raises(IndexError, np.take, x, [-11, 1, 2], out=out)
+        # valid indices into the same out still work
+        assert_array_equal(np.take(x, [1, 2, 3], out=out), [1, 2, 3])
+
+    def test_out_object_identity(self):
+        # object dtype. references must be copied into out.
+        a, b, c = [1], [2], [3]
+        x = np.empty(3, dtype=object)
+        x[0], x[1], x[2] = a, b, c
+        out = np.empty(3, dtype=object)
+        np.take(x, [2, 0, 1], out=out)
+        assert out[0] is c and out[1] is a and out[2] is b
+
 
 class TestLexsort:
     @pytest.mark.parametrize('dtype', [
