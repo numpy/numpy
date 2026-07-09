@@ -458,8 +458,6 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     return result
 
 
-
-
 def apply_over_axes(func, a, axes):
     """
     (This docstring will be overwritten)
