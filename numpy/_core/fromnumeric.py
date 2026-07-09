@@ -224,7 +224,7 @@ def _top_k_dispatcher(a, k, /, *, axis=-1, mode="largest", sorted=True):
 @array_function_dispatch(_top_k_dispatcher)
 def top_k(a, k, /, *, axis=-1, mode="largest", sorted=True):
     """
-    Returns the ``k`` largest or smallest elements and their indices
+    Returns the ``k`` largest or smallest elements and their
     indices along an axis.
 
     A tuple of ``(values, indices)`` is returned, where ``values`` and
