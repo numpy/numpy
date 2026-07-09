@@ -1660,8 +1660,8 @@ class TestNorm_NonSystematic:
             assert norm(x16).dtype == np.float16
             # Not specific to float16 - any float dtype overflows past sqrt(max).
             assert_allclose(norm(np.array([1e200, 1e200])), np.sqrt(2) * 1e200)
-            # The Frobenius (2-D) case uses the same fast path.
-            assert_allclose(norm(np.array([[1e200, 1e200]])), np.sqrt(2) * 1e200)
+            # Frobenius norm of a 2-D matrix uses the same fast path (gh-19097).
+            assert_allclose(norm(np.array([[1e200, 1e200], [1e200, 1e200]])), 2e200)
             # Complex inputs too.
             assert_allclose(norm(np.array([1e200 + 1e200j])), np.sqrt(2) * 1e200)
             # gh-8775 also covers underflow: a tiny vector whose sum of squares
