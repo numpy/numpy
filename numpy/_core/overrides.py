@@ -123,20 +123,26 @@ def _resolve_relevant_arg_spec(implementation, relevant_arg_names):
             "tuple-spec dispatcher requires at least one relevant "
             "argument name; got empty tuple")
     sig = inspect.signature(implementation)
+    Parameter = inspect.Parameter
     spec = {}  # param name -> (kw_name or None, position)
     for pos, (name, param) in enumerate(sig.parameters.items()):
-        if param.kind is inspect.Parameter.VAR_POSITIONAL:
-            raise RuntimeError(
-                f"tuple-spec dispatch does not support implementations "
-                f"with *args; got {implementation.__qualname__}")
-        if param.kind is inspect.Parameter.VAR_KEYWORD:
-            break
-        if param.kind is inspect.Parameter.KEYWORD_ONLY:
-            spec[name] = (name, -1)
-        elif param.kind is inspect.Parameter.POSITIONAL_ONLY:
-            spec[name] = (None, pos)
-        else:
-            spec[name] = (name, pos)
+        match param.kind:
+            case Parameter.VAR_POSITIONAL:
+                raise RuntimeError(
+                    f"tuple-spec dispatch does not support implementations "
+                    f"with *args; got {implementation.__qualname__}")
+            case Parameter.VAR_KEYWORD:
+                break
+            case Parameter.KEYWORD_ONLY:
+                spec[name] = (name, -1)    # keyword channel only
+            case Parameter.POSITIONAL_ONLY:
+                spec[name] = (None, pos)   # positional channel only
+            case Parameter.POSITIONAL_OR_KEYWORD:
+                spec[name] = (name, pos)   # both channels
+            case _:
+                raise RuntimeError(
+                    f"unsupported parameter kind {param.kind!r} for "
+                    f"{name!r} in {implementation.__qualname__}")
     resolved = []
     for name in relevant_arg_names:
         if not isinstance(name, str):
@@ -166,7 +172,6 @@ def array_function_dispatch(dispatcher=None, module=None, verify=True,
 
         If a tuple of strings: names of positional/keyword arguments of the
         decorated function that should be checked for ``__array_function__``.
-        This skips the Python-level dispatcher call for a small perf win.
 
         If ``None``, the first argument is used as the single `like=` argument
         and not passed on.  A function implementing `like=` must call its

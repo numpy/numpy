@@ -908,7 +908,8 @@ class TestTupleSpecDispatch:
             return a
 
         assert my_func.__name__ == "my_func"
-        assert my_func.__doc__ == "My docstring."
+        if sys.flags.optimize < 2:
+            assert my_func.__doc__ == "My docstring."
 
     def test_kwonly_relevant_arg_excess_positional(self):
         # A kwonly relevant arg (where) must never be read positionally:

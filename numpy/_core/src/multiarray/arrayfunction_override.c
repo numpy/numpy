@@ -61,7 +61,9 @@ is_safe_arg(PyObject *a)
  * Collects arguments with __array_function__ and their corresponding methods
  * in the order in which they should be tried (i.e., skipping redundant types).
  * `items` is a C array of `length` borrowed references.
- * Returns the number of arguments, or -1 on failure.
+ * Returns the number of arguments, or -1 on failure.  Returns 0 without
+ * collecting when no argument can carry an override (the caller then
+ * dispatches to the default implementation).
  */
 static int
 get_implementing_args_and_methods(
@@ -427,17 +429,9 @@ typedef struct {
     PyObject *dict;
     PyObject *relevant_arg_func;
     PyObject *default_impl;
-    /*
-     * Fast-path: if relevant_arg_func is NULL and relevant_arg_positions
-     * is non-NULL, the list of relevant arguments is derived from these
-     * positions/names without calling a Python dispatcher.  Each relevant
-     * arg has two independent lookup channels:
-     *   relevant_arg_positions[i] >= 0: positional index (-1 for
-     *     keyword-only params, which are never matched positionally);
-     *   relevant_arg_names[i] != NULL: interned name for kwarg lookup
-     *     (NULL for positional-only params, never matched by keyword).
-     * Missing args yield Py_None.
-     */
+    /* Tuple-spec fast path (set instead of relevant_arg_func): resolved
+     * (name, position) pairs; see _resolve_relevant_arg_spec and
+     * lookup_relevant_arg for the -1/NULL sentinel semantics. */
     int n_relevant_args;
     int *relevant_arg_positions;
     PyObject **relevant_arg_names;
@@ -543,6 +537,7 @@ lookup_relevant_arg(
         PyObject *const *args, Py_ssize_t nargs,
         PyObject *kwnames, Py_ssize_t nkwargs)
 {
+    assert(i >= 0 && i < self->n_relevant_args);
     int pos = self->relevant_arg_positions[i];
     if (pos >= 0 && pos < nargs) {
         return args[pos];
@@ -734,6 +729,72 @@ cleanup:
 }
 
 
+/*
+ * Fill self's tuple-spec fields from a tuple of (name, position) pairs
+ * (see _resolve_relevant_arg_spec).  Returns -1 with an exception set on
+ * error; partially-filled fields are released by dispatcher_dealloc.
+ */
+static int
+init_relevant_arg_spec(
+        PyArray_ArrayFunctionDispatcherObject *self, PyObject *spec)
+{
+    Py_ssize_t n = PyTuple_GET_SIZE(spec);
+    if (n == 0) {
+        PyErr_SetString(PyExc_ValueError,
+                "tuple-spec dispatcher requires at least one relevant "
+                "argument name; got empty tuple");
+        return -1;
+    }
+    if (n > NPY_MAXARGS) {
+        PyErr_Format(PyExc_ValueError,
+                "too many relevant args (%zd > %d)", n, NPY_MAXARGS);
+        return -1;
+    }
+    self->relevant_arg_positions = PyMem_Malloc(sizeof(int) * n);
+    self->relevant_arg_names = PyMem_Calloc(n, sizeof(PyObject *));
+    if (self->relevant_arg_positions == NULL
+            || self->relevant_arg_names == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+    self->n_relevant_args = (int)n;
+    for (Py_ssize_t i = 0; i < n; i++) {
+        PyObject *pair = PyTuple_GET_ITEM(spec, i);
+        PyObject *name;
+        int pos;
+        if (!PyTuple_Check(pair)) {
+            PyErr_Format(PyExc_TypeError,
+                    "tuple-spec items must be (name, position) tuples, "
+                    "got %.200s", Py_TYPE(pair)->tp_name);
+            return -1;
+        }
+        /* name may be None for positional-only params: never matched
+         * by keyword (a NULL entry skips the kwnames scan). */
+        if (!PyArg_ParseTuple(pair, "Oi", &name, &pos)) {
+            return -1;
+        }
+        if (name == Py_None) {
+            self->relevant_arg_names[i] = NULL;
+        }
+        else if (PyUnicode_Check(name)) {
+            /* Own the reference before interning: InternInPlace may
+             * replace (and release) the object it is given. */
+            Py_INCREF(name);
+            PyUnicode_InternInPlace(&name);
+            self->relevant_arg_names[i] = name;
+        }
+        else {
+            PyErr_Format(PyExc_TypeError,
+                    "tuple-spec arg name must be str or None, got %.200s",
+                    Py_TYPE(name)->tp_name);
+            return -1;
+        }
+        self->relevant_arg_positions[i] = pos;
+    }
+    return 0;
+}
+
+
 static PyObject *
 dispatcher_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwargs)
 {
@@ -772,60 +833,11 @@ dispatcher_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwargs)
         /* NULL relevant_arg_func means we use `like=` */
     }
     else if (PyTuple_CheckExact(relevant_arg_spec)) {
-        /* Tuple-spec: sequence of (name, position) pairs. */
-        Py_ssize_t n = PyTuple_GET_SIZE(relevant_arg_spec);
-        if (n == 0) {
-            PyErr_SetString(PyExc_ValueError,
-                    "tuple-spec dispatcher requires at least one relevant "
-                    "argument name; got empty tuple");
+        /* dispatcher_name/public_name stay NULL: there is no dispatcher
+         * function name to rewrite in TypeError messages. */
+        if (init_relevant_arg_spec(self, relevant_arg_spec) < 0) {
             goto fail;
         }
-        if (n > NPY_MAXARGS) {
-            PyErr_Format(PyExc_ValueError,
-                    "too many relevant args (%zd > %d)", n, NPY_MAXARGS);
-            goto fail;
-        }
-        self->relevant_arg_positions = PyMem_Malloc(sizeof(int) * n);
-        self->relevant_arg_names = PyMem_Calloc(n, sizeof(PyObject *));
-        if (self->relevant_arg_positions == NULL
-                || self->relevant_arg_names == NULL) {
-            PyErr_NoMemory();
-            goto fail;
-        }
-        self->n_relevant_args = (int)n;
-        for (Py_ssize_t i = 0; i < n; i++) {
-            PyObject *pair = PyTuple_GET_ITEM(relevant_arg_spec, i);
-            PyObject *name;
-            int pos;
-            if (!PyTuple_Check(pair)) {
-                PyErr_Format(PyExc_TypeError,
-                        "tuple-spec items must be (name, position) tuples, "
-                        "got %.200s", Py_TYPE(pair)->tp_name);
-                goto fail;
-            }
-            /* name may be None for positional-only params: never matched
-             * by keyword (a NULL entry skips the kwnames scan). */
-            if (!PyArg_ParseTuple(pair, "Oi", &name, &pos)) {
-                goto fail;
-            }
-            if (name == Py_None) {
-                self->relevant_arg_names[i] = NULL;
-            }
-            else if (PyUnicode_Check(name)) {
-                Py_INCREF(name);
-                PyUnicode_InternInPlace(&name);
-                self->relevant_arg_names[i] = name;
-            }
-            else {
-                PyErr_Format(PyExc_TypeError,
-                        "tuple-spec arg name must be str or None, got %.200s",
-                        Py_TYPE(name)->tp_name);
-                goto fail;
-            }
-            self->relevant_arg_positions[i] = pos;
-        }
-        /* No separate dispatcher function; leave *_name NULL so
-         * fix_name_if_typeerror short-circuits. */
     }
     else {
         self->relevant_arg_func = relevant_arg_spec;
@@ -851,7 +863,6 @@ dispatcher_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwargs)
     return (PyObject *)self;
 
 fail:
-    /* Safe: all fields were initialized before the first fallible call. */
     Py_DECREF(self);
     return NULL;
 }
