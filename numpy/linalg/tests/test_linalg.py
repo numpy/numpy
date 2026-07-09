@@ -1648,32 +1648,40 @@ class TestNorm_NonSystematic:
         old_assert_almost_equal(np.linalg.norm(d, ord=3), res, decimal=5)
 
     def test_overflow(self):
-        # gh-8775: the 2-norm must not overflow when the result itself is
-        # representable, even if the intermediate sum of squares is not.
-        # float16: 600**2 + 800**2 overflows float16, but the norm (1000) fits.
-        x16 = np.array([600, 800], dtype=np.float16)
-        assert_allclose(norm(x16), 1000.0, rtol=1e-3)
-        assert norm(x16).dtype == np.float16
-        # Not specific to float16 - any float dtype overflows past sqrt(max).
-        assert_allclose(norm(np.array([1e200, 1e200])), np.sqrt(2) * 1e200)
-        # The Frobenius (2-D) case uses the same fast path.
-        assert_allclose(norm(np.array([[1e200, 1e200]])), np.sqrt(2) * 1e200)
-        # Complex inputs too.
-        assert_allclose(norm(np.array([1e200 + 1e200j])), np.sqrt(2) * 1e200)
-        # gh-8775 also covers underflow: a tiny vector whose sum of squares
-        # underflows to 0 must still return the representable norm, not 0.
-        assert_allclose(norm(np.array([1e-200, 1e-200])), np.sqrt(2) * 1e-200)
-        assert norm(np.array([1e-200, 1e-200])) != 0.0
-        # float32 underflows sooner, but the scaled norm still fits.
-        x32 = np.array([1e-30, 1e-30], dtype=np.float32)
-        assert_allclose(norm(x32), np.sqrt(2) * 1e-30, rtol=1e-3)
-        assert norm(x32) != 0.0 and norm(x32).dtype == np.float32
-        # Complex underflow too.
-        assert_allclose(norm(np.array([1e-200 + 1e-200j])), np.sqrt(2) * 1e-200)
-        # Genuine non-finite values and zeros are preserved.
-        assert np.isinf(norm(np.array([np.inf, 1.0])))
-        assert np.isnan(norm(np.array([np.nan, 1.0])))
-        assert norm(np.zeros(5)) == 0.0
+        # gh-8775: the 2-norm must not overflow to inf or underflow to 0 when
+        # the result itself is representable, even if the intermediate sum of
+        # squares is not. The extreme inputs below legitimately trip fp
+        # warnings in the naive step (which the code then recovers from), so
+        # they are ignored here.
+        with np.errstate(over="ignore", under="ignore", invalid="ignore"):
+            # float16: 600**2 + 800**2 overflows float16, but the norm (1000) fits.
+            x16 = np.array([600, 800], dtype=np.float16)
+            assert_allclose(norm(x16), 1000.0, rtol=1e-3)
+            assert norm(x16).dtype == np.float16
+            # Not specific to float16 - any float dtype overflows past sqrt(max).
+            assert_allclose(norm(np.array([1e200, 1e200])), np.sqrt(2) * 1e200)
+            # The Frobenius (2-D) case uses the same fast path.
+            assert_allclose(norm(np.array([[1e200, 1e200]])), np.sqrt(2) * 1e200)
+            # Complex inputs too.
+            assert_allclose(norm(np.array([1e200 + 1e200j])), np.sqrt(2) * 1e200)
+            # gh-8775 also covers underflow: a tiny vector whose sum of squares
+            # underflows to 0 must still return the representable norm, not 0.
+            assert_allclose(norm(np.array([1e-200, 1e-200])), np.sqrt(2) * 1e-200)
+            assert norm(np.array([1e-200, 1e-200])) != 0.0
+            # float32 underflows sooner, but the scaled norm still fits.
+            x32 = np.array([1e-30, 1e-30], dtype=np.float32)
+            assert_allclose(norm(x32), np.sqrt(2) * 1e-30, rtol=1e-3)
+            assert norm(x32) != 0.0 and norm(x32).dtype == np.float32
+            # Complex underflow too.
+            assert_allclose(norm(np.array([1e-200 + 1e-200j])), np.sqrt(2) * 1e-200)
+            # Genuine non-finite values and zeros are preserved.
+            assert np.isinf(norm(np.array([np.inf, 1.0])))
+            assert np.isnan(norm(np.array([np.nan, 1.0])))
+            assert norm(np.zeros(5)) == 0.0
+        # Empty and object-dtype inputs must take the naive path (no rescale),
+        # i.e. no crash from max()/float() on them (gh-8775 review).
+        assert norm(np.array([], dtype=np.float64)) == 0.0
+        assert_allclose(norm(np.array([3, 4], dtype=object)), 5.0)
 
 
 # Separate definitions so we can use them for matrix tests.

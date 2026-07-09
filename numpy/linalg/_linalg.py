@@ -2736,18 +2736,22 @@ def norm(x, ord=None, axis=None, keepdims=False):
             (ord == 2 and ndim == 1)
         ):
             x = x.ravel(order='K')
-            # The naive sum of squares can overflow to inf when the values
-            # exceed the dtype's maximum, or underflow to 0 when they are
-            # tiny, even though the norm itself is representable - e.g.
-            # float16([600, 800]) or float64([1e-200, 1e-200]). When the
-            # naive result is non-finite or zero, recompute with a max-scaled
-            # sum of squares, which is immune to both. See gh-8775.
+            # For floating-point input the naive sum of squares can overflow
+            # to inf (values past sqrt(dtype max)) or underflow to 0 (tiny
+            # values) even though the norm itself is representable - e.g.
+            # float16([600, 800]) or float64([1e-200, 1e-200]). Recompute those
+            # (rare) cases with a max-scaled sum of squares, which is immune to
+            # both. See gh-8775. Restricted to non-empty real/complex float
+            # input: empty or object-dtype arrays don't have this problem and
+            # don't support the scalar float()/max() checks, so they fall
+            # through with the naive result.
             if isComplexType(x.dtype.type):
                 sqnorm = vdot(x, x).real
             else:
                 sqnorm = x.dot(x)
             ret = sqrt(sqnorm)
-            if not math.isfinite(float(ret)) or ret == 0:
+            if (x.size and issubclass(x.dtype.type, inexact)
+                    and (not math.isfinite(float(ret)) or ret == 0)):
                 max_abs = abs(x).max()
                 # A non-finite or zero max means the input itself is
                 # non-finite (inf/nan should propagate) or all-zero (norm is
