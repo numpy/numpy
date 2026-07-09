@@ -1,0 +1,4 @@
+`numpy.linalg.pinv` handles integer inputs with ``rtol=None``
+--------------------------------------------------------------
+`numpy.linalg.pinv` now accepts integer input arrays when ``rtol=None``
+uses the Array API default tolerance.
