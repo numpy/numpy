@@ -14,15 +14,6 @@ the two below:
 
 .. _typing-extensions: https://pypi.org/project/typing-extensions/
 
-Mypy plugin
------------
-
-.. versionadded:: 1.21
-
-.. automodule:: numpy.typing.mypy_plugin
-
-.. currentmodule:: numpy.typing
-
 Differences from the runtime NumPy API
 --------------------------------------
 
