@@ -488,8 +488,11 @@ class TestLinspace:
             assert_raises(ValueError, linspace, 0, 2**63, 2, dtype=np.int64)
             assert_raises(ValueError, linspace, np.float16(0),
                           np.float16(-65504), 2081, dtype=np.int32)
+            assert_raises(ValueError, linspace, 0, 300, 5, dtype=np.uint8)
             assert_array_equal(linspace(0, 10, 5, dtype=int),
                                [0, 2, 5, 7, 10])
+            assert_array_equal(linspace(0, 255, 6, dtype=np.uint8),
+                               [0, 51, 102, 153, 204, 255])
             assert_array_equal(linspace(0, 2**62, 3, dtype=np.int64),
                                [0, 2305843009213693952,
                                 4611686018427387904])

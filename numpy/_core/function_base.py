@@ -195,7 +195,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         info = iinfo(dtype)
         lo = _nx.float64(info.min)
         hi = _nx.float64(int(info.max) + 1)
-        if not ((y >= lo) & (y < hi)).all():
+        if y.size and not (y.min() >= lo and y.max() < hi):
             raise ValueError(
                 f"linspace: computed values are not representable in integer "
                 f"dtype {dtype} (values are non-finite or out of range); use a "
