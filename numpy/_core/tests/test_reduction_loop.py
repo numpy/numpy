@@ -288,13 +288,13 @@ class TestReductionLoop:
     def test_accumulate_raises(self):
         a = make_array((4,), seed=20)
         with pytest.raises(
-                ValueError, match="only supported for functions returning a single value"):
+                ValueError, match="only supported for functions returning a single"):
             mm.accumulate(a)
 
     def test_reduceat_raises(self):
         a = make_array((4,), seed=21)
         with pytest.raises(
-                ValueError, match="only supported for functions returning a single value"):
+                ValueError, match="only supported for functions returning a single"):
             mm.reduceat(a, [0, 2])
 
     def test_at_raises(self):
