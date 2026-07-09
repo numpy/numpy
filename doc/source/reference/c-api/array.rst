@@ -1851,6 +1851,44 @@ the functions that must be implemented for each slot.
    initial value is correct, since NumPy may call this even when it is not
    strictly necessary to do so.
 
+.. c:macro:: NPY_METH_get_reduction_loop
+
+   .. versionadded:: 2.6
+
+   Registers a dedicated loop for use by :meth:`~numpy.ufunc.reduce`,
+   implemented as a :c:type:`PyArrayMethod_GetLoop` function (the same
+   typedef used for ``NPY_METH_get_loop``). This is required to reduce
+   ufuncs with more than one output, since the "forward" elementwise loop of
+   such a ufunc cannot be used as a reduction loop the way a single-output loop
+   can (by aliasing the output to the first input). Instead, the returned
+   :c:type:`PyArrayMethod_StridedLoop` must implement the reduction
+   directly, with an ``(nout + 1)``-in/``nout``-out signature: it takes the
+   current per-output accumulators followed by one streamed input element,
+   and writes the updated accumulators. That is, for a ufunc whose forward
+   loop has ``nout`` outputs, the *data*, *strides*, and descriptor arrays
+   passed to the reduction loop are laid out as::
+
+       [acc_0, ..., acc_{nout-1}, x, out_0, ..., out_{nout-1}]
+
+   where ``x`` is the streamed element being reduced in and each ``out_i``
+   is aliased to (and typically has stride 0 relative to) the matching
+   ``acc_i``.
+
+   If ``NPY_METH_get_reduction_loop`` is not set, :meth:`~numpy.ufunc.reduce`
+   falls back to ``NPY_METH_get_loop``/``NPY_METH_strided_loop``, which only
+   works for the traditional two-input/one-output case. Calling
+   :meth:`~numpy.ufunc.reduce` on a ufunc with more than one output whose
+   resolved ArrayMethod does not register a reduction loop raises a
+   :exc:`ValueError`. See :ref:`c-api.reduction-loop-tutorial` for a
+   worked example.
+
+   This slot only relaxes the *output* arity: :meth:`~numpy.ufunc.reduce`
+   (as well as :meth:`~numpy.ufunc.accumulate` and
+   :meth:`~numpy.ufunc.reduceat`) still requires the ufunc itself to have
+   exactly two inputs, independent of this slot. Calling any of them on a
+   ufunc with ``nin != 2`` raises a :exc:`ValueError` regardless of
+   ``nout`` or whether a reduction loop is registered.
+
 Flags
 ~~~~~
 

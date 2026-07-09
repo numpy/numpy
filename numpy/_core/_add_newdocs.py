@@ -5406,8 +5406,10 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
         If not provided or None, a freshly-allocated array is returned.
         If passed as a keyword argument, can be Ellipses (``out=...``) to
         ensure an array is returned even if the result is 0-dimensional
-        (which is useful especially for object dtype), or a 1-element tuple
-        (latter for consistency with ``ufunc.__call__``).
+        (which is useful especially for object dtype), or a tuple with one
+        entry per output (latter for consistency with ``ufunc.__call__``).
+        For a ufunc with a single output, a 1-element tuple is also
+        accepted, as before.
 
         .. versionadded:: 2.3
             Support for ``out=...`` was added.
@@ -5416,12 +5418,15 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the original `array`.
-    initial : scalar, optional
+    initial : scalar or tuple of scalars, optional
         The value with which to start the reduction.
         If the ufunc has no identity or the dtype is object, this defaults
         to None - otherwise it defaults to ufunc.identity.
         If ``None`` is given, the first element of the reduction is used,
         and an error is thrown if the reduction is empty.
+        For a ufunc with more than one output (see the note on multiple
+        outputs below), a tuple with one value per output may be given
+        instead of a single scalar. A scalar still seeds every output.
     where : array_like of bool, optional
         A boolean array which is broadcasted to match the dimensions
         of `array`, and selects elements to include in the reduction. Note
@@ -5430,8 +5435,18 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
 
     Returns
     -------
-    r : ndarray
+    r : ndarray or tuple of ndarray
         The reduced array. If `out` was supplied, `r` is a reference to it.
+        For a ufunc with more than one output whose loop implementation
+        registers a reduction loop (see the note below), `r` is instead a
+        tuple with one array per output.
+
+    Notes
+    -----
+    ``reduce`` normally only supports ufuncs with a single output. A ufunc
+    with more than one output can still be reduced if its loop implementation
+    registers a dedicated reduction loop. Otherwise, calling ``reduce`` on it
+    raises a ``ValueError``.
 
     Examples
     --------
