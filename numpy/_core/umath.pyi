@@ -25,7 +25,6 @@ from numpy import (
     _CastingKind,
     _OrderKACF,
     add,
-    arctan2,
     bitwise_and,
     bitwise_or,
     bitwise_xor,
@@ -41,7 +40,6 @@ from numpy import (
     fmod,
     frompyfunc,
     gcd,
-    hypot,
     lcm,
     left_shift,
     matmul,
@@ -6129,6 +6127,12 @@ heaviside: Final[_ufunc_21_f[None]] = ...
 logaddexp: Final[_ufunc_21_f[float]] = ...
 logaddexp2: Final[_ufunc_21_f[float]] = ...
 nextafter: Final[_ufunc_21_f[None]] = ...
+
+# technically these also accept `object_` dtypes, but that requires the underlying python
+# object to have a `.arctan2`/`.hypot()` method, which is unlikely to exist on non-numpy
+# types, so it would be type-unsafe to (explicitly) allow `object_` dtypes here.
+arctan2: Final[_ufunc_21_f[None]] = ...
+hypot: Final[_ufunc_21_f[Literal[0]]] = ...
 
 ###
 # re-exports from `_core._multiarray_umath` that are used by `_core._ufunc_config`

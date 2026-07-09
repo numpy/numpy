@@ -388,6 +388,8 @@ from numpy._core.umath import (
     arcsinh as asinh,
     arctan,
     arctan as atan,
+    arctan2,
+    arctan2 as atan2,
     arctanh,
     arctanh as atanh,
     bitwise_count,
@@ -410,6 +412,7 @@ from numpy._core.umath import (
     greater,
     greater_equal,
     heaviside,
+    hypot,
     invert,
     invert as bitwise_invert,
     invert as bitwise_not,
@@ -7621,7 +7624,6 @@ class ufunc:
 
 # Parameters: `__name__`, `ntypes` and `identity`
 add: _UFunc_Nin2_Nout1[L["add"], L[22], L[0]]
-arctan2: _UFunc_Nin2_Nout1[L["arctan2"], L[5], None]
 bitwise_and: _UFunc_Nin2_Nout1[L["bitwise_and"], L[12], L[-1]]
 bitwise_or: _UFunc_Nin2_Nout1[L["bitwise_or"], L[12], L[0]]
 bitwise_xor: _UFunc_Nin2_Nout1[L["bitwise_xor"], L[12], L[0]]
@@ -7633,7 +7635,6 @@ fmax: _UFunc_Nin2_Nout1[L["fmax"], L[21], None]
 fmin: _UFunc_Nin2_Nout1[L["fmin"], L[21], None]
 fmod: _UFunc_Nin2_Nout1[L["fmod"], L[15], None]
 gcd: _UFunc_Nin2_Nout1[L["gcd"], L[11], L[0]]
-hypot: _UFunc_Nin2_Nout1[L["hypot"], L[5], L[0]]
 lcm: _UFunc_Nin2_Nout1[L["lcm"], L[11], None]
 left_shift: _UFunc_Nin2_Nout1[L["left_shift"], L[11], None]
 matmul: _GUFunc_Nin2_Nout1[L["matmul"], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]]
@@ -7648,7 +7649,6 @@ subtract: _UFunc_Nin2_Nout1[L["subtract"], L[21], None]
 vecdot: _GUFunc_Nin2_Nout1[L["vecdot"], L[19], None, L["(n),(n)->()"]]
 vecmat: _GUFunc_Nin2_Nout1[L["vecmat"], L[19], None, L["(n),(n,m)->(m)"]]
 
-atan2 = arctan2
 concat = concatenate
 bitwise_left_shift = left_shift
 bitwise_right_shift = right_shift
