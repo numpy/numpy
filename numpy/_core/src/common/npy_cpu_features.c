@@ -274,8 +274,8 @@ npy__cpu_check_env(int disable, const char *env) {
     size_t var_len = strlen(env) + 1;
     if (var_len > NPY__MAX_VAR_LEN) {
         PyErr_Format(PyExc_RuntimeError,
-            "Length of environment variable '%s' is %d, only %d accepted",
-            env_name, var_len, NPY__MAX_VAR_LEN
+            "Length of environment variable '%s' is %zu, only %zu accepted",
+            env_name, var_len, (size_t)NPY__MAX_VAR_LEN
         );
         return -1;
     }
