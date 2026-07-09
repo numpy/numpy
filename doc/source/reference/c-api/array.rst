@@ -4301,40 +4301,33 @@ the C-API is needed then some additional steps must be taken.
 Checking the API Version
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Because python extensions are not used in the same way as usual libraries on
-most platforms, some errors cannot be automatically detected at build time or
-even runtime. For example, if you build an extension using a function available
-only for numpy >= 1.3.0, and you import the extension later with numpy 1.2, you
-will not get an import error (but almost certainly a segmentation fault when
-calling the function). That's why several functions are provided to check for
-numpy versions. The macros :c:data:`NPY_VERSION`  and
-:c:data:`NPY_FEATURE_VERSION` corresponds to the numpy version used to build the
-extension, whereas the versions returned by the functions
-:c:func:`PyArray_GetNDArrayCVersion` and :c:func:`PyArray_GetNDArrayCFeatureVersion`
-corresponds to the runtime numpy's version.
+The following definitions allow checking the NumPy compile time version,
+enabled C-API feature version and runtime version.
 
-The rules for ABI and API compatibilities can be summarized as follows:
+ABI and C-API compatibility are automatically checked when calling
+:c:func:`PyArray_ImportNumPyAPI` or :c:func:`import_array` and an error
+will be raised when these are incompatible with the NumPy runtime.
+User code should generally **not** check these manually.
 
-* Whenever :c:data:`NPY_VERSION` != ``PyArray_GetNDArrayCVersion()``, the
-  extension has to be recompiled (ABI incompatibility).
-* :c:data:`NPY_VERSION` == ``PyArray_GetNDArrayCVersion()`` and
-  :c:data:`NPY_FEATURE_VERSION` <= ``PyArray_GetNDArrayCFeatureVersion()`` means
-  backward compatible changes.
-
-ABI incompatibility is automatically detected in every numpy's version. API
-incompatibility detection was added in numpy 1.4.0. If you want to supported
-many different numpy versions with one extension binary, you have to build your
-extension with the lowest :c:data:`NPY_FEATURE_VERSION` as possible.
+For details about NumPy C-API compatibility see
+:ref:`for-downstream-package-authors`.
 
 .. c:macro:: NPY_VERSION
 
-    The current version of the ndarray object (check to see if this
-    variable is defined to guarantee the ``numpy/arrayobject.h`` header is
-    being used).
+    The ABI version of the NumPy headers at compile time.
 
 .. c:macro:: NPY_FEATURE_VERSION
 
-    The current version of the C-API.
+    The version of the NumPy C-API the compilation targets.
+    Setting ``NPY_TARGET_VERSION`` may modify this value to make newer
+    NumPy API features available or, in principle, to be compatible with
+    older NumPy versions.
+
+.. c:macro:: PyArray_RUNTIME_VERSION
+
+    After the C-API has been imported ``PyArray_RUNTIME_VERSION`` is set to
+    the current runtime C-API version. ``PyArray_RUNTIME_VERSION`` is
+    mainly used when necessary to support both old and new NumPy versions.
 
 .. c:function:: unsigned int PyArray_GetNDArrayCVersion(void)
 
