@@ -828,16 +828,16 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
 NPY_NO_EXPORT PyObject *
 PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
 {
-    if (NPY_DT_SLOTS(NPY_DTYPE(PyArray_DTYPE(self)))->imag_meth != NULL
-            || PyArray_ISUSERDEF(self)) {
-        /*
-         * The dtype has `arr.imag` so `conjugate` must exist (or error).
-         * Legacy user-defined dtypes (`type_num >= NPY_USERDEF`) have no
-         * `imag_meth` and are not flagged numeric, but they may register a
-         * `conjugate` ufunc loop (e.g., quaternion), so dispatch to the ufunc
-         * for them as well, preserving the pre-2.5 behavior.  (New-style
-         * user dtypes have `type_num == -1` and are unaffected by this.)
-         */
+    PyArray_DTypeMeta *dtype = NPY_DTYPE(PyArray_DESCR(self));
+    /*
+     * If a dtype doesn't define `imag_meth` and is numeric, we assume it isn't
+     * a complex dtype (`conjugate()` does nothing).
+     * For user defined legacy dtypes we always try the ufunc unless for backwards
+     * compatibility (could be deprecated). Unless they flag "numeric" because if
+     * they do they live in a future where they could set `imag_meth` as well.
+     */
+    if (NPY_DT_SLOTS(dtype)->imag_meth != NULL
+            || (PyArray_ISUSERDEF(self) && !NPY_DT_is_numeric(dtype))) {
         if (out == NULL) {
             return PyArray_GenericUnaryFunction(self,
                                                 n_ops.conjugate);
@@ -849,7 +849,7 @@ PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
         }
     }
     else {
-        if (!NPY_DT_is_numeric(NPY_DTYPE(PyArray_DTYPE(self)))) {
+        if (!NPY_DT_is_numeric(dtype)) {
             PyErr_SetString(PyExc_TypeError,
                             "cannot conjugate non-numeric dtype");
             return NULL;
