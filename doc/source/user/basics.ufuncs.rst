@@ -58,11 +58,14 @@ All ufuncs have 5 methods. 4 reduce-like methods
 (:meth:`~numpy.ufunc.reduce`, :meth:`~numpy.ufunc.accumulate`,
 :meth:`~numpy.ufunc.reduceat`, :meth:`~numpy.ufunc.outer`) and one
 for inplace operations (:meth:`~numpy.ufunc.at`).
-See :ref:`ufuncs.methods` for more. However, these methods only make sense on 
+See :ref:`ufuncs.methods` for more. However, these methods only make sense on
 ufuncs that take two input arguments and return one output argument (so-called
 "scalar" ufuncs since the inner loop operates on a single scalar value).
 Attempting to call these methods on other ufuncs will cause a
-:exc:`ValueError`.
+:exc:`ValueError`, unless the ufunc's loop implementation registers a
+dedicated reduction loop, in which case :meth:`~numpy.ufunc.reduce` (but not
+the other four methods) also works for ufuncs with more than one output; see
+:doc:`c-info.reduction-loop-tutorial` for how to add one to a custom ufunc.
 
 For example, :func:`numpy.add` takes two inputs and returns one output,
 so its methods work::
@@ -70,13 +73,18 @@ so its methods work::
    >>> np.add.reduce([1, 2, 3])
    6
 
-But :func:`numpy.divmod` returns two outputs (quotient and remainder),
-so calling its methods raises an error::
+But :func:`numpy.divmod` returns two outputs (quotient and remainder) and has no
+reduction loop registered, so calling its methods raises an error::
 
    >>> np.divmod.reduce([1, 2, 3])
    Traceback (most recent call last):
        ...
    ValueError: divmod.reduce is not supported: the resolved loop does not register a reduction loop
+
+For a ufunc with more than one output whose loop *does* register a reduction
+loop, :meth:`~numpy.ufunc.reduce` instead returns a tuple with one array per
+output. Its *initial* argument then also accepts either a single value,
+broadcast to every output, or a tuple with one value per output.
 
 The reduce-like methods all take an *axis* keyword, a *dtype*
 keyword, and an *out* keyword, and the arrays must all have dimension >= 1.
