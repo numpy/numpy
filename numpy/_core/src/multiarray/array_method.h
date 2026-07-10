@@ -28,6 +28,22 @@ extern "C" {
             | (flags1 & flags2)))
 
 /*
+ * Cache for a legacy ufunc inner-loop, used only by the legacy wrapping
+ * ArrayMethod (managed in umath/legacy_array_method.c).  An entry is
+ * immutable once published, so a single read of ``cached_legacy_loop``
+ * always yields a consistent loop/user_data pair, even if the loop is
+ * re-registered concurrently.  A replaced entry may still be in use by a
+ * concurrently executing loop, so it is kept alive on the ``prev`` chain
+ * and only freed when the method is deallocated.
+ */
+typedef struct npy_legacy_loop_cache_tag {
+    void *loop;  /* really a PyUFuncGenericFunction */
+    void *user_data;
+    struct npy_legacy_loop_cache_tag *prev;
+} npy_legacy_loop_cache;
+
+
+/*
  * Structure of the ArrayMethod. This structure should probably not be made
  * public. If necessary, we can make certain operations on it public
  * (e.g. to allow users indirect access to `get_strided_loop`).
@@ -65,8 +81,8 @@ typedef struct PyArrayMethodObject_tag {
     PyArrayMethod_TranslateLoopDescriptors *translate_loop_descrs;
     /* Chunk reserved for use by the legacy fallback arraymethod */
     char legacy_initial[sizeof(npy_clongdouble)];  /* initial value storage */
-    void *cached_loop;  /* cached loop function (PyUFuncGenericFunction) */
-    void *cached_loop_data;  /* cached loop user data */
+    /* Cached legacy inner-loop, NULL unless set by the legacy wrapper */
+    npy_legacy_loop_cache *cached_legacy_loop;
 } PyArrayMethodObject;
 
 

@@ -244,7 +244,7 @@ get_loop(PyArrayMethod_Context *context,
         /*
          * The Python int fits in the array dtype: forward to the legacy
          * loop wrapper.  ``patch_cached_int_loop`` pre-populates
-         * ``method->cached_loop`` with the same-type integer comparison
+         * ``method->cached_legacy_loop`` with the same-type integer comparison
          * loop at registration time, so this dispatches via the cached
          * fast path.
          */
@@ -326,10 +326,10 @@ pyint_comparison_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
 
 
 /*
- * Pre-populate ``cached_loop`` on the just-registered (Int, PyInt, Bool)
- * (or reversed) ArrayMethod with the same-type ``(Int, Int, Bool)``
- * comparison loop, so that the same-type forward branch in
- * ``get_loop`` dispatches via the cached fast path.
+ * Pre-populate ``cached_legacy_loop`` on the just-registered
+ * (Int, PyInt, Bool) (or reversed) ArrayMethod with the same-type
+ * ``(Int, Int, Bool)`` comparison loop, so that the same-type forward
+ * branch in ``get_loop`` dispatches via the cached fast path.
  */
 static int
 patch_cached_int_loop(PyUFuncObject *ufunc, PyArray_DTypeMeta *Int,
@@ -368,8 +368,12 @@ patch_cached_int_loop(PyUFuncObject *ufunc, PyArray_DTypeMeta *Int,
         return -1;
     }
     assert(!needs_api);  /* integer comparison loops don't use the Python API */
-    method->cached_loop = (void *)loop;
-    method->cached_loop_data = user_data;
+    npy_legacy_loop_cache *cache = new_legacy_loop_cache(loop, user_data);
+    if (cache == NULL) {
+        Py_DECREF(info);
+        return -1;
+    }
+    publish_legacy_loop_cache(method, cache);
     Py_DECREF(info);
     return 0;
 }
