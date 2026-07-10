@@ -627,7 +627,7 @@ typedef struct _PyArray_Descr_fields {
          * be two type_numbers with the same type
          * object.
          */
-        PyTypeObject *typeobj;
+        _NPY_OPAQUE_FIRST_FIELD PyTypeObject *typeobj;
         /* kind for this type */
         char kind;
         /* unique-character representing this type */
@@ -659,7 +659,7 @@ typedef struct _PyArray_Descr_fields {
 
 typedef struct _PyArray_Descr {
         PyObject_HEAD
-        PyTypeObject *typeobj;
+        _NPY_OPAQUE_FIRST_FIELD PyTypeObject *typeobj;
         char kind;
         char type;
         char byteorder;
@@ -670,7 +670,7 @@ typedef struct _PyArray_Descr {
 /* To access modified fields, define the full 2.0 struct: */
 typedef struct {
         PyObject_HEAD
-        PyTypeObject *typeobj;
+        _NPY_OPAQUE_FIRST_FIELD PyTypeObject *typeobj;
         char kind;
         char type;
         char byteorder;
@@ -697,7 +697,7 @@ typedef struct {
 #ifndef Py_TARGET_ABI3T
         PyObject_HEAD
 #endif
-        PyTypeObject *typeobj;
+        _NPY_OPAQUE_FIRST_FIELD PyTypeObject *typeobj;
         char kind;
         char type;
         char byteorder;
@@ -792,7 +792,7 @@ typedef struct tagPyArrayObject_fields {
     PyObject_HEAD
 #endif
     /* Pointer to the raw data buffer */
-    char *data;
+    _NPY_OPAQUE_FIRST_FIELD char *data;
     /* The number of dimensions, also called 'ndim' */
     int nd;
     /* The size in each dimension, also called 'shape' */
@@ -1219,7 +1219,7 @@ typedef struct PyArrayIterObject_fields {
 #ifndef Py_TARGET_ABI3T
         PyObject_HEAD
 #endif
-        int               nd_m1;            /* number of dimensions - 1 */
+        _NPY_OPAQUE_FIRST_FIELD int nd_m1;      /* number of dimensions - 1 */
         npy_intp          index, size;
         npy_intp          coordinates[NPY_MAXDIMS_LEGACY_ITERS];/* N-dimensional loop */
         npy_intp          dims_m1[NPY_MAXDIMS_LEGACY_ITERS];    /* ao->dimensions - 1 */
@@ -1245,7 +1245,7 @@ typedef struct {
 #ifndef Py_TARGET_ABI3T
         PyObject_HEAD
 #endif
-        int                  numiter;                 /* number of iters */
+        _NPY_OPAQUE_FIRST_FIELD int numiter;              /* number of iters */
         npy_intp             size;                    /* broadcasted size */
         npy_intp             index;                   /* current index */
         int                  nd;                      /* number of dims */
@@ -1292,7 +1292,7 @@ typedef struct {
     /*
      * PyArrayIterObject part: keep this in this exact order
      */
-    int               nd_m1;            /* number of dimensions - 1 */
+    _NPY_OPAQUE_FIRST_FIELD int nd_m1;      /* number of dimensions - 1 */
     npy_intp          index, size;
     npy_intp          coordinates[NPY_MAXDIMS_LEGACY_ITERS];/* N-dimensional loop */
     npy_intp          dims_m1[NPY_MAXDIMS_LEGACY_ITERS];    /* ao->dimensions - 1 */
@@ -1439,6 +1439,7 @@ typedef struct npy_unpacked_static_string {
  */
 typedef struct npy_string_allocator npy_string_allocator;
 
+#ifndef Py_TARGET_ABI3T
 typedef struct {
     PyArray_Descr_fields base;
     // The object representing a null value
@@ -1461,6 +1462,15 @@ typedef struct {
     // no longer needed
     npy_string_allocator *allocator;
 } PyArray_StringDTypeObject;
+#else
+/*
+ * Accessing StringDType instance fields is not supported under the abi3t
+ * stable ABI. The NpyString allocator API still works with the opaque
+ * struct: pass the descriptor object pointer, i.e.
+ * NpyString_acquire_allocator((PyArray_StringDTypeObject *)descr).
+ */
+typedef struct PyArray_StringDTypeObject PyArray_StringDTypeObject;
+#endif
 
 /*
  * PyArray_DTypeMeta related definitions.
