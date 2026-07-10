@@ -2180,8 +2180,11 @@ ArrayMethod spec with the name ``"partition"`` or ``"argpartition"`` respectivel
 The spec must have ``nin=2`` and ``nout=1`` for both partition and argpartition,
 where the first input ``data[0]`` is the array to partition and the second input
 ``data[1]`` is the kth array of indices to partition by. Partitioning is
-inplace, hence we enforce that ``data[0] == data[2]``. Argpartitioning
-returns a new array of indices, so the output must be of ``NPY_INTP`` type.
+inplace, hence we enforce that ``data[0] == data[2]``. ``data[1]`` is always
+a contiguous array of type ``NPY_INTP`` that contains the partition indices.
+If multiple partition indices are given, the array is partitioned for each
+index. Argpartitioning returns a new array of indices, so the output must be of
+``NPY_INTP`` type.
 
 The ``context`` passed to the loop contains the ``parameters`` field which
 for these operations is a ``PyArrayMethod_PartitionParameters *`` struct. This
@@ -2189,7 +2192,8 @@ struct contains a ``flags`` field which is a bitwise OR of ``NPY_SELECTKIND``
 values indicating the kind of partition to perform (that is, whether it is a
 descending partition). If the strided loop depends on the flags, a good way
 to deal with this is to define :c:macro:`NPY_METH_get_loop`, and not set any
-of the other loop slots.
+of the other loop slots. For the loop, ``dimensions[0]`` is the number of
+elements to partition, and ``dimensions[1]`` is the number of partition indices.
 
 .. c:struct:: PyArrayMethod_PartitionParameters
 
