@@ -4282,6 +4282,14 @@ class TestMethods:
         with pytest.raises(TypeError, match="cannot conjugate non-numeric dtype"):
             a.conj()
 
+    def test_conjugate_legacy_user_dtype(self):
+        # gh-31754 : legacy user-defined dtypes are not flagged numeric and have
+        # no `.imag`, but `conjugate` must still dispatch to the ufunc (which
+        # falls back to a cast for `rational`) rather than raising.
+        a = np.array([1, 2, 3], dtype=rational)
+        assert_array_equal(a.conjugate(), np.conjugate(a))
+        assert_array_equal(a.conjugate(), [1, 2, 3])
+
     def test_conjugate_out(self):
         # Minimal test for the out argument being passed on correctly
         # NOTE: The ability to pass `out` is currently undocumented!
