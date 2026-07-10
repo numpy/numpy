@@ -402,6 +402,7 @@ from numpy._core.umath import (
     cosh,
     deg2rad,
     degrees,
+    divide,
     equal,
     exp,
     exp2,
@@ -7627,7 +7628,6 @@ add: _UFunc_Nin2_Nout1[L["add"], L[22], L[0]]
 bitwise_and: _UFunc_Nin2_Nout1[L["bitwise_and"], L[12], L[-1]]
 bitwise_or: _UFunc_Nin2_Nout1[L["bitwise_or"], L[12], L[0]]
 bitwise_xor: _UFunc_Nin2_Nout1[L["bitwise_xor"], L[12], L[0]]
-divide: _UFunc_Nin2_Nout1[L["divide"], L[11], None]
 divmod: _UFunc_Nin2_Nout2[L["divmod"], L[15], None]
 float_power: _UFunc_Nin2_Nout1[L["float_power"], L[4], None]
 floor_divide: _UFunc_Nin2_Nout1[L["floor_divide"], L[21], None]
