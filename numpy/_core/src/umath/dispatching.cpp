@@ -250,21 +250,85 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
             }
         }
         else if (ufunc == npy_interned_str.sort) {
+            if (slot->spec->nin != 1 || slot->spec->nout != 1) {
+                PyErr_Format(PyExc_ValueError,
+                        "Sort method spec must have nin=1 and nout=1, got %d and %d",
+                        slot->spec->nin, slot->spec->nout);
+                goto finish;
+            }
+            if (slot->spec->dtypes[0] != slot->spec->dtypes[1]) {
+                PyErr_Format(PyExc_ValueError,
+                        "Sort method spec must have the same input and output dtypes, got %R and %R",
+                        slot->spec->dtypes[0], slot->spec->dtypes[1]);
+                goto finish;
+            }
+
             if (set_static_method<&NPY_DType_Slots::sort_meth, false>(slot->spec) < 0) {
                 goto finish;
             }
         }
         else if (ufunc == npy_interned_str.argsort) {
+            if (slot->spec->nin != 1 || slot->spec->nout != 1) {
+                PyErr_Format(PyExc_ValueError,
+                        "Argsort method spec must have nin=1 and nout=1, got %d and %d",
+                        slot->spec->nin, slot->spec->nout);
+                goto finish;
+            }
+            if (slot->spec->dtypes[1] != &PyArray_IntpDType) {
+                PyErr_Format(PyExc_ValueError,
+                        "Argsort method spec must have output dtype intp, got %R",
+                        slot->spec->dtypes[1]);
+                goto finish;
+            }
+
             if (set_static_method<&NPY_DType_Slots::argsort_meth, false>(slot->spec) < 0) {
                 goto finish;
             }
         }
         else if (ufunc == npy_interned_str.partition) {
+            if (slot->spec->nin != 2 || slot->spec->nout != 1) {
+                PyErr_Format(PyExc_ValueError,
+                        "Partition method spec must have nin=2 and nout=1, got %d and %d",
+                        slot->spec->nin, slot->spec->nout);
+                goto finish;
+            }
+            if (slot->spec->dtypes[0] != slot->spec->dtypes[2]) {
+                PyErr_Format(PyExc_ValueError,
+                        "Partition method spec must have the same input array and output dtypes, got %R and %R",
+                        slot->spec->dtypes[0], slot->spec->dtypes[2]);
+                goto finish;
+            }
+            if (slot->spec->dtypes[1] != &PyArray_IntpDType) {
+                PyErr_Format(PyExc_ValueError,
+                        "Partition method spec must have kth dtype intp, got %R",
+                        slot->spec->dtypes[1]);
+                goto finish;
+            }
+
             if (set_static_method<&NPY_DType_Slots::part_meth, false>(slot->spec) < 0) {
                 goto finish;
             }
         }
         else if (ufunc == npy_interned_str.argpartition) {
+            if (slot->spec->nin != 2 || slot->spec->nout != 1) {
+                PyErr_Format(PyExc_ValueError,
+                        "Argpartition method spec must have nin=2 and nout=1, got %d and %d",
+                        slot->spec->nin, slot->spec->nout);
+                goto finish;
+            }
+            if (slot->spec->dtypes[2] != &PyArray_IntpDType) {
+                PyErr_Format(PyExc_ValueError,
+                        "Argpartition method spec must have output dtype intp, got %R",
+                        slot->spec->dtypes[2]);
+                goto finish;
+            }
+            if (slot->spec->dtypes[1] != &PyArray_IntpDType) {
+                PyErr_Format(PyExc_ValueError,
+                        "Argpartition method spec must have kth dtype intp, got %R",
+                        slot->spec->dtypes[1]);
+                goto finish;
+            }
+
             if (set_static_method<&NPY_DType_Slots::argpart_meth, false>(slot->spec) < 0) {
                 goto finish;
             }
