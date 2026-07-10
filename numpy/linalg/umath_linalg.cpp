@@ -4681,7 +4681,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
 };
 
 static int
-addUfuncs(PyObject *dictionary) {
+addUfuncs(PyObject *module) {
     PyUFuncObject *f;
     int i;
     const int gufunc_count = sizeof(gufunc_descriptors)/
@@ -4707,7 +4707,7 @@ addUfuncs(PyObject *dictionary) {
 #if _UMATH_LINALG_DEBUG
         dump_ufunc_object((PyUFuncObject*) f);
 #endif
-        int ret = PyDict_SetItemString(dictionary, d->name, (PyObject *)f);
+        int ret = PyModule_AddObjectRef(module, d->name, (PyObject *)f);
         Py_DECREF(f);
         if (ret < 0) {
             return -1;
@@ -4730,7 +4730,6 @@ static int module_loaded = 0;
 static int
 _umath_linalg_exec(PyObject *m)
 {
-    PyObject *d;
     PyObject *version;
 
     // https://docs.python.org/3/howto/isolating-extensions.html#opt-out-limiting-to-one-module-object-per-process
@@ -4748,23 +4747,18 @@ _umath_linalg_exec(PyObject *m)
         return -1;
     }
 
-    d = PyModule_GetDict(m);
-    if (d == NULL) {
-        return -1;
-    }
-
     version = PyUnicode_FromString(umath_linalg_version_string);
     if (version == NULL) {
         return -1;
     }
-    int ret = PyDict_SetItemString(d, "__version__", version);
+    int ret = PyModule_AddObjectRef(m, "__version__", version);
     Py_DECREF(version);
     if (ret < 0) {
         return -1;
     }
 
     /* Load the ufunc operators into the module's namespace */
-    if (addUfuncs(d) < 0) {
+    if (addUfuncs(m) < 0) {
         return -1;
     }
 
@@ -4777,9 +4771,13 @@ _umath_linalg_exec(PyObject *m)
 #endif
 
 #ifdef HAVE_BLAS_ILP64
-    PyDict_SetItemString(d, "_ilp64", Py_True);
+    if (PyModule_AddObjectRef(m, "_ilp64", Py_True) < 0) {
+        return -1;
+    }
 #else
-    PyDict_SetItemString(d, "_ilp64", Py_False);
+    if (PyModule_AddObjectRef(m, "_ilp64", Py_False) < 0) {
+        return -1;
+    }
 #endif
 
     return 0;
