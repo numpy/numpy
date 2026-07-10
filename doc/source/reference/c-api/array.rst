@@ -2180,7 +2180,7 @@ ArrayMethod spec with the name ``"partition"`` or ``"argpartition"`` respectivel
 The spec must have ``nin=2`` and ``nout=1`` for both partition and argpartition,
 where the first input ``data[0]`` is the array to partition and the second input
 ``data[1]`` is the kth array of indices to partition by. Partitioning is
-inplace, hence we enforce  that ``data[0] == data[2]``. Argpartitioning
+inplace, hence we enforce that ``data[0] == data[2]``. Argpartitioning
 returns a new array of indices, so the output must be of ``NPY_INTP`` type.
 
 The ``context`` passed to the loop contains the ``parameters`` field which
