@@ -1243,6 +1243,19 @@ User-defined data types
         The struct is not a valid Python object, so do not use ``Py_DECREF``
         on it.
 
+        **Transitioning to the new DType API**
+
+        Users currently using the old DType API may not be able to easily
+        transition due to NumPy issues that would cause regressions.
+        While new DTypes may reasonably limit themselves to newer NumPy
+        versions, existing DTypes cannot do so.
+
+        You can transition to the new DType API by using the
+        :c:macro:`NPY_DT_legacy_descriptor_proto` slot when registering.
+        This slot is available when compiling with NumPy 2.5 and provides
+        support for NumPy 2.0 and higher (it can also be vendored to compile
+        on older versions of NumPy).
+
     Register a data-type as a new user-defined data type for
     arrays. The type must have most of its entries filled in. This is
     not always checked and errors can produce segfaults. In
@@ -1277,6 +1290,11 @@ User-defined data types
     *totype*. Any old casting function is over-written. A ``0`` is
     returned on success or a ``-1`` on failure.
 
+    .. note::
+        This function will eventually be deprecated. Please migrate to the new
+        DType API for casts.  See :c:macro:`NPY_DT_legacy_descriptor_proto`
+        for details.
+
     .. c:type:: PyArray_VectorUnaryFunc
 
         The function pointer type for low-level casting functions.
@@ -1289,6 +1307,12 @@ User-defined data types
     *scalar* = :c:data:`NPY_NOSCALAR` to register that an array of data-type
     *descr* can be cast safely to a data-type whose type_number is
     *totype*. The return value is 0 on success or -1 on failure.
+
+    .. note::
+        This function will eventually be deprecated. Please migrate to the new
+        DType API for casts.  See :c:macro:`NPY_DT_legacy_descriptor_proto`
+        for details.  The new DType API provides more flexibility and speed
+        even for dtypes compatible with the legacy API.
 
 
 Special functions for NPY_OBJECT
@@ -2026,7 +2050,7 @@ with the rest of the ArrayMethod API.
     The new descriptors MUST be viewable with the old ones, `NULL` must be
     supported (for output arguments) and should normally be forwarded.
 
-    The output of of this function will be used to construct
+    The output of this function will be used to construct
     views of the arguments as if they were the translated dtypes and
     does not use a cast. This means this mechanism is mostly useful for
     DTypes that "wrap" another DType implementation. For example, a unit
@@ -3541,6 +3565,11 @@ Also see :ref:`dtypemeta` for documentation on ``PyArray_DTypeMeta`` and
  the examples in the ``numpy-user-dtypes`` repository for usage with both
  parametric and non-parametric data types.
 
+ .. note::
+
+    Custom DType registration is expected to happen during module import.
+    The registration API mutates global state and is not thread-safe.
+
 .. _dtype-flags:
 
 Flags
@@ -3571,6 +3600,37 @@ Slot IDs and API Function Typedefs
 These IDs correspond to slots in the DType API and are used to identify
 implementations of each slot from the items of the ``slots`` array
 member of ``PyArrayDTypeMeta_Spec`` struct.
+
+.. c:macro:: NPY_DT_legacy_descriptor_proto
+
+   Compatibility slot to transition legacy dtypes to the new DType API.
+   Existing legacy dtypes that currently use ``PyArray_RegisterDataType``
+   should use this to transition to the new DType API.
+   The value of this slot is the ``PyArray_DescrProto`` struct.
+
+   This slot allows an *existing* legacy DType to use the new DType API
+   without breaking backwards compatibility (or with very minor changes).
+   I.e. NumPy will still consider this a "legacy" DType and use old code paths
+   where applicable, but use new features as they become available.
+
+   If used, this slot is required to be the first slot.  The ``ArrFuncs``
+   fields are copied, but you may also set them via the slots below.
+   (This allows backporting e.g. sorts, although NumPy 2.4+ does support
+   a new way to implement sorts.)
+
+   .. versionadded:: 2.5
+
+      This feature is added in NumPy 2.5, but is backported to be compatible
+      with NumPy 2.0+.  You can vendor this backport from ``npy_2_compat.h``
+      if you wish to compile with older NumPy versions.
+
+   .. note::
+      This slot exists for DTypes that currently use
+      ``PyArray_RegisterDataType`` allowing them to transition when otherwise
+      regressions would block them from doing so.
+      It is a path for deprecating ``PyArray_RegisterDataType``,
+      ``PyArray_RegisterCastFunc``, ``PyArray_RegisterCanCast`` and further
+      slots in the future.
 
 .. c:macro:: NPY_DT_discover_descr_from_pyobject
 
@@ -3671,6 +3731,11 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
    may be unaligned and is uninitialized.
    Returns 1 on success, 0 if the constant is not available,
    or -1 with an error set.
+
+   Implementing all ``finfo`` constants allows the DType to be used together
+   with `numpy.finfo`. Complex dtypes can support ``finfo`` by implementing the
+   ``imag`` and ``real`` slots (see  :c:func:`PyUFunc_AddLoopFromSpec`) when
+   the corresponding real DType implements it.
 
    **Constant IDs**:
 
@@ -4023,7 +4088,7 @@ Other conversions
 
     Convert any Python sequence (or single Python number) passed in as
     *seq* to (up to) *maxvals* pointer-sized integers and place them
-    in the *vals* array. The sequence can be smaller then *maxvals* as
+    in the *vals* array. The sequence can be smaller than *maxvals* as
     the number of converted objects is returned.
 
 .. _including-the-c-api:
@@ -4236,40 +4301,33 @@ the C-API is needed then some additional steps must be taken.
 Checking the API Version
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Because python extensions are not used in the same way as usual libraries on
-most platforms, some errors cannot be automatically detected at build time or
-even runtime. For example, if you build an extension using a function available
-only for numpy >= 1.3.0, and you import the extension later with numpy 1.2, you
-will not get an import error (but almost certainly a segmentation fault when
-calling the function). That's why several functions are provided to check for
-numpy versions. The macros :c:data:`NPY_VERSION`  and
-:c:data:`NPY_FEATURE_VERSION` corresponds to the numpy version used to build the
-extension, whereas the versions returned by the functions
-:c:func:`PyArray_GetNDArrayCVersion` and :c:func:`PyArray_GetNDArrayCFeatureVersion`
-corresponds to the runtime numpy's version.
+The following definitions allow checking the NumPy compile time version,
+enabled C-API feature version and runtime version.
 
-The rules for ABI and API compatibilities can be summarized as follows:
+ABI and C-API compatibility are automatically checked when calling
+:c:func:`PyArray_ImportNumPyAPI` or :c:func:`import_array` and an error
+will be raised when these are incompatible with the NumPy runtime.
+User code should generally **not** check these manually.
 
-* Whenever :c:data:`NPY_VERSION` != ``PyArray_GetNDArrayCVersion()``, the
-  extension has to be recompiled (ABI incompatibility).
-* :c:data:`NPY_VERSION` == ``PyArray_GetNDArrayCVersion()`` and
-  :c:data:`NPY_FEATURE_VERSION` <= ``PyArray_GetNDArrayCFeatureVersion()`` means
-  backward compatible changes.
-
-ABI incompatibility is automatically detected in every numpy's version. API
-incompatibility detection was added in numpy 1.4.0. If you want to supported
-many different numpy versions with one extension binary, you have to build your
-extension with the lowest :c:data:`NPY_FEATURE_VERSION` as possible.
+For details about NumPy C-API compatibility see
+:ref:`for-downstream-package-authors`.
 
 .. c:macro:: NPY_VERSION
 
-    The current version of the ndarray object (check to see if this
-    variable is defined to guarantee the ``numpy/arrayobject.h`` header is
-    being used).
+    The ABI version of the NumPy headers at compile time.
 
 .. c:macro:: NPY_FEATURE_VERSION
 
-    The current version of the C-API.
+    The version of the NumPy C-API the compilation targets.
+    Setting ``NPY_TARGET_VERSION`` may modify this value to make newer
+    NumPy API features available or, in principle, to be compatible with
+    older NumPy versions.
+
+.. c:macro:: PyArray_RUNTIME_VERSION
+
+    After the C-API has been imported ``PyArray_RUNTIME_VERSION`` is set to
+    the current runtime C-API version. ``PyArray_RUNTIME_VERSION`` is
+    mainly used when necessary to support both old and new NumPy versions.
 
 .. c:function:: unsigned int PyArray_GetNDArrayCVersion(void)
 
@@ -4617,8 +4675,6 @@ Enumerated Types
     .. c:enumerator:: NPY_SORT_DESCENDING
 
         (Requirement) Specifies that the sort must be in descending order.
-        This functionality is not yet implemented for any of the NumPy types
-        and cannot yet be set from the Python interface.
 
 .. c:enum:: NPY_SCALARKIND
 
@@ -4699,9 +4755,21 @@ Enumerated Types
 
 .. c:enum:: NPY_SELECTKIND
 
-    A variable type indicating the selection algorithm being used.
+    A variable type indicating the selection algorithm options for
+    the partitioning functions, see also :c:type:`NPY_SORTKIND`.
+
+    .. c:enumerator:: NPY_SELECT_DEFAULT
+
+        The default selection algorithm.
+
+    .. c:enumerator:: NPY_SELECT_DESCENDING
+
+        (Requirement) Flag that changes the partition/sort order to descending.
 
     .. c:enumerator:: NPY_INTROSELECT
+
+        Identical to ``NPY_SELECT_DEFAULT`` but defined prior to NumPy 2.5.
+        Prefer ``NPY_SELECT_DEFAULT`` if compiling with NumPy 2.5 or later.
 
 .. c:enum:: NPY_CASTING
 

@@ -3,6 +3,7 @@
 
 #include <numpy/npy_math.h>
 #include <numpy/npy_common.h>
+#include <numpy/utils.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -100,13 +101,16 @@ typedef int (PyUFunc_ProcessCoreDimsFunc)(
                                 npy_intp *core_dim_sizes);
 
 typedef struct _tagPyUFuncObject {
+#ifndef Py_TARGET_ABI3T
         PyObject_HEAD
+#endif
         /*
          * nin: Number of inputs
          * nout: Number of outputs
          * nargs: Always nin + nout (Why is it stored?)
          */
-        int nin, nout, nargs;
+        _NPY_OPAQUE_FIRST_FIELD int nin;
+        int nout, nargs;
 
         /*
          * Identity for reduction, any of PyUFunc_One, PyUFunc_Zero
@@ -234,7 +238,6 @@ typedef struct _tagPyUFuncObject {
     #endif
 } PyUFuncObject_fields;
 
-typedef PyUFuncObject_fields PyUFuncObject;
 
 #include "arrayobject.h"
 /* Generalized ufunc; 0x0001 reserved for possible use as CORE_ENABLED */
@@ -345,13 +348,18 @@ typedef struct _loop1d_info {
 #endif
 #endif
 
+#ifndef Py_TARGET_ABI3T
+typedef struct _tagPyUFuncObject PyUFuncObject;
+#else
+typedef struct tagPyUFuncObject PyUFuncObject;
+#endif
+
 #include "__ufunc_api.h"
 
-// In future, when adding support for opaque PyObject, this would become
-// a ABI function call to get the ufunc struct fields from the PyObject.
-static inline PyUFuncObject_fields *_PyUFuncObject_GET_ITEM_DATA(PyUFuncObject *ufunc) {
-    return (PyUFuncObject_fields *)ufunc;
-}
+#ifndef Py_TARGET_ABI3T
+#undef _PyUFuncObject_GET_ITEM_DATA
+#define _PyUFuncObject_GET_ITEM_DATA(ufunc) ((PyUFuncObject_fields *)(ufunc))
+#endif
 
 #ifdef __cplusplus
 }

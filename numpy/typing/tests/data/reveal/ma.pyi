@@ -238,6 +238,9 @@ assert_type(MAR_f4.ids(), tuple[int, int])
 
 assert_type(MAR_f4.iscontiguous(), bool)
 
+assert_type(np.ma.where(MAR_b), tuple[np.ndarray[tuple[int], np.dtype[np.intp]], ...])
+assert_type(np.ma.where(MAR_b, 0, 1), MaskedArray[Any])
+
 assert_type(MAR_f4 >= 3, MaskedArray[np.bool])
 assert_type(MAR_i8 >= AR_td64, MaskedArray[np.bool])
 assert_type(MAR_b >= AR_td64, MaskedArray[np.bool])
@@ -459,6 +462,9 @@ assert_type(MAR_f8.view(dtype="float32"), MaskedArray[Any])
 assert_type(MAR_f8.view(dtype="float32", type=np.ndarray), np.ndarray[Any, Any])
 assert_type(MAR_2d_f4.view(dtype=np.float16), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float16]])
 assert_type(MAR_2d_f4.view(dtype=np.dtype(np.float16)), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float16]])
+
+assert_type(MAR_2d_f4.astype(np.float16), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float16]])
+assert_type(MAR_2d_f4.astype("f2"), np.ma.MaskedArray[tuple[int, int], np.dtype[Any]])
 
 assert_type(MAR_f8.__deepcopy__(), MaskedArray[np.float64])
 

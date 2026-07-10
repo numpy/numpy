@@ -408,7 +408,7 @@ _convert_from_array_descr(PyObject *obj, int align)
     }
 
     /* Types with fields need the Python C API for field access */
-    char dtypeflags = NPY_NEEDS_PYAPI;
+    npy_uint64 dtypeflags = NPY_NEEDS_PYAPI;
     int maxalign = 1;
     int totalsize = 0;
     PyObject *fields = PyDict_New();
@@ -631,7 +631,7 @@ _convert_from_list(PyObject *obj, int align)
     }
 
     /* Types with fields need the Python C API for field access */
-    char dtypeflags = NPY_NEEDS_PYAPI;
+    npy_uint64 dtypeflags = NPY_NEEDS_PYAPI;
     int maxalign = 1;
     int totalsize = 0;
     for (int i = 0; i < n; i++) {
@@ -1100,7 +1100,7 @@ _convert_from_dict(PyObject *obj, int align)
     }
 
     /* Types with fields need the Python C API for field access */
-    char dtypeflags = NPY_NEEDS_PYAPI;
+    npy_uint64 dtypeflags = NPY_NEEDS_PYAPI;
     int totalsize = 0;
     int maxalign = 1;
     int has_out_of_order_fields = 0;
@@ -1317,6 +1317,18 @@ _convert_from_dict(PyObject *obj, int align)
         }
         /* Set the itemsize */
         new->elsize = itemsize;
+    }
+
+    /*
+     * Check if anything prevents using memcpy for whole items for this dtype,
+     * i.e., whether there are any holes unrelated to alignment padding
+     * (since those holes might be used to avoid accessing/overwriting stuff).
+     * Such holes can be introduced due to choices of itemsize or offsets.
+     */
+    if (new->elsize != totalsize
+        || (offsets != NULL && !is_dtype_struct_simple_unaligned_layout(
+                (PyArray_Descr *)new))) {
+        new->flags |= NPY_NOT_TRIVIALLY_COPYABLE;
     }
 
     /* Add the metadata if provided */
@@ -1964,9 +1976,9 @@ PyArray_DescrNew(PyArray_Descr *base_descr)
         return NULL;
     }
     /* Don't copy PyObject_HEAD part */
-    memcpy((char *)newdescr + sizeof(PyObject),
-           (char *)base + sizeof(PyObject),
-           sizeof(_PyArray_LegacyDescr) - sizeof(PyObject));
+    memcpy((char *)newdescr + offsetof(_PyArray_LegacyDescr, typeobj),
+           (char *)base + offsetof(_PyArray_LegacyDescr, typeobj),
+           sizeof(_PyArray_LegacyDescr) - offsetof(_PyArray_LegacyDescr, typeobj));
 
     /*
      * The c_metadata has a by-value ownership model, need to clone it
@@ -2817,7 +2829,8 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     }
     PyTuple_SET_ITEM(state, 5, PyLong_FromLong(elsize));
     PyTuple_SET_ITEM(state, 6, PyLong_FromLong(alignment));
-    PyTuple_SET_ITEM(state, 7, PyLong_FromUnsignedLongLong(self->flags));
+    PyTuple_SET_ITEM(state, 7, PyLong_FromUnsignedLongLong(
+            self->flags & ~NPY_NOT_TRIVIALLY_COPYABLE));
 
     PyTuple_SET_ITEM(ret, 2, state);
     return ret;
@@ -3185,6 +3198,15 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
 
     if (version < 3) {
         self->flags = _descr_find_object((PyArray_Descr *)self);
+    }
+
+    /*
+     * Mark as not trivially copyable if layout is not simple (has padding).
+     * This flag is always recomputed on unpickle (not stored in pickle).
+     */
+    if (PyDataType_HASFIELDS((PyArray_Descr *)self) &&
+            !is_dtype_struct_simple_unaligned_layout((PyArray_Descr *)self)) {
+        self->flags |= NPY_NOT_TRIVIALLY_COPYABLE;
     }
 
     PyObject *old_metadata, *new_metadata;
@@ -3755,6 +3777,10 @@ arraydescr_field_subset_view(_PyArray_LegacyDescr *self, PyObject *ind)
     view_dtype->names = names;
     view_dtype->fields = fields;
     view_dtype->flags = self->flags;
+    /* Mark as not trivially copyable if layout is not simple (has padding) */
+    if (!is_dtype_struct_simple_unaligned_layout((PyArray_Descr *)view_dtype)) {
+        view_dtype->flags |= NPY_NOT_TRIVIALLY_COPYABLE;
+    }
     return (PyArray_Descr *)view_dtype;
 
 fail:

@@ -4,6 +4,9 @@ to document how deprecations should eventually be turned into errors.
 
 """
 import contextlib
+import re
+import sys
+import textwrap
 import warnings
 from collections.abc import Callable
 
@@ -11,7 +14,8 @@ import pytest
 
 import numpy as np
 from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
-from numpy.testing import assert_raises
+from numpy.testing import IS_WASM, assert_raises
+from numpy.testing._private.utils import run_subprocess
 
 
 class _DeprecationTestCase:
@@ -86,6 +90,12 @@ class _DeprecationTestCase:
         for warning in w_context:
             if warning.category is self.warning_cls:
                 num_found += 1
+                if self.message:
+                    if not re.match(self.message, str(warning.message)):
+                        raise AssertionError(
+                            f"Warning message '{warning.message}' did not match "
+                            f"expected pattern '{self.message}'"
+                        )
             elif not ignore_others:
                 name = self.warning_cls.__name__
                 raise AssertionError(f"expected {name} but got: {warning.category}")
@@ -428,7 +438,8 @@ class TestRoundDeprecation(_DeprecationTestCase):
 
 class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
     # Deprecated in Numpy 2.5, 2025-11
-    # See gh-29619
+    # See gh-29619 for scalar operations
+    # See gh-31255 for array operations
     message = "The 'generic' unit for NumPy timedelta is deprecated"
 
     @pytest.mark.parametrize('value', [
@@ -453,7 +464,7 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
     def test_raise_warning_for_operation_with_generic_unit(
         self, value: int, generic_value: int, op: Callable
     ):
-        self.assert_deprecated(op, args=(value, generic_value))
+        self.assert_deprecated(op, num=1, args=(value, generic_value))
 
     def test_raise_warning_for_default_constructor(self):
         self.assert_deprecated(lambda: np.timedelta64())
@@ -462,6 +473,74 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
     def test_raise_warning_for_NAT_construction(self):
         self.assert_deprecated(lambda: np.datetime64('NaT'))
         self.assert_deprecated(lambda: np.datetime64(None))
+
+    # Array operations
+    @pytest.mark.parametrize('timedelta_arr', [
+        np.array([1, 2, 3], dtype="m8[s]"),
+        np.array([1], dtype="m8[ms]"),
+    ])
+    @pytest.mark.parametrize('int_arr', [
+        np.array([1, 2, 3]),
+        np.array([1]),
+    ])
+    @pytest.mark.parametrize("op", [np.add, np.subtract])
+    def test_timedelta_array_integer_array_arithmetic(
+        self, timedelta_arr, int_arr, op
+    ):
+        """Test that timedelta64 array + integer array triggers deprecation."""
+        # timedelta op int
+        self.assert_deprecated(op, num=None, args=(timedelta_arr, int_arr))
+        # int op timedelta
+        self.assert_deprecated(op, num=None, args=(int_arr, timedelta_arr))
+
+    @pytest.mark.parametrize('datetime_arr', [
+        np.array(['2020-01-01', '2020-01-02'], dtype="M8[D]"),
+        np.array(['2020-01-01T00:00:00'], dtype="M8[s]"),
+    ])
+    @pytest.mark.parametrize('int_arr', [
+        np.array([1, 2]),
+        np.array([1]),
+    ])
+    @pytest.mark.parametrize("op", [np.add, np.subtract])
+    def test_datetime_array_integer_array_arithmetic(
+        self, datetime_arr, int_arr, op
+    ):
+        """Test that datetime64 array + integer array triggers deprecation."""
+        # datetime op int
+        self.assert_deprecated(op, num=None, args=(datetime_arr, int_arr))
+        # int op datetime
+        if op == np.add:
+            self.assert_deprecated(op, num=None, args=(int_arr, datetime_arr))
+
+    def test_non_associative_case_warns(self):
+        """Verify the specific non-associative case from gh-31255 warns."""
+        a = np.array([1], dtype="m8[s]")
+        b = np.array([1])
+        c = np.array([1], dtype="m8[ms]")
+
+        # Both intermediate operations should trigger warnings
+        self.assert_deprecated(np.add, num=None, args=(a, b))
+        self.assert_deprecated(np.add, num=None, args=(b, c))
+
+    @pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for subprocess")
+    def test_first_call_warns_once(self):
+        # The legacy type resolver used to also warn when invoked to populate
+        # the ufunc promotion cache, so the first call in a process emitted
+        # two warnings and later calls one.  Use a fresh process to test with
+        # a cold cache.
+        code = textwrap.dedent("""
+            import warnings
+            import numpy as np
+
+            for args in [(np.timedelta64(3, "s"), 5),
+                         (np.array([3], dtype="m8[s]"), np.array([5]))]:
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter("always")
+                    np.subtract(*args)
+                assert len(w) == 1, [str(x.message) for x in w]
+            """)
+        p = run_subprocess([sys.executable, "-c", code])
+        assert p.returncode == 0, p.stderr
 
 
 class TestTriDeprecationWithNonInteger(_DeprecationTestCase):

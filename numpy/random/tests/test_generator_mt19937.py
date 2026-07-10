@@ -10,6 +10,7 @@ from numpy.exceptions import AxisError
 from numpy.linalg import LinAlgError
 from numpy.random import MT19937, Generator, RandomState, SeedSequence
 from numpy.testing import (
+    IS_64BIT,
     IS_WASM,
     assert_,
     assert_allclose,
@@ -1267,6 +1268,10 @@ class TestRandomDist:
 
     @pytest.mark.slow
     @pytest.mark.thread_unsafe(reason="crashes with low memory")
+    @pytest.mark.skipif(
+        not IS_64BIT,
+        reason="the 458 MiB sample array may not fit in a 32-bit "
+               "address space fragmented by earlier tests")
     def test_dirichlet_moderately_small_alpha(self):
         # Use alpha.max() < 0.1 to trigger stick breaking code path
         alpha = np.array([0.02, 0.04, 0.03])

@@ -149,6 +149,14 @@ class TestRot90:
             assert_equal(rot90(a, k=k, axes=(2, 0)),
                          rot90(a_rot90_20, k=k - 1, axes=(2, 0)))
 
+    @pytest.mark.parametrize('k', [2.0, 2.25])
+    def test_noninteger_k_deprecation_warning(self, k):
+        a = np.array([[1, 2], [3, 4]])
+        with pytest.warns(DeprecationWarning,
+                          match="not an integer type has been deprecated"):
+            b = rot90(a, k=k)
+        assert_array_equal(b, np.rot90(a, k=2), strict=True)
+
 
 class TestFlip:
 
@@ -690,10 +698,14 @@ class TestInsert:
         with pytest.raises(IndexError):
             np.insert([0, 1, 2], np.array([], dtype=float), [])
 
-    @pytest.mark.parametrize('idx', [4, -4])
-    def test_index_out_of_bounds(self, idx):
+    @pytest.mark.parametrize('idx,values', [
+        ([4], [3, 4]),
+        ([-4], [3, 4]),
+        ([-6, 0], [9, 8]),
+    ])
+    def test_index_out_of_bounds(self, idx, values):
         with pytest.raises(IndexError, match='out of bounds'):
-            np.insert([0, 1, 2], [idx], [3, 4])
+            np.insert([0, 1, 2], idx, values)
 
 
 class TestAmax:
@@ -2116,6 +2128,7 @@ class TestLeaks:
     @pytest.mark.thread_unsafe(
         reason="test result depends on the reference count of a global object"
     )
+    @pytest.mark.slow
     def test_frompyfunc_leaks(self, name, incr):
         # exposed in gh-11867 as np.vectorized, but the problem stems from
         # frompyfunc.
@@ -3106,6 +3119,16 @@ class TestInterp:
         assert_raises(ValueError, interp, 0, [0, 1], [1, 2], period=0)
         assert_raises(ValueError, interp, 0, [], [], period=360)
         assert_raises(ValueError, interp, 0, [0], [1, 2], period=360)
+        assert_raises(ValueError, interp, [], [], [3, 4, 5])
+
+    def test_empty_x(self):
+        # gh-30316
+        assert_array_equal(interp([], [], []), np.array([], dtype=np.float64))
+        assert_array_equal(interp([], [1, 2], [3, 4]), np.array([], dtype=np.float64))
+        assert_array_equal(
+            interp([], [], [], period=360), np.array([], dtype=np.float64))
+        assert_array_equal(
+            interp([], [1, 2], [3 + 4j, 5 + 6j]), np.array([], dtype=np.complex128))
 
     def test_basic(self):
         x = np.linspace(0, 1, 5)
@@ -3919,6 +3942,7 @@ class TestPercentile:
         assert z == one
         assert z.dtype == a.dtype
 
+    @pytest.mark.slow
     def test_percentile_gh_29003_Fraction(self):
         zero = Fraction(0)
         one = Fraction(1)

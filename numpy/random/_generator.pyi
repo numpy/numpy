@@ -17,6 +17,7 @@ from numpy._typing import (
     _FloatLike_co,
     _Int64Codes,
     _NestedSequence,
+    _Shape,
     _ShapeLike,
 )
 
@@ -680,25 +681,38 @@ class Generator:
     def permutation(self, /, x: ArrayLike, axis: int = 0) -> np.ndarray: ...
 
     #
-    @overload
-    def permuted[ArrayT: np.ndarray](self, /, x: ArrayT, *, axis: int | None = None, out: None = None) -> ArrayT: ...
+    @overload  # does not preserve `ndarray` subtypes
+    def permuted[ShapeT: _Shape, DTypeT: np.dtype](
+        self, /, x: np.ndarray[ShapeT, DTypeT], *, axis: int | None = None, out: None = None
+    ) -> np.ndarray[ShapeT, DTypeT]: ...
     @overload
     def permuted(self, /, x: ArrayLike, *, axis: int | None = None, out: None = None) -> np.ndarray: ...
     @overload
     def permuted[ArrayT: np.ndarray](self, /, x: ArrayLike, *, axis: int | None = None, out: ArrayT) -> ArrayT: ...
 
     #
-    @overload  # >=0d int, size=None (default)
+    @overload  # 0d int, size=None (default)
     def choice(
         self,
         /,
-        a: int | _NestedSequence[int],
+        a: int,
         size: None = None,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
         axis: int = 0,
         shuffle: bool = True,
     ) -> int: ...
+    @overload  # >0d int, size=None (default)
+    def choice(
+        self,
+        /,
+        a: _NestedSequence[int],
+        size: None = None,
+        replace: bool = True,
+        p: _ArrayLikeFloat_co | None = None,
+        axis: int = 0,
+        shuffle: bool = True,
+    ) -> np.int_: ...
     @overload  # >=0d known, size=None (default)
     def choice[ScalarT: np.generic](
         self,

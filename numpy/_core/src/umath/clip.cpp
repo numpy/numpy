@@ -18,7 +18,7 @@
 
 #include "fast_loop_macros.h"
 
-#include "../common/numpy_tag.h"
+#include "../common/numpy_tag.hpp"
 
 template <class T>
 T

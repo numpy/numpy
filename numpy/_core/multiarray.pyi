@@ -807,7 +807,10 @@ def vdot(a: _ArrayLikeObject_co, b: object, /) -> Any: ...
 def vdot(a: object, b: _ArrayLikeObject_co, /) -> Any: ...
 
 #
-def bincount(x: _ArrayLikeInt_co, /, weights: ArrayLike | None = None, minlength: SupportsIndex = 0) -> _Array1D[intp]: ...
+@overload
+def bincount(x: _ArrayLikeInt_co, /, weights: None = None, minlength: SupportsIndex = 0) -> _Array1D[intp]: ...
+@overload
+def bincount(x: _ArrayLikeInt_co, /, weights: _ArrayLikeFloat_co, minlength: SupportsIndex = 0) -> _Array1D[np.float64]: ...
 
 #
 def copyto(dst: ndarray, src: ArrayLike, casting: _CastingKind = "same_kind", where: object = True) -> None: ...
@@ -870,6 +873,16 @@ def asarray[ShapeT: _Shape](
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> np.ndarray[ShapeT]: ...
+@overload  # 1d ~float  (must be above the `bool` overload to catch empty lists)
+def asarray(
+    a: list[float],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.float64]: ...
 @overload  # 1d bool
 def asarray(
     a: Sequence[bool],
@@ -890,16 +903,6 @@ def asarray(
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array1D[np.int_]: ...
-@overload  # 1d ~float
-def asarray(
-    a: list[float],
-    dtype: None = None,
-    order: _OrderKACF = None,
-    *,
-    device: L["cpu"] | None = None,
-    copy: bool | None = None,
-    like: _SupportsArrayFunc | None = None,
-) -> _Array1D[np.float64]: ...
 @overload  # 1d ~complex
 def asarray(
     a: list[complex],
@@ -930,6 +933,16 @@ def asarray(
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array1D[Any]: ...
+@overload  # 2d ~float  (must be above the `bool` overload to catch empty lists)
+def asarray(
+    a: Sequence[list[float]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[np.float64]: ...
 @overload  # 2d bool
 def asarray(
     a: Sequence[Sequence[bool]],
@@ -950,16 +963,6 @@ def asarray(
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array2D[np.int_]: ...
-@overload  # 2d ~float
-def asarray(
-    a: Sequence[list[float]],
-    dtype: None = None,
-    order: _OrderKACF = None,
-    *,
-    device: L["cpu"] | None = None,
-    copy: bool | None = None,
-    like: _SupportsArrayFunc | None = None,
-) -> _Array2D[np.float64]: ...
 @overload  # 2d ~complex
 def asarray(
     a: Sequence[list[complex]],
@@ -1726,7 +1729,16 @@ class flatiter(Generic[_ArrayT_co]):
     # iteration
     def __len__(self, /) -> int: ...
     def __iter__(self, /) -> Self: ...
-    def __next__[ScalarT: np.generic](self: flatiter[NDArray[ScalarT]], /) -> ScalarT: ...
+
+    # we need to be careful not to yield fictional `np.object_` values
+    @overload
+    def __next__(self: flatiter[NDArray[np.object_]], /) -> Any: ...
+    @overload  # we can't use `np.generic` because it includes `np.object_`
+    def __next__[ScalarT: np.bool | np.number | np.flexible | np.datetime64 | np.timedelta64](
+        self: flatiter[NDArray[ScalarT]], /
+    ) -> ScalarT: ...
+    @overload  # `StringDType` has no scalar type
+    def __next__(self: flatiter[np.ndarray[Any, np.dtypes.StringDType]], /) -> str: ...
 
     # indexing
     @overload  # nd: _[()]
@@ -1780,7 +1792,7 @@ class nditer:
         /,
         op: ArrayLike,
         flags: Sequence[_NDIterFlagsKind] | None = None,
-        op_flags: Sequence[_NDIterFlagsOp] | None = None,
+        op_flags: Sequence[_NDIterFlagsOp] | Sequence[Sequence[_NDIterFlagsOp]] | None = None,
         op_dtypes: DTypeLike | None = None,
         order: _OrderKACF = "K",
         casting: _CastingKind = "safe",

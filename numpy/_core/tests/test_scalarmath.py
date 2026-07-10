@@ -11,7 +11,7 @@ from hypothesis.extra import numpy as hynp
 from hypothesis.strategies import sampled_from
 
 import numpy as np
-from numpy._core._rational_tests import rational
+from numpy._core._rational_tests import rational, rational2
 from numpy._utils import _pep440
 from numpy.exceptions import ComplexWarning
 from numpy.testing import (
@@ -23,6 +23,7 @@ from numpy.testing import (
     assert_raises,
     check_support_sve,
 )
+from numpy.testing._private.utils import LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE
 
 types = [np.bool, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.int_, np.uint, np.longlong, np.ulonglong,
@@ -521,7 +522,7 @@ class TestConversion:
 
     @pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
                         reason="long double is same as double")
-    @pytest.mark.skipif(platform.machine().startswith("ppc"),
+    @pytest.mark.skipif(LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE,
                         reason="IBM double double")
     def test_int_from_huge_longdouble(self):
         # Produce a longdouble that would overflow a double,
@@ -869,7 +870,7 @@ def recursionlimit(n):
 
 @given(sampled_from(objecty_things),
        sampled_from(binary_operators_for_scalar_ints),
-       sampled_from(types + [rational]))
+       sampled_from(types + [rational, rational2]))
 @pytest.mark.thread_unsafe(reason="sets recursion limit globally")
 def test_operator_object_left(o, op, type_):
     try:
@@ -881,7 +882,7 @@ def test_operator_object_left(o, op, type_):
 
 @given(sampled_from(objecty_things),
        sampled_from(binary_operators_for_scalar_ints),
-       sampled_from(types + [rational]))
+       sampled_from(types + [rational, rational2]))
 @pytest.mark.thread_unsafe(reason="sets recursion limit globally")
 def test_operator_object_right(o, op, type_):
     try:

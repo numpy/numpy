@@ -46,7 +46,7 @@ class TestModuleDocString(util.F2PyTest):
                      i : 'i'-scalar
                      x : 'i'-array(4)
                      a : 'f'-array(2,3)
-                     b : 'f'-array(-1,-1), not allocated\x00
+                     b : 'f'-array(-1,-1), not allocated
                      foo()\n
                      Wrapper for ``foo``.\n\n"""
         )

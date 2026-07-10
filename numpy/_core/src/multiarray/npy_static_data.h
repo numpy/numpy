@@ -133,6 +133,13 @@ typedef struct npy_static_pydata_struct {
     PyObject *format_options;
 
     /*
+     * Context variable set to True while the legacy ufunc type resolvers
+     * run for promotion, to suppress their deprecation warnings (the
+     * resolution step warns on every call).
+     */
+    PyObject *legacy_resolver_promoting;
+
+    /*
      * Used in the __array__ internals to avoid building a tuple inline
      */
     PyObject *kwnames_is_copy;
@@ -163,6 +170,9 @@ typedef struct npy_static_pydata_struct {
     PyObject *dl_call_kwnames;
     PyObject *dl_cpu_device_tuple;
     PyObject *dl_max_version;
+    /* dicts for implementing `register_dlpack_dtype` */
+    PyObject *dlpack_dtype_registry;
+    PyObject *dlpack_export_registry;
 } npy_static_pydata_struct;
 
 

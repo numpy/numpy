@@ -205,8 +205,8 @@ cdef class MT19937(BitGenerator):
         iter : integer, positive
             Number of times to jump the state of the rng.
         """
-        cdef np.npy_intp i
-        for i in range(iter):
+        cdef np.npy_intp _i
+        for _i in range(iter):
             mt19937_jump(&self.rng_state)
 
 

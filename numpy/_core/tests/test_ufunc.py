@@ -1791,7 +1791,7 @@ class TestUfunc:
         a = a[1:, 1:, 1:]
         yield a
 
-    @pytest.mark.parametrize("arrs", identityless_reduce_arrs())
+    @pytest.mark.parametrize("arrs", list(identityless_reduce_arrs()))
     @pytest.mark.parametrize("pos", [(1, 0, 0), (0, 1, 0), (0, 0, 1)])
     def test_identityless_reduction(self, arrs, pos):
         # np.minimum.reduce is an identityless reduction
@@ -2169,6 +2169,7 @@ class TestUfunc:
     @pytest.mark.parametrize("a", (
                              np.arange(10, dtype=int),
                              np.arange(10, dtype=_rational_tests.rational),
+                             np.arange(10, dtype=_rational_tests.rational2),
                              ))
     def test_ufunc_at_basic(self, a):
 
@@ -2732,6 +2733,18 @@ class TestUfunc:
         with pytest.raises(ValueError, match="(shape|size)"):
             np.add.accumulate(arr, out=out)
 
+    def test_reduceat_and_accumulate_out_dtype_resolution_failure(self):
+        # gh-31691: the out= error path leaked a reference to out when the
+        # ufunc dtype resolution failed (no matching loop for the out dtype).
+        arr = np.arange(3)
+        out = np.empty(3, dtype="U5")  # no add loop resolves to this
+
+        with pytest.raises(np._core._exceptions._UFuncNoLoopError):
+            np.add.reduceat(arr, [0, 1, 2], out=out)
+
+        with pytest.raises(np._core._exceptions._UFuncNoLoopError):
+            np.add.accumulate(arr, out=out)
+
     @pytest.mark.parametrize('out_shape',
                              [(), (1,), (3,), (1, 1), (1, 3), (4, 3)])
     @pytest.mark.parametrize('keepdims', [True, False])
@@ -2870,14 +2883,8 @@ def test_ufunc_types(ufunc):
         if 'O' in typ or '?' in typ:
             continue
         inp, out = typ.split('->')
-        if 'm' in inp:
-            with pytest.warns(
-                DeprecationWarning,
-                match="The 'generic' unit for NumPy timedelta is deprecated",
-            ):
-                args = [np.ones((3, 3), t) for t in inp]
-        else:
-            args = [np.ones((3, 3), t) for t in inp]
+        _inp_dtypes = [t if t.lower() != 'm' else t + "8[D]" for t in inp]
+        args = [np.ones((3, 3), t) for t in _inp_dtypes]
         with warnings.catch_warnings(record=True):
             warnings.filterwarnings("always")
             res = ufunc(*args)
@@ -2885,9 +2892,9 @@ def test_ufunc_types(ufunc):
             outs = tuple(out)
             assert len(res) == len(outs)
             for r, t in zip(res, outs):
-                assert r.dtype == np.dtype(t)
+                assert r.dtype.char == t
         else:
-            assert res.dtype == np.dtype(out)
+            assert res.dtype.char == out
 
 @pytest.mark.parametrize('ufunc', [getattr(np, x) for x in dir(np)
                                 if isinstance(getattr(np, x), np.ufunc)])
@@ -3245,6 +3252,13 @@ class TestLowlevelAPIAccess:
 
         with pytest.raises(TypeError):
             np.add.resolve_dtypes((i4, f4, None), casting="no")
+
+    def test_resolve_dtypes_unary_weak_scalar(self):
+        assert np.sin.resolve_dtypes((int, None)) == (
+            np.dtype("f8"), np.dtype("f8"))
+        with pytest.raises(TypeError,
+                match="Output descriptors must be NumPy dtypes or None."):
+            np.sin.resolve_dtypes((int, int))
 
     def test_resolve_dtypes_comparison(self):
         i4 = np.dtype("i4")

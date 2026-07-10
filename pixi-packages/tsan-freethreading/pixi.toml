@@ -26,4 +26,3 @@ python.rev = "55ea59e7dc35e1363b203ae4dd9cfc3a0ac0a844"  # v3.15.0a8
 
 meson-python = "*"
 cython = "*"
-uv = "*" # used to invoke the wheel build

@@ -274,8 +274,8 @@ npy__cpu_check_env(int disable, const char *env) {
     size_t var_len = strlen(env) + 1;
     if (var_len > NPY__MAX_VAR_LEN) {
         PyErr_Format(PyExc_RuntimeError,
-            "Length of environment variable '%s' is %d, only %d accepted",
-            env_name, var_len, NPY__MAX_VAR_LEN
+            "Length of environment variable '%s' is %zu, only %zu accepted",
+            env_name, var_len, (size_t)NPY__MAX_VAR_LEN
         );
         return -1;
     }
@@ -285,7 +285,7 @@ npy__cpu_check_env(int disable, const char *env) {
     char nexist[NPY__MAX_VAR_LEN];
     char *nexist_cur = &nexist[0];
 
-    char notsupp[sizeof(NPY_WITH_CPU_DISPATCH) + 1];
+    char notsupp[NPY__MAX_VAR_LEN];
     char *notsupp_cur = &notsupp[0];
 
     //comma and space including (htab, vtab, CR, LF, FF)
@@ -308,15 +308,21 @@ npy__cpu_check_env(int disable, const char *env) {
         int feature_id = npy__cpu_dispatch_fid(feature);
         if (feature_id == 0) {
             int flen = strlen(feature);
+            if (nexist_cur != nexist) {
+                *nexist_cur++ = ' ';
+            }
             memcpy(nexist_cur, feature, flen);
-            nexist_cur[flen] = ' '; nexist_cur += flen + 1;
+            nexist_cur += flen;
             goto next;
         }
         // check if the feature supported by the running machine
         if (!npy__cpu_have[feature_id]) {
             int flen = strlen(feature);
+            if (notsupp_cur != notsupp) {
+                *notsupp_cur++ = ' ';
+            }
             memcpy(notsupp_cur, feature, flen);
-            notsupp_cur[flen] = ' '; notsupp_cur += flen + 1;
+            notsupp_cur += flen;
             goto next;
         }
         // Finally we can disable or mark for enabling
@@ -335,7 +341,6 @@ npy__cpu_check_env(int disable, const char *env) {
 
     *nexist_cur = '\0';
     if (nexist[0] != '\0') {
-        *(nexist_cur-1) = '\0'; // trim the last space
         if (PyErr_WarnFormat(PyExc_ImportWarning, 1,
             "%sYou cannot %s CPU features (%s), since "
             "they are not part of the dispatched optimizations\n"
@@ -354,7 +359,6 @@ npy__cpu_check_env(int disable, const char *env) {
 
     *notsupp_cur = '\0';
     if (notsupp[0] != '\0') {
-        *(notsupp_cur-1) = '\0'; // trim the last space
         if (!disable){
             PyErr_Format(PyExc_RuntimeError, NOTSUPP_BODY);
             return -1;
@@ -934,6 +938,16 @@ npy__cpu_init_features(void)
         // https://github.com/torvalds/linux/blob/v6.8/arch/riscv/include/uapi/asm/hwcap.h#L24
         #define COMPAT_HWCAP_ISA_V (1 << ('V' - 'A'))
     #endif
+
+    #ifdef __linux__
+        #include <asm/unistd.h>
+        #include <unistd.h>
+
+        #if defined(__has_include) && __has_include(<asm/hwprobe.h>)
+            #include <asm/hwprobe.h>
+            #define HAS_RISCV_HWPROBE
+        #endif
+    #endif
 #endif
 
 static void
@@ -942,14 +956,39 @@ npy__cpu_init_features(void)
     memset(npy__cpu_have, 0, sizeof(npy__cpu_have[0]) * NPY_CPU_FEATURE_MAX);
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 #ifdef __linux__
+    #ifdef HAS_RISCV_HWPROBE
+        /*
+        * RISCV_HWPROBE_IMA_V reports the ratified RVV 1.0 extension.
+        * HWCAP's V bit may also be set for pre-standard vector extensions,
+        * so prefer hwprobe and keep HWCAP only as a compatibility fallback
+        * when hwprobe is unavailable or cannot answer the query.
+        */
+        struct riscv_hwprobe probe;
+        probe.key = RISCV_HWPROBE_KEY_IMA_EXT_0;
+        probe.value = 0;
+
+        int ret = syscall(__NR_riscv_hwprobe, &probe, 1, 0, NULL, 0);
+        if (0 == ret) {
+            if (probe.value & RISCV_HWPROBE_IMA_V){
+                npy__cpu_have[NPY_CPU_FEATURE_RVV]  = 1;
+            }
+            return;
+        }
+    #endif
+
     unsigned int hwcap = getauxval(AT_HWCAP);
-#else
-    unsigned long hwcap;
-    elf_aux_info(AT_HWCAP, &hwcap, sizeof(hwcap));
-#endif
     if (hwcap & COMPAT_HWCAP_ISA_V) {
         npy__cpu_have[NPY_CPU_FEATURE_RVV]  = 1;
     }
+
+#else         //  __FreeBSD__|| __OpenBSD__
+    unsigned long hwcap;
+    elf_aux_info(AT_HWCAP, &hwcap, sizeof(hwcap));
+    if (hwcap & COMPAT_HWCAP_ISA_V) {
+        npy__cpu_have[NPY_CPU_FEATURE_RVV]  = 1;
+    }
+#endif
+
 #endif
 }
 

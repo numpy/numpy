@@ -12,10 +12,13 @@
 
 #include "npy_import.h"
 
+#include "array_assign.h"
 #include "common.h"
 #include "conversion_utils.h"
 #include "ctors.h"
+#include "dtype_transfer.h"
 #include "dtypemeta.h"
+#include "lowlevel_strided_loops.h"
 #include "scalartypes.h"
 #include "descriptor.h"
 #include "flagsobject.h"
@@ -354,55 +357,26 @@ array_descr_set_internal(PyArrayObject *self, PyObject *arg)
         return -1;
     }
     /* Check dtype and possibly give new dim & stride for last axis */
-    npy_intp newlastdim, newlaststride;
+    int newnd;
+    npy_intp *newdims = NULL;
+    npy_intp *newstrides = NULL;
+    /* Check whether the type is compatible, get pointers to dimensions and
+       strides (can be from input or to newly allocated dim_array). */
     Py_SETREF(newtype, _check_compatibility_with_new_dtype(
-                  self, newtype, &newlastdim, &newlaststride));
+                  self, newtype, &newnd, &newdims, &newstrides));
     if (newtype == NULL) {
         return -1;
     }
-
-    /* Viewing as a subarray increases the number of dimensions */
-    if (PyDataType_HASSUBARRAY(newtype)) {
-        assert(newlastdim < 0);  /* not allowed for subarrays */
-        /*
-         * create new array object from data and update
-         * dimensions, strides and descr from it
-         */
-        PyArrayObject *temp;
-        /*
-         * We would decref newtype here.
-         * temp will steal a reference to it
-         */
-        temp = (PyArrayObject *)
-            PyArray_NewFromDescr(&PyArray_Type, newtype, PyArray_NDIM(self),
-                                 PyArray_DIMS(self), PyArray_STRIDES(self),
-                                 PyArray_DATA(self), PyArray_FLAGS(self), NULL);
-        if (temp == NULL) {
-            return -1;
-        }
-        /* create new dimensions cache and fill it */
-        npy_intp new_nd = PyArray_NDIM(temp);
-        npy_intp *new_dims = npy_alloc_cache_dim(2 * new_nd);
-        if (new_dims == NULL) {
-            Py_DECREF(temp);
-            PyErr_NoMemory();
-            return -1;
-        }
-        memcpy(new_dims, PyArray_DIMS(temp), new_nd * sizeof(npy_intp));
-        memcpy(new_dims + new_nd, PyArray_STRIDES(temp), new_nd * sizeof(npy_intp));
-        /* Update self with new cache */
+    if (newnd != PyArray_NDIM(self)) {
+        /* Update self with new dim array created above (subarray dtype). */
+        assert(newdims != PyArray_DIMS(self));
         npy_free_cache_dim_array(self);
-        ((PyArrayObject_fields *)self)->nd = new_nd;
-        ((PyArrayObject_fields *)self)->dimensions = new_dims;
-        ((PyArrayObject_fields *)self)->strides = new_dims + new_nd;
-        newtype = PyArray_DESCR(temp);
-        Py_INCREF(newtype);
-        Py_DECREF(temp);
+        ((PyArrayObject_fields *)self)->nd = newnd;
+        ((PyArrayObject_fields *)self)->dimensions = newdims;
+        ((PyArrayObject_fields *)self)->strides = newstrides;
     }
-    else if (newlastdim >= 0) {
-        int lastaxis = PyArray_NDIM(self) - 1;
-        PyArray_DIMS(self)[lastaxis] = newlastdim;
-        PyArray_STRIDES(self)[lastaxis] = newlaststride;
+    else { /* We keep our old dims (possibly changed inplace) */
+        assert(newdims == PyArray_DIMS(self));
     }
     Py_DECREF(PyArray_DESCR(self));
     ((PyArrayObject_fields *)self)->descr = newtype;
@@ -700,15 +674,30 @@ array_flat_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
         retval = 0;
         goto exit;
     }
-    swap = PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(arr);
     copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(self))->copyswap;
-    if (PyDataType_REFCHK(PyArray_DESCR(self))) {
+    if (copyswap == NULL || PyDataType_REFCHK(PyArray_DESCR(self))) {
+        /* reference dtypes have copyswap, but the transfer path handles
+           refcounts and is better for structured dtypes */
+        NPY_cast_info cast_info;
+        NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
+        npy_intp one = 1;
+        npy_intp itemsize = PyArray_ITEMSIZE(self);
+        npy_intp transfer_strides[2] = {itemsize, itemsize};
+
+        NPY_cast_info_init(&cast_info);
+        if (PyArray_GetDTypeTransferFunction(
+                IsUintAligned(self) && IsUintAligned(arr),
+                itemsize, itemsize,
+                PyArray_DESCR(arr), PyArray_DESCR(self), 0,
+                &cast_info, &transfer_flags) < 0) {
+            goto exit;
+        }
         while (selfit->index < selfit->size) {
-            PyArray_Item_XDECREF(selfit->dataptr, PyArray_DESCR(self));
-            PyArray_Item_INCREF(arrit->dataptr, PyArray_DESCR(arr));
-            memmove(selfit->dataptr, arrit->dataptr, sizeof(PyObject **));
-            if (swap) {
-                copyswap(selfit->dataptr, NULL, swap, self);
+            char *args[2] = {arrit->dataptr, selfit->dataptr};
+            if (cast_info.func(&cast_info.context, args, &one,
+                               transfer_strides, cast_info.auxdata) < 0) {
+                NPY_cast_info_xfree(&cast_info);
+                goto exit;
             }
             PyArray_ITER_NEXT(selfit);
             PyArray_ITER_NEXT(arrit);
@@ -716,10 +705,12 @@ array_flat_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
                 PyArray_ITER_RESET(arrit);
             }
         }
+        NPY_cast_info_xfree(&cast_info);
         retval = 0;
         goto exit;
     }
 
+    swap = PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(arr);
     while(selfit->index < selfit->size) {
         copyswap(selfit->dataptr, arrit->dataptr, swap, self);
         PyArray_ITER_NEXT(selfit);

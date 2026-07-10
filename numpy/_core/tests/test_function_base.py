@@ -1,5 +1,6 @@
 import platform
 import sys
+import warnings
 
 import pytest
 
@@ -21,6 +22,7 @@ from numpy import (
 from numpy._core import sctypes
 from numpy._core.function_base import add_newdoc
 from numpy.testing import (
+    IS_WASM,
     assert_,
     assert_allclose,
     assert_array_equal,
@@ -481,6 +483,58 @@ class TestLinspace:
         stop = array([2.0, 1.0])
         y = linspace(start, stop, 3)
         assert_array_equal(y, array([[0.0, 1.0], [1.0, 1.0], [2.0, 1.0]]))
+
+    def test_inf_equal_endpoints(self):
+        # Regression test for gh-26699, equal infinite endpoint were returning NaN.
+        # Equal endpoints skip the `inf - inf` subtraction entirely, so no
+        # spurious "invalid value" RuntimeWarning must be emitted (the fix does
+        # not rely on suppressing warnings via errstate).
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", RuntimeWarning)
+            for inf in [np.inf, -np.inf]:
+                assert_array_equal(linspace(inf, inf, 0), array([]))
+                assert_array_equal(linspace(inf, inf, 1), array([inf]))
+                for num in [2, 5, 50]:
+                    assert_array_equal(linspace(inf, inf, num), np.full(num, inf))
+
+            assert_array_equal(linspace(np.inf, np.inf, 5, endpoint=False),
+                               np.full(5, np.inf))
+
+            y, step = linspace(np.inf, np.inf, 2, retstep=True)
+            assert_array_equal(y, array([np.inf, np.inf]))
+            assert_equal(step, 0.0)
+
+            start = array([np.inf, 1.0])
+            stop = array([np.inf, 3.0])
+            result = linspace(start, stop, 3)
+            assert_array_equal(result,
+                               array([[np.inf, 1.0], [np.inf, 2.0],
+                                      [np.inf, 3.0]]))
+
+            # Complex infinities
+            for cinf in [complex(np.inf, 0), complex(0, np.inf),
+                         complex(np.inf, np.inf), complex(-np.inf, -np.inf)]:
+                assert_array_equal(linspace(cinf, cinf, 3), np.full(3, cinf))
+
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
+    def test_inf_mixed_endpoints_warns(self):
+        # Mixed infinite endpoints produce NaN interior points and should warn.
+        cases = [(np.inf, -np.inf, -np.inf), (-np.inf, np.inf, np.inf)]
+        for num in [3, 5]:
+            for start, stop, expected_stop in cases:
+                with pytest.warns(RuntimeWarning, match="invalid value"):
+                    mixed = linspace(start, stop, num)
+                assert_(isnan(mixed[:-1]).all())
+                assert_equal(mixed[-1], expected_stop)
+
+    def test_nan_endpoints(self):
+        # NaN inputs: behavior unchanged by gh-26699 fix (nan != nan so no
+        # replacement occurs; delta stays nan and propagates normally).
+        assert_(isnan(linspace(np.nan, np.nan, 5)).all())
+        assert_(isnan(linspace(np.nan, np.nan, 1)).all())
+        result = linspace(np.nan, 1.0, 5)
+        assert_(isnan(result[:-1]).all())
+        assert_equal(result[-1], 1.0)
 
 
 class TestAdd_newdoc:

@@ -465,8 +465,8 @@ PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private)
         PyErr_NoMemory();
         return NULL;
     }
-    memset((char *)(res->method) + sizeof(PyObject), 0,
-           sizeof(PyArrayMethodObject) - sizeof(PyObject));
+    memset((char *)(res->method) + offsetof(PyArrayMethodObject, name), 0,
+           sizeof(PyArrayMethodObject) - offsetof(PyArrayMethodObject, name));
 
     res->method->nin = spec->nin;
     res->method->nout = spec->nout;

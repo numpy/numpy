@@ -188,8 +188,8 @@ Functions
      Acquire the mutex locking the allocator attached to
      ``descr``. ``NpyString_release_allocator`` must be called on the allocator
      returned by this function exactly once. Note that functions requiring the
-     GIL should not be called while the allocator mutex is held, as doing so may
-     cause deadlocks.
+     GIL should not be called while the allocator mutex is held unless
+     re-entrancy is impossible, as doing so may cause deadlocks.
 
 .. c:function:: void NpyString_acquire_allocators( \
         size_t n_descriptors, PyArray_Descr *const descrs[], \
@@ -212,7 +212,8 @@ Functions
      ``NpyString_release_allocators``.
 
      Note that functions requiring the GIL should not be called while the
-     allocator mutex is held, as doing so may cause deadlocks.
+     allocator mutex is held and reentrancy is possible, as doing so may cause
+     deadlocks.
 
 .. c:function:: void NpyString_release_allocator( \
         npy_string_allocator *allocator)

@@ -10,16 +10,7 @@ extern "C" {
 
 #include <Python.h>
 #include "ndarraytypes.h"
-#include "dtype_api.h"
 
-/* Includes the "function" C-API -- these are all stored in a
-   list of pointers --- one for each file
-   The two lists are concatenated into one in multiarray.
-
-   They are available as import_array()
-*/
-
-#include "__multiarray_api.h"
 
 /*
  * Include any definitions which are defined differently for 1.x and 2.x
@@ -68,7 +59,7 @@ extern "C" {
 
 
 #define PyArray_GETCONTIGUOUS(m) (PyArray_ISCONTIGUOUS(m) ?                   \
-                                  Py_INCREF(m), (m) :                         \
+                                  Py_INCREF((PyObject*)m), (m) :                         \
                                   (PyArrayObject *)(PyArray_Copy(m)))
 
 #define PyArray_SAMESHAPE(a1,a2) ((PyArray_NDIM(a1) == PyArray_NDIM(a2)) &&   \
@@ -156,7 +147,7 @@ extern "C" {
 static inline void
 PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
 {
-    PyArrayObject_fields *fa = (PyArrayObject_fields *)arr;
+    PyArrayObject_fields *fa = _PyArray_GET_ITEM_DATA(arr);
     if (fa && fa->base) {
         if (fa->flags & NPY_ARRAY_WRITEBACKIFCOPY) {
             PyArray_ENABLEFLAGS((PyArrayObject*)fa->base, NPY_ARRAY_WRITEABLE);
@@ -170,7 +161,7 @@ PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
 #define PyArray_DESCR_REPLACE(descr) do { \
                 PyArray_Descr *_new_; \
                 _new_ = PyArray_DescrNew(descr); \
-                Py_XDECREF(descr); \
+                Py_XDECREF((PyObject*)descr); \
                 descr = _new_; \
         } while(0)
 
@@ -252,6 +243,9 @@ PyArray_ITEMSIZE(const PyArrayObject *arr)
 
 #define PyDataType_REFCHK(dtype) \
         PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)
+
+#define PyDataType_ISTRIVIALLYCOPYABLE(dtype) \
+        (!(PyDataType_FLAGS(dtype) & (NPY_NOT_TRIVIALLY_COPYABLE | NPY_ITEM_REFCOUNT)))
 
 #define NPY_BEGIN_THREADS_DESCR(dtype) \
         do {if (!(PyDataType_FLAGCHK((dtype), NPY_NEEDS_PYAPI))) \

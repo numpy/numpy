@@ -28,12 +28,14 @@ simple_dtypes = [type(np.dtype(c)) for c in simple_dtypes]
 
 
 def simple_dtype_instances():
+    params = []
     for dtype_class in simple_dtypes:
         dt = dtype_class()
-        yield pytest.param(dt, id=str(dt))
+        params.append(pytest.param(dt, id=str(dt)))
         if dt.byteorder != "|":
             dt = dt.newbyteorder()
-            yield pytest.param(dt, id=str(dt))
+            params.append(pytest.param(dt, id=str(dt)))
+    return params
 
 
 def get_expected_stringlength(dtype):

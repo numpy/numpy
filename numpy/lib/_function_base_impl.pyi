@@ -470,6 +470,12 @@ def asarray_chkfinite(a: object, dtype: DTypeLike | None = None, order: _OrderKA
 # `[condlist]`. And even though the documentation says these should be boolean, in
 # practice anything that `np.array(condlist, dtype=bool)` accepts will work, i.e. any
 # array-like.
+@overload  # this overload is required to avoid pyright rejecting all-scalar `funclist`
+def piecewise[ShapeT: _Shape, ScalarT: np.generic](
+    x: _Array[ShapeT, ScalarT],
+    condlist: ArrayLike,
+    funclist: _SizedIterable[_ScalarLike_co],
+) -> _Array[ShapeT, ScalarT]: ...
 @overload
 def piecewise[ShapeT: _Shape, ScalarT: np.generic, **Tss](
     x: _Array[ShapeT, ScalarT],
@@ -950,6 +956,8 @@ def sort_complex(a: _ArrayLike[_SortsToComplex128]) -> NDArray[np.complex128]: .
 def sort_complex[ShapeT: _Shape](a: _Array[ShapeT, np.longdouble]) -> _Array[ShapeT, np.clongdouble]: ...
 @overload  # clongdouble, shape unknown
 def sort_complex(a: _ArrayLike[np.longdouble]) -> NDArray[np.clongdouble]: ...
+@overload  # builtin +complex, shape unknown
+def sort_complex(a: _SeqND[complex]) -> NDArray[np.complex128]: ...
 
 #
 def trim_zeros[T](filt: _TrimZerosSequence[T], trim: L["f", "b", "fb", "bf"] = "fb", axis: _ShapeLike | None = None) -> T: ...
