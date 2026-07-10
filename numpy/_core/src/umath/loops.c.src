@@ -2436,9 +2436,9 @@ NPY_NO_EXPORT void
         if (NPY_UNLIKELY(npy_isnan(rr) && npy_isnan(ri))) {
             const @ftype@ in1r_abs = npy_fabs@c@(in1r);
             const @ftype@ in1i_abs = npy_fabs@c@(in1i);
-            if ((in1r_abs == 0 && in1i_abs == 0)
-                && (!npy_isnan(in1r) || !npy_isnan(in1i)))
-            {
+            /* in1r_abs/in1i_abs == 0 implies in1r/in1i are +-0 (never nan),
+             * so unlike divide there is no numerator-nan clause to guard. */
+            if (in1r_abs == 0 && in1i_abs == 0) {
                 npy_set_floatstatus_divbyzero();
                 rr = npy_copysign@c@(NPY_INFINITY@C@, in1r) * 1.0@c@;
                 ri = npy_copysign@c@(NPY_INFINITY@C@, in1r) * 0.0@c@;
