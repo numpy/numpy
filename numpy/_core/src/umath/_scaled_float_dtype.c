@@ -982,13 +982,13 @@ sfloat_partition_loop(
     assert(strides[1] == sizeof(npy_intp));
 
     npy_intp *kth = (npy_intp *)data[1];
-    
+
     NPY_SELECTKIND which = ((PyArrayMethod_PartitionParameters *)context->parameters)->flags;
     PyArray_PartitionFunc *partition_func = get_partition_func(NPY_DOUBLE, which);
     if (partition_func == NULL) {
         return -1;
     }
-    
+
     npy_intp pivots[NPY_MAX_PIVOT_STACK];
     npy_intp npiv = 0;
     npy_intp i;
@@ -1074,7 +1074,7 @@ sfloat_argpartition_resolve_descriptors(
     assert(PyArray_IsNativeByteOrder(given_descrs[0]->byteorder));
     assert(given_descrs[1]->type_num == NPY_INTP);
     assert(given_descrs[2] == NULL || given_descrs[2]->type_num == NPY_INTP);
-    
+
     loop_descrs[0] = given_descrs[0];
     Py_INCREF(loop_descrs[0]);
 

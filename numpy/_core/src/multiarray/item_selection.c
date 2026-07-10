@@ -1895,7 +1895,7 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
         context.descriptors = loop_descrs;
         context.parameters = &part_params;
         context.method = method;
-        
+
         // Arrays are always contiguous for partitioning
         npy_intp strides[3] = {
             loop_descrs[0]->elsize, loop_descrs[1]->elsize, loop_descrs[2]->elsize};
