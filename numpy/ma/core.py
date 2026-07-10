@@ -1988,8 +1988,15 @@ def masked_where(condition, a, copy=True):
 
     (cshape, ashape) = (cond.shape, a.shape)
     if cshape and cshape != ashape:
-        raise IndexError("Inconsistent shape between the condition and the input"
-                         f" (got {cshape} and {ashape})")
+        # Broadcast the condition against the input, matching the semantics of
+        # np.where and boolean indexing. Only raise when the shapes are
+        # genuinely incompatible.
+        try:
+            cond = np.broadcast_to(cond, ashape).copy()
+        except ValueError:
+            raise IndexError(
+                "Inconsistent shape between the condition and the input"
+                f" (got {cshape} and {ashape})") from None
     if hasattr(a, '_mask'):
         cond = mask_or(cond, a._mask)
         cls = type(a)

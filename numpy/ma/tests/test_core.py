@@ -4548,6 +4548,24 @@ class TestMaskedArrayFunctions:
         test = masked_equal(a, 1)
         assert_equal(test.mask, [0, 1, 0, 0, 0, 0, 0, 0, 0, 0])
 
+    def test_masked_where_broadcast(self):
+        # gh-17605: the condition is broadcast against the input, matching
+        # the semantics of np.where and boolean indexing.
+        a = np.arange(6).reshape(3, 2)
+        # column condition (3, 1) -> (3, 2)
+        test = masked_where(np.array([[False], [True], [False]]), a)
+        assert_equal(test.mask, [[0, 0], [1, 1], [0, 0]])
+        # row condition (2,) -> (3, 2)
+        test = masked_where(np.array([True, False]), a)
+        assert_equal(test.mask, [[1, 0], [1, 0], [1, 0]])
+        # the mask of the input is still combined with the (broadcast) condition
+        am = array(a, mask=[[1, 0], [0, 0], [0, 0]])
+        test = masked_where(np.array([[False], [True], [False]]), am)
+        assert_equal(test.mask, [[1, 0], [1, 1], [0, 0]])
+        # genuinely incompatible shapes still raise
+        with assert_raises(IndexError):
+            masked_where(np.array([True, False, True, False]), a)
+
     def test_masked_where_structured(self):
         # test that masked_where on a structured array sets a structured
         # mask (see issue #2972)
