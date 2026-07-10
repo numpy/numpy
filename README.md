@@ -32,8 +32,10 @@ It provides:
 
 - a powerful N-dimensional array object
 - sophisticated (broadcasting) functions
+- most of the parts that require fast computation are written in C or C++
 - tools for integrating C/C++ and Fortran code
 - useful linear algebra, Fourier transform, and random number capabilities
+
 
 Testing:
 
