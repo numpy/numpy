@@ -1765,7 +1765,7 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
     method = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op)))->part_meth;
     if (method != NULL) {
         PyArray_Descr *descr = PyArray_DESCR(op);
-        PyArray_Descr *kdescr = PyArray_DESCR(ktharray);
+        PyArray_Descr *kdescr = PyArray_DESCR(kthrvl);
         PyArray_DTypeMeta *dt = NPY_DTYPE(descr);
         PyArray_DTypeMeta *kdt = NPY_DTYPE(kdescr);
 
@@ -1867,7 +1867,7 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
     method = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op)))->argpart_meth;
     if (method != NULL) {
         PyArray_Descr *descr = PyArray_DESCR(op);
-        PyArray_Descr *kdescr = PyArray_DESCR(ktharray);
+        PyArray_Descr *kdescr = PyArray_DESCR(kthrvl);
         odescr = PyArray_DescrFromType(NPY_INTP);
         if (odescr == NULL) {
             Py_DECREF(kthrvl);
