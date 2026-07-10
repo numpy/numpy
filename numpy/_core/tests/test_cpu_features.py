@@ -281,6 +281,23 @@ if __name__ == "__main__":
             "`__cpu_dispatch__` is non-empty"
         )
     )
+    @pytest.mark.parametrize("action", ["ENABLE", "DISABLE"])
+    def test_max_length_nonexistent_feature(self, action):
+        """
+        Test that the maximum accepted environment variable length can be
+        processed even if the whole value is an invalid feature name.
+        """
+        MAX_VAR_LENGTH = 1024
+        self.env[f'NPY_{action}_CPU_FEATURES'] = "t" * (MAX_VAR_LENGTH - 1)
+        self._run()
+
+    @pytest.mark.skipif(
+        not __cpu_dispatch__,
+        reason=(
+            "NPY_*_CPU_FEATURES only parsed if "
+            "`__cpu_dispatch__` is non-empty"
+        )
+    )
     def test_impossible_feature_disable(self):
         """
         Test that a RuntimeError is thrown if an impossible feature-disabling
@@ -334,6 +351,28 @@ if __name__ == "__main__":
                 "they are not supported by your machine."
             )
             self._expect_error(msg, err_type)
+
+    @pytest.mark.parametrize("action", ["ENABLE", "DISABLE"])
+    def test_repeated_unavailable_feature(self, action):
+        """
+        Test that repeated unavailable features can be processed without
+        overflowing the diagnostic buffer.
+        """
+        if self.UNAVAILABLE_FEAT is None:
+            pytest.skip("There are no unavailable features to test with")
+
+        bad_feature = self.UNAVAILABLE_FEAT
+        feature_repeats = 1024 // (len(bad_feature) + 1)
+        self.env[f'NPY_{action}_CPU_FEATURES'] = ",".join(
+            [bad_feature] * feature_repeats
+        )
+
+        if action == "ENABLE":
+            msg = "You cannot enable CPU features"
+            err_type = "RuntimeError"
+            self._expect_error(msg, err_type)
+        else:
+            self._run()
 
 
 is_linux = sys.platform.startswith('linux')
