@@ -5032,7 +5032,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 # NOTE: while `np.generic` is not technically an instance of `ABCMeta`,
 # the `@abstractmethod` decorator is herein used to (forcefully) deny
 # the creation of `np.generic` instances.
-# The mypy suppression comments are necessary to silence errors regarding
+# The ignore comments are necessary to silence errors regarding
 # the missing `ABCMeta` metaclass.
 # See https://github.com/numpy/numpy-stubs/pull/80 for more details.
 class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
@@ -7460,7 +7460,7 @@ class datetime64(_RealMixin, generic[_DT64ItemT_co], Generic[_DT64ItemT_co]):
 @final  # cannot be subclassed at runtime
 class flexible(_RealMixin, generic[_FlexibleItemT_co], Generic[_FlexibleItemT_co]): ...  # type: ignore[misc]  # ty: ignore[abstract-method-in-final-class]
 
-class void(flexible[bytes | tuple[Any, ...]]):  # type: ignore[misc]  # ty: ignore[subclass-of-final-class]
+class void(flexible[bytes | tuple[Any, ...]]):  # type: ignore[misc]
     @overload
     def __new__(cls, length_or_data: _IntLike_co | bytes, /, dtype: None = None) -> Self: ...
     @overload
@@ -7497,7 +7497,7 @@ class void(flexible[bytes | tuple[Any, ...]]):  # type: ignore[misc]  # ty: igno
 
     def setfield(self, val: ArrayLike, dtype: DTypeLike, offset: int = ...) -> None: ...
 
-class character(flexible[_CharacterItemT_co], Generic[_CharacterItemT_co]):  # type: ignore[misc]  # ty: ignore[subclass-of-final-class]
+class character(flexible[_CharacterItemT_co], Generic[_CharacterItemT_co]):  # type: ignore[misc]
     @abstractmethod
     def __new__(cls, value: object = ..., /) -> Self: ...
 

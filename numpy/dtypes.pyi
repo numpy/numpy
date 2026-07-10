@@ -61,7 +61,7 @@ _NaObjectT_co = TypeVar("_NaObjectT_co", default=Never, covariant=True)
 # Helper base classes (typing-only)
 
 @type_check_only
-class _SimpleDType[ScalarT: np.generic](np.dtype[ScalarT]):  # type: ignore[misc]  # pyright: ignore[reportGeneralTypeIssues]  # ty: ignore[subclass-of-final-class]
+class _SimpleDType[ScalarT: np.generic](np.dtype[ScalarT]):  # type: ignore[misc]  # pyright: ignore[reportGeneralTypeIssues]
     names: None  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override]
     def __new__(cls, /) -> Self: ...
     def __getitem__(self, key: Any, /) -> NoReturn: ...
@@ -456,7 +456,7 @@ class VoidDType(  # type: ignore[misc]
     _TypeCodes[L["V"], L["V"], L[20]],
     _NoOrder,
     _NBit[L[1], _ItemSizeT_co],
-    np.dtype[np.void],  # pyright: ignore[reportGeneralTypeIssues]  # pyrefly: ignore[invalid-inheritance]  # ty: ignore[subclass-of-final-class]
+    np.dtype[np.void],  # pyright: ignore[reportGeneralTypeIssues]  # pyrefly: ignore[invalid-inheritance]
     Generic[_ItemSizeT_co],
 ):
     # NOTE: `VoidDType(...)` raises a `TypeError` at the moment
@@ -581,7 +581,7 @@ class StringDType(  # type: ignore[misc]
     _NBit[L[8], L[16]],
     # TODO(jorenham): change once we have a string scalar type:
     # https://github.com/numpy/numpy/issues/28165
-    np.dtype[str],  # type: ignore[type-var]  # pyright: ignore[reportGeneralTypeIssues, reportInvalidTypeArguments]  # ty: ignore[invalid-type-arguments, subclass-of-final-class]
+    np.dtype[str],  # type: ignore[type-var]  # pyright: ignore[reportGeneralTypeIssues, reportInvalidTypeArguments]  # ty: ignore[invalid-type-arguments]
     Generic[_NaObjectT_co],
 ):
     @property
