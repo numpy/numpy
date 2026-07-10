@@ -1776,8 +1776,6 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
 
         if (method->resolve_descriptors(
             method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
-            PyErr_SetString(PyExc_TypeError,
-                            "unable to resolve descriptors for partition");
             Py_DECREF(kthrvl);
             return -1;
         }
@@ -1885,8 +1883,6 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
 
         if (method->resolve_descriptors(
             method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
-            PyErr_SetString(PyExc_TypeError,
-                            "unable to resolve descriptors for argpartition");
             Py_DECREF(kthrvl);
             Py_DECREF(op2);
             Py_DECREF(odescr);
@@ -3353,8 +3349,6 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 
         if (sort_method->resolve_descriptors(
             sort_method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "unable to resolve descriptors for sort");
             return -1;
         }
         context.descriptors = loop_descrs;
@@ -3462,8 +3456,6 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
             argsort_method, dtypes, given_descrs, loop_descrs, &view_offset);
         Py_DECREF(odescr);
         if (resolve_ret < 0) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "unable to resolve descriptors for argsort");
             return NULL;
         }
         context.descriptors = loop_descrs;
