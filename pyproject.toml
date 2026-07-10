@@ -303,3 +303,15 @@ errors = { bad-override = "ignore" }
 [[tool.pyrefly.sub-config]]
 matches = "numpy/matrixlib/defmatrix.pyi"
 errors = { bad-override = "ignore" }
+
+[tool.ty.environment]
+python-version = "3.14"
+
+[tool.ty.src]
+include = ["numpy/*.pyi", "numpy/**/*.pyi"]
+exclude = ["numpy/typing/tests/**"]
+
+[tool.ty.rules]
+deprecated = "ignore"
+# NumPy intentionally models runtime-incompatible specialized overrides in its stubs.
+invalid-method-override = "ignore"

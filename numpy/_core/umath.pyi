@@ -309,7 +309,7 @@ class _Kwargs21(TypedDict, total=False):
 _IdT_co = TypeVar("_IdT_co", covariant=True, default=None)
 
 @type_check_only
-class _ufunc_11(np.ufunc, Generic[_IdT_co]):  # type: ignore[misc]
+class _ufunc_11(np.ufunc, Generic[_IdT_co]):  # type: ignore[misc]  # ty: ignore[subclass-of-final-class]
     @property
     @override
     def identity(self) -> _IdT_co: ...
@@ -337,7 +337,7 @@ class _ufunc_11(np.ufunc, Generic[_IdT_co]):  # type: ignore[misc]
     def outer(self, A: Never, B: Never, /) -> Never: ...  # pyrefly:ignore[bad-override]
 
 @type_check_only
-class _ufunc_12(np.ufunc):  # type: ignore[misc]
+class _ufunc_12(np.ufunc):  # type: ignore[misc]  # ty: ignore[subclass-of-final-class]
     @property
     @override
     def identity(self) -> None: ...
@@ -372,7 +372,7 @@ class _ufunc_12(np.ufunc):  # type: ignore[misc]
     def outer(self, A: Never, B: Never, /) -> Never: ...  # pyrefly:ignore[bad-override]
 
 @type_check_only
-class _ufunc_21(np.ufunc, Generic[_IdT_co]):  # type: ignore[misc]
+class _ufunc_21(np.ufunc, Generic[_IdT_co]):  # type: ignore[misc]  # ty: ignore[subclass-of-final-class]
     @property
     @override
     def identity(self) -> _IdT_co: ...

@@ -15,25 +15,25 @@ from typing_extensions import deprecated
 class NBitBase: ...
 
 @final
-class _256Bit(NBitBase): ...  # type: ignore[deprecated]
+class _256Bit(NBitBase): ...  # type: ignore[deprecated]  # ty: ignore[subclass-of-final-class]
 
 @final
-class _128Bit(_256Bit): ...
+class _128Bit(_256Bit): ...  # ty: ignore[subclass-of-final-class]
 
 @final
-class _96Bit(_128Bit): ...
+class _96Bit(_128Bit): ...  # ty: ignore[subclass-of-final-class]
 
 @final
-class _80Bit(_96Bit): ...
+class _80Bit(_96Bit): ...  # ty: ignore[subclass-of-final-class]
 
 @final
-class _64Bit(_80Bit): ...
+class _64Bit(_80Bit): ...  # ty: ignore[subclass-of-final-class]
 
 @final
-class _32Bit(_64Bit): ...
+class _32Bit(_64Bit): ...  # ty: ignore[subclass-of-final-class]
 
 @final
-class _16Bit(_32Bit): ...
+class _16Bit(_32Bit): ...  # ty: ignore[subclass-of-final-class]
 
 @final
-class _8Bit(_16Bit): ...
+class _8Bit(_16Bit): ...  # ty: ignore[subclass-of-final-class]

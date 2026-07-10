@@ -75,7 +75,7 @@ class _ReduceKwargs(TypedDict, total=False):
 # pyright: reportIncompatibleMethodOverride=false
 
 @type_check_only
-class _UFunc_Nin2_Nout1[NameT: LiteralString, NTypesT: int, IdentT](ufunc):  # type: ignore[misc]
+class _UFunc_Nin2_Nout1[NameT: LiteralString, NTypesT: int, IdentT](ufunc):  # type: ignore[misc]  # ty: ignore[subclass-of-final-class]
     @property
     def __name__(self) -> NameT: ...
     @property
@@ -274,7 +274,7 @@ class _UFunc_Nin2_Nout1[NameT: LiteralString, NTypesT: int, IdentT](ufunc):  # t
     ) -> None: ...
 
 @type_check_only
-class _UFunc_Nin2_Nout2[NameT: LiteralString, NTypesT: int, IdentT](ufunc):  # type: ignore[misc]
+class _UFunc_Nin2_Nout2[NameT: LiteralString, NTypesT: int, IdentT](ufunc):  # type: ignore[misc]  # ty: ignore[subclass-of-final-class]
     @property
     def __name__(self) -> NameT: ...
     @property
@@ -334,7 +334,7 @@ class _UFunc_Nin2_Nout2[NameT: LiteralString, NTypesT: int, IdentT](ufunc):  # t
     def at(self, a: Never, indices: Never, b: Never, /) -> NoReturn: ...  # type: ignore[override]
 
 @type_check_only
-class _GUFunc_Nin2_Nout1[NameT: LiteralString, NTypesT: int, IdentT, SignatureT: LiteralString](ufunc):  # type: ignore[misc]
+class _GUFunc_Nin2_Nout1[NameT: LiteralString, NTypesT: int, IdentT, SignatureT: LiteralString](ufunc):  # type: ignore[misc]  # ty: ignore[subclass-of-final-class]
     @property
     def __name__(self) -> NameT: ...
     @property
@@ -427,7 +427,7 @@ class _PyFunc_Kwargs_Nargs4P(TypedDict, total=False):
     signature: str | _4PTuple[DTypeLike]
 
 @type_check_only
-class _PyFunc_Nin1_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
+class _PyFunc_Nin1_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]  # ty: ignore[subclass-of-final-class]
     @property
     def identity(self) -> IdentT: ...
     @property
@@ -482,7 +482,7 @@ class _PyFunc_Nin1_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
     def at(self, a: np.ndarray | _SupportsArrayUFunc, indices: _ArrayLikeInt_co, /) -> None: ...  # type: ignore[override]
 
 @type_check_only
-class _PyFunc_Nin2_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
+class _PyFunc_Nin2_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]  # ty: ignore[subclass-of-final-class]
     @property
     def identity(self) -> IdentT: ...
     @property
@@ -707,7 +707,7 @@ class _PyFunc_Nin2_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
     ) -> None: ...
 
 @type_check_only
-class _PyFunc_Nin3P_Nout1[ReturnT, IdentT, NInT: int](ufunc):  # type: ignore[misc]
+class _PyFunc_Nin3P_Nout1[ReturnT, IdentT, NInT: int](ufunc):  # type: ignore[misc]  # ty: ignore[subclass-of-final-class]
     @property
     def identity(self) -> IdentT: ...
     @property
@@ -771,7 +771,7 @@ class _PyFunc_Nin3P_Nout1[ReturnT, IdentT, NInT: int](ufunc):  # type: ignore[mi
     def at(self, a: Never, indices: Never, /, *args: Never) -> NoReturn: ...  # type: ignore[override]
 
 @type_check_only
-class _PyFunc_Nin1P_Nout2P[ReturnT, IdentT, NInT: int, NOutT: int](ufunc):  # type: ignore[misc]
+class _PyFunc_Nin1P_Nout2P[ReturnT, IdentT, NInT: int, NOutT: int](ufunc):  # type: ignore[misc]  # ty: ignore[subclass-of-final-class]
     @property
     def identity(self) -> IdentT: ...
     @property
