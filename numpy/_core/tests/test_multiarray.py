@@ -3106,8 +3106,6 @@ class TestMethods:
         before, after = np.split(part, [k])
         before.sort(descending=descending)
         after.sort(descending=descending)
-
-        part = np.partition(a, k, descending=descending)
         if np.issubdtype(a.dtype, np.object_):
             before = before.astype(float)
             after = after.astype(float)
@@ -3125,8 +3123,6 @@ class TestMethods:
         before, after = np.split(part, [k])
         before.sort(descending=descending)
         after.sort(descending=descending)
-
-        part = np.partition(a, k, descending=descending)
         if np.issubdtype(a.dtype, np.object_):
             before = before.astype(float)
             after = after.astype(float)
