@@ -479,7 +479,7 @@ class TestComplexDivision:
                     assert_equal(result.imag, ex[1])
 
     def test_annex_g(self):
-        # C99 Annex G.5.1 recovery cases for complex division.
+        # C99 Annex G.5.2 recovery cases for complex division.
         # Test cases from CPython 3.14 cmath tests.
         INF = np.inf
         NAN = np.nan
@@ -556,7 +556,7 @@ class TestComplexMultiplication:
 
 class TestComplexReciprocal:
     def test_annex_g(self):
-        # C99 Annex G.5.1 recovery cases for complex reciprocal (1/z).
+        # C99 Annex G.5.2 recovery cases for complex reciprocal (1/z).
         # reciprocal is division with numerator 1+0j, so only
         # cases 1 (denom zero) and 3 (denom infinite) apply.
         INF = np.inf

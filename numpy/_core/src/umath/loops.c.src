@@ -2265,7 +2265,7 @@ NPY_NO_EXPORT void
             ri = (in1i*rat - in1r)*scl;
         }
         /* Recover infinities and zeros that computed as nan+nanj.
-         * See e.g. the C11, Annex G.5.1, routine _Cdivd(). */
+         * See e.g. the C11, Annex G.5.2, routine _Cdivd(). */
         if (NPY_UNLIKELY(npy_isnan(rr) && npy_isnan(ri))) {
             if ((in2r_abs == 0 && in2i_abs == 0)
                 && (!npy_isnan(in1r) && !npy_isnan(in1i)))
@@ -2430,7 +2430,7 @@ NPY_NO_EXPORT void
             ri = -1/d;
         }
         /* Recover infinities and zeros that computed as nan+nanj.
-         * See e.g. the C11, Annex G.5.1, routine _Cdivd().
+         * See e.g. the C11, Annex G.5.2, routine _Cdivd().
          * Numerator is the constant 1+0j, so case 2 (numerator
          * infinite) can never trigger. */
         if (NPY_UNLIKELY(npy_isnan(rr) && npy_isnan(ri))) {

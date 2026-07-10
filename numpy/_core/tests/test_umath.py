@@ -657,7 +657,7 @@ class TestDivision:
             assert_(np.isnan(y)[0])
 
     def test_division_annex_g_complex(self):
-        # C99 Annex G.5.1 recovery cases for complex division.
+        # C99 Annex G.5.2 recovery cases for complex division.
         # Test cases from CPython 3.14 cmath tests.
         INF = np.inf
         NAN = np.nan
@@ -695,7 +695,7 @@ class TestDivision:
             assert_array_strict_equal(x / y, expected)
 
     def test_reciprocal_annex_g_complex(self):
-        # C99 Annex G.5.1 recovery cases for complex reciprocal (1/z).
+        # C99 Annex G.5.2 recovery cases for complex reciprocal (1/z).
         # reciprocal is division with numerator 1+0j, so only
         # cases 1 (denom zero) and 3 (denom infinite) apply.
         INF = np.inf
