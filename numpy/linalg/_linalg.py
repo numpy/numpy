@@ -2574,14 +2574,16 @@ def _rescale_axis_norm(x, ret, axis, ord, keepdims):
     """Recompute the over/underflowed slices of an axis-reduced ord-norm.
 
     ``ret`` is the naive vector ord-norm / Frobenius norm over ``axis``; any
-    slice that came out non-finite or spuriously zero is recomputed with a
-    max-scaled sum (nrm2 scaling, valid for ord >= 1). inf/nan and genuine
-    zeros are preserved, and the common no-overflow case returns ``ret``
-    untouched. See gh-8775.
+    slice that came out non-finite, subnormal or spuriously zero is recomputed
+    with a max-scaled sum (nrm2 scaling, valid for ord >= 1). inf/nan and
+    genuine zeros are preserved, and the common no-overflow case returns
+    ``ret`` untouched. See gh-8775.
     """
     if not issubclass(x.dtype.type, inexact):
         return ret
-    bad = ~isfinite(ret) | (ret == 0)
+    # ret**ord is the per-slice power sum; below smallest_normal it has over-,
+    # under- or subnormal-flowed and lost precision, so recompute that slice.
+    bad = ~isfinite(ret) | (ret ** ord < finfo(ret.dtype).smallest_normal)
     if not bad.any():
         return ret
     ax = abs(x)
@@ -2768,13 +2770,14 @@ def norm(x, ord=None, axis=None, keepdims=False):
         ):
             x = x.ravel(order='K')
             # vdot(x, x).real is a single-pass sum of squared magnitudes
-            # (== x.dot(x) for real). gh-8775: it can overflow/underflow while
-            # the norm is representable, so rescale those rare float cases (the
-            # x.size/inexact guard skips empty and object arrays).
+            # (== x.dot(x) for real). gh-8775: it can overflow/underflow/go
+            # subnormal while the norm is representable, so rescale those rare
+            # float cases (x.size/inexact guard skips empty and object arrays).
             sqnorm = vdot(x, x).real
             ret = sqrt(sqnorm)
             if (x.size and issubclass(x.dtype.type, inexact)
-                    and (not math.isfinite(float(ret)) or ret == 0)):
+                    and (not math.isfinite(float(ret))
+                         or sqnorm < finfo(ret.dtype).smallest_normal)):
                 max_abs = abs(x).max()
                 # skip inf/nan (propagate) and all-zero input (norm is truly 0)
                 if math.isfinite(float(max_abs)) and max_abs != 0:

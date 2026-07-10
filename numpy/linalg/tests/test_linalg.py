@@ -1673,6 +1673,9 @@ class TestNorm_NonSystematic:
             assert norm(x32).dtype == np.float32
             # Complex underflow too.
             assert_allclose(norm(np.array([1e-200 + 1e-200j])), np.sqrt(2) * 1e-200)
+            # A subnormal (but non-zero) sum of squares loses precision in the
+            # naive path; the rescale recovers the full-precision norm.
+            assert_allclose(norm(np.full(10, 1e-161)), np.sqrt(10) * 1e-161)
             # Genuine non-finite values and zeros are preserved.
             assert np.isinf(norm(np.array([np.inf, 1.0])))
             assert np.isnan(norm(np.array([np.nan, 1.0])))
@@ -1697,6 +1700,9 @@ class TestNorm_NonSystematic:
                             [np.sqrt(2) * 1e-200])
             u32 = np.array([[1e-30, 1e-30]], dtype=np.float32)
             assert_allclose(norm(u32, axis=1), [np.sqrt(2) * 1e-30], rtol=1e-3)
+            # Subnormal (non-zero) sum of squares is rescaled per slice too.
+            assert_allclose(norm(np.full((2, 10), 1e-161), axis=1),
+                            [np.sqrt(10) * 1e-161, np.sqrt(10) * 1e-161])
             # Arbitrary ord > 1 along an axis overflows the same way.
             p = np.array([[1e200, 1e200], [3.0, 4.0]])
             assert_allclose(norm(p, ord=3, axis=1),
