@@ -1838,6 +1838,7 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
     NPY_ARRAYMETHOD_FLAGS method_flags = 0;
 
     PyArrayObject *op2, *kthrvl;
+    PyArray_Descr *odescr = NULL;
     PyArray_ArgPartitionFunc *argpart = NULL;
     PyObject *ret;
 
@@ -1867,7 +1868,7 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
     if (method != NULL) {
         PyArray_Descr *descr = PyArray_DESCR(op);
         PyArray_Descr *kdescr = PyArray_DESCR(ktharray);
-        PyArray_Descr *odescr = PyArray_DescrFromType(NPY_INTP);
+        odescr = PyArray_DescrFromType(NPY_INTP);
         if (odescr == NULL) {
             Py_DECREF(kthrvl);
             Py_DECREF(op2);
@@ -1878,7 +1879,7 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
         PyArray_DTypeMeta *odt = NPY_DTYPE(odescr);
 
         PyArray_DTypeMeta *dtypes[3] = { dt, kdt, odt };
-        PyArray_Descr *given_descrs[3] = {descr, kdescr, odescr };
+        PyArray_Descr *given_descrs[3] = { descr, kdescr, odescr };
         // Partition cannot be a view, so view offset is unused
         npy_intp view_offset = 0;
 
@@ -1888,6 +1889,7 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
                             "unable to resolve descriptors for argpartition");
             Py_DECREF(kthrvl);
             Py_DECREF(op2);
+            Py_DECREF(odescr);
             return NULL;
         }
         context.descriptors = loop_descrs;
@@ -1921,6 +1923,7 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
 fail:
     Py_DECREF(kthrvl);
     Py_DECREF(op2);
+    Py_XDECREF(odescr);
 
     if (method != NULL) {
         NPY_AUXDATA_FREE(auxdata);

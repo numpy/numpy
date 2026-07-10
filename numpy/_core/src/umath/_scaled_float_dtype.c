@@ -1083,6 +1083,8 @@ sfloat_argpartition_resolve_descriptors(
 
     loop_descrs[2] = PyArray_DescrFromType(NPY_INTP);
     if (loop_descrs[2] == NULL) {
+        Py_DECREF(loop_descrs[0]);
+        Py_DECREF(loop_descrs[1]);
         return -1;
     }
 
