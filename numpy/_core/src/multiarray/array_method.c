@@ -512,14 +512,6 @@ arraymethod_dealloc(PyObject *self)
         PyMem_Free(meth->wrapped_dtypes);
     }
 
-    /* Free the cached legacy loop including replaced entries */
-    npy_legacy_loop_cache *cache = meth->cached_legacy_loop;
-    while (cache != NULL) {
-        npy_legacy_loop_cache *prev = cache->prev;
-        PyMem_Free(cache);
-        cache = prev;
-    }
-
     Py_TYPE(self)->tp_free(self);
 }
 

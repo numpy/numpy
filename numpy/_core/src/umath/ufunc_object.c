@@ -4935,12 +4935,14 @@ PyUFunc_ReplaceLoopBySignature(PyUFuncObject *func,
         }
         /*
          * If a wrapping ArrayMethod exists for this signature, its cached
-         * loop must be replaced as well.  All fallible steps (lookup and
-         * allocation) happen before any mutation, so a failure leaves the
-         * ufunc unchanged and returns -1 with an exception set.
+         * loop must be replaced as well.  The (fallible) lookup happens
+         * before any mutation, so a failure leaves the ufunc unchanged and
+         * returns -1 with an exception set.
+         * NOTE: replacing a loop is not synchronized with ufunc execution;
+         * the user must not call this while the ufunc runs in another
+         * thread.
          */
         PyArrayMethodObject *method = NULL;
-        npy_legacy_loop_cache *new_cache = NULL;
         if (func->_loops != NULL) {
             PyArray_DTypeMeta *sig_dtypes[NPY_MAXARGS];
             for (j = 0; j < func->nargs; j++) {
@@ -4974,13 +4976,6 @@ PyUFunc_ReplaceLoopBySignature(PyUFuncObject *func,
                 }
                 Py_DECREF(item);
             }
-            if (method != NULL) {
-                new_cache = new_legacy_loop_cache(
-                        newfunc, func->data == NULL ? NULL : func->data[i]);
-                if (new_cache == NULL) {
-                    return -1;
-                }
-            }
         }
 
         if (oldfunc != NULL) {
@@ -4988,7 +4983,8 @@ PyUFunc_ReplaceLoopBySignature(PyUFuncObject *func,
         }
         func->functions[i] = newfunc;
         if (method != NULL) {
-            publish_legacy_loop_cache(method, new_cache);
+            /* ``cached_loop_data`` is unchanged (still ``func->data[i]``) */
+            method->cached_loop = (void *)newfunc;
         }
         res = 0;
         break;
@@ -5375,7 +5371,6 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     PyArray_DTypeMeta *signature[NPY_MAXARGS];
     PyObject *signature_tuple = NULL;
     PyObject *info = NULL;
-    npy_legacy_loop_cache *new_cache = NULL;
     int i;
     int *newtypes=NULL;
 
@@ -5440,8 +5435,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
             !PyObject_TypeCheck(registered, &PyArrayMethod_Type) ||
             (((PyArrayMethodObject *)registered)->get_strided_loop !=
                     &get_wrapped_legacy_ufunc_loop
-                && ((PyArrayMethodObject *)registered)->cached_legacy_loop
-                        == NULL));
+                && ((PyArrayMethodObject *)registered)->cached_loop == NULL));
         Py_DECREF(existing_item);
         if (not_compatible) {
             PyErr_Format(PyExc_TypeError,
@@ -5478,10 +5472,6 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     PyArrayMethodObject *registered_method =
             (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
     assert(PyObject_TypeCheck(registered_method, &PyArrayMethod_Type));
-    new_cache = new_legacy_loop_cache(function, data);
-    if (new_cache == NULL) {
-        goto fail;
-    }
     /* Clearing sets it to NULL for the error paths */
     Py_CLEAR(signature_tuple);
 
@@ -5552,8 +5542,13 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
         }
     }
   patch_and_return:
-    /* Patch the wrapping ArrayMethod so calls dispatch via call_cached_loop. */
-    publish_legacy_loop_cache(registered_method, new_cache);
+    /*
+     * Patch the wrapping ArrayMethod so calls dispatch via call_cached_loop.
+     * NOTE: registering a loop is not synchronized with ufunc execution;
+     * the user must not call this while the ufunc runs in another thread.
+     */
+    registered_method->cached_loop = (void *)function;
+    registered_method->cached_loop_data = data;
     Py_DECREF(info);
     Py_DECREF(key);
     return 0;
@@ -5562,8 +5557,6 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     Py_DECREF(key);
     Py_XDECREF(signature_tuple);
     Py_XDECREF(info);
-    /* ``new_cache`` is only owned by the method once published */
-    PyMem_Free(new_cache);
     PyArray_free(funcdata);
     PyArray_free(newtypes);
     if (!PyErr_Occurred()) PyErr_NoMemory();

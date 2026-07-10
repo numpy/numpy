@@ -21,51 +21,13 @@
 #include "ufunc_object.h"
 #include "ufunc_type_resolution.h"
 
-#ifdef Py_GIL_DISABLED
-#include <stdatomic.h>
-#define FT_ATOMIC_LOAD_PTR_ACQUIRE(ptr) \
-    atomic_load_explicit((_Atomic(void *) *)&(ptr), memory_order_acquire)
-#define FT_ATOMIC_STORE_PTR_RELEASE(ptr, val) \
-    atomic_store_explicit((_Atomic(void *) *)&(ptr), (void *)(val), memory_order_release)
-#else
-#define FT_ATOMIC_LOAD_PTR_ACQUIRE(ptr) (ptr)
-#define FT_ATOMIC_STORE_PTR_RELEASE(ptr, val) (ptr) = (val)
-#endif
-
-
-NPY_NO_EXPORT npy_legacy_loop_cache *
-new_legacy_loop_cache(PyUFuncGenericFunction loop, void *user_data)
-{
-    npy_legacy_loop_cache *cache = PyMem_Malloc(sizeof(npy_legacy_loop_cache));
-    if (cache == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-    cache->loop = (void *)loop;
-    cache->user_data = user_data;
-    cache->prev = NULL;
-    return cache;
-}
-
-
-NPY_NO_EXPORT void
-publish_legacy_loop_cache(PyArrayMethodObject *method,
-        npy_legacy_loop_cache *cache)
-{
-    /*
-     * The replaced entry may still be in use by a concurrently executing
-     * loop; it stays on the ``prev`` chain until the method is deallocated.
-     */
-    cache->prev = method->cached_legacy_loop;
-    FT_ATOMIC_STORE_PTR_RELEASE(method->cached_legacy_loop, cache);
-}
-
 
 /*
- * The legacy loop pointer and its user_data live on the ArrayMethod in
- * ``cached_legacy_loop``.  No auxdata is needed.  The cache entry is read
- * with a single pointer load: entries are immutable once published, so
- * the loop/user_data pair is always consistent (see ``array_method.h``).
+ * The legacy loop pointer and its user_data live on the ArrayMethod
+ * (in ``cached_loop`` / ``cached_loop_data``).  No auxdata is needed.
+ * NOTE: replacing or registering a loop rewrites the pair; that must be
+ * synchronized by the user with any concurrent execution of the ufunc
+ * (see ``array_method.h``).
  */
 static int
 call_cached_loop(PyArrayMethod_Context *context,
@@ -73,10 +35,9 @@ call_cached_loop(PyArrayMethod_Context *context,
         NpyAuxData *NPY_UNUSED(auxdata))
 {
     PyArrayMethodObject *method = context->method;
-    npy_legacy_loop_cache *cache = (npy_legacy_loop_cache *)
-            FT_ATOMIC_LOAD_PTR_ACQUIRE(method->cached_legacy_loop);
-    ((PyUFuncGenericFunction)cache->loop)(
-            (char **)data, dimensions, strides, cache->user_data);
+    ((PyUFuncGenericFunction)method->cached_loop)(
+            (char **)data, dimensions, strides,
+            method->cached_loop_data);
     if ((method->flags & NPY_METH_REQUIRES_PYAPI) &&
             PyErr_Occurred()) {
         return -1;
@@ -178,7 +139,7 @@ simple_legacy_resolve_descriptors(
 
 
 /*
- * Legacy wrapper get_strided_loop.  ``cached_legacy_loop`` is populated at
+ * Legacy wrapper get_strided_loop.  ``cached_loop`` is populated at
  * registration time -- either by ``PyArray_NewLegacyWrappingArrayMethod``
  * (built-ins and spec-API ufuncs), by ``PyUFunc_RegisterLoopForType``
  * (third-party userloops), or by ``patch_cached_int_loop`` (special-int
@@ -195,7 +156,7 @@ get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
     assert(aligned);
     assert(!move_references);
 
-    if (NPY_UNLIKELY(context->method->cached_legacy_loop == NULL)) {
+    if (NPY_UNLIKELY(context->method->cached_loop == NULL)) {
         /*
          * No loop was found at registration time and none was registered
          * since (e.g. a partially failed ``PyUFunc_RegisterLoopForType``).
@@ -445,7 +406,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
      * Resolve and cache the inner loop now so that calls dispatch via
      * ``call_cached_loop`` directly.  When the selector cannot find a loop
      * (for userloops registered after this method is created),
-     * ``cached_legacy_loop`` is left NULL and ``PyUFunc_RegisterLoopForType``
+     * ``cached_loop`` is left NULL and ``PyUFunc_RegisterLoopForType``
      * patches it later.
      */
     {
@@ -466,13 +427,8 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
             PyErr_Clear();
         }
         else {
-            npy_legacy_loop_cache *cache = new_legacy_loop_cache(
-                    loop, user_data);
-            if (cache == NULL) {
-                Py_DECREF(bound_res);
-                return NULL;
-            }
-            publish_legacy_loop_cache(res, cache);
+            res->cached_loop = (void *)loop;
+            res->cached_loop_data = user_data;
             res->strided_loop = &call_cached_loop;
             /*
              * ``contiguous_loop`` is left NULL (it would be the same

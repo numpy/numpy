@@ -30,18 +30,6 @@ NPY_NO_EXPORT NPY_CASTING
 wrapped_legacy_resolve_descriptors(PyArrayMethodObject *,
         PyArray_DTypeMeta *const *, PyArray_Descr *const *, PyArray_Descr **, npy_intp *);
 
-/*
- * Create/publish a cached legacy inner-loop on an ArrayMethod.  Creation
- * is separate from (infallible) publishing so callers can allocate before
- * mutating any other state.
- */
-NPY_NO_EXPORT npy_legacy_loop_cache *
-new_legacy_loop_cache(PyUFuncGenericFunction loop, void *user_data);
-
-NPY_NO_EXPORT void
-publish_legacy_loop_cache(PyArrayMethodObject *method,
-        npy_legacy_loop_cache *cache);
-
 #ifdef __cplusplus
 }
 #endif
