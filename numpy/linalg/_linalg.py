@@ -916,7 +916,7 @@ def outer(x1, x2, /):
     out : (M, N) ndarray
         ``out[i, j] = a[i] * b[j]``
 
-    See also
+    See Also
     --------
     outer
 
@@ -2442,7 +2442,6 @@ def lstsq(a, b, rcond=None):
     Raises
     ------
     LinAlgError
-        If computation does not converge.
 
     See Also
     --------

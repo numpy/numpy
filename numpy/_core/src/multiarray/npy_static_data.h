@@ -133,6 +133,13 @@ typedef struct npy_static_pydata_struct {
     PyObject *format_options;
 
     /*
+     * Context variable set to True while the legacy ufunc type resolvers
+     * run for promotion, to suppress their deprecation warnings (the
+     * resolution step warns on every call).
+     */
+    PyObject *legacy_resolver_promoting;
+
+    /*
      * Used in the __array__ internals to avoid building a tuple inline
      */
     PyObject *kwnames_is_copy;

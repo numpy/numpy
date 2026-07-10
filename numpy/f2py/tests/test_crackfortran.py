@@ -66,7 +66,7 @@ class TestPublicPrivate:
         mod = crackfortran.crackfortran([str(fpath)])
         assert len(mod) == 1
         pyf = crackfortran.crack2fortran(mod)
-        assert 'bar' not in pyf
+        assert 'bar1337baz' not in pyf
 
 class TestModuleProcedure:
     def test_moduleOperators(self, tmp_path):

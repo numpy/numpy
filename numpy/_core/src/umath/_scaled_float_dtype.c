@@ -158,9 +158,9 @@ sfloat_scaled_copy(PyArray_SFloatDescr *self, double factor) {
         return NULL;
     }
     /* Don't copy PyObject_HEAD part */
-    memcpy((char *)new + sizeof(PyObject),
-            (char *)self + sizeof(PyObject),
-            sizeof(PyArray_SFloatDescr) - sizeof(PyObject));
+    memcpy((char *)new + offsetof(PyArray_Descr, typeobj),
+            (char *)self + offsetof(PyArray_Descr, typeobj),
+            sizeof(PyArray_SFloatDescr) - offsetof(PyArray_Descr, typeobj));
 
     new->scaling = new->scaling * factor;
     return (PyArray_Descr *)new;

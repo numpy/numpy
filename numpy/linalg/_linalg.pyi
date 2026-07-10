@@ -196,8 +196,8 @@ class SVDResult(NamedTuple, Generic[_FloatingT_co, _InexactT_co]):
     Vh: NDArray[_InexactT_co]
 
 class SlogdetResult(NamedTuple, Generic[_FloatingOrArrayT_co, _InexactOrArrayT_co]):
-    sign: _FloatingOrArrayT_co
-    logabsdet: _InexactOrArrayT_co
+    sign: _InexactOrArrayT_co
+    logabsdet: _FloatingOrArrayT_co
 
 # keep in sync with `solve`
 @overload  # ~float64, +float64
@@ -962,43 +962,49 @@ def diagonal(x: ArrayLike, /, *, offset: SupportsIndex = 0) -> np.ndarray: ...
 def trace(
     x: _SupportsArray[_JustAnyShape, np.dtype[_to_complex]], /, *, offset: SupportsIndex = 0, dtype: DTypeLike | None = None
 ) -> Any: ...
-@overload  # 2d known dtype, dtype=None
-def trace[ScalarT: _to_complex](x: _ArrayLike2D[ScalarT], /, *, offset: SupportsIndex = 0, dtype: None = None) -> ScalarT: ...
+@overload  # 2d known dtype
+def trace[ScalarT: np.inexact](x: _ArrayLike2D[ScalarT], /, *, offset: SupportsIndex = 0, dtype: None = None) -> ScalarT: ...
 @overload  # 2d, dtype=<given>
-def trace[ScalarT: _to_complex](
-    x: _ToArrayComplex_2d, /, *, offset: SupportsIndex = 0, dtype: _DTypeLike[ScalarT]
-) -> ScalarT: ...
-@overload  # 2d bool
-def trace(x: _Sequence2D[bool], /, *, offset: SupportsIndex = 0, dtype: None = None) -> np.bool: ...
-@overload  # 2d int
-def trace(x: Sequence[list[int]], /, *, offset: SupportsIndex = 0, dtype: None = None) -> np.int_: ...
-@overload  # 2d float
+def trace[ScalarT: np.number](x: _ToArrayComplex_2d, /, *, offset: SupportsIndex = 0, dtype: _DTypeLike[ScalarT]) -> ScalarT: ...
+@overload  # 2d +int
+def trace(
+    x: _ArrayLike2D[np.integer | np.bool] | Sequence[Sequence[int]], /, *, offset: SupportsIndex = 0, dtype: None = None
+) -> np.int_: ...
+@overload  # 2d ~float
 def trace(x: Sequence[list[float]], /, *, offset: SupportsIndex = 0, dtype: None = None) -> np.float64: ...
-@overload  # 2d complex
+@overload  # 2d ~complex
 def trace(x: Sequence[list[complex]], /, *, offset: SupportsIndex = 0, dtype: None = None) -> np.complex128: ...
-@overload  # 3d known dtype, dtype=None
-def trace[DTypeT: np.dtype[_to_complex]](
+@overload  # 3d known dtype
+def trace[DTypeT: np.dtype[np.inexact]](
     x: _SupportsArray[tuple[int, int, int], DTypeT], /, *, offset: SupportsIndex = 0, dtype: None = None
 ) -> np.ndarray[tuple[int], DTypeT]: ...
+@overload  # 3d +int
+def trace(
+    x: _SupportsArray[tuple[int, int, int], np.dtype[np.integer | np.bool]], /, *, offset: SupportsIndex = 0, dtype: None = None
+) -> np.ndarray[tuple[int], np.dtype[np.int_]]: ...
 @overload  # 3d, dtype=<given>
-def trace[ScalarT: _to_complex](
+def trace[ScalarT: np.number](
     x: _ToArrayComplex_3d, /, *, offset: SupportsIndex = 0, dtype: _DTypeLike[ScalarT]
 ) -> _Array1D[ScalarT]: ...
-@overload  # 3d+ known dtype, dtype=None
-def trace[DTypeT: np.dtype[_to_complex]](
+@overload  # 3d+ known dtype
+def trace[DTypeT: np.dtype[np.inexact]](
     x: _SupportsArray[_AtLeast3D, DTypeT], /, *, offset: SupportsIndex = 0, dtype: None = None
 ) -> np.ndarray[tuple[int, *tuple[Any, ...]], DTypeT]: ...
 @overload  # 3d+, dtype=<given>
-def trace[ScalarT: _to_complex](
+def trace[ScalarT: np.inexact](
     x: _ArrayLike3ND[_to_complex] | _Sequence3ND[complex], /, *, offset: SupportsIndex = 0, dtype: _DTypeLike[ScalarT]
 ) -> np.ndarray[tuple[int, *tuple[Any, ...]], np.dtype[ScalarT]]: ...
-@overload  # 3d+ bool
-def trace(x: _Sequence3ND[bool], /, *, offset: SupportsIndex = 0, dtype: None = None) -> NDArray[np.bool]: ...
-@overload  # 3d+ int
-def trace(x: _Sequence2ND[list[int]], /, *, offset: SupportsIndex = 0, dtype: None = None) -> NDArray[np.int_]: ...
-@overload  # 3d+ float
+@overload  # 3d+ +integer
+def trace(
+    x: _SupportsArray[_AtLeast3D, np.dtype[np.integer | np.bool]] | _Sequence2ND[Sequence[int]],
+    /,
+    *,
+    offset: SupportsIndex = 0,
+    dtype: None = None,
+) -> NDArray[np.int_]: ...
+@overload  # 3d+ ~float
 def trace(x: _Sequence2ND[list[float]], /, *, offset: SupportsIndex = 0, dtype: None = None) -> NDArray[np.float64]: ...
-@overload  # 3d+ complex
+@overload  # 3d+ ~complex
 def trace(x: _Sequence2ND[list[complex]], /, *, offset: SupportsIndex = 0, dtype: None = None) -> NDArray[np.complex128]: ...
 @overload  # fallback
 def trace(x: _ArrayLikeComplex_co, /, *, offset: SupportsIndex = 0, dtype: DTypeLike | None = None) -> Any: ...

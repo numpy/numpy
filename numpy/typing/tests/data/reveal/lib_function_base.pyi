@@ -103,6 +103,7 @@ assert_type(np.asarray_chkfinite(AR_f8, dtype=np.float64), npt.NDArray[np.float6
 assert_type(np.asarray_chkfinite(AR_f8, dtype=float), np.ndarray)
 
 # piecewise
+assert_type(np.piecewise(AR_f8_1d, AR_b, [-1.0, 1.0]), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.piecewise(AR_f8_1d, AR_b, [func]), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.piecewise(AR_f8, AR_b, [func]), npt.NDArray[np.float64])
 assert_type(np.piecewise(AR_f8, AR_b, [func_f8]), npt.NDArray[np.float64])
@@ -216,6 +217,7 @@ assert_type(np.sort_complex(AR_f8), npt.NDArray[np.complex128])
 assert_type(np.sort_complex(AR_f10), npt.NDArray[np.clongdouble])
 assert_type(np.sort_complex(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.complex128]])
 assert_type(np.sort_complex(AR_c16_1d), np.ndarray[tuple[int], np.dtype[np.complex128]])
+assert_type(np.sort_complex(AR_LIKE_f8), npt.NDArray[np.complex128])
 
 # trim_zeros
 assert_type(np.trim_zeros(AR_f8), npt.NDArray[np.float64])

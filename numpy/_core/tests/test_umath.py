@@ -3954,6 +3954,21 @@ class TestSpecialMethods:
         with assert_raises_regex(TypeError, fnmatch.translate(msg)):
             np.add(A(), object(), out=1)
 
+    def test_ufunc_override_reduction_not_implemented_leak(self):
+        # gh-31677: the reduction override error path leaked references to
+        # the internal full_args.in/out tuples when __array_ufunc__ returned
+        # NotImplemented (or raised). No refcount assertion is made here; a
+        # leak sanitizer build is expected to catch the regression.
+
+        class A:
+            def __array_ufunc__(self, *args, **kwargs):
+                return NotImplemented
+
+        a = A()
+        assert_raises(TypeError, np.add.reduce, a)
+        assert_raises(TypeError, np.add.accumulate, a)
+        assert_raises(TypeError, np.add.reduceat, a, [0])
+
     def test_ufunc_override_disabled(self):
 
         class OptOut:

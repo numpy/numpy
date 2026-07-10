@@ -13,7 +13,7 @@ __all__ = ["NDArrayOperatorsMixin"]
 # As such, only little type safety can be provided here.
 
 class NDArrayOperatorsMixin(ABC):
-    __slots__ = ()  # pyrefly:ignore[implicit-any-attribute]
+    __slots__ = ()
 
     @type_check_only
     @abstractmethod

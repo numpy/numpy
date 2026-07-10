@@ -357,8 +357,8 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
     {
         PyArray_StringDTypeObject *descr =
             reinterpret_cast<PyArray_StringDTypeObject *>(PyArray_DESCR(self));
-        np::raii::NpyStringAcquireAllocator alloc(descr);
         np::raii::SaveThreadState save_thread_state{};
+        np::raii::NpyStringAcquireAllocator alloc(descr);
 
         char *idata = PyArray_BYTES(self);
         npy_intp istride = PyArray_STRIDES(self)[0];
@@ -387,8 +387,8 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
     {
         PyArray_StringDTypeObject *res_descr =
             reinterpret_cast<PyArray_StringDTypeObject *>(PyArray_DESCR(res_obj));
-        np::raii::NpyStringAcquireAllocator alloc(res_descr);
         np::raii::SaveThreadState save_thread_state{};
+        np::raii::NpyStringAcquireAllocator alloc(res_descr);
 
         char *odata = PyArray_BYTES(res_obj);
         npy_intp ostride = PyArray_STRIDES(res_obj)[0];

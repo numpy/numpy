@@ -28,6 +28,8 @@ from typing_extensions import TypeIs, TypeVar, deprecated
 
 import numpy as np
 from numpy import (
+    _CastingKind,
+    _CopyMode,
     _HasDType,
     _HasDTypeWithRealAndImag,
     _ModeKind,
@@ -1880,6 +1882,27 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def ids(self) -> tuple[int, int]: ...
     def iscontiguous(self) -> bool: ...
 
+    # keep in sync with ndarray.astype
+    @override
+    @overload
+    def astype[ScalarT: generic](
+        self,
+        dtype: _DTypeLike[ScalarT],
+        order: _OrderKACF = "K",
+        casting: _CastingKind = "unsafe",
+        subok: bool = True,
+        copy: bool | _CopyMode = True,
+    ) -> MaskedArray[_ShapeT_co, np.dtype[ScalarT]]: ...
+    @overload
+    def astype(
+        self,
+        dtype: DTypeLike | None,
+        order: _OrderKACF = "K",
+        casting: _CastingKind = "unsafe",
+        subok: bool = True,
+        copy: bool | _CopyMode = True,
+    ) -> MaskedArray[_ShapeT_co, np.dtype]: ...
+
     # Keep in sync with `ma.core.all`
     @overload  # type: ignore[override]
     def all(
@@ -2073,7 +2096,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     # Keep in sync with `ndarray.cumprod`
     @override  # type: ignore[override]
     @overload
-    def cumprod[DTypeT: dtype[number | object_]](
+    def cumprod[DTypeT: dtype[inexact | object_]](
         self: MaskedArray[Any, DTypeT],
         axis: None = None,
         dtype: None = None,
@@ -2081,7 +2104,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     ) -> MaskedArray[tuple[int], DTypeT]: ...
     @overload  # bool_
     def cumprod(
-        self: _MaskedArray[np.bool],
+        self: _MaskedArray[np.integer | np.bool],
         axis: None = None,
         dtype: None = None,
         out: None = None,
@@ -2117,15 +2140,15 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         out: None = None,
     ) -> _Masked1D[Any]: ...
     @overload  # axis: <given>
-    def cumprod[ArrayT: _MaskedArray[number | object_]](
+    def cumprod[ArrayT: _MaskedArray[np.inexact | object_]](
         self: ArrayT,
         axis: SupportsIndex,
         dtype: None = None,
         out: None = None,
     ) -> ArrayT: ...
-    @overload  # bool_, axis: <given>
+    @overload  # +integer, axis: <given>
     def cumprod[ShapeT: _Shape](
-        self: MaskedArray[ShapeT, np.dtype[np.bool]],
+        self: MaskedArray[ShapeT, np.dtype[np.integer | np.bool]],
         axis: SupportsIndex,
         dtype: None = None,
         out: None = None,
@@ -2163,7 +2186,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     # Keep in sync with `ndarray.cumsum`
     @override  # type: ignore[override]
     @overload
-    def cumsum[DTypeT: dtype[number | timedelta64 | object_]](
+    def cumsum[DTypeT: dtype[inexact | timedelta64 | object_]](
         self: MaskedArray[Any, DTypeT],
         axis: None = None,
         dtype: None = None,
@@ -2171,7 +2194,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     ) -> MaskedArray[tuple[int], DTypeT]: ...
     @overload  # bool_
     def cumsum(
-        self: _MaskedArray[np.bool],
+        self: _MaskedArray[np.integer | np.bool],
         axis: None = None,
         dtype: None = None,
         out: None = None,
@@ -2213,9 +2236,9 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         dtype: None = None,
         out: None = None,
     ) -> ArrayT: ...
-    @overload  # bool_, axis: <given>
+    @overload  # +integer, axis: <given>
     def cumsum[ShapeT: _Shape](
-        self: MaskedArray[ShapeT, np.dtype[np.bool]],
+        self: MaskedArray[ShapeT, np.dtype[np.integer | np.bool]],
         axis: SupportsIndex,
         dtype: None = None,
         out: None = None,
@@ -2854,7 +2877,8 @@ class MaskedConstant(MaskedArray[tuple[()], dtype[float64]]):
 masked: Final[MaskedConstant] = ...
 masked_singleton: Final[MaskedConstant] = ...
 
-type masked_array = MaskedArray
+# this should NOT be a (PEP 695) type alias, see https://github.com/numpy/numpy/issues/31737
+masked_array = MaskedArray
 
 # keep in sync with `MaskedArray.__new__`
 @overload
@@ -3954,9 +3978,11 @@ def diff(
     append: ArrayLike | _NoValueType = ...,
 ) -> _MaskedArray[Incomplete]: ...
 
-# keep in sync with `_core.multiarray.where`
+#
 @overload
-def where(condition: ArrayLike, x: _NoValueType = ..., y: _NoValueType = ...) -> tuple[_MaskedArray[np.intp], ...]: ...
+def where(
+    condition: ArrayLike, x: _NoValueType = ..., y: _NoValueType = ...
+) -> tuple[np.ndarray[tuple[int], np.dtype[np.intp]], ...]: ...
 @overload
 def where(condition: ArrayLike, x: ArrayLike, y: ArrayLike) -> _MaskedArray[Incomplete]: ...
 
