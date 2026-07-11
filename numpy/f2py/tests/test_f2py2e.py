@@ -754,6 +754,51 @@ def test_inclpath(monkeypatch):
     assert remain == []
 
 
+def test_get_newer_options_preserves_tokenized_arguments_with_spaces(monkeypatch):
+    """Preserve already-tokenized argv entries that contain spaces."""
+    monkeypatch.setattr(os, "pathsep", ";")
+
+    include_paths, ftcompat, remain = get_newer_options(
+        ["-I", r"C:\Users\First Last\include", r"C:\src\fib.f90"]
+    )
+
+    assert include_paths == [r"C:\Users\First Last\include"]
+    assert ftcompat is None
+    assert remain == [r"C:\src\fib.f90"]
+
+    include_paths, ftcompat, remain = get_newer_options(
+        [
+            "--include-paths",
+            r"C:\Users\First Last\include;D:\vendor headers",
+            r"C:\src\fib.f90",
+        ]
+    )
+
+    assert set(include_paths) == {
+        r"C:\Users\First Last\include",
+        r"D:\vendor headers",
+    }
+    assert ftcompat is None
+    assert remain == [r"C:\src\fib.f90"]
+
+    include_paths, ftcompat, remain = get_newer_options(
+        [
+            "--build-dir",
+            r"C:\Users\First Last\f2py build",
+            "--freethreading-compatible",
+            r"C:\Users\First Last\src\fib.f90",
+        ]
+    )
+
+    assert include_paths == []
+    assert ftcompat is True
+    assert remain == [
+        "--build-dir",
+        r"C:\Users\First Last\f2py build",
+        r"C:\Users\First Last\src\fib.f90",
+    ]
+
+
 def test_hlink():
     """Add to the include directories
 
