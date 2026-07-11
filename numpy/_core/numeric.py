@@ -2145,7 +2145,9 @@ def base_repr(number, base=2, padding=0):
     """
     digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     if base > len(digits):
-        raise ValueError("Bases greater than 36 not handled in base_repr.")
+        raise ValueError(
+            f"Bases greater than {len(digits)} not handled in base_repr."
+        )
     elif base < 2:
         raise ValueError("Bases less than 2 not handled in base_repr.")
 

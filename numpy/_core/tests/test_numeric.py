@@ -2095,7 +2095,9 @@ class TestBaseRepr:
     def test_base_range(self):
         with assert_raises(ValueError):
             np.base_repr(1, 1)
-        with assert_raises(ValueError):
+        # the upper-bound message reports len(digits), so it stays correct if
+        # the digit alphabet is ever extended
+        with assert_raises_regex(ValueError, "Bases greater than 36"):
             np.base_repr(1, 37)
 
     def test_minimal_signed_int(self):
