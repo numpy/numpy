@@ -365,17 +365,22 @@ def _unique1d(ar, return_index=False, return_inverse=False,
 
     # masked arrays are not supported yet.
     if not optional_indices and not return_counts and not np.ma.is_masked(ar):
-        # First we convert the array to a numpy array, later we wrap it back
-        # in case it was a subclass of numpy.ndarray.
-        conv = _array_converter(ar)
-        ar_, = conv
+        # Hashing is faster for variable-width StringDType.
+        # For other types (numeric, fixed-width string/unicode), sorting is
+        # faster at larger scales, but hashing is faster at small scales (size < 100).
+        is_vstring = getattr(ar.dtype, "__class__", None).__name__ == "StringDType"
+        if is_vstring or len(ar) < 100:
+            # First we convert the array to a numpy array, later we wrap it back
+            # in case it was a subclass of numpy.ndarray.
+            conv = _array_converter(ar)
+            ar_, = conv
 
-        if (hash_unique := _unique_hash(ar_, equal_nan=equal_nan)) \
-            is not NotImplemented:
-            if sorted:
-                hash_unique.sort()
-            # We wrap the result back in case it was a subclass of numpy.ndarray.
-            return (conv.wrap(hash_unique),)
+            if (hash_unique := _unique_hash(ar_, equal_nan=equal_nan)) \
+                is not NotImplemented:
+                if sorted:
+                    hash_unique.sort()
+                # We wrap the result back in case it was a subclass of numpy.ndarray.
+                return (conv.wrap(hash_unique),)
 
     # If we don't use the hash map, we use the slower sorting method.
     if optional_indices:
