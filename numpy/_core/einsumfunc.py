@@ -1136,8 +1136,7 @@ def _parse_output_order(order, a_is_fcontig, b_is_fcontig):
             return "C"
     else:
         raise ValueError(
-            "ValueError: order must be one of "
-            f"'C', 'F', 'A', or 'K' (got '{order}')"
+            f"order must be one of 'C', 'F', 'A', or 'K' (got '{order}')"
         )
 
 

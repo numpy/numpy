@@ -1136,6 +1136,17 @@ class TestEinsum:
             tmp = np.einsum('...ft,mf->...mt', d, c, order='a', optimize=opt)
             assert_(tmp.flags.c_contiguous)
 
+    def test_invalid_output_order(self):
+        # an invalid order must report the accepted set without an accidental
+        # "ValueError: " prefix embedded in the message itself
+        a = np.ones((2, 3, 5), order='F')
+        b = np.ones((4, 3), order='F')
+        assert_raises_regex(
+            ValueError,
+            r"^order must be one of 'C', 'F', 'A', or 'K'",
+            np.einsum, '...ft,mf->...mt', a, b, order='z', optimize=True,
+        )
+
     def test_singleton_broadcasting(self):
         eq = "ijp,ipq,ikq->ijk"
         shapes = ((3, 1, 1), (3, 1, 3), (1, 3, 3))
