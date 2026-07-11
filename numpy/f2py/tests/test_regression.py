@@ -1,10 +1,14 @@
 import os
 import platform
+import sys
+from pathlib import Path
 
 import pytest
 
 import numpy as np
 import numpy.testing as npt
+
+from numpy.f2py._backends._meson import MesonTemplate
 
 from . import util
 
@@ -154,6 +158,32 @@ def test_gh26623():
         )
     except RuntimeError as rerr:
         assert "lparen got assign" not in str(rerr)
+
+
+def test_meson_library_names_use_valid_identifiers():
+    mparser = pytest.importorskip("mesonbuild.mparser")
+    meson_build = MesonTemplate(
+        modulename="Blah",
+        sources=[Path("f90continuation.f90")],
+        deps=[],
+        libraries=["foo.bar", "foo-bar", "foo_bar", "1foo"],
+        library_dirs=[],
+        include_dirs=[],
+        object_files=[],
+        linker_args=[],
+        fortran_args=[],
+        build_type="debug",
+        python_exe=sys.executable,
+    ).generate_meson_build()
+
+    mparser.Parser(meson_build, "meson.build").parse()
+    assert "-lfoo.bar" in meson_build
+    assert "-lfoo-bar" in meson_build
+    assert "-lfoo_bar" in meson_build
+    assert "-l1foo" in meson_build
+    assert "\nfoo.bar =" not in meson_build
+    assert "\nfoo-bar =" not in meson_build
+    assert "\n1foo =" not in meson_build
 
 
 @pytest.mark.slow
