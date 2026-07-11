@@ -2585,9 +2585,9 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
 
         /* Check for a NaT string */
         if (len <= 0 || (len == 3 &&
-                        tolower(str[0]) == 'n' &&
-                        tolower(str[1]) == 'a' &&
-                        tolower(str[2]) == 't')) {
+                        tolower(Py_CHARMASK(str[0])) == 'n' &&
+                        tolower(Py_CHARMASK(str[1])) == 'a' &&
+                        tolower(Py_CHARMASK(str[2])) == 't')) {
             *out = NPY_DATETIME_NAT;
             succeeded = 1;
         }
