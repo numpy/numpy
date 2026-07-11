@@ -1,4 +1,5 @@
 import sys
+import warnings
 
 import pytest
 
@@ -176,3 +177,66 @@ class TestPut:
         # Allowing empty values like this is weird...
         np.put(arr, [1, 2, 3], [])
         assert_array_equal(arr, arr_copy)
+
+
+class TestPartialWriteNote:
+    # Operations writing straight into a caller's array can raise part-way
+    # through; the error then carries a note saying the array may be partially
+    # modified. No note when an internal copy shielded the array.
+    note = "may have been partially modified"
+
+    def _has_note(self, exc):
+        return any(self.note in n for n in getattr(exc, "__notes__", []))
+
+    def test_put_oob_notes_partial_write(self):
+        a = np.arange(10)
+        with pytest.raises(IndexError) as exc_info:
+            np.put(a, [0, 1, 99], [100, 101, 102])
+        assert self._has_note(exc_info.value)
+        # the note must not change the error or get duplicated
+        assert "out of bounds" in str(exc_info.value)
+        notes = exc_info.value.__notes__
+        assert len([n for n in notes if self.note in n]) == 1
+        # the write up to the bad index really happened
+        assert a[0] == 100 and a[1] == 101
+
+    def test_take_out_copy_not_noted(self):
+        # dtype mismatch forces a writeback copy, so out stays untouched
+        a = np.arange(10)
+        out = np.zeros(3, dtype=np.float64)
+        with pytest.raises(IndexError) as exc_info:
+            np.take(a, [0, 1, 99], out=out)
+        assert not self._has_note(exc_info.value)
+        assert_array_equal(out, np.zeros(3))
+
+    def test_choose_raise_not_noted(self):
+        # mode="raise" copies out internally, so out stays untouched
+        choices = [np.zeros(3, dtype=int), np.ones(3, dtype=int)]
+        out = np.full(3, -7)
+        with pytest.raises(ValueError) as exc_info:
+            np.choose(np.array([0, 1, 5]), choices, out=out, mode="raise")
+        assert not self._has_note(exc_info.value)
+        assert_array_equal(out, np.full(3, -7))
+
+    def test_take_writeback_failure_noted(self):
+        # the copy shields out from the main loop, but casting the result
+        # back into out can itself fail part-way through (the object->intp
+        # out is deprecated, but the writeback still runs until it expires)
+        a = np.array([1, None, 3], dtype=object)
+        out = np.zeros(3, dtype=np.intp)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            with pytest.raises(TypeError) as exc_info:
+                np.take(a, [0, 1, 2], out=out)
+        assert self._has_note(exc_info.value)
+        assert out[0] == 1
+
+    def test_choose_writeback_failure_noted(self):
+        # same for choose: the copy back into out fails on the None
+        choices = [np.array([1, None, 3], dtype=object),
+                   np.zeros(3, dtype=object)]
+        out = np.full(3, -7)
+        with pytest.raises(TypeError) as exc_info:
+            np.choose(np.array([0, 0, 0]), choices, out=out, mode="raise")
+        assert self._has_note(exc_info.value)
+        assert out[0] == 1

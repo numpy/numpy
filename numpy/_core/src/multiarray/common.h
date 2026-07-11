@@ -69,6 +69,13 @@ convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending);
 NPY_NO_EXPORT void
 dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j);
 
+/*
+ * Note on the raised exception that a caller's out array may be partially
+ * written. Only call when writing straight into out (no internal copy).
+ */
+NPY_NO_EXPORT void
+npy_note_partial_write(void);
+
 
 /**
  * unpack tuple of PyDataType_FIELDS(dtype) (descr, offset, title[not-needed])

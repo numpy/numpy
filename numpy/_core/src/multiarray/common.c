@@ -299,6 +299,23 @@ end:
     Py_XDECREF(shape2_j);
 }
 
+
+/* See common.h. The raised exception is left unchanged if add_note fails. */
+NPY_NO_EXPORT void
+npy_note_partial_write(void)
+{
+    PyObject *exc = PyErr_GetRaisedException();
+    if (exc == NULL) {
+        return;
+    }
+    PyObject *res = PyObject_CallMethod(
+            exc, "add_note", "s",
+            "the output array may have been partially modified");
+    Py_XDECREF(res);
+    PyErr_Clear();
+    PyErr_SetRaisedException(exc);
+}
+
 /**
  * unpack tuple of PyDataType_FIELDS(dtype) (descr, offset, title[not-needed])
  *

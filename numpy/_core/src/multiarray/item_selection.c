@@ -354,11 +354,18 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             dest, src, indices_data, n, m, max_item, nelem, chunk,
             clipmode, itemsize, needs_refcounting, src_descr, dst_descr,
             axis) < 0) {
+        /* obj is out itself unless a writeback copy shielded it */
+        if (out != NULL &&
+                !(PyArray_FLAGS(obj) & NPY_ARRAY_WRITEBACKIFCOPY)) {
+            npy_note_partial_write();
+        }
         goto fail;
     }
 
     if (out != NULL && out != obj) {
         if (PyArray_ResolveWritebackIfCopy(obj) < 0) {
+            /* the writeback itself writes into out and can fail part-way */
+            npy_note_partial_write();
             goto fail;
         }
         Py_DECREF(obj);
@@ -389,6 +396,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     char *src, *dest;
     int copied = 0;
     int overlap = 0;
+    int wrote_directly = 0;
 
     NPY_BEGIN_THREADS_DEF;
     NPY_cast_info cast_info;
@@ -469,6 +477,11 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         }
     }
 
+
+    /* writes below land in the caller's array unless it was copied */
+    if (!copied) {
+        wrote_directly = 1;
+    }
 
     if (has_references) {
         const npy_intp one = 1;
@@ -595,6 +608,10 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
  fail:
     NPY_cast_info_xfree(&cast_info);
 
+    if (wrote_directly) {
+        npy_note_partial_write();
+    }
+
     Py_XDECREF(indices);
     Py_XDECREF(values);
     if (copied) {
@@ -681,6 +698,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     npy_bool *mask_data;
     int copied = 0;
     int overlap = 0;
+    int wrote_directly = 0;
     NPY_BEGIN_THREADS_DEF;
 
     mask = NULL;
@@ -766,6 +784,11 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
             NPY_BEGIN_THREADS;
         }
 
+        /* the cast below writes into the caller's array unless it was copied */
+        if (!copied) {
+            wrote_directly = 1;
+        }
+
         for (npy_intp i = 0, j = 0; i < ni; i++, j++) {
             if (j >= nv) {
                 j = 0;
@@ -799,6 +822,9 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     Py_RETURN_NONE;
 
  fail:
+    if (wrote_directly) {
+        npy_note_partial_write();
+    }
     Py_XDECREF(mask);
     Py_XDECREF(values);
     if (copied) {
@@ -1030,6 +1056,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     /* PyArray_MultiIterFromObjects below bounds n by NPY_MAXARGS */
     NPY_cast_info cast_infos[NPY_MAXARGS];
     int needs_transfer = 0;
+    int copy_existing_out = 0;
     NPY_BEGIN_THREADS_DEF;
     ap = NULL;
 
@@ -1058,7 +1085,6 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     }
     dtype = PyArray_DESCR(mps[0]);
 
-    int copy_existing_out = 0;
     /* Set-up return array */
     if (out == NULL) {
         Py_INCREF(dtype);
@@ -1211,6 +1237,8 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
         int res = PyArray_CopyInto(out, obj);
         Py_DECREF(obj);
         if (res < 0) {
+            /* the copy back writes into out and can fail part-way */
+            npy_note_partial_write();
             return NULL;
         }
         return Py_NewRef(out);
@@ -1230,6 +1258,10 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     }
     Py_XDECREF(ap);
     PyDataMem_FREE(mps);
+    /* obj is out itself when not copied (never the case for NPY_RAISE) */
+    if (out != NULL && !copy_existing_out) {
+        npy_note_partial_write();
+    }
     PyArray_DiscardWritebackIfCopy(obj);
     Py_XDECREF(obj);
     return NULL;
