@@ -446,6 +446,28 @@ def test_copyto():
     assert_raises(TypeError, np.copyto, [1, 2, 3], [2, 3, 4])
 
 
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+def test_copyto_overlapping_where_false_no_refcount_leak():
+    """Overlapping assign with scalar where=False must not leak the temp.
+
+    PyArray_AssignArray materializes a temp when src/dst overlap, then used to
+    early-return on scalar where=False without Py_DECREF of that temp.
+    """
+    a = np.empty((6, 6), dtype=object)
+    for i in range(6):
+        for j in range(6):
+            a[i, j] = object()
+
+    victim = a[0, 0]
+    before = sys.getrefcount(victim)
+    np.copyto(a, a[::-1, :], where=False)
+    after = sys.getrefcount(victim)
+    assert after == before, (
+        f"refcount leak after overlapping copyto where=False: "
+        f"before={before}, after={after}"
+    )
+
+
 def test_copyto_cast_safety():
     with pytest.raises(TypeError):
         np.copyto(np.arange(3), 3., casting="safe")
