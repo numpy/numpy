@@ -7,7 +7,6 @@ import pytest
 
 import numpy as np
 import numpy.testing as npt
-
 from numpy.f2py._backends._meson import MesonTemplate
 
 from . import util
