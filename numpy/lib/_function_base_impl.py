@@ -4659,7 +4659,7 @@ def _quantile_ureduce_func(
         # The code below works fine for nd, but it might not have useful
         # semantics. For now, keep the supported dimensions the same as it was
         # before.
-        raise ValueError("q must be a scalar or 1d")
+        raise ValueError(f"q must have at most 2 dimensions (got {q.ndim})")
     if overwrite_input:
         if axis is None:
             axis = 0

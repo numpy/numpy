@@ -3988,6 +3988,15 @@ class TestQuantile:
         # Identification function used in several tests.
         return (x >= y) - alpha
 
+    def test_q_ndim(self):
+        # A 2d q is supported and returns a matching leading shape; only q with
+        # more than 2 dimensions is rejected, and the error names that limit
+        # (gh-30038).
+        a = np.arange(100.0)
+        assert np.quantile(a, np.full((2, 2), 0.5)).shape == (2, 2)
+        with pytest.raises(ValueError, match="q must have at most 2 dimensions"):
+            np.quantile(a, np.full((2, 2, 2), 0.5))
+
     def test_max_ulp(self):
         x = [0.0, 0.2, 0.4]
         a = np.quantile(x, 0.45)
