@@ -1354,6 +1354,17 @@ def buildmodule(m, um):
     Return
     """
     outmess(f"    Building module \"{m['name']}\"...\n")
+    # Make __user__ modules visible to callback iface generation even when
+    # crackfortran.usermodules is empty (``.pyf`` rebuild path, gh-20157).
+    from . import func2subr as _func2subr
+    _func2subr.set_active_user_modules(um)
+    try:
+        return _buildmodule_body(m, um, vrd=None)
+    finally:
+        _func2subr.set_active_user_modules([])
+
+
+def _buildmodule_body(m, um, vrd=None):
     ret = {}
     mod_rules = defmod_rules[:]
     vrd = capi_maps.modsign2map(m)

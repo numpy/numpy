@@ -84,6 +84,17 @@ def useiso_c_binding(rout):
     return useisoc
 
 
+# User-module blocks available while building F90 wrappers for one extension
+# (set by rules.buildmodule from the um list; complements crackfortran.usermodules).
+_active_user_modules = []
+
+
+def set_active_user_modules(um):
+    """Register python-module ``__user__`` blocks for the current buildmodule call."""
+    global _active_user_modules
+    _active_user_modules = list(um or [])
+
+
 def _iter_routine_blocks(body):
     """Yield function/subroutine blocks nested under *body* (incl. interfaces)."""
     for b in body or []:
@@ -94,50 +105,129 @@ def _iter_routine_blocks(body):
             yield from _iter_routine_blocks(b.get('body'))
 
 
+def _user_module_catalog():
+    """All known ``__user__`` modules for this build (globals + active um list)."""
+    from . import crackfortran
+    seen = set()
+    out = []
+    for um in list(crackfortran.usermodules) + list(_active_user_modules):
+        name = um.get('name')
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        out.append(um)
+    return out
+
+
+def _remote_names_for_local(use_dict, local_name):
+    """Names under which *local_name* may appear in a used user-module.
+
+    Handles ``use m, only: f => fun`` style maps stored as
+    ``use[m]['map'][local] = remote``.
+    """
+    names = {local_name.lower()}
+    for _mname, spec in (use_dict or {}).items():
+        mapping = (spec or {}).get('map') or {}
+        for local, remote in mapping.items():
+            if (local or '').lower() == local_name.lower():
+                names.add((remote or local).lower())
+            if (remote or '').lower() == local_name.lower():
+                names.add((local or remote).lower())
+    return names
+
+
 def _callback_routine_blocks(rout):
-    """Map lowercased callback name -> cracked routine block.
+    """Map lowercased *local* callback dummy name -> cracked routine block.
 
     Prefer definitions still on ``rout['body']``. After postcrack moves
     callback signatures into ``__user__`` python modules, resolve them via
-    ``rout['use']`` and ``crackfortran.usermodules``.
+    ``rout['use']`` against both ``crackfortran.usermodules`` and the
+    ``um`` list active for the current ``buildmodule`` call (needed for the
+    ``-h``/``.pyf`` workflow where usermodules may not be populated).
     """
     found = {}
     for b in _iter_routine_blocks(rout.get('body')):
         found[b['name'].lower()] = b
 
     use = rout.get('use') or {}
-    if use:
-        from . import crackfortran
-        for um in crackfortran.usermodules:
-            if um.get('name') not in use:
-                continue
-            for b in _iter_routine_blocks(um.get('body')):
-                key = b['name'].lower()
-                if key not in found:
-                    found[key] = b
+    if not use:
+        return found
+
+    # Index all routines in user modules by lowercased name
+    by_name = {}
+    um_by_modname = {}
+    for um in _user_module_catalog():
+        um_by_modname[um.get('name')] = um
+        for b in _iter_routine_blocks(um.get('body')):
+            by_name.setdefault(b['name'].lower(), b)
+
+    for mname in use:
+        um = um_by_modname.get(mname)
+        if um is None:
+            continue
+        for b in _iter_routine_blocks(um.get('body')):
+            by_name.setdefault(b['name'].lower(), b)
+
+    # Externals may be listed on args and/or rout['externals']
+    vars_ = rout.get('vars') or {}
+    candidates = list(rout.get('args') or [])
+    for e in rout.get('externals') or []:
+        if e not in candidates:
+            candidates.append(e)
+    for a in candidates:
+        if a.lower() in found:
+            continue
+        if a in vars_ and not isexternal(vars_[a]):
+            continue
+        # If vars is incomplete (unit tests), still try externals by name
+        if a in vars_ or a in (rout.get('externals') or []):
+            for remote in _remote_names_for_local(use, a):
+                if remote in by_name:
+                    found[a.lower()] = by_name[remote]
+                    break
     return found
 
 
-def _cb_iface_module_name(rout):
+def _safe_ident(raw, prefix, taken, max_len=63):
+    """Build a Fortran-safe identifier that does not collide with *taken*."""
+    base = ''.join(c if (c.isalnum() or c == '_') else '_' for c in raw)
+    if not base or base[0].isdigit():
+        base = 'r_' + base
+    name = f'{prefix}{base}'
+    if len(name) > max_len:
+        name = name[:max_len]
+    if name.lower() not in taken:
+        taken.add(name.lower())
+        return name
+    n = 2
+    while True:
+        suffix = f'_{n}'
+        cand = (name[: max_len - len(suffix)] + suffix)
+        if cand.lower() not in taken:
+            taken.add(cand.lower())
+            return cand
+        n += 1
+
+
+def _cb_iface_module_name(rout, taken=None):
     """Fortran module name holding abstract interfaces for this routine's callbacks."""
     # Per-routine modules avoid colliding two different signatures for the
     # same dummy name across wrappers in one extension (gh-20157 discussion).
+    if taken is None:
+        taken = set()
     raw = getfortranname(rout)
-    safe = ''.join(c if (c.isalnum() or c == '_') else '_' for c in raw)
-    if not safe or safe[0].isdigit():
-        safe = 'r_' + safe
-    return f'f2py_cb_ifaces_{safe}'
+    return _safe_ident(raw, 'f2py_cb_ifaces_', taken)
 
 
-def _abstract_iface_name(cbname_lower):
+def _abstract_iface_name(cbname_lower, taken=None):
     """Name of the abstract interface body for callback *cbname_lower*.
 
     Must differ from the dummy argument name so ``use`` of the module does
     not make the dummy name ambiguous (gfortran: "ambiguous reference").
     """
-    safe = ''.join(
-        c if (c.isalnum() or c == '_') else '_' for c in cbname_lower)
-    return f'f2py_ai_{safe}'
+    if taken is None:
+        taken = set()
+    return _safe_ident(cbname_lower, 'f2py_ai_', taken)
 
 
 def _collect_use_lines_for_module(cb_blocks, host_rout=None):
@@ -192,11 +282,13 @@ def _rename_callback_block_for_abstract(block, abs_name):
     return b
 
 
-def _build_callback_iface_module(mod_name, cb_blocks, host_rout=None):
+def _build_callback_iface_module(mod_name, cb_blocks, host_rout=None,
+                                 abs_map=None):
     """Emit a Fortran module of abstract interfaces for *cb_blocks*.
 
+    *abs_map* maps local callback lower-name -> abstract interface body name.
     Callers ``use`` the module and declare
-    ``procedure(f2py_ai_<name>) :: <name>`` for each callback dummy.
+    ``procedure(<abs>) :: <local>`` for each callback dummy.
     """
     from .crackfortran import crack2fortrangen
     # Interface bodies are separate scoping units: kind/type names from a
@@ -208,9 +300,10 @@ def _build_callback_iface_module(mod_name, cb_blocks, host_rout=None):
         '  implicit none',
         '  abstract interface',
     ]
+    abs_map = abs_map or {}
     for key, block in sorted(cb_blocks.items(), key=lambda kv: kv[0]):
-        b = _rename_callback_block_for_abstract(
-            block, _abstract_iface_name(key))
+        abs_name = abs_map.get(key) or _abstract_iface_name(key)
+        b = _rename_callback_block_for_abstract(block, abs_name)
         text = crack2fortrangen(b, tab='\n  ', as_interface=True)
         body_lines = [ln.strip() for ln in text.split('\n') if ln.strip()]
         if not body_lines:
@@ -227,7 +320,8 @@ def _build_callback_iface_module(mod_name, cb_blocks, host_rout=None):
     return '\n'.join(lines)
 
 
-def _rewrite_saved_interface_use_module(saved_interface, cb_orig_names, mod_name):
+def _rewrite_saved_interface_use_module(saved_interface, cb_orig_names,
+                                        mod_name, abs_map):
     """Adapt *saved_interface* for module-based callback interfaces.
 
     Drop bare EXTERNAL and nested interface blocks for the named callbacks.
@@ -307,21 +401,22 @@ def _rewrite_saved_interface_use_module(saved_interface, cb_orig_names, mod_name
     out.append(f'          use {mod_name}')
     out.extend(use_lines)
     for low in sorted(orig_by_lower):
+        abs_name = abs_map[low]
         out.append(
-            f'          procedure({_abstract_iface_name(low)}) :: '
-            f'{orig_by_lower[low]}'
+            f'          procedure({abs_name}) :: {orig_by_lower[low]}'
         )
     out.extend(other)
     return '\n'.join(out)
 
 
 def _prepare_callback_module(rout, args, vars, need_interface):
-    """Return (module_src, mod_name, cb_orig_names) for assumed-shape callback path.
+    """Return (module_src, mod_name, cb_orig_names, abs_map).
 
-    *cb_orig_names* lists dummy names (original spelling) covered by the module.
+    *abs_map* maps local dummy lower-name -> abstract interface body name.
     """
+    empty = ('', None, [], {})
     if not need_interface:
-        return '', None, []
+        return empty
     all_blocks = _callback_routine_blocks(rout)
     needed = {}
     orig_names = []
@@ -333,16 +428,25 @@ def _prepare_callback_module(rout, args, vars, need_interface):
             needed[a.lower()] = block
             orig_names.append(a)
     if not needed:
-        return '', None, []
-    mod_name = _cb_iface_module_name(rout)
+        return empty
+    taken = {a.lower() for a in args}
+    taken.update(k.lower() for k in (vars or {}))
+    taken.update(e.lower() for e in (rout.get('externals') or []))
+    abs_map = {
+        a.lower(): _abstract_iface_name(a.lower(), taken)
+        for a in orig_names
+    }
+    mod_name = _cb_iface_module_name(rout, taken)
     return (
-        _build_callback_iface_module(mod_name, needed, host_rout=rout),
+        _build_callback_iface_module(
+            mod_name, needed, host_rout=rout, abs_map=abs_map),
         mod_name,
         orig_names,
+        abs_map,
     )
 
 
-def _declare_external_args(args, vars, cb_orig_names, add):
+def _declare_external_args(args, vars, cb_orig_names, abs_map, add):
     """Declare procedure(...) for module-backed callbacks, else EXTERNAL."""
     cb_lower = {n.lower() for n in cb_orig_names}
     dumped = []
@@ -350,7 +454,7 @@ def _declare_external_args(args, vars, cb_orig_names, add):
         if not isexternal(vars[a]):
             continue
         if a.lower() in cb_lower:
-            add(f'procedure({_abstract_iface_name(a.lower())}) :: {a}')
+            add(f'procedure({abs_map[a.lower()]}) :: {a}')
             dumped.append(a)
             continue
         add(f'external {a}')
@@ -429,7 +533,8 @@ def createfuncwrapper(rout, signature=0):
     args = args[1:]
     # Callback interface module (gh-20157): one definition, USE'd in the
     # wrapper and in the nested host interface.
-    module_src, cb_mod_name, cb_via_module = _prepare_callback_module(
+    # f90mode (module CONTAINS): no nested host interface, skip module path.
+    module_src, cb_mod_name, cb_via_module, abs_map = _prepare_callback_module(
         rout, args, vars, need_interface and not f90mode)
 
     if need_interface:
@@ -439,7 +544,8 @@ def createfuncwrapper(rout, signature=0):
         if cb_mod_name:
             add(f'use {cb_mod_name}')
 
-    dumped_args = _declare_external_args(args, vars, cb_via_module, add)
+    dumped_args = _declare_external_args(
+        args, vars, cb_via_module, abs_map, add)
     for a in args:
         if a in dumped_args:
             continue
@@ -463,13 +569,14 @@ def createfuncwrapper(rout, signature=0):
 
     if need_interface:
         if f90mode:
-            # f90 module already defines needed interface
+            # Module CONTAINS path: use modulename only; no dual EXTERNAL+
+            # interface conflict to fix (gh-20157 applies to free routines).
             pass
         else:
             saved = rout['saved_interface']
             if cb_mod_name:
                 saved = _rewrite_saved_interface_use_module(
-                    saved, cb_via_module, cb_mod_name)
+                    saved, cb_via_module, cb_mod_name, abs_map)
             add('interface')
             add(saved.lstrip())
             add('end interface')
@@ -531,7 +638,7 @@ def createsubrwrapper(rout, signature=0):
         if not need_interface:
             add(f'external {fortranname}')
 
-    module_src, cb_mod_name, cb_via_module = _prepare_callback_module(
+    module_src, cb_mod_name, cb_via_module, abs_map = _prepare_callback_module(
         rout, args, vars, need_interface and not f90mode)
 
     if need_interface:
@@ -541,7 +648,8 @@ def createsubrwrapper(rout, signature=0):
         if cb_mod_name:
             add(f'use {cb_mod_name}')
 
-    dumped_args = _declare_external_args(args, vars, cb_via_module, add)
+    dumped_args = _declare_external_args(
+        args, vars, cb_via_module, abs_map, add)
     for a in args:
         if a in dumped_args:
             continue
@@ -555,13 +663,13 @@ def createsubrwrapper(rout, signature=0):
 
     if need_interface:
         if f90mode:
-            # f90 module already defines needed interface
+            # Module CONTAINS path: no dual EXTERNAL+interface conflict.
             pass
         else:
             saved = rout['saved_interface']
             if cb_mod_name:
                 saved = _rewrite_saved_interface_use_module(
-                    saved, cb_via_module, cb_mod_name)
+                    saved, cb_via_module, cb_mod_name, abs_map)
             add('interface')
             for line in saved.split('\n'):
                 if line.lstrip().startswith('use ') and '__user__' in line:
