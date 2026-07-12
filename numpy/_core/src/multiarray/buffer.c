@@ -66,7 +66,7 @@ _append_char(_tmp_string_t *s, char c)
         char *p;
         size_t to_alloc = (s->allocated == 0) ? INIT_SIZE : (2 * s->allocated);
 
-        p = PyObject_Realloc(s->s, to_alloc);
+        p = PyMem_Realloc(s->s, to_alloc);
         if (p == NULL) {
             PyErr_SetString(PyExc_MemoryError, "memory allocation failed");
             return -1;
@@ -473,7 +473,7 @@ _buffer_info_new(PyObject *obj, int flags)
     int err = 0;
 
     if (PyArray_IsScalar(obj, Void)) {
-        info = PyObject_Malloc(sizeof(_buffer_info_t));
+        info = PyMem_Malloc(sizeof(_buffer_info_t));
         if (info == NULL) {
             PyErr_NoMemory();
             goto fail;
@@ -491,8 +491,8 @@ _buffer_info_new(PyObject *obj, int flags)
         assert(PyArray_Check(obj));
         PyArrayObject * arr = (PyArrayObject *)obj;
 
-        info = PyObject_Malloc(sizeof(_buffer_info_t) +
-                               sizeof(Py_ssize_t) * PyArray_NDIM(arr) * 2);
+        info = PyMem_Malloc(sizeof(_buffer_info_t) +
+                            sizeof(Py_ssize_t) * PyArray_NDIM(arr) * 2);
         if (info == NULL) {
             PyErr_NoMemory();
             goto fail;
@@ -564,8 +564,8 @@ _buffer_info_new(PyObject *obj, int flags)
     return info;
 
 fail:
-    PyObject_Free(fmt.s);
-    PyObject_Free(info);
+    PyMem_Free(fmt.s);
+    PyMem_Free(info);
     return NULL;
 }
 
@@ -659,10 +659,10 @@ _buffer_info_free_untagged(void *_buffer_info)
         _buffer_info_t *curr = next;
         next = curr->next;
         if (curr->format) {
-            PyObject_Free(curr->format);
+            PyMem_Free(curr->format);
         }
         /* Shape is allocated as part of info */
-        PyObject_Free(curr);
+        PyMem_Free(curr);
     }
 }
 
@@ -934,7 +934,7 @@ _descriptor_from_pep3118_format(char const *s)
     }
 
     /* Strip whitespace, except from field names */
-    buf = malloc(strlen(s) + 1);
+    buf = PyMem_Malloc(strlen(s) + 1);
     if (buf == NULL) {
         PyErr_NoMemory();
         return NULL;
@@ -956,7 +956,7 @@ _descriptor_from_pep3118_format(char const *s)
 
     str = PyUnicode_FromStringAndSize(buf, strlen(buf));
     if (str == NULL) {
-        free(buf);
+        PyMem_Free(buf);
         return NULL;
     }
 
@@ -964,7 +964,7 @@ _descriptor_from_pep3118_format(char const *s)
     _numpy_internal = PyImport_ImportModule("numpy._core._internal");
     if (_numpy_internal == NULL) {
         Py_DECREF(str);
-        free(buf);
+        PyMem_Free(buf);
         return NULL;
     }
     descr = PyObject_CallMethod(
@@ -977,7 +977,7 @@ _descriptor_from_pep3118_format(char const *s)
         PyErr_Format(PyExc_ValueError,
                      "'%s' is not a valid PEP 3118 buffer format string", buf);
         npy_PyErr_ChainExceptionsCause(exc, val, tb);
-        free(buf);
+        PyMem_Free(buf);
         return NULL;
     }
     if (!PyArray_DescrCheck(descr)) {
@@ -985,10 +985,10 @@ _descriptor_from_pep3118_format(char const *s)
                      "internal error: numpy._core._internal._dtype_from_pep3118 "
                      "did not return a valid dtype, got %s", buf);
         Py_DECREF(descr);
-        free(buf);
+        PyMem_Free(buf);
         return NULL;
     }
-    free(buf);
+    PyMem_Free(buf);
     return (PyArray_Descr*)descr;
 }
 

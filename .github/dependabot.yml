@@ -3,9 +3,9 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: daily
+      interval: weekly
     cooldown:
-      default-days: 7
+      default-days: 7     # optional
     commit-message:
       prefix: "MAINT"
     labels:
@@ -16,8 +16,14 @@ updates:
     directory: /requirements
     schedule:
       interval: daily
+    versioning-strategy: increase-if-necessary
     cooldown:
-      default-days: 7
+      default-days: 7     # optional
+    groups:
+      python-deps:
+        patterns:
+          - "*"           # catches EVERY dependency in ALL requirements files
+        applies-to: "version-updates"
     commit-message:
       prefix: "MAINT"
     labels:
@@ -27,3 +33,4 @@ updates:
       - dependency-name: "scipy-openblas64"
       - dependency-name: "jupyterlite-pyodide-kernel"
       - dependency-name: "sphinx"
+      - dependency-name: "pkgconf"

@@ -41,13 +41,14 @@ alignment of 4 and "uint" alignment of 8 (equal to the true alignment of
 ``uint64``).
 
 Some cases where uint and true alignment are different (default GCC Linux):
-   ======   =========   ========    ========
-   arch     type        true-aln    uint-aln
-   ======   =========   ========    ========
-   x86_64   complex64          4           8
-   x86_64   float128          16           8
-   x86      float96            4          \-
-   ======   =========   ========    ========
+
+======   =========   ========    ========
+arch     type        true-aln    uint-aln
+======   =========   ========    ========
+x86_64   complex64          4           8
+x86_64   float128          16           8
+x86      float96            4          \-
+======   =========   ========    ========
 
 
 Variables in NumPy which control and describe alignment
@@ -95,7 +96,7 @@ Here is how the variables above are used:
    use a code path that buffers the arguments so they are true-aligned.
 4. Strided copy code: Here, "uint alignment" is used instead.  If the itemsize
    of an array is equal to 1, 2, 4, 8 or 16 bytes and the array is uint
-   aligned then instead NumPy will do ``*(uintN*)dst) = *(uintN*)src)`` for
+   aligned then instead NumPy will do ``*(uintN*)dst = *(uintN*)src`` for
    appropriate N. Otherwise, NumPy copies by doing ``memcpy(dst, src, N)``.
 5. Nditer code: Since this often calls the strided copy code, it must
    check for "uint alignment".

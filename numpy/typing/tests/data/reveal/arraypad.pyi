@@ -13,6 +13,8 @@ def mode_func(
 
 AR_i8: npt.NDArray[np.int64]
 AR_f8: npt.NDArray[np.float64]
+AR_f8_1d: np.ndarray[tuple[int], np.dtype[np.float64]]
+AR_f8_2d: np.ndarray[tuple[int, int], np.dtype[np.float64]]
 AR_LIKE: list[int]
 
 assert_type(np.pad(AR_i8, (2, 3), "constant"), npt.NDArray[np.int64])
@@ -25,3 +27,6 @@ assert_type(np.pad(AR_i8, {-1: (2, 3)}), npt.NDArray[np.int64])
 assert_type(np.pad(AR_i8, {-2: 4}), npt.NDArray[np.int64])
 pad_width: dict[int, int | tuple[int, int]] = {-1: (2, 3), -2: 4}
 assert_type(np.pad(AR_i8, pad_width), npt.NDArray[np.int64])
+
+assert_type(np.pad(AR_f8_1d, (2, 3)), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.pad(AR_f8_2d, (2, 3)), np.ndarray[tuple[int, int], np.dtype[np.float64]])

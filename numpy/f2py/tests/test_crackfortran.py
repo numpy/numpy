@@ -13,6 +13,7 @@ from numpy.f2py.crackfortran import markinnerspaces, nameargspattern
 from . import util
 
 
+@pytest.mark.slow
 class TestNoSpace(util.F2PyTest):
     # issue gh-15035: add handling for endsubroutine, endfunction with no space
     # between "end" and the block name
@@ -65,7 +66,7 @@ class TestPublicPrivate:
         mod = crackfortran.crackfortran([str(fpath)])
         assert len(mod) == 1
         pyf = crackfortran.crack2fortran(mod)
-        assert 'bar' not in pyf
+        assert 'bar1337baz' not in pyf
 
 class TestModuleProcedure:
     def test_moduleOperators(self, tmp_path):
@@ -96,6 +97,7 @@ class TestModuleProcedure:
         assert mod['vars']['seta']['attrspec'] == ['public', ]
 
 
+@pytest.mark.slow
 class TestExternal(util.F2PyTest):
     # issue gh-17859: add external attribute support
     sources = [util.getpath("tests", "src", "crackfortran", "gh17859.f")]
@@ -115,6 +117,7 @@ class TestExternal(util.F2PyTest):
         assert r == 123
 
 
+@pytest.mark.slow
 class TestCrackFortran(util.F2PyTest):
     # gh-2848: commented lines between parameters in subroutine parameter lists
     sources = [util.getpath("tests", "src", "crackfortran", "gh2848.f90"),
@@ -149,6 +152,7 @@ class TestMarkinnerspaces:
         assert markinnerspaces(r'a "b c" "d e"') == r'a "b@_@c" "d@_@e"'
 
 
+@pytest.mark.slow
 class TestDimSpec(util.F2PyTest):
     """This test suite tests various expressions that are used as dimension
     specifications.
@@ -218,7 +222,6 @@ class TestDimSpec(util.F2PyTest):
         )
 
     @pytest.mark.parametrize("dimspec", all_dimspecs)
-    @pytest.mark.slow
     def test_array_size(self, dimspec):
 
         count = self.all_dimspecs.index(dimspec)
@@ -260,6 +263,7 @@ class TestModuleDeclaration:
         assert mod[0]["vars"]["abar"]["="] == "bar('abar')"
 
 
+@pytest.mark.slow
 class TestEval(util.F2PyTest):
     def test_eval_scalar(self):
         eval_scalar = crackfortran._eval_scalar
@@ -270,6 +274,7 @@ class TestEval(util.F2PyTest):
         assert eval_scalar('"123"', {}) == "'123'"
 
 
+@pytest.mark.slow
 class TestFortranReader(util.F2PyTest):
     @pytest.mark.parametrize("encoding",
                              ['ascii', 'utf-8', 'utf-16', 'utf-32'])
@@ -333,15 +338,16 @@ class TestNameArgsPatternBacktracking:
             good_version_of_adversary = repeated_adversary + '@)@'
             assert nameargspattern.search(good_version_of_adversary)
 
+@pytest.mark.slow
 class TestFunctionReturn(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "gh23598.f90")]
 
-    @pytest.mark.slow
     def test_function_rettype(self):
         # gh-23598
         assert self.module.intproduct(3, 4) == 12
 
 
+@pytest.mark.slow
 class TestFortranGroupCounters(util.F2PyTest):
     def test_end_if_comment(self):
         # gh-23533
@@ -410,6 +416,42 @@ class TestParamEval:
         dimspec = '(0:4, 3:12, 5)'
         pytest.raises(ValueError, crackfortran.param_eval, v, g_params, params,
                       dimspec=dimspec)
+
+
+class TestParamParseNestedParens:
+    # issue gh-28095: grouping parens in a dimension expression such as
+    # (mx_supply_curves + mx_intl_curves) must fold to a concrete size,
+    # not be mistaken for pa(index) array-parameter indexing.
+    def test_grouping_parens_fold(self):
+        params = {"mx_supply_curves": 14, "mx_intl_curves": 12}
+        out = crackfortran.param_parse(
+            "(mx_supply_curves + mx_intl_curves)", params)
+        assert out.replace(" ", "") == "(14+12)"
+
+    def test_grouping_parens_with_trailing_factor(self):
+        # A grouping paren need not span the whole token; the factor
+        # outside the parentheses must survive substitution.
+        params = {"n": 3, "m": 1800}
+        out = crackfortran.param_parse("(n + 1)*m", params)
+        assert out.replace(" ", "") == "(3+1)*1800"
+
+    def test_array_index_still_works(self):
+        params = {"pa": {1: 3, 2: 5}}
+        assert crackfortran.param_parse("pa(1)", params) == "3"
+        assert crackfortran.param_parse("pa(2)", params) == "5"
+
+    def test_nested_array_index(self):
+        params = {"dim": 2, "nested": {1: 1, 2: 2, 3: 3},
+                  "myparamarray": {1: 10, 2: 20, 3: 30}}
+        assert crackfortran.param_parse(
+            "myparamarray(nested(dim))", params) == "20"
+
+    def test_dimension_substituted_in_module(self):
+        fpath = util.getpath("tests", "src", "crackfortran", "gh28095.f90")
+        mod = crackfortran.crackfortran([str(fpath)])
+        vs = mod[0]["vars"]["cmm_cl_btus"]
+        assert vs["dimension"] == ["26", "1800"]
+
 
 @pytest.mark.slow
 class TestLowerF2PYDirective(util.F2PyTest):

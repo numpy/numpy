@@ -1,10 +1,10 @@
-import subprocess
 import sys
 import textwrap
 
 import pytest
 
 from numpy.testing import IS_WASM
+from numpy.testing._private.utils import run_subprocess
 
 
 @pytest.mark.skipif(IS_WASM, reason="can't start subprocess")
@@ -32,11 +32,4 @@ def test_lazy_load():
         # test triggering the import of the package
         np.ndarray
         """)
-    p = subprocess.run(
-        (sys.executable, '-c', code),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        encoding='utf-8',
-        check=False,
-    )
-    assert p.returncode == 0, p.stdout
+    run_subprocess((sys.executable, '-c', code))

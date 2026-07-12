@@ -29,7 +29,7 @@ are functions over vectors (or arrays) instead of only single-element scalars.
 .. autosummary::
    :toctree: generated/
 
-   numpy.ufunc
+   ufunc
 
 .. _ufuncs.kwargs:
 

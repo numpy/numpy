@@ -848,7 +848,14 @@ else:
     del _mac_os_check
 
     def blas_fpe_check():
-        # Check if BLAS adds spurious FPEs, mostly seen on M4 arms with Accelerate.
+        if sys.platform != "darwin":
+            # We currently assume this is limited to MacOS as downstream NumPy
+            # import during dlopen caused a deadlock regression: gh-31284
+            return
+
+        # Check if BLAS adds spurious FPEs, seen on M4 arms with Accelerate.
+        # In this case we disable FPE reporting since the use of SME poisons
+        # it and Accelerate doesn't sanitize them.
         with errstate(all='raise'):
             x = ones((20, 20))
             try:

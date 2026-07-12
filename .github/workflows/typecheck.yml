@@ -22,7 +22,7 @@ on:
       - '**.rst'
       - '.circlecl/**'
       - '.devcontainer/**'
-      - '.spin/**'
+      - '.spin/LICENSE'
       - 'benchmarks/**'
       - 'branding/**'
       - 'doc/**'
@@ -54,14 +54,14 @@ jobs:
         os_python:
           - [macos-latest, '3.14']
           - [ubuntu-latest, '3.13']
-          - [windows-latest, '3.12']
+          - [windows-2022, '3.12']
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+    - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
       with:
         python-version: ${{ matrix.os_python[1] }}
         activate-environment: true
@@ -76,25 +76,20 @@ jobs:
         -r requirements/build_requirements.txt
         -r requirements/typing_requirements.txt
         orjson
-        basedpyright
     - name: Build
       run: |
         spin build -j2 -- -Dallow-noblas=true -Ddisable-optimization=true --vsenv
     - name: Run Mypy
       run: |
         spin mypy
-    - name: Check basedpyright's type completeness is at least 100%
-      run: >-
-        spin run python tools/pyright_completeness.py
-        --verifytypes numpy
-        --ignoreexternal
-        --exclude-like '*.tests.*' '*.conftest.*'
+    - name: Pyrefly type coverage is 100%
+      run: pyrefly coverage check --public-only
 
   pyrefly:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-    - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
       with:
         activate-environment: true
     - name: Install dependencies

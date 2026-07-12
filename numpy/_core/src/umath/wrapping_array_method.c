@@ -206,7 +206,7 @@ wrapping_method_get_identity_function(
     int res = context->method->wrapped_meth->get_reduction_initial(
             &orig_context, reduction_is_empty, item);
     for (int i = 0; i < nin + nout; i++) {
-        Py_DECREF(orig_descrs);
+        Py_DECREF(orig_descrs[i]);
     }
     return res;
 }

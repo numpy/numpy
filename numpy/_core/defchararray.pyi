@@ -1,5 +1,5 @@
 from collections.abc import Buffer
-from typing import Any, Final, Literal as L, Self, SupportsIndex, SupportsInt, overload
+from typing import Any, Literal as L, Self, SupportsIndex, SupportsInt, overload
 from typing_extensions import TypeVar, deprecated
 
 import numpy as np
@@ -17,7 +17,19 @@ from numpy._typing import (
     _Shape,
     _ShapeLike,
     _SupportsArray,
-    _UFunc_Nin1_Nout1,
+)
+
+from .strings import (
+    isalnum,
+    isalpha,
+    isdecimal,
+    isdigit,
+    islower,
+    isnumeric,
+    isspace,
+    istitle,
+    isupper,
+    str_len,
 )
 
 __all__ = [
@@ -614,18 +626,6 @@ def index(a: U_co, sub: U_co, start: i_co = 0, end: i_co | None = None) -> NDArr
 def index(a: S_co, sub: S_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
 @overload
 def index(a: T_co, sub: T_co, start: i_co = 0, end: i_co | None = None) -> NDArray[np.int_]: ...
-
-isalpha: Final[_UFunc_Nin1_Nout1[L["isalpha"], L[0], L[False]]] = ...
-isalnum: Final[_UFunc_Nin1_Nout1[L["isalnum"], L[0], L[False]]] = ...
-isdecimal: Final[_UFunc_Nin1_Nout1[L["isdecimal"], L[0], L[False]]] = ...
-isdigit: Final[_UFunc_Nin1_Nout1[L["isdigit"], L[0], L[False]]] = ...
-islower: Final[_UFunc_Nin1_Nout1[L["islower"], L[0], L[False]]] = ...
-isnumeric: Final[_UFunc_Nin1_Nout1[L["isnumeric"], L[0], L[False]]] = ...
-isspace: Final[_UFunc_Nin1_Nout1[L["isspace"], L[0], L[False]]] = ...
-istitle: Final[_UFunc_Nin1_Nout1[L["istitle"], L[0], L[False]]] = ...
-isupper: Final[_UFunc_Nin1_Nout1[L["isupper"], L[0], L[False]]] = ...
-
-str_len: Final[_UFunc_Nin1_Nout1[L["str_len"], L[0], L[0]]] = ...
 
 @overload
 def rfind(a: U_co, sub: U_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...

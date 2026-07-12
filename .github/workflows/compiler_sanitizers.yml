@@ -33,16 +33,16 @@ jobs:
   clang_ASAN_UBSAN:
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
-    runs-on: macos-latest
+    runs-on: macos-26
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
     - name: Set up pyenv
       run: |
-        git clone --branch v2.6.25 --depth 1 https://github.com/pyenv/pyenv.git "$HOME/.pyenv"
+        git clone --branch v2.7.3 --depth 1 https://github.com/pyenv/pyenv.git "$HOME/.pyenv"
         PYENV_ROOT="$HOME/.pyenv"
         PYENV_BIN="$PYENV_ROOT/bin"
         PYENV_SHIMS="$PYENV_ROOT/shims"
@@ -54,15 +54,15 @@ jobs:
         pyenv --version
     - name: Set up LLVM
       run: |
-        brew install llvm@20
-        LLVM_PREFIX=$(brew --prefix llvm@20)
+        brew install llvm
+        LLVM_PREFIX=$(brew --prefix llvm)
         echo CC="$LLVM_PREFIX/bin/clang" >> $GITHUB_ENV
         echo CXX="$LLVM_PREFIX/bin/clang++" >> $GITHUB_ENV
         echo LDFLAGS="-L$LLVM_PREFIX/lib" >> $GITHUB_ENV
         echo CPPFLAGS="-I$LLVM_PREFIX/include" >> $GITHUB_ENV
     - name: Build Python with address sanitizer
       run: |
-        CONFIGURE_OPTS="--with-address-sanitizer" pyenv install 3.14
+        CONFIGURE_OPTS="--with-address-sanitizer" pyenv install -v 3.14
         pyenv global 3.14
     - name: Install dependencies
       run: |
@@ -91,7 +91,7 @@ jobs:
         options: --shm-size=2g # increase memory for large matrix ops
 
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Trust working directory and initialize submodules
         run: |
           git config --global --add safe.directory /__w/numpy/numpy
@@ -122,7 +122,7 @@ jobs:
         options: --shm-size=2g # increase memory for large matrix ops
 
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Trust working directory and initialize submodules
         run: |
           git config --global --add safe.directory /__w/numpy/numpy

@@ -828,8 +828,16 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
 NPY_NO_EXPORT PyObject *
 PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
 {
-    if (PyArray_ISCOMPLEX(self) || PyArray_ISOBJECT(self) ||
-            PyArray_ISUSERDEF(self)) {
+    PyArray_DTypeMeta *dtype = NPY_DTYPE(PyArray_DESCR(self));
+    /*
+     * If a dtype doesn't define `imag_meth` and is numeric, we assume it isn't
+     * a complex dtype (`conjugate()` does nothing).
+     * For user defined legacy dtypes we always try the ufunc for backwards
+     * compatibility (could be deprecated). Unless they flag "numeric" because if
+     * they do they live in a future where they could set `imag_meth` as well.
+     */
+    if (NPY_DT_SLOTS(dtype)->imag_meth != NULL
+            || (PyArray_ISUSERDEF(self) && !NPY_DT_is_numeric(dtype))) {
         if (out == NULL) {
             return PyArray_GenericUnaryFunction(self,
                                                 n_ops.conjugate);
@@ -841,12 +849,14 @@ PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
         }
     }
     else {
-        PyArrayObject *ret;
-        if (!PyArray_ISNUMBER(self)) {
+        if (!NPY_DT_is_numeric(dtype)) {
             PyErr_SetString(PyExc_TypeError,
-                "cannot conjugate non-numeric dtype");
+                            "cannot conjugate non-numeric dtype");
             return NULL;
         }
+
+        /* Numeric but no `.imag`: real-valued (or `.imag` should error) */
+        PyArrayObject *ret;
         if (out) {
             if (PyArray_AssignArray(out, self,
                         NULL, NPY_DEFAULT_ASSIGN_CASTING) < 0) {

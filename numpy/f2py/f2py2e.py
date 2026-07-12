@@ -113,8 +113,8 @@ Options:
                    --no-freethreading-compatible, as f2py does not analyze
                    fortran code for thread safety issues.
 
-  --include-paths <path1>:<path2>:...   Search include files from the given
-                   directories.
+  --include-paths <path1><pathsep><path2>...
+                  Search include files from the given directories.
 
   --f2cmap <filename>  Load Fortran-to-Python KIND specification from the given
                    file. Default: .f2py_f2cmap in current directory.
@@ -540,7 +540,7 @@ class CombineIncludePaths(argparse.Action):
         if option_string == "--include_paths":
             outmess("Use --include-paths or -I instead of --include_paths which will be removed")
         if option_string in {"--include-paths", "--include_paths"}:
-            include_paths_set.update(values.split(':'))
+            include_paths_set.update(values.split(os.pathsep))
         else:
             include_paths_set.add(values)
         namespace.include_paths = list(include_paths_set)
@@ -627,7 +627,7 @@ def run_compile():
         sysinfo_flags = [f[7:] for f in sysinfo_flags]
 
     _reg2 = re.compile(
-        r'--((no-|)(wrap-functions|lower|freethreading-compatible)|debug-capi|quiet|skip-empty-wrappers)|-include')
+        r'--((no-|)(wrap-functions|lower|freethreading-compatible|latex-doc)|debug-capi|quiet|skip-empty-wrappers)|-include')
     f2py_flags = [_m for _m in sys.argv[1:] if _reg2.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in f2py_flags]
     f2py_flags2 = []

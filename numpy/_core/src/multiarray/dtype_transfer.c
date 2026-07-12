@@ -169,6 +169,9 @@ _any_to_object_auxdata_clone(NpyAuxData *auxdata)
     _any_to_object_auxdata *data = (_any_to_object_auxdata *)auxdata;
 
     _any_to_object_auxdata *res = PyMem_Malloc(sizeof(_any_to_object_auxdata));
+    if (res == NULL) {
+        return NULL;
+    }
 
     res->base = data->base;
     res->getitem = data->getitem;
@@ -348,6 +351,7 @@ object_to_any_get_loop(
     /* NOTE: auxdata is only really necessary to flag `move_references` */
     _object_to_any_auxdata *data = PyMem_Malloc(sizeof(*data));
     if (data == NULL) {
+        PyErr_NoMemory();
         return -1;
     }
     data->base.free = &_object_to_any_auxdata_free;
@@ -1576,6 +1580,7 @@ static NpyAuxData *_n_to_n_data_clone(NpyAuxData *data)
 
     if (NPY_cast_info_copy(&newdata->wrapped, &d->wrapped) < 0) {
         _n_to_n_data_free((NpyAuxData *)newdata);
+        return NULL;
     }
 
     return (NpyAuxData *)newdata;

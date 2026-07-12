@@ -1,6 +1,5 @@
 import os
 import shutil
-import subprocess
 import sys
 import sysconfig
 import warnings
@@ -10,6 +9,7 @@ import pytest
 
 import numpy as np
 from numpy.testing import IS_EDITABLE, IS_WASM
+from numpy.testing._private.utils import run_subprocess
 
 try:
     import cffi
@@ -38,7 +38,7 @@ except ImportError:
 else:
     from numpy._utils import _pep440
     # Note: keep in sync with the one in pyproject.toml
-    required_version = '3.0.6'
+    required_version = '3.1.0'
     if _pep440.parse(cython_version) < _pep440.Version(required_version):
         # too old or wrong cython, skip the test
         cython = None
@@ -77,18 +77,16 @@ def test_cython(tmp_path):
         f.write(f"python = '{sys.executable}'\n")
         f.write(f"python3 = '{sys.executable}'")
     if sys.platform == "win32":
-        subprocess.check_call(["meson", "setup",
-                               "--buildtype=release",
-                               "--vsenv", "--native-file", native_file,
-                               str(build_dir)],
-                              cwd=target_dir,
-                              )
+        run_subprocess(["meson", "setup",
+                        "--buildtype=release",
+                        "--vsenv", "--native-file", native_file,
+                        str(build_dir)],
+                       target_dir)
     else:
-        subprocess.check_call(["meson", "setup",
-                               "--native-file", native_file, str(build_dir)],
-                              cwd=target_dir
-                              )
-    subprocess.check_call(["meson", "compile", "-vv"], cwd=target_dir)
+        run_subprocess(["meson", "setup",
+                        "--native-file", native_file, str(build_dir)],
+                       target_dir)
+    run_subprocess(["meson", "compile", "-vv"], target_dir)
 
     # gh-16162: make sure numpy's __init__.pxd was used for cython
     # not really part of this test, but it is a convenient place to check

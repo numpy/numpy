@@ -97,8 +97,11 @@ Usage:
      character(len=C['len'],kind=C['kind'], f2py_len=C['f2py_len'])
      (see also fortran type declaration statement formats below)
 
-Fortran 90 type declaration statement format (F77 is subset of F90)
-====================================================================
+Fortran 90 type declaration statement format
+============================================
+
+F77 is subset of F90
+
 (Main source: IBM XL Fortran 5.1 Language Reference Manual)
 type declaration = <typespec> [[<attrspec>]::] <entitydecl>
 <typespec> = byte                          |
@@ -3079,12 +3082,12 @@ def param_parse(d, params):
     >>> param_parse(d, params)
     3
     """
-    if "(" in d:
-        # this dimension expression is an array
-        dname = d[:d.find("(")]
+    dname = d[:d.find("(")] if "(" in d else ""
+    if dname:
+        # Text precedes the first "(", so this is array-parameter
+        # indexing such as pa(1) or myparamarray(nested(dim)).
         ddims = d[d.find("(") + 1:d.rfind(")")]
-        # this dimension expression is also a parameter;
-        # parse it recursively
+        # the index is itself an expression over params; parse it recursively
         index = int(param_parse(ddims, params))
         return str(params[dname][index])
     elif d in params:

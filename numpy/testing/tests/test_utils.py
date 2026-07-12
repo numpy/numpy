@@ -428,14 +428,15 @@ class TestEqual(TestArrayEqual):
 
     def test_nat_items(self):
         # not a datetime
-        nadt_no_unit = np.datetime64("NaT")
         nadt_s = np.datetime64("NaT", "s")
         nadt_d = np.datetime64("NaT", "ns")
+
         # not a timedelta
         with pytest.warns(
             DeprecationWarning,
             match="The 'generic' unit for NumPy timedelta is deprecated",
         ):
+            nadt_no_unit = np.datetime64("NaT")
             natd_no_unit = np.timedelta64("NaT")
         natd_s = np.timedelta64("NaT", "s")
         natd_d = np.timedelta64("NaT", "ns")
@@ -1802,211 +1803,238 @@ def test_clear_and_catch_warnings():
     assert_warn_len_equal(my_mod, 0)
 
 
-@pytest.mark.filterwarnings(
-    "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
-    ".*:DeprecationWarning")
 @pytest.mark.thread_unsafe(reason="checks global module & deprecated warnings")
 def test_suppress_warnings_module():
-    # Initial state of module, no warnings
-    my_mod = _get_fresh_mod()
-    assert_equal(getattr(my_mod, '__warningregistry__', {}), {})
+    # NOTE(seberg): We test for the DeprecationWarning mainly because on
+    # free-threaded Python an "ignore" warning filters seem to collide with
+    # parts of what `suppress_warnings` does (if used more than once?).
+    with pytest.warns(
+            DeprecationWarning,
+            match="suppression and assertion utilities are deprecated"):
+        # Initial state of module, no warnings
+        my_mod = _get_fresh_mod()
+        assert_equal(getattr(my_mod, '__warningregistry__', {}), {})
 
-    def warn_other_module():
-        # Apply along axis is implemented in python; stacklevel=2 means
-        # we end up inside its module, not ours.
-        def warn(arr):
-            warnings.warn("Some warning 2", stacklevel=2)
-            return arr
-        np.apply_along_axis(warn, 0, [0])
+        def warn_other_module():
+            # Apply along axis is implemented in python; stacklevel=2 means
+            # we end up inside its module, not ours.
+            def warn(arr):
+                warnings.warn("Some warning 2", stacklevel=2)
+                return arr
+            np.apply_along_axis(warn, 0, [0])
 
-    # Test module based warning suppression:
-    assert_warn_len_equal(my_mod, 0)
-    with suppress_warnings() as sup:
-        sup.record(UserWarning)
-        # suppress warning from other module (may have .pyc ending),
-        # if apply_along_axis is moved, had to be changed.
-        sup.filter(module=np.lib._shape_base_impl)
-        warnings.warn("Some warning")
-        warn_other_module()
-    # Check that the suppression did test the file correctly (this module
-    # got filtered)
-    assert_equal(len(sup.log), 1)
-    assert_equal(sup.log[0].message.args[0], "Some warning")
-    assert_warn_len_equal(my_mod, 0)
-    sup = suppress_warnings()
-    # Will have to be changed if apply_along_axis is moved:
-    sup.filter(module=my_mod)
-    with sup:
-        warnings.warn('Some warning')
-    assert_warn_len_equal(my_mod, 0)
-    # And test repeat works:
-    sup.filter(module=my_mod)
-    with sup:
-        warnings.warn('Some warning')
-    assert_warn_len_equal(my_mod, 0)
+        # Test module based warning suppression:
+        assert_warn_len_equal(my_mod, 0)
+        with suppress_warnings() as sup:
+            sup.record(UserWarning)
+            # suppress warning from other module (may have .pyc ending),
+            # if apply_along_axis is moved, had to be changed.
+            sup.filter(module=np.lib._shape_base_impl)
+            warnings.warn("Some warning")
+            warn_other_module()
+        # Check that the suppression did test the file correctly (this module
+        # got filtered)
+        assert_equal(len(sup.log), 1)
+        assert_equal(sup.log[0].message.args[0], "Some warning")
+        assert_warn_len_equal(my_mod, 0)
+        sup = suppress_warnings()
+        # Will have to be changed if apply_along_axis is moved:
+        sup.filter(module=my_mod)
+        with sup:
+            warnings.warn('Some warning')
+        assert_warn_len_equal(my_mod, 0)
+        # And test repeat works:
+        sup.filter(module=my_mod)
+        with sup:
+            warnings.warn('Some warning')
+        assert_warn_len_equal(my_mod, 0)
 
-    # Without specified modules
-    with suppress_warnings():
-        warnings.simplefilter('ignore')
-        warnings.warn('Some warning')
-    assert_warn_len_equal(my_mod, 0)
+        # Without specified modules
+        with suppress_warnings():
+            warnings.simplefilter('ignore')
+            warnings.warn('Some warning')
+        assert_warn_len_equal(my_mod, 0)
 
 
-@pytest.mark.filterwarnings(
-    "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
-    ".*:DeprecationWarning")
 @pytest.mark.thread_unsafe(reason="checks global module & deprecated warnings")
 def test_suppress_warnings_type():
-    # Initial state of module, no warnings
-    my_mod = _get_fresh_mod()
-    assert_equal(getattr(my_mod, '__warningregistry__', {}), {})
+    # NOTE(seberg): We test for the DeprecationWarning mainly because on
+    # free-threaded Python an "ignore" warning filters seem to collide with
+    # parts of what `suppress_warnings` does (if used more than once?).
+    with pytest.warns(
+            DeprecationWarning,
+            match="suppression and assertion utilities are deprecated"):
+        # Initial state of module, no warnings
+        my_mod = _get_fresh_mod()
+        assert_equal(getattr(my_mod, '__warningregistry__', {}), {})
 
-    # Test module based warning suppression:
-    with suppress_warnings() as sup:
+        # Test module based warning suppression:
+        with suppress_warnings() as sup:
+            sup.filter(UserWarning)
+            warnings.warn('Some warning')
+        assert_warn_len_equal(my_mod, 0)
+        sup = suppress_warnings()
         sup.filter(UserWarning)
-        warnings.warn('Some warning')
-    assert_warn_len_equal(my_mod, 0)
-    sup = suppress_warnings()
-    sup.filter(UserWarning)
-    with sup:
-        warnings.warn('Some warning')
-    assert_warn_len_equal(my_mod, 0)
-    # And test repeat works:
-    sup.filter(module=my_mod)
-    with sup:
-        warnings.warn('Some warning')
-    assert_warn_len_equal(my_mod, 0)
+        with sup:
+            warnings.warn('Some warning')
+        assert_warn_len_equal(my_mod, 0)
+        # And test repeat works:
+        sup.filter(module=my_mod)
+        with sup:
+            warnings.warn('Some warning')
+        assert_warn_len_equal(my_mod, 0)
 
-    # Without specified modules
-    with suppress_warnings():
-        warnings.simplefilter('ignore')
-        warnings.warn('Some warning')
-    assert_warn_len_equal(my_mod, 0)
+        # Without specified modules
+        with suppress_warnings():
+            warnings.simplefilter('ignore')
+            warnings.warn('Some warning')
+        assert_warn_len_equal(my_mod, 0)
 
 
-@pytest.mark.filterwarnings(
-    "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
-    ".*:DeprecationWarning")
 @pytest.mark.thread_unsafe(
     reason="uses deprecated thread-unsafe warnings control utilities"
 )
 def test_suppress_warnings_decorate_no_record():
-    sup = suppress_warnings()
-    sup.filter(UserWarning)
+    # NOTE(seberg): We test for the DeprecationWarning mainly because on
+    # free-threaded Python an "ignore" warning filters seem to collide with
+    # parts of what `suppress_warnings` does (if used more than once?).
+    with pytest.warns(
+            DeprecationWarning,
+            match="suppression and assertion utilities are deprecated"):
+        sup = suppress_warnings()
+        sup.filter(UserWarning)
 
-    @sup
-    def warn(category):
-        warnings.warn('Some warning', category)
+        @sup
+        def warn(category):
+            warnings.warn('Some warning', category)
 
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-        warn(UserWarning)  # should be suppressed
-        warn(RuntimeWarning)
-        assert_equal(len(w), 1)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            warn(UserWarning)  # should be suppressed
+            warn(RuntimeWarning)
+            assert_equal(len(w), 1)
 
 
-@pytest.mark.filterwarnings(
-    "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
-    ".*:DeprecationWarning")
 @pytest.mark.thread_unsafe(
     reason="uses deprecated thread-unsafe warnings control utilities"
 )
 def test_suppress_warnings_record():
-    sup = suppress_warnings()
-    log1 = sup.record()
+    # NOTE(seberg): We test for the DeprecationWarning mainly because on
+    # free-threaded Python an "ignore" warning filters seem to collide with
+    # parts of what `suppress_warnings` does (if used more than once?).
+    with pytest.warns(
+            DeprecationWarning,
+            match="suppression and assertion utilities are deprecated"):
+        sup = suppress_warnings()
+        log1 = sup.record()
 
-    with sup:
-        log2 = sup.record(message='Some other warning 2')
-        sup.filter(message='Some warning')
-        warnings.warn('Some warning')
-        warnings.warn('Some other warning')
-        warnings.warn('Some other warning 2')
-
-        assert_equal(len(sup.log), 2)
-        assert_equal(len(log1), 1)
-        assert_equal(len(log2), 1)
-        assert_equal(log2[0].message.args[0], 'Some other warning 2')
-
-    # Do it again, with the same context to see if some warnings survived:
-    with sup:
-        log2 = sup.record(message='Some other warning 2')
-        sup.filter(message='Some warning')
-        warnings.warn('Some warning')
-        warnings.warn('Some other warning')
-        warnings.warn('Some other warning 2')
-
-        assert_equal(len(sup.log), 2)
-        assert_equal(len(log1), 1)
-        assert_equal(len(log2), 1)
-        assert_equal(log2[0].message.args[0], 'Some other warning 2')
-
-    # Test nested:
-    with suppress_warnings() as sup:
-        sup.record()
-        with suppress_warnings() as sup2:
-            sup2.record(message='Some warning')
+        with sup:
+            log2 = sup.record(message='Some other warning 2')
+            sup.filter(message='Some warning')
             warnings.warn('Some warning')
             warnings.warn('Some other warning')
-            assert_equal(len(sup2.log), 1)
-        # includes a DeprecationWarning for suppress_warnings
-        assert_equal(len(sup.log), 2)
+            warnings.warn('Some other warning 2')
+
+            assert_equal(len(sup.log), 2)
+            assert_equal(len(log1), 1)
+            assert_equal(len(log2), 1)
+            assert_equal(log2[0].message.args[0], 'Some other warning 2')
+
+        # Do it again, with the same context to see if some warnings survived:
+        with sup:
+            log2 = sup.record(message='Some other warning 2')
+            sup.filter(message='Some warning')
+            warnings.warn('Some warning')
+            warnings.warn('Some other warning')
+            warnings.warn('Some other warning 2')
+
+            assert_equal(len(sup.log), 2)
+            assert_equal(len(log1), 1)
+            assert_equal(len(log2), 1)
+            assert_equal(log2[0].message.args[0], 'Some other warning 2')
+
+        # Test nested:
+        with suppress_warnings() as sup:
+            sup.record()
+            with suppress_warnings() as sup2:
+                sup2.record(message='Some warning')
+                warnings.warn('Some warning')
+                warnings.warn('Some other warning')
+                assert_equal(len(sup2.log), 1)
+            # includes a DeprecationWarning for suppress_warnings
+            assert_equal(len(sup.log), 2)
 
 
-@pytest.mark.filterwarnings(
-    "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
-    ".*:DeprecationWarning")
 @pytest.mark.thread_unsafe(
     reason="uses deprecated thread-unsafe warnings control utilities"
 )
 def test_suppress_warnings_forwarding():
-    def warn_other_module():
-        # Apply along axis is implemented in python; stacklevel=2 means
-        # we end up inside its module, not ours.
-        def warn(arr):
-            warnings.warn("Some warning", stacklevel=2)
-            return arr
-        np.apply_along_axis(warn, 0, [0])
+    # NOTE(seberg): We test for the DeprecationWarning mainly because on
+    # free-threaded Python an "ignore" warning filters seem to collide with
+    # parts of what `suppress_warnings` does (if used more than once?).
+    with pytest.warns(
+            DeprecationWarning,
+            match="suppression and assertion utilities are deprecated"):
+        def warn_other_module():
+            # Apply along axis is implemented in python; stacklevel=2 means
+            # we end up inside its module, not ours.
+            def warn(arr):
+                warnings.warn("Some warning", stacklevel=2)
+                return arr
+            np.apply_along_axis(warn, 0, [0])
 
-    with suppress_warnings() as sup:
-        sup.record()
-        with suppress_warnings("always"):
-            for i in range(2):
-                warnings.warn("Some warning")
+        with suppress_warnings() as sup:
+            sup.record()
+            with suppress_warnings("always"):
+                for i in range(2):
+                    warnings.warn("Some warning")
 
-        # includes a DeprecationWarning for suppress_warnings
-        assert_equal(len(sup.log), 3)
+            # includes a DeprecationWarning for suppress_warnings
+            assert_equal(len(sup.log), 3)
 
-    with suppress_warnings() as sup:
-        sup.record()
-        with suppress_warnings("location"):
-            for i in range(2):
-                warnings.warn("Some warning")
-                warnings.warn("Some warning")
+        with suppress_warnings() as sup:
+            sup.record()
+            with suppress_warnings("location"):
+                for i in range(2):
+                    warnings.warn("Some warning")
+                    warnings.warn("Some warning")
 
-        # includes a DeprecationWarning for suppress_warnings
-        assert_equal(len(sup.log), 3)
+            # includes a DeprecationWarning for suppress_warnings
+            assert_equal(len(sup.log), 3)
 
-    with suppress_warnings() as sup:
-        sup.record()
-        with suppress_warnings("module"):
-            for i in range(2):
-                warnings.warn("Some warning")
-                warnings.warn("Some warning")
-                warn_other_module()
+        with suppress_warnings() as sup:
+            sup.record()
+            with suppress_warnings("module"):
+                for i in range(2):
+                    warnings.warn("Some warning")
+                    warnings.warn("Some warning")
+                    warn_other_module()
 
-        # includes a DeprecationWarning for suppress_warnings
-        assert_equal(len(sup.log), 3)
+            # includes a DeprecationWarning for suppress_warnings
+            assert_equal(len(sup.log), 3)
 
-    with suppress_warnings() as sup:
-        sup.record()
-        with suppress_warnings("once"):
-            for i in range(2):
-                warnings.warn("Some warning")
-                warnings.warn("Some other warning")
-                warn_other_module()
+        with suppress_warnings() as sup:
+            sup.record()
+            with suppress_warnings("once"):
+                for i in range(2):
+                    warnings.warn("Some warning")
+                    warnings.warn("Some other warning")
+                    warn_other_module()
 
-        # includes a DeprecationWarning for suppress_warnings
-        assert_equal(len(sup.log), 3)
+            # includes a DeprecationWarning for suppress_warnings
+            assert_equal(len(sup.log), 3)
+
+
+def test_no_warnings_message_reports_warning():
+    def f():
+        warnings.warn("a very specific warning text", UserWarning)
+
+    with pytest.raises(AssertionError) as exc_info:
+        assert_no_warnings(f)
+
+    msg = str(exc_info.value)
+    assert "a very specific warning text" in msg
+    assert "WarningMessage" not in msg
 
 
 def test_tempdir():
@@ -2059,6 +2087,7 @@ def test_clear_and_catch_warnings_inherit():
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 @pytest.mark.thread_unsafe(reason="garbage collector is global state")
+@pytest.mark.slow
 class TestAssertNoGcCycles:
     """ Test assert_no_gc_cycles """
 
@@ -2087,7 +2116,6 @@ class TestAssertNoGcCycles:
         with assert_raises(AssertionError):
             assert_no_gc_cycles(make_cycle)
 
-    @pytest.mark.slow
     def test_fails(self):
         """
         Test that in cases where the garbage cannot be collected, we raise an

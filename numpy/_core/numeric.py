@@ -536,7 +536,8 @@ def count_nonzero(a, axis=None, *, keepdims=False):
 
     a = asanyarray(a)
 
-    # TODO: this works around .astype(bool) not working properly (gh-9847)
+    # This is a performance optimization for character dtypes
+    # TODO: this can be removed if the legacy fixed-width string dtypes are ever removed
     if np.issubdtype(a.dtype, np.character):
         a_bool = a != a.dtype.type()
     else:
@@ -1019,6 +1020,7 @@ def tensordot(a, b, axes=2):
           second to `b`. Both elements array_like must be of the same length.
           Each axis may appear at most once; repeated axes are not allowed.
           For example, ``axes=([1, 1], [0, 0])`` is invalid.
+
     Returns
     -------
     output : ndarray

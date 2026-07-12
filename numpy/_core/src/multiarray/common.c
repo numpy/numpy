@@ -18,6 +18,7 @@
 #include "get_attr_string.h"
 #include "mem_overlap.h"
 #include "array_coercion.h"
+#include "alloc.h"  /* for npy_alloc_cache_dim */
 
 /*
  * The casting to use for implicit assignment operations resulting from
@@ -368,6 +369,214 @@ _may_have_objects(PyArray_Descr *dtype)
 
     return (PyDataType_HASFIELDS(base) ||
             PyDataType_FLAGCHK(base, NPY_ITEM_HASOBJECT) );
+}
+
+/*
+ * Get the number of dimensions of a subarray.  If added to nd,
+ * it exceeds NPY_MAXDIMS, return -1 with an exception set.
+ */
+static inline int
+_get_subarray_ndim(const PyArray_Descr *descr, const int nd)
+{
+    PyObject *shape = PyDataType_SUBARRAY(descr)->shape;
+    assert(shape);
+    int subnd = PyTuple_Check(shape) ? PyTuple_GET_SIZE(shape) : 1;
+    if (nd + subnd > NPY_MAXDIMS) {
+        PyErr_Format(PyExc_ValueError,
+                "number of dimensions must be within [0, %d]", NPY_MAXDIMS);
+        return -1;
+    }
+    return subnd;
+}
+
+/*
+ * For a sub-array descriptor, return the base descriptor,
+ * set newnd to nd plus the number of subarray dimensions,
+ * and fill newdims by copying nd items from dims and appending
+ * newnd-nd items from the subarray.
+ * If newstrides != NULL, newstrides are similarly filled.
+ *
+ * Note: caller has to ensure that descr is a subarray, and that
+ * newdims and newstrides are big enough (i.e., NPY_MAXDIMS if
+ * the new size is not yet known).
+ */
+NPY_NO_EXPORT PyArray_Descr*
+_get_subarray_base_and_dimensions(
+    const PyArray_Descr *descr,
+    const int nd, const npy_intp *dims, const npy_intp *strides,
+    int *newnd, npy_intp *newdims, npy_intp *newstrides)
+{
+    PyArray_Descr *base = PyDataType_SUBARRAY(descr)->base;
+    PyObject *shape = PyDataType_SUBARRAY(descr)->shape;
+    assert(base && shape);
+
+    int subnd = _get_subarray_ndim(descr, nd);
+    if (subnd < 0) {
+        return NULL;
+    }
+
+    *newnd = nd + subnd;
+    memcpy(newdims, dims, nd * sizeof(npy_intp));
+    if (PyTuple_Check(shape)) {
+        for (int i = 0; i < subnd; i++) {
+            newdims[nd+i] = (npy_intp)PyLong_AsLong(PyTuple_GET_ITEM(shape, i));
+        }
+    }
+    else {
+        newdims[nd] = (npy_intp)PyLong_AsLong(shape);
+    }
+    if (newstrides) {
+        assert(strides || nd==0);
+        memcpy(newstrides, strides, nd * sizeof(npy_intp));
+        npy_intp tempsize;
+        /* Make new strides -- always C-contiguous */
+        tempsize = base->elsize;
+        for (int i = nd + subnd - 1; i >= nd; i--) {
+            newstrides[i] = tempsize;
+            tempsize *= newdims[i] ? newdims[i] : 1;
+        }
+    }
+
+    Py_INCREF(base);
+    return base;
+}
+
+/*
+ * Check whether self can be viewed with the given dtype.
+ * If so, return a new reference to the dtype (possibly changed).
+ * If needed, also determine new dimensions and strides:
+ * - For views, *newdims and *newstrides hold storage.  If a change is
+ *   required, copy old dims and strides and make the change.
+ *   If no change is needed, set *newdims and *newstrides to self's versions.
+ * - For _set_dtype, *newdims and *newstrides are NULL. Allocate a new
+ *   array if the number of dimensions increases (because type is a
+ *   subarray), and otherwise use self's dims and strides, possibly
+ *   changing the last element in-place.
+ */
+NPY_NO_EXPORT PyArray_Descr*
+_check_compatibility_with_new_dtype(
+    PyArrayObject *self, PyArray_Descr *type,
+    int *newnd, npy_intp **newdims, npy_intp **newstrides)
+{
+    PyArray_Descr *dtype = PyArray_DESCR(self);
+    int nd = PyArray_NDIM(self);
+
+    /* Check that we are not reinterpreting memory containing Objects. */
+    if (_may_have_objects(dtype) || _may_have_objects(type)) {
+        if (npy_cache_import_runtime(
+                "numpy._core._internal", "_view_is_safe",
+                &npy_runtime_imports._view_is_safe) == -1) {
+            return NULL;
+        }
+        PyObject *safe = PyObject_CallFunctionObjArgs(
+                npy_runtime_imports._view_is_safe, dtype, type, NULL);
+        if (safe == NULL) {
+            return NULL;
+        }
+        Py_DECREF(safe);
+    }
+
+    if (PyDataType_HASSUBARRAY(type)) {
+        if (type->elsize != dtype->elsize) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Changing the dtype to a subarray type is only supported "
+                    "if the total itemsize is unchanged");
+            return NULL;
+        }
+        int subnd = _get_subarray_ndim(type, nd);
+        if (subnd < 0) {
+            return NULL;
+        }
+        if (*newdims == NULL) {
+            *newdims = npy_alloc_cache_dim(2 * (nd + subnd));
+            if (*newdims == NULL) {
+                return NULL;
+            }
+            *newstrides = *newdims + nd + subnd;
+        }
+        return _get_subarray_base_and_dimensions(
+            type, nd, PyArray_DIMS(self), PyArray_STRIDES(self),
+            newnd, *newdims, *newstrides);  /* cannot fail given check above. */
+    }
+
+    /* Number of dimensions can no longer change. */
+    *newnd = nd;
+    if (type->elsize != dtype->elsize) {
+        /*
+         * Viewing as an unsized void implies a void dtype matching
+         * the size of the current dtype.
+         */
+        if (type->type_num == NPY_VOID && PyDataType_ISUNSIZED(type)) {
+            PyArray_Descr *newtype = PyArray_DescrNew(type);
+            if (newtype == NULL) {
+                return NULL;
+            }
+            newtype->elsize = dtype->elsize;
+            *newdims = PyArray_DIMS(self);
+            *newstrides = PyArray_STRIDES(self);
+            return newtype;
+        }
+        /*
+         * Otherwise, changing the size of the dtype results in a shape change.
+         */
+        if (nd == 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Changing the dtype of a 0d array is only supported "
+                    "if the itemsize is unchanged");
+            return NULL;
+        }
+        /* Resize on last axis only (we have nd>0 here). */
+        int lastaxis = nd-1;
+        npy_intp lastdim = PyArray_DIMS(self)[lastaxis];
+        if (lastdim != 1 && PyArray_SIZE(self) != 0 &&
+                PyArray_STRIDES(self)[lastaxis] != dtype->elsize) {
+            PyErr_SetString(PyExc_ValueError,
+                    "To change to a dtype of a different size, the last axis "
+                    "must be contiguous");
+            return NULL;
+        }
+        if (type->elsize < dtype->elsize) {
+            /* If it is compatible, increase the size of the last axis. */
+            if (type->elsize == 0 || dtype->elsize % type->elsize != 0) {
+                PyErr_SetString(PyExc_ValueError,
+                        "When changing to a smaller dtype, its size must be a "
+                        "divisor of the size of original dtype");
+                return NULL;
+            }
+            lastdim *= (dtype->elsize / type->elsize);
+        }
+        else /* type->elsize > dtype->elsize */ {
+            /* If it is compatible, decrease the size of the relevant axis. */
+            npy_intp lastsize = lastdim * dtype->elsize;
+            if (lastsize % type->elsize != 0) {
+                PyErr_SetString(PyExc_ValueError,
+                        "When changing to a larger dtype, its size must be a "
+                        "divisor of the total size in bytes of the last axis "
+                        "of the array.");
+                return NULL;
+            }
+            lastdim = lastsize / type->elsize;
+        }
+        if (*newdims != NULL) {
+            /* Have storage for dims & strides (view); copy unchanged ones */
+            memcpy(*newdims, PyArray_DIMS(self), lastaxis * sizeof(npy_intp));
+            memcpy(*newstrides, PyArray_STRIDES(self), lastaxis * sizeof(npy_intp));
+        }
+        else {
+            /* Don't have storage, so update in place (_set_dtype) */
+            *newdims = PyArray_DIMS(self);
+            *newstrides = PyArray_STRIDES(self);
+        }
+        (*newdims)[lastaxis] = lastdim;
+        (*newstrides)[lastaxis] = type->elsize;
+    }
+    else {
+        /* Itemsizes equal, dims and strides unchanged. */
+        *newdims = PyArray_DIMS(self);
+        *newstrides = PyArray_STRIDES(self);
+    }
+    Py_INCREF(type);
+    return type;
 }
 
 /*

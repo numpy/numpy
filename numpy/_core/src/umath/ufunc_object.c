@@ -322,9 +322,11 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
     }
     len = strlen(signature);
     ufunc->core_signature = PyArray_malloc(sizeof(char) * (len+1));
-    if (ufunc->core_signature) {
-        strcpy(ufunc->core_signature, signature);
+    if (ufunc->core_signature == NULL) {
+        PyErr_NoMemory();
+        return -1;
     }
+    strcpy(ufunc->core_signature, signature);
     /* Allocate sufficient memory to store pointers to all dimension names */
     var_names = PyArray_malloc(sizeof(char const*) * len);
     if (var_names == NULL) {
@@ -474,14 +476,28 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
         parse_error = "incomplete signature: not all arguments found";
         goto fail;
     }
-    ufunc->core_dim_ixs = PyArray_realloc(ufunc->core_dim_ixs,
+    void *tmp;
+    tmp = PyArray_realloc(ufunc->core_dim_ixs,
             sizeof(int) * cur_core_dim);
-    ufunc->core_dim_sizes = PyArray_realloc(
-            ufunc->core_dim_sizes,
+    if (tmp == NULL) {
+        PyErr_NoMemory();
+        goto fail;
+    }
+    ufunc->core_dim_ixs = tmp;
+    tmp = PyArray_realloc(ufunc->core_dim_sizes,
             sizeof(npy_intp) * ufunc->core_num_dim_ix);
-    ufunc->core_dim_flags = PyArray_realloc(
-            ufunc->core_dim_flags,
+    if (tmp == NULL) {
+        PyErr_NoMemory();
+        goto fail;
+    }
+    ufunc->core_dim_sizes = tmp;
+    tmp = PyArray_realloc(ufunc->core_dim_flags,
             sizeof(npy_uint32) * ufunc->core_num_dim_ix);
+    if (tmp == NULL) {
+        PyErr_NoMemory();
+        goto fail;
+    }
+    ufunc->core_dim_flags = tmp;
 
     /* check for trivial core-signature, e.g. "(),()->()" */
     if (cur_core_dim == 0) {
@@ -2499,22 +2515,123 @@ finish_loop:
 }
 
 /*
- * The implementation of the reduction operators with the new iterator
- * turned into a bit of a long function here, but I think the design
- * of this part needs to be changed to be more like einsum, so it may
- * not be worth refactoring it too much.  Consider this timing:
+ * Try a fast path that bypasses NpyIter / PyUFunc_ReduceWrapper for full
+ * reductions (axis=None) over a trivially iterable, aligned input where no
+ * casting is required.  The strided reduce loop is called directly on the
+ * input buffer and writes into a freshly allocated 0-d result.
  *
- * >>> a = arange(10000)
- *
- * >>> timeit sum(a)
- * 10000 loops, best of 3: 17 us per loop
- *
- * >>> timeit einsum("i->",a)
- * 100000 loops, best of 3: 13.5 us per loop
- *
- * The axes must already be bounds-checked by the calling function,
- * this function does not validate them.
+ * Returns:
+ *      1 on success; ``*out_result`` holds the new 0-d result.
+ *      0 if any precondition is unmet (caller should run the slow path);
+ *        ``*out_result`` is NULL and no error is set.
+ *     -1 on hard error during the fast path; ``*out_result`` is NULL and
+ *        a Python error is set.
  */
+static inline int
+try_reduce_contiguous(
+        PyArrayMethod_Context *context, PyArrayObject *arr,
+        PyArray_Descr *const *descrs,
+        PyArrayObject *out, PyArrayObject *wheremask, PyObject *initial,
+        int ndim, int naxes, int keepdims,
+        int errormask,
+        PyArrayObject **out_result)
+{
+    NPY_BEGIN_THREADS_DEF;
+    *out_result = NULL;
+
+    PyArrayMethodObject *ufuncimpl = context->method;
+    if (!(out == NULL && wheremask == NULL && initial == NULL && keepdims == 0
+            && naxes == ndim
+            && PyArray_TRIVIALLY_ITERABLE(arr)
+            && PyArray_ISALIGNED(arr)
+            && PyArray_DESCR(arr) == descrs[1]
+            && descrs[0] == descrs[1]
+            && !PyDataType_REFCHK(descrs[0])
+            && (ndim <= 1
+                || (ufuncimpl->flags & NPY_METH_IS_REORDERABLE)))) {
+        return 0;
+    }
+    npy_intp count = PyArray_SIZE(arr);
+    if (count == 0) {
+        /* Let the slow path handle empty (it knows the proper semantics). */
+        return 0;
+    }
+
+    /* Allocate the 0-d result first so the loop can write into it. */
+    Py_INCREF(descrs[0]);
+    PyArrayObject *result = (PyArrayObject *)PyArray_NewFromDescr(
+            &PyArray_Type, descrs[0], 0, NULL, NULL, NULL, 0, NULL);
+    if (result == NULL) {
+        return -1;
+    }
+    char *accum = PyArray_BYTES(result);
+    int has_initial = 0;
+    if (ufuncimpl->get_reduction_initial != NULL) {
+        has_initial = ufuncimpl->get_reduction_initial(
+                context, /*reduction_is_empty=*/0, accum);
+        if (has_initial < 0) {
+            Py_DECREF(result);
+            return -1;
+        }
+    }
+
+    /*
+     * For C/F-contiguous N-D arrays the stride is always elsize; for 1-D
+     * arrays we need the actual stride to handle non-contiguous slices.
+     */
+    npy_intp arr_stride = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(count, arr);
+    char *src = PyArray_BYTES(arr);
+    if (!has_initial) {
+        /*
+         * No identity available -- seed the accumulator with arr[0] and
+         * reduce over arr[1:].
+         */
+        memcpy(accum, src, descrs[1]->elsize);
+        src += arr_stride;
+        count -= 1;
+    }
+    if (count == 0) {
+        /* Single-element input with no identity -- accum already holds arr[0]. */
+        *out_result = result;
+        return 1;
+    }
+
+    npy_intp strides[3] = {0, arr_stride, 0};
+    PyArrayMethod_StridedLoop *strided_loop;
+    NpyAuxData *auxdata = NULL;
+    NPY_ARRAYMETHOD_FLAGS flags = 0;
+    if (ufuncimpl->get_strided_loop(context, /*aligned=*/1,
+            /*move_references=*/0, strides,
+            &strided_loop, &auxdata, &flags) < 0) {
+        Py_DECREF(result);
+        return -1;
+    }
+    int needs_fperr = !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS);
+    if (needs_fperr) {
+        npy_clear_floatstatus_barrier((char *)context);
+    }
+    if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
+        NPY_BEGIN_THREADS_THRESHOLDED(count);
+    }
+    char *data[3] = {accum, src, accum};
+    int res = strided_loop(context, data, &count, strides, auxdata);
+    NPY_END_THREADS;
+    NPY_AUXDATA_FREE(auxdata);
+    if (res == 0 && PyErr_Occurred()) {
+        res = -1;
+    }
+    if (res == 0 && needs_fperr) {
+        res = _check_ufunc_fperr(errormask, "reduce");
+    }
+    if (res < 0) {
+        Py_DECREF(result);
+        return -1;
+    }
+    *out_result = result;
+    return 1;
+}
+
+
 static PyArrayObject *
 PyUFunc_Reduce(PyUFuncObject *ufunc,
         PyArrayObject *arr, PyArrayObject *out,
@@ -2560,10 +2677,18 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
     context.caller = (PyObject *)ufunc;
     context.method = ufuncimpl;
 
-    PyArrayObject *result = PyUFunc_ReduceWrapper(&context,
-            arr, out, wheremask, axis_flags, keepdims,
-            initial, reduce_loop, buffersize, ufunc_name, errormask);
+    PyArrayObject *result = NULL;
 
+    int fast_status = try_reduce_contiguous(
+            &context, arr, descrs, out, wheremask, initial,
+            ndim, naxes, keepdims, errormask, &result);
+    if (fast_status == 0) {
+        /* Fast path did not apply; run the full reduction. */
+        result = PyUFunc_ReduceWrapper(&context,
+                arr, out, wheremask, axis_flags, keepdims,
+                initial, reduce_loop, buffersize, ufunc_name, errormask);
+    }
+    /* Fall through to shared cleanup of `descrs`. */
     multi_DECREF((PyObject *const *)descrs, 3);
     return result;
 }
@@ -2618,6 +2743,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
             arr, out, signature, NPY_TRUE, descrs, NPY_UNSAFE_CASTING,
             "accumulate");
     if (ufuncimpl == NULL) {
+        Py_XDECREF(out);
         return NULL;
     }
 
@@ -3041,6 +3167,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
             arr, out, signature, NPY_TRUE, descrs, NPY_UNSAFE_CASTING,
             "reduceat");
     if (ufuncimpl == NULL) {
+        Py_XDECREF(out);
         return NULL;
     }
 
@@ -3659,7 +3786,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             ufunc_output, nout_args,
             wheremask_obj, args, len_args, kwnames, &override);
     if (errval) {
-        return NULL;
+        goto fail;
     }
     else if (override) {
         multi_XDECREF(ufunc_input, nin_args);
@@ -5390,6 +5517,15 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 
 #undef _SETCPTR
 
+#undef _PyUFuncObject_GET_ITEM_DATA
+static_assert(NPY_ALIGNOF(PyUFuncObject_fields) <= 8,
+              "PyUFuncObject must not require more than 8-byte alignment");
+/*UFUNC_API*/
+NPY_NO_EXPORT PyUFuncObject_fields *
+_PyUFuncObject_GET_ITEM_DATA(const PyUFuncObject *obj)
+{
+    return (PyUFuncObject_fields *)((char *)obj + offsetof(PyUFuncObject_fields, nin));
+}
 
 static void
 ufunc_dealloc(PyUFuncObject *ufunc)
@@ -6230,7 +6366,7 @@ free_ufunc_call_info(PyObject *self)
     Py_DECREF(context->method);
     NPY_AUXDATA_FREE(call_info->auxdata);
 
-    PyObject_Free(call_info);
+    PyMem_Free(call_info);
 }
 
 
@@ -6322,8 +6458,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
             DTypes[i] = NPY_DTYPE(descr);
             Py_INCREF(DTypes[i]);
         }
-         /* Explicitly allow int, float, and complex for the "weak" types. */
-        else if (descr_obj == (PyObject *)&PyLong_Type) {
+        /* Explicitly allow int, float, and complex for the "weak" types. */
+        else if (descr_obj == (PyObject *)&PyLong_Type && i < ufunc -> nin) {
             descr = PyArray_DescrFromType(NPY_INTP);
             dummy_arrays[i] = (PyArrayObject *)PyArray_Empty(0, NULL, descr, 0);
             if (dummy_arrays[i] == NULL) {
@@ -6334,7 +6470,7 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
             DTypes[i] = &PyArray_PyLongDType;
             promoting_pyscalars = NPY_TRUE;
         }
-        else if (descr_obj == (PyObject *)&PyFloat_Type) {
+        else if (descr_obj == (PyObject *)&PyFloat_Type && i < ufunc -> nin) {
             descr = PyArray_DescrFromType(NPY_DOUBLE);
             dummy_arrays[i] = (PyArrayObject *)PyArray_Empty(0, NULL, descr, 0);
             if (dummy_arrays[i] == NULL) {
@@ -6345,7 +6481,7 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
             DTypes[i] = &PyArray_PyFloatDType;
             promoting_pyscalars = NPY_TRUE;
         }
-        else if (descr_obj == (PyObject *)&PyComplex_Type) {
+        else if (descr_obj == (PyObject *)&PyComplex_Type && i < ufunc -> nin) {
             descr = PyArray_DescrFromType(NPY_CDOUBLE);
             dummy_arrays[i] = (PyArrayObject *)PyArray_Empty(0, NULL, descr, 0);
             if (dummy_arrays[i] == NULL) {
@@ -6363,6 +6499,11 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
                         "(except the first one in reductions)");
                 goto finish;
             }
+        }
+        else if (i >= ufunc -> nin) {
+            PyErr_SetString(PyExc_TypeError,
+                    "Output descriptors must be NumPy dtypes or None.");
+            goto finish;
         }
         else {
             PyErr_SetString(PyExc_TypeError,
@@ -6429,8 +6570,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
 
     /* We may have to return the context: */
     ufunc_call_info *call_info;
-    call_info = PyObject_Malloc(sizeof(ufunc_call_info)
-                              + ufunc->nargs * sizeof(PyArray_Descr *));
+    call_info = PyMem_Malloc(sizeof(ufunc_call_info)
+                             + ufunc->nargs * sizeof(PyArray_Descr *));
     if (call_info == NULL) {
         PyErr_NoMemory();
         goto finish;
@@ -6448,7 +6589,7 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
     PyObject *capsule = PyCapsule_New(
             call_info, "numpy_1.24_ufunc_call_info", &free_ufunc_call_info);
     if (capsule == NULL) {
-        PyObject_Free(call_info);
+        PyMem_Free(call_info);
         goto finish;
     }
 
@@ -6721,6 +6862,10 @@ ufunc_get_types(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
         return NULL;
     }
     t = PyArray_malloc(no+ni+2);
+    if (t == NULL) {
+        Py_DECREF(list);
+        return PyErr_NoMemory();
+    }
     n = 0;
     for (k = 0; k < nt; k++) {
         for (j = 0; j<ni; j++) {

@@ -785,7 +785,7 @@ class TestUnique:
         assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
 
         # test for ticket 2111 - datetime64
-        nat = np.datetime64('nat')
+        nat = np.datetime64('nat', 'D')
         a = [np.datetime64('2020-12-26'), nat, np.datetime64('2020-12-24'), nat]
         ua = [np.datetime64('2020-12-24'), np.datetime64('2020-12-26'), nat]
         ua_idx = [2, 0, 1]

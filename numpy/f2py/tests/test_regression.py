@@ -1,19 +1,22 @@
 import os
 import platform
+import sys
+from pathlib import Path
 
 import pytest
 
 import numpy as np
 import numpy.testing as npt
+from numpy.f2py._backends._meson import MesonTemplate
 
 from . import util
 
 
+@pytest.mark.slow
 class TestIntentInOut(util.F2PyTest):
     # Check that intent(in out) translates as intent(inout)
     sources = [util.getpath("tests", "src", "regression", "inout.f90")]
 
-    @pytest.mark.slow
     def test_inout(self):
         # non-contiguous should raise error
         x = np.arange(6, dtype=np.float32)[::2]
@@ -25,11 +28,11 @@ class TestIntentInOut(util.F2PyTest):
         assert np.allclose(x, [3, 1, 2])
 
 
+@pytest.mark.slow
 class TestDataOnlyMultiModule(util.F2PyTest):
     # Check that modules without subroutines work
     sources = [util.getpath("tests", "src", "regression", "datonly.f90")]
 
-    @pytest.mark.slow
     def test_mdat(self):
         assert self.module.datonly.max_value == 100
         assert self.module.dat.max_ == 1009
@@ -37,21 +40,21 @@ class TestDataOnlyMultiModule(util.F2PyTest):
         assert self.module.simple_subroutine(5) == 1014
 
 
+@pytest.mark.slow
 class TestModuleWithDerivedType(util.F2PyTest):
     # Check that modules with derived types work
     sources = [util.getpath("tests", "src", "regression", "mod_derived_types.f90")]
 
-    @pytest.mark.slow
     def test_mtypes(self):
         assert self.module.no_type_subroutine(10) == 110
         assert self.module.type_subroutine(10) == 210
 
 
+@pytest.mark.slow
 class TestNegativeBounds(util.F2PyTest):
     # Check that negative bounds work correctly
     sources = [util.getpath("tests", "src", "negative_bounds", "issue_20853.f90")]
 
-    @pytest.mark.slow
     def test_negbound(self):
         xvec = np.arange(12)
         xlow = -6
@@ -68,12 +71,12 @@ class TestNegativeBounds(util.F2PyTest):
         assert np.allclose(rval, expval)
 
 
+@pytest.mark.slow
 class TestNumpyVersionAttribute(util.F2PyTest):
     # Check that th attribute __f2py_numpy_version__ is present
     # in the compiled module and that has the value np.__version__.
     sources = [util.getpath("tests", "src", "regression", "inout.f90")]
 
-    @pytest.mark.slow
     def test_numpy_version_attribute(self):
 
         # Check that self.module has an attribute named "__f2py_numpy_version__"
@@ -93,22 +96,22 @@ def test_include_path():
         assert fname in fnames_in_dir
 
 
+@pytest.mark.slow
 class TestIncludeFiles(util.F2PyTest):
     sources = [util.getpath("tests", "src", "regression", "incfile.f90")]
     options = [f"-I{util.getpath('tests', 'src', 'regression')}",
                f"--include-paths {util.getpath('tests', 'src', 'regression')}"]
 
-    @pytest.mark.slow
     def test_gh25344(self):
         exp = 7.0
         res = self.module.add(3.0, 4.0)
         assert exp == res
 
+@pytest.mark.slow
 class TestF77Comments(util.F2PyTest):
     # Check that comments are stripped from F77 continuation lines
     sources = [util.getpath("tests", "src", "regression", "f77comments.f")]
 
-    @pytest.mark.slow
     def test_gh26148(self):
         x1 = np.array(3, dtype=np.int32)
         x2 = np.array(5, dtype=np.int32)
@@ -116,18 +119,17 @@ class TestF77Comments(util.F2PyTest):
         assert res[0] == 8
         assert res[1] == 15
 
-    @pytest.mark.slow
     def test_gh26466(self):
         # Check that comments after PARAMETER directions are stripped
         expected = np.arange(1, 11, dtype=np.float32) * 2
         res = self.module.testsub2()
         npt.assert_allclose(expected, res)
 
+@pytest.mark.slow
 class TestF90Continuation(util.F2PyTest):
     # Check that comments are stripped from F90 continuation lines
     sources = [util.getpath("tests", "src", "regression", "f90continuation.f90")]
 
-    @pytest.mark.slow
     def test_gh26148b(self):
         x1 = np.array(3, dtype=np.int32)
         x2 = np.array(5, dtype=np.int32)
@@ -135,11 +137,11 @@ class TestF90Continuation(util.F2PyTest):
         assert res[0] == 8
         assert res[1] == 15
 
+@pytest.mark.slow
 class TestLowerF2PYDirectives(util.F2PyTest):
     # Check variables are cased correctly
     sources = [util.getpath("tests", "src", "regression", "lower_f2py_fortran.f90")]
 
-    @pytest.mark.slow
     def test_gh28014(self):
         self.module.inquire_next(3)
         assert True
@@ -155,6 +157,33 @@ def test_gh26623():
         )
     except RuntimeError as rerr:
         assert "lparen got assign" not in str(rerr)
+
+
+def test_meson_library_names_use_valid_identifiers():
+    mparser = pytest.importorskip("mesonbuild.mparser")
+    libraries = ["foo.bar", "scalapack-openmpi", "foo-bar", "foo_bar", "1foo"]
+    meson_build = MesonTemplate(
+        modulename="Blah",
+        sources=[Path("f90continuation.f90")],
+        deps=[],
+        libraries=libraries,
+        library_dirs=[],
+        include_dirs=[],
+        object_files=[],
+        linker_args=[],
+        fortran_args=[],
+        build_type="debug",
+        python_exe=sys.executable,
+    ).generate_meson_build()
+
+    mparser.Parser(meson_build, "meson.build").parse()
+    for lib in libraries:
+        assert f"declare_dependency(link_args : ['-l{lib}'])" in meson_build
+
+    assert "\nfoo.bar =" not in meson_build
+    assert "\nscalapack-openmpi =" not in meson_build
+    assert "\nfoo-bar =" not in meson_build
+    assert "\n1foo =" not in meson_build
 
 
 @pytest.mark.slow
@@ -197,8 +226,94 @@ class TestAssignmentOnlyModules(util.F2PyTest):
     # Ensure that variables are exposed without functions or subroutines in a module
     sources = [util.getpath("tests", "src", "regression", "assignOnlyModule.f90")]
 
-    @pytest.mark.slow
     def test_gh27167(self):
         assert (self.module.f_globals.n_max == 16)
         assert (self.module.f_globals.i_max == 18)
         assert (self.module.f_globals.j_max == 72)
+
+
+def _wrap_f90(funcwrappers2):
+    """Reproduce the F90 line-wrapping logic from rules.py buildmodule."""
+    lines = []
+    for l in ('\n\n'.join(funcwrappers2) + '\n').split('\n'):
+        if 0 <= l.find('!') < 72:
+            lines.append(l + '\n')
+        elif len(l) > 72 and l[0] == ' ':
+            lines.append(l[:72] + '&\n     &')
+            l = l[72:]
+            while len(l) > 66:
+                lines.append(l[:66] + '&\n     &')
+                l = l[66:]
+            lines.append(l + '\n')
+        else:
+            lines.append(l + '\n')
+    return ''.join(lines).replace('&\n     &\n', '\n')
+
+
+def _wrap_f77(funcwrappers):
+    """Reproduce the F77 line-wrapping logic from rules.py buildmodule."""
+    lines = []
+    for l in ('\n\n'.join(funcwrappers) + '\n').split('\n'):
+        if 0 <= l.find('!') < 66:
+            lines.append(l + '\n')
+        elif l and l[0] == ' ':
+            while len(l) > 66:
+                lines.append(l[:66] + '\n     &')
+                l = l[66:]
+            lines.append(l + '\n')
+        else:
+            lines.append(l + '\n')
+    return ''.join(lines).replace('\n     &\n', '\n')
+
+
+class TestLineWrapping:
+    """Test that F77/F90 line wrapping does not produce invalid continuations.
+
+    Regression tests for gh-28474.
+    """
+
+    def test_f90_no_empty_continuation(self):
+        # Build a line that is exactly 72 + 66 = 138 chars (spaces included)
+        # so the remainder after the first split is exactly 66 chars,
+        # which previously produced an empty continuation line with a
+        # trailing ampersand on the preceding line.
+        name = 'a' * 120
+        wrapper = f'      subroutine f2pywrap_{name}()'
+        result = _wrap_f90([wrapper])
+        for line in result.split('\n'):
+            stripped = line.rstrip()
+            # No line should end with & unless followed by a continuation
+            if stripped.endswith('&'):
+                # Find this line's position and check next line exists
+                idx = result.index(line + '\n')
+                rest = result[idx + len(line) + 1:]
+                assert rest.startswith('     &'), (
+                    f"Line ends with '&' but next line is not a continuation:\n"
+                    f"  {stripped!r}"
+                )
+
+    def test_f90_long_line_wraps_correctly(self):
+        # A line longer than 72 + 66 chars should wrap without issues
+        name = 'b' * 200
+        wrapper = f'      subroutine f2pywrap_{name}()'
+        result = _wrap_f90([wrapper])
+        assert '&\n     &\n' not in result
+        # Each line should be at most 73 chars (72 content + trailing &)
+        for line in result.split('\n'):
+            assert len(line) <= 73, f"Line too long: {line!r}"
+
+    def test_f77_no_empty_continuation(self):
+        # A line of exactly 66 chars should not enter the wrapping loop
+        line_66 = ' ' + 'x' * 65  # 66 chars, starts with space
+        result = _wrap_f77([line_66])
+        assert '\n     &' not in result, (
+            "Line of exactly 66 chars should not be wrapped"
+        )
+
+    def test_f77_boundary_67(self):
+        # A line of 67 chars should wrap into 66 + 1
+        line_67 = ' ' + 'y' * 66  # 67 chars
+        result = _wrap_f77([line_67])
+        assert '\n     &' in result
+        for line in result.strip().split('\n'):
+            assert len(line) <= 66 or line.startswith('     &')
