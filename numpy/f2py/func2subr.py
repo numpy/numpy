@@ -140,26 +140,87 @@ def _abstract_iface_name(cbname_lower):
     return f'f2py_ai_{safe}'
 
 
-def _build_callback_iface_module(mod_name, cb_blocks):
+def _collect_use_lines_for_module(cb_blocks, host_rout=None):
+    """USE lines needed so abstract-interface kinds/types resolve (gh-20157)."""
+    from .crackfortran import use2fortran
+    seen = set()
+    lines = []
+
+    def add_from(block):
+        use = (block or {}).get('use') or {}
+        for mname, spec in use.items():
+            if '__user__' in mname:
+                continue
+            key = (mname, repr(spec))
+            if key in seen:
+                continue
+            seen.add(key)
+            # use2fortran expects the full use dict; emit one module at a time
+            chunk = use2fortran({mname: spec}, tab='')
+            for raw in chunk.split('\n'):
+                s = raw.strip()
+                if s:
+                    lines.append(s)
+
+    if host_rout is not None:
+        add_from(host_rout)
+    for block in cb_blocks.values():
+        add_from(block)
+    return lines
+
+
+def _rename_callback_block_for_abstract(block, abs_name):
+    """Deep-copy *block* as abstract-interface body named *abs_name*.
+
+    When the result is the function name (no ``result(...)``), retarget the
+    typed result variable so crack2fortrangen does not drop the type.
+    """
+    b = copy.deepcopy(block)
+    old = b.get('name')
+    b['name'] = abs_name
+    if not old:
+        return b
+    if b.get('result') == old:
+        b['result'] = abs_name
+    vars_ = b.setdefault('vars', {})
+    if old in vars_ and abs_name not in vars_:
+        vars_[abs_name] = vars_.pop(old)
+    elif 'result' not in b and old in vars_:
+        # Implicit result is the function name.
+        b['result'] = abs_name
+        vars_[abs_name] = vars_.pop(old)
+    return b
+
+
+def _build_callback_iface_module(mod_name, cb_blocks, host_rout=None):
     """Emit a Fortran module of abstract interfaces for *cb_blocks*.
 
     Callers ``use`` the module and declare
     ``procedure(f2py_ai_<name>) :: <name>`` for each callback dummy.
     """
     from .crackfortran import crack2fortrangen
+    # Interface bodies are separate scoping units: kind/type names from a
+    # host USE are not visible inside them unless the body itself has USE
+    # or IMPORT.  Emit USE inside each abstract-interface body.
+    use_lines = _collect_use_lines_for_module(cb_blocks, host_rout)
     lines = [
         f'module {mod_name}',
         '  implicit none',
         '  abstract interface',
     ]
     for key, block in sorted(cb_blocks.items(), key=lambda kv: kv[0]):
-        b = copy.deepcopy(block)
-        b['name'] = _abstract_iface_name(key)
+        b = _rename_callback_block_for_abstract(
+            block, _abstract_iface_name(key))
         text = crack2fortrangen(b, tab='\n  ', as_interface=True)
-        for line in text.split('\n'):
-            s = line.strip()
-            if s:
-                lines.append(f'    {s}')
+        body_lines = [ln.strip() for ln in text.split('\n') if ln.strip()]
+        if not body_lines:
+            continue
+        # procedure header, then USE, then remaining specification statements
+        lines.append(f'    {body_lines[0]}')
+        for use_line in use_lines:
+            lines.append(f'      {use_line}')
+        for ln in body_lines[1:]:
+            lines.append(f'    {ln}')
     # Abstract interfaces close with END INTERFACE (not END ABSTRACT INTERFACE).
     lines.append('  end interface')
     lines.append(f'end module {mod_name}')
@@ -169,12 +230,12 @@ def _build_callback_iface_module(mod_name, cb_blocks):
 def _rewrite_saved_interface_use_module(saved_interface, cb_orig_names, mod_name):
     """Adapt *saved_interface* for module-based callback interfaces.
 
-    Drop bare EXTERNAL and nested interface blocks for the named callbacks,
-    insert ``use <mod_name>``, and declare each callback with
-    ``procedure(f2py_ai_*)`` (gh-20157).
+    Drop bare EXTERNAL and nested interface blocks for the named callbacks.
+    Emit all ``use`` statements (callback module first, then host USEs), then
+    ``procedure(f2py_ai_*)`` declarations, then remaining specification
+    statements — so USE never follows a declaration (gh-20157).
     """
     cb_set = {n.lower() for n in cb_orig_names}
-    # preserve one original-case spelling per lower name
     orig_by_lower = {}
     for n in cb_orig_names:
         orig_by_lower.setdefault(n.lower(), n)
@@ -212,8 +273,10 @@ def _rewrite_saved_interface_use_module(saved_interface, cb_orig_names, mod_name
             continue
         i += 1
 
-    out = []
-    inserted_use = False
+    header = []
+    use_lines = []
+    other = []
+    saw_header = False
     for idx, line in enumerate(lines):
         if drop[idx]:
             continue
@@ -223,21 +286,32 @@ def _rewrite_saved_interface_use_module(saved_interface, cb_orig_names, mod_name
             names = [n.strip() for n in rest.split(',') if n.strip()]
             if names and all(n in cb_set for n in names):
                 continue
-        out.append(line)
-        if not inserted_use:
-            # Host procedure header (free- or fixed-form style).
+        if not saw_header:
+            header.append(line)
             is_header = (
                 s.startswith('function ') or s.startswith('subroutine ')
                 or ' function ' in f' {s}' or ' subroutine ' in f' {s}'
             )
             if is_header:
-                out.append(f'          use {mod_name}')
-                for low in sorted(orig_by_lower):
-                    out.append(
-                        f'          procedure({_abstract_iface_name(low)}) :: '
-                        f'{orig_by_lower[low]}'
-                    )
-                inserted_use = True
+                saw_header = True
+            continue
+        if s.startswith('use '):
+            # Drop f2py __user__ USE; real Fortran modules keep.
+            if '__user__' in s:
+                continue
+            use_lines.append(line)
+        else:
+            other.append(line)
+
+    out = list(header)
+    out.append(f'          use {mod_name}')
+    out.extend(use_lines)
+    for low in sorted(orig_by_lower):
+        out.append(
+            f'          procedure({_abstract_iface_name(low)}) :: '
+            f'{orig_by_lower[low]}'
+        )
+    out.extend(other)
     return '\n'.join(out)
 
 
@@ -262,7 +336,7 @@ def _prepare_callback_module(rout, args, vars, need_interface):
         return '', None, []
     mod_name = _cb_iface_module_name(rout)
     return (
-        _build_callback_iface_module(mod_name, needed),
+        _build_callback_iface_module(mod_name, needed, host_rout=rout),
         mod_name,
         orig_names,
     )
