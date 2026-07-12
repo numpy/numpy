@@ -440,7 +440,7 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
             wheremask = NULL;
         }
         else {
-            /* where=False copies nothing; still free any overlap temp */
+            /* where=False copies nothing */
             if (copied_src) {
                 Py_DECREF(src);
             }
