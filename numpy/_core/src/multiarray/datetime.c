@@ -2079,10 +2079,10 @@ pydatetime_attr_to_long(PyObject *obj, PyObject *name, long *value)
  * Tests for and converts a Python datetime.datetime or datetime.date
  * object into a NumPy npy_datetimestruct.
  *
- * While the C API has PyDate_* and PyDateTime_* functions, the following
- * implementation just asks for attributes, and thus supports
- * datetime duck typing. The tzinfo time zone conversion would require
- * this style of access anyway.
+ * Exact datetime.date / datetime.datetime objects are read directly from
+ * the C struct via the datetime C-API.  Other objects (including
+ * date/datetime subclasses) are queried for the attributes instead, and
+ * thus support datetime duck typing.
  *
  * 'out_bestunit' gives a suggested unit based on whether the object
  *      was a datetime.date or datetime.datetime object.
@@ -2098,7 +2098,6 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
         PyObject *obj, npy_datetimestruct *out, NPY_DATETIMEUNIT *out_bestunit,
         int apply_tzinfo)
 {
-    PyObject *tmp;
     int isleap;
     int has_time;
 
@@ -2215,46 +2214,49 @@ validate_and_return:
 
     /* Apply the time zone offset if it exists */
     if (apply_tzinfo) {
-        found = PyObject_GetOptionalAttr(obj, npy_interned_str.tzinfo, &tmp);
-        if (found < 0) {
+        PyObject *tzinfo = NULL;
+        if (PyDateTime_CheckExact(obj)) {
+            /* Read straight from the C struct; Py_None when naive */
+            tzinfo = Py_NewRef(PyDateTime_DATE_GET_TZINFO(obj));
+        }
+        else if (PyObject_GetOptionalAttr(
+                        obj, npy_interned_str.tzinfo, &tzinfo) < 0) {
             return -1;
         }
-        if (found && tmp != Py_None) {
-            PyObject *offset;
+        if (tzinfo != NULL && tzinfo != Py_None) {
             int seconds_offset, minutes_offset;
             if (PyErr_WarnEx(PyExc_UserWarning,
                 "no explicit representation of timezones available for np.datetime64",
                 1) < 0) {
-                    Py_DECREF(tmp);
+                    Py_DECREF(tzinfo);
                     return -1;
                 }
 
             /* The utcoffset function should return a timedelta */
-            offset = PyObject_CallMethod(tmp, "utcoffset", "O", obj);
+            PyObject *offset = PyObject_CallMethod(tzinfo, "utcoffset", "O", obj);
+            Py_DECREF(tzinfo);
             if (offset == NULL) {
-                Py_DECREF(tmp);
                 return -1;
             }
-            Py_DECREF(tmp);
 
             /*
              * The timedelta should have a function "total_seconds"
              * which contains the value we want.
              */
-            tmp = PyObject_CallMethod(offset, "total_seconds", "");
+            PyObject *total_seconds = PyObject_CallMethod(
+                    offset, "total_seconds", "");
             Py_DECREF(offset);
-            if (tmp == NULL) {
+            if (total_seconds == NULL) {
                 return -1;
             }
             /* Rounding here is no worse than the integer division below.
              * Only whole minute offsets are supported by numpy anyway.
              */
-            seconds_offset = (int)PyFloat_AsDouble(tmp);
+            seconds_offset = (int)PyFloat_AsDouble(total_seconds);
+            Py_DECREF(total_seconds);
             if (error_converting(seconds_offset)) {
-                Py_DECREF(tmp);
                 return -1;
             }
-            Py_DECREF(tmp);
 
             /* Convert to a minutes offset and apply it */
             minutes_offset = seconds_offset / 60;
@@ -2262,8 +2264,8 @@ validate_and_return:
             add_minutes_to_datetimestruct(out, -minutes_offset);
         }
         else {
-            /* tmp is None (or NULL when the attribute is absent) */
-            Py_XDECREF(tmp);
+            /* tzinfo is None (or NULL when the attribute is absent) */
+            Py_XDECREF(tzinfo);
         }
     }
 
