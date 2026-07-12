@@ -201,14 +201,14 @@ def limited_api_cython_module_names():
 
 
 @pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
-@pytest.mark.xfail(
+@pytest.mark.skipif(
     sysconfig.get_config_var("Py_DEBUG"),
     reason=(
         "Py_LIMITED_API is incompatible with Py_DEBUG, Py_TRACE_REFS, "
         "and Py_REF_DEBUG"
     ),
 )
-@pytest.mark.xfail(
+@pytest.mark.skipif(
     NOGIL_BUILD,
     reason="Py_GIL_DISABLED builds do not support abi3",
 )
@@ -219,14 +219,14 @@ def test_limited_api_abi3(install_temp, module_name):
 
 
 @pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
-@pytest.mark.xfail(
+@pytest.mark.skipif(
     sysconfig.get_config_var("Py_DEBUG"),
     reason=(
         "Py_LIMITED_API is incompatible with Py_DEBUG, Py_TRACE_REFS, "
         "and Py_REF_DEBUG"
     ),
 )
-@pytest.mark.xfail(
+@pytest.mark.skipif(
     NOGIL_BUILD,
     reason="Py_GIL_DISABLED builds do not support abi3",
 )
