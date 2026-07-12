@@ -2074,7 +2074,7 @@ def _assert_no_warnings_context(name=None):
         yield
         if len(l) > 0:
             name_str = f' when calling {name}' if name is not None else ''
-            raise AssertionError(f'Got warnings{name_str}: {l}')
+            raise AssertionError(f'Got warnings{name_str}: {[e.message for e in l]}')
 
 
 def assert_no_warnings(*args, **kwargs):
@@ -2478,8 +2478,8 @@ class suppress_warnings:
             raise RuntimeError("cannot enter suppress_warnings twice.")
 
         self._orig_show = warnings.showwarning
-        self._filters = warnings.filters
-        warnings.filters = self._filters[:]
+        self._catch_warnings = warnings.catch_warnings()
+        self._catch_warnings.__enter__()
 
         self._entered = True
         self._tmp_suppressions = []
@@ -2507,11 +2507,11 @@ class suppress_warnings:
 
     def __exit__(self, *exc_info):
         warnings.showwarning = self._orig_show
-        warnings.filters = self._filters
+        self._catch_warnings.__exit__(*exc_info)
         self._clear_registries()
         self._entered = False
         del self._orig_show
-        del self._filters
+        del self._catch_warnings
 
     def _showwarning(self, message, category, filename, lineno,
                      *args, use_warnmsg=None, **kwargs):
@@ -2868,3 +2868,32 @@ def requires_deep_recursion(func):
                         "deep recursion")
         return func(*args, **kwargs)
     return wrapper
+
+
+def run_subprocess(cmd, cwd=None, **kwargs):
+    """Run ``cmd`` in a subprocess, failing the test with its captured output
+    if it exits with a nonzero status.
+
+    Output that a subprocess merely inherits is lost in pytest-xdist workers
+    when a test fails, making CI failures hard to debug.  Routing a
+    build/compile/run step through this helper captures the child's stdout and
+    stderr and folds them into the failure message so they reach the report.
+    Returns the ``subprocess.CompletedProcess`` for callers that want to
+    inspect the output.  Extra keyword arguments are passed to
+    ``subprocess.run``.
+    """
+    import subprocess
+
+    import pytest
+
+    res = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True,
+                         errors="replace", **kwargs)
+    if res.returncode != 0:
+        cmd_str = cmd if isinstance(cmd, str) else " ".join(map(str, cmd))
+        in_dir = f" in {cwd}" if cwd is not None else ""
+        pytest.fail(
+            f"`{cmd_str}` failed (exit {res.returncode}){in_dir}\n"
+            f"----- stdout -----\n{res.stdout}\n"
+            f"----- stderr -----\n{res.stderr}",
+            pytrace=False)
+    return res

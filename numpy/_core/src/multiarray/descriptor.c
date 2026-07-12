@@ -1976,9 +1976,9 @@ PyArray_DescrNew(PyArray_Descr *base_descr)
         return NULL;
     }
     /* Don't copy PyObject_HEAD part */
-    memcpy((char *)newdescr + sizeof(PyObject),
-           (char *)base + sizeof(PyObject),
-           sizeof(_PyArray_LegacyDescr) - sizeof(PyObject));
+    memcpy((char *)newdescr + offsetof(_PyArray_LegacyDescr, typeobj),
+           (char *)base + offsetof(_PyArray_LegacyDescr, typeobj),
+           sizeof(_PyArray_LegacyDescr) - offsetof(_PyArray_LegacyDescr, typeobj));
 
     /*
      * The c_metadata has a by-value ownership model, need to clone it

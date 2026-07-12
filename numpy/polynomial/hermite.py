@@ -71,7 +71,7 @@ Misc Functions
    herm2poly
    poly2herm
 
-See also
+See Also
 --------
 `numpy.polynomial`
 

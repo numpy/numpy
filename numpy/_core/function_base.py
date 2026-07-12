@@ -137,8 +137,19 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     else:
         integer_dtype = _nx.issubdtype(dtype, _nx.integer)
 
-    # Use `dtype=type(dt)` to enforce a floating point evaluation:
-    delta = np.subtract(stop, start, dtype=type(dt))
+    # Use `dtype=type(dt)` to enforce a floating point evaluation.
+    # Equal endpoints (including equal infinities) must produce a zero step,
+    # so skip the subtraction there: `inf - inf` would otherwise yield a
+    # spurious nan and an "invalid value" warning.  Using `where=` avoids the
+    # bad element entirely rather than suppressing warnings globally, so
+    # genuine invalid operations (e.g. mixed infinities) still warn.
+    equal = start == stop
+    if equal.ndim == 0:
+        delta = dt.type(0) if equal else np.subtract(
+            stop, start, dtype=type(dt))
+    else:
+        delta = np.subtract(stop, start, dtype=type(dt), where=~equal,
+                            out=np.zeros(equal.shape, dtype=type(dt)))
     y = _nx.arange(
         0, num, dtype=dt, device=device
     ).reshape((-1,) + (1,) * ndim(delta))
@@ -472,6 +483,8 @@ def _needs_add_docstring(obj):
 
 
 def _add_docstring(obj, doc, warn_on_python):
+    doc = inspect.cleandoc(doc)
+
     if warn_on_python and not _needs_add_docstring(obj):
         warnings.warn(
             f"add_newdoc was used on a pure-python object {obj}. "
@@ -479,7 +492,20 @@ def _add_docstring(obj, doc, warn_on_python):
             UserWarning,
             stacklevel=3)
 
-    doc = inspect.cleandoc(doc)
+    # For types, try to assign ``__doc__`` directly (works for heap types).
+    # When that succeeds, ``add_docstring`` only needs to populate
+    # ``__text_signature__`` from any ``"\n--\n\n"`` stub.  Static types
+    # (where ``__doc__`` is read-only) fall through unchanged.
+    if isinstance(obj, type):
+        head, sep, body = doc.partition("\n--\n\n")
+        try:
+            obj.__doc__ = body if sep else doc
+        except Exception:
+            pass  # just assume we should use add_docstring.
+        else:
+            if not sep:
+                return
+            doc = head + sep  # set only text-signature part
 
     try:
         add_docstring(obj, doc)

@@ -292,7 +292,10 @@ def diagflat[ScalarT: np.generic](v: _ArrayLike[ScalarT], k: int = 0) -> _MArray
 def diagflat(v: ArrayLike, k: int = 0) -> _MArray[Incomplete]: ...
 
 #
-def count_masked(arr: ArrayLike, axis: SupportsIndex | None = None) -> NDArray[np.intp]: ...
+@overload
+def count_masked(arr: ArrayLike, axis: None = None) -> np.intp: ...
+@overload
+def count_masked(arr: ArrayLike, axis: SupportsIndex) -> NDArray[np.intp]: ...
 
 #
 @overload
@@ -621,7 +624,7 @@ def cov(
 def corrcoef(x: ArrayLike, y: ArrayLike | None = None, rowvar: bool = True, allow_masked: bool = True) -> _MArray[Incomplete]: ...
 
 class MAxisConcatenator(AxisConcatenator):
-    __slots__ = ()  # pyrefly:ignore[implicit-any-attribute]
+    __slots__ = ()
 
     # keep in sync with `ma.core.concatenate`
     @override  # type: ignore[override]
@@ -638,7 +641,7 @@ class MAxisConcatenator(AxisConcatenator):
     def makemat(cls, /, arr: ArrayLike) -> _MArray[Incomplete]: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleVariableOverride]
 
 class mr_class(MAxisConcatenator):
-    __slots__ = ()  # pyrefly:ignore[implicit-any-attribute]
+    __slots__ = ()
     def __init__(self) -> None: ...
 
 mr_: Final[mr_class] = ...

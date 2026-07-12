@@ -21,8 +21,8 @@ cy = meson.get_compiler('cython')
 
 # Check compiler is recent enough (see the SciPy Toolchain Roadmap for details)
 if cc.get_id() == 'gcc'
-  if not cc.version().version_compare('>=9.3')
-    error('NumPy requires GCC >= 9.3')
+  if not cc.version().version_compare('>=10.3')
+    error('NumPy requires GCC >= 10.3')
   endif
 elif cc.get_id() == 'msvc'
   if not cc.version().version_compare('>=19.35')
@@ -31,8 +31,8 @@ elif cc.get_id() == 'msvc'
   endif
   add_project_arguments('/experimental:c11atomics', language: 'c')
 endif
-if not cy.version().version_compare('>=3.0.6')
-  error('NumPy requires Cython >= 3.0.6')
+if not cy.version().version_compare('>=3.1.0')
+  error('NumPy requires Cython >= 3.1.0')
 endif
 
 py = import('python').find_installation(pure: false)

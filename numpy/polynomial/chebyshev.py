@@ -80,7 +80,7 @@ Misc Functions
    poly2cheb
    chebinterpolate
 
-See also
+See Also
 --------
 `numpy.polynomial`
 
