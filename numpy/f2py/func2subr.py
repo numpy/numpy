@@ -225,12 +225,12 @@ def _rewrite_saved_interface_use_module(saved_interface, cb_orig_names, mod_name
                 continue
         out.append(line)
         if not inserted_use:
+            # Host procedure header (free- or fixed-form style).
             is_header = (
                 s.startswith('function ') or s.startswith('subroutine ')
-                or (' function ' in f' {s}') or (' subroutine ' in f' {s}')
+                or ' function ' in f' {s}' or ' subroutine ' in f' {s}'
             )
-            if is_header and (s.startswith('function') or s.startswith('subroutine')
-                              or ' function ' in f' {s}' or ' subroutine ' in f' {s}'):
+            if is_header:
                 out.append(f'          use {mod_name}')
                 for low in sorted(orig_by_lower):
                     out.append(
@@ -506,11 +506,6 @@ def createsubrwrapper(rout, signature=0):
     return module_src, ret[0]
 
 
-def _unwrap_wrapper_result(result):
-    """Normalize create*wrapper return to (module_src, wrapper_src)."""
-    if isinstance(result, tuple) and len(result) == 2:
-        return result[0] or '', result[1] or ''
-    return '', result or ''
 
 
 def assubr(rout):

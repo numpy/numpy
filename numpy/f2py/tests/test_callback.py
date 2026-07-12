@@ -509,8 +509,35 @@ class TestCallbackInterfaceStructure:
         assert found['cb']['name'] == 'cb'
 
 
+
+@pytest.mark.slow
+class TestGH20157ArrayCallback(util.F2PyTest):
+    """Compile-and-run: assumed-shape host + array-argument callback (gh-20157).
+
+    String-only codegen tests passed on uncompilable abstract interfaces
+    for dimensioned dummies; this locks the vars2fortran comma fix and the
+    module/procedure form under a real gfortran link.
+    """
+    sources = [util.getpath("tests", "src", "callback", "gh20157_arr.f90")]
+
+    def test_array_callback_compiles_and_runs(self):
+        # Purpose is compile/link under the module+procedure form for a
+        # *dimensioned* callback dummy (gh-20157 / vars2fortran comma fix).
+        # Assumed-shape callback args still crack as size 0 (pre-existing
+        # getarrdims warning); only require the callback to be entered.
+        entered = []
+
+        def fill(y):
+            entered.append(True)
+
+        y = np.zeros(4, dtype=np.int64)
+        self.module.apply_arr_cb(fill, y)
+        assert entered, "array-arg callback was not invoked"
+
+
 @pytest.mark.slow
 class TestGH18335(util.F2PyTest):
+
     """The reproduction of the reported issue requires specific input that
     extensions may break the issue conditions, so the reproducer is
     implemented as a separate test class. Do not extend this test with
