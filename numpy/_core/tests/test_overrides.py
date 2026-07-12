@@ -505,8 +505,6 @@ class TestNumPyFunctions:
     def test_inspect_sum(self):
         signature = inspect.signature(np.sum)
         assert_('axis' in signature.parameters)
-        # The exposed signature (parameter names, kinds, and real default
-        # values) comes from the implementation, not the dispatcher.
         assert_equal(signature, inspect.signature(np.sum._implementation))
 
     @pytest.mark.parametrize("func", [
