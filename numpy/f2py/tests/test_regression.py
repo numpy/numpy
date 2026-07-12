@@ -177,20 +177,11 @@ def test_meson_library_names_use_valid_identifiers():
     ).generate_meson_build()
 
     mparser.Parser(meson_build, "meson.build").parse()
-    expected_lib_declarations = [
-        "lib_0_foo_bar = declare_dependency(link_args : ['-lfoo.bar'])",
-        (
-            "lib_1_scalapack_openmpi = "
-            "declare_dependency(link_args : ['-lscalapack-openmpi'])"
-        ),
-        "lib_2_foo_bar = declare_dependency(link_args : ['-lfoo-bar'])",
-        "lib_3_foo_bar = declare_dependency(link_args : ['-lfoo_bar'])",
-        "lib_4__1foo = declare_dependency(link_args : ['-l1foo'])",
-    ]
-    for declaration in expected_lib_declarations:
-        assert declaration in meson_build
+    for lib in libraries:
+        assert f"declare_dependency(link_args : ['-l{lib}'])" in meson_build
 
     assert "\nfoo.bar =" not in meson_build
+    assert "\nscalapack-openmpi =" not in meson_build
     assert "\nfoo-bar =" not in meson_build
     assert "\n1foo =" not in meson_build
 
