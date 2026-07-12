@@ -995,6 +995,37 @@ TIMEDELTA_qm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
     }
 }
 
+/*
+ * Convert a floating-point timedelta64 arithmetic result to int64, guarding
+ * the int64 range the same way the integer datetime/timedelta loops above do:
+ *
+ *   - a NaN result (e.g. ``0 * inf`` or ``td * nan``) yields NaT;
+ *   - a result whose magnitude reaches 2**63 -- which covers both +/-inf and
+ *     any finite value that would overflow int64 -- is reported as overflow;
+ *   - any other (in-range) result is truncated toward zero.
+ *
+ * The bound is 2**63 rather than int64.max (2**63 - 1): the latter is not
+ * exactly representable in float64 and rounds up to 2**63, so a result landing
+ * exactly on 2**63 would otherwise slip past the check and saturate on the
+ * cast.  A magnitude strictly below 2**63 truncates into (-2**63, 2**63) and
+ * so can never be misread as the NaT sentinel (NPY_DATETIME_NAT == -2**63).
+ *
+ * Returns 1 on overflow (leaving *out untouched); returns 0 otherwise.
+ */
+static inline int
+timedelta_from_double(double result, npy_timedelta *out)
+{
+    if (npy_isnan(result)) {
+        *out = NPY_DATETIME_NAT;
+        return 0;
+    }
+    if (npy_fabs(result) >= 9223372036854775808.0 /* 2**63 */) {
+        return 1;
+    }
+    *out = (npy_timedelta)result;
+    return 0;
+}
+
 NPY_NO_EXPORT void
 TIMEDELTA_md_m_multiply(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
@@ -1005,12 +1036,11 @@ TIMEDELTA_md_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            double result = in1 * in2;
-            if (npy_isfinite(result)) {
-                *((npy_timedelta *)op1) = (npy_timedelta)result;
-            }
-            else {
-                *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+            const double result = (double)in1 * in2;
+            if (timedelta_from_double(result, (npy_timedelta *)op1)) {
+                npy_gil_error(PyExc_OverflowError,
+                        "Overflow in timedelta64 * float64 multiplication");
+                return;
             }
         }
     }
@@ -1026,12 +1056,11 @@ TIMEDELTA_dm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            double result = in1 * in2;
-            if (npy_isfinite(result)) {
-                *((npy_timedelta *)op1) = (npy_timedelta)result;
-            }
-            else {
-                *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+            const double result = in1 * (double)in2;
+            if (timedelta_from_double(result, (npy_timedelta *)op1)) {
+                npy_gil_error(PyExc_OverflowError,
+                        "Overflow in float64 * timedelta64 multiplication");
+                return;
             }
         }
     }
@@ -1087,6 +1116,7 @@ TIMEDELTA_mq_m_divide(char **args, npy_intp const *dimensions, npy_intp const *s
     }
 }
 
+/* Shared by timedelta64 / float64 (true_divide) and // float64 (floor_divide). */
 NPY_NO_EXPORT void
 TIMEDELTA_md_m_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
@@ -1097,12 +1127,18 @@ TIMEDELTA_md_m_divide(char **args, npy_intp const *dimensions, npy_intp const *s
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            double result = in1 / in2;
-            if (npy_isfinite(result)) {
-                *((npy_timedelta *)op1) = (npy_timedelta)result;
-            }
-            else {
+            /* Compute first so the FPU still flags divide-by-zero as before. */
+            const double result = (double)in1 / in2;
+            if (in2 == 0.0) {
+                /* Division by exactly zero yields NaT, matching numpy's
+                 * convention.  Unlike a tiny nonzero divisor (whose infinite
+                 * quotient is an overflow), this is not treated as overflow. */
                 *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+            }
+            else if (timedelta_from_double(result, (npy_timedelta *)op1)) {
+                npy_gil_error(PyExc_OverflowError,
+                        "Overflow in timedelta64 / float64 division");
+                return;
             }
         }
     }
