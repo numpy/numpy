@@ -161,11 +161,12 @@ def test_gh26623():
 
 def test_meson_library_names_use_valid_identifiers():
     mparser = pytest.importorskip("mesonbuild.mparser")
+    libraries = ["foo.bar", "scalapack-openmpi", "foo-bar", "foo_bar", "1foo"]
     meson_build = MesonTemplate(
         modulename="Blah",
         sources=[Path("f90continuation.f90")],
         deps=[],
-        libraries=["foo.bar", "foo-bar", "foo_bar", "1foo"],
+        libraries=libraries,
         library_dirs=[],
         include_dirs=[],
         object_files=[],
@@ -176,10 +177,19 @@ def test_meson_library_names_use_valid_identifiers():
     ).generate_meson_build()
 
     mparser.Parser(meson_build, "meson.build").parse()
-    assert "-lfoo.bar" in meson_build
-    assert "-lfoo-bar" in meson_build
-    assert "-lfoo_bar" in meson_build
-    assert "-l1foo" in meson_build
+    expected_lib_declarations = [
+        "lib_0_foo_bar = declare_dependency(link_args : ['-lfoo.bar'])",
+        (
+            "lib_1_scalapack_openmpi = "
+            "declare_dependency(link_args : ['-lscalapack-openmpi'])"
+        ),
+        "lib_2_foo_bar = declare_dependency(link_args : ['-lfoo-bar'])",
+        "lib_3_foo_bar = declare_dependency(link_args : ['-lfoo_bar'])",
+        "lib_4__1foo = declare_dependency(link_args : ['-l1foo'])",
+    ]
+    for declaration in expected_lib_declarations:
+        assert declaration in meson_build
+
     assert "\nfoo.bar =" not in meson_build
     assert "\nfoo-bar =" not in meson_build
     assert "\n1foo =" not in meson_build
