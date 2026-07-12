@@ -174,7 +174,12 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
     n = PyArray_SIZE(ap)/m;
     rptr = (npy_intp *)PyArray_DATA(rp);
     for (ip = PyArray_DATA(ap), i = 0; i < n; i++, ip += elsize*m) {
-        arg_func(ip, m, rptr, ap);
+        if (arg_func(ip, m, rptr, ap) < 0) {
+            NPY_END_THREADS_DESCR(PyArray_DESCR(ap));
+            /* `rp` may be a WRITEBACKIFCOPY of `out`; do not write back */
+            PyArray_DiscardWritebackIfCopy(rp);
+            goto fail;
+        }
         rptr += 1;
     }
     NPY_END_THREADS_DESCR(PyArray_DESCR(ap));

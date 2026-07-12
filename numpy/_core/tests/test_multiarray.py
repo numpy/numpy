@@ -5690,6 +5690,32 @@ class TestArgmaxArgminCommon:
         a[1] = vals[1]
         assert_equal(arg_method(), 1)
 
+    @pytest.mark.parametrize('method, op',
+        [('argmax', '__gt__'),
+         ('argmin', '__lt__')])
+    def test_object_comparison_error(self, method, op):
+        # gh-31977: an exception raised by an object comparison was
+        # swallowed: the loop kept comparing with the error set and kept
+        # writing result indices, finally raising a chained SystemError.
+        class Bad:
+            def __init__(self, v):
+                self.v = v
+
+        def cmp(self, other):
+            if self.v == 3 or other.v == 3:
+                raise ValueError("comparison error")
+            return getattr(self.v, op)(other.v)
+        setattr(Bad, op, cmp)
+
+        a = np.array([[Bad(1), Bad(2)],
+                      [Bad(3), Bad(4)],
+                      [Bad(1), Bad(2)]], dtype=object)
+        out = np.full(3, -1, dtype=np.intp)
+        with pytest.raises(ValueError, match="comparison error"):
+            getattr(np, method)(a, axis=1, out=out)
+        # rows past the failing one must not have been written
+        assert out[2] == -1
+
 class TestArgmax:
     usg_data = [
         ([1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0], 0),
