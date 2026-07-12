@@ -92,26 +92,29 @@ static int
 check_object(PyObject *module, PyObject *ob, int t, char *obname,
              char *tname, char *funname)
 {
-    lapack_lite_state *state = get_lapack_lite_state(module);
     if (!PyArray_Check(ob)) {
+        lapack_lite_state *state = get_lapack_lite_state(module);
         PyErr_Format(state->LapackError,
                      "Expected an array for parameter %s in lapack_lite.%s",
                      obname, funname);
         return 0;
     }
     else if (!PyArray_IS_C_CONTIGUOUS((PyArrayObject *)ob)) {
+        lapack_lite_state *state = get_lapack_lite_state(module);
         PyErr_Format(state->LapackError,
                      "Parameter %s is not contiguous in lapack_lite.%s",
                      obname, funname);
         return 0;
     }
     else if (!(PyArray_TYPE((PyArrayObject *)ob) == t)) {
+        lapack_lite_state *state = get_lapack_lite_state(module);
         PyErr_Format(state->LapackError,
                      "Parameter %s is not of type %s in lapack_lite.%s",
                      obname, tname, funname);
         return 0;
     }
     else if (PyArray_ISBYTESWAPPED((PyArrayObject *)ob)) {
+        lapack_lite_state *state = get_lapack_lite_state(module);
         PyErr_Format(state->LapackError,
                      "Parameter %s has non-native byte order in lapack_lite.%s",
                      obname, funname);
