@@ -505,6 +505,23 @@ class TestNumPyFunctions:
     def test_inspect_sum(self):
         signature = inspect.signature(np.sum)
         assert_('axis' in signature.parameters)
+        # The exposed signature (parameter names, kinds, and real default
+        # values) comes from the implementation, not the dispatcher.
+        assert_equal(signature, inspect.signature(np.sum._implementation))
+
+    @pytest.mark.parametrize("func", [
+        np.sum,            # tuple-spec dispatcher
+        np.reshape,        # tuple-spec, positional-only relevant arg
+        np.any,            # tuple-spec, keyword-only relevant arg
+        np.concatenate,    # legacy callable dispatcher
+        np.fft.fft,        # tuple-spec in a submodule
+        np.linalg.solve,   # tuple-spec in a submodule
+    ])
+    def test_inspect_signature_matches_implementation(self, func):
+        # Both dispatcher forms expose the implementation's signature via
+        # __wrapped__ (set by functools.update_wrapper).
+        assert_equal(inspect.signature(func),
+                     inspect.signature(func._implementation))
 
     def test_override_sum(self):
         MyArray, implements = _new_duck_type_and_implements()
