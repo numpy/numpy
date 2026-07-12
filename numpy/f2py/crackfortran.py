@@ -3481,17 +3481,29 @@ def vars2fortran(block, vars, args, tab='', as_interface=False):
                 vardef = f"{vardef}, {','.join(attr)}"
                 c = ','
         if 'dimension' in vars[a]:
+            # Declarations always end with F90 ``::`` below. Attribute lists
+            # after a kind/len selector must be comma-separated
+            # (``integer(kind=8), dimension(:) :: y``). A bare space produces
+            # invalid Fortran and breaks abstract interfaces (gh-20157).
+            if c == ' ':
+                c = ','
             vardef = f"{vardef}{c}dimension({','.join(vars[a]['dimension'])})"
             c = ','
         if 'intent' in vars[a]:
             lst = true_intent_list(vars[a])
             if lst:
+                if c == ' ':
+                    c = ','
                 vardef = f"{vardef}{c}intent({','.join(lst)})"
             c = ','
         if 'check' in vars[a]:
+            if c == ' ':
+                c = ','
             vardef = f"{vardef}{c}check({','.join(vars[a]['check'])})"
             c = ','
         if 'depend' in vars[a]:
+            if c == ' ':
+                c = ','
             vardef = f"{vardef}{c}depend({','.join(vars[a]['depend'])})"
             c = ','
         if '=' in vars[a]:
