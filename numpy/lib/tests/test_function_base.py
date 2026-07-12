@@ -2343,6 +2343,16 @@ class TestUnwrap:
         with pytest.raises(np.exceptions.DTypePromotionError):
             unwrap(np.arange(5).astype(dtype))
 
+    @pytest.mark.parametrize(
+        "dtype, expected",
+        [(np.int64, [1, 1, 1]), (np.float64, [1, np.nan, np.nan])],
+    )
+    def test_period_zero(self, dtype, expected):
+        p = np.array([1, 2, 3], dtype=dtype)
+        with pytest.warns(RuntimeWarning):
+            result = unwrap(p, period=0)
+        assert_array_equal(result, np.array(expected, dtype=result.dtype))
+
 
 @pytest.mark.parametrize(
     "dtype", "O" + np.typecodes["AllInteger"] + np.typecodes["Float"]

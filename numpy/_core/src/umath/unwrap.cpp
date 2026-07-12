@@ -71,11 +71,18 @@ floor_mod(npy_longdouble a, npy_longdouble b)
     return m;
 }
 #endif
-/* integer floor-modulo into [0, b); the caller guarantees b > 0. */
+/*
+ * integer floor-modulo into [0, b).
+ * if b == 0, returns 0 and sets the floating-point divide-by-zero flag
+ */
 template <typename T>
 static inline std::enable_if_t<std::is_integral_v<T>, T>
 floor_mod(T a, T b)
 {
+    if (b == 0) {
+        npy_set_floatstatus_divbyzero();
+        return 0;
+    }
     T m = a % b;
     if (m < 0) {
         m += b;
