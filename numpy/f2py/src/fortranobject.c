@@ -10,11 +10,15 @@ extern "C" {
 #include <string.h>
 
 #if !defined(Py_TARGET_ABI3T) && \
-    NPY_TARGET_VERSION < NPY_2_5_API_VERSION && \
-    !defined(_PyDataType_GET_ITEM_DATA)
-// We only use _PyDataType_GET_ITEM_DATA for ABI3t support, so define the
+    NPY_TARGET_VERSION < NPY_2_5_API_VERSION
+// We only use these macros for ABI3t support, so define the
 // simple "cast" version if needed to maximize compatibility with older Numpy.
-#define _PyDataType_GET_ITEM_DATA(descr) ((PyArray_Descr_fields *)(descr))
+#ifndef (PyDataType_TYPE)
+#define PyDataType_TYPE (((PyArray_Descr_fields *)(descr))->type)
+#endif
+#ifndef (PyDataType_KIND)
+#define PyDataType_KIND (((PyArray_Descr_fields *)(descr))->kind)
+#endif 
 #endif
 
 /*
@@ -317,7 +321,7 @@ fortran_doc(FortranDataDef def)
         if (!formatted_def) return NULL;
         d = PyArray_DescrFromType(def.type);
         if (d) {
-            s = PyUnicode_FromFormat("%s : '%c'-%U\n", def.name, _PyDataType_GET_ITEM_DATA(d)->type, formatted_def);
+            s = PyUnicode_FromFormat("%s : '%c'-%U\n", def.name, PyDataType_TYPE(d), formatted_def);
             Py_DECREF(d);
         }
         Py_DECREF(formatted_def);
@@ -1099,8 +1103,8 @@ ndarray_from_pyobj(const int type_num,
             if (!(ARRAY_ISCOMPATIBLE(arr, type_num))) {
                 extra_msg = PyUnicode_FromFormat(
                     " -- input '%c' not compatible to '%c'",
-                    _PyDataType_GET_ITEM_DATA(PyArray_DESCR(arr))->type,
-                    _PyDataType_GET_ITEM_DATA(descr)->type);
+                    PyDataType_TYPE(PyArray_DESCR(arr)),
+                    PyDataType_TYPE(descr));
                 if (!extra_msg) goto end_intent_err_handling;
                 PyUnicode_AppendAndDel(&msg, extra_msg);
                 if (!msg) goto end_intent_err_handling;
@@ -1139,8 +1143,8 @@ ndarray_from_pyobj(const int type_num,
                     PyExc_ValueError,
                     "failed to initialize intent(inplace) array"
                     " -- input '%c' not compatible to '%c'",
-                    _PyDataType_GET_ITEM_DATA(PyArray_DESCR(arr))->type,
-                    _PyDataType_GET_ITEM_DATA(descr)->type);
+                    PyDataType_TYPE(PyArray_DESCR(arr)),
+                    PyDataType_TYPE(descr));
                   Py_DECREF(descr);
                   return NULL;
               }
@@ -1434,7 +1438,7 @@ PyObject *f2py_describe_obj(PyObject *obj) {
     if (PyArray_CheckScalar(obj)) {
         PyArrayObject* arr = (PyArrayObject*)obj;
         result = PyUnicode_FromFormat("%c%" NPY_INTP_FMT "-" TP_NAME_FMT "-scalar",
-                                      _PyDataType_GET_ITEM_DATA(PyArray_DESCR(arr))->kind,
+                                      PyDataType_KIND(PyArray_DESCR(arr)),
                                       PyArray_ITEMSIZE(arr), tp_name);
     } else if (PyArray_Check(obj)) {
         int i;
@@ -1452,7 +1456,7 @@ PyObject *f2py_describe_obj(PyObject *obj) {
         }
         result = PyUnicode_FromFormat(
             "(%U)-%c%" NPY_INTP_FMT "-" TP_NAME_FMT,
-            dims_str, _PyDataType_GET_ITEM_DATA(PyArray_DESCR(arr))->kind,
+            dims_str, PyDataType_KIND(PyArray_DESCR(arr)),
             PyArray_ITEMSIZE(arr), tp_name);
         Py_DECREF(dims_str);
     } else if (PySequence_Check(obj)) {
