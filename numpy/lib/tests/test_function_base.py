@@ -2349,8 +2349,12 @@ class TestUnwrap:
     )
     def test_period_zero(self, dtype, expected):
         p = np.array([1, 2, 3], dtype=dtype)
-        with pytest.warns(RuntimeWarning):
-            result = unwrap(p, period=0)
+        if IS_WASM:
+            with np.errstate(divide="ignore", invalid="ignore"):
+                result = unwrap(p, period=0)
+        else:
+            with pytest.warns(RuntimeWarning):
+                result = unwrap(p, period=0)
         assert_array_equal(result, np.array(expected, dtype=result.dtype))
 
 
