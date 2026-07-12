@@ -9,18 +9,6 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 
-#if !defined(Py_TARGET_ABI3T) && \
-    NPY_TARGET_VERSION < NPY_2_5_API_VERSION
-// We only use these macros for ABI3t support, so define the
-// simple "cast" version if needed to maximize compatibility with older Numpy.
-#ifndef (PyDataType_TYPE)
-#define PyDataType_TYPE (((PyArray_Descr_fields *)(descr))->type)
-#endif
-#ifndef (PyDataType_KIND)
-#define PyDataType_KIND (((PyArray_Descr_fields *)(descr))->kind)
-#endif 
-#endif
-
 /*
   This file implements: FortranObject, array_from_pyobj, copy_ND_array
 
