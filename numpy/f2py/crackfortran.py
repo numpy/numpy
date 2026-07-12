@@ -3353,6 +3353,27 @@ def true_intent_list(var):
     return ret
 
 
+def _external_has_explicit_interface(block, name):
+    """True if *name* is defined by an explicit interface in *block*['body'].
+
+    Used when emitting Fortran for ``as_interface=True``: a dummy procedure
+    must not be both ``external`` and given an explicit interface in the same
+    scope (Fortran standard; diagnosed by Intel ifort/ifx, gh-20157).
+    """
+    want = name.lower()
+    for b in block.get('body') or []:
+        btype = b.get('block')
+        if btype in ('function', 'subroutine'):
+            if (b.get('name') or '').lower() == want:
+                return True
+        elif btype in ('interface', 'abstract interface'):
+            for bb in b.get('body') or []:
+                if bb.get('block') in ('function', 'subroutine'):
+                    if (bb.get('name') or '').lower() == want:
+                        return True
+    return False
+
+
 def vars2fortran(block, vars, args, tab='', as_interface=False):
     setmesstext(block)
     ret = ''
@@ -3381,6 +3402,14 @@ def vars2fortran(block, vars, args, tab='', as_interface=False):
                     errmess(
                         f'vars2fortran: Warning: cross-dependence between variables "{a}" and "{d}\"\n')
         if 'externals' in block and a in block['externals']:
+            # When generating an explicit interface body, bare EXTERNAL
+            # conflicts with an interface block for the same dummy
+            # procedure in this scope (gh-20157). Prefer the interface.
+            has_iface = _external_has_explicit_interface(block, a)
+            if as_interface and has_iface:
+                if isoptional(vars[a]):
+                    ret = f'{ret}{tab}optional {a}'
+                continue
             if isintent_callback(vars[a]):
                 ret = f'{ret}{tab}intent(callback) {a}'
             ret = f'{ret}{tab}external {a}'
@@ -3409,7 +3438,9 @@ def vars2fortran(block, vars, args, tab='', as_interface=False):
         if 'typespec' not in vars[a]:
             if 'attrspec' in vars[a] and 'external' in vars[a]['attrspec']:
                 if a in args:
-                    ret = f'{ret}{tab}external {a}'
+                    if not (as_interface and
+                            _external_has_explicit_interface(block, a)):
+                        ret = f'{ret}{tab}external {a}'
                 continue
             show(vars[a])
             outmess(f'vars2fortran: No typespec for argument "{a}".\n')

@@ -83,6 +83,207 @@ def useiso_c_binding(rout):
             return True
     return useisoc
 
+
+def _iter_routine_blocks(body):
+    """Yield function/subroutine blocks nested under *body* (incl. interfaces)."""
+    for b in body or []:
+        btype = b.get('block')
+        if btype in ('function', 'subroutine') and b.get('name'):
+            yield b
+        elif btype in ('interface', 'abstract interface'):
+            yield from _iter_routine_blocks(b.get('body'))
+
+
+def _callback_routine_blocks(rout):
+    """Map lowercased callback name -> cracked routine block.
+
+    Prefer definitions still on ``rout['body']``. After postcrack moves
+    callback signatures into ``__user__`` python modules, resolve them via
+    ``rout['use']`` and ``crackfortran.usermodules``.
+    """
+    found = {}
+    for b in _iter_routine_blocks(rout.get('body')):
+        found[b['name'].lower()] = b
+
+    use = rout.get('use') or {}
+    if use:
+        from . import crackfortran
+        for um in crackfortran.usermodules:
+            if um.get('name') not in use:
+                continue
+            for b in _iter_routine_blocks(um.get('body')):
+                key = b['name'].lower()
+                if key not in found:
+                    found[key] = b
+    return found
+
+
+def _cb_iface_module_name(rout):
+    """Fortran module name holding abstract interfaces for this routine's callbacks."""
+    # Per-routine modules avoid colliding two different signatures for the
+    # same dummy name across wrappers in one extension (gh-20157 discussion).
+    raw = getfortranname(rout)
+    safe = ''.join(c if (c.isalnum() or c == '_') else '_' for c in raw)
+    if not safe or safe[0].isdigit():
+        safe = 'r_' + safe
+    return f'f2py_cb_ifaces_{safe}'
+
+
+def _abstract_iface_name(cbname_lower):
+    """Name of the abstract interface body for callback *cbname_lower*.
+
+    Must differ from the dummy argument name so ``use`` of the module does
+    not make the dummy name ambiguous (gfortran: "ambiguous reference").
+    """
+    safe = ''.join(
+        c if (c.isalnum() or c == '_') else '_' for c in cbname_lower)
+    return f'f2py_ai_{safe}'
+
+
+def _build_callback_iface_module(mod_name, cb_blocks):
+    """Emit a Fortran module of abstract interfaces for *cb_blocks*.
+
+    Callers ``use`` the module and declare
+    ``procedure(f2py_ai_<name>) :: <name>`` for each callback dummy.
+    """
+    from .crackfortran import crack2fortrangen
+    lines = [
+        f'module {mod_name}',
+        '  implicit none',
+        '  abstract interface',
+    ]
+    for key, block in sorted(cb_blocks.items(), key=lambda kv: kv[0]):
+        b = copy.deepcopy(block)
+        b['name'] = _abstract_iface_name(key)
+        text = crack2fortrangen(b, tab='\n  ', as_interface=True)
+        for line in text.split('\n'):
+            s = line.strip()
+            if s:
+                lines.append(f'    {s}')
+    # Abstract interfaces close with END INTERFACE (not END ABSTRACT INTERFACE).
+    lines.append('  end interface')
+    lines.append(f'end module {mod_name}')
+    return '\n'.join(lines)
+
+
+def _rewrite_saved_interface_use_module(saved_interface, cb_orig_names, mod_name):
+    """Adapt *saved_interface* for module-based callback interfaces.
+
+    Drop bare EXTERNAL and nested interface blocks for the named callbacks,
+    insert ``use <mod_name>``, and declare each callback with
+    ``procedure(f2py_ai_*)`` (gh-20157).
+    """
+    cb_set = {n.lower() for n in cb_orig_names}
+    # preserve one original-case spelling per lower name
+    orig_by_lower = {}
+    for n in cb_orig_names:
+        orig_by_lower.setdefault(n.lower(), n)
+
+    lines = saved_interface.split('\n')
+    drop = [False] * len(lines)
+    i = 0
+    while i < len(lines):
+        s = lines[i].strip().lower()
+        if s == 'interface' or (s.startswith('interface ') and not s.startswith('end')):
+            start = i
+            depth = 1
+            j = i + 1
+            chunk = [lines[i]]
+            while j < len(lines) and depth:
+                sj = lines[j].strip().lower()
+                if sj == 'interface' or (
+                        sj.startswith('interface ') and not sj.startswith('end')):
+                    depth += 1
+                elif sj.startswith('end interface'):
+                    depth -= 1
+                chunk.append(lines[j])
+                j += 1
+            block_l = '\n'.join(chunk).lower()
+            if any(
+                f'function {cb}(' in block_l
+                or f'subroutine {cb}(' in block_l
+                or f'function {cb} ' in block_l
+                or f'subroutine {cb} ' in block_l
+                for cb in cb_set
+            ):
+                for k in range(start, j):
+                    drop[k] = True
+            i = j
+            continue
+        i += 1
+
+    out = []
+    inserted_use = False
+    for idx, line in enumerate(lines):
+        if drop[idx]:
+            continue
+        s = line.strip().lower()
+        if s.startswith('external'):
+            rest = s[len('external'):].lstrip(' :')
+            names = [n.strip() for n in rest.split(',') if n.strip()]
+            if names and all(n in cb_set for n in names):
+                continue
+        out.append(line)
+        if not inserted_use:
+            is_header = (
+                s.startswith('function ') or s.startswith('subroutine ')
+                or (' function ' in f' {s}') or (' subroutine ' in f' {s}')
+            )
+            if is_header and (s.startswith('function') or s.startswith('subroutine')
+                              or ' function ' in f' {s}' or ' subroutine ' in f' {s}'):
+                out.append(f'          use {mod_name}')
+                for low in sorted(orig_by_lower):
+                    out.append(
+                        f'          procedure({_abstract_iface_name(low)}) :: '
+                        f'{orig_by_lower[low]}'
+                    )
+                inserted_use = True
+    return '\n'.join(out)
+
+
+def _prepare_callback_module(rout, args, vars, need_interface):
+    """Return (module_src, mod_name, cb_orig_names) for assumed-shape callback path.
+
+    *cb_orig_names* lists dummy names (original spelling) covered by the module.
+    """
+    if not need_interface:
+        return '', None, []
+    all_blocks = _callback_routine_blocks(rout)
+    needed = {}
+    orig_names = []
+    for a in args:
+        if not isexternal(vars[a]):
+            continue
+        block = all_blocks.get(a.lower())
+        if block is not None:
+            needed[a.lower()] = block
+            orig_names.append(a)
+    if not needed:
+        return '', None, []
+    mod_name = _cb_iface_module_name(rout)
+    return (
+        _build_callback_iface_module(mod_name, needed),
+        mod_name,
+        orig_names,
+    )
+
+
+def _declare_external_args(args, vars, cb_orig_names, add):
+    """Declare procedure(...) for module-backed callbacks, else EXTERNAL."""
+    cb_lower = {n.lower() for n in cb_orig_names}
+    dumped = []
+    for a in args:
+        if not isexternal(vars[a]):
+            continue
+        if a.lower() in cb_lower:
+            add(f'procedure({_abstract_iface_name(a.lower())}) :: {a}')
+            dumped.append(a)
+            continue
+        add(f'external {a}')
+        dumped.append(a)
+    return dumped
+
+
 def createfuncwrapper(rout, signature=0):
     assert isfunction(rout)
 
@@ -151,17 +352,20 @@ def createfuncwrapper(rout, signature=0):
             add(f'external {fortranname}')
             rl = l_tmpl.replace('@@@NAME@@@', '') + ' ' + fortranname
 
+    args = args[1:]
+    # Callback interface module (gh-20157): one definition, USE'd in the
+    # wrapper and in the nested host interface.
+    module_src, cb_mod_name, cb_via_module = _prepare_callback_module(
+        rout, args, vars, need_interface and not f90mode)
+
     if need_interface:
         for line in rout['saved_interface'].split('\n'):
             if line.lstrip().startswith('use ') and '__user__' not in line:
                 add(line)
+        if cb_mod_name:
+            add(f'use {cb_mod_name}')
 
-    args = args[1:]
-    dumped_args = []
-    for a in args:
-        if isexternal(vars[a]):
-            add(f'external {a}')
-            dumped_args.append(a)
+    dumped_args = _declare_external_args(args, vars, cb_via_module, add)
     for a in args:
         if a in dumped_args:
             continue
@@ -188,8 +392,12 @@ def createfuncwrapper(rout, signature=0):
             # f90 module already defines needed interface
             pass
         else:
+            saved = rout['saved_interface']
+            if cb_mod_name:
+                saved = _rewrite_saved_interface_use_module(
+                    saved, cb_via_module, cb_mod_name)
             add('interface')
-            add(rout['saved_interface'].lstrip())
+            add(saved.lstrip())
             add('end interface')
 
     sargs = ', '.join([a for a in args if a not in extra_args])
@@ -203,7 +411,7 @@ def createfuncwrapper(rout, signature=0):
         add(f"end subroutine f2pywrap_{rout['modulename']}_{name}")
     else:
         add('end')
-    return ret[0]
+    return module_src, ret[0]
 
 
 def createsubrwrapper(rout, signature=0):
@@ -249,16 +457,17 @@ def createsubrwrapper(rout, signature=0):
         if not need_interface:
             add(f'external {fortranname}')
 
+    module_src, cb_mod_name, cb_via_module = _prepare_callback_module(
+        rout, args, vars, need_interface and not f90mode)
+
     if need_interface:
         for line in rout['saved_interface'].split('\n'):
             if line.lstrip().startswith('use ') and '__user__' not in line:
                 add(line)
+        if cb_mod_name:
+            add(f'use {cb_mod_name}')
 
-    dumped_args = []
-    for a in args:
-        if isexternal(vars[a]):
-            add(f'external {a}')
-            dumped_args.append(a)
+    dumped_args = _declare_external_args(args, vars, cb_via_module, add)
     for a in args:
         if a in dumped_args:
             continue
@@ -275,8 +484,12 @@ def createsubrwrapper(rout, signature=0):
             # f90 module already defines needed interface
             pass
         else:
+            saved = rout['saved_interface']
+            if cb_mod_name:
+                saved = _rewrite_saved_interface_use_module(
+                    saved, cb_via_module, cb_mod_name)
             add('interface')
-            for line in rout['saved_interface'].split('\n'):
+            for line in saved.split('\n'):
                 if line.lstrip().startswith('use ') and '__user__' in line:
                     continue
                 add(line)
@@ -290,7 +503,14 @@ def createsubrwrapper(rout, signature=0):
         add(f"end subroutine f2pywrap_{rout['modulename']}_{name}")
     else:
         add('end')
-    return ret[0]
+    return module_src, ret[0]
+
+
+def _unwrap_wrapper_result(result):
+    """Normalize create*wrapper return to (module_src, wrapper_src)."""
+    if isinstance(result, tuple) and len(result) == 2:
+        return result[0] or '', result[1] or ''
+    return '', result or ''
 
 
 def assubr(rout):
@@ -326,4 +546,4 @@ def assubr(rout):
                 f'"{name}"("{fortranname}")...\n')
         rout = copy.copy(rout)
         return rout, createsubrwrapper(rout)
-    return rout, ''
+    return rout, ('', '')
