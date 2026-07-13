@@ -3444,6 +3444,15 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
         }
 
         /*
+         * RemoveMultiIndex may coalesce a size-one inner axis, changing its
+         * zero stride.  Do not specialize for a stride that can change.
+         */
+        if ((itflags & NPY_ITFLAG_HASMULTIINDEX) &&
+                NAD_SHAPE(axisdata) == 1 && op_stride == 0) {
+            op_stride = NPY_MAX_INTP;
+        }
+
+        /*
          * If we have determined that a buffer may be needed,
          * allocate the appropriate transfer functions
          */

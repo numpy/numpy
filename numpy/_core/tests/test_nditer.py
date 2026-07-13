@@ -1854,6 +1854,18 @@ def test_iter_remove_multi_index_inner_loop():
     assert_equal(i[0].shape, (24,))
     assert_equal(i.value, arange(24))
 
+
+def test_iter_remove_multi_index_buffered():
+    a = arange(10).reshape(10, 1)
+    i = nditer(a, ["buffered", "multi_index"], buffersize=5)
+
+    i.remove_multi_index()
+    i.enable_external_loop()
+
+    assert_equal(i.ndim, 1)
+    assert_array_equal(np.concatenate([chunk.copy() for chunk in i]), a.ravel())
+
+
 def test_iter_iterindex():
     # Make sure iterindex works
 
