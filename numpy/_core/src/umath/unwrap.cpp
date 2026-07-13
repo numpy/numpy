@@ -68,8 +68,14 @@ template <typename T>
 static inline std::enable_if_t<std::is_integral_v<T>, T>
 floor_mod(T a, T b)
 {
-    if (b == 0 || (a == std::numeric_limits<T>::min() && b == -1)) {
+    if (b == 0) {
         npy_set_floatstatus_divbyzero();
+        return 0;
+    }
+    if (b == -1) {
+        if (a == std::numeric_limits<T>::min()) {
+            npy_set_floatstatus_divbyzero();
+        }
         return 0;
     }
     T rem = a % b;
