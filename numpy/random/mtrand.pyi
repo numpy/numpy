@@ -458,7 +458,7 @@ class RandomState:
         low: int,
         high: int | None = None,
         size: None = None,
-    ) -> int: ...
+    ) -> np.long: ...
     @overload
     def random_integers(
         self,

@@ -349,7 +349,36 @@ def flatten_inplace(seq):
 
 def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     """
-    (This docstring should be overwritten)
+    Apply a function to 1-D slices of a masked array along an axis.
+
+    This function is the equivalent of `numpy.apply_along_axis` that returns
+    a masked array.  See `numpy.apply_along_axis` for the full documentation.
+
+    See Also
+    --------
+    numpy.apply_along_axis : Equivalent function for ndarrays.
+
+    Examples
+    --------
+    >>> import numpy as np
+
+    Sum each column, skipping masked values:
+
+    >>> a = np.ma.array([[1, 2, 3],
+    ...                  [4, 5, 6]], mask=[[0, 1, 0],
+    ...                                    [0, 0, 1]])
+    >>> np.ma.apply_along_axis(np.ma.sum, 0, a)
+    masked_array(data=[5, 5, 3],
+                 mask=False,
+           fill_value=999999)
+
+    Compute the mean of each row, ignoring masked values:
+
+    >>> np.ma.apply_along_axis(np.ma.mean, 1, a)
+    masked_array(data=[2. , 4.5],
+                 mask=False,
+           fill_value=1e+20)
+
     """
     arr = array(arr, copy=False, subok=True)
     nd = arr.ndim
@@ -427,9 +456,6 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         result = asarray(outarr, dtype=max_dtypes)
         result.fill_value = ma.default_fill_value(result)
     return result
-
-
-apply_along_axis.__doc__ = np.apply_along_axis.__doc__
 
 
 def apply_over_axes(func, a, axes):
@@ -2231,7 +2257,42 @@ vander.__doc__ = ma.doc_note(np.vander.__doc__, vander.__doc__)
 
 def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     """
-    Any masked values in x is propagated in y, and vice-versa.
+    Least squares polynomial fit to data with possible masked values.
+
+    This function is the equivalent of `numpy.polyfit` that takes masked
+    values into account, see `numpy.polyfit` for details.
+
+    Notes
+    -----
+    Any masked values in `x` are propagated to `y`, and vice-versa.
+    A data point is excluded from the fit if either coordinate is masked.
+
+    See Also
+    --------
+    numpy.polyfit : Equivalent function for ndarrays.
+
+    Examples
+    --------
+    >>> import numpy as np
+
+    Fit a line to data with a masked outlier in ``y``:
+
+    >>> x = np.ma.array([0., 1., 2., 3., 4.])
+    >>> y = np.ma.array([1., 3., 5., 7., 999.], mask=[0, 0, 0, 0, 1])
+    >>> np.ma.polyfit(x, y, 1)
+    array([2., 1.])
+
+    Masking a value in ``x`` also excludes the corresponding ``y`` point:
+
+    >>> x = np.ma.array([0., 1., 999., 3., 4.], mask=[0, 0, 1, 0, 0])
+    >>> y = np.ma.array([1., 3., 5., 7., 9.])
+    >>> np.ma.polyfit(x, y, 1)
+    array([2., 1.])
+
+    Without masking, an outlier distorts the fit significantly:
+
+    >>> np.polyfit([0., 1., 2., 3., 4.], [1., 3., 5., 7., 999.], 1)
+    array([ 200., -197.])
 
     """
     x = asarray(x)
@@ -2262,6 +2323,3 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         return np.polyfit(x[not_m], y[not_m], deg, rcond, full, w, cov)
     else:
         return np.polyfit(x, y, deg, rcond, full, w, cov)
-
-
-polyfit.__doc__ = ma.doc_note(np.polyfit.__doc__, polyfit.__doc__)

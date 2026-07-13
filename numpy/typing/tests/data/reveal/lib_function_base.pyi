@@ -217,6 +217,7 @@ assert_type(np.sort_complex(AR_f8), npt.NDArray[np.complex128])
 assert_type(np.sort_complex(AR_f10), npt.NDArray[np.clongdouble])
 assert_type(np.sort_complex(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.complex128]])
 assert_type(np.sort_complex(AR_c16_1d), np.ndarray[tuple[int], np.dtype[np.complex128]])
+assert_type(np.sort_complex(AR_LIKE_f8), npt.NDArray[np.complex128])
 
 # trim_zeros
 assert_type(np.trim_zeros(AR_f8), npt.NDArray[np.float64])

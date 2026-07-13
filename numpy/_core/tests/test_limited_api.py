@@ -8,7 +8,7 @@ import sysconfig
 import pytest
 
 import numpy as np
-from numpy.testing import IS_64BIT, IS_EDITABLE, IS_WASM, NOGIL_BUILD
+from numpy.testing import IS_EDITABLE, IS_WASM, NOGIL_BUILD
 from numpy.testing._private.utils import run_subprocess
 
 # This import is copied from random.tests.test_extending
@@ -155,6 +155,21 @@ def _check_api_module(mod, cython=False):
         with pytest.raises(RuntimeError):
             mod.datetime_metadata(np.arange(3))
 
+        # NpyString allocator API; under abi3t PyArray_StringDTypeObject is
+        # opaque and only the descriptor object pointer is passed. Absent
+        # when the module targets NumPy < 2.0 (the "default" target).
+        if hasattr(mod, "stringdtype_load"):
+            arr = np.array(["hello", "world"], dtype=np.dtypes.StringDType())
+            assert mod.stringdtype_load(arr) == "hello"
+            # A long string is stored on the heap, so loading it
+            # dereferences the allocator acquired from the descriptor.
+            text = "numpy" * 20
+            arr = np.array([text, "world"], dtype=np.dtypes.StringDType())
+            assert mod.stringdtype_load(arr) == text
+            arr = np.array([None, "world"],
+                           dtype=np.dtypes.StringDType(na_object=None))
+            assert mod.stringdtype_load(arr) is None
+
 
 # Test limited API extension modules for all supported Python and NumPy versions
 # The _PY_ABI3_VERSIONS and _NPY_TARGET_VERSIONS lists should be kept in sync
@@ -186,14 +201,14 @@ def limited_api_cython_module_names():
 
 
 @pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
-@pytest.mark.xfail(
+@pytest.mark.skipif(
     sysconfig.get_config_var("Py_DEBUG"),
     reason=(
         "Py_LIMITED_API is incompatible with Py_DEBUG, Py_TRACE_REFS, "
         "and Py_REF_DEBUG"
     ),
 )
-@pytest.mark.xfail(
+@pytest.mark.skipif(
     NOGIL_BUILD,
     reason="Py_GIL_DISABLED builds do not support abi3",
 )
@@ -204,14 +219,14 @@ def test_limited_api_abi3(install_temp, module_name):
 
 
 @pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
-@pytest.mark.xfail(
+@pytest.mark.skipif(
     sysconfig.get_config_var("Py_DEBUG"),
     reason=(
         "Py_LIMITED_API is incompatible with Py_DEBUG, Py_TRACE_REFS, "
         "and Py_REF_DEBUG"
     ),
 )
-@pytest.mark.xfail(
+@pytest.mark.skipif(
     NOGIL_BUILD,
     reason="Py_GIL_DISABLED builds do not support abi3",
 )
@@ -223,9 +238,6 @@ def test_limited_api_cython(install_temp, module_name):
 
 @pytest.mark.skipif(
     sys.version_info < (3, 15), reason="opaque PyObject requires Python 3.15+"
-)
-@pytest.mark.skipif(
-    not IS_64BIT, reason="opaque abi3t extensions are broken on 32-bit"
 )
 @pytest.mark.skipif(
     sys.platform == "win32" and not sysconfig.get_config_var('Py_GIL_DISABLED'),

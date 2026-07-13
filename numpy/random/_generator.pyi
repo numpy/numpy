@@ -17,6 +17,7 @@ from numpy._typing import (
     _FloatLike_co,
     _Int64Codes,
     _NestedSequence,
+    _Shape,
     _ShapeLike,
 )
 
@@ -680,8 +681,10 @@ class Generator:
     def permutation(self, /, x: ArrayLike, axis: int = 0) -> np.ndarray: ...
 
     #
-    @overload
-    def permuted[ArrayT: np.ndarray](self, /, x: ArrayT, *, axis: int | None = None, out: None = None) -> ArrayT: ...
+    @overload  # does not preserve `ndarray` subtypes
+    def permuted[ShapeT: _Shape, DTypeT: np.dtype](
+        self, /, x: np.ndarray[ShapeT, DTypeT], *, axis: int | None = None, out: None = None
+    ) -> np.ndarray[ShapeT, DTypeT]: ...
     @overload
     def permuted(self, /, x: ArrayLike, *, axis: int | None = None, out: None = None) -> np.ndarray: ...
     @overload

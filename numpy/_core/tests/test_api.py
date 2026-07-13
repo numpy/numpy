@@ -446,6 +446,18 @@ def test_copyto():
     assert_raises(TypeError, np.copyto, [1, 2, 3], [2, 3, 4])
 
 
+def test_copyto_overlapping_where_false_no_leak():
+    # gh-31968: overlapping copyto with scalar where=False used to leak the
+    # overlap temp (missing Py_DECREF on the early-return path). No refcount
+    # assertion is made here; a leak sanitizer build is expected to catch
+    # the regression.
+    a = np.arange(36, dtype=object).reshape(6, 6)
+    original = a.copy()
+    np.copyto(a, a[::-1, :], where=False)
+    # where=False must write nothing
+    assert_array_equal(a, original)
+
+
 def test_copyto_cast_safety():
     with pytest.raises(TypeError):
         np.copyto(np.arange(3), 3., casting="safe")

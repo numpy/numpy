@@ -160,13 +160,13 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
 
     Parameters
     ----------
-    path : str or pathlib.Path
+    path : str or path-like
         Local file path or URL to open.
     mode : str, optional
         Mode to open `path`. Mode 'r' for reading, 'w' for writing, 'a' to
         append. Available modes depend on the type of object specified by
         path.  Default is 'r'.
-    destpath : str, optional
+    destpath : str, path-like, or None, optional
         Path to the directory where the source file gets downloaded to for
         use.  If `destpath` is None, a temporary directory will be created.
         The default path is the current directory.
@@ -188,6 +188,7 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
 
     """
 
+    path = os.fspath(path)
     ds = DataSource(destpath)
     return ds.open(path, mode, encoding=encoding, newline=newline)
 
@@ -206,7 +207,7 @@ class DataSource:
 
     Parameters
     ----------
-    destpath : str or None, optional
+    destpath : str, path-like, or None, optional
         Path to the directory where the source file gets downloaded to for
         use.  If `destpath` is None, a temporary directory will be created.
         The default path is the current directory.
@@ -378,7 +379,7 @@ class DataSource:
 
         Parameters
         ----------
-        path : str or pathlib.Path
+        path : str or path-like
             Can be a local file or a remote URL.
 
         Returns
@@ -391,6 +392,8 @@ class DataSource:
         The functionality is based on `os.path.abspath`.
 
         """
+        path = os.fspath(path)
+
         # We do this here to reduce the 'import numpy' initial import time.
         from urllib.parse import urlparse
 
@@ -438,7 +441,7 @@ class DataSource:
 
         Parameters
         ----------
-        path : str or pathlib.Path
+        path : str or path-like
             Can be a local file or a remote URL.
 
         Returns
@@ -454,6 +457,8 @@ class DataSource:
         is accessible if it exists in either location.
 
         """
+
+        path = os.fspath(path)
 
         # First test for local path
         if os.path.exists(path):
@@ -489,7 +494,7 @@ class DataSource:
 
         Parameters
         ----------
-        path : str or pathlib.Path
+        path : str or path-like
             Local file path or URL to open.
         mode : {'r', 'w', 'a'}, optional
             Mode to open `path`.  Mode 'r' for reading, 'w' for writing,
@@ -513,6 +518,8 @@ class DataSource:
 
         # TODO: Add a ``subdir`` parameter for specifying the subdirectory
         #       used to store URLs in self._destpath.
+
+        path = os.fspath(path)
 
         if self._isurl(path) and self._iswritemode(mode):
             raise ValueError("URLs are not writeable")
@@ -544,10 +551,10 @@ class Repository (DataSource):
 
     Parameters
     ----------
-    baseurl : str
+    baseurl : str or path-like
         Path to the local directory or remote location that contains the
         data files.
-    destpath : str or None, optional
+    destpath : str, path-like, or None, optional
         Path to the directory where the source file gets downloaded to for
         use.  If `destpath` is None, a temporary directory will be created.
         The default path is the current directory.
@@ -572,13 +579,14 @@ class Repository (DataSource):
     def __init__(self, baseurl, destpath=os.curdir):
         """Create a Repository with a shared url or directory of baseurl."""
         DataSource.__init__(self, destpath=destpath)
-        self._baseurl = baseurl
+        self._baseurl = os.fspath(baseurl)
 
     def __del__(self):
         DataSource.__del__(self)
 
     def _fullpath(self, path):
         """Return complete path for path.  Prepends baseurl if necessary."""
+        path = os.fspath(path)
         splitpath = path.split(self._baseurl, 2)
         if len(splitpath) == 1:
             result = os.path.join(self._baseurl, path)
@@ -600,7 +608,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str or pathlib.Path
+        path : str or path-like
             Can be a local file or a remote URL. This may, but does not
             have to, include the `baseurl` with which the `Repository` was
             initialized.
@@ -627,7 +635,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str or pathlib.Path
+        path : str or path-like
             Can be a local file or a remote URL. This may, but does not
             have to, include the `baseurl` with which the `Repository` was
             initialized.
@@ -656,7 +664,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str or pathlib.Path
+        path : str or path-like
             Local file path or URL to open. This may, but does not have to,
             include the `baseurl` with which the `Repository` was
             initialized.
@@ -685,7 +693,7 @@ class Repository (DataSource):
 
         Returns
         -------
-        files : list of str or pathlib.Path
+        files : list of str
             List of file names (not containing a directory part).
 
         Notes
