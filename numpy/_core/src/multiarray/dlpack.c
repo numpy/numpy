@@ -596,12 +596,6 @@ gentype_dlpack(PyObject *self,
             {"$copy", &PyArray_CopyConverter, &copy_mode})) {
         return NULL;
     }
-    if (result_device.device_type != kDLCPU ||
-        result_device.device_id != 0) {
-        PyErr_SetString(PyExc_BufferError,
-            "Cannot export a scalar to DLPack on a non-CPU device.");
-        return NULL;
-    }
     // scalars cannot be viewed, so reject copy=False otherwise
     // pass copy=None to the array version
     if (copy_mode == NPY_COPY_NEVER) {
