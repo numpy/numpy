@@ -75,6 +75,9 @@ intern_strings(void)
     INTERN_STRING(sort, "sort");
     INTERN_STRING(argsort, "argsort");
     INTERN_STRING(_set_dtype, "_set_dtype");
+    INTERN_STRING(conjugate, "conjugate");
+    INTERN_STRING(astimezone, "astimezone");
+    INTERN_STRING(value, "value");
     return 0;
 }
 

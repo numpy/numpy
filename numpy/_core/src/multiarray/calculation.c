@@ -289,7 +289,8 @@ PyArray_Ptp(PyArrayObject *ap, int axis, PyArrayObject *out)
     }
     Py_DECREF(arr);
     if (out) {
-        ret = PyObject_CallFunction(n_ops.subtract, "OOO", out, obj2, out);
+        PyObject *args[3] = {(PyObject *)out, obj2, (PyObject *)out};
+        ret = PyObject_Vectorcall(n_ops.subtract, args, 3, NULL);
     }
     else {
         ret = PyNumber_Subtract(obj1, obj2);
@@ -642,9 +643,10 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
         }
         if (decimals == 0) {
             if (out) {
-                return PyObject_CallFunction(n_ops.rint, "OO", a, out);
+                PyObject *args[2] = {(PyObject *)a, (PyObject *)out};
+                return PyObject_Vectorcall(n_ops.rint, args, 2, NULL);
             }
-            return PyObject_CallFunction(n_ops.rint, "O", a);
+            return PyObject_CallOneArg(n_ops.rint, (PyObject *)a);
         }
         op1 = n_ops.multiply;
         op2 = n_ops.true_divide;
@@ -685,18 +687,21 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
     if (f == NULL) {
         return NULL;
     }
-    ret = PyObject_CallFunction(op1, "OOO", a, f, out);
+    PyObject *args1[3] = {(PyObject *)a, f, (PyObject *)out};
+    ret = PyObject_Vectorcall(op1, args1, 3, NULL);
     if (ret == NULL) {
         goto finish;
     }
-    tmp = PyObject_CallFunction(n_ops.rint, "OO", ret, ret);
+    PyObject *args2[2] = {ret, ret};
+    tmp = PyObject_Vectorcall(n_ops.rint, args2, 2, NULL);
     if (tmp == NULL) {
         Py_DECREF(ret);
         ret = NULL;
         goto finish;
     }
     Py_DECREF(tmp);
-    tmp = PyObject_CallFunction(op2, "OOO", ret, f, ret);
+    PyObject *args3[3] = {ret, f, ret};
+    tmp = PyObject_Vectorcall(op2, args3, 3, NULL);
     if (tmp == NULL) {
         Py_DECREF(ret);
         ret = NULL;
@@ -744,7 +749,8 @@ PyArray_Mean(PyArrayObject *self, int axis, int rtype, PyArrayObject *out)
         ret = PyNumber_TrueDivide(obj1, obj2);
     }
     else {
-        ret = PyObject_CallFunction(n_ops.divide, "OOO", out, obj2, out);
+        PyObject *args[3] = {(PyObject *)out, obj2, (PyObject *)out};
+        ret = PyObject_Vectorcall(n_ops.divide, args, 3, NULL);
     }
     Py_DECREF(obj1);
     Py_DECREF(obj2);

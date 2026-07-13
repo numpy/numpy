@@ -2294,7 +2294,8 @@ get_tzoffset_from_pytzinfo(PyObject *timezone_obj, npy_datetimestruct *dts)
     }
 
     /* Convert the datetime from UTC to local time */
-    loc_dt = PyObject_CallMethod(dt, "astimezone", "O", timezone_obj);
+    loc_dt = PyObject_CallMethodOneArg(dt, npy_interned_str.astimezone,
+                                       timezone_obj);
     Py_DECREF(dt);
     if (loc_dt == NULL) {
         return -1;
