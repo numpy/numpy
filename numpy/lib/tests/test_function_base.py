@@ -2464,6 +2464,18 @@ class TestUnwrap:
         assert result.dtype == quaddtype.QuadPrecision
         assert_array_equal(result, [0, 1, 2])
 
+    def test_masked_array(self):
+        # the gufunc's C loop can't propagate masking through the scan the
+        # way the fallback's mask-aware ops do, so this must match the
+        # fallback exactly, not just "look reasonable"
+        p = np.ma.MaskedArray([0., 1., 2., 2 + 2 * np.pi, 3 + 2 * np.pi],
+                              mask=[False, False, True, False, False])
+        out = unwrap(p)
+        assert isinstance(out, np.ma.MaskedArray)
+        expected = nfb._unwrap_fallback(p, np.pi, 2 * np.pi, -1)
+        assert_array_equal(out.mask, expected.mask)
+        assert_array_equal(out.data, expected.data)
+
     def test_array_ufunc_no_override_raises(self):
         class MyArray(np.ndarray):
             def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
