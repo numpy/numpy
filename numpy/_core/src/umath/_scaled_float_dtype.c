@@ -1018,8 +1018,7 @@ sfloat_partition_resolve_descriptors(
     loop_descrs[0] = given_descrs[0];
     Py_INCREF(loop_descrs[0]);
 
-    loop_descrs[1] = given_descrs[1];
-    Py_INCREF(loop_descrs[1]);
+    loop_descrs[1] = PyArray_DescrFromType(NPY_INTP);
 
     loop_descrs[2] = loop_descrs[0];
     Py_INCREF(loop_descrs[2]);
@@ -1078,15 +1077,9 @@ sfloat_argpartition_resolve_descriptors(
     loop_descrs[0] = given_descrs[0];
     Py_INCREF(loop_descrs[0]);
 
-    loop_descrs[1] = given_descrs[1];
-    Py_INCREF(loop_descrs[1]);
+    loop_descrs[1] = PyArray_DescrFromType(NPY_INTP);
 
     loop_descrs[2] = PyArray_DescrFromType(NPY_INTP);
-    if (loop_descrs[2] == NULL) {
-        Py_DECREF(loop_descrs[0]);
-        Py_DECREF(loop_descrs[1]);
-        return -1;
-    }
 
     return NPY_NO_CASTING;
 }

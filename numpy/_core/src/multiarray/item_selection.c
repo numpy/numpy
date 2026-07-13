@@ -1741,7 +1741,7 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
     PyArrayObject *kthrvl;
     PyArray_PartitionFunc *part = NULL;
     int n = PyArray_NDIM(op);
-    int ret;
+    int ret = -1;
 
     if (check_and_adjust_axis(&axis, n) < 0) {
         return -1;
@@ -1772,12 +1772,11 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
         PyArray_DTypeMeta *dtypes[3] = {dt, kdt, dt};
         PyArray_Descr *given_descrs[3] = {descr, kdescr, descr};
         // Partition cannot be a view, so view offset is unused
-        npy_intp view_offset = 0;
+        npy_intp view_offset = NPY_MIN_INT;
 
         if (method->resolve_descriptors(
-            method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
-            Py_DECREF(kthrvl);
-            return -1;
+                method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
+            goto fail;
         }
         context.descriptors = loop_descrs;
         context.parameters = &part_params;
@@ -1788,9 +1787,8 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
             loop_descrs[0]->elsize, loop_descrs[1]->elsize, loop_descrs[2]->elsize};
 
         if (method->get_strided_loop(
-            &context, 1, 0, strides, &strided_loop, &auxdata, &method_flags) < 0) {
-                ret = -1;
-                goto fail;
+                &context, 1, 0, strides, &strided_loop, &auxdata, &method_flags) < 0) {
+            goto fail;
         }
     }
     else {
@@ -1810,7 +1808,7 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
 fail:
     Py_DECREF(kthrvl);
 
-    if (method != NULL) {
+    if (context.descriptors != NULL) {
         NPY_AUXDATA_FREE(auxdata);
         Py_DECREF(context.descriptors[0]);
         Py_DECREF(context.descriptors[1]);
@@ -1838,7 +1836,7 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
     PyArrayObject *op2, *kthrvl;
     PyArray_Descr *odescr = NULL;
     PyArray_ArgPartitionFunc *argpart = NULL;
-    PyObject *ret;
+    PyObject *ret = NULL;
 
     /*
      * As a C-exported function, enum NPY_SELECTKIND loses its enum property
@@ -1879,14 +1877,11 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
         PyArray_DTypeMeta *dtypes[3] = { dt, kdt, odt };
         PyArray_Descr *given_descrs[3] = { descr, kdescr, odescr };
         // Partition cannot be a view, so view offset is unused
-        npy_intp view_offset = 0;
+        npy_intp view_offset = NPY_MIN_INT;
 
         if (method->resolve_descriptors(
-            method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
-            Py_DECREF(kthrvl);
-            Py_DECREF(op2);
-            Py_DECREF(odescr);
-            return NULL;
+                method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
+            goto fail;
         }
         context.descriptors = loop_descrs;
         context.parameters = &part_params;
@@ -1897,9 +1892,8 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
             loop_descrs[0]->elsize, loop_descrs[1]->elsize, loop_descrs[2]->elsize};
 
         if (method->get_strided_loop(
-            &context, 1, 0, strides, &strided_loop, &auxdata, &method_flags) < 0) {
-                ret = NULL;
-                goto fail;
+                &context, 1, 0, strides, &strided_loop, &auxdata, &method_flags) < 0) {
+            goto fail;
         }
     }
     else {
@@ -1921,7 +1915,7 @@ fail:
     Py_DECREF(op2);
     Py_XDECREF(odescr);
 
-    if (method != NULL) {
+    if (context.descriptors != NULL) {
         NPY_AUXDATA_FREE(auxdata);
         Py_DECREF(context.descriptors[0]);
         Py_DECREF(context.descriptors[1]);
