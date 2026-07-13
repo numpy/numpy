@@ -83,6 +83,8 @@ intern_strings(void)
     INTERN_STRING(second, "second");
     INTERN_STRING(microsecond, "microsecond");
     INTERN_STRING(tzinfo, "tzinfo");
+    INTERN_STRING(utcoffset, "utcoffset");
+    INTERN_STRING(total_seconds, "total_seconds");
     return 0;
 }
 

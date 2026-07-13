@@ -2233,7 +2233,8 @@ validate_and_return:
                 }
 
             /* The utcoffset function should return a timedelta */
-            PyObject *offset = PyObject_CallMethod(tzinfo, "utcoffset", "O", obj);
+            PyObject *offset = PyObject_CallMethodOneArg(
+                    tzinfo, npy_interned_str.utcoffset, obj);
             Py_DECREF(tzinfo);
             if (offset == NULL) {
                 return -1;
@@ -2243,8 +2244,8 @@ validate_and_return:
              * The timedelta should have a function "total_seconds"
              * which contains the value we want.
              */
-            PyObject *total_seconds = PyObject_CallMethod(
-                    offset, "total_seconds", "");
+            PyObject *total_seconds = PyObject_CallMethodNoArgs(
+                    offset, npy_interned_str.total_seconds);
             Py_DECREF(offset);
             if (total_seconds == NULL) {
                 return -1;

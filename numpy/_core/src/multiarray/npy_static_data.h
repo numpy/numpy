@@ -62,6 +62,8 @@ typedef struct npy_interned_str_struct {
     PyObject *second;
     PyObject *microsecond;
     PyObject *tzinfo;
+    PyObject *utcoffset;
+    PyObject *total_seconds;
 } npy_interned_str_struct;
 
 /*
