@@ -1872,8 +1872,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
         # straight through masked values; the fallback's ops are mask-aware
         return _unwrap_fallback(p, discont, period, axis)
     dtype = np.result_type(p, period)
-    discont_type = (np.longdouble if type(dtype) is np.dtypes.LongDoubleDType
-                     else np.float64)
+    discont_type = np.longdouble if dtype.type is np.longdouble else np.float64
     try:
         return _unwrap(p, discont, period,
                        signature=(type(dtype), discont_type, type(dtype), type(dtype)),
