@@ -10,7 +10,7 @@ from numpy._core._multiarray_umath import _array_converter
 from numpy._core.multiarray import add_docstring
 
 from . import numeric as _nx
-from .numeric import asanyarray, nan, ndim, result_type
+from .numeric import asanyarray, nan, result_type
 
 __all__ = ['logspace', 'linspace', 'geomspace']
 
@@ -137,29 +137,26 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     else:
         integer_dtype = _nx.issubdtype(dtype, _nx.integer)
 
-    # Use `dtype=type(dt)` to enforce a floating point evaluation.
     # Equal endpoints (including equal infinities) must produce a zero step,
     # so skip the subtraction there: `inf - inf` would otherwise yield a
     # spurious nan and an "invalid value" warning.  Using `where=` avoids the
     # bad element entirely rather than suppressing warnings globally, so
     # genuine invalid operations (e.g. mixed infinities) still warn.
     equal = start == stop
-    if equal.ndim == 0:
-        delta = dt.type(0) if equal else np.subtract(
-            stop, start, dtype=type(dt))
-    else:
-        delta = np.subtract(stop, start, dtype=type(dt), where=~equal,
-                            out=np.zeros(equal.shape, dtype=type(dt)))
-    y = _nx.arange(
+    # Wrapping y ensures that ndarray subclasses like astropy's Quantity
+    # can override the further operations below. See gh-7142.
+    y = conv.wrap(_nx.arange(
         0, num, dtype=dt, device=device
-    ).reshape((-1,) + (1,) * ndim(delta))
+    ).reshape((-1,) + (1,) * equal.ndim), to_scalar=False)
+    delta = np.zeros_like(y, shape=equal.shape, dtype=type(dt))
+    # Use `dtype=type(dt)` to enforce a floating point evaluation.
+    np.subtract(stop, start, dtype=type(dt), where=~equal, out=delta)
 
-    # In-place multiplication y *= delta/div is faster, but prevents
-    # the multiplicant from overriding what class is produced, and thus
-    # prevents, e.g. use of Quantities, see gh-7142. Hence, we multiply
-    # in place only for standard scalar types.
+    # In-place multiplication y *= delta/div is faster, but cannot work
+    # if the input and output shapes are not equal. Hence, we multiply
+    # in place only if delta is scalar.
     if div > 0:
-        _mult_inplace = _nx.isscalar(delta)
+        _mult_inplace = delta.ndim == 0
         step = delta / div
         any_step_zero = (
             step == 0 if _mult_inplace else _nx.asanyarray(step == 0).any())
@@ -178,7 +175,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         # sequences with 0 items or 1 item with endpoint=True (i.e. div <= 0)
         # have an undefined step
         step = nan
-        # Multiply with delta to allow possible override of output class.
+        # Multiply with delta out-of-place in case delta is not scalar.
         y = y * delta
 
     y += start
@@ -192,7 +189,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     if integer_dtype:
         _nx.floor(y, out=y)
 
-    y = conv.wrap(y.astype(dtype, copy=False))
+    y = y.astype(dtype, copy=False)
     if retstep:
         return y, step
     else:
