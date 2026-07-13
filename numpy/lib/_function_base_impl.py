@@ -1868,16 +1868,21 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     if discont is None:
         discont = period / 2
     dtype = np.result_type(p, period)
+    discont_type = (np.longdouble if type(dtype) is np.dtypes.LongDoubleDType
+                     else np.float64)
     try:
         return _unwrap(p, discont, period,
-                       signature=(type(dtype), np.float64, type(dtype), type(dtype)),
+                       signature=(type(dtype), discont_type, type(dtype), type(dtype)),
                        axis=axis)
     except np._core._exceptions._UFuncNoLoopError:
-        # We could implement a gufunc loop for object dtype
-        # but it's not worth the burden of all the extra c++ code.
-        # We let object dtype go through the fallback.
-        if dtype.isbuiltin == 1 and p.dtype != object:
+        # object and user DTypes fall back; check p.dtype, not the promoted
+        # dtype, since a user DType can promote through a builtin
+        if p.dtype.isbuiltin == 1 and p.dtype != object:
             raise
+        return _unwrap_fallback(p, discont, period, axis)
+    except TypeError:
+        # p's __array_ufunc__ declined the private _unwrap gufunc; the
+        # fallback only uses public ufuncs, which it may still implement
         return _unwrap_fallback(p, discont, period, axis)
 
 

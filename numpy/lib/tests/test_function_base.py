@@ -2237,6 +2237,30 @@ class TestDigitize:
 
 class TestUnwrap:
 
+    @staticmethod
+    def _reference_unwrap(p, discont=None, period=2 * np.pi):
+        # the documented algorithm, spelled out with plain numpy ops
+        p = np.asarray(p)
+        dtype = np.result_type(p, period)
+        if discont is None:
+            discont = period / 2
+        dd = np.diff(p.astype(dtype))
+        if np.issubdtype(dtype, np.integer):
+            interval_high, rem = divmod(period, 2)
+            boundary_ambiguous = rem == 0
+        else:
+            interval_high = period / 2
+            boundary_ambiguous = True
+        interval_low = -interval_high
+        ddmod = np.mod(dd - interval_low, period) + interval_low
+        if boundary_ambiguous:
+            np.copyto(ddmod, interval_high, where=(ddmod == interval_low) & (dd > 0))
+        ph_correct = ddmod - dd
+        np.copyto(ph_correct, 0, where=np.abs(dd) < discont)
+        out = p.astype(dtype).copy()
+        out[1:] = p[1:].astype(dtype) + ph_correct.cumsum()
+        return out
+
     def test_simple(self):
         # check that unwrap removes jumps greater that 2*pi
         assert_array_equal(unwrap([1, 1 + 2 * np.pi]), [1, 1])
@@ -2343,19 +2367,147 @@ class TestUnwrap:
         with pytest.raises(np.exceptions.DTypePromotionError):
             unwrap(np.arange(5).astype(dtype))
 
-    @pytest.mark.parametrize(
-        "dtype, expected",
-        [(np.int64, [1, 1, 1]), (np.float64, [1, np.nan, np.nan])],
-    )
-    def test_period_zero(self, dtype, expected):
-        p = np.array([1, 2, 3], dtype=dtype)
+    def test_period_zero_int(self):
+        # matches np.mod's own int-division-by-zero warning
+        p = np.array([1, 2, 3], dtype=np.int64)
         if IS_WASM:
             with np.errstate(divide="ignore", invalid="ignore"):
                 result = unwrap(p, period=0)
         else:
             with pytest.warns(RuntimeWarning):
                 result = unwrap(p, period=0)
-        assert_array_equal(result, np.array(expected, dtype=result.dtype))
+        assert_array_equal(result, [1, 1, 1])
+
+    def test_period_zero_float(self):
+        # np.mod doesn't warn on float division by zero, only int does
+        p = np.array([1, 2, 3], dtype=np.float64)
+        result = unwrap(p, period=0)
+        assert_array_equal(result, [1, np.nan, np.nan])
+
+    def test_negative_period(self):
+        p = np.array([0, 3, 6, 1, 4], dtype=np.int64)
+        assert_array_equal(unwrap(p, period=-8), [0, 3, 6, 9, 12])
+
+    @hypothesis.given(
+            arr=arrays(dtype=np.int32,
+                       shape=st.integers(min_value=1, max_value=50),
+                       elements=st.integers(min_value=-1000, max_value=1000)),
+            period=st.integers(min_value=-50, max_value=50).filter(bool))
+    def test_int_matches_reference_hypo(self, arr, period):
+        assert_array_equal(unwrap(arr, period=period),
+                           self._reference_unwrap(arr, period=period))
+
+    @hypothesis.given(
+            arr=arrays(dtype=np.float64,
+                       shape=st.integers(min_value=1, max_value=50),
+                       elements=st.floats(allow_infinity=False, allow_nan=False,
+                                          min_value=-1e6, max_value=1e6)))
+    def test_float_matches_reference_hypo(self, arr):
+        assert_allclose(unwrap(arr), self._reference_unwrap(arr))
+
+    def test_float16_random(self):
+        rng = np.random.default_rng(0)
+        for period in [2 * np.pi, 1.0, 10.0]:
+            p = rng.uniform(-3 * period, 3 * period, size=50).astype(np.float16)
+            got = unwrap(p, period=np.float16(period))
+            exp = self._reference_unwrap(p, period=np.float16(period))
+            # exact bit comparison: pins the per-op half-precision rounding
+            assert_array_equal(got.view(np.uint16), exp.view(np.uint16))
+
+    @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64])
+    def test_signed_extrema(self, dtype):
+        lo, hi = np.iinfo(dtype).min, np.iinfo(dtype).max
+        p = np.array([hi, lo, hi, lo], dtype=dtype)
+        assert_array_equal(unwrap(p, period=4), self._reference_unwrap(p, period=4))
+
+    @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64])
+    def test_int_min_period_minus_one(self, dtype):
+        # T_MIN % -1 is the one case that's UB in C++ if not guarded
+        lo = np.iinfo(dtype).min
+        p = np.array([lo, lo + 1, lo + 2], dtype=dtype)
+        assert_array_equal(unwrap(p, period=-1), self._reference_unwrap(p, period=-1))
+
+    def test_longdouble_discont_precision(self):
+        if np.finfo(np.longdouble).eps >= np.finfo(np.float64).eps:
+            pytest.skip("long double has no extra precision on this platform")
+        p = np.array([0, 5], dtype=np.longdouble)
+        period = np.longdouble(100)
+        # only representable with more than float64 precision
+        discont = np.longdouble(5) + np.longdouble(2) ** -80
+        assert_array_equal(unwrap(p, discont=discont, period=period), [0, 5])
+        truncated = np.float64(discont)
+        assert unwrap(p, discont=truncated, period=period)[1] != 5
+
+    def test_non_native_byteorder(self):
+        p = np.array([0, 1, 2, -1, 0], dtype=np.int32)
+        swapped = p.astype(p.dtype.newbyteorder())
+        assert_array_equal(unwrap(swapped, period=4), unwrap(p, period=4))
+
+    def test_custom_dtype(self):
+        # quaddtype <= 1.0.0 corrupts unrelated dtype promotions for the
+        # rest of the process on *import*, so check the version via package
+        # metadata (doesn't import it) before importing (see
+        # test_arrayprint.py for the same guard)
+        from importlib.metadata import version
+        try:
+            quaddtype_version = version("numpy_quaddtype")
+        except Exception:
+            pytest.skip("numpy_quaddtype not installed")
+        from numpy._utils import _pep440
+        if _pep440.Version(quaddtype_version) <= _pep440.Version("1.0.0"):
+            pytest.skip("critical bug in quaddtype during import")
+
+        quaddtype = pytest.importorskip("numpy_quaddtype")
+        p = np.array([quaddtype.QuadPrecision(v) for v in (0, 1, 2)],
+                     dtype=quaddtype.QuadPrecDType())
+        result = unwrap(p, period=4)
+        assert result.dtype == quaddtype.QuadPrecision
+        assert_array_equal(result, [0, 1, 2])
+
+    def test_array_ufunc_no_override_raises(self):
+        class MyArray(np.ndarray):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+                return NotImplemented
+
+        p = np.array([0., 1., 2., 2 + 2 * np.pi]).view(MyArray)
+        with pytest.raises(TypeError):
+            unwrap(p)
+
+    def test_array_ufunc_override_forwards(self):
+        class MyArray(np.ndarray):
+            calls = []
+
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+                type(self).calls.append(ufunc.__name__)
+                inputs = tuple(x.view(np.ndarray) if isinstance(x, MyArray) else x
+                               for x in inputs)
+                out = super().__array_ufunc__(ufunc, method, *inputs, **kwargs)
+                return out.view(MyArray) if isinstance(out, np.ndarray) else out
+
+        p = np.array([0., 1., 2., 2 + 2 * np.pi]).view(MyArray)
+        out = unwrap(p)
+        assert isinstance(out, MyArray)
+        assert_array_equal(np.asarray(out), unwrap(np.asarray(p)))
+        assert "_unwrap" in MyArray.calls
+
+    def test_array_ufunc_partial_override_falls_back(self):
+        # doesn't know about the private _unwrap gufunc, but does implement
+        # the public ufuncs the python fallback uses
+        public = {"subtract", "remainder", "add", "equal", "greater",
+                  "bitwise_and", "absolute", "less"}
+
+        class MyArray(np.ndarray):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+                if ufunc.__name__ not in public:
+                    return NotImplemented
+                inputs = tuple(x.view(np.ndarray) if isinstance(x, MyArray) else x
+                               for x in inputs)
+                out = super().__array_ufunc__(ufunc, method, *inputs, **kwargs)
+                return out.view(MyArray) if isinstance(out, np.ndarray) else out
+
+        p = np.array([0., 1., 2., 2 + 2 * np.pi]).view(MyArray)
+        out = unwrap(p)
+        assert_array_equal(np.asarray(out), unwrap(np.asarray(p)))
 
 
 @pytest.mark.parametrize(

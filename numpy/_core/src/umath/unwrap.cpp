@@ -9,6 +9,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include <limits>
 #include <type_traits>
 
 #include "numpy/halffloat.h"
@@ -32,8 +33,7 @@
  * The operands are, in order, the values `p` (core `(n)`), the scalars
  * `discont` and `period`, and the output (core `(n)`).  The Python wrapper in
  * numpy/lib/_function_base_impl.py fills the `discont`/`period` defaults,
- * resolves the common dtype and casts the scalars to it (rounding `discont` up
- * for integer dtypes so that the `|dd| < discont` threshold keeps its meaning).
+ * resolves the common dtype and casts the scalars to it.
  *
  * gufunc strided-loop layout for signature (n),(),()->(n):
  *   dimensions[0]      outer (broadcast) loop count
@@ -43,63 +43,46 @@
  *   strides[5]         core stride of out
  */
 
-/*
- * floor-modulo matching numpy's `mod`, picked by overload on the npy floating
- * types.  The long double overload is only defined when it is a distinct type
- * from double (otherwise the double overload already covers npy_longdouble).
- */
+/* floor-modulo matching numpy's `mod`, same as @TYPE@_remainder in loops.c.src */
 static inline npy_float
 floor_mod(npy_float a, npy_float b)
 {
-    npy_float m;
-    npy_divmodf(a, b, &m);
-    return m;
+    return npy_remainderf(a, b);
 }
 static inline npy_double
 floor_mod(npy_double a, npy_double b)
 {
-    npy_double m;
-    npy_divmod(a, b, &m);
-    return m;
+    return npy_remainder(a, b);
 }
 #if NPY_SIZEOF_LONGDOUBLE != NPY_SIZEOF_DOUBLE
 static inline npy_longdouble
 floor_mod(npy_longdouble a, npy_longdouble b)
 {
-    npy_longdouble m;
-    npy_divmodl(a, b, &m);
-    return m;
+    return npy_remainderl(a, b);
 }
 #endif
-/*
- * integer floor-modulo into [0, b).
- * if b == 0, returns 0 and sets the floating-point divide-by-zero flag
- */
+
+/* no integer npy_remainder to call; mirrors @TYPE@_remainder in
+ * loops_modulo.dispatch.c.src, including the T_MIN / -1 guard */
 template <typename T>
 static inline std::enable_if_t<std::is_integral_v<T>, T>
 floor_mod(T a, T b)
 {
-    if (b == 0) {
+    if (b == 0 || (a == std::numeric_limits<T>::min() && b == -1)) {
         npy_set_floatstatus_divbyzero();
         return 0;
     }
-    T m = a % b;
-    if (m < 0) {
-        m += b;
+    T rem = a % b;
+    if ((a > 0) == (b > 0) || rem == 0) {
+        return rem;
     }
-    return m;
+    return rem + b;
 }
 
 /*
- * One strided loop per real dtype.  `T` is both the storage and the compute
- * type; the integer vs. floating-point parts of the algorithm (floor division
- * for the interval, the even-period boundary, integer floor-modulo) select with
- * `if constexpr` on `T`.  `discont` is only a threshold (never part of the wrap
- * arithmetic), so it is always a plain double operand -- it keeps its value
- * exactly and never drags the result dtype (e.g. integer input stays integer).
- *
- * `npy_half` has no native arithmetic, so it gets its own loop below that
- * computes in float; every other real dtype uses this template.
+ * One loop per real dtype. T is the storage/compute type; discont is read
+ * as npy_longdouble only for the longdouble loop, npy_double otherwise.
+ * npy_half has no native arithmetic, so it gets its own loop below.
  */
 template <typename T>
 static int
@@ -107,6 +90,9 @@ unwrap_loop(PyArrayMethod_Context *NPY_UNUSED(context), char *const data[],
             npy_intp const dimensions[], npy_intp const strides[],
             NpyAuxData *NPY_UNUSED(auxdata))
 {
+    using D = std::conditional_t<std::is_same_v<T, npy_longdouble>,
+                                  npy_longdouble, npy_double>;
+
     npy_intp n_outer = dimensions[0];
     npy_intp n = dimensions[1];
     npy_intp s_p = strides[0], s_disc = strides[1];
@@ -121,19 +107,21 @@ unwrap_loop(PyArrayMethod_Context *NPY_UNUSED(context), char *const data[],
         if (n <= 0) {
             continue;
         }
-        npy_double discont = *(const npy_double *)disc_o;
+        D discont = *(const D *)disc_o;
         T period = *(const T *)per_o;
-        /* floor division for ints, exact half for floats */
-        T interval_high = period / 2;
-        T interval_low = -interval_high;
+        T interval_high;
         bool boundary_ambiguous;
         if constexpr (std::is_integral_v<T>) {
-            /* only an even period has a representable +/-period/2 boundary */
-            boundary_ambiguous = (period % 2) == 0;
+            /* floor((period)/2), matching python's `divmod(period, 2)` */
+            T rem = floor_mod(period, (T)2);
+            interval_high = (period - rem) / 2;
+            boundary_ambiguous = (rem == 0);
         }
         else {
+            interval_high = period / 2;
             boundary_ambiguous = true;
         }
+        T interval_low = -interval_high;
 
         const char *ip = p_o;
         char *op = out_o;
@@ -145,14 +133,13 @@ unwrap_loop(PyArrayMethod_Context *NPY_UNUSED(context), char *const data[],
             op += op_step;
             T cur = *(const T *)ip;
             T dd = cur - prev;
-            /* wrap the raw diff into [interval_low, interval_low + period);
-             * floor_mod dispatches to the integer or floating overload on T. */
+            /* wrap the raw diff into [interval_low, interval_low + period) */
             T ddmod = (T)(floor_mod((T)(dd - interval_low), period) + interval_low);
             if (boundary_ambiguous && ddmod == interval_low && dd > 0) {
                 ddmod = interval_high;
             }
             T corr = ddmod - dd;
-            T adiff = dd < 0 ? (T)-dd : dd;
+            D adiff = (D)(dd < 0 ? (T)-dd : dd);
             if (adiff < discont) {
                 corr = 0;
             }
@@ -164,8 +151,11 @@ unwrap_loop(PyArrayMethod_Context *NPY_UNUSED(context), char *const data[],
     return 0;
 }
 
-/* Half is stored as npy_half but has no native arithmetic, so it loads/stores
- * npy_half and does the whole scan in float. */
+/* rounds to half after every step, like numpy's own HALF_remainder loop,
+ * instead of only at the end -- that changes the result */
+static inline float h2f(npy_half h) { return npy_half_to_float(h); }
+static inline npy_half f2h(float f) { return npy_float_to_half(f); }
+
 static int
 unwrap_half_loop(PyArrayMethod_Context *NPY_UNUSED(context), char *const data[],
                  npy_intp const dimensions[], npy_intp const strides[],
@@ -186,31 +176,33 @@ unwrap_half_loop(PyArrayMethod_Context *NPY_UNUSED(context), char *const data[],
             continue;
         }
         npy_double discont = *(const npy_double *)disc_o;
-        float period = npy_half_to_float(*(const npy_half *)per_o);
-        float interval_high = period / 2;
-        float interval_low = -interval_high;
+        npy_half period = *(const npy_half *)per_o;
+        npy_half interval_high = f2h(h2f(period) / 2.0f);
+        npy_half interval_low = f2h(-h2f(interval_high));
 
         const char *ip = p_o;
         char *op = out_o;
-        float prev = npy_half_to_float(*(const npy_half *)ip);
-        *(npy_half *)op = npy_float_to_half(prev);
-        float cum = 0;
+        npy_half prev = *(const npy_half *)ip;
+        *(npy_half *)op = prev;
+        npy_half cum = f2h(0.0f);
         for (npy_intp i = 1; i < n; i++) {
             ip += ip_step;
             op += op_step;
-            float cur = npy_half_to_float(*(const npy_half *)ip);
-            float dd = cur - prev;
-            float ddmod = floor_mod(dd - interval_low, period) + interval_low;
-            if (ddmod == interval_low && dd > 0) {
+            npy_half cur = *(const npy_half *)ip;
+            npy_half dd = f2h(h2f(cur) - h2f(prev));
+            npy_half t1 = f2h(h2f(dd) - h2f(interval_low));
+            npy_half t2 = f2h(floor_mod(h2f(t1), h2f(period)));
+            npy_half ddmod = f2h(h2f(t2) + h2f(interval_low));
+            if (ddmod == interval_low && h2f(dd) > 0) {
                 ddmod = interval_high;
             }
-            float corr = ddmod - dd;
-            float adiff = dd < 0 ? -dd : dd;
+            npy_half corr = f2h(h2f(ddmod) - h2f(dd));
+            double adiff = h2f(dd) < 0 ? -(double)h2f(dd) : (double)h2f(dd);
             if (adiff < discont) {
-                corr = 0;
+                corr = f2h(0.0f);
             }
-            cum += corr;
-            *(npy_half *)op = npy_float_to_half(cur + cum);
+            cum = f2h(h2f(cum) + h2f(corr));
+            *(npy_half *)op = f2h(h2f(cur) + h2f(cum));
             prev = cur;
         }
     }
@@ -220,19 +212,19 @@ unwrap_half_loop(PyArrayMethod_Context *NPY_UNUSED(context), char *const data[],
 
 static int
 add_unwrap_loop(PyObject *ufunc, int typenum,
-                PyArrayMethod_StridedLoop *loop)
+                PyArrayMethod_StridedLoop *loop, int discont_typenum = NPY_DOUBLE)
 {
     PyArray_DTypeMeta *dt = PyArray_DTypeFromTypeNum(typenum);
     if (dt == NULL) {
         return -1;
     }
-    PyArray_DTypeMeta *dbl = PyArray_DTypeFromTypeNum(NPY_DOUBLE);
-    if (dbl == NULL) {
+    PyArray_DTypeMeta *disc_dt = PyArray_DTypeFromTypeNum(discont_typenum);
+    if (disc_dt == NULL) {
         Py_DECREF(dt);
         return -1;
     }
-    /* p, out and period share the loop dtype; discont is always double. */
-    PyArray_DTypeMeta *dtypes[4] = {dt, dbl, dt, dt};
+    /* p, out and period share the loop dtype; discont has its own dtype. */
+    PyArray_DTypeMeta *dtypes[4] = {dt, disc_dt, dt, dt};
     PyType_Slot slots[] = {
         {NPY_METH_strided_loop, (void *)loop},
         {0, NULL}
@@ -249,10 +241,10 @@ add_unwrap_loop(PyObject *ufunc, int typenum,
 
     if (PyUFunc_AddLoopFromSpec_int(ufunc, &spec, 1)) {
         Py_DECREF(dt);
-        Py_DECREF(dbl);
+        Py_DECREF(disc_dt);
         return -1;
     }
-    Py_DECREF(dbl);
+    Py_DECREF(disc_dt);
 
     Py_DECREF(dt);
     return 0;
@@ -286,16 +278,16 @@ init_unwrap_ufunc(PyObject *umath)
         {NPY_INT, unwrap_loop<npy_int>},
         {NPY_LONG, unwrap_loop<npy_long>},
         {NPY_LONGLONG, unwrap_loop<npy_longlong>},
-        /*
-         * We could implement a gufunc loop for object dtype
-         * but it's not worth the burden of all the extra c++ code.
-        */
+        /* object dtype falls back to the python implementation instead */
         // {NPY_OBJECT, object_unwrap_loop},
     };
 
     int res = 0;
     for (const auto& entry : loops) {
-        if (add_unwrap_loop(ufunc, entry.typenum, entry.loop) < 0) {
+        int discont_typenum = entry.typenum == NPY_LONGDOUBLE
+                ? NPY_LONGDOUBLE : NPY_DOUBLE;
+        if (add_unwrap_loop(ufunc, entry.typenum, entry.loop,
+                             discont_typenum) < 0) {
             res = -1;
             break;
         }
