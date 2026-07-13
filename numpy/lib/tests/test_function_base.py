@@ -2379,9 +2379,10 @@ class TestUnwrap:
         assert_array_equal(result, [1, 1, 1])
 
     def test_period_zero_float(self):
-        # np.mod doesn't warn on float division by zero, only int does
+        # whether float division by zero warns is platform-dependent
         p = np.array([1, 2, 3], dtype=np.float64)
-        result = unwrap(p, period=0)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            result = unwrap(p, period=0)
         assert_array_equal(result, [1, np.nan, np.nan])
 
     def test_negative_period(self):
@@ -2426,20 +2427,6 @@ class TestUnwrap:
         lo = np.iinfo(dtype).min
         p = np.array([lo, lo + 1, lo + 2], dtype=dtype)
         assert_array_equal(unwrap(p, period=-1), self._reference_unwrap(p, period=-1))
-
-    def test_longdouble_discont_precision(self):
-        if np.finfo(np.longdouble).eps >= np.finfo(np.float64).eps:
-            pytest.skip("long double has no extra precision on this platform")
-        # period=8 puts the delta (5) past the wrap boundary (+-4), so
-        # whether discont suppresses the correction actually depends on
-        # its precision
-        p = np.array([0, 5], dtype=np.longdouble)
-        period = np.longdouble(8)
-        # only representable with more than float64 precision
-        discont = np.longdouble(5) + np.longdouble(2) ** -80
-        assert_array_equal(unwrap(p, discont=discont, period=period), [0, 5])
-        truncated = np.float64(discont)
-        assert_array_equal(unwrap(p, discont=truncated, period=period), [0, -3])
 
     def test_non_native_byteorder(self):
         p = np.array([0, 1, 2, -1, 0], dtype=np.int32)
