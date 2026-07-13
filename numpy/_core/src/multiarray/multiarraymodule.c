@@ -30,6 +30,7 @@
 #include "npy_pycompat.h"
 #include "npy_import.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "convert_datatype.h"
 #include "legacy_dtype_implementation.h"
 
@@ -5009,6 +5010,14 @@ set_flaginfo(PyObject *d)
 // static variables are automatically zero-initialized
 NPY_VISIBILITY_HIDDEN npy_global_state_struct npy_global_state;
 
+/*
+ * TRANSITIONAL: process-global pointer to module state.
+ * Set once in _multiarray_umath_exec(). Used by call sites that don't
+ * have a module pointer available yet.
+ * FIXME: Remove once all access sites are updated.
+ */
+NPY_VISIBILITY_HIDDEN multiarray_umath_state *_npy_module_state = NULL;
+
 static int
 initialize_global_state(void) {
     char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
@@ -5024,6 +5033,31 @@ initialize_global_state(void) {
 
 static int module_loaded = 0;
 
+/* GC hooks — to be progressively filled as each struct is migrated */
+static int
+multiarray_umath_traverse(PyObject *m, visitproc visit, void *arg)
+{
+    /* FIXME : Py_VISIT each field of state->interned_str */
+    /* FIXME : Py_VISIT each field of state->static_pydata */
+    /* FIXME : Py_VISIT each field of state->runtime_imports */
+    return 0;
+}
+
+static int
+multiarray_umath_clear(PyObject *m)
+{
+    /* FIXME : Py_CLEAR each field of state->interned_str */
+    /* FIXME : Py_CLEAR each field of state->static_pydata */
+    /* FIXME : Py_CLEAR each field of state->runtime_imports */
+    return 0;
+}
+
+static void
+multiarray_umath_free(void *m)
+{
+    /* Nothing to free yet; non-PyObject C data is trivially destructed */
+}
+
 static int
 _multiarray_umath_exec(PyObject *m) {
     PyObject *d, *s, *c_api;
@@ -5035,6 +5069,9 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
     module_loaded = 1;
+
+    /* Set up per-module state pointer */
+    _npy_module_state = get_module_state(m);
 
     /* Initialize CPU features */
     if (npy_cpu_init() < 0) {
@@ -5438,11 +5475,14 @@ static struct PyModuleDef_Slot _multiarray_umath_slots[] = {
 };
 
 static struct PyModuleDef moduledef = {
-    .m_base = PyModuleDef_HEAD_INIT,
-    .m_name = "_multiarray_umath",
-    .m_size = 0,
-    .m_methods = array_module_methods,
-    .m_slots = _multiarray_umath_slots,
+    .m_base     = PyModuleDef_HEAD_INIT,
+    .m_name     = "_multiarray_umath",
+    .m_size     = sizeof(multiarray_umath_state),
+    .m_methods  = array_module_methods,
+    .m_slots    = _multiarray_umath_slots,
+    .m_traverse = multiarray_umath_traverse,
+    .m_clear    = multiarray_umath_clear,
+    .m_free     = multiarray_umath_free,
 };
 
 PyMODINIT_FUNC PyInit__multiarray_umath(void) {
