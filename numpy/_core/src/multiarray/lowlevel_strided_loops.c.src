@@ -2153,6 +2153,11 @@ mapiter_@name@(
         }
 /**end repeat1**/
     }
+
+    /* Check if the above iteration ended with an error */
+    if (PyErr_Occurred()) {
+        return -1;
+    }
     return 0;
 }
 
