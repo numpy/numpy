@@ -823,17 +823,18 @@ _void_to_hex(const char* argbuf, const Py_ssize_t arglen,
              const char *schars, const char *bprefix, const char *echars)
 {
     PyObject *retval;
-    int extrachars, slen;
+    Py_ssize_t extrachars, slen;
     char *retbuf;
     Py_ssize_t i, j;
     char const *hexdigits = "0123456789ABCDEF";
+    Py_ssize_t bytes_per = 2 + (Py_ssize_t)strlen(bprefix);
 
-    extrachars = strlen(schars) + strlen(echars);
-    slen = extrachars + arglen*(2 + strlen(bprefix));
+    extrachars = (Py_ssize_t)strlen(schars) + strlen(echars);
 
-    if (arglen > (PY_SSIZE_T_MAX / 2) - extrachars) {
+    if (arglen > (PY_SSIZE_T_MAX - extrachars) / bytes_per) {
         return PyErr_NoMemory();
     }
+    slen = extrachars + arglen*bytes_per;
 
     retbuf = (char *)PyMem_Malloc(slen);
     if (!retbuf) {
