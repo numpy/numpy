@@ -2496,6 +2496,40 @@ M   33  21.99
 
         assert_array_equal(a, b)
 
+    def test_genfromtxt_commented_names_false_skips_multiple_comments(self):
+        data = TextIO(
+            "# unrelated note\n"
+            "# Color Type Origin Stolen\n"
+            "Color Type Origin Stolen\n"
+            "Red Sports Domestic Yes\n"
+        )
+        a = np.genfromtxt(data, dtype=None, names=True,
+                         commented_names=False, encoding=None)
+        assert a.dtype.names == ('Color', 'Type', 'Origin', 'Stolen')
+
+    def test_genfromtxt_commented_names_true_uses_last_comment(self):
+        data = TextIO(
+            "# unrelated note\n"
+            "# Color Type Origin Stolen\n"
+            "Red Sports Domestic Yes\n"
+            "Yellow SUV Imported No\n"
+        )
+        a = np.genfromtxt(data, dtype=None, names=True,
+                           commented_names=True, encoding=None)
+        assert a.dtype.names == ('Color', 'Type', 'Origin', 'Stolen')
+        assert len(a) == 2
+
+    def test_genfromtxt_commented_names_true_no_comment_raises(self):
+        data = TextIO("Red Sports Domestic Yes\n")
+        with pytest.raises(ValueError):
+            np.genfromtxt(data, dtype=None, names=True,
+                       commented_names=True, encoding=None)
+
+    def test_genfromtxt_commented_names_requires_names_true(self):
+        data = TextIO("1,2,3\n")
+        with pytest.raises(ValueError):
+            np.genfromtxt(data, delimiter=",", names=False,
+                           commented_names=True)
 
 class TestPathUsage:
     # Test that pathlib.Path can be used

@@ -1740,7 +1740,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                replace_space='_', autostrip=False, case_sensitive=True,
                defaultfmt="f%i", unpack=None, usemask=False, loose=True,
                invalid_raise=True, max_rows=None, encoding=None,
-               *, ndmin=0, like=None):
+               *, ndmin=0, commented_names=None, like=None):
     """
     Load data from a text file, with missing values handled as specified.
 
@@ -1946,7 +1946,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             case_sensitive=case_sensitive, defaultfmt=defaultfmt,
             unpack=unpack, usemask=usemask, loose=loose,
             invalid_raise=invalid_raise, max_rows=max_rows, encoding=encoding,
-            ndmin=ndmin,
+            ndmin=ndmin, commented_names=commented_names,
         )
 
     _ensure_ndmin_ndarray_check_param(ndmin)
@@ -1958,6 +1958,15 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     "specified at the same time.")
         if max_rows < 1:
             raise ValueError("'max_rows' must be at least 1.")
+
+    if commented_names is not None:
+        if not isinstance(commented_names, (bool, np.bool_)):
+            raise ValueError(
+                "commented_names must be None, True, or False")
+        if names is not True:
+            raise ValueError(
+                "commented_names can only be used together with "
+                "names=True")
 
     if usemask:
         from numpy.ma import MaskedArray, make_mask_descr
@@ -2006,14 +2015,32 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
             # Keep on until we find the first valid values
             first_values = None
+            last_comment_line = None
+            skip_comment_lines = names is True and commented_names is not None
+            use_last_comment = names is True and commented_names is True
 
             while not first_values:
                 first_line = _decode_line(next(fhd), encoding)
-                if (names is True) and (comments is not None):
-                    if comments in first_line:
-                        first_line = (
+                is_comment_line = (
+                    comments is not None and comments in first_line)
+
+                if is_comment_line and skip_comment_lines:
+                    if use_last_comment:
+                        last_comment_line = (
                             ''.join(first_line.split(comments)[1:]))
-                first_values = split_line(first_line)
+                    continue
+
+                if is_comment_line and names is True:
+                    first_line = ''.join(first_line.split(comments)[1:])
+
+                if use_last_comment:
+                    if last_comment_line is None:
+                        raise ValueError(
+                            "commented_names=True but no comment line "
+                            "was found before the first line of data.")
+                    first_values = split_line(last_comment_line)
+                else:
+                    first_values = split_line(first_line)
         except StopIteration:
             # return an empty array if the datafile is empty
             first_line = ''
@@ -2043,7 +2070,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         # Check the names and overwrite the dtype.names if needed
         if names is True:
             names = validate_names([str(_.strip()) for _ in first_values])
-            first_line = ''
+            if commented_names is not True:
+                first_line = ''
         elif _is_string_like(names):
             names = validate_names([_.strip() for _ in names.split(',')])
         elif names:
