@@ -175,6 +175,9 @@ __all__ = [
 
 ###
 
+_IdT_co = TypeVar("_IdT_co", covariant=True, default=None)
+_ScalarT_contra = TypeVar("_ScalarT_contra", bound=np.generic, contravariant=True)
+
 type _Array[ShapeT: _Shape, ScalarT: np.generic] = np.ndarray[ShapeT, np.dtype[ScalarT]]
 type _Array0D[ScalarT: np.generic] = _Array[tuple[()], ScalarT]
 type _Array1D[ScalarT: np.generic] = _Array[tuple[int], ScalarT]
@@ -307,8 +310,6 @@ class _Kwargs21(TypedDict, total=False):
     order: _OrderKACF  # = "K",
     subok: bool  # = True,
     signature: _Signature2
-
-_IdT_co = TypeVar("_IdT_co", covariant=True, default=None)
 
 @type_check_only
 class _ufunc_11(np.ufunc, Generic[_IdT_co]):  # type: ignore[misc]
@@ -7411,11 +7412,11 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
-# ?bBhHiIlLqQO, ?bBhHiIlLqQO => ?bBhHiIlLqQO
+# [?]bBhHiIlLqQO, [?]bBhHiIlLqQO => [?]bBhHiIlLqQO
 #
 # promotion table:
 #       b8   i8   u8  i16  u16  i32  u32  i64  u64  O
-# b8    b8   i8   u8  i16  u16  i32  u32  i64  u64  O
+# b8   [b8]  i8   u8  i16  u16  i32  u32  i64  u64  O
 # i8    i8   i8  i16  i16  i32  i32  i64  i64       O
 # u8    u8  i16   u8  i16  u16  i32  u32  i64  u64  O
 # i16  i16  i16  i16  i16  i32  i32  i64  i64       O
@@ -7428,11 +7429,11 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
 #
 # Only the i64/i32/u8 int promotion rules are implemented (most gh code search hits).
 @type_check_only
-class _ufunc_21_bio[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
+class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # type: ignore[misc]
     @override
-    @overload  # 0d bool, 0d bool
+    @overload  # 0d bool, 0d bool  (only if `bool` in domain)
     def __call__(
-        self,
+        self: _ufunc_21_bio[Any, np.bool],
         x1: bool | np.bool,
         x2: bool | np.bool,
         /,
@@ -7573,9 +7574,9 @@ class _ufunc_21_bio[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> IntT: ...
-    @overload  # ?d +bool, ?d +bool
+    @overload  # ?d +bool, ?d +bool  (only if `bool` in domain)
     def __call__(
-        self,
+        self: _ufunc_21_bio[Any, np.bool],
         x1: _ArrayLikeBool_co,
         x2: _ArrayLikeBool_co,
         /,
@@ -7785,9 +7786,9 @@ class _ufunc_21_bio[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
 
     # keep in sync with `__call__`
     @override
-    @overload  # 0d bool, 0d bool
+    @overload  # 0d bool, 0d bool  (only if `bool` in domain)
     def outer(  # pyrefly:ignore[bad-override]
-        self,
+        self: _ufunc_21_bio[Any, np.bool],
         x1: bool | np.bool,
         x2: bool | np.bool,
         /,
@@ -7928,9 +7929,9 @@ class _ufunc_21_bio[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> IntT: ...
-    @overload  # ?d +bool, ?d +bool
+    @overload  # ?d +bool, ?d +bool  (only if `bool` in domain)
     def outer(
-        self,
+        self: _ufunc_21_bio[Any, np.bool],
         x1: _ArrayLikeBool_co,
         x2: _ArrayLikeBool_co,
         /,
@@ -8118,7 +8119,7 @@ class _ufunc_21_bio[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     @overload  # x1.__array_ufunc__(self, "outer", x1, x2, ...)
     def outer[OtherT, OutT](
         self,
-        x1: _CanUfuncCall2L[OtherT, OutT],
+        x1: _CanUfuncOuterL[OtherT, OutT],
         x2: OtherT,
         /,
         *,
@@ -8130,7 +8131,7 @@ class _ufunc_21_bio[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     def outer[OtherT, OutT](
         self,
         x1: OtherT,
-        x2: _CanUfuncCall2R[OtherT, OutT],
+        x2: _CanUfuncOuterR[OtherT, OutT],
         /,
         *,
         out: object | None = None,
@@ -8141,7 +8142,15 @@ class _ufunc_21_bio[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     #
     @override
     @overload
-    def at(self, a: npt.NDArray[_to_integer | np.object_], indices: _ArrayLikeInt, b: _ArrayLikeIntObj_co, /) -> None: ...  # pyrefly:ignore[bad-override]
+    def at(  # pyrefly:ignore[bad-override]
+        self: _ufunc_21_bio[Any, np.bool],
+        a: npt.NDArray[np.bool],
+        indices: _ArrayLikeInt,
+        b: _ArrayLikeIntObj_co,
+        /,
+    ) -> None: ...
+    @overload
+    def at(self, a: npt.NDArray[np.integer | np.object_], indices: _ArrayLikeInt, b: _ArrayLikeIntObj_co, /) -> None: ...
     @overload
     def at[OtherT, IxT, OutT](self, a: _CanUfuncAt2L[OtherT, IxT, OutT], indices: IxT, b: OtherT, /) -> OutT: ...
     @overload
@@ -8150,7 +8159,7 @@ class _ufunc_21_bio[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     #
     @override
     @overload  # known scalar type
-    def reduce[ScalarT: _to_integer](  # pyrefly:ignore[bad-override]
+    def reduce[ScalarT: np.integer](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -8163,7 +8172,7 @@ class _ufunc_21_bio[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[ScalarT] | Any: ...
     @overload  # known scalar type, axis=None
-    def reduce[ScalarT: _to_integer](
+    def reduce[ScalarT: np.integer](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -8176,7 +8185,7 @@ class _ufunc_21_bio[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         where: _ArrayLikeBool_co = True,
     ) -> ScalarT: ...
     @overload  # known scalar type, keepdims=True
-    def reduce[ScalarT: _to_integer | np.object_](
+    def reduce[ScalarT: np.integer | np.object_](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -8216,8 +8225,8 @@ class _ufunc_21_bio[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     ) -> Any: ...
     @overload  # ~bool
     def reduce(
-        self,
-        array: _NestedSequence[bool],
+        self: _ufunc_21_bio[Any, np.bool],
+        array: _ArrayLikeBool_co,
         /,
         *,
         axis: int | tuple[int, ...] = 0,
@@ -8229,8 +8238,8 @@ class _ufunc_21_bio[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     ) -> npt.NDArray[np.bool] | Any: ...
     @overload  # ~bool, axis=None
     def reduce(
-        self,
-        array: _NestedSequence[bool],
+        self: _ufunc_21_bio[Any, np.bool],
+        array: _ArrayLikeBool_co,
         /,
         *,
         axis: None,
@@ -8242,8 +8251,8 @@ class _ufunc_21_bio[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     ) -> np.bool: ...
     @overload  # ~bool, keepdims=True
     def reduce(
-        self,
-        array: _NestedSequence[bool],
+        self: _ufunc_21_bio[Any, np.bool],
+        array: _ArrayLikeBool_co,
         /,
         *,
         axis: int | tuple[int, ...] | None = 0,
@@ -8348,7 +8357,7 @@ class _ufunc_21_bio[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     #
     @override
     @overload  # known scalar type
-    def reduceat[ScalarT: _to_integer | np.object_](  # pyrefly:ignore[bad-override]
+    def reduceat[ScalarT: np.integer | np.object_](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -8360,8 +8369,8 @@ class _ufunc_21_bio[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # ~bool
     def reduceat(
-        self,
-        array: _NestedSequence[bool],
+        self: _ufunc_21_bio[Any, np.bool],
+        array: _ArrayLikeBool_co,
         /,
         indices: tuple[int, ...],
         *,
@@ -8428,7 +8437,7 @@ class _ufunc_21_bio[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     #
     @override
     @overload  # known scalar type
-    def accumulate[ScalarT: _to_integer | np.object_](  # pyrefly:ignore[bad-override]
+    def accumulate[ScalarT: np.integer | np.object_](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -8439,8 +8448,8 @@ class _ufunc_21_bio[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # ~bool
     def accumulate(
-        self,
-        array: _NestedSequence[bool],
+        self: _ufunc_21_bio[Any, np.bool],
+        array: _ArrayLikeBool_co,
         /,
         *,
         axis: int = 0,
@@ -8525,14 +8534,14 @@ hypot: Final[_ufunc_21_f[Literal[0]]] = ...
 divide: Final[_ufunc_21_divide] = ...
 
 # technically these reject `bool * bool`, but that would lead to a lot of code duplication
-gcd: Final[_ufunc_21_bio[Literal[0]]] = ...
-lcm: Final[_ufunc_21_bio[None]] = ...
-left_shift: Final[_ufunc_21_bio[None]] = ...
-right_shift: Final[_ufunc_21_bio[None]] = ...
+gcd: Final[_ufunc_21_bio[Literal[0], np.integer | np.object_]] = ...
+lcm: Final[_ufunc_21_bio[None, np.integer | np.object_]] = ...
+left_shift: Final[_ufunc_21_bio[None, np.integer | np.object_]] = ...
+right_shift: Final[_ufunc_21_bio[None, np.integer | np.object_]] = ...
 
-bitwise_and: Final[_ufunc_21_bio[Literal[-1]]] = ...
-bitwise_or: Final[_ufunc_21_bio[Literal[0]]] = ...
-bitwise_xor: Final[_ufunc_21_bio[Literal[0]]] = ...
+bitwise_and: Final[_ufunc_21_bio[Literal[-1], np.bool | np.integer | np.object_]] = ...
+bitwise_or: Final[_ufunc_21_bio[Literal[0], np.bool | np.integer | np.object_]] = ...
+bitwise_xor: Final[_ufunc_21_bio[Literal[0], np.bool | np.integer | np.object_]] = ...
 
 ###
 # re-exports from `_core._multiarray_umath` that are used by `_core._ufunc_config`
