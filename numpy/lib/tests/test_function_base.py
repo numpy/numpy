@@ -2454,6 +2454,20 @@ class TestUnwrap:
         assert result.dtype == quaddtype.QuadPrecision
         assert_array_equal(result, [0, 1, 2])
 
+    def test_longdouble_discont_precision(self):
+        if np.finfo(np.longdouble).eps >= np.finfo(np.float64).eps:
+            pytest.skip("long double has no extra precision on this platform")
+        # period=8 puts the delta (5) past the wrap boundary (+-4), so
+        # whether discont suppresses the correction actually depends on
+        # its precision
+        p = np.array([0, 5], dtype=np.longdouble)
+        period = np.longdouble(8)
+        # only representable with more than float64 precision
+        discont = np.longdouble(5) + np.longdouble(2) ** -56
+        assert_array_equal(unwrap(p, discont=discont, period=period), [0, 5])
+        truncated = np.float64(discont)
+        assert_array_equal(unwrap(p, discont=truncated, period=period), [0, -3])
+
     def test_masked_array(self):
         # the gufunc's C loop can't propagate masking through the scan the
         # way the fallback's mask-aware ops do, so this must match the
