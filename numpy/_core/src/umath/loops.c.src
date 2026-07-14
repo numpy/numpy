@@ -225,14 +225,17 @@ PyUFunc_O_O_method(char **args, npy_intp const *dimensions, npy_intp const *step
         /* We allow NULL, but try to guarantee non-NULL to downstream */
         assert(in1 != NULL);
         PyObject *ret, *func;
-        func = PyObject_GetAttr(in1 ? in1 : Py_None, meth_name);
+        PyObject *obj = in1 ? in1 : Py_None;
+        /* hold obj: the attribute lookup can clear its array slot */
+        Py_INCREF(obj);
+        func = PyObject_GetAttr(obj, meth_name);
         if (func != NULL && !PyCallable_Check(func)) {
             Py_DECREF(func);
             func = NULL;
         }
         if (func == NULL) {
             PyObject *exc, *val, *tb;
-            PyTypeObject *type = in1 ? Py_TYPE(in1) : Py_TYPE(Py_None);
+            PyTypeObject *type = Py_TYPE(obj);
             PyErr_Fetch(&exc, &val, &tb);
             PyErr_Format(PyExc_TypeError,
                          "loop of ufunc does not support argument %d of "
@@ -240,9 +243,11 @@ PyUFunc_O_O_method(char **args, npy_intp const *dimensions, npy_intp const *step
                          i, type->tp_name, meth);
             npy_PyErr_ChainExceptionsCause(exc, val, tb);
             Py_XDECREF(func);
+            Py_DECREF(obj);
             Py_DECREF(meth_name);
             return;
         }
+        Py_DECREF(obj);
         ret = PyObject_CallNoArgs(func);
         Py_DECREF(func);
         if (ret == NULL) {
@@ -318,9 +323,14 @@ PyUFunc_OO_O_method(char **args, npy_intp const *dimensions, npy_intp const *ste
         /* We allow NULL, but try to guarantee non-NULL to downstream */
         assert(in1 != NULL);
         assert(in2 != NULL);
-        PyObject *ret = PyObject_CallMethodOneArg(in1 ? in1 : Py_None,
-                                                  meth_name,
-                                                  in2 ? in2 : Py_None);
+        /* hold the operands: the call can clear their array slots */
+        PyObject *obj = in1 ? in1 : Py_None;
+        PyObject *arg = in2 ? in2 : Py_None;
+        Py_INCREF(obj);
+        Py_INCREF(arg);
+        PyObject *ret = PyObject_CallMethodOneArg(obj, meth_name, arg);
+        Py_DECREF(obj);
+        Py_DECREF(arg);
         if (ret == NULL) {
             Py_DECREF(meth_name);
             return;

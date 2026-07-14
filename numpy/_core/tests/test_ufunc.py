@@ -146,6 +146,21 @@ class TestUfuncGenericLoops:
         x = np.full(10, foo(), dtype=object)
         assert_(np.all(np.conjugate(x) == True))
 
+    def test_unary_PyUFunc_O_O_method_reentrant_mutation(self):
+        # gh-31988: the error path read the type of the input operand after
+        # the attribute lookup ran code that cleared the operand's array
+        # slot (use-after-free, detectable with PYTHONMALLOC=debug).
+        class Evil:
+            @property
+            def conjugate(self):
+                arr[0] = None  # drops the slot's reference
+                return 42  # not callable
+
+        arr = np.empty(1, dtype=object)
+        arr[0] = Evil()
+        with pytest.raises(TypeError, match="no callable conjugate method"):
+            np.conjugate(arr)
+
     def test_binary_PyUFunc_OO_O(self):
         x = np.ones(10, dtype=object)
         assert_(np.all(np.add(x, x) == 2))

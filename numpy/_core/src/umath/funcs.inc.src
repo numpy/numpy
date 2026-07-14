@@ -174,6 +174,9 @@ npy_ObjectGCD(PyObject *i1, PyObject *i2)
 {
     PyObject *gcd = NULL;
 
+    /* hold i1 and i2: the calls below can clear their array slots */
+    Py_INCREF(i1);
+    Py_INCREF(i2);
     PyObject *args[2] = {i1, i2};
 
     /* use math.gcd if valid on the provided types */
@@ -181,7 +184,7 @@ npy_ObjectGCD(PyObject *i1, PyObject *i2)
         gcd = PyObject_Vectorcall(npy_static_pydata.math_gcd_func,
                                   args, 2, NULL);
         if (gcd != NULL) {
-            return gcd;
+            goto done;
         }
         /* silence errors, and fall back on pure-python gcd */
         PyErr_Clear();
@@ -191,17 +194,20 @@ npy_ObjectGCD(PyObject *i1, PyObject *i2)
     {
         if (npy_cache_import_runtime("numpy._core._internal", "_gcd",
                                      &npy_runtime_imports.internal_gcd_func) == -1) {
-            return NULL;
+            goto done;
         }
         gcd = PyObject_Vectorcall(npy_runtime_imports.internal_gcd_func,
                                   args, 2, NULL);
         if (gcd == NULL) {
-            return NULL;
+            goto done;
         }
         /* _gcd has some unusual behaviour regarding sign */
         Py_SETREF(gcd, PyNumber_Absolute(gcd));
-        return gcd;
     }
+done:
+    Py_DECREF(i1);
+    Py_DECREF(i2);
+    return gcd;
 }
 
 static PyObject *
@@ -209,10 +215,13 @@ npy_ObjectLCM(PyObject *i1, PyObject *i2)
 {
     /* lcm(a, b) = abs(a // gcd(a, b) * b) */
 
+    /* hold i1 and i2: the gcd call can clear their array slots */
+    Py_INCREF(i1);
+    Py_INCREF(i2);
+    PyObject *tmp = NULL;
     PyObject *gcd = npy_ObjectGCD(i1, i2);
-    PyObject *tmp;
     if(gcd == NULL) {
-        return NULL;
+        goto done;
     }
     /* Floor divide preserves integer types - we know the division will have
      * no remainder
@@ -220,16 +229,19 @@ npy_ObjectLCM(PyObject *i1, PyObject *i2)
     tmp = PyNumber_FloorDivide(i1, gcd);
     Py_DECREF(gcd);
     if(tmp == NULL) {
-        return NULL;
+        goto done;
     }
 
     Py_SETREF(tmp, PyNumber_Multiply(tmp, i2));
     if(tmp == NULL) {
-        return NULL;
+        goto done;
     }
 
     /* even though we fix gcd to be positive, we need to do it again here */
     Py_SETREF(tmp,  PyNumber_Absolute(tmp));
+done:
+    Py_DECREF(i1);
+    Py_DECREF(i2);
     return tmp;
 }
 
