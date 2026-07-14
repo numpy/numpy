@@ -17,6 +17,7 @@
 #include "dtype_transfer.h"
 #include "legacy_array_method.h"
 #include "dtypemeta.h"
+#include "npy_static_data.h"
 
 #include "ufunc_object.h"
 #include "ufunc_type_resolution.h"
@@ -419,8 +420,9 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         }
         if (PyUFunc_DefaultLegacyInnerLoopSelector(
                 ufunc, descrs, &loop, &user_data, &needs_api) < 0) {
-            /* Only ignore a missing loop (a TypeError, `_UFuncNoLoopError`) */
-            if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
+            /* Only ignore a missing loop */
+            if (!PyErr_ExceptionMatches(
+                    npy_static_pydata._UFuncNoLoopError)) {
                 Py_DECREF(bound_res);
                 return NULL;
             }
