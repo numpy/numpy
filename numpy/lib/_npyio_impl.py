@@ -1798,6 +1798,17 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         `names`.
         If `names` is None, the output is structured only if `dtype` is
         structured, in which case the field names are taken from `dtype`.
+    commented_names : {None, True, False}, optional
+        Only used when `names` is True.
+        If None, names are taken from the first line after `skip_header`
+        lines, whether or not it is a comment.
+        If True, names are taken from the last comment line before the
+        first line of data. A `ValueError` is raised if no comment line
+        precedes the data.
+        If False, names are taken from the first non-comment line,
+        skipping any number of leading comment lines.
+
+        .. versionadded:: 2.6.0
     excludelist : sequence, optional
         A list of names to exclude. This list is appended to the default list
         ['return','file','print']. Excluded names are appended with an
