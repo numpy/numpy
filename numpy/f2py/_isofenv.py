@@ -3,7 +3,6 @@ ISO_FORTRAN_ENV maps for f2py2e
 """
 iso_fortran_env_map: dict[str, dict[str, str]] = {
     'integer': {
-        'int8': 'signed_char',
         'int16': 'short',
         'int32': 'int',
         'int64': 'long_long',
