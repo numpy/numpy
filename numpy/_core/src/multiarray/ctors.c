@@ -4000,6 +4000,19 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
     PyArray_Dims new_dims = {dims, PyArray_NDIM(ret)};
 
     char *item = PyArray_BYTES(ret);
+    /*
+     * PyArray_NewFromDescr may hand back an array whose descriptor is not
+     * `dtype`.  For subarray dtypes it uses the base descriptor, and packing
+     * must keep using the subarray `dtype` itself.  For parametric dtypes such
+     * as StringDType it may return an equivalent but distinct descriptor that
+     * owns its own storage (the string arena) -- this happens when the passed
+     * descriptor is already owned by another array, e.g. when the same dtype
+     * instance is reused.  In that case values must be packed with the array's
+     * actual descriptor, otherwise they are written into the wrong arena and
+     * the memory is freed twice on cleanup.
+     */
+    PyArray_Descr *pack_descr = PyDataType_HASSUBARRAY(dtype) ?
+                                dtype : PyArray_DESCR(ret);
     for (i = 0; i < count || count == -1; i++, item += elsize) {
         PyObject *value = PyIter_Next(iter);
         if (value == NULL) {
@@ -4028,7 +4041,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
             item = ((char *)PyArray_DATA(ret)) + i * elsize;
         }
 
-        if (PyArray_Pack(dtype, item, value) < 0) {
+        if (PyArray_Pack(pack_descr, item, value) < 0) {
             Py_DECREF(value);
             goto fail;
         }
