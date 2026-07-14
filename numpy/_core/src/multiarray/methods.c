@@ -537,22 +537,30 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
         if (PyArray_FailUnlessWriteable(self, "array to be byte-swapped") < 0) {
             return NULL;
         }
-        size = PyArray_SIZE(self);
-        if (PyArray_ISONESEGMENT(self)) {
-            copyswapn(PyArray_DATA(self), PyArray_ITEMSIZE(self), NULL, -1, size, 1, self);
-        }
-        else { /* Use iterator */
-            int axis = -1;
-            npy_intp stride;
-            it = (PyArrayIterObject *)                      \
-                PyArray_IterAllButAxis((PyObject *)self, &axis);
-            stride = PyArray_STRIDES(self)[axis];
-            size = PyArray_DIMS(self)[axis];
-            while (it->index < it->size) {
-                copyswapn(it->dataptr, stride, NULL, -1, size, 1, self);
-                PyArray_ITER_NEXT(it);
+        /*
+         * Some dtypes (e.g. StringDType) do not provide a legacy copyswapn
+         * function because their data has no meaningful byte order to swap.
+         * Treat byteswapping as a no-op for those instead of crashing on a
+         * NULL function pointer.
+         */
+        if (copyswapn != NULL) {
+            size = PyArray_SIZE(self);
+            if (PyArray_ISONESEGMENT(self)) {
+                copyswapn(PyArray_DATA(self), PyArray_ITEMSIZE(self), NULL, -1, size, 1, self);
             }
-            Py_DECREF(it);
+            else { /* Use iterator */
+                int axis = -1;
+                npy_intp stride;
+                it = (PyArrayIterObject *)                      \
+                    PyArray_IterAllButAxis((PyObject *)self, &axis);
+                stride = PyArray_STRIDES(self)[axis];
+                size = PyArray_DIMS(self)[axis];
+                while (it->index < it->size) {
+                    copyswapn(it->dataptr, stride, NULL, -1, size, 1, self);
+                    PyArray_ITER_NEXT(it);
+                }
+                Py_DECREF(it);
+            }
         }
 
         Py_INCREF(self);

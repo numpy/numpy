@@ -724,6 +724,26 @@ def test_fancy_indexing(string_list):
         assert_array_equal(sarr[ind], uarr[ind])
 
 
+def test_byteswap():
+    # byteswap() used to segfault on a NULL copyswapn. StringDType
+    # data has no meaningful byte order, so byteswap is a no-op.
+    arr = np.array(['b', 'short', 'x' * 40, '', 'café'], dtype='T')
+
+    swapped = arr.byteswap()
+    assert_array_equal(swapped, arr)
+
+    # 2-D and a non-contiguous (transposed) view
+    arr2d = np.array([['aa', 'bb'], ['c' * 30, 'dd']], dtype='T')
+    assert_array_equal(arr2d.byteswap(), arr2d)
+    assert_array_equal(arr2d.T.byteswap(), arr2d.T)
+
+    # in-place returns self, unchanged
+    ret = arr.byteswap(inplace=True)
+    assert ret is arr
+    assert_array_equal(arr, np.array(['b', 'short', 'x' * 40, '', 'café'],
+                                     dtype='T'))
+
+
 def test_flatiter_indexing():
     # see gh-29659
     arr = np.array(['hello', 'world'], dtype='T')
