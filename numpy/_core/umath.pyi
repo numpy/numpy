@@ -3513,8 +3513,6 @@ modf: Final[_ufunc_12_modf] = ...
 # ?bBhHiIlLqQefdgFDGOSUVT, ?bBhHiIlLqQefdgFDGOSUVT => ?O;  (also supports `mM` input)
 @type_check_only
 class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
-    # TODO(@jorenham): shape-typing
-
     @override
     @overload  # 0d, 0d
     def __call__(
@@ -4750,7 +4748,7 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # x1.__array_ufunc__(self, "outer", x1, x2, ...)
     def outer[OtherT, OutT](
         self,
-        x1: _CanUfuncCall2L[OtherT, OutT],
+        x1: _CanUfuncOuterL[OtherT, OutT],
         x2: OtherT,
         /,
         *,
@@ -4762,7 +4760,7 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
     def outer[OtherT, OutT](
         self,
         x1: OtherT,
-        x2: _CanUfuncCall2R[OtherT, OutT],
+        x2: _CanUfuncOuterR[OtherT, OutT],
         /,
         *,
         out: object | None = None,
@@ -5828,7 +5826,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         indices: tuple[int, ...],
         *,
         axis: int = 0,
-        dtype: str,
+        dtype: str | type,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
@@ -5903,7 +5901,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         /,
         *,
         axis: int = 0,
-        dtype: str,
+        dtype: str | type,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
@@ -5947,9 +5945,6 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
 # f80  f80  f80  f80  f80  f80  f80  f80  f80  f80  f80  f80  f80  f80
 @type_check_only
 class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
-    # TODO(@jorenham): shape-typing
-
-    #
     @override
     @overload  # 0d +float, 0d +float
     def __call__(
@@ -6573,7 +6568,7 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     @overload  # x1.__array_ufunc__(self, "outer", x1, x2, ...)
     def outer[OtherT, OutT](
         self,
-        x1: _CanUfuncCall2L[OtherT, OutT],
+        x1: _CanUfuncOuterL[OtherT, OutT],
         x2: OtherT,
         /,
         *,
@@ -6585,7 +6580,7 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     def outer[OtherT, OutT](
         self,
         x1: OtherT,
-        x2: _CanUfuncCall2R[OtherT, OutT],
+        x2: _CanUfuncOuterR[OtherT, OutT],
         /,
         *,
         out: object | None = None,
@@ -6813,7 +6808,7 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[ScalarT] | ScalarT: ...
     @overload  # dtype=float
-    def reduce[ScalarT: np.floating](
+    def reduce(
         self,
         array: _ArrayLikeFloat_co,
         /,
@@ -6826,7 +6821,7 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.float64] | np.float64: ...
     @overload  # dtype=<unknown>
-    def reduce[ScalarT: np.floating](
+    def reduce(
         self,
         array: _ArrayLikeFloat_co,
         /,
@@ -6941,7 +6936,7 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         indices: tuple[int, ...],
         *,
         axis: int = 0,
-        dtype: str,
+        dtype: str | type,
         out: None = None,
     ) -> npt.NDArray[np.floating]: ...
     @overload  # out=<given>
@@ -7036,7 +7031,7 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         /,
         *,
         axis: int = 0,
-        dtype: str,
+        dtype: str | type,
         out: None = None,
     ) -> npt.NDArray[np.floating]: ...
     @overload  # out=<given>
@@ -7050,16 +7045,6 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "accumulate", array, ...)
-    def accumulate[IxT, OutT](
-        self,
-        array: _CanUfuncReduceAt[IxT, OutT],
-        /,
-        *,
-        axis: int = 0,
-        dtype: npt.DTypeLike | None = None,
-        out: np.ndarray | None = None,
-    ) -> OutT: ...
-    @overload
     def accumulate[OutT](
         self,
         array: _CanUfuncAccumulate[OutT],
@@ -8260,7 +8245,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         indices: tuple[int, ...],
         *,
         axis: int = 0,
-        dtype: str,
+        dtype: str | type,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
@@ -8345,7 +8330,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         /,
         *,
         axis: int = 0,
-        dtype: str,
+        dtype: str | type,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
@@ -9281,7 +9266,7 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         dtype: npt.DTypeLike,
         out: EllipsisType | None = None,
         keepdims: bool = False,
-        initial: type | str = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[Any] | Any: ...
     @overload  # out=<given>
@@ -9365,7 +9350,7 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         indices: tuple[int, ...],
         *,
         axis: int = 0,
-        dtype: str,
+        dtype: str |  type,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
@@ -9440,7 +9425,7 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         /,
         *,
         axis: int = 0,
-        dtype: str,
+        dtype: str | type,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
