@@ -17,15 +17,23 @@ jobs:
       uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd  # v8.0.0
       with:
         script: |
-          const yaml = require('js-yaml');
           const {data} = await github.rest.repos.getContent({
             owner: context.repo.owner,
             repo: context.repo.repo,
             path: '.github/pr-prefix-labeler.yml',
           });
-          const prefixToLabel = yaml.load(
-            Buffer.from(data.content, data.encoding).toString()
-          );
+          // parse the config's `"PREFIX": "label"` lines directly
+          const content = Buffer.from(data.content, data.encoding).toString();
+          const prefixToLabel = {};
+          for (const line of content.split('\n')) {
+            const match = line.match(/^\s*"([^"]+)"\s*:\s*"([^"]+)"\s*$/);
+            if (match) {
+              prefixToLabel[match[1]] = match[2];
+            }
+          }
+          if (Object.keys(prefixToLabel).length === 0) {
+            throw new Error('No entries parsed from pr-prefix-labeler.yml');
+          }
           const title = context.payload.pull_request.title;
           for (const [prefix, label] of Object.entries(prefixToLabel)) {
             if (title.startsWith(prefix)) {
