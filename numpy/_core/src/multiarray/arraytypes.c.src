@@ -23,6 +23,7 @@
 #include "abstractdtypes.h"
 #include "common.h"
 #include "ctors.h"
+#include "module_state.h"
 #include "convert_datatype.h"
 #include "dtypemeta.h"
 #include "lowlevel_strided_loops.h"
@@ -4186,7 +4187,7 @@ NPY_NO_EXPORT _PyArray_LegacyDescr @from@_Descr = {
 
 /* The smallest type number is ?, the largest bounded by 'z'. */
 #define _MAX_LETTER ('z' + 1)
-#define LETTER_TO_NUM(letter) npy_static_cdata._letter_to_num[letter - '?']
+#define LETTER_TO_NUM(letter) npy_get_module_state()->static_cdata._letter_to_num[letter - '?']
 
 static _PyArray_LegacyDescr *_builtin_descrs[] = {
     &BOOL_Descr,

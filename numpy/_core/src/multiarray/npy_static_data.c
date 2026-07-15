@@ -13,11 +13,12 @@
 #include "npy_import.h"
 #include "npy_static_data.h"
 #include "extobj.h"
+#include "module_state.h"
 
 // static variables are zero-filled by default, no need to explicitly do so
 NPY_VISIBILITY_HIDDEN npy_interned_str_struct npy_interned_str;
 NPY_VISIBILITY_HIDDEN npy_static_pydata_struct npy_static_pydata;
-NPY_VISIBILITY_HIDDEN npy_static_cdata_struct npy_static_cdata;
+/* npy_static_cdata migrated to multiarray_umath_state.static_cdata */
 
 #define INTERN_STRING(struct_member, string)                             \
     assert(npy_interned_str.struct_member == NULL);                      \
@@ -241,6 +242,7 @@ initialize_static_globals(void)
      * This struct holds global static caches. These are set
      * up this way for performance reasons.
      */
+    npy_static_cdata_struct *cdata = &npy_get_module_state()->static_cdata;
 
     PyObject *flags = PySys_GetObject("flags");  /* borrowed object */
     if (flags == NULL) {
@@ -251,7 +253,7 @@ initialize_static_globals(void)
     if (level == NULL) {
         return -1;
     }
-    npy_static_cdata.optimize = PyLong_AsLong(level);
+    cdata->optimize = PyLong_AsLong(level);
     Py_DECREF(level);
 
     /*
@@ -267,7 +269,7 @@ initialize_static_globals(void)
         npy_intp k;
         for (k=0; k < 8; k++) {
             npy_uint8 v = (j & (1 << k)) == (1 << k);
-            npy_static_cdata.unpack_lookup_big[j].bytes[7 - k] = v;
+            cdata->unpack_lookup_big[j].bytes[7 - k] = v;
         }
     }
 

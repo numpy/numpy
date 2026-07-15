@@ -7,7 +7,7 @@
  * Migration status (FIXME: update this as each struct is moved):
  *   [ ] npy_interned_str    — still global in npy_static_data.c
  *   [ ] npy_static_pydata   — still global in npy_static_data.c
- *   [ ] npy_static_cdata    — still global in npy_static_data.c
+ *   [x] npy_static_cdata    — migrated to multiarray_umath_state.static_cdata
  *   [ ] npy_runtime_imports — still global in npy_import.c
  *   [ ] npy_global_state    — still global in multiarraymodule.c
  */
