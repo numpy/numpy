@@ -414,6 +414,7 @@ from numpy._core.umath import (
     fabs,
     float_power,
     floor,
+    fmod,
     frexp,
     gcd,
     greater,
@@ -7640,7 +7641,6 @@ divmod: _UFunc_Nin2_Nout2[L["divmod"], L[15], None]
 floor_divide: _UFunc_Nin2_Nout1[L["floor_divide"], L[21], None]
 fmax: _UFunc_Nin2_Nout1[L["fmax"], L[21], None]
 fmin: _UFunc_Nin2_Nout1[L["fmin"], L[21], None]
-fmod: _UFunc_Nin2_Nout1[L["fmod"], L[15], None]
 matmul: _GUFunc_Nin2_Nout1[L["matmul"], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]]
 matvec: _GUFunc_Nin2_Nout1[L["matvec"], L[19], None, L["(m,n),(n)->(m)"]]
 maximum: _UFunc_Nin2_Nout1[L["maximum"], L[21], None]
