@@ -1273,7 +1273,6 @@ def _dot_fallback(a, b, out=None):
     if out is not None:
         _dot_check_out(out, res_shape, res_dtype)
     if a.ndim == 0 or b.ndim == 0:
-        # scalar * array: like np.dot, this preserves the operand's layout
         res = np.multiply(a, b)
     elif a.shape[-1] == 0 or 0 in res_shape:
         res = np.zeros(res_shape, dtype=res_dtype)
