@@ -65,6 +65,15 @@ typedef struct PyArrayMethodObject_tag {
     PyArrayMethod_TranslateLoopDescriptors *translate_loop_descrs;
     /* Chunk reserved for use by the legacy fallback arraymethod */
     char legacy_initial[sizeof(npy_clongdouble)];  /* initial value storage */
+    /*
+     * Cached legacy inner-loop and its user data, NULL unless set by the
+     * legacy wrapping ArrayMethod (see umath/legacy_array_method.c).
+     * NOTE: replacing or registering a ufunc loop (which rewrites this
+     * pair) must be synchronized by the user; doing so while the ufunc
+     * executes in another thread is not thread-safe.
+     */
+    void *cached_loop;  /* really a PyUFuncGenericFunction */
+    void *cached_loop_data;
 } PyArrayMethodObject;
 
 
