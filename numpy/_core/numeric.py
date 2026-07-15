@@ -1227,44 +1227,27 @@ def _dot_result_shape(a, b):
     return a.shape[:-1] + b.shape[:-2] + b.shape[-1:]
 
 
-def _dot_check_out(out, shape, dtype):
-    if out.shape != tuple(shape):
-        raise ValueError("output array has wrong dimensions")
-    if out.dtype != dtype or not out.flags["C_CONTIGUOUS"]:
-        raise ValueError(
-            "output array is not acceptable (must have the right datatype, "
-            "number of dimensions, and be a C-Array)"
-        )
-
-
 def _dot_fallback(a, b, out=None):
     """``dot`` via ``matmul``/``multiply`` for dtypes without a legacy dotfunc."""
     a = np.asarray(a)
     b = np.asarray(b)
-    # For stacked arrays (ndim > 2) ``np.dot`` does not broadcast; instead it
-    # takes the outer product over the "batch" axes, i.e. it is the same as
-    # ``tensordot(a, b, axes=[-1, -2])``.  We deliberately do not reproduce
-    # that quirky behaviour for user dtypes (see gh-30793); the only stacked
-    # case that is unambiguous is an ``N-D . 1-D`` reduction over the last
-    # axis, which is kept.  Everything else should go through ``tensordot``.
+
     if (a.ndim > 2 or b.ndim > 2) and a.ndim > 0 and b.ndim > 1:
         raise ValueError(
             "'dot' does not support stacked arrays (ndim > 2) for "
             "user-defined dtypes; use 'numpy.tensordot' instead."
         )
     if out is not None:
-        # ``matmul``/``multiply`` are more permissive with ``out`` than
-        # ``np.dot``, so enforce ``np.dot``'s stricter contract here.
-        _dot_check_out(out, _dot_result_shape(a, b),
-                       np.result_type(a.dtype, b.dtype))
+        if out.shape != _dot_result_shape(a, b):
+            raise ValueError("output array has wrong dimensions")
+        if out.dtype != np.result_type(a.dtype, b.dtype) \
+                or not out.flags["C_CONTIGUOUS"]:
+            raise ValueError(
+                "output array is not acceptable (must have the right datatype, "
+                "number of dimensions, and be a C-Array)"
+            )
     if a.ndim == 0 or b.ndim == 0:
-        # scalar * array is elementwise (matmul is undefined for 0-D operands)
-        # and, like np.dot, preserves the operand's memory layout.
         return np.multiply(a, b, out=out)
-    # Once the stacked (ndim > 2) case above is excluded, ``np.dot`` coincides
-    # exactly with ``matmul`` for every remaining case -- matrix/vector
-    # products, the ``N-D . 1-D`` reduction and empty contractions -- so no
-    # transpose/reshape dance is needed.
     return np.matmul(a, b, out=out)
 
 
