@@ -1,5 +1,5 @@
 Cython
-hypothesis==6.155.7
+hypothesis==6.156.3
 pytest==9.1.1
 pytest-cov==7.1.0
 meson
