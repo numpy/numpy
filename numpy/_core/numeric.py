@@ -1257,12 +1257,24 @@ def _dot_fallback(a, b, out=None):
     """``dot`` via ``matmul``/``multiply`` for dtypes without a legacy dotfunc."""
     a = np.asarray(a)
     b = np.asarray(b)
+    # For stacked arrays (ndim > 2) ``np.dot`` does not broadcast; instead it
+    # takes the outer product over the "batch" axes, i.e. it is the same as
+    # ``tensordot(a, b, axes=[-1, -2])``.  We deliberately do not reproduce
+    # that quirky behaviour for user dtypes (see gh-30793); the only stacked
+    # case that is unambiguous is an ``N-D . 1-D`` reduction over the last
+    # axis, which is kept.  Everything else should go through ``tensordot``.
+    if (a.ndim > 2 or b.ndim > 2) and a.ndim > 0 and b.ndim > 1:
+        raise ValueError(
+            "'dot' does not support stacked arrays (ndim > 2) for "
+            "user-defined dtypes; use 'numpy.tensordot' instead."
+        )
     res_dtype = np.result_type(a.dtype, b.dtype)
     res_shape = _dot_result_shape(a, b)
     if out is not None:
         _dot_check_out(out, res_shape, res_dtype)
     if a.ndim == 0 or b.ndim == 0:
-        res = asarray(np.multiply(a, b), order='C')
+        # scalar * array: like np.dot, this preserves the operand's layout
+        res = np.multiply(a, b)
     elif a.shape[-1] == 0 or 0 in res_shape:
         res = np.zeros(res_shape, dtype=res_dtype)
     elif a.ndim == 1 and b.ndim == 1:

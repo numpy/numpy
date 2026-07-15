@@ -8358,8 +8358,8 @@ class TestDotFamilyFallback:
 
     @pytest.mark.parametrize("sa,sb", [
         ((), ()), ((), (3, 4)), ((4, 3), ()), ((5,), (5,)), ((3,), (3, 4)),
-        ((4, 3), (3,)), ((4, 3), (3, 5)), ((2, 3, 4), (4,)), ((4,), (2, 4, 5)),
-        ((2, 3, 4), (6, 4, 5)), ((0, 3), (3, 4)), ((4, 0), (0, 5)),
+        ((4, 3), (3,)), ((4, 3), (3, 5)), ((2, 3, 4), (4,)),
+        ((0, 3), (3, 4)), ((4, 0), (0, 5)),
     ])
     def test_dot_fallback_matches_dot(self, sa, sb):
         from numpy._core.numeric import _dot_fallback
@@ -8370,11 +8370,26 @@ class TestDotFamilyFallback:
         got = _dot_fallback(a, b)
         assert_array_equal(got, ref, strict=True)
 
+    @pytest.mark.parametrize("sa,sb", [
+        ((4,), (2, 4, 5)), ((3, 4), (2, 4, 5)), ((2, 3, 4), (4, 5)),
+        ((2, 3, 4), (6, 4, 5)),
+    ])
+    def test_dot_fallback_rejects_stacked(self, sa, sb):
+        # np.dot's stacked-array (ndim > 2) semantics are the outer product
+        # over the batch axes, which we intentionally do not implement for
+        # user dtypes; such calls are rejected in favour of tensordot.
+        from numpy._core.numeric import _dot_fallback
+        a = np.ones(sa, dtype=np.float64)
+        b = np.ones(sb, dtype=np.float64)
+        with assert_raises_regex(ValueError, "tensordot"):
+            _dot_fallback(a, b)
+
     def test_dot_fallback_noncontiguous_inputs(self):
         # matmul handles strided operands, so the fallback needs no input copy:
-        # verify correct values for F-contiguous and sliced (strided) inputs,
-        # and a C-contiguous output like np.dot (incl the 0-D scalar*array
-        # branch, where elementwise multiply would keep the operand's F order).
+        # verify correct values for F-contiguous and sliced (strided) inputs.
+        # The fallback reproduces np.dot's memory layout exactly: matmul yields
+        # a C-contiguous result, while the 0-D scalar*array branch preserves
+        # the operand's order (here F), just like np.dot.
         from numpy._core.numeric import _dot_fallback
         a = np.arange(12, dtype=np.float64).reshape(4, 3)
         b = np.arange(15, dtype=np.float64).reshape(3, 5)
@@ -8388,7 +8403,6 @@ class TestDotFamilyFallback:
             ref = np.dot(x, y)
             got = _dot_fallback(x, y)
             assert_array_equal(got, ref, strict=True)
-            assert got.flags["C_CONTIGUOUS"]
             assert got.strides == ref.strides
 
     def test_dot_fallback_does_not_conjugate(self):
