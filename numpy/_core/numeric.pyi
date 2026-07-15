@@ -1048,14 +1048,14 @@ def flatnonzero(a: ArrayLike) -> _Array1D[np.intp]: ...
 
 # NOTE: we ignore UP047 because inlining `_AnyScalarT` would result in a lot of code duplication
 
-type _LagsArg = int | tuple[int, int] | tuple[int, int, int] | range | slice | _ArrayLikeInt_co
+type _LagsArg = int | np.integer
 
 # keep in sync with `convolve` and `ma.core.correlate`
 @overload
 def correlate(  # noqa: UP047
     a: _ArrayLike1D[_AnyNumericScalarT],
     v: _ArrayLike1D[_AnyNumericScalarT],
-    mode: _CorrelateMode | None = ...,
+    mode: _CorrelateMode | None = None,
     *,
     lags: _LagsArg | None = None,
 ) -> _Array1D[_AnyNumericScalarT]: ...
@@ -1063,7 +1063,7 @@ def correlate(  # noqa: UP047
 def correlate(
     a: _ArrayLike1DBool_co,
     v: _ArrayLike1DBool_co,
-    mode: _CorrelateMode | None = ...,
+    mode: _CorrelateMode | None = None,
     *,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.bool]: ...
@@ -1071,7 +1071,7 @@ def correlate(
 def correlate(
     a: _ArrayLike1DInt_co,
     v: _ArrayLike1DInt_co,
-    mode: _CorrelateMode | None = ...,
+    mode: _CorrelateMode | None = None,
     *,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.int_ | Any]: ...
@@ -1079,7 +1079,7 @@ def correlate(
 def correlate(
     a: _ArrayLike1DFloat_co,
     v: _ArrayLike1DFloat_co,
-    mode: _CorrelateMode | None = ...,
+    mode: _CorrelateMode | None = None,
     *,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.float64 | Any]: ...
@@ -1087,7 +1087,7 @@ def correlate(
 def correlate(
     a: _ArrayLike1DNumber_co,
     v: _ArrayLike1DNumber_co,
-    mode: _CorrelateMode | None = ...,
+    mode: _CorrelateMode | None = None,
     *,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.complex128 | Any]: ...
@@ -1095,7 +1095,7 @@ def correlate(
 def correlate(
     a: _ArrayLike1DTD64_co,
     v: _ArrayLike1DTD64_co,
-    mode: _CorrelateMode | None = ...,
+    mode: _CorrelateMode | None = None,
     *,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.timedelta64 | Any]: ...
@@ -1105,7 +1105,7 @@ def correlate(
 def convolve(  # noqa: UP047
     a: _ArrayLike1D[_AnyNumericScalarT],
     v: _ArrayLike1D[_AnyNumericScalarT],
-    mode: _CorrelateMode | None = ...,
+    mode: _CorrelateMode | None = None,
     *,
     lags: _LagsArg | None = None,
 ) -> _Array1D[_AnyNumericScalarT]: ...
@@ -1113,7 +1113,7 @@ def convolve(  # noqa: UP047
 def convolve(
     a: _ArrayLike1DBool_co,
     v: _ArrayLike1DBool_co,
-    mode: _CorrelateMode | None = ...,
+    mode: _CorrelateMode | None = None,
     *,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.bool]: ...
@@ -1121,7 +1121,7 @@ def convolve(
 def convolve(
     a: _ArrayLike1DInt_co,
     v: _ArrayLike1DInt_co,
-    mode: _CorrelateMode | None = ...,
+    mode: _CorrelateMode | None = None,
     *,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.int_ | Any]: ...
@@ -1129,7 +1129,7 @@ def convolve(
 def convolve(
     a: _ArrayLike1DFloat_co,
     v: _ArrayLike1DFloat_co,
-    mode: _CorrelateMode | None = ...,
+    mode: _CorrelateMode | None = None,
     *,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.float64 | Any]: ...
@@ -1137,7 +1137,7 @@ def convolve(
 def convolve(
     a: _ArrayLike1DNumber_co,
     v: _ArrayLike1DNumber_co,
-    mode: _CorrelateMode | None = ...,
+    mode: _CorrelateMode | None = None,
     *,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.complex128 | Any]: ...
@@ -1145,7 +1145,7 @@ def convolve(
 def convolve(
     a: _ArrayLike1DTD64_co,
     v: _ArrayLike1DTD64_co,
-    mode: _CorrelateMode | None = ...,
+    mode: _CorrelateMode | None = None,
     *,
     lags: _LagsArg | None = None,
 ) -> _Array1D[np.timedelta64 | Any]: ...
