@@ -18,6 +18,7 @@
 #include "dtypemeta.h"
 #include "dtype_transfer.h"
 #include "simd/simd.h"
+#include "module_state.h"
 
 #include <string.h>
 
@@ -1494,7 +1495,7 @@ fail:
 
 /* Can only be called if doc is currently NULL */
 NPY_NO_EXPORT PyObject *
-arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_args)
+arr_add_docstring(PyObject *module, PyObject *const *args, Py_ssize_t len_args)
 {
     PyObject *obj;
     PyObject *str;
@@ -1503,12 +1504,17 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
 
     /* Don't add docstrings */
 #if PY_VERSION_HEX > 0x030b0000
-    if (npy_static_cdata.optimize > 1) {
+    {
+        multiarray_umath_state *st = get_module_state(module);
+        if (st->static_cdata.optimize > 1) {
+            Py_RETURN_NONE;
+        }
+    }
 #else
     if (Py_OptimizeFlag > 1) {
-#endif
         Py_RETURN_NONE;
     }
+#endif
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("add_docstring", args, len_args, NULL,
@@ -1958,6 +1964,10 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
 
     NPY_BEGIN_THREADS_THRESHOLDED(PyArray_Size((PyObject *)out) / 8);
 
+    /* FIXME: replace npy_get_module_state() with get_module_state(module)
+     * once all call chains carry the module pointer */
+    npy_static_cdata_struct *cdata = &npy_get_module_state()->static_cdata;
+
     while (PyArray_ITER_NOTDONE(it)) {
         npy_intp index;
         unsigned const char *inptr = PyArray_ITER_DATA(it);
@@ -1967,7 +1977,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             /* for unity stride we can just copy out of the lookup table */
             if (order == 'b') {
                 for (index = 0; index < in_n; index++) {
-                    npy_uint64 v = npy_static_cdata.unpack_lookup_big[*inptr].uint64;
+                    npy_uint64 v = cdata->unpack_lookup_big[*inptr].uint64;
                     memcpy(outptr, &v, 8);
                     outptr += 8;
                     inptr += in_stride;
@@ -1975,7 +1985,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             }
             else {
                 for (index = 0; index < in_n; index++) {
-                    npy_uint64 v = npy_static_cdata.unpack_lookup_big[*inptr].uint64;
+                    npy_uint64 v = cdata->unpack_lookup_big[*inptr].uint64;
                     if (order != 'b') {
                         v = npy_bswap8(v);
                     }
@@ -1986,7 +1996,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             }
             /* Clean up the tail portion */
             if (in_tail) {
-                npy_uint64 v = npy_static_cdata.unpack_lookup_big[*inptr].uint64;
+                npy_uint64 v = cdata->unpack_lookup_big[*inptr].uint64;
                 if (order != 'b') {
                     v = npy_bswap8(v);
                 }

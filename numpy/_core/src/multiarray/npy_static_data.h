@@ -207,7 +207,7 @@ typedef struct npy_static_cdata_struct {
 
 NPY_VISIBILITY_HIDDEN extern npy_interned_str_struct npy_interned_str;
 NPY_VISIBILITY_HIDDEN extern npy_static_pydata_struct npy_static_pydata;
-NPY_VISIBILITY_HIDDEN extern npy_static_cdata_struct npy_static_cdata;
+/* npy_static_cdata migrated to multiarray_umath_state.static_cdata */
 
 #ifdef __cplusplus
 }
