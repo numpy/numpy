@@ -112,7 +112,7 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
     int iflags, nflags;
 
     PyObject *f;
-    char *str = NULL;
+    const char *str = NULL;
     Py_ssize_t length = 0;
     npy_uint32 flag;
 
@@ -135,18 +135,13 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
         }
 
         if (PyUnicode_Check(f)) {
-            /* accept unicode input */
-            PyObject *f_str;
-            f_str = PyUnicode_AsASCIIString(f);
-            if (f_str == NULL) {
+            str = PyUnicode_AsUTF8AndSize(f, &length);
+            if (str == NULL) {
                 Py_DECREF(f);
                 return 0;
             }
-            Py_DECREF(f);
-            f = f_str;
         }
-
-        if (PyBytes_AsStringAndSize(f, &str, &length) < 0) {
+        else if (PyBytes_AsStringAndSize(f, (char **)&str, &length) < 0) {
             Py_DECREF(f);
             return 0;
         }
@@ -258,7 +253,7 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
     *op_flags = 0;
     for (iflags = 0; iflags < nflags; ++iflags) {
         PyObject *f;
-        char *str = NULL;
+        const char *str = NULL;
         Py_ssize_t length = 0;
 
         f = PySequence_GetItem(op_flags_in, iflags);
@@ -267,18 +262,13 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
         }
 
         if (PyUnicode_Check(f)) {
-            /* accept unicode input */
-            PyObject *f_str;
-            f_str = PyUnicode_AsASCIIString(f);
-            if (f_str == NULL) {
+            str = PyUnicode_AsUTF8AndSize(f, &length);
+            if (str == NULL) {
                 Py_DECREF(f);
                 return 0;
             }
-            Py_DECREF(f);
-            f = f_str;
         }
-
-        if (PyBytes_AsStringAndSize(f, &str, &length) < 0) {
+        else if (PyBytes_AsStringAndSize(f, (char **)&str, &length) < 0) {
             PyErr_Clear();
             Py_DECREF(f);
             PyErr_SetString(PyExc_ValueError,
