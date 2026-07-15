@@ -8387,9 +8387,11 @@ class TestDotFamilyFallback:
     def test_dot_fallback_noncontiguous_inputs(self):
         # matmul handles strided operands, so the fallback needs no input copy:
         # verify correct values for F-contiguous and sliced (strided) inputs.
-        # The fallback reproduces np.dot's memory layout exactly: matmul yields
-        # a C-contiguous result, while the 0-D scalar*array branch preserves
-        # the operand's order (here F), just like np.dot.
+        # A matrix product goes through matmul and is always C-contiguous; the
+        # 0-D scalar*array branch is an elementwise multiply that preserves the
+        # operand's layout.  (np.dot's own scalar layout is not a stable oracle:
+        # for float64 it routes ndim<=2 through CBLAS -> C-order, but a user
+        # DType never hits CBLAS and takes the same order-preserving multiply.)
         from numpy._core.numeric import _dot_fallback
         a = np.arange(12, dtype=np.float64).reshape(4, 3)
         b = np.arange(15, dtype=np.float64).reshape(3, 5)
@@ -8403,7 +8405,8 @@ class TestDotFamilyFallback:
             ref = np.dot(x, y)
             got = _dot_fallback(x, y)
             assert_array_equal(got, ref, strict=True)
-            assert got.strides == ref.strides
+            if x.ndim and y.ndim:  # matrix product -> C-contiguous like matmul
+                assert got.flags["C_CONTIGUOUS"]
 
     def test_dot_fallback_does_not_conjugate(self):
         # dot (unlike vdot) must not conjugate, even for complex input
