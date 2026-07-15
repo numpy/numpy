@@ -20,20 +20,11 @@ jobs:
           const {data} = await github.rest.repos.getContent({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            path: '.github/pr-prefix-labeler.yml',
+            path: '.github/pr-prefix-labeler.json',
           });
-          // parse the config's `"PREFIX": "label"` lines directly
-          const content = Buffer.from(data.content, data.encoding).toString();
-          const prefixToLabel = {};
-          for (const line of content.split('\n')) {
-            const match = line.match(/^\s*"([^"]+)"\s*:\s*"([^"]+)"\s*$/);
-            if (match) {
-              prefixToLabel[match[1]] = match[2];
-            }
-          }
-          if (Object.keys(prefixToLabel).length === 0) {
-            throw new Error('No entries parsed from pr-prefix-labeler.yml');
-          }
+          const prefixToLabel = JSON.parse(
+            Buffer.from(data.content, data.encoding).toString()
+          );
           const title = context.payload.pull_request.title;
           for (const [prefix, label] of Object.entries(prefixToLabel)) {
             if (title.startsWith(prefix)) {
