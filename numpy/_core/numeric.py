@@ -1237,22 +1237,6 @@ def _dot_check_out(out, shape, dtype):
         )
 
 
-def _dot_contract(a, b, axis_a, axis_b, out=None):
-    notin_a = [k for k in range(a.ndim) if k != axis_a]
-    notin_b = [k for k in range(b.ndim) if k != axis_b]
-    n = a.shape[axis_a]
-    m = math.prod(a.shape[ax] for ax in notin_a)
-    p = math.prod(b.shape[ax] for ax in notin_b)
-    at = a.transpose(notin_a + [axis_a]).reshape(m, n)
-    bt = b.transpose([axis_b] + notin_b).reshape(n, p)
-    if out is not None:
-        np.matmul(at, bt, out=out.reshape(m, p))
-        return out
-    res = np.matmul(at, bt)
-    return res.reshape([a.shape[ax] for ax in notin_a]
-                       + [b.shape[ax] for ax in notin_b])
-
-
 def _dot_fallback(a, b, out=None):
     """``dot`` via ``matmul``/``multiply`` for dtypes without a legacy dotfunc."""
     a = np.asarray(a)
@@ -1268,24 +1252,20 @@ def _dot_fallback(a, b, out=None):
             "'dot' does not support stacked arrays (ndim > 2) for "
             "user-defined dtypes; use 'numpy.tensordot' instead."
         )
-    res_dtype = np.result_type(a.dtype, b.dtype)
-    res_shape = _dot_result_shape(a, b)
     if out is not None:
-        _dot_check_out(out, res_shape, res_dtype)
+        # ``matmul``/``multiply`` are more permissive with ``out`` than
+        # ``np.dot``, so enforce ``np.dot``'s stricter contract here.
+        _dot_check_out(out, _dot_result_shape(a, b),
+                       np.result_type(a.dtype, b.dtype))
     if a.ndim == 0 or b.ndim == 0:
-        res = np.multiply(a, b)
-    elif a.shape[-1] == 0 or 0 in res_shape:
-        res = np.zeros(res_shape, dtype=res_dtype)
-    elif a.ndim == 1 and b.ndim == 1:
-        return np.matmul(a, b, out=out)
-    elif b.ndim == 1:
-        return _dot_contract(a, b, a.ndim - 1, 0, out)
-    else:
-        return _dot_contract(a, b, a.ndim - 1, b.ndim - 2, out)
-    if out is not None:
-        out[...] = res
-        return out
-    return res
+        # scalar * array is elementwise (matmul is undefined for 0-D operands)
+        # and, like np.dot, preserves the operand's memory layout.
+        return np.multiply(a, b, out=out)
+    # Once the stacked (ndim > 2) case above is excluded, ``np.dot`` coincides
+    # exactly with ``matmul`` for every remaining case -- matrix/vector
+    # products, the ``N-D . 1-D`` reduction and empty contractions -- so no
+    # transpose/reshape dance is needed.
+    return np.matmul(a, b, out=out)
 
 
 def _vdot_fallback(a, b):
