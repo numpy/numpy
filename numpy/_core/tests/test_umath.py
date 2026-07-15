@@ -5192,6 +5192,14 @@ class TestReplaceLoopBySignature:
 
         assert_array_equal(np.negative(a), [-1.0, -2.0, -3.0])
 
+    def test_replace_loop_before_first_call(self):
+        # gh-31068: replacing the loop of a ufunc that was never called
+        # must take effect in the cached dispatch path created later.
+        # A fresh ufunc guarantees the dispatch state is untouched.
+        fresh = ncu_tests.create_unary_ufunc()
+        ncu_tests.replace_loop(fresh)
+        assert_array_equal(fresh(np.array([1.0, 2.0])), [42.0, 42.0])
+
 
 class TestAddDocstring:
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
