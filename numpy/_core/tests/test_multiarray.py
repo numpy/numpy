@@ -3244,9 +3244,6 @@ class TestMethods:
         before, after = np.split(idx, [k])
         before.sort()
         after.sort()
-        if np.issubdtype(a.dtype, np.object_):
-            before = before.astype(float)
-            after = after.astype(float)
 
         msg = f"argpartition, dtype={a.dtype}, k={k}, descending={descending}"
         assert_equal(before, expected_before, msg)
@@ -3264,9 +3261,6 @@ class TestMethods:
         before, after = np.split(idx, [k])
         before.sort()
         after.sort()
-        if np.issubdtype(a.dtype, np.object_):
-            before = before.astype(float)
-            after = after.astype(float)
 
         msg = (f"argpartition, randomized, dtype={a.dtype}, k={k}, "
                f"descending={descending}")

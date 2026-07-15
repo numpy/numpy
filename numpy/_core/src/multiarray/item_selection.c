@@ -1860,9 +1860,9 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
         return NULL;
     }
 
-    method = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op)))->argpart_meth;
+    method = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op2)))->argpart_meth;
     if (method != NULL) {
-        PyArray_Descr *descr = PyArray_DESCR(op);
+        PyArray_Descr *descr = PyArray_DESCR(op2);
         PyArray_Descr *kdescr = PyArray_DESCR(kthrvl);
         odescr = PyArray_DescrFromType(NPY_INTP);
         if (odescr == NULL) {
@@ -1897,12 +1897,12 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
         }
     }
     else {
-        argpart = get_argpartition_func(PyArray_TYPE(op), which);
+        argpart = get_argpartition_func(PyArray_TYPE(op2), which);
     }
 
     if (method == NULL && argpart == NULL) {
         /* Use sorting, slower but equivalent */
-        ret = PyArray_ArgSort(op, axis, (NPY_SORTKIND)which);
+        ret = PyArray_ArgSort(op2, axis, (NPY_SORTKIND)which);
     }
     else {
         ret = _new_argsortlike(op2, axis, NULL, argpart,
