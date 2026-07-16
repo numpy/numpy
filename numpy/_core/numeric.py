@@ -78,8 +78,7 @@ __all__ = [
     'argwhere', 'copyto', 'concatenate', 'lexsort', 'astype',
     'can_cast', 'promote_types', 'min_scalar_type',
     'result_type', 'isfortran', 'empty_like', 'zeros_like', 'ones_like',
-    'correlate', 'convolve', 'inner', 'dot',
-    'outer', 'vdot', 'roll',
+    'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
     'rollaxis', 'moveaxis', 'cross', 'tensordot', 'little_endian',
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
     'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
@@ -744,36 +743,6 @@ def _lags_from_lags(lags):
     return (-m, m + 1, 1)
 
 
-def _lags_from_mode(alen, vlen, mode):
-    """
-    Compute the lag range for a given mode.
-
-    Produces lags aligned with the caller's original (alen, vlen) order
-    (i.e. matches what ``np.correlate(a, v, mode)`` returns element-by-element).
-    """
-    inverted = False
-    if alen < vlen:
-        alen, vlen = vlen, alen
-        inverted = True
-
-    if mode == 0:
-        m0, m1 = 0, alen - vlen + 1
-    elif mode == 1:
-        half = vlen // 2
-        m0, m1 = -half, alen - half
-    elif mode == 2:
-        m0, m1 = -vlen + 1, alen
-    else:
-        raise ValueError("correlate/convolve mode must be "
-                         "one of 'valid', 'same', 'full'")
-
-    if inverted:
-        count = m1 - m0  # lag_step is always 1 for mode-based lags
-        m0, m1 = -(m0 + count - 1), -m0 + 1
-
-    return (m0, m1, 1)
-
-
 def _correlate_dispatcher(a, v, mode=None, *, lags=None):
     return (a, v)
 
@@ -901,20 +870,20 @@ def convolve(a, v, mode=None, *, lags=None):
           Returns the convolution at each point of overlap, with an output
           shape of (N+M-1,). At the end-points of the convolution, the
           signals do not overlap completely, and boundary effects may be
-          seen.  This corresponds with a lag tuple of (-M+1, N, 1) for
-          N>M or (-N+1, M, 1) for M>N.
+          seen.  This covers the lag range ``[-M+1, N)`` for N>M or
+          ``[-N+1, M)`` for M>N.
 
         'same':
           Mode `same` returns output of length ``max(M, N)``.  Boundary
-          effects are still visible. This corresponds with a lag tuple of
-          (-M/2, N-M/2, 1) for N>M or (-M+N/2+1, N/2+1, 1) for M>N.
+          effects are still visible. This covers the lag range
+          ``[-M/2, N-M/2)`` for N>M or ``[-M+N/2+1, N/2+1)`` for M>N.
 
         'valid':
           Mode 'valid' returns output of length
           ``max(M, N) - min(M, N) + 1``.  The convolution product is only
           given for points where the signals overlap completely.  Values
-          outside the signal boundary have no effect. This corresponds with
-          a lag tuple of (0, N-M+1, 1) for N>M or (-M+N, 1, 1) for M>N.
+          outside the signal boundary have no effect. This covers the lag
+          range ``[0, N-M+1)`` for N>M or ``[-M+N, 1)`` for M>N.
 
     lags : int, optional
         Lag window half-width.  An integer ``n`` requests the symmetric
