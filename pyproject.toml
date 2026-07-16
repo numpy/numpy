@@ -238,8 +238,8 @@ before-test = ""
 # Any packages which appear both here and in test_requirements.txt should be kept in
 # sync.
 test-requires = [
-    "hypothesis==6.152.1",
-    "pytest==9.1.0",
+    "hypothesis==6.155.7",
+    "pytest==9.1.1",
     "tzdata",
     "pytest-xdist",
 ]
