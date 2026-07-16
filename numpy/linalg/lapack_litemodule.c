@@ -454,6 +454,14 @@ lapack_lite_exec(PyObject *m)
     }
     module_loaded = 1;
 
+    if (PyErr_WarnEx(PyExc_DeprecationWarning,
+                     "The numpy.linalg.lapack_lite module is deprecated and will be "
+                     "removed in a future release. It is an internal implementation "
+                     "detail of numpy.linalg.",
+                     2) < 0) {
+        return -1;
+    }
+
     if (PyArray_ImportNumPyAPI() < 0) {
         return -1;
     }

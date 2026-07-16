@@ -46,7 +46,13 @@ from numpy.testing import (
 from numpy.testing._private.utils import run_subprocess
 
 try:
-    import numpy.linalg.lapack_lite
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="The numpy.linalg.lapack_lite module is deprecated",
+            category=DeprecationWarning,
+        )
+        import numpy.linalg.lapack_lite
 except ImportError:
     # May be broken when numpy was built without BLAS/LAPACK present
     # If so, ensure we don't break the whole test suite - the `lapack_lite`
