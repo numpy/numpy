@@ -3096,6 +3096,9 @@ class TestMethods:
             a = a[::-1]
 
         expected = a.copy()[::-1]
+        if np.issubdtype(a.dtype, np.object_):
+            # cast to float for comparison, as object does not support isnan
+            expected = expected.astype(float)
         if nan is not None:
             # nans sort to the end regardless of sort order
             expected = np.concatenate((expected[~np.isnan(expected)],
@@ -3105,6 +3108,9 @@ class TestMethods:
         before, after = np.split(part, [k])
         before.sort(descending=descending)
         after.sort(descending=descending)
+        if np.issubdtype(a.dtype, np.object_):
+            before = before.astype(float)
+            after = after.astype(float)
 
         msg = f"partition, dtype={a.dtype}, k={k}, descending={descending}"
         assert_equal(before, expected[:k], msg)
@@ -3119,6 +3125,9 @@ class TestMethods:
         before, after = np.split(part, [k])
         before.sort(descending=descending)
         after.sort(descending=descending)
+        if np.issubdtype(a.dtype, np.object_):
+            before = before.astype(float)
+            after = after.astype(float)
 
         msg = f"partition, randomized, dtype={a.dtype}, k={k}, descending={descending}"
         assert_equal(before, expected[:k], msg)
@@ -3188,7 +3197,6 @@ class TestMethods:
         assert_equal(before_part, before_sort, msg)
         assert_equal(after_part, after_sort, msg)
 
-    @pytest.mark.skip(reason="descending partitions not supported for string types yet")
     @pytest.mark.parametrize('dtype', [np.str_, np.bytes_])
     @pytest.mark.parametrize('k', [2, 15, 50, 95])
     @pytest.mark.parametrize('descending', [True, False])
@@ -3208,6 +3216,13 @@ class TestMethods:
         self._test_partition_descending(a, k, None, descending)
         self._test_partition_descending(a, k, nan, descending)
 
+    @pytest.mark.parametrize('k', [2, 15, 50, 80])
+    @pytest.mark.parametrize("descending", [True, False])
+    def test_partition_descending_object(self, k, descending):
+        a = np.arange(101, dtype=float).astype(object)
+        self._test_partition_descending(a, k, None, descending)
+        self._test_partition_descending(a, k, np.nan, descending)
+
     def _test_argpartition_descending(self, a, k, nan, descending):
         if nan is not None:
             # because of this decimation, we only test with k values < 90
@@ -3218,7 +3233,11 @@ class TestMethods:
 
         expected = np.arange(len(a))[::-1]
         if nan is not None:
-            expected = np.concatenate((expected[~np.isnan(a)], expected[np.isnan(a)]))
+            # cast to float for comparison, as object does not support isnan
+            a_cast = a.astype(float) if np.issubdtype(a.dtype, np.object_) else a
+            expected = np.concatenate((expected[~np.isnan(a_cast)],
+                                       expected[np.isnan(a_cast)]))
+
         # nan indices are not ordered, so sort for set-like comparison
         expected_before = np.sort(expected[:k])
         expected_after = np.sort(expected[k:])
@@ -3282,7 +3301,6 @@ class TestMethods:
         a = np.arange(-50, 51, dtype=dtype) + 1j * np.arange(-50, 51, dtype=dtype)
         self._test_argpartition_descending(a, k, nan, descending)
 
-    @pytest.mark.skip(reason="descending partitions not supported for string types yet")
     @pytest.mark.parametrize('dtype', [np.str_, np.bytes_])
     @pytest.mark.parametrize('k', [2, 15, 50, 80])
     @pytest.mark.parametrize('descending', [True, False])
@@ -3302,14 +3320,12 @@ class TestMethods:
         self._test_argpartition_descending(a, k, None, descending)
         self._test_argpartition_descending(a, k, nan, descending)
 
-    @pytest.mark.parametrize('dtype', [np.str_, np.bytes_, np.object_])
-    def test_partition_and_argpartition_raise_on_descending(self, dtype):
-        a = np.arange(10, dtype=np.float64).astype(dtype)
-
-        with assert_raises(TypeError, msg="type does not support descending partition"):
-            np.partition(a, 5, descending=True)
-        with assert_raises(TypeError, msg="type does not support descending partition"):
-            np.argpartition(a, 5, descending=True)
+    @pytest.mark.parametrize('k', [2, 15, 50, 80])
+    @pytest.mark.parametrize("descending", [True, False])
+    def test_argpartition_descending_object(self, k, descending):
+        a = np.arange(101, dtype=float).astype(object)
+        self._test_argpartition_descending(a, k, None, descending)
+        self._test_argpartition_descending(a, k, np.nan, descending)
 
     @pytest.mark.parametrize('a', [
         np.array([0, 1, np.nan], dtype=np.float16),
@@ -4539,6 +4555,14 @@ class TestMethods:
         a = np.ones(10, dtype=dtype)
         with pytest.raises(TypeError, match="cannot conjugate non-numeric dtype"):
             a.conj()
+
+    def test_conjugate_legacy_user_dtype(self):
+        # gh-31754 : legacy user-defined dtypes are not flagged numeric and have
+        # no `.imag`, but `conjugate` must still dispatch to the ufunc (which
+        # falls back to a cast for `rational`) rather than raising.
+        a = np.array([1, 2, 3], dtype=rational)
+        assert_array_equal(a.conjugate(), np.conjugate(a))
+        assert_array_equal(a.conjugate(), [1, 2, 3])
 
     def test_conjugate_out(self):
         # Minimal test for the out argument being passed on correctly

@@ -807,7 +807,10 @@ def vdot(a: _ArrayLikeObject_co, b: object, /) -> Any: ...
 def vdot(a: object, b: _ArrayLikeObject_co, /) -> Any: ...
 
 #
-def bincount(x: _ArrayLikeInt_co, /, weights: ArrayLike | None = None, minlength: SupportsIndex = 0) -> _Array1D[intp]: ...
+@overload
+def bincount(x: _ArrayLikeInt_co, /, weights: None = None, minlength: SupportsIndex = 0) -> _Array1D[intp]: ...
+@overload
+def bincount(x: _ArrayLikeInt_co, /, weights: _ArrayLikeFloat_co, minlength: SupportsIndex = 0) -> _Array1D[np.float64]: ...
 
 #
 def copyto(dst: ndarray, src: ArrayLike, casting: _CastingKind = "same_kind", where: object = True) -> None: ...
@@ -1789,7 +1792,7 @@ class nditer:
         /,
         op: ArrayLike,
         flags: Sequence[_NDIterFlagsKind] | None = None,
-        op_flags: Sequence[_NDIterFlagsOp] | None = None,
+        op_flags: Sequence[_NDIterFlagsOp] | Sequence[Sequence[_NDIterFlagsOp]] | None = None,
         op_dtypes: DTypeLike | None = None,
         order: _OrderKACF = "K",
         casting: _CastingKind = "safe",

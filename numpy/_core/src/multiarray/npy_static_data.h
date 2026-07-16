@@ -53,6 +53,8 @@ typedef struct npy_interned_str_struct {
     PyObject *imag;
     PyObject *sort;
     PyObject *argsort;
+    PyObject *partition;
+    PyObject *argpartition;
     PyObject *_set_dtype;
 } npy_interned_str_struct;
 

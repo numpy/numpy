@@ -37,7 +37,7 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         # To update: replace commit hash (no tags/releases available, use HEAD of master)
-        run: pip install git+https://github.com/hauntsaninja/mypy_primer.git@05f73ec3d85bb4f55676f3c57f2c3e5136228977  # HEAD of master on 2026-03-04
+        run: pip install git+https://github.com/hauntsaninja/mypy_primer.git@ff3d9531335dad605d43fcc208c9c159bb09fa81  # HEAD of master on 2026-06-06
       - name: Run mypy_primer
         shell: bash
         run: |
@@ -58,12 +58,12 @@ jobs:
           echo ''
           cd ..
           # fail action if exit code isn't zero or one
-          # TODO: note that we don't build numpy, so if a project attempts to use the
-          # numpy mypy plugin, we may see some issues involving version skew.
+          # (dedupe is temporarily disabled: https://github.com/dedupeio/dedupe/pull/1229)
           (
             mypy_primer \
             --new v${MYPY_VERSION} --old v${MYPY_VERSION} \
             --known-dependency-selector numpy \
+            --project-selector '^(?!.*dedupeio/dedupe)' \
             --old-prepend-path numpy_base --new-prepend-path numpy_to_test \
             --num-shards 1 --shard-index ${{ matrix.shard-index }} \
             --additional-flags="--python-version=3.12" \

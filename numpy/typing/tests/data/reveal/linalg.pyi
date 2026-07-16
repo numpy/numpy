@@ -16,8 +16,10 @@ type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[S
 
 bool_list_1d: list[bool]
 bool_list_2d: list[list[bool]]
+bool_list_3d: list[list[list[bool]]]
 int_list_1d: list[int]
 int_list_2d: list[list[int]]
+int_list_3d: list[list[list[int]]]
 float_list_1d: list[float]
 float_list_2d: list[list[float]]
 float_list_3d: list[list[list[float]]]
@@ -59,6 +61,8 @@ AR_f8_2d: _Array2D[np.float64]
 AR_f8_3d: _Array3D[np.float64]
 AR_f8_4d: np.ndarray[tuple[int, int, int, int], np.dtype[np.float64]]
 
+AR_i1_2d: _Array2D[np.int8]
+AR_i1_3d: _Array3D[np.int8]
 AR_f2_2d: _Array2D[np.float16]
 AR_f4_1d: _Array1D[np.float32]
 AR_f4_2d: _Array2D[np.float32]
@@ -388,15 +392,19 @@ assert_type(np.linalg.diagonal(str_list_2d), npt.NDArray[np.str_])
 
 assert_type(np.linalg.trace(AR_any), Any)
 assert_type(np.linalg.trace(AR_f4), Any)
+assert_type(np.linalg.trace(AR_i1_2d), np.int_)
+assert_type(np.linalg.trace(AR_i1_3d), _Array1D[np.int_])
 assert_type(np.linalg.trace(AR_f4_2d), np.float32)
 assert_type(np.linalg.trace(AR_f8_2d), np.float64)
 assert_type(np.linalg.trace(AR_f4_3d), _Array1D[np.float32])
 assert_type(np.linalg.trace(AR_f8_3d), _Array1D[np.float64])
 assert_type(np.linalg.trace(AR_f8_4d), np.ndarray[tuple[int, *tuple[Any, ...]], np.dtype[np.float64]])
-assert_type(np.linalg.trace(bool_list_2d), np.bool)
+assert_type(np.linalg.trace(bool_list_2d), np.int_)
 assert_type(np.linalg.trace(int_list_2d), np.int_)
 assert_type(np.linalg.trace(float_list_2d), np.float64)
 assert_type(np.linalg.trace(complex_list_2d), np.complex128)
+assert_type(np.linalg.trace(bool_list_3d), npt.NDArray[np.int_])
+assert_type(np.linalg.trace(int_list_3d), npt.NDArray[np.int_])
 assert_type(np.linalg.trace(float_list_3d), npt.NDArray[np.float64])
 
 assert_type(np.linalg.outer(bool_list_1d, bool_list_1d), _Array2D[np.bool])

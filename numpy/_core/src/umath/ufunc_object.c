@@ -4933,10 +4933,59 @@ PyUFunc_ReplaceLoopBySignature(PyUFuncObject *func,
         if (j < func->nargs) {
             continue;
         }
+        /*
+         * If a wrapping ArrayMethod exists for this signature, its cached
+         * loop must be replaced as well.  The (fallible) lookup happens
+         * before any mutation, so a failure leaves the ufunc unchanged and
+         * returns -1 with an exception set.
+         * NOTE: replacing a loop is not synchronized with ufunc execution;
+         * the user must not call this while the ufunc runs in another
+         * thread.
+         */
+        PyArrayMethodObject *method = NULL;
+        if (func->_loops != NULL) {
+            PyArray_DTypeMeta *sig_dtypes[NPY_MAXARGS];
+            for (j = 0; j < func->nargs; j++) {
+                sig_dtypes[j] = PyArray_DTypeFromTypeNum(signature[j]);
+                if (sig_dtypes[j] == NULL) {
+                    while (--j >= 0) {
+                        Py_DECREF(sig_dtypes[j]);
+                    }
+                    return -1;
+                }
+            }
+            PyObject *sig_tuple = PyTuple_FromArray(
+                    (PyObject **)sig_dtypes, func->nargs);
+            for (j = 0; j < func->nargs; j++) {
+                Py_DECREF(sig_dtypes[j]);
+            }
+            if (sig_tuple == NULL) {
+                return -1;
+            }
+            PyObject *item = NULL;
+            int found = PyDict_GetItemRef(func->_loops, sig_tuple, &item);
+            Py_DECREF(sig_tuple);
+            if (found < 0) {
+                return -1;
+            }
+            if (found == 1) {
+                PyObject *method_obj = PyTuple_GET_ITEM(item, 1);
+                if (PyObject_TypeCheck(method_obj, &PyArrayMethod_Type)) {
+                    /* borrowed, but kept alive by ``func->_loops`` */
+                    method = (PyArrayMethodObject *)method_obj;
+                }
+                Py_DECREF(item);
+            }
+        }
+
         if (oldfunc != NULL) {
             *oldfunc = func->functions[i];
         }
         func->functions[i] = newfunc;
+        if (method != NULL) {
+            /* ``cached_loop_data`` is unchanged (still ``func->data[i]``) */
+            method->cached_loop = (void *)newfunc;
+        }
         res = 0;
         break;
     }
@@ -5321,6 +5370,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     PyObject *key, *cobj;
     PyArray_DTypeMeta *signature[NPY_MAXARGS];
     PyObject *signature_tuple = NULL;
+    PyObject *info = NULL;
     int i;
     int *newtypes=NULL;
 
@@ -5369,9 +5419,8 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     /*
      * We add the loop to the list of all loops and promoters.  If the
      * equivalent loop was already added, skip this.
-     * Note that even then the ufunc is still modified: The legacy ArrayMethod
-     * already looks up the inner-loop from the ufunc (and this is replaced
-     * below!).
+     * Note that even then the ufunc is still modified: the wrapping
+     * ArrayMethod's cached inner-loop is patched below.
      * If the existing one is not a legacy ArrayMethod, we raise currently:
      * A new-style loop should not be replaced by an old-style one.
      */
@@ -5384,8 +5433,9 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
         PyObject *registered = PyTuple_GET_ITEM(existing_item, 1);
         int not_compatible = (
             !PyObject_TypeCheck(registered, &PyArrayMethod_Type) ||
-            ((PyArrayMethodObject *)registered)->get_strided_loop !=
-                &get_wrapped_legacy_ufunc_loop);
+            (((PyArrayMethodObject *)registered)->get_strided_loop !=
+                    &get_wrapped_legacy_ufunc_loop
+                && ((PyArrayMethodObject *)registered)->cached_loop == NULL));
         Py_DECREF(existing_item);
         if (not_compatible) {
             PyErr_Format(PyExc_TypeError,
@@ -5398,12 +5448,30 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
         add_new_loop = 0;
     }
     if (add_new_loop) {
-        PyObject *info = add_and_return_legacy_wrapping_ufunc_loop(
-                ufunc, signature, 0);
-        if (info == NULL) {
+        /* The returned reference is borrowed (held by ``ufunc->_loops``) */
+        if (add_and_return_legacy_wrapping_ufunc_loop(
+                ufunc, signature, 0) == NULL) {
             goto fail;
         }
     }
+    /*
+     * Look up the wrapping ArrayMethod we just added (or that already
+     * existed) so we can patch its cached legacy loop after the userloop
+     * is threaded into ``ufunc->userloops`` below.  The cache entry is
+     * allocated up front so that the patch itself cannot fail once the
+     * ufunc has been modified.
+     */
+    if (PyDict_GetItemRef(ufunc->_loops, signature_tuple, &info) < 0) {
+        goto fail;
+    }
+    if (info == NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "internal error: registered loop missing from dispatch table");
+        goto fail;
+    }
+    PyArrayMethodObject *registered_method =
+            (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
+    assert(PyObject_TypeCheck(registered_method, &PyArrayMethod_Type));
     /* Clearing sets it to NULL for the error paths */
     Py_CLEAR(signature_tuple);
 
@@ -5427,8 +5495,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
         }
         PyDict_SetItem(ufunc->userloops, key, cobj);
         Py_DECREF(cobj);
-        Py_DECREF(key);
-        return 0;
+        goto patch_and_return;
     }
     else {
         PyUFunc_Loop1d *current, *prev = NULL;
@@ -5474,12 +5541,22 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
             }
         }
     }
+  patch_and_return:
+    /*
+     * Patch the wrapping ArrayMethod so calls dispatch via call_cached_loop.
+     * NOTE: registering a loop is not synchronized with ufunc execution;
+     * the user must not call this while the ufunc runs in another thread.
+     */
+    registered_method->cached_loop = (void *)function;
+    registered_method->cached_loop_data = data;
+    Py_DECREF(info);
     Py_DECREF(key);
     return 0;
 
  fail:
     Py_DECREF(key);
     Py_XDECREF(signature_tuple);
+    Py_XDECREF(info);
     PyArray_free(funcdata);
     PyArray_free(newtypes);
     if (!PyErr_Occurred()) PyErr_NoMemory();
@@ -5489,11 +5566,13 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 #undef _SETCPTR
 
 #undef _PyUFuncObject_GET_ITEM_DATA
+static_assert(NPY_ALIGNOF(PyUFuncObject_fields) <= 8,
+              "PyUFuncObject must not require more than 8-byte alignment");
 /*UFUNC_API*/
 NPY_NO_EXPORT PyUFuncObject_fields *
 _PyUFuncObject_GET_ITEM_DATA(const PyUFuncObject *obj)
 {
-    return (PyUFuncObject_fields *)((char *)obj + sizeof(PyObject));
+    return (PyUFuncObject_fields *)((char *)obj + offsetof(PyUFuncObject_fields, nin));
 }
 
 static void
@@ -6423,8 +6502,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
             DTypes[i] = NPY_DTYPE(descr);
             Py_INCREF(DTypes[i]);
         }
-         /* Explicitly allow int, float, and complex for the "weak" types. */
-        else if (descr_obj == (PyObject *)&PyLong_Type) {
+        /* Explicitly allow int, float, and complex for the "weak" types. */
+        else if (descr_obj == (PyObject *)&PyLong_Type && i < ufunc -> nin) {
             descr = PyArray_DescrFromType(NPY_INTP);
             dummy_arrays[i] = (PyArrayObject *)PyArray_Empty(0, NULL, descr, 0);
             if (dummy_arrays[i] == NULL) {
@@ -6435,7 +6514,7 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
             DTypes[i] = &PyArray_PyLongDType;
             promoting_pyscalars = NPY_TRUE;
         }
-        else if (descr_obj == (PyObject *)&PyFloat_Type) {
+        else if (descr_obj == (PyObject *)&PyFloat_Type && i < ufunc -> nin) {
             descr = PyArray_DescrFromType(NPY_DOUBLE);
             dummy_arrays[i] = (PyArrayObject *)PyArray_Empty(0, NULL, descr, 0);
             if (dummy_arrays[i] == NULL) {
@@ -6446,7 +6525,7 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
             DTypes[i] = &PyArray_PyFloatDType;
             promoting_pyscalars = NPY_TRUE;
         }
-        else if (descr_obj == (PyObject *)&PyComplex_Type) {
+        else if (descr_obj == (PyObject *)&PyComplex_Type && i < ufunc -> nin) {
             descr = PyArray_DescrFromType(NPY_CDOUBLE);
             dummy_arrays[i] = (PyArrayObject *)PyArray_Empty(0, NULL, descr, 0);
             if (dummy_arrays[i] == NULL) {
@@ -6464,6 +6543,11 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
                         "(except the first one in reductions)");
                 goto finish;
             }
+        }
+        else if (i >= ufunc -> nin) {
+            PyErr_SetString(PyExc_TypeError,
+                    "Output descriptors must be NumPy dtypes or None.");
+            goto finish;
         }
         else {
             PyErr_SetString(PyExc_TypeError,

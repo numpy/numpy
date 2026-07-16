@@ -3254,6 +3254,28 @@ class MaskedArray(ndarray):
         memory. Therefore if ``a`` is C-ordered versus fortran-ordered, versus
         defined as a slice or transpose, etc., the view may give different
         results.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> a = np.ma.array([1.0, 2.0, 3.0], mask=[0, 1, 0])
+        >>> a
+        masked_array(data=[1.0, --, 3.0],
+                     mask=[False,  True, False],
+               fill_value=1e+20)
+
+        Use ``fill_value`` to set a custom fill value on the view without
+        copying the data:
+
+        >>> a.view(fill_value=-999.0)
+        masked_array(data=[1.0, --, 3.0],
+                     mask=[False,  True, False],
+               fill_value=-999.0)
+
+        View as a plain :class:`numpy.ndarray` — the mask is not preserved:
+
+        >>> a.view(np.ndarray)
+        array([1., 2., 3.])
         """
 
         if type is None and (isinstance(dtype, builtins.type)
@@ -8451,6 +8473,8 @@ def convolve(a, v, mode='full', propagate_mask=True):
     See Also
     --------
     numpy.convolve : Equivalent function in the top-level NumPy module.
+    numpy.ma.correlate : Cross-correlation of two 1-D sequences; see its
+        examples for ``propagate_mask`` behaviour.
     """
     return _convolve_or_correlate(np.convolve, a, v, mode, propagate_mask)
 

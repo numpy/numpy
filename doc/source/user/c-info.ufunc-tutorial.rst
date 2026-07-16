@@ -149,12 +149,7 @@ how to create the module.
 
         PyMODINIT_FUNC PyInit_spam(void)
         {
-            PyObject *m;
-            m = PyModule_Create(&moduledef);
-            if (!m) {
-                return NULL;
-            }
-            return m;
+            return PyModule_Create(&moduledef);
         }
 
 To create the module, one proceeds as one would for a Python package, creating
