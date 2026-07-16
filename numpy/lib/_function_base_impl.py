@@ -1864,17 +1864,19 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     >>> plt.legend(framealpha=1, shadow=True)
     >>> plt.show()
     """
-    p = asanyarray(p)
-    if discont is None:
-        discont = period / 2
     if np.ma.isMaskedArray(p):
         # TODO: one could potentially implement a mask aware unwrap function
+        # we now remove the mask and rewrap the result into a masked array
+        # to preserve the ndarray subclass type
         fill_value = p.fill_value
-        unmasked = _unwrap_fallback(asarray(p), discont, period, axis)
+        unmasked = unwrap(np.asarray(p), discont=discont, axis=axis, period=period)
         result = unmasked.view(type(p))
         result.mask = False
         result.fill_value = fill_value
         return result
+    p = asanyarray(p)
+    if discont is None:
+        discont = period / 2
     dtype = np.result_type(p, period)
     discont_type = np.longdouble if dtype.type is np.longdouble else np.float64
     try:

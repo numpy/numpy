@@ -2476,7 +2476,7 @@ class TestUnwrap:
                               mask=[False, False, True, False, False])
         out = unwrap(p)
         assert isinstance(out, np.ma.MaskedArray)
-        expected = nfb._unwrap_fallback(np.asarray(p), np.pi, 2 * np.pi, -1)
+        expected = self._reference_unwrap(np.asarray(p))
         expected = np.ma.array(expected, mask=False, fill_value=p.fill_value)
         assert_array_equal(out.mask, expected.mask)
         assert_array_equal(out.data, expected.data)
