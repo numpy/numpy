@@ -9349,7 +9349,7 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         indices: tuple[int, ...],
         *,
         axis: int = 0,
-        dtype: str |  type,
+        dtype: str | type,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
