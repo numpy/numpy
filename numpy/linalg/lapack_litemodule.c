@@ -68,34 +68,54 @@ extern fortran_int FNAME(zungqr)(fortran_int *m, fortran_int *n, fortran_int *k,
 
 extern fortran_int FNAME(xerbla)(char *srname, fortran_int *info);
 
-static PyObject *LapackError;
+/*
+ * Per-module state struct to support sub-interpreters.
+ */
+typedef struct {
+    PyObject *LapackError;
+} lapack_lite_state;
+
+/*
+ * Retrieve module state from a module object.
+ */
+static lapack_lite_state *
+get_lapack_lite_state(PyObject *module)
+{
+    lapack_lite_state *state = (lapack_lite_state *)PyModule_GetState(module);
+    assert(state != NULL);
+    return state;
+}
 
 #define TRY(E) if (!(E)) return NULL
 
 static int
-check_object(PyObject *ob, int t, char *obname,
-                        char *tname, char *funname)
+check_object(PyObject *module, PyObject *ob, int t, char *obname,
+             char *tname, char *funname)
 {
     if (!PyArray_Check(ob)) {
-        PyErr_Format(LapackError,
+        lapack_lite_state *state = get_lapack_lite_state(module);
+        PyErr_Format(state->LapackError,
                      "Expected an array for parameter %s in lapack_lite.%s",
                      obname, funname);
         return 0;
     }
     else if (!PyArray_IS_C_CONTIGUOUS((PyArrayObject *)ob)) {
-        PyErr_Format(LapackError,
+        lapack_lite_state *state = get_lapack_lite_state(module);
+        PyErr_Format(state->LapackError,
                      "Parameter %s is not contiguous in lapack_lite.%s",
                      obname, funname);
         return 0;
     }
     else if (!(PyArray_TYPE((PyArrayObject *)ob) == t)) {
-        PyErr_Format(LapackError,
+        lapack_lite_state *state = get_lapack_lite_state(module);
+        PyErr_Format(state->LapackError,
                      "Parameter %s is not of type %s in lapack_lite.%s",
                      obname, tname, funname);
         return 0;
     }
     else if (PyArray_ISBYTESWAPPED((PyArrayObject *)ob)) {
-        PyErr_Format(LapackError,
+        lapack_lite_state *state = get_lapack_lite_state(module);
+        PyErr_Format(state->LapackError,
                      "Parameter %s has non-native byte order in lapack_lite.%s",
                      obname, funname);
         return 0;
@@ -113,8 +133,15 @@ check_object(PyObject *ob, int t, char *obname,
 #define ZDATA(p) ((f2c_doublecomplex *) PyArray_DATA((PyArrayObject *)p))
 #define IDATA(p) ((fortran_int *) PyArray_DATA((PyArrayObject *)p))
 
+/*
+ * TRY_CO wraps check_object() calls, threading `self` through
+ * to retrieve LapackError from per-module state.
+ */
+#define TRY_CO(ob, t, obname, tname, funname) \
+    TRY(check_object(self, ob, t, obname, tname, funname))
+
 static PyObject *
-lapack_lite_dgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
+lapack_lite_dgelsd(PyObject *self, PyObject *args)
 {
     fortran_int lapack_lite_status;
     fortran_int m;
@@ -139,14 +166,14 @@ lapack_lite_dgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
                          &m,&n,&nrhs,&a,&lda,&b,&ldb,&s,&rcond,
                          &rank,&work,&lwork,&iwork,&info));
 
-    TRY(check_object(a,NPY_DOUBLE,"a","NPY_DOUBLE","dgelsd"));
-    TRY(check_object(b,NPY_DOUBLE,"b","NPY_DOUBLE","dgelsd"));
-    TRY(check_object(s,NPY_DOUBLE,"s","NPY_DOUBLE","dgelsd"));
-    TRY(check_object(work,NPY_DOUBLE,"work","NPY_DOUBLE","dgelsd"));
+    TRY_CO(a,NPY_DOUBLE,"a","NPY_DOUBLE","dgelsd");
+    TRY_CO(b,NPY_DOUBLE,"b","NPY_DOUBLE","dgelsd");
+    TRY_CO(s,NPY_DOUBLE,"s","NPY_DOUBLE","dgelsd");
+    TRY_CO(work,NPY_DOUBLE,"work","NPY_DOUBLE","dgelsd");
 #ifndef NPY_UMATH_USE_BLAS64_
-    TRY(check_object(iwork,NPY_INT,"iwork","NPY_INT","dgelsd"));
+    TRY_CO(iwork,NPY_INT,"iwork","NPY_INT","dgelsd");
 #else
-    TRY(check_object(iwork,NPY_INT64,"iwork","NPY_INT64","dgelsd"));
+    TRY_CO(iwork,NPY_INT64,"iwork","NPY_INT64","dgelsd");
 #endif
 
     lapack_lite_status =
@@ -167,7 +194,7 @@ lapack_lite_dgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
 }
 
 static PyObject *
-lapack_lite_dgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
+lapack_lite_dgeqrf(PyObject *self, PyObject *args)
 {
         fortran_int lapack_lite_status;
         fortran_int m, n, lwork;
@@ -181,9 +208,9 @@ lapack_lite_dgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
                              &m,&n,&a,&lda,&tau,&work,&lwork,&info));
 
         /* check objects and convert to right storage order */
-        TRY(check_object(a,NPY_DOUBLE,"a","NPY_DOUBLE","dgeqrf"));
-        TRY(check_object(tau,NPY_DOUBLE,"tau","NPY_DOUBLE","dgeqrf"));
-        TRY(check_object(work,NPY_DOUBLE,"work","NPY_DOUBLE","dgeqrf"));
+        TRY_CO(a,NPY_DOUBLE,"a","NPY_DOUBLE","dgeqrf");
+        TRY_CO(tau,NPY_DOUBLE,"tau","NPY_DOUBLE","dgeqrf");
+        TRY_CO(work,NPY_DOUBLE,"work","NPY_DOUBLE","dgeqrf");
 
         lapack_lite_status =
                 FNAME(dgeqrf)(&m, &n, DDATA(a), &lda, DDATA(tau),
@@ -201,7 +228,7 @@ lapack_lite_dgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
 
 
 static PyObject *
-lapack_lite_dorgqr(PyObject *NPY_UNUSED(self), PyObject *args)
+lapack_lite_dorgqr(PyObject *self, PyObject *args)
 {
         fortran_int lapack_lite_status;
         fortran_int m, n, k, lwork;
@@ -214,9 +241,9 @@ lapack_lite_dorgqr(PyObject *NPY_UNUSED(self), PyObject *args)
                               FINT_PYFMT "OO" FINT_PYFMT FINT_PYFMT
                               ":dorgqr"),
                              &m, &n, &k, &a, &lda, &tau, &work, &lwork, &info));
-        TRY(check_object(a,NPY_DOUBLE,"a","NPY_DOUBLE","dorgqr"));
-        TRY(check_object(tau,NPY_DOUBLE,"tau","NPY_DOUBLE","dorgqr"));
-        TRY(check_object(work,NPY_DOUBLE,"work","NPY_DOUBLE","dorgqr"));
+        TRY_CO(a,NPY_DOUBLE,"a","NPY_DOUBLE","dorgqr");
+        TRY_CO(tau,NPY_DOUBLE,"tau","NPY_DOUBLE","dorgqr");
+        TRY_CO(work,NPY_DOUBLE,"work","NPY_DOUBLE","dorgqr");
         lapack_lite_status =
             FNAME(dorgqr)(&m, &n, &k, DDATA(a), &lda, DDATA(tau), DDATA(work),
                           &lwork, &info);
@@ -230,7 +257,7 @@ lapack_lite_dorgqr(PyObject *NPY_UNUSED(self), PyObject *args)
 
 
 static PyObject *
-lapack_lite_zgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
+lapack_lite_zgelsd(PyObject *self, PyObject *args)
 {
     fortran_int lapack_lite_status;
     fortran_int m;
@@ -255,15 +282,15 @@ lapack_lite_zgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
                          &m,&n,&nrhs,&a,&lda,&b,&ldb,&s,&rcond,
                          &rank,&work,&lwork,&rwork,&iwork,&info));
 
-    TRY(check_object(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zgelsd"));
-    TRY(check_object(b,NPY_CDOUBLE,"b","NPY_CDOUBLE","zgelsd"));
-    TRY(check_object(s,NPY_DOUBLE,"s","NPY_DOUBLE","zgelsd"));
-    TRY(check_object(work,NPY_CDOUBLE,"work","NPY_CDOUBLE","zgelsd"));
-    TRY(check_object(rwork,NPY_DOUBLE,"rwork","NPY_DOUBLE","zgelsd"));
+    TRY_CO(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zgelsd");
+    TRY_CO(b,NPY_CDOUBLE,"b","NPY_CDOUBLE","zgelsd");
+    TRY_CO(s,NPY_DOUBLE,"s","NPY_DOUBLE","zgelsd");
+    TRY_CO(work,NPY_CDOUBLE,"work","NPY_CDOUBLE","zgelsd");
+    TRY_CO(rwork,NPY_DOUBLE,"rwork","NPY_DOUBLE","zgelsd");
 #ifndef NPY_UMATH_USE_BLAS64_
-    TRY(check_object(iwork,NPY_INT,"iwork","NPY_INT","zgelsd"));
+    TRY_CO(iwork,NPY_INT,"iwork","NPY_INT","zgelsd");
 #else
-    TRY(check_object(iwork,NPY_INT64,"iwork","NPY_INT64","zgelsd"));
+    TRY_CO(iwork,NPY_INT64,"iwork","NPY_INT64","zgelsd");
 #endif
 
     lapack_lite_status =
@@ -283,7 +310,7 @@ lapack_lite_zgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
 }
 
 static PyObject *
-lapack_lite_zgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
+lapack_lite_zgeqrf(PyObject *self, PyObject *args)
 {
         fortran_int lapack_lite_status;
         fortran_int m, n, lwork;
@@ -297,9 +324,9 @@ lapack_lite_zgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
                              &m,&n,&a,&lda,&tau,&work,&lwork,&info));
 
 /* check objects and convert to right storage order */
-        TRY(check_object(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zgeqrf"));
-        TRY(check_object(tau,NPY_CDOUBLE,"tau","NPY_CDOUBLE","zgeqrf"));
-        TRY(check_object(work,NPY_CDOUBLE,"work","NPY_CDOUBLE","zgeqrf"));
+        TRY_CO(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zgeqrf");
+        TRY_CO(tau,NPY_CDOUBLE,"tau","NPY_CDOUBLE","zgeqrf");
+        TRY_CO(work,NPY_CDOUBLE,"work","NPY_CDOUBLE","zgeqrf");
 
         lapack_lite_status =
             FNAME(zgeqrf)(&m, &n, ZDATA(a), &lda, ZDATA(tau), ZDATA(work),
@@ -316,7 +343,7 @@ lapack_lite_zgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
 
 
 static PyObject *
-lapack_lite_zungqr(PyObject *NPY_UNUSED(self), PyObject *args)
+lapack_lite_zungqr(PyObject *self, PyObject *args)
 {
         fortran_int lapack_lite_status;
         fortran_int m, n, k, lwork;
@@ -329,9 +356,9 @@ lapack_lite_zungqr(PyObject *NPY_UNUSED(self), PyObject *args)
                               FINT_PYFMT "OO" FINT_PYFMT "" FINT_PYFMT
                               ":zungqr"),
                              &m, &n, &k, &a, &lda, &tau, &work, &lwork, &info));
-        TRY(check_object(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zungqr"));
-        TRY(check_object(tau,NPY_CDOUBLE,"tau","NPY_CDOUBLE","zungqr"));
-        TRY(check_object(work,NPY_CDOUBLE,"work","NPY_CDOUBLE","zungqr"));
+        TRY_CO(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zungqr");
+        TRY_CO(tau,NPY_CDOUBLE,"tau","NPY_CDOUBLE","zungqr");
+        TRY_CO(work,NPY_CDOUBLE,"work","NPY_CDOUBLE","zungqr");
 
 
         lapack_lite_status =
@@ -377,13 +404,48 @@ static struct PyMethodDef lapack_lite_module_methods[] = {
     { NULL,NULL,0, NULL}
 };
 
+/*
+ * Opt out of multiple-interpreters support because xerbla/npy_cblas
+ * rely on process-global LAPACK/BLAS state.
+ *
+ * https://docs.python.org/3/howto/isolating-extensions.html#opt-out-limiting-to-one-module-object-per-process
+ */
 static int module_loaded = 0;
+
+/* GC traversal hook: visit all Python objects stored in module state. */
+static int
+lapack_lite_traverse(PyObject *m, visitproc visit, void *arg)
+{
+    lapack_lite_state *state = (lapack_lite_state *)PyModule_GetState(m);
+    if (state == NULL) {
+        return 0;
+    }
+    Py_VISIT(state->LapackError);
+    return 0;
+}
+
+/* GC clear hook: drop all references held in module state. */
+static int
+lapack_lite_clear(PyObject *m)
+{
+    lapack_lite_state *state = (lapack_lite_state *)PyModule_GetState(m);
+    if (state == NULL) {
+        return 0;
+    }
+    Py_CLEAR(state->LapackError);
+    return 0;
+}
+
+/* Deallocation hook: clear module state before memory is freed. */
+static void
+lapack_lite_free(void *m)
+{
+    lapack_lite_clear((PyObject *)m);
+}
 
 static int
 lapack_lite_exec(PyObject *m)
 {
-    PyObject *d;
-
     // https://docs.python.org/3/howto/isolating-extensions.html#opt-out-limiting-to-one-module-object-per-process
     if (module_loaded) {
         PyErr_SetString(PyExc_ImportError,
@@ -396,14 +458,29 @@ lapack_lite_exec(PyObject *m)
         return -1;
     }
 
-    d = PyModule_GetDict(m);
-    LapackError = PyErr_NewException("numpy.linalg.lapack_lite.LapackError", NULL, NULL);
-    PyDict_SetItemString(d, "LapackError", LapackError);
+    lapack_lite_state *state = (lapack_lite_state *)PyModule_GetState(m);
+    if (state == NULL) {
+        return -1;
+    }
+
+    /* Create LapackError and store in per-module state */
+    state->LapackError = PyErr_NewException(
+            "numpy.linalg.lapack_lite.LapackError", NULL, NULL);
+    if (state->LapackError == NULL) {
+        return -1;
+    }
+    if (PyModule_AddObjectRef(m, "LapackError", state->LapackError) < 0) {
+        return -1;
+    }
 
 #ifdef HAVE_BLAS_ILP64
-    PyDict_SetItemString(d, "_ilp64", Py_True);
+    if (PyModule_AddObjectRef(m, "_ilp64", Py_True) < 0) {
+        return -1;
+    }
 #else
-    PyDict_SetItemString(d, "_ilp64", Py_False);
+    if (PyModule_AddObjectRef(m, "_ilp64", Py_False) < 0) {
+        return -1;
+    }
 #endif
 
     return 0;
@@ -424,9 +501,12 @@ static struct PyModuleDef_Slot lapack_lite_slots[] = {
 static struct PyModuleDef moduledef = {
     .m_base = PyModuleDef_HEAD_INIT,
     .m_name = "lapack_lite",
-    .m_size = 0,
+    .m_size = sizeof(lapack_lite_state),
     .m_methods = lapack_lite_module_methods,
     .m_slots = lapack_lite_slots,
+    .m_traverse = lapack_lite_traverse,
+    .m_clear = lapack_lite_clear,
+    .m_free = lapack_lite_free,
 };
 
 PyMODINIT_FUNC PyInit_lapack_lite(void) {
