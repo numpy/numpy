@@ -29,7 +29,6 @@ from numpy import (
     divmod,
     e,
     euler_gamma,
-    floor_divide,
     fmax,
     fmin,
     frompyfunc,
@@ -37,11 +36,9 @@ from numpy import (
     matvec,
     maximum,
     minimum,
-    mod,
     multiply,
     pi,
     power,
-    remainder,
     subtract,
     true_divide,
     vecdot,
@@ -175,6 +172,7 @@ __all__ = [
 
 _IdT_co = TypeVar("_IdT_co", covariant=True, default=None)
 _ScalarT_contra = TypeVar("_ScalarT_contra", bound=np.generic, contravariant=True)
+_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
 
 type _Array[ShapeT: _Shape, ScalarT: np.generic] = np.ndarray[ShapeT, np.dtype[ScalarT]]
 type _Array0D[ScalarT: np.generic] = _Array[tuple[()], ScalarT]
@@ -212,6 +210,7 @@ type _to_f64 = np.float64 | np.float32 | np.float16 | _to_integer
 type _to_c128 = np.complex128 | np.complex64 | _to_f64
 
 type _ArrayLikeIntObj_co = _DualArrayLike[np.dtype[_to_integer | np.object_], int]
+type _ArrayLikeFloatObj_co = _DualArrayLike[np.dtype[_to_floating | np.object_], float]
 type _ArrayLikeNumberObj_co = _DualArrayLike[np.dtype[_to_number | np.object_], complex]
 type _ArrayLikeNumericObj = _DualArrayLike[np.dtype[_numeric | np.object_], complex]
 type _ArrayLikeNumericObj_co = _DualArrayLike[np.dtype[_to_numeric | np.object_], complex]
@@ -9447,14 +9446,19 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
-# bBhHiIlLqQefdgO, bBhHiIlLqQefdgO => bBhHiIlLqQefdgO
+# bBhHiIlLqQefdg[mO], bBhHiIlLqQefdg[mO] => bBhHiIlLqQefdg[mO]
 #
-# Object dtypes aren't included here because this simply calls `.fmod(_)` on the
-# underlying Python object, which in practice will usually lead to a `TypeError`.
+# Generic family of ufunc specializations for `fmod` and `remainder`/`mod`.
+# The first type param represents the domain, and the second the output type in case of
+# (timedelta64, timedelta64) input.
+#
+# Object dtypes aren't included for `fmod` here because this simply calls `.fmod(_)` on
+# the underlying Python object, which in practice will usually lead to a `TypeError`.
+# For `remainder`, the `object_` dtypes are a lot more flexible, so there it is supported.
 #
 # Only the i64/i32/i8/u8 int promotion rules are implemented, building upon `_ufunc_21_bio`.
 @type_check_only
-class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
+class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # type: ignore[misc]  # noqa: UP046
     @override
     @overload  # 0d +i8, 0d +i8
     def __call__(
@@ -9632,6 +9636,28 @@ class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> np.longdouble: ...
+    @overload  # 0d ~m64, 0d ~m64  (if `timedelta64` in domain)
+    def __call__[OutT: np.generic](
+        self: _ufunc_21_mod[np.timedelta64, OutT],
+        x1: np.timedelta64,
+        x2: np.timedelta64,
+        /,
+        *,
+        out: None = None,
+        dtype: type[OutT] | np.dtype[OutT] | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> OutT: ...
+    @overload  # 0d ~m64, 0d +floating  (iff `timedelta64 * timedelta64 -> int64`)
+    def __call__[OutT: np.timedelta64](
+        self: _ufunc_21_mod[np.timedelta64, np.int64],
+        x1: OutT,
+        x2: float | np.floating | np.integer,
+        /,
+        *,
+        out: None = None,
+        dtype: type[OutT] | np.dtype[OutT] | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> OutT: ...
     @overload  # 0d T@floating, 0d +float
     def __call__[FloatT: np.floating](
         self,
@@ -9874,30 +9900,52 @@ class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.longdouble]: ...
-    @overload  # Nd _, ?d _, dtype=<known>
-    def __call__[ScalarT: np.floating | np.integer | np.object_](
-        self,
-        x1: npt.NDArray[_to_floating],
-        x2: _ArrayLikeFloat_co,
+    @overload  # ?d ~m64, ?d ~m64  (if `timedelta64` in domain)
+    def __call__[OutT: np.generic](
+        self: _ufunc_21_mod[np.timedelta64, OutT],
+        x1: _ArrayLike[np.timedelta64],
+        x2: _ArrayLike[np.timedelta64],
+        /,
+        *,
+        out: EllipsisType | npt.NDArray[OutT] | None = None,
+        dtype: type[OutT] | np.dtype[OutT] | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[OutT]: ...
+    @overload  # 0d ~m64, 0d +floating  (iff `timedelta64 * timedelta64 -> int64`)
+    def __call__[OutT: np.timedelta64](
+        self: _ufunc_21_mod[np.timedelta64, np.int64],
+        x1: _ArrayLike[OutT],
+        x2: _DualArrayLike[np.dtype[np.floating | np.integer], float],
+        /,
+        *,
+        out: EllipsisType | npt.NDArray[OutT] | None = None,
+        dtype: type[OutT] | np.dtype[OutT] | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[OutT]: ...
+    @overload  # Nd ~obj, ?d +obj  (if `object_` in domain)
+    def __call__(
+        self: _ufunc_21_mod[np.object_, Any],
+        x1: npt.NDArray[np.object_],
+        x2: _ArrayLikeFloatObj_co,
         /,
         *,
         out: EllipsisType | None = None,
-        dtype: _DTypeLike[ScalarT],
+        dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d _, Nd _, dtype=<known>
-    def __call__[ScalarT: np.floating | np.integer | np.object_](
-        self,
-        x1: _ArrayLikeFloat_co,
-        x2: npt.NDArray[_to_floating],
+    ) -> npt.NDArray[np.object_]: ...
+    @overload  # ?d +obj, Nd ~obj  (if `object_` in domain)
+    def __call__(
+        self: _ufunc_21_mod[np.object_, Any],
+        x1: _ArrayLikeFloatObj_co,
+        x2: npt.NDArray[np.object_],
         /,
         *,
         out: EllipsisType | None = None,
-        dtype: _DTypeLike[ScalarT],
+        dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[ScalarT]: ...
+    ) -> npt.NDArray[np.object_]: ...
     @overload  # Nd T@floating, ?d +float
-    def __call__[ArrayT: npt.NDArray[np.floating]](
+    def __call__[ArrayT: npt.NDArray[np.floating | np.object_]](
         self,
         x1: ArrayT,
         x2: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], float],
@@ -9908,7 +9956,7 @@ class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
         **kwargs: Unpack[_Kwargs21],
     ) -> ArrayT: ...
     @overload  # ?d +float, Nd T@floating
-    def __call__[ArrayT: npt.NDArray[np.floating]](
+    def __call__[ArrayT: npt.NDArray[np.floating | np.object_]](
         self,
         x1: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], float],
         x2: ArrayT,
@@ -9918,6 +9966,28 @@ class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> ArrayT: ...
+    @overload  # Nd _, ?d _, dtype=<known>
+    def __call__[ScalarT: np.floating | np.integer](
+        self,
+        x1: npt.NDArray[_to_floating],
+        x2: _ArrayLikeFloat_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # ?d _, Nd _, dtype=<known>
+    def __call__[ScalarT: np.floating | np.integer](
+        self,
+        x1: _ArrayLikeFloat_co,
+        x2: npt.NDArray[_to_floating],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd ~float, ?d +float
     def __call__(
         self,
@@ -9943,8 +10013,8 @@ class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
         self,
-        x1: _ArrayLikeFloat_co,
-        x2: _ArrayLikeFloat_co,
+        x1: _ArrayLikeFloatObj_co,
+        x2: _ArrayLikeFloatObj_co,
         /,
         out: OutT,
         *,
@@ -9954,8 +10024,8 @@ class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ?d ?, ?d ?  (fallback)
     def __call__(
         self,
-        x1: _ArrayLikeFloat_co,
-        x2: _ArrayLikeFloat_co,
+        x1: _ArrayLikeFloatObj_co,
+        x2: _ArrayLikeFloatObj_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -10163,6 +10233,28 @@ class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> np.longdouble: ...
+    @overload  # 0d ~m64, 0d ~m64  (if `timedelta64` in domain)
+    def outer[OutT: np.generic](
+        self: _ufunc_21_mod[np.timedelta64, OutT],
+        x1: np.timedelta64,
+        x2: np.timedelta64,
+        /,
+        *,
+        out: None = None,
+        dtype: type[OutT] | np.dtype[OutT] | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> OutT: ...
+    @overload  # 0d ~m64, 0d +floating  (iff `timedelta64 * timedelta64 -> int64`)
+    def outer[OutT: np.timedelta64](
+        self: _ufunc_21_mod[np.timedelta64, np.int64],
+        x1: OutT,
+        x2: float | np.floating | np.integer,
+        /,
+        *,
+        out: None = None,
+        dtype: type[OutT] | np.dtype[OutT] | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> OutT: ...
     @overload  # 0d T@floating, 0d +float
     def outer[FloatT: np.floating](
         self,
@@ -10405,30 +10497,52 @@ class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.longdouble]: ...
-    @overload  # Nd _, ?d _, dtype=<known>
-    def outer[ScalarT: np.floating | np.integer | np.object_](
-        self,
-        x1: npt.NDArray[_to_floating],
-        x2: _ArrayLikeFloat_co,
+    @overload  # ?d ~m64, ?d ~m64  (if `timedelta64` in domain)
+    def outer[OutT: np.generic](
+        self: _ufunc_21_mod[np.timedelta64, OutT],
+        x1: _ArrayLike[np.timedelta64],
+        x2: _ArrayLike[np.timedelta64],
+        /,
+        *,
+        out: EllipsisType | npt.NDArray[OutT] | None = None,
+        dtype: type[OutT] | np.dtype[OutT] | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[OutT]: ...
+    @overload  # ?d ~m64, ?d +floating  (iff `timedelta64 * timedelta64 -> int64`)
+    def outer[OutT: np.timedelta64](
+        self: _ufunc_21_mod[np.timedelta64, np.int64],
+        x1: _ArrayLike[OutT],
+        x2: _DualArrayLike[np.dtype[np.floating | np.integer], float],
+        /,
+        *,
+        out: EllipsisType | npt.NDArray[OutT] | None = None,
+        dtype: type[OutT] | np.dtype[OutT] | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[OutT]: ...
+    @overload  # Nd ~obj, ?d +obj  (if `object_` in domain)
+    def outer(
+        self: _ufunc_21_mod[np.object_, Any],
+        x1: npt.NDArray[np.object_],
+        x2: _ArrayLikeFloatObj_co,
         /,
         *,
         out: EllipsisType | None = None,
-        dtype: _DTypeLike[ScalarT],
+        dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d _, Nd _, dtype=<known>
-    def outer[ScalarT: np.floating | np.integer | np.object_](
-        self,
-        x1: _ArrayLikeFloat_co,
-        x2: npt.NDArray[_to_floating],
+    ) -> npt.NDArray[np.object_]: ...
+    @overload  # ?d +obj, Nd ~obj  (if `object_` in domain)
+    def outer(
+        self: _ufunc_21_mod[np.object_, Any],
+        x1: _ArrayLikeFloatObj_co,
+        x2: npt.NDArray[np.object_],
         /,
         *,
         out: EllipsisType | None = None,
-        dtype: _DTypeLike[ScalarT],
+        dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[ScalarT]: ...
+    ) -> npt.NDArray[np.object_]: ...
     @overload  # Nd T@floating, ?d +float
-    def outer[ArrayT: npt.NDArray[np.floating]](
+    def outer[ArrayT: npt.NDArray[np.floating | np.object_]](
         self,
         x1: ArrayT,
         x2: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], float],
@@ -10439,7 +10553,7 @@ class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
         **kwargs: Unpack[_Kwargs21],
     ) -> ArrayT: ...
     @overload  # ?d +float, Nd T@floating
-    def outer[ArrayT: npt.NDArray[np.floating]](
+    def outer[ArrayT: npt.NDArray[np.floating | np.object_]](
         self,
         x1: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], float],
         x2: ArrayT,
@@ -10449,6 +10563,28 @@ class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> ArrayT: ...
+    @overload  # Nd _, ?d _, dtype=<known>
+    def outer[ScalarT: np.floating | np.integer](
+        self,
+        x1: npt.NDArray[_to_floating],
+        x2: _ArrayLikeFloat_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # ?d _, Nd _, dtype=<known>
+    def outer[ScalarT: np.floating | np.integer](
+        self,
+        x1: _ArrayLikeFloat_co,
+        x2: npt.NDArray[_to_floating],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd ~float, ?d +float
     def outer(
         self,
@@ -10474,8 +10610,8 @@ class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # out=<given>
     def outer[OutT: np.ndarray](
         self,
-        x1: _ArrayLikeFloat_co,
-        x2: _ArrayLikeFloat_co,
+        x1: _ArrayLikeFloatObj_co,
+        x2: _ArrayLikeFloatObj_co,
         /,
         out: OutT,
         *,
@@ -10485,8 +10621,8 @@ class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ?d ?, ?d ?  (fallback)
     def outer(
         self,
-        x1: _ArrayLikeFloat_co,
-        x2: _ArrayLikeFloat_co,
+        x1: _ArrayLikeFloatObj_co,
+        x2: _ArrayLikeFloatObj_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -10518,7 +10654,23 @@ class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
 
     #
     @overload
-    def at(self, a: npt.NDArray[_to_floating], indices: _ArrayLikeInt, b: _ArrayLikeFloat_co, /) -> None: ...  # pyrefly:ignore[bad-override]
+    def at(  # pyrefly:ignore[bad-override]
+        self: _ufunc_21_mod[np.timedelta64, Any],
+        a: npt.NDArray[np.timedelta64],
+        indices: _ArrayLikeInt,
+        b: _ArrayLike[np.timedelta64],
+        /,
+    ) -> None: ...
+    @overload
+    def at(
+        self: _ufunc_21_mod[np.object_, Any],
+        a: npt.NDArray[np.object_],
+        indices: _ArrayLikeInt,
+        b: _ArrayLikeFloatObj_co,
+        /,
+    ) -> None: ...
+    @overload
+    def at(self, a: npt.NDArray[_to_floating], indices: _ArrayLikeInt, b: _ArrayLikeFloat_co, /) -> None: ...
     @overload
     def at[OtherT, IxT, OutT](self, a: _CanUfuncAt2L[OtherT, IxT, OutT], indices: IxT, b: OtherT, /) -> OutT: ...
     @overload
@@ -10604,6 +10756,84 @@ class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
         initial: bool | _to_i8 = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.int8]: ...
+    @overload  # ~timedelta64
+    def reduce[MT: np.timedelta64](
+        self: _ufunc_21_mod[np.timedelta64, np.timedelta64],
+        array: npt.NDArray[MT],
+        /,
+        *,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: np.timedelta64 = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[MT] | Any: ...
+    @overload  # ~timedelta64, axis=None
+    def reduce[MT: np.timedelta64](
+        self: _ufunc_21_mod[np.timedelta64, np.timedelta64],
+        array: npt.NDArray[MT],
+        /,
+        *,
+        axis: None,
+        dtype: None = None,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: np.timedelta64 = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> MT: ...
+    @overload  # ~timedelta64, keepdims=True
+    def reduce[MT: np.timedelta64](
+        self: _ufunc_21_mod[np.timedelta64, np.timedelta64],
+        array: npt.NDArray[MT],
+        /,
+        *,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: np.timedelta64 = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[MT]: ...
+    @overload  # ~object_
+    def reduce(
+        self: _ufunc_21_mod[np.object_, Any],
+        array: npt.NDArray[np.object_],
+        /,
+        *,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: object = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.object_] | Any: ...
+    @overload  # ~object_, axis=None
+    def reduce(
+        self: _ufunc_21_mod[np.object_, Any],
+        array: npt.NDArray[np.object_],
+        /,
+        *,
+        axis: None,
+        dtype: None = None,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: object = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> Any: ...
+    @overload  # ~object_, keepdims=True
+    def reduce(
+        self: _ufunc_21_mod[np.object_, Any],
+        array: npt.NDArray[np.object_],
+        /,
+        *,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: object = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.object_]: ...
     @overload  # ~int
     def reduce(
         self,
@@ -10748,6 +10978,28 @@ class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
         dtype: None = None,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
+    @overload  # ~timedelta64
+    def reduceat[MT: np.timedelta64](
+        self: _ufunc_21_mod[np.timedelta64, np.timedelta64],
+        array: npt.NDArray[MT],
+        /,
+        indices: tuple[int, ...],
+        *,
+        axis: int = 0,
+        dtype: None = None,
+        out: None = None,
+    ) -> npt.NDArray[MT]: ...
+    @overload  # ~object_
+    def reduceat(
+        self: _ufunc_21_mod[np.object_, Any],
+        array: npt.NDArray[np.object_],
+        /,
+        indices: tuple[int, ...],
+        *,
+        axis: int = 0,
+        dtype: None = None,
+        out: None = None,
+    ) -> npt.NDArray[np.object_]: ...
     @overload  # ~bool
     def reduceat(
         self,
@@ -10782,7 +11034,7 @@ class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # dtype=<known>
-    def reduceat[ScalarT: np.floating | np.integer | np.object_](
+    def reduceat[ScalarT: np.floating | np.integer | np.timedelta64 | np.object_](
         self,
         array: _ArrayLikeFloat_co,
         /,
@@ -10795,7 +11047,7 @@ class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # dtype=<unknown>
     def reduceat(
         self,
-        array: _ArrayLikeFloat_co,
+        array: _ArrayLikeFloatObj_co,
         /,
         indices: tuple[int, ...],
         *,
@@ -10838,6 +11090,26 @@ class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
         dtype: None = None,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
+    @overload  # ~timedelta64
+    def accumulate[MT: np.timedelta64](
+        self: _ufunc_21_mod[np.timedelta64, np.timedelta64],
+        array: npt.NDArray[MT],
+        /,
+        *,
+        axis: int = 0,
+        dtype: None = None,
+        out: None = None,
+    ) -> npt.NDArray[MT]: ...
+    @overload  # ~object_
+    def accumulate(
+        self: _ufunc_21_mod[np.object_, Any],
+        array: npt.NDArray[np.object_],
+        /,
+        *,
+        axis: int = 0,
+        dtype: None = None,
+        out: None = None,
+    ) -> npt.NDArray[np.object_]: ...
     @overload  # ~bool
     def accumulate(
         self,
@@ -10869,7 +11141,7 @@ class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # dtype=<known>
-    def accumulate[ScalarT: np.floating | np.integer | np.object_](
+    def accumulate[ScalarT: np.floating | np.integer | np.timedelta64 | np.object_](
         self,
         array: _ArrayLikeFloat_co,
         /,
@@ -10881,23 +11153,13 @@ class _ufunc_21_fmod(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # dtype=<unknown>
     def accumulate(
         self,
-        array: _ArrayLikeFloat_co,
+        array: _ArrayLikeFloatObj_co,
         /,
         *,
         axis: int = 0,
         dtype: str | type,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
-    @overload  # out=<given>
-    def accumulate[OutT: npt.NDArray[np.floating | np.integer | np.object_]](
-        self,
-        array: _ArrayLikeFloat_co,
-        /,
-        *,
-        axis: int = 0,
-        dtype: npt.DTypeLike | None = None,
-        out: OutT,
-    ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "accumulate", array, ...)
     def accumulate[OutT](
         self,
@@ -10946,7 +11208,10 @@ bitwise_and: Final[_ufunc_21_bio[Literal[-1], np.bool | np.integer | np.object_]
 bitwise_or: Final[_ufunc_21_bio[Literal[0], np.bool | np.integer | np.object_]] = ...
 bitwise_xor: Final[_ufunc_21_bio[Literal[0], np.bool | np.integer | np.object_]] = ...
 
-fmod: Final[_ufunc_21_fmod] = ...
+fmod: Final[_ufunc_21_mod[np.inexact, Never]] = ...
+remainder: Final[_ufunc_21_mod[np.inexact | np.timedelta64 | np.object_, np.timedelta64]] = ...
+mod = remainder
+floor_divide: Final[_ufunc_21_mod[np.inexact | np.timedelta64 | np.object_, np.int64]] = ...
 
 ###
 # re-exports from `_core._multiarray_umath` that are used by `_core._ufunc_config`

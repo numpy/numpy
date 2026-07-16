@@ -414,6 +414,7 @@ from numpy._core.umath import (
     fabs,
     float_power,
     floor,
+    floor_divide,
     fmod,
     frexp,
     gcd,
@@ -444,6 +445,7 @@ from numpy._core.umath import (
     logical_not,
     logical_or,
     logical_xor,
+    mod,
     modf,
     nextafter,
     not_equal,
@@ -452,6 +454,7 @@ from numpy._core.umath import (
     rad2deg,
     radians,
     reciprocal,
+    remainder,
     right_shift,
     right_shift as bitwise_right_shift,
     rint,
@@ -7638,7 +7641,6 @@ class ufunc:
 # Parameters: `__name__`, `ntypes` and `identity`
 add: _UFunc_Nin2_Nout1[L["add"], L[22], L[0]]
 divmod: _UFunc_Nin2_Nout2[L["divmod"], L[15], None]
-floor_divide: _UFunc_Nin2_Nout1[L["floor_divide"], L[21], None]
 fmax: _UFunc_Nin2_Nout1[L["fmax"], L[21], None]
 fmin: _UFunc_Nin2_Nout1[L["fmin"], L[21], None]
 matmul: _GUFunc_Nin2_Nout1[L["matmul"], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]]
@@ -7647,13 +7649,11 @@ maximum: _UFunc_Nin2_Nout1[L["maximum"], L[21], None]
 minimum: _UFunc_Nin2_Nout1[L["minimum"], L[21], None]
 multiply: _UFunc_Nin2_Nout1[L["multiply"], L[23], L[1]]
 power: _UFunc_Nin2_Nout1[L["power"], L[18], None]
-remainder: _UFunc_Nin2_Nout1[L["remainder"], L[16], None]
 subtract: _UFunc_Nin2_Nout1[L["subtract"], L[21], None]
 vecdot: _GUFunc_Nin2_Nout1[L["vecdot"], L[19], None, L["(n),(n)->()"]]
 vecmat: _GUFunc_Nin2_Nout1[L["vecmat"], L[19], None, L["(n),(n,m)->(m)"]]
 
 concat = concatenate
-mod = remainder
 permute_dims = transpose
 pow = power
 
