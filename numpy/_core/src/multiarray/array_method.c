@@ -320,6 +320,17 @@ fill_arraymethod_from_slots(
         return -1;
     }
 
+    if (meth->get_reduction_loop != NULL) {
+        int max_reduce_outputs = (NPY_MAXARGS - 2) / 2;
+        if (meth->nout > max_reduce_outputs) {
+            PyErr_Format(PyExc_ValueError,
+                    "ArrayMethod reduction loops are limited to at most %d "
+                    "outputs. (method: %s)",
+                    max_reduce_outputs, spec->name);
+            return -1;
+        }
+    }
+
     /* Check whether the slots are valid: */
     if (meth->resolve_descriptors == &default_resolve_descriptors) {
         if (spec->casting == -1) {
