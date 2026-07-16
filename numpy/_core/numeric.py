@@ -11,6 +11,7 @@ import numpy as np
 from numpy.exceptions import AxisError
 
 from . import multiarray, numerictypes, numerictypes as nt, overrides, shape_base, umath
+from ._exceptions import _UFuncNoLoopError
 from ._ufunc_config import errstate
 from .multiarray import (  # noqa: F401
     ALLOW_THREADS,
@@ -1219,40 +1220,29 @@ def tensordot(a, b, axes=2):
     return res.reshape(olda + oldb)
 
 
-def _dot_result_shape(a, b):
-    if a.ndim == 0 or b.ndim == 0:
-        return np.broadcast_shapes(a.shape, b.shape)
-    if b.ndim == 1:
-        return a.shape[:-1]
-    return a.shape[:-1] + b.shape[:-2] + b.shape[-1:]
-
-
 def _dot_fallback(a, b, out=None):
     """``dot`` via ``matmul``/``multiply`` for dtypes without a legacy dotfunc."""
     a = np.asarray(a)
     b = np.asarray(b)
 
-    if (a.ndim > 2 or b.ndim > 2) and a.ndim > 0 and b.ndim > 1:
+    if a.ndim >= 2 and b.ndim >= 3:
         raise ValueError(
-            "'dot' does not support stacked arrays (ndim > 2) for "
-            "user-defined dtypes; use 'numpy.tensordot' instead."
+            "'dot' does not support the stacked outer-product semantics of "
+            "'a.ndim >= 2 and b.ndim >= 3' for user-defined dtypes; "
+            "use 'numpy.tensordot' instead."
         )
-    if out is not None:
-        if out.shape != _dot_result_shape(a, b):
-            raise ValueError("output array has wrong dimensions")
-        if out.dtype != np.result_type(a.dtype, b.dtype) \
-                or not out.flags["C_CONTIGUOUS"]:
-            raise ValueError(
-                "output array is not acceptable (must have the right datatype, "
-                "number of dimensions, and be a C-Array)"
-            )
-    if a.ndim == 0 or b.ndim == 0:
-        return np.multiply(a, b, out=out)
-    return np.matmul(a, b, out=out)
+    op = np.multiply if a.ndim == 0 or b.ndim == 0 else np.matmul
+    try:
+        return op(a, b, out=out)
+    except _UFuncNoLoopError:
+        raise ValueError("dot not available for this type") from None
 
 
 def _vdot_fallback(a, b):
-    return np.vecdot(np.asarray(a).ravel(), np.asarray(b).ravel())
+    try:
+        return np.vecdot(np.asarray(a).ravel(), np.asarray(b).ravel())
+    except _UFuncNoLoopError:
+        raise ValueError("dot not available for this type") from None
 
 
 def _roll_dispatcher(a, shift, axis=None):

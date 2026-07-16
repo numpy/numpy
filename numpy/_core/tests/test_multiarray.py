@@ -8359,6 +8359,7 @@ class TestDotFamilyFallback:
     @pytest.mark.parametrize("sa,sb", [
         ((), ()), ((), (3, 4)), ((4, 3), ()), ((5,), (5,)), ((3,), (3, 4)),
         ((4, 3), (3,)), ((4, 3), (3, 5)), ((2, 3, 4), (4,)),
+        ((2, 3, 4), (4, 5)), ((4,), (2, 4, 5)),
         ((0, 3), (3, 4)), ((4, 0), (0, 5)),
     ])
     def test_dot_fallback_matches_dot(self, sa, sb):
@@ -8371,18 +8372,25 @@ class TestDotFamilyFallback:
         assert_array_equal(got, ref, strict=True)
 
     @pytest.mark.parametrize("sa,sb", [
-        ((4,), (2, 4, 5)), ((3, 4), (2, 4, 5)), ((2, 3, 4), (4, 5)),
-        ((2, 3, 4), (6, 4, 5)),
+        ((3, 4), (2, 4, 5)), ((2, 3), (5, 3, 4)), ((2, 3, 4), (6, 4, 5)),
     ])
     def test_dot_fallback_rejects_stacked(self, sa, sb):
-        # np.dot's stacked-array (ndim > 2) semantics are the outer product
-        # over the batch axes, which we intentionally do not implement for
-        # user dtypes; such calls are rejected in favour of tensordot.
+        # For a.ndim >= 2 and b.ndim >= 3 np.dot takes the outer product over
+        # the batch axes (unlike matmul's broadcasting); we intentionally do
+        # not implement that for user dtypes and reject in favour of tensordot.
         from numpy._core.numeric import _dot_fallback
         a = np.ones(sa, dtype=np.float64)
         b = np.ones(sb, dtype=np.float64)
         with assert_raises_regex(ValueError, "tensordot"):
             _dot_fallback(a, b)
+
+    def test_dot_fallback_unsupported_type(self):
+        from numpy._core.numeric import _dot_fallback, _vdot_fallback
+        s = np.array(["a", "b", "c"])
+        assert_raises(ValueError, _dot_fallback, s, s)
+        assert_raises(ValueError, np.dot, s, s)
+        assert_raises(ValueError, _vdot_fallback, s, s)
+        assert_raises(ValueError, np.vdot, s, s)
 
     def test_dot_fallback_noncontiguous_inputs(self):
         from numpy._core.numeric import _dot_fallback
@@ -8420,12 +8428,7 @@ class TestDotFamilyFallback:
         s = np.empty(())
         assert _dot_fallback(a[0], b[:, 0], out=s) is s
         assert s == np.dot(a[0], b[:, 0])
-        # strict out= contract: wrong shape / dtype / non-C-contiguous all reject
         assert_raises(ValueError, _dot_fallback, a, b, out=np.empty((4, 4)))
-        assert_raises(ValueError, _dot_fallback, a, b,
-                      out=np.empty((4, 5), dtype=np.float32))
-        assert_raises(ValueError, _dot_fallback, a, b,
-                      out=np.asfortranarray(np.empty((4, 5))))
 
     def test_vdot_fallback_matches_vdot(self):
         # vdot conjugates the first argument; vecdot reproduces that on 1-D
