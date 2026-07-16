@@ -258,9 +258,9 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     .. versionchanged:: 2.1
 
-   Print options are maintained per execution context rather than globally.
-   Different threads and asynchronous tasks have independent print option
-   settings.
+        Print options are maintained per execution context rather than globally.
+        Different threads and asynchronous tasks have independent print option
+        settings.
 
     **Concurrency note:** see :ref:`text_formatting_options`
 
