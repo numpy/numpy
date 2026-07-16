@@ -89,7 +89,7 @@ class CompilerChecker:
         self.has_f90 = False
 
     def check_compilers(self):
-        if (not self.compilers_checked) and (not sys.platform == "cygwin"):
+        if (not self.compilers_checked):
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = [
                     executor.submit(check_language, "c"),
