@@ -444,6 +444,7 @@ from numpy._core.umath import (
     logical_not,
     logical_or,
     logical_xor,
+    mod,
     modf,
     nextafter,
     not_equal,
@@ -452,6 +453,7 @@ from numpy._core.umath import (
     rad2deg,
     radians,
     reciprocal,
+    remainder,
     right_shift,
     right_shift as bitwise_right_shift,
     rint,
@@ -7647,13 +7649,11 @@ maximum: _UFunc_Nin2_Nout1[L["maximum"], L[21], None]
 minimum: _UFunc_Nin2_Nout1[L["minimum"], L[21], None]
 multiply: _UFunc_Nin2_Nout1[L["multiply"], L[23], L[1]]
 power: _UFunc_Nin2_Nout1[L["power"], L[18], None]
-remainder: _UFunc_Nin2_Nout1[L["remainder"], L[16], None]
 subtract: _UFunc_Nin2_Nout1[L["subtract"], L[21], None]
 vecdot: _GUFunc_Nin2_Nout1[L["vecdot"], L[19], None, L["(n),(n)->()"]]
 vecmat: _GUFunc_Nin2_Nout1[L["vecmat"], L[19], None, L["(n),(n,m)->(m)"]]
 
 concat = concatenate
-mod = remainder
 permute_dims = transpose
 pow = power
 
