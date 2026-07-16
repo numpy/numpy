@@ -1772,7 +1772,7 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
         PyArray_DTypeMeta *dtypes[3] = {dt, kdt, dt};
         PyArray_Descr *given_descrs[3] = {descr, kdescr, descr};
         // Partition cannot be a view, so view offset is unused
-        npy_intp view_offset = NPY_MIN_INT;
+        npy_intp view_offset = NPY_MIN_INTP;
 
         if (method->resolve_descriptors(
                 method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
@@ -1877,7 +1877,7 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
         PyArray_DTypeMeta *dtypes[3] = { dt, kdt, odt };
         PyArray_Descr *given_descrs[3] = { descr, kdescr, odescr };
         // Partition cannot be a view, so view offset is unused
-        npy_intp view_offset = NPY_MIN_INT;
+        npy_intp view_offset = NPY_MIN_INTP;
 
         if (method->resolve_descriptors(
                 method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
