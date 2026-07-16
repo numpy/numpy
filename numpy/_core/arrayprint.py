@@ -256,6 +256,12 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     * Use `printoptions` as a context manager to set the values temporarily.
     * These print options apply only to NumPy ndarrays, not to scalars.
 
+    .. versionchanged:: 2.1
+
+   Print options are maintained per execution context rather than globally.
+   Different threads and asynchronous tasks have independent print option
+   settings.
+
     **Concurrency note:** see :ref:`text_formatting_options`
 
     Examples
