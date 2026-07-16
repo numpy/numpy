@@ -3,6 +3,7 @@ import itertools
 import pytest
 
 import numpy as np
+from numpy._core._exceptions import _UFuncNoLoopError
 from numpy._core._reduction_loop_tests import minimummaximum as mm
 
 SHAPES = [(12,), (3, 4), (2, 3, 4)]
@@ -252,7 +253,7 @@ class TestReductionLoop:
 
     def test_no_reduction_loop_raises(self):
         with pytest.raises(
-                ValueError, match="resolved loop does not register a reduction loop"):
+                _UFuncNoLoopError, match="did not contain a loop with signature"):
             np.divmod.reduce([1, 2, 3])
 
     def test_forward_python_scalars(self):

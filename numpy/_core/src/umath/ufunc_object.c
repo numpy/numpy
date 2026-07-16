@@ -2361,10 +2361,7 @@ reducelike_promote_and_resolve_multi(PyUFuncObject *ufunc,
     }
 
     if (ufuncimpl->get_reduction_loop == NULL) {
-        PyErr_Format(PyExc_ValueError,
-                "%s.%s is not supported: the resolved loop does not register "
-                "a reduction loop",
-                ufunc_get_name_cstr(ufunc), method);
+        raise_no_loop_found_error(ufunc, (PyObject **)fwd_descrs);
         goto fail;
     }
 
