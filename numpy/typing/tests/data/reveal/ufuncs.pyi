@@ -1920,7 +1920,7 @@ assert_type(np.bitwise_or.accumulate(_py_b_1d), npt.NDArray[np.bool])
 assert_type(np.bitwise_or.accumulate(_bool_nd), npt.NDArray[np.bool])
 
 ###
-# _ufunc_21_mod[inexact]
+# _ufunc_21_mod[inexact, Never]
 # (fmod)
 
 assert_type(np.fmod(_py_b_0d, _py_b_0d), np.int8)
@@ -2351,9 +2351,9 @@ assert_type(np.fmod.accumulate(_py_i_1d, dtype=np.int16), npt.NDArray[np.int16])
 assert_type(np.fmod.accumulate(_py_i_1d, dtype="i2"), npt.NDArray[Any])
 
 ###
-# _ufunc_21_mod[inexact | timedelta64 | object_]
+# _ufunc_21_mod[inexact | timedelta64 | object_, timedelta64]
 # (remainder, mod)
-# same as above but with additional `timedelta64` and `object_` overloads
+# same as `fmod` but with additional `timedelta64` and `object_` overloads
 
 assert_type(np.mod(_td_ns_0d, _td_ns_0d), np.timedelta64)
 assert_type(np.mod(_td_ns_0d, _td_ns_1d), npt.NDArray[np.timedelta64])
@@ -2385,3 +2385,50 @@ assert_type(np.mod.reduceat(_obj_nd, (1,)), npt.NDArray[np.object_])
 
 assert_type(np.mod.accumulate(_td_ns_nd), npt.NDArray[np.timedelta64[int]])
 assert_type(np.mod.accumulate(_obj_nd), npt.NDArray[np.object_])
+
+###
+# _ufunc_21_mod[inexact | timedelta64 | object_, int64]
+# (floor_divide)
+# same as above `fmod` with additional `timedelta64` and `object_` overloads
+
+assert_type(np.floor_divide(_td_ns_0d, _py_i_0d), np.timedelta64[int])
+assert_type(np.floor_divide(_td_ns_0d, _py_i_1d), npt.NDArray[np.timedelta64[int]])
+assert_type(np.floor_divide(_td_ns_1d, _py_i_0d), npt.NDArray[np.timedelta64[int]])
+assert_type(np.floor_divide(_td_ns_1d, _py_i_1d), npt.NDArray[np.timedelta64[int]])
+assert_type(np.floor_divide(_td_ns_0d, _py_f_0d), np.timedelta64[int])
+assert_type(np.floor_divide(_td_ns_0d, _py_f_1d), npt.NDArray[np.timedelta64[int]])
+assert_type(np.floor_divide(_td_ns_1d, _py_f_0d), npt.NDArray[np.timedelta64[int]])
+assert_type(np.floor_divide(_td_ns_1d, _py_f_1d), npt.NDArray[np.timedelta64[int]])
+assert_type(np.floor_divide(_td_ns_0d, _i16_0d), np.timedelta64[int])
+assert_type(np.floor_divide(_td_ns_0d, _i16_1d), npt.NDArray[np.timedelta64[int]])
+assert_type(np.floor_divide(_td_ns_1d, _i16_0d), npt.NDArray[np.timedelta64[int]])
+assert_type(np.floor_divide(_td_ns_1d, _i16_1d), npt.NDArray[np.timedelta64[int]])
+assert_type(np.floor_divide(_td_ns_0d, _f32_0d), np.timedelta64[int])
+assert_type(np.floor_divide(_td_ns_0d, _f32_1d), npt.NDArray[np.timedelta64[int]])
+assert_type(np.floor_divide(_td_ns_1d, _f32_0d), npt.NDArray[np.timedelta64[int]])
+assert_type(np.floor_divide(_td_ns_1d, _f32_1d), npt.NDArray[np.timedelta64[int]])
+assert_type(np.floor_divide(_td_ns_0d, _td_ns_0d), np.int64)
+assert_type(np.floor_divide(_td_ns_0d, _td_ns_1d), npt.NDArray[np.int64])
+assert_type(np.floor_divide(_td_ns_1d, _td_ns_0d), npt.NDArray[np.int64])
+assert_type(np.floor_divide(_td_ns_1d, _td_ns_1d), npt.NDArray[np.int64])
+
+assert_type(np.floor_divide(_obj_1d, _py_f_0d), npt.NDArray[np.object_])
+assert_type(np.floor_divide(_obj_1d, _py_f_1d), npt.NDArray[np.object_])
+assert_type(np.floor_divide(_obj_1d, _i16_0d), npt.NDArray[np.object_])
+assert_type(np.floor_divide(_obj_1d, _i16_1d), npt.NDArray[np.object_])
+assert_type(np.floor_divide(_obj_1d, _f32_0d), npt.NDArray[np.object_])
+assert_type(np.floor_divide(_obj_1d, _f32_1d), npt.NDArray[np.object_])
+assert_type(np.floor_divide(_obj_1d, _obj_1d), npt.NDArray[np.object_])
+
+# floor_divide.outer is equivalent to __call__
+
+assert_type(np.floor_divide.at(_td_ns_1d, 1, _td_ns_0d), None)
+assert_type(np.floor_divide.at(_obj_1d, 1, _py_f_0d), None)
+
+assert_type(np.floor_divide.reduce(_obj_nd), npt.NDArray[np.object_] | Any)
+assert_type(np.floor_divide.reduce(_obj_nd, axis=None), Any)
+assert_type(np.floor_divide.reduce(_obj_nd, keepdims=True), npt.NDArray[np.object_])
+
+assert_type(np.floor_divide.reduceat(_obj_nd, (1,)), npt.NDArray[np.object_])
+
+assert_type(np.floor_divide.accumulate(_obj_nd), npt.NDArray[np.object_])
