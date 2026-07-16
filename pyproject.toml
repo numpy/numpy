@@ -1,7 +1,7 @@
 [build-system]
 build-backend = "mesonpy"
 requires = [
-    "meson-python>=0.18.0",
+    "meson-python>=0.20.0",
     "Cython>=3.1.0",  # keep in sync with version check in meson.build
 ]
 
@@ -199,6 +199,15 @@ enable = ["cpython-prerelease"]
 setup-args = ["-Duse-ilp64=true", "-Dallow-noblas=false"]
 build-dir = "build"
 
+[tool.cibuildwheel.android.config-settings]
+# ILP64 causes many failures on Android, for unknown reasons.
+setup-args = ["-Duse-ilp64=false", "-Dallow-noblas=false"]
+build-dir = "build"
+
+[tool.cibuildwheel.android.environment]
+PKG_CONFIG_PATH = "$(pwd)/.openblas/chaquopy/lib/pkgconfig"
+AUDITWHEEL_LD_LIBRARY_PATH = "$(pwd)/.openblas/chaquopy/lib"
+
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
@@ -222,16 +231,31 @@ select = ["*-win32"]
 config-settings = {setup-args = ["--vsenv", "-Dallow-noblas=true"], build-dir="build"}
 repair-wheel-command = ""
 
-[tool.cibuildwheel.pyodide]
-before-test = "pip install -r {project}/requirements/emscripten_test_requirements.txt"
-# Pyodide ensures that the wheels are already repaired by auditwheel-emscripten
-repair-wheel-command = ""
+[[tool.cibuildwheel.overrides]]
+select = ["*-android*", "*-ios*", "*-pyodide*"]
+before-test = ""
+
+# Any packages which appear both here and in test_requirements.txt should be kept in
+# sync.
+test-requires = [
+    "hypothesis==6.155.7",
+    "pytest==9.1.1",
+    "tzdata",
+    "pytest-xdist",
+]
+
+# Mobile and WASM platforms can't run the cibw_test_command shell script, so they must
+# run Python directly.
 test-command = """
     python -m pytest --pyargs numpy \
         -m 'not slow' \
         -W ignore::PendingDeprecationWarning \
         -p no:cacheprovider
 """
+
+[tool.cibuildwheel.pyodide]
+# Pyodide ensures that the wheels are already repaired by auditwheel-emscripten
+repair-wheel-command = ""
 
 [tool.cibuildwheel.pyodide.config-settings]
 build-dir = "build"

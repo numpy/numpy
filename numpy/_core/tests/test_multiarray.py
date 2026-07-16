@@ -39,6 +39,7 @@ from numpy.lib.recfunctions import repack_fields
 from numpy.testing import (
     BLAS_SUPPORTS_FPE,
     HAS_REFCOUNT,
+    HAS_SUBPROCESSES,
     IS_64BIT,
     IS_WASM,
     assert_,
@@ -58,6 +59,7 @@ from numpy.testing import (
 )
 from numpy.testing._private.utils import (
     _no_tracing,
+    longdouble_fpe_mark,
     requires_deep_recursion,
     requires_memory,
 )
@@ -4114,7 +4116,10 @@ class TestMethods:
         a.dot(b=b, out=c)
         assert_equal(c, np.dot(a, b))
 
-    @pytest.mark.parametrize("dtype", [np.half, np.double, np.longdouble])
+    @pytest.mark.parametrize(
+        "dtype",
+        [np.half, np.double, pytest.param(np.longdouble, marks=longdouble_fpe_mark)],
+    )
     @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
     def test_dot_errstate(self, dtype):
         # Some dtypes use BLAS for 'dot' operation and
@@ -7027,7 +7032,9 @@ class TestResize:
         y = x
         assert_raises(ValueError, x.resize, (5, 1))
 
-    @pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
+    @pytest.mark.skipif(
+        not HAS_SUBPROCESSES, reason="platform cannot start subprocesses"
+    )
     def test_check_reference_module_scope(self):
         code = textwrap.dedent("""
             import numpy as np

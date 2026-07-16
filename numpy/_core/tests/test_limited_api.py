@@ -8,7 +8,7 @@ import sysconfig
 import pytest
 
 import numpy as np
-from numpy.testing import IS_EDITABLE, IS_WASM, NOGIL_BUILD
+from numpy.testing import HAS_SUBPROCESSES, IS_EDITABLE, NOGIL_BUILD
 from numpy.testing._private.utils import run_subprocess
 
 # This import is copied from random.tests.test_extending
@@ -39,7 +39,7 @@ if IS_EDITABLE:
 @pytest.fixture(scope='module')
 def install_temp(tmpdir_factory):
     # Based in part on test_cython from random.tests.test_extending
-    if IS_WASM:
+    if not HAS_SUBPROCESSES:
         pytest.skip("No subprocess")
 
     # Build against a copy of the sources placed next to the build dir:
@@ -200,7 +200,9 @@ def limited_api_cython_module_names():
     return _module_names("limited_api_cython", _PY_ABI3_VERSIONS)
 
 
-@pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
+@pytest.mark.skipif(
+    not HAS_SUBPROCESSES, reason="platform cannot start subprocesses"
+)
 @pytest.mark.skipif(
     sysconfig.get_config_var("Py_DEBUG"),
     reason=(
@@ -218,7 +220,9 @@ def test_limited_api_abi3(install_temp, module_name):
     _check_api_module(mod)
 
 
-@pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
+@pytest.mark.skipif(
+    not HAS_SUBPROCESSES, reason="platform cannot start subprocesses"
+)
 @pytest.mark.skipif(
     sysconfig.get_config_var("Py_DEBUG"),
     reason=(
