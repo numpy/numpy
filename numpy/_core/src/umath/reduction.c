@@ -14,6 +14,7 @@
 #include <Python.h>
 
 #include "npy_config.h"
+#include "npy_pycompat.h"
 #include "numpy/arrayobject.h"
 
 
@@ -489,14 +490,9 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
         ret = (PyObject *)result;
     }
     else {
-        ret = PyTuple_New(nout);
+        ret = PyTuple_FromArray((PyObject *const *)NpyIter_GetOperandArray(iter), nout);
         if (ret == NULL) {
             goto fail;
-        }
-        for (int i = 0; i < nout; i++) {
-            PyArrayObject *res_i = NpyIter_GetOperandArray(iter)[i];
-            Py_INCREF(res_i);
-            PyTuple_SET_ITEM(ret, i, (PyObject *)res_i);
         }
     }
 
