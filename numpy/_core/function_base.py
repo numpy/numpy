@@ -143,20 +143,25 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     # bad element entirely rather than suppressing warnings globally, so
     # genuine invalid operations (e.g. mixed infinities) still warn.
     equal = start == stop
-    # Wrapping y ensures that ndarray subclasses like astropy's Quantity
-    # can override the further operations below. See gh-7142.
-    y = conv.wrap(_nx.arange(
-        0, num, dtype=dt, device=device
-    ).reshape((-1,) + (1,) * equal.ndim), to_scalar=False)
-    delta = np.zeros_like(y, shape=equal.shape, dtype=type(dt))
+    # Wrapping delta ensures that ndarray subclasses like astropy's Quantity
+    # can override the subtraction correctly below. See gh-7142.
+    delta = conv.wrap(
+        np.zeros(shape=equal.shape, dtype=type(dt)),
+        to_scalar=False
+    )
     # Use `dtype=type(dt)` to enforce a floating point evaluation.
     np.subtract(stop, start, dtype=type(dt), where=~equal, out=delta)
 
-    # In-place multiplication y *= delta/div is faster, but cannot work
-    # if the input and output shapes are not equal. Hence, we multiply
-    # in place only if delta is scalar.
+    # Now start the real work, by generating the range of numbers.
+    y = _nx.arange(
+        0, num, dtype=dt, device=device
+    ).reshape((-1,) + (1,) * equal.ndim)
+    # In-place multiplication y *= delta/div is fastest, but cannot work
+    # if the input and output shapes are not equal, and may fail for
+    # subclasses, where the output needs to be a subclass. Hence, we multiply
+    # in place only if delta is a scalar non-subclassed array.
     if div > 0:
-        _mult_inplace = delta.ndim == 0
+        _mult_inplace = delta.ndim == 0 and type(delta) is np.ndarray
         step = delta / div
         any_step_zero = (
             step == 0 if _mult_inplace else _nx.asanyarray(step == 0).any())
@@ -175,7 +180,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         # sequences with 0 items or 1 item with endpoint=True (i.e. div <= 0)
         # have an undefined step
         step = nan
-        # Multiply with delta out-of-place in case delta is not scalar.
+        # Multiply out-of-place in case delta is not scalar or a subclass.
         y = y * delta
 
     y += start
