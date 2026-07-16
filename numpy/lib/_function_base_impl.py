@@ -1868,9 +1868,13 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     if discont is None:
         discont = period / 2
     if np.ma.isMaskedArray(p):
-        # the gufunc's C loop has no concept of masking and would compute
-        # straight through masked values; the fallback's ops are mask-aware
-        return _unwrap_fallback(p, discont, period, axis)
+        # TODO: one could potentially implement a mask aware unwrap function
+        fill_value = p.fill_value
+        unmasked = _unwrap_fallback(asarray(p), discont, period, axis)
+        result = unmasked.view(type(p))
+        result.mask = False
+        result.fill_value = fill_value
+        return result
     dtype = np.result_type(p, period)
     discont_type = np.longdouble if dtype.type is np.longdouble else np.float64
     try:
