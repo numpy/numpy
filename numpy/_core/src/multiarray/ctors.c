@@ -4002,14 +4002,13 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
     char *item = PyArray_BYTES(ret);
     /*
      * PyArray_NewFromDescr may hand back an array whose descriptor is not
-     * `dtype`.  For subarray dtypes it uses the base descriptor, and packing
-     * must keep using the subarray `dtype` itself.  For parametric dtypes such
-     * as StringDType it may return an equivalent but distinct descriptor that
-     * owns its own storage (the string arena) -- this happens when the passed
-     * descriptor is already owned by another array, e.g. when the same dtype
-     * instance is reused.  In that case values must be packed with the array's
-     * actual descriptor, otherwise they are written into the wrong arena and
-     * the memory is freed twice on cleanup.
+     * `dtype`.  For subarray dtypes we use the base descriptor `dtype` for packing.
+     * For parametric dtypes such as StringDType it may return an equivalent but
+     * distinct descriptor that owns its own storage (the string arena) -- this
+     * happens when the passed descriptor is already owned by another array,
+     * e.g. when the same dtype instance is reused.  In that case values must be
+     * packed with the array's actual descriptor, otherwise they are written into
+     * the wrong arena and the memory is freed twice on cleanup.
      */
     PyArray_Descr *pack_descr = PyDataType_HASSUBARRAY(dtype) ?
                                 dtype : PyArray_DESCR(ret);
