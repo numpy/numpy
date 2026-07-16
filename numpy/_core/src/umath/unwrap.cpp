@@ -101,6 +101,9 @@ unwrap_loop(PyArrayMethod_Context *NPY_UNUSED(context), char *const data[],
 
     npy_intp n_outer = dimensions[0];
     npy_intp n = dimensions[1];
+    if (n == 0) {
+        return 0;
+    }
     npy_intp s_p = strides[0], s_disc = strides[1];
     npy_intp s_per = strides[2], s_out = strides[3];
     npy_intp ip_step = strides[4];
@@ -110,9 +113,6 @@ unwrap_loop(PyArrayMethod_Context *NPY_UNUSED(context), char *const data[],
 
     for (npy_intp k = 0; k < n_outer; k++,
             p_o += s_p, disc_o += s_disc, per_o += s_per, out_o += s_out) {
-        if (n <= 0) {
-            continue;
-        }
         D discont = *(const D *)disc_o;
         T period = *(const T *)per_o;
         T interval_high;
@@ -169,6 +169,9 @@ unwrap_half_loop(PyArrayMethod_Context *NPY_UNUSED(context), char *const data[],
 {
     npy_intp n_outer = dimensions[0];
     npy_intp n = dimensions[1];
+    if (n == 0) {
+        return 0;
+    }
     npy_intp s_p = strides[0], s_disc = strides[1];
     npy_intp s_per = strides[2], s_out = strides[3];
     npy_intp ip_step = strides[4];
@@ -178,9 +181,6 @@ unwrap_half_loop(PyArrayMethod_Context *NPY_UNUSED(context), char *const data[],
 
     for (npy_intp k = 0; k < n_outer; k++,
             p_o += s_p, disc_o += s_disc, per_o += s_per, out_o += s_out) {
-        if (n <= 0) {
-            continue;
-        }
         npy_double discont = *(const npy_double *)disc_o;
         npy_half period = *(const npy_half *)per_o;
         npy_half interval_high = f2h(h2f(period) / 2.0f);
