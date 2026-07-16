@@ -601,7 +601,7 @@ assert_type(np.invert(_obj_nd), npt.NDArray[np.object_])
 
 assert_type(np.invert(_py_b_0d, dtype=np.uint8), np.uint8)
 assert_type(np.invert(_py_i_1d, dtype=np.int16), npt.NDArray[np.int16])
-assert_type(np.invert(_u8_2d, dtype=np.bool), _Array2D[np.bool])
+assert_type(np.invert(_u8_2d, dtype=np.bool), _Array2D[np.bool[Any]])
 
 assert_type(np.invert(_py_b_0d, dtype="i4"), Any)
 assert_type(np.invert(_py_i_1d, dtype="i4"), np.ndarray)
@@ -644,7 +644,7 @@ assert_type(np.ceil(_obj_nd), npt.NDArray[np.object_])
 
 assert_type(np.ceil(_py_b_0d, dtype=np.uint8), np.uint8)
 assert_type(np.ceil(_py_i_1d, dtype=np.float32), npt.NDArray[np.float32])
-assert_type(np.ceil(_u8_2d, dtype=np.bool), _Array2D[np.bool])
+assert_type(np.ceil(_u8_2d, dtype=np.bool), _Array2D[np.bool[Any]])
 
 assert_type(np.ceil(_py_b_0d, dtype="f4"), Any)
 assert_type(np.ceil(_py_i_1d, dtype="f4"), np.ndarray)
@@ -699,7 +699,7 @@ assert_type(np.abs(_obj_nd), npt.NDArray[np.object_])
 
 assert_type(np.abs(_py_b_0d, dtype=np.uint8), np.uint8)
 assert_type(np.abs(_py_c_1d, dtype=np.float32), npt.NDArray[np.float32])
-assert_type(np.abs(_u8_2d, dtype=np.bool), _Array2D[np.bool])
+assert_type(np.abs(_u8_2d, dtype=np.bool), _Array2D[np.bool[Any]])
 
 assert_type(np.abs(_py_b_0d, dtype="f4"), Any)
 assert_type(np.abs(_py_i_1d, dtype="f4"), np.ndarray)
