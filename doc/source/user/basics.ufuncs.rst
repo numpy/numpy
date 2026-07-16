@@ -79,7 +79,7 @@ reduction loop registered, so calling its methods raises an error::
    >>> np.divmod.reduce([1, 2, 3])
    Traceback (most recent call last):
        ...
-   ValueError: divmod.reduce is not supported: the resolved loop does not register a reduction loop
+   TypeError: divmod.reduce is not supported: the resolved loop does not register a reduction loop
 
 For a ufunc with more than one output whose loop *does* register a reduction
 loop, :meth:`~numpy.ufunc.reduce` instead returns a tuple with one array per
