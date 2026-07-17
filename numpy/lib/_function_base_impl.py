@@ -1764,7 +1764,7 @@ def _unwrap_fallback(p, discont, period, axis):
         # `ddmod[mask] == -period/2`. correct these such that
         # `ddmod[mask] == sign(dd[mask])*period/2`.
         _nx.copyto(ddmod, interval_high,
-                where=(ddmod == interval_low) & (dd > 0))
+                   where=(ddmod == interval_low) & (dd > 0))
     ph_correct = ddmod - dd
     _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
     up = asanyarray(p, dtype=dtype, copy=True)
