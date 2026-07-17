@@ -726,7 +726,7 @@ def test_fancy_indexing(string_list):
 
 def test_fromiter_reused_dtype():
     # Reusing the same StringDType instance across fromiter
-    # calls used to write strings into the wrong arena create corrupted arrays.
+    # calls used to write strings into the wrong arena, creating corrupted arrays
     sd = np.dtypes.StringDType()
     data = ["a" * 18, "b" * 18] * 8
     arr1 = np.fromiter(iter(data), dtype=sd, count=len(data))
