@@ -26,9 +26,14 @@ enum CBLAS_SIDE {CblasLeft=141, CblasRight=142};
 #define CBLAS_INDEX size_t  /* this may vary between platforms */
 
 #ifdef ACCELERATE_NEW_LAPACK
-    #if __MAC_OS_X_VERSION_MAX_ALLOWED < 130300
+    #include "TargetConditionals.h"
+    #if TARGET_OS_OSX && __MAC_OS_X_VERSION_MAX_ALLOWED < 130300
         #ifdef HAVE_BLAS_ILP64
             #error "Accelerate ILP64 support is only available with macOS 13.3 SDK or later"
+        #endif
+    #elif TARGET_OS_IOS && __IPHONE_OS_VERSION_MAX_ALLOWED < 160400
+        #ifdef HAVE_BLAS_ILP64
+            #error "Accelerate ILP64 support is only available with iOS 16.4 SDK or later"
         #endif
     #else
         #define NO_APPEND_FORTRAN

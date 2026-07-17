@@ -208,6 +208,14 @@ build-dir = "build"
 PKG_CONFIG_PATH = "$(pwd)/.openblas/chaquopy/lib/pkgconfig"
 AUDITWHEEL_LD_LIBRARY_PATH = "$(pwd)/.openblas/chaquopy/lib"
 
+[tool.cibuildwheel.ios]
+# The ILP64 version of Accelerate is only available on iOS 16.4 or above.
+config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dallow-noblas=false build-dir=build"
+# On older iOS versions, use the following configuration
+# config-settings = "setup-args=-Dallow-noblas=false build-dir=build"
+before-build = []
+xbuild-tools = ["ninja"]
+
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"

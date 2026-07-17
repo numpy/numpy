@@ -805,7 +805,7 @@ class TestRemainder:
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.xfail(
-        sys.platform in ["android", "darwin"],
+        sys.platform in ["android", "darwin", "ios"],
         reason="This platform seems to not give the correct 'invalid' warning"
     )
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
@@ -835,7 +835,7 @@ class TestRemainder:
             reason="gh-22982")
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.xfail(
-        sys.platform in ["android", "darwin"],
+        sys.platform in ["android", "darwin", "ios"],
         reason="This platform seems to not give the correct 'invalid' warning"
     )
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
@@ -1624,7 +1624,7 @@ class TestSpecialFloats:
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.xfail(
-        sys.platform.startswith("darwin"),
+        sys.platform in {"darwin", "ios"},
         reason="underflow is triggered for scalar 'sin'"
     )
     def test_sincos_underflow(self):

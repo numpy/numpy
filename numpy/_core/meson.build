@@ -517,6 +517,20 @@ if longdouble_format == 'UNKNOWN'
     else
       longdouble_format = 'IEEE_DOUBLE_LE'
     endif
+  elif host_machine.system() == 'ios'
+    if host_machine.cpu_family() == 'x86_64'
+      # The x86_64 iOS simulator runs on x86_64 macOS hosts. Apple's x86-64
+      # calling conventions defer to the System V AMD64 psABI, which defines
+      # `long double` as the 80-bit x87 extended-precision format stored in
+      # 16 bytes (unlike arm64, where `long double` == `double`):
+      #  * https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/LowLevelABI/140-x86-64_Function_Calling_Conventions/x86_64.html
+      #  * https://gitlab.com/x86-psABIs/x86-64-ABI
+      longdouble_format = 'INTEL_EXTENDED_16_BYTES_LE'
+    else
+      # On arm64 iOS, long double is identical to the double type:
+      # https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms#Handle-data-types-and-data-alignment-properly
+      longdouble_format = 'IEEE_DOUBLE_LE'
+    endif
   else
     longdouble_format = meson.get_compiler('c').run(
 '''

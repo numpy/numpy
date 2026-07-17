@@ -47,6 +47,8 @@ jobs:
           # runner. So we build for ARM on a non-ARM runner, which will skip the tests.
           - [ubuntu-24.04, android_arm64_v8a]
           - [ubuntu-24.04, android_x86_64]
+          - [macos-26, ios_arm64_iphoneos, accelerate]
+          - [macos-26, ios_arm64_iphonesimulator, accelerate]
         python: ["cp313"]
 
     env:
@@ -84,7 +86,7 @@ jobs:
           echo "CIBW_ENVIRONMENT_WINDOWS=PKG_CONFIG_PATH=$CIBW" >> $env:GITHUB_ENV
 
       - name: Setup macOS
-        if: matrix.buildplat[0] == 'macos-15-intel' || matrix.buildplat[0] == 'macos-14'
+        if: matrix.buildplat[1] == 'macosx_x86_64' || matrix.buildplat[1] == 'macosx_arm64'
         run: |
           # Needed due to https://github.com/actions/runner-images/issues/3371
           # Supported versions: https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md
@@ -103,6 +105,19 @@ jobs:
             PKG_CONFIG_PATH="$PWD/.openblas"
             DYLD="$DYLD_LIBRARY_PATH:/$PWD/.openblas/lib"
             echo "CIBW_ENVIRONMENT_MACOS=$CIBW PKG_CONFIG_PATH=$PKG_CONFIG_PATH DYLD_LIBRARY_PATH=$DYLD" >> "$GITHUB_ENV"
+          fi
+
+      - name: Setup iOS
+        if: matrix.buildplat[1] == 'ios_arm64_iphoneos' || matrix.buildplat[1] == 'ios_arm64_iphonesimulator'
+        run: |
+          if [[ "${{ matrix.buildplat[2] }}" == 'accelerate' ]]; then
+            # ACCELERATE_NEW_LAPACK with ILP64 requires iOS 16.4 or higher
+            CIBW_ENV="IPHONEOS_DEPLOYMENT_TARGET=17.0"
+            echo "CIBW_ENVIRONMENT_IOS=$CIBW_ENV" >> "$GITHUB_ENV"
+          else
+            # On older iOS versions, use LP64 with the older Accelerate
+            CIBW_CONFIG="setup-args=-Dallow-noblas=false build-dir=build"
+            echo "CIBW_CONFIG_SETTINGS_IOS=$CIBW_CONFIG" >> "$GITHUB_ENV"
           fi
 
       - name: Build wheels

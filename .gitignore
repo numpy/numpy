@@ -29,6 +29,7 @@ GSYMS
 GTAGS
 .cache
 .mypy_cache/
+.envrc
 
 # Compiled source #
 ###################
@@ -67,6 +68,8 @@ pip-wheel-metadata
 # virtual envs
 numpy-dev/
 venv/
+# cibuildwheel output directory
+wheelhouse/
 
 # Paver generated files #
 #########################
