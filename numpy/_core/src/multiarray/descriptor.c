@@ -389,6 +389,27 @@ _convert_from_tuple(PyObject *obj, int align)
 }
 
 /*
+ * StringDType is not supported in structured dtypes.  Reject it as a field
+ * dtype, including when it is wrapped in subarray dtypes.  Returns -1 with
+ * an exception set if rejected, 0 otherwise.
+ */
+static int
+_reject_stringdtype_field(PyArray_Descr *descr)
+{
+    while (PyDataType_HASSUBARRAY(descr)) {
+        descr = PyDataType_SUBARRAY(descr)->base;
+    }
+    if (PyObject_IsInstance((PyObject *)descr,
+                            (PyObject *)&PyArray_StringDType)) {
+        PyErr_SetString(PyExc_TypeError,
+                "StringDType is not currently supported for structured "
+                "dtype fields.");
+        return -1;
+    }
+    return 0;
+}
+
+/*
  * obj is a list.  Each item is a tuple with
  *
  * (field-name, data-type (either a list or a string), and an optional
@@ -495,9 +516,8 @@ _convert_from_array_descr(PyObject *obj, int align)
                     "Field elements must be tuples with at most 3 elements, got '%R'", item);
             goto fail;
         }
-        if (PyObject_IsInstance((PyObject *)conv, (PyObject *)&PyArray_StringDType)) {
-            PyErr_Format(PyExc_TypeError,
-                         "StringDType is not currently supported for structured dtype fields.");
+        if (_reject_stringdtype_field(conv) < 0) {
+            Py_DECREF(conv);
             goto fail;
         }
         if ((PyDict_GetItemWithError(fields, name) != NULL) // noqa: borrowed-ref OK
@@ -638,6 +658,10 @@ _convert_from_list(PyObject *obj, int align)
         PyArray_Descr *conv = _convert_from_any(
                 PyList_GET_ITEM(obj, i), align); // noqa: borrowed-ref OK
         if (conv == NULL) {
+            goto fail;
+        }
+        if (_reject_stringdtype_field(conv) < 0) {
+            Py_DECREF(conv);
             goto fail;
         }
         dtypeflags |= (conv->flags & NPY_FROM_FIELDS);
@@ -1129,6 +1153,12 @@ _convert_from_dict(PyObject *obj, int align)
         PyArray_Descr *newdescr = _convert_from_any(descr, align);
         Py_DECREF(descr);
         if (newdescr == NULL) {
+            Py_DECREF(tup);
+            Py_DECREF(ind);
+            goto fail;
+        }
+        if (_reject_stringdtype_field(newdescr) < 0) {
+            Py_DECREF(newdescr);
             Py_DECREF(tup);
             Py_DECREF(ind);
             goto fail;

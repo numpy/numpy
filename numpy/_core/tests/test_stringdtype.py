@@ -113,6 +113,32 @@ def test_dtype_creation():
     assert len(hashes) == 4
 
 
+@pytest.mark.parametrize("dtype_spec", [
+    [("a", StringDType())],
+    [("a", (StringDType(), 10))],
+    [("a", np.dtype((StringDType(), 2)))],
+    [("a", (np.dtype((StringDType(), 2)), 3))],
+    {"names": ["a"], "formats": [StringDType()]},
+    {"names": ["a"], "formats": [(StringDType(), 2)]},
+    {"a": (StringDType(), 0)},
+    "T,i4",
+])
+def test_structured_dtype_creation_rejected(dtype_spec):
+    with pytest.raises(TypeError,
+                       match="not currently supported for structured"):
+        np.dtype(dtype_spec)
+
+
+def test_subarray_dtype_allowed():
+    # subarray dtypes are not structured dtypes; array creation unwraps
+    # them into an extra dimension
+    arr = np.zeros(3, dtype=np.dtype((StringDType(), 2)))
+    assert arr.shape == (3, 2)
+    assert arr.dtype == StringDType()
+    arr[0, 0] = "hello" * 5
+    assert arr[0, 0] == "hello" * 5
+
+
 def test_dtype_equality(dtype):
     assert dtype == dtype
     for ch in "SU":
