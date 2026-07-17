@@ -15,7 +15,6 @@ import pprint
 import re
 import shutil
 import subprocess
-import subprocess
 import sys
 import sysconfig
 import threading
@@ -41,7 +40,8 @@ __all__ = [
         'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
         'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
-        'HAS_REFCOUNT', 'IS_IOS', "IS_WASM", 'suppress_warnings', 'assert_array_compare',
+        'HAS_REFCOUNT', 'IS_IOS', 'IS_WASM',
+        'suppress_warnings', 'assert_array_compare',
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'HAS_SUBPROCESSES',
         'IS_PYSTON', 'IS_MUSL', 'check_support_sve', 'NOGIL_BUILD',
         'IS_EDITABLE', 'IS_INSTALLED', 'NUMPY_ROOT', 'run_threaded', 'IS_64BIT',
