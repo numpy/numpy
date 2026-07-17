@@ -308,6 +308,18 @@ _convert_from_tuple(PyObject *obj, int align)
             return type;
         }
 
+        /*
+         * A subarray dtype is never attached to an array, so a base with
+         * per-instance state (a finalize slot, e.g. StringDType) could
+         * never be finalized and anything using the dtype would misbehave.
+         */
+        if (NPY_DT_SLOTS(NPY_DTYPE(type))->finalize_descr != NULL) {
+            PyErr_Format(PyExc_TypeError,
+                    "%s is not currently supported within subarray dtypes.",
+                    ((PyTypeObject *)NPY_DTYPE(type))->tp_name);
+            goto fail;
+        }
+
         /* validate and set shape */
         for (int i=0; i < shape.len; i++) {
             if (shape.ptr[i] < 0) {
@@ -389,21 +401,19 @@ _convert_from_tuple(PyObject *obj, int align)
 }
 
 /*
- * StringDType is not supported in structured dtypes.  Reject it as a field
- * dtype, including when it is wrapped in subarray dtypes.  Returns -1 with
- * an exception set if rejected, 0 otherwise.
+ * DTypes with a finalize slot (e.g. StringDType) carry per-instance state
+ * that array creation must finalize, which the structured dtype machinery
+ * does not do.  Reject them as field dtypes; they cannot be wrapped in
+ * subarray dtypes either, so subarray bases need not be checked.  Returns
+ * -1 with an exception set if rejected, 0 otherwise.
  */
 static int
-_reject_stringdtype_field(PyArray_Descr *descr)
+_reject_unsupported_field_dtype(PyArray_Descr *descr)
 {
-    while (PyDataType_HASSUBARRAY(descr)) {
-        descr = PyDataType_SUBARRAY(descr)->base;
-    }
-    if (PyObject_IsInstance((PyObject *)descr,
-                            (PyObject *)&PyArray_StringDType)) {
-        PyErr_SetString(PyExc_TypeError,
-                "StringDType is not currently supported for structured "
-                "dtype fields.");
+    if (NPY_DT_SLOTS(NPY_DTYPE(descr))->finalize_descr != NULL) {
+        PyErr_Format(PyExc_TypeError,
+                "%s is not currently supported for structured dtype "
+                "fields.", ((PyTypeObject *)NPY_DTYPE(descr))->tp_name);
         return -1;
     }
     return 0;
@@ -516,7 +526,7 @@ _convert_from_array_descr(PyObject *obj, int align)
                     "Field elements must be tuples with at most 3 elements, got '%R'", item);
             goto fail;
         }
-        if (_reject_stringdtype_field(conv) < 0) {
+        if (_reject_unsupported_field_dtype(conv) < 0) {
             Py_DECREF(conv);
             goto fail;
         }
@@ -660,7 +670,7 @@ _convert_from_list(PyObject *obj, int align)
         if (conv == NULL) {
             goto fail;
         }
-        if (_reject_stringdtype_field(conv) < 0) {
+        if (_reject_unsupported_field_dtype(conv) < 0) {
             Py_DECREF(conv);
             goto fail;
         }
@@ -1157,7 +1167,7 @@ _convert_from_dict(PyObject *obj, int align)
             Py_DECREF(ind);
             goto fail;
         }
-        if (_reject_stringdtype_field(newdescr) < 0) {
+        if (_reject_unsupported_field_dtype(newdescr) < 0) {
             Py_DECREF(newdescr);
             Py_DECREF(tup);
             Py_DECREF(ind);
