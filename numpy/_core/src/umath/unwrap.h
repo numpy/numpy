@@ -13,4 +13,3 @@ init_unwrap_ufunc(PyObject *umath);
 #endif
 
 #endif  /* _NPY_CORE_SRC_UMATH_UNWRAP_H_ */
-
