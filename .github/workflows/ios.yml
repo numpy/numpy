@@ -61,7 +61,7 @@ jobs:
             echo "CIBW_ENVIRONMENT_IOS=$CIBW_ENV" >> "$GITHUB_ENV"
           else
             # On older iOS versions, disable ILP64.
-            CIBW_CONFIG="setup-args=-Duse-ilp64=false setup-args=-Dallow-noblas=true build-dir=build"
+            CIBW_CONFIG="setup-args=-Dallow-noblas=false build-dir=build"
             echo "CIBW_CONFIG_IOS=$CIBW_CONFIG" >> "$GITHUB_ENV"
           fi
 

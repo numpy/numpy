@@ -210,9 +210,9 @@ AUDITWHEEL_LD_LIBRARY_PATH = "$(pwd)/.openblas/chaquopy/lib"
 
 [tool.cibuildwheel.ios]
 # The ILP64 version of Accelerate is only available on iOS 16.4 or above.
-config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dallow-noblas=true build-dir=build"
+config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dallow-noblas=false build-dir=build"
 # On older iOS versions, use the following configuration
-# config-settings = "setup-args=setup-args=-Duse-ilp64=false setup-args=-Dallow-noblas=true build-dir=build"
+# config-settings = "setup-args=-Dallow-noblas=false build-dir=build"
 before-build = []
 xbuild-tools = ["ninja"]
 
@@ -255,7 +255,7 @@ test-requires = [
 # Mobile and WASM platforms can't run the cibw_test_command shell script, so they must
 # run Python directly.
 test-command = """
-    python -m pytest --pyargs numpy -vv \
+    python -m pytest --pyargs numpy \
         -m 'not slow' \
         -W ignore::PendingDeprecationWarning \
         -p no:cacheprovider
