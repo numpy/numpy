@@ -29,6 +29,7 @@ GSYMS
 GTAGS
 .cache
 .mypy_cache/
+.envrc
 
 # Compiled source #
 ###################
