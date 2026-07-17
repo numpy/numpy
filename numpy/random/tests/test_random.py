@@ -883,6 +883,10 @@ class TestRandomDist:
                             [0, 0]])
         assert_array_equal(actual, desired)
 
+    @pytest.mark.skipif(
+        np.iinfo('l').max < 1e17,
+        reason="test requires support for lam=1e17",
+    )
     def test_poisson_large_lambda(self):
         # The direct log-PMF used by PTRS loses precision through cancellation
         # at large lambda, which distorts the variance of the samples.
