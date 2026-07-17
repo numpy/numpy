@@ -254,6 +254,7 @@ fill_arraymethod_from_slots(
     meth->resolve_descriptors = &default_resolve_descriptors;
     meth->get_reduction_loop = NULL;
     meth->get_reduction_initial = NULL;  /* no initial/identity by default */
+    meth->get_multi_reduction_initials = NULL;  /* no initial/identity by default */
 
     /* Fill in the slots passed by the user */
     /*
@@ -304,6 +305,9 @@ fill_arraymethod_from_slots(
                 continue;
             case NPY_METH_get_reduction_loop:
                 meth->get_reduction_loop = slot->pfunc;
+                continue;
+            case NPY_METH_get_multi_reduction_initials:
+                meth->get_multi_reduction_initials = slot->pfunc;
                 continue;
             case NPY_METH_contiguous_indexed_loop:
                 meth->contiguous_indexed_loop = slot->pfunc;

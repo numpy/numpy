@@ -81,6 +81,7 @@ typedef struct PyArrayMethodObject_tag {
      * reduction's loop which requires an (nout+1)->nout signature.
      */
     PyArrayMethod_GetLoop *get_reduction_loop;
+    PyArrayMethod_GetMultiReductionInitials *get_multi_reduction_initials;
 } PyArrayMethodObject;
 
 
