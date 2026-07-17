@@ -4548,14 +4548,15 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
 
 
 static PyObject *
-_set_numpy_warn_if_no_mem_policy(PyObject *NPY_UNUSED(self), PyObject *arg)
+_set_numpy_warn_if_no_mem_policy(PyObject *self, PyObject *arg)
 {
     int res = PyObject_IsTrue(arg);
     if (res < 0) {
         return NULL;
     }
-    int old_value = npy_global_state.warn_if_no_mem_policy;
-    npy_global_state.warn_if_no_mem_policy = res;
+    multiarray_umath_state *state = get_module_state(self);
+    int old_value = state->global_state.warn_if_no_mem_policy;
+    state->global_state.warn_if_no_mem_policy = res;
     if (old_value) {
         Py_RETURN_TRUE;
     }
@@ -4585,7 +4586,8 @@ _blas_supports_fpe(PyObject *NPY_UNUSED(self), PyObject *arg) {
 
 
 static PyObject *
-_reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
+_reload_guard(PyObject *self, PyObject *NPY_UNUSED(args)) {
+    multiarray_umath_state *state = get_module_state(self);
     if (PyThreadState_Get()->interp != PyInterpreterState_Main()) {
         if (PyErr_WarnEx(PyExc_UserWarning,
                 "NumPy was imported from a Python sub-interpreter but "
@@ -4600,10 +4602,10 @@ _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
             return NULL;
         }
         /* No need to give the other warning in a sub-interpreter as well... */
-        npy_global_state.reload_guard_initialized = 1;
+        state->global_state.reload_guard_initialized = 1;
         Py_RETURN_NONE;
     }
-    if (npy_global_state.reload_guard_initialized) {
+    if (state->global_state.reload_guard_initialized) {
         if (PyErr_WarnEx(PyExc_UserWarning,
                 "The NumPy module was reloaded (imported a second time). "
                 "This can in some cases result in small but subtle issues "
@@ -4611,7 +4613,7 @@ _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
             return NULL;
         }
     }
-    npy_global_state.reload_guard_initialized = 1;
+    state->global_state.reload_guard_initialized = 1;
     Py_RETURN_NONE;
 }
 
@@ -5007,9 +5009,6 @@ set_flaginfo(PyObject *d)
     return;
 }
 
-// static variables are automatically zero-initialized
-NPY_VISIBILITY_HIDDEN npy_global_state_struct npy_global_state;
-
 /*
  * TRANSITIONAL: process-global pointer to module state.
  * Set once in _multiarray_umath_exec(). Used by call sites that don't
@@ -5019,13 +5018,13 @@ NPY_VISIBILITY_HIDDEN npy_global_state_struct npy_global_state;
 NPY_VISIBILITY_HIDDEN multiarray_umath_state *_npy_module_state = NULL;
 
 static int
-initialize_global_state(void) {
+initialize_global_state(multiarray_umath_state *state) {
     char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
     if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
-        npy_global_state.warn_if_no_mem_policy = 1;
+        state->global_state.warn_if_no_mem_policy = 1;
     }
     else {
-        npy_global_state.warn_if_no_mem_policy = 0;
+        state->global_state.warn_if_no_mem_policy = 0;
     }
 
     return 0;
@@ -5112,7 +5111,7 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
 
-    if (initialize_global_state() < 0) {
+    if (initialize_global_state(get_module_state(m)) < 0) {
         return -1;
     }
 

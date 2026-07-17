@@ -63,6 +63,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "binop_override.h"
 #include "array_coercion.h"
 #include "multiarraymodule.h"
+#include "module_state.h"
 
 /*NUMPY_API
   Compute the size of an array (in number of items)
@@ -431,7 +432,7 @@ _clear_array_attributes(PyArrayObject *self, npy_bool unraisable)
         }
         /* mem_handler can be absent if NPY_ARRAY_OWNDATA arbitrarily set */
         if (fa->mem_handler == NULL) {
-            if (npy_global_state.warn_if_no_mem_policy) {
+            if (npy_get_module_state()->global_state.warn_if_no_mem_policy) {
                 char const *msg = "Trying to dealloc data, but a memory policy "
                     "is not set. If you take ownership of the data, you must "
                     "set a base owning the data (e.g. a PyCapsule).";
