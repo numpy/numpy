@@ -1866,13 +1866,9 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     """
     if np.ma.isMaskedArray(p):
         # TODO: one could potentially implement a mask aware unwrap function
-        # we now remove the mask and rewrap the result into a masked array
-        # to preserve the ndarray subclass type
-        unmasked = unwrap(np.asarray(p), discont=discont, axis=axis, period=period)
-        result = unmasked.view(type(p))
-        result.mask = False
-        result.fill_value = p.fill_value
-        return result
+        # we now remove the mask and do the unwrapping on the unmasked array
+        # and return back an ndarray
+        return unwrap(np.asarray(p), discont=discont, axis=axis, period=period)
     p = asanyarray(p)
     if discont is None:
         discont = period / 2

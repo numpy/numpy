@@ -2475,11 +2475,9 @@ class TestUnwrap:
         p = np.ma.MaskedArray([0., 1., 2., 2 + 2 * np.pi, 3 + 2 * np.pi],
                               mask=[False, False, True, False, False])
         out = unwrap(p)
-        assert isinstance(out, np.ma.MaskedArray)
+        assert isinstance(out, np.ndarray)
         expected = self._reference_unwrap(np.asarray(p))
-        expected = np.ma.array(expected, mask=False, fill_value=p.fill_value)
-        assert_array_equal(out.mask, expected.mask)
-        assert_array_equal(out.data, expected.data)
+        assert_array_equal(out, expected)
 
     def test_array_ufunc_no_override_raises(self):
         class MyArray(np.ndarray):
