@@ -89,22 +89,8 @@ def test_eigvalsh_thread_safety():
         rng.random((5, 10, 10, 3, 3)),
     )
 
-    try:
-        run_threaded(lambda i: np.linalg.eigvalsh(matrices[i]), 2,
-                     pass_count=True)
-    except np.linalg.LinAlgError:
-        # A non-thread-safe LAPACK can corrupt the concurrent eigvalsh calls,
-        # surfacing as e.g. "Eigenvalues did not converge". OpenBLAS versions
-        # older than 0.3.33.112 are known to be affected; xfail those rather
-        # than reporting a spurious failure.
-        blas_name, blas_version = _detected_blas()
-        if _openblas_predates_gemm_fix(blas_name, blas_version):
-            pytest.xfail(
-                f"OpenBLAS version ({blas_version}) predates first OpenBLAS "
-                "version with a fix (0.3.33.112) or BLAS metadata is not "
-                "sufficient to identify the BLAS implementation."
-            )
-        raise
+    run_threaded(lambda i: np.linalg.eigvalsh(matrices[i]), 2,
+                 pass_count=True)
 
 
 def _detected_blas():
