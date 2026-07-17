@@ -14,6 +14,7 @@
 #include "npy_static_data.h"
 #include "templ_common.h"
 #include "multiarraymodule.h"
+#include "module_state.h"
 
 #include <assert.h>
 #ifdef NPY_OS_LINUX
@@ -70,7 +71,7 @@ NPY_NO_EXPORT PyObject *
 _get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 {
 #ifdef NPY_OS_LINUX
-    if (npy_global_state.madvise_hugepage) {
+    if (npy_get_module_state()->global_state.madvise_hugepage) {
         Py_RETURN_TRUE;
     }
 #endif
@@ -86,14 +87,15 @@ _get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
  * It is exposed to Python as `np._core.multiarray._set_madvise_hugepage`.
  */
 NPY_NO_EXPORT PyObject *
-_set_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *enabled_obj)
+_set_madvise_hugepage(PyObject *self, PyObject *enabled_obj)
 {
-    int was_enabled = npy_global_state.madvise_hugepage;
+    multiarray_umath_state *state = get_module_state(self);
+    int was_enabled = state->global_state.madvise_hugepage;
     int enabled = PyObject_IsTrue(enabled_obj);
     if (enabled < 0) {
         return NULL;
     }
-    npy_global_state.madvise_hugepage = enabled;
+    state->global_state.madvise_hugepage = enabled;
     if (was_enabled) {
         Py_RETURN_TRUE;
     }
@@ -106,7 +108,7 @@ indicate_hugepages(void *p, size_t size) {
 #ifdef NPY_OS_LINUX
     /* allow kernel allocating huge pages for large arrays */
     if (NPY_UNLIKELY(size >= ((1u<<22u))) &&
-        npy_global_state.madvise_hugepage) {
+        npy_get_module_state()->global_state.madvise_hugepage) {
         npy_uintp offset = 4096u - (npy_uintp)p % (4096u);
         npy_uintp length = size - offset;
         /**

@@ -9,7 +9,7 @@
  *   [ ] npy_static_pydata   — still global in npy_static_data.c
  *   [x] npy_static_cdata    — migrated to multiarray_umath_state.static_cdata
  *   [ ] npy_runtime_imports — still global in npy_import.c
- *   [ ] npy_global_state    — still global in multiarraymodule.c
+ *   [x] npy_global_state    — migrated to multiarray_umath_state.global_state
  */
 
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_MODULE_STATE_H_

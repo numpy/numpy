@@ -28,6 +28,7 @@
 #include "dispatching.h"
 #include "gil_utils.h"
 #include "multiarraymodule.h"
+#include "module_state.h"
 
 typedef struct {
     PyArray_Descr base;
@@ -1241,9 +1242,10 @@ sfloat_init_ufuncs(void) {
  * TODO: Should be moved when the necessary API is not internal anymore.
  */
 NPY_NO_EXPORT PyObject *
-get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
+get_sfloat_dtype(PyObject *mod, PyObject *NPY_UNUSED(args))
 {
-    if (npy_global_state.get_sfloat_dtype_initialized) {
+    multiarray_umath_state *state = get_module_state(mod);
+    if (state->global_state.get_sfloat_dtype_initialized) {
         Py_INCREF(&PyArray_SFloatDType);
         return (PyObject *)&PyArray_SFloatDType;
     }
@@ -1272,6 +1274,6 @@ get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
         return NULL;
     }
 
-    npy_global_state.get_sfloat_dtype_initialized = NPY_TRUE;
+    state->global_state.get_sfloat_dtype_initialized = NPY_TRUE;
     return (PyObject *)&PyArray_SFloatDType;
 }
