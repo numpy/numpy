@@ -177,6 +177,7 @@ typedef struct {
  * output whose forward loop cannot double as a reduction loop.
  */
 #define NPY_METH_get_reduction_loop 11
+#define NPY_METH_get_multi_reduction_initials 12
 
 /*
  * The resolve descriptors function, must be able to handle NULL values for
@@ -261,6 +262,11 @@ typedef int (PyArrayMethod_GetLoop)(
 typedef int (PyArrayMethod_GetReductionInitial)(
         PyArrayMethod_Context *context, npy_bool reduction_is_empty,
         void *initial);
+
+
+typedef int (PyArrayMethod_GetMultiReductionInitials)(
+        PyArrayMethod_Context *context, npy_bool reduction_is_empty,
+        void **initials);
 
 /*
  * The following functions are only used by the wrapping array method defined
