@@ -323,6 +323,72 @@ class TestSFloat:
         # original is unchanged
         assert_array_equal(a.view(np.float64), [6., 4., 2.])
 
+    def test_partition(self):
+        a = self._get_array(1.)
+        a = a[::-1]  # reverse it
+
+        k = 1
+        a.partition(k)
+        before_k = a[:k].view(np.float64)
+        after_k = a[k:].view(np.float64)
+        assert_array_equal(np.sort(before_k), [1.])
+        assert_array_equal(np.sort(after_k), [2., 3.])
+
+        a.partition(k, descending=True)
+        before_k = a[:k].view(np.float64)
+        after_k = a[k:].view(np.float64)
+        assert_array_equal(np.sort(before_k), [3.])
+        assert_array_equal(np.sort(after_k), [1., 2.])
+
+        a = self._get_array(0.5)  # different factor
+        a = a[::2][::-1]  # reverse it
+        a.partition(k)
+        before_k = a[:k].view(np.float64)
+        after_k = a[k:].view(np.float64)
+        assert_array_equal(np.sort(before_k), [2.])
+        assert_array_equal(np.sort(after_k), [6.])
+
+        a = self._get_array(0.5, aligned=False)
+        a = a[::-1]  # reverse it
+        a.partition(k)
+        before_k = a[:k].view(np.float64)
+        after_k = a[k:].view(np.float64)
+        assert_array_equal(np.sort(before_k), [2.])
+        assert_array_equal(np.sort(after_k), [4., 6.])
+
+    def test_argpartition(self):
+        a = self._get_array(1.)
+        a = a[::-1]  # reverse it
+
+        k = 1
+        indices = a.argpartition(k)
+        before_k = a[indices[:k]].view(np.float64)
+        after_k = a[indices[k:]].view(np.float64)
+        assert_array_equal(np.sort(before_k), [1.])
+        assert_array_equal(np.sort(after_k), [2., 3.])
+
+        indices = a.argpartition(k, descending=True)
+        before_k = a[indices[:k]].view(np.float64)
+        after_k = a[indices[k:]].view(np.float64)
+        assert_array_equal(np.sort(before_k), [3.])
+        assert_array_equal(np.sort(after_k), [1., 2.])
+
+        a = self._get_array(0.5)  # different factor
+        a = a[::2][::-1]  # reverse it
+        indices = a.argpartition(k)
+        before_k = a[indices[:k]].view(np.float64)
+        after_k = a[indices[k:]].view(np.float64)
+        assert_array_equal(np.sort(before_k), [2.])
+        assert_array_equal(np.sort(after_k), [6.])
+
+        a = self._get_array(0.5, aligned=False)
+        a = a[::-1]  # reverse it
+        indices = a.argpartition(k)
+        before_k = a[indices[:k]].view(np.float64)
+        after_k = a[indices[k:]].view(np.float64)
+        assert_array_equal(np.sort(before_k), [2.])
+        assert_array_equal(np.sort(after_k), [4., 6.])
+
     def test_astype_class(self):
         # Very simple test that we accept `.astype()` also on the class.
         # ScaledFloat always returns the default descriptor, but it does

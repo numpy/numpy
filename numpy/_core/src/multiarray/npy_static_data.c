@@ -74,6 +74,8 @@ intern_strings(void)
     INTERN_STRING(imag, "imag");
     INTERN_STRING(sort, "sort");
     INTERN_STRING(argsort, "argsort");
+    INTERN_STRING(partition, "partition");
+    INTERN_STRING(argpartition, "argpartition");
     INTERN_STRING(_set_dtype, "_set_dtype");
     return 0;
 }
@@ -177,6 +179,12 @@ initialize_static_globals(void)
             PyTuple_Pack(3, tmp, tmp, tmp);
     Py_DECREF(tmp);
     if (npy_static_pydata.default_truediv_type_tup == NULL) {
+        return -1;
+    }
+
+    npy_static_pydata.legacy_resolver_promoting =
+            PyContextVar_New("numpy._legacy_resolver_promoting", Py_False);
+    if (npy_static_pydata.legacy_resolver_promoting == NULL) {
         return -1;
     }
 

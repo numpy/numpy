@@ -144,6 +144,35 @@ def test_create_with_na(dtype):
     assert arr[1] is dtype.na_object
 
 
+def test_create_with_failing_na_comparison():
+    # An error raised while re-creating an array-owned descriptor used to
+    # crash with a NULL dereference in stringdtype_finalize_descr instead
+    # of propagating.
+    class Flaky:
+        def __init__(self):
+            self.calls = 0
+
+        def __eq__(self, other):
+            return self is other
+
+        def __ne__(self, other):
+            self.calls += 1
+            if self.calls > 1:
+                raise RuntimeError("boom")
+            return False
+
+        def __hash__(self):
+            return 0
+
+    dt = StringDType(na_object=Flaky())
+    # the first array takes ownership of the descriptor
+    np.array(["x"], dtype=dt)
+    # the second array creation re-creates the descriptor, re-running the
+    # na object classification, which fails
+    with pytest.raises(RuntimeError, match="boom"):
+        np.array(["y"], dtype=dt)
+
+
 @pytest.mark.parametrize("i", list(range(5)))
 def test_set_replace_na(i):
     # Test strings of various lengths can be set to NaN and then replaced.
@@ -166,6 +195,18 @@ def test_null_roundtripping():
     arr = np.array(data, dtype="T")
     assert data[0] == arr[0]
     assert data[1] == arr[1]
+
+
+@pytest.mark.parametrize("coerce", [True, False])
+def test_np_str_trailing_nul_preserved(coerce):
+    dtype = StringDType(coerce=coerce)
+    value = np.str_("q\x00")
+    arr = np.empty(1, dtype=dtype)
+    arr[0] = value
+    assert arr[0] == "q\x00"
+    arr[0:1] = [value]
+    assert arr[0] == "q\x00"
+    assert np.array([value], dtype=dtype)[0] == "q\x00"
 
 
 @pytest.mark.parametrize(
@@ -309,6 +350,17 @@ def test_self_casts(dtype, dtype2, strings):
                 arr[:-1] == newarr[:-1]
             return
     assert_array_equal(arr[:-1], newarr[:-1])
+
+
+def test_cast_method_names():
+    get_castingimpl = np._core._multiarray_umath._get_castingimpl
+    string_DT = type(StringDType())
+    for other_DT, name in [(np.dtypes.BoolDType, "bool"),
+                           (np.dtypes.Float64DType, "double")]:
+        to_string = get_castingimpl(other_DT, string_DT)
+        assert f"cast_{name}_to_StringDType" in repr(to_string)
+        from_string = get_castingimpl(string_DT, other_DT)
+        assert f"cast_StringDType_to_{name}" in repr(from_string)
 
 
 @pytest.mark.parametrize(
@@ -890,6 +942,34 @@ def test_float_nan_cast_na_object():
     arr = np.array(inp).astype(dt)
     assert arr[2] is np.nan
     assert arr[0] == '1.2'
+
+
+def test_string_to_bytes_invalid_ascii_error():
+    # The cast builds this UnicodeEncodeError only after releasing the allocator
+    # lock and copying the offending bytes out of the arena; check the reported
+    # character and position survive that.
+    arr = np.array(["abc", "café", "xy"], dtype="T")
+    with pytest.raises(UnicodeEncodeError) as excinfo:
+        arr.astype("S10")
+    exc = excinfo.value
+    assert exc.encoding == "ascii"
+    assert exc.object == "café"
+    assert exc.start == 3
+    assert exc.end == 4
+    assert exc.reason == "ordinal not in range(128)"
+    assert_array_equal(
+        np.array(["abc", "xy"], dtype="T").astype("S3"),
+        np.array([b"abc", b"xy"], dtype="S3"),
+    )
+
+
+def test_void_to_string_invalid_utf8_error():
+    # invalid UTF-8 in a void buffer used to surface as a confusing
+    # MemoryError because the error return of utf8_buffer_size was
+    # stored in an unsigned variable
+    varr = np.array([b"\xff\xff\xff\xff"], dtype="V4")
+    with pytest.raises(TypeError, match="Invalid UTF-8"):
+        varr.astype(StringDType())
 
 
 @pytest.mark.parametrize(
@@ -1740,10 +1820,17 @@ def test_unset_na_coercion():
                      StringDType(na_object=None)]:
         if op_dtype is None:
             op = "2"
+            expected = StringDType(na_object=None)  # coerce defaults to True
         else:
             op = np.array("2", dtype=op_dtype)
+            expected = StringDType(na_object=None, coerce=op_dtype.coerce)
         res = arr + op
         assert_array_equal(res, ["hello2", "world2"])
+        assert res.dtype == expected
+        # the promotion must not depend on the operand order
+        res = op + arr
+        assert_array_equal(res, ["2hello", "2world"])
+        assert res.dtype == expected
 
     # dtype instances with distinct explicitly set NA objects are incompatible
     for op_dtype in [StringDType(na_object=pd_NA), StringDType(na_object="")]:
@@ -1765,6 +1852,87 @@ def test_unset_na_coercion():
         op = np.array(inp, dtype=op_dtype)
         with pytest.raises(TypeError):
             arr == op
+
+
+def test_coerce_promotion_commutative():
+    # promoting a coerce=False instance with a coerce=True instance
+    # used to depend on the argument order
+    dt = StringDType()
+    dt_no_coerce = StringDType(coerce=False)
+    assert np.promote_types(dt, dt_no_coerce) == dt_no_coerce
+    assert np.promote_types(dt_no_coerce, dt) == dt_no_coerce
+    assert np.promote_types(dt, dt) == dt
+    assert np.promote_types(dt_no_coerce, dt_no_coerce) == dt_no_coerce
+
+
+def test_mixed_instance_null_handling():
+    # the rules for picking a result dtype when mixing dtype instances
+    # shouldn't depend on the input order
+    nan_dt = StringDType(na_object=np.nan)
+    plain = np.array(["x", "y"], dtype=StringDType())
+    withna = np.array(["z", np.nan], dtype=nan_dt)
+
+    # missing values propagate through add in both operand orders
+    res = np.add(plain, withna)
+    assert res.dtype == nan_dt
+    assert res[0] == "xz" and np.isnan(res[1])
+    res = np.add(withna, plain)
+    assert res.dtype == nan_dt
+    assert res[0] == "zx" and np.isnan(res[1])
+
+    # nulls sort to the end with a nan-like NA, in both operand orders
+    assert np.isnan(np.maximum(plain, withna)[1])
+    assert np.isnan(np.maximum(withna, plain)[1])
+    assert np.minimum(plain, withna)[1] == "y"
+    assert np.minimum(withna, plain)[1] == "y"
+
+    # a missing value never compares equal to or smaller than a string
+    empty = np.array(["", ""], dtype=StringDType())
+    assert_array_equal(empty == withna, [False, False])
+    assert_array_equal(withna == empty, [False, False])
+    assert_array_equal(empty < withna, [True, False])
+    assert_array_equal(withna < empty, [False, False])
+
+    # operations that reject non-string nulls do so in both orders
+    for a, b in [(plain, withna), (withna, plain)]:
+        with pytest.raises(ValueError, match="not supported"):
+            np.strings.find(a, b)
+
+
+@pytest.mark.parametrize("op", [
+    lambda a, b: np.add(a, b),
+    lambda a, b: np.maximum(a, b),
+    lambda a, b: np.minimum(a, b),
+    lambda a, b: a == b,
+    lambda a, b: a < b,
+    lambda a, b: np.strings.find(a, b),
+    lambda a, b: np.strings.count(a, b),
+    lambda a, b: np.strings.startswith(a, b),
+    lambda a, b: np.strings.endswith(a, b),
+    lambda a, b: np.strings.lstrip(a, b),
+    lambda a, b: np.strings.strip(a, b),
+    lambda a, b: np.strings.replace(a, b, "R"),
+    lambda a, b: np.strings.center(a, 4, b),
+    lambda a, b: np.strings.partition(a, b),
+    lambda a, b: np.strings.rpartition(a, b),
+])
+def test_mixed_instance_string_na_matches_common_instance(op):
+    # with a string na_object, nulls behave like the na string; mixing an
+    # instance that has an na_object with one that does not must give the
+    # same result as casting both operands to the common instance,
+    # regardless of the operand order
+    sdt = StringDType(na_object="M")
+    plain = np.array(["M", "n"], dtype=StringDType())
+    withna = np.array(["M", "q"], dtype=sdt)
+
+    for left, right in [(plain, withna), (withna, plain)]:
+        expected = op(left.astype(sdt), right.astype(sdt))
+        result = op(left, right)
+        if not isinstance(expected, tuple):
+            expected, result = (expected,), (result,)
+        for e, r in zip(expected, result):
+            assert r.dtype == e.dtype
+            assert_array_equal(r, e)
 
 
 def test_repeat(string_array):

@@ -504,10 +504,22 @@ endforeach
 # as well as https://github.com/mesonbuild/meson/issues/11068
 longdouble_format = meson.get_external_property('longdouble_format', 'UNKNOWN')
 if longdouble_format == 'UNKNOWN'
-  # We can't programmatically check iOS; but we do know what format it uses.
-  # On iOS, long double is identical to the double type:
-  # https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms#Handle-data-types-and-data-alignment-properly
-  if host_machine.system() == 'ios'
+  # We can't run the auto-detection program when cross-compiling, so we need to specify
+  # what format each system uses.
+  if host_machine.system() == 'android'
+    # Android defines `long double` as 128-bit quad precision on 64-bit platforms, and
+    # 64-bit double precision on 32-bit platforms. This is true even on x86 and x86_64,
+    # where `long double` is usually 80 bits padded to 96 or 128:
+    #  * https://developer.android.com/ndk/guides/abis
+    #  * https://gitlab.com/x86-psABIs/x86-64-ABI
+    if host_machine.cpu_family().contains('64')
+      longdouble_format = 'IEEE_QUAD_LE'
+    else
+      longdouble_format = 'IEEE_DOUBLE_LE'
+    endif
+  elif host_machine.system() == 'ios'
+    # On iOS, long double is identical to the double type:
+    # https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms#Handle-data-types-and-data-alignment-properly
     longdouble_format = 'IEEE_DOUBLE_LE'
   else
     longdouble_format = meson.get_compiler('c').run(

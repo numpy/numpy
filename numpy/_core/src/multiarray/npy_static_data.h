@@ -53,6 +53,8 @@ typedef struct npy_interned_str_struct {
     PyObject *imag;
     PyObject *sort;
     PyObject *argsort;
+    PyObject *partition;
+    PyObject *argpartition;
     PyObject *_set_dtype;
 } npy_interned_str_struct;
 
@@ -131,6 +133,13 @@ typedef struct npy_static_pydata_struct {
     PyObject *os_PathLike;
     PyObject *os_fspath;
     PyObject *format_options;
+
+    /*
+     * Context variable set to True while the legacy ufunc type resolvers
+     * run for promotion, to suppress their deprecation warnings (the
+     * resolution step warns on every call).
+     */
+    PyObject *legacy_resolver_promoting;
 
     /*
      * Used in the __array__ internals to avoid building a tuple inline

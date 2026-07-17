@@ -226,6 +226,12 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
         else if (strcmp(slot->name, "argsort") == 0) {
             Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.argsort));
         }
+        else if (strcmp(slot->name, "partition") == 0) {
+            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.partition));
+        }
+        else if (strcmp(slot->name, "argpartition") == 0) {
+            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.argpartition));
+        }
         else {
             Py_XSETREF(ufunc, npy_import_entry_point(slot->name));
             if (ufunc == NULL) {
@@ -244,12 +250,86 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
             }
         }
         else if (ufunc == npy_interned_str.sort) {
+            if (slot->spec->nin != 1 || slot->spec->nout != 1) {
+                PyErr_Format(PyExc_ValueError,
+                        "Sort method spec must have nin=1 and nout=1, got %d and %d",
+                        slot->spec->nin, slot->spec->nout);
+                goto finish;
+            }
+            if (slot->spec->dtypes[0] != slot->spec->dtypes[1]) {
+                PyErr_Format(PyExc_ValueError,
+                        "Sort method spec must have the same input and output dtypes, got %R and %R",
+                        slot->spec->dtypes[0], slot->spec->dtypes[1]);
+                goto finish;
+            }
+
             if (set_static_method<&NPY_DType_Slots::sort_meth, false>(slot->spec) < 0) {
                 goto finish;
             }
         }
         else if (ufunc == npy_interned_str.argsort) {
+            if (slot->spec->nin != 1 || slot->spec->nout != 1) {
+                PyErr_Format(PyExc_ValueError,
+                        "Argsort method spec must have nin=1 and nout=1, got %d and %d",
+                        slot->spec->nin, slot->spec->nout);
+                goto finish;
+            }
+            if (slot->spec->dtypes[1] != &PyArray_IntpDType) {
+                PyErr_Format(PyExc_ValueError,
+                        "Argsort method spec must have output dtype intp, got %R",
+                        slot->spec->dtypes[1]);
+                goto finish;
+            }
+
             if (set_static_method<&NPY_DType_Slots::argsort_meth, false>(slot->spec) < 0) {
+                goto finish;
+            }
+        }
+        else if (ufunc == npy_interned_str.partition) {
+            if (slot->spec->nin != 2 || slot->spec->nout != 1) {
+                PyErr_Format(PyExc_ValueError,
+                        "Partition method spec must have nin=2 and nout=1, got %d and %d",
+                        slot->spec->nin, slot->spec->nout);
+                goto finish;
+            }
+            if (slot->spec->dtypes[0] != slot->spec->dtypes[2]) {
+                PyErr_Format(PyExc_ValueError,
+                        "Partition method spec must have the same input array and output dtypes, got %R and %R",
+                        slot->spec->dtypes[0], slot->spec->dtypes[2]);
+                goto finish;
+            }
+            if (slot->spec->dtypes[1] != &PyArray_IntpDType) {
+                PyErr_Format(PyExc_ValueError,
+                        "Partition method spec must have kth dtype intp, got %R",
+                        slot->spec->dtypes[1]);
+                goto finish;
+            }
+
+            if (set_static_method<&NPY_DType_Slots::part_meth, false>(slot->spec) < 0) {
+                goto finish;
+            }
+        }
+        else if (ufunc == npy_interned_str.argpartition) {
+            if (slot->spec->nin != 2 || slot->spec->nout != 1) {
+                PyErr_Format(PyExc_ValueError,
+                        "Argpartition method spec must have nin=2 and nout=1, got %d and %d",
+                        slot->spec->nin, slot->spec->nout);
+                goto finish;
+            }
+            if (slot->spec->dtypes[2] != &PyArray_IntpDType) {
+                PyErr_Format(PyExc_ValueError,
+                        "Argpartition method spec must have output dtype intp, got %R",
+                        slot->spec->dtypes[2]);
+                goto finish;
+            }
+            if (slot->spec->dtypes[1] != &PyArray_IntpDType) {
+                PyErr_Format(PyExc_ValueError,
+                        "Argpartition method spec must have kth dtype intp, got %R",
+                        slot->spec->dtypes[1]);
+                goto finish;
+            }
+
+            if (set_static_method<&NPY_DType_Slots::argpart_meth, false>(slot->spec) < 0) {
                 goto finish;
             }
         }
@@ -735,9 +815,18 @@ legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
      * difference.  Whether the actual operands can be casts must be checked
      * during the type resolution step (which may _also_ calls this!).
      */
-    if (ufunc->type_resolver(ufunc,
+    PyObject *promotion_token = npy_begin_legacy_resolver_promotion();
+    if (promotion_token == NULL) {
+        Py_XDECREF(type_tuple);
+        return -1;
+    }
+    int resolver_result = ufunc->type_resolver(ufunc,
             NPY_UNSAFE_CASTING, (PyArrayObject **)ops, type_tuple,
-            out_descrs) < 0) {
+            out_descrs);
+    if (npy_end_legacy_resolver_promotion(promotion_token) < 0) {
+        resolver_result = -1;
+    }
+    if (resolver_result < 0) {
         Py_XDECREF(type_tuple);
         /* Not all legacy resolvers clean up on failures: */
         for (int i = 0; i < nargs; i++) {

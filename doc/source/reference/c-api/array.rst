@@ -2171,6 +2171,40 @@ and not set any of the other loop slots.
 These specs can be registered using :c:func:`PyUFunc_AddLoopsFromSpecs`
 along with other ufunc loops.
 
+Partitioning and Argpartitioning
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Similarly to sorting and argsorting, partitioning and argpartitioning methods
+can be registered using the ArrayMethod API. This is done by adding an
+ArrayMethod spec with the name ``"partition"`` or ``"argpartition"`` respectively.
+The spec must have ``nin=2`` and ``nout=1`` for both partition and argpartition,
+where the first input ``data[0]`` is the array to partition and the second input
+``data[1]`` is the kth array of indices to partition by. Partitioning is
+inplace, hence we enforce that ``data[0] == data[2]``. ``data[1]`` is always
+a contiguous array of type ``NPY_INTP`` that contains the partition indices.
+If multiple partition indices are given, the array is partitioned for each
+index. Argpartitioning returns a new array of indices, so the output must be of
+``NPY_INTP`` type.
+
+The ``context`` passed to the loop contains the ``parameters`` field which
+for these operations is a ``PyArrayMethod_PartitionParameters *`` struct. This
+struct contains a ``flags`` field which is a bitwise OR of ``NPY_SELECTKIND``
+values indicating the kind of partition to perform (that is, whether it is a
+descending partition). If the strided loop depends on the flags, a good way
+to deal with this is to define :c:macro:`NPY_METH_get_loop`, and not set any
+of the other loop slots. For the loop, ``dimensions[0]`` is the number of
+elements to partition, and ``dimensions[1]`` is the number of partition indices.
+
+.. c:struct:: PyArrayMethod_PartitionParameters
+
+    .. c:member:: NPY_SELECTKIND flags
+
+        The flags passed to the partition operation. This is a bitwise OR of
+        ``NPY_SELECTKIND`` values indicating the kind of partition to perform.
+
+These specs can be registered using :c:func:`PyUFunc_AddLoopsFromSpecs`
+along with other ufunc loops.
+
 API for calling array methods
 -----------------------------
 
@@ -4088,7 +4122,7 @@ Other conversions
 
     Convert any Python sequence (or single Python number) passed in as
     *seq* to (up to) *maxvals* pointer-sized integers and place them
-    in the *vals* array. The sequence can be smaller then *maxvals* as
+    in the *vals* array. The sequence can be smaller than *maxvals* as
     the number of converted objects is returned.
 
 .. _including-the-c-api:
@@ -4301,40 +4335,33 @@ the C-API is needed then some additional steps must be taken.
 Checking the API Version
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Because python extensions are not used in the same way as usual libraries on
-most platforms, some errors cannot be automatically detected at build time or
-even runtime. For example, if you build an extension using a function available
-only for numpy >= 1.3.0, and you import the extension later with numpy 1.2, you
-will not get an import error (but almost certainly a segmentation fault when
-calling the function). That's why several functions are provided to check for
-numpy versions. The macros :c:data:`NPY_VERSION`  and
-:c:data:`NPY_FEATURE_VERSION` corresponds to the numpy version used to build the
-extension, whereas the versions returned by the functions
-:c:func:`PyArray_GetNDArrayCVersion` and :c:func:`PyArray_GetNDArrayCFeatureVersion`
-corresponds to the runtime numpy's version.
+The following definitions allow checking the NumPy compile time version,
+enabled C-API feature version and runtime version.
 
-The rules for ABI and API compatibilities can be summarized as follows:
+ABI and C-API compatibility are automatically checked when calling
+:c:func:`PyArray_ImportNumPyAPI` or :c:func:`import_array` and an error
+will be raised when these are incompatible with the NumPy runtime.
+User code should generally **not** check these manually.
 
-* Whenever :c:data:`NPY_VERSION` != ``PyArray_GetNDArrayCVersion()``, the
-  extension has to be recompiled (ABI incompatibility).
-* :c:data:`NPY_VERSION` == ``PyArray_GetNDArrayCVersion()`` and
-  :c:data:`NPY_FEATURE_VERSION` <= ``PyArray_GetNDArrayCFeatureVersion()`` means
-  backward compatible changes.
-
-ABI incompatibility is automatically detected in every numpy's version. API
-incompatibility detection was added in numpy 1.4.0. If you want to supported
-many different numpy versions with one extension binary, you have to build your
-extension with the lowest :c:data:`NPY_FEATURE_VERSION` as possible.
+For details about NumPy C-API compatibility see
+:ref:`for-downstream-package-authors`.
 
 .. c:macro:: NPY_VERSION
 
-    The current version of the ndarray object (check to see if this
-    variable is defined to guarantee the ``numpy/arrayobject.h`` header is
-    being used).
+    The ABI version of the NumPy headers at compile time.
 
 .. c:macro:: NPY_FEATURE_VERSION
 
-    The current version of the C-API.
+    The version of the NumPy C-API the compilation targets.
+    Setting ``NPY_TARGET_VERSION`` may modify this value to make newer
+    NumPy API features available or, in principle, to be compatible with
+    older NumPy versions.
+
+.. c:macro:: PyArray_RUNTIME_VERSION
+
+    After the C-API has been imported ``PyArray_RUNTIME_VERSION`` is set to
+    the current runtime C-API version. ``PyArray_RUNTIME_VERSION`` is
+    mainly used when necessary to support both old and new NumPy versions.
 
 .. c:function:: unsigned int PyArray_GetNDArrayCVersion(void)
 

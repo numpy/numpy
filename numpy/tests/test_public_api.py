@@ -138,7 +138,6 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "testing",
     "testing.overrides",
     "typing",
-    "typing.mypy_plugin",
     "version",
 ]]
 

@@ -1598,7 +1598,9 @@ _convert_from_type(PyObject *obj) {
     else {
         PyObject *DType = PyArray_DiscoverDTypeFromScalarType(typ);
         if (DType != NULL) {
-            return PyArray_GetDefaultDescr((PyArray_DTypeMeta *)DType);
+            PyArray_Descr *ret = PyArray_GetDefaultDescr((PyArray_DTypeMeta *)DType);
+            Py_DECREF(DType);
+            return ret;
         }
         PyArray_Descr *ret = _try_convert_from_dtype_attr(obj);
         if ((PyObject *)ret != Py_NotImplemented) {
@@ -1976,9 +1978,9 @@ PyArray_DescrNew(PyArray_Descr *base_descr)
         return NULL;
     }
     /* Don't copy PyObject_HEAD part */
-    memcpy((char *)newdescr + sizeof(PyObject),
-           (char *)base + sizeof(PyObject),
-           sizeof(_PyArray_LegacyDescr) - sizeof(PyObject));
+    memcpy((char *)newdescr + offsetof(_PyArray_LegacyDescr, typeobj),
+           (char *)base + offsetof(_PyArray_LegacyDescr, typeobj),
+           sizeof(_PyArray_LegacyDescr) - offsetof(_PyArray_LegacyDescr, typeobj));
 
     /*
      * The c_metadata has a by-value ownership model, need to clone it

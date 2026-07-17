@@ -45,6 +45,10 @@ jobs:
           - [windows, windows-11-arm, win_arm64, ""]
           - [ios, macos-14, ios_arm64_iphonesimulator, accelerate]
           - [ios, macos-14, ios_arm64_iphoneos, ""]
+          # GitHub Actions doesn’t currently support the Android emulator on any ARM
+          # runner. So we build for ARM on a non-ARM runner, which will skip the tests.
+          - [android, ubuntu-24.04, android_arm64_v8a]
+          - [android, ubuntu-24.04, android_x86_64]
         python: ["cp313"]
 
     env:
@@ -118,9 +122,8 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55  # v4.1.0
-        env:
-          CIBW_PLATFORM: ${{ matrix.buildplat[0] }}
-          CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[2] }}
+        with:
+          only: ${{ matrix.python }}-${{ matrix.buildplat[2] }}
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

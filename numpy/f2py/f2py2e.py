@@ -113,8 +113,8 @@ Options:
                    --no-freethreading-compatible, as f2py does not analyze
                    fortran code for thread safety issues.
 
-  --include-paths <path1>:<path2>:...   Search include files from the given
-                   directories.
+  --include-paths <path1><pathsep><path2>...
+                  Search include files from the given directories.
 
   --f2cmap <filename>  Load Fortran-to-Python KIND specification from the given
                    file. Default: .f2py_f2cmap in current directory.
@@ -540,7 +540,7 @@ class CombineIncludePaths(argparse.Action):
         if option_string == "--include_paths":
             outmess("Use --include-paths or -I instead of --include_paths which will be removed")
         if option_string in {"--include-paths", "--include_paths"}:
-            include_paths_set.update(values.split(':'))
+            include_paths_set.update(values.split(os.pathsep))
         else:
             include_paths_set.add(values)
         namespace.include_paths = list(include_paths_set)

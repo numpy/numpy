@@ -53,7 +53,7 @@ def check_language(lang, code_snippet=None):
                 cwd=tmpdir,
                 capture_output=True,
             )
-        except subprocess.CalledProcessError:
+        except OSError:
             pytest.skip("meson not present, skipping compiler dependent test", allow_module_level=True)
         return runmeson.returncode == 0
     finally:
@@ -89,7 +89,7 @@ class CompilerChecker:
         self.has_f90 = False
 
     def check_compilers(self):
-        if (not self.compilers_checked) and (not sys.platform == "cygwin"):
+        if (not self.compilers_checked):
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = [
                     executor.submit(check_language, "c"),

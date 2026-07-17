@@ -554,4 +554,8 @@ typedef struct {
     NPY_SORTKIND flags;
 } PyArrayMethod_SortParameters;
 
+typedef struct {
+    NPY_SELECTKIND flags;
+} PyArrayMethod_PartitionParameters;
+
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_ */
