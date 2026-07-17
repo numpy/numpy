@@ -47,8 +47,9 @@ jobs:
           # runner. So we build for ARM on a non-ARM runner, which will skip the tests.
           - [ubuntu-24.04, android_arm64_v8a]
           - [ubuntu-24.04, android_x86_64]
-          - [macos-26, ios_arm64_iphonesimulator, accelerate]
           - [macos-26, ios_arm64_iphoneos, ""]
+          - [macos-26, ios_arm64_iphonesimulator, accelerate]
+          - [macos-26-intel, ios_x86_64_iphonesimulator, accelerate]
         python: ["cp313"]
 
     env:

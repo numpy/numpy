@@ -34,14 +34,20 @@ jobs:
           - runs-on: "macos-26"
             accelerated: true
             arch: arm64_iphonesimulator
+          - runs-on: "macos-26-intel"
+            accelerated: true
+            arch: x86_64_iphonesimulator
 
           # Non-accelerated
           - runs-on: "macos-26"
             accelerated: false
-            arch: arm64_iphonesimulator
+            arch: arm64_iphoneos
           - runs-on: "macos-26"
             accelerated: false
-            arch: arm64_iphoneos
+            arch: arm64_iphonesimulator
+          - runs-on: "macos-26-intel"
+            accelerated: false
+            arch: x86_64_iphonesimulator
 
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
