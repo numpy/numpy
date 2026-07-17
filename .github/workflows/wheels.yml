@@ -116,7 +116,7 @@ jobs:
           else
             # On older iOS versions, use LP64 with the older Accelerate
             CIBW_CONFIG="setup-args=-Dallow-noblas=false build-dir=build"
-            echo "CIBW_CONFIG_IOS=$CIBW_CONFIG" >> "$GITHUB_ENV"
+            echo "CIBW_CONFIG_SETTINGS_IOS=$CIBW_CONFIG" >> "$GITHUB_ENV"
           fi
 
       - name: Build wheels
