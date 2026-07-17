@@ -573,6 +573,12 @@ static RAND_INT_TYPE random_poisson_mult(bitgen_t *bitgen_state, double lam) {
 #define LS2PI 0.91893853320467267
 #define TWELFTH 0.083333333333333333333333
 
+/*
+ * Stable Poisson probability evaluation based on:
+ * C. Loader, "Fast and Accurate Computation of Binomial Probabilities",
+ * 2002, equations 4, 6, and 7.
+ */
+
 /* Stirling's error: log(n!) - log(sqrt(2*pi*n) * (n/e)^n). */
 static double random_stirlerr(RAND_INT_TYPE n) {
   static const double sfe[16] = {
