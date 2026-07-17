@@ -996,7 +996,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     }
     Py_SETREF(typec, NPY_DT_CALL_ensure_canonical(typec));
 
-    if (typec != NULL && PyDataType_GetArrFuncs(typec)->dotfunc == NULL) {
+    if (PyDataType_GetArrFuncs(typec)->dotfunc == NULL) {
         Py_DECREF(typec);
         if (npy_cache_import_runtime("numpy._core.numeric", "_dot_fallback",
                                      &npy_runtime_imports._dot_fallback) == -1) {
@@ -2637,7 +2637,7 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
     }
    Py_SETREF(type, NPY_DT_CALL_ensure_canonical(type));
 
-    if (type != NULL && PyDataType_GetArrFuncs(type)->dotfunc == NULL) {
+    if (PyDataType_GetArrFuncs(type)->dotfunc == NULL) {
         Py_DECREF(type);
         if (npy_cache_import_runtime("numpy._core.numeric", "_vdot_fallback",
                                      &npy_runtime_imports._vdot_fallback) == -1) {

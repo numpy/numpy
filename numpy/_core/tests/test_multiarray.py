@@ -32,6 +32,7 @@ import numpy as np
 import numpy._core._multiarray_tests as _multiarray_tests
 from numpy._core._rational_tests import rational, rational2
 from numpy._core.multiarray import _get_ndarray_c_version, dot
+from numpy._core.numeric import _dot_fallback, _vdot_fallback
 from numpy._core.tests._locales import CommaDecimalPointLocale
 from numpy.exceptions import AxisError, ComplexWarning
 from numpy.lib import stride_tricks
@@ -8363,7 +8364,6 @@ class TestDotFamilyFallback:
         ((0, 3), (3, 4)), ((4, 0), (0, 5)),
     ])
     def test_dot_fallback_matches_dot(self, sa, sb):
-        from numpy._core.numeric import _dot_fallback
         rng = np.random.default_rng(1)
         a = rng.integers(-4, 5, sa).astype(np.float64)
         b = rng.integers(-4, 5, sb).astype(np.float64)
@@ -8378,14 +8378,12 @@ class TestDotFamilyFallback:
         # For a.ndim >= 2 and b.ndim >= 3 np.dot takes the outer product over
         # the batch axes (unlike matmul's broadcasting); we intentionally do
         # not implement that for user dtypes and reject in favour of tensordot.
-        from numpy._core.numeric import _dot_fallback
         a = np.ones(sa, dtype=np.float64)
         b = np.ones(sb, dtype=np.float64)
         with assert_raises_regex(ValueError, "tensordot"):
             _dot_fallback(a, b)
 
     def test_dot_fallback_unsupported_type(self):
-        from numpy._core.numeric import _dot_fallback, _vdot_fallback
         s = np.array(["a", "b", "c"])
         assert_raises(ValueError, _dot_fallback, s, s)
         assert_raises(ValueError, np.dot, s, s)
@@ -8393,7 +8391,6 @@ class TestDotFamilyFallback:
         assert_raises(ValueError, np.vdot, s, s)
 
     def test_dot_fallback_noncontiguous_inputs(self):
-        from numpy._core.numeric import _dot_fallback
         a = np.arange(12, dtype=np.float64).reshape(4, 3)
         b = np.arange(15, dtype=np.float64).reshape(3, 5)
         inputs = [
@@ -8411,19 +8408,17 @@ class TestDotFamilyFallback:
 
     def test_dot_fallback_does_not_conjugate(self):
         # dot (unlike vdot) must not conjugate, even for complex input
-        from numpy._core.numeric import _dot_fallback
         a = np.array([1 + 2j, 3 + 4j])
         b = np.array([5 + 6j, 7 + 8j])
         assert _dot_fallback(a, b) == np.dot(a, b)
 
     def test_dot_fallback_out(self):
-        from numpy._core.numeric import _dot_fallback
         a = np.arange(12, dtype=np.float64).reshape(4, 3)
         b = np.arange(15, dtype=np.float64).reshape(3, 5)
         out = np.empty((4, 5), dtype=np.float64)
         ret = _dot_fallback(a, b, out=out)
         assert ret is out
-        assert_array_equal(out, np.dot(a, b))
+        assert_array_equal(out, np.dot(a, b), strict=True)
         # 1-D . 1-D writes the scalar result into a 0-D out
         s = np.empty(())
         assert _dot_fallback(a[0], b[:, 0], out=s) is s
@@ -8432,7 +8427,6 @@ class TestDotFamilyFallback:
 
     def test_vdot_fallback_matches_vdot(self):
         # vdot conjugates the first argument; vecdot reproduces that on 1-D
-        from numpy._core.numeric import _vdot_fallback
         rng = np.random.default_rng(2)
         a = rng.integers(-4, 5, (2, 3)).astype(np.float64)
         b = rng.integers(-4, 5, (2, 3)).astype(np.float64)
@@ -8450,9 +8444,7 @@ class TestDotFamilyFallback:
             return np.array(arr, dtype=qd)
 
         def f(arr):
-            arr = np.asarray(arr)
-            flat = np.array([float(v) for v in arr.ravel()])
-            return flat.reshape(arr.shape)
+            return np.asarray(arr).astype(float)
 
         rng = np.random.default_rng(3)
         a = rng.integers(-4, 5, (3,)).astype(np.float64)
