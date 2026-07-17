@@ -1265,117 +1265,75 @@ class TestDateTime:
         assert small * np.int64(7) == np.timedelta64(21, "s")
         assert np.int64(7) * small == np.timedelta64(21, "s")
 
-    def test_float_multiply_overflow_raises(self):
-        # timedelta64 * float64 must raise OverflowError instead of silently
-        # saturating on the float->int64 cast.  Covers TIMEDELTA_md_m_multiply
-        # (td * float) and TIMEDELTA_dm_m_multiply (float * td), both via the
-        # scalar fast path and the strided ufunc loop.
-        td = np.timedelta64(1 << 62, "s")
-
-        # Finite product that overflows int64 (2**62 * 2.5 ~ 1.15e19 > 2**63).
+    # timedelta64 */ float64 that overflows int64 must raise OverflowError
+    # instead of silently saturating on the float->int64 cast, matching the
+    # integer timedelta loops.  The boundary is 2**63 (not int64.max, which is
+    # not representable in float64) and covers +/-inf.  Both operand orders,
+    # the scalar fast path and the strided array loop, and floor division
+    # (which shares the divide loop) are exercised.
+    @pytest.mark.parametrize("expr", [
+        pytest.param(lambda: np.timedelta64(1 << 62, "s") * 2.5, id="td*float"),
+        pytest.param(lambda: 2.5 * np.timedelta64(1 << 62, "s"), id="float*td"),
+        pytest.param(lambda: np.timedelta64(1 << 62, "s") * 2.0, id="td*float-on-2**63"),
+        pytest.param(lambda: 2.0 * np.timedelta64(1 << 62, "s"), id="float*td-on-2**63"),
+        pytest.param(lambda: np.timedelta64(5, "s") * np.float64(np.inf), id="td*inf"),
+        pytest.param(lambda: np.float64(np.inf) * np.timedelta64(5, "s"), id="inf*td"),
+        pytest.param(lambda: np.timedelta64(1 << 62, "s") / 0.4, id="td/float"),
+        pytest.param(lambda: np.timedelta64(1 << 62, "s") // 0.4, id="td//float"),
+        pytest.param(lambda: np.timedelta64(1 << 62, "s") / 0.5, id="td/float-on-2**63"),
+        pytest.param(lambda: np.timedelta64(np.iinfo(np.int64).max, "s") / np.float64(1e-300), id="td/tiny"),
+        pytest.param(lambda: np.array([1, 1 << 62], dtype="timedelta64[s]") * 2.5, id="arr*float"),
+        pytest.param(lambda: 2.5 * np.array([1, 1 << 62], dtype="timedelta64[s]"), id="float*arr"),
+        pytest.param(lambda: np.array([1, 1 << 62], dtype="timedelta64[s]") / 0.4, id="arr/float"),
+    ])
+    def test_float_arithmetic_overflow_raises(self, expr):
         with pytest.raises(OverflowError, match="Overflow"):
-            td * 2.5
-        with pytest.raises(OverflowError, match="Overflow"):
-            2.5 * td
+            expr()
 
-        # Product landing exactly on 2**63 -- int64.max (2**63 - 1) is not
-        # representable in float64, so the boundary is 2**63, not int64.max.
-        # This value is also the NaT sentinel's magnitude.
-        with pytest.raises(OverflowError, match="Overflow"):
-            td * 2.0
-        with pytest.raises(OverflowError, match="Overflow"):
-            2.0 * td
+    # NaT operands propagate (the NaT short-circuit runs before the op, so even
+    # an otherwise-overflowing partner stays NaT) and a NaN operand yields NaT
+    # rather than overflow.  None of these touch the FP status flags.
+    @pytest.mark.parametrize("expr", [
+        pytest.param(lambda: np.timedelta64("NaT", "s") * 2.5, id="nat*float"),
+        pytest.param(lambda: 2.5 * np.timedelta64("NaT", "s"), id="float*nat"),
+        pytest.param(lambda: np.timedelta64("NaT", "s") / 0.4, id="nat/float"),
+        pytest.param(lambda: np.timedelta64("NaT", "s") * np.float64(np.inf), id="nat*inf"),
+        pytest.param(lambda: np.timedelta64(5, "s") * np.float64(np.nan), id="td*nan"),
+        pytest.param(lambda: np.float64(np.nan) * np.timedelta64(5, "s"), id="nan*td"),
+        pytest.param(lambda: np.timedelta64(5, "s") / np.float64(np.nan), id="td/nan"),
+    ])
+    def test_float_arithmetic_nat_result(self, expr):
+        assert np.isnat(expr()).all()
 
-        # An infinite multiplier is an overflow, not NaT.
-        with pytest.raises(OverflowError, match="Overflow"):
-            np.timedelta64(5, "s") * np.float64(np.inf)
-        with pytest.raises(OverflowError, match="Overflow"):
-            np.float64(np.inf) * np.timedelta64(5, "s")
+    # 0 * inf (== NaN) and division by exactly zero yield NaT, not overflow --
+    # matching numpy's long-standing convention -- even for a huge dividend and
+    # through the array path.  These signal the FP invalid/divide flags as they
+    # always have, so silence them.
+    @pytest.mark.parametrize("expr", [
+        pytest.param(lambda: np.timedelta64(0, "s") * np.float64(np.inf), id="0*inf"),
+        pytest.param(lambda: np.timedelta64(5, "s") / 0.0, id="td/0"),
+        pytest.param(lambda: np.timedelta64(np.iinfo(np.int64).max, "s") / 0.0, id="big/0"),
+        pytest.param(lambda: np.timedelta64(0, "s") / 0.0, id="0/0"),
+        pytest.param(lambda: np.timedelta64(5, "s") // 0.0, id="td//0"),
+        pytest.param(lambda: np.array([5, np.iinfo(np.int64).max], dtype="timedelta64[s]") / 0.0, id="arr/0"),
+    ])
+    def test_float_arithmetic_divzero_is_nat(self, expr):
+        with np.errstate(invalid="ignore", divide="ignore"):
+            assert np.isnat(expr()).all()
 
-        # Array (strided) path for both operand orders.
-        arr = np.array([1, 1 << 62], dtype="timedelta64[s]")
-        with pytest.raises(OverflowError, match="Overflow"):
-            arr * 2.5
-        with pytest.raises(OverflowError, match="Overflow"):
-            2.5 * arr
-
-    def test_float_divide_overflow_raises(self):
-        # timedelta64 / float64 must raise OverflowError instead of silently
-        # saturating.  Covers TIMEDELTA_md_m_divide, which backs both true
-        # division and floor division by a float.
-        td = np.timedelta64(1 << 62, "s")
-        big = np.timedelta64(np.iinfo(np.int64).max, "s")
-
-        # Finite quotient that overflows int64 (2**62 / 0.4 ~ 1.15e19).
-        with pytest.raises(OverflowError, match="Overflow"):
-            td / 0.4
-        # floor division shares the loop.
-        with pytest.raises(OverflowError, match="Overflow"):
-            td // 0.4
-
-        # Quotient landing exactly on 2**63.
-        with pytest.raises(OverflowError, match="Overflow"):
-            td / 0.5
-
-        # A tiny (nonzero) divisor produces an infinite quotient -- overflow,
-        # unlike division by exactly zero (which yields NaT, tested below).
-        with pytest.raises(OverflowError, match="Overflow"):
-            big / np.float64(1e-300)
-
-        # Array (strided) path.
-        arr = np.array([1, 1 << 62], dtype="timedelta64[s]")
-        with pytest.raises(OverflowError, match="Overflow"):
-            arr / 0.4
-
-    def test_float_arithmetic_nat_and_special(self):
-        # NaT propagation and the non-overflow special cases (NaN operands,
-        # division by zero, division by infinity) must not raise now that
-        # float overflow checking is on.
-        nat = np.timedelta64("NaT", "s")
-        td = np.timedelta64(5, "s")
-        big = np.timedelta64(np.iinfo(np.int64).max, "s")
-
-        # NaT dividend/multiplicand propagates, even when the other operand
-        # would otherwise overflow (the NaT short-circuit runs first).
-        assert np.isnat(nat * 2.5)
-        assert np.isnat(2.5 * nat)
-        assert np.isnat(nat / 0.4)
-        assert np.isnat(nat * np.float64(np.inf))
-
-        # NaN operand yields NaT, not overflow.
-        assert np.isnat(td * np.float64(np.nan))
-        assert np.isnat(np.float64(np.nan) * td)
-        assert np.isnat(td / np.float64(np.nan))
-
-        # 0 * inf is NaN -> NaT (not overflow).  The multiply signals the FP
-        # "invalid" flag as it always has, so silence it.
-        with np.errstate(invalid="ignore"):
-            assert np.isnat(np.timedelta64(0, "s") * np.float64(np.inf))
-
-        # Division by exactly zero yields NaT (matching numpy's convention),
-        # and must not be misreported as overflow even for a huge dividend.
-        with np.errstate(divide="ignore", invalid="ignore"):
-            assert np.isnat(td / 0.0)
-            assert np.isnat(big / 0.0)
-            assert np.isnat(np.timedelta64(0, "s") / 0.0)
-            # Array path through the divide-by-zero branch.
-            arr = np.array([5, np.iinfo(np.int64).max], dtype="timedelta64[s]")
-            assert np.isnat(arr / 0.0).all()
-
-        # Division by infinity is a well-defined zero, not overflow.
-        assert td / np.float64(np.inf) == np.timedelta64(0, "s")
-
-    def test_float_arithmetic_valid_boundary(self):
-        # Regression guard: float multiply/divide that stays in range must
-        # continue to produce the right value and not raise.
-        assert np.timedelta64(10, "s") * 0.5 == np.timedelta64(5, "s")
-        assert 0.5 * np.timedelta64(10, "s") == np.timedelta64(5, "s")
-        assert np.timedelta64(6, "s") / 2.0 == np.timedelta64(3, "s")
-        assert np.timedelta64(7, "s") // 2.0 == np.timedelta64(3, "s")
-
-        # Large product/quotient that just fits (2**61 * 2 == 2**62 < 2**63).
-        assert np.timedelta64(1 << 61, "s") * 2.0 == np.timedelta64(1 << 62, "s")
-        assert np.timedelta64(1 << 62, "s") / 2.0 == np.timedelta64(1 << 61, "s")
+    # Regression guard: in-range float multiply/divide (including division by
+    # infinity, a well-defined zero) keeps producing the right value.
+    @pytest.mark.parametrize("expr, expected", [
+        pytest.param(lambda: np.timedelta64(10, "s") * 0.5, np.timedelta64(5, "s"), id="td*0.5"),
+        pytest.param(lambda: 0.5 * np.timedelta64(10, "s"), np.timedelta64(5, "s"), id="0.5*td"),
+        pytest.param(lambda: np.timedelta64(6, "s") / 2.0, np.timedelta64(3, "s"), id="td/2"),
+        pytest.param(lambda: np.timedelta64(7, "s") // 2.0, np.timedelta64(3, "s"), id="td//2"),
+        pytest.param(lambda: np.timedelta64(1 << 61, "s") * 2.0, np.timedelta64(1 << 62, "s"), id="td*2-large"),
+        pytest.param(lambda: np.timedelta64(1 << 62, "s") / 2.0, np.timedelta64(1 << 61, "s"), id="td/2-large"),
+        pytest.param(lambda: np.timedelta64(5, "s") / np.float64(np.inf), np.timedelta64(0, "s"), id="td/inf"),
+    ])
+    def test_float_arithmetic_valid_boundary(self, expr, expected):
+        assert expr() == expected
 
     def test_datetime64_item_int64_min_edge_case(self):
         info = np.iinfo(np.int64)
@@ -1753,32 +1711,19 @@ class TestDateTime:
             # float * M8
             assert_raises(TypeError, np.multiply, 1.5, dta)
 
-        # NaTs
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                'ignore', "invalid value encountered in multiply", RuntimeWarning)
-            nat = np.timedelta64('NaT', 's')
+        # NaTs: NaT propagates through any scalar operand, including nan/inf.
+        # The non-NaT float special cases (nan/inf operands and float overflow)
+        # are covered by test_float_arithmetic_* above.
+        nat = np.timedelta64('NaT', 's')
 
-            def check(a, b, res):
-                assert_equal(a * b, res)
-                assert_equal(b * a, res)
-            for tp in (int, float):
-                check(nat, tp(2), nat)
-                check(nat, tp(0), nat)
-            # A NaN operand yields NaT for every timedelta (finite, zero,
-            # or NaT).
-            nan = float('nan')
-            check(np.timedelta64(1, "s"), nan, nat)
-            check(np.timedelta64(0, "s"), nan, nat)
-            check(nat, nan, nat)
-            # An inf operand: 0 * inf (== NaN) and NaT * inf stay NaT, but a
-            # finite nonzero timedelta * inf now overflows instead of
-            # saturating to NaT.
-            inf = float('inf')
-            check(np.timedelta64(0, "s"), inf, nat)
-            check(nat, inf, nat)
-            assert_raises(OverflowError, np.multiply, np.timedelta64(1, "s"), inf)
-            assert_raises(OverflowError, np.multiply, inf, np.timedelta64(1, "s"))
+        def check(a, b, res):
+            assert_equal(a * b, res)
+            assert_equal(b * a, res)
+        for tp in (int, float):
+            check(nat, tp(2), nat)
+            check(nat, tp(0), nat)
+        for f in (float('nan'), float('inf')):
+            check(nat, f, nat)
 
     @pytest.mark.parametrize("op1, op2, exp", [
         # m8 same units round down
