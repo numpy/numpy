@@ -14,7 +14,7 @@ extra-args = ["-Csetup-args=-Db_sanitize=address", "-Csetup-args=-Dbuildtype=deb
 
 [package.host-dependencies]
 python.flags = ["asan"]
-python.git = "https://github.com/lucascolley/cpython"
+python.git = "https://github.com/python/cpython"
 python.subdirectory = "Tools/pixi-packages"
 python.rev = "abdd7aea18bde039fe35983b5c0d8036bc16f1a7"
 
