@@ -2468,6 +2468,16 @@ class TestUnwrap:
         truncated = np.float64(discont)
         assert_array_equal(unwrap(p, discont=truncated, period=period), [0, -3])
 
+    def test_discont_weak_scalar_narrow_dtype(self):
+        # a bare python float discont is a weak scalar (NEP 50), so main
+        # downcasts it to p's dtype before comparing; here that downcast
+        # rounds 3.0001 down to exactly 3.0, so the diff of 3 is no longer
+        # judged smaller than discont and does get corrected
+        p = np.array([0, 3], dtype=np.float16)
+        period = 4
+        discont = 3 + 1e-4
+        assert_array_equal(unwrap(p, discont=discont, period=period), [0, -1])
+
     def test_masked_array(self):
         # the gufunc's C loop can't propagate masking through the scan the
         # way the fallback's mask-aware ops do, so this must match the

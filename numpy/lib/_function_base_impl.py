@@ -1873,7 +1873,13 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     if discont is None:
         discont = period / 2
     dtype = np.result_type(p, period)
+    # match NEP 50: a discont that would collapse to dtype anyway (the
+    # weak-scalar or same-dtype case) is compared at that native precision;
+    # anything wider (explicit stronger scalar, or cross-kind on an integer
+    # dtype) is compared at >=double
     discont_type = np.longdouble if dtype.type is np.longdouble else np.float64
+    if _nx.issubdtype(dtype, _nx.floating) and np.result_type(dtype, discont) == dtype:
+        discont_type = dtype.type
     try:
         return _unwrap(p, discont, period,
                        signature=(type(dtype), discont_type, type(dtype), type(dtype)),
