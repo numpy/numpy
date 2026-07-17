@@ -457,7 +457,8 @@ lapack_lite_exec(PyObject *m)
     if (PyErr_WarnEx(PyExc_DeprecationWarning,
                      "The numpy.linalg.lapack_lite module is deprecated and will be "
                      "removed in a future release. It is an internal implementation "
-                     "detail of numpy.linalg.",
+                     "detail of numpy.linalg. Users that need LAPACK or BLAS routines "
+                     "should use scipy.linalg.lapack or scipy.linalg.blas instead.",
                      2) < 0) {
         return -1;
     }
