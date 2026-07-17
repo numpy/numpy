@@ -21,26 +21,26 @@ jobs:
   build-ios:
     permissions:
       contents: read  # to fetch code (actions/checkout)
-    name: Test (${{ matrix.arch }} ${{ matrix.accelerated && 'accelerated' || 'non-accelerated' }})
+    name: Test (${{ matrix.arch }} ${{ matrix.accelerate && 'new accelerate' || 'original' }})
     runs-on: ${{ matrix.runs-on }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          # Accelerated
+          # ACCELERATE_NEW_LAPACK ILP64
           - runs-on: "macos-26"
-            accelerated: true
+            accelerate: true
             arch: arm64_iphoneos
           - runs-on: "macos-26"
-            accelerated: true
+            accelerate: true
             arch: arm64_iphonesimulator
 
-          # Non-accelerated
+          # Original LP64
           - runs-on: "macos-26"
-            accelerated: false
+            accelerate: false
             arch: arm64_iphoneos
           - runs-on: "macos-26"
-            accelerated: false
+            accelerate: false
             arch: arm64_iphonesimulator
 
     # To enable this workflow on a fork, comment out:
@@ -55,12 +55,12 @@ jobs:
 
       - name: Setup iOS
         run: |
-          if ${{ matrix.accelerated }}; then
-            # Accelerate with ILP64 requires iOS 16.4 or higher
+          if ${{ matrix.accelerate }}; then
+            # ACCELERATE_NEW_LAPACK with ILP64 requires iOS 16.4 or higher
             CIBW_ENV="IPHONEOS_DEPLOYMENT_TARGET=17.0"
             echo "CIBW_ENVIRONMENT_IOS=$CIBW_ENV" >> "$GITHUB_ENV"
           else
-            # On older iOS versions, disable ILP64.
+            # On older iOS versions, use LP64 with the older Accelerate
             CIBW_CONFIG="setup-args=-Dallow-noblas=false build-dir=build"
             echo "CIBW_CONFIG_IOS=$CIBW_CONFIG" >> "$GITHUB_ENV"
           fi

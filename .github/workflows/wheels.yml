@@ -110,11 +110,11 @@ jobs:
         if: matrix.buildplat[1] == 'ios_arm64_iphoneos' || matrix.buildplat[1] == 'ios_arm64_iphonesimulator'
         run: |
           if [[ "${{ matrix.buildplat[2] }}" == 'accelerate' ]]; then
-            # Accelerate with ILP64 requires iOS 16.4 or higher
+            # ACCELERATE_NEW_LAPACK with ILP64 requires iOS 16.4 or higher
             CIBW_ENV="IPHONEOS_DEPLOYMENT_TARGET=17.0"
             echo "CIBW_ENVIRONMENT_IOS=$CIBW_ENV" >> "$GITHUB_ENV"
           else
-            # On older iOS versions, disable ILP64.
+            # On older iOS versions, use LP64 with the older Accelerate
             CIBW_CONFIG="setup-args=-Dallow-noblas=false build-dir=build"
             echo "CIBW_CONFIG_IOS=$CIBW_CONFIG" >> "$GITHUB_ENV"
           fi
