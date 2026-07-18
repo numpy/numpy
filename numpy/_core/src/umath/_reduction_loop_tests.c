@@ -2,9 +2,11 @@
 
 /*
  * _reduction_loop_tests.c
- * A minimal float64-only `minimummaximum` ufunc exercising the
- * NPY_METH_get_reduction_loop ArrayMethod slot: a 2-in/2-out forward loop
- * plus a 3-in/2-out reduction loop, so `minimummaximum.reduce(a)` works.
+ * Two minimal float64-only `minimummaximum` ufuncs exercising the
+ * NPY_METH_get_reduction_loop ArrayMethod slot: a 2-in/2-out forward
+ * loop plus a 3-in/2-out reduction loop, so `.reduce(a)` returns
+ * (min, max). `minimummaximum_with_identity` additionally registers
+ * NPY_METH_get_multi_reduction_initials (+inf/-inf).
  */
 
 #define PY_SSIZE_T_CLEAN
@@ -97,6 +99,17 @@ minimummaximum_get_reduction_loop(PyArrayMethod_Context *NPY_UNUSED(context),
 
 
 static int
+minimummaximum_get_multi_reduction_initials(
+        PyArrayMethod_Context *NPY_UNUSED(context),
+        npy_bool NPY_UNUSED(reduction_is_empty), void **initials)
+{
+    *(double *)initials[0] = NPY_INFINITY;
+    *(double *)initials[1] = -NPY_INFINITY;
+    return 1;
+}
+
+
+static int
 minimummaximum_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *const NPY_UNUSED(op_dtypes[]),
         PyArray_DTypeMeta *const signature[],
@@ -139,11 +152,10 @@ register_minimummaximum_promoter(PyObject *minimummaximum)
 
 
 static int
-add_minimummaximum(PyObject *module)
+add_minimummaximum(PyObject *module, const char *name, int with_identity)
 {
     PyObject *minimummaximum = PyUFunc_FromFuncAndData(
-            NULL, NULL, NULL, 0, 2, 2, PyUFunc_None,
-            "minimummaximum", "minimummaximum_docstring", 0);
+            NULL, NULL, NULL, 0, 2, 2, PyUFunc_None, name, NULL, 0);
     if (minimummaximum == NULL) {
         return -1;
     }
@@ -159,11 +171,13 @@ add_minimummaximum(PyObject *module)
     PyType_Slot slots[] = {
         {NPY_METH_strided_loop, (void *)&double_minimummaximum_loop},
         {NPY_METH_get_reduction_loop, (void *)&minimummaximum_get_reduction_loop},
+        {NPY_METH_get_multi_reduction_initials, with_identity ?
+         (void *)&minimummaximum_get_multi_reduction_initials : NULL},
         {0, NULL},
     };
 
     PyArrayMethod_Spec spec = {
-        .name = "double_minimummaximum",
+        .name = name,
         .nin = 2,
         .nout = 2,
         .casting = NPY_NO_CASTING,
@@ -175,7 +189,7 @@ add_minimummaximum(PyObject *module)
     int res = PyUFunc_AddLoopFromSpec(minimummaximum, &spec);
     Py_DECREF(double_descr);
     if (res < 0 || register_minimummaximum_promoter(minimummaximum) < 0
-            || PyModule_AddObject(module, "minimummaximum", minimummaximum) < 0) {
+            || PyModule_AddObject(module, name, minimummaximum) < 0) {
         Py_XDECREF(minimummaximum);
         return -1;
     }
@@ -215,7 +229,11 @@ PyMODINIT_FUNC PyInit__reduction_loop_tests(void)
         return NULL;
     }
 
-    if (add_minimummaximum(m) < 0) {
+    if (add_minimummaximum(m, "minimummaximum", 0) < 0) {
+        Py_DECREF(m);
+        return NULL;
+    }
+    if (add_minimummaximum(m, "minimummaximum_with_identity", 1) < 0) {
         Py_DECREF(m);
         return NULL;
     }
