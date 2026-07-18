@@ -60,6 +60,7 @@ from numpy.ma.extras import (
     stack,
     union1d,
     unique,
+    vander,
     vstack,
 )
 from numpy.ma.testutils import (
@@ -1447,6 +1448,30 @@ class TestCorrcoef:
         test = corrcoef(x)
         control = np.corrcoef(x)
         assert_almost_equal(test[:-1, :-1], control[:-1, :-1])
+
+
+class TestVander:
+
+    def test_vander(self):
+        # ma.vander should match np.vander for unmasked input, and zero
+        # out rows corresponding to masked entries.
+        x = np.array([1, 2, 3, 5])
+        assert_equal(vander(x, 3), np.vander(x, 3))
+        assert_equal(vander(x), np.vander(x))
+
+        mx = MaskedArray(x, mask=[0, 1, 0, 0])
+        expected = np.vander(x)
+        expected[1] = 0
+        assert_equal(vander(mx), expected)
+
+    def test_vander_docstring_matches_signature(self):
+        # ma.vander does not support the `increasing` keyword that
+        # np.vander documents; its docstring should not claim otherwise.
+        # See https://github.com/numpy/numpy/issues/32033
+        assert 'increasing' not in vander.__doc__
+        x = np.array([1, 2, 3, 5])
+        with pytest.raises(TypeError):
+            vander(x, increasing=True)
 
 
 class TestPolynomial:

@@ -2242,6 +2242,34 @@ def clump_masked(a):
 
 def vander(x, n=None):
     """
+    Generate a Vandermonde matrix, treating masked values as zero rows.
+
+    The columns of the output matrix are powers of the input vector,
+    with the `i`-th output column equal to the input vector raised
+    element-wise to the power of ``n - i - 1``.
+
+    Parameters
+    ----------
+    x : array_like
+        1-D input array. Masked values are set to zero in the
+        corresponding rows of the output.
+    n : int, optional
+        Number of columns in the output. If `n` is not specified, a
+        square array is returned (``n = len(x)``).
+
+    Returns
+    -------
+    out : ndarray
+        Vandermonde matrix. The first column is ``x^(n-1)``, the
+        second ``x^(n-2)`` and so forth. Rows corresponding to masked
+        values in `x` are set to zero.
+
+    See Also
+    --------
+    numpy.vander
+
+    Notes
+    -----
     Masked values in the input array result in rows of zeros.
 
     """
@@ -2250,9 +2278,6 @@ def vander(x, n=None):
     if m is not nomask:
         _vander[m] = 0
     return _vander
-
-
-vander.__doc__ = ma.doc_note(np.vander.__doc__, vander.__doc__)
 
 
 def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
