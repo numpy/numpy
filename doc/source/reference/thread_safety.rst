@@ -37,16 +37,18 @@ do not release the GIL.
 Context Local State
 -------------------
 
-NumPy stores user-adjustable configuration options in py:mod:`context variables
+NumPy stores user-adjustable configuration options in :py:mod:`context variables
 <python:contextvars>`. Context variables allow *context-local state*, which
 means each thread in a multithreaded program or task in an asyncio program has
 its own independent configuration. This includes the following state:
 
 * The `numpy.errstate` and all floating-point error handling configuration
-  options. See :doc:`/reference/routines.err` for more details.
+  options and the ufunc buffer size settable via `numpy.setbufsize`. See
+  :doc:`/reference/routines.err` for more details.
 * The `numpy.printoptions`  and all text-formatting configuration options.
   See :ref:`text_formatting_options` for more details.
-* The memory allocator, see :ref:`data_memory` and NEP 49 for more details.
+* The memory allocator, see :ref:`data_memory` and :ref:`NEP 49 <NEP49>` for
+  more details.
 
 State stored in a context variable is set syntactically using the ``with``
 statement. For example, you can update the numpy printing options state like so:
