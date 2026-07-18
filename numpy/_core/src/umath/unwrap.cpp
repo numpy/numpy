@@ -252,15 +252,10 @@ add_unwrap_loop(PyObject *ufunc, int typenum,
     spec.dtypes = dtypes;
     spec.slots = slots;
 
-    if (PyUFunc_AddLoopFromSpec_int(ufunc, &spec, 1)) {
-        Py_DECREF(dt);
-        Py_DECREF(disc_dt);
-        return -1;
-    }
-    Py_DECREF(disc_dt);
-
+    int ret = PyUFunc_AddLoopFromSpec_int(ufunc, &spec, 1);
     Py_DECREF(dt);
-    return 0;
+    Py_DECREF(disc_dt);
+    return ret;
 }
 
 NPY_NO_EXPORT int
@@ -306,15 +301,14 @@ init_unwrap_ufunc(PyObject *umath)
         // {NPY_OBJECT, object_unwrap_loop},
     };
 
-    int res = 0;
     for (const auto& entry : loops) {
         if (add_unwrap_loop(ufunc, entry.typenum, entry.loop,
                              entry.discont_typenum) < 0) {
-            res = -1;
-            break;
+            Py_DECREF(ufunc);
+            return -1;
         }
     }
 
     Py_DECREF(ufunc);
-    return res;
+    return 0;
 }

@@ -2479,9 +2479,9 @@ class TestUnwrap:
         assert_array_equal(unwrap(p, discont=discont, period=period), [0, -1])
 
     def test_masked_array(self):
-        # the gufunc's C loop can't propagate masking through the scan the
-        # way the fallback's mask-aware ops do, so this must match the
-        # fallback exactly, not just "look reasonable"
+        # for masked arrays, we'd need a masked aware np.ma.unwrap implementation
+        # the operation currently unmasks the masked array into an ndarray
+        # and runs the operation on that, completely ignoring the mask
         p = np.ma.MaskedArray([0., 1., 2., 2 + 2 * np.pi, 3 + 2 * np.pi],
                               mask=[False, False, True, False, False])
         out = unwrap(p)
