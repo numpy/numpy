@@ -130,9 +130,9 @@ static abstract_dtype_spec abstract_dtype_specs[] = {
      &_UnsignedIntegerAbstract_dtype, &_IntegerAbstract_dtype, 0},
     {"numpy.dtypes.InexactAbstractDType",
      &_InexactAbstract_dtype, &_NumericAbstract_dtype, 0},
-    {"numpy.dtypes.FloatAbstractDType",
+    {"numpy.dtypes.FloatingAbstractDType",
      &_FloatAbstract_dtype, &_InexactAbstract_dtype, 0},
-    {"numpy.dtypes.ComplexAbstractDType",
+    {"numpy.dtypes.ComplexFloatingAbstractDType",
      &_ComplexAbstract_dtype, &_InexactAbstract_dtype, 0},
 };
 

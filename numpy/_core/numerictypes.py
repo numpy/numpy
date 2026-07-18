@@ -340,8 +340,8 @@ _kind_to_dtypes = {
     "signed integer": (np.dtypes.SignedIntegerAbstractDType,),
     "unsigned integer": (np.dtypes.UnsignedIntegerAbstractDType,),
     "integral": (np.dtypes.IntegerAbstractDType,),
-    "real floating": (np.dtypes.FloatAbstractDType,),
-    "complex floating": (np.dtypes.ComplexAbstractDType,),
+    "real floating": (np.dtypes.FloatingAbstractDType,),
+    "complex floating": (np.dtypes.ComplexFloatingAbstractDType,),
     # The Array API "numeric" kind excludes bool, so do not use
     # NumericAbstractDType directly here.
     "numeric": (
