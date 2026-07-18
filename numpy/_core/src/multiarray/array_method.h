@@ -95,6 +95,25 @@ reduction_get_loop_func(PyArrayMethodObject *meth)
 }
 
 
+/* Returns the reduction identity/initial value(s) from whichever slot
+ * `context->method` registered; registration guarantees at most one is set. */
+static inline int
+reduction_get_initial(PyArrayMethod_Context *context,
+        npy_bool reduction_is_empty, void **initials)
+{
+    PyArrayMethodObject *meth = context->method;
+    if (meth->get_multi_reduction_initials != NULL) {
+        return meth->get_multi_reduction_initials(
+                context, reduction_is_empty, initials);
+    }
+    if (meth->get_reduction_initial != NULL) {
+        return meth->get_reduction_initial(
+                context, reduction_is_empty, initials[0]);
+    }
+    return 0;
+}
+
+
 /*
  * We will sometimes have to create an ArrayMethod and allow passing it around,
  * similar to `instance.method` returning a bound method, e.g. a function like

@@ -335,6 +335,35 @@ fill_arraymethod_from_slots(
         }
     }
 
+    if (meth->get_reduction_initial != NULL &&
+            meth->get_multi_reduction_initials != NULL) {
+        PyErr_Format(PyExc_ValueError,
+                "ArrayMethod cannot register both get_reduction_initial and "
+                "get_multi_reduction_initials; use get_multi_reduction_initials "
+                "alone (it supports single-output reductions too). "
+                "(method: %s)",
+                spec->name);
+        return -1;
+    }
+    if (meth->nout > 1 && meth->get_reduction_initial != NULL) {
+        PyErr_Format(PyExc_ValueError,
+                "get_reduction_initial does not support multi-output "
+                "reductions; use get_multi_reduction_initials instead. "
+                "(method: %s)",
+                spec->name);
+        return -1;
+    }
+    if (meth->nout > 1 && meth->get_multi_reduction_initials != NULL &&
+            meth->get_reduction_loop == NULL) {
+        PyErr_Format(PyExc_ValueError,
+                "get_multi_reduction_initials was registered without a "
+                "get_reduction_loop; reduce() is unreachable for a "
+                "multi-output ArrayMethod without a reduction loop, so this "
+                "identity would never be used. (method: %s)",
+                spec->name);
+        return -1;
+    }
+
     /* Check whether the slots are valid: */
     if (meth->resolve_descriptors == &default_resolve_descriptors) {
         if (spec->casting == -1) {

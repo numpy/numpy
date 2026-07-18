@@ -2733,19 +2733,15 @@ try_reduce_contiguous(
         accum[i] = PyArray_BYTES(result[i]);
     }
     int has_initial = 0;
-    if (ufuncimpl->get_reduction_initial != NULL) {
-        has_initial = ufuncimpl->get_reduction_initial(
-                context, /*reduction_is_empty=*/0, accum[0]);
+    if (ufuncimpl->get_reduction_initial != NULL
+            || ufuncimpl->get_multi_reduction_initials != NULL) {
+        has_initial = reduction_get_initial(context,
+                /*reduction_is_empty=*/0, (void **)accum);
         if (has_initial < 0) {
             for (int i = 0; i < nout; i++) {
                 Py_DECREF(result[i]);
             }
             return -1;
-        }
-        if (has_initial) {
-            for (int i = 1; i < nout; i++) {
-                memcpy(accum[i], accum[0], stream_descr->elsize);
-            }
         }
     }
 
