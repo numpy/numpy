@@ -354,6 +354,50 @@ int npy_get_floatstatus() {
 #endif
 
 
+#ifdef __EMSCRIPTEN__
+static NPY_TLS int _npy_wasm_floatstatus = 0;
+
+int npy_get_floatstatus_barrier(char* param)
+{
+    /*
+     * By using a volatile, the compiler cannot reorder this call
+     */
+    if (param != NULL) {
+        volatile char NPY_UNUSED(c) = *(char*)param;
+    }
+
+    return _npy_wasm_floatstatus;
+}
+
+int npy_clear_floatstatus_barrier(char * param)
+{
+    int fpstatus = npy_get_floatstatus_barrier(param);
+    _npy_wasm_floatstatus = 0;
+
+    return fpstatus;
+}
+
+
+void npy_set_floatstatus_divbyzero(void)
+{
+    _npy_wasm_floatstatus |= NPY_FPE_DIVIDEBYZERO;
+}
+
+void npy_set_floatstatus_overflow(void)
+{
+    _npy_wasm_floatstatus |= NPY_FPE_OVERFLOW;
+}
+
+void npy_set_floatstatus_underflow(void)
+{
+    _npy_wasm_floatstatus |= NPY_FPE_UNDERFLOW;
+}
+
+void npy_set_floatstatus_invalid(void)
+{
+    _npy_wasm_floatstatus |= NPY_FPE_INVALID;
+}
+#else
 int npy_get_floatstatus_barrier(char* param)
 {
     int fpstatus = fetestexcept(FE_DIVBYZERO | FE_OVERFLOW |
@@ -403,4 +447,5 @@ void npy_set_floatstatus_invalid(void)
 {
     feraiseexcept(FE_INVALID);
 }
+#endif  /* __EMSCRIPTEN__ */
 
