@@ -106,7 +106,7 @@ array_dlpack_deleter(DLManagedTensorVersioned *self)
 
     PyGILState_STATE state = PyGILState_Ensure();
 
-    PyArrayObject *array = (PyArrayObject *)self->manager_ctx;
+    PyObject *array = self->manager_ctx;
     // This will also free the shape and strides as it's one allocation.
     PyMem_Free(self);
     Py_XDECREF(array);
@@ -127,25 +127,6 @@ array_dlpack_deleter_unversioned(DLManagedTensor *self)
     PyArrayObject *array = (PyArrayObject *)self->manager_ctx;
     PyMem_Free(self);
     Py_XDECREF(array);
-
-    PyGILState_Release(state);
-}
-
-/*
- * Deleter for a NumPy exported scalar dlpack DLManagedTensor(Versioned).
- */
-static void
-scalar_dlpack_deleter(DLManagedTensorVersioned *self)
-{
-    if (!Py_IsInitialized()) {
-        return;
-    }
-
-    PyGILState_STATE state = PyGILState_Ensure();
-
-    PyObject *scalar = (PyObject *)self->manager_ctx;
-    PyMem_Free(self);
-    Py_XDECREF(scalar);
 
     PyGILState_Release(state);
 }
@@ -454,12 +435,7 @@ create_dlpack_capsule(PyObject *scalar, PyArrayObject *array,
         DLManagedTensorVersioned *managed = (DLManagedTensorVersioned *)ptr;
         capsule_name = NPY_DLPACK_VERSIONED_CAPSULE_NAME;
         capsule_deleter = (PyCapsule_Destructor)dlpack_capsule_deleter;
-        if (array == NULL) {
-            managed->deleter = scalar_dlpack_deleter;
-        }
-        else {
-            managed->deleter = array_dlpack_deleter;
-        }
+        managed->deleter = array_dlpack_deleter;
         managed->manager_ctx = self;
 
         dl_tensor = &managed->dl_tensor;
