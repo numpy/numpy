@@ -334,7 +334,8 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
         }
     }
 
-    if ((initial == NULL && context->method->get_reduction_initial == NULL)
+    if ((initial == NULL && context->method->get_reduction_initial == NULL
+                && context->method->get_multi_reduction_initials == NULL)
             || initial == Py_None) {
         /* There is no initial value, or initial value was explicitly unset */
     }
@@ -358,14 +359,13 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
         }
         else {
             /*
-             * Fetch initial from ArrayMethod, we pretend the reduction is
-             * empty when the iteration is.  This may be wrong, but when it is,
-             * we will not need the identity as the result is also empty.
-             * The identity seeds output 0 and is broadcast to the rest (the
-             * reduction outputs share a dtype).
+             * Fetch initial value(s) from the ArrayMethod, we pretend the
+             * reduction is empty when the iteration is.  This may be wrong,
+             * but when it is, we will not need the identity as the result is
+             * also empty.
              */
-            int has_initial = context->method->get_reduction_initial(
-                    context, empty_iteration, initial_buf[0]);
+            int has_initial = reduction_get_initial(context,
+                    empty_iteration, (void **)initial_buf);
             if (has_initial < 0) {
                 goto fail;
             }
@@ -374,11 +374,6 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
                 for (int i = 0; i < nout; i++) {
                     PyMem_FREE(initial_buf[i]);
                     initial_buf[i] = NULL;
-                }
-            }
-            else {
-                for (int i = 1; i < nout; i++) {
-                    memcpy(initial_buf[i], initial_buf[0], op_dtypes[i]->elsize);
                 }
             }
         }
