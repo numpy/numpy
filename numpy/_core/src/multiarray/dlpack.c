@@ -396,7 +396,15 @@ fill_dl_tensor_information_from_scalar(
     DLTensor *dl_tensor, PyObject *self, DLDevice *result_device)
 {
     PyArray_Descr *dtype = PyArray_DescrFromScalar(self);
+    if (dtype == NULL) {
+        return -1;
+    }
+
     void *data = scalar_value(self, dtype);
+    if (data == NULL) {
+        Py_DECREF(dtype);
+        return -1;
+    }
 
     int ret = fill_dl_tensor_information(dl_tensor, result_device,
         dtype->elsize, 0, NULL, NULL, dtype, data);
@@ -546,7 +554,7 @@ array_dlpack(PyArrayObject *self,
             {"$stream", NULL, &stream},
             {"$max_version", NULL, &max_version},
             {"$dl_device", &device_converter, &result_device},
-            {"$copy", &PyArray_CopyConverter, &copy_mode})) {
+            {"$copy", &PyArray_CopyConverter, &copy_mode}) < 0) {
         return NULL;
     }
 
@@ -621,8 +629,7 @@ gentype_dlpack(PyObject *self,
     PyObject *stream = Py_None;
     PyObject *max_version = Py_None;
     NPY_COPYMODE copy_mode = NPY_COPY_IF_NEEDED;
-    /* For scalars, version >=1 is supported, so set default to 1. */
-    long major_version = 1;
+    long major_version = 0;
     /* We allow the user to request a result device in principle. */
     DLDevice result_device = {kDLCPU, 0};
 
@@ -631,7 +638,7 @@ gentype_dlpack(PyObject *self,
             {"$stream", NULL, &stream},
             {"$max_version", NULL, &max_version},
             {"$dl_device", &device_converter, &result_device},
-            {"$copy", &PyArray_CopyConverter, &copy_mode})) {
+            {"$copy", &PyArray_CopyConverter, &copy_mode}) < 0) {
         return NULL;
     }
 
@@ -667,21 +674,13 @@ gentype_dlpack(PyObject *self,
         return NULL;
     }
 
-    /*
-     * TODO: The versioned and non-versioned structs of DLPack are very
-     * similar but not ABI compatible so that the function called here requires
-     * branching (templating didn't seem worthwhile).
-     *
-     * Version 0 support should be deprecated in NumPy 2.1 and the branches
-     * can then be removed again.
-     */
     return create_dlpack_capsule(
             self, NULL, major_version >= 1, &result_device,
             copy_mode == NPY_COPY_ALWAYS);
 }
 
 NPY_NO_EXPORT PyObject *
-gentype_dlpack_device(PyObject *self, PyObject *NPY_UNUSED(args))
+gentype_dlpack_device(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 {
     return Py_BuildValue("ii", kDLCPU, 0);
 }

@@ -296,7 +296,7 @@ class TestScalarDLPack:
 
     def test_dunder_dlpack_refcount(self):
         x = np.float64(2)
-        y = x.__dlpack__()
+        y = x.__dlpack__(max_version=(1, 0))
         startcount = sys.getrefcount(x)
         del y
         assert startcount - sys.getrefcount(x) == 1
@@ -305,6 +305,9 @@ class TestScalarDLPack:
         x = np.float64(2)
         with pytest.raises(BufferError, match="readonly is unsupported"):
             x.__dlpack__(max_version=(0, 0))
+        with pytest.raises(BufferError, match="readonly is unsupported"):
+            # None is equivalent to (0, 0)
+            x.__dlpack__()
 
     def test_dlpack_cannot_copy(self):
         x = np.float64(2)
@@ -321,12 +324,12 @@ class TestScalarDLPack:
     def test_device(self):
         x = np.float64(2)
         # requesting (1, 0), i.e. CPU device works in both calls:
-        x.__dlpack__(dl_device=(1, 0))
+        x.__dlpack__(dl_device=(1, 0), max_version=(1, 0))
         np.from_dlpack(x, device="cpu")
         np.from_dlpack(x, device=None)
 
         with pytest.raises(BufferError):
-            x.__dlpack__(dl_device=(10, 0))
+            x.__dlpack__(dl_device=(10, 0), max_version=(1, 0))
         with pytest.raises(ValueError):
             np.from_dlpack(x, device="gpu")
 
