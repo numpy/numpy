@@ -42,9 +42,10 @@ NumPy stores user-adjustable configuration options in :py:mod:`context variables
 means each thread in a multithreaded program or task in an asyncio program has
 its own independent configuration. This includes the following state:
 
-* The `numpy.errstate` and all floating-point error handling configuration
+* The `numpy.errstate`, which storesl floating-point error handling configuration
   options and the ufunc buffer size settable via `numpy.setbufsize`. See
-  :doc:`/reference/routines.err` for more details.
+  :doc:`/reference/routines.err` and :ref:`use-of-internal-buffers` for
+  more details.
 * The `numpy.printoptions`  and all text-formatting configuration options.
   See :ref:`text_formatting_options` for more details.
 * The memory allocator, see :ref:`data_memory` and :ref:`NEP 49 <NEP49>` for
@@ -73,8 +74,6 @@ state. For example:
 .. code-block:: pycon
 
      $ python3.12
-     Python 3.12.13 (main, May 14 2026, 09:32:06) [Clang 21.0.0 (clang-2100.0.123.102)] on darwin
-     Type "help", "copyright", "credits" or "license" for more information.
      >>> import numpy, threading
      >>> def print_printoptions():
      ...     print(numpy.get_printoptions()['precision'])
@@ -90,8 +89,6 @@ behave:
 .. code-block:: pycon
 
      $ python3.14 -Xthread_inherit_context=1
-     Python 3.14.5 (main, May 22 2026, 08:10:06) [Clang 21.0.0 (clang-2100.0.123.102)] on darwin
-     Type "help", "copyright", "credits" or "license" for more information.
      >>> import numpy, threading
      >>> def print_printoptions():
      ...     print(numpy.get_printoptions()['precision'])
