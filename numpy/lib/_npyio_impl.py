@@ -1944,6 +1944,14 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     array([(b'text', b''), (b'hello world', b'11'), (b'numpy', b'5')],
       dtype=[('f0', 'S12'), ('f1', 'S12')])
 
+    Reading names from a comment line:
+
+    >>> from io import StringIO
+    >>> s = StringIO("# a b c\n1 2 3\n4 5 6\n")
+    >>> np.genfromtxt(s, names=True, commented_names=True,
+    ...               dtype=None, encoding=None).dtype.names
+    ('a', 'b', 'c')
+
     """
 
     if like is not None:
