@@ -3,7 +3,10 @@ import itertools
 import pytest
 
 import numpy as np
-from numpy._core._reduction_loop_tests import minimummaximum as mm
+from numpy._core._reduction_loop_tests import (
+    minimummaximum as mm,
+    minimummaximum_with_identity as mmi,
+)
 
 SHAPES = [(12,), (3, 4), (2, 3, 4)]
 EMPTY_SHAPES = [(0,), (0, 3), (3, 0), (2, 0, 4)]
@@ -211,6 +214,26 @@ class TestReductionLoop:
                 with pytest.raises(
                         ValueError, match="zero-size array to reduction operation"):
                     op.reduce(a, axis=axis, keepdims=keepdims)
+
+    @pytest.mark.parametrize("shape", EMPTY_SHAPES, ids=str)
+    @pytest.mark.parametrize("keepdims", [False, True])
+    def test_reduce_empty_uses_registered_identity(self, shape, keepdims):
+        a = np.zeros(shape, np.float64)
+        for axis in reduce_axes(a.ndim):
+            if not reduces_over_empty(shape, axis):
+                continue
+            got_min, got_max = mmi.reduce(a, axis=axis, keepdims=keepdims)
+            np.testing.assert_array_equal(
+                got_min,
+                np.minimum.reduce(a, axis=axis, keepdims=keepdims, initial=np.inf))
+            np.testing.assert_array_equal(
+                got_max,
+                np.maximum.reduce(a, axis=axis, keepdims=keepdims, initial=-np.inf))
+
+    def test_reduce_empty_returns_identity(self):
+        got_min, got_max = mmi.reduce(np.array([], dtype=np.float64))
+        assert got_min == np.inf
+        assert got_max == -np.inf
 
     @pytest.mark.parametrize("shape", EMPTY_SHAPES, ids=str)
     @pytest.mark.parametrize("keepdims", [False, True])
