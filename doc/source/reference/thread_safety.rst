@@ -62,8 +62,6 @@ statement. For example, you can update the numpy printing options state like so:
 
 This property applies to all context-local state, not just `numpy.printoptions`.
 
-.. _context_local:
-
 Interaction with the `threading` module
 +++++++++++++++++++++++++++++++++++++++
 
