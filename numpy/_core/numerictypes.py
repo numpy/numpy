@@ -79,11 +79,10 @@ Exported symbols include:
 import numbers
 import warnings
 
+import numpy as np
 from numpy._utils import set_module
 
-import numpy as np
 from . import multiarray as ma
-from ._multiarray_umath import StringDType
 from .multiarray import (
     busday_count,
     busday_offset,
@@ -115,7 +114,7 @@ from ._string_helpers import (  # noqa: F401
     english_lower,
     english_upper,
 )
-from ._type_aliases import allTypes, sctypeDict, sctypes
+from ._type_aliases import allTypes, sctypeDict
 
 # We use this later
 generic = allTypes['generic']
@@ -306,8 +305,6 @@ def issubsctype(arg1, arg2):
 
 class _PreprocessDTypeError(Exception):
     pass
-
-
 
 
 def _preprocess_dtype(obj):
