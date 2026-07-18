@@ -34,7 +34,6 @@ from numpy.linalg._linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     HAS_LAPACK64,
     HAS_SUBPROCESSES,
-    IS_WASM,
     NOGIL_BUILD,
     assert_,
     assert_allclose,
