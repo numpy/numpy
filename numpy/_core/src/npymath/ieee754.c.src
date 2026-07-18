@@ -355,7 +355,7 @@ int npy_get_floatstatus() {
 
 
 #ifdef __EMSCRIPTEN__
-static NPY_TLS int _npy_wasm_floatstatus = 0;
+__attribute__((visibility("default"))) int _npy_wasm_floatstatus = 0;
 
 int npy_get_floatstatus_barrier(char* param)
 {
