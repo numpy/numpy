@@ -105,12 +105,6 @@ typedef struct {
     /* Definition for real and imaginary parts, and the (internal) ufuncs */
     PyBoundArrayMethodObject *real_meth;
     PyBoundArrayMethodObject *imag_meth;
-    /*
-     * Set of DType classes registered as virtual subclasses of this abstract
-     * DType via ``register()``.  ``NULL`` (lazily allocated) when no
-     * registrations have been made.  Internal use only.
-     */
-    PyObject *subclass_pos_cache;
 } NPY_DType_Slots;
 
 // This must be updated if new slots before within_dtype_castingimpl
