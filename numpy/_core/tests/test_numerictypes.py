@@ -502,17 +502,19 @@ class TestIsDType:
 
         # matches itself and the StringDType class, which stands in for
         # the scalar type that identifies the other dtypes
-        assert np.isdtype(dt, dt)
         assert np.isdtype(dt, np.dtypes.StringDType)
-        assert np.isdtype(np.dtypes.StringDType, dt)
         assert np.isdtype(dt, ("numeric", np.dtypes.StringDType))
-        assert not np.isdtype(np.int64, dt)
         assert not np.isdtype(dt, ("integral", np.int64))
 
-        # dtype parameters are ignored, like datetime64 units
-        assert np.isdtype(np.dtypes.StringDType(na_object=None), dt)
-        assert np.isdtype(dt, np.dtypes.StringDType(na_object=np.nan,
-                                                    coerce=False))
+        # Second argument being an instance is deprecated.
+        with pytest.warns(
+                DeprecationWarning, match=r"isdtype\(\) with a dtype.*"):
+            assert np.isdtype(dt, dt)
+            assert not np.isdtype(np.int64, dt)
+            # dtype parameters are ignored, like datetime64 units
+            assert np.isdtype(np.dtypes.StringDType(na_object=None), dt)
+            assert np.isdtype(dt, np.dtypes.StringDType(na_object=np.nan,
+                                                        coerce=False))
 
         # fixed-width unicode strings are a different kind
         assert not np.isdtype(dt, np.str_)
