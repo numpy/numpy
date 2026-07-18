@@ -1694,7 +1694,6 @@ class TestDateTime:
         ):
             assert_equal(np.timedelta64(1890) // np.timedelta64(31), 60)
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("op1, op2", [
         # div by 0
         (np.timedelta64(10, 'us'),

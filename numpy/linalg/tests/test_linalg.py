@@ -1167,7 +1167,6 @@ class TestMatrixPower:
         assert_raises(LinAlgError, matrix_power, np.array([[1], [2]], dt), 1)
         assert_raises(LinAlgError, matrix_power, np.ones((4, 3, 2), dt), 1)
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_exceptions_not_invertible(self, dt):
         if dt in self.dtnoinv:
             return
@@ -1996,7 +1995,6 @@ def test_byteorder_check():
             assert_array_equal(res, routine(sw_arr))
 
 
-@pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
 def test_generalized_raise_multiloop():
     # It should raise an error even if the error doesn't occur in the
     # last iteration of the ufunc inner loop
