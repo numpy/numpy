@@ -370,7 +370,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         # Hashing is faster for variable-width StringDType.
         # For other types (numeric, fixed-width string/unicode), sorting is
         # faster at larger scales, but hashing is faster at small scales (size < _UNIQUE_HASH_THRESHOLD).
-        is_vstring = getattr(ar.dtype, "__class__", None).__name__ == "StringDType"
+        is_vstring = isinstance(ar.dtype, np.dtypes.StringDType)
         if is_vstring or len(ar) < _UNIQUE_HASH_THRESHOLD:
             # First we convert the array to a numpy array, later we wrap it back
             # in case it was a subclass of numpy.ndarray.
