@@ -2449,7 +2449,6 @@ class TestDateTime:
         with assert_raises_regex(TypeError, "common metadata divisor"):
             val1 % val2
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_timedelta_modulus_div_by_zero(self):
         with pytest.warns(RuntimeWarning):
             actual = np.timedelta64(10, 's') % np.timedelta64(0, 's')
