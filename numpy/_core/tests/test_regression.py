@@ -1,7 +1,6 @@
 import copy
 import datetime
 import gc
-import os
 import pickle
 import sys
 import tempfile
