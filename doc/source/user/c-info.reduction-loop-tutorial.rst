@@ -46,7 +46,7 @@ on a ufunc with ``nin != 2`` (regardless of ``nout``) raises a
 
 If a ufunc has more than one output and its resolved ``ArrayMethod`` does
 not register a reduction loop, calling ``.reduce()`` on it raises a
-:exc:`ValueError`, e.g. ``numpy.divmod.reduce`` fails since ``divmod``
+:exc:`TypeError`, e.g. ``numpy.divmod.reduce`` fails since ``divmod``
 has no reduction loop.
 
 Example: a two-output ``minimummaximum`` ufunc

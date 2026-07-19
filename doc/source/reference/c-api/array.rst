@@ -1879,7 +1879,7 @@ the functions that must be implemented for each slot.
    works for the traditional two-input/one-output case. Calling
    :meth:`~numpy.ufunc.reduce` on a ufunc with more than one output whose
    resolved ArrayMethod does not register a reduction loop raises a
-   :exc:`ValueError`. See :ref:`c-api.reduction-loop-tutorial` for a
+   :exc:`TypeError`. See :ref:`c-api.reduction-loop-tutorial` for a
    worked example.
 
    This slot only relaxes the *output* arity: :meth:`~numpy.ufunc.reduce`

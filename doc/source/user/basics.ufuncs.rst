@@ -62,9 +62,10 @@ See :ref:`ufuncs.methods` for more. However, these methods only make sense on
 ufuncs that take two input arguments and return one output argument (so-called
 "scalar" ufuncs since the inner loop operates on a single scalar value).
 Attempting to call these methods on other ufuncs will cause a
-:exc:`ValueError`, unless the ufunc's loop implementation registers a
-dedicated reduction loop, in which case :meth:`~numpy.ufunc.reduce` (but not
-the other four methods) also works for ufuncs with more than one output; see
+:exc:`ValueError` (or, for :meth:`~numpy.ufunc.reduce` on a ufunc with more
+than one output, a :exc:`TypeError`), unless the ufunc's loop implementation
+registers a dedicated reduction loop, in which case :meth:`~numpy.ufunc.reduce`
+also works for ufuncs with more than one output; see
 :doc:`c-info.reduction-loop-tutorial` for how to add one to a custom ufunc.
 
 For example, :func:`numpy.add` takes two inputs and returns one output,

@@ -5446,7 +5446,7 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
     ``reduce`` normally only supports ufuncs with a single output. A ufunc
     with more than one output can still be reduced if its loop implementation
     registers a dedicated reduction loop. Otherwise, calling ``reduce`` on it
-    raises a ``ValueError``.
+    raises a ``TypeError``.
 
     Examples
     --------
