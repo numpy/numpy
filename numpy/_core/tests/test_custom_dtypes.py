@@ -483,3 +483,13 @@ def test_type_pickle():
 
 def test_is_numeric():
     assert SF._is_numeric
+
+
+def test_structured_field_allowed():
+    # dtypes without per-instance state (no finalize slot) are allowed as
+    # structured dtype fields and as subarray dtype bases
+    dt = np.dtype([("a", SF(2.))])
+    arr = np.zeros(2, dt)
+    arr["a"] = [1., 2.]
+    assert_array_equal(arr["a"].astype(np.float64), [1., 2.])
+    assert np.dtype((SF(2.), 3)).subdtype[0] == SF(2.)

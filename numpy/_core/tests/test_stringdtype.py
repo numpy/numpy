@@ -113,6 +113,28 @@ def test_dtype_creation():
     assert len(hashes) == 4
 
 
+@pytest.mark.parametrize("dtype_spec", [
+    [("a", StringDType())],
+    [("a", StringDType(), 10)],
+    [("a", (StringDType(), 10))],
+    {"names": ["a"], "formats": [StringDType()]},
+    {"names": ["a"], "formats": [(StringDType(), 2)]},
+    {"a": (StringDType(), 0)},
+    "T,i4",
+])
+def test_structured_dtype_creation_rejected(dtype_spec):
+    with pytest.raises(TypeError, match="not currently supported"):
+        np.dtype(dtype_spec)
+
+
+def test_subarray_dtype_rejected():
+    with pytest.raises(TypeError,
+                       match="not currently supported within subarray"):
+        np.dtype((StringDType(), 2))
+    # (dtype, ()) is equivalent to the dtype itself and remains allowed
+    assert np.dtype((StringDType(), ())) == StringDType()
+
+
 def test_dtype_equality(dtype):
     assert dtype == dtype
     for ch in "SU":
