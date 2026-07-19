@@ -2382,10 +2382,9 @@ reducelike_promote_and_resolve_multi(PyUFuncObject *ufunc,
      * takes the forward *input* descriptor.
      *
      * There is only one streamed operand, but the forward loop has `nin`
-     * inputs -- all of which are the array being reduced, resolved with the
-     * same DType.  A sane resolver therefore assigns them equivalent
-     * descriptors, and we collapse them into the single stream dtype by
-     * taking the first (asserted below); the rest are discarded.
+     * inputs. They are all the array being reduced, resolved with the same
+     * DType, so a sane resolver gives them equivalent descriptors. We keep the
+     * first as the stream dtype (asserted below) and discard the rest.
      */
     for (int i = 1; i < nin; i++) {
         assert(PyArray_EquivTypes(fwd_descrs[0], fwd_descrs[i]));
@@ -2762,7 +2761,7 @@ try_reduce_contiguous(
     char *src = PyArray_BYTES(arr);
     if (!has_initial) {
         /*
-         * No identity available -- seed each accumulator with arr[0] and
+         * No identity available, so seed each accumulator with arr[0] and
          * reduce over arr[1:].
          */
         for (int i = 0; i < nout; i++){

@@ -91,8 +91,8 @@ with ``/* BEGIN main computation */`` and ``/* END main computation */``.
          * minmax.c
          * A minimal ufunc for a single dtype ('f8') that computes the
          * running minimum and maximum in one pass, and registers a
-         * reduction loop for it so that `minimummaximum.reduce(a)` -- the
-         * actual "minmax" operation -- works.
+         * reduction loop for it so that `minimummaximum.reduce(a)` computes
+         * the actual minmax.
          */
 
         static int
@@ -239,7 +239,7 @@ with ``/* BEGIN main computation */`` and ``/* END main computation */``.
                 return NULL;
             }
 
-            /* A 2-in/2-out ufunc; its loop(s) are registered separately below. */
+            /* A 2-in/2-out ufunc. Its loops are registered separately below. */
             PyObject *minimummaximum = PyUFunc_FromFuncAndData(
                     NULL, NULL, NULL, 0, 2, 2, PyUFunc_None,
                     "minimummaximum", "minimummaximum_docstring", 0);
@@ -380,9 +380,27 @@ real-world implementation, like the built-in :func:`numpy.add` or a fuller
   keeping their own dtype. A multi-dtype ufunc would instead register a
   loop per dtype and pick the common one, as in the built-in
   :func:`numpy.minimum`/:func:`numpy.maximum`.
-- It has no :c:macro:`NPY_METH_get_reduction_initial`, so
-  ``minimummaximum.reduce`` of an empty array raises a :exc:`ValueError`,
-  matching the "no identity" behaviour of e.g. ``numpy.maximum.reduce``.
+- It registers no reduction identity, so ``minimummaximum.reduce`` of an
+  empty array raises a :exc:`ValueError`, the same as ``numpy.maximum.reduce``.
+  A multi-output ufunc can provide per-output identities with the
+  :c:macro:`NPY_METH_get_multi_reduction_initials` slot, the multi-output
+  version of :c:macro:`NPY_METH_get_reduction_initial`. Its function fills one
+  initial value per output, for example ``+inf`` for the running minimum and
+  ``-inf`` for the running maximum. Reducing an empty array, or reducing with
+  a ``where=`` mask, then returns those identities instead of raising::
+
+      static int
+      minimummaximum_get_multi_reduction_initials(
+              PyArrayMethod_Context *NPY_UNUSED(context),
+              npy_bool NPY_UNUSED(reduction_is_empty), void **initials)
+      {
+          *(double *)initials[0] = NPY_INFINITY;   /* min identity */
+          *(double *)initials[1] = -NPY_INFINITY;  /* max identity */
+          return 1;
+      }
+
+  registered alongside the reduction loop as
+  ``{NPY_METH_get_multi_reduction_initials, (void *)&minimummaximum_get_multi_reduction_initials}``.
 - :meth:`~numpy.ufunc.accumulate`, :meth:`~numpy.ufunc.reduceat`, and
   :meth:`~numpy.ufunc.at` are not supported for multi-output ufuncs yet,
   only :meth:`~numpy.ufunc.reduce` is.

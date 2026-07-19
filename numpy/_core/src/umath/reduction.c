@@ -320,7 +320,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
      */
     /*
      * A per-output `initial` may be given as a tuple with one entry per
-     * reduction output; a scalar seeds every output.  Single-output reductions
+     * reduction output. A scalar seeds every output. Single-output reductions
      * keep their historical behaviour (the value is packed as-is).
      */
     if (initial != NULL && initial != Py_None && nout > 1 && PyTuple_Check(initial)) {

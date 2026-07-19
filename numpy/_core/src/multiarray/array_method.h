@@ -81,6 +81,12 @@ typedef struct PyArrayMethodObject_tag {
      * reduction's loop which requires an (nout+1)->nout signature.
      */
     PyArrayMethod_GetLoop *get_reduction_loop;
+    /*
+     * Optional per-output reduction identity/initial values
+     * (NPY_METH_get_multi_reduction_initials), the multi-output generalization
+     * of `get_reduction_initial`.  At most one of the two may be set. This one
+     * also handles the single-output case.  See `reduction_get_initial`.
+     */
     PyArrayMethod_GetMultiReductionInitials *get_multi_reduction_initials;
 } PyArrayMethodObject;
 
@@ -96,7 +102,7 @@ reduction_get_loop_func(PyArrayMethodObject *meth)
 
 
 /* Returns the reduction identity/initial value(s) from whichever slot
- * `context->method` registered; registration guarantees at most one is set. */
+ * `context->method` registered. Registration guarantees at most one is set. */
 static inline int
 reduction_get_initial(PyArrayMethod_Context *context,
         npy_bool reduction_is_empty, void **initials)
