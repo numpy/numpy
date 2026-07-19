@@ -309,6 +309,10 @@ class TestScalarDLPack:
             # None is equivalent to (0, 0)
             x.__dlpack__()
 
+        # if copy=True, then we create a 0-D array, so should work
+        x.__dlpack__(max_version=(0, 0), copy=True)
+        x.__dlpack__(max_version=None, copy=True)
+
     def test_dlpack_copy(self):
         x = np.float64(2)
         y = np.from_dlpack(x, copy=True)
