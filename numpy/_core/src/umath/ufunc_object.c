@@ -2380,7 +2380,16 @@ reducelike_promote_and_resolve_multi(PyUFuncObject *ufunc,
      * Each acc_i and out_i take the i-th forward *output* descriptor (so the
      * outputs keep their individual dtypes), while the single streamed input
      * takes the forward *input* descriptor.
+     *
+     * There is only one streamed operand, but the forward loop has `nin`
+     * inputs -- all of which are the array being reduced, resolved with the
+     * same DType.  A sane resolver therefore assigns them equivalent
+     * descriptors, and we collapse them into the single stream dtype by
+     * taking the first (asserted below); the rest are discarded.
      */
+    for (int i = 1; i < nin; i++) {
+        assert(PyArray_EquivTypes(fwd_descrs[0], fwd_descrs[i]));
+    }
     for (int i = 0; i < nout; i++) {
         PyArray_Descr *out_descr = fwd_descrs[nin + i];
         Py_INCREF(out_descr);
