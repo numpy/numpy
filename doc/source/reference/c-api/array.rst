@@ -1851,6 +1851,17 @@ the functions that must be implemented for each slot.
    initial value is correct, since NumPy may call this even when it is not
    strictly necessary to do so.
 
+.. c:type:: int (PyArrayMethod_GetMultiReductionInitials)( \
+        PyArrayMethod_Context *context, npy_bool reduction_is_empty, \
+        void **initials)
+
+   Multi-output version of :c:type:`PyArrayMethod_GetReductionInitial`, used to
+   query the per-output initial values for a reduction. It behaves the same
+   way, except that *initials* is an array of ``nout`` pointers, one per
+   reduction output, each pointing to the buffer to fill. The
+   *reduction_is_empty* argument and the -1, 0, or 1 return value have the same
+   meaning. A return of 1 must fill every output.
+
 .. c:macro:: NPY_METH_get_reduction_loop
 
    .. versionadded:: 2.6
@@ -1899,14 +1910,8 @@ the functions that must be implemented for each slot.
    one initial value per reduction output instead of a single one.
    :meth:`~numpy.ufunc.reduce` uses it to seed the accumulators when the
    reduction is empty or when a ``where=`` mask is given, for a ufunc whose
-   loop also registers a :c:macro:`NPY_METH_get_reduction_loop`.
-
-   Its signature matches :c:macro:`NPY_METH_get_reduction_initial`, except that
-   the final argument is ``void **initials``, an array of ``nout`` pointers,
-   one per reduction output, each pointing to the buffer to fill. The
-   *reduction_is_empty* argument and the -1/0/1 return value have the same
-   meaning as for :c:macro:`NPY_METH_get_reduction_initial`. A return of 1 must
-   fill every output.
+   loop also registers a :c:macro:`NPY_METH_get_reduction_loop`. See
+   :c:type:`PyArrayMethod_GetMultiReductionInitials` for the signature.
 
    A method may register at most one of
    :c:macro:`NPY_METH_get_reduction_initial` and
