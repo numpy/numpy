@@ -2380,7 +2380,10 @@ def _sum_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
     return (a, out)
 
 
-@array_function_dispatch(_sum_dispatcher)
+@array_function_dispatch(
+    _sum_dispatcher,
+    reduction=(um.add, overrides._REDUCTION_SUM_PROD),
+)
 def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         initial=np._NoValue, where=np._NoValue):
     """
@@ -2511,7 +2514,10 @@ def _any_dispatcher(a, axis=None, out=None, keepdims=None, *,
     return (a, where, out)
 
 
-@array_function_dispatch(_any_dispatcher)
+@array_function_dispatch(
+    _any_dispatcher,
+    reduction=(um.logical_or, overrides._REDUCTION_ANY_ALL),
+)
 def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     """
     Test whether any array element along a given axis evaluates to True.
@@ -2623,7 +2629,10 @@ def _all_dispatcher(a, axis=None, out=None, keepdims=None, *,
     return (a, where, out)
 
 
-@array_function_dispatch(_all_dispatcher)
+@array_function_dispatch(
+    _all_dispatcher,
+    reduction=(um.logical_and, overrides._REDUCTION_ANY_ALL),
+)
 def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     """
     Test whether all array elements along a given axis evaluate to True.
@@ -3086,7 +3095,10 @@ def _max_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
     return (a, out)
 
 
-@array_function_dispatch(_max_dispatcher)
+@array_function_dispatch(
+    _max_dispatcher,
+    reduction=(um.maximum, overrides._REDUCTION_MIN_MAX),
+)
 @set_module('numpy')
 def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
          where=np._NoValue):
@@ -3202,7 +3214,10 @@ def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
                           keepdims, initial, where)
 
 
-@array_function_dispatch(_max_dispatcher)
+@array_function_dispatch(
+    _max_dispatcher,
+    reduction=(um.maximum, overrides._REDUCTION_MIN_MAX),
+)
 def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
          where=np._NoValue):
     """
@@ -3224,7 +3239,10 @@ def _min_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
     return (a, out)
 
 
-@array_function_dispatch(_min_dispatcher)
+@array_function_dispatch(
+    _min_dispatcher,
+    reduction=(um.minimum, overrides._REDUCTION_MIN_MAX),
+)
 def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         where=np._NoValue):
     """
@@ -3340,7 +3358,10 @@ def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
                           keepdims, initial, where)
 
 
-@array_function_dispatch(_min_dispatcher)
+@array_function_dispatch(
+    _min_dispatcher,
+    reduction=(um.minimum, overrides._REDUCTION_MIN_MAX),
+)
 def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
          where=np._NoValue):
     """
@@ -3362,7 +3383,10 @@ def _prod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
     return (a, out)
 
 
-@array_function_dispatch(_prod_dispatcher)
+@array_function_dispatch(
+    _prod_dispatcher,
+    reduction=(um.multiply, overrides._REDUCTION_SUM_PROD),
+)
 def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
          initial=np._NoValue, where=np._NoValue):
     """
