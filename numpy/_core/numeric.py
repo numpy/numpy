@@ -1186,29 +1186,22 @@ def tensordot(a, b, axes=2):
     bs = b.shape
     ndb = b.ndim
     equal = True
-    msg = None
     if na != nb:
         equal = False
-        msg = (
-            f"shape-mismatch for sum: `a` and `b` have a different number "
-            f"of axes to contract ({na} vs {nb}, from axes = {axes!r})"
-        )
     else:
         for k in range(na):
             if as_[axes_a[k]] != bs[axes_b[k]]:
                 equal = False
-                msg = (
-                    f"shape-mismatch for sum: axis {axes_a[k]} of `a` "
-                    f"(size {as_[axes_a[k]]}) does not match axis "
-                    f"{axes_b[k]} of `b` (size {bs[axes_b[k]]})"
-                )
                 break
             if axes_a[k] < 0:
                 axes_a[k] += nda
             if axes_b[k] < 0:
                 axes_b[k] += ndb
     if not equal:
-        raise ValueError(msg)
+        raise ValueError(
+            f"shape-mismatch for tensordot: axes of `a` (shape {as_}) not "
+            f"compatible with axes of `b` (shape {bs})"
+        )
 
     # Move the axes to sum over to the end of "a"
     # and to the front of "b"
