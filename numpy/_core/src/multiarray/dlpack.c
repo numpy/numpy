@@ -661,10 +661,15 @@ gentype_dlpack(PyObject *self,
     }
 
     if (copy_mode == NPY_COPY_ALWAYS) {
-        // Scalars cannot be copied
-        PyErr_SetString(PyExc_BufferError,
-            "Cannot export scalars with copy=True to DLPack.");
-        return NULL;
+        /* Export a fresh 0-d array that owns the copied data. */
+        PyArrayObject *arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
+        if (arr == NULL) {
+            return NULL;
+        }
+        PyObject *res = create_dlpack_capsule(
+                NULL, arr, major_version >= 1, &result_device, 1);
+        Py_DECREF(arr);
+        return res;
     }
 
     if (major_version < 1) {
@@ -675,8 +680,7 @@ gentype_dlpack(PyObject *self,
     }
 
     return create_dlpack_capsule(
-            self, NULL, major_version >= 1, &result_device,
-            copy_mode == NPY_COPY_ALWAYS);
+            self, NULL, major_version >= 1, &result_device, 0);
 }
 
 NPY_NO_EXPORT PyObject *

@@ -309,10 +309,26 @@ class TestScalarDLPack:
             # None is equivalent to (0, 0)
             x.__dlpack__()
 
-    def test_dlpack_cannot_copy(self):
+    def test_dlpack_copy(self):
         x = np.float64(2)
-        with pytest.raises(BufferError, match="copy=True"):
-            np.from_dlpack(x, copy=True)
+        y = np.from_dlpack(x, copy=True)
+        assert x.dtype == y.dtype
+        assert y.shape == ()
+        assert x == y
+
+        y[()] = 3
+        assert x == 2
+        assert y == 3
+
+    @pytest.mark.parametrize("copy", [False, None])
+    def test_dlpack_read_only(self, copy):
+        x = np.float64(2)
+        y = np.from_dlpack(x, copy=copy)
+
+        with pytest.raises(
+            ValueError, match="assignment destination is read-only"
+        ):
+            y[()] = 3
 
     @pytest.mark.parametrize("dtype", [np.str_, np.datetime64])
     def test_invalid_dtype(self, dtype):
@@ -332,12 +348,3 @@ class TestScalarDLPack:
             x.__dlpack__(dl_device=(10, 0), max_version=(1, 0))
         with pytest.raises(ValueError):
             np.from_dlpack(x, device="gpu")
-
-    def test_cannot_write_to_scalar(self):
-        x = np.float64(2)
-        y = np.from_dlpack(x)
-
-        with pytest.raises(
-            ValueError, match="assignment destination is read-only"
-        ):
-            y[()] = 3
