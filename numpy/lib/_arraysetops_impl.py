@@ -32,6 +32,8 @@ __all__ = [
     "unique_values"
 ]
 
+_UNIQUE_HASH_THRESHOLD = 100
+
 
 def _ediff1d_dispatcher(ary, to_end=None, to_begin=None):
     return (ary, to_end, to_begin)
@@ -367,16 +369,16 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     if not optional_indices and not return_counts and not np.ma.is_masked(ar):
         # Hashing is faster for variable-width StringDType.
         # For other types (numeric, fixed-width string/unicode), sorting is
-        # faster at larger scales, but hashing is faster at small scales (size < 100).
+        # faster at larger scales, but hashing is faster at small scales (size < _UNIQUE_HASH_THRESHOLD).
         is_vstring = getattr(ar.dtype, "__class__", None).__name__ == "StringDType"
-        if is_vstring or len(ar) < 100:
+        if is_vstring or len(ar) < _UNIQUE_HASH_THRESHOLD:
             # First we convert the array to a numpy array, later we wrap it back
             # in case it was a subclass of numpy.ndarray.
             conv = _array_converter(ar)
             ar_, = conv
 
-            if (hash_unique := _unique_hash(ar_, equal_nan=equal_nan)) \
-                is not NotImplemented:
+            hash_unique = _unique_hash(ar_, equal_nan=equal_nan)
+            if hash_unique is not NotImplemented:
                 if sorted:
                     hash_unique.sort()
                 # We wrap the result back in case it was a subclass of numpy.ndarray.
