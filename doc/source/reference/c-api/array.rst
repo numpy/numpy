@@ -1889,6 +1889,33 @@ the functions that must be implemented for each slot.
    ufunc with ``nin != 2`` raises a :exc:`ValueError` regardless of
    ``nout`` or whether a reduction loop is registered.
 
+.. c:macro:: NPY_METH_get_multi_reduction_initials
+
+   .. versionadded:: 2.6
+
+   Registers the per-output reduction identity/initial values, implemented as
+   a :c:type:`PyArrayMethod_GetMultiReductionInitials` function. It is the
+   multi-output version of :c:macro:`NPY_METH_get_reduction_initial` and fills
+   one initial value per reduction output instead of a single one.
+   :meth:`~numpy.ufunc.reduce` uses it to seed the accumulators when the
+   reduction is empty or when a ``where=`` mask is given, for a ufunc whose
+   loop also registers a :c:macro:`NPY_METH_get_reduction_loop`.
+
+   Its signature matches :c:macro:`NPY_METH_get_reduction_initial`, except that
+   the final argument is ``void **initials``, an array of ``nout`` pointers,
+   one per reduction output, each pointing to the buffer to fill. The
+   *reduction_is_empty* argument and the -1/0/1 return value have the same
+   meaning as for :c:macro:`NPY_METH_get_reduction_initial`. A return of 1 must
+   fill every output.
+
+   A method may register at most one of
+   :c:macro:`NPY_METH_get_reduction_initial` and
+   ``NPY_METH_get_multi_reduction_initials``. The latter supports single-output
+   reductions too. For a ufunc with more than one output it must be paired with
+   a :c:macro:`NPY_METH_get_reduction_loop`, otherwise
+   :meth:`~numpy.ufunc.reduce` is unreachable and the identity would never be
+   used. See :ref:`c-api.reduction-loop-tutorial` for a worked example.
+
 Flags
 ~~~~~
 

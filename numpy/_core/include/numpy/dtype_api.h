@@ -177,6 +177,12 @@ typedef struct {
  * output whose forward loop cannot double as a reduction loop.
  */
 #define NPY_METH_get_reduction_loop 11
+/*
+ * A `PyArrayMethod_GetMultiReductionInitials` that fills the per-output
+ * reduction identity/initial values.  It is the multi-output generalization of
+ * NPY_METH_get_reduction_initial (and also handles the single-output case).
+ * A method may register at most one of the two initial-value slots.
+ */
 #define NPY_METH_get_multi_reduction_initials 12
 
 /*
@@ -264,6 +270,24 @@ typedef int (PyArrayMethod_GetReductionInitial)(
         void *initial);
 
 
+/**
+ * Multi-output counterpart of `PyArrayMethod_GetReductionInitial`: query an
+ * ArrayMethod for the per-output initial values used in a reduction.  This is
+ * the identity slot for multi-output reductions (registered via
+ * NPY_METH_get_multi_reduction_initials), but it also supports single-output
+ * reductions.  It behaves exactly like `PyArrayMethod_GetReductionInitial`,
+ * except that `initials` is an array of `nout` pointers, one per reduction
+ * output, each pointing to the buffer to fill.
+ *
+ * @param context The arraymethod context, mainly to access the descriptors.
+ * @param reduction_is_empty Whether the reduction is empty, see
+ *     `PyArrayMethod_GetReductionInitial` for the (per-output) semantics.
+ * @param initials Array of `nout` pointers to the initial buffers to fill.
+ *
+ * @returns -1, 0, or 1 indicating error, no initial value, and the initials
+ *     being successfully filled.  A return of 1 must fill every output.  As
+ *     with the single-output slot, errors must not be given where 0 is correct.
+ */
 typedef int (PyArrayMethod_GetMultiReductionInitials)(
         PyArrayMethod_Context *context, npy_bool reduction_is_empty,
         void **initials);
