@@ -2357,6 +2357,17 @@ string_unicode_bool_output_promoter(
 }
 
 static int
+string_partition_promoter(
+        PyObject *ufunc, PyArray_DTypeMeta *const op_dtypes[],
+        PyArray_DTypeMeta *const signature[],
+        PyArray_DTypeMeta *new_op_dtypes[])
+{
+    return string_inputs_promoter(
+            ufunc, op_dtypes, signature,
+            new_op_dtypes, &PyArray_StringDType, &PyArray_StringDType);
+}
+
+static int
 is_integer_dtype(PyArray_DTypeMeta *DType)
 {
     if (DType == &PyArray_PyLongDType) {
@@ -3110,6 +3121,27 @@ init_stringdtype_ufuncs(PyObject *umath)
                        string_partition_strided_loop, 2, 3, NPY_NO_CASTING,
                        (NPY_ARRAYMETHOD_FLAGS) 0, &partition_startpositions[i]) < 0) {
             return -1;
+        }
+    }
+
+    PyArray_DTypeMeta *partition_promoter_dtypes[2][5] = {
+        {
+            &PyArray_StringDType, &PyArray_UnicodeDType,
+            &PyArray_StringDType, &PyArray_StringDType, &PyArray_StringDType,
+        },
+        {
+            &PyArray_UnicodeDType, &PyArray_StringDType,
+            &PyArray_StringDType, &PyArray_StringDType, &PyArray_StringDType,
+        },
+    };
+
+    for (int i=0; i<2; i++) {
+        for (int j=0; j<2; j++) {
+            if (add_promoter(umath, partition_names[i],
+                             partition_promoter_dtypes[j], 5,
+                             string_partition_promoter) < 0) {
+                return -1;
+            }
         }
     }
 

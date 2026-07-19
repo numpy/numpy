@@ -1331,16 +1331,17 @@ def replace(a, old, new, count=-1):
 
     arr = np.asanyarray(a)
     old_dtype = getattr(old, 'dtype', None)
-    old = np.asanyarray(old)
+    old_arr = np.asanyarray(old)
     new_dtype = getattr(new, 'dtype', None)
-    new = np.asanyarray(new)
+    new_arr = np.asanyarray(new)
 
-    if np.result_type(arr, old, new).char == "T":
-        return _replace(arr, old, new, count)
+    if np.result_type(arr, old_arr, new_arr).char == "T":
+        # pass the originals so the ufunc converts str scalars directly
+        return _replace(a, old, new, count)
 
     a_dt = arr.dtype
-    old = old.astype(old_dtype or a_dt, copy=False)
-    new = new.astype(new_dtype or a_dt, copy=False)
+    old = old_arr.astype(old_dtype or a_dt, copy=False)
+    new = new_arr.astype(new_dtype or a_dt, copy=False)
     max_int64 = np.iinfo(np.int64).max
     counts = _count_ufunc(arr, old, 0, max_int64)
     counts = np.where(count < 0, counts, np.minimum(counts, count))
@@ -1577,13 +1578,15 @@ def partition(a, sep):
      array(['is nice!'], dtype='<U8'))
 
     """
-    a = np.asanyarray(a)
-    sep = np.asanyarray(sep)
+    a_arr = np.asanyarray(a)
+    sep_arr = np.asanyarray(sep)
 
-    if np.result_type(a, sep).char == "T":
+    if np.result_type(a_arr, sep_arr).char == "T":
+        # pass the originals so the ufunc converts str scalars directly
         return _partition(a, sep)
 
-    sep = sep.astype(a.dtype, copy=False)
+    a = a_arr
+    sep = sep_arr.astype(a_arr.dtype, copy=False)
     pos = _find_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)
@@ -1646,13 +1649,15 @@ def rpartition(a, sep):
      array(['', '  ', 'Bba'], dtype='<U3'))
 
     """
-    a = np.asanyarray(a)
-    sep = np.asanyarray(sep)
+    a_arr = np.asanyarray(a)
+    sep_arr = np.asanyarray(sep)
 
-    if np.result_type(a, sep).char == "T":
+    if np.result_type(a_arr, sep_arr).char == "T":
+        # pass the originals so the ufunc converts str scalars directly
         return _rpartition(a, sep)
 
-    sep = sep.astype(a.dtype, copy=False)
+    a = a_arr
+    sep = sep_arr.astype(a_arr.dtype, copy=False)
     pos = _rfind_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)

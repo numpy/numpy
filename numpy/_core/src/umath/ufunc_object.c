@@ -723,6 +723,9 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
             }
             *promoting_pyscalars = NPY_TRUE;
         }
+        else {
+            npy_mark_tmp_array_if_pystr(obj, out_op[i]);
+        }
     }
     if ((!all_scalar && any_scalar)) {
         *force_legacy_promotion = should_use_min_scalar(nin, out_op, 0, NULL);
@@ -4219,8 +4222,10 @@ resolve_descriptors(int nop,
 
         /* For scalars, replace the operand if needed (scalars can't be out) */
         for (int i = 0; i < nin; i++) {
-            if ((PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_LITERAL)) {
-                /* `resolve_descriptors_with_scalars` decides the descr */
+            if ((PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_LITERAL) ||
+                /* str is only replaced if the resolver was passed the scalar */
+                (input_scalars[i] != NULL &&
+                 (PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_STR))) {
                 if (npy_update_operand_for_scalar(
                         &operands[i], input_scalars[i], dtypes[i],
                         /* ignore cast safety for this op (resolvers job) */
@@ -4242,8 +4247,13 @@ resolve_descriptors(int nop,
         /*
          * If we are working with Python literals/scalars, deal with them.
          * If needed, we create new array with the right descriptor.
+         * A str operand is only replaced when `inputs_tup` provides the
+         * original scalar.
          */
-        if ((PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_LITERAL)) {
+        if ((PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_LITERAL)
+                || (inputs_tup != NULL
+                    && (PyArray_FLAGS(operands[i])
+                        & NPY_ARRAY_WAS_PYTHON_STR))) {
             PyObject *input;
             if (inputs_tup == NULL) {
                 input = NULL;

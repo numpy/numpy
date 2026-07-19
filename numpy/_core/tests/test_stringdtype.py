@@ -231,6 +231,68 @@ def test_np_str_trailing_nul_preserved(coerce):
     assert np.array([value], dtype=dtype)[0] == "q\x00"
 
 
+def test_pystr_scalar_ufunc_operand_preserves_nulls():
+    arr = np.array(["abc\0", "abc"], dtype="T")
+
+    assert_array_equal(arr == "abc\0", [True, False])
+    assert_array_equal(arr != "abc\0", [False, True])
+    # expected values are wrapped in StringDType arrays because converting
+    # the plain lists would itself go through fixed-width unicode
+    assert_array_equal(
+        arr + "x\0", np.array(["abc\0x\0", "abcx\0"], dtype="T"))
+    assert_array_equal(
+        "x\0" + arr, np.array(["x\0abc\0", "x\0abc"], dtype="T"))
+    assert_array_equal(np.strings.str_len(arr + "x\0"), [6, 5])
+
+    arr2 = arr.copy()
+    arr2 += "\0"
+    assert_array_equal(arr2, np.array(["abc\0\0", "abc\0"], dtype="T"))
+
+    assert_array_equal(np.strings.endswith(arr, "c\0"), [True, False])
+    assert_array_equal(np.strings.count(arr, "\0"), [1, 0])
+    assert_array_equal(np.strings.find(arr, "c\0"), [2, -1])
+    assert_array_equal(np.strings.replace(arr, "\0", "!"), ["abc!", "abc"])
+
+
+def test_pystr_scalar_ufunc_operand_any_instance(dtype):
+    arr = np.array(["abc\0"], dtype=dtype)
+    assert_array_equal(arr == "abc\0", [True])
+    assert (arr + "x\0")[0] == "abc\0x\0"
+
+
+def test_partition_str_sep():
+    arr = np.array(["a-b\0c", "nosep"], dtype="T")
+
+    parts = np.strings.partition(arr, "-")
+    expected = [["a", "nosep"], ["-", ""], ["b\0c", ""]]
+    for res, exp in zip(parts, expected):
+        assert_array_equal(res, np.array(exp, dtype="T"))
+
+    rparts = np.strings.rpartition(np.array(["a-b-c", "nosep"], dtype="T"),
+                                   np.str_("-"))
+    expected = [["a-b", ""], ["-", ""], ["c", "nosep"]]
+    for res, exp in zip(rparts, expected):
+        assert_array_equal(res, np.array(exp, dtype="T"))
+
+    parts = np.strings.partition(np.array(["ab\0cd"], dtype="T"), "\0")
+    for res, exp in zip(parts, [["ab"], ["\0"], ["cd"]]):
+        assert_array_equal(res, np.array(exp, dtype="T"))
+
+    with pytest.raises(ValueError, match="empty separator"):
+        np.strings.partition(arr, "")
+
+
+def test_np_str_scalar_ufunc_operand_not_special_cased():
+    # unlike an exact str, np.str_ is a fixed-width scalar, so as a ufunc
+    # operand it converts through its unicode dtype, which treats trailing
+    # nulls as padding
+    value = np.str_("q\x00")
+    arr = np.array(["q\x00", "q"], dtype="T")
+    assert_array_equal(arr == value, [False, True])
+    assert_array_equal(arr + value, np.array(["q\x00q", "qq"], dtype="T"))
+    assert_array_equal(np.strings.endswith(arr, value), [False, True])
+
+
 @pytest.mark.parametrize(
     "op, pyop",
     [

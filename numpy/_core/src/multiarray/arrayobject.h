@@ -61,6 +61,15 @@ static const int NPY_ARRAY_WAS_INT_AND_REPLACED = (1 << 27);
 static const int NPY_ARRAY_WAS_PYTHON_LITERAL = (1 << 30 | 1 << 29 | 1 << 28);
 
 /*
+ * Mark an array converted from an exact Python str.  Unlike the flags above
+ * it does not participate in promotion (the array keeps its discovered
+ * dtype); it only lets the ufunc machinery convert the operand again from
+ * the original object once the loop's descriptors are resolved.  Not part
+ * of NPY_ARRAY_WAS_PYTHON_LITERAL, whose consumers assume a numeric scalar.
+ */
+static const int NPY_ARRAY_WAS_PYTHON_STR = (1 << 25);
+
+/*
  * This flag allows same kind casting, similar to NPY_ARRAY_FORCECAST.
  *
  * An array never has this flag set; they're only used as parameter
