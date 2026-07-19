@@ -1,0 +1,8 @@
+``np.ma.masked_where`` broadcasts the condition
+-----------------------------------------------
+`numpy.ma.masked_where` now broadcasts the ``condition`` against ``a`` instead
+of requiring their shapes to match exactly, matching the behaviour of
+`numpy.where` and boolean indexing. A broadcastable condition such as a column
+of shape ``(3, 1)`` against a ``(3, 2)`` input previously raised an
+``IndexError``; it now masks the selected entries. Genuinely incompatible
+shapes still raise ``IndexError``.
