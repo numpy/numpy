@@ -4441,7 +4441,6 @@ class TestComplexFunctions:
             assert_almost_equal(fz.real, fr, err_msg=f'real part {f}')
             assert_almost_equal(fz.imag, 0., err_msg=f'imag part {f}')
 
-    @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     def test_precisions_consistent(self):
         z = 1 + 1j
         for f in self.funcs:
@@ -4451,7 +4450,6 @@ class TestComplexFunctions:
             assert_almost_equal(fcf, fcd, decimal=6, err_msg=f'fch-fcd {f}')
             assert_almost_equal(fcl, fcd, decimal=15, err_msg=f'fch-fcl {f}')
 
-    @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     def test_branch_cuts(self):
         # check branch cuts and continuity on them
         _check_branch_cut(np.log,   -0.5, 1j, 1, -1, True)  # noqa: E221
@@ -4477,7 +4475,6 @@ class TestComplexFunctions:
         _check_branch_cut(np.arccosh, [0 - 2j, 2j, 2], [1,  1,  1j], 1, 1)
         _check_branch_cut(np.arctanh, [0 - 2j, 2j, 0], [1,  1,  1j], 1, 1)
 
-    @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     def test_branch_cuts_complex64(self):
         # check branch cuts and continuity on them
         _check_branch_cut(np.log,   -0.5, 1j, 1, -1, True, np.complex64)  # noqa: E221
@@ -4562,7 +4559,6 @@ class TestComplexFunctions:
         _glibc_older_than("2.18"),
         reason="Older glibc versions are imprecise (maybe passes with SIMD?)"
     )
-    @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     @pytest.mark.parametrize('dtype', [
         np.complex64, np.complex128, np.clongdouble
     ])
