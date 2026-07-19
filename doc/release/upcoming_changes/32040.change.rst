@@ -1,0 +1,12 @@
+Python ``str`` ufunc operands convert with the resolved dtype
+-------------------------------------------------------------
+A Python ``str`` scalar passed to a ufunc is now converted with the
+operation's resolved descriptor when that differs from the dtype discovered
+for the scalar. Previously the scalar was always converted through a
+fixed-width unicode temporary, which treats trailing nulls as padding, so
+data was silently lost when the other operand was a ``StringDType`` (or
+``object``) array. For example,
+``np.array(["x\0"], dtype=np.dtypes.StringDType()) == "x\0"`` now gives
+``[True]`` rather than ``[False]``. Promotion and result dtypes are
+unchanged, and operations between fixed-width string and unicode dtypes and
+Python ``str`` scalars behave as before.
