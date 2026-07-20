@@ -5,6 +5,7 @@
 #include "numpy/ufuncobject.h"
 #include "npy_import.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "multiarraymodule.h"
 #include "npy_pycompat.h"
 #include "override.h"
@@ -113,21 +114,22 @@ initialize_normal_kwds(PyObject *out_args,
         }
     }
 
+    PyObject *out_str = npy_get_module_state()->interned_str.out;
     if (out_args != NULL) {
         /* Replace `out` argument with the normalized version */
-        int res = PyDict_SetItem(normal_kwds, npy_interned_str.out, out_args);
+        int res = PyDict_SetItem(normal_kwds, out_str, out_args);
         if (res < 0) {
             return -1;
         }
     }
     else {
         /* Ensure that `out` is not present. */
-        int res = PyDict_Contains(normal_kwds, npy_interned_str.out);
+        int res = PyDict_Contains(normal_kwds, out_str);
         if (res < 0) {
             return -1;
         }
         if (res) {
-            return PyDict_DelItem(normal_kwds, npy_interned_str.out);
+            return PyDict_DelItem(normal_kwds, out_str);
         }
     }
     return 0;

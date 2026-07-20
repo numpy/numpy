@@ -27,6 +27,7 @@
 #include "refcount.h"
 #include "getset.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 
 #if defined(HAVE_FALLOCATE) && defined(__linux__)
 #include <fcntl.h>
@@ -545,13 +546,14 @@ get_optional_set_dtype_and_dtype(
     PyTypeObject *subtype,
     PyObject **_set_dtype, PyObject **sub_dtype)
 {
+    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
     if (PyObject_GetOptionalAttr(
-            (PyObject *)subtype, npy_interned_str._set_dtype,
+            (PyObject *)subtype, interned_str->_set_dtype,
             _set_dtype) < 0) {
         return -1;
     }
     if (PyObject_GetOptionalAttr(
-            (PyObject *)subtype, npy_interned_str.dtype, sub_dtype) < 0) {
+            (PyObject *)subtype, interned_str->dtype, sub_dtype) < 0) {
         Py_XDECREF(*_set_dtype);
         return -1;
     }
@@ -755,7 +757,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
          * Path 2: subclass lives in future but needs to set dtype itself.
          */
         PyObject *res = PyObject_CallMethodOneArg(
-                ret, npy_interned_str._set_dtype, (PyObject *)type);
+                ret, npy_get_module_state()->interned_str._set_dtype, (PyObject *)type);
         if (res == NULL) {
             Py_CLEAR(ret);
             goto finish;
@@ -767,7 +769,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
          * Path 3: subclass overrides dtype property.
          */
         if (PyObject_GenericSetAttr(
-                ret, npy_interned_str.dtype, (PyObject *)type) < 0) {
+                ret, npy_get_module_state()->interned_str.dtype, (PyObject *)type) < 0) {
             Py_CLEAR(ret);
             goto finish;
         }

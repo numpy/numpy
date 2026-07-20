@@ -31,6 +31,7 @@
 #include "array_assign.h"
 #include "npy_dlpack.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "multiarraymodule.h"
 
 #include "methods.h"
@@ -1042,7 +1043,7 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     }
     Py_DECREF(out_kwd_obj);
     /* check where if it exists */
-    where_obj = PyDict_GetItemWithError(kwds, npy_interned_str.where); // noqa: borrowed-ref OK
+    where_obj = PyDict_GetItemWithError(kwds, npy_get_module_state()->interned_str.where); // noqa: borrowed-ref OK
     if (where_obj == NULL) {
         if (PyErr_Occurred()) {
             return -1;

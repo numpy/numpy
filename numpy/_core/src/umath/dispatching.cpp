@@ -47,6 +47,7 @@
 #include "npy_import.h"
 #include "common.h"
 #include "npy_pycompat.h"
+#include "module_state.h"
 
 #include "arrayobject.h"
 #include "dispatching.h"
@@ -209,28 +210,29 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
 {
     int ret = -1;
     PyObject *ufunc = NULL;
+    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
 
     PyUFunc_LoopSlot *slot;
     for (slot = slots; slot->name != NULL; slot++) {
         // Hardcode slot names for attributes and non-ufuncs stored on the DType
         // (Also avoids circular imports a bit.)
         if (strcmp(slot->name, "real") == 0) {
-            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.real));
+            Py_XSETREF(ufunc, Py_NewRef(interned_str->real));
         }
         else if (strcmp(slot->name, "imag") == 0) {
-            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.imag));
+            Py_XSETREF(ufunc, Py_NewRef(interned_str->imag));
         }
         else if (strcmp(slot->name, "sort") == 0) {
-            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.sort));
+            Py_XSETREF(ufunc, Py_NewRef(interned_str->sort));
         }
         else if (strcmp(slot->name, "argsort") == 0) {
-            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.argsort));
+            Py_XSETREF(ufunc, Py_NewRef(interned_str->argsort));
         }
         else if (strcmp(slot->name, "partition") == 0) {
-            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.partition));
+            Py_XSETREF(ufunc, Py_NewRef(interned_str->partition));
         }
         else if (strcmp(slot->name, "argpartition") == 0) {
-            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.argpartition));
+            Py_XSETREF(ufunc, Py_NewRef(interned_str->argpartition));
         }
         else {
             Py_XSETREF(ufunc, npy_import_entry_point(slot->name));
@@ -239,17 +241,17 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
             }
         }
 
-        if (ufunc == npy_interned_str.real) {
+        if (ufunc == interned_str->real) {
             if (set_static_method<&NPY_DType_Slots::real_meth, true>(slot->spec) < 0) {
                 goto finish;
             }
         }
-        else if (ufunc == npy_interned_str.imag) {
+        else if (ufunc == interned_str->imag) {
             if (set_static_method<&NPY_DType_Slots::imag_meth, true>(slot->spec) < 0) {
                 goto finish;
             }
         }
-        else if (ufunc == npy_interned_str.sort) {
+        else if (ufunc == interned_str->sort) {
             if (slot->spec->nin != 1 || slot->spec->nout != 1) {
                 PyErr_Format(PyExc_ValueError,
                         "Sort method spec must have nin=1 and nout=1, got %d and %d",
@@ -267,7 +269,7 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
                 goto finish;
             }
         }
-        else if (ufunc == npy_interned_str.argsort) {
+        else if (ufunc == interned_str->argsort) {
             if (slot->spec->nin != 1 || slot->spec->nout != 1) {
                 PyErr_Format(PyExc_ValueError,
                         "Argsort method spec must have nin=1 and nout=1, got %d and %d",
@@ -285,7 +287,7 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
                 goto finish;
             }
         }
-        else if (ufunc == npy_interned_str.partition) {
+        else if (ufunc == interned_str->partition) {
             if (slot->spec->nin != 2 || slot->spec->nout != 1) {
                 PyErr_Format(PyExc_ValueError,
                         "Partition method spec must have nin=2 and nout=1, got %d and %d",
@@ -309,7 +311,7 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
                 goto finish;
             }
         }
-        else if (ufunc == npy_interned_str.argpartition) {
+        else if (ufunc == interned_str->argpartition) {
             if (slot->spec->nin != 2 || slot->spec->nout != 1) {
                 PyErr_Format(PyExc_ValueError,
                         "Argpartition method spec must have nin=2 and nout=1, got %d and %d",

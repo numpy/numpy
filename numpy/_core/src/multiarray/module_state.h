@@ -5,7 +5,7 @@
  * interpreter when _multiarray_umath is imported. All global PyObject* caches for the _multiarray_umath module must eventually live here instead of as process-global variables.
  *
  * Migration status (FIXME: update this as each struct is moved):
- *   [ ] npy_interned_str    — still global in npy_static_data.c
+ *   [x] npy_interned_str    — migrated to multiarray_umath_state.interned_str
  *   [ ] npy_static_pydata   — still global in npy_static_data.c
  *   [x] npy_static_cdata    — migrated to multiarray_umath_state.static_cdata
  *   [ ] npy_runtime_imports — still global in npy_import.c
@@ -19,6 +19,10 @@
                                    npy_static_cdata_struct */
 #include "npy_import.h"        /* npy_runtime_imports_struct */
 #include "multiarraymodule.h"  /* npy_global_state_struct */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * Master module state struct.
@@ -76,5 +80,9 @@ npy_get_module_state(void)
     assert(_npy_module_state != NULL);
     return _npy_module_state;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_MODULE_STATE_H_ */

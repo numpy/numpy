@@ -16,6 +16,7 @@
 
 #include "common.h"
 #include "npy_pycompat.h"
+#include "module_state.h"
 
 
 #define UFUNC_ERR_IGNORE 0
@@ -173,10 +174,11 @@ errmodeconverter(PyObject *obj, int *mode)
     if (obj == Py_None) {
         return 1;
     }
+    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
     int i = 0;
     for (; i <= UFUNC_ERR_LOG; i++) {
         int eq = PyObject_RichCompareBool(
-                obj, npy_interned_str.errmode_strings[i], Py_EQ);
+                obj, interned_str->errmode_strings[i], Py_EQ);
         if (eq == -1) {
             return 0;
         }
@@ -307,7 +309,7 @@ extobj_make_extobj(PyObject *NPY_UNUSED(mod),
  * current extobj/errobj.
  */
 NPY_NO_EXPORT PyObject *
-extobj_get_extobj_dict(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(noarg))
+extobj_get_extobj_dict(PyObject *mod, PyObject *NPY_UNUSED(noarg))
 {
     PyObject *result = NULL, *bufsize_obj = NULL;
     npy_extobj extobj;
@@ -320,25 +322,26 @@ extobj_get_extobj_dict(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(noarg))
     if (result == NULL) {
         goto fail;
     }
+    npy_interned_str_struct *interned_str = &get_module_state(mod)->interned_str;
     /* Set all error modes: */
     mode = (extobj.errmask & UFUNC_MASK_DIVIDEBYZERO) >> UFUNC_SHIFT_DIVIDEBYZERO;
     if (PyDict_SetItemString(result, "divide",
-                             npy_interned_str.errmode_strings[mode]) < 0) {
+                             interned_str->errmode_strings[mode]) < 0) {
         goto fail;
     }
     mode = (extobj.errmask & UFUNC_MASK_OVERFLOW) >> UFUNC_SHIFT_OVERFLOW;
     if (PyDict_SetItemString(result, "over",
-                             npy_interned_str.errmode_strings[mode]) < 0) {
+                             interned_str->errmode_strings[mode]) < 0) {
         goto fail;
     }
     mode = (extobj.errmask & UFUNC_MASK_UNDERFLOW) >> UFUNC_SHIFT_UNDERFLOW;
     if (PyDict_SetItemString(result, "under",
-                             npy_interned_str.errmode_strings[mode]) < 0) {
+                             interned_str->errmode_strings[mode]) < 0) {
         goto fail;
     }
     mode = (extobj.errmask & UFUNC_MASK_INVALID) >> UFUNC_SHIFT_INVALID;
     if (PyDict_SetItemString(result, "invalid",
-                             npy_interned_str.errmode_strings[mode]) < 0) {
+                             interned_str->errmode_strings[mode]) < 0) {
         goto fail;
     }
 
