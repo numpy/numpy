@@ -286,6 +286,31 @@ class TestStringLiteralDepend:
         # while the one inside the literal is dropped
         assert vs["realdep"]["depend"] == ["badvar2"]
 
+    def test_trcon_literal_masking_and_sort_order(self):
+        # SciPy flapack ?trcon regression: masking ``diag = 'N'`` must not
+        # harvest ``n`` from the literal. Cycle fallback must order
+        # ``a`` then ``n = shape(a, 1)`` then ``work`` so getarrdims keeps
+        # ``work_Dims[0]=3*n`` (not blanked to assumed-shape).
+        fpath = util.getpath("tests", "src", "crackfortran", "gh28700_trcon.pyf")
+        mod = crackfortran.crackfortran([str(fpath)])
+        iface = next(b for b in mod if b.get("name") == "gh28700_trcon")["body"][0]
+        trcon = next(b for b in iface["body"] if b.get("name") == "trcon")
+        vs = trcon["vars"]
+        assert "depend" not in vs["diag"]
+        assert vs["work"]["dimension"] == ["3 * n"]
+        assert vs["work"]["depend"] == ["n"]
+        order = trcon["sortvars"]
+        assert order.index("a") < order.index("n")
+        assert order.index("n") < order.index("work")
+        assert order.index("n") < order.index("lda")
+
+        lwork_case = next(b for b in iface["body"] if b.get("name") == "trcon_lwork")
+        lvs = lwork_case["vars"]
+        # depend harvest order follows vars dict iteration; compare as a set
+        assert set(lvs["lwork"]["depend"]) == {"norm", "n"}
+        assert lvs["lwork"]["="] == "(*norm=='i'?3*n:n)"
+        assert lvs["work"]["dimension"] == ["lwork"]
+
 
 @pytest.mark.slow
 class TestEval(util.F2PyTest):
