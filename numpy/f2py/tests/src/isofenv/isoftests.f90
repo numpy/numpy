@@ -43,8 +43,8 @@
       subroutine f_add_int8_arr(a, b, c)
         use iso_fortran_env, only: int8
         implicit none
-        integer(int8), dimension(3), intent(in) :: a, b
-        integer(int8), dimension(3), intent(out) :: c
+        integer(kind=int8), dimension(3), intent(in) :: a, b
+        integer(kind=int8), dimension(3), intent(out) :: c
         c = a + b
       end subroutine f_add_int8_arr
       ! gh-25207
