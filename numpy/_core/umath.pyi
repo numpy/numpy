@@ -9691,17 +9691,6 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> np.float64 | Any: ...
-    @overload  # 0d ?, 0d ?
-    def __call__(
-        self,
-        x1: _FloatLike_co,
-        x2: _FloatLike_co,
-        /,
-        *,
-        out: None = None,
-        dtype: npt.DTypeLike | None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> Any: ...
     @overload  # 0d _, 0d _, dtype=<known>
     def __call__[ScalarT: np.floating | np.integer](
         self,
@@ -9713,6 +9702,17 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         dtype: _DTypeLike[ScalarT],
         **kwargs: Unpack[_Kwargs21],
     ) -> ScalarT: ...
+    @overload  # 0d ?, 0d ?
+    def __call__(
+        self,
+        x1: _FloatLike_co,
+        x2: _FloatLike_co,
+        /,
+        *,
+        out: None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> Any: ...
     @overload  # ?d +i8, ?d +i8
     def __call__(
         self,
@@ -10288,17 +10288,6 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> np.float64 | Any: ...
-    @overload  # 0d ?, 0d ?
-    def outer(
-        self,
-        x1: _FloatLike_co,
-        x2: _FloatLike_co,
-        /,
-        *,
-        out: None = None,
-        dtype: npt.DTypeLike | None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> Any: ...
     @overload  # 0d _, 0d _, dtype=<known>
     def outer[ScalarT: np.floating | np.integer](
         self,
@@ -10310,6 +10299,17 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         dtype: _DTypeLike[ScalarT],
         **kwargs: Unpack[_Kwargs21],
     ) -> ScalarT: ...
+    @overload  # 0d ?, 0d ?
+    def outer(
+        self,
+        x1: _FloatLike_co,
+        x2: _FloatLike_co,
+        /,
+        *,
+        out: None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> Any: ...
     @overload  # ?d +i8, ?d +i8
     def outer(
         self,
