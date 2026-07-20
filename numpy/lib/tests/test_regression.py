@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 from numpy.testing import (
     _assert_valid_refcount,
