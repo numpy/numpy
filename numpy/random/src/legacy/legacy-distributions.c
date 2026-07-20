@@ -127,7 +127,7 @@ double legacy_noncentral_chisquare(aug_bitgen_t *aug_state, double df,
     const double n = legacy_gauss(aug_state) + sqrt(nonc);
     return Chi2 + n * n;
   } else {
-    const long i = random_poisson(aug_state->bit_generator, nonc / 2.0);
+    const long i = legacy_random_poisson(aug_state->bit_generator, nonc / 2.0);
     out = legacy_chisquare(aug_state, df + 2 * i);
     /* Insert nan guard here to avoid changing the stream */
     if (npy_isnan(nonc)){
@@ -178,7 +178,7 @@ double legacy_standard_t(aug_bitgen_t *aug_state, double df) {
 
 int64_t legacy_negative_binomial(aug_bitgen_t *aug_state, double n, double p) {
   double Y = legacy_gamma(aug_state, n, (1 - p) / p);
-  return (int64_t)random_poisson(aug_state->bit_generator, Y);
+  return legacy_random_poisson(aug_state->bit_generator, Y);
 }
 
 double legacy_standard_cauchy(aug_bitgen_t *aug_state) {
@@ -571,8 +571,70 @@ int64_t legacy_random_hypergeometric(bitgen_t *bitgen_state, int64_t good,
 }
 
 
+static RAND_INT_TYPE legacy_random_poisson_mult(bitgen_t *bitgen_state,
+                                                double lam) {
+  RAND_INT_TYPE X;
+  double prod, U, enlam;
+
+  enlam = exp(-lam);
+  X = 0;
+  prod = 1.0;
+  while (1) {
+    U = next_double(bitgen_state);
+    prod *= U;
+    if (prod > enlam) {
+      X += 1;
+    } else {
+      return X;
+    }
+  }
+}
+
+/*
+ * The transformed rejection method for generating Poisson random variables
+ * W. Hoermann
+ * Insurance: Mathematics and Economics 12, 39-45 (1993)
+ */
+static RAND_INT_TYPE legacy_random_poisson_ptrs(bitgen_t *bitgen_state,
+                                                double lam) {
+  RAND_INT_TYPE k;
+  double U, V, slam, loglam, a, b, invalpha, vr, us;
+
+  slam = sqrt(lam);
+  loglam = log(lam);
+  b = 0.931 + 2.53 * slam;
+  a = -0.059 + 0.02483 * b;
+  invalpha = 1.1239 + 1.1328 / (b - 3.4);
+  vr = 0.9277 - 3.6224 / (b - 2);
+
+  while (1) {
+    U = next_double(bitgen_state) - 0.5;
+    V = next_double(bitgen_state);
+    us = 0.5 - fabs(U);
+    k = (RAND_INT_TYPE)floor((2 * a / us + b) * U + lam + 0.43);
+    if ((us >= 0.07) && (V <= vr)) {
+      return k;
+    }
+    if ((k < 0) || ((us < 0.013) && (V > us))) {
+      continue;
+    }
+    /* log(V) == log(0.0) ok here */
+    /* if U==0.0 so that us==0.0, log is ok since always returns */
+    if ((log(V) + log(invalpha) - log(a / (us * us) + b)) <=
+        (-lam + (double)k * loglam - random_loggam((double)k + 1))) {
+      return k;
+    }
+  }
+}
+
 int64_t legacy_random_poisson(bitgen_t *bitgen_state, double lam) {
-  return (int64_t)random_poisson(bitgen_state, lam);
+  if (lam >= 10) {
+    return (int64_t)legacy_random_poisson_ptrs(bitgen_state, lam);
+  } else if (lam == 0) {
+    return 0;
+  } else {
+    return (int64_t)legacy_random_poisson_mult(bitgen_state, lam);
+  }
 }
 
 int64_t legacy_random_zipf(bitgen_t *bitgen_state, double a) {
