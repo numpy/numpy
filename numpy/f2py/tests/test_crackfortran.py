@@ -263,6 +263,30 @@ class TestModuleDeclaration:
         assert mod[0]["vars"]["abar"]["="] == "bar('abar')"
 
 
+class TestStringLiteralDepend:
+    # gh-28700: identifiers inside a character parameter's literal value
+    # must not be harvested as dependencies (a self-dependency crashes the
+    # dependency sort during a -c build).
+    def test_mask_string_literals(self):
+        mask = crackfortran.mask_string_literals
+        assert mask("'mkdir '") == "''"
+        assert mask('"badvar2"') == "''"
+        assert mask("'mkdir '//badvar2") == "''//badvar2"
+        assert mask("a + b") == "a + b"
+
+    def test_no_self_depend_from_literal(self):
+        fpath = util.getpath("tests", "src", "crackfortran", "gh28700.f90")
+        mod = crackfortran.crackfortran([str(fpath)])
+        m1 = next(b for b in mod if b.get("name") == "mod1")
+        vs = m1["vars"]
+        # string-only values gain no dependency at all
+        assert "depend" not in vs["mkdir"]
+        assert "depend" not in vs["badvar2"]
+        # a real identifier outside the quotes is still a dependency,
+        # while the one inside the literal is dropped
+        assert vs["realdep"]["depend"] == ["badvar2"]
+
+
 @pytest.mark.slow
 class TestEval(util.F2PyTest):
     def test_eval_scalar(self):
