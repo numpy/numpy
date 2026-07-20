@@ -10,6 +10,7 @@ from . import __version__
 
 f2py_version = __version__.version
 
+import ast
 import copy
 import os
 import re
@@ -139,6 +140,32 @@ f2cmap_default = copy.deepcopy(f2cmap_all)
 
 f2cmap_mapped = []
 
+
+def _eval_f2cmap_node(node):
+    """Recursively evaluate a single f2cmap AST node.
+
+    Only dict literals (``{...}``), ``dict(...)`` calls with keyword
+    arguments, and scalar constants are permitted.  Anything else raises
+    ``ValueError`` so an f2cmap file can never execute arbitrary code.
+    """
+    if isinstance(node, ast.Dict):
+        return {_eval_f2cmap_node(k): _eval_f2cmap_node(v)
+                for k, v in zip(node.keys, node.values)}
+    if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+            and node.func.id == 'dict' and not node.args
+            and all(kw.arg is not None for kw in node.keywords)):
+        return {kw.arg: _eval_f2cmap_node(kw.value) for kw in node.keywords}
+    if isinstance(node, ast.Constant):
+        return node.value
+    raise ValueError(
+        f'disallowed expression in f2cmap file: {ast.dump(node)}')
+
+
+def _f2cmap_from_str(source):
+    """Safely parse the contents of an f2cmap file into a dictionary."""
+    return _eval_f2cmap_node(ast.parse(source, mode='eval').body)
+
+
 def load_f2cmap_file(f2cmap_file):
     global f2cmap_all, f2cmap_mapped
 
@@ -158,7 +185,7 @@ def load_f2cmap_file(f2cmap_file):
     try:
         outmess(f'Reading f2cmap from {f2cmap_file!r} ...\n')
         with open(f2cmap_file) as f:
-            d = eval(f.read().lower(), {}, {})
+            d = _f2cmap_from_str(f.read().lower())
         f2cmap_all, f2cmap_mapped = process_f2cmap_dict(f2cmap_all, d, c2py_map, True)
         outmess('Successfully applied user defined f2cmap changes\n')
     except Exception as msg:
