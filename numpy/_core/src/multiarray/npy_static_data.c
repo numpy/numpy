@@ -16,20 +16,22 @@
 #include "module_state.h"
 
 // static variables are zero-filled by default, no need to explicitly do so
-NPY_VISIBILITY_HIDDEN npy_interned_str_struct npy_interned_str;
+/* npy_interned_str migrated to multiarray_umath_state.interned_str */
 NPY_VISIBILITY_HIDDEN npy_static_pydata_struct npy_static_pydata;
 /* npy_static_cdata migrated to multiarray_umath_state.static_cdata */
 
-#define INTERN_STRING(struct_member, string)                             \
-    assert(npy_interned_str.struct_member == NULL);                      \
-    npy_interned_str.struct_member = PyUnicode_InternFromString(string); \
-    if (npy_interned_str.struct_member == NULL) {                        \
+#define INTERN_STRING(struct_member, string)                              \
+    assert(interned_str->struct_member == NULL);                         \
+    interned_str->struct_member = PyUnicode_InternFromString(string);    \
+    if (interned_str->struct_member == NULL) {                           \
         return -1;                                                       \
     }                                                                    \
 
 NPY_NO_EXPORT int
 intern_strings(void)
 {
+    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
+
     INTERN_STRING(current_allocator, "current_allocator");
     INTERN_STRING(array, "__array__");
     INTERN_STRING(array_function, "__array_function__");
@@ -189,7 +191,9 @@ initialize_static_globals(void)
         return -1;
     }
 
-    npy_static_pydata.kwnames_is_copy = PyTuple_Pack(1, npy_interned_str.copy);
+    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
+
+    npy_static_pydata.kwnames_is_copy = PyTuple_Pack(1, interned_str->copy);
     if (npy_static_pydata.kwnames_is_copy == NULL) {
         return -1;
     }
@@ -205,9 +209,9 @@ initialize_static_globals(void)
     }
 
     npy_static_pydata.dl_call_kwnames =
-            PyTuple_Pack(3, npy_interned_str.dl_device,
-                            npy_interned_str.copy,
-                            npy_interned_str.max_version);
+            PyTuple_Pack(3, interned_str->dl_device,
+                            interned_str->copy,
+                            interned_str->max_version);
     if (npy_static_pydata.dl_call_kwnames == NULL) {
         return -1;
     }
@@ -289,8 +293,9 @@ initialize_static_globals(void)
 NPY_NO_EXPORT int
 verify_static_structs_initialized(void) {
     // verify all entries in npy_interned_str are filled in
+    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
     for (int i=0; i < (sizeof(npy_interned_str_struct)/sizeof(PyObject *)); i++) {
-        if (*(((PyObject **)&npy_interned_str) + i) == NULL) {
+        if (*(((PyObject **)interned_str) + i) == NULL) {
             PyErr_Format(
                     PyExc_SystemError,
                     "NumPy internal error: NULL entry detected in "

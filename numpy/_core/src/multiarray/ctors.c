@@ -17,6 +17,7 @@
 #include "npy_ctypes.h"
 
 #include "npy_static_data.h"
+#include "module_state.h"
 
 #include "common.h"
 #include "ctors.h"
@@ -897,7 +898,7 @@ PyArray_NewFromDescr_int(
      */
     if (subtype != &PyArray_Type) {
         PyObject *res, *func;
-        func = PyObject_GetAttr((PyObject *)subtype, npy_interned_str.array_finalize);
+        func = PyObject_GetAttr((PyObject *)subtype, npy_get_module_state()->interned_str.array_finalize);
         if (func == NULL) {
             goto fail;
         }
@@ -2005,7 +2006,7 @@ PyArray_FromStructInterface(PyObject *input)
     char endian = NPY_NATBYTE;
 
     if (PyArray_LookupSpecial_OnInstance(
-            input, npy_interned_str.array_struct, &attr) < 0) {
+            input, npy_get_module_state()->interned_str.array_struct, &attr) < 0) {
         return NULL;
     }
     else if (attr == NULL) {
@@ -2129,7 +2130,7 @@ PyArray_FromInterface(PyObject *origin)
     int use_scalar_assign = 0;
 
     if (PyArray_LookupSpecial_OnInstance(
-            origin, npy_interned_str.array_interface, &iface) < 0) {
+            origin, npy_get_module_state()->interned_str.array_interface, &iface) < 0) {
         return NULL;
     }
     else if (iface == NULL) {
@@ -2451,7 +2452,7 @@ check_or_clear_and_warn_error_if_due_to_copy_kwarg(PyObject *kwnames)
         goto restore_error;
     }
     int copy_kwarg_unsupported = PyUnicode_Contains(
-            str_value, npy_interned_str.array_err_msg_substr);
+            str_value, npy_get_module_state()->interned_str.array_err_msg_substr);
     Py_DECREF(str_value);
     if (copy_kwarg_unsupported == -1) {
         goto restore_error;
@@ -2507,7 +2508,7 @@ PyArray_FromArrayAttr_int(PyObject *op, PyArray_Descr *descr, int copy,
     PyObject *array_meth;
 
     if (PyArray_LookupSpecial_OnInstance(
-                op, npy_interned_str.array, &array_meth) < 0) {
+                op, npy_get_module_state()->interned_str.array, &array_meth) < 0) {
         return NULL;
     }
     else if (array_meth == NULL) {

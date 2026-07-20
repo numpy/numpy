@@ -37,6 +37,7 @@
 #include "npy_longdouble.h"
 #include "npy_buffer.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "multiarraymodule.h"
 #include "array_api_standard.h"
 
@@ -212,7 +213,7 @@ find_binary_operation_path(
      * It may be nice to avoid double lookup in `BINOP_GIVE_UP_IF_NEEDED`.
      */
     PyObject *attr;
-    if (PyArray_LookupSpecial(other, npy_interned_str.array_ufunc, &attr) < 0) {
+    if (PyArray_LookupSpecial(other, npy_get_module_state()->interned_str.array_ufunc, &attr) < 0) {
         PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
     else if (attr != NULL) {
@@ -259,7 +260,7 @@ find_binary_operation_path(
      * Retrying then succeeds. So if (and only if) `self.item()` returns a new
      * type, we can safely attempt the operation (again) with that.
      */
-    PyObject *self_item = PyObject_CallMethodNoArgs(self, npy_interned_str.item);
+    PyObject *self_item = PyObject_CallMethodNoArgs(self, npy_get_module_state()->interned_str.item);
     if (self_item == NULL) {
         return -1;
     }

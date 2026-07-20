@@ -10,6 +10,7 @@
 #include "npy_argparse.h"
 #include "npy_dlpack.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "common.h"
 #include "conversion_utils.h"
 #include "descriptor.h"
@@ -569,7 +570,7 @@ array_dlpack_device(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 }
 
 NPY_NO_EXPORT PyObject *
-from_dlpack(PyObject *NPY_UNUSED(self),
+from_dlpack(PyObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *obj, *copy = Py_None, *device = Py_None;
@@ -601,8 +602,9 @@ from_dlpack(PyObject *NPY_UNUSED(self),
     }
 
 
+    PyObject *dlpack_str = get_module_state(self)->interned_str.__dlpack__;
     PyObject *capsule = PyObject_VectorcallMethod(
-            npy_interned_str.__dlpack__, call_args, nargsf,
+            dlpack_str, call_args, nargsf,
             npy_static_pydata.dl_call_kwnames);
     if (capsule == NULL) {
         /*
@@ -617,7 +619,7 @@ from_dlpack(PyObject *NPY_UNUSED(self),
             /* max_version may be unsupported, try without kwargs */
             PyErr_Clear();
             capsule = PyObject_VectorcallMethod(
-                npy_interned_str.__dlpack__, call_args, nargsf, NULL);
+                dlpack_str, call_args, nargsf, NULL);
         }
         if (capsule == NULL) {
             return NULL;

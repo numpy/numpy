@@ -20,6 +20,8 @@
 #include "dtype_transfer.h"
 #include "lowlevel_strided_loops.h"
 #include "array_method.h"
+#include "npy_static_data.h"
+#include "module_state.h"
 
 #include "real_imag_ufuncs.h"
 
@@ -95,11 +97,12 @@ object_get_comp_strided_loop(
     char *out = data[1];
     npy_intp istride = strides[0];
     npy_intp ostride = strides[1];
+    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
 
     while (N--) {
         PyObject *obj = *reinterpret_cast<PyObject **>(in);
         PyObject *attr;
-        if (PyObject_GetOptionalAttr(obj, npy_interned_str.*component, &attr) < 0) {
+        if (PyObject_GetOptionalAttr(obj, interned_str->*component, &attr) < 0) {
             return -1;
         }
         if (attr == NULL) {
@@ -255,8 +258,9 @@ NPY_NO_EXPORT int
 init_real_imag_ufuncs(PyObject *umath)
 {
     int res = -1;
-    PyObject *real_ufunc = PyObject_GetAttr(umath, npy_interned_str.real);
-    PyObject *imag_ufunc = PyObject_GetAttr(umath, npy_interned_str.imag);
+    npy_interned_str_struct *interned_str = &get_module_state(umath)->interned_str;
+    PyObject *real_ufunc = PyObject_GetAttr(umath, interned_str->real);
+    PyObject *imag_ufunc = PyObject_GetAttr(umath, interned_str->imag);
     if (real_ufunc == NULL || imag_ufunc == NULL) {
         goto finish;
     }

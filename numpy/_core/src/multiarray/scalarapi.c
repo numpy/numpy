@@ -20,6 +20,7 @@
 #include "scalartypes.h"
 
 #include "common.h"
+#include "module_state.h"
 
 static PyArray_Descr *
 _descr_from_subtype(PyObject *type)
@@ -344,7 +345,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
     if (PyType_IsSubtype((PyTypeObject *)type, &PyVoidArrType_Type)) {
         PyObject *attr;
         _PyArray_LegacyDescr *conv = NULL;
-        int res = PyObject_GetOptionalAttr(type, npy_interned_str.dtype, &attr);
+        int res = PyObject_GetOptionalAttr(type, npy_get_module_state()->interned_str.dtype, &attr);
         if (res < 0) {
             return NULL;  // Should be a rather critical error, so just fail.
         }

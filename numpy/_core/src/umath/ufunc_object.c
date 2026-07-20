@@ -64,6 +64,7 @@
 #include "abstractdtypes.h"
 #include "mapping.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "multiarraymodule.h"
 #include "number.h"
 #include "scalartypes.h"  // for is_anyscalar_exact and scalar_value
@@ -6826,7 +6827,7 @@ ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
     PyObject *doc;
 
     // If there is a __doc__ in the instance __dict__, use it.
-    int result = PyDict_GetItemRef(ufunc->dict, npy_interned_str.__doc__, &doc);
+    int result = PyDict_GetItemRef(ufunc->dict, npy_get_module_state()->interned_str.__doc__, &doc);
     if (result == -1) {
         return NULL;
     }
@@ -6861,9 +6862,9 @@ static int
 ufunc_set_doc(PyUFuncObject *ufunc, PyObject *doc, void *NPY_UNUSED(ignored))
 {
     if (doc == NULL) {
-        return PyDict_DelItem(ufunc->dict, npy_interned_str.__doc__);
+        return PyDict_DelItem(ufunc->dict, npy_get_module_state()->interned_str.__doc__);
     } else {
-        return PyDict_SetItem(ufunc->dict, npy_interned_str.__doc__, doc);
+        return PyDict_SetItem(ufunc->dict, npy_get_module_state()->interned_str.__doc__, doc);
     }
 }
 

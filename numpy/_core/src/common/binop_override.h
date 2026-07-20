@@ -7,6 +7,7 @@
 
 #include "get_attr_string.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 
 /*
  * Logic for deciding when binops should return NotImplemented versus when
@@ -129,7 +130,7 @@ binop_should_defer(PyObject *self, PyObject *other, int inplace)
      * Classes with __array_ufunc__ are living in the future, and only need to
      * check whether __array_ufunc__ equals None.
      */
-    if (PyArray_LookupSpecial(other, npy_interned_str.array_ufunc, &attr) < 0) {
+    if (PyArray_LookupSpecial(other, npy_get_module_state()->interned_str.array_ufunc, &attr) < 0) {
         PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
     else if (attr != NULL) {

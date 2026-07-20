@@ -122,7 +122,7 @@ get_legacy_print_mode(void) {
         return -1;
     }
     PyObject *legacy_print_mode = NULL;
-    if (PyDict_GetItemRef(format_options, npy_interned_str.legacy,
+    if (PyDict_GetItemRef(format_options, npy_get_module_state()->interned_str.legacy,
                           &legacy_print_mode) == -1) {
         Py_DECREF(format_options);
         return -1;
@@ -163,7 +163,7 @@ PyArray_GetPriority(PyObject *obj, double default_)
     }
 
     if (PyArray_LookupSpecial_OnInstance(
-            obj, npy_interned_str.array_priority, &ret) < 0) {
+            obj, npy_get_module_state()->interned_str.array_priority, &ret) < 0) {
         /* TODO[gh-14801]: propagate crashes during attribute access? */
         PyErr_Clear();
         return default_;
@@ -3498,7 +3498,7 @@ array_lexsort(PyObject *NPY_UNUSED(ignored), PyObject *const *args, Py_ssize_t l
 }
 
 static PyObject *
-array_can_cast_safely(PyObject *NPY_UNUSED(self),
+array_can_cast_safely(PyObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *from_obj = NULL;
@@ -3530,7 +3530,7 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self),
          * TODO: `PyArray_IsScalar` should not be required for new dtypes.
          *       weak-promotion branch is in practice identical to dtype one.
          */
-        PyObject *descr = PyObject_GetAttr(from_obj, npy_interned_str.dtype);
+        PyObject *descr = PyObject_GetAttr(from_obj, get_module_state(self)->interned_str.dtype);
         if (descr == NULL) {
             goto finish;
         }
@@ -5036,7 +5036,52 @@ static int module_loaded = 0;
 static int
 multiarray_umath_traverse(PyObject *m, visitproc visit, void *arg)
 {
-    /* FIXME : Py_VISIT each field of state->interned_str */
+    multiarray_umath_state *state = get_module_state(m);
+
+    Py_VISIT(state->interned_str.current_allocator);
+    Py_VISIT(state->interned_str.array);
+    Py_VISIT(state->interned_str.array_function);
+    Py_VISIT(state->interned_str.array_struct);
+    Py_VISIT(state->interned_str.array_priority);
+    Py_VISIT(state->interned_str.array_interface);
+    Py_VISIT(state->interned_str.array_wrap);
+    Py_VISIT(state->interned_str.array_finalize);
+    Py_VISIT(state->interned_str.array_ufunc);
+    Py_VISIT(state->interned_str.numpy_dtype);
+    Py_VISIT(state->interned_str.implementation);
+    Py_VISIT(state->interned_str.axis1);
+    Py_VISIT(state->interned_str.axis2);
+    Py_VISIT(state->interned_str.item);
+    Py_VISIT(state->interned_str.like);
+    Py_VISIT(state->interned_str.numpy);
+    Py_VISIT(state->interned_str.where);
+    Py_VISIT(state->interned_str.convert);
+    Py_VISIT(state->interned_str.preserve);
+    Py_VISIT(state->interned_str.convert_if_no_array);
+    Py_VISIT(state->interned_str.cpu);
+    Py_VISIT(state->interned_str.dtype);
+    Py_VISIT(state->interned_str.array_err_msg_substr);
+    Py_VISIT(state->interned_str.out);
+    for (int i = 0; i < 6; i++) {
+        Py_VISIT(state->interned_str.errmode_strings[i]);
+    }
+    Py_VISIT(state->interned_str.__dlpack__);
+    Py_VISIT(state->interned_str.pyvals_name);
+    Py_VISIT(state->interned_str.legacy);
+    Py_VISIT(state->interned_str.__doc__);
+    Py_VISIT(state->interned_str.__signature__);
+    Py_VISIT(state->interned_str.copy);
+    Py_VISIT(state->interned_str.dl_device);
+    Py_VISIT(state->interned_str.max_version);
+    Py_VISIT(state->interned_str.array_dealloc);
+    Py_VISIT(state->interned_str.real);
+    Py_VISIT(state->interned_str.imag);
+    Py_VISIT(state->interned_str.sort);
+    Py_VISIT(state->interned_str.argsort);
+    Py_VISIT(state->interned_str.partition);
+    Py_VISIT(state->interned_str.argpartition);
+    Py_VISIT(state->interned_str._set_dtype);
+
     /* FIXME : Py_VISIT each field of state->static_pydata */
     /* FIXME : Py_VISIT each field of state->runtime_imports */
     return 0;
@@ -5045,7 +5090,52 @@ multiarray_umath_traverse(PyObject *m, visitproc visit, void *arg)
 static int
 multiarray_umath_clear(PyObject *m)
 {
-    /* FIXME : Py_CLEAR each field of state->interned_str */
+    multiarray_umath_state *state = get_module_state(m);
+
+    Py_CLEAR(state->interned_str.current_allocator);
+    Py_CLEAR(state->interned_str.array);
+    Py_CLEAR(state->interned_str.array_function);
+    Py_CLEAR(state->interned_str.array_struct);
+    Py_CLEAR(state->interned_str.array_priority);
+    Py_CLEAR(state->interned_str.array_interface);
+    Py_CLEAR(state->interned_str.array_wrap);
+    Py_CLEAR(state->interned_str.array_finalize);
+    Py_CLEAR(state->interned_str.array_ufunc);
+    Py_CLEAR(state->interned_str.numpy_dtype);
+    Py_CLEAR(state->interned_str.implementation);
+    Py_CLEAR(state->interned_str.axis1);
+    Py_CLEAR(state->interned_str.axis2);
+    Py_CLEAR(state->interned_str.item);
+    Py_CLEAR(state->interned_str.like);
+    Py_CLEAR(state->interned_str.numpy);
+    Py_CLEAR(state->interned_str.where);
+    Py_CLEAR(state->interned_str.convert);
+    Py_CLEAR(state->interned_str.preserve);
+    Py_CLEAR(state->interned_str.convert_if_no_array);
+    Py_CLEAR(state->interned_str.cpu);
+    Py_CLEAR(state->interned_str.dtype);
+    Py_CLEAR(state->interned_str.array_err_msg_substr);
+    Py_CLEAR(state->interned_str.out);
+    for (int i = 0; i < 6; i++) {
+        Py_CLEAR(state->interned_str.errmode_strings[i]);
+    }
+    Py_CLEAR(state->interned_str.__dlpack__);
+    Py_CLEAR(state->interned_str.pyvals_name);
+    Py_CLEAR(state->interned_str.legacy);
+    Py_CLEAR(state->interned_str.__doc__);
+    Py_CLEAR(state->interned_str.__signature__);
+    Py_CLEAR(state->interned_str.copy);
+    Py_CLEAR(state->interned_str.dl_device);
+    Py_CLEAR(state->interned_str.max_version);
+    Py_CLEAR(state->interned_str.array_dealloc);
+    Py_CLEAR(state->interned_str.real);
+    Py_CLEAR(state->interned_str.imag);
+    Py_CLEAR(state->interned_str.sort);
+    Py_CLEAR(state->interned_str.argsort);
+    Py_CLEAR(state->interned_str.partition);
+    Py_CLEAR(state->interned_str.argpartition);
+    Py_CLEAR(state->interned_str._set_dtype);
+
     /* FIXME : Py_CLEAR each field of state->static_pydata */
     /* FIXME : Py_CLEAR each field of state->runtime_imports */
     return 0;
@@ -5129,7 +5219,7 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
     PyUFunc_Type.tp_dict = Py_BuildValue(
-        "{ON}", npy_interned_str.__signature__, s);
+        "{ON}", get_module_state(m)->interned_str.__signature__, s);
     if (PyUFunc_Type.tp_dict == NULL) {
         return -1;
     }

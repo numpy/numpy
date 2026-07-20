@@ -19,6 +19,7 @@
 #include "alloc.h"
 #include "npy_buffer.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "multiarraymodule.h"
 
 static int
@@ -1412,7 +1413,7 @@ PyArray_DeviceConverterOptional(PyObject *object, NPY_DEVICE *device)
     }
 
     if (PyUnicode_Check(object) &&
-        PyUnicode_Compare(object, npy_interned_str.cpu) == 0) {
+        PyUnicode_Compare(object, npy_get_module_state()->interned_str.cpu) == 0) {
         *device = NPY_DEVICE_CPU;
         return NPY_SUCCEED;
     }

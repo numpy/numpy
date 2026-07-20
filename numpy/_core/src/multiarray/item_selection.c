@@ -17,6 +17,7 @@
 
 
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "common.h"
 #include "dtype_transfer.h"
 #include "dtypemeta.h"
@@ -2458,10 +2459,11 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
     }
 
     /* Handle negative axes with standard Python indexing rules */
-    if (check_and_adjust_axis_msg(&axis1, ndim, npy_interned_str.axis1) < 0) {
+    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
+    if (check_and_adjust_axis_msg(&axis1, ndim, interned_str->axis1) < 0) {
         return NULL;
     }
-    if (check_and_adjust_axis_msg(&axis2, ndim, npy_interned_str.axis2) < 0) {
+    if (check_and_adjust_axis_msg(&axis2, ndim, interned_str->axis2) < 0) {
         return NULL;
     }
     if (axis1 == axis2) {

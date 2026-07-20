@@ -24,6 +24,7 @@
 #include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "descriptor.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "multiarraymodule.h"  // for thread unsafe state access
 #include "alloc.h"
 #include "assert.h"
@@ -96,7 +97,8 @@ _try_convert_from_dtype_attr(PyObject *obj)
     int used_dtype_attr = 0;
     /* For arbitrary objects that have a "dtype" attribute */
     PyObject *attr;
-    int res = PyObject_GetOptionalAttr(obj, npy_interned_str.numpy_dtype, &attr);
+    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
+    int res = PyObject_GetOptionalAttr(obj, interned_str->numpy_dtype, &attr);
     if (res < 0) {
         return NULL;
     }
@@ -108,7 +110,7 @@ _try_convert_from_dtype_attr(PyObject *obj)
          * syntax.
          */
         used_dtype_attr = 1;
-        int res = PyObject_GetOptionalAttr(obj, npy_interned_str.dtype, &attr);
+        int res = PyObject_GetOptionalAttr(obj, interned_str->dtype, &attr);
         if (res < 0) {
             return NULL;
         }
@@ -126,7 +128,7 @@ _try_convert_from_dtype_attr(PyObject *obj)
         }
         PyErr_Format(PyExc_ValueError,
             "Could not convert %R to a NumPy dtype (via `.%S` value %R).", obj,
-            used_dtype_attr ? npy_interned_str.dtype : npy_interned_str.numpy_dtype,
+            used_dtype_attr ? interned_str->dtype : interned_str->numpy_dtype,
             attr);
         Py_DECREF(attr);
         return NULL;
@@ -2778,7 +2780,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         Py_DECREF(ret);
         return NULL;
     }
-    obj = PyObject_GetAttr(mod, npy_interned_str.dtype);
+    obj = PyObject_GetAttr(mod, get_module_state(mod)->interned_str.dtype);
     Py_DECREF(mod);
     if (obj == NULL) {
         Py_DECREF(ret);

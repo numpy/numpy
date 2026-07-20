@@ -1,6 +1,10 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_MULTIARRAYMODULE_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_MULTIARRAYMODULE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Struct definition for per-module global state, embedded as the
  * global_state field of multiarray_umath_state (see module_state.h).
@@ -32,5 +36,9 @@ typedef struct npy_global_state_struct {
 
 NPY_NO_EXPORT int
 get_legacy_print_mode(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_MULTIARRAYMODULE_H_ */

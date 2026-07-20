@@ -14,6 +14,7 @@
 
 #include "arraywrap.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 
 /*
  * Find the array wrap or array prepare method that applies to the inputs.
@@ -57,7 +58,7 @@ npy_find_array_wrap(
         else {
             PyObject *new_wrap;
             if (PyArray_LookupSpecial_OnInstance(
-                    obj, npy_interned_str.array_wrap, &new_wrap) < 0) {
+                    obj, npy_get_module_state()->interned_str.array_wrap, &new_wrap) < 0) {
                 goto fail;
             }
             else if (new_wrap == NULL) {
@@ -156,7 +157,7 @@ npy_apply_wrap(
         else {
             /* Replace passed wrap/wrap_type (borrowed refs) with new_wrap/type. */
             if (PyArray_LookupSpecial_OnInstance(
-                    original_out, npy_interned_str.array_wrap, &new_wrap) < 0) {
+                    original_out, npy_get_module_state()->interned_str.array_wrap, &new_wrap) < 0) {
                 return NULL;
             }
             else if (new_wrap != NULL) {

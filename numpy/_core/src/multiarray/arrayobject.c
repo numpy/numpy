@@ -368,7 +368,7 @@ static inline int
 write_and_clear_error_if_unraisable(int status, npy_bool unraisable)
 {
     if (status < 0 && unraisable) {
-        PyErr_WriteUnraisable(npy_interned_str.array_dealloc);
+        PyErr_WriteUnraisable(npy_get_module_state()->interned_str.array_dealloc);
         return 0;
     }
     return status;
