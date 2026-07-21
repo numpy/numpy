@@ -670,6 +670,9 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
         out_op_DTypes[i] = NPY_DTYPE(PyArray_DESCR(out_op[i]));
         Py_INCREF(out_op_DTypes[i]);
 
+        /* Does not affect promotion, only conversion after resolution. */
+        npy_mark_tmp_array_if_pystr(obj, out_op[i]);
+
         if (nin == 1) {
             /*
              * TODO: If nin == 1 we don't promote!  This has exactly the effect
@@ -722,9 +725,6 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
                           (PyArrayObject *)npy_static_pydata.zero_pyint_like_arr);
             }
             *promoting_pyscalars = NPY_TRUE;
-        }
-        else {
-            npy_mark_tmp_array_if_pystr(obj, out_op[i]);
         }
     }
     if ((!all_scalar && any_scalar)) {
@@ -4222,10 +4222,7 @@ resolve_descriptors(int nop,
 
         /* For scalars, replace the operand if needed (scalars can't be out) */
         for (int i = 0; i < nin; i++) {
-            if ((PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_LITERAL) ||
-                /* str is only replaced if the resolver was passed the scalar */
-                (input_scalars[i] != NULL &&
-                 (PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_STR))) {
+            if ((PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_LITERAL)) {
                 if (npy_update_operand_for_scalar(
                         &operands[i], input_scalars[i], dtypes[i],
                         /* ignore cast safety for this op (resolvers job) */
@@ -4250,10 +4247,9 @@ resolve_descriptors(int nop,
          * A str operand is only replaced when `inputs_tup` provides the
          * original scalar.
          */
-        if ((PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_LITERAL)
-                || (inputs_tup != NULL
-                    && (PyArray_FLAGS(operands[i])
-                        & NPY_ARRAY_WAS_PYTHON_STR))) {
+        if ((PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_LITERAL) ||
+                (inputs_tup != NULL &&
+                 (PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_STR))) {
             PyObject *input;
             if (inputs_tup == NULL) {
                 input = NULL;
@@ -4585,6 +4581,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     }
     /* All following variables are cleared in the `fail` error path */
     ufunc_full_args full_args = {NULL, NULL};
+    PyObject *original_inputs = NULL;
     PyArrayObject *wheremask = NULL;
 
     /*
@@ -4795,7 +4792,8 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         if (new_in == NULL) {
             goto fail;
         }
-        Py_SETREF(full_args.in, new_in);
+        original_inputs = full_args.in;
+        full_args.in = new_in;
     }
 
     /*
@@ -4828,6 +4826,13 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         goto fail;
     }
 
+    if (original_inputs != NULL) {
+        for (int i = 0; i < nin; i++) {
+            npy_mark_tmp_array_if_pystr(
+                    PyTuple_GET_ITEM(original_inputs, i), operands[i]);
+        }
+    }
+
     /*
      * Note that part of the promotion is to the complete the signature
      * (until here it only represents the fixed part and is usually NULLs).
@@ -4847,7 +4852,8 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     /* Find the correct descriptors for the operation */
     if (resolve_descriptors(nop, ufunc, ufuncimpl,
             operands, operation_descrs, signature, operand_DTypes,
-            full_args.in, casting) < 0) {
+            original_inputs != NULL ? original_inputs : full_args.in,
+            casting) < 0) {
         goto fail;
     }
 
@@ -4886,6 +4892,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             full_args, subok, operands+nin, return_scalar);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
+    Py_XDECREF(original_inputs);
 
     npy_free_workspace(scratch_objs);
     return result;
@@ -4893,6 +4900,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 fail:
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
+    Py_XDECREF(original_inputs);
     Py_XDECREF(wheremask);
     for (int i = 0; i < ufunc->nargs; i++) {
         Py_XDECREF(operands[i]);
@@ -6117,6 +6125,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     PyObject *op1 = NULL;
     PyObject *idx = NULL;
     PyObject *op2 = NULL;
+    PyObject *input_tup = NULL;
     PyArrayObject *op1_array = NULL;
     PyArrayObject *op2_array = NULL;
     PyArrayMapIterObject *iter = NULL;
@@ -6196,6 +6205,12 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         if (op2_array == NULL) {
             goto fail;
         }
+        if (npy_mark_tmp_array_if_pystr(op2, op2_array)) {
+            input_tup = PyTuple_Pack(2, op1, op2);
+            if (input_tup == NULL) {
+                goto fail;
+            }
+        }
     }
 
     PyArrayMethodObject *ufuncimpl = NULL;
@@ -6250,8 +6265,12 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         }
 
         /* Find the correct operation_descrs for the operation */
-        int resolve_result = resolve_descriptors(nop, ufunc, ufuncimpl,
-                tmp_operands, operation_descrs, signature, operand_DTypes, NULL, NPY_UNSAFE_CASTING);
+        int resolve_result = resolve_descriptors(
+                nop, ufunc, ufuncimpl, tmp_operands, operation_descrs,
+                signature, operand_DTypes, input_tup, NPY_UNSAFE_CASTING);
+        if (input_tup != NULL) {
+            op2_array = tmp_operands[1];
+        }
         for (int i = 0; i < 3; i++) {
             Py_XDECREF(signature[i]);
             Py_XDECREF(operand_DTypes[i]);
@@ -6364,6 +6383,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 fail:
     NPY_AUXDATA_FREE(auxdata);
 
+    Py_XDECREF(input_tup);
     Py_XDECREF(op2_array);
     Py_XDECREF(iter2);
     for (int i = 0; i < nop; i++) {

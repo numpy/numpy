@@ -1,6 +1,6 @@
 Python ``str`` ufunc operands convert with the resolved dtype
 -------------------------------------------------------------
-A Python ``str`` scalar containing tailing nulls now preserves the tailing nulls
+A Python ``str`` scalar containing trailing nulls now preserves the trailing nulls
 in operations with StringDType. For example, ``np.array(["x\0"],
 dtype=np.dtypes.StringDType()) == "x\0"`` now gives ``[True]`` rather than
 ``[False]``.

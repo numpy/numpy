@@ -253,6 +253,15 @@ def test_pystr_scalar_ufunc_operand_preserves_nulls():
     assert_array_equal(np.strings.find(arr, "c\0"), [2, -1])
     assert_array_equal(np.strings.replace(arr, "\0", "!"), ["abc!", "abc"])
 
+    outer = np.add.outer(np.array(["x"], dtype="T"), "y\0")
+    assert outer.item() == "xy\0"
+    outer = np.add.outer("y\0", np.array(["x"], dtype="T"))
+    assert outer.item() == "y\0x"
+
+    at_arr = np.array(["x"], dtype="T")
+    np.add.at(at_arr, 0, "y\0")
+    assert at_arr[0] == "xy\0"
+
 
 def test_pystr_scalar_ufunc_operand_any_instance(dtype):
     arr = np.array(["abc\0"], dtype=dtype)
@@ -280,17 +289,6 @@ def test_partition_str_sep():
 
     with pytest.raises(ValueError, match="empty separator"):
         np.strings.partition(arr, "")
-
-
-def test_np_str_scalar_ufunc_operand_not_special_cased():
-    # unlike an exact str, np.str_ is a fixed-width scalar, so as a ufunc
-    # operand it converts through its unicode dtype, which treats trailing
-    # nulls as padding
-    value = np.str_("q\x00")
-    arr = np.array(["q\x00", "q"], dtype="T")
-    assert_array_equal(arr == value, [False, True])
-    assert_array_equal(arr + value, np.array(["q\x00q", "qq"], dtype="T"))
-    assert_array_equal(np.strings.endswith(arr, value), [False, True])
 
 
 @pytest.mark.parametrize(

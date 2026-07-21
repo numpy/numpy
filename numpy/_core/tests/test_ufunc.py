@@ -3220,6 +3220,10 @@ def test_pystr_scalar_converted_with_resolved_descriptor():
     # np.str_ is a fixed-width scalar, not special-cased like exact str
     assert (arr + np.str_("y\0"))[0] == "xy"
 
+    # unary object loops also receive the original str object
+    identity = np.frompyfunc(lambda value: value, 1, 1)
+    assert identity("y\0") == "y\0"
+
 
 @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64])
 def test_find_non_long_args(dtype):

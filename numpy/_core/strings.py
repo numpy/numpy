@@ -1336,7 +1336,10 @@ def replace(a, old, new, count=-1):
     new_arr = np.asanyarray(new)
 
     if np.result_type(arr, old_arr, new_arr).char == "T":
-        # pass the originals so the ufunc converts str scalars directly
+        # pass exact str objects so the ufunc converts them directly
+        a = a if type(a) is str else arr
+        old = old if type(old) is str else old_arr
+        new = new if type(new) is str else new_arr
         return _replace(a, old, new, count)
 
     a_dt = arr.dtype
@@ -1582,7 +1585,9 @@ def partition(a, sep):
     sep_arr = np.asanyarray(sep)
 
     if np.result_type(a_arr, sep_arr).char == "T":
-        # pass the originals so the ufunc converts str scalars directly
+        # pass exact str objects so the ufunc converts them directly
+        a = a if type(a) is str else a_arr
+        sep = sep if type(sep) is str else sep_arr
         return _partition(a, sep)
 
     a = a_arr
@@ -1653,7 +1658,9 @@ def rpartition(a, sep):
     sep_arr = np.asanyarray(sep)
 
     if np.result_type(a_arr, sep_arr).char == "T":
-        # pass the originals so the ufunc converts str scalars directly
+        # pass exact str objects so the ufunc converts them directly
+        a = a if type(a) is str else a_arr
+        sep = sep if type(sep) is str else sep_arr
         return _rpartition(a, sep)
 
     a = a_arr
