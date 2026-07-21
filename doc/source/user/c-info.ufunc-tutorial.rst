@@ -942,7 +942,7 @@ Numpy ufuncs. For example:
             return log(p/(1-p))
 
 Here ``log`` is taken from the C standard library. The ``cdivision``
-dectorator and ``noexcept`` exception specification are Cython extensions
+decorator and ``noexcept`` exception specification are Cython extensions
 and ensure that a divide by zero will not raise a Python exception.
 They are useful for this specific example but not necessary for ufuncs
 generally.
