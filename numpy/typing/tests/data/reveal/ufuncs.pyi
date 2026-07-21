@@ -2434,7 +2434,7 @@ assert_type(np.floor_divide.reduceat(_obj_nd, (1,)), npt.NDArray[np.object_])
 assert_type(np.floor_divide.accumulate(_obj_nd), npt.NDArray[np.object_])
 
 ###
-# _ufunc_21_pow
+# _ufunc_21_pow_sub[bool | number | object_]
 # (pow[er])
 
 assert_type(np.pow(_py_b_0d, _py_b_0d), np.int8)
@@ -2814,3 +2814,52 @@ assert_type(np.pow.accumulate(_c128_nd), npt.NDArray[np.complex128])
 assert_type(np.pow.accumulate(_obj_nd), npt.NDArray[np.object_])
 assert_type(np.pow.accumulate(_py_i_1d, dtype=np.int16), npt.NDArray[np.int16])
 assert_type(np.pow.accumulate(_py_i_1d, dtype="i2"), npt.NDArray[Any])
+
+###
+# _ufunc_21_pow_sub[bool | number | object_ | timedelta64 | datetime64]
+# (subtract)
+# same as `pow[er]` above with additional `timedelta64` and `datetime64` overloads
+
+assert_type(np.subtract(_py_b_0d, _td_ns_0d), np.timedelta64)
+assert_type(np.subtract(_py_b_1d, _td_ns_1d), npt.NDArray[np.timedelta64])
+
+assert_type(np.subtract(_py_i_0d, _td_ns_0d), np.timedelta64)
+assert_type(np.subtract(_py_i_1d, _td_ns_1d), npt.NDArray[np.timedelta64])
+
+assert_type(np.subtract(_i64_0d, _td_ns_0d), np.timedelta64)
+assert_type(np.subtract(_i64_1d, _td_ns_1d), npt.NDArray[np.timedelta64])
+
+assert_type(np.subtract(_td_ns_0d, _py_b_0d), np.timedelta64)
+assert_type(np.subtract(_td_ns_1d, _py_b_1d), npt.NDArray[np.timedelta64])
+assert_type(np.subtract(_td_ns_0d, _py_i_0d), np.timedelta64)
+assert_type(np.subtract(_td_ns_1d, _py_i_1d), npt.NDArray[np.timedelta64])
+assert_type(np.subtract(_td_ns_0d, _i64_0d), np.timedelta64)
+assert_type(np.subtract(_td_ns_1d, _i64_1d), npt.NDArray[np.timedelta64])
+assert_type(np.subtract(_td_ns_0d, _td_ns_0d), np.timedelta64)
+assert_type(np.subtract(_td_ns_1d, _td_ns_1d), npt.NDArray[np.timedelta64])
+
+assert_type(np.subtract(_dt_ns_0d, _py_b_0d), np.datetime64)
+assert_type(np.subtract(_dt_ns_1d, _py_b_1d), npt.NDArray[np.datetime64])
+assert_type(np.subtract(_dt_ns_0d, _py_i_0d), np.datetime64)
+assert_type(np.subtract(_dt_ns_1d, _py_i_1d), npt.NDArray[np.datetime64])
+assert_type(np.subtract(_dt_ns_0d, _i64_0d), np.datetime64)
+assert_type(np.subtract(_dt_ns_1d, _i64_1d), npt.NDArray[np.datetime64])
+assert_type(np.subtract(_dt_ns_0d, _td_ns_0d), np.datetime64)
+assert_type(np.subtract(_dt_ns_1d, _td_ns_1d), npt.NDArray[np.datetime64])
+assert_type(np.subtract(_dt_ns_0d, _dt_ns_0d), np.timedelta64)
+assert_type(np.subtract(_dt_ns_1d, _dt_ns_1d), npt.NDArray[np.timedelta64])
+
+# subtract.outer is equivalent to __call__
+
+assert_type(np.subtract.at(_td_ns_1d, 1, _py_b_1d), None)
+assert_type(np.subtract.at(_td_ns_1d, 1, _py_i_1d), None)
+assert_type(np.subtract.at(_td_ns_1d, 1, _i64_1d), None)
+assert_type(np.subtract.at(_td_ns_1d, 1, _td_ns_1d), None)
+
+assert_type(np.subtract.reduce(_td_ns_1d), npt.NDArray[np.timedelta64[int]] | Any)
+assert_type(np.subtract.reduce(_td_ns_1d, axis=None), np.timedelta64[int])
+assert_type(np.subtract.reduce(_td_ns_1d, keepdims=True), npt.NDArray[np.timedelta64[int]])
+
+assert_type(np.subtract.reduceat(_td_ns_1d, (1,)), npt.NDArray[np.timedelta64[int]])
+
+assert_type(np.subtract.accumulate(_td_ns_1d), npt.NDArray[np.timedelta64[int]])

@@ -38,7 +38,6 @@ from numpy import (
     minimum,
     multiply,
     pi,
-    subtract,
     true_divide,
     vecdot,
     vecmat,
@@ -11171,12 +11170,12 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
-# bBhHiIlLqQefdgFDGO, bBhHiIlLqQefdgFDGO => bBhHiIlLqQefdgFDGO
+# bBhHiIlLqQefdgFDGO[Mm], bBhHiIlLqQefdgFDGO[Mm] => bBhHiIlLqQefdgFDGO[Mm]
 #
 # This builds upon `_ufunc_21_mod`, and only covers the i64/i32/i8/u8 int promotions,
 # the closed f32/f64 float promotions, and the closed c64/c128 complex promotions.
 @type_check_only
-class _ufunc_21_pow(_ufunc_21[None]):  # type: ignore[misc]
+class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ignore[misc]  # noqa: UP046
     @override
     @overload  # 0d +i8, 0d +i8
     def __call__(
@@ -11398,6 +11397,50 @@ class _ufunc_21_pow(_ufunc_21[None]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> np.complex128: ...
+    @overload  # 0d ~timedelta, 0d +timedelta  (if timedelta in domain)
+    def __call__(
+        self: _ufunc_21_pow_sub[np.timedelta64],
+        x1: np.timedelta64,
+        x2: np.timedelta64 | _IntLike_co,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> np.timedelta64: ...
+    @overload  # 0d +timedelta, 0d ~timedelta  (if timedelta in domain)
+    def __call__(
+        self: _ufunc_21_pow_sub[np.timedelta64],
+        x1: np.timedelta64 | _IntLike_co,
+        x2: np.timedelta64,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> np.timedelta64: ...
+    @overload  # 0d ~datetime64, 0d +timedelta  (if datetime in domain)
+    def __call__(
+        self: _ufunc_21_pow_sub[np.datetime64],
+        x1: np.datetime64,
+        x2: np.timedelta64 | _IntLike_co,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> np.datetime64: ...
+    @overload  # 0d ~datetime64, 0d ~datetime64  (if datetime in domain)
+    def __call__(
+        self: _ufunc_21_pow_sub[np.datetime64],
+        x1: np.datetime64,
+        x2: np.datetime64,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> np.timedelta64: ...
     @overload  # 0d T@inexact, 0d +float
     def __call__[ScalarT: np.inexact](
         self,
@@ -11761,6 +11804,50 @@ class _ufunc_21_pow(_ufunc_21[None]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.object_]: ...
+    @overload  # ?d ~timedelta, ?d +timedelta  (if timedelta in domain)
+    def __call__(
+        self: _ufunc_21_pow_sub[np.timedelta64],
+        x1: _ArrayLike[np.timedelta64],
+        x2: _DualArrayLike[np.dtype[np.timedelta64 | _to_integer], int],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.timedelta64]: ...
+    @overload  # ?d +timedelta, ?d ~timedelta  (if timedelta in domain)
+    def __call__(
+        self: _ufunc_21_pow_sub[np.timedelta64],
+        x1: _DualArrayLike[np.dtype[np.timedelta64 | _to_integer], int],
+        x2: _ArrayLike[np.timedelta64],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.timedelta64]: ...
+    @overload  # ?d ~datetime64, ?d +timedelta  (if datetime in domain)
+    def __call__(
+        self: _ufunc_21_pow_sub[np.datetime64],
+        x1: _ArrayLike[np.datetime64],
+        x2: _DualArrayLike[np.dtype[np.timedelta64 | _to_integer], int],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.datetime64]: ...
+    @overload  # ?d ~datetime64, ?d ~datetime64  (if datetime in domain)
+    def __call__(
+        self: _ufunc_21_pow_sub[np.datetime64],
+        x1: _ArrayLike[np.datetime64],
+        x2: _ArrayLike[np.datetime64],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.timedelta64]: ...
     @overload  # Nd ~complex, ?d +complex
     def __call__(
         self,
@@ -11883,7 +11970,7 @@ class _ufunc_21_pow(_ufunc_21[None]):  # type: ignore[misc]
         **kwargs: Unpack[_Kwargs21],
     ) -> OutT: ...
 
-    # TODO: keep in sync with `__call__`
+    # NOTE: keep in sync with `__call__`
     @override
     @overload  # 0d +i8, 0d +i8
     def outer(  # pyrefly:ignore[bad-override]
@@ -12105,6 +12192,50 @@ class _ufunc_21_pow(_ufunc_21[None]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> np.complex128: ...
+    @overload  # 0d ~timedelta, 0d +timedelta  (if timedelta in domain)
+    def outer(
+        self: _ufunc_21_pow_sub[np.timedelta64],
+        x1: np.timedelta64,
+        x2: np.timedelta64 | _IntLike_co,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> np.timedelta64: ...
+    @overload  # 0d +timedelta, 0d ~timedelta  (if timedelta in domain)
+    def outer(
+        self: _ufunc_21_pow_sub[np.timedelta64],
+        x1: np.timedelta64 | _IntLike_co,
+        x2: np.timedelta64,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> np.timedelta64: ...
+    @overload  # 0d ~datetime64, 0d +timedelta  (if datetime in domain)
+    def outer(
+        self: _ufunc_21_pow_sub[np.datetime64],
+        x1: np.datetime64,
+        x2: np.timedelta64 | _IntLike_co,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> np.datetime64: ...
+    @overload  # 0d ~datetime64, 0d ~datetime64  (if datetime in domain)
+    def outer(
+        self: _ufunc_21_pow_sub[np.datetime64],
+        x1: np.datetime64,
+        x2: np.datetime64,
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> np.timedelta64: ...
     @overload  # 0d T@inexact, 0d +float
     def outer[ScalarT: np.inexact](
         self,
@@ -12468,6 +12599,50 @@ class _ufunc_21_pow(_ufunc_21[None]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.object_]: ...
+    @overload  # ?d ~timedelta, ?d +timedelta  (if timedelta in domain)
+    def outer(
+        self: _ufunc_21_pow_sub[np.timedelta64],
+        x1: _ArrayLike[np.timedelta64],
+        x2: _DualArrayLike[np.dtype[np.timedelta64 | _to_integer], int],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.timedelta64]: ...
+    @overload  # ?d +timedelta, ?d ~timedelta  (if timedelta in domain)
+    def outer(
+        self: _ufunc_21_pow_sub[np.timedelta64],
+        x1: _DualArrayLike[np.dtype[np.timedelta64 | _to_integer], int],
+        x2: _ArrayLike[np.timedelta64],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.timedelta64]: ...
+    @overload  # ?d ~datetime64, ?d +timedelta  (if datetime in domain)
+    def outer(
+        self: _ufunc_21_pow_sub[np.datetime64],
+        x1: _ArrayLike[np.datetime64],
+        x2: _DualArrayLike[np.dtype[np.timedelta64 | _to_integer], int],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.datetime64]: ...
+    @overload  # ?d ~datetime64, ?d ~datetime64  (if datetime in domain)
+    def outer(
+        self: _ufunc_21_pow_sub[np.datetime64],
+        x1: _ArrayLike[np.datetime64],
+        x2: _ArrayLike[np.datetime64],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.timedelta64]: ...
     @overload  # Nd ~complex, ?d +complex
     def outer(
         self,
@@ -12595,6 +12770,14 @@ class _ufunc_21_pow(_ufunc_21[None]):  # type: ignore[misc]
     @overload
     def at(self, a: npt.NDArray[_to_number | np.object_], indices: _ArrayLikeInt, b: _ArrayLikeNumberObj_co, /) -> None: ...  # pyrefly:ignore[bad-override]
     @overload
+    def at(
+        self: _ufunc_21_pow_sub[np.timedelta64 | np.datetime64],
+        a: npt.NDArray[np.timedelta64 | np.datetime64 | _to_integer],
+        indices: _ArrayLikeInt,
+        b: _DualArrayLike[np.dtype[np.timedelta64 | _to_integer], int],
+        /,
+    ) -> None: ...
+    @overload
     def at[OtherT, IxT, OutT](self, a: _CanUfuncAt2L[OtherT, IxT, OutT], indices: IxT, b: OtherT, /) -> OutT: ...
     @overload
     def at[OtherT, IxT, OutT](self, a: OtherT, indices: IxT, b: _CanUfuncAt2R[OtherT, IxT, OutT], /) -> OutT: ...
@@ -12692,6 +12875,45 @@ class _ufunc_21_pow(_ufunc_21[None]):  # type: ignore[misc]
         initial: bool | _to_i8 = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.int8]: ...
+    @overload  # ~timedelta64  (if timedelta in domain)
+    def reduce[TimedeltaT: np.timedelta64](
+        self: _ufunc_21_pow_sub[np.timedelta64],
+        array: _ArrayLike[TimedeltaT],
+        /,
+        *,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: np.timedelta64 | _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[TimedeltaT] | Any: ...
+    @overload  # ~timedelta64, axis=None  (if timedelta in domain)
+    def reduce[TimedeltaT: np.timedelta64](
+        self: _ufunc_21_pow_sub[np.timedelta64],
+        array: _ArrayLike[TimedeltaT],
+        /,
+        *,
+        axis: None,
+        dtype: None = None,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: np.timedelta64 | _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> TimedeltaT: ...
+    @overload  # ~timedelta64, keepdims=True  (if timedelta in domain)
+    def reduce[TimedeltaT: np.timedelta64](
+        self: _ufunc_21_pow_sub[np.timedelta64],
+        array: _ArrayLike[TimedeltaT],
+        /,
+        *,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: np.timedelta64 | _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[TimedeltaT]: ...
     @overload  # ~int
     def reduce(
         self,
@@ -12886,6 +13108,17 @@ class _ufunc_21_pow(_ufunc_21[None]):  # type: ignore[misc]
         dtype: None = None,
         out: None = None,
     ) -> npt.NDArray[np.int8]: ...
+    @overload  # ~timedelta64  (if timedelta in domain)
+    def reduceat[TimedeltaT: np.timedelta64](
+        self: _ufunc_21_pow_sub[np.timedelta64],
+        array: _ArrayLike[TimedeltaT],
+        /,
+        indices: tuple[int, ...],
+        *,
+        axis: int = 0,
+        dtype: None = None,
+        out: None = None,
+    ) -> npt.NDArray[TimedeltaT]: ...
     @overload  # ~int
     def reduceat(
         self,
@@ -12986,6 +13219,16 @@ class _ufunc_21_pow(_ufunc_21[None]):  # type: ignore[misc]
         dtype: None = None,
         out: None = None,
     ) -> npt.NDArray[np.int8]: ...
+    @overload  # ~timedelta64  (if timedelta in domain)
+    def accumulate[TimedeltaT: np.timedelta64](
+        self: _ufunc_21_pow_sub[np.timedelta64],
+        array: _ArrayLike[TimedeltaT],
+        /,
+        *,
+        axis: int = 0,
+        dtype: None = None,
+        out: None = None,
+    ) -> npt.NDArray[TimedeltaT]: ...
     @overload  # ~int
     def accumulate(
         self,
@@ -13099,7 +13342,8 @@ remainder: Final[_ufunc_21_mod[np.inexact | np.timedelta64 | np.object_, np.time
 mod = remainder
 floor_divide: Final[_ufunc_21_mod[np.inexact | np.timedelta64 | np.object_, np.int64]] = ...
 
-power: Final[_ufunc_21_pow] = ...
+power: Final[_ufunc_21_pow_sub[np.bool | np.number | np.object_]] = ...
+subtract: Final[_ufunc_21_pow_sub[np.bool | np.number | np.object_ | np.timedelta64 | np.datetime64]] = ...
 
 ###
 # re-exports from `_core._multiarray_umath` that are used by `_core._ufunc_config`
