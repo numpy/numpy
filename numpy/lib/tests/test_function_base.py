@@ -2478,6 +2478,15 @@ class TestUnwrap:
         discont = 3 + 1e-4
         assert_array_equal(unwrap(p, discont=discont, period=period), [0, -1])
 
+    def test_discont_explicit_wider_truncates_to_dtype(self):
+        # an explicitly typed discont wider than the result dtype is
+        # compared at the result dtype rather than promoting (see release
+        # notes); 3 + 1e-8 rounds down to exactly 3.0 in float32
+        p = np.array([0, 3], dtype=np.float32)
+        period = 4
+        discont = np.float64(3) + 1e-8
+        assert_array_equal(unwrap(p, discont=discont, period=period), [0, -1])
+
     def test_masked_array(self):
         # for masked arrays, we'd need a masked aware np.ma.unwrap implementation
         # the operation currently unmasks the masked array into an ndarray

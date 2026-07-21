@@ -9,7 +9,6 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include <limits>
 #include <type_traits>
 
 #include "numpy/halffloat.h"
@@ -63,9 +62,11 @@ floor_mod(npy_longdouble a, npy_longdouble b)
 #endif
 
 /* no integer npy_remainder to call; mirrors @TYPE@_remainder in
- * loops_modulo.dispatch.c.src, including the T_MIN / -1 guard */
+ * loops_modulo.dispatch.c.src, including the T_MIN / -1 guard (which sets
+ * no floating point status there either -- only the quotient overflows,
+ * and this only ever computes the remainder) */
 template <typename T>
-static inline std::enable_if_t<std::is_integral_v<T>, T>
+static inline std::enable_if_t<std::is_integral_v<T> && std::is_signed_v<T>, T>
 floor_mod(T a, T b)
 {
     if (b == 0) {
@@ -73,9 +74,6 @@ floor_mod(T a, T b)
         return 0;
     }
     if (b == -1) {
-        if (a == std::numeric_limits<T>::min()) {
-            npy_set_floatstatus_divbyzero();
-        }
         return 0;
     }
     T rem = a % b;
@@ -86,17 +84,18 @@ floor_mod(T a, T b)
 }
 
 /*
- * One loop per (T, D) pair. T is the storage/compute type; D is discont's
- * type, either T itself (NEP 50 weak-scalar match) or a wider float type
- * for explicitly-typed/cross-kind discont. npy_half has no native
- * arithmetic, so it gets its own loop below.
+ * One loop per real dtype. T is the storage/compute type; discont is read
+ * as T itself for the float dtypes, npy_double for the integer ones.
+ * npy_half has no native arithmetic, so it gets its own loop below.
  */
-template <typename T, typename D>
+template <typename T>
 static int
 unwrap_loop(PyArrayMethod_Context *NPY_UNUSED(context), char *const data[],
             npy_intp const dimensions[], npy_intp const strides[],
             NpyAuxData *NPY_UNUSED(auxdata))
 {
+    using D = std::conditional_t<std::is_floating_point_v<T>, T, npy_double>;
+
     npy_intp n_outer = dimensions[0];
     npy_intp n = dimensions[1];
     if (n == 0) {
@@ -160,7 +159,6 @@ unwrap_loop(PyArrayMethod_Context *NPY_UNUSED(context), char *const data[],
 static inline float h2f(npy_half h) { return npy_half_to_float(h); }
 static inline npy_half f2h(float f) { return npy_float_to_half(f); }
 
-template <typename D>
 static int
 unwrap_half_loop(PyArrayMethod_Context *NPY_UNUSED(context), char *const data[],
                  npy_intp const dimensions[], npy_intp const strides[],
@@ -180,15 +178,7 @@ unwrap_half_loop(PyArrayMethod_Context *NPY_UNUSED(context), char *const data[],
 
     for (npy_intp k = 0; k < n_outer; k++,
             p_o += s_p, disc_o += s_disc, per_o += s_per, out_o += s_out) {
-        /* npy_half discont is read through h2f, matching the NEP 50 weak-
-         * scalar case where discont is compared at half precision */
-        double discont;
-        if constexpr (std::is_same_v<D, npy_half>) {
-            discont = h2f(*(const npy_half *)disc_o);
-        }
-        else {
-            discont = *(const D *)disc_o;
-        }
+        double discont = h2f(*(const npy_half *)disc_o);
         npy_half period = *(const npy_half *)per_o;
         npy_half interval_high = f2h(h2f(period) / 2.0f);
         npy_half interval_low = f2h(-h2f(interval_high));
@@ -224,13 +214,15 @@ unwrap_half_loop(PyArrayMethod_Context *NPY_UNUSED(context), char *const data[],
 
 
 static int
-add_unwrap_loop(PyObject *ufunc, int typenum,
-                PyArrayMethod_StridedLoop *loop, int discont_typenum)
+add_unwrap_loop(PyObject *ufunc, int typenum, PyArrayMethod_StridedLoop *loop)
 {
     PyArray_DTypeMeta *dt = PyArray_DTypeFromTypeNum(typenum);
     if (dt == NULL) {
         return -1;
     }
+    /* discont is read at typenum's own precision for float dtypes, double
+     * for the integer ones -- matches unwrap_loop's own D derivation */
+    int discont_typenum = PyTypeNum_ISFLOAT(typenum) ? typenum : NPY_DOUBLE;
     PyArray_DTypeMeta *disc_dt = PyArray_DTypeFromTypeNum(discont_typenum);
     if (disc_dt == NULL) {
         Py_DECREF(dt);
@@ -274,36 +266,24 @@ init_unwrap_ufunc(PyObject *umath)
     struct Loop {
         int typenum;
         PyArrayMethod_StridedLoop *loop;
-        int discont_typenum;
     };
 
-    /*
-     * float dtypes get two loops: discont at native precision (the NEP 50
-     * weak-scalar case, where the python wrapper matches discont to p's
-     * dtype) and at wider precision (explicitly-typed/cross-kind discont).
-     * Integer dtypes only get the wider loop -- NEP 50 native-int discont
-     * is not implemented, so the wrapper always widens for those.
-     */
     Loop loops[] = {
-        {NPY_HALF, unwrap_half_loop<npy_half>, NPY_HALF},
-        {NPY_HALF, unwrap_half_loop<npy_double>, NPY_DOUBLE},
-        {NPY_FLOAT, unwrap_loop<npy_float, npy_float>, NPY_FLOAT},
-        {NPY_FLOAT, unwrap_loop<npy_float, npy_double>, NPY_DOUBLE},
-        {NPY_DOUBLE, unwrap_loop<npy_double, npy_double>, NPY_DOUBLE},
-        {NPY_LONGDOUBLE, unwrap_loop<npy_longdouble, npy_longdouble>,
-         NPY_LONGDOUBLE},
-        {NPY_BYTE, unwrap_loop<npy_byte, npy_double>, NPY_DOUBLE},
-        {NPY_SHORT, unwrap_loop<npy_short, npy_double>, NPY_DOUBLE},
-        {NPY_INT, unwrap_loop<npy_int, npy_double>, NPY_DOUBLE},
-        {NPY_LONG, unwrap_loop<npy_long, npy_double>, NPY_DOUBLE},
-        {NPY_LONGLONG, unwrap_loop<npy_longlong, npy_double>, NPY_DOUBLE},
+        {NPY_HALF, unwrap_half_loop},
+        {NPY_FLOAT, unwrap_loop<npy_float>},
+        {NPY_DOUBLE, unwrap_loop<npy_double>},
+        {NPY_LONGDOUBLE, unwrap_loop<npy_longdouble>},
+        {NPY_BYTE, unwrap_loop<npy_byte>},
+        {NPY_SHORT, unwrap_loop<npy_short>},
+        {NPY_INT, unwrap_loop<npy_int>},
+        {NPY_LONG, unwrap_loop<npy_long>},
+        {NPY_LONGLONG, unwrap_loop<npy_longlong>},
         /* object dtype falls back to the python implementation instead */
         // {NPY_OBJECT, object_unwrap_loop},
     };
 
     for (const auto& entry : loops) {
-        if (add_unwrap_loop(ufunc, entry.typenum, entry.loop,
-                             entry.discont_typenum) < 0) {
+        if (add_unwrap_loop(ufunc, entry.typenum, entry.loop) < 0) {
             Py_DECREF(ufunc);
             return -1;
         }
