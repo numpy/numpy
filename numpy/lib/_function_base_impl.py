@@ -1874,7 +1874,9 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
         discont = period / 2
     try:
         dtype = np.result_type(p, period)
-        discont_type = type(dtype) if _nx.issubdtype(dtype, _nx.floating) else np.float64
+        discont_type = (
+            type(dtype) if _nx.issubdtype(dtype, _nx.floating) else np.float64
+        )
         return _unwrap(p, discont, period,
                        signature=(type(dtype), discont_type, type(dtype), type(dtype)),
                        axis=axis)
