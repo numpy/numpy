@@ -1810,10 +1810,10 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     Returns
     -------
     out : ndarray
-        Output array. Its dtype is ``numpy.result_type(p, period)``; in
-        particular an integer array unwrapped with an integer `period` keeps
-        its integer dtype, while any float `period` (including the default
-        ``2 pi``) produces a floating-point result.
+        Output array. Its dtype is ``numpy.result_type(p, period)``.
+        In particular an integer array unwrapped with an integer `period`
+        keeps its integer dtype, while any float `period` (including the
+        default ``2 pi``) produces a floating-point result.
 
     See Also
     --------
@@ -1879,13 +1879,13 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
                        signature=(type(dtype), discont_type, type(dtype), type(dtype)),
                        axis=axis)
     except np._core._exceptions._UFuncNoLoopError:
-        # object and user DTypes fall back; check p.dtype, not the promoted
+        # object and user DTypes fall back. check p.dtype, not the promoted
         # dtype, since a user DType can promote through a builtin
         if p.dtype.isbuiltin == 1 and p.dtype != object:
             raise
         return _unwrap_fallback(p, discont, period, axis)
     except TypeError:
-        # p's __array_ufunc__ declined the private _unwrap gufunc; the
+        # p's __array_ufunc__ declined the private _unwrap gufunc. the
         # fallback only uses public ufuncs, which it may still implement
         return _unwrap_fallback(p, discont, period, axis)
 

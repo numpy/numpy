@@ -2288,7 +2288,8 @@ class TestUnwrap:
     @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int8, np.int32,
                                        np.int64, object])
     def test_dtype_preserved(self, dtype):
-        # integer array + integer period keeps the integer dtype; float stays
+        # p keeps its own dtype here for every dtype tested, since period=4
+        # is an integer and never forces a float result
         p = np.array([0, 1, 2, -1, 0], dtype=dtype)
         out = unwrap(p, period=4)
         assert out.dtype == dtype
@@ -2312,8 +2313,8 @@ class TestUnwrap:
         assert_array_equal(np.asarray(out), unwrap(np.asarray(p)))
 
     def test_object_matches_float(self):
-        # object arrays go through the Python fall-back; result matches the
-        # float computation, stays object, and preserves subclasses
+        # object arrays go through the python fallback. the result matches
+        # the float computation, stays object dtype, and preserves subclasses
         base = np.array([0., 1., 2., 2 + 2 * np.pi, 3 + 2 * np.pi, 3.1, 3.2])
         obj = base.astype(object)
         out = unwrap(obj)
@@ -2323,8 +2324,8 @@ class TestUnwrap:
         assert_array_equal(unwrap(obj, discont=10).astype(float), base)
 
     def test_object_boundary_and_fraction(self):
-        # exact +period/2 upward jump exercises the boundary correction; the
-        # values stay exact Python objects (Fractions)
+        # exact +period/2 upward jump exercises the boundary correction,
+        # and the values stay exact python objects (Fractions)
         p = np.array([Fraction(0), Fraction(2), Fraction(4), Fraction(1),
                       Fraction(0)], dtype=object)
         out = unwrap(p, period=4)
@@ -2470,9 +2471,9 @@ class TestUnwrap:
 
     def test_discont_weak_scalar_narrow_dtype(self):
         # a bare python float discont is a weak scalar (NEP 50), so main
-        # downcasts it to p's dtype before comparing; here that downcast
-        # rounds 3.0001 down to exactly 3.0, so the diff of 3 is no longer
-        # judged smaller than discont and does get corrected
+        # downcasts it to p's dtype before comparing. that downcast rounds
+        # 3.0001 down to exactly 3.0, so the diff of 3 no longer looks
+        # smaller than discont and gets corrected
         p = np.array([0, 3], dtype=np.float16)
         period = 4
         discont = 3 + 1e-4
@@ -2480,8 +2481,8 @@ class TestUnwrap:
 
     def test_discont_explicit_wider_truncates_to_dtype(self):
         # an explicitly typed discont wider than the result dtype is
-        # compared at the result dtype rather than promoting (see release
-        # notes); 3 + 1e-8 rounds down to exactly 3.0 in float32
+        # compared at the result dtype rather than promoting, see the
+        # release notes. 3 + 1e-8 rounds down to exactly 3.0 in float32
         p = np.array([0, 3], dtype=np.float32)
         period = 4
         discont = np.float64(3) + 1e-8

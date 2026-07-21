@@ -61,10 +61,10 @@ floor_mod(npy_longdouble a, npy_longdouble b)
 }
 #endif
 
-/* no integer npy_remainder to call; mirrors @TYPE@_remainder in
- * loops_modulo.dispatch.c.src, including the T_MIN / -1 guard (which sets
- * no floating point status there either -- only the quotient overflows,
- * and this only ever computes the remainder) */
+/* no integer npy_remainder to call, so mirror @TYPE@_remainder in
+ * loops_modulo.dispatch.c.src, including the T_MIN / -1 guard. that guard
+ * doesn't set a floating point status there either, since only the
+ * quotient overflows and this only ever computes the remainder */
 template <typename T>
 static inline std::enable_if_t<std::is_integral_v<T> && std::is_signed_v<T>, T>
 floor_mod(T a, T b)
@@ -84,8 +84,8 @@ floor_mod(T a, T b)
 }
 
 /*
- * One loop per real dtype. T is the storage/compute type; discont is read
- * as T itself for the float dtypes, npy_double for the integer ones.
+ * One loop per real dtype. T is the storage/compute type, and discont is
+ * read as T itself for the float dtypes, npy_double for the integer ones.
  * npy_half has no native arithmetic, so it gets its own loop below.
  */
 template <typename T>
@@ -154,8 +154,8 @@ unwrap_loop(PyArrayMethod_Context *NPY_UNUSED(context), char *const data[],
     return 0;
 }
 
-/* rounds to half after every step, like numpy's own HALF_remainder loop,
- * instead of only at the end -- that changes the result */
+/* rounds to half after every step, like numpy's own HALF_remainder loop.
+ * rounding only at the end instead would change the result */
 static inline float h2f(npy_half h) { return npy_half_to_float(h); }
 static inline npy_half f2h(float f) { return npy_float_to_half(f); }
 
@@ -220,15 +220,15 @@ add_unwrap_loop(PyObject *ufunc, int typenum, PyArrayMethod_StridedLoop *loop)
     if (dt == NULL) {
         return -1;
     }
-    /* discont is read at typenum's own precision for float dtypes, double
-     * for the integer ones -- matches unwrap_loop's own D derivation */
+    /* discont is read at typenum's own precision for float dtypes and at
+     * double for the integer ones, matching unwrap_loop's own D derivation */
     int discont_typenum = PyTypeNum_ISFLOAT(typenum) ? typenum : NPY_DOUBLE;
     PyArray_DTypeMeta *disc_dt = PyArray_DTypeFromTypeNum(discont_typenum);
     if (disc_dt == NULL) {
         Py_DECREF(dt);
         return -1;
     }
-    /* p, out and period share the loop dtype; discont has its own dtype. */
+    /* p, out and period share the loop dtype, discont has its own */
     PyArray_DTypeMeta *dtypes[4] = {dt, disc_dt, dt, dt};
     PyType_Slot slots[] = {
         {NPY_METH_strided_loop, (void *)loop},

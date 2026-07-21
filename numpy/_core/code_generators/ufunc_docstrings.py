@@ -3304,9 +3304,9 @@ add_newdoc('numpy._core.umath', '_unwrap',
     For each 1-D slice ``p`` along the core dimension, unwrap the values by
     changing elements whose absolute difference from their predecessor exceeds
     ``max(discont, period/2)`` to their `period`-complementary values.
-    `discont` and `period` are scalars that are expected to already share the
-    common dtype of `p`. The public `numpy.unwrap` wrapper fills their
-    defaults, resolves that dtype and casts them.
+    `period` is expected to already share `p`'s dtype, and `discont` its own
+    matching dtype. The public `numpy.unwrap` wrapper fills their defaults
+    and resolves and casts both before calling this.
 
     See Also
     --------
