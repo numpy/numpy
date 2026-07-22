@@ -1206,6 +1206,12 @@ defdict = {
           TD(O),
           signature='(n),(n,m)->(m)',
           ),
+'_unwrap':
+    Ufunc(3, 1, None,
+          docstrings.get('numpy._core.umath._unwrap'),
+          None,
+          signature='(n),(),()->(n)',
+          ),
 # Real and imag ufunc helpers (loops added later):
 'real':
     Ufunc(1, 1, None,

@@ -1,0 +1,9 @@
+``numpy.unwrap`` is now implemented as a generalized ufunc and preserves array subclasses
+-----------------------------------------------------------------------------------------
+The core of ``numpy.unwrap`` is now a generalized ufunc in C++ (signature ``(n),(),()->(n)``)
+covering the floating point and signed integer dtypes while performing the operation
+in a single pass without the intermediate arrays the previous Python implementation
+had to allocate. As a result, ``numpy.unwrap`` now preserves the ``ndarray`` subclasses
+rather than always returning a base ``ndarray`` in all cases except masked arrays.
+For masked arrays and their subclasses, the current unwrap algorithm is ill-defined
+so it unmasks the maskedarray and performs the operation on an ndarray instead.
