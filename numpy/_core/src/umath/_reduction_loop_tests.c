@@ -168,13 +168,16 @@ add_minimummaximum(PyObject *module, const char *name, int with_identity)
     PyArray_DTypeMeta *dt = NPY_DTYPE(double_descr);
     PyArray_DTypeMeta *dtypes[4] = {dt, dt, dt, dt};
 
-    PyType_Slot slots[] = {
+    PyType_Slot slots[4] = {
         {NPY_METH_strided_loop, (void *)&double_minimummaximum_loop},
         {NPY_METH_get_reduction_loop, (void *)&minimummaximum_get_reduction_loop},
-        {NPY_METH_get_multi_reduction_initials, with_identity ?
-         (void *)&minimummaximum_get_multi_reduction_initials : NULL},
+        {0, NULL},
         {0, NULL},
     };
+    if (with_identity) {
+        slots[2].slot = NPY_METH_get_multi_reduction_initials;
+        slots[2].pfunc = (void *)&minimummaximum_get_multi_reduction_initials;
+    }
 
     PyArrayMethod_Spec spec = {
         .name = name,

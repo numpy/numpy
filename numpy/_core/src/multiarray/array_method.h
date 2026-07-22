@@ -113,6 +113,7 @@ reduction_get_initial(PyArrayMethod_Context *context,
                 context, reduction_is_empty, initials);
     }
     if (meth->get_reduction_initial != NULL) {
+        assert(meth->nout == 1);
         return meth->get_reduction_initial(
                 context, reduction_is_empty, initials[0]);
     }

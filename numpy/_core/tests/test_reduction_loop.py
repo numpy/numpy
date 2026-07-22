@@ -157,6 +157,22 @@ class TestReductionLoop:
         with pytest.raises(ValueError, match="one entry per reduction output"):
             mm.reduce(a, initial=(1.0, 2.0, 3.0))
 
+    @pytest.mark.parametrize("initial", [(None, 5.0), (5.0, None), (None, None)])
+    def test_reduce_initial_tuple_none_raises(self, initial):
+        # `initial=None` means "no initial value", which cannot be expressed
+        # per-output, so it must not be packed as a value (NaN for floats).
+        a = make_array((4,), seed=7)
+        with pytest.raises(ValueError, match="cannot be None"):
+            mm.reduce(a, initial=initial)
+
+    def test_reduce_initial_scalar_none(self):
+        # A scalar None is still "no initial value", as for single-output
+        # reductions, so it falls back to seeding from the first element.
+        a = make_array((4,), seed=7)
+        got_min, got_max = mm.reduce(a, initial=None)
+        np.testing.assert_array_equal(got_min, np.minimum.reduce(a, initial=None))
+        np.testing.assert_array_equal(got_max, np.maximum.reduce(a, initial=None))
+
     @pytest.mark.parametrize("shape", SHAPES, ids=str)
     @pytest.mark.parametrize("keepdims", [False, True])
     def test_reduce_out_tuple(self, shape, keepdims):
@@ -171,6 +187,27 @@ class TestReductionLoop:
             assert got_min is omin and got_max is omax
             np.testing.assert_array_equal(omin, ref_min)
             np.testing.assert_array_equal(omax, ref_max)
+
+    def test_reduce_out_overlapping_input(self):
+        # `out` views into the reduced array make the iterator use a writeback
+        # temporary, but the arrays that were passed in must still be the ones
+        # returned and updated.
+        a = np.arange(12, dtype=np.float64).reshape(3, 4)
+        ref_min = np.minimum.reduce(a, axis=0)
+        ref_max = np.maximum.reduce(a, axis=0)
+        omin, omax = a[0], a[1]
+        got_min, got_max = mm.reduce(a, axis=0, out=(omin, omax))
+        assert got_min is omin and got_max is omax
+        np.testing.assert_array_equal(omin, ref_min)
+        np.testing.assert_array_equal(omax, ref_max)
+
+    @pytest.mark.parametrize("out", [None, (None, None)])
+    def test_reduce_out_none(self, out):
+        # `out=None` means no output was given, as for single-output reduce.
+        a = make_array((4,), seed=9)
+        got_min, got_max = mm.reduce(a, out=out)
+        np.testing.assert_array_equal(got_min, np.minimum.reduce(a))
+        np.testing.assert_array_equal(got_max, np.maximum.reduce(a))
 
     def test_reduce_out_bare_array_raises(self):
         a = make_array((4,), seed=9)
