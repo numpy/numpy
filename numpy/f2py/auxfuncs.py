@@ -131,9 +131,7 @@ def isreal(var):
     return isscalar(var) and var.get('typespec') == 'real'
 
 
-def get_kind(
-        var: dict[str, dict[str, str]]
-) -> 'Literal["-8", "-4", "-2", "-1", "1", "2", "4", "8", "16"]':
+def get_kind(var):
     try:
         result = var['kindselector']['*']
     except KeyError:
