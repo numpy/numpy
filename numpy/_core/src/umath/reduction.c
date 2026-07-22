@@ -383,15 +383,30 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     NPY_ARRAYMETHOD_FLAGS flags;
 
     npy_intp *strideptr = NpyIter_GetInnerStrideArray(iter);
+    /*
+     * Expand the iterator's strides, which are laid out as
+     *     [out_0 .. out_{nout-1}, operand, (wheremask)]
+     * into the layout the reduction loop is called with,
+     *     [acc_0 .. acc_{nout-1}, x, out_0 .. out_{nout-1}, (mask)]
+     * so that `get_reduction_loop` sees the same layout at setup time as the
+     * loop does at call time (see `reduce_loop`).
+     */
+    npy_intp fixed_strides[NPY_MAXARGS];
+    for (int i = 0; i < nout; i++) {
+        fixed_strides[i] = strideptr[i];
+        fixed_strides[nout + 1 + i] = strideptr[i];
+    }
+    fixed_strides[nout] = strideptr[nout];
     if (wheremask != NULL) {
+        fixed_strides[2 * nout + 1] = strideptr[nout + 1];
         if (PyArrayMethod_GetMaskedReductionLoop(context,
-                1, strideptr, &strided_loop, &auxdata, &flags) < 0) {
+                1, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
             goto fail;
         }
     }
     else {
         if (reduction_get_loop_func(context->method)(context,
-                1, 0, strideptr, &strided_loop, &auxdata, &flags) < 0) {
+                1, 0, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
             goto fail;
         }
     }
