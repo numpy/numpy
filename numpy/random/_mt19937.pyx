@@ -192,7 +192,7 @@ cdef class MT19937(BitGenerator):
                     raise ValueError("Seed must be between 0 and 2**32 - 1")
                 obj = obj.astype(np.uint32, casting='unsafe', order='C')
                 mt19937_init_by_array(&self.rng_state, <uint32_t*> obj.data, np.PyArray_DIM(obj, 0))
-        self._seed_seq = None
+            self._seed_seq = None
 
     cdef jump_inplace(self, iter):
         """
@@ -266,11 +266,12 @@ cdef class MT19937(BitGenerator):
             state of the PRNG
         """
         key = np.zeros(624, dtype=np.uint32)
-        for i in range(624):
-            key[i] = self.rng_state.key[i]
+        with self.lock:
+            for i in range(624):
+                key[i] = self.rng_state.key[i]
 
-        return {'bit_generator': self.__class__.__name__,
-                'state': {'key': key, 'pos': self.rng_state.pos}}
+            return {'bit_generator': self.__class__.__name__,
+                    'state': {'key': key, 'pos': self.rng_state.pos}}
 
     @state.setter
     def state(self, value):
@@ -286,6 +287,7 @@ cdef class MT19937(BitGenerator):
         if bitgen != self.__class__.__name__:
             raise ValueError(f'state must be for a {self.__class__.__name__} PRNG')
         key = value['state']['key']
-        for i in range(624):
-            self.rng_state.key[i] = key[i]
-        self.rng_state.pos = value['state']['pos']
+        with self.lock:
+            for i in range(624):
+                self.rng_state.key[i] = key[i]
+            self.rng_state.pos = value['state']['pos']
