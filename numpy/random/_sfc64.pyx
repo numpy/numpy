@@ -118,9 +118,10 @@ cdef class SFC64(BitGenerator):
         cdef uint32_t uinteger
 
         state_vec = <np.ndarray>np.empty(4, dtype=np.uint64)
-        sfc64_get_state(&self.rng_state,
-                        <uint64_t *>np.PyArray_DATA(state_vec),
-                        &has_uint32, &uinteger)
+        with self.lock:
+            sfc64_get_state(&self.rng_state,
+                            <uint64_t *>np.PyArray_DATA(state_vec),
+                            &has_uint32, &uinteger)
         return {'bit_generator': self.__class__.__name__,
                 'state': {'state': state_vec},
                 'has_uint32': has_uint32,
@@ -140,6 +141,7 @@ cdef class SFC64(BitGenerator):
         state_vec[:] = value['state']['state']
         has_uint32 = value['has_uint32']
         uinteger = value['uinteger']
-        sfc64_set_state(&self.rng_state,
-                        <uint64_t *>np.PyArray_DATA(state_vec),
-                        has_uint32, uinteger)
+        with self.lock:
+            sfc64_set_state(&self.rng_state,
+                            <uint64_t *>np.PyArray_DATA(state_vec),
+                            has_uint32, uinteger)

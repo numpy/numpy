@@ -1,5 +1,6 @@
 import concurrent.futures
 import inspect
+import random
 import subprocess
 import sys
 import textwrap
@@ -39,6 +40,48 @@ def test_parallel_randomstate():
         rng.set_state(state)
 
     run_threaded(func, 8, pass_count=True)
+
+def test_parallel_seed_get_state():
+    seeds = [12345, 67890]
+    rng = np.random.RandomState()
+    expected = []
+    for seed in seeds:
+        rng.seed(seed)
+        expected.append(rng.get_state()[1])
+
+    def func(i, barrier):
+        rnd = random.Random(i)
+        barrier.wait()
+        for _ in range(100):
+            if rnd.randrange(2):
+                rng.seed(rnd.choice(seeds))
+            else:
+                key = rng.get_state()[1]
+                assert any((key == exp).all() for exp in expected)
+
+    run_threaded(func, pass_count=True, pass_barrier=True)
+
+@pytest.mark.parametrize(
+    "bitgen_name", ["MT19937", "PCG64", "PCG64DXSM", "Philox", "SFC64"])
+def test_parallel_bit_generator_state_access(bitgen_name):
+    bg = getattr(np.random, bitgen_name)(12345)
+    gen = np.random.Generator(bg)
+
+    def func(i, barrier):
+        rnd = random.Random(i)
+        barrier.wait()
+        for _ in range(100):
+            branch = rnd.randrange(3)
+            if branch == 0:
+                bg.state = bg.state
+            elif branch == 1:
+                gen.random(10)
+            elif hasattr(bg, "advance"):
+                bg.advance(10)
+            else:
+                _ = bg.state
+
+    run_threaded(func, pass_count=True, pass_barrier=True)
 
 def test_parallel_ufunc_execution():
     # if the loop data cache or dispatch cache are not thread-safe
