@@ -49,7 +49,7 @@ jobs:
             return parseInt(fs.readFileSync("pr_number.txt", { encoding: "utf8" }))
 
       - name: Hide old comments
-        uses: int128/hide-comment-action@769d2f65928cb6477a9993aab4ed7a02c33f4588  # v1.64.0
+        uses: int128/hide-comment-action@7938621b1746abfe9727d44c8f6c47d5485192ca  # v1.65.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ steps.get-pr-number.outputs.result }}
