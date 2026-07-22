@@ -206,6 +206,18 @@ validate_spec(PyArrayMethod_Spec *spec)
             }
     }
 
+    if (spec->flags & ~(NPY_METH_REQUIRES_PYAPI |
+                        NPY_METH_NO_FLOATINGPOINT_ERRORS |
+                        NPY_METH_SUPPORTS_UNALIGNED |
+                        NPY_METH_IS_REORDERABLE |
+                        _NPY_METH_FORCE_CAST_INPUTS |
+                        NPY_METH_REQUIRES_CONTIGUOUS)) {
+        PyErr_Format(PyExc_ValueError,
+                "Invalid flags set for ArrayMethod: 0x%x. (method: %s)",
+                spec->flags, spec->name);
+        return -1;
+    }
+
     for (int i = 0; i < nargs; i++) {
         /*
          * Note that we could allow for output dtypes to not be specified
@@ -392,7 +404,6 @@ fill_arraymethod_from_slots(
                 spec->name);
         return -1;
     }
-
     return 0;
 }
 
