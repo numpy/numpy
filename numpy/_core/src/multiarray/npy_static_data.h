@@ -206,7 +206,7 @@ typedef struct npy_static_cdata_struct {
 } npy_static_cdata_struct;
 
 /* npy_interned_str migrated to multiarray_umath_state.interned_str */
-NPY_VISIBILITY_HIDDEN extern npy_static_pydata_struct npy_static_pydata;
+/* npy_static_pydata migrated to multiarray_umath_state.static_pydata */
 /* npy_static_cdata migrated to multiarray_umath_state.static_cdata */
 
 #ifdef __cplusplus

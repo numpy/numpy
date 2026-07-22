@@ -28,6 +28,7 @@
 #include "refcount.h"
 #include "dtype_traversal.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "multiarraymodule.h"
 
 #include <assert.h>
@@ -864,7 +865,7 @@ void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
     if (descr1->subarray == NULL && descr1->names == NULL &&
             descr2->subarray == NULL && descr2->names == NULL) {
         if (descr1->elsize != descr2->elsize) {
-            PyErr_SetString(npy_static_pydata.DTypePromotionError,
+            PyErr_SetString(npy_get_module_state()->static_pydata.DTypePromotionError,
                     "Invalid type promotion with void datatypes of different "
                     "lengths. Use the `np.bytes_` datatype instead to pad the "
                     "shorter value with trailing zero bytes.");
@@ -903,7 +904,7 @@ void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
             return NULL;
         }
         if (!cmp) {
-            PyErr_SetString(npy_static_pydata.DTypePromotionError,
+            PyErr_SetString(npy_get_module_state()->static_pydata.DTypePromotionError,
                     "invalid type promotion with subarray datatypes "
                     "(shape mismatch).");
             return NULL;
@@ -933,7 +934,7 @@ void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
         return new_descr;
     }
 
-    PyErr_SetString(npy_static_pydata.DTypePromotionError,
+    PyErr_SetString(npy_get_module_state()->static_pydata.DTypePromotionError,
             "invalid type promotion with structured datatype(s).");
     return NULL;
 }

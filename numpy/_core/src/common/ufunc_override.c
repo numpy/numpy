@@ -43,7 +43,7 @@ PyUFuncOverride_GetNonDefaultArrayUfunc(PyObject *obj)
         return NULL;
     }
     /* Ignore if the same as ndarray.__array_ufunc__ (it may be NULL here) */
-    if (cls_array_ufunc == npy_static_pydata.ndarray_array_ufunc) {
+    if (cls_array_ufunc == npy_get_module_state()->static_pydata.ndarray_array_ufunc) {
         Py_DECREF(cls_array_ufunc);
         return NULL;
     }

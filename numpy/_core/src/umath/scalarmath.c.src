@@ -25,6 +25,7 @@
 #include "templ_common.h"
 
 #include "binop_override.h"
+#include "module_state.h"
 #include "npy_longdouble.h"
 
 #include "arraytypes.h"
@@ -1754,7 +1755,7 @@ static int
 static int
 emit_complexwarning(void)
 {
-    return PyErr_WarnEx(npy_static_pydata.ComplexWarning,
+    return PyErr_WarnEx(npy_get_module_state()->static_pydata.ComplexWarning,
             "Casting complex values to real discards the imaginary part", 1);
 }
 

@@ -119,8 +119,8 @@ fetch_curr_extobj_state(npy_extobj *extobj)
 {
     PyObject *capsule;
     if (PyContextVar_Get(
-            npy_static_pydata.npy_extobj_contextvar,
-            npy_static_pydata.default_extobj_capsule, &capsule) < 0) {
+            npy_get_module_state()->static_pydata.npy_extobj_contextvar,
+            npy_get_module_state()->static_pydata.default_extobj_capsule, &capsule) < 0) {
         return -1;
     }
     npy_extobj *obj = PyCapsule_GetPointer(capsule, "numpy.ufunc.extobj");
@@ -142,22 +142,22 @@ fetch_curr_extobj_state(npy_extobj *extobj)
 NPY_NO_EXPORT int
 init_extobj(void)
 {
-    npy_static_pydata.default_extobj_capsule = make_extobj_capsule(
+    npy_get_module_state()->static_pydata.default_extobj_capsule = make_extobj_capsule(
             NPY_BUFSIZE, UFUNC_ERR_DEFAULT, Py_None);
-    if (npy_static_pydata.default_extobj_capsule == NULL) {
+    if (npy_get_module_state()->static_pydata.default_extobj_capsule == NULL) {
         return -1;
     }
 #ifdef Py_GIL_DISABLED
-    if (PyUnstable_SetImmortal(npy_static_pydata.default_extobj_capsule) == 0) {
+    if (PyUnstable_SetImmortal(npy_get_module_state()->static_pydata.default_extobj_capsule) == 0) {
         PyErr_SetString(PyExc_RuntimeError, "Could not mark extobj capsule as immortal");
-        Py_CLEAR(npy_static_pydata.default_extobj_capsule);
+        Py_CLEAR(npy_get_module_state()->static_pydata.default_extobj_capsule);
         return -1;
     }
 #endif
-    npy_static_pydata.npy_extobj_contextvar = PyContextVar_New(
-            "numpy.ufunc.extobj", npy_static_pydata.default_extobj_capsule);
-    if (npy_static_pydata.npy_extobj_contextvar == NULL) {
-        Py_CLEAR(npy_static_pydata.default_extobj_capsule);
+    npy_get_module_state()->static_pydata.npy_extobj_contextvar = PyContextVar_New(
+            "numpy.ufunc.extobj", npy_get_module_state()->static_pydata.default_extobj_capsule);
+    if (npy_get_module_state()->static_pydata.npy_extobj_contextvar == NULL) {
+        Py_CLEAR(npy_get_module_state()->static_pydata.default_extobj_capsule);
         return -1;
     }
     return 0;

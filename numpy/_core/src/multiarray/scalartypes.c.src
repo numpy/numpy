@@ -3431,7 +3431,7 @@ object_arrtype_alloc(PyTypeObject *type, Py_ssize_t items)
      * Object scalars should not actually exist, if they exist we should
      * consider it to be a bug.
      */
-    if (PyErr_WarnEx(npy_static_pydata.VisibleDeprecationWarning,
+    if (PyErr_WarnEx(npy_get_module_state()->static_pydata.VisibleDeprecationWarning,
             "Creating a NumPy object scalar.  NumPy object scalars should "
             "never be created.  If you see this message please inform the "
             "NumPy developers.  Since this message should never be shown "

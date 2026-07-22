@@ -2622,7 +2622,7 @@ arraydescr_new(PyTypeObject *subtype,
             if (res == -1 && PyErr_Occurred()) {
                 return NULL;  // Should actually be impossible (as inputs are `long`)
             }
-            if (PyErr_WarnFormat(npy_static_pydata.VisibleDeprecationWarning, 1,
+            if (PyErr_WarnFormat(npy_get_module_state()->static_pydata.VisibleDeprecationWarning, 1,
                         "dtype(): align should be passed as Python or NumPy boolean but got `align=%.100R`. "
                         "Did you mean to pass a tuple to create a subarray type? (Deprecated NumPy 2.4)",
                         oalign) < 0) {

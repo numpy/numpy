@@ -114,7 +114,7 @@ get_legacy_print_mode(void) {
      * complex requirements in the future.
      */
     PyObject *format_options = NULL;
-    PyContextVar_Get(npy_static_pydata.format_options, NULL, &format_options);
+    PyContextVar_Get(npy_get_module_state()->static_pydata.format_options, NULL, &format_options);
     if (format_options == NULL) {
         PyErr_SetString(PyExc_SystemError,
                         "NumPy internal error: unable to get format_options "
@@ -4292,7 +4292,7 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     }
     else if (result == MEM_OVERLAP_TOO_HARD) {
         if (raise_exceptions) {
-            PyErr_SetString(npy_static_pydata.TooHardError,
+            PyErr_SetString(npy_get_module_state()->static_pydata.TooHardError,
                             "Exceeded max_work");
             return NULL;
         }
@@ -5082,7 +5082,51 @@ multiarray_umath_traverse(PyObject *m, visitproc visit, void *arg)
     Py_VISIT(state->interned_str.argpartition);
     Py_VISIT(state->interned_str._set_dtype);
 
-    /* FIXME : Py_VISIT each field of state->static_pydata */
+    Py_VISIT(state->static_pydata.default_truediv_type_tup);
+    Py_VISIT(state->static_pydata.default_extobj_capsule);
+    Py_VISIT(state->static_pydata.npy_extobj_contextvar);
+    Py_VISIT(state->static_pydata.ndarray_array_ufunc);
+    Py_VISIT(state->static_pydata.ndarray_array_finalize);
+    Py_VISIT(state->static_pydata.ndarray_array_function);
+    Py_VISIT(state->static_pydata.ndarray_set_dtype);
+    Py_VISIT(state->static_pydata.ndarray_dtype_descr);
+    Py_VISIT(state->static_pydata.one_obj);
+    Py_VISIT(state->static_pydata.zero_obj);
+    Py_VISIT(state->static_pydata.zero_pyint_like_arr);
+    Py_VISIT(state->static_pydata.AxisError);
+    Py_VISIT(state->static_pydata.ComplexWarning);
+    Py_VISIT(state->static_pydata.DTypePromotionError);
+    Py_VISIT(state->static_pydata.TooHardError);
+    Py_VISIT(state->static_pydata.VisibleDeprecationWarning);
+    Py_VISIT(state->static_pydata._CopyMode);
+    Py_VISIT(state->static_pydata._NoValue);
+    Py_VISIT(state->static_pydata._ArrayMemoryError);
+    Py_VISIT(state->static_pydata._UFuncBinaryResolutionError);
+    Py_VISIT(state->static_pydata._UFuncInputCastingError);
+    Py_VISIT(state->static_pydata._UFuncNoLoopError);
+    Py_VISIT(state->static_pydata._UFuncOutputCastingError);
+    Py_VISIT(state->static_pydata.math_floor_func);
+    Py_VISIT(state->static_pydata.math_ceil_func);
+    Py_VISIT(state->static_pydata.math_trunc_func);
+    Py_VISIT(state->static_pydata.math_gcd_func);
+    Py_VISIT(state->static_pydata.os_PathLike);
+    Py_VISIT(state->static_pydata.os_fspath);
+    Py_VISIT(state->static_pydata.format_options);
+    Py_VISIT(state->static_pydata.legacy_resolver_promoting);
+    Py_VISIT(state->static_pydata.kwnames_is_copy);
+    Py_VISIT(state->static_pydata.axes_1d_obj_kwargs);
+    Py_VISIT(state->static_pydata.axes_2d_obj_kwargs);
+    Py_VISIT(state->static_pydata.cpu_dispatch_registry);
+    Py_VISIT(state->static_pydata.VoidToGenericMethod);
+    Py_VISIT(state->static_pydata.GenericToVoidMethod);
+    Py_VISIT(state->static_pydata.ObjectToGenericMethod);
+    Py_VISIT(state->static_pydata.GenericToObjectMethod);
+    Py_VISIT(state->static_pydata.dl_call_kwnames);
+    Py_VISIT(state->static_pydata.dl_cpu_device_tuple);
+    Py_VISIT(state->static_pydata.dl_max_version);
+    Py_VISIT(state->static_pydata.dlpack_dtype_registry);
+    Py_VISIT(state->static_pydata.dlpack_export_registry);
+
     /* FIXME : Py_VISIT each field of state->runtime_imports */
     return 0;
 }
@@ -5136,7 +5180,51 @@ multiarray_umath_clear(PyObject *m)
     Py_CLEAR(state->interned_str.argpartition);
     Py_CLEAR(state->interned_str._set_dtype);
 
-    /* FIXME : Py_CLEAR each field of state->static_pydata */
+    Py_CLEAR(state->static_pydata.default_truediv_type_tup);
+    Py_CLEAR(state->static_pydata.default_extobj_capsule);
+    Py_CLEAR(state->static_pydata.npy_extobj_contextvar);
+    Py_CLEAR(state->static_pydata.ndarray_array_ufunc);
+    Py_CLEAR(state->static_pydata.ndarray_array_finalize);
+    Py_CLEAR(state->static_pydata.ndarray_array_function);
+    Py_CLEAR(state->static_pydata.ndarray_set_dtype);
+    Py_CLEAR(state->static_pydata.ndarray_dtype_descr);
+    Py_CLEAR(state->static_pydata.one_obj);
+    Py_CLEAR(state->static_pydata.zero_obj);
+    Py_CLEAR(state->static_pydata.zero_pyint_like_arr);
+    Py_CLEAR(state->static_pydata.AxisError);
+    Py_CLEAR(state->static_pydata.ComplexWarning);
+    Py_CLEAR(state->static_pydata.DTypePromotionError);
+    Py_CLEAR(state->static_pydata.TooHardError);
+    Py_CLEAR(state->static_pydata.VisibleDeprecationWarning);
+    Py_CLEAR(state->static_pydata._CopyMode);
+    Py_CLEAR(state->static_pydata._NoValue);
+    Py_CLEAR(state->static_pydata._ArrayMemoryError);
+    Py_CLEAR(state->static_pydata._UFuncBinaryResolutionError);
+    Py_CLEAR(state->static_pydata._UFuncInputCastingError);
+    Py_CLEAR(state->static_pydata._UFuncNoLoopError);
+    Py_CLEAR(state->static_pydata._UFuncOutputCastingError);
+    Py_CLEAR(state->static_pydata.math_floor_func);
+    Py_CLEAR(state->static_pydata.math_ceil_func);
+    Py_CLEAR(state->static_pydata.math_trunc_func);
+    Py_CLEAR(state->static_pydata.math_gcd_func);
+    Py_CLEAR(state->static_pydata.os_PathLike);
+    Py_CLEAR(state->static_pydata.os_fspath);
+    Py_CLEAR(state->static_pydata.format_options);
+    Py_CLEAR(state->static_pydata.legacy_resolver_promoting);
+    Py_CLEAR(state->static_pydata.kwnames_is_copy);
+    Py_CLEAR(state->static_pydata.axes_1d_obj_kwargs);
+    Py_CLEAR(state->static_pydata.axes_2d_obj_kwargs);
+    Py_CLEAR(state->static_pydata.cpu_dispatch_registry);
+    Py_CLEAR(state->static_pydata.VoidToGenericMethod);
+    Py_CLEAR(state->static_pydata.GenericToVoidMethod);
+    Py_CLEAR(state->static_pydata.ObjectToGenericMethod);
+    Py_CLEAR(state->static_pydata.GenericToObjectMethod);
+    Py_CLEAR(state->static_pydata.dl_call_kwnames);
+    Py_CLEAR(state->static_pydata.dl_cpu_device_tuple);
+    Py_CLEAR(state->static_pydata.dl_max_version);
+    Py_CLEAR(state->static_pydata.dlpack_dtype_registry);
+    Py_CLEAR(state->static_pydata.dlpack_export_registry);
+
     /* FIXME : Py_CLEAR each field of state->runtime_imports */
     return 0;
 }
@@ -5464,29 +5552,30 @@ _multiarray_umath_exec(PyObject *m) {
     }
 
     // initialize static references to ndarray.__array_*__ special methods
-    npy_static_pydata.ndarray_array_finalize = PyObject_GetAttrString(
+    multiarray_umath_state *state = get_module_state(m);
+    state->static_pydata.ndarray_array_finalize = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_finalize__");
-    if (npy_static_pydata.ndarray_array_finalize == NULL) {
+    if (state->static_pydata.ndarray_array_finalize == NULL) {
         return -1;
     }
-    npy_static_pydata.ndarray_array_ufunc = PyObject_GetAttrString(
+    state->static_pydata.ndarray_array_ufunc = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_ufunc__");
-    if (npy_static_pydata.ndarray_array_ufunc == NULL) {
+    if (state->static_pydata.ndarray_array_ufunc == NULL) {
         return -1;
     }
-    npy_static_pydata.ndarray_array_function = PyObject_GetAttrString(
+    state->static_pydata.ndarray_array_function = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_function__");
-    if (npy_static_pydata.ndarray_array_function == NULL) {
+    if (state->static_pydata.ndarray_array_function == NULL) {
         return -1;
     }
-    npy_static_pydata.ndarray_set_dtype = PyObject_GetAttrString(
+    state->static_pydata.ndarray_set_dtype = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "_set_dtype");
-    if (npy_static_pydata.ndarray_set_dtype == NULL) {
+    if (state->static_pydata.ndarray_set_dtype == NULL) {
         return -1;
     }
-    npy_static_pydata.ndarray_dtype_descr = PyObject_GetAttrString(
+    state->static_pydata.ndarray_dtype_descr = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "dtype");
-    if (npy_static_pydata.ndarray_dtype_descr == NULL) {
+    if (state->static_pydata.ndarray_dtype_descr == NULL) {
         return -1;
     }
 
@@ -5514,12 +5603,12 @@ _multiarray_umath_exec(PyObject *m) {
     PyDict_SetItemString(d, "StringDType", (PyObject *)&PyArray_StringDType);
 
     // initialize static reference to a zero-like array
-    npy_static_pydata.zero_pyint_like_arr = PyArray_ZEROS(
+    state->static_pydata.zero_pyint_like_arr = PyArray_ZEROS(
             0, NULL, NPY_DEFAULT_INT, NPY_FALSE);
-    if (npy_static_pydata.zero_pyint_like_arr == NULL) {
+    if (state->static_pydata.zero_pyint_like_arr == NULL) {
         return -1;
     }
-    ((PyArrayObject_fields *)npy_static_pydata.zero_pyint_like_arr)->flags |=
+    ((PyArrayObject_fields *)state->static_pydata.zero_pyint_like_arr)->flags |=
             (NPY_ARRAY_WAS_PYTHON_INT|NPY_ARRAY_WAS_INT_AND_REPLACED);
 
     if (verify_static_structs_initialized() < 0) {

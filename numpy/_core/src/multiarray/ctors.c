@@ -581,7 +581,7 @@ raise_memory_error(int nd, npy_intp const *dims, PyArray_Descr *descr)
     if (exc_value == NULL){
         goto fail;
     }
-    PyErr_SetObject(npy_static_pydata._ArrayMemoryError, exc_value);
+    PyErr_SetObject(npy_get_module_state()->static_pydata._ArrayMemoryError, exc_value);
     Py_DECREF(exc_value);
     return;
 
@@ -902,7 +902,7 @@ PyArray_NewFromDescr_int(
         if (func == NULL) {
             goto fail;
         }
-        else if (func == npy_static_pydata.ndarray_array_finalize) {
+        else if (func == npy_get_module_state()->static_pydata.ndarray_array_finalize) {
             Py_DECREF(func);
         }
         else {
@@ -2541,7 +2541,7 @@ PyArray_FromArrayAttr_int(PyObject *op, PyArray_Descr *descr, int copy,
      * signature of the __array__ method being called does not have `copy`.
      */
     if (copy != -1) {
-        kwnames = npy_static_pydata.kwnames_is_copy;
+        kwnames = npy_get_module_state()->static_pydata.kwnames_is_copy;
         arguments[nargs] = copy == 1 ? Py_True : Py_False;
     }
 

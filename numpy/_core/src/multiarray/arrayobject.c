@@ -958,7 +958,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     if (result == NULL
             && (cmp_op == Py_EQ || cmp_op == Py_NE)
             && PyErr_ExceptionMatches(
-                    npy_static_pydata._UFuncNoLoopError)) {
+                    npy_get_module_state()->static_pydata._UFuncNoLoopError)) {
         PyErr_Clear();
 
         PyArrayObject *array_other = (PyArrayObject *)PyArray_FROM_O(other);

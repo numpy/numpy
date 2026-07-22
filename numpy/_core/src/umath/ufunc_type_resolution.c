@@ -39,6 +39,7 @@
 #include "numpy/ufuncobject.h"
 #include "npy_import.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "ufunc_type_resolution.h"
 #include "ufunc_object.h"
 #include "common.h"
@@ -86,14 +87,14 @@ NPY_NO_EXPORT PyObject *
 npy_begin_legacy_resolver_promotion(void)
 {
     return PyContextVar_Set(
-            npy_static_pydata.legacy_resolver_promoting, Py_True);
+            npy_get_module_state()->static_pydata.legacy_resolver_promoting, Py_True);
 }
 
 NPY_NO_EXPORT int
 npy_end_legacy_resolver_promotion(PyObject *token)
 {
     int result = PyContextVar_Reset(
-            npy_static_pydata.legacy_resolver_promoting, token);
+            npy_get_module_state()->static_pydata.legacy_resolver_promoting, token);
     Py_DECREF(token);
     return result;
 }
@@ -102,7 +103,7 @@ static int
 deprecate_integer_datetime_operation(void)
 {
     PyObject *promoting;
-    if (PyContextVar_Get(npy_static_pydata.legacy_resolver_promoting,
+    if (PyContextVar_Get(npy_get_module_state()->static_pydata.legacy_resolver_promoting,
                          Py_False, &promoting) < 0) {
         return -1;
     }
@@ -135,7 +136,7 @@ raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
         return -1;
     }
     PyErr_SetObject(
-            npy_static_pydata._UFuncBinaryResolutionError, exc_value);
+            npy_get_module_state()->static_pydata._UFuncBinaryResolutionError, exc_value);
     Py_DECREF(exc_value);
 
     return -1;
@@ -158,7 +159,7 @@ raise_no_loop_found_error(
     if (exc_value == NULL) {
         return -1;
     }
-    PyErr_SetObject(npy_static_pydata._UFuncNoLoopError, exc_value);
+    PyErr_SetObject(npy_get_module_state()->static_pydata._UFuncNoLoopError, exc_value);
     Py_DECREF(exc_value);
 
     return -1;
@@ -210,7 +211,7 @@ raise_input_casting_error(
         PyArray_Descr *to,
         npy_intp i)
 {
-    return raise_casting_error(npy_static_pydata._UFuncInputCastingError,
+    return raise_casting_error(npy_get_module_state()->static_pydata._UFuncInputCastingError,
                                ufunc, casting, from, to, i);
 }
 
@@ -226,7 +227,7 @@ raise_output_casting_error(
         PyArray_Descr *to,
         npy_intp i)
 {
-    return raise_casting_error(npy_static_pydata._UFuncOutputCastingError,
+    return raise_casting_error(npy_get_module_state()->static_pydata._UFuncOutputCastingError,
                                ufunc, casting, from, to, i);
 }
 
@@ -1524,7 +1525,7 @@ PyUFunc_TrueDivisionTypeResolver(PyUFuncObject *ufunc,
             (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2))) {
         return PyUFunc_DefaultTypeResolver(
                 ufunc, casting, operands,
-                npy_static_pydata.default_truediv_type_tup, out_dtypes);
+                npy_get_module_state()->static_pydata.default_truediv_type_tup, out_dtypes);
     }
     return PyUFunc_DivisionTypeResolver(ufunc, casting, operands,
                                         type_tup, out_dtypes);
