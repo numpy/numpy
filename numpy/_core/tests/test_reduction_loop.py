@@ -209,6 +209,17 @@ class TestReductionLoop:
         np.testing.assert_array_equal(got_min, np.minimum.reduce(a))
         np.testing.assert_array_equal(got_max, np.maximum.reduce(a))
 
+    @pytest.mark.parametrize("which", [0, 1])
+    def test_reduce_out_partial(self, which):
+        # Only some entries of the `out` tuple given, the rest allocated.
+        a = make_array((3, 4), seed=9)
+        given = np.empty(4)
+        out = (given, None) if which == 0 else (None, given)
+        got = mm.reduce(a, axis=0, out=out)
+        assert got[which] is given
+        np.testing.assert_array_equal(got[0], np.minimum.reduce(a, axis=0))
+        np.testing.assert_array_equal(got[1], np.maximum.reduce(a, axis=0))
+
     def test_reduce_out_bare_array_raises(self):
         a = make_array((4,), seed=9)
         with pytest.raises(TypeError, match="must be a tuple of arrays"):
@@ -239,6 +250,27 @@ class TestReductionLoop:
                 got_min, np.minimum.reduce(a, axis=axis, where=mask, initial=initial))
             np.testing.assert_array_equal(
                 got_max, np.maximum.reduce(a, axis=axis, where=mask, initial=initial))
+
+    @pytest.mark.parametrize("shape", SHAPES, ids=str)
+    def test_reduce_where_uses_registered_identity(self, shape):
+        # Without `initial`, the registered identity seeds the masked-out
+        # slots, including slots where the mask excludes everything.
+        a = make_array(shape, seed=11)
+        mask = np.random.default_rng(12).integers(0, 2, size=shape).astype(bool)
+        for axis in reduce_axes(a.ndim):
+            got_min, got_max = mmi.reduce(a, axis=axis, where=mask)
+            np.testing.assert_array_equal(
+                got_min,
+                np.minimum.reduce(a, axis=axis, where=mask, initial=np.inf))
+            np.testing.assert_array_equal(
+                got_max,
+                np.maximum.reduce(a, axis=axis, where=mask, initial=-np.inf))
+
+    def test_reduce_where_fully_masked_gives_identity(self):
+        a = make_array((3, 4), seed=11)
+        mask = np.array([[True] * 4, [False] * 4, [True] * 4])
+        got_min, got_max = mmi.reduce(a, axis=1, where=mask)
+        assert got_min[1] == np.inf and got_max[1] == -np.inf
 
     @pytest.mark.parametrize("shape", EMPTY_SHAPES, ids=str)
     @pytest.mark.parametrize("keepdims", [False, True])
@@ -368,3 +400,25 @@ class TestReductionLoop:
         got_min, got_max = mm.outer(a, b)
         np.testing.assert_array_equal(got_min, np.minimum.outer(a, b))
         np.testing.assert_array_equal(got_max, np.maximum.outer(a, b))
+
+    # `minimummaximum` also registers an object loop, so the reduction
+    # machinery is exercised with refcounted (NPY_ITEM_REFCOUNT) descriptors.
+    @pytest.mark.parametrize("shape", SHAPES, ids=str)
+    def test_object_reduce(self, shape):
+        a = np.random.default_rng(30).integers(-50, 51, size=shape).astype(object)
+        for axis in reduce_axes(a.ndim):
+            got_min, got_max = mm.reduce(a, axis=axis)
+            np.testing.assert_array_equal(got_min, np.minimum.reduce(a, axis=axis))
+            np.testing.assert_array_equal(got_max, np.maximum.reduce(a, axis=axis))
+
+    def test_object_reduce_initial(self):
+        # `initial` is packed into refcounted buffers, which the reduction
+        # machinery has to clear again.
+        a = np.random.default_rng(31).integers(-50, 51, size=12).astype(object)
+        got_min, got_max = mm.reduce(a, initial=(7, -7))
+        assert got_min == np.minimum.reduce(a, initial=7)
+        assert got_max == np.maximum.reduce(a, initial=-7)
+
+    def test_object_reduce_incomparable_raises(self):
+        with pytest.raises(TypeError):
+            mm.reduce(np.array([1, "x", 2], dtype=object))
