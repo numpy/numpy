@@ -23,8 +23,8 @@ get_array_function(PyObject *obj)
 {
     /* Fast return for ndarray */
     if (PyArray_CheckExact(obj)) {
-        Py_INCREF(npy_static_pydata.ndarray_array_function);
-        return npy_static_pydata.ndarray_array_function;
+        Py_INCREF(npy_get_module_state()->static_pydata.ndarray_array_function);
+        return npy_get_module_state()->static_pydata.ndarray_array_function;
     }
 
     PyObject *array_function;
@@ -129,7 +129,7 @@ fail:
 static int
 is_default_array_function(PyObject *obj)
 {
-    return obj == npy_static_pydata.ndarray_array_function;
+    return obj == npy_get_module_state()->static_pydata.ndarray_array_function;
 }
 
 

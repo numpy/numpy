@@ -11,6 +11,7 @@
 #include "npy_pycompat.h"
 #include "npy_import.h"
 #include "common.h"
+#include "module_state.h"
 #include "number.h"
 #include "temp_elide.h"
 
@@ -126,15 +127,16 @@ _PyArray_SetNumericOps(PyObject *dict)
     SET(imag);
 
     // initialize static globals needed for matmul
-    npy_static_pydata.axes_1d_obj_kwargs = Py_BuildValue(
+    npy_static_pydata_struct *static_pydata = &npy_get_module_state()->static_pydata;
+    static_pydata->axes_1d_obj_kwargs = Py_BuildValue(
             "{s, [(i), (i, i), (i)]}", "axes", -1, -2, -1, -1);
-    if (npy_static_pydata.axes_1d_obj_kwargs == NULL) {
+    if (static_pydata->axes_1d_obj_kwargs == NULL) {
         return -1;
     }
 
-    npy_static_pydata.axes_2d_obj_kwargs = Py_BuildValue(
+    static_pydata->axes_2d_obj_kwargs = Py_BuildValue(
             "{s, [(i, i), (i, i), (i, i)]}", "axes", -2, -1, -2, -1, -2, -1);
-    if (npy_static_pydata.axes_2d_obj_kwargs == NULL) {
+    if (static_pydata->axes_2d_obj_kwargs == NULL) {
         return -1;
     }
 
@@ -316,10 +318,10 @@ array_inplace_matrix_multiply(PyArrayObject *self, PyObject *other)
      * passing the correct `axes=`.
      */
     if (PyArray_NDIM(self) == 1) {
-        kwargs = npy_static_pydata.axes_1d_obj_kwargs;
+        kwargs = npy_get_module_state()->static_pydata.axes_1d_obj_kwargs;
     }
     else {
-        kwargs = npy_static_pydata.axes_2d_obj_kwargs;
+        kwargs = npy_get_module_state()->static_pydata.axes_2d_obj_kwargs;
     }
     PyObject *res = PyObject_Call(n_ops.matmul, args, kwargs);
     Py_DECREF(args);
@@ -329,7 +331,7 @@ array_inplace_matrix_multiply(PyArrayObject *self, PyObject *other)
          * AxisError should indicate that the axes argument didn't work out
          * which should mean the second operand not being 2 dimensional.
          */
-        if (PyErr_ExceptionMatches(npy_static_pydata.AxisError)) {
+        if (PyErr_ExceptionMatches(npy_get_module_state()->static_pydata.AxisError)) {
             PyErr_SetString(PyExc_ValueError,
                 "inplace matrix multiplication requires the first operand to "
                 "have at least one and the second at least two dimensions.");

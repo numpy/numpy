@@ -718,9 +718,9 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
                  * TODO: Just like the general dual NEP 50/legacy promotion
                  * support this is meant as a temporary hack for NumPy 1.25.
                  */
-                Py_INCREF(npy_static_pydata.zero_pyint_like_arr);
+                Py_INCREF(npy_get_module_state()->static_pydata.zero_pyint_like_arr);
                 Py_SETREF(out_op[i],
-                          (PyArrayObject *)npy_static_pydata.zero_pyint_like_arr);
+                          (PyArrayObject *)npy_get_module_state()->static_pydata.zero_pyint_like_arr);
             }
             *promoting_pyscalars = NPY_TRUE;
         }
@@ -1397,7 +1397,7 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
         if (PyTuple_Check(op_axes_tuple)) {
             if (PyTuple_Size(op_axes_tuple) != op_ncore) {
                 /* must have been a tuple with too many entries. */
-                PyErr_Format(npy_static_pydata.AxisError,
+                PyErr_Format(npy_get_module_state()->static_pydata.AxisError,
                         "%s: operand %d has %d core dimensions, "
                         "but %zd dimensions are specified by axes tuple.",
                         ufunc_get_name_cstr(ufunc), iop, op_ncore,
@@ -1421,7 +1421,7 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
                 return -1;
             }
             /* If it is a single integer, inform user that more are needed */
-            PyErr_Format(npy_static_pydata.AxisError,
+            PyErr_Format(npy_get_module_state()->static_pydata.AxisError,
                     "%s: operand %d has %d core dimensions, "
                     "but the axes item is a single integer.",
                     ufunc_get_name_cstr(ufunc), iop, op_ncore);

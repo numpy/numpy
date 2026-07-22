@@ -180,7 +180,7 @@ copy_positional_args_to_kwargs(const char **keywords,
              * 5 keyword arguments.
              */
             assert(strcmp(keywords[i], "initial") == 0);
-            if (args[i] == npy_static_pydata._NoValue) {
+            if (args[i] == npy_get_module_state()->static_pydata._NoValue) {
                 continue;
             }
         }

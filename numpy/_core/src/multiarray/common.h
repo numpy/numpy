@@ -12,6 +12,7 @@
 
 #include "npy_static_data.h"
 #include "npy_import.h"
+#include "module_state.h"
 #include <limits.h>
 #include <string.h>
 
@@ -180,12 +181,12 @@ check_and_adjust_axis_msg(int *axis, int ndim, PyObject *msg_prefix)
     if (NPY_UNLIKELY((*axis < -ndim) || (*axis >= ndim))) {
         /* Invoke the AxisError constructor */
         PyObject *exc = PyObject_CallFunction(
-                npy_static_pydata.AxisError, "iiO", *axis, ndim,
+                npy_get_module_state()->static_pydata.AxisError, "iiO", *axis, ndim,
                 msg_prefix);
         if (exc == NULL) {
             return -1;
         }
-        PyErr_SetObject(npy_static_pydata.AxisError, exc);
+        PyErr_SetObject(npy_get_module_state()->static_pydata.AxisError, exc);
         Py_DECREF(exc);
 
         return -1;

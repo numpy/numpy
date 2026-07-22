@@ -10,6 +10,7 @@
 
 #include "npy_import.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "multiarraymodule.h"
 
 /*
@@ -156,19 +157,19 @@ npy_ObjectLogicalNot(PyObject *i1)
 
 static PyObject *
 npy_ObjectFloor(PyObject *obj) {
-    return PyObject_CallFunction(npy_static_pydata.math_floor_func,
+    return PyObject_CallFunction(npy_get_module_state()->static_pydata.math_floor_func,
                                  "O", obj);
 }
 
 static PyObject *
 npy_ObjectCeil(PyObject *obj) {
-    return PyObject_CallFunction(npy_static_pydata.math_ceil_func,
+    return PyObject_CallFunction(npy_get_module_state()->static_pydata.math_ceil_func,
                                  "O", obj);
 }
 
 static PyObject *
 npy_ObjectTrunc(PyObject *obj) {
-    return PyObject_CallFunction(npy_static_pydata.math_trunc_func,
+    return PyObject_CallFunction(npy_get_module_state()->static_pydata.math_trunc_func,
                                  "O", obj);
 }
 
@@ -179,7 +180,7 @@ npy_ObjectGCD(PyObject *i1, PyObject *i2)
 
     /* use math.gcd if valid on the provided types */
     {
-        gcd = PyObject_CallFunction(npy_static_pydata.math_gcd_func,
+        gcd = PyObject_CallFunction(npy_get_module_state()->static_pydata.math_gcd_func,
                                     "OO", i1, i2);
         if (gcd != NULL) {
             return gcd;

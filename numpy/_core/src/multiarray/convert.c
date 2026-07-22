@@ -602,9 +602,9 @@ decide_view_dtype_path(
     }
 
     int set_overridden =
-            (sub_set_dtype != npy_static_pydata.ndarray_set_dtype);
+            (sub_set_dtype != npy_get_module_state()->static_pydata.ndarray_set_dtype);
     int dtype_overridden =
-            (sub_dtype != npy_static_pydata.ndarray_dtype_descr);
+            (sub_dtype != npy_get_module_state()->static_pydata.ndarray_dtype_descr);
 
     /* Default: `_set_dtype` wins (either it was overridden, or nothing
      * was); flipped only if the walk below finds `dtype` diverging
