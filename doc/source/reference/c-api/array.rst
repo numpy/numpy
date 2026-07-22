@@ -1856,11 +1856,13 @@ the functions that must be implemented for each slot.
         void **initials)
 
    Multi-output version of :c:type:`PyArrayMethod_GetReductionInitial`, used to
-   query the per-output initial values for a reduction. It behaves the same
-   way, except that *initials* is an array of ``nout`` pointers, one per
-   reduction output, each pointing to the buffer to fill. The
-   *reduction_is_empty* argument and the -1, 0, or 1 return value have the same
-   meaning. A return of 1 must fill every output.
+   query the per-output initial values for a reduction. It behaves the same as
+   :c:type:`PyArrayMethod_GetReductionInitial`, except that *initials*
+   is an array of ``nout`` pointers, one per reduction output, each pointing
+   to the buffer to fill. The *reduction_is_empty* argument and the -1, 0, or 1
+   return value have the same meaning as :c:type:`PyArrayMethod_GetReductionInitial`.
+   A return of 1 indicates every initial value has been successfully initialized
+   with valid data.
 
 .. c:macro:: NPY_METH_get_reduction_loop
 
@@ -1871,7 +1873,8 @@ the functions that must be implemented for each slot.
    typedef used for ``NPY_METH_get_loop``). This is required to reduce
    ufuncs with more than one output, since the "forward" elementwise loop of
    such a ufunc cannot be used as a reduction loop the way a single-output loop
-   can (by aliasing the output to the first input). Instead, the returned
+   can (by pointing the output and the first input at the same memory, so that
+   the loop accumulates in place). Instead, the returned
    :c:type:`PyArrayMethod_StridedLoop` must implement the reduction
    directly, with an ``(nout + 1)``-in/``nout``-out signature: it takes the
    current per-output accumulators followed by one streamed input element,
@@ -1881,24 +1884,25 @@ the functions that must be implemented for each slot.
 
        [acc_0, ..., acc_{nout-1}, x, out_0, ..., out_{nout-1}]
 
-   where ``x`` is the streamed element being reduced in and each ``out_i``
-   is aliased to (and typically has stride 0 relative to) the matching
-   ``acc_i``.
+   where ``x`` is the streamed element being reduced in, and each ``out_i``
+   points at the same memory as the matching ``acc_i`` (and typically has a
+   stride of 0 relative to it).
 
    If ``NPY_METH_get_reduction_loop`` is not set, :meth:`~numpy.ufunc.reduce`
    falls back to ``NPY_METH_get_loop``/``NPY_METH_strided_loop``, which only
-   works for the traditional two-input/one-output case. Calling
+   works for the typical two-input/one-output case. Calling
    :meth:`~numpy.ufunc.reduce` on a ufunc with more than one output whose
    resolved ArrayMethod does not register a reduction loop raises a
    :exc:`TypeError`. See :ref:`c-api.reduction-loop-tutorial` for a
    worked example.
 
-   This slot only relaxes the *output* arity: :meth:`~numpy.ufunc.reduce`
-   (as well as :meth:`~numpy.ufunc.accumulate` and
-   :meth:`~numpy.ufunc.reduceat`) still requires the ufunc itself to have
-   exactly two inputs, independent of this slot. Calling any of them on a
-   ufunc with ``nin != 2`` raises a :exc:`ValueError` regardless of
-   ``nout`` or whether a reduction loop is registered.
+   Note that this slot only lifts the restriction on how many outputs a
+   ufunc may have. It does not change how many inputs a ufunc may have:
+   :meth:`~numpy.ufunc.reduce` (as well as :meth:`~numpy.ufunc.accumulate`
+   and :meth:`~numpy.ufunc.reduceat`) still only works on ufuncs that take
+   exactly two inputs, whether or not a reduction loop is registered.
+   Calling any of these methods on a ufunc with a number of inputs other
+   than two raises a :exc:`ValueError`.
 
 .. c:macro:: NPY_METH_get_multi_reduction_initials
 

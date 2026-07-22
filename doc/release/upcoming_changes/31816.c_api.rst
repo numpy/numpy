@@ -1,21 +1,6 @@
 New mechanism to register reduction loops to ufuncs for multi-output reductions
 -------------------------------------------------------------------------------
-``ArrayMethod`` implementations can now register a dedicated reduction loop via
-the ``NPY_METH_get_reduction_loop`` slot. This allows ufuncs with more than one
-output (a two-in/``N``-out elementwise loop) to support
-:meth:`~numpy.ufunc.reduce`, which previously only worked for single-output
-binary ufuncs. ``reduce`` still requires exactly two inputs. Only the output
-arity is generalized. The reduction loop has an
-``(N+1)``-in/``N``-out signature: it consumes the running accumulators
-together with one streamed input element and produces the updated
-accumulators. Such a loop can also register per-output reduction identities
-through the ``NPY_METH_get_multi_reduction_initials`` slot (the multi-output
-analogue of ``NPY_METH_get_reduction_initial``), used to seed empty reductions
-and reductions with a ``where=`` mask.
-:meth:`~numpy.ufunc.reduce` on such a ufunc returns a tuple with one array per
-output, its ``out`` argument accepts a tuple of output arrays (one per
-output), and its ``initial`` argument accepts either a single value
-(broadcast to every output) or a tuple with one value per output.
-
-See :ref:`c-api.reduction-loop-tutorial` for a worked example of registering a
-reduction loop on a custom ufunc.
+Ufuncs with more than one output can now support :meth:`~numpy.ufunc.reduce`
+by registering a dedicated reduction loop (and, optionally, per-output
+identities) on their ``ArrayMethod``. The reduction returns one array per
+output. See :ref:`c-api.reduction-loop-tutorial` for a worked example.

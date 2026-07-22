@@ -13,53 +13,70 @@ as described in :doc:`c-info.ufunc-tutorial`.
 Background
 ==========
 
-:meth:`~numpy.ufunc.reduce` (and the ``.sum()``/``.prod()``/... methods
+:meth:`~numpy.ufunc.reduce` historically only worked for ufuncs with
+exactly one output. This covers the ``.sum()``/``.prod()``/... methods
 built on top of it for functions like :func:`numpy.add` and
-:func:`numpy.multiply`) historically only worked for ufuncs with exactly
-one output. The trick that makes this possible is that the ordinary
-two-input/one-output elementwise loop can be used as the reduction loop:
-if the output pointer is aliased to the first input pointer (with stride 0)
-and left unmoved, the loop keeps accumulating into the same location as it
-walks over the array.
+:func:`numpy.multiply`.
 
-That trick does not generalize to ufuncs with more than one output, because
-their forward elementwise loop has a two-in/``nout``-out signature that has
-no natural way to alias an accumulator the same way. To support ``reduce``
-for such ufuncs, an ``ArrayMethod`` can instead register a *dedicated*
-reduction loop through the ``NPY_METH_get_reduction_loop`` slot. Unlike the
-forward loop, this loop has an ``(nout + 1)``-in/``nout``-out signature: it
-takes the current per-output accumulators plus one streamed input element,
-and writes the updated accumulators. The reason we require this signature is
-that it naturally collapses down to the nominal two-input/one-output case
-when ``nout = 1``. See :c:macro:`NPY_METH_get_reduction_loop` in the
+What makes those work is that the ordinary two-input/one-output elementwise
+loop can double as the reduction loop. NumPy points the loop's output and
+its first input at the same piece of memory. It also gives that pointer a
+stride of zero, so the pointer never advances. The loop then reads the
+running result and writes the updated result back to that same location as
+it walks over the array.
+
+That trick does not generalize to ufuncs with more than one output, such as
+:func:`numpy.divmod`. Their forward loop has a two-in/``nout``-out
+signature. There is no natural way to pair each output up with an input
+that could hold its running result.
+
+To support ``reduce`` for such ufuncs, an ``ArrayMethod`` can register a
+*dedicated* reduction loop through the ``NPY_METH_get_reduction_loop``
+slot. That loop has an ``(nout + 1)``-in/``nout``-out signature. It takes
+the current per-output accumulators plus one streamed input element, and
+writes the updated accumulators. We use this signature because it collapses
+down to the usual two-input/one-output case when ``nout`` is 1. See
+:c:macro:`NPY_METH_get_reduction_loop` in the
 :doc:`ArrayMethod API reference </reference/c-api/array>` for the exact
 data/stride layout.
 
-``reduce`` (like ``accumulate`` and ``reduceat``) still requires the ufunc's
-forward loop to have exactly two inputs as reducing folds an accumulator and
-one new element together at each step, which is only well-defined for a
-binary combining operation. This is unrelated to the number of outputs and
-was already true before multi-output reduction existed: calling ``reduce``
-on a ufunc with ``nin != 2`` (regardless of ``nout``) raises a
-:exc:`ValueError` ("... only supported for binary functions"). Only the
-*output* arity is generalized here.
+Only the restriction on the number of *outputs* is lifted. The number of
+inputs is unchanged: ``reduce`` still requires exactly two, as do
+``accumulate`` and ``reduceat``. Reducing repeatedly combines an
+accumulated result with one new element, which only makes sense for a
+ufunc taking two inputs.
 
-If a ufunc has more than one output and its resolved ``ArrayMethod`` does
-not register a reduction loop, calling ``.reduce()`` on it raises a
-:exc:`TypeError`, e.g. ``numpy.divmod.reduce`` fails since ``divmod``
-has no reduction loop.
+The three cases look like this::
+
+    >>> import numpy as np
+    >>> np.add.reduce([1.0, 2.0, 3.0])  # 2 inputs, 1 output
+    np.float64(6.0)
+    >>> np.modf.reduce([1.0, 2.0, 3.0])  # 1 input, 2 outputs
+    Traceback (most recent call last):
+        ...
+    ValueError: reduce only supported for binary functions
+    >>> np.divmod.reduce([1.0, 2.0, 3.0])  # 2 inputs, 2 outputs
+    Traceback (most recent call last):
+        ...
+    TypeError: divmod.reduce is not supported: the resolved loop does not register a reduction loop
+
+The first two behaviours are unchanged by this feature. :func:`numpy.modf`
+takes a single input, so it can never be reduced. Only the third case is
+new: :func:`numpy.divmod` has the right number of inputs, and fails purely
+because no reduction loop is registered for it. The rest of this tutorial
+shows how to write and register such a loop.
 
 Example: a two-output ``minimummaximum`` ufunc
 ===============================================
 
 The example below defines a ``minimummaximum`` ufunc for the ``'f8'``
-(``double``) dtype only, computing the running minimum and maximum in a
-single reduction pass: ``minimummaximum.reduce(a)`` returns the pair
-``(a.min(), a.max())``, computed in one loop over ``a`` rather than in two.
+(``double``) dtype only. It computes the running minimum and maximum in a
+single pass, so ``minimummaximum.reduce(a)`` returns the pair
+``(a.min(), a.max())`` using one loop over ``a`` rather than two.
 
-Because ``NPY_METH_get_reduction_loop`` is an ``ArrayMethod`` slot, the
-ufunc's loop must be registered through the new-style ``PyArrayMethod_Spec``
-API (:c:func:`PyUFunc_AddLoopFromSpec`) rather than the legacy
+``NPY_METH_get_reduction_loop`` is an ``ArrayMethod`` slot. The ufunc's loop
+must therefore be registered through the ``PyArrayMethod_Spec``
+API (:c:func:`PyUFunc_AddLoopFromSpec`), not the legacy
 ``PyUFunc_FromFuncAndData`` loop table used in the previous tutorial. The
 ufunc itself is still created with :c:func:`PyUFunc_FromFuncAndData`, just
 without any loops attached yet. The loop is added separately, via its
@@ -119,8 +136,9 @@ with ``/* BEGIN main computation */`` and ``/* END main computation */``.
         }
 
         /*
-         * The reduce machinery aliases out_i to acc_i (with stride 0), so
-         * this both reads the running accumulators and writes the new ones.
+         * The reduce machinery points each out_i at the same memory as the
+         * matching acc_i (with stride 0), so this both reads the running
+         * accumulators and writes the new ones.
          */
         static int
         double_minimummaximum_reduce_loop(PyArrayMethod_Context *NPY_UNUSED(context),
@@ -343,9 +361,9 @@ dependency on NumPy to build:
 
          setup(name='minmax', version='1.0', ext_modules=[minmax])
 
-After the above has been installed, it can be imported and used as
-follows. Note that plain Python floats and ints work directly, thanks to
-the promoter, no explicit ``np.float64(...)`` wrapping is needed::
+After the above has been installed, it can be imported and used as follows.
+Plain Python floats and ints work directly, thanks to the promoter. No
+explicit ``np.float64(...)`` wrapping is needed::
 
     >>> import numpy as np
     >>> import minmax
@@ -363,10 +381,10 @@ the promoter, no explicit ``np.float64(...)`` wrapping is needed::
     (array([1., 2.]), array([4., 9.]))
 
 Note that ``minimummaximum.reduce`` returns a tuple with one array per
-output (``lo, hi = minimummaximum.reduce(a)``), rather than a single array.
-If ``initial`` is passed to ``reduce`` on a multi-output ufunc, it can
-either be a single scalar (broadcast to seed every output) or a tuple with
-one value per output.
+output, rather than a single array, so it is usually unpacked as
+``lo, hi = minimummaximum.reduce(a)``. The ``initial`` argument of a
+multi-output ``reduce`` accepts either a single scalar, which seeds every
+output, or a tuple with one value per output.
 
 Limitations
 ===========
@@ -375,19 +393,19 @@ This example is intentionally minimal and leaves out several things a
 real-world implementation, like the built-in :func:`numpy.add` or a fuller
 ``minimummaximum``, would normally have:
 
-- The promoter always resolves to ``'f8'`` regardless of the input dtypes,
-  so e.g. integer input arrays are silently cast to ``float64`` rather than
-  keeping their own dtype. A multi-dtype ufunc would instead register a
-  loop per dtype and pick the common one, as in the built-in
-  :func:`numpy.minimum`/:func:`numpy.maximum`.
-- It registers no reduction identity, so ``minimummaximum.reduce`` of an
-  empty array raises a :exc:`ValueError`, the same as ``numpy.maximum.reduce``.
-  A multi-output ufunc can provide per-output identities with the
+- The promoter always resolves to ``'f8'``, regardless of the input dtypes.
+  Integer input arrays are therefore silently cast to ``float64`` instead of
+  keeping their own dtype. A multi-dtype ufunc would register a loop per
+  dtype and pick the common one, as the built-in
+  :func:`numpy.minimum`/:func:`numpy.maximum` do.
+- It registers no reduction identity. Reducing an empty array therefore
+  raises a :exc:`ValueError`, the same as ``numpy.maximum.reduce``. A
+  multi-output ufunc can provide per-output identities with the
   :c:macro:`NPY_METH_get_multi_reduction_initials` slot, the multi-output
-  version of :c:macro:`NPY_METH_get_reduction_initial`. Its function fills one
-  initial value per output, for example ``+inf`` for the running minimum and
-  ``-inf`` for the running maximum. Reducing an empty array, or reducing with
-  a ``where=`` mask, then returns those identities instead of raising::
+  version of :c:macro:`NPY_METH_get_reduction_initial`. Its function fills
+  one initial value per output, for example ``+inf`` for the running minimum
+  and ``-inf`` for the running maximum. Reducing an empty array, or reducing
+  with a ``where=`` mask, then returns those identities instead of raising::
 
       static int
       minimummaximum_get_multi_reduction_initials(
@@ -399,7 +417,8 @@ real-world implementation, like the built-in :func:`numpy.add` or a fuller
           return 1;
       }
 
-  registered alongside the reduction loop as
+  It is registered alongside the reduction loop, by adding this entry to the
+  ``slots`` array above:
   ``{NPY_METH_get_multi_reduction_initials, (void *)&minimummaximum_get_multi_reduction_initials}``.
 - :meth:`~numpy.ufunc.accumulate`, :meth:`~numpy.ufunc.reduceat`, and
   :meth:`~numpy.ufunc.at` are not supported for multi-output ufuncs yet,
