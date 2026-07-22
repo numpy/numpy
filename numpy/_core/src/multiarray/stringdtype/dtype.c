@@ -389,6 +389,15 @@ stringdtype_setitem(PyArray_StringDTypeObject *descr, PyObject *obj, char **data
         return -1;
     }
 
+    if (!na_cmp && descr->has_nan_na) {
+        // may raise a ComplexWarning (turned into an error) for a complex
+        // value with a non-zero imaginary part
+        na_cmp = pyobj_is_nan_na(obj);
+        if (na_cmp < 0) {
+            return -1;
+        }
+    }
+
     if (na_object != NULL && na_cmp) {
         npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
         int pack_status = NpyString_pack_null(allocator, sdata);
