@@ -4833,7 +4833,7 @@ def seed(seed=None):
         return _rand.seed(seed)
     else:
         bg_type = type(_rand._bit_generator)
-        _rand._bit_generator.state = bg_type(seed).state
+        _rand.set_state(bg_type(seed).state)
 
 def get_bit_generator():
     """
