@@ -360,6 +360,14 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     else:
         # Slow, but safe for subclasses of ndarray
         a, mask = _replace_nan(a, +np.inf)
+        # Replace NaN initial with +inf (identity of min) to avoid NaN
+        # propagation through np.amin. nanmin should ignore NaN in initial
+        # the same way it ignores NaN in array elements. Comparing initial to
+        # itself detects NaN without going through np.isnan, which raises on
+        # non-numeric scalars such as decimal.Decimal.
+        initial_is_nan = initial is not np._NoValue and initial != initial
+        if initial_is_nan:
+            kwargs["initial"] = +np.inf
         res = np.amin(a, axis=axis, out=out, **kwargs)
         if mask is None:
             return res
@@ -368,9 +376,13 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         kwargs.pop("initial", None)
         mask = np.all(mask, axis=axis, **kwargs)
         if np.any(mask):
-            res = _copyto(res, np.nan, mask)
-            warnings.warn("All-NaN axis encountered", RuntimeWarning,
-                          stacklevel=2)
+            if initial is not np._NoValue and not initial_is_nan:
+                # Non-NaN initial provides a valid fallback for all-NaN slices
+                res = _copyto(res, initial, mask)
+            else:
+                res = _copyto(res, np.nan, mask)
+                warnings.warn("All-NaN axis encountered", RuntimeWarning,
+                              stacklevel=2)
     return res
 
 
@@ -489,6 +501,14 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     else:
         # Slow, but safe for subclasses of ndarray
         a, mask = _replace_nan(a, -np.inf)
+        # Replace NaN initial with -inf (identity of max) to avoid NaN
+        # propagation through np.amax. nanmax should ignore NaN in initial
+        # the same way it ignores NaN in array elements. Comparing initial to
+        # itself detects NaN without going through np.isnan, which raises on
+        # non-numeric scalars such as decimal.Decimal.
+        initial_is_nan = initial is not np._NoValue and initial != initial
+        if initial_is_nan:
+            kwargs["initial"] = -np.inf
         res = np.amax(a, axis=axis, out=out, **kwargs)
         if mask is None:
             return res
@@ -497,9 +517,13 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         kwargs.pop("initial", None)
         mask = np.all(mask, axis=axis, **kwargs)
         if np.any(mask):
-            res = _copyto(res, np.nan, mask)
-            warnings.warn("All-NaN axis encountered", RuntimeWarning,
-                          stacklevel=2)
+            if initial is not np._NoValue and not initial_is_nan:
+                # Non-NaN initial provides a valid fallback for all-NaN slices
+                res = _copyto(res, initial, mask)
+            else:
+                res = _copyto(res, np.nan, mask)
+                warnings.warn("All-NaN axis encountered", RuntimeWarning,
+                              stacklevel=2)
     return res
 
 
