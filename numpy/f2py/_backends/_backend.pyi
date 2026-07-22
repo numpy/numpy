@@ -19,6 +19,7 @@ class Backend(abc.ABC):
     setup_flags: Final[list[str]]
     remove_build_dir: Final[bool]
     extra_dat: Final[dict[str, Any]]
+    limited_api: Final[str | None]
 
     def __init__(
         self,
@@ -39,6 +40,7 @@ class Backend(abc.ABC):
         setup_flags: list[str],
         remove_build_dir: bool,
         extra_dat: dict[str, Any],
+        limited_api: str | None,
     ) -> None: ...
 
     #
