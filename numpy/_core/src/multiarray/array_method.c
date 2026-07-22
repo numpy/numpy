@@ -345,7 +345,8 @@ fill_arraymethod_from_slots(
                 spec->name);
         return -1;
     }
-    if (meth->nout > 1 && meth->get_reduction_initial != NULL) {
+    if (meth->nout > 1 && meth->get_reduction_initial != NULL
+            && meth->get_reduction_loop != NULL) {
         PyErr_Format(PyExc_ValueError,
                 "get_reduction_initial does not support multi-output "
                 "reductions. Use get_multi_reduction_initials instead. "

@@ -384,7 +384,9 @@ Note that ``minimummaximum.reduce`` returns a tuple with one array per
 output, rather than a single array, so it is usually unpacked as
 ``lo, hi = minimummaximum.reduce(a)``. The ``initial`` argument of a
 multi-output ``reduce`` accepts either a single scalar, which seeds every
-output, or a tuple with one value per output.
+output, or a tuple with one value per output. The entries of such a tuple
+cannot be ``None``; a plain ``initial=None`` still unsets the initial value
+for the whole reduction.
 
 Limitations
 ===========

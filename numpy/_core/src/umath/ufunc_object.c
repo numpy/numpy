@@ -2383,11 +2383,20 @@ reducelike_promote_and_resolve_multi(PyUFuncObject *ufunc,
      *
      * There is only one streamed operand, but the forward loop has `nin`
      * inputs. They are all the array being reduced, resolved with the same
-     * DType, so a sane resolver gives them equivalent descriptors. We keep the
-     * first as the stream dtype (asserted below) and discard the rest.
+     * DType, so a resolver should give them equivalent descriptors. We keep
+     * the first as the stream dtype and discard the rest, so reject the case
+     * where they disagree rather than silently using the first.
      */
     for (int i = 1; i < nin; i++) {
-        assert(PyArray_EquivTypes(fwd_descrs[0], fwd_descrs[i]));
+        if (!PyArray_EquivTypes(fwd_descrs[0], fwd_descrs[i])) {
+            PyErr_Format(PyExc_TypeError,
+                    "%s.%s is not supported: the resolved loop requires "
+                    "different descriptors for its inputs (%R and %R), but a "
+                    "reduction streams only a single input.",
+                    ufunc_get_name_cstr(ufunc), method,
+                    fwd_descrs[0], fwd_descrs[i]);
+            goto fail;
+        }
     }
     for (int i = 0; i < nout; i++) {
         PyArray_Descr *out_descr = fwd_descrs[nin + i];
@@ -2611,7 +2620,7 @@ reduce_loop(PyArrayMethod_Context *context,
                 for (int i = 0; i < nout; ++i) {
                     dataptrs_copy[i] = dataptrs[i];
                     strides_copy[i] = strides[i];
-                    dataptrs_copy[nout + 1 +i] = dataptrs[i];
+                    dataptrs_copy[nout + 1 + i] = dataptrs[i];
                     strides_copy[nout + 1 + i] = strides[i];
                 }
                 dataptrs_copy[nout] = dataptrs[nout];
@@ -2764,7 +2773,7 @@ try_reduce_contiguous(
          * No identity available, so seed each accumulator with arr[0] and
          * reduce over arr[1:].
          */
-        for (int i = 0; i < nout; i++){
+        for (int i = 0; i < nout; i++) {
             memcpy(accum[i], src, stream_descr->elsize);
         }
         src += arr_stride;
@@ -3964,7 +3973,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             out_obj = NULL;
             return_scalar = NPY_FALSE;
         }
-        else if (_set_full_args_out(ufunc->nout, out_obj, &full_args) < 0) {
+        else if (out_obj != Py_None
+                    && _set_full_args_out(ufunc->nout, out_obj, &full_args) < 0) {
             goto fail;
         }
     }
@@ -6679,6 +6689,15 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
         return NULL;
     }
 
+    /*
+     * TODO: `nout != 1` could be supported here by resolving the forward loop
+     *       and returning its descriptors, so that
+     *       `resolve_dtypes((f8, f8, None, None), reduction=True)` would give
+     *       `(stream, stream, out_0, out_1)`.  This is mainly useful for
+     *       projects wrapping NumPy, such as Numba.  The `&dummy_arrays[0]`
+     *       passed to `reducelike_promote_and_resolve` below would have to be
+     *       relaxed at the same time.
+     */
     if (reduction && (ufunc->nin != 2 || ufunc->nout != 1)) {
         PyErr_SetString(PyExc_ValueError,
                 "ufunc is not compatible with reduction operations.");

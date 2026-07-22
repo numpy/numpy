@@ -5427,6 +5427,9 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
         For a ufunc with more than one output (see the note on multiple
         outputs below), a tuple with one value per output may be given
         instead of a single scalar. A scalar still seeds every output.
+        The entries of such a tuple cannot be ``None``, since "no initial
+        value" cannot be requested for individual outputs; pass a plain
+        ``None`` to unset the initial value for the whole reduction.
     where : array_like of bool, optional
         A boolean array which is broadcasted to match the dimensions
         of `array`, and selects elements to include in the reduction. Note

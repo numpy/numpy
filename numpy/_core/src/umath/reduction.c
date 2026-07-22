@@ -352,6 +352,16 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
             /* must use user provided initial value(s) */
             for (int i = 0; i < nout; i++) {
                 PyObject *initial_i = initial_is_tuple ? PyTuple_GET_ITEM(initial, i) : initial;
+                /*
+                 * `initial=None` means "no initial value", which we cannot
+                 * express per-output.  Reject it rather than let PyArray_Pack
+                 * turn it into a value (e.g. NaN for floats).
+                 */
+                if (initial_is_tuple && initial_i == Py_None) {
+                    PyErr_SetString(PyExc_ValueError,
+                                    "entries of a tuple 'initial' cannot be None");
+                    goto fail;
+                }
                 if (PyArray_Pack(op_dtypes[i], initial_buf[i], initial_i) < 0) {
                     goto fail;
                 }
@@ -493,9 +503,15 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
         ret = (PyObject *)result;
     }
     else {
-        ret = PyTuple_FromArray((PyObject *const *)NpyIter_GetOperandArray(iter), nout);
+        ret = PyTuple_New(nout);
         if (ret == NULL) {
             goto fail;
+        }
+        for (int i = 0; i < nout; i++) {
+            /* iterator operand may be a writeback temporary (COPY_IF_OVERLAP) */
+            PyArrayObject *res_i = out[i] != NULL ? out[i] : NpyIter_GetOperandArray(iter)[i];
+            Py_INCREF(res_i);
+            PyTuple_SET_ITEM(ret, i, (PyObject *)res_i);
         }
     }
 
