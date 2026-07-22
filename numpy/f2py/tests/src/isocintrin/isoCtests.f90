@@ -42,5 +42,5 @@
          do j = 1, 3
             C(j) = A(j)+B(j)
          end do
-      end subroutine
+      end subroutine add_int8_arr
   end module coddity

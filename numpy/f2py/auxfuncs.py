@@ -143,9 +143,12 @@ def get_kind(var):
             int(result)
         except ValueError:
             from .capi_maps import f2cmap_all
-            f2cmap_for_type = f2cmap_all.get(var['typespec'], {})
+            var_typespec = var.get('typespec', "real")
+            f2cmap_for_type = f2cmap_all.get(var_typespec, {})
             c_type = f2cmap_for_type.get(result)
             do_neg = False
+            if var_typespec == "integer":
+                do_neg = True
             for kind_exp in range(5):
                 test_kind = str(2 ** kind_exp)
                 if c_type == f2cmap_for_type.get(test_kind, ""):
@@ -156,7 +159,6 @@ def get_kind(var):
                     if c_type == f2cmap_for_type[test_kind]:
                         result = test_kind
                         break
-        # int(result)
         return result
 
 
