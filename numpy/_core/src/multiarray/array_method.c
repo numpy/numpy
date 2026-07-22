@@ -1039,8 +1039,14 @@ PyArrayMethod_GetMaskedReductionLoop(
     data->unmasked_stridedloop = NULL;
     data->nargs = nargs;
 
+    /* Copy so the strides passed on are always fully initialized (+1 for the mask) */
+    npy_intp reduction_strides[NPY_MAXARGS];
+    for (int i = 0; i < nargs + 1; i++) {
+        reduction_strides[i] = fixed_strides[i];
+    }
+
     if (reduction_get_loop_func(context->method)(context,
-            aligned, 0, fixed_strides,
+            aligned, 0, reduction_strides,
             &data->unmasked_stridedloop, &data->unmasked_auxdata, flags) < 0) {
         PyMem_Free(data);
         return -1;
