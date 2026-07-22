@@ -13,7 +13,6 @@ import re
 import sys
 import types
 from functools import reduce
-from typing import Literal
 
 from . import __version__, cfuncs
 from .cfuncs import errmess
