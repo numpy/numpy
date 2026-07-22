@@ -224,7 +224,7 @@ i.e., statement coverage should be at 100%.
 
 To measure the test coverage, run::
 
-  $ spin test --coverage
+  $ pytest numpy --cov-report=html:build/coverage
 
 This will create a report in ``html`` format at ``build/coverage``, which can be
 viewed with your browser, e.g.::
