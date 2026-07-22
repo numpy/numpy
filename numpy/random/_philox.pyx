@@ -215,20 +215,21 @@ cdef class Philox(BitGenerator):
         ctr = np.empty(4, dtype=np.uint64)
         key = np.empty(2, dtype=np.uint64)
         buffer = np.empty(PHILOX_BUFFER_SIZE, dtype=np.uint64)
-        for i in range(4):
-            ctr[i] = self.rng_state.ctr.v[i]
-            if i < 2:
-                key[i] = self.rng_state.key.v[i]
-        for i in range(PHILOX_BUFFER_SIZE):
-            buffer[i] = self.rng_state.buffer[i]
+        with self.lock:
+            for i in range(4):
+                ctr[i] = self.rng_state.ctr.v[i]
+                if i < 2:
+                    key[i] = self.rng_state.key.v[i]
+            for i in range(PHILOX_BUFFER_SIZE):
+                buffer[i] = self.rng_state.buffer[i]
 
-        state = {'counter': ctr, 'key': key}
-        return {'bit_generator': self.__class__.__name__,
-                'state': state,
-                'buffer': buffer,
-                'buffer_pos': self.rng_state.buffer_pos,
-                'has_uint32': self.rng_state.has_uint32,
-                'uinteger': self.rng_state.uinteger}
+            state = {'counter': ctr, 'key': key}
+            return {'bit_generator': self.__class__.__name__,
+                    'state': state,
+                    'buffer': buffer,
+                    'buffer_pos': self.rng_state.buffer_pos,
+                    'has_uint32': self.rng_state.has_uint32,
+                    'uinteger': self.rng_state.uinteger}
 
     @state.setter
     def state(self, value):
@@ -237,16 +238,17 @@ cdef class Philox(BitGenerator):
         bitgen = value.get('bit_generator', '')
         if bitgen != self.__class__.__name__:
             raise ValueError(f'state must be for a {self.__class__.__name__} PRNG')
-        for i in range(4):
-            self.rng_state.ctr.v[i] = <uint64_t> value['state']['counter'][i]
-            if i < 2:
-                self.rng_state.key.v[i] = <uint64_t> value['state']['key'][i]
-        for i in range(PHILOX_BUFFER_SIZE):
-            self.rng_state.buffer[i] = <uint64_t> value['buffer'][i]
+        with self.lock:
+            for i in range(4):
+                self.rng_state.ctr.v[i] = <uint64_t> value['state']['counter'][i]
+                if i < 2:
+                    self.rng_state.key.v[i] = <uint64_t> value['state']['key'][i]
+            for i in range(PHILOX_BUFFER_SIZE):
+                self.rng_state.buffer[i] = <uint64_t> value['buffer'][i]
 
-        self.rng_state.has_uint32 = value['has_uint32']
-        self.rng_state.uinteger = value['uinteger']
-        self.rng_state.buffer_pos = value['buffer_pos']
+            self.rng_state.has_uint32 = value['has_uint32']
+            self.rng_state.uinteger = value['uinteger']
+            self.rng_state.buffer_pos = value['buffer_pos']
 
     cdef jump_inplace(self, iter):
         """
@@ -328,6 +330,7 @@ cdef class Philox(BitGenerator):
 
         cdef np.ndarray delta_a
         delta_a = int_to_array(delta, 'step', 256, 64)
-        philox_advance(<uint64_t *> delta_a.data, &self.rng_state)
-        self._reset_state_variables()
+        with self.lock:
+            philox_advance(<uint64_t *> delta_a.data, &self.rng_state)
+            self._reset_state_variables()
         return self
