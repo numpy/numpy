@@ -1888,6 +1888,15 @@ the functions that must be implemented for each slot.
    points at the same memory as the matching ``acc_i`` (and typically has a
    stride of 0 relative to it).
 
+   The *strides* argument passed to ``NPY_METH_get_reduction_loop`` itself at
+   setup time uses this same layout, so that ``strides[i]`` describes the
+   ``i``-th operand of the loop being requested. ``strides[nout]`` is the
+   stride of the streamed input, and each ``strides[nout + 1 + i]`` repeats
+   ``strides[i]``, because ``out_i`` and ``acc_i`` are the same buffer. The
+   accumulator strides are normally 0, since the reduction accumulates in
+   place. When a ``where=`` mask is used, one further entry at
+   ``strides[2 * nout + 1]`` holds the mask stride.
+
    If ``NPY_METH_get_reduction_loop`` is not set, :meth:`~numpy.ufunc.reduce`
    falls back to ``NPY_METH_get_loop``/``NPY_METH_strided_loop``, which only
    works for the typical two-input/one-output case. Calling
