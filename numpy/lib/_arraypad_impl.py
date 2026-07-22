@@ -228,22 +228,22 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
     return left_ramp, right_ramp
 
 
-def _validate_zero_width_linear_ramp(padded, axis, end_value_pair):
+def _validate_zero_width_linear_ramp(roi, axis, end_value_pair):
     """
     Preserve zero-width linear_ramp validation without constructing ramps.
     """
-    if padded.dtype.hasobject:
-        _get_linear_ramps(padded, axis, (0, 0), end_value_pair)
+    if roi.dtype.hasobject:
+        _get_linear_ramps(roi, axis, (0, 0), end_value_pair)
         return
 
-    edge = np.zeros((1,) * (padded.ndim - 1), dtype=padded.dtype)
+    edge = np.zeros((1,) * (roi.ndim - 1), dtype=roi.dtype)
     for end_value in end_value_pair:
         np.linspace(
             start=end_value,
             stop=edge,
             num=0,
             endpoint=False,
-            dtype=padded.dtype,
+            dtype=roi.dtype,
             axis=axis
         )
 
@@ -314,16 +314,16 @@ def _get_stats(padded, axis, width_pair, length_pair, stat_func):
     return left_stat, right_stat
 
 
-def _validate_zero_width_stat(padded, axis, length_pair, stat_func):
+def _validate_zero_width_stat(roi, axis, length_pair, stat_func):
     """
     Preserve zero-width statistic validation without reducing full arrays.
     """
-    if padded.dtype.hasobject:
-        _get_stats(padded, axis, (0, 0), length_pair, stat_func)
+    if roi.dtype.hasobject:
+        _get_stats(roi, axis, (0, 0), length_pair, stat_func)
         return
 
-    validation_slice = (slice(0, 1),) * padded.ndim
-    _get_stats(padded[validation_slice], axis, (0, 0), length_pair, stat_func)
+    validation_slice = (slice(0, 1),) * roi.ndim
+    _get_stats(roi[validation_slice], axis, (0, 0), length_pair, stat_func)
 
 
 def _set_reflect_both(padded, axis, width_pair, method,
@@ -909,10 +909,10 @@ def pad(array, pad_width, mode='constant', **kwargs):
         end_values = kwargs.get("end_values", 0)
         end_values = _as_pairs(end_values, padded.ndim)
         for axis, width_pair, value_pair in zip(axes, pad_width, end_values):
-            if not any(width_pair):
-                _validate_zero_width_linear_ramp(padded, axis, value_pair)
-                continue
             roi = _view_roi(padded, original_area_slice, axis)
+            if not any(width_pair):
+                _validate_zero_width_linear_ramp(roi, axis, value_pair)
+                continue
             ramp_pair = _get_linear_ramps(roi, axis, width_pair, value_pair)
             _set_pad_area(roi, axis, width_pair, ramp_pair)
 
@@ -921,10 +921,10 @@ def pad(array, pad_width, mode='constant', **kwargs):
         length = kwargs.get("stat_length")
         length = _as_pairs(length, padded.ndim, as_index=True)
         for axis, width_pair, length_pair in zip(axes, pad_width, length):
-            if not any(width_pair):
-                _validate_zero_width_stat(padded, axis, length_pair, func)
-                continue
             roi = _view_roi(padded, original_area_slice, axis)
+            if not any(width_pair):
+                _validate_zero_width_stat(roi, axis, length_pair, func)
+                continue
             stat_pair = _get_stats(roi, axis, width_pair, length_pair, func)
             _set_pad_area(roi, axis, width_pair, stat_pair)
 

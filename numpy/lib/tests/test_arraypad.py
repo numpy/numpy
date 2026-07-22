@@ -170,6 +170,18 @@ class TestConditionalShortcuts:
         with pytest.raises(TypeError):
             np.pad(test, 0, mode=mode)
 
+    @pytest.mark.parametrize(
+        "mode", ["linear_ramp", "maximum", "mean", "median", "minimum"]
+    )
+    def test_zero_width_axis_object_mixed_widths(self, mode):
+        # Zero-width axes must not feed not-yet-filled pad values (None
+        # for object dtype) into the validation of later padded axes.
+        test = np.array([[1, 2], [3, 4]], dtype=object)
+        expected = np.pad(test.astype(float), ((0, 0), (1, 1)), mode=mode)
+        result = np.pad(test, ((0, 0), (1, 1)), mode=mode)
+        assert result.dtype == object
+        assert_array_equal(result.astype(float), expected)
+
     @pytest.mark.parametrize("mode", ['maximum', 'mean', 'median', 'minimum',])
     def test_shallow_statistic_range(self, mode):
         test = np.arange(120).reshape(4, 5, 6)
