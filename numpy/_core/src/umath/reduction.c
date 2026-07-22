@@ -383,14 +383,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     NPY_ARRAYMETHOD_FLAGS flags;
 
     npy_intp *strideptr = NpyIter_GetInnerStrideArray(iter);
-    /*
-     * Expand the iterator's strides, which are laid out as
-     *     [out_0 .. out_{nout-1}, operand, (wheremask)]
-     * into the layout the reduction loop is called with,
-     *     [acc_0 .. acc_{nout-1}, x, out_0 .. out_{nout-1}, (mask)]
-     * so that `get_reduction_loop` sees the same layout at setup time as the
-     * loop does at call time (see `reduce_loop`).
-     */
+    /* Expand the iterator strides into the loop layout (see reduce_loop) */
     npy_intp fixed_strides[NPY_MAXARGS];
     for (int i = 0; i < nout; i++) {
         fixed_strides[i] = strideptr[i];
