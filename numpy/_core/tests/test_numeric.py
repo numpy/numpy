@@ -4254,6 +4254,25 @@ class TestTensordot:
         ret = np.tensordot(arr_0d, arr_0d, ([], []))
         assert_array_equal(ret, arr_0d)
 
+    def test_shape_mismatch_message(self):
+        a = np.zeros((3, 4, 5))
+        b = np.zeros((5, 6, 7))
+        with pytest.raises(
+            ValueError,
+            match=r"shape-mismatch for tensordot: axes of `a` \(shape \(3, 4, 5\)\) "
+                  r"not compatible with axes of `b` \(shape \(5, 6, 7\)\)",
+        ):
+            np.tensordot(a, b, axes=([1], [0]))
+
+    def test_axes_count_mismatch_message(self):
+        a = np.zeros((3, 4, 5))
+        b = np.zeros((5, 6, 7))
+        with pytest.raises(
+            ValueError,
+            match=r"shape-mismatch for tensordot: axes of `a` \(shape \(3, 4, 5\)\) "
+                  r"not compatible with axes of `b` \(shape \(5, 6, 7\)\)",
+        ):
+            np.tensordot(a, b, axes=([0, 1], [0]))
 
 class TestAsType:
 
