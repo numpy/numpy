@@ -3209,6 +3209,22 @@ def test_addition_unicode_inverse_byte_order(order1, order2):
     assert result == 2 * element
 
 
+def test_pystr_scalar_converted_with_resolved_descriptor():
+    # an object loop receives the original str object
+    arr = np.array(["x"], dtype=object)
+    res = (arr + "y\0")[0]
+    assert type(res) is str
+    assert res == "xy\0"
+    # for fixed-width unicode trailing nulls are padding
+    assert (np.array(["x"], dtype="U1") + "y\0")[0] == "xy"
+    # np.str_ is a fixed-width scalar, not special-cased like exact str
+    assert (arr + np.str_("y\0"))[0] == "xy"
+
+    # unary object loops also receive the original str object
+    identity = np.frompyfunc(lambda value: value, 1, 1)
+    assert identity("y\0") == "y\0"
+
+
 @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64])
 def test_find_non_long_args(dtype):
     element = 'abcd'

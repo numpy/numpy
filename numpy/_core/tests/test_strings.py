@@ -201,6 +201,43 @@ def test_in_place_multiply_no_overflow(dt):
 
 
 @pytest.mark.parametrize("dt", ["S", "U", "T"])
+def test_string_function_array_likes_converted_once(dt):
+    class ArrayLike:
+        def __init__(self, value):
+            self.value = value
+            self.array_calls = 0
+            self.ufunc_calls = 0
+
+        def __array__(self, dtype=None, copy=None):
+            self.array_calls += 1
+            arr = np.array(self.value, dtype=dt)
+            if dtype is not None:
+                arr = arr.astype(dtype, copy=False)
+            return arr
+
+        def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+            self.ufunc_calls += 1
+            return NotImplemented
+
+    for func in [np.strings.partition, np.strings.rpartition]:
+        a = ArrayLike(["a-b"])
+        sep = ArrayLike("-")
+        result = func(a, sep)
+        for actual, expected in zip(result, [["a"], ["-"], ["b"]]):
+            assert_array_equal(actual, np.array(expected, dtype=dt))
+        assert a.array_calls == sep.array_calls == 1
+        assert a.ufunc_calls == sep.ufunc_calls == 0
+
+    a = ArrayLike(["a-b"])
+    old = ArrayLike("-")
+    new = ArrayLike("+")
+    result = np.strings.replace(a, old, new)
+    assert_array_equal(result, np.array(["a+b"], dtype=dt))
+    assert a.array_calls == old.array_calls == new.array_calls == 1
+    assert a.ufunc_calls == old.ufunc_calls == new.ufunc_calls == 0
+
+
+@pytest.mark.parametrize("dt", ["S", "U", "T"])
 class TestMethods:
 
     @pytest.mark.parametrize("in1,in2,out", [
