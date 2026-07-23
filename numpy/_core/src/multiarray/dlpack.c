@@ -543,12 +543,12 @@ array_dlpack(PyArrayObject *self,
     }
 
     /*
-     * TODO: The versioned and non-versioned structs of DLPack are very
-     * similar but not ABI compatible so that the function called here requires
-     * branching (templating didn't seem worthwhile).
+     * The versioned and non-versioned structs of DLPack are very similar but
+     * not ABI compatible so that the function called here requires branching
+     * (templating didn't seem worthwhile).
      *
-     * Version 0 support should be deprecated in NumPy 2.1 and the branches
-     * can then be removed again.
+     * Version 0 support should not be removed since it's faster for callers
+     * to omit max_version if they're OK with getting an unversioned tensor.
      */
     PyObject *res = create_dlpack_capsule(
             self, major_version >= 1, &result_device,
