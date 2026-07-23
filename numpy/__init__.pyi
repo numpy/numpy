@@ -125,6 +125,7 @@ from numpy._array_api_info import __array_namespace_info__
 from collections.abc import (
     Buffer,
     Callable,
+    Hashable,
     Iterable,
     Iterator,
     Mapping,
@@ -142,6 +143,7 @@ from typing import (
     NoReturn,
     Protocol,
     Self,
+    SupportsAbs,
     SupportsComplex,
     SupportsFloat,
     SupportsInt,
@@ -1274,14 +1276,32 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     # NOTE: `_: type[object]` would also accept e.g. `type[object | complex]`,
     # and is therefore not included here
     @overload
-    def __new__(
+    def __new__[T](
         cls,
-        dtype: py_type[object_ | _BuiltinObjectLike | ct.py_object[Any]] | _ObjectCodes,
+        dtype: py_type[object_[T] | ct.py_object[T]],
         align: py_bool = False,
         copy: py_bool = False,
         *,
         metadata: dict[py_str, Any] = ...,
-    ) -> dtype[object_]: ...
+    ) -> dtype[object_[T]]: ...
+    @overload
+    def __new__[T: _BuiltinObjectLike](
+        cls,
+        dtype: py_type[T],
+        align: py_bool = False,
+        copy: py_bool = False,
+        *,
+        metadata: dict[py_str, Any] = ...,
+    ) -> dtype[object_[T]]: ...
+    @overload
+    def __new__(
+        cls,
+        dtype: _ObjectCodes,
+        align: py_bool = False,
+        copy: py_bool = False,
+        *,
+        metadata: dict[py_str, Any] = ...,
+    ) -> dtype[object_[Any]]: ...
 
     # `unsignedinteger` string-based representations and ctypes
     @overload
@@ -5940,27 +5960,35 @@ bool_ = bool
 
 # NOTE: The `object_` constructor returns the passed object, so instances with type
 # `object_` cannot exists (at runtime).
-# NOTE: Because mypy has some long-standing bugs related to `__new__`, `object_` can't
-# be made generic.
 @final
-class object_(_RealMixin, generic):
+class object_(generic[_ItemT_co], Generic[_ItemT_co]):
     @overload
     def __new__(cls, value: None = None, /) -> None: ...  # type: ignore[misc]
     @overload
     def __new__[AnyStrT: (LiteralString, str, bytes)](cls, value: AnyStrT, /) -> AnyStrT: ...  # type: ignore[misc]
     @overload
-    def __new__[ShapeT: _Shape](cls, value: ndarray[ShapeT, Any], /) -> ndarray[ShapeT, dtype[Self]]: ...  # type: ignore[misc]
+    def __new__[ShapeT: tuple[int, *tuple[int, ...]]](  # type: ignore[misc]
+        cls, value: ndarray[ShapeT, dtype[generic[_ItemT_co]]], /
+    ) -> ndarray[ShapeT, dtype[Self]]: ...
     @overload
-    def __new__(cls, value: SupportsLenAndGetItem[object], /) -> NDArray[Self]: ...  # type: ignore[misc]
+    def __new__(cls, value: _NestedSequence[_ItemT_co], /) -> NDArray[Self]: ...  # type: ignore[misc]
     @overload
-    def __new__[T](cls, value: T, /) -> T: ...  # type: ignore[misc]
+    def __new__(cls, value: _ItemT_co, /) -> _ItemT_co: ...  # type: ignore[misc]
     @overload  # catch-all
-    def __new__(cls, value: Any = ..., /) -> object | NDArray[Self]: ...  # type: ignore[misc]
+    def __new__(cls, value: Any, /) -> Any | NDArray[Self]: ...  # type: ignore[misc]
 
-    def __hash__(self, /) -> int: ...
-    def __abs__(self, /) -> object_: ...  # this affects NDArray[object_].__abs__
-    def __call__(self, /, *args: object, **kwargs: object) -> Any: ...
+    #
+    def __hash__(self: object_[Hashable], /) -> int: ...
+    def __abs__[T](self: object_[SupportsAbs[T]], /) -> object_[T]: ...  # this affects NDArray[object_].__abs__
+    def __call__[**P, T](self: object_[Callable[P, T]], /, *args: P.args, **kwargs: P.kwargs) -> object_[T]: ...
 
+    #
+    @property
+    def real[T](self: object_[_HasRealAndImag[T, Any]]) -> object_[T]: ...
+    @property
+    def imag[T](self: object_[_HasRealAndImag[Any, T]]) -> object_[T]: ...
+
+    #
     def __release_buffer__(self, buffer: memoryview, /) -> None: ...
 
 class integer(_IntegralMixin, _RoundMixin, number[_NBitT, int]):
