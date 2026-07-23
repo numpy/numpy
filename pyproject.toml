@@ -335,3 +335,12 @@ errors = { bad-override = "ignore" }
 [[tool.pyrefly.sub-config]]
 matches = "numpy/matrixlib/defmatrix.pyi"
 errors = { bad-override = "ignore" }
+
+[tool.ty.src]
+include = ["numpy/**/*.pyi"]
+exclude = ["numpy/typing/tests/**"]
+
+[tool.ty.rules]
+deprecated = "ignore"
+invalid-method-override = "ignore"
+subclass-of-final-class = "ignore"

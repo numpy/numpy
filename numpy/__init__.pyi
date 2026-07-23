@@ -5050,7 +5050,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 # NOTE: while `np.generic` is not technically an instance of `ABCMeta`,
 # the `@abstractmethod` decorator is herein used to (forcefully) deny
 # the creation of `np.generic` instances.
-# The `# type: ignore` comments are necessary to silence mypy errors regarding
+# The ignore comments are necessary to silence errors regarding
 # the missing `ABCMeta` metaclass.
 # See https://github.com/numpy/numpy-stubs/pull/80 for more details.
 class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
@@ -7476,7 +7476,7 @@ class datetime64(_RealMixin, generic[_DT64ItemT_co], Generic[_DT64ItemT_co]):
     def __ge__(self, other: _SupportsGT, /) -> bool_: ...
 
 @final  # cannot be subclassed at runtime
-class flexible(_RealMixin, generic[_FlexibleItemT_co], Generic[_FlexibleItemT_co]): ...  # type: ignore[misc]
+class flexible(_RealMixin, generic[_FlexibleItemT_co], Generic[_FlexibleItemT_co]): ...  # type: ignore[misc]  # ty: ignore[abstract-method-in-final-class]
 
 class void(flexible[bytes | tuple[Any, ...]]):  # type: ignore[misc]
     @overload
