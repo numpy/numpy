@@ -465,11 +465,11 @@ _check_compatibility_with_new_dtype(
     if (_may_have_objects(dtype) || _may_have_objects(type)) {
         if (npy_cache_import_runtime(
                 "numpy._core._internal", "_view_is_safe",
-                &npy_runtime_imports._view_is_safe) == -1) {
+                &npy_get_module_state()->runtime_imports._view_is_safe) == -1) {
             return NULL;
         }
         PyObject *safe = PyObject_CallFunctionObjArgs(
-                npy_runtime_imports._view_is_safe, dtype, type, NULL);
+                npy_get_module_state()->runtime_imports._view_is_safe, dtype, type, NULL);
         if (safe == NULL) {
             return NULL;
         }

@@ -5662,7 +5662,7 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
     PyArrayObject *ap1 = NULL;
     PyObject *tmp;
     npy_cache_import_runtime("numpy", "matrix",
-                             &npy_runtime_imports.numpy_matrix);
+                             &npy_get_module_state()->runtime_imports.numpy_matrix);
 
     const char *matrix_deprecation_msg = (
             "%s.outer() was passed a numpy matrix as %s argument. "
@@ -5671,7 +5671,7 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
 
     tmp = PyTuple_GET_ITEM(args, 0);
 
-    if (PyObject_IsInstance(tmp, npy_runtime_imports.numpy_matrix)) {
+    if (PyObject_IsInstance(tmp, npy_get_module_state()->runtime_imports.numpy_matrix)) {
         PyErr_Format(PyExc_TypeError,
                 matrix_deprecation_msg, ufunc->name, "first");
         return NULL;
@@ -5685,7 +5685,7 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
 
     PyArrayObject *ap2 = NULL;
     tmp = PyTuple_GET_ITEM(args, 1);
-    if (PyObject_IsInstance(tmp, npy_runtime_imports.numpy_matrix)) {
+    if (PyObject_IsInstance(tmp, npy_get_module_state()->runtime_imports.numpy_matrix)) {
         PyErr_Format(PyExc_TypeError,
                 matrix_deprecation_msg, ufunc->name, "second");
         return NULL;
@@ -6837,7 +6837,7 @@ ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 
     if (npy_cache_import_runtime(
             "numpy._core._internal", "_ufunc_doc_signature_formatter",
-            &npy_runtime_imports._ufunc_doc_signature_formatter) == -1) {
+            &npy_get_module_state()->runtime_imports._ufunc_doc_signature_formatter) == -1) {
         return NULL;
     }
 
@@ -6847,7 +6847,7 @@ ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
      * of it the doc string shouldn't need the calling convention
      */
     doc = PyObject_CallFunctionObjArgs(
-            npy_runtime_imports._ufunc_doc_signature_formatter,
+            npy_get_module_state()->runtime_imports._ufunc_doc_signature_formatter,
             (PyObject *)ufunc, NULL);
     if (doc == NULL) {
         return NULL;

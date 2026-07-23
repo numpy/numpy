@@ -755,10 +755,10 @@ _convert_from_commastring(PyObject *obj, int align)
     assert(PyUnicode_Check(obj));
     if (npy_cache_import_runtime(
             "numpy._core._internal", "_commastring",
-            &npy_runtime_imports._commastring) == -1) {
+            &npy_get_module_state()->runtime_imports._commastring) == -1) {
         return NULL;
     }
-    parsed = PyObject_CallOneArg(npy_runtime_imports._commastring, obj);
+    parsed = PyObject_CallOneArg(npy_get_module_state()->runtime_imports._commastring, obj);
     if (parsed == NULL) {
         return NULL;
     }
@@ -1059,12 +1059,13 @@ static PyArray_Descr *
 _convert_from_field_dict(PyObject *obj, int align)
 {
     if (npy_cache_import_runtime(
-            "numpy._core._internal", "_usefields", &npy_runtime_imports._usefields) < 0) {
+            "numpy._core._internal", "_usefields",
+            &npy_get_module_state()->runtime_imports._usefields) < 0) {
         return NULL;
     }
 
     return (PyArray_Descr *)PyObject_CallFunctionObjArgs(
-        npy_runtime_imports._usefields, obj, align ? Py_True : Py_False, NULL);
+        npy_get_module_state()->runtime_imports._usefields, obj, align ? Py_True : Py_False, NULL);
 }
 
 /*
