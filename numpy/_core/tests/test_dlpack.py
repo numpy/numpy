@@ -260,3 +260,95 @@ class TestRegisterDlpackDtype:
         arr.__dlpack__()  # passes
         with pytest.raises(BufferError):
             np.from_dlpack(arr)  # doesn't round-trip
+
+
+class TestScalarDLPack:
+    @pytest.mark.parametrize(
+        "dtype",
+        [
+            np.bool_,
+            np.uint8,
+            np.int32,
+            np.int64,
+            np.float16,
+            np.float32,
+            np.float64,
+            np.complex128,
+        ],
+    )
+    def test_dlpack(self, dtype):
+        x = dtype(2)
+        y = np.from_dlpack(x)
+
+        assert x.dtype == y.dtype
+        assert y.shape == ()
+        assert x == y
+
+        # copy=False
+        y = np.from_dlpack(x, copy=False)
+        assert x.dtype == y.dtype
+        assert y.shape == ()
+        assert x == y
+
+    def test_dlpack_device(self):
+        x = np.float64(2)
+        assert x.__dlpack_device__() == (1, 0)
+
+    def test_dunder_dlpack_refcount(self):
+        x = np.float64(2)
+        y = x.__dlpack__(max_version=(1, 0))
+        startcount = sys.getrefcount(x)
+        del y
+        assert startcount - sys.getrefcount(x) == 1
+
+    def test_dunder_dlpack_version(self):
+        x = np.float64(2)
+        with pytest.raises(BufferError, match="readonly is unsupported"):
+            x.__dlpack__(max_version=(0, 0))
+        with pytest.raises(BufferError, match="readonly is unsupported"):
+            # None is equivalent to (0, 0)
+            x.__dlpack__()
+
+        # if copy=True, then we create a 0-D array, so should work
+        x.__dlpack__(max_version=(0, 0), copy=True)
+        x.__dlpack__(max_version=None, copy=True)
+
+    def test_dlpack_copy(self):
+        x = np.float64(2)
+        y = np.from_dlpack(x, copy=True)
+        assert x.dtype == y.dtype
+        assert y.shape == ()
+        assert x == y
+
+        y[()] = 3
+        assert x == 2
+        assert y == 3
+
+    @pytest.mark.parametrize("copy", [False, None])
+    def test_dlpack_read_only(self, copy):
+        x = np.float64(2)
+        y = np.from_dlpack(x, copy=copy)
+
+        with pytest.raises(
+            ValueError, match="assignment destination is read-only"
+        ):
+            y[()] = 3
+
+    @pytest.mark.parametrize("dtype", [np.str_, np.datetime64])
+    def test_invalid_dtype(self, dtype):
+        x = dtype('2021-05-27')
+
+        with pytest.raises(BufferError):
+            np.from_dlpack(x)
+
+    def test_device(self):
+        x = np.float64(2)
+        # requesting (1, 0), i.e. CPU device works in both calls:
+        x.__dlpack__(dl_device=(1, 0), max_version=(1, 0))
+        np.from_dlpack(x, device="cpu")
+        np.from_dlpack(x, device=None)
+
+        with pytest.raises(BufferError):
+            x.__dlpack__(dl_device=(10, 0), max_version=(1, 0))
+        with pytest.raises(ValueError):
+            np.from_dlpack(x, device="gpu")

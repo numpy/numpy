@@ -1,0 +1,6 @@
+Add DLPack support to NumPy scalars
+-----------------------------------
+``scalar.__dlpack__`` and ``scalar.__dlpack_device__`` methods have been added
+to NumPy scalars to allow exporting them to DLPack, similarly to ndarrays.
+Scalars can only be exported with read-only access (``__dlpack__(copy=False)``)
+and to DLPack version 1.0 or higher.
