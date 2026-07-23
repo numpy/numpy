@@ -1,0 +1,6 @@
+Faster selected ``numpy.pad`` modes for zero-width axes
+-------------------------------------------------------
+``numpy.pad`` is now faster for axes with pad width ``(0, 0)`` when using
+``mode="linear_ramp"`` or one of the statistic modes ``"maximum"``,
+``"mean"``, ``"median"``, and ``"minimum"``. These modes now skip unnecessary
+mode-specific work for axes where no values are added.
