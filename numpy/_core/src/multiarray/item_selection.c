@@ -2272,8 +2272,34 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     PyArray_ArgBinSearchFunc *argbinsearch = NULL;
     NPY_BEGIN_THREADS_DEF;
 
-    /* Find common type */
-    dtype = PyArray_DescrFromObject((PyObject *)op2, PyArray_DESCR(op1));
+    /* Reject the string-vs-non-string mixture that would otherwise silently
+     * promote to a string dtype and return wrong indices (gh-24032).  The
+     * check is on the dtypes, so it is applied independently of `v`'s size:
+     * an explicitly-typed but empty `v` (e.g. an empty integer array searched
+     * in a string `a`) is rejected just like a non-empty one, matching how
+     * comparison ufuncs such as ``np.less`` reject the same dtype pairing.
+     *
+     * The only exemption is when no dtype can be inferred from `v` at all
+     * (dtype_v == NULL, e.g. an empty list): such a `v` carries no type intent
+     * and always yields an empty result, so it must keep working. */
+    PyArray_Descr *dtype_a = PyArray_DESCR(op1);
+    PyArray_Descr *dtype_v = NULL;
+    if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &dtype_v) < 0) {
+        return NULL;
+    }
+    if (dtype_v != NULL
+            && PyTypeNum_ISSTRING(dtype_a->type_num)
+                != PyTypeNum_ISSTRING(dtype_v->type_num)) {
+        PyErr_Format(PyExc_TypeError,
+                "Incompatible types for searching: a (%S) and v (%S)",
+                dtype_a, dtype_v);
+        Py_DECREF(dtype_v);
+        return NULL;
+    }
+    Py_XDECREF(dtype_v);
+
+    /* Find common type (unchanged historical behavior for the accepted cases) */
+    dtype = PyArray_DescrFromObject((PyObject *)op2, dtype_a);
     if (dtype == NULL) {
         return NULL;
     }

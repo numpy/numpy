@@ -3576,6 +3576,36 @@ class TestMethods:
         assert_(not isinstance(a.searchsorted(b, 'left', s), A))
         assert_(not isinstance(a.searchsorted(b, 'right', s), A))
 
+    def test_searchsorted_incompatible_inputs(self):
+        # gh-24032: incompatible types must raise rather than silently
+        # promote to a string dtype and return wrong indices.
+        assert_raises(TypeError, np.searchsorted, [1, 2, 3], ["1"])
+        assert_raises(TypeError, np.searchsorted, ["1", "2", "3"], [2])
+        assert_raises(TypeError, np.searchsorted, [b"1", b"2", b"3"], 1)
+
+    def test_searchsorted_empty_v(self):
+        # gh-24032 regression: an empty python list carries no type intent, so
+        # its dtype cannot be inferred and the incompatible-type check must be
+        # skipped -- it always yields an empty result regardless of `a`.
+        for a in (["a", "b"], [b"a", b"b"], [1, 2, 3]):
+            res = np.searchsorted(a, [])
+            assert_equal(res, np.array([], dtype=np.intp))
+            # an empty array with a *compatible* dtype also works
+            res = np.searchsorted(a, np.array([], dtype=np.asarray(a).dtype))
+            assert_equal(res, np.array([], dtype=np.intp))
+
+    def test_searchsorted_incompatible_empty_v(self):
+        # gh-24032: the string-vs-non-string check is on the dtypes, so an
+        # explicitly-typed but empty `v` is rejected just like a non-empty one
+        # (the contract must not depend on len(v)). This mirrors how comparison
+        # ufuncs such as np.less reject the same dtype pairing.
+        assert_raises(TypeError, np.searchsorted, ["a", "b"],
+                      np.array([], dtype=np.int64))
+        assert_raises(TypeError, np.searchsorted, [b"a", b"b"],
+                      np.array([], dtype=np.int64))
+        assert_raises(TypeError, np.searchsorted, [1, 2, 3],
+                      np.array([], dtype="U1"))
+
     @pytest.mark.parametrize("dtype", np.typecodes["All"])
     def test_argpartition_out_of_range(self, dtype):
         # Test out of range values in kth raise an error, gh-5469
