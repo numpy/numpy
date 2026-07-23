@@ -2201,7 +2201,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
  *
  * #name = take, getfield, put, repeat, tofile, mean, trace, diagonal, clip,
  *         std, var, sum, cumsum, prod, cumprod, compress, sort, argsort,
- *         round, argmax, argmin, max, min, any, all, astype, resize,
+ *         round, argmax, argmin, max, min, any, all, resize,
  *         reshape, choose, tobytes, copy, searchsorted, view,
  *         flatten, ravel, squeeze#
  */
@@ -2252,6 +2252,32 @@ static PyObject *
     return obj;
 }
 /**end repeat**/
+
+static PyObject *
+gentype_astype(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    if (PyObject_IsInstance(self, (PyObject *)&PyVoidArrType_Type)) {
+        // guard for structured data types
+        return gentype_generic_method(self, args, kwds, "astype");
+    }
+    PyArray_Descr *from = PyArray_DescrFromScalar(self);
+    if (from == NULL) {
+        return NULL;
+    }
+    PyArray_Descr *to = NULL;
+    if (PyTuple_GET_SIZE(args) >= 1
+            && !PyArray_DescrConverter(PyTuple_GET_ITEM(args, 0), &to)) {
+        Py_DECREF(from);
+        return NULL;
+    }
+    int equiv = (to != NULL) && PyArray_EquivTypes(from, to);
+    Py_DECREF(from);
+    Py_XDECREF(to);
+    if (equiv) {
+        return Py_NewRef(self);
+    }
+    return gentype_generic_method(self, args, kwds, "astype");
+}
 
 static PyObject *
 voidtype_getfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
