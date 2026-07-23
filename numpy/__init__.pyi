@@ -107,7 +107,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     _CharacterCodes,
     # Ufuncs
     _UFunc_Nin2_Nout1,
-    _UFunc_Nin2_Nout2,
     _GUFunc_Nin2_Nout1,
 )
 from numpy._typing._char_codes import (
@@ -407,6 +406,7 @@ from numpy._core.umath import (
     degrees,
     divide,
     divide as true_divide,
+    divmod,
     equal,
     exp,
     exp2,
@@ -7643,7 +7643,6 @@ class ufunc:
 
 # Parameters: `__name__`, `ntypes` and `identity`
 add: _UFunc_Nin2_Nout1[L["add"], L[22], L[0]]
-divmod: _UFunc_Nin2_Nout2[L["divmod"], L[15], None]
 fmax: _UFunc_Nin2_Nout1[L["fmax"], L[21], None]
 fmin: _UFunc_Nin2_Nout1[L["fmin"], L[21], None]
 matmul: _GUFunc_Nin2_Nout1[L["matmul"], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]]
