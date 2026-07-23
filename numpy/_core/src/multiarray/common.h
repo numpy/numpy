@@ -21,6 +21,23 @@ extern "C" {
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
+static inline void
+multi_DECREF(PyObject *const *objects, npy_intp n)
+{
+    assert(n == 0 || objects != NULL);
+    for (npy_intp i = 0; i < n; i++) {
+        Py_DECREF(objects[i]);
+    }
+}
+
+static inline void
+multi_XDECREF(PyObject *const *objects, npy_intp n)
+{
+    assert(objects != NULL || n == 0);
+    for (npy_intp i = 0; i < n; i++) {
+        Py_XDECREF(objects[i]);
+    }
+}
 
 NPY_NO_EXPORT PyObject *
 build_array_interface(PyObject *dataptr, PyObject *descr, PyObject *strides,
