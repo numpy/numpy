@@ -186,4 +186,8 @@ _fill_dtype_api(void *full_api_table[])
     full_api_table[366] = &PyArray_IntAbstractDType;
     full_api_table[367] = &PyArray_FloatAbstractDType;
     full_api_table[368] = &PyArray_ComplexAbstractDType;
+    full_api_table[379] = &PyArray_NumericAbstractDType;
+    full_api_table[380] = &PyArray_SignedIntegerAbstractDType;
+    full_api_table[381] = &PyArray_UnsignedIntegerAbstractDType;
+    full_api_table[382] = &PyArray_InexactAbstractDType;
 }

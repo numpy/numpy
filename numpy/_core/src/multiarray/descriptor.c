@@ -3918,6 +3918,11 @@ static PyMappingMethods descr_as_mapping = {
 
 /****************** End of Mapping Protocol ******************************/
 
+/*
+ * Minimal dt_slots for the abstract numpy.dtype class (issubclass/register
+ * caches; see dtypemeta.c).
+ */
+static NPY_DType_Slots arraydescr_dtype_slots;
 
 /*
  * NOTE: Since this is a MetaClass, the name has Full appended here, the
@@ -3946,4 +3951,5 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArrayDescr_TypeFull = {
     .type_num = -1,
     .scalar_type = NULL,
     .flags = NPY_DT_ABSTRACT,
+    .dt_slots = &arraydescr_dtype_slots,
 };

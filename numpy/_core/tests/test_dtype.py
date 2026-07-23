@@ -1704,6 +1704,25 @@ class TestDTypeClasses:
                     np._core.multiarray.scalar(dt)
 
 
+class TestAbstractDTypes:
+    def test_numeric_abstract_exposed(self):
+        assert "NumericAbstractDType" in np.dtypes.__all__
+        assert np.dtypes.NumericAbstractDType.__name__ == "NumericAbstractDType"
+
+    def test_numeric_abstract_mro(self):
+        assert issubclass(np.dtypes.Int64DType, np.dtypes.NumericAbstractDType)
+        assert issubclass(np.dtypes.Int64DType, np.dtypes.IntegerAbstractDType)
+        assert issubclass(
+            np.dtypes.Float64DType, np.dtypes.NumericAbstractDType)
+        assert issubclass(
+            np.dtypes.Complex128DType, np.dtypes.NumericAbstractDType)
+
+    def test_numeric_abstract_subclasscheck_flag(self):
+        NA = np.dtypes.NumericAbstractDType
+        assert issubclass(np.dtypes.Int64DType, NA)
+        assert not issubclass(np.dtypes.StringDType, NA)
+
+
 class TestFromCTypes:
 
     @staticmethod
@@ -2077,6 +2096,13 @@ class TestDTypeSignatures:
                 # `np._NoValue` default, which isn't supported by `inspect.signature`,
                 # so `**kwargs` is used instead.
                 params_expect = {"coerce", "kwargs"}
+            case ("numericabstract" | "integerabstract" | "inexactabstract"
+                  | "floatingabstract" | "complexfloatingabstract"
+                  | "signedintegerabstract" | "unsignedintegerabstract"):
+                # Signature is currently inherited, but can't instantiate anyway.
+                params_expect = set(sig.parameters)
+                with pytest.raises(TypeError):
+                    dtype_type()
             case _:
                 params_expect = set()
 
