@@ -260,3 +260,39 @@ class TestRegisterDlpackDtype:
         arr.__dlpack__()  # passes
         with pytest.raises(BufferError):
             np.from_dlpack(arr)  # doesn't round-trip
+
+
+class TestScalarDLPack:
+    @pytest.mark.parametrize("dtype", [np.bool, np.float64, np.complex128])
+    def test_dlpack(self, dtype):
+        x = np.from_dlpack(dtype(2))
+        expected = np.array(2, dtype=dtype)
+
+        assert x.dtype == expected.dtype
+        assert x.shape == ()
+        assert_array_equal(x, expected)
+
+    def test_dlpack_device(self):
+        x = np.float64(2)
+        assert x.__dlpack_device__() == (1, 0)
+
+    def test_dlpack_cannot_view(self):
+        x = np.float64(2)
+
+        with pytest.raises(BufferError, match="copy=False"):
+            np.from_dlpack(x, copy=False)
+
+    @pytest.mark.parametrize("dtype", [np.str_, np.datetime64])
+    def test_invalid_dtype(self, dtype):
+        x = dtype('2021-05-27')
+
+        with pytest.raises(BufferError):
+            np.from_dlpack(x)
+
+    def test_independent_copy(self):
+        x = np.bool_(True)
+        y1 = np.from_dlpack(x)
+        y2 = np.from_dlpack(x)
+        y1[...] = False
+        assert bool(y2) == True
+        assert bool(x) == True  # singleton must be untouched
