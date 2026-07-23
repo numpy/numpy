@@ -5,6 +5,7 @@
 
 #include "npy_import.h"
 #include "multiarraymodule.h"
+#include "module_state.h"
 
 /*
  * Check if a python type is a ctypes class.
@@ -24,12 +25,12 @@ npy_ctypes_check(PyTypeObject *obj)
 
     if (npy_cache_import_runtime(
                 "numpy._core._internal", "npy_ctypes_check",
-                &npy_runtime_imports.npy_ctypes_check) == -1) {
+                &npy_get_module_state()->runtime_imports.npy_ctypes_check) == -1) {
         goto fail;
     }
 
     ret_obj = PyObject_CallFunctionObjArgs(
-            npy_runtime_imports.npy_ctypes_check, (PyObject *)obj, NULL);
+            npy_get_module_state()->runtime_imports.npy_ctypes_check, (PyObject *)obj, NULL);
     if (ret_obj == NULL) {
         goto fail;
     }

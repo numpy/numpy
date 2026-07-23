@@ -5127,7 +5127,37 @@ multiarray_umath_traverse(PyObject *m, visitproc visit, void *arg)
     Py_VISIT(state->static_pydata.dlpack_dtype_registry);
     Py_VISIT(state->static_pydata.dlpack_export_registry);
 
-    /* FIXME : Py_VISIT each field of state->runtime_imports */
+    Py_VISIT(state->runtime_imports._add_dtype_helper);
+    Py_VISIT(state->runtime_imports._all);
+    Py_VISIT(state->runtime_imports._amax);
+    Py_VISIT(state->runtime_imports._amin);
+    Py_VISIT(state->runtime_imports._any);
+    Py_VISIT(state->runtime_imports.array_function_errmsg_formatter);
+    Py_VISIT(state->runtime_imports.array_ufunc_errmsg_formatter);
+    Py_VISIT(state->runtime_imports._clip);
+    Py_VISIT(state->runtime_imports._commastring);
+    Py_VISIT(state->runtime_imports._convert_to_stringdtype_kwargs);
+    Py_VISIT(state->runtime_imports._default_array_repr);
+    Py_VISIT(state->runtime_imports._default_array_str);
+    Py_VISIT(state->runtime_imports._dump);
+    Py_VISIT(state->runtime_imports._dumps);
+    Py_VISIT(state->runtime_imports._getfield_is_safe);
+    Py_VISIT(state->runtime_imports.internal_gcd_func);
+    Py_VISIT(state->runtime_imports._mean);
+    Py_VISIT(state->runtime_imports.NO_NEP50_WARNING);
+    Py_VISIT(state->runtime_imports.npy_ctypes_check);
+    Py_VISIT(state->runtime_imports.numpy_matrix);
+    Py_VISIT(state->runtime_imports._prod);
+    Py_VISIT(state->runtime_imports._promote_fields);
+    Py_VISIT(state->runtime_imports._std);
+    Py_VISIT(state->runtime_imports._sum);
+    Py_VISIT(state->runtime_imports._ufunc_doc_signature_formatter);
+    Py_VISIT(state->runtime_imports._ufunc_inspect_signature_builder);
+    Py_VISIT(state->runtime_imports._usefields);
+    Py_VISIT(state->runtime_imports._var);
+    Py_VISIT(state->runtime_imports._view_is_safe);
+    Py_VISIT(state->runtime_imports._void_scalar_to_string);
+
     return 0;
 }
 
@@ -5225,7 +5255,37 @@ multiarray_umath_clear(PyObject *m)
     Py_CLEAR(state->static_pydata.dlpack_dtype_registry);
     Py_CLEAR(state->static_pydata.dlpack_export_registry);
 
-    /* FIXME : Py_CLEAR each field of state->runtime_imports */
+    Py_CLEAR(state->runtime_imports._add_dtype_helper);
+    Py_CLEAR(state->runtime_imports._all);
+    Py_CLEAR(state->runtime_imports._amax);
+    Py_CLEAR(state->runtime_imports._amin);
+    Py_CLEAR(state->runtime_imports._any);
+    Py_CLEAR(state->runtime_imports.array_function_errmsg_formatter);
+    Py_CLEAR(state->runtime_imports.array_ufunc_errmsg_formatter);
+    Py_CLEAR(state->runtime_imports._clip);
+    Py_CLEAR(state->runtime_imports._commastring);
+    Py_CLEAR(state->runtime_imports._convert_to_stringdtype_kwargs);
+    Py_CLEAR(state->runtime_imports._default_array_repr);
+    Py_CLEAR(state->runtime_imports._default_array_str);
+    Py_CLEAR(state->runtime_imports._dump);
+    Py_CLEAR(state->runtime_imports._dumps);
+    Py_CLEAR(state->runtime_imports._getfield_is_safe);
+    Py_CLEAR(state->runtime_imports.internal_gcd_func);
+    Py_CLEAR(state->runtime_imports._mean);
+    Py_CLEAR(state->runtime_imports.NO_NEP50_WARNING);
+    Py_CLEAR(state->runtime_imports.npy_ctypes_check);
+    Py_CLEAR(state->runtime_imports.numpy_matrix);
+    Py_CLEAR(state->runtime_imports._prod);
+    Py_CLEAR(state->runtime_imports._promote_fields);
+    Py_CLEAR(state->runtime_imports._std);
+    Py_CLEAR(state->runtime_imports._sum);
+    Py_CLEAR(state->runtime_imports._ufunc_doc_signature_formatter);
+    Py_CLEAR(state->runtime_imports._ufunc_inspect_signature_builder);
+    Py_CLEAR(state->runtime_imports._usefields);
+    Py_CLEAR(state->runtime_imports._var);
+    Py_CLEAR(state->runtime_imports._view_is_safe);
+    Py_CLEAR(state->runtime_imports._void_scalar_to_string);
+
     return 0;
 }
 
@@ -5591,12 +5651,12 @@ _multiarray_umath_exec(PyObject *m) {
 
     if (npy_cache_import_runtime(
             "numpy.dtypes", "_add_dtype_helper",
-            &npy_runtime_imports._add_dtype_helper) == -1) {
+            &state->runtime_imports._add_dtype_helper) == -1) {
         return -1;
     }
 
     if (PyObject_CallFunction(
-            npy_runtime_imports._add_dtype_helper,
+            state->runtime_imports._add_dtype_helper,
             "Os", (PyObject *)&PyArray_StringDType, NULL) == NULL) {
         return -1;
     }

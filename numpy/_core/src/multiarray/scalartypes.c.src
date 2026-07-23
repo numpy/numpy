@@ -865,12 +865,12 @@ static PyObject *
 _void_scalar_to_string(PyObject *obj, int repr) {
     if (npy_cache_import_runtime(
                 "numpy._core.arrayprint", "_void_scalar_to_string",
-                &npy_runtime_imports._void_scalar_to_string) == -1) {
+                &npy_get_module_state()->runtime_imports._void_scalar_to_string) == -1) {
         return NULL;
     }
     PyObject *is_repr = repr ? Py_True : Py_False;
     return PyObject_CallFunctionObjArgs(
-            npy_runtime_imports._void_scalar_to_string, obj, is_repr, NULL);
+            npy_get_module_state()->runtime_imports._void_scalar_to_string, obj, is_repr, NULL);
 }
 
 static PyObject *

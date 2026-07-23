@@ -18,6 +18,7 @@
 #include "conversion_utils.h"
 #include "npy_import.h"
 #include "multiarraymodule.h"
+#include "module_state.h"
 #include "npy_sort.h"
 
 /*
@@ -912,18 +913,18 @@ stringdtype__reduce__(PyArray_StringDTypeObject *self, PyObject *NPY_UNUSED(args
 {
     if (npy_cache_import_runtime(
                 "numpy._core._internal", "_convert_to_stringdtype_kwargs",
-                &npy_runtime_imports._convert_to_stringdtype_kwargs) == -1) {
+                &npy_get_module_state()->runtime_imports._convert_to_stringdtype_kwargs) == -1) {
         return NULL;
     }
 
     if (self->na_object != NULL) {
         return Py_BuildValue(
-                "O(iO)", npy_runtime_imports._convert_to_stringdtype_kwargs,
+                "O(iO)", npy_get_module_state()->runtime_imports._convert_to_stringdtype_kwargs,
                 self->coerce, self->na_object);
     }
 
     return Py_BuildValue(
-            "O(i)", npy_runtime_imports._convert_to_stringdtype_kwargs,
+            "O(i)", npy_get_module_state()->runtime_imports._convert_to_stringdtype_kwargs,
             self->coerce);
 }
 

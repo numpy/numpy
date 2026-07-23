@@ -879,11 +879,11 @@ void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
         /* If both have fields promoting individual fields may be possible */
         if (npy_cache_import_runtime(
                     "numpy._core._internal", "_promote_fields",
-                    &npy_runtime_imports._promote_fields) == -1) {
+                    &npy_get_module_state()->runtime_imports._promote_fields) == -1) {
             return NULL;
         }
         PyObject *result = PyObject_CallFunctionObjArgs(
-                npy_runtime_imports._promote_fields,
+                npy_get_module_state()->runtime_imports._promote_fields,
                 descr1, descr2, NULL);
         if (result == NULL) {
             return NULL;
@@ -1321,12 +1321,12 @@ dtypemeta_wrap_legacy_descriptor(
     /* And it to the types submodule if it is a builtin dtype */
     if (!PyTypeNum_ISUSERDEF(descr->type_num)) {
         if (npy_cache_import_runtime("numpy.dtypes", "_add_dtype_helper",
-                                     &npy_runtime_imports._add_dtype_helper) == -1) {
+                                     &npy_get_module_state()->runtime_imports._add_dtype_helper) == -1) {
             goto fail;
         }
 
         if (PyObject_CallFunction(
-                npy_runtime_imports._add_dtype_helper,
+                npy_get_module_state()->runtime_imports._add_dtype_helper,
                 "Os", (PyObject *)dtype_class, alias) == NULL) {
             goto fail;
         }

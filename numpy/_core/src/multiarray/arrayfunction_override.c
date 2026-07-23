@@ -249,9 +249,9 @@ set_no_matching_types_error(PyObject *public_api, PyObject *types)
     if (npy_cache_import_runtime(
             "numpy._core._internal",
             "array_function_errmsg_formatter",
-            &npy_runtime_imports.array_function_errmsg_formatter) == 0) {
+            &npy_get_module_state()->runtime_imports.array_function_errmsg_formatter) == 0) {
         PyObject *errmsg = PyObject_CallFunctionObjArgs(
-                npy_runtime_imports.array_function_errmsg_formatter,
+                npy_get_module_state()->runtime_imports.array_function_errmsg_formatter,
                 public_api, types, NULL);
         if (errmsg != NULL) {
             PyErr_SetObject(PyExc_TypeError, errmsg);

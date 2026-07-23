@@ -374,11 +374,11 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
             if (npy_cache_import_runtime(
                     "numpy._core._internal",
                     "array_ufunc_errmsg_formatter",
-                    &npy_runtime_imports.array_ufunc_errmsg_formatter) == -1) {
+                    &npy_get_module_state()->runtime_imports.array_ufunc_errmsg_formatter) == -1) {
                 goto fail;
             }
             errmsg = PyObject_Call(
-                    npy_runtime_imports.array_ufunc_errmsg_formatter,
+                    npy_get_module_state()->runtime_imports.array_ufunc_errmsg_formatter,
                     override_args, normal_kwds);
             if (errmsg != NULL) {
                 PyErr_SetObject(PyExc_TypeError, errmsg);

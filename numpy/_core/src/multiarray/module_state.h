@@ -8,7 +8,8 @@
  *   [x] npy_interned_str    — migrated to multiarray_umath_state.interned_str
  *   [x] npy_static_pydata   — migrated to multiarray_umath_state.static_pydata
  *   [x] npy_static_cdata    — migrated to multiarray_umath_state.static_cdata
- *   [ ] npy_runtime_imports — still global in npy_import.c
+ *   [x] npy_runtime_imports — migrated to multiarray_umath_state.runtime_imports
+ *                             (import mutex remains process-global in npy_import.c)
  *   [x] npy_global_state    — migrated to multiarray_umath_state.global_state
  */
 
