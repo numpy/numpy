@@ -1,5 +1,6 @@
 """Implementation of __array_function__ overrides from NEP-18."""
 import collections
+import enum
 import functools
 import inspect
 
@@ -14,9 +15,12 @@ from numpy._utils._inspect import getargspec
 ARRAY_FUNCTIONS = set()
 
 # Signature families used by the exact-ndarray reduction fast path.
-_REDUCTION_SUM_PROD = 1
-_REDUCTION_MIN_MAX = 2
-_REDUCTION_ANY_ALL = 3
+class _ReductionKind(enum.IntEnum):
+    # Keep in sync with the enum in arrayfunction_override.c
+    SUM_PROD = 1
+    MIN_MAX = 2
+    ANY_ALL = 3
+
 
 array_function_like_doc = (
     """like : array_like, optional

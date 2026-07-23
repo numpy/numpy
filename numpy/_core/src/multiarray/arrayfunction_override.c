@@ -406,7 +406,11 @@ cleanup:
 }
 
 
-enum {REDUCTION_SUM_PROD = 1, REDUCTION_MIN_MAX, REDUCTION_ANY_ALL};
+enum {
+    REDUCTION_SUM_PROD = 1,
+    REDUCTION_MIN_MAX = 2,
+    REDUCTION_ANY_ALL = 3,
+};
 typedef struct {
     PyObject_HEAD
     vectorcallfunc vectorcall;
@@ -432,8 +436,8 @@ try_reduction(PyArray_ArrayFunctionDispatcherObject *self,
     switch (self->reduction_kind) {
         case REDUCTION_SUM_PROD: {
             NPY_PREPARE_ARGPARSER;
-            parsed = npy_parse_arguments("", args, PyVectorcall_NARGS(nargsf), kwnames, 
-                {"a", NULL, &a}, 
+            parsed = npy_parse_arguments("", args, PyVectorcall_NARGS(nargsf), kwnames,
+                {"a", NULL, &a},
                 {"|axis", NULL, &axis},
                 {"|dtype", NULL, &dtype},
                 {"|out", NULL, &out},
@@ -444,7 +448,7 @@ try_reduction(PyArray_ArrayFunctionDispatcherObject *self,
         }
         case REDUCTION_MIN_MAX: {
             NPY_PREPARE_ARGPARSER;
-            parsed = npy_parse_arguments("", args, PyVectorcall_NARGS(nargsf), kwnames, 
+            parsed = npy_parse_arguments("", args, PyVectorcall_NARGS(nargsf), kwnames,
                 {"a", NULL, &a},
                 {"|axis", NULL, &axis},
                 {"|out", NULL, &out},
@@ -456,13 +460,15 @@ try_reduction(PyArray_ArrayFunctionDispatcherObject *self,
         case REDUCTION_ANY_ALL: {
             NPY_PREPARE_ARGPARSER;
             parsed = npy_parse_arguments("", args, PyVectorcall_NARGS(nargsf), kwnames,
-                {"a", NULL, &a}, 
+                {"a", NULL, &a},
                 {"|axis", NULL, &axis},
                 {"|out", NULL, &out},
                 {"|keepdims", NULL, &keepdims},
                 {"$where", NULL, &where});
             break;
         }
+        default:
+            return 0;
     }
     if (parsed < 0 && PyErr_ExceptionMatches(PyExc_TypeError)) { PyErr_Clear(); return 0; }
     if (parsed < 0) { return -1; }
@@ -475,7 +481,7 @@ try_reduction(PyArray_ArrayFunctionDispatcherObject *self,
     PyObject *call_args[] = {
         a, axis, dtype, out,
         keepdims == npy_static_pydata._NoValue ? Py_False : keepdims,
-        initial, 
+        initial,
         where == npy_static_pydata._NoValue ? Py_True : where,
     };
     *result = PyObject_Vectorcall(self->reduction, call_args, 7, NULL);
@@ -574,8 +580,15 @@ dispatcher_vectorcall(PyArray_ArrayFunctionDispatcherObject *self,
 
     int num_implementing_args;
 
-    if (self->reduction != NULL && try_reduction(self, args, len_args, kwnames, &result))
-        return result;
+    if (self->reduction != NULL) {
+        int reduction_status = try_reduction(self, args, len_args, kwnames, &result);
+        if (reduction_status < 0) {
+            return NULL;
+        }
+        if (reduction_status == 1) {
+            return result;
+        }
+    }
 
     if (self->relevant_arg_func != NULL) {
         public_api = (PyObject *)self;
@@ -763,7 +776,7 @@ dispatcher_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwargs)
                 !PyCallable_Check(callable) ||
                 kind < REDUCTION_SUM_PROD || kind > REDUCTION_ANY_ALL) {
             Py_DECREF(self);
-            return PyErr_Format(PyExc_ValueError, "invalid reduction");
+            return PyErr_Format(PyExc_ValueError, "reduction must be a (callable, kind) tuple");
         }
         self->reduction = Py_NewRef(callable);
         self->reduction_kind = kind;
