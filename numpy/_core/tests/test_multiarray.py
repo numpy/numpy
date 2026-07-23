@@ -10228,7 +10228,6 @@ class TestWhere:
             assert_equal(np.where(c[::-3], d[::-3], e[::-3]), r[::-3])
             assert_equal(np.where(c[1::-3], d[1::-3], e[1::-3]), r[1::-3])
 
-    @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
     def test_exotic(self):
         # object
         assert_array_equal(np.where(True, None, None), np.array(None))
