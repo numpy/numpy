@@ -460,10 +460,15 @@ array_struct_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     }
     PyObject *ret = PyCapsule_New(inter, NULL, gentype_struct_free);
     if (ret == NULL) {
+        Py_XDECREF(inter->descr);
+        PyArray_free(inter->shape);
+        PyArray_free(inter);
         return NULL;
     }
     Py_INCREF(self);
     if (PyCapsule_SetContext(ret, self) < 0) {
+        Py_DECREF(self);
+        Py_DECREF(ret);
         return NULL;
     }
     return ret;
