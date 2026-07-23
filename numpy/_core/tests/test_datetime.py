@@ -671,6 +671,27 @@ class TestDateTime:
         assert_equal(clnan.astype('timedelta64[ns]'), nat)
         assert_equal(hnan.astype('timedelta64[ns]'), nat)
 
+    def test_datetime_nat_like_object_conversion(self):
+        # gh-31608: objects that duck-type as datetimes but whose
+        # year/month/day attributes are NaN (e.g. pandas NaT) should
+        # convert to NaT instead of raising a TypeError.
+        class NaTLike:
+            year = float("nan")
+            month = float("nan")
+            day = float("nan")
+
+        # explicit unit
+        arr_ns = np.asarray(NaTLike(), dtype=object).astype("datetime64[ns]")
+        assert arr_ns.dtype == np.dtype("M8[ns]")
+        assert np.isnat(arr_ns)
+
+        # scalar constructor path
+        assert np.isnat(np.datetime64(NaTLike(), "ns"))
+
+        # the exact bug-report case (no explicit unit)
+        arr = np.asarray(NaTLike(), dtype=object).astype("datetime64")
+        assert np.isnat(arr)
+
     def test_days_creation(self):
         assert_equal(np.array('1599', dtype='M8[D]').astype('i8'),
                 (1600 - 1970) * 365 - (1972 - 1600) / 4 + 3 - 365)
