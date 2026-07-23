@@ -10,6 +10,8 @@ type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 
+type _ArrayAny = np.ndarray[tuple[Any, ...], np.dtype[Any]]
+
 class SubClass[ScalarT: np.generic](np.ndarray[_AnyShape, np.dtype[ScalarT]]): ...
 
 class IntoSubClass[ScalarT: np.generic]:
@@ -60,6 +62,7 @@ assert_type(np.array(B, subok=True, ndmin=0), SubClass[np.float64])
 assert_type(np.array(B, subok=True, ndmin=1), SubClass[np.float64])
 assert_type(np.array(D), npt.NDArray[np.float64 | np.int64])
 assert_type(np.array(E, subok=True), SubClass[np.float64 | np.int64])
+assert_type(np.array([np.sum, np.mean]), _ArrayAny)
 # https://github.com/numpy/numpy/issues/29245
 assert_type(np.array([], dtype=np.bool), npt.NDArray[np.bool[Any]])
 

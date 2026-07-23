@@ -14,6 +14,14 @@ from ._shape import _AnyShape
 
 type NDArray[ScalarT: np.generic] = np.ndarray[_AnyShape, np.dtype[ScalarT]]
 
+type _FiniteNestedSequence[T] = (
+    T
+    | Sequence[T]
+    | Sequence[Sequence[T]]
+    | Sequence[Sequence[Sequence[T]]]
+    | Sequence[Sequence[Sequence[Sequence[T]]]]
+)
+
 # The `_SupportsArray` protocol only cares about the default dtype
 # (i.e. `dtype=None` or no `dtype` parameter at all) of the to-be returned
 # array.
@@ -39,7 +47,7 @@ class _SupportsArrayFunc(Protocol):
 # A subset of `npt.ArrayLike` that can be parametrized w.r.t. `np.generic`
 type _ArrayLike[ScalarT: np.generic] = (
     _SupportsArray[np.dtype[ScalarT]]
-    | _NestedSequence[_SupportsArray[np.dtype[ScalarT]]]
+    | _FiniteNestedSequence[_SupportsArray[np.dtype[ScalarT]]]
 )
 
 # A union representing array-like objects; consists of two typevars:
