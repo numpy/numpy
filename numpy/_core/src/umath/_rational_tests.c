@@ -425,7 +425,7 @@ pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
             if (scan_rational(&s,&r)) {
                 const char* p;
                 for (p = s; *p; p++) {
-                    if (!isspace(*p)) {
+                    if (!isspace(Py_CHARMASK(*p))) {
                         goto bad;
                     }
                 }
