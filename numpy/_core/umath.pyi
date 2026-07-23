@@ -26,7 +26,6 @@ from numpy import (
     _OrderKACF,
     add,
     conj,
-    divmod,
     e,
     euler_gamma,
     fmax,
@@ -229,6 +228,7 @@ class _ExtOjbDict(TypedDict, total=False):
 
 type _Signature1 = tuple[str | None, str | None] | str
 type _Signature2 = tuple[str | None, str | None, str | None] | str
+type _Signature3 = tuple[str | None, str | None, str | None, str | None] | str
 
 # TODO(@jorenham): make these `__array_ufunc__` protocols generic on `ufunc` so that
 # implementing types can structurally determine the signature of the calling `ufunc`.
@@ -307,6 +307,14 @@ class _Kwargs21(TypedDict, total=False):
     order: _OrderKACF  # = "K",
     subok: bool  # = True,
     signature: _Signature2
+
+@type_check_only
+class _Kwargs22(TypedDict, total=False):
+    where: _ArrayLikeBool_co  # = True
+    casting: _CastingKind  # = "same_kind"
+    order: _OrderKACF  # = "K"
+    subok: bool  # = True
+    signature: _Signature3
 
 @type_check_only
 class _ufunc_11(np.ufunc, Generic[_IdT_co]):  # type: ignore[misc]
@@ -388,6 +396,38 @@ class _ufunc_21(np.ufunc, Generic[_IdT_co]):  # type: ignore[misc]
     @property
     @override
     def signature(self) -> None: ...
+
+@type_check_only
+class _ufunc_22(np.ufunc):  # type: ignore[misc]
+    @property
+    @override
+    def identity(self) -> None: ...
+    @property
+    @override
+    def nin(self) -> Literal[2]: ...
+    @property
+    @override
+    def nout(self) -> Literal[2]: ...
+    @property
+    @override
+    def nargs(self) -> Literal[4]: ...
+    @property
+    @override
+    def signature(self) -> None: ...
+
+    #
+    @final
+    @override
+    def at(self, a: Never, indices: Never, b: Never, /) -> Never: ...  # pyrefly:ignore[bad-override]
+    @final
+    @override
+    def accumulate(self, array: Never, /) -> Never: ...  # pyrefly:ignore[bad-override]
+    @final
+    @override
+    def reduce(self, array: Never, /) -> Never: ...  # pyrefly:ignore[bad-override]
+    @final
+    @override
+    def reduceat(self, array: Never, /, indices: Never) -> Never: ...  # pyrefly:ignore[bad-override]
 
 # Mm => ?
 @type_check_only
@@ -13344,6 +13384,1140 @@ floor_divide: Final[_ufunc_21_mod[np.inexact | np.timedelta64 | np.object_, np.i
 
 power: Final[_ufunc_21_pow_sub[np.bool | np.number | np.object_]] = ...
 subtract: Final[_ufunc_21_pow_sub[np.bool | np.number | np.object_ | np.timedelta64 | np.datetime64]] = ...
+
+# bBhHiIlLqQefdgm, bBhHiIlLqQefdgm => bBhHiIlLqQefdg, bBhHiIlLqQefdgm
+#
+# Only the i64/i32/i8/u8 int promotion rules are implemented
+@type_check_only
+class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
+    @override
+    @overload  # 0d +i8, 0d +i8
+    def __call__(
+        self,
+        x1: bool | _to_i8,
+        x2: bool | _to_i8,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.int8]: ...
+    @overload  # 0d int|bool, 0d int|bool  (inevitably overlaps with previous overload)
+    def __call__(
+        self,
+        x1: int | np.bool,
+        x2: int | np.bool,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.int_ | Any]: ...
+    @overload  # 0d ~i64, 0d +i64
+    def __call__(
+        self,
+        x1: np.int64,
+        x2: _to_i64,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.int64]: ...
+    @overload  # 0d +i64, 0d ~i64
+    def __call__(
+        self,
+        x1: _to_i64,
+        x2: np.int64,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.int64]: ...
+    @overload  # 0d ~i32, 0d +i32
+    def __call__(
+        self,
+        x1: np.int32,
+        x2: _to_i32,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.int32]: ...
+    @overload  # 0d +i32, 0d ~i32
+    def __call__(
+        self,
+        x1: _to_i32,
+        x2: np.int32,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.int32]: ...
+    @overload  # 0d ~u8, 0d +u8
+    def __call__(
+        self,
+        x1: np.uint8,
+        x2: _to_u8,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.uint8]: ...
+    @overload  # 0d +u8, 0d ~u8
+    def __call__(
+        self,
+        x1: _to_u8,
+        x2: np.uint8,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.uint8]: ...
+    @overload  # 0d T@integer, 0d +int
+    def __call__[IntT: np.integer](
+        self,
+        x1: IntT,
+        x2: int | np.bool,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[IntT]: ...
+    @overload  # 0d +int, 0d T@integer
+    def __call__[IntT: np.integer](
+        self,
+        x1: int | np.bool,
+        x2: IntT,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[IntT]: ...
+    @overload  # 0d ~f64, 0d +f64
+    def __call__(
+        self,
+        x1: np.float64,
+        x2: _to_f64,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.float64]: ...
+    @overload  # 0d +f64, 0d ~f64
+    def __call__(
+        self,
+        x1: _to_f64,
+        x2: np.float64,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.float64]: ...
+    @overload  # 0d ~f32, 0d +f32
+    def __call__(
+        self,
+        x1: np.float32,
+        x2: _to_f32,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.float32]: ...
+    @overload  # 0d +f32, 0d ~f32
+    def __call__(
+        self,
+        x1: _to_f32,
+        x2: np.float32,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.float32]: ...
+    @overload  # 0d ~f80, 0d +f80
+    def __call__(
+        self,
+        x1: np.longdouble,
+        x2: _FloatLike_co,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.longdouble]: ...
+    @overload  # 0d +f80, 0d ~f80
+    def __call__(
+        self,
+        x1: _FloatLike_co,
+        x2: np.longdouble,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.longdouble]: ...
+    @overload  # 0d ~m64, 0d ~m64
+    def __call__[MT: np.timedelta64](
+        self,
+        x1: MT,
+        x2: MT,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> tuple[np.int64, MT]: ...
+    @overload  # 0d T@floating, 0d +float
+    def __call__[FloatT: np.floating](
+        self,
+        x1: FloatT,
+        x2: float | np.bool,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[FloatT]: ...
+    @overload  # 0d +float, 0d T@floating
+    def __call__[FloatT: np.floating](
+        self,
+        x1: float | np.bool,
+        x2: FloatT,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[FloatT]: ...
+    @overload  # 0d float|int|bool, 0d float|int|bool
+    def __call__(
+        self,
+        x1: float | np.bool,
+        x2: float | np.bool,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.float64 | Any]: ...
+    @overload  # 0d _, 0d _, dtype=<known>
+    def __call__[ScalarT: np.floating | np.integer](
+        self,
+        x1: _FloatLike_co,
+        x2: _FloatLike_co,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[ScalarT]: ...
+    @overload  # 0d ?, 0d ?
+    def __call__(
+        self,
+        x1: _FloatLike_co,
+        x2: _FloatLike_co,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[Any]: ...
+    @overload  # ?d +i8, ?d +i8
+    def __call__(
+        self,
+        x1: _DualArrayLike[np.dtype[_to_i8], bool],
+        x2: _DualArrayLike[np.dtype[_to_i8], bool],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.int8]]: ...
+    @overload  # ?d ~i64, ?d +i64
+    def __call__(
+        self,
+        x1: _ArrayLike[np.int64],
+        x2: _ArrayLikeInt_co,
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.int64]]: ...
+    @overload  # ?d +i64, ?d ~i64
+    def __call__(
+        self,
+        x1: _ArrayLikeInt_co,
+        x2: _ArrayLike[np.int64],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.int64]]: ...
+    @overload  # ?d ~i32, ?d +i32
+    def __call__(
+        self,
+        x1: _ArrayLike[np.int32],
+        x2: _ArrayLike[_to_i32],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.int32]]: ...
+    @overload  # ?d +i32, ?d ~i32
+    def __call__(
+        self,
+        x1: _ArrayLike[_to_i32],
+        x2: _ArrayLike[np.int32],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.int32]]: ...
+    @overload  # ?d ~u8, ?d +u8
+    def __call__(
+        self,
+        x1: _ArrayLike[np.uint8],
+        x2: _ArrayLike[_to_u8],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.uint8]]: ...
+    @overload  # ?d +u8, ?d ~u8
+    def __call__(
+        self,
+        x1: _ArrayLike[_to_u8],
+        x2: _ArrayLike[np.uint8],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.uint8]]: ...
+    @overload  # Nd T@integer, ?d +int
+    def __call__[IntT: np.integer](
+        self,
+        x1: npt.NDArray[IntT],
+        x2: _DualArrayLike[np.dtype[np.bool], int],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[IntT]]: ...
+    @overload  # ?d +int, Nd T@integer
+    def __call__[IntT: np.integer](
+        self,
+        x1: _DualArrayLike[np.dtype[np.bool], int],
+        x2: npt.NDArray[IntT],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[IntT]]: ...
+    @overload  # Nd ~int, ?d +int
+    def __call__(
+        self,
+        x1: list[int] | _NestedSequence[list[int]],
+        x2: int | _NestedSequence[int],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.int_]]: ...
+    @overload  # ?d +int, Nd ~int
+    def __call__(
+        self,
+        x1: int | _NestedSequence[int],
+        x2: list[int] | _NestedSequence[list[int]],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.int_]]: ...
+    @overload  # ?d ~f64, ?d +f64
+    def __call__(
+        self,
+        x1: _ArrayLike[np.float64],
+        x2: _ArrayLike[_to_f64],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.float64]]: ...
+    @overload  # ?d +f64, ?d ~f64
+    def __call__(
+        self,
+        x1: _ArrayLike[_to_f64],
+        x2: _ArrayLike[np.float64],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.float64]]: ...
+    @overload  # ?d ~f32, ?d +f32
+    def __call__(
+        self,
+        x1: _ArrayLike[np.float32],
+        x2: _ArrayLike[_to_f32],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.float32]]: ...
+    @overload  # ?d +f32, ?d ~f32
+    def __call__(
+        self,
+        x1: _ArrayLike[_to_f32],
+        x2: _ArrayLike[np.float32],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.float32]]: ...
+    @overload  # ?d ~f80, ?d +f80
+    def __call__(
+        self,
+        x1: _ArrayLike[np.longdouble],
+        x2: _ArrayLike[_to_floating],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.longdouble]]: ...
+    @overload  # ?d +f80, ?d ~f80
+    def __call__(
+        self,
+        x1: _ArrayLike[_to_floating],
+        x2: _ArrayLike[np.longdouble],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.longdouble]]: ...
+    @overload  # ?d ~m64, ?d ~m64
+    def __call__[MT: np.timedelta64](
+        self,
+        x1: _ArrayLike[MT],
+        x2: _ArrayLike[MT],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> tuple[npt.NDArray[np.int64], npt.NDArray[MT]]: ...
+    @overload  # Nd T@floating, ?d +float
+    def __call__[FloatT: np.floating](
+        self,
+        x1: npt.NDArray[FloatT],
+        x2: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], float],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[FloatT]]: ...
+    @overload  # ?d +float, Nd T@floating
+    def __call__[FloatT: np.floating | np.object_](
+        self,
+        x1: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], float],
+        x2: npt.NDArray[FloatT],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[FloatT]]: ...
+    @overload  # Nd _, ?d _, dtype=<known>
+    def __call__[ScalarT: np.floating | np.integer](
+        self,
+        x1: npt.NDArray[_to_floating],
+        x2: _ArrayLikeFloat_co,
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[ScalarT]]: ...
+    @overload  # ?d _, Nd _, dtype=<known>
+    def __call__[ScalarT: np.floating | np.integer](
+        self,
+        x1: _ArrayLikeFloat_co,
+        x2: npt.NDArray[_to_floating],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[ScalarT]]: ...
+    @overload  # Nd ~float, ?d +float
+    def __call__(
+        self,
+        x1: list[float] | _NestedSequence[list[float]],
+        x2: float | _NestedSequence[float],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.float64]]: ...
+    @overload  # ?d +float, Nd ~float
+    def __call__(
+        self,
+        x1: float | _NestedSequence[float],
+        x2: list[float] | _NestedSequence[list[float]],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.float64]]: ...
+    @overload  # out=<given>
+    def __call__[OutT1: np.ndarray, OutT2: np.ndarray](
+        self,
+        x1: _ArrayLikeFloat_co,
+        x2: _ArrayLikeFloat_co,
+        /,
+        out: tuple[OutT1, OutT2],
+        *,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> tuple[OutT1, OutT2]: ...
+    @overload  # out=<given> (timedelta64)
+    def __call__[OutT1: np.ndarray, OutT2: np.ndarray](
+        self,
+        x1: _ArrayLike[np.timedelta64],
+        x2: _ArrayLike[np.timedelta64],
+        /,
+        out: tuple[OutT1, OutT2],
+        *,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> tuple[OutT1, OutT2]: ...
+    @overload  # ?d ?, ?d ?  (fallback)
+    def __call__(
+        self,
+        x1: _ArrayLikeFloat_co,
+        x2: _ArrayLikeFloat_co,
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[Any]]: ...
+    @overload  # x1.__array_ufunc__(self, "__call__", x1, x2, ...)
+    def __call__[OtherT, OutT](
+        self,
+        x1: _CanUfuncCall2L[OtherT, OutT],
+        x2: OtherT,
+        /,
+        *,
+        out: object | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> OutT: ...
+    @overload  # x2.__array_ufunc__(self, "__call__", x1, x2, ...)
+    def __call__[OtherT, OutT](
+        self,
+        x1: OtherT,
+        x2: _CanUfuncCall2R[OtherT, OutT],
+        /,
+        *,
+        out: object | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> OutT: ...
+
+    # keep in sync with `__call__`
+    @override
+    @overload  # 0d +i8, 0d +i8
+    def outer(  # pyrefly:ignore[bad-override]
+        self,
+        x1: bool | _to_i8,
+        x2: bool | _to_i8,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.int8]: ...
+    @overload  # 0d int|bool, 0d int|bool  (inevitably overlaps with previous overload)
+    def outer(
+        self,
+        x1: int | np.bool,
+        x2: int | np.bool,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.int_ | Any]: ...
+    @overload  # 0d ~i64, 0d +i64
+    def outer(
+        self,
+        x1: np.int64,
+        x2: _to_i64,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.int64]: ...
+    @overload  # 0d +i64, 0d ~i64
+    def outer(
+        self,
+        x1: _to_i64,
+        x2: np.int64,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.int64]: ...
+    @overload  # 0d ~i32, 0d +i32
+    def outer(
+        self,
+        x1: np.int32,
+        x2: _to_i32,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.int32]: ...
+    @overload  # 0d +i32, 0d ~i32
+    def outer(
+        self,
+        x1: _to_i32,
+        x2: np.int32,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.int32]: ...
+    @overload  # 0d ~u8, 0d +u8
+    def outer(
+        self,
+        x1: np.uint8,
+        x2: _to_u8,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.uint8]: ...
+    @overload  # 0d +u8, 0d ~u8
+    def outer(
+        self,
+        x1: _to_u8,
+        x2: np.uint8,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.uint8]: ...
+    @overload  # 0d T@integer, 0d +int
+    def outer[IntT: np.integer](
+        self,
+        x1: IntT,
+        x2: int | np.bool,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[IntT]: ...
+    @overload  # 0d +int, 0d T@integer
+    def outer[IntT: np.integer](
+        self,
+        x1: int | np.bool,
+        x2: IntT,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[IntT]: ...
+    @overload  # 0d ~f64, 0d +f64
+    def outer(
+        self,
+        x1: np.float64,
+        x2: _to_f64,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.float64]: ...
+    @overload  # 0d +f64, 0d ~f64
+    def outer(
+        self,
+        x1: _to_f64,
+        x2: np.float64,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.float64]: ...
+    @overload  # 0d ~f32, 0d +f32
+    def outer(
+        self,
+        x1: np.float32,
+        x2: _to_f32,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.float32]: ...
+    @overload  # 0d +f32, 0d ~f32
+    def outer(
+        self,
+        x1: _to_f32,
+        x2: np.float32,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.float32]: ...
+    @overload  # 0d ~f80, 0d +f80
+    def outer(
+        self,
+        x1: np.longdouble,
+        x2: _FloatLike_co,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.longdouble]: ...
+    @overload  # 0d +f80, 0d ~f80
+    def outer(
+        self,
+        x1: _FloatLike_co,
+        x2: np.longdouble,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.longdouble]: ...
+    @overload  # 0d ~m64, 0d ~m64
+    def outer[MT: np.timedelta64](
+        self,
+        x1: MT,
+        x2: MT,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> tuple[np.int64, MT]: ...
+    @overload  # 0d T@floating, 0d +float
+    def outer[FloatT: np.floating](
+        self,
+        x1: FloatT,
+        x2: float | np.bool,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[FloatT]: ...
+    @overload  # 0d +float, 0d T@floating
+    def outer[FloatT: np.floating](
+        self,
+        x1: float | np.bool,
+        x2: FloatT,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[FloatT]: ...
+    @overload  # 0d float|int|bool, 0d float|int|bool
+    def outer(
+        self,
+        x1: float | np.bool,
+        x2: float | np.bool,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[np.float64 | Any]: ...
+    @overload  # 0d _, 0d _, dtype=<known>
+    def outer[ScalarT: np.floating | np.integer](
+        self,
+        x1: _FloatLike_co,
+        x2: _FloatLike_co,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[ScalarT]: ...
+    @overload  # 0d ?, 0d ?
+    def outer(
+        self,
+        x1: _FloatLike_co,
+        x2: _FloatLike_co,
+        /,
+        *,
+        out: _tuple2[None] = (None, None),
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[Any]: ...
+    @overload  # ?d +i8, ?d +i8
+    def outer(
+        self,
+        x1: _DualArrayLike[np.dtype[_to_i8], bool],
+        x2: _DualArrayLike[np.dtype[_to_i8], bool],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.int8]]: ...
+    @overload  # ?d ~i64, ?d +i64
+    def outer(
+        self,
+        x1: _ArrayLike[np.int64],
+        x2: _ArrayLikeInt_co,
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.int64]]: ...
+    @overload  # ?d +i64, ?d ~i64
+    def outer(
+        self,
+        x1: _ArrayLikeInt_co,
+        x2: _ArrayLike[np.int64],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.int64]]: ...
+    @overload  # ?d ~i32, ?d +i32
+    def outer(
+        self,
+        x1: _ArrayLike[np.int32],
+        x2: _ArrayLike[_to_i32],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.int32]]: ...
+    @overload  # ?d +i32, ?d ~i32
+    def outer(
+        self,
+        x1: _ArrayLike[_to_i32],
+        x2: _ArrayLike[np.int32],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.int32]]: ...
+    @overload  # ?d ~u8, ?d +u8
+    def outer(
+        self,
+        x1: _ArrayLike[np.uint8],
+        x2: _ArrayLike[_to_u8],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.uint8]]: ...
+    @overload  # ?d +u8, ?d ~u8
+    def outer(
+        self,
+        x1: _ArrayLike[_to_u8],
+        x2: _ArrayLike[np.uint8],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.uint8]]: ...
+    @overload  # Nd T@integer, ?d +int
+    def outer[IntT: np.integer](
+        self,
+        x1: npt.NDArray[IntT],
+        x2: _DualArrayLike[np.dtype[np.bool], int],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[IntT]]: ...
+    @overload  # ?d +int, Nd T@integer
+    def outer[IntT: np.integer](
+        self,
+        x1: _DualArrayLike[np.dtype[np.bool], int],
+        x2: npt.NDArray[IntT],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[IntT]]: ...
+    @overload  # Nd ~int, ?d +int
+    def outer(
+        self,
+        x1: list[int] | _NestedSequence[list[int]],
+        x2: int | _NestedSequence[int],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.int_]]: ...
+    @overload  # ?d +int, Nd ~int
+    def outer(
+        self,
+        x1: int | _NestedSequence[int],
+        x2: list[int] | _NestedSequence[list[int]],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.int_]]: ...
+    @overload  # ?d ~f64, ?d +f64
+    def outer(
+        self,
+        x1: _ArrayLike[np.float64],
+        x2: _ArrayLike[_to_f64],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.float64]]: ...
+    @overload  # ?d +f64, ?d ~f64
+    def outer(
+        self,
+        x1: _ArrayLike[_to_f64],
+        x2: _ArrayLike[np.float64],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.float64]]: ...
+    @overload  # ?d ~f32, ?d +f32
+    def outer(
+        self,
+        x1: _ArrayLike[np.float32],
+        x2: _ArrayLike[_to_f32],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.float32]]: ...
+    @overload  # ?d +f32, ?d ~f32
+    def outer(
+        self,
+        x1: _ArrayLike[_to_f32],
+        x2: _ArrayLike[np.float32],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.float32]]: ...
+    @overload  # ?d ~f80, ?d +f80
+    def outer(
+        self,
+        x1: _ArrayLike[np.longdouble],
+        x2: _ArrayLike[_to_floating],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.longdouble]]: ...
+    @overload  # ?d +f80, ?d ~f80
+    def outer(
+        self,
+        x1: _ArrayLike[_to_floating],
+        x2: _ArrayLike[np.longdouble],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.longdouble]]: ...
+    @overload  # ?d ~m64, ?d ~m64
+    def outer[MT: np.timedelta64](
+        self,
+        x1: _ArrayLike[MT],
+        x2: _ArrayLike[MT],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> tuple[npt.NDArray[np.int64], npt.NDArray[MT]]: ...
+    @overload  # Nd T@floating, ?d +float
+    def outer[FloatT: np.floating](
+        self,
+        x1: npt.NDArray[FloatT],
+        x2: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], float],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[FloatT]]: ...
+    @overload  # ?d +float, Nd T@floating
+    def outer[FloatT: np.floating | np.object_](
+        self,
+        x1: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], float],
+        x2: npt.NDArray[FloatT],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[FloatT]]: ...
+    @overload  # Nd _, ?d _, dtype=<known>
+    def outer[ScalarT: np.floating | np.integer](
+        self,
+        x1: npt.NDArray[_to_floating],
+        x2: _ArrayLikeFloat_co,
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[ScalarT]]: ...
+    @overload  # ?d _, Nd _, dtype=<known>
+    def outer[ScalarT: np.floating | np.integer](
+        self,
+        x1: _ArrayLikeFloat_co,
+        x2: npt.NDArray[_to_floating],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[ScalarT]]: ...
+    @overload  # Nd ~float, ?d +float
+    def outer(
+        self,
+        x1: list[float] | _NestedSequence[list[float]],
+        x2: float | _NestedSequence[float],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.float64]]: ...
+    @overload  # ?d +float, Nd ~float
+    def outer(
+        self,
+        x1: float | _NestedSequence[float],
+        x2: list[float] | _NestedSequence[list[float]],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[np.float64]]: ...
+    @overload  # out=<given>
+    def outer[OutT1: np.ndarray, OutT2: np.ndarray](
+        self,
+        x1: _ArrayLikeFloat_co,
+        x2: _ArrayLikeFloat_co,
+        /,
+        out: tuple[OutT1, OutT2],
+        *,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> tuple[OutT1, OutT2]: ...
+    @overload  # out=<given> (timedelta64)
+    def outer[OutT1: np.ndarray, OutT2: np.ndarray](
+        self,
+        x1: _ArrayLike[np.timedelta64],
+        x2: _ArrayLike[np.timedelta64],
+        /,
+        out: tuple[OutT1, OutT2],
+        *,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> tuple[OutT1, OutT2]: ...
+    @overload  # ?d ?, ?d ?  (fallback)
+    def outer(
+        self,
+        x1: _ArrayLikeFloat_co,
+        x2: _ArrayLikeFloat_co,
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[Any]]: ...
+    @overload  # x1.__array_ufunc__(self, "outer", x1, x2, ...)
+    def outer[OtherT, OutT](
+        self,
+        x1: _CanUfuncOuterL[OtherT, OutT],
+        x2: OtherT,
+        /,
+        *,
+        out: object | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> OutT: ...
+    @overload  # x2.__array_ufunc__(self, "outer", x1, x2, ...)
+    def outer[OtherT, OutT](
+        self,
+        x1: OtherT,
+        x2: _CanUfuncOuterR[OtherT, OutT],
+        /,
+        *,
+        out: object | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> OutT: ...
+
+divmod: Final[_ufunc_22_divmod] = ...
 
 ###
 # re-exports from `_core._multiarray_umath` that are used by `_core._ufunc_config`

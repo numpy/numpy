@@ -33,7 +33,6 @@ from ._shape import _ShapeLike
 
 type _2Tuple[T] = tuple[T, T]
 type _3Tuple[T] = tuple[T, T, T]
-type _4Tuple[T] = tuple[T, T, T, T]
 
 type _2PTuple[T] = tuple[T, T, *tuple[T, ...]]
 type _3PTuple[T] = tuple[T, T, T, *tuple[T, ...]]
@@ -272,66 +271,6 @@ class _UFunc_Nin2_Nout1[NameT: LiteralString, NTypesT: int, IdentT](ufunc):  # t
         b: ArrayLike,
         /,
     ) -> None: ...
-
-@type_check_only
-class _UFunc_Nin2_Nout2[NameT: LiteralString, NTypesT: int, IdentT](ufunc):  # type: ignore[misc]
-    @property
-    def __name__(self) -> NameT: ...
-    @property
-    def __qualname__(self) -> NameT: ...  # pyright: ignore[reportIncompatibleVariableOverride]
-    @property
-    def ntypes(self) -> NTypesT: ...
-    @property
-    def identity(self) -> IdentT: ...
-    @property
-    def nin(self) -> Literal[2]: ...
-    @property
-    def nout(self) -> Literal[2]: ...
-    @property
-    def nargs(self) -> Literal[4]: ...
-    @property
-    def signature(self) -> None: ...
-
-    @overload
-    def __call__(
-        self,
-        x1: _ScalarLike_co,
-        x2: _ScalarLike_co,
-        out1: EllipsisType | None = ...,
-        out2: None = None,
-        /,
-        *,
-        out: EllipsisType | None = ...,
-        dtype: DTypeLike | None = None,
-        where: _ArrayLikeBool_co | None = True,
-        casting: _CastingKind = ...,
-        order: _OrderKACF = ...,
-        subok: bool = ...,
-        signature: str | _4Tuple[str | None] = ...,
-    ) -> _2Tuple[Incomplete]: ...
-    @overload
-    def __call__(
-        self,
-        x1: ArrayLike,
-        x2: ArrayLike,
-        out1: np.ndarray | EllipsisType | None = ...,
-        out2: np.ndarray | None = ...,
-        /,
-        *,
-        out: _2Tuple[np.ndarray] | EllipsisType = ...,
-        dtype: DTypeLike | None = None,
-        where: _ArrayLikeBool_co | None = True,
-        casting: _CastingKind = ...,
-        order: _OrderKACF = ...,
-        subok: bool = ...,
-        signature: str | _4Tuple[str | None] = ...,
-    ) -> _2Tuple[NDArray[Incomplete]]: ...
-
-    def accumulate(self, array: Never, /) -> NoReturn: ...  # type: ignore[override]
-    def reduce(self, array: Never, /) -> NoReturn: ...  # type: ignore[override]
-    def reduceat(self, array: Never, /, indices: Never) -> NoReturn: ...  # type: ignore[override]
-    def outer(self, A: Never, B: Never, /) -> NoReturn: ...  # type: ignore[override]
-    def at(self, a: Never, indices: Never, b: Never, /) -> NoReturn: ...  # type: ignore[override]
 
 @type_check_only
 class _GUFunc_Nin2_Nout1[NameT: LiteralString, NTypesT: int, IdentT, SignatureT: LiteralString](ufunc):  # type: ignore[misc]
