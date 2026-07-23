@@ -1,0 +1,24 @@
+python module gh28700_trcon
+    interface
+        subroutine trcon(norm, uplo, diag, n, a, lda, rcond, work, irwork, info)
+            character optional intent(in), check(*norm=='1'||*norm=='I'||*norm=='O') :: norm = '1'
+            character optional intent(in), check(*uplo=='U'||*uplo=='L') :: uplo = 'U'
+            character optional intent(in), check(*diag=='N'||*diag=='U') :: diag = 'N'
+            real intent(in), dimension(lda, n) :: a
+            integer intent(hide), depend(a) :: n = shape(a, 1)
+            integer intent(hide), depend(n) :: lda = MAX(1, n)
+            real intent(hide), dimension(3*n), depend(n) :: work
+            integer intent(hide), dimension(n), depend(n) :: irwork
+            real intent(out) :: rcond
+            integer intent(out) :: info
+        end subroutine trcon
+        subroutine trcon_lwork(n, norm, rcond, work, lwork, info)
+            integer intent(in) :: n
+            character*1 intent(in) :: norm
+            real intent(out) :: rcond
+            integer depend(n, norm), optional, intent(hide) :: lwork = (*norm=='I'?3*n:n)
+            real intent(hide), depend(lwork), dimension(lwork) :: work
+            integer intent(out) :: info
+        end subroutine trcon_lwork
+    end interface
+end python module gh28700_trcon
