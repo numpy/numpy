@@ -883,6 +883,27 @@ class TestRandomDist:
                             [0, 0]])
         assert_array_equal(actual, desired)
 
+    @pytest.mark.skipif(
+        np.iinfo('l').max < 1e17,
+        reason="test requires support for lam=1e17",
+    )
+    def test_poisson_large_lambda(self):
+        # The direct log-PMF used by PTRS loses precision through cancellation
+        # at large lambda, which distorts the variance of the samples.
+        lam = 1e17
+        rng = random.RandomState(self.seed)
+        actual = rng.poisson(lam=lam, size=3)
+        desired = np.array([
+            100000000107423792,
+            100000000449696768,
+            99999999962367168,
+        ])
+        assert_array_equal(actual, desired)
+
+        rng = np.random.default_rng(self.seed)
+        samples = rng.poisson(lam=lam, size=10_000)
+        assert 0.8 < samples.var() / lam < 1.2
+
     def test_poisson_exceptions(self):
         lambig = np.iinfo('l').max
         lamneg = -1

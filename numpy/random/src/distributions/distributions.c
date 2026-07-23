@@ -572,12 +572,91 @@ static RAND_INT_TYPE random_poisson_mult(bitgen_t *bitgen_state, double lam) {
  */
 #define LS2PI 0.91893853320467267
 #define TWELFTH 0.083333333333333333333333
+
+/*
+ * Stable Poisson probability evaluation based on:
+ * C. Loader, "Fast and Accurate Computation of Binomial Probabilities",
+ * 2002, equations 4, 6, and 7.
+ */
+
+/* Stirling's error: log(n!) - log(sqrt(2*pi*n) * (n/e)^n). */
+static double random_stirlerr(RAND_INT_TYPE n) {
+  static const double sfe[16] = {
+      0.0,
+      0.081061466795327258219670264,
+      0.041340695955409294093822081,
+      0.0276779256849983391487892927,
+      0.020790672103765093111522771,
+      0.0166446911898211921631948653,
+      0.013876128823070747998745727,
+      0.0118967099458917700950557241,
+      0.010411265261972096497478567,
+      0.0092554621827127329177286366,
+      0.008330563433362871256469318,
+      0.0075736754879518407949720242,
+      0.006942840107209529865664152,
+      0.0064089941880042070684396310,
+      0.005951370112758847735624416,
+      0.0055547335519628013710386899};
+  const double S0 = 0.083333333333333333333;
+  const double S1 = 0.00277777777777777777778;
+  const double S2 = 0.00079365079365079365079365;
+  const double S3 = 0.000595238095238095238095238;
+  const double S4 = 0.0008417508417508417508417508;
+  double nn;
+
+  if (n < 16) {
+    return sfe[n];
+  }
+  nn = (double)n * (double)n;
+  if (n > 500) {
+    return (S0 - S1 / nn) / (double)n;
+  }
+  if (n > 80) {
+    return (S0 - (S1 - S2 / nn) / nn) / (double)n;
+  }
+  if (n > 35) {
+    return (S0 - (S1 - (S2 - S3 / nn) / nn) / nn) / (double)n;
+  }
+  return (S0 - (S1 - (S2 - (S3 - S4 / nn) / nn) / nn) / nn) /
+         (double)n;
+}
+
+/* Compute x*log(x/np) + np - x without cancellation when x is near np. */
+static double random_bd0(double x, double np) {
+  double ej, s, s1, v;
+  int j;
+
+  if (fabs(x - np) < 0.1 * (x + np)) {
+    s = (x - np) * (x - np) / (x + np);
+    v = (x - np) / (x + np);
+    ej = 2.0 * x * v;
+    v *= v;
+    for (j = 1;; ++j) {
+      ej *= v;
+      s1 = s + ej / (2 * j + 1);
+      if (s1 == s) {
+        return s1;
+      }
+      s = s1;
+    }
+  }
+  return x * log(x / np) + np - x;
+}
+
+static double random_poisson_logpmf(RAND_INT_TYPE k, double lam) {
+  if (k == 0) {
+    return -lam;
+  }
+  return -random_stirlerr(k) - random_bd0((double)k, lam) - LS2PI -
+         0.5 * log((double)k);
+}
+
 static RAND_INT_TYPE random_poisson_ptrs(bitgen_t *bitgen_state, double lam) {
   RAND_INT_TYPE k;
-  double U, V, slam, loglam, a, b, invalpha, vr, us;
+  double U, V, slam, a, b, invalpha, vr, us;
 
   slam = sqrt(lam);
-  loglam = log(lam);
   b = 0.931 + 2.53 * slam;
   a = -0.059 + 0.02483 * b;
   invalpha = 1.1239 + 1.1328 / (b - 3.4);
@@ -597,7 +676,7 @@ static RAND_INT_TYPE random_poisson_ptrs(bitgen_t *bitgen_state, double lam) {
     /* log(V) == log(0.0) ok here */
     /* if U==0.0 so that us==0.0, log is ok since always returns */
     if ((log(V) + log(invalpha) - log(a / (us * us) + b)) <=
-        (-lam + (double)k * loglam - random_loggam((double)k + 1))) {
+        random_poisson_logpmf(k, lam)) {
       return k;
     }
   }
