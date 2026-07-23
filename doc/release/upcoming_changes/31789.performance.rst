@@ -1,0 +1,5 @@
+Faster selected ``numpy.pad`` modes for singleton arrays
+--------------------------------------------------------
+``numpy.pad`` is now faster for singleton arrays when using ``mode="reflect"``,
+``mode="symmetric"``, or ``mode="wrap"``. These modes now fill the padded
+result directly when the input has a single element.
