@@ -10,6 +10,10 @@ updates:
       prefix: "MAINT"
     labels:
       - "03 - Maintenance"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
     ignore:
       - dependency-name: "bus1/cabuild"
   - package-ecosystem: pip
