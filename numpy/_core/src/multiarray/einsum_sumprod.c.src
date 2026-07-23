@@ -1062,7 +1062,17 @@ static void
             }
         }
 
-        PyObject *sum = PyNumber_Add(*(PyObject **)dataptr[nop], prod);
+        PyObject *accum = *(PyObject **)dataptr[nop];
+        PyObject *sum;
+        if (accum == NULL || accum == Py_None) {
+            /* None/NULL means no contribution yet; the first one is used
+             * as-is since object dtype has no universal additive zero. */
+            sum = prod;
+            Py_INCREF(sum);
+        }
+        else {
+            sum = PyNumber_Add(accum, prod);
+        }
         Py_DECREF(prod);
         if (!sum) {
             return;
