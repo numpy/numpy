@@ -277,7 +277,7 @@ _hist_bin_selectors = {'stone': _hist_bin_stone,
 
 def _ravel_and_check_weights(a, weights):
     """ Check a and weights have matching shapes, and ravel both """
-    a = np.asarray(a)
+    a = np.asanyarray(a)
 
     # Ensure that the array is a "subtractable" dtype
     if a.dtype == np.bool:
@@ -286,12 +286,25 @@ def _ravel_and_check_weights(a, weights):
         a = a.astype(np.uint8)
 
     if weights is not None:
-        weights = np.asarray(weights)
+        weights = np.asanyarray(weights)
         if weights.shape != a.shape:
             raise ValueError(
                 'weights should have the same shape as a.')
-        weights = weights.ravel()
-    a = a.ravel()
+
+    # Handle masked input. Weights or the data may be masked (possible both)
+    if isinstance(a, np.ma.MaskedArray) or isinstance(weights, np.ma.MaskedArray):
+        mask = np.ma.getmaskarray(a)
+        if isinstance(weights, np.ma.MaskedArray):
+            mask = mask | np.ma.getmaskarray(weights)
+        mask = mask.ravel()
+        a = np.asarray(a).ravel()[~mask]
+        if weights is not None:
+            weights = np.asarray(weights).ravel()[~mask]
+    else:
+        a = a.ravel()
+        if weights is not None:
+            weights = weights.ravel()
+
     return a, weights
 
 
