@@ -5655,6 +5655,14 @@ ufunc_outer(PyUFuncObject *ufunc,
 }
 
 
+static inline int
+is_pyscalar(PyObject *obj)
+{
+    return (PyLong_CheckExact(obj) || PyFloat_CheckExact(obj)
+            || PyComplex_CheckExact(obj));
+}
+
+
 static PyObject *
 prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
 {
@@ -5675,23 +5683,30 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
                 matrix_deprecation_msg, ufunc->name, "first");
         return NULL;
     }
-    else {
-        ap1 = (PyArrayObject *) PyArray_FROM_O(tmp);
+    if (PyObject_IsInstance(PyTuple_GET_ITEM(args, 1),
+                            npy_runtime_imports.numpy_matrix)) {
+        PyErr_Format(PyExc_TypeError,
+                matrix_deprecation_msg, ufunc->name, "second");
+        return NULL;
     }
+    /*
+     * Keep Python scalars weak (NEP 50); a 0-d input makes the reshape
+     * below a no-op.
+     */
+    if (is_pyscalar(PyTuple_GET_ITEM(args, 0))
+            || is_pyscalar(PyTuple_GET_ITEM(args, 1))) {
+        Py_INCREF(args);
+        return args;
+    }
+
+    ap1 = (PyArrayObject *) PyArray_FROM_O(tmp);
     if (ap1 == NULL) {
         return NULL;
     }
 
     PyArrayObject *ap2 = NULL;
     tmp = PyTuple_GET_ITEM(args, 1);
-    if (PyObject_IsInstance(tmp, npy_runtime_imports.numpy_matrix)) {
-        PyErr_Format(PyExc_TypeError,
-                matrix_deprecation_msg, ufunc->name, "second");
-        return NULL;
-    }
-    else {
-        ap2 = (PyArrayObject *) PyArray_FROM_O(tmp);
-    }
+    ap2 = (PyArrayObject *) PyArray_FROM_O(tmp);
     if (ap2 == NULL) {
         Py_DECREF(ap1);
         return NULL;
