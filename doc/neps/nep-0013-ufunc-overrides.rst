@@ -632,28 +632,28 @@ Ufuncs used by :class:`ndarray` and
 ====== ============ =========================================
 Symbol Operator     NumPy Ufunc(s)
 ====== ============ =========================================
-``<``  ``lt``       :func:`~numpy.less`
-``<=`` ``le``       :func:`~numpy.less_equal`
-``==`` ``eq``       :func:`~numpy.equal`
-``!=`` ``ne``       :func:`~numpy.not_equal`
-``>``  ``gt``       :func:`~numpy.greater`
-``>=`` ``ge``       :func:`~numpy.greater_equal`
-``+``  ``add``      :func:`~numpy.add`
-``-``  ``sub``      :func:`~numpy.subtract`
-``*``  ``mul``      :func:`~numpy.multiply`
-``/``  ``truediv``  :func:`~numpy.true_divide`
+``<``  ``lt``       :obj:`numpy.less`
+``<=`` ``le``       :obj:`numpy.less_equal`
+``==`` ``eq``       :obj:`numpy.equal`
+``!=`` ``ne``       :obj:`numpy.not_equal`
+``>``  ``gt``       :obj:`numpy.greater`
+``>=`` ``ge``       :obj:`numpy.greater_equal`
+``+``  ``add``      :obj:`numpy.add`
+``-``  ``sub``      :obj:`numpy.subtract`
+``*``  ``mul``      :obj:`numpy.multiply`
+``/``  ``truediv``  :obj:`numpy.true_divide`
        (Python 3)
-``/``  ``div``      :func:`~numpy.divide`
+``/``  ``div``      :obj:`numpy.divide`
        (Python 2)
-``//`` ``floordiv`` :func:`~numpy.floor_divide`
-``%``  ``mod``      :func:`~numpy.remainder`
-NA     ``divmod``   :func:`~numpy.divmod`
-``**`` ``pow``      :func:`~numpy.power` [10]_
-``<<`` ``lshift``   :func:`~numpy.left_shift`
-``>>`` ``rshift``   :func:`~numpy.right_shift`
-``&``  ``and_``     :func:`~numpy.bitwise_and`
-``^``  ``xor_``     :func:`~numpy.bitwise_xor`
-``|``  ``or_``      :func:`~numpy.bitwise_or`
+``//`` ``floordiv`` :obj:`numpy.floor_divide`
+``%``  ``mod``      :obj:`numpy.remainder`
+NA     ``divmod``   :obj:`numpy.divmod`
+``**`` ``pow``      :obj:`numpy.power` [10]_
+``<<`` ``lshift``   :obj:`numpy.left_shift`
+``>>`` ``rshift``   :obj:`numpy.right_shift`
+``&``  ``and_``     :obj:`numpy.bitwise_and`
+``^``  ``xor_``     :obj:`numpy.bitwise_xor`
+``|``  ``or_``      :obj:`numpy.bitwise_or`
 ``@``  ``matmul``   Not yet implemented as a ufunc [11]_
 ====== ============ =========================================
 
@@ -662,21 +662,21 @@ And here is the list of unary operators:
 ====== ============ =========================================
 Symbol Operator     NumPy Ufunc(s)
 ====== ============ =========================================
-``-``  ``neg``      :func:`~numpy.negative`
-``+``  ``pos``      :func:`~numpy.positive` [12]_
-NA     ``abs``      :func:`~numpy.absolute`
-``~``  ``invert``   :func:`~numpy.invert`
+``-``  ``neg``      :obj:`numpy.negative`
+``+``  ``pos``      :obj:`numpy.positive` [12]_
+NA     ``abs``      :obj:`numpy.absolute`
+``~``  ``invert``   :obj:`numpy.invert`
 ====== ============ =========================================
 
 .. [10] class :class:`ndarray` takes short cuts for ``__pow__`` for the
-        cases where the power equals ``1`` (:func:`~numpy.positive`),
-        ``-1`` (:func:`~numpy.reciprocal`), ``2`` (:func:`~numpy.square`),
+        cases where the power equals ``1`` (:obj:`numpy.positive`),
+        ``-1`` (:obj:`numpy.reciprocal`), ``2`` (:obj:`numpy.square`),
         ``0`` (an otherwise private ``_ones_like`` ufunc), and ``0.5``
-        (:func:`~numpy.sqrt`), and the array is float or complex (or integer
+        (:obj:`numpy.sqrt`), and the array is float or complex (or integer
         for square).
 
 
-.. [11] Because NumPy's :func:`~numpy.matmul` is not a ufunc, it is
+.. [11] Because NumPy's :obj:`numpy.matmul` is not a ufunc, it is
         `currently not possible <https://github.com/numpy/numpy/issues/9028>`_
         to override ``numpy_array @ other`` with ``other`` taking precedence
         if ``other`` implements ``__array_func__``.
@@ -688,11 +688,11 @@ Future extensions to other functions
 
 Some NumPy functions could be implemented as (generalized) Ufunc, in
 which case it would be possible for them to be overridden by the
-``__array_ufunc__`` method.  A prime candidate is :func:`~numpy.matmul`,
+``__array_ufunc__`` method.  A prime candidate is :obj:`numpy.matmul`,
 which currently is not a Ufunc, but could be relatively easily be
 rewritten as a (set of) generalized Ufuncs. The same may happen with
-functions such as :func:`~numpy.median`, :func:`~numpy.min`, and
-:func:`~numpy.argsort`.
+functions such as :obj:`numpy.median`, :obj:`numpy.min`, and
+:obj:`numpy.argsort`.
 
 
 .. Local Variables:
