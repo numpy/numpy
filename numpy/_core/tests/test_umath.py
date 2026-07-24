@@ -4341,6 +4341,63 @@ class TestRationalFunctions:
             assert_equal(np.gcd(q * 3,  a), q)
             assert_equal(np.gcd(-q * 3, a), q)
 
+    def test_gcd_object_reentrant_mutation(self):
+        # gh-31988: a re-entrant __index__ clearing the second operand's
+        # array slot must not leave math.gcd with a dangling pointer
+        # (use-after-free, detectable with PYTHONMALLOC=debug).
+        victim_deleted = []
+
+        class Victim:
+            def __index__(self):
+                return 8
+
+            def __del__(self):
+                victim_deleted.append(True)
+
+        class Killer:
+            def __index__(self):
+                victim_array[0] = None  # drops the slot's reference
+                return 12
+
+        left = np.empty(1, dtype=object)
+        left[0] = Killer()
+        victim_array = np.empty(1, dtype=object)
+        victim_array[0] = Victim()
+
+        assert_equal(np.gcd(left, victim_array)[0], 4)
+        assert victim_deleted  # the slot really was cleared re-entrantly
+
+    def test_lcm_object_reentrant_mutation(self):
+        # gh-31988: np.lcm also uses both operands *after* the inner gcd
+        # call, so it must keep them alive for the whole loop body.
+        victim_deleted = []
+
+        class Victim:
+            def __index__(self):
+                return 8
+
+            def __del__(self):
+                victim_deleted.append(True)
+
+            def __rmul__(self, other):
+                return 8 * other
+
+        class Killer:
+            def __index__(self):
+                victim_array[0] = None  # drops the slot's reference
+                return 12
+
+            def __floordiv__(self, other):
+                return 12 // other
+
+        left = np.empty(1, dtype=object)
+        left[0] = Killer()
+        victim_array = np.empty(1, dtype=object)
+        victim_array[0] = Victim()
+
+        assert_equal(np.lcm(left, victim_array)[0], 24)
+        assert victim_deleted
+
     def test_decimal(self):
         from decimal import Decimal
         a = np.array([1,  1, -1, -1]) * Decimal('0.20')

@@ -151,7 +151,8 @@ OBJECT_vdot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp
             Py_INCREF(Py_False);
         }
         else {
-            tmp0 = PyObject_CallMethod(*((PyObject **)ip1), "conjugate", NULL);
+            tmp0 = PyObject_CallMethodNoArgs(*((PyObject **)ip1),
+                                             npy_interned_str.conjugate);
             if (tmp0 == NULL) {
                 Py_XDECREF(tmp);
                 return;

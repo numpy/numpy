@@ -77,6 +77,9 @@ intern_strings(void)
     INTERN_STRING(partition, "partition");
     INTERN_STRING(argpartition, "argpartition");
     INTERN_STRING(_set_dtype, "_set_dtype");
+    INTERN_STRING(conjugate, "conjugate");
+    INTERN_STRING(astimezone, "astimezone");
+    INTERN_STRING(value, "value");
     return 0;
 }
 

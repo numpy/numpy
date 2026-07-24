@@ -215,26 +215,29 @@ PyArray_GenericAccumulateFunction(PyArrayObject *m1, PyObject *op, int axis,
 NPY_NO_EXPORT PyObject *
 PyArray_GenericBinaryFunction(PyObject *m1, PyObject *m2, PyObject *op)
 {
-    return PyObject_CallFunctionObjArgs(op, m1, m2, NULL);
+    PyObject *args[2] = {m1, m2};
+    return PyObject_Vectorcall(op, args, 2, NULL);
 }
 
 NPY_NO_EXPORT PyObject *
 PyArray_GenericUnaryFunction(PyArrayObject *m1, PyObject *op)
 {
-    return PyObject_CallFunctionObjArgs(op, m1, NULL);
+    return PyObject_CallOneArg(op, (PyObject *)m1);
 }
 
 static PyObject *
 PyArray_GenericInplaceBinaryFunction(PyArrayObject *m1,
                                      PyObject *m2, PyObject *op)
 {
-    return PyObject_CallFunctionObjArgs(op, m1, m2, m1, NULL);
+    PyObject *args[3] = {(PyObject *)m1, m2, (PyObject *)m1};
+    return PyObject_Vectorcall(op, args, 3, NULL);
 }
 
 static PyObject *
 PyArray_GenericInplaceUnaryFunction(PyArrayObject *m1, PyObject *op)
 {
-    return PyObject_CallFunctionObjArgs(op, m1, m1, NULL);
+    PyObject *args[2] = {(PyObject *)m1, (PyObject *)m1};
+    return PyObject_Vectorcall(op, args, 2, NULL);
 }
 
 static PyObject *
