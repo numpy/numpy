@@ -448,6 +448,7 @@ from numpy import (  # noqa: F401
     testing,
     tile,
     timedelta64,
+    top_k,
     trace,
     transpose,
     trapezoid,
