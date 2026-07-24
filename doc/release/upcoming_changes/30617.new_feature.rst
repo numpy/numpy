@@ -1,0 +1,5 @@
+``equal_mask`` argument for masked array testing
+------------------------------------------------
+A new ``equal_mask`` parameter has been added to `assert_equal`, `assert_array_equal`,
+and `assert_array_compare`. When ``True``, masks must match during comparison;
+masked positions are ignored. Default is ``False`` for backward compatibility.
