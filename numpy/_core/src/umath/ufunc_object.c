@@ -5655,6 +5655,14 @@ ufunc_outer(PyUFuncObject *ufunc,
 }
 
 
+static inline int
+is_pyscalar(PyObject *obj)
+{
+    return (PyLong_CheckExact(obj) || PyFloat_CheckExact(obj)
+            || PyComplex_CheckExact(obj));
+}
+
+
 static PyObject *
 prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
 {
@@ -5687,7 +5695,22 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
     if (PyObject_IsInstance(tmp, npy_runtime_imports.numpy_matrix)) {
         PyErr_Format(PyExc_TypeError,
                 matrix_deprecation_msg, ufunc->name, "second");
+        Py_DECREF(ap1);
         return NULL;
+    }
+    else if (is_pyscalar(PyTuple_GET_ITEM(args, 0))) {
+        /*
+         * Passing Python scalars on unchanged keeps them weakly typed
+         * (NEP 50).  The reshape below is a no-op if either input is 0-d.
+         * The first input has to be checked first, it may be a scalar too.
+         */
+        Py_DECREF(ap1);
+        Py_INCREF(args);
+        return args;
+    }
+    else if (is_pyscalar(tmp)) {
+        Py_INCREF(tmp);
+        return Py_BuildValue("(NN)", ap1, tmp);
     }
     else {
         ap2 = (PyArrayObject *) PyArray_FROM_O(tmp);

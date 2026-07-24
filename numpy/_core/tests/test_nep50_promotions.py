@@ -186,6 +186,30 @@ def test_nep50_in_concat_and_choose():
     assert res.dtype == "float32"
 
 
+@pytest.mark.parametrize("scalar,expected", [
+    (1, "float32"), (1., "float32"), (1j, "complex64")])
+def test_nep50_in_ufunc_outer(scalar, expected):
+    # gh-32076: outer used to convert Python scalars to arrays, making them
+    # strongly typed.
+    arr = np.arange(6, dtype="float32").reshape(3, 2)
+
+    res = np.add.outer(scalar, arr)
+    assert res.dtype == expected
+    assert_array_equal(res, np.add(scalar, arr))
+
+    res = np.add.outer(arr, scalar)
+    assert res.dtype == expected
+    assert_array_equal(res, np.add(arr, scalar))
+
+    # NumPy scalars and 0-d arrays remain strongly typed:
+    assert np.add.outer(np.float64(1), arr).dtype == "float64"
+    assert np.add.outer(np.array(1.), arr).dtype == "float64"
+
+    # Both inputs weak: a huge integer must not go to object dtype here.
+    with pytest.raises(OverflowError):
+        np.add.outer(2**100, 1)
+
+
 @pytest.mark.parametrize("expected,dtypes,optional_dtypes", [
         (np.float32, [np.float32],
             [np.float16, 0.0, np.uint16, np.int16, np.int8, 0]),
