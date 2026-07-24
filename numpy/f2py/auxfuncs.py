@@ -156,7 +156,7 @@ def get_kind(var):
                     break
                 if do_neg:
                     test_kind = f"-{test_kind:s}"
-                    if c_type == f2cmap_for_type[test_kind]:
+                    if c_type == f2cmap_for_type.get(test_kind, ""):
                         result = test_kind
                         break
         return result
