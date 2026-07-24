@@ -1,5 +1,6 @@
 """Implementation of __array_function__ overrides from NEP-18."""
 import collections
+import enum
 import functools
 import inspect
 
@@ -12,6 +13,14 @@ from numpy._utils import set_module  # noqa: F401
 from numpy._utils._inspect import getargspec
 
 ARRAY_FUNCTIONS = set()
+
+# Signature families used by the exact-ndarray reduction fast path.
+class _ReductionKind(enum.IntEnum):
+    # Keep in sync with the enum in arrayfunction_override.c
+    SUM_PROD = 1
+    MIN_MAX = 2
+    ANY_ALL = 3
+
 
 array_function_like_doc = (
     """like : array_like, optional
@@ -37,7 +46,7 @@ add_docstring(
     """
     Class to wrap functions with checks for __array_function__ overrides.
 
-    All arguments are required, and can only be passed by position.
+    The first two arguments are required and can only be passed by position.
 
     Parameters
     ----------
@@ -53,6 +62,8 @@ add_docstring(
         overrides.  Arguments passed calling the ``_ArrayFunctionDispatcher``
         will be forwarded to this (and the ``dispatcher``) as if using
         ``*args, **kwargs``.
+    reduction : tuple or None, optional
+        Private internal configuration for the exact-ndarray reduction path.
 
     Attributes
     ----------
@@ -106,7 +117,7 @@ def verify_matching_signatures(implementation, dispatcher):
 
 
 def array_function_dispatch(dispatcher=None, module=None, verify=True,
-                            docs_from_dispatcher=False):
+                            docs_from_dispatcher=False, reduction=None):
     """Decorator for adding dispatch with the __array_function__ protocol.
 
     See NEP-18 for example usage.
@@ -136,6 +147,9 @@ def array_function_dispatch(dispatcher=None, module=None, verify=True,
         If True, copy docs from the dispatcher function onto the dispatched
         function, rather than from the implementation. This is useful for
         functions defined in C, which otherwise don't have docstrings.
+    reduction : tuple or None, optional
+        Private ``(ufunc, kind)`` specification for an exact-ndarray
+        reduction fast path.
 
     Returns
     -------
@@ -161,7 +175,8 @@ def array_function_dispatch(dispatcher=None, module=None, verify=True,
             doc = inspect.cleandoc(dispatcher.__doc__)
             add_docstring(implementation, doc)
 
-        public_api = _ArrayFunctionDispatcher(dispatcher, implementation)
+        config = None if reduction is None else (reduction[0].reduce, reduction[1])
+        public_api = _ArrayFunctionDispatcher(dispatcher, implementation, config)
         functools.update_wrapper(public_api, implementation)
 
         if not verify and not getattr(implementation, "__text_signature__", None):

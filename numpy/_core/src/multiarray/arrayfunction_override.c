@@ -7,6 +7,7 @@
 #include "numpy/ndarrayobject.h"
 #include "numpy/ndarraytypes.h"
 #include "get_attr_string.h"
+#include "npy_argparse.h"
 #include "npy_import.h"
 #include "npy_static_data.h"
 #include "multiarraymodule.h"
@@ -405,16 +406,112 @@ cleanup:
 }
 
 
+// Keep in sync with the enum in _core/overrides.py
+typedef enum {
+    REDUCTION_NONE = 0,
+    REDUCTION_SUM_PROD = 1,
+    REDUCTION_MIN_MAX = 2,
+    REDUCTION_ANY_ALL = 3,
+} npy_reduction_kind;
+
 typedef struct {
     PyObject_HEAD
     vectorcallfunc vectorcall;
     PyObject *dict;
     PyObject *relevant_arg_func;
     PyObject *default_impl;
+    PyObject *reduction;
+    npy_reduction_kind reduction_kind;
     /* The following fields are used to clean up TypeError messages only: */
     PyObject *dispatcher_name;
     PyObject *public_name;
 } PyArray_ArrayFunctionDispatcherObject;
+
+/*
+ * Try the exact-ndarray reduction fast path by calling the configured ufunc's
+ * reduce method directly from C, bypassing calling back into Python implementation;
+ * returns 1 if handled, 0 fallback to normal dispatch, and -1 on error.
+ */
+static int
+try_reduction(PyArray_ArrayFunctionDispatcherObject *self,
+        PyObject *const *args, Py_ssize_t nargsf, PyObject *kwnames, PyObject **result)
+{
+    PyObject *a = NULL, *axis = Py_None, *out = Py_None;
+    PyObject *dtype = self->reduction_kind == REDUCTION_ANY_ALL ? (PyObject *)&PyBool_Type : Py_None;
+    PyObject *keepdims = npy_static_pydata._NoValue, *where = npy_static_pydata._NoValue;
+    PyObject *initial = npy_static_pydata._NoValue;
+    int parsed = 0;
+    switch (self->reduction_kind) {
+        case REDUCTION_SUM_PROD: {
+            NPY_PREPARE_ARGPARSER;
+            parsed = npy_parse_arguments("sum-like", args, PyVectorcall_NARGS(nargsf), kwnames,
+                {"a", NULL, &a},
+                {"|axis", NULL, &axis},
+                {"|dtype", NULL, &dtype},
+                {"|out", NULL, &out},
+                {"|keepdims", NULL, &keepdims},
+                {"|initial", NULL, &initial},
+                {"|where", NULL, &where});
+            break;
+        }
+        case REDUCTION_MIN_MAX: {
+            NPY_PREPARE_ARGPARSER;
+            parsed = npy_parse_arguments("min-like", args, PyVectorcall_NARGS(nargsf), kwnames,
+                {"a", NULL, &a},
+                {"|axis", NULL, &axis},
+                {"|out", NULL, &out},
+                {"|keepdims", NULL, &keepdims},
+                {"|initial", NULL, &initial},
+                {"|where", NULL, &where});
+            break;
+        }
+        case REDUCTION_ANY_ALL: {
+            NPY_PREPARE_ARGPARSER;
+            parsed = npy_parse_arguments("any-like", args, PyVectorcall_NARGS(nargsf), kwnames,
+                {"a", NULL, &a},
+                {"|axis", NULL, &axis},
+                {"|out", NULL, &out},
+                {"|keepdims", NULL, &keepdims},
+                {"$where", NULL, &where});
+            break;
+        }
+        default:
+            return 0;
+    }
+
+    /*
+     * These parsers use no explicit argument converters, so a TypeError here
+     * means that the call does not match this fast-path signature. Clear it
+     * and fall back to normal dispatch; other parser errors are propagated later.
+     *
+     * TODO: Add an npy_parse_arguments probe mode that returns a distinct mismatch
+     * status instead of relying on exception-class matching here. See
+     * https://github.com/numpy/numpy/pull/32041#discussion_r3638882974
+     */
+    if (parsed < 0 && PyErr_ExceptionMatches(PyExc_TypeError)) {
+        PyErr_Clear();
+        return 0;
+    }
+    if (parsed < 0) {
+        return -1;
+    }
+    if (!PyArray_CheckExact(a) ||
+        (out != Py_None && !PyArray_CheckExact(out)) ||
+        (where != npy_static_pydata._NoValue && where != Py_None &&
+            !PyBool_Check(where) && !PyArray_CheckExact(where))) {
+        return 0;
+    }
+
+    // This set of arguments must exactly match ufunc.reduce positional argument order
+    PyObject *call_args[] = {
+        a, axis, dtype, out,
+        keepdims == npy_static_pydata._NoValue ? Py_False : keepdims,
+        initial,
+        where == npy_static_pydata._NoValue ? Py_True : where,
+    };
+    *result = PyObject_Vectorcall(self->reduction, call_args, 7, NULL);
+    return 1;
+}
 
 
 static void
@@ -422,6 +519,7 @@ dispatcher_dealloc(PyArray_ArrayFunctionDispatcherObject *self)
 {
     Py_CLEAR(self->relevant_arg_func);
     Py_CLEAR(self->default_impl);
+    Py_CLEAR(self->reduction);
     Py_CLEAR(self->dict);
     Py_CLEAR(self->dispatcher_name);
     Py_CLEAR(self->public_name);
@@ -507,6 +605,16 @@ dispatcher_vectorcall(PyArray_ArrayFunctionDispatcherObject *self,
     PyObject *array_function_methods[NPY_MAXARGS];
 
     int num_implementing_args;
+
+    if (self->reduction != NULL) {
+        int reduction_status = try_reduction(self, args, len_args, kwnames, &result);
+        if (reduction_status < 0) {
+            return NULL;
+        }
+        if (reduction_status == 1) {
+            return result;
+        }
+    }
 
     if (self->relevant_arg_func != NULL) {
         public_api = (PyObject *)self;
@@ -641,6 +749,16 @@ static PyObject *
 dispatcher_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwargs)
 {
     PyArray_ArrayFunctionDispatcherObject *self;
+    PyObject *reduction = Py_None;
+    PyObject *relevant_arg_func;
+    PyObject *default_impl;
+
+    char *kwlist[] = {"", "", "reduction", NULL};
+    if (!PyArg_ParseTupleAndKeywords(
+            args, kwargs, "OO|O:_ArrayFunctionDispatcher", kwlist,
+            &relevant_arg_func, &default_impl, &reduction)) {
+        return NULL;
+    }
 
     self = PyObject_New(
             PyArray_ArrayFunctionDispatcherObject,
@@ -649,19 +767,14 @@ dispatcher_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwargs)
         return PyErr_NoMemory();
     }
 
-    char *kwlist[] = {"", "", NULL};
-    if (!PyArg_ParseTupleAndKeywords(
-            args, kwargs, "OO:_ArrayFunctionDispatcher", kwlist,
-            &self->relevant_arg_func, &self->default_impl)) {
-        Py_DECREF(self);
-        return NULL;
-    }
-
     self->vectorcall = (vectorcallfunc)dispatcher_vectorcall;
-    Py_INCREF(self->default_impl);
     self->dict = NULL;
+    self->reduction = NULL;
+    self->reduction_kind = REDUCTION_NONE;
     self->dispatcher_name = NULL;
     self->public_name = NULL;
+    self->relevant_arg_func = Py_NewRef(relevant_arg_func);
+    self->default_impl = Py_NewRef(default_impl);
 
     if (self->relevant_arg_func == Py_None) {
         /* NULL in the relevant arg function means we use `like=` */
@@ -669,28 +782,54 @@ dispatcher_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwargs)
     }
     else {
         /* Fetch names to clean up TypeErrors (show actual name) */
-        Py_INCREF(self->relevant_arg_func);
         self->dispatcher_name = PyObject_GetAttrString(
             self->relevant_arg_func, "__qualname__");
         if (self->dispatcher_name == NULL) {
-            Py_DECREF(self);
-            return NULL;
+            goto fail;
         }
         self->public_name = PyObject_GetAttrString(
             self->default_impl, "__qualname__");
         if (self->public_name == NULL) {
-            Py_DECREF(self);
-            return NULL;
+            goto fail;
         }
+    }
+
+    if (reduction != Py_None) {
+        PyObject *callable;
+        int kind;
+
+        if (self->relevant_arg_func == NULL) {
+            PyErr_SetString(
+                    PyExc_TypeError,
+                    "reduction is not supported for like= dispatchers");
+            goto fail;
+        }
+        if (!PyTuple_Check(reduction) ||
+                !PyArg_ParseTuple(reduction, "Oi:reduction", &callable, &kind) ||
+                !PyCallable_Check(callable)) {
+            PyErr_SetString(
+                    PyExc_TypeError,
+                    "reduction must be a (callable, kind) tuple");
+            goto fail;
+        }
+        if (kind < REDUCTION_SUM_PROD || kind > REDUCTION_ANY_ALL) {
+            PyErr_SetString(PyExc_ValueError, "invalid reduction kind");
+            goto fail;
+        }
+        self->reduction = Py_NewRef(callable);
+        self->reduction_kind = kind;
     }
 
     /* Need to be like a Python function that has arbitrary attributes */
     self->dict = PyDict_New();
     if (self->dict == NULL) {
-        Py_DECREF(self);
-        return NULL;
+        goto fail;
     }
     return (PyObject *)self;
+
+fail:
+    Py_DECREF(self);
+    return NULL;
 }
 
 
