@@ -36,6 +36,13 @@ class TestIOSF(util.F2PyTest):
         assert_allclose(out, exp_out)
         assert exp_out.dtype == out.dtype
 
+    def test_f_add_int8_arr(self):
+        args = np.arange(6, dtype=np.int8)
+        out = self.module.foddity.f_add_int8_arr(args[:3], args[3:])
+        exp_out = args[:3] + args[3:]
+        assert_allclose(out, exp_out)
+        assert exp_out.dtype == out.dtype
+
     def test_f_add_arr(self):
         args = np.arange(6, dtype=np.int64)
         out = self.module.foddity.add_arr(args[:3], args[3:])

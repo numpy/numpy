@@ -38,6 +38,14 @@ class TestISOC(util.F2PyTest):
         exp_out = a * 2
         assert_allclose(out, exp_out)
 
+    def test_bindc_add_int8_arr(self):
+        a = np.array([1, 2, 3], dtype=np.int8)
+        b = np.array([3, 2, 1], dtype=np.int8)
+        out = self.module.coddity.add_int8_arr(a, b)
+        exp_out = a + b
+        assert_allclose(out, exp_out)
+        assert out.dtype == exp_out.dtype
+
 
 def test_process_f2cmap_dict():
     from numpy.f2py.auxfuncs import process_f2cmap_dict

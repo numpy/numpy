@@ -132,12 +132,34 @@ def isreal(var):
 
 def get_kind(var):
     try:
-        return var['kindselector']['*']
+        result = var['kindselector']['*']
     except KeyError:
         try:
-            return var['kindselector']['kind']
+            result = var['kindselector']['kind']
         except KeyError:
-            pass
+            result = None
+    if result is not None:
+        try:
+            int(result)
+        except ValueError:
+            from .capi_maps import f2cmap_all
+            var_typespec = var.get('typespec', "real")
+            f2cmap_for_type = f2cmap_all.get(var_typespec, {})
+            c_type = f2cmap_for_type.get(result)
+            do_neg = False
+            if var_typespec == "integer":
+                do_neg = True
+            for kind_exp in range(5):
+                test_kind = str(2 ** kind_exp)
+                if c_type == f2cmap_for_type.get(test_kind, ""):
+                    result = test_kind
+                    break
+                if do_neg:
+                    test_kind = f"-{test_kind:s}"
+                    if c_type == f2cmap_for_type.get(test_kind, ""):
+                        result = test_kind
+                        break
+        return result
 
 
 def isint1(var):
