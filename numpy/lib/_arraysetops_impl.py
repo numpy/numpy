@@ -33,11 +33,7 @@ __all__ = [
 ]
 
 
-def _ediff1d_dispatcher(ary, to_end=None, to_begin=None):
-    return (ary, to_end, to_begin)
-
-
-@array_function_dispatch(_ediff1d_dispatcher)
+@array_function_dispatch(("ary", "to_end", "to_begin"))
 def ediff1d(ary, to_end=None, to_begin=None):
     """
     The differences between consecutive elements of an array.
@@ -136,13 +132,7 @@ def _unpack_tuple(x):
         return x
 
 
-def _unique_dispatcher(ar, return_index=None, return_inverse=None,
-                       return_counts=None, axis=None, *, equal_nan=None,
-                       sorted=True):
-    return (ar,)
-
-
-@array_function_dispatch(_unique_dispatcher)
+@array_function_dispatch(("ar",))
 def unique(ar, return_index=False, return_inverse=False,
            return_counts=False, axis=None, *, equal_nan=True,
            sorted=True):
@@ -433,11 +423,7 @@ class UniqueInverseResult(NamedTuple):
     inverse_indices: np.ndarray
 
 
-def _unique_all_dispatcher(x, /):
-    return (x,)
-
-
-@array_function_dispatch(_unique_all_dispatcher)
+@array_function_dispatch(("x",))
 def unique_all(x):
     """
     Find the unique elements of an array, and counts, inverse, and indices.
@@ -497,11 +483,7 @@ def unique_all(x):
     return UniqueAllResult(*result)
 
 
-def _unique_counts_dispatcher(x, /):
-    return (x,)
-
-
-@array_function_dispatch(_unique_counts_dispatcher)
+@array_function_dispatch(("x",))
 def unique_counts(x):
     """
     Find the unique elements and counts of an input array `x`.
@@ -553,11 +535,7 @@ def unique_counts(x):
     return UniqueCountsResult(*result)
 
 
-def _unique_inverse_dispatcher(x, /):
-    return (x,)
-
-
-@array_function_dispatch(_unique_inverse_dispatcher)
+@array_function_dispatch(("x",))
 def unique_inverse(x):
     """
     Find the unique elements of `x` and indices to reconstruct `x`.
@@ -610,11 +588,7 @@ def unique_inverse(x):
     return UniqueInverseResult(*result)
 
 
-def _unique_values_dispatcher(x, /):
-    return (x,)
-
-
-@array_function_dispatch(_unique_values_dispatcher)
+@array_function_dispatch(("x",))
 def unique_values(x):
     """
     Returns the unique elements of an input array `x`.
@@ -658,12 +632,7 @@ def unique_values(x):
     )
 
 
-def _intersect1d_dispatcher(
-        ar1, ar2, assume_unique=None, return_indices=None):
-    return (ar1, ar2)
-
-
-@array_function_dispatch(_intersect1d_dispatcher)
+@array_function_dispatch(("ar1", "ar2"))
 def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     """
     Find the intersection of two arrays.
@@ -755,11 +724,7 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         return int1d
 
 
-def _setxor1d_dispatcher(ar1, ar2, assume_unique=None):
-    return (ar1, ar2)
-
-
-@array_function_dispatch(_setxor1d_dispatcher)
+@array_function_dispatch(("ar1", "ar2"))
 def setxor1d(ar1, ar2, assume_unique=False):
     """
     Find the set exclusive-or of two arrays.
@@ -950,12 +915,7 @@ def _isin(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
         return ret[rev_idx]
 
 
-def _isin_dispatcher(element, test_elements, assume_unique=None, invert=None,
-                     *, kind=None):
-    return (element, test_elements)
-
-
-@array_function_dispatch(_isin_dispatcher)
+@array_function_dispatch(("element", "test_elements"))
 def isin(element, test_elements, assume_unique=False, invert=False, *,
          kind=None):
     """
@@ -1076,11 +1036,7 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
                  invert=invert, kind=kind).reshape(element.shape)
 
 
-def _union1d_dispatcher(ar1, ar2):
-    return (ar1, ar2)
-
-
-@array_function_dispatch(_union1d_dispatcher)
+@array_function_dispatch(("ar1", "ar2"))
 def union1d(ar1, ar2):
     """
     Find the union of two arrays.
@@ -1113,11 +1069,7 @@ def union1d(ar1, ar2):
     return unique(np.concatenate((ar1, ar2), axis=None))
 
 
-def _setdiff1d_dispatcher(ar1, ar2, assume_unique=None):
-    return (ar1, ar2)
-
-
-@array_function_dispatch(_setdiff1d_dispatcher)
+@array_function_dispatch(("ar1", "ar2"))
 def setdiff1d(ar1, ar2, assume_unique=False):
     """
     Find the set difference of two arrays.

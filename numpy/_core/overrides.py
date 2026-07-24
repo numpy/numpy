@@ -76,7 +76,9 @@ add_docstring(
     Returns
     -------
     Sequence of arguments with __array_function__ methods, in the order in
-    which they should be called.
+    which they should be called.  Returns an empty sequence when every
+    argument is an exact ``ndarray`` or a basic Python type (the caller
+    short-circuits to the default implementation in that case).
     """)
 
 
@@ -105,6 +107,56 @@ def verify_matching_signatures(implementation, dispatcher):
                                'default argument values')
 
 
+def _resolve_relevant_arg_spec(implementation, relevant_arg_names):
+    """Resolve arg names into ((kw_name, position), ...) pairs against
+    ``implementation``'s signature.  Rejects an empty spec, ``*args``
+    (positions would be ambiguous at call time), and unknown names.
+
+    Each pair encodes two independent lookup channels: ``position >= 0``
+    means the arg may be matched positionally (-1 for keyword-only params)
+    and ``kw_name is not None`` means it may be matched by keyword (None
+    for positional-only params).  This keeps signature-invalid calls
+    raising TypeError instead of dispatching on the wrong argument.
+    """
+    if not relevant_arg_names:
+        raise ValueError(
+            "tuple-spec dispatcher requires at least one relevant "
+            "argument name; got empty tuple")
+    sig = inspect.signature(implementation)
+    Parameter = inspect.Parameter
+    spec = {}  # param name -> (kw_name or None, position)
+    for pos, (name, param) in enumerate(sig.parameters.items()):
+        match param.kind:
+            case Parameter.VAR_POSITIONAL:
+                raise RuntimeError(
+                    f"tuple-spec dispatch does not support implementations "
+                    f"with *args; got {implementation.__qualname__}")
+            case Parameter.VAR_KEYWORD:
+                break
+            case Parameter.KEYWORD_ONLY:
+                spec[name] = (name, -1)    # keyword channel only
+            case Parameter.POSITIONAL_ONLY:
+                spec[name] = (None, pos)   # positional channel only
+            case Parameter.POSITIONAL_OR_KEYWORD:
+                spec[name] = (name, pos)   # both channels
+            case _:
+                raise RuntimeError(
+                    f"unsupported parameter kind {param.kind!r} for "
+                    f"{name!r} in {implementation.__qualname__}")
+    resolved = []
+    for name in relevant_arg_names:
+        if not isinstance(name, str):
+            raise TypeError(
+                f"tuple-spec dispatcher must contain only strings; "
+                f"got {name!r}")
+        if name not in spec:
+            raise RuntimeError(
+                f"relevant arg {name!r} not found in "
+                f"{implementation.__qualname__} signature")
+        resolved.append(spec[name])
+    return tuple(resolved)
+
+
 def array_function_dispatch(dispatcher=None, module=None, verify=True,
                             docs_from_dispatcher=False):
     """Decorator for adding dispatch with the __array_function__ protocol.
@@ -113,12 +165,15 @@ def array_function_dispatch(dispatcher=None, module=None, verify=True,
 
     Parameters
     ----------
-    dispatcher : callable or None
-        Function that when called like ``dispatcher(*args, **kwargs)`` with
-        arguments from the NumPy function call returns an iterable of
+    dispatcher : callable, tuple of str, or None
+        If a callable: when called like ``dispatcher(*args, **kwargs)`` with
+        arguments from the NumPy function call it returns an iterable of
         array-like arguments to check for ``__array_function__``.
 
-        If `None`, the first argument is used as the single `like=` argument
+        If a tuple of strings: names of positional/keyword arguments of the
+        decorated function that should be checked for ``__array_function__``.
+
+        If ``None``, the first argument is used as the single `like=` argument
         and not passed on.  A function implementing `like=` must call its
         dispatcher with `like` as the first non-keyword argument.
     module : str, optional
@@ -142,29 +197,46 @@ def array_function_dispatch(dispatcher=None, module=None, verify=True,
     Function suitable for decorating the implementation of a NumPy function.
 
     """
+    # exact tuple only (matches C-side PyTuple_CheckExact)
+    is_tuple_spec = type(dispatcher) is tuple
+
+    if is_tuple_spec and docs_from_dispatcher:
+        raise TypeError(
+            "docs_from_dispatcher=True is not supported with a tuple-spec "
+            "dispatcher (there is no dispatcher function to copy docs from)")
+
     def decorator(implementation):
-        if verify:
-            if dispatcher is not None:
-                verify_matching_signatures(implementation, dispatcher)
-            else:
-                # Using __code__ directly similar to verify_matching_signature
-                co = implementation.__code__
-                last_arg = co.co_argcount + co.co_kwonlyargcount - 1
-                last_arg = co.co_varnames[last_arg]
-                if last_arg != "like" or co.co_kwonlyargcount == 0:
-                    raise RuntimeError(
-                        "__array_function__ expects `like=` to be the last "
-                        "argument and a keyword-only argument. "
-                        f"{implementation} does not seem to comply.")
+        if is_tuple_spec:
+            spec = _resolve_relevant_arg_spec(implementation, dispatcher)
+            public_api = _ArrayFunctionDispatcher(spec, implementation)
+        else:
+            if verify:
+                if dispatcher is not None:
+                    verify_matching_signatures(implementation, dispatcher)
+                else:
+                    # Using __code__ directly similar to
+                    # verify_matching_signatures
+                    co = implementation.__code__
+                    last_arg = co.co_argcount + co.co_kwonlyargcount - 1
+                    last_arg = co.co_varnames[last_arg]
+                    if last_arg != "like" or co.co_kwonlyargcount == 0:
+                        raise RuntimeError(
+                            "__array_function__ expects `like=` to be the "
+                            "last argument and a keyword-only argument. "
+                            f"{implementation} does not seem to comply.")
 
-        if docs_from_dispatcher and dispatcher.__doc__ is not None:
-            doc = inspect.cleandoc(dispatcher.__doc__)
-            add_docstring(implementation, doc)
+            if docs_from_dispatcher and dispatcher.__doc__ is not None:
+                doc = inspect.cleandoc(dispatcher.__doc__)
+                add_docstring(implementation, doc)
 
-        public_api = _ArrayFunctionDispatcher(dispatcher, implementation)
+            public_api = _ArrayFunctionDispatcher(dispatcher, implementation)
+
         functools.update_wrapper(public_api, implementation)
 
-        if not verify and not getattr(implementation, "__text_signature__", None):
+        if not is_tuple_spec and not verify and not getattr(
+                implementation, "__text_signature__", None):
+            # update_wrapper does not help inspect.signature for
+            # implementations with a */** signature; use the dispatcher's.
             public_api.__signature__ = inspect.signature(dispatcher)
 
         if module is not None:

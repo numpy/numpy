@@ -53,11 +53,7 @@ def _make_along_axis_idx(arr_shape, indices, axis):
     return tuple(fancy_index)
 
 
-def _take_along_axis_dispatcher(arr, indices, axis=None):
-    return (arr, indices)
-
-
-@array_function_dispatch(_take_along_axis_dispatcher)
+@array_function_dispatch(("arr", "indices"))
 def take_along_axis(arr, indices, axis=-1):
     """
     Take values from the input array by matching 1d index and data slices.
@@ -179,11 +175,7 @@ def take_along_axis(arr, indices, axis=-1):
     return arr[_make_along_axis_idx(arr.shape, indices, axis)]
 
 
-def _put_along_axis_dispatcher(arr, indices, values, axis):
-    return (arr, indices, values)
-
-
-@array_function_dispatch(_put_along_axis_dispatcher)
+@array_function_dispatch(("arr", "indices", "values"))
 def put_along_axis(arr, indices, values, axis):
     """
     Put values into the destination array by matching 1d index and data slices.
@@ -414,11 +406,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     return conv.wrap(res)
 
 
-def _apply_over_axes_dispatcher(func, a, axes):
-    return (a,)
-
-
-@array_function_dispatch(_apply_over_axes_dispatcher)
+@array_function_dispatch(("a",))
 def apply_over_axes(func, a, axes):
     """
     Apply a function repeatedly over multiple axes.
@@ -506,11 +494,7 @@ def apply_over_axes(func, a, axes):
     return val
 
 
-def _expand_dims_dispatcher(a, axis):
-    return (a,)
-
-
-@array_function_dispatch(_expand_dims_dispatcher)
+@array_function_dispatch(("a",))
 def expand_dims(a, axis):
     """
     Expand the shape of an array.
@@ -712,11 +696,7 @@ def dstack(tup):
     return _nx.concatenate(arrs, 2)
 
 
-def _array_split_dispatcher(ary, indices_or_sections, axis=None):
-    return (ary, indices_or_sections)
-
-
-@array_function_dispatch(_array_split_dispatcher)
+@array_function_dispatch(("ary", "indices_or_sections"))
 def array_split(ary, indices_or_sections, axis=0):
     """
     Split an array into multiple sub-arrays.
@@ -773,11 +753,7 @@ def array_split(ary, indices_or_sections, axis=0):
     return sub_arys
 
 
-def _split_dispatcher(ary, indices_or_sections, axis=None):
-    return (ary, indices_or_sections)
-
-
-@array_function_dispatch(_split_dispatcher)
+@array_function_dispatch(("ary", "indices_or_sections"))
 def split(ary, indices_or_sections, axis=0):
     """
     Split an array into multiple sub-arrays as views into `ary`.
@@ -856,11 +832,7 @@ def split(ary, indices_or_sections, axis=0):
     return array_split(ary, indices_or_sections, axis)
 
 
-def _hvdsplit_dispatcher(ary, indices_or_sections):
-    return (ary, indices_or_sections)
-
-
-@array_function_dispatch(_hvdsplit_dispatcher)
+@array_function_dispatch(("ary", "indices_or_sections"))
 def hsplit(ary, indices_or_sections):
     """
     Split an array into multiple sub-arrays horizontally (column-wise).
@@ -931,7 +903,7 @@ def hsplit(ary, indices_or_sections):
         return split(ary, indices_or_sections, 0)
 
 
-@array_function_dispatch(_hvdsplit_dispatcher)
+@array_function_dispatch(("ary", "indices_or_sections"))
 def vsplit(ary, indices_or_sections):
     """
     Split an array into multiple sub-arrays vertically (row-wise).
@@ -985,7 +957,7 @@ def vsplit(ary, indices_or_sections):
     return split(ary, indices_or_sections, 0)
 
 
-@array_function_dispatch(_hvdsplit_dispatcher)
+@array_function_dispatch(("ary", "indices_or_sections"))
 def dsplit(ary, indices_or_sections):
     """
     Split array into multiple sub-arrays along the 3rd axis (depth).
@@ -1031,11 +1003,7 @@ def dsplit(ary, indices_or_sections):
     return split(ary, indices_or_sections, 2)
 
 
-def _kron_dispatcher(a, b):
-    return (a, b)
-
-
-@array_function_dispatch(_kron_dispatcher)
+@array_function_dispatch(("a", "b"))
 def kron(a, b):
     """
     Kronecker product of two arrays.
@@ -1150,11 +1118,7 @@ def kron(a, b):
     return result if not is_any_mat else matrix(result, copy=False)
 
 
-def _tile_dispatcher(A, reps):
-    return (A, reps)
-
-
-@array_function_dispatch(_tile_dispatcher)
+@array_function_dispatch(("A", "reps"))
 def tile(A, reps):
     """
     Construct an array by repeating A the number of times given by reps.

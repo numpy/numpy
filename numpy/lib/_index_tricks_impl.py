@@ -787,11 +787,7 @@ s_ = IndexExpression(maketuple=False)
 # applicable to N-dimensions.
 
 
-def _fill_diagonal_dispatcher(a, val, wrap=None):
-    return (a,)
-
-
-@array_function_dispatch(_fill_diagonal_dispatcher)
+@array_function_dispatch(("a",))
 def fill_diagonal(a, val, wrap=False):
     """Fill the main diagonal of the given array of any dimensionality.
 

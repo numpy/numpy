@@ -466,11 +466,7 @@ def _search_sorted_inclusive(a, v):
     ))
 
 
-def _histogram_bin_edges_dispatcher(a, bins=None, range=None, weights=None):
-    return (a, bins, weights)
-
-
-@array_function_dispatch(_histogram_bin_edges_dispatcher)
+@array_function_dispatch(("a", "bins", "weights"))
 def histogram_bin_edges(a, bins=10, range=None, weights=None):
     r"""
     Function to calculate only the edges of the bins used by the `histogram`
@@ -677,12 +673,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     return bin_edges
 
 
-def _histogram_dispatcher(
-        a, bins=None, range=None, density=None, weights=None):
-    return (a, bins, weights)
-
-
-@array_function_dispatch(_histogram_dispatcher)
+@array_function_dispatch(("a", "bins", "weights"))
 def histogram(a, bins=10, range=None, density=None, weights=None):
     r"""
     Compute the histogram of a dataset.

@@ -173,11 +173,7 @@ _QuantileMethods = {
     }}
 
 
-def _rot90_dispatcher(m, k=None, axes=None):
-    return (m,)
-
-
-@array_function_dispatch(_rot90_dispatcher)
+@array_function_dispatch(("m",))
 def rot90(m, k=1, axes=(0, 1)):
     """
     Rotate an array by 90 degrees in the plane specified by axes.
@@ -277,11 +273,7 @@ def rot90(m, k=1, axes=(0, 1)):
         return flip(transpose(m, axes_list), axes[1])
 
 
-def _flip_dispatcher(m, axis=None):
-    return (m,)
-
-
-@array_function_dispatch(_flip_dispatcher)
+@array_function_dispatch(("m",))
 def flip(m, axis=None):
     """
     Reverse the order of elements in an array along the given axis.
@@ -443,12 +435,7 @@ def _weights_are_valid(weights, a, axis):
     return wgt
 
 
-def _average_dispatcher(a, axis=None, weights=None, returned=None, *,
-                        keepdims=None):
-    return (a, weights)
-
-
-@array_function_dispatch(_average_dispatcher)
+@array_function_dispatch(("a", "weights"))
 def average(a, axis=None, weights=None, returned=False, *,
             keepdims=np._NoValue):
     """
@@ -929,11 +916,7 @@ def select(condlist, choicelist, default=0):
     return result
 
 
-def _copy_dispatcher(a, order=None, subok=None):
-    return (a,)
-
-
-@array_function_dispatch(_copy_dispatcher)
+@array_function_dispatch(("a",))
 def copy(a, order='K', subok=False):
     """
     Return an array copy of the given object.
@@ -1407,11 +1390,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     return tuple(outvals)
 
 
-def _diff_dispatcher(a, n=None, axis=None, prepend=None, append=None):
-    return (a, prepend, append)
-
-
-@array_function_dispatch(_diff_dispatcher)
+@array_function_dispatch(("a", "prepend", "append"))
 def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     """
     Calculate the n-th discrete difference along the given axis.
@@ -1543,11 +1522,7 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     return a
 
 
-def _interp_dispatcher(x, xp, fp, left=None, right=None, period=None):
-    return (x, xp, fp)
-
-
-@array_function_dispatch(_interp_dispatcher)
+@array_function_dispatch(("x", "xp", "fp"))
 def interp(x, xp, fp, left=None, right=None, period=None):
     """
     One-dimensional linear interpolation for monotonically increasing sample points.
@@ -1687,11 +1662,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
     return interp_func(x, xp, fp, left, right)
 
 
-def _angle_dispatcher(z, deg=None):
-    return (z,)
-
-
-@array_function_dispatch(_angle_dispatcher)
+@array_function_dispatch(("z",))
 def angle(z, deg=False):
     """
     Return the angle of the complex argument.
@@ -1772,11 +1743,7 @@ def _unwrap_fallback(p, discont, period, axis):
     return up
 
 
-def _unwrap_dispatcher(p, discont=None, axis=None, *, period=None):
-    return (p,)
-
-
-@array_function_dispatch(_unwrap_dispatcher)
+@array_function_dispatch(("p",))
 def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     r"""
     Unwrap by taking the complement of large deltas with respect to the period.
@@ -2076,11 +2043,7 @@ def trim_zeros(filt, trim='fb', axis=None):
     return filt[sl]
 
 
-def _extract_dispatcher(condition, arr):
-    return (condition, arr)
-
-
-@array_function_dispatch(_extract_dispatcher)
+@array_function_dispatch(("condition", "arr"))
 def extract(condition, arr):
     """
     Return the elements of an array that satisfy some condition.
@@ -2133,11 +2096,7 @@ def extract(condition, arr):
     return _nx.take(ravel(arr), nonzero(ravel(condition))[0])
 
 
-def _place_dispatcher(arr, mask, vals):
-    return (arr, mask, vals)
-
-
-@array_function_dispatch(_place_dispatcher)
+@array_function_dispatch(("arr", "mask", "vals"))
 def place(arr, mask, vals):
     """
     Change elements of an array based on conditional and input values.
@@ -2708,12 +2667,7 @@ class vectorize:
         return outputs[0] if nout == 1 else outputs
 
 
-def _cov_dispatcher(m, y=None, rowvar=None, bias=None, ddof=None,
-                    fweights=None, aweights=None, *, dtype=None):
-    return (m, y, fweights, aweights)
-
-
-@array_function_dispatch(_cov_dispatcher)
+@array_function_dispatch(("m", "y", "fweights", "aweights"))
 def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         aweights=None, *, dtype=None):
     """
@@ -2931,12 +2885,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     return c.squeeze()
 
 
-def _corrcoef_dispatcher(x, y=None, rowvar=None, *,
-                         dtype=None):
-    return (x, y)
-
-
-@array_function_dispatch(_corrcoef_dispatcher)
+@array_function_dispatch(("x", "y"))
 def corrcoef(x, y=None, rowvar=True, *,
              dtype=None):
     """
@@ -3566,11 +3515,7 @@ def _i0_2(x):
     return exp(x) * _chbevl(32.0 / x - 2.0, _i0B) / sqrt(x)
 
 
-def _i0_dispatcher(x):
-    return (x,)
-
-
-@array_function_dispatch(_i0_dispatcher)
+@array_function_dispatch(("x",))
 def i0(x):
     """
     Modified Bessel function of the first kind, order 0.
@@ -3764,11 +3709,7 @@ def kaiser(M, beta):
     return i0(beta * sqrt(1 - ((n - alpha) / alpha)**2.0)) / i0(beta)
 
 
-def _sinc_dispatcher(x):
-    return (x,)
-
-
-@array_function_dispatch(_sinc_dispatcher)
+@array_function_dispatch(("x",))
 def sinc(x):
     r"""
     Return the normalized sinc function.
@@ -3935,12 +3876,7 @@ def _ureduce(a, func, keepdims=False, **kwargs):
     return r
 
 
-def _median_dispatcher(
-        a, axis=None, out=None, overwrite_input=None, keepdims=None):
-    return (a, out)
-
-
-@array_function_dispatch(_median_dispatcher)
+@array_function_dispatch(("a", "out"))
 def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     """
     Compute the median along the specified axis.
@@ -4084,12 +4020,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     return rout
 
 
-def _percentile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                           method=None, keepdims=None, *, weights=None):
-    return (a, q, out, weights)
-
-
-@array_function_dispatch(_percentile_dispatcher)
+@array_function_dispatch(("a", "q", "out", "weights"))
 def percentile(a,
                q,
                axis=None,
@@ -4286,12 +4217,7 @@ def percentile(a,
         a, q, axis, out, overwrite_input, method, keepdims, weights, weak_q)
 
 
-def _quantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                         method=None, keepdims=None, *, weights=None):
-    return (a, q, out, weights)
-
-
-@array_function_dispatch(_quantile_dispatcher)
+@array_function_dispatch(("a", "q", "out", "weights"))
 def quantile(a,
              q,
              axis=None,
@@ -4941,11 +4867,7 @@ def _quantile(
     return result
 
 
-def _trapezoid_dispatcher(y, x=None, dx=None, axis=None):
-    return (y, x)
-
-
-@array_function_dispatch(_trapezoid_dispatcher)
+@array_function_dispatch(("y", "x"))
 def trapezoid(y, x=None, dx=1.0, axis=-1):
     r"""
     Integrate along the given axis using the composite trapezoidal rule.
@@ -5239,11 +5161,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     return output
 
 
-def _delete_dispatcher(arr, obj, axis=None):
-    return (arr, obj)
-
-
-@array_function_dispatch(_delete_dispatcher)
+@array_function_dispatch(("arr", "obj"))
 def delete(arr, obj, axis=None):
     """
     Return a new array with sub-arrays along an axis deleted. For a one
@@ -5423,11 +5341,7 @@ def delete(arr, obj, axis=None):
     return conv.wrap(new, to_scalar=False)
 
 
-def _insert_dispatcher(arr, obj, values, axis=None):
-    return (arr, obj, values)
-
-
-@array_function_dispatch(_insert_dispatcher)
+@array_function_dispatch(("arr", "obj", "values"))
 def insert(arr, obj, values, axis=None):
     """
     Insert values along the given axis before the given indices.
@@ -5620,11 +5534,7 @@ def insert(arr, obj, values, axis=None):
     return conv.wrap(new, to_scalar=False)
 
 
-def _append_dispatcher(arr, values, axis=None):
-    return (arr, values)
-
-
-@array_function_dispatch(_append_dispatcher)
+@array_function_dispatch(("arr", "values"))
 def append(arr, values, axis=None):
     """
     Append values to the end of an array.
@@ -5694,11 +5604,7 @@ def append(arr, values, axis=None):
     return concatenate((arr, values), axis=axis)
 
 
-def _digitize_dispatcher(x, bins, right=None):
-    return (x, bins)
-
-
-@array_function_dispatch(_digitize_dispatcher)
+@array_function_dispatch(("x", "bins"))
 def digitize(x, bins, right=False):
     """
     Return the indices of the bins to which each value in input array belongs.
