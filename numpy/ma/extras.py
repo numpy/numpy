@@ -2246,11 +2246,23 @@ def vander(x, n=None):
 
     Masked values in the input array result in rows of zeros.
 
-    This function is the masked-array equivalent of `numpy.vander`.
+    Parameters
+    ----------
+    x : array_like
+        1-D input array.
+    n : int, optional
+        Number of columns in the output. If `n` is not specified, a square
+        array is returned.
+
+    Returns
+    -------
+    out : ndarray
+        Vandermonde matrix.
 
     See Also
     --------
     numpy.vander : Equivalent function for ndarrays.
+
     """
     _vander = np.vander(x, n)
     m = getmask(x)
