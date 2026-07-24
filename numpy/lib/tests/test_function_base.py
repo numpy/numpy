@@ -698,6 +698,19 @@ class TestInsert:
         with pytest.raises(IndexError):
             np.insert([0, 1, 2], np.array([], dtype=float), [])
 
+    @pytest.mark.parametrize("indexer", [[], np.array([], dtype=np.intp)])
+    def test_empty_integer_index_returns_copy(self, indexer):
+        a = np.arange(6).reshape(2, 3)
+        res = insert(a, indexer, 9, axis=1)
+
+        assert_array_equal(res, a)
+        assert_(res is not a)
+        assert_(not np.shares_memory(res, a))
+
+    def test_empty_integer_index_validates_values(self):
+        with pytest.raises(ValueError, match="shape mismatch"):
+            insert(np.arange(3), [], [[1, 2, 3]])
+
     @pytest.mark.parametrize('idx,values', [
         ([4], [3, 4]),
         ([-4], [3, 4]),

@@ -5591,6 +5591,12 @@ def insert(arr, obj, values, axis=None):
         # Can safely cast the empty list to intp
         indices = indices.astype(intp)
 
+    if indices.size == 0 and indices.dtype.kind in "ui":
+        new = arr.copy(order=arrorder)
+        slobj[axis] = indices
+        new[tuple(slobj)] = values
+        return conv.wrap(new, to_scalar=False)
+
     if indices.size > 0:
         min_idx = indices.min()
         max_idx = indices.max()
