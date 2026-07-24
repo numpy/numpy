@@ -1381,7 +1381,8 @@ class TestNanFunctions_Quantile:
 
     @pytest.mark.parametrize("func", [np.nanquantile, np.nanpercentile])
     def test_float16_gh_31487(self, func):
-        # gh-31487: nanquantile/nanpercentile overflowed on large float16 arrays
+        # gh-31487: overflowed on large float16 arrays (also see
+        # test_function_base.py for percentile/quantile).
         a = np.zeros(65521, dtype=np.float16)
         a[:20_000] = 1.0
         scale = 100 if func is np.nanpercentile else 1

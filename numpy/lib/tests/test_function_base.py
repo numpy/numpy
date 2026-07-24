@@ -4225,6 +4225,18 @@ class TestPercentile:
         assert z == one
         assert z.dtype == a.dtype
 
+    @pytest.mark.parametrize("func", [np.percentile, np.quantile])
+    def test_float16_gh_31487(self, func):
+        # gh-31487: overflows when q is a float16 array (also see
+        # test_nanfunctions.py for nanpercentile/nanquantile).
+        a = np.zeros(65521, dtype=np.float16)
+        a[:20_000] = 1.0
+        scale = 100 if func is np.percentile else 1
+        q = np.array([0.5 * scale, 0.99 * scale], dtype=np.float16)
+        z = func(a, q)
+        assert_array_equal(z, np.array([0.0, 1.0], dtype=np.float16))
+        assert z.dtype == np.float16
+
     @pytest.mark.slow
     def test_percentile_gh_29003_Fraction(self):
         zero = Fraction(0)
