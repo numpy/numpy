@@ -5678,10 +5678,10 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
             "Special handling of matrix is removed. Convert to a "
             "ndarray via 'matrix.A' ");
 
-    PyObject *tmp0 = PyTuple_GET_ITEM(args, 0);
-    PyObject *tmp1 = PyTuple_GET_ITEM(args, 1);
+    PyObject *tmp1 = PyTuple_GET_ITEM(args, 0);
+    PyObject *tmp2 = PyTuple_GET_ITEM(args, 1);
 
-    int is_matrix = PyObject_IsInstance(tmp0, npy_runtime_imports.numpy_matrix);
+    int is_matrix = PyObject_IsInstance(tmp1, npy_runtime_imports.numpy_matrix);
     if (is_matrix == -1) {
         return NULL;
     }
@@ -5691,7 +5691,7 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
         return NULL;
     }
 
-    is_matrix = PyObject_IsInstance(tmp1, npy_runtime_imports.numpy_matrix);
+    is_matrix = PyObject_IsInstance(tmp2, npy_runtime_imports.numpy_matrix);
     if (is_matrix == -1) {
         return NULL;
     }
@@ -5704,17 +5704,17 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
      * 0-d inputs contribute no dimensions to the result and broadcast the same
      * without the inserted 1s, so the reshape below is unnecessary
      */
-    if (is_known_scalar(tmp0) || is_known_scalar(tmp1)) {
+    if (is_known_scalar(tmp1) || is_known_scalar(tmp2)) {
         Py_INCREF(args);
         return args;
     }
 
-    ap1 = (PyArrayObject *) PyArray_FROM_O(tmp0);
+    ap1 = (PyArrayObject *) PyArray_FROM_O(tmp1);
     if (ap1 == NULL) {
         return NULL;
     }
 
-    PyArrayObject *ap2 = (PyArrayObject *) PyArray_FROM_O(tmp1);
+    PyArrayObject *ap2 = (PyArrayObject *) PyArray_FROM_O(tmp2);
     if (ap2 == NULL) {
         Py_DECREF(ap1);
         return NULL;
