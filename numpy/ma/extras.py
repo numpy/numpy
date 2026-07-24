@@ -16,7 +16,8 @@ __all__ = [
     'isin', 'in1d', 'intersect1d', 'mask_cols', 'mask_rowcols', 'mask_rows',
     'masked_all', 'masked_all_like', 'median', 'mr_', 'ndenumerate',
     'notmasked_contiguous', 'notmasked_edges', 'polyfit', 'row_stack',
-    'setdiff1d', 'setxor1d', 'stack', 'unique', 'union1d', 'vander', 'vstack',
+    'setdiff1d', 'setxor1d', 'stack', 'unique', 'union1d', 'unwrap', 'vander',
+    'vstack',
     ]
 
 import functools
@@ -1247,6 +1248,104 @@ def mask_cols(a, axis=np._NoValue):
             "The axis argument has always been ignored, in future passing it "
             "will raise TypeError", DeprecationWarning, stacklevel=2)
     return mask_rowcols(a, 1)
+
+
+def unwrap(p, discont=None, axis=-1, *, period=2 * np.pi):
+    r"""
+    Unwrap by taking the complement of large deltas with respect to the period.
+
+    This function is the equivalent of `numpy.unwrap` that takes masked values
+    into account. Masked elements are skipped over: every correction is
+    computed from the delta to the closest preceding unmasked element, and the
+    mask itself is carried through to the output. See `numpy.unwrap` for the
+    details of the unwrapping.
+
+    Parameters
+    ----------
+    p : array_like
+        Input array.
+    discont : float, optional
+        Maximum discontinuity between values, default is ``period/2``.
+        Values below ``period/2`` are treated as if they were ``period/2``.
+        To have an effect different from the default, `discont` should be
+        larger than ``period/2``.
+    axis : int, optional
+        Axis along which unwrap will operate, default is the last axis.
+    period : float or int, optional
+        Size of the range over which the input wraps. By default, it is
+        ``2 pi``.
+
+    Returns
+    -------
+    out : MaskedArray
+        Output array, carrying the mask of `p`. Its dtype is
+        ``numpy.result_type(p, period)``, following `numpy.unwrap`. The data
+        underlying the masked elements is unspecified.
+
+    See Also
+    --------
+    numpy.unwrap : Equivalent function for ndarrays, which ignores the mask.
+
+    Notes
+    -----
+    Unwrapping assumes that the change between two consecutive unmasked
+    elements is less than half a period. Across a masked gap that assumption
+    is a guess: a gap hiding more than half a period of change cannot be
+    recovered, and the elements following it are then offset by a multiple of
+    `period`.
+
+    Elements preceding the first unmasked element along `axis`, and lines that
+    are masked entirely, are returned masked and uncorrected.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> phase = np.ma.masked_array([0., 1., 2., 2 + 2 * np.pi, 3 + 2 * np.pi],
+    ...                            mask=[0, 0, 1, 0, 0])
+    >>> np.ma.unwrap(phase)
+    masked_array(data=[0.0, 1.0, --, 2.0, 3.0],
+                 mask=[False, False,  True, False, False],
+           fill_value=1e+20)
+
+    The masked element is skipped over, so the correction of the fourth
+    element is computed from the delta to the second one. `numpy.unwrap`
+    instead unwraps relative to the value underlying the mask, which can hide
+    a discontinuity from it entirely:
+
+    >>> phase_deg = np.ma.masked_array([0., 170., 340., 150.],
+    ...                                mask=[0, 1, 0, 0])
+    >>> np.ma.unwrap(phase_deg, period=360)
+    masked_array(data=[0.0, --, -20.0, 150.0],
+                 mask=[False,  True, False, False],
+           fill_value=1e+20)
+    >>> np.unwrap(phase_deg, period=360)
+    array([  0., 170., 340., 510.])
+
+    """
+    p = masked_array(p, copy=False, subok=True)
+    mask = getmask(p)
+    if mask is nomask:
+        result = masked_array(np.unwrap(getdata(p), discont, axis,
+                                        period=period))
+    else:
+        axis = normalize_axis_index(axis, p.ndim)
+        if p.ndim == 1:
+            unwrapped = np.unwrap(p.compressed(), discont, period=period)
+            out = np.zeros(p.shape, dtype=unwrapped.dtype)
+            out[~mask] = unwrapped
+        else:
+            # gather the unmasked elements of every line to its front, the
+            # unwrapping being a forward scan that the trailing masked
+            # elements cannot affect. their data is arbitrary, so drop it
+            order = np.argsort(mask, axis=axis, kind='stable')
+            packed = np.take_along_axis(p.filled(0), order, axis=axis)
+            unwrapped = np.unwrap(packed, discont, axis, period=period)
+            out = np.empty_like(unwrapped)
+            np.put_along_axis(out, order, unwrapped, axis=axis)
+            np.copyto(out, 0, where=mask)
+        result = masked_array(out, mask=mask.copy())
+    subclass = get_masked_subclass(p)
+    return result if subclass is MaskedArray else result.view(subclass)
 
 
 #####--------------------------------------------------------------------------
