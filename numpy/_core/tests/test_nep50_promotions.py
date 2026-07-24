@@ -194,11 +194,13 @@ def test_nep50_in_ufunc_at():
 
     arr = np.zeros(3, dtype=np.float32)
     np.add.at(arr, [0, 0, 1], 0.25)
-    assert_array_equal(arr, np.array([0.5, 0.25, 0], dtype=np.float32))
+    assert_array_equal(arr, np.array([0.5, 0.25, 0], dtype=np.float32),
+                       strict=True)
 
     arr = np.zeros(2, dtype=np.complex64)
     np.add.at(arr, [1], 1j)
-    assert arr[1] == 1j
+    assert_array_equal(arr, np.array([0, 1j], dtype=np.complex64),
+                       strict=True)
 
     # Huge Python integers work when the resolved dtype can hold the value:
     arr = np.zeros(1)

@@ -628,8 +628,10 @@ _wheremask_converter(PyObject *obj, PyArrayObject **wheremask)
  * abstract DType and flag the array, since legacy type resolution uses
  * `np.can_cast(operand, dtype)` and needs the information there.
  *
- * Returns 1 and replaces `*operand` (a reference it owns) if `obj` was a
- * Python scalar, and 0 otherwise.
+ * `*operand` must be an owned reference to a temporary array (freshly
+ * converted from `obj`); it may be replaced with a new reference.
+ *
+ * Returns 1 if `obj` was a Python int, float, or complex, and 0 otherwise.
  */
 static int
 mark_pyscalar_operand(PyObject *obj, PyArrayObject **operand,
@@ -642,9 +644,10 @@ mark_pyscalar_operand(PyObject *obj, PyArrayObject **operand,
             && PyArray_TYPE(*operand) != NPY_LONG) {
         /*
          * A Python integer that did not convert to the default integer
-         * (object or uint64 dtype) confuses many type resolvers, so promote a
-         * default-integer placeholder instead; `resolve_descriptors` replaces
-         * the operand with the packed original scalar afterwards.
+         * (object or uint64 dtype) confuses many type resolvers, so
+         * substitute a default-integer placeholder instead;
+         * `resolve_descriptors` replaces the operand with the packed
+         * original scalar afterwards.
          *
          * TODO: Just like the general dual NEP 50/legacy promotion
          * support this is meant as a temporary hack for NumPy 1.25.
@@ -6242,21 +6245,26 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             tmp_operands[2] = NULL;
         }
 
+        int resolve_result = -1;
         PyObject *inputs_tup = NULL;
         if (op2_is_pyscalar) {
             inputs_tup = PyTuple_Pack(2, op1, op2);
+            if (inputs_tup == NULL) {
+                goto finish_resolution;
+            }
         }
 
-        int resolve_result = -1;
         ufuncimpl = promote_and_get_ufuncimpl(ufunc, tmp_operands, signature,
                         operand_DTypes, force_legacy_promotion,
                         op2_is_pyscalar, NPY_FALSE);
-        if (ufuncimpl != NULL && (!op2_is_pyscalar || inputs_tup != NULL)) {
+        if (ufuncimpl != NULL) {
             /* Find the correct operation_descrs for the operation */
             resolve_result = resolve_descriptors(nop, ufunc, ufuncimpl,
                     tmp_operands, operation_descrs, signature, operand_DTypes,
                     inputs_tup, NPY_UNSAFE_CASTING);
         }
+
+    finish_resolution:
         Py_XDECREF(inputs_tup);
         if (op2_array != NULL) {
             Py_SETREF(op2_array, tmp_operands[1]);
