@@ -16,6 +16,7 @@
 #include "convert_datatype.h"
 #include "dtypemeta.h"
 #include "stringdtype/dtype.h"
+#include "stringdtype/casts.h"
 
 #include "npy_argparse.h"
 #include "abstractdtypes.h"
@@ -872,6 +873,21 @@ find_descriptor_from_array(
             if (*out_descr == NULL) {
                 return -1;
             }
+        }
+    }
+    else if (NPY_UNLIKELY(PyArray_TYPE(arr) == NPY_VSTRING &&
+                          (DType->type_num == NPY_STRING ||
+                           DType->type_num == NPY_UNICODE))) {
+        /*
+         * Casting a StringDType array to a fixed-width string DType with no
+         * size means finding the width of the widest entry first, so that
+         * the cast does not truncate.  Note that, like the object branch
+         * above, this inspects array values.
+         */
+        *out_descr = stringdtype_find_fixed_width_descr(
+                arr, DType->type_num);
+        if (*out_descr == NULL) {
+            return -1;
         }
     }
     else {
