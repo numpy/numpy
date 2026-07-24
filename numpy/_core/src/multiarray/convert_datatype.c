@@ -2250,7 +2250,14 @@ get_byteswap_loop(
     PyArray_Descr *const *descrs = context->descriptors;
     assert(descrs[0]->kind == descrs[1]->kind);
     assert(descrs[0]->elsize == descrs[1]->elsize);
-    int itemsize = descrs[0]->elsize;
+    if (descrs[0]->elsize > NPY_MAX_INT) {
+        // TODO: add a regression test for >INT_MAX byte-swap itemsize support.
+        PyErr_SetString(PyExc_TypeError,
+                "byte-swapping with itemsize larger than INT_MAX "
+                "is not supported");
+        return -1;
+    }
+    int itemsize = (int)descrs[0]->elsize;
     *flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
     *out_transferdata = NULL;
     if (descrs[0]->kind == 'c') {
@@ -2988,20 +2995,16 @@ structured_to_nonstructured_resolve_descriptors(
 
     /* Void dtypes always do the full cast. */
     if (given_descrs[1] == NULL) {
+        /*
+         * Reject string casts, historically these worked only for empty arrays.
+         * (One could go via object and hex printing, but...)
+         */
+        if (dtypes[1]->type_num == NPY_STRING || dtypes[1]->type_num == NPY_UNICODE) {
+            return -1;
+        }
         loop_descrs[1] = NPY_DT_CALL_default_descr(dtypes[1]);
         if (loop_descrs[1] == NULL) {
             return -1;
-        }
-        /*
-         * Special case strings here, it should be useless (and only actually
-         * work for empty arrays).  Possibly this should simply raise for
-         * all parametric DTypes.
-         */
-        if (dtypes[1]->type_num == NPY_STRING) {
-            loop_descrs[1]->elsize = given_descrs[0]->elsize;
-        }
-        else if (dtypes[1]->type_num == NPY_UNICODE) {
-            loop_descrs[1]->elsize = given_descrs[0]->elsize * 4;
         }
     }
     else {

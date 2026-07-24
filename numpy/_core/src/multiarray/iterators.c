@@ -696,7 +696,7 @@ iter_ass_sub_Bool(PyArrayIterObject *self, PyArrayObject *ind,
     /* Loop over Boolean array */
     npy_intp one = 1;
     PyArray_Descr *dtype = PyArray_DESCR(self->ao);
-    int itemsize = dtype->elsize;
+    npy_intp itemsize = dtype->elsize;
     npy_intp transfer_strides[2] = {itemsize, itemsize};
     while (counter--) {
         if (*((npy_bool *)dptr) != 0) {
@@ -727,7 +727,7 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
 
     npy_intp one = 1;
     PyArray_Descr *dtype = PyArray_DESCR(self->ao);
-    int itemsize = dtype->elsize;
+    npy_intp itemsize = dtype->elsize;
     npy_intp transfer_strides[2] = {itemsize, itemsize};
 
     if (PyArray_NDIM(ind) == 0) {

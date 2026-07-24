@@ -258,7 +258,7 @@ _convert_from_tuple(PyObject *obj, int align)
      */
     if (PyDataType_ISUNSIZED(type)) {
         /* interpret next item as a typesize */
-        int itemsize = PyArray_PyIntAsInt(PyTuple_GET_ITEM(obj,1));
+        npy_intp itemsize = PyArray_PyIntAsIntp(PyTuple_GET_ITEM(obj,1));
         if (type->type_num == NPY_UNICODE) {
             if (itemsize > NPY_MAX_INT / 4) {
                 itemsize = -1;
@@ -266,6 +266,9 @@ _convert_from_tuple(PyObject *obj, int align)
             else {
                 itemsize *= 4;
             }
+        }
+        else if (type->type_num == NPY_STRING && itemsize > NPY_MAX_INT) {
+            itemsize = -1;
         }
         if (itemsize < 0) {
             /* Error may or may not be set by PyIntAsInt. */
@@ -328,22 +331,16 @@ _convert_from_tuple(PyObject *obj, int align)
                                 "dimension smaller then zero.");
                 goto fail;
             }
-            if (shape.ptr[i] > NPY_MAX_INT) {
-                PyErr_SetString(PyExc_ValueError,
-                                "invalid shape in fixed-type tuple: "
-                                "dimension does not fit into a C int.");
-                goto fail;
-            }
         }
         npy_intp items = PyArray_OverflowMultiplyList(shape.ptr, shape.len);
         int overflowed;
-        int nbytes;
-        if (items < 0 || items > NPY_MAX_INT) {
+        npy_intp nbytes;
+        if (items < 0) {
             overflowed = 1;
         }
         else {
-            overflowed = npy_mul_with_overflow_int(
-                &nbytes, type->elsize, (int) items);
+            overflowed = npy_mul_sizes_with_overflow(
+                &nbytes, type->elsize, items);
         }
         if (overflowed) {
             PyErr_SetString(PyExc_ValueError,
@@ -382,7 +379,7 @@ _convert_from_tuple(PyObject *obj, int align)
         }
         for (int i=0; i < shape.len; i++) {
             PyTuple_SET_ITEM(newdescr->subarray->shape, i,
-                             PyLong_FromLong((long)shape.ptr[i]));
+                             PyLong_FromSsize_t(shape.ptr[i]));
 
             if (PyTuple_GET_ITEM(newdescr->subarray->shape, i) == NULL) {
                 Py_DECREF(newdescr);
@@ -441,7 +438,7 @@ _convert_from_array_descr(PyObject *obj, int align)
     /* Types with fields need the Python C API for field access */
     npy_uint64 dtypeflags = NPY_NEEDS_PYAPI;
     int maxalign = 1;
-    int totalsize = 0;
+    npy_intp totalsize = 0;
     PyObject *fields = PyDict_New();
     if (!fields) {
         Py_DECREF(nameslist);
@@ -557,7 +554,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             goto fail;
         }
         PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
-        PyTuple_SET_ITEM(tup, 1, PyLong_FromLong((long) totalsize));
+        PyTuple_SET_ITEM(tup, 1, PyLong_FromSsize_t(totalsize));
 
         /*
          * Title can be "meta-data".  Only insert it
@@ -663,7 +660,7 @@ _convert_from_list(PyObject *obj, int align)
     /* Types with fields need the Python C API for field access */
     npy_uint64 dtypeflags = NPY_NEEDS_PYAPI;
     int maxalign = 1;
-    int totalsize = 0;
+    npy_intp totalsize = 0;
     for (int i = 0; i < n; i++) {
         PyArray_Descr *conv = _convert_from_any(
                 PyList_GET_ITEM(obj, i), align); // noqa: borrowed-ref OK
@@ -682,7 +679,7 @@ _convert_from_list(PyObject *obj, int align)
             }
             maxalign = PyArray_MAX(maxalign, _align);
         }
-        PyObject *size_obj = PyLong_FromLong((long) totalsize);
+        PyObject *size_obj = PyLong_FromSsize_t(totalsize);
         if (!size_obj) {
             Py_DECREF(conv);
             goto fail;
@@ -955,7 +952,7 @@ _validate_object_field_overlap(_PyArray_LegacyDescr *dtype)
     PyObject *names, *fields, *key, *tup, *title;
     Py_ssize_t i, j, names_size;
     PyArray_Descr *fld_dtype, *fld2_dtype;
-    int fld_offset, fld2_offset;
+    npy_intp fld_offset, fld2_offset;
 
     /* Get some properties from the dtype */
     names = dtype->names;
@@ -975,7 +972,7 @@ _validate_object_field_overlap(_PyArray_LegacyDescr *dtype)
             }
             return -1;
         }
-        if (!PyArg_ParseTuple(tup, "Oi|O", &fld_dtype, &fld_offset, &title)) {
+        if (!PyArg_ParseTuple(tup, "On|O", &fld_dtype, &fld_offset, &title)) {
             return -1;
         }
 
@@ -995,7 +992,7 @@ _validate_object_field_overlap(_PyArray_LegacyDescr *dtype)
                         }
                         return -1;
                     }
-                    if (!PyArg_ParseTuple(tup, "Oi|O", &fld2_dtype,
+                    if (!PyArg_ParseTuple(tup, "On|O", &fld2_dtype,
                                                 &fld2_offset, &title)) {
                         return -1;
                     }
@@ -1135,7 +1132,7 @@ _convert_from_dict(PyObject *obj, int align)
 
     /* Types with fields need the Python C API for field access */
     npy_uint64 dtypeflags = NPY_NEEDS_PYAPI;
-    int totalsize = 0;
+    npy_intp totalsize = 0;
     int maxalign = 1;
     int has_out_of_order_fields = 0;
     for (int i = 0; i < n; i++) {
@@ -1186,7 +1183,7 @@ _convert_from_dict(PyObject *obj, int align)
                 Py_DECREF(ind);
                 goto fail;
             }
-            long offset = PyArray_PyIntAsInt(off);
+            npy_intp offset = PyArray_PyIntAsIntp(off);
             if (error_converting(offset)) {
                 Py_DECREF(off);
                 Py_DECREF(tup);
@@ -1195,14 +1192,15 @@ _convert_from_dict(PyObject *obj, int align)
             }
             Py_DECREF(off);
             if (offset < 0) {
-                PyErr_Format(PyExc_ValueError, "offset %ld cannot be negative",
-                             offset);
+                PyErr_Format(PyExc_ValueError,
+                             "offset %zd cannot be negative",
+                             (Py_ssize_t)offset);
                 Py_DECREF(tup);
                 Py_DECREF(ind);
                 goto fail;
             }
 
-            PyTuple_SET_ITEM(tup, 1, PyLong_FromLong(offset));
+            PyTuple_SET_ITEM(tup, 1, PyLong_FromSsize_t(offset));
             /* Flag whether the fields are specified out of order */
             if (offset < totalsize) {
                 has_out_of_order_fields = 1;
@@ -1210,10 +1208,10 @@ _convert_from_dict(PyObject *obj, int align)
             /* If align=True, enforce field alignment */
             if (align && offset % newdescr->alignment != 0) {
                 PyErr_Format(PyExc_ValueError,
-                        "offset %ld for NumPy dtype with fields is "
+                        "offset %zd for NumPy dtype with fields is "
                         "not divisible by the field alignment %d "
                         "with align=True",
-                        offset, newdescr->alignment);
+                        (Py_ssize_t)offset, newdescr->alignment);
                 Py_DECREF(ind);
                 Py_DECREF(tup);
                 goto fail;
@@ -1226,7 +1224,7 @@ _convert_from_dict(PyObject *obj, int align)
             if (align && _align > 1) {
                 totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align);
             }
-            PyTuple_SET_ITEM(tup, 1, PyLong_FromLong(totalsize));
+            PyTuple_SET_ITEM(tup, 1, PyLong_FromSsize_t(totalsize));
             totalsize += newdescr->elsize;
         }
         if (len == 3) {
@@ -1331,7 +1329,7 @@ _convert_from_dict(PyObject *obj, int align)
     if (tmp == NULL) {
         PyErr_Clear();
     } else {
-        int itemsize = (int)PyArray_PyIntAsInt(tmp);
+        npy_intp itemsize = PyArray_PyIntAsIntp(tmp);
         Py_DECREF(tmp);
         if (error_converting(itemsize)) {
             Py_DECREF(new);
@@ -1340,9 +1338,9 @@ _convert_from_dict(PyObject *obj, int align)
         /* Make sure the itemsize isn't made too small */
         if (itemsize < new->elsize) {
             PyErr_Format(PyExc_ValueError,
-                    "NumPy dtype descriptor requires %d bytes, "
-                    "cannot override to smaller itemsize of %d",
-                    new->elsize, itemsize);
+                    "NumPy dtype descriptor requires %zd bytes, "
+                    "cannot override to smaller itemsize of %zd",
+                    (Py_ssize_t)new->elsize, (Py_ssize_t)itemsize);
             Py_DECREF(new);
             goto fail;
         }
@@ -1350,8 +1348,8 @@ _convert_from_dict(PyObject *obj, int align)
         if (align && new->alignment > 0 && itemsize % new->alignment != 0) {
             PyErr_Format(PyExc_ValueError,
                     "NumPy dtype descriptor requires alignment of %d bytes, "
-                    "which is not divisible into the specified itemsize %d",
-                    new->alignment, itemsize);
+                    "which is not divisible into the specified itemsize %zd",
+                    new->alignment, (Py_ssize_t)itemsize);
             Py_DECREF(new);
             goto fail;
         }
@@ -1847,7 +1845,7 @@ _convert_from_str(PyObject *obj, int align)
     }
 
     int check_num = NPY_NOTYPE + 10;
-    int elsize = 0;
+    npy_intp elsize = 0;
     /* A typecode like 'd' */
     if (len == 1) {
         /* Python byte string characters are unsigned */
@@ -1860,24 +1858,28 @@ _convert_from_str(PyObject *obj, int align)
 
         /* Attempt to parse the integer, make sure it's the rest of the string */
         errno = 0;
-        long result = strtol(type + 1, &typeend, 10);
+        long long result = strtoll(type + 1, &typeend, 10);
         npy_bool some_parsing_happened = !(type == typeend);
         npy_bool entire_string_consumed = *typeend == '\0';
         npy_bool parsing_succeeded =
                 (errno == 0) && some_parsing_happened && entire_string_consumed;
         // make sure it doesn't overflow or go negative
-        if (result > INT_MAX || result < 0) {
+        if (result > NPY_MAX_INTP || result < 0) {
             goto fail;
         }
 
-        elsize = (int)result;
+        elsize = result;
 
 
         if (parsing_succeeded && typeend - type == len) {
 
             kind = type[0];
             switch (kind) {
+                // TODO(seberg): This currently limits strings to int size.
                 case NPY_STRINGLTR:
+                    if (elsize > NPY_MAX_INT) {
+                        goto fail;
+                    }
                     check_num = NPY_STRING;
                     break;
 
@@ -2147,7 +2149,7 @@ arraydescr_protocol_typestr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 
     char basic_ = self->kind;
     char endian = self->byteorder;
-    int size = self->elsize;
+    npy_intp size = self->elsize;
     PyObject *ret;
 
     if (endian == '=') {
@@ -2163,7 +2165,7 @@ arraydescr_protocol_typestr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
         ret = PyUnicode_FromFormat("%c%c", endian, basic_);
     }
     else {
-        ret = PyUnicode_FromFormat("%c%c%d", endian, basic_, size);
+        ret = PyUnicode_FromFormat("%c%c%zd", endian, basic_, (Py_ssize_t)size);
     }
     if (ret == NULL) {
         return NULL;
@@ -2303,13 +2305,13 @@ _arraydescr_isnative(PyArray_Descr *self)
     else {
         PyObject *key, *value, *title = NULL;
         PyArray_Descr *new;
-        int offset;
+        npy_intp offset;
         Py_ssize_t pos = 0;
         while (PyDict_Next(PyDataType_FIELDS(self), &pos, &key, &value)) { // noqa: borrowed-ref OK
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
+            if (!PyArg_ParseTuple(value, "On|O", &new, &offset, &title)) {
                 return -1;
             }
             if (!_arraydescr_isnative(new)) {
@@ -2767,7 +2769,8 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     PyObject *ret, *mod, *obj;
     PyObject *state;
     char endian;
-    int elsize, alignment;
+    npy_intp elsize;
+    int alignment;
 
     ret = PyTuple_New(3);
     if (ret == NULL) {
@@ -2803,7 +2806,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         if (self->type_num == NPY_UNICODE) {
             elsize >>= 2;
         }
-        obj = PyUnicode_FromFormat("%c%d",self->kind, elsize);
+        obj = PyUnicode_FromFormat("%c%zd", self->kind, (Py_ssize_t)elsize);
     }
     PyTuple_SET_ITEM(ret, 1, Py_BuildValue("(NOO)", obj, Py_False, Py_True));
 
@@ -2869,7 +2872,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         elsize = -1;
         alignment = -1;
     }
-    PyTuple_SET_ITEM(state, 5, PyLong_FromLong(elsize));
+    PyTuple_SET_ITEM(state, 5, PyLong_FromSsize_t(elsize));
     PyTuple_SET_ITEM(state, 6, PyLong_FromLong(alignment));
     PyTuple_SET_ITEM(state, 7, PyLong_FromUnsignedLongLong(
             self->flags & ~NPY_NOT_TRIVIALLY_COPYABLE));
@@ -2893,14 +2896,14 @@ _descr_find_object(PyArray_Descr *self)
     if (PyDataType_HASFIELDS(self)) {
         PyObject *key, *value, *title = NULL;
         PyArray_Descr *new;
-        int offset;
+        npy_intp offset;
         Py_ssize_t pos = 0;
 
         while (PyDict_Next(PyDataType_FIELDS(self), &pos, &key, &value)) { // noqa: borrowed-ref OK
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
+            if (!PyArg_ParseTuple(value, "On|O", &new, &offset, &title)) {
                 PyErr_Clear();
                 return 0;
             }
@@ -3506,7 +3509,7 @@ is_dtype_struct_simple_unaligned_layout(PyArray_Descr *dtype)
     PyObject *names, *fields, *key, *tup, *title;
     Py_ssize_t i, names_size;
     PyArray_Descr *fld_dtype;
-    int fld_offset;
+    npy_intp fld_offset;
     npy_intp total_offset;
 
     /* Get some properties from the dtype */
@@ -3526,7 +3529,7 @@ is_dtype_struct_simple_unaligned_layout(PyArray_Descr *dtype)
         if (tup == NULL) {
             return 0;
         }
-        if (!PyArg_ParseTuple(tup, "Oi|O", &fld_dtype, &fld_offset, &title)) {
+        if (!PyArg_ParseTuple(tup, "On|O", &fld_dtype, &fld_offset, &title)) {
             PyErr_Clear();
             return 0;
         }

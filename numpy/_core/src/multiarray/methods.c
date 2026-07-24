@@ -373,11 +373,11 @@ array_swapaxes(PyArrayObject *self, PyObject *args)
   steals reference to typed, must not be NULL
 */
 NPY_NO_EXPORT PyObject *
-PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
+PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, npy_intp offset)
 {
     PyObject *ret = NULL;
     PyObject *safe;
-    int self_elsize, typed_elsize;
+    npy_intp self_elsize, typed_elsize;
 
     if (self == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -402,7 +402,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
 
         /* only returns True or raises */
         safe = PyObject_CallFunction(npy_runtime_imports._getfield_is_safe,
-                                     "OOi", PyArray_DESCR(self),
+                                     "OOn", PyArray_DESCR(self),
                                      typed, offset);
         if (safe == NULL) {
             Py_DECREF(typed);
@@ -445,10 +445,10 @@ array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
 
     PyArray_Descr *dtype = NULL;
-    int offset = 0;
+    npy_intp offset = 0;
     static char *kwlist[] = {"dtype", "offset", 0};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|i:getfield", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|n:getfield", kwlist,
                                      PyArray_DescrConverter, &dtype,
                                      &offset)) {
         Py_XDECREF(dtype);
@@ -465,7 +465,7 @@ array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 */
 NPY_NO_EXPORT int
 PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
-                 int offset, PyObject *val)
+                 npy_intp offset, PyObject *val)
 {
     PyObject *ret = NULL;
     int retval = 0;
@@ -502,11 +502,11 @@ static PyObject *
 array_setfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     PyArray_Descr *dtype = NULL;
-    int offset = 0;
+    npy_intp offset = 0;
     PyObject *value;
     static char *kwlist[] = {"value", "dtype", "offset", 0};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|i:setfield", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|n:setfield", kwlist,
                                      &value,
                                      PyArray_DescrConverter, &dtype,
                                      &offset)) {
@@ -1626,13 +1626,14 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
     else if (PyDataType_HASFIELDS(dtype)) {
         PyObject *key, *value, *title = NULL;
         PyArray_Descr *new;
-        int offset, res;
+        npy_intp offset;
+        int res;
         Py_ssize_t pos = 0;
         while (PyDict_Next(PyDataType_FIELDS(dtype), &pos, &key, &value)) { // noqa: borrowed-ref OK
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
+            if (!PyArg_ParseTuple(value, "On|O", &new, &offset,
                                   &title)) {
                 return -1;
             }

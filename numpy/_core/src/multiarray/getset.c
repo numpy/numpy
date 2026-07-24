@@ -320,7 +320,7 @@ array_data_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 static PyObject *
 array_itemsize_get(PyArrayObject *self, void* NPY_UNUSED(ignored))
 {
-    return PyLong_FromLong((long) PyArray_ITEMSIZE(self));
+    return PyArray_PyIntFromIntp(PyArray_ITEMSIZE(self));
 }
 
 static PyObject *
