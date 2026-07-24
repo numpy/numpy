@@ -60,6 +60,7 @@ from numpy.ma.extras import (
     stack,
     union1d,
     unique,
+    unwrap,
     vstack,
 )
 from numpy.ma.testutils import (
@@ -1943,3 +1944,218 @@ class TestStack:
         assert_equal(c.shape, c_shp)
         assert_array_equal(a1.mask, c[..., 0].mask)
         assert_array_equal(a2.mask, c[..., 1].mask)
+
+
+class TestUnwrap:
+    @staticmethod
+    def _reference(p, discont=None, axis=-1, period=2 * np.pi):
+        # unwrap the unmasked elements of every line on their own, with the
+        # ndarray `numpy.unwrap`, and put them back where they came from
+        p = masked_array(p)
+        mask = np.moveaxis(getmaskarray(p), axis, -1)
+        data = np.moveaxis(p.filled(0), axis, -1)
+        out = np.zeros(data.shape, dtype=np.result_type(p.dtype, period))
+        for i in np.ndindex(data.shape[:-1]):
+            valid = ~mask[i]
+            out[i][valid] = np.unwrap(data[i][valid], discont, period=period)
+        return masked_array(np.moveaxis(out, -1, axis),
+                            mask=np.moveaxis(mask, -1, axis))
+
+    def test_simple(self):
+        # the correction of the fourth element is computed from the second
+        # one, the masked third element being skipped over
+        p = masked_array([0., 1., 2., 2 + 2 * np.pi, 3 + 2 * np.pi],
+                         mask=[0, 0, 1, 0, 0])
+        out = unwrap(p)
+        assert isinstance(out, MaskedArray)
+        assert_array_equal(out.mask, [False, False, True, False, False])
+        assert_almost_equal(out, masked_array([0., 1., 0., 2., 3.],
+                                              mask=[0, 0, 1, 0, 0]))
+
+    def test_gap_hiding_a_wrap(self):
+        # unwrapping bridges the gap, it cannot know about a wrap that
+        # happened entirely inside it
+        p = masked_array([0., 1., 100., 2., 3.], mask=[0, 0, 1, 0, 0])
+        assert_almost_equal(unwrap(p), self._reference(p))
+
+    def test_matches_unwrap_of_compressed(self):
+        rng = np.random.RandomState(0)
+        for _ in range(50):
+            n = rng.randint(1, 12)
+            data = rng.uniform(-np.pi, np.pi, n)
+            mask = rng.rand(n) < 0.35
+            p = masked_array(data, mask=mask)
+            out = unwrap(p)
+            assert_array_equal(out.mask, mask)
+            assert_almost_equal(out.compressed(),
+                                np.unwrap(p.compressed()))
+
+    @pytest.mark.parametrize("shape,axis", [
+        ((5,), -1), ((5,), 0),
+        ((4, 7), 0), ((4, 7), 1), ((4, 7), -1), ((4, 7), -2),
+        ((2, 3, 5), 0), ((2, 3, 5), 1), ((2, 3, 5), 2), ((2, 3, 5), -1),
+    ])
+    def test_against_reference(self, shape, axis):
+        rng = np.random.RandomState(1)
+        for _ in range(20):
+            data = rng.uniform(-np.pi, np.pi, shape)
+            mask = rng.rand(*shape) < 0.4
+            p = masked_array(data, mask=mask)
+            out = unwrap(p, axis=axis)
+            expected = self._reference(p, axis=axis)
+            assert_array_equal(out.mask, expected.mask)
+            assert_almost_equal(out, expected)
+
+    def test_fully_masked(self):
+        p = masked_array([1., 2., 3.], mask=True)
+        out = unwrap(p)
+        assert_array_equal(out.mask, [True, True, True])
+        assert out.count() == 0
+
+    def test_fully_masked_line(self):
+        # a fully masked line must not disturb the other lines
+        data = np.array([[0., 1., 2., 2 + 2 * np.pi]] * 2)
+        mask = np.zeros((2, 4), dtype=bool)
+        mask[0] = True
+        p = masked_array(data, mask=mask)
+        out = unwrap(p)
+        assert_almost_equal(out[1], unwrap(p[1]))
+        assert_array_equal(out.mask, mask)
+
+    def test_leading_and_trailing_masked(self):
+        p = masked_array([0., 1., 2., 2 + 2 * np.pi, 3.],
+                         mask=[1, 0, 0, 0, 1])
+        out = unwrap(p)
+        assert_array_equal(out.mask, [True, False, False, False, True])
+        assert_almost_equal(out.compressed(), np.unwrap([1., 2., 2 + 2 * np.pi]))
+
+    def test_single_unmasked(self):
+        p = masked_array([5., 1., 2.], mask=[0, 1, 1])
+        out = unwrap(p)
+        assert_almost_equal(out.compressed(), [5.])
+
+    def test_empty(self):
+        p = masked_array(np.zeros((0,)), mask=np.zeros((0,), dtype=bool))
+        assert_equal(unwrap(p).shape, (0,))
+        p = masked_array(np.zeros((3, 0)), mask=np.zeros((3, 0), dtype=bool))
+        assert_equal(unwrap(p).shape, (3, 0))
+
+    def test_masked_data_is_ignored(self):
+        # whatever sits under the mask must not reach the result
+        data = np.array([0., 1., 2., 2 + 2 * np.pi, 3 + 2 * np.pi])
+        mask = [0, 0, 1, 0, 0]
+        expected = unwrap(masked_array(data, mask=mask))
+        for filler in (1e9, -1e9, np.nan, np.inf):
+            other = data.copy()
+            other[2] = filler
+            out = unwrap(masked_array(other, mask=mask))
+            assert_almost_equal(out.compressed(), expected.compressed())
+
+    def test_masked_data_is_ignored_nd(self):
+        data = np.array([[0., 1., 2., 2 + 2 * np.pi, 3 + 2 * np.pi]] * 2)
+        mask = np.array([[0, 0, 1, 0, 0], [0, 1, 0, 0, 1]], dtype=bool)
+        expected = unwrap(masked_array(data, mask=mask))
+        other = np.where(mask, np.nan, data)
+        out = unwrap(masked_array(other, mask=mask))
+        assert_almost_equal(out.compressed(), expected.compressed())
+
+    def test_differs_from_ndarray_unwrap(self):
+        # `numpy.unwrap` is deliberately not mask aware, the masked 170 makes
+        # every step look continuous to it while `numpy.ma.unwrap` skips it
+        p = masked_array([0., 170., 340., 150.], mask=[0, 1, 0, 0])
+        plain = np.unwrap(p, period=360)
+        assert type(plain) is np.ndarray
+        assert_almost_equal(plain, np.unwrap(p.data, period=360))
+        assert_almost_equal(plain, [0., 170., 340., 510.])
+        assert_almost_equal(unwrap(p, period=360).compressed(),
+                            [0., -20., 150.])
+
+    def test_nomask(self):
+        p = masked_array([0., 1., 2., 2 + 2 * np.pi])
+        out = unwrap(p)
+        assert isinstance(out, MaskedArray)
+        assert out.mask is nomask
+        assert_almost_equal(out, np.unwrap(p.data))
+
+    def test_array_like(self):
+        out = unwrap([0., 1., 2., 2 + 2 * np.pi])
+        assert isinstance(out, MaskedArray)
+        assert_almost_equal(out, np.unwrap([0., 1., 2., 2 + 2 * np.pi]))
+
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64,
+                                       np.longdouble, np.int16, np.int32,
+                                       np.int64])
+    @pytest.mark.parametrize("period", [4, 2 * np.pi])
+    def test_dtype(self, dtype, period):
+        p = masked_array(np.array([0, 1, 2, 3, 0], dtype=dtype),
+                         mask=[0, 0, 1, 0, 0])
+        out = unwrap(p, period=period)
+        assert out.dtype == np.result_type(dtype, period)
+        assert_almost_equal(out, self._reference(p, period=period))
+
+    def test_integer_period(self):
+        p = masked_array([0, 1, 2, -1, 0], mask=[0, 0, 1, 0, 0])
+        out = unwrap(p, period=4)
+        assert out.dtype == p.dtype
+        # masking the 2 leaves a delta of -2, exactly half a period, which
+        # taking the complement does not shorten, so nothing is corrected
+        assert_array_equal(out, masked_array([0, 1, 0, -1, 0],
+                                             mask=[0, 0, 1, 0, 0]))
+        assert_array_equal(out.compressed(),
+                           np.unwrap([0, 1, -1, 0], period=4))
+
+    def test_discont(self):
+        p = masked_array([0., 1., 2., 2 + 2 * np.pi, 3 + 2 * np.pi],
+                         mask=[0, 0, 1, 0, 0])
+        # a discont larger than every jump leaves the values alone
+        out = unwrap(p, discont=10.0)
+        assert_almost_equal(out.compressed(), p.compressed())
+        assert_almost_equal(unwrap(p, discont=1.0), unwrap(p))
+
+    def test_object_dtype(self):
+        # object dtype takes the python fallback of `numpy.unwrap`
+        p = masked_array(np.array([0., 1., 2., 2 + 2 * np.pi, 3 + 2 * np.pi],
+                                  dtype=object), mask=[0, 0, 1, 0, 0])
+        out = unwrap(p)
+        assert out.dtype == object
+        assert_almost_equal(out.compressed().astype(float),
+                            [0., 1., 2., 3.])
+        # 2d goes through the packing path instead
+        p2 = masked_array(np.stack([p.data, p.data]),
+                          mask=np.stack([p.mask, p.mask]))
+        out2 = unwrap(p2)
+        assert out2.dtype == object
+        assert_almost_equal(out2.compressed().astype(float),
+                            [0., 1., 2., 3.] * 2)
+
+    def test_input_is_not_modified(self):
+        data = np.array([0., 1., 2., 2 + 2 * np.pi, 3 + 2 * np.pi])
+        mask = np.array([0, 0, 1, 0, 0], dtype=bool)
+        p = masked_array(data.copy(), mask=mask.copy())
+        out = unwrap(p)
+        assert_array_equal(p.data, data)
+        assert_array_equal(p.mask, mask)
+        # the mask of the result is not shared with the input either
+        out.mask[0] = True
+        assert_array_equal(p.mask, mask)
+
+    def test_axis_out_of_range(self):
+        p = masked_array([0., 1., 2.], mask=[0, 1, 0])
+        with pytest.raises(np.exceptions.AxisError):
+            unwrap(p, axis=1)
+
+    def test_subclass_preserved(self):
+        class MyMaskedArray(MaskedArray):
+            pass
+
+        data = [0., 1., 2., 2 + 2 * np.pi, 3 + 2 * np.pi]
+        mask = [0, 0, 1, 0, 0]
+        # the 1d, the nd and the nomask path
+        p = masked_array(data, mask=mask).view(MyMaskedArray)
+        assert isinstance(unwrap(p), MyMaskedArray)
+        p2 = masked_array([data, data], mask=[mask, mask]).view(MyMaskedArray)
+        assert isinstance(unwrap(p2), MyMaskedArray)
+        assert_array_equal(unwrap(p2)[0], unwrap(p))
+        p3 = masked_array(data).view(MyMaskedArray)
+        assert p3.mask is nomask
+        assert isinstance(unwrap(p3), MyMaskedArray)

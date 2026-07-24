@@ -1,0 +1,6 @@
+``numpy.ma.unwrap`` has been added
+----------------------------------
+`numpy.ma.unwrap` is the mask aware equivalent of `numpy.unwrap`. It skips over
+the masked elements, computing each correction from the delta to the closest
+preceding unmasked element rather than from the data underlying the mask, and
+carries the mask through to the output.
