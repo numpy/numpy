@@ -333,10 +333,10 @@ gentype_@name@@suff@(PyObject *m1, PyObject *m2)
         /* Call the corresponding ufunc (with the array) */
         PyObject *res;
         if (self == m1) {
-            res = PyArray_GenericBinaryFunction(m1, other_op, n_ops.@ufunc@);
+            res = PyArray_GenericBinaryFunction(m1, other_op, npy_get_module_state()->n_ops.@ufunc@);
         }
         else {
-            res = PyArray_GenericBinaryFunction(other_op, m2, n_ops.@ufunc@);
+            res = PyArray_GenericBinaryFunction(other_op, m2, npy_get_module_state()->n_ops.@ufunc@);
         }
         Py_DECREF(other_op);
         return res;
@@ -448,10 +448,10 @@ gentype_power(PyObject *m1, PyObject *m2, PyObject *modulo)
          */
         PyObject *res;
         if (self == m1) {
-            res = PyArray_GenericBinaryFunction(m1, other_op, n_ops.power);
+            res = PyArray_GenericBinaryFunction(m1, other_op, npy_get_module_state()->n_ops.power);
         }
         else {
-            res = PyArray_GenericBinaryFunction(other_op, m2, n_ops.power);
+            res = PyArray_GenericBinaryFunction(other_op, m2, npy_get_module_state()->n_ops.power);
         }
         Py_DECREF(other_op);
         return res;

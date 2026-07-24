@@ -1023,7 +1023,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
 
     if (PyArray_NDIM(ap1) == 0 || PyArray_NDIM(ap2) == 0) {
         PyObject *mul_res = PyObject_CallFunctionObjArgs(
-                n_ops.multiply, ap1, ap2, out, NULL);
+                npy_get_module_state()->n_ops.multiply, ap1, ap2, out, NULL);
         Py_DECREF(ap1);
         Py_DECREF(ap2);
         return mul_res;
@@ -5158,6 +5158,52 @@ multiarray_umath_traverse(PyObject *m, visitproc visit, void *arg)
     Py_VISIT(state->runtime_imports._view_is_safe);
     Py_VISIT(state->runtime_imports._void_scalar_to_string);
 
+    /* scattered globals */
+    Py_VISIT(state->typeDict);
+    Py_VISIT(state->current_handler);
+    Py_VISIT(state->global_pytype_to_type_dict);
+    Py_VISIT(state->n_ops.add);
+    Py_VISIT(state->n_ops.subtract);
+    Py_VISIT(state->n_ops.multiply);
+    Py_VISIT(state->n_ops.divide);
+    Py_VISIT(state->n_ops.remainder);
+    Py_VISIT(state->n_ops.divmod);
+    Py_VISIT(state->n_ops.power);
+    Py_VISIT(state->n_ops.square);
+    Py_VISIT(state->n_ops.reciprocal);
+    Py_VISIT(state->n_ops._ones_like);
+    Py_VISIT(state->n_ops.sqrt);
+    Py_VISIT(state->n_ops.cbrt);
+    Py_VISIT(state->n_ops.negative);
+    Py_VISIT(state->n_ops.positive);
+    Py_VISIT(state->n_ops.absolute);
+    Py_VISIT(state->n_ops.invert);
+    Py_VISIT(state->n_ops.left_shift);
+    Py_VISIT(state->n_ops.right_shift);
+    Py_VISIT(state->n_ops.bitwise_and);
+    Py_VISIT(state->n_ops.bitwise_xor);
+    Py_VISIT(state->n_ops.bitwise_or);
+    Py_VISIT(state->n_ops.less);
+    Py_VISIT(state->n_ops.less_equal);
+    Py_VISIT(state->n_ops.equal);
+    Py_VISIT(state->n_ops.not_equal);
+    Py_VISIT(state->n_ops.greater);
+    Py_VISIT(state->n_ops.greater_equal);
+    Py_VISIT(state->n_ops.floor_divide);
+    Py_VISIT(state->n_ops.true_divide);
+    Py_VISIT(state->n_ops.logical_or);
+    Py_VISIT(state->n_ops.logical_and);
+    Py_VISIT(state->n_ops.floor);
+    Py_VISIT(state->n_ops.ceil);
+    Py_VISIT(state->n_ops.maximum);
+    Py_VISIT(state->n_ops.minimum);
+    Py_VISIT(state->n_ops.rint);
+    Py_VISIT(state->n_ops.conjugate);
+    Py_VISIT(state->n_ops.matmul);
+    Py_VISIT(state->n_ops.clip);
+    Py_VISIT(state->n_ops.real);
+    Py_VISIT(state->n_ops.imag);
+
     return 0;
 }
 
@@ -5285,6 +5331,52 @@ multiarray_umath_clear(PyObject *m)
     Py_CLEAR(state->runtime_imports._var);
     Py_CLEAR(state->runtime_imports._view_is_safe);
     Py_CLEAR(state->runtime_imports._void_scalar_to_string);
+
+    /* scattered globals */
+    Py_CLEAR(state->typeDict);
+    Py_CLEAR(state->current_handler);
+    Py_CLEAR(state->global_pytype_to_type_dict);
+    Py_CLEAR(state->n_ops.add);
+    Py_CLEAR(state->n_ops.subtract);
+    Py_CLEAR(state->n_ops.multiply);
+    Py_CLEAR(state->n_ops.divide);
+    Py_CLEAR(state->n_ops.remainder);
+    Py_CLEAR(state->n_ops.divmod);
+    Py_CLEAR(state->n_ops.power);
+    Py_CLEAR(state->n_ops.square);
+    Py_CLEAR(state->n_ops.reciprocal);
+    Py_CLEAR(state->n_ops._ones_like);
+    Py_CLEAR(state->n_ops.sqrt);
+    Py_CLEAR(state->n_ops.cbrt);
+    Py_CLEAR(state->n_ops.negative);
+    Py_CLEAR(state->n_ops.positive);
+    Py_CLEAR(state->n_ops.absolute);
+    Py_CLEAR(state->n_ops.invert);
+    Py_CLEAR(state->n_ops.left_shift);
+    Py_CLEAR(state->n_ops.right_shift);
+    Py_CLEAR(state->n_ops.bitwise_and);
+    Py_CLEAR(state->n_ops.bitwise_xor);
+    Py_CLEAR(state->n_ops.bitwise_or);
+    Py_CLEAR(state->n_ops.less);
+    Py_CLEAR(state->n_ops.less_equal);
+    Py_CLEAR(state->n_ops.equal);
+    Py_CLEAR(state->n_ops.not_equal);
+    Py_CLEAR(state->n_ops.greater);
+    Py_CLEAR(state->n_ops.greater_equal);
+    Py_CLEAR(state->n_ops.floor_divide);
+    Py_CLEAR(state->n_ops.true_divide);
+    Py_CLEAR(state->n_ops.logical_or);
+    Py_CLEAR(state->n_ops.logical_and);
+    Py_CLEAR(state->n_ops.floor);
+    Py_CLEAR(state->n_ops.ceil);
+    Py_CLEAR(state->n_ops.maximum);
+    Py_CLEAR(state->n_ops.minimum);
+    Py_CLEAR(state->n_ops.rint);
+    Py_CLEAR(state->n_ops.conjugate);
+    Py_CLEAR(state->n_ops.matmul);
+    Py_CLEAR(state->n_ops.clip);
+    Py_CLEAR(state->n_ops.real);
+    Py_CLEAR(state->n_ops.imag);
 
     return 0;
 }
@@ -5598,8 +5690,9 @@ _multiarray_umath_exec(PyObject *m) {
      * Initialize the context-local current handler
      * with the default PyDataMem_Handler capsule.
      */
-    current_handler = PyContextVar_New("current_allocator", PyDataMem_DefaultHandler);
-    if (current_handler == NULL) {
+    get_module_state(m)->current_handler = PyContextVar_New(
+            "current_allocator", PyDataMem_DefaultHandler);
+    if (get_module_state(m)->current_handler == NULL) {
         return -1;
     }
 

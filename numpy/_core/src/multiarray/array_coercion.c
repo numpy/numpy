@@ -24,6 +24,8 @@
 #include "common.h"
 #include "_datetime.h"
 #include "npy_import.h"
+#include "npy_static_data.h"
+#include "module_state.h"
 #include "refcount.h"
 
 #include "umathmodule.h"
@@ -88,7 +90,6 @@
  *       It should be possible to retrofit this without too much trouble
  *       (all type objects support weak references).
  */
-PyObject *_global_pytype_to_type_dict = NULL;
 
 
 /* Enum to track or signal some things during dtype and shape discovery */
@@ -111,24 +112,21 @@ enum _dtype_discovery_flags {
  * @return -1 on error 0 on success
  */
 static int
-_prime_global_pytype_to_type_dict(void)
+_prime_global_pytype_to_type_dict(PyObject *dict)
 {
     int res;
 
     /* Add the basic Python sequence types */
-    res = PyDict_SetItem(_global_pytype_to_type_dict,
-                         (PyObject *)&PyList_Type, Py_None);
+    res = PyDict_SetItem(dict, (PyObject *)&PyList_Type, Py_None);
     if (res < 0) {
         return -1;
     }
-    res = PyDict_SetItem(_global_pytype_to_type_dict,
-                         (PyObject *)&PyTuple_Type, Py_None);
+    res = PyDict_SetItem(dict, (PyObject *)&PyTuple_Type, Py_None);
     if (res < 0) {
         return -1;
     }
     /* NumPy Arrays are not handled as scalars */
-    res = PyDict_SetItem(_global_pytype_to_type_dict,
-                         (PyObject *)&PyArray_Type, Py_None);
+    res = PyDict_SetItem(dict, (PyObject *)&PyArray_Type, Py_None);
     if (res < 0) {
         return -1;
     }
@@ -181,18 +179,20 @@ _PyArray_MapPyTypeToDType(
         return -1;
     }
 
+    multiarray_umath_state *state = npy_get_module_state();
+
     /* Create the global dictionary if it does not exist */
-    if (NPY_UNLIKELY(_global_pytype_to_type_dict == NULL)) {
-        _global_pytype_to_type_dict = PyDict_New();
-        if (_global_pytype_to_type_dict == NULL) {
+    if (NPY_UNLIKELY(state->global_pytype_to_type_dict == NULL)) {
+        state->global_pytype_to_type_dict = PyDict_New();
+        if (state->global_pytype_to_type_dict == NULL) {
             return -1;
         }
-        if (_prime_global_pytype_to_type_dict() < 0) {
+        if (_prime_global_pytype_to_type_dict(state->global_pytype_to_type_dict) < 0) {
             return -1;
         }
     }
 
-    int res = PyDict_Contains(_global_pytype_to_type_dict, (PyObject *)pytype);
+    int res = PyDict_Contains(state->global_pytype_to_type_dict, (PyObject *)pytype);
     if (res < 0) {
         return -1;
     }
@@ -208,7 +208,7 @@ _PyArray_MapPyTypeToDType(
         return -1;
     }
 
-    return PyDict_SetItem(_global_pytype_to_type_dict,
+    return PyDict_SetItem(state->global_pytype_to_type_dict,
             (PyObject *)pytype, Dtype_obj);
 }
 
@@ -234,7 +234,7 @@ npy_discover_dtype_from_pytype(PyTypeObject *pytype)
         DType = Py_NewRef((PyObject *)&PyArray_PyLongDType);
     }
     else {
-        int res = PyDict_GetItemRef(_global_pytype_to_type_dict,
+        int res = PyDict_GetItemRef(npy_get_module_state()->global_pytype_to_type_dict,
                                     (PyObject *)pytype, (PyObject **)&DType);
 
         if (res <= 0) {

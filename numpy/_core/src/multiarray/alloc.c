@@ -434,11 +434,11 @@ PyDataMem_Handler default_handler = {
         default_free     /* free */
     }
 };
-/* singleton capsule of the default handler */
+/*
+ * singleton capsule of the default handler.
+ * Stays process-global: public C-API slot (numpy_api.py, slot 306), can't move to module state.
+ */
 PyObject *PyDataMem_DefaultHandler;
-PyObject *current_handler;
-
-int uo_index=0;   /* user_override index */
 
 /* Wrappers for the default or any user-assigned PyDataMem_Handler */
 
@@ -542,6 +542,8 @@ PyDataMem_SetHandler(PyObject *handler)
 {
     PyObject *old_handler;
     PyObject *token;
+    
+    PyObject *current_handler = npy_get_module_state()->current_handler;
     if (PyContextVar_Get(current_handler, NULL, &old_handler)) {
         return NULL;
     }
@@ -569,7 +571,7 @@ NPY_NO_EXPORT PyObject *
 PyDataMem_GetHandler()
 {
     PyObject *handler;
-    if (PyContextVar_Get(current_handler, NULL, &handler)) {
+    if (PyContextVar_Get(npy_get_module_state()->current_handler, NULL, &handler)) {
         return NULL;
     }
     return handler;

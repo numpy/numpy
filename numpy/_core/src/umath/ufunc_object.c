@@ -4651,7 +4651,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 
         /* Extra positional args but no keywords */
         /* DEPRECATED NumPy 2.4, 2025-08 */
-        if ((PyObject *)ufunc == n_ops.maximum || (PyObject *)ufunc == n_ops.minimum) {
+        if ((PyObject *)ufunc == npy_get_module_state()->n_ops.maximum || (PyObject *)ufunc == npy_get_module_state()->n_ops.minimum) {
 
             if (DEPRECATE(
                 "Passing more than 2 positional arguments to np.maximum and np.minimum "

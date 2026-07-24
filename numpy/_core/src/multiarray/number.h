@@ -45,7 +45,7 @@ typedef struct {
     PyObject *imag;
 } NumericOps;
 
-extern NPY_NO_EXPORT NumericOps n_ops;
+/* n_ops lives in multiarray_umath_state.n_ops (module_state.h) */
 extern NPY_NO_EXPORT PyNumberMethods array_as_number;
 
 NPY_NO_EXPORT PyObject *
