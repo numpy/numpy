@@ -175,12 +175,8 @@ def array_function_dispatch(dispatcher=None, module=None, verify=True,
             doc = inspect.cleandoc(dispatcher.__doc__)
             add_docstring(implementation, doc)
 
-        if reduction is None:
-            public_api = _ArrayFunctionDispatcher(dispatcher, implementation)
-        else:
-            config = (reduction[0].reduce, reduction[1])
-            public_api = _ArrayFunctionDispatcher(
-                dispatcher, implementation, config)
+        config = None if reduction is None else (reduction[0].reduce, reduction[1])
+        public_api = _ArrayFunctionDispatcher(dispatcher, implementation, config)
         functools.update_wrapper(public_api, implementation)
 
         if not verify and not getattr(implementation, "__text_signature__", None):

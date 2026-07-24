@@ -9,8 +9,10 @@ from unittest import mock
 import pytest
 
 import numpy as np
+from numpy._core._multiarray_umath import _ArrayFunctionDispatcher
 from numpy._core.overrides import (
     _get_implementing_args,
+    _ReductionKind,
     array_function_dispatch,
     verify_matching_signatures,
 )
@@ -294,6 +296,35 @@ class TestVerifyMatchingSignatures:
         @array_function_dispatch(lambda x: (x,), verify=False)
         def f(y):
             pass
+
+    def test_reduction_configuration_errors(self):
+        implementation = lambda *args, **kwargs: None
+        dispatcher = lambda x: (x,)
+
+        with pytest.raises(TypeError, match="like= dispatchers"):
+            _ArrayFunctionDispatcher(
+                    None, implementation, (np.add.reduce, 1))
+
+        with pytest.raises(TypeError, match=r"callable, kind\) tuple"):
+            _ArrayFunctionDispatcher(dispatcher, implementation, object())
+
+        with pytest.raises(ValueError, match="invalid reduction kind"):
+            _ArrayFunctionDispatcher(
+                    dispatcher, implementation, (np.add.reduce, 99))
+
+    def test_reduction_kinds_match_c_enum(self):
+        implementation = lambda *args, **kwargs: None
+        dispatcher = lambda x: (x,)
+
+        for kind in _ReductionKind:
+            _ArrayFunctionDispatcher(
+                    dispatcher, implementation, (np.add.reduce, kind))
+
+        # A new C reduction kind must also be added to the Python enum.
+        next_kind = max(kind.value for kind in _ReductionKind) + 1
+        with pytest.raises(ValueError, match="invalid reduction kind"):
+            _ArrayFunctionDispatcher(
+                    dispatcher, implementation, (np.add.reduce, next_kind))
 
 
 def _new_duck_type_and_implements():

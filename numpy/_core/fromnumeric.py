@@ -2380,6 +2380,8 @@ def _sum_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
     return (a, out)
 
 
+# reduction= enables the C fast path for exact-ndarray reductions.
+# _ReductionKind selects the appropriate argument signature to use.
 @array_function_dispatch(
     _sum_dispatcher,
     reduction=(um.add, overrides._ReductionKind.SUM_PROD),
