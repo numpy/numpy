@@ -2,6 +2,24 @@
     use iso_c_binding, only: c_double, c_int, c_int64_t
     implicit none
     contains
+      subroutine add_cfloat_arr(A, B, C)
+        use iso_c_binding, only: c_float_complex
+        complex(c_float_complex), intent(in), dimension(3) :: A, B
+        complex(c_float_complex), intent(out), dimension(3) :: C
+       C = A + B
+      end subroutine add_cfloat_arr
+      subroutine add_cdouble_arr(A, B, C)
+        use iso_c_binding, only: c_double_complex
+        complex(c_double_complex), intent(in), dimension(3) :: A, B
+        complex(c_double_complex), intent(out), dimension(3) :: C
+        C = A + B
+      end subroutine add_cdouble_arr
+      subroutine add_clong_double_arr(A, B, C)
+        use iso_c_binding, only: c_long_double_complex
+        complex(c_long_double_complex), intent(in), dimension(3) :: A, B
+        complex(c_long_double_complex), intent(out), dimension(3) :: C
+        C = A + B
+      end subroutine add_clong_double_arr
       subroutine c_add(a, b, c) bind(c, name="c_add")
         real(c_double), intent(in) :: a, b
         real(c_double), intent(out) :: c
