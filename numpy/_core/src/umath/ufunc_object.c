@@ -5656,10 +5656,10 @@ ufunc_outer(PyUFuncObject *ufunc,
 
 
 static inline int
-is_pyscalar(PyObject *obj)
+is_known_scalar(PyObject *obj)
 {
     return (PyLong_CheckExact(obj) || PyFloat_CheckExact(obj)
-            || PyComplex_CheckExact(obj));
+            || PyComplex_CheckExact(obj) || is_anyscalar_exact(obj));
 }
 
 
@@ -5667,46 +5667,54 @@ static PyObject *
 prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
 {
     PyArrayObject *ap1 = NULL;
-    PyObject *tmp;
-    npy_cache_import_runtime("numpy", "matrix",
-                             &npy_runtime_imports.numpy_matrix);
+
+    if (npy_cache_import_runtime("numpy", "matrix",
+                                 &npy_runtime_imports.numpy_matrix) == -1) {
+        return NULL;
+    }
 
     const char *matrix_deprecation_msg = (
             "%s.outer() was passed a numpy matrix as %s argument. "
             "Special handling of matrix is removed. Convert to a "
             "ndarray via 'matrix.A' ");
 
-    tmp = PyTuple_GET_ITEM(args, 0);
+    PyObject *tmp0 = PyTuple_GET_ITEM(args, 0);
+    PyObject *tmp1 = PyTuple_GET_ITEM(args, 1);
 
-    if (PyObject_IsInstance(tmp, npy_runtime_imports.numpy_matrix)) {
+    int is_matrix = PyObject_IsInstance(tmp0, npy_runtime_imports.numpy_matrix);
+    if (is_matrix == -1) {
+        return NULL;
+    }
+    else if (is_matrix) {
         PyErr_Format(PyExc_TypeError,
                 matrix_deprecation_msg, ufunc->name, "first");
         return NULL;
     }
-    if (PyObject_IsInstance(PyTuple_GET_ITEM(args, 1),
-                            npy_runtime_imports.numpy_matrix)) {
+
+    is_matrix = PyObject_IsInstance(tmp1, npy_runtime_imports.numpy_matrix);
+    if (is_matrix == -1) {
+        return NULL;
+    }
+    else if (is_matrix) {
         PyErr_Format(PyExc_TypeError,
                 matrix_deprecation_msg, ufunc->name, "second");
         return NULL;
     }
     /*
-     * Keep Python scalars weak (NEP 50); a 0-d input makes the reshape
-     * below a no-op.
+     * 0-d inputs contribute no dimensions to the result and broadcast the same
+     * without the inserted 1s, so the reshape below is unnecessary
      */
-    if (is_pyscalar(PyTuple_GET_ITEM(args, 0))
-            || is_pyscalar(PyTuple_GET_ITEM(args, 1))) {
+    if (is_known_scalar(tmp0) || is_known_scalar(tmp1)) {
         Py_INCREF(args);
         return args;
     }
 
-    ap1 = (PyArrayObject *) PyArray_FROM_O(tmp);
+    ap1 = (PyArrayObject *) PyArray_FROM_O(tmp0);
     if (ap1 == NULL) {
         return NULL;
     }
 
-    PyArrayObject *ap2 = NULL;
-    tmp = PyTuple_GET_ITEM(args, 1);
-    ap2 = (PyArrayObject *) PyArray_FROM_O(tmp);
+    PyArrayObject *ap2 = (PyArrayObject *) PyArray_FROM_O(tmp1);
     if (ap2 == NULL) {
         Py_DECREF(ap1);
         return NULL;

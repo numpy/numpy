@@ -201,11 +201,17 @@ def test_nep50_in_ufunc_outer(scalar, expected):
     assert res.dtype == expected
     assert_array_equal(res, np.add(arr, scalar))
 
-    # NumPy scalars and 0-d arrays remain strongly typed:
+
+def test_nep50_in_ufunc_outer_strong_operands():
+    # gh-32076: NumPy scalars and 0-d arrays remain strongly typed.
+    arr = np.arange(6, dtype="float32").reshape(3, 2)
     assert np.add.outer(np.float64(1), arr).dtype == "float64"
     assert np.add.outer(np.array(1.), arr).dtype == "float64"
 
-    # Both inputs weak: a huge integer must not go to object dtype here.
+
+def test_nep50_in_ufunc_outer_huge_integer():
+    # gh-32076: a weak Python int stays weak, so a huge one overflows here
+    # rather than silently going to object dtype (matching ufunc.__call__).
     with pytest.raises(OverflowError):
         np.add.outer(2**100, 1)
 
