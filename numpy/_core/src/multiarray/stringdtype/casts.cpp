@@ -329,12 +329,14 @@ string_to_fixed_width_resolve_descriptors(
         npy_intp *NPY_UNUSED(view_offset))
 {
     if (given_descrs[1] == NULL) {
-        // currently there's no way to determine the correct output
-        // size, so set an error and bail
+        // the correct output size can only be discovered by inspecting the
+        // values of an array being cast, which happens in
+        // stringdtype_find_fixed_width_descr before descriptor resolution
         PyErr_SetString(
                 PyExc_TypeError,
                 "Casting from StringDType to a fixed-width dtype with an "
-                "unspecified size is not currently supported, specify "
+                "unspecified size is only supported when the widths can be "
+                "inferred from the values of an array being cast, specify "
                 "an explicit size for the output dtype instead.");
         return (NPY_CASTING)-1;
     }
@@ -349,13 +351,11 @@ string_to_fixed_width_resolve_descriptors(
     return NPY_SAME_KIND_CASTING;
 }
 
-static int
-load_nullable_string(const npy_packed_static_string *ps,
+// The caller must hold *allocator*, acquired from *descr*.
+NPY_NO_EXPORT int
+load_nullable_string(const PyArray_StringDTypeObject *descr,
+                     const npy_packed_static_string *ps,
                      npy_static_string *s,
-                     int has_null,
-                     int has_string_na,
-                     const npy_static_string *default_string,
-                     const npy_static_string *na_name,
                      npy_string_allocator *allocator,
                      const char *context)
 {
@@ -366,15 +366,121 @@ load_nullable_string(const npy_packed_static_string *ps,
         return -1;
     }
     else if (is_null) {
-        if (has_null && !has_string_na) {
+        if (descr->na_object != NULL && !descr->has_string_na) {
             // lossy but not much else we can do
-            *s = *na_name;
+            *s = descr->na_name;
         }
         else {
-            *s = *default_string;
+            *s = descr->default_string;
         }
     }
     return 0;
+}
+
+// Find a fixed-width string or unicode descriptor wide enough to store every
+// entry of *arr*, a StringDType array, without truncation.  Entries convert
+// exactly as in the corresponding cast loops: missing entries count with the
+// width of their effective value (see load_nullable_string above) and
+// embedded and trailing NULs count as data.  The result is at least "S1" or
+// "U1", including for empty arrays and arrays that only hold empty strings.
+//
+// For NPY_UNICODE the entries must be counted in code points, so invalid
+// UTF-8 is detected here and raises a UnicodeDecodeError.  For NPY_STRING
+// the width is the UTF-8 byte length; non-ASCII entries are not rejected
+// here, the cast loop raises a UnicodeEncodeError for them.
+//
+// Returns NULL with an error set on failure.
+NPY_NO_EXPORT PyArray_Descr *
+stringdtype_find_fixed_width_descr(PyArrayObject *arr, int type_num)
+{
+    assert(type_num == NPY_STRING || type_num == NPY_UNICODE);
+    assert(PyArray_TYPE(arr) == NPY_VSTRING);
+
+    PyArray_StringDTypeObject *descr =
+            (PyArray_StringDTypeObject *)PyArray_DESCR(arr);
+
+    // Create the iterator before acquiring the allocator
+    PyArrayIterObject *iter =
+            (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);
+    if (iter == NULL) {
+        return NULL;
+    }
+
+    npy_uint64 max_width = 1;
+    char *bad_buf = NULL;
+    size_t bad_size = 0;
+    PyArray_Descr *ret = NULL;
+
+    npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
+
+    while (iter->index < iter->size) {
+        const npy_packed_static_string *ps =
+                (const npy_packed_static_string *)iter->dataptr;
+        npy_static_string s = {0, NULL};
+        if (load_nullable_string(descr, ps, &s, allocator,
+                                 "fixed-width width discovery") == -1) {
+            goto fail;
+        }
+        npy_uint64 width;
+        if (type_num == NPY_STRING) {
+            width = (npy_uint64)s.size;
+        }
+        else {
+            size_t num_codepoints = 0;
+            if (num_codepoints_for_utf8_bytes(
+                        (const unsigned char *)s.buf, &num_codepoints,
+                        s.size) != 0) {
+                // defer raising error until after the allocator is dropped
+                bad_buf = (char *)PyMem_RawMalloc(s.size);
+                if (bad_buf == NULL) {
+                    PyErr_NoMemory();
+                    goto fail;
+                }
+                memcpy(bad_buf, s.buf, s.size);
+                bad_size = s.size;
+                goto fail;
+            }
+            width = (npy_uint64)num_codepoints;
+        }
+        if (width > max_width) {
+            max_width = width;
+        }
+        PyArray_ITER_NEXT(iter);
+    }
+
+    NpyString_release_allocator(allocator);
+    Py_DECREF(iter);
+
+    if (max_width > NPY_MAX_INT ||
+            (type_num == NPY_UNICODE && max_width > NPY_MAX_INT / 4)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "string too large to store inside array.");
+        return NULL;
+    }
+
+    ret = PyArray_DescrNewFromType(type_num);
+    if (ret == NULL) {
+        return NULL;
+    }
+    ret->elsize = (int)(type_num == NPY_UNICODE ? 4 * max_width : max_width);
+    return ret;
+
+fail:
+    NpyString_release_allocator(allocator);
+    Py_DECREF(iter);
+    if (bad_buf != NULL) {
+        // decode to construct a UnicodeDecodeError with positional information
+        PyObject *decoded = PyUnicode_Decode(bad_buf, bad_size, "utf-8",
+                                             "strict");
+        PyMem_RawFree(bad_buf);
+        if (decoded != NULL) {
+            Py_DECREF(decoded);
+            PyErr_SetString(PyExc_TypeError,
+                            "Invalid UTF-8 bytes found in string width "
+                            "discovery");
+        }
+    }
+    return NULL;
 }
 
 static int
@@ -384,10 +490,6 @@ string_to_unicode(PyArrayMethod_Context *context, char *const data[],
 {
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
-    int has_null = descr->na_object != NULL;
-    int has_string_na = descr->has_string_na;
-    const npy_static_string *default_string = &descr->default_string;
-    const npy_static_string *na_name = &descr->na_name;
     npy_intp N = dimensions[0];
     char *in = data[0];
     Py_UCS4 *out = (Py_UCS4 *)data[1];
@@ -399,9 +501,8 @@ string_to_unicode(PyArrayMethod_Context *context, char *const data[],
     while (N--) {
         const npy_packed_static_string *ps = (npy_packed_static_string *)in;
         npy_static_string s = {0, NULL};
-        if (load_nullable_string(ps, &s, has_null, has_string_na,
-                                 default_string, na_name, allocator,
-                                 "in string to unicode cast") == -1) {
+        if (load_nullable_string(descr, ps, &s, allocator,
+                                 "string to unicode cast") == -1) {
             goto fail;
         }
 
@@ -1810,10 +1911,6 @@ string_to_void(PyArrayMethod_Context *context, char *const data[],
 {
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
-    int has_null = descr->na_object != NULL;
-    int has_string_na = descr->has_string_na;
-    const npy_static_string *default_string = &descr->default_string;
-    const npy_static_string *na_name = &descr->na_name;
     npy_intp N = dimensions[0];
     char *in = data[0];
     char *out = data[1];
@@ -1824,9 +1921,8 @@ string_to_void(PyArrayMethod_Context *context, char *const data[],
     while (N--) {
         const npy_packed_static_string *ps = (npy_packed_static_string *)in;
         npy_static_string s = {0, NULL};
-        if (load_nullable_string(ps, &s, has_null, has_string_na,
-                                 default_string, na_name, allocator,
-                                 "in string to void cast") == -1) {
+        if (load_nullable_string(descr, ps, &s, allocator,
+                                 "string to void cast") == -1) {
             goto fail;
         }
 
@@ -1925,10 +2021,6 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
                 NpyAuxData *NPY_UNUSED(auxdata))
 {
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
-    int has_null = descr->na_object != NULL;
-    int has_string_na = descr->has_string_na;
-    const npy_static_string *default_string = &descr->default_string;
-    const npy_static_string *na_name = &descr->na_name;
     npy_intp N = dimensions[0];
     char *in = data[0];
     char *out = data[1];
@@ -1941,9 +2033,8 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
     while (N--) {
         const npy_packed_static_string *ps = (npy_packed_static_string *)in;
         npy_static_string s = {0, NULL};
-        if (load_nullable_string(ps, &s, has_null, has_string_na,
-                                 default_string, na_name, alloc.allocator(),
-                                 "in string to bytes cast") == -1) {
+        if (load_nullable_string(descr, ps, &s, alloc.allocator(),
+                                 "string to bytes cast") == -1) {
             return -1;
         }
 

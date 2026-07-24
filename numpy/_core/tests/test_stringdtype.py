@@ -439,6 +439,178 @@ class TestStringLikeCasts:
                 sarr.astype("S20")
 
 
+UNSIZED_SPELLINGS = {
+    "S": ["S", "S0", np.dtype("S"), np.dtypes.BytesDType, np.bytes_],
+    "U": ["U", "U0", np.dtype("U"), np.dtypes.StrDType, np.str_],
+}
+
+
+CONVERSION_PATHS = [
+    pytest.param(lambda arr, req: arr.astype(req), id="astype"),
+    pytest.param(lambda arr, req: np.array(arr, dtype=req), id="np.array"),
+    pytest.param(lambda arr, req: np.asarray(arr, dtype=req),
+                 id="np.asarray"),
+    # exercises PyArray_CastToType
+    pytest.param(lambda arr, req: arr.__array__(dtype=np.dtype(req),
+                                                copy=True), id="__array__"),
+]
+
+
+class TestUnsizedFixedWidthCasts:
+    """Converting to an unsized "S" or "U" dtype infers the width by
+    inspecting the values in the array being converted."""
+
+    @pytest.mark.parametrize("kind", ["S", "U"])
+    def test_unsized_spellings(self, kind):
+        arr = np.array(["this", "is", "an", "array"], dtype="T")
+        expected = np.array(["this", "is", "an", "array"], dtype=f"{kind}5")
+        for spelling in UNSIZED_SPELLINGS[kind]:
+            assert_array_equal(arr.astype(spelling), expected)
+
+    @pytest.mark.parametrize("convert", CONVERSION_PATHS)
+    @pytest.mark.parametrize("kind", ["S", "U"])
+    @pytest.mark.parametrize(
+        "strings,width",
+        [
+            (["this", "is", "an", "array"], 5),
+            (["a" * 100, "", "b"], 100),
+            # embedded and trailing NULs count as data
+            (["x\0", "y\0\0z", ""], 4),
+            # empty arrays and all-empty entries produce width 1
+            ([], 1),
+            (["", "", ""], 1),
+        ],
+    )
+    def test_conversion_paths_infer_width(self, convert, kind, strings,
+                                          width):
+        arr = np.array(strings, dtype="T")
+        res = convert(arr, kind)
+        assert res.dtype == np.dtype(f"{kind}{width}")
+        assert_array_equal(res, np.array(strings, dtype=f"{kind}{width}"))
+
+    @pytest.mark.parametrize("kind", ["S", "U"])
+    def test_zero_dimensional(self, kind):
+        res = np.array("abcd", dtype="T").astype(kind)
+        assert res.dtype == np.dtype(f"{kind}4")
+        assert res == np.array("abcd", dtype=f"{kind}4")
+
+    @pytest.mark.parametrize("kind", ["S", "U"])
+    def test_strided_and_multidimensional(self, kind):
+        arr = np.array(
+            ["a long string entry", "ab", "c", "d"], dtype="T")
+        # only the short entries participate in a strided view
+        assert arr[1::2].astype(kind).dtype == np.dtype(f"{kind}2")
+        assert arr[::-1].astype(kind).dtype == np.dtype(f"{kind}19")
+        arr_2d = np.array([["a", "bb"], ["ccc", "dddd"]], dtype="T")
+        res = arr_2d.astype(kind)
+        assert res.dtype == np.dtype(f"{kind}4")
+        assert_array_equal(
+            res, np.array([["a", "bb"], ["ccc", "dddd"]], dtype=f"{kind}4"))
+
+    def test_multibyte_unicode_widths(self):
+        # "U" widths count code points, "S" widths count UTF-8 bytes
+        arr = np.array(["a😊b", "é"], dtype="T")
+        res = arr.astype("U")
+        assert res.dtype == np.dtype("U3")
+        assert_array_equal(res, np.array(["a😊b", "é"], dtype="U3"))
+        # the "S" cast sizes by bytes but rejects non-ASCII entries
+        with pytest.raises(UnicodeEncodeError):
+            arr.astype("S")
+        arr = np.array(["hello", "world!!"], dtype="T")
+        res = arr.astype("S")
+        assert res.dtype == np.dtype("S7")
+        assert_array_equal(res, np.array(["hello", "world!!"], dtype="S7"))
+
+    def test_multiple_arrays_promote_to_widest(self):
+        arr1 = np.array(["abc"], dtype="T")
+        arr2 = np.array(["longer!"], dtype="T")
+        assert np.array([arr1, arr2], dtype="S").dtype == np.dtype("S7")
+
+    @pytest.mark.parametrize("kind", ["S", "U"])
+    def test_descriptor_only_resolution_still_fails(self, kind):
+        # functions that adapt descriptors without inspecting array values
+        # cannot infer a width
+        arr = np.array(["abc"], dtype="T")
+        with pytest.raises(TypeError,
+                           match="cannot cast dtype StringDType"):
+            np.concatenate([arr, arr], dtype=kind)
+
+    def test_explicit_width_still_truncates(self):
+        arr = np.array(["abcdef"], dtype="T")
+        assert_array_equal(arr.astype("S3"), np.array([b"abc"], dtype="S3"))
+        assert_array_equal(arr.astype("U3"), np.array(["abc"], dtype="U3"))
+
+
+class TestUnsizedCastMissingValues:
+    def test_nan_na(self):
+        dt = StringDType(na_object=np.nan)
+        arr = np.array(["abcde", np.nan], dtype=dt)
+        res = arr.astype("U")
+        assert res.dtype == np.dtype("U5")
+        assert res[1] == "nan"
+        all_null = np.array([np.nan, np.nan], dtype=dt)
+        res = all_null.astype("U")
+        assert res.dtype == np.dtype("U3")
+        assert_array_equal(res, np.array(["nan", "nan"], dtype="U3"))
+
+    def test_non_ascii_string_na(self):
+        # a non-ASCII sentinel counts code points for "U" and raises for
+        # the ASCII-only "S" cast
+        dt = StringDType(na_object="😊😊")
+        arr = np.array(["ab", "😊😊"], dtype=dt)
+        res = arr.astype("U")
+        assert res.dtype == np.dtype("U2")
+        assert res[1] == "😊😊"
+        with pytest.raises(UnicodeEncodeError):
+            arr.astype("S")
+
+
+class TestStringDTypeNditer:
+    def test_infer_width_for_existing_operand(self):
+        arr = np.array(["abc", "defgh"], dtype="T")
+        for kind, expected in [("S", "S5"), ("U", "U5")]:
+            with np.nditer(
+                arr,
+                op_dtypes=[np.dtype(kind)],
+                flags=["buffered", "refs_ok"],
+                casting="same_kind",
+            ) as it:
+                assert it.dtypes[0] == np.dtype(expected)
+                assert [x[()] for x in it] == list(
+                    np.array(["abc", "defgh"], dtype=expected))
+
+    def test_readwrite_stringdtype_operand_fixed_width_buffers(self):
+        # reads convert to the inferred fixed-width dtype and writing
+        # back into the StringDType array round-trips the values
+        arr = np.array(["abc", "defgh"], dtype="T")
+        with np.nditer(
+            arr,
+            op_dtypes=[np.dtype("U")],
+            op_flags=[["readwrite"]],
+            flags=["buffered", "refs_ok"],
+            casting="same_kind",
+        ) as it:
+            assert it.dtypes[0] == np.dtype("U5")
+            for x in it:
+                x[...] = str(x[()]).upper()
+        assert_array_equal(
+            arr, np.array(["ABC", "DEFGH"], dtype="T"))
+
+    @pytest.mark.parametrize("kind,expected", [("S", "S1"), ("U", "U1")])
+    def test_allocated_output_stays_unsized_legacy(self, kind, expected):
+        # allocated outputs have no values to inspect, so an unsized
+        # request keeps the legacy one-character width
+        arr = np.array(["abc", "defgh"], dtype="T")
+        it = np.nditer(
+            [arr, None],
+            op_dtypes=[arr.dtype, np.dtype(kind)],
+            op_flags=[["readonly"], ["writeonly", "allocate"]],
+            flags=["buffered", "refs_ok"],
+            casting="unsafe",
+        )
+        assert it.operands[1].dtype == np.dtype(expected)
+
+
 def test_additional_unicode_cast(dtype):
     string_list = random_unicode_string_list()
     arr = np.array(string_list, dtype=dtype)
