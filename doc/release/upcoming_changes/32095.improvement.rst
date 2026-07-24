@@ -1,0 +1,6 @@
+Fixed-width string to ``StringDType`` casts are now safe and validated
+----------------------------------------------------------------------
+The casts from fixed-width `numpy.bytes_` and `numpy.str_` to
+`numpy.dtypes.StringDType` are now marked `"safe"` rather than `"same-kind"`. We
+also now validate that `numpy.bytes_`, `numpy.void`, and `numpy.str_` arrays
+contain valid UTF-8 before converting to `numpy.dtypes.StringDType`.
