@@ -1075,6 +1075,15 @@ class TestDelete:
         with pytest.raises(IndexError):
             np.delete([0, 1, 2], np.array([], dtype=float))
 
+    @pytest.mark.parametrize("indexer", [[], np.array([], dtype=np.intp)])
+    def test_empty_integer_index_returns_copy(self, indexer):
+        a = np.arange(6).reshape(2, 3)
+        res = delete(a, indexer, axis=1)
+
+        assert_array_equal(res, a)
+        assert_(res is not a)
+        assert_(not np.shares_memory(res, a))
+
     @pytest.mark.parametrize("indexer", [np.array([1]), [1]])
     def test_single_item_array(self, indexer):
         a, nd_a = self._create_arrays()
