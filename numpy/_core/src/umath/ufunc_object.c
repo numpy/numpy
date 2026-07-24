@@ -6207,10 +6207,24 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         Py_INCREF(operand_DTypes[0]);
         int force_legacy_promotion = 0;
 
+        npy_bool op2_is_pyscalar = NPY_FALSE;
         if (op2_array != NULL) {
+            /* Owned: `resolve_descriptors` may replace it for Python scalars */
             tmp_operands[1] = op2_array;
+            Py_INCREF(tmp_operands[1]);
             operand_DTypes[1] = NPY_DTYPE(PyArray_DESCR(op2_array));
             Py_INCREF(operand_DTypes[1]);
+            if (npy_mark_tmp_array_if_pyscalar(
+                    op2, op2_array, &operand_DTypes[1])) {
+                op2_is_pyscalar = NPY_TRUE;
+                if (PyArray_FLAGS(op2_array) & NPY_ARRAY_WAS_PYTHON_INT
+                        && PyArray_TYPE(op2_array) != NPY_LONG) {
+                    /* Same hack as in `convert_ufunc_arguments` */
+                    Py_INCREF(npy_static_pydata.zero_pyint_like_arr);
+                    Py_SETREF(tmp_operands[1],
+                              (PyArrayObject *)npy_static_pydata.zero_pyint_like_arr);
+                }
+            }
             tmp_operands[2] = tmp_operands[0];
             operand_DTypes[2] = operand_DTypes[0];
             Py_INCREF(operand_DTypes[2]);
@@ -6228,20 +6242,25 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             tmp_operands[2] = NULL;
         }
 
-        ufuncimpl = promote_and_get_ufuncimpl(ufunc, tmp_operands, signature,
-                        operand_DTypes, force_legacy_promotion,
-                        NPY_FALSE, NPY_FALSE);
-        if (ufuncimpl == NULL) {
-            for (int i = 0; i < 3; i++) {
-                Py_XDECREF(signature[i]);
-                Py_XDECREF(operand_DTypes[i]);
-            }
-            goto fail;
+        PyObject *inputs_tup = NULL;
+        if (op2_is_pyscalar) {
+            inputs_tup = PyTuple_Pack(2, op1, op2);
         }
 
-        /* Find the correct operation_descrs for the operation */
-        int resolve_result = resolve_descriptors(nop, ufunc, ufuncimpl,
-                tmp_operands, operation_descrs, signature, operand_DTypes, NULL, NPY_UNSAFE_CASTING);
+        int resolve_result = -1;
+        ufuncimpl = promote_and_get_ufuncimpl(ufunc, tmp_operands, signature,
+                        operand_DTypes, force_legacy_promotion,
+                        op2_is_pyscalar, NPY_FALSE);
+        if (ufuncimpl != NULL && (!op2_is_pyscalar || inputs_tup != NULL)) {
+            /* Find the correct operation_descrs for the operation */
+            resolve_result = resolve_descriptors(nop, ufunc, ufuncimpl,
+                    tmp_operands, operation_descrs, signature, operand_DTypes,
+                    inputs_tup, NPY_UNSAFE_CASTING);
+        }
+        Py_XDECREF(inputs_tup);
+        if (op2_array != NULL) {
+            Py_SETREF(op2_array, tmp_operands[1]);
+        }
         for (int i = 0; i < 3; i++) {
             Py_XDECREF(signature[i]);
             Py_XDECREF(operand_DTypes[i]);
