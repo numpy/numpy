@@ -239,3 +239,8 @@ Care must be taken to ensure that the output array has enough space
 for the UTF-8 bytes in the string, since the size of a UTF-8
 bytestream in bytes is not necessarily the same as the number of
 characters in the string.
+
+Conversions in the other direction, from a fixed-width string array to
+``StringDType`` are ``"safe"`` casts. The bytes stored in a
+`numpy.bytes_` array must be valid UTF-8, and a ``UnicodeDecodeError``
+is raised during the cast if they are not.
