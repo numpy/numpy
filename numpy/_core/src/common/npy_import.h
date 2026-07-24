@@ -12,13 +12,12 @@ extern "C" {
 /*
  * Cached references to objects obtained via an import. All of these are
  * can be initialized at any time by npy_cache_import_runtime.
+ *
+ * The mutex that guards the lazy-initialization of these fields is kept
+ * process-global (see npy_import.c) since it only protects the act of
+ * importing, not per-interpreter data.
  */
 typedef struct npy_runtime_imports_struct {
-#if PY_VERSION_HEX < 0x30d00b3
-    PyThread_type_lock import_mutex;
-#else
-    PyMutex import_mutex;
-#endif
     PyObject *_add_dtype_helper;
     PyObject *_all;
     PyObject *_amax;
@@ -50,8 +49,6 @@ typedef struct npy_runtime_imports_struct {
     PyObject *_view_is_safe;
     PyObject *_void_scalar_to_string;
 } npy_runtime_imports_struct;
-
-NPY_VISIBILITY_HIDDEN extern npy_runtime_imports_struct npy_runtime_imports;
 
 /*! \brief Import a Python object.
 

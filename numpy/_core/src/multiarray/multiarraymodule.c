@@ -30,6 +30,7 @@
 #include "npy_pycompat.h"
 #include "npy_import.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "convert_datatype.h"
 #include "legacy_dtype_implementation.h"
 
@@ -113,7 +114,7 @@ get_legacy_print_mode(void) {
      * complex requirements in the future.
      */
     PyObject *format_options = NULL;
-    PyContextVar_Get(npy_static_pydata.format_options, NULL, &format_options);
+    PyContextVar_Get(npy_get_module_state()->static_pydata.format_options, NULL, &format_options);
     if (format_options == NULL) {
         PyErr_SetString(PyExc_SystemError,
                         "NumPy internal error: unable to get format_options "
@@ -121,7 +122,7 @@ get_legacy_print_mode(void) {
         return -1;
     }
     PyObject *legacy_print_mode = NULL;
-    if (PyDict_GetItemRef(format_options, npy_interned_str.legacy,
+    if (PyDict_GetItemRef(format_options, npy_get_module_state()->interned_str.legacy,
                           &legacy_print_mode) == -1) {
         Py_DECREF(format_options);
         return -1;
@@ -162,7 +163,7 @@ PyArray_GetPriority(PyObject *obj, double default_)
     }
 
     if (PyArray_LookupSpecial_OnInstance(
-            obj, npy_interned_str.array_priority, &ret) < 0) {
+            obj, npy_get_module_state()->interned_str.array_priority, &ret) < 0) {
         /* TODO[gh-14801]: propagate crashes during attribute access? */
         PyErr_Clear();
         return default_;
@@ -1022,7 +1023,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
 
     if (PyArray_NDIM(ap1) == 0 || PyArray_NDIM(ap2) == 0) {
         PyObject *mul_res = PyObject_CallFunctionObjArgs(
-                n_ops.multiply, ap1, ap2, out, NULL);
+                npy_get_module_state()->n_ops.multiply, ap1, ap2, out, NULL);
         Py_DECREF(ap1);
         Py_DECREF(ap2);
         return mul_res;
@@ -3497,7 +3498,7 @@ array_lexsort(PyObject *NPY_UNUSED(ignored), PyObject *const *args, Py_ssize_t l
 }
 
 static PyObject *
-array_can_cast_safely(PyObject *NPY_UNUSED(self),
+array_can_cast_safely(PyObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *from_obj = NULL;
@@ -3529,7 +3530,7 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self),
          * TODO: `PyArray_IsScalar` should not be required for new dtypes.
          *       weak-promotion branch is in practice identical to dtype one.
          */
-        PyObject *descr = PyObject_GetAttr(from_obj, npy_interned_str.dtype);
+        PyObject *descr = PyObject_GetAttr(from_obj, get_module_state(self)->interned_str.dtype);
         if (descr == NULL) {
             goto finish;
         }
@@ -4291,7 +4292,7 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     }
     else if (result == MEM_OVERLAP_TOO_HARD) {
         if (raise_exceptions) {
-            PyErr_SetString(npy_static_pydata.TooHardError,
+            PyErr_SetString(npy_get_module_state()->static_pydata.TooHardError,
                             "Exceeded max_work");
             return NULL;
         }
@@ -4547,14 +4548,15 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
 
 
 static PyObject *
-_set_numpy_warn_if_no_mem_policy(PyObject *NPY_UNUSED(self), PyObject *arg)
+_set_numpy_warn_if_no_mem_policy(PyObject *self, PyObject *arg)
 {
     int res = PyObject_IsTrue(arg);
     if (res < 0) {
         return NULL;
     }
-    int old_value = npy_global_state.warn_if_no_mem_policy;
-    npy_global_state.warn_if_no_mem_policy = res;
+    multiarray_umath_state *state = get_module_state(self);
+    int old_value = state->global_state.warn_if_no_mem_policy;
+    state->global_state.warn_if_no_mem_policy = res;
     if (old_value) {
         Py_RETURN_TRUE;
     }
@@ -4584,7 +4586,8 @@ _blas_supports_fpe(PyObject *NPY_UNUSED(self), PyObject *arg) {
 
 
 static PyObject *
-_reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
+_reload_guard(PyObject *self, PyObject *NPY_UNUSED(args)) {
+    multiarray_umath_state *state = get_module_state(self);
     if (PyThreadState_Get()->interp != PyInterpreterState_Main()) {
         if (PyErr_WarnEx(PyExc_UserWarning,
                 "NumPy was imported from a Python sub-interpreter but "
@@ -4599,10 +4602,10 @@ _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
             return NULL;
         }
         /* No need to give the other warning in a sub-interpreter as well... */
-        npy_global_state.reload_guard_initialized = 1;
+        state->global_state.reload_guard_initialized = 1;
         Py_RETURN_NONE;
     }
-    if (npy_global_state.reload_guard_initialized) {
+    if (state->global_state.reload_guard_initialized) {
         if (PyErr_WarnEx(PyExc_UserWarning,
                 "The NumPy module was reloaded (imported a second time). "
                 "This can in some cases result in small but subtle issues "
@@ -4610,7 +4613,7 @@ _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
             return NULL;
         }
     }
-    npy_global_state.reload_guard_initialized = 1;
+    state->global_state.reload_guard_initialized = 1;
     Py_RETURN_NONE;
 }
 
@@ -5006,23 +5009,383 @@ set_flaginfo(PyObject *d)
     return;
 }
 
-// static variables are automatically zero-initialized
-NPY_VISIBILITY_HIDDEN npy_global_state_struct npy_global_state;
+/*
+ * TRANSITIONAL: process-global pointer to module state.
+ * Set once in _multiarray_umath_exec(). Used by call sites that don't
+ * have a module pointer available yet.
+ * FIXME: Remove once all access sites are updated.
+ */
+NPY_VISIBILITY_HIDDEN multiarray_umath_state *_npy_module_state = NULL;
 
 static int
-initialize_global_state(void) {
+initialize_global_state(multiarray_umath_state *state) {
     char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
     if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
-        npy_global_state.warn_if_no_mem_policy = 1;
+        state->global_state.warn_if_no_mem_policy = 1;
     }
     else {
-        npy_global_state.warn_if_no_mem_policy = 0;
+        state->global_state.warn_if_no_mem_policy = 0;
     }
 
     return 0;
 }
 
 static int module_loaded = 0;
+
+/* GC hooks — to be progressively filled as each struct is migrated */
+static int
+multiarray_umath_traverse(PyObject *m, visitproc visit, void *arg)
+{
+    multiarray_umath_state *state = get_module_state(m);
+
+    Py_VISIT(state->interned_str.current_allocator);
+    Py_VISIT(state->interned_str.array);
+    Py_VISIT(state->interned_str.array_function);
+    Py_VISIT(state->interned_str.array_struct);
+    Py_VISIT(state->interned_str.array_priority);
+    Py_VISIT(state->interned_str.array_interface);
+    Py_VISIT(state->interned_str.array_wrap);
+    Py_VISIT(state->interned_str.array_finalize);
+    Py_VISIT(state->interned_str.array_ufunc);
+    Py_VISIT(state->interned_str.numpy_dtype);
+    Py_VISIT(state->interned_str.implementation);
+    Py_VISIT(state->interned_str.axis1);
+    Py_VISIT(state->interned_str.axis2);
+    Py_VISIT(state->interned_str.item);
+    Py_VISIT(state->interned_str.like);
+    Py_VISIT(state->interned_str.numpy);
+    Py_VISIT(state->interned_str.where);
+    Py_VISIT(state->interned_str.convert);
+    Py_VISIT(state->interned_str.preserve);
+    Py_VISIT(state->interned_str.convert_if_no_array);
+    Py_VISIT(state->interned_str.cpu);
+    Py_VISIT(state->interned_str.dtype);
+    Py_VISIT(state->interned_str.array_err_msg_substr);
+    Py_VISIT(state->interned_str.out);
+    for (int i = 0; i < 6; i++) {
+        Py_VISIT(state->interned_str.errmode_strings[i]);
+    }
+    Py_VISIT(state->interned_str.__dlpack__);
+    Py_VISIT(state->interned_str.pyvals_name);
+    Py_VISIT(state->interned_str.legacy);
+    Py_VISIT(state->interned_str.__doc__);
+    Py_VISIT(state->interned_str.__signature__);
+    Py_VISIT(state->interned_str.copy);
+    Py_VISIT(state->interned_str.dl_device);
+    Py_VISIT(state->interned_str.max_version);
+    Py_VISIT(state->interned_str.array_dealloc);
+    Py_VISIT(state->interned_str.real);
+    Py_VISIT(state->interned_str.imag);
+    Py_VISIT(state->interned_str.sort);
+    Py_VISIT(state->interned_str.argsort);
+    Py_VISIT(state->interned_str.partition);
+    Py_VISIT(state->interned_str.argpartition);
+    Py_VISIT(state->interned_str._set_dtype);
+
+    Py_VISIT(state->static_pydata.default_truediv_type_tup);
+    Py_VISIT(state->static_pydata.default_extobj_capsule);
+    Py_VISIT(state->static_pydata.npy_extobj_contextvar);
+    Py_VISIT(state->static_pydata.ndarray_array_ufunc);
+    Py_VISIT(state->static_pydata.ndarray_array_finalize);
+    Py_VISIT(state->static_pydata.ndarray_array_function);
+    Py_VISIT(state->static_pydata.ndarray_set_dtype);
+    Py_VISIT(state->static_pydata.ndarray_dtype_descr);
+    Py_VISIT(state->static_pydata.one_obj);
+    Py_VISIT(state->static_pydata.zero_obj);
+    Py_VISIT(state->static_pydata.zero_pyint_like_arr);
+    Py_VISIT(state->static_pydata.AxisError);
+    Py_VISIT(state->static_pydata.ComplexWarning);
+    Py_VISIT(state->static_pydata.DTypePromotionError);
+    Py_VISIT(state->static_pydata.TooHardError);
+    Py_VISIT(state->static_pydata.VisibleDeprecationWarning);
+    Py_VISIT(state->static_pydata._CopyMode);
+    Py_VISIT(state->static_pydata._NoValue);
+    Py_VISIT(state->static_pydata._ArrayMemoryError);
+    Py_VISIT(state->static_pydata._UFuncBinaryResolutionError);
+    Py_VISIT(state->static_pydata._UFuncInputCastingError);
+    Py_VISIT(state->static_pydata._UFuncNoLoopError);
+    Py_VISIT(state->static_pydata._UFuncOutputCastingError);
+    Py_VISIT(state->static_pydata.math_floor_func);
+    Py_VISIT(state->static_pydata.math_ceil_func);
+    Py_VISIT(state->static_pydata.math_trunc_func);
+    Py_VISIT(state->static_pydata.math_gcd_func);
+    Py_VISIT(state->static_pydata.os_PathLike);
+    Py_VISIT(state->static_pydata.os_fspath);
+    Py_VISIT(state->static_pydata.format_options);
+    Py_VISIT(state->static_pydata.legacy_resolver_promoting);
+    Py_VISIT(state->static_pydata.kwnames_is_copy);
+    Py_VISIT(state->static_pydata.axes_1d_obj_kwargs);
+    Py_VISIT(state->static_pydata.axes_2d_obj_kwargs);
+    Py_VISIT(state->static_pydata.cpu_dispatch_registry);
+    Py_VISIT(state->static_pydata.VoidToGenericMethod);
+    Py_VISIT(state->static_pydata.GenericToVoidMethod);
+    Py_VISIT(state->static_pydata.ObjectToGenericMethod);
+    Py_VISIT(state->static_pydata.GenericToObjectMethod);
+    Py_VISIT(state->static_pydata.dl_call_kwnames);
+    Py_VISIT(state->static_pydata.dl_cpu_device_tuple);
+    Py_VISIT(state->static_pydata.dl_max_version);
+    Py_VISIT(state->static_pydata.dlpack_dtype_registry);
+    Py_VISIT(state->static_pydata.dlpack_export_registry);
+
+    Py_VISIT(state->runtime_imports._add_dtype_helper);
+    Py_VISIT(state->runtime_imports._all);
+    Py_VISIT(state->runtime_imports._amax);
+    Py_VISIT(state->runtime_imports._amin);
+    Py_VISIT(state->runtime_imports._any);
+    Py_VISIT(state->runtime_imports.array_function_errmsg_formatter);
+    Py_VISIT(state->runtime_imports.array_ufunc_errmsg_formatter);
+    Py_VISIT(state->runtime_imports._clip);
+    Py_VISIT(state->runtime_imports._commastring);
+    Py_VISIT(state->runtime_imports._convert_to_stringdtype_kwargs);
+    Py_VISIT(state->runtime_imports._default_array_repr);
+    Py_VISIT(state->runtime_imports._default_array_str);
+    Py_VISIT(state->runtime_imports._dump);
+    Py_VISIT(state->runtime_imports._dumps);
+    Py_VISIT(state->runtime_imports._getfield_is_safe);
+    Py_VISIT(state->runtime_imports.internal_gcd_func);
+    Py_VISIT(state->runtime_imports._mean);
+    Py_VISIT(state->runtime_imports.NO_NEP50_WARNING);
+    Py_VISIT(state->runtime_imports.npy_ctypes_check);
+    Py_VISIT(state->runtime_imports.numpy_matrix);
+    Py_VISIT(state->runtime_imports._prod);
+    Py_VISIT(state->runtime_imports._promote_fields);
+    Py_VISIT(state->runtime_imports._std);
+    Py_VISIT(state->runtime_imports._sum);
+    Py_VISIT(state->runtime_imports._ufunc_doc_signature_formatter);
+    Py_VISIT(state->runtime_imports._ufunc_inspect_signature_builder);
+    Py_VISIT(state->runtime_imports._usefields);
+    Py_VISIT(state->runtime_imports._var);
+    Py_VISIT(state->runtime_imports._view_is_safe);
+    Py_VISIT(state->runtime_imports._void_scalar_to_string);
+
+    /* scattered globals */
+    Py_VISIT(state->typeDict);
+    Py_VISIT(state->current_handler);
+    Py_VISIT(state->global_pytype_to_type_dict);
+    Py_VISIT(state->n_ops.add);
+    Py_VISIT(state->n_ops.subtract);
+    Py_VISIT(state->n_ops.multiply);
+    Py_VISIT(state->n_ops.divide);
+    Py_VISIT(state->n_ops.remainder);
+    Py_VISIT(state->n_ops.divmod);
+    Py_VISIT(state->n_ops.power);
+    Py_VISIT(state->n_ops.square);
+    Py_VISIT(state->n_ops.reciprocal);
+    Py_VISIT(state->n_ops._ones_like);
+    Py_VISIT(state->n_ops.sqrt);
+    Py_VISIT(state->n_ops.cbrt);
+    Py_VISIT(state->n_ops.negative);
+    Py_VISIT(state->n_ops.positive);
+    Py_VISIT(state->n_ops.absolute);
+    Py_VISIT(state->n_ops.invert);
+    Py_VISIT(state->n_ops.left_shift);
+    Py_VISIT(state->n_ops.right_shift);
+    Py_VISIT(state->n_ops.bitwise_and);
+    Py_VISIT(state->n_ops.bitwise_xor);
+    Py_VISIT(state->n_ops.bitwise_or);
+    Py_VISIT(state->n_ops.less);
+    Py_VISIT(state->n_ops.less_equal);
+    Py_VISIT(state->n_ops.equal);
+    Py_VISIT(state->n_ops.not_equal);
+    Py_VISIT(state->n_ops.greater);
+    Py_VISIT(state->n_ops.greater_equal);
+    Py_VISIT(state->n_ops.floor_divide);
+    Py_VISIT(state->n_ops.true_divide);
+    Py_VISIT(state->n_ops.logical_or);
+    Py_VISIT(state->n_ops.logical_and);
+    Py_VISIT(state->n_ops.floor);
+    Py_VISIT(state->n_ops.ceil);
+    Py_VISIT(state->n_ops.maximum);
+    Py_VISIT(state->n_ops.minimum);
+    Py_VISIT(state->n_ops.rint);
+    Py_VISIT(state->n_ops.conjugate);
+    Py_VISIT(state->n_ops.matmul);
+    Py_VISIT(state->n_ops.clip);
+    Py_VISIT(state->n_ops.real);
+    Py_VISIT(state->n_ops.imag);
+
+    return 0;
+}
+
+static int
+multiarray_umath_clear(PyObject *m)
+{
+    multiarray_umath_state *state = get_module_state(m);
+
+    Py_CLEAR(state->interned_str.current_allocator);
+    Py_CLEAR(state->interned_str.array);
+    Py_CLEAR(state->interned_str.array_function);
+    Py_CLEAR(state->interned_str.array_struct);
+    Py_CLEAR(state->interned_str.array_priority);
+    Py_CLEAR(state->interned_str.array_interface);
+    Py_CLEAR(state->interned_str.array_wrap);
+    Py_CLEAR(state->interned_str.array_finalize);
+    Py_CLEAR(state->interned_str.array_ufunc);
+    Py_CLEAR(state->interned_str.numpy_dtype);
+    Py_CLEAR(state->interned_str.implementation);
+    Py_CLEAR(state->interned_str.axis1);
+    Py_CLEAR(state->interned_str.axis2);
+    Py_CLEAR(state->interned_str.item);
+    Py_CLEAR(state->interned_str.like);
+    Py_CLEAR(state->interned_str.numpy);
+    Py_CLEAR(state->interned_str.where);
+    Py_CLEAR(state->interned_str.convert);
+    Py_CLEAR(state->interned_str.preserve);
+    Py_CLEAR(state->interned_str.convert_if_no_array);
+    Py_CLEAR(state->interned_str.cpu);
+    Py_CLEAR(state->interned_str.dtype);
+    Py_CLEAR(state->interned_str.array_err_msg_substr);
+    Py_CLEAR(state->interned_str.out);
+    for (int i = 0; i < 6; i++) {
+        Py_CLEAR(state->interned_str.errmode_strings[i]);
+    }
+    Py_CLEAR(state->interned_str.__dlpack__);
+    Py_CLEAR(state->interned_str.pyvals_name);
+    Py_CLEAR(state->interned_str.legacy);
+    Py_CLEAR(state->interned_str.__doc__);
+    Py_CLEAR(state->interned_str.__signature__);
+    Py_CLEAR(state->interned_str.copy);
+    Py_CLEAR(state->interned_str.dl_device);
+    Py_CLEAR(state->interned_str.max_version);
+    Py_CLEAR(state->interned_str.array_dealloc);
+    Py_CLEAR(state->interned_str.real);
+    Py_CLEAR(state->interned_str.imag);
+    Py_CLEAR(state->interned_str.sort);
+    Py_CLEAR(state->interned_str.argsort);
+    Py_CLEAR(state->interned_str.partition);
+    Py_CLEAR(state->interned_str.argpartition);
+    Py_CLEAR(state->interned_str._set_dtype);
+
+    Py_CLEAR(state->static_pydata.default_truediv_type_tup);
+    Py_CLEAR(state->static_pydata.default_extobj_capsule);
+    Py_CLEAR(state->static_pydata.npy_extobj_contextvar);
+    Py_CLEAR(state->static_pydata.ndarray_array_ufunc);
+    Py_CLEAR(state->static_pydata.ndarray_array_finalize);
+    Py_CLEAR(state->static_pydata.ndarray_array_function);
+    Py_CLEAR(state->static_pydata.ndarray_set_dtype);
+    Py_CLEAR(state->static_pydata.ndarray_dtype_descr);
+    Py_CLEAR(state->static_pydata.one_obj);
+    Py_CLEAR(state->static_pydata.zero_obj);
+    Py_CLEAR(state->static_pydata.zero_pyint_like_arr);
+    Py_CLEAR(state->static_pydata.AxisError);
+    Py_CLEAR(state->static_pydata.ComplexWarning);
+    Py_CLEAR(state->static_pydata.DTypePromotionError);
+    Py_CLEAR(state->static_pydata.TooHardError);
+    Py_CLEAR(state->static_pydata.VisibleDeprecationWarning);
+    Py_CLEAR(state->static_pydata._CopyMode);
+    Py_CLEAR(state->static_pydata._NoValue);
+    Py_CLEAR(state->static_pydata._ArrayMemoryError);
+    Py_CLEAR(state->static_pydata._UFuncBinaryResolutionError);
+    Py_CLEAR(state->static_pydata._UFuncInputCastingError);
+    Py_CLEAR(state->static_pydata._UFuncNoLoopError);
+    Py_CLEAR(state->static_pydata._UFuncOutputCastingError);
+    Py_CLEAR(state->static_pydata.math_floor_func);
+    Py_CLEAR(state->static_pydata.math_ceil_func);
+    Py_CLEAR(state->static_pydata.math_trunc_func);
+    Py_CLEAR(state->static_pydata.math_gcd_func);
+    Py_CLEAR(state->static_pydata.os_PathLike);
+    Py_CLEAR(state->static_pydata.os_fspath);
+    Py_CLEAR(state->static_pydata.format_options);
+    Py_CLEAR(state->static_pydata.legacy_resolver_promoting);
+    Py_CLEAR(state->static_pydata.kwnames_is_copy);
+    Py_CLEAR(state->static_pydata.axes_1d_obj_kwargs);
+    Py_CLEAR(state->static_pydata.axes_2d_obj_kwargs);
+    Py_CLEAR(state->static_pydata.cpu_dispatch_registry);
+    Py_CLEAR(state->static_pydata.VoidToGenericMethod);
+    Py_CLEAR(state->static_pydata.GenericToVoidMethod);
+    Py_CLEAR(state->static_pydata.ObjectToGenericMethod);
+    Py_CLEAR(state->static_pydata.GenericToObjectMethod);
+    Py_CLEAR(state->static_pydata.dl_call_kwnames);
+    Py_CLEAR(state->static_pydata.dl_cpu_device_tuple);
+    Py_CLEAR(state->static_pydata.dl_max_version);
+    Py_CLEAR(state->static_pydata.dlpack_dtype_registry);
+    Py_CLEAR(state->static_pydata.dlpack_export_registry);
+
+    Py_CLEAR(state->runtime_imports._add_dtype_helper);
+    Py_CLEAR(state->runtime_imports._all);
+    Py_CLEAR(state->runtime_imports._amax);
+    Py_CLEAR(state->runtime_imports._amin);
+    Py_CLEAR(state->runtime_imports._any);
+    Py_CLEAR(state->runtime_imports.array_function_errmsg_formatter);
+    Py_CLEAR(state->runtime_imports.array_ufunc_errmsg_formatter);
+    Py_CLEAR(state->runtime_imports._clip);
+    Py_CLEAR(state->runtime_imports._commastring);
+    Py_CLEAR(state->runtime_imports._convert_to_stringdtype_kwargs);
+    Py_CLEAR(state->runtime_imports._default_array_repr);
+    Py_CLEAR(state->runtime_imports._default_array_str);
+    Py_CLEAR(state->runtime_imports._dump);
+    Py_CLEAR(state->runtime_imports._dumps);
+    Py_CLEAR(state->runtime_imports._getfield_is_safe);
+    Py_CLEAR(state->runtime_imports.internal_gcd_func);
+    Py_CLEAR(state->runtime_imports._mean);
+    Py_CLEAR(state->runtime_imports.NO_NEP50_WARNING);
+    Py_CLEAR(state->runtime_imports.npy_ctypes_check);
+    Py_CLEAR(state->runtime_imports.numpy_matrix);
+    Py_CLEAR(state->runtime_imports._prod);
+    Py_CLEAR(state->runtime_imports._promote_fields);
+    Py_CLEAR(state->runtime_imports._std);
+    Py_CLEAR(state->runtime_imports._sum);
+    Py_CLEAR(state->runtime_imports._ufunc_doc_signature_formatter);
+    Py_CLEAR(state->runtime_imports._ufunc_inspect_signature_builder);
+    Py_CLEAR(state->runtime_imports._usefields);
+    Py_CLEAR(state->runtime_imports._var);
+    Py_CLEAR(state->runtime_imports._view_is_safe);
+    Py_CLEAR(state->runtime_imports._void_scalar_to_string);
+
+    /* scattered globals */
+    Py_CLEAR(state->typeDict);
+    Py_CLEAR(state->current_handler);
+    Py_CLEAR(state->global_pytype_to_type_dict);
+    Py_CLEAR(state->n_ops.add);
+    Py_CLEAR(state->n_ops.subtract);
+    Py_CLEAR(state->n_ops.multiply);
+    Py_CLEAR(state->n_ops.divide);
+    Py_CLEAR(state->n_ops.remainder);
+    Py_CLEAR(state->n_ops.divmod);
+    Py_CLEAR(state->n_ops.power);
+    Py_CLEAR(state->n_ops.square);
+    Py_CLEAR(state->n_ops.reciprocal);
+    Py_CLEAR(state->n_ops._ones_like);
+    Py_CLEAR(state->n_ops.sqrt);
+    Py_CLEAR(state->n_ops.cbrt);
+    Py_CLEAR(state->n_ops.negative);
+    Py_CLEAR(state->n_ops.positive);
+    Py_CLEAR(state->n_ops.absolute);
+    Py_CLEAR(state->n_ops.invert);
+    Py_CLEAR(state->n_ops.left_shift);
+    Py_CLEAR(state->n_ops.right_shift);
+    Py_CLEAR(state->n_ops.bitwise_and);
+    Py_CLEAR(state->n_ops.bitwise_xor);
+    Py_CLEAR(state->n_ops.bitwise_or);
+    Py_CLEAR(state->n_ops.less);
+    Py_CLEAR(state->n_ops.less_equal);
+    Py_CLEAR(state->n_ops.equal);
+    Py_CLEAR(state->n_ops.not_equal);
+    Py_CLEAR(state->n_ops.greater);
+    Py_CLEAR(state->n_ops.greater_equal);
+    Py_CLEAR(state->n_ops.floor_divide);
+    Py_CLEAR(state->n_ops.true_divide);
+    Py_CLEAR(state->n_ops.logical_or);
+    Py_CLEAR(state->n_ops.logical_and);
+    Py_CLEAR(state->n_ops.floor);
+    Py_CLEAR(state->n_ops.ceil);
+    Py_CLEAR(state->n_ops.maximum);
+    Py_CLEAR(state->n_ops.minimum);
+    Py_CLEAR(state->n_ops.rint);
+    Py_CLEAR(state->n_ops.conjugate);
+    Py_CLEAR(state->n_ops.matmul);
+    Py_CLEAR(state->n_ops.clip);
+    Py_CLEAR(state->n_ops.real);
+    Py_CLEAR(state->n_ops.imag);
+
+    return 0;
+}
+
+static void
+multiarray_umath_free(void *m)
+{
+    /* Nothing to free yet; non-PyObject C data is trivially destructed */
+}
 
 static int
 _multiarray_umath_exec(PyObject *m) {
@@ -5035,6 +5398,9 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
     module_loaded = 1;
+
+    /* Set up per-module state pointer */
+    _npy_module_state = get_module_state(m);
 
     /* Initialize CPU features */
     if (npy_cpu_init() < 0) {
@@ -5075,7 +5441,7 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
 
-    if (initialize_global_state() < 0) {
+    if (initialize_global_state(get_module_state(m)) < 0) {
         return -1;
     }
 
@@ -5093,7 +5459,7 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
     PyUFunc_Type.tp_dict = Py_BuildValue(
-        "{ON}", npy_interned_str.__signature__, s);
+        "{ON}", get_module_state(m)->interned_str.__signature__, s);
     if (PyUFunc_Type.tp_dict == NULL) {
         return -1;
     }
@@ -5324,8 +5690,9 @@ _multiarray_umath_exec(PyObject *m) {
      * Initialize the context-local current handler
      * with the default PyDataMem_Handler capsule.
      */
-    current_handler = PyContextVar_New("current_allocator", PyDataMem_DefaultHandler);
-    if (current_handler == NULL) {
+    get_module_state(m)->current_handler = PyContextVar_New(
+            "current_allocator", PyDataMem_DefaultHandler);
+    if (get_module_state(m)->current_handler == NULL) {
         return -1;
     }
 
@@ -5338,29 +5705,30 @@ _multiarray_umath_exec(PyObject *m) {
     }
 
     // initialize static references to ndarray.__array_*__ special methods
-    npy_static_pydata.ndarray_array_finalize = PyObject_GetAttrString(
+    multiarray_umath_state *state = get_module_state(m);
+    state->static_pydata.ndarray_array_finalize = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_finalize__");
-    if (npy_static_pydata.ndarray_array_finalize == NULL) {
+    if (state->static_pydata.ndarray_array_finalize == NULL) {
         return -1;
     }
-    npy_static_pydata.ndarray_array_ufunc = PyObject_GetAttrString(
+    state->static_pydata.ndarray_array_ufunc = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_ufunc__");
-    if (npy_static_pydata.ndarray_array_ufunc == NULL) {
+    if (state->static_pydata.ndarray_array_ufunc == NULL) {
         return -1;
     }
-    npy_static_pydata.ndarray_array_function = PyObject_GetAttrString(
+    state->static_pydata.ndarray_array_function = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_function__");
-    if (npy_static_pydata.ndarray_array_function == NULL) {
+    if (state->static_pydata.ndarray_array_function == NULL) {
         return -1;
     }
-    npy_static_pydata.ndarray_set_dtype = PyObject_GetAttrString(
+    state->static_pydata.ndarray_set_dtype = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "_set_dtype");
-    if (npy_static_pydata.ndarray_set_dtype == NULL) {
+    if (state->static_pydata.ndarray_set_dtype == NULL) {
         return -1;
     }
-    npy_static_pydata.ndarray_dtype_descr = PyObject_GetAttrString(
+    state->static_pydata.ndarray_dtype_descr = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "dtype");
-    if (npy_static_pydata.ndarray_dtype_descr == NULL) {
+    if (state->static_pydata.ndarray_dtype_descr == NULL) {
         return -1;
     }
 
@@ -5376,24 +5744,24 @@ _multiarray_umath_exec(PyObject *m) {
 
     if (npy_cache_import_runtime(
             "numpy.dtypes", "_add_dtype_helper",
-            &npy_runtime_imports._add_dtype_helper) == -1) {
+            &state->runtime_imports._add_dtype_helper) == -1) {
         return -1;
     }
 
     if (PyObject_CallFunction(
-            npy_runtime_imports._add_dtype_helper,
+            state->runtime_imports._add_dtype_helper,
             "Os", (PyObject *)&PyArray_StringDType, NULL) == NULL) {
         return -1;
     }
     PyDict_SetItemString(d, "StringDType", (PyObject *)&PyArray_StringDType);
 
     // initialize static reference to a zero-like array
-    npy_static_pydata.zero_pyint_like_arr = PyArray_ZEROS(
+    state->static_pydata.zero_pyint_like_arr = PyArray_ZEROS(
             0, NULL, NPY_DEFAULT_INT, NPY_FALSE);
-    if (npy_static_pydata.zero_pyint_like_arr == NULL) {
+    if (state->static_pydata.zero_pyint_like_arr == NULL) {
         return -1;
     }
-    ((PyArrayObject_fields *)npy_static_pydata.zero_pyint_like_arr)->flags |=
+    ((PyArrayObject_fields *)state->static_pydata.zero_pyint_like_arr)->flags |=
             (NPY_ARRAY_WAS_PYTHON_INT|NPY_ARRAY_WAS_INT_AND_REPLACED);
 
     if (verify_static_structs_initialized() < 0) {
@@ -5438,11 +5806,14 @@ static struct PyModuleDef_Slot _multiarray_umath_slots[] = {
 };
 
 static struct PyModuleDef moduledef = {
-    .m_base = PyModuleDef_HEAD_INIT,
-    .m_name = "_multiarray_umath",
-    .m_size = 0,
-    .m_methods = array_module_methods,
-    .m_slots = _multiarray_umath_slots,
+    .m_base     = PyModuleDef_HEAD_INIT,
+    .m_name     = "_multiarray_umath",
+    .m_size     = sizeof(multiarray_umath_state),
+    .m_methods  = array_module_methods,
+    .m_slots    = _multiarray_umath_slots,
+    .m_traverse = multiarray_umath_traverse,
+    .m_clear    = multiarray_umath_clear,
+    .m_free     = multiarray_umath_free,
 };
 
 PyMODINIT_FUNC PyInit__multiarray_umath(void) {

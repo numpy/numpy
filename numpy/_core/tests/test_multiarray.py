@@ -28,6 +28,11 @@ from decimal import Decimal
 
 import pytest
 
+try:
+    import _interpreters
+except ModuleNotFoundError:
+    _interpreters = None
+
 import numpy as np
 import numpy._core._multiarray_tests as _multiarray_tests
 from numpy._core._rational_tests import rational, rational2
@@ -11840,3 +11845,53 @@ class TestPatternMatching:
                 assert_array_equal(row4, [7, 8])
             case _:
                 raise AssertionError("3D ndarray did not match sequence pattern")
+
+
+class TestSubinterpreterTeardown:
+    """
+    Test that _multiarray_umath handles subinterpreter load attempts gracefully.
+
+    Currently ensures the import fails cleanly (without segfaulting); the
+    ``finally`` block exercises subinterpreter teardown code paths even on
+    failure. Once supported, the module's own GC hooks will also fire.
+
+    Uses the `_interpreters` internal C module (Python 3.13+), which
+    backs `concurrent.interpreters` (PEP 734).
+
+    FIXME: Remove the xfail and update this test to pass once NumPy's global
+    state migration is complete (i.e., once Py_MOD_MULTIPLE_INTERPRETERS_SUPPORTED
+    is declared in multiarraymodule.c).
+    """
+
+    @pytest.mark.xfail(
+        reason=(
+            "numpy._core._multiarray_umath has not yet opted in to "
+            "Py_MOD_MULTIPLE_INTERPRETERS_SUPPORTED global state "
+            "migration is still in progress."
+        )
+    )
+    @pytest.mark.skipif(
+        _interpreters is None,
+        reason="_interpreters module not available (Python 3.13+ required)"
+    )
+    def test_subinterpreter_import_and_teardown(self):
+        """
+        Loading numpy in a subinterpreter must raise ImportError cleanly.
+
+        The ``finally`` block destroys the subinterpreter, exercising its
+        teardown code paths even on import failure. Once subinterpreter
+        support lands, numpy's GC hooks (m_clear / m_free) will also fire.
+        """
+        interp = _interpreters.create()
+        try:
+            excinfo = _interpreters.run_string(interp, "import numpy")
+            # _interpreters.run_string returns None on success and a
+            # types.SimpleNamespace on failure (with .type, .msg, .formatted
+            # attributes). Re-raise so pytest.mark.xfail can catch it.
+            if excinfo is not None:
+                raise ImportError(excinfo.formatted)
+        finally:
+            # Destroy the subinterpreter to exercise its teardown code paths.
+            # Once subinterpreter support is enabled, this will also call
+            # numpy's m_clear / m_free GC hooks.
+            _interpreters.destroy(interp)

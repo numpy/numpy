@@ -14,6 +14,7 @@
 #include "npy_static_data.h"
 #include "templ_common.h"
 #include "multiarraymodule.h"
+#include "module_state.h"
 
 #include <assert.h>
 #ifdef NPY_OS_LINUX
@@ -70,7 +71,7 @@ NPY_NO_EXPORT PyObject *
 _get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 {
 #ifdef NPY_OS_LINUX
-    if (npy_global_state.madvise_hugepage) {
+    if (npy_get_module_state()->global_state.madvise_hugepage) {
         Py_RETURN_TRUE;
     }
 #endif
@@ -86,14 +87,15 @@ _get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
  * It is exposed to Python as `np._core.multiarray._set_madvise_hugepage`.
  */
 NPY_NO_EXPORT PyObject *
-_set_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *enabled_obj)
+_set_madvise_hugepage(PyObject *self, PyObject *enabled_obj)
 {
-    int was_enabled = npy_global_state.madvise_hugepage;
+    multiarray_umath_state *state = get_module_state(self);
+    int was_enabled = state->global_state.madvise_hugepage;
     int enabled = PyObject_IsTrue(enabled_obj);
     if (enabled < 0) {
         return NULL;
     }
-    npy_global_state.madvise_hugepage = enabled;
+    state->global_state.madvise_hugepage = enabled;
     if (was_enabled) {
         Py_RETURN_TRUE;
     }
@@ -106,7 +108,7 @@ indicate_hugepages(void *p, size_t size) {
 #ifdef NPY_OS_LINUX
     /* allow kernel allocating huge pages for large arrays */
     if (NPY_UNLIKELY(size >= ((1u<<22u))) &&
-        npy_global_state.madvise_hugepage) {
+        npy_get_module_state()->global_state.madvise_hugepage) {
         npy_uintp offset = 4096u - (npy_uintp)p % (4096u);
         npy_uintp length = size - offset;
         /**
@@ -432,11 +434,11 @@ PyDataMem_Handler default_handler = {
         default_free     /* free */
     }
 };
-/* singleton capsule of the default handler */
+/*
+ * singleton capsule of the default handler.
+ * Stays process-global: public C-API slot (numpy_api.py, slot 306), can't move to module state.
+ */
 PyObject *PyDataMem_DefaultHandler;
-PyObject *current_handler;
-
-int uo_index=0;   /* user_override index */
 
 /* Wrappers for the default or any user-assigned PyDataMem_Handler */
 
@@ -540,6 +542,8 @@ PyDataMem_SetHandler(PyObject *handler)
 {
     PyObject *old_handler;
     PyObject *token;
+    
+    PyObject *current_handler = npy_get_module_state()->current_handler;
     if (PyContextVar_Get(current_handler, NULL, &old_handler)) {
         return NULL;
     }
@@ -567,7 +571,7 @@ NPY_NO_EXPORT PyObject *
 PyDataMem_GetHandler()
 {
     PyObject *handler;
-    if (PyContextVar_Get(current_handler, NULL, &handler)) {
+    if (PyContextVar_Get(npy_get_module_state()->current_handler, NULL, &handler)) {
         return NULL;
     }
     return handler;

@@ -8,6 +8,7 @@
 #include "npy_pycompat.h"
 #include "npy_import.h"
 #include "multiarraymodule.h"
+#include "module_state.h"
 #include "strfuncs.h"
 
 static void
@@ -39,13 +40,13 @@ array_repr(PyArrayObject *self)
      * leads to circular import problems.
      */
     if (npy_cache_import_runtime("numpy._core.arrayprint", "_default_array_repr",
-                                 &npy_runtime_imports._default_array_repr) == -1) {
+                                 &npy_get_module_state()->runtime_imports._default_array_repr) == -1) {
         npy_PyErr_SetStringChained(PyExc_RuntimeError,
                 "Unable to configure default ndarray.__repr__");
         return NULL;
     }
     return PyObject_CallFunctionObjArgs(
-            npy_runtime_imports._default_array_repr, self, NULL);
+            npy_get_module_state()->runtime_imports._default_array_repr, self, NULL);
 }
 
 
@@ -58,13 +59,13 @@ array_str(PyArrayObject *self)
      */
     if (npy_cache_import_runtime(
                 "numpy._core.arrayprint", "_default_array_str",
-                &npy_runtime_imports._default_array_str) == -1) {
+                &npy_get_module_state()->runtime_imports._default_array_str) == -1) {
         npy_PyErr_SetStringChained(PyExc_RuntimeError,
                 "Unable to configure default ndarray.__str__");
         return NULL;
     }
     return PyObject_CallFunctionObjArgs(
-            npy_runtime_imports._default_array_str, self, NULL);
+            npy_get_module_state()->runtime_imports._default_array_str, self, NULL);
 }
 
 

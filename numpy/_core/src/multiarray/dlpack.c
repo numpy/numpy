@@ -10,6 +10,7 @@
 #include "npy_argparse.h"
 #include "npy_dlpack.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "common.h"
 #include "conversion_utils.h"
 #include "descriptor.h"
@@ -24,7 +25,7 @@ dlpack_export_registry_lookup(PyArray_Descr *dtype,
 {
     PyObject *val = NULL;
     int gres = PyDict_GetItemRef(
-            npy_static_pydata.dlpack_export_registry,
+            npy_get_module_state()->static_pydata.dlpack_export_registry,
             (PyObject *)dtype,
             &val);
     if (gres <= 0) {
@@ -66,7 +67,7 @@ dlpack_dtype_registry_lookup(uint8_t code, uint8_t bits)
     }
     PyObject *reg_val = NULL;
     int gres = PyDict_GetItemRef(
-            npy_static_pydata.dlpack_dtype_registry, key, &reg_val);
+            npy_get_module_state()->static_pydata.dlpack_dtype_registry, key, &reg_val);
     Py_DECREF(key);
     if (gres < 0) {
         return NULL;
@@ -569,7 +570,7 @@ array_dlpack_device(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 }
 
 NPY_NO_EXPORT PyObject *
-from_dlpack(PyObject *NPY_UNUSED(self),
+from_dlpack(PyObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *obj, *copy = Py_None, *device = Py_None;
@@ -586,7 +587,8 @@ from_dlpack(PyObject *NPY_UNUSED(self),
      * our max_version. `device` is always passed as `None`, but if the user
      * provided a device, we will replace it with the "cpu": (1, 0).
      */
-    PyObject *call_args[] = {obj, Py_None, copy, npy_static_pydata.dl_max_version};
+    multiarray_umath_state *state = get_module_state(self);
+    PyObject *call_args[] = {obj, Py_None, copy, state->static_pydata.dl_max_version};
     Py_ssize_t nargsf = 1 | PY_VECTORCALL_ARGUMENTS_OFFSET;
 
     /* If device is passed it must be "cpu" and replace it with (1, 0) */
@@ -597,13 +599,14 @@ from_dlpack(PyObject *NPY_UNUSED(self),
             return NULL;
         }
         assert(device_request == NPY_DEVICE_CPU);
-        call_args[1] = npy_static_pydata.dl_cpu_device_tuple;
+        call_args[1] = state->static_pydata.dl_cpu_device_tuple;
     }
 
 
+    PyObject *dlpack_str = state->interned_str.__dlpack__;
     PyObject *capsule = PyObject_VectorcallMethod(
-            npy_interned_str.__dlpack__, call_args, nargsf,
-            npy_static_pydata.dl_call_kwnames);
+            dlpack_str, call_args, nargsf,
+            state->static_pydata.dl_call_kwnames);
     if (capsule == NULL) {
         /*
          * TODO: This path should be deprecated in NumPy 2.1.  Once deprecated
@@ -617,7 +620,7 @@ from_dlpack(PyObject *NPY_UNUSED(self),
             /* max_version may be unsupported, try without kwargs */
             PyErr_Clear();
             capsule = PyObject_VectorcallMethod(
-                npy_interned_str.__dlpack__, call_args, nargsf, NULL);
+                dlpack_str, call_args, nargsf, NULL);
         }
         if (capsule == NULL) {
             return NULL;
@@ -808,8 +811,9 @@ from_dlpack(PyObject *NPY_UNUSED(self),
 
 
 NPY_NO_EXPORT PyObject *
-_register_dlpack_dtype(PyObject *NPY_UNUSED(self), PyObject *args)
+_register_dlpack_dtype(PyObject *self, PyObject *args)
 {
+    multiarray_umath_state *state = get_module_state(self);
     PyObject *ret = NULL;
     PyArray_Descr *descr = NULL;
     PyObject *dlpack_tuple = NULL;
@@ -843,7 +847,7 @@ _register_dlpack_dtype(PyObject *NPY_UNUSED(self), PyObject *args)
     }
 
     int set_res = PyDict_SetDefaultRef(
-            npy_static_pydata.dlpack_export_registry, (PyObject *)descr, dlpack_tuple,
+            state->static_pydata.dlpack_export_registry, (PyObject *)descr, dlpack_tuple,
             &original_tuple);
     if (set_res < 0) {
         goto finish;
@@ -863,7 +867,7 @@ _register_dlpack_dtype(PyObject *NPY_UNUSED(self), PyObject *args)
     }
 
     if (PyDict_SetDefaultRef(
-            npy_static_pydata.dlpack_dtype_registry, dlpack_tuple, (PyObject *)descr,
+            state->static_pydata.dlpack_dtype_registry, dlpack_tuple, (PyObject *)descr,
             &original_descr) < 0) {
         goto finish;
     }
@@ -888,8 +892,9 @@ finish:
 
 /* Swap out the registry dicts for testing purposes. */
 NPY_NO_EXPORT PyObject *
-_dlpack_registry_replace(PyObject *NPY_UNUSED(self), PyObject *args)
+_dlpack_registry_replace(PyObject *self, PyObject *args)
 {
+    multiarray_umath_state *state = get_module_state(self);
     PyObject *imp, *exp;
     if (!PyArg_ParseTuple(args, "O!O!: _dlpack_registry_replace",
             &PyDict_Type, &imp, &PyDict_Type, &exp)) {
@@ -897,15 +902,15 @@ _dlpack_registry_replace(PyObject *NPY_UNUSED(self), PyObject *args)
     }
 
     PyObject *ret = PyTuple_Pack(2,
-        npy_static_pydata.dlpack_dtype_registry,
-        npy_static_pydata.dlpack_export_registry);
+        state->static_pydata.dlpack_dtype_registry,
+        state->static_pydata.dlpack_export_registry);
     if (ret == NULL) {
         return ret;
     }
 
     /* Replace the currently used dicts in place. */
-    Py_SETREF(npy_static_pydata.dlpack_dtype_registry, Py_NewRef(imp));
-    Py_SETREF(npy_static_pydata.dlpack_export_registry, Py_NewRef(exp));
+    Py_SETREF(state->static_pydata.dlpack_dtype_registry, Py_NewRef(imp));
+    Py_SETREF(state->static_pydata.dlpack_export_registry, Py_NewRef(exp));
     return ret;
 }
 

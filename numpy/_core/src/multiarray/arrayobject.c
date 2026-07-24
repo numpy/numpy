@@ -63,6 +63,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "binop_override.h"
 #include "array_coercion.h"
 #include "multiarraymodule.h"
+#include "module_state.h"
 
 /*NUMPY_API
   Compute the size of an array (in number of items)
@@ -367,7 +368,7 @@ static inline int
 write_and_clear_error_if_unraisable(int status, npy_bool unraisable)
 {
     if (status < 0 && unraisable) {
-        PyErr_WriteUnraisable(npy_interned_str.array_dealloc);
+        PyErr_WriteUnraisable(npy_get_module_state()->interned_str.array_dealloc);
         return 0;
     }
     return status;
@@ -431,7 +432,7 @@ _clear_array_attributes(PyArrayObject *self, npy_bool unraisable)
         }
         /* mem_handler can be absent if NPY_ARRAY_OWNDATA arbitrarily set */
         if (fa->mem_handler == NULL) {
-            if (npy_global_state.warn_if_no_mem_policy) {
+            if (npy_get_module_state()->global_state.warn_if_no_mem_policy) {
                 char const *msg = "Trying to dealloc data, but a memory policy "
                     "is not set. If you take ownership of the data, you must "
                     "set a base owning the data (e.g. a PyCapsule).";
@@ -653,7 +654,7 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
             return NULL;
         }
 
-        PyObject *op = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
+        PyObject *op = (cmp_op == Py_EQ ? npy_get_module_state()->n_ops.logical_and : npy_get_module_state()->n_ops.logical_or);
         PyObject *res = NULL;
         for (int i = 0; i < field_count; ++i) {
             PyObject *fieldname, *temp, *temp2;
@@ -844,12 +845,12 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     case Py_LT:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, other, n_ops.less);
+                (PyObject *)self, other, npy_get_module_state()->n_ops.less);
         break;
     case Py_LE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, other, n_ops.less_equal);
+                (PyObject *)self, other, npy_get_module_state()->n_ops.less_equal);
         break;
     case Py_EQ:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
@@ -881,7 +882,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         }
 
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, (PyObject *)other, n_ops.equal);
+                (PyObject *)self, (PyObject *)other, npy_get_module_state()->n_ops.equal);
         break;
     case Py_NE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
@@ -913,17 +914,17 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         }
 
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, (PyObject *)other, n_ops.not_equal);
+                (PyObject *)self, (PyObject *)other, npy_get_module_state()->n_ops.not_equal);
         break;
     case Py_GT:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, other, n_ops.greater);
+                (PyObject *)self, other, npy_get_module_state()->n_ops.greater);
         break;
     case Py_GE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, other, n_ops.greater_equal);
+                (PyObject *)self, other, npy_get_module_state()->n_ops.greater_equal);
         break;
     default:
         Py_INCREF(Py_NotImplemented);
@@ -957,7 +958,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     if (result == NULL
             && (cmp_op == Py_EQ || cmp_op == Py_NE)
             && PyErr_ExceptionMatches(
-                    npy_static_pydata._UFuncNoLoopError)) {
+                    npy_get_module_state()->static_pydata._UFuncNoLoopError)) {
         PyErr_Clear();
 
         PyArrayObject *array_other = (PyArrayObject *)PyArray_FROM_O(other);

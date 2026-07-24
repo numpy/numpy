@@ -13,22 +13,25 @@
 #include "npy_import.h"
 #include "npy_static_data.h"
 #include "extobj.h"
+#include "module_state.h"
 
 // static variables are zero-filled by default, no need to explicitly do so
-NPY_VISIBILITY_HIDDEN npy_interned_str_struct npy_interned_str;
-NPY_VISIBILITY_HIDDEN npy_static_pydata_struct npy_static_pydata;
-NPY_VISIBILITY_HIDDEN npy_static_cdata_struct npy_static_cdata;
+/* npy_interned_str migrated to multiarray_umath_state.interned_str */
+/* npy_static_pydata migrated to multiarray_umath_state.static_pydata */
+/* npy_static_cdata migrated to multiarray_umath_state.static_cdata */
 
-#define INTERN_STRING(struct_member, string)                             \
-    assert(npy_interned_str.struct_member == NULL);                      \
-    npy_interned_str.struct_member = PyUnicode_InternFromString(string); \
-    if (npy_interned_str.struct_member == NULL) {                        \
+#define INTERN_STRING(struct_member, string)                              \
+    assert(interned_str->struct_member == NULL);                         \
+    interned_str->struct_member = PyUnicode_InternFromString(string);    \
+    if (interned_str->struct_member == NULL) {                           \
         return -1;                                                       \
     }                                                                    \
 
 NPY_NO_EXPORT int
 intern_strings(void)
 {
+    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
+
     INTERN_STRING(current_allocator, "current_allocator");
     INTERN_STRING(array, "__array__");
     INTERN_STRING(array_function, "__array_function__");
@@ -115,119 +118,122 @@ initialize_static_globals(void)
      * that we want to keep alive for the lifetime of the
      * module for performance reasons
      */
+    npy_static_pydata_struct *static_pydata = &npy_get_module_state()->static_pydata;
 
     IMPORT_GLOBAL("math", "floor",
-                  npy_static_pydata.math_floor_func);
+                  static_pydata->math_floor_func);
 
     IMPORT_GLOBAL("math", "ceil",
-                  npy_static_pydata.math_ceil_func);
+                  static_pydata->math_ceil_func);
 
     IMPORT_GLOBAL("math", "trunc",
-                  npy_static_pydata.math_trunc_func);
+                  static_pydata->math_trunc_func);
 
     IMPORT_GLOBAL("math", "gcd",
-                  npy_static_pydata.math_gcd_func);
+                  static_pydata->math_gcd_func);
 
     IMPORT_GLOBAL("numpy.exceptions", "AxisError",
-                  npy_static_pydata.AxisError);
+                  static_pydata->AxisError);
 
     IMPORT_GLOBAL("numpy.exceptions", "ComplexWarning",
-                  npy_static_pydata.ComplexWarning);
+                  static_pydata->ComplexWarning);
 
     IMPORT_GLOBAL("numpy.exceptions", "DTypePromotionError",
-                  npy_static_pydata.DTypePromotionError);
+                  static_pydata->DTypePromotionError);
 
     IMPORT_GLOBAL("numpy.exceptions", "TooHardError",
-                  npy_static_pydata.TooHardError);
+                  static_pydata->TooHardError);
 
     IMPORT_GLOBAL("numpy.exceptions", "VisibleDeprecationWarning",
-                  npy_static_pydata.VisibleDeprecationWarning);
+                  static_pydata->VisibleDeprecationWarning);
 
     IMPORT_GLOBAL("numpy._globals", "_CopyMode",
-                  npy_static_pydata._CopyMode);
+                  static_pydata->_CopyMode);
 
     IMPORT_GLOBAL("numpy._globals", "_NoValue",
-                  npy_static_pydata._NoValue);
+                  static_pydata->_NoValue);
 
     IMPORT_GLOBAL("numpy._core._exceptions", "_ArrayMemoryError",
-                  npy_static_pydata._ArrayMemoryError);
+                  static_pydata->_ArrayMemoryError);
 
     IMPORT_GLOBAL("numpy._core._exceptions", "_UFuncBinaryResolutionError",
-                  npy_static_pydata._UFuncBinaryResolutionError);
+                  static_pydata->_UFuncBinaryResolutionError);
 
     IMPORT_GLOBAL("numpy._core._exceptions", "_UFuncInputCastingError",
-                  npy_static_pydata._UFuncInputCastingError);
+                  static_pydata->_UFuncInputCastingError);
 
     IMPORT_GLOBAL("numpy._core._exceptions", "_UFuncNoLoopError",
-                  npy_static_pydata._UFuncNoLoopError);
+                  static_pydata->_UFuncNoLoopError);
 
     IMPORT_GLOBAL("numpy._core._exceptions", "_UFuncOutputCastingError",
-                  npy_static_pydata._UFuncOutputCastingError);
+                  static_pydata->_UFuncOutputCastingError);
 
     IMPORT_GLOBAL("numpy._core.printoptions", "format_options",
-                  npy_static_pydata.format_options);
+                  static_pydata->format_options);
 
     IMPORT_GLOBAL("os", "fspath",
-                  npy_static_pydata.os_fspath);
+                  static_pydata->os_fspath);
 
     IMPORT_GLOBAL("os", "PathLike",
-                  npy_static_pydata.os_PathLike);
+                  static_pydata->os_PathLike);
 
     // default_truediv_type_tup
     PyArray_Descr *tmp = PyArray_DescrFromType(NPY_DOUBLE);
-    npy_static_pydata.default_truediv_type_tup =
+    static_pydata->default_truediv_type_tup =
             PyTuple_Pack(3, tmp, tmp, tmp);
     Py_DECREF(tmp);
-    if (npy_static_pydata.default_truediv_type_tup == NULL) {
+    if (static_pydata->default_truediv_type_tup == NULL) {
         return -1;
     }
 
-    npy_static_pydata.legacy_resolver_promoting =
+    static_pydata->legacy_resolver_promoting =
             PyContextVar_New("numpy._legacy_resolver_promoting", Py_False);
-    if (npy_static_pydata.legacy_resolver_promoting == NULL) {
+    if (static_pydata->legacy_resolver_promoting == NULL) {
         return -1;
     }
 
-    npy_static_pydata.kwnames_is_copy = PyTuple_Pack(1, npy_interned_str.copy);
-    if (npy_static_pydata.kwnames_is_copy == NULL) {
+    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
+
+    static_pydata->kwnames_is_copy = PyTuple_Pack(1, interned_str->copy);
+    if (static_pydata->kwnames_is_copy == NULL) {
         return -1;
     }
 
-    npy_static_pydata.one_obj = PyLong_FromLong((long) 1);
-    if (npy_static_pydata.one_obj == NULL) {
+    static_pydata->one_obj = PyLong_FromLong((long) 1);
+    if (static_pydata->one_obj == NULL) {
         return -1;
     }
 
-    npy_static_pydata.zero_obj = PyLong_FromLong((long) 0);
-    if (npy_static_pydata.zero_obj == NULL) {
+    static_pydata->zero_obj = PyLong_FromLong((long) 0);
+    if (static_pydata->zero_obj == NULL) {
         return -1;
     }
 
-    npy_static_pydata.dl_call_kwnames =
-            PyTuple_Pack(3, npy_interned_str.dl_device,
-                            npy_interned_str.copy,
-                            npy_interned_str.max_version);
-    if (npy_static_pydata.dl_call_kwnames == NULL) {
+    static_pydata->dl_call_kwnames =
+            PyTuple_Pack(3, interned_str->dl_device,
+                            interned_str->copy,
+                            interned_str->max_version);
+    if (static_pydata->dl_call_kwnames == NULL) {
         return -1;
     }
 
-    npy_static_pydata.dl_cpu_device_tuple = Py_BuildValue("(i,i)", 1, 0);
-    if (npy_static_pydata.dl_cpu_device_tuple == NULL) {
+    static_pydata->dl_cpu_device_tuple = Py_BuildValue("(i,i)", 1, 0);
+    if (static_pydata->dl_cpu_device_tuple == NULL) {
         return -1;
     }
 
-    npy_static_pydata.dl_max_version = Py_BuildValue("(i,i)", 1, 0);
-    if (npy_static_pydata.dl_max_version == NULL) {
+    static_pydata->dl_max_version = Py_BuildValue("(i,i)", 1, 0);
+    if (static_pydata->dl_max_version == NULL) {
         return -1;
     }
 
-    npy_static_pydata.dlpack_dtype_registry = PyDict_New();
-    if (npy_static_pydata.dlpack_dtype_registry == NULL) {
+    static_pydata->dlpack_dtype_registry = PyDict_New();
+    if (static_pydata->dlpack_dtype_registry == NULL) {
         return -1;
     }
 
-    npy_static_pydata.dlpack_export_registry = PyDict_New();
-    if (npy_static_pydata.dlpack_export_registry == NULL) {
+    static_pydata->dlpack_export_registry = PyDict_New();
+    if (static_pydata->dlpack_export_registry == NULL) {
         return -1;
     }
 
@@ -241,6 +247,7 @@ initialize_static_globals(void)
      * This struct holds global static caches. These are set
      * up this way for performance reasons.
      */
+    npy_static_cdata_struct *cdata = &npy_get_module_state()->static_cdata;
 
     PyObject *flags = PySys_GetObject("flags");  /* borrowed object */
     if (flags == NULL) {
@@ -251,7 +258,7 @@ initialize_static_globals(void)
     if (level == NULL) {
         return -1;
     }
-    npy_static_cdata.optimize = PyLong_AsLong(level);
+    cdata->optimize = PyLong_AsLong(level);
     Py_DECREF(level);
 
     /*
@@ -267,7 +274,7 @@ initialize_static_globals(void)
         npy_intp k;
         for (k=0; k < 8; k++) {
             npy_uint8 v = (j & (1 << k)) == (1 << k);
-            npy_static_cdata.unpack_lookup_big[j].bytes[7 - k] = v;
+            cdata->unpack_lookup_big[j].bytes[7 - k] = v;
         }
     }
 
@@ -287,8 +294,9 @@ initialize_static_globals(void)
 NPY_NO_EXPORT int
 verify_static_structs_initialized(void) {
     // verify all entries in npy_interned_str are filled in
+    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
     for (int i=0; i < (sizeof(npy_interned_str_struct)/sizeof(PyObject *)); i++) {
-        if (*(((PyObject **)&npy_interned_str) + i) == NULL) {
+        if (*(((PyObject **)interned_str) + i) == NULL) {
             PyErr_Format(
                     PyExc_SystemError,
                     "NumPy internal error: NULL entry detected in "
@@ -298,8 +306,9 @@ verify_static_structs_initialized(void) {
     }
 
     // verify all entries in npy_static_pydata are filled in
+    npy_static_pydata_struct *static_pydata = &npy_get_module_state()->static_pydata;
     for (int i=0; i < (sizeof(npy_static_pydata_struct)/sizeof(PyObject *)); i++) {
-        if (*(((PyObject **)&npy_static_pydata) + i) == NULL) {
+        if (*(((PyObject **)static_pydata) + i) == NULL) {
             PyErr_Format(
                     PyExc_SystemError,
                     "NumPy internal error: NULL entry detected in "
