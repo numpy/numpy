@@ -624,6 +624,40 @@ _wheremask_converter(PyObject *obj, PyArrayObject **wheremask)
 
 
 /*
+ * Mark a temporary operand as a "weak" Python scalar (NEP 50): swap in the
+ * abstract DType and flag the array, since legacy type resolution uses
+ * `np.can_cast(operand, dtype)` and needs the information there.
+ *
+ * Returns 1 and replaces `*operand` (a reference it owns) if `obj` was a
+ * Python scalar, and 0 otherwise.
+ */
+static int
+mark_pyscalar_operand(PyObject *obj, PyArrayObject **operand,
+                      PyArray_DTypeMeta **DType)
+{
+    if (!npy_mark_tmp_array_if_pyscalar(obj, *operand, DType)) {
+        return 0;
+    }
+    if (PyArray_FLAGS(*operand) & NPY_ARRAY_WAS_PYTHON_INT
+            && PyArray_TYPE(*operand) != NPY_LONG) {
+        /*
+         * A Python integer that did not convert to the default integer
+         * (object or uint64 dtype) confuses many type resolvers, so promote a
+         * default-integer placeholder instead; `resolve_descriptors` replaces
+         * the operand with the packed original scalar afterwards.
+         *
+         * TODO: Just like the general dual NEP 50/legacy promotion
+         * support this is meant as a temporary hack for NumPy 1.25.
+         */
+        Py_INCREF(npy_static_pydata.zero_pyint_like_arr);
+        Py_SETREF(*operand,
+                  (PyArrayObject *)npy_static_pydata.zero_pyint_like_arr);
+    }
+    return 1;
+}
+
+
+/*
  * Due to the array override, do the actual parameter conversion
  * only in this step. This function takes the reference objects and
  * parses them into the desired values.
@@ -693,34 +727,7 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
             continue;
         }
 
-        /*
-         * Handle the "weak" Python scalars/literals.  We use a special DType
-         * for these.
-         * Further, we mark the operation array with a special flag to indicate
-         * this.  This is because the legacy dtype resolution makes use of
-         * `np.can_cast(operand, dtype)`.  The flag is local to this use, but
-         * necessary to propagate the information to the legacy type resolution.
-         */
-        if (npy_mark_tmp_array_if_pyscalar(obj, out_op[i], &out_op_DTypes[i])) {
-            if (PyArray_FLAGS(out_op[i]) & NPY_ARRAY_WAS_PYTHON_INT
-                    && PyArray_TYPE(out_op[i]) != NPY_LONG) {
-                /*
-                 * When `np.array(integer)` is not the default integer (mainly
-                 * object dtype), this confuses many type resolvers.  Simply
-                 * forcing a default integer array is unfortunately easiest.
-                 * In this disables the optional NEP 50 warnings, but in
-                 * practice when this happens we should _usually_ pick the
-                 * default integer loop and that raises an error.
-                 * (An exception is `float64(1.) + 10**100` which silently
-                 * will give a float64 result rather than a Python float.)
-                 *
-                 * TODO: Just like the general dual NEP 50/legacy promotion
-                 * support this is meant as a temporary hack for NumPy 1.25.
-                 */
-                Py_INCREF(npy_static_pydata.zero_pyint_like_arr);
-                Py_SETREF(out_op[i],
-                          (PyArrayObject *)npy_static_pydata.zero_pyint_like_arr);
-            }
+        if (mark_pyscalar_operand(obj, &out_op[i], &out_op_DTypes[i])) {
             *promoting_pyscalars = NPY_TRUE;
         }
     }
@@ -6214,16 +6221,9 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             Py_INCREF(tmp_operands[1]);
             operand_DTypes[1] = NPY_DTYPE(PyArray_DESCR(op2_array));
             Py_INCREF(operand_DTypes[1]);
-            if (npy_mark_tmp_array_if_pyscalar(
-                    op2, op2_array, &operand_DTypes[1])) {
+            if (mark_pyscalar_operand(
+                    op2, &tmp_operands[1], &operand_DTypes[1])) {
                 op2_is_pyscalar = NPY_TRUE;
-                if (PyArray_FLAGS(op2_array) & NPY_ARRAY_WAS_PYTHON_INT
-                        && PyArray_TYPE(op2_array) != NPY_LONG) {
-                    /* Same hack as in `convert_ufunc_arguments` */
-                    Py_INCREF(npy_static_pydata.zero_pyint_like_arr);
-                    Py_SETREF(tmp_operands[1],
-                              (PyArrayObject *)npy_static_pydata.zero_pyint_like_arr);
-                }
             }
             tmp_operands[2] = tmp_operands[0];
             operand_DTypes[2] = operand_DTypes[0];
