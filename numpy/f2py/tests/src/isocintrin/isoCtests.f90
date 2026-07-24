@@ -43,4 +43,11 @@
             C(j) = A(j)+B(j)
          end do
       end subroutine add_int8_arr
+      subroutine add_clong_arr(A, B, C)
+        use iso_c_binding, only: c_long
+        implicit none
+        integer(c_long), intent(in), dimension(3) :: A, B
+        integer(c_long), intent(out), dimension(3) :: C
+        C = A + B
+      end subroutine add_clong_arr
   end module coddity

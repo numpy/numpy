@@ -30,18 +30,16 @@ class TestISOC(util.F2PyTest):
         exp_out = 21
         assert out == exp_out
 
-    # gh-25207
-    def test_bindc_add_arr(self):
-        a = np.array([1, 2, 3])
-        b = np.array([1, 2, 3])
-        out = self.module.coddity.add_arr(a, b)
-        exp_out = a * 2
-        assert_allclose(out, exp_out)
-
-    def test_bindc_add_int8_arr(self):
-        a = np.array([1, 2, 3], dtype=np.int8)
-        b = np.array([3, 2, 1], dtype=np.int8)
-        out = self.module.coddity.add_int8_arr(a, b)
+    # gh-25207 (int64/add_arr)
+    @pytest.mark.parametrize("dtype", [np.int8, np.long, np.int64])
+    def test_bindc_add_int_arr(self, dtype):
+        a = np.array([1, 2, 3], dtype=dtype)
+        b = np.array([4, 5, 6], dtype=dtype)
+        out = {
+            np.int8: self.module.coddity.add_int8_arr,
+            np.long: self.module.coddity.add_clong_arr,
+            np.int64: self.module.coddity.add_arr
+        }[dtype](a, b)
         exp_out = a + b
         assert_allclose(out, exp_out)
         assert out.dtype == exp_out.dtype
