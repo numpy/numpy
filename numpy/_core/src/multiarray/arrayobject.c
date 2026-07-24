@@ -654,7 +654,7 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
             return NULL;
         }
 
-        PyObject *op = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
+        PyObject *op = (cmp_op == Py_EQ ? npy_get_module_state()->n_ops.logical_and : npy_get_module_state()->n_ops.logical_or);
         PyObject *res = NULL;
         for (int i = 0; i < field_count; ++i) {
             PyObject *fieldname, *temp, *temp2;
@@ -845,12 +845,12 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     case Py_LT:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, other, n_ops.less);
+                (PyObject *)self, other, npy_get_module_state()->n_ops.less);
         break;
     case Py_LE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, other, n_ops.less_equal);
+                (PyObject *)self, other, npy_get_module_state()->n_ops.less_equal);
         break;
     case Py_EQ:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
@@ -882,7 +882,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         }
 
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, (PyObject *)other, n_ops.equal);
+                (PyObject *)self, (PyObject *)other, npy_get_module_state()->n_ops.equal);
         break;
     case Py_NE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
@@ -914,17 +914,17 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         }
 
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, (PyObject *)other, n_ops.not_equal);
+                (PyObject *)self, (PyObject *)other, npy_get_module_state()->n_ops.not_equal);
         break;
     case Py_GT:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, other, n_ops.greater);
+                (PyObject *)self, other, npy_get_module_state()->n_ops.greater);
         break;
     case Py_GE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, other, n_ops.greater_equal);
+                (PyObject *)self, other, npy_get_module_state()->n_ops.greater_equal);
         break;
     default:
         Py_INCREF(Py_NotImplemented);

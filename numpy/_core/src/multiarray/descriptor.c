@@ -37,8 +37,6 @@
 #define PyDictProxy_Check(obj) (Py_TYPE(obj) == &PyDictProxy_Type)
 #endif
 
-static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
-
 static PyArray_Descr *
 _try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj);
 
@@ -142,16 +140,17 @@ _try_convert_from_dtype_attr(PyObject *obj)
  * dtype names to numpy scalar types.
  */
 NPY_NO_EXPORT PyObject *
-array_set_typeDict(PyObject *NPY_UNUSED(ignored), PyObject *args)
+array_set_typeDict(PyObject *module, PyObject *args)
 {
     PyObject *dict;
 
     if (!PyArg_ParseTuple(args, "O:set_typeDict", &dict)) {
         return NULL;
     }
+    multiarray_umath_state *state = get_module_state(module);
     /* Decrement old reference (if any)*/
-    Py_XDECREF(typeDict);
-    typeDict = dict;
+    Py_XDECREF(state->typeDict);
+    state->typeDict = dict;
     /* Create an internal reference to it */
     Py_INCREF(dict);
     Py_RETURN_NONE;
@@ -1931,6 +1930,7 @@ _convert_from_str(PyObject *obj, int align)
             (ret = PyArray_DescrFromType(check_num)) == NULL) {
         PyErr_Clear();
         /* Now check to see if the object is registered in typeDict */
+        PyObject *typeDict = npy_get_module_state()->typeDict;
         if (typeDict == NULL) {
             goto fail;
         }

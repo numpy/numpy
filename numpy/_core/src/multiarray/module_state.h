@@ -11,6 +11,11 @@
  *   [x] npy_runtime_imports — migrated to multiarray_umath_state.runtime_imports
  *                             (import mutex remains process-global in npy_import.c)
  *   [x] npy_global_state    — migrated to multiarray_umath_state.global_state
+ *   [x] typeDict (descriptor.c)                    — migrated to multiarray_umath_state.typeDict
+ *   [x] current_handler (alloc.c)                  — migrated to multiarray_umath_state.current_handler
+ *   [x] _global_pytype_to_type_dict (array_coercion.c) — migrated to multiarray_umath_state.global_pytype_to_type_dict
+ *   [x] n_ops (number.c)                           — migrated to multiarray_umath_state.n_ops
+ *   [x] uo_index (alloc.c) — dead code, deleted instead of migrated
  */
 
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_MODULE_STATE_H_
@@ -20,6 +25,7 @@
                                    npy_static_cdata_struct */
 #include "npy_import.h"        /* npy_runtime_imports_struct */
 #include "multiarraymodule.h"  /* npy_global_state_struct */
+#include "number.h"             /* NumericOps */
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,7 +47,12 @@ typedef struct {
     npy_static_cdata_struct    static_cdata;
     npy_runtime_imports_struct runtime_imports;
     npy_global_state_struct    global_state;
-    /* additional scattered globals */
+
+    /* scattered globals — formerly descriptor.c/alloc.c/array_coercion.c/number.c globals */
+    PyObject *typeDict;
+    PyObject *current_handler;
+    PyObject *global_pytype_to_type_dict;
+    NumericOps n_ops;
 } multiarray_umath_state;
 
 /*
