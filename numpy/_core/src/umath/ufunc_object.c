@@ -5701,7 +5701,7 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
     else if (is_pyscalar(PyTuple_GET_ITEM(args, 0))) {
         /*
          * Passing Python scalars on unchanged keeps them weakly typed
-         * (NEP 50).  The reshape below is a no-op if either input is 0-d.
+         * (NEP 50). The reshape below is a no-op if either input is 0-d.
          * The first input has to be checked first, it may be a scalar too.
          */
         Py_DECREF(ap1);
