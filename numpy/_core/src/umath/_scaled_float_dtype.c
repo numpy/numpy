@@ -980,26 +980,13 @@ sfloat_partition_loop(
 {
     assert(strides[0] == sizeof(npy_float64));
     assert(strides[1] == sizeof(npy_intp));
-
-    npy_intp *kth = (npy_intp *)data[1];
-
-    NPY_SELECTKIND which = ((PyArrayMethod_PartitionParameters *)context->parameters)->flags;
-    PyArray_PartitionFunc *partition_func = get_partition_func(NPY_DOUBLE, which);
-    if (partition_func == NULL) {
+    
+    PyArrayMethodObject *part_meth = NPY_DT_SLOTS(&PyArray_DoubleDType)->part_meth;
+    if (part_meth == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "double partition method not found");
         return -1;
     }
-
-    npy_intp pivots[NPY_MAX_PIVOT_STACK];
-    npy_intp npiv = 0;
-    npy_intp i;
-
-    int ret = 0;
-    for (i = 0; i < dimensions[1] && ret == 0; ++i) {
-        ret = partition_func(
-            data[0], dimensions[0], kth[i], pivots, &npiv, dimensions[1], NULL);
-    }
-
-    return ret;
+    return part_meth->strided_loop(context, data, dimensions, strides, NULL);
 }
 
 
@@ -1039,26 +1026,12 @@ sfloat_argpartition_loop(
     assert(strides[1] == sizeof(npy_intp));
     assert(strides[2] == sizeof(npy_intp));
 
-    npy_intp *kth = (npy_intp *)data[1];
-    npy_intp *out = (npy_intp *)data[2];
-
-    NPY_SELECTKIND which = ((PyArrayMethod_PartitionParameters *)context->parameters)->flags;
-    PyArray_ArgPartitionFunc *argpartition_func = get_argpartition_func(NPY_DOUBLE, which);
-    if (argpartition_func == NULL) {
+    PyArrayMethodObject *argpart_meth = NPY_DT_SLOTS(&PyArray_DoubleDType)->argpart_meth;
+    if (argpart_meth == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "double argpartition method not found");
         return -1;
     }
-
-    npy_intp pivots[NPY_MAX_PIVOT_STACK];
-    npy_intp npiv = 0;
-    npy_intp i;
-
-    int ret = 0;
-    for (i = 0; i < dimensions[1] && ret == 0; ++i) {
-        ret = argpartition_func(
-            data[0], out, dimensions[0], kth[i], pivots, &npiv, dimensions[1], NULL);
-    }
-
-    return ret;
+    return argpart_meth->strided_loop(context, data, dimensions, strides, NULL);
 }
 
 
