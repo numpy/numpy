@@ -3191,15 +3191,15 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__class_getitem__',
 
     """))
 
-add_newdoc('numpy._core.multiarray', 'ndarry', ('__complex__',
+add_newdoc('numpy._core.multiarray', 'ndarray', ('__complex__',
     """
     __complex__($self, /)
     --
 
-    a.__complex__()
+    complex(a)
 
-    Returns the array as a complex number. Raises an error if more than
-    one argument.
+    Returns the array as a complex number. The array must be
+    0-dimensional and have a compatible dtype.
 
     """))
 
@@ -3227,27 +3227,27 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__dlpack_device__',
 
     """))
 
-add_newdoc('numpy._core.multiarray', 'ndarry', ('__float__',
+add_newdoc('numpy._core.multiarray', 'ndarray', ('__float__',
     """
     __float__($self, /)
     --
 
-    a.__float__()
+    float(a)
 
-    Returns the array as a floating point number. Raises an error if more than
-    one argument.
+    Returns the array as a floating point number. The array must be
+    0-dimensional and have a compatible dtype.
 
     """))
 
-add_newdoc('numpy._core.multiarray', 'ndarry', ('__int__',
+add_newdoc('numpy._core.multiarray', 'ndarray', ('__int__',
     """
     __int__($self, /)
     --
 
-    a.__int__()
+    int(a)
 
-    Returns the array as an intger number. Raises an error if more than
-    one argument.
+    Returns the array as an intger number. The array must be
+    0-dimensional and have a compatible dtype.
 
     """))
 
