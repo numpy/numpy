@@ -238,6 +238,11 @@ def get_fieldstructure(adtype, lastname=None, parents=None,):
     parents : dictionary
         Dictionary of parent fields (used internally during recursion).
 
+    Returns
+    -------
+    out : dict
+        Dictionary with fields indexing lists of their parent fields.
+
     Examples
     --------
     >>> import numpy as np
@@ -246,7 +251,6 @@ def get_fieldstructure(adtype, lastname=None, parents=None,):
     ...                     ('B', [('BA', int),
     ...                            ('BB', [('BBA', int), ('BBB', int)])])])
     >>> rfn.get_fieldstructure(ndtype)
-    ... # XXX: possible regression, order of BBA and BBB is swapped
     {'A': [], 'B': [], 'BA': ['B'], 'BB': ['B'], 'BBA': ['B', 'BB'], 'BBB': ['B', 'BB']}
 
     """
