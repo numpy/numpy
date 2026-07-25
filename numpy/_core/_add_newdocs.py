@@ -3191,6 +3191,17 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__class_getitem__',
 
     """))
 
+add_newdoc('numpy._core.multiarray', 'ndarry', ('__complex__',
+    """
+    __complex__($self, /)
+    --
+
+    a.__complex__()
+
+    Returns the array as a complex number. Raises an error if more than
+    one argument.
+
+    """))
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__dlpack__',
     """
@@ -3216,6 +3227,29 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__dlpack_device__',
 
     """))
 
+add_newdoc('numpy._core.multiarray', 'ndarry', ('__float__',
+    """
+    __float__($self, /)
+    --
+
+    a.__float__()
+
+    Returns the array as a floating point number. Raises an error if more than
+    one argument.
+
+    """))
+
+add_newdoc('numpy._core.multiarray', 'ndarry', ('__int__',
+    """
+    __int__($self, /)
+    --
+
+    a.__int__()
+
+    Returns the array as an intger number. Raises an error if more than
+    one argument.
+
+    """))
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__reduce__',
     """
