@@ -1217,15 +1217,15 @@ class TestUnique:
         for res_unique_array_api, res_unique in [
             (
                 np.unique_values(arr),
-                np.unique(arr, equal_nan=False)
+                np.unique(arr, equal_nan=False, sorted=False)
             ),
             (
                 np.unique_counts(arr),
-                np.unique(arr, return_counts=True, equal_nan=False)
+                np.unique(arr, return_counts=True, equal_nan=False, sorted=False)
             ),
             (
                 np.unique_inverse(arr),
-                np.unique(arr, return_inverse=True, equal_nan=False)
+                np.unique(arr, return_inverse=True, equal_nan=False, sorted=False)
             ),
             (
                 np.unique_all(arr),
@@ -1234,7 +1234,8 @@ class TestUnique:
                     return_index=True,
                     return_inverse=True,
                     return_counts=True,
-                    equal_nan=False
+                    equal_nan=False,
+                    sorted=False
                 )
             )
         ]:
@@ -1247,6 +1248,67 @@ class TestUnique:
             for actual, expected in zip(res_unique_array_api, res_unique):
                 # Order of output is not guaranteed
                 assert_equal(np.sort(actual), np.sort(expected))
+
+    @pytest.mark.parametrize(
+        "func, expected_kwargs",
+        [
+            (
+                np.unique_values,
+                {
+                    "return_index": False,
+                    "return_inverse": False,
+                    "return_counts": False,
+                    "equal_nan": False,
+                    "sorted": False,
+                },
+            ),
+            (
+                np.unique_counts,
+                {
+                    "return_index": False,
+                    "return_inverse": False,
+                    "return_counts": True,
+                    "equal_nan": False,
+                    "sorted": False,
+                },
+            ),
+            (
+                np.unique_inverse,
+                {
+                    "return_index": False,
+                    "return_inverse": True,
+                    "return_counts": False,
+                    "equal_nan": False,
+                    "sorted": False,
+                },
+            ),
+            (
+                np.unique_all,
+                {
+                    "return_index": True,
+                    "return_inverse": True,
+                    "return_counts": True,
+                    "equal_nan": False,
+                    "sorted": False,
+                },
+            ),
+        ],
+    )
+    def test_array_api_unique_forwards_kwargs(self, monkeypatch, func, expected_kwargs):
+        import numpy.lib._arraysetops_impl as arraysetops_impl
+
+        calls = []
+        original_unique = arraysetops_impl.unique
+
+        def spy(*args, **kwargs):
+            calls.append(kwargs)
+            return original_unique(*args, **kwargs)
+
+        monkeypatch.setattr(arraysetops_impl, "unique", spy)
+
+        func(np.array([2, 1, 2, 3, 1, 4]))
+
+        assert calls == [expected_kwargs]
 
     def test_unique_inverse_shape(self):
         # Regression test for https://github.com/numpy/numpy/issues/25552
