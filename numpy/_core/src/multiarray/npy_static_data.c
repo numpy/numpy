@@ -77,6 +77,16 @@ intern_strings(void)
     INTERN_STRING(partition, "partition");
     INTERN_STRING(argpartition, "argpartition");
     INTERN_STRING(_set_dtype, "_set_dtype");
+    INTERN_STRING(year, "year");
+    INTERN_STRING(month, "month");
+    INTERN_STRING(day, "day");
+    INTERN_STRING(hour, "hour");
+    INTERN_STRING(minute, "minute");
+    INTERN_STRING(second, "second");
+    INTERN_STRING(microsecond, "microsecond");
+    INTERN_STRING(tzinfo, "tzinfo");
+    INTERN_STRING(utcoffset, "utcoffset");
+    INTERN_STRING(total_seconds, "total_seconds");
     return 0;
 }
 
