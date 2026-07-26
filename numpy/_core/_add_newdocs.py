@@ -3246,7 +3246,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__int__',
 
     int(a)
 
-    Returns the array as an intger number. The array must be
+    Returns the array as an integer number. The array must be
     0-dimensional and have a compatible dtype.
 
     """))
