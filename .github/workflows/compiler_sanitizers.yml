@@ -105,27 +105,23 @@ jobs:
           fi
           echo "OPENBLAS_VERSION=v$version"
           echo "OPENBLAS_VERSION=v$version" >> "$GITHUB_ENV"
-      - name: Uninstall pytest-xdist (conflicts with TSAN)
-        run: pip uninstall -y pytest-xdist
-
-      - name: Uninstall scipy-openblas
-        run: pip uninstall -y scipy-openblas32 scipy-openblas64
+      - name: Uninstall pytest-xdist and scipy-openblas (conflicts with TSAN)
+        run: pip uninstall -y pytest-xdist scipy-openblas32 scipy-openblas64
 
       - name: Upgrade spin (gh-29777)
         run: pip install -U spin
 
-      - name: Set up ccache
+      - name: Install ccache
         run: |
           apt-get update && apt-get install -y ccache
           echo "CCACHE_DIR=$GITHUB_WORKSPACE/.ccache" >> "$GITHUB_ENV"
           echo "CCACHE_MAXSIZE=500M" >> "$GITHUB_ENV"
 
-      - name: Cache compiler output (ccache)
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - name: Set up ccache
+        uses: ./.github/ccache
         with:
-          path: .ccache
-          key: tsan-ccache-${{ github.sha }}
-          restore-keys: tsan-ccache-
+          workflow_name: ${{ github.workflow }}
+          job_name: ${{ github.job }}
 
       - name: Cache TSAN-instrumented OpenBLAS
         id: cache-openblas
