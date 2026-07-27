@@ -71,7 +71,15 @@ int random_multivariate_hypergeometric_count(bitgen_t *bitgen_state,
         return 0;
     }
 
-    choices = PyMem_RawMalloc(total * (sizeof *choices));
+    /*
+     *  Not PyMem_Raw* (gh-31503): it only joined the Limited API in 3.13, and
+     *  this installed library is linked into abi3 3.12 extensions.
+     *  Not PyMem_* either: c_distributions.pxd declares this nogil, so
+     *  callers need not hold an attached thread state.
+     *  TODO: when py_limited_api reaches 3.13, restore PyMem_Raw* so that this
+     *  buffer is tracked by tracemalloc again.
+     */
+    choices = malloc(total * (sizeof *choices));
     if (choices == NULL) {
         return -1;
     }
@@ -125,7 +133,7 @@ int random_multivariate_hypergeometric_count(bitgen_t *bitgen_state,
         }
     }
 
-    PyMem_RawFree(choices);
+    free(choices);
 
     return 0;
 }

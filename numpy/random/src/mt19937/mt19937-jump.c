@@ -2,6 +2,15 @@
 #include "mt19937-jump.h"
 #include "mt19937.h"
 
+/*
+ * PyMem_Calloc/PyMem_Free, not PyMem_Raw* (gh-31503): the raw domain entered
+ * the Limited API only in 3.13, while py_limited_api targets 3.12.  Safe
+ * because mt19937_jump() is declared without nogil, so callers hold the
+ * attached thread state PyMem_* needs.
+ * TODO: when py_limited_api reaches 3.13, restore PyMem_Raw* so this file
+ * matches the rest of gh-31503.
+ */
+
 /* 32-bits function */
 /* return the i-th coefficient of the polynomial pf */
 unsigned long get_coef(unsigned long *pf, unsigned int deg) {
@@ -67,7 +76,7 @@ void horner1(unsigned long *pf, mt19937_state *state) {
   int i = MEXP - 1;
   mt19937_state *temp;
 
-  temp = (mt19937_state *)PyMem_RawCalloc(1, sizeof(mt19937_state));
+  temp = (mt19937_state *)PyMem_Calloc(1, sizeof(mt19937_state));
 
   while (get_coef(pf, i) == 0)
     i--;
@@ -93,14 +102,14 @@ void horner1(unsigned long *pf, mt19937_state *state) {
     ;
 
   copy_state(state, temp);
-  PyMem_RawFree(temp);
+  PyMem_Free(temp);
 }
 
 void mt19937_jump_state(mt19937_state *state) {
   unsigned long *pf;
   int i;
 
-  pf = (unsigned long *)PyMem_RawCalloc(P_SIZE, sizeof(unsigned long));
+  pf = (unsigned long *)PyMem_Calloc(P_SIZE, sizeof(unsigned long));
   for (i = 0; i<P_SIZE; i++) {
     pf[i] = poly_coef[i];
   }
@@ -111,5 +120,5 @@ void mt19937_jump_state(mt19937_state *state) {
 
   horner1(pf, state);
 
-  PyMem_RawFree(pf);
+  PyMem_Free(pf);
 }
