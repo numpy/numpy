@@ -447,6 +447,7 @@ from numpy._core.umath import (
     logical_xor,
     mod,
     modf,
+    multiply,
     nextafter,
     not_equal,
     positive,
@@ -7649,7 +7650,6 @@ matmul: _GUFunc_Nin2_Nout1[L["matmul"], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]
 matvec: _GUFunc_Nin2_Nout1[L["matvec"], L[19], None, L["(m,n),(n)->(m)"]]
 maximum: _UFunc_Nin2_Nout1[L["maximum"], L[21], None]
 minimum: _UFunc_Nin2_Nout1[L["minimum"], L[21], None]
-multiply: _UFunc_Nin2_Nout1[L["multiply"], L[23], L[1]]
 vecdot: _GUFunc_Nin2_Nout1[L["vecdot"], L[19], None, L["(n),(n)->()"]]
 vecmat: _GUFunc_Nin2_Nout1[L["vecmat"], L[19], None, L["(n),(n,m)->(m)"]]
 
