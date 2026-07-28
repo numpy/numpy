@@ -592,7 +592,7 @@ NumPyOS_ascii_strtold(const char *s, char** endptr)
         errno = 0;
         result = strtold_l(s, endptr, clocale);
         /*
-         * On some platforms (e.g. Darwin/iOS), freelocale can set errno.
+         * On some platforms (e.g. Darwin/iOS), successful freelocale can set errno.
          * We're interested in the strtold_l failure; so save the errno
          * after that call, and restore after freelocale(). See gh-32124.
          */
