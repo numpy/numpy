@@ -2089,8 +2089,24 @@ arraydescr_dealloc(PyArray_Descr *self)
     Py_XDECREF(lself->fields);
     if (lself->subarray) {
         Py_XDECREF(lself->subarray->shape);
-        Py_DECREF(lself->subarray->base);
+        /*
+         * A subarray dtype's base may itself be a subarray dtype, so
+         * decref'ing the base here can re-enter this function, one C
+         * stack frame per nesting level. Unwind the chain iteratively
+         * instead; at refcount 1 this dealloc holds the only
+         * reference (descriptors support neither weakrefs nor GC), so
+         * stealing the link is unobservable and each node still runs
+         * its own, now shallow, dealloc.
+         */
+        PyArray_Descr *base = lself->subarray->base;
         PyArray_free(lself->subarray);
+        while (base != NULL && Py_REFCNT(base) == 1 && PyDataType_HASSUBARRAY(base)) {
+            _PyArray_LegacyDescr *lbase = (_PyArray_LegacyDescr *)base;
+            base = lbase->subarray->base;
+            lbase->subarray->base = NULL;
+            Py_DECREF(lbase);
+        }
+        Py_XDECREF(base);
     }
     Py_XDECREF(lself->metadata);
     NPY_AUXDATA_FREE(lself->c_metadata);
