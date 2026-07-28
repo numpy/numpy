@@ -24,49 +24,49 @@ extern "C" {
 #define FE_ALL_EXCEPT \
     (FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW | FE_UNDERFLOW | FE_INEXACT)
 
-extern __attribute__((visibility("default"))) int npy_wasm_fenv_flags;
+extern __attribute__((visibility("default"))) int npy__wasm_fenv_flags;
 
 static inline int
-npy_wasm_fetestexcept(int excepts)
+npy__wasm_fetestexcept(int excepts)
 {
-    return npy_wasm_fenv_flags & excepts & FE_ALL_EXCEPT;
+    return npy__wasm_fenv_flags & excepts & FE_ALL_EXCEPT;
 }
 
 static inline int
-npy_wasm_feclearexcept(int excepts)
+npy__wasm_feclearexcept(int excepts)
 {
-    npy_wasm_fenv_flags &= ~(excepts & FE_ALL_EXCEPT);
+    npy__wasm_fenv_flags &= ~(excepts & FE_ALL_EXCEPT);
     return 0;
 }
 
 static inline int
-npy_wasm_feraiseexcept(int excepts)
+npy__wasm_feraiseexcept(int excepts)
 {
-    npy_wasm_fenv_flags |= excepts & FE_ALL_EXCEPT;
+    npy__wasm_fenv_flags |= excepts & FE_ALL_EXCEPT;
     return 0;
 }
 
 static inline int
-npy_wasm_fegetexceptflag(fexcept_t *flagp, int excepts)
+npy__wasm_fegetexceptflag(fexcept_t *flagp, int excepts)
 {
-    *flagp = (fexcept_t)(npy_wasm_fenv_flags & excepts & FE_ALL_EXCEPT);
+    *flagp = (fexcept_t)(npy__wasm_fenv_flags & excepts & FE_ALL_EXCEPT);
     return 0;
 }
 
 static inline int
-npy_wasm_fesetexceptflag(const fexcept_t *flagp, int excepts)
+npy__wasm_fesetexceptflag(const fexcept_t *flagp, int excepts)
 {
     excepts &= FE_ALL_EXCEPT;
-    npy_wasm_fenv_flags = (npy_wasm_fenv_flags & ~excepts) |
-                          ((int)*flagp & excepts);
+    npy__wasm_fenv_flags = (npy__wasm_fenv_flags & ~excepts) |
+                           ((int)*flagp & excepts);
     return 0;
 }
 
-#define fetestexcept(excepts)          npy_wasm_fetestexcept(excepts)
-#define feclearexcept(excepts)         npy_wasm_feclearexcept(excepts)
-#define feraiseexcept(excepts)         npy_wasm_feraiseexcept(excepts)
-#define fegetexceptflag(flagp, excpts) npy_wasm_fegetexceptflag(flagp, excpts)
-#define fesetexceptflag(flagp, excpts) npy_wasm_fesetexceptflag(flagp, excpts)
+#define fetestexcept(excepts)          npy__wasm_fetestexcept(excepts)
+#define feclearexcept(excepts)         npy__wasm_feclearexcept(excepts)
+#define feraiseexcept(excepts)         npy__wasm_feraiseexcept(excepts)
+#define fegetexceptflag(flagp, excpts) npy__wasm_fegetexceptflag(flagp, excpts)
+#define fesetexceptflag(flagp, excpts) npy__wasm_fesetexceptflag(flagp, excpts)
 
 #ifdef __cplusplus
 }
