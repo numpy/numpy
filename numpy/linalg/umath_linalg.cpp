@@ -22,35 +22,18 @@
 #include <cstdio>
 #include <cassert>
 #include <cmath>
-#include <cstdlib>
 #include <cstring>
 #include <type_traits>
 #include <utility>
-
-/*
- * PyMem_Raw* is only in the Limited API from 3.13 on. These buffers are
- * allocated inside ufunc inner loops, which run with the GIL released, so
- * PyMem_Malloc (which needs an attached thread state) is not an option and
- * malloc/free is what is left as it was here before gh-31503.
- *
- * TODO: when py_limited_api reaches 3.13, drop this and use PyMem_Raw* again.
- */
-#if defined(Py_LIMITED_API) && Py_LIMITED_API < 0x030d0000
-    #define linalg_raw_malloc std::malloc
-    #define linalg_raw_free   std::free
-#else
-    #define linalg_raw_malloc PyMem_RawMalloc
-    #define linalg_raw_free   PyMem_RawFree
-#endif
 
 
 static const char* umath_linalg_version_string = "0.1.5";
 
 /*
  * PyMutex is not in the Limited API at any version, so a limited API build
- * reuses the PyThread_type_lock fallback already used on Python < 3.13.
+ * uses the PyThread_type_lock fallback that Python < 3.13 uses.
  */
-#if PY_VERSION_HEX >= 0x30d00b3 && (!defined(Py_LIMITED_API) || Py_LIMITED_API >= 0x030d0000)
+#if PY_VERSION_HEX >= 0x30d00b3 && !defined(Py_LIMITED_API)
     #define UMATH_LINALG_USE_PYMUTEX 1
 #else
     #define UMATH_LINALG_USE_PYMUTEX 0
@@ -1218,7 +1201,7 @@ slogdet(char **args,
     safe_m = m != 0 ? m : 1;
     matrix_size = safe_m * safe_m * sizeof(typ);
     pivot_size = safe_m * sizeof(fortran_int);
-    tmp_buff = (char *)linalg_raw_malloc(matrix_size + pivot_size);
+    tmp_buff = (char *)PyMem_RawMalloc(matrix_size + pivot_size);
 
     if (tmp_buff) {
         /* swapped steps to get matrix in FORTRAN order */
@@ -1232,7 +1215,7 @@ slogdet(char **args,
                                           (basetyp*)args[2]);
         END_OUTER_LOOP
 
-        linalg_raw_free(tmp_buff);
+        PyMem_RawFree(tmp_buff);
     }
     else {
         /* TODO: Requires use of new ufunc API to indicate error return */
@@ -1266,7 +1249,7 @@ det(char **args,
     safe_m = m != 0 ? m : 1;
     matrix_size = safe_m * safe_m * sizeof(typ);
     pivot_size = safe_m * sizeof(fortran_int);
-    tmp_buff = (char *)linalg_raw_malloc(matrix_size + pivot_size);
+    tmp_buff = (char *)PyMem_RawMalloc(matrix_size + pivot_size);
 
     if (tmp_buff) {
         /* swapped steps to get matrix in FORTRAN order */
@@ -1285,7 +1268,7 @@ det(char **args,
             *(typ *)args[1] = det_from_slogdet(sign, logdet);
         END_OUTER_LOOP
 
-        linalg_raw_free(tmp_buff);
+        PyMem_RawFree(tmp_buff);
     }
     else {
         /* TODO: Requires use of new ufunc API to indicate error return */
@@ -1359,7 +1342,7 @@ init_evd(EIGH_PARAMS_t<typ>* params, char JOBZ, char UPLO,
     size_t alloc_size = safe_N * (safe_N + 1) * sizeof(typ);
     fortran_int lda = fortran_int_max(N, 1);
 
-    mem_buff = (npy_uint8 *)linalg_raw_malloc(alloc_size);
+    mem_buff = (npy_uint8 *)PyMem_RawMalloc(alloc_size);
 
     if (!mem_buff) {
         goto no_memory;
@@ -1394,7 +1377,7 @@ init_evd(EIGH_PARAMS_t<typ>* params, char JOBZ, char UPLO,
         liwork = query_iwork_size;
     }
 
-    mem_buff2 = (npy_uint8 *)linalg_raw_malloc(lwork*sizeof(typ) + liwork*sizeof(fortran_int));
+    mem_buff2 = (npy_uint8 *)PyMem_RawMalloc(lwork*sizeof(typ) + liwork*sizeof(fortran_int));
     if (!mem_buff2) {
         goto no_memory;
     }
@@ -1415,8 +1398,8 @@ init_evd(EIGH_PARAMS_t<typ>* params, char JOBZ, char UPLO,
  error:
     /* something failed */
     memset(params, 0, sizeof(*params));
-    linalg_raw_free(mem_buff2);
-    linalg_raw_free(mem_buff);
+    PyMem_RawFree(mem_buff2);
+    PyMem_RawFree(mem_buff);
 
     return 0;
 }
@@ -1471,7 +1454,7 @@ using fbasetyp = fortran_type_t<basetyp>;
     size_t safe_N = N;
     fortran_int lda = fortran_int_max(N, 1);
 
-    mem_buff = (npy_uint8 *)linalg_raw_malloc(safe_N * safe_N * sizeof(typ) +
+    mem_buff = (npy_uint8 *)PyMem_RawMalloc(safe_N * safe_N * sizeof(typ) +
                       safe_N * sizeof(basetyp));
     if (!mem_buff) {
         goto no_memory;
@@ -1508,7 +1491,7 @@ using fbasetyp = fortran_type_t<basetyp>;
         liwork = query_iwork_size;
     }
 
-    mem_buff2 = (npy_uint8 *)linalg_raw_malloc(lwork*sizeof(typ) +
+    mem_buff2 = (npy_uint8 *)PyMem_RawMalloc(lwork*sizeof(typ) +
                        lrwork*sizeof(basetyp) +
                        liwork*sizeof(fortran_int));
     if (!mem_buff2) {
@@ -1533,8 +1516,8 @@ no_memory:
     report_no_memory();
 error:
     memset(params, 0, sizeof(*params));
-    linalg_raw_free(mem_buff2);
-    linalg_raw_free(mem_buff);
+    PyMem_RawFree(mem_buff2);
+    PyMem_RawFree(mem_buff);
 
     return 0;
 }
@@ -1552,8 +1535,8 @@ static inline void
 release_evd(EIGH_PARAMS_t<typ> *params)
 {
     /* allocated memory in A and WORK */
-    linalg_raw_free(params->A);
-    linalg_raw_free(params->WORK);
+    PyMem_RawFree(params->A);
+    PyMem_RawFree(params->WORK);
     memset(params, 0, sizeof(*params));
 }
 
@@ -1750,7 +1733,7 @@ init_gesv(GESV_PARAMS_t<ftyp> *params, fortran_int N, fortran_int NRHS)
     size_t safe_N = N;
     size_t safe_NRHS = NRHS;
     fortran_int ld = fortran_int_max(N, 1);
-    mem_buff = (npy_uint8 *)linalg_raw_malloc(safe_N * safe_N * sizeof(ftyp) +
+    mem_buff = (npy_uint8 *)PyMem_RawMalloc(safe_N * safe_N * sizeof(ftyp) +
                       safe_N * safe_NRHS*sizeof(ftyp) +
                       safe_N * sizeof(fortran_int));
     if (!mem_buff) {
@@ -1773,7 +1756,7 @@ init_gesv(GESV_PARAMS_t<ftyp> *params, fortran_int N, fortran_int NRHS)
  error:
     report_no_memory();
 
-    linalg_raw_free(mem_buff);
+    PyMem_RawFree(mem_buff);
     memset(params, 0, sizeof(*params));
 
     return 0;
@@ -1784,7 +1767,7 @@ static inline void
 release_gesv(GESV_PARAMS_t<ftyp> *params)
 {
     /* memory block base is in A */
-    linalg_raw_free(params->A);
+    PyMem_RawFree(params->A);
     memset(params, 0, sizeof(*params));
 }
 
@@ -2002,7 +1985,7 @@ init_potrf(POTR_PARAMS_t<ftyp> *params, char UPLO, fortran_int N)
     size_t safe_N = N;
     fortran_int lda = fortran_int_max(N, 1);
 
-    mem_buff = (npy_uint8 *)linalg_raw_malloc(safe_N * safe_N * sizeof(ftyp));
+    mem_buff = (npy_uint8 *)PyMem_RawMalloc(safe_N * safe_N * sizeof(ftyp));
     if (!mem_buff) {
         goto error;
     }
@@ -2018,7 +2001,7 @@ init_potrf(POTR_PARAMS_t<ftyp> *params, char UPLO, fortran_int N)
  error:
     report_no_memory();
 
-    linalg_raw_free(mem_buff);
+    PyMem_RawFree(mem_buff);
     memset(params, 0, sizeof(*params));
 
     return 0;
@@ -2029,7 +2012,7 @@ static inline void
 release_potrf(POTR_PARAMS_t<ftyp> *params)
 {
     /* memory block base in A */
-    linalg_raw_free(params->A);
+    PyMem_RawFree(params->A);
     memset(params, 0, sizeof(*params));
 }
 
@@ -2212,7 +2195,7 @@ scalar_trait)
     fortran_int ld = fortran_int_max(n, 1);
 
     /* allocate data for known sizes (all but work) */
-    mem_buff = (npy_uint8 *)linalg_raw_malloc(a_size + wr_size + wi_size +
+    mem_buff = (npy_uint8 *)PyMem_RawMalloc(a_size + wr_size + wi_size +
                       vlr_size + vrr_size +
                       w_size + vl_size + vr_size);
     if (!mem_buff) {
@@ -2257,7 +2240,7 @@ scalar_trait)
         work_count = (size_t)work_size_query;
     }
 
-    mem_buff2 = (npy_uint8 *)linalg_raw_malloc(work_count*sizeof(typ));
+    mem_buff2 = (npy_uint8 *)PyMem_RawMalloc(work_count*sizeof(typ));
     if (!mem_buff2) {
         goto no_memory;
     }
@@ -2272,8 +2255,8 @@ scalar_trait)
     report_no_memory();
 
  error:
-    linalg_raw_free(mem_buff2);
-    linalg_raw_free(mem_buff);
+    PyMem_RawFree(mem_buff2);
+    PyMem_RawFree(mem_buff);
     memset(params, 0, sizeof(*params));
 
     return 0;
@@ -2435,7 +2418,7 @@ using realtyp = basetype_t<ftyp>;
     size_t total_size = a_size + w_size + vl_size + vr_size + rwork_size;
     fortran_int ld = fortran_int_max(n, 1);
 
-    mem_buff = (npy_uint8 *)linalg_raw_malloc(total_size);
+    mem_buff = (npy_uint8 *)PyMem_RawMalloc(total_size);
     if (!mem_buff) {
         goto no_memory;
     }
@@ -2477,7 +2460,7 @@ using realtyp = basetype_t<ftyp>;
         if(work_count == 0) work_count = 1;
     }
 
-    mem_buff2 = (npy_uint8 *)linalg_raw_malloc(work_count*sizeof(ftyp));
+    mem_buff2 = (npy_uint8 *)PyMem_RawMalloc(work_count*sizeof(ftyp));
     if (!mem_buff2) {
         goto no_memory;
     }
@@ -2492,8 +2475,8 @@ using realtyp = basetype_t<ftyp>;
  no_memory:
     report_no_memory();
  error:
-    linalg_raw_free(mem_buff2);
-    linalg_raw_free(mem_buff);
+    PyMem_RawFree(mem_buff2);
+    PyMem_RawFree(mem_buff);
     memset(params, 0, sizeof(*params));
 
     return 0;
@@ -2512,8 +2495,8 @@ template<typename typ>
 static inline void
 release_geev(GEEV_PARAMS_t<typ> *params)
 {
-    linalg_raw_free(params->WORK);
-    linalg_raw_free(params->A);
+    PyMem_RawFree(params->WORK);
+    PyMem_RawFree(params->A);
     memset(params, 0, sizeof(*params));
 }
 
@@ -2799,7 +2782,7 @@ init_gesdd(GESDD_PARAMS_t<ftyp> *params,
     u_size = safe_u_row_count * safe_m * sizeof(ftyp);
     vt_size = safe_n * safe_vt_column_count * sizeof(ftyp);
 
-    mem_buff = (npy_uint8 *)linalg_raw_malloc(a_size + s_size + u_size + vt_size + iwork_size);
+    mem_buff = (npy_uint8 *)PyMem_RawMalloc(a_size + s_size + u_size + vt_size + iwork_size);
 
     if (!mem_buff) {
         goto no_memory;
@@ -2844,7 +2827,7 @@ init_gesdd(GESDD_PARAMS_t<ftyp> *params,
         work_size = (size_t)work_count * sizeof(ftyp);
     }
 
-    mem_buff2 = (npy_uint8 *)linalg_raw_malloc(work_size);
+    mem_buff2 = (npy_uint8 *)PyMem_RawMalloc(work_size);
     if (!mem_buff2) {
         goto no_memory;
     }
@@ -2860,8 +2843,8 @@ init_gesdd(GESDD_PARAMS_t<ftyp> *params,
     report_no_memory();
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
-    linalg_raw_free(mem_buff);
-    linalg_raw_free(mem_buff2);
+    PyMem_RawFree(mem_buff);
+    PyMem_RawFree(mem_buff2);
     memset(params, 0, sizeof(*params));
 
     return 0;
@@ -2938,7 +2921,7 @@ using frealtyp = basetype_t<ftyp>;
     rwork_size *= sizeof(ftyp);
     iwork_size = 8 * safe_min_m_n* sizeof(fortran_int);
 
-    mem_buff = (npy_uint8 *)linalg_raw_malloc(a_size +
+    mem_buff = (npy_uint8 *)PyMem_RawMalloc(a_size +
                       s_size +
                       u_size +
                       vt_size +
@@ -2988,7 +2971,7 @@ using frealtyp = basetype_t<ftyp>;
         work_size = (size_t)work_count * sizeof(ftyp);
     }
 
-    mem_buff2 = (npy_uint8 *)linalg_raw_malloc(work_size);
+    mem_buff2 = (npy_uint8 *)PyMem_RawMalloc(work_size);
     if (!mem_buff2) {
         goto no_memory;
     }
@@ -3005,8 +2988,8 @@ using frealtyp = basetype_t<ftyp>;
 
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
-    linalg_raw_free(mem_buff2);
-    linalg_raw_free(mem_buff);
+    PyMem_RawFree(mem_buff2);
+    PyMem_RawFree(mem_buff);
     memset(params, 0, sizeof(*params));
 
     return 0;
@@ -3017,8 +3000,8 @@ static inline void
 release_gesdd(GESDD_PARAMS_t<typ>* params)
 {
     /* A and WORK contain allocated blocks */
-    linalg_raw_free(params->A);
-    linalg_raw_free(params->WORK);
+    PyMem_RawFree(params->A);
+    PyMem_RawFree(params->WORK);
     memset(params, 0, sizeof(*params));
 }
 
@@ -3238,7 +3221,7 @@ using ftyp = fortran_doublereal;
     size_t work_size;
     fortran_int lda = fortran_int_max(1, m);
 
-    mem_buff = (npy_uint8 *)linalg_raw_malloc(a_size + tau_size);
+    mem_buff = (npy_uint8 *)PyMem_RawMalloc(a_size + tau_size);
 
     if (!mem_buff)
         goto no_memory;
@@ -3272,7 +3255,7 @@ using ftyp = fortran_doublereal;
     params->LWORK = fortran_int_max(fortran_int_max(1, n), work_count);
 
     work_size = (size_t) params->LWORK * sizeof(ftyp);
-    mem_buff2 = (npy_uint8 *)linalg_raw_malloc(work_size);
+    mem_buff2 = (npy_uint8 *)PyMem_RawMalloc(work_size);
     if (!mem_buff2)
         goto no_memory;
 
@@ -3287,8 +3270,8 @@ using ftyp = fortran_doublereal;
 
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
-    linalg_raw_free(mem_buff);
-    linalg_raw_free(mem_buff2);
+    PyMem_RawFree(mem_buff);
+    PyMem_RawFree(mem_buff2);
     memset(params, 0, sizeof(*params));
 
     return 0;
@@ -3316,7 +3299,7 @@ using ftyp = fortran_doublecomplex;
     size_t work_size;
     fortran_int lda = fortran_int_max(1, m);
 
-    mem_buff = (npy_uint8 *)linalg_raw_malloc(a_size + tau_size);
+    mem_buff = (npy_uint8 *)PyMem_RawMalloc(a_size + tau_size);
 
     if (!mem_buff)
         goto no_memory;
@@ -3352,7 +3335,7 @@ using ftyp = fortran_doublecomplex;
 
     work_size = (size_t) params->LWORK * sizeof(ftyp);
 
-    mem_buff2 = (npy_uint8 *)linalg_raw_malloc(work_size);
+    mem_buff2 = (npy_uint8 *)PyMem_RawMalloc(work_size);
     if (!mem_buff2)
         goto no_memory;
 
@@ -3367,8 +3350,8 @@ using ftyp = fortran_doublecomplex;
 
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
-    linalg_raw_free(mem_buff);
-    linalg_raw_free(mem_buff2);
+    PyMem_RawFree(mem_buff);
+    PyMem_RawFree(mem_buff2);
     memset(params, 0, sizeof(*params));
 
     return 0;
@@ -3380,8 +3363,8 @@ static inline void
 release_geqrf(GEQRF_PARAMS_t<ftyp>* params)
 {
     /* A and WORK contain allocated blocks */
-    linalg_raw_free(params->A);
-    linalg_raw_free(params->WORK);
+    PyMem_RawFree(params->A);
+    PyMem_RawFree(params->WORK);
     memset(params, 0, sizeof(*params));
 }
 
@@ -3493,7 +3476,7 @@ using ftyp = fortran_doublereal;
     size_t work_size;
     fortran_int lda = fortran_int_max(1, m);
 
-    mem_buff = (npy_uint8 *)linalg_raw_malloc(q_size + tau_size + a_size);
+    mem_buff = (npy_uint8 *)PyMem_RawMalloc(q_size + tau_size + a_size);
 
     if (!mem_buff)
         goto no_memory;
@@ -3529,7 +3512,7 @@ using ftyp = fortran_doublereal;
 
     work_size = (size_t) params->LWORK * sizeof(ftyp);
 
-    mem_buff2 = (npy_uint8 *)linalg_raw_malloc(work_size);
+    mem_buff2 = (npy_uint8 *)PyMem_RawMalloc(work_size);
     if (!mem_buff2)
         goto no_memory;
 
@@ -3544,8 +3527,8 @@ using ftyp = fortran_doublereal;
 
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
-    linalg_raw_free(mem_buff);
-    linalg_raw_free(mem_buff2);
+    PyMem_RawFree(mem_buff);
+    PyMem_RawFree(mem_buff2);
     memset(params, 0, sizeof(*params));
 
     return 0;
@@ -3576,7 +3559,7 @@ using ftyp=fortran_doublecomplex;
     size_t work_size;
     fortran_int lda = fortran_int_max(1, m);
 
-    mem_buff = (npy_uint8 *)linalg_raw_malloc(q_size + tau_size + a_size);
+    mem_buff = (npy_uint8 *)PyMem_RawMalloc(q_size + tau_size + a_size);
 
     if (!mem_buff)
         goto no_memory;
@@ -3613,7 +3596,7 @@ using ftyp=fortran_doublecomplex;
 
     work_size = (size_t) params->LWORK * sizeof(ftyp);
 
-    mem_buff2 = (npy_uint8 *)linalg_raw_malloc(work_size);
+    mem_buff2 = (npy_uint8 *)PyMem_RawMalloc(work_size);
     if (!mem_buff2)
         goto no_memory;
 
@@ -3629,8 +3612,8 @@ using ftyp=fortran_doublecomplex;
 
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
-    linalg_raw_free(mem_buff);
-    linalg_raw_free(mem_buff2);
+    PyMem_RawFree(mem_buff);
+    PyMem_RawFree(mem_buff2);
     memset(params, 0, sizeof(*params));
 
     return 0;
@@ -3686,8 +3669,8 @@ static inline void
 release_gqr(GQR_PARAMS_t<typ>* params)
 {
     /* A and WORK contain allocated blocks */
-    linalg_raw_free(params->Q);
-    linalg_raw_free(params->WORK);
+    PyMem_RawFree(params->Q);
+    PyMem_RawFree(params->WORK);
     memset(params, 0, sizeof(*params));
 }
 
@@ -3917,7 +3900,7 @@ scalar_trait)
     fortran_int ldb = fortran_int_max(1, fortran_int_max(m,n));
 
     size_t msize = a_size + b_size + s_size;
-    mem_buff = (npy_uint8 *)linalg_raw_malloc(msize != 0 ? msize : 1);
+    mem_buff = (npy_uint8 *)PyMem_RawMalloc(msize != 0 ? msize : 1);
 
     if (!mem_buff) {
         goto no_memory;
@@ -3954,7 +3937,7 @@ scalar_trait)
         iwork_size = (size_t)iwork_size_query * sizeof(fortran_int);
     }
 
-    mem_buff2 = (npy_uint8 *)linalg_raw_malloc(work_size + iwork_size);
+    mem_buff2 = (npy_uint8 *)PyMem_RawMalloc(work_size + iwork_size);
     if (!mem_buff2) {
         goto no_memory;
     }
@@ -3973,8 +3956,8 @@ scalar_trait)
 
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
-    linalg_raw_free(mem_buff);
-    linalg_raw_free(mem_buff2);
+    PyMem_RawFree(mem_buff);
+    PyMem_RawFree(mem_buff2);
     memset(params, 0, sizeof(*params));
     return 0;
 }
@@ -4044,7 +4027,7 @@ using frealtyp = basetype_t<ftyp>;
     fortran_int ldb = fortran_int_max(1, fortran_int_max(m,n));
 
     size_t msize = a_size + b_size + s_size;
-    mem_buff = (npy_uint8 *)linalg_raw_malloc(msize != 0 ? msize : 1);
+    mem_buff = (npy_uint8 *)PyMem_RawMalloc(msize != 0 ? msize : 1);
 
     if (!mem_buff) {
         goto no_memory;
@@ -4085,7 +4068,7 @@ using frealtyp = basetype_t<ftyp>;
         iwork_size = (size_t)iwork_size_query * sizeof(fortran_int);
     }
 
-    mem_buff2 = (npy_uint8 *)linalg_raw_malloc(work_size + rwork_size + iwork_size);
+    mem_buff2 = (npy_uint8 *)PyMem_RawMalloc(work_size + rwork_size + iwork_size);
     if (!mem_buff2) {
         goto no_memory;
     }
@@ -4106,8 +4089,8 @@ using frealtyp = basetype_t<ftyp>;
 
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
-    linalg_raw_free(mem_buff);
-    linalg_raw_free(mem_buff2);
+    PyMem_RawFree(mem_buff);
+    PyMem_RawFree(mem_buff2);
     memset(params, 0, sizeof(*params));
 
     return 0;
@@ -4118,8 +4101,8 @@ static inline void
 release_gelsd(GELSD_PARAMS_t<ftyp>* params)
 {
     /* A and WORK contain allocated blocks */
-    linalg_raw_free(params->A);
-    linalg_raw_free(params->WORK);
+    PyMem_RawFree(params->A);
+    PyMem_RawFree(params->WORK);
     memset(params, 0, sizeof(*params));
 }
 
@@ -4816,7 +4799,7 @@ static struct PyModuleDef_Slot _umath_linalg_slots[] = {
 #if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
     {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
 #endif
-#if PY_VERSION_HEX >= 0x030d00f0 && (!defined(Py_LIMITED_API) || Py_LIMITED_API >= 0x030d0000) // Python 3.13+
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
     // signal that this module supports running without an active GIL
     {Py_mod_gil, Py_MOD_GIL_NOT_USED},
 #endif
