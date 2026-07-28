@@ -328,76 +328,9 @@ int npy_get_floatstatus() {
  * portability.  This should be unnecessary with C99/C++11 and further
  * functionality can be used from `fenv.h` directly.
  */
-#  include <fenv.h>
-
-/*
- * According to the C99 standard FE_DIVBYZERO, etc. may not be provided when
- * unsupported.  In such cases NumPy will not report these correctly, but we
- * should still allow compiling (whether tests pass or not).
- * By defining them as 0 locally, we make them no-ops.  Unlike these defines,
- * for example `musl` still defines all of the functions (as no-ops):
- *     https://git.musl-libc.org/cgit/musl/tree/src/fenv/fenv.c
- * and does similar replacement in its tests:
- * http://nsz.repo.hu/git/?p=libc-test;a=blob;f=src/common/mtest.h;h=706c1ba23ea8989b17a2f72ed1a919e187c06b6a;hb=HEAD#l30
- */
-#ifndef FE_DIVBYZERO
-    #define FE_DIVBYZERO 0
-#endif
-#ifndef FE_OVERFLOW
-    #define FE_OVERFLOW 0
-#endif
-#ifndef FE_UNDERFLOW
-    #define FE_UNDERFLOW 0
-#endif
-#ifndef FE_INVALID
-    #define FE_INVALID 0
-#endif
+#  include "npy_fenv.h"
 
 
-#ifdef __EMSCRIPTEN__
-__attribute__((visibility("default"))) int _npy_wasm_floatstatus = 0;
-
-int npy_get_floatstatus_barrier(char* param)
-{
-    /*
-     * By using a volatile, the compiler cannot reorder this call
-     */
-    if (param != NULL) {
-        volatile char NPY_UNUSED(c) = *(char*)param;
-    }
-
-    return _npy_wasm_floatstatus;
-}
-
-int npy_clear_floatstatus_barrier(char * param)
-{
-    int fpstatus = npy_get_floatstatus_barrier(param);
-    _npy_wasm_floatstatus = 0;
-
-    return fpstatus;
-}
-
-
-void npy_set_floatstatus_divbyzero(void)
-{
-    _npy_wasm_floatstatus |= NPY_FPE_DIVIDEBYZERO;
-}
-
-void npy_set_floatstatus_overflow(void)
-{
-    _npy_wasm_floatstatus |= NPY_FPE_OVERFLOW;
-}
-
-void npy_set_floatstatus_underflow(void)
-{
-    _npy_wasm_floatstatus |= NPY_FPE_UNDERFLOW;
-}
-
-void npy_set_floatstatus_invalid(void)
-{
-    _npy_wasm_floatstatus |= NPY_FPE_INVALID;
-}
-#else
 int npy_get_floatstatus_barrier(char* param)
 {
     int fpstatus = fetestexcept(FE_DIVBYZERO | FE_OVERFLOW |
@@ -447,5 +380,4 @@ void npy_set_floatstatus_invalid(void)
 {
     feraiseexcept(FE_INVALID);
 }
-#endif  /* __EMSCRIPTEN__ */
 
