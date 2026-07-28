@@ -210,6 +210,8 @@ assert_type(np.unwrap(AR_f8_3d), np.ndarray[tuple[int, int, int], np.dtype[np.fl
 assert_type(np.unwrap(AR_LIKE_b), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.unwrap(AR_LIKE_i8), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.unwrap(AR_LIKE_f8), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.unwrap(AR_i8, period=4), npt.NDArray[np.int64])
+assert_type(np.unwrap(AR_i8), npt.NDArray[np.float64])
 
 # sort_complex
 assert_type(np.sort_complex(AR_u1), npt.NDArray[np.complex64])

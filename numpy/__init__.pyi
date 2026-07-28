@@ -107,7 +107,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     _CharacterCodes,
     # Ufuncs
     _UFunc_Nin2_Nout1,
-    _UFunc_Nin2_Nout2,
     _GUFunc_Nin2_Nout1,
 )
 from numpy._typing._char_codes import (
@@ -407,6 +406,7 @@ from numpy._core.umath import (
     degrees,
     divide,
     divide as true_divide,
+    divmod,
     equal,
     exp,
     exp2,
@@ -415,6 +415,8 @@ from numpy._core.umath import (
     float_power,
     floor,
     floor_divide,
+    fmax,
+    fmin,
     fmod,
     frexp,
     gcd,
@@ -445,11 +447,16 @@ from numpy._core.umath import (
     logical_not,
     logical_or,
     logical_xor,
+    maximum,
+    minimum,
     mod,
     modf,
+    multiply,
     nextafter,
     not_equal,
     positive,
+    power,
+    power as pow,
     negative,
     rad2deg,
     radians,
@@ -465,6 +472,7 @@ from numpy._core.umath import (
     spacing,
     square,
     sqrt,
+    subtract,
     tan,
     tanh,
     trunc,
@@ -7640,22 +7648,13 @@ class ufunc:
 
 # Parameters: `__name__`, `ntypes` and `identity`
 add: _UFunc_Nin2_Nout1[L["add"], L[22], L[0]]
-divmod: _UFunc_Nin2_Nout2[L["divmod"], L[15], None]
-fmax: _UFunc_Nin2_Nout1[L["fmax"], L[21], None]
-fmin: _UFunc_Nin2_Nout1[L["fmin"], L[21], None]
 matmul: _GUFunc_Nin2_Nout1[L["matmul"], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]]
 matvec: _GUFunc_Nin2_Nout1[L["matvec"], L[19], None, L["(m,n),(n)->(m)"]]
-maximum: _UFunc_Nin2_Nout1[L["maximum"], L[21], None]
-minimum: _UFunc_Nin2_Nout1[L["minimum"], L[21], None]
-multiply: _UFunc_Nin2_Nout1[L["multiply"], L[23], L[1]]
-power: _UFunc_Nin2_Nout1[L["power"], L[18], None]
-subtract: _UFunc_Nin2_Nout1[L["subtract"], L[21], None]
 vecdot: _GUFunc_Nin2_Nout1[L["vecdot"], L[19], None, L["(n),(n)->()"]]
 vecmat: _GUFunc_Nin2_Nout1[L["vecmat"], L[19], None, L["(n),(n,m)->(m)"]]
 
 concat = concatenate
 permute_dims = transpose
-pow = power
 
 # TODO: The type of each `__next__` and `iters` return-type depends
 # on the length and dtype of `args`; we can't describe this behavior yet
