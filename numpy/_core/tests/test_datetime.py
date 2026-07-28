@@ -9,7 +9,6 @@ import pytest
 import numpy
 import numpy as np
 from numpy.testing import (
-    IS_WASM,
     assert_,
     assert_array_equal,
     assert_equal,
@@ -1861,7 +1860,6 @@ class TestDateTime:
     def test_timedelta_divmod_typeerror(self, op1, op2):
         assert_raises(TypeError, np.divmod, op1, op2)
 
-    @pytest.mark.skipif(IS_WASM, reason="does not work in wasm")
     @pytest.mark.parametrize("op1, op2", [
         # reuse cases from floordiv
         # div by 0
