@@ -37,7 +37,11 @@ It provides:
 
 Testing:
 
-NumPy requires `pytest` and `hypothesis`.  Tests can then be run after installation with:
+NumPy requires `pytest`. In addition, there are a number of optional test
+dependencies, like Meson for testing the NumPy C API, Cython for testing the
+NumPy Cython API, and Hypothesis additional property-based tests.
+
+Tests can then be run after installation with:
 
     python -c "import numpy, sys; sys.exit(numpy.test() is False)"
 
