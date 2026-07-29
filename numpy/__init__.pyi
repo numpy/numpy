@@ -106,7 +106,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     _InexactCodes,
     _CharacterCodes,
     # Ufuncs
-    _UFunc_Nin2_Nout1,
     _GUFunc_Nin2_Nout1,
 )
 from numpy._typing._char_codes import (
@@ -377,6 +376,7 @@ from numpy._core.shape_base import (
 from numpy._core.umath import (
     absolute,
     absolute as abs,
+    add,
     arccos,
     arccos as acos,
     arccosh,
@@ -7647,7 +7647,6 @@ class ufunc:
     ) -> tuple[dtype, ...]: ...
 
 # Parameters: `__name__`, `ntypes` and `identity`
-add: _UFunc_Nin2_Nout1[L["add"], L[22], L[0]]
 matmul: _GUFunc_Nin2_Nout1[L["matmul"], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]]
 matvec: _GUFunc_Nin2_Nout1[L["matvec"], L[19], None, L["(m,n),(n)->(m)"]]
 vecdot: _GUFunc_Nin2_Nout1[L["vecdot"], L[19], None, L["(n),(n)->()"]]
