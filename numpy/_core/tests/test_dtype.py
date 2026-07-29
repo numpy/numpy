@@ -5,7 +5,6 @@ import operator
 import os
 import pickle
 import sys
-import textwrap
 import types
 import warnings
 from itertools import permutations
@@ -21,14 +20,13 @@ from numpy._core._multiarray_tests import create_custom_field_dtype
 from numpy._core._rational_tests import rational, rational2
 from numpy.testing import (
     HAS_REFCOUNT,
-    HAS_SUBPROCESSES,
     IS_64BIT,
     assert_,
     assert_array_equal,
     assert_equal,
     assert_raises,
 )
-from numpy.testing._private.utils import requires_deep_recursion, run_subprocess
+from numpy.testing._private.utils import requires_deep_recursion
 
 
 def assert_dtype_equal(a, b):
@@ -899,28 +897,26 @@ class TestMonsterType:
         with contextlib.suppress(RecursionError):
             np.dtype(d)
 
-    @pytest.mark.skipif(not HAS_SUBPROCESSES,
-                        reason="platform cannot start subprocesses")
     def test_deep_subarray_dtype_dealloc(self):
-        script = textwrap.dedent("""
-            import threading
+        import threading
 
-            import numpy as np
+        import numpy as np
 
-            def build_and_drop():
-                d = np.dtype(np.int32)
-                for _ in range(200000):
-                    d = np.dtype((d, (1,)))
-                held = d.base
-                del d
-                del held
+        def build_and_drop():
+            d = np.dtype(np.int32)
+            for _ in range(200000):
+                d = np.dtype((d, (1,)))
+            # hold a second reference so teardown exercises stopping
+            # and resuming
+            held = d.base
+            del d
+            del held
 
-            threading.stack_size(1024 * 1024)
-            t = threading.Thread(target=build_and_drop)
-            t.start()
-            t.join()
-        """)
-        run_subprocess([sys.executable, "-c", script], timeout=180)
+        # small stack size to fail reliably if deallocation is recusive
+        threading.stack_size(1024 * 1024)
+        t = threading.Thread(target=build_and_drop)
+        t.start()
+        t.join()
 
     @requires_deep_recursion
     def test_dict_recursion(self):
