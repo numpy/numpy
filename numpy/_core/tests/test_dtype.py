@@ -898,6 +898,7 @@ class TestMonsterType:
         with contextlib.suppress(RecursionError):
             np.dtype(d)
 
+    @pytest.mark.thread_unsafe(reason="Sets global threading stack size")
     @pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for threads")
     def test_deep_subarray_dtype_dealloc(self):
         import threading
@@ -915,10 +916,13 @@ class TestMonsterType:
             del held
 
         # small stack size to fail reliably if deallocation is recusive
-        threading.stack_size(1024 * 1024)
-        t = threading.Thread(target=build_and_drop)
-        t.start()
-        t.join()
+        old_stack_size = threading.stack_size(1024 * 1024)
+        try:
+            t = threading.Thread(target=build_and_drop)
+            t.start()
+            t.join()
+        finally:
+            threading.stack_size(old_stack_size)
 
     @requires_deep_recursion
     def test_dict_recursion(self):

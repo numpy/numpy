@@ -2098,7 +2098,7 @@ arraydescr_dealloc(PyArray_Descr *self)
          * stealing the link is unobservable and each node still runs
          * its own, now shallow, dealloc.
          *
-         * If descriptors ever become heap types and/or GC types, we can
+         * If descriptors ever get the Py_TPFLAGS_HAVE_GC flag, we can
          * use CPython's stack protection via the trashcan macros
          * instead.
          */
@@ -2107,9 +2107,8 @@ arraydescr_dealloc(PyArray_Descr *self)
         /*
          * The Py_REFCNT(..) == 1 check is intentional. This happens in
          * a deallocator for a type that doesn't support weakrefs and
-         * isn't a GC type, so it's impossible for another thread to
-         * concurrently change the reference count if we observe the
-         * reference count is 1 here. We can't use
+         * isn't a GC type, so it's impossible to get here with a refcount
+         * of 1 without us being the only owner. We can't use
          * PyUnstable_Object_IsUniquelyReferenced because that excludes
          * objects on remote threads.
          */
@@ -2119,7 +2118,7 @@ arraydescr_dealloc(PyArray_Descr *self)
             // (Py_CLEAR without a DECREF)
             base = lbase->subarray->base;
             lbase->subarray->base = NULL;
-            // lbase no longer owns a reference to base, so its deallocator
+            // lbase no longer owns a reference to base, so base's deallocator
             // doesn't fire
             Py_DECREF(lbase);
         }
