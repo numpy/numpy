@@ -16,7 +16,7 @@ project(
 
 # Target version for the Limited C API, used by extension modules that
 # have been ported. Controlled by python.allow_limited_api (default: false).
-py_limited_api = '3.12'
+py_limited_api = '3.13'
 
 fs = import('fs')
 
