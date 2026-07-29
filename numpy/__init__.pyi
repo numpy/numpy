@@ -106,7 +106,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     _InexactCodes,
     _CharacterCodes,
     # Ufuncs
-    _UFunc_Nin2_Nout1,
     _GUFunc_Nin2_Nout1,
 )
 from numpy._typing._char_codes import (
@@ -377,6 +376,7 @@ from numpy._core.shape_base import (
 from numpy._core.umath import (
     absolute,
     absolute as abs,
+    add,
     arccos,
     arccos as acos,
     arccosh,
@@ -415,6 +415,8 @@ from numpy._core.umath import (
     float_power,
     floor,
     floor_divide,
+    fmax,
+    fmin,
     fmod,
     frexp,
     gcd,
@@ -445,8 +447,11 @@ from numpy._core.umath import (
     logical_not,
     logical_or,
     logical_xor,
+    maximum,
+    minimum,
     mod,
     modf,
+    multiply,
     nextafter,
     not_equal,
     positive,
@@ -7642,14 +7647,8 @@ class ufunc:
     ) -> tuple[dtype, ...]: ...
 
 # Parameters: `__name__`, `ntypes` and `identity`
-add: _UFunc_Nin2_Nout1[L["add"], L[22], L[0]]
-fmax: _UFunc_Nin2_Nout1[L["fmax"], L[21], None]
-fmin: _UFunc_Nin2_Nout1[L["fmin"], L[21], None]
 matmul: _GUFunc_Nin2_Nout1[L["matmul"], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]]
 matvec: _GUFunc_Nin2_Nout1[L["matvec"], L[19], None, L["(m,n),(n)->(m)"]]
-maximum: _UFunc_Nin2_Nout1[L["maximum"], L[21], None]
-minimum: _UFunc_Nin2_Nout1[L["minimum"], L[21], None]
-multiply: _UFunc_Nin2_Nout1[L["multiply"], L[23], L[1]]
 vecdot: _GUFunc_Nin2_Nout1[L["vecdot"], L[19], None, L["(n),(n)->()"]]
 vecmat: _GUFunc_Nin2_Nout1[L["vecmat"], L[19], None, L["(n),(n,m)->(m)"]]
 
