@@ -2829,8 +2829,18 @@ class TestBool:
     def test_exceptions(self):
         a = np.ones(1, dtype=np.bool)
         assert_raises(TypeError, np.negative, a)
-        assert_raises(TypeError, np.positive, a)
         assert_raises(TypeError, np.subtract, a, a)
+
+    def test_positive(self):
+        for value in (False, True):
+            result = np.positive(np.bool_(value))
+            assert_equal(result, value)
+            assert isinstance(result, np.bool_)
+
+        values = np.array([False, True], dtype=np.bool_)
+        result = np.positive(values)
+        assert_array_equal(result, values)
+        assert result.dtype == np.bool_
 
     def test_truth_table_logical(self):
         # 2, 3 and 4 serves as true values
@@ -3228,8 +3238,6 @@ class TestPositive:
             assert_equal(x, result, err_msg=str(dtype))
 
     def test_invalid(self):
-        with assert_raises(TypeError):
-            np.positive(True)
         with assert_raises(TypeError):
             np.positive(np.datetime64('2000-01-01'))
         with assert_raises(TypeError):
