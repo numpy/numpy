@@ -5081,6 +5081,16 @@ multiarray_umath_traverse(PyObject *m, visitproc visit, void *arg)
     Py_VISIT(state->interned_str.partition);
     Py_VISIT(state->interned_str.argpartition);
     Py_VISIT(state->interned_str._set_dtype);
+    Py_VISIT(state->interned_str.year);
+    Py_VISIT(state->interned_str.month);
+    Py_VISIT(state->interned_str.day);
+    Py_VISIT(state->interned_str.hour);
+    Py_VISIT(state->interned_str.minute);
+    Py_VISIT(state->interned_str.second);
+    Py_VISIT(state->interned_str.microsecond);
+    Py_VISIT(state->interned_str.tzinfo);
+    Py_VISIT(state->interned_str.utcoffset);
+    Py_VISIT(state->interned_str.total_seconds);
 
     Py_VISIT(state->static_pydata.default_truediv_type_tup);
     Py_VISIT(state->static_pydata.default_extobj_capsule);
@@ -5255,6 +5265,16 @@ multiarray_umath_clear(PyObject *m)
     Py_CLEAR(state->interned_str.partition);
     Py_CLEAR(state->interned_str.argpartition);
     Py_CLEAR(state->interned_str._set_dtype);
+    Py_CLEAR(state->interned_str.year);
+    Py_CLEAR(state->interned_str.month);
+    Py_CLEAR(state->interned_str.day);
+    Py_CLEAR(state->interned_str.hour);
+    Py_CLEAR(state->interned_str.minute);
+    Py_CLEAR(state->interned_str.second);
+    Py_CLEAR(state->interned_str.microsecond);
+    Py_CLEAR(state->interned_str.tzinfo);
+    Py_CLEAR(state->interned_str.utcoffset);
+    Py_CLEAR(state->interned_str.total_seconds);
 
     Py_CLEAR(state->static_pydata.default_truediv_type_tup);
     Py_CLEAR(state->static_pydata.default_extobj_capsule);
