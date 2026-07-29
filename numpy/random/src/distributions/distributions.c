@@ -7,7 +7,6 @@
 #endif
 
 #include <assert.h>
-/* for llabs(); Python.h omits <stdlib.h> under Py_LIMITED_API */
 #include <stdlib.h>
 
 /* Inline generators for internal use */

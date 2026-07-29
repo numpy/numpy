@@ -10,7 +10,6 @@
  */
 #include "include/legacy-distributions.h"
 
-/* for llabs(); Python.h omits <stdlib.h> under Py_LIMITED_API */
 #include <stdlib.h>
 
 
