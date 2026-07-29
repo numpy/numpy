@@ -21,6 +21,7 @@ from numpy._core._rational_tests import rational, rational2
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
+    IS_WASM,
     assert_,
     assert_array_equal,
     assert_equal,
@@ -897,6 +898,7 @@ class TestMonsterType:
         with contextlib.suppress(RecursionError):
             np.dtype(d)
 
+    @pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for threads")
     def test_deep_subarray_dtype_dealloc(self):
         import threading
 
