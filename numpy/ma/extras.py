@@ -1332,7 +1332,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * np.pi):
     array([  0., 170., 340., 510.])
 
     """
-    p = masked_array(p, copy=False, subok=True)
+    p = ma.asanyarray(p)
     mask = getmask(p)
     if mask is nomask:
         result = masked_array(np.unwrap(getdata(p), discont, axis,
@@ -1356,6 +1356,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * np.pi):
             np.put_along_axis(out, order, unwrapped, axis=axis)
             np.copyto(out, 0, where=mask)
         result = masked_array(out, mask=mask.copy())
+    result._update_from(p)
     return result.view(get_masked_subclass(p))
 
 

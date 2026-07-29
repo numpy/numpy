@@ -1826,9 +1826,9 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     but larger than `discont`, no unwrapping is done because taking
     the complement would only make the discontinuity larger.
 
-    This function ignores the mask of a masked array input, and returns an
-    `~numpy.ndarray` computed from the data underlying the mask as well. Use
-    `numpy.ma.unwrap` to skip over the masked elements instead.
+    As with any other ufunc, a masked array input is unwrapped over the data
+    underlying its mask, and the mask is carried through element by element.
+    Use `numpy.ma.unwrap` to skip over the masked elements instead.
 
     Examples
     --------
@@ -1869,11 +1869,6 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     >>> plt.legend(framealpha=1, shadow=True)
     >>> plt.show()
     """
-    if np.ma.isMaskedArray(p):
-        # this function is not mask aware, so drop the mask and return an
-        # ndarray rather than a masked array that would suggest otherwise.
-        # `numpy.ma.unwrap` is the mask aware equivalent
-        return unwrap(np.asarray(p), discont=discont, axis=axis, period=period)
     p = asanyarray(p)
     if discont is None:
         discont = period / 2

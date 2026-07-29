@@ -2059,14 +2059,10 @@ class TestUnwrap:
         out = unwrap(masked_array(other, mask=mask))
         assert_almost_equal(out.compressed(), expected.compressed())
 
-    def test_differs_from_ndarray_unwrap(self):
-        # `numpy.unwrap` is deliberately not mask aware, the masked 170 makes
-        # every step look continuous to it while `numpy.ma.unwrap` skips it
+    def test_gap_uncovers_a_wrap(self):
+        # skipping the masked 170 leaves a jump of 340 to correct, which the
+        # unmasked values on their own do not show
         p = masked_array([0., 170., 340., 150.], mask=[0, 1, 0, 0])
-        plain = np.unwrap(p, period=360)
-        assert type(plain) is np.ndarray
-        assert_almost_equal(plain, np.unwrap(p.data, period=360))
-        assert_almost_equal(plain, [0., 170., 340., 510.])
         assert_almost_equal(unwrap(p, period=360).compressed(),
                             [0., -20., 150.])
 
