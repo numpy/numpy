@@ -2492,15 +2492,20 @@ class TestUnwrap:
         discont = np.float64(3) + 1e-8
         assert_array_equal(unwrap(p, discont=discont, period=period), [0, -1])
 
-    def test_masked_array(self):
+    @pytest.mark.parametrize("dtype", [float, object])
+    def test_masked_array(self, dtype):
         # a masked array is treated like any other ufunc input, unwrapped
         # over the data underlying the mask with the mask carried through.
         # np.ma.unwrap is the mask aware version
-        p = np.ma.MaskedArray([0., 1., 2., 2 + 2 * np.pi, 3 + 2 * np.pi],
-                              mask=[False, False, True, False, False])
+        p = np.ma.MaskedArray(
+            np.array([0., 1., 2., 2 + 2 * np.pi, 3 + 2 * np.pi], dtype=dtype),
+            mask=[False, False, True, False, False],
+            fill_value=-7,
+        )
         out = unwrap(p)
         assert isinstance(out, np.ma.MaskedArray)
         assert_array_equal(out.mask, p.mask)
+        assert_equal(out.fill_value, p.fill_value)
         expected = self._reference_unwrap(np.asarray(p))
         assert_array_equal(np.asarray(out), expected)
 

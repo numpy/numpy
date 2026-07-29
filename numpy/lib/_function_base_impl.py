@@ -1746,10 +1746,20 @@ def angle(z, deg=False):
 
 def _unwrap_fallback(p, discont, period, axis):
     nd = p.ndim
-    dd = diff(p, axis=axis)
+    if nd == 0:
+        raise ValueError("diff requires input that is at least one dimensional")
+    axis = normalize_axis_index(axis, nd)
+    slice0 = [slice(None, None)] * nd     # full slices
+    slice0[axis] = slice(None, -1)
+    slice0 = tuple(slice0)
     slice1 = [slice(None, None)] * nd     # full slices
     slice1[axis] = slice(1, None)
     slice1 = tuple(slice1)
+    op = not_equal if p.dtype == np.bool else subtract
+    # The intermediate differences are implementation details. Suppress
+    # legacy subclass wrapping so that their masks or other metadata do not
+    # affect the calculation. __array_ufunc__ overrides are still honored.
+    dd = op(p[slice1], p[slice0], subok=False)
     dtype = np.result_type(dd, period)
     if _nx.issubdtype(dtype, _nx.integer):
         interval_high, rem = divmod(period, 2)
@@ -1768,7 +1778,10 @@ def _unwrap_fallback(p, discont, period, axis):
     ph_correct = ddmod - dd
     _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
     up = asanyarray(p, dtype=dtype, copy=True)
-    up[slice1] = p[slice1] + ph_correct.cumsum(axis)
+    corrected = add(p[slice1], ph_correct.cumsum(axis), subok=False)
+    # Copying writes the calculated data without invoking a subclass's
+    # __setitem__, leaving metadata already carried by `up` unchanged.
+    _nx.copyto(up[slice1], corrected)
     return up
 
 
