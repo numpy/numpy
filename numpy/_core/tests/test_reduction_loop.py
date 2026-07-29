@@ -403,6 +403,13 @@ class TestReductionLoop:
 
     # `minimummaximum` also registers an object loop, so the reduction
     # machinery is exercised with refcounted (NPY_ITEM_REFCOUNT) descriptors.
+    def test_object_forward(self):
+        a = np.array([3, -7, 12], dtype=object)
+        b = np.array([1, 9, -2], dtype=object)
+        got_min, got_max = mm(a, b)
+        assert got_min.tolist() == [1, -7, -2]
+        assert got_max.tolist() == [3, 9, 12]
+
     @pytest.mark.parametrize("shape", SHAPES, ids=str)
     def test_object_reduce(self, shape):
         a = np.random.default_rng(30).integers(-50, 51, size=shape).astype(object)
