@@ -5655,43 +5655,66 @@ ufunc_outer(PyUFuncObject *ufunc,
 }
 
 
+static inline int
+is_known_scalar(PyObject *obj)
+{
+    return (PyLong_CheckExact(obj) || PyFloat_CheckExact(obj)
+            || PyComplex_CheckExact(obj) || is_anyscalar_exact(obj));
+}
+
+
 static PyObject *
 prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
 {
     PyArrayObject *ap1 = NULL;
-    PyObject *tmp;
-    npy_cache_import_runtime("numpy", "matrix",
-                             &npy_runtime_imports.numpy_matrix);
+
+    if (npy_cache_import_runtime("numpy", "matrix",
+                                 &npy_runtime_imports.numpy_matrix) == -1) {
+        return NULL;
+    }
 
     const char *matrix_deprecation_msg = (
             "%s.outer() was passed a numpy matrix as %s argument. "
             "Special handling of matrix is removed. Convert to a "
             "ndarray via 'matrix.A' ");
 
-    tmp = PyTuple_GET_ITEM(args, 0);
+    PyObject *tmp1 = PyTuple_GET_ITEM(args, 0);
+    PyObject *tmp2 = PyTuple_GET_ITEM(args, 1);
 
-    if (PyObject_IsInstance(tmp, npy_runtime_imports.numpy_matrix)) {
+    int is_matrix = PyObject_IsInstance(tmp1, npy_runtime_imports.numpy_matrix);
+    if (is_matrix == -1) {
+        return NULL;
+    }
+    else if (is_matrix) {
         PyErr_Format(PyExc_TypeError,
                 matrix_deprecation_msg, ufunc->name, "first");
         return NULL;
     }
-    else {
-        ap1 = (PyArrayObject *) PyArray_FROM_O(tmp);
-    }
-    if (ap1 == NULL) {
+
+    is_matrix = PyObject_IsInstance(tmp2, npy_runtime_imports.numpy_matrix);
+    if (is_matrix == -1) {
         return NULL;
     }
-
-    PyArrayObject *ap2 = NULL;
-    tmp = PyTuple_GET_ITEM(args, 1);
-    if (PyObject_IsInstance(tmp, npy_runtime_imports.numpy_matrix)) {
+    else if (is_matrix) {
         PyErr_Format(PyExc_TypeError,
                 matrix_deprecation_msg, ufunc->name, "second");
         return NULL;
     }
-    else {
-        ap2 = (PyArrayObject *) PyArray_FROM_O(tmp);
+    /*
+     * 0-d inputs contribute no dimensions to the result and broadcast the same
+     * without the inserted 1s, so the reshape below is unnecessary
+     */
+    if (is_known_scalar(tmp1) || is_known_scalar(tmp2)) {
+        Py_INCREF(args);
+        return args;
     }
+
+    ap1 = (PyArrayObject *) PyArray_FROM_O(tmp1);
+    if (ap1 == NULL) {
+        return NULL;
+    }
+
+    PyArrayObject *ap2 = (PyArrayObject *) PyArray_FROM_O(tmp2);
     if (ap2 == NULL) {
         Py_DECREF(ap1);
         return NULL;

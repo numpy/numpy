@@ -412,6 +412,7 @@ else:
         tanh,
         tensordot,
         timedelta64,
+        top_k,
         trace,
         transpose,
         true_divide,

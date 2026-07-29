@@ -7,6 +7,7 @@
 #endif
 
 #include <assert.h>
+#include <stdlib.h>
 
 /* Inline generators for internal use */
 static inline uint32_t next_uint32(bitgen_t *bitgen_state) {
