@@ -9,8 +9,10 @@ from unittest import mock
 import pytest
 
 import numpy as np
+from numpy._core._multiarray_umath import _ArrayFunctionDispatcher
 from numpy._core.overrides import (
     _get_implementing_args,
+    _ReductionKind,
     array_function_dispatch,
     verify_matching_signatures,
 )
@@ -295,6 +297,48 @@ class TestVerifyMatchingSignatures:
         def f(y):
             pass
 
+    def test_reduction_configuration_errors(self):
+        implementation = lambda *args, **kwargs: None
+        dispatcher = lambda x: (x,)
+
+        with pytest.raises(TypeError, match="like= dispatchers"):
+            _ArrayFunctionDispatcher(
+                    None, implementation, (np.add.reduce, 1))
+
+        invalid_reductions = [
+            object(),
+            (object(), _ReductionKind.SUM_PROD),
+            (np.add.reduce, object()),
+        ]
+        for reduction in invalid_reductions:
+            with pytest.raises(TypeError, match=r"callable, kind\) tuple"):
+                _ArrayFunctionDispatcher(
+                        dispatcher, implementation, reduction)
+
+        with pytest.raises(ValueError, match="invalid reduction kind"):
+            _ArrayFunctionDispatcher(
+                    dispatcher, implementation, (np.add.reduce, 99))
+
+    def test_dispatcher_constructor_argument_error(self):
+        dispatcher = lambda x: (x,)
+
+        with pytest.raises(TypeError, match=r"_ArrayFunctionDispatcher\(\)"):
+            _ArrayFunctionDispatcher(dispatcher)
+
+    def test_reduction_kinds_match_c_enum(self):
+        implementation = lambda *args, **kwargs: None
+        dispatcher = lambda x: (x,)
+
+        for kind in _ReductionKind:
+            _ArrayFunctionDispatcher(
+                    dispatcher, implementation, (np.add.reduce, kind))
+
+        # A new C reduction kind must also be added to the Python enum.
+        next_kind = max(kind.value for kind in _ReductionKind) + 1
+        with pytest.raises(ValueError, match="invalid reduction kind"):
+            _ArrayFunctionDispatcher(
+                    dispatcher, implementation, (np.add.reduce, next_kind))
+
 
 def _new_duck_type_and_implements():
     """Create a duck array type and implements functions."""
@@ -407,6 +451,24 @@ class TestArrayFunctionImplementation:
                             "TypeError formatting.")
 
             assert exc.args == expected_exception.args
+
+    @pytest.mark.parametrize(
+        "func, args, kwargs",
+        [
+            (np.sum, (), {}),
+            (np.sum, (np.ones(1),), {"out": object()}),
+            (np.max, (np.ones(1),), {"dtype": np.float64}),
+            (np.any, (np.ones(1),), {"dtype": np.bool_, "initial": False}),
+        ],
+    )
+    def test_reduction_error_message(self, func, args, kwargs):
+        with pytest.raises(TypeError) as expected:
+            func._implementation(*args, **kwargs)
+
+        with pytest.raises(TypeError) as actual:
+            func(*args, **kwargs)
+
+        assert actual.value.args == expected.value.args
 
     @pytest.mark.parametrize("value", [234, "this func is not replaced"])
     def test_dispatcher_error(self, value):

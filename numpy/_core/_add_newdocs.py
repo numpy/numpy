@@ -5362,7 +5362,7 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
 
     reduce(array, axis=0, dtype=None, out=None, keepdims=False, initial=<no value>, where=True)
 
-    Reduces `array`'s dimension by one, by applying ufunc along one axis.
+    Reduces ``array``'s dimension by one, by applying ufunc along one axis.
 
     Let :math:`array.shape = (N_0, ..., N_i, ..., N_{M-1})`.  Then
     :math:`ufunc.reduce(array, axis=i)[k_0, ..,k_{i-1}, k_{i+1}, .., k_{M-1}]` =
@@ -5415,7 +5415,7 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `array`.
+        the result will broadcast correctly against the original ``array``.
     initial : scalar, optional
         The value with which to start the reduction.
         If the ufunc has no identity or the dtype is object, this defaults
@@ -5424,7 +5424,7 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
         and an error is thrown if the reduction is empty.
     where : array_like of bool, optional
         A boolean array which is broadcasted to match the dimensions
-        of `array`, and selects elements to include in the reduction. Note
+        of ``array``, and selects elements to include in the reduction. Note
         that for ufuncs like ``minimum`` that do not have an identity
         defined, one has to pass in also ``initial``.
 
@@ -5586,8 +5586,8 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
       simply ``array[indices[i]]``.
     * if ``indices[i] >= len(array)`` or ``indices[i] < 0``, an error is raised.
 
-    The shape of the output depends on the size of `indices`, and may be
-    larger than `array` (this happens if ``len(indices) > array.shape[axis]``).
+    The shape of the output depends on the size of ``indices``, and may be
+    larger than ``array`` (this happens if ``len(indices) > array.shape[axis]``).
 
     Parameters
     ----------
@@ -5620,15 +5620,15 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
     -----
     A descriptive example:
 
-    If `array` is 1-D, the function `ufunc.accumulate(array)` is the same as
-    ``ufunc.reduceat(array, indices)[::2]`` where `indices` is
+    If ``array`` is 1-D, the function ``ufunc.accumulate(array)`` is the same as
+    ``ufunc.reduceat(array, indices)[::2]`` where ``indices`` is
     ``range(len(array) - 1)`` with a zero placed
     in every other element:
     ``indices = zeros(2 * len(array) - 1)``,
     ``indices[1::2] = range(1, len(array))``.
 
-    Don't be fooled by this attribute's name: `reduceat(array)` is not
-    necessarily smaller than `array`.
+    Don't be fooled by this attribute's name: ``reduceat(array)`` is not
+    necessarily smaller than ``array``.
 
     Examples
     --------
@@ -5705,7 +5705,7 @@ add_newdoc('numpy._core', 'ufunc', ('outer',
     B : array_like
         Second array
     kwargs : any
-        Arguments to pass on to the ufunc. Typically `dtype` or `out`.
+        Arguments to pass on to the ufunc. Typically ``dtype`` or ``out``.
         See `ufunc` for a comprehensive overview of all available arguments.
 
     Returns
