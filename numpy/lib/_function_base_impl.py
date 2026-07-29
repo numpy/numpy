@@ -1828,6 +1828,8 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
 
     As with any other ufunc, a masked array input is unwrapped over the data
     underlying its mask, and the mask is carried through element by element.
+    With some dtypes, such as object, the mask may instead propagate to
+    neighboring elements.
     Use `numpy.ma.unwrap` to skip over the masked elements instead.
 
     Examples
