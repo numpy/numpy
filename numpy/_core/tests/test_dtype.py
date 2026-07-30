@@ -260,6 +260,54 @@ class TestBuiltin:
         assert dt1.itemsize == 10
 
 
+class TestByteOrderStr:
+    """Regression coverage for numpy._core._dtype._byte_order_str.
+
+    dtype.byteorder only ever returns one of '<', '>', '=', or '|'.
+    An earlier implementation also handled 'S', but that branch was
+    unreachable in practice and has been removed.
+    """
+
+    def test_all_possible_byteorders_are_handled(self):
+        from numpy._core._dtype import _byte_order_str
+
+        # '<' and '>' pass through unchanged.
+        assert _byte_order_str(np.dtype('int32').newbyteorder('<')) == '<'
+        assert _byte_order_str(np.dtype('int32').newbyteorder('>')) == '>'
+
+        # '|' (byteorder-not-applicable, e.g. single-byte dtypes) maps to ''.
+        assert _byte_order_str(np.dtype('int8')) == ''
+
+        # '=' (native) resolves to the platform's native byte order,
+        # which is either '<' or '>' depending on the host.
+        native_result = _byte_order_str(np.dtype('int32'))
+        assert native_result in ('<', '>')
+
+    def test_dtype_byteorder_never_returns_S(self):
+        # Sanity check for the premise of the above test: no reasonable
+        # way to construct a dtype produces .byteorder == 'S'. Even
+        # newbyteorder('S') resolves to '<' or '>' on the resulting dtype.
+        for spec in ['int8', 'int32', 'float64', 'complex128', 'U4', 'S4']:
+            for arg in ('<', '>', '=', '|', 'S', 'native', 'swap'):
+                try:
+                    dt = np.dtype(spec).newbyteorder(arg)
+                except (ValueError, TypeError):
+                    continue
+                assert dt.byteorder in ('<', '>', '=', '|'), (
+                    f"dtype({spec!r}).newbyteorder({arg!r}).byteorder "
+                    f"= {dt.byteorder!r}, expected one of '<>=|'"
+                )
+
+    def test_scalar_repr_still_works(self):
+        # Integration check: dtype repr goes through _byte_order_str;
+        # verify it still renders correctly for common dtypes after the
+        # dead-branch removal.
+        assert repr(np.dtype('int32')) == "dtype('int32')"
+        assert repr(np.dtype('int8')) == "dtype('int8')"
+        assert repr(np.dtype('<i4')) in ("dtype('int32')", "dtype('<i4')")
+        assert repr(np.dtype('>i4')) in ("dtype('int32')", "dtype('>i4')")
+
+
 class TestRecord:
     def test_equivalent_record(self):
         """Test whether equivalent record dtypes hash the same."""
