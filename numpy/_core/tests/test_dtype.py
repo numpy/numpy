@@ -21,6 +21,7 @@ from numpy._core._rational_tests import rational, rational2
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
+    IS_WASM,
     assert_,
     assert_array_equal,
     assert_equal,
@@ -896,6 +897,32 @@ class TestMonsterType:
         # see gh-30370 and cpython issue #142253
         with contextlib.suppress(RecursionError):
             np.dtype(d)
+
+    @pytest.mark.thread_unsafe(reason="Sets global threading stack size")
+    @pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for threads")
+    def test_deep_subarray_dtype_dealloc(self):
+        import threading
+
+        import numpy as np
+
+        def build_and_drop():
+            d = np.dtype(np.int32)
+            for _ in range(200000):
+                d = np.dtype((d, (1,)))
+            # hold a second reference so teardown exercises stopping
+            # and resuming
+            held = d.base
+            del d
+            del held
+
+        # small stack size to fail reliably if deallocation is recusive
+        old_stack_size = threading.stack_size(1024 * 1024)
+        try:
+            t = threading.Thread(target=build_and_drop)
+            t.start()
+            t.join()
+        finally:
+            threading.stack_size(old_stack_size)
 
     @requires_deep_recursion
     def test_dict_recursion(self):
