@@ -5404,7 +5404,8 @@ multiarray_umath_clear(PyObject *m)
 static void
 multiarray_umath_free(void *m)
 {
-    /* Nothing to free yet; non-PyObject C data is trivially destructed */
+    multiarray_umath_clear((PyObject *)m);
+    _npy_module_state = NULL;
 }
 
 static int

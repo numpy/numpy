@@ -15,11 +15,6 @@
 #include "extobj.h"
 #include "module_state.h"
 
-// static variables are zero-filled by default, no need to explicitly do so
-/* npy_interned_str migrated to multiarray_umath_state.interned_str */
-/* npy_static_pydata migrated to multiarray_umath_state.static_pydata */
-/* npy_static_cdata migrated to multiarray_umath_state.static_cdata */
-
 #define INTERN_STRING(struct_member, string)                              \
     assert(interned_str->struct_member == NULL);                         \
     interned_str->struct_member = PyUnicode_InternFromString(string);    \
