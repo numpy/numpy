@@ -233,6 +233,7 @@ if HAVE_SCPDT:
     dt_config.pytest_extra_xfail = {
         'how-to-verify-bug.rst': '',
         'c-info.ufunc-tutorial.rst': '',
+        'c-info.reduction-loop-tutorial.rst': '',
         'basics.interoperability.rst': 'needs pandas',
         'basics.dispatch.rst': 'errors out in /testing/overrides.py',
         'basics.subclassing.rst': '.. testcode:: admonitions not understood',

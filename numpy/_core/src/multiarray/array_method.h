@@ -74,7 +74,51 @@ typedef struct PyArrayMethodObject_tag {
      */
     void *cached_loop;  /* really a PyUFuncGenericFunction */
     void *cached_loop_data;
+    /*
+     * Optional dedicated reduction loop (NPY_METH_get_reduction_loop), used
+     * by `ufunc.reduce` instead of `get_strided_loop` when set.  Required
+     * for `nout > 1` since the forward loop's arity cannot be used as the
+     * reduction's loop which requires an (nout+1)->nout signature.
+     */
+    PyArrayMethod_GetLoop *get_reduction_loop;
+    /*
+     * Optional per-output reduction identity/initial values
+     * (NPY_METH_get_multi_reduction_initials), the multi-output generalization
+     * of `get_reduction_initial`.  At most one of the two may be set. This one
+     * also handles the single-output case.  See `reduction_get_initial`.
+     */
+    PyArrayMethod_GetMultiReductionInitials *get_multi_reduction_initials;
 } PyArrayMethodObject;
+
+
+/* Returns the loop `ufunc.reduce` should use: the dedicated reduction loop
+ * if the method registered one, otherwise the forward `get_strided_loop`
+ * (only valid when nout == 1). */
+static inline PyArrayMethod_GetLoop *
+reduction_get_loop_func(PyArrayMethodObject *meth)
+{
+    return meth->get_reduction_loop != NULL ? meth->get_reduction_loop : meth->get_strided_loop;
+}
+
+
+/* Returns the reduction identity/initial value(s) from whichever slot
+ * `context->method` registered. Registration guarantees at most one is set. */
+static inline int
+reduction_get_initial(PyArrayMethod_Context *context,
+        npy_bool reduction_is_empty, void **initials)
+{
+    PyArrayMethodObject *meth = context->method;
+    if (meth->get_multi_reduction_initials != NULL) {
+        return meth->get_multi_reduction_initials(
+                context, reduction_is_empty, initials);
+    }
+    if (meth->get_reduction_initial != NULL) {
+        assert(meth->nout == 1);
+        return meth->get_reduction_initial(
+                context, reduction_is_empty, initials[0]);
+    }
+    return 0;
+}
 
 
 /*
@@ -118,6 +162,15 @@ PyArrayMethod_GetMaskedStridedLoop(
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags);
 
+
+NPY_NO_EXPORT int
+PyArrayMethod_GetMaskedReductionLoop(
+        PyArrayMethod_Context *context,
+        int aligned,
+        npy_intp *fixed_strides,
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags);
 
 
 NPY_NO_EXPORT PyObject *
