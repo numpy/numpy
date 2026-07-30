@@ -1,0 +1,6 @@
+Structured dtypes now support larger field sizes
+------------------------------------------------
+It is now possible to construct structured data types with
+field sizes and offsets that exceed the size of a standard C
+integer. Arrays using these structured data types are now
+also possible to construct.

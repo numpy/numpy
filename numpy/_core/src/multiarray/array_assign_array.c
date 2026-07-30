@@ -42,7 +42,10 @@ copycast_isaligned(int ndim, npy_intp const *shape,
     int aligned;
     int big_aln, small_aln;
 
-    int uint_aln = npy_uint_alignment(dtype->elsize);
+    int uint_aln = 0;
+    if (dtype->elsize <= NPY_MAX_INT) {
+        uint_aln = npy_uint_alignment((int)dtype->elsize);
+    }
     int true_aln = dtype->alignment;
 
     /* uint alignment can be 0, meaning not uint alignable */

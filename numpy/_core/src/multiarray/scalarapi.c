@@ -468,7 +468,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
     void *destptr;
     PyArray_CopySwapFunc *copyswap;
     int type_num;
-    int itemsize;
+    npy_intp itemsize;
     int swap;
 
     type_num = descr->type_num;
