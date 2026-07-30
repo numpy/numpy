@@ -3074,6 +3074,14 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         }
     }
 
+    /*
+     * descrs[0] and descrs[2] both describe op[0], which is used as both
+     * the previous-value input and the output (see `dataptr_copy` below).
+     */
+    npy_resync_finalized_descr(&descrs[0], op[0]);
+    npy_resync_finalized_descr(&descrs[1], op[1]);
+    npy_resync_finalized_descr(&descrs[2], op[0]);
+
     npy_intp fixed_strides[3];
     if (need_outer_iterator) {
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);

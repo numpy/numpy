@@ -746,6 +746,74 @@ def test_fancy_indexing(string_list):
         assert_array_equal(sarr[ind], uarr[ind])
 
 
+@pytest.mark.parametrize("value", ["Z" * 20, "Z" * 5])
+def test_fancy_index_assign_0d_value(value):
+    # a 0-d value assigned through multiple fancy indices broadcasts to
+    # every selected element (gh-32153)
+    a = np.array(["v0", "v1", "v2", "v3"], dtype="T").reshape(2, 2)
+    a[[0, 1], [0, 1]] = np.array(value, dtype="T")
+    assert_array_equal(a, [[value, "v1"], ["v2", value]])
+    # the value may carry the destination's own dtype instance
+    a[[0, 1], [0, 1]] = np.array(value + "x", dtype=a.dtype)
+    assert_array_equal(a, [[value + "x", "v1"], ["v2", value + "x"]])
+
+
+@pytest.mark.parametrize("buffered", [True, False])
+@pytest.mark.parametrize("pass_op_dtypes", [True, False])
+def test_nditer_allocated_output(buffered, pass_op_dtypes):
+    # an iterator-allocated StringDType output round-trips the values
+    # written through the iterator, and it.dtypes reports the descriptor
+    # that owns the allocated operand's data (gh-32153)
+    a = np.array(["x" * 20, "y" * 20, "z" * 20], dtype="T")
+    flags = ["refs_ok"] + (["buffered"] if buffered else [])
+    op_dtypes = [a.dtype, a.dtype] if pass_op_dtypes else None
+    it = np.nditer([a, None], flags=flags,
+                   op_flags=[["readonly"], ["writeonly", "allocate"]],
+                   op_dtypes=op_dtypes)
+    with it:
+        for x, y in it:
+            y[...] = x
+        out = it.operands[1]
+        assert it.dtypes[1] is out.dtype
+    assert_array_equal(out, a)
+
+
+def test_nditer_copy_and_writeback():
+    # requesting a distinct StringDType instance forces the iterator to
+    # copy the operand; the copied values read back correctly and, with
+    # updateifcopy, write back to the original array (gh-32153)
+    v = np.array(["Z" * 20, "Y" * 25], dtype="T")
+    dt = np.dtypes.StringDType()
+    np.empty(1, dtype=dt)  # attach dt to an array so it is a distinct instance
+
+    it = np.nditer([v], flags=["refs_ok"], op_flags=[["readonly", "copy"]],
+                   op_dtypes=[dt], casting="unsafe")
+    assert [str(x) for x in it] == ["Z" * 20, "Y" * 25]
+    assert it.dtypes[0] is it.operands[0].dtype
+
+    it = np.nditer([v], flags=["refs_ok"],
+                   op_flags=[["readwrite", "updateifcopy"]],
+                   op_dtypes=[dt], casting="unsafe")
+    with it:
+        for x in it:
+            x[...] = str(x) + "q"
+    assert v.tolist() == ["Z" * 20 + "q", "Y" * 25 + "q"]
+
+
+def test_concatenate_single_array_axis_none():
+    # concatenating a single arena-backed array with axis=None returns it
+    # unchanged (gh-32153)
+    a = np.array(["a" * 20, "b"], dtype="T")
+    assert_array_equal(np.concatenate([a], axis=None), a)
+
+
+def test_ndarray_from_buffer_rejected():
+    # StringDType entries reference a per-descriptor arena, so an array
+    # cannot be created over caller-supplied buffer memory (gh-32153)
+    with pytest.raises(TypeError, match="buffer"):
+        np.ndarray((2,), dtype="T", buffer=bytearray(32))
+
+
 def test_fromiter_reused_dtype():
     # Reusing the same StringDType instance across fromiter
     # calls used to write strings into the wrong arena, creating corrupted arrays

@@ -18,6 +18,7 @@
 #include "nditer_impl.h"
 #include "arrayobject.h"
 #include "array_coercion.h"
+#include "dtypemeta.h"
 #include "templ_common.h"
 #include "array_assign.h"
 #include "dtype_traversal.h"
@@ -626,7 +627,10 @@ NpyIter_Copy(NpyIter *iter)
             npyiter_goto_iterindex(newiter, NIT_ITERINDEX(newiter));
 
             /* Prepare the next buffers and set iterend/size */
-            npyiter_copy_to_buffers(newiter, NULL);
+            if (npyiter_copy_to_buffers(newiter, NULL) < 0) {
+                NpyIter_Deallocate(newiter);
+                return NULL;
+            }
         }
     }
 
@@ -3211,6 +3215,8 @@ npyiter_allocate_arrays(NpyIter *iter,
 
             op[iop] = out;
 
+            npy_resync_finalized_descr(&op_dtype[iop], op[iop]);
+
             /*
              * Now we need to replace the pointers and strides with values
              * from the new array.
@@ -3230,7 +3236,8 @@ npyiter_allocate_arrays(NpyIter *iter,
                          NPY_OP_ITFLAG_READ |
                          NPY_OP_ITFLAG_WRITE)) == (NPY_OP_ITFLAG_CAST |
                                                    NPY_OP_ITFLAG_READ) &&
-                          PyArray_NDIM(op[iop]) == 0) {
+                          PyArray_NDIM(op[iop]) == 0 &&
+                          !NPY_DT_has_finalize(NPY_DTYPE(op_dtype[iop]))) {
             PyArrayObject *temp;
             Py_INCREF(op_dtype[iop]);
             temp = (PyArrayObject *)PyArray_NewFromDescr(
@@ -3302,6 +3309,8 @@ npyiter_allocate_arrays(NpyIter *iter,
 
             Py_DECREF(op[iop]);
             op[iop] = temp;
+
+            npy_resync_finalized_descr(&op_dtype[iop], op[iop]);
 
             /*
              * Now we need to replace the pointers and strides with values

@@ -133,6 +133,26 @@ static inline int NPY_DT_is_user_defined(PyArray_DTypeMeta *dtype) {
     // New-style user defined dtypes have a type_num of -1 also on DType
     return dtype->type_num == -1;
 }
+static inline int NPY_DT_has_finalize(PyArray_DTypeMeta *dtype) {
+    return NPY_DT_SLOTS(dtype)->finalize_descr != NULL;
+}
+
+/*
+ * Re-point an owned descriptor reference at the descriptor that owns
+ * `arr`'s data, for use where array creation may have replaced `*descr`
+ * via `finalize_descr` (e.g. StringDType, whose packed strings reference
+ * the descriptor's arena).  The `NPY_DT_has_finalize` guard leaves the
+ * subarray-dtype descriptor replacement alone, where `*descr` must keep
+ * describing subarray-sized items.
+ */
+static inline void
+npy_resync_finalized_descr(PyArray_Descr **descr, PyArrayObject *arr)
+{
+    if (PyArray_DESCR(arr) != *descr && NPY_DT_has_finalize(NPY_DTYPE(*descr))) {
+        Py_INCREF(PyArray_DESCR(arr));
+        Py_SETREF(*descr, PyArray_DESCR(arr));
+    }
+}
 
 /*
  * Macros for convenient classmethod calls, since these require
