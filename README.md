@@ -39,7 +39,7 @@ Testing:
 
 NumPy requires `pytest`. In addition, there are a number of optional test
 dependencies, like Meson for testing the NumPy C API, Cython for testing the
-NumPy Cython API, and Hypothesis additional property-based tests.
+NumPy Cython API, and Hypothesis for additional property-based tests.
 
 Tests can then be run after installation with:
 
