@@ -376,6 +376,7 @@ array_swapaxes(PyArrayObject *self, PyObject *args)
 NPY_NO_EXPORT PyObject *
 PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     PyObject *ret = NULL;
     PyObject *safe;
     int self_elsize, typed_elsize;
@@ -396,13 +397,13 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
     if (_may_have_objects(PyArray_DESCR(self)) || _may_have_objects(typed)) {
         if (npy_cache_import_runtime(
                     "numpy._core._internal", "_getfield_is_safe",
-                    &npy_get_module_state()->runtime_imports._getfield_is_safe) == -1) {
+                    &state->runtime_imports._getfield_is_safe) == -1) {
             Py_DECREF(typed);
             return NULL;
         }
 
         /* only returns True or raises */
-        safe = PyObject_CallFunction(npy_get_module_state()->runtime_imports._getfield_is_safe,
+        safe = PyObject_CallFunction(state->runtime_imports._getfield_is_safe,
                                      "OOi", PyArray_DESCR(self),
                                      typed, offset);
         if (safe == NULL) {
@@ -2300,20 +2301,21 @@ end:
 NPY_NO_EXPORT int
 PyArray_Dump(PyObject *self, PyObject *file, int protocol)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     PyObject *ret;
     if (npy_cache_import_runtime(
                 "numpy._core._methods", "_dump",
-                &npy_get_module_state()->runtime_imports._dump) == -1) {
+                &state->runtime_imports._dump) == -1) {
         return -1;
     }
 
     if (protocol < 0) {
         ret = PyObject_CallFunction(
-                npy_get_module_state()->runtime_imports._dump, "OO", self, file);
+                state->runtime_imports._dump, "OO", self, file);
     }
     else {
         ret = PyObject_CallFunction(
-                npy_get_module_state()->runtime_imports._dump, "OOi", self, file, protocol);
+                state->runtime_imports._dump, "OOi", self, file, protocol);
     }
     if (ret == NULL) {
         return -1;
@@ -2326,16 +2328,17 @@ PyArray_Dump(PyObject *self, PyObject *file, int protocol)
 NPY_NO_EXPORT PyObject *
 PyArray_Dumps(PyObject *self, int protocol)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     if (npy_cache_import_runtime("numpy._core._methods", "_dumps",
-                                 &npy_get_module_state()->runtime_imports._dumps) == -1) {
+                                 &state->runtime_imports._dumps) == -1) {
         return NULL;
     }
     if (protocol < 0) {
-        return PyObject_CallFunction(npy_get_module_state()->runtime_imports._dumps, "O", self);
+        return PyObject_CallFunction(state->runtime_imports._dumps, "O", self);
     }
     else {
         return PyObject_CallFunction(
-                npy_get_module_state()->runtime_imports._dumps, "Oi", self, protocol);
+                state->runtime_imports._dumps, "Oi", self, protocol);
     }
 }
 

@@ -214,8 +214,10 @@ int initumath(PyObject *m)
 #undef ADDSCONST
     PyModule_AddIntConstant(m, "UFUNC_BUFSIZE_DEFAULT", (long)NPY_BUFSIZE);
 
-    Py_INCREF(get_module_state(m)->static_pydata.npy_extobj_contextvar);
-    PyModule_AddObject(m, "_extobj_contextvar", get_module_state(m)->static_pydata.npy_extobj_contextvar);
+    multiarray_umath_state *state = get_module_state(m);
+    Py_INCREF(state->static_pydata.npy_extobj_contextvar);
+    PyModule_AddObject(m, "_extobj_contextvar",
+                       state->static_pydata.npy_extobj_contextvar);
 
     PyModule_AddObject(m, "PINF", PyFloat_FromDouble(NPY_INFINITY));
     PyModule_AddObject(m, "NINF", PyFloat_FromDouble(-NPY_INFINITY));

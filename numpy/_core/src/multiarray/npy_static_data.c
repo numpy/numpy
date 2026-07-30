@@ -116,6 +116,7 @@ intern_strings(void)
 NPY_NO_EXPORT int
 initialize_static_globals(void)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     /*
      * Initialize contents of npy_static_pydata struct
      *
@@ -123,7 +124,7 @@ initialize_static_globals(void)
      * that we want to keep alive for the lifetime of the
      * module for performance reasons
      */
-    npy_static_pydata_struct *static_pydata = &npy_get_module_state()->static_pydata;
+    npy_static_pydata_struct *static_pydata = &state->static_pydata;
 
     IMPORT_GLOBAL("math", "floor",
                   static_pydata->math_floor_func);
@@ -197,7 +198,7 @@ initialize_static_globals(void)
         return -1;
     }
 
-    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
+    npy_interned_str_struct *interned_str = &state->interned_str;
 
     static_pydata->kwnames_is_copy = PyTuple_Pack(1, interned_str->copy);
     if (static_pydata->kwnames_is_copy == NULL) {
@@ -252,7 +253,7 @@ initialize_static_globals(void)
      * This struct holds global static caches. These are set
      * up this way for performance reasons.
      */
-    npy_static_cdata_struct *cdata = &npy_get_module_state()->static_cdata;
+    npy_static_cdata_struct *cdata = &state->static_cdata;
 
     PyObject *flags = PySys_GetObject("flags");  /* borrowed object */
     if (flags == NULL) {
@@ -298,8 +299,9 @@ initialize_static_globals(void)
  */
 NPY_NO_EXPORT int
 verify_static_structs_initialized(void) {
+    multiarray_umath_state *state = npy_get_module_state();
     // verify all entries in npy_interned_str are filled in
-    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
+    npy_interned_str_struct *interned_str = &state->interned_str;
     for (int i=0; i < (sizeof(npy_interned_str_struct)/sizeof(PyObject *)); i++) {
         if (*(((PyObject **)interned_str) + i) == NULL) {
             PyErr_Format(
@@ -311,7 +313,7 @@ verify_static_structs_initialized(void) {
     }
 
     // verify all entries in npy_static_pydata are filled in
-    npy_static_pydata_struct *static_pydata = &npy_get_module_state()->static_pydata;
+    npy_static_pydata_struct *static_pydata = &state->static_pydata;
     for (int i=0; i < (sizeof(npy_static_pydata_struct)/sizeof(PyObject *)); i++) {
         if (*(((PyObject **)static_pydata) + i) == NULL) {
             PyErr_Format(

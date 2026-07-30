@@ -35,37 +35,39 @@ PyArray_SetStringFunction(PyObject *op, int repr)
 NPY_NO_EXPORT PyObject *
 array_repr(PyArrayObject *self)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     /*
      * We need to do a delayed import here as initialization on module load
      * leads to circular import problems.
      */
     if (npy_cache_import_runtime("numpy._core.arrayprint", "_default_array_repr",
-                                 &npy_get_module_state()->runtime_imports._default_array_repr) == -1) {
+                                 &state->runtime_imports._default_array_repr) == -1) {
         npy_PyErr_SetStringChained(PyExc_RuntimeError,
                 "Unable to configure default ndarray.__repr__");
         return NULL;
     }
     return PyObject_CallFunctionObjArgs(
-            npy_get_module_state()->runtime_imports._default_array_repr, self, NULL);
+            state->runtime_imports._default_array_repr, self, NULL);
 }
 
 
 NPY_NO_EXPORT PyObject *
 array_str(PyArrayObject *self)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     /*
      * We need to do a delayed import here as initialization on module load leads
      * to circular import problems.
      */
     if (npy_cache_import_runtime(
                 "numpy._core.arrayprint", "_default_array_str",
-                &npy_get_module_state()->runtime_imports._default_array_str) == -1) {
+                &state->runtime_imports._default_array_str) == -1) {
         npy_PyErr_SetStringChained(PyExc_RuntimeError,
                 "Unable to configure default ndarray.__str__");
         return NULL;
     }
     return PyObject_CallFunctionObjArgs(
-            npy_get_module_state()->runtime_imports._default_array_str, self, NULL);
+            state->runtime_imports._default_array_str, self, NULL);
 }
 
 

@@ -176,11 +176,12 @@ npy_ObjectTrunc(PyObject *obj) {
 static PyObject *
 npy_ObjectGCD(PyObject *i1, PyObject *i2)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     PyObject *gcd = NULL;
 
     /* use math.gcd if valid on the provided types */
     {
-        gcd = PyObject_CallFunction(npy_get_module_state()->static_pydata.math_gcd_func,
+        gcd = PyObject_CallFunction(state->static_pydata.math_gcd_func,
                                     "OO", i1, i2);
         if (gcd != NULL) {
             return gcd;
@@ -192,10 +193,10 @@ npy_ObjectGCD(PyObject *i1, PyObject *i2)
     /* otherwise, use our internal one, written in python */
     {
         if (npy_cache_import_runtime("numpy._core._internal", "_gcd",
-                                     &npy_get_module_state()->runtime_imports.internal_gcd_func) == -1) {
+                                     &state->runtime_imports.internal_gcd_func) == -1) {
             return NULL;
         }
-        gcd = PyObject_CallFunction(npy_get_module_state()->runtime_imports.internal_gcd_func,
+        gcd = PyObject_CallFunction(state->runtime_imports.internal_gcd_func,
                                     "OO", i1, i2);
         if (gcd == NULL) {
             return NULL;

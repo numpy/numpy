@@ -745,15 +745,16 @@ _convert_from_list(PyObject *obj, int align)
 static PyArray_Descr *
 _convert_from_commastring(PyObject *obj, int align)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     PyObject *parsed;
     PyArray_Descr *res;
     assert(PyUnicode_Check(obj));
     if (npy_cache_import_runtime(
             "numpy._core._internal", "_commastring",
-            &npy_get_module_state()->runtime_imports._commastring) == -1) {
+            &state->runtime_imports._commastring) == -1) {
         return NULL;
     }
-    parsed = PyObject_CallOneArg(npy_get_module_state()->runtime_imports._commastring, obj);
+    parsed = PyObject_CallOneArg(state->runtime_imports._commastring, obj);
     if (parsed == NULL) {
         return NULL;
     }
@@ -1053,14 +1054,15 @@ _validate_object_field_overlap(_PyArray_LegacyDescr *dtype)
 static PyArray_Descr *
 _convert_from_field_dict(PyObject *obj, int align)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     if (npy_cache_import_runtime(
             "numpy._core._internal", "_usefields",
-            &npy_get_module_state()->runtime_imports._usefields) < 0) {
+            &state->runtime_imports._usefields) < 0) {
         return NULL;
     }
 
     return (PyArray_Descr *)PyObject_CallFunctionObjArgs(
-        npy_get_module_state()->runtime_imports._usefields, obj, align ? Py_True : Py_False, NULL);
+        state->runtime_imports._usefields, obj, align ? Py_True : Py_False, NULL);
 }
 
 /*

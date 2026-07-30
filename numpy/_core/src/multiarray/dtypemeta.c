@@ -862,10 +862,11 @@ void_ensure_canonical(_PyArray_LegacyDescr *self)
 static PyArray_Descr *
 void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     if (descr1->subarray == NULL && descr1->names == NULL &&
             descr2->subarray == NULL && descr2->names == NULL) {
         if (descr1->elsize != descr2->elsize) {
-            PyErr_SetString(npy_get_module_state()->static_pydata.DTypePromotionError,
+            PyErr_SetString(state->static_pydata.DTypePromotionError,
                     "Invalid type promotion with void datatypes of different "
                     "lengths. Use the `np.bytes_` datatype instead to pad the "
                     "shorter value with trailing zero bytes.");
@@ -879,11 +880,11 @@ void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
         /* If both have fields promoting individual fields may be possible */
         if (npy_cache_import_runtime(
                     "numpy._core._internal", "_promote_fields",
-                    &npy_get_module_state()->runtime_imports._promote_fields) == -1) {
+                    &state->runtime_imports._promote_fields) == -1) {
             return NULL;
         }
         PyObject *result = PyObject_CallFunctionObjArgs(
-                npy_get_module_state()->runtime_imports._promote_fields,
+                state->runtime_imports._promote_fields,
                 descr1, descr2, NULL);
         if (result == NULL) {
             return NULL;
@@ -904,7 +905,7 @@ void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
             return NULL;
         }
         if (!cmp) {
-            PyErr_SetString(npy_get_module_state()->static_pydata.DTypePromotionError,
+            PyErr_SetString(state->static_pydata.DTypePromotionError,
                     "invalid type promotion with subarray datatypes "
                     "(shape mismatch).");
             return NULL;
@@ -934,7 +935,7 @@ void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
         return new_descr;
     }
 
-    PyErr_SetString(npy_get_module_state()->static_pydata.DTypePromotionError,
+    PyErr_SetString(state->static_pydata.DTypePromotionError,
             "invalid type promotion with structured datatype(s).");
     return NULL;
 }
@@ -1166,6 +1167,7 @@ dtypemeta_wrap_legacy_descriptor(
     _PyArray_LegacyDescr *descr, PyArray_ArrFuncs *arr_funcs,
     PyTypeObject *dtype_super_class, const char *name, const char *alias)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     int has_type_set = Py_TYPE(descr) == &PyArrayDescr_Type;
 
     if (!has_type_set) {
@@ -1321,12 +1323,12 @@ dtypemeta_wrap_legacy_descriptor(
     /* And it to the types submodule if it is a builtin dtype */
     if (!PyTypeNum_ISUSERDEF(descr->type_num)) {
         if (npy_cache_import_runtime("numpy.dtypes", "_add_dtype_helper",
-                                     &npy_get_module_state()->runtime_imports._add_dtype_helper) == -1) {
+                                     &state->runtime_imports._add_dtype_helper) == -1) {
             goto fail;
         }
 
         if (PyObject_CallFunction(
-                npy_get_module_state()->runtime_imports._add_dtype_helper,
+                state->runtime_imports._add_dtype_helper,
                 "Os", (PyObject *)dtype_class, alias) == NULL) {
             goto fail;
         }

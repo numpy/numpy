@@ -604,6 +604,7 @@ PyArray_NewFromDescr_int(
         npy_intp const *dims, npy_intp const *strides, void *data,
         int flags, PyObject *obj, PyObject *base, _NPY_CREATION_FLAGS cflags)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     PyArrayObject_fields *fa;
     npy_intp nbytes;
 
@@ -898,11 +899,11 @@ PyArray_NewFromDescr_int(
      */
     if (subtype != &PyArray_Type) {
         PyObject *res, *func;
-        func = PyObject_GetAttr((PyObject *)subtype, npy_get_module_state()->interned_str.array_finalize);
+        func = PyObject_GetAttr((PyObject *)subtype, state->interned_str.array_finalize);
         if (func == NULL) {
             goto fail;
         }
-        else if (func == npy_get_module_state()->static_pydata.ndarray_array_finalize) {
+        else if (func == state->static_pydata.ndarray_array_finalize) {
             Py_DECREF(func);
         }
         else {
@@ -2504,11 +2505,12 @@ NPY_NO_EXPORT PyObject *
 PyArray_FromArrayAttr_int(PyObject *op, PyArray_Descr *descr, int copy,
                           int *was_copied_by__array__)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     PyObject *new;
     PyObject *array_meth;
 
     if (PyArray_LookupSpecial_OnInstance(
-                op, npy_get_module_state()->interned_str.array, &array_meth) < 0) {
+                op, state->interned_str.array, &array_meth) < 0) {
         return NULL;
     }
     else if (array_meth == NULL) {
@@ -2541,7 +2543,7 @@ PyArray_FromArrayAttr_int(PyObject *op, PyArray_Descr *descr, int copy,
      * signature of the __array__ method being called does not have `copy`.
      */
     if (copy != -1) {
-        kwnames = npy_get_module_state()->static_pydata.kwnames_is_copy;
+        kwnames = state->static_pydata.kwnames_is_copy;
         arguments[nargs] = copy == 1 ? Py_True : Py_False;
     }
 

@@ -76,10 +76,11 @@ array_inplace_matrix_multiply(PyArrayObject *m1, PyObject *m2);
 NPY_NO_EXPORT int
 _PyArray_SetNumericOps(PyObject *dict)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     PyObject *temp = NULL;
     int res;
 
-    NumericOps *n_ops = &npy_get_module_state()->n_ops;
+    NumericOps *n_ops = &state->n_ops;
     SET(add);
     SET(subtract);
     SET(multiply);
@@ -123,7 +124,7 @@ _PyArray_SetNumericOps(PyObject *dict)
     SET(imag);
 
     // initialize static globals needed for matmul
-    npy_static_pydata_struct *static_pydata = &npy_get_module_state()->static_pydata;
+    npy_static_pydata_struct *static_pydata = &state->static_pydata;
     static_pydata->axes_1d_obj_kwargs = Py_BuildValue(
             "{s, [(i), (i, i), (i)]}", "axes", -1, -2, -1, -1);
     if (static_pydata->axes_1d_obj_kwargs == NULL) {
@@ -295,6 +296,7 @@ array_matrix_multiply(PyObject *m1, PyObject *m2)
 static PyObject *
 array_inplace_matrix_multiply(PyArrayObject *self, PyObject *other)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     INPLACE_GIVE_UP_IF_NEEDED(self, other,
             nb_inplace_matrix_multiply, array_inplace_matrix_multiply);
 
@@ -314,12 +316,12 @@ array_inplace_matrix_multiply(PyArrayObject *self, PyObject *other)
      * passing the correct `axes=`.
      */
     if (PyArray_NDIM(self) == 1) {
-        kwargs = npy_get_module_state()->static_pydata.axes_1d_obj_kwargs;
+        kwargs = state->static_pydata.axes_1d_obj_kwargs;
     }
     else {
-        kwargs = npy_get_module_state()->static_pydata.axes_2d_obj_kwargs;
+        kwargs = state->static_pydata.axes_2d_obj_kwargs;
     }
-    PyObject *res = PyObject_Call(npy_get_module_state()->n_ops.matmul, args, kwargs);
+    PyObject *res = PyObject_Call(state->n_ops.matmul, args, kwargs);
     Py_DECREF(args);
 
     if (res == NULL) {
@@ -327,7 +329,7 @@ array_inplace_matrix_multiply(PyArrayObject *self, PyObject *other)
          * AxisError should indicate that the axes argument didn't work out
          * which should mean the second operand not being 2 dimensional.
          */
-        if (PyErr_ExceptionMatches(npy_get_module_state()->static_pydata.AxisError)) {
+        if (PyErr_ExceptionMatches(state->static_pydata.AxisError)) {
             PyErr_SetString(PyExc_ValueError,
                 "inplace matrix multiplication requires the first operand to "
                 "have at least one and the second at least two dimensions.");
@@ -340,6 +342,7 @@ array_inplace_matrix_multiply(PyArrayObject *self, PyObject *other)
 static int
 fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     PyObject *fastop = NULL;
 
     if (PyLong_CheckExact(o2)) {
@@ -350,10 +353,10 @@ fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
         }
 
         if (exp == -1) {
-            fastop = npy_get_module_state()->n_ops.reciprocal;
+            fastop = state->n_ops.reciprocal;
         }
         else if (exp == 2) {
-            fastop = npy_get_module_state()->n_ops.square;
+            fastop = state->n_ops.square;
         }
         else {
             return 1;
@@ -362,7 +365,7 @@ fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
     else if (PyFloat_CheckExact(o2)) {
         double exp = PyFloat_AsDouble(o2);
         if (exp == 0.5) {
-            fastop = npy_get_module_state()->n_ops.sqrt;
+            fastop = state->n_ops.sqrt;
         }
         else {
             return 1;
@@ -376,7 +379,7 @@ fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
     if (PyArray_ISOBJECT(a1)) {
         return 1;
     }
-    if (fastop != npy_get_module_state()->n_ops.square && !PyArray_ISFLOAT(a1) && !PyArray_ISCOMPLEX(a1)) {
+    if (fastop != state->n_ops.square && !PyArray_ISFLOAT(a1) && !PyArray_ISCOMPLEX(a1)) {
         // we special-case squaring for any array type
         // gh-29388
         return 1;
@@ -413,37 +416,41 @@ array_power(PyObject *a1, PyObject *o2, PyObject *modulo)
 static PyObject *
 array_positive(PyArrayObject *m1)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     if (can_elide_temp_unary(m1)) {
-        return PyArray_GenericInplaceUnaryFunction(m1, npy_get_module_state()->n_ops.positive);
+        return PyArray_GenericInplaceUnaryFunction(m1, state->n_ops.positive);
     }
-    return PyArray_GenericUnaryFunction(m1, npy_get_module_state()->n_ops.positive);
+    return PyArray_GenericUnaryFunction(m1, state->n_ops.positive);
 }
 
 static PyObject *
 array_negative(PyArrayObject *m1)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     if (can_elide_temp_unary(m1)) {
-        return PyArray_GenericInplaceUnaryFunction(m1, npy_get_module_state()->n_ops.negative);
+        return PyArray_GenericInplaceUnaryFunction(m1, state->n_ops.negative);
     }
-    return PyArray_GenericUnaryFunction(m1, npy_get_module_state()->n_ops.negative);
+    return PyArray_GenericUnaryFunction(m1, state->n_ops.negative);
 }
 
 static PyObject *
 array_absolute(PyArrayObject *m1)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     if (can_elide_temp_unary(m1) && !PyArray_ISCOMPLEX(m1)) {
-        return PyArray_GenericInplaceUnaryFunction(m1, npy_get_module_state()->n_ops.absolute);
+        return PyArray_GenericInplaceUnaryFunction(m1, state->n_ops.absolute);
     }
-    return PyArray_GenericUnaryFunction(m1, npy_get_module_state()->n_ops.absolute);
+    return PyArray_GenericUnaryFunction(m1, state->n_ops.absolute);
 }
 
 static PyObject *
 array_invert(PyArrayObject *m1)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     if (can_elide_temp_unary(m1)) {
-        return PyArray_GenericInplaceUnaryFunction(m1, npy_get_module_state()->n_ops.invert);
+        return PyArray_GenericInplaceUnaryFunction(m1, state->n_ops.invert);
     }
-    return PyArray_GenericUnaryFunction(m1, npy_get_module_state()->n_ops.invert);
+    return PyArray_GenericUnaryFunction(m1, state->n_ops.invert);
 }
 
 static PyObject *

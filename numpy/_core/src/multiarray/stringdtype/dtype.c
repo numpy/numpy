@@ -911,20 +911,21 @@ stringdtype_repr(PyArray_StringDTypeObject *self)
 static PyObject *
 stringdtype__reduce__(PyArray_StringDTypeObject *self, PyObject *NPY_UNUSED(args))
 {
+    multiarray_umath_state *state = npy_get_module_state();
     if (npy_cache_import_runtime(
                 "numpy._core._internal", "_convert_to_stringdtype_kwargs",
-                &npy_get_module_state()->runtime_imports._convert_to_stringdtype_kwargs) == -1) {
+                &state->runtime_imports._convert_to_stringdtype_kwargs) == -1) {
         return NULL;
     }
 
     if (self->na_object != NULL) {
         return Py_BuildValue(
-                "O(iO)", npy_get_module_state()->runtime_imports._convert_to_stringdtype_kwargs,
+                "O(iO)", state->runtime_imports._convert_to_stringdtype_kwargs,
                 self->coerce, self->na_object);
     }
 
     return Py_BuildValue(
-            "O(i)", npy_get_module_state()->runtime_imports._convert_to_stringdtype_kwargs,
+            "O(i)", state->runtime_imports._convert_to_stringdtype_kwargs,
             self->coerce);
 }
 

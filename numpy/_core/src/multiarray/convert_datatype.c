@@ -1830,6 +1830,7 @@ _check_object_rec(PyArray_Descr *descr)
 NPY_NO_EXPORT char *
 PyArray_Zero(PyArrayObject *arr)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     char *zeroval;
     int ret, storeflags;
 
@@ -1849,12 +1850,12 @@ PyArray_Zero(PyArrayObject *arr)
            if they simply memcpy it into an ndarray without using
            setitem(), refcount errors will occur
         */
-        memcpy(zeroval, &npy_get_module_state()->static_pydata.zero_obj, sizeof(PyObject *));
+        memcpy(zeroval, &state->static_pydata.zero_obj, sizeof(PyObject *));
         return zeroval;
     }
     storeflags = PyArray_FLAGS(arr);
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
-    ret = PyArray_SETITEM(arr, zeroval, npy_get_module_state()->static_pydata.zero_obj);
+    ret = PyArray_SETITEM(arr, zeroval, state->static_pydata.zero_obj);
     ((PyArrayObject_fields *)arr)->flags = storeflags;
     if (ret < 0) {
         PyDataMem_FREE(zeroval);
@@ -1869,6 +1870,7 @@ PyArray_Zero(PyArrayObject *arr)
 NPY_NO_EXPORT char *
 PyArray_One(PyArrayObject *arr)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     char *oneval;
     int ret, storeflags;
 
@@ -1888,13 +1890,13 @@ PyArray_One(PyArrayObject *arr)
            if they simply memcpy it into an ndarray without using
            setitem(), refcount errors will occur
         */
-        memcpy(oneval, &npy_get_module_state()->static_pydata.one_obj, sizeof(PyObject *));
+        memcpy(oneval, &state->static_pydata.one_obj, sizeof(PyObject *));
         return oneval;
     }
 
     storeflags = PyArray_FLAGS(arr);
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
-    ret = PyArray_SETITEM(arr, oneval, npy_get_module_state()->static_pydata.one_obj);
+    ret = PyArray_SETITEM(arr, oneval, state->static_pydata.one_obj);
     ((PyArrayObject_fields *)arr)->flags = storeflags;
     if (ret < 0) {
         PyDataMem_FREE(oneval);
@@ -2927,8 +2929,9 @@ nonstructured_to_structured_get_loop(
 static PyObject *
 PyArray_GetGenericToVoidCastingImpl(void)
 {
-    Py_INCREF(npy_get_module_state()->static_pydata.GenericToVoidMethod);
-    return npy_get_module_state()->static_pydata.GenericToVoidMethod;
+    multiarray_umath_state *state = npy_get_module_state();
+    Py_INCREF(state->static_pydata.GenericToVoidMethod);
+    return state->static_pydata.GenericToVoidMethod;
 }
 
 
@@ -3065,8 +3068,9 @@ structured_to_nonstructured_get_loop(
 static PyObject *
 PyArray_GetVoidToGenericCastingImpl(void)
 {
-    Py_INCREF(npy_get_module_state()->static_pydata.VoidToGenericMethod);
-    return npy_get_module_state()->static_pydata.VoidToGenericMethod;
+    multiarray_umath_state *state = npy_get_module_state();
+    Py_INCREF(state->static_pydata.VoidToGenericMethod);
+    return state->static_pydata.VoidToGenericMethod;
 }
 
 
@@ -3445,8 +3449,9 @@ object_to_any_resolve_descriptors(
 static PyObject *
 PyArray_GetObjectToGenericCastingImpl(void)
 {
-    Py_INCREF(npy_get_module_state()->static_pydata.ObjectToGenericMethod);
-    return npy_get_module_state()->static_pydata.ObjectToGenericMethod;
+    multiarray_umath_state *state = npy_get_module_state();
+    Py_INCREF(state->static_pydata.ObjectToGenericMethod);
+    return state->static_pydata.ObjectToGenericMethod;
 }
 
 
@@ -3482,8 +3487,9 @@ any_to_object_resolve_descriptors(
 static PyObject *
 PyArray_GetGenericToObjectCastingImpl(void)
 {
-    Py_INCREF(npy_get_module_state()->static_pydata.GenericToObjectMethod);
-    return npy_get_module_state()->static_pydata.GenericToObjectMethod;
+    multiarray_umath_state *state = npy_get_module_state();
+    Py_INCREF(state->static_pydata.GenericToObjectMethod);
+    return state->static_pydata.GenericToObjectMethod;
 }
 
 
@@ -3537,6 +3543,7 @@ PyArray_InitializeObjectToObjectCast(void)
 
 static int
 initialize_void_and_object_globals(void) {
+    multiarray_umath_state *state = npy_get_module_state();
     PyArrayMethodObject *method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
     if (method == NULL) {
         PyErr_NoMemory();
@@ -3550,7 +3557,7 @@ initialize_void_and_object_globals(void) {
     method->get_strided_loop = &structured_to_nonstructured_get_loop;
     method->nin = 1;
     method->nout = 1;
-    npy_get_module_state()->static_pydata.VoidToGenericMethod = (PyObject *)method;
+    state->static_pydata.VoidToGenericMethod = (PyObject *)method;
 
     method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
     if (method == NULL) {
@@ -3565,7 +3572,7 @@ initialize_void_and_object_globals(void) {
     method->get_strided_loop = &nonstructured_to_structured_get_loop;
     method->nin = 1;
     method->nout = 1;
-    npy_get_module_state()->static_pydata.GenericToVoidMethod = (PyObject *)method;
+    state->static_pydata.GenericToVoidMethod = (PyObject *)method;
 
     method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
     if (method == NULL) {
@@ -3582,7 +3589,7 @@ initialize_void_and_object_globals(void) {
     method->casting = NPY_UNSAFE_CASTING;
     method->resolve_descriptors = &object_to_any_resolve_descriptors;
     method->get_strided_loop = &object_to_any_get_loop;
-    npy_get_module_state()->static_pydata.ObjectToGenericMethod = (PyObject *)method;
+    state->static_pydata.ObjectToGenericMethod = (PyObject *)method;
 
     method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
     if (method == NULL) {
@@ -3599,7 +3606,7 @@ initialize_void_and_object_globals(void) {
     method->casting = NPY_SAFE_CASTING;
     method->resolve_descriptors = &any_to_object_resolve_descriptors;
     method->get_strided_loop = &any_to_object_get_loop;
-    npy_get_module_state()->static_pydata.GenericToObjectMethod = (PyObject *)method;
+    state->static_pydata.GenericToObjectMethod = (PyObject *)method;
 
     return 0;
 }

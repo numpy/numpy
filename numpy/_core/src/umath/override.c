@@ -210,6 +210,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
         PyObject **result)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     int status;
 
     int num_override_args;
@@ -374,11 +375,11 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
             if (npy_cache_import_runtime(
                     "numpy._core._internal",
                     "array_ufunc_errmsg_formatter",
-                    &npy_get_module_state()->runtime_imports.array_ufunc_errmsg_formatter) == -1) {
+                    &state->runtime_imports.array_ufunc_errmsg_formatter) == -1) {
                 goto fail;
             }
             errmsg = PyObject_Call(
-                    npy_get_module_state()->runtime_imports.array_ufunc_errmsg_formatter,
+                    state->runtime_imports.array_ufunc_errmsg_formatter,
                     override_args, normal_kwds);
             if (errmsg != NULL) {
                 PyErr_SetObject(PyExc_TypeError, errmsg);

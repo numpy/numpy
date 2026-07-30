@@ -586,6 +586,7 @@ decide_view_dtype_path(
         int *use_set_dtype,
         int *use_dtype_prop)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     int ret = -1;
     *use_dtype_in_finalize = 1;  /* Future defaults. */
     *use_set_dtype = 0;
@@ -602,9 +603,9 @@ decide_view_dtype_path(
     }
 
     int set_overridden =
-            (sub_set_dtype != npy_get_module_state()->static_pydata.ndarray_set_dtype);
+            (sub_set_dtype != state->static_pydata.ndarray_set_dtype);
     int dtype_overridden =
-            (sub_dtype != npy_get_module_state()->static_pydata.ndarray_dtype_descr);
+            (sub_dtype != state->static_pydata.ndarray_dtype_descr);
 
     /* Default: `_set_dtype` wins (either it was overridden, or nothing
      * was); flipped only if the walk below finds `dtype` diverging
@@ -669,6 +670,7 @@ decide_view_dtype_path(
 NPY_NO_EXPORT PyObject *
 PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
 {
+    multiarray_umath_state *state = npy_get_module_state();
     PyObject *ret = NULL;
     int nd = PyArray_NDIM(self);
     npy_intp *dims = PyArray_DIMS(self);
@@ -757,7 +759,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
          * Path 2: subclass lives in future but needs to set dtype itself.
          */
         PyObject *res = PyObject_CallMethodOneArg(
-                ret, npy_get_module_state()->interned_str._set_dtype, (PyObject *)type);
+                ret, state->interned_str._set_dtype, (PyObject *)type);
         if (res == NULL) {
             Py_CLEAR(ret);
             goto finish;
@@ -769,7 +771,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
          * Path 3: subclass overrides dtype property.
          */
         if (PyObject_GenericSetAttr(
-                ret, npy_get_module_state()->interned_str.dtype, (PyObject *)type) < 0) {
+                ret, state->interned_str.dtype, (PyObject *)type) < 0) {
             Py_CLEAR(ret);
             goto finish;
         }

@@ -22,15 +22,16 @@ npy_ctypes_check(PyTypeObject *obj)
     PyObject *ret_obj;
     int ret;
 
+    multiarray_umath_state *state = npy_get_module_state();
 
     if (npy_cache_import_runtime(
                 "numpy._core._internal", "npy_ctypes_check",
-                &npy_get_module_state()->runtime_imports.npy_ctypes_check) == -1) {
+                &state->runtime_imports.npy_ctypes_check) == -1) {
         goto fail;
     }
 
     ret_obj = PyObject_CallFunctionObjArgs(
-            npy_get_module_state()->runtime_imports.npy_ctypes_check, (PyObject *)obj, NULL);
+            state->runtime_imports.npy_ctypes_check, (PyObject *)obj, NULL);
     if (ret_obj == NULL) {
         goto fail;
     }

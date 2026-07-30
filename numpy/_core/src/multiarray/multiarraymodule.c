@@ -105,6 +105,7 @@ _umath_strings_richcompare(
 
 NPY_NO_EXPORT int
 get_legacy_print_mode(void) {
+    multiarray_umath_state *state = npy_get_module_state();
     /* Get the C value of the legacy printing mode.
      *
      * It is stored as a Python context variable so we access it via the C
@@ -114,7 +115,7 @@ get_legacy_print_mode(void) {
      * complex requirements in the future.
      */
     PyObject *format_options = NULL;
-    PyContextVar_Get(npy_get_module_state()->static_pydata.format_options, NULL, &format_options);
+    PyContextVar_Get(state->static_pydata.format_options, NULL, &format_options);
     if (format_options == NULL) {
         PyErr_SetString(PyExc_SystemError,
                         "NumPy internal error: unable to get format_options "
@@ -122,7 +123,7 @@ get_legacy_print_mode(void) {
         return -1;
     }
     PyObject *legacy_print_mode = NULL;
-    if (PyDict_GetItemRef(format_options, npy_get_module_state()->interned_str.legacy,
+    if (PyDict_GetItemRef(format_options, state->interned_str.legacy,
                           &legacy_print_mode) == -1) {
         Py_DECREF(format_options);
         return -1;
@@ -5440,7 +5441,8 @@ _multiarray_umath_exec(PyObject *m) {
     Py_INCREF(m);
 
     /* Set up per-module state pointer */
-    _npy_module_state = get_module_state(m);
+    multiarray_umath_state *state = get_module_state(m);
+    _npy_module_state = state;
 
     /* Initialize CPU features */
     if (npy_cpu_init() < 0) {
@@ -5481,7 +5483,7 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
 
-    if (initialize_global_state(get_module_state(m)) < 0) {
+    if (initialize_global_state(state) < 0) {
         return -1;
     }
 
@@ -5499,7 +5501,7 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
     PyUFunc_Type.tp_dict = Py_BuildValue(
-        "{ON}", get_module_state(m)->interned_str.__signature__, s);
+        "{ON}", state->interned_str.__signature__, s);
     if (PyUFunc_Type.tp_dict == NULL) {
         return -1;
     }
@@ -5730,9 +5732,9 @@ _multiarray_umath_exec(PyObject *m) {
      * Initialize the context-local current handler
      * with the default PyDataMem_Handler capsule.
      */
-    get_module_state(m)->current_handler = PyContextVar_New(
+    state->current_handler = PyContextVar_New(
             "current_allocator", PyDataMem_DefaultHandler);
-    if (get_module_state(m)->current_handler == NULL) {
+    if (state->current_handler == NULL) {
         return -1;
     }
 
@@ -5745,7 +5747,6 @@ _multiarray_umath_exec(PyObject *m) {
     }
 
     // initialize static references to ndarray.__array_*__ special methods
-    multiarray_umath_state *state = get_module_state(m);
     state->static_pydata.ndarray_array_finalize = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_finalize__");
     if (state->static_pydata.ndarray_array_finalize == NULL) {
