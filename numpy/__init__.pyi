@@ -448,6 +448,7 @@ from numpy._core.umath import (
     logical_not,
     logical_or,
     logical_xor,
+    matvec,
     maximum,
     minimum,
     mod,
@@ -477,6 +478,7 @@ from numpy._core.umath import (
     tan,
     tanh,
     trunc,
+    vecmat,
 )
 
 from ._expired_attrs_2_0 import __expired_attributes__ as __expired_attributes__
@@ -7649,9 +7651,7 @@ class ufunc:
 
 # Parameters: `__name__`, `ntypes` and `identity`
 matmul: _GUFunc_Nin2_Nout1[L["matmul"], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]]
-matvec: _GUFunc_Nin2_Nout1[L["matvec"], L[19], None, L["(m,n),(n)->(m)"]]
 vecdot: _GUFunc_Nin2_Nout1[L["vecdot"], L[19], None, L["(n),(n)->()"]]
-vecmat: _GUFunc_Nin2_Nout1[L["vecmat"], L[19], None, L["(n),(n,m)->(m)"]]
 
 concat = concatenate
 permute_dims = transpose
