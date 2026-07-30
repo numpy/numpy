@@ -785,6 +785,27 @@ def test_resize_method(string_list):
     assert_array_equal(sarr, np.array(string_list + [''] * 3,  dtype="T"))
 
 
+def test_byteswap(dtype):
+    # byteswap previously crashed since StringDType did not fill the
+    # legacy copyswapn slot; byte order does not apply to stringdtype
+    # so byteswapping is a no-op, as for "S" and object dtypes
+    arr = np.array(["hello", "world"], dtype=dtype)
+    swapped = arr.byteswap()
+    assert swapped is not arr
+    assert_array_equal(swapped, arr)
+    # the result is an independent copy
+    swapped[0] = "goodbye"
+    assert arr[0] == "hello"
+
+    res = arr.byteswap(inplace=True)
+    assert res is arr
+    assert_array_equal(res, ["hello", "world"])
+
+    arr.flags.writeable = False
+    with pytest.raises(ValueError, match="array to be byte-swapped"):
+        arr.byteswap(inplace=True)
+
+
 def test_place(dtype):
     # stringdtype has no legacy copyswap arrfunc, so np.place copies the
     # values through its cast-machinery fallback

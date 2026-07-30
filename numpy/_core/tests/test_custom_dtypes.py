@@ -24,6 +24,19 @@ class TestSFloat:
         a *= 1. / scaling  # the casting code also uses the reciprocal.
         return a.view(SF(scaling))
 
+    def test_byteswap(self):
+        # sfloat previously crashed since it does not fill the legacy
+        # copyswapn slot; its byteorder is '|', declaring that byte order
+        # does not apply to it, so byteswapping is a no-op
+        a = self._get_array(1.)
+        swapped = a.byteswap()
+        assert swapped is not a
+        assert_array_equal(swapped.view(np.float64), a.view(np.float64))
+
+        res = a.byteswap(inplace=True)
+        assert res is a
+        assert_array_equal(a.view(np.float64), [1., 2., 3.])
+
     def test_sfloat_rescaled(self):
         sf = SF(1.)
         sf2 = sf.scaled_by(2.)
