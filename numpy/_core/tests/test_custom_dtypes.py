@@ -58,11 +58,14 @@ class TestSFloat:
         assert_array_equal(swapped["v"].view(np.float64),
                            arr["v"].view(np.float64))
 
-        # subarray fields with byteorder '|' are skipped as well
+        # subarray fields with byteorder '|' are skipped as well; use
+        # distinct nonzero values so that a swapped or zeroed field would
+        # be caught (byteswapped zeros are indistinguishable from zeros)
         subarr = np.zeros(2, dtype=[("v", SF(1.), (2,))])
+        subarr["v"] = np.array([[1., 2.], [3., 4.]]).view(SF(1.))
         res = subarr.byteswap()
         assert_array_equal(res["v"].view(np.float64),
-                           subarr["v"].view(np.float64))
+                           [[1., 2.], [3., 4.]])
 
     def test_structured_field_place_and_flat_raise(self):
         # requests that need to copy through the missing legacy copyswap
@@ -80,7 +83,11 @@ class TestSFloat:
         with pytest.raises(TypeError, match="does not support comparison"):
             np.sort(arr, order="v")
 
-        # misaligned fields take a different path through VOID_compare
+        # packed fields are misaligned; the compare == NULL check fires
+        # before VOID_compare's alignment handling, so this exits through
+        # the same guard as the aligned case above and never reaches the
+        # misaligned buffer path (which would call the missing copyswap
+        # slot); it checks that the guard keeps covering that layout
         packed_dt = np.dtype({"names": ["a", "v"],
                               "formats": ["u1", SF(1.)],
                               "offsets": [0, 1], "itemsize": 17})
@@ -94,6 +101,24 @@ class TestSFloat:
         arr["v"] = np.array([1., 2.]).view(SF(1.))
         arr[0] = arr[1]
         assert arr["v"].view(np.float64).tolist() == [2., 2.]
+
+    def test_structured_setitem_nested_uses_cast_path(self):
+        # for a nested field the copyswap slot is VOID_copyswap, which
+        # fails on the inner sfloat field only after it is called; the
+        # error must not leak out of a successful-looking assignment and
+        # the copy falls back to the casting path like the flat case
+        arr = np.zeros(2, dtype=[("a", "i4"), ("nested", [("v", SF(1.))])])
+        arr["a"] = [1, 2]
+        arr["nested"]["v"] = np.array([1., 2.]).view(SF(1.))
+        arr[0] = arr[1]
+        assert arr["a"].tolist() == [2, 2]
+        assert arr["nested"]["v"].view(np.float64).tolist() == [2., 2.]
+
+        # same for a subarray field of an sfloat dtype
+        arr = np.zeros(2, dtype=[("sub", SF(1.), (2,))])
+        arr["sub"] = np.array([[1., 2.], [3., 4.]]).view(SF(1.))
+        arr[0] = arr[1]
+        assert arr["sub"].view(np.float64).tolist() == [[3., 4.], [3., 4.]]
 
     def test_repr(self):
         # Check the repr, mainly to cover the code paths:

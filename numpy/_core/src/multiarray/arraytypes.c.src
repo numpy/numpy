@@ -1021,6 +1021,14 @@ _copy_and_return_void_setitem(_PyArray_LegacyDescr *dstdescr, char *dstdata,
                 break;
             }
             copyswap(dstdata + offset, srcdata + offset, 0, dummy_arr);
+            if (PyErr_Occurred()) {
+                /*
+                 * Clear the error and use the casting path, which
+                 * handles it and overwrites any partially copied fields.
+                 */
+                PyErr_Clear();
+                break;
+            }
         }
         if (i == names_size) {
             return 0;
