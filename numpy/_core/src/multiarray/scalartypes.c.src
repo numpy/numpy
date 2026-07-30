@@ -2177,13 +2177,31 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
         descr = PyArray_DescrFromScalar(self);
         data = (void *)scalar_value(self, descr);
 
+        PyArray_CopySwapFunc *copyswap =
+                PyDataType_GetArrFuncs(descr)->copyswap;
+        if (copyswap == NULL && descr->byteorder != NPY_IGNORE) {
+            /*
+             * As in PyArray_Byteswap, DTypes written using the new DType
+             * API do not fill the legacy copyswap slot and can only be
+             * byteswapped as a no-op, if byte order does not apply to them.
+             */
+            PyErr_Format(PyExc_TypeError,
+                    "dtype %S does not support byteswapping",
+                    (PyObject *)descr);
+            Py_DECREF(descr);
+            return NULL;
+        }
         newmem = PyMem_Malloc(descr->elsize);
         if (newmem == NULL) {
             Py_DECREF(descr);
             return PyErr_NoMemory();
         }
+        else if (copyswap == NULL) {
+            /* byte order does not apply, so byteswapping is a no-op */
+            memcpy(newmem, data, descr->elsize);
+        }
         else {
-            PyDataType_GetArrFuncs(descr)->copyswap(newmem, data, 1, NULL);
+            copyswap(newmem, data, 1, NULL);
         }
         new = PyArray_Scalar(newmem, descr, NULL);
         PyMem_Free(newmem);

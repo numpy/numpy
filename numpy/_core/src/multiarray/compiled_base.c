@@ -445,6 +445,10 @@ arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
             }
         }
         NPY_END_THREADS;
+        if (PyErr_Occurred()) {
+            /* e.g. a structured dtype field that does not support copyswap */
+            goto fail;
+        }
     }
 
     Py_XDECREF(values);

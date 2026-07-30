@@ -1013,10 +1013,18 @@ _copy_and_return_void_setitem(_PyArray_LegacyDescr *dstdescr, char *dstdata,
             if (_setup_field(i, dstdescr, dummy_arr, &offset, dstdata)) {
                 return -1;
             }
-            PyDataType_GetArrFuncs(PyArray_DESCR(dummy_arr))->copyswap(dstdata + offset,
-                    srcdata + offset, 0, dummy_arr);
+            PyArray_CopySwapFunc *copyswap =
+                    PyDataType_GetArrFuncs(PyArray_DESCR(dummy_arr))->copyswap;
+            if (copyswap == NULL) {
+                /* a field dtype without the legacy copyswap slot; the
+                   casting path below handles it correctly */
+                break;
+            }
+            copyswap(dstdata + offset, srcdata + offset, 0, dummy_arr);
         }
-        return 0;
+        if (i == names_size) {
+            return 0;
+        }
     }
 
     /* Slow path */
@@ -2259,6 +2267,23 @@ STRING_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
 }
 
 
+/*
+ * A missing legacy copyswap slot is a no-op for a swap-only request if byte
+ * order does not apply to the dtype (returns 0); otherwise sets a TypeError
+ * and returns -1.
+ */
+static int
+check_missing_copyswap(PyArray_Descr *dtype, int swap_only)
+{
+    if (swap_only && dtype->byteorder == NPY_IGNORE) {
+        return 0;
+    }
+    npy_gil_error(PyExc_TypeError,
+            "dtype %S does not support the copyswap operation",
+            (PyObject *)dtype);
+    return -1;
+}
+
 /* */
 static void
 VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
@@ -2289,9 +2314,17 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
             }
 
             dummy_fields.descr = new;
-            PyDataType_GetArrFuncs(new)->copyswapn(dst+offset, dstride,
-                    (src != NULL ? src+offset : NULL),
-                    sstride, n, swap, dummy_arr);
+            PyArray_CopySwapNFunc *copyswapn =
+                    PyDataType_GetArrFuncs(new)->copyswapn;
+            if (copyswapn == NULL) {
+                if (check_missing_copyswap(new, src == NULL) < 0) {
+                    return;
+                }
+                continue;
+            }
+            copyswapn(dst+offset, dstride,
+                      (src != NULL ? src+offset : NULL),
+                      sstride, n, swap, dummy_arr);
         }
         return;
     }
@@ -2330,10 +2363,17 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
         ((PyArrayObject_fields *)dummy_arr)->descr = new;
 
+        PyArray_CopySwapNFunc *copyswapn =
+                PyDataType_GetArrFuncs(new)->copyswapn;
+        if (copyswapn == NULL) {
+            /* a no-op either way, but a TypeError may be set */
+            check_missing_copyswap(new, src == NULL);
+            return;
+        }
         num = descr->elsize / subitemsize;
         for (i = 0; i < n; i++) {
-            PyDataType_GetArrFuncs(new)->copyswapn(dstptr, subitemsize, srcptr,
-                    subitemsize, num, swap, dummy_arr);
+            copyswapn(dstptr, subitemsize, srcptr,
+                      subitemsize, num, swap, dummy_arr);
             dstptr += dstride;
             if (srcptr) {
                 srcptr += sstride;
@@ -2374,9 +2414,17 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
                 return;
             }
             dummy_fields.descr = new;
-            PyDataType_GetArrFuncs(new)->copyswap(dst+offset,
-                    (src != NULL ? src+offset : NULL),
-                    swap, dummy_arr);
+            PyArray_CopySwapFunc *copyswap =
+                    PyDataType_GetArrFuncs(new)->copyswap;
+            if (copyswap == NULL) {
+                if (check_missing_copyswap(new, src == NULL) < 0) {
+                    return;
+                }
+                continue;
+            }
+            copyswap(dst+offset,
+                     (src != NULL ? src+offset : NULL),
+                     swap, dummy_arr);
         }
         return;
     }
@@ -2411,9 +2459,16 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
         dummy_fields.descr = new;
 
+        PyArray_CopySwapNFunc *copyswapn =
+                PyDataType_GetArrFuncs(new)->copyswapn;
+        if (copyswapn == NULL) {
+            /* a no-op either way, but a TypeError may be set */
+            check_missing_copyswap(new, src == NULL);
+            return;
+        }
         num = descr->elsize / subitemsize;
-        PyDataType_GetArrFuncs(new)->copyswapn(dst, subitemsize, src,
-                subitemsize, num, swap, dummy_arr);
+        copyswapn(dst, subitemsize, src,
+                  subitemsize, num, swap, dummy_arr);
         return;
     }
     /* Must be a naive Void type (e.g. a "V8") so simple copy is sufficient. */
@@ -3049,6 +3104,13 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         /* Set the fields needed by compare or copyswap */
         dummy_struct.descr = new;
 
+        if (PyDataType_GetArrFuncs(new)->compare == NULL) {
+            npy_gil_error(PyExc_TypeError,
+                    "dtype %S does not support comparison",
+                    (PyObject *)new);
+            /* res is 0, so the caller sees equality alongside the error */
+            goto finish;
+        }
         swap = PyArray_ISBYTESWAPPED(dummy);
         nip1 = ip1 + offset;
         nip2 = ip2 + offset;

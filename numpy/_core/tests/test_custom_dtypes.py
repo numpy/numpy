@@ -44,6 +44,57 @@ class TestSFloat:
         assert a.dtype.get_scaling() == scaling
         assert_array_equal(scaling * a.view(np.float64), [1., 2., 3.])
 
+    def test_structured_field_byteswap(self):
+        # this previously segfaulted via the unguarded field copyswap
+        # calls in VOID_copyswapn; the sfloat field's byteorder is '|'
+        # so it is skipped while other fields are swapped
+        arr = np.zeros(2, dtype=[("a", "i4"), ("v", SF(1.))])
+        arr["a"] = [1, 2]
+        arr["v"] = np.array([1., 2.]).view(SF(1.))
+
+        swapped = arr.byteswap()
+        assert_array_equal(swapped["a"],
+                           np.array([1, 2], dtype="i4").byteswap())
+        assert_array_equal(swapped["v"].view(np.float64),
+                           arr["v"].view(np.float64))
+
+        # subarray fields with byteorder '|' are skipped as well
+        subarr = np.zeros(2, dtype=[("v", SF(1.), (2,))])
+        res = subarr.byteswap()
+        assert_array_equal(res["v"].view(np.float64),
+                           subarr["v"].view(np.float64))
+
+    def test_structured_field_place_and_flat_raise(self):
+        # requests that need to copy through the missing legacy copyswap
+        # slot raise instead of crashing
+        arr = np.zeros(2, dtype=[("v", SF(1.))])
+        with pytest.raises(TypeError, match="does not support the copyswap"):
+            np.place(arr, [True, False], arr[:1])
+        with pytest.raises(TypeError, match="does not support the copyswap"):
+            arr.flat = arr[:1]
+
+    def test_structured_field_sort_raises(self):
+        # VOID_compare called the field's legacy compare slot, which
+        # new-style DTypes do not fill
+        arr = np.zeros(3, dtype=[("v", SF(1.))])
+        with pytest.raises(TypeError, match="does not support comparison"):
+            np.sort(arr, order="v")
+
+        # misaligned fields take a different path through VOID_compare
+        packed_dt = np.dtype({"names": ["a", "v"],
+                              "formats": ["u1", SF(1.)],
+                              "offsets": [0, 1], "itemsize": 17})
+        with pytest.raises(TypeError, match="does not support comparison"):
+            np.sort(np.zeros(3, dtype=packed_dt), order="v")
+
+    def test_structured_setitem_uses_cast_path(self):
+        # scalar assignment between equivalent structured dtypes used to
+        # segfault in the copyswap fast path; it now falls back to casting
+        arr = np.zeros(2, dtype=[("v", SF(1.))])
+        arr["v"] = np.array([1., 2.]).view(SF(1.))
+        arr[0] = arr[1]
+        assert arr["v"].view(np.float64).tolist() == [2., 2.]
+
     def test_repr(self):
         # Check the repr, mainly to cover the code paths:
         assert repr(SF(scaling=1.)) == "_ScaledFloatTestDType(scaling=1.0)"

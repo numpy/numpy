@@ -554,6 +554,10 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
             }
             Py_DECREF(it);
         }
+        if (PyErr_Occurred()) {
+            /* e.g. a structured dtype field that does not support copyswap */
+            return NULL;
+        }
 
         Py_INCREF(self);
         return (PyObject *)self;
@@ -564,6 +568,10 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
             return NULL;
         }
         new = PyArray_Byteswap(ret, NPY_TRUE);
+        if (new == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
         Py_DECREF(new);
         return (PyObject *)ret;
     }
