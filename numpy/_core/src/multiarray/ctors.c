@@ -899,7 +899,8 @@ PyArray_NewFromDescr_int(
      */
     if (subtype != &PyArray_Type) {
         PyObject *res, *func;
-        func = PyObject_GetAttr((PyObject *)subtype, state->interned_str.array_finalize);
+        func = PyObject_GetAttr((PyObject *)subtype,
+                state->interned_str.array_finalize);
         if (func == NULL) {
             goto fail;
         }

@@ -1322,8 +1322,9 @@ dtypemeta_wrap_legacy_descriptor(
 
     /* And it to the types submodule if it is a builtin dtype */
     if (!PyTypeNum_ISUSERDEF(descr->type_num)) {
-        if (npy_cache_import_runtime("numpy.dtypes", "_add_dtype_helper",
-                                     &state->runtime_imports._add_dtype_helper) == -1) {
+        if (npy_cache_import_runtime(
+                "numpy.dtypes", "_add_dtype_helper",
+                &state->runtime_imports._add_dtype_helper) == -1) {
             goto fail;
         }
 

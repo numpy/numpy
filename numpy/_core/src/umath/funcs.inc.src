@@ -192,8 +192,9 @@ npy_ObjectGCD(PyObject *i1, PyObject *i2)
 
     /* otherwise, use our internal one, written in python */
     {
-        if (npy_cache_import_runtime("numpy._core._internal", "_gcd",
-                                     &state->runtime_imports.internal_gcd_func) == -1) {
+        if (npy_cache_import_runtime(
+                "numpy._core._internal", "_gcd",
+                &state->runtime_imports.internal_gcd_func) == -1) {
             return NULL;
         }
         gcd = PyObject_CallFunction(state->runtime_imports.internal_gcd_func,

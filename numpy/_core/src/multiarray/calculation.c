@@ -418,8 +418,8 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
         return NULL;
     }
     /* Compute add.reduce(x*x,axis) */
-    obj1 = PyArray_GenericReduceFunction((PyArrayObject *)obj3, state->n_ops.add,
-                                         axis, rtype, NULL);
+    obj1 = PyArray_GenericReduceFunction(
+            (PyArrayObject *)obj3, state->n_ops.add, axis, rtype, NULL);
     Py_DECREF(obj3);
     Py_DECREF(arr2);
     if (obj1 == NULL) {
@@ -817,13 +817,16 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     }
 
     if (min == NULL) {
-        return PyObject_CallFunctionObjArgs(state->n_ops.minimum, self, max, out, NULL);
+        return PyObject_CallFunctionObjArgs(
+                state->n_ops.minimum, self, max, out, NULL);
     }
     else if (max == NULL) {
-        return PyObject_CallFunctionObjArgs(state->n_ops.maximum, self, min, out, NULL);
+        return PyObject_CallFunctionObjArgs(
+                state->n_ops.maximum, self, min, out, NULL);
     }
     else {
-        return PyObject_CallFunctionObjArgs(state->n_ops.clip, self, min, max, out, NULL);
+        return PyObject_CallFunctionObjArgs(
+                state->n_ops.clip, self, min, max, out, NULL);
     }
 }
 

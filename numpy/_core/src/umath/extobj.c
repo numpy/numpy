@@ -150,7 +150,8 @@ init_extobj(void)
         return -1;
     }
 #ifdef Py_GIL_DISABLED
-    if (PyUnstable_SetImmortal(state->static_pydata.default_extobj_capsule) == 0) {
+    if (PyUnstable_SetImmortal(
+            state->static_pydata.default_extobj_capsule) == 0) {
         PyErr_SetString(PyExc_RuntimeError, "Could not mark extobj capsule as immortal");
         Py_CLEAR(state->static_pydata.default_extobj_capsule);
         return -1;

@@ -1062,7 +1062,8 @@ _convert_from_field_dict(PyObject *obj, int align)
     }
 
     return (PyArray_Descr *)PyObject_CallFunctionObjArgs(
-        state->runtime_imports._usefields, obj, align ? Py_True : Py_False, NULL);
+        state->runtime_imports._usefields, obj,
+        align ? Py_True : Py_False, NULL);
 }
 
 /*

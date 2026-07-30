@@ -719,9 +719,9 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
                  * TODO: Just like the general dual NEP 50/legacy promotion
                  * support this is meant as a temporary hack for NumPy 1.25.
                  */
-                Py_INCREF(state->static_pydata.zero_pyint_like_arr);
-                Py_SETREF(out_op[i],
-                          (PyArrayObject *)state->static_pydata.zero_pyint_like_arr);
+                PyObject *zero_arr = state->static_pydata.zero_pyint_like_arr;
+                Py_INCREF(zero_arr);
+                Py_SETREF(out_op[i], (PyArrayObject *)zero_arr);
             }
             *promoting_pyscalars = NPY_TRUE;
         }
@@ -6858,7 +6858,8 @@ ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
     PyObject *doc;
 
     // If there is a __doc__ in the instance __dict__, use it.
-    int result = PyDict_GetItemRef(ufunc->dict, state->interned_str.__doc__, &doc);
+    int result = PyDict_GetItemRef(
+            ufunc->dict, state->interned_str.__doc__, &doc);
     if (result == -1) {
         return NULL;
     }

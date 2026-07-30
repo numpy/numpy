@@ -2,19 +2,16 @@
 #define NUMPY_CORE_SRC_MULTIARRAY_MODULE_STATE_FIELDS_H_
 
 /*
- * Single source of truth for the PyObject * members of multiarray_umath_state.
+ * Field lists for the PyObject members of multiarray_umath_state.
  *
- * Each macro below takes a macro F and applies it once per field name.
- * multiarray_umath_traverse() and multiarray_umath_clear() are both expanded
- * from these lists, so the two can never disagree with each other.
+ * Each macro applies F to every field name in the matching struct.
+ * multiarray_umath_traverse and multiarray_umath_clear are expanded from
+ * these lists, so the two cannot disagree, and the static assertions in
+ * module_state.h fail the build if a struct gains a member that is not
+ * listed here.
  *
- * The static assertions in module_state.h tie each list back to the size of
- * the struct it describes, so adding a member to one of those structs without
- * adding it here is a compile error rather than a silently missed reference.
- *
- * interned_str.errmode_strings is a fixed-size array rather than a plain
- * member, so it is not in the list below; it is handled explicitly at each use
- * site and accounted for separately in the assertion.
+ * interned_str.errmode_strings is an array rather than a plain member, so it
+ * is handled separately at each use site.
  */
 
 #ifdef __cplusplus
@@ -199,11 +196,11 @@ extern "C" {
     F(current_handler)                          \
     F(global_pytype_to_type_dict)
 
-/* Number of entries in a field list, e.g. NPY_FIELD_COUNT(NPY_N_OPS_FIELDS). */
+/* Number of entries in a field list. */
 #define NPY_FIELD_COUNT_ONE(name) + 1
 #define NPY_FIELD_COUNT(list) (0 list(NPY_FIELD_COUNT_ONE))
 
-/* interned_str.errmode_strings[] — see comment above. */
+/* Size of interned_str.errmode_strings, see comment above. */
 #define NPY_ERRMODE_STRING_COUNT 6
 
 #ifdef __cplusplus
