@@ -6,10 +6,7 @@ import warnings
 from fractions import Fraction
 from functools import partial
 
-import hypothesis
-import hypothesis.strategies as st
 import pytest
-from hypothesis.extra.numpy import arrays
 
 import numpy as np
 import numpy.lib._function_base_impl as nfb
@@ -61,6 +58,12 @@ from numpy.testing import (
     assert_equal,
     assert_raises,
     assert_raises_regex,
+)
+from numpy.testing._private.hypothesis_helpers import (
+    HAS_HYPOTHESIS,
+    arrays,
+    hypothesis,
+    st,
 )
 
 np_floats = [np.half, np.single, np.double, np.longdouble]
@@ -2394,6 +2397,7 @@ class TestUnwrap:
         p = np.array([0, 3, 6, 1, 4], dtype=np.int64)
         assert_array_equal(unwrap(p, period=-8), [0, 3, 6, 9, 12])
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @hypothesis.given(
             arr=arrays(dtype=np.int32,
                        shape=st.integers(min_value=1, max_value=50),
@@ -2403,6 +2407,7 @@ class TestUnwrap:
         assert_array_equal(unwrap(arr, period=period),
                            self._reference_unwrap(arr, period=period))
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @hypothesis.given(
             arr=arrays(dtype=np.float64,
                        shape=st.integers(min_value=1, max_value=50),
@@ -4374,6 +4379,7 @@ class TestQuantile:
         quantile = np.quantile([0., 1., 2., 3.], p0, method=method)
         assert_equal(np.sort(quantile), quantile)
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @hypothesis.given(
             arr=arrays(dtype=np.float64,
                        shape=st.integers(min_value=3, max_value=1000),
@@ -4706,6 +4712,7 @@ class TestQuantile:
 
 
 class TestLerp:
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
                                    min_value=0, max_value=1),
                       t1=st.floats(allow_nan=False, allow_infinity=False,
@@ -4724,6 +4731,7 @@ class TestLerp:
         else:
             assert l0 >= l1
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @hypothesis.given(t=st.floats(allow_nan=False, allow_infinity=False,
                                   min_value=0, max_value=1),
                       a=st.floats(allow_nan=False, allow_infinity=False,
@@ -4736,6 +4744,7 @@ class TestLerp:
         else:
             assert b <= nfb._lerp(a, b, t) <= a
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @hypothesis.given(t=st.floats(allow_nan=False, allow_infinity=False,
                                   min_value=0, max_value=1),
                       a=st.floats(allow_nan=False, allow_infinity=False,

@@ -118,7 +118,7 @@ jobs:
     - name: Install build and test dependencies from PyPI
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install -r requirements/test_requirements.txt
+        pip install -r requirements/test_requirements.txt -r requirements/hypothesis_requirements.txt
     - name: Install gfortran and setup OpenBLAS (MacPython build)
       run: |
         set -xe

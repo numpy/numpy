@@ -6,12 +6,15 @@ is adopted in the main test suite.  A few may be moved elsewhere.
 
 import operator
 
-import hypothesis
 import pytest
-from hypothesis import strategies
 
 import numpy as np
 from numpy.testing import IS_WASM, assert_array_equal
+from numpy.testing._private.hypothesis_helpers import (
+    HAS_HYPOTHESIS,
+    hypothesis,
+    strategies,
+)
 
 
 @pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for fp errors")
@@ -216,6 +219,7 @@ def test_nep50_in_ufunc_outer_huge_integer():
         np.add.outer(2**100, 1)
 
 
+@pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
 @pytest.mark.parametrize("expected,dtypes,optional_dtypes", [
         (np.float32, [np.float32],
             [np.float16, 0.0, np.uint16, np.int16, np.int8, 0]),

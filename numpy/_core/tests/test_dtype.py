@@ -10,9 +10,7 @@ import warnings
 from itertools import permutations
 from typing import Any
 
-import hypothesis
 import pytest
-from hypothesis.extra import numpy as hynp
 
 import numpy as np
 import numpy.dtypes
@@ -27,6 +25,7 @@ from numpy.testing import (
     assert_equal,
     assert_raises,
 )
+from numpy.testing._private.hypothesis_helpers import HAS_HYPOTHESIS, hynp, hypothesis
 from numpy.testing._private.utils import requires_deep_recursion
 
 
@@ -1248,6 +1247,7 @@ class TestDTypeMakeCanonical:
         canonical_dt = np.result_type(arr.dtype)
         assert not canonical_dt.hasobject
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @pytest.mark.slow
     @hypothesis.given(dtype=hynp.nested_dtypes())
     def test_make_canonical_hypothesis(self, dtype):
@@ -1257,6 +1257,7 @@ class TestDTypeMakeCanonical:
         two_arg_result = np.result_type(dtype, dtype)
         assert np.can_cast(two_arg_result, canonical, casting="no")
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @pytest.mark.slow
     @hypothesis.given(
             dtype=hypothesis.extra.numpy.array_dtypes(
