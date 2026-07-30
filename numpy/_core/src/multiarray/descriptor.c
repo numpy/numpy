@@ -2089,8 +2089,40 @@ arraydescr_dealloc(PyArray_Descr *self)
     Py_XDECREF(lself->fields);
     if (lself->subarray) {
         Py_XDECREF(lself->subarray->shape);
-        Py_DECREF(lself->subarray->base);
+        /*
+         * A subarray dtype's base may itself be a subarray dtype, so
+         * decref'ing the base here can re-enter this function, one C
+         * stack frame per nesting level. Unwind the chain iteratively
+         * instead; at refcount 1 this dealloc holds the only
+         * reference (descriptors support neither weakrefs nor GC), so
+         * stealing the link is unobservable and each node still runs
+         * its own, now shallow, dealloc.
+         *
+         * If descriptors ever get the Py_TPFLAGS_HAVE_GC flag, we can
+         * use CPython's stack protection via the trashcan macros
+         * instead.
+         */
+        PyArray_Descr *base = lself->subarray->base;
         PyArray_free(lself->subarray);
+        /*
+         * The Py_REFCNT(..) == 1 check is intentional. This happens in
+         * a deallocator for a type that doesn't support weakrefs and
+         * isn't a GC type, so it's impossible to get here with a refcount
+         * of 1 without us being the only owner. We can't use
+         * PyUnstable_Object_IsUniquelyReferenced because that excludes
+         * objects on remote threads.
+         */
+        while (base != NULL && Py_REFCNT(base) == 1 && PyDataType_HASSUBARRAY(base)) {
+            _PyArray_LegacyDescr *lbase = (_PyArray_LegacyDescr *)base;
+            // steal reference owned by lbase and stash it in base
+            // (Py_CLEAR without a DECREF)
+            base = lbase->subarray->base;
+            lbase->subarray->base = NULL;
+            // lbase no longer owns a reference to base, so base's deallocator
+            // doesn't fire
+            Py_DECREF(lbase);
+        }
+        Py_XDECREF(base);
     }
     Py_XDECREF(lself->metadata);
     NPY_AUXDATA_FREE(lself->c_metadata);
