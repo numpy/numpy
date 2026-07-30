@@ -3223,6 +3223,11 @@ add_newdoc('numpy._core.umath', 'positive',
     Equivalent to `x.copy()`, but only defined for types that support
     arithmetic.
 
+    Boolean input is returned unchanged as a boolean array, mirroring
+    `absolute`.  Note that this differs from Python's ``+True``, which
+    promotes to the integer ``1``; NumPy's unary operators preserve the
+    input dtype.
+
     Examples
     --------
     >>> import numpy as np
@@ -3230,6 +3235,11 @@ add_newdoc('numpy._core.umath', 'positive',
     >>> x1 = np.array(([1., -1.]))
     >>> np.positive(x1)
     array([ 1., -1.])
+
+    Booleans keep their dtype rather than promoting to integers.
+
+    >>> np.positive(np.array([True, False]))
+    array([ True, False])
 
     The unary ``+`` operator can be used as a shorthand for ``np.positive`` on
     ndarrays.

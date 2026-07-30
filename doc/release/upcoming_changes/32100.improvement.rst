@@ -1,0 +1,8 @@
+``np.positive`` now supports boolean arrays
+-------------------------------------------
+`np.positive` and the unary ``+`` operator previously raised a
+``TypeError`` for boolean input, even though `np.absolute` accepted it and
+binary arithmetic such as `np.add` treated booleans as numbers. A boolean
+loop is now registered, so ``+np.array([True, False])`` returns
+``array([True, False])``. As with `np.absolute`, the boolean dtype is
+preserved rather than promoted to an integer type.

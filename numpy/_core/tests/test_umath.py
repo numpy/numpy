@@ -2829,7 +2829,6 @@ class TestBool:
     def test_exceptions(self):
         a = np.ones(1, dtype=np.bool)
         assert_raises(TypeError, np.negative, a)
-        assert_raises(TypeError, np.positive, a)
         assert_raises(TypeError, np.subtract, a, a)
 
     def test_truth_table_logical(self):
@@ -3227,9 +3226,30 @@ class TestPositive:
             result = np.positive(x)
             assert_equal(x, result, err_msg=str(dtype))
 
+    def test_bool(self):
+        # gh-32100: `positive` is the identity, so it must accept booleans
+        # like `absolute` does, and preserve the boolean dtype.
+        for x in (np.array([True, False]), np.array(True), np.True_, True):
+            result = np.positive(x)
+            assert_equal(result, np.asarray(x))
+            assert result.dtype == np.bool_
+
+        # unary `+` goes through the same loop
+        a = np.array([True, False])
+        assert_equal(+a, a)
+        assert (+a).dtype == np.bool_
+
+        # the result is a copy, not a view onto the input
+        result = np.positive(a)
+        result[0] = False
+        assert a[0] == np.True_
+
+        # exercise the SIMD path and non-contiguous strides
+        big = np.arange(1000) % 3 == 0
+        assert_equal(np.positive(big), big)
+        assert_equal(np.positive(big[::3]), big[::3])
+
     def test_invalid(self):
-        with assert_raises(TypeError):
-            np.positive(True)
         with assert_raises(TypeError):
             np.positive(np.datetime64('2000-01-01'))
         with assert_raises(TypeError):
