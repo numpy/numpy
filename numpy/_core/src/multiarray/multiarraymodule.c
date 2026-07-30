@@ -5420,6 +5420,25 @@ _multiarray_umath_exec(PyObject *m) {
     }
     module_loaded = 1;
 
+    /*
+     * Deliberately leak a reference to the module object so that it is never
+     * deallocated and m_clear/m_free never run.
+     *
+     * A large amount of NumPy state lives outside the module state and is
+     * never torn down: the static type objects, the PyArray_API table handed
+     * out to third-party extensions, and the builtin descriptor and DType
+     * singletons reachable through it (e.g. PyArray_BoolDType). Those hold
+     * and hand out references that would outlive a cleared module state, so
+     * tearing the state down while they are still reachable would leave dead
+     * pointers visible through the public C API.
+     *
+     * The module state is therefore process-lifetime, matching the
+     * module_loaded guard above. m_traverse is still required so the GC can
+     * see the objects held in the state; m_clear and m_free are kept correct
+     * for the day this is untangled, but should not fire in practice.
+     */
+    Py_INCREF(m);
+
     /* Set up per-module state pointer */
     _npy_module_state = get_module_state(m);
 
