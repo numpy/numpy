@@ -223,7 +223,8 @@ int register_all_partitions() {
     r += make_partitions_<npy::datetime_tag>(&PyArray_DatetimeDType, "datetime");
     r += make_partitions_<npy::timedelta_tag>(&PyArray_TimedeltaDType, "timedelta");
     r += make_partitions_<npy::half_tag>(&PyArray_HalfDType, "half");
-    r += make_partitions_<npy::object_tag>(&PyArray_ObjectDType, "object");
+
+    // TODO: Support object, string, and unicode dtypes.
 
     return r;
 }

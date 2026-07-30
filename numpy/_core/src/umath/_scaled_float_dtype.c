@@ -22,7 +22,6 @@
 #include "common.h"
 #include "numpy/npy_math.h"
 #include "npy_sort.h"
-#include "npy_partition.h"
 #include "convert_datatype.h"
 #include "dtypemeta.h"
 #include "dispatching.h"
@@ -980,7 +979,7 @@ sfloat_partition_loop(
 {
     assert(strides[0] == sizeof(npy_float64));
     assert(strides[1] == sizeof(npy_intp));
-    
+
     PyArrayMethodObject *part_meth = NPY_DT_SLOTS(&PyArray_DoubleDType)->part_meth;
     if (part_meth == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "double partition method not found");
