@@ -3943,7 +3943,13 @@ add_newdoc('numpy._core.umath', 'nextafter',
 
 add_newdoc('numpy._core.umath', 'spacing',
     """
-    Return the distance between x and the nearest adjacent number.
+    Return the distance to the nearest adjacent number in the direction of
+    increasing magnitude.
+
+    For positive ``x``, this is the distance to the next larger representable
+    number and is positive. For negative ``x``, it is the distance to the next
+    smaller representable number and is negative. At zero, the spacing is the
+    smallest positive subnormal value for both positive and negative zero.
 
     Parameters
     ----------
@@ -3960,9 +3966,13 @@ add_newdoc('numpy._core.umath', 'spacing',
     Notes
     -----
     It can be considered as a generalization of EPS:
-    ``spacing(np.float64(1)) == np.finfo(np.float64).eps``, and there
-    should not be any representable number between ``x + spacing(x)`` and
-    x for any finite x.
+    ``spacing(np.float64(1)) == np.finfo(np.float64).eps``. For a positive
+    finite ``x``, ``spacing(x)`` is equivalent to
+    ``np.nextafter(x, np.inf) - x``; for a negative finite ``x``, it is
+    equivalent to ``np.nextafter(x, -np.inf) - x``.
+
+    At powers of two, ``spacing`` uses the representable number farther from
+    zero rather than the closer number toward zero.
 
     Spacing of +- inf and NaN is NaN.
 
