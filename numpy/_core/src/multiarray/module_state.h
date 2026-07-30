@@ -21,11 +21,14 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_MODULE_STATE_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_MODULE_STATE_H_
 
+#include <stddef.h>          /* offsetof */
+
 #include "npy_static_data.h"   /* npy_interned_str_struct, npy_static_pydata_struct,
                                    npy_static_cdata_struct */
 #include "npy_import.h"        /* npy_runtime_imports_struct */
 #include "multiarraymodule.h"  /* npy_global_state_struct */
 #include "number.h"             /* NumericOps */
+#include "module_state_fields.h"  /* NPY_*_FIELDS field lists */
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,6 +57,41 @@ typedef struct {
     PyObject *global_pytype_to_type_dict;
     NumericOps n_ops;
 } multiarray_umath_state;
+
+/*
+ * Tie the field lists in module_state_fields.h back to the structs they
+ * describe. Every member of these structs is a PyObject *, so the size is
+ * exactly one pointer per member and no padding is involved. Adding a member
+ * without adding it to the matching list breaks the build here rather than
+ * silently dropping it from traverse/clear.
+ */
+static_assert(sizeof(npy_interned_str_struct) ==
+        (NPY_FIELD_COUNT(NPY_INTERNED_STR_FIELDS) + NPY_ERRMODE_STRING_COUNT)
+                * sizeof(PyObject *),
+        "npy_interned_str_struct member missing from NPY_INTERNED_STR_FIELDS");
+
+static_assert(sizeof(npy_static_pydata_struct) ==
+        NPY_FIELD_COUNT(NPY_STATIC_PYDATA_FIELDS) * sizeof(PyObject *),
+        "npy_static_pydata_struct member missing from NPY_STATIC_PYDATA_FIELDS");
+
+static_assert(sizeof(npy_runtime_imports_struct) ==
+        NPY_FIELD_COUNT(NPY_RUNTIME_IMPORTS_FIELDS) * sizeof(PyObject *),
+        "npy_runtime_imports_struct member missing from "
+        "NPY_RUNTIME_IMPORTS_FIELDS");
+
+static_assert(sizeof(NumericOps) ==
+        NPY_FIELD_COUNT(NPY_N_OPS_FIELDS) * sizeof(PyObject *),
+        "NumericOps member missing from NPY_N_OPS_FIELDS");
+
+/*
+ * The loose PyObject * members sit contiguously between the sub-structs and
+ * n_ops, so the gap between them is exactly one pointer per listed field.
+ */
+static_assert(offsetof(multiarray_umath_state, n_ops) -
+        offsetof(multiarray_umath_state, typeDict) ==
+        NPY_FIELD_COUNT(NPY_MODULE_STATE_OBJECT_FIELDS) * sizeof(PyObject *),
+        "multiarray_umath_state member missing from "
+        "NPY_MODULE_STATE_OBJECT_FIELDS");
 
 /*
  * TRANSITIONAL: process-global pointer to the module state.
