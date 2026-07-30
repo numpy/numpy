@@ -8,6 +8,9 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include <float.h>
+#include <limits.h>
+
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -1859,6 +1862,76 @@ static PyObject *
 #define def_half_cmp_@oper@(arg1, arg2) @halfop@(arg1, arg2)
 /**end repeat**/
 
+
+/*
+ * Return whether a mixed NumPy integer/floating-point scalar comparison
+ * needs the ufunc's exact mixed loop.  The scalar fast path otherwise follows
+ * NumPy's safe-cast table, where int64 -> float64 is considered safe despite
+ * not preserving every integer.
+ */
+static int
+mixed_integer_float_comparison_needs_ufunc(
+        int self_type_num, PyObject *other)
+{
+    if (!PyArray_IsScalar(other, Generic)) {
+        return 0;
+    }
+
+    PyArray_Descr *other_descr = PyArray_DescrFromScalar(other);
+    if (other_descr == NULL) {
+        return -1;
+    }
+    int other_type_num = other_descr->type_num;
+    PyArray_Descr *builtin_other_descr =
+            PyArray_DescrFromType(other_type_num);
+    if (builtin_other_descr == NULL) {
+        Py_DECREF(other_descr);
+        return -1;
+    }
+    int other_is_builtin =
+            builtin_other_descr->typeobj == Py_TYPE(other);
+    Py_DECREF(builtin_other_descr);
+    if (!other_is_builtin) {
+        Py_DECREF(other_descr);
+        return 0;
+    }
+
+    int integer_type_num;
+    int floating_type_num;
+    if (PyTypeNum_ISINTEGER(self_type_num)
+            && PyTypeNum_ISFLOAT(other_type_num)) {
+        integer_type_num = self_type_num;
+        floating_type_num = other_type_num;
+    }
+    else if (PyTypeNum_ISFLOAT(self_type_num)
+            && PyTypeNum_ISINTEGER(other_type_num)) {
+        integer_type_num = other_type_num;
+        floating_type_num = self_type_num;
+    }
+    else {
+        Py_DECREF(other_descr);
+        return 0;
+    }
+
+    PyArray_Descr *integer_descr =
+            PyArray_DescrFromType(integer_type_num);
+    if (integer_descr == NULL) {
+        Py_DECREF(other_descr);
+        return -1;
+    }
+    int integer_precision = PyDataType_ELSIZE(integer_descr) * CHAR_BIT;
+    if (PyTypeNum_ISSIGNED(integer_type_num)) {
+        integer_precision--;
+    }
+    Py_DECREF(integer_descr);
+    Py_DECREF(other_descr);
+
+    int floating_precision = floating_type_num == NPY_LONGDOUBLE
+            ? LDBL_MANT_DIG : DBL_MANT_DIG;
+    return integer_precision > floating_precision;
+}
+
+
 /**begin repeat
  * #name = byte, ubyte, short, ushort, int, uint,
  *         long, ulong, longlong, ulonglong,
@@ -1915,6 +1988,16 @@ static PyObject*
     if (may_need_deferring) {
         RICHCMP_GIVE_UP_IF_NEEDED(self, other);
     }
+
+    int use_ufunc = mixed_integer_float_comparison_needs_ufunc(
+            NPY_@NAME@, other);
+    if (use_ufunc < 0) {
+        return NULL;
+    }
+    if (use_ufunc) {
+        return PyGenericArrType_Type.tp_richcompare(self, other, cmp_op);
+    }
+
     switch (res) {
         case DEFER_TO_OTHER_KNOWN_SCALAR:
             Py_RETURN_NOTIMPLEMENTED;

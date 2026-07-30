@@ -424,6 +424,87 @@ class TestComparisons:
         assert py_comp(s1, s2) == expected
         assert np_comp(s1, s2) == expected
 
+    @pytest.mark.parametrize("int_type", [np.int64, np.uint64])
+    @pytest.mark.parametrize(
+        "float_type", [np.float32, np.float64, np.longdouble])
+    @pytest.mark.parametrize('py_comp, np_comp', [
+        (operator.lt, np.less),
+        (operator.le, np.less_equal),
+        (operator.gt, np.greater),
+        (operator.ge, np.greater_equal),
+        (operator.eq, np.equal),
+        (operator.ne, np.not_equal),
+    ])
+    @pytest.mark.parametrize("flip", [False, True])
+    def test_large_integer_floating_direct_comparison(
+            self, int_type, float_type, py_comp, np_comp, flip):
+        integer = int_type(2**53 + 1)
+        floating = float_type(2**53)
+
+        if flip:
+            left, right = floating, integer
+            expected = py_comp(2**53, 2**53 + 1)
+        else:
+            left, right = integer, floating
+            expected = py_comp(2**53 + 1, 2**53)
+
+        assert py_comp(left, right) == expected
+        assert np_comp(left, right) == expected
+
+        left_arr = np.array([left])
+        right_arr = np.array([right])
+        assert_array_equal(py_comp(left_arr, right_arr), [expected])
+        assert_array_equal(np_comp(left_arr, right_arr), [expected])
+
+    @pytest.mark.parametrize("integer, floating", [
+        (np.int64(np.iinfo(np.int64).max), np.float64(2**63)),
+        (np.int64(np.iinfo(np.int64).min), np.float64(-(2**63))),
+        (np.uint64(np.iinfo(np.uint64).max), np.float64(2**64)),
+        (np.uint64(0), np.float64(-0.0)),
+        (np.int64(-1), np.float64(-1.5)),
+        (np.uint64(0), np.float64(-0.5)),
+        (np.int64(0), np.float64(np.nan)),
+        (np.int64(0), np.float64(np.inf)),
+        (np.int64(0), np.float64(-np.inf)),
+    ])
+    @pytest.mark.parametrize('py_comp, np_comp', [
+        (operator.lt, np.less),
+        (operator.le, np.less_equal),
+        (operator.gt, np.greater),
+        (operator.ge, np.greater_equal),
+        (operator.eq, np.equal),
+        (operator.ne, np.not_equal),
+    ])
+    @pytest.mark.parametrize("flip", [False, True])
+    def test_integer_floating_comparison_edge_cases(
+            self, integer, floating, py_comp, np_comp, flip):
+        py_integer = int(integer)
+        py_floating = float(floating)
+        if flip:
+            left, right = floating, integer
+            expected = py_comp(py_floating, py_integer)
+        else:
+            left, right = integer, floating
+            expected = py_comp(py_integer, py_floating)
+
+        assert py_comp(left, right) == expected
+        assert np_comp(left, right) == expected
+        assert_array_equal(
+                py_comp(np.array([left]), np.array([right])), [expected])
+        assert_array_equal(
+                np_comp(np.array([left]), np.array([right])), [expected])
+
+    def test_integer_floating_hash_contract(self):
+        exact_integer = np.int64(2**53)
+        exact_float = np.float64(2**53)
+        assert exact_integer == exact_float
+        assert hash(exact_integer) == hash(exact_float)
+
+        inexact_integer = np.int64(2**53 + 1)
+        rounded_float = np.float64(2**53 + 1)
+        assert inexact_integer != rounded_float
+        assert len({inexact_integer, rounded_float}) == 2
+
     @pytest.mark.parametrize("dtype", np.typecodes['UnsignedInteger'])
     @pytest.mark.parametrize('py_comp_func, np_comp_func', [
         (operator.lt, np.less),
@@ -526,9 +607,9 @@ class TestDivision:
         div_lst = [c_div(x, y) for x, y in zip(a_lst, b_lst)]
 
         msg = "Integer arrays floor division check (//)"
-        assert all(div_ab == div_lst), msg
+        assert div_ab.tolist() == div_lst, msg
         msg_eq = "Integer arrays floor division check (//=)"
-        assert all(ac == div_lst), msg_eq
+        assert ac.tolist() == div_lst, msg_eq
 
         for divisor in divisors:
             ac = a.copy()
@@ -537,8 +618,8 @@ class TestDivision:
                 ac //= divisor
             div_lst = [c_div(i, divisor) for i in a_lst]
 
-            assert all(div_a == div_lst), msg
-            assert all(ac == div_lst), msg_eq
+            assert div_a.tolist() == div_lst, msg
+            assert ac.tolist() == div_lst, msg_eq
 
         with np.errstate(divide='raise', over='raise'):
             if 0 in b:

@@ -406,6 +406,19 @@ class TestComparison:
         assert eq is np.bool_(False)
         assert neq is np.bool_(True)
 
+    def test_mixed_integer_float_scalar_subclass_override(self):
+        class FloatSubclass(np.float64):
+            def __eq__(self, other):
+                return "equal override"
+
+            def __lt__(self, other):
+                return "less override"
+
+        integer = np.int64(2**53 + 1)
+        floating = FloatSubclass(2**53)
+        assert operator.eq(integer, floating) == "equal override"
+        assert operator.gt(integer, floating) == "less override"
+
 
 class TestComplexDivision:
     def test_zero_division(self):

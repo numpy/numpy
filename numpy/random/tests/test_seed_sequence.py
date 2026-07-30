@@ -51,6 +51,7 @@ def test_reference_data():
     ]
     for seed, expected, expected64 in zip(inputs, outputs, outputs64):
         expected = np.array(expected, dtype=np.uint32)
+        expected64 = np.array(expected64, dtype=np.uint64)
         ss = SeedSequence(seed)
         state = ss.generate_state(len(expected))
         assert_array_equal(state, expected)
