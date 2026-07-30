@@ -6287,7 +6287,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
                     inputs_tup, NPY_UNSAFE_CASTING);
         }
 
-    finish_resolution:
+finish_resolution:
         Py_XDECREF(inputs_tup);
         if (op2_array != NULL) {
             Py_SETREF(op2_array, tmp_operands[1]);
