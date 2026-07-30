@@ -785,6 +785,36 @@ def test_resize_method(string_list):
     assert_array_equal(sarr, np.array(string_list + [''] * 3,  dtype="T"))
 
 
+def test_place(dtype):
+    # stringdtype has no legacy copyswap arrfunc, so np.place copies the
+    # values through its cast-machinery fallback
+    arr = np.array(["hello", "world", "a", "b" * 100], dtype=dtype)
+    np.place(arr, [True, False, True, True], ["x", "y" * 100, "z"])
+    expected = np.array(["x", "world", "y" * 100, "z"], dtype=dtype)
+    assert_array_equal(arr, expected)
+
+    # values aliasing the destination array must be handled safely; the
+    # string_to_string cast relies on NpyString_share_memory recognizing
+    # that a packed string shares memory with itself
+    np.place(arr, [True, True, True, True], arr)
+    assert_array_equal(arr, expected)
+
+
+def test_flat_set_aliased(dtype):
+    # flat assignment copies element by element through the same cast
+    # fallback as np.place and, when the value aliases the destination,
+    # also relies on NpyString_share_memory recognizing identical strings
+    arr = np.array(["hello", "world", "b" * 100], dtype=dtype)
+    expected = arr.copy()
+    arr.flat = arr
+    assert_array_equal(arr, expected)
+
+    # broadcasting a view of the array over itself mixes identical
+    # elements with real same-allocator copies
+    arr.flat = arr[:1]
+    assert_array_equal(arr, ["hello"] * 3)
+
+
 def test_create_with_copy_none(string_list):
     arr = np.array(string_list, dtype=StringDType())
     # create another stringdtype array with an arena that has a different
