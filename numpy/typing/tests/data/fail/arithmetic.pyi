@@ -123,4 +123,3 @@ td / dt  # type: ignore[operator]
 td % dt  # type: ignore[operator]
 
 -b_  # type: ignore[operator]
-+b_  # type: ignore[operator]

@@ -357,6 +357,7 @@ with pytest.warns(RuntimeWarning):
 -td
 -AR_f
 
++b_
 +c16
 +c8
 +f8
@@ -366,6 +367,7 @@ with pytest.warns(RuntimeWarning):
 +u8
 +u4
 +td
++AR_b
 +AR_f
 
 abs(c16)
