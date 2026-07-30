@@ -148,11 +148,7 @@ array_set_typeDict(PyObject *module, PyObject *args)
         return NULL;
     }
     multiarray_umath_state *state = get_module_state(module);
-    /* Decrement old reference (if any)*/
-    Py_XDECREF(state->typeDict);
-    state->typeDict = dict;
-    /* Create an internal reference to it */
-    Py_INCREF(dict);
+    Py_XSETREF(state->typeDict, Py_NewRef(dict));
     Py_RETURN_NONE;
 }
 
