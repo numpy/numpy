@@ -14711,9 +14711,9 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         where: _ArrayLikeBool_co = True,
     ) -> ScalarT: ...
     @overload  # ~object_, axis=None
-    def reduce(
+    def reduce[T](
         self,
-        array: npt.NDArray[np.object_],
+        array: npt.NDArray[np.object_[T]],
         /,
         axis: None,
         dtype: None = None,
@@ -14722,7 +14722,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         keepdims: Literal[False] = False,
         initial: object = ...,
         where: _ArrayLikeBool_co = True,
-    ) -> Any: ...
+    ) -> T: ...
     @overload  # known scalar type, keepdims=True
     def reduce[ScalarT: np.inexact | np.object_](
         self,
@@ -16677,9 +16677,9 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         where: _ArrayLikeBool_co = True,
     ) -> ScalarT: ...
     @overload  # ~object_, axis=None
-    def reduce(
+    def reduce[T](
         self,
-        array: npt.NDArray[np.object_],
+        array: npt.NDArray[np.object_[T]],
         /,
         axis: None,
         dtype: None = None,
@@ -16688,7 +16688,7 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         keepdims: Literal[False] = False,
         initial: object = ...,
         where: _ArrayLikeBool_co = True,
-    ) -> Any: ...
+    ) -> T: ...
     @overload  # known scalar type, keepdims=True
     def reduce[ScalarT: _to_numeric | np.datetime64 | np.object_](
         self,
@@ -18758,9 +18758,9 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         where: _ArrayLikeBool_co = True,
     ) -> ScalarT: ...
     @overload  # ~object_, axis=None
-    def reduce(
+    def reduce[T](
         self,
-        array: npt.NDArray[np.object_],
+        array: npt.NDArray[np.object_[T]],
         /,
         axis: None,
         dtype: None = None,
@@ -18769,7 +18769,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         keepdims: Literal[False] = False,
         initial: object = ...,
         where: _ArrayLikeBool_co = True,
-    ) -> Any: ...
+    ) -> T: ...
     @overload  # known scalar type, keepdims=True
     def reduce[ScalarT: np.inexact | np.timedelta64 | np.character | np.object_](
         self,
