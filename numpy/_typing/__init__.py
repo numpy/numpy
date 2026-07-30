@@ -136,6 +136,3 @@ from ._scalars import (
 
 #
 from ._shape import _AnyShape as _AnyShape, _Shape as _Shape, _ShapeLike as _ShapeLike
-
-#
-from ._ufunc import _GUFunc_Nin2_Nout1 as _GUFunc_Nin2_Nout1

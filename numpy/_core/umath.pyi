@@ -1,5 +1,5 @@
 import contextvars
-from _typeshed import SupportsWrite
+from _typeshed import Incomplete, SupportsWrite
 from collections.abc import Callable, Sequence
 from types import EllipsisType
 from typing import (
@@ -22,7 +22,7 @@ from typing_extensions import CapsuleType, TypeVar
 
 import numpy as np
 import numpy.typing as npt
-from numpy import _CastingKind, _OrderKACF, e, euler_gamma, matmul, pi, vecdot
+from numpy import _CastingKind, _OrderKACF, e, euler_gamma, pi
 from numpy._typing import (
     _ArrayLike,
     _ArrayLikeAnyString_co,
@@ -161,6 +161,10 @@ type _Array0D[ScalarT: np.generic] = _Array[tuple[()], ScalarT]
 type _Array1D[ScalarT: np.generic] = _Array[tuple[int], ScalarT]
 type _Array2D[ScalarT: np.generic] = _Array[tuple[int, int], ScalarT]
 type _Array3D[ScalarT: np.generic] = _Array[tuple[int, int, int], ScalarT]
+
+# workaround for microsoft/pyright#10232
+type _JustAnyShape = tuple[Never, Never, Never, Never]
+type _ArrayJustND[ScalarT: np.generic] = np.ndarray[_JustAnyShape, np.dtype[ScalarT]]
 
 type _tuple2[T] = tuple[T, T]
 
@@ -21307,8 +21311,799 @@ class _gufunc_21_matvec_vecmat(_gufunc_21):  # type: ignore[misc]
         **kwargs: Unpack[_Kwargs21G],
     ) -> OutT: ...
 
+# ?bBhHiIlLqQefdgFDGO, ?bBhHiIlLqQefdgFDGO => ?bBhHiIlLqQefdgFDGO
+# (n?,k),(k,m?)->(n?,m?) and (n),(n)->()  (i.e. output is 0d for both 1d input, otherwise >0d)
+#
+# Only the i64/i32/i8/u8 int promotion rules are implemented
+@type_check_only
+class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
+    @overload  # ?d ?, ?d|1d ?  (workaround)
+    def __call__(
+        self,
+        x1: _ArrayJustND[_to_number | np.object_],
+        x2: _ArrayJustND[_to_number | np.object_] | _Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> Incomplete: ...
+    @overload  # ?d|1d ?, ?d ?  (workaround)
+    def __call__(
+        self,
+        x1: _ArrayJustND[_to_number | np.object_] | _Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
+        x2: _ArrayJustND[_to_number | np.object_],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> Incomplete: ...
+    @overload  # 1d ~bool, 1d ~bool
+    def __call__(
+        self,
+        x1: _Array1D[np.bool] | Sequence[bool | np.bool],
+        x2: _Array1D[np.bool] | Sequence[bool | np.bool],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.bool: ...
+    @overload  # ?d ~bool, ?d ~bool
+    def __call__(
+        self,
+        x1: _ArrayLikeBool_co,
+        x2: _ArrayLikeBool_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.bool]: ...
+    @overload  # 1d ~i64, 1d +i64
+    def __call__(
+        self,
+        x1: _Array1D[np.int64],
+        x2: _Array1D[_to_integer] | Sequence[_IntLike_co],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.int64: ...
+    @overload  # 1d +i64, 1d ~i64
+    def __call__(
+        self,
+        x1: _Array1D[_to_integer] | Sequence[_IntLike_co],
+        x2: _Array1D[np.int64],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.int64: ...
+    @overload  # ?d ~i64, ?d +i64
+    def __call__(
+        self,
+        x1: _ArrayLike[np.int64],
+        x2: _ArrayLikeInt_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.int64]: ...
+    @overload  # ?d +i64, ?d ~i64
+    def __call__(
+        self,
+        x1: _ArrayLikeInt_co,
+        x2: _ArrayLike[np.int64],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.int64]: ...
+    @overload  # 1d ~i32, 1d +i32
+    def __call__(
+        self,
+        x1: _Array1D[np.int32],
+        x2: _Array1D[_to_i32] | Sequence[int | _to_i32],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.int32: ...
+    @overload  # 1d +i32, 1d ~i32
+    def __call__(
+        self,
+        x1: _Array1D[_to_i32] | Sequence[int | _to_i32],
+        x2: _Array1D[np.int32],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.int32: ...
+    @overload  # ?d ~i32, ?d +i32
+    def __call__(
+        self,
+        x1: _ArrayLike[np.int32],
+        x2: _ArrayLike[_to_i32],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.int32]: ...
+    @overload  # ?d +i32, ?d ~i32
+    def __call__(
+        self,
+        x1: _ArrayLike[_to_i32],
+        x2: _ArrayLike[np.int32],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.int32]: ...
+    @overload  # 1d ~u8, 1d +u8
+    def __call__(
+        self,
+        x1: _Array1D[np.uint8],
+        x2: _Array1D[_to_u8] | Sequence[int | _to_u8],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.uint8: ...
+    @overload  # 1d +u8, 1d ~u8
+    def __call__(
+        self,
+        x1: _Array1D[_to_u8] | Sequence[int | _to_u8],
+        x2: _Array1D[np.uint8],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.uint8: ...
+    @overload  # ?d ~u8, ?d +u8
+    def __call__(
+        self,
+        x1: _ArrayLike[np.uint8],
+        x2: _ArrayLike[_to_u8],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.uint8]: ...
+    @overload  # ?d +u8, ?d ~u8
+    def __call__(
+        self,
+        x1: _ArrayLike[_to_u8],
+        x2: _ArrayLike[np.uint8],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.uint8]: ...
+    @overload  # 1d T@integer, 1d +int
+    def __call__[ScalarT: np.integer](
+        self,
+        x1: _Array1D[ScalarT],
+        x2: _Array1D[np.bool] | Sequence[int | np.bool],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> ScalarT: ...
+    @overload  # 1d +int, 1d T@integer
+    def __call__[ScalarT: np.integer](
+        self,
+        x1: _Array1D[np.bool] | Sequence[int | np.bool],
+        x2: _Array1D[ScalarT],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> ScalarT: ...
+    @overload  # Nd T@integer, ?d +int
+    def __call__[ScalarT: np.integer](
+        self,
+        x1: npt.NDArray[ScalarT],
+        x2: _DualArrayLike[np.dtype[np.bool], int],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # ?d +int, Nd T@integer
+    def __call__[ScalarT: np.integer](
+        self,
+        x1: _DualArrayLike[np.dtype[np.bool], int],
+        x2: npt.NDArray[ScalarT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # 1d ~int, 1d +int
+    def __call__(
+        self,
+        x1: list[int],
+        x2: Sequence[int],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.int_: ...
+    @overload  # 1d +int, 1d ~int
+    def __call__(
+        self,
+        x1: Sequence[int],
+        x2: list[int],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.int_: ...
+    @overload  # Nd ~int, ?d +int
+    def __call__(
+        self,
+        x1: list[int] | _NestedSequence[list[int]],
+        x2: _NestedSequence[int],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.int_]: ...
+    @overload  # ?d +int, Nd ~int
+    def __call__(
+        self,
+        x1: _NestedSequence[int],
+        x2: list[int] | _NestedSequence[list[int]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.int_]: ...
+    @overload  # 1d ~f64, 1d +f64
+    def __call__(
+        self,
+        x1: _Array1D[np.float64],
+        x2: _Array1D[_to_f64] | Sequence[_to_f64],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.float64: ...
+    @overload  # 1d +f64, 1d ~f64
+    def __call__(
+        self,
+        x1: _Array1D[_to_f64] | Sequence[_to_f64],
+        x2: _Array1D[np.float64],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.float64: ...
+    @overload  # ?d ~f64, ?d +f64
+    def __call__(
+        self,
+        x1: _ArrayLike[np.float64],
+        x2: _ArrayLike[_to_f64],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # ?d +f64, ?d ~f64
+    def __call__(
+        self,
+        x1: _ArrayLike[_to_f64],
+        x2: _ArrayLike[np.float64],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # 1d ~f32, 1d +f32
+    def __call__(
+        self,
+        x1: _Array1D[np.float32],
+        x2: _Array1D[_to_f32] | Sequence[_to_f32],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.float32: ...
+    @overload  # 1d +f32, 1d ~f32
+    def __call__(
+        self,
+        x1: _Array1D[_to_f32] | Sequence[_to_f32],
+        x2: _Array1D[np.float32],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.float32: ...
+    @overload  # ?d ~f32, ?d +f32
+    def __call__(
+        self,
+        x1: _ArrayLike[np.float32],
+        x2: _ArrayLike[_to_f32],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.float32]: ...
+    @overload  # ?d +f32, ?d ~f32
+    def __call__(
+        self,
+        x1: _ArrayLike[_to_f32],
+        x2: _ArrayLike[np.float32],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.float32]: ...
+    @overload  # 1d ~float, 1d +float
+    def __call__(
+        self,
+        x1: list[float],
+        x2: Sequence[float],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.float64: ...
+    @overload  # 1d +float, 1d ~float
+    def __call__(
+        self,
+        x1: Sequence[float],
+        x2: list[float],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.float64: ...
+    @overload  # Nd ~float, ?d +float
+    def __call__(
+        self,
+        x1: list[float] | _NestedSequence[list[float]],
+        x2: _NestedSequence[float],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # ?d +float, Nd ~float
+    def __call__(
+        self,
+        x1: _NestedSequence[float],
+        x2: list[float] | _NestedSequence[list[float]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # 1d ~c128, 1d +c128
+    def __call__(
+        self,
+        x1: _Array1D[np.complex128],
+        x2: _Array1D[_to_c128] | Sequence[complex | _to_c128],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.complex128: ...
+    @overload  # 1d +c128, 1d ~c128
+    def __call__(
+        self,
+        x1: _Array1D[_to_c128] | Sequence[complex | _to_c128],
+        x2: _Array1D[np.complex128],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.complex128: ...
+    @overload  # ?d ~c128, ?d +c128
+    def __call__(
+        self,
+        x1: _ArrayLike[np.complex128],
+        x2: _ArrayLike[_to_c128],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.complex128]: ...
+    @overload  # ?d +c128, ?d ~c128
+    def __call__(
+        self,
+        x1: _ArrayLike[_to_c128],
+        x2: _ArrayLike[np.complex128],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.complex128]: ...
+    @overload  # 1d ~c64, 1d +c64
+    def __call__(
+        self,
+        x1: _Array1D[np.complex64],
+        x2: _Array1D[_to_c64] | Sequence[_to_c64],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.complex64: ...
+    @overload  # 1d +c64, 1d ~c64
+    def __call__(
+        self,
+        x1: _Array1D[_to_c64] | Sequence[_to_c64],
+        x2: _Array1D[np.complex64],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.complex64: ...
+    @overload  # ?d ~c64, ?d +c64
+    def __call__(
+        self,
+        x1: _ArrayLike[np.complex64],
+        x2: _ArrayLike[_to_c64],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.complex64]: ...
+    @overload  # ?d ~c64, ?d +c64
+    def __call__(
+        self,
+        x1: _ArrayLike[_to_c64],
+        x2: _ArrayLike[np.complex64],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.complex64]: ...
+    @overload  # 1d ~c64, 1d ~f64
+    def __call__(
+        self,
+        x1: _Array1D[np.complex64],
+        x2: _Array1D[np.float64 | _as_f64] | Sequence[np.float64 | _as_f64],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.complex128: ...
+    @overload  # 1d ~f64, 1d ~c64
+    def __call__(
+        self,
+        x1: _Array1D[np.float64 | _as_f64] | Sequence[np.float64 | _as_f64],
+        x2: _Array1D[np.complex64],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.complex128: ...
+    @overload  # ?d ~c64, ?d ~f64
+    def __call__(
+        self,
+        x1: _ArrayLike[np.complex64],
+        x2: _ArrayLike[np.float64 | _as_f64],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.complex128]: ...
+    @overload  # ?d ~f64, ?d ~c64
+    def __call__(
+        self,
+        x1: _ArrayLike[np.float64 | _as_f64],
+        x2: _ArrayLike[np.complex64],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.complex128]: ...
+    @overload  # 1d ~obj, 1d +obj
+    def __call__(
+        self,
+        x1: _Array1D[np.object_],
+        x2: _Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> Incomplete: ...
+    @overload  # 1d +obj, 1d ~obj
+    def __call__(
+        self,
+        x1: _Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
+        x2: _Array1D[np.object_],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> Incomplete: ...
+    @overload  # ?d ~obj, ?d +obj
+    def __call__(
+        self,
+        x1: npt.NDArray[np.object_],
+        x2: _ArrayLikeNumberObj_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.object_]: ...
+    @overload  # ?d +obj, ?d ~obj
+    def __call__(
+        self,
+        x1: _ArrayLikeNumberObj_co,
+        x2: npt.NDArray[np.object_],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.object_]: ...
+    @overload  # 1d ~complex, 1d +complex
+    def __call__(
+        self,
+        x1: list[complex],
+        x2: Sequence[complex],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.complex128: ...
+    @overload  # 1d +complex, 1d ~complex
+    def __call__(
+        self,
+        x1: Sequence[complex],
+        x2: list[complex],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> np.complex128: ...
+    @overload  # Nd ~complex, ?d +complex
+    def __call__(
+        self,
+        x1: list[complex] | _NestedSequence[list[complex]],
+        x2: _NestedSequence[complex],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.complex128]: ...
+    @overload  # ?d +complex, Nd ~complex
+    def __call__(
+        self,
+        x1: _NestedSequence[complex],
+        x2: list[complex] | _NestedSequence[list[complex]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[np.complex128]: ...
+    @overload  # 1d T@inexact, 1d +float | +f16
+    def __call__[ScalarT: np.inexact | np.object_](
+        self,
+        x1: _Array1D[ScalarT],
+        x2: _Array1D[_to_f16] | Sequence[float | _to_f16],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> ScalarT: ...
+    @overload  # 1d +float | +f16, 1d T@inexact
+    def __call__[ScalarT: np.inexact | np.object_](
+        self,
+        x1: _Array1D[_to_f16] | Sequence[float | _to_f16],
+        x2: _Array1D[ScalarT],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> ScalarT: ...
+    @overload  # Nd T@inexact, ?d +float | +f16
+    def __call__[ScalarT: np.inexact | np.object_](
+        self,
+        x1: npt.NDArray[ScalarT],
+        x2: _DualArrayLike[np.dtype[_to_f16], float],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # ?d +float | +f16, Nd T@inexact
+    def __call__[ScalarT: np.inexact | np.object_](
+        self,
+        x1: _DualArrayLike[np.dtype[_to_f16], float],
+        x2: npt.NDArray[ScalarT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # 1d T@complexfloating, 1d +complex | +c64
+    def __call__[ScalarT: np.complexfloating | np.object_](
+        self,
+        x1: _Array1D[ScalarT],
+        x2: _Array1D[_to_c64] | Sequence[complex | _to_c64],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> ScalarT: ...
+    @overload  # 1d +complex | +c64, 1d T@complexfloating
+    def __call__[ScalarT: np.complexfloating | np.object_](
+        self,
+        x1: _Array1D[_to_c64] | Sequence[complex | _to_c64],
+        x2: _Array1D[ScalarT],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> ScalarT: ...
+    @overload  # Nd T@complexfloating, ?d +complex | +c64
+    def __call__[ScalarT: np.complexfloating | np.object_](
+        self,
+        x1: npt.NDArray[ScalarT],
+        x2: _DualArrayLike[np.dtype[_to_c64], complex],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # ?d +complex | +c64, Nd T@complexfloating
+    def __call__[ScalarT: np.complexfloating | np.object_](
+        self,
+        x1: _DualArrayLike[np.dtype[_to_c64], complex],
+        x2: npt.NDArray[ScalarT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # 1d _, 1d _, dtype=<known>
+    def __call__[ScalarT: _to_number](
+        self,
+        x1: _Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
+        x2: _Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> ScalarT: ...
+    @overload  # ?d _, ?d _, dtype=<known>
+    def __call__[ScalarT: _to_number | np.object_](
+        self,
+        x1: _ArrayLikeNumberObj_co,
+        x2: _ArrayLikeNumberObj_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # out=<given>
+    def __call__[OutT: np.ndarray](
+        self,
+        x1: _ArrayLikeNumberObj_co,
+        x2: _ArrayLikeNumberObj_co,
+        /,
+        out: OutT,
+        *,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> OutT: ...
+    @overload  # 1d ?, 1d ?  (fallback)
+    def __call__(
+        self,
+        x1: _Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
+        x2: _Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
+        /,
+        *,
+        out: None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> Any: ...
+    @overload  # ?d ?, ?d ?  (fallback)
+    def __call__(
+        self,
+        x1: _ArrayLikeNumberObj_co,
+        x2: _ArrayLikeNumberObj_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[Any]: ...
+    @overload  # x1.__array_ufunc__(self, "__call__", x1, x2, ...)
+    def __call__[OtherT, OutT](
+        self,
+        x1: _CanUfuncCall2L[OtherT, OutT],
+        x2: OtherT,
+        /,
+        *,
+        out: object | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> OutT: ...
+    @overload  # x2.__array_ufunc__(self, "__call__", x1, x2, ...)
+    def __call__[OtherT, OutT](
+        self,
+        x1: OtherT,
+        x2: _CanUfuncCall2R[OtherT, OutT],
+        /,
+        *,
+        out: object | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> OutT: ...
+
 matvec: Final[_gufunc_21_matvec_vecmat] = ...
 vecmat: Final[_gufunc_21_matvec_vecmat] = ...
+
+matmul: Final[_gufunc_21_matmul_vecdot] = ...
+vecdot: Final[_gufunc_21_matmul_vecdot] = ...
 
 ###
 # re-exports from `_core._multiarray_umath` that are used by `_core._ufunc_config`
