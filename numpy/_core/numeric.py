@@ -1835,6 +1835,9 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     The resulting array therefore has a value ``fn(x, y, z)`` at
     coordinate ``(x, y, z)``.
 
+    The function is called only once, with each parameter being an array of
+    coordinates, rather than once for every coordinate.
+
     Parameters
     ----------
     function : callable
