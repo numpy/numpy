@@ -38,7 +38,7 @@ from itertools import cycle
 import re
 from secrets import randbits
 
-from threading import RLock
+from threading import local, RLock
 
 from cpython.pycapsule cimport PyCapsule_New
 
@@ -62,6 +62,13 @@ cdef uint32_t MIX_MULT_L = 0xca01f9dd
 cdef uint32_t MIX_MULT_R = 0x4973f715
 cdef uint32_t XSHIFT = np.dtype(np.uint32).itemsize * 8 // 2
 cdef uint32_t MASK32 = 0xFFFFFFFF
+
+# Keep spawning synchronization outside the installed SeedSequence layout.
+# The prime stripe count distributes aligned object addresses without keeping
+# per-instance state alive.
+cdef tuple _seed_sequence_spawn_locks = tuple(RLock() for _ in range(257))
+cdef object _seed_sequence_spawn_local = local()
+
 
 def _int_to_uint32_array(n):
     arr = []
@@ -484,19 +491,50 @@ cdef class SeedSequence:
 
         """
         cdef uint32_t i
+        cdef object active_spawns
+        cdef object active_seed_sequence
+        cdef object spawn_lock
 
         if n_children < 0:
             raise ValueError("n_children must be non-negative")
 
-        seqs = []
-        for i in range(self.n_children_spawned,
-                       self.n_children_spawned + n_children):
-            seqs.append(type(self)(
-                self.entropy,
-                spawn_key=self.spawn_key + (i,),
-                pool_size=self.pool_size,
-            ))
-        self.n_children_spawned += n_children
+        active_spawns = getattr(
+            _seed_sequence_spawn_local, "active_spawns", None
+        )
+        if active_spawns is None:
+            active_spawns = []
+            _seed_sequence_spawn_local.active_spawns = active_spawns
+        else:
+            for active_seed_sequence in active_spawns:
+                if active_seed_sequence is self:
+                    raise RuntimeError(
+                        "SeedSequence.spawn cannot be re-entered for the "
+                        "same SeedSequence"
+                    )
+
+        active_spawns.append(self)
+        try:
+            spawn_lock = _seed_sequence_spawn_locks[
+                id(self) % len(_seed_sequence_spawn_locks)
+            ]
+            with spawn_lock:
+                if n_children > MASK32 - self.n_children_spawned:
+                    raise OverflowError(
+                        "n_children_spawned cannot exceed 4294967295"
+                    )
+                seqs = []
+                for i in range(self.n_children_spawned,
+                               self.n_children_spawned + n_children):
+                    seqs.append(type(self)(
+                        self.entropy,
+                        spawn_key=self.spawn_key + (i,),
+                        pool_size=self.pool_size,
+                    ))
+                self.n_children_spawned += n_children
+        finally:
+            active_spawns.pop()
+            if not active_spawns:
+                del _seed_sequence_spawn_local.active_spawns
         return seqs
 
 

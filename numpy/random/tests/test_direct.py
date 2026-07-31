@@ -178,6 +178,7 @@ def test_generator_spawning():
     expected_keys = [seq.spawn_key + (i,) for i in range(10, 15)]
     found_keys = [rng.bit_generator.seed_seq.spawn_key for rng in new_rngs]
     assert found_keys == expected_keys
+    assert seq.n_children_spawned == 15
 
     # Sanity check that streams are actually different:
     assert new_rngs[0].uniform() != new_rngs[1].uniform()
