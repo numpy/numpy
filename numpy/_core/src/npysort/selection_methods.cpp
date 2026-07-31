@@ -33,6 +33,9 @@ partition_resolve_descriptors(PyArrayMethodObject *method, PyArray_DTypeMeta *co
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
 
+    /* We reuse the input descriptor for the output as PyArray_Partition uses
+       the same descriptor for both input and output. This can work because
+       partitioning is in-place. */
     Py_INCREF(output_descrs[0]);
     output_descrs[2] = output_descrs[0];
 
