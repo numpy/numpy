@@ -70,6 +70,7 @@ __all__ = [
     "mean",
     "max",
     "min",
+    "minmax",
     "matrix_transpose",
     "ndim",
     "nonzero",
@@ -2834,6 +2835,15 @@ def amin(
 ) -> NDArray[Any]: ...
 
 min = amin
+
+def minmax(
+    a: ArrayLike,
+    axis: int | tuple[int, ...] | None = None,
+    out: tuple[NDArray[Any], NDArray[Any]] | None = None,
+    keepdims: bool | _NoValueType = ...,
+    initial: _NumberLike_co | tuple[_NumberLike_co, _NumberLike_co] | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[Any, Any]: ...
 
 # keep in sync with `cumsum` above (minus `timedelta64` and `StringDType`)
 @overload

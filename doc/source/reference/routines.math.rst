@@ -169,7 +169,10 @@ Extrema finding
    amin
    fmin
    nanmin
-   
+
+   minimummaximum
+   minmax
+
 
 Miscellaneous
 -------------
