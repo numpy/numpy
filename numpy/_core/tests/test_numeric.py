@@ -7,8 +7,6 @@ import warnings
 from decimal import Decimal
 
 import pytest
-from hypothesis import given, strategies as st
-from hypothesis.extra import numpy as hynp
 
 import numpy as np
 from numpy import ma
@@ -29,6 +27,7 @@ from numpy.testing import (
     assert_raises,
     assert_raises_regex,
 )
+from numpy.testing._private.hypothesis_helpers import HAS_HYPOTHESIS, given, hynp, st
 from numpy.testing._private.utils import longdouble_fpe_mark
 
 
@@ -2882,6 +2881,7 @@ class TestClip:
         actual = np.clip(arr, amin, amax)
         assert_equal(actual, expected)
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @given(
         data=st.data(),
         arr=hynp.arrays(

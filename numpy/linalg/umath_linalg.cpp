@@ -22,15 +22,26 @@
 #include <cstdio>
 #include <cassert>
 #include <cmath>
+#include <cstring>
 #include <type_traits>
 #include <utility>
 
 
 static const char* umath_linalg_version_string = "0.1.5";
 
+/*
+ * PyMutex is not in the Limited API at any version, so a limited API build
+ * uses the PyThread_type_lock fallback that Python < 3.13 uses.
+ */
+#if PY_VERSION_HEX >= 0x30d00b3 && !defined(Py_LIMITED_API)
+    #define UMATH_LINALG_USE_PYMUTEX 1
+#else
+    #define UMATH_LINALG_USE_PYMUTEX 0
+#endif
+
 // global lock to serialize calls into lapack_lite
 #if !HAVE_EXTERNAL_LAPACK
-#if PY_VERSION_HEX < 0x30d00b3
+#if !UMATH_LINALG_USE_PYMUTEX
 static PyThread_type_lock lapack_lite_lock;
 #else
 static PyMutex lapack_lite_lock = {0};
@@ -414,7 +425,7 @@ FNAME(zgemm)(char *transa, char *transb,
     #define LOCK_LAPACK_LITE
     #define UNLOCK_LAPACK_LITE
 #else
-#if PY_VERSION_HEX < 0x30d00b3
+#if !UMATH_LINALG_USE_PYMUTEX
     #define LOCK_LAPACK_LITE PyThread_acquire_lock(lapack_lite_lock, WAIT_LOCK)
     #define UNLOCK_LAPACK_LITE PyThread_release_lock(lapack_lite_lock)
 #else
@@ -4762,7 +4773,7 @@ _umath_linalg_exec(PyObject *m)
         return -1;
     }
 
-#if PY_VERSION_HEX < 0x30d00b3 && !HAVE_EXTERNAL_LAPACK
+#if !UMATH_LINALG_USE_PYMUTEX && !HAVE_EXTERNAL_LAPACK
     lapack_lite_lock = PyThread_allocate_lock();
     if (lapack_lite_lock == NULL) {
         PyErr_NoMemory();
