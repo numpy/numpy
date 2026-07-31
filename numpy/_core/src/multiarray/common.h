@@ -59,6 +59,16 @@ _array_find_python_scalar_type(PyObject *op);
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap);
 
+/*
+ * Handle a dtype whose legacy copyswap slot is missing (e.g. a dtype
+ * written using the new DType API).  Currently always raises a TypeError
+ * and returns -1; `swap_only` marks a swap-only (no data copy) request and
+ * is reserved for making such a request a no-op when byte order does not
+ * apply to the dtype (returning 0).
+ */
+NPY_NO_EXPORT int
+check_missing_copyswap(PyArray_Descr *dtype, int swap_only);
+
 NPY_NO_EXPORT PyObject *
 convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending);
 

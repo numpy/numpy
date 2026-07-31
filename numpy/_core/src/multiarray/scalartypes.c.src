@@ -2179,15 +2179,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
 
         PyArray_CopySwapFunc *copyswap =
                 PyDataType_GetArrFuncs(descr)->copyswap;
-        if (copyswap == NULL && descr->byteorder != NPY_IGNORE) {
-            /*
-             * As in PyArray_Byteswap, DTypes written using the new DType
-             * API do not fill the legacy copyswap slot and can only be
-             * byteswapped as a no-op, if byte order does not apply to them.
-             */
-            PyErr_Format(PyExc_TypeError,
-                    "dtype %S does not support byteswapping",
-                    (PyObject *)descr);
+        if (copyswap == NULL && check_missing_copyswap(descr, 1) < 0) {
             Py_DECREF(descr);
             return NULL;
         }
@@ -2197,7 +2189,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
             return PyErr_NoMemory();
         }
         else if (copyswap == NULL) {
-            /* byte order does not apply, so byteswapping is a no-op */
+            /* byte order does not apply, copy the bytes unchanged */
             memcpy(newmem, data, descr->elsize);
         }
         else {

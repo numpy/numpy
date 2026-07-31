@@ -2275,19 +2275,13 @@ STRING_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
 }
 
 
-/*
- * A missing legacy copyswap slot is a no-op for a swap-only request if byte
- * order does not apply to the dtype (returns 0); otherwise sets a TypeError
- * and returns -1.
- */
-static int
+/* See common.h for the contract of this helper. */
+NPY_NO_EXPORT int
 check_missing_copyswap(PyArray_Descr *dtype, int swap_only)
 {
-    if (swap_only && dtype->byteorder == NPY_IGNORE) {
-        return 0;
-    }
+    (void)swap_only;
     npy_gil_error(PyExc_TypeError,
-            "dtype %S does not support the copyswap operation",
+            "dtype %S does not implement copyswap",
             (PyObject *)dtype);
     return -1;
 }

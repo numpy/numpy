@@ -44,36 +44,32 @@ class TestSFloat:
         assert a.dtype.get_scaling() == scaling
         assert_array_equal(scaling * a.view(np.float64), [1., 2., 3.])
 
-    def test_structured_field_byteswap(self):
-        # this previously segfaulted via the unguarded field copyswap
-        # calls in VOID_copyswapn; the sfloat field's byteorder is '|'
-        # so it is skipped while other fields are swapped
+    def test_structured_field_byteswap_raises(self):
+        # a field (or subarray field) whose dtype lacks the legacy copyswap
+        # slot cannot be byteswapped; previously this segfaulted via the
+        # unguarded field copyswap calls in VOID_copyswapn
         arr = np.zeros(2, dtype=[("a", "i4"), ("v", SF(1.))])
-        arr["a"] = [1, 2]
-        arr["v"] = np.array([1., 2.]).view(SF(1.))
+        with pytest.raises(TypeError, match="does not implement copyswap"):
+            arr.byteswap()
 
-        swapped = arr.byteswap()
-        assert_array_equal(swapped["a"],
-                           np.array([1, 2], dtype="i4").byteswap())
-        assert_array_equal(swapped["v"].view(np.float64),
-                           arr["v"].view(np.float64))
-
-        # subarray fields with byteorder '|' are skipped as well; use
-        # distinct nonzero values so that a swapped or zeroed field would
-        # be caught (byteswapped zeros are indistinguishable from zeros)
         subarr = np.zeros(2, dtype=[("v", SF(1.), (2,))])
-        subarr["v"] = np.array([[1., 2.], [3., 4.]]).view(SF(1.))
-        res = subarr.byteswap()
-        assert_array_equal(res["v"].view(np.float64),
-                           [[1., 2.], [3., 4.]])
+        with pytest.raises(TypeError, match="does not implement copyswap"):
+            subarr.byteswap()
+
+    def test_byteswap_raises(self):
+        # a top-level DType without the legacy copyswap slot does not
+        # support byteswapping
+        arr = np.zeros(2, dtype=SF(1.))
+        with pytest.raises(TypeError, match="does not implement copyswap"):
+            arr.byteswap()
 
     def test_structured_field_place_and_flat_raise(self):
         # requests that need to copy through the missing legacy copyswap
         # slot raise instead of crashing
         arr = np.zeros(2, dtype=[("v", SF(1.))])
-        with pytest.raises(TypeError, match="does not support the copyswap"):
+        with pytest.raises(TypeError, match="does not implement copyswap"):
             np.place(arr, [True, False], arr[:1])
-        with pytest.raises(TypeError, match="does not support the copyswap"):
+        with pytest.raises(TypeError, match="does not implement copyswap"):
             arr.flat = arr[:1]
 
     def test_structured_field_sort_raises(self):
