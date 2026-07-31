@@ -3,6 +3,8 @@
 import operator
 import warnings
 from collections.abc import Sequence
+from contextlib import nullcontext
+from threading import RLock as _RLock
 
 import numpy as np
 
@@ -118,6 +120,103 @@ cdef object int64_to_long(object x):
     return x.astype('l', casting='unsafe')
 
 
+_RLOCK_TYPE = type(_RLock())
+
+
+cdef void _require_reentrant_lock(object lock) except *:
+    cdef bint acquired_once = False
+    cdef bint acquired_twice = False
+
+    # Native RLocks have a known reentrant contract and may already be held by
+    # another thread using the proposed BitGenerator.  Unknown compatible
+    # wrappers are checked without blocking or relying on private ownership
+    # introspection.  A busy unknown lock cannot be proved safe and is rejected
+    # transactionally.
+    if type(lock) is _RLOCK_TYPE:
+        return
+
+    try:
+        acquired_once = lock.acquire(False)
+        if acquired_once:
+            acquired_twice = lock.acquire(False)
+    finally:
+        try:
+            if acquired_twice:
+                lock.release()
+        finally:
+            if acquired_once:
+                lock.release()
+
+    if not acquired_once or not acquired_twice:
+        raise TypeError("BitGenerator lock must be reentrant")
+
+
+cdef class _BitGeneratorLock:
+    # Stable facade used only by the module-level RandomState.  The published
+    # inner lock identifies the complete RandomState generation.  Readers
+    # acquire a strong snapshot, take the BitGenerator's shared lock, and then
+    # validate the identity before touching RandomState-owned raw state.
+    cdef object _bit_generator_lock
+    cdef Py_ssize_t _depth
+
+    def __cinit__(self, bit_generator_lock):
+        self._bit_generator_lock = bit_generator_lock
+        self._depth = 0
+
+    cdef object _acquire_current(self, bint replacement):
+        cdef object bit_generator_lock
+        cdef bint reject_replacement
+
+        while True:
+            with cython.critical_section(self):
+                bit_generator_lock = self._bit_generator_lock
+
+            bit_generator_lock.acquire()
+            reject_replacement = False
+            with cython.critical_section(self):
+                # A waiter overtaken by replacement must retry on the new
+                # lock.  Incrementing depth in this same section also closes
+                # the re-entrant singleton replacement window before state is
+                # used.  A separate Generator owns its own bitgen_t snapshot,
+                # so recursively acquiring its shared RLock does not increment
+                # this singleton-only depth and may safely replace the
+                # singleton generation.
+                if bit_generator_lock is self._bit_generator_lock:
+                    if replacement and self._depth:
+                        reject_replacement = True
+                    else:
+                        if not replacement:
+                            self._depth += 1
+                        return bit_generator_lock
+            bit_generator_lock.release()
+            if reject_replacement:
+                raise RuntimeError(
+                    "cannot replace the bit generator while it is in use "
+                    "by the current thread"
+                )
+
+    def __enter__(self):
+        self._acquire_current(False)
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        cdef object bit_generator_lock
+
+        with cython.critical_section(self):
+            self._depth -= 1
+            bit_generator_lock = self._bit_generator_lock
+        bit_generator_lock.release()
+
+    cdef object _begin_replacement(self):
+        return self._acquire_current(True)
+
+    cdef void _finish_replacement(self, object bit_generator_lock):
+        # Publishing the new lock last makes all previously captured waiters
+        # fail validation; new readers can observe the new state afterward.
+        with cython.critical_section(self):
+            self._bit_generator_lock = bit_generator_lock
+
+
 cdef class RandomState:
     # the first line is used to populate `__text_signature__`
     """RandomState(seed=None)\n--
@@ -193,8 +292,9 @@ cdef class RandomState:
         return f'{self} at 0x{id(self):X}'
 
     def __str__(self):
-        _str = self.__class__.__name__
-        _str += '(' + self._bit_generator.__class__.__name__ + ')'
+        with self.lock:
+            _str = self.__class__.__name__
+            _str += '(' + self._bit_generator.__class__.__name__ + ')'
         return _str
 
     # Pickling support:
@@ -211,19 +311,55 @@ cdef class RandomState:
         # contained in the bit generator that described the gaussian
         # generator. This argument is passed to __setstate__ after the
         # Generator is created.
-        return __randomstate_ctor, (self._bit_generator, ), self.get_state(legacy=False)
+        if isinstance(self.lock, _BitGeneratorLock):
+            with self.lock:
+                bit_generator = self._bit_generator
+                state = self.get_state(legacy=False)
+        else:
+            # Preserve pre-existing ordinary RandomState behavior.  A custom
+            # BitGenerator lock need not be reentrant merely because the
+            # module singleton has a replaceable generation.
+            bit_generator = self._bit_generator
+            state = self.get_state(legacy=False)
+        return __randomstate_ctor, (bit_generator, ), state
 
     cdef _initialize_bit_generator(self, bit_generator):
-        self._bit_generator = bit_generator
         capsule = bit_generator.capsule
         cdef const char *name = "BitGenerator"
+        cdef bitgen_t next_bitgen
+        cdef object next_lock
+        cdef object _old_bit_generator
+        cdef object old_lock
+        cdef _BitGeneratorLock lock_proxy
+
         if not PyCapsule_IsValid(capsule, name):
             raise ValueError("Invalid bit generator. The bit generator must "
                              "be instantized.")
-        self._bitgen = (<bitgen_t *> PyCapsule_GetPointer(capsule, name))[0]
+        next_bitgen = (<bitgen_t *> PyCapsule_GetPointer(capsule, name))[0]
+        next_lock = bit_generator.lock
+
+        if isinstance(self.lock, _BitGeneratorLock):
+            _require_reentrant_lock(next_lock)
+            lock_proxy = <_BitGeneratorLock>self.lock
+            old_lock = lock_proxy._begin_replacement()
+            _old_bit_generator = self._bit_generator
+            try:
+                self._bit_generator = bit_generator
+                self._bitgen = next_bitgen
+                self._aug_state.bit_generator = &self._bitgen
+                self._aug_state.has_gauss = 0
+                self._aug_state.gauss = 0.0
+                lock_proxy._finish_replacement(next_lock)
+            finally:
+                old_lock.release()
+            return
+
+        self._bit_generator = bit_generator
+        self._bitgen = next_bitgen
         self._aug_state.bit_generator = &self._bitgen
-        self.lock = bit_generator.lock
-        self._reset_gauss()
+        self.lock = next_lock
+        self._aug_state.has_gauss = 0
+        self._aug_state.gauss = 0.0
 
     cdef _reset_gauss(self):
         with self.lock:
@@ -250,9 +386,9 @@ cdef class RandomState:
         # Later, you want to restart the stream
         >>> rs = RandomState(MT19937(SeedSequence(987654321)))
         """
-        if not isinstance(self._bit_generator, _MT19937):
-            raise TypeError('can only re-seed a MT19937 BitGenerator')
         with self.lock:
+            if not isinstance(self._bit_generator, _MT19937):
+                raise TypeError('can only re-seed a MT19937 BitGenerator')
             self._bit_generator._legacy_seeding(seed)
             self._reset_gauss()
 
@@ -297,7 +433,8 @@ cdef class RandomState:
 
         """
         with self.lock:
-            st = self._bit_generator.state
+            bit_generator = self._bit_generator
+            st = bit_generator.state
             st['has_gauss'] = self._aug_state.has_gauss
             st['gauss'] = self._aug_state.gauss
         if st['bit_generator'] != 'MT19937' and legacy:
@@ -305,7 +442,7 @@ cdef class RandomState:
                           'MT19937 BitGenerator. To silence this warning, '
                           'set `legacy` to False.', RuntimeWarning)
             legacy = False
-        if legacy and not isinstance(self._bit_generator, _MT19937):
+        if legacy and not isinstance(bit_generator, _MT19937):
             raise ValueError(
                 "legacy can only be True when the underlying bitgenerator is "
                 "an instance of MT19937."
@@ -685,8 +822,8 @@ cdef class RandomState:
         randoms_data = <int64_t*>np.PyArray_DATA(randoms)
         n = np.PyArray_SIZE(randoms)
 
-        for i in range(n):
-            with self.lock, nogil:
+        with self.lock, nogil:
+            for i in range(n):
                 randoms_data[i] = random_positive_int(&self._bitgen)
         return randoms
 
@@ -1034,18 +1171,26 @@ cdef class RandomState:
                 p = p.copy()
                 found = np.zeros(shape, dtype=np.long)
                 flat_found = found.ravel()
-                while n_uniq < size:
-                    x = self.rand(size - n_uniq)
-                    if n_uniq > 0:
-                        p[flat_found[0:n_uniq]] = 0
-                    cdf = np.cumsum(p)
-                    cdf /= cdf[-1]
-                    new = cdf.searchsorted(x, side='right')
-                    _, unique_indices = np.unique(new, return_index=True)
-                    unique_indices.sort()
-                    new = new.take(unique_indices)
-                    flat_found[n_uniq:n_uniq + new.size] = new
-                    n_uniq += new.size
+                # Only the module singleton has a replaceable generation.  Do
+                # not add a new recursive-lock requirement to ordinary
+                # RandomState instances using a custom BitGenerator lock.
+                generation_lock = (
+                    self.lock if isinstance(self.lock, _BitGeneratorLock)
+                    else nullcontext()
+                )
+                with generation_lock:
+                    while n_uniq < size:
+                        x = self.rand(size - n_uniq)
+                        if n_uniq > 0:
+                            p[flat_found[0:n_uniq]] = 0
+                        cdf = np.cumsum(p)
+                        cdf /= cdf[-1]
+                        new = cdf.searchsorted(x, side='right')
+                        _, unique_indices = np.unique(new, return_index=True)
+                        unique_indices.sort()
+                        new = new.take(unique_indices)
+                        flat_found[n_uniq:n_uniq + new.size] = new
+                        n_uniq += new.size
                 idx = found
             else:
                 idx = self.permutation(pop_size)[:size]
@@ -4761,7 +4906,12 @@ cdef class RandomState:
         self.shuffle(idx)
         return arr[idx]
 
+cdef void _install_stable_bit_generator_lock(RandomState random_state):
+    random_state.lock = _BitGeneratorLock(random_state.lock)
+
+
 _rand = RandomState()
+_install_stable_bit_generator_lock(_rand)
 
 beta = _rand.beta
 binomial = _rand.binomial
@@ -4829,11 +4979,14 @@ def seed(seed=None):
     --------
     numpy.random.Generator
     """
-    if isinstance(_rand._bit_generator, _MT19937):
-        return _rand.seed(seed)
-    else:
-        bg_type = type(_rand._bit_generator)
-        _rand.set_state(bg_type(seed).state)
+    cdef RandomState singleton
+    singleton = _rand
+    with singleton.lock:
+        if isinstance(singleton._bit_generator, _MT19937):
+            return singleton.seed(seed)
+        else:
+            bg_type = type(singleton._bit_generator)
+            singleton.set_state(bg_type(seed).state)
 
 def get_bit_generator():
     """
@@ -4859,7 +5012,10 @@ def get_bit_generator():
     set_bit_generator
     numpy.random.Generator
     """
-    return _rand._bit_generator
+    cdef RandomState singleton
+    singleton = _rand
+    with singleton.lock:
+        return singleton._bit_generator
 
 def set_bit_generator(bitgen):
     """

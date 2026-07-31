@@ -1,13 +1,18 @@
+import gc
 import hashlib
+import os
 import pickle
+import subprocess
 import sys
+import threading
 import warnings
+import weakref
 
 import pytest
 
 import numpy as np
 from numpy import random
-from numpy.random import MT19937, PCG64
+from numpy.random import MT19937, PCG64, SFC64, BitGenerator, Philox
 from numpy.testing import (
     IS_WASM,
     assert_,
@@ -59,10 +64,14 @@ def int_func(request):
 
 @pytest.fixture
 def restore_singleton_bitgen():
-    """Ensures that the singleton bitgen is restored after a test"""
+    """Restore the singleton bit generator and its complete state."""
     orig_bitgen = np.random.get_bit_generator()
-    yield
-    np.random.set_bit_generator(orig_bitgen)
+    orig_state = np.random.get_state(legacy=False)
+    try:
+        yield
+    finally:
+        np.random.set_bit_generator(orig_bitgen)
+        np.random.set_state(orig_state)
 
 
 def assert_mt19937_state_equal(a, b):
@@ -2045,6 +2054,903 @@ def test_hot_swap(restore_singleton_bitgen):
     assert bg is second_bg
 
 
+class _BlockingLock:
+    def __init__(self):
+        self._lock = threading.RLock()
+        self.armed = False
+        self.entered = threading.Event()
+        self.waiter_started = threading.Event()
+        self.release_draw = threading.Event()
+        self.draw_thread = None
+
+    def acquire(self, blocking=True):
+        # Pause the first draw after it selects and acquires this lock, and
+        # expose when the setter subsequently attempts to acquire it.
+        if not blocking:
+            acquired = self._lock.acquire(False)
+            if (not acquired and self.entered.is_set()
+                    and threading.get_ident() != self.draw_thread):
+                self.waiter_started.set()
+            return acquired
+        if (self.entered.is_set()
+                and threading.get_ident() != self.draw_thread):
+            self.waiter_started.set()
+        self._lock.acquire()
+        if self.armed and not self.entered.is_set():
+            self.draw_thread = threading.get_ident()
+            self.entered.set()
+            if not self.release_draw.wait(10):
+                self._lock.release()
+                raise TimeoutError("blocked draw timed out")
+        return True
+
+    def release(self):
+        self._lock.release()
+
+    def __enter__(self):
+        self.acquire()
+        return self
+
+    def __exit__(self, *args):
+        self.release()
+
+
+class _CountingLock:
+    def __init__(self):
+        self._lock = threading.RLock()
+        self.reset()
+
+    def reset(self):
+        self.acquisitions = 0
+        self.depth = 0
+        self.max_depth = 0
+
+    def acquire(self, blocking=True):
+        acquired = self._lock.acquire(blocking)
+        if acquired:
+            self.acquisitions += 1
+            self.depth += 1
+            self.max_depth = max(self.max_depth, self.depth)
+        return acquired
+
+    def release(self):
+        self.depth -= 1
+        self._lock.release()
+
+    def __enter__(self):
+        self.acquire()
+        return self
+
+    def __exit__(self, *args):
+        self.release()
+
+
+class _RoutedLock:
+    def __init__(self):
+        self._lock = threading.RLock()
+        self.armed = False
+        self.draw_thread = None
+        self.draw_selected = threading.Event()
+        self.allow_draw = threading.Event()
+
+    def acquire(self, blocking=True):
+        if (self.armed
+                and threading.get_ident() == self.draw_thread
+                and not self.draw_selected.is_set()):
+            self.draw_selected.set()
+            if not self.allow_draw.wait(10):
+                raise TimeoutError("routed draw timed out")
+        return self._lock.acquire(blocking)
+
+    def release(self):
+        self._lock.release()
+
+    def __enter__(self):
+        self.acquire()
+        return self
+
+    def __exit__(self, *args):
+        self.release()
+
+
+class _ReentrantSwapList(list):
+    def __init__(self, values, bit_generator):
+        super().__init__(values)
+        self.bit_generator = bit_generator
+        self.error = None
+        self.replaced = False
+
+    def __setitem__(self, key, value):
+        if not self.replaced:
+            self.replaced = True
+            try:
+                random.set_bit_generator(self.bit_generator)
+            except RuntimeError as exc:
+                self.error = exc
+        super().__setitem__(key, value)
+
+
+class _ReentrantSwapErrorList(list):
+    def __init__(self, values, bit_generator):
+        super().__init__(values)
+        self.bit_generator = bit_generator
+        self.error = None
+        self.replaced = False
+
+    def __setitem__(self, key, value):
+        if not self.replaced:
+            self.replaced = True
+            try:
+                random.set_bit_generator(self.bit_generator)
+            except Exception as exc:
+                self.error = exc
+        super().__setitem__(key, value)
+
+
+class _PickleLockMT19937(MT19937):
+    def __init__(self, seed=None, test_lock=None):
+        self._test_lock = test_lock
+        super().__init__(seed)
+
+    @property
+    def lock(self):
+        if self._test_lock is not None:
+            return self._test_lock
+        return BitGenerator.lock.__get__(self, type(self))
+
+
+class _HiddenOwnershipRLock:
+    """RLock-compatible wrapper without CPython ownership introspection."""
+
+    def __init__(self):
+        self._lock = threading.RLock()
+        self.acquisitions = 0
+        self.releases = 0
+        self.depth = 0
+
+    def acquire(self, blocking=True):
+        acquired = self._lock.acquire(blocking)
+        if acquired:
+            self.acquisitions += 1
+            self.depth += 1
+        return acquired
+
+    def release(self):
+        self.releases += 1
+        self.depth -= 1
+        self._lock.release()
+
+    def __enter__(self):
+        self.acquire()
+        return self
+
+    def __exit__(self, *args):
+        self.release()
+
+
+def _run_hot_swap_subprocess(scenario, tmp_path):
+    install_root = os.path.dirname(os.path.dirname(np.__file__))
+    env = os.environ.copy()
+    pythonpath = env.get("PYTHONPATH")
+    if pythonpath:
+        install_root += os.pathsep + pythonpath
+    env["PYTHONPATH"] = install_root
+    code = (
+        "from numpy.random.tests.test_randomstate import "
+        f"{scenario}; {scenario}()"
+    )
+    try:
+        result = subprocess.run(
+            [sys.executable, "-P", "-c", code],
+            cwd=tmp_path,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except subprocess.TimeoutExpired as exc:
+        pytest.fail(
+            f"{scenario} timed out\nstdout={exc.stdout!r}\n"
+            f"stderr={exc.stderr!r}",
+            pytrace=False,
+        )
+    if result.returncode:
+        pytest.fail(
+            f"{scenario} failed with exit code {result.returncode}\n"
+            f"stdout={result.stdout}\nstderr={result.stderr}",
+            pytrace=False,
+        )
+
+
+def _hot_swap_same_bit_generator_scenario():
+    original = random.get_bit_generator()
+    try:
+        bit_generator = PCG64(123)
+        direct = random.RandomState(PCG64(123))
+        random.set_bit_generator(bit_generator)
+        for _ in range(10):
+            state = pickle.dumps(bit_generator.state)
+            random.set_bit_generator(random.get_bit_generator())
+            assert pickle.dumps(bit_generator.state) == state
+            assert_equal(random.random_sample(), direct.random_sample())
+        assert_equal(bit_generator.state, direct._bit_generator.state)
+    finally:
+        random.set_bit_generator(original)
+
+
+def _hot_swap_reentrant_singleton_scenario():
+    original = random.get_bit_generator()
+    try:
+        new = PCG64(456)
+        new_state = new.state
+        seed = 123
+        bit_generator = MT19937(seed)
+        random.set_bit_generator(bit_generator)
+        values = _ReentrantSwapList(range(10), new)
+        expected = list(range(10))
+        direct = random.RandomState(MT19937(seed))
+
+        random.shuffle(values)
+        direct.shuffle(expected)
+
+        assert values.replaced
+        assert isinstance(values.error, RuntimeError)
+        assert "in use by the current thread" in str(values.error)
+        assert values == expected
+        assert random.get_bit_generator() is bit_generator
+        assert_equal(bit_generator.state, direct._bit_generator.state)
+        assert_equal(new.state, new_state)
+    finally:
+        random.set_bit_generator(original)
+
+
+def _hot_swap_reentrant_shared_generator_scenario():
+    original = random.get_bit_generator()
+    try:
+        for hidden_ownership in (False, True):
+            seed = 123
+            if hidden_ownership:
+                hidden_lock = _HiddenOwnershipRLock()
+
+                class HiddenLockMT19937(MT19937):
+                    @property
+                    def lock(self):
+                        return hidden_lock
+
+                bit_generator = HiddenLockMT19937(seed)
+            else:
+                bit_generator = MT19937(seed)
+
+            reference_bit_generator = MT19937(seed)
+            generator = random.Generator(bit_generator)
+            reference_generator = random.Generator(reference_bit_generator)
+            new = PCG64(456)
+            new_state = pickle.dumps(new.state)
+            random.set_bit_generator(bit_generator)
+            if hidden_ownership:
+                assert hidden_lock.acquisitions == 2
+                assert hidden_lock.releases == 2
+                assert hidden_lock.depth == 0
+            values = _ReentrantSwapList(range(10), new)
+            expected = list(range(10))
+
+            generator.shuffle(values)
+            reference_generator.shuffle(expected)
+
+            assert values.replaced
+            assert values.error is None
+            assert values == expected
+            assert random.get_bit_generator() is new
+            assert_array_equal(
+                bit_generator.state["state"]["key"],
+                reference_bit_generator.state["state"]["key"],
+            )
+            assert_equal(
+                bit_generator.state["state"]["pos"],
+                reference_bit_generator.state["state"]["pos"],
+            )
+            assert pickle.dumps(new.state) == new_state
+
+            new_reference = random.RandomState(PCG64(456))
+            assert_equal(random.random_sample(),
+                         new_reference.random_sample())
+            assert_equal(new.state, new_reference._bit_generator.state)
+    finally:
+        random.set_bit_generator(original)
+
+
+def _ordinary_randomstate_plain_lock_pickle_scenario():
+    seed = 5
+    actual = random.RandomState(
+        _PickleLockMT19937(seed, threading.Lock())
+    )
+    expected = random.RandomState(_PickleLockMT19937(seed))
+
+    assert_equal(actual.standard_normal(), expected.standard_normal())
+    restored = pickle.loads(pickle.dumps(actual))
+
+    assert_equal(
+        restored.get_state(legacy=False),
+        expected.get_state(legacy=False),
+    )
+    assert_equal(restored.standard_normal(10), expected.standard_normal(10))
+
+
+def _hot_swap_incompatible_lock_scenario():
+    class NonReentrantRLock(type(threading.RLock())):
+        def __init__(self):
+            self._plain_lock = threading.Lock()
+
+        def acquire(self, blocking=True):
+            return self._plain_lock.acquire(blocking)
+
+        def release(self):
+            self._plain_lock.release()
+
+    original = random.get_bit_generator()
+    try:
+        seed = 123
+        old = MT19937(seed)
+        direct = random.RandomState(MT19937(seed))
+        random.set_bit_generator(old)
+        assert_equal(random.standard_normal(), direct.standard_normal())
+
+        incompatible = _PickleLockMT19937(456, threading.Lock())
+        incompatible_state = pickle.dumps(incompatible.state)
+        with pytest.raises(TypeError, match="lock must be reentrant"):
+            random.set_bit_generator(incompatible)
+
+        assert random.get_bit_generator() is old
+        assert_equal(
+            random.get_state(legacy=False), direct.get_state(legacy=False)
+        )
+        assert pickle.dumps(incompatible.state) == incompatible_state
+
+        dishonest_subclass = _PickleLockMT19937(
+            654, NonReentrantRLock()
+        )
+        dishonest_state = pickle.dumps(dishonest_subclass.state)
+        with pytest.raises(TypeError, match="lock must be reentrant"):
+            random.set_bit_generator(dishonest_subclass)
+        assert random.get_bit_generator() is old
+        assert_equal(
+            random.get_state(legacy=False), direct.get_state(legacy=False)
+        )
+        assert pickle.dumps(dishonest_subclass.state) == dishonest_state
+
+        probabilities = np.full(4, 0.25)
+        assert_equal(
+            random.choice(4, size=4, replace=False, p=probabilities),
+            direct.choice(4, size=4, replace=False, p=probabilities),
+        )
+
+        proposed = _PickleLockMT19937(789, threading.Lock())
+        proposed_state = pickle.dumps(proposed.state)
+        values = _ReentrantSwapErrorList(range(10), proposed)
+        expected = list(range(10))
+        random.shuffle(values)
+        direct.shuffle(expected)
+
+        assert values.replaced
+        assert isinstance(values.error, TypeError)
+        assert "lock must be reentrant" in str(values.error)
+        assert values == expected
+        assert random.get_bit_generator() is old
+        assert_equal(
+            random.get_state(legacy=False), direct.get_state(legacy=False)
+        )
+        assert pickle.dumps(proposed.state) == proposed_state
+    finally:
+        random.set_bit_generator(original)
+
+
+def _ordinary_randomstate_plain_lock_choice_scenario():
+    plain_lock = threading.Lock()
+
+    class PlainLockMT19937(MT19937):
+        @property
+        def lock(self):
+            return plain_lock
+
+    seed = 5
+    actual = random.RandomState(PlainLockMT19937(seed))
+    expected = random.RandomState(MT19937(seed))
+    probabilities = np.full(4, 0.25)
+
+    assert_equal(
+        actual.choice(4, size=4, replace=False, p=probabilities),
+        expected.choice(4, size=4, replace=False, p=probabilities),
+    )
+    assert_equal(
+        actual._bit_generator.state["state"],
+        expected._bit_generator.state["state"],
+    )
+
+
+@pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
+@pytest.mark.skipif(IS_WASM, reason="can't start thread")
+@pytest.mark.parametrize(
+    ("method", "args"),
+    [
+        pytest.param("random_sample", (), id="bitgen-helper"),
+        pytest.param("standard_normal", (), id="augmented-helper"),
+        pytest.param("tomaxint", ((4,),), id="direct-lock"),
+    ],
+)
+def test_hot_swap_waits_for_inflight_draw(
+        restore_singleton_bitgen, method, args):
+    old_lock = _BlockingLock()
+
+    class BlockingMT19937(MT19937):
+        @property
+        def lock(self):
+            return old_lock
+
+    old_seed = 123
+    old = BlockingMT19937(old_seed)
+    old_ref = weakref.ref(old)
+    new = PCG64(456)
+    new_state = new.state
+    expected = getattr(random.RandomState(MT19937(old_seed)), method)(*args)
+    result = []
+    errors = []
+    setter_started = threading.Event()
+    setter_finished = threading.Event()
+
+    random.set_bit_generator(old)
+    del old
+    old_lock.armed = True
+
+    def draw():
+        try:
+            if method == "tomaxint":
+                draw_method = random.mtrand._rand.tomaxint
+            else:
+                draw_method = getattr(random, method)
+            result.append(draw_method(*args))
+        except BaseException as exc:
+            errors.append(exc)
+
+    def replace():
+        setter_started.set()
+        try:
+            random.set_bit_generator(new)
+        except BaseException as exc:
+            errors.append(exc)
+        finally:
+            setter_finished.set()
+
+    worker = threading.Thread(target=draw)
+    setter = threading.Thread(target=replace)
+    worker_started = False
+    setter_thread_started = False
+    try:
+        worker.start()
+        worker_started = True
+        assert old_lock.entered.wait(2), "draw did not acquire the old lock"
+        setter.start()
+        setter_thread_started = True
+        assert setter_started.wait(2), "setter did not start"
+        assert old_lock.waiter_started.wait(2), "setter did not wait on old lock"
+        setter_finished_while_blocked = setter_finished.is_set()
+        gc.collect()
+        old_alive_while_blocked = old_ref() is not None
+    finally:
+        old_lock.release_draw.set()
+        if worker_started:
+            worker.join(5)
+        if setter_thread_started:
+            setter.join(5)
+
+    assert not worker.is_alive(), "draw thread did not finish"
+    assert not setter.is_alive(), "setter thread did not finish"
+    assert not errors
+    assert not setter_finished_while_blocked
+    assert old_alive_while_blocked
+    assert_equal(result[0], expected)
+    assert_equal(new.state, new_state)
+    gc.collect()
+    assert old_ref() is None
+
+
+@pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
+@pytest.mark.skipif(IS_WASM, reason="can't start thread")
+def test_hot_swap_waits_for_shared_generator(restore_singleton_bitgen):
+    old_lock = _BlockingLock()
+
+    class BlockingMT19937(MT19937):
+        @property
+        def lock(self):
+            return old_lock
+
+    old_seed = 123
+    old = BlockingMT19937(old_seed)
+    generator = random.Generator(old)
+    new = PCG64(456)
+    new_state = new.state
+    expected = random.Generator(MT19937(old_seed)).random()
+    result = []
+    errors = []
+    setter_started = threading.Event()
+    setter_finished = threading.Event()
+
+    random.set_bit_generator(old)
+    old_lock.armed = True
+
+    def draw():
+        try:
+            result.append(generator.random())
+        except BaseException as exc:
+            errors.append(exc)
+
+    def replace():
+        setter_started.set()
+        try:
+            random.set_bit_generator(new)
+        except BaseException as exc:
+            errors.append(exc)
+        finally:
+            setter_finished.set()
+
+    worker = threading.Thread(target=draw)
+    setter = threading.Thread(target=replace)
+    worker_started = False
+    setter_thread_started = False
+    try:
+        worker.start()
+        worker_started = True
+        assert old_lock.entered.wait(2), "draw did not acquire the old lock"
+        setter.start()
+        setter_thread_started = True
+        assert setter_started.wait(2), "setter did not start"
+        assert old_lock.waiter_started.wait(2), "setter did not wait on old lock"
+        setter_finished_while_blocked = setter_finished.is_set()
+    finally:
+        old_lock.release_draw.set()
+        if worker_started:
+            worker.join(5)
+        if setter_thread_started:
+            setter.join(5)
+
+    assert not worker.is_alive(), "draw thread did not finish"
+    assert not setter.is_alive(), "setter thread did not finish"
+    assert not errors
+    assert not setter_finished_while_blocked
+    assert_equal(result[0], expected)
+    assert random.get_bit_generator() is new
+    assert_equal(new.state, new_state)
+
+
+@pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
+@pytest.mark.skipif(IS_WASM, reason="can't start thread")
+def test_hot_swap_stale_waiter_retries(restore_singleton_bitgen):
+    old_lock = _RoutedLock()
+    new_lock = _RoutedLock()
+
+    class RoutedMT19937(MT19937):
+        @property
+        def lock(self):
+            return old_lock
+
+    class RoutedPCG64(PCG64):
+        @property
+        def lock(self):
+            return new_lock
+
+    old = RoutedMT19937(123)
+    old_state = pickle.dumps(old.state)
+    new_seed = 456
+    new = RoutedPCG64(new_seed)
+    expected = random.RandomState(PCG64(new_seed)).random_sample()
+    result = []
+    errors = []
+    setter_finished = threading.Event()
+
+    random.set_bit_generator(old)
+    old_lock.armed = True
+
+    def draw():
+        old_lock.draw_thread = threading.get_ident()
+        try:
+            result.append(random.random_sample())
+        except BaseException as exc:
+            errors.append(exc)
+
+    def replace():
+        try:
+            random.set_bit_generator(new)
+        except BaseException as exc:
+            errors.append(exc)
+        finally:
+            setter_finished.set()
+
+    worker = threading.Thread(target=draw)
+    setter = threading.Thread(target=replace)
+    worker_started = False
+    setter_started = False
+    try:
+        worker.start()
+        worker_started = True
+        assert old_lock.draw_selected.wait(2), "draw did not select old lock"
+        setter.start()
+        setter_started = True
+        assert setter_finished.wait(2), "setter did not overtake stale draw"
+        new_lock.draw_thread = old_lock.draw_thread
+        new_lock.armed = True
+        old_lock.allow_draw.set()
+        assert new_lock.draw_selected.wait(2), "draw did not retry new lock"
+        assert worker.is_alive(), "draw did not wait for the new lock"
+    finally:
+        old_lock.allow_draw.set()
+        new_lock.allow_draw.set()
+        if worker_started:
+            worker.join(5)
+        if setter_started:
+            setter.join(5)
+
+    assert not worker.is_alive(), "draw thread did not finish"
+    assert not setter.is_alive(), "setter thread did not finish"
+    assert not errors
+    assert_equal(result[0], expected)
+    assert pickle.dumps(old.state) == old_state
+
+
+@pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
+@pytest.mark.skipif(IS_WASM, reason="can't start thread")
+def test_hot_swap_pickle_generation_is_coherent(restore_singleton_bitgen):
+    old_lock = _BlockingLock()
+    seed = 123
+    old = _PickleLockMT19937(seed, old_lock)
+    direct = random.RandomState(_PickleLockMT19937(seed))
+    new = PCG64(456)
+    new_state = pickle.dumps(new.state)
+    pickled = []
+    errors = []
+    pickle_finished = threading.Event()
+    setter_finished = threading.Event()
+
+    random.set_bit_generator(old)
+    assert_equal(random.standard_normal(), direct.standard_normal())
+    expected_state = direct.get_state(legacy=False)
+    old_lock.armed = True
+
+    def serialize():
+        try:
+            pickled.append(pickle.dumps(random.mtrand._rand))
+        except BaseException as exc:
+            errors.append(exc)
+        finally:
+            pickle_finished.set()
+
+    def replace():
+        try:
+            random.set_bit_generator(new)
+        except BaseException as exc:
+            errors.append(exc)
+        finally:
+            setter_finished.set()
+
+    worker = threading.Thread(target=serialize)
+    setter = threading.Thread(target=replace)
+    worker_started = False
+    setter_started = False
+    try:
+        worker.start()
+        worker_started = True
+        assert old_lock.entered.wait(2), "pickle did not acquire the old lock"
+        setter.start()
+        setter_started = True
+        assert old_lock.waiter_started.wait(2), "setter did not wait on old lock"
+        assert not pickle_finished.is_set(), "pickle escaped the old generation"
+        setter_finished_while_blocked = setter_finished.is_set()
+    finally:
+        old_lock.release_draw.set()
+        if worker_started:
+            worker.join(5)
+        if setter_started:
+            setter.join(5)
+
+    assert not worker.is_alive(), "pickle thread did not finish"
+    assert not setter.is_alive(), "setter thread did not finish"
+    assert not errors
+    assert not setter_finished_while_blocked
+    assert len(pickled) == 1
+    assert random.get_bit_generator() is new
+    assert pickle.dumps(new.state) == new_state
+
+    restored = pickle.loads(pickled[0])
+    assert_equal(restored.get_state(legacy=False), expected_state)
+    assert_equal(restored.standard_normal(10), direct.standard_normal(10))
+
+
+@pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
+def test_hot_swap_invalid_bit_generator_is_transactional(
+        restore_singleton_bitgen):
+    class InvalidBitGenerator:
+        capsule = None
+        lock = threading.RLock()
+
+    class RaisingLockMT19937(MT19937):
+        @property
+        def lock(self):
+            raise RuntimeError("test lock property failure")
+
+    bit_generator = MT19937(123)
+    direct = random.RandomState(MT19937(123))
+    random.set_bit_generator(bit_generator)
+    assert_equal(random.standard_normal(), direct.standard_normal())
+    with pytest.raises(ValueError, match="Invalid bit generator"):
+        random.set_bit_generator(InvalidBitGenerator())
+    assert random.get_bit_generator() is bit_generator
+
+    proposed = RaisingLockMT19937(456)
+    proposed_state = pickle.dumps(proposed.state)
+    with pytest.raises(RuntimeError, match="test lock property failure"):
+        random.set_bit_generator(proposed)
+    assert random.get_bit_generator() is bit_generator
+    assert_equal(
+        random.get_state(legacy=False), direct.get_state(legacy=False)
+    )
+    assert pickle.dumps(proposed.state) == proposed_state
+    assert_equal(random.random_sample(), direct.random_sample())
+
+
+@pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
+@pytest.mark.skipif(IS_WASM, reason="can't start thread")
+def test_hot_swap_busy_unknown_lock_is_transactional(
+        restore_singleton_bitgen):
+    busy_lock = _HiddenOwnershipRLock()
+
+    class BusyLockMT19937(MT19937):
+        @property
+        def lock(self):
+            return busy_lock
+
+    old = MT19937(123)
+    direct = random.RandomState(MT19937(123))
+    proposed = BusyLockMT19937(456)
+    proposed_state = pickle.dumps(proposed.state)
+    entered = threading.Event()
+    release = threading.Event()
+    replacement_finished = threading.Event()
+    holder_errors = []
+    replacement_errors = []
+
+    random.set_bit_generator(old)
+    assert_equal(random.standard_normal(), direct.standard_normal())
+
+    def hold_lock():
+        try:
+            with busy_lock:
+                entered.set()
+                if not release.wait(10):
+                    raise TimeoutError("busy lock holder timed out")
+        except BaseException as exc:
+            holder_errors.append(exc)
+
+    def replace():
+        try:
+            random.set_bit_generator(proposed)
+        except BaseException as exc:
+            replacement_errors.append(exc)
+        finally:
+            replacement_finished.set()
+
+    holder = threading.Thread(target=hold_lock, daemon=True)
+    replacement = threading.Thread(target=replace, daemon=True)
+    holder_started = False
+    replacement_started = False
+    replacement_finished_while_busy = False
+    try:
+        holder.start()
+        holder_started = True
+        assert entered.wait(2), "busy lock holder did not acquire the lock"
+        replacement.start()
+        replacement_started = True
+        replacement_finished_while_busy = replacement_finished.wait(2)
+    finally:
+        release.set()
+        if holder_started:
+            holder.join(5)
+        if replacement_started:
+            replacement.join(5)
+
+    assert not holder.is_alive(), "busy lock holder did not finish"
+    assert not replacement.is_alive(), "replacement worker did not finish"
+    assert not holder_errors
+    assert replacement_finished_while_busy, (
+        "set_bit_generator blocked while validating the busy proposed lock"
+    )
+    assert len(replacement_errors) == 1
+    with pytest.raises(TypeError, match="lock must be reentrant"):
+        raise replacement_errors[0]
+    assert random.get_bit_generator() is old
+    assert_equal(
+        random.get_state(legacy=False), direct.get_state(legacy=False)
+    )
+    assert pickle.dumps(proposed.state) == proposed_state
+    assert_equal(random.random_sample(), direct.random_sample())
+    assert busy_lock.depth == 0
+    assert busy_lock.acquisitions == busy_lock.releases
+
+
+@pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
+def test_hot_swap_multidraw_calls_hold_one_generation(
+        restore_singleton_bitgen):
+    lock = _CountingLock()
+
+    class CountingMT19937(MT19937):
+        @property
+        def lock(self):
+            return lock
+
+    seed = 5
+    bit_generator = CountingMT19937(seed)
+    direct = random.RandomState(MT19937(seed))
+    random.set_bit_generator(bit_generator)
+    lock.reset()
+
+    actual = random.mtrand._rand.tomaxint((4,))
+    expected = direct.tomaxint((4,))
+
+    assert_equal(actual, expected)
+    assert lock.acquisitions == 1
+    assert lock.max_depth == 1
+    assert_equal(bit_generator.state["state"],
+                 direct._bit_generator.state["state"])
+
+    bit_generator = CountingMT19937(seed)
+    direct = random.RandomState(MT19937(seed))
+    random.set_bit_generator(bit_generator)
+    lock.reset()
+    probabilities = np.full(4, 0.25)
+
+    actual = random.choice(4, size=4, replace=False, p=probabilities)
+    expected = direct.choice(4, size=4, replace=False, p=probabilities)
+
+    assert_equal(actual, expected)
+    assert lock.max_depth == 2
+    assert_equal(bit_generator.state["state"],
+                 direct._bit_generator.state["state"])
+
+
+@pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
+def test_hot_swap_resets_gauss_cache(restore_singleton_bitgen):
+    random.set_bit_generator(MT19937(123))
+    random.standard_normal()
+    assert random.get_state(legacy=False)["has_gauss"] == 1
+
+    seed = 456
+    bit_generator = PCG64(seed)
+    direct = random.RandomState(PCG64(seed))
+    random.set_bit_generator(bit_generator)
+    assert random.get_state(legacy=False)["has_gauss"] == 0
+
+    assert_equal(random.standard_normal(), direct.standard_normal())
+    assert_equal(random.get_state(legacy=False),
+                 direct.get_state(legacy=False))
+
+
+@pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
+def test_swapped_singleton_shared_state_continuity(restore_singleton_bitgen):
+    seed = 123
+    bit_generator = PCG64(seed)
+    reference_bit_generator = PCG64(seed)
+    generator = random.Generator(bit_generator)
+    reference_generator = random.Generator(reference_bit_generator)
+    reference_random_state = random.RandomState(reference_bit_generator)
+    random.set_bit_generator(bit_generator)
+
+    assert_equal(random.random_sample(),
+                 reference_random_state.random_sample())
+    assert_equal(generator.random(), reference_generator.random())
+    assert_equal(random.randint(0, 2 ** 30),
+                 reference_random_state.randint(0, 2 ** 30))
+    assert_equal(generator.integers(0, 2 ** 30),
+                 reference_generator.integers(0, 2 ** 30))
+    assert_equal(bit_generator.state, reference_bit_generator.state)
+
+
 @pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
 def test_seed_alt_bit_gen(restore_singleton_bitgen):
     # GH 21808
@@ -2099,9 +3005,79 @@ def test_swap_worked(restore_singleton_bitgen):
 
 
 @pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
-def test_swapped_singleton_against_direct(restore_singleton_bitgen):
-    np.random.set_bit_generator(PCG64(98765))
-    singleton_vals = np.random.randint(0, 2 ** 30, 10)
-    rg = np.random.RandomState(PCG64(98765))
-    non_singleton_vals = rg.randint(0, 2 ** 30, 10)
-    assert_equal(non_singleton_vals, singleton_vals)
+@pytest.mark.parametrize("bit_generator_type", [MT19937, PCG64, Philox, SFC64])
+def test_swapped_singleton_against_direct(
+        restore_singleton_bitgen, bit_generator_type):
+    seed = 98765
+    bit_generator = bit_generator_type(seed)
+    initial_state = bit_generator.state
+    np.random.set_bit_generator(bit_generator)
+    assert np.random.get_bit_generator() is bit_generator
+    assert_equal(bit_generator.state, initial_state)
+
+    direct = np.random.RandomState(bit_generator_type(seed))
+    calls = [
+        ("random_sample", (5,)),
+        ("randint", (0, 2 ** 30, 10)),
+        ("standard_normal", (5,)),
+        ("binomial", (10, 0.25, 5)),
+    ]
+    for method, args in calls:
+        singleton_vals = getattr(np.random, method)(*args)
+        direct_vals = getattr(direct, method)(*args)
+        assert_equal(singleton_vals, direct_vals)
+    assert_equal(np.random.get_state(legacy=False),
+                 direct.get_state(legacy=False))
+
+
+@pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
+def test_swapped_singleton_pickle(restore_singleton_bitgen):
+    np.random.set_bit_generator(Philox(123))
+    np.random.standard_normal()
+    restored = pickle.loads(pickle.dumps(np.random.mtrand._rand))
+    assert_equal(restored.get_state(legacy=False),
+                 np.random.get_state(legacy=False))
+    assert_equal(restored.standard_normal(10),
+                 np.random.standard_normal(10))
+
+
+@pytest.mark.skipif(IS_WASM, reason="can't start subprocess")
+def test_hot_swap_same_bit_generator(tmp_path):
+    _run_hot_swap_subprocess(
+        "_hot_swap_same_bit_generator_scenario", tmp_path
+    )
+
+
+@pytest.mark.skipif(IS_WASM, reason="can't start subprocess")
+def test_hot_swap_reentrant_rejected(tmp_path):
+    _run_hot_swap_subprocess(
+        "_hot_swap_reentrant_singleton_scenario", tmp_path
+    )
+
+
+@pytest.mark.skipif(IS_WASM, reason="can't start subprocess")
+def test_hot_swap_reentrant_shared_generator_is_coherent(tmp_path):
+    _run_hot_swap_subprocess(
+        "_hot_swap_reentrant_shared_generator_scenario", tmp_path
+    )
+
+
+@pytest.mark.skipif(IS_WASM, reason="can't start subprocess")
+def test_randomstate_pickle_accepts_nonreentrant_bit_generator_lock(tmp_path):
+    _run_hot_swap_subprocess(
+        "_ordinary_randomstate_plain_lock_pickle_scenario", tmp_path
+    )
+
+
+@pytest.mark.skipif(IS_WASM, reason="can't start subprocess")
+def test_hot_swap_rejects_nonreentrant_bit_generator_lock(tmp_path):
+    _run_hot_swap_subprocess(
+        "_hot_swap_incompatible_lock_scenario", tmp_path
+    )
+
+
+@pytest.mark.skipif(IS_WASM, reason="can't start subprocess")
+def test_weighted_choice_accepts_nonreentrant_bit_generator_lock(tmp_path):
+    _run_hot_swap_subprocess(
+        "_ordinary_randomstate_plain_lock_choice_scenario", tmp_path
+    )
