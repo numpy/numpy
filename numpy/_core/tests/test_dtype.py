@@ -260,6 +260,29 @@ class TestBuiltin:
         assert dt1.itemsize == 10
 
 
+class TestByteOrderStr:
+    """Regression coverage for numpy._core._dtype._byte_order_str.
+
+    Documents the premise the dead-branch removal relies on:
+    dtype.byteorder only ever returns one of '<', '>', '=', or '|'.
+    """
+
+    def test_dtype_byteorder_never_returns_S(self):
+        # No reasonable way to construct a dtype produces
+        # .byteorder == 'S'. Even newbyteorder('S') resolves to
+        # '<' or '>' on the resulting dtype.
+        for spec in ['int8', 'int32', 'float64', 'complex128', 'U4', 'S4']:
+            for arg in ('<', '>', '=', '|', 'S', 'native', 'swap'):
+                try:
+                    dt = np.dtype(spec).newbyteorder(arg)
+                except (ValueError, TypeError):
+                    continue
+                assert dt.byteorder in ('<', '>', '=', '|'), (
+                    f"dtype({spec!r}).newbyteorder({arg!r}).byteorder "
+                    f"= {dt.byteorder!r}, expected one of '<>=|'"
+                )
+
+
 class TestRecord:
     def test_equivalent_record(self):
         """Test whether equivalent record dtypes hash the same."""
