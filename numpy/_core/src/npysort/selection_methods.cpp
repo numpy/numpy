@@ -1,6 +1,3 @@
-#ifndef NPYSORT_SELECTION_METHODS_CPP
-#define NPYSORT_SELECTION_METHODS_CPP
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "npy_partition.h"
@@ -232,5 +229,3 @@ int register_all_partitions() {
     }
     return 0;
 }
-
-#endif
