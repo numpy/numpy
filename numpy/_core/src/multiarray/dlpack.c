@@ -663,13 +663,16 @@ gentype_dlpack(PyObject *self,
         return NULL;
     }
 
-    if (copy_mode != NPY_COPY_NEVER && major_version < 1
-        || copy_mode == NPY_COPY_ALWAYS) {
+    if ((copy_mode != NPY_COPY_NEVER && major_version < 1)
+        || (copy_mode == NPY_COPY_ALWAYS)) {
         /* Export a fresh 0-d array that owns the copied data. */
         PyArrayObject *arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
         if (arr == NULL) {
             return NULL;
         }
+        /* Ensure the array is not a view */
+        assert(PyArray_BASE(arr) == NULL);
+
         PyObject *res = create_dlpack_capsule(
                 NULL, arr, major_version >= 1, &result_device, 1);
         Py_DECREF(arr);
