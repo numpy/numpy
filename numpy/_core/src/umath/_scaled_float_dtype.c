@@ -975,7 +975,7 @@ sfloat_partition_loop(
         char *const *data,
         const npy_intp *dimensions,
         const npy_intp *strides,
-        NpyAuxData *NPY_UNUSED(auxdata))
+        NpyAuxData *auxdata)
 {
     assert(strides[0] == sizeof(npy_float64));
     assert(strides[1] == sizeof(npy_intp));
@@ -985,7 +985,25 @@ sfloat_partition_loop(
         PyErr_SetString(PyExc_RuntimeError, "double partition method not found");
         return -1;
     }
-    return part_meth->strided_loop(context, data, dimensions, strides, NULL);
+
+    PyArray_SFloatDescr *sdescr = (PyArray_SFloatDescr *)context->descriptors[0];
+    PyArray_Descr *double_descr = &sdescr->base;
+    PyArray_Descr *loop_descrs[3] = {double_descr, context->descriptors[1], double_descr};
+
+    PyArrayMethod_Context part_context = {
+        .method = part_meth,
+        .descriptors = loop_descrs,
+        .parameters = context->parameters,
+    };
+    PyArrayMethod_StridedLoop *loop;
+    NPY_ARRAYMETHOD_FLAGS flags = 0;
+
+    part_meth->get_strided_loop(&part_context, 1, 0, strides, &loop, &auxdata, &flags);
+    if (loop == NULL) {
+        return -1;
+    }
+
+    return loop(&part_context, data, dimensions, strides, auxdata);
 }
 
 
@@ -1019,7 +1037,7 @@ sfloat_argpartition_loop(
         char *const *data,
         const npy_intp *dimensions,
         const npy_intp *strides,
-        NpyAuxData *NPY_UNUSED(auxdata))
+        NpyAuxData *auxdata)
 {
     assert(strides[0] == sizeof(npy_float64));
     assert(strides[1] == sizeof(npy_intp));
@@ -1030,7 +1048,25 @@ sfloat_argpartition_loop(
         PyErr_SetString(PyExc_RuntimeError, "double argpartition method not found");
         return -1;
     }
-    return argpart_meth->strided_loop(context, data, dimensions, strides, NULL);
+
+    PyArray_SFloatDescr *sdescr = (PyArray_SFloatDescr *)context->descriptors[0];
+    PyArray_Descr *double_descr = &sdescr->base;
+    PyArray_Descr *loop_descrs[3] = {double_descr, context->descriptors[1], context->descriptors[2]};
+
+    PyArrayMethod_Context argpart_context = {
+        .method = argpart_meth,
+        .descriptors = loop_descrs,
+        .parameters = context->parameters,
+    };
+    PyArrayMethod_StridedLoop *loop;
+    NPY_ARRAYMETHOD_FLAGS flags = 0;
+
+    argpart_meth->get_strided_loop(&argpart_context, 1, 0, strides, &loop, &auxdata, &flags);
+    if (loop == NULL) {
+        return -1;
+    }
+
+    return loop(&argpart_context, data, dimensions, strides, auxdata);
 }
 
 

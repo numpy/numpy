@@ -1,3 +1,6 @@
+#ifndef NPYSORT_SELECTION_METHODS_CPP
+#define NPYSORT_SELECTION_METHODS_CPP
+
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "npy_partition.h"
@@ -201,30 +204,30 @@ make_partitions_(PyArray_DTypeMeta *dtypemeta, const char *name)
 }
 
 int register_all_partitions() {
-    int r = 0;
-
-    r += make_partitions_<npy::bool_tag>(&PyArray_BoolDType, "bool");
-    r += make_partitions_<npy::byte_tag>(&PyArray_ByteDType, "byte");
-    r += make_partitions_<npy::ubyte_tag>(&PyArray_UByteDType, "ubyte");
-    r += make_partitions_<npy::short_tag>(&PyArray_ShortDType, "short");
-    r += make_partitions_<npy::ushort_tag>(&PyArray_UShortDType, "ushort");
-    r += make_partitions_<npy::int_tag>(&PyArray_IntDType, "int");
-    r += make_partitions_<npy::uint_tag>(&PyArray_UIntDType, "uint");
-    r += make_partitions_<npy::long_tag>(&PyArray_LongDType, "long");
-    r += make_partitions_<npy::ulong_tag>(&PyArray_ULongDType, "ulong");
-    r += make_partitions_<npy::longlong_tag>(&PyArray_LongLongDType, "longlong");
-    r += make_partitions_<npy::ulonglong_tag>(&PyArray_ULongLongDType, "ulonglong");
-    r += make_partitions_<npy::float_tag>(&PyArray_FloatDType, "float");
-    r += make_partitions_<npy::double_tag>(&PyArray_DoubleDType, "double");
-    r += make_partitions_<npy::longdouble_tag>(&PyArray_LongDoubleDType, "longdouble");
-    r += make_partitions_<npy::cfloat_tag>(&PyArray_CFloatDType, "cfloat");
-    r += make_partitions_<npy::cdouble_tag>(&PyArray_CDoubleDType, "cdouble");
-    r += make_partitions_<npy::clongdouble_tag>(&PyArray_CLongDoubleDType, "clongdouble");
-    r += make_partitions_<npy::datetime_tag>(&PyArray_DatetimeDType, "datetime");
-    r += make_partitions_<npy::timedelta_tag>(&PyArray_TimedeltaDType, "timedelta");
-    r += make_partitions_<npy::half_tag>(&PyArray_HalfDType, "half");
-
-    // TODO: Support object, string, and unicode dtypes.
-
-    return r;
+     // TODO: Support object, string, and unicode dtypes.
+    if (make_partitions_<npy::bool_tag>(&PyArray_BoolDType, "bool") < 0 ||
+        make_partitions_<npy::byte_tag>(&PyArray_ByteDType, "byte") < 0 ||
+        make_partitions_<npy::ubyte_tag>(&PyArray_UByteDType, "ubyte") < 0 ||
+        make_partitions_<npy::short_tag>(&PyArray_ShortDType, "short") < 0 ||
+        make_partitions_<npy::ushort_tag>(&PyArray_UShortDType, "ushort") < 0 ||
+        make_partitions_<npy::int_tag>(&PyArray_IntDType, "int") < 0 ||
+        make_partitions_<npy::uint_tag>(&PyArray_UIntDType, "uint") < 0 ||
+        make_partitions_<npy::long_tag>(&PyArray_LongDType, "long") < 0 ||
+        make_partitions_<npy::ulong_tag>(&PyArray_ULongDType, "ulong") < 0 ||
+        make_partitions_<npy::longlong_tag>(&PyArray_LongLongDType, "longlong") < 0 ||
+        make_partitions_<npy::ulonglong_tag>(&PyArray_ULongLongDType, "ulonglong") < 0 ||
+        make_partitions_<npy::float_tag>(&PyArray_FloatDType, "float") < 0 ||
+        make_partitions_<npy::double_tag>(&PyArray_DoubleDType, "double") < 0 ||
+        make_partitions_<npy::longdouble_tag>(&PyArray_LongDoubleDType, "longdouble") < 0 ||
+        make_partitions_<npy::cfloat_tag>(&PyArray_CFloatDType, "cfloat") < 0 ||
+        make_partitions_<npy::cdouble_tag>(&PyArray_CDoubleDType, "cdouble") < 0 ||
+        make_partitions_<npy::clongdouble_tag>(&PyArray_CLongDoubleDType, "clongdouble") < 0 ||
+        make_partitions_<npy::datetime_tag>(&PyArray_DatetimeDType, "datetime") < 0 ||
+        make_partitions_<npy::timedelta_tag>(&PyArray_TimedeltaDType, "timedelta") < 0 ||
+        make_partitions_<npy::half_tag>(&PyArray_HalfDType, "half") < 0) {
+        return -1;
+    }
+    return 0;
 }
+
+#endif
