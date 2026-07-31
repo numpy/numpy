@@ -1774,6 +1774,87 @@ class TestUfunc:
         # Sanity check
         assert_array_equal(result3, a + a)
 
+    @pytest.mark.parametrize("n", [127, 128, 129, 255, 256, 257, 384, 1034])
+    @pytest.mark.parametrize("thd", [0, 0.02, 0.5, 0.7, 0.98, 1.0])
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64,
+                                       np.int16, np.int32, np.int64,
+                                       np.uint16, np.uint32, np.uint64])
+    def test_where_contiguous_two_outs(self, n, thd, dtype):
+
+        rng = np.random.default_rng(0)
+        a = (rng.random(n) * 100).astype(dtype)
+        b = (rng.random(n) * 100 + 1).astype(dtype)
+        m = rng.random(n) < thd
+
+        exp1 = np.full(n, 255, dtype)
+        exp2 = exp1.copy()
+        out1 = exp1.copy()
+        out2 = exp1.copy()
+
+        exp1[m] = a[m] // b[m]
+        exp2[m] = a[m] % b[m]
+        np.divmod(a, b, out=(out1, out2), where=m)
+
+        assert_array_equal(out1, exp1)
+        assert_array_equal(out2, exp2)
+
+    @pytest.mark.parametrize("n", [127, 128, 129, 255, 256, 257, 384, 1034])
+    @pytest.mark.parametrize("thd", [0, 0.02, 0.5, 0.7, 0.98, 1.0])
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64,
+                                       np.int16, np.int32, np.int64,
+                                       np.uint16, np.uint32, np.uint64])
+    def test_where_contiguous(self, n, thd, dtype):
+
+        rng = np.random.default_rng(0)
+        a = (rng.random(n) * 100).astype(dtype)
+        b = (rng.random(n) * 100).astype(dtype)
+        m = rng.random(n) < thd
+
+        exp = np.full(n, 255, dtype)
+        out = exp.copy()
+
+        exp[m] = a[m] + b[m]
+        np.add(a, b, out=out, where=m)
+
+        assert_array_equal(out, exp)
+
+    @pytest.mark.parametrize("n", [127, 128, 129, 255, 256, 257, 384, 1034])
+    @pytest.mark.parametrize("thd", [0, 0.02, 0.5, 0.7, 0.98, 1.0])
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64,
+                                       np.int16, np.int32, np.int64,
+                                       np.uint16, np.uint32, np.uint64])
+    def test_where_contiguous_inplace(self, n, thd, dtype):
+        rng = np.random.default_rng(0)
+        a = (rng.random(n) * 100).astype(dtype)
+        b = (rng.random(n) * 100).astype(dtype)
+        m = rng.random(n) < thd
+
+        exp = a.copy()
+
+        exp[m] = a[m] + b[m]
+        np.add(a, b, out=a, where=m)
+
+        assert_array_equal(a, exp)
+
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64,
+                                   np.int16, np.int32, np.int64,
+                                   np.uint16, np.uint32, np.uint64])
+    def test_where_contiguous_blocks(self, dtype):
+        rng = np.random.default_rng(0)
+
+        n = 4096
+        a = (rng.random(n) * 100).astype(dtype)
+        b = (rng.random(n) * 100).astype(dtype)
+        m = (np.arange(n) // 500) % 2 == 0
+
+        exp = np.full(n, 255, dtype)
+        out = exp.copy()
+
+        exp[m] = a[m] + b[m]
+        np.add(a, b, out=out, where=m)
+
+        assert_array_equal(out, exp)
+
     @staticmethod
     def identityless_reduce_arrs():
         yield np.empty((2, 3, 4), order='C')
