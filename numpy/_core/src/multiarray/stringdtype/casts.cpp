@@ -410,6 +410,7 @@ stringdtype_find_fixed_width_descr(PyArrayObject *arr, int type_num)
     char *bad_buf = NULL;
     size_t bad_size = 0;
     PyArray_Descr *ret = NULL;
+    int succeeded = 0;
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
 
@@ -419,7 +420,7 @@ stringdtype_find_fixed_width_descr(PyArrayObject *arr, int type_num)
         npy_static_string s = {0, NULL};
         if (load_nullable_string(descr, ps, &s, allocator,
                                  "fixed-width width discovery") == -1) {
-            goto fail;
+            goto finish;
         }
         npy_uint64 width;
         if (type_num == NPY_STRING) {
@@ -434,11 +435,11 @@ stringdtype_find_fixed_width_descr(PyArrayObject *arr, int type_num)
                 bad_buf = (char *)PyMem_RawMalloc(s.size);
                 if (bad_buf == NULL) {
                     PyErr_NoMemory();
-                    goto fail;
+                    goto finish;
                 }
                 memcpy(bad_buf, s.buf, s.size);
                 bad_size = s.size;
-                goto fail;
+                goto finish;
             }
             width = (npy_uint64)num_codepoints;
         }
@@ -447,27 +448,13 @@ stringdtype_find_fixed_width_descr(PyArrayObject *arr, int type_num)
         }
         PyArray_ITER_NEXT(iter);
     }
+    succeeded = 1;
+
+finish:
 
     NpyString_release_allocator(allocator);
     Py_DECREF(iter);
 
-    if (max_width > NPY_MAX_INT ||
-            (type_num == NPY_UNICODE && max_width > NPY_MAX_INT / 4)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "string too large to store inside array.");
-        return NULL;
-    }
-
-    ret = PyArray_DescrNewFromType(type_num);
-    if (ret == NULL) {
-        return NULL;
-    }
-    ret->elsize = (int)(type_num == NPY_UNICODE ? 4 * max_width : max_width);
-    return ret;
-
-fail:
-    NpyString_release_allocator(allocator);
-    Py_DECREF(iter);
     if (bad_buf != NULL) {
         // decode to construct a UnicodeDecodeError with positional information
         PyObject *decoded = PyUnicode_Decode(bad_buf, bad_size, "utf-8",
@@ -480,7 +467,24 @@ fail:
                             "discovery");
         }
     }
-    return NULL;
+    if (!succeeded) {
+        // another error raised during the loop
+        return NULL;
+    }
+    if (max_width > NPY_MAX_INT ||
+            (type_num == NPY_UNICODE && max_width > NPY_MAX_INT / 4)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "string too large to store inside array.");
+        return NULL;
+    }
+
+    ret = PyArray_DescrNewFromType(type_num);
+
+    if (ret != NULL) {
+        ret->elsize = (int)(type_num == NPY_UNICODE ? 4 * max_width : max_width);
+    }
+
+    return ret;
 }
 
 static int
