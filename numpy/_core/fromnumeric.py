@@ -19,7 +19,7 @@ __all__ = [
     'all', 'amax', 'amin', 'any', 'argmax',
     'argmin', 'argpartition', 'argsort', 'around', 'choose', 'clip',
     'compress', 'cumprod', 'cumsum', 'cumulative_prod', 'cumulative_sum',
-    'diagonal', 'mean', 'max', 'min', 'matrix_transpose',
+    'diagonal', 'mean', 'max', 'min', 'minmax', 'matrix_transpose',
     'ndim', 'nonzero', 'partition', 'prod', 'ptp', 'put',
     'ravel', 'repeat', 'reshape', 'resize', 'round',
     'searchsorted', 'shape', 'size', 'sort', 'squeeze',
@@ -3485,6 +3485,105 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     """
     return _wrapreduction(a, np.minimum, 'min', axis, None, out,
                           keepdims, initial, where)
+
+
+def _wrapreduction_minmax(obj, ufunc, method, axis, out,
+                          keepdims=_NoValue, initial=_NoValue, where=_NoValue):
+    # Like `_wrapreduction`, but for the 2-output `minimummaximum` reduction;
+    # `out` is a tuple ``(min, max)`` (or None) and the result is a 2-tuple.
+    passkwargs = {}
+    if keepdims is not _NoValue:
+        passkwargs["keepdims"] = keepdims
+    if initial is not _NoValue:
+        passkwargs["initial"] = initial
+    if where is not _NoValue:
+        passkwargs["where"] = where
+
+    if out is None:
+        out = (None, None)
+    return ufunc.reduce(obj, axis, None, out, **passkwargs)
+
+
+def _minmax_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
+                       where=None):
+    if isinstance(out, tuple):
+        return (a, *out)
+    return (a, out)
+
+
+@array_function_dispatch(_minmax_dispatcher)
+@set_module('numpy')
+def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
+           where=np._NoValue):
+    """
+    Return the minimum and maximum of an array or along an axis.
+
+    This is equivalent to ``(np.min(a, ...), np.max(a, ...))`` but computes
+    both the minimum and the maximum in a single pass over `a`.
+
+    Parameters
+    ----------
+    a : array_like
+        Input data.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which to operate.  By default, flattened input is
+        used.  If this is a tuple of ints, the reduction is performed over
+        multiple axes, instead of a single axis or all the axes as before.
+    out : tuple of ndarray, optional
+        A tuple ``(min, max)`` of two arrays in which to place the result.
+        Must be of the same shape and buffer length as the expected output.
+        See :ref:`ufuncs-output-type` for more details.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the input array.
+    initial : scalar or tuple of scalars, optional
+        The initial values of the minimum and maximum, used for empty slices.
+        See `~numpy.ufunc.reduce` for details.
+    where : array_like of bool, optional
+        Elements to compare for the minimum and maximum. See
+        `~numpy.ufunc.reduce` for details.
+
+    Returns
+    -------
+    result : tuple of ndarray or scalar
+        A tuple ``(min, max)`` holding the minimum and maximum of `a`. If
+        `axis` is None, the results are scalar values. If `axis` is an int, the
+        results are arrays of dimension ``a.ndim - 1``. If `axis` is a tuple,
+        the results are arrays of dimension ``a.ndim - len(axis)``.
+
+    See Also
+    --------
+    min :
+        The minimum value of an array along a given axis, propagating any NaNs.
+    max :
+        The maximum value of an array along a given axis, propagating any NaNs.
+    minimummaximum :
+        Element-wise minimum and maximum of two arrays, propagating any NaNs.
+
+    Notes
+    -----
+    NaN values are propagated, that is if at least one item is NaN, the
+    corresponding output value will be NaN as well. To ignore NaN values
+    use `nanmin` and `nanmax`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = np.arange(4).reshape((2, 2))
+    >>> a
+    array([[0, 1],
+           [2, 3]])
+    >>> np.minmax(a)             # min and max of the flattened array
+    (np.int64(0), np.int64(3))
+    >>> np.minmax(a, axis=0)     # along the first axis
+    (array([0, 1]), array([2, 3]))
+    >>> np.minmax(a, axis=1)     # along the second axis
+    (array([0, 2]), array([1, 3]))
+
+    """
+    return _wrapreduction_minmax(a, np.minimummaximum, 'minmax', axis, out,
+                                 keepdims, initial, where)
 
 
 def _prod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
