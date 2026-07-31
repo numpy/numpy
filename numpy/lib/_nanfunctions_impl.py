@@ -244,12 +244,7 @@ def _divide_by_count(a, b, out=None):
             return np.divide(a, b, out=out, casting='unsafe')
 
 
-def _nanmin_dispatcher(a, axis=None, out=None, keepdims=None,
-                       initial=None, where=None):
-    return (a, out)
-
-
-@array_function_dispatch(_nanmin_dispatcher)
+@array_function_dispatch(("a", "out"))
 def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
            where=np._NoValue):
     """
@@ -374,12 +369,7 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     return res
 
 
-def _nanmax_dispatcher(a, axis=None, out=None, keepdims=None,
-                       initial=None, where=None):
-    return (a, out)
-
-
-@array_function_dispatch(_nanmax_dispatcher)
+@array_function_dispatch(("a", "out"))
 def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
            where=np._NoValue):
     """
@@ -503,11 +493,7 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     return res
 
 
-def _nanargmin_dispatcher(a, axis=None, out=None, *, keepdims=None):
-    return (a,)
-
-
-@array_function_dispatch(_nanargmin_dispatcher)
+@array_function_dispatch(("a",))
 def nanargmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     """
     Return the indices of the minimum values in the specified axis ignoring
@@ -564,11 +550,7 @@ def nanargmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     return res
 
 
-def _nanargmax_dispatcher(a, axis=None, out=None, *, keepdims=None):
-    return (a,)
-
-
-@array_function_dispatch(_nanargmax_dispatcher)
+@array_function_dispatch(("a",))
 def nanargmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     """
     Return the indices of the maximum values in the specified axis ignoring
@@ -626,12 +608,7 @@ def nanargmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     return res
 
 
-def _nansum_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
-                       initial=None, where=None):
-    return (a, out)
-
-
-@array_function_dispatch(_nansum_dispatcher)
+@array_function_dispatch(("a", "out"))
 def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
            initial=np._NoValue, where=np._NoValue):
     """
@@ -727,12 +704,7 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
                   initial=initial, where=where)
 
 
-def _nanprod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
-                        initial=None, where=None):
-    return (a, out)
-
-
-@array_function_dispatch(_nanprod_dispatcher)
+@array_function_dispatch(("a", "out"))
 def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
             initial=np._NoValue, where=np._NoValue):
     """
@@ -809,11 +781,7 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
                    initial=initial, where=where)
 
 
-def _nancumsum_dispatcher(a, axis=None, dtype=None, out=None):
-    return (a, out)
-
-
-@array_function_dispatch(_nancumsum_dispatcher)
+@array_function_dispatch(("a", "out"))
 def nancumsum(a, axis=None, dtype=None, out=None):
     """
     Return the cumulative sum of array elements over a given axis treating Not a
@@ -878,11 +846,7 @@ def nancumsum(a, axis=None, dtype=None, out=None):
     return np.cumsum(a, axis=axis, dtype=dtype, out=out)
 
 
-def _nancumprod_dispatcher(a, axis=None, dtype=None, out=None):
-    return (a, out)
-
-
-@array_function_dispatch(_nancumprod_dispatcher)
+@array_function_dispatch(("a", "out"))
 def nancumprod(a, axis=None, dtype=None, out=None):
     """
     Return the cumulative product of array elements over a given axis treating Not a
@@ -944,12 +908,7 @@ def nancumprod(a, axis=None, dtype=None, out=None):
     return np.cumprod(a, axis=axis, dtype=dtype, out=out)
 
 
-def _nanmean_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
-                        *, where=None):
-    return (a, out)
-
-
-@array_function_dispatch(_nanmean_dispatcher)
+@array_function_dispatch(("a", "out"))
 def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
             *, where=np._NoValue):
     """
@@ -1117,12 +1076,7 @@ def _nanmedian_small(a, axis=None, out=None, overwrite_input=False):
     return m.filled(fill_value)
 
 
-def _nanmedian_dispatcher(
-        a, axis=None, out=None, overwrite_input=None, keepdims=None):
-    return (a, out)
-
-
-@array_function_dispatch(_nanmedian_dispatcher)
+@array_function_dispatch(("a", "out"))
 def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValue):
     """
     Compute the median along the specified axis, while ignoring NaNs.
@@ -1216,13 +1170,7 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
                         overwrite_input=overwrite_input)
 
 
-def _nanpercentile_dispatcher(
-        a, q, axis=None, out=None, overwrite_input=None,
-        method=None, keepdims=None, *, weights=None):
-    return (a, q, out, weights)
-
-
-@array_function_dispatch(_nanpercentile_dispatcher)
+@array_function_dispatch(("a", "q", "out", "weights"))
 def nanpercentile(
         a,
         q,
@@ -1395,12 +1343,7 @@ def nanpercentile(
         a, q, axis, out, overwrite_input, method, keepdims, weights, weak_q)
 
 
-def _nanquantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                            method=None, keepdims=None, *, weights=None):
-    return (a, q, out, weights)
-
-
-@array_function_dispatch(_nanquantile_dispatcher)
+@array_function_dispatch(("a", "q", "out", "weights"))
 def nanquantile(
         a,
         q,
@@ -1681,13 +1624,7 @@ def _nanquantile_1d(
     )
 
 
-def _nanvar_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
-                       keepdims=None, *, where=None, mean=None,
-                       correction=None):
-    return (a, out)
-
-
-@array_function_dispatch(_nanvar_dispatcher)
+@array_function_dispatch(("a", "out"))
 def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
            *, where=np._NoValue, mean=np._NoValue, correction=np._NoValue):
     """
@@ -1871,13 +1808,7 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
     return var
 
 
-def _nanstd_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
-                       keepdims=None, *, where=None, mean=None,
-                       correction=None):
-    return (a, out)
-
-
-@array_function_dispatch(_nanstd_dispatcher)
+@array_function_dispatch(("a", "out"))
 def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
            *, where=np._NoValue, mean=np._NoValue, correction=np._NoValue):
     """

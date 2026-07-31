@@ -88,13 +88,7 @@ __all__ = [
     'may_share_memory']
 
 
-def _zeros_like_dispatcher(
-    a, dtype=None, order=None, subok=None, shape=None, *, device=None
-):
-    return (a,)
-
-
-@array_function_dispatch(_zeros_like_dispatcher)
+@array_function_dispatch(("a",))
 def zeros_like(
     a, dtype=None, order='K', subok=True, shape=None, *, device=None
 ):
@@ -237,13 +231,7 @@ def ones(shape, dtype=None, order='C', *, device=None, like=None):
 _ones_with_like = array_function_dispatch()(ones)
 
 
-def _ones_like_dispatcher(
-    a, dtype=None, order=None, subok=None, shape=None, *, device=None
-):
-    return (a,)
-
-
-@array_function_dispatch(_ones_like_dispatcher)
+@array_function_dispatch(("a",))
 def ones_like(
     a, dtype=None, order='K', subok=True, shape=None, *, device=None
 ):
@@ -312,12 +300,6 @@ def ones_like(
     )
     multiarray.copyto(res, 1, casting='unsafe')
     return res
-
-
-def _full_dispatcher(
-    shape, fill_value, dtype=None, order=None, *, device=None, like=None
-):
-    return (like,)
 
 
 @finalize_array_function_like
@@ -390,14 +372,7 @@ def full(shape, fill_value, dtype=None, order='C', *, device=None, like=None):
 _full_with_like = array_function_dispatch()(full)
 
 
-def _full_like_dispatcher(
-    a, fill_value, dtype=None, order=None, subok=None, shape=None,
-    *, device=None
-):
-    return (a,)
-
-
-@array_function_dispatch(_full_like_dispatcher)
+@array_function_dispatch(("a",))
 def full_like(
     a, fill_value, dtype=None, order='K', subok=True, shape=None,
     *, device=None
@@ -476,11 +451,7 @@ def full_like(
     return res
 
 
-def _count_nonzero_dispatcher(a, axis=None, *, keepdims=None):
-    return (a,)
-
-
-@array_function_dispatch(_count_nonzero_dispatcher)
+@array_function_dispatch(("a",))
 def count_nonzero(a, axis=None, *, keepdims=False):
     """
     Counts the number of non-zero values in the array ``a``.
@@ -613,11 +584,7 @@ def isfortran(a):
     return a.flags.fnc
 
 
-def _argwhere_dispatcher(a):
-    return (a,)
-
-
-@array_function_dispatch(_argwhere_dispatcher)
+@array_function_dispatch(("a",))
 def argwhere(a):
     """
     Find the indices of array elements that are non-zero, grouped by element.
@@ -668,11 +635,7 @@ def argwhere(a):
     return transpose(nonzero(a))
 
 
-def _flatnonzero_dispatcher(a):
-    return (a,)
-
-
-@array_function_dispatch(_flatnonzero_dispatcher)
+@array_function_dispatch(("a",))
 def flatnonzero(a):
     """
     Return indices that are non-zero in the flattened version of a.
@@ -714,11 +677,7 @@ def flatnonzero(a):
     return np.nonzero(np.ravel(a))[0]
 
 
-def _correlate_dispatcher(a, v, mode=None):
-    return (a, v)
-
-
-@array_function_dispatch(_correlate_dispatcher)
+@array_function_dispatch(("a", "v"))
 def correlate(a, v, mode='valid'):
     r"""
     Cross-correlation of two 1-dimensional sequences.
@@ -794,11 +753,7 @@ def correlate(a, v, mode='valid'):
     return multiarray.correlate2(a, v, mode)
 
 
-def _convolve_dispatcher(a, v, mode=None):
-    return (a, v)
-
-
-@array_function_dispatch(_convolve_dispatcher)
+@array_function_dispatch(("a", "v"))
 def convolve(a, v, mode='full'):
     """
     Returns the discrete, linear convolution of two one-dimensional sequences.
@@ -898,11 +853,7 @@ def convolve(a, v, mode='full'):
     return multiarray.correlate(a, v[::-1], mode)
 
 
-def _outer_dispatcher(a, b, out=None):
-    return (a, b, out)
-
-
-@array_function_dispatch(_outer_dispatcher)
+@array_function_dispatch(("a", "b", "out"))
 def outer(a, b, out=None):
     """
     Compute the outer product of two vectors.
@@ -990,11 +941,7 @@ def outer(a, b, out=None):
     return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis, :], out)
 
 
-def _tensordot_dispatcher(a, b, axes=None):
-    return (a, b)
-
-
-@array_function_dispatch(_tensordot_dispatcher)
+@array_function_dispatch(("a", "b"))
 def tensordot(a, b, axes=2):
     """
     Compute tensor dot product along specified axes.
@@ -1220,11 +1167,7 @@ def tensordot(a, b, axes=2):
     return res.reshape(olda + oldb)
 
 
-def _roll_dispatcher(a, shift, axis=None):
-    return (a,)
-
-
-@array_function_dispatch(_roll_dispatcher)
+@array_function_dispatch(("a",))
 def roll(a, shift, axis=None):
     """
     Roll array elements along a given axis.
@@ -1330,11 +1273,7 @@ def roll(a, shift, axis=None):
         return result
 
 
-def _rollaxis_dispatcher(a, axis, start=None):
-    return (a,)
-
-
-@array_function_dispatch(_rollaxis_dispatcher)
+@array_function_dispatch(("a",))
 def rollaxis(a, axis, start=0):
     """
     Roll the specified axis backwards, until it lies in a given position.
@@ -1483,11 +1422,7 @@ def normalize_axis_tuple(axis, ndim, argname=None, allow_duplicate=False):
     return axis
 
 
-def _moveaxis_dispatcher(a, source, destination):
-    return (a,)
-
-
-@array_function_dispatch(_moveaxis_dispatcher)
+@array_function_dispatch(("a",))
 def moveaxis(a, source, destination):
     """
     Move axes of an array to new positions.
@@ -1557,11 +1492,7 @@ def moveaxis(a, source, destination):
     return result
 
 
-def _cross_dispatcher(a, b, axisa=None, axisb=None, axisc=None, axis=None):
-    return (a, b)
-
-
-@array_function_dispatch(_cross_dispatcher)
+@array_function_dispatch(("a", "b"))
 def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     """
     Return the cross product of two (arrays of) vectors.
@@ -2220,11 +2151,7 @@ def identity(n, dtype=None, *, like=None):
 _identity_with_like = array_function_dispatch()(identity)
 
 
-def _allclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None):
-    return (a, b, rtol, atol)
-
-
-@array_function_dispatch(_allclose_dispatcher)
+@array_function_dispatch(("a", "b", "rtol", "atol"))
 def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
     Returns True if two arrays are element-wise equal within a tolerance.
@@ -2314,11 +2241,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     return builtins.bool(res)
 
 
-def _isclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None):
-    return (a, b, rtol, atol)
-
-
-@array_function_dispatch(_isclose_dispatcher)
+@array_function_dispatch(("a", "b", "rtol", "atol"))
 def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
     Returns a boolean array where two arrays are element-wise equal within a
@@ -2450,10 +2373,6 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     return result[()]  # Flatten 0d arrays to scalars
 
 
-def _array_equal_dispatcher(a1, a2, equal_nan=None):
-    return (a1, a2)
-
-
 _no_nan_types = {
     # should use np.dtype.BoolDType, but as of writing
     # that fails the reloading test.
@@ -2469,7 +2388,7 @@ def _dtype_cannot_hold_nan(dtype):
     return type(dtype) in _no_nan_types
 
 
-@array_function_dispatch(_array_equal_dispatcher)
+@array_function_dispatch(("a1", "a2"))
 def array_equal(a1, a2, equal_nan=False):
     """
     True if two arrays have the same shape and elements, False otherwise.
@@ -2555,11 +2474,7 @@ def array_equal(a1, a2, equal_nan=False):
     return builtins.bool(equal_or_both_nan.all())
 
 
-def _array_equiv_dispatcher(a1, a2):
-    return (a1, a2)
-
-
-@array_function_dispatch(_array_equiv_dispatcher)
+@array_function_dispatch(("a1", "a2"))
 def array_equiv(a1, a2):
     """
     Returns True if input arrays are shape consistent and all elements equal.
@@ -2608,11 +2523,7 @@ def array_equiv(a1, a2):
     return builtins.bool(asanyarray(a1 == a2).all())
 
 
-def _astype_dispatcher(x, dtype, /, *, copy=None, device=None):
-    return (x, dtype)
-
-
-@array_function_dispatch(_astype_dispatcher)
+@array_function_dispatch(("x", "dtype"))
 def astype(x, dtype, /, *, copy=True, device=None):
     """
     Copies an array to a specified data type.
