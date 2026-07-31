@@ -123,6 +123,8 @@ jobs:
           workflow_name: ${{ github.workflow }}
           job_name: ${{ github.job }}
 
+      # This caches the completed OpenBLAS build; we aim to build once per `OPENBLAS_VERSION`.
+      # If this cache step hits, the next step (building OpenBLAS) is skipped by its `if:` condition.
       - name: Cache TSAN-instrumented OpenBLAS
         id: cache-openblas
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -167,12 +169,17 @@ jobs:
       - name: Build NumPy with ThreadSanitizer
         run: |
           export PKG_CONFIG_PATH=$GITHUB_WORKSPACE/openblas-tsan/lib/pkgconfig
-          export CC="ccache $CC" CXX="ccache $CXX"
+          export CC="ccache ${CC:-clang}" CXX="ccache ${CXX:-clang++}"
           export LDFLAGS="-fsanitize=thread"
           python -m spin build -j4 -- -Db_sanitize=thread \
             -Dbuildtype=debugoptimized -Dcpu-dispatch=none \
             -Ddisable-intel-sort=true -Ddisable-highway=true -Ddisable-svml=true \
             -Dblas=openblas -Dlapack=openblas -Dallow-noblas=false
+
+      - name: Ccache performance
+        shell: bash -l {0}
+        run: |
+          ccache --evict-older-than 1d
           ccache -s
 
       - name: Run tests under prebuilt TSAN container
