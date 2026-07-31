@@ -422,7 +422,7 @@ create_dlpack_capsule(PyObject *scalar, PyArrayObject *array,
 
     /* Scalars are exported read-only, which only versioned capsules can signal. */
     assert(array != NULL || versioned);
- 
+
     /*
      * We align shape and strides at the end but need to align them, offset
      * gives the offset of the shape (and strides) including the struct size.
