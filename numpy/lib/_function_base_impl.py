@@ -1818,7 +1818,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     See Also
     --------
     rad2deg, deg2rad
-    numpy.ma.unwrap : Mask aware equivalent for masked arrays.
+    numpy.ma.unwrap : Mask-aware equivalent for masked arrays.
 
     Notes
     -----

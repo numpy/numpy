@@ -2495,7 +2495,7 @@ class TestUnwrap:
     def test_masked_array(self):
         # a masked array is treated like any other ufunc input, unwrapped
         # over the data underlying the mask with the mask carried through.
-        # np.ma.unwrap is the mask aware version
+        # np.ma.unwrap is the mask-aware version
         p = np.ma.MaskedArray([0., 1., 2., 2 + 2 * np.pi, 3 + 2 * np.pi],
                               mask=[False, False, True, False, False])
         out = unwrap(p)
