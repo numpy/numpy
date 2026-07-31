@@ -1,9 +1,11 @@
 import numpy as np
 from numpy.testing import assert_allclose
+import pytest
 
 from . import util
 
 
+@pytest.mark.slow
 class TestIOSF(util.F2PyTest):
     sources = [
         util.getpath('tests', 'src', 'isofenv', 'isoftests.f90'),
