@@ -2482,17 +2482,7 @@ def clip(a, a_min=np._NoValue, a_max=np._NoValue, out=None, *,
     return _wrapfunc(a, 'clip', a_min, a_max, out=out, **kwargs)
 
 
-def _sum_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
-                    initial=None, where=None):
-    return (a, out)
-
-
-# reduction= enables the C fast path for exact-ndarray reductions.
-# _ReductionKind selects the appropriate argument signature to use.
-@array_function_dispatch(
-    _sum_dispatcher,
-    reduction=(um.add, overrides._ReductionKind.SUM_PROD),
-)
+@array_function_dispatch(("a", "out"), reduction=um.add)
 def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         initial=np._NoValue, where=np._NoValue):
     """
@@ -2618,15 +2608,8 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     )
 
 
-def _any_dispatcher(a, axis=None, out=None, keepdims=None, *,
-                    where=np._NoValue):
-    return (a, where, out)
-
-
-@array_function_dispatch(
-    _any_dispatcher,
-    reduction=(um.logical_or, overrides._ReductionKind.ANY_ALL),
-)
+@array_function_dispatch(("a", "where", "out"), reduction=um.logical_or,
+                         reduction_defaults={"dtype": bool})
 def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     """
     Test whether any array element along a given axis evaluates to True.
@@ -2733,15 +2716,8 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
                                   keepdims, where)
 
 
-def _all_dispatcher(a, axis=None, out=None, keepdims=None, *,
-                    where=None):
-    return (a, where, out)
-
-
-@array_function_dispatch(
-    _all_dispatcher,
-    reduction=(um.logical_and, overrides._ReductionKind.ANY_ALL),
-)
+@array_function_dispatch(("a", "where", "out"), reduction=um.logical_and,
+                         reduction_defaults={"dtype": bool})
 def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     """
     Test whether all array elements along a given axis evaluate to True.
@@ -3199,15 +3175,7 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
     return _methods._ptp(a, axis=axis, out=out, **kwargs)
 
 
-def _max_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
-                    where=None):
-    return (a, out)
-
-
-@array_function_dispatch(
-    _max_dispatcher,
-    reduction=(um.maximum, overrides._ReductionKind.MIN_MAX),
-)
+@array_function_dispatch(("a", "out"), reduction=um.maximum)
 @set_module('numpy')
 def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
          where=np._NoValue):
@@ -3323,10 +3291,7 @@ def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
                           keepdims, initial, where)
 
 
-@array_function_dispatch(
-    _max_dispatcher,
-    reduction=(um.maximum, overrides._ReductionKind.MIN_MAX),
-)
+@array_function_dispatch(("a", "out"), reduction=um.maximum)
 def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
          where=np._NoValue):
     """
@@ -3343,15 +3308,7 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
                           keepdims, initial, where)
 
 
-def _min_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
-                    where=None):
-    return (a, out)
-
-
-@array_function_dispatch(
-    _min_dispatcher,
-    reduction=(um.minimum, overrides._ReductionKind.MIN_MAX),
-)
+@array_function_dispatch(("a", "out"), reduction=um.minimum)
 def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         where=np._NoValue):
     """
@@ -3467,10 +3424,7 @@ def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
                           keepdims, initial, where)
 
 
-@array_function_dispatch(
-    _min_dispatcher,
-    reduction=(um.minimum, overrides._ReductionKind.MIN_MAX),
-)
+@array_function_dispatch(("a", "out"), reduction=um.minimum)
 def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
          where=np._NoValue):
     """
@@ -3487,15 +3441,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
                           keepdims, initial, where)
 
 
-def _prod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
-                     initial=None, where=None):
-    return (a, out)
-
-
-@array_function_dispatch(
-    _prod_dispatcher,
-    reduction=(um.multiply, overrides._ReductionKind.SUM_PROD),
-)
+@array_function_dispatch(("a", "out"), reduction=um.multiply)
 def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
          initial=np._NoValue, where=np._NoValue):
     """
