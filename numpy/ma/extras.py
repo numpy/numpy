@@ -1293,7 +1293,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * np.pi):
 
     See Also
     --------
-    numpy.unwrap : Equivalent function for ndarrays, which ignores the mask.
+    numpy.unwrap : Equivalent function for ndarrays
 
     Notes
     -----
@@ -1319,8 +1319,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * np.pi):
            fill_value=1e+20)
 
     The masked element is skipped over, so the fourth element is unwrapped
-    against the second one. `numpy.unwrap` instead unwraps against the value
-    underlying the mask, which can hide a discontinuity from it entirely:
+    against the second one.
 
     >>> phase_deg = np.ma.masked_array([0., 170., 340., 150.],
     ...                                mask=[0, 1, 0, 0])
@@ -1328,8 +1327,6 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * np.pi):
     masked_array(data=[0.0, --, -20.0, 150.0],
                  mask=[False,  True, False, False],
            fill_value=1e+20)
-    >>> np.unwrap(phase_deg, period=360)
-    array([  0., 170., 340., 510.])
 
     """
     p = ma.asanyarray(p)
