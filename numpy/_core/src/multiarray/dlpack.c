@@ -663,7 +663,8 @@ gentype_dlpack(PyObject *self,
         return NULL;
     }
 
-    if (copy_mode == NPY_COPY_ALWAYS) {
+    if (copy_mode != NPY_COPY_NEVER && major_version < 1
+        || copy_mode == NPY_COPY_ALWAYS) {
         /* Export a fresh 0-d array that owns the copied data. */
         PyArrayObject *arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
         if (arr == NULL) {
@@ -678,7 +679,8 @@ gentype_dlpack(PyObject *self,
     if (major_version < 1) {
         PyErr_SetString(PyExc_BufferError,
             "Cannot export scalars since signalling readonly "
-            "is unsupported by DLPack (supported by newer DLPack version).");
+            "is unsupported by DLPack (supported by newer DLPack version)."
+            "Consider using `copy=True` if possible.");
         return NULL;
     }
 

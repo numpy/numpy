@@ -6932,6 +6932,13 @@ add_newdoc('numpy._core.numerictypes', 'generic', ('size',
 add_newdoc('numpy._core.numerictypes', 'generic', ('strides',
     """Tuple of bytes steps in each dimension."""))
 
+add_newdoc('numpy._core.numerictypes', 'generic', ('__dlpack__',
+    """Exports the scalar for consumption by ``from_dlpack()`` as a DLPack capsule."""))
+
+add_newdoc('numpy._core.numerictypes', 'generic', ('__dlpack_device__',
+    """Returns device type (``1``) and device ID (``0``) in DLPack format.
+    Meant for use within ``from_dlpack()``."""))
+
 # Methods
 
 add_newdoc('numpy._core.numerictypes', 'number', ('__class_getitem__',

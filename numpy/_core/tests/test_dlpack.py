@@ -304,10 +304,10 @@ class TestScalarDLPack:
     def test_dunder_dlpack_version(self):
         x = np.float64(2)
         with pytest.raises(BufferError, match="readonly is unsupported"):
-            x.__dlpack__(max_version=(0, 0))
+            x.__dlpack__(max_version=(0, 0), copy=False)
         with pytest.raises(BufferError, match="readonly is unsupported"):
             # None is equivalent to (0, 0)
-            x.__dlpack__()
+            x.__dlpack__(copy=False)
 
         # if copy=True, then we create a 0-D array, so should work
         x.__dlpack__(max_version=(0, 0), copy=True)
@@ -324,10 +324,9 @@ class TestScalarDLPack:
         assert x == 2
         assert y == 3
 
-    @pytest.mark.parametrize("copy", [False, None])
-    def test_dlpack_read_only(self, copy):
+    def test_dlpack_read_only(self):
         x = np.float64(2)
-        y = np.from_dlpack(x, copy=copy)
+        y = np.from_dlpack(x, copy=False)
 
         with pytest.raises(
             ValueError, match="assignment destination is read-only"
