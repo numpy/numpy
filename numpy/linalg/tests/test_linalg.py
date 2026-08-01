@@ -1719,6 +1719,23 @@ class TestNorm_NonSystematic:
             assert_allclose(r[2], 5.0)
             assert r[3] == 0.0
 
+    def test_overflow_rescale_returns_scalar(self):
+        # A fully reduced norm returns a scalar, not a 0-d array, whether or not
+        # it went through the gh-8775 rescale. `where()` in the rescale path
+        # would otherwise wrap the result. As in test_overflow, the naive step
+        # legitimately trips fp warnings that the code recovers from.
+        with np.errstate(over="ignore", under="ignore", invalid="ignore"):
+            for a in (np.zeros(4),                   # spuriously "bad" zeros
+                      np.array([1e200, 1e200]),      # overflowing sum of squares
+                      np.array([1e-200, 1e-200]),    # underflowing sum of squares
+                      np.array([3.0, 4.0])):         # nothing to rescale
+                assert isinstance(norm(a, axis=0), np.floating)
+                assert isinstance(norm(a), np.floating)
+            # Frobenius over both axes reduces to a scalar too.
+            assert isinstance(norm(np.full((2, 2), 1e200)), np.floating)
+            # A partial reduction still returns an array.
+            assert isinstance(norm(np.full((2, 2), 1e200), axis=1), np.ndarray)
+
 
 # Separate definitions so we can use them for matrix tests.
 class _TestNormDoubleBase(_TestNormBase):

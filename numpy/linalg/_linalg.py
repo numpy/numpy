@@ -2570,6 +2570,48 @@ def _multi_svd_norm(x, row_axis, col_axis, op, initial=None):
     return result
 
 
+# float16 has the largest ``smallest_normal`` of the float dtypes, so a squared
+# norm at or above it is finite and normal for all of them and needs no
+# rescaling. Bounding the check this way keeps the per-dtype finfo() lookup off
+# the fast path of every norm() call.
+_SAFE_SQNORM_MIN = 6.103515625e-05
+
+_smallest_normal_cache = {}
+
+
+def _smallest_normal(dtype):
+    """``dtype``'s smallest normal, cached.
+
+    finfo() is far too slow to call on norm()'s fast paths, and the value only
+    depends on the dtype.
+    """
+    try:
+        return _smallest_normal_cache[dtype]
+    except KeyError:
+        return _smallest_normal_cache.setdefault(
+            dtype, float(finfo(dtype).smallest_normal)
+        )
+
+
+def _rescale_flat_norm(x, ret, sqnorm):
+    """Recompute a flat 2-norm whose sum of squares over- or underflowed.
+
+    ``sqnorm`` only fell outside the always-safe band, which for the wider float
+    dtypes can still be perfectly normal, so re-check it exactly here before
+    paying for the max-scaled second pass. See gh-8775.
+    """
+    if not x.size:
+        return ret
+    if isfinite(sqnorm) and sqnorm >= _smallest_normal(ret.dtype):
+        return ret
+    max_abs = abs(x).max()
+    # skip inf/nan (propagate) and all-zero input (norm is truly 0)
+    if not isfinite(max_abs) or max_abs == 0:
+        return ret
+    scaled = x / max_abs
+    return max_abs * sqrt(vdot(scaled, scaled).real)
+
+
 def _rescale_axis_norm(x, ret, axis, ord, keepdims):
     """Recompute the over/underflowed slices of an axis-reduced ord-norm.
 
@@ -2583,22 +2625,47 @@ def _rescale_axis_norm(x, ret, axis, ord, keepdims):
         return ret
     # ret**ord is the per-slice power sum; below smallest_normal it has over-,
     # under- or subnormal-flowed and lost precision, so recompute that slice.
-    bad = ~isfinite(ret) | (ret ** ord < finfo(ret.dtype).smallest_normal)
-    if not bad.any():
+    # `ord` is always finite and > 1 here, so the test is applied to `ret`
+    # directly against the rooted threshold: that keeps the power off the array
+    # (and finfo() out of the call) for what is overwhelmingly the common case
+    # of nothing needing a rescale.
+    tiny_root = _smallest_normal(ret.dtype) ** (1.0 / ord)
+    # Gate on two reductions rather than the `bad` mask below: for the small
+    # reduced results this check runs on, the per-call ufunc dispatch of
+    # building that mask costs more than the reductions do. A zero or nan fails
+    # the low test and an inf fails the high one, so nothing that needs
+    # rescaling escapes; `initial` keeps empty reductions from raising.
+    if ret.ndim:
+        lo, hi = ret.min(initial=inf), ret.max(initial=-inf)
+    else:
+        lo = hi = ret
+    if tiny_root <= lo and hi < inf:
+        return ret
+    bad = ~isfinite(ret) | (ret < tiny_root)
+    # An all-zero input trips `bad` on every slice, yet none of them can be
+    # rescaled. Testing that here costs one raw pass and short-circuits on the
+    # first nonzero, so it avoids materializing abs(x) for that case.
+    if not x.any():
         return ret
     ax = abs(x)
     # initial=0 keeps empty slices at max 0 (ok mask leaves them at naive 0)
     max_kd = ax.max(axis=axis, keepdims=True, initial=0)
     ok_kd = isfinite(max_kd) & (max_kd != 0)  # slices we can safely rescale
+    max_abs = max_kd if keepdims else squeeze(max_kd, axis=axis)
+    ok = ok_kd if keepdims else squeeze(ok_kd, axis=axis)
+    # `bad` also fires on genuine zeros and on inf/nan, none of which can be
+    # rescaled, so the scaled pass below would be computed only to be discarded
+    # by `where`. Leaving early keeps those inputs as cheap as the common case.
+    fix = bad & ok
+    if not fix.any():
+        return ret
     scaled = ax / where(ok_kd, max_kd, 1)
     scaled **= ord
     r = add.reduce(scaled, axis=axis, keepdims=keepdims)
     r **= reciprocal(ord, dtype=r.dtype)
-    if keepdims:
-        max_abs, ok = max_kd, ok_kd
-    else:
-        max_abs, ok = squeeze(max_kd, axis=axis), squeeze(ok_kd, axis=axis)
-    return where(bad & ok, max_abs * r, ret)
+    # `[()]` unwraps a fully reduced result, which `where` would otherwise turn
+    # from a scalar into a 0-d array.
+    return where(fix, max_abs * r, ret)[()]
 
 
 def _norm_dispatcher(x, ord=None, axis=None, keepdims=None):
@@ -2772,17 +2839,15 @@ def norm(x, ord=None, axis=None, keepdims=False):
             # vdot(x, x).real is a single-pass sum of squared magnitudes
             # (== x.dot(x) for real). gh-8775: it can overflow/underflow/go
             # subnormal while the norm is representable, so rescale those rare
-            # float cases (x.size/inexact guard skips empty and object arrays).
+            # float cases. `_SAFE_SQNORM_MIN` bounds that check with a plain
+            # comparison, keeping finfo() -- far too slow for this fast path --
+            # off it; the inexact guard skips object arrays, whose sqnorm need
+            # not be a scalar to compare.
             sqnorm = vdot(x, x).real
             ret = sqrt(sqnorm)
-            if (x.size and issubclass(x.dtype.type, inexact)
-                    and (not math.isfinite(float(ret))
-                         or sqnorm < finfo(ret.dtype).smallest_normal)):
-                max_abs = abs(x).max()
-                # skip inf/nan (propagate) and all-zero input (norm is truly 0)
-                if math.isfinite(float(max_abs)) and max_abs != 0:
-                    scaled = x / max_abs
-                    ret = max_abs * sqrt(vdot(scaled, scaled).real)
+            if (issubclass(x.dtype.type, inexact)
+                    and not _SAFE_SQNORM_MIN <= sqnorm < math.inf):
+                ret = _rescale_flat_norm(x, ret, sqnorm)
             if keepdims:
                 ret = ret.reshape(ndim * [1])
             return ret
