@@ -1684,8 +1684,9 @@ class TestNorm_NonSystematic:
     def test_overflow_axis(self):
         # gh-8775: the axis reductions (ord==2, arbitrary ord>1, and the
         # Frobenius matrix norm) have the same over/underflow issue as the
-        # no-axis fast path, and are rescaled per slice - only the slices that
-        # actually over/underflow are recomputed, the rest are left untouched.
+        # no-axis fast path. When any slice is affected the reduction is redone
+        # with max-scaling for the whole array, and only the affected slices
+        # take the rescaled value - every other slice keeps its original one.
         with np.errstate(over="ignore", under="ignore", invalid="ignore"):
             # 2-norm along an axis: one overflowing slice next to a normal one.
             a = np.array([[600, 800], [3, 4]], dtype=np.float16)
