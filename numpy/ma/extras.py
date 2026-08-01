@@ -1343,14 +1343,22 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * np.pi):
             out = np.zeros(p.shape, dtype=unwrapped.dtype)
             out[~mask] = unwrapped
         else:
-            # gather the unmasked elements of every line to its front, the
-            # unwrapping being a forward scan that the trailing masked
-            # elements cannot affect. their data is arbitrary, so drop it
-            order = np.argsort(mask, axis=axis, kind='stable')
-            packed = np.take_along_axis(p.filled(0), order, axis=axis)
-            unwrapped = np.unwrap(packed, discont, axis, period=period)
-            out = np.empty_like(unwrapped)
-            np.put_along_axis(out, order, unwrapped, axis=axis)
+            # carry the last unmasked value of every line forward over the
+            # masked ones: the deltas inside a masked run are then zero and
+            # the one ending it is against the true predecessor. the leading
+            # masked elements have none, so point them at the first unmasked
+            # element instead. their own data is arbitrary, so drop it
+            notmask = ~mask
+            n = p.shape[axis]
+            shape = [1] * p.ndim
+            shape[axis] = n
+            held = np.where(notmask, np.arange(n).reshape(shape), -1)
+            np.maximum.accumulate(held, axis=axis, out=held)
+            if n:
+                np.copyto(held, notmask.argmax(axis=axis, keepdims=True),
+                          where=held < 0)
+            out = np.unwrap(np.take_along_axis(p.filled(0), held, axis=axis),
+                            discont, axis, period=period)
             np.copyto(out, 0, where=mask)
         result = masked_array(out, mask=mask.copy())
     result._update_from(p)
