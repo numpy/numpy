@@ -57,9 +57,6 @@
 #include "ufunc_type_resolution.h"
 
 
-#define PROMOTION_DEBUG_TRACING 0
-
-
 /* forward declaration */
 static inline PyObject *
 promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
@@ -399,17 +396,6 @@ resolve_implementation_info(PyUFuncObject *ufunc,
     Py_ssize_t size = PySequence_Length(loops);
     PyObject *best_dtypes = NULL;
     PyObject *best_resolver_info = NULL;
-
-#if PROMOTION_DEBUG_TRACING
-    printf("Promoting for '%s' promoters only: %d\n",
-            ufunc->name ? ufunc->name : "<unknown>", (int)only_promoters);
-    printf("    DTypes: ");
-    PyObject *tmp = PyArray_TupleFromItems(ufunc->nargs, op_dtypes, 1);
-    PyObject_Print(tmp, stdout, 0);
-    Py_DECREF(tmp);
-    printf("\n");
-    Py_DECREF(tmp);
-#endif
 
     for (Py_ssize_t res_idx = 0; res_idx < size; res_idx++) {
         /* Test all resolvers  */
