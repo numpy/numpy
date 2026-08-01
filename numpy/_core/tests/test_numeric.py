@@ -4019,7 +4019,7 @@ class TestCross:
     def test_zero_dimension(self, a, b):
         with pytest.raises(ValueError) as exc:
             np.cross(a, b)
-        assert "At least one array has zero dimension" in str(exc.value)
+        assert "Input arrays must be at least 1-dimensional" in str(exc.value)
 
 
 def test_outer_out_param():
