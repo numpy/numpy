@@ -36,7 +36,6 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 
 
-
 # The positional-only signature and unrolled _NoValue checks (rather than
 # **kwargs with a dict comprehension) are deliberate: these helpers are on
 # the hot path of every reduction (sum, prod, min, max, any, all), and
