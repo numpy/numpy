@@ -14,30 +14,27 @@ try:
 except ImportError:
     ctypes = None
 else:
-    cdll = None
-    test_cdll = None
-    if hasattr(sys, 'gettotalrefcount'):
-        try:
-            cdll = load_library(
-                '_multiarray_umath_d', np._core._multiarray_umath.__file__
-            )
-        except OSError:
-            pass
-        try:
-            test_cdll = load_library(
+    # NOTE: `_test_cdll` and the `_forward_pointer()` helper below replace the
+    # old module-level eager loading of `_multiarray_tests` (and an unused
+    # `_multiarray_umath` / `_multiarray_umath_d` handle that nothing in this
+    # file ever read). Loading a shared library via ctypes is a real OS-level
+    # `dlopen`/`LoadLibrary` call, not a cheap Python assignment, and it was
+    # previously paid on *every import/collection* of this test module, even
+    # when `TestNdpointerCFunc` tests were skipped or never selected. It is
+    # now deferred until a test actually needs it, and cached so it's only
+    # loaded once per session.
+    _test_cdll = None
+
+    def _forward_pointer():
+        """Lazily load and cache the `forward_pointer` C function used by
+        TestNdpointerCFunc. Loaded on first use instead of at import time.
+        """
+        global _test_cdll
+        if _test_cdll is None:
+            _test_cdll = load_library(
                 '_multiarray_tests', np._core._multiarray_tests.__file__
             )
-        except OSError:
-            pass
-    if cdll is None:
-        cdll = load_library(
-            '_multiarray_umath', np._core._multiarray_umath.__file__)
-    if test_cdll is None:
-        test_cdll = load_library(
-            '_multiarray_tests', np._core._multiarray_tests.__file__
-        )
-
-    c_forward_pointer = test_cdll.forward_pointer
+        return _test_cdll.forward_pointer
 
 
 @pytest.mark.skipif(ctypes is None,
@@ -138,8 +135,14 @@ class TestNdpointer:
 @pytest.mark.skipif(ctypes is None,
                     reason="ctypes not available on this python installation")
 class TestNdpointerCFunc:
+    def setup_method(self):
+        # Loaded lazily on first use (see `_forward_pointer` above) and
+        # cached across tests/methods via the module-level `_test_cdll`.
+        self.c_forward_pointer = _forward_pointer()
+
     def test_arguments(self):
         """ Test that arguments are coerced from arrays """
+        c_forward_pointer = self.c_forward_pointer
         c_forward_pointer.restype = ctypes.c_void_p
         c_forward_pointer.argtypes = (ndpointer(ndim=2),)
 
@@ -167,6 +170,7 @@ class TestNdpointerCFunc:
         arr = np.zeros((2, 3), dt)
         ptr_type = ndpointer(shape=arr.shape, dtype=arr.dtype)
 
+        c_forward_pointer = self.c_forward_pointer
         c_forward_pointer.restype = ptr_type
         c_forward_pointer.argtypes = (ptr_type,)
 
@@ -185,6 +189,7 @@ class TestNdpointerCFunc:
         arr = np.zeros((2, 3))
         ptr_type = ndpointer(dtype=arr.dtype)
 
+        c_forward_pointer = self.c_forward_pointer
         c_forward_pointer.restype = ptr_type
         c_forward_pointer.argtypes = (ptr_type,)
 
