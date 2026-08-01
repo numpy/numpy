@@ -917,6 +917,18 @@ foreach gen_mtargets : [
       VXE, VX
     ]
   ],
+  [
+    'masked_compress.dispatch.h',
+    'src/multiarray/masked_compress.dispatch.cpp',
+    [
+      ASIMD, NEON,
+      X86_V4, X86_V3, X86_V2,
+      VSX2,
+      VX,
+      LSX,
+      RVV,
+    ]
+  ],
 ]
   mtargets = mod_features.multi_targets(
     gen_mtargets[0], multiarray_gen_headers + gen_mtargets[1],
@@ -932,7 +944,8 @@ foreach gen_mtargets : [
       'src/multiarray',
       'src/multiarray/stringdtype',
       'src/npymath',
-      'src/umath'
+      'src/umath',
+      'src/highway'
     ]
   )
   if not is_variable('multiarray_umath_mtargets')
@@ -1226,7 +1239,6 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/arrayobject.c',
   'src/multiarray/array_coercion.c',
   'src/multiarray/array_converter.c',
-  'src/multiarray/masked_compress.cpp',
   'src/multiarray/array_method.c',
   'src/multiarray/array_api_standard.c',
   'src/multiarray/array_assign_scalar.c',

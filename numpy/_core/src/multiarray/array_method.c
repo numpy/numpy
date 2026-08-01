@@ -42,6 +42,16 @@
 #include "dtype_transfer.h"
 #include "masked_compress.h"
 
+/*
+ * NPY_MASKED_GATHER_BLOCKSIZE = block size of the masked gather fast path. It
+ * must stay <= 255, because npy_count_nonzero_mask uses an 8-bit sum accumulator.
+ *
+ * NPY_MASKED_GATHER_WALK_LIMIT = the count below which the generic path beats gather. The limit applies
+ * at both ends. Generic loop costs one inner-loop call per mask transition. Number of transitions
+ * is bounded by min(cnt, BLOCKSIZE - cnt), so for generic path an almost full block is as cheap as an almost empty one.
+ */
+#define NPY_MASKED_GATHER_BLOCKSIZE 128
+#define NPY_MASKED_GATHER_WALK_LIMIT 16
 
 /*
  * The default descriptor resolution function.  The logic is as follows:
@@ -897,6 +907,9 @@ typedef struct {
     PyArrayMethod_StridedLoop *unmasked_stridedloop;
     NpyAuxData *unmasked_auxdata;
     int nargs;
+    size_t (*count_nonzero)(const unsigned char *, size_t);
+    size_t (*compress)(void *, const void *, const unsigned char *, size_t, size_t);
+    size_t (*expand)(void *, const void *, const unsigned char *, size_t, size_t);
     char *dataptrs[];
 } _masked_stridedloop_data;
 
@@ -912,7 +925,8 @@ _masked_stridedloop_data_free(NpyAuxData *auxdata)
 /* Process the data as runs of unmasked values */
 static int
 generic_masked_strided_loop_helper(PyArrayMethod_Context* context,
-    char** dataptrs, const npy_intp* strides, char* mask, npy_intp N, int nargs, PyArrayMethod_StridedLoop* strided_loop, NpyAuxData* strided_loop_auxdata)
+    char **dataptrs, const npy_intp *strides, char *mask, npy_intp N, int nargs,
+    PyArrayMethod_StridedLoop* strided_loop, NpyAuxData* strided_loop_auxdata)
 {
     npy_intp mask_stride = strides[nargs];
     do {
@@ -968,7 +982,8 @@ generic_masked_strided_loop(PyArrayMethod_Context *context,
     char *mask = data[nargs];
 
     npy_intp N = dimensions[0];
-    return generic_masked_strided_loop_helper(context, dataptrs, strides, mask, N, nargs, strided_loop, strided_loop_auxdata);
+    return generic_masked_strided_loop_helper(context, dataptrs, strides, mask, N, nargs,
+                                              strided_loop, strided_loop_auxdata);
 }
 /*
  * Fast path for contiguous operands of 2/4/8 byte numeric types.
@@ -977,9 +992,11 @@ generic_masked_strided_loop(PyArrayMethod_Context *context,
  * the number of mask transitions, not with the mask density:
  * the mask that alternates every second element makes it call the inner loop once per element.
  *
- * This loop processes fixed blocks of 128 elements and counts the active ones.
+ * This loop processes fixed blocks of NPY_MASKED_GATHER_BLOCKSIZE elements and counts the active ones.
  * Uniform blocks (all or nothing) need no gather at all.
- * Mixed blocks are compressed into a contiguous buffer, run through the inner loop and expanded back into the output.
+ * Blocks with either very low or very high density fall back to the generic loop.
+ * All other blocks are compressed into a contiguous buffer, run through the inner loop and expanded
+ * back into the output.
  *
  * Falls back to the generic loop when the strides are not the ones the loop was selected for
  * (see PyArrayMethod_GetMaskedStridedLoop).
@@ -994,7 +1011,6 @@ gather_masked_strided_loop(PyArrayMethod_Context *context,
     PyArrayMethod_StridedLoop *strided_loop = auxdata->unmasked_stridedloop;
     NpyAuxData *strided_loop_auxdata = auxdata->unmasked_auxdata;
 
-
     char *buf = (char*)(auxdata->dataptrs + nargs);
 
     char **dataptrs = auxdata->dataptrs;
@@ -1007,7 +1023,7 @@ gather_masked_strided_loop(PyArrayMethod_Context *context,
     for (int i = 0; i < nargs; ++i) {
         elsize[i] = context->descriptors[i]->elsize;
         bufptrs[i] = buf + off;
-        off += 128 * context->descriptors[i]->elsize;
+        off += NPY_MASKED_GATHER_BLOCKSIZE * context->descriptors[i]->elsize;
     }
 
     char *mask = data[nargs];
@@ -1024,44 +1040,62 @@ gather_masked_strided_loop(PyArrayMethod_Context *context,
 
     npy_intp N = dimensions[0];
 
-    while (N >= 128) {
-        npy_intp cnt = (npy_intp)npy_count_nonzero_mask((const unsigned char*)mask, 128);
+    while (N >= NPY_MASKED_GATHER_BLOCKSIZE) {
+        npy_intp cnt = (npy_intp)auxdata->count_nonzero((const unsigned char*)mask,
+                                                  NPY_MASKED_GATHER_BLOCKSIZE);
 
-        if (cnt == 128) {
-
+        if (cnt == NPY_MASKED_GATHER_BLOCKSIZE) {
             int res = strided_loop(context, dataptrs, &cnt, strides, strided_loop_auxdata);
             if (res != 0) {
                 return res;
             }
-        } else if (cnt != 0) {
+        } else if (cnt == 0) {
+            /* whole block is masked. Nothing to compute */
+        } else if (cnt < NPY_MASKED_GATHER_WALK_LIMIT ||
+                   NPY_MASKED_GATHER_BLOCKSIZE - cnt < NPY_MASKED_GATHER_WALK_LIMIT) {
+            int res =
+                generic_masked_strided_loop_helper(context, dataptrs, strides, mask,
+                                                NPY_MASKED_GATHER_BLOCKSIZE, nargs, strided_loop,
+                                                   strided_loop_auxdata);
+            if (res != 0) {
+                return res;
+            }
+
+            mask += NPY_MASKED_GATHER_BLOCKSIZE * mask_stride;
+            N -= NPY_MASKED_GATHER_BLOCKSIZE;
+
+            continue;
+        } else {
             for (int i = 0; i < context->method->nin; ++i)
-                npy_masked_compress(
+                auxdata->compress(
                     (void*)bufptrs[i],
                     (const void*)dataptrs[i],
                     (const unsigned char*)mask,
-                    128, elsize[i]);
+                    NPY_MASKED_GATHER_BLOCKSIZE,
+                    elsize[i]);
 
             int res = strided_loop(context, bufptrs, &cnt, elsize, strided_loop_auxdata);
             if (res != 0) {
                 return res;
             }
             for (int i = context->method->nin; i < nargs; ++i)
-                npy_masked_expand(
+                auxdata->expand(
                     (void*)dataptrs[i],
                     (const void*)bufptrs[i],
                     (const unsigned char*)mask,
-                    128, elsize[i]);
+                    NPY_MASKED_GATHER_BLOCKSIZE,
+                    elsize[i]);
         }
         for (int i = 0; i < nargs; ++i) {
-            dataptrs[i] += 128 * strides[i];
+            dataptrs[i] += NPY_MASKED_GATHER_BLOCKSIZE * strides[i];
         }
 
-        mask += 128 * mask_stride;
-        N -= 128;
+        mask += NPY_MASKED_GATHER_BLOCKSIZE * mask_stride;
+        N -= NPY_MASKED_GATHER_BLOCKSIZE;
     }
 
-    return generic_masked_strided_loop_helper(context, dataptrs, strides, mask, N, nargs, strided_loop, strided_loop_auxdata);
-
+    return generic_masked_strided_loop_helper(context, dataptrs, strides, mask, N,
+                                              nargs, strided_loop, strided_loop_auxdata);
 }
 /*
  * Fetches a strided-loop function that supports a boolean mask as additional
@@ -1098,7 +1132,7 @@ PyArrayMethod_GetMaskedStridedLoop(
             bytes_per_el += context->descriptors[i]->elsize;
         }
     }
-    size_t bufsize = eligible ? (size_t)bytes_per_el * 128 : 0;
+    size_t bufsize = eligible ? (size_t)bytes_per_el * NPY_MASKED_GATHER_BLOCKSIZE : 0;
 
     /* Add working memory for the data pointers, to modify them in-place */
     data = PyMem_Malloc(sizeof(_masked_stridedloop_data) +
@@ -1117,6 +1151,11 @@ PyArrayMethod_GetMaskedStridedLoop(
             &data->unmasked_stridedloop, &data->unmasked_auxdata, flags) < 0) {
         PyMem_Free(data);
         return -1;
+    }
+    if (eligible) {
+        NPY_CPU_DISPATCH_CALL(data->count_nonzero = npy_count_nonzero_mask);
+        NPY_CPU_DISPATCH_CALL(data->compress = npy_masked_compress);
+        NPY_CPU_DISPATCH_CALL(data->expand = npy_masked_expand);
     }
     *out_transferdata = (NpyAuxData *)data;
     *out_loop = eligible ? gather_masked_strided_loop : generic_masked_strided_loop;
