@@ -910,6 +910,7 @@ typedef struct {
     size_t (*count_nonzero)(const unsigned char *, size_t);
     size_t (*compress)(void *, const void *, const unsigned char *, size_t, size_t);
     size_t (*expand)(void *, const void *, const unsigned char *, size_t, size_t);
+    char *buf;
     char *dataptrs[];
 } _masked_stridedloop_data;
 
@@ -1011,7 +1012,7 @@ gather_masked_strided_loop(PyArrayMethod_Context *context,
     PyArrayMethod_StridedLoop *strided_loop = auxdata->unmasked_stridedloop;
     NpyAuxData *strided_loop_auxdata = auxdata->unmasked_auxdata;
 
-    char *buf = (char*)(auxdata->dataptrs + nargs);
+    char *buf = auxdata->buf;
 
     char **dataptrs = auxdata->dataptrs;
     memcpy(dataptrs, data, nargs * sizeof(char *));
@@ -1133,7 +1134,9 @@ PyArrayMethod_GetMaskedStridedLoop(
         }
     }
     size_t bufsize = eligible ? (size_t)bytes_per_el * NPY_MASKED_GATHER_BLOCKSIZE : 0;
-
+    if (bufsize) {
+        bufsize += 16;
+    }
     /* Add working memory for the data pointers, to modify them in-place */
     data = PyMem_Malloc(sizeof(_masked_stridedloop_data) +
                         sizeof(char *) * nargs + bufsize);
@@ -1153,6 +1156,9 @@ PyArrayMethod_GetMaskedStridedLoop(
         return -1;
     }
     if (eligible) {
+        npy_uintp raw = (npy_uintp)(data->dataptrs + nargs);
+        data->buf = (char *)((raw + 15)
+                                 & ~(npy_uintp)(15));
         NPY_CPU_DISPATCH_CALL(data->count_nonzero = npy_count_nonzero_mask);
         NPY_CPU_DISPATCH_CALL(data->compress = npy_masked_compress);
         NPY_CPU_DISPATCH_CALL(data->expand = npy_masked_expand);
