@@ -16,6 +16,7 @@ numpy\._core\.__all__
 numpy\._?core\.numeric\.__all__
 numpy\._?core\.numerictypes\.__all__
 numpy\.matlib\.__all__
+numpy\.(float96|float128|complex192|complex256)
 
 # requires numpy/_core/code_generators to be on the PYTHONPATH when running stubtest
 numpy\._core\.cversions
@@ -37,6 +38,3 @@ numpy\.(\w+\.)*floating\.is_integer
 numpy\.(\w+\.)*complexfloating\.__complex__
 # https://github.com/numpy/numpy/issues/30445#issuecomment-3665484402
 numpy\.(\w+\.)*generic\.__hash__
-
-# intentionally missing deprecated module stubs
-numpy\.typing\.mypy_plugin

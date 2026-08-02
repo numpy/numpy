@@ -35,9 +35,9 @@ assert_type(np.strings.less(AR_U, AR_U), npt.NDArray[np.bool])
 assert_type(np.strings.less(AR_S, AR_S), npt.NDArray[np.bool])
 assert_type(np.strings.less(AR_T, AR_T), npt.NDArray[np.bool])
 
-assert_type(np.strings.add(AR_U, AR_U), np.ndarray)
-assert_type(np.strings.add(AR_S, AR_S), np.ndarray)
-assert_type(np.strings.add(AR_T, AR_T), np.ndarray)
+assert_type(np.strings.add(AR_U, AR_U), npt.NDArray[np.str_])
+assert_type(np.strings.add(AR_S, AR_S), npt.NDArray[np.bytes_])
+assert_type(np.strings.add(AR_T, AR_T), AR_T_alias)
 
 assert_type(np.strings.multiply(AR_U, 5), npt.NDArray[np.str_])
 assert_type(np.strings.multiply(AR_S, [5, 4, 3]), npt.NDArray[np.bytes_])
@@ -93,13 +93,15 @@ assert_type(np.strings.count(AR_S, [b"a", b"b", b"c"], end=9), npt.NDArray[np.in
 assert_type(np.strings.count(AR_T, "a", start=[1, 2, 3]), npt.NDArray[np.int_])
 assert_type(np.strings.count(AR_T, ["a", "b", "c"], end=9), npt.NDArray[np.int_])
 
-assert_type(np.strings.partition(AR_U, "\n"), npt.NDArray[np.str_])
-assert_type(np.strings.partition(AR_S, [b"a", b"b", b"c"]), npt.NDArray[np.bytes_])
-assert_type(np.strings.partition(AR_T, "\n"), AR_TU_alias)
+type _tuple3[T] = tuple[T, T, T]
 
-assert_type(np.strings.rpartition(AR_U, "\n"), npt.NDArray[np.str_])
-assert_type(np.strings.rpartition(AR_S, [b"a", b"b", b"c"]), npt.NDArray[np.bytes_])
-assert_type(np.strings.rpartition(AR_T, "\n"), AR_TU_alias)
+assert_type(np.strings.partition(AR_U, "\n"), _tuple3[npt.NDArray[np.str_]])
+assert_type(np.strings.partition(AR_S, [b"a", b"b", b"c"]), _tuple3[npt.NDArray[np.bytes_]])
+assert_type(np.strings.partition(AR_T, "\n"), _tuple3[AR_TU_alias])
+
+assert_type(np.strings.rpartition(AR_U, "\n"), _tuple3[npt.NDArray[np.str_]])
+assert_type(np.strings.rpartition(AR_S, [b"a", b"b", b"c"]), _tuple3[npt.NDArray[np.bytes_]])
+assert_type(np.strings.rpartition(AR_T, "\n"), _tuple3[AR_TU_alias])
 
 assert_type(np.strings.replace(AR_U, "_", "-"), npt.NDArray[np.str_])
 assert_type(np.strings.replace(AR_S, [b"_", b""], [b"a", b"b"]), npt.NDArray[np.bytes_])

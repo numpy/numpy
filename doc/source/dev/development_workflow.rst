@@ -214,16 +214,10 @@ these fragments in each commit message of a PR:
   you may need to run these tests to verify that the doctests are still valid.
   `See the configuration file for these checks. <https://github.com/numpy/numpy/blob/main/.circleci/config.yml>`__
 
-* ``[skip cirrus]``: skip Cirrus jobs
-
-  `CirrusCI <https://cirrus-ci.org/>`__ mostly triggers Linux aarch64 and MacOS Arm64 wheels
-  uploads.
-  `See the configuration file for these checks. <https://github.com/numpy/numpy/blob/main/.cirrus.star>`__
-
 Test building wheels
 ~~~~~~~~~~~~~~~~~~~~
 
-Numpy currently uses `cibuildwheel <https://cibuildwheel.readthedocs.io/en/stable/>`_
+NumPy currently uses `cibuildwheel <https://cibuildwheel.readthedocs.io/en/stable/>`_
 in order to build wheels through continuous integration services. To save resources, the
 cibuildwheel wheel builders are not run by default on every single PR or commit to main.
 

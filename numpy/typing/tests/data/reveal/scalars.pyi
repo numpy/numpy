@@ -1,3 +1,4 @@
+import datetime as dt
 from typing import Any, Literal, assert_type
 
 import numpy as np
@@ -49,8 +50,6 @@ assert_type(u8[()], np.uint64)
 assert_type(f8[()], np.float64)
 assert_type(c8[()], np.complex64)
 assert_type(c16[()], np.complex128)
-assert_type(U[()], np.str_)
-assert_type(S[()], np.bytes_)
 assert_type(V[()], np.void)
 
 assert_type(b[...], np.ndarray[tuple[()], np.dtype[np.bool]])
@@ -65,10 +64,6 @@ assert_type(c8[...], np.ndarray[tuple[()], np.dtype[np.complex64]])
 assert_type(c8[(...,)], np.ndarray[tuple[()], np.dtype[np.complex64]])
 assert_type(c16[...], np.ndarray[tuple[()], np.dtype[np.complex128]])
 assert_type(c16[(...,)], np.ndarray[tuple[()], np.dtype[np.complex128]])
-assert_type(U[...], np.ndarray[tuple[()], np.dtype[np.str_]])
-assert_type(U[(...,)], np.ndarray[tuple[()], np.dtype[np.str_]])
-assert_type(S[...], np.ndarray[tuple[()], np.dtype[np.bytes_]])
-assert_type(S[(...,)], np.ndarray[tuple[()], np.dtype[np.bytes_]])
 assert_type(V[...], np.ndarray[tuple[()], np.dtype[np.void]])
 assert_type(V[(...,)], np.ndarray[tuple[()], np.dtype[np.void]])
 
@@ -113,17 +108,15 @@ assert_type(c16[None2], np.ndarray[tuple[int, int], np.dtype[np.complex128]])
 assert_type(c16[None3], np.ndarray[tuple[int, int, int], np.dtype[np.complex128]])
 assert_type(c16[None4], np.ndarray[tuple[Any, ...], np.dtype[np.complex128]])
 
-assert_type(U[None], np.ndarray[tuple[int], np.dtype[np.str_]])
-assert_type(U[None1], np.ndarray[tuple[int], np.dtype[np.str_]])
-assert_type(U[None2], np.ndarray[tuple[int, int], np.dtype[np.str_]])
-assert_type(U[None3], np.ndarray[tuple[int, int, int], np.dtype[np.str_]])
-assert_type(U[None4], np.ndarray[tuple[Any, ...], np.dtype[np.str_]])
+assert_type(U[0], str)
+assert_type(U[:1], str)
+assert_type(U[1:], str)
+assert_type(U[:], str)
 
-assert_type(S[None], np.ndarray[tuple[int], np.dtype[np.bytes_]])
-assert_type(S[None1], np.ndarray[tuple[int], np.dtype[np.bytes_]])
-assert_type(S[None2], np.ndarray[tuple[int, int], np.dtype[np.bytes_]])
-assert_type(S[None3], np.ndarray[tuple[int, int, int], np.dtype[np.bytes_]])
-assert_type(S[None4], np.ndarray[tuple[Any, ...], np.dtype[np.bytes_]])
+assert_type(S[0], int)
+assert_type(S[:1], bytes)
+assert_type(S[1:], bytes)
+assert_type(S[:], bytes)
 
 assert_type(V[None], np.ndarray[tuple[int], np.dtype[np.void]])
 assert_type(V[None1], np.ndarray[tuple[int], np.dtype[np.void]])
@@ -257,6 +250,24 @@ assert_type(O.imag, np.object_)
 assert_type(int(O), int)
 assert_type(float(O), float)
 assert_type(complex(O), complex)
+
+assert_type(np.datetime64(), np.datetime64[None])
+assert_type(np.datetime64("now", "ns"), np.datetime64[int])
+assert_type(np.datetime64("now", "s"), np.datetime64[dt.datetime])
+assert_type(np.datetime64("now", "Y"), np.datetime64[dt.date])
+# unit-swapping
+assert_type(np.datetime64(np.datetime64(), "ns"), np.datetime64[int])
+assert_type(np.datetime64(np.datetime64("now", "ns"), "ns"), np.datetime64[int])
+assert_type(np.datetime64(np.datetime64("now", "s"), "ns"), np.datetime64[int])
+assert_type(np.datetime64(np.datetime64("now", "Y"), "ns"), np.datetime64[int])
+assert_type(np.datetime64(np.datetime64(), "s"), np.datetime64[dt.datetime])
+assert_type(np.datetime64(np.datetime64("now", "ns"), "s"), np.datetime64[dt.datetime])
+assert_type(np.datetime64(np.datetime64("now", "s"), "s"), np.datetime64[dt.datetime])
+assert_type(np.datetime64(np.datetime64("now", "Y"), "s"), np.datetime64[dt.datetime])
+assert_type(np.datetime64(np.datetime64(), "Y"), np.datetime64[dt.date])
+assert_type(np.datetime64(np.datetime64("now", "ns"), "Y"), np.datetime64[dt.date])
+assert_type(np.datetime64(np.datetime64("now", "s"), "Y"), np.datetime64[dt.date])
+assert_type(np.datetime64(np.datetime64("now", "Y"), "Y"), np.datetime64[dt.date])
 
 # These fail fail because of a mypy __new__ bug:
 # https://github.com/python/mypy/issues/15182

@@ -147,6 +147,9 @@ string_to_string_resolve_descriptors(PyObject *NPY_UNUSED(self),
 {
     if (given_descrs[1] == NULL) {
         loop_descrs[1] = stringdtype_finalize_descr(given_descrs[0]);
+        if (loop_descrs[1] == NULL) {
+            return (NPY_CASTING)-1;
+        }
     }
     else {
         Py_INCREF(given_descrs[1]);
@@ -852,9 +855,13 @@ make_type2s_name(NPY_TYPES typenum) {
     size_t nlen = strlen(type_name);
 
     const char suffix[] = "_to_StringDType";
-    size_t slen = sizeof(prefix)/sizeof(char) - 1;
+    size_t slen = sizeof(suffix)/sizeof(char) - 1;
 
     char *buf = (char *)PyMem_RawCalloc(sizeof(char), plen + nlen + slen + 1);
+    if (buf == NULL) {
+        npy_gil_error(PyExc_MemoryError, "Failed allocate memory for cast");
+        return NULL;
+    }
 
     // memcpy instead of strcpy/strncat to avoid stringop-truncation warning,
     // since we are not including the trailing null character
@@ -1873,7 +1880,7 @@ void_to_string(PyArrayMethod_Context *context, char *const data[],
     npy_intp out_stride = strides[1];
 
     while(N--) {
-        size_t out_num_bytes = utf8_buffer_size(in, max_in_size);
+        Py_ssize_t out_num_bytes = utf8_buffer_size(in, max_in_size);
         if (out_num_bytes < 0) {
             npy_gil_error(PyExc_TypeError,
                           "Invalid UTF-8 bytes found, cannot convert to UTF-8");
@@ -1881,7 +1888,7 @@ void_to_string(PyArrayMethod_Context *context, char *const data[],
         }
         npy_static_string out_ss = {0, NULL};
         if (load_new_string((npy_packed_static_string *)out,
-                            &out_ss, out_num_bytes, allocator,
+                            &out_ss, (size_t)out_num_bytes, allocator,
                             "void to string cast") == -1) {
             goto fail;
         }

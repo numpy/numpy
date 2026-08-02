@@ -53,27 +53,39 @@ Required subroutine
 
 There is exactly one function that must be defined in your C-code in
 order for Python to use it as an extension module. The function must
-be called init{name} where {name} is the name of the module from
+be called ``PyInit_{name}`` where ``{name}`` is the name of the module from
 Python. This function must be declared so that it is visible to code
 outside of the routine. Besides adding the methods and constants you
 desire, this subroutine must also contain calls like ``import_array()``
 and/or ``import_ufunc()`` depending on which C-API is needed. Forgetting
 to place these commands will show itself as an ugly segmentation fault
 (crash) as soon as any C-API subroutine is actually called. It is
-actually possible to have multiple init{name} functions in a single
+actually possible to have multiple ``PyInit_{name}`` functions in a single
 file in which case multiple modules will be defined by that file.
 However, there are some tricks to get that to work correctly and it is
 not covered here.
 
-A minimal ``init{name}`` method looks like:
+A minimal ``PyInit_{name}`` method looks like:
 
 .. code-block:: c
 
+    static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "{name}",
+        NULL,
+        -1,
+        mymethods,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+    };
+
     PyMODINIT_FUNC
-    init{name}(void)
+    PyInit_{name}(void)
     {
-       (void)Py_InitModule({name}, mymethods);
        import_array();
+       return PyModule_Create(&moduledef);
     }
 
 The mymethods must be an array (usually statically declared) of
@@ -81,7 +93,7 @@ PyMethodDef structures which contain method names, actual C-functions,
 a variable indicating whether the method uses keyword arguments or
 not, and docstrings. These are explained in the next section. If you
 want to add constants to the module, then you store the returned value
-from Py_InitModule which is a module object. The most general way to
+from ``PyModule_Create`` which is a module object. The most general way to
 add items to the module is to get the module dictionary using
 PyModule_GetDict(module). With the module dictionary, you can add
 whatever you like to the module manually. An easier way to add objects
@@ -100,7 +112,7 @@ for convenience:
         PyObject* module, char* name, char* value)
 
     All three of these functions require the *module* object (the
-    return value of Py_InitModule). The *name* is a string that
+    return value of ``PyModule_Create``). The *name* is a string that
     labels the value in the module. Depending on which function is
     called, the *value* argument is either a general object
     (:c:func:`PyModule_AddObject` steals a reference to it), an integer
@@ -110,10 +122,10 @@ for convenience:
 Defining functions
 ==================
 
-The second argument passed in to the Py_InitModule function is a
+The second argument passed in to the ``PyModuleDef`` structure is a
 structure that makes it easy to define functions in the module. In
 the example given above, the mymethods structure would have been
-defined earlier in the file (usually right before the init{name}
+defined earlier in the file (usually right before the ``PyInit_{name}``
 subroutine) to:
 
 .. code-block:: c
@@ -589,7 +601,7 @@ for NumPy v1.14 and above
         Py_DECREF(arr1);
         Py_DECREF(arr2);
     #if NPY_API_VERSION >= 0x0000000c
-        PyArray_ResolveWritebackIfCopy(oarr);
+        PyArray_ResolveWritebackIfCopy((PyArrayObject *)oarr);
     #endif
         Py_DECREF(oarr);
         Py_INCREF(Py_None);
@@ -599,7 +611,7 @@ for NumPy v1.14 and above
         Py_XDECREF(arr1);
         Py_XDECREF(arr2);
     #if NPY_API_VERSION >= 0x0000000c
-        PyArray_DiscardWritebackIfCopy(oarr);
+        PyArray_DiscardWritebackIfCopy((PyArrayObject *)oarr);
     #endif
         Py_XDECREF(oarr);
         return NULL;

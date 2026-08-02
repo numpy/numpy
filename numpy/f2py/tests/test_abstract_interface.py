@@ -1,12 +1,12 @@
 import pytest
 
 from numpy.f2py import crackfortran
-from numpy.testing import IS_WASM
+from numpy.testing import HAS_SUBPROCESSES
 
 from . import util
 
 
-@pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 @pytest.mark.slow
 class TestAbstractInterface(util.F2PyTest):
     sources = [util.getpath("tests", "src", "abstract_interface", "foo.f90")]

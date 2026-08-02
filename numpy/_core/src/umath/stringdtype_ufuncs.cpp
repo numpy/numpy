@@ -240,19 +240,17 @@ static int multiply_left_strided_loop(
 }
 
 static NPY_CASTING
-binary_resolve_descriptors(struct PyArrayMethodObject_tag *NPY_UNUSED(method),
+binary_resolve_descriptors(struct PyArrayMethodObject_tag *method,
                            PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
                            PyArray_Descr *const given_descrs[],
                            PyArray_Descr *loop_descrs[],
                            npy_intp *NPY_UNUSED(view_offset))
 {
-    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
-    PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
-    int out_coerce = descr1->coerce && descr1->coerce;
     PyObject *out_na_object = NULL;
+    int out_coerce = 1;
 
-    if (stringdtype_compatible_na(
-                descr1->na_object, descr2->na_object, &out_na_object) == -1) {
+    if (stringdtype_common_na_coerce(method->nin, given_descrs,
+                                     &out_na_object, &out_coerce) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -289,10 +287,12 @@ add_strided_loop(PyArrayMethod_Context *context, char *const data[],
     PyArray_StringDTypeObject *s1descr = (PyArray_StringDTypeObject *)context->descriptors[0];
     PyArray_StringDTypeObject *s2descr = (PyArray_StringDTypeObject *)context->descriptors[1];
     PyArray_StringDTypeObject *odescr = (PyArray_StringDTypeObject *)context->descriptors[2];
-    int has_null = s1descr->na_object != NULL;
-    int has_nan_na = s1descr->has_nan_na;
-    int has_string_na = s1descr->has_string_na;
-    const npy_static_string *default_string = &s1descr->default_string;
+    PyArray_StringDTypeObject *nadescr = stringdtype_effective_na_descr(
+            context->method->nin, context->descriptors);
+    int has_null = nadescr->na_object != NULL;
+    int has_nan_na = nadescr->has_nan_na;
+    int has_string_na = nadescr->has_string_na;
+    const npy_static_string *default_string = &nadescr->default_string;
     npy_intp N = dimensions[0];
     char *in1 = data[0];
     char *in2 = data[1];
@@ -468,11 +468,12 @@ string_comparison_strided_loop(PyArrayMethod_Context *context, char *const data[
     npy_bool res_for_gt = ((npy_bool *)context->method->static_data)[2];
     npy_bool res_for_ne = !res_for_eq;
     npy_bool eq_or_ne = res_for_lt == res_for_gt;
-    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
-    int has_null = descr1->na_object != NULL;
-    int has_nan_na = descr1->has_nan_na;
-    int has_string_na = descr1->has_string_na;
-    const npy_static_string *default_string = &descr1->default_string;
+    PyArray_StringDTypeObject *nadescr = stringdtype_effective_na_descr(
+            context->method->nin, context->descriptors);
+    int has_null = nadescr->na_object != NULL;
+    int has_nan_na = nadescr->has_nan_na;
+    int has_string_na = nadescr->has_string_na;
+    const npy_static_string *default_string = &nadescr->default_string;
     npy_intp N = dimensions[0];
     char *in1 = data[0];
     char *in2 = data[1];
@@ -549,15 +550,13 @@ fail:
 
 static NPY_CASTING
 string_comparison_resolve_descriptors(
-        struct PyArrayMethodObject_tag *NPY_UNUSED(method),
+        struct PyArrayMethodObject_tag *method,
         PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
         PyArray_Descr *const given_descrs[],
         PyArray_Descr *loop_descrs[], npy_intp *NPY_UNUSED(view_offset))
 {
-    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
-    PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
-
-    if (stringdtype_compatible_na(descr1->na_object, descr2->na_object, NULL) == -1) {
+    if (stringdtype_common_na_coerce(
+                method->nin, given_descrs, NULL, NULL) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -779,16 +778,14 @@ string_findlike_promoter(PyObject *NPY_UNUSED(ufunc),
 
 static NPY_CASTING
 string_findlike_resolve_descriptors(
-        struct PyArrayMethodObject_tag *NPY_UNUSED(method),
+        struct PyArrayMethodObject_tag *method,
         PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
         PyArray_Descr *const given_descrs[],
         PyArray_Descr *loop_descrs[],
         npy_intp *NPY_UNUSED(view_offset))
 {
-    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
-    PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
-
-    if (stringdtype_compatible_na(descr1->na_object, descr2->na_object, NULL) == -1) {
+    if (stringdtype_common_na_coerce(
+                method->nin, given_descrs, NULL, NULL) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -828,16 +825,14 @@ string_startswith_endswith_promoter(
 
 static NPY_CASTING
 string_startswith_endswith_resolve_descriptors(
-        struct PyArrayMethodObject_tag *NPY_UNUSED(method),
+        struct PyArrayMethodObject_tag *method,
         PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
         PyArray_Descr *const given_descrs[],
         PyArray_Descr *loop_descrs[],
         npy_intp *NPY_UNUSED(view_offset))
 {
-    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
-    PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
-
-    if (stringdtype_compatible_na(descr1->na_object, descr2->na_object, NULL) == -1) {
+    if (stringdtype_common_na_coerce(
+                method->nin, given_descrs, NULL, NULL) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -872,11 +867,12 @@ string_findlike_strided_loop(PyArrayMethod_Context *context,
 {
     const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
     find_like_function *function = *(find_like_function *)(context->method->static_data);
-    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
+    PyArray_StringDTypeObject *nadescr = stringdtype_effective_na_descr(
+            context->method->nin, context->descriptors);
 
-    int has_null = descr1->na_object != NULL;
-    int has_string_na = descr1->has_string_na;
-    const npy_static_string *default_string = &descr1->default_string;
+    int has_null = nadescr->na_object != NULL;
+    int has_string_na = nadescr->has_string_na;
+    const npy_static_string *default_string = &nadescr->default_string;
 
     npy_string_allocator *allocators[2] = {};
     NpyString_acquire_allocators(2, context->descriptors, allocators);
@@ -948,12 +944,13 @@ string_startswith_endswith_strided_loop(PyArrayMethod_Context *context,
 {
     const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
     STARTPOSITION startposition = *(STARTPOSITION *)context->method->static_data;
-    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
+    PyArray_StringDTypeObject *nadescr = stringdtype_effective_na_descr(
+            context->method->nin, context->descriptors);
 
-    int has_null = descr1->na_object != NULL;
-    int has_string_na = descr1->has_string_na;
-    int has_nan_na = descr1->has_nan_na;
-    const npy_static_string *default_string = &descr1->default_string;
+    int has_null = nadescr->na_object != NULL;
+    int has_string_na = nadescr->has_string_na;
+    int has_nan_na = nadescr->has_nan_na;
+    const npy_static_string *default_string = &nadescr->default_string;
 
     npy_string_allocator *allocators[2] = {};
     NpyString_acquire_allocators(2, context->descriptors, allocators);
@@ -1064,12 +1061,13 @@ string_lrstrip_chars_strided_loop(
 {
     const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
     STRIPTYPE striptype = *(STRIPTYPE *)context->method->static_data;
-    PyArray_StringDTypeObject *s1descr = (PyArray_StringDTypeObject *)context->descriptors[0];
-    int has_null = s1descr->na_object != NULL;
-    int has_string_na = s1descr->has_string_na;
-    int has_nan_na = s1descr->has_nan_na;
+    PyArray_StringDTypeObject *nadescr = stringdtype_effective_na_descr(
+            context->method->nin, context->descriptors);
+    int has_null = nadescr->na_object != NULL;
+    int has_string_na = nadescr->has_string_na;
+    int has_nan_na = nadescr->has_nan_na;
 
-    const npy_static_string *default_string = &s1descr->default_string;
+    const npy_static_string *default_string = &nadescr->default_string;
     npy_intp N = dimensions[0];
     char *in1 = data[0];
     char *in2 = data[1];
@@ -1298,25 +1296,17 @@ string_replace_promoter(PyObject *NPY_UNUSED(ufunc),
 }
 
 static NPY_CASTING
-replace_resolve_descriptors(struct PyArrayMethodObject_tag *NPY_UNUSED(method),
+replace_resolve_descriptors(struct PyArrayMethodObject_tag *method,
                             PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
                             PyArray_Descr *const given_descrs[],
                             PyArray_Descr *loop_descrs[],
                             npy_intp *NPY_UNUSED(view_offset))
 {
-    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
-    PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
-    PyArray_StringDTypeObject *descr3 = (PyArray_StringDTypeObject *)given_descrs[2];
-    int out_coerce = descr1->coerce && descr2->coerce && descr3->coerce;
     PyObject *out_na_object = NULL;
+    int out_coerce = 1;
 
-    if (stringdtype_compatible_na(
-                descr1->na_object, descr2->na_object, &out_na_object) == -1) {
-        return (NPY_CASTING)-1;
-    }
-
-    if (stringdtype_compatible_na(
-                out_na_object, descr3->na_object, &out_na_object) == -1) {
+    if (stringdtype_common_na_coerce(method->nin, given_descrs,
+                                     &out_na_object, &out_coerce) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -1364,12 +1354,12 @@ string_replace_strided_loop(
 
     npy_intp N = dimensions[0];
 
-    PyArray_StringDTypeObject *descr0 =
-            (PyArray_StringDTypeObject *)context->descriptors[0];
-    int has_null = descr0->na_object != NULL;
-    int has_string_na = descr0->has_string_na;
-    int has_nan_na = descr0->has_nan_na;
-    const npy_static_string *default_string = &descr0->default_string;
+    PyArray_StringDTypeObject *nadescr = stringdtype_effective_na_descr(
+            context->method->nin, context->descriptors);
+    int has_null = nadescr->na_object != NULL;
+    int has_string_na = nadescr->has_string_na;
+    int has_nan_na = nadescr->has_nan_na;
+    const npy_static_string *default_string = &nadescr->default_string;
 
 
     npy_string_allocator *allocators[5] = {};
@@ -1646,17 +1636,15 @@ string_center_ljust_rjust_promoter(
 
 static NPY_CASTING
 center_ljust_rjust_resolve_descriptors(
-        struct PyArrayMethodObject_tag *NPY_UNUSED(method),
+        struct PyArrayMethodObject_tag *method,
         PyArray_DTypeMeta *const dtypes[], PyArray_Descr *const given_descrs[],
         PyArray_Descr *loop_descrs[], npy_intp *NPY_UNUSED(view_offset))
 {
-    PyArray_StringDTypeObject *input_descr = (PyArray_StringDTypeObject *)given_descrs[0];
-    PyArray_StringDTypeObject *fill_descr = (PyArray_StringDTypeObject *)given_descrs[2];
-    int out_coerce = input_descr->coerce && fill_descr->coerce;
     PyObject *out_na_object = NULL;
+    int out_coerce = 1;
 
-    if (stringdtype_compatible_na(
-                input_descr->na_object, fill_descr->na_object, &out_na_object) == -1) {
+    if (stringdtype_common_na_coerce(method->nin, given_descrs,
+                                     &out_na_object, &out_coerce) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -1695,11 +1683,12 @@ center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
                                 npy_intp const strides[],
                                 NpyAuxData *NPY_UNUSED(auxdata))
 {
-    PyArray_StringDTypeObject *s1descr = (PyArray_StringDTypeObject *)context->descriptors[0];
-    int has_null = s1descr->na_object != NULL;
-    int has_nan_na = s1descr->has_nan_na;
-    int has_string_na = s1descr->has_string_na;
-    const npy_static_string *default_string = &s1descr->default_string;
+    PyArray_StringDTypeObject *nadescr = stringdtype_effective_na_descr(
+            context->method->nin, context->descriptors);
+    int has_null = nadescr->na_object != NULL;
+    int has_nan_na = nadescr->has_nan_na;
+    int has_string_na = nadescr->has_string_na;
+    const npy_static_string *default_string = &nadescr->default_string;
     npy_intp N = dimensions[0];
     char *in1 = data[0];
     char *in2 = data[1];
@@ -1969,13 +1958,11 @@ string_partition_resolve_descriptors(
         return (NPY_CASTING)-1;
     }
 
-    PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)given_descrs[0];
-    PyArray_StringDTypeObject *descr2 = (PyArray_StringDTypeObject *)given_descrs[1];
-    int out_coerce = descr1->coerce && descr2->coerce;
     PyObject *out_na_object = NULL;
+    int out_coerce = 1;
 
-    if (stringdtype_compatible_na(
-                descr1->na_object, descr2->na_object, &out_na_object) == -1) {
+    if (stringdtype_common_na_coerce(self->nin, given_descrs,
+                                     &out_na_object, &out_coerce) == -1) {
         return (NPY_CASTING)-1;
     }
 
@@ -2029,10 +2016,10 @@ string_partition_strided_loop(
     npy_string_allocator *out2allocator = allocators[3];
     npy_string_allocator *out3allocator = allocators[4];
 
-    PyArray_StringDTypeObject *idescr =
-            (PyArray_StringDTypeObject *)context->descriptors[0];
-    int has_string_na = idescr->has_string_na;
-    const npy_static_string *default_string = &idescr->default_string;
+    PyArray_StringDTypeObject *nadescr = stringdtype_effective_na_descr(
+            context->method->nin, context->descriptors);
+    int has_string_na = nadescr->has_string_na;
+    const npy_static_string *default_string = &nadescr->default_string;
 
     while (N--) {
         const npy_packed_static_string *i1ps = (npy_packed_static_string *)in1;

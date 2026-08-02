@@ -246,7 +246,7 @@ def histogramdd(
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
-) -> tuple[NDArray[np.float64], tuple[_Array1D[np.float64], ...]]: ...
+) -> tuple[NDArray[np.float64], list[_Array1D[np.float64]]]: ...
 @overload  # dtype ~complex
 def histogramdd(
     sample: _NestedList[complex],
@@ -254,7 +254,7 @@ def histogramdd(
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
-) -> tuple[NDArray[np.float64], tuple[_Array1D[np.complex128], ...]]: ...
+) -> tuple[NDArray[np.float64], list[_Array1D[np.complex128]]]: ...
 @overload  # dtype known
 def histogramdd[ScalarT: np.inexact](
     sample: _ArrayLike[ScalarT],
@@ -262,7 +262,7 @@ def histogramdd[ScalarT: np.inexact](
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
-) -> tuple[NDArray[np.float64], tuple[_Array1D[ScalarT], ...]]: ...
+) -> tuple[NDArray[np.float64], list[_Array1D[ScalarT]]]: ...
 @overload  # dtype unknown
 def histogramdd(
     sample: _ArrayLikeComplex_co,
@@ -270,4 +270,4 @@ def histogramdd(
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
-) -> tuple[NDArray[np.float64], tuple[_Array1D[Any], ...]]: ...
+) -> tuple[NDArray[np.float64], list[_Array1D[Any]]]: ...

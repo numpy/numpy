@@ -68,12 +68,12 @@ CONFIG = _cleanup(
                 "endian": "@BUILD_CPU_ENDIAN@",
                 "system": "@BUILD_CPU_SYSTEM@",
             },
-            "cross-compiled": bool("@CROSS_COMPILED@".lower().replace("false", "")),
+            "cross-compiled": @CROSS_COMPILED@,
         },
         "Build Dependencies": {
             "blas": {
                 "name": "@BLAS_NAME@",
-                "found": bool("@BLAS_FOUND@".lower().replace("false", "")),
+                "found": @BLAS_FOUND@,
                 "version": "@BLAS_VERSION@",
                 "detection method": "@BLAS_TYPE_NAME@",
                 "include directory": r"@BLAS_INCLUDEDIR@",
@@ -83,7 +83,7 @@ CONFIG = _cleanup(
             },
             "lapack": {
                 "name": "@LAPACK_NAME@",
-                "found": bool("@LAPACK_FOUND@".lower().replace("false", "")),
+                "found": @LAPACK_FOUND@,
                 "version": "@LAPACK_VERSION@",
                 "detection method": "@LAPACK_TYPE_NAME@",
                 "include directory": r"@LAPACK_INCLUDEDIR@",

@@ -3294,6 +3294,26 @@ add_newdoc('numpy._core.umath', '_ones_like',
 
     """)
 
+add_newdoc('numpy._core.umath', '_unwrap',
+    """
+    _unwrap(p, discont, period)
+
+    Generalized ufunc backing `numpy.unwrap`, with signature
+    ``(n),(),()->(n)``.
+
+    For each 1-D slice ``p`` along the core dimension, unwrap the values by
+    changing elements whose absolute difference from their predecessor exceeds
+    ``max(discont, period/2)`` to their `period`-complementary values.
+    `period` is expected to already share `p`'s dtype, and `discont` its own
+    matching dtype. The public `numpy.unwrap` wrapper fills their defaults
+    and resolves and casts both before calling this.
+
+    See Also
+    --------
+    unwrap
+
+    """)
+
 add_newdoc('numpy._core.umath', 'power',
     """
     First array elements raised to powers from second array, element-wise.
