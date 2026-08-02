@@ -1,9 +1,18 @@
 #include "masked_compress.h"
 
-#include <hwy/base.h>
 #include "simd/simd.hpp"
 #include <cassert>
 #include <cstdint>
+
+/*
+ * Expand needs a variable shift, which pre-AVX2 x86 emulates with
+ * an overflowing f32 -> i32 conversion that raises an FP exception.
+ */
+#if NPY_HWY && !(HWY_ARCH_X86 && HWY_TARGET > HWY_AVX2)
+#define NPY_MASKED_EXPAND_HWY 1
+#else
+#define NPY_MASKED_EXPAND_HWY 0
+#endif
 
 namespace {
 #if NPY_HWY
@@ -42,7 +51,7 @@ template <typename T>
 size_t
 expand_kernel(T *dst, const T *src, const unsigned char *mask, size_t n)
 {
-#if NPY_HWY
+#if NPY_MASKED_EXPAND_HWY
     const hn::ScalableTag<T> d;
     const hn::Rebind<uint8_t, decltype(d)> d8;
     const size_t N = hn::Lanes(d);
@@ -50,7 +59,7 @@ expand_kernel(T *dst, const T *src, const unsigned char *mask, size_t n)
 
     size_t i = 0, j = 0;
 
-#if NPY_HWY
+#if NPY_MASKED_EXPAND_HWY
     for (; i + N <= n; i += N) {
         const auto m = hn::PromoteMaskTo(d, d8,
                                          hn::Ne(hn::LoadU(d8, mask + i), hn::Zero(d8)));
@@ -102,7 +111,7 @@ NPY_CPU_DISPATCH_CURFX(npy_masked_expand)
         case 8: return expand_kernel(static_cast<uint64_t*>(dst), static_cast<const uint64_t*>(src), mask, n);
         default:
             assert(0 && "unsupported elsize");
-            HWY_UNREACHABLE;
+            return 0;
     }
 }
 
@@ -116,6 +125,8 @@ NPY_CPU_DISPATCH_CURFX(npy_masked_compress)
         case 8: return compress_kernel(static_cast<uint64_t*>(dst), static_cast<const uint64_t*>(src), mask, n);
         default:
             assert(0 && "unsupported elsize");
-            HWY_UNREACHABLE;
+            return 0;
     }
 }
+
+#undef NPY_MASKED_EXPAND_HWY
