@@ -1,7 +1,9 @@
 version: 2
 updates:
   - package-ecosystem: github-actions
-    directory: /
+    directories:
+      - /
+      - /.github/ccache
     schedule:
       interval: weekly
     cooldown:
@@ -38,4 +40,3 @@ updates:
       - dependency-name: "jupyterlite-pyodide-kernel"
       - dependency-name: "sphinx"
       - dependency-name: "pkgconf"
-      - dependency-name: "hypothesis"

@@ -510,7 +510,7 @@ try_reduction(PyArray_ArrayFunctionDispatcherObject *self,
         where == npy_static_pydata._NoValue ? Py_True : where,
     };
     *result = PyObject_Vectorcall(self->reduction, call_args, 7, NULL);
-    return 1;
+    return *result != NULL ? 1 : -1;
 }
 
 

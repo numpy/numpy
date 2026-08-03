@@ -1,9 +1,12 @@
+import pytest
+
 import numpy as np
 from numpy.testing import assert_allclose
 
 from . import util
 
 
+@pytest.mark.slow
 class TestIOSF(util.F2PyTest):
     sources = [
         util.getpath('tests', 'src', 'isofenv', 'isoftests.f90'),
@@ -32,6 +35,13 @@ class TestIOSF(util.F2PyTest):
     def test_f_add_int16_arr(self):
         args = np.arange(6, dtype=np.int16)
         out = self.module.foddity.f_add_int16_arr(args[:3], args[3:])
+        exp_out = args[:3] + args[3:]
+        assert_allclose(out, exp_out)
+        assert exp_out.dtype == out.dtype
+
+    def test_f_add_int8_arr(self):
+        args = np.arange(6, dtype=np.int8)
+        out = self.module.foddity.f_add_int8_arr(args[:3], args[3:])
         exp_out = args[:3] + args[3:]
         assert_allclose(out, exp_out)
         assert exp_out.dtype == out.dtype

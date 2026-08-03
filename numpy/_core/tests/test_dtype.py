@@ -10,9 +10,7 @@ import warnings
 from itertools import permutations
 from typing import Any
 
-import hypothesis
 import pytest
-from hypothesis.extra import numpy as hynp
 
 import numpy as np
 import numpy.dtypes
@@ -21,11 +19,13 @@ from numpy._core._rational_tests import rational, rational2
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
+    IS_WASM,
     assert_,
     assert_array_equal,
     assert_equal,
     assert_raises,
 )
+from numpy.testing._private.hypothesis_helpers import HAS_HYPOTHESIS, hynp, hypothesis
 from numpy.testing._private.utils import requires_deep_recursion
 
 
@@ -258,6 +258,29 @@ class TestBuiltin:
         assert dt1 == dt2
         assert repr(dt1) == "dtype('S10')"
         assert dt1.itemsize == 10
+
+
+class TestByteOrderStr:
+    """Regression coverage for numpy._core._dtype._byte_order_str.
+
+    Documents the premise the dead-branch removal relies on:
+    dtype.byteorder only ever returns one of '<', '>', '=', or '|'.
+    """
+
+    def test_dtype_byteorder_never_returns_S(self):
+        # No reasonable way to construct a dtype produces
+        # .byteorder == 'S'. Even newbyteorder('S') resolves to
+        # '<' or '>' on the resulting dtype.
+        for spec in ['int8', 'int32', 'float64', 'complex128', 'U4', 'S4']:
+            for arg in ('<', '>', '=', '|', 'S', 'native', 'swap'):
+                try:
+                    dt = np.dtype(spec).newbyteorder(arg)
+                except (ValueError, TypeError):
+                    continue
+                assert dt.byteorder in ('<', '>', '=', '|'), (
+                    f"dtype({spec!r}).newbyteorder({arg!r}).byteorder "
+                    f"= {dt.byteorder!r}, expected one of '<>=|'"
+                )
 
 
 class TestRecord:
@@ -888,10 +911,6 @@ class TestMonsterType:
             np.dtype(l)
 
     @requires_deep_recursion
-    @pytest.mark.skipif(
-        sys.platform.startswith("darwin"),
-        reason="test now segfaults on some mac setups",
-    )
     def test_tuple_recursion(self):
         d = np.int32
         for i in range(100000):
@@ -900,6 +919,32 @@ class TestMonsterType:
         # see gh-30370 and cpython issue #142253
         with contextlib.suppress(RecursionError):
             np.dtype(d)
+
+    @pytest.mark.thread_unsafe(reason="Sets global threading stack size")
+    @pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for threads")
+    def test_deep_subarray_dtype_dealloc(self):
+        import threading
+
+        import numpy as np
+
+        def build_and_drop():
+            d = np.dtype(np.int32)
+            for _ in range(200000):
+                d = np.dtype((d, (1,)))
+            # hold a second reference so teardown exercises stopping
+            # and resuming
+            held = d.base
+            del d
+            del held
+
+        # small stack size to fail reliably if deallocation is recusive
+        old_stack_size = threading.stack_size(1024 * 1024)
+        try:
+            t = threading.Thread(target=build_and_drop)
+            t.start()
+            t.join()
+        finally:
+            threading.stack_size(old_stack_size)
 
     @requires_deep_recursion
     def test_dict_recursion(self):
@@ -1225,6 +1270,7 @@ class TestDTypeMakeCanonical:
         canonical_dt = np.result_type(arr.dtype)
         assert not canonical_dt.hasobject
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @pytest.mark.slow
     @hypothesis.given(dtype=hynp.nested_dtypes())
     def test_make_canonical_hypothesis(self, dtype):
@@ -1234,6 +1280,7 @@ class TestDTypeMakeCanonical:
         two_arg_result = np.result_type(dtype, dtype)
         assert np.can_cast(two_arg_result, canonical, casting="no")
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @pytest.mark.slow
     @hypothesis.given(
             dtype=hypothesis.extra.numpy.array_dtypes(

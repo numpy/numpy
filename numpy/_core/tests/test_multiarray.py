@@ -3977,6 +3977,82 @@ class TestMethods:
         p = np.argpartition(d, kth)
         self.assert_partitioned(np.array(d)[p], [1])
 
+    def assert_top_k(self, a, k, axis, y, mode="largest", sorted=True):
+        x_value, x_ind = np.top_k(a, k, axis=axis, mode=mode, sorted=sorted)
+        assert_equal(np.take_along_axis(a, x_ind, axis=axis), x_value)
+
+        descending = mode == "largest"
+        if not sorted:
+            x_value = np.sort(x_value, axis=axis, descending=descending)
+        x_ind = np.sort(x_ind, axis=axis)
+
+        y_value, y_ind = y
+        y_value = np.sort(y_value, axis=axis, descending=descending)
+        y_ind = np.sort(y_ind, axis=axis)
+
+        assert_equal(x_value, y_value)
+        assert_equal(x_ind, y_ind)
+
+    @pytest.mark.parametrize("sorted", [True, False])
+    def test_top_k(self, sorted):
+        a = np.array([
+            [1, 2, 3, 4, 5],
+            [5, 4, 2, 3, 1],
+            [3, 5, 4, 1, 2]
+        ], dtype=np.int8)
+
+        with pytest.raises(
+            ValueError,
+            match=r"k\(=-2\) provided must be a non-negative integer."
+        ):
+            np.top_k(a, -2)
+
+        with pytest.raises(
+            ValueError,
+            match=r'mode\(="invalid"\) must be either "largest" or "smallest".'
+        ):
+            np.top_k(a, 2, mode="invalid")
+
+        with pytest.raises(
+            ValueError,
+            match=r"axis=None is not supported. Please provide a valid axis."
+        ):
+            np.top_k(a, 2, axis=None)
+
+        y = (
+            np.array([[], [], []], dtype=np.int8),
+            np.array([[], [], []], dtype=np.intp)
+        )
+        self.assert_top_k(a, 0, -1, y, sorted=sorted)
+
+        y = (
+            np.array([[4, 5], [4, 5], [4, 5]], dtype=np.int8),
+            np.array([[3, 4], [0, 1], [1, 2]], dtype=np.intp)
+        )
+        self.assert_top_k(a, 2, -1, y, sorted=sorted)
+        self.assert_top_k(a, 2, 1, y, sorted=sorted)
+
+        y = (
+            np.array([[5, 4, 3, 4, 5],
+                      [3, 5, 4, 3, 2]], dtype=np.int8),
+            np.array([[1, 1, 0, 0, 0],
+                      [2, 2, 2, 1, 2]], dtype=np.int8)
+        )
+        self.assert_top_k(a, 2, 0, y, sorted=sorted)
+
+        y = (
+            np.array([[1, 2], [1, 2], [1, 2]], dtype=np.int8),
+            np.array([[0, 1], [2, 4], [3, 4]], dtype=np.intp)
+        )
+        self.assert_top_k(a, 2, -1, y, mode="smallest", sorted=sorted)
+        self.assert_top_k(a, 2, 1, y, mode="smallest", sorted=sorted)
+
+    @pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+    def test_top_k_floating_nan(self, dtype):
+        a = np.array([np.nan, 1, 2, 3, np.nan], dtype=dtype)
+        val, ind = np.top_k(a, 3)
+        assert not np.isnan(val).any()
+
     def test_flatten(self):
         x0 = np.array([[1, 2, 3], [4, 5, 6]], np.int32)
         x1 = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]], np.int32)
