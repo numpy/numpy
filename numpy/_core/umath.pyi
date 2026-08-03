@@ -14922,7 +14922,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     #
     @override
     @overload  # known scalar type
-    def reduce[ScalarT: _to_numeric | np.object_](  # pyrefly:ignore[bad-override]
+    def reduce[ScalarT: np.inexact | np.object_](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -14935,7 +14935,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[ScalarT] | Any: ...
     @overload  # known scalar type, axis=None
-    def reduce[ScalarT: _to_numeric](
+    def reduce[ScalarT: np.inexact](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -14961,7 +14961,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         where: _ArrayLikeBool_co = True,
     ) -> Any: ...
     @overload  # known scalar type, keepdims=True
-    def reduce[ScalarT: _to_numeric | np.object_](
+    def reduce[ScalarT: np.inexact | np.object_](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -14973,49 +14973,10 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         initial: _NumericLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ~bool
+    @overload  # +int
     def reduce(
         self,
-        array: _NestedSequence[bool],
-        /,
-        axis: int | tuple[int, ...] = 0,
-        dtype: None = None,
-        *,
-        out: EllipsisType | None = None,
-        keepdims: Literal[False] = False,
-        initial: _IntLike_co = ...,
-        where: _ArrayLikeBool_co = True,
-    ) -> npt.NDArray[np.bool] | Any: ...
-    @overload  # ~bool, axis=None
-    def reduce(
-        self,
-        array: _NestedSequence[bool],
-        /,
-        axis: None,
-        dtype: None = None,
-        *,
-        out: None = None,
-        keepdims: Literal[False] = False,
-        initial: _IntLike_co = ...,
-        where: _ArrayLikeBool_co = True,
-    ) -> np.bool: ...
-    @overload  # ~bool, keepdims=True
-    def reduce(
-        self,
-        array: _NestedSequence[bool],
-        /,
-        axis: int | tuple[int, ...] | None = 0,
-        dtype: None = None,
-        *,
-        out: EllipsisType | None = None,
-        keepdims: Literal[True],
-        initial: _IntLike_co = ...,
-        where: _ArrayLikeBool_co = True,
-    ) -> npt.NDArray[np.bool]: ...
-    @overload  # ~int
-    def reduce(
-        self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
         /,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
@@ -15025,10 +14986,10 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.int_] | Any: ...
-    @overload  # ~int, axis=None
+    @overload  # +int, axis=None
     def reduce(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
         /,
         axis: None,
         dtype: None = None,
@@ -15038,10 +14999,10 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> np.int_: ...
-    @overload  # ~int, keepdims=True
+    @overload  # +int, keepdims=True
     def reduce(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
         /,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
@@ -15051,6 +15012,45 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.int_]: ...
+    @overload  # ~uint
+    def reduce(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.uint] | Any: ...
+    @overload  # ~uint, axis=None
+    def reduce(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        axis: None,
+        dtype: None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> np.uint: ...
+    @overload  # ~uint, keepdims=True
+    def reduce(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.uint]: ...
     @overload  # ~float
     def reduce(
         self,
@@ -15130,9 +15130,9 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # dtype=<known>
-    def reduce[ScalarT: _to_numeric | np.object_](
+    def reduce[ScalarT: _to_number | np.object_](
         self,
-        array: _ArrayLikeNumericObj_co,
+        array: _ArrayLikeNumberObj_co,
         /,
         axis: int | tuple[int, ...] | None = 0,
         *,
@@ -15145,7 +15145,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # dtype=<unknown>
     def reduce(
         self,
-        array: _ArrayLikeNumericObj_co,
+        array: _ArrayLikeNumberObj_co,
         /,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
@@ -15158,7 +15158,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # out=<given>
     def reduce[OutT: np.ndarray](
         self,
-        array: _ArrayLikeNumericObj_co,
+        array: _ArrayLikeNumberObj_co,
         /,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
@@ -15185,7 +15185,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     #
     @override
     @overload  # known scalar type
-    def reduceat[ScalarT: _to_numeric | np.object_](  # pyrefly:ignore[bad-override]
+    def reduceat[ScalarT: np.inexact | np.object_](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -15195,21 +15195,10 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ~bool
+    @overload  # +int
     def reduceat(
         self,
-        array: _NestedSequence[bool],
-        /,
-        indices: _ArrayLikeInt,
-        axis: int = 0,
-        dtype: None = None,
-        *,
-        out: None = None,
-    ) -> npt.NDArray[np.bool]: ...
-    @overload  # ~int
-    def reduceat(
-        self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
         /,
         indices: _ArrayLikeInt,
         axis: int = 0,
@@ -15217,6 +15206,17 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         *,
         out: None = None,
     ) -> npt.NDArray[np.int_]: ...
+    @overload  # ~uint
+    def reduceat(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        indices: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> npt.NDArray[np.uint]: ...
     @overload  # ~float
     def reduceat(
         self,
@@ -15240,9 +15240,9 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         out: None = None,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # dtype=<known>
-    def reduceat[ScalarT: _to_numeric | np.object_](
+    def reduceat[ScalarT: _to_number | np.object_](
         self,
-        array: _ArrayLikeNumericObj_co,
+        array: _ArrayLikeNumberObj_co,
         /,
         indices: _ArrayLikeInt,
         axis: int = 0,
@@ -15253,7 +15253,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # dtype=<unknown>
     def reduceat(
         self,
-        array: _ArrayLikeNumericObj_co,
+        array: _ArrayLikeNumberObj_co,
         /,
         indices: _ArrayLikeInt,
         axis: int = 0,
@@ -15262,9 +15262,9 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
-    def reduceat[OutT: npt.NDArray[_to_numeric | np.object_]](
+    def reduceat[OutT: npt.NDArray[_to_number | np.object_]](
         self,
-        array: _ArrayLikeNumericObj_co,
+        array: _ArrayLikeNumberObj_co,
         /,
         indices: _ArrayLikeInt,
         axis: int = 0,
@@ -15287,7 +15287,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     #
     @override
     @overload  # known scalar type
-    def accumulate[ScalarT: _to_numeric | np.object_](  # pyrefly:ignore[bad-override]
+    def accumulate[ScalarT: np.inexact | np.object_](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -15296,26 +15296,26 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ~bool
+    @overload  # +int
     def accumulate(
         self,
-        array: _NestedSequence[bool],
-        /,
-        axis: int = 0,
-        dtype: None = None,
-        *,
-        out: None = None,
-    ) -> npt.NDArray[np.bool]: ...
-    @overload  # ~int
-    def accumulate(
-        self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
         /,
         axis: int = 0,
         dtype: None = None,
         *,
         out: None = None,
     ) -> npt.NDArray[np.int_]: ...
+    @overload  # ~uint
+    def accumulate(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> npt.NDArray[np.uint]: ...
     @overload  # ~float
     def accumulate(
         self,
@@ -15337,9 +15337,9 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         out: None = None,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # dtype=<known>
-    def accumulate[ScalarT: _to_numeric | np.object_](
+    def accumulate[ScalarT: _to_number | np.object_](
         self,
-        array: _ArrayLikeNumericObj_co,
+        array: _ArrayLikeNumberObj_co,
         /,
         axis: int = 0,
         *,
@@ -15349,7 +15349,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # dtype=<unknown>
     def accumulate(
         self,
-        array: _ArrayLikeNumericObj_co,
+        array: _ArrayLikeNumberObj_co,
         /,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
@@ -15357,9 +15357,9 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
-    def accumulate[OutT: npt.NDArray[_to_numeric | np.object_]](
+    def accumulate[OutT: npt.NDArray[_to_number | np.object_]](
         self,
-        array: _ArrayLikeNumericObj_co,
+        array: _ArrayLikeNumberObj_co,
         /,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
@@ -19145,7 +19145,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     #
     @override
     @overload  # known scalar type
-    def reduce[ScalarT: _to_numeric | np.character | np.object_](  # pyrefly:ignore[bad-override]
+    def reduce[ScalarT: np.inexact | np.timedelta64 | np.character | np.object_](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -19158,7 +19158,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[ScalarT] | Any: ...
     @overload  # known scalar type, axis=None
-    def reduce[ScalarT: _to_numeric | np.character](
+    def reduce[ScalarT: np.inexact | np.timedelta64 | np.character](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -19184,7 +19184,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         where: _ArrayLikeBool_co = True,
     ) -> Any: ...
     @overload  # known scalar type, keepdims=True
-    def reduce[ScalarT: _to_numeric | np.character | np.object_](
+    def reduce[ScalarT: np.inexact | np.timedelta64 | np.character | np.object_](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -19196,49 +19196,10 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         initial: _NumericLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ~bool
+    @overload  # +int
     def reduce(
         self,
-        array: _NestedSequence[bool],
-        /,
-        axis: int | tuple[int, ...] = 0,
-        dtype: None = None,
-        *,
-        out: EllipsisType | None = None,
-        keepdims: Literal[False] = False,
-        initial: _IntLike_co = ...,
-        where: _ArrayLikeBool_co = True,
-    ) -> npt.NDArray[np.bool] | Any: ...
-    @overload  # ~bool, axis=None
-    def reduce(
-        self,
-        array: _NestedSequence[bool],
-        /,
-        axis: None,
-        dtype: None = None,
-        *,
-        out: None = None,
-        keepdims: Literal[False] = False,
-        initial: _IntLike_co = ...,
-        where: _ArrayLikeBool_co = True,
-    ) -> np.bool: ...
-    @overload  # ~bool, keepdims=True
-    def reduce(
-        self,
-        array: _NestedSequence[bool],
-        /,
-        axis: int | tuple[int, ...] | None = 0,
-        dtype: None = None,
-        *,
-        out: EllipsisType | None = None,
-        keepdims: Literal[True],
-        initial: _IntLike_co = ...,
-        where: _ArrayLikeBool_co = True,
-    ) -> npt.NDArray[np.bool]: ...
-    @overload  # ~int
-    def reduce(
-        self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
         /,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
@@ -19248,10 +19209,10 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.int_] | Any: ...
-    @overload  # ~int, axis=None
+    @overload  # +int, axis=None
     def reduce(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
         /,
         axis: None,
         dtype: None = None,
@@ -19261,10 +19222,10 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> np.int_: ...
-    @overload  # ~int, keepdims=True
+    @overload  # +int, keepdims=True
     def reduce(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
         /,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
@@ -19274,6 +19235,45 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.int_]: ...
+    @overload  # ~uint
+    def reduce(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.uint] | Any: ...
+    @overload  # ~uint, axis=None
+    def reduce(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        axis: None,
+        dtype: None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> np.uint: ...
+    @overload  # ~uint, keepdims=True
+    def reduce(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.uint]: ...
     @overload  # ~float
     def reduce(
         self,
@@ -19486,7 +19486,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     #
     @override
     @overload  # known scalar type
-    def reduceat[ScalarT: _to_numeric | np.character | np.object_](  # pyrefly:ignore[bad-override]
+    def reduceat[ScalarT: np.inexact | np.timedelta64 | np.character | np.object_](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -19496,21 +19496,10 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ~bool
+    @overload  # +int
     def reduceat(
         self,
-        array: _NestedSequence[bool],
-        /,
-        indices: _ArrayLikeInt,
-        axis: int = 0,
-        dtype: None = None,
-        *,
-        out: None = None,
-    ) -> npt.NDArray[np.bool]: ...
-    @overload  # ~int
-    def reduceat(
-        self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
         /,
         indices: _ArrayLikeInt,
         axis: int = 0,
@@ -19518,6 +19507,17 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         *,
         out: None = None,
     ) -> npt.NDArray[np.int_]: ...
+    @overload  # ~uint
+    def reduceat(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        indices: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> npt.NDArray[np.uint]: ...
     @overload  # ~float
     def reduceat(
         self,
@@ -19610,7 +19610,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     #
     @override
     @overload  # known scalar type
-    def accumulate[ScalarT: _to_numeric | np.character | np.object_](  # pyrefly:ignore[bad-override]
+    def accumulate[ScalarT: np.inexact | np.timedelta64 | np.character | np.object_](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -19619,26 +19619,26 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ~bool
+    @overload  # +int
     def accumulate(
         self,
-        array: _NestedSequence[bool],
-        /,
-        axis: int = 0,
-        dtype: None = None,
-        *,
-        out: None = None,
-    ) -> npt.NDArray[np.bool]: ...
-    @overload  # ~int
-    def accumulate(
-        self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
         /,
         axis: int = 0,
         dtype: None = None,
         *,
         out: None = None,
     ) -> npt.NDArray[np.int_]: ...
+    @overload  # ~uint
+    def accumulate(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> npt.NDArray[np.uint]: ...
     @overload  # ~float
     def accumulate(
         self,
