@@ -713,15 +713,16 @@ array_flat_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
     swap = PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(arr);
     while(selfit->index < selfit->size) {
         copyswap(selfit->dataptr, arrit->dataptr, swap, self);
+        if (PyErr_Occurred()) {
+            /* e.g. a structured dtype field that does not support copyswap;
+               stop writing as soon as the error is visible */
+            goto exit;
+        }
         PyArray_ITER_NEXT(selfit);
         PyArray_ITER_NEXT(arrit);
         if (arrit->index == arrit->size) {
             PyArray_ITER_RESET(arrit);
         }
-    }
-    if (PyErr_Occurred()) {
-        /* e.g. a structured dtype field that does not support copyswap */
-        goto exit;
     }
     retval = 0;
 

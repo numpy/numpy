@@ -78,6 +78,20 @@ class TestSFloat:
         with pytest.raises(TypeError, match="does not implement copyswap"):
             arr.flat = arr[:1]
 
+        # both stop copying as soon as the error is detected, so elements
+        # after the first (failing) one keep their values, even for fields
+        # that could have been copied
+        marr = np.zeros(3, dtype=[("a", "i4"), ("v", SF(1.))])
+        marr["a"] = [5, 6, 7]
+        src = marr[:1].copy()
+        src["a"] = 1
+        with pytest.raises(TypeError, match="does not implement copyswap"):
+            marr.flat = src
+        assert marr["a"].tolist()[1:] == [6, 7]
+        with pytest.raises(TypeError, match="does not implement copyswap"):
+            np.place(marr, [True, True, True], src)
+        assert marr["a"].tolist()[1:] == [6, 7]
+
     def test_structured_field_sort_raises(self):
         # VOID_compare called the field's legacy compare slot, which
         # new-style DTypes do not fill
