@@ -65,9 +65,19 @@ _IsWriteable(PyArrayObject *ap);
  * TypeError and returns -1.  `inplace_swap` marks a request that only
  * swaps bytes in place (no data copy); it is unused for now, but is
  * passed so that such requests can become a no-op (returning 0) when
- * byte order does not apply to the dtype (see gh-32150).  Callers
- * propagate the error return and do not yet handle success, since it
- * cannot currently happen.
+ * byte order does not apply to the dtype (see gh-32150).
+ *
+ * WARNING: every call site is written as
+ *
+ *     if (copyswap == NULL && check_missing_copyswap(...) < 0) {
+ *         <error return>;
+ *     }
+ *     copyswap(...);
+ *
+ * which calls through the NULL slot if this function returns 0.  This is
+ * safe only while it unconditionally returns -1: before changing it to
+ * return 0, every call site must first be restructured to skip the
+ * copyswap call on success.
  */
 NPY_NO_EXPORT int
 check_missing_copyswap(PyArray_Descr *dtype, int inplace_swap);
