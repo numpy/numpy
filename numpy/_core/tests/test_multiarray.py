@@ -11941,6 +11941,14 @@ class TestSubinterpreterTeardown:
     def test_subinterpreter_import_fails_cleanly(self):
         interp = _interpreters.create()
         try:
+            # Subinterpreters rebuild sys.path from config, dropping runtime
+            # additions like the iOS testbed's app_packages/. Mirror the
+            # parent's so numpy is importable at all.
+            excinfo = _interpreters.run_string(
+                interp, f"import sys; sys.path[:] = {sys.path!r}"
+            )
+            assert excinfo is None, excinfo.formatted
+
             # run_string returns None on success, or a types.SimpleNamespace
             # describing the exception (.type, .msg, .formatted) on failure.
             excinfo = _interpreters.run_string(interp, "import numpy")
