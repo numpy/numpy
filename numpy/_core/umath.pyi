@@ -200,6 +200,7 @@ type _to_c128 = np.complex128 | np.complex64 | _to_f64
 type _NumericLike_co = _NumberLike_co | np.timedelta64
 type _NumTimeLike_co = _NumericLike_co | np.datetime64
 
+type _ArrayLikeInt64_co = _DualArrayLike[np.dtype[_to_i64], int]  # excludes u64
 type _ArrayLikeIntObj_co = _DualArrayLike[np.dtype[_to_integer | np.object_], int]
 type _ArrayLikeFloatObj_co = _DualArrayLike[np.dtype[_to_floating | np.object_], float]
 type _ArrayLikeNumberObj_co = _DualArrayLike[np.dtype[_to_number | np.object_], complex]
@@ -9806,7 +9807,7 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     def __call__(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -9816,7 +9817,7 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     @overload  # ?d +i64, ?d ~i64
     def __call__(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -10403,7 +10404,7 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     def outer(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -10413,7 +10414,7 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     @overload  # ?d +i64, ?d ~i64
     def outer(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -11622,7 +11623,7 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     def __call__(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -11632,7 +11633,7 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # ?d +i64, ?d ~i64
     def __call__(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -12417,7 +12418,7 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     def outer(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -12427,7 +12428,7 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # ?d +i64, ?d ~i64
     def outer(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -13732,7 +13733,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     def __call__(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -13742,7 +13743,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # ?d +i64, ?d ~i64
     def __call__(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -14505,7 +14506,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     def outer(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -14515,7 +14516,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # ?d +i64, ?d ~i64
     def outer(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -15739,7 +15740,7 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     def __call__(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -15749,7 +15750,7 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # ?d +i64, ?d ~i64
     def __call__(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -16523,7 +16524,7 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     def outer(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -16533,7 +16534,7 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # ?d +i64, ?d ~i64
     def outer(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -17866,7 +17867,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     def __call__(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -17876,7 +17877,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     @overload  # ?d +i64, ?d ~i64
     def __call__(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -18683,7 +18684,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     def outer(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -18693,7 +18694,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     @overload  # ?d +i64, ?d ~i64
     def outer(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -20037,7 +20038,7 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
     def __call__(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | _tuple2[None] = (None, None),
@@ -20047,7 +20048,7 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
     @overload  # ?d +i64, ?d ~i64
     def __call__(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -20601,7 +20602,7 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
     def outer(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | _tuple2[None] = (None, None),
@@ -20611,7 +20612,7 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
     @overload  # ?d +i64, ?d ~i64
     def outer(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -20929,7 +20930,7 @@ class _gufunc_21_matvec_vecmat(_gufunc_21):  # type: ignore[misc]
     def __call__(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -20939,7 +20940,7 @@ class _gufunc_21_matvec_vecmat(_gufunc_21):  # type: ignore[misc]
     @overload  # ?d +i64, ?d ~i64
     def __call__(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -21387,7 +21388,7 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     def __call__(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -21397,7 +21398,7 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # ?d +i64, ?d ~i64
     def __call__(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
