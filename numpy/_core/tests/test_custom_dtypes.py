@@ -63,6 +63,12 @@ class TestSFloat:
         with pytest.raises(TypeError, match="does not implement copyswap"):
             arr.byteswap()
 
+        # the in-place writeability check fires before the missing-slot
+        # check, matching the behavior for dtypes that fill the slot
+        arr.flags.writeable = False
+        with pytest.raises(ValueError, match="array to be byte-swapped"):
+            arr.byteswap(inplace=True)
+
     def test_structured_field_place_and_flat_raise(self):
         # requests that need to copy through the missing legacy copyswap
         # slot raise instead of crashing

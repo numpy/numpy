@@ -533,26 +533,13 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
     PyArrayIterObject *it;
 
     copyswapn = PyDataType_GetArrFuncs(PyArray_DESCR(self))->copyswapn;
-    if (copyswapn == NULL) {
-        /*
-         * A dtype written using the new DType API does not fill the legacy
-         * copyswap slot (structured dtypes go through VOID_copyswapn, which
-         * handles missing field slots itself).
-         */
-        if (check_missing_copyswap(PyArray_DESCR(self), 1) < 0) {
-            return NULL;
-        }
-        /* no-op: byte order does not apply to the dtype */
-        if (!inplace) {
-            return PyArray_NewCopy(self, NPY_ANYORDER);
-        }
-        Py_INCREF(self);
-        return (PyObject *)self;
+    if (inplace && PyArray_FailUnlessWriteable(self, "array to be byte-swapped") < 0) {
+        return NULL;
+    }
+    if (copyswapn == NULL && check_missing_copyswap(PyArray_DESCR(self), 1) < 0) {
+        return NULL;
     }
     if (inplace) {
-        if (PyArray_FailUnlessWriteable(self, "array to be byte-swapped") < 0) {
-            return NULL;
-        }
         size = PyArray_SIZE(self);
         if (PyArray_ISONESEGMENT(self)) {
             copyswapn(PyArray_DATA(self), PyArray_ITEMSIZE(self), NULL, -1, size, 1, self);
