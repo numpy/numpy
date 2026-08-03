@@ -308,7 +308,7 @@ class _Kwargs21G(TypedDict, total=False):
     order: _OrderKACF  # = "K",
     subok: bool  # = True,
     signature: _Signature2
-    axes: list[tuple[int, int]]
+    axes: Sequence[int | tuple[int, ...]]
 
 @type_check_only
 class _Kwargs22(TypedDict, total=False):
@@ -21326,6 +21326,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> Incomplete: ...
     @overload  # ?d|1d ?, ?d ?  (workaround)
@@ -21337,6 +21339,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> Incomplete: ...
     @overload  # 1d ~bool, 1d ~bool
@@ -21348,6 +21352,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.bool: ...
     @overload  # ?d ~bool, ?d ~bool
@@ -21359,6 +21365,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.bool]: ...
     @overload  # 1d ~i64, 1d +i64
@@ -21370,6 +21378,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.int64: ...
     @overload  # 1d +i64, 1d ~i64
@@ -21381,6 +21391,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.int64: ...
     @overload  # ?d ~i64, ?d +i64
@@ -21392,6 +21404,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.int64]: ...
     @overload  # ?d +i64, ?d ~i64
@@ -21403,6 +21417,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.int64]: ...
     @overload  # 1d ~i32, 1d +i32
@@ -21414,6 +21430,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.int32: ...
     @overload  # 1d +i32, 1d ~i32
@@ -21425,6 +21443,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.int32: ...
     @overload  # ?d ~i32, ?d +i32
@@ -21436,6 +21456,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.int32]: ...
     @overload  # ?d +i32, ?d ~i32
@@ -21447,6 +21469,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.int32]: ...
     @overload  # 1d ~u8, 1d +u8
@@ -21458,6 +21482,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.uint8: ...
     @overload  # 1d +u8, 1d ~u8
@@ -21469,6 +21495,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.uint8: ...
     @overload  # ?d ~u8, ?d +u8
@@ -21480,6 +21508,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.uint8]: ...
     @overload  # ?d +u8, ?d ~u8
@@ -21491,6 +21521,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.uint8]: ...
     @overload  # 1d T@integer, 1d +int
@@ -21502,6 +21534,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> ScalarT: ...
     @overload  # 1d +int, 1d T@integer
@@ -21513,6 +21547,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> ScalarT: ...
     @overload  # Nd T@integer, ?d +int
@@ -21524,6 +21560,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # ?d +int, Nd T@integer
@@ -21535,6 +21573,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # 1d ~int, 1d +int
@@ -21546,6 +21586,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.int_: ...
     @overload  # 1d +int, 1d ~int
@@ -21557,6 +21599,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.int_: ...
     @overload  # Nd ~int, ?d +int
@@ -21568,6 +21612,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.int_]: ...
     @overload  # ?d +int, Nd ~int
@@ -21579,6 +21625,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.int_]: ...
     @overload  # 1d ~f64, 1d +f64
@@ -21590,6 +21638,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.float64: ...
     @overload  # 1d +f64, 1d ~f64
@@ -21601,6 +21651,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.float64: ...
     @overload  # ?d ~f64, ?d +f64
@@ -21612,6 +21664,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.float64]: ...
     @overload  # ?d +f64, ?d ~f64
@@ -21623,6 +21677,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.float64]: ...
     @overload  # 1d ~f32, 1d +f32
@@ -21634,6 +21690,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.float32: ...
     @overload  # 1d +f32, 1d ~f32
@@ -21645,6 +21703,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.float32: ...
     @overload  # ?d ~f32, ?d +f32
@@ -21656,6 +21716,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.float32]: ...
     @overload  # ?d +f32, ?d ~f32
@@ -21667,6 +21729,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.float32]: ...
     @overload  # 1d ~float, 1d +float
@@ -21678,6 +21742,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.float64: ...
     @overload  # 1d +float, 1d ~float
@@ -21689,6 +21755,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.float64: ...
     @overload  # Nd ~float, ?d +float
@@ -21700,6 +21768,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.float64]: ...
     @overload  # ?d +float, Nd ~float
@@ -21711,6 +21781,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.float64]: ...
     @overload  # 1d ~c128, 1d +c128
@@ -21722,6 +21794,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.complex128: ...
     @overload  # 1d +c128, 1d ~c128
@@ -21733,6 +21807,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.complex128: ...
     @overload  # ?d ~c128, ?d +c128
@@ -21744,6 +21820,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # ?d +c128, ?d ~c128
@@ -21755,6 +21833,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # 1d ~c64, 1d +c64
@@ -21766,6 +21846,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.complex64: ...
     @overload  # 1d +c64, 1d ~c64
@@ -21777,6 +21859,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.complex64: ...
     @overload  # ?d ~c64, ?d +c64
@@ -21788,6 +21872,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.complex64]: ...
     @overload  # ?d ~c64, ?d +c64
@@ -21799,6 +21885,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.complex64]: ...
     @overload  # 1d ~c64, 1d ~f64
@@ -21810,6 +21898,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.complex128: ...
     @overload  # 1d ~f64, 1d ~c64
@@ -21821,6 +21911,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.complex128: ...
     @overload  # ?d ~c64, ?d ~f64
@@ -21832,6 +21924,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # ?d ~f64, ?d ~c64
@@ -21843,6 +21937,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # 1d ~obj, 1d +obj
@@ -21854,6 +21950,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> Incomplete: ...
     @overload  # 1d +obj, 1d ~obj
@@ -21865,6 +21963,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> Incomplete: ...
     @overload  # ?d ~obj, ?d +obj
@@ -21876,6 +21976,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.object_]: ...
     @overload  # ?d +obj, ?d ~obj
@@ -21887,6 +21989,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.object_]: ...
     @overload  # 1d ~complex, 1d +complex
@@ -21898,6 +22002,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.complex128: ...
     @overload  # 1d +complex, 1d ~complex
@@ -21909,6 +22015,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.complex128: ...
     @overload  # Nd ~complex, ?d +complex
@@ -21920,6 +22028,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # ?d +complex, Nd ~complex
@@ -21931,6 +22041,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # 1d T@inexact, 1d +float | +f16
@@ -21942,6 +22054,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> ScalarT: ...
     @overload  # 1d +float | +f16, 1d T@inexact
@@ -21953,6 +22067,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> ScalarT: ...
     @overload  # Nd T@inexact, ?d +float | +f16
@@ -21964,6 +22080,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # ?d +float | +f16, Nd T@inexact
@@ -21975,6 +22093,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # 1d T@complexfloating, 1d +complex | +c64
@@ -21986,6 +22106,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> ScalarT: ...
     @overload  # 1d +complex | +c64, 1d T@complexfloating
@@ -21997,6 +22119,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> ScalarT: ...
     @overload  # Nd T@complexfloating, ?d +complex | +c64
@@ -22008,6 +22132,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # ?d +complex | +c64, Nd T@complexfloating
@@ -22019,6 +22145,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # 1d _, 1d _, dtype=<known>
@@ -22030,6 +22158,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> ScalarT: ...
     @overload  # ?d _, ?d _, dtype=<known>
@@ -22041,6 +22171,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # out=<given>
@@ -22052,6 +22184,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         out: OutT,
         *,
         dtype: npt.DTypeLike | None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> OutT: ...
     @overload  # 1d ?, 1d ?  (fallback)
@@ -22063,6 +22197,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: npt.DTypeLike | None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> Any: ...
     @overload  # ?d ?, ?d ?  (fallback)
@@ -22074,6 +22210,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike | None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[Any]: ...
     @overload  # x1.__array_ufunc__(self, "__call__", x1, x2, ...)
@@ -22085,6 +22223,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: object | None = None,
         dtype: npt.DTypeLike | None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> OutT: ...
     @overload  # x2.__array_ufunc__(self, "__call__", x1, x2, ...)
@@ -22096,6 +22236,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: object | None = None,
         dtype: npt.DTypeLike | None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> OutT: ...
 
