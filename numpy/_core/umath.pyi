@@ -6232,27 +6232,27 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.longdouble]: ...
     @overload  # Nd T@floating, ?d +float
-    def __call__[ArrayT: npt.NDArray[np.floating]](
+    def __call__[ScalarT: np.floating](
         self,
-        x1: ArrayT,
+        x1: npt.NDArray[ScalarT],
         x2: float | _NestedSequence[float],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # ?d +float, Nd T@floating
-    def __call__[ArrayT: npt.NDArray[np.floating]](
+    def __call__[ScalarT: np.floating](
         self,
         x1: float | _NestedSequence[float],
-        x2: ArrayT,
+        x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd +float, ?d +float
     def __call__(
         self,
@@ -6554,27 +6554,27 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.longdouble]: ...
     @overload  # Nd T@floating, ?d +float
-    def outer[ArrayT: npt.NDArray[np.floating]](
+    def outer[ScalarT: np.floating](
         self,
-        x1: ArrayT,
+        x1: npt.NDArray[ScalarT],
         x2: float | _NestedSequence[float],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # ?d +float, Nd T@floating
-    def outer[ArrayT: npt.NDArray[np.floating]](
+    def outer[ScalarT: np.floating](
         self,
         x1: float | _NestedSequence[float],
-        x2: ArrayT,
+        x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd +float, ?d +float
     def outer(
         self,
@@ -7492,27 +7492,27 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.object_]: ...
     @overload  # Nd T@floating, ?d +float
-    def __call__[ArrayT: npt.NDArray[np.inexact | np.timedelta64]](
+    def __call__[ScalarT: np.inexact | np.timedelta64](
         self,
-        x1: ArrayT,
+        x1: npt.NDArray[ScalarT],
         x2: float | _NestedSequence[float],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # ?d +float, Nd T@floating
-    def __call__[ArrayT: npt.NDArray[np.inexact | np.timedelta64]](
+    def __call__[ScalarT: np.inexact | np.timedelta64](
         self,
         x1: float | _NestedSequence[float],
-        x2: ArrayT,
+        x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd _, ?d _, dtype=<known>
     def __call__[ScalarT: np.inexact | np.timedelta64](
         self,
@@ -7935,27 +7935,27 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.object_]: ...
     @overload  # Nd T@floating, ?d +float
-    def outer[ArrayT: npt.NDArray[np.inexact | np.timedelta64]](
+    def outer[ScalarT: np.inexact | np.timedelta64](
         self,
-        x1: ArrayT,
+        x1: npt.NDArray[ScalarT],
         x2: float | _NestedSequence[float],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # ?d +float, Nd T@floating
-    def outer[ArrayT: npt.NDArray[np.inexact | np.timedelta64]](
+    def outer[ScalarT: np.inexact | np.timedelta64](
         self,
         x1: float | _NestedSequence[float],
-        x2: ArrayT,
+        x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd _, ?d _, dtype=<known>
     def outer[ScalarT: np.inexact | np.timedelta64](
         self,
@@ -8692,27 +8692,27 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.object_]: ...
     @overload  # Nd T@integer, ?d +int
-    def __call__[ArrayT: npt.NDArray[np.integer | np.object_]](
+    def __call__[ScalarT: np.integer | np.object_](
         self,
-        x1: ArrayT,
+        x1: npt.NDArray[ScalarT],
         x2: _DualArrayLike[np.dtype[np.bool], int],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # ?d +int, Nd T@integer
-    def __call__[ArrayT: npt.NDArray[np.integer | np.object_]](
+    def __call__[ScalarT: np.integer | np.object_](
         self,
         x1: _DualArrayLike[np.dtype[np.bool], int],
-        x2: ArrayT,
+        x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd ~int, ?d +int
     def __call__(
         self,
@@ -9047,27 +9047,27 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.object_]: ...
     @overload  # Nd T@integer, ?d +int
-    def outer[ArrayT: npt.NDArray[np.integer | np.object_]](
+    def outer[ScalarT: np.integer | np.object_](
         self,
-        x1: ArrayT,
+        x1: npt.NDArray[ScalarT],
         x2: _DualArrayLike[np.dtype[np.bool], int],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # ?d +int, Nd T@integer
-    def outer[ArrayT: npt.NDArray[np.integer | np.object_]](
+    def outer[ScalarT: np.integer | np.object_](
         self,
         x1: _DualArrayLike[np.dtype[np.bool], int],
-        x2: ArrayT,
+        x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd ~int, ?d +int
     def outer(
         self,
@@ -9869,27 +9869,27 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.uint8]: ...
     @overload  # Nd T@integer, ?d +int
-    def __call__[ArrayT: npt.NDArray[np.integer]](
+    def __call__[ScalarT: np.integer](
         self,
-        x1: ArrayT,
+        x1: npt.NDArray[ScalarT],
         x2: _DualArrayLike[np.dtype[np.bool], int],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # ?d +int, Nd T@integer
-    def __call__[ArrayT: npt.NDArray[np.integer]](
+    def __call__[ScalarT: np.integer](
         self,
         x1: _DualArrayLike[np.dtype[np.bool], int],
-        x2: ArrayT,
+        x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd ~int, ?d +int
     def __call__(
         self,
@@ -10023,27 +10023,27 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.object_]: ...
     @overload  # Nd T@floating, ?d +float
-    def __call__[ArrayT: npt.NDArray[np.floating | np.object_]](
+    def __call__[ScalarT: np.floating | np.object_](
         self,
-        x1: ArrayT,
+        x1: npt.NDArray[ScalarT],
         x2: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], float],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # ?d +float, Nd T@floating
-    def __call__[ArrayT: npt.NDArray[np.floating | np.object_]](
+    def __call__[ScalarT: np.floating | np.object_](
         self,
         x1: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], float],
-        x2: ArrayT,
+        x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd _, ?d _, dtype=<known>
     def __call__[ScalarT: np.floating | np.integer](
         self,
@@ -10466,27 +10466,27 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.uint8]: ...
     @overload  # Nd T@integer, ?d +int
-    def outer[ArrayT: npt.NDArray[np.integer]](
+    def outer[ScalarT: np.integer](
         self,
-        x1: ArrayT,
+        x1: npt.NDArray[ScalarT],
         x2: _DualArrayLike[np.dtype[np.bool], int],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # ?d +int, Nd T@integer
-    def outer[ArrayT: npt.NDArray[np.integer]](
+    def outer[ScalarT: np.integer](
         self,
         x1: _DualArrayLike[np.dtype[np.bool], int],
-        x2: ArrayT,
+        x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd ~int, ?d +int
     def outer(
         self,
@@ -10620,27 +10620,27 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.object_]: ...
     @overload  # Nd T@floating, ?d +float
-    def outer[ArrayT: npt.NDArray[np.floating | np.object_]](
+    def outer[ScalarT: np.floating | np.object_](
         self,
-        x1: ArrayT,
+        x1: npt.NDArray[ScalarT],
         x2: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], float],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # ?d +float, Nd T@floating
-    def outer[ArrayT: npt.NDArray[np.floating | np.object_]](
+    def outer[ScalarT: np.floating | np.object_](
         self,
         x1: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], float],
-        x2: ArrayT,
+        x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd _, ?d _, dtype=<known>
     def outer[ScalarT: np.floating | np.integer](
         self,
