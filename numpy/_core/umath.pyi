@@ -308,7 +308,7 @@ class _Kwargs21G(TypedDict, total=False):
     order: _OrderKACF  # = "K",
     subok: bool  # = True,
     signature: _Signature2
-    axes: list[tuple[int, int]]
+    axes: Sequence[int | tuple[int, ...]]
 
 @type_check_only
 class _Kwargs22(TypedDict, total=False):
