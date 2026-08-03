@@ -7154,7 +7154,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     def __call__(
         self,
         x1: np.float64 | _as_f64,
-        x2: float | _to_floating,
+        x2: float | _to_f64,
         /,
         *,
         out: None = None,
@@ -7164,7 +7164,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # 0d +f64, 0d ~f64
     def __call__(
         self,
-        x1: float | _to_floating,
+        x1: float | _to_f64,
         x2: np.float64 | _as_f64,
         /,
         *,
@@ -7341,7 +7341,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     def __call__(
         self,
         x1: _ArrayLike[np.float64 | _as_f64],
-        x2: _DualArrayLike[np.dtype[_to_floating], float],
+        x2: _DualArrayLike[np.dtype[_to_f64], float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -7351,7 +7351,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ?d +f64, ?d ~f64
     def __call__(
         self,
-        x1: _DualArrayLike[np.dtype[_to_floating], float],
+        x1: _DualArrayLike[np.dtype[_to_f64], float],
         x2: _ArrayLike[np.float64 | _as_f64],
         /,
         *,
@@ -7597,7 +7597,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     def outer(
         self,
         x1: np.float64 | _as_f64,
-        x2: float | _to_floating,
+        x2: float | _to_f64,
         /,
         *,
         out: None = None,
@@ -7607,7 +7607,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # 0d +f64, 0d ~f64
     def outer(
         self,
-        x1: float | _to_floating,
+        x1: float | _to_f64,
         x2: np.float64 | _as_f64,
         /,
         *,
@@ -7784,7 +7784,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     def outer(
         self,
         x1: _ArrayLike[np.float64 | _as_f64],
-        x2: _DualArrayLike[np.dtype[_to_floating], float],
+        x2: _DualArrayLike[np.dtype[_to_f64], float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -7794,7 +7794,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ?d +f64, ?d ~f64
     def outer(
         self,
-        x1: _DualArrayLike[np.dtype[_to_floating], float],
+        x1: _DualArrayLike[np.dtype[_to_f64], float],
         x2: _ArrayLike[np.float64 | _as_f64],
         /,
         *,
