@@ -6,6 +6,7 @@ import numpy as np
 import numpy.typing as npt
 from numpy._typing import _AnyShape
 
+type _Array0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]]
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
@@ -66,6 +67,13 @@ assert_type(np.array(D), npt.NDArray[np.float64 | np.int64])
 assert_type(np.array(E, subok=True), SubClass[np.float64 | np.int64])
 # https://github.com/numpy/numpy/issues/29245
 assert_type(np.array([], dtype=np.bool), npt.NDArray[np.bool[Any]])
+assert_type(np.array(None, dtype=np.object_), _Array0D[np.object_[None]])
+assert_type(np.array(1, dtype=np.object_), _Array0D[np.object_[int]])
+assert_type(np.array(_py_i_1d, dtype=np.object_), _Array1D[np.object_[int]])
+assert_type(np.array(_py_i_2d, dtype=np.object_), _Array2D[np.object_[int]])
+assert_type(np.array(_f32_0d, dtype=np.object_), _Array0D[np.object_[float]])
+assert_type(np.array(_f32_1d, dtype=np.object_), _Array1D[np.object_[float]])
+assert_type(np.array(_f32_2d, dtype=np.object_), _Array2D[np.object_[float]])
 
 assert_type(np.zeros([1, 5, 6]), npt.NDArray[np.float64])
 assert_type(np.zeros([1, 5, 6], dtype=np.int64), npt.NDArray[np.int64])
