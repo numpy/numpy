@@ -2105,36 +2105,65 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     PyArray_ArgBinSearchFunc *argbinsearch = NULL;
     NPY_BEGIN_THREADS_DEF;
 
-    /* Reject the string-vs-non-string mixture that would otherwise silently
-     * promote to a string dtype and return wrong indices (gh-24032).  The
-     * check is on the dtypes, so it is applied independently of `v`'s size:
-     * an explicitly-typed but empty `v` (e.g. an empty integer array searched
-     * in a string `a`) is rejected just like a non-empty one, matching how
-     * comparison ufuncs such as ``np.less`` reject the same dtype pairing.
-     *
-     * The only exemption is when no dtype can be inferred from `v` at all
-     * (dtype_v == NULL, e.g. an empty list): such a `v` carries no type intent
-     * and always yields an empty result, so it must keep working. */
+    /*
+     * Find the common search type: discover `v`'s dtype once, then promote
+     * with `a`'s dtype.  This gives the same result as the historical
+     * ``PyArray_DescrFromObject(op2, dtype_a)`` without scanning a possibly
+     * large sequence `v` a second time.
+     */
     PyArray_Descr *dtype_a = PyArray_DESCR(op1);
     PyArray_Descr *dtype_v = NULL;
     if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &dtype_v) < 0) {
         return NULL;
     }
-    if (dtype_v != NULL
-            && PyTypeNum_ISSTRING(dtype_a->type_num)
-                != PyTypeNum_ISSTRING(dtype_v->type_num)) {
-        PyErr_Format(PyExc_TypeError,
-                "Incompatible types for searching: a (%S) and v (%S)",
-                dtype_a, dtype_v);
-        Py_DECREF(dtype_v);
-        return NULL;
+    if (dtype_v == NULL) {
+        /*
+         * No dtype could be inferred from `v` (e.g. an empty list): such a
+         * `v` carries no type intent (and always yields an empty result), so
+         * keep the historical behavior.
+         */
+        dtype = PyArray_DescrFromObject((PyObject *)op2, dtype_a);
+        if (dtype == NULL) {
+            return NULL;
+        }
     }
-    Py_XDECREF(dtype_v);
-
-    /* Find common type (unchanged historical behavior for the accepted cases) */
-    dtype = PyArray_DescrFromObject((PyObject *)op2, dtype_a);
-    if (dtype == NULL) {
-        return NULL;
+    else {
+        dtype = PyArray_PromoteTypes(dtype_a, dtype_v);
+        if (dtype == NULL) {
+            /*
+             * The dtype discovery machinery falls back to object on
+             * promotion failure (e.g. datetime64 vs. string); mirror that
+             * so these pairings behave exactly as before.
+             */
+            if (PyErr_ExceptionMatches(npy_static_pydata.DTypePromotionError)) {
+                PyErr_Clear();
+                dtype = PyArray_DescrFromType(NPY_OBJECT);
+            }
+            if (dtype == NULL) {
+                Py_DECREF(dtype_v);
+                return NULL;
+            }
+        }
+        /*
+         * Reject mixtures that only "work" by promoting to a legacy string
+         * dtype (e.g. int vs. str): the values would compare as strings and
+         * give wrong indices (gh-24032).  The check runs after promotion so
+         * that pairings promoting to StringDType or object keep working, and
+         * it only involves the dtypes, so an explicitly-typed but empty `v`
+         * is rejected just like a non-empty one, matching how comparison
+         * ufuncs such as ``np.less`` reject the same dtype pairing.
+         */
+        if (PyTypeNum_ISSTRING(dtype->type_num)
+                && !(PyTypeNum_ISSTRING(dtype_a->type_num)
+                     && PyTypeNum_ISSTRING(dtype_v->type_num))) {
+            PyErr_Format(PyExc_TypeError,
+                    "Incompatible types for searching: a (%S) and v (%S)",
+                    dtype_a, dtype_v);
+            Py_DECREF(dtype_v);
+            Py_DECREF(dtype);
+            return NULL;
+        }
+        Py_DECREF(dtype_v);
     }
 
     /* Look for binary search function */

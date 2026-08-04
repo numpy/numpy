@@ -3317,9 +3317,25 @@ class TestMethods:
     def test_searchsorted_incompatible_inputs(self):
         # gh-24032: incompatible types must raise rather than silently
         # promote to a string dtype and return wrong indices.
-        assert_raises(TypeError, np.searchsorted, [1, 2, 3], ["1"])
-        assert_raises(TypeError, np.searchsorted, ["1", "2", "3"], [2])
-        assert_raises(TypeError, np.searchsorted, [b"1", b"2", b"3"], 1)
+        with pytest.raises(TypeError, match="Incompatible types for searching"):
+            np.searchsorted([1, 2, 3], ["1"])
+        with pytest.raises(TypeError, match="Incompatible types for searching"):
+            np.searchsorted(["1", "2", "3"], [2])
+        with pytest.raises(TypeError, match="Incompatible types for searching"):
+            np.searchsorted([b"1", b"2", b"3"], 1)
+
+    def test_searchsorted_string_promotions_still_work(self):
+        # gh-24032 review: only pairings whose *promoted* dtype is a legacy
+        # string (while an input is not) are rejected.  Pairings that promote
+        # to StringDType or object must keep working.
+        # StringDType haystack, python str needles (promotes to StringDType)
+        a = np.array(["a", "b"], dtype="T")
+        assert_equal(a.searchsorted(["b"]), [1])
+        assert_equal(a.searchsorted("b"), 1)
+        # object haystack, string needles (promotes to object)
+        a = np.array(["a", "b"], dtype=object)
+        assert_equal(a.searchsorted(["b"]), [1])
+        assert_equal(a.searchsorted(np.array(["b"])), [1])
 
     def test_searchsorted_empty_v(self):
         # gh-24032 regression: an empty python list carries no type intent, so
@@ -3337,12 +3353,12 @@ class TestMethods:
         # explicitly-typed but empty `v` is rejected just like a non-empty one
         # (the contract must not depend on len(v)). This mirrors how comparison
         # ufuncs such as np.less reject the same dtype pairing.
-        assert_raises(TypeError, np.searchsorted, ["a", "b"],
-                      np.array([], dtype=np.int64))
-        assert_raises(TypeError, np.searchsorted, [b"a", b"b"],
-                      np.array([], dtype=np.int64))
-        assert_raises(TypeError, np.searchsorted, [1, 2, 3],
-                      np.array([], dtype="U1"))
+        with pytest.raises(TypeError, match="Incompatible types for searching"):
+            np.searchsorted(["a", "b"], np.array([], dtype=np.int64))
+        with pytest.raises(TypeError, match="Incompatible types for searching"):
+            np.searchsorted([b"a", b"b"], np.array([], dtype=np.int64))
+        with pytest.raises(TypeError, match="Incompatible types for searching"):
+            np.searchsorted([1, 2, 3], np.array([], dtype="U1"))
 
     @pytest.mark.parametrize("dtype", np.typecodes["All"])
     def test_argpartition_out_of_range(self, dtype):
