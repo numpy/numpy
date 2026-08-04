@@ -9,6 +9,8 @@ import sys
 import textwrap
 import warnings
 from collections.abc import Callable
+from decimal import Decimal
+from fractions import Fraction
 
 import pytest
 
@@ -583,3 +585,37 @@ class TestTakeOutDtype(_DeprecationTestCase):
         different_dtype_out = np.zeros_like(indices, dtype=np.uint32)
 
         self.assert_deprecated(lambda: np.take(a, indices, out=different_dtype_out))
+
+
+class TestArraySplitNonInteger(_DeprecationTestCase):
+    # Deprecated in NumPy 2.6, 2026-08
+    message = "Cannot convert .* safely to an integer"
+
+    def test_python_float(self):
+        x = np.arange(8)
+        self.assert_deprecated(lambda: np.array_split(x, 3.9))
+        # Whole floats are deprecated too: only integers are meaningful here.
+        self.assert_deprecated(lambda: np.array_split(x, 4.0))
+
+    def test_split_delegates(self):
+        # `split` forwards to `array_split`, so it warns as well.
+        self.assert_deprecated(lambda: np.split(np.arange(8), 4.0))
+
+    def test_numpy_float_scalar_and_0d_array(self):
+        x = np.arange(8)
+        self.assert_deprecated(lambda: np.array_split(x, np.float64(3.9)))
+        self.assert_deprecated(lambda: np.array_split(x, np.array(3.9)))
+
+    def test_other_non_integers(self):
+        x = np.arange(8)
+        self.assert_deprecated(lambda: np.array_split(x, Decimal("3.9")))
+        self.assert_deprecated(lambda: np.array_split(x, Fraction(7, 2)))
+
+    def test_integers_not_deprecated(self):
+        x = np.arange(8)
+        self.assert_not_deprecated(lambda: np.array_split(x, 3))
+        self.assert_not_deprecated(lambda: np.array_split(x, np.int64(3)))
+        self.assert_not_deprecated(lambda: np.array_split(x, np.uint8(3)))
+        self.assert_not_deprecated(lambda: np.array_split(x, np.array(3)))
+        # The sequence path is unaffected by the deprecation.
+        self.assert_not_deprecated(lambda: np.array_split(x, [1, 2]))
