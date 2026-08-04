@@ -3836,7 +3836,7 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.bool] | Any: ...
     @overload  # unknown shape, not object_, axis=None
@@ -3849,7 +3849,7 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> np.bool: ...
     @overload  # unknown shape, not object_ keepdims=True
@@ -3862,7 +3862,7 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[True],
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.bool]: ...
     @overload  # unknown shape, not object_, out=...
@@ -3875,7 +3875,7 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         *,
         out: EllipsisType,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.bool]: ...
     @overload  # unknown shape, object_
@@ -3888,7 +3888,7 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.object_] | Any: ...
     @overload  # unknown shape, object_, axis=None
@@ -3901,7 +3901,7 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> Any: ...
     @overload  # unknown shape, not object_ keepdims=True
@@ -3914,7 +3914,7 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[True],
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.object_]: ...
     @overload  # unknown shape, object_, out=...
@@ -3927,7 +3927,7 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         *,
         out: EllipsisType,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.object_]: ...
     @overload  # out=<given>
@@ -3940,7 +3940,7 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         *,
         out: OutT,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "reduceat", array, ...)
@@ -3953,7 +3953,7 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         *,
         out: np.ndarray | EllipsisType | None = None,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> OutT: ...
 
@@ -4258,7 +4258,7 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.bool] | np.bool: ...
     @overload  # unknown shape, axis=None
@@ -4271,7 +4271,7 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> np.bool: ...
     @overload  # unknown shape, keepdims=True
@@ -4284,7 +4284,7 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[True],
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.bool]: ...
     @overload  # unknown shape, out=...
@@ -4297,7 +4297,7 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         *,
         out: EllipsisType,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.bool]: ...
     @overload  # out=<given>
@@ -4310,7 +4310,7 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         *,
         out: OutT,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "reduceat", array, ...)
@@ -4323,7 +4323,7 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         *,
         out: np.ndarray | EllipsisType | None = None,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> OutT: ...
 
@@ -4866,7 +4866,7 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.float64] | np.float64: ...
     @overload  # unknown shape, +f64, axis=None
@@ -4879,7 +4879,7 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> np.float64: ...
     @overload  # unknown shape, +f64, keepdims=True
@@ -4892,7 +4892,7 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[True],
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # unknown shape, +f64, out=...
@@ -4905,7 +4905,7 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         *,
         out: EllipsisType,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # unknown shape, +f32
@@ -4918,7 +4918,7 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.float32] | np.float32: ...
     @overload  # unknown shape, +f32, axis=None
@@ -4931,7 +4931,7 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> np.float32: ...
     @overload  # unknown shape, +f32, keepdims=True
@@ -4944,7 +4944,7 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[True],
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.float32]: ...
     @overload  # unknown shape, +f32, out=...
@@ -4957,7 +4957,7 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         *,
         out: EllipsisType,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.float32]: ...
     @overload  # unknown shape, +f16
@@ -4970,7 +4970,7 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.float16] | np.float16: ...
     @overload  # unknown shape, +f16, axis=None
@@ -4983,7 +4983,7 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> np.float16: ...
     @overload  # unknown shape, +f16, keepdims=True
@@ -4996,7 +4996,7 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[True],
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.float16]: ...
     @overload  # unknown shape, +f16, out=...
@@ -5009,7 +5009,7 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         *,
         out: EllipsisType,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.float16]: ...
     @overload  # out=<given>
@@ -5022,7 +5022,7 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         *,
         out: OutT,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "reduce", array, ...)
@@ -5035,7 +5035,7 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         *,
         out: np.ndarray | EllipsisType | None = None,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> OutT: ...
 
@@ -9252,7 +9252,7 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.bool] | Any: ...
     @overload  # ~bool, axis=None
@@ -9265,7 +9265,7 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> np.bool: ...
     @overload  # ~bool, keepdims=True
@@ -9278,7 +9278,7 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.bool]: ...
     @overload  # ~int
