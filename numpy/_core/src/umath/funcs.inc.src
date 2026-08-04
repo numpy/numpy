@@ -73,8 +73,7 @@ npy_Object@Kind@(PyObject *i1, PyObject *i2)
     else {
         result = i2;
     }
-    Py_INCREF(result);
-    return result;
+    return Py_NewRef(result);
 }
 /**end repeat**/
 
@@ -83,12 +82,10 @@ static PyObject *
 npy_ObjectLogicalOr(PyObject *i1, PyObject *i2)
 {
     if (i1 == NULL) {
-        Py_XINCREF(i2);
-        return i2;
+        return Py_XNewRef(i2);
     }
     else if (i2 == NULL) {
-        Py_INCREF(i1);
-        return i1;
+        return Py_NewRef(i1);
     }
     else {
         int retcode = PyObject_IsTrue(i1);
@@ -96,12 +93,10 @@ npy_ObjectLogicalOr(PyObject *i1, PyObject *i2)
             return NULL;
         }
         else if (retcode) {
-            Py_INCREF(i1);
-            return i1;
+            return Py_NewRef(i1);
         }
         else {
-            Py_INCREF(i2);
-            return i2;
+            return Py_NewRef(i2);
         }
     }
 }
@@ -122,12 +117,10 @@ npy_ObjectLogicalAnd(PyObject *i1, PyObject *i2)
             return NULL;
         }
         else if (!retcode) {
-            Py_INCREF(i1);
-            return i1;
+            return Py_NewRef(i1);
         }
         else {
-            Py_INCREF(i2);
-            return i2;
+            return Py_NewRef(i2);
         }
     }
 }
