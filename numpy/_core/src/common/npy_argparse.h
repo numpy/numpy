@@ -22,6 +22,15 @@ PyArray_PythonPyIntFromInt(PyObject *obj, int *value);
 
 #define _NPY_MAX_KWARGS 14
 
+/*
+ * Returned instead of -1 when the call does not match the signature (wrong
+ * number of positional arguments, unknown/duplicate keyword, or a missing
+ * required argument).  A TypeError is set as usual and the value is negative,
+ * so plain `< 0` error checks remain correct; callers that only want to test a
+ * signature can check for this code and clear the error.
+ */
+#define NPY_ARGPARSE_MISMATCH (-2)
+
 typedef int (*npy_arg_converter)(PyObject *, void *);
 
 typedef struct {
@@ -86,7 +95,8 @@ NPY_NO_EXPORT int init_argparse_mutex(void);
  *            passed to the converter (holding the converted data or a
  *            borrowed reference if converter is NULL).
  *
- * @return Returns 0 on success and -1 on failure.
+ * @return Returns 0 on success, `NPY_ARGPARSE_MISMATCH` if the arguments do
+ *         not match the signature, and -1 on any other failure.
  */
 NPY_NO_EXPORT int
 _npy_parse_arguments(const char *funcname,

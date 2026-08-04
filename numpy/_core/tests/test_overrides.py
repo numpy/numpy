@@ -459,6 +459,8 @@ class TestArrayFunctionImplementation:
             (np.sum, (np.ones(1),), {"out": object()}),
             (np.max, (np.ones(1),), {"dtype": np.float64}),
             (np.any, (np.ones(1),), {"dtype": np.bool_, "initial": False}),
+            (np.sum, (np.ones(1), 0), {"axis": 0}),  # name and position
+            (np.any, (np.ones(1), 0, None, False, True), {}),  # too many pos.
         ],
     )
     def test_reduction_error_message(self, func, args, kwargs):
