@@ -466,6 +466,34 @@ class TestAdd:
         a['a'] = -1
         assert_equal(a['b'].sum(), 0)
 
+    def test_add_object_reentrant_mutation(self):
+        # gh-31988: the generic object loop must hold its operands; here
+        # __add__ clears the second operand's array slot before returning
+        # NotImplemented, so __radd__ runs on an object whose only other
+        # reference was that slot (use-after-free, detectable with
+        # PYTHONMALLOC=debug).
+        victim_deleted = []
+
+        class Victim:
+            def __del__(self):
+                victim_deleted.append(True)
+
+            def __radd__(self, other):
+                return 42
+
+        class Killer:
+            def __add__(self, other):
+                victim_array[0] = None  # drops the slot's reference
+                return NotImplemented
+
+        left = np.empty(1, dtype=object)
+        left[0] = Killer()
+        victim_array = np.empty(1, dtype=object)
+        victim_array[0] = Victim()
+
+        assert_equal(np.add(left, victim_array)[0], 42)
+        assert victim_deleted  # the slot really was cleared re-entrantly
+
 
 class TestDivision:
     def test_division_int(self):
