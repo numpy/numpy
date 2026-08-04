@@ -4623,7 +4623,7 @@ _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
  * np.argsort, ...) when the input is not an ndarray.
  */
 static PyObject *
-array__wrapit(PyObject *NPY_UNUSED(ignored),
+array__wrapit(PyObject *NPY_UNUSED(self),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     Py_ssize_t nargs = PyVectorcall_NARGS(len_args);
@@ -4639,7 +4639,11 @@ array__wrapit(PyObject *NPY_UNUSED(ignored),
     if (conv == NULL) {
         return NULL;
     }
-    /* conv.as_arrays(subok=False) */
+    /*
+     * conv.as_arrays(subok=False): as _wrapfunc already tried the method,
+     * subok=True is maybe quite reasonable here, but this follows what the
+     * previous Python implementation did.  TODO: revisit this.
+     */
     PyObject *as_arrays_stack[2] = {conv, Py_False};
     arrays = PyObject_VectorcallMethod(
             npy_interned_str.as_arrays, as_arrays_stack,
@@ -4710,20 +4714,19 @@ array__wrapfunc(PyObject *self,
     }
     /*
      * A same-named method with an incompatible signature (e.g. pandas):
-     * retry via the conversion path, keeping the original TypeError as
-     * context if the fallback fails too.
+     * retry via the conversion path.  The Python implementation called
+     * _wrapit from within the `except TypeError:` clause; mirror that by
+     * making the TypeError the currently handled exception while the
+     * fallback runs, so that any exception it raises implicitly chains
+     * the TypeError as `__context__` (preserving nested context chains).
      */
-    PyObject *exc, *val, *tb;
-    PyErr_Fetch(&exc, &val, &tb);
+    PyObject *typeerror = PyErr_GetRaisedException();
+    PyObject *prev = PyErr_GetHandledException();
+    PyErr_SetHandledException(typeerror);
     res = array__wrapit(self, args, len_args, kwnames);
-    if (res == NULL) {
-        npy_PyErr_ChainExceptions(exc, val, tb);
-    }
-    else {
-        Py_XDECREF(exc);
-        Py_XDECREF(val);
-        Py_XDECREF(tb);
-    }
+    PyErr_SetHandledException(prev);
+    Py_XDECREF(prev);
+    Py_DECREF(typeerror);
     return res;
 }
 
