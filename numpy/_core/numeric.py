@@ -1595,8 +1595,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     Raises
     ------
     ValueError
-        When the dimension of the vector(s) in `a` or `b` does not equal 3,
-        or when either `a` or `b` is 0-dimensional (e.g., a scalar).
+        When the dimension of the vector(s) in `a` or `b` does not equal 3.
 
     See Also
     --------
