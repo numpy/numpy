@@ -6038,7 +6038,7 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     def __call__(
         self,
         x1: np.float64 | _as_f64,
-        x2: _to_f64,
+        x2: float | _to_f64,
         /,
         *,
         out: None = None,
@@ -6048,7 +6048,7 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     @overload  # 0d +f64, 0d ~f64
     def __call__(
         self,
-        x1: _to_f64,
+        x1: float | _to_f64,
         x2: np.float64 | _as_f64,
         /,
         *,
@@ -6360,7 +6360,7 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     def outer(
         self,
         x1: np.float64 | _as_f64,
-        x2: _to_f64,
+        x2: float | _to_f64,
         /,
         *,
         out: None = None,
@@ -6370,7 +6370,7 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     @overload  # 0d +f64, 0d ~f64
     def outer(
         self,
-        x1: _to_f64,
+        x1: float | _to_f64,
         x2: np.float64 | _as_f64,
         /,
         *,
