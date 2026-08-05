@@ -686,6 +686,9 @@ npymath_sources = [
   'src/npymath/halffloat.cpp',
   'src/npymath/npy_math.c',
 ]
+if host_machine.system() == 'emscripten'
+  npymath_sources += 'src/common/npy_fenv.c'
+endif
 npymath_lib = static_library('npymath',
   npymath_sources,
   c_args: staticlib_cflags,
