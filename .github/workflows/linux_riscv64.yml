@@ -58,7 +58,7 @@ jobs:
             ccache-wheels-manylinux_riscv64-${{ matrix.python }}-
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@4726cd35bb13f7bde50cf2761f2499ac7b3aa32c  # v4.1.1
+        uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074  # v4.2.0
         env:
           CIBW_BUILD: ${{ matrix.python }}-manylinux_riscv64
           CIBW_BEFORE_ALL_LINUX: |
