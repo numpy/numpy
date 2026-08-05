@@ -154,16 +154,6 @@ npy_default_get_strided_loop(
 
 
 NPY_NO_EXPORT int
-PyArrayMethod_GetMaskedStridedLoop(
-        PyArrayMethod_Context *context,
-        int aligned,
-        npy_intp *fixed_strides,
-        PyArrayMethod_StridedLoop **out_loop,
-        NpyAuxData **out_transferdata,
-        NPY_ARRAYMETHOD_FLAGS *flags);
-
-
-NPY_NO_EXPORT int
 PyArrayMethod_GetMaskedReductionLoop(
         PyArrayMethod_Context *context,
         int aligned,

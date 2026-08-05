@@ -14,6 +14,8 @@
 #include "npy_static_data.h"
 #include "extobj.h"
 
+#include "array_method_masked.h"
+
 // static variables are zero-filled by default, no need to explicitly do so
 NPY_VISIBILITY_HIDDEN npy_interned_str_struct npy_interned_str;
 NPY_VISIBILITY_HIDDEN npy_static_pydata_struct npy_static_pydata;
@@ -280,7 +282,9 @@ initialize_static_globals(void)
             npy_static_cdata.unpack_lookup_big[j].bytes[7 - k] = v;
         }
     }
-
+#include "array_method_masked.dispatch.h"
+    NPY_CPU_DISPATCH_CALL(npy_static_cdata.get_masked_strided_loop =
+                          &npy_get_masked_strided_loop);
     return 0;
 }
 
