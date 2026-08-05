@@ -25,7 +25,6 @@
 #include "npy_cpu_features.h"
 #include "npy_cpu_dispatch.h"
 #include "numpy/npy_cpu.h"
-#include "npy_import.h"
 #include "numpy/dtype_api.h"
 
 /*
@@ -603,11 +602,16 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         return NULL;
     }
 
+    if (sig_str == NULL) {
+        return NULL;
+    }
+
+    /* `PyBytes_AS_STRING` is not in the limited API */
     f = (PyUFuncObject*)PyUFunc_FromFuncAndDataAndSignature(
         NULL, NULL, NULL,
         0, nin, nout, PyUFunc_None, "no name",
         "doc:none",
-        1, PyBytes_AS_STRING(sig_str));
+        1, PyBytes_AsString(sig_str));
     if (sig_str != signature) {
         Py_DECREF(sig_str);
     }
@@ -625,9 +629,13 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         if (core_num_dims == NULL) {
             goto fail;
         }
+        /* `PyTuple_SET_ITEM` is not in the limited API; `PyTuple_SetItem`
+           steals `val` as well */
         for (i = 0; i < f->nargs; i++) {
             PyObject *val = PyLong_FromLong(f->core_num_dims[i]);
-            PyTuple_SET_ITEM(core_num_dims, i, val);
+            if (val == NULL || PyTuple_SetItem(core_num_dims, i, val) < 0) {
+                goto fail;
+            }
             core_num_ixs += f->core_num_dims[i];
         }
     }
@@ -642,7 +650,9 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         }
         for (i = 0; i < core_num_ixs; i++) {
             PyObject *val = PyLong_FromLong(f->core_dim_ixs[i]);
-            PyTuple_SET_ITEM(core_dim_ixs, i, val);
+            if (val == NULL || PyTuple_SetItem(core_dim_ixs, i, val) < 0) {
+                goto fail;
+            }
         }
     }
     else {
@@ -656,7 +666,9 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         }
         for (i = 0; i < f->core_num_dim_ix; i++) {
             PyObject *val = PyLong_FromLong(f->core_dim_flags[i]);
-            PyTuple_SET_ITEM(core_dim_flags, i, val);
+            if (val == NULL || PyTuple_SetItem(core_dim_flags, i, val) < 0) {
+                goto fail;
+            }
         }
     }
     else {
@@ -670,7 +682,9 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         }
         for (i = 0; i < f->core_num_dim_ix; i++) {
             PyObject *val = PyLong_FromLong(f->core_dim_sizes[i]);
-            PyTuple_SET_ITEM(core_dim_sizes, i, val);
+            if (val == NULL || PyTuple_SetItem(core_dim_sizes, i, val) < 0) {
+                goto fail;
+            }
         }
     }
     else {
@@ -682,7 +696,8 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
                          core_dim_ixs, core_dim_flags, core_dim_sizes);
 
 fail:
-    Py_XDECREF(f);
+    /* `Py_XDECREF` does not cast its argument under the limited API */
+    Py_XDECREF((PyObject *)f);
     Py_XDECREF(core_num_dims);
     Py_XDECREF(core_dim_ixs);
     Py_XDECREF(core_dim_flags);
@@ -724,7 +739,8 @@ UMath_Tests_test_dispatch(PyObject *NPY_UNUSED(dummy), PyObject *NPY_UNUSED(dumm
         goto err;
     }
     NPY_CPU_DISPATCH_CALL_ALL(_umath_tests_dispatch_attach, (item));
-    Py_SETREF(item, NULL);
+    /* `Py_SETREF` is not in the limited API */
+    Py_CLEAR(item);
     if (PyErr_Occurred()) {
         goto err;
     }
@@ -1062,7 +1078,8 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-#ifdef Py_GIL_DISABLED
+    /* `PyUnstable_*` is not in the limited API; abi3 implies a GIL build */
+#if defined(Py_GIL_DISABLED) && !defined(Py_LIMITED_API)
     // signal this module supports running with the GIL disabled
     PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
 #endif

@@ -3,6 +3,9 @@
 #include "numpy/npy_common.h"
 #include "numpy/npy_cpu.h" // To guarantee the CPU definitions are in scope.
 
+#include <stdlib.h> // getenv
+#include <string.h> // memcpy, memset, strcmp, strlen, strtok
+
 /******************** Private Definitions *********************/
 
 // This is initialized during module initialization and thereafter immutable.
@@ -157,13 +160,18 @@ npy_cpu_features_dict(void)
     return dict;
 }
 
+// `PyList_SET_ITEM` is not in the limited API; `PyList_SetItem` steals
+// `item` too and is safe before the list is fully initialized.
 #define NPY__CPU_PYLIST_APPEND_CB(FEATURE, LIST) \
     item = PyUnicode_FromString(NPY_TOSTRING(FEATURE)); \
     if (item == NULL) { \
         Py_DECREF(LIST); \
         return NULL; \
     } \
-    PyList_SET_ITEM(LIST, index++, item);
+    if (PyList_SetItem(LIST, index++, item) < 0) { \
+        Py_DECREF(LIST); \
+        return NULL; \
+    }
 
 NPY_VISIBILITY_HIDDEN PyObject *
 npy_cpu_baseline_list(void)
