@@ -3,11 +3,11 @@ import textwrap
 
 import pytest
 
-from numpy.testing import IS_WASM
+from numpy.testing import HAS_SUBPROCESSES
 from numpy.testing._private.utils import run_subprocess
 
 
-@pytest.mark.skipif(IS_WASM, reason="can't start subprocess")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 def test_lazy_load():
     # gh-22045. lazyload doesn't import submodule names into the namespace
 

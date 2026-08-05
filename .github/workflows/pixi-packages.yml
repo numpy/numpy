@@ -32,7 +32,7 @@ jobs:
           # - tsan-freethreading
     if: github.repository == 'numpy/numpy'
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
@@ -40,8 +40,8 @@ jobs:
 
     - uses: prefix-dev/setup-pixi@a09b6247153796b190642a2b53fac4241043cf6f # v0.10.0
       with:
-        pixi-version: v0.66.0
+        pixi-version: v0.73.0
         run-install: false
 
     - name: Build
-      run: pixi build --path="pixi-packages/${{ matrix.package_variant }}"
+      run: pixi publish --path="pixi-packages/${{ matrix.package_variant }}"

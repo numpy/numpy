@@ -105,10 +105,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     _ComplexFloatingCodes,
     _InexactCodes,
     _CharacterCodes,
-    # Ufuncs
-    _UFunc_Nin2_Nout1,
-    _UFunc_Nin2_Nout2,
-    _GUFunc_Nin2_Nout1,
 )
 from numpy._typing._char_codes import (
     _DT64Codes_any,
@@ -214,6 +210,7 @@ from numpy._core.fromnumeric import (
     argmax,
     argmin,
     searchsorted,
+    top_k,
     resize,
     squeeze,
     diagonal,
@@ -378,6 +375,7 @@ from numpy._core.shape_base import (
 from numpy._core.umath import (
     absolute,
     absolute as abs,
+    add,
     arccos,
     arccos as acos,
     arccosh,
@@ -407,6 +405,7 @@ from numpy._core.umath import (
     degrees,
     divide,
     divide as true_divide,
+    divmod,
     equal,
     exp,
     exp2,
@@ -414,6 +413,10 @@ from numpy._core.umath import (
     fabs,
     float_power,
     floor,
+    floor_divide,
+    fmax,
+    fmin,
+    fmod,
     frexp,
     gcd,
     greater,
@@ -443,14 +446,23 @@ from numpy._core.umath import (
     logical_not,
     logical_or,
     logical_xor,
+    matmul,
+    matvec,
+    maximum,
+    minimum,
+    mod,
     modf,
+    multiply,
     nextafter,
     not_equal,
     positive,
+    power,
+    power as pow,
     negative,
     rad2deg,
     radians,
     reciprocal,
+    remainder,
     right_shift,
     right_shift as bitwise_right_shift,
     rint,
@@ -461,9 +473,12 @@ from numpy._core.umath import (
     spacing,
     square,
     sqrt,
+    subtract,
     tan,
     tanh,
     trunc,
+    vecdot,
+    vecmat,
 )
 
 from ._expired_attrs_2_0 import __expired_attributes__ as __expired_attributes__
@@ -697,7 +712,7 @@ __all__ = [
     "cumulative_sum", "diagonal", "mean", "max", "min", "matrix_transpose", "ndim",
     "nonzero", "partition", "prod", "ptp", "put", "ravel", "repeat", "reshape",
     "resize", "round", "searchsorted", "shape", "size", "sort", "squeeze", "std", "sum",
-    "swapaxes", "take", "trace", "transpose", "var",
+    "swapaxes", "take", "top_k", "trace", "transpose", "var",
     "absolute", "add", "arccos", "arccosh", "arcsin", "arcsinh", "arctan", "arctan2",
     "arctanh", "bitwise_and", "bitwise_or", "bitwise_xor", "cbrt", "ceil", "conj",
     "conjugate", "copysign", "cos", "cosh", "bitwise_count", "deg2rad", "degrees",
@@ -5119,6 +5134,18 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
         /,
     ) -> ScalarT | ndarray[ShapeT, _dtype[ScalarT]]: ...
 
+    #
+    def __dlpack__(
+        self,
+        /,
+        *,
+        stream: int | Any | None = None,
+        max_version: tuple[int, int] | None = None,
+        dl_device: tuple[int, int] | None = None,
+        copy: py_bool | None = None,
+    ) -> CapsuleType: ...
+    def __dlpack_device__(self, /) -> tuple[L[1], L[0]]: ...
+
     @property
     def base(self) -> None: ...
     @property
@@ -7634,28 +7661,8 @@ class ufunc:
         reduction: py_bool = False,
     ) -> tuple[dtype, ...]: ...
 
-# Parameters: `__name__`, `ntypes` and `identity`
-add: _UFunc_Nin2_Nout1[L["add"], L[22], L[0]]
-divmod: _UFunc_Nin2_Nout2[L["divmod"], L[15], None]
-floor_divide: _UFunc_Nin2_Nout1[L["floor_divide"], L[21], None]
-fmax: _UFunc_Nin2_Nout1[L["fmax"], L[21], None]
-fmin: _UFunc_Nin2_Nout1[L["fmin"], L[21], None]
-fmod: _UFunc_Nin2_Nout1[L["fmod"], L[15], None]
-matmul: _GUFunc_Nin2_Nout1[L["matmul"], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]]
-matvec: _GUFunc_Nin2_Nout1[L["matvec"], L[19], None, L["(m,n),(n)->(m)"]]
-maximum: _UFunc_Nin2_Nout1[L["maximum"], L[21], None]
-minimum: _UFunc_Nin2_Nout1[L["minimum"], L[21], None]
-multiply: _UFunc_Nin2_Nout1[L["multiply"], L[23], L[1]]
-power: _UFunc_Nin2_Nout1[L["power"], L[18], None]
-remainder: _UFunc_Nin2_Nout1[L["remainder"], L[16], None]
-subtract: _UFunc_Nin2_Nout1[L["subtract"], L[21], None]
-vecdot: _GUFunc_Nin2_Nout1[L["vecdot"], L[19], None, L["(n),(n)->()"]]
-vecmat: _GUFunc_Nin2_Nout1[L["vecmat"], L[19], None, L["(n),(n,m)->(m)"]]
-
 concat = concatenate
-mod = remainder
 permute_dims = transpose
-pow = power
 
 # TODO: The type of each `__next__` and `iters` return-type depends
 # on the length and dtype of `args`; we can't describe this behavior yet

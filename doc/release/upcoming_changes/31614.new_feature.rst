@@ -1,0 +1,10 @@
+DType partitioning and argpartitioning supports the ArrayMethod API
+-------------------------------------------------------------------
+User-defined dtypes can now implement custom partitioning and argpartitioning
+using the ArrayMethod API in a fashion similar to sorting and argsorting.
+These methods are used by `numpy.partition` and `numpy.argpartition` when called
+with arrays of the user-defined dtype.
+
+The partitioning and argpartitioning methods are registered by passing the
+arraymethod specs that implement the operations to the `PyUFunc_AddLoopsFromSpecs`
+function. See the ``ArrayMethod`` API documentation for details.

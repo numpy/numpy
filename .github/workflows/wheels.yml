@@ -43,13 +43,19 @@ jobs:
           - [macos-14, macosx_arm64, openblas]
           - [windows-2022, win_amd64, ""]
           - [windows-11-arm, win_arm64, ""]
-        python: ["cp312"]
+          # GitHub Actions doesn’t currently support the Android emulator on any ARM
+          # runner. So we build for ARM on a non-ARM runner, which will skip the tests.
+          - [ubuntu-24.04, android_arm64_v8a]
+          - [ubuntu-24.04, android_x86_64]
+          - [macos-26, ios_arm64_iphoneos, accelerate]
+          - [macos-26, ios_arm64_iphonesimulator, accelerate]
+        python: ["cp313"]
 
     env:
       IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}  # used in cibw_test_command.sh
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
           persist-credentials: false
@@ -80,7 +86,7 @@ jobs:
           echo "CIBW_ENVIRONMENT_WINDOWS=PKG_CONFIG_PATH=$CIBW" >> $env:GITHUB_ENV
 
       - name: Setup macOS
-        if: matrix.buildplat[0] == 'macos-15-intel' || matrix.buildplat[0] == 'macos-14'
+        if: matrix.buildplat[1] == 'macosx_x86_64' || matrix.buildplat[1] == 'macosx_arm64'
         run: |
           # Needed due to https://github.com/actions/runner-images/issues/3371
           # Supported versions: https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md
@@ -101,10 +107,23 @@ jobs:
             echo "CIBW_ENVIRONMENT_MACOS=$CIBW PKG_CONFIG_PATH=$PKG_CONFIG_PATH DYLD_LIBRARY_PATH=$DYLD" >> "$GITHUB_ENV"
           fi
 
+      - name: Setup iOS
+        if: matrix.buildplat[1] == 'ios_arm64_iphoneos' || matrix.buildplat[1] == 'ios_arm64_iphonesimulator'
+        run: |
+          if [[ "${{ matrix.buildplat[2] }}" == 'accelerate' ]]; then
+            # ACCELERATE_NEW_LAPACK with ILP64 requires iOS 16.4 or higher
+            CIBW_ENV="IPHONEOS_DEPLOYMENT_TARGET=17.0"
+            echo "CIBW_ENVIRONMENT_IOS=$CIBW_ENV" >> "$GITHUB_ENV"
+          else
+            # On older iOS versions, use LP64 with the older Accelerate
+            CIBW_CONFIG="setup-args=-Dallow-noblas=false build-dir=build"
+            echo "CIBW_CONFIG_SETTINGS_IOS=$CIBW_CONFIG" >> "$GITHUB_ENV"
+          fi
+
       - name: Build wheels
-        uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55  # v4.1.0
-        env:
-          CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+        uses: pypa/cibuildwheel@4726cd35bb13f7bde50cf2761f2499ac7b3aa32c  # v4.1.1
+        with:
+          only: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

@@ -5362,7 +5362,7 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
 
     reduce(array, axis=0, dtype=None, out=None, keepdims=False, initial=<no value>, where=True)
 
-    Reduces `array`'s dimension by one, by applying ufunc along one axis.
+    Reduces ``array``'s dimension by one, by applying ufunc along one axis.
 
     Let :math:`array.shape = (N_0, ..., N_i, ..., N_{M-1})`.  Then
     :math:`ufunc.reduce(array, axis=i)[k_0, ..,k_{i-1}, k_{i+1}, .., k_{M-1}]` =
@@ -5406,8 +5406,10 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
         If not provided or None, a freshly-allocated array is returned.
         If passed as a keyword argument, can be Ellipses (``out=...``) to
         ensure an array is returned even if the result is 0-dimensional
-        (which is useful especially for object dtype), or a 1-element tuple
-        (latter for consistency with ``ufunc.__call__``).
+        (which is useful especially for object dtype), or a tuple with one
+        entry per output (latter for consistency with ``ufunc.__call__``).
+        For a ufunc with a single output, a 1-element tuple is also
+        accepted, as before.
 
         .. versionadded:: 2.3
             Support for ``out=...`` was added.
@@ -5415,23 +5417,39 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `array`.
-    initial : scalar, optional
+        the result will broadcast correctly against the original ``array``.
+    initial : scalar or tuple of scalars, optional
         The value with which to start the reduction.
         If the ufunc has no identity or the dtype is object, this defaults
         to None - otherwise it defaults to ufunc.identity.
         If ``None`` is given, the first element of the reduction is used,
         and an error is thrown if the reduction is empty.
+        For a ufunc with more than one output (see the note on multiple
+        outputs below), a tuple with one value per output may be given
+        instead of a single scalar. A scalar still seeds every output.
+        The entries of such a tuple cannot be ``None``, since "no initial
+        value" cannot be requested for individual outputs; pass a plain
+        ``None`` to unset the initial value for the whole reduction.
     where : array_like of bool, optional
         A boolean array which is broadcasted to match the dimensions
-        of `array`, and selects elements to include in the reduction. Note
+        of ``array``, and selects elements to include in the reduction. Note
         that for ufuncs like ``minimum`` that do not have an identity
         defined, one has to pass in also ``initial``.
 
     Returns
     -------
-    r : ndarray
+    r : ndarray or tuple of ndarray
         The reduced array. If `out` was supplied, `r` is a reference to it.
+        For a ufunc with more than one output whose loop implementation
+        registers a reduction loop (see the note below), `r` is instead a
+        tuple with one array per output.
+
+    Notes
+    -----
+    ``reduce`` normally only supports ufuncs with a single output. A ufunc
+    with more than one output can still be reduced if its loop implementation
+    registers a dedicated reduction loop. Otherwise, calling ``reduce`` on it
+    raises a ``TypeError``.
 
     Examples
     --------
@@ -5586,8 +5604,8 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
       simply ``array[indices[i]]``.
     * if ``indices[i] >= len(array)`` or ``indices[i] < 0``, an error is raised.
 
-    The shape of the output depends on the size of `indices`, and may be
-    larger than `array` (this happens if ``len(indices) > array.shape[axis]``).
+    The shape of the output depends on the size of ``indices``, and may be
+    larger than ``array`` (this happens if ``len(indices) > array.shape[axis]``).
 
     Parameters
     ----------
@@ -5620,15 +5638,15 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
     -----
     A descriptive example:
 
-    If `array` is 1-D, the function `ufunc.accumulate(array)` is the same as
-    ``ufunc.reduceat(array, indices)[::2]`` where `indices` is
+    If ``array`` is 1-D, the function ``ufunc.accumulate(array)`` is the same as
+    ``ufunc.reduceat(array, indices)[::2]`` where ``indices`` is
     ``range(len(array) - 1)`` with a zero placed
     in every other element:
     ``indices = zeros(2 * len(array) - 1)``,
     ``indices[1::2] = range(1, len(array))``.
 
-    Don't be fooled by this attribute's name: `reduceat(array)` is not
-    necessarily smaller than `array`.
+    Don't be fooled by this attribute's name: ``reduceat(array)`` is not
+    necessarily smaller than ``array``.
 
     Examples
     --------
@@ -5705,7 +5723,7 @@ add_newdoc('numpy._core', 'ufunc', ('outer',
     B : array_like
         Second array
     kwargs : any
-        Arguments to pass on to the ufunc. Typically `dtype` or `out`.
+        Arguments to pass on to the ufunc. Typically ``dtype`` or ``out``.
         See `ufunc` for a comprehensive overview of all available arguments.
 
     Returns
@@ -6931,6 +6949,13 @@ add_newdoc('numpy._core.numerictypes', 'generic', ('size',
 
 add_newdoc('numpy._core.numerictypes', 'generic', ('strides',
     """Tuple of bytes steps in each dimension."""))
+
+add_newdoc('numpy._core.numerictypes', 'generic', ('__dlpack__',
+    """Exports the scalar for consumption by ``from_dlpack()`` as a DLPack capsule."""))
+
+add_newdoc('numpy._core.numerictypes', 'generic', ('__dlpack_device__',
+    """Returns device type (``1``) and device ID (``0``) in DLPack format.
+    Meant for use within ``from_dlpack()``."""))
 
 # Methods
 

@@ -890,7 +890,15 @@ def unwrap[ArrayT: NDArray[np.floating | np.object_]](
     discont: float | None = None,
     axis: int = -1,
     *,
-    period: float = ...,  # = τ
+    period: float | int = ...,  # = τ
+) -> ArrayT: ...
+@overload  # integer array + integer period keeps the integer dtype
+def unwrap[ArrayT: NDArray[np.integer]](
+    p: ArrayT,
+    discont: float | None = None,
+    axis: int = -1,
+    *,
+    period: int,
 ) -> ArrayT: ...
 @overload  # known shape, float64
 def unwrap[ShapeT: _Shape](

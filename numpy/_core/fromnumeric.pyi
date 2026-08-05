@@ -94,6 +94,7 @@ __all__ = [
     "sum",
     "swapaxes",
     "take",
+    "top_k",
     "trace",
     "transpose",
     "var",
@@ -199,6 +200,16 @@ def take[ArrayT: np.ndarray](
     out: ArrayT,
     mode: _ModeKind = "raise",
 ) -> ArrayT: ...
+
+def top_k(
+    a: ArrayLike,
+    k: int,
+    /,
+    *,
+    axis: int = -1,
+    mode: Literal["largest", "smallest"] = "largest",
+    sorted: bool = True,
+) -> tuple[NDArray[Any], NDArray[intp]]: ...
 
 # keep in sync with `ma.core.reshape`
 @overload  # shape: index

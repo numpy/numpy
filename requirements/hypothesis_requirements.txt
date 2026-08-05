@@ -1,0 +1,7 @@
+# hypothesis is an *optional* test dependency: it supplements the deterministic
+# pytest suite with property-based tests. It is kept separate from
+# test_requirements.txt because recent releases ship a Rust extension that is
+# hard to install on platforms without a prebuilt wheel (riscv64, win-arm64,
+# ppc64le, s390x, CPython pre-releases, QEMU-emulated targets). The test suite
+# skips the property-based tests when hypothesis is not installed.
+hypothesis==6.163.0

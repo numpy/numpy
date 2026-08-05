@@ -35,7 +35,7 @@ jobs:
     if: github.repository == 'numpy/numpy'
     runs-on: macos-26
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
@@ -91,24 +91,103 @@ jobs:
         options: --shm-size=2g # increase memory for large matrix ops
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Trust working directory and initialize submodules
         run: |
           git config --global --add safe.directory /__w/numpy/numpy
           git submodule update --init --recursive
-      - name: Uninstall pytest-xdist (conflicts with TSAN)
-        run: pip uninstall -y pytest-xdist
+      - name: Get OpenBLAS version
+        run: |
+          version=$(sed -nE 's/^scipy-openblas64==([0-9]+\.[0-9]+\.[0-9]+)\..*$/\1/p' requirements/ci_requirements.txt)
+          if [ -z "$version" ]; then
+            echo "Could not parse the scipy-openblas64 pin from requirements/ci_requirements.txt"
+            exit 1
+          fi
+          echo "OPENBLAS_VERSION=v$version"
+          echo "OPENBLAS_VERSION=v$version" >> "$GITHUB_ENV"
+      - name: Uninstall pytest-xdist and scipy-openblas (conflicts with TSAN)
+        run: pip uninstall -y pytest-xdist scipy-openblas32 scipy-openblas64
 
       - name: Upgrade spin (gh-29777)
         run: pip install -U spin
 
+      - name: Install ccache
+        run: |
+          apt-get update && apt-get install -y ccache
+          echo "CCACHE_DIR=$GITHUB_WORKSPACE/.ccache" >> "$GITHUB_ENV"
+          echo "CCACHE_MAXSIZE=500M" >> "$GITHUB_ENV"
+
+      - name: Set up ccache
+        uses: ./.github/ccache
+        with:
+          workflow_name: ${{ github.workflow }}
+          job_name: ${{ github.job }}
+
+      # This caches the completed OpenBLAS build; we aim to build once per `OPENBLAS_VERSION`.
+      # If this cache step hits, the next step (building OpenBLAS) is skipped by its `if:` condition.
+      - name: Cache TSAN-instrumented OpenBLAS
+        id: cache-openblas
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: openblas-tsan
+          key: tsan-openblas-${{ env.OPENBLAS_VERSION }}-core2
+
+      - name: Build OpenBLAS with ThreadSanitizer
+        if: steps.cache-openblas.outputs.cache-hit != 'true'
+        run: |
+          pip install cmake
+          git clone --depth 1 --branch $OPENBLAS_VERSION \
+            https://github.com/OpenMathLib/OpenBLAS.git openblas-src
+          # Follows OpenBLAS's own TSAN CI (linux_thread_sanitizer), see
+          # https://github.com/OpenMathLib/OpenBLAS/blob/develop/.github/workflows/dynamic_arch.yml
+          cmake -S openblas-src -B openblas-src/build -G Ninja \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_C_COMPILER=${CC:-clang} \
+            -DCMAKE_CXX_COMPILER=${CXX:-clang++} \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_C_FLAGS="-fsanitize=thread -g -O1 -fno-omit-frame-pointer" \
+            -DCMAKE_CXX_FLAGS="-fsanitize=thread -g -O1 -fno-omit-frame-pointer" \
+            -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=thread" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread" \
+            -DBUILD_SHARED_LIBS=ON \
+            -DBUILD_STATIC_LIBS=OFF \
+            -DBUILD_TESTING=OFF \
+            -DDYNAMIC_ARCH=OFF \
+            -DNOFORTRAN=ON \
+            -DC_LAPACK=ON \
+            -DUSE_THREAD=ON \
+            -DUSE_OPENMP=OFF \
+            -DNUM_THREADS=64 \
+            -DNUM_PARALLEL=2 \
+            -DTARGET=CORE2 \
+            -DCMAKE_INSTALL_LIBDIR=lib \
+            -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/openblas-tsan
+          cmake --build openblas-src/build -j4
+          cmake --install openblas-src/build
+
       - name: Build NumPy with ThreadSanitizer
-        run: python -m spin build -j2 -- -Db_sanitize=thread
+        run: |
+          export PKG_CONFIG_PATH=$GITHUB_WORKSPACE/openblas-tsan/lib/pkgconfig
+          export CC="ccache ${CC:-clang}" CXX="ccache ${CXX:-clang++}"
+          export LDFLAGS="-fsanitize=thread"
+          python -m spin build -j4 -- -Db_sanitize=thread \
+            -Dbuildtype=debugoptimized -Dcpu-dispatch=none \
+            -Ddisable-intel-sort=true -Ddisable-highway=true -Ddisable-svml=true \
+            -Dblas=openblas -Dlapack=openblas -Dallow-noblas=false
+
+      - name: Ccache performance
+        shell: bash -l {0}
+        run: |
+          ccache --evict-older-than 1d
+          ccache -s
 
       - name: Run tests under prebuilt TSAN container
         run: |
           export TSAN_OPTIONS="halt_on_error=0:allocator_may_return_null=1:suppressions=$GITHUB_WORKSPACE/tools/ci/tsan_suppressions.txt"
           echo "TSAN_OPTIONS=$TSAN_OPTIONS"
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/openblas-tsan/lib
+          python -m spin run python -P -c "import numpy; numpy.show_config()"
           python -m spin test \
           `find numpy -name "test*.py" | xargs grep -E -l "import threading|ThreadPoolExecutor" | tr '\n' ' '` \
            -- -v -s --timeout=600 --durations=10
@@ -122,7 +201,7 @@ jobs:
         options: --shm-size=2g # increase memory for large matrix ops
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Trust working directory and initialize submodules
         run: |
           git config --global --add safe.directory /__w/numpy/numpy
