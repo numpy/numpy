@@ -24,6 +24,7 @@ from numpy._typing import (
     _ArrayLikeComplex_co,
     _ArrayLikeFloat_co,
     _ArrayLikeInt_co,
+    _ArrayLikeObject_co,
     _DTypeLike,
     _NestedSequence,
     _NumberLike_co,
@@ -80,6 +81,7 @@ __all__ = [
     "stack",
     "union1d",
     "unique",
+    "unwrap",
     "vander",
     "vstack",
 ]
@@ -479,6 +481,48 @@ def compress_cols(a: ArrayLike) -> _Array2D[Incomplete]: ...
 def mask_rowcols(a: ArrayLike, axis: SupportsIndex | None = None) -> _MArray[Incomplete]: ...
 def mask_rows(a: ArrayLike, axis: _NoValueType = ...) -> _MArray[Incomplete]: ...
 def mask_cols(a: ArrayLike, axis: _NoValueType = ...) -> _MArray[Incomplete]: ...
+
+# keep in sync with `lib._function_base_impl.unwrap`
+@overload  # integer array + integer period keeps the integer dtype
+def unwrap[ScalarT: np.integer](
+    p: NDArray[ScalarT],
+    discont: float | None = None,
+    axis: int = -1,
+    *,
+    period: int,
+) -> _MArray[ScalarT]: ...
+@overload  # floating and object arrays keep their dtype
+def unwrap[ScalarT: np.floating | np.object_](
+    p: NDArray[ScalarT],
+    discont: float | None = None,
+    axis: int = -1,
+    *,
+    period: float | int = ...,  # = tau
+) -> _MArray[ScalarT]: ...
+@overload  # sequence of ints + integer period keeps the integer dtype
+def unwrap(
+    p: _ListSeqND[int],
+    discont: float | None = None,
+    axis: int = -1,
+    *,
+    period: int,
+) -> _MArray[np.int_]: ...
+@overload  # float64-like
+def unwrap(
+    p: _ArrayLikeFloat_co,
+    discont: float | None = None,
+    axis: int = -1,
+    *,
+    period: float = ...,  # = tau
+) -> _MArray[np.float64]: ...
+@overload  # fallback
+def unwrap(
+    p: _ArrayLikeFloat_co | _ArrayLikeObject_co,
+    discont: float | None = None,
+    axis: int = -1,
+    *,
+    period: float | int = ...,  # = tau
+) -> _MArray[Incomplete]: ...
 
 # keep in sync with `lib._arraysetops_impl.ediff1d`
 @overload

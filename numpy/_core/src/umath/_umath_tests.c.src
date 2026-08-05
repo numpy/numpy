@@ -923,6 +923,40 @@ UMath_Tests_restore_loop(PyObject *NPY_UNUSED(dummy), PyObject *args)
     Py_RETURN_NONE;
 }
 
+/*
+ * create_unary_ufunc(): Return a fresh unary d->d ufunc (negation).
+ * A new ufunc is created on every call, so its dispatch state is
+ * guaranteed to be untouched (used to test loop replacement before
+ * the first call).
+ */
+static void
+_double_negation_loop(char **args, npy_intp const *dimensions,
+                      npy_intp const *steps, void *NPY_UNUSED(data))
+{
+    npy_intp n = dimensions[0];
+    char *in = args[0], *out = args[1];
+    for (npy_intp i = 0; i < n; i++) {
+        *(double *)out = -*(double *)in;
+        in += steps[0];
+        out += steps[1];
+    }
+}
+
+static PyUFuncGenericFunction _fresh_unary_functions[] = {
+    _double_negation_loop};
+static const char _fresh_unary_types[] = {NPY_DOUBLE, NPY_DOUBLE};
+static void *const _fresh_unary_data[] = {NULL};
+
+static PyObject *
+UMath_Tests_create_unary_ufunc(PyObject *NPY_UNUSED(dummy),
+                               PyObject *NPY_UNUSED(args))
+{
+    return PyUFunc_FromFuncAndData(
+            _fresh_unary_functions, _fresh_unary_data, _fresh_unary_types,
+            1, 1, 1, PyUFunc_None, "fresh_unary",
+            "fresh unary float64 test ufunc (negation)", 0);
+}
+
 static PyMethodDef UMath_TestsMethods[] = {
     {"test_signature",  UMath_Tests_test_signature, METH_VARARGS,
      "Test signature parsing of ufunc. \n"
@@ -937,6 +971,9 @@ static PyMethodDef UMath_TestsMethods[] = {
     {"restore_loop", UMath_Tests_restore_loop, METH_VARARGS,
      "Restore a ufunc loop previously replaced by replace_loop().\n"
      "Arguments: ufunc, capsule\n"},
+    {"create_unary_ufunc", UMath_Tests_create_unary_ufunc, METH_NOARGS,
+     "Create a fresh unary float64 ufunc (negation) with untouched "
+     "dispatch state.\n"},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

@@ -118,6 +118,70 @@ class TestConditionalShortcuts:
         pad_amt = [(0, 0) for _ in test.shape]
         assert_array_equal(test, np.pad(test, pad_amt, mode=mode))
 
+    @pytest.mark.parametrize("mode", _all_modes.keys())
+    def test_zero_padding_shortcuts_copy(self, mode):
+        test = np.arange(120).reshape(4, 5, 6)
+        result = np.pad(test, 0, mode=mode)
+        assert_array_equal(test, result)
+        assert result is not test
+        assert not np.shares_memory(result, test)
+
+    @pytest.mark.parametrize(
+        "mode, kwargs",
+        [
+            ("linear_ramp", {"end_values": [1, 2, 3]}),
+            ("mean", {"stat_length": -1}),
+            ("median", {"stat_length": -1}),
+            ("maximum", {"stat_length": -1}),
+            ("minimum", {"stat_length": -1}),
+        ],
+    )
+    def test_zero_padding_empty_array_skips_mode_validation(self, mode, kwargs):
+        test = np.empty((0, 3))
+        result = np.pad(test, 0, mode=mode, **kwargs)
+        assert_array_equal(test, result)
+
+    @pytest.mark.parametrize("mode", ["maximum", "minimum"])
+    def test_zero_padding_stat_length_zero_errors(self, mode):
+        test = np.arange(12).reshape(3, 4)
+        with pytest.raises(ValueError, match="stat_length of 0"):
+            np.pad(test, 0, mode=mode, stat_length=0)
+
+    def test_zero_padding_linear_ramp_validates_end_values(self):
+        test = np.arange(12, dtype=float).reshape(3, 4)
+        with pytest.raises(np.exceptions.DTypePromotionError):
+            np.pad(test, 0, mode="linear_ramp", end_values="abc")
+
+    def test_zero_padding_linear_ramp_warns_on_complex_cast(self):
+        test = np.arange(12, dtype=float).reshape(3, 4)
+        with pytest.warns(np.exceptions.ComplexWarning):
+            result = np.pad(test, 0, mode="linear_ramp", end_values=1 + 2j)
+        assert_array_equal(test, result)
+
+    @pytest.mark.parametrize("mode", ["maximum", "mean", "median", "minimum"])
+    def test_zero_padding_stat_modes_validate_string_dtype(self, mode):
+        test = np.array(["a", "b"])
+        with pytest.raises(TypeError):
+            np.pad(test, 0, mode=mode)
+
+    @pytest.mark.parametrize("mode", ["maximum", "mean", "median", "minimum"])
+    def test_zero_padding_stat_modes_validate_object_dtype(self, mode):
+        test = np.array([object(), object()], dtype=object)
+        with pytest.raises(TypeError):
+            np.pad(test, 0, mode=mode)
+
+    @pytest.mark.parametrize(
+        "mode", ["linear_ramp", "maximum", "mean", "median", "minimum"]
+    )
+    def test_zero_width_axis_object_mixed_widths(self, mode):
+        # Zero-width axes must not feed not-yet-filled pad values (None
+        # for object dtype) into the validation of later padded axes.
+        test = np.array([[1, 2], [3, 4]], dtype=object)
+        expected = np.pad(test.astype(float), ((0, 0), (1, 1)), mode=mode)
+        result = np.pad(test, ((0, 0), (1, 1)), mode=mode)
+        assert result.dtype == object
+        assert_array_equal(result.astype(float), expected)
+
     @pytest.mark.parametrize("mode", ['maximum', 'mean', 'median', 'minimum',])
     def test_shallow_statistic_range(self, mode):
         test = np.arange(120).reshape(4, 5, 6)

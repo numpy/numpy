@@ -7,8 +7,6 @@ import warnings
 from decimal import Decimal
 
 import pytest
-from hypothesis import given, strategies as st
-from hypothesis.extra import numpy as hynp
 
 import numpy as np
 from numpy import ma
@@ -29,6 +27,8 @@ from numpy.testing import (
     assert_raises,
     assert_raises_regex,
 )
+from numpy.testing._private.hypothesis_helpers import HAS_HYPOTHESIS, given, hynp, st
+from numpy.testing._private.utils import longdouble_fpe_mark
 
 
 class TestResize:
@@ -345,6 +345,12 @@ class TestNonarrayArgs:
             out = np.take(x, ind)
             assert_equal(out, tgt)
             assert_equal(out.dtype, tgt.dtype)
+
+    def test_top_k(self):
+        a = [[1, 2], [2, 1]]
+        y = ([[2], [2]], [[1], [0]])
+        out = np.top_k(a, 1)
+        assert_equal(out, y)
 
     def test_trace(self):
         c = [[1, 2], [3, 4], [5, 6]]
@@ -979,13 +985,14 @@ class TestFloatExceptions:
 
     # Test for all real and complex float types
     @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
-    @pytest.mark.parametrize("typecode", np.typecodes["AllFloat"])
+    @pytest.mark.parametrize(
+        "typecode",
+        [
+            pytest.param(code, marks=[longdouble_fpe_mark] if code in "gG" else [])
+            for code in np.typecodes["AllFloat"]
+        ],
+    )
     def test_floating_exceptions(self, typecode):
-        if 'bsd' in sys.platform and typecode in 'gG':
-            pytest.skip(reason="Fallback impl for (c)longdouble may not raise "
-                               "FPE errors as expected on BSD OSes, "
-                               "see gh-24876, gh-23379")
-
         # Test basic arithmetic function errors
         with np.errstate(all='raise'):
             ftype = obj2sctype(typecode)
@@ -2874,6 +2881,7 @@ class TestClip:
         actual = np.clip(arr, amin, amax)
         assert_equal(actual, expected)
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @given(
         data=st.data(),
         arr=hynp.arrays(
@@ -4019,7 +4027,7 @@ class TestCross:
     def test_zero_dimension(self, a, b):
         with pytest.raises(ValueError) as exc:
             np.cross(a, b)
-        assert "At least one array has zero dimension" in str(exc.value)
+        assert "Input arrays must be at least 1-dimensional" in str(exc.value)
 
 
 def test_outer_out_param():

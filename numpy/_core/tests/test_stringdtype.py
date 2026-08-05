@@ -113,6 +113,28 @@ def test_dtype_creation():
     assert len(hashes) == 4
 
 
+@pytest.mark.parametrize("dtype_spec", [
+    [("a", StringDType())],
+    [("a", StringDType(), 10)],
+    [("a", (StringDType(), 10))],
+    {"names": ["a"], "formats": [StringDType()]},
+    {"names": ["a"], "formats": [(StringDType(), 2)]},
+    {"a": (StringDType(), 0)},
+    "T,i4",
+])
+def test_structured_dtype_creation_rejected(dtype_spec):
+    with pytest.raises(TypeError, match="not currently supported"):
+        np.dtype(dtype_spec)
+
+
+def test_subarray_dtype_rejected():
+    with pytest.raises(TypeError,
+                       match="not currently supported within subarray"):
+        np.dtype((StringDType(), 2))
+    # (dtype, ()) is equivalent to the dtype itself and remains allowed
+    assert np.dtype((StringDType(), ())) == StringDType()
+
+
 def test_dtype_equality(dtype):
     assert dtype == dtype
     for ch in "SU":
@@ -722,6 +744,17 @@ def test_fancy_indexing(string_list):
     uarr = np.array(data, dtype="U30")
     for ind in [[0], [1], [2], [3], [[0, 0]], [[1, 1, 3]], [[1, 1]]]:
         assert_array_equal(sarr[ind], uarr[ind])
+
+
+def test_fromiter_reused_dtype():
+    # Reusing the same StringDType instance across fromiter
+    # calls used to write strings into the wrong arena, creating corrupted arrays
+    sd = np.dtypes.StringDType()
+    data = ["a" * 18, "b" * 18] * 8
+    arr1 = np.fromiter(iter(data), dtype=sd, count=len(data))
+    arr2 = np.fromiter(iter(data), dtype=sd, count=len(data))
+    # This used to fail with MemoryError.
+    assert_array_equal(arr1, arr2)
 
 
 def test_flatiter_indexing():

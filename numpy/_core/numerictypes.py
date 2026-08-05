@@ -81,6 +81,7 @@ import numbers
 from numpy._utils import set_module
 
 from . import multiarray as ma
+from ._multiarray_umath import StringDType
 from .multiarray import (
     busday_count,
     busday_offset,
@@ -311,9 +312,15 @@ def _preprocess_dtype(dtype):
       1. fetching type from a data type
       2. verifying that types are built-in NumPy dtypes
     """
+    orig_dtype = dtype
     if isinstance(dtype, ma.dtype):
         dtype = dtype.type
     if isinstance(dtype, ndarray) or dtype not in allTypes.values():
+        if isinstance(orig_dtype, StringDType) or orig_dtype is StringDType:
+            # StringDType's scalar type is the builtin `str`, which is not
+            # a NumPy scalar type, so use the DType class to identify it.
+            # if we ever fix gh-28165, this should be deleted
+            return StringDType
         raise _PreprocessDTypeError
     return dtype
 
