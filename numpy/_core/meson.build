@@ -1289,7 +1289,7 @@ src_multiarray = multiarray_gen_headers + [
   'src/npysort/heapsort.cpp',
   'src/npysort/npysort_methods.cpp',
   'src/common/npy_partition.h',
-  'src/npysort/selection.cpp',
+  'src/npysort/selection_methods.cpp',
   'src/common/npy_binsearch.h',
   'src/npysort/binsearch.cpp',
   'src/multiarray/textreading/conversions.c',

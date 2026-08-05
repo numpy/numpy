@@ -22,7 +22,6 @@
 #include "common.h"
 #include "numpy/npy_math.h"
 #include "npy_sort.h"
-#include "npy_partition.h"
 #include "convert_datatype.h"
 #include "dtypemeta.h"
 #include "dispatching.h"
@@ -976,30 +975,35 @@ sfloat_partition_loop(
         char *const *data,
         const npy_intp *dimensions,
         const npy_intp *strides,
-        NpyAuxData *NPY_UNUSED(auxdata))
+        NpyAuxData *auxdata)
 {
     assert(strides[0] == sizeof(npy_float64));
     assert(strides[1] == sizeof(npy_intp));
 
-    npy_intp *kth = (npy_intp *)data[1];
-
-    NPY_SELECTKIND which = ((PyArrayMethod_PartitionParameters *)context->parameters)->flags;
-    PyArray_PartitionFunc *partition_func = get_partition_func(NPY_DOUBLE, which);
-    if (partition_func == NULL) {
+    PyArrayMethodObject *part_meth = NPY_DT_SLOTS(&PyArray_DoubleDType)->part_meth;
+    if (part_meth == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "double partition method not found");
         return -1;
     }
 
-    npy_intp pivots[NPY_MAX_PIVOT_STACK];
-    npy_intp npiv = 0;
-    npy_intp i;
+    PyArray_SFloatDescr *sdescr = (PyArray_SFloatDescr *)context->descriptors[0];
+    PyArray_Descr *double_descr = &sdescr->base;
+    PyArray_Descr *loop_descrs[3] = {double_descr, context->descriptors[1], double_descr};
 
-    int ret = 0;
-    for (i = 0; i < dimensions[1] && ret == 0; ++i) {
-        ret = partition_func(
-            data[0], dimensions[0], kth[i], pivots, &npiv, dimensions[1], NULL);
+    PyArrayMethod_Context part_context = {
+        .method = part_meth,
+        .descriptors = loop_descrs,
+        .parameters = context->parameters,
+    };
+    PyArrayMethod_StridedLoop *loop;
+    NPY_ARRAYMETHOD_FLAGS flags = 0;
+
+    part_meth->get_strided_loop(&part_context, 1, 0, strides, &loop, &auxdata, &flags);
+    if (loop == NULL) {
+        return -1;
     }
 
-    return ret;
+    return loop(&part_context, data, dimensions, strides, auxdata);
 }
 
 
@@ -1033,32 +1037,36 @@ sfloat_argpartition_loop(
         char *const *data,
         const npy_intp *dimensions,
         const npy_intp *strides,
-        NpyAuxData *NPY_UNUSED(auxdata))
+        NpyAuxData *auxdata)
 {
     assert(strides[0] == sizeof(npy_float64));
     assert(strides[1] == sizeof(npy_intp));
     assert(strides[2] == sizeof(npy_intp));
 
-    npy_intp *kth = (npy_intp *)data[1];
-    npy_intp *out = (npy_intp *)data[2];
-
-    NPY_SELECTKIND which = ((PyArrayMethod_PartitionParameters *)context->parameters)->flags;
-    PyArray_ArgPartitionFunc *argpartition_func = get_argpartition_func(NPY_DOUBLE, which);
-    if (argpartition_func == NULL) {
+    PyArrayMethodObject *argpart_meth = NPY_DT_SLOTS(&PyArray_DoubleDType)->argpart_meth;
+    if (argpart_meth == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "double argpartition method not found");
         return -1;
     }
 
-    npy_intp pivots[NPY_MAX_PIVOT_STACK];
-    npy_intp npiv = 0;
-    npy_intp i;
+    PyArray_SFloatDescr *sdescr = (PyArray_SFloatDescr *)context->descriptors[0];
+    PyArray_Descr *double_descr = &sdescr->base;
+    PyArray_Descr *loop_descrs[3] = {double_descr, context->descriptors[1], context->descriptors[2]};
 
-    int ret = 0;
-    for (i = 0; i < dimensions[1] && ret == 0; ++i) {
-        ret = argpartition_func(
-            data[0], out, dimensions[0], kth[i], pivots, &npiv, dimensions[1], NULL);
+    PyArrayMethod_Context argpart_context = {
+        .method = argpart_meth,
+        .descriptors = loop_descrs,
+        .parameters = context->parameters,
+    };
+    PyArrayMethod_StridedLoop *loop;
+    NPY_ARRAYMETHOD_FLAGS flags = 0;
+
+    argpart_meth->get_strided_loop(&argpart_context, 1, 0, strides, &loop, &auxdata, &flags);
+    if (loop == NULL) {
+        return -1;
     }
 
-    return ret;
+    return loop(&argpart_context, data, dimensions, strides, auxdata);
 }
 
 
