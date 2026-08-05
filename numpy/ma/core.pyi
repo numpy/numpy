@@ -2040,6 +2040,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         dtype: DTypeLike | None = None,
         out: None = None,
         keepdims: bool | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> Any: ...
     @overload
     def sum[ArrayT: np.ndarray](
@@ -2049,6 +2050,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         dtype: DTypeLike | None,
         out: ArrayT,
         keepdims: bool | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> ArrayT: ...
     @overload
     def sum[ArrayT: np.ndarray](
@@ -2059,6 +2061,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         *,
         out: ArrayT,
         keepdims: bool | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> ArrayT: ...
 
     # Keep in sync with `ma.core.prod`
@@ -3349,6 +3352,7 @@ def sum(
     dtype: DTypeLike | None = None,
     out: None = None,
     keepdims: bool | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> Incomplete: ...
 @overload
 def sum[ArrayT: np.ndarray](
@@ -3357,6 +3361,7 @@ def sum[ArrayT: np.ndarray](
     dtype: DTypeLike | None,
     out: ArrayT,
     keepdims: bool | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ArrayT: ...
 @overload
 def sum[ArrayT: np.ndarray](
@@ -3366,6 +3371,7 @@ def sum[ArrayT: np.ndarray](
     *,
     out: ArrayT,
     keepdims: bool | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ArrayT: ...
 
 # Keep in sync with `product` and `MaskedArray.prod`
