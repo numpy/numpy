@@ -497,21 +497,65 @@ def zeros(
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Incomplete]: ...
 
-#
-@overload
+# keep in sync with `zeros_like` in core/numeric.pyi
+@overload  # known array, subok=True
 def empty_like[ArrayT: np.ndarray](
-    prototype: ArrayT,
+    a: ArrayT,
+    /,
+    dtype: None = None,
+    order: _OrderKACF = "K",
+    subok: L[True] = True,
+    shape: None = None,
+    *,
+    device: L["cpu"] | None = None,
+) -> ArrayT: ...
+@overload  # known array, subok=False (default)
+def empty_like[ShapeT: _Shape, DTypeT: np.dtype](
+    a: np.ndarray[ShapeT, DTypeT],
+    /,
+    dtype: None = None,
+    order: _OrderKACF = "K",
+    *,
+    subok: L[False],
+    shape: None = None,
+    device: L["cpu"] | None = None,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # known array, dtype=<known>
+def empty_like[ShapeT: _Shape, ScalarT: np.generic](
+    a: np.ndarray[ShapeT],
+    /,
+    dtype: _DTypeLike[ScalarT],
+    order: _OrderKACF = "K",
+    subok: bool = True,
+    shape: None = None,
+    *,
+    device: L["cpu"] | None = None,
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # known array, dtype=<unknown>
+def empty_like[ShapeT: _Shape](
+    a: np.ndarray[ShapeT],
+    /,
+    dtype: DTypeLike,
+    order: _OrderKACF = "K",
+    subok: bool = True,
+    shape: None = None,
+    *,
+    device: L["cpu"] | None = None,
+) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
+@overload  # known array-like, shape=<known>
+def empty_like[ShapeT: _Shape, ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
     /,
     dtype: None = None,
     order: _OrderKACF = "K",
     subok: bool = True,
-    shape: _ShapeLike | None = None,
     *,
+    shape: ShapeT,
     device: L["cpu"] | None = None,
-) -> ArrayT: ...
-@overload
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # known array-like
 def empty_like[ScalarT: np.generic](
-    prototype: _ArrayLike[ScalarT],
+    a: _ArrayLike[ScalarT],
     /,
     dtype: None = None,
     order: _OrderKACF = "K",
@@ -520,9 +564,9 @@ def empty_like[ScalarT: np.generic](
     *,
     device: L["cpu"] | None = None,
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # unknown, dtype=<known>
 def empty_like[ScalarT: np.generic](
-    prototype: Incomplete,
+    a: object,
     /,
     dtype: _DTypeLike[ScalarT],
     order: _OrderKACF = "K",
@@ -531,9 +575,9 @@ def empty_like[ScalarT: np.generic](
     *,
     device: L["cpu"] | None = None,
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # fallback
 def empty_like(
-    prototype: Incomplete,
+    a: object,
     /,
     dtype: DTypeLike | None = None,
     order: _OrderKACF = "K",
@@ -541,7 +585,7 @@ def empty_like(
     shape: _ShapeLike | None = None,
     *,
     device: L["cpu"] | None = None,
-) -> NDArray[Incomplete]: ...
+) -> NDArray[Any]: ...
 
 #
 @overload  # ndarray, subok=True
