@@ -498,7 +498,7 @@ def zeros(
 ) -> NDArray[Incomplete]: ...
 
 # keep in sync with `zeros_like` in core/numeric.pyi
-@overload  # known array, subok=True
+@overload  # known array, subok=True (default)
 def empty_like[ArrayT: np.ndarray](
     a: ArrayT,
     /,
@@ -509,7 +509,7 @@ def empty_like[ArrayT: np.ndarray](
     *,
     device: L["cpu"] | None = None,
 ) -> ArrayT: ...
-@overload  # known array, subok=False (default)
+@overload  # known array, subok=False
 def empty_like[ShapeT: _Shape, DTypeT: np.dtype](
     a: np.ndarray[ShapeT, DTypeT],
     /,

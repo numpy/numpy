@@ -666,7 +666,7 @@ type _DTypeLikeComplex128 = type[complex] | _Complex128Codes
 ###
 
 # keep in sync with `ones_like` and empty_like in `core/multiarray.pyi`
-@overload  # known array, subok=True
+@overload  # known array, subok=True (default)
 def zeros_like[ArrayT: np.ndarray](
     a: ArrayT,
     dtype: None = None,
@@ -676,7 +676,7 @@ def zeros_like[ArrayT: np.ndarray](
     *,
     device: L["cpu"] | None = None,
 ) -> ArrayT: ...
-@overload  # known array, subok=False (default)
+@overload  # known array, subok=False
 def zeros_like[ShapeT: _Shape, DTypeT: np.dtype](
     a: np.ndarray[ShapeT, DTypeT],
     dtype: None = None,
@@ -858,7 +858,7 @@ def ones(
 ) -> NDArray[Incomplete]: ...
 
 # keep in sync with `zeros_like`
-@overload  # known array, subok=True
+@overload  # known array, subok=True (default)
 def ones_like[ArrayT: np.ndarray](
     a: ArrayT,
     dtype: None = None,
@@ -868,7 +868,7 @@ def ones_like[ArrayT: np.ndarray](
     *,
     device: L["cpu"] | None = None,
 ) -> ArrayT: ...
-@overload  # known array, subok=False (default)
+@overload  # known array, subok=False
 def ones_like[ShapeT: _Shape, DTypeT: np.dtype](
     a: np.ndarray[ShapeT, DTypeT],
     dtype: None = None,
@@ -1065,7 +1065,7 @@ def full(
 ) -> NDArray[Any]: ...
 
 # keep in sync with `zeros_like` and `ones_like` (modulo `fill_value`)
-@overload  # known array, subok=True
+@overload  # known array, subok=True (default)
 def full_like[ArrayT: np.ndarray](
     a: ArrayT,
     fill_value: object,
@@ -1076,7 +1076,7 @@ def full_like[ArrayT: np.ndarray](
     *,
     device: L["cpu"] | None = None,
 ) -> ArrayT: ...
-@overload  # known array, subok=False (default)
+@overload  # known array, subok=False
 def full_like[ShapeT: _Shape, DTypeT: np.dtype](
     a: np.ndarray[ShapeT, DTypeT],
     fill_value: object,
