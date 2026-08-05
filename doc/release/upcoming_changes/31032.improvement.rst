@@ -1,0 +1,8 @@
+Allow explicit `out=None` for `ufunc` overrides if the `where` keyword is present
+---------------------------------------------------------------------------------
+Numpy now emits the warning:
+``UserWarning: 'where' used without 'out', expect unitialized memory in output.
+If this is intentional, use out=None.``
+
+This change allows `out=None` to be propagated through ``__array_ufunc__()``
+if the `where` keyword is also present.
