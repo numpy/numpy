@@ -204,6 +204,16 @@ class TestRavelUnravelIndex:
         # regression test for gh-29690
         np.unravel_index(np.array([[1, 0, 1, 0]], dtype=np.uint32), (4,))
 
+    def test_unravel_index_buffer_boundary(self):
+        indices = np.arange(10_000, dtype=np.intp)[:, None]
+        coords = np.unravel_index(indices, (100, 100))
+
+        assert_array_equal(
+            np.ravel_multi_index(coords, (100, 100)),
+            indices,
+        )
+
+
 class TestGrid:
     def test_basic(self):
         a = mgrid[-1:1:10j]

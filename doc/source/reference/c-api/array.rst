@@ -1851,6 +1851,89 @@ the functions that must be implemented for each slot.
    initial value is correct, since NumPy may call this even when it is not
    strictly necessary to do so.
 
+.. c:type:: int (PyArrayMethod_GetMultiReductionInitials)( \
+        PyArrayMethod_Context *context, npy_bool reduction_is_empty, \
+        void **initials)
+
+   Multi-output version of :c:type:`PyArrayMethod_GetReductionInitial`, used to
+   query the per-output initial values for a reduction. It behaves the same as
+   :c:type:`PyArrayMethod_GetReductionInitial`, except that *initials*
+   is an array of ``nout`` pointers, one per reduction output, each pointing
+   to the buffer to fill. The *reduction_is_empty* argument and the -1, 0, or 1
+   return value have the same meaning as :c:type:`PyArrayMethod_GetReductionInitial`.
+   A return of 1 indicates every initial value has been successfully initialized
+   with valid data.
+
+.. c:macro:: NPY_METH_get_reduction_loop
+
+   .. versionadded:: 2.6
+
+   Registers a dedicated loop for use by :meth:`~numpy.ufunc.reduce`,
+   implemented as a :c:type:`PyArrayMethod_GetLoop` function (the same
+   typedef used for ``NPY_METH_get_loop``). This is required to reduce
+   ufuncs with more than one output, since the "forward" elementwise loop of
+   such a ufunc cannot be used as a reduction loop the way a single-output loop
+   can (by pointing the output and the first input at the same memory, so that
+   the loop accumulates in place). Instead, the returned
+   :c:type:`PyArrayMethod_StridedLoop` must implement the reduction
+   directly, with an ``(nout + 1)``-in/``nout``-out signature: it takes the
+   current per-output accumulators followed by one streamed input element,
+   and writes the updated accumulators. That is, for a ufunc whose forward
+   loop has ``nout`` outputs, the *data*, *strides*, and descriptor arrays
+   passed to the reduction loop are laid out as::
+
+       [acc_0, ..., acc_{nout-1}, x, out_0, ..., out_{nout-1}]
+
+   where ``x`` is the streamed element being reduced in, and each ``out_i``
+   points at the same memory as the matching ``acc_i`` (and typically has a
+   stride of 0 relative to it).
+
+   The *strides* argument passed to ``NPY_METH_get_reduction_loop`` itself at
+   setup time uses this same layout, so that ``strides[i]`` describes the
+   ``i``-th operand of the loop being requested. ``strides[nout]`` is the
+   stride of the streamed input, and each ``strides[nout + 1 + i]`` repeats
+   ``strides[i]``, because ``out_i`` and ``acc_i`` are the same buffer. The
+   accumulator strides are normally 0, since the reduction accumulates in
+   place. When a ``where=`` mask is used, one further entry at
+   ``strides[2 * nout + 1]`` holds the mask stride.
+
+   If ``NPY_METH_get_reduction_loop`` is not set, :meth:`~numpy.ufunc.reduce`
+   falls back to ``NPY_METH_get_loop``/``NPY_METH_strided_loop``, which only
+   works for the typical two-input/one-output case. Calling
+   :meth:`~numpy.ufunc.reduce` on a ufunc with more than one output whose
+   resolved ArrayMethod does not register a reduction loop raises a
+   :exc:`TypeError`. See :ref:`c-api.reduction-loop-tutorial` for a
+   worked example.
+
+   Note that this slot only lifts the restriction on how many outputs a
+   ufunc may have. It does not change how many inputs a ufunc may have:
+   :meth:`~numpy.ufunc.reduce` (as well as :meth:`~numpy.ufunc.accumulate`
+   and :meth:`~numpy.ufunc.reduceat`) still only works on ufuncs that take
+   exactly two inputs, whether or not a reduction loop is registered.
+   Calling any of these methods on a ufunc with a number of inputs other
+   than two raises a :exc:`ValueError`.
+
+.. c:macro:: NPY_METH_get_multi_reduction_initials
+
+   .. versionadded:: 2.6
+
+   Registers the per-output reduction identity/initial values, implemented as
+   a :c:type:`PyArrayMethod_GetMultiReductionInitials` function. It is the
+   multi-output version of :c:macro:`NPY_METH_get_reduction_initial` and fills
+   one initial value per reduction output instead of a single one.
+   :meth:`~numpy.ufunc.reduce` uses it to seed the accumulators when the
+   reduction is empty or when a ``where=`` mask is given, for a ufunc whose
+   loop also registers a :c:macro:`NPY_METH_get_reduction_loop`. See
+   :c:type:`PyArrayMethod_GetMultiReductionInitials` for the signature.
+
+   A method may register at most one of
+   :c:macro:`NPY_METH_get_reduction_initial` and
+   ``NPY_METH_get_multi_reduction_initials``. The latter supports single-output
+   reductions too. For a ufunc with more than one output it must be paired with
+   a :c:macro:`NPY_METH_get_reduction_loop`, otherwise
+   :meth:`~numpy.ufunc.reduce` is unreachable and the identity would never be
+   used. See :ref:`c-api.reduction-loop-tutorial` for a worked example.
+
 Flags
 ~~~~~
 
@@ -2167,6 +2250,40 @@ and not set any of the other loop slots.
 
         The flags passed to the sort operation. This is a bitwise OR of
         ``NPY_SORTKIND`` values indicating the kind of sort to perform.
+
+These specs can be registered using :c:func:`PyUFunc_AddLoopsFromSpecs`
+along with other ufunc loops.
+
+Partitioning and Argpartitioning
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Similarly to sorting and argsorting, partitioning and argpartitioning methods
+can be registered using the ArrayMethod API. This is done by adding an
+ArrayMethod spec with the name ``"partition"`` or ``"argpartition"`` respectively.
+The spec must have ``nin=2`` and ``nout=1`` for both partition and argpartition,
+where the first input ``data[0]`` is the array to partition and the second input
+``data[1]`` is the kth array of indices to partition by. Partitioning is
+inplace, hence we enforce that ``data[0] == data[2]``. ``data[1]`` is always
+a contiguous array of type ``NPY_INTP`` that contains the partition indices.
+If multiple partition indices are given, the array is partitioned for each
+index. Argpartitioning returns a new array of indices, so the output must be of
+``NPY_INTP`` type.
+
+The ``context`` passed to the loop contains the ``parameters`` field which
+for these operations is a ``PyArrayMethod_PartitionParameters *`` struct. This
+struct contains a ``flags`` field which is a bitwise OR of ``NPY_SELECTKIND``
+values indicating the kind of partition to perform (that is, whether it is a
+descending partition). If the strided loop depends on the flags, a good way
+to deal with this is to define :c:macro:`NPY_METH_get_loop`, and not set any
+of the other loop slots. For the loop, ``dimensions[0]`` is the number of
+elements to partition, and ``dimensions[1]`` is the number of partition indices.
+
+.. c:struct:: PyArrayMethod_PartitionParameters
+
+    .. c:member:: NPY_SELECTKIND flags
+
+        The flags passed to the partition operation. This is a bitwise OR of
+        ``NPY_SELECTKIND`` values indicating the kind of partition to perform.
 
 These specs can be registered using :c:func:`PyUFunc_AddLoopsFromSpecs`
 along with other ufunc loops.
@@ -4301,40 +4418,33 @@ the C-API is needed then some additional steps must be taken.
 Checking the API Version
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Because python extensions are not used in the same way as usual libraries on
-most platforms, some errors cannot be automatically detected at build time or
-even runtime. For example, if you build an extension using a function available
-only for numpy >= 1.3.0, and you import the extension later with numpy 1.2, you
-will not get an import error (but almost certainly a segmentation fault when
-calling the function). That's why several functions are provided to check for
-numpy versions. The macros :c:data:`NPY_VERSION`  and
-:c:data:`NPY_FEATURE_VERSION` corresponds to the numpy version used to build the
-extension, whereas the versions returned by the functions
-:c:func:`PyArray_GetNDArrayCVersion` and :c:func:`PyArray_GetNDArrayCFeatureVersion`
-corresponds to the runtime numpy's version.
+The following definitions allow checking the NumPy compile time version,
+enabled C-API feature version and runtime version.
 
-The rules for ABI and API compatibilities can be summarized as follows:
+ABI and C-API compatibility are automatically checked when calling
+:c:func:`PyArray_ImportNumPyAPI` or :c:func:`import_array` and an error
+will be raised when these are incompatible with the NumPy runtime.
+User code should generally **not** check these manually.
 
-* Whenever :c:data:`NPY_VERSION` != ``PyArray_GetNDArrayCVersion()``, the
-  extension has to be recompiled (ABI incompatibility).
-* :c:data:`NPY_VERSION` == ``PyArray_GetNDArrayCVersion()`` and
-  :c:data:`NPY_FEATURE_VERSION` <= ``PyArray_GetNDArrayCFeatureVersion()`` means
-  backward compatible changes.
-
-ABI incompatibility is automatically detected in every numpy's version. API
-incompatibility detection was added in numpy 1.4.0. If you want to supported
-many different numpy versions with one extension binary, you have to build your
-extension with the lowest :c:data:`NPY_FEATURE_VERSION` as possible.
+For details about NumPy C-API compatibility see
+:ref:`for-downstream-package-authors`.
 
 .. c:macro:: NPY_VERSION
 
-    The current version of the ndarray object (check to see if this
-    variable is defined to guarantee the ``numpy/arrayobject.h`` header is
-    being used).
+    The ABI version of the NumPy headers at compile time.
 
 .. c:macro:: NPY_FEATURE_VERSION
 
-    The current version of the C-API.
+    The version of the NumPy C-API the compilation targets.
+    Setting ``NPY_TARGET_VERSION`` may modify this value to make newer
+    NumPy API features available or, in principle, to be compatible with
+    older NumPy versions.
+
+.. c:macro:: PyArray_RUNTIME_VERSION
+
+    After the C-API has been imported ``PyArray_RUNTIME_VERSION`` is set to
+    the current runtime C-API version. ``PyArray_RUNTIME_VERSION`` is
+    mainly used when necessary to support both old and new NumPy versions.
 
 .. c:function:: unsigned int PyArray_GetNDArrayCVersion(void)
 

@@ -470,6 +470,12 @@ def asarray_chkfinite(a: object, dtype: DTypeLike | None = None, order: _OrderKA
 # `[condlist]`. And even though the documentation says these should be boolean, in
 # practice anything that `np.array(condlist, dtype=bool)` accepts will work, i.e. any
 # array-like.
+@overload  # this overload is required to avoid pyright rejecting all-scalar `funclist`
+def piecewise[ShapeT: _Shape, ScalarT: np.generic](
+    x: _Array[ShapeT, ScalarT],
+    condlist: ArrayLike,
+    funclist: _SizedIterable[_ScalarLike_co],
+) -> _Array[ShapeT, ScalarT]: ...
 @overload
 def piecewise[ShapeT: _Shape, ScalarT: np.generic, **Tss](
     x: _Array[ShapeT, ScalarT],
@@ -535,13 +541,23 @@ def select(
 ) -> np.ndarray: ...
 
 # keep roughly in sync with `ma.core.copy`
-@overload
+@overload  # known array, subok=True (positional)
 def copy[ArrayT: np.ndarray](a: ArrayT, order: _OrderKACF, subok: L[True]) -> ArrayT: ...
-@overload
+@overload  # known array, subok=True (keyword)
 def copy[ArrayT: np.ndarray](a: ArrayT, order: _OrderKACF = "K", *, subok: L[True]) -> ArrayT: ...
-@overload
-def copy[ScalarT: np.generic](a: _ArrayLike[ScalarT], order: _OrderKACF = "K", subok: L[False] = False) -> NDArray[ScalarT]: ...
-@overload
+@overload  # known array, subok=False (default)
+def copy[ShapeT: _Shape, DTypeT: np.dtype](
+    a: np.ndarray[ShapeT, DTypeT],
+    order: _OrderKACF = "K",
+    subok: L[False] = False,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # known array-like dtype
+def copy[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    order: _OrderKACF = "K",
+    subok: bool = False,
+) -> NDArray[ScalarT]: ...
+@overload  # fallback
 def copy(a: ArrayLike, order: _OrderKACF = "K", subok: L[False] = False) -> NDArray[Incomplete]: ...
 
 #
@@ -884,7 +900,15 @@ def unwrap[ArrayT: NDArray[np.floating | np.object_]](
     discont: float | None = None,
     axis: int = -1,
     *,
-    period: float = ...,  # = τ
+    period: float | int = ...,  # = τ
+) -> ArrayT: ...
+@overload  # integer array + integer period keeps the integer dtype
+def unwrap[ArrayT: NDArray[np.integer]](
+    p: ArrayT,
+    discont: float | None = None,
+    axis: int = -1,
+    *,
+    period: int,
 ) -> ArrayT: ...
 @overload  # known shape, float64
 def unwrap[ShapeT: _Shape](
@@ -950,6 +974,8 @@ def sort_complex(a: _ArrayLike[_SortsToComplex128]) -> NDArray[np.complex128]: .
 def sort_complex[ShapeT: _Shape](a: _Array[ShapeT, np.longdouble]) -> _Array[ShapeT, np.clongdouble]: ...
 @overload  # clongdouble, shape unknown
 def sort_complex(a: _ArrayLike[np.longdouble]) -> NDArray[np.clongdouble]: ...
+@overload  # builtin +complex, shape unknown
+def sort_complex(a: _SeqND[complex]) -> NDArray[np.complex128]: ...
 
 #
 def trim_zeros[T](filt: _TrimZerosSequence[T], trim: L["f", "b", "fb", "bf"] = "fb", axis: _ShapeLike | None = None) -> T: ...

@@ -1,19 +1,28 @@
 version: 2
 updates:
   - package-ecosystem: github-actions
-    directory: /
+    directories:
+      - /
+      - /.github/ccache
     schedule:
-      interval: daily
+      interval: weekly
     cooldown:
       default-days: 7     # optional
     commit-message:
       prefix: "MAINT"
     labels:
       - "03 - Maintenance"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    ignore:
+      - dependency-name: "bus1/cabuild"
   - package-ecosystem: pip
     directory: /requirements
     schedule:
       interval: daily
+    versioning-strategy: increase-if-necessary
     cooldown:
       default-days: 7     # optional
     groups:

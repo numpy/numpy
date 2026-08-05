@@ -1,0 +1,4 @@
+``np.linspace`` no longer returns NaN for equal infinite endpoints
+------------------------------------------------------------------
+``np.linspace(np.inf, np.inf, N)`` (and ``-np.inf``) now correctly returns
+an array filled with ``inf`` instead of ``nan``.

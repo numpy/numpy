@@ -26,7 +26,7 @@ AR_M: npt.NDArray[np.datetime64]
 AR_O: npt.NDArray[np.object_]
 AR_b: npt.NDArray[np.bool]
 AR_U: npt.NDArray[np.str_]
-CHAR_AR_U: np.char.chararray[tuple[Any, ...], np.dtype[np.str_]]  # type: ignore[deprecated]
+CHAR_AR_U: np.char.chararray[tuple[int], np.dtype[np.str_]]  # type: ignore[deprecated]
 
 AR_f8_1d: np.ndarray[tuple[int], np.dtype[np.float64]]
 AR_f8_2d: np.ndarray[tuple[int, int], np.dtype[np.float64]]
@@ -103,6 +103,7 @@ assert_type(np.asarray_chkfinite(AR_f8, dtype=np.float64), npt.NDArray[np.float6
 assert_type(np.asarray_chkfinite(AR_f8, dtype=float), np.ndarray)
 
 # piecewise
+assert_type(np.piecewise(AR_f8_1d, AR_b, [-1.0, 1.0]), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.piecewise(AR_f8_1d, AR_b, [func]), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.piecewise(AR_f8, AR_b, [func]), npt.NDArray[np.float64])
 assert_type(np.piecewise(AR_f8, AR_b, [func_f8]), npt.NDArray[np.float64])
@@ -130,10 +131,9 @@ assert_type(np.place(AR_f8, mask=AR_i8, vals=5.0), None)
 # copy
 assert_type(np.copy(AR_LIKE_f8), np.ndarray)
 assert_type(np.copy(AR_U), npt.NDArray[np.str_])
-assert_type(np.copy(CHAR_AR_U, "K", subok=True), np.char.chararray[tuple[Any, ...], np.dtype[np.str_]])  # type: ignore[deprecated]
-assert_type(np.copy(CHAR_AR_U, subok=True), np.char.chararray[tuple[Any, ...], np.dtype[np.str_]])  # type: ignore[deprecated]
-# pyright correctly infers `NDArray[str_]` here
-assert_type(np.copy(CHAR_AR_U), np.ndarray[Any, Any])  # pyright: ignore[reportAssertTypeFailure]
+assert_type(np.copy(CHAR_AR_U, "K", subok=True), np.char.chararray[tuple[int], np.dtype[np.str_]])  # type: ignore[deprecated]
+assert_type(np.copy(CHAR_AR_U, subok=True), np.char.chararray[tuple[int], np.dtype[np.str_]])  # type: ignore[deprecated]
+assert_type(np.copy(CHAR_AR_U), np.ndarray[tuple[int], np.dtype[np.str_]])
 
 # gradient
 assert_type(np.gradient(AR_f8_1d, 1), np.ndarray[tuple[int], np.dtype[np.float64]])
@@ -209,6 +209,8 @@ assert_type(np.unwrap(AR_f8_3d), np.ndarray[tuple[int, int, int], np.dtype[np.fl
 assert_type(np.unwrap(AR_LIKE_b), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.unwrap(AR_LIKE_i8), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.unwrap(AR_LIKE_f8), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.unwrap(AR_i8, period=4), npt.NDArray[np.int64])
+assert_type(np.unwrap(AR_i8), npt.NDArray[np.float64])
 
 # sort_complex
 assert_type(np.sort_complex(AR_u1), npt.NDArray[np.complex64])
@@ -216,6 +218,7 @@ assert_type(np.sort_complex(AR_f8), npt.NDArray[np.complex128])
 assert_type(np.sort_complex(AR_f10), npt.NDArray[np.clongdouble])
 assert_type(np.sort_complex(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.complex128]])
 assert_type(np.sort_complex(AR_c16_1d), np.ndarray[tuple[int], np.dtype[np.complex128]])
+assert_type(np.sort_complex(AR_LIKE_f8), npt.NDArray[np.complex128])
 
 # trim_zeros
 assert_type(np.trim_zeros(AR_f8), npt.NDArray[np.float64])

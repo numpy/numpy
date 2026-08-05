@@ -1,0 +1,4 @@
+* Structured dtypes and subarray dtypes containing ``StringDType`` now
+  consistently raise ``TypeError``. Formerly some structured dtpes
+  containing ``StringDType`` could be created, but this could lead to
+  data corruption or crashes on array data accesses.

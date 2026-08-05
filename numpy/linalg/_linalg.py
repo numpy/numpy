@@ -2442,7 +2442,6 @@ def lstsq(a, b, rcond=None):
     Raises
     ------
     LinAlgError
-        If computation does not converge.
 
     See Also
     --------

@@ -32,6 +32,7 @@
 #include "stringdtype_ufuncs.h"
 #include "special_integer_comparisons.h"
 #include "real_imag_ufuncs.h"
+#include "unwrap.h"
 #include "extobj.h"  /* for _extobject_contextvar exposure */
 #include "ufunc_type_resolution.h"
 
@@ -270,6 +271,10 @@ int initumath(PyObject *m)
         return -1;
     }
     Py_DECREF(s);
+
+    if (init_unwrap_ufunc(d) < 0 ) {
+        return -1;
+    }
 
     if (init_string_ufuncs(d) < 0) {
         return -1;

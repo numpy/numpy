@@ -308,6 +308,18 @@ _convert_from_tuple(PyObject *obj, int align)
             return type;
         }
 
+        /*
+         * A subarray dtype is never attached to an array, so a base with
+         * per-instance state (a finalize slot, e.g. StringDType) could
+         * never be finalized and anything using the dtype would misbehave.
+         */
+        if (NPY_DT_SLOTS(NPY_DTYPE(type))->finalize_descr != NULL) {
+            PyErr_Format(PyExc_TypeError,
+                    "%s is not currently supported within subarray dtypes.",
+                    ((PyTypeObject *)NPY_DTYPE(type))->tp_name);
+            goto fail;
+        }
+
         /* validate and set shape */
         for (int i=0; i < shape.len; i++) {
             if (shape.ptr[i] < 0) {
@@ -386,6 +398,25 @@ _convert_from_tuple(PyObject *obj, int align)
         npy_free_cache_dim_obj(shape);
         return NULL;
     }
+}
+
+/*
+ * DTypes with a finalize slot (e.g. StringDType) carry per-instance state
+ * that array creation must finalize, which the structured dtype machinery
+ * does not do.  Reject them as field dtypes; they cannot be wrapped in
+ * subarray dtypes either, so subarray bases need not be checked.  Returns
+ * -1 with an exception set if rejected, 0 otherwise.
+ */
+static int
+_reject_unsupported_field_dtype(PyArray_Descr *descr)
+{
+    if (NPY_DT_SLOTS(NPY_DTYPE(descr))->finalize_descr != NULL) {
+        PyErr_Format(PyExc_TypeError,
+                "%s is not currently supported for structured dtype "
+                "fields.", ((PyTypeObject *)NPY_DTYPE(descr))->tp_name);
+        return -1;
+    }
+    return 0;
 }
 
 /*
@@ -495,9 +526,8 @@ _convert_from_array_descr(PyObject *obj, int align)
                     "Field elements must be tuples with at most 3 elements, got '%R'", item);
             goto fail;
         }
-        if (PyObject_IsInstance((PyObject *)conv, (PyObject *)&PyArray_StringDType)) {
-            PyErr_Format(PyExc_TypeError,
-                         "StringDType is not currently supported for structured dtype fields.");
+        if (_reject_unsupported_field_dtype(conv) < 0) {
+            Py_DECREF(conv);
             goto fail;
         }
         if ((PyDict_GetItemWithError(fields, name) != NULL) // noqa: borrowed-ref OK
@@ -638,6 +668,10 @@ _convert_from_list(PyObject *obj, int align)
         PyArray_Descr *conv = _convert_from_any(
                 PyList_GET_ITEM(obj, i), align); // noqa: borrowed-ref OK
         if (conv == NULL) {
+            goto fail;
+        }
+        if (_reject_unsupported_field_dtype(conv) < 0) {
+            Py_DECREF(conv);
             goto fail;
         }
         dtypeflags |= (conv->flags & NPY_FROM_FIELDS);
@@ -1133,6 +1167,12 @@ _convert_from_dict(PyObject *obj, int align)
             Py_DECREF(ind);
             goto fail;
         }
+        if (_reject_unsupported_field_dtype(newdescr) < 0) {
+            Py_DECREF(newdescr);
+            Py_DECREF(tup);
+            Py_DECREF(ind);
+            goto fail;
+        }
         PyTuple_SET_ITEM(tup, 0, (PyObject *)newdescr);
         int _align = 1;
         if (align) {
@@ -1598,7 +1638,9 @@ _convert_from_type(PyObject *obj) {
     else {
         PyObject *DType = PyArray_DiscoverDTypeFromScalarType(typ);
         if (DType != NULL) {
-            return PyArray_GetDefaultDescr((PyArray_DTypeMeta *)DType);
+            PyArray_Descr *ret = PyArray_GetDefaultDescr((PyArray_DTypeMeta *)DType);
+            Py_DECREF(DType);
+            return ret;
         }
         PyArray_Descr *ret = _try_convert_from_dtype_attr(obj);
         if ((PyObject *)ret != Py_NotImplemented) {
@@ -1976,9 +2018,9 @@ PyArray_DescrNew(PyArray_Descr *base_descr)
         return NULL;
     }
     /* Don't copy PyObject_HEAD part */
-    memcpy((char *)newdescr + sizeof(PyObject),
-           (char *)base + sizeof(PyObject),
-           sizeof(_PyArray_LegacyDescr) - sizeof(PyObject));
+    memcpy((char *)newdescr + offsetof(_PyArray_LegacyDescr, typeobj),
+           (char *)base + offsetof(_PyArray_LegacyDescr, typeobj),
+           sizeof(_PyArray_LegacyDescr) - offsetof(_PyArray_LegacyDescr, typeobj));
 
     /*
      * The c_metadata has a by-value ownership model, need to clone it
@@ -2047,8 +2089,40 @@ arraydescr_dealloc(PyArray_Descr *self)
     Py_XDECREF(lself->fields);
     if (lself->subarray) {
         Py_XDECREF(lself->subarray->shape);
-        Py_DECREF(lself->subarray->base);
+        /*
+         * A subarray dtype's base may itself be a subarray dtype, so
+         * decref'ing the base here can re-enter this function, one C
+         * stack frame per nesting level. Unwind the chain iteratively
+         * instead; at refcount 1 this dealloc holds the only
+         * reference (descriptors support neither weakrefs nor GC), so
+         * stealing the link is unobservable and each node still runs
+         * its own, now shallow, dealloc.
+         *
+         * If descriptors ever get the Py_TPFLAGS_HAVE_GC flag, we can
+         * use CPython's stack protection via the trashcan macros
+         * instead.
+         */
+        PyArray_Descr *base = lself->subarray->base;
         PyArray_free(lself->subarray);
+        /*
+         * The Py_REFCNT(..) == 1 check is intentional. This happens in
+         * a deallocator for a type that doesn't support weakrefs and
+         * isn't a GC type, so it's impossible to get here with a refcount
+         * of 1 without us being the only owner. We can't use
+         * PyUnstable_Object_IsUniquelyReferenced because that excludes
+         * objects on remote threads.
+         */
+        while (base != NULL && Py_REFCNT(base) == 1 && PyDataType_HASSUBARRAY(base)) {
+            _PyArray_LegacyDescr *lbase = (_PyArray_LegacyDescr *)base;
+            // steal reference owned by lbase and stash it in base
+            // (Py_CLEAR without a DECREF)
+            base = lbase->subarray->base;
+            lbase->subarray->base = NULL;
+            // lbase no longer owns a reference to base, so base's deallocator
+            // doesn't fire
+            Py_DECREF(lbase);
+        }
+        Py_XDECREF(base);
     }
     Py_XDECREF(lself->metadata);
     NPY_AUXDATA_FREE(lself->c_metadata);

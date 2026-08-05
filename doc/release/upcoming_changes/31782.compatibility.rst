@@ -1,0 +1,6 @@
+`numpy.insert` out-of-bounds index detection
+---------------------------------------------
+``numpy.insert`` now consistently raises ``IndexError`` for any
+out-of-bounds index, including when out-of-bounds and in-bounds
+indices are mixed in the same call. Previously such cases could
+silently succeed or produce incorrect results.

@@ -36,6 +36,7 @@
 #include "dragon4.h"
 #include "npy_longdouble.h"
 #include "npy_buffer.h"
+#include "npy_dlpack.h"
 #include "npy_static_data.h"
 #include "multiarraymodule.h"
 #include "array_api_standard.h"
@@ -2830,6 +2831,14 @@ static PyMethodDef gentype_methods[] = {
     {"setflags",
         (PyCFunction)gentype_setflags,
         METH_VARARGS | METH_KEYWORDS, NULL},
+
+    /* For data interchange between libraries */
+    {"__dlpack__",
+        (PyCFunction)gentype_dlpack,
+        METH_FASTCALL | METH_KEYWORDS, NULL},
+    {"__dlpack_device__",
+        (PyCFunction)gentype_dlpack_device,
+        METH_NOARGS, NULL},
 
     /* For Array API compatibility */
     {"__array_namespace__",

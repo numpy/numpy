@@ -105,6 +105,7 @@ simd_sequence_from_iterable(PyObject *obj, simd_data_type dtype, Py_ssize_t min_
     }
     npyv_lanetype_u8 *dst = simd_sequence_new(seq_size, dtype);
     if (dst == NULL) {
+        Py_DECREF(seq_obj);
         return NULL;
     }
     PyObject **seq_items = PySequence_Fast_ITEMS(seq_obj);

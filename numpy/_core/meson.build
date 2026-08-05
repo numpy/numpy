@@ -123,6 +123,7 @@ if use_highway
   )
 else
   highway_lib = []
+  add_project_arguments(['-DNPY_DISABLE_HIGHWAY'], language: ['cpp'])
 endif
 
 use_intel_sort = not get_option('disable-intel-sort') and cpu_family in ['x86', 'x86_64']
@@ -504,7 +505,35 @@ endforeach
 # as well as https://github.com/mesonbuild/meson/issues/11068
 longdouble_format = meson.get_external_property('longdouble_format', 'UNKNOWN')
 if longdouble_format == 'UNKNOWN'
-  longdouble_format = meson.get_compiler('c').run(
+  # We can't run the auto-detection program when cross-compiling, so we need to specify
+  # what format each system uses.
+  if host_machine.system() == 'android'
+    # Android defines `long double` as 128-bit quad precision on 64-bit platforms, and
+    # 64-bit double precision on 32-bit platforms. This is true even on x86 and x86_64,
+    # where `long double` is usually 80 bits padded to 96 or 128:
+    #  * https://developer.android.com/ndk/guides/abis
+    #  * https://gitlab.com/x86-psABIs/x86-64-ABI
+    if host_machine.cpu_family().contains('64')
+      longdouble_format = 'IEEE_QUAD_LE'
+    else
+      longdouble_format = 'IEEE_DOUBLE_LE'
+    endif
+  elif host_machine.system() == 'ios'
+    if host_machine.cpu_family() == 'x86_64'
+      # The x86_64 iOS simulator runs on x86_64 macOS hosts. Apple's x86-64
+      # calling conventions defer to the System V AMD64 psABI, which defines
+      # `long double` as the 80-bit x87 extended-precision format stored in
+      # 16 bytes (unlike arm64, where `long double` == `double`):
+      #  * https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/LowLevelABI/140-x86-64_Function_Calling_Conventions/x86_64.html
+      #  * https://gitlab.com/x86-psABIs/x86-64-ABI
+      longdouble_format = 'INTEL_EXTENDED_16_BYTES_LE'
+    else
+      # On arm64 iOS, long double is identical to the double type:
+      # https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms#Handle-data-types-and-data-alignment-properly
+      longdouble_format = 'IEEE_DOUBLE_LE'
+    endif
+  else
+    longdouble_format = meson.get_compiler('c').run(
 '''
 #include <stdio.h>
 #include <string.h>
@@ -584,6 +613,7 @@ int main(void) {
   }
 }
   ''').stdout()
+  endif
 endif
 if longdouble_format == 'UNKNOWN' or longdouble_format == 'UNDEFINED'
   error('Unknown long double format of size: ' + cc.sizeof('long double').to_string())
@@ -856,6 +886,7 @@ test_modules_src = [
   ['_rational_tests', 'src/umath/_rational_tests.c', []],
   ['_struct_ufunc_tests', 'src/umath/_struct_ufunc_tests.c', []],
   ['_operand_flag_tests', 'src/umath/_operand_flag_tests.c', []],
+  ['_reduction_loop_tests', 'src/umath/_reduction_loop_tests.c', []],
 ]
 foreach gen: test_modules_src
   py.extension_module(gen[0],
@@ -1280,6 +1311,8 @@ src_umath = umath_gen_headers + [
   src_file.process('src/umath/loops.c.src'),
   src_file.process('src/umath/matmul.c.src'),
   src_file.process('src/umath/matmul.h.src'),
+  'src/umath/unwrap.cpp',
+  'src/umath/unwrap.h',
   'src/umath/ufunc_type_resolution.c',
   'src/umath/clip.cpp',
   'src/umath/clip.h',
