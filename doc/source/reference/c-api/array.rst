@@ -1877,7 +1877,8 @@ the functions that must be implemented for each slot.
 
    Registers a dedicated loop for use by the reduce-like methods
    (:meth:`~numpy.ufunc.reduce`,
-   :meth:`~numpy.ufunc.reduceat`),
+   :meth:`~numpy.ufunc.reduceat`,
+   :meth:`~numpy.ufunc.accumulate`),
    implemented as a :c:type:`PyArrayMethod_GetLoop` function (the same
    typedef used for ``NPY_METH_get_loop``). This is required to reduce
    ufuncs with more than one output, since the "forward" elementwise loop of
