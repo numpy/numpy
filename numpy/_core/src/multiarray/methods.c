@@ -532,11 +532,15 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
     PyArray_CopySwapNFunc *copyswapn;
     PyArrayIterObject *it;
 
-    copyswapn = PyDataType_GetArrFuncs(PyArray_DESCR(self))->copyswapn;
     if (inplace && PyArray_FailUnlessWriteable(self, "array to be byte-swapped") < 0) {
         return NULL;
     }
-    if (copyswapn == NULL && raise_missing_copyswap(PyArray_DESCR(self), 1) < 0) {
+    /*
+     * Both branches below swap in place -- the non-inplace one copies first
+     * and then recurses -- so a dtype that byte order does not apply to
+     * makes this a no-op rather than an error.
+     */
+    if (get_copyswapn_or_raise(PyArray_DESCR(self), 1, &copyswapn) < 0) {
         return NULL;
     }
     if (inplace) {
