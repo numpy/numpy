@@ -378,9 +378,9 @@ typedef struct {
 } PyRational;
 
 /*
- * The limited API has no static types, so `rational`, `rational2` and
- * `Rational2DType` are heap types built in module init.  Plain statics hold
- * them: single-phase init with `m_size = -1` means one load per process.
+ * `rational`, `rational2` and `Rational2DType` are heap types built in module
+ * init.  Plain statics hold them: single-phase init with `m_size = -1` means
+ * one load per process.
  */
 static PyObject* PyRational_Type = NULL;
 
@@ -398,7 +398,7 @@ PyRational_FromRational(PyTypeObject* type, rational x) {
     return (PyObject*)p;
 }
 
-/* `tp_name` is unreachable under the limited API and `%T` needs Python 3.13 */
+/* `%T` needs Python 3.13, so format the type name explicitly */
 static void
 raise_wrong_type(const char* expected, PyObject* obj) {
     PyObject* name = PyType_GetName(Py_TYPE(obj));
@@ -646,9 +646,9 @@ pyrational_nonzero(PyObject* self) {
 static void
 pyrational_dealloc(PyObject* self) {
     /*
-     * `tp_free` is unreachable under the limited API, so dispatch on the GC
-     * flag: a Python subclass of `rational` is a GC type and must be freed as
-     * one.  Heap types also own the reference `PyType_GenericAlloc` took.
+     * A Python subclass of `rational` is a GC type and must be freed as one,
+     * so dispatch on the GC flag.  Heap types also own the reference
+     * `PyType_GenericAlloc` took.
      */
     PyTypeObject* tp = Py_TYPE(self);
     if (PyType_GetFlags(tp) & Py_TPFLAGS_HAVE_GC) {
@@ -677,10 +677,7 @@ static PyGetSetDef pyrational_getset[] = {
     {0} /* sentinel */
 };
 
-/*
- * `PyNumberMethods` is not in the limited API, hence the `Py_nb_*` slots.
- * `tp_base` is only known after `import_array()`, so it is passed in init.
- */
+/* `tp_base` is only known after `import_array()`, so it is passed in init. */
 static PyType_Slot pyrational_slots[] = {
     {Py_tp_dealloc, pyrational_dealloc},
     {Py_tp_repr, pyrational_repr},
@@ -916,7 +913,6 @@ PyArray_DescrProto npyrational_descr_proto = {
  * (Python subclass of `PyRational_Type`), so all the existing C helpers,
  * casts, and ufunc loops can be reused for the new typenum/descr.
  */
-/* Everything is inherited from `rational`, the base passed in module init */
 static PyType_Slot pyrational2_slots[] = {
     {0, NULL},
 };
@@ -935,7 +931,6 @@ static PyObject *
 rational2_repr(PyObject *self) {
     // Just forward, but old versions of NumPy require a repr
     // although for "legacy" dtypes the default one works.
-    // `tp_repr` is unreachable under the limited API, so go through the class.
     return PyObject_CallMethod(
             (PyObject *)&PyArrayDescr_Type, "__repr__", "O", self);
 }
@@ -1461,7 +1456,6 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
             .baseclass = NULL,
         };
 
-        /* Hands back a ready DTypeMeta with `np.dtype` as its base */
         NPY_Rational2DType = (PyArray_DTypeMeta *)PyType_FromMetaclass(
                 &PyArrayDTypeMeta_Type, m, &rational2_dtype_spec,
                 (PyObject *)&PyArrayDescr_Type);
@@ -1592,7 +1586,10 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
     GCD_LCM_UFUNC(gcd,NPY_INT64,"greatest common denominator of two integers");
     GCD_LCM_UFUNC(lcm,NPY_INT64,"least common multiple of two integers");
 
-    /* `PyUnstable_*` is not in the limited API; abi3 implies a GIL build */
+    /*
+     * TODO: 3.15 adds a free-threaded stable ABI (abi3t), but supporting it
+     * also needs heap types and module setup via the new PyModExport API.
+     */
 #if defined(Py_GIL_DISABLED) && !defined(Py_LIMITED_API)
     // signal this module supports running with the GIL disabled
     PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
