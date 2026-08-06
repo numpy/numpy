@@ -54,6 +54,10 @@ class TestF77Callback(util.F2PyTest):
         t = getattr(self.module, name)
         r = t(lambda: 4)
         assert r == 4
+        r = t(lambda x=2: x)
+        assert r == 2
+        r = t(lambda x=2: x, fun_extra_args=(3, ))
+        assert r == 3
         r = t(lambda a: 5, fun_extra_args=(6, ))
         assert r == 5
         r = t(lambda a: a, fun_extra_args=(6, ))
@@ -84,6 +88,11 @@ class TestF77Callback(util.F2PyTest):
         assert r == 7
         r = t(a.mth)
         assert r == 9
+
+        r = t({8: 12}.get, fun_extra_args=(8, ))
+        assert r == 12
+        r = t(int, fun_extra_args=('15', ))
+        assert r == 15
 
     @pytest.mark.skipif(sys.platform == 'win32',
                         reason='Fails with MinGW64 Gfortran (Issue #9673)')
@@ -193,6 +202,36 @@ class TestF77Callback(util.F2PyTest):
         r = self.module.hidden_callback2(2)
         assert r == 3
 
+    @pytest.mark.parametrize("name", ["t", "t2"])
+    @pytest.mark.parametrize("cb", [1.5, None])
+    def test_invalid_callback(self, cb, name):
+        t = getattr(self.module, name)
+        err = getattr(
+            self.module,
+            f"_{self.module.__name__}_error")
+        with pytest.raises(err):
+            t(cb)
+
+    class C:
+        def meth(self, arg):
+            return arg
+
+        def meth_with_default(self, arg1, arg2=5):
+            return arg1 + arg2
+
+    @pytest.mark.parametrize("name", ["t", "t2"])
+    @pytest.mark.parametrize("cb, args",
+        [((lambda x: x), ()),
+         ((lambda x, y=1: x + y), ()),
+         (C().meth, ()),
+         (C().meth_with_default, ())])
+    def test_wrong_arg_count(self, cb, args, name):
+        t = getattr(self.module, name)
+        err = getattr(
+            self.module,
+            f"_{self.module.__name__}_error")
+        with pytest.raises(err):
+            t(cb, fun_extra_args=args)
 
 @pytest.mark.slow
 class TestF77CallbackPythonTLS(TestF77Callback):
