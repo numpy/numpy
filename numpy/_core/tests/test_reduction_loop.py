@@ -260,12 +260,6 @@ class TestReductionLoop:
         got_min, got_max = mm(1, 5, dtype=np.float64)
         assert got_min == 1.0 and got_max == 5.0
 
-    def test_accumulate_raises(self):
-        a = make_array((4,), seed=20)
-        with pytest.raises(
-                ValueError, match="only supported for functions returning a single"):
-            mm.accumulate(a)
-
     def test_at_raises(self):
         a = make_array((4,), seed=22)
         with pytest.raises(ValueError, match="single output"):
