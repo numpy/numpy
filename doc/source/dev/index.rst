@@ -107,6 +107,10 @@ Here's the short summary, complete TOC links are below:
      button. Make sure the title and message are clear, concise, and self-
      explanatory. Then click the button to submit it.
 
+   * Note that non-maintainers may only have one non-draft pull request
+     open for review at a time. See :ref:`pull-request-limit` for details
+     and how to be allowed more open pull requests.
+
    * If your commit introduces a new feature or changes functionality, post on
      the `mailing list`_ to explain your changes. For bug fixes, documentation
      updates, etc., this is generally not necessary, though if you do not get

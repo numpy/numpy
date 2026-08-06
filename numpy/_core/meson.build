@@ -123,6 +123,7 @@ if use_highway
   )
 else
   highway_lib = []
+  add_project_arguments(['-DNPY_DISABLE_HIGHWAY'], language: ['cpp'])
 endif
 
 use_intel_sort = not get_option('disable-intel-sort') and cpu_family in ['x86', 'x86_64']
@@ -685,6 +686,9 @@ npymath_sources = [
   'src/npymath/halffloat.cpp',
   'src/npymath/npy_math.c',
 ]
+if host_machine.system() == 'emscripten'
+  npymath_sources += 'src/common/npy_fenv.c'
+endif
 npymath_lib = static_library('npymath',
   npymath_sources,
   c_args: staticlib_cflags,
@@ -885,6 +889,7 @@ test_modules_src = [
   ['_rational_tests', 'src/umath/_rational_tests.c', []],
   ['_struct_ufunc_tests', 'src/umath/_struct_ufunc_tests.c', []],
   ['_operand_flag_tests', 'src/umath/_operand_flag_tests.c', []],
+  ['_reduction_loop_tests', 'src/umath/_reduction_loop_tests.c', []],
 ]
 foreach gen: test_modules_src
   py.extension_module(gen[0],
@@ -1287,7 +1292,7 @@ src_multiarray = multiarray_gen_headers + [
   'src/npysort/heapsort.cpp',
   'src/npysort/npysort_methods.cpp',
   'src/common/npy_partition.h',
-  'src/npysort/selection.cpp',
+  'src/npysort/selection_methods.cpp',
   'src/common/npy_binsearch.h',
   'src/npysort/binsearch.cpp',
   'src/multiarray/textreading/conversions.c',

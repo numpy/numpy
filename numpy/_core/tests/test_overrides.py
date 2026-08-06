@@ -459,6 +459,8 @@ class TestArrayFunctionImplementation:
             (np.sum, (np.ones(1),), {"out": object()}),
             (np.max, (np.ones(1),), {"dtype": np.float64}),
             (np.any, (np.ones(1),), {"dtype": np.bool_, "initial": False}),
+            (np.sum, (np.ones(1), 0), {"axis": 0}),  # name and position
+            (np.any, (np.ones(1), 0, None, False, True), {}),  # too many pos.
         ],
     )
     def test_reduction_error_message(self, func, args, kwargs):
@@ -469,6 +471,32 @@ class TestArrayFunctionImplementation:
             func(*args, **kwargs)
 
         assert actual.value.args == expected.value.args
+
+    @pytest.mark.parametrize(
+        "args, name",
+        [
+            ((np.ones(1),), "bad"),  # unknown keyword
+            ((np.ones(1), 0), "axis"),  # name and position
+        ],
+    )
+    def test_reduction_signature_format_error(self, args, name):
+        # Formatting the signature mismatch message calls `str()` on the
+        # keyword, which can run arbitrary Python code.  If that raises, the
+        # error must propagate instead of being cleared as a mismatch.
+        class K(str):
+            calls = 0
+
+            def __str__(self):
+                K.calls += 1
+                if K.calls == 1:
+                    raise RuntimeError
+                return super().__str__()
+
+        with pytest.raises(RuntimeError):
+            np.sum(*args, **{K(name): 1})
+
+        # The failure must happen while formatting, not somewhere later.
+        assert K.calls == 1
 
     @pytest.mark.parametrize("value", [234, "this func is not replaced"])
     def test_dispatcher_error(self, value):

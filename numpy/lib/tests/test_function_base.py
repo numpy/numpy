@@ -6,10 +6,7 @@ import warnings
 from fractions import Fraction
 from functools import partial
 
-import hypothesis
-import hypothesis.strategies as st
 import pytest
-from hypothesis.extra.numpy import arrays
 
 import numpy as np
 import numpy.lib._function_base_impl as nfb
@@ -61,6 +58,12 @@ from numpy.testing import (
     assert_equal,
     assert_raises,
     assert_raises_regex,
+)
+from numpy.testing._private.hypothesis_helpers import (
+    HAS_HYPOTHESIS,
+    arrays,
+    hypothesis,
+    st,
 )
 
 np_floats = [np.half, np.single, np.double, np.longdouble]
@@ -2394,6 +2397,7 @@ class TestUnwrap:
         p = np.array([0, 3, 6, 1, 4], dtype=np.int64)
         assert_array_equal(unwrap(p, period=-8), [0, 3, 6, 9, 12])
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @hypothesis.given(
             arr=arrays(dtype=np.int32,
                        shape=st.integers(min_value=1, max_value=50),
@@ -2403,6 +2407,7 @@ class TestUnwrap:
         assert_array_equal(unwrap(arr, period=period),
                            self._reference_unwrap(arr, period=period))
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @hypothesis.given(
             arr=arrays(dtype=np.float64,
                        shape=st.integers(min_value=1, max_value=50),
@@ -2493,15 +2498,16 @@ class TestUnwrap:
         assert_array_equal(unwrap(p, discont=discont, period=period), [0, -1])
 
     def test_masked_array(self):
-        # for masked arrays, we'd need a masked aware np.ma.unwrap implementation
-        # the operation currently unmasks the masked array into an ndarray
-        # and runs the operation on that, completely ignoring the mask
+        # a masked array is treated like any other ufunc input, unwrapped
+        # over the data underlying the mask with the mask carried through.
+        # np.ma.unwrap is the mask-aware version
         p = np.ma.MaskedArray([0., 1., 2., 2 + 2 * np.pi, 3 + 2 * np.pi],
                               mask=[False, False, True, False, False])
         out = unwrap(p)
-        assert isinstance(out, np.ndarray)
+        assert isinstance(out, np.ma.MaskedArray)
+        assert_array_equal(out.mask, p.mask)
         expected = self._reference_unwrap(np.asarray(p))
-        assert_array_equal(out, expected)
+        assert_array_equal(np.asarray(out), expected)
 
     def test_array_ufunc_no_override_raises(self):
         class MyArray(np.ndarray):
@@ -4374,6 +4380,7 @@ class TestQuantile:
         quantile = np.quantile([0., 1., 2., 3.], p0, method=method)
         assert_equal(np.sort(quantile), quantile)
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @hypothesis.given(
             arr=arrays(dtype=np.float64,
                        shape=st.integers(min_value=3, max_value=1000),
@@ -4706,6 +4713,7 @@ class TestQuantile:
 
 
 class TestLerp:
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
                                    min_value=0, max_value=1),
                       t1=st.floats(allow_nan=False, allow_infinity=False,
@@ -4724,6 +4732,7 @@ class TestLerp:
         else:
             assert l0 >= l1
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @hypothesis.given(t=st.floats(allow_nan=False, allow_infinity=False,
                                   min_value=0, max_value=1),
                       a=st.floats(allow_nan=False, allow_infinity=False,
@@ -4736,6 +4745,7 @@ class TestLerp:
         else:
             assert b <= nfb._lerp(a, b, t) <= a
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @hypothesis.given(t=st.floats(allow_nan=False, allow_infinity=False,
                                   min_value=0, max_value=1),
                       a=st.floats(allow_nan=False, allow_infinity=False,

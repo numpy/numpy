@@ -11,7 +11,6 @@ from types import EllipsisType
 from typing import (
     Any,
     Literal,
-    LiteralString,
     Never,
     NoReturn,
     Protocol,
@@ -30,9 +29,6 @@ from ._array_like import ArrayLike, NDArray, _ArrayLikeBool_co, _ArrayLikeInt_co
 from ._dtype_like import DTypeLike
 from ._scalars import _ScalarLike_co
 from ._shape import _ShapeLike
-
-type _2Tuple[T] = tuple[T, T]
-type _3Tuple[T] = tuple[T, T, T]
 
 type _2PTuple[T] = tuple[T, T, *tuple[T, ...]]
 type _3PTuple[T] = tuple[T, T, T, *tuple[T, ...]]
@@ -64,63 +60,6 @@ class _ReduceKwargs(TypedDict, total=False):
 # 2-tuple of arrays. Otherwise `None` or a plain array are also acceptable
 
 # pyright: reportIncompatibleMethodOverride=false
-
-@type_check_only
-class _GUFunc_Nin2_Nout1[NameT: LiteralString, NTypesT: int, IdentT, SignatureT: LiteralString](ufunc):  # type: ignore[misc]
-    @property
-    def __name__(self) -> NameT: ...
-    @property
-    def __qualname__(self) -> NameT: ...  # pyright: ignore[reportIncompatibleVariableOverride]
-    @property
-    def ntypes(self) -> NTypesT: ...
-    @property
-    def identity(self) -> IdentT: ...
-    @property
-    def nin(self) -> Literal[2]: ...
-    @property
-    def nout(self) -> Literal[1]: ...
-    @property
-    def nargs(self) -> Literal[3]: ...
-    @property
-    def signature(self) -> SignatureT: ...
-
-    # Scalar for 1D array-likes; ndarray otherwise
-    @overload
-    def __call__(
-        self,
-        x1: ArrayLike,
-        x2: ArrayLike,
-        /,
-        out: EllipsisType | None = None,
-        *,
-        dtype: DTypeLike | None = None,
-        casting: _CastingKind = ...,
-        order: _OrderKACF = ...,
-        subok: bool = ...,
-        signature: str | _3Tuple[str | None] = ...,
-        axes: list[_2Tuple[SupportsIndex]] = ...,
-    ) -> Incomplete: ...
-    @overload
-    def __call__(
-        self,
-        x1: ArrayLike,
-        x2: ArrayLike,
-        /,
-        out: np.ndarray | tuple[np.ndarray] | EllipsisType,
-        *,
-        dtype: DTypeLike | None = None,
-        casting: _CastingKind = ...,
-        order: _OrderKACF = ...,
-        subok: bool = ...,
-        signature: str | _3Tuple[str | None] = ...,
-        axes: list[_2Tuple[SupportsIndex]] = ...,
-    ) -> NDArray[Incomplete]: ...
-
-    def accumulate(self, array: Never, /) -> NoReturn: ...  # type: ignore[override]
-    def reduce(self, array: Never, /) -> NoReturn: ...  # type: ignore[override]
-    def reduceat(self, array: Never, /, indices: Never) -> NoReturn: ...  # type: ignore[override]
-    def outer(self, A: Never, B: Never, /) -> NoReturn: ...  # type: ignore[override]
-    def at(self, a: Never, indices: Never, b: Never, /) -> NoReturn: ...  # type: ignore[override]
 
 @type_check_only
 class _PyFunc_Kwargs_Nargs2(TypedDict, total=False):

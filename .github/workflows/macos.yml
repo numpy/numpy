@@ -134,7 +134,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt -r requirements/hypothesis_requirements.txt
 
     - name: Build against Accelerate (LP64)
       run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false

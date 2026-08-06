@@ -105,8 +105,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     _ComplexFloatingCodes,
     _InexactCodes,
     _CharacterCodes,
-    # Ufuncs
-    _GUFunc_Nin2_Nout1,
 )
 from numpy._typing._char_codes import (
     _DT64Codes_any,
@@ -448,6 +446,8 @@ from numpy._core.umath import (
     logical_not,
     logical_or,
     logical_xor,
+    matmul,
+    matvec,
     maximum,
     minimum,
     mod,
@@ -477,6 +477,8 @@ from numpy._core.umath import (
     tan,
     tanh,
     trunc,
+    vecdot,
+    vecmat,
 )
 
 from ._expired_attrs_2_0 import __expired_attributes__ as __expired_attributes__
@@ -5132,6 +5134,18 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
         /,
     ) -> ScalarT | ndarray[ShapeT, _dtype[ScalarT]]: ...
 
+    #
+    def __dlpack__(
+        self,
+        /,
+        *,
+        stream: int | Any | None = None,
+        max_version: tuple[int, int] | None = None,
+        dl_device: tuple[int, int] | None = None,
+        copy: py_bool | None = None,
+    ) -> CapsuleType: ...
+    def __dlpack_device__(self, /) -> tuple[L[1], L[0]]: ...
+
     @property
     def base(self) -> None: ...
     @property
@@ -7646,12 +7660,6 @@ class ufunc:
         casting: _CastingKind | None = None,
         reduction: py_bool = False,
     ) -> tuple[dtype, ...]: ...
-
-# Parameters: `__name__`, `ntypes` and `identity`
-matmul: _GUFunc_Nin2_Nout1[L["matmul"], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]]
-matvec: _GUFunc_Nin2_Nout1[L["matvec"], L[19], None, L["(m,n),(n)->(m)"]]
-vecdot: _GUFunc_Nin2_Nout1[L["vecdot"], L[19], None, L["(n),(n)->()"]]
-vecmat: _GUFunc_Nin2_Nout1[L["vecmat"], L[19], None, L["(n),(n,m)->(m)"]]
 
 concat = concatenate
 permute_dims = transpose

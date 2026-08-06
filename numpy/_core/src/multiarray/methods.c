@@ -533,36 +533,13 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
     PyArrayIterObject *it;
 
     copyswapn = PyDataType_GetArrFuncs(PyArray_DESCR(self))->copyswapn;
-    if (copyswapn == NULL) {
-        /*
-         * If the descriptor's byteorder is '|', byte order does not apply to
-         * the dtype and byteswapping is a no-op. Otherwise the dtype declared
-         * byte-order-sensitive storage and numpy cannot know how to swap its
-         * bytes.
-         *
-         * TODO: add a way for new-style dtypes to ask to be byteswapped,
-         * perhaps by casting to the opposite byteorder?
-         */
-        if (PyArray_DESCR(self)->byteorder == NPY_IGNORE) {
-            if (inplace) {
-                if (PyArray_FailUnlessWriteable(
-                            self, "array to be byte-swapped") < 0) {
-                    return NULL;
-                }
-                Py_INCREF(self);
-                return (PyObject *)self;
-            }
-            return PyArray_NewCopy(self, NPY_ANYORDER);
-        }
-        PyErr_Format(PyExc_TypeError,
-                "dtype %S does not support byteswapping",
-                (PyObject *)PyArray_DESCR(self));
+    if (inplace && PyArray_FailUnlessWriteable(self, "array to be byte-swapped") < 0) {
+        return NULL;
+    }
+    if (copyswapn == NULL && raise_missing_copyswap(PyArray_DESCR(self), 1) < 0) {
         return NULL;
     }
     if (inplace) {
-        if (PyArray_FailUnlessWriteable(self, "array to be byte-swapped") < 0) {
-            return NULL;
-        }
         size = PyArray_SIZE(self);
         if (PyArray_ISONESEGMENT(self)) {
             copyswapn(PyArray_DATA(self), PyArray_ITEMSIZE(self), NULL, -1, size, 1, self);
@@ -580,6 +557,10 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
             }
             Py_DECREF(it);
         }
+        if (PyErr_Occurred()) {
+            /* e.g. a structured dtype field that does not support copyswap */
+            return NULL;
+        }
 
         Py_INCREF(self);
         return (PyObject *)self;
@@ -590,6 +571,10 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
             return NULL;
         }
         new = PyArray_Byteswap(ret, NPY_TRUE);
+        if (new == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
         Py_DECREF(new);
         return (PyObject *)ret;
     }

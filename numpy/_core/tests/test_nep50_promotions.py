@@ -6,15 +6,17 @@ is adopted in the main test suite.  A few may be moved elsewhere.
 
 import operator
 
-import hypothesis
 import pytest
-from hypothesis import strategies
 
 import numpy as np
-from numpy.testing import IS_WASM, assert_array_equal
+from numpy.testing import assert_array_equal
+from numpy.testing._private.hypothesis_helpers import (
+    HAS_HYPOTHESIS,
+    hypothesis,
+    strategies,
+)
 
 
-@pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for fp errors")
 def test_nep50_examples():
     res = np.uint8(1) + 2
     assert res.dtype == np.uint8
@@ -186,6 +188,44 @@ def test_nep50_in_concat_and_choose():
     assert res.dtype == "float32"
 
 
+def test_nep50_in_ufunc_at():
+    # Python scalars passed to ufunc.at are weak, like for ufunc.__call__.
+    arr = np.array([2**63], dtype=np.uint64)
+    np.add.at(arr, [0], 1)  # uint64 loop; float64 would round the result
+    assert arr[0] == np.uint64(2**63 + 1)
+
+    arr = np.zeros(3, dtype=np.float32)
+    np.add.at(arr, [0, 0, 1], 0.25)
+    assert_array_equal(arr, np.array([0.5, 0.25, 0], dtype=np.float32),
+                       strict=True)
+
+    arr = np.zeros(2, dtype=np.complex64)
+    np.add.at(arr, [1], 1j)
+    assert_array_equal(arr, np.array([0, 1j], dtype=np.complex64),
+                       strict=True)
+
+    # Huge Python integers work when the resolved dtype can hold the value:
+    arr = np.zeros(1)
+    np.add.at(arr, [0], 2**100)
+    assert arr[0] == 2.0**100
+
+    # NumPy scalars and 0-d arrays remain strongly typed:
+    arr = np.zeros(2, dtype=np.uint8)
+    np.add.at(arr, [0], np.int64(-1))
+    assert arr[0] == 255
+    np.add.at(arr, [1], np.array(-1))
+    assert arr[1] == 255
+
+
+@pytest.mark.parametrize("scalar", [-1, 300, 2**100])
+def test_nep50_in_ufunc_at_overflow(scalar):
+    arr = np.zeros(2, dtype=np.uint8)
+    with pytest.raises(OverflowError):
+        np.add.at(arr, [0], scalar)
+    # the error is raised before any element is modified
+    assert arr[0] == 0
+
+
 @pytest.mark.parametrize("scalar,expected", [
     (1, "float32"), (1., "float32"), (1j, "complex64")])
 def test_nep50_in_ufunc_outer(scalar, expected):
@@ -216,6 +256,7 @@ def test_nep50_in_ufunc_outer_huge_integer():
         np.add.outer(2**100, 1)
 
 
+@pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
 @pytest.mark.parametrize("expected,dtypes,optional_dtypes", [
         (np.float32, [np.float32],
             [np.float16, 0.0, np.uint16, np.int16, np.int8, 0]),

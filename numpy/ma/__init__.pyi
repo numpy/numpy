@@ -224,6 +224,7 @@ from .extras import (
     stack,
     union1d,
     unique,
+    unwrap,
     vander,
     vstack,
 )
@@ -453,6 +454,7 @@ __all__ = [
     "stack",
     "unique",
     "union1d",
+    "unwrap",
     "vander",
     "vstack",
 ]

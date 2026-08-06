@@ -479,7 +479,6 @@ class TestDivision:
         assert_equal(x // 100, [0, 0, 0, 1, -1, -1, -1, -1, -2])
         assert_equal(x % 100, [5, 10, 90, 0, 95, 90, 10, 0, 80])
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dtype", sctypes['int'] + sctypes['uint'])
     @pytest.mark.parametrize("ex_val", (
         (
@@ -564,7 +563,6 @@ class TestDivision:
 
             np.array([], dtype=dtype) // 0
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dtype", sctypes['int'] + sctypes['uint'])
     @pytest.mark.parametrize("ex_val", (
         "np.array([fo.max, 1, 2, 1, 1, 2, 3], dtype=dtype)",
@@ -625,8 +623,6 @@ class TestDivision:
             quotient_array = np.array([quotient] * 5)
             assert all(dividend_array // divisor == quotient_array), msg
         else:
-            if IS_WASM:
-                pytest.skip("fp errors don't work in wasm")
             with np.errstate(divide='raise', invalid='raise'):
                 with pytest.raises(FloatingPointError):
                     dividend // divisor
@@ -994,7 +990,6 @@ class TestDivisionIntegerOverflowsAndDivideByZero:
             helper_lambdas['min-zero'], helper_lambdas['neg_min-zero'])
     }
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dtype", np.typecodes["Integer"])
     def test_signed_division_overflow(self, dtype):
         to_check = interesting_binop_operands(np.iinfo(dtype).min, -1, dtype)
@@ -1021,7 +1016,6 @@ class TestDivisionIntegerOverflowsAndDivideByZero:
             assert extractor(res1) == np.iinfo(op1.dtype).min
             assert extractor(res2) == 0
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
     def test_divide_by_zero(self, dtype):
         # Note that the return value cannot be well defined here, but NumPy
@@ -1041,7 +1035,6 @@ class TestDivisionIntegerOverflowsAndDivideByZero:
             assert extractor(res1) == 0
             assert extractor(res2) == 0
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dividend_dtype", sctypes['int'])
     @pytest.mark.parametrize("divisor_dtype", sctypes['int'])
     @pytest.mark.parametrize("operation",
@@ -1611,7 +1604,6 @@ class TestSpecialFloats:
             a = np.array(1e9, dtype='float32')
             np.log(a)
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize('dtype', ['e', 'f', 'd', 'g'])
     def test_sincos_values(self, dtype):
         with np.errstate(all='ignore'):
@@ -1622,7 +1614,6 @@ class TestSpecialFloats:
             assert_equal(np.sin(yf), xf)
             assert_equal(np.cos(yf), xf)
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.xfail(
         sys.platform in {"darwin", "ios"},
         reason="underflow is triggered for scalar 'sin'"
@@ -4450,7 +4441,6 @@ class TestComplexFunctions:
             assert_almost_equal(fz.real, fr, err_msg=f'real part {f}')
             assert_almost_equal(fz.imag, 0., err_msg=f'imag part {f}')
 
-    @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     def test_precisions_consistent(self):
         z = 1 + 1j
         for f in self.funcs:
@@ -4460,7 +4450,6 @@ class TestComplexFunctions:
             assert_almost_equal(fcf, fcd, decimal=6, err_msg=f'fch-fcd {f}')
             assert_almost_equal(fcl, fcd, decimal=15, err_msg=f'fch-fcl {f}')
 
-    @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     def test_branch_cuts(self):
         # check branch cuts and continuity on them
         _check_branch_cut(np.log,   -0.5, 1j, 1, -1, True)  # noqa: E221
@@ -4486,7 +4475,6 @@ class TestComplexFunctions:
         _check_branch_cut(np.arccosh, [0 - 2j, 2j, 2], [1,  1,  1j], 1, 1)
         _check_branch_cut(np.arctanh, [0 - 2j, 2j, 0], [1,  1,  1j], 1, 1)
 
-    @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     def test_branch_cuts_complex64(self):
         # check branch cuts and continuity on them
         _check_branch_cut(np.log,   -0.5, 1j, 1, -1, True, np.complex64)  # noqa: E221
@@ -4571,7 +4559,6 @@ class TestComplexFunctions:
         _glibc_older_than("2.18"),
         reason="Older glibc versions are imprecise (maybe passes with SIMD?)"
     )
-    @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     @pytest.mark.parametrize('dtype', [
         np.complex64, np.complex128, np.clongdouble
     ])
