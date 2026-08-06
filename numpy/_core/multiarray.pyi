@@ -806,38 +806,148 @@ def unravel_index(indices: _ArrayLikeInt_co, shape: _ShapeLike, order: _OrderCF 
 #
 def normalize_axis_index(axis: int, ndim: int, msg_prefix: str | None = None) -> int: ...
 
-# NOTE: Allow any sequence of array-like objects
-@overload
+#
+@overload  # [Nd]
+def concatenate[ShapeT: _Shape, DTypeT: np.dtype](
+    arrays: Sequence[np.ndarray[ShapeT, DTypeT]],
+    /,
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: None = None,
+    casting: _CastingKind | None = "same_kind",
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # [Nd], dtype=<known>
+def concatenate[ShapeT: _Shape, ScalarT: np.generic](
+    arrays: Sequence[np.ndarray[ShapeT]],
+    /,
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind | None = "same_kind",
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # [Nd], dtype=<unknown>
+def concatenate[ShapeT: _Shape](
+    arrays: Sequence[np.ndarray[ShapeT]],
+    /,
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind | None = "same_kind",
+) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
+@overload  # ?d  (workaround overload)
 def concatenate[ScalarT: np.generic](
-    arrays: _ArrayLike[ScalarT],
+    arrays: _ArrayJustND[ScalarT],
+    /,
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: None = None,
+    casting: _CastingKind | None = "same_kind",
+) -> NDArray[ScalarT]: ...
+@overload  # ?d, dtype=<known>  (workaround overload)
+def concatenate[ScalarT: np.generic](
+    arrays: _ArrayJustND[Any],
+    /,
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind | None = "same_kind",
+) -> NDArray[ScalarT]: ...
+@overload  # ?d, dtype=<unknown>  (workaround overload)
+def concatenate(
+    arrays: _ArrayJustND[Any],
+    /,
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind | None = "same_kind",
+) -> NDArray[Any]: ...
+@overload  # 2d
+def concatenate[ScalarT: np.generic](
+    arrays: _Array2D[ScalarT],
     /,
     axis: SupportsIndex | None = 0,
     out: None = None,
     *,
     dtype: None = None,
     casting: _CastingKind | None = "same_kind",
-) -> NDArray[ScalarT]: ...
-@overload
+) -> _Array1D[ScalarT]: ...
+@overload  # 2d, dtype=<known>
 def concatenate[ScalarT: np.generic](
-    arrays: SupportsLenAndGetItem[ArrayLike],
+    arrays: _Array2D[Any],
     /,
     axis: SupportsIndex | None = 0,
     out: None = None,
     *,
     dtype: _DTypeLike[ScalarT],
     casting: _CastingKind | None = "same_kind",
-) -> NDArray[ScalarT]: ...
-@overload
-def concatenate(
-    arrays: SupportsLenAndGetItem[ArrayLike],
+) -> _Array1D[ScalarT]: ...
+@overload  # 3d
+def concatenate[ScalarT: np.generic](
+    arrays: _Array3D[ScalarT],
     /,
-    axis: SupportsIndex | None = 0,
+    axis: SupportsIndex = 0,
     out: None = None,
     *,
-    dtype: DTypeLike | None = None,
+    dtype: None = None,
     casting: _CastingKind | None = "same_kind",
-) -> NDArray[Incomplete]: ...
-@overload
+) -> _Array2D[ScalarT]: ...
+@overload  # 3d, dtype=<known>
+def concatenate[ScalarT: np.generic](
+    arrays: _Array3D[Any],
+    /,
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind | None = "same_kind",
+) -> _Array2D[ScalarT]: ...
+@overload  # 3d, dtype=<unknown>
+def concatenate(
+    arrays: _Array3D[Any],
+    /,
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind | None = "same_kind",
+) -> _Array2D[Any]: ...
+@overload  # ?d, axis=None
+def concatenate[ScalarT: np.generic](
+    arrays: SupportsLenAndGetItem[_ArrayLike[ScalarT]],
+    /,
+    axis: None,
+    out: None = None,
+    *,
+    dtype: None = None,
+    casting: _CastingKind | None = "same_kind",
+) -> _Array1D[ScalarT]: ...
+@overload  # ?d, axis=None, dtype=<known>
+def concatenate[ScalarT: np.generic](
+    arrays: SupportsLenAndGetItem[ArrayLike],
+    /,
+    axis: None,
+    out: None = None,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind | None = "same_kind",
+) -> _Array1D[ScalarT]: ...
+@overload  # ?d, dtype=<known>
+def concatenate[ScalarT: np.generic](
+    arrays: SupportsLenAndGetItem[ArrayLike],
+    /,
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind | None = "same_kind",
+) -> NDArray[ScalarT]: ...
+@overload  # out=<given>  (keyword)
 def concatenate[OutT: np.ndarray](
     arrays: SupportsLenAndGetItem[ArrayLike],
     /,
@@ -847,7 +957,7 @@ def concatenate[OutT: np.ndarray](
     dtype: DTypeLike | None = None,
     casting: _CastingKind | None = "same_kind",
 ) -> OutT: ...
-@overload
+@overload  # out=<given>  (positional)
 def concatenate[OutT: np.ndarray](
     arrays: SupportsLenAndGetItem[ArrayLike],
     /,
@@ -857,6 +967,26 @@ def concatenate[OutT: np.ndarray](
     dtype: DTypeLike | None = None,
     casting: _CastingKind | None = "same_kind",
 ) -> OutT: ...
+@overload  # unknown, axis=None
+def concatenate(
+    arrays: SupportsLenAndGetItem[ArrayLike],
+    /,
+    axis: None,
+    out: None = None,
+    *,
+    dtype: DTypeLike | None = None,
+    casting: _CastingKind | None = "same_kind",
+) -> _Array1D[Any]: ...
+@overload  # fallback
+def concatenate(
+    arrays: SupportsLenAndGetItem[ArrayLike],
+    /,
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: DTypeLike | None = None,
+    casting: _CastingKind | None = "same_kind",
+) -> NDArray[Any]: ...
 
 # keep in sync with `ma.core.inner`
 @overload  # (?d T, Nd T) -> 0d|Nd T  (workaround)
