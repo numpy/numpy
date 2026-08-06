@@ -546,7 +546,7 @@ get_optional_set_dtype_and_dtype(
     PyTypeObject *subtype,
     PyObject **_set_dtype, PyObject **sub_dtype)
 {
-    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
+    npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
     if (PyObject_GetOptionalAttr(
             (PyObject *)subtype, interned_str->_set_dtype,
             _set_dtype) < 0) {
@@ -586,7 +586,7 @@ decide_view_dtype_path(
         int *use_set_dtype,
         int *use_dtype_prop)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     int ret = -1;
     *use_dtype_in_finalize = 1;  /* Future defaults. */
     *use_set_dtype = 0;
@@ -670,7 +670,7 @@ decide_view_dtype_path(
 NPY_NO_EXPORT PyObject *
 PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     PyObject *ret = NULL;
     int nd = PyArray_NDIM(self);
     npy_intp *dims = PyArray_DIMS(self);

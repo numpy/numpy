@@ -22,7 +22,7 @@
 static PyObject *
 get_array_function(PyObject *obj)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     /* Fast return for ndarray */
     if (PyArray_CheckExact(obj)) {
         Py_INCREF(state->static_pydata.ndarray_array_function);
@@ -131,7 +131,7 @@ fail:
 static int
 is_default_array_function(PyObject *obj)
 {
-    return obj == npy_get_module_state()->static_pydata.ndarray_array_function;
+    return obj == _npy_module_state->static_pydata.ndarray_array_function;
 }
 
 
@@ -168,7 +168,7 @@ array_function_method_impl(PyObject *func, PyObject *types, PyObject *args,
      */
     PyObject *implementation;
     if (PyObject_GetOptionalAttr(
-            func, npy_get_module_state()->interned_str.implementation, &implementation) < 0) {
+            func, _npy_module_state->interned_str.implementation, &implementation) < 0) {
         return NULL;
     }
     else if (implementation == NULL) {
@@ -247,7 +247,7 @@ get_args_and_kwargs(
 static void
 set_no_matching_types_error(PyObject *public_api, PyObject *types)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     /* No acceptable override found, raise TypeError. */
     if (npy_cache_import_runtime(
             "numpy._core._internal",
@@ -276,7 +276,7 @@ array_implement_c_array_function_creation(
     PyObject *args, PyObject *kwargs,
     PyObject *const *fast_args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     PyObject *dispatch_types = NULL;
     PyObject *numpy_module = NULL;
     PyObject *public_api = NULL;
@@ -442,9 +442,9 @@ try_reduction(PyArray_ArrayFunctionDispatcherObject *self,
 {
     PyObject *a = NULL, *axis = Py_None, *out = Py_None;
     PyObject *dtype = self->reduction_kind == REDUCTION_ANY_ALL ? (PyObject *)&PyBool_Type : Py_None;
-    /* FIXME: replace npy_get_module_state() with get_module_state(module)
+    /* FIXME: replace _npy_module_state with get_module_state(module)
      * once this call chain carries the module pointer */
-    PyObject *no_value = npy_get_module_state()->static_pydata._NoValue;
+    PyObject *no_value = _npy_module_state->static_pydata._NoValue;
     PyObject *keepdims = no_value, *where = no_value;
     PyObject *initial = no_value;
     int parsed = 0;

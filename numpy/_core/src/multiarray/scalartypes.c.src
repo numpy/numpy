@@ -191,7 +191,7 @@ static inline int
 find_binary_operation_path(
     PyObject *self, PyObject *other, PyObject **self_op, PyObject **other_op)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     *other_op = NULL;
     *self_op = NULL;
 
@@ -305,7 +305,7 @@ gentype_multiply(PyObject *m1, PyObject *m2);
 static PyObject *
 gentype_@name@@suff@(PyObject *m1, PyObject *m2)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_@name@, gentype_@name@);
 
     PyObject *self = NULL;
@@ -412,7 +412,7 @@ gentype_multiply(PyObject *m1, PyObject *m2)
 static PyObject *
 gentype_power(PyObject *m1, PyObject *m2, PyObject *modulo)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     if (modulo != Py_None) {
         /* modular exponentiation is not implemented (gh-8804) */
         Py_INCREF(Py_NotImplemented);
@@ -873,7 +873,7 @@ _void_to_hex(const char* argbuf, const Py_ssize_t arglen,
 
 static PyObject *
 _void_scalar_to_string(PyObject *obj, int repr) {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     if (npy_cache_import_runtime(
                 "numpy._core.arrayprint", "_void_scalar_to_string",
                 &state->runtime_imports._void_scalar_to_string) == -1) {
@@ -3450,7 +3450,7 @@ object_arrtype_alloc(PyTypeObject *type, Py_ssize_t items)
      * Object scalars should not actually exist, if they exist we should
      * consider it to be a bug.
      */
-    if (PyErr_WarnEx(npy_get_module_state()->static_pydata.VisibleDeprecationWarning,
+    if (PyErr_WarnEx(_npy_module_state->static_pydata.VisibleDeprecationWarning,
             "Creating a NumPy object scalar.  NumPy object scalars should "
             "never be created.  If you see this message please inform the "
             "NumPy developers.  Since this message should never be shown "

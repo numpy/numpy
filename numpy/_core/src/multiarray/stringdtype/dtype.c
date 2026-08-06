@@ -911,7 +911,7 @@ stringdtype_repr(PyArray_StringDTypeObject *self)
 static PyObject *
 stringdtype__reduce__(PyArray_StringDTypeObject *self, PyObject *NPY_UNUSED(args))
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     if (npy_cache_import_runtime(
                 "numpy._core._internal", "_convert_to_stringdtype_kwargs",
                 &state->runtime_imports._convert_to_stringdtype_kwargs) == -1) {

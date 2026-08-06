@@ -117,7 +117,7 @@ make_extobj_capsule(npy_intp bufsize, int errmask, PyObject *pyfunc)
 static int
 fetch_curr_extobj_state(npy_extobj *extobj)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     PyObject *capsule;
     if (PyContextVar_Get(
             state->static_pydata.npy_extobj_contextvar,
@@ -143,7 +143,7 @@ fetch_curr_extobj_state(npy_extobj *extobj)
 NPY_NO_EXPORT int
 init_extobj(void)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     state->static_pydata.default_extobj_capsule = make_extobj_capsule(
             NPY_BUFSIZE, UFUNC_ERR_DEFAULT, Py_None);
     if (state->static_pydata.default_extobj_capsule == NULL) {
@@ -177,7 +177,7 @@ errmodeconverter(PyObject *obj, int *mode)
     if (obj == Py_None) {
         return 1;
     }
-    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
+    npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
     int i = 0;
     for (; i <= UFUNC_ERR_LOG; i++) {
         int eq = PyObject_RichCompareBool(

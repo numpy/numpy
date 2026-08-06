@@ -35,7 +35,7 @@ PyArray_SetStringFunction(PyObject *op, int repr)
 NPY_NO_EXPORT PyObject *
 array_repr(PyArrayObject *self)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     /*
      * We need to do a delayed import here as initialization on module load
      * leads to circular import problems.
@@ -55,7 +55,7 @@ array_repr(PyArrayObject *self)
 NPY_NO_EXPORT PyObject *
 array_str(PyArrayObject *self)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     /*
      * We need to do a delayed import here as initialization on module load leads
      * to circular import problems.

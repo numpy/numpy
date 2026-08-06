@@ -186,7 +186,7 @@ typedef enum {
 static int
 pyscalar_mode_conv(PyObject *obj, scalar_policy *policy)
 {
-    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
+    npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
     PyObject *strings[3] = {
             interned_str->convert, interned_str->preserve,
             interned_str->convert_if_no_array};

@@ -26,7 +26,7 @@ dlpack_export_registry_lookup(PyArray_Descr *dtype,
 {
     PyObject *val = NULL;
     int gres = PyDict_GetItemRef(
-            npy_get_module_state()->static_pydata.dlpack_export_registry,
+            _npy_module_state->static_pydata.dlpack_export_registry,
             (PyObject *)dtype,
             &val);
     if (gres <= 0) {
@@ -68,7 +68,7 @@ dlpack_dtype_registry_lookup(uint8_t code, uint8_t bits)
     }
     PyObject *reg_val = NULL;
     int gres = PyDict_GetItemRef(
-            npy_get_module_state()->static_pydata.dlpack_dtype_registry, key, &reg_val);
+            _npy_module_state->static_pydata.dlpack_dtype_registry, key, &reg_val);
     Py_DECREF(key);
     if (gres < 0) {
         return NULL;

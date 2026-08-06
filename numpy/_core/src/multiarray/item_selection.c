@@ -2459,7 +2459,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
     }
 
     /* Handle negative axes with standard Python indexing rules */
-    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
+    npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
     if (check_and_adjust_axis_msg(&axis1, ndim, interned_str->axis1) < 0) {
         return NULL;
     }

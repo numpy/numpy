@@ -22,7 +22,7 @@
 NPY_NO_EXPORT PyObject *
 PyUFuncOverride_GetNonDefaultArrayUfunc(PyObject *obj)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     PyObject *cls_array_ufunc;
 
     /* Fast return for ndarray */

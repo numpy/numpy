@@ -180,7 +180,7 @@ check_and_adjust_axis_msg(int *axis, int ndim, PyObject *msg_prefix)
     /* Check that index is valid, taking into account negative indices */
     if (NPY_UNLIKELY((*axis < -ndim) || (*axis >= ndim))) {
         /* Invoke the AxisError constructor */
-        multiarray_umath_state *state = npy_get_module_state();
+        multiarray_umath_state *state = _npy_module_state;
         PyObject *exc = PyObject_CallFunction(
                 state->static_pydata.AxisError, "iiO", *axis, ndim,
                 msg_prefix);

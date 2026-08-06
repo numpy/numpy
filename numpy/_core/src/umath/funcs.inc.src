@@ -157,26 +157,26 @@ npy_ObjectLogicalNot(PyObject *i1)
 
 static PyObject *
 npy_ObjectFloor(PyObject *obj) {
-    return PyObject_CallFunction(npy_get_module_state()->static_pydata.math_floor_func,
+    return PyObject_CallFunction(_npy_module_state->static_pydata.math_floor_func,
                                  "O", obj);
 }
 
 static PyObject *
 npy_ObjectCeil(PyObject *obj) {
-    return PyObject_CallFunction(npy_get_module_state()->static_pydata.math_ceil_func,
+    return PyObject_CallFunction(_npy_module_state->static_pydata.math_ceil_func,
                                  "O", obj);
 }
 
 static PyObject *
 npy_ObjectTrunc(PyObject *obj) {
-    return PyObject_CallFunction(npy_get_module_state()->static_pydata.math_trunc_func,
+    return PyObject_CallFunction(_npy_module_state->static_pydata.math_trunc_func,
                                  "O", obj);
 }
 
 static PyObject *
 npy_ObjectGCD(PyObject *i1, PyObject *i2)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     PyObject *gcd = NULL;
 
     /* use math.gcd if valid on the provided types */

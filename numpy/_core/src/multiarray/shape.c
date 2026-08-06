@@ -651,7 +651,7 @@ PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
     int n = PyArray_NDIM(ap);
     int i;
 
-    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
+    npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
     if (check_and_adjust_axis_msg(&a1, n, interned_str->axis1) < 0) {
         return NULL;
     }

@@ -105,7 +105,7 @@ _umath_strings_richcompare(
 
 NPY_NO_EXPORT int
 get_legacy_print_mode(void) {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     /* Get the C value of the legacy printing mode.
      *
      * It is stored as a Python context variable so we access it via the C
@@ -165,7 +165,7 @@ PyArray_GetPriority(PyObject *obj, double default_)
     }
 
     if (PyArray_LookupSpecial_OnInstance(
-            obj, npy_get_module_state()->interned_str.array_priority, &ret) < 0) {
+            obj, _npy_module_state->interned_str.array_priority, &ret) < 0) {
         /* TODO[gh-14801]: propagate crashes during attribute access? */
         PyErr_Clear();
         return default_;
@@ -1025,7 +1025,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
 
     if (PyArray_NDIM(ap1) == 0 || PyArray_NDIM(ap2) == 0) {
         PyObject *mul_res = PyObject_CallFunctionObjArgs(
-                npy_get_module_state()->n_ops.multiply, ap1, ap2, out, NULL);
+                _npy_module_state->n_ops.multiply, ap1, ap2, out, NULL);
         Py_DECREF(ap1);
         Py_DECREF(ap2);
         return mul_res;
@@ -4294,7 +4294,7 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     }
     else if (result == MEM_OVERLAP_TOO_HARD) {
         if (raise_exceptions) {
-            PyErr_SetString(npy_get_module_state()->static_pydata.TooHardError,
+            PyErr_SetString(_npy_module_state->static_pydata.TooHardError,
                             "Exceeded max_work");
             return NULL;
         }

@@ -423,7 +423,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
                 ufunc, descrs, &loop, &user_data, &needs_api) < 0) {
             /* Only ignore a missing loop */
             if (!PyErr_ExceptionMatches(
-                    npy_get_module_state()->static_pydata._UFuncNoLoopError)) {
+                    _npy_module_state->static_pydata._UFuncNoLoopError)) {
                 Py_DECREF(bound_res);
                 return NULL;
             }

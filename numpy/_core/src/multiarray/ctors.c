@@ -581,7 +581,7 @@ raise_memory_error(int nd, npy_intp const *dims, PyArray_Descr *descr)
     if (exc_value == NULL){
         goto fail;
     }
-    PyErr_SetObject(npy_get_module_state()->static_pydata._ArrayMemoryError, exc_value);
+    PyErr_SetObject(_npy_module_state->static_pydata._ArrayMemoryError, exc_value);
     Py_DECREF(exc_value);
     return;
 
@@ -604,7 +604,7 @@ PyArray_NewFromDescr_int(
         npy_intp const *dims, npy_intp const *strides, void *data,
         int flags, PyObject *obj, PyObject *base, _NPY_CREATION_FLAGS cflags)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     PyArrayObject_fields *fa;
     npy_intp nbytes;
 
@@ -2008,7 +2008,7 @@ PyArray_FromStructInterface(PyObject *input)
     char endian = NPY_NATBYTE;
 
     if (PyArray_LookupSpecial_OnInstance(
-            input, npy_get_module_state()->interned_str.array_struct, &attr) < 0) {
+            input, _npy_module_state->interned_str.array_struct, &attr) < 0) {
         return NULL;
     }
     else if (attr == NULL) {
@@ -2132,7 +2132,7 @@ PyArray_FromInterface(PyObject *origin)
     int use_scalar_assign = 0;
 
     if (PyArray_LookupSpecial_OnInstance(
-            origin, npy_get_module_state()->interned_str.array_interface, &iface) < 0) {
+            origin, _npy_module_state->interned_str.array_interface, &iface) < 0) {
         return NULL;
     }
     else if (iface == NULL) {
@@ -2454,7 +2454,7 @@ check_or_clear_and_warn_error_if_due_to_copy_kwarg(PyObject *kwnames)
         goto restore_error;
     }
     int copy_kwarg_unsupported = PyUnicode_Contains(
-            str_value, npy_get_module_state()->interned_str.array_err_msg_substr);
+            str_value, _npy_module_state->interned_str.array_err_msg_substr);
     Py_DECREF(str_value);
     if (copy_kwarg_unsupported == -1) {
         goto restore_error;
@@ -2506,7 +2506,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_FromArrayAttr_int(PyObject *op, PyArray_Descr *descr, int copy,
                           int *was_copied_by__array__)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     PyObject *new;
     PyObject *array_meth;
 

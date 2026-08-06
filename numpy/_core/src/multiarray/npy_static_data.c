@@ -25,7 +25,7 @@
 NPY_NO_EXPORT int
 intern_strings(void)
 {
-    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
+    npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
 
     INTERN_STRING(current_allocator, "current_allocator");
     INTERN_STRING(array, "__array__");
@@ -116,7 +116,7 @@ intern_strings(void)
 NPY_NO_EXPORT int
 initialize_static_globals(void)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     /*
      * Initialize contents of npy_static_pydata struct
      *
@@ -299,7 +299,7 @@ initialize_static_globals(void)
  */
 NPY_NO_EXPORT int
 verify_static_structs_initialized(void) {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     // verify all entries in npy_interned_str are filled in
     npy_interned_str_struct *interned_str = &state->interned_str;
     for (int i=0; i < (sizeof(npy_interned_str_struct)/sizeof(PyObject *)); i++) {

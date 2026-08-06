@@ -82,17 +82,6 @@ static_assert(offsetof(multiarray_umath_state, n_ops) -
         "NPY_MODULE_STATE_OBJECT_FIELDS");
 
 /*
- * TRANSITIONAL: process-global pointer to the module state.
- *
- * Set once during module init in _multiarray_umath_exec(). Used by deep
- * internal functions that don't have easy access to the module pointer.
- *
- * FIXME: Remove this once all access sites are updated to receive the
- * module/state pointer via proper channels (threading or type methods).
- */
-NPY_VISIBILITY_HIDDEN extern multiarray_umath_state *_npy_module_state;
-
-/*
  * Get module state from the module object.
  */
 static inline multiarray_umath_state *
@@ -104,20 +93,21 @@ get_module_state(PyObject *module)
 }
 
 /*
- * TRANSITIONAL: Get module state without a module pointer.
+ * TRANSITIONAL: process-global pointer to the module state.
  *
- * Use this only in internal functions deep in the call chain that cannot
- * easily receive a module pointer yet. Prefer get_module_state() where
- * a module pointer is available.
+ * Sound as a process global only because the module opts out of
+ * subinterpreters (Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED) and refuses a
+ * second load per process, so at most one module state ever exists. It is
+ * assigned at the top of _multiarray_umath_exec() before any reader can run,
+ * and the module leaks a reference to itself so m_free never runs, leaving it
+ * valid for the life of the process: dereference it without a NULL check.
  *
- * FIXME: Remove all call sites once the full migration is complete.
+ * Use only where no module pointer is reachable; prefer get_module_state().
+ *
+ * FIXME: Remove once all access sites receive the module or state pointer
+ * directly, via module-aware type methods or per-interpreter lookup.
  */
-static inline multiarray_umath_state *
-npy_get_module_state(void)
-{
-    assert(_npy_module_state != NULL);
-    return _npy_module_state;
-}
+NPY_VISIBILITY_HIDDEN extern multiarray_umath_state *_npy_module_state;
 
 #ifdef __cplusplus
 }

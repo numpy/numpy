@@ -367,7 +367,7 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
             !PyTypeNum_ISCOMPLEX(type_num) &&
             PyTypeNum_ISNUMBER(type_num) &&
             !PyTypeNum_ISBOOL(type_num)) {
-        int ret = PyErr_WarnEx(npy_get_module_state()->static_pydata.ComplexWarning,
+        int ret = PyErr_WarnEx(_npy_module_state->static_pydata.ComplexWarning,
                 "Casting complex values to real discards "
                 "the imaginary part", 1);
         if (ret < 0) {
@@ -1830,7 +1830,7 @@ _check_object_rec(PyArray_Descr *descr)
 NPY_NO_EXPORT char *
 PyArray_Zero(PyArrayObject *arr)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     char *zeroval;
     int ret, storeflags;
 
@@ -1870,7 +1870,7 @@ PyArray_Zero(PyArrayObject *arr)
 NPY_NO_EXPORT char *
 PyArray_One(PyArrayObject *arr)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     char *oneval;
     int ret, storeflags;
 
@@ -2292,7 +2292,7 @@ complex_to_noncomplex_get_loop(
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    int ret = PyErr_WarnEx(npy_get_module_state()->static_pydata.ComplexWarning,
+    int ret = PyErr_WarnEx(_npy_module_state->static_pydata.ComplexWarning,
             "Casting complex values to real discards "
             "the imaginary part", 1);
     if (ret < 0) {
@@ -2929,7 +2929,7 @@ nonstructured_to_structured_get_loop(
 static PyObject *
 PyArray_GetGenericToVoidCastingImpl(void)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     Py_INCREF(state->static_pydata.GenericToVoidMethod);
     return state->static_pydata.GenericToVoidMethod;
 }
@@ -3068,7 +3068,7 @@ structured_to_nonstructured_get_loop(
 static PyObject *
 PyArray_GetVoidToGenericCastingImpl(void)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     Py_INCREF(state->static_pydata.VoidToGenericMethod);
     return state->static_pydata.VoidToGenericMethod;
 }
@@ -3449,7 +3449,7 @@ object_to_any_resolve_descriptors(
 static PyObject *
 PyArray_GetObjectToGenericCastingImpl(void)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     Py_INCREF(state->static_pydata.ObjectToGenericMethod);
     return state->static_pydata.ObjectToGenericMethod;
 }
@@ -3487,7 +3487,7 @@ any_to_object_resolve_descriptors(
 static PyObject *
 PyArray_GetGenericToObjectCastingImpl(void)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     Py_INCREF(state->static_pydata.GenericToObjectMethod);
     return state->static_pydata.GenericToObjectMethod;
 }
@@ -3543,7 +3543,7 @@ PyArray_InitializeObjectToObjectCast(void)
 
 static int
 initialize_void_and_object_globals(void) {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     PyArrayMethodObject *method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
     if (method == NULL) {
         PyErr_NoMemory();

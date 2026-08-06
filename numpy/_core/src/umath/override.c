@@ -114,7 +114,7 @@ initialize_normal_kwds(PyObject *out_args,
         }
     }
 
-    PyObject *out_str = npy_get_module_state()->interned_str.out;
+    PyObject *out_str = _npy_module_state->interned_str.out;
     if (out_args != NULL) {
         /* Replace `out` argument with the normalized version */
         int res = PyDict_SetItem(normal_kwds, out_str, out_args);
@@ -180,7 +180,7 @@ copy_positional_args_to_kwargs(const char **keywords,
              * 5 keyword arguments.
              */
             assert(strcmp(keywords[i], "initial") == 0);
-            if (args[i] == npy_get_module_state()->static_pydata._NoValue) {
+            if (args[i] == _npy_module_state->static_pydata._NoValue) {
                 continue;
             }
         }
@@ -210,7 +210,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
         PyObject **result)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     int status;
 
     int num_override_args;

@@ -179,7 +179,7 @@ _PyArray_MapPyTypeToDType(
         return -1;
     }
 
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
 
     /* Create the global dictionary if it does not exist */
     if (NPY_UNLIKELY(state->global_pytype_to_type_dict == NULL)) {
@@ -234,7 +234,7 @@ npy_discover_dtype_from_pytype(PyTypeObject *pytype)
         DType = Py_NewRef((PyObject *)&PyArray_PyLongDType);
     }
     else {
-        int res = PyDict_GetItemRef(npy_get_module_state()->global_pytype_to_type_dict,
+        int res = PyDict_GetItemRef(_npy_module_state->global_pytype_to_type_dict,
                                     (PyObject *)pytype, (PyObject **)&DType);
 
         if (res <= 0) {

@@ -109,10 +109,10 @@ npy_forward_method(
  */
 #define NPY_FORWARD_NDARRAY_METHOD(name)                                \
     if (npy_cache_import_runtime("numpy._core._methods", #name,         \
-                &npy_get_module_state()->runtime_imports.name) == -1) { \
+                &_npy_module_state->runtime_imports.name) == -1) { \
         return NULL;                                                    \
     }                                                                   \
-    return npy_forward_method(npy_get_module_state()->runtime_imports.name, \
+    return npy_forward_method(_npy_module_state->runtime_imports.name, \
                               (PyObject *)self, args, len_args, kwnames)
 
 
@@ -376,7 +376,7 @@ array_swapaxes(PyArrayObject *self, PyObject *args)
 NPY_NO_EXPORT PyObject *
 PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     PyObject *ret = NULL;
     PyObject *safe;
     int self_elsize, typed_elsize;
@@ -1044,7 +1044,7 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     }
     Py_DECREF(out_kwd_obj);
     /* check where if it exists */
-    where_obj = PyDict_GetItemWithError(kwds, npy_get_module_state()->interned_str.where); // noqa: borrowed-ref OK
+    where_obj = PyDict_GetItemWithError(kwds, _npy_module_state->interned_str.where); // noqa: borrowed-ref OK
     if (where_obj == NULL) {
         if (PyErr_Occurred()) {
             return -1;
@@ -2301,7 +2301,7 @@ end:
 NPY_NO_EXPORT int
 PyArray_Dump(PyObject *self, PyObject *file, int protocol)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     PyObject *ret;
     if (npy_cache_import_runtime(
                 "numpy._core._methods", "_dump",
@@ -2328,7 +2328,7 @@ PyArray_Dump(PyObject *self, PyObject *file, int protocol)
 NPY_NO_EXPORT PyObject *
 PyArray_Dumps(PyObject *self, int protocol)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     if (npy_cache_import_runtime("numpy._core._methods", "_dumps",
                                  &state->runtime_imports._dumps) == -1) {
         return NULL;

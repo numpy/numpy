@@ -458,7 +458,7 @@ _check_compatibility_with_new_dtype(
     PyArrayObject *self, PyArray_Descr *type,
     int *newnd, npy_intp **newdims, npy_intp **newstrides)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     PyArray_Descr *dtype = PyArray_DESCR(self);
     int nd = PyArray_NDIM(self);
 

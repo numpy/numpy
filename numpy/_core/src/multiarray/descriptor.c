@@ -95,7 +95,7 @@ _try_convert_from_dtype_attr(PyObject *obj)
     int used_dtype_attr = 0;
     /* For arbitrary objects that have a "dtype" attribute */
     PyObject *attr;
-    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
+    npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
     int res = PyObject_GetOptionalAttr(obj, interned_str->numpy_dtype, &attr);
     if (res < 0) {
         return NULL;
@@ -745,7 +745,7 @@ _convert_from_list(PyObject *obj, int align)
 static PyArray_Descr *
 _convert_from_commastring(PyObject *obj, int align)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     PyObject *parsed;
     PyArray_Descr *res;
     assert(PyUnicode_Check(obj));
@@ -1054,7 +1054,7 @@ _validate_object_field_overlap(_PyArray_LegacyDescr *dtype)
 static PyArray_Descr *
 _convert_from_field_dict(PyObject *obj, int align)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     if (npy_cache_import_runtime(
             "numpy._core._internal", "_usefields",
             &state->runtime_imports._usefields) < 0) {
@@ -1929,7 +1929,7 @@ _convert_from_str(PyObject *obj, int align)
             (ret = PyArray_DescrFromType(check_num)) == NULL) {
         PyErr_Clear();
         /* Now check to see if the object is registered in typeDict */
-        PyObject *typeDict = npy_get_module_state()->typeDict;
+        PyObject *typeDict = _npy_module_state->typeDict;
         if (typeDict == NULL) {
             goto fail;
         }
@@ -2654,7 +2654,7 @@ arraydescr_new(PyTypeObject *subtype,
             if (res == -1 && PyErr_Occurred()) {
                 return NULL;  // Should actually be impossible (as inputs are `long`)
             }
-            if (PyErr_WarnFormat(npy_get_module_state()->static_pydata.VisibleDeprecationWarning, 1,
+            if (PyErr_WarnFormat(_npy_module_state->static_pydata.VisibleDeprecationWarning, 1,
                         "dtype(): align should be passed as Python or NumPy boolean but got `align=%.100R`. "
                         "Did you mean to pass a tuple to create a subarray type? (Deprecated NumPy 2.4)",
                         oalign) < 0) {

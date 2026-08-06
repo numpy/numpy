@@ -22,7 +22,7 @@ npy_ctypes_check(PyTypeObject *obj)
     PyObject *ret_obj;
     int ret;
 
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
 
     if (npy_cache_import_runtime(
                 "numpy._core._internal", "npy_ctypes_check",

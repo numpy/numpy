@@ -538,7 +538,7 @@ array_real_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
         return Py_NewRef((PyObject *)self);
     }
 
-    return _get_part(self, npy_get_module_state()->n_ops.real, meth, /* need_view */ 0);
+    return _get_part(self, _npy_module_state->n_ops.real, meth, /* need_view */ 0);
 }
 
 static int
@@ -560,7 +560,7 @@ array_real_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
     }
     else {
         part = (PyArrayObject *)_get_part(
-            self, npy_get_module_state()->n_ops.real, meth, /* need_view */ 1);
+            self, _npy_module_state->n_ops.real, meth, /* need_view */ 1);
         if (part == NULL) {
             if (!PyErr_Occurred()) {
                 PyErr_SetString(PyExc_TypeError,
@@ -599,7 +599,7 @@ array_imag_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
         return ret;
     }
 
-    return _get_part(self, npy_get_module_state()->n_ops.imag, meth, /* need_view */ 0);
+    return _get_part(self, _npy_module_state->n_ops.imag, meth, /* need_view */ 0);
 }
 
 static int
@@ -620,7 +620,7 @@ array_imag_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
     }
 
     part = (PyArrayObject *)_get_part(
-        self, npy_get_module_state()->n_ops.imag, meth, /* need_view */ 1);
+        self, _npy_module_state->n_ops.imag, meth, /* need_view */ 1);
     if (part == NULL) {
         if (!PyErr_Occurred()) {
             PyErr_SetString(PyExc_TypeError,

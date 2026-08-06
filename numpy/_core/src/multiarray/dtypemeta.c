@@ -862,7 +862,7 @@ void_ensure_canonical(_PyArray_LegacyDescr *self)
 static PyArray_Descr *
 void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     if (descr1->subarray == NULL && descr1->names == NULL &&
             descr2->subarray == NULL && descr2->names == NULL) {
         if (descr1->elsize != descr2->elsize) {
@@ -1167,7 +1167,7 @@ dtypemeta_wrap_legacy_descriptor(
     _PyArray_LegacyDescr *descr, PyArray_ArrFuncs *arr_funcs,
     PyTypeObject *dtype_super_class, const char *name, const char *alias)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     int has_type_set = Py_TYPE(descr) == &PyArrayDescr_Type;
 
     if (!has_type_set) {

@@ -368,7 +368,7 @@ static inline int
 write_and_clear_error_if_unraisable(int status, npy_bool unraisable)
 {
     if (status < 0 && unraisable) {
-        PyErr_WriteUnraisable(npy_get_module_state()->interned_str.array_dealloc);
+        PyErr_WriteUnraisable(_npy_module_state->interned_str.array_dealloc);
         return 0;
     }
     return status;
@@ -432,7 +432,7 @@ _clear_array_attributes(PyArrayObject *self, npy_bool unraisable)
         }
         /* mem_handler can be absent if NPY_ARRAY_OWNDATA arbitrarily set */
         if (fa->mem_handler == NULL) {
-            if (npy_get_module_state()->global_state.warn_if_no_mem_policy) {
+            if (_npy_module_state->global_state.warn_if_no_mem_policy) {
                 char const *msg = "Trying to dealloc data, but a memory policy "
                     "is not set. If you take ownership of the data, you must "
                     "set a base owning the data (e.g. a PyCapsule).";
@@ -654,7 +654,7 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
             return NULL;
         }
 
-        multiarray_umath_state *state = npy_get_module_state();
+        multiarray_umath_state *state = _npy_module_state;
         PyObject *op = (cmp_op == Py_EQ ?
                 state->n_ops.logical_and : state->n_ops.logical_or);
         PyObject *res = NULL;
@@ -839,7 +839,7 @@ DEPRECATE_silence_error(const char *msg) {
 NPY_NO_EXPORT PyObject *
 array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     PyArrayObject *array_other;
     PyObject *obj_self = (PyObject *)self;
     PyObject *result = NULL;

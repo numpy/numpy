@@ -681,7 +681,7 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
         PyObject *where_obj, PyArrayObject **out_wheremask, /* PyArray of bool */
         PyObject *keepdims_obj, int *out_keepdims)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     int nin = ufunc->nin;
     int nout = ufunc->nout;
     int nop = ufunc->nargs;
@@ -1363,7 +1363,7 @@ _check_keepdims_support(PyUFuncObject *ufunc) {
 static int
 _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
                 PyArrayObject **op, int broadcast_ndim, int **remap_axis) {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     int nin = ufunc->nin;
     int nop = ufunc->nargs;
     int iop, list_size;
@@ -4911,7 +4911,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 
         /* Extra positional args but no keywords */
         /* DEPRECATED NumPy 2.4, 2025-08 */
-        multiarray_umath_state *state = npy_get_module_state();
+        multiarray_umath_state *state = _npy_module_state;
         if ((PyObject *)ufunc == state->n_ops.maximum
                 || (PyObject *)ufunc == state->n_ops.minimum) {
 
@@ -5929,7 +5929,7 @@ is_known_scalar(PyObject *obj)
 static PyObject *
 prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     PyArrayObject *ap1 = NULL;
 
     if (npy_cache_import_runtime("numpy", "matrix",
@@ -6503,7 +6503,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             Py_INCREF(tmp_operands[1]);
             operand_DTypes[1] = NPY_DTYPE(PyArray_DESCR(op2_array));
             Py_INCREF(operand_DTypes[1]);
-            multiarray_umath_state *state = npy_get_module_state();
+            multiarray_umath_state *state = _npy_module_state;
             if (mark_pyscalar_operand(
                     state, op2, &tmp_operands[1], &operand_DTypes[1])) {
                 op2_is_pyscalar = NPY_TRUE;
@@ -7139,7 +7139,7 @@ _typecharfromnum(int num) {
 static PyObject *
 ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     PyObject *doc;
 
     // If there is a __doc__ in the instance __dict__, use it.
@@ -7178,7 +7178,7 @@ ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 static int
 ufunc_set_doc(PyUFuncObject *ufunc, PyObject *doc, void *NPY_UNUSED(ignored))
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     if (doc == NULL) {
         return PyDict_DelItem(ufunc->dict, state->interned_str.__doc__);
     } else {

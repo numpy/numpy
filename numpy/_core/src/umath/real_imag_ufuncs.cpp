@@ -97,7 +97,7 @@ object_get_comp_strided_loop(
     char *out = data[1];
     npy_intp istride = strides[0];
     npy_intp ostride = strides[1];
-    npy_interned_str_struct *interned_str = &npy_get_module_state()->interned_str;
+    npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
 
     while (N--) {
         PyObject *obj = *reinterpret_cast<PyObject **>(in);

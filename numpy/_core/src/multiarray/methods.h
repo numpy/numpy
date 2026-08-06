@@ -15,7 +15,7 @@ extern NPY_NO_EXPORT PyMethodDef array_methods[];
 static inline PyObject *
 NpyPath_PathlikeToFspath(PyObject *file)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     if (!PyObject_IsInstance(file, state->static_pydata.os_PathLike)) {
         Py_INCREF(file);
         return file;

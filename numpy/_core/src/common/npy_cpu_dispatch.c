@@ -41,7 +41,7 @@ NPY_VISIBILITY_HIDDEN void
 npy_cpu_dispatch_trace(const char *fname, const char *signature,
                        const char **dispatch_info)
 {
-    npy_static_pydata_struct *static_pydata = &npy_get_module_state()->static_pydata;
+    npy_static_pydata_struct *static_pydata = &_npy_module_state->static_pydata;
     PyObject *func_dict = PyDict_GetItemString(static_pydata->cpu_dispatch_registry, fname); // noqa: borrowed-ref OK
     if (func_dict == NULL) {
         func_dict = PyDict_New();

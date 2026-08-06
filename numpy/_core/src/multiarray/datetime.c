@@ -2110,7 +2110,7 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
         PyObject *obj, npy_datetimestruct *out, NPY_DATETIMEUNIT *out_bestunit,
         int apply_tzinfo)
 {
-    multiarray_umath_state *state = npy_get_module_state();
+    multiarray_umath_state *state = _npy_module_state;
     int isleap;
     int has_time;
 
