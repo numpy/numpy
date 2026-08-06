@@ -627,7 +627,7 @@ class WhereMaskTwoArgs(Benchmark):
 
     def setup(self, func, dtype, density):
         rng = np.random.default_rng(42)
-        n = 100_000
+        n = 1_000_000
         try:
             self.f = getattr(np, func)
         except AttributeError:
@@ -651,7 +651,7 @@ class WhereMaskOneArgs(Benchmark):
     def setup(self, func, dtype, density):
         rng = np.random.default_rng(42)
 
-        n = 100_000
+        n = 1_000_000
         try:
             self.f = getattr(np, func)
         except AttributeError:

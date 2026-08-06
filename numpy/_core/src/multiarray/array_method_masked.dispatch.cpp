@@ -1,10 +1,10 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+#include <Python.h>
 #include "array_method_masked.h"
 #include "simd/simd.hpp"
 #include <cassert>
 #include <cstdint>
-#include <Python.h>
 #include <cstring>
 #include <numpy/ndarrayobject.h>
 
