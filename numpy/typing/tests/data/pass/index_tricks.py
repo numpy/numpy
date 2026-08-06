@@ -55,8 +55,11 @@ np.ix_(AR_LIKE_i[0], AR_LIKE_f[0])
 np.ix_(AR_i8[0])
 
 np.fill_diagonal(AR_i8, 5)
+np.fill_diagonal(AR_i8, 5, offset=1)
 
 np.diag_indices(4)
 np.diag_indices(2, 3)
+np.diag_indices(2, 3, offset=1)
 
 np.diag_indices_from(AR_i8)
+np.diag_indices_from(AR_i8, offset=1)
