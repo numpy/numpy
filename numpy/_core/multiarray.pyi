@@ -844,18 +844,6 @@ def array[ItemT: _ObjItemT](
     ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array1D[np.object_[ItemT]]: ...
-@overload  # 2d T@builtin, dtype=object_
-def array[ItemT: _ObjItemT](
-    object: Sequence[list[ItemT]],
-    dtype: _DTypeLike[np.object_] | _ObjectCodes,
-    *,
-    copy: bool | _CopyMode | None = True,
-    order: _OrderKACF = "K",
-    subok: bool = False,
-    ndmin: L[0, 1, 2] = 0,
-    ndmax: int = 0,
-    like: _SupportsArrayFunc | None = None,
-) -> _Array2D[np.object_[ItemT]]: ...
 @overload  # ?d T@builtin, dtype=object_
 def array[ItemT: _ObjItemT](
     object: _NestedSequence[ItemT],
@@ -867,7 +855,7 @@ def array[ItemT: _ObjItemT](
     ndmin: int = 0,
     ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
-) -> NDArray[np.object_[ItemT]]: ...
+) -> NDArray[np.object_[ItemT | Any]]: ...  # `| Any` because it might be ragged
 @overload  # ?, dtype=<known>
 def array[ScalarT: np.generic](
     object: Any,
