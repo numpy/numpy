@@ -1,0 +1,7 @@
+Faster ``isin`` for ``StringDType`` arrays
+------------------------------------------
+``numpy.isin`` now uses its sorting implementation for compatible
+``StringDType`` arrays instead of always falling back to element-by-element
+Python comparisons. Nullable arrays are supported by sorting only their
+non-missing strings and handling missing values separately. The sorting path
+also supports operations mixing ``StringDType`` and fixed-width Unicode arrays.
