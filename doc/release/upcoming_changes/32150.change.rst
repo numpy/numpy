@@ -1,0 +1,4 @@
+* ``ndarray.byteswap`` and ``numpy.byteswap`` now support dtypes that have no
+  defined byte order (e.g. when ``dtype.byteorder == "|"``). This includes NumPy's
+  string dtypes. Such values are left unchanged, including when they occur in
+  structured dtypes.
