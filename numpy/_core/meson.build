@@ -875,8 +875,6 @@ _umath_tests_mtargets = mod_features.multi_targets(
   dependencies: [py_dep, np_core_dep]
 )
 
-# `_rational_tests` is Limited-API clean, so it is built separately from the
-# test modules below in order to pass `limited_api`.
 py.extension_module('_rational_tests',
   'src/umath/_rational_tests.c',
   c_args: c_args_common,
