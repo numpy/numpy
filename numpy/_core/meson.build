@@ -872,7 +872,9 @@ _umath_tests_mtargets = mod_features.multi_targets(
   ],
   baseline: CPU_BASELINE,
   prefix: 'NPY_',
-  dependencies: [py_dep, np_core_dep]
+  dependencies: [py_dep, np_core_dep],
+  # `py.extension_module()`'s `limited_api` kwarg doesn't reach static libs.
+  c_args: get_option('python.allow_limited_api') ? ['-DPy_LIMITED_API=' + py_limited_api_hex] : [],
 )
 
 py.extension_module('_umath_tests',
