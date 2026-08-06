@@ -2178,13 +2178,19 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
         descr = PyArray_DescrFromScalar(self);
         data = (void *)scalar_value(self, descr);
 
+        PyArray_CopySwapFunc *copyswap =
+                PyDataType_GetArrFuncs(descr)->copyswap;
+        if (copyswap == NULL && raise_missing_copyswap(descr, 1) < 0) {
+            Py_DECREF(descr);
+            return NULL;
+        }
         newmem = PyMem_Malloc(descr->elsize);
         if (newmem == NULL) {
             Py_DECREF(descr);
             return PyErr_NoMemory();
         }
         else {
-            PyDataType_GetArrFuncs(descr)->copyswap(newmem, data, 1, NULL);
+            copyswap(newmem, data, 1, NULL);
         }
         new = PyArray_Scalar(newmem, descr, NULL);
         PyMem_Free(newmem);
