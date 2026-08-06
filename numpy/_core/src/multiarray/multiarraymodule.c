@@ -83,7 +83,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "npy_dlpack.h"
 
 #include "umathmodule.h"
-
+#include "histogram.h"
 #include "unique.h"
 
 /*
@@ -4767,6 +4767,8 @@ static struct PyMethodDef array_module_methods[] = {
         "Insert vals sequentially into equivalent 1-d positions "
         "indicated by mask."},
     {"bincount", (PyCFunction)arr_bincount,
+        METH_FASTCALL | METH_KEYWORDS, NULL},
+    {"_histogram_uniform", (PyCFunction)arr_histogram_uniform,
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"_monotonicity", (PyCFunction)arr__monotonicity,
         METH_VARARGS | METH_KEYWORDS, NULL},
