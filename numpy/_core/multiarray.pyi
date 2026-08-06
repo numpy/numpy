@@ -795,7 +795,7 @@ def array[ItemT: _ObjItemT](
     copy: bool | _CopyMode | None = True,
     order: _OrderKACF = "K",
     subok: bool = False,
-    ndmin: L[0, 1, 2] = 0,
+    ndmin: L[0] = 0,
     ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array0D[np.object_[ItemT]]: ...
@@ -819,7 +819,7 @@ def array[ItemT: _ObjItemT](
     copy: bool | _CopyMode | None = True,
     order: _OrderKACF = "K",
     subok: bool = False,
-    ndmin: L[0] = 0,
+    ndmin: L[0, 1, 2] = 0,
     ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array2D[np.object_[ItemT]]: ...
