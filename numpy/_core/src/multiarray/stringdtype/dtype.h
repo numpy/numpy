@@ -32,6 +32,13 @@ stringdtype_binsearch_compare(const void *a, const void *b,
 NPY_NO_EXPORT int
 init_string_na_object(PyObject *mod);
 
+NPY_NO_EXPORT PyObject *
+stringdtype_na_is_nan_like(PyObject *module, PyObject *dtype);
+
+NPY_NO_EXPORT PyObject *
+stringdtype_compatible_na_py(
+        PyObject *module, PyObject *const *args, Py_ssize_t len_args);
+
 NPY_NO_EXPORT int
 stringdtype_setitem(PyArray_StringDTypeObject *descr, PyObject *obj, char **dataptr);
 

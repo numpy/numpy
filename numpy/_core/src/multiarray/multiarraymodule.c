@@ -4836,6 +4836,12 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, "unsafe testing helper to swap out dlpack registry"},
     {"_unique_hash",  (PyCFunction)array__unique_hash,
         METH_FASTCALL | METH_KEYWORDS, "Collect unique values via a hash map."},
+    {"_stringdtype_na_is_nan_like",
+        (PyCFunction)stringdtype_na_is_nan_like, METH_O,
+        "Return whether a StringDType instance has a NaN-like missing value."},
+    {"_stringdtype_compatible_na",
+        (PyCFunction)stringdtype_compatible_na_py, METH_FASTCALL,
+        "Return whether two StringDType instances have compatible missing values."},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 
