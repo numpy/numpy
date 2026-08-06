@@ -540,8 +540,16 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
      * and then recurses -- so a dtype that byte order does not apply to
      * makes this a no-op rather than an error.
      */
-    if (get_copyswapn_or_raise(PyArray_DESCR(self), 1, &copyswapn) < 0) {
-        return NULL;
+    copyswapn = PyDataType_GetArrFuncs(PyArray_DESCR(self))->copyswapn;
+    if (copyswapn == NULL) {
+        if (!can_substitute_copyswap(PyArray_DESCR(self), 1)) {
+            return NULL;
+        }
+        /* Byte order does not apply: only the non-inplace copy remains. */
+        if (!inplace) {
+            return (PyObject *)PyArray_NewCopy(self, -1);
+        }
+        return Py_NewRef((PyObject *)self);
     }
     if (inplace) {
         size = PyArray_SIZE(self);

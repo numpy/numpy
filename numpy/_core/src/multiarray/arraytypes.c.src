@@ -2276,37 +2276,11 @@ STRING_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
 }
 
 
-/*
- * Stand-ins for a missing copyswap slot on a dtype that byte order does not
- * apply to.  There is nothing to reorder, so this degenerates to a plain
- * copy -- and for a pure in-place swap (a NULL source) not even that.  Only
- * handed out under the conditions documented in common.h.
- */
-static void
-_noswap_copyswapn(void *dst, npy_intp dstride, void *src, npy_intp sstride,
-                  npy_intp n, int NPY_UNUSED(swap), void *arr)
-{
-    if (src == NULL) {
-        return;
-    }
-    _basic_copyn(dst, dstride, src, sstride, n,
-                 PyArray_ITEMSIZE((PyArrayObject *)arr));
-}
-
-static void
-_noswap_copyswap(void *dst, void *src, int NPY_UNUSED(swap), void *arr)
-{
-    if (src == NULL) {
-        return;
-    }
-    _basic_copy(dst, src, PyArray_ITEMSIZE((PyArrayObject *)arr));
-}
-
-/* See common.h for the contract of these helpers. */
+/* See common.h for the contract of this helper. */
 NPY_NO_EXPORT int
 can_substitute_copyswap(PyArray_Descr *dtype, int inplace_swap)
 {
-    if (dtype->byteorder == NPY_IGNORE
+    if (PyDataType_BYTEORDER(dtype) == NPY_IGNORE
             && (inplace_swap || PyDataType_ISTRIVIALLYCOPYABLE(dtype))) {
         return 1;
     }
@@ -2316,33 +2290,43 @@ can_substitute_copyswap(PyArray_Descr *dtype, int inplace_swap)
     return 0;
 }
 
-NPY_NO_EXPORT int
-get_copyswapn_or_raise(PyArray_Descr *dtype, int inplace_swap,
-                       PyArray_CopySwapNFunc **copyswapn)
+/*
+ * Keep the fallback as an operation rather than manufacturing a legacy
+ * function pointer whose itemsize can only be recovered from `arr`.
+ */
+static int
+copyswapn_or_fallback(PyArray_Descr *dtype,
+                      void *dst, npy_intp dstride,
+                      void *src, npy_intp sstride,
+                      npy_intp n, int swap, void *arr)
 {
     PyArray_CopySwapNFunc *slot = PyDataType_GetArrFuncs(dtype)->copyswapn;
-    if (slot == NULL) {
-        if (!can_substitute_copyswap(dtype, inplace_swap)) {
-            return -1;
-        }
-        slot = &_noswap_copyswapn;
+    if (slot != NULL) {
+        slot(dst, dstride, src, sstride, n, swap, arr);
+        return 0;
     }
-    *copyswapn = slot;
+
+    if (!can_substitute_copyswap(dtype, src == NULL)) {
+        return -1;
+    }
+    _basic_copyn(dst, dstride, src, sstride, n, PyDataType_ELSIZE(dtype));
     return 0;
 }
 
-NPY_NO_EXPORT int
-get_copyswap_or_raise(PyArray_Descr *dtype, int inplace_swap,
-                      PyArray_CopySwapFunc **copyswap)
+static int
+copyswap_or_fallback(PyArray_Descr *dtype,
+                     void *dst, void *src, int swap, void *arr)
 {
     PyArray_CopySwapFunc *slot = PyDataType_GetArrFuncs(dtype)->copyswap;
-    if (slot == NULL) {
-        if (!can_substitute_copyswap(dtype, inplace_swap)) {
-            return -1;
-        }
-        slot = &_noswap_copyswap;
+    if (slot != NULL) {
+        slot(dst, src, swap, arr);
+        return 0;
     }
-    *copyswap = slot;
+
+    if (!can_substitute_copyswap(dtype, src == NULL)) {
+        return -1;
+    }
+    _basic_copy(dst, src, PyDataType_ELSIZE(dtype));
     return 0;
 }
 
@@ -2376,13 +2360,12 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
             }
 
             dummy_fields.descr = new;
-            PyArray_CopySwapNFunc *copyswapn;
-            if (get_copyswapn_or_raise(new, src == NULL, &copyswapn) < 0) {
+            if (copyswapn_or_fallback(
+                    new, dst+offset, dstride,
+                    (src != NULL ? src+offset : NULL), sstride,
+                    n, swap, dummy_arr) < 0) {
                 return;
             }
-            copyswapn(dst+offset, dstride,
-                      (src != NULL ? src+offset : NULL),
-                      sstride, n, swap, dummy_arr);
         }
         return;
     }
@@ -2421,8 +2404,14 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
         ((PyArrayObject_fields *)dummy_arr)->descr = new;
 
-        PyArray_CopySwapNFunc *copyswapn;
-        if (get_copyswapn_or_raise(new, src == NULL, &copyswapn) < 0) {
+        PyArray_CopySwapNFunc *copyswapn =
+                PyDataType_GetArrFuncs(new)->copyswapn;
+        if (copyswapn == NULL) {
+            if (!can_substitute_copyswap(new, src == NULL)) {
+                return;
+            }
+            /* The whole subarray is trivially copyable, or this is a no-op. */
+            _basic_copyn(dst, dstride, src, sstride, n, descr->elsize);
             return;
         }
         num = descr->elsize / subitemsize;
@@ -2469,13 +2458,12 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
                 return;
             }
             dummy_fields.descr = new;
-            PyArray_CopySwapFunc *copyswap;
-            if (get_copyswap_or_raise(new, src == NULL, &copyswap) < 0) {
+            if (copyswap_or_fallback(
+                    new, dst+offset,
+                    (src != NULL ? src+offset : NULL),
+                    swap, dummy_arr) < 0) {
                 return;
             }
-            copyswap(dst+offset,
-                     (src != NULL ? src+offset : NULL),
-                     swap, dummy_arr);
         }
         return;
     }
@@ -2510,8 +2498,14 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
         dummy_fields.descr = new;
 
-        PyArray_CopySwapNFunc *copyswapn;
-        if (get_copyswapn_or_raise(new, src == NULL, &copyswapn) < 0) {
+        PyArray_CopySwapNFunc *copyswapn =
+                PyDataType_GetArrFuncs(new)->copyswapn;
+        if (copyswapn == NULL) {
+            if (!can_substitute_copyswap(new, src == NULL)) {
+                return;
+            }
+            /* The whole subarray is trivially copyable, or this is a no-op. */
+            _basic_copy(dst, src, descr->elsize);
             return;
         }
         num = descr->elsize / subitemsize;

@@ -60,17 +60,14 @@ NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap);
 
 /*
- * Fetch a dtype's legacy copyswap/copyswapn slot, substituting a fallback
- * for dtypes that do not fill it (e.g. dtypes written using the new DType
- * API).
- *
- * A dtype whose byteorder is NPY_IGNORE ('|') declares that byte order does
- * not apply to it, so there is nothing to reorder and copyswap degenerates
- * to a plain copy.  The substitute is handed out when that copy is one
- * numpy can make on its own:
+ * Check whether a missing legacy copyswap/copyswapn slot can be replaced for
+ * a dtype (for example one written using the new DType API).  A dtype whose
+ * byteorder is NPY_IGNORE ('|') declares that byte order does not apply to it,
+ * so copyswap degenerates to a plain copy.  The fallback is allowed when that
+ * copy is one numpy can make on its own:
  *
  *   - `inplace_swap` (the caller passes src == NULL): there is no data to
- *     copy at all, so the substitute does nothing.
+ *     copy at all, so the fallback does nothing.
  *   - otherwise the dtype must be trivially copyable, i.e. its value is
  *     exactly its bytes, so copying them is the whole operation.
  *
@@ -78,32 +75,10 @@ _IsWriteable(PyArrayObject *ap);
  * swap it, and one that owns references cannot be copied by moving bytes.
  * Callers that can copy some other way -- np.place and `.flat` assignment
  * go through the casting machinery -- should do that instead of asking here.
- *
- * On success 0 is returned and a callable function is stored in
- * *copyswap[n]; it is never NULL, so callers need no NULL check of their
- * own.  On failure -1 is returned with a TypeError set.
- *
- * The returned function must be called with a non-NULL `arr` whenever there
- * is data to copy: like the VOID and STRING slots it may need the array to
- * find the element size.
- */
-NPY_NO_EXPORT int
-get_copyswap_or_raise(PyArray_Descr *dtype, int inplace_swap,
-                      PyArray_CopySwapFunc **copyswap);
-
-/*
- * The decision the two getters above make, for the one caller that cannot
- * use a function-pointer substitute because it has no array to pass to it
- * (gentype_byteswap, which rebuilds a scalar in freshly malloc'd memory).
- * Returns 1 if a missing slot may be replaced by a plain copy, otherwise
- * sets the same TypeError the getters do and returns 0.
+ * Returns 1 when the fallback is safe; otherwise sets TypeError and returns 0.
  */
 NPY_NO_EXPORT int
 can_substitute_copyswap(PyArray_Descr *dtype, int inplace_swap);
-
-NPY_NO_EXPORT int
-get_copyswapn_or_raise(PyArray_Descr *dtype, int inplace_swap,
-                       PyArray_CopySwapNFunc **copyswapn);
 
 NPY_NO_EXPORT PyObject *
 convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending);

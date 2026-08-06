@@ -835,6 +835,15 @@ def test_flat_set_aliased(dtype):
     arr.flat = arr[:1]
     assert_array_equal(arr, ["hello"] * 3)
 
+    # The identical-pointer case also matters for null strings, which do not
+    # have a string buffer for the general sharing check to compare.
+    if hasattr(dtype, "na_object"):
+        missing = np.array([dtype.na_object], dtype=dtype)
+        missing.flat = missing
+        assert missing[0] is dtype.na_object
+        np.place(missing, [True], missing)
+        assert missing[0] is dtype.na_object
+
 
 def test_create_with_copy_none(string_list):
     arr = np.array(string_list, dtype=StringDType())
