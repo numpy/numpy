@@ -3912,7 +3912,7 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: _IntLike_co = ...,
+        initial: T = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.object_[T]] | Any: ...
     @overload  # unknown shape, object_, axis=None
@@ -3925,7 +3925,7 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: object = ...,
+        initial: T = ...,
         where: _ArrayLikeBool_co = True,
     ) -> T: ...
     @overload  # unknown shape, object_ keepdims=True
@@ -3938,7 +3938,7 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[True],
-        initial: object = ...,
+        initial: T = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.object_[T]]: ...
     @overload  # unknown shape, object_, out=...
@@ -3951,7 +3951,7 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         *,
         out: EllipsisType,
         keepdims: bool = False,
-        initial: object = ...,
+        initial: T = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.object_[T]]: ...
     @overload  # out=<given>
@@ -16686,7 +16686,7 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: object = ...,
+        initial: T = ...,
         where: _ArrayLikeBool_co = True,
     ) -> T: ...
     @overload  # known scalar type, keepdims=True
@@ -18767,7 +18767,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: object = ...,
+        initial: T = ...,
         where: _ArrayLikeBool_co = True,
     ) -> T: ...
     @overload  # known scalar type, keepdims=True
