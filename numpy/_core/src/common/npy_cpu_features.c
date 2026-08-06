@@ -3,8 +3,8 @@
 #include "numpy/npy_common.h"
 #include "numpy/npy_cpu.h" // To guarantee the CPU definitions are in scope.
 
-#include <stdlib.h> // getenv
-#include <string.h> // memcpy, memset, strcmp, strlen, strtok
+#include <stdlib.h> 
+#include <string.h> 
 
 /******************** Private Definitions *********************/
 
@@ -160,8 +160,6 @@ npy_cpu_features_dict(void)
     return dict;
 }
 
-// `PyList_SET_ITEM` is not in the limited API; `PyList_SetItem` steals
-// `item` too and is safe before the list is fully initialized.
 #define NPY__CPU_PYLIST_APPEND_CB(FEATURE, LIST) \
     item = PyUnicode_FromString(NPY_TOSTRING(FEATURE)); \
     if (item == NULL) { \

@@ -875,8 +875,6 @@ _umath_tests_mtargets = mod_features.multi_targets(
   dependencies: [py_dep, np_core_dep]
 )
 
-# `_umath_tests` is Limited-API clean, so it is built separately from the
-# test modules below in order to pass `limited_api`.
 py.extension_module('_umath_tests',
   [
     src_file.process('src/umath/_umath_tests.c.src'),

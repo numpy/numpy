@@ -606,7 +606,6 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         return NULL;
     }
 
-    /* `PyBytes_AS_STRING` is not in the limited API */
     f = (PyUFuncObject*)PyUFunc_FromFuncAndDataAndSignature(
         NULL, NULL, NULL,
         0, nin, nout, PyUFunc_None, "no name",
@@ -629,8 +628,7 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         if (core_num_dims == NULL) {
             goto fail;
         }
-        /* `PyTuple_SET_ITEM` is not in the limited API; `PyTuple_SetItem`
-           steals `val` as well */
+
         for (i = 0; i < f->nargs; i++) {
             PyObject *val = PyLong_FromLong(f->core_num_dims[i]);
             if (val == NULL || PyTuple_SetItem(core_num_dims, i, val) < 0) {
@@ -696,7 +694,6 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
                          core_dim_ixs, core_dim_flags, core_dim_sizes);
 
 fail:
-    /* `Py_XDECREF` does not cast its argument under the limited API */
     Py_XDECREF((PyObject *)f);
     Py_XDECREF(core_num_dims);
     Py_XDECREF(core_dim_ixs);
@@ -739,7 +736,6 @@ UMath_Tests_test_dispatch(PyObject *NPY_UNUSED(dummy), PyObject *NPY_UNUSED(dumm
         goto err;
     }
     NPY_CPU_DISPATCH_CALL_ALL(_umath_tests_dispatch_attach, (item));
-    /* `Py_SETREF` is not in the limited API */
     Py_CLEAR(item);
     if (PyErr_Occurred()) {
         goto err;
@@ -1078,7 +1074,10 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    /* `PyUnstable_*` is not in the limited API; abi3 implies a GIL build */
+    /*
+     * TODO: 3.15 adds a free-threaded stable ABI (abi3t), but supporting it
+     * also needs heap types and module setup via the new PyModExport API.
+     */
 #if defined(Py_GIL_DISABLED) && !defined(Py_LIMITED_API)
     // signal this module supports running with the GIL disabled
     PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
