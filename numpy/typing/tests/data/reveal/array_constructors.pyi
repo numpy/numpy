@@ -28,6 +28,7 @@ _f32_0d: np.float32
 _f32_1d: _Array1D[np.float32]
 _f32_2d: _Array2D[np.float32]
 _f32_3d: _Array3D[np.float32]
+_obj_str_1d: _Array1D[np.object_[str]]
 
 _py_b_1d: list[bool]
 _py_b_2d: list[list[bool]]
@@ -229,6 +230,8 @@ assert_type(np.zeros_like(_f32_1d, dtype=np.int64), _Array1D[np.int64])
 assert_type(np.zeros_like(_f32_1d, dtype=int), _Array1D[Any])
 assert_type(np.zeros_like(_f32_1d, shape=_shape_2d), _Array2D[np.float32])
 assert_type(np.zeros_like(_f32_1d, shape=_shape_like), npt.NDArray[np.float32])
+assert_type(np.zeros_like(_obj_str_1d), _Array1D[np.object_[int]])
+assert_type(np.zeros_like(_obj_str_1d, shape=_shape_2d), _Array2D[np.object_[int]])
 
 assert_type(np.ones_like(A), npt.NDArray[np.float64])
 assert_type(np.ones_like(C), npt.NDArray[Any])
@@ -240,6 +243,8 @@ assert_type(np.ones_like(_f32_1d, dtype=np.int64), _Array1D[np.int64])
 assert_type(np.ones_like(_f32_1d, dtype=int), _Array1D[Any])
 assert_type(np.ones_like(_f32_1d, shape=_shape_2d), _Array2D[np.float32])
 assert_type(np.ones_like(_f32_1d, shape=_shape_like), npt.NDArray[np.float32])
+assert_type(np.ones_like(_obj_str_1d), _Array1D[np.object_[int]])
+assert_type(np.ones_like(_obj_str_1d, shape=_shape_2d), _Array2D[np.object_[int]])
 
 assert_type(np.empty_like(A), npt.NDArray[np.float64])
 assert_type(np.empty_like(C), npt.NDArray[Any])
@@ -251,6 +256,8 @@ assert_type(np.empty_like(_f32_1d, dtype=np.int64), _Array1D[np.int64])
 assert_type(np.empty_like(_f32_1d, dtype=int), _Array1D[Any])
 assert_type(np.empty_like(_f32_1d, shape=_shape_2d), _Array2D[np.float32])
 assert_type(np.empty_like(_f32_1d, shape=_shape_like), npt.NDArray[np.float32])
+assert_type(np.empty_like(_obj_str_1d), _Array1D[np.object_[Any | None]])
+assert_type(np.empty_like(_obj_str_1d, shape=_shape_2d), _Array2D[np.object_[Any | None]])
 
 assert_type(np.full_like(A, i8), npt.NDArray[np.float64])
 assert_type(np.full_like(C, i8), npt.NDArray[Any])
@@ -262,6 +269,8 @@ assert_type(np.full_like(_f32_1d, i8, dtype=np.int64), _Array1D[np.int64])
 assert_type(np.full_like(_f32_1d, i8, dtype=int), _Array1D[Any])
 assert_type(np.full_like(_f32_1d, i8, shape=_shape_2d), _Array2D[np.float32])
 assert_type(np.full_like(_f32_1d, i8, shape=_shape_like), npt.NDArray[np.float32])
+assert_type(np.full_like(_obj_str_1d, i8), _Array1D[np.object_[Any]])
+assert_type(np.full_like(_obj_str_1d, i8, shape=_shape_2d), _Array2D[np.object_[Any]])
 
 _size: int
 _shape_0d: tuple[()]
