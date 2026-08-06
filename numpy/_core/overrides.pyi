@@ -1,4 +1,3 @@
-import enum
 from collections.abc import Callable, Iterable
 from typing import Any, Final, NamedTuple
 
@@ -12,10 +11,6 @@ type _Dispatcher[**_Tss] = Callable[_Tss, Iterable[object]]
 
 ARRAY_FUNCTIONS: set[Callable[..., Any]] = ...
 array_function_like_doc: Final[str] = ...
-class _ReductionKind(enum.IntEnum):
-    SUM_PROD = 1
-    MIN_MAX = 2
-    ANY_ALL = 3
 
 class ArgSpec(NamedTuple):
     args: list[str]
@@ -35,11 +30,12 @@ def verify_matching_signatures[**Tss](implementation: Callable[Tss, object], dis
 # specifies. Since the dispatcher only returns an iterable of passed array-like args,
 # this overridable behaviour is impossible to annotate.
 def array_function_dispatch[**Tss, FuncLikeT: _FuncLike](
-    dispatcher: _Dispatcher[Tss] | None = None,
+    dispatcher: _Dispatcher[Tss] | tuple[str, ...] | None = None,
     module: str | None = None,
     verify: bool = True,
     docs_from_dispatcher: bool = False,
-    reduction: tuple[np.ufunc, _ReductionKind] | None = None,
+    reduction: np.ufunc | None = None,
+    reduction_defaults: dict[str, Any] | None = None,
 ) -> Callable[[FuncLikeT], FuncLikeT]: ...
 
 #

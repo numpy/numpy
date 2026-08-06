@@ -78,11 +78,7 @@ def mintypecode(typechars, typeset='GDFgdf', default='d'):
     return min(intersection, key=_typecodes_by_elsize.index)
 
 
-def _real_dispatcher(val):
-    return (val,)
-
-
-@array_function_dispatch(_real_dispatcher)
+@array_function_dispatch(("val",))
 def real(val):
     """
     Return the real part of the complex argument.
@@ -125,11 +121,7 @@ def real(val):
         return asanyarray(val).real
 
 
-def _imag_dispatcher(val):
-    return (val,)
-
-
-@array_function_dispatch(_imag_dispatcher)
+@array_function_dispatch(("val",))
 def imag(val):
     """
     Return the imaginary part of the complex argument.
@@ -169,11 +161,7 @@ def imag(val):
         return asanyarray(val).imag
 
 
-def _is_type_dispatcher(x):
-    return (x,)
-
-
-@array_function_dispatch(_is_type_dispatcher)
+@array_function_dispatch(("x",))
 def iscomplex(x):
     """
     Returns a bool array, where True if input element is complex.
@@ -211,7 +199,7 @@ def iscomplex(x):
     return res[()]   # convert to scalar if needed
 
 
-@array_function_dispatch(_is_type_dispatcher)
+@array_function_dispatch(("x",))
 def isreal(x):
     """
     Returns a bool array, where True if input element is real.
@@ -262,7 +250,7 @@ def isreal(x):
     return imag(x) == 0
 
 
-@array_function_dispatch(_is_type_dispatcher)
+@array_function_dispatch(("x",))
 def iscomplexobj(x):
     """
     Check for a complex type or an array of complex numbers.
@@ -304,7 +292,7 @@ def iscomplexobj(x):
     return issubclass(type_, _nx.complexfloating)
 
 
-@array_function_dispatch(_is_type_dispatcher)
+@array_function_dispatch(("x",))
 def isrealobj(x):
     """
     Return True if x is a not complex type or an array of complex numbers.
@@ -361,11 +349,7 @@ def _getmaxmin(t):
     return f.max, f.min
 
 
-def _nan_to_num_dispatcher(x, copy=None, nan=None, posinf=None, neginf=None):
-    return (x,)
-
-
-@array_function_dispatch(_nan_to_num_dispatcher)
+@array_function_dispatch(("x",))
 def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
     """
     Replace NaN with zero and infinity with large finite numbers (default
@@ -488,11 +472,8 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
 
 #-----------------------------------------------------------------------------
 
-def _real_if_close_dispatcher(a, tol=None):
-    return (a,)
 
-
-@array_function_dispatch(_real_if_close_dispatcher)
+@array_function_dispatch(("a",))
 def real_if_close(a, tol=100):
     """
     If input is complex with all imaginary parts close to zero, return

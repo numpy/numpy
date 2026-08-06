@@ -12,7 +12,6 @@ import numpy as np
 from numpy._core._multiarray_umath import _ArrayFunctionDispatcher
 from numpy._core.overrides import (
     _get_implementing_args,
-    _ReductionKind,
     array_function_dispatch,
     verify_matching_signatures,
 )
@@ -42,17 +41,20 @@ class TestGetImplementingArgs:
     def test_ndarray(self):
         array = np.array(1)
 
+        # When every arg is exact ndarray or a basic Python type, no
+        # override is possible; the collected list is empty and the caller
+        # short-circuits to the default implementation.
         args = _get_implementing_args([array])
-        assert_equal(list(args), [array])
+        assert_equal(list(args), [])
 
         args = _get_implementing_args([array, array])
-        assert_equal(list(args), [array])
+        assert_equal(list(args), [])
 
         args = _get_implementing_args([array, 1])
-        assert_equal(list(args), [array])
+        assert_equal(list(args), [])
 
         args = _get_implementing_args([1, array])
-        assert_equal(list(args), [array])
+        assert_equal(list(args), [])
 
     def test_ndarray_subclasses(self):
 
@@ -298,26 +300,26 @@ class TestVerifyMatchingSignatures:
             pass
 
     def test_reduction_configuration_errors(self):
-        implementation = lambda *args, **kwargs: None
-        dispatcher = lambda x: (x,)
+        # reduction= requires a tuple-spec dispatcher
+        with pytest.raises(TypeError, match="tuple-spec"):
+            @array_function_dispatch(lambda a, out=None: (a, out),
+                                     reduction=np.add)
+            def _f(a, out=None):
+                return a
 
-        with pytest.raises(TypeError, match="like= dispatchers"):
-            _ArrayFunctionDispatcher(
-                    None, implementation, (np.add.reduce, 1))
+        # parameters that cannot be mapped onto ufunc.reduce are rejected
+        with pytest.raises(RuntimeError, match="cannot map"):
+            @array_function_dispatch(("a", "out"), reduction=np.add)
+            def _g(a, out=None, bogus=None):
+                return a
 
-        invalid_reductions = [
-            object(),
-            (object(), _ReductionKind.SUM_PROD),
-            (np.add.reduce, object()),
-        ]
-        for reduction in invalid_reductions:
-            with pytest.raises(TypeError, match=r"callable, kind\) tuple"):
-                _ArrayFunctionDispatcher(
-                        dispatcher, implementation, reduction)
-
-        with pytest.raises(ValueError, match="invalid reduction kind"):
-            _ArrayFunctionDispatcher(
-                    dispatcher, implementation, (np.add.reduce, 99))
+        # unknown reduce argument names in the defaults are rejected
+        with pytest.raises(KeyError):
+            @array_function_dispatch(
+                    ("a", "out"), reduction=np.add,
+                    reduction_defaults={"bogus": 1})
+            def _h(a, out=None):
+                return a
 
     def test_dispatcher_constructor_argument_error(self):
         dispatcher = lambda x: (x,)
@@ -325,19 +327,25 @@ class TestVerifyMatchingSignatures:
         with pytest.raises(TypeError, match=r"_ArrayFunctionDispatcher\(\)"):
             _ArrayFunctionDispatcher(dispatcher)
 
-    def test_reduction_kinds_match_c_enum(self):
-        implementation = lambda *args, **kwargs: None
-        dispatcher = lambda x: (x,)
+    def test_reduction_dispatches_and_falls_back(self):
+        # exact-ndarray calls take the direct ufunc.reduce path; overrides
+        # and invalid signatures fall back to normal dispatch
+        @array_function_dispatch(("a", "out"), reduction=np.add)
+        def my_sum(a, axis=None, dtype=None, out=None):
+            return "python-impl"
 
-        for kind in _ReductionKind:
-            _ArrayFunctionDispatcher(
-                    dispatcher, implementation, (np.add.reduce, kind))
+        # exact ndarray: direct reduce call, wrapper never runs
+        assert my_sum(np.array([1, 2, 3])) == 6
+        assert my_sum(np.array([1, 2, 3]), axis=0) == 6
 
-        # A new C reduction kind must also be added to the Python enum.
-        next_kind = max(kind.value for kind in _ReductionKind) + 1
-        with pytest.raises(ValueError, match="invalid reduction kind"):
-            _ArrayFunctionDispatcher(
-                    dispatcher, implementation, (np.add.reduce, next_kind))
+        # non-exact arrays fall back to the Python implementation
+        assert my_sum([1, 2, 3]) == "python-impl"
+
+        # overrides still dispatch
+        class Duck:
+            def __array_function__(self, func, types, args, kwargs):
+                return "duck"
+        assert my_sum(Duck()) == "duck"
 
 
 def _new_duck_type_and_implements():
@@ -564,6 +572,26 @@ class TestNumPyFunctions:
     def test_inspect_sum(self):
         signature = inspect.signature(np.sum)
         assert_('axis' in signature.parameters)
+        assert_equal(signature, inspect.signature(np.sum._implementation))
+
+    @pytest.mark.parametrize("func", [
+        np.sum,            # tuple-spec dispatcher
+        np.reshape,        # tuple-spec, positional-only relevant arg
+        np.any,            # tuple-spec, keyword-only relevant arg
+        pytest.param(
+            np.concatenate,  # legacy callable dispatcher, C implementation
+            marks=pytest.mark.skipif(
+                sys.flags.optimize > 1,
+                reason="the C implementation's signature comes from its "
+                       "docstring, which -OO strips")),
+        np.fft.fft,        # tuple-spec in a submodule
+        np.linalg.solve,   # tuple-spec in a submodule
+    ])
+    def test_inspect_signature_matches_implementation(self, func):
+        # Both dispatcher forms expose the implementation's signature via
+        # __wrapped__ (set by functools.update_wrapper).
+        assert_equal(inspect.signature(func),
+                     inspect.signature(func._implementation))
 
     def test_override_sum(self):
         MyArray, implements = _new_duck_type_and_implements()
@@ -860,3 +888,200 @@ def test_function_like():
     bound = np.mean.__get__(MyClass)  # classmethod
     with pytest.raises(TypeError, match="unsupported operand type"):
         bound()
+
+
+def _make_duck(result, calls=None):
+    """A minimal class implementing __array_function__."""
+    class Duck:
+        def __array_function__(self, func, types, args, kwargs):
+            if calls is not None:
+                calls.append(func)
+            return result
+    return Duck
+
+
+# The same dispatch scenarios must behave identically for tuple-spec and
+# legacy callable dispatchers; tests using `dispatched_op` run through
+# both C code paths.
+@pytest.fixture(params=["tuple-spec", "callable"])
+def dispatched_op(request):
+    """An (a, out=None) function dispatched via each dispatcher form."""
+    if request.param == "tuple-spec":
+        decorator = array_function_dispatch(("a", "out"))
+    else:
+        decorator = array_function_dispatch(lambda a, out=None: (a, out))
+
+    @decorator
+    def op(a, out=None):
+        return "original"
+    return op
+
+
+class TestTupleSpecDispatch:
+    """Tuple-spec dispatcher: spec validation and construction."""
+
+    def test_construction_failure_does_not_crash(self):
+        from numpy._core._multiarray_umath import _ArrayFunctionDispatcher
+        with pytest.raises(TypeError):
+            _ArrayFunctionDispatcher(42, 42, 42)
+        with pytest.raises(TypeError):
+            _ArrayFunctionDispatcher(42)
+        with pytest.raises(TypeError):
+            _ArrayFunctionDispatcher()
+
+    def test_empty_tuple_spec_rejected(self):
+        with pytest.raises(ValueError, match="at least one relevant"):
+            @array_function_dispatch(())
+            def _f(a):
+                return a
+
+    def test_docs_from_dispatcher_incompatible_with_tuple_spec(self):
+        with pytest.raises(TypeError, match="docs_from_dispatcher"):
+            @array_function_dispatch(("a",), docs_from_dispatcher=True)
+            def _f(a):
+                return a
+
+    def test_var_positional_rejected(self):
+        # *args makes tuple-spec positions ambiguous at call time.
+        with pytest.raises(RuntimeError, match=r"\*args"):
+            @array_function_dispatch(("a", "out"))
+            def _f(a, *args, out=None):
+                return a
+
+    def test_required_keyword_only_rejected(self):
+        # validate_call_signature does not track required keyword-only
+        # parameters, so they cannot be allowed at decoration time.
+        with pytest.raises(RuntimeError, match="keyword-only"):
+            @array_function_dispatch(("a", "out"))
+            def _f(a, *, out):
+                return a
+
+    def test_unknown_arg_name_rejected(self):
+        with pytest.raises(RuntimeError, match="not found"):
+            @array_function_dispatch(("a", "missing"))
+            def _f(a, out=None):
+                return a
+
+    def test_non_string_spec_rejected(self):
+        with pytest.raises(TypeError, match="only strings"):
+            @array_function_dispatch(("a", 42))
+            def _f(a, out=None):
+                return a
+
+    def test_namedtuple_not_treated_as_tuple_spec(self):
+        # Match C-side PyTuple_CheckExact; tuple subclasses take callable path.
+        from collections import namedtuple
+        NT = namedtuple("NT", ["a", "b"])
+        spec = NT("a", "out")
+
+        with pytest.raises(TypeError):
+            @array_function_dispatch(spec)
+            def _f(a, out=None):
+                return a
+
+    def test_wrapped_impl_signature_followed(self):
+        # inspect.signature follows __wrapped__; reading __code__ would fail.
+        import functools
+
+        def _wrap(func):
+            @functools.wraps(func)
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+            return wrapper
+
+        @array_function_dispatch(("a", "out"))
+        @_wrap
+        def _f(a, out=None):
+            return a
+
+        assert _f(np.arange(3)) is not None
+
+    def test_name_and_docstring_preserved(self):
+        @array_function_dispatch(("a",))
+        def my_func(a):
+            """My docstring."""
+            return a
+
+        assert my_func.__name__ == "my_func"
+        if sys.flags.optimize < 2:
+            assert my_func.__doc__ == "My docstring."
+
+    def test_kwonly_relevant_arg_excess_positional(self):
+        # A kwonly relevant arg (where) must never be read positionally:
+        # an invalid call with excess positional args raises TypeError
+        # instead of dispatching on the excess arg.
+        duck = _make_duck("duck")()
+        with pytest.raises(TypeError, match="positional"):
+            np.any(np.arange(3), 0, None, True, duck)
+        # valid keyword use still dispatches
+        assert np.any(np.arange(3), where=duck) == "duck"
+
+    def test_posonly_relevant_arg_by_keyword(self):
+        # A positional-only relevant arg (a in reshape) must never be
+        # matched by keyword: the invalid call raises TypeError instead
+        # of dispatching.
+        duck = _make_duck("duck")()
+        with pytest.raises(TypeError, match="positional-only"):
+            np.reshape(a=duck, shape=(2,))
+        # valid positional use still dispatches
+        assert np.reshape(duck, (2,)) == "duck"
+
+    def test_invalid_signature_with_override(self):
+        # A signature-invalid call must raise TypeError even when an
+        # __array_function__ override is present, instead of forwarding
+        # the invalid call to the override unchecked.
+        duck = _make_duck("duck")()
+        with pytest.raises(TypeError, match="unexpected keyword"):
+            np.sum(duck, bogus=3)
+        with pytest.raises(TypeError, match="multiple values"):
+            np.sum(duck, a="duplicate")
+        with pytest.raises(TypeError, match="positional arguments"):
+            np.sum(duck, 0, None, None, False, 0, True, "extra")
+        # the valid call still dispatches
+        assert np.sum(duck) == "duck"
+
+
+class TestDispatchFormEquivalence:
+    """The same scenarios through both tuple-spec and callable dispatchers."""
+
+    def test_all_safe_args_call_implementation(self, dispatched_op):
+        assert dispatched_op(np.arange(3)) == "original"
+        assert dispatched_op(np.arange(3), out=None) == "original"
+
+    def test_dispatches_ndarray_subclass(self, dispatched_op):
+        calls = []
+
+        class Sub(np.ndarray):
+            def __array_function__(self, func, types, args, kwargs):
+                calls.append(func)
+                return "subclass-handled"
+
+        assert dispatched_op(np.arange(3).view(Sub)) == "subclass-handled"
+        assert calls == [dispatched_op]
+
+    def test_dispatches_duck_array(self, dispatched_op):
+        calls = []
+        duck = _make_duck("duck-handled", calls)()
+        assert dispatched_op(duck) == "duck-handled"
+        assert calls == [dispatched_op]
+
+    def test_out_keyword_dispatch(self, dispatched_op):
+        calls = []
+        duck = _make_duck("duck-out", calls)()
+        assert dispatched_op(np.arange(3), out=duck) == "duck-out"
+        assert calls == [dispatched_op]
+
+    def test_not_implemented_no_fallback(self, dispatched_op):
+        duck = _make_duck(NotImplemented)()
+        with pytest.raises(TypeError, match="no implementation found"):
+            dispatched_op(duck)
+
+    def test_mixed_ndarray_and_duck(self, dispatched_op):
+        # ndarray fallback must stay in the chain when a subclass's
+        # override returns NotImplemented.
+        class Sub(np.ndarray):
+            def __array_function__(self, func, types, args, kwargs):
+                return NotImplemented
+
+        out = np.arange(3).view(Sub)
+        assert dispatched_op(np.arange(3), out=out) == "original"
