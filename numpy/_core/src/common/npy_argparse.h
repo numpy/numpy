@@ -25,9 +25,7 @@ PyArray_PythonPyIntFromInt(PyObject *obj, int *value);
 /*
  * Returned instead of -1 when the call does not match the signature (wrong
  * number of positional arguments, unknown/duplicate keyword, or a missing
- * required argument).  A TypeError is set as usual and the value is negative,
- * so plain `< 0` error checks remain correct; callers that only want to test a
- * signature can check for this code and clear the error.
+ * required argument).
  */
 #define NPY_ARGPARSE_MISMATCH (-2)
 

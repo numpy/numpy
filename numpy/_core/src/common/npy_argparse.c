@@ -336,9 +336,14 @@ _npy_parse_arguments(const char *funcname,
                 }
                 if (NPY_UNLIKELY(*name == NULL)) {
                     /* Invalid keyword argument. */
-                    PyErr_Format(PyExc_TypeError,
+                    PyObject *message = PyUnicode_FromFormat(
                             "%s() got an unexpected keyword argument '%S'",
                             funcname, key);
+                    if (message == NULL) {
+                        return -1;
+                    }
+                    PyErr_SetObject(PyExc_TypeError, message);
+                    Py_DECREF(message);
                     return NPY_ARGPARSE_MISMATCH;
                 }
             }
@@ -348,9 +353,14 @@ _npy_parse_arguments(const char *funcname,
 
             /* There could be an identical positional argument */
             if (NPY_UNLIKELY(all_arguments[param_pos] != NULL)) {
-                PyErr_Format(PyExc_TypeError,
+                PyObject *message = PyUnicode_FromFormat(
                         "argument for %s() given by name ('%S') and position "
                         "(position %zd)", funcname, key, param_pos);
+                if (message == NULL) {
+                    return -1;
+                }
+                PyErr_SetObject(PyExc_TypeError, message);
+                Py_DECREF(message);
                 return NPY_ARGPARSE_MISMATCH;
             }
 
