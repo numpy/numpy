@@ -60,16 +60,17 @@ NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap);
 
 /*
- * Handle a dtype whose legacy copyswap slot is missing (e.g. a dtype
- * written using the new DType API).  Currently this always raises a
- * TypeError and returns -1.  `inplace_swap` marks a request that only
- * swaps bytes in place (no data copy); it is unused for now, but is
- * passed so that such requests can become a no-op (returning 0) when
- * byte order does not apply to the dtype (see gh-32150).
+ * Raise a TypeError for a dtype whose legacy copyswap slot is missing
+ * (e.g. a dtype written using the new DType API).  This never succeeds:
+ * it always returns -1, so that it can be chained onto the NULL test at
+ * the call site.  `inplace_swap` marks a request that only swaps bytes
+ * in place (no data copy); it is unused for now, but is passed so that
+ * such requests can become a no-op (returning 0) when byte order does
+ * not apply to the dtype (see gh-32150).
  *
  * WARNING: every call site is written as
  *
- *     if (copyswap == NULL && check_missing_copyswap(...) < 0) {
+ *     if (copyswap == NULL && raise_missing_copyswap(...) < 0) {
  *         <error return>;
  *     }
  *     copyswap(...);
@@ -80,7 +81,7 @@ _IsWriteable(PyArrayObject *ap);
  * copyswap call on success.
  */
 NPY_NO_EXPORT int
-check_missing_copyswap(PyArray_Descr *dtype, int inplace_swap);
+raise_missing_copyswap(PyArray_Descr *dtype, int inplace_swap);
 
 NPY_NO_EXPORT PyObject *
 convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending);

@@ -536,7 +536,7 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
     if (inplace && PyArray_FailUnlessWriteable(self, "array to be byte-swapped") < 0) {
         return NULL;
     }
-    if (copyswapn == NULL && check_missing_copyswap(PyArray_DESCR(self), 1) < 0) {
+    if (copyswapn == NULL && raise_missing_copyswap(PyArray_DESCR(self), 1) < 0) {
         return NULL;
     }
     if (inplace) {

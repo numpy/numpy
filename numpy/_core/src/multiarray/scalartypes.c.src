@@ -2179,7 +2179,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
 
         PyArray_CopySwapFunc *copyswap =
                 PyDataType_GetArrFuncs(descr)->copyswap;
-        if (copyswap == NULL && check_missing_copyswap(descr, 1) < 0) {
+        if (copyswap == NULL && raise_missing_copyswap(descr, 1) < 0) {
             Py_DECREF(descr);
             return NULL;
         }
