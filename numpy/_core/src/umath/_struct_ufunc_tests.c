@@ -13,9 +13,6 @@
 
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
-#include "numpy/npy_3kcompat.h"
-
-#include <math.h>
 
 
 /*
