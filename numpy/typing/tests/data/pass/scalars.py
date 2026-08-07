@@ -91,17 +91,21 @@ np.datetime64("2019")
 np.datetime64(b"2019")
 np.datetime64("2019", "D")
 np.datetime64("2019", "us")
-np.datetime64("2019", "as")
+# datetime64[as] can only represent +-9.2 s around the epoch. "2019" and
+# other calendar dates are ~1.5e27 as away and do not fit in int64.
+# Previously these silently stored garbage via signed-integer overflow UB;
+# now OverflowError is raised. Use a value that is actually in range.
+np.datetime64("1970-01-01T00:00:05", "as")
 np.datetime64(np.datetime64())
 np.datetime64(np.datetime64())
 np.datetime64(dt.datetime(2000, 5, 3))
 np.datetime64(dt.datetime(2000, 5, 3), "D")
 np.datetime64(dt.datetime(2000, 5, 3), "us")
-np.datetime64(dt.datetime(2000, 5, 3), "as")
+np.datetime64("1970-01-01T00:00:05", "as")  # year 2000 out of as range
 np.datetime64(dt.date(2000, 5, 3))
 np.datetime64(dt.date(2000, 5, 3), "D")
 np.datetime64(dt.date(2000, 5, 3), "us")
-np.datetime64(dt.date(2000, 5, 3), "as")
+np.datetime64("1970-01-01T00:00:05", "as")  # year 2000 out of as range
 np.datetime64(None)
 np.datetime64(None, "D")
 
