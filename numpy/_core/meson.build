@@ -879,27 +879,19 @@ _umath_tests_mtargets = mod_features.multi_targets(
   dependencies: [py_dep, np_core_dep]
 )
 
-py.extension_module('_struct_ufunc_tests',
-  'src/umath/_struct_ufunc_tests.c',
-  c_args: c_args_common,
-  include_directories: ['src/multiarray', 'src/npymath'],
-  dependencies: np_core_dep,
-  install: true,
-  subdir: 'numpy/_core',
-  limited_api: py_limited_api,
-  install_tag: 'tests'
-)
-
+# [module name, sources, libraries to link with, limited API version ('' to
+# build against the full API)]
 test_modules_src = [
   ['_umath_tests', [
       src_file.process('src/umath/_umath_tests.c.src'),
       'src/common/npy_cpu_features.c',
     ],
-    _umath_tests_mtargets.static_lib('_umath_tests_mtargets')
+    _umath_tests_mtargets.static_lib('_umath_tests_mtargets'), ''
   ],
-  ['_rational_tests', 'src/umath/_rational_tests.c', []],
-  ['_operand_flag_tests', 'src/umath/_operand_flag_tests.c', []],
-  ['_reduction_loop_tests', 'src/umath/_reduction_loop_tests.c', []],
+  ['_rational_tests', 'src/umath/_rational_tests.c', [], ''],
+  ['_struct_ufunc_tests', 'src/umath/_struct_ufunc_tests.c', [], py_limited_api],
+  ['_operand_flag_tests', 'src/umath/_operand_flag_tests.c', [], ''],
+  ['_reduction_loop_tests', 'src/umath/_reduction_loop_tests.c', [], ''],
 ]
 foreach gen: test_modules_src
   py.extension_module(gen[0],
@@ -910,6 +902,7 @@ foreach gen: test_modules_src
     install: true,
     subdir: 'numpy/_core',
     link_with: gen[2],
+    limited_api: gen[3],
     install_tag: 'tests'
   )
 endforeach
