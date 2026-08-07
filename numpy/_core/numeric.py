@@ -1198,7 +1198,10 @@ def tensordot(a, b, axes=2):
             if axes_b[k] < 0:
                 axes_b[k] += ndb
     if not equal:
-        raise ValueError("shape-mismatch for sum")
+        raise ValueError(
+            f"shape-mismatch for tensordot: axes of `a` (shape {as_}) not "
+            f"compatible with axes of `b` (shape {bs})"
+        )
 
     # Move the axes to sum over to the end of "a"
     # and to the front of "b"
