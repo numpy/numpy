@@ -4442,6 +4442,89 @@ class TestMaskedArrayMathMethods:
         assert_(np.ma.allequal(a, diff))
 
 
+class TestMaskedArraySumWhere:
+    # Pilot for gh-32126: `where=` keyword on MaskedArray reductions.
+    # Intersection semantics: an element contributes to the sum iff
+    # (not masked) AND (where=True). An output position is masked iff no
+    # element along the axis contributes.
+    def setup_method(self):
+        self.data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+        self.mask = np.array([[False, True, False],
+                              [True, False, True],
+                              [False, True, False]])
+        self.arr = np.ma.array(self.data, mask=self.mask)
+
+    def test_no_where_matches_default(self):
+        # sum() unchanged when where= is not provided
+        assert_equal(self.arr.sum(), 25)
+
+    def test_where_scalar_true_matches_default(self):
+        assert_equal(self.arr.sum(where=True), self.arr.sum())
+
+    def test_where_scalar_false_returns_masked(self):
+        # No element contributes anywhere -> result is masked scalar
+        assert_(self.arr.sum(where=False) is np.ma.masked)
+
+    def test_where_all_true_array_matches_default(self):
+        where = np.ones_like(self.data, dtype=bool)
+        assert_equal(self.arr.sum(where=where), self.arr.sum())
+
+    def test_where_diagonal_all_unmasked(self):
+        # Diagonal selection: (0,0)=1, (1,1)=5, (2,2)=9 — all unmasked
+        # under the setup_method mask pattern (alternating rows).
+        where = np.eye(3, dtype=bool)
+        assert_equal(self.arr.sum(where=where), 1 + 5 + 9)
+
+    def test_where_targets_only_masked_positions(self):
+        # Verify the intersection semantic: if where=True lands only on
+        # already-masked positions, no element contributes and the
+        # result is masked.
+        where = self.mask.copy()  # True exactly where elements are masked
+        assert_(self.arr.sum(where=where) is np.ma.masked)
+
+    def test_where_overlaps_mask(self):
+        # where=True on all positions collapses to default sum
+        where = np.ones_like(self.data, dtype=bool)
+        assert_equal(self.arr.sum(where=where), 25)
+
+    def test_where_fully_excludes_row_on_axis(self):
+        where = np.array([[True, True, True],
+                          [False, False, False],
+                          [True, True, True]])
+        result = self.arr.sum(axis=1, where=where)
+        # Row 0: 1+3=4 (col 1 masked). Row 1: fully excluded -> masked.
+        # Row 2: 7+9=16 (col 1 masked).
+        assert_equal(result[0], 4)
+        assert_(result[1] is np.ma.masked)
+        assert_equal(result[2], 16)
+
+    def test_where_with_axis(self):
+        where = np.ones_like(self.data, dtype=bool)
+        assert_equal(self.arr.sum(axis=0, where=where),
+                     self.arr.sum(axis=0))
+        assert_equal(self.arr.sum(axis=1, where=where),
+                     self.arr.sum(axis=1))
+
+    def test_where_with_keepdims(self):
+        where = np.ones_like(self.data, dtype=bool)
+        result = self.arr.sum(axis=0, keepdims=True, where=where)
+        assert_equal(result.shape, (1, 3))
+
+    def test_where_broadcasts(self):
+        # 1-D where broadcasts across rows; excludes column 1 entirely
+        where = np.array([True, False, True])
+        # Contributing (unmasked AND where): (0,0)=1, (0,2)=3,
+        # (2,0)=7, (2,2)=9 -> 20
+        assert_equal(self.arr.sum(where=where), 20)
+
+    def test_where_with_out_parameter(self):
+        where = np.ones_like(self.data, dtype=bool)
+        out = np.ma.zeros(3, dtype=self.data.dtype)
+        self.arr.sum(axis=1, out=out, where=where)
+        # Row sums honoring mask: 1+3=4, 5=5, 7+9=16
+        assert_equal(out, [4, 5, 16])
+
+
 class TestMaskedArrayMathMethodsComplex:
     # Test class for miscellaneous MaskedArrays methods.
     def _create_data(self):

@@ -5217,13 +5217,26 @@ class MaskedArray(ndarray):
         """
         return dot(self, b, out=out, strict=strict)
 
-    def sum(self, axis=None, dtype=None, out=None, keepdims=np._NoValue):
+    def sum(self, axis=None, dtype=None, out=None, keepdims=np._NoValue,
+            where=np._NoValue):
         """
         Return the sum of the array elements over the given axis.
 
-        Masked elements are set to 0 internally.
+        Masked elements are set to 0 internally. If ``where`` is provided,
+        only elements for which ``where`` is True (and which are not masked)
+        contribute to the sum. When both a mask and ``where`` apply to the
+        same element, the element is excluded (intersection semantics).
 
         Refer to `numpy.sum` for full documentation.
+
+        Parameters
+        ----------
+        axis, dtype, out, keepdims : see `numpy.sum`
+        where : array_like of bool, optional
+            Elements to include in the sum. See `numpy.ufunc.reduce`
+            for details. An output element is masked when no input element
+            along the reduction axis contributes (i.e. every input is either
+            masked or has ``where=False``).
 
         See Also
         --------
@@ -5256,14 +5269,33 @@ class MaskedArray(ndarray):
         >>> print(type(x.sum(axis=0, dtype=np.int64)[0]))
         <class 'numpy.int64'>
 
+        Restricting the sum with ``where``:
+
+        >>> x.sum(where=[[True, True, False],
+        ...              [True, True, True],
+        ...              [False, True, True]])
+        15
+
         """
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
+        where_kwarg = {} if where is np._NoValue else {'where': where}
 
         _mask = self._mask
-        newmask = _check_mask_axis(_mask, axis, **kwargs)
+        # Combine mask with ~where so an output position is masked iff no
+        # element along the axis contributed (either masked or excluded).
+        if where is np._NoValue or where is True:
+            effective_mask = _mask
+        else:
+            where_arr = np.asarray(where)
+            if _mask is nomask:
+                effective_mask = ~where_arr
+            else:
+                effective_mask = _mask | ~where_arr
+        newmask = _check_mask_axis(effective_mask, axis, **kwargs)
         # No explicit output
         if out is None:
-            result = self.filled(0).sum(axis, dtype=dtype, **kwargs)
+            result = self.filled(0).sum(
+                axis, dtype=dtype, **kwargs, **where_kwarg)
             rndim = getattr(result, 'ndim', 0)
             if rndim:
                 result = result.view(type(self))
@@ -5272,7 +5304,8 @@ class MaskedArray(ndarray):
                 result = masked
             return result
         # Explicit output
-        result = self.filled(0).sum(axis, dtype=dtype, out=out, **kwargs)
+        result = self.filled(0).sum(
+            axis, dtype=dtype, out=out, **kwargs, **where_kwarg)
         if isinstance(out, MaskedArray):
             outmask = getmask(out)
             if outmask is nomask:
