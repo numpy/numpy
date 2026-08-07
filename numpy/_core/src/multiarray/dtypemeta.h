@@ -140,10 +140,7 @@ static inline int NPY_DT_has_finalize(PyArray_DTypeMeta *dtype) {
 /*
  * Re-point an owned descriptor reference at the descriptor that owns
  * `arr`'s data, for use where array creation may have replaced `*descr`
- * via `finalize_descr` (e.g. StringDType, whose packed strings reference
- * the descriptor's arena).  The `NPY_DT_has_finalize` guard leaves the
- * subarray-dtype descriptor replacement alone, where `*descr` must keep
- * describing subarray-sized items.
+ * via `finalize_descr`.
  */
 static inline void
 npy_resync_finalized_descr(PyArray_Descr **descr, PyArrayObject *arr)

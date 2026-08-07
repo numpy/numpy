@@ -308,6 +308,22 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
         goto fail;
     }
 
+    /*
+     * op_dtypes tracks the loop's descriptors so the initial-value buffers
+     * use the same ones.  The context must not outlive `iter`.
+     */
+    PyArray_Descr *iter_context_descrs[NPY_MAXARGS];
+    PyArrayMethod_Context iter_context = *context;
+    PyArray_Descr **iter_descrs = NpyIter_GetDescrArray(iter);
+    for (int i = 0; i < nout; i++) {
+        iter_context_descrs[i] = iter_descrs[i];
+        iter_context_descrs[nout + 1 + i] = iter_descrs[i];
+        op_dtypes[i] = iter_descrs[i];
+    }
+    iter_context_descrs[nout] = iter_descrs[nout];
+    iter_context.descriptors = iter_context_descrs;
+    context = &iter_context;
+
     npy_bool empty_iteration = NpyIter_GetIterSize(iter) == 0;
     result = NpyIter_GetOperandArray(iter)[0];
 

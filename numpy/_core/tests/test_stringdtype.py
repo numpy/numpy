@@ -800,13 +800,6 @@ def test_nditer_copy_and_writeback():
     assert v.tolist() == ["Z" * 20 + "q", "Y" * 25 + "q"]
 
 
-def test_concatenate_single_array_axis_none():
-    # concatenating a single arena-backed array with axis=None returns it
-    # unchanged (gh-32153)
-    a = np.array(["a" * 20, "b"], dtype="T")
-    assert_array_equal(np.concatenate([a], axis=None), a)
-
-
 def test_ndarray_from_buffer_rejected():
     # StringDType entries reference a per-descriptor arena, so an array
     # cannot be created over caller-supplied buffer memory (gh-32153)
@@ -2425,6 +2418,9 @@ def test_concatenate_distinct_allocators():
     assert_array_equal(np.vstack([a, b]), np.vstack([a_obj, b_obj]))
     assert_array_equal(np.hstack([a, b]), expected)
 
+    # a single array with axis=None is returned unchanged
+    assert_array_equal(np.concatenate([a], axis=None), a_obj)
+
 
 def test_where_distinct_allocators():
     a, b, a_obj, b_obj = _make_distinct_arena_arrays(101)
@@ -2661,3 +2657,53 @@ def test_flat_assignment_distinct_allocators():
     d.flat = ["xy"]
     d_obj.flat = ["xy"]
     assert_array_equal(d, d_obj)
+
+
+def test_ufunc_overlapping_out_distinct_allocators():
+    a, _, a_obj, _ = _make_distinct_arena_arrays(20)
+    # out= overlapping an input (reversed view)
+    np.add(a, a, out=a[::-1])
+    np.add(a_obj, a_obj, out=a_obj[::-1])
+    assert_array_equal(a, a_obj)
+
+    # same through the masked (where=) loop
+    b, _, b_obj, _ = _make_distinct_arena_arrays(20, prefix_a="B")
+    mask = np.arange(10) % 2 == 0
+    np.add(b[:10], b[:10], out=b[5:15], where=mask)
+    np.add(b_obj[:10], b_obj[:10], out=b_obj[5:15], where=mask)
+    assert_array_equal(b, b_obj)
+
+
+def test_reduce_distinct_allocators():
+    a, _, a_obj, _ = _make_distinct_arena_arrays(50)
+    assert_array_equal(np.maximum.reduce(a), np.maximum.reduce(a_obj))
+    assert_array_equal(np.add.accumulate(a), np.add.accumulate(a_obj))
+
+    # accumulate in place (out aliases the operand)
+    np.add.accumulate(a, out=a)
+    np.add.accumulate(a_obj, out=a_obj)
+    assert_array_equal(a, a_obj)
+
+    # reduce with out= overlapping the operand
+    b, _, b_obj, _ = _make_distinct_arena_arrays(6, prefix_a="B")
+    b, b_obj = b.reshape(2, 3), b_obj.reshape(2, 3)
+    np.maximum.reduce(b, axis=0, out=b[0])
+    np.maximum.reduce(b_obj, axis=0, out=b_obj[0])
+    assert_array_equal(b, b_obj)
+
+
+def test_nditer_distinct_allocators():
+    a, b, a_obj, _ = _make_distinct_arena_arrays(20)
+
+    # a 0-d readonly operand cast to a distinct instance reads back, and
+    # it.dtypes agrees with the operand the iterator actually uses
+    zero_d = np.array(a_obj[0], dtype="T")
+    it = np.nditer([zero_d], flags=["refs_ok"], op_dtypes=[b.dtype],
+                   casting="unsafe")
+    assert str(next(it)) == a_obj[0]
+    assert it.dtypes[0] is it.operands[0].dtype
+
+    # a buffered iterator and its copy read the same values
+    it = np.nditer([a], flags=["refs_ok", "buffered"], op_dtypes=[b.dtype],
+                   casting="unsafe")
+    assert_array_equal([str(x) for x in it.copy()], a_obj.tolist())

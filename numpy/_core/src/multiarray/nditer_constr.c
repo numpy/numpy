@@ -3236,8 +3236,7 @@ npyiter_allocate_arrays(NpyIter *iter,
                          NPY_OP_ITFLAG_READ |
                          NPY_OP_ITFLAG_WRITE)) == (NPY_OP_ITFLAG_CAST |
                                                    NPY_OP_ITFLAG_READ) &&
-                          PyArray_NDIM(op[iop]) == 0 &&
-                          !NPY_DT_has_finalize(NPY_DTYPE(op_dtype[iop]))) {
+                          PyArray_NDIM(op[iop]) == 0) {
             PyArrayObject *temp;
             Py_INCREF(op_dtype[iop]);
             temp = (PyArrayObject *)PyArray_NewFromDescr(
@@ -3252,6 +3251,8 @@ npyiter_allocate_arrays(NpyIter *iter,
             }
             Py_DECREF(op[iop]);
             op[iop] = temp;
+
+            npy_resync_finalized_descr(&op_dtype[iop], op[iop]);
 
             /*
              * Now we need to replace the pointers and strides with values

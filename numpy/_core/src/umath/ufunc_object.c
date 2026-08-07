@@ -944,6 +944,9 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
         if (op[nin] == NULL) {
             return -1;
         }
+        /* The creation may have replaced the descriptor via finalize_descr */
+        npy_resync_finalized_descr(
+                (PyArray_Descr **)&context->descriptors[nin], op[nin]);
         fixed_strides[nin] = context->descriptors[nin]->elsize;
     }
     else {
@@ -1122,6 +1125,10 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
             Py_INCREF(op[nin + i]);
         }
     }
+
+    PyArrayMethod_Context iter_context = NpyIter_GetArrayMethodContext(
+            iter, context->caller, context->method);
+    context = &iter_context;
 
     /* Only do the loop if the iteration size is non-zero */
     npy_intp full_size = NpyIter_GetIterSize(iter);
@@ -2107,11 +2114,9 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
     memcpy(inner_strides, NpyIter_GetInnerStrideArray(iter),
                                     NPY_SIZEOF_INTP * nop);
 
-    /* Final preparation of the arraymethod call */
-    PyArrayMethod_Context context;
-    NPY_context_init(&context, operation_descrs);
-    context.caller = (PyObject *)ufunc;
-    context.method = ufuncimpl;
+    /* Final preparation of the arraymethod call. */
+    PyArrayMethod_Context context = NpyIter_GetArrayMethodContext(
+            iter, (PyObject *)ufunc, ufuncimpl);
     PyArrayMethod_StridedLoop *strided_loop;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
 
