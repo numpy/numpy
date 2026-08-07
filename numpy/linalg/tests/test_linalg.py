@@ -1092,6 +1092,24 @@ class TestLstsq(LstsqCases):
         with assert_raises_regex(LinAlgError, "Incompatible dimensions"):
             linalg.lstsq(A, y, rcond=None)
 
+    def test_rcond_type_validation(self):
+        A = np.array([[1, 1], [1, 2], [1, 3]], dtype=float)
+        b = np.array([1, 2, 3], dtype=float)
+
+        # Valid rcond values should work without error
+        linalg.lstsq(A, b, rcond=None)
+        linalg.lstsq(A, b, rcond=-1)
+        linalg.lstsq(A, b, rcond=0.01)
+        linalg.lstsq(A, b, rcond=0)
+
+        # Invalid types should raise TypeError with a clear message
+        with pytest.raises(TypeError, match="rcond must be a real"):
+            linalg.lstsq(A, b, rcond='hello')
+        with pytest.raises(TypeError, match="rcond must be a real"):
+            linalg.lstsq(A, b, rcond=1+2j)
+        with pytest.raises(TypeError, match="rcond must be a real"):
+            linalg.lstsq(A, b, rcond=[1, 2])
+
 
 @pytest.mark.parametrize('dt', [np.dtype(c) for c in '?bBhHiIqQefdgFDGO'])
 class TestMatrixPower:

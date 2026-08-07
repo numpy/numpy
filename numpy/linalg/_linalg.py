@@ -2442,6 +2442,9 @@ def lstsq(a, b, rcond=None):
     Raises
     ------
     LinAlgError
+        If computation does not converge.
+    TypeError
+        If `rcond` is not a real number or ``None``.
 
     See Also
     --------
@@ -2498,6 +2501,15 @@ def lstsq(a, b, rcond=None):
 
     t, result_t = _commonType(a, b)
     result_real_t = _realType(result_t)
+
+    if rcond is not None:
+        try:
+            rcond = float(rcond)
+        except (TypeError, ValueError):
+            raise TypeError(
+                "rcond must be a real floating-point number or None, "
+                f"got {type(rcond).__name__}"
+            ) from None
 
     if rcond is None:
         rcond = finfo(t).eps * max(n, m)
