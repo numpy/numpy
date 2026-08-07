@@ -1407,58 +1407,58 @@ def allclose(
 def isclose(
     a: _NumberLike_co,
     b: _NumberLike_co,
-    rtol: ArrayLike = 1e-5,
-    atol: ArrayLike = 1e-8,
+    rtol: _ScalarLike_co = 1e-5,
+    atol: _ScalarLike_co = 1e-8,
     equal_nan: py_bool = False,
 ) -> np.bool: ...
 @overload  # known shape, same shape or scalar
 def isclose[ShapeT: _Shape](
     a: np.ndarray[ShapeT],
     b: np.ndarray[ShapeT] | _NumberLike_co,
-    rtol: ArrayLike = 1e-5,
-    atol: ArrayLike = 1e-8,
+    rtol: _ScalarLike_co = 1e-5,
+    atol: _ScalarLike_co = 1e-8,
     equal_nan: py_bool = False,
 ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
 @overload  # same shape or scalar, known shape
 def isclose[ShapeT: _Shape](
     a: np.ndarray[ShapeT] | _NumberLike_co,
     b: np.ndarray[ShapeT],
-    rtol: ArrayLike = 1e-5,
-    atol: ArrayLike = 1e-8,
+    rtol: _ScalarLike_co = 1e-5,
+    atol: _ScalarLike_co = 1e-8,
     equal_nan: py_bool = False,
 ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
 @overload  # 1d sequence, <=1d array-like
 def isclose(
     a: Sequence[_NumberLike_co],
     b: Sequence[_NumberLike_co] | _NumberLike_co | np.ndarray[tuple[int]],
-    rtol: ArrayLike = 1e-5,
-    atol: ArrayLike = 1e-8,
+    rtol: _ScalarLike_co = 1e-5,
+    atol: _ScalarLike_co = 1e-8,
     equal_nan: py_bool = False,
 ) -> np.ndarray[tuple[int], np.dtype[np.bool]]: ...
 @overload  # <=1d array-like, 1d sequence
 def isclose(
     a: Sequence[_NumberLike_co] | _NumberLike_co | np.ndarray[tuple[int]],
     b: Sequence[_NumberLike_co],
-    rtol: ArrayLike = 1e-5,
-    atol: ArrayLike = 1e-8,
+    rtol: _ScalarLike_co = 1e-5,
+    atol: _ScalarLike_co = 1e-8,
     equal_nan: py_bool = False,
 ) -> np.ndarray[tuple[int], np.dtype[np.bool]]: ...
 @overload  # 2d sequence, <=2d array-like
 def isclose(
     a: Sequence[Sequence[_NumberLike_co]],
     b: Sequence[Sequence[_NumberLike_co]] | Sequence[_NumberLike_co] | _NumberLike_co | np.ndarray[tuple[int] | tuple[int, int]],
-    rtol: ArrayLike = 1e-5,
-    atol: ArrayLike = 1e-8,
+    rtol: _ScalarLike_co = 1e-5,
+    atol: _ScalarLike_co = 1e-8,
     equal_nan: py_bool = False,
-) -> np.ndarray[tuple[int], np.dtype[np.bool]]: ...
+) -> np.ndarray[tuple[int, int], np.dtype[np.bool]]: ...
 @overload  # <=2d array-like, 2d sequence
 def isclose(
     b: Sequence[Sequence[_NumberLike_co]] | Sequence[_NumberLike_co] | _NumberLike_co | np.ndarray[tuple[int] | tuple[int, int]],
     a: Sequence[Sequence[_NumberLike_co]],
-    rtol: ArrayLike = 1e-5,
-    atol: ArrayLike = 1e-8,
+    rtol: _ScalarLike_co = 1e-5,
+    atol: _ScalarLike_co = 1e-8,
     equal_nan: py_bool = False,
-) -> np.ndarray[tuple[int], np.dtype[np.bool]]: ...
+) -> np.ndarray[tuple[int, int], np.dtype[np.bool]]: ...
 @overload  # unknown shape, unknown shape
 def isclose(
     a: ArrayLike,
