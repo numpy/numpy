@@ -2089,6 +2089,31 @@ class TestMaskedArrayArithmetic:
         assert_equal(test.mask, control.mask)
         assert_equal(a.mask, [0, 0, 0, 0, 1])
 
+    def test_scalar_arithmetic_preserves_dtype_nep50(self):
+        # MaskedArray arithmetic with Python scalars should follow NEP 50
+        marr = masked_array([100], dtype=np.int8)
+        arr = np.array([100], dtype=np.int8)
+
+        assert_equal((marr + 50).dtype, np.int8)
+        assert_equal((marr - 50).dtype, np.int8)
+        assert_equal((marr * 2).dtype, np.int8)
+        assert_equal((marr ** 2).dtype, np.int8)
+        assert_equal((marr + 50).dtype, (arr + 50).dtype)
+
+        marr_f = masked_array([1.5], dtype=np.float32)
+        arr_f = np.array([1.5], dtype=np.float32)
+
+        assert_equal((marr_f + 1.0).dtype, np.float32)
+        assert_equal((marr_f * 2.0).dtype, np.float32)
+        assert_equal((marr_f + 1.0).dtype, (arr_f + 1.0).dtype)
+
+        # reversed operand order
+        assert_equal((50 + marr).dtype, np.int8)
+        assert_equal((50 + marr).dtype, (50 + arr).dtype)
+
+        # numpy scalars should still promote (strong types)
+        assert_equal((marr + np.int64(50)).dtype, np.int64)
+
 
 class TestMaskedArrayAttributes:
 
