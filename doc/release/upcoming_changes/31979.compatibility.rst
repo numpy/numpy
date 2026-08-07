@@ -1,0 +1,10 @@
+``timedelta64`` float multiplication and division raise on overflow
+--------------------------------------------------------------------
+
+Multiplying or dividing a ``timedelta64`` by a floating-point value now raises
+``OverflowError`` when the result would overflow ``int64`` (or land on the
+``NaT`` sentinel), rather than silently saturating on the float-to-int64 cast.
+This mirrors the overflow checking already performed by ``timedelta64``
+integer multiplication, addition and subtraction.  Special cases are
+unchanged: a ``NaN`` operand, ``0 * inf``, division by zero, and division by
+infinity continue to yield ``NaT`` (or zero) rather than raising.
