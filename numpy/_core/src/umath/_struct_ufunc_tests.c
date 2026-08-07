@@ -166,6 +166,11 @@ PyMODINIT_FUNC PyInit__struct_ufunc_tests(void)
     PyDict_SetItemString(d, "add_triplet", add_triplet);
     Py_DECREF(add_triplet);
 
+    /*
+     * TODO: 3.15 adds a free-threaded stable ABI (abi3t), but supporting it
+     * also needs module setup via the new PyModExport API, since a static
+     * `PyModuleDef` cannot be used there.
+     */
 #if defined(Py_GIL_DISABLED) && !defined(Py_LIMITED_API)
     // signal this module supports running with the GIL disabled
     PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
