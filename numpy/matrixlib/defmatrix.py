@@ -793,7 +793,14 @@ class matrix(N.ndarray):
                 [3]])
 
         """
-        return N.ptp(self, axis, out)._align(axis)
+        result = N.subtract(
+            N.ndarray.max(self, axis, None, keepdims=True),
+            N.ndarray.min(self, axis, None, keepdims=True),
+            out=out,
+        )
+        if isinstance(result, N.ndarray):
+            return result._collapse(axis)
+        return result
 
     @property
     def I(self):  # noqa: E743
