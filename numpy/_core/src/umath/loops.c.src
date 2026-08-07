@@ -201,7 +201,10 @@ PyUFunc_O_O(char **args, npy_intp const *dimensions, npy_intp const *steps, void
         PyObject **out = (PyObject **)op1;
         /* We allow NULL, but try to guarantee non-NULL to downstream */
         assert(in1 != NULL);
-        PyObject *ret = f(in1 ? in1 : Py_None);
+        /* hold in1: the call can run Python code that clears its array slot */
+        in1 = Py_NewRef(in1 ? in1 : Py_None);
+        PyObject *ret = f(in1);
+        Py_DECREF(in1);
         if (ret == NULL) {
             return;
         }
@@ -215,20 +218,26 @@ NPY_NO_EXPORT void
 PyUFunc_O_O_method(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func)
 {
     char *meth = (char *)func;
+    PyObject *meth_name = PyUnicode_FromString(meth);
+    if (meth_name == NULL) {
+        return;
+    }
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
         /* We allow NULL, but try to guarantee non-NULL to downstream */
         assert(in1 != NULL);
         PyObject *ret, *func;
-        func = PyObject_GetAttrString(in1 ? in1 : Py_None, meth);
+        /* hold obj: the attribute lookup can clear its array slot */
+        PyObject *obj = Py_NewRef(in1 ? in1 : Py_None);
+        func = PyObject_GetAttr(obj, meth_name);
         if (func != NULL && !PyCallable_Check(func)) {
             Py_DECREF(func);
             func = NULL;
         }
         if (func == NULL) {
             PyObject *exc, *val, *tb;
-            PyTypeObject *type = in1 ? Py_TYPE(in1) : Py_TYPE(Py_None);
+            PyTypeObject *type = Py_TYPE(obj);
             PyErr_Fetch(&exc, &val, &tb);
             PyErr_Format(PyExc_TypeError,
                          "loop of ufunc does not support argument %d of "
@@ -236,16 +245,21 @@ PyUFunc_O_O_method(char **args, npy_intp const *dimensions, npy_intp const *step
                          i, type->tp_name, meth);
             npy_PyErr_ChainExceptionsCause(exc, val, tb);
             Py_XDECREF(func);
+            Py_DECREF(obj);
+            Py_DECREF(meth_name);
             return;
         }
-        ret = PyObject_CallObject(func, NULL);
+        Py_DECREF(obj);
+        ret = PyObject_CallNoArgs(func);
         Py_DECREF(func);
         if (ret == NULL) {
+            Py_DECREF(meth_name);
             return;
         }
         Py_XDECREF(*out);
         *out = ret;
     }
+    Py_DECREF(meth_name);
 }
 
 /*UFUNC_API*/
@@ -260,7 +274,13 @@ PyUFunc_OO_O(char **args, npy_intp const *dimensions, npy_intp const *steps, voi
         /* We allow NULL, but try to guarantee non-NULL to downstream */
         assert(in1 != NULL);
         assert(in2 != NULL);
-        PyObject *ret = f(in1 ? in1 : Py_None, in2 ? in2 : Py_None);
+        /* hold the operands: the call can run Python code that clears
+         * their array slots */
+        in1 = Py_NewRef(in1 ? in1 : Py_None);
+        in2 = Py_NewRef(in2 ? in2 : Py_None);
+        PyObject *ret = f(in1, in2);
+        Py_DECREF(in1);
+        Py_DECREF(in2);
         if (ret == NULL) {
             return;
         }
@@ -282,11 +302,15 @@ PyUFunc_OOO_O(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
         assert(in1 != NULL);
         assert(in2 != NULL);
         assert(in3 != NULL);
-        PyObject *ret = f(
-            in1 ? in1 : Py_None,
-            in2 ? in2 : Py_None,
-            in3 ? in3 : Py_None
-        );
+        /* hold the operands: the call can run Python code that clears
+         * their array slots */
+        in1 = Py_NewRef(in1 ? in1 : Py_None);
+        in2 = Py_NewRef(in2 ? in2 : Py_None);
+        in3 = Py_NewRef(in3 ? in3 : Py_None);
+        PyObject *ret = f(in1, in2, in3);
+        Py_DECREF(in1);
+        Py_DECREF(in2);
+        Py_DECREF(in3);
         if (ret == NULL) {
             return;
         }
@@ -300,6 +324,10 @@ NPY_NO_EXPORT void
 PyUFunc_OO_O_method(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func)
 {
     char *meth = (char *)func;
+    PyObject *meth_name = PyUnicode_FromString(meth);
+    if (meth_name == NULL) {
+        return;
+    }
     BINARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
@@ -307,14 +335,20 @@ PyUFunc_OO_O_method(char **args, npy_intp const *dimensions, npy_intp const *ste
         /* We allow NULL, but try to guarantee non-NULL to downstream */
         assert(in1 != NULL);
         assert(in2 != NULL);
-        PyObject *ret = PyObject_CallMethod(in1 ? in1 : Py_None,
-                                            meth, "(O)", in2);
+        /* hold the operands: the call can clear their array slots */
+        PyObject *obj = Py_NewRef(in1 ? in1 : Py_None);
+        PyObject *arg = Py_NewRef(in2 ? in2 : Py_None);
+        PyObject *ret = PyObject_CallMethodOneArg(obj, meth_name, arg);
+        Py_DECREF(obj);
+        Py_DECREF(arg);
         if (ret == NULL) {
+            Py_DECREF(meth_name);
             return;
         }
         Py_XDECREF(*out);
         *out = ret;
     }
+    Py_DECREF(meth_name);
 }
 
 /*
@@ -332,7 +366,9 @@ PyUFunc_On_Om(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
     int nout = data->nout;
     PyObject *tocall = data->callable;
     char *ptrs[NPY_MAXARGS];
-    PyObject *arglist, *result;
+    /* one extra slot so PY_VECTORCALL_ARGUMENTS_OFFSET can be used */
+    PyObject *stack_args[NPY_MAXARGS + 1];
+    PyObject *result;
     PyObject *in, **op;
     npy_intp i, j, ntot;
 
@@ -342,10 +378,6 @@ PyUFunc_On_Om(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
         ptrs[j] = args[j];
     }
     for(i = 0; i < n; i++) {
-        arglist = PyTuple_New(nin);
-        if (arglist == NULL) {
-            return;
-        }
         for(j = 0; j < nin; j++) {
             in = *((PyObject **)ptrs[j]);
             /* We allow NULL, but try to guarantee non-NULL to downstream */
@@ -353,11 +385,14 @@ PyUFunc_On_Om(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
             if (in == NULL) {
                 in = Py_None;
             }
-            PyTuple_SET_ITEM(arglist, j, in);
-            Py_INCREF(in);
+            /* own the references in case the call mutates the input arrays */
+            stack_args[j + 1] = Py_NewRef(in);
         }
-        result = PyObject_CallObject(tocall, arglist);
-        Py_DECREF(arglist);
+        result = PyObject_Vectorcall(tocall, stack_args + 1,
+                nin | PY_VECTORCALL_ARGUMENTS_OFFSET, NULL);
+        for(j = 0; j < nin; j++) {
+            Py_DECREF(stack_args[j + 1]);
+        }
         if (result == NULL) {
             return;
         }
