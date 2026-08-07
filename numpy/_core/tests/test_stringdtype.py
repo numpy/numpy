@@ -997,12 +997,59 @@ def test_string_to_bytes_invalid_ascii_error():
 
 
 def test_void_to_string_invalid_utf8_error():
-    # invalid UTF-8 in a void buffer used to surface as a confusing
-    # MemoryError because the error return of utf8_buffer_size was
-    # stored in an unsigned variable
     varr = np.array([b"\xff\xff\xff\xff"], dtype="V4")
-    with pytest.raises(TypeError, match="Invalid UTF-8"):
-        varr.astype(StringDType())
+    with pytest.raises(UnicodeDecodeError) as excinfo:
+        varr.astype("T")
+    exc = excinfo.value
+    assert exc.encoding == "utf-8"
+    assert exc.object == b"\xff\xff\xff\xff"
+    assert exc.start == 0
+
+
+class TestFixedWidthCastSafety:
+    def test_fixed_width_to_stringdtype_is_safe(self):
+        for source in ["S10", "U10"]:
+            assert np.can_cast(source, "T", casting="safe")
+            assert np.can_cast(source, "T", casting="same_kind")
+            assert not np.can_cast(source, "T", casting="no")
+            assert not np.can_cast(source, "T", casting="equiv")
+
+    def test_stringdtype_to_fixed_width_is_same_kind(self):
+        for target in ["S5", "U5", "S", "U"]:
+            assert not np.can_cast("T", target, casting="safe")
+            assert np.can_cast("T", target, casting="same_kind")
+            assert np.can_cast("T", target, casting="unsafe")
+
+    def test_unicode_surrogate_runtime_error(self):
+        arr = np.array(["\ud800"], dtype="U1")
+        assert np.can_cast(arr.dtype, "T", casting="safe")
+        with pytest.raises(TypeError, match="Invalid unicode code point"):
+            arr.astype("T")
+
+    def test_bytes_to_stringdtype_valid_utf8(self):
+        barr = np.array(["café".encode(), "😊".encode()], dtype="S5")
+        assert_array_equal(
+            barr.astype("T"),
+            np.array(["café", "😊"], dtype="T"),
+        )
+
+    @pytest.mark.parametrize("kind", ["S", "V"])
+    @pytest.mark.parametrize(
+        "bad,reason",
+        [
+            (b"a\xffb", "invalid start byte"),
+            # 0xc3 starts a two-byte sequence the itemsize truncates
+            (b"a\xc3", "unexpected end of data"),
+        ],
+    )
+    def test_invalid_utf8_error(self, kind, bad, reason):
+        arr = np.array([bad], dtype=f"{kind}{len(bad)}")
+        with pytest.raises(UnicodeDecodeError) as excinfo:
+            arr.astype("T")
+        exc = excinfo.value
+        assert exc.encoding == "utf-8"
+        assert exc.object == bad
+        assert (exc.start, exc.end, exc.reason) == (1, 2, reason)
 
 
 @pytest.mark.parametrize(

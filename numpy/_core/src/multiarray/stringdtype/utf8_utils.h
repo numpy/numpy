@@ -35,9 +35,6 @@ utf8_size(const Py_UCS4 *codepoints, long max_length, size_t *num_codepoints,
 NPY_NO_EXPORT size_t
 ucs4_code_to_utf8_char(Py_UCS4 code, char *c);
 
-NPY_NO_EXPORT Py_ssize_t
-utf8_buffer_size(const uint8_t *s, size_t max_bytes);
-
 NPY_NO_EXPORT void
 find_start_end_locs(char* buf, size_t buffer_size, npy_int64 start_index, npy_int64 end_index,
                     char **start_loc, char **end_loc);

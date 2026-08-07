@@ -1,0 +1,12 @@
+Casting and validation changes for fixed-width to variable-width string conversions
+-----------------------------------------------------------------------------------
+* Casts from fixed-width `numpy.bytes_` and `nummpy.str_` arrays to
+  `numpy.dtypes.StringDType` are now considered `"safe"` rather than
+  `"same-kind"`.
+* These cast from `numpy.bytes_` to `numpy.dtypes.StringDType` now validates the
+  bytes are valid UTF-8 and raises a ``UnicodeDecodeError``
+  otherwise. Similarly, a `numpy.str_` entry containing a lone surrogate will
+  trigger a ``UnicodeDecodeError`` when converting to
+  `numpy.dtypes.StringDType`.
+* Casting a fixed-width `numpy.void_` array containing invalid UTF-8 now
+  triggers a ``UnicodeDecodeError`` rather than a ``TypeError``.
