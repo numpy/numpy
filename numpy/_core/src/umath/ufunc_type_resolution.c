@@ -27,6 +27,9 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include <float.h>
+#include <limits.h>
+
 // printif debug tracing
 #ifndef NPY_UF_DBG_TRACING
     #define NPY_UF_DBG_TRACING 0
@@ -140,6 +143,30 @@ raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
 
     return -1;
 }
+
+
+static int
+mixed_integer_float_comparison_needs_exact_loop(
+        PyArrayObject *integer, PyArray_Descr *floating)
+{
+    int float_precision;
+    if (floating->type_num == NPY_DOUBLE) {
+        float_precision = DBL_MANT_DIG;
+    }
+    else if (floating->type_num == NPY_LONGDOUBLE) {
+        float_precision = LDBL_MANT_DIG;
+    }
+    else {
+        return 0;
+    }
+
+    int integer_precision = PyArray_ITEMSIZE(integer) * CHAR_BIT;
+    if (PyArray_ISSIGNED(integer)) {
+        integer_precision--;
+    }
+    return integer_precision > float_precision;
+}
+
 
 /** Helper function to raise UFuncNoLoopError
  * Always returns -1 to indicate the exception was raised, for convenience
@@ -398,7 +425,40 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
+            int integer_idx = -1;
             if (PyArray_ISINTEGER(operands[0])
+                    && PyArray_ISFLOAT(operands[1])) {
+                integer_idx = 0;
+            }
+            else if (PyArray_ISFLOAT(operands[0])
+                    && PyArray_ISINTEGER(operands[1])) {
+                integer_idx = 1;
+            }
+
+            if (integer_idx >= 0
+                    && (out_dtypes[0]->type_num == NPY_DOUBLE
+                        || out_dtypes[0]->type_num == NPY_LONGDOUBLE)
+                    && mixed_integer_float_comparison_needs_exact_loop(
+                            operands[integer_idx], out_dtypes[0])) {
+                /*
+                 * A common floating-point dtype would lose integer precision.
+                 * Use an exact mixed loop with a canonical 64-bit integer
+                 * input and the promoted floating-point input instead.
+                 */
+                int integer_type = PyArray_ISSIGNED(operands[integer_idx])
+                        ? NPY_LONGLONG : NPY_ULONGLONG;
+                PyArray_Descr *integer_descr =
+                        PyArray_DescrFromType(integer_type);
+                if (integer_idx == 0) {
+                    PyArray_Descr *float_descr = out_dtypes[0];
+                    out_dtypes[0] = integer_descr;
+                    out_dtypes[1] = float_descr;
+                }
+                else {
+                    out_dtypes[1] = integer_descr;
+                }
+            }
+            else if (PyArray_ISINTEGER(operands[0])
                     && PyArray_ISINTEGER(operands[1])
                     && !PyDataType_ISINTEGER(out_dtypes[0])) {
                 /*

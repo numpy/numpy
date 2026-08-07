@@ -347,6 +347,42 @@ no_bool_times_obj = ints + inexact
 int64 = 'k'
 uint64 = 'K'
 
+
+def comparison_types():
+    """
+    Return the numeric and datetime loops for the comparison ufuncs.
+
+    Mixed signed/unsigned integer and integer/floating-point loops have
+    explicit signatures so that comparison type resolution can avoid lossy
+    promotion to a common floating-point dtype.
+    """
+    tds = TD(bints, out='?')
+    tds.extend([
+        TypeDescription('q', FullTypeDescr, 'qQ', '?'),
+        TypeDescription('q', FullTypeDescr, 'qd', '?'),
+        TypeDescription('q', FullTypeDescr, 'qg', '?'),
+        TypeDescription('q', FullTypeDescr, 'Qq', '?'),
+        TypeDescription('q', FullTypeDescr, 'Qd', '?'),
+        TypeDescription('q', FullTypeDescr, 'Qg', '?'),
+    ])
+    tds.extend(TD(
+        'ef', out='?', dispatch=[('loops_comparison', bints + 'fd')]))
+    tds.extend([
+        TypeDescription('q', FullTypeDescr, 'dq', '?'),
+        TypeDescription('q', FullTypeDescr, 'dQ', '?'),
+    ])
+    tds.extend(TD(
+        'd', out='?', dispatch=[('loops_comparison', bints + 'fd')]))
+    tds.extend([
+        TypeDescription('q', FullTypeDescr, 'gq', '?'),
+        TypeDescription('q', FullTypeDescr, 'gQ', '?'),
+    ])
+    tds.extend(TD(
+        'g' + cmplx + times, out='?',
+        dispatch=[('loops_comparison', bints + 'fd')]))
+    return tds
+
+
 # This dictionary describes all the ufunc implementations, generating
 # all the function names and their corresponding ufunc signatures.  TD is
 # an object which expands a list of character codes into an array of
@@ -544,10 +580,7 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy._core.umath.greater'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(bints, out='?'),
-          [TypeDescription('q', FullTypeDescr, 'qQ', '?'),
-           TypeDescription('q', FullTypeDescr, 'Qq', '?')],
-          TD(inexact + times, out='?', dispatch=[('loops_comparison', bints + 'fd')]),
+          comparison_types(),
           TD('O', out='?'),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           no_float_errors=True,
@@ -556,10 +589,7 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy._core.umath.greater_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(bints, out='?'),
-          [TypeDescription('q', FullTypeDescr, 'qQ', '?'),
-           TypeDescription('q', FullTypeDescr, 'Qq', '?')],
-          TD(inexact + times, out='?', dispatch=[('loops_comparison', bints + 'fd')]),
+          comparison_types(),
           TD('O', out='?'),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           no_float_errors=True,
@@ -568,10 +598,7 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy._core.umath.less'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(bints, out='?'),
-          [TypeDescription('q', FullTypeDescr, 'qQ', '?'),
-           TypeDescription('q', FullTypeDescr, 'Qq', '?')],
-          TD(inexact + times, out='?', dispatch=[('loops_comparison', bints + 'fd')]),
+          comparison_types(),
           TD('O', out='?'),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           no_float_errors=True,
@@ -580,10 +607,7 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy._core.umath.less_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(bints, out='?'),
-          [TypeDescription('q', FullTypeDescr, 'qQ', '?'),
-           TypeDescription('q', FullTypeDescr, 'Qq', '?')],
-          TD(inexact + times, out='?', dispatch=[('loops_comparison', bints + 'fd')]),
+          comparison_types(),
           TD('O', out='?'),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           no_float_errors=True,
@@ -592,10 +616,7 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy._core.umath.equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(bints, out='?'),
-          [TypeDescription('q', FullTypeDescr, 'qQ', '?'),
-           TypeDescription('q', FullTypeDescr, 'Qq', '?')],
-          TD(inexact + times, out='?', dispatch=[('loops_comparison', bints + 'fd')]),
+          comparison_types(),
           TD('O', out='?'),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           no_float_errors=True,
@@ -604,10 +625,7 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy._core.umath.not_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(bints, out='?'),
-          [TypeDescription('q', FullTypeDescr, 'qQ', '?'),
-           TypeDescription('q', FullTypeDescr, 'Qq', '?')],
-          TD(inexact + times, out='?', dispatch=[('loops_comparison', bints + 'fd')]),
+          comparison_types(),
           TD('O', out='?'),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           no_float_errors=True,
