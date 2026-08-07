@@ -42,6 +42,7 @@ from numpy._core.umath import (
     add,
     arctan2,
     cos,
+    log,
     exp,
     floor,
     frompyfunc,
@@ -3562,7 +3563,7 @@ def _i0_1(x):
 
 
 def _i0_2(x):
-    return exp(x) * _chbevl(32.0 / x - 2.0, _i0B) / sqrt(x)
+    return exp(x + log(_chbevl(32.0 / x - 2.0, _i0B) ) - 0.5 * log(x))
 
 
 def _i0_dispatcher(x):
