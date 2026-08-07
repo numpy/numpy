@@ -142,15 +142,6 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
     *ret = (PyArrayObject *)new;
 }
 
-static inline void
-multi_DECREF(PyObject **objects, npy_intp n)
-{
-    npy_intp i;
-    for (i = 0; i < n; i++) {
-        Py_DECREF(objects[i]);
-    }
-}
-
 /**
  * Unpack a tuple into an array of new references. Returns the number of objects
  * unpacked.
