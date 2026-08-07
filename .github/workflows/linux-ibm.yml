@@ -62,6 +62,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
+        persist-credentials: false
 
     - name: Install dependencies
       run: |

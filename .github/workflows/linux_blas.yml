@@ -248,7 +248,7 @@ jobs:
   netlib-split:
     if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
-    container: opensuse/tumbleweed
+    container: opensuse/tumbleweed # zizmor: ignore[unpinned-images]
     name: "OpenSUSE Netlib BLAS/LAPACK"
     steps:
     - name: Install system dependencies
