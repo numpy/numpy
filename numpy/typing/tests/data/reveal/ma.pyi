@@ -44,7 +44,7 @@ MAR_i8: MaskedArray[np.int64]
 MAR_u4: MaskedArray[np.uint32]
 MAR_dt64: MaskedArray[np.datetime64]
 MAR_td64: MaskedArray[np.timedelta64]
-MAR_o: MaskedArray[np.object_]
+MAR_o: MaskedArray[np.object_[int]]
 MAR_s: MaskedArray[np.str_]
 MAR_byte: MaskedArray[np.bytes_]
 MAR_V: MaskedArray[np.void]
@@ -1107,7 +1107,7 @@ assert_type(AR_LIKE_o ** MAR_o, Any)
 
 assert_type(np.ma.unwrap(MAR_f8), MaskedArray[np.float64])
 assert_type(np.ma.unwrap(MAR_f4), MaskedArray[np.float32])
-assert_type(np.ma.unwrap(MAR_o), MaskedArray[np.object_])
+assert_type(np.ma.unwrap(MAR_o), MaskedArray[np.object_[int]])
 assert_type(np.ma.unwrap(MAR_i8, period=4), MaskedArray[np.int64])
 assert_type(np.ma.unwrap(MAR_i8), MaskedArray[np.float64])
 assert_type(np.ma.unwrap(AR_LIKE_f), MaskedArray[np.float64])

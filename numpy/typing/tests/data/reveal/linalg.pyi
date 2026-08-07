@@ -41,7 +41,7 @@ AR_f10: npt.NDArray[np.longdouble]
 AR_c8: npt.NDArray[np.complex64]
 AR_c16: npt.NDArray[np.complex128]
 AR_c20: npt.NDArray[np.clongdouble]
-AR_O: npt.NDArray[np.object_]
+AR_O: npt.NDArray[np.object_[int]]
 AR_M: npt.NDArray[np.datetime64]
 AR_m: npt.NDArray[np.timedelta64]
 AR_S: npt.NDArray[np.bytes_]
@@ -105,7 +105,7 @@ assert_type(np.linalg.matrix_power(AR_i8, -1), npt.NDArray[np.float64])
 assert_type(np.linalg.matrix_power(AR_i8, 1), npt.NDArray[np.int64])
 assert_type(np.linalg.matrix_power(AR_f8, 0), npt.NDArray[np.float64])
 assert_type(np.linalg.matrix_power(AR_c16, 1), npt.NDArray[np.complex128])
-assert_type(np.linalg.matrix_power(AR_O, 2), npt.NDArray[np.object_])
+assert_type(np.linalg.matrix_power(AR_O, 2), npt.NDArray[np.object_[int]])
 
 assert_type(np.linalg.cholesky(AR_i8), npt.NDArray[np.float64])
 assert_type(np.linalg.cholesky(AR_f8), npt.NDArray[np.float64])
@@ -367,7 +367,7 @@ assert_type(np.linalg.tensordot(AR_i8, AR_i8), npt.NDArray[np.int64])
 assert_type(np.linalg.tensordot(AR_f8, AR_f8), npt.NDArray[np.float64])
 assert_type(np.linalg.tensordot(AR_c16, AR_c16), npt.NDArray[np.complex128])
 assert_type(np.linalg.tensordot(AR_m, AR_m), npt.NDArray[np.timedelta64])
-assert_type(np.linalg.tensordot(AR_O, AR_O), npt.NDArray[np.object_])
+assert_type(np.linalg.tensordot(AR_O, AR_O), npt.NDArray[np.object_[int]])
 
 assert_type(np.linalg.multi_dot([AR_i8, AR_i8]), npt.NDArray[np.int64])
 assert_type(np.linalg.multi_dot([AR_f8, AR_f8]), npt.NDArray[np.float64])
@@ -415,7 +415,7 @@ assert_type(np.linalg.outer(AR_i8, AR_i8), _Array2D[np.int64])
 assert_type(np.linalg.outer(AR_f8, AR_f8), _Array2D[np.float64])
 assert_type(np.linalg.outer(AR_c16, AR_c16), _Array2D[np.complex128])
 assert_type(np.linalg.outer(AR_b, AR_b), _Array2D[np.bool])
-assert_type(np.linalg.outer(AR_O, AR_O), _Array2D[np.object_])
+assert_type(np.linalg.outer(AR_O, AR_O), _Array2D[np.object_[int]])
 assert_type(np.linalg.outer(AR_i8, AR_m), _Array2D[np.timedelta64])
 
 assert_type(np.linalg.cross(int_list_1d, int_list_1d), npt.NDArray[np.int64])
