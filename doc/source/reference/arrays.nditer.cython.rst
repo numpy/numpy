@@ -110,7 +110,7 @@ following, but you may have to find some Cython tutorials to tell you
 the specifics for your system configuration.::
 
     $ cython sum_squares.pyx
-    $ gcc -shared -pthread -fPIC -fwrapv -O2 -Wall -I/usr/include/python2.7 -fno-strict-aliasing -o sum_squares.so sum_squares.c
+    $ gcc -shared -pthread -fPIC -fwrapv -O2 -Wall $(python3-config --includes) -I$(python3 -c "import numpy; print(numpy.get_include())") -fno-strict-aliasing -o sum_squares$(python3-config --extension-suffix) sum_squares.c
 
 Running this from the Python interpreter produces the same answers
 as our native Python/NumPy code did.
