@@ -1588,7 +1588,8 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
 
     /*
      * TODO: 3.15 adds a free-threaded stable ABI (abi3t), but supporting it
-     * also needs heap types and module setup via the new PyModExport API.
+     * also needs module setup via the new PyModExport API and instance
+     * structs that do not embed `PyObject`.
      */
 #if defined(Py_GIL_DISABLED) && !defined(Py_LIMITED_API)
     // signal this module supports running with the GIL disabled
