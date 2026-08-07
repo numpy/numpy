@@ -635,8 +635,8 @@ NpyIter_Copy(NpyIter *iter)
     }
 
     if (out_of_memory) {
-        NpyIter_Deallocate(newiter);
         PyErr_NoMemory();
+        NpyIter_Deallocate(newiter);
         return NULL;
     }
 
