@@ -785,6 +785,66 @@ def test_resize_method(string_list):
     assert_array_equal(sarr, np.array(string_list + [''] * 3,  dtype="T"))
 
 
+def test_byteswap(dtype):
+    # byteswap previously crashed since StringDType did not fill the
+    # legacy copyswapn slot; byte order does not apply to stringdtype
+    # so byteswapping is a no-op, as for "S" and object dtypes
+    arr = np.array(["hello", "world"], dtype=dtype)
+    swapped = arr.byteswap()
+    assert swapped is not arr
+    assert_array_equal(swapped, arr)
+    # the result is an independent copy
+    swapped[0] = "goodbye"
+    assert arr[0] == "hello"
+
+    res = arr.byteswap(inplace=True)
+    assert res is arr
+    assert_array_equal(res, ["hello", "world"])
+
+    arr.flags.writeable = False
+    with pytest.raises(ValueError, match="array to be byte-swapped"):
+        arr.byteswap(inplace=True)
+
+
+def test_place(dtype):
+    # stringdtype has no legacy copyswap arrfunc, so np.place copies the
+    # values through its cast-machinery fallback
+    arr = np.array(["hello", "world", "a", "b" * 100], dtype=dtype)
+    np.place(arr, [True, False, True, True], ["x", "y" * 100, "z"])
+    expected = np.array(["x", "world", "y" * 100, "z"], dtype=dtype)
+    assert_array_equal(arr, expected)
+
+    # values aliasing the destination array must be handled safely; the
+    # string_to_string cast relies on NpyString_share_memory recognizing
+    # that a packed string shares memory with itself
+    np.place(arr, [True, True, True, True], arr)
+    assert_array_equal(arr, expected)
+
+
+def test_flat_set_aliased(dtype):
+    # flat assignment copies element by element through the same cast
+    # fallback as np.place and, when the value aliases the destination,
+    # also relies on NpyString_share_memory recognizing identical strings
+    arr = np.array(["hello", "world", "b" * 100], dtype=dtype)
+    expected = arr.copy()
+    arr.flat = arr
+    assert_array_equal(arr, expected)
+
+    # broadcasting a view of the array over itself mixes identical
+    # elements with real same-allocator copies
+    arr.flat = arr[:1]
+    assert_array_equal(arr, ["hello"] * 3)
+
+    # The identical-pointer case also matters for null strings, which do not
+    # have a string buffer for the general sharing check to compare.
+    if hasattr(dtype, "na_object"):
+        missing = np.array([dtype.na_object], dtype=dtype)
+        missing.flat = missing
+        assert missing[0] is dtype.na_object
+        np.place(missing, [True], missing)
+        assert missing[0] is dtype.na_object
+
+
 def test_create_with_copy_none(string_list):
     arr = np.array(string_list, dtype=StringDType())
     # create another stringdtype array with an arena that has a different

@@ -2178,9 +2178,16 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
         descr = PyArray_DescrFromScalar(self);
         data = (void *)scalar_value(self, descr);
 
+        /*
+         * The scalar is rebuilt by copying into fresh memory, so this is not
+         * a pure in-place swap: inplace_swap is 0 and only a dtype whose
+         * value is exactly its bytes can stand in for a missing slot.  The
+         * copy is inlined rather than fetched as a function because there is
+         * no array here to pass to it.
+         */
         PyArray_CopySwapFunc *copyswap =
                 PyDataType_GetArrFuncs(descr)->copyswap;
-        if (copyswap == NULL && raise_missing_copyswap(descr, 1) < 0) {
+        if (copyswap == NULL && !can_substitute_copyswap(descr, 0)) {
             Py_DECREF(descr);
             return NULL;
         }
@@ -2188,6 +2195,9 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
         if (newmem == NULL) {
             Py_DECREF(descr);
             return PyErr_NoMemory();
+        }
+        else if (copyswap == NULL) {
+            memcpy(newmem, data, descr->elsize);
         }
         else {
             copyswap(newmem, data, 1, NULL);
