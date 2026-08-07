@@ -98,3 +98,18 @@ jobs:
         -r requirements/typing_requirements.txt
     - name: Run pyrefly
       run: pyrefly check
+
+  ty:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      with:
+        python-version: '3.14'
+        activate-environment: true
+    - name: Install dependencies
+      run: >-
+        uv pip install
+        -r requirements/typing_requirements.txt
+    - name: Run ty
+      run: ty check

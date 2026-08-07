@@ -1765,7 +1765,7 @@ def datetime_data(dtype: str | _DTypeLike[datetime64 | timedelta64], /) -> tuple
 #
 @final
 class busdaycalendar:
-    __module__: ClassVar[L["numpy"]] = "numpy"  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]
+    __module__: ClassVar[L["numpy"]] = "numpy"  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]  # ty: ignore[invalid-attribute-override]
 
     def __init__(
         self,
@@ -2023,7 +2023,7 @@ class flagsobj:
 
 @final
 class flatiter(Generic[_ArrayT_co]):
-    __module__: ClassVar[L["numpy"]] = "numpy"  # type: ignore[misc] # pyright: ignore[reportIncompatibleVariableOverride]
+    __module__: ClassVar[L["numpy"]] = "numpy"  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]  # ty: ignore[invalid-attribute-override]
     __hash__: ClassVar[None] = None  # type: ignore[assignment]  # pyright: ignore[reportIncompatibleMethodOverride]
 
     @property
@@ -2091,7 +2091,7 @@ class flatiter(Generic[_ArrayT_co]):
 
 @final
 class nditer:
-    __module__: ClassVar[L["numpy"]] = "numpy"  # type: ignore[misc] # pyright: ignore[reportIncompatibleVariableOverride]
+    __module__: ClassVar[L["numpy"]] = "numpy"  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]  # ty: ignore[invalid-attribute-override]
 
     @overload
     def __init__(
