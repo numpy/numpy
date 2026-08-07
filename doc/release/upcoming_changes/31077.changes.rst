@@ -1,0 +1,6 @@
+``np.load`` raises ``ValueError`` for ``mmap_mode`` with ``.npz`` files
+---------------------------------------------------------------------
+
+``np.load`` previously allowed using ``mmap_mode`` when loading ``.npz`` files.
+Since memory mapping is not supported for this format, it now raises a
+``ValueError`` when ``mmap_mode`` is specified.
