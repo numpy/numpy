@@ -64,6 +64,7 @@
 #include "abstractdtypes.h"
 #include "mapping.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "multiarraymodule.h"
 #include "number.h"
 #include "scalartypes.h"  // for is_anyscalar_exact and scalar_value
@@ -634,8 +635,8 @@ _wheremask_converter(PyObject *obj, PyArrayObject **wheremask)
  * Returns 1 if `obj` was a Python int, float, or complex, and 0 otherwise.
  */
 static int
-mark_pyscalar_operand(PyObject *obj, PyArrayObject **operand,
-                      PyArray_DTypeMeta **DType)
+mark_pyscalar_operand(multiarray_umath_state *state, PyObject *obj,
+                      PyArrayObject **operand, PyArray_DTypeMeta **DType)
 {
     if (!npy_mark_tmp_array_if_pyscalar(obj, *operand, DType)) {
         return 0;
@@ -652,9 +653,9 @@ mark_pyscalar_operand(PyObject *obj, PyArrayObject **operand,
          * TODO: Just like the general dual NEP 50/legacy promotion
          * support this is meant as a temporary hack for NumPy 1.25.
          */
-        Py_INCREF(npy_static_pydata.zero_pyint_like_arr);
-        Py_SETREF(*operand,
-                  (PyArrayObject *)npy_static_pydata.zero_pyint_like_arr);
+        PyObject *zero_arr = state->static_pydata.zero_pyint_like_arr;
+        Py_INCREF(zero_arr);
+        Py_SETREF(*operand, (PyArrayObject *)zero_arr);
     }
     return 1;
 }
@@ -680,6 +681,7 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
         PyObject *where_obj, PyArrayObject **out_wheremask, /* PyArray of bool */
         PyObject *keepdims_obj, int *out_keepdims)
 {
+    multiarray_umath_state *state = _npy_module_state;
     int nin = ufunc->nin;
     int nout = ufunc->nout;
     int nop = ufunc->nargs;
@@ -730,7 +732,7 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
             continue;
         }
 
-        if (mark_pyscalar_operand(obj, &out_op[i], &out_op_DTypes[i])) {
+        if (mark_pyscalar_operand(state, obj, &out_op[i], &out_op_DTypes[i])) {
             *promoting_pyscalars = NPY_TRUE;
         }
     }
@@ -1361,6 +1363,7 @@ _check_keepdims_support(PyUFuncObject *ufunc) {
 static int
 _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
                 PyArrayObject **op, int broadcast_ndim, int **remap_axis) {
+    multiarray_umath_state *state = _npy_module_state;
     int nin = ufunc->nin;
     int nop = ufunc->nargs;
     int iop, list_size;
@@ -1406,7 +1409,7 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
         if (PyTuple_Check(op_axes_tuple)) {
             if (PyTuple_Size(op_axes_tuple) != op_ncore) {
                 /* must have been a tuple with too many entries. */
-                PyErr_Format(npy_static_pydata.AxisError,
+                PyErr_Format(state->static_pydata.AxisError,
                         "%s: operand %d has %d core dimensions, "
                         "but %zd dimensions are specified by axes tuple.",
                         ufunc_get_name_cstr(ufunc), iop, op_ncore,
@@ -1430,7 +1433,7 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
                 return -1;
             }
             /* If it is a single integer, inform user that more are needed */
-            PyErr_Format(npy_static_pydata.AxisError,
+            PyErr_Format(state->static_pydata.AxisError,
                     "%s: operand %d has %d core dimensions, "
                     "but the axes item is a single integer.",
                     ufunc_get_name_cstr(ufunc), iop, op_ncore);
@@ -4908,7 +4911,9 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 
         /* Extra positional args but no keywords */
         /* DEPRECATED NumPy 2.4, 2025-08 */
-        if ((PyObject *)ufunc == n_ops.maximum || (PyObject *)ufunc == n_ops.minimum) {
+        multiarray_umath_state *state = _npy_module_state;
+        if ((PyObject *)ufunc == state->n_ops.maximum
+                || (PyObject *)ufunc == state->n_ops.minimum) {
 
             if (DEPRECATE(
                 "Passing more than 2 positional arguments to np.maximum and np.minimum "
@@ -5924,10 +5929,11 @@ is_known_scalar(PyObject *obj)
 static PyObject *
 prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
 {
+    multiarray_umath_state *state = _npy_module_state;
     PyArrayObject *ap1 = NULL;
 
     if (npy_cache_import_runtime("numpy", "matrix",
-                                 &npy_runtime_imports.numpy_matrix) == -1) {
+                                 &state->runtime_imports.numpy_matrix) == -1) {
         return NULL;
     }
 
@@ -5939,7 +5945,8 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
     PyObject *tmp1 = PyTuple_GET_ITEM(args, 0);
     PyObject *tmp2 = PyTuple_GET_ITEM(args, 1);
 
-    int is_matrix = PyObject_IsInstance(tmp1, npy_runtime_imports.numpy_matrix);
+    int is_matrix = PyObject_IsInstance(
+            tmp1, state->runtime_imports.numpy_matrix);
     if (is_matrix == -1) {
         return NULL;
     }
@@ -5949,7 +5956,8 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
         return NULL;
     }
 
-    is_matrix = PyObject_IsInstance(tmp2, npy_runtime_imports.numpy_matrix);
+    is_matrix = PyObject_IsInstance(
+            tmp2, state->runtime_imports.numpy_matrix);
     if (is_matrix == -1) {
         return NULL;
     }
@@ -6495,8 +6503,9 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             Py_INCREF(tmp_operands[1]);
             operand_DTypes[1] = NPY_DTYPE(PyArray_DESCR(op2_array));
             Py_INCREF(operand_DTypes[1]);
+            multiarray_umath_state *state = _npy_module_state;
             if (mark_pyscalar_operand(
-                    op2, &tmp_operands[1], &operand_DTypes[1])) {
+                    state, op2, &tmp_operands[1], &operand_DTypes[1])) {
                 op2_is_pyscalar = NPY_TRUE;
             }
             tmp_operands[2] = tmp_operands[0];
@@ -7130,10 +7139,12 @@ _typecharfromnum(int num) {
 static PyObject *
 ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 {
+    multiarray_umath_state *state = _npy_module_state;
     PyObject *doc;
 
     // If there is a __doc__ in the instance __dict__, use it.
-    int result = PyDict_GetItemRef(ufunc->dict, npy_interned_str.__doc__, &doc);
+    int result = PyDict_GetItemRef(
+            ufunc->dict, state->interned_str.__doc__, &doc);
     if (result == -1) {
         return NULL;
     }
@@ -7143,7 +7154,7 @@ ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 
     if (npy_cache_import_runtime(
             "numpy._core._internal", "_ufunc_doc_signature_formatter",
-            &npy_runtime_imports._ufunc_doc_signature_formatter) == -1) {
+            &state->runtime_imports._ufunc_doc_signature_formatter) == -1) {
         return NULL;
     }
 
@@ -7153,7 +7164,7 @@ ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
      * of it the doc string shouldn't need the calling convention
      */
     doc = PyObject_CallFunctionObjArgs(
-            npy_runtime_imports._ufunc_doc_signature_formatter,
+            state->runtime_imports._ufunc_doc_signature_formatter,
             (PyObject *)ufunc, NULL);
     if (doc == NULL) {
         return NULL;
@@ -7167,10 +7178,11 @@ ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 static int
 ufunc_set_doc(PyUFuncObject *ufunc, PyObject *doc, void *NPY_UNUSED(ignored))
 {
+    multiarray_umath_state *state = _npy_module_state;
     if (doc == NULL) {
-        return PyDict_DelItem(ufunc->dict, npy_interned_str.__doc__);
+        return PyDict_DelItem(ufunc->dict, state->interned_str.__doc__);
     } else {
-        return PyDict_SetItem(ufunc->dict, npy_interned_str.__doc__, doc);
+        return PyDict_SetItem(ufunc->dict, state->interned_str.__doc__, doc);
     }
 }
 

@@ -6,13 +6,25 @@
 #include <stdatomic.h>
 
 
-NPY_VISIBILITY_HIDDEN npy_runtime_imports_struct npy_runtime_imports;
+/*
+ * This mutex only guards the act of importing (i.e. writing a freshly
+ * imported object into a caller-supplied `PyObject **` slot, which now
+ * lives in per-module state). It is intentionally process-global: it does
+ * not protect any per-interpreter data itself, only serializes concurrent
+ * first-time imports, so it is safe to share across interpreters under the
+ * GIL.
+ */
+#if PY_VERSION_HEX < 0x30d00b3
+static PyThread_type_lock npy_import_mutex = NULL;
+#else
+static PyMutex npy_import_mutex;
+#endif
 
 NPY_NO_EXPORT int
 init_import_mutex(void) {
 #if PY_VERSION_HEX < 0x30d00b3
-    npy_runtime_imports.import_mutex = PyThread_allocate_lock();
-    if (npy_runtime_imports.import_mutex == NULL) {
+    npy_import_mutex = PyThread_allocate_lock();
+    if (npy_import_mutex == NULL) {
         PyErr_NoMemory();
         return -1;
     }
@@ -70,17 +82,17 @@ npy_cache_import_runtime(const char *module, const char *attr, PyObject **obj) {
             return -1;
         }
 #if PY_VERSION_HEX < 0x30d00b3
-        PyThread_acquire_lock(npy_runtime_imports.import_mutex, WAIT_LOCK);
+        PyThread_acquire_lock(npy_import_mutex, WAIT_LOCK);
 #else
-        PyMutex_Lock(&npy_runtime_imports.import_mutex);
+        PyMutex_Lock(&npy_import_mutex);
 #endif
         if (!atomic_load_explicit((_Atomic(PyObject *) *)obj, memory_order_acquire)) {
             atomic_store_explicit((_Atomic(PyObject *) *)obj, Py_NewRef(value), memory_order_release);
         }
 #if PY_VERSION_HEX < 0x30d00b3
-        PyThread_release_lock(npy_runtime_imports.import_mutex);
+        PyThread_release_lock(npy_import_mutex);
 #else
-        PyMutex_Unlock(&npy_runtime_imports.import_mutex);
+        PyMutex_Unlock(&npy_import_mutex);
 #endif
         Py_DECREF(value);
     }

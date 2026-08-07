@@ -30,6 +30,7 @@
 #include "npy_pycompat.h"
 #include "npy_import.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "convert_datatype.h"
 #include "legacy_dtype_implementation.h"
 
@@ -104,6 +105,7 @@ _umath_strings_richcompare(
 
 NPY_NO_EXPORT int
 get_legacy_print_mode(void) {
+    multiarray_umath_state *state = _npy_module_state;
     /* Get the C value of the legacy printing mode.
      *
      * It is stored as a Python context variable so we access it via the C
@@ -113,7 +115,8 @@ get_legacy_print_mode(void) {
      * complex requirements in the future.
      */
     PyObject *format_options = NULL;
-    PyContextVar_Get(npy_static_pydata.format_options, NULL, &format_options);
+    PyContextVar_Get(state->static_pydata.format_options, NULL,
+            &format_options);
     if (format_options == NULL) {
         PyErr_SetString(PyExc_SystemError,
                         "NumPy internal error: unable to get format_options "
@@ -121,7 +124,7 @@ get_legacy_print_mode(void) {
         return -1;
     }
     PyObject *legacy_print_mode = NULL;
-    if (PyDict_GetItemRef(format_options, npy_interned_str.legacy,
+    if (PyDict_GetItemRef(format_options, state->interned_str.legacy,
                           &legacy_print_mode) == -1) {
         Py_DECREF(format_options);
         return -1;
@@ -162,7 +165,7 @@ PyArray_GetPriority(PyObject *obj, double default_)
     }
 
     if (PyArray_LookupSpecial_OnInstance(
-            obj, npy_interned_str.array_priority, &ret) < 0) {
+            obj, _npy_module_state->interned_str.array_priority, &ret) < 0) {
         /* TODO[gh-14801]: propagate crashes during attribute access? */
         PyErr_Clear();
         return default_;
@@ -1022,7 +1025,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
 
     if (PyArray_NDIM(ap1) == 0 || PyArray_NDIM(ap2) == 0) {
         PyObject *mul_res = PyObject_CallFunctionObjArgs(
-                n_ops.multiply, ap1, ap2, out, NULL);
+                _npy_module_state->n_ops.multiply, ap1, ap2, out, NULL);
         Py_DECREF(ap1);
         Py_DECREF(ap2);
         return mul_res;
@@ -3497,7 +3500,7 @@ array_lexsort(PyObject *NPY_UNUSED(ignored), PyObject *const *args, Py_ssize_t l
 }
 
 static PyObject *
-array_can_cast_safely(PyObject *NPY_UNUSED(self),
+array_can_cast_safely(PyObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *from_obj = NULL;
@@ -3529,7 +3532,7 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self),
          * TODO: `PyArray_IsScalar` should not be required for new dtypes.
          *       weak-promotion branch is in practice identical to dtype one.
          */
-        PyObject *descr = PyObject_GetAttr(from_obj, npy_interned_str.dtype);
+        PyObject *descr = PyObject_GetAttr(from_obj, get_module_state(self)->interned_str.dtype);
         if (descr == NULL) {
             goto finish;
         }
@@ -4291,7 +4294,7 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     }
     else if (result == MEM_OVERLAP_TOO_HARD) {
         if (raise_exceptions) {
-            PyErr_SetString(npy_static_pydata.TooHardError,
+            PyErr_SetString(_npy_module_state->static_pydata.TooHardError,
                             "Exceeded max_work");
             return NULL;
         }
@@ -4547,14 +4550,15 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
 
 
 static PyObject *
-_set_numpy_warn_if_no_mem_policy(PyObject *NPY_UNUSED(self), PyObject *arg)
+_set_numpy_warn_if_no_mem_policy(PyObject *self, PyObject *arg)
 {
     int res = PyObject_IsTrue(arg);
     if (res < 0) {
         return NULL;
     }
-    int old_value = npy_global_state.warn_if_no_mem_policy;
-    npy_global_state.warn_if_no_mem_policy = res;
+    multiarray_umath_state *state = get_module_state(self);
+    int old_value = state->global_state.warn_if_no_mem_policy;
+    state->global_state.warn_if_no_mem_policy = res;
     if (old_value) {
         Py_RETURN_TRUE;
     }
@@ -4584,7 +4588,8 @@ _blas_supports_fpe(PyObject *NPY_UNUSED(self), PyObject *arg) {
 
 
 static PyObject *
-_reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
+_reload_guard(PyObject *self, PyObject *NPY_UNUSED(args)) {
+    multiarray_umath_state *state = get_module_state(self);
     if (PyThreadState_Get()->interp != PyInterpreterState_Main()) {
         if (PyErr_WarnEx(PyExc_UserWarning,
                 "NumPy was imported from a Python sub-interpreter but "
@@ -4599,10 +4604,10 @@ _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
             return NULL;
         }
         /* No need to give the other warning in a sub-interpreter as well... */
-        npy_global_state.reload_guard_initialized = 1;
+        state->global_state.reload_guard_initialized = 1;
         Py_RETURN_NONE;
     }
-    if (npy_global_state.reload_guard_initialized) {
+    if (state->global_state.reload_guard_initialized) {
         if (PyErr_WarnEx(PyExc_UserWarning,
                 "The NumPy module was reloaded (imported a second time). "
                 "This can in some cases result in small but subtle issues "
@@ -4610,7 +4615,7 @@ _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
             return NULL;
         }
     }
-    npy_global_state.reload_guard_initialized = 1;
+    state->global_state.reload_guard_initialized = 1;
     Py_RETURN_NONE;
 }
 
@@ -5006,23 +5011,97 @@ set_flaginfo(PyObject *d)
     return;
 }
 
-// static variables are automatically zero-initialized
-NPY_VISIBILITY_HIDDEN npy_global_state_struct npy_global_state;
+/*
+ * TRANSITIONAL: process-global pointer to module state.
+ * Set once in _multiarray_umath_exec(). Used by call sites that don't
+ * have a module pointer available yet.
+ * FIXME: Remove once all access sites are updated.
+ */
+NPY_VISIBILITY_HIDDEN multiarray_umath_state *_npy_module_state = NULL;
 
 static int
-initialize_global_state(void) {
+initialize_global_state(multiarray_umath_state *state) {
     char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
     if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
-        npy_global_state.warn_if_no_mem_policy = 1;
+        state->global_state.warn_if_no_mem_policy = 1;
     }
     else {
-        npy_global_state.warn_if_no_mem_policy = 0;
+        state->global_state.warn_if_no_mem_policy = 0;
     }
 
     return 0;
 }
 
 static int module_loaded = 0;
+
+static int
+multiarray_umath_traverse(PyObject *m, visitproc visit, void *arg)
+{
+    multiarray_umath_state *state = get_module_state(m);
+
+#define NPY_VISIT_FIELD(name) Py_VISIT(state->interned_str.name);
+    NPY_INTERNED_STR_FIELDS(NPY_VISIT_FIELD)
+#undef NPY_VISIT_FIELD
+    for (int i = 0; i < NPY_ERRMODE_STRING_COUNT; i++) {
+        Py_VISIT(state->interned_str.errmode_strings[i]);
+    }
+
+#define NPY_VISIT_FIELD(name) Py_VISIT(state->static_pydata.name);
+    NPY_STATIC_PYDATA_FIELDS(NPY_VISIT_FIELD)
+#undef NPY_VISIT_FIELD
+
+#define NPY_VISIT_FIELD(name) Py_VISIT(state->runtime_imports.name);
+    NPY_RUNTIME_IMPORTS_FIELDS(NPY_VISIT_FIELD)
+#undef NPY_VISIT_FIELD
+
+#define NPY_VISIT_FIELD(name) Py_VISIT(state->name);
+    NPY_MODULE_STATE_OBJECT_FIELDS(NPY_VISIT_FIELD)
+#undef NPY_VISIT_FIELD
+
+#define NPY_VISIT_FIELD(name) Py_VISIT(state->n_ops.name);
+    NPY_N_OPS_FIELDS(NPY_VISIT_FIELD)
+#undef NPY_VISIT_FIELD
+
+    return 0;
+}
+
+static int
+multiarray_umath_clear(PyObject *m)
+{
+    multiarray_umath_state *state = get_module_state(m);
+
+#define NPY_CLEAR_FIELD(name) Py_CLEAR(state->interned_str.name);
+    NPY_INTERNED_STR_FIELDS(NPY_CLEAR_FIELD)
+#undef NPY_CLEAR_FIELD
+    for (int i = 0; i < NPY_ERRMODE_STRING_COUNT; i++) {
+        Py_CLEAR(state->interned_str.errmode_strings[i]);
+    }
+
+#define NPY_CLEAR_FIELD(name) Py_CLEAR(state->static_pydata.name);
+    NPY_STATIC_PYDATA_FIELDS(NPY_CLEAR_FIELD)
+#undef NPY_CLEAR_FIELD
+
+#define NPY_CLEAR_FIELD(name) Py_CLEAR(state->runtime_imports.name);
+    NPY_RUNTIME_IMPORTS_FIELDS(NPY_CLEAR_FIELD)
+#undef NPY_CLEAR_FIELD
+
+#define NPY_CLEAR_FIELD(name) Py_CLEAR(state->name);
+    NPY_MODULE_STATE_OBJECT_FIELDS(NPY_CLEAR_FIELD)
+#undef NPY_CLEAR_FIELD
+
+#define NPY_CLEAR_FIELD(name) Py_CLEAR(state->n_ops.name);
+    NPY_N_OPS_FIELDS(NPY_CLEAR_FIELD)
+#undef NPY_CLEAR_FIELD
+
+    return 0;
+}
+
+static void
+multiarray_umath_free(void *m)
+{
+    multiarray_umath_clear((PyObject *)m);
+    _npy_module_state = NULL;
+}
 
 static int
 _multiarray_umath_exec(PyObject *m) {
@@ -5035,6 +5114,19 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
     module_loaded = 1;
+
+    /*
+     * State that is never torn down lives outside the module state: the
+     * static types, the PyArray_API table and the builtin descriptor and
+     * DType singletons reachable through it. Clearing the module state while
+     * those are still reachable would leave dead pointers in the public C
+     * API, so leak a reference to keep m_clear and m_free from running.
+     */
+    Py_INCREF(m);
+
+    /* Set up per-module state pointer */
+    multiarray_umath_state *state = get_module_state(m);
+    _npy_module_state = state;
 
     /* Initialize CPU features */
     if (npy_cpu_init() < 0) {
@@ -5075,7 +5167,7 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
 
-    if (initialize_global_state() < 0) {
+    if (initialize_global_state(state) < 0) {
         return -1;
     }
 
@@ -5093,7 +5185,7 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
     PyUFunc_Type.tp_dict = Py_BuildValue(
-        "{ON}", npy_interned_str.__signature__, s);
+        "{ON}", state->interned_str.__signature__, s);
     if (PyUFunc_Type.tp_dict == NULL) {
         return -1;
     }
@@ -5324,8 +5416,9 @@ _multiarray_umath_exec(PyObject *m) {
      * Initialize the context-local current handler
      * with the default PyDataMem_Handler capsule.
      */
-    current_handler = PyContextVar_New("current_allocator", PyDataMem_DefaultHandler);
-    if (current_handler == NULL) {
+    state->current_handler = PyContextVar_New(
+            "current_allocator", PyDataMem_DefaultHandler);
+    if (state->current_handler == NULL) {
         return -1;
     }
 
@@ -5338,29 +5431,29 @@ _multiarray_umath_exec(PyObject *m) {
     }
 
     // initialize static references to ndarray.__array_*__ special methods
-    npy_static_pydata.ndarray_array_finalize = PyObject_GetAttrString(
+    state->static_pydata.ndarray_array_finalize = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_finalize__");
-    if (npy_static_pydata.ndarray_array_finalize == NULL) {
+    if (state->static_pydata.ndarray_array_finalize == NULL) {
         return -1;
     }
-    npy_static_pydata.ndarray_array_ufunc = PyObject_GetAttrString(
+    state->static_pydata.ndarray_array_ufunc = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_ufunc__");
-    if (npy_static_pydata.ndarray_array_ufunc == NULL) {
+    if (state->static_pydata.ndarray_array_ufunc == NULL) {
         return -1;
     }
-    npy_static_pydata.ndarray_array_function = PyObject_GetAttrString(
+    state->static_pydata.ndarray_array_function = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_function__");
-    if (npy_static_pydata.ndarray_array_function == NULL) {
+    if (state->static_pydata.ndarray_array_function == NULL) {
         return -1;
     }
-    npy_static_pydata.ndarray_set_dtype = PyObject_GetAttrString(
+    state->static_pydata.ndarray_set_dtype = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "_set_dtype");
-    if (npy_static_pydata.ndarray_set_dtype == NULL) {
+    if (state->static_pydata.ndarray_set_dtype == NULL) {
         return -1;
     }
-    npy_static_pydata.ndarray_dtype_descr = PyObject_GetAttrString(
+    state->static_pydata.ndarray_dtype_descr = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "dtype");
-    if (npy_static_pydata.ndarray_dtype_descr == NULL) {
+    if (state->static_pydata.ndarray_dtype_descr == NULL) {
         return -1;
     }
 
@@ -5376,24 +5469,24 @@ _multiarray_umath_exec(PyObject *m) {
 
     if (npy_cache_import_runtime(
             "numpy.dtypes", "_add_dtype_helper",
-            &npy_runtime_imports._add_dtype_helper) == -1) {
+            &state->runtime_imports._add_dtype_helper) == -1) {
         return -1;
     }
 
     if (PyObject_CallFunction(
-            npy_runtime_imports._add_dtype_helper,
+            state->runtime_imports._add_dtype_helper,
             "Os", (PyObject *)&PyArray_StringDType, NULL) == NULL) {
         return -1;
     }
     PyDict_SetItemString(d, "StringDType", (PyObject *)&PyArray_StringDType);
 
     // initialize static reference to a zero-like array
-    npy_static_pydata.zero_pyint_like_arr = PyArray_ZEROS(
+    state->static_pydata.zero_pyint_like_arr = PyArray_ZEROS(
             0, NULL, NPY_DEFAULT_INT, NPY_FALSE);
-    if (npy_static_pydata.zero_pyint_like_arr == NULL) {
+    if (state->static_pydata.zero_pyint_like_arr == NULL) {
         return -1;
     }
-    ((PyArrayObject_fields *)npy_static_pydata.zero_pyint_like_arr)->flags |=
+    ((PyArrayObject_fields *)state->static_pydata.zero_pyint_like_arr)->flags |=
             (NPY_ARRAY_WAS_PYTHON_INT|NPY_ARRAY_WAS_INT_AND_REPLACED);
 
     if (verify_static_structs_initialized() < 0) {
@@ -5438,11 +5531,14 @@ static struct PyModuleDef_Slot _multiarray_umath_slots[] = {
 };
 
 static struct PyModuleDef moduledef = {
-    .m_base = PyModuleDef_HEAD_INIT,
-    .m_name = "_multiarray_umath",
-    .m_size = 0,
-    .m_methods = array_module_methods,
-    .m_slots = _multiarray_umath_slots,
+    .m_base     = PyModuleDef_HEAD_INIT,
+    .m_name     = "_multiarray_umath",
+    .m_size     = sizeof(multiarray_umath_state),
+    .m_methods  = array_module_methods,
+    .m_slots    = _multiarray_umath_slots,
+    .m_traverse = multiarray_umath_traverse,
+    .m_clear    = multiarray_umath_clear,
+    .m_free     = multiarray_umath_free,
 };
 
 PyMODINIT_FUNC PyInit__multiarray_umath(void) {

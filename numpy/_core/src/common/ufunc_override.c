@@ -9,6 +9,7 @@
 #include "ufunc_override.h"
 #include "scalartypes.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 
 /*
  * Check whether an object has __array_ufunc__ defined on its class and it
@@ -21,6 +22,7 @@
 NPY_NO_EXPORT PyObject *
 PyUFuncOverride_GetNonDefaultArrayUfunc(PyObject *obj)
 {
+    multiarray_umath_state *state = _npy_module_state;
     PyObject *cls_array_ufunc;
 
     /* Fast return for ndarray */
@@ -37,12 +39,12 @@ PyUFuncOverride_GetNonDefaultArrayUfunc(PyObject *obj)
      * return for basic python types, so no need to worry about those here)
      */
     if (PyArray_LookupSpecial(
-            obj, npy_interned_str.array_ufunc, &cls_array_ufunc) < 0) {
+            obj, state->interned_str.array_ufunc, &cls_array_ufunc) < 0) {
         PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
         return NULL;
     }
     /* Ignore if the same as ndarray.__array_ufunc__ (it may be NULL here) */
-    if (cls_array_ufunc == npy_static_pydata.ndarray_array_ufunc) {
+    if (cls_array_ufunc == state->static_pydata.ndarray_array_ufunc) {
         Py_DECREF(cls_array_ufunc);
         return NULL;
     }

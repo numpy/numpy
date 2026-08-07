@@ -18,6 +18,7 @@
 #include "npy_config.h"
 #include "npy_pycompat.h"  // PyObject_GetOptionalAttr
 #include "npy_static_data.h"
+#include "module_state.h"
 
 #include "common.h"
 #include "numpy/arrayscalars.h"
@@ -2109,6 +2110,7 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
         PyObject *obj, npy_datetimestruct *out, NPY_DATETIMEUNIT *out_bestunit,
         int apply_tzinfo)
 {
+    multiarray_umath_state *state = _npy_module_state;
     int isleap;
     int has_time;
 
@@ -2144,7 +2146,7 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
      * instance (this includes date/datetime subclasses).
      */
     long val;
-    int found = pydatetime_attr_to_long(obj, npy_interned_str.year, &val);
+    int found = pydatetime_attr_to_long(obj, state->interned_str.year, &val);
     if (found < 0) {
         return -1;
     }
@@ -2153,7 +2155,7 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
     }
     out->year = val;
 
-    found = pydatetime_attr_to_long(obj, npy_interned_str.month, &val);
+    found = pydatetime_attr_to_long(obj, state->interned_str.month, &val);
     if (found < 0) {
         return -1;
     }
@@ -2162,7 +2164,7 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
     }
     out->month = val;
 
-    found = pydatetime_attr_to_long(obj, npy_interned_str.day, &val);
+    found = pydatetime_attr_to_long(obj, state->interned_str.day, &val);
     if (found < 0) {
         return -1;
     }
@@ -2175,8 +2177,8 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
      * are present. */
     long time_vals[4];
     PyObject *const time_names[4] = {
-        npy_interned_str.hour, npy_interned_str.minute,
-        npy_interned_str.second, npy_interned_str.microsecond,
+        state->interned_str.hour, state->interned_str.minute,
+        state->interned_str.second, state->interned_str.microsecond,
     };
     has_time = 1;
     for (int i = 0; i < 4; i++) {
@@ -2231,7 +2233,7 @@ validate_and_return:
             tzinfo = Py_NewRef(PyDateTime_DATE_GET_TZINFO(obj));
         }
         else if (PyObject_GetOptionalAttr(
-                        obj, npy_interned_str.tzinfo, &tzinfo) < 0) {
+                        obj, state->interned_str.tzinfo, &tzinfo) < 0) {
             return -1;
         }
         if (tzinfo != NULL && tzinfo != Py_None) {
@@ -2245,7 +2247,7 @@ validate_and_return:
 
             /* The utcoffset function should return a timedelta */
             PyObject *offset = PyObject_CallMethodOneArg(
-                    tzinfo, npy_interned_str.utcoffset, obj);
+                    tzinfo, state->interned_str.utcoffset, obj);
             Py_DECREF(tzinfo);
             if (offset == NULL) {
                 return -1;
@@ -2256,7 +2258,7 @@ validate_and_return:
              * which contains the value we want.
              */
             PyObject *total_seconds = PyObject_CallMethodNoArgs(
-                    offset, npy_interned_str.total_seconds);
+                    offset, state->interned_str.total_seconds);
             Py_DECREF(offset);
             if (total_seconds == NULL) {
                 return -1;

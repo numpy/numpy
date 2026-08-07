@@ -12,6 +12,7 @@
 
 #include "npy_static_data.h"
 #include "npy_import.h"
+#include "module_state.h"
 #include <limits.h>
 #include <string.h>
 
@@ -203,13 +204,14 @@ check_and_adjust_axis_msg(int *axis, int ndim, PyObject *msg_prefix)
     /* Check that index is valid, taking into account negative indices */
     if (NPY_UNLIKELY((*axis < -ndim) || (*axis >= ndim))) {
         /* Invoke the AxisError constructor */
+        multiarray_umath_state *state = _npy_module_state;
         PyObject *exc = PyObject_CallFunction(
-                npy_static_pydata.AxisError, "iiO", *axis, ndim,
+                state->static_pydata.AxisError, "iiO", *axis, ndim,
                 msg_prefix);
         if (exc == NULL) {
             return -1;
         }
-        PyErr_SetObject(npy_static_pydata.AxisError, exc);
+        PyErr_SetObject(state->static_pydata.AxisError, exc);
         Py_DECREF(exc);
 
         return -1;
