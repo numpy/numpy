@@ -198,30 +198,26 @@ Casting To and From Fixed-Width Strings
 `numpy.bytes_`, and `numpy.void`. Casting to a fixed-width string is
 most useful when strings need to be memory-mapped in an ndarray or
 when a fixed-width string is needed for reading and writing to a
-columnar data format with a known maximum string length.
+columnar data format with a known maximum string length. The
+`numpy.bytes_` cast is most useful for string data that is known to
+contain UTF-8 encoded text, including ASCII text.
 
-In all cases, casting to a fixed-width string requires specifying the
-maximum allowed string length::
+When converting an array to a fixed-width string dtype with an
+unspecified size using `numpy.ndarray.astype`, NumPy infers the size by
+inspecting the array values, producing a dtype wide enough to store the
+widest entry without truncation::
 
-   >>> arr = np.array(["hello", "world"], dtype=StringDType())
-   >>> arr.astype(np.str_)  # doctest: +IGNORE_EXCEPTION_DETAIL
-   Traceback (most recent call last):
-   ...
-   TypeError: Casting from StringDType to a fixed-width dtype with an
-   unspecified size is not currently supported, specify an explicit
-   size for the output dtype instead.
+   >>> arr = np.array(["hello", "world!!"], dtype=StringDType())
+   >>> arr.astype(np.str_)
+   array(['hello', 'world!!'], dtype='<U7')
+   >>> arr.astype("S")
+   array([b'hello', b'world!!'], dtype='|S7')
 
-   The above exception was the direct cause of the following
-   exception:
+An explicit size can still be passed, truncating entries that do not
+fit::
 
-   TypeError: cannot cast dtype StringDType() to <class 'numpy.dtypes.StrDType'>.
-   >>> arr.astype("U5")
-   array(['hello', 'world'], dtype='<U5')
-   
-The `numpy.bytes_` cast is most useful for string data that is known
-to contain only ASCII characters, as characters outside this range
-cannot be represented in a single byte in the UTF-8 encoding and are
-rejected.
+   >>> arr.astype("U4")
+   array(['hell', 'worl'], dtype='<U4')
 
 Any valid unicode string can be cast to `numpy.str_`, although
 since `numpy.str_` uses a 32-bit UCS4 encoding for all characters,
