@@ -5255,7 +5255,14 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
 
-    /* Create all abstract DType classes */
+    /*
+     * Create the abstract DType classes (NumericAbstractDType,
+     * IntegerAbstractDType, SignedIntegerAbstractDType,
+     * UnsignedIntegerAbstractDType, InexactAbstractDType,
+     * FloatAbstractDType, ComplexAbstractDType) and expose them on
+     * ``numpy.dtypes``.  Must run before ``set_typeinfo`` so the legacy
+     * concrete DType classes can use them as ``tp_base`` directly.
+     */
     if (initialize_abstract_dtypes() < 0) {
         return -1;
     }
@@ -5264,22 +5271,7 @@ _multiarray_umath_exec(PyObject *m) {
     if (set_typeinfo(d) != 0) {
         return -1;
     }
-
-    /*
-     * Map ``str``/``bytes``/``bool`` to the matching legacy DTypes.  Done
-     * after ``set_typeinfo`` since that is what wraps those DTypes.
-     */
-    PyArray_DTypeMeta *dt;
-    dt = typenum_to_dtypemeta(NPY_UNICODE);
-    if (_PyArray_MapPyTypeToDType(dt, &PyUnicode_Type, NPY_FALSE) < 0) {
-        return -1;
-    }
-    dt = typenum_to_dtypemeta(NPY_STRING);
-    if (_PyArray_MapPyTypeToDType(dt, &PyBytes_Type, NPY_FALSE) < 0) {
-        return -1;
-    }
-    dt = typenum_to_dtypemeta(NPY_BOOL);
-    if (_PyArray_MapPyTypeToDType(dt, &PyBool_Type, NPY_FALSE) < 0) {
+    if (map_legacy_pytypes_to_dtypes() < 0) {
         return -1;
     }
 
@@ -5380,9 +5372,11 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
 
-    if (PyObject_CallFunction(
+    if (PyObject_CallFunctionObjArgs(
             npy_runtime_imports._add_dtype_helper,
-            "Os", (PyObject *)&PyArray_StringDType, NULL) == NULL) {
+            (PyObject *)&PyArray_StringDType,
+            Py_None,
+            NULL) == NULL) {
         return -1;
     }
     PyDict_SetItemString(d, "StringDType", (PyObject *)&PyArray_StringDType);
