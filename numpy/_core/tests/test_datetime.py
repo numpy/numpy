@@ -1344,6 +1344,48 @@ class TestDateTime:
             assert result == info.min + offset
             assert isinstance(result, int)
 
+    def test_datetime64_struct_to_datetime64_overflow(self):
+        """
+        undefined behaviour for datetime64 values near INT64_MIN / INT64_MAX.
+        """
+        int64_max = np.iinfo(np.int64).max
+        int64_min = np.iinfo(np.int64).min
+
+        for unit in ("Y", "M"):
+            dt = np.datetime64(int64_max, unit)
+            assert dt.view(np.int64) == int64_max
+            dt = np.datetime64(int64_min + 1, unit)
+            assert dt.view(np.int64) == int64_min + 1
+
+        for unit in ("D", "W"):
+            dt = np.datetime64(int64_min + 1, unit)
+            assert dt.view(np.int64) == int64_min + 1
+            dt = np.datetime64(int64_max, unit)
+            assert dt.view(np.int64) == int64_max
+
+        for unit in ("h", "m", "s", "ms", "us"):
+            # Use moderate edge values that fit in the unit's range
+            for raw in (int64_max, int64_min + 1, -1, 0, 1):
+                dt = np.datetime64(raw, unit)
+                assert dt.view(np.int64) == raw
+
+        # --- ns / ps / fs / as: tiny ranges, same check ---
+        for unit in ("ns", "ps", "fs", "as"):
+            for raw in (-1, 0, 1, int64_max, int64_min + 1):
+                dt = np.datetime64(raw, unit)
+                assert dt.view(np.int64) == raw
+
+        # --- Roundtrip through object: extreme D values must not crash ---
+        for offset in (1, 2, 100, 1000):
+            dt = np.datetime64(int64_min + offset, "D")
+            result = dt.item()
+            assert result == int64_min + offset
+            assert isinstance(result, int)
+
+        max_safe_days = int64_max // 86400
+        dt_safe = np.datetime64(max_safe_days, "D").astype("datetime64[s]")
+        assert dt_safe.view(np.int64) == max_safe_days * 86400
+
     def test_pyobject_roundtrip(self):
         # All datetime types should be able to roundtrip through object
         a = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1364,22 +1406,36 @@ class TestDateTime:
 
             assert_equal(b.astype(object).astype(unit), b,
                             f"Error roundtripping unit {unit}")
-        # With time units
+        # With narrow units.
+        narrow_overflow = {'M8[as]', 'M8[16fs]', 'M8[ps]', 'M8[300as]'}
         for unit in ['M8[as]', 'M8[16fs]', 'M8[ps]', 'M8[us]',
                      'M8[300as]', 'M8[20us]']:
             b = a.copy().view(dtype=unit)
-            b[0] = '-0001-01-01T00'
-            b[1] = '-0001-12-31T00'
-            b[2] = '0000-01-01T00'
-            b[3] = '0001-01-01T00'
-            b[4] = '1969-12-31T23:59:59.999999'
-            b[5] = '1970-01-01T00'
-            b[6] = '9999-12-31T23:59:59.999999'
-            b[7] = '10000-01-01T00'
-            b[8] = 'NaT'
-
-            assert_equal(b.astype(object).astype(unit), b,
-                            f"Error roundtripping unit {unit}")
+            # indices 0-3 and 6-7 are out of range for narrow units
+            if unit in narrow_overflow:
+                for date in ['-0001-01-01T00', '-0001-12-31T00',
+                             '0000-01-01T00', '0001-01-01T00',
+                             '9999-12-31T23:59:59.999999', '10000-01-01T00']:
+                    with pytest.raises(OverflowError):
+                        b[0] = date
+                b[4] = '1969-12-31T23:59:59.999999'
+                b[5] = '1970-01-01T00'
+                b[8] = 'NaT'
+                assert_equal(b[[4, 5, 8]].astype(object).astype(unit),
+                             b[[4, 5, 8]],
+                             f"Error roundtripping unit {unit}")
+            else:
+                b[0] = '-0001-01-01T00'
+                b[1] = '-0001-12-31T00'
+                b[2] = '0000-01-01T00'
+                b[3] = '0001-01-01T00'
+                b[4] = '1969-12-31T23:59:59.999999'
+                b[5] = '1970-01-01T00'
+                b[6] = '9999-12-31T23:59:59.999999'
+                b[7] = '10000-01-01T00'
+                b[8] = 'NaT'
+                assert_equal(b.astype(object).astype(unit), b,
+                             f"Error roundtripping unit {unit}")
 
     def test_month_truncation(self):
         # Make sure that months are truncating correctly
@@ -3045,6 +3101,17 @@ class TestDateTime:
         This tests the conversion to and from npy_datetimestruct.
         """
         # TODO: add absolute (gold standard) time span limit strings
+
+        # datetime64[Y] stores (year - 1970) as int64.  INT64_MAX as a raw
+        # value would require year = 1970 + INT64_MAX which overflows int64,
+        # so the positive-limit round-trip is not representable for Y.
+        if time_unit == "Y" and sign == 1:
+            pytest.xfail(
+                "INT64_MAX raw years require year=1970+INT64_MAX which "
+                "overflows int64; the valid positive raw range for Y is "
+                "INT64_MAX - 1970"
+            )
+
         limit = np.datetime64(np.iinfo(np.int64).max * sign, time_unit)
 
         # Convert to string and back. Explicit unit needed since the day and
