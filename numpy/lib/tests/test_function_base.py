@@ -3049,7 +3049,7 @@ class Test_I0:
         result = np.i0(np.inf)
         assert np.isinf(result), f"i0(inf) returned {result}, expected inf"
         assert result > 0, "i0(inf) should be positive infinity"
-        
+
     def test_complex(self):
         a = np.array([0, 1 + 2j])
         with pytest.raises(TypeError, match="i0 not supported for complex values"):
