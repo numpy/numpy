@@ -3073,6 +3073,21 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
     return ret;
 }
 
+/*
+ * Replace an iterator-owned dtype when `finalize_descr` realized a different
+ * descriptor for its operand.  Other constructor changes, such as expanding a
+ * subarray dtype into the operand shape, must retain the requested dtype here.
+ */
+static inline void
+npyiter_sync_finalized_op_dtype(PyArray_Descr **op_dtype, PyArrayObject *op)
+{
+    if (*op_dtype != PyArray_DESCR(op) &&
+            NPY_DT_has_finalize(NPY_DTYPE(*op_dtype))) {
+        Py_INCREF(PyArray_DESCR(op));
+        Py_SETREF(*op_dtype, PyArray_DESCR(op));
+    }
+}
+
 static int
 npyiter_allocate_arrays(NpyIter *iter,
                         npy_uint32 flags,
@@ -3215,7 +3230,7 @@ npyiter_allocate_arrays(NpyIter *iter,
 
             op[iop] = out;
 
-            npy_resync_finalized_descr(&op_dtype[iop], op[iop]);
+            npyiter_sync_finalized_op_dtype(&op_dtype[iop], op[iop]);
 
             /*
              * Now we need to replace the pointers and strides with values
@@ -3252,7 +3267,7 @@ npyiter_allocate_arrays(NpyIter *iter,
             Py_DECREF(op[iop]);
             op[iop] = temp;
 
-            npy_resync_finalized_descr(&op_dtype[iop], op[iop]);
+            npyiter_sync_finalized_op_dtype(&op_dtype[iop], op[iop]);
 
             /*
              * Now we need to replace the pointers and strides with values
@@ -3311,7 +3326,7 @@ npyiter_allocate_arrays(NpyIter *iter,
             Py_DECREF(op[iop]);
             op[iop] = temp;
 
-            npy_resync_finalized_descr(&op_dtype[iop], op[iop]);
+            npyiter_sync_finalized_op_dtype(&op_dtype[iop], op[iop]);
 
             /*
              * Now we need to replace the pointers and strides with values

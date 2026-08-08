@@ -184,15 +184,6 @@ PyArrayMethod_FromSpec(PyArrayMethod_Spec *spec);
 NPY_NO_EXPORT PyBoundArrayMethodObject *
 PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int priv);
 
-/*
- * Build a context to drive `iter`'s inner loop.  Only valid when the loop's
- * descriptors match the iterator operands 1:1; the returned context borrows
- * from `iter` and must not outlive it.
- */
-NPY_NO_EXPORT PyArrayMethod_Context
-NpyIter_GetArrayMethodContext(NpyIter *iter, PyObject *caller,
-                              PyArrayMethodObject *method);
-
 #ifdef __cplusplus
 }
 #endif

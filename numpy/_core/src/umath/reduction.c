@@ -309,8 +309,13 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     }
 
     /*
-     * op_dtypes tracks the loop's descriptors so the initial-value buffers
-     * use the same ones.  The context must not outlive `iter`.
+     * Build the (nout + 1) -> nout reduction-loop descriptor layout:
+     * [accumulators..., stream, outputs...].  The accumulator and output
+     * slots both use the iterator's realized output descriptors.
+     *
+     * `op_dtypes` must track the same descriptors for initial-value buffers.
+     * All references are borrowed from `iter`, so this context must not
+     * outlive it.
      */
     PyArray_Descr *iter_context_descrs[NPY_MAXARGS];
     PyArrayMethod_Context iter_context = *context;

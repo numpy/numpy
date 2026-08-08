@@ -138,20 +138,6 @@ static inline int NPY_DT_has_finalize(PyArray_DTypeMeta *dtype) {
 }
 
 /*
- * Re-point an owned descriptor reference at the descriptor that owns
- * `arr`'s data, for use where array creation may have replaced `*descr`
- * via `finalize_descr`.
- */
-static inline void
-npy_resync_finalized_descr(PyArray_Descr **descr, PyArrayObject *arr)
-{
-    if (PyArray_DESCR(arr) != *descr && NPY_DT_has_finalize(NPY_DTYPE(*descr))) {
-        Py_INCREF(PyArray_DESCR(arr));
-        Py_SETREF(*descr, PyArray_DESCR(arr));
-    }
-}
-
-/*
  * Macros for convenient classmethod calls, since these require
  * the DType both for the slot lookup and as first arguments.
  *

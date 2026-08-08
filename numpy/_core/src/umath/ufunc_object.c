@@ -886,6 +886,8 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
     int operation_ndim = 0;
     npy_intp *operation_shape = NULL;
     npy_intp fixed_strides[NPY_MAXARGS];
+    PyArrayMethod_Context allocated_context;
+    PyArray_Descr *allocated_descrs[NPY_MAXARGS];
 
     for (int iop = 0; iop < nop; iop++) {
         if (op[iop] == NULL) {
@@ -944,9 +946,22 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
         if (op[nin] == NULL) {
             return -1;
         }
-        /* The creation may have replaced the descriptor via finalize_descr */
-        npy_resync_finalized_descr(
-                (PyArray_Descr **)&context->descriptors[nin], op[nin]);
+        /*
+         * PyArray_NewFromDescr may replace the descriptor by calling
+         * `finalize_descr`.  The loop must use the replacement because it may
+         * own state referenced by the output data.
+         * Do not do this for every descriptor change: subarray dtypes also
+         * change PyArray_DESCR during creation, but their loop still uses the
+         * original subarray descriptor.
+         */
+        if (NPY_DT_has_finalize(NPY_DTYPE(context->descriptors[nin]))) {
+            memcpy(allocated_descrs, context->descriptors,
+                    nop * sizeof(*allocated_descrs));
+            allocated_descrs[nin] = PyArray_DESCR(op[nin]);
+            allocated_context = *context;
+            allocated_context.descriptors = allocated_descrs;
+            context = &allocated_context;
+        }
         fixed_strides[nin] = context->descriptors[nin]->elsize;
     }
     else {
@@ -1126,8 +1141,8 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
         }
     }
 
-    PyArrayMethod_Context iter_context = NpyIter_GetArrayMethodContext(
-            iter, context->caller, context->method);
+    PyArrayMethod_Context iter_context = *context;
+    iter_context.descriptors = NpyIter_GetDescrArray(iter);
     context = &iter_context;
 
     /* Only do the loop if the iteration size is non-zero */
@@ -2115,8 +2130,10 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
                                     NPY_SIZEOF_INTP * nop);
 
     /* Final preparation of the arraymethod call. */
-    PyArrayMethod_Context context = NpyIter_GetArrayMethodContext(
-            iter, (PyObject *)ufunc, ufuncimpl);
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, NpyIter_GetDescrArray(iter));
+    context.caller = (PyObject *)ufunc;
+    context.method = ufuncimpl;
     PyArrayMethod_StridedLoop *strided_loop;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
 
@@ -3079,13 +3096,10 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         }
     }
 
-    /*
-     * descrs[0] and descrs[2] both describe op[0], which is used as both
-     * the previous-value input and the output (see `dataptr_copy` below).
-     */
-    npy_resync_finalized_descr(&descrs[0], op[0]);
-    npy_resync_finalized_descr(&descrs[1], op[1]);
-    npy_resync_finalized_descr(&descrs[2], op[0]);
+    /* The loop descriptors borrow from the final iterator/array operands. */
+    PyArray_Descr *loop_descrs[3] = {
+            PyArray_DESCR(op[0]), PyArray_DESCR(op[1]), PyArray_DESCR(op[0])};
+    context.descriptors = loop_descrs;
 
     npy_intp fixed_strides[3];
     if (need_outer_iterator) {
@@ -3105,11 +3119,11 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         goto fail;
     }
     /* Set up function to copy the first element if it has references */
-    if (PyDataType_REFCHK(descrs[2])) {
+    if (PyDataType_REFCHK(loop_descrs[2])) {
         NPY_ARRAYMETHOD_FLAGS copy_flags;
         /* Setup guarantees aligned here. */
         if (PyArray_GetDTypeTransferFunction(
-                1, 0, 0, descrs[1], descrs[2], 0, &copy_info,
+                1, 0, 0, loop_descrs[1], loop_descrs[2], 0, &copy_info,
                 &copy_flags) == NPY_FAIL) {
             goto fail;
         }
@@ -3146,7 +3160,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
 
-        int itemsize = descrs[0]->elsize;
+        int itemsize = loop_descrs[0]->elsize;
 
         /* Get the variables needed for the loop */
         iternext = NpyIter_GetIterNext(iter, NULL);
@@ -3211,7 +3225,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     else if (iter == NULL) {
         char *dataptr_copy[3];
 
-        int itemsize = descrs[0]->elsize;
+        int itemsize = loop_descrs[0]->elsize;
 
         /* Execute the loop with no iterators */
         npy_intp count = PyArray_DIM(op[1], axis);

@@ -758,6 +758,18 @@ def test_fancy_index_assign_0d_value(value):
     assert_array_equal(a, [[value + "x", "v1"], ["v2", value + "x"]])
 
 
+def test_fancy_index_assign_subspace_distinct_allocators():
+    # Fancy indexing only the first dimension leaves the second dimension as
+    # a subspace copied from an independently-owned StringDType descriptor.
+    a, b, a_obj, b_obj = _make_distinct_arena_arrays(6)
+    a, a_obj = a.reshape(3, 2), a_obj.reshape(3, 2)
+    rhs, rhs_obj = b[:4].reshape(2, 2), b_obj[:4].reshape(2, 2)
+
+    a[[0, 2], :] = rhs
+    a_obj[[0, 2], :] = rhs_obj
+    assert_array_equal(a, a_obj)
+
+
 @pytest.mark.parametrize("buffered", [True, False])
 @pytest.mark.parametrize("pass_op_dtypes", [True, False])
 def test_nditer_allocated_output(buffered, pass_op_dtypes):
@@ -2675,9 +2687,31 @@ def test_ufunc_overlapping_out_distinct_allocators():
 
 
 def test_reduce_distinct_allocators():
-    a, _, a_obj, _ = _make_distinct_arena_arrays(50)
+    a, acc_out, a_obj, acc_out_obj = _make_distinct_arena_arrays(50)
     assert_array_equal(np.maximum.reduce(a), np.maximum.reduce(a_obj))
     assert_array_equal(np.add.accumulate(a), np.add.accumulate(a_obj))
+
+    # no outer iterator, but the independently-allocated output still has a
+    # different descriptor from the input
+    np.add.accumulate(a, out=acc_out)
+    np.add.accumulate(a_obj, out=acc_out_obj)
+    assert_array_equal(acc_out, acc_out_obj)
+
+    # a multidimensional accumulate uses an outer iterator and allocates a
+    # finalized output descriptor
+    c, _, c_obj, _ = _make_distinct_arena_arrays(6, prefix_a="C")
+    c, c_obj = c.reshape(2, 3), c_obj.reshape(2, 3)
+    assert_array_equal(
+        np.add.accumulate(c, axis=1), np.add.accumulate(c_obj, axis=1)
+    )
+
+    # a long initial value exercises the finalized reduction descriptors used
+    # to create and populate the masked-reduction initial-value buffer
+    mask = np.array([[True, False, True], [False, True, True]])
+    assert_array_equal(
+        np.maximum.reduce(c, axis=1, where=mask, initial="initial" * 4),
+        np.maximum.reduce(c_obj, axis=1, where=mask, initial="initial" * 4),
+    )
 
     # accumulate in place (out aliases the operand)
     np.add.accumulate(a, out=a)

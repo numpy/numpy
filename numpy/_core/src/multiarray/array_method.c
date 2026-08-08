@@ -42,18 +42,6 @@
 #include "dtype_transfer.h"
 
 
-NPY_NO_EXPORT PyArrayMethod_Context
-NpyIter_GetArrayMethodContext(NpyIter *iter, PyObject *caller,
-                              PyArrayMethodObject *method)
-{
-    PyArrayMethod_Context context = {0};
-    context.caller = caller;
-    context.method = method;
-    context.descriptors = NpyIter_GetDescrArray(iter);
-    return context;
-}
-
-
 /*
  * The default descriptor resolution function.  The logic is as follows:
  *
@@ -1104,4 +1092,3 @@ NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type = {
     .tp_methods = boundarraymethod_methods,
     .tp_getset = boundarraymethods_getters,
 };
-
