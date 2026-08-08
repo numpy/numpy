@@ -3037,15 +3037,9 @@ class Test_I0:
         x = np.float64(713.0)
         expected = np.float64(6.705128263670996e307)
         actual = np.i0(x)
-<<<<<<< HEAD
-
+        
         # Should be finite (not inf)
         assert np.isfinite(actual), f"i0({x}) returned inf, expected finite value"
-
-=======
-        # Should be finite (not inf)
-        assert np.isfinite(actual), f"i0({x}) returned inf, expected finite value"
->>>>>>> 2726b1e8211a172ecb893a4b9f28a60f8091a058
         # Should be close to expected value
         np.testing.assert_allclose(actual, expected, rtol=1e-13)
 
