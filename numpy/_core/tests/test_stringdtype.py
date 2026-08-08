@@ -11,6 +11,10 @@ import tempfile
 import pytest
 
 import numpy as np
+from numpy._core._multiarray_umath import (
+    _stringdtype_compatible_na,
+    _stringdtype_na_is_nan_like,
+)
 from numpy._core.tests._natype import pd_NA
 from numpy.dtypes import StringDType
 from numpy.testing import assert_array_equal
@@ -111,6 +115,48 @@ def test_dtype_creation():
 
     hashes.add(hash(dt))
     assert len(hashes) == 4
+
+
+def test_na_is_nan_like(na_object):
+    dtype = get_dtype(na_object)
+    expected = na_object is pd_NA or (
+        isinstance(na_object, float) and np.isnan(na_object)
+    )
+
+    assert _stringdtype_na_is_nan_like(dtype) == expected
+
+
+def test_na_is_nan_like_rejects_other_dtypes():
+    with pytest.raises(TypeError, match="requires a StringDType instance"):
+        _stringdtype_na_is_nan_like(np.dtype("O"))
+
+
+def test_compatible_na():
+    plain = StringDType()
+    none_na = StringDType(na_object=None)
+
+    # A dtype without an NA adopts the other dtype's NA, and coercion does not
+    # affect whether missing values are compatible.
+    assert _stringdtype_compatible_na(plain, none_na)
+    assert _stringdtype_compatible_na(none_na, plain)
+    assert _stringdtype_compatible_na(
+        none_na, StringDType(na_object=None, coerce=False)
+    )
+
+    # Distinct NaN objects describe the same NaN-like missing behavior, while
+    # equality-like and NaN-like missing values cannot be combined.
+    assert _stringdtype_compatible_na(
+        StringDType(na_object=np.nan),
+        StringDType(na_object=float("nan")),
+    )
+    assert not _stringdtype_compatible_na(
+        none_na, StringDType(na_object=np.nan)
+    )
+
+
+def test_compatible_na_rejects_other_dtypes():
+    with pytest.raises(TypeError, match="requires two StringDType instances"):
+        _stringdtype_compatible_na(StringDType(), np.dtype("O"))
 
 
 @pytest.mark.parametrize("dtype_spec", [

@@ -16,6 +16,7 @@
 #include "casts.h"
 #include "gil_utils.h"
 #include "conversion_utils.h"
+#include "npy_argparse.h"
 #include "npy_import.h"
 #include "multiarraymodule.h"
 #include "npy_sort.h"
@@ -936,6 +937,59 @@ static PyMethodDef PyArray_StringDType_methods[] = {
         },
         {NULL, NULL, 0, NULL},
 };
+
+PyObject *
+stringdtype_na_is_nan_like(PyObject *NPY_UNUSED(module), PyObject *dtype)
+{
+    if (!PyObject_TypeCheck(dtype, (PyTypeObject *)&PyArray_StringDType)) {
+        PyErr_SetString(
+                PyExc_TypeError,
+                "_stringdtype_na_is_nan_like() requires a StringDType instance");
+        return NULL;
+    }
+
+    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)dtype;
+    return PyBool_FromLong(descr->has_nan_na);
+}
+
+PyObject *
+stringdtype_compatible_na_py(
+        PyObject *NPY_UNUSED(module), PyObject *const *args,
+        Py_ssize_t len_args)
+{
+    PyObject *dtype1;
+    PyObject *dtype2;
+
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments(
+            "_stringdtype_compatible_na", args, len_args, NULL,
+            {"", NULL, &dtype1},
+            {"", NULL, &dtype2}) < 0) {
+        return NULL;
+    }
+    if (!PyObject_TypeCheck(dtype1, (PyTypeObject *)&PyArray_StringDType) ||
+            !PyObject_TypeCheck(dtype2, (PyTypeObject *)&PyArray_StringDType)) {
+        PyErr_SetString(
+                PyExc_TypeError,
+                "_stringdtype_compatible_na() requires two StringDType "
+                "instances");
+        return NULL;
+    }
+
+    PyArray_StringDTypeObject *descr1 =
+            (PyArray_StringDTypeObject *)dtype1;
+    PyArray_StringDTypeObject *descr2 =
+            (PyArray_StringDTypeObject *)dtype2;
+    if (stringdtype_compatible_na(
+            descr1->na_object, descr2->na_object, NULL) < 0) {
+        if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
+            return NULL;
+        }
+        PyErr_Clear();
+        Py_RETURN_FALSE;
+    }
+    Py_RETURN_TRUE;
+}
 
 static PyMemberDef PyArray_StringDType_members[] = {
         {"na_object", T_OBJECT_EX, offsetof(PyArray_StringDTypeObject, na_object),
