@@ -1672,10 +1672,13 @@ _array_fromobject_generic(
     }
 
     if (copy == NPY_COPY_ALWAYS) {
-        flags = NPY_ARRAY_ENSURECOPY;
+        flags = NPY_ARRAY_ENSURECOPY | NPY_ARRAY_FORCECAST;
     }
     else if (copy == NPY_COPY_NEVER) {
         flags = NPY_ARRAY_ENSURENOCOPY;
+    }
+    else {
+        flags = NPY_ARRAY_FORCECAST;
     }
     if (order == NPY_CORDER) {
         flags |= NPY_ARRAY_C_CONTIGUOUS;
@@ -1689,8 +1692,6 @@ _array_fromobject_generic(
     if (!subok) {
         flags |= NPY_ARRAY_ENSUREARRAY;
     }
-
-    flags |= NPY_ARRAY_FORCECAST;
 
     ret = (PyArrayObject *)PyArray_CheckFromAny_int(
             op, dtype, in_DType, 0, ndmax, flags);
