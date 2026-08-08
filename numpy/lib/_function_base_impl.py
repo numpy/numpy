@@ -3628,7 +3628,7 @@ def i0(x):
     if x.dtype.kind != 'f':
         x = x.astype(float)
     x = np.abs(x)
-    return piecewise(x, [x <= 8.0], [_i0_1, _i0_2])
+    return piecewise(x, [x <= 8.0, np.isinf(x)], [_i0_1, lambda x: x, _i0_2])
 
 ## End of cephes code for i0
 
