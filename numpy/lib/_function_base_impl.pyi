@@ -541,13 +541,23 @@ def select(
 ) -> np.ndarray: ...
 
 # keep roughly in sync with `ma.core.copy`
-@overload
+@overload  # known array, subok=True (positional)
 def copy[ArrayT: np.ndarray](a: ArrayT, order: _OrderKACF, subok: L[True]) -> ArrayT: ...
-@overload
+@overload  # known array, subok=True (keyword)
 def copy[ArrayT: np.ndarray](a: ArrayT, order: _OrderKACF = "K", *, subok: L[True]) -> ArrayT: ...
-@overload
-def copy[ScalarT: np.generic](a: _ArrayLike[ScalarT], order: _OrderKACF = "K", subok: L[False] = False) -> NDArray[ScalarT]: ...
-@overload
+@overload  # known array, subok=False (default)
+def copy[ShapeT: _Shape, DTypeT: np.dtype](
+    a: np.ndarray[ShapeT, DTypeT],
+    order: _OrderKACF = "K",
+    subok: L[False] = False,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # known array-like dtype
+def copy[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    order: _OrderKACF = "K",
+    subok: bool = False,
+) -> NDArray[ScalarT]: ...
+@overload  # fallback
 def copy(a: ArrayLike, order: _OrderKACF = "K", subok: L[False] = False) -> NDArray[Incomplete]: ...
 
 #

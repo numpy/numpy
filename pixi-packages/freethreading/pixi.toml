@@ -24,7 +24,7 @@ python-freethreading = "*"
 # python.flags = ["freethreading"]
 # python.git = "https://github.com/python/cpython"
 # python.subdirectory = "Tools/pixi-packages"
-# python.rev = "abdd7aea18bde039fe35983b5c0d8036bc16f1a7"  # v3.15.0a8
+# python.rev = "847d099efa4785658ba9bd3163e35cb4ae742f6d"
 
 meson-python = "*"
 cython = "*"

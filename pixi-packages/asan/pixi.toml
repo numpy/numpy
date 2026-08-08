@@ -16,7 +16,7 @@ extra-args = ["-Csetup-args=-Db_sanitize=address", "-Csetup-args=-Dbuildtype=deb
 python.flags = ["asan"]
 python.git = "https://github.com/python/cpython"
 python.subdirectory = "Tools/pixi-packages"
-python.rev = "abdd7aea18bde039fe35983b5c0d8036bc16f1a7"
+python.rev = "847d099efa4785658ba9bd3163e35cb4ae742f6d"
 
 meson-python = "*"
 cython = "*"

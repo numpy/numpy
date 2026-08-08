@@ -314,7 +314,7 @@ using timedelta_tag   = datetime_type<npy_timedelta,  NPY_TIMEDELTA>;
 using string_tag      = string_like_type<npy_char,    NPY_STRING>;
 using unicode_tag     = string_like_type<npy_ucs4,    NPY_UNICODE>;
 
-// Type-list helper used by selection.cpp / binsearch.cpp to instantiate one
+// Type-list helper used by selection.hpp / binsearch.cpp to instantiate one
 // function per supported tag.
 template <typename... Tags>
 struct taglist {

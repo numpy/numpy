@@ -1818,12 +1818,16 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     See Also
     --------
     rad2deg, deg2rad
+    numpy.ma.unwrap : Mask-aware equivalent for masked arrays.
 
     Notes
     -----
     If the discontinuity in `p` is smaller than ``period/2``,
     but larger than `discont`, no unwrapping is done because taking
     the complement would only make the discontinuity larger.
+
+    This function does not work properly with masked arrays,
+    use `numpy.ma.unwrap` instead.
 
     Examples
     --------
@@ -1864,11 +1868,6 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     >>> plt.legend(framealpha=1, shadow=True)
     >>> plt.show()
     """
-    if np.ma.isMaskedArray(p):
-        # TODO: one could potentially implement a mask aware unwrap function
-        # we now remove the mask and do the unwrapping on the unmasked array
-        # and return back an ndarray
-        return unwrap(np.asarray(p), discont=discont, axis=axis, period=period)
     p = asanyarray(p)
     if discont is None:
         discont = period / 2
