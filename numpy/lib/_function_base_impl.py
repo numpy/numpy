@@ -3563,7 +3563,8 @@ def _i0_1(x):
 
 
 def _i0_2(x):
-    return exp(x + log(_chbevl(32.0 / x - 2.0, _i0B)) - 0.5 * log(x))
+    half_exp = exp(0.5 * x)
+    return half_exp * (_chbevl(32.0 / x - 2.0, _i0B) / sqrt(x)) * half_exp
 
 
 def _i0_dispatcher(x):
