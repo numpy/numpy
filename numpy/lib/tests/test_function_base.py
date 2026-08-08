@@ -5094,4 +5094,3 @@ class TestSortComplex:
         actual = np.sort_complex(a)
         assert_equal(actual, expected)
         assert_equal(actual.dtype, expected.dtype)
-        
