@@ -43,7 +43,6 @@ from numpy._core.umath import (
     arctan2,
     cos,
     exp,
-    log,
     floor,
     frompyfunc,
     less_equal,
