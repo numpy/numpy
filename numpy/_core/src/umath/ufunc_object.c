@@ -886,6 +886,8 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
     int operation_ndim = 0;
     npy_intp *operation_shape = NULL;
     npy_intp fixed_strides[NPY_MAXARGS];
+    PyArrayMethod_Context allocated_context;
+    PyArray_Descr *allocated_descrs[NPY_MAXARGS];
 
     for (int iop = 0; iop < nop; iop++) {
         if (op[iop] == NULL) {
@@ -943,6 +945,22 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
                 NULL, NULL, operation_order==NPY_ARRAY_F_CONTIGUOUS, NULL);
         if (op[nin] == NULL) {
             return -1;
+        }
+        /*
+         * PyArray_NewFromDescr may replace the descriptor by calling
+         * `finalize_descr`.  The loop must use the replacement because it may
+         * own state referenced by the output data.
+         * Do not do this for every descriptor change: subarray dtypes also
+         * change PyArray_DESCR during creation, but their loop still uses the
+         * original subarray descriptor.
+         */
+        if (NPY_DT_has_finalize(NPY_DTYPE(context->descriptors[nin]))) {
+            memcpy(allocated_descrs, context->descriptors,
+                    nop * sizeof(*allocated_descrs));
+            allocated_descrs[nin] = PyArray_DESCR(op[nin]);
+            allocated_context = *context;
+            allocated_context.descriptors = allocated_descrs;
+            context = &allocated_context;
         }
         fixed_strides[nin] = context->descriptors[nin]->elsize;
     }
@@ -1122,6 +1140,10 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
             Py_INCREF(op[nin + i]);
         }
     }
+
+    PyArrayMethod_Context iter_context = *context;
+    iter_context.descriptors = NpyIter_GetDescrArray(iter);
+    context = &iter_context;
 
     /* Only do the loop if the iteration size is non-zero */
     npy_intp full_size = NpyIter_GetIterSize(iter);
@@ -2107,9 +2129,9 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
     memcpy(inner_strides, NpyIter_GetInnerStrideArray(iter),
                                     NPY_SIZEOF_INTP * nop);
 
-    /* Final preparation of the arraymethod call */
+    /* Final preparation of the arraymethod call. */
     PyArrayMethod_Context context;
-    NPY_context_init(&context, operation_descrs);
+    NPY_context_init(&context, NpyIter_GetDescrArray(iter));
     context.caller = (PyObject *)ufunc;
     context.method = ufuncimpl;
     PyArrayMethod_StridedLoop *strided_loop;
@@ -2863,6 +2885,11 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         }
     }
 
+    /* The loop descriptors borrow from the final iterator/array operands. */
+    PyArray_Descr *loop_descrs[3] = {
+            PyArray_DESCR(op[0]), PyArray_DESCR(op[1]), PyArray_DESCR(op[0])};
+    context.descriptors = loop_descrs;
+
     npy_intp fixed_strides[3];
     if (need_outer_iterator) {
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
@@ -2881,11 +2908,11 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         goto fail;
     }
     /* Set up function to copy the first element if it has references */
-    if (PyDataType_REFCHK(descrs[2])) {
+    if (PyDataType_REFCHK(loop_descrs[2])) {
         NPY_ARRAYMETHOD_FLAGS copy_flags;
         /* Setup guarantees aligned here. */
         if (PyArray_GetDTypeTransferFunction(
-                1, 0, 0, descrs[1], descrs[2], 0, &copy_info,
+                1, 0, 0, loop_descrs[1], loop_descrs[2], 0, &copy_info,
                 &copy_flags) == NPY_FAIL) {
             goto fail;
         }
@@ -2922,7 +2949,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
 
-        int itemsize = descrs[0]->elsize;
+        int itemsize = loop_descrs[0]->elsize;
 
         /* Get the variables needed for the loop */
         iternext = NpyIter_GetIterNext(iter, NULL);
@@ -2987,7 +3014,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     else if (iter == NULL) {
         char *dataptr_copy[3];
 
-        int itemsize = descrs[0]->elsize;
+        int itemsize = loop_descrs[0]->elsize;
 
         /* Execute the loop with no iterators */
         npy_intp count = PyArray_DIM(op[1], axis);
