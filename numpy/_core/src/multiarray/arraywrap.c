@@ -278,7 +278,7 @@ npy_apply_wrap(
   deprecation_warning:
     /* If we reach here, the original error is still stored. */
     /* Deprecated 2024-01-17, NumPy 2.0 */
-    if (DEPRECATE(
+    if (PyErr_WarnFormat(npy_static_pydata.VisibleDeprecationWarning, 1,
             "__array_wrap__ must accept context and return_scalar arguments "
             "(positionally) in the future. (Deprecated NumPy 2.0)") < 0) {
         npy_PyErr_ChainExceptionsCause(err_type, err_value, traceback);
