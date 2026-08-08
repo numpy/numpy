@@ -1,5 +1,6 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_STATIC_DATA_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_STATIC_DATA_H_
+#include <numpy/ndarraytypes.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -213,6 +214,12 @@ typedef struct npy_static_cdata_struct {
      * This is initialized alongside the built-in dtypes
      */
     npy_int16 _letter_to_num['z' + 1 - '?'];
+    int (*get_masked_strided_loop)(
+                PyArrayMethod_Context *context,
+                int aligned, npy_intp *fixed_strides,
+                PyArrayMethod_StridedLoop **out_loop,
+                NpyAuxData **out_transferdata,
+                NPY_ARRAYMETHOD_FLAGS *flags);
 } npy_static_cdata_struct;
 
 NPY_VISIBILITY_HIDDEN extern npy_interned_str_struct npy_interned_str;

@@ -1175,7 +1175,7 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
     NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
     NPY_ARRAYMETHOD_FLAGS flags = 0;
     if (masked) {
-        if (PyArrayMethod_GetMaskedStridedLoop(context,
+        if (npy_static_cdata.get_masked_strided_loop(context,
                 1, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
             NpyIter_Deallocate(iter);
             return -1;

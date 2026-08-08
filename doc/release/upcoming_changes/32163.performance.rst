@@ -1,0 +1,6 @@
+Faster ufuncs with ``where=``
+-----------------------------
+Ufunc calls with ``where=`` no longer slow down when the mask alternates between
+masked and unmasked values. Contiguous operands of 2-, 4- and 8-byte numeric types
+are now processed in blocks with fixed size, gathering the unmasked values into a
+contiguous buffer.

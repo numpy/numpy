@@ -920,6 +920,18 @@ foreach gen_mtargets : [
       VXE, VX
     ]
   ],
+  [
+    'array_method_masked.dispatch.h',
+    'src/multiarray/array_method_masked.dispatch.cpp',
+    use_highway ? [
+      ASIMD, NEON,
+      X86_V4, X86_V3, X86_V2,
+      VSX2,
+      VX,
+      LSX,
+      RVV,
+    ] : []
+  ],
 ]
   mtargets = mod_features.multi_targets(
     gen_mtargets[0], multiarray_gen_headers + gen_mtargets[1],
@@ -935,7 +947,8 @@ foreach gen_mtargets : [
       'src/multiarray',
       'src/multiarray/stringdtype',
       'src/npymath',
-      'src/umath'
+      'src/umath',
+      'src/highway'
     ]
   )
   if not is_variable('multiarray_umath_mtargets')
