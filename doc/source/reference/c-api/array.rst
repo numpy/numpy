@@ -1868,7 +1868,9 @@ the functions that must be implemented for each slot.
 
    .. versionadded:: 2.6
 
-   Registers a dedicated loop for use by :meth:`~numpy.ufunc.reduce`,
+   Registers a dedicated loop for use by the reduce-like methods
+   (:meth:`~numpy.ufunc.reduce`,
+   :meth:`~numpy.ufunc.reduceat`),
    implemented as a :c:type:`PyArrayMethod_GetLoop` function (the same
    typedef used for ``NPY_METH_get_loop``). This is required to reduce
    ufuncs with more than one output, since the "forward" elementwise loop of
@@ -1897,13 +1899,12 @@ the functions that must be implemented for each slot.
    place. When a ``where=`` mask is used, one further entry at
    ``strides[2 * nout + 1]`` holds the mask stride.
 
-   If ``NPY_METH_get_reduction_loop`` is not set, :meth:`~numpy.ufunc.reduce`
-   falls back to ``NPY_METH_get_loop``/``NPY_METH_strided_loop``, which only
-   works for the typical two-input/one-output case. Calling
-   :meth:`~numpy.ufunc.reduce` on a ufunc with more than one output whose
-   resolved ArrayMethod does not register a reduction loop raises a
-   :exc:`TypeError`. See :ref:`c-api.reduction-loop-tutorial` for a
-   worked example.
+   If ``NPY_METH_get_reduction_loop`` is not set, these methods fall back
+   to ``NPY_METH_get_loop``/``NPY_METH_strided_loop``, which only works for
+   the typical two-input/one-output case. Calling any of them on a ufunc with
+   more than one output whose resolved ArrayMethod does not register a
+   reduction loop raises a :exc:`TypeError`. See
+   :ref:`c-api.reduction-loop-tutorial` for a worked example.
 
    Note that this slot only lifts the restriction on how many outputs a
    ufunc may have. It does not change how many inputs a ufunc may have:
