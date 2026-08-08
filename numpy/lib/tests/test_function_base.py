@@ -3037,13 +3037,25 @@ class Test_I0:
         x = np.float64(713.0)
         expected = np.float64(6.705128263670996e307)
         actual = np.i0(x)
+<<<<<<< HEAD
 
         # Should be finite (not inf)
         assert np.isfinite(actual), f"i0({x}) returned inf, expected finite value"
 
+=======
+        # Should be finite (not inf)
+        assert np.isfinite(actual), f"i0({x}) returned inf, expected finite value"
+>>>>>>> 2726b1e8211a172ecb893a4b9f28a60f8091a058
         # Should be close to expected value
         np.testing.assert_allclose(actual, expected, rtol=1e-13)
 
+    def test_i0_inf(self):
+        """Test that i0 handles infinity correctly"""
+        # i0(inf) should return inf
+        result = np.i0(np.inf)
+        assert np.isinf(result), f"i0(inf) returned {result}, expected inf"
+        assert result > 0, "i0(inf) should be positive infinity"
+        
     def test_complex(self):
         a = np.array([0, 1 + 2j])
         with pytest.raises(TypeError, match="i0 not supported for complex values"):
