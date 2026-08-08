@@ -11,6 +11,7 @@ import numpy as np
 from numpy.exceptions import AxisError
 
 from . import multiarray, numerictypes, numerictypes as nt, overrides, shape_base, umath
+from ._exceptions import _UFuncNoLoopError
 from ._ufunc_config import errstate
 from .multiarray import (  # noqa: F401
     ALLOW_THREADS,
@@ -1218,6 +1219,38 @@ def tensordot(a, b, axes=2):
     bt = b.transpose(newaxes_b).reshape(newshape_b)
     res = dot(at, bt)
     return res.reshape(olda + oldb)
+
+
+def _dot_fallback(a, b, out=None):
+    """``dot`` via ``matmul``/``multiply`` for dtypes without a legacy dotfunc."""
+    # Do not cast the operands here -- ``multiply``/``matmul`` do that anyway,
+    # and leaving them untouched keeps ndarray subclasses (and other
+    # array-likes such as dask arrays with custom dtypes) intact.
+    a_ndim = np.ndim(a)
+    b_ndim = np.ndim(b)
+
+    if a_ndim >= 2 and b_ndim >= 3:
+        raise ValueError(
+            "'dot' does not support the stacked outer-product semantics of "
+            "'a.ndim >= 2 and b.ndim >= 3' for user-defined dtypes; "
+            "use 'numpy.tensordot' instead."
+        )
+    op = np.multiply if a_ndim == 0 or b_ndim == 0 else np.matmul
+    try:
+        return op(a, b, out=out)
+    except _UFuncNoLoopError:
+        # Keep the error the same as it was before we had support for dot
+        # for user types.
+        raise ValueError("dot not available for this type") from None
+
+
+def _vdot_fallback(a, b):
+    try:
+        return np.vecdot(np.ravel(a), np.ravel(b))
+    except _UFuncNoLoopError:
+        # Keep the error the same as it was before we had support for vdot
+        # for user types.
+        raise ValueError("function not available for this data type") from None
 
 
 def _roll_dispatcher(a, shift, axis=None):
