@@ -3037,10 +3037,10 @@ class Test_I0:
         x = np.float64(713.0)
         expected = np.float64(6.705128263670996e307)
         actual = np.i0(x)
-        
+
         # Should be finite (not inf)
         assert np.isfinite(actual), f"i0({x}) returned inf, expected finite value"
-        
+
         # Should be close to expected value
         np.testing.assert_allclose(actual, expected, rtol=1e-13)
 
@@ -5094,4 +5094,3 @@ class TestSortComplex:
         actual = np.sort_complex(a)
         assert_equal(actual, expected)
         assert_equal(actual.dtype, expected.dtype)
-        
