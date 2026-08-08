@@ -26,6 +26,7 @@ from ._multiarray_umath import (  # noqa: F401
     _vec_string,
     from_dlpack,
 )
+from .umath import frompyfunc  # noqa: F401
 
 __all__ = [
     '_ARRAY_API', 'ALLOW_THREADS', 'BUFSIZE', 'CLIP', 'DATETIMEUNITS',
@@ -67,7 +68,6 @@ empty.__module__ = 'numpy'
 frombuffer.__module__ = 'numpy'
 fromfile.__module__ = 'numpy'
 fromiter.__module__ = 'numpy'
-frompyfunc.__module__ = 'numpy'
 fromstring.__module__ = 'numpy'
 may_share_memory.__module__ = 'numpy'
 nested_iters.__module__ = 'numpy'
