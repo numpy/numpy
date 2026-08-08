@@ -3043,6 +3043,13 @@ class Test_I0:
         
         # Should be close to expected value
         np.testing.assert_allclose(actual, expected, rtol=1e-13)
+    
+    def test_i0_inf(self):
+        """Test that i0 handles infinity correctly"""
+        # i0(inf) should return inf
+        result = np.i0(np.inf)
+        assert np.isinf(result), f"i0(inf) returned {result}, expected inf"
+        assert result > 0, "i0(inf) should be positive infinity"
 
     def test_complex(self):
         a = np.array([0, 1 + 2j])
