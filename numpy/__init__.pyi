@@ -456,7 +456,6 @@ from numpy._core.umath import (
     matvec,
     maximum,
     minimum,
-    minimummaximum,
     mod,
     modf,
     multiply,

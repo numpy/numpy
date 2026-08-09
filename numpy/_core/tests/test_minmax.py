@@ -2,6 +2,7 @@
 import pytest
 
 import numpy as np
+from numpy._core.umath import minimummaximum
 from numpy.testing import assert_array_equal, assert_equal
 
 # integer + floating types covered by the fused loops
@@ -30,7 +31,7 @@ class TestMinimumMaximum:
         rng = np.random.default_rng(n)
         a = _sample(rng, n, dtype)
         b = _sample(rng, n, dtype)
-        lo, hi = np.minimummaximum(a, b)
+        lo, hi = minimummaximum(a, b)
         assert_array_equal(lo, np.minimum(a, b))
         assert_array_equal(hi, np.maximum(a, b))
 
@@ -38,20 +39,20 @@ class TestMinimumMaximum:
     def test_forward_nan_propagation(self, dtype):
         a = np.array([1, np.nan, 3, np.nan], dtype=dtype)
         b = np.array([np.nan, 2, 4, np.nan], dtype=dtype)
-        lo, hi = np.minimummaximum(a, b)
+        lo, hi = minimummaximum(a, b)
         assert_array_equal(lo, np.minimum(a, b))
         assert_array_equal(hi, np.maximum(a, b))
 
     def test_forward_broadcasting(self):
         a = np.arange(6).reshape(2, 3)
-        lo, hi = np.minimummaximum(a, np.array([2, 1, 4]))
+        lo, hi = minimummaximum(a, np.array([2, 1, 4]))
         assert_array_equal(lo, np.minimum(a, [2, 1, 4]))
         assert_array_equal(hi, np.maximum(a, [2, 1, 4]))
 
     def test_forward_strided(self):
         a = np.arange(200, dtype=np.float64)[::3]
         b = np.arange(200, 400, dtype=np.float64)[::3][::-1]
-        lo, hi = np.minimummaximum(a, b)
+        lo, hi = minimummaximum(a, b)
         assert_array_equal(lo, np.minimum(a, b))
         assert_array_equal(hi, np.maximum(a, b))
 
@@ -60,20 +61,20 @@ class TestMinimumMaximum:
         b = np.array([1.0, 5.0, 2.0])
         o1 = np.empty(3)
         o2 = np.empty(3)
-        r = np.minimummaximum(a, b, out=(o1, o2))
+        r = minimummaximum(a, b, out=(o1, o2))
         assert r[0] is o1 and r[1] is o2
         assert_array_equal(o1, [1.0, 3.0, 2.0])
         assert_array_equal(o2, [2.0, 5.0, 4.0])
 
     def test_arity(self):
-        assert np.minimummaximum.nin == 2
-        assert np.minimummaximum.nout == 2
+        assert minimummaximum.nin == 2
+        assert minimummaximum.nout == 2
 
     def test_forward_bool(self):
         rng = np.random.default_rng(0)
         a = rng.integers(0, 2, 64).astype(bool)
         b = rng.integers(0, 2, 64).astype(bool)
-        lo, hi = np.minimummaximum(a, b)
+        lo, hi = minimummaximum(a, b)
         assert_array_equal(lo, np.minimum(a, b))
         assert_array_equal(hi, np.maximum(a, b))
 
@@ -83,21 +84,21 @@ class TestMinimumMaximum:
         a = (rng.standard_normal(50) + 1j * rng.standard_normal(50)).astype(ct)
         b = (rng.standard_normal(50) + 1j * rng.standard_normal(50)).astype(ct)
         a[2] = complex(np.nan, 1)
-        lo, hi = np.minimummaximum(a, b)
+        lo, hi = minimummaximum(a, b)
         assert_array_equal(lo, np.minimum(a, b))
         assert_array_equal(hi, np.maximum(a, b))
 
     def test_forward_datetime_nat(self):
         a = np.array(['2020-01-01', 'NaT', '2021-03-03'], dtype='datetime64[D]')
         b = np.array(['2020-06-01', '2019-01-01', 'NaT'], dtype='datetime64[D]')
-        lo, hi = np.minimummaximum(a, b)
+        lo, hi = minimummaximum(a, b)
         assert_array_equal(lo, np.minimum(a, b))
         assert_array_equal(hi, np.maximum(a, b))
 
     def test_forward_object(self):
         a = np.array([3, 1, 4, 1, 5], dtype=object)
         b = np.array([2, 7, 0, 9, 5], dtype=object)
-        lo, hi = np.minimummaximum(a, b)
+        lo, hi = minimummaximum(a, b)
         assert_array_equal(lo, np.minimum(a, b))
         assert_array_equal(hi, np.maximum(a, b))
 
@@ -108,7 +109,7 @@ class TestMinimumMaximumReduce:
     def test_reduce_1d(self, dtype, n):
         rng = np.random.default_rng(n)
         a = _sample(rng, n, dtype)
-        lo, hi = np.minimummaximum.reduce(a)
+        lo, hi = minimummaximum.reduce(a)
         assert_equal(lo, np.minimum.reduce(a))
         assert_equal(hi, np.maximum.reduce(a))
 
@@ -117,7 +118,7 @@ class TestMinimumMaximumReduce:
     def test_reduce_axes(self, axis):
         rng = np.random.default_rng(0)
         a = rng.standard_normal((13, 17, 23))
-        lo, hi = np.minimummaximum.reduce(a, axis=axis)
+        lo, hi = minimummaximum.reduce(a, axis=axis)
         assert_array_equal(lo, np.minimum.reduce(a, axis=axis))
         assert_array_equal(hi, np.maximum.reduce(a, axis=axis))
 
@@ -125,7 +126,7 @@ class TestMinimumMaximumReduce:
     def test_reduce_nan(self, pos):
         a = np.arange(64.0)
         a[pos] = np.nan
-        lo, hi = np.minimummaximum.reduce(a)
+        lo, hi = minimummaximum.reduce(a)
         assert np.isnan(lo) and np.isnan(hi)
 
     def test_reduce_strided_and_fortran(self):
@@ -133,7 +134,7 @@ class TestMinimumMaximumReduce:
         a = rng.standard_normal((20, 30))
         for view in (a[::2], a[:, ::3], a.T, np.asfortranarray(a)):
             for axis in (0, 1):
-                lo, hi = np.minimummaximum.reduce(view, axis=axis)
+                lo, hi = minimummaximum.reduce(view, axis=axis)
                 assert_array_equal(lo, np.minimum.reduce(view, axis=axis))
                 assert_array_equal(hi, np.maximum.reduce(view, axis=axis))
 
@@ -141,23 +142,23 @@ class TestMinimumMaximumReduce:
         a = np.arange(12.0).reshape(3, 4)
         o1 = np.empty(4)
         o2 = np.empty(4)
-        np.minimummaximum.reduce(a, axis=0, out=(o1, o2))
+        minimummaximum.reduce(a, axis=0, out=(o1, o2))
         assert_array_equal(o1, np.minimum.reduce(a, axis=0))
         assert_array_equal(o2, np.maximum.reduce(a, axis=0))
 
     def test_reduce_keepdims(self):
         a = np.arange(24.0).reshape(2, 3, 4)
-        lo, hi = np.minimummaximum.reduce(a, axis=1, keepdims=True)
+        lo, hi = minimummaximum.reduce(a, axis=1, keepdims=True)
         assert lo.shape == (2, 1, 4)
         assert_array_equal(lo, np.minimum.reduce(a, axis=1, keepdims=True))
         assert_array_equal(hi, np.maximum.reduce(a, axis=1, keepdims=True))
 
     def test_reduce_empty_requires_initial(self):
         with pytest.raises(ValueError):
-            np.minimummaximum.reduce(np.array([], dtype=np.float64))
+            minimummaximum.reduce(np.array([], dtype=np.float64))
 
     def test_reduce_empty_with_initial(self):
-        lo, hi = np.minimummaximum.reduce(
+        lo, hi = minimummaximum.reduce(
             np.array([], dtype=np.float64), initial=(np.inf, -np.inf))
         assert lo == np.inf and hi == -np.inf
 
@@ -173,25 +174,25 @@ class TestMinimumMaximumReduce:
             a = rng.integers(0, 2, 200).astype(dt)
         else:
             a = rng.standard_normal(200).astype(dt)
-        lo, hi = np.minimummaximum.reduce(a)
+        lo, hi = minimummaximum.reduce(a)
         assert_equal(lo, np.minimum.reduce(a))
         assert_equal(hi, np.maximum.reduce(a))
 
     def test_reduce_datetime_nat(self):
         a = np.array(['2020-01-01', '2019-06-01', 'NaT', '2021-03-03'],
                      dtype='datetime64[D]')
-        lo, hi = np.minimummaximum.reduce(a)
+        lo, hi = minimummaximum.reduce(a)
         assert_equal(lo, np.minimum.reduce(a))
         assert_equal(hi, np.maximum.reduce(a))
         # without NaT
         b = a[[0, 1, 3]]
-        lo, hi = np.minimummaximum.reduce(b)
+        lo, hi = minimummaximum.reduce(b)
         assert_equal(lo, np.minimum.reduce(b))
         assert_equal(hi, np.maximum.reduce(b))
 
     def test_reduce_object(self):
         a = np.array([3, 1, 4, 1, 5, 9, 2, 6], dtype=object)
-        lo, hi = np.minimummaximum.reduce(a)
+        lo, hi = minimummaximum.reduce(a)
         assert lo == 1 and hi == 9
 
     def test_reduce_object_no_leak(self):
@@ -199,8 +200,8 @@ class TestMinimumMaximumReduce:
         # would catch a missing decref here.
         objs = np.array([float(i) for i in range(50)], dtype=object)
         for _ in range(500):
-            np.minimummaximum.reduce(objs)
-            np.minimummaximum(objs, objs[::-1])
+            minimummaximum.reduce(objs)
+            minimummaximum(objs, objs[::-1])
 
 
 class TestMinmax:
