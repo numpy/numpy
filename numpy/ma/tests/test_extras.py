@@ -1695,6 +1695,38 @@ class TestArraySetOps:
         d = np.isin(a, b[~b.mask]) & ~a.mask
         assert_array_equal(c, d)
 
+    @pytest.mark.parametrize(
+        "test_elements, expected_data",
+        [
+            ([], [False, False, False, False, False]),
+            ([2], [False, False, True, False, False]),
+            ([2, 3, 4], [False, False, True, True, True]),
+        ],
+    )
+    def test_isin_preserves_input_mask(self, test_elements, expected_data):
+        values = masked_array(np.arange(5), mask=[0, 1, 0, 0, 1])
+        expected = masked_array(expected_data, mask=values.mask)
+
+        for func in (in1d, isin):
+            result = func(values, test_elements)
+            assert_equal(result, expected)
+            assert_array_equal(getmaskarray(result), values.mask)
+
+    def test_in1d_flattens_multidimensional_input(self):
+        values = masked_array(
+            np.arange(8).reshape(2, 4),
+            mask=[[0, 1, 0, 0], [0, 0, 0, 0]],
+        )
+        expected = masked_array(
+            [True, False, True, True, False, False, False, False],
+            mask=values.mask.ravel(),
+        )
+
+        result = in1d(values, [0, 2, 3])
+
+        assert_equal(result, expected)
+        assert result.shape == (8,)
+
     def test_in1d(self):
         # Test in1d
         a = array([1, 2, 5, 7, -1], mask=[0, 0, 0, 0, 1])
