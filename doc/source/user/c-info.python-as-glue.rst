@@ -64,6 +64,28 @@ command, or calling a shared-library subroutine directly from Python
 using the `ctypes <https://docs.python.org/3/library/ctypes.html>`_
 module.  Writing an extension module is the most common method.
 
+Building extension modules with Python's limited API
+----------------------------------------------------
+
+When an extension module uses only the Python limited C API, it can be
+built for the stable ABI instead of a single CPython version. A wheel
+built this way can use an ``abi3`` tag and be installed on later supported
+CPython versions. The minimum Python version is part of the wheel tag, so
+build against the oldest Python version you intend to support.
+
+NumPy 2.0 and later support building extension modules that use the NumPy
+C API in CPython's ``abi3`` mode. This can reduce the number of wheels that
+need to be distributed; see :ref:`depending_on_numpy` for the NumPy
+requirements and the `cibuildwheel abi3 documentation
+<https://cibuildwheel.pypa.io/en/stable/faq/#abi3>`__ for build examples.
+
+``abi3`` support does not by itself imply support for free-threaded Python.
+A free-threaded stable-ABI wheel uses the separate ``abi3t`` tag and must be
+validated by the extension's dependencies and build tooling. NumPy's
+documentation currently covers ``abi3`` mode only; do not publish an
+``abi3t`` wheel unless the complete dependency stack supports it. For the
+Python stable ABI details, see :ref:`CPython's stable ABI <python:stable-abi>`.
+
 .. warning::
 
     Calling C-code from Python can result in Python crashes if you are not
