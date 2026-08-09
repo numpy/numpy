@@ -332,7 +332,6 @@ else:
         min,
         min_scalar_type,
         minimum,
-        minimummaximum,
         minmax,
         mod,
         modf,

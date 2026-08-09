@@ -3558,8 +3558,6 @@ def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         The minimum value of an array along a given axis, propagating any NaNs.
     max :
         The maximum value of an array along a given axis, propagating any NaNs.
-    minimummaximum :
-        Element-wise minimum and maximum of two arrays, propagating any NaNs.
 
     Notes
     -----
@@ -3582,7 +3580,7 @@ def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     (array([0, 2]), array([1, 3]))
 
     """
-    return _wrapreduction_minmax(a, np.minimummaximum, 'minmax', axis, out,
+    return _wrapreduction_minmax(a, um.minimummaximum, 'minmax', axis, out,
                                  keepdims, initial, where)
 
 
