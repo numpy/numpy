@@ -1,0 +1,3 @@
+Improved error for non-ASCII ``nditer`` flags
+---------------------------------------------
+`numpy.nditer` and `numpy.nested_iters` now read flag names from Python strings instead of encoding them to ASCII first. The flags containing non-ASCII character used to raise `UnicodeEncodeError`, but now it raises `ValueError`, which make it consistent with the error given for other unrecognized flag names.
