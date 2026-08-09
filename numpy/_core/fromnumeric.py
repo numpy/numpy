@@ -3487,31 +3487,15 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
                           keepdims, initial, where)
 
 
-def _wrapreduction_minmax(obj, ufunc, method, axis, out,
-                          keepdims=_NoValue, initial=_NoValue, where=_NoValue):
-    # Like `_wrapreduction`, but for the 2-output `minimummaximum` reduction;
-    # `out` is a tuple ``(min, max)`` (or None) and the result is a 2-tuple.
-    passkwargs = {}
-    if keepdims is not _NoValue:
-        passkwargs["keepdims"] = keepdims
-    if initial is not _NoValue:
-        passkwargs["initial"] = initial
-    if where is not _NoValue:
-        passkwargs["where"] = where
-
-    if out is None:
-        out = (None, None)
-    return ufunc.reduce(obj, axis, None, out, **passkwargs)
-
-
 def _minmax_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
                        where=None):
-    if isinstance(out, tuple):
-        return (a, *out)
     return (a, out)
 
 
-@array_function_dispatch(_minmax_dispatcher)
+@array_function_dispatch(
+    _minmax_dispatcher,
+    reduction=(um.minimummaximum, overrides._ReductionKind.MIN_MAX),
+)
 @set_module('numpy')
 def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
            where=np._NoValue):
@@ -3580,8 +3564,8 @@ def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     (array([0, 2]), array([1, 3]))
 
     """
-    return _wrapreduction_minmax(a, um.minimummaximum, 'minmax', axis, out,
-                                 keepdims, initial, where)
+    return _wrapreduction(a, um.minimummaximum, 'minmax', axis, None, out,
+                          keepdims, initial, where)
 
 
 def _prod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
