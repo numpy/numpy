@@ -3150,6 +3150,20 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr,
     }
 
     /*
+     * The loop descriptors borrow from the final iterator/array operands,
+     * which may differ from the resolved ones (e.g. `PyArray_NewFromDescr`
+     * can replace a descriptor via `finalize_descr`).  They use the same
+     * layout as `descrs`, with acc_i and out_i both borrowing from op[i].
+     */
+    PyArray_Descr *loop_descrs[NPY_MAXARGS];
+    for (int i = 0; i < nout; i++) {
+        loop_descrs[i] = PyArray_DESCR(op[i]);
+        loop_descrs[nout + 1 + i] = PyArray_DESCR(op[i]);
+    }
+    loop_descrs[nout] = PyArray_DESCR(op[nout]);
+    context.descriptors = loop_descrs;
+
+    /*
      * Build the (2*nout+1) reduction-loop stride array in the layout
      *     [acc_0 .. acc_{nout-1}, x, out_0 .. out_{nout-1}]
      * where acc_i and out_i both walk the axis with output i's stride and x
@@ -3184,12 +3198,13 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr,
      * dtypes differ or when the output holds references.
      */
     for (int i = 0; i < nout; i++) {
-        if (PyDataType_REFCHK(descrs[nout + 1 + i])
-                || !PyArray_EquivTypes(descrs[nout], descrs[nout + 1 + i])) {
+        if (PyDataType_REFCHK(loop_descrs[nout + 1 + i])
+                || !PyArray_EquivTypes(
+                        loop_descrs[nout], loop_descrs[nout + 1 + i])) {
             NPY_ARRAYMETHOD_FLAGS copy_flags;
             /* Setup guarantees aligned here. */
             if (PyArray_GetDTypeTransferFunction(
-                    1, 0, 0, descrs[nout], descrs[nout + 1 + i], 0,
+                    1, 0, 0, loop_descrs[nout], loop_descrs[nout + 1 + i], 0,
                     &copy_info[i], &copy_flags) == NPY_FAIL) {
                 goto fail;
             }
@@ -3273,7 +3288,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr,
                 }
                 else {
                     memmove(dataptr[i], dataptr[nout],
-                            descrs[nout + 1 + i]->elsize);
+                            loop_descrs[nout + 1 + i]->elsize);
                 }
             }
 
@@ -3334,7 +3349,8 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr,
                 char *cargs[2] = {dataptr_copy[nout], dataptr_copy[i]};
                 const npy_intp one = 1;
                 const npy_intp strides[2] = {
-                        descrs[nout]->elsize, descrs[nout + 1 + i]->elsize};
+                        loop_descrs[nout]->elsize,
+                        loop_descrs[nout + 1 + i]->elsize};
                 if (copy_info[i].func(
                         &copy_info[i].context, cargs, &one,
                         strides, copy_info[i].auxdata) < 0) {
@@ -3343,7 +3359,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr,
             }
             else {
                 memmove(dataptr_copy[i], dataptr_copy[nout],
-                        descrs[nout + 1 + i]->elsize);
+                        loop_descrs[nout + 1 + i]->elsize);
             }
         }
 
