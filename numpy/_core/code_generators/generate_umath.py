@@ -684,7 +684,7 @@ defdict = {
           docstrings.get('numpy._core.umath.minimummaximum'),
           'PyUFunc_SimpleUniformOperationTypeResolver',
           TD('?'),
-          TD(no_obj_bool, dispatch=[('minmax', ints + 'fdg')]),
+          TD(no_obj_bool, dispatch=[('loops_minmax', ints + 'fdg')]),
           TD(O),
           no_float_errors=True,
           ),

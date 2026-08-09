@@ -409,6 +409,35 @@ BOOL__ones_like(char **args, npy_intp const *dimensions, npy_intp const *steps, 
     }
 }
 
+NPY_NO_EXPORT void
+BOOL_minimummaximum(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const npy_bool in1 = *(npy_bool *)ip1;
+        const npy_bool in2 = *(npy_bool *)ip2;
+        *((npy_bool *)op1) = in1 && in2;
+        *((npy_bool *)op2) = in1 || in2;
+    }
+}
+
+NPY_NO_EXPORT int
+BOOL_minimummaximum_reduce(PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const *data, npy_intp const *dimensions,
+        npy_intp const *strides, NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp n = dimensions[0];
+    char *acc_min = data[0], *acc_max = data[1], *x = data[2];
+    char *out_min = data[3], *out_max = data[4];
+    for (npy_intp k = 0; k < n; k++) {
+        const npy_bool v = *(npy_bool *)x;
+        *(npy_bool *)out_min = (*(npy_bool *)acc_min) && v;
+        *(npy_bool *)out_max = (*(npy_bool *)acc_max) || v;
+        acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
+        out_min += strides[3]; out_max += strides[4];
+    }
+    return 0;
+}
+
 /*
  *****************************************************************************
  **                           INTEGER LOOPS
@@ -805,6 +834,57 @@ NPY_NO_EXPORT void
     }
 }
 /**end repeat1**/
+
+NPY_NO_EXPORT void
+@TYPE@_minimummaximum(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        @type@ lo, hi;
+        if (in1 == NPY_DATETIME_NAT) {
+            lo = in1;
+            hi = in1;
+        }
+        else if (in2 == NPY_DATETIME_NAT) {
+            lo = in2;
+            hi = in2;
+        }
+        else {
+            lo = (in1 < in2) ? in1 : in2;
+            hi = (in1 > in2) ? in1 : in2;
+        }
+        *((@type@ *)op1) = lo;
+        *((@type@ *)op2) = hi;
+    }
+}
+
+NPY_NO_EXPORT int
+@TYPE@_minimummaximum_reduce(PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const *data, npy_intp const *dimensions,
+        npy_intp const *strides, NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp n = dimensions[0];
+    char *acc_min = data[0], *acc_max = data[1], *x = data[2];
+    char *out_min = data[3], *out_max = data[4];
+    for (npy_intp k = 0; k < n; k++) {
+        const @type@ v = *(@type@ *)x;
+        const @type@ cmin = *(@type@ *)acc_min;
+        const @type@ cmax = *(@type@ *)acc_max;
+        @type@ lo, hi;
+        if (cmin == NPY_DATETIME_NAT) { lo = cmin; }
+        else if (v == NPY_DATETIME_NAT) { lo = v; }
+        else { lo = (cmin < v) ? cmin : v; }
+        if (cmax == NPY_DATETIME_NAT) { hi = cmax; }
+        else if (v == NPY_DATETIME_NAT) { hi = v; }
+        else { hi = (cmax > v) ? cmax : v; }
+        *(@type@ *)out_min = lo;
+        *(@type@ *)out_max = hi;
+        acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
+        out_min += strides[3]; out_max += strides[4];
+    }
+    return 0;
+}
 
 /**end repeat**/
 
@@ -1843,6 +1923,42 @@ HALF_@kind@_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
 /**end repeat**/
 
 NPY_NO_EXPORT void
+HALF_minimummaximum(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const npy_half in1 = *(npy_half *)ip1;
+        const npy_half in2 = *(npy_half *)ip2;
+        *((npy_half *)op1) =
+                (npy_half_le(in1, in2) || npy_half_isnan(in1)) ? in1 : in2;
+        *((npy_half *)op2) =
+                (npy_half_ge(in1, in2) || npy_half_isnan(in1)) ? in1 : in2;
+    }
+    /* npy_half_isnan will never set floatstatus_invalid, so do not clear */
+}
+
+NPY_NO_EXPORT int
+HALF_minimummaximum_reduce(PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const *data, npy_intp const *dimensions,
+        npy_intp const *strides, NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp n = dimensions[0];
+    char *acc_min = data[0], *acc_max = data[1], *x = data[2];
+    char *out_min = data[3], *out_max = data[4];
+    for (npy_intp k = 0; k < n; k++) {
+        const npy_half v = *(npy_half *)x;
+        const npy_half cmin = *(npy_half *)acc_min;
+        const npy_half cmax = *(npy_half *)acc_max;
+        *(npy_half *)out_min =
+                (npy_half_le(cmin, v) || npy_half_isnan(cmin)) ? cmin : v;
+        *(npy_half *)out_max =
+                (npy_half_ge(cmax, v) || npy_half_isnan(cmax)) ? cmax : v;
+        acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
+        out_min += strides[3]; out_max += strides[4];
+    }
+    return 0;
+}
+
+NPY_NO_EXPORT void
 HALF_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
@@ -2433,6 +2549,72 @@ NPY_NO_EXPORT void
 }
 /**end repeat1**/
 
+NPY_NO_EXPORT void
+@TYPE@_minimummaximum(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const @ftype@ in1r = ((@ftype@ *)ip1)[0];
+        const @ftype@ in1i = ((@ftype@ *)ip1)[1];
+        const @ftype@ in2r = ((@ftype@ *)ip2)[0];
+        const @ftype@ in2i = ((@ftype@ *)ip2)[1];
+        const int nan1 = npy_isnan(in1r) || npy_isnan(in1i);
+        if (nan1 || CLE(in1r, in1i, in2r, in2i)) {
+            ((@ftype@ *)op1)[0] = in1r;
+            ((@ftype@ *)op1)[1] = in1i;
+        }
+        else {
+            ((@ftype@ *)op1)[0] = in2r;
+            ((@ftype@ *)op1)[1] = in2i;
+        }
+        if (nan1 || CGE(in1r, in1i, in2r, in2i)) {
+            ((@ftype@ *)op2)[0] = in1r;
+            ((@ftype@ *)op2)[1] = in1i;
+        }
+        else {
+            ((@ftype@ *)op2)[0] = in2r;
+            ((@ftype@ *)op2)[1] = in2i;
+        }
+    }
+    npy_clear_floatstatus_barrier((char*)dimensions);
+}
+
+NPY_NO_EXPORT int
+@TYPE@_minimummaximum_reduce(PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const *data, npy_intp const *dimensions,
+        npy_intp const *strides, NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp n = dimensions[0];
+    char *acc_min = data[0], *acc_max = data[1], *x = data[2];
+    char *out_min = data[3], *out_max = data[4];
+    for (npy_intp k = 0; k < n; k++) {
+        const @ftype@ vr = ((@ftype@ *)x)[0];
+        const @ftype@ vi = ((@ftype@ *)x)[1];
+        const @ftype@ ar = ((@ftype@ *)acc_min)[0];
+        const @ftype@ ai = ((@ftype@ *)acc_min)[1];
+        const @ftype@ br = ((@ftype@ *)acc_max)[0];
+        const @ftype@ bi = ((@ftype@ *)acc_max)[1];
+        if (npy_isnan(ar) || npy_isnan(ai) || CLE(ar, ai, vr, vi)) {
+            ((@ftype@ *)out_min)[0] = ar;
+            ((@ftype@ *)out_min)[1] = ai;
+        }
+        else {
+            ((@ftype@ *)out_min)[0] = vr;
+            ((@ftype@ *)out_min)[1] = vi;
+        }
+        if (npy_isnan(br) || npy_isnan(bi) || CGE(br, bi, vr, vi)) {
+            ((@ftype@ *)out_max)[0] = br;
+            ((@ftype@ *)out_max)[1] = bi;
+        }
+        else {
+            ((@ftype@ *)out_max)[0] = vr;
+            ((@ftype@ *)out_max)[1] = vi;
+        }
+        acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
+        out_min += strides[3]; out_max += strides[4];
+    }
+    return 0;
+}
+
 /**end repeat**/
 
 #undef CGE
@@ -2493,6 +2675,90 @@ OBJECT@suffix@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *s
 }
 /**end repeat1**/
 /**end repeat**/
+
+static inline PyObject *
+object_min(PyObject *a, PyObject *b)
+{
+    int cmp = PyObject_RichCompareBool(a, b, Py_LE);
+    if (cmp < 0) {
+        return NULL;
+    }
+    PyObject *r = cmp ? a : b;
+    Py_INCREF(r);
+    return r;
+}
+
+static inline PyObject *
+object_max(PyObject *a, PyObject *b)
+{
+    int cmp = PyObject_RichCompareBool(a, b, Py_GE);
+    if (cmp < 0) {
+        return NULL;
+    }
+    PyObject *r = cmp ? a : b;
+    Py_INCREF(r);
+    return r;
+}
+
+NPY_NO_EXPORT void
+OBJECT_minimummaximum(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        PyObject *in1 = *(PyObject **)ip1;
+        PyObject *in2 = *(PyObject **)ip2;
+        if (in1 == NULL) {
+            in1 = Py_None;
+        }
+        if (in2 == NULL) {
+            in2 = Py_None;
+        }
+        PyObject *lo = object_min(in1, in2);
+        PyObject *hi = lo != NULL ? object_max(in1, in2) : NULL;
+        if (lo == NULL || hi == NULL) {
+            Py_XDECREF(lo);
+            Py_XDECREF(hi);
+            return;
+        }
+        Py_XSETREF(*(PyObject **)op1, lo);
+        Py_XSETREF(*(PyObject **)op2, hi);
+    }
+}
+
+NPY_NO_EXPORT int
+OBJECT_minimummaximum_reduce(PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const *data, npy_intp const *dimensions,
+        npy_intp const *strides, NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp n = dimensions[0];
+    char *acc_min = data[0], *acc_max = data[1], *x = data[2];
+    char *out_min = data[3], *out_max = data[4];
+    for (npy_intp k = 0; k < n; k++) {
+        PyObject *cur_min = *(PyObject **)acc_min;
+        PyObject *cur_max = *(PyObject **)acc_max;
+        PyObject *val = *(PyObject **)x;
+        if (cur_min == NULL) {
+            cur_min = Py_None;
+        }
+        if (cur_max == NULL) {
+            cur_max = Py_None;
+        }
+        if (val == NULL) {
+            val = Py_None;
+        }
+        PyObject *lo = object_min(cur_min, val);
+        PyObject *hi = lo != NULL ? object_max(cur_max, val) : NULL;
+        if (lo == NULL || hi == NULL) {
+            Py_XDECREF(lo);
+            Py_XDECREF(hi);
+            return -1;
+        }
+        Py_XSETREF(*(PyObject **)out_min, lo);
+        Py_XSETREF(*(PyObject **)out_max, hi);
+        acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
+        out_min += strides[3]; out_max += strides[4];
+    }
+    return 0;
+}
 
 NPY_NO_EXPORT void
 OBJECT_sign(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
