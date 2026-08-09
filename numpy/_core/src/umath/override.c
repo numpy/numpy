@@ -172,12 +172,8 @@ copy_positional_args_to_kwargs(const char **keywords,
             /* keyword argument is either input or output and not set here */
             continue;
         }
-        if (NPY_UNLIKELY(i == 5)) {
-            /*
-             * This is only relevant for reduce, which is the only one with
-             * 5 keyword arguments.
-             */
-            assert(strcmp(keywords[i], "initial") == 0);
+        if (NPY_UNLIKELY(strcmp(keywords[i], "initial") == 0)) {
+            /* `initial` is not passed on when it was not given */
             if (args[i] == npy_static_pydata._NoValue) {
                 continue;
             }
@@ -276,6 +272,13 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     else if (strcmp(method, "reduceat") == 0) {
         static const char *keywords[] = {
                 NULL, NULL, "axis", "dtype", NULL};
+        status = copy_positional_args_to_kwargs(keywords,
+                args, len_args, normal_kwds);
+    }
+    /* ufunc.segmented_reduce */
+    else if (strcmp(method, "segmented_reduce") == 0) {
+        static const char *keywords[] = {
+                NULL, NULL, NULL, "axis", "dtype", NULL, "initial"};
         status = copy_positional_args_to_kwargs(keywords,
                 args, len_args, normal_kwds);
     }

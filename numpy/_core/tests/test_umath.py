@@ -3773,6 +3773,54 @@ class TestSpecialMethods:
         assert_raises(TypeError, np.multiply.reduce, a, [4, 2],
                       'axis0', axis='axis0')
 
+        # segmented_reduce, pos args
+        res = np.multiply.segmented_reduce(a, [4, 2], [6, 4], 'axis0',
+                                           'dtype0', 'out0', 'initial0')
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'segmented_reduce')
+        assert_equal(res[3], (a, [4, 2], [6, 4]))
+        assert_equal(res[4], {'dtype': 'dtype0',
+                              'out': ('out0',),
+                              'axis': 'axis0',
+                              'initial': 'initial0'})
+
+        # segmented_reduce, kwargs
+        res = np.multiply.segmented_reduce(a, [4, 2], [6, 4], axis='axis0',
+                                           dtype='dtype0', out='out0',
+                                           initial='initial0')
+        assert_equal(res[0], a)
+        assert_equal(res[1], np.multiply)
+        assert_equal(res[2], 'segmented_reduce')
+        assert_equal(res[3], (a, [4, 2], [6, 4]))
+        assert_equal(res[4], {'dtype': 'dtype0',
+                              'out': ('out0',),
+                              'axis': 'axis0',
+                              'initial': 'initial0'})
+
+        # segmented_reduce, stops and initial are optional
+        res = np.multiply.segmented_reduce(a, [4, 2])
+        assert_equal(res[3], (a, [4, 2]))
+        assert_equal(res[4], {})
+
+        # segmented_reduce, output equal to None removed.
+        res = np.multiply.segmented_reduce(a, [4, 2], [6, 4], 0, None, None)
+        assert_equal(res[4], {'axis': 0, 'dtype': None})
+        res = np.multiply.segmented_reduce(a, [4, 2], [6, 4], axis=None,
+                                           out=None, dtype='dt')
+        assert_equal(res[4], {'axis': None, 'dtype': 'dt'})
+        res = np.multiply.segmented_reduce(a, [4, 2], [6, 4], None, None,
+                                           out=(None,))
+        assert_equal(res[4], {'axis': None, 'dtype': None})
+
+        # segmented_reduce, wrong args
+        assert_raises(ValueError, np.multiply.segmented_reduce, a, [4, 2],
+                      [6, 4], out=())
+        assert_raises(ValueError, np.multiply.segmented_reduce, a, [4, 2],
+                      [6, 4], out=('out0', 'out1'))
+        assert_raises(TypeError, np.multiply.segmented_reduce, a, [4, 2],
+                      [6, 4], 'axis0', axis='axis0')
+
         # outer
         res = np.multiply.outer(a, 42)
         assert_equal(res[0], a)
@@ -3975,6 +4023,7 @@ class TestSpecialMethods:
         assert_raises(TypeError, np.add.reduce, a)
         assert_raises(TypeError, np.add.accumulate, a)
         assert_raises(TypeError, np.add.reduceat, a, [0])
+        assert_raises(TypeError, np.add.segmented_reduce, a, [0], [1])
 
     def test_ufunc_override_disabled(self):
 
@@ -4192,6 +4241,16 @@ class TestSpecialMethods:
         assert_(c.info, {'inputs': [0]})
         b = np.zeros_like(c)
         c = np.add.reduceat(a, indices, 1, None, b)
+        assert_equal(c, check)
+        assert_(c is b)
+        assert_(c.info, {'inputs': [0], 'outputs': [0]})
+        starts, stops = [0, 2, 1], [2, 3, 3]
+        check = np.add.segmented_reduce(d, starts, stops, axis=1)
+        c = np.add.segmented_reduce(a, starts, stops, axis=1)
+        assert_equal(c, check)
+        assert_(c.info, {'inputs': [0]})
+        b = np.zeros_like(c)
+        c = np.add.segmented_reduce(a, starts, stops, 1, None, b)
         assert_equal(c, check)
         assert_(c is b)
         assert_(c.info, {'inputs': [0], 'outputs': [0]})
@@ -4982,6 +5041,29 @@ def test_reduceat():
     # test no buffer
     np.setbufsize(32)
     h1 = np.add.reduceat(a['value'], indx)
+    np.setbufsize(ncu.UFUNC_BUFSIZE_DEFAULT)
+    assert_array_almost_equal(h1, h2)
+
+def test_segmented_reduce():
+    """Test segmented_reduce when structured arrays are not copied."""
+    db = np.dtype([('name', 'S11'), ('time', np.int64), ('value', np.float32)])
+    a = np.empty([100], dtype=db)
+    a['name'] = 'Simple'
+    a['time'] = 10
+    a['value'] = 100
+    starts = [0, 7, 15, 25]
+    stops = [7, 15, 25, 100]
+
+    h2 = np.array([np.add.reduce(a['value'][i:j])
+                   for i, j in zip(starts, stops)])
+
+    # test buffered
+    h1 = np.add.segmented_reduce(a['value'], starts, stops)
+    assert_array_almost_equal(h1, h2)
+
+    # test no buffer
+    np.setbufsize(32)
+    h1 = np.add.segmented_reduce(a['value'], starts, stops)
     np.setbufsize(ncu.UFUNC_BUFSIZE_DEFAULT)
     assert_array_almost_equal(h1, h2)
 

@@ -1,0 +1,19 @@
+New ``ufunc.segmented_reduce`` method
+-------------------------------------
+Binary ufuncs have a new `~numpy.ufunc.segmented_reduce` method which reduces
+over segments (slices) of an axis given by their start and stop offsets::
+
+    >>> a = np.arange(8)
+    >>> np.add.segmented_reduce(a, starts=[0, 5], stops=[3, 8])
+    array([ 3, 18])
+
+It is a more flexible version of `~numpy.ufunc.reduceat`: segments may skip
+elements of the array, they may overlap, and they may be empty.  The offsets
+are interpreted like the start and stop of a slice, so that the i-th result is
+``ufunc.reduce(array[starts[i]:stops[i]])`` and out-of-bounds offsets are
+clipped rather than an error.  Empty segments give the identity of the ufunc,
+or the ``initial`` value if one is passed (which is required for ufuncs
+without an identity, such as `numpy.maximum`).
+
+If ``stops`` is not given, each segment stops where the next one starts, as it
+does for `~numpy.ufunc.reduceat`.

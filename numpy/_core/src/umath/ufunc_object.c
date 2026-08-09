@@ -65,6 +65,7 @@
 #include "mapping.h"
 #include "npy_static_data.h"
 #include "multiarraymodule.h"
+#include "refcount.h"  // for PyArray_ClearBuffer
 #include "number.h"
 #include "scalartypes.h"  // for is_anyscalar_exact and scalar_value
 
@@ -3757,6 +3758,569 @@ fail:
     return NULL;
 }
 
+/*
+ * Normalize segment offsets in-place the way slices do, negative offsets
+ * count from the end of the axis and out-of-bounds ones are clipped.
+ */
+static inline void
+clip_segment_offsets(npy_intp *offsets, npy_intp n, npy_intp axis_size)
+{
+    for (npy_intp i = 0; i < n; ++i) {
+        npy_intp offset = offsets[i];
+        if (offset < 0) {
+            offset += axis_size;
+            offsets[i] = offset < 0 ? 0 : offset;
+        }
+        else if (offset > axis_size) {
+            offsets[i] = axis_size;
+        }
+    }
+}
+
+/*
+ * Segmented_reduce performs a reduce over an axis using start and stop
+ * offsets as a guide
+ *
+ * op.segmented_reduce(array, starts, stops) computes
+ * op.reduce(array[starts[i]:stops[i]])
+ * for i=0..len(starts)-1.  The offsets use slice semantics, i.e. negative
+ * offsets count from the end of the axis and out-of-bounds offsets are
+ * clipped.  If `stops` is NULL, the stop of a segment is the start of the
+ * next one (and the end of the axis for the last segment).
+ *
+ * Contrary to reduceat, empty segments are well defined, they give the
+ * `initial` value or the identity of the ufunc, exactly like `ufunc.reduce`
+ * does for an empty array.
+ *
+ * output shape is based on the size of starts
+ *
+ * TODO: Segmented_reduce duplicates too much code from reduceat!
+ */
+static PyObject *
+PyUFunc_SegmentedReduce(PyUFuncObject *ufunc, PyArrayObject *arr,
+                        PyArrayObject *starts, PyArrayObject *stops,
+                        PyArrayObject *out, int axis,
+                        PyArray_DTypeMeta *signature[3], PyObject *initial)
+{
+    PyArrayObject *op[3];
+    int op_axes_arrays[3][NPY_MAXDIMS];
+    int *op_axes[3] = {op_axes_arrays[0], op_axes_arrays[1],
+                            op_axes_arrays[2]};
+    npy_uint32 op_flags[3];
+    int idim, ndim;
+    int need_outer_iterator = 0;
+
+    int res = 0;
+
+    NpyIter *iter = NULL;
+
+    PyArrayMethod_StridedLoop *strided_loop;
+    NpyAuxData *auxdata = NULL;
+
+    /* The segment offsets - starts and stops must be copies (see below) */
+    npy_intp *start_offsets, *stop_offsets = NULL;
+    npy_intp i, ind_size, red_axis_size;
+
+    /* Buffer to use when we need an initial value, and views into it */
+    char *initial_buf = NULL;
+    /* Value that starts every segment, and the result of an empty one */
+    char *segment_initial = NULL, *empty_initial = NULL;
+
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
+    char *opname = "segmented_reduce";
+
+    /* These parameters come from a TLS global */
+    int buffersize = 0, errormask = 0;
+
+    NPY_BEGIN_THREADS_DEF;
+
+    start_offsets = (npy_intp *)PyArray_DATA(starts);
+    if (stops != NULL) {
+        stop_offsets = (npy_intp *)PyArray_DATA(stops);
+    }
+    ind_size = PyArray_DIM(starts, 0);
+    red_axis_size = PyArray_DIM(arr, axis);
+
+    /* Out-of-bounds offsets are not an error, they are clipped in-place */
+    clip_segment_offsets(start_offsets, ind_size, red_axis_size);
+    if (stop_offsets != NULL) {
+        clip_segment_offsets(stop_offsets, ind_size, red_axis_size);
+    }
+
+    NPY_UF_DBG_PRINT2("\nEvaluating ufunc %s.%s\n", ufunc_name, opname);
+
+    if (_get_bufsize_errmask(&buffersize, &errormask) < 0) {
+        return NULL;
+    }
+
+    /* Take a reference to out for later returning */
+    Py_XINCREF(out);
+
+    PyArray_Descr *descrs[3];
+    PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
+            arr, &out, signature, NPY_TRUE, descrs, NPY_UNSAFE_CASTING,
+            opname);
+    if (ufuncimpl == NULL) {
+        Py_XDECREF(out);
+        return NULL;
+    }
+
+    /*
+     * The below code assumes that all descriptors are interchangeable, we
+     * allow them to not be strictly identical (but they typically should be)
+     */
+    assert(PyArray_EquivTypes(descrs[0], descrs[1])
+           && PyArray_EquivTypes(descrs[0], descrs[2]));
+
+    if (PyDataType_REFCHK(descrs[2]) && descrs[2]->type_num != NPY_OBJECT) {
+        /* This can be removed, but the initial element copy needs fixing */
+        PyErr_SetString(PyExc_TypeError,
+                "segmented_reduce currently only supports `object` dtype with "
+                "references");
+        goto fail;
+    }
+
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, descrs);
+    context.caller = (PyObject *)ufunc;
+    context.method = ufuncimpl;
+    ndim = PyArray_NDIM(arr);
+
+#if NPY_UF_DBG_TRACING
+    printf("Found %s.%s inner loop with dtype :  ", ufunc_name, opname);
+    PyObject_Print((PyObject *)descrs[0], stdout, 0);
+    printf("\n");
+#endif
+
+    /*
+     * The number of segments defines the length of the output along `axis`,
+     * the iterator would broadcast `starts` up to a longer one.
+     */
+    if (out != NULL && PyArray_NDIM(out) != ndim) {
+        PyErr_Format(PyExc_ValueError,
+                "output parameter for reduction operation %s has the wrong "
+                "number of dimensions: Found %d but expected %d",
+                ufunc_name, PyArray_NDIM(out), ndim);
+        goto fail;
+    }
+    if (out != NULL && PyArray_DIM(out, axis) != ind_size) {
+        PyErr_Format(PyExc_ValueError,
+                "output parameter for reduction operation %s has the wrong "
+                "length along axis %d: Found %" NPY_INTP_FMT " but expected "
+                "%" NPY_INTP_FMT " (the number of segments)",
+                ufunc_name, axis, PyArray_DIM(out, axis), ind_size);
+        goto fail;
+    }
+
+    /* Set up the op_axes for the outer loop */
+    for (idim = 0; idim < ndim; ++idim) {
+        /* Use the i-th iteration dimension to match up starts */
+        if (idim == axis) {
+            op_axes_arrays[0][idim] = axis;
+            op_axes_arrays[1][idim] = -1;
+            op_axes_arrays[2][idim] = 0;
+        }
+        else {
+            op_axes_arrays[0][idim] = idim;
+            op_axes_arrays[1][idim] = idim;
+            op_axes_arrays[2][idim] = -1;
+        }
+    }
+
+    op[0] = out;
+    op[1] = arr;
+    op[2] = starts;
+
+    if (out != NULL || ndim > 1 || !PyArray_ISALIGNED(arr) ||
+            !PyArray_EquivTypes(descrs[0], PyArray_DESCR(arr))) {
+        need_outer_iterator = 1;
+    }
+
+    if (need_outer_iterator) {
+        PyArray_Descr *op_dtypes[3] = {descrs[0], descrs[1], NULL};
+
+        npy_uint32 flags = NPY_ITER_ZEROSIZE_OK|
+                           NPY_ITER_REFS_OK|
+                           NPY_ITER_MULTI_INDEX|
+                           NPY_ITER_COPY_IF_OVERLAP;
+
+        /*
+         * The way segmented_reduce is set up, we can't do buffering,
+         * so make a copy instead when necessary using
+         * the UPDATEIFCOPY flag
+         */
+
+        /* The per-operand flags for the outer loop */
+        op_flags[0] = NPY_ITER_READWRITE|
+                      NPY_ITER_NO_BROADCAST|
+                      NPY_ITER_ALLOCATE|
+                      NPY_ITER_NO_SUBTYPE|
+                      NPY_ITER_UPDATEIFCOPY|
+                      NPY_ITER_ALIGNED;
+        op_flags[1] = NPY_ITER_READONLY|
+                      NPY_ITER_COPY|
+                      NPY_ITER_ALIGNED;
+        op_flags[2] = NPY_ITER_READONLY;
+
+        op_dtypes[1] = op_dtypes[0];
+
+        NPY_UF_DBG_PRINT("Allocating outer iterator\n");
+        iter = NpyIter_AdvancedNew(3, op, flags,
+                                   NPY_KEEPORDER, NPY_UNSAFE_CASTING,
+                                   op_flags, op_dtypes,
+                                   ndim, op_axes, NULL, 0);
+        if (iter == NULL) {
+            goto fail;
+        }
+
+        /* Remove the inner loop axis from the outer iterator */
+        if (NpyIter_RemoveAxis(iter, axis) != NPY_SUCCEED) {
+            goto fail;
+        }
+        if (NpyIter_RemoveMultiIndex(iter) != NPY_SUCCEED) {
+            goto fail;
+        }
+
+        /* In case COPY or UPDATEIFCOPY occurred */
+        op[0] = NpyIter_GetOperandArray(iter)[0];
+        op[1] = NpyIter_GetOperandArray(iter)[1];
+        op[2] = NpyIter_GetOperandArray(iter)[2];
+
+        if (out == NULL) {
+            out = op[0];
+            Py_INCREF(out);
+        }
+    }
+    else {
+        /*
+         * Allocate the output for when there's no outer iterator, we always
+         * use the outer_iteration path when `out` is passed.
+         */
+        assert(out == NULL);
+        Py_INCREF(descrs[0]);
+        op[0] = out = (PyArrayObject *)PyArray_NewFromDescr(
+                                    &PyArray_Type, descrs[0],
+                                    1, &ind_size, NULL, NULL,
+                                    0, NULL);
+        if (out == NULL) {
+            goto fail;
+        }
+    }
+
+    npy_intp fixed_strides[3];
+    if (need_outer_iterator) {
+        NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+    }
+    else {
+        fixed_strides[1] = PyArray_STRIDES(op[1])[axis];
+    }
+    /* The reduce axis does not advance here in the strided-loop */
+    fixed_strides[0] = 0;
+    fixed_strides[2] = 0;
+
+    NPY_ARRAYMETHOD_FLAGS flags = 0;
+    if (ufuncimpl->get_strided_loop(&context,
+            1, 0, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
+        goto fail;
+    }
+    if (iter != NULL) {
+        flags = PyArrayMethod_COMBINED_FLAGS(flags, NpyIter_GetTransferFlags(iter));
+    }
+
+    int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        /* Start with the floating-point exception flags cleared */
+        npy_clear_floatstatus_barrier((char*)&iter);
+    }
+
+    /*
+     * Get the initial value (if it exists).  Without one, the first element
+     * of each segment starts the reduction and empty segments are an error.
+     */
+    if (initial != Py_None) {
+        /* Not all functions will need initialization, but init always: */
+        initial_buf = PyMem_Calloc(1, descrs[0]->elsize);
+        if (initial_buf == NULL) {
+            PyErr_NoMemory();
+            goto fail;
+        }
+        if (initial != NULL) {
+            /* must use user provided initial value */
+            if (PyArray_Pack(descrs[0], initial_buf, initial) < 0) {
+                goto fail;
+            }
+            segment_initial = empty_initial = initial_buf;
+        }
+        else {
+            void *initials[1] = {initial_buf};
+            int has_initial = reduction_get_initial(
+                    &context, /* reduction_is_empty */ NPY_FALSE, initials);
+            if (has_initial < 0) {
+                goto fail;
+            }
+            if (has_initial) {
+                segment_initial = empty_initial = initial_buf;
+            }
+            else {
+                /*
+                 * The method may still have an identity for an empty
+                 * reduction (for `object` dtype it is not used when the
+                 * reduction has elements), it then only defines the result
+                 * of the empty segments.
+                 */
+                has_initial = reduction_get_initial(
+                        &context, /* reduction_is_empty */ NPY_TRUE, initials);
+                if (has_initial < 0) {
+                    goto fail;
+                }
+                if (has_initial) {
+                    empty_initial = initial_buf;
+                }
+                else {
+                    /* No initial value available, free the buffer */
+                    PyMem_FREE(initial_buf);
+                    initial_buf = NULL;
+                }
+            }
+        }
+    }
+
+    /*
+     * If the output has zero elements, return now.
+     */
+    if (PyArray_SIZE(op[0]) == 0) {
+        goto finish;
+    }
+
+    if (iter && NpyIter_GetIterSize(iter) != 0) {
+        char *dataptr_copy[3];
+        npy_intp stride_copy[3];
+
+        NpyIter_IterNextFunc *iternext;
+        char **dataptr;
+        npy_intp stride0, stride1;
+        npy_intp stride0_ind = PyArray_STRIDE(op[0], axis);
+
+        int itemsize = descrs[0]->elsize;
+
+        /* Get the variables needed for the loop */
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            goto fail;
+        }
+        dataptr = NpyIter_GetDataPtrArray(iter);
+
+        /* Execute the loop with just the outer iterator */
+        stride0 = 0;
+        stride1 = PyArray_STRIDE(op[1], axis);
+
+        NPY_UF_DBG_PRINT("UFunc: Reduce loop with just outer iterator\n");
+
+        stride_copy[0] = stride0;
+        stride_copy[1] = stride1;
+        stride_copy[2] = stride0;
+
+        if (!needs_api) {
+            NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
+        }
+
+        do {
+            for (i = 0; i < ind_size; ++i) {
+                npy_intp start = start_offsets[i];
+                npy_intp end = stop_offsets != NULL ? stop_offsets[i] :
+                        ((i == ind_size-1) ? red_axis_size :
+                                             start_offsets[i+1]);
+                npy_intp count = end - start;
+                char *first_element;
+
+                dataptr_copy[0] = dataptr[0] + stride0_ind*i;
+                dataptr_copy[1] = dataptr[1] + stride1*start;
+                dataptr_copy[2] = dataptr[0] + stride0_ind*i;
+
+                /* Start from the initial value or the first element */
+                if (segment_initial != NULL) {
+                    first_element = segment_initial;
+                }
+                else if (count > 0) {
+                    first_element = dataptr_copy[1];
+                    --count;
+                    dataptr_copy[1] += stride1;
+                }
+                else if (empty_initial != NULL) {
+                    first_element = empty_initial;
+                }
+                else {
+                    /* Empty segment and no identity, error out below */
+                    res = -2;
+                    break;
+                }
+
+                /*
+                 * Copy the first value to start the reduction.
+                 *
+                 * Output (dataptr[0]) and input (dataptr[1]) may point
+                 * to the same memory, e.g.
+                 * np.add.segmented_reduce(a, starts, stops, out=a).
+                 */
+                if (descrs[2]->type_num == NPY_OBJECT) {
+                    /*
+                     * Incref before decref to avoid the possibility of
+                     * the reference count being zero temporarily.
+                     */
+                    Py_XINCREF(*(PyObject **)first_element);
+                    Py_XDECREF(*(PyObject **)dataptr_copy[0]);
+                    *(PyObject **)dataptr_copy[0] =
+                                        *(PyObject **)first_element;
+                }
+                else {
+                    memmove(dataptr_copy[0], first_element, itemsize);
+                }
+
+                if (count > 0) {
+                    /* Inner loop like REDUCE */
+                    NPY_UF_DBG_PRINT1("iterator loop count %d\n",
+                                                    (int)count);
+                    res = strided_loop(&context,
+                            dataptr_copy, &count, stride_copy, auxdata);
+                    if (res != 0) {
+                        break;
+                    }
+                }
+            }
+        } while (res == 0 && iternext(iter));
+
+        NPY_END_THREADS;
+    }
+    else if (iter == NULL) {
+        char *dataptr_copy[3];
+
+        int itemsize = descrs[0]->elsize;
+
+        npy_intp stride0_ind = PyArray_STRIDE(op[0], axis);
+        npy_intp stride1 = PyArray_STRIDE(op[1], axis);
+
+        NPY_UF_DBG_PRINT("UFunc: Reduce loop with no iterators\n");
+
+        if (!needs_api) {
+            NPY_BEGIN_THREADS;
+        }
+
+        for (i = 0; i < ind_size; ++i) {
+            npy_intp start = start_offsets[i];
+            npy_intp end = stop_offsets != NULL ? stop_offsets[i] :
+                    ((i == ind_size-1) ? red_axis_size :
+                                         start_offsets[i+1]);
+            npy_intp count = end - start;
+            char *first_element;
+
+            dataptr_copy[0] = PyArray_BYTES(op[0]) + stride0_ind*i;
+            dataptr_copy[1] = PyArray_BYTES(op[1]) + stride1*start;
+            dataptr_copy[2] = PyArray_BYTES(op[0]) + stride0_ind*i;
+
+            /* Start from the initial value or the first element */
+            if (segment_initial != NULL) {
+                first_element = segment_initial;
+            }
+            else if (count > 0) {
+                first_element = dataptr_copy[1];
+                --count;
+                dataptr_copy[1] += stride1;
+            }
+            else if (empty_initial != NULL) {
+                first_element = empty_initial;
+            }
+            else {
+                /* Empty segment and no identity, error out below */
+                res = -2;
+                break;
+            }
+
+            /*
+             * Copy the first value to start the reduction.
+             *
+             * Output (dataptr[0]) and input (dataptr[1]) may point to
+             * the same memory, e.g.
+             * np.add.segmented_reduce(a, starts, stops, out=a).
+             */
+            if (descrs[2]->type_num == NPY_OBJECT) {
+                /*
+                 * Incref before decref to avoid the possibility of the
+                 * reference count being zero temporarily.
+                 */
+                Py_XINCREF(*(PyObject **)first_element);
+                Py_XDECREF(*(PyObject **)dataptr_copy[0]);
+                *(PyObject **)dataptr_copy[0] =
+                                    *(PyObject **)first_element;
+            }
+            else {
+                memmove(dataptr_copy[0], first_element, itemsize);
+            }
+
+            if (count > 0) {
+                /* Inner loop like REDUCE */
+                NPY_UF_DBG_PRINT1("iterator loop count %d\n",
+                                                (int)count);
+                res = strided_loop(&context,
+                        dataptr_copy, &count, fixed_strides, auxdata);
+                if (res != 0) {
+                    break;
+                }
+            }
+        }
+
+        NPY_END_THREADS;
+    }
+
+finish:
+    if (initial_buf != NULL && PyDataType_REFCHK(descrs[0])) {
+        PyArray_ClearBuffer(descrs[0], initial_buf, 0, 1, 1);
+    }
+    PyMem_FREE(initial_buf);
+    NPY_AUXDATA_FREE(auxdata);
+    Py_DECREF(descrs[0]);
+    Py_DECREF(descrs[1]);
+    Py_DECREF(descrs[2]);
+
+    if (!NpyIter_Deallocate(iter)) {
+        res = -1;
+    }
+
+    if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        /* NOTE: We could check float errors even when `res < 0` */
+        res = _check_ufunc_fperr(errormask, "segmented_reduce");
+    }
+
+    if (res < 0) {
+        if (res == -2) {
+            PyErr_Format(PyExc_ValueError,
+                    "zero-size segment in reduction operation '%s' which does "
+                    "not have an identity, so to allow empty segments one has "
+                    "to specify 'initial'", ufunc_name);
+        }
+        Py_DECREF(out);
+        return NULL;
+    }
+
+    return (PyObject *)out;
+
+fail:
+    if (initial_buf != NULL && PyDataType_REFCHK(descrs[0])) {
+        PyArray_ClearBuffer(descrs[0], initial_buf, 0, 1, 1);
+    }
+    PyMem_FREE(initial_buf);
+
+    Py_XDECREF(out);
+
+    NPY_AUXDATA_FREE(auxdata);
+    Py_XDECREF(descrs[0]);
+    Py_XDECREF(descrs[1]);
+    Py_XDECREF(descrs[2]);
+
+    NpyIter_Deallocate(iter);
+
+    return NULL;
+}
+
 
 static npy_bool
 tuple_all_none(PyObject *tup) {
@@ -3879,7 +4443,14 @@ _parse_axis(PyObject *axes_obj, int ndim, int *axes)
 static PyArray_DTypeMeta * _get_dtype(PyObject *dtype_obj);
 
 /*
- * This code handles reduce, reduceat, and accumulate
+ * Identifier for `segmented_reduce`, continuing the `UFUNC_REDUCE`,
+ * `UFUNC_ACCUMULATE`, ... defines of `ufuncobject.h` (`UFUNC_OUTER` is 3 and
+ * not handled by `PyUFunc_GenericReduction`).
+ */
+#define UFUNC_SEGMENTED_REDUCE 4
+
+/*
+ * This code handles reduce, reduceat, segmented_reduce, and accumulate
  * (accumulate and reduce are special cases of the more general reduceat
  * but they are handled separately for speed)
  */
@@ -3896,6 +4467,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     PyObject *op = NULL;
     PyObject *ret = NULL;
     PyArrayObject *indices = NULL;
+    PyArrayObject *starts = NULL, *stops = NULL;
     PyArray_DTypeMeta *signature[NPY_MAXARGS] = {NULL};
     PyArrayObject *out[NPY_MAXARGS] = {NULL};
     int keepdims = 0;
@@ -3903,7 +4475,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     npy_bool out_is_passed_by_position;
 
 
-    static char *_reduce_type[] = {"reduce", "accumulate", "reduceat", NULL};
+    static char *_reduce_type[] = {"reduce", "accumulate", "reduceat",
+                                   "outer", "segmented_reduce", NULL};
 
     if (ufunc == NULL) {
         PyErr_SetString(PyExc_ValueError, "function not supported");
@@ -3935,6 +4508,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
      * certain parameters.
      */
     PyObject *otype_obj = NULL, *out_obj = NULL, *indices_obj = NULL;
+    PyObject *starts_obj = NULL, *stops_obj = NULL;
     PyObject *keepdims_obj = NULL, *wheremask_obj = NULL;
     npy_bool return_scalar = NPY_TRUE;  /* scalar return is disabled for out=... */
     if (operation == UFUNC_REDUCEAT) {
@@ -3955,6 +4529,28 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
         out_is_passed_by_position = len_args >= 5;
+    }
+    else if (operation == UFUNC_SEGMENTED_REDUCE) {
+        NPY_PREPARE_ARGPARSER;
+
+        if (npy_parse_arguments("segmented_reduce", args, len_args, kwnames,
+                {"array", NULL, &op},
+                {"starts", NULL, &starts_obj},
+                {"|stops", NULL, &stops_obj},
+                {"|axis", NULL, &axes_obj},
+                {"|dtype", NULL, &otype_obj},
+                {"|out", NULL, &out_obj},
+                {"|initial", &_not_NoValue, &initial}) < 0) {
+            goto fail;
+        }
+        /* Prepare inputs for PyUfunc_CheckOverride */
+        PyObject *reduce_in[] = {op, starts_obj, stops_obj};
+        npy_bool has_stops = stops_obj != NULL && stops_obj != Py_None;
+        full_args.in = PyTuple_FromArray(reduce_in, has_stops ? 3 : 2);
+        if (full_args.in == NULL) {
+            goto fail;
+        }
+        out_is_passed_by_position = len_args >= 6;
     }
     else if (operation == UFUNC_ACCUMULATE) {
         NPY_PREPARE_ARGPARSER;
@@ -4039,6 +4635,38 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
     }
+    if (starts_obj) {
+        PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
+
+        /*
+         * Ensure copies, since the offsets are clipped in-place.  Each
+         * `PyArray_FromAny` steals a reference to indtype.
+         */
+        Py_INCREF(indtype);
+        starts = (PyArrayObject *)PyArray_FromAny(starts_obj, indtype, 1, 1,
+                NPY_ARRAY_CARRAY | NPY_ARRAY_ENSURECOPY, NULL);
+        if (starts == NULL) {
+            Py_DECREF(indtype);
+            goto fail;
+        }
+        if (stops_obj != NULL && stops_obj != Py_None) {
+            stops = (PyArrayObject *)PyArray_FromAny(stops_obj, indtype, 1, 1,
+                    NPY_ARRAY_CARRAY | NPY_ARRAY_ENSURECOPY, NULL);
+            if (stops == NULL) {
+                goto fail;
+            }
+            if (PyArray_DIM(stops, 0) != PyArray_DIM(starts, 0)) {
+                PyErr_Format(PyExc_ValueError,
+                        "'starts' and 'stops' must have the same length, got "
+                        "%" NPY_INTP_FMT " and %" NPY_INTP_FMT,
+                        PyArray_DIM(starts, 0), PyArray_DIM(stops, 0));
+                goto fail;
+            }
+        }
+        else {
+            Py_DECREF(indtype);
+        }
+    }
     if (otype_obj && otype_obj != Py_None) {
         /* Use `_get_dtype` because `dtype` is a DType and not the instance */
         signature[0] = _get_dtype(otype_obj);
@@ -4106,6 +4734,22 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         ret = PyUFunc_Reduceat(ufunc,
                 mp, indices, out[0], axes[0], signature);
         Py_SETREF(indices, NULL);
+        break;
+    case UFUNC_SEGMENTED_REDUCE:
+        if (ndim == 0) {
+            PyErr_SetString(PyExc_TypeError,
+                        "cannot segmented_reduce on a scalar");
+            goto fail;
+        }
+        if (naxes != 1) {
+            PyErr_SetString(PyExc_ValueError,
+                        "segmented_reduce does not allow multiple axes");
+            goto fail;
+        }
+        ret = PyUFunc_SegmentedReduce(ufunc,
+                mp, starts, stops, out[0], axes[0], signature, initial);
+        Py_SETREF(starts, NULL);
+        Py_XSETREF(stops, NULL);
         break;
     }
     if (ret == NULL) {
@@ -4187,6 +4831,8 @@ fail:
     Py_XDECREF(mp);
     Py_XDECREF(wheremask);
     Py_XDECREF(indices);
+    Py_XDECREF(starts);
+    Py_XDECREF(stops);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
     return NULL;
@@ -6079,6 +6725,14 @@ ufunc_reduceat(PyUFuncObject *ufunc,
             ufunc, args, len_args, kwnames, UFUNC_REDUCEAT);
 }
 
+static PyObject *
+ufunc_segmented_reduce(PyUFuncObject *ufunc,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    return PyUFunc_GenericReduction(
+            ufunc, args, len_args, kwnames, UFUNC_SEGMENTED_REDUCE);
+}
+
 /* Helper for ufunc_at, below */
 static inline PyArrayObject *
 new_array_op(PyArrayObject *op_array, char *data)
@@ -7111,6 +7765,9 @@ static struct PyMethodDef ufunc_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL },
     {"reduceat",
         (PyCFunction)ufunc_reduceat,
+        METH_FASTCALL | METH_KEYWORDS, NULL },
+    {"segmented_reduce",
+        (PyCFunction)ufunc_segmented_reduce,
         METH_FASTCALL | METH_KEYWORDS, NULL },
     {"outer",
         (PyCFunction)ufunc_outer,

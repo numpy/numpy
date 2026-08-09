@@ -2206,7 +2206,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def __array_ufunc__(
         self,
         ufunc: ufunc,
-        method: L["__call__", "reduce", "reduceat", "accumulate", "outer", "at"],
+        method: L["__call__", "reduce", "reduceat", "segmented_reduce", "accumulate", "outer", "at"],
         /,
         *inputs: Any,
         **kwargs: Any,
@@ -7614,7 +7614,7 @@ class ufunc:
 
     def __call__(self, /, *args: Any, **kwargs: Any) -> Any: ...
 
-    # The next four methods will always exist, but they will just
+    # The next five methods will always exist, but they will just
     # raise a ValueError ufuncs with that don't accept two input
     # arguments and return one output argument. Because of that we
     # can't type them very precisely.
@@ -7643,6 +7643,18 @@ class ufunc:
         axis: SupportsIndex = 0,
         dtype: DTypeLike | None = None,
         out: ndarray | EllipsisType | None = None,
+    ) -> NDArray[Incomplete]: ...
+    def segmented_reduce(
+        self,
+        array: ArrayLike,
+        /,
+        starts: _ArrayLikeInt_co,
+        stops: _ArrayLikeInt_co | None = None,
+        axis: SupportsIndex = 0,
+        dtype: DTypeLike | None = None,
+        out: ndarray | EllipsisType | None = None,
+        # `initial` is passed through `kwargs` (like it is for `reduce`)
+        **kwargs: Incomplete,
     ) -> NDArray[Incomplete]: ...
     def outer(self, A: ArrayLike, B: ArrayLike, /, **kwargs: Incomplete) -> NDArray[Incomplete]: ...
 

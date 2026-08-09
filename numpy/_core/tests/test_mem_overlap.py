@@ -730,6 +730,44 @@ class TestUFunc:
         a = np.arange(10000, dtype=np.int16)
         check(np.add, a, a[::-1], a)
 
+    def test_binary_ufunc_segmented_reduce_fuzz(self):
+        def get_out_axis_size(a, b, axis):
+            if axis is None:
+                if a.ndim == 1:
+                    return a.size, False
+                else:
+                    return 'skip', False  # segmented_reduce doesn't support this
+            else:
+                return a.shape[axis], False
+
+        def do_segmented_reduce(a, out, axis):
+            if axis is None:
+                size = len(a)
+                step = size // len(out)
+            else:
+                size = a.shape[axis]
+                step = a.shape[axis] // out.shape[axis]
+            starts = np.arange(0, size, step)
+            return np.add.segmented_reduce(a, starts, out=out, axis=axis)
+
+        self.check_unary_fuzz(do_segmented_reduce, get_out_axis_size,
+                              dtype=np.int16, count=500)
+
+    def test_binary_ufunc_segmented_reduce_manual(self):
+        def check(ufunc, a, starts, stops, out):
+            c1 = ufunc.segmented_reduce(a.copy(), starts.copy(), stops.copy(),
+                                        out=out.copy())
+            c2 = ufunc.segmented_reduce(a, starts, stops, out=out)
+            assert_array_equal(c1, c2)
+
+        # Exactly same input/output arrays
+        a = np.arange(10000, dtype=np.int16)
+        check(np.add, a, a[::-1].copy(), a.copy(), a)
+
+        # Overlap with the offsets
+        a = np.arange(10000, dtype=np.int16)
+        check(np.add, a, a[::-1], a, a)
+
     @pytest.mark.slow
     def test_unary_gufunc_fuzz(self):
         shapes = [7, 13, 8, 21, 29, 32]

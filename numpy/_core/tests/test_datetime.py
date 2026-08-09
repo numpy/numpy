@@ -2574,6 +2574,9 @@ class TestDateTime:
         with pytest.raises(TypeError, match=msg):
             np.subtract.reduceat(arr, [0])
 
+        with pytest.raises(TypeError, match=msg):
+            np.subtract.segmented_reduce(arr, [0], [2])
+
     def test_datetime_busday_offset(self):
         # First Monday in June
         assert_equal(

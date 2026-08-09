@@ -5634,6 +5634,11 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
         The reduced values. If `out` was supplied, `r` is a reference to
         `out`.
 
+    See Also
+    --------
+    ufunc.segmented_reduce : Reduce over segments given by start and stop
+        offsets, which may skip elements, overlap, or be empty.
+
     Notes
     -----
     A descriptive example:
@@ -5691,6 +5696,138 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
            [ 120.,     7.],
            [ 720.,    11.],
            [2184.,    15.]])
+
+    """))
+
+add_newdoc('numpy._core', 'ufunc', ('segmented_reduce',
+    """
+    segmented_reduce($self, array, /, starts, stops=None, axis=0, dtype=None, out=None, **kwargs)
+    --
+
+    segmented_reduce(array, starts, stops=None, axis=0, dtype=None, out=None, initial=<no value>)
+
+    Reduce over segments (slices) of a single axis.
+
+    For i in ``range(len(starts))``, `segmented_reduce` computes
+    ``ufunc.reduce(array[starts[i]:stops[i]], initial=initial)``, which
+    becomes the i-th generalized "row" parallel to `axis` in the final result
+    (i.e., in a 2-D array, for example, if ``axis = 0``, it becomes the i-th
+    row, but if ``axis = 1``, it becomes the i-th column).
+
+    The offsets are interpreted like the start and stop of a slice: negative
+    offsets count from the end of the axis and out-of-bounds offsets are
+    clipped.  Consequently segments may overlap, they may skip elements of
+    `array`, and they may be empty, in which case the result of the segment
+    is `initial` (or the identity of the ufunc, see the Notes).
+
+    .. versionadded:: 2.6.0
+
+    Parameters
+    ----------
+    array : array_like
+        The array to act on.
+    starts : array_like
+        1-D array of offsets at which the segments start.  Its length is the
+        length of the result along `axis`.
+    stops : array_like, optional
+        1-D array of offsets at which the segments stop, must have the same
+        length as `starts`.  If not given, each segment stops where the next
+        one starts and the last one stops at the end of the axis (which is
+        the segmentation `ufunc.reduceat` uses).
+    axis : int, optional
+        The axis along which to apply the segmented reduction.
+    dtype : data-type code, optional
+        The data type used to perform the operation. Defaults to that of
+        ``out`` if given, and the data type of ``array`` otherwise (though
+        upcast to conserve precision for some cases, such as
+        ``numpy.add.reduce`` for integer or boolean input).
+    out : ndarray, None, or tuple of ndarray and None, optional
+        Location into which the result is stored.
+        If not provided or None, a freshly-allocated array is returned.
+        For consistency with ``ufunc.__call__``, if passed as a keyword
+        argument, can be Ellipses (``out=...``, which has the same effect
+        as None as an array is always returned), or a 1-element tuple.
+    initial : scalar, optional
+        The value with which to start each segment reduction.  If the ufunc
+        has no identity, it is required when any segment may be empty.
+
+    Returns
+    -------
+    r : ndarray
+        The reduced values. If `out` was supplied, `r` is a reference to
+        `out`.
+
+    See Also
+    --------
+    ufunc.reduce : Reduce over a whole axis.
+    ufunc.reduceat : Reduce over consecutive slices given by single indices.
+
+    Notes
+    -----
+    If `initial` is not given, the identity of the ufunc is used (e.g. ``0``
+    for `numpy.add` and ``1`` for `numpy.multiply`), exactly as `ufunc.reduce`
+    does.  For a ufunc without an identity, such as `numpy.maximum`, empty
+    segments then raise a ``ValueError`` and `initial` has to be passed to
+    define their result.  Passing ``initial=None`` explicitly disables the
+    use of an identity.
+
+    For arrays of ``object`` dtype the identity is only used for the empty
+    segments, just as `ufunc.reduce` only uses it for an empty reduction.
+
+    If the result is empty, for example because a dimension that is not
+    reduced over has length zero, no reduction is performed at all and no
+    identity is required.
+
+    Unlike `ufunc.reduceat`, offsets are never an error and empty segments
+    have a well defined result, so that ``starts`` and ``stops`` can be
+    computed without clipping them first.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = np.arange(8)
+
+    Reduce over two segments of four elements each:
+
+    >>> np.add.segmented_reduce(a, [0, 4], [4, 8])
+    array([ 6, 22])
+
+    The segments may skip elements or overlap:
+
+    >>> np.add.segmented_reduce(a, [1, 5], [3, 7])
+    array([ 3, 11])
+    >>> np.add.segmented_reduce(a, [0, 2], [5, 4])
+    array([10,  5])
+
+    If ``stops`` is not given, each segment stops where the next one starts,
+    just like `ufunc.reduceat` (but empty segments are still allowed):
+
+    >>> np.add.segmented_reduce(a, [0, 4])
+    array([ 6, 22])
+
+    Empty segments give the identity of the ufunc, or ``initial`` if given:
+
+    >>> np.add.segmented_reduce(a, [0, 4], [0, 4])
+    array([0, 0])
+    >>> np.add.segmented_reduce(a, [0, 4], [4, 8], initial=100)
+    array([106, 122])
+
+    A ufunc without an identity requires ``initial`` for empty segments:
+
+    >>> np.maximum.segmented_reduce(a, [0, 4], [0, 8])
+    Traceback (most recent call last):
+    ...
+    ValueError: zero-size segment in reduction operation 'maximum' which ...
+    >>> np.maximum.segmented_reduce(a, [0, 4], [0, 8], initial=-1)
+    array([-1,  7])
+
+    A 2-D example, reducing over segments of each row:
+
+    >>> x = np.arange(12).reshape(3, 4)
+    >>> np.add.segmented_reduce(x, [0, 2], [2, 4], axis=1)
+    array([[ 1,  5],
+           [ 9, 13],
+           [17, 21]])
 
     """))
 

@@ -2651,6 +2651,9 @@ class TestUfunc:
         assert_array_equal(np.add.accumulate(arr_be), np.add.accumulate(arr_le))
         assert_array_equal(
             np.add.reduceat(arr_be, [1]), np.add.reduceat(arr_le, [1]))
+        assert_array_equal(
+            np.add.segmented_reduce(arr_be, [1], [10]),
+            np.add.segmented_reduce(arr_le, [1], [10]))
 
     def test_reducelike_out_promotes(self):
         # Check that the out argument to reductions is considered for
@@ -2688,6 +2691,11 @@ class TestUfunc:
         out = np.empty(2, dtype=arr.dtype.newbyteorder())
         expected = np.add.reduceat(arr, [0, 1])
         np.add.reduceat(arr, [0, 1], out=out)
+        assert_array_equal(expected, out)
+        # And segmented_reduce:
+        out = np.empty(2, dtype=arr.dtype.newbyteorder())
+        expected = np.add.segmented_reduce(arr, [0, 1], [1, 20])
+        np.add.segmented_reduce(arr, [0, 1], [1, 20], out=out)
         assert_array_equal(expected, out)
         # And accumulate:
         out = np.empty(arr.shape, dtype=arr.dtype.newbyteorder())
@@ -2740,6 +2748,9 @@ class TestUfunc:
 
         with pytest.raises(np._core._exceptions._UFuncNoLoopError):
             np.add.reduceat(arr, [0, 1, 2], out=out)
+
+        with pytest.raises(np._core._exceptions._UFuncNoLoopError):
+            np.add.segmented_reduce(arr, [0, 1, 2], [1, 2, 3], out=out)
 
         with pytest.raises(np._core._exceptions._UFuncNoLoopError):
             np.add.accumulate(arr, out=out)
@@ -2822,6 +2833,523 @@ class TestUfunc:
             assert not np.isinf(nat)
         except TypeError:
             pass  # ok, just not implemented
+
+
+class TestSegmentedReduce:
+    # Ufuncs with an identity, so that empty segments are well defined
+    ufuncs_with_identity = [np.add, np.multiply, np.logical_and,
+                            np.logical_or, np.hypot]
+    # Ufuncs without an identity, empty segments require `initial`
+    ufuncs_without_identity = [np.maximum, np.minimum, np.subtract,
+                               np.arctan2]
+    # Ufuncs that only have integer (or boolean) loops
+    ufuncs_integer = [np.bitwise_or, np.bitwise_and, np.gcd, np.left_shift]
+
+    @staticmethod
+    def reference(ufunc, arr, starts, stops=None, axis=0, **kwargs):
+        """Reference implementation using plain slicing and `ufunc.reduce`."""
+        arr = np.asarray(arr)
+        axis = axis % arr.ndim
+        starts = list(starts)
+        if stops is None:
+            stops = starts[1:] + [arr.shape[axis]]
+
+        results = []
+        for start, stop in zip(starts, stops):
+            # NOTE: slicing defines the start/stop semantics we implement
+            index = (slice(None),) * axis + (slice(start, stop),)
+            results.append(ufunc.reduce(arr[index], axis=axis, **kwargs))
+
+        if not results:
+            shape = list(arr.shape)
+            shape[axis] = 0
+            return np.empty(shape, dtype=ufunc.reduce(arr, axis=axis).dtype)
+        return np.stack(results, axis=axis)
+
+    @pytest.mark.parametrize("ufunc",
+            ufuncs_with_identity + ufuncs_without_identity + ufuncs_integer)
+    def test_basic(self, ufunc):
+        if ufunc in self.ufuncs_integer:
+            arr = np.arange(1, 11)
+        else:
+            arr = np.arange(1, 11).astype(np.float64)
+        # Segments that overlap, skip elements, and are given out of order
+        starts = [0, 2, 5, 3, 9]
+        stops = [4, 3, 10, 9, 10]
+
+        res = ufunc.segmented_reduce(arr, starts, stops)
+        assert_array_equal(res, self.reference(ufunc, arr, starts, stops))
+
+    @pytest.mark.parametrize("ufunc",
+            ufuncs_with_identity + [np.bitwise_or, np.bitwise_and])
+    def test_empty_segments_use_identity(self, ufunc):
+        if ufunc in self.ufuncs_integer:
+            arr = np.arange(1, 11)
+        else:
+            arr = np.arange(1, 11).astype(np.float64)
+        starts = [0, 3, 5, 10]
+        stops = [4, 3, 5, 10]  # last three segments are empty
+
+        res = ufunc.segmented_reduce(arr, starts, stops)
+        assert_array_equal(res, self.reference(ufunc, arr, starts, stops))
+        assert_array_equal(res[1:], [ufunc.identity] * 3)
+
+    @pytest.mark.parametrize("ufunc", ufuncs_without_identity)
+    def test_empty_segments_without_identity(self, ufunc):
+        arr = np.arange(1, 11).astype(np.float64)
+
+        with pytest.raises(ValueError, match="zero-size segment"):
+            ufunc.segmented_reduce(arr, [0, 3], [4, 3])
+
+        # But passing an initial value defines the result:
+        res = ufunc.segmented_reduce(arr, [0, 3], [4, 3], initial=42)
+        assert_array_equal(
+            res, self.reference(ufunc, arr, [0, 3], [4, 3], initial=42))
+        assert res[1] == 42
+
+    def test_initial(self):
+        arr = np.arange(10.)
+        res = np.add.segmented_reduce(arr, [0, 5], [5, 10], initial=100)
+        assert_array_equal(res, [110, 135])
+
+        # `initial=None` means that there is explicitly no initial value
+        # (and thus no identity), just as it does for `reduce`.
+        res = np.add.segmented_reduce(arr, [0, 5], [5, 10], initial=None)
+        assert_array_equal(res, [10, 35])
+        with pytest.raises(ValueError, match="zero-size segment"):
+            np.add.segmented_reduce(arr, [0], [0], initial=None)
+
+        # An initial value that cannot be cast is an error
+        with pytest.raises(ValueError):
+            np.add.segmented_reduce(arr, [0], [5], initial="spam")
+
+    def test_matches_reduce_exactly(self):
+        # The result of a segment must be identical to reducing the slice
+        rng = np.random.RandomState(1234)
+        arr = rng.uniform(-1e10, 1e10, size=100)
+        starts = rng.randint(-120, 120, size=30)
+        stops = rng.randint(-120, 120, size=30)
+
+        res = np.add.segmented_reduce(arr, starts, stops, initial=0.)
+        for i, (start, stop) in enumerate(zip(starts, stops)):
+            assert res[i] == np.add.reduce(arr[start:stop], initial=0.)
+
+    def test_implicit_stops(self):
+        # Without `stops`, a segment ends where the next one starts, which is
+        # the same segmentation `reduceat` uses.
+        arr = np.arange(10.)
+        starts = [0, 3, 3, 7]
+
+        res = np.add.segmented_reduce(arr, starts)
+        assert_array_equal(res, self.reference(np.add, arr, starts))
+        assert_array_equal(res, [3, 0, 18, 24])
+        # `stops=None` is the same as not passing it at all
+        assert_array_equal(np.add.segmented_reduce(arr, starts, None), res)
+
+        # It matches reduceat where the segments are not empty
+        res = np.add.segmented_reduce(arr, [0, 3, 7])
+        assert_array_equal(res, np.add.reduceat(arr, [0, 3, 7]))
+
+    def test_slice_semantics(self):
+        arr = np.arange(10.)
+
+        # Negative offsets count from the end
+        assert_array_equal(
+            np.add.segmented_reduce(arr, [-3, -10], [-1, 3]), [15, 3])
+        # Out-of-bounds offsets are clipped (and not an error)
+        assert_array_equal(
+            np.add.segmented_reduce(arr, [-100, 8], [100, 100]), [45, 17])
+        # A stop before the start gives an empty segment
+        assert_array_equal(np.add.segmented_reduce(arr, [5], [2]), [0])
+        # Including for the implicit stops of decreasing starts
+        assert_array_equal(np.add.segmented_reduce(arr, [5, 2]), [0, 44])
+
+    def test_offsets_are_not_modified(self):
+        # The offsets are normalized internally, but must not be modified
+        arr = np.arange(10.)
+        starts = np.array([-5, 3, 100])
+        stops = np.array([100, -20, 3])
+        starts_copy, stops_copy = starts.copy(), stops.copy()
+
+        np.add.segmented_reduce(arr, starts, stops)
+        assert_array_equal(starts, starts_copy)
+        assert_array_equal(stops, stops_copy)
+
+    @pytest.mark.parametrize("offset_dtype", [np.int8, np.int32, np.intp,
+                                              np.uint8, np.uint32])
+    def test_offset_dtypes(self, offset_dtype):
+        arr = np.arange(10.)
+        starts = np.array([0, 5], dtype=offset_dtype)
+        stops = np.array([5, 10], dtype=offset_dtype)
+        assert_array_equal(
+            np.add.segmented_reduce(arr, starts, stops), [10, 35])
+
+    def test_float_offsets_rejected(self):
+        # Just as for reduceat, offsets must be safely castable to intp
+        arr = np.arange(10.)
+        with pytest.raises(TypeError, match="Cannot cast array data"):
+            np.add.segmented_reduce(arr, np.array([0., 5.]), [5, 10])
+        with pytest.raises(TypeError, match="Cannot cast array data"):
+            np.add.segmented_reduce(arr, [0, 5], np.array([5., 10.]))
+
+    def test_offsets_as_sequences(self):
+        arr = np.arange(10.)
+        expected = [10, 35]
+        assert_array_equal(np.add.segmented_reduce(arr, [0, 5], [5, 10]),
+                           expected)
+        assert_array_equal(np.add.segmented_reduce(arr, (0, 5), (5, 10)),
+                           expected)
+        assert_array_equal(
+            np.add.segmented_reduce(arr, np.array([0, 5]), np.array([5, 10])),
+            expected)
+
+    @pytest.mark.parametrize("axis", [0, 1, 2, -1, -2, -3])
+    def test_axis(self, axis):
+        arr = np.arange(2 * 3 * 4).reshape(2, 3, 4).astype(np.float64)
+        starts = [0, 1]
+        stops = [1, arr.shape[axis]]
+
+        res = np.add.segmented_reduce(arr, starts, stops, axis=axis)
+        assert_array_equal(res, self.reference(
+            np.add, arr, starts, stops, axis=axis))
+        assert res.shape[axis] == 2
+
+    def test_axis_errors(self):
+        arr = np.arange(12.).reshape(3, 4)
+        with pytest.raises(AxisError):
+            np.add.segmented_reduce(arr, [0], [1], axis=2)
+        with pytest.raises(ValueError, match="does not allow multiple axes"):
+            np.add.segmented_reduce(arr, [0], [1], axis=(0, 1))
+        with pytest.raises(TypeError, match="cannot segmented_reduce"):
+            np.add.segmented_reduce(np.float64(1.), [0], [1])
+
+    def test_zero_sized(self):
+        # No segments at all
+        res = np.add.segmented_reduce(np.arange(10.), [], [])
+        assert res.shape == (0,)
+        assert res.dtype == np.float64
+        assert_array_equal(np.add.segmented_reduce(np.arange(10.), []), res)
+
+        # An empty reduction axis (all segments must be empty)
+        assert_array_equal(
+            np.add.segmented_reduce(np.zeros(0), [0, 5], [10, 20]), [0, 0])
+        with pytest.raises(ValueError, match="zero-size segment"):
+            np.maximum.segmented_reduce(np.zeros(0), [0], [1])
+
+        # An empty dimension that is not reduced over
+        arr = np.zeros((0, 5))
+        res = np.add.segmented_reduce(arr, [0, 2], [2, 5], axis=1)
+        assert res.shape == (0, 2)
+
+        # If the result is empty, no reduction happens and thus no identity
+        # is needed, even for empty segments
+        res = np.maximum.segmented_reduce(arr, [0, 2], [0, 5], axis=1)
+        assert res.shape == (0, 2)
+        res = np.maximum.segmented_reduce(np.zeros((0, 0)), [0, 2], [0, 5])
+        assert res.shape == (2, 0)
+
+    def test_out(self):
+        arr = np.arange(10.)
+        out = np.zeros(2)
+        res = np.add.segmented_reduce(arr, [0, 5], [5, 10], out=out)
+        assert res is out
+        assert_array_equal(out, [10, 35])
+
+        # `out=` may also be passed as a 1-element tuple or by position
+        out = np.zeros(2)
+        assert_array_equal(
+            np.add.segmented_reduce(arr, [0, 5], [5, 10], out=(out,)),
+            [10, 35])
+        out = np.zeros(2)
+        np.add.segmented_reduce(arr, [0, 5], [5, 10], 0, None, out)
+        assert_array_equal(out, [10, 35])
+
+        # `out=...` is accepted as a keyword and returns an array
+        res = np.add.segmented_reduce(arr, [0, 5], [5, 10], out=...)
+        assert_array_equal(res, [10, 35])
+        with pytest.raises(TypeError, match="only allowed as a keyword"):
+            np.add.segmented_reduce(arr, [0, 5], [5, 10], 0, None, ...)
+
+        # A cast on the output is fine
+        out = np.zeros(2, dtype=np.int64)
+        np.add.segmented_reduce(arr, [0, 5], [5, 10], out=out)
+        assert_array_equal(out, [10, 35])
+
+    def test_out_shape_mismatch(self):
+        arr = np.arange(10.)
+        for out in [np.zeros(1), np.zeros(3), np.zeros((2, 2))]:
+            with pytest.raises(ValueError, match="(length|dimensions)"):
+                np.add.segmented_reduce(arr, [0, 5], [5, 10], out=out)
+
+        arr = np.arange(12.).reshape(3, 4)
+        with pytest.raises(ValueError, match="(length|dimensions)"):
+            np.add.segmented_reduce(arr, [0], [2], axis=1, out=np.zeros((3, 2)))
+
+    def test_out_aliasing_offsets(self):
+        # The offsets are copied, so writing the result into them is fine
+        arr = np.arange(10)
+        starts = np.array([0, 5])
+        stops = np.array([5, 10])
+
+        res = np.add.segmented_reduce(arr, starts, stops, out=starts)
+        assert res is starts
+        assert_array_equal(starts, [10, 35])
+
+    def test_non_contiguous_offsets(self):
+        arr = np.arange(10.)
+        starts = np.array([0, -1, 5, -1])[::2]
+        stops = np.array([5, -1, 10, -1])[::2]
+        assert_array_equal(
+            np.add.segmented_reduce(arr, starts, stops), [10, 35])
+
+    def test_frompyfunc(self):
+        # A ufunc using the object loop and without an identity
+        ufunc = np.frompyfunc(lambda x, y: x + y, 2, 1)
+        arr = np.arange(6)
+
+        assert_array_equal(ufunc.segmented_reduce(arr, [0, 3], [3, 6]), [3, 12])
+        with pytest.raises(ValueError, match="zero-size segment"):
+            ufunc.segmented_reduce(arr, [0], [0])
+        assert_array_equal(
+            ufunc.segmented_reduce(arr, [0, 3], [0, 6], initial=100),
+            [100, 112])
+
+    def test_out_overlapping_input(self):
+        # Writing into the array that is reduced must give the same result
+        arr = np.arange(20., dtype=np.float64)
+        starts = np.arange(0, 20, 2)
+        stops = starts + 2
+
+        expected = np.add.segmented_reduce(arr, starts, stops)
+        res = np.add.segmented_reduce(arr, starts, stops, out=arr[:10])
+        assert_array_equal(res, expected)
+
+    def test_dtype(self):
+        arr = np.arange(10, dtype=np.int8)
+        res = np.add.segmented_reduce(arr, [0], [10], dtype=np.int8)
+        assert res.dtype == np.int8
+        assert_array_equal(res, [45])
+
+        # The default upcasts small integers, just like `reduce` does
+        assert np.add.segmented_reduce(arr, [0], [10]).dtype == np.intp
+
+        res = np.add.segmented_reduce(arr, [0], [10], dtype=np.float64)
+        assert res.dtype == np.float64
+
+    def test_bad_offsets(self):
+        arr = np.arange(10.)
+        with pytest.raises(ValueError, match="same length"):
+            np.add.segmented_reduce(arr, [0, 5], [5])
+        with pytest.raises(ValueError, match="same length"):
+            np.add.segmented_reduce(arr, [0], [5, 10])
+        with pytest.raises(ValueError, match="dimension"):
+            np.add.segmented_reduce(arr, [[0, 5]], [[5, 10]])
+        with pytest.raises(ValueError, match="depth"):
+            np.add.segmented_reduce(arr, 0, 5)
+        with pytest.raises((ValueError, TypeError)):
+            np.add.segmented_reduce(arr, ["a"], [1])
+
+    def test_bad_ufuncs(self):
+        arr = np.arange(10.)
+        with pytest.raises(ValueError, match="binary functions"):
+            np.sin.segmented_reduce(arr, [0], [1])
+        with pytest.raises(ValueError, match="single value"):
+            np.divmod.segmented_reduce(arr, [0], [1])
+        with pytest.raises(RuntimeError, match="Reduction not defined"):
+            umt.inner1d.segmented_reduce(arr, [0], [1])
+
+    def test_signature(self):
+        arr = np.arange(10.)
+        expected = [10, 35]
+        # All parameters may be passed by keyword
+        assert_array_equal(
+            np.add.segmented_reduce(
+                arr, starts=[0, 5], stops=[5, 10], axis=0, dtype=None,
+                out=None, initial=np._NoValue),
+            expected)
+        # ... and by position
+        assert_array_equal(
+            np.add.segmented_reduce(arr, [0, 5], [5, 10], 0, None, None,
+                                    np._NoValue),
+            expected)
+        with pytest.raises(TypeError):
+            np.add.segmented_reduce(arr, [0], [1], invalid_kwarg=1)
+        with pytest.raises(TypeError):
+            np.add.segmented_reduce(arr)
+        with pytest.raises(TypeError):
+            np.add.segmented_reduce()
+
+    @pytest.mark.parametrize("dtype", ["f8", "f4", "i8", "i4", "u1", "m8[s]",
+                                       "c16", "e"])
+    def test_dtypes(self, dtype):
+        arr = np.arange(1, 11).astype(dtype)
+        starts, stops = [0, 3, 8, 5], [5, 3, 10, 10]
+
+        res = np.add.segmented_reduce(arr, starts, stops)
+        assert_array_equal(res, self.reference(np.add, arr, starts, stops))
+
+    def test_non_contiguous(self):
+        arr = np.arange(40.)[::4]
+        starts, stops = [0, 5], [5, 10]
+        assert_array_equal(np.add.segmented_reduce(arr, starts, stops),
+                           self.reference(np.add, arr, starts, stops))
+
+        # Byte-swapped (non-native) input
+        arr = np.arange(10.).astype(np.dtype("f8").newbyteorder())
+        assert_array_equal(np.add.segmented_reduce(arr, starts, stops),
+                           [10, 35])
+
+        # Non-contiguous output
+        out = np.zeros(4)[::2]
+        np.add.segmented_reduce(np.arange(10.), starts, stops, out=out)
+        assert_array_equal(out, [10, 35])
+
+    def test_object_dtype(self):
+        arr = np.array([1, 2, 3, 4], dtype=object)
+        assert_array_equal(
+            np.add.segmented_reduce(arr, [0, 2], [2, 4]), [3, 7])
+
+        # As for `reduce`, the identity is only used for empty segments and
+        # not to start a non-empty one (`sum` of objects must not add a 0)
+        assert_array_equal(
+            np.add.segmented_reduce(arr, [0, 2], [0, 4]), [0, 7])
+        assert_array_equal(
+            np.multiply.segmented_reduce(arr, [0, 2], [0, 4]), [1, 12])
+        arr = np.array(["a", "b", "c"], dtype=object)
+        assert_array_equal(
+            np.add.segmented_reduce(arr, [0, 1], [2, 3]), ["ab", "bc"])
+
+        # A ufunc without an identity still requires `initial`
+        with pytest.raises(ValueError, match="zero-size segment"):
+            np.maximum.segmented_reduce(arr, [0], [0])
+        assert_array_equal(
+            np.maximum.segmented_reduce(arr, [0, 1], [0, 3], initial="a"),
+            ["a", "c"])
+
+    def test_object_dtype_inplace(self):
+        # Checks that in-place segmented reductions work, see also gh-7465
+        arr = np.empty(4, dtype=object)
+        arr[:] = [[1] for i in range(4)]
+        out = np.empty(4, dtype=object)
+        out[:] = [[1] for i in range(4)]
+        np.add.segmented_reduce(arr, np.arange(4), np.arange(1, 5), out=arr)
+        np.add.segmented_reduce(arr, np.arange(4), np.arange(1, 5), out=arr)
+        assert_array_equal(arr, out)
+
+        # And the same if the axis argument is used
+        arr = np.ones((2, 4), dtype=object)
+        arr[0, :] = [[2] for i in range(4)]
+        out = np.ones((2, 4), dtype=object)
+        out[0, :] = [[2] for i in range(4)]
+        np.add.segmented_reduce(arr, np.arange(4), np.arange(1, 5),
+                                out=arr, axis=-1)
+        np.add.segmented_reduce(arr, np.arange(4), np.arange(1, 5),
+                                out=arr, axis=-1)
+        assert_array_equal(arr, out)
+
+    def test_object_dtype_cleanup_on_failure(self):
+        # Failing in the middle must not leak the initial value or result
+        arr = np.array([1, 2, None], dtype=object)
+        with pytest.raises(TypeError):
+            np.add.segmented_reduce(arr, [0], [3], initial=4)
+        with pytest.raises(TypeError):
+            np.add.segmented_reduce(arr, [0], [3])
+
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    def test_no_reference_leak(self):
+        arr = np.array([1, 2, 3], dtype=np.int32)
+        starts = np.array([0, 1])
+        stops = np.array([1, 3])
+        out = np.empty(2, dtype=np.int32)
+        initial = np.int32(0)
+        counts = [sys.getrefcount(o)
+                  for o in (arr, starts, stops, out, initial)]
+
+        for _ in range(5):
+            np.add.segmented_reduce(arr, starts, stops, dtype=np.int32)
+            np.add.segmented_reduce(arr, starts, stops, dtype=np.int32,
+                                    initial=initial)
+            np.add.segmented_reduce(arr, starts, stops, dtype=np.int32,
+                                    out=out)
+            with pytest.raises(ValueError):
+                np.maximum.segmented_reduce(arr, [0], [0])
+
+        assert counts == [sys.getrefcount(o)
+                          for o in (arr, starts, stops, out, initial)]
+
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    def test_object_no_reference_leak(self):
+        # An object `initial` is used for the empty segment (and released)
+        obj = 12345678901234567890
+        arr = np.empty(2, dtype=object)
+        arr[...] = obj
+        count = sys.getrefcount(obj)
+
+        for _ in range(5):
+            res = np.add.segmented_reduce(arr, [0, 2], [2, 2], initial=obj)
+            assert res[1] is obj
+            del res
+            # The identity used for the empty segment must be released too
+            res = np.add.segmented_reduce(arr, [0, 2], [2, 2])
+            del res
+
+        assert count == sys.getrefcount(obj)
+
+    def test_dtypes_with_references_not_supported(self):
+        # Only object dtype is supported for dtypes holding references
+        arr = np.array(["a", "b", "c"], dtype="T")
+        with pytest.raises(TypeError, match="segmented_reduce"):
+            np.add.segmented_reduce(arr, [0], [3])
+
+    def test_array_ufunc_override(self):
+        class MyArray:
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+                return (ufunc, method, inputs, kwargs)
+
+        arr = MyArray()
+        res = np.add.segmented_reduce(arr, [0, 2], [2, 4], axis=1, initial=3)
+        assert res[0] is np.add
+        assert res[1] == "segmented_reduce"
+        assert res[2] == (arr, [0, 2], [2, 4])
+        assert res[3] == {"axis": 1, "initial": 3}
+
+        # Arguments passed by position are normalized into the kwargs
+        res = np.add.segmented_reduce(arr, [0], [1], "axis0", "dtype0", "out0")
+        assert res[3] == {"axis": "axis0", "dtype": "dtype0",
+                          "out": ("out0",)}
+
+        # `stops` may be left out entirely or passed as None
+        res = np.add.segmented_reduce(arr, [0, 2])
+        assert res[2] == (arr, [0, 2])
+        res = np.add.segmented_reduce(arr, [0, 2], None)
+        assert res[2] == (arr, [0, 2])
+        res = np.add.segmented_reduce(arr, [0, 2], stops=None)
+        assert res[2] == (arr, [0, 2])
+
+        # And `initial` is only passed on when it is given
+        res = np.add.segmented_reduce(arr, [0], [1], 0, None, None,
+                                      np._NoValue)
+        assert res[3] == {"axis": 0, "dtype": None}
+
+    @pytest.mark.parametrize("ndim", [1, 2, 3])
+    @pytest.mark.parametrize("ufunc", [np.add, np.multiply, np.minimum])
+    def test_fuzz_against_reference(self, ndim, ufunc):
+        rng = np.random.RandomState(4321)
+        shape = rng.randint(1, 6, size=ndim)
+        arr = rng.randint(1, 10, size=shape).astype(np.float64)
+
+        for axis in range(-ndim, ndim):
+            n = arr.shape[axis]
+            for _ in range(10):
+                num = rng.randint(0, 5)
+                starts = rng.randint(-n - 2, n + 2, size=num)
+                stops = rng.randint(-n - 2, n + 2, size=num)
+
+                res = ufunc.segmented_reduce(
+                        arr, starts, stops, axis=axis, initial=1.)
+                expected = self.reference(
+                        ufunc, arr, starts, stops, axis=axis, initial=1.)
+                assert_array_equal(res, expected)
 
 
 class TestGUFuncProcessCoreDims:
@@ -3021,7 +3549,8 @@ def test_ufunc_input_floatingpoint_error(bad_offset):
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
 @pytest.mark.parametrize(
     "methodname",
-    ["__call__", "accumulate", "at", "outer", "reduce", "reduceat", "resolve_dtypes"],
+    ["__call__", "accumulate", "at", "outer", "reduce", "reduceat",
+     "segmented_reduce", "resolve_dtypes"],
 )
 def test_ufunc_method_signatures(methodname: str):
     method = getattr(np.ufunc, methodname)
@@ -3085,6 +3614,9 @@ def test_reduction_no_reference_leak():
     np.add.reduceat(arr, [0, 1], dtype=np.int32)
     assert count == sys.getrefcount(arr)
 
+    np.add.segmented_reduce(arr, [0, 1], [1, 3], dtype=np.int32, initial=0)
+    assert count == sys.getrefcount(arr)
+
     # with `out=` the reference count is not changed
     out = np.empty((), dtype=np.int32)
     out_count = sys.getrefcount(out)
@@ -3107,6 +3639,10 @@ def test_reduction_no_reference_leak():
     assert count == sys.getrefcount(arr)
     assert out_count == sys.getrefcount(out)
 
+    np.add.segmented_reduce(arr, [0, 1], [1, 3], dtype=np.int32, out=out)
+    assert count == sys.getrefcount(arr)
+    assert out_count == sys.getrefcount(out)
+
 
 def test_object_reduce_cleanup_on_failure():
     # Test cleanup, including of the initial value (manually provided or not)
@@ -3121,6 +3657,8 @@ def test_object_reduce_cleanup_on_failure():
 @pytest.mark.parametrize("method",
         [np.add.accumulate, np.add.reduce,
          pytest.param(lambda x: np.add.reduceat(x, [0]), id="reduceat"),
+         pytest.param(lambda x: np.add.segmented_reduce(x, [0], [3]),
+                      id="segmented_reduce"),
          pytest.param(lambda x: np.log.at(x, [2]), id="at")])
 def test_ufunc_methods_floaterrors(method):
     # adding inf and -inf (or log(-inf) creates an invalid float and warns
