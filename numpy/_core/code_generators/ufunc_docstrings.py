@@ -2648,10 +2648,13 @@ add_newdoc('numpy._core.umath', 'minimummaximum',
     ``(minimum(x1, x2), maximum(x1, x2))`` but computes both in a single pass
     over the inputs.
 
+    This ufunc is not part of the public API; it is the engine behind
+    `minmax`.
+
     Examples
     --------
-    >>> import numpy as np
-    >>> np.minimummaximum([2, 3, 4], [1, 5, 2])
+    >>> from numpy._core.umath import minimummaximum
+    >>> minimummaximum([2, 3, 4], [1, 5, 2])
     (array([1, 3, 2]), array([2, 5, 4]))
 
     """)
