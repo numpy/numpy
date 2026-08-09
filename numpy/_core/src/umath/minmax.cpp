@@ -8,6 +8,8 @@
  */
 #include <Python.h>
 
+#include "npy_pycompat.h"
+
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
@@ -15,7 +17,6 @@
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
 
-#include "npy_cpu_dispatch.h"
 #include "array_method.h"
 #include "dispatching.h"
 #include "dtypemeta.h"
@@ -109,9 +110,12 @@ init_minimummaximum(PyObject *umath)
         NPY_OBJECT,
     };
 
-    PyUFuncObject *ufunc =
-            (PyUFuncObject *)PyDict_GetItemString(umath, "minimummaximum");
-    if (ufunc == NULL) {
+    PyObject *ufunc = NULL;
+    int res = PyDict_GetItemStringRef(umath, "minimummaximum", &ufunc);
+    if (res < 0) {
+        return -1;
+    }
+    if (res == 0) {
         PyErr_SetString(PyExc_RuntimeError,
                 "internal NumPy error: minimummaximum ufunc not found");
         return -1;
@@ -120,17 +124,17 @@ init_minimummaximum(PyObject *umath)
     for (size_t k = 0; k < sizeof(typenums) / sizeof(typenums[0]); k++) {
         PyArray_DTypeMeta *dt = PyArray_DTypeFromTypeNum(typenums[k]);
         if (dt == NULL) {
-            return -1;
+            goto fail;
         }
-        PyObject *info = get_info_no_cast(ufunc, dt, 4);
+        PyObject *info = get_info_no_cast((PyUFuncObject *)ufunc, dt, 4);
         Py_DECREF(dt);
         if (info == NULL) {
-            return -1;
+            goto fail;
         }
         if (info == Py_None || !PyObject_TypeCheck(info, &PyArrayMethod_Type)) {
             PyErr_SetString(PyExc_RuntimeError,
                     "internal NumPy error: minimummaximum loop not found");
-            return -1;
+            goto fail;
         }
         PyArrayMethodObject *meth = (PyArrayMethodObject *)info;
         /*
@@ -143,5 +147,10 @@ init_minimummaximum(PyObject *umath)
         meth->get_reduction_loop = &minimummaximum_get_reduction_loop;
     }
 
+    Py_DECREF(ufunc);
     return 0;
+
+  fail:
+    Py_DECREF(ufunc);
+    return -1;
 }
