@@ -710,7 +710,7 @@ __all__ = [
     "shares_memory", "may_share_memory",
     "all", "amax", "amin", "any", "argmax", "argmin", "argpartition", "argsort",
     "around", "choose", "clip", "compress", "cumprod", "cumsum", "cumulative_prod",
-    "cumulative_sum", "diagonal", "mean", "max", "min", "matrix_transpose", "ndim",
+    "cumulative_sum", "diagonal", "mean", "max", "min", "minmax", "matrix_transpose", "ndim",
     "nonzero", "partition", "prod", "ptp", "put", "ravel", "repeat", "reshape",
     "resize", "round", "searchsorted", "shape", "size", "sort", "squeeze", "std", "sum",
     "swapaxes", "take", "top_k", "trace", "transpose", "var",
