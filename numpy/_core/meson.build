@@ -1471,6 +1471,7 @@ py.extension_module('_simd',
   install: true,
   subdir: 'numpy/_core',
   install_tag: 'tests',
+  limited_api: py_limited_api,
 )
 
 python_sources = [
