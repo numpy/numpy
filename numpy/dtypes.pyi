@@ -581,7 +581,7 @@ class StringDType(  # type: ignore[misc]
     _NBit[L[8], L[16]],
     # TODO(jorenham): change once we have a string scalar type:
     # https://github.com/numpy/numpy/issues/28165
-    np.dtype[str],  # type: ignore[type-var]  # pyright: ignore[reportGeneralTypeIssues, reportInvalidTypeArguments]
+    np.dtype[str],  # type: ignore[type-var]  # pyright: ignore[reportGeneralTypeIssues, reportInvalidTypeArguments]  # ty: ignore[invalid-type-arguments]
     Generic[_NaObjectT_co],
 ):
     @property
