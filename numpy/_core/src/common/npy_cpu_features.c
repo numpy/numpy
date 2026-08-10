@@ -3,6 +3,9 @@
 #include "numpy/npy_common.h"
 #include "numpy/npy_cpu.h" // To guarantee the CPU definitions are in scope.
 
+#include <stdlib.h>
+#include <string.h>
+
 /******************** Private Definitions *********************/
 
 // This is initialized during module initialization and thereafter immutable.
@@ -163,7 +166,10 @@ npy_cpu_features_dict(void)
         Py_DECREF(LIST); \
         return NULL; \
     } \
-    PyList_SET_ITEM(LIST, index++, item);
+    if (PyList_SetItem(LIST, index++, item) < 0) { \
+        Py_DECREF(LIST); \
+        return NULL; \
+    }
 
 NPY_VISIBILITY_HIDDEN PyObject *
 npy_cpu_baseline_list(void)

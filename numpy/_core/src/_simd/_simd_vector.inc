@@ -27,11 +27,6 @@ simd__vector_item(PySIMDVectorObject *self, Py_ssize_t i)
     return simd_scalar_to_number(data, info->to_scalar);
 }
 
-static PySequenceMethods simd__vector_as_sequence = {
-    .sq_length = (lenfunc) simd__vector_length,
-    .sq_item = (ssizeargfunc) simd__vector_item
-};
-
 static PyObject *
 simd__vector_name(PySIMDVectorObject *self, void *NPY_UNUSED(ignored))
 {
@@ -72,16 +67,50 @@ simd__vector_compare(PyObject *self, PyObject *other, int cmp_op)
     }
     return obj;
 }
-static PyTypeObject PySIMDVectorType = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = NPY_TOSTRING(NPY_CPU_DISPATCH_CURFX(VECTOR)),
-    .tp_basicsize = sizeof(PySIMDVectorObject),
-    .tp_repr = (reprfunc)simd__vector_repr,
-    .tp_as_sequence = &simd__vector_as_sequence,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_richcompare = simd__vector_compare,
-    .tp_getset = simd__vector_getset
+// The type is the only reference a PySIMDVectorObject holds.
+static int
+simd__vector_traverse(PyObject *self, visitproc visit, void *arg)
+{
+    Py_VISIT(Py_TYPE(self));
+    return 0;
+}
+
+static PyType_Slot simd__vector_slots[] = {
+    {Py_tp_repr,        (void*)simd__vector_repr},
+    {Py_tp_richcompare, (void*)simd__vector_compare},
+    {Py_tp_getset,      (void*)simd__vector_getset},
+    {Py_sq_length,      (void*)simd__vector_length},
+    {Py_sq_item,        (void*)simd__vector_item},
+    {Py_tp_traverse,    (void*)simd__vector_traverse},
+    {0, NULL}
 };
+
+static PyType_Spec simd__vector_spec = {
+    /*
+     * The dot is required: it splits `__module__` from `__name__`, which stays
+     * VECTOR_<TARGET>. Without one `__module__` is undefined, which CPython
+     * reports as a DeprecationWarning.
+     */
+    .name = SIMD_MODULE_NAME "." NPY_TOSTRING(NPY_CPU_DISPATCH_CURFX(VECTOR)),
+    .basicsize = sizeof(PySIMDVectorObject),
+    /*
+     * Heap types are mutable and instantiable by default; the last two flags
+     * restore the static type's behaviour. HAVE_GC is required because
+     * instances reference their type.
+     */
+    .flags = Py_TPFLAGS_DEFAULT
+             | Py_TPFLAGS_HAVE_GC
+             | Py_TPFLAGS_IMMUTABLETYPE
+             | Py_TPFLAGS_DISALLOW_INSTANTIATION,
+    .slots = simd__vector_slots
+};
+
+/*
+ * One per compiled dispatch target, like the static PyTypeObject it replaces.
+ * Module state would need multi-phase init and a module handle at every
+ * intrinsic call site.
+ */
+static PyObject *PySIMDVectorType = NULL;
 
 /************************************
  ** Protected Definitions
@@ -107,9 +136,17 @@ PySIMDVector_FromData(simd_data data, simd_data_type dtype)
     const simd_data_info *info = simd_data_getinfo(dtype);
     assert(info->is_vector && info->nlanes > 0);
 
-    PySIMDVectorObject *vec = PyObject_New(PySIMDVectorObject, &PySIMDVectorType);
+    /*
+     * PyObject_New() must not be used with Py_TPFLAGS_HAVE_GC, and skips the
+     * reference on the type that a heap type's instance owns.
+     * PyType_GenericAlloc() is this type's tp_alloc, which the Limited API
+     * cannot reach directly; it increfs the type and GC-tracks the object.
+     */
+    PySIMDVectorObject *vec = (PySIMDVectorObject *)PyType_GenericAlloc(
+        (PyTypeObject *)PySIMDVectorType, 0
+    );
     if (vec == NULL) {
-        return (PySIMDVectorObject*)PyErr_NoMemory();
+        return NULL;
     }
     vec->dtype = dtype;
     if (info->is_bool) {
@@ -140,9 +177,7 @@ PySIMDVector_AsData(PySIMDVectorObject *vec, simd_data_type dtype)
     assert(info->is_vector && info->nlanes > 0);
 
     simd_data data = {.u64 = 0};
-    if (!PyObject_IsInstance(
-        (PyObject *)vec, (PyObject *)&PySIMDVectorType
-    )) {
+    if (!PyObject_IsInstance((PyObject *)vec, PySIMDVectorType)) {
         PyErr_Format(PyExc_TypeError,
             "a vector type %s is required", info->pyname
         );
@@ -180,14 +215,9 @@ PySIMDVector_AsData(PySIMDVectorObject *vec, simd_data_type dtype)
 static int
 PySIMDVectorType_Init(PyObject *module)
 {
-    Py_INCREF(&PySIMDVectorType);
-    if (PyType_Ready(&PySIMDVectorType)) {
+    PySIMDVectorType = PyType_FromSpec(&simd__vector_spec);
+    if (PySIMDVectorType == NULL) {
         return -1;
     }
-    if (PyModule_AddObject(
-        module, "vector_type",(PyObject *)&PySIMDVectorType
-    )) {
-        return -1;
-    }
-    return 0;
+    return PyModule_AddObjectRef(module, "vector_type", PySIMDVectorType);
 }
