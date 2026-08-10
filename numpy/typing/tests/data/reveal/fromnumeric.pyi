@@ -36,6 +36,8 @@ f: float
 _py_list_1d: list[int]
 _py_list_2d: list[list[int]]
 _py_list_3d: list[list[list[int]]]
+_py_str_1d: list[str]
+_py_str_2d: list[list[str]]
 
 _dtype_list: list[np.dtype]
 _any_list: list[Any]
@@ -43,6 +45,10 @@ _any_list: list[Any]
 # integer‑dtype subclass for argmin/argmax
 class NDArrayIntSubclass(np.ndarray[tuple[Any, ...], np.dtype[np.intp]]): ...
 AR_sub_i: NDArrayIntSubclass
+
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 
 assert_type(np.take(b, 0), np.bool)
 assert_type(np.take(f4, 0), np.float32)
@@ -117,7 +123,11 @@ assert_type(np.sort(AR_f4, axis=None), np.ndarray[tuple[int], np.dtype[np.float3
 assert_type(np.sort(AR_f4_1d, axis=None), np.ndarray[tuple[int], np.dtype[np.float32]])
 assert_type(np.sort(AR_f4_2d, axis=None), np.ndarray[tuple[int], np.dtype[np.float32]])
 
-assert_type(np.argsort([2, 1]), npt.NDArray[np.intp])
+assert_type(np.argsort(_py_list_1d), _Array1D[np.intp])
+assert_type(np.argsort(_py_list_2d), _Array2D[np.intp])
+assert_type(np.argsort(_py_list_3d), _Array3D[np.intp])
+assert_type(np.argsort(_py_str_1d), _Array1D[np.intp])
+assert_type(np.argsort(_py_str_2d), _Array2D[np.intp])
 assert_type(np.argsort(AR_b), npt.NDArray[np.intp])
 assert_type(np.argsort(AR_f4), npt.NDArray[np.intp])
 assert_type(np.argsort(AR_f4_1d), np.ndarray[tuple[int], np.dtype[np.intp]])
