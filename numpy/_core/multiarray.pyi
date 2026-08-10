@@ -1,6 +1,7 @@
 import datetime as dt
 from _typeshed import Incomplete, StrOrBytesPath, SupportsLenAndGetItem
 from collections.abc import Buffer, Callable, Iterable, Sequence
+from decimal import Decimal
 from types import EllipsisType, TracebackType
 from typing import (
     Any,
@@ -73,6 +74,7 @@ from numpy._typing import (
     _FloatLike_co,
     _IntLike_co,
     _NestedSequence,
+    _ObjectCodes,
     _ScalarLike_co,
     _Shape,
     _ShapeLike,
@@ -183,6 +185,7 @@ __all__ = [
 _ArrayT_co = TypeVar("_ArrayT_co", bound=np.ndarray, default=np.ndarray, covariant=True)
 
 type _Array[ShapeT: _Shape, ScalarT: np.generic] = ndarray[ShapeT, dtype[ScalarT]]
+type _Array0D[ScalarT: np.generic] = ndarray[tuple[()], dtype[ScalarT]]
 type _Array1D[ScalarT: np.generic] = ndarray[tuple[int], dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = ndarray[tuple[int, int], dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = ndarray[tuple[int, int, int], dtype[ScalarT]]
@@ -221,6 +224,10 @@ type _RollKind = L[  # `raise` is deliberately excluded
 type _ArangeScalar = np.integer | np.floating | np.datetime64 | np.timedelta64
 type _InnerScalar = np.number | np.bool | np.timedelta64
 type _DotScalar = np.number | np.bool
+type _ScalarNotObject = np.number | np.bool | np.character | np.datetime64 | np.timedelta64  # np.generic - np.object_
+
+# A code search survey showed that these types are most frequently used for `array(..., dtype=object_)`
+type _ObjItemT = complex | str | bytes | dt.date | Decimal | dict[Any, Any] | None
 
 # The datetime functions perform unsafe casts to `datetime64[D]`,
 # so a lot of different argument types are allowed here
@@ -499,7 +506,7 @@ def zeros(
 
 # keep in sync with `zeros_like` in core/numeric.pyi
 @overload  # known array, subok=True (default)
-def empty_like[ArrayT: np.ndarray](
+def empty_like[ArrayT: NDArray[_ScalarNotObject]](
     a: ArrayT,
     /,
     dtype: None = None,
@@ -510,7 +517,7 @@ def empty_like[ArrayT: np.ndarray](
     device: L["cpu"] | None = None,
 ) -> ArrayT: ...
 @overload  # known array, subok=False
-def empty_like[ShapeT: _Shape, DTypeT: np.dtype](
+def empty_like[ShapeT: _Shape, DTypeT: np.dtype[_ScalarNotObject]](
     a: np.ndarray[ShapeT, DTypeT],
     /,
     dtype: None = None,
@@ -520,6 +527,17 @@ def empty_like[ShapeT: _Shape, DTypeT: np.dtype](
     shape: None = None,
     device: L["cpu"] | None = None,
 ) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # known array, object_
+def empty_like[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.object_]],
+    /,
+    dtype: None = None,
+    order: _OrderKACF = "K",
+    *,
+    subok: bool = True,
+    shape: None = None,
+    device: L["cpu"] | None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.object_[Any | None]]]: ...
 @overload  # known array, dtype=<known>
 def empty_like[ShapeT: _Shape, ScalarT: np.generic](
     a: np.ndarray[ShapeT],
@@ -543,7 +561,7 @@ def empty_like[ShapeT: _Shape](
     device: L["cpu"] | None = None,
 ) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
 @overload  # known array-like, shape=<known>
-def empty_like[ShapeT: _Shape, ScalarT: np.generic](
+def empty_like[ShapeT: _Shape, ScalarT: _ScalarNotObject](
     a: _ArrayLike[ScalarT],
     /,
     dtype: None = None,
@@ -553,8 +571,19 @@ def empty_like[ShapeT: _Shape, ScalarT: np.generic](
     shape: ShapeT,
     device: L["cpu"] | None = None,
 ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # known array-like, object_, shape=<known>
+def empty_like[ShapeT: _Shape](
+    a: _ArrayLike[np.object_],
+    /,
+    dtype: None = None,
+    order: _OrderKACF = "K",
+    subok: bool = True,
+    *,
+    shape: ShapeT,
+    device: L["cpu"] | None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.object_[Any | None]]]: ...
 @overload  # known array-like
-def empty_like[ScalarT: np.generic](
+def empty_like[ScalarT: _ScalarNotObject](
     a: _ArrayLike[ScalarT],
     /,
     dtype: None = None,
@@ -564,6 +593,17 @@ def empty_like[ScalarT: np.generic](
     *,
     device: L["cpu"] | None = None,
 ) -> NDArray[ScalarT]: ...
+@overload  # known array-like, object_
+def empty_like(
+    a: _ArrayLike[np.object_],
+    /,
+    dtype: None = None,
+    order: _OrderKACF = "K",
+    subok: bool = True,
+    shape: _ShapeLike | None = None,
+    *,
+    device: L["cpu"] | None = None,
+) -> NDArray[np.object_[Any | None]]: ...
 @overload  # unknown, dtype=<known>
 def empty_like[ScalarT: np.generic](
     a: object,
@@ -612,8 +652,8 @@ def array[ShapeT: _Shape, DTypeT: np.dtype](
     ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> np.ndarray[ShapeT, DTypeT]: ...
-@overload  # ndarray, dtype=<known>
-def array[ShapeT: _Shape, ScalarT: np.generic](
+@overload  # ndarray, dtype=<known> (but not `object_`)
+def array[ShapeT: _Shape, ScalarT: _ScalarNotObject](
     object: np.ndarray[ShapeT],
     dtype: _DTypeLike[ScalarT],
     *,
@@ -756,6 +796,66 @@ def array(
     ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array2D[np.complex128]: ...
+@overload  # scalar, dtype=object_
+def array[ItemT](
+    object: np.generic[ItemT],
+    dtype: _DTypeLike[np.object_] | _ObjectCodes,
+    *,
+    copy: bool | _CopyMode | None = True,
+    order: _OrderKACF = "K",
+    subok: bool = False,
+    ndmin: L[0] = 0,
+    ndmax: int = 0,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array0D[np.object_[ItemT]]: ...
+@overload  # ndarray, dtype=object_
+def array[ShapeT: _Shape, ItemT](
+    object: np.ndarray[ShapeT, np.dtype[np.generic[ItemT]]],
+    dtype: _DTypeLike[np.object_] | _ObjectCodes,
+    *,
+    copy: bool | _CopyMode | None = True,
+    order: _OrderKACF = "K",
+    subok: bool = False,
+    ndmin: L[0] = 0,
+    ndmax: int = 0,
+    like: _SupportsArrayFunc | None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.object_[ItemT]]]: ...
+@overload  # 0d T@builtin, dtype=object_
+def array[ItemT: _ObjItemT](
+    object: ItemT,
+    dtype: _DTypeLike[np.object_] | _ObjectCodes,
+    *,
+    copy: bool | _CopyMode | None = True,
+    order: _OrderKACF = "K",
+    subok: bool = False,
+    ndmin: L[0] = 0,
+    ndmax: int = 0,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array0D[np.object_[ItemT]]: ...
+@overload  # 1d T@builtin, dtype=object_
+def array[ItemT: _ObjItemT](
+    object: list[ItemT],
+    dtype: _DTypeLike[np.object_] | _ObjectCodes,
+    *,
+    copy: bool | _CopyMode | None = True,
+    order: _OrderKACF = "K",
+    subok: bool = False,
+    ndmin: L[0, 1] = 0,
+    ndmax: int = 0,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.object_[ItemT]]: ...
+@overload  # ?d T@builtin, dtype=object_
+def array[ItemT: _ObjItemT](
+    object: _NestedSequence[ItemT],
+    dtype: _DTypeLike[np.object_] | _ObjectCodes,
+    *,
+    copy: bool | _CopyMode | None = True,
+    order: _OrderKACF = "K",
+    subok: bool = False,
+    ndmin: int = 0,
+    ndmax: int = 0,
+    like: _SupportsArrayFunc | None = None,
+) -> NDArray[np.object_[ItemT | Any]]: ...  # `| Any` because it might be ragged
 @overload  # ?, dtype=<known>
 def array[ScalarT: np.generic](
     object: Any,
