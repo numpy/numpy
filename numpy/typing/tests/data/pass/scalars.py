@@ -91,7 +91,7 @@ np.datetime64("2019")
 np.datetime64(b"2019")
 np.datetime64("2019", "D")
 np.datetime64("2019", "us")
-np.datetime64("1970-01-01T00:00:05", "as")
+np.datetime64("1970-01-01T00:00:05", "as")  # "2019" overflows datetime64[as]
 np.datetime64(np.datetime64())
 np.datetime64(np.datetime64())
 np.datetime64(dt.datetime(2000, 5, 3))
