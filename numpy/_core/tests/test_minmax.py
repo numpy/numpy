@@ -2,7 +2,7 @@
 import pytest
 
 import numpy as np
-from numpy._core.umath import minimummaximum
+from numpy._core.umath import _minimummaximum as minimummaximum
 from numpy.testing import assert_array_equal, assert_equal
 
 # integer + floating types covered by the fused loops

@@ -1,5 +1,5 @@
 /*
- * Registration of the fused `minimummaximum` reduction loops.
+ * Registration of the fused `_minimummaximum` reduction loops.
  *
  * The loops themselves are defined next to the `minimum`/`maximum` loops
  * (loops_minmax.dispatch.c.src for the SIMD dtypes and loops.c.src for the
@@ -26,7 +26,7 @@
 
 
 /*
- * `get_reduction_loop` slot for `minimummaximum`: return the dedicated
+ * `get_reduction_loop` slot for `_minimummaximum`: return the dedicated
  * (nout+1)->nout reduction loop for the resolved dtype.
  */
 static int
@@ -87,7 +87,7 @@ minimummaximum_get_reduction_loop(
             break;
         default:
             PyErr_SetString(PyExc_RuntimeError,
-                    "minimummaximum reduction: unsupported dtype");
+                    "_minimummaximum reduction: unsupported dtype");
             return -1;
     }
     *out_loop = loop;
@@ -111,13 +111,13 @@ init_minimummaximum(PyObject *umath)
     };
 
     PyObject *ufunc = NULL;
-    int res = PyDict_GetItemStringRef(umath, "minimummaximum", &ufunc);
+    int res = PyDict_GetItemStringRef(umath, "_minimummaximum", &ufunc);
     if (res < 0) {
         return -1;
     }
     if (res == 0) {
         PyErr_SetString(PyExc_RuntimeError,
-                "internal NumPy error: minimummaximum ufunc not found");
+                "internal NumPy error: _minimummaximum ufunc not found");
         return -1;
     }
 
@@ -133,12 +133,12 @@ init_minimummaximum(PyObject *umath)
         }
         if (info == Py_None || !PyObject_TypeCheck(info, &PyArrayMethod_Type)) {
             PyErr_SetString(PyExc_RuntimeError,
-                    "internal NumPy error: minimummaximum loop not found");
+                    "internal NumPy error: _minimummaximum loop not found");
             goto fail;
         }
         PyArrayMethodObject *meth = (PyArrayMethodObject *)info;
         /*
-         * `minimummaximum` is reorderable (like `minimum`/`maximum`), but the
+         * `_minimummaximum` is reorderable (like `minimum`/`maximum`), but the
          * legacy ArrayMethod only sets that flag for nin==2/nout==1 loops, so
          * set it here to allow multi-axis reductions.
          */
