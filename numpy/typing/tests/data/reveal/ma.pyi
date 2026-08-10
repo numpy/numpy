@@ -6,6 +6,9 @@ from numpy._typing import NDArray, _AnyShape
 type MaskedArray[ScalarT: np.generic] = np.ma.MaskedArray[_AnyShape, np.dtype[ScalarT]]
 type _NoMaskType = np.bool[Literal[False]]
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _MArray1D[ScalarT: np.generic] = np.ma.MaskedArray[tuple[int], np.dtype[ScalarT]]
+type _MArray2D[ScalarT: np.generic] = np.ma.MaskedArray[tuple[int, int], np.dtype[ScalarT]]
+type _MArray3D[ScalarT: np.generic] = np.ma.MaskedArray[tuple[int, int, int], np.dtype[ScalarT]]
 
 ###
 
@@ -56,7 +59,9 @@ MAR_subclass_i: MaskedArraySubclassI
 MAR_into_subclass: IntoMaskedArraySubClass[np.float32]
 
 MAR_1d: np.ma.MaskedArray[tuple[int], np.dtype]
+MAR_1d_f4: np.ma.MaskedArray[tuple[int], np.dtype[np.float32]]
 MAR_2d_f4: np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]]
+MAR_3d_f4: np.ma.MaskedArray[tuple[int, int, int], np.dtype[np.float32]]
 MAR_2d_V: np.ma.MaskedArray[tuple[int, int], np.dtype[np.void]]
 
 b: np.bool
@@ -1111,3 +1116,19 @@ assert_type(np.ma.unwrap(MAR_o), MaskedArray[np.object_[int]])
 assert_type(np.ma.unwrap(MAR_i8, period=4), MaskedArray[np.int64])
 assert_type(np.ma.unwrap(MAR_i8), MaskedArray[np.float64])
 assert_type(np.ma.unwrap(AR_LIKE_f), MaskedArray[np.float64])
+
+assert_type(np.ma.vstack([MAR_f4, MAR_f4]), MaskedArray[np.float32])
+assert_type(np.ma.vstack([AR_f4, AR_f4]), MaskedArray[np.float32])
+assert_type(np.ma.vstack([MAR_1d_f4, MAR_1d_f4]), _MArray2D[np.float32])
+assert_type(np.ma.vstack([MAR_2d_f4, MAR_2d_f4]), _MArray2D[np.float32])
+assert_type(np.ma.vstack([MAR_3d_f4, MAR_3d_f4]), _MArray3D[np.float32])
+assert_type(np.ma.vstack([MAR_3d_f4, MAR_3d_f4], dtype=np.int8), _MArray3D[np.int8])
+assert_type(np.ma.vstack([AR_LIKE_f, AR_LIKE_f]), MaskedArray[Any])
+
+assert_type(np.ma.hstack([MAR_f4, MAR_f4]), MaskedArray[np.float32])
+assert_type(np.ma.hstack([AR_f4, AR_f4]), MaskedArray[np.float32])
+assert_type(np.ma.hstack([MAR_1d_f4, MAR_1d_f4]), _MArray1D[np.float32])
+assert_type(np.ma.hstack([MAR_2d_f4, MAR_2d_f4]), _MArray2D[np.float32])
+assert_type(np.ma.hstack([MAR_3d_f4, MAR_3d_f4]), _MArray3D[np.float32])
+assert_type(np.ma.hstack([MAR_3d_f4, MAR_3d_f4], dtype=np.int8), _MArray3D[np.int8])
+assert_type(np.ma.hstack([AR_LIKE_f, AR_LIKE_f]), MaskedArray[Any])
