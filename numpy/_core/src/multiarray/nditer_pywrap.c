@@ -137,7 +137,7 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
         if (PyUnicode_Check(f)) {
             /* accept unicode input */
             str = (char *)PyUnicode_AsUTF8AndSize(f, &length);
-            if(str == NULL) {
+            if (str == NULL) {
                 Py_DECREF(f);
                 return 0;
             }
