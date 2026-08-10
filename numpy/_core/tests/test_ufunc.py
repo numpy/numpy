@@ -2963,8 +2963,8 @@ class TestSegmentedReduce:
         assert_array_equal(starts, starts_copy)
         assert_array_equal(stops, stops_copy)
 
-    @pytest.mark.parametrize("offset_dtype", [np.int8, np.int32, np.intp,
-                                              np.uint8, np.uint32])
+    @pytest.mark.parametrize("offset_dtype", [np.int8, np.int16, np.int32,
+                                              np.intp, np.uint8, np.uint16])
     def test_offset_dtypes(self, offset_dtype):
         arr = np.arange(10.)
         starts = np.array([0, 5], dtype=offset_dtype)
