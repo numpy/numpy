@@ -21,9 +21,7 @@ from numpy import (
     _PartitionKind,
     _SortKind,
     _SortSide,
-    float16,
     intp,
-    object_,
 )
 from numpy._globals import _NoValueType
 from numpy._typing import (
@@ -39,7 +37,6 @@ from numpy._typing import (
     _ArrayLikeInt_co,
     _ArrayLikeObject_co,
     _BoolLike_co,
-    _ComplexLike_co,
     _DTypeLike,
     _FloatLike_co,
     _IntLike_co,
@@ -2109,56 +2106,68 @@ def ndim(a: ArrayLike) -> int: ...
 
 def size(a: ArrayLike, axis: int | tuple[int, ...] | None = None) -> int: ...
 
-# TODO: Fix overlapping overloads: https://github.com/numpy/numpy/issues/27032
-@overload
-def around(
-    a: _BoolLike_co,
-    decimals: SupportsIndex = 0,
-    out: None = None,
-) -> float16: ...
-@overload
-def around[ScalarOrArrayT: np.number | np.object_ | NDArray[np.number | np.object_]](
+#
+@overload  # known scalar or array
+def around[ScalarOrArrayT: np.number | NDArray[np.number | np.object_]](
     a: ScalarOrArrayT,
     decimals: SupportsIndex = 0,
     out: None = None,
 ) -> ScalarOrArrayT: ...
-@overload
-def around(
-    a: _ComplexLike_co | object_,
+@overload  # 0d bool
+def around(a: _BoolLike_co, decimals: SupportsIndex = 0, out: None = None) -> np.float16: ...
+@overload  # 0d int  (overlaps with bool)
+def around(a: int, decimals: SupportsIndex = 0, out: None = None) -> np.int_ | Any: ...
+@overload  # 0d float  (overlaps with int)
+def around(a: float, decimals: SupportsIndex = 0, out: None = None) -> np.float64 | Any: ...
+@overload  # 0d complex  (overlaps with float)
+def around(a: complex, decimals: SupportsIndex = 0, out: None = None) -> np.complex128 | Any: ...
+@overload  # Nd bool
+def around[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.bool]],
     decimals: SupportsIndex = 0,
     out: None = None,
-) -> Any: ...
-@overload
-def around(
-    a: _ArrayLikeBool_co,
+) -> np.ndarray[ShapeT, np.dtype[np.float16]]: ...
+@overload  # 1d bool
+def around(a: list[bool], decimals: SupportsIndex = 0, out: None = None) -> _Array1D[np.float16]: ...
+@overload  # 1d int
+def around(a: list[int], decimals: SupportsIndex = 0, out: None = None) -> _Array1D[np.int_]: ...
+@overload  # 1d float
+def around(a: list[float], decimals: SupportsIndex = 0, out: None = None) -> _Array1D[np.float64]: ...
+@overload  # 1d complex
+def around(a: list[complex], decimals: SupportsIndex = 0, out: None = None) -> _Array1D[np.complex128]: ...
+@overload  # 2d bool
+def around(a: Sequence[list[bool]], decimals: SupportsIndex = 0, out: None = None) -> _Array2D[np.float16]: ...
+@overload  # 2d int
+def around(a: Sequence[list[int]], decimals: SupportsIndex = 0, out: None = None) -> _Array2D[np.int_]: ...
+@overload  # 2d float
+def around(a: Sequence[list[float]], decimals: SupportsIndex = 0, out: None = None) -> _Array2D[np.float64]: ...
+@overload  # 2d complex
+def around(a: Sequence[list[complex]], decimals: SupportsIndex = 0, out: None = None) -> _Array2D[np.complex128]: ...
+@overload  # ?d known dtype
+def around[ScalarT: np.number | np.object_](
+    a: _ArrayLike[ScalarT],
     decimals: SupportsIndex = 0,
     out: None = None,
-) -> NDArray[float16]: ...
-@overload
-def around[NumberOrObjectT: np.number | np.object_](
-    a: _ArrayLike[NumberOrObjectT],
-    decimals: SupportsIndex = 0,
-    out: None = None,
-) -> NDArray[NumberOrObjectT]: ...
-@overload
-def around(
-    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
-    decimals: SupportsIndex = 0,
-    out: None = None,
-) -> NDArray[Any]: ...
-@overload
+) -> NDArray[ScalarT] | Any: ...
+@overload  # out=<given>  (postional)
 def around[ArrayT: np.ndarray](
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
     decimals: SupportsIndex,
     out: ArrayT,
 ) -> ArrayT: ...
-@overload
+@overload  # out=<given>  (keyword)
 def around[ArrayT: np.ndarray](
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
     decimals: SupportsIndex = 0,
     *,
     out: ArrayT,
 ) -> ArrayT: ...
+@overload  # fallback
+def around(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    decimals: SupportsIndex = 0,
+    out: None = None,
+) -> NDArray[Any] | Any: ...
 
 # keep in sync with `sum` below (but without `timedelta64`)
 @overload  # ~builtins.float

@@ -44,6 +44,10 @@ _any_list: list[Any]
 class NDArrayIntSubclass(np.ndarray[tuple[Any, ...], np.dtype[np.intp]]): ...
 AR_sub_i: NDArrayIntSubclass
 
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+
 assert_type(np.take(b, 0), np.bool)
 assert_type(np.take(f4, 0), np.float32)
 assert_type(np.take(f, 0), Any)
@@ -389,16 +393,27 @@ assert_type(np.size(f), int)
 assert_type(np.size(AR_b), int)
 assert_type(np.size(AR_f4), int)
 
-assert_type(np.around(b), np.float16)
-assert_type(np.around(f), Any)
+assert_type(np.around(True), np.float16)
+assert_type(np.around(1), np.int_ | Any)
+assert_type(np.around(1.0), np.float64 | Any)
+assert_type(np.around(1j), np.complex128 | Any)
 assert_type(np.around(i8), np.int64)
 assert_type(np.around(f4), np.float32)
+assert_type(np.around([True]), _Array1D[np.float16])
+assert_type(np.around([1]), _Array1D[np.int_])
+assert_type(np.around([1.0]), _Array1D[np.float64])
+assert_type(np.around([1j]), _Array1D[np.complex128])
+assert_type(np.around([[True]]), _Array2D[np.float16])
+assert_type(np.around([[1]]), _Array2D[np.int_])
+assert_type(np.around([[1.0]]), _Array2D[np.float64])
+assert_type(np.around([[1j]]), _Array2D[np.complex128])
 assert_type(np.around(AR_b), npt.NDArray[np.float16])
 assert_type(np.around(AR_i8), npt.NDArray[np.int64])
 assert_type(np.around(AR_f4), npt.NDArray[np.float32])
-assert_type(np.around([1.5]), npt.NDArray[Any])
+assert_type(np.around(AR_f4_1d), _Array1D[np.float32])
+assert_type(np.around(AR_f4_2d), _Array2D[np.float32])
+assert_type(np.around(AR_f4_3d), _Array3D[np.float32])
 assert_type(np.around(AR_f4, out=AR_subclass), NDArraySubclass)
-assert_type(np.around(AR_f4_1d), np.ndarray[tuple[int], np.dtype[np.float32]])
 
 assert_type(np.prod(AR_nd), Any)
 assert_type(np.prod(AR_b), np.int_)
