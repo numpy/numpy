@@ -5982,6 +5982,10 @@ bool_ = bool
 # `object_` cannot exists (at runtime).
 @final
 class object_(generic[_ItemT_co], Generic[_ItemT_co]):
+    @classmethod   # `object_` is (also) subscriptable at runtime
+    def __class_getitem__[T](cls: T, type_arg: type | object, /) -> T: ...
+
+    #
     @overload
     def __new__(cls, value: None = None, /) -> None: ...  # type: ignore[misc]
     @overload
