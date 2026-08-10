@@ -815,7 +815,10 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
         descr = format_parser(formats, names, titles, aligned, byteorder).dtype
 
     if descr.hasobject:
-        raise ValueError("Cannot read into array with references")
+        raise ValueError(
+            f"Cannot create record array for dtype {descr}. "
+             "Arrays containing references are not supported."
+        )
 
     itemsize = descr.itemsize
 
@@ -916,7 +919,10 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
             ).dtype
 
         if descr.hasobject:
-            raise ValueError("Cannot read into array with references")
+            raise ValueError(
+                f"Cannot create record array for dtype {descr}. "
+                "Arrays containing references are not supported."
+            )
 
         itemsize = descr.itemsize
 

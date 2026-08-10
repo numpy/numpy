@@ -113,11 +113,13 @@ class TestFromrecords:
             with open(path, "wb") as fd:
                 fd.write(b"dummy data")
             with pytest.raises(
-                ValueError, match="Cannot read into array with references"
+                ValueError, match="Arrays containing references are not supported"
             ):
                 np.rec.fromfile(path, formats="O", shape=1)
 
-        with pytest.raises(ValueError, match="Cannot read into array with references"):
+        with pytest.raises(
+            ValueError, match="Arrays containing references are not supported"
+        ):
             np.rec.fromstring(b"dummy data", formats="O", shape=1)
 
     def test_recarray_from_obj(self):
