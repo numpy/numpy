@@ -24,13 +24,13 @@ def test_matmul_reduceat_invalid() -> None:
     assert_type(np.matmul.reduceat(AR_f8, AR_i8), NoReturn)  # type: ignore[arg-type]
 
 def test_absolute_segmented_reduce_invalid() -> None:
-    assert_type(np.absolute.segmented_reduce(AR_f8, AR_i8), NoReturn)  # type: ignore[arg-type]
+    assert_type(np.absolute.segmented_reduce(AR_f8, AR_i8, AR_i8), NoReturn)  # type: ignore[arg-type]
 def test_frexp_segmented_reduce_invalid() -> None:
-    assert_type(np.frexp.segmented_reduce(AR_f8, AR_i8), NoReturn)  # type: ignore[arg-type]
+    assert_type(np.frexp.segmented_reduce(AR_f8, AR_i8, AR_i8), NoReturn)  # type: ignore[arg-type]
 def test_divmod_segmented_reduce_invalid() -> None:
-    assert_type(np.divmod.segmented_reduce(AR_f8, AR_i8), NoReturn)  # type: ignore[arg-type]
+    assert_type(np.divmod.segmented_reduce(AR_f8, AR_i8, AR_i8), NoReturn)  # type: ignore[arg-type]
 def test_matmul_segmented_reduce_invalid() -> None:
-    assert_type(np.matmul.segmented_reduce(AR_f8, AR_i8), NoReturn)  # type: ignore[arg-type]
+    assert_type(np.matmul.segmented_reduce(AR_f8, AR_i8, AR_i8), NoReturn)  # type: ignore[arg-type]
 
 def test_absolute_reduce_invalid() -> None:
     assert_type(np.absolute.reduce(AR_f8), NoReturn)  # type: ignore[arg-type]

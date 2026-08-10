@@ -2846,13 +2846,10 @@ class TestSegmentedReduce:
     ufuncs_integer = [np.bitwise_or, np.bitwise_and, np.gcd, np.left_shift]
 
     @staticmethod
-    def reference(ufunc, arr, starts, stops=None, axis=0, **kwargs):
+    def reference(ufunc, arr, starts, stops, axis=0, **kwargs):
         """Reference implementation using plain slicing and `ufunc.reduce`."""
         arr = np.asarray(arr)
         axis = axis % arr.ndim
-        starts = list(starts)
-        if stops is None:
-            stops = starts[1:] + [arr.shape[axis]]
 
         results = []
         for start, stop in zip(starts, stops):
@@ -2934,21 +2931,14 @@ class TestSegmentedReduce:
         for i, (start, stop) in enumerate(zip(starts, stops)):
             assert res[i] == np.add.reduce(arr[start:stop], initial=0.)
 
-    def test_implicit_stops(self):
-        # Without `stops`, a segment ends where the next one starts, which is
-        # the same segmentation `reduceat` uses.
+    def test_matches_reduceat(self):
+        # Consecutive segments are the segmentation `reduceat` uses
         arr = np.arange(10.)
-        starts = [0, 3, 3, 7]
+        offsets = [0, 3, 7]
+        stops = offsets[1:] + [len(arr)]
 
-        res = np.add.segmented_reduce(arr, starts)
-        assert_array_equal(res, self.reference(np.add, arr, starts))
-        assert_array_equal(res, [3, 0, 18, 24])
-        # `stops=None` is the same as not passing it at all
-        assert_array_equal(np.add.segmented_reduce(arr, starts, None), res)
-
-        # It matches reduceat where the segments are not empty
-        res = np.add.segmented_reduce(arr, [0, 3, 7])
-        assert_array_equal(res, np.add.reduceat(arr, [0, 3, 7]))
+        assert_array_equal(np.add.segmented_reduce(arr, offsets, stops),
+                           np.add.reduceat(arr, offsets))
 
     def test_slice_semantics(self):
         arr = np.arange(10.)
@@ -2961,8 +2951,6 @@ class TestSegmentedReduce:
             np.add.segmented_reduce(arr, [-100, 8], [100, 100]), [45, 17])
         # A stop before the start gives an empty segment
         assert_array_equal(np.add.segmented_reduce(arr, [5], [2]), [0])
-        # Including for the implicit stops of decreasing starts
-        assert_array_equal(np.add.segmented_reduce(arr, [5, 2]), [0, 44])
 
     def test_offsets_are_not_modified(self):
         # The offsets are normalized internally, but must not be modified
@@ -3028,7 +3016,6 @@ class TestSegmentedReduce:
         res = np.add.segmented_reduce(np.arange(10.), [], [])
         assert res.shape == (0,)
         assert res.dtype == np.float64
-        assert_array_equal(np.add.segmented_reduce(np.arange(10.), []), res)
 
         # An empty reduction axis (all segments must be empty)
         assert_array_equal(
@@ -3138,6 +3125,8 @@ class TestSegmentedReduce:
 
     def test_bad_offsets(self):
         arr = np.arange(10.)
+        with pytest.raises(TypeError):
+            np.add.segmented_reduce(arr, [0, 5])
         with pytest.raises(ValueError, match="same length"):
             np.add.segmented_reduce(arr, [0, 5], [5])
         with pytest.raises(ValueError, match="same length"):
@@ -3167,6 +3156,8 @@ class TestSegmentedReduce:
                 arr, starts=[0, 5], stops=[5, 10], axis=0, dtype=None,
                 out=None, initial=np._NoValue),
             expected)
+        with pytest.raises(TypeError):
+            np.add.segmented_reduce(arr, [0, 5])
         # ... and by position
         assert_array_equal(
             np.add.segmented_reduce(arr, [0, 5], [5, 10], 0, None, None,
@@ -3318,15 +3309,7 @@ class TestSegmentedReduce:
         assert res[3] == {"axis": "axis0", "dtype": "dtype0",
                           "out": ("out0",)}
 
-        # `stops` may be left out entirely or passed as None
-        res = np.add.segmented_reduce(arr, [0, 2])
-        assert res[2] == (arr, [0, 2])
-        res = np.add.segmented_reduce(arr, [0, 2], None)
-        assert res[2] == (arr, [0, 2])
-        res = np.add.segmented_reduce(arr, [0, 2], stops=None)
-        assert res[2] == (arr, [0, 2])
-
-        # And `initial` is only passed on when it is given
+        # `initial` is only passed on when it is given
         res = np.add.segmented_reduce(arr, [0], [1], 0, None, None,
                                       np._NoValue)
         assert res[3] == {"axis": 0, "dtype": None}

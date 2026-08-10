@@ -7649,7 +7649,7 @@ class ufunc:
         array: ArrayLike,
         /,
         starts: _ArrayLikeInt_co,
-        stops: _ArrayLikeInt_co | None = None,
+        stops: _ArrayLikeInt_co,
         axis: SupportsIndex = 0,
         dtype: DTypeLike | None = None,
         out: ndarray | EllipsisType | None = None,

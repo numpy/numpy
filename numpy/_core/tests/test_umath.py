@@ -3798,9 +3798,9 @@ class TestSpecialMethods:
                               'axis': 'axis0',
                               'initial': 'initial0'})
 
-        # segmented_reduce, stops and initial are optional
-        res = np.multiply.segmented_reduce(a, [4, 2])
-        assert_equal(res[3], (a, [4, 2]))
+        # segmented_reduce, initial is optional
+        res = np.multiply.segmented_reduce(a, [4, 2], [6, 4])
+        assert_equal(res[3], (a, [4, 2], [6, 4]))
         assert_equal(res[4], {})
 
         # segmented_reduce, output equal to None removed.

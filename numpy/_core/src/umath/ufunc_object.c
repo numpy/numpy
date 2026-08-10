@@ -3785,8 +3785,7 @@ clip_segment_offsets(npy_intp *offsets, npy_intp n, npy_intp axis_size)
  * op.reduce(array[starts[i]:stops[i]])
  * for i=0..len(starts)-1.  The offsets use slice semantics, i.e. negative
  * offsets count from the end of the axis and out-of-bounds offsets are
- * clipped.  If `stops` is NULL, the stop of a segment is the start of the
- * next one (and the end of the axis for the last segment).
+ * clipped.
  *
  * Contrary to reduceat, empty segments are well defined, they give the
  * `initial` value or the identity of the ufunc, exactly like `ufunc.reduce`
@@ -3818,7 +3817,7 @@ PyUFunc_SegmentedReduce(PyUFuncObject *ufunc, PyArrayObject *arr,
     NpyAuxData *auxdata = NULL;
 
     /* The segment offsets - starts and stops must be copies (see below) */
-    npy_intp *start_offsets, *stop_offsets = NULL;
+    npy_intp *start_offsets, *stop_offsets;
     npy_intp i, ind_size, red_axis_size;
 
     /* Buffer to use when we need an initial value, and views into it */
@@ -3835,17 +3834,13 @@ PyUFunc_SegmentedReduce(PyUFuncObject *ufunc, PyArrayObject *arr,
     NPY_BEGIN_THREADS_DEF;
 
     start_offsets = (npy_intp *)PyArray_DATA(starts);
-    if (stops != NULL) {
-        stop_offsets = (npy_intp *)PyArray_DATA(stops);
-    }
+    stop_offsets = (npy_intp *)PyArray_DATA(stops);
     ind_size = PyArray_DIM(starts, 0);
     red_axis_size = PyArray_DIM(arr, axis);
 
     /* Out-of-bounds offsets are not an error, they are clipped in-place */
     clip_segment_offsets(start_offsets, ind_size, red_axis_size);
-    if (stop_offsets != NULL) {
-        clip_segment_offsets(stop_offsets, ind_size, red_axis_size);
-    }
+    clip_segment_offsets(stop_offsets, ind_size, red_axis_size);
 
     NPY_UF_DBG_PRINT2("\nEvaluating ufunc %s.%s\n", ufunc_name, opname);
 
@@ -4127,10 +4122,7 @@ PyUFunc_SegmentedReduce(PyUFuncObject *ufunc, PyArrayObject *arr,
         do {
             for (i = 0; i < ind_size; ++i) {
                 npy_intp start = start_offsets[i];
-                npy_intp end = stop_offsets != NULL ? stop_offsets[i] :
-                        ((i == ind_size-1) ? red_axis_size :
-                                             start_offsets[i+1]);
-                npy_intp count = end - start;
+                npy_intp count = stop_offsets[i] - start;
                 char *first_element;
 
                 dataptr_copy[0] = dataptr[0] + stride0_ind*i;
@@ -4207,10 +4199,7 @@ PyUFunc_SegmentedReduce(PyUFuncObject *ufunc, PyArrayObject *arr,
 
         for (i = 0; i < ind_size; ++i) {
             npy_intp start = start_offsets[i];
-            npy_intp end = stop_offsets != NULL ? stop_offsets[i] :
-                    ((i == ind_size-1) ? red_axis_size :
-                                         start_offsets[i+1]);
-            npy_intp count = end - start;
+            npy_intp count = stop_offsets[i] - start;
             char *first_element;
 
             dataptr_copy[0] = PyArray_BYTES(op[0]) + stride0_ind*i;
@@ -4536,7 +4525,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         if (npy_parse_arguments("segmented_reduce", args, len_args, kwnames,
                 {"array", NULL, &op},
                 {"starts", NULL, &starts_obj},
-                {"|stops", NULL, &stops_obj},
+                {"stops", NULL, &stops_obj},
                 {"|axis", NULL, &axes_obj},
                 {"|dtype", NULL, &otype_obj},
                 {"|out", NULL, &out_obj},
@@ -4545,8 +4534,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         }
         /* Prepare inputs for PyUfunc_CheckOverride */
         PyObject *reduce_in[] = {op, starts_obj, stops_obj};
-        npy_bool has_stops = stops_obj != NULL && stops_obj != Py_None;
-        full_args.in = PyTuple_FromArray(reduce_in, has_stops ? 3 : 2);
+        full_args.in = PyTuple_FromArray(reduce_in, 3);
         if (full_args.in == NULL) {
             goto fail;
         }
@@ -4649,22 +4637,17 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             Py_DECREF(indtype);
             goto fail;
         }
-        if (stops_obj != NULL && stops_obj != Py_None) {
-            stops = (PyArrayObject *)PyArray_FromAny(stops_obj, indtype, 1, 1,
-                    NPY_ARRAY_CARRAY | NPY_ARRAY_ENSURECOPY, NULL);
-            if (stops == NULL) {
-                goto fail;
-            }
-            if (PyArray_DIM(stops, 0) != PyArray_DIM(starts, 0)) {
-                PyErr_Format(PyExc_ValueError,
-                        "'starts' and 'stops' must have the same length, got "
-                        "%" NPY_INTP_FMT " and %" NPY_INTP_FMT,
-                        PyArray_DIM(starts, 0), PyArray_DIM(stops, 0));
-                goto fail;
-            }
+        stops = (PyArrayObject *)PyArray_FromAny(stops_obj, indtype, 1, 1,
+                NPY_ARRAY_CARRAY | NPY_ARRAY_ENSURECOPY, NULL);
+        if (stops == NULL) {
+            goto fail;
         }
-        else {
-            Py_DECREF(indtype);
+        if (PyArray_DIM(stops, 0) != PyArray_DIM(starts, 0)) {
+            PyErr_Format(PyExc_ValueError,
+                    "'starts' and 'stops' must have the same length, got "
+                    "%" NPY_INTP_FMT " and %" NPY_INTP_FMT,
+                    PyArray_DIM(starts, 0), PyArray_DIM(stops, 0));
+            goto fail;
         }
     }
     if (otype_obj && otype_obj != Py_None) {
@@ -4749,7 +4732,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         ret = PyUFunc_SegmentedReduce(ufunc,
                 mp, starts, stops, out[0], axes[0], signature, initial);
         Py_SETREF(starts, NULL);
-        Py_XSETREF(stops, NULL);
+        Py_SETREF(stops, NULL);
         break;
     }
     if (ret == NULL) {

@@ -347,7 +347,7 @@ class _ufunc_11(np.ufunc, Generic[_IdT_co]):  # type: ignore[misc]
     @override
     def reduceat(self, array: Never, /, indices: Never) -> Never: ...  # pyrefly:ignore[bad-override]
     @override
-    def segmented_reduce(self, array: Never, /, starts: Never) -> Never: ...  # pyrefly:ignore[bad-override]
+    def segmented_reduce(self, array: Never, /, starts: Never, stops: Never) -> Never: ...  # pyrefly:ignore[bad-override]
     @override
     def outer(self, A: Never, B: Never, /) -> Never: ...  # pyrefly:ignore[bad-override]
 
@@ -384,7 +384,7 @@ class _ufunc_12(np.ufunc):  # type: ignore[misc]
     def reduceat(self, array: Never, /, indices: Never) -> Never: ...  # pyrefly:ignore[bad-override]
     @final
     @override
-    def segmented_reduce(self, array: Never, /, starts: Never) -> Never: ...  # pyrefly:ignore[bad-override]
+    def segmented_reduce(self, array: Never, /, starts: Never, stops: Never) -> Never: ...  # pyrefly:ignore[bad-override]
     @final
     @override
     def outer(self, A: Never, B: Never, /) -> Never: ...  # pyrefly:ignore[bad-override]
@@ -443,7 +443,7 @@ class _gufunc_21(np.ufunc):  # type: ignore[misc]
     def reduceat(self, array: Never, /, indices: Never) -> Never: ...  # pyrefly:ignore[bad-override]
     @final
     @override
-    def segmented_reduce(self, array: Never, /, starts: Never) -> Never: ...  # pyrefly:ignore[bad-override]
+    def segmented_reduce(self, array: Never, /, starts: Never, stops: Never) -> Never: ...  # pyrefly:ignore[bad-override]
 
 @type_check_only
 class _ufunc_22(np.ufunc):  # type: ignore[misc]
@@ -478,7 +478,7 @@ class _ufunc_22(np.ufunc):  # type: ignore[misc]
     def reduceat(self, array: Never, /, indices: Never) -> Never: ...  # pyrefly:ignore[bad-override]
     @final
     @override
-    def segmented_reduce(self, array: Never, /, starts: Never) -> Never: ...  # pyrefly:ignore[bad-override]
+    def segmented_reduce(self, array: Never, /, starts: Never, stops: Never) -> Never: ...  # pyrefly:ignore[bad-override]
 
 # Mm => ?
 @type_check_only
@@ -5055,7 +5055,7 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
     @override
     def reduceat(self, array: Never, /, indices: Never) -> Never: ...  # pyrefly:ignore[bad-override]
     @override
-    def segmented_reduce(self, array: Never, /, starts: Never) -> Never: ...  # pyrefly:ignore[bad-override]
+    def segmented_reduce(self, array: Never, /, starts: Never, stops: Never) -> Never: ...  # pyrefly:ignore[bad-override]
     @override
     def accumulate(self, array: Never, /) -> Never: ...  # pyrefly:ignore[bad-override]
 

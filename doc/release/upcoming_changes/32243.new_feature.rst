@@ -15,5 +15,5 @@ clipped rather than an error.  Empty segments give the identity of the ufunc,
 or the ``initial`` value if one is passed (which is required for ufuncs
 without an identity, such as `numpy.maximum`).
 
-If ``stops`` is not given, each segment stops where the next one starts, as it
-does for `~numpy.ufunc.reduceat`.
+Consecutive segments, as given by the offsets of a CSR matrix for example,
+are expressed with ``starts=offsets[:-1]`` and ``stops=offsets[1:]``.

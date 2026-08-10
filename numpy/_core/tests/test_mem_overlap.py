@@ -748,7 +748,8 @@ class TestUFunc:
                 size = a.shape[axis]
                 step = a.shape[axis] // out.shape[axis]
             starts = np.arange(0, size, step)
-            return np.add.segmented_reduce(a, starts, out=out, axis=axis)
+            stops = np.concatenate([starts[1:], [size]])
+            return np.add.segmented_reduce(a, starts, stops, out=out, axis=axis)
 
         self.check_unary_fuzz(do_segmented_reduce, get_out_axis_size,
                               dtype=np.int16, count=500)

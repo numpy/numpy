@@ -5701,10 +5701,10 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
 
 add_newdoc('numpy._core', 'ufunc', ('segmented_reduce',
     """
-    segmented_reduce($self, array, /, starts, stops=None, axis=0, dtype=None, out=None, **kwargs)
+    segmented_reduce($self, array, /, starts, stops, axis=0, dtype=None, out=None, **kwargs)
     --
 
-    segmented_reduce(array, starts, stops=None, axis=0, dtype=None, out=None, initial=<no value>)
+    segmented_reduce(array, starts, stops, axis=0, dtype=None, out=None, initial=<no value>)
 
     Reduce over segments (slices) of a single axis.
 
@@ -5729,11 +5729,9 @@ add_newdoc('numpy._core', 'ufunc', ('segmented_reduce',
     starts : array_like
         1-D array of offsets at which the segments start.  Its length is the
         length of the result along `axis`.
-    stops : array_like, optional
+    stops : array_like
         1-D array of offsets at which the segments stop, must have the same
-        length as `starts`.  If not given, each segment stops where the next
-        one starts and the last one stops at the end of the axis (which is
-        the segmentation `ufunc.reduceat` uses).
+        length as `starts`.
     axis : int, optional
         The axis along which to apply the segmented reduction.
     dtype : data-type code, optional
@@ -5792,18 +5790,19 @@ add_newdoc('numpy._core', 'ufunc', ('segmented_reduce',
     >>> np.add.segmented_reduce(a, [0, 4], [4, 8])
     array([ 6, 22])
 
+    Consecutive segments are given by an array of offsets, such as the
+    ``indptr`` of a CSR matrix:
+
+    >>> offsets = np.array([0, 4, 8])
+    >>> np.add.segmented_reduce(a, offsets[:-1], offsets[1:])
+    array([ 6, 22])
+
     The segments may skip elements or overlap:
 
     >>> np.add.segmented_reduce(a, [1, 5], [3, 7])
     array([ 3, 11])
     >>> np.add.segmented_reduce(a, [0, 2], [5, 4])
     array([10,  5])
-
-    If ``stops`` is not given, each segment stops where the next one starts,
-    just like `ufunc.reduceat` (but empty segments are still allowed):
-
-    >>> np.add.segmented_reduce(a, [0, 4])
-    array([ 6, 22])
 
     Empty segments give the identity of the ufunc, or ``initial`` if given:
 
