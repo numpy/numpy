@@ -19,8 +19,9 @@ project(
 py_limited_api = '3.13'
 
 # The `limited_api:` kwarg only reaches an extension module's own sources.
-# Static libraries linked into one must be passed these args as well, or they
-# keep using the unrestricted API and fail to link on Windows. Drop this once
+# Static libraries linked into one must be passed these args as well, or their
+# `PyTuple_Check()` and friends keep reading `tp_flags` out of `PyTypeObject`,
+# which the Stable ABI keeps opaque. Drop this once
 # https://github.com/mesonbuild/meson/issues/13824 is resolved.
 if get_option('python.allow_limited_api')
   # Meson has no integer-to-hex conversion, hence the table; it must match

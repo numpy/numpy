@@ -136,12 +136,8 @@ PySIMDVector_FromData(simd_data data, simd_data_type dtype)
     const simd_data_info *info = simd_data_getinfo(dtype);
     assert(info->is_vector && info->nlanes > 0);
 
-    /*
-     * PyObject_New() must not be used with Py_TPFLAGS_HAVE_GC, and skips the
-     * reference on the type that a heap type's instance owns.
-     * PyType_GenericAlloc() is this type's tp_alloc, which the Limited API
-     * cannot reach directly; it increfs the type and GC-tracks the object.
-     */
+    // PyObject_New() cannot be used with Py_TPFLAGS_HAVE_GC. No Py_tp_alloc
+    // slot is set above, so PyType_GenericAlloc() is this type's tp_alloc.
     PySIMDVectorObject *vec = (PySIMDVectorObject *)PyType_GenericAlloc(
         (PyTypeObject *)PySIMDVectorType, 0
     );
