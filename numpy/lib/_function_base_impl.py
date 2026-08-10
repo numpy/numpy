@@ -27,6 +27,8 @@ from numpy._core.numeric import (
     concatenate,
     dot,
     empty,
+    empty_like,
+    fromiter,
     integer,
     intp,
     isscalar,
@@ -2303,6 +2305,29 @@ def _get_vectorize_dtype(dtype):
     return dtype
 
 
+def _as_object_array(a):
+    """Convert `a` to an object array without unboxing NumPy scalars.
+
+    ``asanyarray(a, dtype=object)`` converts each element through the dtype's
+    ``getitem``.  For datetime64/timedelta64 that yields ``datetime.date``,
+    ``datetime.datetime``, ``int`` or ``None`` depending on both the unit and
+    the values, which loses the unit and makes the type passed to the user's
+    function unpredictable (gh-31382).  Boxing the elements instead preserves
+    the NumPy scalars, matching what `_get_ufunc_and_otypes` already passes
+    when it probes for the output type.
+    """
+    if isinstance(a, ndarray) and a.dtype.kind in "Mm":
+        boxed = fromiter(asarray(a).flat, dtype=object, count=a.size)
+        if type(a) is ndarray:
+            return boxed.reshape(a.shape)
+        # ndarray subclass: `empty_like` keeps the subclass and any mask,
+        # without doing the elementwise conversion we are about to overwrite.
+        out = empty_like(a, dtype=object)
+        asarray(out).flat = boxed
+        return out
+    return asanyarray(a, dtype=object)
+
+
 @set_module('numpy')
 class vectorize:
     """
@@ -2634,7 +2659,7 @@ class vectorize:
         else:
             ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
             # gh-29196: `dtype=object` should eventually be removed
-            args = [asanyarray(a, dtype=object) for a in args]
+            args = [_as_object_array(a) for a in args]
             outputs = ufunc(*args, out=...)
 
             if ufunc.nout == 1:
