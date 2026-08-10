@@ -520,7 +520,7 @@ def sort(
 ) -> _Array1D[Any]: ...
 
 #
-@overload
+@overload  # known shape, axis=<given> (default)
 def argsort[ShapeT: _Shape](
     a: np.ndarray[ShapeT],
     axis: SupportsIndex = -1,
@@ -530,7 +530,37 @@ def argsort[ShapeT: _Shape](
     stable: bool | None = None,
     descending: bool | _NoValueType = ...,
 ) -> np.ndarray[ShapeT, np.dtype[np.intp]]: ...
-@overload
+@overload  # 1d, axis=<given> (default)
+def argsort(
+    a: Sequence[_ScalarLike_co],
+    axis: SupportsIndex = -1,
+    kind: _SortKind | None = None,
+    order: str | Sequence[str] | None = None,
+    *,
+    stable: bool | None = None,
+    descending: bool | _NoValueType = ...,
+) -> _Array1D[np.intp]: ...
+@overload  # 2d, axis=<given> (default)
+def argsort(
+    a: Sequence[Sequence[_ScalarLike_co]],
+    axis: SupportsIndex = -1,
+    kind: _SortKind | None = None,
+    order: str | Sequence[str] | None = None,
+    *,
+    stable: bool | None = None,
+    descending: bool | _NoValueType = ...,
+) -> _Array2D[np.intp]: ...
+@overload  # 3d, axis=<given> (default)
+def argsort(
+    a: Sequence[Sequence[Sequence[_ScalarLike_co]]],
+    axis: SupportsIndex = -1,
+    kind: _SortKind | None = None,
+    order: str | Sequence[str] | None = None,
+    *,
+    stable: bool | None = None,
+    descending: bool | _NoValueType = ...,
+) -> _Array3D[np.intp]: ...
+@overload  # ?d, axis=<given> (default)
 def argsort(
     a: ArrayLike,
     axis: SupportsIndex = -1,
@@ -540,7 +570,7 @@ def argsort(
     stable: bool | None = None,
     descending: bool | _NoValueType = ...,
 ) -> NDArray[np.intp]: ...
-@overload
+@overload  # axis=None
 def argsort(
     a: ArrayLike,
     axis: None,
