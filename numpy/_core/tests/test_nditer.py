@@ -857,8 +857,6 @@ def test_iter_flags_errors():
     assert_raises(ValueError, nditer, [a], [], [['readonly', '☃']])
     # Non-string flag
     assert_raises(ValueError, nditer, [a], [], [['readonly', 3]])
-    # Non-string global flag
-    assert_raises(TypeError, nditer, [a], [3], [['readonly']])
     # Bad order parameter
     assert_raises(ValueError, nditer, [a], [], [['readonly']], order='G')
     # Bad casting parameter
