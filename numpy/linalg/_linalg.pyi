@@ -392,8 +392,45 @@ def pinv(
 ) -> NDArray[Any]: ...
 
 # keep in sync with the inverse functions
-@overload  # inexact32
-def cholesky[ScalarT: _inexact32](a: _ArrayLike[ScalarT], /, *, upper: bool = False) -> NDArray[ScalarT]: ...
+@overload  # known array
+def cholesky[ArrayT: np.ndarray[_AtLeast2D, np.dtype[_inexact32 | _inexact64]]](
+    a: ArrayT,
+    /,
+    *,
+    upper: bool = False,
+) -> ArrayT: ...
+@overload  # known shape, known dtype
+def cholesky[ShapeT: _AtLeast2D, DTypeT: np.dtype[_inexact32 | _inexact64]](
+    a: _SupportsArray[ShapeT, DTypeT],
+    /,
+    *,
+    upper: bool = False,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # known shape, integer
+def cholesky[ShapeT: _AtLeast2D](
+    a: _SupportsArray[ShapeT, np.dtype[np.integer]],
+    /,
+    *,
+    upper: bool = False,
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # 2d +float
+def cholesky(
+    a: Sequence[Sequence[float | np.integer]],
+    /,
+    *,
+    upper: bool = False,
+) -> _Array2D[np.float64]: ...
+@overload  # 3d +float
+def cholesky(
+    a: Sequence[Sequence[Sequence[float | np.integer]]],
+    /,
+    *,
+    upper: bool = False,
+) -> _Array3D[np.float64]: ...
+@overload  # 2d ~complex
+def cholesky(a: Sequence[list[complex]], /, *, upper: bool = False) -> _Array2D[np.complex128]: ...
+@overload  # 3d ~complex
+def cholesky(a: Sequence[Sequence[list[complex]]], /, *, upper: bool = False) -> _Array3D[np.complex128]: ...
 @overload  # +float64
 def cholesky(a: _ToArrayF64, /, *, upper: bool = False) -> NDArray[np.float64]: ...
 @overload  # ~complex128
