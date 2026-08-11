@@ -887,6 +887,33 @@ def vector_norm(
     axis: None = None,
     ord: float | None = 2,
 ) -> np.float64: ...
+@overload  # +inexact64 (unsafe casting), ?d, axis=<int>, keepdims=False
+def vector_norm(
+    x: _SupportsArray[_JustAnyShape, np.dtype[_to_inexact64_unsafe]],
+    /,
+    *,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+    ord: float | None = 2,
+) -> NDArray[np.float64]: ...
+@overload  # +inexact64 (unsafe casting), 2d, axis=<int>, keepdims=False
+def vector_norm(
+    x: _ArrayLike2D[_to_inexact64_unsafe] | _Sequence2D[complex],
+    /,
+    *,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+    ord: float | None = 2,
+) -> _Array1D[np.float64]: ...
+@overload  # +inexact64 (unsafe casting), 3d, axis=<int>, keepdims=False
+def vector_norm(
+    x: _ArrayLike3D[_to_inexact64_unsafe] | _Sequence3D[complex],
+    /,
+    *,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+    ord: float | None = 2,
+) -> _Array2D[np.float64]: ...
 @overload  # +inexact64 (unsafe casting), axis=<given>, keepdims=False
 def vector_norm(
     x: _ArrayLike[_to_inexact64_unsafe] | _NestedSequence[complex],
@@ -934,6 +961,33 @@ def vector_norm(
 def vector_norm(
     x: _ArrayLike[_inexact32], /, *, axis: None = None, keepdims: L[False] = False, ord: float | None = 2
 ) -> np.float32: ...
+@overload  # ~inexact32, ?d, axis=<int>, keepdims=False
+def vector_norm(
+    x: _SupportsArray[_JustAnyShape, np.dtype[_inexact32]],
+    /,
+    *,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+    ord: float | None = 2,
+) -> NDArray[np.float32]: ...
+@overload  # ~inexact32, 2d, axis=<int>, keepdims=False
+def vector_norm(
+    x: _ArrayLike2D[_inexact32],
+    /,
+    *,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+    ord: float | None = 2,
+) -> _Array1D[np.float32]: ...
+@overload  # ~inexact32, 3d, axis=<int>, keepdims=False
+def vector_norm(
+    x: _ArrayLike3D[_inexact32],
+    /,
+    *,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+    ord: float | None = 2,
+) -> _Array2D[np.float32]: ...
 @overload  # ~inexact32, axis=<given>  keepdims=False
 def vector_norm(
     x: _ArrayLike[_inexact32], /, *, axis: _Ax2, keepdims: L[False] = False, ord: float | None = 2
