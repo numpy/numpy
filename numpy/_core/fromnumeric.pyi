@@ -145,6 +145,13 @@ class _CanGE(Protocol):
 
 type _Orderable = _CanLE | _CanGE
 
+@type_check_only
+class _CanArray[ArrayT: np.ndarray](Protocol):
+    def __array__(self, /) -> ArrayT: ...
+
+type _ArrayLike1D = _CanArray[_Array1D[Any]] | Sequence[_ScalarLike_co]
+type _ArrayLikeInt1D = _CanArray[_Array1D[np.integer]] | Sequence[int | np.integer]
+
 ###
 
 # TODO: Fix overlapping overloads: https://github.com/numpy/numpy/issues/27032
@@ -662,21 +669,49 @@ def argmin[ArrayT: NDArray[np.intp]](
     keepdims: bool | _NoValueType = ...,
 ) -> ArrayT: ...
 
-# TODO: Fix overlapping overloads: https://github.com/numpy/numpy/issues/27032
-@overload
-def searchsorted(
-    a: ArrayLike,
-    v: _ScalarLike_co,
+#
+@overload  # Nd
+def searchsorted[ShapeT: _Shape](
+    a: _ArrayLike1D,
+    v: np.ndarray[ShapeT, np.dtype[Any]],
     side: _SortSide = "left",
-    sorter: _ArrayLikeInt_co | None = None,  # 1D int array
-) -> intp: ...
-@overload
+    sorter: _ArrayLikeInt1D | None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.intp]]: ...
+@overload  # 0d
 def searchsorted(
-    a: ArrayLike,
+    a: _ArrayLike1D,
+    v: complex | str | np.generic,
+    side: _SortSide = "left",
+    sorter: _ArrayLikeInt1D | None = None,
+) -> np.intp: ...
+@overload  # 1d  (`str <; Sequence[str]`, hence the `list[str]`)
+def searchsorted(
+    a: _ArrayLike1D,
+    v: Sequence[complex | np.generic] | list[str],
+    side: _SortSide = "left",
+    sorter: _ArrayLikeInt1D | None = None,
+) -> _Array1D[np.intp]: ...
+@overload  # 2d
+def searchsorted(
+    a: _ArrayLike1D,
+    v: Sequence[Sequence[complex | np.generic]] | Sequence[list[str]],
+    side: _SortSide = "left",
+    sorter: _ArrayLikeInt1D | None = None,
+) -> _Array2D[np.intp]: ...
+@overload  # 3d
+def searchsorted(
+    a: _ArrayLike1D,
+    v: Sequence[Sequence[Sequence[complex | np.generic]]] | Sequence[Sequence[list[str]]],
+    side: _SortSide = "left",
+    sorter: _ArrayLikeInt1D | None = None,
+) -> _Array3D[np.intp]: ...
+@overload  # fallback  (overlaps with 1st overload)
+def searchsorted(
+    a: _ArrayLike1D,
     v: ArrayLike,
     side: _SortSide = "left",
-    sorter: _ArrayLikeInt_co | None = None,  # 1D int array
-) -> NDArray[intp]: ...
+    sorter: _ArrayLikeInt1D | None = None,
+) -> NDArray[np.intp] | Any: ...
 
 # keep in sync with `ma.core.resize`
 @overload
