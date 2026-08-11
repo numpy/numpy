@@ -81,6 +81,7 @@ type _tuple2[T] = tuple[T, T]
 type _Ax2 = SupportsIndex | _tuple2[SupportsIndex]
 
 type _inexact32 = np.float32 | np.complex64
+type _inexact64 = np.float64 | np.complex128
 type _inexact80 = np.longdouble | np.clongdouble
 type _to_integer = np.integer | np.bool
 type _to_timedelta64 = np.timedelta64 | _to_integer
@@ -93,6 +94,7 @@ type _to_complex128_co = np.complex128 | np.complex64 | _to_float64_co
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 type _Array3ND[ScalarT: np.generic] = np.ndarray[_AtLeast3D, np.dtype[ScalarT]]
 
 type _Sequence2D[T] = Sequence[Sequence[T]]
@@ -258,8 +260,24 @@ def tensorinv(a: _AsArrayC128, ind: int = 2) -> NDArray[np.complex128]: ...
 def tensorinv(a: _ArrayLikeComplex_co, ind: int = 2) -> np.ndarray: ...
 
 # keep in sync with the other inverse functions and cholesky
-@overload  # inexact32
-def inv[ScalarT: _inexact32](a: _ArrayLike[ScalarT]) -> NDArray[ScalarT]: ...
+@overload  # known array
+def inv[ArrayT: np.ndarray[_AtLeast2D, np.dtype[_inexact32 | _inexact64]]](a: ArrayT) -> ArrayT: ...
+@overload  # known shape, known dtype
+def inv[ShapeT: _AtLeast2D, DTypeT: np.dtype[_inexact32 | _inexact64]](
+    a: _SupportsArray[ShapeT, DTypeT],
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # known shape, integer|bool
+def inv[ShapeT: _AtLeast2D](
+    a: _SupportsArray[ShapeT, np.dtype[np.integer | np.bool]],
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # 2d +float
+def inv(a: Sequence[Sequence[float | np.integer | np.bool]]) -> _Array2D[np.float64]: ...
+@overload  # 3d +float
+def inv(a: Sequence[Sequence[Sequence[float | np.integer | np.bool]]]) -> _Array3D[np.float64]: ...
+@overload  # 2d ~complex
+def inv(a: Sequence[list[complex]]) -> _Array2D[np.complex128]: ...
+@overload  # 3d ~complex
+def inv(a: Sequence[Sequence[list[complex]]]) -> _Array3D[np.complex128]: ...
 @overload  # +float64
 def inv(a: _ToArrayF64) -> NDArray[np.float64]: ...
 @overload  # ~complex128
