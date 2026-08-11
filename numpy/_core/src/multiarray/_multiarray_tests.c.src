@@ -12,9 +12,7 @@
 #include "npy_argparse.h"
 #include "mem_overlap.h"
 #include "npy_extint128.h"
-#include "array_method.h"
 #include "npy_hashtable.h"
-#include "dtypemeta.h"
 
 #if defined(MS_WIN32) || defined(__CYGWIN__)
 #define EXPORT(x) __declspec(dllexport) x
@@ -147,7 +145,8 @@ static int copy_object(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
     npy_intp i, j;
     npy_intp odims[NPY_MAXDIMS_LEGACY_ITERS];
     PyArrayObject *aout;
-    PyArray_CopySwapFunc *copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(itx->ao))->copyswap;
+    PyArray_CopySwapFunc *copyswap = _PyDataType_GetArrFuncs(
+            PyArray_DESCR(itx->ao))->copyswap;
     npy_int itemsize = PyArray_ITEMSIZE(itx->ao);
 
     /*
@@ -290,7 +289,7 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
     }
 
     Py_DECREF(niterx);
-    Py_XDECREF(afill);
+    Py_XDECREF((PyObject *)afill);
     Py_DECREF(itx);
 
     Py_DECREF(ax);
@@ -300,7 +299,7 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
 clean_niterx:
     Py_DECREF(niterx);
 clean_afill:
-    Py_XDECREF(afill);
+    Py_XDECREF((PyObject *)afill);
 clean_itx:
     Py_DECREF(itx);
 clean_out:
@@ -540,7 +539,7 @@ create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
     }
 
     /* Set all fields, mostly copying them from the passed in dtype: */
-    Py_SET_TYPE(&proto, Py_TYPE(dtype));
+    Py_SET_TYPE((PyObject *)&proto, Py_TYPE((PyObject *)dtype));
     proto.typeobj = scalar_type;
     proto.kind = dtype->kind;
     proto.type = dtype->type;
@@ -552,7 +551,7 @@ create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
     proto.subarray = dtype->subarray;
     proto.fields = dtype->fields;
     proto.names = dtype->names;
-    proto.f = PyDataType_GetArrFuncs((PyArray_Descr *)dtype);
+    proto.f = _PyDataType_GetArrFuncs((PyArray_Descr *)dtype);
     proto.metadata = dtype->metadata;
     proto.c_metadata = dtype->c_metadata;
 
@@ -565,7 +564,7 @@ create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
          * Test that we reject this if the type is not set to something that
          * we are pretty sure can be safely replaced.
          */
-        Py_SET_TYPE(&proto, scalar_type);
+        Py_SET_TYPE((PyObject *)&proto, scalar_type);
     }
     else if (error_path != 0) {
         PyErr_SetString(PyExc_ValueError,
@@ -735,6 +734,24 @@ npy_discard(PyObject* NPY_UNUSED(self), PyObject* args)
     }
 
 
+static PyObject *
+tuple_from_ssize_array(Py_ssize_t n, const Py_ssize_t *values)
+{
+    PyObject *tuple = PyTuple_New(n);
+    if (tuple == NULL) {
+        return NULL;
+    }
+    for (Py_ssize_t i = 0; i < n; i++) {
+        PyObject *item = PyLong_FromSsize_t(values[i]);
+        if (item == NULL || PyTuple_SetItem(tuple, i, item) < 0) {
+            Py_DECREF(tuple);
+            return NULL;
+        }
+    }
+    return tuple;
+}
+
+
 /*
  * Get information for a buffer through PyBuf_GetBuffer with the
  * corresponding flags or'ed. Note that the python caller has to
@@ -801,9 +818,10 @@ get_buffer_info(PyObject *NPY_UNUSED(self), PyObject *args)
         shape = Py_None;
     }
     else {
-        shape = PyTuple_New(buffer.ndim);
-        for (i=0; i < buffer.ndim; i++) {
-            PyTuple_SET_ITEM(shape, i, PyLong_FromSsize_t(buffer.shape[i]));
+        shape = tuple_from_ssize_array(buffer.ndim, buffer.shape);
+        if (shape == NULL) {
+            PyBuffer_Release(&buffer);
+            return NULL;
         }
     }
 
@@ -812,9 +830,11 @@ get_buffer_info(PyObject *NPY_UNUSED(self), PyObject *args)
         strides = Py_None;
     }
     else {
-        strides = PyTuple_New(buffer.ndim);
-        for (i=0; i < buffer.ndim; i++) {
-            PyTuple_SET_ITEM(strides, i, PyLong_FromSsize_t(buffer.strides[i]));
+        strides = tuple_from_ssize_array(buffer.ndim, buffer.strides);
+        if (strides == NULL) {
+            Py_DECREF(shape);
+            PyBuffer_Release(&buffer);
+            return NULL;
         }
     }
 
@@ -891,6 +911,33 @@ create_identity_hash(PyObject *NPY_UNUSED(self), PyObject *args)
     return capsule;
 }
 
+
+/*
+ * Check a key tuple against `tb` and copy its items into `key`, which must
+ * have `NPY_MAXARGS` slots (the bound `create_identity_hash` enforces).
+ * The table copies the key into its own buckets rather than keeping this
+ * pointer, so a borrowed, stack-allocated array is enough.
+ */
+static int
+identity_hash_fill_key(PyArrayIdentityHash *tb, PyObject *key_tuple,
+                       PyObject **key)
+{
+    if (!PyTuple_CheckExact(key_tuple)
+            || PyTuple_Size(key_tuple) != tb->key_len) {
+        PyErr_Format(PyExc_TypeError,
+                    "key must be a tuple of length %d", tb->key_len);
+        return -1;
+    }
+    for (int i = 0; i < tb->key_len; i++) {
+        key[i] = PyTuple_GetItem(key_tuple, i);
+        if (key[i] == NULL) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+
 /*
  * Set default item in identity hash table provided as capsule and key as tuple.
  * If the key is already present, return the existing value else set to value and
@@ -913,14 +960,13 @@ identity_hash_set_item_default(PyObject *NPY_UNUSED(self), PyObject *args)
     PyArrayIdentityHash *tb = (PyArrayIdentityHash *)PyCapsule_GetPointer(capsule, "PyArrayIdentityHash");
     assert(tb != NULL);
 
-    if (!PyTuple_CheckExact(key_tuple) || PyTuple_GET_SIZE(key_tuple) != tb->key_len) {
-        PyErr_Format(PyExc_TypeError,
-                    "key must be a tuple of length %d", tb->key_len);
+    PyObject *key[NPY_MAXARGS];
+    if (identity_hash_fill_key(tb, key_tuple, key) < 0) {
         return NULL;
     }
 
     PyObject *result = NULL;
-    if (PyArrayIdentityHash_SetItemDefault(tb, &PyTuple_GET_ITEM(key_tuple, 0), value, &result) < 0) {
+    if (PyArrayIdentityHash_SetItemDefault(tb, key, value, &result) < 0) {
         return NULL;
     }
     Py_INCREF(result);
@@ -949,13 +995,12 @@ identity_hash_get_item(PyObject *NPY_UNUSED(self), PyObject *args)
     PyArrayIdentityHash *tb = (PyArrayIdentityHash *)PyCapsule_GetPointer(capsule, "PyArrayIdentityHash");
     assert(tb != NULL);
 
-    if (!PyTuple_CheckExact(key_tuple) || PyTuple_GET_SIZE(key_tuple) != tb->key_len) {
-        PyErr_Format(PyExc_TypeError,
-                    "key must be a tuple of length %d", tb->key_len);
+    PyObject *key[NPY_MAXARGS];
+    if (identity_hash_fill_key(tb, key_tuple, key) < 0) {
         return NULL;
     }
 
-    PyObject *result = PyArrayIdentityHash_GetItem(tb, &PyTuple_GET_ITEM(key_tuple, 0));
+    PyObject *result = PyArrayIdentityHash_GetItem(tb, key);
     if (result == NULL) {
         Py_RETURN_NONE;
     }
@@ -1021,7 +1066,8 @@ test_as_c_array(PyObject *NPY_UNUSED(self), PyObject *args)
 
     num_dims = PyArray_NDIM(array_obj);
     descr = PyArray_DESCR(array_obj);
-    Py_INCREF(descr);  /* PyArray_AsCArray steals a reference to this */
+    /* PyArray_AsCArray steals a reference to this */
+    Py_INCREF((PyObject *)descr);
 
     switch (num_dims) {
         case 1:
@@ -1101,7 +1147,10 @@ test_nditer_too_large(PyObject *NPY_UNUSED(self), PyObject *args) {
     }
 
     for (i=0; i < nop; i++) {
-        arr = PyTuple_GET_ITEM(array_tuple, i);
+        arr = PyTuple_GetItem(array_tuple, i);
+        if (arr == NULL) {
+            return NULL;
+        }
         if (!PyArray_CheckExact(arr)) {
             PyErr_SetString(PyExc_ValueError, "require base class ndarray");
             return NULL;
@@ -1201,24 +1250,29 @@ array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject 
         return NULL;
     }
 
-    if (PyTuple_GET_SIZE(A) > (Py_ssize_t)ARRAY_SIZE(terms)) {
+    if (PyTuple_Size(A) > (Py_ssize_t)ARRAY_SIZE(terms)) {
         PyErr_SetString(PyExc_ValueError, "too many terms in equation");
         goto fail;
     }
 
-    nterms = PyTuple_GET_SIZE(A);
+    nterms = PyTuple_Size(A);
 
-    if (PyTuple_GET_SIZE(U) != nterms) {
+    if (PyTuple_Size(U) != nterms) {
         PyErr_SetString(PyExc_ValueError, "A, U must be tuples of equal length");
         goto fail;
     }
 
     for (j = 0; j < nterms; ++j) {
-        terms[j].a = (npy_int64)PyLong_AsSsize_t(PyTuple_GET_ITEM(A, j));
+        PyObject *a_obj = PyTuple_GetItem(A, j);
+        PyObject *ub_obj = PyTuple_GetItem(U, j);
+        if (a_obj == NULL || ub_obj == NULL) {
+            goto fail;
+        }
+        terms[j].a = (npy_int64)PyLong_AsSsize_t(a_obj);
         if (error_converting(terms[j].a)) {
             goto fail;
         }
-        terms[j].ub = (npy_int64)PyLong_AsSsize_t(PyTuple_GET_ITEM(U, j));
+        terms[j].ub = (npy_int64)PyLong_AsSsize_t(ub_obj);
         if (error_converting(terms[j].ub)) {
             goto fail;
         }
@@ -1246,10 +1300,9 @@ array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject 
         for (j = 0; j < nterms; ++j) {
             PyObject *obj;
             obj = PyLong_FromSsize_t(x[j]);
-            if (obj == NULL) {
+            if (obj == NULL || PyTuple_SetItem(retval, j, obj) < 0) {
                 goto fail;
             }
-            PyTuple_SET_ITEM(retval, j, obj);
         }
     }
     else if (result == MEM_OVERLAP_NO) {
@@ -1302,7 +1355,7 @@ array_internal_overlap(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *
     result = solve_may_have_internal_overlap(self, max_work);
     NPY_END_THREADS;
 
-    Py_XDECREF(self);
+    Py_XDECREF((PyObject *)self);
 
     if (result == MEM_OVERLAP_NO) {
         Py_RETURN_FALSE;
@@ -1328,7 +1381,7 @@ array_internal_overlap(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *
     }
 
 fail:
-    Py_XDECREF(self);
+    Py_XDECREF((PyObject *)self);
     return NULL;
 }
 
@@ -1711,23 +1764,23 @@ extint_divmod_128_64(PyObject *NPY_UNUSED(self), PyObject *args) {
     c = divmod_128_64(a, b, &mod);
 
     ret = PyTuple_New(2);
+    if (ret == NULL) {
+        goto fail;
+    }
 
     tmp = pylong_from_int128(c);
-    if (tmp == NULL) {
+    if (tmp == NULL || PyTuple_SetItem(ret, 0, tmp) < 0) {
         goto fail;
     }
-    PyTuple_SET_ITEM(ret, 0, tmp);
 
     tmp = PyLong_FromLongLong(mod);
-    if (tmp == NULL) {
+    if (tmp == NULL || PyTuple_SetItem(ret, 1, tmp) < 0) {
         goto fail;
     }
-    PyTuple_SET_ITEM(ret, 1, tmp);
     return ret;
 
 fail:
     Py_XDECREF(ret);
-    Py_XDECREF(tmp);
     return NULL;
 }
 
@@ -1803,11 +1856,10 @@ get_struct_alignments(PyObject *NPY_UNUSED(self), PyObject *args) {
     val = PyTuple_Pack(2, alignment, size);
     Py_DECREF(alignment);
     Py_DECREF(size);
-    if (val == NULL) {
+    if (val == NULL || PyTuple_SetItem(ret, @N@-1, val) < 0) {
         Py_DECREF(ret);
         return NULL;
     }
-    PyTuple_SET_ITEM(ret, @N@-1, val);
 /**end repeat**/
     return ret;
 }
@@ -1943,21 +1995,25 @@ PrintFloat_Printf_g(PyObject *obj, int precision)
     char str[1024];
 
     if (PyArray_IsScalar(obj, Half)) {
-        npy_half x = PyArrayScalar_VAL(obj, Half);
+        npy_half x;
+        PyArray_ScalarAsCtype(obj, &x);
         PyOS_snprintf(str, sizeof(str), "%.*g", precision,
                       npy_half_to_double(x));
     }
     else if (PyArray_IsScalar(obj, Float)) {
-        npy_float x = PyArrayScalar_VAL(obj, Float);
+        npy_float x;
+        PyArray_ScalarAsCtype(obj, &x);
         PyOS_snprintf(str, sizeof(str), "%.*g", precision, x);
     }
     else if (PyArray_IsScalar(obj, Double)) {
-        npy_double x = PyArrayScalar_VAL(obj, Double);
+        npy_double x;
+        PyArray_ScalarAsCtype(obj, &x);
         PyOS_snprintf(str, sizeof(str), "%.*g", precision, x);
         /* would be better to use lg, but not available in C90 */
     }
     else if (PyArray_IsScalar(obj, LongDouble)) {
-        npy_longdouble x = PyArrayScalar_VAL(obj, LongDouble);
+        npy_longdouble x;
+        PyArray_ScalarAsCtype(obj, &x);
         PyOS_snprintf(str, sizeof(str), "%.*" NPY_LONGDOUBLE_FMT, precision, x);
     }
     else{
@@ -2202,7 +2258,9 @@ static PyObject *
 _npy_import_entry_point(PyObject *NPY_UNUSED(self), PyObject *obj) {
     PyObject *res = PyUnicode_AsASCIIString(obj);
     if (res != NULL) {
-        Py_SETREF(res, npy_import_entry_point(PyBytes_AS_STRING(res)));
+        PyObject *imported = npy_import_entry_point(PyBytes_AsString(res));
+        Py_DECREF(res);
+        res = imported;
     }
     return res;
 }
