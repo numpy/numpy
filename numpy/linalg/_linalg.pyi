@@ -250,8 +250,32 @@ def solve(a: _ArrayLike[_inexact32], b: _ArrayLike[np.complex64]) -> NDArray[np.
 def solve(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co) -> NDArray[np.complex128 | Any]: ...
 
 # keep in sync with the other inverse functions and cholesky
-@overload  # inexact32
-def tensorinv[ScalarT: _inexact32](a: _ArrayLike[ScalarT], ind: int = 2) -> NDArray[ScalarT]: ...
+@overload  # known array
+def tensorinv[ArrayT: np.ndarray[_AtLeast2D, np.dtype[_inexact32 | _inexact64]]](
+    a: ArrayT,
+    ind: int = 2,
+) -> ArrayT: ...
+@overload  # known shape, known dtype
+def tensorinv[ShapeT: _AtLeast2D, DTypeT: np.dtype[_inexact32 | _inexact64]](
+    a: _SupportsArray[ShapeT, DTypeT],
+    ind: int = 2,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # known shape, integer|bool
+def tensorinv[ShapeT: _AtLeast2D](
+    a: _SupportsArray[ShapeT, np.dtype[np.integer | np.bool]],
+    ind: int = 2,
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # 2d +float
+def tensorinv(a: Sequence[Sequence[float | np.integer | np.bool]], ind: int = 2) -> _Array2D[np.float64]: ...
+@overload  # 3d +float
+def tensorinv(
+    a: Sequence[Sequence[Sequence[float | np.integer | np.bool]]],
+    ind: int = 2,
+) -> _Array3D[np.float64]: ...
+@overload  # 2d ~complex
+def tensorinv(a: Sequence[list[complex]], ind: int = 2) -> _Array2D[np.complex128]: ...
+@overload  # 3d ~complex
+def tensorinv(a: Sequence[Sequence[list[complex]]], ind: int = 2) -> _Array3D[np.complex128]: ...
 @overload  # +float64
 def tensorinv(a: _ToArrayF64, ind: int = 2) -> NDArray[np.float64]: ...
 @overload  # ~complex128
