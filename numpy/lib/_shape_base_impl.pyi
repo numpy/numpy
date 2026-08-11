@@ -24,6 +24,7 @@ from numpy._typing import (
     _ArrayLikeInt_co,
     _ArrayLikeObject_co,
     _ArrayLikeUInt_co,
+    _ScalarLike_co,
     _Shape,
     _ShapeLike,
 )
@@ -73,7 +74,28 @@ class _SupportsSplitOps(Protocol):
     def swapaxes(self, axis1: int, axis2: int, /) -> Self: ...
     def __getitem__(self, key: Any, /) -> Self: ...
 
-type _JustAnyShape = tuple[Never, Never, Never]  # workaround for microsoft/pyright#10232
+type _JustAnyShape = tuple[Never, Never, Never, Never]  # workaround for microsoft/pyright#10232
+
+type _0d = tuple[()]
+type _1d = tuple[int]
+type _2d = tuple[int, int]
+type _3d = tuple[int, int, int]
+type _4d = tuple[int, int, int, int]
+type _5d = tuple[int, int, int, int, int]
+type _6d = tuple[int, int, int, int, int, int]
+
+type _Min1D = tuple[int, *tuple[int, ...]]
+type _Min2D = tuple[int, int, *tuple[int, ...]]
+type _Min3D = tuple[int, int, int, *tuple[int, ...]]
+
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+
+type _To1D[ScalarT: np.generic] = np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]] | ScalarT
+type _To2D[ScalarT: np.generic] = np.ndarray[tuple[()] | tuple[int] | tuple[int, int], np.dtype[ScalarT]] | ScalarT
+type _To3D[ScalarT: np.generic] = (
+    np.ndarray[tuple[()] | tuple[int] | tuple[int, int] | tuple[int, int, int], np.dtype[ScalarT]] | ScalarT
+)
 
 ###
 
@@ -250,7 +272,53 @@ def kron(a: _ArrayLikeObject_co, b: object) -> NDArray[np.object_]: ...
 def kron(a: object, b: _ArrayLikeObject_co) -> NDArray[np.object_]: ...
 
 #
-@overload
+@overload  # ?d, known dtype, (workaround overload)
+def tile[DTypeT: np.dtype](
+    A: np.ndarray[_JustAnyShape, DTypeT],
+    reps: _ArrayLikeInt,
+) -> np.ndarray[_AnyShape, DTypeT]: ...
+@overload  # >=1d, known dtype, <=1d reps
+def tile[ArrayT: np.ndarray[_Min1D]](A: ArrayT, reps: int | tuple[()] | tuple[int]) -> ArrayT: ...
+@overload  # >=2d, known dtype, 2d reps
+def tile[ArrayT: np.ndarray[_Min2D]](A: ArrayT, reps: tuple[int, int]) -> ArrayT: ...
+@overload  # >=3d, known dtype, 3d reps
+def tile[ArrayT: np.ndarray[_Min3D]](A: ArrayT, reps: tuple[int, int, int]) -> ArrayT: ...
+@overload  # <=1d, known dtype, >=1d reps
+def tile[ScalarT: np.generic, ShapeT: (_1d, _2d, _3d, _4d, _5d, _6d)](  # constraints avoid `Literal` propagation
+    A: _To1D[ScalarT],
+    reps: ShapeT,
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # <=2d, known dtype, >=2d reps
+def tile[ScalarT: np.generic, ShapeT: (_2d, _3d, _4d, _5d, _6d)](
+    A: _To2D[ScalarT],
+    reps: ShapeT,
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # <=3d, known dtype, >=3d reps
+def tile[ScalarT: np.generic, ShapeT: (_3d, _4d, _5d, _6d)](
+    A: _To3D[ScalarT],
+    reps: ShapeT,
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # <=1d, unknown dtype, >=1d reps
+def tile[ShapeT: (_1d, _2d, _3d, _4d, _5d, _6d)](
+    A: Sequence[_ScalarLike_co] | _ScalarLike_co,
+    reps: ShapeT,
+) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
+@overload  # <=1d, unknown dtype, 1d reps
+def tile(
+    A: Sequence[_ScalarLike_co] | _ScalarLike_co,
+    reps: int,
+) -> np.ndarray[tuple[int], np.dtype[Any]]: ...
+@overload  # 2d, unknown dtype, >=2d reps
+def tile[ShapeT: (_2d, _3d, _4d, _5d, _6d)](
+    A: Sequence[Sequence[_ScalarLike_co]],
+    reps: ShapeT,
+) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
+@overload  # 3d, unknown dtype, >=3d reps
+def tile[ShapeT: (_3d, _4d, _5d, _6d)](
+    A: Sequence[Sequence[Sequence[_ScalarLike_co]]],
+    reps: ShapeT,
+) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
+@overload  # ?d, known dtype
 def tile[ScalarT: np.generic](A: _ArrayLike[ScalarT], reps: _ArrayLikeInt) -> NDArray[ScalarT]: ...
-@overload
+@overload  # ?d, unknown dtype
 def tile(A: ArrayLike, reps: _ArrayLikeInt) -> NDArray[Incomplete]: ...
