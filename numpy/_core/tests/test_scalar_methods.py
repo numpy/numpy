@@ -238,7 +238,9 @@ class TestDevice:
 class TestByteswap:
     @pytest.mark.parametrize("scalar", [
         np.bytes_(b"abcd"),
-        np.str_("abcd"),
+        # pick characters that are valid UCS-4 after being byteswapped
+        # otherwise we trip a sanity check in debug Python builds
+        np.str_("\u0100\u0200\u0300"),
         np.void(b"\x01\x02\x03\x04"),
         np.array([(1, 2.5)], dtype="i4,f8")[0],
         np.array([([1, 2], b"xy")], dtype=[("a", "i4", (2,)), ("b", "S2")])[0],
