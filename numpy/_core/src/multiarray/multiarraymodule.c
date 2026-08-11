@@ -4790,6 +4790,11 @@ static struct PyMethodDef array_module_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"_get_castingimpl",  (PyCFunction)_get_castingimpl,
         METH_VARARGS | METH_KEYWORDS, NULL},
+    {"_get_all_cast_information", _get_all_cast_information,
+        METH_NOARGS,
+        "Return a list with info on all available casts. Some of the info "
+        "may differ for an actual cast if it uses value-based casting "
+        "(flexible types)."},
     {"_is_view_safe_cast",  (PyCFunction)_is_view_safe_cast,
         METH_FASTCALL, NULL},
     {"_load_from_filelike", (PyCFunction)_load_from_filelike,
