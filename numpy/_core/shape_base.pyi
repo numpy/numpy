@@ -21,6 +21,13 @@ type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 
+# input only
+type _AtLeast2D = tuple[int, int, *tuple[Any, ...]]
+type _To1D[ScalarT: np.generic] = ScalarT | np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]
+type _To2D[ScalarT: np.generic] = ScalarT | np.ndarray[tuple[()] | tuple[int] | tuple[int, int], np.dtype[ScalarT]]
+
+###
+
 # keep in sync with `numpy.ma.extras.atleast_1d`
 @overload
 def atleast_1d[ArrayT: _Array1D[Any] | _Array2D[Any] | _Array3D[Any]](a0: ArrayT, /) -> ArrayT: ...
@@ -96,50 +103,134 @@ def atleast_3d(a0: ArrayLike, a1: ArrayLike, /, *ai: ArrayLike) -> tuple[NDArray
 # used by numpy.lib._shape_base_impl
 def _arrays_for_stack_dispatcher[T](arrays: Sequence[T]) -> tuple[T, ...]: ...
 
-# keep in sync with `numpy.ma.extras.vstack`
-@overload
+# keep in sync with `hstack` and `numpy.ma.extras.vstack`
+@overload  # >=2d
+def vstack[ShapeT: _AtLeast2D, DTypeT: np.dtype](
+    tup: Sequence[np.ndarray[ShapeT, DTypeT]],
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind",
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # >=2d, dtype=<known>
+def vstack[ShapeT: _AtLeast2D, ScalarT: np.generic](
+    tup: Sequence[np.ndarray[ShapeT]],
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind = "same_kind",
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # >=2d, dtype=<unknown>
+def vstack[ShapeT: _AtLeast2D](
+    tup: Sequence[np.ndarray[ShapeT]],
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind = "same_kind",
+) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
+@overload  # <=2d
+def vstack[ScalarT: np.generic](
+    tup: Sequence[_To2D[ScalarT]],
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind",
+) -> _Array2D[ScalarT]: ...
+@overload  # <=2d, dtype=<known>
+def vstack[ScalarT: np.generic](
+    tup: Sequence[_To2D[np.generic]],
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind = "same_kind",
+) -> _Array2D[ScalarT]: ...
+@overload  # <=2d, dtype=<unknown>
+def vstack(
+    tup: Sequence[_To2D[np.generic]],
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind = "same_kind",
+) -> _Array2D[Any]: ...
+@overload  # ?d
 def vstack[ScalarT: np.generic](
     tup: Sequence[_ArrayLike[ScalarT]],
     *,
     dtype: None = None,
-    casting: _CastingKind = "same_kind"
+    casting: _CastingKind = "same_kind",
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # ?d, dtype=<known>
 def vstack[ScalarT: np.generic](
     tup: Sequence[ArrayLike],
     *,
     dtype: _DTypeLike[ScalarT],
-    casting: _CastingKind = "same_kind"
+    casting: _CastingKind = "same_kind",
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # fallback
 def vstack(
     tup: Sequence[ArrayLike],
     *,
     dtype: DTypeLike | None = None,
-    casting: _CastingKind = "same_kind"
+    casting: _CastingKind = "same_kind",
 ) -> NDArray[Any]: ...
 
-# keep in sync with `numpy.ma.extras.hstack`
-@overload
+# keep in sync with `vstack` and `numpy.ma.extras.hstack`
+@overload  # >=2d
+def hstack[ShapeT: _AtLeast2D, DTypeT: np.dtype](
+    tup: Sequence[np.ndarray[ShapeT, DTypeT]],
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind",
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # >=2d, dtype=<known>
+def hstack[ShapeT: _AtLeast2D, ScalarT: np.generic](
+    tup: Sequence[np.ndarray[ShapeT]],
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind = "same_kind",
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # >=2d, dtype=<unknown>
+def hstack[ShapeT: _AtLeast2D](
+    tup: Sequence[np.ndarray[ShapeT]],
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind = "same_kind",
+) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
+@overload  # <=1d
+def hstack[ScalarT: np.generic](
+    tup: Sequence[_To1D[ScalarT]],
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind",
+) -> _Array1D[ScalarT]: ...
+@overload  # <=1d, dtype=<known>
+def hstack[ScalarT: np.generic](
+    tup: Sequence[_To1D[np.generic]],
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind = "same_kind",
+) -> _Array1D[ScalarT]: ...
+@overload  # <=1d, dtype=<unknown>
+def hstack(
+    tup: Sequence[_To1D[np.generic]],
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind = "same_kind",
+) -> _Array1D[Any]: ...
+@overload  # ?d
 def hstack[ScalarT: np.generic](
     tup: Sequence[_ArrayLike[ScalarT]],
     *,
     dtype: None = None,
-    casting: _CastingKind = "same_kind"
+    casting: _CastingKind = "same_kind",
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # ?d, dtype=<known>
 def hstack[ScalarT: np.generic](
     tup: Sequence[ArrayLike],
     *,
     dtype: _DTypeLike[ScalarT],
-    casting: _CastingKind = "same_kind"
+    casting: _CastingKind = "same_kind",
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # fallback
 def hstack(
     tup: Sequence[ArrayLike],
     *,
     dtype: DTypeLike | None = None,
-    casting: _CastingKind = "same_kind"
+    casting: _CastingKind = "same_kind",
 ) -> NDArray[Any]: ...
 
 # keep in sync with `numpy.ma.extras.stack`

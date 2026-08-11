@@ -2498,15 +2498,16 @@ class TestUnwrap:
         assert_array_equal(unwrap(p, discont=discont, period=period), [0, -1])
 
     def test_masked_array(self):
-        # for masked arrays, we'd need a masked aware np.ma.unwrap implementation
-        # the operation currently unmasks the masked array into an ndarray
-        # and runs the operation on that, completely ignoring the mask
+        # a masked array is treated like any other ufunc input, unwrapped
+        # over the data underlying the mask with the mask carried through.
+        # np.ma.unwrap is the mask-aware version
         p = np.ma.MaskedArray([0., 1., 2., 2 + 2 * np.pi, 3 + 2 * np.pi],
                               mask=[False, False, True, False, False])
         out = unwrap(p)
-        assert isinstance(out, np.ndarray)
+        assert isinstance(out, np.ma.MaskedArray)
+        assert_array_equal(out.mask, p.mask)
         expected = self._reference_unwrap(np.asarray(p))
-        assert_array_equal(out, expected)
+        assert_array_equal(np.asarray(out), expected)
 
     def test_array_ufunc_no_override_raises(self):
         class MyArray(np.ndarray):

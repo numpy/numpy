@@ -27,6 +27,7 @@ _sub_nd_i8: SubClass
 _to_1d_bool: list[bool]
 _to_1d_int: list[int]
 _to_1d_float: list[float]
+_to_2d_float: list[list[float]]
 _to_1d_complex: list[complex]
 
 ###
@@ -161,6 +162,9 @@ assert_type(np.allclose(AR_i8, AR_i8), bool)
 assert_type(np.isclose(i8, i8), np.bool)
 assert_type(np.isclose(i8, AR_i8), npt.NDArray[np.bool])
 assert_type(np.isclose(_to_1d_int, _to_1d_int), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.isclose(_to_1d_int, _to_2d_float), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.isclose(_to_2d_float, _to_1d_int), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.isclose(_to_2d_float, _to_2d_float), np.ndarray[tuple[int, int], np.dtype[np.bool]])
 assert_type(np.isclose(AR_i8, AR_i8), npt.NDArray[np.bool])
 
 assert_type(np.array_equal(i8, AR_i8), bool)

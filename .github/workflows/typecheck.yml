@@ -20,7 +20,7 @@ on:
     paths-ignore:
       - '**.md'
       - '**.rst'
-      - '.circlecl/**'
+      - '.circleci/**'
       - '.devcontainer/**'
       - '.spin/LICENSE'
       - 'benchmarks/**'
