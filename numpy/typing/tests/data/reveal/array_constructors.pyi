@@ -10,6 +10,7 @@ type _Array0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]]
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+type _Array4D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int], np.dtype[ScalarT]]
 
 class SubClass[ScalarT: np.generic](np.ndarray[_AnyShape, np.dtype[ScalarT]]): ...
 
@@ -379,6 +380,13 @@ assert_type(np.stack([A, C]), npt.NDArray[Any])
 assert_type(np.stack([C, C]), npt.NDArray[Any])
 assert_type(np.stack([A, A], axis=0), npt.NDArray[np.float64])
 assert_type(np.stack([A, A], out=B), SubClass[np.float64])
+assert_type(np.stack([_f32_0d, _f32_0d]), _Array1D[np.float32])
+assert_type(np.stack([_f32_1d, _f32_1d]), _Array2D[np.float32])
+assert_type(np.stack([_f32_2d, _f32_2d]), _Array3D[np.float32])
+assert_type(np.stack([_f32_3d, _f32_3d]), _Array4D[np.float32])
+assert_type(np.stack([_f32_2d, _f32_2d], axis=-1), _Array3D[np.float32])
+assert_type(np.stack([_f32_2d, _f32_2d], dtype=np.int8), _Array3D[np.int8])
+assert_type(np.stack([_f32_2d, _f32_2d], dtype="i1"), _Array3D[Any])
 
 assert_type(np.block([[A, A], [A, A]]), npt.NDArray[Any])  # pyright correctly infers this as NDArray[float64]
 assert_type(np.block(C), npt.NDArray[Any])
