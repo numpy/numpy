@@ -349,7 +349,14 @@ PyArray_TupleFromItems(int n, PyObject *const *items, int make_null_none)
             tmp = Py_None;
         }
         Py_INCREF(tmp);
+#if defined(Py_LIMITED_API)
+        if (PyTuple_SetItem(tuple, i, tmp) < 0) {
+            Py_DECREF(tuple);
+            return NULL;
+        }
+#else
         PyTuple_SET_ITEM(tuple, i, tmp);
+#endif
     }
     return tuple;
 }

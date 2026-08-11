@@ -1492,6 +1492,8 @@ typedef struct PyArray_StringDTypeObject PyArray_StringDTypeObject;
     /* TODO: Make this definition public in the API, as soon as its settled */
     NPY_NO_EXPORT extern PyTypeObject PyArrayDTypeMeta_Type;
 
+#ifndef Py_LIMITED_API
+
     /*
      * While NumPy DTypes would not need to be heap types the plan is to
      * make DTypes available in Python at which point they will be heap types.
@@ -1531,6 +1533,17 @@ typedef struct PyArray_StringDTypeObject PyArray_StringDTypeObject;
         void *dt_slots;
         void *reserved[3];
     } PyArray_DTypeMeta;
+
+#else
+
+    /*
+     * PyHeapTypeObject is not part of the Limited API, so the fields above
+     * are not accessible there.  This is the same opaque form dtype_api.h
+     * already uses for downstream Limited API builds.
+     */
+    typedef PyTypeObject PyArray_DTypeMeta;
+
+#endif /* Py_LIMITED_API */
 
 #endif  /* NPY_INTERNAL_BUILD */
 
