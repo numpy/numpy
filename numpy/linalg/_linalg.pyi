@@ -286,14 +286,62 @@ def inv(a: _AsArrayC128) -> NDArray[np.complex128]: ...
 def inv(a: _ArrayLikeComplex_co) -> np.ndarray: ...
 
 # keep in sync with the other inverse functions and cholesky
-@overload  # inexact32
-def pinv[ScalarT: _inexact32](
-    a: _ArrayLike[ScalarT],
+@overload  # known array
+def pinv[ArrayT: np.ndarray[_AtLeast2D, np.dtype[_inexact32 | _inexact64]]](
+    a: ArrayT,
     rcond: _ArrayLikeFloat_co | None = None,
     hermitian: bool = False,
     *,
     rtol: _ArrayLikeFloat_co | _NoValueType = _NoValue,
-) -> NDArray[ScalarT]: ...
+) -> ArrayT: ...
+@overload  # known shape, known dtype
+def pinv[ShapeT: _AtLeast2D, DTypeT: np.dtype[_inexact32 | _inexact64]](
+    a: _SupportsArray[ShapeT, DTypeT],
+    rcond: _ArrayLikeFloat_co | None = None,
+    hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | _NoValueType = _NoValue,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # known shape, integer|bool
+def pinv[ShapeT: _AtLeast2D](
+    a: _SupportsArray[ShapeT, np.dtype[np.integer | np.bool]],
+    rcond: _ArrayLikeFloat_co | None = None,
+    hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | _NoValueType = _NoValue,
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # 2d +float
+def pinv(
+    a: Sequence[Sequence[float | np.integer | np.bool]],
+    rcond: _ArrayLikeFloat_co | None = None,
+    hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | _NoValueType = _NoValue,
+) -> _Array2D[np.float64]: ...
+@overload  # 3d +float
+def pinv(
+    a: Sequence[Sequence[Sequence[float | np.integer | np.bool]]],
+    rcond: _ArrayLikeFloat_co | None = None,
+    hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | _NoValueType = _NoValue,
+) -> _Array3D[np.float64]: ...
+@overload  # 2d ~complex
+def pinv(
+    a: Sequence[list[complex]],
+    rcond: _ArrayLikeFloat_co | None = None,
+    hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | _NoValueType = _NoValue,
+) -> _Array2D[np.complex128]: ...
+@overload  # 3d ~complex
+def pinv(
+    a: Sequence[Sequence[list[complex]]],
+    rcond: _ArrayLikeFloat_co | None = None,
+    hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | _NoValueType = _NoValue,
+) -> _Array3D[np.complex128]: ...
 @overload  # +float64
 def pinv(
     a: _ToArrayF64,
