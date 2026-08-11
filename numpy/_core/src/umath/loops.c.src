@@ -244,7 +244,6 @@ PyUFunc_O_O_method(char **args, npy_intp const *dimensions, npy_intp const *step
                          "type %s which has no callable %s method",
                          i, type->tp_name, meth);
             npy_PyErr_ChainExceptionsCause(exc, val, tb);
-            Py_XDECREF(func);
             Py_DECREF(obj);
             Py_DECREF(meth_name);
             return;
