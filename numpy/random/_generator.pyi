@@ -1,6 +1,6 @@
 # Alias for builtin shadowed by classes to avoid annotations resolving to class members by ty
 from builtins import bytes as py_bytes
-from collections.abc import Callable, MutableSequence
+from collections.abc import Callable, MutableSequence, Sequence
 from typing import Any, Literal, Self, SupportsIndex, overload
 
 import numpy as np
@@ -27,6 +27,7 @@ from .mtrand import RandomState
 ###
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
 type _ArrayF32 = NDArray[np.float32]
 type _ArrayF64 = NDArray[np.float64]
@@ -807,10 +808,30 @@ class Generator:
     def shuffle(self, /, x: MutableSequence[Any], axis: Literal[0] = 0) -> None: ...
 
     #
-    @overload
-    def permutation(self, /, x: int, axis: int = 0) -> NDArray[np.int64]: ...
-    @overload
-    def permutation(self, /, x: ArrayLike, axis: int = 0) -> np.ndarray: ...
+    @overload  # int -> 1d
+    def permutation(self, /, x: int, axis: int = 0) -> _Array1D[np.int64]: ...
+    @overload  # known array
+    def permutation[ArrayT: np.ndarray](self, /, x: ArrayT, axis: int = 0) -> ArrayT: ...
+    @overload  # 1d bool
+    def permutation(self, /, x: list[bool], axis: int = 0) -> _Array1D[np.bool]: ...
+    @overload  # 1d int
+    def permutation(self, /, x: list[int], axis: int = 0) -> _Array1D[np.int_]: ...
+    @overload  # 1d float
+    def permutation(self, /, x: list[float], axis: int = 0) -> _Array1D[np.float64]: ...
+    @overload  # 1d complex
+    def permutation(self, /, x: list[complex], axis: int = 0) -> _Array1D[np.complex128]: ...
+    @overload  # 2d bool
+    def permutation(self, /, x: Sequence[list[bool]], axis: int = 0) -> _Array2D[np.bool]: ...
+    @overload  # 2d int
+    def permutation(self, /, x: Sequence[list[int]], axis: int = 0) -> _Array2D[np.int_]: ...
+    @overload  # 2d float
+    def permutation(self, /, x: Sequence[list[float]], axis: int = 0) -> _Array2D[np.float64]: ...
+    @overload  # 2d complex
+    def permutation(self, /, x: Sequence[list[complex]], axis: int = 0) -> _Array2D[np.complex128]: ...
+    @overload  # ?d known dtype
+    def permutation[ScalarT: np.generic](self, /, x: _ArrayLike[ScalarT], axis: int = 0) -> NDArray[ScalarT]: ...
+    @overload  # ?d unknown dtype
+    def permutation(self, /, x: ArrayLike, axis: int = 0) -> NDArray[Any]: ...
 
     #
     @overload  # does not preserve `ndarray` subtypes
