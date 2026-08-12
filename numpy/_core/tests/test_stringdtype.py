@@ -1086,29 +1086,26 @@ def test_float_to_string_nan_na_consistent(typename, nan_like_na_object):
     arr = np.array([1.5, np.nan, -2.0], dtype=typename).astype(dt)
     assert arr[0] == "1.5"
     assert arr[2] == "-2.0"
-    # the NaN element is the missing value (returned by identity), not "nan"
     assert arr[1] is nan_like_na_object
 
 
 @pytest.mark.parametrize("typename", ["complex64", "complex128", "clongdouble"])
 def test_cfloat_to_string_nan_na(typename, nan_like_na_object):
-    # A complex value whose real part is NaN is the complex embedding of a real
-    # NaN, so on cast it maps to the missing value regardless of the imaginary
-    # part. As with a complex -> real cast, coercing it discards the imaginary
-    # part and always warns. A non-NaN real part is a genuine complex value and
-    # is stringified.
+    # a complex value with any NaN component is missing (np.isnan semantics)
+    # and coercing it to the sentinel warns, like a complex -> real cast
     dt = StringDType(na_object=nan_like_na_object)
 
-    # any NaN real part -> missing, with a ComplexWarning (even for zero imag)
-    for imag in (0.0, 2.0, np.nan):
+    for val in (complex(np.nan, 0.0), complex(np.nan, 2.0),
+                complex(0.0, np.nan), complex(2.0, np.nan),
+                complex(np.nan, np.nan)):
         with pytest.warns(ComplexWarning):
-            arr = np.array([complex(np.nan, imag)], dtype=typename).astype(dt)
+            arr = np.array([val], dtype=typename).astype(dt)
         assert arr[0] is nan_like_na_object
 
-    # a non-NaN real part is a genuine complex value, stringified (no warning)
-    arr = np.array([complex(0, np.nan), 1.5 + 2j], dtype=typename).astype(dt)
-    assert isinstance(arr[0], str) and "nan" in arr[0]
-    assert arr[1] == "(1.5+2j)"
+    # no NaN component (even inf): stringified, without a warning
+    arr = np.array([1.5 + 2j, complex(np.inf, 1)], dtype=typename).astype(dt)
+    assert arr[0] == "(1.5+2j)"
+    assert arr[1] == "(inf+1j)"
 
 
 @pytest.mark.parametrize("typename", ["float16", "float32", "float64",
@@ -1118,16 +1115,15 @@ def test_setitem_nan_na_matches_float_cast(typename, nan_like_na_object):
     nan_scalar = np.dtype(typename).type("nan")
 
     arr = np.empty(4, dtype=dt)
-    arr[0] = nan_scalar       # NumPy scalar of the parametrized width
-    arr[1] = float("nan")     # plain Python float
-    arr[2] = np.nan           # float64 NaN
+    arr[0] = nan_scalar
+    arr[1] = float("nan")
+    arr[2] = np.nan
     arr[3] = np.dtype(typename).type("1.5")
     assert arr[0] is nan_like_na_object
     assert arr[1] is nan_like_na_object
     assert arr[2] is nan_like_na_object
     assert arr[3] == "1.5"
 
-    # the float-to-string cast of the same values agrees element for element
     cast = np.array([nan_scalar, float("nan"), np.nan, 1.5], dtype=typename).astype(dt)
     assert cast[0] is nan_like_na_object
     assert cast[1] is nan_like_na_object
@@ -1137,28 +1133,45 @@ def test_setitem_nan_na_matches_float_cast(typename, nan_like_na_object):
 
 @pytest.mark.parametrize("typename", ["complex64", "complex128", "clongdouble"])
 def test_setitem_cfloat_nan(typename, nan_like_na_object):
-    # setitem agrees with the cast: a NaN real part is the missing value
-    # regardless of the imaginary part, and coercing it always warns.
+    # setitem agrees with the cast, for numpy scalars and Python complex
     dt = StringDType(na_object=nan_like_na_object)
     arr = np.empty(1, dtype=dt)
 
-    # any NaN real part -> missing, with a warning (even for zero imag)
-    for imag in (0.0, 2.0):
+    for val in (complex(np.nan, 0.0), complex(np.nan, 2.0),
+                complex(0.0, np.nan), complex(2.0, np.nan),
+                complex(np.nan, np.nan)):
         with pytest.warns(ComplexWarning):
-            arr[0] = np.dtype(typename).type(complex(np.nan, imag))
+            arr[0] = np.dtype(typename).type(val)
+        assert arr[0] is nan_like_na_object
+        with pytest.warns(ComplexWarning):
+            arr[0] = val
         assert arr[0] is nan_like_na_object
 
-    # a non-NaN real part is stringified (no warning)
-    arr[0] = np.dtype(typename).type(complex(0, np.nan))
-    assert isinstance(arr[0], str) and "nan" in arr[0]
+    arr[0] = np.dtype(typename).type(1.5 + 2j)
+    assert arr[0] == "(1.5+2j)"
+
+
+@pytest.mark.parametrize("dt", [StringDType(), StringDType(na_object="missing")],
+                         ids=["no-na", "string-na"])
+def test_nan_is_not_missing_without_nan_like_na(dt):
+    arr = np.array([np.nan, 1.5], dtype="float32").astype(dt)
+    assert arr[0] == "nan"
+    assert arr[1] == "1.5"
+    arr = np.array([complex(np.nan, 2.0), complex(0.0, np.nan)],
+                   dtype="complex128").astype(dt)
+    assert arr[0] == "(nan+2j)"
+    assert arr[1] == "nanj"
+    arr = np.empty(2, dtype=dt)
+    arr[0] = np.float32("nan")
+    arr[1] = np.complex128(complex(np.nan, 2.0))
+    assert arr[0] == "nan"
+    assert arr[1] == "(nan+2j)"
 
 
 @pytest.mark.parametrize("typename", ["float16", "float32", "float64",
                                       "longdouble", "complex64", "complex128",
                                       "clongdouble"])
 def test_string_na_to_numeric_is_nan(typename, nan_like_na_object):
-    # With a NaN-like na object a missing string casts to NaN rather than
-    # raising; a non-NaN-like na object still cannot be represented.
     dt = StringDType(na_object=nan_like_na_object)
     out = np.array(["1.5", nan_like_na_object], dtype=dt).astype(typename)
     assert out[0] == np.dtype(typename).type("1.5")
@@ -1173,16 +1186,14 @@ def test_string_na_to_numeric_is_nan(typename, nan_like_na_object):
      if ("complex128", "string") not in zip(o, o[1:])],
     ids="->".join)
 def test_roundtrip_float_through_complex_and_string(order, nan_like_na_object):
-    # float64, complex128 and StringDType round-trip through one another.
-    # Bracketing the trip with float64 normalizes the string form of a complex
-    # value ("(1.5+0j)" vs "1.5"), so the values come back unchanged.
+    # bracketing the trip with float64 normalizes the string form of a complex
+    # value ("(1.5+0j)" vs "1.5") so the values come back unchanged
     dt = StringDType(na_object=nan_like_na_object)
     specs = {"complex128": "complex128", "float64": "float64", "string": dt}
     original = np.array([1.5, np.nan, -2.0, 0.0], dtype="float64")
 
     arr = original
-    # every trip does complex -> real once (to float or the missing value),
-    # which warns; pytest.warns also lets it through filterwarnings=error
+    # each order does complex -> real exactly once, which warns
     with pytest.warns(ComplexWarning):
         for name in (*order, "float64"):
             arr = arr.astype(specs[name])

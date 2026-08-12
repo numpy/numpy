@@ -602,21 +602,16 @@ static PyType_Slot b2s_slots[] = {{NPY_METH_resolve_descriptors,
 // casts between string and (u)int dtypes
 
 
-// Load the string at `in` for a cast to a type that cannot itself hold a
-// missing element. A missing element is not an error when the na object is
-// NaN-like (has_nan_na): *is_nan_na is set and the caller substitutes NaN.
-// Otherwise a missing element is an error when there is an na object, and uses
-// the default string when there is not. is_nan_na may be NULL when the caller
-// does not handle the NaN-like case (e.g. integer casts, which cannot hold NaN).
+// Load the string at `in` for conversion to a numeric type. A missing
+// element sets *is_nan_na if the na object is NaN-like, errors if there is
+// some other na object, and loads the default string if there is none.
 static int
 load_numeric_string(char *in, int has_null, int has_nan_na,
                     const npy_static_string *default_string,
                     npy_static_string *string_to_load, int *is_nan_na,
                     npy_string_allocator *allocator, int has_gil)
 {
-    if (is_nan_na != NULL) {
-        *is_nan_na = 0;
-    }
+    *is_nan_na = 0;
     const npy_packed_static_string *ps = (npy_packed_static_string *)in;
     int isnull = NpyString_load(allocator, ps, string_to_load);
     if (isnull == -1) {
@@ -632,9 +627,7 @@ load_numeric_string(char *in, int has_null, int has_nan_na,
     }
     else if (isnull) {
         if (has_nan_na) {
-            if (is_nan_na != NULL) {
-                *is_nan_na = 1;
-            }
+            *is_nan_na = 1;
             return 0;
         }
         if (has_null) {
@@ -653,10 +646,8 @@ load_numeric_string(char *in, int has_null, int has_nan_na,
     return 0;
 }
 
-// Note that this is only used to convert to numeric types and errors on a
-// missing element, unless the na object is NaN-like, in which case a missing
-// element converts to the string "nan" so the numeric parsers (float/complex)
-// produce NaN.
+// note that this is only used to convert to numeric types; a NaN-like
+// missing element becomes "nan" so the numeric parsers produce NaN
 static PyObject *
 string_to_pystring(char *in, int has_null, int has_nan_na,
                    const npy_static_string *default_string,
@@ -1151,7 +1142,6 @@ string_to_float<npy_longdouble, NPY_LONGDOUBLE>(
             goto fail;
         }
         if (is_nan_na) {
-            // a NaN-like missing value converts to NaN
             *out = (npy_longdouble)NPY_NAN;
             in += in_stride;
             out += out_stride;
@@ -1245,12 +1235,9 @@ static PyType_Slot s2float_slots[] = {
         {NPY_METH_strided_loop, (void *)&string_to_float<NpyType, typenum, npy_is_inf, double_is_inf, double_to_float>},
         {0, NULL}};
 
-// Whether a raw floating-point value should be stored as the null/NA string
-// when the StringDType uses a NaN-like missing-data sentinel (has_nan_na). A
-// complex value counts when its real part is NaN, regardless of its imaginary
-// part: it is the complex embedding of a real NaN. Coercing a complex value
-// discards its imaginary part, so the call sites raise a ComplexWarning, just
-// as a complex-to-real cast does.
+// Whether a value counts as NaN for a NaN-like missing-data sentinel. Complex
+// values follow np.isnan (either component NaN); coercing one to the sentinel
+// is lossy, so the call sites raise a ComplexWarning.
 template <typename NpyType>
 static inline bool
 float_is_nan_na(NpyType val)
@@ -1259,32 +1246,25 @@ float_is_nan_na(NpyType val)
         return npy_half_isnan(val);
     }
     else if constexpr (std::is_same_v<NpyType, npy_cfloat>) {
-        return npy_isnan(npy_crealf(val));
+        return npy_isnan(npy_crealf(val)) || npy_isnan(npy_cimagf(val));
     }
     else if constexpr (std::is_same_v<NpyType, npy_cdouble>) {
-        return npy_isnan(npy_creal(val));
+        return npy_isnan(npy_creal(val)) || npy_isnan(npy_cimag(val));
     }
     else if constexpr (std::is_same_v<NpyType, npy_clongdouble>) {
-        return npy_isnan(npy_creall(val));
+        return npy_isnan(npy_creall(val)) || npy_isnan(npy_cimagl(val));
     }
     else {
         return npy_isnan(val);
     }
 }
 
-// Whether NpyType is one of the complex types handled by float_to_string.
 template <typename NpyType>
 inline constexpr bool is_complex_npy_v =
         std::is_same_v<NpyType, npy_cfloat> ||
         std::is_same_v<NpyType, npy_cdouble> ||
         std::is_same_v<NpyType, npy_clongdouble>;
 
-// PyObject entry point to float_is_nan_na for stringdtype_setitem, which has a
-// Python object rather than a raw value. Mirrors float_is_nan_na: a real float
-// NaN, or a complex value with a NaN real part, is the missing value. Coercing
-// a complex value discards its imaginary part, so a ComplexWarning is raised
-// (as a complex-to-real cast does). Returns 1 for missing, 0 for not, and -1 if
-// the warning was turned into an exception.
 NPY_NO_EXPORT int
 pyobj_is_nan_na(PyObject *obj)
 {
@@ -1302,7 +1282,7 @@ pyobj_is_nan_na(PyObject *obj)
             PyErr_Clear();  // out-of-double-range clongdouble: finite, not NaN
             return 0;
         }
-        if (!npy_isnan(value.real)) {
+        if (!(npy_isnan(value.real) || npy_isnan(value.imag))) {
             return 0;
         }
         if (npy_gil_warning(npy_static_pydata.ComplexWarning, 1,
@@ -1335,12 +1315,12 @@ float_to_string(
     PyArray_StringDTypeObject *descr =
             (PyArray_StringDTypeObject *)context->descriptors[1];
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
-    [[maybe_unused]] int lossy_coerce_to_na_must_warn = 0;
+    [[maybe_unused]] int coerced_complex_to_na = 0;
 
     while (N--) {
         if (descr->has_nan_na && float_is_nan_na(*in)) {
             if constexpr (is_complex_npy_v<NpyType>) {
-                lossy_coerce_to_na_must_warn = 1;
+                coerced_complex_to_na = 1;
             }
             if (NpyString_pack_null(allocator, (npy_packed_static_string *)out) < 0) {
                 npy_gil_error(PyExc_MemoryError,
@@ -1363,12 +1343,10 @@ float_to_string(
 
     NpyString_release_allocator(allocator);
 
-    // A complex value with a NaN real part is stored as the missing value,
-    // discarding the imaginary part, so warn as a complex-to-real cast would.
-    // Warn once, after releasing the allocator, so the warning machinery never
-    // runs while the allocator lock is held.
+    // warn outside the loop so the warning machinery never runs while the
+    // allocator lock is held
     if constexpr (is_complex_npy_v<NpyType>) {
-        if (lossy_coerce_to_na_must_warn) {
+        if (coerced_complex_to_na) {
             if (npy_gil_warning(npy_static_pydata.ComplexWarning, 1,
                                 "Casting complex values to real discards "
                                 "the imaginary part") < 0) {
