@@ -2219,7 +2219,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
             Py_DECREF(tmp);
         }
         else {
-            char *newmem = PyMem_Malloc(descr->elsize);
+            char *newmem = PyMem_Calloc(1, descr->elsize);
             if (newmem == NULL) {
                 Py_DECREF(descr);
                 return PyErr_NoMemory();
