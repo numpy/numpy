@@ -102,13 +102,23 @@ npy_find_array_wrap(
  */
 static PyObject *
 _get_wrap_prepare_args(NpyUFuncContext *context) {
-    if (context->out == NULL) {
-        Py_INCREF(context->in);
-        return context->in;
+    int total = context->nin;
+    if (context->out != NULL) {
+        total += context->nout;
     }
-    else {
-        return PySequence_Concat(context->in, context->out);
+    PyObject *args_tup = PyTuple_New(total);
+    if (args_tup == NULL) {
+        return NULL;
     }
+    for (int i = 0; i < context->nin; i++) {
+        PyTuple_SET_ITEM(args_tup, i, Py_NewRef(context->in[i]));
+    }
+    if (context->out != NULL) {
+        for (int i = 0; i < context->nout; i++) {
+            PyTuple_SET_ITEM(args_tup, context->nin + i, Py_NewRef(context->out[i]));
+        }
+    }
+    return args_tup;
 }
 
 
