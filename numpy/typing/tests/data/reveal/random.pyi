@@ -14,6 +14,7 @@ from numpy.random.bit_generator import SeedlessSeedSequence, SeedSequence
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
+_1d: tuple[int]
 _2d: tuple[int, int]
 
 ###
@@ -149,7 +150,10 @@ assert_type(def_gen.random(dtype=np.float32, out=S_out), npt.NDArray[np.float32]
 
 assert_type(def_gen.standard_cauchy(), float)
 assert_type(def_gen.standard_cauchy(size=None), float)
-assert_type(def_gen.standard_cauchy(size=1), npt.NDArray[np.float64])
+assert_type(def_gen.standard_cauchy(size=1), _Array1D[np.float64])
+assert_type(def_gen.standard_cauchy(size=_1d), _Array1D[np.float64])
+assert_type(def_gen.standard_cauchy(size=_2d), _Array2D[np.float64])
+assert_type(def_gen.standard_cauchy(size=[2, 3]), npt.NDArray[np.float64])
 
 assert_type(def_gen.standard_exponential(), float)
 assert_type(def_gen.standard_exponential(method="inv"), float)
