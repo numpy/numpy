@@ -703,20 +703,11 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
             if (out_op[i] == NULL) {
                 goto fail;
             }
+            /* Does not affect promotion, only conversion after resolution. */
+            npy_mark_tmp_array_if_pystr(obj, out_op[i]);
         }
         out_op_DTypes[i] = NPY_DTYPE(PyArray_DESCR(out_op[i]));
         Py_INCREF(out_op_DTypes[i]);
-
-        if (PyArray_NDIM(out_op[i]) == 0) {
-            any_scalar = NPY_TRUE;
-        }
-        else {
-            all_scalar = NPY_FALSE;
-            continue;
-        }
-
-        /* Does not affect promotion, only conversion after resolution. */
-        npy_mark_tmp_array_if_pystr(obj, out_op[i]);
 
         if (nin == 1) {
             /*
@@ -730,6 +721,14 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
              *
              *       This is issue is part of the NEP 50 adoption.
              */
+            break;
+        }
+
+        if (PyArray_NDIM(out_op[i]) == 0) {
+            any_scalar = NPY_TRUE;
+        }
+        else {
+            all_scalar = NPY_FALSE;
             continue;
         }
 
@@ -4504,7 +4503,8 @@ resolve_descriptors(int nop,
          * If we are working with Python literals/scalars, deal with them.
          * If needed, we create new array with the right descriptor.
          * An exact Python str must be replaced from the original object to
-         * preserve trailing nulls, so it requires an available input tuple.
+         * preserve trailing nulls, so it requires an available input tuple
+         * (only `ufunc.resolve_dtypes` has no input tuple).
          */
         if ((PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_LITERAL) ||
                 (inputs_tup != NULL &&
