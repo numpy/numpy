@@ -235,6 +235,44 @@ class TestDevice:
         assert scalar.__array_namespace__() is np
 
 
+class TestByteswap:
+    @pytest.mark.parametrize("scalar", [
+        np.bytes_(b"abcd"),
+        # pick characters that are valid UCS-4 after being byteswapped
+        # otherwise we trip a sanity check in debug Python builds
+        np.str_("\u0100\u0200\u0300"),
+        np.void(b"\x01\x02\x03\x04"),
+        np.array([(1, 2.5)], dtype="i4,f8")[0],
+        np.array([([1, 2], b"xy")], dtype=[("a", "i4", (2,)), ("b", "S2")])[0],
+    ])
+    def test_matches_array_byteswap(self, scalar):
+        arr = np.array([scalar], dtype=scalar.dtype)
+        assert scalar.byteswap().tobytes() == arr.byteswap()[0].tobytes()
+        assert scalar.byteswap().byteswap().tobytes() == scalar.tobytes()
+
+    def test_object_field(self):
+        sentinel = object()
+        scalar = np.array([(1, sentinel)], dtype=[("a", "i4"), ("b", "O")])[0]
+        swapped = scalar.byteswap()
+        assert swapped["b"] is sentinel
+        assert swapped["a"] == np.int32(1).byteswap()
+
+        count = sys.getrefcount(sentinel)
+        scalar.byteswap()
+        assert sys.getrefcount(sentinel) == count
+
+    @pytest.mark.parametrize("scalar", [
+        np.bytes_(b""),
+        np.str_(""),
+        np.void(b""),
+        np.zeros(1, dtype=[])[0],
+    ])
+    def test_empty(self, scalar):
+        swapped = scalar.byteswap()
+        assert swapped == scalar
+        assert swapped.dtype == scalar.dtype
+
+
 @pytest.mark.parametrize("scalar", [np.bool(True), np.int8(1), np.float64(1)])
 def test_array_wrap(scalar):
     # Test scalars array wrap as long as it exists.  NumPy itself should

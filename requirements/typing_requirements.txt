@@ -4,4 +4,4 @@
 -r hypothesis_requirements.txt
 
 mypy==2.3.0
-pyrefly==1.1.1
+pyrefly==1.2.0
