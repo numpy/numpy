@@ -3920,6 +3920,13 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
                      _reduce_type[operation]);
         return NULL;
     }
+    if (ufunc->nout == 0) {
+        PyErr_Format(PyExc_ValueError,
+                     "%s not supported for functions "
+                     "returning no value",
+                     _reduce_type[operation]);
+        return NULL;
+    }
     if (operation != UFUNC_REDUCE && ufunc->nout != 1) {
         PyErr_Format(PyExc_ValueError,
                      "%s only supported for functions "
