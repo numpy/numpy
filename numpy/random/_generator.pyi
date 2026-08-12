@@ -1,4 +1,4 @@
-# Alias for builtins shadowed by classes to avoid annotations resolving to class members by ty
+# Alias for builtin shadowed by classes to avoid annotations resolving to class members by ty
 from builtins import bytes as py_bytes
 from collections.abc import Callable, MutableSequence
 from typing import Any, Literal, Self, SupportsIndex, overload
@@ -64,7 +64,7 @@ class Generator:
     @overload
     def standard_cauchy(self, size: _ShapeLike) -> _ArrayF64: ...
 
-    #
+    # keep in sync with `Generator.standard_normal`
     @overload  # size=None (default)
     def random(
         self,
@@ -145,23 +145,86 @@ class Generator:
         out: ArrayT,
     ) -> ArrayT: ...
 
-    #
-    @overload  # size=None (default);  NOTE: dtype is ignored
-    def standard_normal(self, size: None = None, dtype: _DTypeLikeFloat = ..., out: None = None) -> float: ...
-    @overload  # size=<given>, dtype: f64 (default)
-    def standard_normal(self, size: _ShapeLike, dtype: _DTypeLikeF64 = ..., out: None = None) -> _ArrayF64: ...
-    @overload  # size=<given>, dtype: f32
-    def standard_normal(self, size: _ShapeLike, dtype: _DTypeLikeF32, *, out: None = None) -> _ArrayF32: ...
-    @overload  # dtype: f64 (default), out: f64 array (keyword)
+    # keep in sync with `Generator.random`
+    @overload  # size=None (default)
+    def standard_normal(
+        self,
+        size: None = None,
+        dtype: _DTypeLikeFloat = np.float64,  # ignored
+        out: None = None,
+    ) -> float: ...
+    @overload  # size=<1d>, dtype=f64 (default)
+    def standard_normal(
+        self,
+        size: SupportsIndex | tuple[SupportsIndex],
+        dtype: _DTypeLikeF64 = np.float64,
+        out: None = None,
+    ) -> _Array1D[np.float64]: ...
+    @overload  # size=<known>, dtype=f64 (default)
+    def standard_normal[ShapeT: _Shape](
+        self,
+        size: ShapeT,
+        dtype: _DTypeLikeF64 = np.float64,
+        out: None = None,
+    ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    @overload  # size=<unknown>, dtype=f64 (default)
+    def standard_normal(
+        self,
+        size: _ShapeLike,
+        dtype: _DTypeLikeF64 = np.float64,
+        out: None = None,
+    ) -> NDArray[np.float64]: ...
+    @overload  # size=<1d>, dtype=f32
+    def standard_normal(
+        self,
+        size: SupportsIndex | tuple[SupportsIndex],
+        dtype: _DTypeLikeF32,
+        out: None = None,
+    ) -> _Array1D[np.float32]: ...
+    @overload  # size=<known>, dtype=f32
+    def standard_normal[ShapeT: _Shape](
+        self,
+        size: ShapeT,
+        dtype: _DTypeLikeF32,
+        out: None = None,
+    ) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
+    @overload  # size=<unknown>, dtype=f32
+    def standard_normal(
+        self,
+        size: _ShapeLike,
+        dtype: _DTypeLikeF32,
+        out: None = None,
+    ) -> NDArray[np.float32]: ...
+    @overload  # out: f64 array  (keyword)
     def standard_normal[ArrayT: _ArrayF64](
-        self, size: _ShapeLike | None = None, dtype: _DTypeLikeF64 = ..., *, out: ArrayT
+        self,
+        size: _ShapeLike | None = None,
+        dtype: _DTypeLikeF64 = np.float64,
+        *,
+        out: ArrayT,
     ) -> ArrayT: ...
-    @overload  # dtype: f32 (keyword), out: f32 array
+    @overload  # out: f64 array  (positional)
+    def standard_normal[ArrayT: _ArrayF64](
+        self,
+        size: _ShapeLike | None,
+        dtype: _DTypeLikeF64,
+        out: ArrayT,
+    ) -> ArrayT: ...
+    @overload  # dtype: f32, out: f32 array  (keyword)
     def standard_normal[ArrayT: _ArrayF32](
-        self, size: _ShapeLike | None = None, *, dtype: _DTypeLikeF32, out: ArrayT
+        self,
+        size: _ShapeLike | None = None,
+        *,
+        dtype: _DTypeLikeF32,
+        out: ArrayT,
     ) -> ArrayT: ...
-    @overload  # dtype: f32 (positional), out: f32 array
-    def standard_normal[ArrayT: _ArrayF32](self, size: _ShapeLike | None, dtype: _DTypeLikeF32, out: ArrayT) -> ArrayT: ...
+    @overload  # dtype: f32, out: f32 array  (positional)
+    def standard_normal[ArrayT: _ArrayF32](
+        self,
+        size: _ShapeLike | None,
+        dtype: _DTypeLikeF32,
+        out: ArrayT,
+    ) -> ArrayT: ...
 
     #
     @overload  # size=None (default);  NOTE: dtype is ignored
