@@ -2695,6 +2695,16 @@ class TestUfunc:
         np.add.accumulate(arr, out=out)
         assert_array_equal(expected, out)
 
+    @pytest.mark.parametrize("method", ["reduce", "accumulate", "reduceat"])
+    def test_reducelike_no_output_raises(self, method):
+        # A ufunc without outputs has nothing to accumulate into.  Reductions
+        # must reject it rather than resolving a nonexistent output loop.
+        # See gh-31816, which segfaulted here.
+        ufunc = np.frompyfunc(lambda a, b: None, 2, 0)
+        args = ([1, 2, 3], [0, 1]) if method == "reduceat" else ([1, 2, 3],)
+        with pytest.raises(ValueError, match="returning no value"):
+            getattr(ufunc, method)(*args)
+
     def test_reduce_noncontig_output(self):
         # Check that reduction deals with non-contiguous output arrays
         # appropriately.

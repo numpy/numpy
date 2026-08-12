@@ -891,7 +891,7 @@ test_modules_src = [
     _umath_tests_mtargets.static_lib('_umath_tests_mtargets'), py_limited_api
   ],
   ['_rational_tests', 'src/umath/_rational_tests.c', [], ''],
-  ['_struct_ufunc_tests', 'src/umath/_struct_ufunc_tests.c', [], ''],
+  ['_struct_ufunc_tests', 'src/umath/_struct_ufunc_tests.c', [], py_limited_api],
   ['_operand_flag_tests', 'src/umath/_operand_flag_tests.c', [], py_limited_api],
   ['_reduction_loop_tests', 'src/umath/_reduction_loop_tests.c', [], ''],
 ]
