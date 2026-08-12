@@ -750,10 +750,19 @@ assert_type(def_gen.multivariate_normal([0.0], np.array([[1.0]])), npt.NDArray[n
 assert_type(def_gen.multivariate_normal(np.array([0.0]), [[1.0]]), npt.NDArray[np.float64])
 assert_type(def_gen.multivariate_normal([0.0], np.array([[1.0]])), npt.NDArray[np.float64])
 
-assert_type(def_gen.permutation(10), npt.NDArray[np.int64])
-assert_type(def_gen.permutation([1, 2, 3, 4]), npt.NDArray[Any])
-assert_type(def_gen.permutation(np.array([1, 2, 3, 4])), npt.NDArray[Any])
-assert_type(def_gen.permutation(D_2D, axis=1), npt.NDArray[Any])
+_f32_2d: _Array2D[np.float32]
+
+assert_type(def_gen.permutation(10), _Array1D[np.int64])
+assert_type(def_gen.permutation([True]), _Array1D[np.bool])
+assert_type(def_gen.permutation([1]), _Array1D[np.int_])
+assert_type(def_gen.permutation([1.0]), _Array1D[np.float64])
+assert_type(def_gen.permutation([1j]), _Array1D[np.complex128])
+assert_type(def_gen.permutation([[True]]), _Array2D[np.bool])
+assert_type(def_gen.permutation([[1]]), _Array2D[np.int_])
+assert_type(def_gen.permutation([[1.0]]), _Array2D[np.float64])
+assert_type(def_gen.permutation([[1j]]), _Array2D[np.complex128])
+assert_type(def_gen.permutation(_f32_2d), _Array2D[np.float32])
+
 assert_type(def_gen.permuted(D_2D), npt.NDArray[np.float64])
 assert_type(def_gen.permuted(D_2D_like), npt.NDArray[Any])
 assert_type(def_gen.permuted(D_2D, axis=1), npt.NDArray[np.float64])
