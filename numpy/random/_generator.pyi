@@ -1,7 +1,7 @@
-# Aliases for builtins shadowed by classes to avoid annotations resolving to class members by ty
+# Alias for builtins shadowed by classes to avoid annotations resolving to class members by ty
 from builtins import bytes as py_bytes
 from collections.abc import Callable, MutableSequence
-from typing import Any, Literal, Self, overload
+from typing import Any, Literal, Self, SupportsIndex, overload
 
 import numpy as np
 from numpy._typing import (
@@ -23,6 +23,10 @@ from numpy._typing import (
 
 from .bit_generator import BitGenerator, SeedSequence
 from .mtrand import RandomState
+
+###
+
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 
 type _ArrayF32 = NDArray[np.float32]
 type _ArrayF64 = NDArray[np.float64]
@@ -61,20 +65,85 @@ class Generator:
     def standard_cauchy(self, size: _ShapeLike) -> _ArrayF64: ...
 
     #
-    @overload  # size=None (default);  NOTE: dtype is ignored
-    def random(self, size: None = None, dtype: _DTypeLikeFloat = ..., out: None = None) -> float: ...
-    @overload  # size=<given>, dtype=f64 (default)
-    def random(self, size: _ShapeLike, dtype: _DTypeLikeF64 = ..., out: None = None) -> _ArrayF64: ...
-    @overload  # size=<given>, dtype=f32
-    def random(self, size: _ShapeLike, dtype: _DTypeLikeF32, out: None = None) -> _ArrayF32: ...
+    @overload  # size=None (default)
+    def random(
+        self,
+        size: None = None,
+        dtype: _DTypeLikeFloat = np.float64,  # ignored
+        out: None = None,
+    ) -> float: ...
+    @overload  # size=<1d>, dtype=f64 (default)
+    def random(
+        self,
+        size: SupportsIndex | tuple[SupportsIndex],
+        dtype: _DTypeLikeF64 = np.float64,
+        out: None = None,
+    ) -> _Array1D[np.float64]: ...
+    @overload  # size=<known>, dtype=f64 (default)
+    def random[ShapeT: _Shape](
+        self,
+        size: ShapeT,
+        dtype: _DTypeLikeF64 = np.float64,
+        out: None = None,
+    ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    @overload  # size=<unknown>, dtype=f64 (default)
+    def random(
+        self,
+        size: _ShapeLike,
+        dtype: _DTypeLikeF64 = np.float64,
+        out: None = None,
+    ) -> NDArray[np.float64]: ...
+    @overload  # size=<1d>, dtype=f32
+    def random(
+        self,
+        size: SupportsIndex | tuple[SupportsIndex],
+        dtype: _DTypeLikeF32,
+        out: None = None,
+    ) -> _Array1D[np.float32]: ...
+    @overload  # size=<known>, dtype=f32
+    def random[ShapeT: _Shape](
+        self,
+        size: ShapeT,
+        dtype: _DTypeLikeF32,
+        out: None = None,
+    ) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
+    @overload  # size=<unknown>, dtype=f32
+    def random(
+        self,
+        size: _ShapeLike,
+        dtype: _DTypeLikeF32,
+        out: None = None,
+    ) -> NDArray[np.float32]: ...
     @overload  # out: f64 array  (keyword)
-    def random[ArrayT: _ArrayF64](self, size: _ShapeLike | None = None, dtype: _DTypeLikeF64 = ..., *, out: ArrayT) -> ArrayT: ...
-    @overload  # dtype: f32 (keyword), out: f64 array
-    def random[ArrayT: _ArrayF32](self, size: _ShapeLike | None = None, *, dtype: _DTypeLikeF32, out: ArrayT) -> ArrayT: ...
+    def random[ArrayT: _ArrayF64](
+        self,
+        size: _ShapeLike | None = None,
+        dtype: _DTypeLikeF64 = np.float64,
+        *,
+        out: ArrayT,
+    ) -> ArrayT: ...
     @overload  # out: f64 array  (positional)
-    def random[ArrayT: _ArrayF64](self, size: _ShapeLike | None, dtype: _DTypeLikeF64, out: ArrayT) -> ArrayT: ...
-    @overload  # dtype: f32 (positional), out: f32 array
-    def random[ArrayT: _ArrayF32](self, size: _ShapeLike | None, dtype: _DTypeLikeF32, out: ArrayT) -> ArrayT: ...
+    def random[ArrayT: _ArrayF64](
+        self,
+        size: _ShapeLike | None,
+        dtype: _DTypeLikeF64,
+        out: ArrayT,
+    ) -> ArrayT: ...
+    @overload  # dtype: f32, out: f32 array  (keyword)
+    def random[ArrayT: _ArrayF32](
+        self,
+        size: _ShapeLike | None = None,
+        *,
+        dtype: _DTypeLikeF32,
+        out: ArrayT,
+    ) -> ArrayT: ...
+    @overload  # dtype: f32, out: f32 array  (positional)
+    def random[ArrayT: _ArrayF32](
+        self,
+        size: _ShapeLike | None,
+        dtype: _DTypeLikeF32,
+        out: ArrayT,
+    ) -> ArrayT: ...
 
     #
     @overload  # size=None (default);  NOTE: dtype is ignored
