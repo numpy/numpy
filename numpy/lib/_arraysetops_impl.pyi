@@ -1,4 +1,5 @@
 from _typeshed import Incomplete
+from collections.abc import Sequence
 from typing import Any, Literal as L, NamedTuple, SupportsIndex, TypeVar, overload
 
 import numpy as np
@@ -44,7 +45,10 @@ _AnyScalarT = TypeVar(
 
 type _NumericScalar = np.number | np.timedelta64 | np.object_
 
+type _Array0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]]
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 
 type _IntND = NDArray[np.intp]
 type _Int1D = _Array1D[np.intp]
@@ -916,6 +920,52 @@ def setdiff1d(  # noqa: UP047
 def setdiff1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False) -> _Array1D[Incomplete]: ...
 
 #
+@overload  # known shape
+def isin[ShapeT: _Shape](
+    element: np.ndarray[ShapeT],
+    test_elements: ArrayLike,
+    assume_unique: bool = False,
+    invert: bool = False,
+    *,
+    kind: L["sort", "table"] | None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+@overload  # 0d
+def isin[ShapeT: _Shape](
+    element: complex | np.generic,
+    test_elements: ArrayLike,
+    assume_unique: bool = False,
+    invert: bool = False,
+    *,
+    kind: L["sort", "table"] | None = None,
+) -> _Array0D[np.bool]: ...
+@overload  # 1d
+def isin[ShapeT: _Shape](
+    element: Sequence[complex | np.generic],
+    test_elements: ArrayLike,
+    assume_unique: bool = False,
+    invert: bool = False,
+    *,
+    kind: L["sort", "table"] | None = None,
+) -> _Array1D[np.bool]: ...
+@overload  # 2d
+def isin[ShapeT: _Shape](
+    element: Sequence[Sequence[complex | np.generic]],
+    test_elements: ArrayLike,
+    assume_unique: bool = False,
+    invert: bool = False,
+    *,
+    kind: L["sort", "table"] | None = None,
+) -> _Array2D[np.bool]: ...
+@overload  # 3d
+def isin[ShapeT: _Shape](
+    element: Sequence[Sequence[Sequence[complex | np.generic]]],
+    test_elements: ArrayLike,
+    assume_unique: bool = False,
+    invert: bool = False,
+    *,
+    kind: L["sort", "table"] | None = None,
+) -> _Array3D[np.bool]: ...
+@overload  # fallback
 def isin(
     element: ArrayLike,
     test_elements: ArrayLike,
