@@ -26,7 +26,6 @@ from ._multiarray_umath import (
     _lstrip_chars,
     _lstrip_whitespace,
     _make_extobj,
-    _minimummaximum,
     _ones_like,
     _partition,
     _partition_index,

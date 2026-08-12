@@ -2691,15 +2691,15 @@ class TestMinimum(_FilterInvalids):
 
 
 class TestMinimumMaximum(_FilterInvalids):
-    # `_minimummaximum` computes both extrema in a single pass; it must always
+    # `minimummaximum` computes both extrema in a single pass; it must always
     # agree with the `minimum`/`maximum` pair it fuses.
     def check(self, *args, **kwargs):
-        lo, hi = ncu._minimummaximum(*args, **kwargs)
+        lo, hi = ncu.minimummaximum(*args, **kwargs)
         assert_equal(lo, np.minimum(*args, **kwargs))
         assert_equal(hi, np.maximum(*args, **kwargs))
 
     def check_reduce(self, a, **kwargs):
-        lo, hi = ncu._minimummaximum.reduce(a, **kwargs)
+        lo, hi = ncu.minimummaximum.reduce(a, **kwargs)
         assert_equal(lo, np.minimum.reduce(a, **kwargs))
         assert_equal(hi, np.maximum.reduce(a, **kwargs))
 
@@ -2771,7 +2771,7 @@ class TestMinimumMaximum(_FilterInvalids):
         arr2 = np.array([-2.0, -1.0, np.nan, 1.0])
         out1 = np.empty(4)
         out2 = np.empty(4)
-        res = ncu._minimummaximum(arr1, arr2, out=(out1, out2))
+        res = ncu.minimummaximum(arr1, arr2, out=(out1, out2))
         assert_(res[0] is out1 and res[1] is out2)
         assert_equal(out1, np.minimum(arr1, arr2))
         assert_equal(out2, np.maximum(arr1, arr2))
@@ -2779,7 +2779,7 @@ class TestMinimumMaximum(_FilterInvalids):
     def test_reduce_axes(self):
         a = np.arange(2 * 3 * 4, dtype=np.float64).reshape(2, 3, 4)
         a[1, 2, 3] = np.nan
-        # `_minimummaximum` is reorderable, so multiple axes are allowed
+        # `minimummaximum` is reorderable, so multiple axes are allowed
         for axis in [0, 1, 2, (0, 1), (1, 2), (0, 2), (0, 1, 2), None]:
             self.check_reduce(a, axis=axis)
         self.check_reduce(a, axis=1, keepdims=True)
@@ -2790,15 +2790,15 @@ class TestMinimumMaximum(_FilterInvalids):
         a = np.arange(12.0).reshape(3, 4)
         out1 = np.empty(4)
         out2 = np.empty(4)
-        ncu._minimummaximum.reduce(a, axis=0, out=(out1, out2))
+        ncu.minimummaximum.reduce(a, axis=0, out=(out1, out2))
         assert_equal(out1, np.minimum.reduce(a, axis=0))
         assert_equal(out2, np.maximum.reduce(a, axis=0))
 
     def test_reduce_identity(self):
         # no identity, so an empty reduction needs an explicit initial value
-        assert_raises(ValueError, ncu._minimummaximum.reduce,
+        assert_raises(ValueError, ncu.minimummaximum.reduce,
                       np.array([], dtype=np.float64))
-        lo, hi = ncu._minimummaximum.reduce(
+        lo, hi = ncu.minimummaximum.reduce(
             np.array([], dtype=np.float64), initial=(np.inf, -np.inf))
         assert_equal((lo, hi), (np.inf, -np.inf))
 

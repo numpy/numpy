@@ -3494,7 +3494,7 @@ def _minmax_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
 
 @array_function_dispatch(
     _minmax_dispatcher,
-    reduction=(um._minimummaximum, overrides._ReductionKind.MIN_MAX),
+    reduction=(um.minimummaximum, overrides._ReductionKind.MIN_MAX),
 )
 @set_module('numpy')
 def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
@@ -3564,7 +3564,7 @@ def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     (array([0, 2]), array([1, 3]))
 
     """
-    return _wrapreduction(a, um._minimummaximum, 'minmax', axis, None, out,
+    return _wrapreduction(a, um.minimummaximum, 'minmax', axis, None, out,
                           keepdims, initial, where)
 
 

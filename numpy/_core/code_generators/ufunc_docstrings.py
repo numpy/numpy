@@ -2607,7 +2607,7 @@ add_newdoc('numpy._core.umath', 'minimum',
 
     """)
 
-add_newdoc('numpy._core.umath', '_minimummaximum',
+add_newdoc('numpy._core.umath', 'minimummaximum',
     """
     Element-wise minimum and maximum of array elements.
 
@@ -2644,7 +2644,7 @@ add_newdoc('numpy._core.umath', '_minimummaximum',
 
     Notes
     -----
-    ``_minimummaximum(x1, x2)`` is equivalent to
+    ``minimummaximum(x1, x2)`` is equivalent to
     ``(minimum(x1, x2), maximum(x1, x2))`` but computes both in a single pass
     over the inputs.
 
@@ -2653,8 +2653,8 @@ add_newdoc('numpy._core.umath', '_minimummaximum',
 
     Examples
     --------
-    >>> from numpy._core.umath import _minimummaximum
-    >>> _minimummaximum([2, 3, 4], [1, 5, 2])
+    >>> from numpy._core.umath import minimummaximum
+    >>> minimummaximum([2, 3, 4], [1, 5, 2])
     (array([1, 3, 2]), array([2, 5, 4]))
 
     """)

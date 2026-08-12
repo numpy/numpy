@@ -679,14 +679,13 @@ defdict = {
           indexed=flts + ints,
           no_float_errors=True,
           ),
-'_minimummaximum':
+'minimummaximum':
     Ufunc(2, 2, ReorderableNone,
-          docstrings.get('numpy._core.umath._minimummaximum'),
+          docstrings.get('numpy._core.umath.minimummaximum'),
           'PyUFunc_SimpleUniformOperationTypeResolver',
-          TD('?', cfunc_alias='minimummaximum'),
-          TD(no_obj_bool, cfunc_alias='minimummaximum',
-                  dispatch=[('loops_minmax', ints + 'fdg')]),
-          TD(O, cfunc_alias='minimummaximum'),
+          TD('?'),
+          TD(no_obj_bool, dispatch=[('loops_minmax', ints + 'fdg')]),
+          TD(O),
           no_float_errors=True,
           ),
 'clip':
