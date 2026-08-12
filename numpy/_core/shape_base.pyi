@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any, SupportsIndex, overload
+from typing import Any, Never, SupportsIndex, overload
 
 import numpy as np
 from numpy import _CastingKind
@@ -20,9 +20,12 @@ type _Array0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]]
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+type _Array4D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int], np.dtype[ScalarT]]
 
 # input only
 type _AtLeast2D = tuple[int, int, *tuple[Any, ...]]
+type _ToJustND[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, Never], np.dtype[ScalarT]]
+type _To0D[ScalarT: np.generic] = ScalarT | np.ndarray[tuple[()], np.dtype[ScalarT]]
 type _To1D[ScalarT: np.generic] = ScalarT | np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]
 type _To2D[ScalarT: np.generic] = ScalarT | np.ndarray[tuple[()] | tuple[int] | tuple[int, int], np.dtype[ScalarT]]
 
@@ -234,34 +237,169 @@ def hstack(
 ) -> NDArray[Any]: ...
 
 # keep in sync with `numpy.ma.extras.stack`
-@overload
+@overload  # ?d  (workaround overload)
+def stack[ScalarT: np.generic](
+    arrays: Sequence[_ToJustND[ScalarT]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind",
+) -> NDArray[ScalarT]: ...
+@overload  # ?d, dtype=<known>  (workaround overload)
+def stack[ScalarT: np.generic](
+    arrays: Sequence[_ToJustND[np.generic]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind = "same_kind",
+) -> NDArray[ScalarT]: ...
+@overload  # ?d, dtype=<unknown>  (workaround overload)
+def stack(
+    arrays: Sequence[_ToJustND[np.generic]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind = "same_kind",
+) -> NDArray[Any]: ...
+@overload  # 0d -> 1d
+def stack[ScalarT: np.generic](
+    arrays: Sequence[_To0D[ScalarT]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind",
+) -> _Array1D[ScalarT]: ...
+@overload  # 0d -> 1d, dtype=<known>
+def stack[ScalarT: np.generic](
+    arrays: Sequence[_To0D[np.generic]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind = "same_kind",
+) -> _Array1D[ScalarT]: ...
+@overload  # 0d -> 1d, dtype=<unknown>
+def stack(
+    arrays: Sequence[_To0D[np.generic]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind = "same_kind",
+) -> _Array1D[Any]: ...
+@overload  # 1d -> 2d
+def stack[ScalarT: np.generic](
+    arrays: Sequence[_Array1D[ScalarT]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind",
+) -> _Array2D[ScalarT]: ...
+@overload  # 1d -> 2d, dtype=<known>
+def stack[ScalarT: np.generic](
+    arrays: Sequence[_Array1D[np.generic]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind = "same_kind",
+) -> _Array2D[ScalarT]: ...
+@overload  # 1d -> 2d, dtype=<unknown>
+def stack(
+    arrays: Sequence[_Array1D[np.generic]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind = "same_kind",
+) -> _Array2D[Any]: ...
+@overload  # 2d -> 3d
+def stack[ScalarT: np.generic](
+    arrays: Sequence[_Array2D[ScalarT]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind",
+) -> _Array3D[ScalarT]: ...
+@overload  # 2d -> 3d, dtype=<known>
+def stack[ScalarT: np.generic](
+    arrays: Sequence[_Array2D[np.generic]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind = "same_kind",
+) -> _Array3D[ScalarT]: ...
+@overload  # 2d -> 3d, dtype=<unknown>
+def stack(
+    arrays: Sequence[_Array2D[np.generic]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind = "same_kind",
+) -> _Array3D[Any]: ...
+@overload  # 3d -> 4d
+def stack[ScalarT: np.generic](
+    arrays: Sequence[_Array3D[ScalarT]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind",
+) -> _Array4D[ScalarT]: ...
+@overload  # 3d -> 4d, dtype=<known>
+def stack[ScalarT: np.generic](
+    arrays: Sequence[_Array3D[np.generic]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind = "same_kind",
+) -> _Array4D[ScalarT]: ...
+@overload  # 3d -> 4d, dtype=<unknown>
+def stack(
+    arrays: Sequence[_Array3D[np.generic]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind = "same_kind",
+) -> _Array4D[Any]: ...
+@overload  # ?d
 def stack[ScalarT: np.generic](
     arrays: Sequence[_ArrayLike[ScalarT]],
     axis: SupportsIndex = 0,
     out: None = None,
     *,
     dtype: None = None,
-    casting: _CastingKind = "same_kind"
+    casting: _CastingKind = "same_kind",
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # ?d, dtype=<known>
 def stack[ScalarT: np.generic](
     arrays: Sequence[ArrayLike],
     axis: SupportsIndex = 0,
     out: None = None,
     *,
     dtype: _DTypeLike[ScalarT],
-    casting: _CastingKind = "same_kind"
+    casting: _CastingKind = "same_kind",
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # fallback
 def stack(
     arrays: Sequence[ArrayLike],
     axis: SupportsIndex = 0,
     out: None = None,
     *,
     dtype: DTypeLike | None = None,
-    casting: _CastingKind = "same_kind"
+    casting: _CastingKind = "same_kind",
 ) -> NDArray[Any]: ...
-@overload
+@overload  # out=<given>  (positional)
 def stack[OutT: np.ndarray](
     arrays: Sequence[ArrayLike],
     axis: SupportsIndex,
@@ -270,7 +408,7 @@ def stack[OutT: np.ndarray](
     dtype: DTypeLike | None = None,
     casting: _CastingKind = "same_kind",
 ) -> OutT: ...
-@overload
+@overload  # out=<given> (keyword)
 def stack[OutT: np.ndarray](
     arrays: Sequence[ArrayLike],
     axis: SupportsIndex = 0,

@@ -156,10 +156,14 @@ assert_type(np.argmin(AR_f4_2d, keepdims=True), np.ndarray[tuple[int, int], np.d
 assert_type(np.argmin(AR_f4_3d, keepdims=True), np.ndarray[tuple[int, int, int], np.dtype[np.intp]])
 assert_type(np.argmin(AR_f4, out=AR_sub_i), NDArrayIntSubclass)
 
-assert_type(np.searchsorted(AR_b[0], 0), np.intp)
-assert_type(np.searchsorted(AR_f4[0], 0), np.intp)
-assert_type(np.searchsorted(AR_b[0], [0]), npt.NDArray[np.intp])
-assert_type(np.searchsorted(AR_f4[0], [0]), npt.NDArray[np.intp])
+assert_type(np.searchsorted(AR_f4, 0), np.intp)
+assert_type(np.searchsorted(AR_f4, _py_list_1d), _Array1D[np.intp])
+assert_type(np.searchsorted(AR_f4, _py_list_2d), _Array2D[np.intp])
+assert_type(np.searchsorted(AR_f4, _py_list_3d), _Array3D[np.intp])
+assert_type(np.searchsorted(AR_f4, f4), np.intp)
+assert_type(np.searchsorted(AR_f4, AR_f4_1d), _Array1D[np.intp])
+assert_type(np.searchsorted(AR_f4, AR_f4_2d), _Array2D[np.intp])
+assert_type(np.searchsorted(AR_f4, AR_f4_3d), _Array3D[np.intp])
 
 assert_type(np.resize(b, (5, 5)), np.ndarray[tuple[int, int], np.dtype[np.bool]])
 assert_type(np.resize(f4, (5, 5)), np.ndarray[tuple[int, int], np.dtype[np.float32]])
