@@ -1,4 +1,7 @@
 [run]
 branch = True
 include = */numpy/*
+omit =
+    */tests/*
+    */numpy/conftest.py
 disable_warnings = include-ignored

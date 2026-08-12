@@ -8,7 +8,7 @@ from datetime import datetime
 import pytest
 
 import numpy as np
-from numpy.testing import IS_EDITABLE, IS_WASM, assert_array_equal
+from numpy.testing import HAS_SUBPROCESSES, IS_EDITABLE, assert_array_equal
 from numpy.testing._private.utils import run_subprocess
 
 # This import is copied from random.tests.test_extending
@@ -35,12 +35,11 @@ if IS_EDITABLE:
         allow_module_level=True
     )
 
-
 @pytest.fixture(scope='module')
 def install_temp(tmpdir_factory):
     # Based in part on test_cython from random.tests.test_extending
-    if IS_WASM:
-        pytest.skip("No subprocess")
+    if not HAS_SUBPROCESSES:
+        pytest.skip("platform cannot start subprocesses")
 
     # Build against a copy of the sources placed next to the build dir:
     # meson refers to sources via paths relative to the build dir, and on

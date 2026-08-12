@@ -732,7 +732,6 @@ class TestUfunc:
         a = np.ones(500, dtype=np.float64)
         assert_almost_equal((a / 10.).sum() - a.size / 10., 0, 13)
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_sum(self):
         for dt in (int, np.float16, np.float32, np.float64, np.longdouble):
             for v in (0, 1, 2, 7, 8, 9, 15, 16, 19, 127,
@@ -3252,6 +3251,13 @@ class TestLowlevelAPIAccess:
 
         with pytest.raises(TypeError):
             np.add.resolve_dtypes((i4, f4, None), casting="no")
+
+    def test_resolve_dtypes_unary_weak_scalar(self):
+        assert np.sin.resolve_dtypes((int, None)) == (
+            np.dtype("f8"), np.dtype("f8"))
+        with pytest.raises(TypeError,
+                match="Output descriptors must be NumPy dtypes or None."):
+            np.sin.resolve_dtypes((int, int))
 
     def test_resolve_dtypes_comparison(self):
         i4 = np.dtype("i4")

@@ -30,12 +30,12 @@ jobs:
     if: github.repository == 'numpy/numpy'
     steps:
       - name: Checkout NumPy
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           submodules: recursive
           fetch-tags: true
           persist-credentials: false
-      - uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55  # v4.1.0
+      - uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074  # v4.2.0
         env:
           CIBW_PLATFORM: pyodide
           CIBW_BUILD: cp314-pyodide_wasm32

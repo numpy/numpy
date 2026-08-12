@@ -12,8 +12,8 @@ import numpy._core.umath as ncu
 from numpy import all, arange, array, nditer
 from numpy.testing import (
     HAS_REFCOUNT,
+    HAS_SUBPROCESSES,
     IS_64BIT,
-    IS_WASM,
     assert_,
     assert_array_equal,
     assert_equal,
@@ -1854,6 +1854,18 @@ def test_iter_remove_multi_index_inner_loop():
     assert_equal(i[0].shape, (24,))
     assert_equal(i.value, arange(24))
 
+
+def test_iter_remove_multi_index_buffered():
+    a = arange(10).reshape(10, 1)
+    i = nditer(a, ["buffered", "multi_index"], buffersize=5)
+
+    i.remove_multi_index()
+    i.enable_external_loop()
+
+    assert_equal(i.ndim, 1)
+    assert_array_equal(np.concatenate([chunk.copy() for chunk in i]), a.ravel())
+
+
 def test_iter_iterindex():
     # Make sure iterindex works
 
@@ -2212,7 +2224,7 @@ def test_buffered_cast_error_paths():
             buf = next(it)
             buf[...] = "a"  # cannot be converted to int.
 
-@pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 def test_buffered_cast_error_paths_unraisable():
     # The following gives an unraisable error. Pytest sometimes captures that
     # (depending python and/or pytest version). So with Python>=3.8 this can

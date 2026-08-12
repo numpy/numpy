@@ -18,6 +18,7 @@
 #include "nditer_impl.h"
 #include "arrayobject.h"
 #include "array_coercion.h"
+#include "dtypemeta.h"
 #include "templ_common.h"
 #include "array_assign.h"
 #include "dtype_traversal.h"
@@ -626,13 +627,16 @@ NpyIter_Copy(NpyIter *iter)
             npyiter_goto_iterindex(newiter, NIT_ITERINDEX(newiter));
 
             /* Prepare the next buffers and set iterend/size */
-            npyiter_copy_to_buffers(newiter, NULL);
+            if (npyiter_copy_to_buffers(newiter, NULL) < 0) {
+                NpyIter_Deallocate(newiter);
+                return NULL;
+            }
         }
     }
 
     if (out_of_memory) {
-        NpyIter_Deallocate(newiter);
         PyErr_NoMemory();
+        NpyIter_Deallocate(newiter);
         return NULL;
     }
 
@@ -3069,6 +3073,21 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
     return ret;
 }
 
+/*
+ * Replace an iterator-owned dtype when `finalize_descr` realized a different
+ * descriptor for its operand.  Other constructor changes, such as expanding a
+ * subarray dtype into the operand shape, must retain the requested dtype here.
+ */
+static inline void
+npyiter_sync_finalized_op_dtype(PyArray_Descr **op_dtype, PyArrayObject *op)
+{
+    if (*op_dtype != PyArray_DESCR(op) &&
+            NPY_DT_has_finalize(NPY_DTYPE(*op_dtype))) {
+        Py_INCREF(PyArray_DESCR(op));
+        Py_SETREF(*op_dtype, PyArray_DESCR(op));
+    }
+}
+
 static int
 npyiter_allocate_arrays(NpyIter *iter,
                         npy_uint32 flags,
@@ -3211,6 +3230,8 @@ npyiter_allocate_arrays(NpyIter *iter,
 
             op[iop] = out;
 
+            npyiter_sync_finalized_op_dtype(&op_dtype[iop], op[iop]);
+
             /*
              * Now we need to replace the pointers and strides with values
              * from the new array.
@@ -3245,6 +3266,8 @@ npyiter_allocate_arrays(NpyIter *iter,
             }
             Py_DECREF(op[iop]);
             op[iop] = temp;
+
+            npyiter_sync_finalized_op_dtype(&op_dtype[iop], op[iop]);
 
             /*
              * Now we need to replace the pointers and strides with values
@@ -3302,6 +3325,8 @@ npyiter_allocate_arrays(NpyIter *iter,
 
             Py_DECREF(op[iop]);
             op[iop] = temp;
+
+            npyiter_sync_finalized_op_dtype(&op_dtype[iop], op[iop]);
 
             /*
              * Now we need to replace the pointers and strides with values
@@ -3441,6 +3466,15 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
         }
         else {
             op_stride = strides[iop];
+        }
+
+        /*
+         * RemoveMultiIndex may coalesce a size-one inner axis, changing its
+         * zero stride.  Do not specialize for a stride that can change.
+         */
+        if ((itflags & NPY_ITFLAG_HASMULTIINDEX) &&
+                NAD_SHAPE(axisdata) == 1 && op_stride == 0) {
+            op_stride = NPY_MAX_INTP;
         }
 
         /*

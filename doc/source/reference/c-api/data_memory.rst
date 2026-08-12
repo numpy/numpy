@@ -52,6 +52,10 @@ functions may change during the lifetime of the process, each ``ndarray``
 carries with it the functions used at the time of its instantiation, and these
 will be used to reallocate or free the data memory of the instance.
 
+NumPy stores the memory handler state in a :py:mod:`context variable
+<python:contextvars>`, allowing different threads or async tasks to have
+independent configurations. See :ref:`context_local` for more information.
+
 .. c:type:: PyDataMem_Handler
 
     A struct to hold function pointers used to manipulate memory

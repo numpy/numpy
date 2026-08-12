@@ -589,14 +589,18 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
 
         stride = descr->elsize;
 
-        /* Allocate the array for the result. This steals the 'dtype' reference. */
+        /*
+         * Allocate the array for the result. This steals the `descr`
+         * reference and may replace the descriptor via `finalize_descr`,
+         * so `descr` must not be used from here on.
+         */
         ret = (PyArrayObject *)PyArray_NewFromDescr_int(
                 subtype, descr,  1, &shape, &stride, NULL, 0, NULL,
                 NULL, _NPY_ARRAY_ALLOW_EMPTY_STRING);
+        descr = NULL;
         if (ret == NULL) {
             return NULL;
         }
-        assert(PyArray_DESCR(ret) == descr);
     }
 
     /*
@@ -4615,7 +4619,129 @@ _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
 }
 
 
+/*
+ * _wrapit(obj, method, *args, **kwds): convert `obj` to a base-class
+ * array (via the array converter), call `method` on the result, and wrap
+ * the return value following the converter's policy.  Used by dispatched
+ * functions that are implemented as an ndarray method (np.take,
+ * np.argsort, ...) when the input is not an ndarray.
+ */
+static PyObject *
+array__wrapit(PyObject *NPY_UNUSED(self),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    Py_ssize_t nargs = PyVectorcall_NARGS(len_args);
+    if (nargs < 2) {
+        PyErr_SetString(PyExc_TypeError,
+                "_wrapit requires at least (obj, method) arguments");
+        return NULL;
+    }
+    PyObject *res = NULL, *arrays = NULL, *method_res = NULL;
+
+    PyObject *conv = PyObject_Vectorcall(
+            (PyObject *)&PyArrayArrayConverter_Type, args, 1, NULL);
+    if (conv == NULL) {
+        return NULL;
+    }
+    /*
+     * conv.as_arrays(subok=False): as _wrapfunc already tried the method,
+     * subok=True is maybe quite reasonable here, but this follows what the
+     * previous Python implementation did.  TODO: revisit this.
+     */
+    PyObject *as_arrays_stack[2] = {conv, Py_False};
+    arrays = PyObject_VectorcallMethod(
+            npy_interned_str.as_arrays, as_arrays_stack,
+            1 | PY_VECTORCALL_ARGUMENTS_OFFSET,
+            npy_static_pydata.wrapit_kwnames_subok);
+    if (arrays == NULL) {
+        goto finish;
+    }
+    if (!PyTuple_CheckExact(arrays) || PyTuple_GET_SIZE(arrays) != 1) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "as_arrays did not return a 1-tuple");
+        goto finish;
+    }
+    PyObject *bound = PyObject_GetAttr(PyTuple_GET_ITEM(arrays, 0), args[1]);
+    if (bound == NULL) {
+        goto finish;
+    }
+    method_res = PyObject_Vectorcall(bound, args + 2, nargs - 2, kwnames);
+    Py_DECREF(bound);
+    if (method_res == NULL) {
+        goto finish;
+    }
+    /* conv.wrap(method_res, to_scalar=False) */
+    PyObject *wrap_stack[3] = {conv, method_res, Py_False};
+    res = PyObject_VectorcallMethod(
+            npy_interned_str.wrap, wrap_stack,
+            2 | PY_VECTORCALL_ARGUMENTS_OFFSET,
+            npy_static_pydata.wrapit_kwnames_to_scalar);
+
+  finish:
+    Py_XDECREF(method_res);
+    Py_XDECREF(arrays);
+    Py_DECREF(conv);
+    return res;
+}
+
+
+/*
+ * _wrapfunc(obj, method, *args, **kwds): look up `method` on `obj` and
+ * call it with the remaining arguments; fall back to _wrapit (the
+ * conversion path) when the attribute is missing or the call raises
+ * TypeError (e.g. a same-named method with an incompatible signature,
+ * as seen with pandas), chaining the original TypeError when the
+ * fallback itself fails.
+ */
+static PyObject *
+array__wrapfunc(PyObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    Py_ssize_t nargs = PyVectorcall_NARGS(len_args);
+    if (nargs < 2) {
+        PyErr_SetString(PyExc_TypeError,
+                "_wrapfunc requires at least (obj, method) arguments");
+        return NULL;
+    }
+    PyObject *bound;
+    if (PyObject_GetOptionalAttr(args[0], args[1], &bound) < 0) {
+        return NULL;
+    }
+    if (bound == NULL) {
+        /* No such method: use the conversion path. */
+        return array__wrapit(self, args, len_args, kwnames);
+    }
+    PyObject *res = PyObject_Vectorcall(bound, args + 2, nargs - 2, kwnames);
+    Py_DECREF(bound);
+    if (res != NULL || !PyErr_ExceptionMatches(PyExc_TypeError)) {
+        return res;
+    }
+    /*
+     * A same-named method with an incompatible signature (e.g. pandas):
+     * retry via the conversion path.  The Python implementation called
+     * _wrapit from within the `except TypeError:` clause; mirror that by
+     * making the TypeError the currently handled exception while the
+     * fallback runs, so that any exception it raises implicitly chains
+     * the TypeError as `__context__` (preserving nested context chains).
+     */
+    PyObject *typeerror = PyErr_GetRaisedException();
+    PyObject *prev = PyErr_GetHandledException();
+    PyErr_SetHandledException(typeerror);
+    res = array__wrapit(self, args, len_args, kwnames);
+    PyErr_SetHandledException(prev);
+    Py_XDECREF(prev);
+    Py_DECREF(typeerror);
+    return res;
+}
+
+
 static struct PyMethodDef array_module_methods[] = {
+    {"_wrapfunc",
+        (PyCFunction)array__wrapfunc,
+        METH_FASTCALL | METH_KEYWORDS, NULL},
+    {"_wrapit",
+        (PyCFunction)array__wrapit,
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"_get_implementing_args",
         (PyCFunction)array__get_implementing_args,
         METH_VARARGS, NULL},
