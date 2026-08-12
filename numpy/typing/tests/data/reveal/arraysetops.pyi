@@ -45,6 +45,7 @@ assert_type(np.isin(AR_i8, AR_i8), npt.NDArray[np.bool])
 assert_type(np.isin(AR_M, AR_M, assume_unique=True), npt.NDArray[np.bool])
 assert_type(np.isin(AR_f8, AR_i8), npt.NDArray[np.bool])
 assert_type(np.isin(AR_f8, AR_LIKE_f8, invert=True), npt.NDArray[np.bool])
+assert_type(np.isin(AR_f8_1d, AR_LIKE_f8, invert=True), _Array1D[np.bool])
 
 assert_type(np.union1d(AR_i8, AR_i8), _Array1D[np.int64])
 # NOTE: Mypy incorrectly infers `ndarray[Any, Any]`, but pyright behaves correctly.

@@ -25,12 +25,12 @@ num_object: Decimal | Fraction
 sct_int: np.int_
 sct_float: np.float64
 sct_complex: np.complex128
-sct_object: np.object_  # doesn't exist at runtime
+sct_object: np.object_[int]  # doesn't exist at runtime
 
 arr_int: npt.NDArray[np.int_]
 arr_float: npt.NDArray[np.float64]
 arr_complex: npt.NDArray[np.complex128]
-arr_object: npt.NDArray[np.object_]
+arr_object: npt.NDArray[np.object_[int]]
 
 seq_num_int: Sequence[int]
 seq_num_float: Sequence[float]
