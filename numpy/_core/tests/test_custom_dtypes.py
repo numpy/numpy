@@ -24,6 +24,25 @@ class TestSFloat:
         a *= 1. / scaling  # the casting code also uses the reciprocal.
         return a.view(SF(scaling))
 
+    def test_byteswap(self):
+        # sfloat previously crashed since it does not fill the legacy
+        # copyswapn slot; its byteorder is '|', declaring that byte order
+        # does not apply to it, so byteswapping is a no-op
+        a = self._get_array(1.)
+        swapped = a.byteswap()
+        assert swapped is not a
+        assert_array_equal(swapped.view(np.float64), a.view(np.float64))
+
+        res = a.byteswap(inplace=True)
+        assert res is a
+        assert_array_equal(a.view(np.float64), [1., 2., 3.])
+
+        # the in-place writeability check still fires first, matching the
+        # behavior for dtypes that fill the slot
+        a.flags.writeable = False
+        with pytest.raises(ValueError, match="array to be byte-swapped"):
+            a.byteswap(inplace=True)
+
     def test_sfloat_rescaled(self):
         sf = SF(1.)
         sf2 = sf.scaled_by(2.)
@@ -44,53 +63,45 @@ class TestSFloat:
         assert a.dtype.get_scaling() == scaling
         assert_array_equal(scaling * a.view(np.float64), [1., 2., 3.])
 
-    def test_structured_field_byteswap_raises(self):
-        # a field (or subarray field) whose dtype lacks the legacy copyswap
-        # slot cannot be byteswapped; previously this segfaulted via the
-        # unguarded field copyswap calls in VOID_copyswapn
+    def test_structured_field_byteswap_skips_field(self):
+        # a field whose dtype lacks the legacy copyswap slot but that byte
+        # order does not apply to is left alone, while sibling fields are
+        # still swapped; previously the unguarded field copyswap calls in
+        # VOID_copyswapn segfaulted here
         arr = np.zeros(2, dtype=[("a", "i4"), ("v", SF(1.))])
-        with pytest.raises(TypeError, match="does not implement copyswap"):
-            arr.byteswap()
+        arr["a"] = [1, 2]
+        arr["v"] = np.array([1., 2.]).view(SF(1.))
 
+        swapped = arr.byteswap()
+        assert_array_equal(swapped["a"], np.array([1, 2], dtype="i4").byteswap())
+        assert_array_equal(swapped["v"].view(np.float64), [1., 2.])
+
+        # a subarray field is skipped the same way
         subarr = np.zeros(2, dtype=[("v", SF(1.), (2,))])
-        with pytest.raises(TypeError, match="does not implement copyswap"):
-            subarr.byteswap()
+        subarr["v"] = np.array([[1., 2.], [3., 4.]]).view(SF(1.))
+        assert_array_equal(subarr.byteswap()["v"].view(np.float64),
+                           [[1., 2.], [3., 4.]])
 
-    def test_byteswap_raises(self):
-        # a top-level DType without the legacy copyswap slot does not
-        # support byteswapping
-        arr = np.zeros(2, dtype=SF(1.))
-        with pytest.raises(TypeError, match="does not implement copyswap"):
-            arr.byteswap()
-
-        # the in-place writeability check fires before the missing-slot
-        # check, matching the behavior for dtypes that fill the slot
-        arr.flags.writeable = False
-        with pytest.raises(ValueError, match="array to be byte-swapped"):
-            arr.byteswap(inplace=True)
-
-    def test_structured_field_place_and_flat_raise(self):
-        # requests that need to copy through the missing legacy copyswap
-        # slot raise instead of crashing
-        arr = np.zeros(2, dtype=[("v", SF(1.))])
-        with pytest.raises(TypeError, match="does not implement copyswap"):
-            np.place(arr, [True, False], arr[:1])
-        with pytest.raises(TypeError, match="does not implement copyswap"):
-            arr.flat = arr[:1]
-
-        # both stop copying as soon as the error is detected, so elements
-        # after the first (failing) one keep their values, even for fields
-        # that could have been copied
+    def test_structured_field_place_and_flat_copy(self):
+        # copying through the missing legacy copyswap slot used to segfault
+        # and then (gh-32151) raised; sfloat is trivially copyable, so the
+        # copy is just its bytes and these now succeed
         marr = np.zeros(3, dtype=[("a", "i4"), ("v", SF(1.))])
         marr["a"] = [5, 6, 7]
+        marr["v"] = np.array([1., 2., 3.]).view(SF(1.))
         src = marr[:1].copy()
         src["a"] = 1
-        with pytest.raises(TypeError, match="does not implement copyswap"):
-            marr.flat = src
-        assert marr["a"].tolist()[1:] == [6, 7]
-        with pytest.raises(TypeError, match="does not implement copyswap"):
-            np.place(marr, [True, True, True], src)
-        assert marr["a"].tolist()[1:] == [6, 7]
+        src["v"] = np.array([9.]).view(SF(1.))
+
+        marr.flat = src
+        assert marr["a"].tolist() == [1, 1, 1]
+        assert marr["v"].view(np.float64).tolist() == [9., 9., 9.]
+
+        marr["a"] = [5, 6, 7]
+        marr["v"] = np.array([1., 2., 3.]).view(SF(1.))
+        np.place(marr, [True, False, True], src)
+        assert marr["a"].tolist() == [1, 6, 1]
+        assert marr["v"].view(np.float64).tolist() == [9., 2., 9.]
 
     def test_structured_field_sort_raises(self):
         # VOID_compare called the field's legacy compare slot, which
