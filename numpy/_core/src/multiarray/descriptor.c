@@ -310,7 +310,7 @@ _convert_from_tuple(PyObject *obj, int align)
          * per-instance state (a finalize slot, e.g. StringDType) could
          * never be finalized and anything using the dtype would misbehave.
          */
-        if (NPY_DT_SLOTS(NPY_DTYPE(type))->finalize_descr != NULL) {
+        if (NPY_DT_has_finalize(NPY_DTYPE(type))) {
             PyErr_Format(PyExc_TypeError,
                     "%s is not currently supported within subarray dtypes.",
                     ((PyTypeObject *)NPY_DTYPE(type))->tp_name);
@@ -407,7 +407,7 @@ _convert_from_tuple(PyObject *obj, int align)
 static int
 _reject_unsupported_field_dtype(PyArray_Descr *descr)
 {
-    if (NPY_DT_SLOTS(NPY_DTYPE(descr))->finalize_descr != NULL) {
+    if (NPY_DT_has_finalize(NPY_DTYPE(descr))) {
         PyErr_Format(PyExc_TypeError,
                 "%s is not currently supported for structured dtype "
                 "fields.", ((PyTypeObject *)NPY_DTYPE(descr))->tp_name);

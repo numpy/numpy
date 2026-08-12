@@ -215,6 +215,13 @@ pyscalar_mode_conv(PyObject *obj, scalar_policy *policy)
 }
 
 
+/*
+ * NOTE: array__wrapit in multiarraymodule.c calls `as_arrays` and `wrap`
+ * by interned name at runtime (with the `subok=`/`to_scalar=` keywords,
+ * interned in npy_static_data.c), and relies on `as_arrays` returning a
+ * length-1 tuple for a single-input converter.  Keep it in sync when
+ * changing the API of either method.
+ */
 static PyObject *
 array_converter_as_arrays(PyArrayArrayConverterObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)

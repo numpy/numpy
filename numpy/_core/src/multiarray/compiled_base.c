@@ -395,7 +395,7 @@ arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     j = 0;
 
     copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(array))->copyswap;
-    if (copyswap == NULL) {
+    if (copyswap == NULL || PyDataType_REFCHK(PyArray_DESCR(array))) {
         NPY_cast_info cast_info;
         NPY_ARRAYMETHOD_FLAGS flags;
         const npy_intp one = 1;
@@ -434,6 +434,7 @@ arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         NPY_cast_info_xfree(&cast_info);
     }
     else {
+        int needs_api = PyDataType_FLAGCHK(PyArray_DESCR(array), NPY_NEEDS_PYAPI);
         NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(array));
         for (i = 0; i < ni; i++) {
             if (mask_data[i]) {
@@ -442,10 +443,17 @@ arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                 }
 
                 copyswap(dest + i*chunk, src + j*chunk, 0, array);
+                if (needs_api && PyErr_Occurred()) {
+                    /* e.g. a structured dtype field that does not support copyswap */
+                    break;
+                }
                 j++;
             }
         }
         NPY_END_THREADS;
+        if (PyErr_Occurred()) {
+            goto fail;
+        }
     }
 
     Py_XDECREF(values);

@@ -56,6 +56,10 @@ extern "C" {
     F(imag)                 \
     F(sort)                 \
     F(argsort)              \
+    F(as_arrays)            \
+    F(wrap)                 \
+    F(subok)                \
+    F(to_scalar)            \
     F(partition)            \
     F(argpartition)         \
     F(_set_dtype)           \
@@ -103,6 +107,8 @@ extern "C" {
     F(format_options)              \
     F(legacy_resolver_promoting)   \
     F(kwnames_is_copy)             \
+    F(wrapit_kwnames_subok)        \
+    F(wrapit_kwnames_to_scalar)    \
     F(axes_1d_obj_kwargs)          \
     F(axes_2d_obj_kwargs)          \
     F(cpu_dispatch_registry)       \

@@ -72,6 +72,10 @@ intern_strings(void)
     INTERN_STRING(imag, "imag");
     INTERN_STRING(sort, "sort");
     INTERN_STRING(argsort, "argsort");
+    INTERN_STRING(as_arrays, "as_arrays");
+    INTERN_STRING(wrap, "wrap");
+    INTERN_STRING(subok, "subok");
+    INTERN_STRING(to_scalar, "to_scalar");
     INTERN_STRING(partition, "partition");
     INTERN_STRING(argpartition, "argpartition");
     INTERN_STRING(_set_dtype, "_set_dtype");
@@ -202,6 +206,18 @@ initialize_static_globals(void)
 
     static_pydata->kwnames_is_copy = PyTuple_Pack(1, interned_str->copy);
     if (static_pydata->kwnames_is_copy == NULL) {
+        return -1;
+    }
+
+    static_pydata->wrapit_kwnames_subok = PyTuple_Pack(
+            1, interned_str->subok);
+    if (static_pydata->wrapit_kwnames_subok == NULL) {
+        return -1;
+    }
+
+    static_pydata->wrapit_kwnames_to_scalar = PyTuple_Pack(
+            1, interned_str->to_scalar);
+    if (static_pydata->wrapit_kwnames_to_scalar == NULL) {
         return -1;
     }
 

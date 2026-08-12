@@ -60,6 +60,30 @@ _array_find_python_scalar_type(PyObject *op);
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap);
 
+/*
+ * Raise a TypeError for a dtype whose legacy copyswap slot is missing
+ * (e.g. a dtype written using the new DType API).  This never succeeds:
+ * it always returns -1, so that it can be chained onto the NULL test at
+ * the call site.  `inplace_swap` marks a request that only swaps bytes
+ * in place (no data copy); it is unused for now, but is passed so that
+ * such requests can become a no-op (returning 0) when byte order does
+ * not apply to the dtype (see gh-32150).
+ *
+ * WARNING: every call site is written as
+ *
+ *     if (copyswap == NULL && raise_missing_copyswap(...) < 0) {
+ *         <error return>;
+ *     }
+ *     copyswap(...);
+ *
+ * which calls through the NULL slot if this function returns 0.  This is
+ * safe only while it unconditionally returns -1: before changing it to
+ * return 0, every call site must first be restructured to skip the
+ * copyswap call on success.
+ */
+NPY_NO_EXPORT int
+raise_missing_copyswap(PyArray_Descr *dtype, int inplace_swap);
+
 NPY_NO_EXPORT PyObject *
 convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending);
 

@@ -1207,6 +1207,12 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     }
     else {
         /* buffer given -- use it */
+        if (NPY_DT_has_finalize(NPY_DTYPE(descr))) {
+            PyErr_Format(PyExc_TypeError,
+                         "cannot create a %S array from a buffer",
+                         descr);
+            goto fail;
+        }
         if (dims.len == 1 && dims.ptr[0] == -1) {
             dims.ptr[0] = (buffer.len-(npy_intp)offset) / itemsize;
         }
