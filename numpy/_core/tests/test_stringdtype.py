@@ -1206,6 +1206,20 @@ def test_cast_structured_field_view_strides():
     assert_array_equal(rec2["v"], np.array([4.5, 5.5, 6.5]))
     assert_array_equal(rec2["pad"], np.zeros(3, dtype="u4"))
 
+    # likewise the 8-byte datetime/timedelta loops only see a mismatched
+    # stride on 32-bit architectures
+    rec3 = np.zeros(3, dtype=[("t", "M8[D]"), ("td", "m8[s]"), ("pad", "u4")])
+    rec3["t"] = np.array(["2010-01-01", "NaT", "2015-02-03"], dtype="M8[D]")
+    rec3["td"] = np.array([12, "NaT", -34], dtype="m8[s]")
+    assert_array_equal(rec3["t"].astype("T"),
+                       np.array(["2010-01-01", "NaT", "2015-02-03"], dtype="T"))
+    assert_array_equal(rec3["td"].astype("T"),
+                       np.array(["12", "NaT", "-34"], dtype="T"))
+    rec3["t"] = np.array(["1993-06-05", "NaT", "2038-01-19"], dtype="T")
+    rec3["td"] = np.array(["-56", "NaT", "78"], dtype="T")
+    assert_array_equal(rec3["t"],
+                       np.array(["1993-06-05", "NaT", "2038-01-19"], dtype="M8[D]"))
+    assert_array_equal(rec3["td"], np.array([-56, "NaT", 78], dtype="m8[s]"))
 
 def test_take(string_list):
     sarr = np.array(string_list, dtype="T")
