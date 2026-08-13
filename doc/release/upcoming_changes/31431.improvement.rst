@@ -1,7 +1,7 @@
-Object array sorting supports ``descending=True`` and consistently sorts NaN-like objects
------------------------------------------------------------------------------------------
-`np.sort` and `np.argsort` with arrays of dtype ``object``
+Object and ``StringDType`` array sorting supports ``descending=True``
+----------------------------------------------------------------------
+`np.sort` and `np.argsort` with arrays of dtype ``object`` or ``StringDType``
 now support passing `descending=True` to sort in descending order. Objects that
 compare as not equal to themselves (``obj != obj``), such as NaN-like objects,
-are considered unordered and are sorted to the end of the array, regardless of
-the value of ``descending``.
+and missing strings with a nan-like ``na_object`` are considered unordered and
+are sorted to the end of the array, regardless of the value of ``descending``.
