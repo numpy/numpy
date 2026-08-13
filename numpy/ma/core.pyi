@@ -2743,20 +2743,27 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
 
     # keep in sync with `ndarray.repeat`
     @override
-    @overload
+    @overload  # axis=None  (default)
     def repeat(
         self,
-        /,
         repeats: _ArrayLikeInt_co,
+        /,
         axis: None = None,
     ) -> MaskedArray[tuple[int], _DTypeT_co]: ...
-    @overload
-    def repeat(
-        self,
-        /,
+    @overload  # >=1d, axis=<given>
+    def repeat[DTypeT: dtype, ShapeT: tuple[int, *tuple[int, ...]]](
+        self: MaskedArray[ShapeT, DTypeT],
         repeats: _ArrayLikeInt_co,
+        /,
         axis: SupportsIndex,
-    ) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
+    ) -> MaskedArray[ShapeT, DTypeT]: ...
+    @overload  # 0d, axis=<given>
+    def repeat[DTypeT: dtype](
+        self: MaskedArray[tuple[()], DTypeT],
+        repeats: _ArrayLikeInt_co,
+        /,
+        axis: SupportsIndex,
+    ) -> MaskedArray[tuple[int], DTypeT]: ...
 
     # keep in sync with `ndarray.flatten` and `ndarray.ravel`
     @override
