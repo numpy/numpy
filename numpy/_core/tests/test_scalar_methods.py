@@ -173,12 +173,16 @@ class TestClassGetItem:
     @pytest.mark.parametrize("code", np.typecodes["All"])
     def test_concrete(self, code: str) -> None:
         cls = np.dtype(code).type
-        if cls in {np.bool, np.datetime64}:
+        if cls in {np.bool, np.datetime64, np.object_}:
             # these are intentionally subscriptable
             assert cls[Any]
         else:
             with pytest.raises(TypeError):
                 cls[Any]
+
+    def test_object(self) -> None:
+        # returns itself, not a generic alias, so it stays dtype-like
+        assert np.object_[int] is np.object_
 
     @pytest.mark.parametrize("arg_len", range(4))
     def test_subscript_tuple(self, arg_len: int) -> None:
