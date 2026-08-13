@@ -16,7 +16,10 @@ project(
 
 # Target version for the Limited C API, used by extension modules that
 # have been ported. Controlled by python.allow_limited_api (default: false).
+# The hex form is the same version, for targets that must define
+# `Py_LIMITED_API` themselves; keep the two in sync.
 py_limited_api = '3.13'
+py_limited_api_hex = '0x030d0000'
 
 # The `limited_api:` kwarg only reaches an extension module's own sources.
 # Static libraries linked into one must be passed these args as well, or their

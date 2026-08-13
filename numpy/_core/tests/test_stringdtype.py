@@ -746,6 +746,79 @@ def test_fancy_indexing(string_list):
         assert_array_equal(sarr[ind], uarr[ind])
 
 
+@pytest.mark.parametrize("value", ["Z" * 20, "Z" * 5])
+def test_fancy_index_assign_0d_value(value):
+    # a 0-d value assigned through multiple fancy indices broadcasts to
+    # every selected element (gh-32153)
+    a = np.array(["v0", "v1", "v2", "v3"], dtype="T").reshape(2, 2)
+    a[[0, 1], [0, 1]] = np.array(value, dtype="T")
+    assert_array_equal(a, [[value, "v1"], ["v2", value]])
+    # the value may carry the destination's own dtype instance
+    a[[0, 1], [0, 1]] = np.array(value + "x", dtype=a.dtype)
+    assert_array_equal(a, [[value + "x", "v1"], ["v2", value + "x"]])
+
+
+def test_fancy_index_assign_subspace_distinct_allocators():
+    # Fancy indexing only the first dimension leaves the second dimension as
+    # a subspace copied from an independently-owned StringDType descriptor.
+    a, b, a_obj, b_obj = _make_distinct_arena_arrays(6)
+    a, a_obj = a.reshape(3, 2), a_obj.reshape(3, 2)
+    rhs, rhs_obj = b[:4].reshape(2, 2), b_obj[:4].reshape(2, 2)
+
+    a[[0, 2], :] = rhs
+    a_obj[[0, 2], :] = rhs_obj
+    assert_array_equal(a, a_obj)
+
+
+@pytest.mark.parametrize("buffered", [True, False])
+@pytest.mark.parametrize("pass_op_dtypes", [True, False])
+def test_nditer_allocated_output(buffered, pass_op_dtypes):
+    # an iterator-allocated StringDType output round-trips the values
+    # written through the iterator, and it.dtypes reports the descriptor
+    # that owns the allocated operand's data (gh-32153)
+    a = np.array(["x" * 20, "y" * 20, "z" * 20], dtype="T")
+    flags = ["refs_ok"] + (["buffered"] if buffered else [])
+    op_dtypes = [a.dtype, a.dtype] if pass_op_dtypes else None
+    it = np.nditer([a, None], flags=flags,
+                   op_flags=[["readonly"], ["writeonly", "allocate"]],
+                   op_dtypes=op_dtypes)
+    with it:
+        for x, y in it:
+            y[...] = x
+        out = it.operands[1]
+        assert it.dtypes[1] is out.dtype
+    assert_array_equal(out, a)
+
+
+def test_nditer_copy_and_writeback():
+    # requesting a distinct StringDType instance forces the iterator to
+    # copy the operand; the copied values read back correctly and, with
+    # updateifcopy, write back to the original array (gh-32153)
+    v = np.array(["Z" * 20, "Y" * 25], dtype="T")
+    dt = np.dtypes.StringDType()
+    np.empty(1, dtype=dt)  # attach dt to an array so it is a distinct instance
+
+    it = np.nditer([v], flags=["refs_ok"], op_flags=[["readonly", "copy"]],
+                   op_dtypes=[dt], casting="unsafe")
+    assert [str(x) for x in it] == ["Z" * 20, "Y" * 25]
+    assert it.dtypes[0] is it.operands[0].dtype
+
+    it = np.nditer([v], flags=["refs_ok"],
+                   op_flags=[["readwrite", "updateifcopy"]],
+                   op_dtypes=[dt], casting="unsafe")
+    with it:
+        for x in it:
+            x[...] = str(x) + "q"
+    assert v.tolist() == ["Z" * 20 + "q", "Y" * 25 + "q"]
+
+
+def test_ndarray_from_buffer_rejected():
+    # StringDType entries reference a per-descriptor arena, so an array
+    # cannot be created over caller-supplied buffer memory (gh-32153)
+    with pytest.raises(TypeError, match="buffer"):
+        np.ndarray((2,), dtype="T", buffer=bytearray(32))
+
+
 def test_fromiter_reused_dtype():
     # Reusing the same StringDType instance across fromiter
     # calls used to write strings into the wrong arena, creating corrupted arrays
@@ -783,6 +856,66 @@ def test_resize_method(string_list):
     sarr = np.array(string_list, dtype="T")
     sarr.resize(len(string_list) + 3)
     assert_array_equal(sarr, np.array(string_list + [''] * 3,  dtype="T"))
+
+
+def test_byteswap(dtype):
+    # byteswap previously crashed since StringDType did not fill the
+    # legacy copyswapn slot; byte order does not apply to stringdtype
+    # so byteswapping is a no-op, as for "S" and object dtypes
+    arr = np.array(["hello", "world"], dtype=dtype)
+    swapped = arr.byteswap()
+    assert swapped is not arr
+    assert_array_equal(swapped, arr)
+    # the result is an independent copy
+    swapped[0] = "goodbye"
+    assert arr[0] == "hello"
+
+    res = arr.byteswap(inplace=True)
+    assert res is arr
+    assert_array_equal(res, ["hello", "world"])
+
+    arr.flags.writeable = False
+    with pytest.raises(ValueError, match="array to be byte-swapped"):
+        arr.byteswap(inplace=True)
+
+
+def test_place(dtype):
+    # stringdtype has no legacy copyswap arrfunc, so np.place copies the
+    # values through its cast-machinery fallback
+    arr = np.array(["hello", "world", "a", "b" * 100], dtype=dtype)
+    np.place(arr, [True, False, True, True], ["x", "y" * 100, "z"])
+    expected = np.array(["x", "world", "y" * 100, "z"], dtype=dtype)
+    assert_array_equal(arr, expected)
+
+    # values aliasing the destination array must be handled safely; the
+    # string_to_string cast relies on NpyString_share_memory recognizing
+    # that a packed string shares memory with itself
+    np.place(arr, [True, True, True, True], arr)
+    assert_array_equal(arr, expected)
+
+
+def test_flat_set_aliased(dtype):
+    # flat assignment copies element by element through the same cast
+    # fallback as np.place and, when the value aliases the destination,
+    # also relies on NpyString_share_memory recognizing identical strings
+    arr = np.array(["hello", "world", "b" * 100], dtype=dtype)
+    expected = arr.copy()
+    arr.flat = arr
+    assert_array_equal(arr, expected)
+
+    # broadcasting a view of the array over itself mixes identical
+    # elements with real same-allocator copies
+    arr.flat = arr[:1]
+    assert_array_equal(arr, ["hello"] * 3)
+
+    # The identical-pointer case also matters for null strings, which do not
+    # have a string buffer for the general sharing check to compare.
+    if hasattr(dtype, "na_object"):
+        missing = np.array([dtype.na_object], dtype=dtype)
+        missing.flat = missing
+        assert missing[0] is dtype.na_object
+        np.place(missing, [True], missing)
+        assert missing[0] is dtype.na_object
 
 
 def test_create_with_copy_none(string_list):
@@ -2357,6 +2490,9 @@ def test_concatenate_distinct_allocators():
     assert_array_equal(np.vstack([a, b]), np.vstack([a_obj, b_obj]))
     assert_array_equal(np.hstack([a, b]), expected)
 
+    # a single array with axis=None is returned unchanged
+    assert_array_equal(np.concatenate([a], axis=None), a_obj)
+
 
 def test_where_distinct_allocators():
     a, b, a_obj, b_obj = _make_distinct_arena_arrays(101)
@@ -2593,3 +2729,75 @@ def test_flat_assignment_distinct_allocators():
     d.flat = ["xy"]
     d_obj.flat = ["xy"]
     assert_array_equal(d, d_obj)
+
+
+def test_ufunc_overlapping_out_distinct_allocators():
+    a, _, a_obj, _ = _make_distinct_arena_arrays(20)
+    # out= overlapping an input (reversed view)
+    np.add(a, a, out=a[::-1])
+    np.add(a_obj, a_obj, out=a_obj[::-1])
+    assert_array_equal(a, a_obj)
+
+    # same through the masked (where=) loop
+    b, _, b_obj, _ = _make_distinct_arena_arrays(20, prefix_a="B")
+    mask = np.arange(10) % 2 == 0
+    np.add(b[:10], b[:10], out=b[5:15], where=mask)
+    np.add(b_obj[:10], b_obj[:10], out=b_obj[5:15], where=mask)
+    assert_array_equal(b, b_obj)
+
+
+def test_reduce_distinct_allocators():
+    a, acc_out, a_obj, acc_out_obj = _make_distinct_arena_arrays(50)
+    assert_array_equal(np.maximum.reduce(a), np.maximum.reduce(a_obj))
+    assert_array_equal(np.add.accumulate(a), np.add.accumulate(a_obj))
+
+    # no outer iterator, but the independently-allocated output still has a
+    # different descriptor from the input
+    np.add.accumulate(a, out=acc_out)
+    np.add.accumulate(a_obj, out=acc_out_obj)
+    assert_array_equal(acc_out, acc_out_obj)
+
+    # a multidimensional accumulate uses an outer iterator and allocates a
+    # finalized output descriptor
+    c, _, c_obj, _ = _make_distinct_arena_arrays(6, prefix_a="C")
+    c, c_obj = c.reshape(2, 3), c_obj.reshape(2, 3)
+    assert_array_equal(
+        np.add.accumulate(c, axis=1), np.add.accumulate(c_obj, axis=1)
+    )
+
+    # a long initial value exercises the finalized reduction descriptors used
+    # to create and populate the masked-reduction initial-value buffer
+    mask = np.array([[True, False, True], [False, True, True]])
+    assert_array_equal(
+        np.maximum.reduce(c, axis=1, where=mask, initial="initial" * 4),
+        np.maximum.reduce(c_obj, axis=1, where=mask, initial="initial" * 4),
+    )
+
+    # accumulate in place (out aliases the operand)
+    np.add.accumulate(a, out=a)
+    np.add.accumulate(a_obj, out=a_obj)
+    assert_array_equal(a, a_obj)
+
+    # reduce with out= overlapping the operand
+    b, _, b_obj, _ = _make_distinct_arena_arrays(6, prefix_a="B")
+    b, b_obj = b.reshape(2, 3), b_obj.reshape(2, 3)
+    np.maximum.reduce(b, axis=0, out=b[0])
+    np.maximum.reduce(b_obj, axis=0, out=b_obj[0])
+    assert_array_equal(b, b_obj)
+
+
+def test_nditer_distinct_allocators():
+    a, b, a_obj, _ = _make_distinct_arena_arrays(20)
+
+    # a 0-d readonly operand cast to a distinct instance reads back, and
+    # it.dtypes agrees with the operand the iterator actually uses
+    zero_d = np.array(a_obj[0], dtype="T")
+    it = np.nditer([zero_d], flags=["refs_ok"], op_dtypes=[b.dtype],
+                   casting="unsafe")
+    assert str(next(it)) == a_obj[0]
+    assert it.dtypes[0] is it.operands[0].dtype
+
+    # a buffered iterator and its copy read the same values
+    it = np.nditer([a], flags=["refs_ok", "buffered"], op_dtypes=[b.dtype],
+                   casting="unsafe")
+    assert_array_equal([str(x) for x in it.copy()], a_obj.tolist())

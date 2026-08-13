@@ -3,8 +3,8 @@
 #include "numpy/npy_common.h"
 #include "numpy/npy_cpu.h" // To guarantee the CPU definitions are in scope.
 
-#include <stdlib.h>
-#include <string.h>
+#include <stdlib.h> 
+#include <string.h> 
 
 /******************** Private Definitions *********************/
 
