@@ -325,6 +325,8 @@ assert_type(f8.repeat(1), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(f8.repeat(1, axis=0), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(AR_f8.repeat(1), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(AR_f8.repeat(1, axis=0), npt.NDArray[np.float64])
+assert_type(AR_f8_1d.repeat(1, axis=0), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8_2d.repeat(1, axis=0), np.ndarray[tuple[int, int], np.dtype[np.float64]])
 assert_type(B.repeat(1), np.ndarray[tuple[int], np.dtype[np.object_]])
 assert_type(B.repeat(1, axis=0), npt.NDArray[np.object_])
 
