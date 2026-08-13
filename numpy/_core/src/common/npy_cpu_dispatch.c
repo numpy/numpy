@@ -27,11 +27,7 @@ npy_cpu_dispatch_tracer_init(PyObject *mod)
     if (err != 0) {
         return -1;
     }
-    /*
-     * state->static_pydata.cpu_dispatch_registry is a separate owned
-     * reference from the one held by mod_dict above, since it is
-     * visited/cleared by the module's GC hooks.
-     */
+    /* The module state holds its own reference, visited by the GC hooks. */
     Py_INCREF(reg_dict);
     state->static_pydata.cpu_dispatch_registry = reg_dict;
     return 0;

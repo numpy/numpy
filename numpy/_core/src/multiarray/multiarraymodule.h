@@ -5,12 +5,7 @@
 extern "C" {
 #endif
 
-/*
- * Struct definition for per-module global state, embedded as the
- * global_state field of multiarray_umath_state (see module_state.h).
- * Python allocates one instance per interpreter; access it via
- * get_module_state() or _npy_module_state.
- */
+/* Embedded as the global_state field of multiarray_umath_state. */
 typedef struct npy_global_state_struct {
     /*
      * Used to test the internal-only scaled float test dtype

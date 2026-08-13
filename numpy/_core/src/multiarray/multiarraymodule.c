@@ -5138,12 +5138,6 @@ set_flaginfo(PyObject *d)
     return;
 }
 
-/*
- * TRANSITIONAL: process-global pointer to module state.
- * Set once in _multiarray_umath_exec(). Used by call sites that don't
- * have a module pointer available yet.
- * FIXME: Remove once all access sites are updated.
- */
 NPY_VISIBILITY_HIDDEN multiarray_umath_state *_npy_module_state = NULL;
 
 static int
@@ -5243,15 +5237,12 @@ _multiarray_umath_exec(PyObject *m) {
     module_loaded = 1;
 
     /*
-     * State that is never torn down lives outside the module state: the
-     * static types, the PyArray_API table and the builtin descriptor and
-     * DType singletons reachable through it. Clearing the module state while
-     * those are still reachable would leave dead pointers in the public C
-     * API, so leak a reference to keep m_clear and m_free from running.
+     * The static types and the PyArray_API table outlive the module, so
+     * clearing the module state would leave dead pointers in the public C
+     * API. Leak a reference to keep m_clear and m_free from running.
      */
     Py_INCREF(m);
 
-    /* Set up per-module state pointer */
     multiarray_umath_state *state = get_module_state(m);
     _npy_module_state = state;
 

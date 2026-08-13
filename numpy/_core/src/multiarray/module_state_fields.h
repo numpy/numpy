@@ -2,16 +2,11 @@
 #define NUMPY_CORE_SRC_MULTIARRAY_MODULE_STATE_FIELDS_H_
 
 /*
- * Field lists for the PyObject members of multiarray_umath_state.
+ * Field lists for the PyObject members of multiarray_umath_state, used to
+ * expand the module traverse and clear functions.
  *
- * Each macro applies F to every field name in the matching struct.
- * multiarray_umath_traverse and multiarray_umath_clear are expanded from
- * these lists, so the two cannot disagree, and the static assertions in
- * module_state.h fail the build if a struct gains a member that is not
- * listed here.
- *
- * interned_str.errmode_strings is an array rather than a plain member, so it
- * is handled separately at each use site.
+ * interned_str.errmode_strings is an array, so it is handled separately at
+ * each use site.
  */
 
 #ifdef __cplusplus
@@ -198,15 +193,13 @@ extern "C" {
     F(imag)
 
 #define NPY_MODULE_STATE_OBJECT_FIELDS(F) \
-    F(typeDict)                                 \
-    F(current_handler)                          \
+    F(typeDict)        \
+    F(current_handler) \
     F(global_pytype_to_type_dict)
 
-/* Number of entries in a field list. */
 #define NPY_FIELD_COUNT_ONE(name) + 1
 #define NPY_FIELD_COUNT(list) (0 list(NPY_FIELD_COUNT_ONE))
 
-/* Size of interned_str.errmode_strings, see comment above. */
 #define NPY_ERRMODE_STRING_COUNT 6
 
 #ifdef __cplusplus

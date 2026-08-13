@@ -1,36 +1,18 @@
-/*
- * Per-module state for _multiarray_umath.
- *
- * Defines the state struct that Python allocates once per interpreter when
- * _multiarray_umath is imported. The global PyObject caches for the module
- * live here rather than in process-global variables.
- */
-
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_MODULE_STATE_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_MODULE_STATE_H_
 
-#include <stddef.h>  /* offsetof */
+#include <stddef.h>  /* for offsetof */
 
-#include "npy_static_data.h"      /* npy_interned_str_struct and friends */
-#include "npy_import.h"           /* npy_runtime_imports_struct */
-#include "multiarraymodule.h"     /* npy_global_state_struct */
-#include "number.h"               /* NumericOps */
-#include "module_state_fields.h"  /* NPY_*_FIELDS field lists */
+#include "npy_static_data.h"
+#include "npy_import.h"
+#include "multiarraymodule.h"
+#include "number.h"
+#include "module_state_fields.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/*
- * Master module state struct.
- *
- * Python allocates sizeof(multiarray_umath_state) bytes per interpreter
- * instance and zero-initializes it. Access via get_module_state() below.
- *
- * NOTE: The sub-struct fields here are placeholders for when each global
- * is actually migrated. Until then the real data lives in the process-global
- * variables and the fields in this struct are unused.
- */
 typedef struct {
     npy_interned_str_struct    interned_str;
     npy_static_pydata_struct   static_pydata;
@@ -38,20 +20,13 @@ typedef struct {
     npy_runtime_imports_struct runtime_imports;
     npy_global_state_struct    global_state;
 
-    /* formerly file-scope globals in descriptor.c, alloc.c, array_coercion.c
-       and number.c */
     PyObject *typeDict;
     PyObject *current_handler;
     PyObject *global_pytype_to_type_dict;
     NumericOps n_ops;
 } multiarray_umath_state;
 
-/*
- * Tie each field list to the struct it describes. Every member is a
- * PyObject *, so the size is exactly one pointer per member. A member that is
- * missing from a list breaks the build here instead of being silently dropped
- * from traverse and clear.
- */
+/* All members are PyObject *, so these catch one missing from a field list. */
 static_assert(sizeof(npy_interned_str_struct) ==
         (NPY_FIELD_COUNT(NPY_INTERNED_STR_FIELDS) + NPY_ERRMODE_STRING_COUNT)
                 * sizeof(PyObject *),
@@ -71,19 +46,13 @@ static_assert(sizeof(NumericOps) ==
         NPY_FIELD_COUNT(NPY_N_OPS_FIELDS) * sizeof(PyObject *),
         "NumericOps member missing from NPY_N_OPS_FIELDS");
 
-/*
- * The loose members sit contiguously between the sub-structs and n_ops, so
- * the gap between them is one pointer per listed field.
- */
+/* The loose members sit contiguously between the sub-structs and n_ops. */
 static_assert(offsetof(multiarray_umath_state, n_ops) -
         offsetof(multiarray_umath_state, typeDict) ==
         NPY_FIELD_COUNT(NPY_MODULE_STATE_OBJECT_FIELDS) * sizeof(PyObject *),
         "multiarray_umath_state member missing from "
         "NPY_MODULE_STATE_OBJECT_FIELDS");
 
-/*
- * Get module state from the module object.
- */
 static inline multiarray_umath_state *
 get_module_state(PyObject *module)
 {
@@ -93,19 +62,10 @@ get_module_state(PyObject *module)
 }
 
 /*
- * TRANSITIONAL: process-global pointer to the module state.
+ * Only one state ever exists: the module opts out of subinterpreters and
+ * refuses a second load. Use only where no module pointer is reachable.
  *
- * Sound as a process global only because the module opts out of
- * subinterpreters (Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED) and refuses a
- * second load per process, so at most one module state ever exists. It is
- * assigned at the top of _multiarray_umath_exec() before any reader can run,
- * and the module leaks a reference to itself so m_free never runs, leaving it
- * valid for the life of the process: dereference it without a NULL check.
- *
- * Use only where no module pointer is reachable; prefer get_module_state().
- *
- * FIXME: Remove once all access sites receive the module or state pointer
- * directly, via module-aware type methods or per-interpreter lookup.
+ * FIXME: Remove once all access sites receive the module or state pointer.
  */
 NPY_VISIBILITY_HIDDEN extern multiarray_umath_state *_npy_module_state;
 

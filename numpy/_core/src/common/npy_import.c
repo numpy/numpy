@@ -6,14 +6,7 @@
 #include <stdatomic.h>
 
 
-/*
- * This mutex only guards the act of importing (i.e. writing a freshly
- * imported object into a caller-supplied `PyObject **` slot, which now
- * lives in per-module state). It is intentionally process-global: it does
- * not protect any per-interpreter data itself, only serializes concurrent
- * first-time imports, so it is safe to share across interpreters under the
- * GIL.
- */
+/* Process global mutex to serialize first time imports. */
 #if PY_VERSION_HEX < 0x30d00b3
 static PyThread_type_lock npy_import_mutex = NULL;
 #else

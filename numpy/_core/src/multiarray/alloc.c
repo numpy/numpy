@@ -435,8 +435,8 @@ PyDataMem_Handler default_handler = {
     }
 };
 /*
- * singleton capsule of the default handler.
- * Stays process-global: public C-API slot (numpy_api.py, slot 306), can't move to module state.
+ * Singleton capsule of the default handler. Stays process-global, it is a
+ * public C-API slot (numpy_api.py, slot 306).
  */
 PyObject *PyDataMem_DefaultHandler;
 

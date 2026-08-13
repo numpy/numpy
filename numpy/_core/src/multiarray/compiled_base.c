@@ -1972,8 +1972,6 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
 
     NPY_BEGIN_THREADS_THRESHOLDED(PyArray_Size((PyObject *)out) / 8);
 
-    /* FIXME: replace _npy_module_state with get_module_state(module)
-     * once all call chains carry the module pointer */
     npy_static_cdata_struct *cdata = &_npy_module_state->static_cdata;
 
     while (PyArray_ITER_NOTDONE(it)) {

@@ -442,8 +442,6 @@ try_reduction(PyArray_ArrayFunctionDispatcherObject *self,
 {
     PyObject *a = NULL, *axis = Py_None, *out = Py_None;
     PyObject *dtype = self->reduction_kind == REDUCTION_ANY_ALL ? (PyObject *)&PyBool_Type : Py_None;
-    /* FIXME: replace _npy_module_state with get_module_state(module)
-     * once this call chain carries the module pointer */
     PyObject *no_value = _npy_module_state->static_pydata._NoValue;
     PyObject *keepdims = no_value, *where = no_value;
     PyObject *initial = no_value;
