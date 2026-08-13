@@ -5,3 +5,13 @@ omit =
     */tests/*
     */numpy/conftest.py
 disable_warnings = include-ignored
+parallel = True
+concurrency =
+    multiprocessing
+    thread
+
+[paths]
+source =
+    numpy/
+    */numpy/
+    */site-packages/numpy/

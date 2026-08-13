@@ -104,6 +104,7 @@ Thumbs.db
 # pytest generated files #
 ##########################
 /.pytest_cache
+.coverage
 
 # doc build generated files #
 #############################
