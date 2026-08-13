@@ -28,11 +28,6 @@ from decimal import Decimal
 
 import pytest
 
-try:
-    import _interpreters
-except ModuleNotFoundError:
-    _interpreters = None
-
 import numpy as np
 import numpy._core._multiarray_tests as _multiarray_tests
 from numpy._core._rational_tests import rational, rational2
@@ -11926,36 +11921,21 @@ class TestSubinterpreterTeardown:
     """
     ``_multiarray_umath`` declares Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED,
     so importing numpy in a subinterpreter must fail cleanly with an
-    ImportError rather than crashing. Destroying the subinterpreter afterwards
+    ImportError rather than crashing. Closing the subinterpreter afterwards
     exercises its teardown path even though the import failed.
-
-    Uses the `_interpreters` internal C module (Python 3.13+), which
-    backs `concurrent.interpreters` (PEP 734).
     """
 
-    @pytest.mark.skipif(
-        _interpreters is None,
-        reason="_interpreters module not available (Python 3.13+ required)"
-    )
+    @pytest.mark.skipif(IS_WASM, reason="no subinterpreter support in wasm")
     def test_subinterpreter_import_fails_cleanly(self):
-        interp = _interpreters.create()
+        # concurrent.interpreters is Python 3.14+
+        interpreters = pytest.importorskip("concurrent.interpreters")
+        interp = interpreters.create()
         try:
-            # Subinterpreters rebuild sys.path from config, dropping runtime
-            # additions like the iOS testbed's app_packages/. Mirror the
-            # parent's so numpy is importable at all.
-            excinfo = _interpreters.run_string(
-                interp, f"import sys; sys.path[:] = {sys.path!r}"
-            )
-            assert excinfo is None, excinfo.formatted
-
-            # run_string returns None on success, or a types.SimpleNamespace
-            # describing the exception (.type, .msg, .formatted) on failure.
-            excinfo = _interpreters.run_string(interp, "import numpy")
-            assert excinfo is not None, (
-                "importing numpy in a subinterpreter unexpectedly succeeded; "
-                "if subinterpreter support has been added, update this test "
-                "to assert that it works"
-            )
-            assert excinfo.type.__name__ == "ImportError", excinfo.formatted
+            with pytest.raises(interpreters.ExecutionFailed) as exc:
+                interp.exec("import numpy")
+            # numpy rewraps every C-extension ImportError in a generic
+            # message, so the type alone would also pass for a broken build.
+            msg = exc.value.excinfo.msg
+            assert "does not support loading in subinterpreters" in msg, msg
         finally:
-            _interpreters.destroy(interp)
+            interp.close()
