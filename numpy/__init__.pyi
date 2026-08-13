@@ -3760,8 +3760,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 
     # keep in sync with `max`
     @override  # type: ignore[override]
-    @overload  # +number | timedelta64 | datetime64
-    def min[ScalarT: number | bool_ | timedelta64 | datetime64](
+    @overload  # known dtype, axis=None (default)
+    def min[ScalarT: _ScalarOrderable](
         self: NDArray[ScalarT],
         axis: None = None,
         out: None = None,
@@ -3770,9 +3770,19 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         initial: _NumberLike_co | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> ScalarT: ...
-    @overload  # +number | timedelta64 | datetime64 | object_, axis: <given>
-    def min[ScalarT: number | bool_ | timedelta64 | datetime64 | object_](
-        self: NDArray[ScalarT],
+    @overload  # object_, axis=None (default)
+    def min[ItemT](
+        self: NDArray[object_[ItemT]],
+        axis: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ItemT: ...
+    @overload  # ?d, axis=<given>  (workaround overload)
+    def min[ScalarT: _ScalarOrderable | object_](
+        self: ndarray[_JustND, _dtype[ScalarT]],
         axis: int | tuple[int, ...],
         out: None = None,
         *,
@@ -3780,8 +3790,78 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         initial: _NumberLike_co | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> NDArray[ScalarT]: ...
-    @overload  # +number | timedelta64 | datetime64 | object_, keepdims=True
-    def min[ArrayT: NDArray[number | bool_ | timedelta64 | datetime64 | object_]](
+    @overload  # <=1d, axis=<single>
+    def min[ScalarT: _ScalarOrderable](
+        self: ndarray[_0D | _1D, _dtype[ScalarT]],
+        axis: int | tuple[int],
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ScalarT: ...
+    @overload  # 2d, axis=<single>
+    def min[ScalarT: _ScalarOrderable | object_](
+        self: ndarray[_2D, _dtype[ScalarT]],
+        axis: int | tuple[int],
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray[_1D, _dtype[ScalarT]]: ...
+    @overload  # 2d, axis=<all>
+    def min[ScalarT: _ScalarOrderable | object_](
+        self: ndarray[_2D, _dtype[ScalarT]],
+        axis: tuple[int, int],
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ScalarT: ...
+    @overload  # 3d, axis=<single>
+    def min[ScalarT: _ScalarOrderable | object_](
+        self: ndarray[_3D, _dtype[ScalarT]],
+        axis: int | tuple[int],
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray[_2D, _dtype[ScalarT]]: ...
+    @overload  # 3d, axis=<double>
+    def min[ScalarT: _ScalarOrderable | object_](
+        self: ndarray[_3D, _dtype[ScalarT]],
+        axis: tuple[int, int],
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray[_1D, _dtype[ScalarT]]: ...
+    @overload  # 4d, axis=<single>
+    def min[ScalarT: _ScalarOrderable | object_](
+        self: ndarray[_4D, _dtype[ScalarT]],
+        axis: int | tuple[int],
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray[_3D, _dtype[ScalarT]]: ...
+    @overload  # 4d, axis=<double>
+    def min[ScalarT: _ScalarOrderable | object_](
+        self: ndarray[_4D, _dtype[ScalarT]],
+        axis: tuple[int, int],
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray[_2D, _dtype[ScalarT]]: ...
+    @overload  # keepdims=True
+    def min[ArrayT: NDArray[_ScalarOrderable | object_]](
         self: ArrayT,
         axis: int | tuple[int, ...] | None = None,
         out: None = None,
@@ -3790,23 +3870,33 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         initial: _NumberLike_co | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> ArrayT: ...
-    @overload  # object_
-    def min(
-        self: NDArray[object_],
-        axis: None = None,
+    @overload  # ?d, axis=<any>
+    def min[ScalarT: _ScalarOrderable | object_](
+        self: NDArray[ScalarT],
+        axis: int | tuple[int, ...],
         out: None = None,
         *,
         keepdims: L[False] | _NoValueType = ...,
         initial: _NumberLike_co | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
-    ) -> Any: ...
-    @overload  # out: ArrayT
+    ) -> NDArray[ScalarT] | Any: ...
+    @overload  # out=<given>  (positional)
+    def min[ArrayT: ndarray](
+        self: NDArray[_ScalarOrderable | object_],
+        axis: int | tuple[int, ...] | None,
+        out: ArrayT,
+        *,
+        keepdims: py_bool | _NoValueType = ...,
+        initial: _NumberLike_co | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ArrayT: ...
+    @overload  # out=<given>  (keyword)
     def min[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
-        self: NDArray[number | bool_ | timedelta64 | datetime64 | object_],
+        self: NDArray[_ScalarOrderable | object_],
         axis: int | tuple[int, ...] | None = None,
         *,
         out: ArrayT,
-        keepdims: bool | _NoValueType = ...,
+        keepdims: py_bool | _NoValueType = ...,
         initial: _NumberLike_co | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> ArrayT: ...
