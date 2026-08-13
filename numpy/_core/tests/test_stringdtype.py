@@ -1241,6 +1241,49 @@ def test_string_to_cfloat_cast_distinct_components(typename):
     assert_array_equal(inp.astype(typename), expected)
 
 
+def test_cast_structured_field_view_strides():
+    # the numeric cast loops used to truncate byte strides that are not a
+    # multiple of the itemsize, like a complex128 field view of 24-byte records
+    rec = np.zeros(3, dtype=[("c", "c16"), ("f", "f8")])
+    rec["c"] = [1 + 1j, 2 + 2j, 3 + 3j]
+    rec["f"] = [10.0, 20.0, 30.0]
+
+    assert_array_equal(
+        rec["c"].astype("T"),
+        np.array(["(1+1j)", "(2+2j)", "(3+3j)"], dtype="T"),
+    )
+
+    rec["c"] = np.array(["4+4j", "5+5j", "6-6j"], dtype="T")
+    assert_array_equal(rec["c"], np.array([4 + 4j, 5 + 5j, 6 - 6j]))
+    assert_array_equal(rec["f"], np.array([10.0, 20.0, 30.0]))
+
+    # the f8 loops only see a mismatched stride on 32-bit architectures,
+    # where 8-byte types have 4-byte alignment
+    rec2 = np.zeros(3, dtype=[("v", "f8"), ("pad", "u4")])
+    rec2["v"] = [1.5, 2.5, 3.5]
+    assert_array_equal(
+        rec2["v"].astype("T"),
+        np.array(["1.5", "2.5", "3.5"], dtype="T"),
+    )
+    rec2["v"] = np.array(["4.5", "5.5", "6.5"], dtype="T")
+    assert_array_equal(rec2["v"], np.array([4.5, 5.5, 6.5]))
+    assert_array_equal(rec2["pad"], np.zeros(3, dtype="u4"))
+
+    # likewise the 8-byte datetime/timedelta loops only see a mismatched
+    # stride on 32-bit architectures
+    rec3 = np.zeros(3, dtype=[("t", "M8[D]"), ("td", "m8[s]"), ("pad", "u4")])
+    rec3["t"] = np.array(["2010-01-01", "NaT", "2015-02-03"], dtype="M8[D]")
+    rec3["td"] = np.array([12, "NaT", -34], dtype="m8[s]")
+    assert_array_equal(rec3["t"].astype("T"),
+                       np.array(["2010-01-01", "NaT", "2015-02-03"], dtype="T"))
+    assert_array_equal(rec3["td"].astype("T"),
+                       np.array(["12", "NaT", "-34"], dtype="T"))
+    rec3["t"] = np.array(["1993-06-05", "NaT", "2038-01-19"], dtype="T")
+    rec3["td"] = np.array(["-56", "NaT", "78"], dtype="T")
+    assert_array_equal(rec3["t"],
+                       np.array(["1993-06-05", "NaT", "2038-01-19"], dtype="M8[D]"))
+    assert_array_equal(rec3["td"], np.array([-56, "NaT", 78], dtype="m8[s]"))
+
 def test_take(string_list):
     sarr = np.array(string_list, dtype="T")
     res = sarr.take(np.arange(len(string_list)))
