@@ -156,7 +156,7 @@ from typing import (
 # library include `typing_extensions` stubs:
 # https://github.com/python/typeshed/blob/main/stdlib/typing_extensions.pyi
 from _typeshed import Incomplete, StrOrBytesPath, SupportsFlush, SupportsLenAndGetItem, SupportsWrite
-from typing_extensions import CapsuleType, TypeVar, deprecated
+from typing_extensions import CapsuleType, TypeVar, deprecated, disjoint_base
 
 from numpy import (
     char,
@@ -2185,6 +2185,7 @@ class _ArrayOrScalarCommon:
         correction: float | _NoValueType = ...,
     ) -> ArrayT: ...
 
+@disjoint_base
 class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     __hash__: ClassVar[None]  # type: ignore[assignment]  # pyright: ignore[reportIncompatibleMethodOverride]
     @property
@@ -5694,6 +5695,7 @@ class number(generic[_NumberItemT_co], Generic[_NBitT, _NumberItemT_co]):
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> ArrayT: ...
 
+@disjoint_base
 class bool(generic[_BoolItemT_co], Generic[_BoolItemT_co]):
     @property
     def itemsize(self) -> L[1]: ...
@@ -6816,6 +6818,7 @@ float16 = floating[_16Bit]
 float32 = floating[_32Bit]
 
 # either a C `double`, `float`, or `longdouble`
+@disjoint_base
 class float64(floating[_64Bit], float):  # type: ignore[misc]
     @property
     def itemsize(self) -> L[8]: ...
@@ -7074,6 +7077,7 @@ class complexfloating(inexact[_NBitT1, complex], Generic[_NBitT1, _NBitT2]):
 
 complex64 = complexfloating[_32Bit]
 
+@disjoint_base
 class complex128(complexfloating[_64Bit, _64Bit], complex):
     @property
     def itemsize(self) -> L[16]: ...
@@ -7127,6 +7131,7 @@ csingle = complex64
 cdouble = complex128
 clongdouble = complexfloating[_NBitLongDouble]
 
+@disjoint_base
 class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]):
     @property
     def itemsize(self) -> L[8]: ...
@@ -7491,6 +7496,7 @@ class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> ArrayT: ...
 
+@disjoint_base
 class datetime64(_RealMixin, generic[_DT64ItemT_co], Generic[_DT64ItemT_co]):
     @property
     def itemsize(self) -> L[8]: ...
@@ -7634,6 +7640,7 @@ class datetime64(_RealMixin, generic[_DT64ItemT_co], Generic[_DT64ItemT_co]):
 @final  # cannot be subclassed at runtime
 class flexible(_RealMixin, generic[_FlexibleItemT_co], Generic[_FlexibleItemT_co]): ...  # type: ignore[misc]
 
+@disjoint_base
 class void(flexible[bytes | tuple[Any, ...]]):  # type: ignore[misc]
     @overload
     def __new__(cls, length_or_data: _IntLike_co | bytes, /, dtype: None = None) -> Self: ...
@@ -7677,6 +7684,7 @@ class character(flexible[_CharacterItemT_co], Generic[_CharacterItemT_co]):  # t
 
 # NOTE: Most `np.bytes_` / `np.str_` methods return their builtin `bytes` / `str` counterpart
 
+@disjoint_base
 class bytes_(character[bytes], bytes):  # type: ignore[misc]
     @overload
     def __new__(cls, value: object = b"", /) -> Self: ...
@@ -7697,6 +7705,7 @@ class bytes_(character[bytes], bytes):  # type: ignore[misc]
     #
     def __bytes__(self, /) -> bytes: ...
 
+@disjoint_base
 class str_(character[str], str):  # type: ignore[misc]
     @overload
     def __new__(cls, value: object = "", /) -> Self: ...
