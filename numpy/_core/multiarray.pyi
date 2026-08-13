@@ -748,18 +748,6 @@ def array(
     ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array0D[np.complex128 | Any]: ...
-@overload  # 1d float  (must go first to capture empty lists)
-def array(
-    object: list[float] | Sequence[Never],
-    dtype: None = None,
-    *,
-    copy: bool | _CopyMode | None = True,
-    order: _OrderKACF = "K",
-    subok: bool = False,
-    ndmin: L[0, 1] = 0,
-    ndmax: int = 0,
-    like: _SupportsArrayFunc | None = None,
-) -> _Array1D[np.float64]: ...
 @overload  # 1d bool
 def array(
     object: Sequence[bool],
@@ -784,6 +772,18 @@ def array(
     ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array1D[np.int_]: ...
+@overload  # 1d float
+def array(
+    object: list[float],
+    dtype: None = None,
+    *,
+    copy: bool | _CopyMode | None = True,
+    order: _OrderKACF = "K",
+    subok: bool = False,
+    ndmin: L[0, 1] = 0,
+    ndmax: int = 0,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.float64]: ...
 @overload  # 1d complex
 def array(
     object: list[complex],
@@ -796,18 +796,6 @@ def array(
     ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array1D[np.complex128]: ...
-@overload  # 2d float
-def array(
-    object: Sequence[list[float]],
-    dtype: None = None,
-    *,
-    copy: bool | _CopyMode | None = True,
-    order: _OrderKACF = "K",
-    subok: bool = False,
-    ndmin: L[0, 1, 2] = 0,
-    ndmax: int = 0,
-    like: _SupportsArrayFunc | None = None,
-) -> _Array2D[np.float64]: ...
 @overload  # 2d bool
 def array(
     object: Sequence[Sequence[bool]],
@@ -832,6 +820,18 @@ def array(
     ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array2D[np.int_]: ...
+@overload  # 2d float
+def array(
+    object: Sequence[list[float]],
+    dtype: None = None,
+    *,
+    copy: bool | _CopyMode | None = True,
+    order: _OrderKACF = "K",
+    subok: bool = False,
+    ndmin: L[0, 1, 2] = 0,
+    ndmax: int = 0,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[np.float64]: ...
 @overload  # 2d complex
 def array(
     object: Sequence[list[complex]],
@@ -844,18 +844,6 @@ def array(
     ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array2D[np.complex128]: ...
-@overload  # 3d float
-def array(
-    object: Sequence[Sequence[list[float]]],
-    dtype: None = None,
-    *,
-    copy: bool | _CopyMode | None = True,
-    order: _OrderKACF = "K",
-    subok: bool = False,
-    ndmin: L[0, 1, 2, 3] = 0,
-    ndmax: int = 0,
-    like: _SupportsArrayFunc | None = None,
-) -> _Array3D[np.float64]: ...
 @overload  # 3d bool
 def array(
     object: Sequence[Sequence[Sequence[bool]]],
@@ -880,6 +868,18 @@ def array(
     ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array3D[np.int_]: ...
+@overload  # 3d float
+def array(
+    object: Sequence[Sequence[list[float]]],
+    dtype: None = None,
+    *,
+    copy: bool | _CopyMode | None = True,
+    order: _OrderKACF = "K",
+    subok: bool = False,
+    ndmin: L[0, 1, 2, 3] = 0,
+    ndmax: int = 0,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array3D[np.float64]: ...
 @overload  # 3d complex
 def array(
     object: Sequence[Sequence[list[complex]]],
@@ -1482,6 +1482,16 @@ def asarray[ShapeT: _Shape, DTypeT: np.dtype](
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # known array-like (unknown shape)
+def asarray[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> NDArray[ScalarT]: ...
 @overload  # 0d bool
 def asarray(
     a: bool,
@@ -1542,16 +1552,6 @@ def asarray(
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array0D[Any]: ...
-@overload  # 1d ~float  (must be above the `bool` overload to catch empty lists)
-def asarray(
-    a: list[float],
-    dtype: None = None,
-    order: _OrderKACF = None,
-    *,
-    device: L["cpu"] | None = None,
-    copy: bool | None = None,
-    like: _SupportsArrayFunc | None = None,
-) -> _Array1D[np.float64]: ...
 @overload  # 1d bool
 def asarray(
     a: Sequence[bool],
@@ -1572,6 +1572,16 @@ def asarray(
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array1D[np.int_]: ...
+@overload  # 1d ~float
+def asarray(
+    a: list[float],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.float64]: ...
 @overload  # 1d ~complex
 def asarray(
     a: list[complex],
@@ -1602,16 +1612,6 @@ def asarray(
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array1D[Any]: ...
-@overload  # 2d ~float  (must be above the `bool` overload to catch empty lists)
-def asarray(
-    a: Sequence[list[float]],
-    dtype: None = None,
-    order: _OrderKACF = None,
-    *,
-    device: L["cpu"] | None = None,
-    copy: bool | None = None,
-    like: _SupportsArrayFunc | None = None,
-) -> _Array2D[np.float64]: ...
 @overload  # 2d bool
 def asarray(
     a: Sequence[Sequence[bool]],
@@ -1632,6 +1632,16 @@ def asarray(
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array2D[np.int_]: ...
+@overload  # 2d ~float
+def asarray(
+    a: Sequence[list[float]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[np.float64]: ...
 @overload  # 2d ~complex
 def asarray(
     a: Sequence[list[complex]],
@@ -1662,16 +1672,6 @@ def asarray(
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array2D[Any]: ...
-@overload  # 3d ~float  (must be above the `bool` overload to catch empty lists)
-def asarray(
-    a: Sequence[Sequence[list[float]]],
-    dtype: None = None,
-    order: _OrderKACF = None,
-    *,
-    device: L["cpu"] | None = None,
-    copy: bool | None = None,
-    like: _SupportsArrayFunc | None = None,
-) -> _Array3D[np.float64]: ...
 @overload  # 3d bool
 def asarray(
     a: Sequence[Sequence[Sequence[bool]]],
@@ -1692,6 +1692,16 @@ def asarray(
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array3D[np.int_]: ...
+@overload  # 3d ~float
+def asarray(
+    a: Sequence[Sequence[list[float]]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array3D[np.float64]: ...
 @overload  # 3d ~complex
 def asarray(
     a: Sequence[Sequence[list[complex]]],
@@ -1722,16 +1732,6 @@ def asarray(
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array3D[Any]: ...
-@overload  # known array-like
-def asarray[ScalarT: np.generic](
-    a: _ArrayLike[ScalarT],
-    dtype: None = None,
-    order: _OrderKACF = None,
-    *,
-    device: L["cpu"] | None = None,
-    copy: bool | None = None,
-    like: _SupportsArrayFunc | None = None,
-) -> NDArray[ScalarT]: ...
 @overload  # array-like, dtype: <known>
 def asarray[ScalarT: np.generic](
     a: object,
