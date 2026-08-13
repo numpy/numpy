@@ -42,6 +42,7 @@ AR_V: npt.NDArray[np.void]
 AR_f8_1d: np.ndarray[tuple[int], np.dtype[np.float64]]
 AR_f8_2d: np.ndarray[tuple[int, int], np.dtype[np.float64]]
 AR_f8_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float64]]
+AR_f8_4d: np.ndarray[tuple[int, int, int, int], np.dtype[np.float64]]
 
 AR_any: np.ndarray
 
@@ -306,8 +307,12 @@ assert_type(AR_f8.max(axis=0, keepdims=True), npt.NDArray[np.float64])
 assert_type(AR_f8.max(out=B), SubClass)
 assert_type(AR_f8_2d.max(), np.float64)
 assert_type(AR_f8_2d.max(keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float64]])
-assert_type(AR_f8_2d.max(axis=0), npt.NDArray[np.float64])
-assert_type(AR_f8_2d.max(axis=0, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(AR_f8_2d.max(axis=0), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8_2d.max(axis=(0, 1)), np.float64)
+assert_type(AR_f8_3d.max(axis=0), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(AR_f8_3d.max(axis=(0, 1)), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8_4d.max(axis=0), np.ndarray[tuple[int, int, int], np.dtype[np.float64]])
+assert_type(AR_f8_4d.max(axis=(0, 1)), np.ndarray[tuple[int, int], np.dtype[np.float64]])
 
 # same as above
 assert_type(f8.min(), Any)
@@ -322,8 +327,12 @@ assert_type(AR_f8.min(axis=0, keepdims=True), npt.NDArray[np.float64])
 assert_type(AR_f8.min(out=B), SubClass)
 assert_type(AR_f8_2d.min(), np.float64)
 assert_type(AR_f8_2d.min(keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float64]])
-assert_type(AR_f8_2d.min(axis=0), npt.NDArray[np.float64])
-assert_type(AR_f8_2d.min(axis=0, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(AR_f8_2d.min(axis=0), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8_2d.min(axis=(0, 1)), np.float64)
+assert_type(AR_f8_3d.min(axis=0), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(AR_f8_3d.min(axis=(0, 1)), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8_4d.min(axis=0), np.ndarray[tuple[int, int, int], np.dtype[np.float64]])
+assert_type(AR_f8_4d.min(axis=(0, 1)), np.ndarray[tuple[int, int], np.dtype[np.float64]])
 
 assert_type(f8.round(), np.float64)
 assert_type(AR_f8.round(), npt.NDArray[np.float64])
