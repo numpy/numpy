@@ -4072,12 +4072,26 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # (dtype: ?, type: T)
     def view[ArrayT: ndarray](self, /, dtype: DTypeLike, type: type[ArrayT]) -> ArrayT: ...
 
+    #
     def setfield(self, val: ArrayLike, /, dtype: DTypeLike, offset: SupportsIndex = 0) -> None: ...
-    @overload
-    def getfield[ScalarT: generic](self, /, dtype: _DTypeLike[ScalarT], offset: SupportsIndex = 0) -> NDArray[ScalarT]: ...
-    @overload
-    def getfield(self, /, dtype: DTypeLike, offset: SupportsIndex = 0) -> NDArray[Any]: ...
 
+    #
+    @overload
+    def getfield[ScalarT: generic](
+        self,
+        /,
+        dtype: _DTypeLike[ScalarT],
+        offset: SupportsIndex = 0,
+    ) -> ndarray[_ShapeT_co, dtype[ScalarT]]: ...
+    @overload
+    def getfield(
+        self,
+        /,
+        dtype: DTypeLike,
+        offset: SupportsIndex = 0,
+    ) -> ndarray[_ShapeT_co, dtype[Any]]: ...
+
+    #
     def __index__(self: NDArray[integer], /) -> int: ...
     def __complex__(self: NDArray[number | bool_ | object_], /) -> complex: ...
 

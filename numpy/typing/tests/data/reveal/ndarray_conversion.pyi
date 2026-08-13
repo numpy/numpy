@@ -78,6 +78,8 @@ assert_type(i0_nd.getfield("float"), npt.NDArray[Any])
 assert_type(i0_nd.getfield(float), npt.NDArray[Any])
 assert_type(i0_nd.getfield(np.float64), npt.NDArray[np.float64])
 assert_type(i0_nd.getfield(np.float64, 8), npt.NDArray[np.float64])
+assert_type(u2_1d.getfield("f"), np.ndarray[tuple[int]])
+assert_type(u2_1d.getfield(np.float64), np.ndarray[tuple[int], np.dtype[np.float64]])
 
 # setflags does not return a value
 # fill does not return a value
