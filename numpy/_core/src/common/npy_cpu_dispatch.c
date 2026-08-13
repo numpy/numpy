@@ -23,12 +23,10 @@ npy_cpu_dispatch_tracer_init(PyObject *mod)
         return -1;
     }
     int err = PyDict_SetItemString(mod_dict, "__cpu_targets_info__", reg_dict);
-    Py_DECREF(reg_dict);
     if (err != 0) {
+        Py_DECREF(reg_dict);
         return -1;
     }
-    /* The module state holds its own reference, visited by the GC hooks. */
-    Py_INCREF(reg_dict);
     state->static_pydata.cpu_dispatch_registry = reg_dict;
     return 0;
 }
