@@ -703,6 +703,8 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
             if (out_op[i] == NULL) {
                 goto fail;
             }
+            /* Does not affect promotion, only conversion after resolution. */
+            npy_mark_tmp_array_if_pystr(obj, out_op[i]);
         }
         out_op_DTypes[i] = NPY_DTYPE(PyArray_DESCR(out_op[i]));
         Py_INCREF(out_op_DTypes[i]);
@@ -4534,8 +4536,13 @@ resolve_descriptors(int nop,
         /*
          * If we are working with Python literals/scalars, deal with them.
          * If needed, we create new array with the right descriptor.
+         * An exact Python str must be replaced from the original object to
+         * preserve trailing nulls, so it requires an available input tuple
+         * (only `ufunc.resolve_dtypes` has no input tuple).
          */
-        if ((PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_LITERAL)) {
+        if ((PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_LITERAL) ||
+                (inputs_tup != NULL &&
+                 (PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_STR))) {
             PyObject *input;
             if (inputs_tup == NULL) {
                 input = NULL;
@@ -5951,7 +5958,8 @@ static inline int
 is_known_scalar(PyObject *obj)
 {
     return (PyLong_CheckExact(obj) || PyFloat_CheckExact(obj)
-            || PyComplex_CheckExact(obj) || is_anyscalar_exact(obj));
+            || PyComplex_CheckExact(obj) || PyUnicode_CheckExact(obj)
+            || is_anyscalar_exact(obj));
 }
 
 
@@ -6523,6 +6531,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         int force_legacy_promotion = 0;
 
         npy_bool op2_is_pyscalar = NPY_FALSE;
+        npy_bool op2_is_pystr = NPY_FALSE;
         if (op2_array != NULL) {
             /* Owned: `resolve_descriptors` may replace it for Python scalars */
             tmp_operands[1] = op2_array;
@@ -6532,6 +6541,9 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             if (mark_pyscalar_operand(
                     op2, &tmp_operands[1], &operand_DTypes[1])) {
                 op2_is_pyscalar = NPY_TRUE;
+            }
+            else if (npy_mark_tmp_array_if_pystr(op2, tmp_operands[1])) {
+                op2_is_pystr = NPY_TRUE;
             }
             tmp_operands[2] = tmp_operands[0];
             operand_DTypes[2] = operand_DTypes[0];
@@ -6552,7 +6564,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
         int resolve_result = -1;
         PyObject *inputs_tup = NULL;
-        if (op2_is_pyscalar) {
+        if (op2_is_pyscalar || op2_is_pystr) {
             inputs_tup = PyTuple_Pack(2, op1, op2);
             if (inputs_tup == NULL) {
                 goto finish_resolution;
