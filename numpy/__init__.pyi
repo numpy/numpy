@@ -3861,6 +3861,39 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         descending: py_bool | None = None,
     ) -> None: ...
 
+    #
+    @override  # type:ignore[override]  # false positive
+    @overload  # >=1d, axis=<given>  (default)
+    def argsort[ShapeT: tuple[int, *tuple[int, ...]]](
+        self: ndarray[ShapeT],
+        axis: SupportsIndex = -1,
+        kind: _SortKind | None = None,
+        order: str | Sequence[str] | None = None,
+        *,
+        stable: py_bool | None = None,
+        descending: py_bool | None = None,
+    ) -> ndarray[ShapeT, dtype[intp]]: ...
+    @overload  # 0d, axis=<given>  (default)
+    def argsort(
+        self: ndarray[tuple[()]],
+        axis: SupportsIndex = -1,
+        kind: _SortKind | None = None,
+        order: str | Sequence[str] | None = None,
+        *,
+        stable: py_bool | None = None,
+        descending: py_bool | None = None,
+    ) -> ndarray[tuple[int], dtype[intp]]: ...
+    @overload  # axis=None
+    def argsort(
+        self,
+        axis: None,
+        kind: _SortKind | None = None,
+        order: str | Sequence[str] | None = None,
+        *,
+        stable: py_bool | None = None,
+        descending: py_bool | None = None,
+    ) -> ndarray[tuple[int], dtype[intp]]: ...
+
     # Keep in sync with `MaskedArray.trace`
     @overload
     def trace(
