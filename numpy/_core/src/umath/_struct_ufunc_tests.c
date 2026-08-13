@@ -2,11 +2,17 @@
 #include <Python.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+/* Build as a downstream module: the internal `PyArray_DTypeMeta` is built on
+ * `PyHeapTypeObject`, which is not in the limited API.  `NPY_TARGET_VERSION`
+ * keeps the API target that `NPY_INTERNAL_BUILD` implied. */
+#if defined(NPY_INTERNAL_BUILD)
+#undef NPY_INTERNAL_BUILD
+#endif
+#define NPY_TARGET_VERSION NPY_API_VERSION
+
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
-#include "numpy/npy_3kcompat.h"
-
-#include <math.h>
 
 
 /*
@@ -157,7 +163,12 @@ PyMODINIT_FUNC PyInit__struct_ufunc_tests(void)
     PyDict_SetItemString(d, "add_triplet", add_triplet);
     Py_DECREF(add_triplet);
 
-#ifdef Py_GIL_DISABLED
+    /*
+     * TODO: 3.15 adds a free-threaded stable ABI (abi3t), but supporting it
+     * also needs module setup via the new PyModExport API, since a static
+     * `PyModuleDef` cannot be used there.
+     */
+#if defined(Py_GIL_DISABLED) && !defined(Py_LIMITED_API)
     // signal this module supports running with the GIL disabled
     PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
 #endif

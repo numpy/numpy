@@ -343,20 +343,52 @@ def swapaxes[ScalarT: np.generic](a: _ArrayLike[ScalarT], axis1: SupportsIndex, 
 @overload
 def swapaxes(a: ArrayLike, axis1: SupportsIndex, axis2: SupportsIndex) -> NDArray[Any]: ...
 
-#
-@overload
+# keep in sync with `matrix_transpose`  (but start at 1d lists)
+@overload  # known array
 def transpose[ArrayT: np.ndarray](a: ArrayT, axes: _ShapeLike | None = None) -> ArrayT: ...
-@overload
+@overload  # 1d bool
+def transpose(a: list[bool], axes: _ShapeLike | None = None) -> _Array1D[np.bool]: ...
+@overload  # 1d int
+def transpose(a: list[int], axes: _ShapeLike | None = None) -> _Array1D[np.int_]: ...
+@overload  # 1d float
+def transpose(a: list[float], axes: _ShapeLike | None = None) -> _Array1D[np.float64]: ...
+@overload  # 1d complex
+def transpose(a: list[complex], axes: _ShapeLike | None = None) -> _Array1D[np.complex128]: ...
+@overload  # 2d bool
+def transpose(a: Sequence[list[bool]], axes: _ShapeLike | None = None) -> _Array2D[np.bool]: ...
+@overload  # 2d int
+def transpose(a: Sequence[list[int]], axes: _ShapeLike | None = None) -> _Array2D[np.int_]: ...
+@overload  # 2d float
+def transpose(a: Sequence[list[float]], axes: _ShapeLike | None = None) -> _Array2D[np.float64]: ...
+@overload  # 2d complex
+def transpose(a: Sequence[list[complex]], axes: _ShapeLike | None = None) -> _Array2D[np.complex128]: ...
+@overload  # known dtype
 def transpose[ScalarT: np.generic](a: _ArrayLike[ScalarT], axes: _ShapeLike | None = None) -> NDArray[ScalarT]: ...
-@overload
+@overload  # fallback
 def transpose(a: ArrayLike, axes: _ShapeLike | None = None) -> NDArray[Any]: ...
 
-#
-@overload
+# keep in sync with `transpose`  (but start at 2d lists)
+@overload  # known array
 def matrix_transpose[ArrayT: np.ndarray](x: ArrayT, /) -> ArrayT: ...
-@overload
+@overload  # 2d bool
+def matrix_transpose(x: Sequence[list[bool]], /) -> _Array2D[np.bool]: ...
+@overload  # 2d int
+def matrix_transpose(x: Sequence[list[int]], /) -> _Array2D[np.int_]: ...
+@overload  # 2d float
+def matrix_transpose(x: Sequence[list[float]], /) -> _Array2D[np.float64]: ...
+@overload  # 2d complex
+def matrix_transpose(x: Sequence[list[complex]], /) -> _Array2D[np.complex128]: ...
+@overload  # 3d bool
+def matrix_transpose(x: Sequence[Sequence[list[bool]]], /) -> _Array3D[np.bool]: ...
+@overload  # 3d int
+def matrix_transpose(x: Sequence[Sequence[list[int]]], /) -> _Array3D[np.int_]: ...
+@overload  # 3d float
+def matrix_transpose(x: Sequence[Sequence[list[float]]], /) -> _Array3D[np.float64]: ...
+@overload  # 3d complex
+def matrix_transpose(x: Sequence[Sequence[list[complex]]], /) -> _Array3D[np.complex128]: ...
+@overload  # known dtype
 def matrix_transpose[ScalarT: np.generic](x: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
-@overload
+@overload  # fallback
 def matrix_transpose(x: ArrayLike, /) -> NDArray[Any]: ...
 
 #
@@ -472,7 +504,7 @@ def argpartition[ShapeT: _Shape](
 ) -> np.ndarray[ShapeT, np.dtype[np.intp]]: ...
 
 #
-@overload
+@overload  # known array, axis=<given> (default)
 def sort[ArrayT: np.ndarray](
     a: ArrayT,
     axis: SupportsIndex = -1,
@@ -482,7 +514,87 @@ def sort[ArrayT: np.ndarray](
     stable: bool | None = None,
     descending: bool | _NoValueType = ...,
 ) -> ArrayT: ...
-@overload
+@overload  # 1d, bool
+def sort[ScalarT: np.generic](
+    a: list[bool],
+    axis: SupportsIndex | None = -1,
+    kind: _SortKind | None = None,
+    order: None = None,
+    *,
+    stable: bool | None = None,
+    descending: bool | _NoValueType = ...,
+) -> _Array1D[np.bool]: ...
+@overload  # 1d, int
+def sort[ScalarT: np.generic](
+    a: list[int],
+    axis: SupportsIndex | None = -1,
+    kind: _SortKind | None = None,
+    order: None = None,
+    *,
+    stable: bool | None = None,
+    descending: bool | _NoValueType = ...,
+) -> _Array1D[np.int_]: ...
+@overload  # 1d, float
+def sort[ScalarT: np.generic](
+    a: list[float],
+    axis: SupportsIndex | None = -1,
+    kind: _SortKind | None = None,
+    order: None = None,
+    *,
+    stable: bool | None = None,
+    descending: bool | _NoValueType = ...,
+) -> _Array1D[np.float64]: ...
+@overload  # 1d, complex
+def sort[ScalarT: np.generic](
+    a: list[complex],
+    axis: SupportsIndex | None = -1,
+    kind: _SortKind | None = None,
+    order: None = None,
+    *,
+    stable: bool | None = None,
+    descending: bool | _NoValueType = ...,
+) -> _Array1D[np.complex128]: ...
+@overload  # 2d, bool, axis=<given> (default)
+def sort[ScalarT: np.generic](
+    a: Sequence[list[bool]],
+    axis: SupportsIndex = -1,
+    kind: _SortKind | None = None,
+    order: None = None,
+    *,
+    stable: bool | None = None,
+    descending: bool | _NoValueType = ...,
+) -> _Array2D[np.bool]: ...
+@overload  # 2d, int, axis=<given> (default)
+def sort[ScalarT: np.generic](
+    a: Sequence[list[int]],
+    axis: SupportsIndex = -1,
+    kind: _SortKind | None = None,
+    order: None = None,
+    *,
+    stable: bool | None = None,
+    descending: bool | _NoValueType = ...,
+) -> _Array2D[np.int_]: ...
+@overload  # 2d, float, axis=<given> (default)
+def sort[ScalarT: np.generic](
+    a: Sequence[list[float]],
+    axis: SupportsIndex = -1,
+    kind: _SortKind | None = None,
+    order: None = None,
+    *,
+    stable: bool | None = None,
+    descending: bool | _NoValueType = ...,
+) -> _Array2D[np.float64]: ...
+@overload  # 2d, complex, axis=<given> (default)
+def sort[ScalarT: np.generic](
+    a: Sequence[list[complex]],
+    axis: SupportsIndex = -1,
+    kind: _SortKind | None = None,
+    order: None = None,
+    *,
+    stable: bool | None = None,
+    descending: bool | _NoValueType = ...,
+) -> _Array2D[np.complex128]: ...
+@overload  # ?d, known dtype, axis=<given> (default)
 def sort[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     axis: SupportsIndex = -1,
@@ -492,7 +604,7 @@ def sort[ScalarT: np.generic](
     stable: bool | None = None,
     descending: bool | _NoValueType = ...,
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # ?d, known dtype, axis=None
 def sort[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     axis: None,
@@ -502,7 +614,7 @@ def sort[ScalarT: np.generic](
     stable: bool | None = None,
     descending: bool | _NoValueType = ...,
 ) -> _Array1D[ScalarT]: ...
-@overload
+@overload  # ?d, unknown dtype, axis=<given> (default)
 def sort(
     a: ArrayLike,
     axis: SupportsIndex = -1,
@@ -512,7 +624,7 @@ def sort(
     stable: bool | None = None,
     descending: bool | _NoValueType = ...,
 ) -> NDArray[Any]: ...
-@overload
+@overload  # ?d, unknown dtype, axis=None
 def sort(
     a: ArrayLike,
     axis: None,
