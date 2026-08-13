@@ -109,8 +109,12 @@ assert_type(AR_f8.clip(1, out=B), SubClass)
 assert_type(AR_f8.clip(None, 1, out=B), SubClass)
 
 assert_type(f8.compress([0]), npt.NDArray[Any])
-assert_type(AR_f8.compress([0]), npt.NDArray[Any])
+assert_type(AR_f8.compress([0]), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8.compress([0], axis=0), npt.NDArray[np.float64])
 assert_type(AR_f8.compress([0], out=B), SubClass)
+assert_type(AR_f8_1d.compress([0]), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8_1d.compress([0], axis=0), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8_2d.compress([0], axis=0), np.ndarray[tuple[int, int], np.dtype[np.float64]])
 
 assert_type(f8.conj(), np.float64)
 assert_type(AR_f8.conj(), npt.NDArray[np.float64])

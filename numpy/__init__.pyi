@@ -3718,6 +3718,50 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     ) -> ArrayT: ...
 
     #
+    @override  # type:ignore[override]  # false positive
+    @overload  # axis=None (default)
+    def compress(
+        self,
+        /,
+        condition: _ArrayLikeInt_co,
+        axis: None = None,
+        out: None = None,
+    ) -> ndarray[tuple[int], _DTypeT_co]: ...
+    @overload  # >=1d, axis=<given>
+    def compress[DTypeT: dtype, ShapeT: tuple[int, *tuple[int, ...]]](
+        self: ndarray[ShapeT, DTypeT],
+        /,
+        condition: _ArrayLikeInt_co,
+        axis: SupportsIndex,
+        out: None = None,
+    ) -> ndarray[ShapeT, DTypeT]: ...
+    @overload  # 0d, axis=<given>
+    def compress[DTypeT: dtype](
+        self: ndarray[tuple[()], DTypeT],
+        /,
+        condition: _ArrayLikeInt_co,
+        axis: SupportsIndex,
+        out: None = None,
+    ) -> ndarray[tuple[int], DTypeT]: ...
+    @overload  # out=<given>  (positional)
+    def compress[ArrayT: ndarray](
+        self,
+        /,
+        condition: _ArrayLikeInt_co,
+        axis: SupportsIndex | None,
+        out: ArrayT,
+    ) -> ArrayT: ...
+    @overload  # out=<given>  (keyword)
+    def compress[ArrayT: ndarray](
+        self,
+        /,
+        condition: _ArrayLikeInt_co,
+        axis: SupportsIndex | None = None,
+        *,
+        out: ArrayT,
+    ) -> ArrayT: ...
+
+    #
     @overload
     def partition(
         self,
