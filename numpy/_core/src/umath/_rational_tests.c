@@ -399,7 +399,8 @@ PyRational_FromRational(PyTypeObject* type, rational x) {
     return (PyObject*)p;
 }
 
-/* `%T` needs Python 3.13, so format the type name explicitly */
+/* `%T` is a runtime feature of Python 3.13+, and numpy still
+   supports 3.12, so format the type name explicitly */
 static void
 raise_wrong_type(const char* expected, PyObject* obj) {
     PyObject* name = PyType_GetName(Py_TYPE(obj));
