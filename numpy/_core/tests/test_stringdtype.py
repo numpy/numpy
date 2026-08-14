@@ -84,6 +84,12 @@ def dtype2(na_object2, coerce2):
         return StringDType(coerce=coerce2)
 
 
+@pytest.fixture(params=[True, False])
+def stable(request):
+    """Use a stable sort or the default sort kind"""
+    return request.param
+
+
 def test_dtype_creation():
     hashes = set()
     dt = StringDType()
@@ -638,24 +644,24 @@ def test_stdlib_copy(dtype, string_list):
     assert_array_equal(copy.deepcopy(arr), arr)
 
 
-@pytest.mark.parametrize(
-    "strings",
+SORT_STRINGS = [
+    ["left", "right", "leftovers", "righty", "up", "down"],
     [
-        ["left", "right", "leftovers", "righty", "up", "down"],
-        [
-            "left" * 10,
-            "right" * 10,
-            "leftovers" * 10,
-            "righty" * 10,
-            "up" * 10,
-        ],
-        ["🤣🤣", "🤣", "📵", "😰"],
-        ["🚜", "🙃", "😾"],
-        ["😹", "🚠", "🚌"],
-        ["A¢☃€ 😊", " A☃€¢😊", "☃€😊 A¢", "😊☃A¢ €"],
+        "left" * 10,
+        "right" * 10,
+        "leftovers" * 10,
+        "righty" * 10,
+        "up" * 10,
     ],
-)
-def test_sort(dtype, strings):
+    ["🤣🤣", "🤣", "📵", "😰"],
+    ["🚜", "🙃", "😾"],
+    ["😹", "🚠", "🚌"],
+    ["A¢☃€ 😊", " A☃€¢😊", "☃€😊 A¢", "😊☃A¢ €"],
+]
+
+
+@pytest.mark.parametrize("strings", SORT_STRINGS)
+def test_sort(dtype, strings, stable):
     """Test that sorting matches python's internal sorting."""
 
     def test_sort(strings, arr_sorted):
@@ -666,24 +672,24 @@ def test_sort(dtype, strings):
                 ValueError,
                 match="Cannot compare null that is not a nan-like value",
             ):
-                np.argsort(arr)
+                np.argsort(arr, stable=stable)
             argsorted = None
         elif na_object is pd_NA or na_object != '':
             argsorted = None
         else:
-            argsorted = np.argsort(arr)
+            argsorted = np.argsort(arr, stable=stable)
         np.random.default_rng().shuffle(arr)
         if na_object is None and None in strings:
             with pytest.raises(
                 ValueError,
                 match="Cannot compare null that is not a nan-like value",
             ):
-                arr.sort()
+                arr.sort(stable=stable)
         else:
-            arr.sort()
+            arr.sort(stable=stable)
             assert np.array_equal(arr, arr_sorted, equal_nan=True)
         if argsorted is not None:
-            assert np.array_equal(argsorted, np.argsort(strings))
+            assert np.array_equal(argsorted, np.argsort(strings, stable=stable))
 
     # make a copy so we don't mutate the lists in the fixture
     strings = strings.copy()
@@ -708,6 +714,72 @@ def test_sort(dtype, strings):
         arr_sorted = np.array(sorted(strings), dtype=dtype)
 
     test_sort(strings, arr_sorted)
+
+
+@pytest.mark.parametrize("strings", SORT_STRINGS)
+def test_sort_descending(dtype, strings, stable):
+    """Test that descending sorts reverse the ascending order."""
+    arr = np.array(strings, dtype=dtype)
+    expected = np.array(sorted(strings, reverse=True), dtype=dtype)
+
+    assert_array_equal(np.sort(arr, stable=stable, descending=True), expected)
+    argsorted = np.argsort(arr, stable=stable, descending=True)
+    assert_array_equal(arr[argsorted], expected)
+
+    if not hasattr(dtype, "na_object"):
+        return
+
+    # make sure NAs get sorted to the end of the array in descending
+    # sorts too and string NAs get sorted like normal strings
+    strings = strings.copy()
+    strings.insert(0, dtype.na_object)
+    strings.insert(2, dtype.na_object)
+    arr = np.array(strings, dtype=dtype)
+
+    if dtype.na_object is None:
+        with pytest.raises(
+            ValueError,
+            match="Cannot compare null that is not a nan-like value",
+        ):
+            np.sort(arr, stable=stable, descending=True)
+        return
+
+    if isinstance(dtype.na_object, str):
+        expected = np.array(sorted(strings, reverse=True), dtype=dtype)
+    else:
+        expected = np.array(
+            expected.tolist() + [dtype.na_object, dtype.na_object],
+            dtype=dtype,
+        )
+
+    res = np.sort(arr, stable=stable, descending=True)
+    assert np.array_equal(res, expected, equal_nan=True)
+
+
+@pytest.mark.parametrize("length", [1, 30])  # lengths > 15 bytes -> arena
+def test_argsort_descending_stable(length):
+    b, a, c = "b" * length, "a" * length, "c" * length
+    arr = np.array([b, a, c, b, a, c], dtype="T")
+    argsorted = np.argsort(arr, stable=True, descending=True)
+    # the "c"s (at indices 2 and 5) sort first, then the "b"s (0 and 3),
+    # then the "a"s (1 and 4), and stability requires each group of equal
+    # strings to keep its original order; reversing a stable ascending
+    # argsort would instead give [5, 2, 3, 0, 4, 1]
+    assert_array_equal(argsorted, [2, 5, 0, 3, 1, 4])
+
+
+def test_top_k(string_list):
+    arr = np.array(string_list, dtype="T")
+
+    expected = sorted(string_list, reverse=True)[:2]
+    values, indices = np.top_k(arr, 2)
+    assert values.tolist() == expected
+    assert arr[indices].tolist() == expected
+
+    expected = sorted(string_list)[:2]
+    values, indices = np.top_k(arr, 2, mode="smallest")
+    assert values.tolist() == expected
+    assert arr[indices].tolist() == expected
 
 
 def test_searchsorted_gh31533():

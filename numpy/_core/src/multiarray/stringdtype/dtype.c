@@ -512,9 +512,9 @@ compare(void *a, void *b, void *arr)
 }
 
 // We assume the allocator mutex is already held.
-int
-_compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
-         PyArray_StringDTypeObject *descr_b)
+static int
+_compare_impl(void *a, void *b, PyArray_StringDTypeObject *descr_a,
+              PyArray_StringDTypeObject *descr_b, int descending)
 {
     npy_string_allocator *allocator_a = descr_a->allocator;
     npy_string_allocator *allocator_b = descr_b->allocator;
@@ -538,6 +538,8 @@ _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
     else if (NPY_UNLIKELY(a_is_null || b_is_null)) {
         if (has_null && !has_string_na) {
             if (has_nan_na) {
+                // nan-like nulls sort to the end even in a descending
+                // sort, matching how NaN sorts for floats
                 if (a_is_null) {
                     return 1;
                 }
@@ -561,7 +563,18 @@ _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
             }
         }
     }
+    if (descending) {
+        return NpyString_cmp(&s_b, &s_a);
+    }
     return NpyString_cmp(&s_a, &s_b);
+}
+
+// We assume the allocator mutex is already held.
+int
+_compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
+         PyArray_StringDTypeObject *descr_b)
+{
+    return _compare_impl(a, b, descr_a, descr_b, 0);
 }
 
 NPY_NO_EXPORT int
@@ -580,9 +593,25 @@ _sort_compare(const void *a, const void *b, void *context)
     PyArray_StringDTypeObject *sdescr =
         (PyArray_StringDTypeObject *)sort_context->descriptors[0];
 
-    int ret = _compare((void *)a, (void *)b, sdescr, sdescr);
-    return ret;
+    return _compare_impl((void *)a, (void *)b, sdescr, sdescr, 0);
 }
+
+int
+_sort_compare_descending(const void *a, const void *b, void *context)
+{
+    PyArrayMethod_Context *sort_context = (PyArrayMethod_Context *)context;
+    PyArray_StringDTypeObject *sdescr =
+        (PyArray_StringDTypeObject *)sort_context->descriptors[0];
+
+    return _compare_impl((void *)a, (void *)b, sdescr, sdescr, 1);
+}
+
+// {ascending, descending} compare functions, stored in the static_data of
+// the sort and argsort ArrayMethods and consumed by npy_default_sort_loop
+// and npy_default_argsort_loop, which index them by whether
+// NPY_SORT_DESCENDING is set in the sort parameters.
+static PyArray_CompareFunc *stringdtype_sort_compares[2] = {
+        &_sort_compare, &_sort_compare_descending};
 
 // PyArray_ArgFunc
 // The max element is the one with the highest unicode code point.
@@ -805,17 +834,17 @@ stringdtype_wrap_argsort_loop(
 static int
 stringdtype_get_sort_loop(
         PyArrayMethod_Context *context,
-        int aligned, int move_references,
-        const npy_intp *strides,
+        int NPY_UNUSED(aligned), int NPY_UNUSED(move_references),
+        const npy_intp *NPY_UNUSED(strides),
         PyArrayMethod_StridedLoop **out_loop,
-        NpyAuxData **out_transferdata,
+        NpyAuxData **NPY_UNUSED(out_transferdata),
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
     PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
     *flags |= NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
-    if ((parameters->flags == NPY_SORT_STABLE)
-        || parameters->flags == NPY_SORT_DEFAULT) {
+    NPY_SORTKIND kind = parameters->flags & ~NPY_SORT_DESCENDING;
+    if (kind == NPY_SORT_STABLE || kind == NPY_SORT_DEFAULT) {
         *out_loop = (PyArrayMethod_StridedLoop *)stringdtype_wrap_sort_loop;
     }
     else {
@@ -828,17 +857,17 @@ stringdtype_get_sort_loop(
 static int
 stringdtype_get_argsort_loop(
         PyArrayMethod_Context *context,
-        int aligned, int move_references,
-        const npy_intp *strides,
+        int NPY_UNUSED(aligned), int NPY_UNUSED(move_references),
+        const npy_intp *NPY_UNUSED(strides),
         PyArrayMethod_StridedLoop **out_loop,
-        NpyAuxData **out_transferdata,
+        NpyAuxData **NPY_UNUSED(out_transferdata),
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
     PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
     *flags |= NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
-    if (parameters->flags == NPY_SORT_STABLE
-        || parameters->flags == NPY_SORT_DEFAULT) {
+    NPY_SORTKIND kind = parameters->flags & ~NPY_SORT_DESCENDING;
+    if (kind == NPY_SORT_STABLE || kind == NPY_SORT_DEFAULT) {
         *out_loop = (PyArrayMethod_StridedLoop *)stringdtype_wrap_argsort_loop;
     }
     else {
@@ -1021,7 +1050,7 @@ init_stringdtype_sorts(void)
     PyType_Slot sort_slots[4] = {
             {NPY_METH_resolve_descriptors, &stringdtype_sort_resolve_descriptors},
             {NPY_METH_get_loop, &stringdtype_get_sort_loop},
-            {_NPY_METH_static_data, &_sort_compare},
+            {_NPY_METH_static_data, stringdtype_sort_compares},
             {0, NULL}
     };
     PyArrayMethod_Spec sort_spec = {
@@ -1045,7 +1074,7 @@ init_stringdtype_sorts(void)
     PyArray_DTypeMeta *argsort_dtypes[2] = {stringdtype, &PyArray_IntpDType};
     PyType_Slot argsort_slots[3] = {
             {NPY_METH_get_loop, &stringdtype_get_argsort_loop},
-            {_NPY_METH_static_data, &_sort_compare},
+            {_NPY_METH_static_data, stringdtype_sort_compares},
             {0, NULL}
     };
     PyArrayMethod_Spec argsort_spec = {
