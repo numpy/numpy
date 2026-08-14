@@ -606,6 +606,13 @@ _sort_compare_descending(const void *a, const void *b, void *context)
     return _compare_impl((void *)a, (void *)b, sdescr, sdescr, 1);
 }
 
+// {ascending, descending} compare functions, stored in the static_data of
+// the sort and argsort ArrayMethods and consumed by npy_default_sort_loop
+// and npy_default_argsort_loop, which index them by whether
+// NPY_SORT_DESCENDING is set in the sort parameters.
+static PyArray_CompareFunc *stringdtype_sort_compares[2] = {
+        &_sort_compare, &_sort_compare_descending};
+
 // PyArray_ArgFunc
 // The max element is the one with the highest unicode code point.
 int
@@ -772,23 +779,14 @@ static PyType_Slot PyArray_StringDType_Slots[] = {
 static int
 stringdtype_wrap_sort_loop(
         PyArrayMethod_Context *context,
-        char *const *data, const npy_intp *dimensions,
-        const npy_intp *NPY_UNUSED(strides),
-        NpyAuxData *NPY_UNUSED(transferdata))
+        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *transferdata)
 {
     PyArray_StringDTypeObject *sdescr =
             (PyArray_StringDTypeObject *)context->descriptors[0];
-    PyArrayMethod_SortParameters *parameters =
-            (PyArrayMethod_SortParameters *)context->parameters;
-
-    PyArray_CompareFunc *cmp = (parameters->flags & NPY_SORT_DESCENDING) ?
-            _sort_compare_descending : _sort_compare;
-    PyArray_SortImpl *sort_func = (parameters->flags & NPY_SORT_STABLE) ?
-            npy_timsort_impl : npy_quicksort_impl;
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(sdescr);
-    int ret = sort_func(data[0], dimensions[0], context,
-                        context->descriptors[0]->elsize, cmp);
+    int ret = npy_default_sort_loop(context, data, dimensions, strides, transferdata);
     NpyString_release_allocator(allocator);
     return ret;
 }
@@ -821,23 +819,14 @@ stringdtype_sort_resolve_descriptors(
 static int
 stringdtype_wrap_argsort_loop(
         PyArrayMethod_Context *context,
-        char *const *data, const npy_intp *dimensions,
-        const npy_intp *NPY_UNUSED(strides),
-        NpyAuxData *NPY_UNUSED(transferdata))
+        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *transferdata)
 {
     PyArray_StringDTypeObject *sdescr =
             (PyArray_StringDTypeObject *)context->descriptors[0];
-    PyArrayMethod_SortParameters *parameters =
-            (PyArrayMethod_SortParameters *)context->parameters;
-
-    PyArray_CompareFunc *cmp = (parameters->flags & NPY_SORT_DESCENDING) ?
-            _sort_compare_descending : _sort_compare;
-    PyArray_ArgSortImpl *argsort_func = (parameters->flags & NPY_SORT_STABLE) ?
-            npy_atimsort_impl : npy_aquicksort_impl;
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(sdescr);
-    int ret = argsort_func(data[0], (npy_intp *)data[1], dimensions[0], context,
-                           context->descriptors[0]->elsize, cmp);
+    int ret = npy_default_argsort_loop(context, data, dimensions, strides, transferdata);
     NpyString_release_allocator(allocator);
     return ret;
 }
@@ -1058,9 +1047,10 @@ init_stringdtype_sorts(void)
     PyArray_DTypeMeta *stringdtype = &PyArray_StringDType;
 
     PyArray_DTypeMeta *sort_dtypes[2] = {stringdtype, stringdtype};
-    PyType_Slot sort_slots[3] = {
+    PyType_Slot sort_slots[4] = {
             {NPY_METH_resolve_descriptors, &stringdtype_sort_resolve_descriptors},
             {NPY_METH_get_loop, &stringdtype_get_sort_loop},
+            {_NPY_METH_static_data, stringdtype_sort_compares},
             {0, NULL}
     };
     PyArrayMethod_Spec sort_spec = {
@@ -1082,8 +1072,9 @@ init_stringdtype_sorts(void)
     Py_DECREF(sort_method);
 
     PyArray_DTypeMeta *argsort_dtypes[2] = {stringdtype, &PyArray_IntpDType};
-    PyType_Slot argsort_slots[2] = {
+    PyType_Slot argsort_slots[3] = {
             {NPY_METH_get_loop, &stringdtype_get_argsort_loop},
+            {_NPY_METH_static_data, stringdtype_sort_compares},
             {0, NULL}
     };
     PyArrayMethod_Spec argsort_spec = {
