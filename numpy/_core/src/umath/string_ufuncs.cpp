@@ -689,7 +689,8 @@ string_slice_loop(PyArrayMethod_Context *context,
         // adjust slice to string length in codepoints
         // and handle negative indices
         size_t num_codepoints = inbuf.num_codepoints();
-        npy_intp slice_length = PySlice_AdjustIndices(num_codepoints, &start, &stop, step);
+        npy_intp slice_length = PySlice_AdjustIndices(num_codepoints, &start, &stop,
+                                                      step < -NPY_MAX_INTP ? -NPY_MAX_INTP : step);
 
         // iterate over slice and copy each character of the string
         inbuf.advance_chars_or_bytes(start);

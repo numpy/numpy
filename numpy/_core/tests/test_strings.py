@@ -1076,6 +1076,13 @@ class TestMethods:
                        dtype=dt)
         assert_array_equal(act, res)
 
+    def test_slice_extreme_step(self, dt):
+        buf = np.array(["abcd"], dtype=dt)
+        imax, imin = np.iinfo(np.intp).max, np.iinfo(np.intp).min
+        for step, expected in [(imax, "a"), (-imax, "d"), (imin, "d")]:
+            assert_array_equal(np.strings.slice(buf, None, None, step),
+                               np.array([expected], dtype=dt))
+
     def test_slice_unsupported(self, dt):
         with pytest.raises(TypeError, match="did not contain a loop"):
             np.strings.slice(np.array([1, 2, 3]), 4)

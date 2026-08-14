@@ -2301,8 +2301,8 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
 
         // adjust slice to string length in codepoints
         // and handle negative indices
-        npy_intp slice_length =
-                PySlice_AdjustIndices(num_codepoints, &start, &stop, step);
+        npy_intp slice_length = PySlice_AdjustIndices(num_codepoints, &start, &stop,
+                                                      step < -NPY_MAX_INTP ? -NPY_MAX_INTP : step);
 
         if (step == 1) {
             // step == 1 is the easy case, we can just use memcpy
