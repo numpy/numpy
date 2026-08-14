@@ -934,10 +934,11 @@ static PyObject* PyRational2_Type = NULL;
 
 static PyObject *
 rational2_repr(PyObject *self) {
-    // Just forward, but old versions of NumPy require a repr
-    // although for "legacy" dtypes the default one works.
-    return PyObject_CallMethod(
-            (PyObject *)&PyArrayDescr_Type, "__repr__", "O", self);
+    // Just forward to `np.dtype.__repr__`; the inherited default would do
+    // the same here.  (`Py_TYPE(self)` would be this slot itself.)
+    reprfunc descr_repr = (reprfunc)PyType_GetSlot(
+            (PyTypeObject *)&PyArrayDescr_Type, Py_tp_repr);
+    return descr_repr(self);
 }
 
 /*
