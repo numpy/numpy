@@ -92,7 +92,7 @@ jobs:
       shell: bash -l {0}
       run: |
         conda activate numpy-dev
-        CC="ccache $CC" spin build -j2 -- -Dallow-noblas=false
+        CC="ccache ${CC:-clang}" CXX="ccache ${CXX:-clang++}" spin build -j2 -- -Dallow-noblas=false
 
     - name: Run test suite (full)
       shell: bash -l {0}
