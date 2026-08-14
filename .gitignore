@@ -105,6 +105,7 @@ Thumbs.db
 ##########################
 /.pytest_cache
 .coverage
+.coverage.*
 
 # doc build generated files #
 #############################
