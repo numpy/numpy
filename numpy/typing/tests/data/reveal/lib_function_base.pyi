@@ -23,10 +23,10 @@ AR_c16: npt.NDArray[np.complex128]
 AR_c20: npt.NDArray[np.clongdouble]
 AR_m: npt.NDArray[np.timedelta64]
 AR_M: npt.NDArray[np.datetime64]
-AR_O: npt.NDArray[np.object_]
+AR_O: npt.NDArray[np.object_[int]]
 AR_b: npt.NDArray[np.bool]
 AR_U: npt.NDArray[np.str_]
-CHAR_AR_U: np.char.chararray[tuple[Any, ...], np.dtype[np.str_]]  # type: ignore[deprecated]
+CHAR_AR_U: np.char.chararray[tuple[int], np.dtype[np.str_]]  # type: ignore[deprecated]
 
 AR_f8_1d: np.ndarray[tuple[int], np.dtype[np.float64]]
 AR_f8_2d: np.ndarray[tuple[int, int], np.dtype[np.float64]]
@@ -131,10 +131,9 @@ assert_type(np.place(AR_f8, mask=AR_i8, vals=5.0), None)
 # copy
 assert_type(np.copy(AR_LIKE_f8), np.ndarray)
 assert_type(np.copy(AR_U), npt.NDArray[np.str_])
-assert_type(np.copy(CHAR_AR_U, "K", subok=True), np.char.chararray[tuple[Any, ...], np.dtype[np.str_]])  # type: ignore[deprecated]
-assert_type(np.copy(CHAR_AR_U, subok=True), np.char.chararray[tuple[Any, ...], np.dtype[np.str_]])  # type: ignore[deprecated]
-# pyright correctly infers `NDArray[str_]` here
-assert_type(np.copy(CHAR_AR_U), np.ndarray[Any, Any])  # pyright: ignore[reportAssertTypeFailure]
+assert_type(np.copy(CHAR_AR_U, "K", subok=True), np.char.chararray[tuple[int], np.dtype[np.str_]])  # type: ignore[deprecated]
+assert_type(np.copy(CHAR_AR_U, subok=True), np.char.chararray[tuple[int], np.dtype[np.str_]])  # type: ignore[deprecated]
+assert_type(np.copy(CHAR_AR_U), np.ndarray[tuple[int], np.dtype[np.str_]])
 
 # gradient
 assert_type(np.gradient(AR_f8_1d, 1), np.ndarray[tuple[int], np.dtype[np.float64]])
@@ -203,7 +202,7 @@ assert_type(np.angle(AR_LIKE_c16), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.unwrap(AR_f2), npt.NDArray[np.float16])
 assert_type(np.unwrap(AR_f8), npt.NDArray[np.float64])
 assert_type(np.unwrap(AR_f10), npt.NDArray[np.longdouble])
-assert_type(np.unwrap(AR_O), npt.NDArray[np.object_])
+assert_type(np.unwrap(AR_O), npt.NDArray[np.object_[int]])
 assert_type(np.unwrap(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.unwrap(AR_f8_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
 assert_type(np.unwrap(AR_f8_3d), np.ndarray[tuple[int, int, int], np.dtype[np.float64]])

@@ -123,6 +123,7 @@ if use_highway
   )
 else
   highway_lib = []
+  add_project_arguments(['-DNPY_DISABLE_HIGHWAY'], language: ['cpp'])
 endif
 
 use_intel_sort = not get_option('disable-intel-sort') and cpu_family in ['x86', 'x86_64']
@@ -685,6 +686,9 @@ npymath_sources = [
   'src/npymath/halffloat.cpp',
   'src/npymath/npy_math.c',
 ]
+if host_machine.system() == 'emscripten'
+  npymath_sources += 'src/common/npy_fenv.c'
+endif
 npymath_lib = static_library('npymath',
   npymath_sources,
   c_args: staticlib_cflags,
@@ -872,7 +876,9 @@ _umath_tests_mtargets = mod_features.multi_targets(
   ],
   baseline: CPU_BASELINE,
   prefix: 'NPY_',
-  dependencies: [py_dep, np_core_dep]
+  dependencies: [py_dep, np_core_dep],
+  # `py.extension_module()`'s `limited_api` kwarg doesn't reach static libs.
+  c_args: get_option('python.allow_limited_api') ? ['-DPy_LIMITED_API=' + py_limited_api_hex] : [],
 )
 
 # [module name, sources, libraries to link with, limited API version ('' to
@@ -882,11 +888,11 @@ test_modules_src = [
       src_file.process('src/umath/_umath_tests.c.src'),
       'src/common/npy_cpu_features.c',
     ],
-    _umath_tests_mtargets.static_lib('_umath_tests_mtargets'), ''
+    _umath_tests_mtargets.static_lib('_umath_tests_mtargets'), py_limited_api
   ],
   ['_rational_tests', 'src/umath/_rational_tests.c', [], py_limited_api],
-  ['_struct_ufunc_tests', 'src/umath/_struct_ufunc_tests.c', [], ''],
-  ['_operand_flag_tests', 'src/umath/_operand_flag_tests.c', [], ''],
+  ['_struct_ufunc_tests', 'src/umath/_struct_ufunc_tests.c', [], py_limited_api],
+  ['_operand_flag_tests', 'src/umath/_operand_flag_tests.c', [], py_limited_api],
   ['_reduction_loop_tests', 'src/umath/_reduction_loop_tests.c', [], ''],
 ]
 foreach gen: test_modules_src
@@ -1291,7 +1297,7 @@ src_multiarray = multiarray_gen_headers + [
   'src/npysort/heapsort.cpp',
   'src/npysort/npysort_methods.cpp',
   'src/common/npy_partition.h',
-  'src/npysort/selection.cpp',
+  'src/npysort/selection_methods.cpp',
   'src/common/npy_binsearch.h',
   'src/npysort/binsearch.cpp',
   'src/multiarray/textreading/conversions.c',

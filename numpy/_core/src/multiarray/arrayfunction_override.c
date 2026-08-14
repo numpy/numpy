@@ -479,16 +479,8 @@ try_reduction(PyArray_ArrayFunctionDispatcherObject *self,
             return 0;
     }
 
-    /*
-     * These parsers use no explicit argument converters, so a TypeError here
-     * means that the call does not match this fast-path signature. Clear it
-     * and fall back to normal dispatch; other parser errors are propagated later.
-     *
-     * TODO: Add an npy_parse_arguments probe mode that returns a distinct mismatch
-     * status instead of relying on exception-class matching here. See
-     * https://github.com/numpy/numpy/pull/32041#discussion_r3638882974
-     */
-    if (parsed < 0 && PyErr_ExceptionMatches(PyExc_TypeError)) {
+    /* The call does not match this fast-path signature, use normal dispatch. */
+    if (parsed == NPY_ARGPARSE_MISMATCH) {
         PyErr_Clear();
         return 0;
     }

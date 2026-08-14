@@ -732,7 +732,6 @@ class TestUfunc:
         a = np.ones(500, dtype=np.float64)
         assert_almost_equal((a / 10.).sum() - a.size / 10., 0, 13)
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_sum(self):
         for dt in (int, np.float16, np.float32, np.float64, np.longdouble):
             for v in (0, 1, 2, 7, 8, 9, 15, 16, 19, 127,
@@ -2696,6 +2695,16 @@ class TestUfunc:
         np.add.accumulate(arr, out=out)
         assert_array_equal(expected, out)
 
+    @pytest.mark.parametrize("method", ["reduce", "accumulate", "reduceat"])
+    def test_reducelike_no_output_raises(self, method):
+        # A ufunc without outputs has nothing to accumulate into.  Reductions
+        # must reject it rather than resolving a nonexistent output loop.
+        # See gh-31816, which segfaulted here.
+        ufunc = np.frompyfunc(lambda a, b: None, 2, 0)
+        args = ([1, 2, 3], [0, 1]) if method == "reduceat" else ([1, 2, 3],)
+        with pytest.raises(ValueError, match="returning no value"):
+            getattr(ufunc, method)(*args)
+
     def test_reduce_noncontig_output(self):
         # Check that reduction deals with non-contiguous output arrays
         # appropriately.
@@ -3207,6 +3216,22 @@ def test_addition_unicode_inverse_byte_order(order1, order2):
     arr2 = np.array([element], dtype=f"{order2}U4")
     result = arr1 + arr2
     assert result == 2 * element
+
+
+def test_pystr_scalar_converted_with_resolved_descriptor():
+    # an object loop receives the original str object
+    arr = np.array(["x"], dtype=object)
+    res = (arr + "y\0")[0]
+    assert type(res) is str
+    assert res == "xy\0"
+    # for fixed-width unicode trailing nulls are padding
+    assert (np.array(["x"], dtype="U1") + "y\0")[0] == "xy"
+    # np.str_ is a fixed-width scalar, not special-cased like exact str
+    assert (arr + np.str_("y\0"))[0] == "xy"
+
+    # unary object loops also receive the original str object
+    identity = np.frompyfunc(lambda value: value, 1, 1)
+    assert identity("y\0") == "y\0"
 
 
 @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64])

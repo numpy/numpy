@@ -1641,6 +1641,38 @@ class TestFromiter:
             np.fromiter(iterable, dtype=np.dtype((int, 2)))
 
 
+class TestWrapFunc:
+    # Functions like np.take, np.nonzero and np.argsort dispatch through
+    # the C helpers _wrapfunc/_wrapit (see gh-32165).
+
+    def test_typeerror_fallback_exception_chain(self):
+        # If the object's own method raises TypeError, _wrapfunc retries
+        # via array conversion.  A failure in the fallback must chain the
+        # original TypeError as __context__ while preserving any nested
+        # context raised inside the fallback, exactly as when _wrapit was
+        # called from within an `except TypeError:` clause in Python.
+        class FailingDuckArray:
+            def nonzero(self):
+                raise TypeError("direct method failed")
+
+            def __array__(self, dtype=None, copy=None):
+                try:
+                    raise KeyError("inner conversion error")
+                except KeyError:
+                    raise ValueError("fallback conversion failed")
+
+        with pytest.raises(ValueError,
+                           match="fallback conversion failed") as exc_info:
+            np.nonzero(FailingDuckArray())
+
+        chain = []
+        err = exc_info.value
+        while err is not None:
+            chain.append(type(err))
+            err = err.__context__
+        assert chain == [ValueError, KeyError, TypeError]
+
+
 class TestNonzero:
     def test_nonzero_trivial(self):
         assert_equal(np.count_nonzero(np.array([])), 0)
@@ -4027,7 +4059,7 @@ class TestCross:
     def test_zero_dimension(self, a, b):
         with pytest.raises(ValueError) as exc:
             np.cross(a, b)
-        assert "At least one array has zero dimension" in str(exc.value)
+        assert "Input arrays must be at least 1-dimensional" in str(exc.value)
 
 
 def test_outer_out_param():

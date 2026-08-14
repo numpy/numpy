@@ -200,6 +200,7 @@ type _to_c128 = np.complex128 | np.complex64 | _to_f64
 type _NumericLike_co = _NumberLike_co | np.timedelta64
 type _NumTimeLike_co = _NumericLike_co | np.datetime64
 
+type _ArrayLikeInt64_co = _DualArrayLike[np.dtype[_to_i64], int]  # excludes u64
 type _ArrayLikeIntObj_co = _DualArrayLike[np.dtype[_to_integer | np.object_], int]
 type _ArrayLikeFloatObj_co = _DualArrayLike[np.dtype[_to_floating | np.object_], float]
 type _ArrayLikeNumberObj_co = _DualArrayLike[np.dtype[_to_number | np.object_], complex]
@@ -209,6 +210,8 @@ type _ArrayLikeNumTimeObj_co = _DualArrayLike[np.dtype[_to_numeric | np.datetime
 
 type _ArrayUnlikeObject = _DualArrayLike[np.dtype[_non_object] | np.dtypes.StringDType, complex | bytes | str]
 type _ScalarUnlikeObject = complex | bytes | str | np.generic  # bare `np.object_` don't exist
+
+type _NestedList[T] = _NestedSequence[list[T]] | list[T]
 
 @type_check_only
 class _ExtOjbDict(TypedDict, total=False):
@@ -308,7 +311,7 @@ class _Kwargs21G(TypedDict, total=False):
     order: _OrderKACF  # = "K",
     subok: bool  # = True,
     signature: _Signature2
-    axes: list[tuple[int, int]]
+    axes: Sequence[int | tuple[int, ...]]
 
 @type_check_only
 class _Kwargs22(TypedDict, total=False):
@@ -3623,28 +3626,39 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.bool]: ...
-    @overload  # >0d object_, >=0d
-    def __call__(
+    @overload  # >0d object_, >0d object_
+    def __call__[T1, T2](
         self,
-        x1: npt.NDArray[np.object_],
+        x1: npt.NDArray[np.object_[T1]],
+        x2: npt.NDArray[np.object_[T2]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeObject | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.object_[T1 | T2]]: ...
+    @overload  # >0d object_, >=0d
+    def __call__[T](
+        self,
+        x1: npt.NDArray[np.object_[T]],
         x2: npt.ArrayLike,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLikeObject | None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[T | Any]]: ...
     @overload  # >=0d, >0d object_
-    def __call__(
+    def __call__[T](
         self,
         x1: npt.ArrayLike,
-        x2: npt.NDArray[np.object_],
+        x2: npt.NDArray[np.object_[T]],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLikeObject | None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[T | Any]]: ...
     @overload  # >=0d, >=0d, out=...
     def __call__(
         self,
@@ -3736,28 +3750,39 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.bool]: ...
-    @overload  # >0d object, >=0d
-    def outer(
+    @overload  # >0d object_, >0d object_
+    def outer[T1, T2](
         self,
-        x1: npt.NDArray[np.object_],
+        x1: npt.NDArray[np.object_[T1]],
+        x2: npt.NDArray[np.object_[T2]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeObject | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.object_[T1 | T2]]: ...
+    @overload  # >0d object, >=0d
+    def outer[T](
+        self,
+        x1: npt.NDArray[np.object_[T]],
         x2: npt.ArrayLike,
         /,
         *,
         out: None = None,
         dtype: _DTypeLikeObject | None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[T | Any]]: ...
     @overload  # >=0d, >0d object
-    def outer(
+    def outer[T](
         self,
         x1: npt.ArrayLike,
-        x2: npt.NDArray[np.object_],
+        x2: npt.NDArray[np.object_[T]],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLikeObject | None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[T | Any]]: ...
     @overload  # >=0d, >=0d, out=<given>
     def outer[OutT: np.ndarray](
         self,
@@ -3830,12 +3855,12 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayUnlikeObject,
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: _DTypeLikeBool | None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.bool] | Any: ...
     @overload  # unknown shape, not object_, axis=None
@@ -3843,12 +3868,12 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayUnlikeObject,
         /,
-        *,
         axis: None,
         dtype: _DTypeLikeBool | None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> np.bool: ...
     @overload  # unknown shape, not object_ keepdims=True
@@ -3856,12 +3881,12 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayUnlikeObject,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: _DTypeLikeBool | None = None,
+        *,
         out: None = None,
         keepdims: Literal[True],
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.bool]: ...
     @overload  # unknown shape, not object_, out=...
@@ -3869,77 +3894,77 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayUnlikeObject,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: _DTypeLikeBool | None = None,
+        *,
         out: EllipsisType,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.bool]: ...
     @overload  # unknown shape, object_
-    def reduce(
+    def reduce[T](
         self,
-        array: npt.NDArray[np.object_],
+        array: npt.NDArray[np.object_[T]],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: _DTypeLikeObject | None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: T = ...,
         where: _ArrayLikeBool_co = True,
-    ) -> npt.NDArray[np.object_] | Any: ...
+    ) -> npt.NDArray[np.object_[T]] | Any: ...
     @overload  # unknown shape, object_, axis=None
-    def reduce(
+    def reduce[T](
         self,
-        array: npt.NDArray[np.object_],
+        array: npt.NDArray[np.object_[T]],
         /,
-        *,
         axis: None,
         dtype: _DTypeLikeObject | None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: T = ...,
         where: _ArrayLikeBool_co = True,
-    ) -> Any: ...
-    @overload  # unknown shape, not object_ keepdims=True
-    def reduce(
+    ) -> T: ...
+    @overload  # unknown shape, object_ keepdims=True
+    def reduce[T](
         self,
-        array: npt.NDArray[np.object_],
+        array: npt.NDArray[np.object_[T]],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: _DTypeLikeObject | None = None,
+        *,
         out: None = None,
         keepdims: Literal[True],
-        initial: bool | np.bool = ...,
+        initial: T = ...,
         where: _ArrayLikeBool_co = True,
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[T]]: ...
     @overload  # unknown shape, object_, out=...
-    def reduce(
+    def reduce[T](
         self,
-        array: npt.NDArray[np.object_],
+        array: npt.NDArray[np.object_[T]],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: _DTypeLikeBool | None = None,
+        *,
         out: EllipsisType,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: T = ...,
         where: _ArrayLikeBool_co = True,
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[T]]: ...
     @overload  # out=<given>
     def reduce[OutT: np.ndarray](
         self,
         array: npt.ArrayLike,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: _DTypeLikeBool | _DTypeLikeObject | None = None,
+        *,
         out: OutT,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "reduceat", array, ...)
@@ -3947,12 +3972,12 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _CanUfuncReduce[OutT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | EllipsisType | None = None,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> OutT: ...
 
@@ -3963,32 +3988,32 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: np.ndarray[ShapeT, np.dtype[_non_object] | np.dtypes.StringDType],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: _DTypeLikeBool | None = None,
+        *,
         out: None = None,
     ) -> _Array[ShapeT, np.bool]: ...
     @overload  # known shape, object_
-    def reduceat[ShapeT: _Shape](  # pyrefly:ignore[bad-override]
+    def reduceat[ShapeT: _Shape, T](  # pyrefly:ignore[bad-override]
         self,
-        array: _Array[ShapeT, np.object_],
+        array: _Array[ShapeT, np.object_[T]],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: _DTypeLikeObject | None = None,
+        *,
         out: None = None,
-    ) -> _Array[ShapeT, np.object_]: ...
+    ) -> _Array[ShapeT, np.object_[T]]: ...
     @overload  # unknown shape
     def reduceat(
         self,
         array: _ArrayUnlikeObject,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: _DTypeLikeBool | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.bool]: ...
     @overload  # out=<given>
@@ -3996,10 +4021,10 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: npt.ArrayLike,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: _DTypeLikeBool | _DTypeLikeObject | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "reduceat", array, ...)
@@ -4008,9 +4033,9 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         array: _CanUfuncReduceAt[IxT, OutT],
         /,
         indices: IxT,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
@@ -4021,29 +4046,29 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: np.ndarray[ShapeT, np.dtype[_non_object] | np.dtypes.StringDType],
         /,
-        *,
         axis: int = 0,
         dtype: _DTypeLikeBool | None = None,
+        *,
         out: None = None,
     ) -> _Array[ShapeT, np.bool]: ...
     @overload  # known shape, OBJECT_
-    def accumulate[ShapeT: _Shape](
+    def accumulate[ShapeT: _Shape, T](
         self,
-        array: _Array[ShapeT, np.object_],
+        array: _Array[ShapeT, np.object_[T]],
         /,
-        *,
         axis: int = 0,
         dtype: _DTypeLikeObject | None = None,
+        *,
         out: None = None,
-    ) -> _Array[ShapeT, np.object_]: ...
+    ) -> _Array[ShapeT, np.object_[T]]: ...
     @overload  # unknown shape
     def accumulate(
         self,
         array: _ArrayUnlikeObject,
         /,
-        *,
         axis: int = 0,
         dtype: _DTypeLikeBool | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.bool]: ...
     @overload  # out=<given>
@@ -4051,9 +4076,9 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: npt.ArrayLike,
         /,
-        *,
         axis: int = 0,
         dtype: _DTypeLikeBool | _DTypeLikeObject | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "accumulate", array, ...)
@@ -4061,9 +4086,9 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _CanUfuncAccumulate[OutT],
         /,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
@@ -4252,12 +4277,12 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeBool_co,
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: _DTypeLikeBool | None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.bool] | np.bool: ...
     @overload  # unknown shape, axis=None
@@ -4265,12 +4290,12 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeBool_co,
         /,
-        *,
         axis: None,
         dtype: _DTypeLikeBool | None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> np.bool: ...
     @overload  # unknown shape, keepdims=True
@@ -4278,12 +4303,12 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeBool_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: _DTypeLikeBool | None = None,
+        *,
         out: None = None,
         keepdims: Literal[True],
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.bool]: ...
     @overload  # unknown shape, out=...
@@ -4291,12 +4316,12 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeBool_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: _DTypeLikeBool | None = None,
+        *,
         out: EllipsisType,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.bool]: ...
     @overload  # out=<given>
@@ -4304,12 +4329,12 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeBool_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: _DTypeLikeBool | None = None,
+        *,
         out: OutT,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "reduceat", array, ...)
@@ -4317,12 +4342,12 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _CanUfuncReduce[OutT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | EllipsisType | None = None,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> OutT: ...
 
@@ -4333,10 +4358,10 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _Array[ShapeT, np.bool],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: _DTypeLikeBool | None = None,
+        *,
         out: None = None,
     ) -> _Array[ShapeT, np.bool]: ...
     @overload  # unknown shape
@@ -4344,10 +4369,10 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeBool_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: _DTypeLikeBool | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.bool]: ...
     @overload  # out=<given>
@@ -4355,10 +4380,10 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeBool_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: _DTypeLikeBool | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "reduceat", array, ...)
@@ -4367,9 +4392,9 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         array: _CanUfuncReduceAt[IxT, OutT],
         /,
         indices: IxT,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
@@ -4380,9 +4405,9 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _Array[ShapeT, np.bool],
         /,
-        *,
         axis: int = 0,
         dtype: _DTypeLikeBool | None = None,
+        *,
         out: None = None,
     ) -> _Array[ShapeT, np.bool]: ...
     @overload  # unknown shape
@@ -4390,9 +4415,9 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeBool_co,
         /,
-        *,
         axis: int = 0,
         dtype: _DTypeLikeBool | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.bool]: ...
     @overload  # out=<given>
@@ -4400,9 +4425,9 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeBool_co,
         /,
-        *,
         axis: int = 0,
         dtype: _DTypeLikeBool | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "accumulate", array, ...)
@@ -4410,9 +4435,9 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _CanUfuncAccumulate[OutT],
         /,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
@@ -4860,12 +4885,12 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _DualArrayLike[np.dtype[_as_f64], float],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.float64] | np.float64: ...
     @overload  # unknown shape, +f64, axis=None
@@ -4873,12 +4898,12 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _DualArrayLike[np.dtype[_as_f64], float],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> np.float64: ...
     @overload  # unknown shape, +f64, keepdims=True
@@ -4886,12 +4911,12 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _DualArrayLike[np.dtype[_as_f64], float],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[True],
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # unknown shape, +f64, out=...
@@ -4899,12 +4924,12 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _DualArrayLike[np.dtype[_as_f64], float],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # unknown shape, +f32
@@ -4912,12 +4937,12 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLike[_as_f32],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.float32] | np.float32: ...
     @overload  # unknown shape, +f32, axis=None
@@ -4925,12 +4950,12 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLike[_as_f32],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> np.float32: ...
     @overload  # unknown shape, +f32, keepdims=True
@@ -4938,12 +4963,12 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLike[_as_f32],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[True],
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.float32]: ...
     @overload  # unknown shape, +f32, out=...
@@ -4951,12 +4976,12 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLike[_as_f32],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.float32]: ...
     @overload  # unknown shape, +f16
@@ -4964,12 +4989,12 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLike[_as_f16],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.float16] | np.float16: ...
     @overload  # unknown shape, +f16, axis=None
@@ -4977,12 +5002,12 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLike[_as_f16],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> np.float16: ...
     @overload  # unknown shape, +f16, keepdims=True
@@ -4990,12 +5015,12 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLike[_as_f16],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[True],
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.float16]: ...
     @overload  # unknown shape, +f16, out=...
@@ -5003,12 +5028,12 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLike[_as_f16],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.float16]: ...
     @overload  # out=<given>
@@ -5016,12 +5041,12 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeInt,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: OutT,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "reduce", array, ...)
@@ -5029,12 +5054,12 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _CanUfuncReduce[OutT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | EllipsisType | None = None,
         keepdims: bool = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> OutT: ...
 
@@ -5215,7 +5240,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ?d ~c128, ?d +c128
     def __call__(
         self,
-        x1: _ArrayLike[np.complex128 | np.complex64],
+        x1: _ArrayLike[np.complex128 | np.complex64] | _NestedList[complex],
         x2: _DualArrayLike[np.dtype[_to_c128], complex],
         /,
         *,
@@ -5227,7 +5252,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
     def __call__(
         self,
         x1: _DualArrayLike[np.dtype[_to_c128], complex],
-        x2: _ArrayLike[np.complex128 | np.complex64],
+        x2: _ArrayLike[np.complex128 | np.complex64] | _NestedList[complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -5260,7 +5285,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
     def __call__(
         self,
         x1: _ArrayLike[np.longdouble],
-        x2: _ArrayLike[np.complexfloating] | list[complex] | _NestedSequence[list[complex]],
+        x2: _ArrayLike[np.complexfloating] | _NestedList[complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -5270,7 +5295,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ?d ~c, ?d ~f80
     def __call__(
         self,
-        x1: _ArrayLike[np.complexfloating] | list[complex] | _NestedSequence[list[complex]],
+        x1: _ArrayLike[np.complexfloating] | _NestedList[complex],
         x2: _ArrayLike[np.longdouble],
         /,
         *,
@@ -5278,28 +5303,6 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.clongdouble]: ...
-    @overload  # ?d ~complex, ?d +complex
-    def __call__(
-        self,
-        x1: list[complex] | _NestedSequence[list[complex]],
-        x2: complex | _NestedSequence[complex],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # ?d +complex, ?d ~complex
-    def __call__(
-        self,
-        x1: complex | _NestedSequence[complex],
-        x2: list[complex] | _NestedSequence[list[complex]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.complex128]: ...
     @overload  # ?d _, ?d _, dtype=<known>
     def __call__[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
         self,
@@ -5526,7 +5529,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ?d ~c128, ?d +c128
     def outer(
         self,
-        x1: _ArrayLike[np.complex128 | np.complex64],
+        x1: _ArrayLike[np.complex128 | np.complex64] | _NestedList[complex],
         x2: _DualArrayLike[np.dtype[_to_c128], complex],
         /,
         *,
@@ -5538,7 +5541,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
     def outer(
         self,
         x1: _DualArrayLike[np.dtype[_to_c128], complex],
-        x2: _ArrayLike[np.complex128 | np.complex64],
+        x2: _ArrayLike[np.complex128 | np.complex64] | _NestedList[complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -5571,7 +5574,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
     def outer(
         self,
         x1: _ArrayLike[np.longdouble],
-        x2: _ArrayLike[np.complexfloating] | list[complex] | _NestedSequence[list[complex]],
+        x2: _ArrayLike[np.complexfloating] | _NestedList[complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -5581,7 +5584,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ?d ~c, ?d ~f80
     def outer(
         self,
-        x1: _ArrayLike[np.complexfloating] | list[complex] | _NestedSequence[list[complex]],
+        x1: _ArrayLike[np.complexfloating] | _NestedList[complex],
         x2: _ArrayLike[np.longdouble],
         /,
         *,
@@ -5589,28 +5592,6 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.clongdouble]: ...
-    @overload  # ?d ~complex, ?d +complex
-    def outer(
-        self,
-        x1: list[complex] | _NestedSequence[list[complex]],
-        x2: complex | _NestedSequence[complex],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # ?d +complex, ?d ~complex
-    def outer(
-        self,
-        x1: complex | _NestedSequence[complex],
-        x2: list[complex] | _NestedSequence[list[complex]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.complex128]: ...
     @overload  # ?d _, ?d _, dtype=<known>
     def outer[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
         self,
@@ -5683,9 +5664,9 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _NumberLike_co = ...,
@@ -5696,9 +5677,9 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _NumberLike_co = ...,
@@ -5709,9 +5690,9 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _NumberLike_co = ...,
@@ -5722,9 +5703,9 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _DualArrayLike[np.dtype[_to_f64], float],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _FloatLike_co = ...,
@@ -5735,9 +5716,9 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _DualArrayLike[np.dtype[_to_f64], float],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _FloatLike_co = ...,
@@ -5748,9 +5729,9 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _DualArrayLike[np.dtype[_to_f64], float],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _FloatLike_co = ...,
@@ -5759,11 +5740,11 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ~c128
     def reduce(
         self,
-        array: _ArrayLike[np.complex64] | list[complex] | _NestedSequence[list[complex]],
+        array: _ArrayLike[np.complex64] | _NestedList[complex],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _NumberLike_co = ...,
@@ -5772,11 +5753,11 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ~c128, axis=None
     def reduce(
         self,
-        array: _ArrayLike[np.complex64] | list[complex] | _NestedSequence[list[complex]],
+        array: _ArrayLike[np.complex64] | _NestedList[complex],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _NumberLike_co = ...,
@@ -5785,11 +5766,11 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ~c128, keepdims=True
     def reduce(
         self,
-        array: _ArrayLike[np.complex64] | list[complex] | _NestedSequence[list[complex]],
+        array: _ArrayLike[np.complex64] | _NestedList[complex],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _NumberLike_co = ...,
@@ -5800,8 +5781,8 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumber_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: EllipsisType | None = None,
         keepdims: bool = False,
@@ -5813,9 +5794,9 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumber_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
-        dtype: npt.DTypeLike,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: bool = False,
         initial: _NumberLike_co = ...,
@@ -5826,9 +5807,9 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumber_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
         keepdims: bool = False,
         initial: _NumberLike_co = ...,
@@ -5839,9 +5820,9 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _CanUfuncReduce[OutT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | EllipsisType | None = None,
         keepdims: bool = False,
         initial: _NumberLike_co = ...,
@@ -5855,10 +5836,10 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLike[ScalarT],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # ~f64
@@ -5866,21 +5847,21 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _DualArrayLike[np.dtype[_to_f64], float],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # ~c128
     def reduceat(
         self,
-        array: _ArrayLike[np.complex64] | list[complex] | _NestedSequence[list[complex]],
+        array: _ArrayLike[np.complex64] | _NestedList[complex],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # dtype=<known>
@@ -5888,9 +5869,9 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumber_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
@@ -5899,10 +5880,10 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumber_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
-        dtype: str | type,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
@@ -5910,10 +5891,10 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumber_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "reduceat", array, ...)
@@ -5922,9 +5903,9 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         array: _CanUfuncReduceAt[IxT, OutT],
         /,
         indices: IxT,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
@@ -5935,9 +5916,9 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # ~f64
@@ -5945,19 +5926,19 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _DualArrayLike[np.dtype[_to_f64], float],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # ~c128
     def accumulate(
         self,
-        array: _ArrayLike[np.complex64] | list[complex] | _NestedSequence[list[complex]],
+        array: _ArrayLike[np.complex64] | _NestedList[complex],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # dtype=<known>
@@ -5965,8 +5946,8 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumber_co,
         /,
-        *,
         axis: int = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
@@ -5975,9 +5956,9 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumber_co,
         /,
-        *,
         axis: int = 0,
-        dtype: str | type,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
@@ -5985,9 +5966,9 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumber_co,
         /,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "accumulate", array, ...)
@@ -5995,9 +5976,9 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _CanUfuncAccumulate[OutT],
         /,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
@@ -6037,7 +6018,7 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     def __call__(
         self,
         x1: np.float64 | _as_f64,
-        x2: _to_f64,
+        x2: float | _to_f64,
         /,
         *,
         out: None = None,
@@ -6047,7 +6028,7 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     @overload  # 0d +f64, 0d ~f64
     def __call__(
         self,
-        x1: _to_f64,
+        x1: float | _to_f64,
         x2: np.float64 | _as_f64,
         /,
         *,
@@ -6157,8 +6138,8 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     @overload  # ?d ~f64, ?d +f64
     def __call__(
         self,
-        x1: _ArrayLike[np.float64 | _as_f64],
-        x2: _ArrayLike[_to_f64],
+        x1: _ArrayLike[np.float64 | _as_f64] | _NestedSequence[float],
+        x2: _DualArrayLike[np.dtype[_to_f64], float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -6168,8 +6149,8 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     @overload  # ?d +f64, ?d ~f64
     def __call__(
         self,
-        x1: _ArrayLike[_to_f64],
-        x2: _ArrayLike[np.float64 | _as_f64],
+        x1: _DualArrayLike[np.dtype[_to_f64], float],
+        x2: _ArrayLike[np.float64 | _as_f64] | _NestedSequence[float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -6213,7 +6194,7 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     def __call__(
         self,
         x1: _ArrayLike[np.longdouble],
-        x2: _ArrayLike[_to_floating],
+        x2: _ArrayLikeFloat_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -6223,7 +6204,7 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     @overload  # ?d +f80, ?d ~f80
     def __call__(
         self,
-        x1: _ArrayLike[_to_floating],
+        x1: _ArrayLikeFloat_co,
         x2: _ArrayLike[np.longdouble],
         /,
         *,
@@ -6232,49 +6213,27 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.longdouble]: ...
     @overload  # Nd T@floating, ?d +float
-    def __call__[ArrayT: npt.NDArray[np.floating]](
+    def __call__[ScalarT: np.floating](
         self,
-        x1: ArrayT,
-        x2: float | _NestedSequence[float],
+        x1: npt.NDArray[ScalarT],
+        x2: float,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # ?d +float, Nd T@floating
-    def __call__[ArrayT: npt.NDArray[np.floating]](
+    def __call__[ScalarT: np.floating](
         self,
-        x1: float | _NestedSequence[float],
-        x2: ArrayT,
+        x1: float,
+        x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
-    @overload  # Nd +float, ?d +float
-    def __call__(
-        self,
-        x1: _NestedSequence[float],
-        x2: float | _NestedSequence[float],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
-    @overload  # ?d +float, Nd +float
-    def __call__(
-        self,
-        x1: float | _NestedSequence[float],
-        x2: _NestedSequence[float],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd _, ?d _, dtype=<known>
     def __call__[FloatT: np.floating](
         self,
@@ -6359,7 +6318,7 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     def outer(
         self,
         x1: np.float64 | _as_f64,
-        x2: _to_f64,
+        x2: float | _to_f64,
         /,
         *,
         out: None = None,
@@ -6369,7 +6328,7 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     @overload  # 0d +f64, 0d ~f64
     def outer(
         self,
-        x1: _to_f64,
+        x1: float | _to_f64,
         x2: np.float64 | _as_f64,
         /,
         *,
@@ -6479,8 +6438,8 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     @overload  # ?d ~f64, ?d +f64
     def outer(
         self,
-        x1: _ArrayLike[np.float64 | _as_f64],
-        x2: _ArrayLike[_to_f64],
+        x1: _ArrayLike[np.float64 | _as_f64] | _NestedSequence[float],
+        x2: _DualArrayLike[np.dtype[_to_f64], float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -6490,8 +6449,8 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     @overload  # ?d +f64, ?d ~f64
     def outer(
         self,
-        x1: _ArrayLike[_to_f64],
-        x2: _ArrayLike[np.float64 | _as_f64],
+        x1: _DualArrayLike[np.dtype[_to_f64], float],
+        x2: _ArrayLike[np.float64 | _as_f64] | _NestedSequence[float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -6535,7 +6494,7 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     def outer(
         self,
         x1: _ArrayLike[np.longdouble],
-        x2: _ArrayLike[_to_floating],
+        x2: _ArrayLikeFloat_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -6545,7 +6504,7 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
     @overload  # ?d +f80, ?d ~f80
     def outer(
         self,
-        x1: _ArrayLike[_to_floating],
+        x1: _ArrayLikeFloat_co,
         x2: _ArrayLike[np.longdouble],
         /,
         *,
@@ -6554,49 +6513,27 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.longdouble]: ...
     @overload  # Nd T@floating, ?d +float
-    def outer[ArrayT: npt.NDArray[np.floating]](
+    def outer[ScalarT: np.floating](
         self,
-        x1: ArrayT,
-        x2: float | _NestedSequence[float],
+        x1: npt.NDArray[ScalarT],
+        x2: float,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # ?d +float, Nd T@floating
-    def outer[ArrayT: npt.NDArray[np.floating]](
+    def outer[ScalarT: np.floating](
         self,
-        x1: float | _NestedSequence[float],
-        x2: ArrayT,
+        x1: float,
+        x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
-    @overload  # Nd +float, ?d +float
-    def outer(
-        self,
-        x1: _NestedSequence[float],
-        x2: float | _NestedSequence[float],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
-    @overload  # ?d +float, Nd +float
-    def outer(
-        self,
-        x1: float | _NestedSequence[float],
-        x2: _NestedSequence[float],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd _, ?d _, dtype=<known>
     def outer[FloatT: np.floating](
         self,
@@ -6680,9 +6617,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLike[FloatT],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: float | FloatT = ...,
@@ -6693,9 +6630,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLike[FloatT],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: float | FloatT = ...,
@@ -6706,9 +6643,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLike[FloatT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: float | FloatT = ...,
@@ -6719,9 +6656,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _DualArrayLike[np.dtype[_as_f64], float],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: float | _to_f64 = ...,
@@ -6732,9 +6669,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _DualArrayLike[np.dtype[_as_f64], float],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: float | _to_f64 = ...,
@@ -6745,9 +6682,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _DualArrayLike[np.dtype[_as_f64], float],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: float | _to_f64 = ...,
@@ -6758,9 +6695,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLike[_as_f32],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: float | _to_f32 = ...,
@@ -6771,9 +6708,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLike[_as_f32],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: float | _to_f32 = ...,
@@ -6784,9 +6721,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLike[_as_f32],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: float | _to_f32 = ...,
@@ -6797,9 +6734,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLike[_as_f16],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: float | _as_f16 = ...,
@@ -6810,9 +6747,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLike[_as_f16],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: float | _as_f16 = ...,
@@ -6823,9 +6760,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLike[_as_f16],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: float | _as_f16 = ...,
@@ -6836,9 +6773,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLike[np.longdouble],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _FloatLike_co = ...,
@@ -6849,9 +6786,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLike[np.longdouble],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _FloatLike_co = ...,
@@ -6862,9 +6799,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLike[np.longdouble],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _FloatLike_co = ...,
@@ -6875,8 +6812,8 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLikeFloat_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: EllipsisType | None = None,
         keepdims: bool = False,
@@ -6888,8 +6825,8 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLikeFloat_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
+        *,
         dtype: type[float],
         out: EllipsisType | None = None,
         keepdims: bool = False,
@@ -6901,9 +6838,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLikeFloat_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
-        dtype: npt.DTypeLike,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: bool = False,
         initial: _FloatLike_co = ...,
@@ -6914,9 +6851,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLikeFloat_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
         keepdims: bool = False,
         initial: _FloatLike_co = ...,
@@ -6927,9 +6864,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _CanUfuncReduce[OutT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | EllipsisType | None = None,
         keepdims: bool = False,
         initial: _FloatLike_co = ...,
@@ -6943,10 +6880,10 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLike[FloatT],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[FloatT]: ...
     @overload  # ~f64
@@ -6954,10 +6891,10 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _DualArrayLike[np.dtype[_as_f64], float],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # ~f32
@@ -6965,10 +6902,10 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLike[_as_f32],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.float32]: ...
     @overload  # ~f16
@@ -6976,10 +6913,10 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLike[_as_f16],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.float16]: ...
     @overload  # dtype=<known>
@@ -6987,9 +6924,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLikeFloat_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
@@ -6998,9 +6935,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLikeFloat_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
+        *,
         dtype: type[float],
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
@@ -7009,10 +6946,10 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLikeFloat_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
-        dtype: str | type,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.floating]: ...
     @overload  # out=<given>
@@ -7020,10 +6957,10 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLikeFloat_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "reduceat", array, ...)
@@ -7032,9 +6969,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         array: _CanUfuncReduceAt[IxT, OutT],
         /,
         indices: IxT,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
@@ -7045,9 +6982,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLike[FloatT],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[FloatT]: ...
     @overload  # ~f64
@@ -7055,9 +6992,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _DualArrayLike[np.dtype[_as_f64], float],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # ~f32
@@ -7065,9 +7002,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLike[_as_f32],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.float32]: ...
     @overload  # ~f16
@@ -7075,9 +7012,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLike[_as_f16],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.float16]: ...
     @overload  # dtype=<known>
@@ -7085,8 +7022,8 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLikeFloat_co,
         /,
-        *,
         axis: int = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
@@ -7095,8 +7032,8 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLikeFloat_co,
         /,
-        *,
         axis: int = 0,
+        *,
         dtype: type[float],
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
@@ -7105,9 +7042,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLikeFloat_co,
         /,
-        *,
         axis: int = 0,
-        dtype: str | type,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.floating]: ...
     @overload  # out=<given>
@@ -7115,9 +7052,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _ArrayLikeFloat_co,
         /,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "accumulate", array, ...)
@@ -7125,9 +7062,9 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         self,
         array: _CanUfuncAccumulate[OutT],
         /,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
@@ -7154,7 +7091,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     def __call__(
         self,
         x1: np.float64 | _as_f64,
-        x2: float | _to_floating,
+        x2: float | _to_f64,
         /,
         *,
         out: None = None,
@@ -7164,7 +7101,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # 0d +f64, 0d ~f64
     def __call__(
         self,
-        x1: float | _to_floating,
+        x1: float | _to_f64,
         x2: np.float64 | _as_f64,
         /,
         *,
@@ -7340,8 +7277,8 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ?d ~f64, ?d +f64
     def __call__(
         self,
-        x1: _ArrayLike[np.float64 | _as_f64],
-        x2: _DualArrayLike[np.dtype[_to_floating], float],
+        x1: _ArrayLike[np.float64 | _as_f64] | _NestedList[float],
+        x2: _DualArrayLike[np.dtype[_to_f64], float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -7351,8 +7288,8 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ?d +f64, ?d ~f64
     def __call__(
         self,
-        x1: _DualArrayLike[np.dtype[_to_floating], float],
-        x2: _ArrayLike[np.float64 | _as_f64],
+        x1: _DualArrayLike[np.dtype[_to_f64], float],
+        x2: _ArrayLike[np.float64 | _as_f64] | _NestedList[float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -7363,7 +7300,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     def __call__(
         self,
         x1: _ArrayLike[np.float32],
-        x2: _DualArrayLike[np.dtype[_to_f32], float],
+        x2: _ArrayLike[_to_f32],
         /,
         *,
         out: EllipsisType | None = None,
@@ -7373,7 +7310,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ?d +f32, ?d ~f32
     def __call__(
         self,
-        x1: _DualArrayLike[np.dtype[_to_f32], float],
+        x1: _ArrayLike[_to_f32],
         x2: _ArrayLike[np.float32],
         /,
         *,
@@ -7384,7 +7321,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ?d ~c128, ?d +c128
     def __call__(
         self,
-        x1: _ArrayLike[np.complex128],
+        x1: _ArrayLike[np.complex128] | _NestedList[complex],
         x2: _DualArrayLike[np.dtype[_to_c128], complex],
         /,
         *,
@@ -7396,7 +7333,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     def __call__(
         self,
         x1: _DualArrayLike[np.dtype[_to_c128], complex],
-        x2: _ArrayLike[np.complex128],
+        x2: _ArrayLike[np.complex128] | _NestedList[complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -7429,7 +7366,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     def __call__(
         self,
         x1: _ArrayLike[np.complex64],
-        x2: _DualArrayLike[np.dtype[np.complex64 | _to_f32], complex],
+        x2: _DualArrayLike[np.dtype[np.complex64 | _to_f32], bool],
         /,
         *,
         out: EllipsisType | None = None,
@@ -7439,7 +7376,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ?d +c64, ?d c64
     def __call__(
         self,
-        x1: _DualArrayLike[np.dtype[_to_f32], complex],
+        x1: _DualArrayLike[np.dtype[_to_f32], bool],
         x2: _ArrayLike[np.complex64],
         /,
         *,
@@ -7472,47 +7409,47 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # Nd ~O, ?d ?
     def __call__(
         self,
-        x1: npt.NDArray[np.object_],
+        x1: npt.NDArray[np.object_[Incomplete]],
         x2: _ArrayLikeNumericObj_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[Incomplete]]: ...
     @overload  # ?d ?, Nd ~O
     def __call__(
         self,
         x1: _ArrayLikeNumericObj_co,
-        x2: npt.NDArray[np.object_],
+        x2: npt.NDArray[np.object_[Incomplete]],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[Incomplete]]: ...
     @overload  # Nd T@floating, ?d +float
-    def __call__[ArrayT: npt.NDArray[np.inexact | np.timedelta64]](
+    def __call__[ScalarT: np.inexact | np.timedelta64](
         self,
-        x1: ArrayT,
-        x2: float | _NestedSequence[float],
+        x1: npt.NDArray[ScalarT],
+        x2: float,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # ?d +float, Nd T@floating
-    def __call__[ArrayT: npt.NDArray[np.inexact | np.timedelta64]](
+    def __call__[ScalarT: np.inexact | np.timedelta64](
         self,
-        x1: float | _NestedSequence[float],
-        x2: ArrayT,
+        x1: float,
+        x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd _, ?d _, dtype=<known>
     def __call__[ScalarT: np.inexact | np.timedelta64](
         self,
@@ -7597,7 +7534,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     def outer(
         self,
         x1: np.float64 | _as_f64,
-        x2: float | _to_floating,
+        x2: float | _to_f64,
         /,
         *,
         out: None = None,
@@ -7607,7 +7544,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # 0d +f64, 0d ~f64
     def outer(
         self,
-        x1: float | _to_floating,
+        x1: float | _to_f64,
         x2: np.float64 | _as_f64,
         /,
         *,
@@ -7783,8 +7720,8 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ?d ~f64, ?d +f64
     def outer(
         self,
-        x1: _ArrayLike[np.float64 | _as_f64],
-        x2: _DualArrayLike[np.dtype[_to_floating], float],
+        x1: _ArrayLike[np.float64 | _as_f64] | _NestedList[float],
+        x2: _DualArrayLike[np.dtype[_to_f64], float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -7794,8 +7731,8 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ?d +f64, ?d ~f64
     def outer(
         self,
-        x1: _DualArrayLike[np.dtype[_to_floating], float],
-        x2: _ArrayLike[np.float64 | _as_f64],
+        x1: _DualArrayLike[np.dtype[_to_f64], float],
+        x2: _ArrayLike[np.float64 | _as_f64] | _NestedList[float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -7806,7 +7743,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     def outer(
         self,
         x1: _ArrayLike[np.float32],
-        x2: _DualArrayLike[np.dtype[_to_f32], float],
+        x2: _ArrayLike[_to_f32],
         /,
         *,
         out: EllipsisType | None = None,
@@ -7816,7 +7753,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ?d +f32, ?d ~f32
     def outer(
         self,
-        x1: _DualArrayLike[np.dtype[_to_f32], float],
+        x1: _ArrayLike[_to_f32],
         x2: _ArrayLike[np.float32],
         /,
         *,
@@ -7827,7 +7764,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ?d ~c128, ?d +c128
     def outer(
         self,
-        x1: _ArrayLike[np.complex128],
+        x1: _ArrayLike[np.complex128] | _NestedList[complex],
         x2: _DualArrayLike[np.dtype[_to_c128], complex],
         /,
         *,
@@ -7839,7 +7776,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     def outer(
         self,
         x1: _DualArrayLike[np.dtype[_to_c128], complex],
-        x2: _ArrayLike[np.complex128],
+        x2: _ArrayLike[np.complex128] | _NestedList[complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -7872,7 +7809,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     def outer(
         self,
         x1: _ArrayLike[np.complex64],
-        x2: _DualArrayLike[np.dtype[np.complex64 | _to_f32], complex],
+        x2: _DualArrayLike[np.dtype[np.complex64 | _to_f32], bool],
         /,
         *,
         out: EllipsisType | None = None,
@@ -7882,7 +7819,7 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ?d +c64, ?d c64
     def outer(
         self,
-        x1: _DualArrayLike[np.dtype[_to_f32], complex],
+        x1: _DualArrayLike[np.dtype[_to_f32], bool],
         x2: _ArrayLike[np.complex64],
         /,
         *,
@@ -7915,47 +7852,47 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # Nd ~O, ?d ?
     def outer(
         self,
-        x1: npt.NDArray[np.object_],
+        x1: npt.NDArray[np.object_[Incomplete]],
         x2: _ArrayLikeNumericObj_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[Incomplete]]: ...
     @overload  # ?d ?, Nd ~O
     def outer(
         self,
         x1: _ArrayLikeNumericObj_co,
-        x2: npt.NDArray[np.object_],
+        x2: npt.NDArray[np.object_[Incomplete]],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[Incomplete]]: ...
     @overload  # Nd T@floating, ?d +float
-    def outer[ArrayT: npt.NDArray[np.inexact | np.timedelta64]](
+    def outer[ScalarT: np.inexact | np.timedelta64](
         self,
-        x1: ArrayT,
-        x2: float | _NestedSequence[float],
+        x1: npt.NDArray[ScalarT],
+        x2: float,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # ?d +float, Nd T@floating
-    def outer[ArrayT: npt.NDArray[np.inexact | np.timedelta64]](
+    def outer[ScalarT: np.inexact | np.timedelta64](
         self,
-        x1: float | _NestedSequence[float],
-        x2: ArrayT,
+        x1: float,
+        x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd _, ?d _, dtype=<known>
     def outer[ScalarT: np.inexact | np.timedelta64](
         self,
@@ -8039,9 +7976,9 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: complex | ScalarT = ...,
@@ -8052,9 +7989,9 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: complex | ScalarT = ...,
@@ -8065,9 +8002,9 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: complex | ScalarT = ...,
@@ -8078,9 +8015,9 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: npt.NDArray[np.object_],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: object = ...,
@@ -8091,9 +8028,9 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: npt.NDArray[np.object_],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: object = ...,
@@ -8104,9 +8041,9 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _DualArrayLike[np.dtype[_to_integer], float],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: float | _to_f64 = ...,
@@ -8117,9 +8054,9 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _DualArrayLike[np.dtype[_to_integer], float],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: float | _to_f64 = ...,
@@ -8130,9 +8067,9 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _DualArrayLike[np.dtype[_to_integer], float],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: float | _to_f64 = ...,
@@ -8141,11 +8078,11 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ~c128  (invariant `list` is used to avoid overlap with `float`)
     def reduce(
         self,
-        array: _NestedSequence[list[complex]] | list[complex],
+        array: _NestedList[complex],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: complex | _to_c128 = ...,
@@ -8154,11 +8091,11 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ~c128, axis=None
     def reduce(
         self,
-        array: _NestedSequence[list[complex]] | list[complex],
+        array: _NestedList[complex],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: complex | _to_c128 = ...,
@@ -8167,11 +8104,11 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ~c128, keepdims=True
     def reduce(
         self,
-        array: _NestedSequence[list[complex]] | list[complex],
+        array: _NestedList[complex],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: complex | _to_c128 = ...,
@@ -8182,8 +8119,8 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: EllipsisType | None = None,
         keepdims: bool = False,
@@ -8195,8 +8132,8 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
+        *,
         dtype: type[float],
         out: EllipsisType | None = None,
         keepdims: bool = False,
@@ -8208,9 +8145,9 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
-        dtype: npt.DTypeLike,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: bool = False,
         initial: _NumberLike_co = ...,
@@ -8221,9 +8158,9 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: None,
-        dtype: npt.DTypeLike,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: bool = False,
         initial: _NumberLike_co = ...,
@@ -8234,9 +8171,9 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
         keepdims: bool = False,
         initial: _NumberLike_co = ...,
@@ -8247,9 +8184,9 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _CanUfuncReduce[OutT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | EllipsisType | None = None,
         keepdims: bool = False,
         initial: object = ...,
@@ -8263,10 +8200,10 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLike[ScalarT],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # +f64
@@ -8274,21 +8211,21 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _DualArrayLike[np.dtype[_to_f64], float],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # ~complex
     def reduceat(
         self,
-        array: _NestedSequence[list[complex]] | list[complex],
+        array: _NestedList[complex],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # dtype=<known>
@@ -8296,9 +8233,9 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
@@ -8307,9 +8244,9 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
+        *,
         dtype: type[float],
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
@@ -8318,10 +8255,10 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
-        dtype: str | type,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
@@ -8329,10 +8266,10 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "reduceat", array, ...)
@@ -8341,9 +8278,9 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         array: _CanUfuncReduceAt[IxT, OutT],
         /,
         indices: IxT,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
@@ -8354,9 +8291,9 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # +f64
@@ -8364,19 +8301,19 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _DualArrayLike[np.dtype[_to_f64], float],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # ~complex
     def accumulate(
         self,
-        array: _NestedSequence[list[complex]] | list[complex],
+        array: _NestedList[complex],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # dtype=<known>
@@ -8384,8 +8321,8 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: int = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
@@ -8394,8 +8331,8 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: int = 0,
+        *,
         dtype: type[float],
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
@@ -8404,9 +8341,9 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: int = 0,
-        dtype: str | type,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
@@ -8414,9 +8351,9 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "accumulate", array, ...)
@@ -8424,9 +8361,9 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         self,
         array: _CanUfuncAccumulate[OutT],
         /,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
@@ -8670,53 +8607,53 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.uint8]: ...
     @overload  # Nd ~obj, ?d +obj
-    def __call__(
+    def __call__[T](
         self,
-        x1: npt.NDArray[np.object_],
+        x1: npt.NDArray[np.object_[T]],
         x2: _ArrayLikeIntObj_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[T]]: ...
     @overload  # ?d +obj, Nd ~obj
-    def __call__(
+    def __call__[T](
         self,
         x1: _ArrayLikeIntObj_co,
-        x2: npt.NDArray[np.object_],
+        x2: npt.NDArray[np.object_[T]],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.object_]: ...
-    @overload  # Nd T@integer, ?d +int
-    def __call__[ArrayT: npt.NDArray[np.integer | np.object_]](
+    ) -> npt.NDArray[np.object_[T]]: ...
+    @overload  # Nd T@integer, ?d +bool
+    def __call__[ScalarT: np.integer | np.object_](
         self,
-        x1: ArrayT,
-        x2: _DualArrayLike[np.dtype[np.bool], int],
+        x1: npt.NDArray[ScalarT],
+        x2: _ArrayLikeBool_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
-    @overload  # ?d +int, Nd T@integer
-    def __call__[ArrayT: npt.NDArray[np.integer | np.object_]](
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # ?d +bool, Nd T@integer
+    def __call__[ScalarT: np.integer | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[np.bool], int],
-        x2: ArrayT,
+        x1: _ArrayLikeBool_co,
+        x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd ~int, ?d +int
     def __call__(
         self,
-        x1: list[int] | _NestedSequence[list[int]],
+        x1: _NestedList[int],
         x2: int | _NestedSequence[int],
         /,
         *,
@@ -8728,7 +8665,7 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
     def __call__(
         self,
         x1: int | _NestedSequence[int],
-        x2: list[int] | _NestedSequence[list[int]],
+        x2: _NestedList[int],
         /,
         *,
         out: EllipsisType | None = None,
@@ -9046,32 +8983,32 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.object_]: ...
-    @overload  # Nd T@integer, ?d +int
-    def outer[ArrayT: npt.NDArray[np.integer | np.object_]](
+    @overload  # Nd T@integer, ?d +bool
+    def outer[ScalarT: np.integer | np.object_](
         self,
-        x1: ArrayT,
-        x2: _DualArrayLike[np.dtype[np.bool], int],
+        x1: npt.NDArray[ScalarT],
+        x2: _ArrayLikeBool_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
-    @overload  # ?d +int, Nd T@integer
-    def outer[ArrayT: npt.NDArray[np.integer | np.object_]](
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # ?d +bool, Nd T@integer
+    def outer[ScalarT: np.integer | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[np.bool], int],
-        x2: ArrayT,
+        x1: _ArrayLikeBool_co,
+        x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd ~int, ?d +int
     def outer(
         self,
-        x1: list[int] | _NestedSequence[list[int]],
+        x1: _NestedList[int],
         x2: int | _NestedSequence[int],
         /,
         *,
@@ -9083,7 +9020,7 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
     def outer(
         self,
         x1: int | _NestedSequence[int],
-        x2: list[int] | _NestedSequence[list[int]],
+        x2: _NestedList[int],
         /,
         *,
         out: EllipsisType | None = None,
@@ -9181,9 +9118,9 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: int | ScalarT = ...,
@@ -9194,9 +9131,9 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: int | ScalarT = ...,
@@ -9207,9 +9144,9 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: int | ScalarT = ...,
@@ -9220,9 +9157,9 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self,
         array: npt.NDArray[np.object_],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: object = ...,
@@ -9233,9 +9170,9 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self,
         array: npt.NDArray[np.object_],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: object = ...,
@@ -9246,12 +9183,12 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self: _ufunc_21_bio[Any, np.bool],
         array: _ArrayLikeBool_co,
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.bool] | Any: ...
     @overload  # ~bool, axis=None
@@ -9259,12 +9196,12 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self: _ufunc_21_bio[Any, np.bool],
         array: _ArrayLikeBool_co,
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> np.bool: ...
     @overload  # ~bool, keepdims=True
@@ -9272,22 +9209,22 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self: _ufunc_21_bio[Any, np.bool],
         array: _ArrayLikeBool_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
-        initial: bool | np.bool = ...,
+        initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.bool]: ...
     @overload  # ~int
     def reduce(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _NestedList[int],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _IntLike_co = ...,
@@ -9296,11 +9233,11 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
     @overload  # ~int, axis=None
     def reduce(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _NestedList[int],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _IntLike_co = ...,
@@ -9309,11 +9246,11 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
     @overload  # ~int, keepdims=True
     def reduce(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _NestedList[int],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _IntLike_co = ...,
@@ -9324,8 +9261,8 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self,
         array: _ArrayLikeIntObj_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: EllipsisType | None = None,
         keepdims: bool = False,
@@ -9337,9 +9274,9 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self,
         array: _ArrayLikeIntObj_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
-        dtype: npt.DTypeLike,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: bool = False,
         initial: _IntLike_co = ...,
@@ -9350,9 +9287,9 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self,
         array: _ArrayLikeIntObj_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
         keepdims: bool = False,
         initial: _IntLike_co = ...,
@@ -9363,9 +9300,9 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self,
         array: _CanUfuncReduce[OutT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | EllipsisType | None = None,
         keepdims: bool = False,
         initial: _IntLike_co = ...,
@@ -9379,10 +9316,10 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self,
         array: _ArrayLike[ScalarT],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # ~bool
@@ -9390,21 +9327,21 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self: _ufunc_21_bio[Any, np.bool],
         array: _ArrayLikeBool_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.bool]: ...
     @overload  # ~int
     def reduceat(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _NestedList[int],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.int_]: ...
     @overload  # dtype=<known>
@@ -9412,9 +9349,9 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self,
         array: _ArrayLikeIntObj_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
@@ -9423,10 +9360,10 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self,
         array: _ArrayLikeIntObj_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
-        dtype: str | type,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
@@ -9434,10 +9371,10 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self,
         array: _ArrayLikeIntObj_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "reduceat", array, indices, ...)
@@ -9446,9 +9383,9 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         array: _CanUfuncReduceAt[IxT, OutT],
         /,
         indices: IxT,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
@@ -9459,9 +9396,9 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # ~bool
@@ -9469,19 +9406,19 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self: _ufunc_21_bio[Any, np.bool],
         array: _ArrayLikeBool_co,
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.bool]: ...
     @overload  # ~int
     def accumulate(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _NestedList[int],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.int_]: ...
     @overload  # dtype=<known>
@@ -9489,8 +9426,8 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self,
         array: _ArrayLikeIntObj_co,
         /,
-        *,
         axis: int = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
@@ -9499,9 +9436,9 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self,
         array: _ArrayLikeIntObj_co,
         /,
-        *,
         axis: int = 0,
-        dtype: str | type,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
@@ -9509,18 +9446,18 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         self,
         array: _ArrayLikeIntObj_co,
         /,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "accumulate", array, ...)
     def accumulate[OutT](
         self,
         array: _CanUfuncAccumulate[OutT],
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
@@ -9806,7 +9743,7 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     def __call__(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -9816,7 +9753,7 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     @overload  # ?d +i64, ?d ~i64
     def __call__(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -9868,32 +9805,32 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.uint8]: ...
-    @overload  # Nd T@integer, ?d +int
-    def __call__[ArrayT: npt.NDArray[np.integer]](
+    @overload  # Nd T@integer, ?d +bool
+    def __call__[ScalarT: np.integer](
         self,
-        x1: ArrayT,
-        x2: _DualArrayLike[np.dtype[np.bool], int],
+        x1: npt.NDArray[ScalarT],
+        x2: _ArrayLikeBool_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
-    @overload  # ?d +int, Nd T@integer
-    def __call__[ArrayT: npt.NDArray[np.integer]](
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # ?d +bool, Nd T@integer
+    def __call__[ScalarT: np.integer](
         self,
-        x1: _DualArrayLike[np.dtype[np.bool], int],
-        x2: ArrayT,
+        x1: _ArrayLikeBool_co,
+        x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd ~int, ?d +int
     def __call__(
         self,
-        x1: list[int] | _NestedSequence[list[int]],
+        x1: _NestedList[int],
         x2: int | _NestedSequence[int],
         /,
         *,
@@ -9905,7 +9842,7 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     def __call__(
         self,
         x1: int | _NestedSequence[int],
-        x2: list[int] | _NestedSequence[list[int]],
+        x2: _NestedList[int],
         /,
         *,
         out: EllipsisType | None = None,
@@ -9915,8 +9852,8 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     @overload  # ?d ~f64, ?d +f64
     def __call__(
         self,
-        x1: _ArrayLike[np.float64],
-        x2: _ArrayLike[_to_f64],
+        x1: _ArrayLike[np.float64] | _NestedList[float],
+        x2: _DualArrayLike[np.dtype[_to_f64], float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -9926,8 +9863,8 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     @overload  # ?d +f64, ?d ~f64
     def __call__(
         self,
-        x1: _ArrayLike[_to_f64],
-        x2: _ArrayLike[np.float64],
+        x1: _DualArrayLike[np.dtype[_to_f64], float],
+        x2: _ArrayLike[np.float64] | _NestedList[float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -9960,7 +9897,7 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     def __call__(
         self,
         x1: _ArrayLike[np.longdouble],
-        x2: _ArrayLike[_to_floating],
+        x2: _ArrayLikeFloat_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -9970,7 +9907,7 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     @overload  # ?d +f80, ?d ~f80
     def __call__(
         self,
-        x1: _ArrayLike[_to_floating],
+        x1: _ArrayLikeFloat_co,
         x2: _ArrayLike[np.longdouble],
         /,
         *,
@@ -10022,28 +9959,28 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.object_]: ...
-    @overload  # Nd T@floating, ?d +float
-    def __call__[ArrayT: npt.NDArray[np.floating | np.object_]](
+    @overload  # Nd T@floating, ?d +int
+    def __call__[ScalarT: np.floating | np.object_](
         self,
-        x1: ArrayT,
-        x2: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], float],
+        x1: npt.NDArray[ScalarT],
+        x2: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
-    @overload  # ?d +float, Nd T@floating
-    def __call__[ArrayT: npt.NDArray[np.floating | np.object_]](
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # ?d +int, Nd T@floating
+    def __call__[ScalarT: np.floating | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], float],
-        x2: ArrayT,
+        x1: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], bool],
+        x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd _, ?d _, dtype=<known>
     def __call__[ScalarT: np.floating | np.integer](
         self,
@@ -10066,28 +10003,6 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         dtype: _DTypeLike[ScalarT],
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # Nd ~float, ?d +float
-    def __call__(
-        self,
-        x1: list[float] | _NestedSequence[list[float]],
-        x2: float | _NestedSequence[float],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
-    @overload  # ?d +float, Nd ~float
-    def __call__(
-        self,
-        x1: float | _NestedSequence[float],
-        x2: list[float] | _NestedSequence[list[float]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
         self,
@@ -10403,7 +10318,7 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     def outer(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -10413,7 +10328,7 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     @overload  # ?d +i64, ?d ~i64
     def outer(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -10465,32 +10380,32 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.uint8]: ...
-    @overload  # Nd T@integer, ?d +int
-    def outer[ArrayT: npt.NDArray[np.integer]](
+    @overload  # Nd T@integer, ?d +bool
+    def outer[ScalarT: np.integer](
         self,
-        x1: ArrayT,
-        x2: _DualArrayLike[np.dtype[np.bool], int],
+        x1: npt.NDArray[ScalarT],
+        x2: _ArrayLikeBool_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
-    @overload  # ?d +int, Nd T@integer
-    def outer[ArrayT: npt.NDArray[np.integer]](
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # ?d +bool, Nd T@integer
+    def outer[ScalarT: np.integer](
         self,
-        x1: _DualArrayLike[np.dtype[np.bool], int],
-        x2: ArrayT,
+        x1: _ArrayLikeBool_co,
+        x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd ~int, ?d +int
     def outer(
         self,
-        x1: list[int] | _NestedSequence[list[int]],
+        x1: _NestedList[int],
         x2: int | _NestedSequence[int],
         /,
         *,
@@ -10502,7 +10417,7 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     def outer(
         self,
         x1: int | _NestedSequence[int],
-        x2: list[int] | _NestedSequence[list[int]],
+        x2: _NestedList[int],
         /,
         *,
         out: EllipsisType | None = None,
@@ -10512,8 +10427,8 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     @overload  # ?d ~f64, ?d +f64
     def outer(
         self,
-        x1: _ArrayLike[np.float64],
-        x2: _ArrayLike[_to_f64],
+        x1: _ArrayLike[np.float64] | _NestedList[float],
+        x2: _DualArrayLike[np.dtype[_to_f64], float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -10523,8 +10438,8 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     @overload  # ?d +f64, ?d ~f64
     def outer(
         self,
-        x1: _ArrayLike[_to_f64],
-        x2: _ArrayLike[np.float64],
+        x1: _DualArrayLike[np.dtype[_to_f64], float],
+        x2: _ArrayLike[np.float64] | _NestedList[float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -10557,7 +10472,7 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     def outer(
         self,
         x1: _ArrayLike[np.longdouble],
-        x2: _ArrayLike[_to_floating],
+        x2: _ArrayLikeFloat_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -10567,7 +10482,7 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     @overload  # ?d +f80, ?d ~f80
     def outer(
         self,
-        x1: _ArrayLike[_to_floating],
+        x1: _ArrayLikeFloat_co,
         x2: _ArrayLike[np.longdouble],
         /,
         *,
@@ -10586,7 +10501,7 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         dtype: type[OutT] | np.dtype[OutT] | None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[OutT]: ...
-    @overload  # ?d ~m64, ?d +floating  (iff `timedelta64 * timedelta64 -> int64`)
+    @overload  # 0d ~m64, 0d +floating  (iff `timedelta64 * timedelta64 -> int64`)
     def outer[OutT: np.timedelta64](
         self: _ufunc_21_mod[np.timedelta64, np.int64],
         x1: _ArrayLike[OutT],
@@ -10619,28 +10534,28 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.object_]: ...
-    @overload  # Nd T@floating, ?d +float
-    def outer[ArrayT: npt.NDArray[np.floating | np.object_]](
+    @overload  # Nd T@floating, ?d +int
+    def outer[ScalarT: np.floating | np.object_](
         self,
-        x1: ArrayT,
-        x2: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], float],
+        x1: npt.NDArray[ScalarT],
+        x2: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
-    @overload  # ?d +float, Nd T@floating
-    def outer[ArrayT: npt.NDArray[np.floating | np.object_]](
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # ?d +int, Nd T@floating
+    def outer[ScalarT: np.floating | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], float],
-        x2: ArrayT,
+        x1: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], bool],
+        x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> ArrayT: ...
+    ) -> npt.NDArray[ScalarT]: ...
     @overload  # Nd _, ?d _, dtype=<known>
     def outer[ScalarT: np.floating | np.integer](
         self,
@@ -10663,28 +10578,6 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         dtype: _DTypeLike[ScalarT],
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # Nd ~float, ?d +float
-    def outer(
-        self,
-        x1: list[float] | _NestedSequence[list[float]],
-        x2: float | _NestedSequence[float],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
-    @overload  # ?d +float, Nd ~float
-    def outer(
-        self,
-        x1: float | _NestedSequence[float],
-        x2: list[float] | _NestedSequence[list[float]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
     @overload  # out=<given>
     def outer[OutT: np.ndarray](
         self,
@@ -10761,9 +10654,9 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _FloatLike_co = ...,
@@ -10774,9 +10667,9 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _FloatLike_co = ...,
@@ -10787,9 +10680,9 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _FloatLike_co = ...,
@@ -10800,9 +10693,9 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self,
         array: _ArrayLikeBool_co,
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: bool | _to_i8 = ...,
@@ -10813,9 +10706,9 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self,
         array: _ArrayLikeBool_co,
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: bool | _to_i8 = ...,
@@ -10826,9 +10719,9 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self,
         array: _ArrayLikeBool_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: bool | _to_i8 = ...,
@@ -10839,9 +10732,9 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self: _ufunc_21_mod[np.timedelta64, np.timedelta64],
         array: npt.NDArray[MT],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: np.timedelta64 = ...,
@@ -10852,9 +10745,9 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self: _ufunc_21_mod[np.timedelta64, np.timedelta64],
         array: npt.NDArray[MT],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: np.timedelta64 = ...,
@@ -10865,9 +10758,9 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self: _ufunc_21_mod[np.timedelta64, np.timedelta64],
         array: npt.NDArray[MT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: np.timedelta64 = ...,
@@ -10878,9 +10771,9 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self: _ufunc_21_mod[np.object_, Any],
         array: npt.NDArray[np.object_],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: object = ...,
@@ -10891,9 +10784,9 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self: _ufunc_21_mod[np.object_, Any],
         array: npt.NDArray[np.object_],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: object = ...,
@@ -10904,9 +10797,9 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self: _ufunc_21_mod[np.object_, Any],
         array: npt.NDArray[np.object_],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: object = ...,
@@ -10915,11 +10808,11 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     @overload  # ~int
     def reduce(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _NestedList[int],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _IntLike_co = ...,
@@ -10928,11 +10821,11 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     @overload  # ~int, axis=None
     def reduce(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _NestedList[int],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _IntLike_co = ...,
@@ -10941,11 +10834,11 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     @overload  # ~int, keepdims=True
     def reduce(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _NestedList[int],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _IntLike_co = ...,
@@ -10954,11 +10847,11 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     @overload  # ~float
     def reduce(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _FloatLike_co = ...,
@@ -10967,11 +10860,11 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     @overload  # ~float, axis=None
     def reduce(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _FloatLike_co = ...,
@@ -10980,11 +10873,11 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
     @overload  # ~float, keepdims=True
     def reduce(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _FloatLike_co = ...,
@@ -10995,8 +10888,8 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self,
         array: _ArrayLikeFloat_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: EllipsisType | None = None,
         keepdims: bool = False,
@@ -11008,9 +10901,9 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self,
         array: _ArrayLikeFloat_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
-        dtype: type | str,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: bool = False,
         initial: _FloatLike_co = ...,
@@ -11021,9 +10914,9 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self,
         array: _ArrayLikeFloat_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
         keepdims: bool = False,
         initial: _FloatLike_co = ...,
@@ -11034,9 +10927,9 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self,
         array: _CanUfuncReduce[OutT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | EllipsisType | None = None,
         keepdims: bool = False,
         initial: _FloatLike_co = ...,
@@ -11050,10 +10943,10 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self,
         array: _ArrayLike[ScalarT],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # ~timedelta64
@@ -11061,10 +10954,10 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self: _ufunc_21_mod[np.timedelta64, np.timedelta64],
         array: npt.NDArray[MT],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[MT]: ...
     @overload  # ~object_
@@ -11072,10 +10965,10 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self: _ufunc_21_mod[np.object_, Any],
         array: npt.NDArray[np.object_],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.object_]: ...
     @overload  # ~bool
@@ -11083,32 +10976,32 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self,
         array: _ArrayLikeBool_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.int8]: ...
     @overload  # ~int
     def reduceat(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _NestedList[int],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.int_]: ...
     @overload  # ~float
     def reduceat(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # dtype=<known>
@@ -11116,9 +11009,9 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self,
         array: _ArrayLikeFloat_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
@@ -11127,10 +11020,10 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self,
         array: _ArrayLikeFloatObj_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
-        dtype: str | type,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
@@ -11138,10 +11031,10 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self,
         array: _ArrayLikeFloat_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "reduceat", array, indices, ...)
@@ -11150,9 +11043,9 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         array: _CanUfuncReduceAt[IxT, OutT],
         /,
         indices: IxT,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
@@ -11163,9 +11056,9 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # ~timedelta64
@@ -11173,9 +11066,9 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self: _ufunc_21_mod[np.timedelta64, np.timedelta64],
         array: npt.NDArray[MT],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[MT]: ...
     @overload  # ~object_
@@ -11183,9 +11076,9 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self: _ufunc_21_mod[np.object_, Any],
         array: npt.NDArray[np.object_],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.object_]: ...
     @overload  # ~bool
@@ -11193,29 +11086,29 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self,
         array: _ArrayLikeBool_co,
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.int8]: ...
     @overload  # ~int
     def accumulate(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _NestedList[int],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.int_]: ...
     @overload  # ~float
     def accumulate(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # dtype=<known>
@@ -11223,8 +11116,8 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self,
         array: _ArrayLikeFloat_co,
         /,
-        *,
         axis: int = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
@@ -11233,18 +11126,18 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         self,
         array: _ArrayLikeFloatObj_co,
         /,
-        *,
         axis: int = 0,
-        dtype: str | type,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # array.__array_ufunc__(self, "accumulate", array, ...)
     def accumulate[OutT](
         self,
         array: _CanUfuncAccumulate[OutT],
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
@@ -11622,7 +11515,7 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     def __call__(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -11632,7 +11525,7 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # ?d +i64, ?d ~i64
     def __call__(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -11684,21 +11577,21 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.uint8]: ...
-    @overload  # Nd T@integer, ?d +int
+    @overload  # Nd T@integer, ?d +bool
     def __call__[ScalarT: np.integer](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[np.bool], int],
+        x2: _ArrayLikeBool_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +int, Nd T@integer
+    @overload  # ?d +bool, Nd T@integer
     def __call__[ScalarT: np.integer](
         self,
-        x1: _DualArrayLike[np.dtype[np.bool], int],
+        x1: _ArrayLikeBool_co,
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -11709,7 +11602,7 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # Nd ~int, ?d +int
     def __call__(
         self,
-        x1: list[int] | _NestedSequence[list[int]],
+        x1: _NestedList[int],
         x2: int | _NestedSequence[int],
         /,
         *,
@@ -11721,7 +11614,7 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     def __call__(
         self,
         x1: int | _NestedSequence[int],
-        x2: list[int] | _NestedSequence[list[int]],
+        x2: _NestedList[int],
         /,
         *,
         out: EllipsisType | None = None,
@@ -11731,8 +11624,8 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # ?d ~f64, ?d +f64
     def __call__(
         self,
-        x1: _ArrayLike[np.float64],
-        x2: _ArrayLike[_to_f64],
+        x1: _ArrayLike[np.float64] | _NestedList[float],
+        x2: _DualArrayLike[np.dtype[_to_f64], float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -11742,8 +11635,8 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # ?d +f64, ?d ~f64
     def __call__(
         self,
-        x1: _ArrayLike[_to_f64],
-        x2: _ArrayLike[np.float64],
+        x1: _DualArrayLike[np.dtype[_to_f64], float],
+        x2: _ArrayLike[np.float64] | _NestedList[float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -11772,33 +11665,11 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.float32]: ...
-    @overload  # Nd ~float, ?d +float
-    def __call__(
-        self,
-        x1: list[float] | _NestedSequence[list[float]],
-        x2: float | _NestedSequence[float],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
-    @overload  # ?d +float, Nd ~float
-    def __call__(
-        self,
-        x1: float | _NestedSequence[float],
-        x2: list[float] | _NestedSequence[list[float]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
     @overload  # ?d ~c128, ?d +c128
     def __call__(
         self,
-        x1: _ArrayLike[np.complex128],
-        x2: _ArrayLike[_to_c128],
+        x1: _ArrayLike[np.complex128] | _NestedList[complex],
+        x2: _DualArrayLike[np.dtype[_to_c128], complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -11808,8 +11679,8 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # ?d +c128, ?d ~c128
     def __call__(
         self,
-        x1: _ArrayLike[_to_c128],
-        x2: _ArrayLike[np.complex128],
+        x1: _DualArrayLike[np.dtype[_to_c128], complex],
+        x2: _ArrayLike[np.complex128] | _NestedList[complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -11926,43 +11797,21 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.timedelta64]: ...
-    @overload  # Nd ~complex, ?d +complex
-    def __call__(
-        self,
-        x1: list[complex] | _NestedSequence[list[complex]],
-        x2: complex | _NestedSequence[complex],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # ?d +complex, Nd ~complex
-    def __call__(
-        self,
-        x1: complex | _NestedSequence[complex],
-        x2: list[complex] | _NestedSequence[list[complex]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # Nd T@inexact, ?d +float | +f16
+    @overload  # Nd T@inexact, ?d +f16
     def __call__[ScalarT: np.inexact | np.object_](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[_to_f16], float],
+        x2: _DualArrayLike[np.dtype[_to_f16], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +float | +f16, Nd T@inexact
+    @overload  # ?d +f16, Nd T@inexact
     def __call__[ScalarT: np.inexact | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[_to_f16], float],
+        x1: _DualArrayLike[np.dtype[_to_f16], bool],
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -11970,21 +11819,21 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # Nd T@complexfloating, ?d +complex | +c64
+    @overload  # Nd T@complexfloating, ?d +c64
     def __call__[ScalarT: np.complexfloating | np.object_](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[_to_c64], complex],
+        x2: _DualArrayLike[np.dtype[_to_c64], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +complex | +c64, Nd T@complexfloating
+    @overload  # ?d +c64, Nd T@complexfloating
     def __call__[ScalarT: np.complexfloating | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[_to_c64], complex],
+        x1: _DualArrayLike[np.dtype[_to_c64], bool],
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -12417,7 +12266,7 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     def outer(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -12427,7 +12276,7 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # ?d +i64, ?d ~i64
     def outer(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -12479,21 +12328,21 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.uint8]: ...
-    @overload  # Nd T@integer, ?d +int
+    @overload  # Nd T@integer, ?d +bool
     def outer[ScalarT: np.integer](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[np.bool], int],
+        x2: _ArrayLikeBool_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +int, Nd T@integer
+    @overload  # ?d +bool, Nd T@integer
     def outer[ScalarT: np.integer](
         self,
-        x1: _DualArrayLike[np.dtype[np.bool], int],
+        x1: _ArrayLikeBool_co,
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -12504,7 +12353,7 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # Nd ~int, ?d +int
     def outer(
         self,
-        x1: list[int] | _NestedSequence[list[int]],
+        x1: _NestedList[int],
         x2: int | _NestedSequence[int],
         /,
         *,
@@ -12516,7 +12365,7 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     def outer(
         self,
         x1: int | _NestedSequence[int],
-        x2: list[int] | _NestedSequence[list[int]],
+        x2: _NestedList[int],
         /,
         *,
         out: EllipsisType | None = None,
@@ -12526,8 +12375,8 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # ?d ~f64, ?d +f64
     def outer(
         self,
-        x1: _ArrayLike[np.float64],
-        x2: _ArrayLike[_to_f64],
+        x1: _ArrayLike[np.float64] | _NestedList[float],
+        x2: _DualArrayLike[np.dtype[_to_f64], float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -12537,8 +12386,8 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # ?d +f64, ?d ~f64
     def outer(
         self,
-        x1: _ArrayLike[_to_f64],
-        x2: _ArrayLike[np.float64],
+        x1: _DualArrayLike[np.dtype[_to_f64], float],
+        x2: _ArrayLike[np.float64] | _NestedList[float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -12567,33 +12416,11 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.float32]: ...
-    @overload  # Nd ~float, ?d +float
-    def outer(
-        self,
-        x1: list[float] | _NestedSequence[list[float]],
-        x2: float | _NestedSequence[float],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
-    @overload  # ?d +float, Nd ~float
-    def outer(
-        self,
-        x1: float | _NestedSequence[float],
-        x2: list[float] | _NestedSequence[list[float]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
     @overload  # ?d ~c128, ?d +c128
     def outer(
         self,
-        x1: _ArrayLike[np.complex128],
-        x2: _ArrayLike[_to_c128],
+        x1: _ArrayLike[np.complex128] | _NestedList[complex],
+        x2: _DualArrayLike[np.dtype[_to_c128], complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -12603,8 +12430,8 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # ?d +c128, ?d ~c128
     def outer(
         self,
-        x1: _ArrayLike[_to_c128],
-        x2: _ArrayLike[np.complex128],
+        x1: _DualArrayLike[np.dtype[_to_c128], complex],
+        x2: _ArrayLike[np.complex128] | _NestedList[complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -12721,43 +12548,21 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.timedelta64]: ...
-    @overload  # Nd ~complex, ?d +complex
-    def outer(
-        self,
-        x1: list[complex] | _NestedSequence[list[complex]],
-        x2: complex | _NestedSequence[complex],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # ?d +complex, Nd ~complex
-    def outer(
-        self,
-        x1: complex | _NestedSequence[complex],
-        x2: list[complex] | _NestedSequence[list[complex]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # Nd T@inexact, ?d +float | +f16
+    @overload  # Nd T@inexact, ?d +f16
     def outer[ScalarT: np.inexact | np.object_](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[_to_f16], float],
+        x2: _DualArrayLike[np.dtype[_to_f16], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +float | +f16, Nd T@inexact
+    @overload  # ?d +f16, Nd T@inexact
     def outer[ScalarT: np.inexact | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[_to_f16], float],
+        x1: _DualArrayLike[np.dtype[_to_f16], bool],
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -12765,21 +12570,21 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # Nd T@complexfloating, ?d +complex | +c64
+    @overload  # Nd T@complexfloating, ?d +c64
     def outer[ScalarT: np.complexfloating | np.object_](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[_to_c64], complex],
+        x2: _DualArrayLike[np.dtype[_to_c64], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +complex | +c64, Nd T@complexfloating
+    @overload  # ?d +c64, Nd T@complexfloating
     def outer[ScalarT: np.complexfloating | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[_to_c64], complex],
+        x1: _DualArrayLike[np.dtype[_to_c64], bool],
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -12863,13 +12668,13 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     #
     @override
     @overload  # known scalar type
-    def reduce[ScalarT: np.number | np.object_](  # pyrefly:ignore[bad-override]
+    def reduce[ScalarT: np.number](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _NumberLike_co = ...,
@@ -12880,29 +12685,16 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _NumberLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> ScalarT: ...
-    @overload  # ~object_, axis=None
-    def reduce(
-        self,
-        array: npt.NDArray[np.object_],
-        /,
-        *,
-        axis: None,
-        dtype: None = None,
-        out: None = None,
-        keepdims: Literal[False] = False,
-        initial: object = ...,
-        where: _ArrayLikeBool_co = True,
-    ) -> Any: ...
     @overload  # known scalar type, keepdims=True
-    def reduce[ScalarT: np.number | np.object_](
+    def reduce[ScalarT: np.number](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -12914,14 +12706,53 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         initial: _NumberLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[ScalarT]: ...
+    @overload  # object_
+    def reduce(
+        self,
+        array: npt.NDArray[np.object_],
+        /,
+        *,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _NumberLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.object_[Any]] | Any: ...
+    @overload  # ~object_, axis=None
+    def reduce(
+        self,
+        array: npt.NDArray[np.object_],
+        /,
+        axis: None,
+        dtype: None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: object = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> Any: ...
+    @overload  # object_, keepdims=True
+    def reduce(
+        self,
+        array: npt.NDArray[np.object_],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: _NumberLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.object_[Any]]: ...
     @overload  # ~bool
     def reduce(
         self,
         array: _ArrayLikeBool_co,
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: bool | _to_i8 = ...,
@@ -12932,9 +12763,9 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         self,
         array: _ArrayLikeBool_co,
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: bool | _to_i8 = ...,
@@ -12945,9 +12776,9 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         self,
         array: _ArrayLikeBool_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: bool | _to_i8 = ...,
@@ -12958,9 +12789,9 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         self: _ufunc_21_pow_sub[np.timedelta64],
         array: _ArrayLike[TimedeltaT],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: np.timedelta64 | _IntLike_co = ...,
@@ -12971,9 +12802,9 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         self: _ufunc_21_pow_sub[np.timedelta64],
         array: _ArrayLike[TimedeltaT],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: np.timedelta64 | _IntLike_co = ...,
@@ -12984,9 +12815,9 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         self: _ufunc_21_pow_sub[np.timedelta64],
         array: _ArrayLike[TimedeltaT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: np.timedelta64 | _IntLike_co = ...,
@@ -12995,11 +12826,11 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # ~int
     def reduce(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _NestedList[int],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _IntLike_co = ...,
@@ -13008,11 +12839,11 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # ~int, axis=None
     def reduce(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _NestedList[int],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _IntLike_co = ...,
@@ -13021,11 +12852,11 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # ~int, keepdims=True
     def reduce(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _NestedList[int],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _IntLike_co = ...,
@@ -13034,11 +12865,11 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # ~float
     def reduce(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _FloatLike_co = ...,
@@ -13047,11 +12878,11 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # ~float, axis=None
     def reduce(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _FloatLike_co = ...,
@@ -13060,11 +12891,11 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # ~float, keepdims=True
     def reduce(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _FloatLike_co = ...,
@@ -13073,11 +12904,11 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # ~complex
     def reduce(
         self,
-        array: list[complex] | _NestedSequence[list[complex]],
+        array: _NestedList[complex],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _NumberLike_co = ...,
@@ -13086,11 +12917,11 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # ~complex, axis=None
     def reduce(
         self,
-        array: list[complex] | _NestedSequence[list[complex]],
+        array: _NestedList[complex],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _NumberLike_co = ...,
@@ -13099,11 +12930,11 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     @overload  # ~complex, keepdims=True
     def reduce(
         self,
-        array: list[complex] | _NestedSequence[list[complex]],
+        array: _NestedList[complex],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _NumberLike_co = ...,
@@ -13114,8 +12945,8 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: EllipsisType | None = None,
         keepdims: bool = False,
@@ -13127,9 +12958,9 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
-        dtype: type | str,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: bool = False,
         initial: _NumberLike_co = ...,
@@ -13140,9 +12971,9 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
         keepdims: bool = False,
         initial: _NumberLike_co = ...,
@@ -13153,9 +12984,9 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         self,
         array: _CanUfuncReduce[OutT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | EllipsisType | None = None,
         keepdims: bool = False,
         initial: _NumberLike_co = ...,
@@ -13165,14 +12996,14 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     #
     @override
     @overload  # known scalar type
-    def reduceat[ScalarT: np.number | np.object_](  # pyrefly:ignore[bad-override]
+    def reduceat[ScalarT: np.number](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # ~bool
@@ -13180,54 +13011,65 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         self,
         array: _ArrayLikeBool_co,
         /,
+        indices: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> npt.NDArray[np.int8]: ...
+    @overload  # object_
+    def reduceat(
+        self,
+        array: npt.NDArray[np.object_],
+        /,
         indices: tuple[int, ...],
         *,
         axis: int = 0,
         dtype: None = None,
         out: None = None,
-    ) -> npt.NDArray[np.int8]: ...
+    ) -> npt.NDArray[np.object_[Any]]: ...
     @overload  # ~timedelta64  (if timedelta in domain)
     def reduceat[TimedeltaT: np.timedelta64](
         self: _ufunc_21_pow_sub[np.timedelta64],
         array: _ArrayLike[TimedeltaT],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[TimedeltaT]: ...
     @overload  # ~int
     def reduceat(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _NestedList[int],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.int_]: ...
     @overload  # ~float
     def reduceat(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # ~complex
     def reduceat(
         self,
-        array: list[complex] | _NestedSequence[list[complex]],
+        array: _NestedList[complex],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # dtype=<known>
@@ -13235,9 +13077,9 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
@@ -13246,10 +13088,10 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
-        dtype: str | type,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
@@ -13257,10 +13099,10 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "reduceat", array, indices, ...)
@@ -13269,22 +13111,22 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         array: _CanUfuncReduceAt[IxT, OutT],
         /,
         indices: IxT,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
     #
     @override
     @overload  # known scalar type
-    def accumulate[ScalarT: np.number | np.object_](  # pyrefly:ignore[bad-override]
+    def accumulate[ScalarT: np.number](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # ~bool
@@ -13292,49 +13134,59 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         self,
         array: _ArrayLikeBool_co,
         /,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> npt.NDArray[np.int8]: ...
+    @overload  # object_
+    def accumulate(
+        self,
+        array: npt.NDArray[np.object_],
+        /,
         *,
         axis: int = 0,
         dtype: None = None,
         out: None = None,
-    ) -> npt.NDArray[np.int8]: ...
+    ) -> npt.NDArray[np.object_[Any]]: ...
     @overload  # ~timedelta64  (if timedelta in domain)
     def accumulate[TimedeltaT: np.timedelta64](
         self: _ufunc_21_pow_sub[np.timedelta64],
         array: _ArrayLike[TimedeltaT],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[TimedeltaT]: ...
     @overload  # ~int
     def accumulate(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _NestedList[int],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.int_]: ...
     @overload  # ~float
     def accumulate(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # ~complex
     def accumulate(
         self,
-        array: list[complex] | _NestedSequence[list[complex]],
+        array: _NestedList[complex],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # dtype=<known>
@@ -13342,8 +13194,8 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: int = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
@@ -13352,9 +13204,9 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: int = 0,
-        dtype: str | type,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
@@ -13362,18 +13214,18 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         self,
         array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "accumulate", array, ...)
     def accumulate[OutT](
         self,
         array: _CanUfuncAccumulate[OutT],
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
@@ -13732,7 +13584,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     def __call__(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -13742,7 +13594,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # ?d +i64, ?d ~i64
     def __call__(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -13794,21 +13646,21 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.uint8]: ...
-    @overload  # Nd T@integer, ?d +int
+    @overload  # Nd T@integer, ?d +bool
     def __call__[ScalarT: np.integer](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[np.bool], int],
+        x2: _ArrayLikeBool_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +int, Nd T@integer
+    @overload  # ?d +bool, Nd T@integer
     def __call__[ScalarT: np.integer](
         self,
-        x1: _DualArrayLike[np.dtype[np.bool], int],
+        x1: _ArrayLikeBool_co,
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -13819,7 +13671,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # Nd ~int, ?d +int
     def __call__(
         self,
-        x1: list[int] | _NestedSequence[list[int]],
+        x1: _NestedList[int],
         x2: int | _NestedSequence[int],
         /,
         *,
@@ -13831,7 +13683,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     def __call__(
         self,
         x1: int | _NestedSequence[int],
-        x2: list[int] | _NestedSequence[list[int]],
+        x2: _NestedList[int],
         /,
         *,
         out: EllipsisType | None = None,
@@ -13841,8 +13693,8 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # ?d ~f64, ?d +f64
     def __call__(
         self,
-        x1: _ArrayLike[np.float64],
-        x2: _ArrayLike[_to_f64],
+        x1: _ArrayLike[np.float64] | _NestedList[float],
+        x2: _DualArrayLike[np.dtype[_to_f64], float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -13852,8 +13704,8 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # ?d +f64, ?d ~f64
     def __call__(
         self,
-        x1: _ArrayLike[_to_f64],
-        x2: _ArrayLike[np.float64],
+        x1: _DualArrayLike[np.dtype[_to_f64], float],
+        x2: _ArrayLike[np.float64] | _NestedList[float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -13882,33 +13734,11 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.float32]: ...
-    @overload  # Nd ~float, ?d +float
-    def __call__(
-        self,
-        x1: list[float] | _NestedSequence[list[float]],
-        x2: float | _NestedSequence[float],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
-    @overload  # ?d +float, Nd ~float
-    def __call__(
-        self,
-        x1: float | _NestedSequence[float],
-        x2: list[float] | _NestedSequence[list[float]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
     @overload  # ?d ~c128, ?d +c128
     def __call__(
         self,
-        x1: _ArrayLike[np.complex128],
-        x2: _ArrayLike[_to_c128],
+        x1: _ArrayLike[np.complex128] | _NestedList[complex],
+        x2: _DualArrayLike[np.dtype[_to_c128], complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -13918,8 +13748,8 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # ?d +c128, ?d ~c128
     def __call__(
         self,
-        x1: _ArrayLike[_to_c128],
-        x2: _ArrayLike[np.complex128],
+        x1: _DualArrayLike[np.dtype[_to_c128], complex],
+        x2: _ArrayLike[np.complex128] | _NestedList[complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -14036,43 +13866,21 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> np.ndarray[tuple[Any, ...], np.dtypes.StringDType]: ...
-    @overload  # Nd ~complex, ?d +complex
-    def __call__(
-        self,
-        x1: list[complex] | _NestedSequence[list[complex]],
-        x2: complex | _NestedSequence[complex],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # ?d +complex, Nd ~complex
-    def __call__(
-        self,
-        x1: complex | _NestedSequence[complex],
-        x2: list[complex] | _NestedSequence[list[complex]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # Nd T@inexact, ?d +float | +f16
+    @overload  # Nd T@inexact, ?d +f16
     def __call__[ScalarT: np.inexact | np.object_](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[_to_f16], float],
+        x2: _DualArrayLike[np.dtype[_to_f16], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +float | +f16, Nd T@inexact
+    @overload  # ?d +f16, Nd T@inexact
     def __call__[ScalarT: np.inexact | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[_to_f16], float],
+        x1: _DualArrayLike[np.dtype[_to_f16], bool],
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -14080,21 +13888,21 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # Nd T@complexfloating, ?d +complex | +c64
+    @overload  # Nd T@complexfloating, ?d +c64
     def __call__[ScalarT: np.complexfloating | np.object_](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[_to_c64], complex],
+        x2: _DualArrayLike[np.dtype[_to_c64], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +complex | +c64, Nd T@complexfloating
+    @overload  # ?d +c64, Nd T@complexfloating
     def __call__[ScalarT: np.complexfloating | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[_to_c64], complex],
+        x1: _DualArrayLike[np.dtype[_to_c64], bool],
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -14505,7 +14313,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     def outer(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -14515,7 +14323,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # ?d +i64, ?d ~i64
     def outer(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -14567,21 +14375,21 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.uint8]: ...
-    @overload  # Nd T@integer, ?d +int
+    @overload  # Nd T@integer, ?d +bool
     def outer[ScalarT: np.integer](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[np.bool], int],
+        x2: _ArrayLikeBool_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +int, Nd T@integer
+    @overload  # ?d +bool, Nd T@integer
     def outer[ScalarT: np.integer](
         self,
-        x1: _DualArrayLike[np.dtype[np.bool], int],
+        x1: _ArrayLikeBool_co,
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -14592,7 +14400,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # Nd ~int, ?d +int
     def outer(
         self,
-        x1: list[int] | _NestedSequence[list[int]],
+        x1: _NestedList[int],
         x2: int | _NestedSequence[int],
         /,
         *,
@@ -14604,7 +14412,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     def outer(
         self,
         x1: int | _NestedSequence[int],
-        x2: list[int] | _NestedSequence[list[int]],
+        x2: _NestedList[int],
         /,
         *,
         out: EllipsisType | None = None,
@@ -14614,8 +14422,8 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # ?d ~f64, ?d +f64
     def outer(
         self,
-        x1: _ArrayLike[np.float64],
-        x2: _ArrayLike[_to_f64],
+        x1: _ArrayLike[np.float64] | _NestedList[float],
+        x2: _DualArrayLike[np.dtype[_to_f64], float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -14625,8 +14433,8 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # ?d +f64, ?d ~f64
     def outer(
         self,
-        x1: _ArrayLike[_to_f64],
-        x2: _ArrayLike[np.float64],
+        x1: _DualArrayLike[np.dtype[_to_f64], float],
+        x2: _ArrayLike[np.float64] | _NestedList[float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -14655,33 +14463,11 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.float32]: ...
-    @overload  # Nd ~float, ?d +float
-    def outer(
-        self,
-        x1: list[float] | _NestedSequence[list[float]],
-        x2: float | _NestedSequence[float],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
-    @overload  # ?d +float, Nd ~float
-    def outer(
-        self,
-        x1: float | _NestedSequence[float],
-        x2: list[float] | _NestedSequence[list[float]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
     @overload  # ?d ~c128, ?d +c128
     def outer(
         self,
-        x1: _ArrayLike[np.complex128],
-        x2: _ArrayLike[_to_c128],
+        x1: _ArrayLike[np.complex128] | _NestedList[complex],
+        x2: _DualArrayLike[np.dtype[_to_c128], complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -14691,8 +14477,8 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # ?d +c128, ?d ~c128
     def outer(
         self,
-        x1: _ArrayLike[_to_c128],
-        x2: _ArrayLike[np.complex128],
+        x1: _DualArrayLike[np.dtype[_to_c128], complex],
+        x2: _ArrayLike[np.complex128] | _NestedList[complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -14787,43 +14573,21 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.timedelta64]: ...
-    @overload  # Nd ~complex, ?d +complex
-    def outer(
-        self,
-        x1: list[complex] | _NestedSequence[list[complex]],
-        x2: complex | _NestedSequence[complex],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # ?d +complex, Nd ~complex
-    def outer(
-        self,
-        x1: complex | _NestedSequence[complex],
-        x2: list[complex] | _NestedSequence[list[complex]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # Nd T@inexact, ?d +float | +f16
+    @overload  # Nd T@inexact, ?d +f16
     def outer[ScalarT: np.inexact | np.object_](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[_to_f16], float],
+        x2: _DualArrayLike[np.dtype[_to_f16], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +float | +f16, Nd T@inexact
+    @overload  # ?d +f16, Nd T@inexact
     def outer[ScalarT: np.inexact | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[_to_f16], float],
+        x1: _DualArrayLike[np.dtype[_to_f16], bool],
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -14831,21 +14595,21 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # Nd T@complexfloating, ?d +complex | +c64
+    @overload  # Nd T@complexfloating, ?d +c64
     def outer[ScalarT: np.complexfloating | np.object_](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[_to_c64], complex],
+        x2: _DualArrayLike[np.dtype[_to_c64], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +complex | +c64, Nd T@complexfloating
+    @overload  # ?d +c64, Nd T@complexfloating
     def outer[ScalarT: np.complexfloating | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[_to_c64], complex],
+        x1: _DualArrayLike[np.dtype[_to_c64], bool],
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -14921,143 +14685,143 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     #
     @override
     @overload  # known scalar type
-    def reduce[ScalarT: _to_numeric | np.object_](  # pyrefly:ignore[bad-override]
+    def reduce[ScalarT: np.inexact | np.object_](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _NumericLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[ScalarT] | Any: ...
     @overload  # known scalar type, axis=None
-    def reduce[ScalarT: _to_numeric](
+    def reduce[ScalarT: np.inexact](
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _NumericLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> ScalarT: ...
     @overload  # ~object_, axis=None
-    def reduce(
+    def reduce[T](
         self,
-        array: npt.NDArray[np.object_],
+        array: npt.NDArray[np.object_[T]],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: object = ...,
         where: _ArrayLikeBool_co = True,
-    ) -> Any: ...
+    ) -> T: ...
     @overload  # known scalar type, keepdims=True
-    def reduce[ScalarT: _to_numeric | np.object_](
+    def reduce[ScalarT: np.inexact | np.object_](
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _NumericLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ~bool
+    @overload  # +int
     def reduce(
         self,
-        array: _NestedSequence[bool],
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
-        out: EllipsisType | None = None,
-        keepdims: Literal[False] = False,
-        initial: _IntLike_co = ...,
-        where: _ArrayLikeBool_co = True,
-    ) -> npt.NDArray[np.bool] | Any: ...
-    @overload  # ~bool, axis=None
-    def reduce(
-        self,
-        array: _NestedSequence[bool],
-        /,
         *,
-        axis: None,
-        dtype: None = None,
-        out: None = None,
-        keepdims: Literal[False] = False,
-        initial: _IntLike_co = ...,
-        where: _ArrayLikeBool_co = True,
-    ) -> np.bool: ...
-    @overload  # ~bool, keepdims=True
-    def reduce(
-        self,
-        array: _NestedSequence[bool],
-        /,
-        *,
-        axis: int | tuple[int, ...] | None = 0,
-        dtype: None = None,
-        out: EllipsisType | None = None,
-        keepdims: Literal[True],
-        initial: _IntLike_co = ...,
-        where: _ArrayLikeBool_co = True,
-    ) -> npt.NDArray[np.bool]: ...
-    @overload  # ~int
-    def reduce(
-        self,
-        array: list[int] | _NestedSequence[list[int]],
-        /,
-        *,
-        axis: int | tuple[int, ...] = 0,
-        dtype: None = None,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.int_] | Any: ...
-    @overload  # ~int, axis=None
+    @overload  # +int, axis=None
     def reduce(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> np.int_: ...
-    @overload  # ~int, keepdims=True
+    @overload  # +int, keepdims=True
     def reduce(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.int_]: ...
+    @overload  # ~uint
+    def reduce(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.uint] | Any: ...
+    @overload  # ~uint, axis=None
+    def reduce(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        axis: None,
+        dtype: None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> np.uint: ...
+    @overload  # ~uint, keepdims=True
+    def reduce(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.uint]: ...
     @overload  # ~float
     def reduce(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _FloatLike_co = ...,
@@ -15066,11 +14830,11 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # ~float, axis=None
     def reduce(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _FloatLike_co = ...,
@@ -15079,11 +14843,11 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # ~float, keepdims=True
     def reduce(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _FloatLike_co = ...,
@@ -15092,11 +14856,11 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # ~complex
     def reduce(
         self,
-        array: list[complex] | _NestedSequence[list[complex]],
+        array: _NestedList[complex],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _NumericLike_co = ...,
@@ -15105,11 +14869,11 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # ~complex, axis=None
     def reduce(
         self,
-        array: list[complex] | _NestedSequence[list[complex]],
+        array: _NestedList[complex],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _NumericLike_co = ...,
@@ -15118,23 +14882,23 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # ~complex, keepdims=True
     def reduce(
         self,
-        array: list[complex] | _NestedSequence[list[complex]],
+        array: _NestedList[complex],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _NumericLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # dtype=<known>
-    def reduce[ScalarT: _to_numeric | np.object_](
+    def reduce[ScalarT: _to_number | np.object_](
         self,
-        array: _ArrayLikeNumericObj_co,
+        array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: EllipsisType | None = None,
         keepdims: bool = False,
@@ -15144,11 +14908,11 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # dtype=<unknown>
     def reduce(
         self,
-        array: _ArrayLikeNumericObj_co,
+        array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
-        dtype: type | str,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: bool = False,
         initial: _NumericLike_co = ...,
@@ -15157,11 +14921,11 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     @overload  # out=<given>
     def reduce[OutT: np.ndarray](
         self,
-        array: _ArrayLikeNumericObj_co,
+        array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
         keepdims: bool = False,
         initial: _NumericLike_co = ...,
@@ -15172,9 +14936,9 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         self,
         array: _CanUfuncReduce[OutT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | EllipsisType | None = None,
         keepdims: bool = False,
         initial: _NumericLike_co = ...,
@@ -15184,91 +14948,91 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
     #
     @override
     @overload  # known scalar type
-    def reduceat[ScalarT: _to_numeric | np.object_](  # pyrefly:ignore[bad-override]
+    def reduceat[ScalarT: np.inexact | np.object_](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ~bool
+    @overload  # +int
     def reduceat(
         self,
-        array: _NestedSequence[bool],
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
-        out: None = None,
-    ) -> npt.NDArray[np.bool]: ...
-    @overload  # ~int
-    def reduceat(
-        self,
-        array: list[int] | _NestedSequence[list[int]],
-        /,
-        indices: tuple[int, ...],
         *,
-        axis: int = 0,
-        dtype: None = None,
         out: None = None,
     ) -> npt.NDArray[np.int_]: ...
+    @overload  # ~uint
+    def reduceat(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        indices: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> npt.NDArray[np.uint]: ...
     @overload  # ~float
     def reduceat(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # ~complex
     def reduceat(
         self,
-        array: list[complex] | _NestedSequence[list[complex]],
+        array: _NestedList[complex],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # dtype=<known>
-    def reduceat[ScalarT: _to_numeric | np.object_](
+    def reduceat[ScalarT: _to_number | np.object_](
         self,
-        array: _ArrayLikeNumericObj_co,
+        array: _ArrayLikeNumberObj_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # dtype=<unknown>
     def reduceat(
         self,
-        array: _ArrayLikeNumericObj_co,
+        array: _ArrayLikeNumberObj_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
-        dtype: str | type,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
-    def reduceat[OutT: npt.NDArray[_to_numeric | np.object_]](
+    def reduceat[OutT: npt.NDArray[_to_number | np.object_]](
         self,
-        array: _ArrayLikeNumericObj_co,
+        array: _ArrayLikeNumberObj_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "reduceat", array, indices, ...)
@@ -15277,101 +15041,101 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         array: _CanUfuncReduceAt[IxT, OutT],
         /,
         indices: IxT,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
     #
     @override
     @overload  # known scalar type
-    def accumulate[ScalarT: _to_numeric | np.object_](  # pyrefly:ignore[bad-override]
+    def accumulate[ScalarT: np.inexact | np.object_](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ~bool
+    @overload  # +int
     def accumulate(
         self,
-        array: _NestedSequence[bool],
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
-        out: None = None,
-    ) -> npt.NDArray[np.bool]: ...
-    @overload  # ~int
-    def accumulate(
-        self,
-        array: list[int] | _NestedSequence[list[int]],
-        /,
         *,
-        axis: int = 0,
-        dtype: None = None,
         out: None = None,
     ) -> npt.NDArray[np.int_]: ...
+    @overload  # ~uint
+    def accumulate(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> npt.NDArray[np.uint]: ...
     @overload  # ~float
     def accumulate(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # ~complex
     def accumulate(
         self,
-        array: list[complex] | _NestedSequence[list[complex]],
+        array: _NestedList[complex],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # dtype=<known>
-    def accumulate[ScalarT: _to_numeric | np.object_](
+    def accumulate[ScalarT: _to_number | np.object_](
         self,
-        array: _ArrayLikeNumericObj_co,
+        array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: int = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # dtype=<unknown>
     def accumulate(
         self,
-        array: _ArrayLikeNumericObj_co,
+        array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: int = 0,
-        dtype: str | type,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
-    def accumulate[OutT: npt.NDArray[_to_numeric | np.object_]](
+    def accumulate[OutT: npt.NDArray[_to_number | np.object_]](
         self,
-        array: _ArrayLikeNumericObj_co,
+        array: _ArrayLikeNumberObj_co,
         /,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "accumulate", array, ...)
     def accumulate[OutT](
         self,
         array: _CanUfuncAccumulate[OutT],
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
@@ -15739,7 +15503,7 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     def __call__(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -15749,7 +15513,7 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # ?d +i64, ?d ~i64
     def __call__(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -15801,21 +15565,21 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.uint8]: ...
-    @overload  # Nd T@integer, ?d +int
+    @overload  # Nd T@integer, ?d +bool
     def __call__[ScalarT: np.integer | np.timedelta64](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[np.bool], int],
+        x2: _ArrayLikeBool_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +int, Nd T@integer
+    @overload  # ?d +bool, Nd T@integer
     def __call__[ScalarT: np.integer | np.timedelta64](
         self,
-        x1: _DualArrayLike[np.dtype[np.bool], int],
+        x1: _ArrayLikeBool_co,
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -15826,7 +15590,7 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # Nd ~int, ?d +int
     def __call__(
         self,
-        x1: list[int] | _NestedSequence[list[int]],
+        x1: _NestedList[int],
         x2: int | _NestedSequence[int],
         /,
         *,
@@ -15838,7 +15602,7 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     def __call__(
         self,
         x1: int | _NestedSequence[int],
-        x2: list[int] | _NestedSequence[list[int]],
+        x2: _NestedList[int],
         /,
         *,
         out: EllipsisType | None = None,
@@ -15848,8 +15612,8 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # ?d ~f64, ?d +f64
     def __call__(
         self,
-        x1: _ArrayLike[np.float64],
-        x2: _ArrayLike[_to_f64],
+        x1: _ArrayLike[np.float64] | _NestedList[float],
+        x2: _DualArrayLike[np.dtype[_to_f64], float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -15859,8 +15623,8 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # ?d +f64, ?d ~f64
     def __call__(
         self,
-        x1: _ArrayLike[_to_f64],
-        x2: _ArrayLike[np.float64],
+        x1: _DualArrayLike[np.dtype[_to_f64], float],
+        x2: _ArrayLike[np.float64] | _NestedList[float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -15889,33 +15653,11 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.float32]: ...
-    @overload  # Nd ~float, ?d +float
-    def __call__(
-        self,
-        x1: list[float] | _NestedSequence[list[float]],
-        x2: float | _NestedSequence[float],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
-    @overload  # ?d +float, Nd ~float
-    def __call__(
-        self,
-        x1: float | _NestedSequence[float],
-        x2: list[float] | _NestedSequence[list[float]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
     @overload  # ?d ~c128, ?d +c128
     def __call__(
         self,
-        x1: _ArrayLike[np.complex128],
-        x2: _ArrayLike[_to_c128],
+        x1: _ArrayLike[np.complex128] | _NestedList[complex],
+        x2: _DualArrayLike[np.dtype[_to_c128], complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -15925,8 +15667,8 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # ?d +c128, ?d ~c128
     def __call__(
         self,
-        x1: _ArrayLike[_to_c128],
-        x2: _ArrayLike[np.complex128],
+        x1: _DualArrayLike[np.dtype[_to_c128], complex],
+        x2: _ArrayLike[np.complex128] | _NestedList[complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -16043,43 +15785,21 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> np.ndarray[tuple[Any, ...], np.dtypes.StringDType]: ...
-    @overload  # Nd ~complex, ?d +complex
-    def __call__(
-        self,
-        x1: list[complex] | _NestedSequence[list[complex]],
-        x2: complex | _NestedSequence[complex],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # ?d +complex, Nd ~complex
-    def __call__(
-        self,
-        x1: complex | _NestedSequence[complex],
-        x2: list[complex] | _NestedSequence[list[complex]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # Nd T@inexact, ?d +float | +f16
+    @overload  # Nd T@inexact, ?d +f16
     def __call__[ScalarT: np.inexact | np.object_](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[_to_f16], float],
+        x2: _DualArrayLike[np.dtype[_to_f16], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +float | +f16, Nd T@inexact
+    @overload  # ?d +f16, Nd T@inexact
     def __call__[ScalarT: np.inexact | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[_to_f16], float],
+        x1: _DualArrayLike[np.dtype[_to_f16], bool],
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -16087,21 +15807,21 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # Nd T@complexfloating, ?d +complex | +c64
+    @overload  # Nd T@complexfloating, ?d +c64
     def __call__[ScalarT: np.complexfloating](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[_to_c64], complex],
+        x2: _DualArrayLike[np.dtype[_to_c64], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +complex | +c64, Nd T@complexfloating
+    @overload  # ?d +c64, Nd T@complexfloating
     def __call__[ScalarT: np.complexfloating](
         self,
-        x1: _DualArrayLike[np.dtype[_to_c64], complex],
+        x1: _DualArrayLike[np.dtype[_to_c64], bool],
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -16523,7 +16243,7 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     def outer(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -16533,7 +16253,7 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # ?d +i64, ?d ~i64
     def outer(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -16585,21 +16305,21 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.uint8]: ...
-    @overload  # Nd T@integer, ?d +int
+    @overload  # Nd T@integer, ?d +bool
     def outer[ScalarT: np.integer | np.timedelta64](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[np.bool], int],
+        x2: _ArrayLikeBool_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +int, Nd T@integer
+    @overload  # ?d +bool, Nd T@integer
     def outer[ScalarT: np.integer | np.timedelta64](
         self,
-        x1: _DualArrayLike[np.dtype[np.bool], int],
+        x1: _ArrayLikeBool_co,
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -16610,7 +16330,7 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # Nd ~int, ?d +int
     def outer(
         self,
-        x1: list[int] | _NestedSequence[list[int]],
+        x1: _NestedList[int],
         x2: int | _NestedSequence[int],
         /,
         *,
@@ -16622,7 +16342,7 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     def outer(
         self,
         x1: int | _NestedSequence[int],
-        x2: list[int] | _NestedSequence[list[int]],
+        x2: _NestedList[int],
         /,
         *,
         out: EllipsisType | None = None,
@@ -16632,8 +16352,8 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # ?d ~f64, ?d +f64
     def outer(
         self,
-        x1: _ArrayLike[np.float64],
-        x2: _ArrayLike[_to_f64],
+        x1: _ArrayLike[np.float64] | _NestedList[float],
+        x2: _DualArrayLike[np.dtype[_to_f64], float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -16643,8 +16363,8 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # ?d +f64, ?d ~f64
     def outer(
         self,
-        x1: _ArrayLike[_to_f64],
-        x2: _ArrayLike[np.float64],
+        x1: _DualArrayLike[np.dtype[_to_f64], float],
+        x2: _ArrayLike[np.float64] | _NestedList[float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -16673,33 +16393,11 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.float32]: ...
-    @overload  # Nd ~float, ?d +float
-    def outer(
-        self,
-        x1: list[float] | _NestedSequence[list[float]],
-        x2: float | _NestedSequence[float],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
-    @overload  # ?d +float, Nd ~float
-    def outer(
-        self,
-        x1: float | _NestedSequence[float],
-        x2: list[float] | _NestedSequence[list[float]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
     @overload  # ?d ~c128, ?d +c128
     def outer(
         self,
-        x1: _ArrayLike[np.complex128],
-        x2: _ArrayLike[_to_c128],
+        x1: _ArrayLike[np.complex128] | _NestedList[complex],
+        x2: _DualArrayLike[np.dtype[_to_c128], complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -16709,8 +16407,8 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # ?d +c128, ?d ~c128
     def outer(
         self,
-        x1: _ArrayLike[_to_c128],
-        x2: _ArrayLike[np.complex128],
+        x1: _DualArrayLike[np.dtype[_to_c128], complex],
+        x2: _ArrayLike[np.complex128] | _NestedList[complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -16827,43 +16525,21 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> np.ndarray[tuple[Any, ...], np.dtypes.StringDType]: ...
-    @overload  # Nd ~complex, ?d +complex
-    def outer(
-        self,
-        x1: list[complex] | _NestedSequence[list[complex]],
-        x2: complex | _NestedSequence[complex],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # ?d +complex, Nd ~complex
-    def outer(
-        self,
-        x1: complex | _NestedSequence[complex],
-        x2: list[complex] | _NestedSequence[list[complex]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # Nd T@inexact, ?d +float | +f16
+    @overload  # Nd T@inexact, ?d +f16
     def outer[ScalarT: np.inexact | np.object_](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[_to_f16], float],
+        x2: _DualArrayLike[np.dtype[_to_f16], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +float | +f16, Nd T@inexact
+    @overload  # ?d +f16, Nd T@inexact
     def outer[ScalarT: np.inexact | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[_to_f16], float],
+        x1: _DualArrayLike[np.dtype[_to_f16], bool],
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -16871,21 +16547,21 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # Nd T@complexfloating, ?d +complex | +c64
+    @overload  # Nd T@complexfloating, ?d +c64
     def outer[ScalarT: np.complexfloating](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[_to_c64], complex],
+        x2: _DualArrayLike[np.dtype[_to_c64], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +complex | +c64, Nd T@complexfloating
+    @overload  # ?d +c64, Nd T@complexfloating
     def outer[ScalarT: np.complexfloating](
         self,
-        x1: _DualArrayLike[np.dtype[_to_c64], complex],
+        x1: _DualArrayLike[np.dtype[_to_c64], bool],
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -16979,9 +16655,9 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _NumTimeLike_co = ...,
@@ -16992,35 +16668,35 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _NumTimeLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> ScalarT: ...
     @overload  # ~object_, axis=None
-    def reduce(
+    def reduce[T](
         self,
-        array: npt.NDArray[np.object_],
+        array: npt.NDArray[np.object_[T]],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: object = ...,
+        initial: T = ...,
         where: _ArrayLikeBool_co = True,
-    ) -> Any: ...
+    ) -> T: ...
     @overload  # known scalar type, keepdims=True
     def reduce[ScalarT: _to_numeric | np.datetime64 | np.object_](
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _NumTimeLike_co = ...,
@@ -17031,9 +16707,9 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self: _ufunc_21_extremum[str],
         array: np.ndarray[Any, np.dtypes.StringDType],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: str = ...,
@@ -17044,9 +16720,9 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self: _ufunc_21_extremum[str],
         array: np.ndarray[Any, np.dtypes.StringDType],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: str = ...,
@@ -17057,9 +16733,9 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self: _ufunc_21_extremum[str],
         array: np.ndarray[Any, np.dtypes.StringDType],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: str = ...,
@@ -17070,9 +16746,9 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self,
         array: _NestedSequence[bool],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _IntLike_co = ...,
@@ -17083,9 +16759,9 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self,
         array: _NestedSequence[bool],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _IntLike_co = ...,
@@ -17096,9 +16772,9 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self,
         array: _NestedSequence[bool],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _IntLike_co = ...,
@@ -17107,11 +16783,11 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # ~int
     def reduce(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _NestedList[int],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _IntLike_co = ...,
@@ -17120,11 +16796,11 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # ~int, axis=None
     def reduce(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _NestedList[int],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _IntLike_co = ...,
@@ -17133,11 +16809,11 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # ~int, keepdims=True
     def reduce(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _NestedList[int],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _IntLike_co = ...,
@@ -17146,11 +16822,11 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # ~float
     def reduce(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _FloatLike_co = ...,
@@ -17159,11 +16835,11 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # ~float, axis=None
     def reduce(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _FloatLike_co = ...,
@@ -17172,11 +16848,11 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # ~float, keepdims=True
     def reduce(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _FloatLike_co = ...,
@@ -17185,11 +16861,11 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # ~complex
     def reduce(
         self,
-        array: list[complex] | _NestedSequence[list[complex]],
+        array: _NestedList[complex],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _NumTimeLike_co = ...,
@@ -17198,11 +16874,11 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # ~complex, axis=None
     def reduce(
         self,
-        array: list[complex] | _NestedSequence[list[complex]],
+        array: _NestedList[complex],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _NumTimeLike_co = ...,
@@ -17211,11 +16887,11 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
     @overload  # ~complex, keepdims=True
     def reduce(
         self,
-        array: list[complex] | _NestedSequence[list[complex]],
+        array: _NestedList[complex],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _NumTimeLike_co = ...,
@@ -17226,8 +16902,8 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self,
         array: _ArrayLikeNumTimeObj_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: EllipsisType | None = None,
         keepdims: bool = False,
@@ -17239,9 +16915,9 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self,
         array: _ArrayLikeNumTimeObj_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
-        dtype: type | str,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: bool = False,
         initial: _NumTimeLike_co = ...,
@@ -17252,9 +16928,9 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self,
         array: _ArrayLikeNumTimeObj_co,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
         keepdims: bool = False,
         initial: _NumTimeLike_co = ...,
@@ -17265,9 +16941,9 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self,
         array: _CanUfuncReduce[OutT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | EllipsisType | None = None,
         keepdims: bool = False,
         initial: _NumericLike_co = ...,
@@ -17281,10 +16957,10 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self,
         array: _ArrayLike[ScalarT],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # ~str
@@ -17292,10 +16968,10 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self: _ufunc_21_extremum[str],
         array: np.ndarray[Any, np.dtypes.StringDType],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> np.ndarray[tuple[Any, ...], np.dtypes.StringDType]: ...
     @overload  # ~bool
@@ -17303,43 +16979,43 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self,
         array: _NestedSequence[bool],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.bool]: ...
     @overload  # ~int
     def reduceat(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _NestedList[int],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.int_]: ...
     @overload  # ~float
     def reduceat(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # ~complex
     def reduceat(
         self,
-        array: list[complex] | _NestedSequence[list[complex]],
+        array: _NestedList[complex],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # dtype=<known>
@@ -17347,9 +17023,9 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self,
         array: _ArrayLikeNumTimeObj_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
@@ -17358,10 +17034,10 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self,
         array: _ArrayLikeNumTimeObj_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
-        dtype: str | type,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
@@ -17369,10 +17045,10 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self,
         array: _ArrayLikeNumTimeObj_co,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "reduceat", array, indices, ...)
@@ -17381,9 +17057,9 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         array: _CanUfuncReduceAt[IxT, OutT],
         /,
         indices: IxT,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
@@ -17394,9 +17070,9 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # ~str
@@ -17404,9 +17080,9 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self: _ufunc_21_extremum[str],
         array: np.ndarray[Any, np.dtypes.StringDType],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> np.ndarray[tuple[Any, ...], np.dtypes.StringDType]: ...
     @overload  # ~bool
@@ -17414,39 +17090,39 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self,
         array: _NestedSequence[bool],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.bool]: ...
     @overload  # ~int
     def accumulate(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _NestedList[int],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.int_]: ...
     @overload  # ~float
     def accumulate(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # ~complex
     def accumulate(
         self,
-        array: list[complex] | _NestedSequence[list[complex]],
+        array: _NestedList[complex],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # dtype=<known>
@@ -17454,8 +17130,8 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self,
         array: _ArrayLikeNumTimeObj_co,
         /,
-        *,
         axis: int = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
@@ -17464,9 +17140,9 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self,
         array: _ArrayLikeNumTimeObj_co,
         /,
-        *,
         axis: int = 0,
-        dtype: str | type,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
@@ -17474,18 +17150,19 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         self,
         array: _ArrayLikeNumTimeObj_co,
         /,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "accumulate", array, ...)
     def accumulate[OutT](
         self,
         array: _CanUfuncAccumulate[OutT],
-        *,
+        /,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
@@ -17866,7 +17543,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     def __call__(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -17876,7 +17553,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     @overload  # ?d +i64, ?d ~i64
     def __call__(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -17928,11 +17605,11 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.uint8]: ...
-    @overload  # Nd T@integer, ?d +int
+    @overload  # Nd T@integer, ?d +bool
     def __call__[ScalarT: np.integer](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[np.bool], int],
+        x2: _ArrayLikeBool_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -17942,7 +17619,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     @overload  # ?d +int, Nd T@integer
     def __call__[ScalarT: np.integer](
         self,
-        x1: _DualArrayLike[np.dtype[np.bool], int],
+        x1: _ArrayLikeBool_co,
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -17953,7 +17630,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     @overload  # Nd ~int, ?d +int
     def __call__(
         self,
-        x1: list[int] | _NestedSequence[list[int]],
+        x1: _NestedList[int],
         x2: int | _NestedSequence[int],
         /,
         *,
@@ -17965,7 +17642,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     def __call__(
         self,
         x1: int | _NestedSequence[int],
-        x2: list[int] | _NestedSequence[list[int]],
+        x2: _NestedList[int],
         /,
         *,
         out: EllipsisType | None = None,
@@ -17975,8 +17652,8 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     @overload  # ?d ~f64, ?d +f64
     def __call__(
         self,
-        x1: _ArrayLike[np.float64],
-        x2: _ArrayLike[_to_f64],
+        x1: _ArrayLike[np.float64] | _NestedList[float],
+        x2: _DualArrayLike[np.dtype[_to_f64], float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -17986,8 +17663,8 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     @overload  # ?d +f64, ?d ~f64
     def __call__(
         self,
-        x1: _ArrayLike[_to_f64],
-        x2: _ArrayLike[np.float64],
+        x1: _DualArrayLike[np.dtype[_to_f64], float],
+        x2: _ArrayLike[np.float64] | _NestedList[float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -18016,33 +17693,11 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.float32]: ...
-    @overload  # Nd ~float, ?d +float
-    def __call__(
-        self,
-        x1: list[float] | _NestedSequence[list[float]],
-        x2: float | _NestedSequence[float],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
-    @overload  # ?d +float, Nd ~float
-    def __call__(
-        self,
-        x1: float | _NestedSequence[float],
-        x2: list[float] | _NestedSequence[list[float]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
     @overload  # ?d ~c128, ?d +c128
     def __call__(
         self,
-        x1: _ArrayLike[np.complex128],
-        x2: _ArrayLike[_to_c128],
+        x1: _ArrayLike[np.complex128] | _NestedList[complex],
+        x2: _DualArrayLike[np.dtype[_to_c128], complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -18052,8 +17707,8 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     @overload  # ?d +c128, ?d ~c128
     def __call__(
         self,
-        x1: _ArrayLike[_to_c128],
-        x2: _ArrayLike[np.complex128],
+        x1: _DualArrayLike[np.dtype[_to_c128], complex],
+        x2: _ArrayLike[np.complex128] | _NestedList[complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -18192,43 +17847,21 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.bytes_]: ...
-    @overload  # Nd ~complex, ?d +complex
-    def __call__(
-        self,
-        x1: list[complex] | _NestedSequence[list[complex]],
-        x2: complex | _NestedSequence[complex],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # ?d +complex, Nd ~complex
-    def __call__(
-        self,
-        x1: complex | _NestedSequence[complex],
-        x2: list[complex] | _NestedSequence[list[complex]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # Nd T@inexact, ?d +float | +f16
+    @overload  # Nd T@inexact, ?d +f16
     def __call__[ScalarT: np.inexact | np.object_](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[_to_f16], float],
+        x2: _DualArrayLike[np.dtype[_to_f16], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +float | +f16, Nd T@inexact
+    @overload  # ?d +f16, Nd T@inexact
     def __call__[ScalarT: np.inexact | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[_to_f16], float],
+        x1: _DualArrayLike[np.dtype[_to_f16], bool],
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -18236,21 +17869,21 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # Nd T@complexfloating, ?d +complex | +c64
+    @overload  # Nd T@complexfloating, ?d +c64
     def __call__[ScalarT: np.complexfloating | np.object_](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[_to_c64], complex],
+        x2: _DualArrayLike[np.dtype[_to_c64], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +complex | +c64, Nd T@complexfloating
+    @overload  # ?d +c64, Nd T@complexfloating
     def __call__[ScalarT: np.complexfloating | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[_to_c64], complex],
+        x1: _DualArrayLike[np.dtype[_to_c64], bool],
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -18683,7 +18316,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     def outer(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -18693,7 +18326,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     @overload  # ?d +i64, ?d ~i64
     def outer(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -18745,21 +18378,21 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.uint8]: ...
-    @overload  # Nd T@integer, ?d +int
+    @overload  # Nd T@integer, ?d +bool
     def outer[ScalarT: np.integer](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[np.bool], int],
+        x2: _ArrayLikeBool_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +int, Nd T@integer
+    @overload  # ?d +bool, Nd T@integer
     def outer[ScalarT: np.integer](
         self,
-        x1: _DualArrayLike[np.dtype[np.bool], int],
+        x1: _ArrayLikeBool_co,
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -18770,7 +18403,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     @overload  # Nd ~int, ?d +int
     def outer(
         self,
-        x1: list[int] | _NestedSequence[list[int]],
+        x1: _NestedList[int],
         x2: int | _NestedSequence[int],
         /,
         *,
@@ -18782,7 +18415,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     def outer(
         self,
         x1: int | _NestedSequence[int],
-        x2: list[int] | _NestedSequence[list[int]],
+        x2: _NestedList[int],
         /,
         *,
         out: EllipsisType | None = None,
@@ -18792,8 +18425,8 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     @overload  # ?d ~f64, ?d +f64
     def outer(
         self,
-        x1: _ArrayLike[np.float64],
-        x2: _ArrayLike[_to_f64],
+        x1: _ArrayLike[np.float64] | _NestedList[float],
+        x2: _DualArrayLike[np.dtype[_to_f64], float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -18803,8 +18436,8 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     @overload  # ?d +f64, ?d ~f64
     def outer(
         self,
-        x1: _ArrayLike[_to_f64],
-        x2: _ArrayLike[np.float64],
+        x1: _DualArrayLike[np.dtype[_to_f64], float],
+        x2: _ArrayLike[np.float64] | _NestedList[float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -18833,33 +18466,11 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.float32]: ...
-    @overload  # Nd ~float, ?d +float
-    def outer(
-        self,
-        x1: list[float] | _NestedSequence[list[float]],
-        x2: float | _NestedSequence[float],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
-    @overload  # ?d +float, Nd ~float
-    def outer(
-        self,
-        x1: float | _NestedSequence[float],
-        x2: list[float] | _NestedSequence[list[float]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.float64]: ...
     @overload  # ?d ~c128, ?d +c128
     def outer(
         self,
-        x1: _ArrayLike[np.complex128],
-        x2: _ArrayLike[_to_c128],
+        x1: _ArrayLike[np.complex128] | _NestedList[complex],
+        x2: _DualArrayLike[np.dtype[_to_c128], complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -18869,8 +18480,8 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     @overload  # ?d +c128, ?d ~c128
     def outer(
         self,
-        x1: _ArrayLike[_to_c128],
-        x2: _ArrayLike[np.complex128],
+        x1: _DualArrayLike[np.dtype[_to_c128], complex],
+        x2: _ArrayLike[np.complex128] | _NestedList[complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -19009,43 +18620,21 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.bytes_]: ...
-    @overload  # Nd ~complex, ?d +complex
-    def outer(
-        self,
-        x1: list[complex] | _NestedSequence[list[complex]],
-        x2: complex | _NestedSequence[complex],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # ?d +complex, Nd ~complex
-    def outer(
-        self,
-        x1: complex | _NestedSequence[complex],
-        x2: list[complex] | _NestedSequence[list[complex]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # Nd T@inexact, ?d +float | +f16
+    @overload  # Nd T@inexact, ?d +f16
     def outer[ScalarT: np.inexact | np.object_](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[_to_f16], float],
+        x2: _DualArrayLike[np.dtype[_to_f16], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +float | +f16, Nd T@inexact
+    @overload  # ?d +f16, Nd T@inexact
     def outer[ScalarT: np.inexact | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[_to_f16], float],
+        x1: _DualArrayLike[np.dtype[_to_f16], bool],
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -19053,21 +18642,21 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # Nd T@complexfloating, ?d +complex | +c64
+    @overload  # Nd T@complexfloating, ?d +c64
     def outer[ScalarT: np.complexfloating | np.object_](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[_to_c64], complex],
+        x2: _DualArrayLike[np.dtype[_to_c64], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +complex | +c64, Nd T@complexfloating
+    @overload  # ?d +c64, Nd T@complexfloating
     def outer[ScalarT: np.complexfloating | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[_to_c64], complex],
+        x1: _DualArrayLike[np.dtype[_to_c64], bool],
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -19143,143 +18732,143 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     #
     @override
     @overload  # known scalar type
-    def reduce[ScalarT: _to_numeric | np.character | np.object_](  # pyrefly:ignore[bad-override]
+    def reduce[ScalarT: np.inexact | np.timedelta64 | np.character | np.object_](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _NumericLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[ScalarT] | Any: ...
     @overload  # known scalar type, axis=None
-    def reduce[ScalarT: _to_numeric | np.character](
+    def reduce[ScalarT: np.inexact | np.timedelta64 | np.character](
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _NumericLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> ScalarT: ...
     @overload  # ~object_, axis=None
-    def reduce(
+    def reduce[T](
         self,
-        array: npt.NDArray[np.object_],
+        array: npt.NDArray[np.object_[T]],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: object = ...,
+        initial: T = ...,
         where: _ArrayLikeBool_co = True,
-    ) -> Any: ...
+    ) -> T: ...
     @overload  # known scalar type, keepdims=True
-    def reduce[ScalarT: _to_numeric | np.character | np.object_](
+    def reduce[ScalarT: np.inexact | np.timedelta64 | np.character | np.object_](
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _NumericLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ~bool
+    @overload  # +int
     def reduce(
         self,
-        array: _NestedSequence[bool],
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
-        out: EllipsisType | None = None,
-        keepdims: Literal[False] = False,
-        initial: _IntLike_co = ...,
-        where: _ArrayLikeBool_co = True,
-    ) -> npt.NDArray[np.bool] | Any: ...
-    @overload  # ~bool, axis=None
-    def reduce(
-        self,
-        array: _NestedSequence[bool],
-        /,
         *,
-        axis: None,
-        dtype: None = None,
-        out: None = None,
-        keepdims: Literal[False] = False,
-        initial: _IntLike_co = ...,
-        where: _ArrayLikeBool_co = True,
-    ) -> np.bool: ...
-    @overload  # ~bool, keepdims=True
-    def reduce(
-        self,
-        array: _NestedSequence[bool],
-        /,
-        *,
-        axis: int | tuple[int, ...] | None = 0,
-        dtype: None = None,
-        out: EllipsisType | None = None,
-        keepdims: Literal[True],
-        initial: _IntLike_co = ...,
-        where: _ArrayLikeBool_co = True,
-    ) -> npt.NDArray[np.bool]: ...
-    @overload  # ~int
-    def reduce(
-        self,
-        array: list[int] | _NestedSequence[list[int]],
-        /,
-        *,
-        axis: int | tuple[int, ...] = 0,
-        dtype: None = None,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.int_] | Any: ...
-    @overload  # ~int, axis=None
+    @overload  # +int, axis=None
     def reduce(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> np.int_: ...
-    @overload  # ~int, keepdims=True
+    @overload  # +int, keepdims=True
     def reduce(
         self,
-        array: list[int] | _NestedSequence[list[int]],
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _IntLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.int_]: ...
+    @overload  # ~uint
+    def reduce(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.uint] | Any: ...
+    @overload  # ~uint, axis=None
+    def reduce(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        axis: None,
+        dtype: None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> np.uint: ...
+    @overload  # ~uint, keepdims=True
+    def reduce(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.uint]: ...
     @overload  # ~float
     def reduce(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _FloatLike_co = ...,
@@ -19288,11 +18877,11 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     @overload  # ~float, axis=None
     def reduce(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _FloatLike_co = ...,
@@ -19301,11 +18890,11 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     @overload  # ~float, keepdims=True
     def reduce(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _FloatLike_co = ...,
@@ -19314,11 +18903,11 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     @overload  # ~complex
     def reduce(
         self,
-        array: list[complex] | _NestedSequence[list[complex]],
+        array: _NestedList[complex],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: _NumericLike_co = ...,
@@ -19327,11 +18916,11 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     @overload  # ~complex, axis=None
     def reduce(
         self,
-        array: list[complex] | _NestedSequence[list[complex]],
+        array: _NestedList[complex],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: _NumericLike_co = ...,
@@ -19340,11 +18929,11 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     @overload  # ~complex, keepdims=True
     def reduce(
         self,
-        array: list[complex] | _NestedSequence[list[complex]],
+        array: _NestedList[complex],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: _NumericLike_co = ...,
@@ -19355,9 +18944,9 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: _NestedSequence[str],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: str | np.str_ = ...,
@@ -19368,9 +18957,9 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: _NestedSequence[str],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: str | np.str_ = ...,
@@ -19381,9 +18970,9 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: _NestedSequence[str],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: str | np.str_ = ...,
@@ -19394,9 +18983,9 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: _NestedSequence[bytes],
         /,
-        *,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[False] = False,
         initial: bytes | np.bytes_ = ...,
@@ -19407,9 +18996,9 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: _NestedSequence[bytes],
         /,
-        *,
         axis: None,
         dtype: None = None,
+        *,
         out: None = None,
         keepdims: Literal[False] = False,
         initial: bytes | np.bytes_ = ...,
@@ -19420,9 +19009,9 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: _NestedSequence[bytes],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: Literal[True],
         initial: bytes | np.bytes_ = ...,
@@ -19433,8 +19022,8 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: npt.ArrayLike,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: EllipsisType | None = None,
         keepdims: bool = False,
@@ -19446,9 +19035,9 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: npt.ArrayLike,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
-        dtype: type | str,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: EllipsisType | None = None,
         keepdims: bool = False,
         initial: _ScalarLike_co = ...,
@@ -19459,9 +19048,9 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: npt.ArrayLike,
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
         keepdims: bool = False,
         initial: _ScalarLike_co = ...,
@@ -19472,9 +19061,9 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: _CanUfuncReduce[OutT],
         /,
-        *,
         axis: int | tuple[int, ...] | None = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | EllipsisType | None = None,
         keepdims: bool = False,
         initial: _NumericLike_co = ...,
@@ -19484,58 +19073,58 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     #
     @override
     @overload  # known scalar type
-    def reduceat[ScalarT: _to_numeric | np.character | np.object_](  # pyrefly:ignore[bad-override]
+    def reduceat[ScalarT: np.inexact | np.timedelta64 | np.character | np.object_](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ~bool
+    @overload  # +int
     def reduceat(
         self,
-        array: _NestedSequence[bool],
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
-        out: None = None,
-    ) -> npt.NDArray[np.bool]: ...
-    @overload  # ~int
-    def reduceat(
-        self,
-        array: list[int] | _NestedSequence[list[int]],
-        /,
-        indices: tuple[int, ...],
         *,
-        axis: int = 0,
-        dtype: None = None,
         out: None = None,
     ) -> npt.NDArray[np.int_]: ...
+    @overload  # ~uint
+    def reduceat(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        indices: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> npt.NDArray[np.uint]: ...
     @overload  # ~float
     def reduceat(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # ~complex
     def reduceat(
         self,
-        array: list[complex] | _NestedSequence[list[complex]],
+        array: _NestedList[complex],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # ~str
@@ -19543,10 +19132,10 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: _NestedSequence[str],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.str_]: ...
     @overload  # ~bytes
@@ -19554,10 +19143,10 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: _NestedSequence[bytes],
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.bytes_]: ...
     @overload  # dtype=<known>
@@ -19565,9 +19154,9 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: npt.ArrayLike,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
@@ -19576,10 +19165,10 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: npt.ArrayLike,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
-        dtype: str | type | None = None,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
@@ -19587,10 +19176,10 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: npt.ArrayLike,
         /,
-        indices: tuple[int, ...],
-        *,
+        indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "reduceat", array, indices, ...)
@@ -19599,62 +19188,62 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         array: _CanUfuncReduceAt[IxT, OutT],
         /,
         indices: IxT,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
     #
     @override
     @overload  # known scalar type
-    def accumulate[ScalarT: _to_numeric | np.character | np.object_](  # pyrefly:ignore[bad-override]
+    def accumulate[ScalarT: np.inexact | np.timedelta64 | np.character | np.object_](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ~bool
+    @overload  # +int
     def accumulate(
         self,
-        array: _NestedSequence[bool],
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
-        out: None = None,
-    ) -> npt.NDArray[np.bool]: ...
-    @overload  # ~int
-    def accumulate(
-        self,
-        array: list[int] | _NestedSequence[list[int]],
-        /,
         *,
-        axis: int = 0,
-        dtype: None = None,
         out: None = None,
     ) -> npt.NDArray[np.int_]: ...
+    @overload  # ~uint
+    def accumulate(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> npt.NDArray[np.uint]: ...
     @overload  # ~float
     def accumulate(
         self,
-        array: list[float] | _NestedSequence[list[float]],
+        array: _NestedList[float],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.float64]: ...
     @overload  # ~complex
     def accumulate(
         self,
-        array: list[complex] | _NestedSequence[list[complex]],
+        array: _NestedList[complex],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # ~str
@@ -19662,9 +19251,9 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: _NestedSequence[str],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.str_]: ...
     @overload  # ~bytes
@@ -19672,9 +19261,9 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: _NestedSequence[bytes],
         /,
-        *,
         axis: int = 0,
         dtype: None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[np.bytes_]: ...
     @overload  # dtype=<known>
@@ -19682,8 +19271,8 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: npt.ArrayLike,
         /,
-        *,
         axis: int = 0,
+        *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
@@ -19692,9 +19281,9 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: npt.ArrayLike,
         /,
-        *,
         axis: int = 0,
-        dtype: str | type | None = None,
+        dtype: npt.DTypeLike | None = None,
+        *,
         out: None = None,
     ) -> npt.NDArray[Any]: ...
     @overload  # out=<given>
@@ -19702,9 +19291,9 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: npt.ArrayLike,
         /,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: OutT,
     ) -> OutT: ...
     @overload  # array.__array_ufunc__(self, "accumulate", array, ...)
@@ -19712,9 +19301,9 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         self,
         array: _CanUfuncAccumulate[OutT],
         /,
-        *,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
+        *,
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
@@ -20037,7 +19626,7 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
     def __call__(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | _tuple2[None] = (None, None),
@@ -20047,7 +19636,7 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
     @overload  # ?d +i64, ?d ~i64
     def __call__(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -20099,21 +19688,21 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs22],
     ) -> _tuple2[npt.NDArray[np.uint8]]: ...
-    @overload  # Nd T@integer, ?d +int
+    @overload  # Nd T@integer, ?d +bool
     def __call__[IntT: np.integer](
         self,
         x1: npt.NDArray[IntT],
-        x2: _DualArrayLike[np.dtype[np.bool], int],
+        x2: _ArrayLikeBool_co,
         /,
         *,
         out: EllipsisType | _tuple2[None] = (None, None),
         dtype: None = None,
         **kwargs: Unpack[_Kwargs22],
     ) -> _tuple2[npt.NDArray[IntT]]: ...
-    @overload  # ?d +int, Nd T@integer
+    @overload  # ?d +bool, Nd T@integer
     def __call__[IntT: np.integer](
         self,
-        x1: _DualArrayLike[np.dtype[np.bool], int],
+        x1: _ArrayLikeBool_co,
         x2: npt.NDArray[IntT],
         /,
         *,
@@ -20124,7 +19713,7 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
     @overload  # Nd ~int, ?d +int
     def __call__(
         self,
-        x1: list[int] | _NestedSequence[list[int]],
+        x1: _NestedList[int],
         x2: int | _NestedSequence[int],
         /,
         *,
@@ -20136,7 +19725,7 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
     def __call__(
         self,
         x1: int | _NestedSequence[int],
-        x2: list[int] | _NestedSequence[list[int]],
+        x2: _NestedList[int],
         /,
         *,
         out: EllipsisType | _tuple2[None] = (None, None),
@@ -20146,8 +19735,8 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
     @overload  # ?d ~f64, ?d +f64
     def __call__(
         self,
-        x1: _ArrayLike[np.float64],
-        x2: _ArrayLike[_to_f64],
+        x1: _ArrayLike[np.float64] | _NestedList[float],
+        x2: _DualArrayLike[np.dtype[_to_f64], float],
         /,
         *,
         out: EllipsisType | _tuple2[None] = (None, None),
@@ -20157,8 +19746,8 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
     @overload  # ?d +f64, ?d ~f64
     def __call__(
         self,
-        x1: _ArrayLike[_to_f64],
-        x2: _ArrayLike[np.float64],
+        x1: _DualArrayLike[np.dtype[_to_f64], float],
+        x2: _ArrayLike[np.float64] | _NestedList[float],
         /,
         *,
         out: EllipsisType | _tuple2[None] = (None, None),
@@ -20191,7 +19780,7 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
     def __call__(
         self,
         x1: _ArrayLike[np.longdouble],
-        x2: _ArrayLike[_to_floating],
+        x2: _ArrayLikeFloat_co,
         /,
         *,
         out: EllipsisType | _tuple2[None] = (None, None),
@@ -20201,7 +19790,7 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
     @overload  # ?d +f80, ?d ~f80
     def __call__(
         self,
-        x1: _ArrayLike[_to_floating],
+        x1: _ArrayLikeFloat_co,
         x2: _ArrayLike[np.longdouble],
         /,
         *,
@@ -20220,21 +19809,21 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs22],
     ) -> tuple[npt.NDArray[np.int64], npt.NDArray[MT]]: ...
-    @overload  # Nd T@floating, ?d +float
+    @overload  # Nd T@floating, ?d +f16
     def __call__[FloatT: np.floating](
         self,
         x1: npt.NDArray[FloatT],
-        x2: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], float],
+        x2: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], bool],
         /,
         *,
         out: EllipsisType | _tuple2[None] = (None, None),
         dtype: None = None,
         **kwargs: Unpack[_Kwargs22],
     ) -> _tuple2[npt.NDArray[FloatT]]: ...
-    @overload  # ?d +float, Nd T@floating
+    @overload  # ?d +f16, Nd T@floating
     def __call__[FloatT: np.floating | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], float],
+        x1: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], bool],
         x2: npt.NDArray[FloatT],
         /,
         *,
@@ -20264,28 +19853,6 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
         dtype: _DTypeLike[ScalarT],
         **kwargs: Unpack[_Kwargs22],
     ) -> _tuple2[npt.NDArray[ScalarT]]: ...
-    @overload  # Nd ~float, ?d +float
-    def __call__(
-        self,
-        x1: list[float] | _NestedSequence[list[float]],
-        x2: float | _NestedSequence[float],
-        /,
-        *,
-        out: EllipsisType | _tuple2[None] = (None, None),
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs22],
-    ) -> _tuple2[npt.NDArray[np.float64]]: ...
-    @overload  # ?d +float, Nd ~float
-    def __call__(
-        self,
-        x1: float | _NestedSequence[float],
-        x2: list[float] | _NestedSequence[list[float]],
-        /,
-        *,
-        out: EllipsisType | _tuple2[None] = (None, None),
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs22],
-    ) -> _tuple2[npt.NDArray[np.float64]]: ...
     @overload  # out=<given>
     def __call__[OutT1: np.ndarray, OutT2: np.ndarray](
         self,
@@ -20601,7 +20168,7 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
     def outer(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | _tuple2[None] = (None, None),
@@ -20611,7 +20178,7 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
     @overload  # ?d +i64, ?d ~i64
     def outer(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -20663,21 +20230,21 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs22],
     ) -> _tuple2[npt.NDArray[np.uint8]]: ...
-    @overload  # Nd T@integer, ?d +int
+    @overload  # Nd T@integer, ?d +bool
     def outer[IntT: np.integer](
         self,
         x1: npt.NDArray[IntT],
-        x2: _DualArrayLike[np.dtype[np.bool], int],
+        x2: _ArrayLikeBool_co,
         /,
         *,
         out: EllipsisType | _tuple2[None] = (None, None),
         dtype: None = None,
         **kwargs: Unpack[_Kwargs22],
     ) -> _tuple2[npt.NDArray[IntT]]: ...
-    @overload  # ?d +int, Nd T@integer
+    @overload  # ?d +bool, Nd T@integer
     def outer[IntT: np.integer](
         self,
-        x1: _DualArrayLike[np.dtype[np.bool], int],
+        x1: _ArrayLikeBool_co,
         x2: npt.NDArray[IntT],
         /,
         *,
@@ -20688,7 +20255,7 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
     @overload  # Nd ~int, ?d +int
     def outer(
         self,
-        x1: list[int] | _NestedSequence[list[int]],
+        x1: _NestedList[int],
         x2: int | _NestedSequence[int],
         /,
         *,
@@ -20700,7 +20267,7 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
     def outer(
         self,
         x1: int | _NestedSequence[int],
-        x2: list[int] | _NestedSequence[list[int]],
+        x2: _NestedList[int],
         /,
         *,
         out: EllipsisType | _tuple2[None] = (None, None),
@@ -20710,8 +20277,8 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
     @overload  # ?d ~f64, ?d +f64
     def outer(
         self,
-        x1: _ArrayLike[np.float64],
-        x2: _ArrayLike[_to_f64],
+        x1: _ArrayLike[np.float64] | _NestedList[float],
+        x2: _DualArrayLike[np.dtype[_to_f64], float],
         /,
         *,
         out: EllipsisType | _tuple2[None] = (None, None),
@@ -20721,8 +20288,8 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
     @overload  # ?d +f64, ?d ~f64
     def outer(
         self,
-        x1: _ArrayLike[_to_f64],
-        x2: _ArrayLike[np.float64],
+        x1: _DualArrayLike[np.dtype[_to_f64], float],
+        x2: _ArrayLike[np.float64] | _NestedList[float],
         /,
         *,
         out: EllipsisType | _tuple2[None] = (None, None),
@@ -20755,7 +20322,7 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
     def outer(
         self,
         x1: _ArrayLike[np.longdouble],
-        x2: _ArrayLike[_to_floating],
+        x2: _ArrayLikeFloat_co,
         /,
         *,
         out: EllipsisType | _tuple2[None] = (None, None),
@@ -20765,7 +20332,7 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
     @overload  # ?d +f80, ?d ~f80
     def outer(
         self,
-        x1: _ArrayLike[_to_floating],
+        x1: _ArrayLikeFloat_co,
         x2: _ArrayLike[np.longdouble],
         /,
         *,
@@ -20784,21 +20351,21 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs22],
     ) -> tuple[npt.NDArray[np.int64], npt.NDArray[MT]]: ...
-    @overload  # Nd T@floating, ?d +float
+    @overload  # Nd T@floating, ?d +f64
     def outer[FloatT: np.floating](
         self,
         x1: npt.NDArray[FloatT],
-        x2: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], float],
+        x2: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], bool],
         /,
         *,
         out: EllipsisType | _tuple2[None] = (None, None),
         dtype: None = None,
         **kwargs: Unpack[_Kwargs22],
     ) -> _tuple2[npt.NDArray[FloatT]]: ...
-    @overload  # ?d +float, Nd T@floating
+    @overload  # ?d +f16, Nd T@floating
     def outer[FloatT: np.floating | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], float],
+        x1: _DualArrayLike[np.dtype[np.int8 | np.uint8 | np.bool], bool],
         x2: npt.NDArray[FloatT],
         /,
         *,
@@ -20828,28 +20395,6 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
         dtype: _DTypeLike[ScalarT],
         **kwargs: Unpack[_Kwargs22],
     ) -> _tuple2[npt.NDArray[ScalarT]]: ...
-    @overload  # Nd ~float, ?d +float
-    def outer(
-        self,
-        x1: list[float] | _NestedSequence[list[float]],
-        x2: float | _NestedSequence[float],
-        /,
-        *,
-        out: EllipsisType | _tuple2[None] = (None, None),
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs22],
-    ) -> _tuple2[npt.NDArray[np.float64]]: ...
-    @overload  # ?d +float, Nd ~float
-    def outer(
-        self,
-        x1: float | _NestedSequence[float],
-        x2: list[float] | _NestedSequence[list[float]],
-        /,
-        *,
-        out: EllipsisType | _tuple2[None] = (None, None),
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs22],
-    ) -> _tuple2[npt.NDArray[np.float64]]: ...
     @overload  # out=<given>
     def outer[OutT1: np.ndarray, OutT2: np.ndarray](
         self,
@@ -20929,7 +20474,7 @@ class _gufunc_21_matvec_vecmat(_gufunc_21):  # type: ignore[misc]
     def __call__(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
@@ -20939,7 +20484,7 @@ class _gufunc_21_matvec_vecmat(_gufunc_21):  # type: ignore[misc]
     @overload  # ?d +i64, ?d ~i64
     def __call__(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
@@ -20991,21 +20536,21 @@ class _gufunc_21_matvec_vecmat(_gufunc_21):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.uint8]: ...
-    @overload  # Nd T@integer, ?d +int
+    @overload  # Nd T@integer, ?d +bool
     def __call__[ScalarT: np.integer](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[np.bool], int],
+        x2: _ArrayLikeBool_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +int, Nd T@integer
+    @overload  # ?d +bool, Nd T@integer
     def __call__[ScalarT: np.integer](
         self,
-        x1: _DualArrayLike[np.dtype[np.bool], int],
+        x1: _ArrayLikeBool_co,
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -21016,7 +20561,7 @@ class _gufunc_21_matvec_vecmat(_gufunc_21):  # type: ignore[misc]
     @overload  # Nd ~int, ?d +int
     def __call__(
         self,
-        x1: list[int] | _NestedSequence[list[int]],
+        x1: _NestedList[int],
         x2: _NestedSequence[int],
         /,
         *,
@@ -21028,7 +20573,7 @@ class _gufunc_21_matvec_vecmat(_gufunc_21):  # type: ignore[misc]
     def __call__(
         self,
         x1: _NestedSequence[int],
-        x2: list[int] | _NestedSequence[list[int]],
+        x2: _NestedList[int],
         /,
         *,
         out: EllipsisType | None = None,
@@ -21038,8 +20583,8 @@ class _gufunc_21_matvec_vecmat(_gufunc_21):  # type: ignore[misc]
     @overload  # ?d ~f64, ?d +f64
     def __call__(
         self,
-        x1: _ArrayLike[np.float64],
-        x2: _ArrayLike[_to_f64],
+        x1: _ArrayLike[np.float64] | _NestedList[float],
+        x2: _DualArrayLike[np.dtype[_to_f64], float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -21049,8 +20594,8 @@ class _gufunc_21_matvec_vecmat(_gufunc_21):  # type: ignore[misc]
     @overload  # ?d +f64, ?d ~f64
     def __call__(
         self,
-        x1: _ArrayLike[_to_f64],
-        x2: _ArrayLike[np.float64],
+        x1: _DualArrayLike[np.dtype[_to_f64], float],
+        x2: _ArrayLike[np.float64] | _NestedList[float],
         /,
         *,
         out: EllipsisType | None = None,
@@ -21079,33 +20624,11 @@ class _gufunc_21_matvec_vecmat(_gufunc_21):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.float32]: ...
-    @overload  # Nd ~float, ?d +float
-    def __call__(
-        self,
-        x1: list[float] | _NestedSequence[list[float]],
-        x2: _NestedSequence[float],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21G],
-    ) -> npt.NDArray[np.float64]: ...
-    @overload  # ?d +float, Nd ~float
-    def __call__(
-        self,
-        x1: _NestedSequence[float],
-        x2: list[float] | _NestedSequence[list[float]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21G],
-    ) -> npt.NDArray[np.float64]: ...
     @overload  # ?d ~c128, ?d +c128
     def __call__(
         self,
-        x1: _ArrayLike[np.complex128],
-        x2: _ArrayLike[_to_c128],
+        x1: _ArrayLike[np.complex128] | _NestedList[complex],
+        x2: _DualArrayLike[np.dtype[_to_c128], complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -21115,8 +20638,8 @@ class _gufunc_21_matvec_vecmat(_gufunc_21):  # type: ignore[misc]
     @overload  # ?d +c128, ?d ~c128
     def __call__(
         self,
-        x1: _ArrayLike[_to_c128],
-        x2: _ArrayLike[np.complex128],
+        x1: _DualArrayLike[np.dtype[_to_c128], complex],
+        x2: _ArrayLike[np.complex128] | _NestedList[complex],
         /,
         *,
         out: EllipsisType | None = None,
@@ -21189,43 +20712,21 @@ class _gufunc_21_matvec_vecmat(_gufunc_21):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.object_]: ...
-    @overload  # Nd ~complex, ?d +complex
-    def __call__(
-        self,
-        x1: list[complex] | _NestedSequence[list[complex]],
-        x2: _NestedSequence[complex],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21G],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # ?d +complex, Nd ~complex
-    def __call__(
-        self,
-        x1: _NestedSequence[complex],
-        x2: list[complex] | _NestedSequence[list[complex]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21G],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # Nd T@inexact, ?d +float | +f16
+    @overload  # Nd T@inexact, ?d +f16
     def __call__[ScalarT: np.inexact | np.object_](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[_to_f16], float],
+        x2: _DualArrayLike[np.dtype[_to_f16], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +float | +f16, Nd T@inexact
+    @overload  # ?d +f16, Nd T@inexact
     def __call__[ScalarT: np.inexact | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[_to_f16], float],
+        x1: _DualArrayLike[np.dtype[_to_f16], bool],
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -21233,21 +20734,21 @@ class _gufunc_21_matvec_vecmat(_gufunc_21):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # Nd T@complexfloating, ?d +complex | +c64
+    @overload  # Nd T@complexfloating, ?d +c64
     def __call__[ScalarT: np.complexfloating | np.object_](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[_to_c64], complex],
+        x2: _DualArrayLike[np.dtype[_to_c64], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +complex | +c64, Nd T@complexfloating
+    @overload  # ?d +c64, Nd T@complexfloating
     def __call__[ScalarT: np.complexfloating | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[_to_c64], complex],
+        x1: _DualArrayLike[np.dtype[_to_c64], bool],
         x2: npt.NDArray[ScalarT],
         /,
         *,
@@ -21326,6 +20827,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> Incomplete: ...
     @overload  # ?d|1d ?, ?d ?  (workaround)
@@ -21337,6 +20840,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> Incomplete: ...
     @overload  # 1d ~bool, 1d ~bool
@@ -21348,6 +20853,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.bool: ...
     @overload  # ?d ~bool, ?d ~bool
@@ -21359,6 +20866,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.bool]: ...
     @overload  # 1d ~i64, 1d +i64
@@ -21370,6 +20879,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.int64: ...
     @overload  # 1d +i64, 1d ~i64
@@ -21381,28 +20892,34 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.int64: ...
     @overload  # ?d ~i64, ?d +i64
     def __call__(
         self,
         x1: _ArrayLike[np.int64],
-        x2: _ArrayLikeInt_co,
+        x2: _ArrayLikeInt64_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.int64]: ...
     @overload  # ?d +i64, ?d ~i64
     def __call__(
         self,
-        x1: _ArrayLikeInt_co,
+        x1: _ArrayLikeInt64_co,
         x2: _ArrayLike[np.int64],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.int64]: ...
     @overload  # 1d ~i32, 1d +i32
@@ -21414,6 +20931,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.int32: ...
     @overload  # 1d +i32, 1d ~i32
@@ -21425,6 +20944,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.int32: ...
     @overload  # ?d ~i32, ?d +i32
@@ -21436,6 +20957,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.int32]: ...
     @overload  # ?d +i32, ?d ~i32
@@ -21447,6 +20970,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.int32]: ...
     @overload  # 1d ~u8, 1d +u8
@@ -21458,6 +20983,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.uint8: ...
     @overload  # 1d +u8, 1d ~u8
@@ -21469,6 +20996,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.uint8: ...
     @overload  # ?d ~u8, ?d +u8
@@ -21480,6 +21009,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.uint8]: ...
     @overload  # ?d +u8, ?d ~u8
@@ -21491,50 +21022,60 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.uint8]: ...
-    @overload  # 1d T@integer, 1d +int
+    @overload  # 1d T@integer, 1d +biik
     def __call__[ScalarT: np.integer](
         self,
         x1: _Array1D[ScalarT],
-        x2: _Array1D[np.bool] | Sequence[int | np.bool],
+        x2: _Array1D[np.bool] | Sequence[bool | np.bool],
         /,
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> ScalarT: ...
-    @overload  # 1d +int, 1d T@integer
+    @overload  # 1d +bool, 1d T@integer
     def __call__[ScalarT: np.integer](
         self,
-        x1: _Array1D[np.bool] | Sequence[int | np.bool],
+        x1: _Array1D[np.bool] | Sequence[bool | np.bool],
         x2: _Array1D[ScalarT],
         /,
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> ScalarT: ...
-    @overload  # Nd T@integer, ?d +int
+    @overload  # Nd T@integer, ?d +bool
     def __call__[ScalarT: np.integer](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[np.bool], int],
+        x2: _ArrayLikeBool_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +int, Nd T@integer
+    @overload  # ?d +bool, Nd T@integer
     def __call__[ScalarT: np.integer](
         self,
-        x1: _DualArrayLike[np.dtype[np.bool], int],
+        x1: _ArrayLikeBool_co,
         x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # 1d ~int, 1d +int
@@ -21546,6 +21087,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.int_: ...
     @overload  # 1d +int, 1d ~int
@@ -21557,72 +21100,86 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.int_: ...
     @overload  # Nd ~int, ?d +int
     def __call__(
         self,
-        x1: list[int] | _NestedSequence[list[int]],
+        x1: _NestedList[int],
         x2: _NestedSequence[int],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.int_]: ...
     @overload  # ?d +int, Nd ~int
     def __call__(
         self,
         x1: _NestedSequence[int],
-        x2: list[int] | _NestedSequence[list[int]],
+        x2: _NestedList[int],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.int_]: ...
     @overload  # 1d ~f64, 1d +f64
     def __call__(
         self,
-        x1: _Array1D[np.float64],
-        x2: _Array1D[_to_f64] | Sequence[_to_f64],
+        x1: _Array1D[np.float64] | list[float],
+        x2: _Array1D[_to_f64] | Sequence[float | _to_f64],
         /,
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.float64: ...
     @overload  # 1d +f64, 1d ~f64
     def __call__(
         self,
-        x1: _Array1D[_to_f64] | Sequence[_to_f64],
-        x2: _Array1D[np.float64],
+        x1: _Array1D[_to_f64] | Sequence[float | _to_f64],
+        x2: _Array1D[np.float64] | list[float],
         /,
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.float64: ...
     @overload  # ?d ~f64, ?d +f64
     def __call__(
         self,
-        x1: _ArrayLike[np.float64],
-        x2: _ArrayLike[_to_f64],
+        x1: _ArrayLike[np.float64] | _NestedList[float],
+        x2: _DualArrayLike[np.dtype[_to_f64], float],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.float64]: ...
     @overload  # ?d +f64, ?d ~f64
     def __call__(
         self,
-        x1: _ArrayLike[_to_f64],
-        x2: _ArrayLike[np.float64],
+        x1: _DualArrayLike[np.dtype[_to_f64], float],
+        x2: _ArrayLike[np.float64] | _NestedList[float],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.float64]: ...
     @overload  # 1d ~f32, 1d +f32
@@ -21634,6 +21191,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.float32: ...
     @overload  # 1d +f32, 1d ~f32
@@ -21645,6 +21204,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.float32: ...
     @overload  # ?d ~f32, ?d +f32
@@ -21656,6 +21217,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.float32]: ...
     @overload  # ?d +f32, ?d ~f32
@@ -21667,94 +21230,60 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.float32]: ...
-    @overload  # 1d ~float, 1d +float
-    def __call__(
-        self,
-        x1: list[float],
-        x2: Sequence[float],
-        /,
-        *,
-        out: None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21G],
-    ) -> np.float64: ...
-    @overload  # 1d +float, 1d ~float
-    def __call__(
-        self,
-        x1: Sequence[float],
-        x2: list[float],
-        /,
-        *,
-        out: None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21G],
-    ) -> np.float64: ...
-    @overload  # Nd ~float, ?d +float
-    def __call__(
-        self,
-        x1: list[float] | _NestedSequence[list[float]],
-        x2: _NestedSequence[float],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21G],
-    ) -> npt.NDArray[np.float64]: ...
-    @overload  # ?d +float, Nd ~float
-    def __call__(
-        self,
-        x1: _NestedSequence[float],
-        x2: list[float] | _NestedSequence[list[float]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21G],
-    ) -> npt.NDArray[np.float64]: ...
     @overload  # 1d ~c128, 1d +c128
     def __call__(
         self,
-        x1: _Array1D[np.complex128],
+        x1: _Array1D[np.complex128] | list[complex],
         x2: _Array1D[_to_c128] | Sequence[complex | _to_c128],
         /,
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.complex128: ...
     @overload  # 1d +c128, 1d ~c128
     def __call__(
         self,
         x1: _Array1D[_to_c128] | Sequence[complex | _to_c128],
-        x2: _Array1D[np.complex128],
+        x2: _Array1D[np.complex128] | list[complex],
         /,
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.complex128: ...
     @overload  # ?d ~c128, ?d +c128
     def __call__(
         self,
-        x1: _ArrayLike[np.complex128],
-        x2: _ArrayLike[_to_c128],
+        x1: _ArrayLike[np.complex128] | _NestedList[complex],
+        x2: _DualArrayLike[np.dtype[_to_c128], complex],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # ?d +c128, ?d ~c128
     def __call__(
         self,
-        x1: _ArrayLike[_to_c128],
-        x2: _ArrayLike[np.complex128],
+        x1: _DualArrayLike[np.dtype[_to_c128], complex],
+        x2: _ArrayLike[np.complex128] | _NestedList[complex],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # 1d ~c64, 1d +c64
@@ -21766,6 +21295,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.complex64: ...
     @overload  # 1d +c64, 1d ~c64
@@ -21777,6 +21308,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.complex64: ...
     @overload  # ?d ~c64, ?d +c64
@@ -21788,6 +21321,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.complex64]: ...
     @overload  # ?d ~c64, ?d +c64
@@ -21799,6 +21334,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.complex64]: ...
     @overload  # 1d ~c64, 1d ~f64
@@ -21810,6 +21347,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.complex128: ...
     @overload  # 1d ~f64, 1d ~c64
@@ -21821,6 +21360,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> np.complex128: ...
     @overload  # ?d ~c64, ?d ~f64
@@ -21832,6 +21373,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # ?d ~f64, ?d ~c64
@@ -21843,6 +21386,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # 1d ~obj, 1d +obj
@@ -21854,6 +21399,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> Incomplete: ...
     @overload  # 1d +obj, 1d ~obj
@@ -21865,6 +21412,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> Incomplete: ...
     @overload  # ?d ~obj, ?d +obj
@@ -21876,6 +21425,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.object_]: ...
     @overload  # ?d +obj, ?d ~obj
@@ -21887,138 +21438,112 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[np.object_]: ...
-    @overload  # 1d ~complex, 1d +complex
-    def __call__(
-        self,
-        x1: list[complex],
-        x2: Sequence[complex],
-        /,
-        *,
-        out: None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21G],
-    ) -> np.complex128: ...
-    @overload  # 1d +complex, 1d ~complex
-    def __call__(
-        self,
-        x1: Sequence[complex],
-        x2: list[complex],
-        /,
-        *,
-        out: None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21G],
-    ) -> np.complex128: ...
-    @overload  # Nd ~complex, ?d +complex
-    def __call__(
-        self,
-        x1: list[complex] | _NestedSequence[list[complex]],
-        x2: _NestedSequence[complex],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21G],
-    ) -> npt.NDArray[np.complex128]: ...
-    @overload  # ?d +complex, Nd ~complex
-    def __call__(
-        self,
-        x1: _NestedSequence[complex],
-        x2: list[complex] | _NestedSequence[list[complex]],
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs21G],
-    ) -> npt.NDArray[np.complex128]: ...
     @overload  # 1d T@inexact, 1d +float | +f16
     def __call__[ScalarT: np.inexact | np.object_](
         self,
         x1: _Array1D[ScalarT],
-        x2: _Array1D[_to_f16] | Sequence[float | _to_f16],
+        x2: _Array1D[_to_f16] | Sequence[bool | _to_f16],
         /,
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> ScalarT: ...
     @overload  # 1d +float | +f16, 1d T@inexact
     def __call__[ScalarT: np.inexact | np.object_](
         self,
-        x1: _Array1D[_to_f16] | Sequence[float | _to_f16],
+        x1: _Array1D[_to_f16] | Sequence[bool | _to_f16],
         x2: _Array1D[ScalarT],
         /,
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> ScalarT: ...
-    @overload  # Nd T@inexact, ?d +float | +f16
+    @overload  # Nd T@inexact, ?d +f16
     def __call__[ScalarT: np.inexact | np.object_](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[_to_f16], float],
+        x2: _DualArrayLike[np.dtype[_to_f16], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +float | +f16, Nd T@inexact
+    @overload  # ?d +f16, Nd T@inexact
     def __call__[ScalarT: np.inexact | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[_to_f16], float],
+        x1: _DualArrayLike[np.dtype[_to_f16], bool],
         x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # 1d T@complexfloating, 1d +complex | +c64
+    @overload  # 1d T@complexfloating, 1d +c64
     def __call__[ScalarT: np.complexfloating | np.object_](
         self,
         x1: _Array1D[ScalarT],
-        x2: _Array1D[_to_c64] | Sequence[complex | _to_c64],
+        x2: _Array1D[_to_c64] | Sequence[bool | _to_c64],
         /,
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> ScalarT: ...
-    @overload  # 1d +complex | +c64, 1d T@complexfloating
+    @overload  # 1d +c64, 1d T@complexfloating
     def __call__[ScalarT: np.complexfloating | np.object_](
         self,
-        x1: _Array1D[_to_c64] | Sequence[complex | _to_c64],
+        x1: _Array1D[_to_c64] | Sequence[bool | _to_c64],
         x2: _Array1D[ScalarT],
         /,
         *,
         out: None = None,
         dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> ScalarT: ...
-    @overload  # Nd T@complexfloating, ?d +complex | +c64
+    @overload  # Nd T@complexfloating, ?d +c64
     def __call__[ScalarT: np.complexfloating | np.object_](
         self,
         x1: npt.NDArray[ScalarT],
-        x2: _DualArrayLike[np.dtype[_to_c64], complex],
+        x2: _DualArrayLike[np.dtype[_to_c64], bool],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ?d +complex | +c64, Nd T@complexfloating
+    @overload  # ?d +c64, Nd T@complexfloating
     def __call__[ScalarT: np.complexfloating | np.object_](
         self,
-        x1: _DualArrayLike[np.dtype[_to_c64], complex],
+        x1: _DualArrayLike[np.dtype[_to_c64], bool],
         x2: npt.NDArray[ScalarT],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # 1d _, 1d _, dtype=<known>
@@ -22030,6 +21555,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> ScalarT: ...
     @overload  # ?d _, ?d _, dtype=<known>
@@ -22041,6 +21568,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLike[ScalarT],
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[ScalarT]: ...
     @overload  # out=<given>
@@ -22052,6 +21581,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         out: OutT,
         *,
         dtype: npt.DTypeLike | None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> OutT: ...
     @overload  # 1d ?, 1d ?  (fallback)
@@ -22063,6 +21594,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: None = None,
         dtype: npt.DTypeLike | None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> Any: ...
     @overload  # ?d ?, ?d ?  (fallback)
@@ -22074,6 +21607,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: EllipsisType | None = None,
         dtype: npt.DTypeLike | None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> npt.NDArray[Any]: ...
     @overload  # x1.__array_ufunc__(self, "__call__", x1, x2, ...)
@@ -22085,6 +21620,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: object | None = None,
         dtype: npt.DTypeLike | None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> OutT: ...
     @overload  # x2.__array_ufunc__(self, "__call__", x1, x2, ...)
@@ -22096,6 +21633,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         *,
         out: object | None = None,
         dtype: npt.DTypeLike | None = None,
+        keepdims: bool = False,
+        axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> OutT: ...
 

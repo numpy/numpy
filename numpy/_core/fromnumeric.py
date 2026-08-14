@@ -9,7 +9,7 @@ import numpy as np
 from numpy._utils import set_module
 
 from . import _methods, multiarray as mu, numerictypes as nt, overrides, umath as um
-from ._multiarray_umath import _array_converter
+from ._multiarray_umath import _wrapfunc, _wrapit
 from .multiarray import asanyarray, asarray, concatenate, normalize_axis_index
 
 _dt_ = nt.sctype2char
@@ -34,35 +34,6 @@ _NoValue = np._NoValue
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
-
-
-# functions that are now methods
-def _wrapit(obj, method, *args, **kwds):
-    conv = _array_converter(obj)
-    # As this already tried the method, subok is maybe quite reasonable here
-    # but this follows what was done before. TODO: revisit this.
-    arr, = conv.as_arrays(subok=False)
-    result = getattr(arr, method)(*args, **kwds)
-
-    return conv.wrap(result, to_scalar=False)
-
-
-def _wrapfunc(obj, method, *args, **kwds):
-    bound = getattr(obj, method, None)
-    if bound is None:
-        return _wrapit(obj, method, *args, **kwds)
-
-    try:
-        return bound(*args, **kwds)
-    except TypeError:
-        # A TypeError occurs if the object does have such a method in its
-        # class, but its signature is not identical to that of NumPy's. This
-        # situation has occurred in the case of a downstream library like
-        # 'pandas'.
-        #
-        # Call _wrapit from within the except clause to ensure a potential
-        # exception has a traceback chain.
-        return _wrapit(obj, method, *args, **kwds)
 
 
 # The positional-only signature and unrolled _NoValue checks (rather than

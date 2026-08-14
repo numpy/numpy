@@ -268,6 +268,20 @@ messages (e.g., ``BUG:``, ``ENH:``, ``DOC:``). This enables automated labeling
 of your PR.
 
 
+.. _pull-request-limit:
+
+Open pull request limit
+=======================
+
+To keep the review queue manageable, GitHub is configured to allow only one
+open non-draft pull request per non-maintainer at a time. Draft pull requests
+do not count towards the limit. The maintainer team can, at its discretion,
+add contributors to the list of accounts allowed to open more pull requests
+at once. We liberally add contributors who attend the community and triage
+meetings, which alternate weekly on Wednesdays -- see the `community calendar
+<https://scientific-python.org/calendars/>`__ for times.
+
+
 .. _workflow_PR_timeline:
 
 Getting your PR reviewed
@@ -279,6 +293,9 @@ adding a comment on your PR (this will notify maintainers).
 
 If your PR is large or complicated, asking for input on the numpy-discussion
 mailing list may also be useful.
+
+Pull requests that go stale or do not meet our quality standards may be
+labeled by a triager and closed automatically by a bot.
 
 
 .. _rebasing-on-main:

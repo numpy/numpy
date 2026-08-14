@@ -53,6 +53,10 @@ typedef struct npy_interned_str_struct {
     PyObject *imag;
     PyObject *sort;
     PyObject *argsort;
+    PyObject *as_arrays;
+    PyObject *wrap;
+    PyObject *subok;
+    PyObject *to_scalar;
     PyObject *partition;
     PyObject *argpartition;
     PyObject *_set_dtype;
@@ -155,6 +159,13 @@ typedef struct npy_static_pydata_struct {
      * Used in the __array__ internals to avoid building a tuple inline
      */
     PyObject *kwnames_is_copy;
+
+    /*
+     * Used by _wrapit to call the array converter's as_arrays/wrap
+     * methods without building kwnames tuples inline
+     */
+    PyObject *wrapit_kwnames_subok;
+    PyObject *wrapit_kwnames_to_scalar;
 
     /*
      * Used in __imatmul__ to avoid building tuples inline

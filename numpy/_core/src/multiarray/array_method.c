@@ -1092,4 +1092,3 @@ NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type = {
     .tp_methods = boundarraymethod_methods,
     .tp_getset = boundarraymethods_getters,
 };
-

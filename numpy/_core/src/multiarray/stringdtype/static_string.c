@@ -828,6 +828,12 @@ NpyString_pack(npy_string_allocator *allocator,
 NPY_NO_EXPORT int
 NpyString_share_memory(const npy_packed_static_string *s1, npy_string_allocator *a1,
                        const npy_packed_static_string *s2, npy_string_allocator *a2) {
+    if (s1 == s2) {
+        // a packed string trivially shares memory with itself; this case
+        // needs to be checked explicitly since the checks below miss it
+        // for short and null strings
+        return 1;
+    }
     if (a1 != a2 ||
         is_short_string(s1) || is_short_string(s2) ||
         NpyString_isnull(s1) || NpyString_isnull(s2)) {
