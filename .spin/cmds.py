@@ -172,7 +172,6 @@ def test(*, parent_callback, pytest_args, tests, markexpr, parallel_threads, **k
     if kwargs.get('coverage'):
         coveragerc = curdir.parent / '.coveragerc'
         pytest_args = (f'--cov-config={coveragerc}',) + pytest_args
-        os.environ['COVERAGE_PROCESS_START'] = str(coveragerc)
         os.environ['COVERAGE_FILE'] = str(curdir.parent / '.coverage')
 
     kwargs['pytest_args'] = pytest_args

@@ -6,6 +6,7 @@ omit =
     */numpy/conftest.py
 disable_warnings = include-ignored
 parallel = True
+patch = subprocess
 concurrency =
     multiprocessing
     thread
