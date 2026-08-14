@@ -25,7 +25,8 @@ npy_default_sort_loop(PyArrayMethod_Context *context,
 
     if (cmp == NULL) {
         npy_gil_error(PyExc_ValueError,
-                      "descending sort not supported for this DType");
+                      "%s sort not supported for this DType",
+                      descending ? "descending" : "ascending");
         return -1;
     }
 
@@ -61,7 +62,8 @@ npy_default_argsort_loop(PyArrayMethod_Context *context,
 
     if (cmp == NULL) {
         npy_gil_error(PyExc_ValueError,
-                      "descending sort not supported for this DType");
+                      "%s sort not supported for this DType",
+                      descending ? "descending" : "ascending");
         return -1;
     }
 
