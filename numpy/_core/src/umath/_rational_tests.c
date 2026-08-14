@@ -391,7 +391,8 @@ PyRational_Check(PyObject* object) {
 
 static PyObject*
 PyRational_FromRational(PyTypeObject* type, rational x) {
-    PyRational* p = (PyRational*)PyType_GenericAlloc(type, 0);
+    allocfunc tp_alloc = (allocfunc)PyType_GetSlot(type, Py_tp_alloc);
+    PyRational* p = (PyRational*)tp_alloc(type, 0);
     if (p) {
         p->r = x;
     }
@@ -643,21 +644,19 @@ pyrational_nonzero(PyObject* self) {
     return rational_nonzero(x);
 }
 
+/* An instance keeps its type alive, so a heap type must be visited. */
+static int
+pyrational_traverse(PyObject* self, visitproc visit, void* arg) {
+    Py_VISIT(Py_TYPE(self));
+    return 0;
+}
+
 static void
 pyrational_dealloc(PyObject* self) {
-    /*
-     * A Python subclass of `rational` is a GC type and must be freed as one,
-     * so dispatch on the GC flag.  Heap types also own the reference
-     * `PyType_GenericAlloc` took.
-     */
     PyTypeObject* tp = Py_TYPE(self);
-    if (PyType_GetFlags(tp) & Py_TPFLAGS_HAVE_GC) {
-        PyObject_GC_UnTrack(self);
-        PyObject_GC_Del(self);
-    }
-    else {
-        PyObject_Free(self);
-    }
+    freefunc tp_free = (freefunc)PyType_GetSlot(tp, Py_tp_free);
+    PyObject_GC_UnTrack(self);
+    tp_free(self);
     Py_DECREF(tp);
 }
 
@@ -680,6 +679,9 @@ static PyGetSetDef pyrational_getset[] = {
 /* `tp_base` is only known after `import_array()`, so it is passed in init. */
 static PyType_Slot pyrational_slots[] = {
     {Py_tp_dealloc, pyrational_dealloc},
+    {Py_tp_traverse, pyrational_traverse},
+    /* Must be set: `np.generic`'s allocator is not GC-aware. */
+    {Py_tp_alloc, PyType_GenericAlloc},
     {Py_tp_repr, pyrational_repr},
     {Py_tp_hash, pyrational_hash},
     {Py_tp_str, pyrational_str},
@@ -705,7 +707,7 @@ static PyType_Slot pyrational_slots[] = {
 static PyType_Spec pyrational_spec = {
     .name = "numpy._core._rational_tests.rational",
     .basicsize = sizeof(PyRational),
-    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
     .slots = pyrational_slots,
 };
 
@@ -914,13 +916,15 @@ PyArray_DescrProto npyrational_descr_proto = {
  * casts, and ufunc loops can be reused for the new typenum/descr.
  */
 static PyType_Slot pyrational2_slots[] = {
+    /* `tp_traverse` is not inherited by a subtype that sets the GC flag. */
+    {Py_tp_traverse, pyrational_traverse},
     {0, NULL},
 };
 
 static PyType_Spec pyrational2_spec = {
     .name = "numpy._core._rational_tests.rational2",
     .basicsize = sizeof(PyRational),
-    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
     .slots = pyrational2_slots,
 };
 
