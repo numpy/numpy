@@ -1473,7 +1473,11 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
             goto fail;
         }
     }
-    /* `singleton` is opaque here, but calling a legacy DType returns it */
+    /*
+     * Under the Limited API `PyArray_DTypeMeta` is just `PyTypeObject`, so the
+     * `singleton` field (the DType's default descriptor) is unreachable.
+     * Calling a legacy DType returns that same instance, as a new reference.
+     */
     npyrational2_descr = (PyArray_Descr *)PyObject_CallNoArgs(
             (PyObject *)NPY_Rational2DType);
     if (npyrational2_descr == NULL) {
