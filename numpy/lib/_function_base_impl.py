@@ -46,6 +46,7 @@ from numpy._core.umath import (
     floor,
     frompyfunc,
     less_equal,
+    log,
     minimum,
     mod,
     not_equal,
@@ -3562,7 +3563,25 @@ def _i0_1(x):
 
 
 def _i0_2(x):
-    return exp(x) * _chbevl(32.0 / x - 2.0, _i0B) / sqrt(x)
+    # Cephes: I0(x) = exp(x) * y / sqrt(x) for x > 8, with y = chbevl(...).
+    # exp(x) overflows for x > log(dtype.max) (~709.78 for float64) even
+    # when the product is still finite (e.g. x = 713).  Keep the original
+    # formula below that threshold.  Above it, factor exp(x) = exp(x-s)*exp(s)
+    # with finite s so the Chebyshev factor is not logged (preserves accuracy).
+    y = _chbevl(32.0 / x - 2.0, _i0B)
+    overflow = log(np.finfo(x.dtype).max)
+    large = x > overflow
+    if not np.any(large):
+        return exp(x) * y / sqrt(x)
+    s = overflow - 1.0
+    if np.all(large):
+        return exp(x - s) * (exp(s) * y / sqrt(x))
+    out = empty(x.shape, dtype=x.dtype)
+    small = ~large
+    out[small] = exp(x[small]) * y[small] / sqrt(x[small])
+    xl = x[large]
+    out[large] = exp(xl - s) * (exp(s) * y[large] / sqrt(xl))
+    return out
 
 
 def _i0_dispatcher(x):

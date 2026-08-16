@@ -3016,6 +3016,17 @@ class Test_I0:
         assert_equal(i0_0.shape, (1,))
         assert_array_equal(np.i0([0.]), np.array([1.]))
 
+    def test_gh_32209_large_finite(self):
+        # exp(713) overflows float64, but I0(713) is still representable.
+        x = np.float64(713.0)
+        expected = np.float64(6.705128263670996e307)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", RuntimeWarning)
+            actual = i0(x)
+        assert np.isfinite(actual)
+        assert_allclose(actual, expected, rtol=1e-14, atol=0.0)
+        assert_allclose(i0(-x), actual, rtol=1e-14, atol=0.0)
+
     def test_non_array(self):
         a = np.arange(4)
 

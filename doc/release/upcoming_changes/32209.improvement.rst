@@ -1,0 +1,7 @@
+`numpy.i0` no longer overflows for large finite inputs
+------------------------------------------------------
+`numpy.i0` could return ``inf`` for large but representable arguments
+such as ``713.0``, because ``exp(x)`` overflowed before it was scaled
+by the Chebyshev factor. The large-``x`` path now avoids that
+intermediate overflow, so the result stays finite when it fits in
+float64.
