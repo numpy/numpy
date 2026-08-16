@@ -23,7 +23,7 @@ import pytest
 import numpy
 from numpy._utils import asunicode
 from numpy.f2py._backends._meson import MesonBackend
-from numpy.testing import IS_IOS, IS_WASM, temppath
+from numpy.testing import IS_IOS, IS_MESON_BROKEN_FOR_PYPY312, IS_WASM, temppath
 
 #
 # Check if compilers are available at all...
@@ -376,6 +376,8 @@ class F2PyTest:
     def setup_class(cls):
         if sys.platform == "win32":
             pytest.skip("Fails with MinGW64 Gfortran (Issue #9673)")
+        if IS_MESON_BROKEN_FOR_PYPY312:
+            pytest.skip("meson <= 1.12.0 cannot probe PyPy 3.12+ (missing distutils)")
         F2PyTest._has_c_compiler = has_c_compiler()
         F2PyTest._has_f77_compiler = has_f77_compiler()
         F2PyTest._has_f90_compiler = has_f90_compiler()
