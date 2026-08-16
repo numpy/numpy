@@ -1,0 +1,4 @@
+`np.vdot` of empty object arrays
+--------------------------------
+`np.vdot` on zero-length object arrays now returns ``0`` instead of
+``None``.
