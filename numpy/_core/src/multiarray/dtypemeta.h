@@ -127,6 +127,9 @@ static inline int NPY_DT_is_user_defined(PyArray_DTypeMeta *dtype) {
     // New-style user defined dtypes have a type_num of -1 also on DType
     return dtype->type_num == -1;
 }
+static inline int NPY_DT_has_finalize(PyArray_DTypeMeta *dtype) {
+    return NPY_DT_SLOTS(dtype)->finalize_descr != NULL;
+}
 
 /*
  * Macros for convenient classmethod calls, since these require
