@@ -683,6 +683,7 @@ static PyType_Slot pyrational_slots[] = {
     {Py_tp_traverse, pyrational_traverse},
     /* Must be set: `np.generic`'s allocator is not GC-aware. */
     {Py_tp_alloc, PyType_GenericAlloc},
+    {Py_tp_free, PyObject_GC_Del},
     {Py_tp_repr, pyrational_repr},
     {Py_tp_hash, pyrational_hash},
     {Py_tp_str, pyrational_str},
