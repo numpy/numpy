@@ -7839,6 +7839,19 @@ class TestVdot:
             assert_equal(np.vdot(a, b.copy('F')),
                          np.vdot(a.flatten(), b.flatten()))
 
+    def test_vdot_object_empty_is_zero(self):
+        # gh-31735: empty object vdot used to return None
+        cases = [
+            np.empty((0,), dtype=object),
+            np.empty((1, 0), dtype=object),
+            np.empty((0, 1), dtype=object),
+            np.empty((0, 0), dtype=object),
+        ]
+        for x in cases:
+            res = np.vdot(x, x)
+            assert_(np.isscalar(res))
+            assert_equal(res, 0)
+
 
 class TestDot:
     N = 7
