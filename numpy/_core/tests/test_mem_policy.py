@@ -9,7 +9,12 @@ import pytest
 
 import numpy as np
 from numpy._core.multiarray import get_handler_name
-from numpy.testing import HAS_SUBPROCESSES, IS_EDITABLE, extbuild
+from numpy.testing import (
+    HAS_SUBPROCESSES,
+    IS_EDITABLE,
+    IS_MESON_BROKEN_FOR_PYPY312,
+    extbuild,
+)
 
 
 @pytest.fixture
@@ -23,6 +28,8 @@ def get_module(tmp_path):
         pytest.skip('link fails on cygwin')
     if not HAS_SUBPROCESSES:
         pytest.skip("Can't build module on platform without subprocesses")
+    if IS_MESON_BROKEN_FOR_PYPY312:
+        pytest.skip("meson <= 1.12.0 cannot probe PyPy 3.12+ (missing distutils)")
     if IS_EDITABLE:
         pytest.skip("Can't build module for editable install")
 
