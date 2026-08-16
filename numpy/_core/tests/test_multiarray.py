@@ -11899,7 +11899,10 @@ class TestTextSignatures:
 
     @pytest.mark.parametrize(("func", "parameter_names"), [
         (np.arange, ("start_or_stop", "stop", "step", "dtype", "device", "like")),
-        (np.busdaycalendar, ("weekmask", "holidays")),
+        pytest.param(
+            np.busdaycalendar, ("weekmask", "holidays"),
+            marks=pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc"),
+        ),
         (np.char.compare_chararrays, ("a1", "a2", "cmp", "rstrip")),
         (np.datetime_data, ("dtype",)),
         (np.from_dlpack, ("x", "device", "copy")),
