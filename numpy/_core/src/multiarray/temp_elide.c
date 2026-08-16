@@ -59,7 +59,7 @@
  * supported too by using the appropriate Windows APIs.
  */
 
-#if defined HAVE_BACKTRACE && defined HAVE_DLFCN_H
+#if defined HAVE_BACKTRACE && defined HAVE_DLFCN_H && ! defined PYPY_VERSION
 
 #include <feature_detection_misc.h>
 
@@ -113,9 +113,9 @@ find_addr(void * addresses[], npy_intp naddr, void * addr)
 static int
 check_unique_temporary(PyObject *lhs)
 {
-#if PY_VERSION_HEX == 0x030E00A7
+#if PY_VERSION_HEX == 0x030E00A7 && !defined(PYPY_VERSION)
 #error "NumPy is broken on CPython 3.14.0a7, please update to a newer version"
-#elif PY_VERSION_HEX >= 0x030E00B1
+#elif PY_VERSION_HEX >= 0x030E00B1 && !defined(PYPY_VERSION)
     // Python 3.14 changed the semantics for reference counting temporaries
     // see https://github.com/python/cpython/issues/133164
     return PyUnstable_Object_IsUniqueReferencedTemporary(lhs);

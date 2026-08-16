@@ -8,7 +8,7 @@ import sysconfig
 import pytest
 
 import numpy as np
-from numpy.testing import HAS_SUBPROCESSES, IS_EDITABLE, NOGIL_BUILD
+from numpy.testing import HAS_SUBPROCESSES, IS_EDITABLE, IS_PYPY, NOGIL_BUILD
 from numpy.testing._private.utils import run_subprocess
 
 # This import is copied from random.tests.test_extending
@@ -214,6 +214,7 @@ def limited_api_cython_module_names():
     NOGIL_BUILD,
     reason="Py_GIL_DISABLED builds do not support abi3",
 )
+@pytest.mark.skipif(IS_PYPY, reason="no support for limited API in PyPy")
 @pytest.mark.parametrize("module_name", limited_api_module_names())
 def test_limited_api_abi3(install_temp, module_name):
     mod = importlib.import_module(module_name)
@@ -234,6 +235,7 @@ def test_limited_api_abi3(install_temp, module_name):
     NOGIL_BUILD,
     reason="Py_GIL_DISABLED builds do not support abi3",
 )
+@pytest.mark.skipif(IS_PYPY, reason="no support for limited API in PyPy")
 @pytest.mark.parametrize("module_name", limited_api_cython_module_names())
 def test_limited_api_cython(install_temp, module_name):
     mod = importlib.import_module(module_name)

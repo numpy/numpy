@@ -88,6 +88,12 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
             return -1;
         }
         if (refcheck) {
+#ifdef PYPY_VERSION
+            PyErr_SetString(PyExc_ValueError,
+                    "cannot resize an array with refcheck=True on PyPy.\n"
+                    "Use the np.resize function or refcheck=False");
+            return -1;
+#else
 #if PY_VERSION_HEX >= 0x030E00B0
             // Python 3.14 changed reference counting semantics for function-
             // local variables. There is no way to tell if the calling function
@@ -112,6 +118,7 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
                 PyErr_SetString(PyExc_ValueError, msg);
                 return -1;
             }
+#endif /* PYPY_VERSION */
         }
         /* Reallocate space if needed - allocating 0 is forbidden */
         PyObject *handler = PyArray_HANDLER(self);

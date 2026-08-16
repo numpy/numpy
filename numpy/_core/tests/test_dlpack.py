@@ -3,7 +3,7 @@ import sys
 import pytest
 
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import IS_PYPY, assert_array_equal
 
 
 def new_and_old_dlpack():
@@ -17,6 +17,7 @@ def new_and_old_dlpack():
 
 
 class TestDLPack:
+    @pytest.mark.skipif(IS_PYPY, reason="PyPy can't get refcounts.")
     @pytest.mark.parametrize("max_version", [(0, 0), None, (1, 0), (100, 3)])
     def test_dunder_dlpack_refcount(self, max_version):
         x = np.arange(5)
@@ -53,6 +54,7 @@ class TestDLPack:
         with pytest.raises(BufferError):
             np.from_dlpack(z)
 
+    @pytest.mark.skipif(IS_PYPY, reason="PyPy can't get refcounts.")
     @pytest.mark.parametrize("arr", new_and_old_dlpack())
     def test_from_dlpack_refcount(self, arr):
         arr = arr.copy()
@@ -294,6 +296,7 @@ class TestScalarDLPack:
         x = np.float64(2)
         assert x.__dlpack_device__() == (1, 0)
 
+    @pytest.mark.skipif(IS_PYPY, reason="PyPy can't get refcounts.")
     def test_dunder_dlpack_refcount(self):
         x = np.float64(2)
         y = x.__dlpack__(max_version=(1, 0))

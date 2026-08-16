@@ -11,7 +11,7 @@ import pytest
 
 import numpy as np
 from numpy._core import sctypes
-from numpy.testing import assert_equal, assert_raises
+from numpy.testing import HAS_REFCOUNT, IS_PYPY, assert_equal, assert_raises
 from numpy.testing._private.utils import LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE
 
 
@@ -261,9 +261,10 @@ class TestByteswap:
         assert swapped["b"] is sentinel
         assert swapped["a"] == np.int32(1).byteswap()
 
-        count = sys.getrefcount(sentinel)
-        scalar.byteswap()
-        assert sys.getrefcount(sentinel) == count
+        if HAS_REFCOUNT:
+            count = sys.getrefcount(sentinel)
+            scalar.byteswap()
+            assert sys.getrefcount(sentinel) == count
 
     @pytest.mark.parametrize("scalar", [
         np.bytes_(b""),
@@ -299,6 +300,7 @@ def test_array_wrap(scalar):
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
 class TestSignature:
     # test that scalar types have a valid __text_signature__ or __signature__ set
     @pytest.mark.parametrize(

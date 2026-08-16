@@ -19,6 +19,7 @@ from numpy.lib.stride_tricks import as_strided
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
+    IS_PYPY,
     IS_WASM,
     _assert_valid_refcount,
     assert_,
@@ -1301,9 +1302,15 @@ class TestRegression:
                 for k in range(3):
                     # Try to ensure that x->data contains non-zero floats
                     x = np.array([123456789e199], dtype=np.float64)
-                    x.resize((m, 0))
+                    if IS_PYPY:
+                        x.resize((m, 0), refcheck=False)
+                    else:
+                        x.resize((m, 0))
                     y = np.array([123456789e199], dtype=np.float64)
-                    y.resize((0, n))
+                    if IS_PYPY:
+                        y.resize((0, n), refcheck=False)
+                    else:
+                        y.resize((0, n))
 
                     # `dot` should just return zero (m, n) matrix
                     z = np.dot(x, y)

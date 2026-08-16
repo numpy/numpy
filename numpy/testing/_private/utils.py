@@ -40,6 +40,7 @@ __all__ = [
         'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
         'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
+        'IS_MESON_BROKEN_FOR_PYPY312',
         'HAS_REFCOUNT', 'IS_IOS', 'IS_WASM',
         'suppress_warnings', 'assert_array_compare',
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'HAS_SUBPROCESSES',
@@ -105,6 +106,14 @@ else:
 IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 IS_IOS = sys.platform == "ios"
 IS_PYPY = sys.implementation.name == 'pypy'
+try:
+    from mesonbuild.coredata import version as _meson_version
+    from numpy._utils import _pep440
+    IS_MESON_BROKEN_FOR_PYPY312 = (
+        IS_PYPY and _pep440.parse(_meson_version) <= _pep440.parse('1.12.0')
+    )
+except ImportError:
+    IS_MESON_BROKEN_FOR_PYPY312 = False
 IS_PYSTON = hasattr(sys, "pyston_version_info")
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
 HAS_SUBPROCESSES = getattr(subprocess, "_can_fork_exec", True) and sys.platform not in [

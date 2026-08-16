@@ -1295,7 +1295,7 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
  * definition of `_NPY_OPAQUE_FIRST_FIELD`.
  */
 
-#if SIZEOF_VOID_P != 4  // not a 32bit build
+#if SIZEOF_VOID_P != 4 && !defined(PYPY_VERSION)  // not a 32bit build
 /*
  * If this assert fails then Python changed the sizeof(PyObject). If we simply remove the
  * assert we lose flexibility to add 16byte aligned fields to the stable ABI fields.
