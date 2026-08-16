@@ -1571,13 +1571,15 @@ def polyroots(c):
 
     Notes
     -----
-    The root estimates are obtained as the eigenvalues of the companion
-    matrix, Roots far from the origin of the complex plane may have large
-    errors due to the numerical instability of the power series for such
-    values. Roots with multiplicity greater than 1 will also show larger
-    errors as the value of the series near such points is relatively
-    insensitive to errors in the roots. Isolated roots near the origin can
-    be improved by a few iterations of Newton's method.
+    For degrees higher than two the root estimates are obtained as the
+    eigenvalues of the companion matrix, Roots far from the origin of the
+    complex plane may have large errors due to the numerical instability
+    of the power series for such values. Roots with multiplicity greater
+    than 1 will also show larger errors as the value of the series near
+    such points is relatively insensitive to errors in the roots.
+    Isolated roots near the origin can be improved by a few iterations of
+    Newton's method. Linear and quadratic polynomials use explicit,
+    numerically stable formulas instead.
 
     Examples
     --------
@@ -1597,14 +1599,39 @@ def polyroots(c):
         return np.array([], dtype=c.dtype)
     if len(c) == 2:
         return np.array([-c[0] / c[1]])
-
-    m = polycompanion(c)
-    r = np.linalg.eigvals(m)
+    if len(c) == 3:
+        # Explicit quadratic formula, using the standard trick of
+        # picking the sign of the square root that avoids cancellation
+        # in computing one root, then getting the other root from the
+        # product-of-roots relation c0/c2 = r0*r1. Coefficients are
+        # normalized by their largest magnitude first: this doesn't
+        # change the roots, but keeps c1**2 and c2*c0 well away from
+        # overflow/underflow for polynomials with huge or tiny
+        # coefficients.
+        with np.errstate(over='ignore', under='ignore', divide='ignore',
+                          invalid='ignore'):
+            c0, c1, c2 = c / np.max(np.abs(c))
+            d = np.emath.sqrt(c1 * c1 - 4 * c2 * c0)
+            if np.real(np.conj(c1) * d) < 0:
+                d = -d
+            q = -0.5 * (c1 + d)
+            r = (np.array([0, -c1 / c2]) if q == 0
+                 else np.array([q / c2, c0 / q]))
+        if not np.all(np.isfinite(r)):
+            # matches the error the general eigenvalue path below raises
+            # when the companion matrix isn't finite: a coefficient
+            # spread this extreme means at least one true root doesn't
+            # fit in the input's floating-point range.
+            from numpy.linalg import LinAlgError
+            raise LinAlgError("Array must not contain infs or NaNs")
+    else:
+        m = polycompanion(c)
+        r = np.linalg.eigvals(m)
     r.sort()
 
     # backwards compat: return real values if possible
     from numpy.linalg._linalg import _to_real_if_imag_zero
-    r = _to_real_if_imag_zero(r, m)
+    r = _to_real_if_imag_zero(r, c)
     return r
 
 
