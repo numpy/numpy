@@ -272,6 +272,7 @@ simd_binary_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip1, npy_intp sip1,
  * #sfx = s8, u8, s16, u16, s32, u32, s64, u64, f32, f64#
  * #simd_chk = NPY_SIMD*8, NPY_SIMD_F32, NPY_SIMD_F64#
  * #is_fp = 0*8, 1, 1#
+ * #has_loadn = 0, 0, 0, 0, 1, 1, 1, 1, 1, 1#
  * #scalar_sfx = i*8, f, d#
  */
 /**begin repeat1
@@ -529,15 +530,100 @@ simd_reduce_outer_@fused@_@sfx@(const npyv_lanetype_@sfx@ *ip,
     }
 }
 
-// non-contiguous for float 32/64-bit memory access
-// Note, unlike the single-op loop above this is enabled on Arm as well: the
-// fused loop replaces two passes over the inputs, which outweighs the cost of
-// the non-contiguous vector load/store.
-// TODO: the integer types have no such loop either here or above and fall back
-// to scalars on strided input.  int64 is then ~2x slower than two passes of
-// `minimum`/`maximum`, but int32 is not, so the missing loop is not the whole
-// story and the cause has yet to be pinned down.
-#if @is_fp@
+// contiguous accumulators, strided input, reducing over an outer axis.
+// A copy of simd_reduce_outer with the input loads made non-contiguous.  Same
+// reasoning as the strided simd_binary_@fused@ above: the two accumulators make
+// the fused reduce too complex for the compiler to auto-vectorize, unlike the
+// single-output `minimum`/`maximum` reduce, so it is written by hand.  Gated on
+// Arm, the only place it is measured; enabling it on x86 would need measuring.
+#if @has_loadn@ && defined(NPY_HAVE_NEON)
+static inline void
+simd_reduce_outern_@fused@_@sfx@(const npyv_lanetype_@sfx@ *ip, npy_intp sip,
+                                 npyv_lanetype_@sfx@ *io_min, npyv_lanetype_@sfx@ *io_max, npy_intp len)
+{
+    // NPY_SIMD_WIDTH == 128 on Arm
+    const int vectorsPerLoop = 6;
+    const int elemPerVector = npyv_nlanes_@sfx@;
+    int elemPerLoop = vectorsPerLoop * elemPerVector;
+
+    npy_intp i = 0;
+
+    for (; (i+elemPerLoop) <= len; i += elemPerLoop) {
+        npyv_@sfx@ v0 = npyv_loadn_@sfx@(&ip[(i + 0 * elemPerVector) * sip], sip);
+        npyv_@sfx@ v1 = npyv_loadn_@sfx@(&ip[(i + 1 * elemPerVector) * sip], sip);
+        npyv_@sfx@ v2 = npyv_loadn_@sfx@(&ip[(i + 2 * elemPerVector) * sip], sip);
+        npyv_@sfx@ v3 = npyv_loadn_@sfx@(&ip[(i + 3 * elemPerVector) * sip], sip);
+        npyv_@sfx@ v4 = npyv_loadn_@sfx@(&ip[(i + 4 * elemPerVector) * sip], sip);
+        npyv_@sfx@ v5 = npyv_loadn_@sfx@(&ip[(i + 5 * elemPerVector) * sip], sip);
+        npyv_@sfx@ a0 = npyv_load_@sfx@(&io_min[i + 0 * elemPerVector]);
+        npyv_@sfx@ a1 = npyv_load_@sfx@(&io_min[i + 1 * elemPerVector]);
+        npyv_@sfx@ a2 = npyv_load_@sfx@(&io_min[i + 2 * elemPerVector]);
+        npyv_@sfx@ a3 = npyv_load_@sfx@(&io_min[i + 3 * elemPerVector]);
+        npyv_@sfx@ a4 = npyv_load_@sfx@(&io_min[i + 4 * elemPerVector]);
+        npyv_@sfx@ a5 = npyv_load_@sfx@(&io_min[i + 5 * elemPerVector]);
+        npyv_@sfx@ m0 = V_MIN(a0, v0);
+        npyv_@sfx@ m1 = V_MIN(a1, v1);
+        npyv_@sfx@ m2 = V_MIN(a2, v2);
+        npyv_@sfx@ m3 = V_MIN(a3, v3);
+        npyv_@sfx@ m4 = V_MIN(a4, v4);
+        npyv_@sfx@ m5 = V_MIN(a5, v5);
+        npyv_store_@sfx@(&io_min[i + 0 * elemPerVector], m0);
+        npyv_store_@sfx@(&io_min[i + 1 * elemPerVector], m1);
+        npyv_store_@sfx@(&io_min[i + 2 * elemPerVector], m2);
+        npyv_store_@sfx@(&io_min[i + 3 * elemPerVector], m3);
+        npyv_store_@sfx@(&io_min[i + 4 * elemPerVector], m4);
+        npyv_store_@sfx@(&io_min[i + 5 * elemPerVector], m5);
+        npyv_@sfx@ b0 = npyv_load_@sfx@(&io_max[i + 0 * elemPerVector]);
+        npyv_@sfx@ b1 = npyv_load_@sfx@(&io_max[i + 1 * elemPerVector]);
+        npyv_@sfx@ b2 = npyv_load_@sfx@(&io_max[i + 2 * elemPerVector]);
+        npyv_@sfx@ b3 = npyv_load_@sfx@(&io_max[i + 3 * elemPerVector]);
+        npyv_@sfx@ b4 = npyv_load_@sfx@(&io_max[i + 4 * elemPerVector]);
+        npyv_@sfx@ b5 = npyv_load_@sfx@(&io_max[i + 5 * elemPerVector]);
+        npyv_@sfx@ x0 = V_MAX(b0, v0);
+        npyv_@sfx@ x1 = V_MAX(b1, v1);
+        npyv_@sfx@ x2 = V_MAX(b2, v2);
+        npyv_@sfx@ x3 = V_MAX(b3, v3);
+        npyv_@sfx@ x4 = V_MAX(b4, v4);
+        npyv_@sfx@ x5 = V_MAX(b5, v5);
+        npyv_store_@sfx@(&io_max[i + 0 * elemPerVector], x0);
+        npyv_store_@sfx@(&io_max[i + 1 * elemPerVector], x1);
+        npyv_store_@sfx@(&io_max[i + 2 * elemPerVector], x2);
+        npyv_store_@sfx@(&io_max[i + 3 * elemPerVector], x3);
+        npyv_store_@sfx@(&io_max[i + 4 * elemPerVector], x4);
+        npyv_store_@sfx@(&io_max[i + 5 * elemPerVector], x5);
+    }
+    for (; (i+elemPerVector) <= len; i += elemPerVector) {
+        npyv_@sfx@ v = npyv_loadn_@sfx@(ip + i * sip, sip);
+        npyv_@sfx@ a0 = npyv_load_@sfx@(io_min + i);
+        npyv_@sfx@ m0 = V_MIN(a0, v);
+        npyv_store_@sfx@(io_min + i, m0);
+        npyv_@sfx@ b0 = npyv_load_@sfx@(io_max + i);
+        npyv_@sfx@ x0 = V_MAX(b0, v);
+        npyv_store_@sfx@(io_max + i, x0);
+    }
+    // Scalar - finish up any remaining iterations
+    for (; i < len; ++i) {
+        const npyv_lanetype_@sfx@ v = ip[i * sip];
+        io_min[i] = SCALAR_MIN(io_min[i], v);
+        io_max[i] = SCALAR_MAX(io_max[i], v);
+    }
+}
+#endif
+
+// non-contiguous memory access for 32/64-bit types.
+//
+// The single-op loop above only has this for float on non-Arm; elsewhere it
+// leaves strided input to the scalar loop, relying on the C compiler to
+// auto-vectorize it.  That works for `minimum`/`maximum` because their loop has
+// a single output, but the compiler will not auto-vectorize the fused loop: its
+// two output streams (min and max) defeat the alias analysis, so without this
+// kernel strided minmax stays truly scalar and runs several times slower than
+// two auto-vectorized `minimum`/`maximum` passes.  Hence it is provided here
+// more widely than the single-op loop -- on Arm (where the single-op float loop
+// is disabled) and for the integer types (which the single-op loop never
+// vectorizes).  The integer variant is gated on Arm as that is the only place
+// it is measured; extending it to x86 would need measuring there.
+#if @is_fp@ || (@has_loadn@ && defined(NPY_HAVE_NEON))
 static inline void
 simd_binary_@fused@_@sfx@(const npyv_lanetype_@sfx@ *ip1, npy_intp sip1,
                           const npyv_lanetype_@sfx@ *ip2, npy_intp sip2,
@@ -836,8 +922,9 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
             );
             goto clear_fp;
         }
-    // see the note on simd_binary_@fused@: enabled on Arm as well
-    #if @is_fp@
+    // strided inputs/outputs; see the note on simd_binary_@fused@ for why this
+    // is hand-vectorized more widely than the single-op loop
+    #if @is_fp@ || ((NPY_BITSOF_@BTYPE@ == 32 || NPY_BITSOF_@BTYPE@ == 64) && defined(NPY_HAVE_NEON))
         if (TO_SIMD_SFX(npyv_loadable_stride)(is1) &&
             TO_SIMD_SFX(npyv_loadable_stride)(is2) &&
             TO_SIMD_SFX(npyv_storable_stride)(os1) &&
@@ -911,16 +998,25 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@_reduce)
             (const STYPE*)data[2], (STYPE*)data[3], (STYPE*)data[4], n);
         goto done;
     }
-    // reduce over an outer axis
-    // TODO: this requires a contiguous inner axis; when it is strided (e.g.
-    // `a[:, ::2]` reduced over axis 0) the scalar tail below is ~15% slower
-    // than two passes.  A `loadn`/`storen` variant would need measuring on x86.
+    // reduce over an outer axis with a contiguous inner axis
     if (strides[0] == elsize && strides[1] == elsize && strides[2] == elsize
             && strides[3] == elsize && strides[4] == elsize) {
         TO_SIMD_SFX(simd_reduce_outer_@fused@)(
             (const STYPE*)data[2], (STYPE*)data[3], (STYPE*)data[4], n);
         goto done;
     }
+    // reduce over an outer axis with a strided inner axis (e.g. `a[:, ::2]`
+    // reduced over axis 0); Arm/32-64-bit only, see simd_reduce_outern
+#if (NPY_BITSOF_@BTYPE@ == 32 || NPY_BITSOF_@BTYPE@ == 64) && defined(NPY_HAVE_NEON)
+    if (strides[0] == elsize && strides[1] == elsize
+            && strides[3] == elsize && strides[4] == elsize
+            && TO_SIMD_SFX(npyv_loadable_stride)(strides[2])) {
+        TO_SIMD_SFX(simd_reduce_outern_@fused@)(
+            (const STYPE*)data[2], strides[2] / elsize,
+            (STYPE*)data[3], (STYPE*)data[4], n);
+        goto done;
+    }
+#endif
 #endif // TO_SIMD_SFX
     {
     char *acc_min = data[0], *acc_max = data[1], *x = data[2];
