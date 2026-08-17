@@ -226,7 +226,13 @@ conveniently be installed with::
 Tests for a module should ideally cover all code in that module,
 i.e., statement coverage should be at 100%.
 
-To measure the test coverage, run::
+Coverage for the Python and the compiled C sources is collected by separate
+tools and controlled by separate flags of ``spin test``.
+
+Python coverage
+~~~~~~~~~~~~~~~
+
+To measure the coverage of NumPy's Python sources, run::
 
   $ spin test --coverage
 
@@ -234,6 +240,29 @@ This will create a report in ``html`` format at ``build/coverage``, which can be
 viewed with your browser, e.g.::
 
   $ firefox build/coverage/index.html
+
+C coverage
+~~~~~~~~~~
+
+To measure the coverage of NumPy's compiled C sources with ``gcov``, run::
+
+  $ spin test --gcov
+
+This rebuilds the source code with coverage instrumentation, runs the
+tests, and writes the report to ``build/meson-logs/coveragereport``. Coverage
+reports cannot be generated for editable installs.
+
+The report format is selected with ``--gcov-format``, which defaults to
+``html``. The supported formats are ``html``, ``xml``, ``text``, and
+``sonarqube``::
+
+  $ spin test --gcov --gcov-format=text
+
+Generating a C coverage report requires the corresponding coverage tools (such
+as ``gcovr`` or ``lcov``) to be installed; ``spin`` reports which dependencies
+are missing. If the instrumented build is not found, rebuild first with::
+
+  $ spin build --clean --gcov
 
 .. _building-docs:
 
