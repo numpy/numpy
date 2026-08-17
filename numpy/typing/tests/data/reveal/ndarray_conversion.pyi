@@ -68,10 +68,13 @@ assert_type(i0_nd.byteswap(True), npt.NDArray[np.int_])
 assert_type(i0_nd.copy(), npt.NDArray[np.int_])
 assert_type(i0_nd.copy("C"), npt.NDArray[np.int_])
 
-assert_type(i0_nd.view(), npt.NDArray[np.int_])
-assert_type(i0_nd.view(np.float64), npt.NDArray[np.float64])
-assert_type(i0_nd.view(float), npt.NDArray[Any])
-assert_type(i0_nd.view(np.float64, np.matrix), np.matrix[Any, Any])
+assert_type(u2_1d.view(), np.ndarray[tuple[int], np.dtype[np.uint16]])
+assert_type(i4_2d.view(np.float64), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(f8_3d.view(float), np.ndarray[tuple[int, int, int], np.dtype[Any]])
+assert_type(u2_1d.view(np.memmap), np.memmap[tuple[int], np.dtype[np.uint16]])
+assert_type(u2_1d.view(type=np.memmap), np.memmap[tuple[int], np.dtype[np.uint16]])
+assert_type(i4_2d.view(np.ma.MaskedArray), np.ma.MaskedArray[tuple[int, int], np.dtype[np.int32]])
+assert_type(i4_2d.view(type=np.ma.MaskedArray), np.ma.MaskedArray[tuple[int, int], np.dtype[np.int32]])
 
 # getfield
 assert_type(i0_nd.getfield("float"), npt.NDArray[Any])
