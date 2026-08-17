@@ -2371,12 +2371,44 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def resize(self, /, *new_shape: SupportsIndex, refcheck: py_bool = True) -> None: ...
 
     # keep in sync with `ma.MaskedArray.squeeze`
+    @overload  # 0d (the generic shape catches `tuple[Any, ...]`)
+    def squeeze[ShapeT: _0D, DTypeT: _dtype](
+        self: ndarray[ShapeT, DTypeT],
+        /,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
+    ) -> ndarray[ShapeT, DTypeT]: ...
+    @overload  # 1d, axis=<single>
+    def squeeze[DTypeT: _dtype](
+        self: ndarray[_1D, DTypeT],
+        /,
+        axis: SupportsIndex | tuple[SupportsIndex],
+    ) -> ndarray[_0D, DTypeT]: ...
+    @overload  # 2d, axis=<single>
+    def squeeze[DTypeT: _dtype](
+        self: ndarray[_2D, DTypeT],
+        /,
+        axis: SupportsIndex | tuple[SupportsIndex],
+    ) -> ndarray[_1D, DTypeT]: ...
+    @overload  # 3d, axis=<single>
+    def squeeze[DTypeT: _dtype](
+        self: ndarray[_3D, DTypeT],
+        /,
+        axis: SupportsIndex | tuple[SupportsIndex],
+    ) -> ndarray[_2D, DTypeT]: ...
+    @overload  # 4d, axis=<single>
+    def squeeze[DTypeT: _dtype](
+        self: ndarray[_4D, DTypeT],
+        /,
+        axis: SupportsIndex | tuple[SupportsIndex],
+    ) -> ndarray[_3D, DTypeT]: ...
+    @overload  # Nd
     def squeeze(
         self,
         /,
-        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = ...,
+        axis: SupportsIndex | tuple[SupportsIndex] | None = None,
     ) -> ndarray[_AnyShape, _DTypeT_co]: ...
 
+    #
     def swapaxes(self, axis1: SupportsIndex, axis2: SupportsIndex, /) -> Self: ...
 
     @overload
