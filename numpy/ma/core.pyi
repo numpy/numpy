@@ -2870,10 +2870,41 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
 
     # keep in sync with `ndarray.squeeze`
     @override
+    @overload  # 0d (the generic shape catches `tuple[Any, ...]`)
+    def squeeze[ShapeT: tuple[()], DTypeT: np.dtype](
+        self: MaskedArray[ShapeT, DTypeT],
+        /,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
+    ) -> MaskedArray[ShapeT, DTypeT]: ...
+    @overload  # 1d, axis=<single>
+    def squeeze[DTypeT: dtype](
+        self: MaskedArray[tuple[int], DTypeT],
+        /,
+        axis: SupportsIndex | tuple[SupportsIndex],
+    ) -> MaskedArray[tuple[()], DTypeT]: ...
+    @overload  # 2d, axis=<single>
+    def squeeze[DTypeT: dtype](
+        self: MaskedArray[tuple[int, int], DTypeT],
+        /,
+        axis: SupportsIndex | tuple[SupportsIndex],
+    ) -> MaskedArray[tuple[int], DTypeT]: ...
+    @overload  # 3d, axis=<single>
+    def squeeze[DTypeT: np.dtype](
+        self: MaskedArray[tuple[int, int, int], DTypeT],
+        /,
+        axis: SupportsIndex | tuple[SupportsIndex],
+    ) -> MaskedArray[tuple[int, int], DTypeT]: ...
+    @overload  # 4d, axis=<single>
+    def squeeze[DTypeT: dtype](
+        self: MaskedArray[tuple[int, int, int, int], DTypeT],
+        /,
+        axis: SupportsIndex | tuple[SupportsIndex],
+    ) -> MaskedArray[tuple[int, int, int], DTypeT]: ...
+    @overload  # Nd
     def squeeze(
         self,
         /,
-        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex] | None = None,
     ) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
 
     #
