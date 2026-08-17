@@ -5790,8 +5790,8 @@ add_newdoc('numpy._core', 'ufunc', ('segmented_reduce',
     >>> np.add.segmented_reduce(a, [0, 4], [4, 8])
     array([ 6, 22])
 
-    Consecutive segments are given by an array of offsets, such as the
-    ``indptr`` of a CSR matrix:
+    Consecutive segments are commonly stored as a single array of offsets,
+    with the i-th segment given by ``offsets[i]:offsets[i + 1]``:
 
     >>> offsets = np.array([0, 4, 8])
     >>> np.add.segmented_reduce(a, offsets[:-1], offsets[1:])
