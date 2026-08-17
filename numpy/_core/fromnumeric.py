@@ -3489,7 +3489,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
 
 def _minmax_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
                        where=None):
-    return (a, out)
+    return (a, *out) if type(out) is tuple else (a, out)
 
 
 @array_function_dispatch(

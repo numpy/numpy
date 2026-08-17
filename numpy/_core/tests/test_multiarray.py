@@ -6151,6 +6151,16 @@ class TestMinMax:
         assert_equal(out1, np.min(a, axis=0))
         assert_equal(out2, np.max(a, axis=0))
 
+    def test_minmax_out_array_function(self):
+        # the arrays inside the `out` tuple must take part in dispatching
+        class MyArray:
+            def __array_function__(self, *args, **kwargs):
+                return "handled"
+
+        a = np.array([1, 2, 3])
+        assert_equal(np.minmax(a, out=(MyArray(), MyArray())), "handled")
+        assert_equal(np.minmax(a, out=MyArray()), "handled")
+
     def test_minmax_initial_and_where(self):
         a = np.array([[-50], [10]])
         assert_equal(np.minmax(a, axis=-1, initial=0), ([-50, 0], [0, 10]))

@@ -420,6 +420,11 @@ BOOL_minimummaximum(char **args, npy_intp const *dimensions, npy_intp const *ste
     }
 }
 
+/*
+ * TODO: for booleans `minimum`/`maximum` are `logical_and`/`logical_or`, whose
+ * reduce loops are vectorized, so `np.min`/`np.max` still beat this scalar loop
+ * on input that does not exit early.  Vectorizing it would close that gap.
+ */
 NPY_NO_EXPORT int
 BOOL_minimummaximum_reduce(PyArrayMethod_Context *NPY_UNUSED(context),
         char *const *data, npy_intp const *dimensions,
@@ -428,10 +433,16 @@ BOOL_minimummaximum_reduce(PyArrayMethod_Context *NPY_UNUSED(context),
     npy_intp n = dimensions[0];
     char *acc_min = data[0], *acc_max = data[1], *x = data[2];
     char *out_min = data[3], *out_max = data[4];
+    /* only scalar accumulators (contiguous axis) may bail out early */
+    const int scalar_acc = strides[3] == 0 && strides[4] == 0;
     for (npy_intp k = 0; k < n; k++) {
         const npy_bool v = *(npy_bool *)x;
         *(npy_bool *)out_min = (*(npy_bool *)acc_min) && v;
         *(npy_bool *)out_max = (*(npy_bool *)acc_max) || v;
+        /* no further value can change a False minimum or a True maximum */
+        if (scalar_acc && !*(npy_bool *)out_min && *(npy_bool *)out_max) {
+            return 0;
+        }
         acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
         out_min += strides[3]; out_max += strides[4];
     }
@@ -850,9 +861,13 @@ NPY_NO_EXPORT void
             lo = in2;
             hi = in2;
         }
+        else if (in1 < in2) {
+            lo = in1;
+            hi = in2;
+        }
         else {
-            lo = (in1 < in2) ? in1 : in2;
-            hi = (in1 > in2) ? in1 : in2;
+            lo = in2;
+            hi = in1;
         }
         *((@type@ *)op1) = lo;
         *((@type@ *)op2) = hi;
