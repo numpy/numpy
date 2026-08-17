@@ -27,10 +27,6 @@ type _CastingSafe = Literal["no", "equiv", "safe", "same_kind"]
 type _CastingUnsafe = Literal["unsafe"]
 
 # TODO: Properly handle the `casting`-based combinatorics
-# TODO: We need to evaluate the content `__subscripts` in order
-# to identify whether or an array or scalar is returned. At a cursory
-# glance this seems like something that can quite easily be done with
-# a mypy plugin.
 # Something like `is_scalar = bool(__subscripts.partition("->")[-1])`
 @overload
 def einsum(

@@ -17,6 +17,8 @@ from typing_extensions import CapsuleType
 import numpy as np
 import numpy.typing as npt
 
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+
 class SubClass(np.ndarray[tuple[Any, ...], np.dtype[np.object_]]): ...
 
 f8: np.float64
@@ -32,6 +34,7 @@ AR_f8: npt.NDArray[np.float64]
 AR_i8: npt.NDArray[np.int64]
 AR_u1: npt.NDArray[np.uint8]
 AR_c8: npt.NDArray[np.complex64]
+AR_c16: npt.NDArray[np.complex128]
 AR_m: npt.NDArray[np.timedelta64]
 AR_U: npt.NDArray[np.str_]
 AR_V: npt.NDArray[np.void]
@@ -39,6 +42,7 @@ AR_V: npt.NDArray[np.void]
 AR_f8_1d: np.ndarray[tuple[int], np.dtype[np.float64]]
 AR_f8_2d: np.ndarray[tuple[int, int], np.dtype[np.float64]]
 AR_f8_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float64]]
+AR_f8_4d: np.ndarray[tuple[int, int, int, int], np.dtype[np.float64]]
 
 AR_any: np.ndarray
 
@@ -56,21 +60,39 @@ assert_type(ctypes_obj.data_as(ct.c_void_p), ct.c_void_p)
 assert_type(ctypes_obj.shape_as(ct.c_longlong), ct.Array[ct.c_longlong])
 assert_type(ctypes_obj.strides_as(ct.c_ubyte), ct.Array[ct.c_ubyte])
 
+# same as below
 assert_type(f8.all(), np.bool)
 assert_type(AR_f8.all(), np.bool)
 assert_type(AR_f8.all(axis=0), npt.NDArray[np.bool])
 assert_type(AR_f8.all(keepdims=True), npt.NDArray[np.bool])
+assert_type(AR_f8_1d.all(), np.bool)
+assert_type(AR_f8_1d.all(axis=0), np.bool)
 assert_type(AR_f8_1d.all(keepdims=True), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR_f8_2d.all(), np.bool)
+assert_type(AR_f8_2d.all(axis=0), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR_f8_2d.all(axis=(0, 1)), np.bool)
 assert_type(AR_f8_2d.all(keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(AR_f8_3d.all(), np.bool)
+assert_type(AR_f8_3d.all(axis=0), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(AR_f8_3d.all(axis=(0, 1)), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(AR_f8_3d.all(keepdims=True), np.ndarray[tuple[int, int, int], np.dtype[np.bool]])
 assert_type(AR_f8.all(out=B), SubClass)
 
+# same as above
 assert_type(f8.any(), np.bool)
 assert_type(AR_f8.any(), np.bool)
 assert_type(AR_f8.any(axis=0), npt.NDArray[np.bool])
 assert_type(AR_f8.any(keepdims=True), npt.NDArray[np.bool])
+assert_type(AR_f8_1d.any(), np.bool)
+assert_type(AR_f8_1d.any(axis=0), np.bool)
 assert_type(AR_f8_1d.any(keepdims=True), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR_f8_2d.any(), np.bool)
+assert_type(AR_f8_2d.any(axis=0), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR_f8_2d.any(axis=(0, 1)), np.bool)
 assert_type(AR_f8_2d.any(keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(AR_f8_3d.any(), np.bool)
+assert_type(AR_f8_3d.any(axis=0), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(AR_f8_3d.any(axis=(0, 1)), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(AR_f8_3d.any(keepdims=True), np.ndarray[tuple[int, int, int], np.dtype[np.bool]])
 assert_type(AR_f8.any(out=B), SubClass)
 
@@ -96,6 +118,8 @@ assert_type(AR_f8_3d.argmin(keepdims=True), np.ndarray[tuple[int, int, int], np.
 
 assert_type(f8.argsort(), npt.NDArray[np.intp])
 assert_type(AR_f8.argsort(), npt.NDArray[np.intp])
+assert_type(AR_f8_1d.argsort(), _Array1D[np.intp])
+assert_type(AR_f8.argsort(axis=None), _Array1D[np.intp])
 
 assert_type(f8.astype(np.int64).choose([()]), npt.NDArray[Any])
 assert_type(AR_f8.choose([0]), npt.NDArray[Any])
@@ -108,8 +132,12 @@ assert_type(AR_f8.clip(1, out=B), SubClass)
 assert_type(AR_f8.clip(None, 1, out=B), SubClass)
 
 assert_type(f8.compress([0]), npt.NDArray[Any])
-assert_type(AR_f8.compress([0]), npt.NDArray[Any])
+assert_type(AR_f8.compress([0]), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8.compress([0], axis=0), npt.NDArray[np.float64])
 assert_type(AR_f8.compress([0], out=B), SubClass)
+assert_type(AR_f8_1d.compress([0]), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8_1d.compress([0], axis=0), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8_2d.compress([0], axis=0), np.ndarray[tuple[int, int], np.dtype[np.float64]])
 
 assert_type(f8.conj(), np.float64)
 assert_type(AR_f8.conj(), npt.NDArray[np.float64])
@@ -119,8 +147,10 @@ assert_type(f8.conjugate(), np.float64)
 assert_type(AR_f8.conjugate(), npt.NDArray[np.float64])
 assert_type(B.conjugate(), SubClass)
 
-assert_type(AR_i8.cumprod(), np.ndarray[tuple[int], np.dtype[np.int64]])
-assert_type(AR_i8.cumprod(axis=0), npt.NDArray[np.int64])
+assert_type(AR_u1.cumprod(), np.ndarray[tuple[int], np.dtype[np.int_]])
+assert_type(AR_u1.cumprod(axis=0), npt.NDArray[np.int_])
+assert_type(AR_i8.cumprod(), np.ndarray[tuple[int], np.dtype[np.int_]])
+assert_type(AR_i8.cumprod(axis=0), npt.NDArray[np.int_])
 assert_type(AR_f8.cumprod(), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(AR_f8.cumprod(axis=0), npt.NDArray[np.float64])
 assert_type(AR_f8.cumprod(dtype=np.float32), np.ndarray[tuple[int], np.dtype[np.float32]])
@@ -133,8 +163,10 @@ assert_type(AR_f8_2d.cumprod(dtype=np.float32, axis=0), np.ndarray[tuple[int, in
 assert_type(AR_any.cumprod(), np.ndarray[tuple[int]])
 assert_type(AR_any.cumprod(axis=0), np.ndarray)
 
-assert_type(AR_i8.cumsum(), np.ndarray[tuple[int], np.dtype[np.int64]])
-assert_type(AR_i8.cumsum(axis=0), npt.NDArray[np.int64])
+assert_type(AR_u1.cumsum(), np.ndarray[tuple[int], np.dtype[np.int_]])
+assert_type(AR_u1.cumsum(axis=0), npt.NDArray[np.int_])
+assert_type(AR_i8.cumsum(), np.ndarray[tuple[int], np.dtype[np.int_]])
+assert_type(AR_i8.cumsum(axis=0), npt.NDArray[np.int_])
 assert_type(AR_f8.cumsum(), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(AR_f8.cumsum(axis=0), npt.NDArray[np.float64])
 assert_type(AR_f8.cumsum(dtype=np.float32), np.ndarray[tuple[int], np.dtype[np.float32]])
@@ -151,10 +183,14 @@ assert_type(AR_any.cumsum(axis=0), np.ndarray)
 assert_type(b1.prod(), np.int_)
 assert_type(i8.prod(), np.int64)
 assert_type(f8.prod(), np.float64)
-assert_type(AR_i8.prod(), np.int64)
-assert_type(AR_i8.prod(keepdims=True), npt.NDArray[np.int64])
-assert_type(AR_i8.prod(axis=0), npt.NDArray[np.int64])
-assert_type(AR_i8.prod(axis=0, keepdims=True), npt.NDArray[np.int64])
+assert_type(AR_u1.prod(), np.int_)
+assert_type(AR_u1.prod(keepdims=True), npt.NDArray[np.int_])
+assert_type(AR_u1.prod(axis=0), npt.NDArray[np.int_])
+assert_type(AR_u1.prod(axis=0, keepdims=True), npt.NDArray[np.int_])
+assert_type(AR_i8.prod(), np.int_)
+assert_type(AR_i8.prod(keepdims=True), npt.NDArray[np.int_])
+assert_type(AR_i8.prod(axis=0), npt.NDArray[np.int_])
+assert_type(AR_i8.prod(axis=0, keepdims=True), npt.NDArray[np.int_])
 assert_type(AR_f8.prod(), np.float64)
 assert_type(AR_f8.prod(keepdims=True), npt.NDArray[np.float64])
 assert_type(AR_f8.prod(axis=0), npt.NDArray[np.float64])
@@ -181,10 +217,14 @@ assert_type(f8.sum(), np.float64)
 assert_type(m8_ns.sum(), np.timedelta64[int])
 assert_type(m8_ms.sum(), np.timedelta64[dt.timedelta])
 assert_type(m8_na.sum(), np.timedelta64[None])
-assert_type(AR_i8.sum(), np.int64)
-assert_type(AR_i8.sum(keepdims=True), npt.NDArray[np.int64])
-assert_type(AR_i8.sum(axis=0), npt.NDArray[np.int64])
-assert_type(AR_i8.sum(axis=0, keepdims=True), npt.NDArray[np.int64])
+assert_type(AR_u1.sum(), np.int_)
+assert_type(AR_u1.sum(keepdims=True), npt.NDArray[np.int_])
+assert_type(AR_u1.sum(axis=0), npt.NDArray[np.int_])
+assert_type(AR_u1.sum(axis=0, keepdims=True), npt.NDArray[np.int_])
+assert_type(AR_i8.sum(), np.int_)
+assert_type(AR_i8.sum(keepdims=True), npt.NDArray[np.int_])
+assert_type(AR_i8.sum(axis=0), npt.NDArray[np.int_])
+assert_type(AR_i8.sum(axis=0, keepdims=True), npt.NDArray[np.int_])
 assert_type(AR_f8.sum(), np.float64)
 assert_type(AR_f8.sum(keepdims=True), npt.NDArray[np.float64])
 assert_type(AR_f8.sum(axis=0), npt.NDArray[np.float64])
@@ -224,12 +264,16 @@ assert_type(AR_f8_2d.mean(dtype=np.float32, axis=0), npt.NDArray[np.float32])
 assert_type(AR_f8_2d.mean(dtype=np.float32, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 assert_type(AR_f8_2d.mean(dtype=np.float32, axis=0, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 
-# same as above
+# as above, but returns floating for complexfloating input
 assert_type(f8.std(), Any)
 assert_type(AR_f8.std(), np.float64)
 assert_type(AR_f8.std(keepdims=True), npt.NDArray[np.float64])
 assert_type(AR_f8.std(axis=0), npt.NDArray[np.float64])
 assert_type(AR_f8.std(axis=0, keepdims=True), npt.NDArray[np.float64])
+assert_type(AR_c16.std(), np.float64)
+assert_type(AR_c16.std(keepdims=True), npt.NDArray[np.float64])
+assert_type(AR_c16.std(axis=0), npt.NDArray[np.float64])
+assert_type(AR_c16.std(axis=0, keepdims=True), npt.NDArray[np.float64])
 assert_type(AR_f8.std(dtype=np.float32), np.float32)
 assert_type(AR_f8.std(dtype=np.float32, axis=0), npt.NDArray[np.float32])
 assert_type(AR_f8.std(dtype=np.float32, keepdims=True), npt.NDArray[np.float32])
@@ -250,6 +294,10 @@ assert_type(AR_f8.var(), np.float64)
 assert_type(AR_f8.var(keepdims=True), npt.NDArray[np.float64])
 assert_type(AR_f8.var(axis=0), npt.NDArray[np.float64])
 assert_type(AR_f8.var(axis=0, keepdims=True), npt.NDArray[np.float64])
+assert_type(AR_c16.var(), np.float64)
+assert_type(AR_c16.var(keepdims=True), npt.NDArray[np.float64])
+assert_type(AR_c16.var(axis=0), npt.NDArray[np.float64])
+assert_type(AR_c16.var(axis=0, keepdims=True), npt.NDArray[np.float64])
 assert_type(AR_f8.var(dtype=np.float32), np.float32)
 assert_type(AR_f8.var(dtype=np.float32, axis=0), npt.NDArray[np.float32])
 assert_type(AR_f8.var(dtype=np.float32, keepdims=True), npt.NDArray[np.float32])
@@ -277,8 +325,12 @@ assert_type(AR_f8.max(axis=0, keepdims=True), npt.NDArray[np.float64])
 assert_type(AR_f8.max(out=B), SubClass)
 assert_type(AR_f8_2d.max(), np.float64)
 assert_type(AR_f8_2d.max(keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float64]])
-assert_type(AR_f8_2d.max(axis=0), npt.NDArray[np.float64])
-assert_type(AR_f8_2d.max(axis=0, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(AR_f8_2d.max(axis=0), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8_2d.max(axis=(0, 1)), np.float64)
+assert_type(AR_f8_3d.max(axis=0), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(AR_f8_3d.max(axis=(0, 1)), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8_4d.max(axis=0), np.ndarray[tuple[int, int, int], np.dtype[np.float64]])
+assert_type(AR_f8_4d.max(axis=(0, 1)), np.ndarray[tuple[int, int], np.dtype[np.float64]])
 
 # same as above
 assert_type(f8.min(), Any)
@@ -293,8 +345,12 @@ assert_type(AR_f8.min(axis=0, keepdims=True), npt.NDArray[np.float64])
 assert_type(AR_f8.min(out=B), SubClass)
 assert_type(AR_f8_2d.min(), np.float64)
 assert_type(AR_f8_2d.min(keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float64]])
-assert_type(AR_f8_2d.min(axis=0), npt.NDArray[np.float64])
-assert_type(AR_f8_2d.min(axis=0, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(AR_f8_2d.min(axis=0), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8_2d.min(axis=(0, 1)), np.float64)
+assert_type(AR_f8_3d.min(axis=0), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(AR_f8_3d.min(axis=(0, 1)), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8_4d.min(axis=0), np.ndarray[tuple[int, int, int], np.dtype[np.float64]])
+assert_type(AR_f8_4d.min(axis=(0, 1)), np.ndarray[tuple[int, int], np.dtype[np.float64]])
 
 assert_type(f8.round(), np.float64)
 assert_type(AR_f8.round(), npt.NDArray[np.float64])
@@ -304,6 +360,8 @@ assert_type(f8.repeat(1), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(f8.repeat(1, axis=0), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(AR_f8.repeat(1), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(AR_f8.repeat(1, axis=0), npt.NDArray[np.float64])
+assert_type(AR_f8_1d.repeat(1, axis=0), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8_2d.repeat(1, axis=0), np.ndarray[tuple[int, int], np.dtype[np.float64]])
 assert_type(B.repeat(1), np.ndarray[tuple[int], np.dtype[np.object_]])
 assert_type(B.repeat(1, axis=0), npt.NDArray[np.object_])
 

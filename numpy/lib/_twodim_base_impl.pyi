@@ -40,6 +40,8 @@ type _Int_co = np.integer | np.bool
 type _Float_co = np.floating | _Int_co
 type _Number_co = np.number | np.bool
 
+type _AtLeast2D = tuple[int, int, *tuple[int, ...]]  # input only
+
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 # Workaround for mypy's and pyright's lack of compliance with the typing spec for
@@ -192,7 +194,9 @@ def tri(
 
 # keep in sync with `triu`
 @overload
-def tril[ArrayT: np.ndarray](m: ArrayT, k: int = 0) -> ArrayT: ...
+def tril[ArrayT: np.ndarray[_AtLeast2D]](m: ArrayT, k: int = 0) -> ArrayT: ...
+@overload
+def tril[DTypeT: np.dtype](m: np.ndarray[tuple[int], DTypeT], k: int = 0) -> np.ndarray[tuple[int, int], DTypeT]: ...
 @overload
 def tril[ScalarT: np.generic](m: _ArrayLike[ScalarT], k: int = 0) -> NDArray[ScalarT]: ...
 @overload
@@ -200,7 +204,9 @@ def tril(m: ArrayLike, k: int = 0) -> NDArray[Any]: ...
 
 # keep in sync with `tril`
 @overload
-def triu[ArrayT: np.ndarray](m: ArrayT, k: int = 0) -> ArrayT: ...
+def triu[ArrayT: np.ndarray[_AtLeast2D]](m: ArrayT, k: int = 0) -> ArrayT: ...
+@overload
+def triu[DTypeT: np.dtype](m: np.ndarray[tuple[int], DTypeT], k: int = 0) -> np.ndarray[tuple[int, int], DTypeT]: ...
 @overload
 def triu[ScalarT: np.generic](m: _ArrayLike[ScalarT], k: int = 0) -> NDArray[ScalarT]: ...
 @overload

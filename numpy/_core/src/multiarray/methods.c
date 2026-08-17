@@ -532,11 +532,26 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
     PyArray_CopySwapNFunc *copyswapn;
     PyArrayIterObject *it;
 
+    if (inplace && PyArray_FailUnlessWriteable(self, "array to be byte-swapped") < 0) {
+        return NULL;
+    }
+    /*
+     * Both branches below swap in place -- the non-inplace one copies first
+     * and then recurses -- so a dtype that byte order does not apply to
+     * makes this a no-op rather than an error.
+     */
     copyswapn = PyDataType_GetArrFuncs(PyArray_DESCR(self))->copyswapn;
-    if (inplace) {
-        if (PyArray_FailUnlessWriteable(self, "array to be byte-swapped") < 0) {
+    if (copyswapn == NULL) {
+        if (!can_substitute_copyswap(PyArray_DESCR(self), 1)) {
             return NULL;
         }
+        /* Byte order does not apply: only the non-inplace copy remains. */
+        if (!inplace) {
+            return (PyObject *)PyArray_NewCopy(self, -1);
+        }
+        return Py_NewRef((PyObject *)self);
+    }
+    if (inplace) {
         size = PyArray_SIZE(self);
         if (PyArray_ISONESEGMENT(self)) {
             copyswapn(PyArray_DATA(self), PyArray_ITEMSIZE(self), NULL, -1, size, 1, self);
@@ -554,6 +569,10 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
             }
             Py_DECREF(it);
         }
+        if (PyErr_Occurred()) {
+            /* e.g. a structured dtype field that does not support copyswap */
+            return NULL;
+        }
 
         Py_INCREF(self);
         return (PyObject *)self;
@@ -564,6 +583,10 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
             return NULL;
         }
         new = PyArray_Byteswap(ret, NPY_TRUE);
+        if (new == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
         Py_DECREF(new);
         return (PyObject *)ret;
     }

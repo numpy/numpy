@@ -814,6 +814,12 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     else:
         descr = format_parser(formats, names, titles, aligned, byteorder).dtype
 
+    if descr.hasobject:
+        raise ValueError(
+            f"Cannot create record array for dtype {descr}. "
+             "Arrays containing references are not supported."
+        )
+
     itemsize = descr.itemsize
 
     # NumPy 1.19.0, 2020-01-01
@@ -911,6 +917,12 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
             descr = format_parser(
                 formats, names, titles, aligned, byteorder
             ).dtype
+
+        if descr.hasobject:
+            raise ValueError(
+                f"Cannot create record array for dtype {descr}. "
+                "Arrays containing references are not supported."
+            )
 
         itemsize = descr.itemsize
 

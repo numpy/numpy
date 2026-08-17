@@ -296,15 +296,15 @@ cdef class RandomState:
         the user should know exactly what he/she is doing.
 
         """
-        st = self._bit_generator.state
+        with self.lock:
+            st = self._bit_generator.state
+            st['has_gauss'] = self._aug_state.has_gauss
+            st['gauss'] = self._aug_state.gauss
         if st['bit_generator'] != 'MT19937' and legacy:
             warnings.warn('get_state and legacy can only be used with the '
                           'MT19937 BitGenerator. To silence this warning, '
                           'set `legacy` to False.', RuntimeWarning)
             legacy = False
-        with self.lock:
-            st['has_gauss'] = self._aug_state.has_gauss
-            st['gauss'] = self._aug_state.gauss
         if legacy and not isinstance(self._bit_generator, _MT19937):
             raise ValueError(
                 "legacy can only be True when the underlying bitgenerator is "
@@ -4833,7 +4833,7 @@ def seed(seed=None):
         return _rand.seed(seed)
     else:
         bg_type = type(_rand._bit_generator)
-        _rand._bit_generator.state = bg_type(seed).state
+        _rand.set_state(bg_type(seed).state)
 
 def get_bit_generator():
     """

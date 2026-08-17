@@ -10,8 +10,16 @@ project(
     'c_std=c11',
     'cpp_std=c++17',
     'pkgconfig.relocatable=true',
+    'python.allow_limited_api=false',
   ],
 )
+
+# Target version for the Limited C API, used by extension modules that
+# have been ported. Controlled by python.allow_limited_api (default: false).
+# The hex form is the same version, for targets that must define
+# `Py_LIMITED_API` themselves; keep the two in sync.
+py_limited_api = '3.13'
+py_limited_api_hex = '0x030d0000'
 
 fs = import('fs')
 
@@ -31,8 +39,8 @@ elif cc.get_id() == 'msvc'
   endif
   add_project_arguments('/experimental:c11atomics', language: 'c')
 endif
-if not cy.version().version_compare('>=3.0.6')
-  error('NumPy requires Cython >= 3.0.6')
+if not cy.version().version_compare('>=3.1.0')
+  error('NumPy requires Cython >= 3.1.0')
 endif
 
 py = import('python').find_installation(pure: false)

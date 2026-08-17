@@ -169,6 +169,11 @@ def test(*, parent_callback, pytest_args, tests, markexpr, parallel_threads, **k
     if parallel_threads != "1":
         pytest_args = ('--parallel-threads', parallel_threads) + pytest_args
 
+    if kwargs.get('coverage'):
+        coveragerc = curdir.parent / '.coveragerc'
+        pytest_args = (f'--cov-config={coveragerc}',) + pytest_args
+        os.environ['COVERAGE_FILE'] = str(curdir.parent / '.coverage')
+
     kwargs['pytest_args'] = pytest_args
     parent_callback(**{'pytest_args': pytest_args, 'tests': tests, **kwargs})
 

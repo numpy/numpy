@@ -74,7 +74,23 @@ intern_strings(void)
     INTERN_STRING(imag, "imag");
     INTERN_STRING(sort, "sort");
     INTERN_STRING(argsort, "argsort");
+    INTERN_STRING(as_arrays, "as_arrays");
+    INTERN_STRING(wrap, "wrap");
+    INTERN_STRING(subok, "subok");
+    INTERN_STRING(to_scalar, "to_scalar");
+    INTERN_STRING(partition, "partition");
+    INTERN_STRING(argpartition, "argpartition");
     INTERN_STRING(_set_dtype, "_set_dtype");
+    INTERN_STRING(year, "year");
+    INTERN_STRING(month, "month");
+    INTERN_STRING(day, "day");
+    INTERN_STRING(hour, "hour");
+    INTERN_STRING(minute, "minute");
+    INTERN_STRING(second, "second");
+    INTERN_STRING(microsecond, "microsecond");
+    INTERN_STRING(tzinfo, "tzinfo");
+    INTERN_STRING(utcoffset, "utcoffset");
+    INTERN_STRING(total_seconds, "total_seconds");
     return 0;
 }
 
@@ -188,6 +204,18 @@ initialize_static_globals(void)
 
     npy_static_pydata.kwnames_is_copy = PyTuple_Pack(1, npy_interned_str.copy);
     if (npy_static_pydata.kwnames_is_copy == NULL) {
+        return -1;
+    }
+
+    npy_static_pydata.wrapit_kwnames_subok = PyTuple_Pack(
+            1, npy_interned_str.subok);
+    if (npy_static_pydata.wrapit_kwnames_subok == NULL) {
+        return -1;
+    }
+
+    npy_static_pydata.wrapit_kwnames_to_scalar = PyTuple_Pack(
+            1, npy_interned_str.to_scalar);
+    if (npy_static_pydata.wrapit_kwnames_to_scalar == NULL) {
         return -1;
     }
 

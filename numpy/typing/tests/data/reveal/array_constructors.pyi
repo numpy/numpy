@@ -6,9 +6,11 @@ import numpy as np
 import numpy.typing as npt
 from numpy._typing import _AnyShape
 
+type _Array0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]]
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+type _Array4D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int], np.dtype[ScalarT]]
 
 class SubClass[ScalarT: np.generic](np.ndarray[_AnyShape, np.dtype[ScalarT]]): ...
 
@@ -27,26 +29,46 @@ _f32_0d: np.float32
 _f32_1d: _Array1D[np.float32]
 _f32_2d: _Array2D[np.float32]
 _f32_3d: _Array3D[np.float32]
+_obj_str_1d: _Array1D[np.object_[str]]
 
 _py_b_1d: list[bool]
 _py_b_2d: list[list[bool]]
+_py_b_3d: list[list[list[bool]]]
 _py_i_1d: list[int]
 _py_i_2d: list[list[int]]
+_py_i_3d: list[list[list[int]]]
 _py_f_1d: list[float]
 _py_f_2d: list[list[float]]
+_py_f_3d: list[list[list[float]]]
 _py_c_1d: list[complex]
 _py_c_2d: list[list[complex]]
+_py_c_3d: list[list[list[complex]]]
 
 mixed_shape: tuple[int, np.int64]
 
 def func(i: int, j: int, **kwargs: Any) -> SubClass[np.float64]: ...
 
-assert_type(np.empty_like(A), npt.NDArray[np.float64])
-assert_type(np.empty_like(B), SubClass[np.float64])
-assert_type(np.empty_like([1, 1.0]), npt.NDArray[Any])
-assert_type(np.empty_like(A, dtype=np.int64), npt.NDArray[np.int64])
-assert_type(np.empty_like(A, dtype="c16"), npt.NDArray[Any])
-
+assert_type(np.array(_py_b_1d), _Array1D[np.bool])
+assert_type(np.array(_py_b_2d), _Array2D[np.bool])
+assert_type(np.array(_py_b_3d), _Array3D[np.bool])
+assert_type(np.array(_py_i_1d), _Array1D[np.int_])
+assert_type(np.array(_py_i_2d), _Array2D[np.int_])
+assert_type(np.array(_py_i_3d), _Array3D[np.int_])
+assert_type(np.array(_py_f_1d), _Array1D[np.float64])
+assert_type(np.array(_py_f_2d), _Array2D[np.float64])
+assert_type(np.array(_py_f_3d), _Array3D[np.float64])
+assert_type(np.array(_py_c_1d), _Array1D[np.complex128])
+assert_type(np.array(_py_c_2d), _Array2D[np.complex128])
+assert_type(np.array(_py_c_3d), _Array3D[np.complex128])
+assert_type(np.array(_py_i_1d, dtype=np.float32), _Array1D[np.float32])
+assert_type(np.array(_py_i_2d, dtype=np.float32), _Array2D[np.float32])
+assert_type(np.array(_py_i_3d, dtype=np.float32), _Array3D[np.float32])
+assert_type(np.array(_py_i_1d, dtype="f"), _Array1D[Any])
+assert_type(np.array(_py_i_2d, dtype="f"), _Array2D[Any])
+assert_type(np.array(_py_i_3d, dtype="f"), _Array3D[Any])
+assert_type(np.array(_f32_0d), _Array0D[np.float32])
+assert_type(np.array(_f32_1d), _Array1D[np.float32])
+assert_type(np.array(_f32_2d), _Array2D[np.float32])
 assert_type(np.array(A), npt.NDArray[np.float64])
 assert_type(np.array(B), npt.NDArray[np.float64])
 assert_type(np.array([1, 1.0]), npt.NDArray[Any])
@@ -57,11 +79,26 @@ assert_type(np.array(A, like=A), npt.NDArray[np.float64])
 assert_type(np.array(A, subok=True), npt.NDArray[np.float64])
 assert_type(np.array(B, subok=True), SubClass[np.float64])
 assert_type(np.array(B, subok=True, ndmin=0), SubClass[np.float64])
-assert_type(np.array(B, subok=True, ndmin=1), SubClass[np.float64])
+assert_type(np.array(B, subok=True, ndmin=1), npt.NDArray[np.float64])  # subtype erased because unknown shape-type could be modified
 assert_type(np.array(D), npt.NDArray[np.float64 | np.int64])
 assert_type(np.array(E, subok=True), SubClass[np.float64 | np.int64])
 # https://github.com/numpy/numpy/issues/29245
-assert_type(np.array([], dtype=np.bool), npt.NDArray[np.bool])
+assert_type(np.array([]), npt.NDArray[Any])
+assert_type(np.array([], dtype=np.bool), _Array1D[np.bool[Any]])
+assert_type(np.array(None, dtype=np.object_), _Array0D[np.object_[None]])
+assert_type(np.array(1, dtype=np.object_), _Array0D[np.object_[int]])
+assert_type(np.array(_py_i_1d, dtype=np.object_), _Array1D[np.object_[int]])
+# mypy bug; pyright correctly infer `object_[int | Any]` instead of `object_[Any]`
+assert_type(np.array(_py_i_2d, dtype=np.object_), npt.NDArray[np.object_[Any]])
+assert_type(np.array(_f32_0d, dtype=np.object_), _Array0D[np.object_[float]])
+assert_type(np.array(_f32_1d, dtype=np.object_), _Array1D[np.object_[float]])
+assert_type(np.array(_f32_2d, dtype=np.object_), _Array2D[np.object_[float]])
+assert_type(np.array(True), _Array0D[np.bool])
+assert_type(np.array(1), _Array0D[np.int_ | Any])
+assert_type(np.array(1.0), _Array0D[np.float64 | Any])
+assert_type(np.array(1j), _Array0D[np.complex128 | Any])
+assert_type(np.array(1, dtype=np.float32), _Array0D[np.float32])
+assert_type(np.array(1, dtype="f"), _Array0D[Any])
 
 assert_type(np.zeros([1, 5, 6]), npt.NDArray[np.float64])
 assert_type(np.zeros([1, 5, 6], dtype=np.int64), npt.NDArray[np.int64])
@@ -74,7 +111,7 @@ assert_type(np.empty([1, 5, 6], dtype="c16"), npt.NDArray[Any])
 assert_type(np.empty(mixed_shape), npt.NDArray[np.float64])
 
 assert_type(np.concatenate(A), npt.NDArray[np.float64])
-assert_type(np.concatenate([A, A]), npt.NDArray[Any])  # pyright correctly infers this as NDArray[float64]
+assert_type(np.concatenate([A, A]), npt.NDArray[np.float64])
 assert_type(np.concatenate([[1], A]), npt.NDArray[Any])
 assert_type(np.concatenate([[1], [1]]), npt.NDArray[Any])
 assert_type(np.concatenate((A, A)), npt.NDArray[np.float64])
@@ -89,23 +126,38 @@ assert_type(np.asarray(B), npt.NDArray[np.float64])
 assert_type(np.asarray(C), _Array1D[np.int_])
 assert_type(np.asarray(A, dtype=np.int64), npt.NDArray[np.int64])
 assert_type(np.asarray(A, dtype="c16"), npt.NDArray[Any])
+assert_type(np.asarray(_f32_0d), _Array0D[np.float32])
 assert_type(np.asarray(_f32_1d), _Array1D[np.float32])
+assert_type(np.asarray(_f32_2d), _Array2D[np.float32])
+assert_type(np.asarray(_f32_3d), _Array3D[np.float32])
 assert_type(np.asarray(_f32_1d, dtype=np.float64), _Array1D[np.float64])
 assert_type(np.asarray(_f32_1d, dtype="f8"), _Array1D[Any])
-assert_type(np.asarray([]), _Array1D[np.float64])
-assert_type(np.asarray([[]]), _Array2D[np.float64])
+assert_type(np.asarray([]), npt.NDArray[Any])
+assert_type(np.asarray([[]]), npt.NDArray[Any])
+assert_type(np.asarray(True), _Array0D[np.bool_])
+assert_type(np.asarray(1), _Array0D[np.int_ | Any])
+assert_type(np.asarray(1.0), _Array0D[np.float64 | Any])
+assert_type(np.asarray(1j), _Array0D[np.complex128 | Any])
 assert_type(np.asarray(_py_b_1d), _Array1D[np.bool_])
 assert_type(np.asarray(_py_b_2d), _Array2D[np.bool_])
+assert_type(np.asarray(_py_b_3d), _Array3D[np.bool_])
 assert_type(np.asarray(_py_i_1d), _Array1D[np.int_])
 assert_type(np.asarray(_py_i_2d), _Array2D[np.int_])
+assert_type(np.asarray(_py_i_3d), _Array3D[np.int_])
 assert_type(np.asarray(_py_f_1d), _Array1D[np.float64])
 assert_type(np.asarray(_py_f_2d), _Array2D[np.float64])
+assert_type(np.asarray(_py_f_3d), _Array3D[np.float64])
 assert_type(np.asarray(_py_c_1d), _Array1D[np.complex128])
 assert_type(np.asarray(_py_c_2d), _Array2D[np.complex128])
+assert_type(np.asarray(_py_c_3d), _Array3D[np.complex128])
+assert_type(np.asarray(1, dtype=np.float32), _Array0D[np.float32])
+assert_type(np.asarray(1, dtype="f"), _Array0D[Any])
 assert_type(np.asarray(_py_i_1d, dtype=np.float32), _Array1D[np.float32])
 assert_type(np.asarray(_py_i_1d, dtype="f4"), _Array1D[Any])
 assert_type(np.asarray(_py_i_2d, dtype=np.float32), _Array2D[np.float32])
 assert_type(np.asarray(_py_i_2d, dtype="f4"), _Array2D[Any])
+assert_type(np.asarray(_py_i_3d, dtype=np.float32), _Array3D[np.float32])
+assert_type(np.asarray(_py_i_3d, dtype="f4"), _Array3D[Any])
 
 assert_type(np.asanyarray(A), npt.NDArray[np.float64])
 assert_type(np.asanyarray(B), SubClass[np.float64])
@@ -212,18 +264,52 @@ assert_type(np.zeros_like(C), npt.NDArray[Any])
 assert_type(np.zeros_like(A, dtype=float), npt.NDArray[Any])
 assert_type(np.zeros_like(B), SubClass[np.float64])
 assert_type(np.zeros_like(B, dtype=np.int64), npt.NDArray[np.int64])
+assert_type(np.zeros_like(_f32_1d), _Array1D[np.float32])
+assert_type(np.zeros_like(_f32_1d, dtype=np.int64), _Array1D[np.int64])
+assert_type(np.zeros_like(_f32_1d, dtype=int), _Array1D[Any])
+assert_type(np.zeros_like(_f32_1d, shape=_shape_2d), _Array2D[np.float32])
+assert_type(np.zeros_like(_f32_1d, shape=_shape_like), npt.NDArray[np.float32])
+assert_type(np.zeros_like(_obj_str_1d), _Array1D[np.object_[int]])
+assert_type(np.zeros_like(_obj_str_1d, shape=_shape_2d), _Array2D[np.object_[int]])
 
 assert_type(np.ones_like(A), npt.NDArray[np.float64])
 assert_type(np.ones_like(C), npt.NDArray[Any])
 assert_type(np.ones_like(A, dtype=float), npt.NDArray[Any])
 assert_type(np.ones_like(B), SubClass[np.float64])
 assert_type(np.ones_like(B, dtype=np.int64), npt.NDArray[np.int64])
+assert_type(np.ones_like(_f32_1d), _Array1D[np.float32])
+assert_type(np.ones_like(_f32_1d, dtype=np.int64), _Array1D[np.int64])
+assert_type(np.ones_like(_f32_1d, dtype=int), _Array1D[Any])
+assert_type(np.ones_like(_f32_1d, shape=_shape_2d), _Array2D[np.float32])
+assert_type(np.ones_like(_f32_1d, shape=_shape_like), npt.NDArray[np.float32])
+assert_type(np.ones_like(_obj_str_1d), _Array1D[np.object_[int]])
+assert_type(np.ones_like(_obj_str_1d, shape=_shape_2d), _Array2D[np.object_[int]])
+
+assert_type(np.empty_like(A), npt.NDArray[np.float64])
+assert_type(np.empty_like(C), npt.NDArray[Any])
+assert_type(np.empty_like(A, dtype=float), npt.NDArray[Any])
+assert_type(np.empty_like(B), SubClass[np.float64])
+assert_type(np.empty_like(B, dtype=np.int64), npt.NDArray[np.int64])
+assert_type(np.empty_like(_f32_1d), _Array1D[np.float32])
+assert_type(np.empty_like(_f32_1d, dtype=np.int64), _Array1D[np.int64])
+assert_type(np.empty_like(_f32_1d, dtype=int), _Array1D[Any])
+assert_type(np.empty_like(_f32_1d, shape=_shape_2d), _Array2D[np.float32])
+assert_type(np.empty_like(_f32_1d, shape=_shape_like), npt.NDArray[np.float32])
+assert_type(np.empty_like(_obj_str_1d), _Array1D[np.object_[Any | None]])
+assert_type(np.empty_like(_obj_str_1d, shape=_shape_2d), _Array2D[np.object_[Any | None]])
 
 assert_type(np.full_like(A, i8), npt.NDArray[np.float64])
 assert_type(np.full_like(C, i8), npt.NDArray[Any])
 assert_type(np.full_like(A, i8, dtype=int), npt.NDArray[Any])
 assert_type(np.full_like(B, i8), SubClass[np.float64])
 assert_type(np.full_like(B, i8, dtype=np.int64), npt.NDArray[np.int64])
+assert_type(np.full_like(_f32_1d, i8), _Array1D[np.float32])
+assert_type(np.full_like(_f32_1d, i8, dtype=np.int64), _Array1D[np.int64])
+assert_type(np.full_like(_f32_1d, i8, dtype=int), _Array1D[Any])
+assert_type(np.full_like(_f32_1d, i8, shape=_shape_2d), _Array2D[np.float32])
+assert_type(np.full_like(_f32_1d, i8, shape=_shape_like), npt.NDArray[np.float32])
+assert_type(np.full_like(_obj_str_1d, i8), _Array1D[np.object_[Any]])
+assert_type(np.full_like(_obj_str_1d, i8, shape=_shape_2d), _Array2D[np.object_[Any]])
 
 _size: int
 _shape_0d: tuple[()]
@@ -309,9 +395,21 @@ assert_type(np.vstack([A, A]), npt.NDArray[np.float64])
 assert_type(np.vstack([A, A], dtype=np.float32), npt.NDArray[np.float32])
 assert_type(np.vstack([A, C]), npt.NDArray[Any])
 assert_type(np.vstack([C, C]), npt.NDArray[Any])
+assert_type(np.vstack([_f32_0d, _f32_0d]), _Array2D[np.float32])
+assert_type(np.vstack([_f32_1d, _f32_1d]), _Array2D[np.float32])
+assert_type(np.vstack([_f32_2d, _f32_2d]), _Array2D[np.float32])
+assert_type(np.vstack([_f32_3d, _f32_3d]), _Array3D[np.float32])
+assert_type(np.vstack([_f32_3d, _f32_3d], dtype=np.int8), _Array3D[np.int8])
 
 assert_type(np.hstack([A, A]), npt.NDArray[np.float64])
 assert_type(np.hstack([A, A], dtype=np.float32), npt.NDArray[np.float32])
+assert_type(np.hstack([A, C]), npt.NDArray[Any])
+assert_type(np.hstack([C, C]), npt.NDArray[Any])
+assert_type(np.hstack([_f32_0d, _f32_0d]), _Array1D[np.float32])
+assert_type(np.hstack([_f32_1d, _f32_1d]), _Array1D[np.float32])
+assert_type(np.hstack([_f32_2d, _f32_2d]), _Array2D[np.float32])
+assert_type(np.hstack([_f32_3d, _f32_3d]), _Array3D[np.float32])
+assert_type(np.hstack([_f32_3d, _f32_3d], dtype=np.int8), _Array3D[np.int8])
 
 assert_type(np.stack([A, A]), npt.NDArray[np.float64])
 assert_type(np.stack([A, A], dtype=np.float32), npt.NDArray[np.float32])
@@ -319,6 +417,13 @@ assert_type(np.stack([A, C]), npt.NDArray[Any])
 assert_type(np.stack([C, C]), npt.NDArray[Any])
 assert_type(np.stack([A, A], axis=0), npt.NDArray[np.float64])
 assert_type(np.stack([A, A], out=B), SubClass[np.float64])
+assert_type(np.stack([_f32_0d, _f32_0d]), _Array1D[np.float32])
+assert_type(np.stack([_f32_1d, _f32_1d]), _Array2D[np.float32])
+assert_type(np.stack([_f32_2d, _f32_2d]), _Array3D[np.float32])
+assert_type(np.stack([_f32_3d, _f32_3d]), _Array4D[np.float32])
+assert_type(np.stack([_f32_2d, _f32_2d], axis=-1), _Array3D[np.float32])
+assert_type(np.stack([_f32_2d, _f32_2d], dtype=np.int8), _Array3D[np.int8])
+assert_type(np.stack([_f32_2d, _f32_2d], dtype="i1"), _Array3D[Any])
 
 assert_type(np.block([[A, A], [A, A]]), npt.NDArray[Any])  # pyright correctly infers this as NDArray[float64]
 assert_type(np.block(C), npt.NDArray[Any])
