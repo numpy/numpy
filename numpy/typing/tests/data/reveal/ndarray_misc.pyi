@@ -18,6 +18,8 @@ import numpy as np
 import numpy.typing as npt
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 
 class SubClass(np.ndarray[tuple[Any, ...], np.dtype[np.object_]]): ...
 
@@ -264,31 +266,40 @@ assert_type(AR_f8_2d.mean(dtype=np.float32, axis=0), npt.NDArray[np.float32])
 assert_type(AR_f8_2d.mean(dtype=np.float32, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 assert_type(AR_f8_2d.mean(dtype=np.float32, axis=0, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 
-# as above, but returns floating for complexfloating input
+# same as below (TODO)
 assert_type(f8.std(), Any)
 assert_type(AR_f8.std(), np.float64)
 assert_type(AR_f8.std(keepdims=True), npt.NDArray[np.float64])
-assert_type(AR_f8.std(axis=0), npt.NDArray[np.float64])
+assert_type(AR_f8.std(axis=0), npt.NDArray[np.float64] | Any)
 assert_type(AR_f8.std(axis=0, keepdims=True), npt.NDArray[np.float64])
 assert_type(AR_c16.std(), np.float64)
 assert_type(AR_c16.std(keepdims=True), npt.NDArray[np.float64])
-assert_type(AR_c16.std(axis=0), npt.NDArray[np.float64])
+assert_type(AR_c16.std(axis=0), npt.NDArray[np.float64] | Any)
 assert_type(AR_c16.std(axis=0, keepdims=True), npt.NDArray[np.float64])
 assert_type(AR_f8.std(dtype=np.float32), np.float32)
-assert_type(AR_f8.std(dtype=np.float32, axis=0), npt.NDArray[np.float32])
+assert_type(AR_f8.std(dtype=np.float32, axis=0), npt.NDArray[np.float32] | Any)
 assert_type(AR_f8.std(dtype=np.float32, keepdims=True), npt.NDArray[np.float32])
 assert_type(AR_f8.std(dtype=np.float32, axis=0, keepdims=True), npt.NDArray[np.float32])
 assert_type(AR_f8.std(out=B), SubClass)
+assert_type(AR_f8_1d.std(), np.float64)
+assert_type(AR_f8_1d.std(axis=0), np.float64)
+assert_type(AR_f8_1d.std(dtype=np.float32, axis=0), np.float32)
+assert_type(AR_f8_1d.std(keepdims=True), _Array1D[np.float64])
 assert_type(AR_f8_2d.std(), np.float64)
-assert_type(AR_f8_2d.std(keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float64]])
-assert_type(AR_f8_2d.std(axis=0), npt.NDArray[np.float64])
-assert_type(AR_f8_2d.std(axis=0, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(AR_f8_2d.std(keepdims=True), _Array2D[np.float64])
+assert_type(AR_f8_2d.std(axis=0), _Array1D[np.float64])
+assert_type(AR_f8_2d.std(axis=0, ddof=1), _Array1D[np.float64])
+assert_type(AR_f8_2d.std(axis=0, keepdims=True), _Array2D[np.float64])
 assert_type(AR_f8_2d.std(dtype=np.float32), np.float32)
-assert_type(AR_f8_2d.std(dtype=np.float32, axis=0), npt.NDArray[np.float32])
-assert_type(AR_f8_2d.std(dtype=np.float32, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float32]])
-assert_type(AR_f8_2d.std(dtype=np.float32, axis=0, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(AR_f8_2d.std(dtype=np.float32, axis=0), _Array1D[np.float32])
+assert_type(AR_f8_2d.std(dtype=np.float32, keepdims=True), _Array2D[np.float32])
+assert_type(AR_f8_2d.std(dtype=np.float32, axis=0, keepdims=True), _Array2D[np.float32])
+assert_type(AR_f8_3d.std(), np.float64)
+assert_type(AR_f8_3d.std(axis=0), _Array2D[np.float64])
+assert_type(AR_f8_3d.std(dtype=np.float32, axis=0), _Array2D[np.float32])
+assert_type(AR_f8_3d.std(keepdims=True), _Array3D[np.float64])
 
-# same as above
+# same as above (TODO)
 assert_type(f8.var(), Any)
 assert_type(AR_f8.var(), np.float64)
 assert_type(AR_f8.var(keepdims=True), npt.NDArray[np.float64])
