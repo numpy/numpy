@@ -26,17 +26,19 @@ class SubClass(np.ndarray[tuple[Any, ...], np.dtype[np.object_]]): ...
 f8: np.float64
 i8: np.int64
 b1: np.bool
+M8_ns: np.datetime64[int]
 m8_ns: np.timedelta64[int]
 m8_ms: np.timedelta64[dt.timedelta]
 m8_na: np.timedelta64[None]
 
 B: SubClass
 
-AR_f8: npt.NDArray[np.float64]
-AR_i8: npt.NDArray[np.int64]
 AR_u1: npt.NDArray[np.uint8]
+AR_i8: npt.NDArray[np.int64]
+AR_f8: npt.NDArray[np.float64]
 AR_c8: npt.NDArray[np.complex64]
 AR_c16: npt.NDArray[np.complex128]
+AR_M: npt.NDArray[np.datetime64]
 AR_m: npt.NDArray[np.timedelta64]
 AR_U: npt.NDArray[np.str_]
 AR_V: npt.NDArray[np.void]
@@ -136,10 +138,23 @@ assert_type(AR_f8.choose([0]), npt.NDArray[Any])
 assert_type(AR_f8.choose([0], out=B), SubClass)
 
 assert_type(f8.clip(1), npt.NDArray[Any])
-assert_type(AR_f8.clip(1), npt.NDArray[Any])
-assert_type(AR_f8.clip(None, 1), npt.NDArray[Any])
-assert_type(AR_f8.clip(1, out=B), SubClass)
-assert_type(AR_f8.clip(None, 1, out=B), SubClass)
+assert_type(AR_i8.clip(0, 1), npt.NDArray[np.int64])
+assert_type(AR_i8.clip(0.0, 1.0), npt.NDArray[Any])
+assert_type(AR_i8.clip(0j, 1j), npt.NDArray[Any])
+assert_type(AR_f8.clip(0, 1), npt.NDArray[np.float64])
+assert_type(AR_f8.clip(0.0, 1.0), npt.NDArray[np.float64])
+assert_type(AR_f8.clip(0j, 1j), npt.NDArray[Any])
+assert_type(AR_c16.clip(0, 1), npt.NDArray[np.complex128])
+assert_type(AR_c16.clip(0.0, 1.0), npt.NDArray[np.complex128])
+assert_type(AR_c16.clip(0j, 1j), npt.NDArray[np.complex128])
+assert_type(AR_m.clip(0, 1), npt.NDArray[np.timedelta64])
+assert_type(AR_m.clip(m8_ns, m8_ns), npt.NDArray[np.timedelta64])
+assert_type(AR_M.clip(M8_ns, M8_ns), npt.NDArray[np.datetime64])
+assert_type(AR_f8_1d.clip(0, 1), _Array1D[np.float64])
+assert_type(AR_f8_1d.clip(0j, 1j), _Array1D[Any])
+assert_type(AR_f8_1d.clip([0], [1]), npt.NDArray[np.float64])
+assert_type(AR_f8_1d.clip([0j], [1j]), npt.NDArray[Any])
+assert_type(AR_f8.clip(0, 1, out=B), SubClass)
 
 assert_type(f8.compress([0]), npt.NDArray[Any])
 assert_type(AR_f8.compress([0]), np.ndarray[tuple[int], np.dtype[np.float64]])
