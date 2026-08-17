@@ -3420,7 +3420,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     PyArray_Descr *descrs[3];
     PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
             arr, &out, signature, NPY_TRUE, descrs, NPY_UNSAFE_CASTING,
-            "reduceat");
+            opname);
     if (ufuncimpl == NULL) {
         Py_XDECREF(out);
         return NULL;
@@ -3435,16 +3435,16 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
     if (PyDataType_REFCHK(descrs[2]) && descrs[2]->type_num != NPY_OBJECT) {
         /* This can be removed, but the initial element copy needs fixing */
-        PyErr_SetString(PyExc_TypeError,
-                "reduceat currently only supports `object` dtype with "
-                "references");
+        PyErr_Format(PyExc_TypeError,
+                "%s currently only supports `object` dtype with references",
+                opname);
         goto fail;
     }
 
     PyArrayMethod_Context context;
     NPY_context_init(&context, descrs);
-    context.caller = (PyObject *)ufunc,
-    context.method = ufuncimpl,
+    context.caller = (PyObject *)ufunc;
+    context.method = ufuncimpl;
     ndim = PyArray_NDIM(arr);
 
 #if NPY_UF_DBG_TRACING
@@ -3735,7 +3735,7 @@ finish:
 
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* NOTE: We could check float errors even when `res < 0` */
-        res = _check_ufunc_fperr(errormask, "reduceat");
+        res = _check_ufunc_fperr(errormask, opname);
     }
 
     if (res < 0) {
@@ -3816,7 +3816,7 @@ PyUFunc_SegmentedReduce(PyUFuncObject *ufunc, PyArrayObject *arr,
     PyArrayMethod_StridedLoop *strided_loop;
     NpyAuxData *auxdata = NULL;
 
-    /* The segment offsets - starts and stops must be copies (see below) */
+    /* The segment offsets - starts and stops must be copies (clipped below) */
     npy_intp *start_offsets, *stop_offsets;
     npy_intp i, ind_size, red_axis_size;
 
@@ -3869,9 +3869,9 @@ PyUFunc_SegmentedReduce(PyUFuncObject *ufunc, PyArrayObject *arr,
 
     if (PyDataType_REFCHK(descrs[2]) && descrs[2]->type_num != NPY_OBJECT) {
         /* This can be removed, but the initial element copy needs fixing */
-        PyErr_SetString(PyExc_TypeError,
-                "segmented_reduce currently only supports `object` dtype with "
-                "references");
+        PyErr_Format(PyExc_TypeError,
+                "%s currently only supports `object` dtype with references",
+                opname);
         goto fail;
     }
 
@@ -4121,8 +4121,9 @@ PyUFunc_SegmentedReduce(PyUFuncObject *ufunc, PyArrayObject *arr,
 
         do {
             for (i = 0; i < ind_size; ++i) {
-                npy_intp start = start_offsets[i];
-                npy_intp count = stop_offsets[i] - start;
+                npy_intp start = start_offsets[i],
+                        end = stop_offsets[i];
+                npy_intp count = end - start;
                 char *first_element;
 
                 dataptr_copy[0] = dataptr[0] + stride0_ind*i;
@@ -4198,8 +4199,9 @@ PyUFunc_SegmentedReduce(PyUFuncObject *ufunc, PyArrayObject *arr,
         }
 
         for (i = 0; i < ind_size; ++i) {
-            npy_intp start = start_offsets[i];
-            npy_intp count = stop_offsets[i] - start;
+            npy_intp start = start_offsets[i],
+                    end = stop_offsets[i];
+            npy_intp count = end - start;
             char *first_element;
 
             dataptr_copy[0] = PyArray_BYTES(op[0]) + stride0_ind*i;
@@ -4276,7 +4278,7 @@ finish:
 
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* NOTE: We could check float errors even when `res < 0` */
-        res = _check_ufunc_fperr(errormask, "segmented_reduce");
+        res = _check_ufunc_fperr(errormask, opname);
     }
 
     if (res < 0) {
