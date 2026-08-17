@@ -5155,6 +5155,30 @@ initialize_global_state(multiarray_umath_state *state) {
 
 static int module_loaded = 0;
 
+/*
+ * The module state is never torn down: the static types and the PyArray_API
+ * table keep using objects it holds. These slots are no-ops so an unbalanced
+ * Py_DECREF cannot clear it either.
+ */
+static int
+multiarray_umath_traverse(PyObject *NPY_UNUSED(m), visitproc NPY_UNUSED(visit),
+                          void *NPY_UNUSED(arg))
+{
+    return 0;
+}
+
+static int
+multiarray_umath_clear(PyObject *NPY_UNUSED(m))
+{
+    return 0;
+}
+
+static void
+multiarray_umath_free(void *NPY_UNUSED(m))
+{
+}
+
+#if 0  /* restore once the module state can be torn down */
 static int
 multiarray_umath_traverse(PyObject *m, visitproc visit, void *arg)
 {
@@ -5223,6 +5247,7 @@ multiarray_umath_free(void *m)
     multiarray_umath_clear((PyObject *)m);
     _npy_module_state = NULL;
 }
+#endif  /* 0 */
 
 static int
 _multiarray_umath_exec(PyObject *m) {
@@ -5237,9 +5262,8 @@ _multiarray_umath_exec(PyObject *m) {
     module_loaded = 1;
 
     /*
-     * The static types and the PyArray_API table outlive the module, so
-     * clearing the module state would leave dead pointers in the public C
-     * API. Leak a reference to keep m_clear and m_free from running.
+     * Deallocating the module also frees the module state, so leak a
+     * reference to keep it valid for the life of the process.
      */
     Py_INCREF(m);
 
