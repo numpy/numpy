@@ -3248,37 +3248,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 
     #
     @override  # type: ignore[override]
-    @overload  # +integer | ~object_
-    def mean(
-        self: NDArray[integer | bool_ | object_],
-        axis: None = None,
-        dtype: None = None,
-        out: None = None,
-        *,
-        keepdims: L[False] | _NoValueType = ...,
-        where: _ArrayLikeBool_co | _NoValueType = ...,
-    ) -> float64: ...
-    @overload  # +integer, axis: <given>
-    def mean(
-        self: NDArray[integer | bool_],
-        axis: int | tuple[int, ...],
-        dtype: None = None,
-        out: None = None,
-        *,
-        keepdims: L[False] | _NoValueType = ...,
-        where: _ArrayLikeBool_co | _NoValueType = ...,
-    ) -> NDArray[float64]: ...
-    @overload  # +integer, keepdims=True
-    def mean(
-        self: NDArray[integer | bool_],
-        axis: int | tuple[int, ...] | None = None,
-        dtype: None = None,
-        out: None = None,
-        *,
-        keepdims: L[True],
-        where: _ArrayLikeBool_co | _NoValueType = ...,
-    ) -> ndarray[_ShapeT_co, _dtype[float64]]: ...
-    @overload  # ~inexact | timedelta64
+    @overload  # axis=None (default)
     def mean[ScalarT: inexact | timedelta64](
         self: NDArray[ScalarT],
         axis: None = None,
@@ -3288,27 +3258,17 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         keepdims: L[False] | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> ScalarT: ...
-    @overload  # ~inexact | timedelta64, axis: <given>
-    def mean[ScalarT: inexact | timedelta64 | object_](
-        self: NDArray[ScalarT],
-        axis: int | tuple[int, ...],
+    @overload  # axis=None (default), +integer | ~object_
+    def mean(
+        self: NDArray[integer | bool_ | object_],
+        axis: None = None,
         dtype: None = None,
         out: None = None,
         *,
         keepdims: L[False] | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
-    ) -> NDArray[ScalarT]: ...
-    @overload  # ~inexact | timedelta64 | object_, keepdims=True
-    def mean[ArrayT: NDArray[inexact | timedelta64 | object_]](
-        self: ArrayT,
-        axis: int | tuple[int, ...] | None = None,
-        dtype: None = None,
-        out: None = None,
-        *,
-        keepdims: L[True],
-        where: _ArrayLikeBool_co | _NoValueType = ...,
-    ) -> ArrayT: ...
-    @overload  # dtype: ScalarT
+    ) -> float64: ...
+    @overload  # axis=None (default), dtype=<known>
     def mean[ScalarT: generic](
         self: NDArray[number | bool_ | timedelta64 | object_],
         axis: None = None,
@@ -3318,47 +3278,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         keepdims: L[False] | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> ScalarT: ...
-    @overload  # dtype: ScalarT (keyword), keepdims=True
-    def mean[ScalarT: generic](
-        self: NDArray[number | bool_ | timedelta64 | object_],
-        axis: int | tuple[int, ...] | None = None,
-        *,
-        dtype: _DTypeLike[ScalarT],
-        out: None = None,
-        keepdims: L[True],
-        where: _ArrayLikeBool_co | _NoValueType = ...,
-    ) -> ndarray[_ShapeT_co, _dtype[ScalarT]]: ...
-    @overload  # dtype: ScalarT (positional), keepdims=True
-    def mean[ScalarT: generic](
-        self: NDArray[number | bool_ | timedelta64 | object_],
-        axis: int | tuple[int, ...] | None,
-        dtype: _DTypeLike[ScalarT],
-        out: None = None,
-        *,
-        keepdims: L[True],
-        where: _ArrayLikeBool_co | _NoValueType = ...,
-    ) -> ndarray[_ShapeT_co, _dtype[ScalarT]]: ...
-    @overload  # axis: <given>, dtype: ScalarT
-    def mean[ScalarT: generic](
-        self: NDArray[number | bool_ | timedelta64 | object_],
-        axis: int | tuple[int, ...],
-        dtype: _DTypeLike[ScalarT],
-        out: None = None,
-        *,
-        keepdims: L[False] | _NoValueType = ...,
-        where: _ArrayLikeBool_co | _NoValueType = ...,
-    ) -> NDArray[ScalarT]: ...
-    @overload  # out: ArrayT
-    def mean[ArrayT: ndarray](
-        self: NDArray[number | bool_ | timedelta64 | object_],
-        axis: int | tuple[int, ...] | None = None,
-        dtype: DTypeLike | None = None,
-        *,
-        out: ArrayT,
-        keepdims: py_bool | _NoValueType = ...,
-        where: _ArrayLikeBool_co | _NoValueType = ...,
-    ) -> ArrayT: ...
-    @overload  # fallback
+    @overload  # axis=None (default), dtype=<unknown>
     def mean(
         self: NDArray[number | bool_ | timedelta64 | object_],
         axis: None = None,
@@ -3368,7 +3288,237 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         keepdims: L[False] | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> Any: ...
-    @overload  # fallback, axis: <given>
+    @overload  # ?d, axis=<given>
+    def mean[ScalarT: inexact | timedelta64 | object_](
+        self: ndarray[_JustND, _dtype[ScalarT]],
+        axis: int | tuple[int, ...],
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> NDArray[ScalarT] | Any: ...
+    @overload  # ?d, axis=<given>, +integer
+    def mean(
+        self: ndarray[_JustND, _dtype[integer | bool_]],
+        axis: int | tuple[int, ...],
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> NDArray[float64] | Any: ...
+    @overload  # ?d, axis=<given>, dtype=<known>
+    def mean[ScalarT: generic](
+        self: ndarray[_JustND, _dtype[number | bool_ | timedelta64 | object_]],
+        axis: int | tuple[int, ...],
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> NDArray[ScalarT] | Any: ...
+    @overload  # ?d, axis=<given>, dtype=<unknown>
+    def mean(
+        self: ndarray[_JustND, _dtype[number | bool_ | timedelta64 | object_]],
+        axis: int | tuple[int, ...],
+        dtype: DTypeLike | None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray | Any: ...
+    @overload  # 1d, axis=<single>
+    def mean[ScalarT: inexact | timedelta64 | object_](
+        self: ndarray[_1D, _dtype[ScalarT]],
+        axis: int | tuple[int],
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ScalarT: ...
+    @overload  # 1d, axis=<single>, +integer
+    def mean(
+        self: ndarray[_1D, _dtype[integer | bool_]],
+        axis: int | tuple[int],
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> float64: ...
+    @overload  # 1d, axis=<single>, dtype=<known>
+    def mean[ScalarT: generic](
+        self: ndarray[_1D, _dtype[number | bool_ | timedelta64 | object_]],
+        axis: int | tuple[int],
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ScalarT: ...
+    @overload  # 1d, axis=<single>, dtype=<unknown>
+    def mean(
+        self: ndarray[_1D, _dtype[number | bool_ | timedelta64 | object_]],
+        axis: int | tuple[int],
+        dtype: DTypeLike | None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> Any: ...
+    @overload  # 2d, axis=<single>
+    def mean[ScalarT: inexact | timedelta64 | object_](
+        self: ndarray[_2D, _dtype[ScalarT]],
+        axis: int | tuple[int],
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray[_1D, _dtype[ScalarT]]: ...
+    @overload  # 2d, axis=<single>, +integer
+    def mean(
+        self: ndarray[_2D, _dtype[integer | bool_]],
+        axis: int | tuple[int],
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray[_1D, _dtype[float64]]: ...
+    @overload  # 2d, axis=<single>, dtype=<known>
+    def mean[ScalarT: generic](
+        self: ndarray[_2D, _dtype[number | bool_ | timedelta64 | object_]],
+        axis: int | tuple[int],
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray[_1D, _dtype[ScalarT]]: ...
+    @overload  # 2d, axis=<single>, dtype=<unknown>
+    def mean(
+        self: ndarray[_2D, _dtype[number | bool_ | timedelta64 | object_]],
+        axis: int | tuple[int],
+        dtype: DTypeLike | None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray[_1D]: ...
+    @overload  # 3d, axis=<single>
+    def mean[ScalarT: inexact | timedelta64 | object_](
+        self: ndarray[_3D, _dtype[ScalarT]],
+        axis: int | tuple[int],
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray[_2D, _dtype[ScalarT]]: ...
+    @overload  # 3d, axis=<single>, +integer
+    def mean(
+        self: ndarray[_3D, _dtype[integer | bool_]],
+        axis: int | tuple[int],
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray[_2D, _dtype[float64]]: ...
+    @overload  # 3d, axis=<single>, dtype=<known>
+    def mean[ScalarT: generic](
+        self: ndarray[_3D, _dtype[number | bool_ | timedelta64 | object_]],
+        axis: int | tuple[int],
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray[_2D, _dtype[ScalarT]]: ...
+    @overload  # 3d, axis=<single>, dtype=<unknown>
+    def mean(
+        self: ndarray[_3D, _dtype[number | bool_ | timedelta64 | object_]],
+        axis: int | tuple[int],
+        dtype: DTypeLike | None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray[_2D]: ...
+    @overload  # 4d, axis=<single>
+    def mean[ScalarT: inexact | timedelta64 | object_](
+        self: ndarray[_4D, _dtype[ScalarT]],
+        axis: int | tuple[int],
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray[_3D, _dtype[ScalarT]]: ...
+    @overload  # 4d, axis=<single>, +integer
+    def mean(
+        self: ndarray[_4D, _dtype[integer | bool_]],
+        axis: int | tuple[int],
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray[_3D, _dtype[float64]]: ...
+    @overload  # 4d, axis=<single>, dtype=<known>
+    def mean[ScalarT: generic](
+        self: ndarray[_4D, _dtype[number | bool_ | timedelta64 | object_]],
+        axis: int | tuple[int],
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray[_3D, _dtype[ScalarT]]: ...
+    @overload  # 4d, axis=<single>, dtype=<unknown>
+    def mean(
+        self: ndarray[_4D, _dtype[number | bool_ | timedelta64 | object_]],
+        axis: int | tuple[int],
+        dtype: DTypeLike | None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray[_3D]: ...
+    @overload  # ?d, axis=<given>
+    def mean[ScalarT: inexact | timedelta64 | object_](
+        self: NDArray[ScalarT],
+        axis: int | tuple[int, ...],
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> NDArray[ScalarT] | Any: ...
+    @overload  # ?d, axis=<given>, +integer
+    def mean(
+        self: NDArray[integer | bool_],
+        axis: int | tuple[int, ...],
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> NDArray[float64] | Any: ...
+    @overload  # ?d, axis=<given>, dtype=<known>
+    def mean[ScalarT: generic](
+        self: NDArray[number | bool_ | timedelta64 | object_],
+        axis: int | tuple[int, ...],
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+        *,
+        keepdims: L[False] | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> NDArray[ScalarT] | Any: ...
+    @overload  # ?d, axis=<given>, dtype=<unknown>
     def mean(
         self: NDArray[number | bool_ | timedelta64 | object_],
         axis: int | tuple[int, ...],
@@ -3377,9 +3527,49 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         *,
         keepdims: L[False] | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
-    ) -> ndarray: ...
-    @overload  # fallback, keepdims=True
-    def mean(  # pyright: ignore[reportIncompatibleMethodOverride]
+    ) -> ndarray | Any: ...
+    @overload  # keepdims=True
+    def mean[ArrayT: NDArray[inexact | timedelta64 | object_]](
+        self: ArrayT,
+        axis: int | tuple[int, ...] | None = None,
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: L[True],
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ArrayT: ...
+    @overload  # keepdims=True, +integer
+    def mean(
+        self: NDArray[integer | bool_],
+        axis: int | tuple[int, ...] | None = None,
+        dtype: None = None,
+        out: None = None,
+        *,
+        keepdims: L[True],
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray[_ShapeT_co, _dtype[float64]]: ...
+    @overload  # keepdims=True, dtype=<known>  (keyword)
+    def mean[ScalarT: generic](
+        self: NDArray[number | bool_ | timedelta64 | object_],
+        axis: int | tuple[int, ...] | None = None,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+        keepdims: L[True],
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray[_ShapeT_co, _dtype[ScalarT]]: ...
+    @overload  # keepdims=True, dtype=<known>  (positional)
+    def mean[ScalarT: generic](
+        self: NDArray[number | bool_ | timedelta64 | object_],
+        axis: int | tuple[int, ...] | None,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+        *,
+        keepdims: L[True],
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ndarray[_ShapeT_co, _dtype[ScalarT]]: ...
+    @overload  # keepdims=True, dtype=<unknown>
+    def mean(
         self: NDArray[number | bool_ | timedelta64 | object_],
         axis: int | tuple[int, ...] | None = None,
         dtype: DTypeLike | None = None,
@@ -3388,6 +3578,16 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         keepdims: L[True],
         where: _ArrayLikeBool_co | _NoValueType = ...,
     ) -> ndarray[_ShapeT_co]: ...
+    @overload  # out=<given>
+    def mean[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self: NDArray[number | bool_ | timedelta64 | object_],
+        axis: int | tuple[int, ...] | None = None,
+        dtype: DTypeLike | None = None,
+        *,
+        out: ArrayT,
+        keepdims: py_bool | _NoValueType = ...,
+        where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ArrayT: ...
 
     # keep in sync with `ndarray.mean` above
     @override  # type: ignore[override]
