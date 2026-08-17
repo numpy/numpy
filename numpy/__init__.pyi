@@ -680,6 +680,7 @@ from numpy.lib._utils_impl import (
     show_runtime,
 )
 
+from numpy.ma import MaskedArray as _marray  # type-check-only
 from numpy.matrixlib import (
     asmatrix,
     bmat,
@@ -4478,20 +4479,33 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         copy: py_bool | _CopyMode = ...,
     ) -> ndarray[_ShapeT_co, _dtype]: ...
 
-    #
-    @overload  # ()
+    # NOTE: Python has no support for higher-kinded types, so we special-case some known
+    # array subclasses to avoid erasing the shape-type and dtype.
+    @overload  # /
     def view(self, /) -> Self: ...
-    @overload  # (dtype: T)
+    @overload  # dtype=<known dtype>
     def view[DTypeT: _dtype](self, /, dtype: DTypeT | _HasDType[DTypeT]) -> ndarray[_ShapeT_co, DTypeT]: ...
-    @overload  # (dtype: dtype[T])
+    @overload  # dtype=<known scalar type>
     def view[ScalarT: generic](self, /, dtype: _DTypeLike[ScalarT]) -> ndarray[_ShapeT_co, _dtype[ScalarT]]: ...
-    @overload  # (type: T)
+    @overload  # type=memmap (keyword)
+    def view(self, /, *, type: type[memmap]) -> memmap[_ShapeT_co, _DTypeT_co]: ...
+    @overload  # type=memmap (positional)
+    def view(self, /, dtype: type[memmap]) -> memmap[_ShapeT_co, _DTypeT_co]: ...
+    @overload  # type=recarray (keyword)
+    def view(self, /, *, type: type[recarray]) -> recarray[_ShapeT_co, _DTypeT_co]: ...
+    @overload  # type=recarray (positional)
+    def view(self, /, dtype: type[recarray]) -> recarray[_ShapeT_co, _DTypeT_co]: ...
+    @overload  # type=ma.MaskedArray (keyword)
+    def view(self, /, *, type: type[_marray]) -> _marray[_ShapeT_co, _DTypeT_co]: ...
+    @overload  # type=ma.MaskedArray (positional)
+    def view(self, /, dtype: type[_marray]) -> _marray[_ShapeT_co, _DTypeT_co]: ...
+    @overload  # type=<given> (keyword)
     def view[ArrayT: ndarray](self, /, *, type: type[ArrayT]) -> ArrayT: ...
-    @overload  # (_: T)
+    @overload  # type=<given> (positional)
     def view[ArrayT: ndarray](self, /, dtype: type[ArrayT]) -> ArrayT: ...
-    @overload  # (dtype: ?)
+    @overload  # dtype=<unknown>
     def view(self, /, dtype: DTypeLike) -> ndarray[_ShapeT_co, _dtype]: ...
-    @overload  # (dtype: ?, type: T)
+    @overload  # dtype=<unknown>, type=<given>
     def view[ArrayT: ndarray](self, /, dtype: DTypeLike, type: type[ArrayT]) -> ArrayT: ...
 
     #
