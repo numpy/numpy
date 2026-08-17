@@ -2898,6 +2898,12 @@ class TestSegmentedReduce:
         with pytest.raises(ValueError, match="zero-size segment"):
             ufunc.segmented_reduce(arr, [0, 3], [4, 3])
 
+        # The error is raised before anything is written into `out`
+        out = np.full(2, 42.)
+        with pytest.raises(ValueError, match="zero-size segment"):
+            ufunc.segmented_reduce(arr, [0, 3], [4, 3], out=out)
+        assert_array_equal(out, [42., 42.])
+
         # But passing an initial value defines the result:
         res = ufunc.segmented_reduce(arr, [0, 3], [4, 3], initial=42)
         assert_array_equal(

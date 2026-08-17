@@ -4087,6 +4087,22 @@ PyUFunc_SegmentedReduce(PyUFuncObject *ufunc, PyArrayObject *arr,
         goto finish;
     }
 
+    if (empty_initial == NULL) {
+        /*
+         * Without an initial value an empty segment has no result.  Check
+         * for one here, the loops below may run without holding the GIL.
+         */
+        for (i = 0; i < ind_size; ++i) {
+            if (stop_offsets[i] <= start_offsets[i]) {
+                PyErr_Format(PyExc_ValueError,
+                        "zero-size segment in reduction operation '%s' which "
+                        "does not have an identity, so to allow empty "
+                        "segments one has to specify 'initial'", ufunc_name);
+                goto fail;
+            }
+        }
+    }
+
     if (iter && NpyIter_GetIterSize(iter) != 0) {
         char *dataptr_copy[3];
         npy_intp stride_copy[3];
@@ -4139,13 +4155,9 @@ PyUFunc_SegmentedReduce(PyUFuncObject *ufunc, PyArrayObject *arr,
                     --count;
                     dataptr_copy[1] += stride1;
                 }
-                else if (empty_initial != NULL) {
-                    first_element = empty_initial;
-                }
                 else {
-                    /* Empty segment and no identity, error out below */
-                    res = -2;
-                    break;
+                    /* An empty segment, checked to have a result above */
+                    first_element = empty_initial;
                 }
 
                 /*
@@ -4217,13 +4229,9 @@ PyUFunc_SegmentedReduce(PyUFuncObject *ufunc, PyArrayObject *arr,
                 --count;
                 dataptr_copy[1] += stride1;
             }
-            else if (empty_initial != NULL) {
-                first_element = empty_initial;
-            }
             else {
-                /* Empty segment and no identity, error out below */
-                res = -2;
-                break;
+                /* An empty segment, checked to have a result above */
+                first_element = empty_initial;
             }
 
             /*
@@ -4282,12 +4290,6 @@ finish:
     }
 
     if (res < 0) {
-        if (res == -2) {
-            PyErr_Format(PyExc_ValueError,
-                    "zero-size segment in reduction operation '%s' which does "
-                    "not have an identity, so to allow empty segments one has "
-                    "to specify 'initial'", ufunc_name);
-        }
         Py_DECREF(out);
         return NULL;
     }
