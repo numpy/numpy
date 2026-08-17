@@ -106,6 +106,7 @@ from numpy._typing import (  # type: ignore[deprecated]
     _InexactCodes,
     _CharacterCodes,
 )
+from numpy._typing._array_like import _DualArrayLike
 from numpy._typing._char_codes import (
     _DT64Codes_any,
     _DT64Codes_date,
@@ -144,7 +145,7 @@ from typing import (
     SupportsFloat,
     SupportsInt,
     SupportsIndex,
-    TypedDict,
+    Unpack,
     final,
     overload,
     override,
@@ -155,8 +156,8 @@ from typing import (
 # if not available at runtime. This is because the `typeshed` stubs for the standard
 # library include `typing_extensions` stubs:
 # https://github.com/python/typeshed/blob/main/stdlib/typing_extensions.pyi
-from _typeshed import Incomplete, StrOrBytesPath, SupportsFlush, SupportsLenAndGetItem, SupportsWrite
-from typing_extensions import CapsuleType, TypeVar, deprecated, disjoint_base
+from _typeshed import Incomplete, StrOrBytesPath, SupportsFlush, SupportsWrite
+from typing_extensions import CapsuleType, TypedDict, TypeVar, deprecated, disjoint_base
 
 from numpy import (
     char,
@@ -854,6 +855,10 @@ type _ArrayNumeric = NDArray[number | timedelta64 | object_]
 type _ScalarOrderable = number | bool_ | timedelta64 | datetime64
 type _ScalarNotObject = number | flexible
 
+# array/scalar-likes minus `flexible` dtypes
+type _ArrayLikeNotFlex = _DualArrayLike[_dtype[_ScalarOrderable | object_], complex]
+type _ScalarLikeNotFlex = _ScalarOrderable | complex
+
 type _Float64_co = float | floating[_64Bit] | float32 | float16 | integer | bool_
 type _Complex64_co = number[_32Bit] | number[_16Bit] | number[_8Bit] | py_bool | bool_
 type _Complex128_co = complex | number[_64Bit] | _Complex64_co
@@ -1051,6 +1056,14 @@ class _FormerAttrsDict(TypedDict):
     complex: LiteralString
     str: LiteralString
     int: LiteralString
+
+# ufuncs kwargs minus `subok` and `dtype`
+@type_check_only
+class _ClipKwargs(TypedDict, total=False, closed=True):
+    where: _ArrayLikeBool_co | None
+    order: _OrderKACF
+    signature: str | tuple[str | None, ...]
+    casting: _CastingKind
 
 ### Protocols (for internal use only)
 
@@ -4043,6 +4056,201 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         keepdims: py_bool | _NoValueType = ...,
         initial: _NumberLike_co | _NoValueType = ...,
         where: _ArrayLikeBool_co | _NoValueType = ...,
+    ) -> ArrayT: ...
+
+    #
+    @override  # type: ignore[override]
+    @overload  # 0d +int, 0d +int
+    def clip[SelfT: NDArray[number | object_]](
+        self: SelfT,
+        /,
+        min: _IntLike_co | _NoValueType | None = ...,
+        max: _IntLike_co | _NoValueType | None = ...,
+        out: None = None,
+        *,
+        dtype: None = None,
+        subok: L[True] = True,
+        **kwargs: Unpack[_ClipKwargs],
+    ) -> SelfT: ...
+    @overload  # ?d +int, ?d +int
+    def clip[DTypeT: _dtype[number | object_]](
+        self: ndarray[Any, DTypeT],
+        /,
+        min: _ArrayLikeInt_co | _NoValueType | None = ...,
+        max: _ArrayLikeInt_co | _NoValueType | None = ...,
+        out: None = None,
+        *,
+        dtype: None = None,
+        subok: py_bool = True,
+        **kwargs: Unpack[_ClipKwargs],
+    ) -> ndarray[_AnyShape, DTypeT]: ...
+    @overload  # 0d +float, 0d +float
+    def clip[SelfT: NDArray[inexact]](
+        self: SelfT,
+        /,
+        min: _FloatLike_co | _NoValueType | None = ...,
+        max: _FloatLike_co | _NoValueType | None = ...,
+        out: None = None,
+        *,
+        dtype: None = None,
+        subok: L[True] = True,
+        **kwargs: Unpack[_ClipKwargs],
+    ) -> SelfT: ...
+    @overload  # ?d +float, ?d +float
+    def clip[DTypeT: _dtype[inexact]](
+        self: ndarray[Any, DTypeT],
+        /,
+        min: _ArrayLikeFloat_co | _NoValueType | None = ...,
+        max: _ArrayLikeFloat_co | _NoValueType | None = ...,
+        out: None = None,
+        *,
+        dtype: None = None,
+        subok: py_bool = True,
+        **kwargs: Unpack[_ClipKwargs],
+    ) -> ndarray[_AnyShape, DTypeT]: ...
+    @overload  # 0d +complex, 0d +complex
+    def clip[SelfT: NDArray[complexfloating]](
+        self: SelfT,
+        /,
+        min: _NumberLike_co | _NoValueType | None = ...,
+        max: _NumberLike_co | _NoValueType | None = ...,
+        out: None = None,
+        *,
+        dtype: None = None,
+        subok: L[True] = True,
+        **kwargs: Unpack[_ClipKwargs],
+    ) -> SelfT: ...
+    @overload  # ?d +complex, ?d +complex
+    def clip[DTypeT: _dtype[complexfloating]](
+        self: ndarray[Any, DTypeT],
+        /,
+        min: _ArrayLikeNumber_co | _NoValueType | None = ...,
+        max: _ArrayLikeNumber_co | _NoValueType | None = ...,
+        out: None = None,
+        *,
+        dtype: None = None,
+        subok: py_bool = True,
+        **kwargs: Unpack[_ClipKwargs],
+    ) -> ndarray[_AnyShape, DTypeT]: ...
+    @overload  # 0d ~datetime, 0d ~datetime
+    def clip[SelfT: NDArray[datetime64]](
+        self: SelfT,
+        /,
+        min: datetime64 | _NoValueType | None = ...,
+        max: datetime64 | _NoValueType | None = ...,
+        out: None = None,
+        *,
+        dtype: None = None,
+        subok: L[True] = True,
+        **kwargs: Unpack[_ClipKwargs],
+    ) -> SelfT: ...
+    @overload  # ?d ~datetime, ?d ~datetime
+    def clip[DTypeT: _dtype[datetime64]](
+        self: ndarray[Any, DTypeT],
+        /,
+        min: _ArrayLike[datetime64] | _NoValueType | None = ...,
+        max: _ArrayLike[datetime64] | _NoValueType | None = ...,
+        out: None = None,
+        *,
+        dtype: None = None,
+        subok: py_bool = True,
+        **kwargs: Unpack[_ClipKwargs],
+    ) -> ndarray[_AnyShape, DTypeT]: ...
+    @overload  # 0d +timedelta, 0d +timedelta
+    def clip[SelfT: NDArray[timedelta64]](
+        self: SelfT,
+        /,
+        min: _TD64Like_co | _NoValueType | None = ...,
+        max: _TD64Like_co | _NoValueType | None = ...,
+        out: None = None,
+        *,
+        dtype: None = None,
+        subok: L[True] = True,
+        **kwargs: Unpack[_ClipKwargs],
+    ) -> SelfT: ...
+    @overload  # ?d +timedelta, ?d +timedelta
+    def clip[DTypeT: _dtype[timedelta64]](
+        self: ndarray[Any, DTypeT],
+        /,
+        min: _ArrayLikeTD64_co | _NoValueType | None = ...,
+        max: _ArrayLikeTD64_co | _NoValueType | None = ...,
+        out: None = None,
+        *,
+        dtype: None = None,
+        subok: py_bool = True,
+        **kwargs: Unpack[_ClipKwargs],
+    ) -> ndarray[_AnyShape, DTypeT]: ...
+    @overload  # 0d, 0d, dtype=<known>
+    def clip[ShapeT: _Shape, ScalarT: _ScalarOrderable | object_](
+        self: ndarray[ShapeT, _dtype[_ScalarOrderable | object_]],
+        /,
+        min: _ScalarLikeNotFlex | _NoValueType | None = ...,
+        max: _ScalarLikeNotFlex | _NoValueType | None = ...,
+        out: None = None,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        subok: py_bool = True,
+        **kwargs: Unpack[_ClipKwargs],
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # ?d, ?d, dtype=<known>
+    def clip[ScalarT: _ScalarOrderable | object_](
+        self: NDArray[_ScalarOrderable | object_],
+        /,
+        min: _ArrayLikeNotFlex | _NoValueType | None = ...,
+        max: _ArrayLikeNotFlex | _NoValueType | None = ...,
+        out: None = None,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        subok: py_bool = True,
+        **kwargs: Unpack[_ClipKwargs],
+    ) -> NDArray[ScalarT]: ...
+    @overload  # 0d, 0d, dtype=<unknown>
+    def clip[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[_ScalarOrderable | object_]],
+        /,
+        min: _ScalarLikeNotFlex | _NoValueType | None = ...,
+        max: _ScalarLikeNotFlex | _NoValueType | None = ...,
+        out: None = None,
+        *,
+        dtype: str | type | None = None,
+        subok: py_bool = True,
+        **kwargs: Unpack[_ClipKwargs],
+    ) -> ndarray[ShapeT, _dtype[Any]]: ...
+    @overload  # ?d, ?d, dtype=<unknown>
+    def clip(
+        self: NDArray[_ScalarOrderable | object_],
+        /,
+        min: _ArrayLikeNotFlex | _NoValueType | None = ...,
+        max: _ArrayLikeNotFlex | _NoValueType | None = ...,
+        out: None = None,
+        *,
+        dtype: str | type | None = None,
+        subok: py_bool = True,
+        **kwargs: Unpack[_ClipKwargs],
+    ) -> NDArray[Any]: ...
+    @overload  # ?d, ?d, out=<given> (keyword)
+    def clip[ArrayT: ndarray](
+        self: NDArray[_ScalarOrderable | object_],
+        /,
+        min: _ArrayLikeNotFlex | _NoValueType | None = ...,
+        max: _ArrayLikeNotFlex | _NoValueType | None = ...,
+        *,
+        out: ArrayT,
+        dtype: DTypeLike | None = None,
+        subok: py_bool = True,
+        **kwargs: Unpack[_ClipKwargs],
+    ) -> ArrayT: ...
+    @overload  # ?d, ?d, out=<given> (positional)
+    def clip[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self: NDArray[_ScalarOrderable | object_],
+        /,
+        min: ArrayLike | None,
+        max: ArrayLike | None,
+        out: ArrayT,
+        *,
+        dtype: DTypeLike | None = None,
+        subok: py_bool = True,
+        **kwargs: Unpack[_ClipKwargs],
     ) -> ArrayT: ...
 
     #
