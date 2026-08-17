@@ -18,6 +18,8 @@ import numpy as np
 import numpy.typing as npt
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 
 class SubClass(np.ndarray[tuple[Any, ...], np.dtype[np.object_]]): ...
 
@@ -219,29 +221,39 @@ assert_type(m8_ms.sum(), np.timedelta64[dt.timedelta])
 assert_type(m8_na.sum(), np.timedelta64[None])
 assert_type(AR_u1.sum(), np.int_)
 assert_type(AR_u1.sum(keepdims=True), npt.NDArray[np.int_])
-assert_type(AR_u1.sum(axis=0), npt.NDArray[np.int_])
+assert_type(AR_u1.sum(axis=0), npt.NDArray[np.int_] | Any)
 assert_type(AR_u1.sum(axis=0, keepdims=True), npt.NDArray[np.int_])
 assert_type(AR_i8.sum(), np.int_)
 assert_type(AR_i8.sum(keepdims=True), npt.NDArray[np.int_])
-assert_type(AR_i8.sum(axis=0), npt.NDArray[np.int_])
+assert_type(AR_i8.sum(axis=0), npt.NDArray[np.int_] | Any)
 assert_type(AR_i8.sum(axis=0, keepdims=True), npt.NDArray[np.int_])
 assert_type(AR_f8.sum(), np.float64)
 assert_type(AR_f8.sum(keepdims=True), npt.NDArray[np.float64])
-assert_type(AR_f8.sum(axis=0), npt.NDArray[np.float64])
+assert_type(AR_f8.sum(axis=0), npt.NDArray[np.float64] | Any)
 assert_type(AR_f8.sum(axis=0, keepdims=True), npt.NDArray[np.float64])
 assert_type(AR_f8.sum(dtype=np.float32), np.float32)
-assert_type(AR_f8.sum(dtype=np.float32, axis=0), npt.NDArray[np.float32])
+assert_type(AR_f8.sum(dtype=np.float32, axis=0), npt.NDArray[np.float32] | Any)
 assert_type(AR_f8.sum(dtype=np.float32, keepdims=True), npt.NDArray[np.float32])
 assert_type(AR_f8.sum(dtype=np.float32, axis=0, keepdims=True), npt.NDArray[np.float32])
 assert_type(AR_f8.sum(out=B), SubClass)
+assert_type(AR_f8_1d.sum(), np.float64)
+assert_type(AR_f8_1d.sum(dtype=np.float32), np.float32)
+assert_type(AR_f8_1d.sum(axis=0), np.float64)
+assert_type(AR_f8_1d.sum(dtype=np.float32, axis=0), np.float32)
+assert_type(AR_f8_1d.sum(keepdims=True), _Array1D[np.float64])
+assert_type(AR_f8_1d.sum(dtype=np.float32, keepdims=True), _Array1D[np.float32])
 assert_type(AR_f8_2d.sum(), np.float64)
-assert_type(AR_f8_2d.sum(keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float64]])
-assert_type(AR_f8_2d.sum(axis=0), npt.NDArray[np.float64])
-assert_type(AR_f8_2d.sum(axis=0, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float64]])
 assert_type(AR_f8_2d.sum(dtype=np.float32), np.float32)
-assert_type(AR_f8_2d.sum(dtype=np.float32, axis=0), npt.NDArray[np.float32])
-assert_type(AR_f8_2d.sum(dtype=np.float32, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float32]])
-assert_type(AR_f8_2d.sum(dtype=np.float32, axis=0, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(AR_f8_2d.sum(axis=0), _Array1D[np.float64])
+assert_type(AR_f8_2d.sum(dtype=np.float32, axis=0), _Array1D[np.float32])
+assert_type(AR_f8_2d.sum(keepdims=True), _Array2D[np.float64])
+assert_type(AR_f8_2d.sum(dtype=np.float32, keepdims=True), _Array2D[np.float32])
+assert_type(AR_f8_3d.sum(), np.float64)
+assert_type(AR_f8_3d.sum(dtype=np.float32), np.float32)
+assert_type(AR_f8_3d.sum(axis=0), _Array2D[np.float64])
+assert_type(AR_f8_3d.sum(dtype=np.float32, axis=0), _Array2D[np.float32])
+assert_type(AR_f8_3d.sum(keepdims=True), _Array3D[np.float64])
+assert_type(AR_f8_3d.sum(dtype=np.float32, keepdims=True), _Array3D[np.float32])
 assert_type(AR_any.sum(), Any)
 
 # same as below
