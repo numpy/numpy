@@ -2527,12 +2527,20 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             /*
              * Allow NaT-like objects (e.g. pandas NaT) to convert to NaT,
              * bypassing the unit cast-safety checks just like NaT scalars
-             * do. 
+             * do.
              */
-             if (dts.year == NPY_DATETIME_NAT) {
+            if (dts.year == NPY_DATETIME_NAT) {
                 if (meta->base == NPY_FR_ERROR) {
                     meta->base = NPY_FR_GENERIC;
                     meta->num = 1;
+                }
+                if (meta->base == NPY_FR_GENERIC) {
+                    if (DEPRECATE(
+                                "The 'generic' unit for NumPy datetime is deprecated, "
+                                "and will raise an error in the future. "
+                                "Please use a specific unit instead.") < 0) {
+                        return -1;
+                    }
                 }
                 *out = NPY_DATETIME_NAT;
                 return 0;

@@ -688,7 +688,11 @@ class TestDateTime:
         assert np.isnat(np.datetime64(NaTLike(), "ns"))
 
         # the exact bug-report case (no explicit unit)
-        arr = np.asarray(NaTLike(), dtype=object).astype("datetime64")
+        with pytest.warns(
+            DeprecationWarning,
+            match="The 'generic' unit for NumPy datetime is deprecated",
+        ):
+            arr = np.asarray(NaTLike(), dtype=object).astype("datetime64")
         assert np.isnat(arr)
 
     def test_days_creation(self):
