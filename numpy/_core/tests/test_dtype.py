@@ -1,4 +1,5 @@
 import contextlib
+import copy
 import ctypes
 import inspect
 import operator
@@ -1430,6 +1431,45 @@ class TestPickling:
                 ValueError, match="Invalid state while unpickling"
             ):
                 dt.__setstate__(extended)
+
+
+class TestImmortalHeapDtypes:
+    # gh-32298: heap-allocated descriptors are immortalized so that dtype
+    # instances shared across threads (from unpickling, deepcopy, newbyteorder,
+    # or parametrized dtypes) do not cause refcount contention on free-threaded
+    # builds, matching the builtin singletons.
+
+    @staticmethod
+    def assert_immortal(dtype):
+        # Immortal objects are excluded from refcounting: getrefcount reports
+        # the special immortal value (2**32 - 1 on CPython 3.13) rather than a
+        # small per-object count.  Guard well below that so the check is robust
+        # to the exact sentinel.
+        assert sys.getrefcount(dtype) > 2**30, (
+            f"{dtype!r} is mortal; heap descriptors must be immortal"
+        )
+
+    def test_unpickled_dtype_is_immortal(self):
+        dt = pickle.loads(pickle.dumps(np.dtype("float64")))
+        assert dt == np.dtype("float64")
+        assert dt is not np.dtype("float64")  # a fresh heap descriptor
+        self.assert_immortal(dt)
+
+    def test_deepcopy_dtype_is_immortal(self):
+        self.assert_immortal(copy.deepcopy(np.dtype("float64")))
+
+    def test_newbyteorder_dtype_is_immortal(self):
+        self.assert_immortal(np.dtype("float64").newbyteorder("="))
+
+    @pytest.mark.parametrize(
+        "spec",
+        ["datetime64[ns]", "timedelta64[s]", "U5", "S3", "V12",
+         [("a", "f8"), ("b", "i4")]],
+    )
+    def test_parametrized_dtype_is_immortal(self, spec):
+        # These dtypes are not cached singletons, so a freshly created instance
+        # is shared across threads with no user-side workaround available.
+        self.assert_immortal(np.dtype(spec))
 
 
 class TestPromotion:

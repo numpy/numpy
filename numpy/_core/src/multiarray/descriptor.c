@@ -2058,6 +2058,25 @@ PyArray_DescrNew(PyArray_Descr *base_descr)
     Py_XINCREF(newdescr->metadata);
     newdescr->hash = -1;
 
+    /*
+     * Make heap-allocated descriptors immortal (gh-32298).
+     *
+     * Builtin, unparametrized dtype singletons are immortal, so refcounting
+     * them is a no-op.  A descriptor created here is an ordinary mortal object,
+     * and every array operation takes a reference on its operands' dtype.  On
+     * free-threaded builds, when one such descriptor is shared across threads
+     * (e.g. an array from unpickling, copy.deepcopy, newbyteorder, or any
+     * parametrized dtype such as datetime64[ns] / fixed-width strings /
+     * structured dtypes) those atomic refcount updates contend on a single
+     * cache line and the workload anti-scales.
+     *
+     * Immortalizing the descriptor removes it from refcounting entirely, giving
+     * these dtypes the same threading behavior as the builtin singletons.  This
+     * mirrors the treatment of casting impls in array_method.c, which are made
+     * immortal for the same reason.
+     */
+    PyUnstable_SetImmortal((PyObject *)newdescr);
+
     return (PyArray_Descr *)newdescr;
 }
 
