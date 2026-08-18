@@ -2204,9 +2204,16 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
             return ret;
         }
 
+        /*
+         * The scalar is rebuilt by copying into fresh memory, so this is not
+         * a pure in-place swap: inplace_swap is 0 and only a dtype whose
+         * value is exactly its bytes can stand in for a missing slot.  The
+         * copy is inlined rather than fetched as a function because there is
+         * no array here to pass to it.
+         */
         PyArray_CopySwapFunc *copyswap =
                 PyDataType_GetArrFuncs(descr)->copyswap;
-        if (copyswap == NULL && raise_missing_copyswap(descr, 1) < 0) {
+        if (copyswap == NULL && !can_substitute_copyswap(descr, 0)) {
             Py_DECREF(descr);
             return NULL;
         }
@@ -2570,6 +2577,13 @@ numbertype_class_getitem(PyObject *cls, PyObject *args)
                  "There are no type variables left in %s",
                  ((PyTypeObject *)cls)->tp_name);
     return NULL;
+}
+
+/* Returns `np.object_` itself, so that e.g. `np.object_[str]` stays dtype-like */
+static PyObject *
+objecttype_class_getitem(PyObject *cls, PyObject *NPY_UNUSED(args))
+{
+    return Py_NewRef(cls);
 }
 
 /*
@@ -2978,6 +2992,14 @@ static PyMethodDef @name@type_methods[] = {
     {NULL, NULL, 0, NULL} /* sentinel */
 };
 /**end repeat**/
+
+static PyMethodDef objecttype_methods[] = {
+    /* for typing */
+    {"__class_getitem__",
+        (PyCFunction)objecttype_class_getitem,
+        METH_CLASS | METH_O, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
 
 /**begin repeat
  * #name = cfloat,clongdouble#
@@ -4577,6 +4599,8 @@ initialize_numeric_types(void)
     PyVoidArrType_Type.tp_as_sequence = &voidtype_as_sequence;
     PyVoidArrType_Type.tp_repr = voidtype_repr;
     PyVoidArrType_Type.tp_str = voidtype_str;
+
+    PyObjectArrType_Type.tp_methods = objecttype_methods;
 
     PyIntegerArrType_Type.tp_getset = inttype_getsets;
 

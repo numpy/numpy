@@ -1,6 +1,7 @@
 from builtins import bytes as py_bytes
 from collections.abc import Callable
 from typing import Any, Literal, overload
+from typing_extensions import disjoint_base
 
 import numpy as np
 from numpy._typing import (
@@ -82,6 +83,7 @@ __all__ = [
     "zipf",
 ]
 
+@disjoint_base
 class RandomState:
     _bit_generator: BitGenerator
 

@@ -2,6 +2,7 @@
 from builtins import bytes as py_bytes
 from collections.abc import Callable, MutableSequence, Sequence
 from typing import Any, Literal, Self, SupportsIndex, overload
+from typing_extensions import disjoint_base
 
 import numpy as np
 from numpy._typing import (
@@ -46,6 +47,7 @@ type _MethodExp = Literal["zig", "inv"]
 
 ###
 
+@disjoint_base
 class Generator:
     def __init__(self, bit_generator: BitGenerator) -> None: ...
     def __setstate__(self, state: dict[str, Any] | None) -> None: ...
