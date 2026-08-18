@@ -277,6 +277,23 @@ class TestFlags:
         with pytest.raises(KeyError, match="Unknown flag"):
             arr.flags["\N{MICRO SIGN}"] = True
 
+    @pytest.mark.parametrize("key", ["\N{MICRO SIGN}", "\N{SNOWMAN}",
+                                     "\ud800", "WRITEABLE" * 3, ""])
+    def test_bad_flag_key_raises_keyerror(self, key):
+        arr = np.arange(10)
+        with pytest.raises(KeyError, match="Unknown flag"):
+            arr.flags[key]
+        with pytest.raises(KeyError, match="Unknown flag"):
+            arr.flags[key] = True
+
+    def test_bytes_flag_key(self):
+        # bytes keys are accepted for backwards compatibility
+        arr = np.arange(10)
+        assert_equal(arr.flags[b'WRITEABLE'], True)
+        assert_equal(arr.flags[b'W'], True)
+        arr.flags[b'WRITEABLE'] = False
+        assert_equal(arr.flags['WRITEABLE'], False)
+
     def test_string_align(self):
         a = np.zeros(4, dtype=np.dtype('|S4'))
         assert_(a.flags.aligned)
