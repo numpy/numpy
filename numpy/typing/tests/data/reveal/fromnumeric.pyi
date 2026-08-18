@@ -198,6 +198,8 @@ assert_type(np.searchsorted(AR_f4, _py_list_2d), _Array2D[np.intp])
 assert_type(np.searchsorted(AR_f4, _py_list_3d), _Array3D[np.intp])
 assert_type(np.searchsorted(AR_f4, f4), np.intp)
 assert_type(np.searchsorted(AR_f4, AR_f4_1d), _Array1D[np.intp])
+assert_type(np.searchsorted(AR_f4, 0, axis=-1), np.intp)
+assert_type(np.searchsorted(AR_f4, _py_list_1d, axis=None), _Array1D[np.intp])
 assert_type(np.searchsorted(AR_f4, AR_f4_2d), _Array2D[np.intp])
 assert_type(np.searchsorted(AR_f4, AR_f4_3d), _Array3D[np.intp])
 

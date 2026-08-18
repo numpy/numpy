@@ -1339,6 +1339,8 @@ src_umath = umath_gen_headers + [
   src_file.process('src/umath/matmul.h.src'),
   'src/umath/unwrap.cpp',
   'src/umath/unwrap.h',
+  'src/umath/searchsorted.cpp',
+  'src/umath/searchsorted.h',
   'src/umath/ufunc_type_resolution.c',
   'src/umath/clip.cpp',
   'src/umath/clip.h',
