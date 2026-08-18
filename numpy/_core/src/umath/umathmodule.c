@@ -33,6 +33,7 @@
 #include "special_integer_comparisons.h"
 #include "real_imag_ufuncs.h"
 #include "unwrap.h"
+#include "searchsorted.h"
 #include "extobj.h"  /* for _extobject_contextvar exposure */
 #include "ufunc_type_resolution.h"
 
@@ -273,6 +274,10 @@ int initumath(PyObject *m)
     Py_DECREF(s);
 
     if (init_unwrap_ufunc(d) < 0 ) {
+        return -1;
+    }
+
+    if (init_searchsorted_ufuncs(d) < 0) {
         return -1;
     }
 
