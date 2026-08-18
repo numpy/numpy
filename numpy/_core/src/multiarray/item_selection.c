@@ -30,6 +30,8 @@
 #include "npy_sort.h"
 #include "npy_partition.h"
 #include "npy_binsearch.h"
+#include "npy_import.h"
+#include "ufunc_override.h"
 #include "alloc.h"
 #include "arraytypes.h"
 #include "array_coercion.h"
@@ -2183,6 +2185,84 @@ binsearch_compare_default(const void *a, const void *b,
 }
 
 
+/*
+ * Promote `op1` and `op2` to a common descriptor and cast both to it.
+ * `ap1_depth` is 0 for no limit and 1 for the one dimensional implementation
+ * below.  On success both outputs hold new references to arrays sharing one
+ * descriptor instance.
+ */
+static int
+searchsorted_cast_operands(PyArrayObject *op1, PyObject *op2, int ap1_depth,
+                           int ap1_flags, int ap2_flags,
+                           PyArrayObject **ap1, PyArrayObject **ap2)
+{
+    /* Find common type */
+    PyArray_Descr *dtype = PyArray_DescrFromObject(op2, PyArray_DESCR(op1));
+    if (dtype == NULL) {
+        return -1;
+    }
+    /* note: steals the dtype reference */
+    *ap2 = (PyArrayObject *)PyArray_CheckFromAny(op2, dtype, 0, 0,
+                                                 ap2_flags, NULL);
+    if (*ap2 == NULL) {
+        return -1;
+    }
+    /*
+     * The dtype reference we had was used for creating ap2, which may have
+     * replaced it with another. So here we copy the dtype of ap2 and use it
+     * for `ap1`.
+     */
+    dtype = (PyArray_Descr *)Py_NewRef(PyArray_DESCR(*ap2));
+
+    /*
+     * If the needle (ap2) is larger than the haystack (op1) we copy the
+     * haystack to a contiguous array for improved cache utilization.
+     */
+    if (PyArray_SIZE(*ap2) > PyArray_SIZE(op1)) {
+        ap1_flags |= NPY_ARRAY_CARRAY_RO;
+    }
+    *ap1 = (PyArrayObject *)PyArray_CheckFromAny((PyObject *)op1, dtype,
+                                                 ap1_depth, ap1_depth,
+                                                 ap1_flags, NULL);
+    if (*ap1 == NULL) {
+        Py_CLEAR(*ap2);
+        return -1;
+    }
+    return 0;
+}
+
+
+/*
+ * Convert `perm` into an intp array of sorting indices.  `max_depth` is 0 for
+ * no limit and 1 for the one dimensional implementation below.
+ */
+static PyArrayObject *
+searchsorted_prepare_sorter(PyObject *perm, int max_depth, int flags)
+{
+    PyArrayObject *sorter;
+    PyArrayObject *ap3 = (PyArrayObject *)PyArray_CheckFromAny(
+            perm, NULL, max_depth, max_depth, flags, NULL);
+    if (ap3 == NULL) {
+        PyErr_SetString(PyExc_TypeError, "could not parse sorter argument");
+        return NULL;
+    }
+    if (!PyArray_ISINTEGER(ap3)) {
+        Py_DECREF(ap3);
+        PyErr_SetString(PyExc_TypeError,
+                        "sorter must only contain integers");
+        return NULL;
+    }
+    /* convert to known integer size */
+    sorter = (PyArrayObject *)PyArray_FromArray(
+            ap3, PyArray_DescrFromType(NPY_INTP), flags);
+    Py_DECREF(ap3);
+    if (sorter == NULL) {
+        PyErr_SetString(PyExc_ValueError, "could not parse sorter argument");
+    }
+    return sorter;
+}
+
+
 /*NUMPY_API
  *
  * Search the sorted array op1 for the location of the items in op2. The
@@ -2218,85 +2298,34 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
 {
     PyArrayObject *ap1 = NULL;
     PyArrayObject *ap2 = NULL;
-    PyArrayObject *ap3 = NULL;
     PyArrayObject *sorter = NULL;
     PyArrayObject *ret = NULL;
-    PyArray_Descr *dtype;
     int ap1_flags = NPY_ARRAY_NOTSWAPPED | NPY_ARRAY_ALIGNED;
     PyArray_BinSearchFunc *binsearch = NULL;
     PyArray_ArgBinSearchFunc *argbinsearch = NULL;
     NPY_BEGIN_THREADS_DEF;
 
-    /* Find common type */
-    dtype = PyArray_DescrFromObject((PyObject *)op2, PyArray_DESCR(op1));
-    if (dtype == NULL) {
+    if (searchsorted_cast_operands(op1, op2, 1, ap1_flags,
+            NPY_ARRAY_CARRAY_RO | NPY_ARRAY_NOTSWAPPED, &ap1, &ap2) < 0) {
         return NULL;
     }
 
     /* Look for binary search function */
     if (perm) {
-        argbinsearch = get_argbinsearch_func(dtype, side);
+        argbinsearch = get_argbinsearch_func(PyArray_DESCR(ap2), side);
     }
     else {
-        binsearch = get_binsearch_func(dtype, side);
+        binsearch = get_binsearch_func(PyArray_DESCR(ap2), side);
     }
     if (binsearch == NULL && argbinsearch == NULL) {
         PyErr_SetString(PyExc_TypeError, "compare not supported for type");
-        Py_DECREF(dtype);
-        return NULL;
-    }
-
-    /* need ap2 as contiguous array and of right dtype (note: steals dtype reference) */
-    ap2 = (PyArrayObject *)PyArray_CheckFromAny(op2, dtype,
-                                0, 0,
-                                NPY_ARRAY_CARRAY_RO | NPY_ARRAY_NOTSWAPPED,
-                                NULL);
-    if (ap2 == NULL) {
-        return NULL;
-    }
-    /*
-     * The dtype reference we had was used for creating ap2, which may have
-     * replaced it with another. So here we copy the dtype of ap2 and use it for `ap1`.
-     */
-     dtype = (PyArray_Descr *)Py_NewRef(PyArray_DESCR(ap2));
-
-    /*
-     * If the needle (ap2) is larger than the haystack (op1) we copy the
-     * haystack to a contiguous array for improved cache utilization.
-     */
-    if (PyArray_SIZE(ap2) > PyArray_SIZE(op1)) {
-        ap1_flags |= NPY_ARRAY_CARRAY_RO;
-    }
-    /* dtype is stolen, after this we have no reference */
-    ap1 = (PyArrayObject *)PyArray_CheckFromAny((PyObject *)op1, dtype,
-                                1, 1, ap1_flags, NULL);
-    if (ap1 == NULL) {
         goto fail;
     }
 
     if (perm) {
-        /* need ap3 as a 1D aligned, not swapped, array of right type */
-        ap3 = (PyArrayObject *)PyArray_CheckFromAny(perm, NULL,
-                                    1, 1,
-                                    NPY_ARRAY_ALIGNED | NPY_ARRAY_NOTSWAPPED,
-                                    NULL);
-        if (ap3 == NULL) {
-            PyErr_SetString(PyExc_TypeError,
-                        "could not parse sorter argument");
-            goto fail;
-        }
-        if (!PyArray_ISINTEGER(ap3)) {
-            PyErr_SetString(PyExc_TypeError,
-                        "sorter must only contain integers");
-            goto fail;
-        }
-        /* convert to known integer size */
-        sorter = (PyArrayObject *)PyArray_FromArray(ap3,
-                                    PyArray_DescrFromType(NPY_INTP),
-                                    NPY_ARRAY_ALIGNED | NPY_ARRAY_NOTSWAPPED);
+        sorter = searchsorted_prepare_sorter(
+                perm, 1, NPY_ARRAY_ALIGNED | NPY_ARRAY_NOTSWAPPED);
         if (sorter == NULL) {
-            PyErr_SetString(PyExc_ValueError,
-                        "could not parse sorter argument");
             goto fail;
         }
         if (PyArray_SIZE(sorter) != PyArray_SIZE(ap1)) {
@@ -2334,7 +2363,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         NpyString_acquire_allocators(2, cmp_descrs, allocators);
     }
 
-    if (ap3 == NULL) {
+    if (sorter == NULL) {
         /* do regular binsearch */
         binsearch((const char *)PyArray_DATA(ap1),
                   (const char *)PyArray_DATA(ap2),
@@ -2366,10 +2395,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         PyErr_SetString(PyExc_ValueError, "Sorter index out of range.");
         goto fail;
     }
-    if (ap3 != NULL) {
-        Py_DECREF(ap3);
-        Py_DECREF(sorter);
-    }
+    Py_XDECREF(sorter);
     Py_DECREF(ap1);
     Py_DECREF(ap2);
     return (PyObject *)ret;
@@ -2377,11 +2403,204 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
  fail:
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
-    Py_XDECREF(ap3);
     Py_XDECREF(sorter);
     Py_XDECREF(ret);
     return NULL;
 }
+
+/* Move `axis` last, keeping the relative order of the other axes. */
+static PyArrayObject *
+searchsorted_move_axis(PyArrayObject *arr, int axis)
+{
+    int ndim = PyArray_NDIM(arr);
+    npy_intp permute_dims[NPY_MAXDIMS];
+    PyArray_Dims permute = {permute_dims, ndim};
+    int j = 0;
+
+    for (int i = 0; i < ndim; i++) {
+        if (i != axis) {
+            permute_dims[j++] = i;
+        }
+    }
+    permute_dims[j] = axis;
+    return (PyArrayObject *)PyArray_Transpose(arr, &permute);
+}
+
+
+/*
+ * Dispatch to the private searchsorted gufuncs.  As PyArray_SearchSorted, `a`
+ * and `v` are promoted to a common descriptor and cast to it, so the gufunc
+ * matches one of its loops exactly.  Returns NULL with an exception set on
+ * failure, which the caller may recover from by falling back.
+ */
+static PyObject *
+searchsorted_gufunc(PyArrayObject *op1, PyObject *op2,
+                    NPY_SEARCHSIDE side, PyObject *perm, int axis)
+{
+    PyArrayObject *a = NULL, *ap1 = NULL, *ap2 = NULL, *sorter = NULL;
+    PyObject *ret = NULL;
+
+    if (perm != NULL) {
+        sorter = searchsorted_prepare_sorter(perm, 0, NPY_ARRAY_ENSUREARRAY);
+        if (sorter == NULL) {
+            return NULL;
+        }
+    }
+
+    /*
+     * The gufunc takes its core dimension from the last axis, so move the
+     * searched axis of `a` (and of `sorter`) there.  `v` is left alone, its
+     * keys are its own last axis, so the searched dimension of the result is
+     * appended rather than inserted at `axis`.
+     */
+    if (axis == NPY_RAVEL_AXIS) {
+        a = (PyArrayObject *)PyArray_Ravel(op1, NPY_CORDER);
+        if (a == NULL) {
+            goto finish;
+        }
+        if (sorter != NULL) {
+            PyArrayObject *flat = (PyArrayObject *)PyArray_Ravel(sorter,
+                                                                NPY_CORDER);
+            if (flat == NULL) {
+                goto finish;
+            }
+            Py_SETREF(sorter, flat);
+        }
+    }
+    else {
+        int ndim = PyArray_NDIM(op1);
+        int use_axis = axis;
+
+        if (ndim > 0 && check_and_adjust_axis(&use_axis, ndim) < 0) {
+            goto finish;
+        }
+        if (ndim > 1 && use_axis != ndim - 1) {
+            a = searchsorted_move_axis(op1, use_axis);
+            if (a == NULL) {
+                goto finish;
+            }
+            if (sorter != NULL && PyArray_NDIM(sorter) == ndim) {
+                PyArrayObject *moved = searchsorted_move_axis(sorter, use_axis);
+                if (moved == NULL) {
+                    goto finish;
+                }
+                Py_SETREF(sorter, moved);
+            }
+        }
+        else {
+            a = (PyArrayObject *)Py_NewRef(op1);
+        }
+    }
+
+    /*
+     * An operand that overrides ufuncs has to be handed to the gufunc
+     * unchanged, casting it first would hide it.  An override that declines
+     * raises TypeError, which the caller turns into the one dimensional
+     * implementation, as before.
+     */
+    if (PyUFunc_HasOverride((PyObject *)a) || PyUFunc_HasOverride(op2)) {
+        ap1 = (PyArrayObject *)Py_NewRef(a);
+        ap2 = (PyArrayObject *)Py_NewRef(op2);
+    }
+    /* NPY_ARRAY_ENSUREARRAY keeps the result a base ndarray, as it has
+     * always been for the functions returning indices. */
+    else if (searchsorted_cast_operands(a, op2, 0, NPY_ARRAY_ENSUREARRAY,
+                                        NPY_ARRAY_ENSUREARRAY,
+                                        &ap1, &ap2) < 0) {
+        goto finish;
+    }
+
+    PyObject **caches[2][2] = {
+        {&npy_runtime_imports._searchsorted_left,
+         &npy_runtime_imports._searchsorted_right},
+        {&npy_runtime_imports._searchsorted_left_sorter,
+         &npy_runtime_imports._searchsorted_right_sorter},
+    };
+    static const char *const names[2][2] = {
+        {"_searchsorted_left", "_searchsorted_right"},
+        {"_searchsorted_left_sorter", "_searchsorted_right_sorter"},
+    };
+    int with_sorter = sorter != NULL;
+    int right = side == NPY_SEARCHRIGHT;
+
+    if (npy_cache_import_runtime("numpy._core.umath",
+                                 names[with_sorter][right],
+                                 caches[with_sorter][right]) == -1) {
+        goto finish;
+    }
+    {
+        PyObject *stack[3] = {(PyObject *)ap1, (PyObject *)ap2,
+                              (PyObject *)sorter};
+        ret = PyObject_Vectorcall(*caches[with_sorter][right], stack,
+                                  with_sorter ? 3 : 2, NULL);
+    }
+
+  finish:
+    Py_XDECREF(a);
+    Py_XDECREF(ap1);
+    Py_XDECREF(ap2);
+    Py_XDECREF(sorter);
+    return ret;
+}
+
+
+/*
+ * Internal version of PyArray_SearchSorted that additionally takes an `axis`,
+ * which may be NPY_RAVEL_AXIS to search a flattened `op1`.
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_SearchSorted_int(PyArrayObject *op1, PyObject *op2,
+                         NPY_SEARCHSIDE side, PyObject *perm, int axis)
+{
+    PyObject *ret = searchsorted_gufunc(op1, op2, side, perm, axis);
+    if (ret != NULL) {
+        return ret;
+    }
+
+    /*
+     * Dtypes with neither a loop nor a usable comparison, StringDType above
+     * all, raise TypeError.  Fall back to the generic implementation, which
+     * is 1-D only and can therefore stand in only when the search axis is
+     * `op1`'s single axis.
+     */
+    if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
+        return NULL;
+    }
+    if (axis != NPY_RAVEL_AXIS && axis != -1
+            && !(PyArray_NDIM(op1) <= 1 && (axis == 0 || axis == -1))) {
+        return NULL;
+    }
+    PyErr_Clear();
+
+    if (axis == NPY_RAVEL_AXIS && PyArray_NDIM(op1) != 1) {
+        /* The 1-D fallback cannot express `axis=None`, so flatten first. */
+        PyArrayObject *flat = (PyArrayObject *)PyArray_Ravel(op1, NPY_CORDER);
+        if (flat == NULL) {
+            return NULL;
+        }
+        PyObject *flat_perm = NULL;
+        if (perm != NULL) {
+            PyArrayObject *perm_arr = (PyArrayObject *)PyArray_FromAny(
+                    perm, NULL, 0, 0, 0, NULL);
+            if (perm_arr == NULL) {
+                Py_DECREF(flat);
+                return NULL;
+            }
+            flat_perm = PyArray_Ravel(perm_arr, NPY_CORDER);
+            Py_DECREF(perm_arr);
+            if (flat_perm == NULL) {
+                Py_DECREF(flat);
+                return NULL;
+            }
+        }
+        ret = PyArray_SearchSorted(flat, op2, side, flat_perm);
+        Py_DECREF(flat);
+        Py_XDECREF(flat_perm);
+        return ret;
+    }
+    return PyArray_SearchSorted(op1, op2, side, perm);
+}
+
 
 /*NUMPY_API
  * Diagonal
