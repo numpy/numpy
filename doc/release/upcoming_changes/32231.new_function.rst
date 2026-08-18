@@ -5,4 +5,7 @@ A new function ``np.minmax(a, axis=..., out=..., keepdims=..., initial=...,
 where=...)`` was added, which returns a ``(min, max)`` tuple holding the
 minimum and the maximum of an array along a given axis.  It is equivalent to
 ``(np.min(a, ...), np.max(a, ...))`` but computes both in a single fused pass
-over the data.
+over the data.  For dtypes that support ``min``/``max`` but have no fused
+``minmax`` loop (such as the string DType and other user DTypes), it falls back
+to two separate reductions.  A masked-array counterpart ``np.ma.minmax`` was
+also added, which simply returns ``(np.ma.min(a, ...), np.ma.max(a, ...))``.
