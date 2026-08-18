@@ -1747,8 +1747,8 @@ gentype_struct_free(PyObject *ptr)
     }
     Py_XDECREF(context);
     Py_XDECREF(arrif->descr);
-    PyArray_free(arrif->shape);
-    PyArray_free(arrif);
+    PyMem_RawFree(arrif->shape);
+    PyMem_RawFree(arrif);
 }
 
 static PyObject *
@@ -1759,7 +1759,7 @@ gentype_struct_get(PyObject *self, void *NPY_UNUSED(ignored))
     PyObject *ret;
 
     arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
-    inter = (PyArrayInterface *)PyArray_malloc(sizeof(PyArrayInterface));
+    inter = (PyArrayInterface *)PyMem_RawMalloc(sizeof(PyArrayInterface));
     inter->two = 2;
     inter->nd = 0;
     inter->flags = PyArray_FLAGS(arr);

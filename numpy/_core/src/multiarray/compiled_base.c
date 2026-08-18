@@ -685,7 +685,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
 
         /* only pre-calculate slopes if there are relatively few of them. */
         if (lenxp <= lenx) {
-            slopes = PyArray_malloc((lenxp - 1) * sizeof(npy_double));
+            slopes = PyMem_RawMalloc((lenxp - 1) * sizeof(npy_double));
             if (slopes == NULL) {
                 PyErr_NoMemory();
                 goto fail;
@@ -741,7 +741,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
         NPY_END_THREADS;
     }
 
-    PyArray_free(slopes);
+    PyMem_RawFree(slopes);
 
 finish:
     Py_DECREF(afp);
@@ -873,7 +873,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
 
         /* only pre-calculate slopes if there are relatively few of them. */
         if (lenxp <= lenx) {
-            slopes = PyArray_malloc((lenxp - 1) * sizeof(npy_cdouble));
+            slopes = PyMem_RawMalloc((lenxp - 1) * sizeof(npy_cdouble));
             if (slopes == NULL) {
                 PyErr_NoMemory();
                 goto fail;
@@ -946,7 +946,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
 
         NPY_END_THREADS;
     }
-    PyArray_free(slopes);
+    PyMem_RawFree(slopes);
 
 finish:
     Py_DECREF(afp);
