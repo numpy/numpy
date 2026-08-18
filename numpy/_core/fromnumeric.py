@@ -1576,7 +1576,7 @@ def _searchsorted_dispatcher(a, v, side=None, sorter=None, *, axis=None):
 
 
 @array_function_dispatch(_searchsorted_dispatcher)
-def searchsorted(a, v, side='left', sorter=None, *, axis=-1):
+def searchsorted(a, v, side='left', sorter=None, *, axis=_NoValue):
     """
     Find indices where elements should be inserted to maintain order.
 
@@ -1609,8 +1609,10 @@ def searchsorted(a, v, side='left', sorter=None, *, axis=-1):
         index, return either 0 or N (where N is the length of `a`).
     sorter : array_like, optional
         Optional array of integer indices that sort array a into ascending
-        order. They are typically the result of argsort. It must have the
-        same shape as `a`.
+        order along `axis`. They are typically the result of argsort,
+        giving `sorter` the same shape as `a`.  A `sorter` with fewer
+        dimensions sorts along its last axis, which must match the `axis`
+        dimension of `a`, and its leading dimensions broadcast.
     axis : int or None, optional
         The axis of `a` holding the sorted sequence. The default, -1,
         searches along the last axis. If None, `a` is flattened first.
@@ -1684,7 +1686,8 @@ def searchsorted(a, v, side='left', sorter=None, *, axis=-1):
     >>> np.searchsorted(a, 5)
     array([3, 2])
     """
-    return _wrapfunc(a, 'searchsorted', v, side=side, sorter=sorter, axis=axis)
+    kwds = {'axis': axis} if axis is not _NoValue else {}
+    return _wrapfunc(a, 'searchsorted', v, side=side, sorter=sorter, **kwds)
 
 
 def _resize_dispatcher(a, new_shape):
