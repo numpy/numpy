@@ -227,7 +227,22 @@ Tests for a module should ideally cover all code in that module,
 i.e., statement coverage should be at 100%.
 
 Coverage for the Python and the compiled C sources is collected by separate
-tools and controlled by separate flags of ``spin test``.
+tools, but both can be measured in a single ``spin test`` invocation.
+First install the coverage tools::
+
+    $ python -m pip install coverage gcovr
+
+Then rebuild with C coverage instrumentation and run the tests, generating both
+reports at once::
+
+    $ spin build --clean --gcov
+    $ spin test --coverage --gcov
+
+The Python report is written to ``build/coverage`` and the C report to
+``build/meson-logs/coveragereport``.
+
+The following subsections describe each kind of coverage and how to customize
+if.
 
 Python coverage
 ~~~~~~~~~~~~~~~
@@ -241,16 +256,33 @@ viewed with your browser, e.g.::
 
   $ firefox build/coverage/index.html
 
+Additional arguments after ``--`` are passed straight through to ``pytest``,
+so you can request other `coverage.py report formats
+<https://coverage.readthedocs.io/en/latest/commands/index.html>`__ with ``--cov-report``.
+For example, to print a summary in the terminal, write an XML report, and
+generate an HTML report::
+
+  $ spin test --coverage -- --cov-report=term --cov-report=xml --cov-report=html
+
+The ``--cov-report`` option can be given multiple times to produce several
+formats in one run. Supported formats are ``term`` (and ``term-missing``),
+``html``, ``xml``, ``json``, ``lcov``, and ``annotate``. A destination can be
+appended after a colon, e.g. ``--cov-report=html:build/coverage``.
+
 C coverage
 ~~~~~~~~~~
 
-To measure the coverage of NumPy's compiled C sources with ``gcov``, run::
+Measuring the coverage of NumPy's compiled C sources with ``gcov`` requires a
+build with coverage instrumentation, so rebuild first with::
+
+  $ spin build --clean --gcov
+
+Then run the tests with ``--gcov``::
 
   $ spin test --gcov
 
-This rebuilds the source code with coverage instrumentation, runs the
-tests, and writes the report to ``build/meson-logs/coveragereport``. Coverage
-reports cannot be generated for editable installs.
+This runs the tests and writes the report to
+``build/meson-logs/coveragereport``.
 
 The report format is selected with ``--gcov-format``, which defaults to
 ``html``. The supported formats are ``html``, ``xml``, ``text``, and
@@ -258,11 +290,8 @@ The report format is selected with ``--gcov-format``, which defaults to
 
   $ spin test --gcov --gcov-format=text
 
-Generating a C coverage report requires the corresponding coverage tools (such
-as ``gcovr`` or ``lcov``) to be installed; ``spin`` reports which dependencies
-are missing. If the instrumented build is not found, rebuild first with::
-
-  $ spin build --clean --gcov
+Generating a C coverage report requires ``gcovr`` to be installed; ``spin``
+reports if it is missing.
 
 .. _building-docs:
 
