@@ -6168,6 +6168,38 @@ class TestMinMax:
         assert_equal(np.minmax(np.array([], dtype=np.float64),
                                initial=(np.inf, -np.inf)), (np.inf, -np.inf))
 
+    def test_minmax_no_loop_fallback(self):
+        # dtypes with no fused `minimummaximum` loop but that support min/max
+        # (the variable-width string DType, other user DTypes) fall back to two
+        # separate reductions.
+        a = np.array(["banana", "apple", "cherry"],
+                     dtype=np.dtypes.StringDType())
+        assert_equal(np.minmax(a), (np.min(a), np.max(a)))
+        a2 = a.reshape(3, 1)
+        lo, hi = np.minmax(a2, axis=0)
+        assert_equal(lo, np.min(a2, axis=0))
+        assert_equal(hi, np.max(a2, axis=0))
+
+    def test_minmax_no_loop_raises(self):
+        # a dtype that supports neither `minmax` nor `min`/`max` still raises
+        assert_raises(TypeError, np.minmax, np.array(["banana", "apple"]))
+
+    def test_minmax_array_ufunc_fallback(self):
+        # a subclass that implements min/max through __array_ufunc__ but
+        # declines the private minimummaximum ufunc still works via the
+        # fallback, matching np.min / np.max
+        class Sub(np.ndarray):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kw):
+                if ufunc in (np.minimum, np.maximum):
+                    inputs = [np.asarray(i) if isinstance(i, Sub) else i
+                              for i in inputs]
+                    return getattr(ufunc, method)(*inputs, **kw)
+                return NotImplemented
+
+        a = np.array([3, 1, 2]).view(Sub)
+        assert_equal(np.minmax(a), (np.min(a), np.max(a)))
+        assert_equal(np.minmax(a), (1, 3))
+
 
 class TestNewaxis:
     def test_basic(self):

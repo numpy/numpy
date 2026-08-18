@@ -3492,10 +3492,17 @@ def _minmax_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
     return (a, *out) if type(out) is tuple else (a, out)
 
 
-@array_function_dispatch(
-    _minmax_dispatcher,
-    reduction=(um.minimummaximum, overrides._ReductionKind.MIN_MAX),
-)
+def _minmax_fallback(a, axis, out, keepdims, initial, where):
+    out_min, out_max = out if type(out) is tuple else (None, None)
+    initial_min, initial_max = (initial if type(initial) is tuple
+                                else (initial, initial))
+    return (min(a, axis=axis, out=out_min, keepdims=keepdims,
+                initial=initial_min, where=where),
+            max(a, axis=axis, out=out_max, keepdims=keepdims,
+                initial=initial_max, where=where))
+
+
+@array_function_dispatch(_minmax_dispatcher)
 @set_module('numpy')
 def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
            where=np._NoValue):
@@ -3522,8 +3529,10 @@ def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the input array.
     initial : scalar or tuple of scalars, optional
-        The initial values of the minimum and maximum, used for empty slices.
-        See `~numpy.ufunc.reduce` for details.
+        If a tuple, the first entry is the maximum value for the minimum result
+        and the second entry is the minimum value for the maximum result. If a
+        scalar, the same value is used for both. Also used as a fill value for
+        empty slices. See `~numpy.ufunc.reduce` for details.
     where : array_like of bool, optional
         Elements to compare for the minimum and maximum. See
         `~numpy.ufunc.reduce` for details.
@@ -3564,8 +3573,11 @@ def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     (array([0, 2]), array([1, 3]))
 
     """
-    return _wrapreduction(a, um.minimummaximum, 'minmax', axis, None, out,
-                          keepdims, initial, where)
+    try:
+        return _wrapreduction(a, um.minimummaximum, 'minmax', axis, None, out,
+                              keepdims, initial, where)
+    except TypeError:
+        return _minmax_fallback(a, axis, out, keepdims, initial, where)
 
 
 def _prod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,

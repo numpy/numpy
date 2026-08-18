@@ -236,6 +236,7 @@ __all__ = [
     "min",
     "minimum",
     "minimum_fill_value",
+    "minmax",
     "mod",
     "multiply",
     "mvoid",
@@ -3036,6 +3037,23 @@ def max[ArrayT: np.ndarray](
     fill_value: _ScalarLike_co | None = None,
     keepdims: bool | _NoValueType = ...,
 ) -> ArrayT: ...
+
+@overload
+def minmax[ScalarT: np.generic](
+    obj: _ArrayLike[ScalarT],
+    axis: None = None,
+    out: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> tuple[ScalarT, ScalarT]: ...
+@overload
+def minmax(
+    obj: ArrayLike,
+    axis: _ShapeLike | None = None,
+    out: tuple[np.ndarray, np.ndarray] | None = None,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...,
+) -> tuple[Any, Any]: ...
 
 @overload
 def ptp[ScalarT: np.generic](

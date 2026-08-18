@@ -99,6 +99,7 @@ from numpy.ma.core import (
     min,
     minimum,
     minimum_fill_value,
+    minmax,
     mod,
     multiply,
     mvoid,
@@ -1399,6 +1400,33 @@ class TestMaskedArrayArithmetic:
             nout.fill(-999)
             result = mafunc(xm, axis=0, out=nout)
             assert_(result is nout)
+
+    def test_minmax(self):
+        # ma.minmax returns (ma.min, ma.max) and is mask-aware
+        x = array([1, 2, 3, 4], mask=[0, 0, 1, 1])
+        assert_equal(minmax(x), (min(x), max(x)))
+        assert_equal(minmax(x), (1, 2))
+
+        a = arange(6).reshape(2, 3)
+        a[0, 0] = masked
+        for axis in (None, 0, 1):
+            lo, hi = minmax(a, axis=axis)
+            assert_equal(lo, min(a, axis=axis))
+            assert_equal(hi, max(a, axis=axis))
+
+        lo, hi = minmax(a, axis=1, keepdims=True)
+        assert_equal(lo, min(a, axis=1, keepdims=True))
+        assert_equal(hi, max(a, axis=1, keepdims=True))
+
+        # `out` tuple is filled and returned
+        xm = array(np.random.uniform(0, 10, 12), mask=np.random.rand(12).round())
+        xm = xm.reshape((3, 4))
+        out1 = np.empty((4,), dtype=float)
+        out2 = np.empty((4,), dtype=float)
+        res = minmax(xm, axis=0, out=(out1, out2))
+        assert_(res[0] is out1 and res[1] is out2)
+        assert_equal(out1, min(xm, axis=0))
+        assert_equal(out2, max(xm, axis=0))
 
     def test_minmax_methods(self):
         # Additional tests on max/min
