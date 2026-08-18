@@ -456,9 +456,18 @@ assert_type(AR_f8.diagonal(), npt.NDArray[np.float64])
 assert_type(AR_f8_2d.diagonal(), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(AR_f8_3d.diagonal(), np.ndarray[tuple[int, int], np.dtype[np.float64]])
 
-assert_type(AR_f8.dot(1), npt.NDArray[Any])
+#
+
+assert_type(AR_f8.dot(1), npt.NDArray[Any] | Any)
 assert_type(AR_f8.dot([1]), Any)
 assert_type(AR_f8.dot(1, out=B), SubClass)
+
+assert_type(AR_f8_1d.dot(AR_f8_1d), np.float64)
+assert_type(AR_f8_1d.dot(AR_f8_2d), _Array1D[np.float64])
+assert_type(AR_f8_2d.dot(AR_f8_1d), _Array1D[np.float64])
+assert_type(AR_f8_2d.dot(AR_f8_2d), _Array2D[np.float64])
+
+#
 
 type _Int1D = np.ndarray[tuple[int], np.dtype[np.intp]]
 

@@ -5597,14 +5597,133 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         axis2: SupportsIndex = 1,
     ) -> ndarray[_AnyShape, _DTypeT_co]: ...
 
-    # 1D + 1D returns a scalar;
-    # all other with at least 1 non-0D array return an ndarray.
-    @overload
-    def dot(self, b: _ScalarLike_co, /, out: None = None) -> NDArray[Any]: ...
-    @overload
-    def dot(self, b: ArrayLike, /, out: None = None) -> Any: ...
-    @overload
-    def dot[ArrayT: ndarray](self, b: ArrayLike, /, out: ArrayT) -> ArrayT: ...
+    #
+    @overload  # ?d _, Nd _  (workaround)
+    def dot(
+        self: ndarray[_JustND, _dtype[number | bool_ | object_]],
+        b: _ArrayLike[number | bool_ | object_],
+        /,
+        out: None = None,
+    ) -> Incomplete: ...
+    @overload  # Nd _, ?d _  (workaround)
+    def dot(
+        self: NDArray[number | bool_ | object_],
+        b: ndarray[_JustND, _dtype[number | bool_ | object_]],
+        /,
+        out: None = None,
+    ) -> Incomplete: ...
+    @overload  # 1d object_, 1d _
+    def dot(
+        self: ndarray[_1D, _dtype[object_]],
+        b: ndarray[_1D, _dtype[number | bool_ | object_]] | Sequence[number | bool_],
+        /,
+        out: None = None,
+    ) -> Any: ...
+    @overload  # 1d _, 1d object_
+    def dot(
+        self: ndarray[_1D, _dtype[number | bool_]],
+        b: ndarray[_1D, _dtype[object_]],
+        /,
+        out: None = None,
+    ) -> Any: ...
+    @overload  # 1d T, 1d T
+    def dot[ScalarT: number | bool_](
+        self: ndarray[_1D, _dtype[ScalarT]],
+        b: ndarray[_1D, _dtype[ScalarT]] | Sequence[ScalarT],
+        /,
+        out: None = None,
+    ) -> ScalarT: ...
+    @overload  # 1d _, 1d ?
+    def dot(
+        self: ndarray[_0D | _1D, _dtype[number | bool_ | object_]],
+        b: ndarray[_0D | _1D, _dtype[number | bool_ | object_]] | Sequence[complex | number | bool_],
+        /,
+        out: None = None,
+    ) -> Incomplete: ...
+    @overload  # 1d T, 2d T
+    def dot[ScalarT: number | bool_ | object_](
+        self: ndarray[_1D, _dtype[ScalarT]],
+        b: ndarray[_2D, _dtype[ScalarT]] | Sequence[Sequence[ScalarT]],
+        /,
+        out: None = None,
+    ) -> ndarray[_1D, _dtype[ScalarT]]: ...
+    @overload  # 1d _, 2d ?
+    def dot(
+        self: ndarray[_1D, _dtype[number | bool_ | object_]],
+        b: ndarray[_2D, _dtype[number | bool_ | object_]] | Sequence[Sequence[complex | number | bool_]],
+        /,
+        out: None = None,
+    ) -> ndarray[_1D, _dtype[Incomplete]]: ...
+    @overload  # 2d T, 1d T
+    def dot[ScalarT: number | bool_ | object_](
+        self: ndarray[_2D, _dtype[ScalarT]],
+        b: ndarray[_1D, _dtype[ScalarT]] | Sequence[ScalarT],
+        /,
+        out: None = None,
+    ) -> ndarray[_1D, _dtype[ScalarT]]: ...
+    @overload  # 2d _, 1d ?
+    def dot(
+        self: ndarray[_2D, _dtype[number | bool_ | object_]],
+        b: ndarray[_1D, _dtype[number | bool_ | object_]] | Sequence[complex | number | bool_],
+        /,
+        out: None = None,
+    ) -> ndarray[_1D, _dtype[Incomplete]]: ...
+    @overload  # 2d T, 2d T
+    def dot[ScalarT: number | bool_ | object_](
+        self: ndarray[_2D, _dtype[ScalarT]],
+        b: ndarray[_2D, _dtype[ScalarT]] | Sequence[Sequence[ScalarT]],
+        /,
+        out: None = None,
+    ) -> ndarray[_2D, _dtype[ScalarT]]: ...
+    @overload  # 2d _, 2d ?
+    def dot(
+        self: ndarray[_2D, _dtype[number | bool_ | object_]],
+        b: ndarray[_2D, _dtype[number | bool_ | object_]] | Sequence[Sequence[complex | number | bool_]],
+        /,
+        out: None = None,
+    ) -> ndarray[_2D, _dtype[Incomplete]]: ...
+    @overload  # 2d T, ?d T
+    def dot[ScalarT: number | bool_ | object_](
+        self: ndarray[_2D, _dtype[ScalarT]],
+        b: _ArrayLike[ScalarT],
+        /,
+        out: None = None,
+    ) -> NDArray[ScalarT]: ...
+    @overload  # 2d _, ?d ?
+    def dot(
+        self: ndarray[_2D, _dtype[number | bool_ | object_]],
+        b: _ArrayLike[number | bool_ | object_] | _NestedSequence[complex],
+        /,
+        out: None = None,
+    ) -> NDArray[Incomplete]: ...
+    @overload  # ?d T, 2d T
+    def dot[ScalarT: number | bool_ | object_](
+        self: NDArray[ScalarT],
+        b: ndarray[_2D, _dtype[ScalarT]] | Sequence[Sequence[ScalarT]],
+        /,
+        out: None = None,
+    ) -> NDArray[ScalarT]: ...
+    @overload  # ?d _, 2d ?
+    def dot(
+        self: NDArray[number | bool_ | object_],
+        b: ndarray[_2D, _dtype[number | bool_ | object_]] | Sequence[Sequence[complex | number | bool_]],
+        /,
+        out: None = None,
+    ) -> NDArray[Incomplete]: ...
+    @overload  # ?d, ?d
+    def dot(
+        self: NDArray[number | bool_ | object_],
+        b: ArrayLike,
+        /,
+        out: None = None,
+    ) -> ndarray | Any: ...
+    @overload  # out=<given>
+    def dot[ArrayT: ndarray](
+        self: NDArray[number | bool_ | object_],
+        b: ArrayLike,
+        /,
+        out: ArrayT,
+    ) -> ArrayT: ...
 
     # keep in sync with `_core.fromnumeric.nonzero`
     @overload  # ?d  (workaround)
