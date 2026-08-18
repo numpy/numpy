@@ -128,6 +128,11 @@ searchsorted_loop(PyArrayMethod_Context *context, char *const data[],
                                       a_o += s_a, v_o += s_v, out_o += s_out) {
         bs(a_o, v_o, out_o, n, m, a_str, v_str, out_str, carrier, carrier,
            generic ? &searchsorted_compare : NULL);
+        /* A comparison may have raised; do not keep searching on top of a
+         * pending error (the GIL is held here, generic implies PYAPI). */
+        if (generic && PyErr_Occurred()) {
+            break;
+        }
     }
     searchsorted_restore_floatstatus((char *)&n_outer, saved);
     Py_XDECREF(carrier);
@@ -185,6 +190,11 @@ searchsorted_sorter_loop(PyArrayMethod_Context *context, char *const data[],
             PyErr_SetString(PyExc_ValueError, "Sorter index out of range.");
             NPY_DISABLE_C_API;
             ret = -1;
+            break;
+        }
+        /* A comparison may have raised; do not keep searching on top of a
+         * pending error (the GIL is held here, generic implies PYAPI). */
+        if (generic && PyErr_Occurred()) {
             break;
         }
     }

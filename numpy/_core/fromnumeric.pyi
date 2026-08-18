@@ -757,7 +757,7 @@ def searchsorted[ShapeT: _Shape](
     side: _SortSide = "left",
     sorter: _ArrayLikeInt1D | None = None,
     *,
-    axis: SupportsIndex | None = -1,
+    axis: SupportsIndex | None | _NoValueType = ...,
 ) -> np.ndarray[ShapeT, np.dtype[np.intp]]: ...
 @overload  # 0d
 def searchsorted(
@@ -766,7 +766,7 @@ def searchsorted(
     side: _SortSide = "left",
     sorter: _ArrayLikeInt1D | None = None,
     *,
-    axis: SupportsIndex | None = -1,
+    axis: SupportsIndex | None | _NoValueType = ...,
 ) -> np.intp: ...
 @overload  # 1d  (`str <; Sequence[str]`, hence the `list[str]`)
 def searchsorted(
@@ -775,7 +775,7 @@ def searchsorted(
     side: _SortSide = "left",
     sorter: _ArrayLikeInt1D | None = None,
     *,
-    axis: SupportsIndex | None = -1,
+    axis: SupportsIndex | None | _NoValueType = ...,
 ) -> _Array1D[np.intp]: ...
 @overload  # 2d
 def searchsorted(
@@ -784,7 +784,7 @@ def searchsorted(
     side: _SortSide = "left",
     sorter: _ArrayLikeInt1D | None = None,
     *,
-    axis: SupportsIndex | None = -1,
+    axis: SupportsIndex | None | _NoValueType = ...,
 ) -> _Array2D[np.intp]: ...
 @overload  # 3d
 def searchsorted(
@@ -793,7 +793,7 @@ def searchsorted(
     side: _SortSide = "left",
     sorter: _ArrayLikeInt1D | None = None,
     *,
-    axis: SupportsIndex | None = -1,
+    axis: SupportsIndex | None | _NoValueType = ...,
 ) -> _Array3D[np.intp]: ...
 @overload  # fallback  (overlaps with 1st overload)
 def searchsorted(
@@ -802,7 +802,7 @@ def searchsorted(
     side: _SortSide = "left",
     sorter: _ArrayLikeInt1D | None = None,
     *,
-    axis: SupportsIndex | None = -1,
+    axis: SupportsIndex | None | _NoValueType = ...,
 ) -> NDArray[np.intp] | Any: ...
 
 # keep in sync with `ma.core.resize`
