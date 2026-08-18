@@ -2359,9 +2359,9 @@ def around(
 ) -> NDArray[Any] | Any: ...
 
 # keep in sync with `sum` below (but without `timedelta64`)
-@overload  # +int
+@overload  # ~int
 def prod(
-    a: _ArrayLikeInt_co,
+    a: _NestedSequence[list[int]] | list[int],
     axis: None = None,
     dtype: None = None,
     out: None = None,
@@ -2419,9 +2419,9 @@ def prod(
     initial: _IntLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> _Array3D[np.int_]: ...
-@overload  # +int, ?d, axis: <given>
+@overload  # ~int, ?d, axis: <given>
 def prod(
-    a: _ArrayLikeInt_co,
+    a: _NestedSequence[list[int]] | list[int],
     axis: int | tuple[int, ...],
     dtype: None = None,
     out: None = None,
@@ -2643,6 +2643,26 @@ def prod[ArrayT: NDArray[np.inexact | np.object_]](
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ArrayT: ...
+@overload  # +int
+def prod(
+    a: _ArrayLikeInt_co,
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _IntLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.int_: ...
+@overload  # +int, ?d, axis: <given>
+def prod(
+    a: _ArrayLikeInt_co,
+    axis: int | tuple[int, ...],
+    dtype: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _IntLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.int_] | Any: ...
 @overload  # dtype: <known>
 def prod[ScalarT: np.generic](
     a: _ArrayLikeMultiplicative_co,
@@ -2851,9 +2871,9 @@ def prod(
 ) -> NDArray[Any]: ...
 
 # keep in sync with `prod` above (but also accept `timedelta64`)
-@overload  # +int
+@overload  # ~int
 def sum(
-    a: _ArrayLikeInt_co,
+    a: _NestedSequence[list[int]] | list[int],
     axis: None = None,
     dtype: None = None,
     out: None = None,
@@ -2911,9 +2931,9 @@ def sum(
     initial: _IntLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> _Array3D[np.int_]: ...
-@overload  # +int, ?d, axis: <given>
+@overload  # ~int, ?d, axis: <given>
 def sum(
-    a: _ArrayLikeInt_co,
+    a: _NestedSequence[list[int]] | list[int],
     axis: int | tuple[int, ...],
     dtype: None = None,
     out: None = None,
@@ -3135,6 +3155,26 @@ def sum[ArrayT: NDArray[np.inexact | np.timedelta64 | np.object_]](
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ArrayT: ...
+@overload  # +int
+def sum(
+    a: _ArrayLikeInt_co,
+    axis: None = None,
+    dtype: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _IntLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.int_: ...
+@overload  # +int, ?d, axis: <given>
+def sum(
+    a: _ArrayLikeInt_co,
+    axis: int | tuple[int, ...],
+    dtype: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _IntLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.int_] | Any: ...
 @overload  # dtype: ScalarT
 def sum[ScalarT: np.generic](
     a: _ArrayLikeNumeric_co,

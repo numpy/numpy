@@ -118,7 +118,7 @@ np.prod(a, out=False)  # type: ignore[call-overload]
 np.prod(a, keepdims=1.0)  # type: ignore[call-overload]
 np.prod(a, initial=int)  # type: ignore[call-overload]
 np.prod(a, where=1.0)  # type: ignore[call-overload]
-np.prod(AR_U)  # type: ignore[arg-type]
+np.prod(AR_U)  # type: ignore[type-var]
 
 np.cumprod(a, axis=1.0)  # type: ignore[call-overload]
 np.cumprod(a, out=False)  # type: ignore[call-overload]
