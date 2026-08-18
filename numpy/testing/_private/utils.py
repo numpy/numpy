@@ -108,6 +108,7 @@ IS_IOS = sys.platform == "ios"
 IS_PYPY = sys.implementation.name == 'pypy'
 try:
     from mesonbuild.coredata import version as _meson_version
+
     from numpy._utils import _pep440
     IS_MESON_BROKEN_FOR_PYPY312 = (
         IS_PYPY and _pep440.parse(_meson_version) <= _pep440.parse('1.12.0')
