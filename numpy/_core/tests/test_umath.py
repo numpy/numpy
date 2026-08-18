@@ -2717,12 +2717,16 @@ class TestMinimumMaximum(_FilterInvalids):
 
     def test_lengths(self):
         # cover the SIMD main loops, their unrolled tails and the scalar tail
+        # across the lane widths (8/16/32/64-bit), for integer and float
+        dtypes = ['int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
+                  'int64', 'uint64', 'float32', 'float64']
         for n in [0, 1, 2, 3, 7, 8, 15, 16, 17, 63, 64, 65, 127, 1000, 4099]:
-            a = np.arange(n, dtype=np.float64)
-            b = a[::-1].copy()
-            self.check(a, b)
-            if n > 0:
-                self.check_reduce(a)
+            for dt in dtypes:
+                a = np.arange(n).astype(dt)
+                b = a[::-1].copy()
+                self.check(a, b)
+                if n > 0:
+                    self.check_reduce(a)
 
     def test_float_nans(self):
         nan = np.nan

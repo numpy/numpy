@@ -6123,10 +6123,12 @@ class TestMinMax:
         self.check_minmax(a, axis=1, keepdims=True)
 
     def test_minmax_dtypes(self):
+        # a large array so the SIMD reduction kernels (not just the scalar
+        # tail) are exercised for every lane width
         for dtype in (np.typecodes['AllInteger'] + np.typecodes['AllFloat']
                       + np.typecodes['Complex'] + '?'):
-            self.check_minmax(np.arange(10).astype(dtype))
-        self.check_minmax(np.arange(10, dtype=object))
+            self.check_minmax(np.arange(1000).astype(dtype))
+        self.check_minmax(np.arange(1000, dtype=object))
 
     def test_minmax_nan(self):
         # NaN is propagated, like min/max
