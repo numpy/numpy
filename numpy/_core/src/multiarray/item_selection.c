@@ -2552,19 +2552,48 @@ NPY_NO_EXPORT PyObject *
 PyArray_SearchSorted_int(PyArrayObject *op1, PyObject *op2,
                          NPY_SEARCHSIDE side, PyObject *perm, int axis)
 {
+    /*
+     * Fast path for the calls the original 1-D implementation handled: it
+     * behaves identically and skips the gufunc invocation overhead, which
+     * roughly doubles the cost of a small search.  The gufunc is needed for
+     * everything new: more dimensions, a batched (>1-D) sorter, or an
+     * operand whose `__array_ufunc__` must be consulted.
+     */
+    if (PyArray_NDIM(op1) == 1
+            && (axis == -1 || axis == 0 || axis == NPY_RAVEL_AXIS)
+            && (perm == NULL || !PyArray_Check(perm)
+                || PyArray_NDIM((PyArrayObject *)perm) <= 1)
+            && !PyUFunc_HasOverride((PyObject *)op1)
+            && !PyUFunc_HasOverride(op2)) {
+        return PyArray_SearchSorted(op1, op2, side, perm);
+    }
+
     PyObject *ret = searchsorted_gufunc(op1, op2, side, perm, axis);
     if (ret != NULL) {
         return ret;
     }
 
     /*
-     * Dtypes with neither a loop nor a usable comparison, StringDType above
-     * all, raise TypeError.  Fall back to the generic implementation, which
-     * is 1-D only and can therefore stand in only when the search axis is
-     * `op1`'s single axis.
+     * Only a failure to dispatch may fall back to the generic
+     * implementation: dtypes with neither a loop nor a usable comparison,
+     * StringDType above all, fail with _UFuncNoLoopError, and an operand
+     * whose `__array_ufunc__` declined the call raises a plain TypeError.
+     * Any other TypeError (a bad `sorter`, a failing object comparison, ...)
+     * is a genuine error.  The generic implementation is 1-D only and can
+     * therefore stand in only when the search axis is `op1`'s single axis.
      */
     if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
         return NULL;
+    }
+    if (!PyErr_ExceptionMatches(npy_static_pydata._UFuncNoLoopError)) {
+        /* Stash the error: the attribute lookups must not run under it. */
+        PyObject *exc = PyErr_GetRaisedException();
+        int declined_override = PyUFunc_HasOverride((PyObject *)op1)
+                                || PyUFunc_HasOverride(op2);
+        PyErr_SetRaisedException(exc);
+        if (!declined_override) {
+            return NULL;
+        }
     }
     if (axis != NPY_RAVEL_AXIS && axis != -1
             && !(PyArray_NDIM(op1) <= 1 && (axis == 0 || axis == -1))) {
