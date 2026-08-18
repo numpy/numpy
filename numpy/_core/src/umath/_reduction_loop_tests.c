@@ -145,6 +145,7 @@ object_minimummaximum_loop(PyArrayMethod_Context *NPY_UNUSED(context),
 
     for (npy_intp i = 0; i < n; i++) {
         PyObject *a = *(PyObject **)in1, *b = *(PyObject **)in2;
+        PyObject **o1 = (PyObject **)out1, **o2 = (PyObject **)out2;
         if (a == NULL) a = Py_None;
         if (b == NULL) b = Py_None;
         PyObject *lo = object_min(a, b);
@@ -154,8 +155,11 @@ object_minimummaximum_loop(PyArrayMethod_Context *NPY_UNUSED(context),
             Py_XDECREF(hi);
             return -1;
         }
-        Py_XSETREF(*(PyObject **)out1, lo);
-        Py_XSETREF(*(PyObject **)out2, hi);
+        PyObject *old1 = *o1, *old2 = *o2;
+        *o1 = lo;
+        *o2 = hi;
+        Py_XDECREF(old1);
+        Py_XDECREF(old2);
         in1 += strides[0]; in2 += strides[1];
         out1 += strides[2]; out2 += strides[3];
     }
@@ -176,6 +180,7 @@ object_minimummaximum_reduce_loop(PyArrayMethod_Context *NPY_UNUSED(context),
         PyObject *cur_min = *(PyObject **)acc_min;
         PyObject *cur_max = *(PyObject **)acc_max;
         PyObject *val = *(PyObject **)x;
+        PyObject **o_min = (PyObject **)out_min, **o_max = (PyObject **)out_max;
         if (cur_min == NULL) cur_min = Py_None;
         if (cur_max == NULL) cur_max = Py_None;
         if (val == NULL) val = Py_None;
@@ -186,8 +191,11 @@ object_minimummaximum_reduce_loop(PyArrayMethod_Context *NPY_UNUSED(context),
             Py_XDECREF(hi);
             return -1;
         }
-        Py_XSETREF(*(PyObject **)out_min, lo);
-        Py_XSETREF(*(PyObject **)out_max, hi);
+        PyObject *old_min = *o_min, *old_max = *o_max;
+        *o_min = lo;
+        *o_max = hi;
+        Py_XDECREF(old_min);
+        Py_XDECREF(old_max);
         acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
         out_min += strides[3]; out_max += strides[4];
     }
@@ -225,7 +233,7 @@ minimummaximum_promoter(PyObject *NPY_UNUSED(ufunc),
 
     for (int i = 0; i < 4; i++) {
         PyArray_DTypeMeta *dt = signature[i] != NULL ? signature[i] : double_dt;
-        Py_INCREF(dt);
+        Py_INCREF((PyObject *)dt);
         new_op_dtypes[i] = dt;
     }
     Py_DECREF(double_descr);
@@ -326,12 +334,14 @@ add_minimummaximum(PyObject *module, const char *name, int with_identity)
 
     res = PyUFunc_AddLoopFromSpec(minimummaximum, &object_spec);
     Py_DECREF(object_descr);
-    if (res < 0 || register_minimummaximum_promoter(minimummaximum) < 0
-            || PyModule_AddObject(module, name, minimummaximum) < 0) {
-        Py_XDECREF(minimummaximum);
-        return -1;
+    if (res == 0) {
+        res = register_minimummaximum_promoter(minimummaximum);
     }
-    return 0;
+    if (res == 0) {
+        res = PyModule_AddObjectRef(module, name, minimummaximum);
+    }
+    Py_DECREF(minimummaximum);
+    return res;
 }
 
 
@@ -376,7 +386,11 @@ PyMODINIT_FUNC PyInit__reduction_loop_tests(void)
         return NULL;
     }
 
-#ifdef Py_GIL_DISABLED
+    /*
+     * TODO: free-threading under the stable ABI needs abi3t (3.15+), where
+     * `PyModuleDef` is opaque and `PyModExport` slots replace it.
+     */
+#if defined(Py_GIL_DISABLED) && !defined(Py_LIMITED_API)
     // signal this module supports running with the GIL disabled
     PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
 #endif
