@@ -913,61 +913,78 @@ SIMD_INTRIN_DEF(pack_b8_b64)
 //#########################################################################
 //## Defining a separate module for each target
 //#########################################################################
-NPY_VISIBILITY_HIDDEN PyObject *
-NPY_CPU_DISPATCH_CURFX(simd_create_module)(void)
+#if defined(NPY_MTARGETS_CURRENT) // meson build
+    #define SIMD_MODULE_NAME \
+        "numpy._core._simd." NPY_TOSTRING(NPY_MTARGETS_CURRENT)
+#elif defined(NPY__CPU_TARGET_CURRENT)
+    #define SIMD_MODULE_NAME \
+        "numpy._core._simd." NPY_TOSTRING(NPY__CPU_TARGET_CURRENT)
+#else
+    #define SIMD_MODULE_NAME "numpy._core._simd.baseline"
+#endif
+
+static int
+simd_module_exec(PyObject *m)
 {
-    static struct PyModuleDef defs = {
-        .m_base = PyModuleDef_HEAD_INIT,
-    #if defined(NPY_MTARGETS_CURRENT) // meson build
-        .m_name = "numpy._core._simd." NPY_TOSTRING(NPY_MTARGETS_CURRENT),
-    #elif defined(NPY__CPU_TARGET_CURRENT)
-        .m_name = "numpy._core._simd." NPY_TOSTRING(NPY__CPU_TARGET_CURRENT),
-    #else
-        .m_name = "numpy._core._simd.baseline",
-    #endif
-        .m_size = -1,
-    #if NPY_SIMD
-        .m_methods = simd__intrinsics_methods
-    #else
-        .m_methods = NULL
-    #endif
-    };
-    PyObject *m = PyModule_Create(&defs);
-    if (m == NULL) {
-        return NULL;
+    if (PyModule_AddIntConstant(m, "simd", NPY_SIMD) < 0) {
+        return -1;
     }
-    if (PyModule_AddIntConstant(m, "simd", NPY_SIMD)) {
-        goto err;
+    if (PyModule_AddIntConstant(m, "simd_f64", NPY_SIMD_F64) < 0) {
+        return -1;
     }
-    if (PyModule_AddIntConstant(m, "simd_f64", NPY_SIMD_F64)) {
-        goto err;
+    if (PyModule_AddIntConstant(m, "simd_f32", NPY_SIMD_F32) < 0) {
+        return -1;
     }
-    if (PyModule_AddIntConstant(m, "simd_f32", NPY_SIMD_F32)) {
-        goto err;
+    if (PyModule_AddIntConstant(m, "simd_fma3", NPY_SIMD_FMA3) < 0) {
+        return -1;
     }
-    if (PyModule_AddIntConstant(m, "simd_fma3", NPY_SIMD_FMA3)) {
-        goto err;
+    if (PyModule_AddIntConstant(m, "simd_width", NPY_SIMD_WIDTH) < 0) {
+        return -1;
     }
-    if (PyModule_AddIntConstant(m, "simd_width", NPY_SIMD_WIDTH)) {
-        goto err;
-    }
-    if (PyModule_AddIntConstant(m, "simd_bigendian", NPY_SIMD_BIGENDIAN)) {
-        goto err;
+    if (PyModule_AddIntConstant(m, "simd_bigendian", NPY_SIMD_BIGENDIAN) < 0) {
+        return -1;
     }
 #if NPY_SIMD
-    if (PySIMDVectorType_Init(m)) {
-        goto err;
+    if (PySIMDVectorType_Init(m) < 0) {
+        return -1;
     }
     /**begin repeat
      * #sfx = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
      */
-    if (PyModule_AddIntConstant(m, "nlanes_@sfx@", npyv_nlanes_@sfx@)) {
-        goto err;
+    if (PyModule_AddIntConstant(m, "nlanes_@sfx@", npyv_nlanes_@sfx@) < 0) {
+        return -1;
     }
     /**end repeat**/
 #endif // NPY_SIMD
-    return m;
-err:
-    Py_DECREF(m);
-    return NULL;
+    return 0;
+}
+
+static PyModuleDef_Slot simd_module_slots[] = {
+    {Py_mod_exec, simd_module_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
+#endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    // signal that this module supports running without an active GIL
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
+
+static struct PyModuleDef simd_module_def = {
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = SIMD_MODULE_NAME,
+    .m_size = 0,
+#if NPY_SIMD
+    .m_methods = simd__intrinsics_methods,
+#else
+    .m_methods = NULL,
+#endif
+    .m_slots = simd_module_slots,
+};
+
+NPY_VISIBILITY_HIDDEN PyObject *
+NPY_CPU_DISPATCH_CURFX(simd_create_module)(void)
+{
+    return simd_module_from_def(&simd_module_def, SIMD_MODULE_NAME);
 }
