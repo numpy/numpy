@@ -5987,8 +5987,7 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
     PyObject *tmp1 = PyTuple_GET_ITEM(args, 0);
     PyObject *tmp2 = PyTuple_GET_ITEM(args, 1);
 
-    int is_matrix = PyObject_IsInstance(
-            tmp1, state->runtime_imports.numpy_matrix);
+    int is_matrix = PyObject_IsInstance(tmp1, state->runtime_imports.numpy_matrix);
     if (is_matrix == -1) {
         return NULL;
     }
@@ -5998,8 +5997,7 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
         return NULL;
     }
 
-    is_matrix = PyObject_IsInstance(
-            tmp2, state->runtime_imports.numpy_matrix);
+    is_matrix = PyObject_IsInstance(tmp2, state->runtime_imports.numpy_matrix);
     if (is_matrix == -1) {
         return NULL;
     }
@@ -7189,8 +7187,7 @@ ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
     PyObject *doc;
 
     // If there is a __doc__ in the instance __dict__, use it.
-    int result = PyDict_GetItemRef(
-            ufunc->dict, state->interned_str.__doc__, &doc);
+    int result = PyDict_GetItemRef(ufunc->dict, state->interned_str.__doc__, &doc);
     if (result == -1) {
         return NULL;
     }

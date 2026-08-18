@@ -817,12 +817,10 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     }
 
     if (min == NULL) {
-        return PyObject_CallFunctionObjArgs(
-                state->n_ops.minimum, self, max, out, NULL);
+        return PyObject_CallFunctionObjArgs(state->n_ops.minimum, self, max, out, NULL);
     }
     else if (max == NULL) {
-        return PyObject_CallFunctionObjArgs(
-                state->n_ops.maximum, self, min, out, NULL);
+        return PyObject_CallFunctionObjArgs(state->n_ops.maximum, self, min, out, NULL);
     }
     else {
         return PyObject_CallFunctionObjArgs(

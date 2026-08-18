@@ -209,14 +209,12 @@ initialize_static_globals(void)
         return -1;
     }
 
-    static_pydata->wrapit_kwnames_subok = PyTuple_Pack(
-            1, interned_str->subok);
+    static_pydata->wrapit_kwnames_subok = PyTuple_Pack(1, interned_str->subok);
     if (static_pydata->wrapit_kwnames_subok == NULL) {
         return -1;
     }
 
-    static_pydata->wrapit_kwnames_to_scalar = PyTuple_Pack(
-            1, interned_str->to_scalar);
+    static_pydata->wrapit_kwnames_to_scalar = PyTuple_Pack(1, interned_str->to_scalar);
     if (static_pydata->wrapit_kwnames_to_scalar == NULL) {
         return -1;
     }

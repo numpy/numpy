@@ -215,8 +215,7 @@ find_binary_operation_path(
      * It may be nice to avoid double lookup in `BINOP_GIVE_UP_IF_NEEDED`.
      */
     PyObject *attr;
-    if (PyArray_LookupSpecial(
-            other, state->interned_str.array_ufunc, &attr) < 0) {
+    if (PyArray_LookupSpecial(other, state->interned_str.array_ufunc, &attr) < 0) {
         PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
     else if (attr != NULL) {
@@ -263,8 +262,7 @@ find_binary_operation_path(
      * Retrying then succeeds. So if (and only if) `self.item()` returns a new
      * type, we can safely attempt the operation (again) with that.
      */
-    PyObject *self_item = PyObject_CallMethodNoArgs(
-            self, state->interned_str.item);
+    PyObject *self_item = PyObject_CallMethodNoArgs(self, state->interned_str.item);
     if (self_item == NULL) {
         return -1;
     }
@@ -338,12 +336,10 @@ gentype_@name@@suff@(PyObject *m1, PyObject *m2)
         /* Call the corresponding ufunc (with the array) */
         PyObject *res;
         if (self == m1) {
-            res = PyArray_GenericBinaryFunction(
-                    m1, other_op, state->n_ops.@ufunc@);
+            res = PyArray_GenericBinaryFunction(m1, other_op, state->n_ops.@ufunc@);
         }
         else {
-            res = PyArray_GenericBinaryFunction(
-                    other_op, m2, state->n_ops.@ufunc@);
+            res = PyArray_GenericBinaryFunction(other_op, m2, state->n_ops.@ufunc@);
         }
         Py_DECREF(other_op);
         return res;
@@ -456,12 +452,10 @@ gentype_power(PyObject *m1, PyObject *m2, PyObject *modulo)
          */
         PyObject *res;
         if (self == m1) {
-            res = PyArray_GenericBinaryFunction(
-                    m1, other_op, state->n_ops.power);
+            res = PyArray_GenericBinaryFunction(m1, other_op, state->n_ops.power);
         }
         else {
-            res = PyArray_GenericBinaryFunction(
-                    other_op, m2, state->n_ops.power);
+            res = PyArray_GenericBinaryFunction(other_op, m2, state->n_ops.power);
         }
         Py_DECREF(other_op);
         return res;
