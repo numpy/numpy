@@ -1131,7 +1131,7 @@ def clip(
 ) -> Any: ...
 
 # keep in sync with `any`
-@overload
+@overload  # axis=None (default)
 def all(
     a: ArrayLike | None,
     axis: None = None,
@@ -1140,25 +1140,52 @@ def all(
     *,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> np.bool: ...
-@overload  # axis: int
-def all[ShapeT: _Shape](
-    a: ArrayLike,
-    axis: int,
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-    *,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> NDArray[np.bool]: ...
-@overload  # axis: (int, ...)
-def all[ShapeT: _Shape](
-    a: ArrayLike,
-    axis: tuple[int, ...],
+@overload  # ?d, axis=<given>  (workaround)
+def all(
+    a: _ArrayJustND[Any],
+    axis: int | tuple[int, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     *,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.bool] | Any: ...
-@overload  # Nd, keepdims: True
+@overload  # 1d, axis=<single>
+def all(
+    a: _ToArray1D[Any],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    *,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.bool: ...
+@overload  # 2d, axis=<single>
+def all(
+    a: _ToArray2D[Any],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    *,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array1D[np.bool]: ...
+@overload  # 3d, axis=<single>
+def all(
+    a: _ToArray3D[Any],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    *,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array2D[np.bool]: ...
+@overload  # ?d, axis=<given>
+def all(
+    a: ArrayLike,
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    *,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.bool] | Any: ...
+@overload  # Nd, keepdims=True
 def all[ShapeT: _Shape](
     a: np.ndarray[ShapeT],
     axis: int | tuple[int, ...] | None = None,
@@ -1167,8 +1194,8 @@ def all[ShapeT: _Shape](
     keepdims: Literal[True],
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
-@overload  # ?d, keepdims: True
-def all[ShapeT: _Shape](
+@overload  # ?d, keepdims=True
+def all(
     a: ArrayLike,
     axis: int | tuple[int, ...] | None = None,
     out: None = None,
@@ -1176,7 +1203,7 @@ def all[ShapeT: _Shape](
     keepdims: Literal[True],
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.bool]: ...
-@overload  # out: <given> (keyword)
+@overload  # out=<given> (keyword)
 def all[ArrayT: np.ndarray](
     a: ArrayLike | None,
     axis: int | tuple[int, ...] | None = None,
@@ -1185,7 +1212,7 @@ def all[ArrayT: np.ndarray](
     keepdims: bool | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ArrayT: ...
-@overload  # out: <given> (positional)
+@overload  # out=<given> (positional)
 def all[ArrayT: np.ndarray](
     a: ArrayLike | None,
     axis: int | tuple[int, ...] | None,
@@ -1196,7 +1223,7 @@ def all[ArrayT: np.ndarray](
 ) -> ArrayT: ...
 
 # keep in sync with `all`
-@overload
+@overload  # axis=None (default)
 def any(
     a: ArrayLike | None,
     axis: None = None,
@@ -1205,25 +1232,52 @@ def any(
     *,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> np.bool: ...
-@overload  # axis: int
-def any[ShapeT: _Shape](
-    a: ArrayLike,
-    axis: int,
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-    *,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> NDArray[np.bool]: ...
-@overload  # axis: (int, ...)
-def any[ShapeT: _Shape](
-    a: ArrayLike,
-    axis: tuple[int, ...],
+@overload  # ?d, axis=<given>  (workaround)
+def any(
+    a: _ArrayJustND[Any],
+    axis: int | tuple[int, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     *,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.bool] | Any: ...
-@overload  # Nd, keepdims: True
+@overload  # 1d, axis=<single>
+def any(
+    a: _ToArray1D[Any],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    *,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.bool: ...
+@overload  # 2d, axis=<single>
+def any(
+    a: _ToArray2D[Any],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    *,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array1D[np.bool]: ...
+@overload  # 3d, axis=<single>
+def any(
+    a: _ToArray3D[Any],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    *,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array2D[np.bool]: ...
+@overload  # ?d, axis=<given>
+def any(
+    a: ArrayLike,
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    *,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[np.bool] | Any: ...
+@overload  # Nd, keepdims=True
 def any[ShapeT: _Shape](
     a: np.ndarray[ShapeT],
     axis: int | tuple[int, ...] | None = None,
@@ -1232,8 +1286,8 @@ def any[ShapeT: _Shape](
     keepdims: Literal[True],
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
-@overload  # ?d, keepdims: True
-def any[ShapeT: _Shape](
+@overload  # ?d, keepdims=True
+def any(
     a: ArrayLike,
     axis: int | tuple[int, ...] | None = None,
     out: None = None,
@@ -1241,7 +1295,7 @@ def any[ShapeT: _Shape](
     keepdims: Literal[True],
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.bool]: ...
-@overload  # out: <given> (keyword)
+@overload  # out=<given> (keyword)
 def any[ArrayT: np.ndarray](
     a: ArrayLike | None,
     axis: int | tuple[int, ...] | None = None,
@@ -1250,7 +1304,7 @@ def any[ArrayT: np.ndarray](
     keepdims: bool | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ArrayT: ...
-@overload  # out: <given> (positional)
+@overload  # out=<given> (positional)
 def any[ArrayT: np.ndarray](
     a: ArrayLike | None,
     axis: int | tuple[int, ...] | None,
