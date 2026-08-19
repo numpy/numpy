@@ -29,6 +29,9 @@ from .mtrand import RandomState
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+type _Array4D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int], np.dtype[ScalarT]]
+
 type _ToArray1D[ScalarT: np.generic] = _Array1D[ScalarT] | list[ScalarT]
 type _NestedList[T] = _NestedSequence[list[T]] | list[T]
 
@@ -46,6 +49,8 @@ type _NDArrayLikeInt = NDArray[np.generic[int]] | _NestedSequence[int]
 type _NDArrayLikeFloat = NDArray[np.generic[float]] | _NestedSequence[float]
 
 type _MethodExp = Literal["zig", "inv"]
+type _MethodMVN = Literal["svd", "eigh", "cholesky"]
+type _CheckValid = Literal["warn", "raise", "ignore"]
 
 ###
 
@@ -1159,16 +1164,65 @@ class Generator:
     def dirichlet(self, /, alpha: _ArrayLikeFloat_co, size: _ShapeLike | None = None) -> _ArrayF64: ...
 
     #
+    @overload  # size=None (default)
     def multivariate_normal(
         self,
         /,
         mean: _ArrayLikeFloat_co,
         cov: _ArrayLikeFloat_co,
-        size: _ShapeLike | None = None,
-        check_valid: Literal["warn", "raise", "ignore"] = "warn",
+        size: None = None,
+        check_valid: _CheckValid = "warn",
         tol: float = 1e-8,
         *,
-        method: Literal["svd", "eigh", "cholesky"] = "svd",
+        method: _MethodMVN = "svd",
+    ) -> _Array1D[np.float64]: ...
+    @overload  # size=<1d>
+    def multivariate_normal(
+        self,
+        /,
+        mean: _ArrayLikeFloat_co,
+        cov: _ArrayLikeFloat_co,
+        size: int | tuple[int],
+        check_valid: _CheckValid = "warn",
+        tol: float = 1e-8,
+        *,
+        method: _MethodMVN = "svd",
+    ) -> _Array2D[np.float64]: ...
+    @overload  # size=<2d>
+    def multivariate_normal(
+        self,
+        /,
+        mean: _ArrayLikeFloat_co,
+        cov: _ArrayLikeFloat_co,
+        size: tuple[int, int],
+        check_valid: _CheckValid = "warn",
+        tol: float = 1e-8,
+        *,
+        method: _MethodMVN = "svd",
+    ) -> _Array3D[np.float64]: ...
+    @overload  # size=<3d>
+    def multivariate_normal(
+        self,
+        /,
+        mean: _ArrayLikeFloat_co,
+        cov: _ArrayLikeFloat_co,
+        size: tuple[int, int, int],
+        check_valid: _CheckValid = "warn",
+        tol: float = 1e-8,
+        *,
+        method: _MethodMVN = "svd",
+    ) -> _Array4D[np.float64]: ...
+    @overload  # size=<unknown>
+    def multivariate_normal(
+        self,
+        /,
+        mean: _ArrayLikeFloat_co,
+        cov: _ArrayLikeFloat_co,
+        size: _ShapeLike,
+        check_valid: _CheckValid = "warn",
+        tol: float = 1e-8,
+        *,
+        method: _MethodMVN = "svd",
     ) -> _ArrayF64: ...
 
     #
