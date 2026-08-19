@@ -351,6 +351,17 @@ assert_type(np.amin(_dtype_list), Any)
 assert_type(np.amin(_dtype_list, axis=1), npt.NDArray[Any])
 assert_type(np.amin(_dtype_list, keepdims=True), npt.NDArray[Any])
 
+assert_type(np.minmax(AR_i8), tuple[np.int64, np.int64])
+assert_type(np.minmax(AR_i8, axis=0), tuple[Any, Any])
+assert_type(
+    np.minmax(AR_f4, out=(AR_subclass, AR_subclass)),
+    tuple[NDArraySubclass, NDArraySubclass],
+)
+assert_type(
+    np.minmax(AR_f4, 0, (AR_subclass, AR_subclass)),
+    tuple[NDArraySubclass, NDArraySubclass],
+)
+
 assert_type(np.cumprod(b), np.ndarray[tuple[int], np.dtype[np.int_]])
 assert_type(np.cumprod(f4), np.ndarray[tuple[int], np.dtype[np.float32]])
 assert_type(np.cumprod(f), np.ndarray[tuple[int]])
