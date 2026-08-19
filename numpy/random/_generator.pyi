@@ -283,44 +283,64 @@ class Generator:
         self, size: _ShapeLike | None, dtype: _DTypeLikeF32, method: _MethodExp, out: ArrayT
     ) -> ArrayT: ...
 
-    #
+    # keep in sync with `Generator.random`
     @overload  # 0d, size=None (default);  NOTE: dtype is ignored
     def standard_gamma(
         self, shape: _FloatLike_co, size: None = None, dtype: _DTypeLikeFloat = ..., out: None = None
     ) -> float: ...
-    @overload  # >0d, dtype: f64 (default)
+    @overload  # >0d, dtype=f64 (default)
     def standard_gamma(
         self, shape: _NDArrayLikeFloat, size: None = None, dtype: _DTypeLikeF64 = ..., out: None = None
     ) -> _ArrayF64: ...
-    @overload  # >0d, dtype: f32 (keyword)
+    @overload  # >0d, dtype=f32 (keyword)
     def standard_gamma(
         self, shape: _NDArrayLikeFloat, size: None = None, *, dtype: _DTypeLikeF32, out: None = None
     ) -> _ArrayF32: ...
-    @overload  # >=0d, dtype: f64 (default)
+    @overload  # >=0d, dtype=f64 (default)
     def standard_gamma(
         self, shape: _ArrayLikeFloat_co, size: None = None, dtype: _DTypeLikeF64 = ..., out: None = None
     ) -> _ArrayF64 | Any: ...
-    @overload  # >=0d, dtype: f32 (keyword)
+    @overload  # >=0d, dtype=f32 (keyword)
     def standard_gamma(
         self, shape: _ArrayLikeFloat_co, size: None = None, *, dtype: _DTypeLikeF32, out: None = None
     ) -> _ArrayF32 | Any: ...
-    @overload  # >=0d, size=<given>, dtype: f64 (default)
+    @overload  # >=0d, size=<1d>, dtype=f64 (default)
+    def standard_gamma(
+        self, shape: _ArrayLikeFloat_co, size: int, dtype: _DTypeLikeF64 = ..., out: None = None
+    ) -> _Array1D[np.float64]: ...
+    @overload  # >=0d, size=<known>, dtype=f64 (default)
+    def standard_gamma[ShapeT: _Shape](
+        self, shape: _ArrayLikeFloat_co, size: ShapeT, dtype: _DTypeLikeF64 = ..., out: None = None
+    ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    @overload  # >=0d, size=<unknown>, dtype=f64 (default)
     def standard_gamma(
         self, shape: _ArrayLikeFloat_co, size: _ShapeLike, dtype: _DTypeLikeF64 = ..., out: None = None
-    ) -> _ArrayF64: ...
-    @overload  # >=0d, size=<given>, dtype: f32
+    ) -> NDArray[np.float64]: ...
+    @overload  # >=0d, size=<1d>, dtype=f32
+    def standard_gamma(
+        self, shape: _ArrayLikeFloat_co, size: int, dtype: _DTypeLikeF32, *, out: None = None
+    ) -> _Array1D[np.float32]: ...
+    @overload  # >=0d, size=<known>, dtype=f32
+    def standard_gamma[ShapeT: _Shape](
+        self, shape: _ArrayLikeFloat_co, size: ShapeT, dtype: _DTypeLikeF32, *, out: None = None
+    ) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
+    @overload  # >=0d, size=<unknown>, dtype=f32
     def standard_gamma(
         self, shape: _ArrayLikeFloat_co, size: _ShapeLike, dtype: _DTypeLikeF32, *, out: None = None
-    ) -> _ArrayF32: ...
-    @overload  # >=0d, dtype: f64 (default), out: f64 array (keyword)
+    ) -> NDArray[np.float32]: ...
+    @overload  # >=0d, out: f64 array  (keyword)
     def standard_gamma[ArrayT: _ArrayF64](
         self, shape: _ArrayLikeFloat_co, size: _ShapeLike | None = None, dtype: _DTypeLikeF64 = ..., *, out: ArrayT
     ) -> ArrayT: ...
-    @overload  # >=0d, dtype: f32 (keyword), out: f32 array
+    @overload  # >=0d, out: f64 array  (positional)
+    def standard_gamma[ArrayT: _ArrayF64](
+        self, shape: _ArrayLikeFloat_co, size: _ShapeLike | None, dtype: _DTypeLikeF64, out: ArrayT
+    ) -> ArrayT: ...
+    @overload  # >=0d, dtype=f32, out: f32 array  (keyword)
     def standard_gamma[ArrayT: _ArrayF32](
         self, shape: _ArrayLikeFloat_co, size: _ShapeLike | None = None, *, dtype: _DTypeLikeF32, out: ArrayT
     ) -> ArrayT: ...
-    @overload  # >=0d, dtype: f32 (positional), out: f32 array
+    @overload  # >=0d, dtype=f32, out: f32 array  (positional)
     def standard_gamma[ArrayT: _ArrayF32](
         self, shape: _ArrayLikeFloat_co, size: _ShapeLike | None, dtype: _DTypeLikeF32, out: ArrayT
     ) -> ArrayT: ...
