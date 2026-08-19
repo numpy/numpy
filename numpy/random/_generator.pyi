@@ -619,7 +619,45 @@ class Generator:
     def integers(
         self, low: int, high: int | None = None, size: None = None, dtype: DTypeLike | None = ..., endpoint: bool = False
     ) -> Any: ...
-    @overload  # integer dtype, size=<given>
+    @overload  # integer dtype, size=<1d> (positional)
+    def integers[ScalarT: np.integer | np.bool](
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None,
+        size: int,
+        *, dtype: _DTypeLike[ScalarT],
+        endpoint: bool = False,
+    ) -> _Array1D[ScalarT]: ...
+    @overload  # integer dtype, size=<1d> (keyword)
+    def integers[ScalarT: np.integer | np.bool](
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        *,
+        size: int,
+        dtype: _DTypeLike[ScalarT],
+        endpoint: bool = False,
+    ) -> _Array1D[ScalarT]: ...
+    @overload  # integer dtype, size=<known> (positional)
+    def integers[ScalarT: np.integer | np.bool, ShapeT: _Shape](
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None,
+        size: ShapeT,
+        *, dtype: _DTypeLike[ScalarT],
+        endpoint: bool = False,
+    ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+    @overload  # integer dtype, size=<known> (keyword)
+    def integers[ScalarT: np.integer | np.bool, ShapeT: _Shape](
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        *,
+        size: ShapeT,
+        dtype: _DTypeLike[ScalarT],
+        endpoint: bool = False,
+    ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+    @overload  # integer dtype, size=<unknown>
     def integers[ScalarT: np.integer | np.bool](
         self,
         low: _ArrayLikeInt_co,
@@ -629,7 +667,45 @@ class Generator:
         dtype: _DTypeLike[ScalarT],
         endpoint: bool = False,
     ) -> NDArray[ScalarT]: ...
-    @overload  # int64 (default), size=<given>
+    @overload  # int64 (default), size=<1d> (positional)
+    def integers(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None,
+        size: int,
+        dtype: _DTypeLikeI64 = ...,
+        endpoint: bool = False,
+    ) -> _Array1D[np.int64]: ...
+    @overload  # int64 (default), size=<1d> (keyword)
+    def integers(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        *,
+        size: int,
+        dtype: _DTypeLikeI64 = ...,
+        endpoint: bool = False,
+    ) -> _Array1D[np.int64]: ...
+    @overload  # int64 (default), size=<known> (positional)
+    def integers[ShapeT: _Shape](
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None,
+        size: ShapeT,
+        dtype: _DTypeLikeI64 = ...,
+        endpoint: bool = False,
+    ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
+    @overload  # int64 (default), size=<known> (keyword)
+    def integers[ShapeT: _Shape](
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        *,
+        size: ShapeT,
+        dtype: _DTypeLikeI64 = ...,
+        endpoint: bool = False,
+    ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
+    @overload  # int64 (default), size=<unknown>
     def integers(
         self,
         low: _ArrayLikeInt_co,
@@ -639,7 +715,45 @@ class Generator:
         dtype: _DTypeLikeI64 = ...,
         endpoint: bool = False,
     ) -> NDArray[np.int64]: ...
-    @overload  # unknown, size=<given>
+    @overload  # unknown, size=<1d> (positional)
+    def integers(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None,
+        size: int,
+        dtype: DTypeLike | None = ...,
+        endpoint: bool = False,
+    ) -> _Array1D[Any]: ...
+    @overload  # unknown, size=<1d> (keyword)
+    def integers(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        *,
+        size: int,
+        dtype: DTypeLike | None = ...,
+        endpoint: bool = False,
+    ) -> _Array1D[Any]: ...
+    @overload  # unknown, size=<known> (positional)
+    def integers[ShapeT: _Shape](
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None,
+        size: ShapeT,
+        dtype: DTypeLike | None = ...,
+        endpoint: bool = False,
+    ) -> np.ndarray[ShapeT]: ...
+    @overload  # unknown, size=<known> (keyword)
+    def integers[ShapeT: _Shape](
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        *,
+        size: ShapeT,
+        dtype: DTypeLike | None = ...,
+        endpoint: bool = False,
+    ) -> np.ndarray[ShapeT]: ...
+    @overload  # unknown, size=<unknown>
     def integers(
         self,
         low: _ArrayLikeInt_co,
