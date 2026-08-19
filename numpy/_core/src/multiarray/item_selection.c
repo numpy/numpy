@@ -2409,22 +2409,46 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     return NULL;
 }
 
-/* Move `axis` last, keeping the relative order of the other axes. */
-static PyArrayObject *
-searchsorted_move_axis(PyArrayObject *arr, int axis)
+/* Number of dimensions an operand will have once the gufunc converts it. */
+static int
+searchsorted_operand_ndim(PyObject *op)
 {
-    int ndim = PyArray_NDIM(arr);
-    npy_intp permute_dims[NPY_MAXDIMS];
-    PyArray_Dims permute = {permute_dims, ndim};
-    int j = 0;
-
-    for (int i = 0; i < ndim; i++) {
-        if (i != axis) {
-            permute_dims[j++] = i;
-        }
+    if (PyArray_Check(op)) {
+        return PyArray_NDIM((PyArrayObject *)op);
     }
-    permute_dims[j] = axis;
-    return (PyArrayObject *)PyArray_Transpose(arr, &permute);
+    PyArrayObject *tmp = (PyArrayObject *)PyArray_FromAny(op, NULL, 0, 0, 0,
+                                                          NULL);
+    if (tmp == NULL) {
+        return -1;
+    }
+    int ndim = PyArray_NDIM(tmp);
+    Py_DECREF(tmp);
+    return ndim;
+}
+
+
+/*
+ * Build the gufunc `axes` argument placing `a`'s core dimension at `axis`.
+ * `v`, the result and a lower dimensional `sorter` keep their own last axis,
+ * and a 0-d `v` has dropped the flexible dimension so it names no axis at all.
+ */
+static PyObject *
+searchsorted_build_axes(int axis, int a_ndim, int v_ndim, int sorter_ndim)
+{
+    PyObject *keys = v_ndim == 0 ? Py_BuildValue("()") : Py_BuildValue("(i)", -1);
+    if (keys == NULL) {
+        return NULL;
+    }
+    PyObject *axes;
+    if (sorter_ndim < 0) {
+        axes = Py_BuildValue("[(i),O,O]", axis, keys, keys);
+    }
+    else {
+        axes = Py_BuildValue("[(i),O,(i),O]", axis, keys,
+                             sorter_ndim == a_ndim ? axis : -1, keys);
+    }
+    Py_DECREF(keys);
+    return axes;
 }
 
 
@@ -2439,7 +2463,8 @@ searchsorted_gufunc(PyArrayObject *op1, PyObject *op2,
                     NPY_SEARCHSIDE side, PyObject *perm, int axis)
 {
     PyArrayObject *a = NULL, *ap1 = NULL, *ap2 = NULL, *sorter = NULL;
-    PyObject *ret = NULL;
+    PyObject *axes = NULL, *kwnames = NULL, *ret = NULL;
+    int needs_axes = 0, use_axis = -1;
 
     if (perm != NULL) {
         sorter = searchsorted_prepare_sorter(perm, 0, NPY_ARRAY_ENSUREARRAY);
@@ -2449,10 +2474,8 @@ searchsorted_gufunc(PyArrayObject *op1, PyObject *op2,
     }
 
     /*
-     * The gufunc takes its core dimension from the last axis, so move the
-     * searched axis of `a` (and of `sorter`) there.  `v` is left alone, its
-     * keys are its own last axis, so the searched dimension of the result is
-     * appended rather than inserted at `axis`.
+     * `axis=None` searches the flattened array, which `axes` cannot express.
+     * Any other axis is handed to the gufunc as its `axes` argument below.
      */
     if (axis == NPY_RAVEL_AXIS) {
         a = (PyArrayObject *)PyArray_Ravel(op1, NPY_CORDER);
@@ -2470,27 +2493,15 @@ searchsorted_gufunc(PyArrayObject *op1, PyObject *op2,
     }
     else {
         int ndim = PyArray_NDIM(op1);
-        int use_axis = axis;
 
+        use_axis = axis;
         if (ndim > 0 && check_and_adjust_axis(&use_axis, ndim) < 0) {
             goto finish;
         }
         if (ndim > 1 && use_axis != ndim - 1) {
-            a = searchsorted_move_axis(op1, use_axis);
-            if (a == NULL) {
-                goto finish;
-            }
-            if (sorter != NULL && PyArray_NDIM(sorter) == ndim) {
-                PyArrayObject *moved = searchsorted_move_axis(sorter, use_axis);
-                if (moved == NULL) {
-                    goto finish;
-                }
-                Py_SETREF(sorter, moved);
-            }
+            needs_axes = 1;
         }
-        else {
-            a = (PyArrayObject *)Py_NewRef(op1);
-        }
+        a = (PyArrayObject *)Py_NewRef(op1);
     }
 
     if (sorter != NULL && PyArray_NDIM(a) == 1 && PyArray_NDIM(sorter) == 1
@@ -2535,11 +2546,28 @@ searchsorted_gufunc(PyArrayObject *op1, PyObject *op2,
                                  caches[with_sorter][right]) == -1) {
         goto finish;
     }
+
+    if (needs_axes) {
+        int v_ndim = searchsorted_operand_ndim((PyObject *)ap2);
+        if (v_ndim < 0) {
+            goto finish;
+        }
+        axes = searchsorted_build_axes(
+                use_axis, PyArray_NDIM(ap1), v_ndim,
+                with_sorter ? PyArray_NDIM(sorter) : -1);
+        kwnames = Py_BuildValue("(s)", "axes");
+        if (axes == NULL || kwnames == NULL) {
+            goto finish;
+        }
+    }
     {
-        PyObject *stack[3] = {(PyObject *)ap1, (PyObject *)ap2,
-                              (PyObject *)sorter};
+        PyObject *stack[4] = {(PyObject *)ap1, (PyObject *)ap2,
+                              (PyObject *)sorter, NULL};
+        if (needs_axes) {
+            stack[with_sorter ? 3 : 2] = axes;
+        }
         ret = PyObject_Vectorcall(*caches[with_sorter][right], stack,
-                                  with_sorter ? 3 : 2, NULL);
+                                  with_sorter ? 3 : 2, kwnames);
     }
 
   finish:
@@ -2547,6 +2575,8 @@ searchsorted_gufunc(PyArrayObject *op1, PyObject *op2,
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
     Py_XDECREF(sorter);
+    Py_XDECREF(axes);
+    Py_XDECREF(kwnames);
     return ret;
 }
 
