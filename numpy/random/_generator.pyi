@@ -963,10 +963,6 @@ class Generator:
     #
     @overload  # 0d, 0d, 0d
     def hypergeometric(self, /, ngood: int, nbad: int, nsample: int, size: None = None) -> int: ...
-    @overload  # size=<given>
-    def hypergeometric(
-        self, /, ngood: _ArrayLikeInt_co, nbad: _ArrayLikeInt_co, nsample: _ArrayLikeInt_co, size: _ShapeLike
-    ) -> NDArray[np.int64]: ...
     @overload  # >=0d, >=0d, >0d
     def hypergeometric(
         self, /, ngood: _ArrayLikeInt_co, nbad: _ArrayLikeInt_co, nsample: _NDArrayLikeInt, size: None = None
@@ -983,6 +979,18 @@ class Generator:
     def hypergeometric(
         self, /, ngood: _ArrayLikeInt_co, nbad: _ArrayLikeInt_co, nsample: _ArrayLikeInt_co, size: None = None
     ) -> NDArray[np.int64] | Any: ...
+    @overload  # size=<1d>
+    def hypergeometric(
+        self, /, ngood: _ArrayLikeInt_co, nbad: _ArrayLikeInt_co, nsample: _ArrayLikeInt_co, size: int
+    ) -> _Array1D[np.int64]: ...
+    @overload  # size=<known>
+    def hypergeometric[ShapeT: _Shape](
+        self, /, ngood: _ArrayLikeInt_co, nbad: _ArrayLikeInt_co, nsample: _ArrayLikeInt_co, size: ShapeT
+    ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
+    @overload  # size=<unknown>
+    def hypergeometric(
+        self, /, ngood: _ArrayLikeInt_co, nbad: _ArrayLikeInt_co, nsample: _ArrayLikeInt_co, size: _ShapeLike
+    ) -> NDArray[np.int64]: ...
 
     ###
     # multivariate
