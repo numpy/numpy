@@ -6084,67 +6084,187 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def __iter__(self, /) -> Iterator[Any]: ...
 
     #
-    @overload
+    @overload  # 0d +number
+    def __lt__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[number | bool_]],
+        other: _NumberLike_co,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # 0d +timedelta64
+    def __lt__[ShapeT: _Shape](  # type:ignore[has-type]  # mypy bug
+        self: ndarray[ShapeT, _dtype[timedelta64 | integer | bool_]],
+        other: _TD64Like_co,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # 0d +datetime64
+    def __lt__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[datetime64]],
+        other: datetime64,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # 0d +bytes
+    def __lt__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[bytes_]],
+        other: bytes,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # 0d +str
+    def __lt__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[str_] | dtypes.StringDType],
+        other: str,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # ?d +number
     def __lt__(self: _ArrayNumber_co, other: _ArrayLikeNumber_co, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d +timedelta64
     def __lt__(self: _ArrayTD64_co, other: _ArrayLikeTD64_co, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d +datetime64
     def __lt__(self: NDArray[datetime64], other: _ArrayLikeDT64_co, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d +bytes
     def __lt__(self: NDArray[bytes_], other: _ArrayLikeBytes_co, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d +str
     def __lt__(self: _ArrayString, other: _ArrayLikeStr_co | _ArrayLikeString_co, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d ~object
     def __lt__(self: NDArray[object_], other: object, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d +object
     def __lt__(self, other: _ArrayLikeObject_co, /) -> NDArray[bool_]: ...
 
     #
-    @overload
+    @overload  # 0d +number
+    def __le__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[number | bool_]],
+        other: _NumberLike_co,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # 0d +timedelta64
+    def __le__[ShapeT: _Shape](  # type:ignore[has-type]  # mypy bug
+        self: ndarray[ShapeT, _dtype[timedelta64 | integer | bool_]],
+        other: _TD64Like_co,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # 0d +datetime64
+    def __le__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[datetime64]],
+        other: datetime64,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # 0d +bytes
+    def __le__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[bytes_]],
+        other: bytes,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # 0d +str
+    def __le__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[str_] | dtypes.StringDType],
+        other: str,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # ?d +number
     def __le__(self: _ArrayNumber_co, other: _ArrayLikeNumber_co, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d +timedelta64
     def __le__(self: _ArrayTD64_co, other: _ArrayLikeTD64_co, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d +datetime64
     def __le__(self: NDArray[datetime64], other: _ArrayLikeDT64_co, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d +bytes
     def __le__(self: NDArray[bytes_], other: _ArrayLikeBytes_co, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d +str
     def __le__(self: _ArrayString, other: _ArrayLikeStr_co | _ArrayLikeString_co, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d ~object
     def __le__(self: NDArray[object_], other: object, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d +object
     def __le__(self, other: _ArrayLikeObject_co, /) -> NDArray[bool_]: ...
 
     #
-    @overload
+    @overload  # 0d +number
+    def __gt__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[number | bool_]],
+        other: _NumberLike_co,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # 0d +timedelta64
+    def __gt__[ShapeT: _Shape](  # type:ignore[has-type]  # mypy bug
+        self: ndarray[ShapeT, _dtype[timedelta64 | integer | bool_]],
+        other: _TD64Like_co,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # 0d +datetime64
+    def __gt__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[datetime64]],
+        other: datetime64,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # 0d +bytes
+    def __gt__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[bytes_]],
+        other: bytes,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # 0d +str
+    def __gt__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[str_] | dtypes.StringDType],
+        other: str,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # ?d +number
     def __gt__(self: _ArrayNumber_co, other: _ArrayLikeNumber_co, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d +timedelta64
     def __gt__(self: _ArrayTD64_co, other: _ArrayLikeTD64_co, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d +datetime64
     def __gt__(self: NDArray[datetime64], other: _ArrayLikeDT64_co, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d +bytes
     def __gt__(self: NDArray[bytes_], other: _ArrayLikeBytes_co, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d +str
     def __gt__(self: _ArrayString, other: _ArrayLikeStr_co | _ArrayLikeString_co, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d ~object
     def __gt__(self: NDArray[object_], other: object, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d +object
     def __gt__(self, other: _ArrayLikeObject_co, /) -> NDArray[bool_]: ...
 
     #
-    @overload
+    @overload  # 0d +number
+    def __ge__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[number | bool_]],
+        other: _NumberLike_co,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # 0d +timedelta64
+    def __ge__[ShapeT: _Shape](  # type:ignore[has-type]  # mypy bug
+        self: ndarray[ShapeT, _dtype[timedelta64 | integer | bool_]],
+        other: _TD64Like_co,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # 0d +datetime64
+    def __ge__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[datetime64]],
+        other: datetime64,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # 0d +bytes
+    def __ge__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[bytes_]],
+        other: bytes,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # 0d +str
+    def __ge__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[str_] | dtypes.StringDType],
+        other: str,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # ?d +number
     def __ge__(self: _ArrayNumber_co, other: _ArrayLikeNumber_co, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d +timedelta64
     def __ge__(self: _ArrayTD64_co, other: _ArrayLikeTD64_co, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d +datetime64
     def __ge__(self: NDArray[datetime64], other: _ArrayLikeDT64_co, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d +bytes
     def __ge__(self: NDArray[bytes_], other: _ArrayLikeBytes_co, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d +str
     def __ge__(self: _ArrayString, other: _ArrayLikeStr_co | _ArrayLikeString_co, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d ~object
     def __ge__(self: NDArray[object_], other: object, /) -> NDArray[bool_]: ...
-    @overload
+    @overload  # ?d +object
     def __ge__(self, other: _ArrayLikeObject_co, /) -> NDArray[bool_]: ...
 
     # Unary ops
