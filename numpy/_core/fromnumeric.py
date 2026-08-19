@@ -1623,10 +1623,10 @@ def searchsorted(a, v, side='left', sorter=None, *, axis=_NoValue):
     -------
     indices : int or array of ints
         Array of insertion points. Its shape is the broadcast of `a`'s
-        non-`axis` dimensions with `v`'s leading dimensions, followed by the
-        number of keys, i.e. ``v``'s last dimension. For a one-dimensional
-        `a` this is simply the shape of `v`, and an integer if `v` is a
-        scalar.
+        non-`axis` dimensions with `v`'s leading dimensions, with the number
+        of keys, i.e. ``v``'s last dimension, inserted at `axis`. For a
+        one-dimensional `a` this is simply the shape of `v`, and an integer
+        if `v` is a scalar.
 
     See Also
     --------
