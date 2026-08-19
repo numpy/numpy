@@ -750,10 +750,6 @@ class Generator:
     #
     @overload  # 0d, 0d, 0d
     def noncentral_f(self, /, dfnum: _FloatLike_co, dfden: _FloatLike_co, nonc: _FloatLike_co, size: None = None) -> float: ...
-    @overload  # >=0d, >=0d, >=0d, size=<given>
-    def noncentral_f(
-        self, /, dfnum: _ArrayLikeFloat_co, dfden: _ArrayLikeFloat_co, nonc: _ArrayLikeFloat_co, size: _ShapeLike
-    ) -> _ArrayF64: ...
     @overload  # >=0d, >=0d, >0d
     def noncentral_f(
         self, /, dfnum: _ArrayLikeFloat_co, dfden: _ArrayLikeFloat_co, nonc: _NDArrayLikeFloat, size: None = None
@@ -770,6 +766,18 @@ class Generator:
     def noncentral_f(
         self, /, dfnum: _ArrayLikeFloat_co, dfden: _ArrayLikeFloat_co, nonc: _ArrayLikeFloat_co, size: None = None
     ) -> _ArrayF64 | Any: ...
+    @overload  # size=<1d>
+    def noncentral_f(
+        self, /, dfnum: _ArrayLikeFloat_co, dfden: _ArrayLikeFloat_co, nonc: _ArrayLikeFloat_co, size: int
+    ) -> _Array1D[np.float64]: ...
+    @overload  # size=<known>
+    def noncentral_f[ShapeT: _Shape](
+        self, /, dfnum: _ArrayLikeFloat_co, dfden: _ArrayLikeFloat_co, nonc: _ArrayLikeFloat_co, size: ShapeT
+    ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    @overload  # size=<unknown>
+    def noncentral_f(
+        self, /, dfnum: _ArrayLikeFloat_co, dfden: _ArrayLikeFloat_co, nonc: _ArrayLikeFloat_co, size: _ShapeLike
+    ) -> _ArrayF64: ...
 
     ###
     # discrete
