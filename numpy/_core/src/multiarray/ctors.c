@@ -141,11 +141,11 @@ swab_separator(const char *sep)
         return NULL;
     }
     /* add space to front if there isn't one */
-    if (*sep != '\0' && !isspace(*sep)) {
+    if (*sep != '\0' && !isspace(Py_CHARMASK(*sep))) {
         *s = ' '; s++;
     }
     while (*sep != '\0') {
-        if (isspace(*sep)) {
+        if (isspace(Py_CHARMASK(*sep))) {
             if (skip_space) {
                 sep++;
             }
@@ -209,7 +209,7 @@ fromstr_skip_separator(char **s, const char *sep, const char *end)
         }
         else if (*sep == ' ') {
             /* whitespace wildcard */
-            if (!isspace(c)) {
+            if (!isspace(Py_CHARMASK(c))) {
                 sep++;
                 continue;
             }
