@@ -192,7 +192,7 @@ jobs:
 
     - name: Install Intel SDE
       # setup-sde v5.0 installs Intel SDE 9.58.0 when requested below.
-      uses: petarpetrovt/setup-sde@31aa4a8e85e109bef00f1d838613fcc6ec421271 # v5.0
+      uses: petarpetrovt/setup-sde@6d2773bc0ef3005fd52e0ae0bb91782321793aec # v6.0
       with:
         environmentVariableName: SDE_PATH
         sdeVersion: 9.58.0
@@ -246,7 +246,7 @@ jobs:
 
     - name: Install Intel SDE
       # setup-sde v5.0 installs Intel SDE 9.58.0 when requested below.
-      uses: petarpetrovt/setup-sde@31aa4a8e85e109bef00f1d838613fcc6ec421271 # v5.0
+      uses: petarpetrovt/setup-sde@6d2773bc0ef3005fd52e0ae0bb91782321793aec # v6.0
       with:
         environmentVariableName: SDE_PATH
         sdeVersion: 9.58.0
