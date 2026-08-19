@@ -718,10 +718,6 @@ class Generator:
     #
     @overload  # 0d, 0d, 0d
     def triangular(self, /, left: _FloatLike_co, mode: _FloatLike_co, right: _FloatLike_co, size: None = None) -> float: ...
-    @overload  # >=0d, >=0d, >=0d, size=<given>
-    def triangular(
-        self, /, left: _ArrayLikeFloat_co, mode: _ArrayLikeFloat_co, right: _ArrayLikeFloat_co, size: _ShapeLike
-    ) -> _ArrayF64: ...
     @overload  # >=0d, >=0d, >0d
     def triangular(
         self, /, left: _ArrayLikeFloat_co, mode: _ArrayLikeFloat_co, right: _NDArrayLikeFloat, size: None = None
@@ -738,6 +734,18 @@ class Generator:
     def triangular(
         self, /, left: _ArrayLikeFloat_co, mode: _ArrayLikeFloat_co, right: _ArrayLikeFloat_co, size: None = None
     ) -> _ArrayF64 | Any: ...
+    @overload  # size=<1d>
+    def triangular(
+        self, /, left: _ArrayLikeFloat_co, mode: _ArrayLikeFloat_co, right: _ArrayLikeFloat_co, size: int
+    ) -> _Array1D[np.float64]: ...
+    @overload  # size=<known>
+    def triangular[ShapeT: _Shape](
+        self, /, left: _ArrayLikeFloat_co, mode: _ArrayLikeFloat_co, right: _ArrayLikeFloat_co, size: ShapeT
+    ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    @overload  # size=<unknown>
+    def triangular(
+        self, /, left: _ArrayLikeFloat_co, mode: _ArrayLikeFloat_co, right: _ArrayLikeFloat_co, size: _ShapeLike
+    ) -> _ArrayF64: ...
 
     #
     @overload  # 0d, 0d, 0d
