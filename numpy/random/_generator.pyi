@@ -17,6 +17,7 @@ from numpy._typing import (
     _Float64Codes,
     _FloatLike_co,
     _Int64Codes,
+    _IntLike_co,
     _NestedSequence,
     _Shape,
     _ShapeLike,
@@ -1235,8 +1236,27 @@ class Generator:
     ) -> NDArray[np.float64]: ...
 
     #
+    @overload  # 0d n, size=None (default)
+    def multinomial(self, /, n: _IntLike_co, pvals: _ArrayLikeFloat_co, size: None = None) -> _Array1D[np.int64]: ...
+    @overload  # >=0d n, size=None (default)
     def multinomial(
-        self, /, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: _ShapeLike | None = None
+        self, /, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: None = None
+    ) -> NDArray[np.int64]: ...
+    @overload  # size=<1d>
+    def multinomial(
+        self, /, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: int | tuple[int]
+    ) -> _Array2D[np.int64]: ...
+    @overload  # size=<2d>
+    def multinomial(
+        self, /, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: tuple[int, int]
+    ) -> _Array3D[np.int64]: ...
+    @overload  # size=<3d>
+    def multinomial(
+        self, /, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: tuple[int, int, int]
+    ) -> _Array4D[np.int64]: ...
+    @overload  # size=<unknown>
+    def multinomial(
+        self, /, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: _ShapeLike
     ) -> NDArray[np.int64]: ...
 
     #
