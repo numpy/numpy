@@ -6,7 +6,6 @@ import math
 import types
 
 import numpy as np
-from numpy._utils import set_module
 
 from . import _methods, multiarray as mu, numerictypes as nt, overrides, umath as um
 from ._multiarray_umath import _array_converter
@@ -3208,7 +3207,6 @@ def _max_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
     _max_dispatcher,
     reduction=(um.maximum, overrides._ReductionKind.MIN_MAX),
 )
-@set_module('numpy')
 def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
          where=np._NoValue):
     """
@@ -3492,18 +3490,7 @@ def _minmax_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
     return (a, *out) if type(out) is tuple else (a, out)
 
 
-def _minmax_fallback(a, axis, out, keepdims, initial, where):
-    out_min, out_max = out if type(out) is tuple else (None, None)
-    initial_min, initial_max = (initial if type(initial) is tuple
-                                else (initial, initial))
-    return (min(a, axis=axis, out=out_min, keepdims=keepdims,
-                initial=initial_min, where=where),
-            max(a, axis=axis, out=out_max, keepdims=keepdims,
-                initial=initial_max, where=where))
-
-
 @array_function_dispatch(_minmax_dispatcher)
-@set_module('numpy')
 def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
            where=np._NoValue):
     """
@@ -3577,7 +3564,13 @@ def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         return _wrapreduction(a, um.minimummaximum, 'minmax', axis, None, out,
                               keepdims, initial, where)
     except TypeError:
-        return _minmax_fallback(a, axis, out, keepdims, initial, where)
+        out_min, out_max = out if type(out) is tuple else (None, None)
+        initial_min, initial_max = (initial if type(initial) is tuple
+                                    else (initial, initial))
+        return (min(a, axis=axis, out=out_min, keepdims=keepdims,
+                    initial=initial_min, where=where),
+                max(a, axis=axis, out=out_max, keepdims=keepdims,
+                    initial=initial_max, where=where))
 
 
 def _prod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
