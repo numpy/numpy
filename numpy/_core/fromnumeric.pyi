@@ -718,6 +718,46 @@ def argmax(
     *,
     keepdims: Literal[False] | _NoValueType = ...,
 ) -> np.intp: ...
+@overload  # ?d, axis: <given> (workaround)
+def argmax(
+    a: _ArrayJustND[Any],
+    axis: SupportsIndex,
+    out: None = None,
+    *,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> NDArray[np.intp] | Any: ...
+@overload  # 1d, axis: <given>
+def argmax(
+    a: _ToArray1D2[np.generic, np.generic | complex],
+    axis: SupportsIndex,
+    out: None = None,
+    *,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> np.intp: ...
+@overload  # 2d, axis: <given>
+def argmax(
+    a: _ToArray2D2[np.generic, np.generic | complex],
+    axis: SupportsIndex,
+    out: None = None,
+    *,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _Array1D[np.intp]: ...
+@overload  # 3d, axis: <given>
+def argmax(
+    a: _ToArray3D2[np.generic, np.generic | complex],
+    axis: SupportsIndex,
+    out: None = None,
+    *,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _Array2D[np.intp]: ...
+@overload  # 4d, axis: <given>
+def argmax(
+    a: _ToArray4D2[np.generic, np.generic | complex],
+    axis: SupportsIndex,
+    out: None = None,
+    *,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _Array3D[np.intp]: ...
 @overload  # ?d, axis: <given>
 def argmax(
     a: ArrayLike | _NestedSequence[_Orderable],
@@ -725,7 +765,7 @@ def argmax(
     out: None = None,
     *,
     keepdims: Literal[False] | _NoValueType = ...,
-) -> NDArray[np.intp]: ...
+) -> NDArray[np.intp] | Any: ...
 @overload  # Nd, keepdims=True
 def argmax[ShapeT: _Shape](
     a: np.ndarray[ShapeT],
@@ -760,6 +800,46 @@ def argmin(
     *,
     keepdims: Literal[False] | _NoValueType = ...,
 ) -> np.intp: ...
+@overload  # ?d, axis: <given> (workaround)
+def argmin(
+    a: _ArrayJustND[Any],
+    axis: SupportsIndex,
+    out: None = None,
+    *,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> NDArray[np.intp] | Any: ...
+@overload  # 1d, axis: <given>
+def argmin(
+    a: _ToArray1D2[np.generic, np.generic | complex],
+    axis: SupportsIndex,
+    out: None = None,
+    *,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> np.intp: ...
+@overload  # 2d, axis: <given>
+def argmin(
+    a: _ToArray2D2[np.generic, np.generic | complex],
+    axis: SupportsIndex,
+    out: None = None,
+    *,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _Array1D[np.intp]: ...
+@overload  # 3d, axis: <given>
+def argmin(
+    a: _ToArray3D2[np.generic, np.generic | complex],
+    axis: SupportsIndex,
+    out: None = None,
+    *,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _Array2D[np.intp]: ...
+@overload  # 4d, axis: <given>
+def argmin(
+    a: _ToArray4D2[np.generic, np.generic | complex],
+    axis: SupportsIndex,
+    out: None = None,
+    *,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _Array3D[np.intp]: ...
 @overload  # ?d, axis: <given>
 def argmin(
     a: ArrayLike | _NestedSequence[_Orderable],
@@ -767,7 +847,7 @@ def argmin(
     out: None = None,
     *,
     keepdims: Literal[False] | _NoValueType = ...,
-) -> NDArray[np.intp]: ...
+) -> NDArray[np.intp] | Any: ...
 @overload  # Nd, keepdims=True
 def argmin[ShapeT: _Shape](
     a: np.ndarray[ShapeT],
