@@ -275,31 +275,25 @@ simd_binary_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip1, npy_intp sip1,
  * #has_loadn = 0, 0, 0, 0, 1, 1, 1, 1, 1, 1#
  * #scalar_sfx = i*8, f, d#
  */
-/**begin repeat1
- * #fused = minmax#
- * #min_intrin = min#
- * #max_intrin = max#
- * #fp_only = 0#
- */
-#define SCALAR_MIN scalar_@min_intrin@_@scalar_sfx@
-#define SCALAR_MAX scalar_@max_intrin@_@scalar_sfx@
-#if @simd_chk@ && (!@fp_only@ || (@is_fp@ && @fp_only@))
+#define SCALAR_MIN scalar_min_@scalar_sfx@
+#define SCALAR_MAX scalar_max_@scalar_sfx@
+#if @simd_chk@
 
-#if @is_fp@ && !@fp_only@
-    #define V_MIN npyv_@min_intrin@n_@sfx@ // propagates NaNs
-    #define V_MAX npyv_@max_intrin@n_@sfx@
-    #define V_REDUCE_MIN npyv_reduce_@min_intrin@n_@sfx@
-    #define V_REDUCE_MAX npyv_reduce_@max_intrin@n_@sfx@
+#if @is_fp@
+    #define V_MIN npyv_minn_@sfx@ // propagates NaNs
+    #define V_MAX npyv_maxn_@sfx@
+    #define V_REDUCE_MIN npyv_reduce_minn_@sfx@
+    #define V_REDUCE_MAX npyv_reduce_maxn_@sfx@
 #else
-    #define V_MIN npyv_@min_intrin@_@sfx@
-    #define V_MAX npyv_@max_intrin@_@sfx@
-    #define V_REDUCE_MIN npyv_reduce_@min_intrin@_@sfx@
-    #define V_REDUCE_MAX npyv_reduce_@max_intrin@_@sfx@
+    #define V_MIN npyv_min_@sfx@
+    #define V_MAX npyv_max_@sfx@
+    #define V_REDUCE_MIN npyv_reduce_min_@sfx@
+    #define V_REDUCE_MAX npyv_reduce_max_@sfx@
 #endif
 
 // contiguous input.
 static inline void
-simd_reduce_c_@fused@_@sfx@(const npyv_lanetype_@sfx@ *ip,
+simd_reduce_c_minmax_@sfx@(const npyv_lanetype_@sfx@ *ip,
                             npyv_lanetype_@sfx@ *op_min, npyv_lanetype_@sfx@ *op_max, npy_intp len)
 {
     if (len < 1) {
@@ -354,7 +348,7 @@ simd_reduce_c_@fused@_@sfx@(const npyv_lanetype_@sfx@ *ip,
 
 // contiguous inputs and outputs.
 static inline void
-simd_binary_ccc_@fused@_@sfx@(const npyv_lanetype_@sfx@ *ip1, const npyv_lanetype_@sfx@ *ip2,
+simd_binary_ccc_minmax_@sfx@(const npyv_lanetype_@sfx@ *ip1, const npyv_lanetype_@sfx@ *ip2,
                               npyv_lanetype_@sfx@ *op_min, npyv_lanetype_@sfx@ *op_max, npy_intp len)
 {
 #if NPY_SIMD_WIDTH == 128
@@ -440,7 +434,7 @@ simd_binary_ccc_@fused@_@sfx@(const npyv_lanetype_@sfx@ *ip1, const npyv_lanetyp
 
 // contiguous accumulators, reducing over an outer axis.
 static inline void
-simd_reduce_outer_@fused@_@sfx@(const npyv_lanetype_@sfx@ *ip,
+simd_reduce_outer_minmax_@sfx@(const npyv_lanetype_@sfx@ *ip,
                                 npyv_lanetype_@sfx@ *io_min, npyv_lanetype_@sfx@ *io_max, npy_intp len)
 {
 #if NPY_SIMD_WIDTH == 128
@@ -532,13 +526,13 @@ simd_reduce_outer_@fused@_@sfx@(const npyv_lanetype_@sfx@ *ip,
 
 // contiguous accumulators, strided input, reducing over an outer axis.
 // A copy of simd_reduce_outer with the input loads made non-contiguous.  Same
-// reasoning as the strided simd_binary_@fused@ above: the two accumulators make
+// reasoning as the strided simd_binary_minmax above: the two accumulators make
 // the fused reduce too complex for the compiler to auto-vectorize, unlike the
 // single-output `minimum`/`maximum` reduce, so it is written by hand.  Measured
 // faster than the scalar fallback on both Arm and x86 (2-3x).
 #if @has_loadn@
 static inline void
-simd_reduce_outern_@fused@_@sfx@(const npyv_lanetype_@sfx@ *ip, npy_intp sip,
+simd_reduce_outern_minmax_@sfx@(const npyv_lanetype_@sfx@ *ip, npy_intp sip,
                                  npyv_lanetype_@sfx@ *io_min, npyv_lanetype_@sfx@ *io_max, npy_intp len)
 {
 #if NPY_SIMD_WIDTH == 128
@@ -643,7 +637,7 @@ simd_reduce_outern_@fused@_@sfx@(const npyv_lanetype_@sfx@ *ip, npy_intp sip,
 // measured faster than the scalar fallback.
 #if @is_fp@ || @has_loadn@
 static inline void
-simd_binary_@fused@_@sfx@(const npyv_lanetype_@sfx@ *ip1, npy_intp sip1,
+simd_binary_minmax_@sfx@(const npyv_lanetype_@sfx@ *ip1, npy_intp sip1,
                           const npyv_lanetype_@sfx@ *ip2, npy_intp sip2,
                                 npyv_lanetype_@sfx@ *op_min, npy_intp sop_min,
                                 npyv_lanetype_@sfx@ *op_max, npy_intp sop_max,
@@ -692,11 +686,10 @@ simd_binary_@fused@_@sfx@(const npyv_lanetype_@sfx@ *ip1, npy_intp sip1,
 #undef V_REDUCE_MIN
 #undef V_REDUCE_MAX
 
-#endif // simd_chk && (!fp_only || (is_fp && fp_only))
+#endif // simd_chk
 
 #undef SCALAR_MIN
 #undef SCALAR_MAX
-/**end repeat1**/
 /**end repeat**/
 
 /*******************************************************************************
@@ -907,18 +900,10 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@_indexed)
 #endif // !fp_only || (is_fp && fp_only)
 /**end repeat1**/
 
-/**begin repeat1
- * #kind = minimummaximum#
- * #fused = minmax#
- * #min_intrin = min#
- * #max_intrin = max#
- * #fp_only = 0#
- */
-#if !@fp_only@ || (@is_fp@ && @fp_only@)
-#define SCALAR_MIN scalar_@min_intrin@_@scalar_sfx@
-#define SCALAR_MAX scalar_@max_intrin@_@scalar_sfx@
+#define SCALAR_MIN scalar_min_@scalar_sfx@
+#define SCALAR_MAX scalar_max_@scalar_sfx@
 
-NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_minimummaximum)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     char *ip1 = args[0], *ip2 = args[1], *op1 = args[2], *op2 = args[3];
@@ -935,12 +920,12 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
     ) {
         // no overlap and operands are binary contiguous
         if (IS_BINARY_CONT(@type@, @type@) && os2 == sizeof(@type@)) {
-            TO_SIMD_SFX(simd_binary_ccc_@fused@)(
+            TO_SIMD_SFX(simd_binary_ccc_minmax)(
                 (STYPE*)ip1, (STYPE*)ip2, (STYPE*)op1, (STYPE*)op2, len
             );
             goto clear_fp;
         }
-    // strided inputs/outputs; see the note on simd_binary_@fused@ for why this
+    // strided inputs/outputs; see the note on simd_binary_minmax for why this
     // is hand-vectorized more widely than the single-op loop
     #if @is_fp@ || (NPY_BITSOF_@BTYPE@ == 32 || NPY_BITSOF_@BTYPE@ == 64)
         if (TO_SIMD_SFX(npyv_loadable_stride)(is1) &&
@@ -948,7 +933,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
             TO_SIMD_SFX(npyv_storable_stride)(os1) &&
             TO_SIMD_SFX(npyv_storable_stride)(os2)
         ) {
-            TO_SIMD_SFX(simd_binary_@fused@)(
+            TO_SIMD_SFX(simd_binary_minmax)(
                 (STYPE*)ip1, is1/sizeof(STYPE),
                 (STYPE*)ip2, is2/sizeof(STYPE),
                 (STYPE*)op1, os1/sizeof(STYPE),
@@ -970,14 +955,14 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
          * result of iteration 1.
          */
 
-        /**begin repeat2
+        /**begin repeat1
          * #unroll = 0, 1, 2, 3#
          */
         @type@ v@unroll@ = *((@type@ *)(ip1 + (i + @unroll@) * is1));
         @type@ u@unroll@ = *((@type@ *)(ip2 + (i + @unroll@) * is2));
         *((@type@ *)(op1 + (i + @unroll@) * os1)) = SCALAR_MIN(v@unroll@, u@unroll@);
         *((@type@ *)(op2 + (i + @unroll@) * os2)) = SCALAR_MAX(v@unroll@, u@unroll@);
-        /**end repeat2**/
+        /**end repeat1**/
     }
 #endif // NPY_DISABLE_OPTIMIZATION
     ip1 += is1 * i;
@@ -1000,7 +985,7 @@ clear_fp:
 }
 
 // reduction loop, data/strides are [acc_min, acc_max, x, out_min, out_max]
-NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@_reduce)
+NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_minimummaximum_reduce)
 (PyArrayMethod_Context *NPY_UNUSED(context), char *const *data,
  npy_intp const *dimensions, npy_intp const *strides, NpyAuxData *NPY_UNUSED(auxdata))
 {
@@ -1012,14 +997,14 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@_reduce)
     // reduce over the contiguous axis
     if (strides[0] == 0 && strides[1] == 0 && strides[3] == 0 && strides[4] == 0
             && strides[2] == elsize) {
-        TO_SIMD_SFX(simd_reduce_c_@fused@)(
+        TO_SIMD_SFX(simd_reduce_c_minmax)(
             (const STYPE*)data[2], (STYPE*)data[3], (STYPE*)data[4], n);
         goto done;
     }
     // reduce over an outer axis with a contiguous inner axis
     if (strides[0] == elsize && strides[1] == elsize && strides[2] == elsize
             && strides[3] == elsize && strides[4] == elsize) {
-        TO_SIMD_SFX(simd_reduce_outer_@fused@)(
+        TO_SIMD_SFX(simd_reduce_outer_minmax)(
             (const STYPE*)data[2], (STYPE*)data[3], (STYPE*)data[4], n);
         goto done;
     }
@@ -1029,7 +1014,7 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@_reduce)
     if (strides[0] == elsize && strides[1] == elsize
             && strides[3] == elsize && strides[4] == elsize
             && TO_SIMD_SFX(npyv_loadable_stride)(strides[2])) {
-        TO_SIMD_SFX(simd_reduce_outern_@fused@)(
+        TO_SIMD_SFX(simd_reduce_outern_minmax)(
             (const STYPE*)data[2], strides[2] / elsize,
             (STYPE*)data[3], (STYPE*)data[4], n);
         goto done;
@@ -1046,27 +1031,27 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@_reduce)
         // Note, 8x unroll was chosen for best results on Apple M1
         npy_intp elemPerLoop = 8;
         if((i+elemPerLoop) <= n){
-            /**begin repeat2
+            /**begin repeat1
              * #unroll = 0, 1, 2, 3, 4, 5, 6, 7#
              */
             @type@ m@unroll@ = *((@type@ *)(x + (i + @unroll@) * is));
             @type@ x@unroll@ = m@unroll@;
-            /**end repeat2**/
+            /**end repeat1**/
 
             i += elemPerLoop;
             for(; (i+elemPerLoop)<=n; i+=elemPerLoop){
-                /**begin repeat2
+                /**begin repeat1
                  * #unroll = 0, 1, 2, 3, 4, 5, 6, 7#
                  */
                 @type@ v@unroll@ = *((@type@ *)(x + (i + @unroll@) * is));
-                /**end repeat2**/
+                /**end repeat1**/
 
-                /**begin repeat2
+                /**begin repeat1
                  * #unroll = 0, 1, 2, 3, 4, 5, 6, 7#
                  */
                 m@unroll@ = SCALAR_MIN(m@unroll@, v@unroll@);
                 x@unroll@ = SCALAR_MAX(x@unroll@, v@unroll@);
-                /**end repeat2**/
+                /**end repeat1**/
             }
 
             m0 = SCALAR_MIN(m0, m1);
@@ -1114,7 +1099,5 @@ done:
 #undef SCALAR_MIN
 #undef SCALAR_MAX
 
-#endif // !fp_only || (is_fp && fp_only)
-/**end repeat1**/
 /**end repeat**/
 
