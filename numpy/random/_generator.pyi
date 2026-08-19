@@ -235,70 +235,114 @@ class Generator:
         out: ArrayT,
     ) -> ArrayT: ...
 
-    #
+    # keep in sync with `Generator.random`
     @overload  # size=None (default);  NOTE: dtype is ignored
     def standard_exponential(
         self, size: None = None, dtype: _DTypeLikeFloat = ..., method: _MethodExp = "zig", out: None = None
     ) -> float: ...
-    @overload  # size=<given>, dtype: f64 (default)
+    @overload  # size=<1d>, dtype=f64 (default)
+    def standard_exponential(
+        self, size: int, dtype: _DTypeLikeF64 = ..., method: _MethodExp = "zig", out: None = None
+    ) -> _Array1D[np.float64]: ...
+    @overload  # size=<known>, dtype=f64 (default)
+    def standard_exponential[ShapeT: _Shape](
+        self, size: ShapeT, dtype: _DTypeLikeF64 = ..., method: _MethodExp = "zig", out: None = None
+    ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    @overload  # size=<unknown>, dtype=f64 (default)
     def standard_exponential(
         self, size: _ShapeLike, dtype: _DTypeLikeF64 = ..., method: _MethodExp = "zig", out: None = None
-    ) -> _ArrayF64: ...
-    @overload  # size=<given>, dtype: f32 (default)
+    ) -> NDArray[np.float64]: ...
+    @overload  # size=<1d>, dtype=f32
+    def standard_exponential(
+        self, size: int, dtype: _DTypeLikeF32, method: _MethodExp = "zig", out: None = None
+    ) -> _Array1D[np.float32]: ...
+    @overload  # size=<known>, dtype=f32
+    def standard_exponential[ShapeT: _Shape](
+        self, size: ShapeT, dtype: _DTypeLikeF32, method: _MethodExp = "zig", out: None = None
+    ) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
+    @overload  # size=<unknown>, dtype=f32
     def standard_exponential(
         self, size: _ShapeLike, dtype: _DTypeLikeF32, method: _MethodExp = "zig", out: None = None
-    ) -> _ArrayF32: ...
-    @overload  # dtype: f64 (default), out: f64 array (keyword)
+    ) -> NDArray[np.float32]: ...
+    @overload  # out: f64 array  (keyword)
     def standard_exponential[ArrayT: _ArrayF64](
         self, size: _ShapeLike | None = None, dtype: _DTypeLikeF64 = ..., method: _MethodExp = "zig", *, out: ArrayT
     ) -> ArrayT: ...
-    @overload  # dtype: f32 (keyword), out: f32 array
+    @overload  # out: f64 array  (positional)
+    def standard_exponential[ArrayT: _ArrayF64](
+        self, size: _ShapeLike | None, dtype: _DTypeLikeF64, method: _MethodExp, out: ArrayT
+    ) -> ArrayT: ...
+    @overload  # dtype: f32  (keyword), out: f32 array
     def standard_exponential[ArrayT: _ArrayF32](
         self, size: _ShapeLike | None = None, *, dtype: _DTypeLikeF32, method: _MethodExp = "zig", out: ArrayT
     ) -> ArrayT: ...
-    @overload  # dtype: f32 (positional), out: f32 array (keyword)
+    @overload  # dtype: f32 (positional), out: f32 array
     def standard_exponential[ArrayT: _ArrayF32](
         self, size: _ShapeLike | None, dtype: _DTypeLikeF32, method: _MethodExp = "zig", *, out: ArrayT
     ) -> ArrayT: ...
+    @overload  # dtype: f32, out: f32 array  (positional)
+    def standard_exponential[ArrayT: _ArrayF32](
+        self, size: _ShapeLike | None, dtype: _DTypeLikeF32, method: _MethodExp, out: ArrayT
+    ) -> ArrayT: ...
 
-    #
+    # keep in sync with `Generator.random`
     @overload  # 0d, size=None (default);  NOTE: dtype is ignored
     def standard_gamma(
         self, shape: _FloatLike_co, size: None = None, dtype: _DTypeLikeFloat = ..., out: None = None
     ) -> float: ...
-    @overload  # >0d, dtype: f64 (default)
+    @overload  # >0d, dtype=f64 (default)
     def standard_gamma(
         self, shape: _NDArrayLikeFloat, size: None = None, dtype: _DTypeLikeF64 = ..., out: None = None
     ) -> _ArrayF64: ...
-    @overload  # >0d, dtype: f32 (keyword)
+    @overload  # >0d, dtype=f32 (keyword)
     def standard_gamma(
         self, shape: _NDArrayLikeFloat, size: None = None, *, dtype: _DTypeLikeF32, out: None = None
     ) -> _ArrayF32: ...
-    @overload  # >=0d, dtype: f64 (default)
+    @overload  # >=0d, dtype=f64 (default)
     def standard_gamma(
         self, shape: _ArrayLikeFloat_co, size: None = None, dtype: _DTypeLikeF64 = ..., out: None = None
     ) -> _ArrayF64 | Any: ...
-    @overload  # >=0d, dtype: f32 (keyword)
+    @overload  # >=0d, dtype=f32 (keyword)
     def standard_gamma(
         self, shape: _ArrayLikeFloat_co, size: None = None, *, dtype: _DTypeLikeF32, out: None = None
     ) -> _ArrayF32 | Any: ...
-    @overload  # >=0d, size=<given>, dtype: f64 (default)
+    @overload  # >=0d, size=<1d>, dtype=f64 (default)
+    def standard_gamma(
+        self, shape: _ArrayLikeFloat_co, size: int, dtype: _DTypeLikeF64 = ..., out: None = None
+    ) -> _Array1D[np.float64]: ...
+    @overload  # >=0d, size=<known>, dtype=f64 (default)
+    def standard_gamma[ShapeT: _Shape](
+        self, shape: _ArrayLikeFloat_co, size: ShapeT, dtype: _DTypeLikeF64 = ..., out: None = None
+    ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    @overload  # >=0d, size=<unknown>, dtype=f64 (default)
     def standard_gamma(
         self, shape: _ArrayLikeFloat_co, size: _ShapeLike, dtype: _DTypeLikeF64 = ..., out: None = None
-    ) -> _ArrayF64: ...
-    @overload  # >=0d, size=<given>, dtype: f32
+    ) -> NDArray[np.float64]: ...
+    @overload  # >=0d, size=<1d>, dtype=f32
+    def standard_gamma(
+        self, shape: _ArrayLikeFloat_co, size: int, dtype: _DTypeLikeF32, *, out: None = None
+    ) -> _Array1D[np.float32]: ...
+    @overload  # >=0d, size=<known>, dtype=f32
+    def standard_gamma[ShapeT: _Shape](
+        self, shape: _ArrayLikeFloat_co, size: ShapeT, dtype: _DTypeLikeF32, *, out: None = None
+    ) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
+    @overload  # >=0d, size=<unknown>, dtype=f32
     def standard_gamma(
         self, shape: _ArrayLikeFloat_co, size: _ShapeLike, dtype: _DTypeLikeF32, *, out: None = None
-    ) -> _ArrayF32: ...
-    @overload  # >=0d, dtype: f64 (default), out: f64 array (keyword)
+    ) -> NDArray[np.float32]: ...
+    @overload  # >=0d, out: f64 array  (keyword)
     def standard_gamma[ArrayT: _ArrayF64](
         self, shape: _ArrayLikeFloat_co, size: _ShapeLike | None = None, dtype: _DTypeLikeF64 = ..., *, out: ArrayT
     ) -> ArrayT: ...
-    @overload  # >=0d, dtype: f32 (keyword), out: f32 array
+    @overload  # >=0d, out: f64 array  (positional)
+    def standard_gamma[ArrayT: _ArrayF64](
+        self, shape: _ArrayLikeFloat_co, size: _ShapeLike | None, dtype: _DTypeLikeF64, out: ArrayT
+    ) -> ArrayT: ...
+    @overload  # >=0d, dtype=f32, out: f32 array  (keyword)
     def standard_gamma[ArrayT: _ArrayF32](
         self, shape: _ArrayLikeFloat_co, size: _ShapeLike | None = None, *, dtype: _DTypeLikeF32, out: ArrayT
     ) -> ArrayT: ...
-    @overload  # >=0d, dtype: f32 (positional), out: f32 array
+    @overload  # >=0d, dtype=f32, out: f32 array  (positional)
     def standard_gamma[ArrayT: _ArrayF32](
         self, shape: _ArrayLikeFloat_co, size: _ShapeLike | None, dtype: _DTypeLikeF32, out: ArrayT
     ) -> ArrayT: ...
@@ -801,7 +845,45 @@ class Generator:
     def integers(
         self, low: int, high: int | None = None, size: None = None, dtype: DTypeLike | None = ..., endpoint: bool = False
     ) -> Any: ...
-    @overload  # integer dtype, size=<given>
+    @overload  # integer dtype, size=<1d> (positional)
+    def integers[ScalarT: np.integer | np.bool](
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None,
+        size: int,
+        *, dtype: _DTypeLike[ScalarT],
+        endpoint: bool = False,
+    ) -> _Array1D[ScalarT]: ...
+    @overload  # integer dtype, size=<1d> (keyword)
+    def integers[ScalarT: np.integer | np.bool](
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        *,
+        size: int,
+        dtype: _DTypeLike[ScalarT],
+        endpoint: bool = False,
+    ) -> _Array1D[ScalarT]: ...
+    @overload  # integer dtype, size=<known> (positional)
+    def integers[ScalarT: np.integer | np.bool, ShapeT: _Shape](
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None,
+        size: ShapeT,
+        *, dtype: _DTypeLike[ScalarT],
+        endpoint: bool = False,
+    ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+    @overload  # integer dtype, size=<known> (keyword)
+    def integers[ScalarT: np.integer | np.bool, ShapeT: _Shape](
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        *,
+        size: ShapeT,
+        dtype: _DTypeLike[ScalarT],
+        endpoint: bool = False,
+    ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+    @overload  # integer dtype, size=<unknown>
     def integers[ScalarT: np.integer | np.bool](
         self,
         low: _ArrayLikeInt_co,
@@ -811,7 +893,45 @@ class Generator:
         dtype: _DTypeLike[ScalarT],
         endpoint: bool = False,
     ) -> NDArray[ScalarT]: ...
-    @overload  # int64 (default), size=<given>
+    @overload  # int64 (default), size=<1d> (positional)
+    def integers(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None,
+        size: int,
+        dtype: _DTypeLikeI64 = ...,
+        endpoint: bool = False,
+    ) -> _Array1D[np.int64]: ...
+    @overload  # int64 (default), size=<1d> (keyword)
+    def integers(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        *,
+        size: int,
+        dtype: _DTypeLikeI64 = ...,
+        endpoint: bool = False,
+    ) -> _Array1D[np.int64]: ...
+    @overload  # int64 (default), size=<known> (positional)
+    def integers[ShapeT: _Shape](
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None,
+        size: ShapeT,
+        dtype: _DTypeLikeI64 = ...,
+        endpoint: bool = False,
+    ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
+    @overload  # int64 (default), size=<known> (keyword)
+    def integers[ShapeT: _Shape](
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        *,
+        size: ShapeT,
+        dtype: _DTypeLikeI64 = ...,
+        endpoint: bool = False,
+    ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
+    @overload  # int64 (default), size=<unknown>
     def integers(
         self,
         low: _ArrayLikeInt_co,
@@ -821,7 +941,45 @@ class Generator:
         dtype: _DTypeLikeI64 = ...,
         endpoint: bool = False,
     ) -> NDArray[np.int64]: ...
-    @overload  # unknown, size=<given>
+    @overload  # unknown, size=<1d> (positional)
+    def integers(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None,
+        size: int,
+        dtype: DTypeLike | None = ...,
+        endpoint: bool = False,
+    ) -> _Array1D[Any]: ...
+    @overload  # unknown, size=<1d> (keyword)
+    def integers(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        *,
+        size: int,
+        dtype: DTypeLike | None = ...,
+        endpoint: bool = False,
+    ) -> _Array1D[Any]: ...
+    @overload  # unknown, size=<known> (positional)
+    def integers[ShapeT: _Shape](
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None,
+        size: ShapeT,
+        dtype: DTypeLike | None = ...,
+        endpoint: bool = False,
+    ) -> np.ndarray[ShapeT]: ...
+    @overload  # unknown, size=<known> (keyword)
+    def integers[ShapeT: _Shape](
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        *,
+        size: ShapeT,
+        dtype: DTypeLike | None = ...,
+        endpoint: bool = False,
+    ) -> np.ndarray[ShapeT]: ...
+    @overload  # unknown, size=<unknown>
     def integers(
         self,
         low: _ArrayLikeInt_co,
