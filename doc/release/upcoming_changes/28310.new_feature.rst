@@ -1,0 +1,5 @@
+``offset`` for diagonal helper functions
+----------------------------------------
+`fill_diagonal`, `diag_indices`, and `diag_indices_from` now accept an
+``offset`` keyword-only argument to operate on diagonals above or below the
+main diagonal.
