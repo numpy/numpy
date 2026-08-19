@@ -579,6 +579,20 @@ def test_pad_extreme_width_overflow():
             pad(arr, imax)
 
 
+def test_pad_out_aliases_fill():
+    from numpy._core.umath import _center, _ljust, _rjust
+    dt = StringDType()
+    for pad, expected in [(_center, "***abc***"), (_ljust, "abc******"),
+                          (_rjust, "******abc")]:
+        a = np.array(["abc"], dtype=dt)
+        fill = np.array(["*"], dtype=dt)
+        assert pad(a, 9, fill, out=fill).tolist() == [expected]
+    # a fill longer than 15 bytes is stored in the arena, not the packed struct
+    a = np.array(["abc"], dtype=dt)
+    fill = np.array(["*" * 300], dtype=dt)
+    assert _center(a, 9, fill, out=fill).tolist() == ["***abc***"]
+
+
 def test_zfill_no_padding_no_oob():
     # no padding is added for an empty input or a width <= the input length
     dt = StringDType()

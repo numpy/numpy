@@ -1783,8 +1783,9 @@ center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
                 goto fail;
             }
 
-            if (context->descriptors[0] == context->descriptors[3]) {
-                // in-place
+            int in_place = context->descriptors[0] == context->descriptors[3] ||
+                           context->descriptors[2] == context->descriptors[3];
+            if (in_place) {
                 buf = (char *)PyMem_RawMalloc(newsize);
                 if (buf == NULL) {
                     npy_gil_error(PyExc_MemoryError,
@@ -1805,14 +1806,14 @@ center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
             npy_intp len = string_pad(inbuf, width, *fill, pos, outbuf);
 
             if (len < 0) {
-                if (context->descriptors[0] == context->descriptors[3]) {
+                if (in_place) {
                     PyMem_RawFree(buf);
                 }
                 goto fail;
             }
 
             // in-place operations need to clean up temp buffer
-            if (context->descriptors[0] == context->descriptors[3]) {
+            if (in_place) {
                 if (NpyString_pack(oallocator, ops, buf, newsize) < 0) {
                     npy_gil_error(PyExc_MemoryError,
                                   "Failed to pack string in %s", ufunc_name);
