@@ -249,7 +249,10 @@ static int f2py_module_exec(PyObject *m) {
     int i;
     PyObject *d, *s, *tmp;
     #modulename#_module = m;
-    Py_SET_TYPE((PyObject*)&PyFortran_Type, &PyType_Type);
+    if (F2Py_InitializePyFortranType() < 0) {
+        Py_DECREF(m);
+        return -1;
+    }
     import_array2(\"can't initialize module #modulename# (failed to import numpy)\", -1);
     d = PyModule_GetDict(m);
     s = PyUnicode_FromString(\"#f2py_version#\");
@@ -284,10 +287,6 @@ static int f2py_module_exec(PyObject *m) {
     if (! PyErr_Occurred())
         on_exit(f2py_report_on_exit,(void*)\"#modulename#\");
 #endif
-
-    if (PyType_Ready(&PyFortran_Type) < 0) {
-        return -1;
-    }
 
     return 0;
 }
