@@ -116,6 +116,8 @@ type _PyArray[_T] = list[_T] | tuple[_T, ...]
 # `int` also covers `bool`
 type _PyScalar = complex | bytes | str
 
+type _NestedList[T] = _NestedSequence[list[T]] | list[T]
+
 type _0D = tuple[()]
 type _1D = tuple[int]
 type _2D = tuple[int, int]
@@ -146,6 +148,8 @@ type _ToNumeric4D = _ToArray4D2[np.number | np.bool | np.object_ | np.timedelta6
 
 type _ArrayLikeMultiplicative_co = _DualArrayLike[np.dtype[np.number | np.bool | np.object_], complex]
 type _ArrayLikeNumeric_co = _DualArrayLike[np.dtype[np.number | np.bool | np.object_ | np.timedelta64], complex]
+
+type _ScalarOrderable = np.number | np.bool | np.timedelta64 | np.datetime64
 
 @type_check_only
 class _CanLE(Protocol):
@@ -1714,7 +1718,7 @@ def amax(
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> Any: ...
-@overload  # builtins.bool
+@overload  # bool
 def amax(
     a: _NestedSequence[bool],
     axis: None = None,
@@ -1723,16 +1727,43 @@ def amax(
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> np.bool: ...
-@overload  # builtins.bool, axis: <given>
+@overload  # bool, 1d, axis=<single>
 def amax(
-    a: _NestedSequence[bool],
+    a: Sequence[bool],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.bool: ...
+@overload  # bool, 2d, axis=<single>
+def amax(
+    a: Sequence[Sequence[bool]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array1D[np.bool]: ...
+@overload  # bool, 3d, axis=<single>
+def amax(
+    a: Sequence[Sequence[Sequence[bool]]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array2D[np.bool]: ...
+@overload  # bool, >=1d, axis=<given>
+def amax(
+    a: Sequence[_NestedSequence[bool]],
     axis: int | tuple[int, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.bool]: ...
-@overload  # builtins.bool, keepdims=True
+@overload  # bool, keepdims=True
 def amax(
     a: _NestedSequence[bool],
     axis: int | tuple[int, ...] | None = None,
@@ -1742,27 +1773,54 @@ def amax(
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.bool]: ...
-@overload  # ~builtins.int
+@overload  # ~int
 def amax(
-    a: _NestedSequence[list[int]] | list[int],
+    a: _NestedList[int],
     axis: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> np.int_: ...
-@overload  # ~builtins.int, axis: <given>
+@overload  # ~int, 1d, axis=<single>
 def amax(
-    a: _NestedSequence[list[int]] | list[int],
+    a: list[int],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.int_: ...
+@overload  # ~int, 2d, axis=<single>
+def amax(
+    a: Sequence[list[int]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array1D[np.int_]: ...
+@overload  # ~int, 3d, axis=<single>
+def amax(
+    a: Sequence[Sequence[list[int]]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array2D[np.int_]: ...
+@overload  # ~int, >=1d, axis=<given>
+def amax(
+    a: _NestedSequence[list[int]],
     axis: int | tuple[int, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.int_]: ...
-@overload  # ~builtins.int, keepdims=True
+@overload  # ~int, keepdims=True
 def amax(
-    a: _NestedSequence[list[int]] | list[int],
+    a: _NestedList[int],
     axis: int | tuple[int, ...] | None = None,
     out: None = None,
     *,
@@ -1770,27 +1828,54 @@ def amax(
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.int_]: ...
-@overload  # ~builtins.float
+@overload  # ~float
 def amax(
-    a: _NestedSequence[list[float]] | list[float],
+    a: _NestedList[float],
     axis: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> np.float64: ...
-@overload  # ~builtins.float, axis: <given>
+@overload  # ~float, 1d, axis=<single>
 def amax(
-    a: _NestedSequence[list[float]] | list[float],
+    a: list[float],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.float64: ...
+@overload  # ~float, 2d, axis=<single>
+def amax(
+    a: Sequence[list[float]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array1D[np.float64]: ...
+@overload  # ~float, 3d, axis=<single>
+def amax(
+    a: Sequence[Sequence[list[float]]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array2D[np.float64]: ...
+@overload  # ~float, >=1d, axis=<given>
+def amax(
+    a: _NestedSequence[list[float]],
     axis: int | tuple[int, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.float64]: ...
-@overload  # ~builtins.float, keepdims=True
+@overload  # ~float, keepdims=True
 def amax(
-    a: _NestedSequence[list[float]] | list[float],
+    a: _NestedList[float],
     axis: int | tuple[int, ...] | None = None,
     out: None = None,
     *,
@@ -1798,27 +1883,54 @@ def amax(
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.float64]: ...
-@overload  # ~builtins.complex
+@overload  # ~complex
 def amax(
-    a: _NestedSequence[list[complex]] | list[complex],
+    a: _NestedList[complex],
     axis: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> np.complex128: ...
-@overload  # ~builtins.complex, axis: <given>
+@overload  # ~complex, 1d, axis=<single>
 def amax(
-    a: _NestedSequence[list[complex]] | list[complex],
+    a: list[complex],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.complex128: ...
+@overload  # ~complex, 2d, axis=<single>
+def amax(
+    a: Sequence[list[complex]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array1D[np.complex128]: ...
+@overload  # ~complex, 3d, axis=<single>
+def amax(
+    a: Sequence[Sequence[list[complex]]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array2D[np.complex128]: ...
+@overload  # ~complex, >=1d, axis=<given>
+def amax(
+    a: _NestedSequence[list[complex]],
     axis: int | tuple[int, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.complex128]: ...
-@overload  # ~builtins.complex, keepdims=True
+@overload  # ~complex, keepdims=True
 def amax(
-    a: _NestedSequence[list[complex]] | list[complex],
+    a: _NestedList[complex],
     axis: int | tuple[int, ...] | None = None,
     out: None = None,
     *,
@@ -1827,7 +1939,7 @@ def amax(
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.complex128]: ...
 @overload  # +number | timedelta64 | datetime64
-def amax[ScalarT: np.number | np.bool | np.timedelta64 | np.datetime64](
+def amax[ScalarT: _ScalarOrderable](
     a: _ArrayLike[ScalarT],
     axis: None = None,
     out: None = None,
@@ -1835,17 +1947,62 @@ def amax[ScalarT: np.number | np.bool | np.timedelta64 | np.datetime64](
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ScalarT: ...
-@overload  # +number | timedelta64 | datetime64 | object_, axis: <given>
-def amax[ScalarT: np.number | np.bool | np.timedelta64 | np.datetime64 | np.object_](
+@overload  # known dtype, ?d, axis=<given>  (workaround)
+def amax[ScalarT: _ScalarOrderable | np.object_](
+    a: _ArrayJustND[ScalarT],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[ScalarT] | Any: ...
+@overload  # known dtype, 1d, axis=<single>
+def amax[ScalarT: _ScalarOrderable](
+    a: _ToArray1D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> ScalarT: ...
+@overload  # known dtype, 2d, axis=<single>
+def amax[ScalarT: _ScalarOrderable](
+    a: _ToArray2D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array1D[ScalarT]: ...
+@overload  # known dtype, 3d, axis=<single>
+def amax[ScalarT: _ScalarOrderable | np.object_](
+    a: _ToArray3D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array2D[ScalarT]: ...
+@overload  # known dtype, 4d, axis=<single>
+def amax[ScalarT: _ScalarOrderable | np.object_](
+    a: _ToArray4D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array3D[ScalarT]: ...
+@overload  # known dtype, ?d, axis=<given>
+def amax[ScalarT: _ScalarOrderable | np.object_](
     a: _ArrayLike[ScalarT],
     axis: int | tuple[int, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> NDArray[ScalarT]: ...
-@overload  # +number | timedelta64 | datetime64 | object_, keepdims=True
-def amax[ArrayT: NDArray[np.number | np.bool | np.timedelta64 | np.datetime64 | np.object_]](
+) -> NDArray[ScalarT] | Any: ...
+@overload  # known array, keepdims=True
+def amax[ArrayT: NDArray[_ScalarOrderable | np.object_]](
     a: ArrayT,
     axis: int | tuple[int, ...] | None = None,
     out: None = None,
@@ -1855,14 +2012,14 @@ def amax[ArrayT: NDArray[np.number | np.bool | np.timedelta64 | np.datetime64 | 
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ArrayT: ...
 @overload  # object_
-def amax(
-    a: _ArrayLike[np.object_],
+def amax[ItemT](
+    a: _ArrayLike[np.object_[ItemT]],
     axis: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> Any: ...
+) -> ItemT: ...
 @overload  # out: ArrayT
 def amax[ArrayT: np.ndarray](
     a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
@@ -1882,7 +2039,7 @@ def amax(
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> Any: ...
-@overload  # fallback, axis: <given>
+@overload  # fallback, ?d, axis=<given>
 def amax(
     a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
     axis: int | tuple[int, ...],
@@ -1890,7 +2047,7 @@ def amax(
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> NDArray[Any]: ...
+) -> NDArray[Any] | Any: ...
 @overload  # fallback, keepdims=True
 def amax(
     a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
@@ -1914,7 +2071,7 @@ def amin(
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> Any: ...
-@overload  # builtins.bool
+@overload  # bool
 def amin(
     a: _NestedSequence[bool],
     axis: None = None,
@@ -1923,16 +2080,43 @@ def amin(
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> np.bool: ...
-@overload  # builtins.bool, axis: <given>
+@overload  # bool, 1d, axis=<single>
 def amin(
-    a: _NestedSequence[bool],
+    a: Sequence[bool],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.bool: ...
+@overload  # bool, 2d, axis=<single>
+def amin(
+    a: Sequence[Sequence[bool]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array1D[np.bool]: ...
+@overload  # bool, 3d, axis=<single>
+def amin(
+    a: Sequence[Sequence[Sequence[bool]]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array2D[np.bool]: ...
+@overload  # bool, >=1d, axis=<given>
+def amin(
+    a: Sequence[_NestedSequence[bool]],
     axis: int | tuple[int, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.bool]: ...
-@overload  # builtins.bool, keepdims=True
+@overload  # bool, keepdims=True
 def amin(
     a: _NestedSequence[bool],
     axis: int | tuple[int, ...] | None = None,
@@ -1942,27 +2126,54 @@ def amin(
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.bool]: ...
-@overload  # ~builtins.int
+@overload  # ~int
 def amin(
-    a: _NestedSequence[list[int]] | list[int],
+    a: _NestedList[int],
     axis: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> np.int_: ...
-@overload  # ~builtins.int, axis: <given>
+@overload  # ~int, 1d, axis=<single>
 def amin(
-    a: _NestedSequence[list[int]] | list[int],
+    a: list[int],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.int_: ...
+@overload  # ~int, 2d, axis=<single>
+def amin(
+    a: Sequence[list[int]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array1D[np.int_]: ...
+@overload  # ~int, 3d, axis=<single>
+def amin(
+    a: Sequence[Sequence[list[int]]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array2D[np.int_]: ...
+@overload  # ~int, >=1d, axis=<given>
+def amin(
+    a: _NestedSequence[list[int]],
     axis: int | tuple[int, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.int_]: ...
-@overload  # ~builtins.int, keepdims=True
+@overload  # ~int, keepdims=True
 def amin(
-    a: _NestedSequence[list[int]] | list[int],
+    a: _NestedList[int],
     axis: int | tuple[int, ...] | None = None,
     out: None = None,
     *,
@@ -1970,27 +2181,54 @@ def amin(
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.int_]: ...
-@overload  # ~builtins.float
+@overload  # ~float
 def amin(
-    a: _NestedSequence[list[float]] | list[float],
+    a: _NestedList[float],
     axis: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> np.float64: ...
-@overload  # ~builtins.float, axis: <given>
+@overload  # ~float, 1d, axis=<single>
 def amin(
-    a: _NestedSequence[list[float]] | list[float],
+    a: list[float],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.float64: ...
+@overload  # ~float, 2d, axis=<single>
+def amin(
+    a: Sequence[list[float]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array1D[np.float64]: ...
+@overload  # ~float, 3d, axis=<single>
+def amin(
+    a: Sequence[Sequence[list[float]]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array2D[np.float64]: ...
+@overload  # ~float, >=1d, axis=<given>
+def amin(
+    a: _NestedSequence[list[float]],
     axis: int | tuple[int, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.float64]: ...
-@overload  # ~builtins.float, keepdims=True
+@overload  # ~float, keepdims=True
 def amin(
-    a: _NestedSequence[list[float]] | list[float],
+    a: _NestedList[float],
     axis: int | tuple[int, ...] | None = None,
     out: None = None,
     *,
@@ -1998,27 +2236,54 @@ def amin(
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.float64]: ...
-@overload  # ~builtins.complex
+@overload  # ~complex
 def amin(
-    a: _NestedSequence[list[complex]] | list[complex],
+    a: _NestedList[complex],
     axis: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> np.complex128: ...
-@overload  # ~builtins.complex, axis: <given>
+@overload  # ~complex, 1d, axis=<single>
 def amin(
-    a: _NestedSequence[list[complex]] | list[complex],
+    a: list[complex],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> np.complex128: ...
+@overload  # ~complex, 2d, axis=<single>
+def amin(
+    a: Sequence[list[complex]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array1D[np.complex128]: ...
+@overload  # ~complex, 3d, axis=<single>
+def amin(
+    a: Sequence[Sequence[list[complex]]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array2D[np.complex128]: ...
+@overload  # ~complex, >=1d, axis=<given>
+def amin(
+    a: _NestedSequence[list[complex]],
     axis: int | tuple[int, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.complex128]: ...
-@overload  # ~builtins.complex, keepdims=True
+@overload  # ~complex, keepdims=True
 def amin(
-    a: _NestedSequence[list[complex]] | list[complex],
+    a: _NestedList[complex],
     axis: int | tuple[int, ...] | None = None,
     out: None = None,
     *,
@@ -2027,7 +2292,7 @@ def amin(
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> NDArray[np.complex128]: ...
 @overload  # +number | timedelta64 | datetime64
-def amin[ScalarT: np.number | np.bool | np.timedelta64 | np.datetime64](
+def amin[ScalarT: _ScalarOrderable](
     a: _ArrayLike[ScalarT],
     axis: None = None,
     out: None = None,
@@ -2035,17 +2300,62 @@ def amin[ScalarT: np.number | np.bool | np.timedelta64 | np.datetime64](
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ScalarT: ...
-@overload  # +number | timedelta64 | datetime64 | object_, axis: <given>
-def amin[ScalarT: np.number | np.bool | np.timedelta64 | np.datetime64 | np.object_](
+@overload  # known dtype, ?d, axis=<given>  (workaround)
+def amin[ScalarT: _ScalarOrderable | np.object_](
+    a: _ArrayJustND[ScalarT],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[ScalarT] | Any: ...
+@overload  # known dtype, 1d, axis=<single>
+def amin[ScalarT: _ScalarOrderable](
+    a: _ToArray1D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> ScalarT: ...
+@overload  # known dtype, 2d, axis=<single>
+def amin[ScalarT: _ScalarOrderable](
+    a: _ToArray2D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array1D[ScalarT]: ...
+@overload  # known dtype, 3d, axis=<single>
+def amin[ScalarT: _ScalarOrderable | np.object_](
+    a: _ToArray3D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array2D[ScalarT]: ...
+@overload  # known dtype, 4d, axis=<single>
+def amin[ScalarT: _ScalarOrderable | np.object_](
+    a: _ToArray4D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _Array3D[ScalarT]: ...
+@overload  # known dtype, ?d, axis=<given>
+def amin[ScalarT: _ScalarOrderable | np.object_](
     a: _ArrayLike[ScalarT],
     axis: int | tuple[int, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> NDArray[ScalarT]: ...
-@overload  # +number | timedelta64 | datetime64 | object_, keepdims=True
-def amin[ArrayT: NDArray[np.number | np.bool | np.timedelta64 | np.datetime64 | np.object_]](
+) -> NDArray[ScalarT] | Any: ...
+@overload  # known array, keepdims=True
+def amin[ArrayT: NDArray[_ScalarOrderable | np.object_]](
     a: ArrayT,
     axis: int | tuple[int, ...] | None = None,
     out: None = None,
@@ -2055,14 +2365,14 @@ def amin[ArrayT: NDArray[np.number | np.bool | np.timedelta64 | np.datetime64 | 
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ArrayT: ...
 @overload  # object_
-def amin(
-    a: _ArrayLike[np.object_],
+def amin[ItemT](
+    a: _ArrayLike[np.object_[ItemT]],
     axis: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> Any: ...
+) -> ItemT: ...
 @overload  # out: ArrayT
 def amin[ArrayT: np.ndarray](
     a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
@@ -2082,7 +2392,7 @@ def amin(
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> Any: ...
-@overload  # fallback, axis: <given>
+@overload  # fallback, ?d, axis=<given>
 def amin(
     a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
     axis: int | tuple[int, ...],
@@ -2090,7 +2400,7 @@ def amin(
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> NDArray[Any]: ...
+) -> NDArray[Any] | Any: ...
 @overload  # fallback, keepdims=True
 def amin(
     a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
