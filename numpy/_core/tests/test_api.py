@@ -479,6 +479,14 @@ def test_copyto_cast_safety():
     # As a special thing, object is equiv currently:
     np.copyto(np.arange(3, dtype=object), 3, casting="equiv")
 
+    # A Python str adopts a StringDType's semantics in the same way
+    np.copyto(np.empty(3, dtype=np.dtypes.StringDType()), "x", casting="no")
+    with pytest.raises(TypeError):
+        np.copyto(np.empty(3, dtype=np.dtypes.StringDType()), "x",
+                  casting="equiv")
+    # and object is equiv for a str, too:
+    np.copyto(np.empty(3, dtype=object), "x", casting="equiv")
+
     # The following raises an overflow error/gives a warning but not
     # type error (due to casting), though:
     with pytest.raises(OverflowError):
