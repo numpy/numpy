@@ -692,6 +692,7 @@ PyArray_ConcatenateInto(PyObject *op,
         PyErr_NoMemory();
         return NULL;
     }
+    int any_pystr = 0;
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
         PyObject *item = PySequence_GetItem(op, iarrays);
         if (item == NULL) {
@@ -705,7 +706,31 @@ PyArray_ConcatenateInto(PyObject *op,
             goto fail;
         }
         npy_mark_tmp_array_if_pyscalar(item, arrays[iarrays], NULL);
+        any_pystr |= npy_mark_tmp_array_if_pystr(item, arrays[iarrays]);
         Py_DECREF(item);
+    }
+
+    /* Explicit axes reject the 0-d str before resolving a descriptor */
+    if (any_pystr && axis == NPY_RAVEL_AXIS) {
+        PyArray_Descr *target = PyArray_FindConcatenationDescriptor(
+                narrays, arrays, ret != NULL ? PyArray_DESCR(ret) : dtype);
+        if (target == NULL) {
+            goto fail;
+        }
+        for (iarrays = 0; iarrays < narrays; ++iarrays) {
+            if (!(PyArray_FLAGS(arrays[iarrays]) & NPY_ARRAY_WAS_PYTHON_STR)) {
+                continue;
+            }
+            PyObject *item = PySequence_GetItem(op, iarrays);
+            if (item == NULL || npy_update_operand_for_pystr(
+                    &arrays[iarrays], item, target, casting) < 0) {
+                Py_XDECREF(item);
+                Py_DECREF(target);
+                goto fail;
+            }
+            Py_DECREF(item);
+        }
+        Py_DECREF(target);
     }
 
     if (axis == NPY_RAVEL_AXIS) {
@@ -728,7 +753,7 @@ PyArray_ConcatenateInto(PyObject *op,
 fail:
     /* 'narrays' was set to how far we got in the conversion */
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
-        Py_DECREF(arrays[iarrays]);
+        Py_XDECREF(arrays[iarrays]);
     }
     PyMem_RawFree(arrays);
 
@@ -1981,13 +2006,14 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
     }
     PyArray_DTypeMeta *DType = NPY_DTYPE(PyArray_DESCR(src));
     Py_INCREF(DType);
-    if (npy_mark_tmp_array_if_pyscalar(src_obj, src, &DType)) {
-        /* The user passed a Python scalar */
+    int is_pyscalar = npy_mark_tmp_array_if_pyscalar(src_obj, src, &DType);
+    if (is_pyscalar || npy_mark_tmp_array_if_pystr(src_obj, src)) {
         PyArray_Descr *descr;
         PyArray_DTypeMeta *dst_DType = NPY_DTYPE(PyArray_DESCR(dst));
         bool is_npy_nan = PyFloat_Check(src_obj) && npy_isnan(PyFloat_AsDouble(src_obj));
-        if (!is_npy_nan && (dst_DType->type_num == NPY_TIMEDELTA ||
-                            dst_DType->type_num == NPY_DATETIME)) {
+        if (is_pyscalar && !is_npy_nan &&
+                (dst_DType->type_num == NPY_TIMEDELTA ||
+                 dst_DType->type_num == NPY_DATETIME)) {
             descr = PyArray_DESCR(dst);
             Py_INCREF(descr);
         }
@@ -3274,6 +3300,8 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     }
     npy_mark_tmp_array_if_pyscalar(x, ax, NULL);
     npy_mark_tmp_array_if_pyscalar(y, ay, NULL);
+    npy_mark_tmp_array_if_pystr(x, ax);
+    npy_mark_tmp_array_if_pystr(y, ay);
 
     npy_uint32 flags = NPY_ITER_EXTERNAL_LOOP | NPY_ITER_BUFFERED |
                         NPY_ITER_REFS_OK | NPY_ITER_ZEROSIZE_OK;
@@ -3292,14 +3320,14 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         goto fail;
     }
 
-    if (PyArray_FLAGS(ax) & NPY_ARRAY_WAS_PYTHON_LITERAL) {
+    if (PyArray_FLAGS(ax) & (NPY_ARRAY_WAS_PYTHON_LITERAL | NPY_ARRAY_WAS_PYTHON_STR)) {
         if (npy_update_operand_for_scalar(&ax, x, common_dt, NPY_SAFE_CASTING) < 0) {
             goto fail;
         }
         op_in[2] = ax;
     }
 
-    if (PyArray_FLAGS(ay) & NPY_ARRAY_WAS_PYTHON_LITERAL) {
+    if (PyArray_FLAGS(ay) & (NPY_ARRAY_WAS_PYTHON_LITERAL | NPY_ARRAY_WAS_PYTHON_STR)) {
         if (npy_update_operand_for_scalar(&ay, y, common_dt, NPY_SAFE_CASTING) < 0) {
             goto fail;
         }

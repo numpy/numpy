@@ -2019,6 +2019,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
             goto fail;
         }
         npy_mark_tmp_array_if_pyscalar(tmp, mps[i], NULL);
+        npy_mark_tmp_array_if_pystr(tmp, mps[i]);
         Py_DECREF(tmp);
     }
 
@@ -2030,8 +2031,18 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
     /* Make sure all arrays are contiguous and have the correct dtype. */
     for (i = 0; i < n; i++) {
         int flags = NPY_ARRAY_CARRAY;
-        PyArrayObject *tmp = mps[i];
 
+        if (PyArray_FLAGS(mps[i]) & NPY_ARRAY_WAS_PYTHON_STR) {
+            PyObject *item = PySequence_GetItem(op, i);
+            if (item == NULL || npy_update_operand_for_pystr(
+                    &mps[i], item, common_descr, NPY_SAFE_CASTING) < 0) {
+                Py_XDECREF(item);
+                goto fail;
+            }
+            Py_DECREF(item);
+        }
+
+        PyArrayObject *tmp = mps[i];
         Py_INCREF(common_descr);
         mps[i] = (PyArrayObject *)PyArray_FromArray(tmp, common_descr, flags);
         Py_DECREF(tmp);
