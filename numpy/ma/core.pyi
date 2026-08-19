@@ -3052,7 +3052,7 @@ def minmax(
     axis: _ShapeLike | None = None,
     out: None = None,
     fill_value: _ScalarLike_co | None = None,
-    keepdims: bool | _NoValueType = ...,
+    keepdims: bool | _NoValueType = ...
 ) -> tuple[Any, Any]: ...
 @overload
 def minmax[ArrayT: np.ndarray](
