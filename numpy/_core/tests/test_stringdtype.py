@@ -579,6 +579,19 @@ def test_pad_extreme_width_overflow():
             pad(arr, imax)
 
 
+def test_zfill_no_padding_no_oob():
+    # no padding is added for an empty input or a width <= the input length
+    dt = StringDType()
+    assert np.strings.zfill(np.array([""], dtype=dt), 20).tolist() == ["0" * 20]
+    assert np.strings.zfill(np.array([""], dtype=dt), 0).tolist() == [""]
+    assert np.strings.zfill(np.array(["42"], dtype=dt), 1).tolist() == ["42"]
+    assert np.strings.zfill(np.array(["-7"], dtype=dt), 5).tolist() == ["-0007"]
+    # the in-place path writes into a heap buffer the sanitizer can bounds-check
+    from numpy._core.umath import _zfill
+    a = np.array([""], dtype=dt)
+    assert _zfill(a, 20, out=a).tolist() == ["0" * 20]
+
+
 def test_additional_unicode_cast(dtype):
     string_list = random_unicode_string_list()
     arr = np.array(string_list, dtype=dtype)

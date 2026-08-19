@@ -1635,13 +1635,18 @@ string_zfill(Buffer<enc> buf, npy_int64 width, Buffer<enc> out)
         return -1;
     }
 
-    size_t offset = final_width - buf.num_codepoints();
-    Buffer<enc> tmp = out + offset;
+    // when no padding was added there is no sign to move, and the sign
+    // position below would be out of bounds
+    size_t len = buf.num_codepoints();
+    if (len > 0 && final_width > len) {
+        size_t offset = final_width - len;
+        Buffer<enc> tmp = out + offset;
 
-    npy_ucs4 c = *tmp;
-    if (c == '+' || c == '-') {
-        tmp.buffer_memset(fill, 1);
-        out.buffer_memset(c, 1);
+        npy_ucs4 c = *tmp;
+        if (c == '+' || c == '-') {
+            tmp.buffer_memset(fill, 1);
+            out.buffer_memset(c, 1);
+        }
     }
 
     return new_len;
