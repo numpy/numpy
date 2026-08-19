@@ -233,30 +233,54 @@ class Generator:
         out: ArrayT,
     ) -> ArrayT: ...
 
-    #
+    # keep in sync with `Generator.random`
     @overload  # size=None (default);  NOTE: dtype is ignored
     def standard_exponential(
         self, size: None = None, dtype: _DTypeLikeFloat = ..., method: _MethodExp = "zig", out: None = None
     ) -> float: ...
-    @overload  # size=<given>, dtype: f64 (default)
+    @overload  # size=<1d>, dtype=f64 (default)
+    def standard_exponential(
+        self, size: int, dtype: _DTypeLikeF64 = ..., method: _MethodExp = "zig", out: None = None
+    ) -> _Array1D[np.float64]: ...
+    @overload  # size=<known>, dtype=f64 (default)
+    def standard_exponential[ShapeT: _Shape](
+        self, size: ShapeT, dtype: _DTypeLikeF64 = ..., method: _MethodExp = "zig", out: None = None
+    ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    @overload  # size=<unknown>, dtype=f64 (default)
     def standard_exponential(
         self, size: _ShapeLike, dtype: _DTypeLikeF64 = ..., method: _MethodExp = "zig", out: None = None
-    ) -> _ArrayF64: ...
-    @overload  # size=<given>, dtype: f32 (default)
+    ) -> NDArray[np.float64]: ...
+    @overload  # size=<1d>, dtype=f32
+    def standard_exponential(
+        self, size: int, dtype: _DTypeLikeF32, method: _MethodExp = "zig", out: None = None
+    ) -> _Array1D[np.float32]: ...
+    @overload  # size=<known>, dtype=f32
+    def standard_exponential[ShapeT: _Shape](
+        self, size: ShapeT, dtype: _DTypeLikeF32, method: _MethodExp = "zig", out: None = None
+    ) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
+    @overload  # size=<unknown>, dtype=f32
     def standard_exponential(
         self, size: _ShapeLike, dtype: _DTypeLikeF32, method: _MethodExp = "zig", out: None = None
-    ) -> _ArrayF32: ...
-    @overload  # dtype: f64 (default), out: f64 array (keyword)
+    ) -> NDArray[np.float32]: ...
+    @overload  # out: f64 array  (keyword)
     def standard_exponential[ArrayT: _ArrayF64](
         self, size: _ShapeLike | None = None, dtype: _DTypeLikeF64 = ..., method: _MethodExp = "zig", *, out: ArrayT
     ) -> ArrayT: ...
-    @overload  # dtype: f32 (keyword), out: f32 array
+    @overload  # out: f64 array  (positional)
+    def standard_exponential[ArrayT: _ArrayF64](
+        self, size: _ShapeLike | None, dtype: _DTypeLikeF64, method: _MethodExp, out: ArrayT
+    ) -> ArrayT: ...
+    @overload  # dtype: f32  (keyword), out: f32 array
     def standard_exponential[ArrayT: _ArrayF32](
         self, size: _ShapeLike | None = None, *, dtype: _DTypeLikeF32, method: _MethodExp = "zig", out: ArrayT
     ) -> ArrayT: ...
-    @overload  # dtype: f32 (positional), out: f32 array (keyword)
+    @overload  # dtype: f32 (positional), out: f32 array
     def standard_exponential[ArrayT: _ArrayF32](
         self, size: _ShapeLike | None, dtype: _DTypeLikeF32, method: _MethodExp = "zig", *, out: ArrayT
+    ) -> ArrayT: ...
+    @overload  # dtype: f32, out: f32 array  (positional)
+    def standard_exponential[ArrayT: _ArrayF32](
+        self, size: _ShapeLike | None, dtype: _DTypeLikeF32, method: _MethodExp, out: ArrayT
     ) -> ArrayT: ...
 
     #
