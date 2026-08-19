@@ -698,11 +698,13 @@ string_slice_loop(PyArrayMethod_Context *context,
             // copy one codepoint
             inbuf.buffer_memcpy(outbuf, 1);
 
-            // Move in inbuf by step.
-            inbuf += step;
-
             // Move in outbuf by the number of chars or bytes written
             outbuf.advance_chars_or_bytes(1);
+
+            // an extreme step overflows the pointer on the final advance
+            if (i + 1 < slice_length) {
+                inbuf += step;
+            }
         }
 
         // fill remaining outbuf with zero bytes

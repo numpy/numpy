@@ -320,7 +320,7 @@ struct Buffer {
             buf += rhs;
             break;
         case ENCODING::UTF32:
-            buf += rhs * sizeof(npy_ucs4);
+            buf += rhs * (npy_int64)sizeof(npy_ucs4);
             break;
         case ENCODING::UTF8:
             for (npy_int64 i = 0; i < rhs && buf < after; i++) {
@@ -340,7 +340,7 @@ struct Buffer {
             buf -= rhs;
             break;
         case ENCODING::UTF32:
-            buf -= rhs * sizeof(npy_ucs4);
+            buf -= rhs * (npy_int64)sizeof(npy_ucs4);
             break;
         case ENCODING::UTF8:
             buf = (char *) find_previous_utf8_character((unsigned char *)buf, (size_t) rhs);
@@ -722,8 +722,8 @@ operator+(Buffer<enc> lhs, npy_int64 rhs)
         case ENCODING::ASCII:
             return Buffer<enc>(lhs.buf + rhs, lhs.after - lhs.buf - rhs);
         case ENCODING::UTF32:
-            return Buffer<enc>(lhs.buf + rhs * sizeof(npy_ucs4),
-                          lhs.after - lhs.buf - rhs * sizeof(npy_ucs4));
+            return Buffer<enc>(lhs.buf + rhs * (npy_int64)sizeof(npy_ucs4),
+                          lhs.after - lhs.buf - rhs * (npy_int64)sizeof(npy_ucs4));
         case ENCODING::UTF8:
             char* buf = lhs.buf;
             for (npy_int64 i = 0; i < rhs && buf < lhs.after; i++) {
@@ -759,8 +759,8 @@ operator-(Buffer<enc> lhs, npy_int64 rhs)
         case ENCODING::ASCII:
             return Buffer<enc>(lhs.buf - rhs, lhs.after - lhs.buf + rhs);
         case ENCODING::UTF32:
-            return Buffer<enc>(lhs.buf - rhs * sizeof(npy_ucs4),
-                          lhs.after - lhs.buf + rhs * sizeof(npy_ucs4));
+            return Buffer<enc>(lhs.buf - rhs * (npy_int64)sizeof(npy_ucs4),
+                          lhs.after - lhs.buf + rhs * (npy_int64)sizeof(npy_ucs4));
         case ENCODING::UTF8:
             char* buf = lhs.buf;
             buf = (char *)find_previous_utf8_character((unsigned char *)buf, rhs);
