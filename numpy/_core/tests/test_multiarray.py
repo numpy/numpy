@@ -3625,9 +3625,10 @@ class TestMethods:
         a = np.array([[0., 2., 4., 6.], [1., 3., 5., 7.]])
         v = np.array([[3., 5.], [2., 4.]])
 
-        # searching a transposed array along axis 0 matches the original
+        # the searched dimension of the result sits at `axis`, so searching a
+        # transposed array along axis 0 gives the transposed result
         assert_equal(np.searchsorted(a.T, v, axis=0),
-                     np.searchsorted(a, v))
+                     np.searchsorted(a, v).T)
         # negative and positive spellings agree
         assert_equal(np.searchsorted(a, v, axis=1),
                      np.searchsorted(a, v, axis=-1))
@@ -3639,7 +3640,8 @@ class TestMethods:
         b = np.sort(rng.rand(4, 5, 6), axis=1)
         w = rng.rand(4, 6, 3)
         assert_equal(np.searchsorted(b, w, axis=1),
-                     np.searchsorted(np.moveaxis(b, 1, -1), w))
+                     np.moveaxis(np.searchsorted(np.moveaxis(b, 1, -1), w),
+                                 -1, 1))
 
         # out-of-range axes are rejected
         assert_raises(np.exceptions.AxisError, np.searchsorted, a, v, axis=2)
@@ -3677,7 +3679,7 @@ class TestMethods:
         s = np.argsort(a, axis=0)
         v = rng.rand(3, 4)
         assert_equal(np.searchsorted(a, v, sorter=s, axis=0),
-                     np.searchsorted(a.T, v, sorter=s.T))
+                     np.searchsorted(a.T, v, sorter=s.T).T)
 
     @pytest.mark.parametrize("dtype", ['O', 'S4', 'U4',
                                        [('x', 'i4'), ('y', 'i4')]])

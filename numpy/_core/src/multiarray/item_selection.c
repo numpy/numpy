@@ -2428,26 +2428,38 @@ searchsorted_operand_ndim(PyObject *op)
 
 
 /*
- * Build the gufunc `axes` argument placing `a`'s core dimension at `axis`.
- * `v`, the result and a lower dimensional `sorter` keep their own last axis,
- * and a 0-d `v` has dropped the flexible dimension so it names no axis at all.
+ * Build the gufunc `axes` argument placing `a`'s core dimension at `axis`,
+ * and the searched dimension of the result there too.  `v` and a lower
+ * dimensional `sorter` keep their own last axis, and a 0-d `v` has dropped
+ * the flexible dimension so it names no axis at all.
  */
 static PyObject *
 searchsorted_build_axes(int axis, int a_ndim, int v_ndim, int sorter_ndim)
 {
-    PyObject *keys = v_ndim == 0 ? Py_BuildValue("()") : Py_BuildValue("(i)", -1);
-    if (keys == NULL) {
+    PyObject *keys, *out;
+    if (v_ndim == 0) {
+        keys = Py_BuildValue("()");
+        out = Py_BuildValue("()");
+    }
+    else {
+        keys = Py_BuildValue("(i)", -1);
+        out = Py_BuildValue("(i)", axis);
+    }
+    if (keys == NULL || out == NULL) {
+        Py_XDECREF(keys);
+        Py_XDECREF(out);
         return NULL;
     }
     PyObject *axes;
     if (sorter_ndim < 0) {
-        axes = Py_BuildValue("[(i),O,O]", axis, keys, keys);
+        axes = Py_BuildValue("[(i),O,O]", axis, keys, out);
     }
     else {
         axes = Py_BuildValue("[(i),O,(i),O]", axis, keys,
-                             sorter_ndim == a_ndim ? axis : -1, keys);
+                             sorter_ndim == a_ndim ? axis : -1, out);
     }
     Py_DECREF(keys);
+    Py_DECREF(out);
     return axes;
 }
 
