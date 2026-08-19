@@ -13,6 +13,7 @@ from numpy.random.bit_generator import SeedlessSeedSequence, SeedSequence
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 
 _1d: tuple[int]
 _2d: tuple[int, int]
@@ -898,27 +899,38 @@ assert_type(def_gen.choice(str_list, 3, p=[1 / 4] * 4), _Array1D[np.str_])
 assert_type(def_gen.choice(str_list, 3, replace=True), _Array1D[np.str_])
 assert_type(def_gen.choice(str_list, 3, replace=False, p=np.array([1 / 8, 1 / 8, 1 / 2, 1 / 4])), _Array1D[np.str_])
 
-assert_type(def_gen.dirichlet([0.5, 0.5]), npt.NDArray[np.float64])
-assert_type(def_gen.dirichlet(np.array([0.5, 0.5])), npt.NDArray[np.float64])
-assert_type(def_gen.dirichlet(np.array([0.5, 0.5]), size=3), npt.NDArray[np.float64])
+assert_type(def_gen.dirichlet([0.5, 0.5]), _Array1D[np.float64])
+assert_type(def_gen.dirichlet(np.array([0.5, 0.5])), _Array1D[np.float64])
+assert_type(def_gen.dirichlet(np.array([0.5, 0.5]), size=3), _Array2D[np.float64])
+assert_type(def_gen.dirichlet([0.5, 0.5], _1d), _Array2D[np.float64])
+assert_type(def_gen.dirichlet([0.5, 0.5], _2d), _Array3D[np.float64])
+assert_type(def_gen.dirichlet([0.5, 0.5], size=_2d), _Array3D[np.float64])
 
-assert_type(def_gen.multinomial(20, [1 / 6.0] * 6), npt.NDArray[np.int64])
-assert_type(def_gen.multinomial(20, np.array([0.5, 0.5])), npt.NDArray[np.int64])
-assert_type(def_gen.multinomial(20, [1 / 6.0] * 6, size=2), npt.NDArray[np.int64])
-assert_type(def_gen.multinomial([[10], [20]], [1 / 6.0] * 6, size=(2, 2)), npt.NDArray[np.int64])
-assert_type(def_gen.multinomial(np.array([[10], [20]]), np.array([0.5, 0.5]), size=(2, 2)), npt.NDArray[np.int64])
+assert_type(def_gen.multinomial(20, [1 / 6.0] * 6), _Array1D[np.int64])
+assert_type(def_gen.multinomial(20, np.array([0.5, 0.5])), _Array1D[np.int64])
+assert_type(def_gen.multinomial(20, [1 / 6.0] * 6, size=2), _Array2D[np.int64])
+assert_type(def_gen.multinomial(20, [1 / 6.0] * 6, size=_1d), _Array2D[np.int64])
+assert_type(def_gen.multinomial(20, [1 / 6.0] * 6, size=_2d), _Array3D[np.int64])
+assert_type(def_gen.multinomial([[10], [20]], [1 / 6.0] * 6, size=(2, 2)), _Array3D[np.int64])
+assert_type(def_gen.multinomial(np.array([[10], [20]]), np.array([0.5, 0.5]), size=(2, 2)), _Array3D[np.int64])
+assert_type(def_gen.multinomial([[10], [20]], [1 / 6.0] * 6), npt.NDArray[np.int64])
 
-assert_type(def_gen.multivariate_hypergeometric([3, 5, 7], 2), npt.NDArray[np.int64])
-assert_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2), npt.NDArray[np.int64])
-assert_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2, size=4), npt.NDArray[np.int64])
-assert_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2, size=(4, 7)), npt.NDArray[np.int64])
-assert_type(def_gen.multivariate_hypergeometric([3, 5, 7], 2, method="count"), npt.NDArray[np.int64])
-assert_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2, method="marginals"), npt.NDArray[np.int64])
+assert_type(def_gen.multivariate_hypergeometric([3, 5, 7], 2), _Array1D[np.int64])
+assert_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2), _Array1D[np.int64])
+assert_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2, size=4), _Array2D[np.int64])
+assert_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2, size=_1d), _Array2D[np.int64])
+assert_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2, size=(4, 7)), _Array3D[np.int64])
+assert_type(def_gen.multivariate_hypergeometric([3, 5, 7], 2, method="count"), _Array1D[np.int64])
+assert_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2, method="marginals"), _Array1D[np.int64])
 
-assert_type(def_gen.multivariate_normal([0.0], [[1.0]]), npt.NDArray[np.float64])
-assert_type(def_gen.multivariate_normal([0.0], np.array([[1.0]])), npt.NDArray[np.float64])
-assert_type(def_gen.multivariate_normal(np.array([0.0]), [[1.0]]), npt.NDArray[np.float64])
-assert_type(def_gen.multivariate_normal([0.0], np.array([[1.0]])), npt.NDArray[np.float64])
+assert_type(def_gen.multivariate_normal([0.0], [[1.0]]), _Array1D[np.float64])
+assert_type(def_gen.multivariate_normal([0.0], np.array([[1.0]])), _Array1D[np.float64])
+assert_type(def_gen.multivariate_normal(np.array([0.0]), [[1.0]]), _Array1D[np.float64])
+assert_type(def_gen.multivariate_normal([0.0], np.array([[1.0]])), _Array1D[np.float64])
+assert_type(def_gen.multivariate_normal([0.0], [[1.0]], 3), _Array2D[np.float64])
+assert_type(def_gen.multivariate_normal([0.0], [[1.0]], _1d), _Array2D[np.float64])
+assert_type(def_gen.multivariate_normal([0.0], [[1.0]], _2d), _Array3D[np.float64])
+assert_type(def_gen.multivariate_normal([0.0], [[1.0]], size=_2d, method="eigh"), _Array3D[np.float64])
 
 _f32_2d: _Array2D[np.float32]
 

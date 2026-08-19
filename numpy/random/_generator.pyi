@@ -17,6 +17,7 @@ from numpy._typing import (
     _Float64Codes,
     _FloatLike_co,
     _Int64Codes,
+    _IntLike_co,
     _NestedSequence,
     _Shape,
     _ShapeLike,
@@ -29,6 +30,9 @@ from .mtrand import RandomState
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+type _Array4D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int], np.dtype[ScalarT]]
+
 type _ToArray1D[ScalarT: np.generic] = _Array1D[ScalarT] | list[ScalarT]
 type _NestedList[T] = _NestedSequence[list[T]] | list[T]
 
@@ -46,6 +50,9 @@ type _NDArrayLikeInt = NDArray[np.generic[int]] | _NestedSequence[int]
 type _NDArrayLikeFloat = NDArray[np.generic[float]] | _NestedSequence[float]
 
 type _MethodExp = Literal["zig", "inv"]
+type _MethodMVN = Literal["svd", "eigh", "cholesky"]
+type _CheckValid = Literal["warn", "raise", "ignore"]
+type _MethodMVHG = Literal["marginals", "count"]
 
 ###
 
@@ -1156,34 +1163,148 @@ class Generator:
     # multivariate
 
     #
-    def dirichlet(self, /, alpha: _ArrayLikeFloat_co, size: _ShapeLike | None = None) -> _ArrayF64: ...
+    @overload  # size=None (default)
+    def dirichlet(self, /, alpha: _ArrayLikeFloat_co, size: None = None) -> _Array1D[np.float64]: ...
+    @overload  # size=<1d>
+    def dirichlet(self, /, alpha: _ArrayLikeFloat_co, size: int | tuple[int]) -> _Array2D[np.float64]: ...
+    @overload  # size=<2d>
+    def dirichlet(self, /, alpha: _ArrayLikeFloat_co, size: tuple[int, int]) -> _Array3D[np.float64]: ...
+    @overload  # size=<3d>
+    def dirichlet(self, /, alpha: _ArrayLikeFloat_co, size: tuple[int, int, int]) -> _Array4D[np.float64]: ...
+    @overload  # size=<unknown>
+    def dirichlet(self, /, alpha: _ArrayLikeFloat_co, size: _ShapeLike) -> NDArray[np.float64]: ...
 
     #
+    @overload  # size=None (default)
     def multivariate_normal(
         self,
         /,
         mean: _ArrayLikeFloat_co,
         cov: _ArrayLikeFloat_co,
-        size: _ShapeLike | None = None,
-        check_valid: Literal["warn", "raise", "ignore"] = "warn",
+        size: None = None,
+        check_valid: _CheckValid = "warn",
         tol: float = 1e-8,
         *,
-        method: Literal["svd", "eigh", "cholesky"] = "svd",
-    ) -> _ArrayF64: ...
+        method: _MethodMVN = "svd",
+    ) -> _Array1D[np.float64]: ...
+    @overload  # size=<1d>
+    def multivariate_normal(
+        self,
+        /,
+        mean: _ArrayLikeFloat_co,
+        cov: _ArrayLikeFloat_co,
+        size: int | tuple[int],
+        check_valid: _CheckValid = "warn",
+        tol: float = 1e-8,
+        *,
+        method: _MethodMVN = "svd",
+    ) -> _Array2D[np.float64]: ...
+    @overload  # size=<2d>
+    def multivariate_normal(
+        self,
+        /,
+        mean: _ArrayLikeFloat_co,
+        cov: _ArrayLikeFloat_co,
+        size: tuple[int, int],
+        check_valid: _CheckValid = "warn",
+        tol: float = 1e-8,
+        *,
+        method: _MethodMVN = "svd",
+    ) -> _Array3D[np.float64]: ...
+    @overload  # size=<3d>
+    def multivariate_normal(
+        self,
+        /,
+        mean: _ArrayLikeFloat_co,
+        cov: _ArrayLikeFloat_co,
+        size: tuple[int, int, int],
+        check_valid: _CheckValid = "warn",
+        tol: float = 1e-8,
+        *,
+        method: _MethodMVN = "svd",
+    ) -> _Array4D[np.float64]: ...
+    @overload  # size=<unknown>
+    def multivariate_normal(
+        self,
+        /,
+        mean: _ArrayLikeFloat_co,
+        cov: _ArrayLikeFloat_co,
+        size: _ShapeLike,
+        check_valid: _CheckValid = "warn",
+        tol: float = 1e-8,
+        *,
+        method: _MethodMVN = "svd",
+    ) -> NDArray[np.float64]: ...
 
     #
+    @overload  # 0d n, size=None (default)
+    def multinomial(self, /, n: _IntLike_co, pvals: _ArrayLikeFloat_co, size: None = None) -> _Array1D[np.int64]: ...
+    @overload  # >=0d n, size=None (default)
     def multinomial(
-        self, /, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: _ShapeLike | None = None
+        self, /, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: None = None
+    ) -> NDArray[np.int64]: ...
+    @overload  # size=<1d>
+    def multinomial(
+        self, /, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: int | tuple[int]
+    ) -> _Array2D[np.int64]: ...
+    @overload  # size=<2d>
+    def multinomial(
+        self, /, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: tuple[int, int]
+    ) -> _Array3D[np.int64]: ...
+    @overload  # size=<3d>
+    def multinomial(
+        self, /, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: tuple[int, int, int]
+    ) -> _Array4D[np.int64]: ...
+    @overload  # size=<unknown>
+    def multinomial(
+        self, /, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: _ShapeLike
     ) -> NDArray[np.int64]: ...
 
     #
+    @overload  # size=None (default)
     def multivariate_hypergeometric(
         self,
         /,
         colors: _ArrayLikeInt_co,
         nsample: int,
-        size: _ShapeLike | None = None,
-        method: Literal["marginals", "count"] = "marginals",
+        size: None = None,
+        method: _MethodMVHG = "marginals",
+    ) -> _Array1D[np.int64]: ...
+    @overload  # size=<1d>
+    def multivariate_hypergeometric(
+        self,
+        /,
+        colors: _ArrayLikeInt_co,
+        nsample: int,
+        size: int | tuple[int],
+        method: _MethodMVHG = "marginals",
+    ) -> _Array2D[np.int64]: ...
+    @overload  # size=<2d>
+    def multivariate_hypergeometric(
+        self,
+        /,
+        colors: _ArrayLikeInt_co,
+        nsample: int,
+        size: tuple[int, int],
+        method: _MethodMVHG = "marginals",
+    ) -> _Array3D[np.int64]: ...
+    @overload  # size=<3d>
+    def multivariate_hypergeometric(
+        self,
+        /,
+        colors: _ArrayLikeInt_co,
+        nsample: int,
+        size: tuple[int, int, int],
+        method: _MethodMVHG = "marginals",
+    ) -> _Array4D[np.int64]: ...
+    @overload  # size=<unknown>
+    def multivariate_hypergeometric(
+        self,
+        /,
+        colors: _ArrayLikeInt_co,
+        nsample: int,
+        size: _ShapeLike,
+        method: _MethodMVHG = "marginals",
     ) -> NDArray[np.int64]: ...
 
     ###
