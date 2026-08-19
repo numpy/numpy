@@ -686,6 +686,11 @@ string_slice_loop(PyArrayMethod_Context *context,
         npy_intp stop = *(npy_intp*)stop_ptr;
         npy_intp step = *(npy_intp*)step_ptr;
 
+        if (step == 0) {
+            npy_gil_error(PyExc_ValueError, "slice step cannot be zero");
+            return -1;
+        }
+
         // adjust slice to string length in codepoints
         // and handle negative indices
         size_t num_codepoints = inbuf.num_codepoints();

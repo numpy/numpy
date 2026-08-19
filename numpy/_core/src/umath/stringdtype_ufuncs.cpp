@@ -2263,6 +2263,11 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
         npy_intp stop = *(npy_intp *)stop_ptr;
         npy_intp step = *(npy_intp *)step_ptr;
 
+        if (step == 0) {
+            npy_gil_error(PyExc_ValueError, "slice step cannot be zero");
+            goto fail;
+        }
+
         npy_static_string is = {0, NULL};
         const npy_packed_static_string *ips = (npy_packed_static_string *)iptr;
         npy_static_string os = {0, NULL};
