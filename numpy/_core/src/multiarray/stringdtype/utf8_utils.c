@@ -295,7 +295,8 @@ find_start_end_locs(char* buf, size_t buffer_size, npy_int64 start_index, npy_in
         *end_loc = buf;
     }
     while (bytes_consumed < buffer_size && num_codepoints < (size_t) end_index) {
-        size_t num_bytes = num_bytes_for_utf8_character((const unsigned char*)buf);
+        size_t num_bytes = num_bytes_for_utf8_character_bounded(
+                (const unsigned char*)buf, buffer_size - bytes_consumed);
         num_codepoints += 1;
         bytes_consumed += num_bytes;
         buf += num_bytes;
@@ -318,7 +319,8 @@ utf8_character_index(
     size_t bytes_consumed = 0;
     size_t cur_index = start_index;
     while (bytes_consumed < buffer_size && bytes_consumed < search_byte_offset) {
-        size_t num_bytes = num_bytes_for_utf8_character((const unsigned char*)start_loc);
+        size_t num_bytes = num_bytes_for_utf8_character_bounded(
+                (const unsigned char*)start_loc, buffer_size - bytes_consumed);
         cur_index += 1;
         bytes_consumed += num_bytes;
         start_loc += num_bytes;

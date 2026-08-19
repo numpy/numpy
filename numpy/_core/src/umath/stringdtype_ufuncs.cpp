@@ -1762,9 +1762,12 @@ center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
 
             char *buf = NULL;
             char overflowed = 0;
+            // size the pad with the same encoded length buffer_memset writes
+            char fill_utf8[4];
+            npy_int64 fill_nbytes =
+                    (npy_int64)ucs4_code_to_utf8_char(*fill, fill_utf8);
             npy_int64 pad_nbytes = safe_mul(
-                    (npy_int64)num_bytes_for_utf8_character((unsigned char *)s2.buf),
-                    width - (npy_int64)num_codepoints, &overflowed);
+                    fill_nbytes, width - (npy_int64)num_codepoints, &overflowed);
             npy_int64 newsize = safe_add(pad_nbytes, (npy_int64)s1.size,
                                          &overflowed);
             // also bounds width: the fill is at least one byte per pad

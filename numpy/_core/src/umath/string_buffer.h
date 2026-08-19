@@ -323,8 +323,9 @@ struct Buffer {
             buf += rhs * sizeof(npy_ucs4);
             break;
         case ENCODING::UTF8:
-            for (int i=0; i<rhs; i++) {
-                buf += num_bytes_for_utf8_character((unsigned char *)buf);
+            for (npy_int64 i = 0; i < rhs && buf < after; i++) {
+                buf += num_bytes_for_utf8_character_bounded(
+                        (unsigned char *)buf, (size_t)(after - buf));
             }
             break;
         }
@@ -482,7 +483,8 @@ struct Buffer {
             case ENCODING::UTF32:
                 return 4;
             case ENCODING::UTF8:
-                return num_bytes_for_utf8_character((unsigned char *)(*this).buf);
+                return num_bytes_for_utf8_character_bounded(
+                        (unsigned char *)buf, (size_t)(after - buf));
         }
     }
 
@@ -724,8 +726,9 @@ operator+(Buffer<enc> lhs, npy_int64 rhs)
                           lhs.after - lhs.buf - rhs * sizeof(npy_ucs4));
         case ENCODING::UTF8:
             char* buf = lhs.buf;
-            for (int i=0; i<rhs; i++) {
-                buf += num_bytes_for_utf8_character((unsigned char *)buf);
+            for (npy_int64 i = 0; i < rhs && buf < lhs.after; i++) {
+                buf += num_bytes_for_utf8_character_bounded(
+                        (unsigned char *)buf, (size_t)(lhs.after - buf));
             }
             return Buffer<enc>(buf, (npy_int64)(lhs.after - buf));
     }
