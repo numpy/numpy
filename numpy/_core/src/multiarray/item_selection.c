@@ -2187,12 +2187,13 @@ binsearch_compare_default(const void *a, const void *b,
 
 /*
  * Promote `op1` and `op2` to a common descriptor and cast both to it.
- * `ap1_depth` is 0 for no limit and 1 for the one dimensional implementation
- * below.  On success both outputs hold new references to arrays sharing one
+ * `ap1_min_depth` and `ap1_max_depth` bound the accepted dimensionality of
+ * `op1`, 0 meaning no limit.  On success both outputs hold new references to arrays sharing one
  * descriptor instance.
  */
 static int
-searchsorted_cast_operands(PyArrayObject *op1, PyObject *op2, int ap1_depth,
+searchsorted_cast_operands(PyArrayObject *op1, PyObject *op2,
+                           int ap1_min_depth, int ap1_max_depth,
                            int ap1_flags, int ap2_flags,
                            PyArrayObject **ap1, PyArrayObject **ap2)
 {
@@ -2222,7 +2223,7 @@ searchsorted_cast_operands(PyArrayObject *op1, PyObject *op2, int ap1_depth,
         ap1_flags |= NPY_ARRAY_CARRAY_RO;
     }
     *ap1 = (PyArrayObject *)PyArray_CheckFromAny((PyObject *)op1, dtype,
-                                                 ap1_depth, ap1_depth,
+                                                 ap1_min_depth, ap1_max_depth,
                                                  ap1_flags, NULL);
     if (*ap1 == NULL) {
         Py_CLEAR(*ap2);
@@ -2305,7 +2306,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     PyArray_ArgBinSearchFunc *argbinsearch = NULL;
     NPY_BEGIN_THREADS_DEF;
 
-    if (searchsorted_cast_operands(op1, op2, 1, ap1_flags,
+    if (searchsorted_cast_operands(op1, op2, 1, 1, ap1_flags,
             NPY_ARRAY_CARRAY_RO | NPY_ARRAY_NOTSWAPPED, &ap1, &ap2) < 0) {
         return NULL;
     }
@@ -2492,6 +2493,12 @@ searchsorted_gufunc(PyArrayObject *op1, PyObject *op2,
         }
     }
 
+    if (sorter != NULL && PyArray_NDIM(a) == 1 && PyArray_NDIM(sorter) == 1
+            && PyArray_SIZE(sorter) != PyArray_SIZE(a)) {
+        PyErr_SetString(PyExc_ValueError, "sorter.size must equal a.size");
+        goto finish;
+    }
+
     /*
      * An operand that overrides ufuncs has to be handed to the gufunc
      * unchanged, casting it first would hide it.  An override that declines
@@ -2504,7 +2511,7 @@ searchsorted_gufunc(PyArrayObject *op1, PyObject *op2,
     }
     /* NPY_ARRAY_ENSUREARRAY keeps the result a base ndarray, as it has
      * always been for the functions returning indices. */
-    else if (searchsorted_cast_operands(a, op2, 0, NPY_ARRAY_ENSUREARRAY,
+    else if (searchsorted_cast_operands(a, op2, 1, 0, NPY_ARRAY_ENSUREARRAY,
                                         NPY_ARRAY_ENSUREARRAY,
                                         &ap1, &ap2) < 0) {
         goto finish;
@@ -2552,22 +2559,6 @@ NPY_NO_EXPORT PyObject *
 PyArray_SearchSorted_int(PyArrayObject *op1, PyObject *op2,
                          NPY_SEARCHSIDE side, PyObject *perm, int axis)
 {
-    /*
-     * Fast path for the calls the original 1-D implementation handled: it
-     * behaves identically and skips the gufunc invocation overhead, which
-     * roughly doubles the cost of a small search.  The gufunc is needed for
-     * everything new: more dimensions, a batched (>1-D) sorter, or an
-     * operand whose `__array_ufunc__` must be consulted.
-     */
-    if (PyArray_NDIM(op1) == 1
-            && (axis == -1 || axis == 0 || axis == NPY_RAVEL_AXIS)
-            && (perm == NULL || !PyArray_Check(perm)
-                || PyArray_NDIM((PyArrayObject *)perm) <= 1)
-            && !PyUFunc_HasOverride((PyObject *)op1)
-            && !PyUFunc_HasOverride(op2)) {
-        return PyArray_SearchSorted(op1, op2, side, perm);
-    }
-
     PyObject *ret = searchsorted_gufunc(op1, op2, side, perm, axis);
     if (ret != NULL) {
         return ret;
