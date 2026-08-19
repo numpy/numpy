@@ -1161,7 +1161,16 @@ class Generator:
     # multivariate
 
     #
-    def dirichlet(self, /, alpha: _ArrayLikeFloat_co, size: _ShapeLike | None = None) -> _ArrayF64: ...
+    @overload  # size=None (default)
+    def dirichlet(self, /, alpha: _ArrayLikeFloat_co, size: None = None) -> _Array1D[np.float64]: ...
+    @overload  # size=<1d>
+    def dirichlet(self, /, alpha: _ArrayLikeFloat_co, size: int | tuple[int]) -> _Array2D[np.float64]: ...
+    @overload  # size=<2d>
+    def dirichlet(self, /, alpha: _ArrayLikeFloat_co, size: tuple[int, int]) -> _Array3D[np.float64]: ...
+    @overload  # size=<3d>
+    def dirichlet(self, /, alpha: _ArrayLikeFloat_co, size: tuple[int, int, int]) -> _Array4D[np.float64]: ...
+    @overload  # size=<unknown>
+    def dirichlet(self, /, alpha: _ArrayLikeFloat_co, size: _ShapeLike) -> NDArray[np.float64]: ...
 
     #
     @overload  # size=None (default)
@@ -1223,7 +1232,7 @@ class Generator:
         tol: float = 1e-8,
         *,
         method: _MethodMVN = "svd",
-    ) -> _ArrayF64: ...
+    ) -> NDArray[np.float64]: ...
 
     #
     def multinomial(
