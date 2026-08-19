@@ -210,8 +210,9 @@ utf8_decode(uint32_t* state, uint32_t* codep, uint32_t byte) {
 
 /*******************************************************************************/
 
-// calculate the size in bytes required to store a UTF-8 encoded version of the
-// UTF-32 encoded string stored in **s**, which is **max_bytes** long.
+// calculate the number of bytes, excluding trailing null bytes, needed to
+// store the UTF-8 encoded buffer **s**, which is **max_bytes** long. Returns
+// -1 if **s** is not valid, complete UTF-8.
 NPY_NO_EXPORT Py_ssize_t
 utf8_buffer_size(const uint8_t *s, size_t max_bytes)
 {
