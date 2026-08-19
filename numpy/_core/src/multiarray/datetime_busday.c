@@ -1047,7 +1047,7 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
     Py_DECREF(dates);
     Py_DECREF(offsets);
     if (allocated_holidays && holidays.begin != NULL) {
-        PyArray_free(holidays.begin);
+        PyMem_RawFree(holidays.begin);
     }
 
     return out == NULL ? PyArray_Return(ret) : (PyObject *)ret;
@@ -1056,7 +1056,7 @@ fail:
     Py_XDECREF(dates);
     Py_XDECREF(offsets);
     if (allocated_holidays && holidays.begin != NULL) {
-        PyArray_free(holidays.begin);
+        PyMem_RawFree(holidays.begin);
     }
 
     return NULL;
@@ -1192,7 +1192,7 @@ array_busday_count(PyObject *NPY_UNUSED(self),
     Py_DECREF(dates_begin);
     Py_DECREF(dates_end);
     if (allocated_holidays && holidays.begin != NULL) {
-        PyArray_free(holidays.begin);
+        PyMem_RawFree(holidays.begin);
     }
 
     return out == NULL ? PyArray_Return(ret) : (PyObject *)ret;
@@ -1201,7 +1201,7 @@ fail:
     Py_XDECREF(dates_begin);
     Py_XDECREF(dates_end);
     if (allocated_holidays && holidays.begin != NULL) {
-        PyArray_free(holidays.begin);
+        PyMem_RawFree(holidays.begin);
     }
 
     return NULL;
@@ -1311,7 +1311,7 @@ array_is_busday(PyObject *NPY_UNUSED(self),
 
     Py_DECREF(dates);
     if (allocated_holidays && holidays.begin != NULL) {
-        PyArray_free(holidays.begin);
+        PyMem_RawFree(holidays.begin);
     }
 
     return out == NULL ? PyArray_Return(ret) : (PyObject *)ret;
@@ -1319,7 +1319,7 @@ array_is_busday(PyObject *NPY_UNUSED(self),
 fail:
     Py_XDECREF(dates);
     if (allocated_holidays && holidays.begin != NULL) {
-        PyArray_free(holidays.begin);
+        PyMem_RawFree(holidays.begin);
     }
 
     return NULL;
