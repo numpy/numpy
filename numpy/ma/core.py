@@ -1064,8 +1064,10 @@ class _MaskedBinaryOperation(_MaskedUFunc):
         Execute the call behavior.
 
         """
-        # Get the data, as ndarray
-        (da, db) = (getdata(a), getdata(b))
+        # Get the data, as ndarray. Python scalars are passed through
+        # unchanged so that ufuncs see them as weak types under NEP 50
+        da = a if isinstance(a, (int, float, complex)) else getdata(a)
+        db = b if isinstance(b, (int, float, complex)) else getdata(b)
         # Get the result
         with np.errstate():
             np.seterr(divide='ignore', invalid='ignore')
@@ -7203,9 +7205,9 @@ def power(a, b, third=None):
     ma = getmask(a)
     mb = getmask(b)
     m = mask_or(ma, mb)
-    # Get the rawdata
-    fa = getdata(a)
-    fb = getdata(b)
+    # Get the rawdata, preserving Python scalars for NEP 50 (gh-31868)
+    fa = a if isinstance(a, (int, float, complex)) else getdata(a)
+    fb = b if isinstance(b, (int, float, complex)) else getdata(b)
     # Get the type of the result (so that we preserve subclasses)
     if isinstance(a, MaskedArray):
         basetype = type(a)
