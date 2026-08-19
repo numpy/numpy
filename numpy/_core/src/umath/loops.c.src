@@ -642,6 +642,165 @@ LONGLONG_qQ_bool_@kind@(char **args, npy_intp const *dimensions, npy_intp const 
 
 
 /*
+ * Mixed integer/floating-point comparisons cannot use normal promotion when
+ * the floating-point dtype cannot represent every value of the integer dtype.
+ * Compare without ever converting the integer to floating point instead.
+ */
+typedef enum {
+    NPY_INT_FLOAT_CMP_LESS = -1,
+    NPY_INT_FLOAT_CMP_EQUAL = 0,
+    NPY_INT_FLOAT_CMP_GREATER = 1,
+    NPY_INT_FLOAT_CMP_UNORDERED = 2,
+} npy_int_float_cmp;
+
+#define NPY_INT_FLOAT_CMP_equal(cmp) \
+    ((cmp) == NPY_INT_FLOAT_CMP_EQUAL)
+#define NPY_INT_FLOAT_CMP_not_equal(cmp) \
+    ((cmp) != NPY_INT_FLOAT_CMP_EQUAL)
+#define NPY_INT_FLOAT_CMP_less(cmp) \
+    ((cmp) == NPY_INT_FLOAT_CMP_LESS)
+#define NPY_INT_FLOAT_CMP_less_equal(cmp) \
+    ((cmp) == NPY_INT_FLOAT_CMP_LESS || \
+     (cmp) == NPY_INT_FLOAT_CMP_EQUAL)
+#define NPY_INT_FLOAT_CMP_greater(cmp) \
+    ((cmp) == NPY_INT_FLOAT_CMP_GREATER)
+#define NPY_INT_FLOAT_CMP_greater_equal(cmp) \
+    ((cmp) == NPY_INT_FLOAT_CMP_GREATER || \
+     (cmp) == NPY_INT_FLOAT_CMP_EQUAL)
+
+static inline npy_int_float_cmp
+npy_reverse_int_float_compare(npy_int_float_cmp cmp)
+{
+    if (cmp == NPY_INT_FLOAT_CMP_UNORDERED) {
+        return cmp;
+    }
+    return (npy_int_float_cmp)-cmp;
+}
+
+/**begin repeat
+ * #ftype = npy_double, npy_longdouble#
+ * #fchar = d, g#
+ * #c = , l#
+ */
+static inline npy_int_float_cmp
+npy_longlong_@fchar@_compare(npy_longlong integer, @ftype@ floating)
+{
+    if (npy_isnan(floating)) {
+        return NPY_INT_FLOAT_CMP_UNORDERED;
+    }
+    if (floating < -(@ftype@)0x1p63) {
+        return NPY_INT_FLOAT_CMP_GREATER;
+    }
+    if (floating >= (@ftype@)0x1p63) {
+        return NPY_INT_FLOAT_CMP_LESS;
+    }
+
+    npy_longlong truncated = (npy_longlong)floating;
+    if (integer < truncated) {
+        return NPY_INT_FLOAT_CMP_LESS;
+    }
+    if (integer > truncated) {
+        return NPY_INT_FLOAT_CMP_GREATER;
+    }
+    if (floating == npy_trunc@c@(floating)) {
+        return NPY_INT_FLOAT_CMP_EQUAL;
+    }
+    return floating < 0
+            ? NPY_INT_FLOAT_CMP_GREATER : NPY_INT_FLOAT_CMP_LESS;
+}
+
+static inline npy_int_float_cmp
+npy_ulonglong_@fchar@_compare(npy_ulonglong integer, @ftype@ floating)
+{
+    if (npy_isnan(floating)) {
+        return NPY_INT_FLOAT_CMP_UNORDERED;
+    }
+    if (floating < 0) {
+        return NPY_INT_FLOAT_CMP_GREATER;
+    }
+    if (floating >= (@ftype@)0x1p64) {
+        return NPY_INT_FLOAT_CMP_LESS;
+    }
+
+    npy_ulonglong truncated = (npy_ulonglong)floating;
+    if (integer < truncated) {
+        return NPY_INT_FLOAT_CMP_LESS;
+    }
+    if (integer > truncated) {
+        return NPY_INT_FLOAT_CMP_GREATER;
+    }
+    if (floating == npy_trunc@c@(floating)) {
+        return NPY_INT_FLOAT_CMP_EQUAL;
+    }
+    return NPY_INT_FLOAT_CMP_LESS;
+}
+
+/**begin repeat1
+ * #kind = equal, not_equal, less, less_equal, greater, greater_equal#
+ */
+NPY_NO_EXPORT void
+LONGLONG_q@fchar@_bool_@kind@(char **args, npy_intp const *dimensions,
+        npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const npy_longlong integer = *(npy_longlong *)ip1;
+        const @ftype@ floating = *(@ftype@ *)ip2;
+        npy_int_float_cmp cmp =
+                npy_longlong_@fchar@_compare(integer, floating);
+        *(npy_bool *)op1 = NPY_INT_FLOAT_CMP_@kind@(cmp);
+    }
+}
+
+NPY_NO_EXPORT void
+LONGLONG_Q@fchar@_bool_@kind@(char **args, npy_intp const *dimensions,
+        npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const npy_ulonglong integer = *(npy_ulonglong *)ip1;
+        const @ftype@ floating = *(@ftype@ *)ip2;
+        npy_int_float_cmp cmp =
+                npy_ulonglong_@fchar@_compare(integer, floating);
+        *(npy_bool *)op1 = NPY_INT_FLOAT_CMP_@kind@(cmp);
+    }
+}
+
+NPY_NO_EXPORT void
+LONGLONG_@fchar@q_bool_@kind@(char **args, npy_intp const *dimensions,
+        npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @ftype@ floating = *(@ftype@ *)ip1;
+        const npy_longlong integer = *(npy_longlong *)ip2;
+        npy_int_float_cmp cmp = npy_reverse_int_float_compare(
+                npy_longlong_@fchar@_compare(integer, floating));
+        *(npy_bool *)op1 = NPY_INT_FLOAT_CMP_@kind@(cmp);
+    }
+}
+
+NPY_NO_EXPORT void
+LONGLONG_@fchar@Q_bool_@kind@(char **args, npy_intp const *dimensions,
+        npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @ftype@ floating = *(@ftype@ *)ip1;
+        const npy_ulonglong integer = *(npy_ulonglong *)ip2;
+        npy_int_float_cmp cmp = npy_reverse_int_float_compare(
+                npy_ulonglong_@fchar@_compare(integer, floating));
+        *(npy_bool *)op1 = NPY_INT_FLOAT_CMP_@kind@(cmp);
+    }
+}
+/**end repeat1**/
+/**end repeat**/
+
+#undef NPY_INT_FLOAT_CMP_equal
+#undef NPY_INT_FLOAT_CMP_not_equal
+#undef NPY_INT_FLOAT_CMP_less
+#undef NPY_INT_FLOAT_CMP_less_equal
+#undef NPY_INT_FLOAT_CMP_greater
+#undef NPY_INT_FLOAT_CMP_greater_equal
+
+
+/*
  *****************************************************************************
  **                           DATETIME LOOPS                                **
  *****************************************************************************
