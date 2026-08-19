@@ -1,0 +1,8 @@
+``np.einsum`` no longer raises ``TypeError`` on non-numeric object reductions
+------------------------------------------------------------------------------
+Previously, `numpy.einsum` initialised its reduction accumulator to the
+integer ``0`` regardless of dtype. For object arrays containing values that
+are not addable to ``int`` (e.g. ``str``, ``list``, or custom objects), this
+raised a ``TypeError`` even though the equivalent `numpy.tensordot` call on
+the same inputs succeeded. ``einsum`` now uses each dtype's own additive
+identity for object-dtype reductions, matching ``tensordot``.
