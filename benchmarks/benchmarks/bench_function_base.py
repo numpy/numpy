@@ -134,6 +134,21 @@ class Select(Benchmark):
         np.select(self.cond_large, ([self.d, self.e] * 10))
 
 
+class Delete(Benchmark):
+    params = [
+        [(1000,), (100, 100)],
+        [None, 0],
+    ]
+    param_names = ["shape", "axis"]
+
+    def setup(self, shape, axis):
+        self.arr = np.arange(np.prod(shape)).reshape(shape)
+        self.empty_indices = []
+
+    def time_empty_indices(self, shape, axis):
+        np.delete(self.arr, self.empty_indices, axis=axis)
+
+
 def memoize(f):
     _memoized = {}
 
