@@ -1591,6 +1591,16 @@ def test_multiply_two_string_raises():
         np.multiply(arr, arr)
 
 
+def test_multiply_nonpositive_factor_or_empty():
+    # a non-positive factor or an empty input yields an empty string
+    dt = StringDType()
+    for factor in (0, -1, -100):
+        assert (np.array(["ab", ""], dtype=dt) * factor).tolist() == ["", ""]
+    assert (np.array([""], dtype=dt) * np.uint64(2**63)).tolist() == [""]
+    with pytest.raises(OverflowError):
+        np.array(["ab"], dtype=dt) * np.uint64(2**63)
+
+
 @pytest.mark.parametrize("use_out", [True, False])
 @pytest.mark.parametrize("other", [2, [2, 1, 3, 4, 1, 3]])
 @pytest.mark.parametrize(

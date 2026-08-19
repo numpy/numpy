@@ -135,6 +135,11 @@ static int multiply_loop_core(
         }
         T factor = *(T *)iin;
         size_t cursize = is.size;
+        // the overflow check below passes for an empty input regardless of
+        // factor, but the copy loop still runs factor times
+        if (factor < 1 || cursize == 0) {
+            factor = 0;
+        }
         size_t newsize;
         int overflowed = npy_mul_with_overflow_size_t(
                 &newsize, cursize, factor);
