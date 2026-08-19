@@ -210,46 +210,6 @@ utf8_decode(uint32_t* state, uint32_t* codep, uint32_t byte) {
 
 /*******************************************************************************/
 
-// calculate the size in bytes required to store a UTF-8 encoded version of the
-// UTF-32 encoded string stored in **s**, which is **max_bytes** long.
-NPY_NO_EXPORT Py_ssize_t
-utf8_buffer_size(const uint8_t *s, size_t max_bytes)
-{
-    uint32_t codepoint;
-    uint32_t state = 0;
-    size_t num_bytes = 0;
-    Py_ssize_t encoded_size_in_bytes = 0;
-
-    // ignore trailing nulls
-    while (max_bytes > 0 && s[max_bytes - 1] == 0) {
-        max_bytes--;
-    }
-
-    if (max_bytes == 0) {
-        return 0;
-    }
-
-    for (; num_bytes < max_bytes; ++s)
-    {
-        utf8_decode(&state, &codepoint, *s);
-        if (state == UTF8_REJECT)
-        {
-            return -1;
-        }
-        else if(state == UTF8_ACCEPT)
-        {
-            encoded_size_in_bytes += num_utf8_bytes_for_codepoint(codepoint);
-        }
-        num_bytes += 1;
-    }
-
-    if (state != UTF8_ACCEPT) {
-        return -1;
-    }
-    return encoded_size_in_bytes;
-}
-
-
 // calculate the number of UTF-32 code points in the UTF-8 encoded string
 // stored in **s**, which is **max_bytes** long. Unlike the fixed-width
 // conversion helpers above, this is length-explicit and does not trim trailing

@@ -314,7 +314,7 @@ fail:
 }
 
 static PyType_Slot u2s_slots[] = {{NPY_METH_resolve_descriptors,
-                                   (void *)&any_to_string_resolve_descriptors<NPY_SAME_KIND_CASTING>},
+                                   (void *)&any_to_string_resolve_descriptors<NPY_SAFE_CASTING>},
                                   {NPY_METH_strided_loop, (void *)&unicode_to_string},
                                   {0, NULL}};
 
@@ -1858,19 +1858,18 @@ static PyType_Slot s2v_slots[] = {
     {0, NULL}
 };
 
-// void to string
-
+// void to string and bytes to string
 static int
-void_to_string(PyArrayMethod_Context *context, char *const data[],
-               npy_intp const dimensions[], npy_intp const strides[],
-               NpyAuxData *NPY_UNUSED(auxdata))
+fixed_width_bytes_to_string(PyArrayMethod_Context *context, char *const data[],
+                            npy_intp const dimensions[], npy_intp const strides[],
+                            NpyAuxData *NPY_UNUSED(auxdata))
 {
     PyArray_Descr *const *descrs = context->descriptors;
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)descrs[1];
+    const char *context_name = descrs[0]->type_num == NPY_VOID ?
+            "void to string cast" : "bytes to string cast";
 
-    npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
-
-    long max_in_size = descrs[0]->elsize;
+    size_t max_in_size = descrs[0]->elsize;
 
     npy_intp N = dimensions[0];
     unsigned char *in = (unsigned char *)data[0];
@@ -1879,41 +1878,66 @@ void_to_string(PyArrayMethod_Context *context, char *const data[],
     npy_intp in_stride = strides[0];
     npy_intp out_stride = strides[1];
 
-    while(N--) {
-        Py_ssize_t out_num_bytes = utf8_buffer_size(in, max_in_size);
-        if (out_num_bytes < 0) {
-            npy_gil_error(PyExc_TypeError,
-                          "Invalid UTF-8 bytes found, cannot convert to UTF-8");
-            goto fail;
+    np::raii::NpyStringAcquireAllocator alloc(descr);
+
+    while (N--) {
+        size_t out_num_bytes = max_in_size;
+
+        // ignore trailing nulls
+        while (out_num_bytes > 0 && in[out_num_bytes - 1] == 0) {
+            out_num_bytes--;
         }
+
+        size_t num_codepoints = 0;
+        if (num_codepoints_for_utf8_bytes(in, &num_codepoints,
+                                          out_num_bytes) != 0) {
+            // Building the UnicodeDecodeError needs the GIL but we have to copy
+            // the bytes before releasing the allocator and acquiring the GIL
+            char *bad = (char *)PyMem_RawMalloc(out_num_bytes);
+            if (bad == NULL) {
+                alloc.release();
+                npy_gil_error(PyExc_MemoryError,
+                              "Failed to allocate memory for unicode "
+                              "decoding error");
+                return -1;
+            }
+            memcpy(bad, in, out_num_bytes);
+            size_t bad_size = out_num_bytes;
+            alloc.release();
+
+            np::raii::EnsureGIL ensure_gil{};
+
+            // decode only to construct a UnicodeDecodeError with positional information
+            PyObject *decoded = PyUnicode_Decode(bad, bad_size, "utf-8",
+                                                 "strict");
+            PyMem_RawFree(bad);
+            if (decoded != NULL) {
+                Py_DECREF(decoded);
+                PyErr_Format(PyExc_TypeError,
+                             "Invalid UTF-8 bytes found in %s", context_name);
+            }
+            return -1;
+        }
+
         npy_static_string out_ss = {0, NULL};
         if (load_new_string((npy_packed_static_string *)out,
-                            &out_ss, (size_t)out_num_bytes, allocator,
-                            "void to string cast") == -1) {
-            goto fail;
+                            &out_ss, out_num_bytes, alloc.allocator(),
+                            context_name) == -1) {
+            return -1;
         }
         // ignores const to fill in the buffer
-        char *out_buf = (char *)out_ss.buf;
-        memcpy(out_buf, in, out_num_bytes);
+        memcpy((char *)out_ss.buf, in, out_num_bytes);
 
         in += in_stride;
         out += out_stride;
     }
 
-    NpyString_release_allocator(allocator);
-
     return 0;
-
-fail:
-
-    NpyString_release_allocator(allocator);
-
-    return -1;
 }
 
 static PyType_Slot v2s_slots[] = {
     {NPY_METH_resolve_descriptors, (void *)&any_to_string_resolve_descriptors<NPY_SAME_KIND_CASTING>},
-    {NPY_METH_strided_loop, (void *)&void_to_string},
+    {NPY_METH_strided_loop, (void *)&fixed_width_bytes_to_string},
     {0, NULL}
 };
 
@@ -2020,63 +2044,9 @@ static PyType_Slot s2bytes_slots[] = {
 
 // bytes to string
 
-static int
-bytes_to_string(PyArrayMethod_Context *context, char *const data[],
-                npy_intp const dimensions[], npy_intp const strides[],
-                NpyAuxData *NPY_UNUSED(auxdata))
-{
-    PyArray_Descr *const *descrs = context->descriptors;
-    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)descrs[1];
-
-    npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
-
-    size_t max_in_size = descrs[0]->elsize;
-
-    npy_intp N = dimensions[0];
-    unsigned char *in = (unsigned char *)data[0];
-    char *out = data[1];
-
-    npy_intp in_stride = strides[0];
-    npy_intp out_stride = strides[1];
-
-    while(N--) {
-        size_t out_num_bytes = max_in_size;
-
-        // ignore trailing nulls
-        while (out_num_bytes > 0 && in[out_num_bytes - 1] == 0) {
-            out_num_bytes--;
-        }
-
-        npy_static_string out_ss = {0, NULL};
-        if (load_new_string((npy_packed_static_string *)out,
-                            &out_ss, out_num_bytes, allocator,
-                            "void to string cast") == -1) {
-            goto fail;
-        }
-
-        // ignores const to fill in the buffer
-        char *out_buf = (char *)out_ss.buf;
-        memcpy(out_buf, in, out_num_bytes);
-
-        in += in_stride;
-        out += out_stride;
-    }
-
-    NpyString_release_allocator(allocator);
-
-    return 0;
-
-fail:
-
-    NpyString_release_allocator(allocator);
-
-    return -1;
-}
-
-
 static PyType_Slot bytes2s_slots[] = {
-    {NPY_METH_resolve_descriptors, (void *)&any_to_string_resolve_descriptors<NPY_SAME_KIND_CASTING>},
-    {NPY_METH_strided_loop, (void *)&bytes_to_string},
+    {NPY_METH_resolve_descriptors, (void *)&any_to_string_resolve_descriptors<NPY_SAFE_CASTING>},
+    {NPY_METH_strided_loop, (void *)&fixed_width_bytes_to_string},
     {0, NULL}
 };
 
@@ -2167,7 +2137,7 @@ get_casts() {
 
     PyArrayMethod_Spec *UnicodeToStringCastSpec = get_cast_spec(
         make_type2s_name(NPY_UNICODE),
-        NPY_SAME_KIND_CASTING,
+        NPY_SAFE_CASTING,
         NPY_METH_NO_FLOATINGPOINT_ERRORS,
         u2s_dtypes,
         u2s_slots
@@ -2288,7 +2258,7 @@ get_casts() {
 
     PyArrayMethod_Spec *BytesToStringCastSpec = get_cast_spec(
         make_type2s_name(NPY_BYTE),
-        NPY_SAME_KIND_CASTING,
+        NPY_SAFE_CASTING,
         NPY_METH_NO_FLOATINGPOINT_ERRORS,
         bytes2s_dtypes,
         bytes2s_slots
