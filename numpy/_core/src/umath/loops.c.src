@@ -1759,6 +1759,7 @@ HALF_nextafter(char **args, npy_intp const *dimensions, npy_intp const *steps, v
 /**begin repeat
  * #kind = maximum, minimum#
  * #OP =  npy_half_ge, npy_half_le#
+ * #ZERO_OP = &, |#
  **/
 NPY_NO_EXPORT void
 HALF_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
@@ -1767,7 +1768,17 @@ HALF_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
     BINARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
         const npy_half in2 = *(npy_half *)ip2;
-        *((npy_half *)op1) = (@OP@(in1, in2) || npy_half_isnan(in1)) ? in1 : in2;
+        if (npy_half_iszero(in1) && npy_half_iszero(in2)) {
+            /* +0 and -0 compare equal, so @OP@ returns whichever came
+             * first. Pick the sign instead: the only bit set in a half zero
+             * is the sign bit, so & keeps it clear for the maximum and |
+             * keeps it set for the minimum.
+             */
+            *((npy_half *)op1) = in1 @ZERO_OP@ in2;
+        }
+        else {
+            *((npy_half *)op1) = (@OP@(in1, in2) || npy_half_isnan(in1)) ? in1 : in2;
+        }
     }
     /* npy_half_isnan will never set floatstatus_invalid, so do not clear */
 }
@@ -1792,7 +1803,12 @@ HALF_@kind@_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
         }
         indexed = (npy_half *)(ip1 + is1 * indx);
         npy_half v = *(npy_half *)value;
-        *indexed = (@OP@(*indexed, v) || npy_half_isnan(*indexed)) ? *indexed : v;
+        if (npy_half_iszero(*indexed) && npy_half_iszero(v)) {
+            *indexed = *indexed @ZERO_OP@ v;
+        }
+        else {
+            *indexed = (@OP@(*indexed, v) || npy_half_isnan(*indexed)) ? *indexed : v;
+        }
     }
     return 0;
 }

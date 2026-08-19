@@ -45,6 +45,7 @@
 /**begin repeat1
  * #op = max, min#
  * #neon_instr = fmax, fmin#
+ * #bit_op = and, or#
  */
 #ifdef NPY_HAVE_SSE2
 #undef scalar_@op@_@c_sfx@
@@ -58,6 +59,17 @@ NPY_FINLINE @type@ scalar_@op@_@c_sfx@(@type@ a, @type@ b) {
     rv = _mm_blendv_p@isa_sfx@(va, rv, nn);
     #else
     rv = _mm_xor_p@isa_sfx@(va, _mm_and_p@isa_sfx@(_mm_xor_p@isa_sfx@(va, rv), nn));
+    #endif
+    // MAXSS/MINSS returned the second operand, so +0.0 and -0.0 came out in
+    // argument order. Fold in the sign FMAX/FMIN give: AND for the maximum, OR
+    // for the minimum, but only where the operands are equal. NaN compares
+    // not-equal and so is left to the propagation above.
+    @sse_type@ ez = _mm_cmpeq_s@isa_sfx@(va, vb);
+    @sse_type@ sz = _mm_@bit_op@_p@isa_sfx@(va, vb);
+    #ifdef NPY_HAVE_SSE41
+    rv = _mm_blendv_p@isa_sfx@(rv, sz, ez);
+    #else
+    rv = _mm_xor_p@isa_sfx@(rv, _mm_and_p@isa_sfx@(_mm_xor_p@isa_sfx@(rv, sz), ez));
     #endif
     return _mm_cvts@isa_sfx@_@sfx@(rv);
 }

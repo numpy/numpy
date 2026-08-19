@@ -2816,6 +2816,94 @@ class TestFmin(_FilterInvalids):
                 assert_equal(np.fmin.reduce([v1, v2]), expected)
 
 
+class TestMinMaxSignedZero:
+    # maximum and minimum of +0.0 and -0.0 used to give a zero whose sign
+    # depended on the dtype, the argument order and the CPU.
+    #
+    #   - float16 has no vector kernel, so it always took the scalar C path,
+    #     which picked the result with npy_half_ge / npy_half_le. Those compare
+    #     +0.0 and -0.0 as equal and so returned whichever argument came first.
+    #     Wrong on every platform.
+    #   - float32 and float64 replace their scalar op and their SIMD kernel with
+    #     a CPU instruction. aarch64 uses FMIN/FMAX, which give the maximum the
+    #     clear sign bit and the minimum the set one, so it was already right.
+    #     x86 uses MINSS/MAXSS and the matching MINPS/MAXPS, which return the
+    #     second operand, so the sign followed argument order there.
+    #
+    # So the result of maximum([0.0], [-0.0]) disagreed with maximum([-0.0],
+    # [0.0]), with the same call in another dtype, and with the same call on
+    # another machine. Because these reductions are reorderable, that also made
+    # minimum.reduce order dependent. The fix makes all three of float16,
+    # float32 and float64 return the IEEE 754 sign on every platform.
+    #
+    # longdouble is left out: on x86 it is the 80-bit x87 type and takes the
+    # sign-blind C macro, which is a separate change. fmin and fmax are left out
+    # too: C does not specify their sign for equal zeros, so they are a weaker
+    # claim than the reorderable min/max above.
+    dtypes = [np.float16, np.float32, np.float64]
+    ops = [(np.minimum, True), (np.maximum, False)]
+
+    @pytest.mark.parametrize("dt", dtypes)
+    @pytest.mark.parametrize("op,negative", ops)
+    def test_both_argument_orders(self, dt, op, negative):
+        for a, b in [(0.0, -0.0), (-0.0, 0.0)]:
+            got = op(np.array([a], dt), np.array([b], dt))
+            assert_equal(np.signbit(got), [negative],
+                         err_msg=f"{op.__name__}({a}, {b}) in {np.dtype(dt)}")
+
+    def test_min_and_max_do_not_return_the_same_zero(self):
+        # The order-independent statement of the bug: on x86 both maximum and
+        # minimum of +0.0 and -0.0 returned -0.0, and they cannot both be right
+        # whatever one thinks IEEE 754 requires.
+        for dt in self.dtypes:
+            z, n = np.array([0.0], dt), np.array([-0.0], dt)
+            assert not np.signbit(np.maximum(z, n))[0], np.dtype(dt)
+            assert np.signbit(np.minimum(z, n))[0], np.dtype(dt)
+
+    @pytest.mark.parametrize("dt", dtypes)
+    @pytest.mark.parametrize("op,negative", ops)
+    def test_reduce_does_not_depend_on_order(self, dt, op, negative):
+        # minimum and maximum are reorderable reductions, so an element order
+        # must not change the sign of a zero result.
+        for values in [[0.0, -0.0], [-0.0, 0.0]]:
+            got = op.reduce(np.array(values, dt))
+            assert_equal(np.signbit(got), negative,
+                         err_msg=f"{op.__name__}.reduce({values}) in "
+                                 f"{np.dtype(dt)}")
+
+    @pytest.mark.parametrize("dt", dtypes)
+    @pytest.mark.parametrize("op,negative", ops)
+    def test_longer_than_a_vector_register(self, dt, op, negative):
+        # The scalar path, the SIMD kernel and the SIMD tail are different code.
+        # Cover a length past a vector register and a couple that straddle one.
+        for n in [1, 3, 7, 8, 16, 33, 128, 1000]:
+            for a, b in [(0.0, -0.0), (-0.0, 0.0)]:
+                got = op(np.full(n, a, dt), np.full(n, b, dt))
+                assert_equal(np.signbit(got), np.full(n, negative),
+                             err_msg=f"{op.__name__} n={n} in {np.dtype(dt)}")
+
+    @pytest.mark.parametrize("dt", dtypes)
+    @pytest.mark.parametrize("op,negative", ops)
+    def test_at(self, dt, op, negative):
+        for a, b in [(0.0, -0.0), (-0.0, 0.0)]:
+            arr = np.array([a], dt)
+            op.at(arr, [0], np.array([b], dt))
+            assert_equal(np.signbit(arr), [negative],
+                         err_msg=f"{op.__name__}.at({a}, {b}) in {np.dtype(dt)}")
+
+    @pytest.mark.parametrize("op,negative", ops)
+    def test_float16_matches_float32_everywhere(self, op, negative):
+        # A guard that the zero handling did not disturb any other input.
+        # Compared as bit patterns so that a wrong zero sign is not hidden.
+        rng = np.random.default_rng(0)
+        bits = rng.integers(0, 1 << 16, size=(2, 5000), dtype=np.uint16)
+        a, b = bits[0].view(np.float16), bits[1].view(np.float16)
+        with np.errstate(invalid='ignore'):
+            got = op(a, b).astype(np.float32)
+            want = op(a.astype(np.float32), b.astype(np.float32))
+        assert_array_equal(got.view(np.uint32), want.view(np.uint32))
+
+
 class TestBool:
     def test_exceptions(self):
         a = np.ones(1, dtype=np.bool)

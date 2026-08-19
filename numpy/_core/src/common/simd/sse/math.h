@@ -37,6 +37,27 @@ NPY_FINLINE npyv_f32 npyv_square_f32(npyv_f32 a)
 NPY_FINLINE npyv_f64 npyv_square_f64(npyv_f64 a)
 { return _mm_mul_pd(a, a); }
 
+// MAXPS/MINPS return the second operand when the two are equal, so +0.0 and
+// -0.0 come out of a max or min depending on argument order. aarch64's
+// FMAX/FMIN instead give the maximum a clear sign bit and the minimum a set
+// one, so np.maximum/np.minimum disagree with themselves across architectures
+// and, because those reductions may be reordered, across argument order too.
+// These fold the aarch64 sign back in: where the operands are equal the maximum
+// is their bitwise AND (a set sign bit survives only if both have it) and the
+// minimum their bitwise OR (it survives if either does). Equal operands that
+// are not zeros share a bit pattern, so AND and OR both return it and nothing
+// changes; unequal operands compare not-equal and keep the intrinsic result.
+// So only the +0.0/-0.0 case is touched. Used by the NaN-propagating maxn/minn
+// that back np.maximum/np.minimum; fmax/fmin are left as they were.
+NPY_FINLINE npyv_f32 npyv__signed_zero_max_f32(npyv_f32 res, npyv_f32 a, npyv_f32 b)
+{ return npyv_select_f32(_mm_castps_si128(_mm_cmpeq_ps(a, b)), _mm_and_ps(a, b), res); }
+NPY_FINLINE npyv_f64 npyv__signed_zero_max_f64(npyv_f64 res, npyv_f64 a, npyv_f64 b)
+{ return npyv_select_f64(_mm_castpd_si128(_mm_cmpeq_pd(a, b)), _mm_and_pd(a, b), res); }
+NPY_FINLINE npyv_f32 npyv__signed_zero_min_f32(npyv_f32 res, npyv_f32 a, npyv_f32 b)
+{ return npyv_select_f32(_mm_castps_si128(_mm_cmpeq_ps(a, b)), _mm_or_ps(a, b), res); }
+NPY_FINLINE npyv_f64 npyv__signed_zero_min_f64(npyv_f64 res, npyv_f64 a, npyv_f64 b)
+{ return npyv_select_f64(_mm_castpd_si128(_mm_cmpeq_pd(a, b)), _mm_or_pd(a, b), res); }
+
 // Maximum, natively mapping with no guarantees to handle NaN.
 #define npyv_max_f32 _mm_max_ps
 #define npyv_max_f64 _mm_max_pd
@@ -58,13 +79,13 @@ NPY_FINLINE npyv_f64 npyv_maxp_f64(npyv_f64 a, npyv_f64 b)
 NPY_FINLINE npyv_f32 npyv_maxn_f32(npyv_f32 a, npyv_f32 b)
 {
     __m128i nn = npyv_notnan_f32(a);
-    __m128 max = _mm_max_ps(a, b);
+    __m128 max = npyv__signed_zero_max_f32(_mm_max_ps(a, b), a, b);
     return npyv_select_f32(nn, max, a);
 }
 NPY_FINLINE npyv_f64 npyv_maxn_f64(npyv_f64 a, npyv_f64 b)
 {
     __m128i nn  = npyv_notnan_f64(a);
-    __m128d max = _mm_max_pd(a, b);
+    __m128d max = npyv__signed_zero_max_f64(_mm_max_pd(a, b), a, b);
     return npyv_select_f64(nn, max, a);
 }
 // Maximum, integer operations
@@ -123,13 +144,13 @@ NPY_FINLINE npyv_f64 npyv_minp_f64(npyv_f64 a, npyv_f64 b)
 NPY_FINLINE npyv_f32 npyv_minn_f32(npyv_f32 a, npyv_f32 b)
 {
     __m128i nn = npyv_notnan_f32(a);
-    __m128 min = _mm_min_ps(a, b);
+    __m128 min = npyv__signed_zero_min_f32(_mm_min_ps(a, b), a, b);
     return npyv_select_f32(nn, min, a);
 }
 NPY_FINLINE npyv_f64 npyv_minn_f64(npyv_f64 a, npyv_f64 b)
 {
     __m128i nn  = npyv_notnan_f64(a);
-    __m128d min = _mm_min_pd(a, b);
+    __m128d min = npyv__signed_zero_min_f64(_mm_min_pd(a, b), a, b);
     return npyv_select_f64(nn, min, a);
 }
 // Minimum, integer operations
