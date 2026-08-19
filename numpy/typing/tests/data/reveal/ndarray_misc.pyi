@@ -545,7 +545,8 @@ assert_type(AR_m.to_device("cpu"), npt.NDArray[np.timedelta64])
 assert_type(f8.__array_namespace__(), ModuleType)
 assert_type(AR_f8.__array_namespace__(), ModuleType)
 
-assert_type(iter(AR_f8), Iterator[Any])  # any-D
-assert_type(iter(AR_f8_1d), Iterator[np.float64])  # 1-D
-assert_type(iter(AR_f8_2d), Iterator[npt.NDArray[np.float64]])  # 2-D
-assert_type(iter(AR_f8_3d), Iterator[npt.NDArray[np.float64]])  # 3-D
+assert_type(iter(AR_f8), Iterator[Any])
+assert_type(iter(AR_f8_1d), Iterator[np.float64])
+assert_type(iter(AR_f8_2d), Iterator[_Array1D[np.float64]])
+assert_type(iter(AR_f8_3d), Iterator[_Array2D[np.float64]])
+assert_type(iter(AR_f8_4d), Iterator[_Array3D[np.float64]])
