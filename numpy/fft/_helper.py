@@ -2,7 +2,7 @@
 Discrete Fourier Transforms - _helper.py
 
 """
-from numpy._core import arange, asarray, empty, integer, roll
+from numpy._core import arange, asarray, empty, float64, floating, integer, roll
 from numpy._core.overrides import array_function_dispatch, set_module
 
 # Created by Pearu Peterson, September 2002
@@ -123,7 +123,7 @@ def ifftshift(x, axes=None):
 
 
 @set_module('numpy.fft')
-def fftfreq(n, d=1.0, device=None):
+def fftfreq(n, d=1.0, device=None, dtype=None):
     """
     Return the Discrete Fourier Transform sample frequencies.
 
@@ -147,6 +147,11 @@ def fftfreq(n, d=1.0, device=None):
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
+    dtype : dtype, optional
+        The type of the output array. Must be a real-valued floating-point type.
+        Default is `numpy.float64`.
+
+        .. versionadded:: 2.6.0
 
     Returns
     -------
@@ -167,18 +172,22 @@ def fftfreq(n, d=1.0, device=None):
     """
     if not isinstance(n, integer_types):
         raise ValueError("n should be an integer")
+    dtype = dtype or float64
+    if not issubclass(dtype, floating):
+        raise ValueError(f"`dtype` must be a real floating-point type. Got {dtype=}.")
     val = 1.0 / (n * d)
-    results = empty(n, int, device=device)
+    results = empty(n, dtype, device=device)
     N = (n - 1) // 2 + 1
-    p1 = arange(0, N, dtype=int, device=device)
+    p1 = arange(0, N, dtype=dtype, device=device)
     results[:N] = p1
-    p2 = arange(-(n // 2), 0, dtype=int, device=device)
+    p2 = arange(-(n // 2), 0, dtype=dtype, device=device)
     results[N:] = p2
-    return results * val
+    results *= val
+    return results
 
 
 @set_module('numpy.fft')
-def rfftfreq(n, d=1.0, device=None):
+def rfftfreq(n, d=1.0, device=None, dtype=None):
     """
     Return the Discrete Fourier Transform sample frequencies
     (for usage with rfft, irfft).
@@ -206,6 +215,11 @@ def rfftfreq(n, d=1.0, device=None):
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
 
         .. versionadded:: 2.0.0
+    dtype : dtype, optional
+        The type of the output array. Must be a real-valued floating-point type.
+        Default is `numpy.float64`.
+
+        ..versionadded:: 2.6.0
 
     Returns
     -------
@@ -229,7 +243,11 @@ def rfftfreq(n, d=1.0, device=None):
     """
     if not isinstance(n, integer_types):
         raise ValueError("n should be an integer")
+    dtype = dtype or float64
+    if not issubclass(dtype, floating):
+        raise ValueError(f"`dtype` must be a real floating-point type. Got {dtype=}.")
     val = 1.0 / (n * d)
     N = n // 2 + 1
-    results = arange(0, N, dtype=int, device=device)
-    return results * val
+    results = arange(0, N, dtype=dtype, device=device)
+    results *= val
+    return results
