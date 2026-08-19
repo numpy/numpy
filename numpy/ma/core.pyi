@@ -3050,10 +3050,27 @@ def minmax[ScalarT: np.generic](
 def minmax(
     obj: ArrayLike,
     axis: _ShapeLike | None = None,
-    out: tuple[np.ndarray, np.ndarray] | None = None,
+    out: None = None,
     fill_value: _ScalarLike_co | None = None,
     keepdims: bool | _NoValueType = ...,
 ) -> tuple[Any, Any]: ...
+@overload
+def minmax[ArrayT: np.ndarray](
+    obj: ArrayLike,
+    axis: _ShapeLike | None,
+    out: tuple[ArrayT, ArrayT],
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...,
+) -> tuple[ArrayT, ArrayT]: ...
+@overload
+def minmax[ArrayT: np.ndarray](
+    obj: ArrayLike,
+    axis: _ShapeLike | None = None,
+    *,
+    out: tuple[ArrayT, ArrayT],
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...,
+) -> tuple[ArrayT, ArrayT]: ...
 
 @overload
 def ptp[ScalarT: np.generic](

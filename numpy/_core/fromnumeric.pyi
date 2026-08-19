@@ -1865,6 +1865,16 @@ def amin(
 
 min = amin
 
+@overload
+def minmax[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | tuple[_NumberLike_co, _NumberLike_co] | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[ScalarT, ScalarT]: ...
+@overload
 def minmax(
     a: ArrayLike,
     axis: int | tuple[int, ...] | None = None,
