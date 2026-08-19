@@ -1431,6 +1431,36 @@ class TestPickling:
             ):
                 dt.__setstate__(extended)
 
+    @pytest.mark.parametrize('dt', [
+        np.dtype([('a', 'i4'), ('b', 'f8')]),
+        np.dtype('i4, i1', align=True),
+    ])
+    def test_setstate_endian(self, dt):
+        valid_state = list(dt.__reduce__()[2])
+
+        def state_with_endian(endian):
+            state = list(valid_state)
+            state[1] = endian
+            return tuple(state)
+
+        # a non-native byte order is stored as given, a native one as '='
+        swapped = '>' if sys.byteorder == 'little' else '<'
+
+        # bytes are accepted for backwards compatibility with old pickles
+        dt.__setstate__(state_with_endian(swapped.encode()))
+        assert dt.byteorder == swapped
+        dt.__setstate__(state_with_endian(swapped))
+        assert dt.byteorder == swapped
+
+        for endian in ['\N{MICRO SIGN}', '\N{SNOWMAN}', '', '>>', b'', b'>>']:
+            with pytest.raises(
+                ValueError, match="endian is not 1-char string"
+            ):
+                dt.__setstate__(state_with_endian(endian))
+
+        with pytest.raises(ValueError, match="endian is not a string"):
+            dt.__setstate__(state_with_endian(42))
+
 
 class TestPromotion:
     """Test cases related to more complex DType promotions.  Further promotion

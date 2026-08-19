@@ -3061,30 +3061,25 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
 
     /* Parse endian */
     if (PyUnicode_Check(endian_obj) || PyBytes_Check(endian_obj)) {
-        PyObject *tmp = NULL;
-        char *str;
+        char const *str;
         Py_ssize_t len;
 
         if (PyUnicode_Check(endian_obj)) {
-            tmp = PyUnicode_AsASCIIString(endian_obj);
-            if (tmp == NULL) {
+            str = PyUnicode_AsUTF8AndSize(endian_obj, &len);
+            if (str == NULL) {
                 return NULL;
             }
-            endian_obj = tmp;
         }
-
-        if (PyBytes_AsStringAndSize(endian_obj, &str, &len) < 0) {
-            Py_XDECREF(tmp);
-            return NULL;
+        else {
+            str = PyBytes_AS_STRING(endian_obj);
+            len = PyBytes_GET_SIZE(endian_obj);
         }
         if (len != 1) {
             PyErr_SetString(PyExc_ValueError,
                             "endian is not 1-char string in Numpy dtype unpickling");
-            Py_XDECREF(tmp);
             return NULL;
         }
         endian = str[0];
-        Py_XDECREF(tmp);
     }
     else {
         PyErr_SetString(PyExc_ValueError,
