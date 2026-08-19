@@ -1,0 +1,10 @@
+``maximum`` and ``minimum`` now return the IEEE sign for signed zeros
+---------------------------------------------------------------------
+`numpy.maximum` and `numpy.minimum` returned a zero whose sign depended on the
+dtype, the argument order and the CPU. On x86 both ``np.maximum(0.0, -0.0)``
+and ``np.minimum(0.0, -0.0)`` returned ``-0.0``, and because these reductions
+may be reordered, ``np.minimum.reduce`` gave a sign that depended on the order
+of its input. They now return ``+0.0`` for the maximum and ``-0.0`` for the
+minimum in ``float16``, ``float32`` and ``float64`` on every platform.
+
+`numpy.fmax` and `numpy.fmin` are unchanged, as is ``longdouble`` on x86.
