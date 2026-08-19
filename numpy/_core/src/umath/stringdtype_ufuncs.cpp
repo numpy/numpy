@@ -140,6 +140,12 @@ static int multiply_loop_core(
         if (factor < 1 || cursize == 0) {
             factor = 0;
         }
+        // on 32-bit platforms size_t truncates a 64-bit factor
+        else if ((npy_uint64)factor > (npy_uint64)PY_SSIZE_T_MAX) {
+            npy_gil_error(PyExc_OverflowError,
+                      "Overflow encountered in string multiply");
+            goto fail;
+        }
         size_t newsize;
         int overflowed = npy_mul_with_overflow_size_t(
                 &newsize, cursize, factor);
