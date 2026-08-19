@@ -3490,7 +3490,10 @@ def _minmax_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
     return (a, *out) if type(out) is tuple else (a, out)
 
 
-@array_function_dispatch(_minmax_dispatcher)
+@array_function_dispatch(
+    _minmax_dispatcher,
+    reduction=(um.minimummaximum, overrides._ReductionKind.MIN_MAX),
+)
 def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
            where=np._NoValue):
     """
