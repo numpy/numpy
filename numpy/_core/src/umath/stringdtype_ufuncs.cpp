@@ -181,6 +181,7 @@ static int multiply_loop_core(
             if (NpyString_pack(oallocator, ops, buf, newsize) < 0) {
                 npy_gil_error(PyExc_MemoryError,
                               "Failed to pack string in multiply");
+                PyMem_RawFree(buf);
                 goto fail;
             }
 
@@ -376,6 +377,7 @@ add_strided_loop(PyArrayMethod_Context *context, char *const data[],
             if (NpyString_pack(oallocator, ops, buf, newsize) < 0) {
                 npy_gil_error(PyExc_MemoryError,
                           "Failed to pack output string in add");
+                PyMem_RawFree(buf);
                 goto fail;
             }
 
