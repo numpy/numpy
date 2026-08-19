@@ -52,6 +52,7 @@ type _NDArrayLikeFloat = NDArray[np.generic[float]] | _NestedSequence[float]
 type _MethodExp = Literal["zig", "inv"]
 type _MethodMVN = Literal["svd", "eigh", "cholesky"]
 type _CheckValid = Literal["warn", "raise", "ignore"]
+type _MethodMVHG = Literal["marginals", "count"]
 
 ###
 
@@ -1260,13 +1261,50 @@ class Generator:
     ) -> NDArray[np.int64]: ...
 
     #
+    @overload  # size=None (default)
     def multivariate_hypergeometric(
         self,
         /,
         colors: _ArrayLikeInt_co,
         nsample: int,
-        size: _ShapeLike | None = None,
-        method: Literal["marginals", "count"] = "marginals",
+        size: None = None,
+        method: _MethodMVHG = "marginals",
+    ) -> _Array1D[np.int64]: ...
+    @overload  # size=<1d>
+    def multivariate_hypergeometric(
+        self,
+        /,
+        colors: _ArrayLikeInt_co,
+        nsample: int,
+        size: int | tuple[int],
+        method: _MethodMVHG = "marginals",
+    ) -> _Array2D[np.int64]: ...
+    @overload  # size=<2d>
+    def multivariate_hypergeometric(
+        self,
+        /,
+        colors: _ArrayLikeInt_co,
+        nsample: int,
+        size: tuple[int, int],
+        method: _MethodMVHG = "marginals",
+    ) -> _Array3D[np.int64]: ...
+    @overload  # size=<3d>
+    def multivariate_hypergeometric(
+        self,
+        /,
+        colors: _ArrayLikeInt_co,
+        nsample: int,
+        size: tuple[int, int, int],
+        method: _MethodMVHG = "marginals",
+    ) -> _Array4D[np.int64]: ...
+    @overload  # size=<unknown>
+    def multivariate_hypergeometric(
+        self,
+        /,
+        colors: _ArrayLikeInt_co,
+        nsample: int,
+        size: _ShapeLike,
+        method: _MethodMVHG = "marginals",
     ) -> NDArray[np.int64]: ...
 
     ###
