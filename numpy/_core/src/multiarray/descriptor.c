@@ -3065,9 +3065,15 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         Py_ssize_t len;
 
         if (PyUnicode_Check(endian_obj)) {
-            str = PyUnicode_AsUTF8AndSize(endian_obj, &len);
-            if (str == NULL) {
-                return NULL;
+            if (!PyUnicode_IS_ASCII(endian_obj)) {
+                str = NULL;
+                len = 0;
+            }
+            else {
+                str = PyUnicode_AsUTF8AndSize(endian_obj, &len);
+                if (str == NULL) {
+                    return NULL;
+                }
             }
         }
         else {

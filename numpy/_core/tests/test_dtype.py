@@ -1431,11 +1431,12 @@ class TestPickling:
             ):
                 dt.__setstate__(extended)
 
-    @pytest.mark.parametrize('dt', [
-        np.dtype([('a', 'i4'), ('b', 'f8')]),
-        np.dtype('i4, i1', align=True),
+    @pytest.mark.parametrize('spec, align', [
+        ([('a', 'i4'), ('b', 'f8')], False),
+        ('i4, i1', True),
     ])
-    def test_setstate_endian(self, dt):
+    def test_setstate_endian(self, spec, align):
+        dt = np.dtype(spec, align=align)
         valid_state = list(dt.__reduce__()[2])
 
         def state_with_endian(endian):
