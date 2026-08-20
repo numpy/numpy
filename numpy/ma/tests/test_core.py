@@ -68,6 +68,7 @@ from numpy.ma.core import (
     fromflex,
     getmask,
     getmaskarray,
+    get_fill_value,
     greater,
     greater_equal,
     identity,
@@ -109,6 +110,7 @@ from numpy.ma.core import (
     outer,
     power,
     product,
+    ptp,
     put,
     putmask,
     ravel,
@@ -2209,6 +2211,16 @@ class TestMaskedArrayAttributes:
         a.shrink_mask()
         assert_equal(a.mask, b.mask)
 
+    def test_unshare_mask(self):
+        a = array([1, 2, 3], mask=[0, 1, 0])
+        b = a[:]
+        assert_(b.sharedmask)
+        assert_(b.unshare_mask() is b)
+        assert_(not b.sharedmask)
+        b[0] = masked
+        assert_equal(a.mask, [False, True, False])
+        assert_equal(b.mask, [True, True, False])
+
     def test_flat(self):
         # Test that flat can return all types of items [#4585, #4615]
         # test 2-D record array
@@ -2409,6 +2421,12 @@ class TestFillingValues:
         dt = np.dtype([('v', 'V7')])
         f = default_fill_value(dt)
         assert_equal(f['v'], np.array(default_fill_value(dt['v']), dt['v']))
+
+    def test_get_fill_value(self):
+        a = array([1, 2, 3], fill_value=-999)
+        assert_equal(get_fill_value(a), -999)
+        b = np.array([1, 2, 3])
+        assert_equal(get_fill_value(b), default_fill_value(b))
 
     def test_fillvalue(self):
         # Yet more fun with the fill_value
@@ -5197,6 +5215,13 @@ class TestMaskedArrayFunctions:
         assert_equal(test, masked_equal([1, 1, -1, 1, 1], -1))
         test = np.ma.convolve(a, b, propagate_mask=True)
         assert_equal(test, masked_equal([-1, -1, -1, -1, -1], -1))
+
+    def test_ptp_func(self):
+        x = array([[4, 9, 2, 10], [6, 9, 7, 12]], mask=[[0, 0, 0, 1], [0, 0, 0, 0]])
+        assert_equal(ptp(x, axis=1), [7, 6])
+        assert_equal(ptp(x), 10)
+        assert_equal(ptp(x, axis=1, fill_value=0), [9, 6])
+        assert_equal(ptp([1, 5, 3]), 4)
 
 
 class TestMaskedFields:
