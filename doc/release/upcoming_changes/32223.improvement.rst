@@ -1,0 +1,2 @@
+`numpy.i0` no longer returns ``inf`` for large inputs such as ``np.i0(713.0)``.
+The function now avoids intermediate overflow and returns the correct finite value.
