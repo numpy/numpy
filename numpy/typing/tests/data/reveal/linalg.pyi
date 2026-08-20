@@ -192,9 +192,28 @@ assert_type(np.linalg.qr(AR_any, "r"), npt.NDArray[Any])  # type: ignore[assert-
 # Mypy bug: `Expression is of type "tuple[Any, ...]", <--snip-->"`
 assert_type(np.linalg.qr(AR_any, "raw"), tuple[npt.NDArray[Any], npt.NDArray[Any]])  # type: ignore[assert-type]
 
-assert_type(np.linalg.eigvals(AR_i8), npt.NDArray[np.float64] | npt.NDArray[np.complex128])
-assert_type(np.linalg.eigvals(AR_f8), npt.NDArray[np.float64] | npt.NDArray[np.complex128])
+assert_type(np.linalg.eigvals(AR_i8), npt.NDArray[np.float64 | np.complex128])
+assert_type(np.linalg.eigvals(AR_f8), npt.NDArray[np.float64 | np.complex128])
+assert_type(np.linalg.eigvals(AR_f4), npt.NDArray[np.float32 | np.complex64])
+assert_type(np.linalg.eigvals(AR_c8), npt.NDArray[np.complex64])
 assert_type(np.linalg.eigvals(AR_c16), npt.NDArray[np.complex128])
+
+assert_type(np.linalg.eigvals(AR_i1_2d), _Array1D[np.float64 | np.complex128])
+assert_type(np.linalg.eigvals(AR_i1_3d), _Array2D[np.float64 | np.complex128])
+assert_type(np.linalg.eigvals(AR_f8_2d), _Array1D[np.float64 | np.complex128])
+assert_type(np.linalg.eigvals(AR_f8_3d), _Array2D[np.float64 | np.complex128])
+assert_type(np.linalg.eigvals(AR_f4_2d), _Array1D[np.float32 | np.complex64])
+assert_type(np.linalg.eigvals(AR_f4_3d), _Array2D[np.float32 | np.complex64])
+assert_type(np.linalg.eigvals(AR_c16_2d), _Array1D[np.complex128])
+assert_type(np.linalg.eigvals(AR_c16_3d), _Array2D[np.complex128])
+assert_type(np.linalg.eigvals(AR_c8_2d), _Array1D[np.complex64])
+assert_type(np.linalg.eigvals(AR_c8_3d), _Array2D[np.complex64])
+assert_type(np.linalg.eigvals(int_list_2d), _Array1D[np.float64 | np.complex128])
+assert_type(np.linalg.eigvals(int_list_3d), _Array2D[np.float64 | np.complex128])
+assert_type(np.linalg.eigvals(float_list_2d), _Array1D[np.float64 | np.complex128])
+assert_type(np.linalg.eigvals(float_list_3d), _Array2D[np.float64 | np.complex128])
+assert_type(np.linalg.eigvals(complex_list_2d), _Array1D[np.complex128])
+assert_type(np.linalg.eigvals(complex_list_3d), _Array2D[np.complex128])
 
 assert_type(np.linalg.eigvalsh(AR_i8), npt.NDArray[np.float64])
 assert_type(np.linalg.eigvalsh(AR_f8), npt.NDArray[np.float64])
