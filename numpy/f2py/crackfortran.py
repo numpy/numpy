@@ -600,7 +600,7 @@ groupbegins90 = groupbegins77 + \
     r'type(?!\s*\()'
 beginpattern90 = re.compile(
     beforethisafter % ('', groupbegins90, groupbegins90, '.*'), re.I), 'begin'
-beginpattern = beginpattern90 #gh-32360
+beginpattern = beginpattern90  # gh-32360
 groupends = (r'end|endprogram|endblockdata|endmodule|endpythonmodule|'
              r'endinterface|endsubroutine|endfunction')
 endpattern = re.compile(
