@@ -30,7 +30,7 @@ skipemptyends: L[0, 1]
 ignorecontains: L[1]
 dolowercase: L[1]
 
-beginpattern: str | re.Pattern[str]
+beginpattern: str | tuple[re.Pattern[str], L["begin"]]
 currentfilename: str
 filepositiontext: str
 expectbegin: L[0, 1]
