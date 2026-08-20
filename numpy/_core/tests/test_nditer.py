@@ -851,6 +851,12 @@ def test_iter_flags_errors():
     assert_raises(ValueError, nditer, [a], ['bad flag'], [['readonly']])
     # Bad op flag
     assert_raises(ValueError, nditer, [a], [], [['readonly', 'bad flag']])
+    # Non-ASCII global flag
+    assert_raises(ValueError, nditer, [a], ['☃'], [['readonly']])
+    # Non-ASCII op flag
+    assert_raises(ValueError, nditer, [a], [], [['readonly', '☃']])
+    # Non-string flag
+    assert_raises(ValueError, nditer, [a], [], [['readonly', 3]])
     # Bad order parameter
     assert_raises(ValueError, nditer, [a], [], [['readonly']], order='G')
     # Bad casting parameter
@@ -914,6 +920,14 @@ def test_iter_flags_errors():
     assert_raises(ValueError, assign_iterrange, i)
     # Can't iterate if size is zero
     assert_raises(ValueError, nditer, np.array([]))
+
+def test_iter_bytes_flags():
+    # bytes flags are accepted for backwards compatibility
+    a = arange(6)
+    i = nditer(a, [b'buffered'], [['readonly']])
+    assert_equal([int(x) for x in i], [0, 1, 2, 3, 4, 5])
+    i = nditer(a, [], [[b'readonly']])
+    assert_equal([int(x) for x in i], [0, 1, 2, 3, 4, 5])
 
 def test_iter_slice():
     a, b, c = np.arange(3), np.arange(3), np.arange(3.)

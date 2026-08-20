@@ -18,6 +18,7 @@
 #include "npy_config.h"
 #include "npy_pycompat.h"  // PyObject_GetOptionalAttr
 #include "npy_static_data.h"
+#include "numpy/npy_math.h"
 
 #include "common.h"
 #include "numpy/arrayscalars.h"
@@ -2144,12 +2145,32 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
      * instance (this includes date/datetime subclasses).
      */
     long val;
-    int found = pydatetime_attr_to_long(obj, npy_interned_str.year, &val);
+    PyObject *tmp;
+    int found = PyObject_GetOptionalAttr(obj, npy_interned_str.year, &tmp);
     if (found < 0) {
         return -1;
     }
     if (found == 0) {
         return 1;
+    }
+    /*
+     * NaT-like objects (e.g. pandas NaT) duck-type as datetimes but expose
+     * year/month/day as NaN floats instead of integers. Represent these as
+     * NaT (year == NPY_DATETIME_NAT); downstream conversion turns this into
+     * a datetime64 NaT value instead of raising a TypeError.
+     */
+    if (PyFloat_Check(tmp) && npy_isnan(PyFloat_AS_DOUBLE(tmp))) {
+        Py_DECREF(tmp);
+        out->year = NPY_DATETIME_NAT;
+        if (out_bestunit != NULL) {
+            *out_bestunit = NPY_FR_GENERIC;
+        }
+        return 0;
+    }
+    val = PyLong_AsLong(tmp);
+    Py_DECREF(tmp);
+    if (error_converting(val)) {
+        return -1;
     }
     out->year = val;
 
@@ -2503,6 +2524,27 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             return -1;
         }
         else if (code == 0) {
+            /*
+             * Allow NaT-like objects (e.g. pandas NaT) to convert to NaT,
+             * bypassing the unit cast-safety checks just like NaT scalars
+             * do.
+             */
+            if (dts.year == NPY_DATETIME_NAT) {
+                if (meta->base == NPY_FR_ERROR) {
+                    meta->base = NPY_FR_GENERIC;
+                    meta->num = 1;
+                }
+                if (meta->base == NPY_FR_GENERIC) {
+                    if (DEPRECATE(
+                                "The 'generic' unit for NumPy datetime is deprecated, "
+                                "and will raise an error in the future. "
+                                "Please use a specific unit instead.") < 0) {
+                        return -1;
+                    }
+                }
+                *out = NPY_DATETIME_NAT;
+                return 0;
+            }
             /* Use the detected unit if none was specified */
             if (meta->base == NPY_FR_ERROR) {
                 meta->base = bestunit;
@@ -3320,7 +3362,7 @@ convert_pyobjects_to_datetimes(int count,
     /* Use the inputs to resolve the unit metadata if requested */
     if (inout_meta->base == NPY_FR_ERROR) {
         /* Allocate an array of metadata corresponding to the objects */
-        meta = PyArray_malloc(count * sizeof(PyArray_DatetimeMetaData));
+        meta = PyMem_RawMalloc(count * sizeof(PyArray_DatetimeMetaData));
         if (meta == NULL) {
             PyErr_NoMemory();
             return -1;
@@ -3339,14 +3381,14 @@ convert_pyobjects_to_datetimes(int count,
             else if (type_nums[i] == NPY_DATETIME) {
                 if (convert_pyobject_to_datetime(&meta[i], objs[i],
                                             casting, &out_values[i]) < 0) {
-                    PyArray_free(meta);
+                    PyMem_RawFree(meta);
                     return -1;
                 }
             }
             else if (type_nums[i] == NPY_TIMEDELTA) {
                 if (convert_pyobject_to_timedelta(&meta[i], objs[i],
                                             casting, &out_values[i]) < 0) {
-                    PyArray_free(meta);
+                    PyMem_RawFree(meta);
                     return -1;
                 }
             }
@@ -3354,7 +3396,7 @@ convert_pyobjects_to_datetimes(int count,
                 PyErr_SetString(PyExc_ValueError,
                         "convert_pyobjects_to_datetimes requires that "
                         "all the type_nums provided be datetime or timedelta");
-                PyArray_free(meta);
+                PyMem_RawFree(meta);
                 return -1;
             }
         }
@@ -3368,7 +3410,7 @@ convert_pyobjects_to_datetimes(int count,
                                     &meta[i], inout_meta, inout_meta,
                                     type_nums[i] == NPY_TIMEDELTA,
                                     is_out_strict) < 0) {
-                PyArray_free(meta);
+                PyMem_RawFree(meta);
                 return -1;
             }
             is_out_strict = is_out_strict || (type_nums[i] == NPY_TIMEDELTA);
@@ -3379,20 +3421,20 @@ convert_pyobjects_to_datetimes(int count,
             if (type_nums[i] == NPY_DATETIME) {
                 if (cast_datetime_to_datetime(&meta[i], inout_meta,
                                          out_values[i], &out_values[i]) < 0) {
-                    PyArray_free(meta);
+                    PyMem_RawFree(meta);
                     return -1;
                 }
             }
             else if (type_nums[i] == NPY_TIMEDELTA) {
                 if (cast_timedelta_to_timedelta(&meta[i], inout_meta,
                                          out_values[i], &out_values[i]) < 0) {
-                    PyArray_free(meta);
+                    PyMem_RawFree(meta);
                     return -1;
                 }
             }
         }
 
-        PyArray_free(meta);
+        PyMem_RawFree(meta);
     }
     /* Otherwise convert to the provided unit metadata */
     else {
@@ -3679,7 +3721,7 @@ find_string_array_datetime64_type(PyArrayObject *arr,
     maxlen = NpyIter_GetDescrArray(iter)[0]->elsize;
 
     /* Allocate a buffer for strings which fill the buffer completely */
-    tmp_buffer = PyArray_malloc(maxlen+1);
+    tmp_buffer = PyMem_RawMalloc(maxlen+1);
     if (tmp_buffer == NULL) {
         PyErr_NoMemory();
         NpyIter_Deallocate(iter);
@@ -3735,13 +3777,13 @@ find_string_array_datetime64_type(PyArrayObject *arr,
         }
     } while(iternext(iter));
 
-    PyArray_free(tmp_buffer);
+    PyMem_RawFree(tmp_buffer);
     NpyIter_Deallocate(iter);
 
     return 0;
 
 fail:
-    PyArray_free(tmp_buffer);
+    PyMem_RawFree(tmp_buffer);
     NpyIter_Deallocate(iter);
 
     return -1;

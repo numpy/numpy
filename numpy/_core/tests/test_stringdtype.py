@@ -94,6 +94,12 @@ def dtype2(na_object2, coerce2):
         return StringDType(coerce=coerce2)
 
 
+@pytest.fixture(params=[True, False])
+def stable(request):
+    """Use a stable sort or the default sort kind"""
+    return request.param
+
+
 def test_dtype_creation():
     hashes = set()
     dt = StringDType()
@@ -239,6 +245,69 @@ def test_np_str_trailing_nul_preserved(coerce):
     arr[0:1] = [value]
     assert arr[0] == "q\x00"
     assert np.array([value], dtype=dtype)[0] == "q\x00"
+
+
+def test_pystr_scalar_ufunc_operand_preserves_nulls():
+    arr = np.array(["abc\0", "abc"], dtype="T")
+
+    assert_array_equal(arr == "abc\0", [True, False])
+    assert_array_equal(arr != "abc\0", [False, True])
+    # expected values are wrapped in StringDType arrays because converting
+    # the plain lists would itself go through fixed-width unicode
+    assert_array_equal(
+        arr + "x\0", np.array(["abc\0x\0", "abcx\0"], dtype="T"))
+    assert_array_equal(
+        "x\0" + arr, np.array(["x\0abc\0", "x\0abc"], dtype="T"))
+    assert_array_equal(np.strings.str_len(arr + "x\0"), [6, 5])
+
+    arr2 = arr.copy()
+    arr2 += "\0"
+    assert_array_equal(arr2, np.array(["abc\0\0", "abc\0"], dtype="T"))
+
+    assert_array_equal(np.strings.endswith(arr, "c\0"), [True, False])
+    assert_array_equal(np.strings.count(arr, "\0"), [1, 0])
+    assert_array_equal(np.strings.find(arr, "c\0"), [2, -1])
+    assert_array_equal(np.strings.replace(arr, "\0", "!"), ["abc!", "abc"])
+
+
+def test_pystr_scalar_ufunc_outer_preserves_nulls():
+    arr = np.array(["x"], dtype="T")
+    assert np.add.outer(arr, "y\0").item() == "xy\0"
+    assert np.add.outer("y\0", arr).item() == "y\0x"
+
+
+def test_pystr_scalar_ufunc_at_preserves_nulls():
+    arr = np.array(["x"], dtype="T")
+    np.add.at(arr, 0, "y\0")
+    assert arr[0] == "xy\0"
+
+
+def test_pystr_scalar_ufunc_operand_any_instance(dtype):
+    arr = np.array(["abc\0"], dtype=dtype)
+    assert_array_equal(arr == "abc\0", [True])
+    assert (arr + "x\0")[0] == "abc\0x\0"
+
+
+def test_partition_str_sep():
+    arr = np.array(["a-b\0c", "nosep"], dtype="T")
+
+    parts = np.strings.partition(arr, "-")
+    expected = [["a", "nosep"], ["-", ""], ["b\0c", ""]]
+    for res, exp in zip(parts, expected):
+        assert_array_equal(res, np.array(exp, dtype="T"))
+
+    rparts = np.strings.rpartition(np.array(["a-b-c", "nosep"], dtype="T"),
+                                   np.str_("-"))
+    expected = [["a-b", ""], ["-", ""], ["c", "nosep"]]
+    for res, exp in zip(rparts, expected):
+        assert_array_equal(res, np.array(exp, dtype="T"))
+
+    parts = np.strings.partition(np.array(["ab\0cd"], dtype="T"), "\0")
+    for res, exp in zip(parts, [["ab"], ["\0"], ["cd"]]):
+        assert_array_equal(res, np.array(exp, dtype="T"))
+
+    with pytest.raises(ValueError, match="empty separator"):
+        np.strings.partition(arr, "")
 
 
 @pytest.mark.parametrize(
@@ -585,24 +654,24 @@ def test_stdlib_copy(dtype, string_list):
     assert_array_equal(copy.deepcopy(arr), arr)
 
 
-@pytest.mark.parametrize(
-    "strings",
+SORT_STRINGS = [
+    ["left", "right", "leftovers", "righty", "up", "down"],
     [
-        ["left", "right", "leftovers", "righty", "up", "down"],
-        [
-            "left" * 10,
-            "right" * 10,
-            "leftovers" * 10,
-            "righty" * 10,
-            "up" * 10,
-        ],
-        ["🤣🤣", "🤣", "📵", "😰"],
-        ["🚜", "🙃", "😾"],
-        ["😹", "🚠", "🚌"],
-        ["A¢☃€ 😊", " A☃€¢😊", "☃€😊 A¢", "😊☃A¢ €"],
+        "left" * 10,
+        "right" * 10,
+        "leftovers" * 10,
+        "righty" * 10,
+        "up" * 10,
     ],
-)
-def test_sort(dtype, strings):
+    ["🤣🤣", "🤣", "📵", "😰"],
+    ["🚜", "🙃", "😾"],
+    ["😹", "🚠", "🚌"],
+    ["A¢☃€ 😊", " A☃€¢😊", "☃€😊 A¢", "😊☃A¢ €"],
+]
+
+
+@pytest.mark.parametrize("strings", SORT_STRINGS)
+def test_sort(dtype, strings, stable):
     """Test that sorting matches python's internal sorting."""
 
     def test_sort(strings, arr_sorted):
@@ -613,24 +682,24 @@ def test_sort(dtype, strings):
                 ValueError,
                 match="Cannot compare null that is not a nan-like value",
             ):
-                np.argsort(arr)
+                np.argsort(arr, stable=stable)
             argsorted = None
         elif na_object is pd_NA or na_object != '':
             argsorted = None
         else:
-            argsorted = np.argsort(arr)
+            argsorted = np.argsort(arr, stable=stable)
         np.random.default_rng().shuffle(arr)
         if na_object is None and None in strings:
             with pytest.raises(
                 ValueError,
                 match="Cannot compare null that is not a nan-like value",
             ):
-                arr.sort()
+                arr.sort(stable=stable)
         else:
-            arr.sort()
+            arr.sort(stable=stable)
             assert np.array_equal(arr, arr_sorted, equal_nan=True)
         if argsorted is not None:
-            assert np.array_equal(argsorted, np.argsort(strings))
+            assert np.array_equal(argsorted, np.argsort(strings, stable=stable))
 
     # make a copy so we don't mutate the lists in the fixture
     strings = strings.copy()
@@ -655,6 +724,72 @@ def test_sort(dtype, strings):
         arr_sorted = np.array(sorted(strings), dtype=dtype)
 
     test_sort(strings, arr_sorted)
+
+
+@pytest.mark.parametrize("strings", SORT_STRINGS)
+def test_sort_descending(dtype, strings, stable):
+    """Test that descending sorts reverse the ascending order."""
+    arr = np.array(strings, dtype=dtype)
+    expected = np.array(sorted(strings, reverse=True), dtype=dtype)
+
+    assert_array_equal(np.sort(arr, stable=stable, descending=True), expected)
+    argsorted = np.argsort(arr, stable=stable, descending=True)
+    assert_array_equal(arr[argsorted], expected)
+
+    if not hasattr(dtype, "na_object"):
+        return
+
+    # make sure NAs get sorted to the end of the array in descending
+    # sorts too and string NAs get sorted like normal strings
+    strings = strings.copy()
+    strings.insert(0, dtype.na_object)
+    strings.insert(2, dtype.na_object)
+    arr = np.array(strings, dtype=dtype)
+
+    if dtype.na_object is None:
+        with pytest.raises(
+            ValueError,
+            match="Cannot compare null that is not a nan-like value",
+        ):
+            np.sort(arr, stable=stable, descending=True)
+        return
+
+    if isinstance(dtype.na_object, str):
+        expected = np.array(sorted(strings, reverse=True), dtype=dtype)
+    else:
+        expected = np.array(
+            expected.tolist() + [dtype.na_object, dtype.na_object],
+            dtype=dtype,
+        )
+
+    res = np.sort(arr, stable=stable, descending=True)
+    assert np.array_equal(res, expected, equal_nan=True)
+
+
+@pytest.mark.parametrize("length", [1, 30])  # lengths > 15 bytes -> arena
+def test_argsort_descending_stable(length):
+    b, a, c = "b" * length, "a" * length, "c" * length
+    arr = np.array([b, a, c, b, a, c], dtype="T")
+    argsorted = np.argsort(arr, stable=True, descending=True)
+    # the "c"s (at indices 2 and 5) sort first, then the "b"s (0 and 3),
+    # then the "a"s (1 and 4), and stability requires each group of equal
+    # strings to keep its original order; reversing a stable ascending
+    # argsort would instead give [5, 2, 3, 0, 4, 1]
+    assert_array_equal(argsorted, [2, 5, 0, 3, 1, 4])
+
+
+def test_top_k(string_list):
+    arr = np.array(string_list, dtype="T")
+
+    expected = sorted(string_list, reverse=True)[:2]
+    values, indices = np.top_k(arr, 2)
+    assert values.tolist() == expected
+    assert arr[indices].tolist() == expected
+
+    expected = sorted(string_list)[:2]
+    values, indices = np.top_k(arr, 2, mode="smallest")
+    assert values.tolist() == expected
+    assert arr[indices].tolist() == expected
 
 
 def test_searchsorted_gh31533():
@@ -866,6 +1001,66 @@ def test_resize_method(string_list):
     sarr = np.array(string_list, dtype="T")
     sarr.resize(len(string_list) + 3)
     assert_array_equal(sarr, np.array(string_list + [''] * 3,  dtype="T"))
+
+
+def test_byteswap(dtype):
+    # byteswap previously crashed since StringDType did not fill the
+    # legacy copyswapn slot; byte order does not apply to stringdtype
+    # so byteswapping is a no-op, as for "S" and object dtypes
+    arr = np.array(["hello", "world"], dtype=dtype)
+    swapped = arr.byteswap()
+    assert swapped is not arr
+    assert_array_equal(swapped, arr)
+    # the result is an independent copy
+    swapped[0] = "goodbye"
+    assert arr[0] == "hello"
+
+    res = arr.byteswap(inplace=True)
+    assert res is arr
+    assert_array_equal(res, ["hello", "world"])
+
+    arr.flags.writeable = False
+    with pytest.raises(ValueError, match="array to be byte-swapped"):
+        arr.byteswap(inplace=True)
+
+
+def test_place(dtype):
+    # stringdtype has no legacy copyswap arrfunc, so np.place copies the
+    # values through its cast-machinery fallback
+    arr = np.array(["hello", "world", "a", "b" * 100], dtype=dtype)
+    np.place(arr, [True, False, True, True], ["x", "y" * 100, "z"])
+    expected = np.array(["x", "world", "y" * 100, "z"], dtype=dtype)
+    assert_array_equal(arr, expected)
+
+    # values aliasing the destination array must be handled safely; the
+    # string_to_string cast relies on NpyString_share_memory recognizing
+    # that a packed string shares memory with itself
+    np.place(arr, [True, True, True, True], arr)
+    assert_array_equal(arr, expected)
+
+
+def test_flat_set_aliased(dtype):
+    # flat assignment copies element by element through the same cast
+    # fallback as np.place and, when the value aliases the destination,
+    # also relies on NpyString_share_memory recognizing identical strings
+    arr = np.array(["hello", "world", "b" * 100], dtype=dtype)
+    expected = arr.copy()
+    arr.flat = arr
+    assert_array_equal(arr, expected)
+
+    # broadcasting a view of the array over itself mixes identical
+    # elements with real same-allocator copies
+    arr.flat = arr[:1]
+    assert_array_equal(arr, ["hello"] * 3)
+
+    # The identical-pointer case also matters for null strings, which do not
+    # have a string buffer for the general sharing check to compare.
+    if hasattr(dtype, "na_object"):
+        missing = np.array([dtype.na_object], dtype=dtype)
+        missing.flat = missing
+        assert missing[0] is dtype.na_object
+        np.place(missing, [True], missing)
+        assert missing[0] is dtype.na_object
 
 
 def test_create_with_copy_none(string_list):
@@ -1261,6 +1456,49 @@ def test_string_to_cfloat_cast_distinct_components(typename):
     )
     assert_array_equal(inp.astype(typename), expected)
 
+
+def test_cast_structured_field_view_strides():
+    # the numeric cast loops used to truncate byte strides that are not a
+    # multiple of the itemsize, like a complex128 field view of 24-byte records
+    rec = np.zeros(3, dtype=[("c", "c16"), ("f", "f8")])
+    rec["c"] = [1 + 1j, 2 + 2j, 3 + 3j]
+    rec["f"] = [10.0, 20.0, 30.0]
+
+    assert_array_equal(
+        rec["c"].astype("T"),
+        np.array(["(1+1j)", "(2+2j)", "(3+3j)"], dtype="T"),
+    )
+
+    rec["c"] = np.array(["4+4j", "5+5j", "6-6j"], dtype="T")
+    assert_array_equal(rec["c"], np.array([4 + 4j, 5 + 5j, 6 - 6j]))
+    assert_array_equal(rec["f"], np.array([10.0, 20.0, 30.0]))
+
+    # the f8 loops only see a mismatched stride on 32-bit architectures,
+    # where 8-byte types have 4-byte alignment
+    rec2 = np.zeros(3, dtype=[("v", "f8"), ("pad", "u4")])
+    rec2["v"] = [1.5, 2.5, 3.5]
+    assert_array_equal(
+        rec2["v"].astype("T"),
+        np.array(["1.5", "2.5", "3.5"], dtype="T"),
+    )
+    rec2["v"] = np.array(["4.5", "5.5", "6.5"], dtype="T")
+    assert_array_equal(rec2["v"], np.array([4.5, 5.5, 6.5]))
+    assert_array_equal(rec2["pad"], np.zeros(3, dtype="u4"))
+
+    # likewise the 8-byte datetime/timedelta loops only see a mismatched
+    # stride on 32-bit architectures
+    rec3 = np.zeros(3, dtype=[("t", "M8[D]"), ("td", "m8[s]"), ("pad", "u4")])
+    rec3["t"] = np.array(["2010-01-01", "NaT", "2015-02-03"], dtype="M8[D]")
+    rec3["td"] = np.array([12, "NaT", -34], dtype="m8[s]")
+    assert_array_equal(rec3["t"].astype("T"),
+                       np.array(["2010-01-01", "NaT", "2015-02-03"], dtype="T"))
+    assert_array_equal(rec3["td"].astype("T"),
+                       np.array(["12", "NaT", "-34"], dtype="T"))
+    rec3["t"] = np.array(["1993-06-05", "NaT", "2038-01-19"], dtype="T")
+    rec3["td"] = np.array(["-56", "NaT", "78"], dtype="T")
+    assert_array_equal(rec3["t"],
+                       np.array(["1993-06-05", "NaT", "2038-01-19"], dtype="M8[D]"))
+    assert_array_equal(rec3["td"], np.array([-56, "NaT", 78], dtype="m8[s]"))
 
 def test_take(string_list):
     sarr = np.array(string_list, dtype="T")

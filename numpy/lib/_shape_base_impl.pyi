@@ -188,10 +188,16 @@ def expand_dims[ScalarT: np.generic](
 def expand_dims(a: ArrayLike, axis: int | tuple[int, ...]) -> NDArray[Any]: ...
 
 # keep in sync with `numpy.ma.extras.column_stack`
-@overload
+@overload  # >=2d, known dtype
+def column_stack[ShapeT: _Min2D, DTypeT: np.dtype](
+    tup: Sequence[np.ndarray[ShapeT, DTypeT]],
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # <=2d, known dtype
+def column_stack[ScalarT: np.generic](tup: Sequence[_To2D[ScalarT]]) -> _Array2D[ScalarT]: ...
+@overload  # ?d, known dtype
 def column_stack[ScalarT: np.generic](tup: Sequence[_ArrayLike[ScalarT]]) -> NDArray[ScalarT]: ...
-@overload
-def column_stack(tup: Sequence[ArrayLike]) -> NDArray[Incomplete]: ...
+@overload  # fallback
+def column_stack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
 
 # keep in sync with `numpy.ma.extras.dstack`
 @overload

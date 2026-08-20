@@ -1,0 +1,15 @@
+``PyArray`` allocator helpers are now deprecated
+------------------------------------------------
+
+The following macro and C API helper functions for allocating data are now
+`soft-deprecated
+<https://docs.python.org/3/glossary.html#term-soft-deprecated>`_:
+
+* ``NPY_USE_PYMEM``
+* ``PyArray_malloc``
+* ``PyArray_realloc``
+* ``PyArray_free``
+
+If you are using these in your extensions, we suggest migrating to use `the
+Python Raw Memory Interface instead
+<https://docs.python.org/3/c-api/memory.html#raw-memory-interface>`_.

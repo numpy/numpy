@@ -304,7 +304,7 @@ _is_same_name(const char* s1, const char* s2)
  *
  * The function assumes that the values that are arrays have not
  * been set already, and sets these pointers to memory allocated
- * with PyArray_malloc.  These are freed when the ufunc dealloc
+ * with PyMem_RawMalloc.  These are freed when the ufunc dealloc
  * method is called.
  *
  * Returns 0 unless an error occurred.
@@ -326,14 +326,14 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
         return -1;
     }
     len = strlen(signature);
-    ufunc->core_signature = PyArray_malloc(sizeof(char) * (len+1));
+    ufunc->core_signature = PyMem_RawMalloc(sizeof(char) * (len+1));
     if (ufunc->core_signature == NULL) {
         PyErr_NoMemory();
         return -1;
     }
     strcpy(ufunc->core_signature, signature);
     /* Allocate sufficient memory to store pointers to all dimension names */
-    var_names = PyArray_malloc(sizeof(char const*) * len);
+    var_names = PyMem_RawMalloc(sizeof(char const*) * len);
     if (var_names == NULL) {
         PyErr_NoMemory();
         return -1;
@@ -341,12 +341,12 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
 
     ufunc->core_enabled = 1;
     ufunc->core_num_dim_ix = 0;
-    ufunc->core_num_dims = PyArray_malloc(sizeof(int) * ufunc->nargs);
-    ufunc->core_offsets = PyArray_malloc(sizeof(int) * ufunc->nargs);
+    ufunc->core_num_dims = PyMem_RawMalloc(sizeof(int) * ufunc->nargs);
+    ufunc->core_offsets = PyMem_RawMalloc(sizeof(int) * ufunc->nargs);
     /* The next three items will be shrunk later */
-    ufunc->core_dim_ixs = PyArray_malloc(sizeof(int) * len);
-    ufunc->core_dim_sizes = PyArray_malloc(sizeof(npy_intp) * len);
-    ufunc->core_dim_flags = PyArray_malloc(sizeof(npy_uint32) * len);
+    ufunc->core_dim_ixs = PyMem_RawMalloc(sizeof(int) * len);
+    ufunc->core_dim_sizes = PyMem_RawMalloc(sizeof(npy_intp) * len);
+    ufunc->core_dim_flags = PyMem_RawMalloc(sizeof(npy_uint32) * len);
 
     if (ufunc->core_num_dims == NULL || ufunc->core_dim_ixs == NULL ||
         ufunc->core_offsets == NULL ||
@@ -482,21 +482,21 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
         goto fail;
     }
     void *tmp;
-    tmp = PyArray_realloc(ufunc->core_dim_ixs,
+    tmp = PyMem_RawRealloc(ufunc->core_dim_ixs,
             sizeof(int) * cur_core_dim);
     if (tmp == NULL) {
         PyErr_NoMemory();
         goto fail;
     }
     ufunc->core_dim_ixs = tmp;
-    tmp = PyArray_realloc(ufunc->core_dim_sizes,
+    tmp = PyMem_RawRealloc(ufunc->core_dim_sizes,
             sizeof(npy_intp) * ufunc->core_num_dim_ix);
     if (tmp == NULL) {
         PyErr_NoMemory();
         goto fail;
     }
     ufunc->core_dim_sizes = tmp;
-    tmp = PyArray_realloc(ufunc->core_dim_flags,
+    tmp = PyMem_RawRealloc(ufunc->core_dim_flags,
             sizeof(npy_uint32) * ufunc->core_num_dim_ix);
     if (tmp == NULL) {
         PyErr_NoMemory();
@@ -508,11 +508,11 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
     if (cur_core_dim == 0) {
         ufunc->core_enabled = 0;
     }
-    PyArray_free((void*)var_names);
+    PyMem_RawFree((void*)var_names);
     return 0;
 
 fail:
-    PyArray_free((void*)var_names);
+    PyMem_RawFree((void*)var_names);
     if (parse_error) {
         PyErr_Format(PyExc_ValueError,
                      "%s at position %d in \"%s\"",
@@ -703,6 +703,8 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
             if (out_op[i] == NULL) {
                 goto fail;
             }
+            /* Does not affect promotion, only conversion after resolution. */
+            npy_mark_tmp_array_if_pystr(obj, out_op[i]);
         }
         out_op_DTypes[i] = NPY_DTYPE(PyArray_DESCR(out_op[i]));
         Py_INCREF(out_op_DTypes[i]);
@@ -1868,8 +1870,8 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
     if (axes != NULL || axis != NULL) {
         assert(!(axes != NULL && axis != NULL));
 
-        remap_axis = PyArray_malloc(sizeof(remap_axis[0]) * nop);
-        remap_axis_memory = PyArray_malloc(sizeof(remap_axis_memory[0]) *
+        remap_axis = PyMem_RawMalloc(sizeof(remap_axis[0]) * nop);
+        remap_axis_memory = PyMem_RawMalloc(sizeof(remap_axis_memory[0]) *
                                                   nop * NPY_MAXDIMS);
         if (remap_axis == NULL || remap_axis_memory == NULL) {
             PyErr_NoMemory();
@@ -2056,7 +2058,7 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
     for (i = 0; i < nop; ++i) {
         core_dim_ixs_size += ufunc->core_num_dims[i];
     }
-    inner_strides = (npy_intp *)PyArray_malloc(
+    inner_strides = (npy_intp *)PyMem_RawMalloc(
                         NPY_SIZEOF_INTP * (nop+core_dim_ixs_size));
     if (inner_strides == NULL) {
         PyErr_NoMemory();
@@ -2196,14 +2198,14 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
         retval = _check_ufunc_fperr(errormask, ufunc_name);
     }
 
-    PyArray_free(inner_strides);
+    PyMem_RawFree(inner_strides);
     NPY_AUXDATA_FREE(auxdata);
     if (!NpyIter_Deallocate(iter)) {
         retval = -1;
     }
 
-    PyArray_free(remap_axis_memory);
-    PyArray_free(remap_axis);
+    PyMem_RawFree(remap_axis_memory);
+    PyMem_RawFree(remap_axis);
 
     NPY_UF_DBG_PRINT1("Returning code %d\n", retval);
 
@@ -2211,11 +2213,11 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
 
 fail:
     NPY_UF_DBG_PRINT1("Returning failure code %d\n", retval);
-    PyArray_free(inner_strides);
+    PyMem_RawFree(inner_strides);
     NPY_AUXDATA_FREE(auxdata);
     NpyIter_Deallocate(iter);
-    PyArray_free(remap_axis_memory);
-    PyArray_free(remap_axis);
+    PyMem_RawFree(remap_axis_memory);
+    PyMem_RawFree(remap_axis);
     return retval;
 }
 
@@ -3920,6 +3922,13 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
                      _reduce_type[operation]);
         return NULL;
     }
+    if (ufunc->nout == 0) {
+        PyErr_Format(PyExc_ValueError,
+                     "%s not supported for functions "
+                     "returning no value",
+                     _reduce_type[operation]);
+        return NULL;
+    }
     if (operation != UFUNC_REDUCE && ufunc->nout != 1) {
         PyErr_Format(PyExc_ValueError,
                      "%s only supported for functions "
@@ -4527,8 +4536,13 @@ resolve_descriptors(int nop,
         /*
          * If we are working with Python literals/scalars, deal with them.
          * If needed, we create new array with the right descriptor.
+         * An exact Python str must be replaced from the original object to
+         * preserve trailing nulls, so it requires an available input tuple
+         * (only `ufunc.resolve_dtypes` has no input tuple).
          */
-        if ((PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_LITERAL)) {
+        if ((PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_LITERAL) ||
+                (inputs_tup != NULL &&
+                 (PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_STR))) {
             PyObject *input;
             if (inputs_tup == NULL) {
                 input = NULL;
@@ -5396,7 +5410,7 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     }
     ufunc->doc = doc;
 
-    ufunc->op_flags = PyArray_malloc(sizeof(npy_uint32)*ufunc->nargs);
+    ufunc->op_flags = PyMem_RawMalloc(sizeof(npy_uint32)*ufunc->nargs);
     if (ufunc->op_flags == NULL) {
         Py_DECREF(ufunc);
         return PyErr_NoMemory();
@@ -5497,16 +5511,16 @@ _free_loop1d_list(PyUFunc_Loop1d *data)
 
     while (data != NULL) {
         PyUFunc_Loop1d *next = data->next;
-        PyArray_free(data->arg_types);
+        PyMem_RawFree(data->arg_types);
 
         if (data->arg_dtypes != NULL) {
             for (i = 0; i < data->nargs; i++) {
                 Py_DECREF(data->arg_dtypes[i]);
             }
-            PyArray_free(data->arg_dtypes);
+            PyMem_RawFree(data->arg_dtypes);
         }
 
-        PyArray_free(data);
+        PyMem_RawFree(data);
         data = next;
     }
 }
@@ -5559,7 +5573,7 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
         return -1;
     }
 
-    arg_typenums = PyArray_malloc(ufunc->nargs * sizeof(int));
+    arg_typenums = PyMem_RawMalloc(ufunc->nargs * sizeof(int));
     if (arg_typenums == NULL) {
         Py_DECREF(key);
         PyErr_NoMemory();
@@ -5605,7 +5619,7 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
                 current = current->next;
             }
             if (cmp == 0 && current != NULL && current->arg_dtypes == NULL) {
-                current->arg_dtypes = PyArray_malloc(ufunc->nargs *
+                current->arg_dtypes = PyMem_RawMalloc(ufunc->nargs *
                     sizeof(PyArray_Descr*));
                 if (current->arg_dtypes == NULL) {
                     PyErr_NoMemory();
@@ -5635,7 +5649,7 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
     }
 
 done:
-    PyArray_free(arg_typenums);
+    PyMem_RawFree(arg_typenums);
 
     Py_DECREF(key);
 
@@ -5673,11 +5687,11 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     if (key == NULL) {
         return -1;
     }
-    funcdata = PyArray_malloc(sizeof(PyUFunc_Loop1d));
+    funcdata = PyMem_RawMalloc(sizeof(PyUFunc_Loop1d));
     if (funcdata == NULL) {
         goto fail;
     }
-    newtypes = PyArray_malloc(sizeof(int)*ufunc->nargs);
+    newtypes = PyMem_RawMalloc(sizeof(int)*ufunc->nargs);
     if (newtypes == NULL) {
         goto fail;
     }
@@ -5807,8 +5821,8 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
             /* just replace it with new function */
             current->func = function;
             current->data = data;
-            PyArray_free(newtypes);
-            PyArray_free(funcdata);
+            PyMem_RawFree(newtypes);
+            PyMem_RawFree(funcdata);
         }
         else {
             /*
@@ -5842,8 +5856,8 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     Py_DECREF(key);
     Py_XDECREF(signature_tuple);
     Py_XDECREF(info);
-    PyArray_free(funcdata);
-    PyArray_free(newtypes);
+    PyMem_RawFree(funcdata);
+    PyMem_RawFree(newtypes);
     if (!PyErr_Occurred()) PyErr_NoMemory();
     return -1;
 }
@@ -5864,14 +5878,14 @@ static void
 ufunc_dealloc(PyUFuncObject *ufunc)
 {
     PyObject_GC_UnTrack((PyObject *)ufunc);
-    PyArray_free(ufunc->core_num_dims);
-    PyArray_free(ufunc->core_dim_ixs);
-    PyArray_free(ufunc->core_dim_sizes);
-    PyArray_free(ufunc->core_dim_flags);
-    PyArray_free(ufunc->core_offsets);
-    PyArray_free(ufunc->core_signature);
-    PyArray_free(ufunc->ptr);
-    PyArray_free(ufunc->op_flags);
+    PyMem_RawFree(ufunc->core_num_dims);
+    PyMem_RawFree(ufunc->core_dim_ixs);
+    PyMem_RawFree(ufunc->core_dim_sizes);
+    PyMem_RawFree(ufunc->core_dim_flags);
+    PyMem_RawFree(ufunc->core_offsets);
+    PyMem_RawFree(ufunc->core_signature);
+    PyMem_RawFree(ufunc->ptr);
+    PyMem_RawFree(ufunc->op_flags);
     Py_XDECREF(ufunc->userloops);
     if (ufunc->identity == PyUFunc_IdentityValue) {
         Py_DECREF(ufunc->identity_value);
@@ -5944,7 +5958,8 @@ static inline int
 is_known_scalar(PyObject *obj)
 {
     return (PyLong_CheckExact(obj) || PyFloat_CheckExact(obj)
-            || PyComplex_CheckExact(obj) || is_anyscalar_exact(obj));
+            || PyComplex_CheckExact(obj) || PyUnicode_CheckExact(obj)
+            || is_anyscalar_exact(obj));
 }
 
 
@@ -6516,6 +6531,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         int force_legacy_promotion = 0;
 
         npy_bool op2_is_pyscalar = NPY_FALSE;
+        npy_bool op2_is_pystr = NPY_FALSE;
         if (op2_array != NULL) {
             /* Owned: `resolve_descriptors` may replace it for Python scalars */
             tmp_operands[1] = op2_array;
@@ -6525,6 +6541,9 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             if (mark_pyscalar_operand(
                     op2, &tmp_operands[1], &operand_DTypes[1])) {
                 op2_is_pyscalar = NPY_TRUE;
+            }
+            else if (npy_mark_tmp_array_if_pystr(op2, tmp_operands[1])) {
+                op2_is_pystr = NPY_TRUE;
             }
             tmp_operands[2] = tmp_operands[0];
             operand_DTypes[2] = operand_DTypes[0];
@@ -6545,7 +6564,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
         int resolve_result = -1;
         PyObject *inputs_tup = NULL;
-        if (op2_is_pyscalar) {
+        if (op2_is_pyscalar || op2_is_pystr) {
             inputs_tup = PyTuple_Pack(2, op1, op2);
             if (inputs_tup == NULL) {
                 goto finish_resolution;
@@ -7239,7 +7258,7 @@ ufunc_get_types(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
     if (list == NULL) {
         return NULL;
     }
-    t = PyArray_malloc(no+ni+2);
+    t = PyMem_RawMalloc(no+ni+2);
     if (t == NULL) {
         Py_DECREF(list);
         return PyErr_NoMemory();
@@ -7259,7 +7278,7 @@ ufunc_get_types(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
         str = PyUnicode_FromStringAndSize(t, no + ni + 2);
         PyList_SET_ITEM(list, k, str);
     }
-    PyArray_free(t);
+    PyMem_RawFree(t);
     return list;
 }
 

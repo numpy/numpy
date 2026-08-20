@@ -794,10 +794,10 @@ string_to_int(
 
     npy_intp N = dimensions[0];
     char *in = data[0];
-    NpyType *out = (NpyType *)data[1];
+    char *out = data[1];
 
     npy_intp in_stride = strides[0];
-    npy_intp out_stride = strides[1] / sizeof(NpyType);
+    npy_intp out_stride = strides[1];
 
     while (N--) {
         NpyLongType value;
@@ -805,10 +805,10 @@ string_to_int(
             npy_gil_error(PyExc_RuntimeError, "Encountered problem converting string dtype to integer dtype.");
             goto fail;
         }
-        *out = (NpyType)value;
+        *(NpyType *)out = (NpyType)value;
 
         // Cast back to NpyLongType to check for out-of-bounds errors
-        if (static_cast<NpyLongType>(*out) != value) {
+        if (static_cast<NpyLongType>(*(NpyType *)out) != value) {
             // out of bounds, raise error following NEP 50 behavior
             const char *errmsg = NULL;
             if constexpr (std::is_same_v<NpyLongType, npy_ulonglong>) {
@@ -918,10 +918,10 @@ type_to_string(
     NpyAuxData *NPY_UNUSED(auxdata)
 ) {
     npy_intp N = dimensions[0];
-    NpyType *in = (NpyType *)data[0];
+    char *in = data[0];
     char *out = data[1];
 
-    npy_intp in_stride = strides[0] / sizeof(NpyType);
+    npy_intp in_stride = strides[0];
     npy_intp out_stride = strides[1];
 
     PyArray_StringDTypeObject *descr =
@@ -930,7 +930,7 @@ type_to_string(
             NpyString_acquire_allocator(descr);
 
     while (N--) {
-        if (int_to_stringbuf((TClongType)*in, out, allocator) != 0) {
+        if (int_to_stringbuf((TClongType)*(NpyType *)in, out, allocator) != 0) {
             goto fail;
         }
 
@@ -1029,10 +1029,10 @@ string_to_float(
 
     npy_intp N = dimensions[0];
     char *in = data[0];
-    NpyType *out = (NpyType *)data[1];
+    char *out = data[1];
 
     npy_intp in_stride = strides[0];
-    npy_intp out_stride = strides[1] / sizeof(NpyType);
+    npy_intp out_stride = strides[1];
 
     while (N--) {
         PyObject *pyfloat_value = string_to_pyfloat(
@@ -1052,7 +1052,7 @@ string_to_float(
             }
         }
 
-        *out = fval;
+        *(NpyType *)out = fval;
 
         in += in_stride;
         out += out_stride;
@@ -1085,10 +1085,10 @@ string_to_float<npy_float64, NPY_DOUBLE>(
 
     npy_intp N = dimensions[0];
     char *in = data[0];
-    npy_float64 *out = (npy_float64 *)data[1];
+    char *out = data[1];
 
     npy_intp in_stride = strides[0];
-    npy_intp out_stride = strides[1] / sizeof(npy_float64);
+    npy_intp out_stride = strides[1];
 
     while (N--) {
         PyObject *pyfloat_value = string_to_pyfloat(
@@ -1097,7 +1097,7 @@ string_to_float<npy_float64, NPY_DOUBLE>(
         if (pyfloat_value == NULL) {
             goto fail;
         }
-        *out = (npy_float64)PyFloat_AS_DOUBLE(pyfloat_value);
+        *(npy_float64 *)out = (npy_float64)PyFloat_AS_DOUBLE(pyfloat_value);
         Py_DECREF(pyfloat_value);
 
         in += in_stride;
@@ -1129,10 +1129,10 @@ string_to_float<npy_longdouble, NPY_LONGDOUBLE>(
     const npy_static_string *default_string = &descr->default_string;
     npy_intp N = dimensions[0];
     char *in = data[0];
-    npy_longdouble *out = (npy_longdouble *)data[1];
+    char *out = data[1];
 
     npy_intp in_stride = strides[0];
-    npy_intp out_stride = strides[1] / sizeof(npy_longdouble);
+    npy_intp out_stride = strides[1];
 
     while (N--) {
         npy_static_string s = {0, NULL};
@@ -1186,7 +1186,7 @@ string_to_float<npy_longdouble, NPY_LONGDOUBLE>(
             }
         }
         PyMem_RawFree(buf);
-        *out = longdouble_value;
+        *(npy_longdouble *)out = longdouble_value;
 
         in += in_stride;
         out += out_stride;
@@ -1408,10 +1408,10 @@ string_to_complex_float(
     const npy_static_string *default_string = &descr->default_string;
     npy_intp N = dimensions[0];
     char *in = data[0];
-    NpyComplexType *out = (NpyComplexType *)data[1];
+    char *out = data[1];
 
     npy_intp in_stride = strides[0];
-    npy_intp out_stride = strides[1] / sizeof(NpyComplexType);
+    npy_intp out_stride = strides[1];
 
     while (N--) {
         PyObject *pycomplex_value = string_to_pycomplex(
@@ -1428,8 +1428,8 @@ string_to_complex_float(
             goto fail;
         }
 
-        npy_csetrealfunc(out, (NpyFloatType) complex_value.real);
-        npy_csetimagfunc(out, (NpyFloatType) complex_value.imag);
+        npy_csetrealfunc((NpyComplexType *)out, (NpyFloatType) complex_value.real);
+        npy_csetimagfunc((NpyComplexType *)out, (NpyFloatType) complex_value.imag);
         in += in_stride;
         out += out_stride;
     }
@@ -1558,10 +1558,10 @@ string_to_datetime(PyArrayMethod_Context *context, char *const data[],
 
     npy_intp N = dimensions[0];
     char *in = data[0];
-    npy_datetime *out = (npy_datetime *)data[1];
+    char *out = data[1];
 
     npy_intp in_stride = strides[0];
-    npy_intp out_stride = strides[1] / sizeof(npy_datetime);
+    npy_intp out_stride = strides[1];
 
     npy_datetimestruct dts;
     NPY_DATETIMEUNIT in_unit = NPY_FR_ERROR;
@@ -1584,13 +1584,13 @@ string_to_datetime(PyArrayMethod_Context *context, char *const data[],
         }
         if (is_null) {
             if (has_null && !has_string_na) {
-                *out = NPY_DATETIME_NAT;
+                *(npy_datetime *)out = NPY_DATETIME_NAT;
                 goto next_step;
             }
             s = *default_string;
         }
         if (is_nat_string(&s)) {
-            *out = NPY_DATETIME_NAT;
+            *(npy_datetime *)out = NPY_DATETIME_NAT;
             goto next_step;
         }
 
@@ -1600,8 +1600,8 @@ string_to_datetime(PyArrayMethod_Context *context, char *const data[],
                     &dts, &in_meta.base, &out_special) < 0) {
             goto fail;
         }
-        if (NpyDatetime_ConvertDatetimeStructToDatetime64(dt_meta, &dts, out) <
-            0) {
+        if (NpyDatetime_ConvertDatetimeStructToDatetime64(
+                    dt_meta, &dts, (npy_datetime *)out) < 0) {
             goto fail;
         }
 
@@ -1632,10 +1632,10 @@ datetime_to_string(PyArrayMethod_Context *context, char *const data[],
                    NpyAuxData *NPY_UNUSED(auxdata))
 {
     npy_intp N = dimensions[0];
-    npy_datetime *in = (npy_datetime *)data[0];
+    char *in = data[0];
     char *out = data[1];
 
-    npy_intp in_stride = strides[0] / sizeof(npy_datetime);
+    npy_intp in_stride = strides[0];
     npy_intp out_stride = strides[1];
 
     _PyArray_LegacyDescr *dt_descr = (_PyArray_LegacyDescr *)context->descriptors[0];
@@ -1650,7 +1650,7 @@ datetime_to_string(PyArrayMethod_Context *context, char *const data[],
 
     while (N--) {
         npy_packed_static_string *out_pss = (npy_packed_static_string *)out;
-        if (*in == NPY_DATETIME_NAT)
+        if (*(npy_datetime *)in == NPY_DATETIME_NAT)
         {
             if (!has_null) {
                 npy_static_string os = {3, "NaT"};
@@ -1672,7 +1672,7 @@ datetime_to_string(PyArrayMethod_Context *context, char *const data[],
         else {
             npy_datetimestruct dts;
             if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(
-                        dt_meta, *in, &dts) < 0) {
+                        dt_meta, *(npy_datetime *)in, &dts) < 0) {
                 goto fail;
             }
 
@@ -1727,10 +1727,10 @@ string_to_timedelta(PyArrayMethod_Context *context, char *const data[],
 
     npy_intp N = dimensions[0];
     char *in = data[0];
-    npy_timedelta *out = (npy_timedelta *)data[1];
+    char *out = data[1];
 
     npy_intp in_stride = strides[0];
-    npy_intp out_stride = strides[1] / sizeof(npy_timedelta);
+    npy_intp out_stride = strides[1];
 
     while (N--) {
         const npy_packed_static_string *ps = (npy_packed_static_string *)in;
@@ -1744,7 +1744,7 @@ string_to_timedelta(PyArrayMethod_Context *context, char *const data[],
         }
         if (is_null) {
             if (has_null && !has_string_na) {
-                *out = NPY_DATETIME_NAT;
+                *(npy_timedelta *)out = NPY_DATETIME_NAT;
                 in += in_stride;
                 out += out_stride;
                 continue;
@@ -1752,7 +1752,7 @@ string_to_timedelta(PyArrayMethod_Context *context, char *const data[],
             s = *default_string;
         }
         if (is_nat_string(&s)) {
-            *out = NPY_DATETIME_NAT;
+            *(npy_timedelta *)out = NPY_DATETIME_NAT;
             in += in_stride;
             out += out_stride;
             continue;
@@ -1776,7 +1776,7 @@ string_to_timedelta(PyArrayMethod_Context *context, char *const data[],
             goto fail;
         }
 
-        *out = (npy_timedelta)value;
+        *(npy_timedelta *)out = (npy_timedelta)value;
 
         in += in_stride;
         out += out_stride;
@@ -1804,10 +1804,10 @@ timedelta_to_string(PyArrayMethod_Context *context, char *const data[],
                    NpyAuxData *NPY_UNUSED(auxdata))
 {
     npy_intp N = dimensions[0];
-    npy_timedelta *in = (npy_timedelta *)data[0];
+    char *in = data[0];
     char *out = data[1];
 
-    npy_intp in_stride = strides[0] / sizeof(npy_timedelta);
+    npy_intp in_stride = strides[0];
     npy_intp out_stride = strides[1];
 
     PyArray_StringDTypeObject *sdescr = (PyArray_StringDTypeObject *)context->descriptors[1];
@@ -1816,7 +1816,7 @@ timedelta_to_string(PyArrayMethod_Context *context, char *const data[],
 
     while (N--) {
         npy_packed_static_string *out_pss = (npy_packed_static_string *)out;
-        if (*in == NPY_DATETIME_NAT)
+        if (*(npy_timedelta *)in == NPY_DATETIME_NAT)
         {
             if (!has_null) {
                 npy_static_string os = {3, "NaT"};
@@ -1835,7 +1835,7 @@ timedelta_to_string(PyArrayMethod_Context *context, char *const data[],
                 goto fail;
             }
         }
-        else if (int_to_stringbuf((long long)*in, out, allocator) < 0) {
+        else if (int_to_stringbuf((long long)*(npy_timedelta *)in, out, allocator) < 0) {
             goto fail;
         }
 

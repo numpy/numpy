@@ -318,10 +318,16 @@ def hstack(
     casting: _CastingKind = "same_kind"
 ) -> _MArray[Incomplete]: ...
 
-# keep in sync with `numpy._core.shape_base_impl.column_stack`
-@overload
+# keep in sync with `numpy.lib._shape_base_impl.column_stack`
+@overload  # >=2d, known dtype
+def column_stack[ShapeT: _AtLeast2D, DTypeT: np.dtype](
+    tup: Sequence[np.ndarray[ShapeT, DTypeT]],
+) -> MaskedArray[ShapeT, DTypeT]: ...
+@overload  # <=2d, known dtype
+def column_stack[ScalarT: np.generic](tup: Sequence[_To2D[ScalarT]]) -> _MArray2D[ScalarT]: ...
+@overload  # ?d, known dtype
 def column_stack[ScalarT: np.generic](tup: Sequence[_ArrayLike[ScalarT]]) -> _MArray[ScalarT]: ...
-@overload
+@overload  # fallback
 def column_stack(tup: Sequence[ArrayLike]) -> _MArray[Incomplete]: ...
 
 # keep in sync with `numpy._core.shape_base_impl.dstack`
