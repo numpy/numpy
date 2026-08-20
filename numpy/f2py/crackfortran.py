@@ -411,10 +411,6 @@ def readfortrancode(ffile, dowithline=show, istop=1):
                 strictf77 = 1
             elif is_free_format(currentfilename) and not _has_fix_header(l):
                 sourcecodeform = 'free'
-            if strictf77:
-                beginpattern = beginpattern77
-            else:
-                beginpattern = beginpattern90
             outmess(f"\tReading file {currentfilename!r} "
                     f"(format:{sourcecodeform}{',strict' if strictf77 else ''})\n")
 
@@ -604,6 +600,7 @@ groupbegins90 = groupbegins77 + \
     r'type(?!\s*\()'
 beginpattern90 = re.compile(
     beforethisafter % ('', groupbegins90, groupbegins90, '.*'), re.I), 'begin'
+beginpattern = beginpattern90 #gh-32360
 groupends = (r'end|endprogram|endblockdata|endmodule|endpythonmodule|'
              r'endinterface|endsubroutine|endfunction')
 endpattern = re.compile(
