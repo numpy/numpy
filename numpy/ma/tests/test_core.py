@@ -89,6 +89,7 @@ from numpy.ma.core import (
     masked_less,
     masked_less_equal,
     masked_not_equal,
+    masked_object,
     masked_outside,
     masked_print_option,
     masked_values,
@@ -5688,8 +5689,49 @@ class TestMaskedConstant:
 
 
 class TestMaskedWhereAliases:
+    def test_masked_greater(self):
+        assert_equal(masked_greater(np.arange(4), 2).mask,
+                     [False, False, False, True])
 
-    # TODO: Test masked_object, masked_equal, ...
+    def test_masked_greater_equal(self):
+        assert_equal(masked_greater_equal(np.arange(4), 2).mask,
+                     [False, False, True, True])
+
+    def test_masked_less(self):
+        assert_equal(masked_less(np.arange(4), 2).mask,
+                     [True, True, False, False])
+
+    def test_masked_less_equal(self):
+        assert_equal(masked_less_equal(np.arange(4), 2).mask,
+                     [True, True, True, False])
+
+    def test_masked_equal(self):
+        x = np.arange(4)
+        res = masked_equal(x, 2)
+        assert_equal(res.mask, [False, False, True, False])
+        assert_(res[2] is masked)
+        assert_equal(res.fill_value, 2)
+
+        res = masked_equal(x, 9)
+        assert_(res.mask is nomask)
+
+        xm = array([1, 2, 3], mask=[1, 0, 0])
+        res = masked_equal(xm, 3)
+        assert_equal(res.mask, [True, False, True])
+
+    def test_masked_object(self):
+        food = np.array(['green_eggs', 'ham'], dtype=object)
+        res = masked_object(food, 'green_eggs')
+        assert_equal(res.mask, [True, False])
+        assert_(res[0] is masked)
+        assert_equal(res.fill_value, 'green_eggs')
+
+        res = masked_object(food, 'cheese')
+        assert_(res.mask is nomask)
+
+        xm = array(['a', 'b', 'c'], mask=[1, 0, 0], dtype=object)
+        res = masked_object(xm, 'c')
+        assert_equal(res.mask, [True, False, True])
 
     def test_masked_values(self):
         res = masked_values(np.array([-32768.0]), np.int16(-32768))
