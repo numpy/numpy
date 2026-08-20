@@ -1142,7 +1142,7 @@ string_to_float<npy_longdouble, NPY_LONGDOUBLE>(
             goto fail;
         }
         if (is_nan_na) {
-            *out = (npy_longdouble)NPY_NAN;
+            *(npy_longdouble *)out = (npy_longdouble)NPY_NAN;
             in += in_stride;
             out += out_stride;
             continue;
