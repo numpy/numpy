@@ -177,7 +177,6 @@ dolowercase = 1
 debug = []
 
 # Global variables
-beginpattern = ''
 currentfilename = ''
 expectbegin = 1
 f90modulevars = {}
