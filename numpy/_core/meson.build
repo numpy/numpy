@@ -1460,7 +1460,7 @@ _simd_mtargets = mod_features.multi_targets(
   prefix: 'NPY_',
   dependencies: [py_dep, np_core_dep],
   include_directories: ['src/_simd', 'src/npymath'],
-  c_args: c_args_common,
+  c_args: c_args_common + py_limited_api_args,
   cpp_args: cpp_args_common,
 )
 
@@ -1476,6 +1476,7 @@ py.extension_module('_simd',
   install: true,
   subdir: 'numpy/_core',
   install_tag: 'tests',
+  limited_api: py_limited_api,
 )
 
 python_sources = [

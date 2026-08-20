@@ -21,6 +21,23 @@ project(
 py_limited_api = '3.13'
 py_limited_api_hex = '0x030d0000'
 
+# The `limited_api:` kwarg only reaches an extension module's own sources.
+# Static libraries linked into one must be passed these args as well, or their
+# `PyTuple_Check()` and friends keep reading `tp_flags` out of `PyTypeObject`,
+# which the Stable ABI keeps opaque. Drop this once
+# https://github.com/mesonbuild/meson/issues/13824 is resolved.
+if get_option('python.allow_limited_api')
+  # Meson has no integer-to-hex conversion, hence the table; it must match
+  # meson's own '0x{major:02x}{minor:02x}0000' formatting.
+  _py_limited_api_minor_hex = {'12': '0c', '13': '0d', '14': '0e', '15': '0f'}
+  py_limited_api_args = [
+    '-DPy_LIMITED_API=0x03' +
+    _py_limited_api_minor_hex[py_limited_api.split('.')[1]] + '0000'
+  ]
+else
+  py_limited_api_args = []
+endif
+
 fs = import('fs')
 
 cc = meson.get_compiler('c')

@@ -88,7 +88,13 @@ PyMODINIT_FUNC PyInit__simd(void)
     NPY_MTARGETS_CONF_DISPATCH(NPY_CPU_HAVE, ATTACH_MODULE, MAKE_MSVC_HAPPY)
     NPY_MTARGETS_CONF_BASELINE(ATTACH_BASELINE_MODULE, MAKE_MSVC_HAPPY)
 
-#ifdef Py_GIL_DISABLED
+    /*
+     * TODO: 3.15 adds a free-threaded stable ABI (abi3t), but supporting it
+     * also needs module setup via the new PyModExport API, which carries
+     * Py_mod_gil in place of this call, and instance structs that do not
+     * embed `PyObject`.
+     */
+#if defined(Py_GIL_DISABLED) && !defined(Py_LIMITED_API)
     // signal this module supports running with the GIL disabled
     PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
 #endif
