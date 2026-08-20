@@ -203,10 +203,10 @@ class QRResult(NamedTuple, Generic[_InexactT_co]):
     Q: NDArray[_InexactT_co]
     R: NDArray[_InexactT_co]
 
-class SVDResult(NamedTuple, Generic[_FloatingT_co, _InexactT_co]):
-    U: NDArray[_InexactT_co]
-    S: NDArray[_FloatingT_co]
-    Vh: NDArray[_InexactT_co]
+class SVDResult(NamedTuple, Generic[_FloatingT_co, _InexactT_co, _ShapeT1_co, _ShapeT2_co]):
+    U: np.ndarray[_ShapeT2_co, np.dtype[_InexactT_co]]
+    S: np.ndarray[_ShapeT1_co, np.dtype[_FloatingT_co]]
+    Vh: np.ndarray[_ShapeT2_co, np.dtype[_InexactT_co]]
 
 class SlogdetResult(NamedTuple, Generic[_FloatingOrArrayT_co, _InexactOrArrayT_co]):
     sign: _InexactOrArrayT_co
@@ -552,43 +552,185 @@ def qr(a: _ArrayLikeComplex_co, mode: L["r"]) -> np.ndarray: ...
 @overload  # fallback,    raw
 def qr(a: _ArrayLikeComplex_co, mode: L["raw"]) -> _tuple2[np.ndarray]: ...
 
-#
-@overload  # workaround for microsoft/pyright#10232, compute_uv=True (default)
-def svd(a: NDArray[Never], full_matrices: bool = True, compute_uv: L[True] = True, hermitian: bool = False) -> SVDResult: ...
-@overload  # workaround for microsoft/pyright#10232, compute_uv=False (positional)
-def svd(a: NDArray[Never], full_matrices: bool, compute_uv: L[False], hermitian: bool = False) -> np.ndarray: ...
-@overload  # workaround for microsoft/pyright#10232, compute_uv=False (keyword)
-def svd(a: NDArray[Never], full_matrices: bool = True, *, compute_uv: L[False], hermitian: bool = False) -> np.ndarray: ...
-@overload  # ~inexact32, compute_uv=True (default)
-def svd[ScalarT: _inexact32](
-    a: _ArrayLike[ScalarT], full_matrices: bool = True, compute_uv: L[True] = True, hermitian: bool = False
-) -> SVDResult[np.float32, ScalarT]: ...
-@overload  # ~inexact32, compute_uv=False (positional)
-def svd(a: _ArrayLike[_inexact32], full_matrices: bool, compute_uv: L[False], hermitian: bool = False) -> NDArray[np.float32]: ...
-@overload  # ~inexact32, compute_uv=False (keyword)
+# keep the `compute_uv=False` overloads in sync with `svdvals`
+@overload  # abstract `inexact` (workaround)
 def svd(
-    a: _ArrayLike[_inexact32], full_matrices: bool = True, *, compute_uv: L[False], hermitian: bool = False
-) -> NDArray[np.float32]: ...
-@overload  # +float64, compute_uv=True (default)
-def svd(
-    a: _ToArrayF64, full_matrices: bool = True, compute_uv: L[True] = True, hermitian: bool = False
-) -> SVDResult[np.float64, np.float64]: ...
-@overload  # ~complex128, compute_uv=True (default)
-def svd(
-    a: _AsArrayC128, full_matrices: bool = True, compute_uv: L[True] = True, hermitian: bool = False
-) -> SVDResult[np.float64, np.complex128]: ...
-@overload  # +float64 | ~complex128, compute_uv=False (positional)
-def svd(a: _ToArrayC128, full_matrices: bool, compute_uv: L[False], hermitian: bool = False) -> NDArray[np.float64]: ...
-@overload  # +float64 | ~complex128, compute_uv=False (keyword)
-def svd(a: _ToArrayC128, full_matrices: bool = True, *, compute_uv: L[False], hermitian: bool = False) -> NDArray[np.float64]: ...
-@overload  # fallback, compute_uv=True (default)
-def svd(
-    a: _ArrayLikeComplex_co, full_matrices: bool = True, compute_uv: L[True] = True, hermitian: bool = False
+    a: NDArray[np.inexact[Never]],
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
 ) -> SVDResult: ...
-@overload  # fallback, compute_uv=False (positional)
-def svd(a: _ArrayLikeComplex_co, full_matrices: bool, compute_uv: L[False], hermitian: bool = False) -> np.ndarray: ...
-@overload  # fallback, compute_uv=False (keyword)
-def svd(a: _ArrayLikeComplex_co, full_matrices: bool = True, *, compute_uv: L[False], hermitian: bool = False) -> np.ndarray: ...
+@overload  # ?d +f64 (workaround)
+def svd(
+    a: _ArrayJustND[_to_float64],
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float64, np.float64]: ...
+@overload  # ?d ~c128 (workaround)
+def svd(
+    a: _ArrayJustND[np.complex128],
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float64, np.complex128]: ...
+@overload  # ?d ~f32|c64 (workaround)
+def svd[ScalarT: _inexact32](
+    a: _ArrayJustND[ScalarT],
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float32, ScalarT]: ...
+@overload  # 2d +f64
+def svd(
+    a: _ArrayLike2D2[_to_float64, float],
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float64, np.float64, _1D, _2D]: ...
+@overload  # 2d ~c128
+def svd(
+    a: _AsArrayC128_2d,
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float64, np.complex128, _1D, _2D]: ...
+@overload  # 2d ~f32|c64
+def svd[ScalarT: _inexact32](
+    a: _ArrayLike2D[ScalarT],
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float32, ScalarT, _1D, _2D]: ...
+@overload  # 3d +f64
+def svd(
+    a: _ArrayLike3D2[_to_float64, float],
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float64, np.float64, _2D, _3D]: ...
+@overload  # 3d ~c128
+def svd(
+    a: _AsArrayC128_3d,
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float64, np.complex128, _2D, _3D]: ...
+@overload  # 3d ~f32|c64
+def svd[ScalarT: _inexact32](
+    a: _ArrayLike3D[ScalarT],
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float32, ScalarT, _2D, _3D]: ...
+@overload  # ?d +f64
+def svd(
+    a: _ToArrayF64,
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float64, np.float64]: ...
+@overload  # ?d ~c128
+def svd(
+    a: _AsArrayC128,
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float64, np.complex128]: ...
+@overload  # ?d ~f32|c64
+def svd[ScalarT: _inexact32](
+    a: _ArrayLike[ScalarT],
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float32, ScalarT]: ...
+@overload  # fallback
+def svd(
+    a: _ArrayLikeComplex_co,
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult: ...
+@overload  # compute_uv=False, abstract `inexact` (workaround)
+def svd(
+    a: NDArray[np.inexact[Never]],
+    full_matrices: bool = True,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> np.ndarray: ...
+@overload  # compute_uv=False, ?d ~f32|c64 (workaround)
+def svd(
+    a: _ArrayJustND[_inexact32],
+    full_matrices: bool = True,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> NDArray[np.float32]: ...
+@overload  # compute_uv=False, ?d +c128 (workaround)
+def svd(
+    a: _ArrayJustND[_to_inexact64],
+    full_matrices: bool = True,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> NDArray[np.float64]: ...
+@overload  # compute_uv=False, 2d ~f32|c64
+def svd(
+    a: _ArrayLike2D[_inexact32],
+    full_matrices: bool = True,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> _Array1D[np.float32]: ...
+@overload  # compute_uv=False, 2d +c128
+def svd(
+    a: _ArrayLike2D2[_to_inexact64, complex],
+    full_matrices: bool = True,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> _Array1D[np.float64]: ...
+@overload  # compute_uv=False, 3d ~f32|c64
+def svd(
+    a: _ArrayLike3D[_inexact32],
+    full_matrices: bool = True,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> _Array2D[np.float32]: ...
+@overload  # compute_uv=False, 3d +c128
+def svd(
+    a: _ArrayLike3D2[_to_inexact64, complex],
+    full_matrices: bool = True,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> _Array2D[np.float64]: ...
+@overload  # compute_uv=False, ?d ~f32|c64
+def svd(
+    a: _ArrayLike[_inexact32],
+    full_matrices: bool = True,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> NDArray[np.float32]: ...
+@overload  # compute_uv=False, ?d +c128
+def svd(
+    a: _ToArrayC128,
+    full_matrices: bool = True,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> NDArray[np.float64]: ...
+@overload  # compute_uv=False, fallback
+def svd(
+    a: _ArrayLikeComplex_co,
+    full_matrices: bool = True,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> np.ndarray: ...
 
 # NOTE: for real input the output dtype (floating/complexfloating) depends on the specific values
 @overload  # abstract `inexact` (excluding concrete types)
