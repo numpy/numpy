@@ -89,6 +89,7 @@ from numpy.ma.core import (
     masked_less,
     masked_less_equal,
     masked_not_equal,
+    masked_object,
     masked_outside,
     masked_print_option,
     masked_values,
@@ -5688,8 +5689,22 @@ class TestMaskedConstant:
 
 
 class TestMaskedWhereAliases:
+    def test_masked_object(self):
+        food = np.array(['green_eggs', 'ham'], dtype=object)
+        res = masked_object(food, 'green_eggs')
+        assert_equal(res.mask, [True, False])
+        assert_(res[0] is masked)
+        assert_equal(res.fill_value, 'green_eggs')
 
-    # TODO: Test masked_object, masked_equal, ...
+        res = masked_object(food, 'cheese')
+        assert_(res.mask is nomask)
+
+        res = masked_object(food, 'cheese', shrink=False)
+        assert_equal(res.mask, [False, False])
+
+        xm = array(['a', 'b', 'c'], mask=[1, 0, 0], dtype=object)
+        res = masked_object(xm, 'c')
+        assert_equal(res.mask, [True, False, True])
 
     def test_masked_values(self):
         res = masked_values(np.array([-32768.0]), np.int16(-32768))
