@@ -1305,11 +1305,11 @@ float_to_string(
     NpyAuxData *NPY_UNUSED(auxdata)
 ) {
     npy_intp N = dimensions[0];
-    NpyType *in = (NpyType *)data[0];
+    char *in = data[0];
     char *out = data[1];
     PyArray_Descr *float_descr = context->descriptors[0];
 
-    npy_intp in_stride = strides[0] / sizeof(NpyType);
+    npy_intp in_stride = strides[0];
     npy_intp out_stride = strides[1];
 
     PyArray_StringDTypeObject *descr =
@@ -1318,7 +1318,7 @@ float_to_string(
     [[maybe_unused]] int coerced_complex_to_na = 0;
 
     while (N--) {
-        if (descr->has_nan_na && float_is_nan_na(*in)) {
+        if (descr->has_nan_na && float_is_nan_na(*(NpyType *)in)) {
             if constexpr (is_complex_npy_v<NpyType>) {
                 coerced_complex_to_na = 1;
             }

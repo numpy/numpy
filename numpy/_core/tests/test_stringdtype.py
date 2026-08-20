@@ -1108,6 +1108,19 @@ def test_cfloat_to_string_nan_na(typename, nan_like_na_object):
     assert arr[1] == "(inf+1j)"
 
 
+def test_cfloat_to_string_nan_na_strided_field_view(nan_like_na_object):
+    # the field view's byte stride is aligned but not a multiple of the
+    # itemsize; the NaN check and the value read must step in bytes
+    rec = np.zeros(3, dtype=[("c", "c16"), ("pad", "f8")])
+    rec["c"] = [1 + 2j, complex(np.nan, 4.0), 5 + 6j]
+    dt = StringDType(na_object=nan_like_na_object)
+    with pytest.warns(ComplexWarning):
+        res = rec["c"].astype(dt)
+    assert res[0] == "(1+2j)"
+    assert res[1] is nan_like_na_object
+    assert res[2] == "(5+6j)"
+
+
 @pytest.mark.parametrize("typename", ["float16", "float32", "float64",
                                       "longdouble"])
 def test_setitem_nan_na_matches_float_cast(typename, nan_like_na_object):
