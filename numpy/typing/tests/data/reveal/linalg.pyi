@@ -10,6 +10,10 @@ from numpy.linalg._linalg import (
     SVDResult,
 )
 
+type _1D = tuple[int]
+type _2D = tuple[int, int]
+type _3D = tuple[int, int, int]
+
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
@@ -74,6 +78,7 @@ AR_c8_2d: _Array2D[np.complex64]
 AR_c8_3d: _Array3D[np.complex64]
 AR_c16_1d: _Array1D[np.complex128]
 AR_c16_2d: _Array2D[np.complex128]
+AR_c16_3d: _Array3D[np.complex128]
 
 ###
 
@@ -195,15 +200,32 @@ assert_type(np.linalg.eigvalsh(AR_i8), npt.NDArray[np.float64])
 assert_type(np.linalg.eigvalsh(AR_f8), npt.NDArray[np.float64])
 assert_type(np.linalg.eigvalsh(AR_c16), npt.NDArray[np.float64])
 
-assert_type(np.linalg.eig(AR_i8), EigResult[np.complex128])
-assert_type(np.linalg.eig(AR_f4), EigResult[np.complex64])
-assert_type(np.linalg.eig(AR_f8), EigResult[np.complex128])
+assert_type(np.linalg.eig(AR_i8), EigResult[np.float64 | np.complex128])
+assert_type(np.linalg.eig(AR_f4), EigResult[np.float32 | np.complex64])
+assert_type(np.linalg.eig(AR_f8), EigResult[np.float64 | np.complex128])
 assert_type(np.linalg.eig(AR_c8), EigResult[np.complex64])
 assert_type(np.linalg.eig(AR_c16), EigResult[np.complex128])
 # Mypy bug: `Expression is of type "EigResult[Any]", not "EigResult[Any]"`
 assert_type(np.linalg.eig(AR_f_), EigResult[Any])  # type: ignore[assert-type]
 assert_type(np.linalg.eig(AR_c_), EigResult[Any])  # type: ignore[assert-type]
 assert_type(np.linalg.eig(AR_any), EigResult[Any])  # type: ignore[assert-type]
+
+assert_type(np.linalg.eig(AR_i1_2d), EigResult[np.float64 | np.complex128, _1D, _2D])
+assert_type(np.linalg.eig(AR_i1_3d), EigResult[np.float64 | np.complex128, _2D, _3D])
+assert_type(np.linalg.eig(AR_f8_2d), EigResult[np.float64 | np.complex128, _1D, _2D])
+assert_type(np.linalg.eig(AR_f8_3d), EigResult[np.float64 | np.complex128, _2D, _3D])
+assert_type(np.linalg.eig(AR_f4_2d), EigResult[np.float32 | np.complex64, _1D, _2D])
+assert_type(np.linalg.eig(AR_f4_3d), EigResult[np.float32 | np.complex64, _2D, _3D])
+assert_type(np.linalg.eig(AR_c16_2d), EigResult[np.complex128, _1D, _2D])
+assert_type(np.linalg.eig(AR_c16_3d), EigResult[np.complex128, _2D, _3D])
+assert_type(np.linalg.eig(AR_c8_2d), EigResult[np.complex64, _1D, _2D])
+assert_type(np.linalg.eig(AR_c8_3d), EigResult[np.complex64, _2D, _3D])
+assert_type(np.linalg.eig(int_list_2d), EigResult[np.float64 | np.complex128, _1D, _2D])
+assert_type(np.linalg.eig(int_list_3d), EigResult[np.float64 | np.complex128, _2D, _3D])
+assert_type(np.linalg.eig(float_list_2d), EigResult[np.float64 | np.complex128, _1D, _2D])
+assert_type(np.linalg.eig(float_list_3d), EigResult[np.float64 | np.complex128, _2D, _3D])
+assert_type(np.linalg.eig(complex_list_2d), EigResult[np.complex128, _1D, _2D])
+assert_type(np.linalg.eig(complex_list_3d), EigResult[np.complex128, _2D, _3D])
 
 assert_type(np.linalg.eigh(AR_i8), EighResult[np.float64, np.float64])
 assert_type(np.linalg.eigh(AR_f4), EighResult[np.float32, np.float32])
