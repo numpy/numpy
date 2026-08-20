@@ -7010,7 +7010,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # fallback
     def __and__(self: _ArrayInt_co, other: _ArrayLikeInt_co, /) -> NDArray[Any]: ...
 
-    # keep in sync with __and__
+    #
     @overload  # Nd bool, 0d|Nd bool
     def __rand__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[bool_]],
@@ -7058,50 +7058,197 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # fallback
     def __rand__(self: _ArrayInt_co, other: _ArrayLikeInt_co, /) -> NDArray[Any]: ...
 
-    #
-    @overload
-    def __xor__(self: NDArray[bool_], other: _ArrayLikeBool_co, /) -> NDArray[bool_]: ...
-    @overload
-    def __xor__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co, /) -> NDArray[unsignedinteger]: ...
-    @overload
-    def __xor__(self: _ArrayInt_co, other: _ArrayLikeInt_co, /) -> NDArray[signedinteger]: ...
-    @overload
-    def __xor__(self: NDArray[object_], other: Any, /) -> Any: ...
-    @overload
-    def __xor__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
+    # keep in sync with __and__
+    @overload  # Nd bool, 0d|Nd bool
+    def __xor__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[bool_]],
+        other: py_bool | bool_ | ndarray[ShapeT, _dtype[bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # Nd bool, 0d|Nd T:integer
+    def __xor__[ShapeT: _Shape, ScalarT: integer](
+        self: ndarray[ShapeT, _dtype[bool_]],
+        other: ScalarT | ndarray[ShapeT, _dtype[ScalarT]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd ~int64, 0d|Nd ~integer
+    def __xor__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[int64]],
+        other: _IntLike_co | ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[int64]]: ...
+    @overload  # Nd T:integer, 0d|Nd +integer|T
+    def __xor__[ShapeT: _Shape, ScalarT: integer](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        other: int | ScalarT | bool_ | ndarray[ShapeT, _dtype[ScalarT | bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd object_, Nd object
+    def __xor__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[object_]],
+        other: _IntLike_co | ndarray[ShapeT, _dtype[integer | bool_ | object_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[object_]]: ...
+    @overload  # ?d T:+integer, ?d bool|T
+    def __xor__[ScalarT: integer | bool_](
+        self: NDArray[ScalarT],
+        other: _ArrayLikeBool_co | _ArrayLike[ScalarT],
+        /,
+    ) -> NDArray[ScalarT]: ...
+    @overload  # ?d +integer, ?d ~int
+    def __xor__(self: _ArrayInt_co, other: _ArrayLike[int64] | _NestedList[int], /) -> NDArray[int64]: ...
+    @overload  # ?d ~int64, ?d ~integer
+    def __xor__(self: NDArray[int64], other: _ArrayLikeInt, /) -> NDArray[int64]: ...
+    @overload  # ?d +integer, ?d object
+    def __xor__(self: _ArrayInt_co, other: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
+    @overload  # ?d ~object, ?d object
+    def __xor__(self: NDArray[object_], other: object, /) -> NDArray[object_]: ...
+    @overload  # fallback
+    def __xor__(self: _ArrayInt_co, other: _ArrayLikeInt_co, /) -> NDArray[Any]: ...
 
-    @overload
-    def __rxor__(self: NDArray[bool_], other: _ArrayLikeBool_co, /) -> NDArray[bool_]: ...
-    @overload
-    def __rxor__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co, /) -> NDArray[unsignedinteger]: ...
-    @overload
-    def __rxor__(self: _ArrayInt_co, other: _ArrayLikeInt_co, /) -> NDArray[signedinteger]: ...
-    @overload
-    def __rxor__(self: NDArray[object_], other: Any, /) -> Any: ...
-    @overload
-    def __rxor__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
+    # keep in sync with __rand__
+    @overload  # Nd bool, 0d|Nd bool
+    def __rxor__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[bool_]],
+        other: py_bool | bool_,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # Nd bool, 0d|Nd T:integer
+    def __rxor__[ShapeT: _Shape, ScalarT: integer](
+        self: ndarray[ShapeT, _dtype[bool_]],
+        other: ScalarT | ndarray[ShapeT, _dtype[ScalarT]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd ~int64, 0d|Nd ~integer
+    def __rxor__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[int64]],
+        other: _IntLike_co | ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[int64]]: ...
+    @overload  # Nd T:integer, 0d|Nd +integer|T
+    def __rxor__[ShapeT: _Shape, ScalarT: integer](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        other: int | ScalarT | bool_ | ndarray[ShapeT, _dtype[ScalarT | bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd object_, Nd object
+    def __rxor__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[object_]],
+        other: _IntLike_co,
+        /,
+    ) -> ndarray[ShapeT, _dtype[object_]]: ...
+    @overload  # ?d T:+integer, ?d bool|T
+    def __rxor__[ScalarT: integer | bool_](
+        self: NDArray[ScalarT],
+        other: _ArrayLikeBool_co | _ArrayLike[ScalarT],
+        /,
+    ) -> NDArray[ScalarT]: ...
+    @overload  # ?d +integer, ?d ~int
+    def __rxor__(self: _ArrayInt_co, other: _ArrayLike[int64] |_NestedList[int], /) -> NDArray[int64]: ...
+    @overload  # ?d ~int64, ?d ~integer
+    def __rxor__(self: NDArray[int64], other: _ArrayLikeInt, /) -> NDArray[int64]: ...
+    @overload  # ?d +integer, ?d object
+    def __rxor__(self: _ArrayInt_co, other: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
+    @overload  # ?d ~object, ?d object
+    def __rxor__(self: NDArray[object_], other: object, /) -> NDArray[object_]: ...
+    @overload  # fallback
+    def __rxor__(self: _ArrayInt_co, other: _ArrayLikeInt_co, /) -> NDArray[Any]: ...
 
-    @overload
-    def __or__(self: NDArray[bool_], other: _ArrayLikeBool_co, /) -> NDArray[bool_]: ...
-    @overload
-    def __or__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co, /) -> NDArray[unsignedinteger]: ...
-    @overload
-    def __or__(self: _ArrayInt_co, other: _ArrayLikeInt_co, /) -> NDArray[signedinteger]: ...
-    @overload
-    def __or__(self: NDArray[object_], other: Any, /) -> Any: ...
-    @overload
-    def __or__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
+    # keep in sync with __and__
+    @overload  # Nd bool, 0d|Nd bool
+    def __or__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[bool_]],
+        other: py_bool | bool_ | ndarray[ShapeT, _dtype[bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # Nd bool, 0d|Nd T:integer
+    def __or__[ShapeT: _Shape, ScalarT: integer](
+        self: ndarray[ShapeT, _dtype[bool_]],
+        other: ScalarT | ndarray[ShapeT, _dtype[ScalarT]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd ~int64, 0d|Nd ~integer
+    def __or__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[int64]],
+        other: _IntLike_co | ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[int64]]: ...
+    @overload  # Nd T:integer, 0d|Nd +integer|T
+    def __or__[ShapeT: _Shape, ScalarT: integer](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        other: int | ScalarT | bool_ | ndarray[ShapeT, _dtype[ScalarT | bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd object_, Nd object
+    def __or__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[object_]],
+        other: _IntLike_co | ndarray[ShapeT, _dtype[integer | bool_ | object_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[object_]]: ...
+    @overload  # ?d T:+integer, ?d bool|T
+    def __or__[ScalarT: integer | bool_](
+        self: NDArray[ScalarT],
+        other: _ArrayLikeBool_co | _ArrayLike[ScalarT],
+        /,
+    ) -> NDArray[ScalarT]: ...
+    @overload  # ?d +integer, ?d ~int
+    def __or__(self: _ArrayInt_co, other: _ArrayLike[int64] | _NestedList[int], /) -> NDArray[int64]: ...
+    @overload  # ?d ~int64, ?d ~integer
+    def __or__(self: NDArray[int64], other: _ArrayLikeInt, /) -> NDArray[int64]: ...
+    @overload  # ?d +integer, ?d object
+    def __or__(self: _ArrayInt_co, other: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
+    @overload  # ?d ~object, ?d object
+    def __or__(self: NDArray[object_], other: object, /) -> NDArray[object_]: ...
+    @overload  # fallback
+    def __or__(self: _ArrayInt_co, other: _ArrayLikeInt_co, /) -> NDArray[Any]: ...
 
-    @overload
-    def __ror__(self: NDArray[bool_], other: _ArrayLikeBool_co, /) -> NDArray[bool_]: ...
-    @overload
-    def __ror__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co, /) -> NDArray[unsignedinteger]: ...
-    @overload
-    def __ror__(self: _ArrayInt_co, other: _ArrayLikeInt_co, /) -> NDArray[signedinteger]: ...
-    @overload
-    def __ror__(self: NDArray[object_], other: Any, /) -> Any: ...
-    @overload
-    def __ror__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
+    # keep in sync with __rand__
+    @overload  # Nd bool, 0d|Nd bool
+    def __ror__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[bool_]],
+        other: py_bool | bool_,
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # Nd bool, 0d|Nd T:integer
+    def __ror__[ShapeT: _Shape, ScalarT: integer](
+        self: ndarray[ShapeT, _dtype[bool_]],
+        other: ScalarT | ndarray[ShapeT, _dtype[ScalarT]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd ~int64, 0d|Nd ~integer
+    def __ror__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[int64]],
+        other: _IntLike_co | ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[int64]]: ...
+    @overload  # Nd T:integer, 0d|Nd +integer|T
+    def __ror__[ShapeT: _Shape, ScalarT: integer](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        other: int | ScalarT | bool_ | ndarray[ShapeT, _dtype[ScalarT | bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd object_, Nd object
+    def __ror__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[object_]],
+        other: _IntLike_co,
+        /,
+    ) -> ndarray[ShapeT, _dtype[object_]]: ...
+    @overload  # ?d T:+integer, ?d bool|T
+    def __ror__[ScalarT: integer | bool_](
+        self: NDArray[ScalarT],
+        other: _ArrayLikeBool_co | _ArrayLike[ScalarT],
+        /,
+    ) -> NDArray[ScalarT]: ...
+    @overload  # ?d +integer, ?d ~int
+    def __ror__(self: _ArrayInt_co, other: _ArrayLike[int64] |_NestedList[int], /) -> NDArray[int64]: ...
+    @overload  # ?d ~int64, ?d ~integer
+    def __ror__(self: NDArray[int64], other: _ArrayLikeInt, /) -> NDArray[int64]: ...
+    @overload  # ?d +integer, ?d object
+    def __ror__(self: _ArrayInt_co, other: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
+    @overload  # ?d ~object, ?d object
+    def __ror__(self: NDArray[object_], other: object, /) -> NDArray[object_]: ...
+    @overload  # fallback
+    def __ror__(self: _ArrayInt_co, other: _ArrayLikeInt_co, /) -> NDArray[Any]: ...
 
     # `np.generic` does not support inplace operations
 

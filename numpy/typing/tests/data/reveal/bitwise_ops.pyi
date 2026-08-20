@@ -35,9 +35,6 @@ assert_type(_i64 & _i64, np.int64)
 
 assert_type(_i64 << _i32_nd, npt.NDArray[np.signedinteger])
 assert_type(_i64 >> _i32_nd, npt.NDArray[np.signedinteger])
-assert_type(_i64 | _i32_nd, npt.NDArray[np.signedinteger])
-assert_type(_i64 ^ _i32_nd, npt.NDArray[np.signedinteger])
-assert_type(_i64 & _i32_nd, npt.NDArray[np.int64])
 
 assert_type(_i32 << _i32, np.int32)
 assert_type(_i32 >> _i32, np.int32)
@@ -71,9 +68,6 @@ assert_type(_u64 & _u64, np.uint64)
 
 assert_type(_u64 << _i32_nd, npt.NDArray[np.signedinteger])
 assert_type(_u64 >> _i32_nd, npt.NDArray[np.signedinteger])
-assert_type(_u64 | _i32_nd, npt.NDArray[np.signedinteger])
-assert_type(_u64 ^ _i32_nd, npt.NDArray[np.signedinteger])
-assert_type(_u64 & _i32_nd, npt.NDArray[Any])
 
 assert_type(_u32 << _u32, np.uint32)
 assert_type(_u32 >> _u32, np.uint32)
@@ -113,9 +107,6 @@ assert_type(_b & _b, np.bool)
 
 assert_type(_b << _i32_nd, npt.NDArray[np.signedinteger])
 assert_type(_b >> _i32_nd, npt.NDArray[np.signedinteger])
-assert_type(_b | _i32_nd, npt.NDArray[np.signedinteger])
-assert_type(_b ^ _i32_nd, npt.NDArray[np.signedinteger])
-assert_type(_b & _i32_nd, npt.NDArray[np.int32])
 
 assert_type(_b << _py_b, np.int8)
 assert_type(_b >> _py_b, np.int8)
@@ -259,3 +250,5 @@ assert_type(_u8_1d & _i64_1d, npt.NDArray[np.int64])
 assert_type(_u8_2d & _i64_1d, npt.NDArray[np.int64])
 assert_type(_i64 & _i64_1d, _Array1D[np.int64])
 assert_type(_i64_2d & _i64_1d, npt.NDArray[np.int64])
+
+# `ndarray.__xor__` and `ndarray.__xor__` are identical to `ndarray.__and__`
