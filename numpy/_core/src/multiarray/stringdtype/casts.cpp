@@ -2276,7 +2276,7 @@ get_casts() {
             &PyArray_StringDType, &PyArray_BytesDType);
 
     PyArrayMethod_Spec *StringToBytesCastSpec = get_cast_spec(
-        make_s2type_name(NPY_BYTE),
+        make_s2type_name(NPY_STRING),
         NPY_SAME_KIND_CASTING,
         NPY_METH_NO_FLOATINGPOINT_ERRORS,
         s2bytes_dtypes,
@@ -2287,7 +2287,7 @@ get_casts() {
             &PyArray_BytesDType, &PyArray_StringDType);
 
     PyArrayMethod_Spec *BytesToStringCastSpec = get_cast_spec(
-        make_type2s_name(NPY_BYTE),
+        make_type2s_name(NPY_STRING),
         NPY_SAME_KIND_CASTING,
         NPY_METH_NO_FLOATINGPOINT_ERRORS,
         bytes2s_dtypes,
