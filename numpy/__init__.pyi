@@ -7018,28 +7018,105 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # fallback
     def __rlshift__(self: _ArrayInt_co, other: _ArrayLikeInt_co, /) -> NDArray[Any]: ...
 
-    #
-    @overload
+    # keep in sync with __lshift__
+    @overload  # Nd bool, 0d|Nd bool
+    def __rshift__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[int8 | bool_]],
+        other: py_bool | int8 | bool_ | ndarray[ShapeT, _dtype[int8 | bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[int8]]: ...
+    @overload  # Nd bool, 0d|Nd T:integer
+    def __rshift__[ShapeT: _Shape, ScalarT: integer](
+        self: ndarray[ShapeT, _dtype[bool_]],
+        other: ScalarT | ndarray[ShapeT, _dtype[ScalarT]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd ~int64, 0d|Nd ~integer
+    def __rshift__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[int64]],
+        other: _IntLike_co | ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[int64]]: ...
+    @overload  # Nd T:integer, 0d|Nd +integer|T
+    def __rshift__[ShapeT: _Shape, ScalarT: integer](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        other: int | ScalarT | bool_ | ndarray[ShapeT, _dtype[ScalarT | bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd object_, Nd object
+    def __rshift__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[object_]],
+        other: _IntLike_co | ndarray[ShapeT, _dtype[integer | bool_ | object_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[object_]]: ...
+    @overload  # ?d T:integer, ?d bool|T
+    def __rshift__[ScalarT: integer](
+        self: NDArray[ScalarT],
+        other: _ArrayLikeBool_co | _ArrayLike[ScalarT],
+        /,
+    ) -> NDArray[ScalarT]: ...
+    @overload  # ?d bool, ?d ~bool
     def __rshift__(self: NDArray[bool_], other: _ArrayLikeBool_co, /) -> NDArray[int8]: ...
-    @overload
-    def __rshift__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co, /) -> NDArray[unsignedinteger]: ...
-    @overload
-    def __rshift__(self: _ArrayInt_co, other: _ArrayLikeInt_co, /) -> NDArray[signedinteger]: ...
-    @overload
-    def __rshift__(self: NDArray[object_], other: Any, /) -> Any: ...
-    @overload
-    def __rshift__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
+    @overload  # ?d +integer, ?d ~int
+    def __rshift__(self: _ArrayInt_co, other: _ArrayLike[int64] | _NestedList[int], /) -> NDArray[int64]: ...
+    @overload  # ?d ~int64, ?d ~integer
+    def __rshift__(self: NDArray[int64], other: _ArrayLikeInt, /) -> NDArray[int64]: ...
+    @overload  # ?d +integer, ?d object
+    def __rshift__(self: _ArrayInt_co, other: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
+    @overload  # ?d ~object, ?d object
+    def __rshift__(self: NDArray[object_], other: object, /) -> NDArray[object_]: ...
+    @overload  # fallback
+    def __rshift__(self: _ArrayInt_co, other: _ArrayLikeInt_co, /) -> NDArray[Any]: ...
 
-    @overload
+    # keep in sync with __rlshift__
+    @overload  # Nd bool, 0d|Nd bool
+    def __rrshift__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[int8 | bool_]],
+        other: py_bool | int8 | bool_,
+        /,
+    ) -> ndarray[ShapeT, _dtype[int8]]: ...
+    @overload  # Nd bool, 0d|Nd T:integer
+    def __rrshift__[ShapeT: _Shape, ScalarT: integer](
+        self: ndarray[ShapeT, _dtype[bool_]],
+        other: ScalarT | ndarray[ShapeT, _dtype[ScalarT]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd ~int64, 0d|Nd ~integer
+    def __rrshift__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[int64]],
+        other: _IntLike_co | ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[int64]]: ...
+    @overload  # Nd T:integer, 0d|Nd +integer|T
+    def __rrshift__[ShapeT: _Shape, ScalarT: integer](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        other: int | ScalarT | bool_ | ndarray[ShapeT, _dtype[ScalarT | bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd object_, Nd object
+    def __rrshift__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[object_]],
+        other: _IntLike_co,
+        /,
+    ) -> ndarray[ShapeT, _dtype[object_]]: ...
+    @overload  # ?d T:integer, ?d bool|T
+    def __rrshift__[ScalarT: integer](
+        self: NDArray[ScalarT],
+        other: _ArrayLikeBool_co | _ArrayLike[ScalarT],
+        /,
+    ) -> NDArray[ScalarT]: ...
+    @overload  # ?d bool, ?d ~bool
     def __rrshift__(self: NDArray[bool_], other: _ArrayLikeBool_co, /) -> NDArray[int8]: ...
-    @overload
-    def __rrshift__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co, /) -> NDArray[unsignedinteger]: ...
-    @overload
-    def __rrshift__(self: _ArrayInt_co, other: _ArrayLikeInt_co, /) -> NDArray[signedinteger]: ...
-    @overload
-    def __rrshift__(self: NDArray[object_], other: Any, /) -> Any: ...
-    @overload
-    def __rrshift__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
+    @overload  # ?d +integer, ?d ~int
+    def __rrshift__(self: _ArrayInt_co, other: _ArrayLike[int64] | _NestedList[int], /) -> NDArray[int64]: ...
+    @overload  # ?d ~int64, ?d ~integer
+    def __rrshift__(self: NDArray[int64], other: _ArrayLikeInt, /) -> NDArray[int64]: ...
+    @overload  # ?d +integer, ?d object
+    def __rrshift__(self: _ArrayInt_co, other: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
+    @overload  # ?d ~object, ?d object
+    def __rrshift__(self: NDArray[object_], other: object, /) -> NDArray[object_]: ...
+    @overload  # fallback
+    def __rrshift__(self: _ArrayInt_co, other: _ArrayLikeInt_co, /) -> NDArray[Any]: ...
 
     #
     @overload  # Nd bool, 0d|Nd bool
