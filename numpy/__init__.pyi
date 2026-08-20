@@ -6303,65 +6303,215 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 
     # Binary ops
 
-    # TODO: Support the "1d @ 1d -> scalar" case
-    @overload
-    def __matmul__[ScalarT: number](self: NDArray[ScalarT], other: _ArrayLikeBool_co, /) -> NDArray[ScalarT]: ...
-    @overload
-    def __matmul__(self: NDArray[bool_], other: _ArrayLikeBool_co, /) -> NDArray[bool_]: ...
-    @overload
-    def __matmul__[ScalarT: number](self: NDArray[bool_], other: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
-    @overload
-    def __matmul__(self: NDArray[floating[_64Bit]], other: _ArrayLikeFloat64_co, /) -> NDArray[float64]: ...
-    @overload
-    def __matmul__(self: _ArrayFloat64_co, other: _ArrayLike[floating[_64Bit]], /) -> NDArray[float64]: ...
-    @overload
-    def __matmul__(self: NDArray[complexfloating[_64Bit]], other: _ArrayLikeComplex128_co, /) -> NDArray[complex128]: ...
-    @overload
-    def __matmul__(self: _ArrayComplex128_co, other: _ArrayLike[complexfloating[_64Bit]], /) -> NDArray[complex128]: ...
-    @overload
-    def __matmul__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co, /) -> NDArray[unsignedinteger]: ...
-    @overload
-    def __matmul__(self: _ArrayInt_co, other: _ArrayLikeInt_co, /) -> NDArray[signedinteger]: ...
-    @overload
-    def __matmul__(self: _ArrayFloat_co, other: _ArrayLikeFloat_co, /) -> NDArray[floating]: ...
-    @overload
-    def __matmul__(self: _ArrayComplex_co, other: _ArrayLikeComplex_co, /) -> NDArray[complexfloating]: ...
-    @overload
-    def __matmul__(self: NDArray[number], other: _ArrayLikeNumber_co, /) -> NDArray[number]: ...
-    @overload
-    def __matmul__(self: NDArray[object_], other: Any, /) -> Any: ...
-    @overload
-    def __matmul__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
+    # keep in roughly in sync with `ndarray.dot`
+    @overload  # ?d _, Nd _  (workaround)
+    def __matmul__(
+        self: ndarray[_JustND, _dtype[number | bool_ | object_]],
+        other: _ArrayLike[number | bool_ | object_],
+        /,
+    ) -> Incomplete: ...
+    @overload  # Nd _, ?d _  (workaround)
+    def __matmul__(
+        self: NDArray[number | bool_ | object_],
+        other: ndarray[_JustND, _dtype[number | bool_ | object_]],
+        /,
+    ) -> Incomplete: ...
+    @overload  # 1d object_, 1d _
+    def __matmul__(
+        self: ndarray[_1D, _dtype[object_]],
+        other: ndarray[_1D, _dtype[number | bool_ | object_]] | Sequence[number | bool_],
+        /,
+    ) -> Any: ...
+    @overload  # 1d _, 1d object_
+    def __matmul__(
+        self: ndarray[_1D, _dtype[number | bool_]],
+        other: ndarray[_1D, _dtype[object_]],
+        /,
+    ) -> Any: ...
+    @overload  # 1d T, 1d T
+    def __matmul__[ScalarT: number | bool_](
+        self: ndarray[_1D, _dtype[ScalarT]],
+        other: ndarray[_1D, _dtype[ScalarT]] | Sequence[ScalarT],
+        /,
+    ) -> ScalarT: ...
+    @overload  # 1d _, 1d ?
+    def __matmul__(
+        self: ndarray[_0D | _1D, _dtype[number | bool_ | object_]],
+        other: ndarray[_0D | _1D, _dtype[number | bool_ | object_]] | Sequence[complex | number | bool_],
+        /,
+    ) -> Incomplete: ...
+    @overload  # 1d T, 2d T
+    def __matmul__[ScalarT: number | bool_ | object_](
+        self: ndarray[_1D, _dtype[ScalarT]],
+        other: ndarray[_2D, _dtype[ScalarT]] | Sequence[Sequence[ScalarT]],
+        /,
+    ) -> ndarray[_1D, _dtype[ScalarT]]: ...
+    @overload  # 1d _, 2d ?
+    def __matmul__(
+        self: ndarray[_1D, _dtype[number | bool_ | object_]],
+        other: ndarray[_2D, _dtype[number | bool_ | object_]] | Sequence[Sequence[complex | number | bool_]],
+        /,
+    ) -> ndarray[_1D, _dtype[Incomplete]]: ...
+    @overload  # 2d T, 1d T
+    def __matmul__[ScalarT: number | bool_ | object_](
+        self: ndarray[_2D, _dtype[ScalarT]],
+        other: ndarray[_1D, _dtype[ScalarT]] | Sequence[ScalarT],
+        /,
+    ) -> ndarray[_1D, _dtype[ScalarT]]: ...
+    @overload  # 2d _, 1d ?
+    def __matmul__(
+        self: ndarray[_2D, _dtype[number | bool_ | object_]],
+        other: ndarray[_1D, _dtype[number | bool_ | object_]] | Sequence[complex | number | bool_],
+        /,
+    ) -> ndarray[_1D, _dtype[Incomplete]]: ...
+    @overload  # 2d T, 2d T
+    def __matmul__[ScalarT: number | bool_ | object_](
+        self: ndarray[_2D, _dtype[ScalarT]],
+        other: ndarray[_2D, _dtype[ScalarT]] | Sequence[Sequence[ScalarT]],
+        /,
+    ) -> ndarray[_2D, _dtype[ScalarT]]: ...
+    @overload  # 2d _, 2d ?
+    def __matmul__(
+        self: ndarray[_2D, _dtype[number | bool_ | object_]],
+        other: ndarray[_2D, _dtype[number | bool_ | object_]] | Sequence[Sequence[complex | number | bool_]],
+        /,
+    ) -> ndarray[_2D, _dtype[Incomplete]]: ...
+    @overload  # 2d T, ?d T
+    def __matmul__[ScalarT: number | bool_ | object_](
+        self: ndarray[_2D, _dtype[ScalarT]],
+        other: _ArrayLike[ScalarT],
+        /,
+    ) -> NDArray[ScalarT]: ...
+    @overload  # 2d _, ?d ?
+    def __matmul__(
+        self: ndarray[_2D, _dtype[number | bool_ | object_]],
+        other: _ArrayLike[number | bool_ | object_] | _NestedSequence[complex],
+        /,
+    ) -> NDArray[Incomplete]: ...
+    @overload  # ?d T, 2d T
+    def __matmul__[ScalarT: number | bool_ | object_](
+        self: NDArray[ScalarT],
+        other: ndarray[_2D, _dtype[ScalarT]] | Sequence[Sequence[ScalarT]],
+        /,
+    ) -> NDArray[ScalarT]: ...
+    @overload  # ?d _, 2d ?
+    def __matmul__(
+        self: NDArray[number | bool_ | object_],
+        other: ndarray[_2D, _dtype[number | bool_ | object_]] | Sequence[Sequence[complex | number | bool_]],
+        /,
+    ) -> NDArray[Incomplete]: ...
+    @overload  # ?d, ?d
+    def __matmul__(
+        self: NDArray[number | bool_ | object_],
+        other: _ArrayLike[number | bool_ | object_] | _NestedSequence[complex],
+        /,
+    ) -> ndarray | Any: ...
 
-    @overload  # signature equivalent to __matmul__
-    def __rmatmul__[ScalarT: number](self: NDArray[ScalarT], other: _ArrayLikeBool_co, /) -> NDArray[ScalarT]: ...
-    @overload
-    def __rmatmul__(self: NDArray[bool_], other: _ArrayLikeBool_co, /) -> NDArray[bool_]: ...
-    @overload
-    def __rmatmul__[ScalarT: number](self: NDArray[bool_], other: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
-    @overload
-    def __rmatmul__(self: NDArray[floating[_64Bit]], other: _ArrayLikeFloat64_co, /) -> NDArray[float64]: ...
-    @overload
-    def __rmatmul__(self: _ArrayFloat64_co, other: _ArrayLike[floating[_64Bit]], /) -> NDArray[float64]: ...
-    @overload
-    def __rmatmul__(self: NDArray[complexfloating[_64Bit]], other: _ArrayLikeComplex128_co, /) -> NDArray[complex128]: ...
-    @overload
-    def __rmatmul__(self: _ArrayComplex128_co, other: _ArrayLike[complexfloating[_64Bit]], /) -> NDArray[complex128]: ...
-    @overload
-    def __rmatmul__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co, /) -> NDArray[unsignedinteger]: ...
-    @overload
-    def __rmatmul__(self: _ArrayInt_co, other: _ArrayLikeInt_co, /) -> NDArray[signedinteger]: ...
-    @overload
-    def __rmatmul__(self: _ArrayFloat_co, other: _ArrayLikeFloat_co, /) -> NDArray[floating]: ...
-    @overload
-    def __rmatmul__(self: _ArrayComplex_co, other: _ArrayLikeComplex_co, /) -> NDArray[complexfloating]: ...
-    @overload
-    def __rmatmul__(self: NDArray[number], other: _ArrayLikeNumber_co, /) -> NDArray[number]: ...
-    @overload
-    def __rmatmul__(self: NDArray[object_], other: Any, /) -> Any: ...
-    @overload
-    def __rmatmul__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
+    # keep in sync with `ndarray.__matmul__`
+    @overload  # ?d _, Nd _  (workaround)
+    def __rmatmul__(
+        self: ndarray[_JustND, _dtype[number | bool_ | object_]],
+        other: _ArrayLike[number | bool_ | object_],
+        /,
+    ) -> Incomplete: ...
+    @overload  # Nd _, ?d _  (workaround)
+    def __rmatmul__(
+        self: NDArray[number | bool_ | object_],
+        other: ndarray[_JustND, _dtype[number | bool_ | object_]],
+        /,
+    ) -> Incomplete: ...
+    @overload  # 1d object_, 1d _
+    def __rmatmul__(
+        self: ndarray[_1D, _dtype[object_]],
+        other: ndarray[_1D, _dtype[number | bool_ | object_]] | Sequence[number | bool_],
+        /,
+    ) -> Any: ...
+    @overload  # 1d _, 1d object_
+    def __rmatmul__(
+        self: ndarray[_1D, _dtype[number | bool_]],
+        other: ndarray[_1D, _dtype[object_]],
+        /,
+    ) -> Any: ...
+    @overload  # 1d T, 1d T
+    def __rmatmul__[ScalarT: number | bool_](
+        self: ndarray[_1D, _dtype[ScalarT]],
+        other: ndarray[_1D, _dtype[ScalarT]] | Sequence[ScalarT],
+        /,
+    ) -> ScalarT: ...
+    @overload  # 1d _, 1d ?
+    def __rmatmul__(
+        self: ndarray[_0D | _1D, _dtype[number | bool_ | object_]],
+        other: ndarray[_0D | _1D, _dtype[number | bool_ | object_]] | Sequence[complex | number | bool_],
+        /,
+    ) -> Incomplete: ...
+    @overload  # 1d T, 2d T
+    def __rmatmul__[ScalarT: number | bool_ | object_](
+        self: ndarray[_1D, _dtype[ScalarT]],
+        other: ndarray[_2D, _dtype[ScalarT]] | Sequence[Sequence[ScalarT]],
+        /,
+    ) -> ndarray[_1D, _dtype[ScalarT]]: ...
+    @overload  # 1d _, 2d ?
+    def __rmatmul__(
+        self: ndarray[_1D, _dtype[number | bool_ | object_]],
+        other: ndarray[_2D, _dtype[number | bool_ | object_]] | Sequence[Sequence[complex | number | bool_]],
+        /,
+    ) -> ndarray[_1D, _dtype[Incomplete]]: ...
+    @overload  # 2d T, 1d T
+    def __rmatmul__[ScalarT: number | bool_ | object_](
+        self: ndarray[_2D, _dtype[ScalarT]],
+        other: ndarray[_1D, _dtype[ScalarT]] | Sequence[ScalarT],
+        /,
+    ) -> ndarray[_1D, _dtype[ScalarT]]: ...
+    @overload  # 2d _, 1d ?
+    def __rmatmul__(
+        self: ndarray[_2D, _dtype[number | bool_ | object_]],
+        other: ndarray[_1D, _dtype[number | bool_ | object_]] | Sequence[complex | number | bool_],
+        /,
+    ) -> ndarray[_1D, _dtype[Incomplete]]: ...
+    @overload  # 2d T, 2d T
+    def __rmatmul__[ScalarT: number | bool_ | object_](
+        self: ndarray[_2D, _dtype[ScalarT]],
+        other: ndarray[_2D, _dtype[ScalarT]] | Sequence[Sequence[ScalarT]],
+        /,
+    ) -> ndarray[_2D, _dtype[ScalarT]]: ...
+    @overload  # 2d _, 2d ?
+    def __rmatmul__(
+        self: ndarray[_2D, _dtype[number | bool_ | object_]],
+        other: ndarray[_2D, _dtype[number | bool_ | object_]] | Sequence[Sequence[complex | number | bool_]],
+        /,
+    ) -> ndarray[_2D, _dtype[Incomplete]]: ...
+    @overload  # 2d T, ?d T
+    def __rmatmul__[ScalarT: number | bool_ | object_](
+        self: ndarray[_2D, _dtype[ScalarT]],
+        other: _ArrayLike[ScalarT],
+        /,
+    ) -> NDArray[ScalarT]: ...
+    @overload  # 2d _, ?d ?
+    def __rmatmul__(
+        self: ndarray[_2D, _dtype[number | bool_ | object_]],
+        other: _ArrayLike[number | bool_ | object_] | _NestedSequence[complex],
+        /,
+    ) -> NDArray[Incomplete]: ...
+    @overload  # ?d T, 2d T
+    def __rmatmul__[ScalarT: number | bool_ | object_](
+        self: NDArray[ScalarT],
+        other: ndarray[_2D, _dtype[ScalarT]] | Sequence[Sequence[ScalarT]],
+        /,
+    ) -> NDArray[ScalarT]: ...
+    @overload  # ?d _, 2d ?
+    def __rmatmul__(
+        self: NDArray[number | bool_ | object_],
+        other: ndarray[_2D, _dtype[number | bool_ | object_]] | Sequence[Sequence[complex | number | bool_]],
+        /,
+    ) -> NDArray[Incomplete]: ...
+    @overload  # ?d, ?d
+    def __rmatmul__(
+        self: NDArray[number | bool_ | object_],
+        other: _ArrayLike[number | bool_ | object_] | _NestedSequence[complex],
+        /,
+    ) -> ndarray | Any: ...
 
+    #
     @overload
     def __mod__[ScalarT: floating | integer](
         self: NDArray[ScalarT], other: int | bool_, /
