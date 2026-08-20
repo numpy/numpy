@@ -1452,7 +1452,8 @@ class TestPickling:
         dt.__setstate__(state_with_endian(swapped))
         assert dt.byteorder == swapped
 
-        for endian in ['\N{MICRO SIGN}', '\N{SNOWMAN}', '', '>>', b'', b'>>']:
+        for endian in ['\N{MICRO SIGN}', '\N{SNOWMAN}', '\ud800', '', '>>',
+                       b'', b'>>']:
             with pytest.raises(
                 ValueError, match="endian is not 1-char string"
             ):
