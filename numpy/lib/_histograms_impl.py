@@ -791,6 +791,10 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
 
     bin_edges, uniform_bins = _get_bin_edges(a, bins, range, weights)
 
+    # If Histogram is of type object make it a float.
+    if a.dtype == object:
+        a = a.astype(float)
+
     # Histogram is an integer or a float array depending on the weights.
     if weights is None:
         ntype = np.dtype(np.intp)
