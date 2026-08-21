@@ -23,7 +23,7 @@
 /*
  * Internal helper to create new instances
  */
-PyObject *
+NPY_NO_EXPORT PyObject *
 new_stringdtype_instance(PyObject *na_object, int coerce)
 {
     PyObject *new =
@@ -178,7 +178,7 @@ na_eq_cmp(PyObject *a, PyObject *b) {
 }
 
 // sets the logical rules for determining equality between dtype instances
-int
+static int
 _eq_comparison(int scoerce, int ocoerce, PyObject *sna, PyObject *ona)
 {
     if (scoerce != ocoerce) {
@@ -374,7 +374,7 @@ string_discover_descriptor_from_pyobject(PyTypeObject *NPY_UNUSED(cls),
 
 // Take a python object `obj` and insert it into the array of dtype `descr` at
 // the position given by dataptr.
-int
+NPY_NO_EXPORT int
 stringdtype_setitem(PyArray_StringDTypeObject *descr, PyObject *obj, char **dataptr)
 {
     npy_packed_static_string *sdata = (npy_packed_static_string *)dataptr;
@@ -476,7 +476,7 @@ fail:
 
 // PyArray_NonzeroFunc
 // Unicode strings are nonzero if their length is nonzero.
-npy_bool
+static npy_bool
 nonzero(void *data, void *arr)
 {
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(arr);
@@ -499,7 +499,7 @@ nonzero(void *data, void *arr)
 
 // Implementation of PyArray_CompareFunc.
 // Compares unicode strings by their code points.
-int
+static int
 compare(void *a, void *b, void *arr)
 {
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(arr);
@@ -573,7 +573,7 @@ stringdtype_binsearch_compare(const void *a, const void *b,
                     (PyArray_StringDTypeObject *)PyArray_DESCR(arr_b));
 }
 
-int
+NPY_NO_EXPORT int
 _sort_compare(const void *a, const void *b, void *context)
 {
     PyArrayMethod_Context *sort_context = (PyArrayMethod_Context *)context;
@@ -586,7 +586,7 @@ _sort_compare(const void *a, const void *b, void *context)
 
 // PyArray_ArgFunc
 // The max element is the one with the highest unicode code point.
-int
+static int
 argmax(char *data, npy_intp n, npy_intp *max_ind, void *arr)
 {
     PyArray_Descr *descr = PyArray_DESCR(arr);
@@ -602,7 +602,7 @@ argmax(char *data, npy_intp n, npy_intp *max_ind, void *arr)
 
 // PyArray_ArgFunc
 // The min element is the one with the lowest unicode code point.
-int
+static int
 argmin(char *data, npy_intp n, npy_intp *min_ind, void *arr)
 {
     PyArray_Descr *descr = PyArray_DESCR(arr);
@@ -702,7 +702,7 @@ stringdtype_is_known_scalar_type(PyArray_DTypeMeta *cls,
     return 0;
 }
 
-PyArray_Descr *
+NPY_NO_EXPORT PyArray_Descr *
 stringdtype_finalize_descr(PyArray_Descr *dtype)
 {
     PyArray_StringDTypeObject *sdtype = (PyArray_StringDTypeObject *)dtype;
@@ -1120,7 +1120,7 @@ init_string_dtype(void)
     return 0;
 }
 
-int
+NPY_NO_EXPORT int
 free_and_copy(npy_string_allocator *in_allocator,
               npy_string_allocator *out_allocator,
               const npy_packed_static_string *in,
