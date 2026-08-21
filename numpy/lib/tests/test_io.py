@@ -2496,6 +2496,71 @@ M   33  21.99
 
         assert_array_equal(a, b)
 
+    def test_genfromtxt_commented_names_false_skips_multiple_comments(self):
+        data = TextIO(
+            "# unrelated note\n"
+            "# Color Type Origin Stolen\n"
+            "Color Type Origin Stolen\n"
+            "Red Sports Domestic Yes\n"
+        )
+        a = np.genfromtxt(data, dtype=None, names=True,
+                         commented_names=False, encoding=None)
+        assert a.dtype.names == ('Color', 'Type', 'Origin', 'Stolen')
+
+    def test_genfromtxt_commented_names_true_uses_last_comment(self):
+        data = TextIO(
+            "# unrelated note\n"
+            "# Color Type Origin Stolen\n"
+            "Red Sports Domestic Yes\n"
+            "Yellow SUV Imported No\n"
+        )
+        a = np.genfromtxt(data, dtype=None, names=True,
+                           commented_names=True, encoding=None)
+        assert a.dtype.names == ('Color', 'Type', 'Origin', 'Stolen')
+        assert len(a) == 2
+
+    def test_genfromtxt_commented_names_true_no_comment_raises(self):
+        data = TextIO("Red Sports Domestic Yes\n")
+        with pytest.raises(ValueError):
+            np.genfromtxt(data, dtype=None, names=True,
+                       commented_names=True, encoding=None)
+
+    def test_genfromtxt_commented_names_none_matches_legacy(self):
+        text = (
+            "# Color Type Origin Stolen\n"
+            "Red Sports Domestic Yes\n"
+            "Yellow SUV Imported No\n"
+        )
+        a = np.genfromtxt(TextIO(text), dtype=None, names=True,
+                          encoding=None)
+        b = np.genfromtxt(TextIO(text), dtype=None, names=True,
+                          commented_names=None, encoding=None)
+        assert a.dtype.names == b.dtype.names
+        assert_array_equal(a, b)
+
+    def test_genfromtxt_commented_names_false_no_comments(self):
+        data = TextIO(
+            "Color Type Origin Stolen\n"
+            "Red Sports Domestic Yes\n"
+        )
+        a = np.genfromtxt(data, dtype=None, names=True,
+                          commented_names=False, encoding=None)
+        assert a.dtype.names == ('Color', 'Type', 'Origin', 'Stolen')
+
+    @pytest.mark.parametrize("kwargs, match", [
+        # Wrong type for commented_names
+        (dict(dtype=None, names=True, commented_names="yes",
+              encoding=None), "commented_names"),
+        # commented_names used without names=True
+        (dict(delimiter=",", names=False, commented_names=True),
+         "names=True"),
+    ])
+    def test_genfromtxt_commented_names_invalid_usage_raises(
+            self, kwargs, match):
+        data = TextIO("# a b\n1 2\n")
+        with pytest.raises(ValueError, match=match):
+            np.genfromtxt(data, **kwargs)
+
 
 class TestPathUsage:
     # Test that pathlib.Path can be used
