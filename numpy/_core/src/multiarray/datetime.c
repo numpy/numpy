@@ -31,6 +31,7 @@
 
 #include "dtype_transfer.h"
 #include "lowlevel_strided_loops.h"
+#include "npy_extint128.h"
 
 #include <datetime.h>
 #include <time.h>
@@ -142,20 +143,40 @@ get_datetimestruct_days(const npy_datetimestruct *dts)
         (npy_uint32)dts->day - 1;                            /* [0, 365] */
     npy_uint32 doe = yoe * 365 + yoe / 4 - yoe / 100 + doy; /* [0, 146096] */
 
-    return era * (npy_int64)146097 + (npy_int64)doe - (npy_int64)719468;
+    /* era * 146097 can overflow int64 for extreme years; use 128-bit. */
+    char overflow = 0;
+    npy_extint128_t days128 = add_128(
+            mul_64_64(era, (npy_int64)146097),
+            to_128((npy_int64)doe - (npy_int64)719468),
+            &overflow);
+    npy_int64 result = to_64(days128, &overflow);
+    if (overflow) {
+        return NPY_DATETIME_NAT;
+    }
+    return result;
 }
 
 /*
  * Calculates the minutes offset from the 1970 epoch.
+ *
+ * Only used for timezone offset calculation (difference between two
+ * nearby datetimes), so the inputs are always close to the epoch and
+ * overflow cannot occur in practice.  safe_mul/safe_add are used here
+ * to eliminate signed-integer overflow UB.
  */
 NPY_NO_EXPORT npy_int64
 get_datetimestruct_minutes(const npy_datetimestruct *dts)
 {
-    npy_int64 days = get_datetimestruct_days(dts) * 24 * 60;
-    days += dts->hour * 60;
-    days += dts->min;
-
-    return days;
+    char overflow = 0;
+    npy_int64 days = get_datetimestruct_days(dts);
+    npy_int64 result = safe_mul(days, (npy_int64)24 * 60, &overflow);
+    result = safe_add(result, (npy_int64)dts->hour * 60, &overflow);
+    result = safe_add(result, (npy_int64)dts->min, &overflow);
+    
+    if (overflow) {
+        return (days < 0) ? NPY_MIN_INT64 : NPY_MAX_INT64;
+    }
+    return result;
 }
 
 static void
@@ -321,13 +342,29 @@ NpyDatetime_ConvertDatetimeStructToDatetime64(PyArray_DatetimeMetaData *meta,
         return -1;
     }
 
+    char overflow = 0;
+
     if (base == NPY_FR_Y) {
         /* Truncate to the year */
-        ret = dts->year - 1970;
+        ret = safe_sub(dts->year, (npy_int64)1970, &overflow);
     }
     else if (base == NPY_FR_M) {
-        /* Truncate to the month */
-        ret = 12 * (dts->year - 1970) + (dts->month - 1);
+        /*
+         * use 128-bit
+         * arithmetic and narrow only at the end.
+         */
+        char ov_sub = 0;
+        npy_int64 year_offset = safe_sub(dts->year, (npy_int64)1970, &ov_sub);
+        if (ov_sub) {
+            overflow = 1;
+        }
+        else {
+            npy_extint128_t acc128 = mul_64_64(year_offset, (npy_int64)12);
+            char ov_add = 0;
+            acc128 = add_128(acc128,
+                             to_128((npy_int64)(dts->month - 1)), &ov_add);
+            ret = to_64(acc128, &overflow);
+        }
     }
     else {
         /* Otherwise calculate the number of days to start */
@@ -335,88 +372,127 @@ NpyDatetime_ConvertDatetimeStructToDatetime64(PyArray_DatetimeMetaData *meta,
 
         switch (base) {
             case NPY_FR_W:
-                /* Truncate to weeks */
+                /* Truncate to weeks (floor division toward -inf) */
                 if (days >= 0) {
                     ret = days / 7;
                 }
                 else {
-                    ret = (days - 6) / 7;
+                    /* days - 6 can overflow when days is near INT64_MIN.
+                     * Floor division: for negative non-multiple, subtract 1
+                     * from the truncated quotient. */
+                    npy_int64 adj = safe_sub(days, (npy_int64)6, &overflow);
+                    if (overflow) {
+                        /* days is within 6 of INT64_MIN; floor(days/7) */
+                        ret = NPY_MIN_INT64 / 7 - (NPY_MIN_INT64 % 7 != 0 ? 1 : 0);
+                        overflow = 0;
+                    }
+                    else {
+                        ret = adj / 7;
+                    }
                 }
                 break;
             case NPY_FR_D:
                 ret = days;
                 break;
-            case NPY_FR_h:
-                ret = days * 24 +
-                      dts->hour;
+        
+            case NPY_FR_h: {
+                npy_extint128_t acc128 = to_128(days);
+                acc128 = accum_128(acc128, 24,      dts->hour,      &overflow);
+                ret = to_64(acc128, &overflow);
                 break;
-            case NPY_FR_m:
-                ret = (days * 24 +
-                      dts->hour) * 60 +
-                      dts->min;
+            }
+            case NPY_FR_m: {
+                npy_extint128_t acc128 = to_128(days);
+                acc128 = accum_128(acc128, 24,      dts->hour,      &overflow);
+                acc128 = accum_128(acc128, 60,      dts->min,       &overflow);
+                ret = to_64(acc128, &overflow);
                 break;
-            case NPY_FR_s:
-                ret = ((days * 24 +
-                      dts->hour) * 60 +
-                      dts->min) * 60 +
-                      dts->sec;
+            }
+            case NPY_FR_s: {
+                npy_extint128_t acc128 = to_128(days);
+                acc128 = accum_128(acc128, 24,      dts->hour,      &overflow);
+                acc128 = accum_128(acc128, 60,      dts->min,       &overflow);
+                acc128 = accum_128(acc128, 60,      dts->sec,       &overflow);
+                ret = to_64(acc128, &overflow);
                 break;
-            case NPY_FR_ms:
-                ret = (((days * 24 +
-                      dts->hour) * 60 +
-                      dts->min) * 60 +
-                      dts->sec) * 1000 +
-                      dts->us / 1000;
+            }
+            case NPY_FR_ms: {
+                npy_extint128_t acc128 = to_128(days);
+                acc128 = accum_128(acc128, 24,      dts->hour,      &overflow);
+                acc128 = accum_128(acc128, 60,      dts->min,       &overflow);
+                acc128 = accum_128(acc128, 60,      dts->sec,       &overflow);
+                acc128 = accum_128(acc128, 1000,    dts->us / 1000, &overflow);
+                ret = to_64(acc128, &overflow);
                 break;
-            case NPY_FR_us:
-                ret = (((days * 24 +
-                      dts->hour) * 60 +
-                      dts->min) * 60 +
-                      dts->sec) * 1000000 +
-                      dts->us;
+            }
+            case NPY_FR_us: {
+                npy_extint128_t acc128 = to_128(days);
+                acc128 = accum_128(acc128, 24,      dts->hour,      &overflow);
+                acc128 = accum_128(acc128, 60,      dts->min,       &overflow);
+                acc128 = accum_128(acc128, 60,      dts->sec,       &overflow);
+                acc128 = accum_128(acc128, 1000000, dts->us,        &overflow);
+                ret = to_64(acc128, &overflow);
                 break;
-            case NPY_FR_ns:
-                ret = ((((days * 24 +
-                      dts->hour) * 60 +
-                      dts->min) * 60 +
-                      dts->sec) * 1000000 +
-                      dts->us) * 1000 +
-                      dts->ps / 1000;
+            }
+            case NPY_FR_ns: {
+                npy_extint128_t acc128 = to_128(days);
+                acc128 = accum_128(acc128, 24,      dts->hour,      &overflow);
+                acc128 = accum_128(acc128, 60,      dts->min,       &overflow);
+                acc128 = accum_128(acc128, 60,      dts->sec,       &overflow);
+                acc128 = accum_128(acc128, 1000000, dts->us,        &overflow);
+                acc128 = accum_128(acc128, 1000,    dts->ps / 1000, &overflow);
+                ret = to_64(acc128, &overflow);
                 break;
-            case NPY_FR_ps:
-                ret = ((((days * 24 +
-                      dts->hour) * 60 +
-                      dts->min) * 60 +
-                      dts->sec) * 1000000 +
-                      dts->us) * 1000000 +
-                      dts->ps;
+            }
+            case NPY_FR_ps: {
+                npy_extint128_t acc128 = to_128(days);
+                acc128 = accum_128(acc128, 24,      dts->hour,      &overflow);
+                acc128 = accum_128(acc128, 60,      dts->min,       &overflow);
+                acc128 = accum_128(acc128, 60,      dts->sec,       &overflow);
+                acc128 = accum_128(acc128, 1000000, dts->us,        &overflow);
+                acc128 = accum_128(acc128, 1000000, dts->ps,        &overflow);
+                ret = to_64(acc128, &overflow);
                 break;
+            }
             case NPY_FR_fs:
                 /* only 2.6 hours */
-                ret = (((((days * 24 +
-                      dts->hour) * 60 +
-                      dts->min) * 60 +
-                      dts->sec) * 1000000 +
-                      dts->us) * 1000000 +
-                      dts->ps) * 1000 +
-                      dts->as / 1000;
+                {
+                npy_extint128_t acc128 = to_128(days);
+                acc128 = accum_128(acc128, 24,      dts->hour,      &overflow);
+                acc128 = accum_128(acc128, 60,      dts->min,       &overflow);
+                acc128 = accum_128(acc128, 60,      dts->sec,       &overflow);
+                acc128 = accum_128(acc128, 1000000, dts->us,        &overflow);
+                acc128 = accum_128(acc128, 1000000, dts->ps,        &overflow);
+                acc128 = accum_128(acc128, 1000,    dts->as / 1000, &overflow);
+                ret = to_64(acc128, &overflow);
                 break;
+                }
             case NPY_FR_as:
                 /* only 9.2 secs */
-                ret = (((((days * 24 +
-                      dts->hour) * 60 +
-                      dts->min) * 60 +
-                      dts->sec) * 1000000 +
-                      dts->us) * 1000000 +
-                      dts->ps) * 1000000 +
-                      dts->as;
+                {
+                npy_extint128_t acc128 = to_128(days);
+                acc128 = accum_128(acc128, 24,      dts->hour,      &overflow);
+                acc128 = accum_128(acc128, 60,      dts->min,       &overflow);
+                acc128 = accum_128(acc128, 60,      dts->sec,       &overflow);
+                acc128 = accum_128(acc128, 1000000, dts->us,        &overflow);
+                acc128 = accum_128(acc128, 1000000, dts->ps,        &overflow);
+                acc128 = accum_128(acc128, 1000000, dts->as,        &overflow);
+                ret = to_64(acc128, &overflow);
                 break;
+                }
             default:
                 /* Something got corrupted */
                 PyErr_SetString(PyExc_ValueError,
                         "NumPy datetime metadata with corrupt unit value");
                 return -1;
         }
+    }
+
+    if (overflow) {
+        /* Do not call PyErr_SetString here: this function may be called
+         * from GIL-less cast loops in dtype_transfer.c. */
+        *out = NPY_DATETIME_NAT;
+        return -1;
     }
 
     /* Divide by the multiplier */
@@ -491,8 +567,17 @@ NpyDatetime_ConvertDatetime64ToDatetimeStruct(
             break;
 
         case NPY_FR_W:
-            /* A week is 7 days */
-            set_datetimestruct_days(dt * 7, out);
+            /* A week is 7 days; guard against overflow for extreme values */
+            {
+                char ov = 0;
+                npy_int64 days = safe_mul(dt, (npy_int64)7, &ov);
+                if (ov) {
+                    out->year = NPY_DATETIME_NAT;
+                }
+                else {
+                    set_datetimestruct_days(days, out);
+                }
+            }
             break;
 
         case NPY_FR_D:
@@ -2419,6 +2504,11 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
 
         if (NpyDatetime_ConvertDatetimeStructToDatetime64(meta, &dts, out) < 0) {
             Py_DECREF(utf8);
+            if (!PyErr_Occurred()) {
+                PyErr_SetString(PyExc_OverflowError,
+                        "Overflow converting datetime string: value is out "
+                        "of range for the requested unit");
+            }
             return -1;
         }
 
@@ -2563,7 +2653,15 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
                 }
             }
 
-            return NpyDatetime_ConvertDatetimeStructToDatetime64(meta, &dts, out);
+            if (NpyDatetime_ConvertDatetimeStructToDatetime64(meta, &dts, out) < 0) {
+                if (!PyErr_Occurred()) {
+                    PyErr_SetString(PyExc_OverflowError,
+                            "Overflow converting datetime object: value is out "
+                            "of range for the requested unit");
+                }
+                return -1;
+            }
+            return 0;
         }
     }
 
@@ -4066,10 +4164,17 @@ time_to_time_get_loop(
     int requires_wrap = 0;
     int inner_aligned = aligned;
     PyArray_Descr *const *descrs = context->descriptors;
-    *flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
-
     PyArray_DatetimeMetaData *meta1 = get_datetime_metadata_from_dtype(descrs[0]);
     PyArray_DatetimeMetaData *meta2 = get_datetime_metadata_from_dtype(descrs[1]);
+
+    /* Y/M casts may raise OverflowError, so require the GIL. */
+    if (meta1->base == NPY_FR_Y || meta1->base == NPY_FR_M ||
+            meta2->base == NPY_FR_Y || meta2->base == NPY_FR_M) {
+        *flags = NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_REQUIRES_PYAPI;
+    }
+    else {
+        *flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+    }
 
     if (meta1->base == meta2->base && meta1->num == meta2->num) {
         /*
