@@ -21,27 +21,43 @@ static PyMethodDef _simd_methods[] = {
     {NULL, NULL, 0, NULL}
 };
 
-PyMODINIT_FUNC PyInit__simd(void)
+NPY_VISIBILITY_HIDDEN PyObject *
+simd_module_from_def(PyModuleDef *def, const char *name)
 {
-    static struct PyModuleDef defs = {
-        .m_base = PyModuleDef_HEAD_INIT,
-        .m_name = "numpy._core._simd",
-        .m_size = -1,
-        .m_methods = _simd_methods
-    };
-    if (npy_cpu_init() < 0) {
+    PyObject *machinery = PyImport_ImportModule("importlib.machinery");
+    if (machinery == NULL) {
         return NULL;
     }
-    PyObject *m = PyModule_Create(&defs);
+    PyObject *spec = PyObject_CallMethod(
+        machinery, "ModuleSpec", "sO", name, Py_None
+    );
+    Py_DECREF(machinery);
+    if (spec == NULL) {
+        return NULL;
+    }
+    PyObject *m = PyModule_FromDefAndSpec(def, spec);
+    Py_DECREF(spec);
     if (m == NULL) {
         return NULL;
     }
+    if (PyModule_ExecDef(m, def) < 0) {
+        Py_DECREF(m);
+        return NULL;
+    }
+    return m;
+}
+
+static int
+_simd_exec(PyObject *m)
+{
+    if (npy_cpu_init() < 0) {
+        return -1;
+    }
     PyObject *targets = PyDict_New();
     if (targets == NULL) {
-        goto err;
+        return -1;
     }
-    if (PyModule_AddObject(m, "targets", targets) < 0) {
-        Py_DECREF(targets);
+    if (PyModule_AddObjectRef(m, "targets", targets) < 0) {
         goto err;
     }
     // add keys for non-supported optimizations with None value
@@ -49,8 +65,7 @@ PyMODINIT_FUNC PyInit__simd(void)
         {                                                                      \
             PyObject *simd_mod;                                                \
             if (!TESTED_FEATURES) {                                            \
-                Py_INCREF(Py_None);                                            \
-                simd_mod = Py_None;                                            \
+                simd_mod = Py_NewRef(Py_None);                                 \
             } else {                                                           \
                 simd_mod = NPY_CAT(simd_create_module_, TARGET_NAME)();        \
                 if (simd_mod == NULL) {                                        \
@@ -58,15 +73,12 @@ PyMODINIT_FUNC PyInit__simd(void)
                 }                                                              \
             }                                                                  \
             const char *target_name = NPY_TOSTRING(TARGET_NAME);               \
-            if (PyDict_SetItemString(targets, target_name, simd_mod) < 0) {    \
+            if (PyDict_SetItemString(targets, target_name, simd_mod) < 0 ||    \
+                PyModule_AddObjectRef(m, target_name, simd_mod) < 0) {         \
                 Py_DECREF(simd_mod);                                           \
                 goto err;                                                      \
             }                                                                  \
-            Py_INCREF(simd_mod);                                               \
-            if (PyModule_AddObject(m, target_name, simd_mod) < 0) {            \
-                Py_DECREF(simd_mod);                                           \
-                goto err;                                                      \
-            }                                                                  \
+            Py_DECREF(simd_mod);                                               \
         }
 
     #define ATTACH_BASELINE_MODULE(MAKE_MSVC_HAPPY)                            \
@@ -75,26 +87,44 @@ PyMODINIT_FUNC PyInit__simd(void)
             if (simd_mod == NULL) {                                            \
                 goto err;                                                      \
             }                                                                  \
-            if (PyDict_SetItemString(targets, "baseline", simd_mod) < 0) {     \
+            if (PyDict_SetItemString(targets, "baseline", simd_mod) < 0 ||     \
+                PyModule_AddObjectRef(m, "baseline", simd_mod) < 0) {          \
                 Py_DECREF(simd_mod);                                           \
                 goto err;                                                      \
             }                                                                  \
-            Py_INCREF(simd_mod);                                               \
-            if (PyModule_AddObject(m, "baseline", simd_mod) < 0) {             \
-                Py_DECREF(simd_mod);                                           \
-                goto err;                                                      \
-            }                                                                  \
+            Py_DECREF(simd_mod);                                               \
         }
     NPY_MTARGETS_CONF_DISPATCH(NPY_CPU_HAVE, ATTACH_MODULE, MAKE_MSVC_HAPPY)
     NPY_MTARGETS_CONF_BASELINE(ATTACH_BASELINE_MODULE, MAKE_MSVC_HAPPY)
 
-#ifdef Py_GIL_DISABLED
-    // signal this module supports running with the GIL disabled
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
-#endif
-
-    return m;
+    Py_DECREF(targets);
+    return 0;
 err:
-    Py_DECREF(m);
-    return NULL;
+    Py_DECREF(targets);
+    return -1;
+}
+
+static PyModuleDef_Slot _simd_slots[] = {
+    {Py_mod_exec, _simd_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
+#endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    // signal that this module supports running without an active GIL
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
+
+static struct PyModuleDef _simd_moduledef = {
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "numpy._core._simd",
+    .m_size = 0,
+    .m_methods = _simd_methods,
+    .m_slots = _simd_slots,
+};
+
+PyMODINIT_FUNC PyInit__simd(void)
+{
+    return PyModuleDef_Init(&_simd_moduledef);
 }
