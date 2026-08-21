@@ -1447,3 +1447,32 @@ def test_memmap_takes_fast_route(tmpdir):
         # For completeness, same for nanmin.
         with pytest.raises(ValueError, match="reduction operation fmin"):
             np.nanmin(mm, out=np.zeros(2))
+
+
+@pytest.mark.parametrize("f", [np.nanmean, np.nanstd, np.nanvar])
+def test_masked_array_all_masked(f):
+    # gh-29117: these used to raise `ValueError: output array is read-only`;
+    # a fully masked array should return a masked constant instead
+    vals_ma = np.ma.MaskedArray([np.nan, 3], mask=[True, True])
+    res = f(vals_ma)
+    assert_(np.ma.is_masked(res))
+
+
+def test_masked_array_all_masked_nanmedian():
+    # nanmedian returns a masked constant for a fully masked array, like
+    # nanmean/nanstd/nanvar, but it also emits a RuntimeWarning (gh-29117)
+    vals_ma = np.ma.MaskedArray([np.nan, 3], mask=[True, True])
+
+    with pytest.warns(RuntimeWarning, match="All-NaN slice encountered"):
+        res = np.nanmedian(vals_ma)
+    assert_(np.ma.is_masked(res))
+
+
+def test_masked_array_all_masked_nanpercentile():
+    # nanpercentile returns NaN rather than a masked constant for a fully
+    # masked array (gh-29117)
+    vals_ma = np.ma.MaskedArray([np.nan, 3], mask=[True, True])
+
+    with pytest.warns(RuntimeWarning, match="All-NaN slice encountered"):
+        res = np.nanpercentile(vals_ma, 90)
+    assert_(np.isnan(res))
