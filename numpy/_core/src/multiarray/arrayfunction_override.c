@@ -502,7 +502,19 @@ try_reduction(PyArray_ArrayFunctionDispatcherObject *self,
         where == npy_static_pydata._NoValue ? Py_True : where,
     };
     *result = PyObject_Vectorcall(self->reduction, call_args, 7, NULL);
-    return *result != NULL ? 1 : -1;
+    if (*result == NULL) {
+        /*
+         * The fast-path ufunc has no loop for this dtype; defer to the Python
+         * implementation, which may provide a fallback (e.g. `minmax` reducing
+         * via `min`/`max`).  Any other error propagates.
+         */
+        if (PyErr_ExceptionMatches(npy_static_pydata._UFuncNoLoopError)) {
+            PyErr_Clear();
+            return 0;
+        }
+        return -1;
+    }
+    return 1;
 }
 
 

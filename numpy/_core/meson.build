@@ -1332,6 +1332,8 @@ src_umath = umath_gen_headers + [
   src_file.process('src/umath/scalarmath.c.src'),
   'src/umath/ufunc_object.c',
   'src/umath/umathmodule.c',
+  'src/umath/minmax.cpp',
+  'src/umath/minmax.h',
   'src/umath/real_imag_ufuncs.cpp',
   'src/umath/special_integer_comparisons.cpp',
   'src/umath/string_ufuncs.cpp',
