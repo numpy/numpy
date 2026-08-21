@@ -615,3 +615,50 @@ class BinaryBenchInteger(Benchmark):
 
     def time_pow_five(self, dtype):
         np.power(self.a, 5)
+
+class WhereMaskTwoArgs(Benchmark):
+    params = [
+        ["add"],
+        ['float32', 'float64'],
+        [0, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5,
+         0.6, 0.7, 0.8, 0.9, 0.95, 0.98, 0.99, 1]
+    ]
+    param_names = ['func', 'dtype', 'density']
+
+    def setup(self, func, dtype, density):
+        rng = np.random.default_rng(42)
+        n = 1_000_000
+        try:
+            self.f = getattr(np, func)
+        except AttributeError:
+            raise NotImplementedError
+        self.a = rng.random(n).astype(dtype)
+        self.b = rng.random(n).astype(dtype)
+        self.out = np.full(n, 0, dtype)
+        self.mask = rng.random(n) < density
+
+    def time_where(self, func, dtype, density):
+        self.f(self.a, self.b, out=self.out, where=self.mask)
+class WhereMaskOneArgs(Benchmark):
+    params = [
+        ["sqrt", "sin"],
+        ['float32', 'float64'],
+        [0, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5,
+         0.6, 0.7, 0.8, 0.9, 0.95, 0.98, 0.99, 1]
+    ]
+    param_names = ['func', 'dtype', 'density']
+
+    def setup(self, func, dtype, density):
+        rng = np.random.default_rng(42)
+
+        n = 1_000_000
+        try:
+            self.f = getattr(np, func)
+        except AttributeError:
+            raise NotImplementedError
+        self.a = rng.random(n).astype(dtype)
+        self.out = np.full(n, 0, dtype)
+        self.mask = rng.random(n) < density
+
+    def time_where(self, func, dtype, density):
+        self.f(self.a, out=self.out, where=self.mask)
