@@ -31,6 +31,7 @@ typedef struct npy_runtime_imports_struct {
     PyObject *_convert_to_stringdtype_kwargs;
     PyObject *_default_array_repr;
     PyObject *_default_array_str;
+    PyObject *_dot_fallback;
     PyObject *_dump;
     PyObject *_dumps;
     PyObject *_getfield_is_safe;
@@ -47,6 +48,7 @@ typedef struct npy_runtime_imports_struct {
     PyObject *_ufunc_inspect_signature_builder;
     PyObject *_usefields;
     PyObject *_var;
+    PyObject *_vdot_fallback;
     PyObject *_view_is_safe;
     PyObject *_void_scalar_to_string;
 } npy_runtime_imports_struct;
