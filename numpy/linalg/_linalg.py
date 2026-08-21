@@ -17,6 +17,7 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'matrix_norm', 'vector_norm', 'vecdot']
 
 import functools
+import math
 import operator
 from typing import Any, NamedTuple
 
@@ -63,12 +64,15 @@ from numpy._core import (
     single,
     sort,
     sqrt,
+    squeeze,
     sum,
     swapaxes,
     tensordot as _core_tensordot,
     trace as _core_trace,
     transpose as _core_transpose,
+    vdot,
     vecdot as _core_vecdot,
+    where,
     zeros,
 )
 from numpy._globals import _NoValue
@@ -2565,6 +2569,107 @@ def _multi_svd_norm(x, row_axis, col_axis, op, initial=None):
     return result
 
 
+# float16 has the largest ``smallest_normal`` of the float dtypes, so a squared
+# norm at or above it is finite and normal for all of them and needs no
+# rescaling. Bounding the check this way keeps the per-dtype finfo() lookup off
+# the fast path of every norm() call.
+_SAFE_SQNORM_MIN = 6.103515625e-05
+
+_smallest_normal_cache = {}
+
+
+def _smallest_normal(dtype):
+    """``dtype``'s smallest normal, cached.
+
+    finfo() is far too slow to call on norm()'s fast paths, and the value only
+    depends on the dtype.
+    """
+    try:
+        return _smallest_normal_cache[dtype]
+    except KeyError:
+        return _smallest_normal_cache.setdefault(
+            dtype, float(finfo(dtype).smallest_normal)
+        )
+
+
+def _rescale_flat_norm(x, ret, sqnorm):
+    """Recompute a flat 2-norm whose sum of squares over- or underflowed.
+
+    ``sqnorm`` only fell outside the always-safe band, which for the wider float
+    dtypes can still be perfectly normal, so re-check it exactly here before
+    paying for the max-scaled second pass. See gh-8775.
+    """
+    if not x.size:
+        return ret
+    if isfinite(sqnorm) and sqnorm >= _smallest_normal(ret.dtype):
+        return ret
+    # An all-zero input has a zero sum of squares and a norm that is genuinely
+    # 0, so check that here rather than materializing abs(x) below for it. A
+    # sum of squares that underflowed to 0 from nonzero input still falls
+    # through and gets rescaled.
+    max_abs = abs(x).max()
+    # skip inf/nan (propagate) and all-zero input (norm is truly 0)
+    if not isfinite(max_abs) or max_abs == 0:
+        return ret
+    scaled = x / max_abs
+    return max_abs * sqrt(vdot(scaled, scaled).real)
+
+
+def _rescale_axis_norm(x, ret, axis, ord, keepdims):
+    """Fix up the over/underflowed slices of an axis-reduced ord-norm.
+
+    ``ret`` is the naive vector ord-norm / Frobenius norm over ``axis``. If any
+    slice came out non-finite, subnormal or spuriously zero, the reduction is
+    redone for the whole array with a max-scaled sum (nrm2 scaling, valid for
+    ord >= 1) and only those slices take the rescaled value; inf/nan and genuine
+    zeros keep theirs. The common case of nothing needing a rescale returns
+    ``ret`` untouched. See gh-8775.
+    """
+    if not issubclass(x.dtype.type, inexact):
+        return ret
+    # ret**ord is the per-slice power sum; below smallest_normal it has over-,
+    # under- or subnormal-flowed and lost precision, so recompute that slice.
+    # `ord` is always finite and > 1 here, so the test is applied to `ret`
+    # directly against the rooted threshold: that keeps the power off the array
+    # (and finfo() out of the call) for what is overwhelmingly the common case
+    # of nothing needing a rescale.
+    tiny_root = _smallest_normal(ret.dtype) ** (1.0 / ord)
+    # Gate on two reductions rather than the `bad` mask below: for the small
+    # reduced results this check runs on, the per-call ufunc dispatch of
+    # building that mask costs more than the reductions do. A zero or nan fails
+    # the low test and an inf fails the high one, so nothing that needs
+    # rescaling escapes; `initial` keeps empty reductions from raising.
+    if ret.ndim:
+        lo, hi = ret.min(initial=inf), ret.max(initial=-inf)
+    else:
+        lo = hi = ret
+    if tiny_root <= lo and hi < inf:
+        return ret
+    bad = ~isfinite(ret) | (ret < tiny_root)
+    # An all-zero input trips `bad` on every slice, yet none of them can be
+    # rescaled. Testing that here costs one raw pass and short-circuits on the
+    # first nonzero, so it avoids materializing abs(x) for that case.
+    ax = abs(x)
+    # initial=0 keeps empty slices at max 0 (ok mask leaves them at naive 0)
+    max_kd = ax.max(axis=axis, keepdims=True, initial=0)
+    ok_kd = isfinite(max_kd) & (max_kd != 0)  # slices we can safely rescale
+    max_abs = max_kd if keepdims else squeeze(max_kd, axis=axis)
+    ok = ok_kd if keepdims else squeeze(ok_kd, axis=axis)
+    # `bad` also fires on genuine zeros and on inf/nan, none of which can be
+    # rescaled, so the scaled pass below would be computed only to be discarded
+    # by `where`. Leaving early keeps those inputs as cheap as the common case.
+    fix = bad & ok
+    if not fix.any():
+        return ret
+    scaled = ax / where(ok_kd, max_kd, 1)
+    scaled **= ord
+    r = add.reduce(scaled, axis=axis, keepdims=keepdims)
+    r **= reciprocal(ord, dtype=r.dtype)
+    # `[()]` unwraps a fully reduced result, which `where` would otherwise turn
+    # from a scalar into a 0-d array.
+    return where(fix, max_abs * r, ret)[()]
+
+
 def _norm_dispatcher(x, ord=None, axis=None, keepdims=None):
     return (x,)
 
@@ -2733,13 +2838,18 @@ def norm(x, ord=None, axis=None, keepdims=False):
             (ord == 2 and ndim == 1)
         ):
             x = x.ravel(order='K')
-            if isComplexType(x.dtype.type):
-                x_real = x.real
-                x_imag = x.imag
-                sqnorm = x_real.dot(x_real) + x_imag.dot(x_imag)
-            else:
-                sqnorm = x.dot(x)
+            # vdot(x, x).real is a single-pass sum of squared magnitudes
+            # (== x.dot(x) for real). gh-8775: it can overflow/underflow/go
+            # subnormal while the norm is representable, so rescale those rare
+            # float cases. `_SAFE_SQNORM_MIN` bounds that check with a plain
+            # comparison, keeping finfo() -- far too slow for this fast path --
+            # off it; the inexact guard skips object arrays, whose sqnorm need
+            # not be a scalar to compare.
+            sqnorm = vdot(x, x).real
             ret = sqrt(sqnorm)
+            if (issubclass(x.dtype.type, inexact)
+                    and not _SAFE_SQNORM_MIN <= sqnorm < math.inf):
+                ret = _rescale_flat_norm(x, ret, sqnorm)
             if keepdims:
                 ret = ret.reshape(ndim * [1])
             return ret
@@ -2775,7 +2885,8 @@ def norm(x, ord=None, axis=None, keepdims=False):
         elif ord is None or ord == 2:
             # special case for speedup
             s = (x.conj() * x).real
-            return sqrt(add.reduce(s, axis=axis, keepdims=keepdims))
+            ret = sqrt(add.reduce(s, axis=axis, keepdims=keepdims))
+            return _rescale_axis_norm(x, ret, axis, 2, keepdims)
         # None of the str-type keywords for ord ('fro', 'nuc')
         # are valid for vectors
         elif isinstance(ord, str):
@@ -2785,6 +2896,9 @@ def norm(x, ord=None, axis=None, keepdims=False):
             absx **= ord
             ret = add.reduce(absx, axis=axis, keepdims=keepdims)
             ret **= reciprocal(ord, dtype=ret.dtype)
+            if ord > 1:
+                # same over/underflow rescale as the 2-norm (gh-8775)
+                ret = _rescale_axis_norm(x, ret, axis, ord, keepdims)
             return ret
     elif len(axis) == 2:
         row_axis, col_axis = axis
@@ -2814,6 +2928,9 @@ def norm(x, ord=None, axis=None, keepdims=False):
             ret = add.reduce(abs(x), axis=col_axis).min(axis=row_axis)
         elif ord in [None, 'fro', 'f']:
             ret = sqrt(add.reduce((x.conj() * x).real, axis=axis))
+            # keepdims is applied below for all matrix orders; rescale on the
+            # already-reduced result (gh-8775).
+            ret = _rescale_axis_norm(x, ret, axis, 2, keepdims=False)
         elif ord == 'nuc':
             ret = _multi_svd_norm(x, row_axis, col_axis, sum, 0)
         else:
