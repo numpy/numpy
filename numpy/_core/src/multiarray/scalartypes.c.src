@@ -35,6 +35,7 @@
 #include "npy_import.h"
 #include "dragon4.h"
 #include "npy_longdouble.h"
+#include "npy_argparse.h"
 #include "npy_buffer.h"
 #include "npy_dlpack.h"
 #include "npy_static_data.h"
@@ -2255,6 +2256,36 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
     }
 }
 
+static PyObject *
+gentype_astype(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    if (PyArray_IsScalar(self, Void)) {
+        // guard for structured data types
+        return gentype_generic_method(self, args, kwds, "astype");
+    }
+    PyArray_Descr *from = PyArray_DescrFromScalar(self);
+    if (from == NULL) {
+        return NULL;
+    }
+    PyArray_Descr *to = NULL;
+    if (PyTuple_GET_SIZE(args) >= 1
+            && !PyArray_DescrConverter(PyTuple_GET_ITEM(args, 0), &to)) {
+        Py_DECREF(from);
+        return NULL;
+    }
+
+    int equiv = (to != NULL) && PyArray_EquivTypes(from, to) && Py_TYPE(self) == (PyTypeObject *)to->typeobj;
+    Py_DECREF(from);
+    Py_XDECREF(to);
+
+    if (! equiv) {
+        return gentype_generic_method(self, args, kwds, "astype");
+        return Py_NewRef(self);
+    }
+    
+    return Py_NewRef(self);
+}
+
 
 /*
  * These gentype_* functions take keyword arguments.
@@ -2264,7 +2295,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
  *
  * #name = take, getfield, put, repeat, tofile, mean, trace, diagonal, clip,
  *         std, var, sum, cumsum, prod, cumprod, compress, sort, argsort,
- *         round, argmax, argmin, max, min, any, all, astype, resize,
+ *         round, argmax, argmin, max, min, any, all, resize,
  *         reshape, choose, tobytes, copy, searchsorted, view,
  *         flatten, ravel, squeeze#
  */
