@@ -18,6 +18,7 @@
 
 #include "blas_utils.h"
 #include "npy_cblas.h"
+#include "npy_static_data.h"
 #include "arraytypes.h" /* For TYPE_dot functions */
 
 #include <assert.h>
@@ -731,7 +732,8 @@ OBJECT_dotc(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp
         if (obj2 == NULL) {
             obj2 = Py_None;  /* raise at multiply (unless obj1 handles None) */
         }
-        PyObject *obj1_conj = PyObject_CallMethod(obj1, "conjugate", NULL);
+        PyObject *obj1_conj = PyObject_CallMethodNoArgs(
+                obj1, npy_interned_str.conjugate);
         if (obj1_conj == NULL) {
             goto fail;
         }
