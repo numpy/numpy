@@ -19,6 +19,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+env:
+  APT_TIMEOUT_MINUTES: 15
+
 jobs:
   native_ibm:
     # These jobs runs only in the main NumPy repository.
@@ -65,6 +68,7 @@ jobs:
         persist-credentials: false
 
     - name: Install dependencies
+      timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
         sudo apt update
         sudo apt install -y python3.12 python3-pip python3-dev ninja-build gfortran \
@@ -75,6 +79,7 @@ jobs:
 
     - name: Install clang
       if: matrix.config.compiler == 'clang'
+      timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
         sudo apt install -y clang-20
         echo CC=clang-20 >> $GITHUB_ENV

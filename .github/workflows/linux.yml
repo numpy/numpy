@@ -31,6 +31,9 @@ concurrency:
 permissions:
   contents: read # to fetch code (actions/checkout)
 
+env:
+  APT_TIMEOUT_MINUTES: 15
+
 jobs:
   smoke_test:
     # To enable this job on a fork, comment out:
@@ -121,6 +124,7 @@ jobs:
         pip install -r requirements/build_requirements.txt
         pip install -r requirements/test_requirements.txt -r requirements/hypothesis_requirements.txt
     - name: Install gfortran and setup OpenBLAS (MacPython build)
+      timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
         set -xe
         sudo apt update
@@ -157,6 +161,7 @@ jobs:
         persist-credentials: false
 
     - name: Creates new container
+      timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
         docker run --name the_container --interactive \
           -v $(pwd):/numpy arm32v7/ubuntu:24.04 /bin/linux32 /bin/bash -c "
@@ -204,6 +209,7 @@ jobs:
       with:
         python-version: '3.12'
     - name: Install build and benchmarking dependencies
+      timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
         sudo apt-get update
         sudo apt-get install libopenblas-dev ninja-build
@@ -263,6 +269,7 @@ jobs:
         cd tools
         pytest --pyargs numpy -m "not slow"
     - name: Test SWIG binding
+      timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
         sudo apt update
         sudo apt install make swig

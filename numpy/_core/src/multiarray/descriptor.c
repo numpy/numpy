@@ -313,7 +313,7 @@ _convert_from_tuple(PyObject *obj, int align)
          * per-instance state (a finalize slot, e.g. StringDType) could
          * never be finalized and anything using the dtype would misbehave.
          */
-        if (NPY_DT_SLOTS(NPY_DTYPE(type))->finalize_descr != NULL) {
+        if (NPY_DT_has_finalize(NPY_DTYPE(type))) {
             PyErr_Format(PyExc_TypeError,
                     "%s is not currently supported within subarray dtypes.",
                     ((PyTypeObject *)NPY_DTYPE(type))->tp_name);
@@ -356,7 +356,7 @@ _convert_from_tuple(PyObject *obj, int align)
             goto fail;
         }
         newdescr->elsize = nbytes;
-        newdescr->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
+        newdescr->subarray = PyMem_RawMalloc(sizeof(PyArray_ArrayDescr));
         if (newdescr->subarray == NULL) {
             Py_DECREF(newdescr);
             PyErr_NoMemory();
@@ -410,7 +410,7 @@ _convert_from_tuple(PyObject *obj, int align)
 static int
 _reject_unsupported_field_dtype(PyArray_Descr *descr)
 {
-    if (NPY_DT_SLOTS(NPY_DTYPE(descr))->finalize_descr != NULL) {
+    if (NPY_DT_has_finalize(NPY_DTYPE(descr))) {
         PyErr_Format(PyExc_TypeError,
                 "%s is not currently supported for structured dtype "
                 "fields.", ((PyTypeObject *)NPY_DTYPE(descr))->tp_name);
@@ -2045,7 +2045,7 @@ PyArray_DescrNew(PyArray_Descr *base_descr)
     Py_XINCREF(newdescr->fields);
     Py_XINCREF(newdescr->names);
     if (newdescr->subarray) {
-        newdescr->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
+        newdescr->subarray = PyMem_RawMalloc(sizeof(PyArray_ArrayDescr));
         if (newdescr->subarray == NULL) {
             Py_DECREF(newdescr);
             return (PyArray_Descr *)PyErr_NoMemory();
@@ -2103,7 +2103,7 @@ arraydescr_dealloc(PyArray_Descr *self)
          * instead.
          */
         PyArray_Descr *base = lself->subarray->base;
-        PyArray_free(lself->subarray);
+        PyMem_RawFree(lself->subarray);
         /*
          * The Py_REFCNT(..) == 1 check is intentional. This happens in
          * a deallocator for a type that doesn't support weakrefs and
@@ -3061,30 +3061,31 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
 
     /* Parse endian */
     if (PyUnicode_Check(endian_obj) || PyBytes_Check(endian_obj)) {
-        PyObject *tmp = NULL;
-        char *str;
+        char const *str;
         Py_ssize_t len;
 
         if (PyUnicode_Check(endian_obj)) {
-            tmp = PyUnicode_AsASCIIString(endian_obj);
-            if (tmp == NULL) {
-                return NULL;
+            if (!PyUnicode_IS_ASCII(endian_obj)) {
+                str = NULL;
+                len = 0;
             }
-            endian_obj = tmp;
+            else {
+                str = PyUnicode_AsUTF8AndSize(endian_obj, &len);
+                if (str == NULL) {
+                    return NULL;
+                }
+            }
         }
-
-        if (PyBytes_AsStringAndSize(endian_obj, &str, &len) < 0) {
-            Py_XDECREF(tmp);
-            return NULL;
+        else {
+            str = PyBytes_AS_STRING(endian_obj);
+            len = PyBytes_GET_SIZE(endian_obj);
         }
         if (len != 1) {
             PyErr_SetString(PyExc_ValueError,
                             "endian is not 1-char string in Numpy dtype unpickling");
-            Py_XDECREF(tmp);
             return NULL;
         }
         endian = str[0];
-        Py_XDECREF(tmp);
     }
     else {
         PyErr_SetString(PyExc_ValueError,
@@ -3118,7 +3119,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
     if (self->subarray) {
         Py_XDECREF(self->subarray->base);
         Py_XDECREF(self->subarray->shape);
-        PyArray_free(self->subarray);
+        PyMem_RawFree(self->subarray);
     }
     self->subarray = NULL;
 
@@ -3158,7 +3159,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
             return NULL;
         }
 
-        self->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
+        self->subarray = PyMem_RawMalloc(sizeof(PyArray_ArrayDescr));
         if (self->subarray == NULL) {
             return PyErr_NoMemory();
         }

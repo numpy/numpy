@@ -57,6 +57,9 @@ concurrency:
 permissions:
   contents: read # to fetch code (actions/checkout)
 
+env:
+  APT_TIMEOUT_MINUTES: 15
+
 jobs:
   openblas32_stable_nightly:
     # To enable this workflow on a fork, comment out:
@@ -203,6 +206,7 @@ jobs:
         python-version: '3.12'
 
     - name: Install dependencies
+      timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
         pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
         sudo apt-get update
@@ -231,6 +235,7 @@ jobs:
         python-version: '3.12'
 
     - name: Install dependencies
+      timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
         pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
         sudo apt-get update
@@ -359,6 +364,7 @@ jobs:
         python-version: '3.12'
 
     - name: Install dependencies
+      timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
         pip install -r requirements/build_requirements.txt
         pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
@@ -396,6 +402,7 @@ jobs:
         python-version: '3.12'
 
     - name: Install dependencies
+      timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
         pip install -r requirements/build_requirements.txt
         pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt

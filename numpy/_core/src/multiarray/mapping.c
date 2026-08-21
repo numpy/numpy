@@ -2102,11 +2102,6 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         if (PyArray_CopyObject(tmp_arr, op) < 0) {
              goto fail;
         }
-        /*
-         * In this branch we copy directly from a newly allocated array which
-         * may have a new descr:
-         */
-        descr = PyArray_DESCR(tmp_arr);
     }
 
     if (PyArray_MapIterCheckIndices(mit) < 0) {
@@ -2150,9 +2145,15 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         /* May need a generic copy function (only for refs and odd sizes) */
         NPY_ARRAYMETHOD_FLAGS transfer_flags;
         npy_intp itemsize = PyArray_ITEMSIZE(self);
+        /*
+         * The value's descriptor may differ from `descr`: mit->outer can
+         * present it through a buffer or a temp copy whose descriptor
+         * `finalize_descr` replaced.
+         */
         if (PyArray_GetDTypeTransferFunction(
                 1, itemsize, itemsize,
-                descr, PyArray_DESCR(self),
+                NpyIter_GetDescrArray(mit->outer)[mit->num_fancy],
+                PyArray_DESCR(self),
                 0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
             goto fail;
         }
@@ -2812,7 +2813,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     }
 
     /* create new MapIter object */
-    mit = (PyArrayMapIterObject *)PyArray_malloc(
+    mit = (PyArrayMapIterObject *)PyObject_Malloc(
             sizeof(PyArrayMapIterObject) + sizeof(NPY_cast_info));
     if (mit == NULL) {
         Py_DECREF(intp_descr);
@@ -3462,7 +3463,7 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
     if (mit->extra_op_iter != NULL) {
         NpyIter_Deallocate(mit->extra_op_iter);
     }
-    PyArray_free(mit);
+    PyObject_Free(mit);
 }
 
 /*
@@ -3481,5 +3482,6 @@ NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type = {
     .tp_name = "numpy.mapiter",
     .tp_basicsize = sizeof(PyArrayMapIterObject),
     .tp_dealloc = (destructor)arraymapiter_dealloc,
+    .tp_free = PyObject_Free,
     .tp_flags = Py_TPFLAGS_DEFAULT,
 };

@@ -9,7 +9,6 @@ import pytest
 import numpy
 import numpy as np
 from numpy.testing import (
-    IS_WASM,
     assert_,
     assert_array_equal,
     assert_equal,
@@ -670,6 +669,31 @@ class TestDateTime:
         assert_equal(cfnan.astype('timedelta64[ns]'), nat)
         assert_equal(clnan.astype('timedelta64[ns]'), nat)
         assert_equal(hnan.astype('timedelta64[ns]'), nat)
+
+    def test_datetime_nat_like_object_conversion(self):
+        # gh-31608: objects that duck-type as datetimes but whose
+        # year/month/day attributes are NaN (e.g. pandas NaT) should
+        # convert to NaT instead of raising a TypeError.
+        class NaTLike:
+            year = float("nan")
+            month = float("nan")
+            day = float("nan")
+
+        # explicit unit
+        arr_ns = np.asarray(NaTLike(), dtype=object).astype("datetime64[ns]")
+        assert arr_ns.dtype == np.dtype("M8[ns]")
+        assert np.isnat(arr_ns)
+
+        # scalar constructor path
+        assert np.isnat(np.datetime64(NaTLike(), "ns"))
+
+        # the exact bug-report case (no explicit unit)
+        with pytest.warns(
+            DeprecationWarning,
+            match="The 'generic' unit for NumPy datetime is deprecated",
+        ):
+            arr = np.asarray(NaTLike(), dtype=object).astype("datetime64")
+        assert np.isnat(arr)
 
     def test_days_creation(self):
         assert_equal(np.array('1599', dtype='M8[D]').astype('i8'),
@@ -1764,7 +1788,6 @@ class TestDateTime:
         ):
             assert_equal(np.timedelta64(1890) // np.timedelta64(31), 60)
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("op1, op2", [
         # div by 0
         (np.timedelta64(10, 'us'),
@@ -1862,7 +1885,6 @@ class TestDateTime:
     def test_timedelta_divmod_typeerror(self, op1, op2):
         assert_raises(TypeError, np.divmod, op1, op2)
 
-    @pytest.mark.skipif(IS_WASM, reason="does not work in wasm")
     @pytest.mark.parametrize("op1, op2", [
         # reuse cases from floordiv
         # div by 0
@@ -2520,7 +2542,6 @@ class TestDateTime:
         with assert_raises_regex(TypeError, "common metadata divisor"):
             val1 % val2
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_timedelta_modulus_div_by_zero(self):
         with pytest.warns(RuntimeWarning):
             actual = np.timedelta64(10, 's') % np.timedelta64(0, 's')

@@ -24,6 +24,25 @@ class TestSFloat:
         a *= 1. / scaling  # the casting code also uses the reciprocal.
         return a.view(SF(scaling))
 
+    def test_byteswap(self):
+        # sfloat previously crashed since it does not fill the legacy
+        # copyswapn slot; its byteorder is '|', declaring that byte order
+        # does not apply to it, so byteswapping is a no-op
+        a = self._get_array(1.)
+        swapped = a.byteswap()
+        assert swapped is not a
+        assert_array_equal(swapped.view(np.float64), a.view(np.float64))
+
+        res = a.byteswap(inplace=True)
+        assert res is a
+        assert_array_equal(a.view(np.float64), [1., 2., 3.])
+
+        # the in-place writeability check still fires first, matching the
+        # behavior for dtypes that fill the slot
+        a.flags.writeable = False
+        with pytest.raises(ValueError, match="array to be byte-swapped"):
+            a.byteswap(inplace=True)
+
     def test_sfloat_rescaled(self):
         sf = SF(1.)
         sf2 = sf.scaled_by(2.)
@@ -43,6 +62,90 @@ class TestSFloat:
 
         assert a.dtype.get_scaling() == scaling
         assert_array_equal(scaling * a.view(np.float64), [1., 2., 3.])
+
+    def test_structured_field_byteswap_skips_field(self):
+        # a field whose dtype lacks the legacy copyswap slot but that byte
+        # order does not apply to is left alone, while sibling fields are
+        # still swapped; previously the unguarded field copyswap calls in
+        # VOID_copyswapn segfaulted here
+        arr = np.zeros(2, dtype=[("a", "i4"), ("v", SF(1.))])
+        arr["a"] = [1, 2]
+        arr["v"] = np.array([1., 2.]).view(SF(1.))
+
+        swapped = arr.byteswap()
+        assert_array_equal(swapped["a"], np.array([1, 2], dtype="i4").byteswap())
+        assert_array_equal(swapped["v"].view(np.float64), [1., 2.])
+
+        # a subarray field is skipped the same way
+        subarr = np.zeros(2, dtype=[("v", SF(1.), (2,))])
+        subarr["v"] = np.array([[1., 2.], [3., 4.]]).view(SF(1.))
+        assert_array_equal(subarr.byteswap()["v"].view(np.float64),
+                           [[1., 2.], [3., 4.]])
+
+    def test_structured_field_place_and_flat_copy(self):
+        # copying through the missing legacy copyswap slot used to segfault
+        # and then (gh-32151) raised; sfloat is trivially copyable, so the
+        # copy is just its bytes and these now succeed
+        marr = np.zeros(3, dtype=[("a", "i4"), ("v", SF(1.))])
+        marr["a"] = [5, 6, 7]
+        marr["v"] = np.array([1., 2., 3.]).view(SF(1.))
+        src = marr[:1].copy()
+        src["a"] = 1
+        src["v"] = np.array([9.]).view(SF(1.))
+
+        marr.flat = src
+        assert marr["a"].tolist() == [1, 1, 1]
+        assert marr["v"].view(np.float64).tolist() == [9., 9., 9.]
+
+        marr["a"] = [5, 6, 7]
+        marr["v"] = np.array([1., 2., 3.]).view(SF(1.))
+        np.place(marr, [True, False, True], src)
+        assert marr["a"].tolist() == [1, 6, 1]
+        assert marr["v"].view(np.float64).tolist() == [9., 2., 9.]
+
+    def test_structured_field_sort_raises(self):
+        # VOID_compare called the field's legacy compare slot, which
+        # new-style DTypes do not fill
+        arr = np.zeros(3, dtype=[("v", SF(1.))])
+        with pytest.raises(TypeError, match="does not support comparison"):
+            np.sort(arr, order="v")
+
+        # packed fields are misaligned; the compare == NULL check fires
+        # before VOID_compare's alignment handling, so this exits through
+        # the same guard as the aligned case above and never reaches the
+        # misaligned buffer path (which would call the missing copyswap
+        # slot); it checks that the guard keeps covering that layout
+        packed_dt = np.dtype({"names": ["a", "v"],
+                              "formats": ["u1", SF(1.)],
+                              "offsets": [0, 1], "itemsize": 17})
+        with pytest.raises(TypeError, match="does not support comparison"):
+            np.sort(np.zeros(3, dtype=packed_dt), order="v")
+
+    def test_structured_setitem_uses_cast_path(self):
+        # scalar assignment between equivalent structured dtypes used to
+        # segfault in the copyswap fast path; it now falls back to casting
+        arr = np.zeros(2, dtype=[("v", SF(1.))])
+        arr["v"] = np.array([1., 2.]).view(SF(1.))
+        arr[0] = arr[1]
+        assert arr["v"].view(np.float64).tolist() == [2., 2.]
+
+    def test_structured_setitem_nested_uses_cast_path(self):
+        # for a nested field the copyswap slot is VOID_copyswap, which
+        # fails on the inner sfloat field only after it is called; the
+        # error must not leak out of a successful-looking assignment and
+        # the copy falls back to the casting path like the flat case
+        arr = np.zeros(2, dtype=[("a", "i4"), ("nested", [("v", SF(1.))])])
+        arr["a"] = [1, 2]
+        arr["nested"]["v"] = np.array([1., 2.]).view(SF(1.))
+        arr[0] = arr[1]
+        assert arr["a"].tolist() == [2, 2]
+        assert arr["nested"]["v"].view(np.float64).tolist() == [2., 2.]
+
+        # same for a subarray field of an sfloat dtype
+        arr = np.zeros(2, dtype=[("sub", SF(1.), (2,))])
+        arr["sub"] = np.array([[1., 2.], [3., 4.]]).view(SF(1.))
+        arr[0] = arr[1]
+        assert arr["sub"].view(np.float64).tolist() == [[3., 4.], [3., 4.]]
 
     def test_repr(self):
         # Check the repr, mainly to cover the code paths:
@@ -289,6 +392,25 @@ class TestSFloat:
         assert_array_equal(sorted_a.view(np.float64), [2., 4., 6.])
         # original is unchanged
         assert_array_equal(a.view(np.float64), [6., 4., 2.])
+
+    @pytest.mark.parametrize("stable", [True, False])
+    def test_sort_descending(self, stable):
+        a = self._get_array(1.)
+
+        sorted_a = np.sort(a, stable=stable, descending=True)
+        assert_array_equal(sorted_a.view(np.float64), [3., 2., 1.])
+        # original is unchanged
+        assert_array_equal(a.view(np.float64), [1., 2., 3.])
+
+        # NaNs sort to the end of the array for either sort direction
+        a = np.array([np.nan, 1., 3., np.nan, 2.]).view(SF(1.))
+        sorted_a = np.sort(a, stable=stable, descending=True)
+        assert_array_equal(sorted_a.view(np.float64),
+                           [3., 2., 1., np.nan, np.nan])
+
+        indices = np.argsort(a, stable=stable, descending=True)
+        assert_array_equal(a[indices].view(np.float64),
+                           [3., 2., 1., np.nan, np.nan])
 
     def test_argsort(self):
         a = self._get_array(1.)

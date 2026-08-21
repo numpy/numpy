@@ -9,7 +9,7 @@ import operator
 import pytest
 
 import numpy as np
-from numpy.testing import IS_WASM, assert_array_equal
+from numpy.testing import assert_array_equal
 from numpy.testing._private.hypothesis_helpers import (
     HAS_HYPOTHESIS,
     hypothesis,
@@ -17,7 +17,6 @@ from numpy.testing._private.hypothesis_helpers import (
 )
 
 
-@pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for fp errors")
 def test_nep50_examples():
     res = np.uint8(1) + 2
     assert res.dtype == np.uint8

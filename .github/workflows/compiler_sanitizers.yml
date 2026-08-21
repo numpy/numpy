@@ -29,6 +29,9 @@ concurrency:
 permissions:
   contents: read # to fetch code (actions/checkout)
 
+env:
+  APT_TIMEOUT_MINUTES: 15
+
 jobs:
   clang_ASAN_UBSAN:
     # To enable this workflow on a fork, comment out:
@@ -114,6 +117,7 @@ jobs:
         run: pip install -U spin
 
       - name: Install ccache
+        timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
         run: |
           apt-get update && apt-get install -y ccache
           echo "CCACHE_DIR=$GITHUB_WORKSPACE/.ccache" >> "$GITHUB_ENV"

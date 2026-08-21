@@ -70,7 +70,10 @@ __all__ = [
     "vecdot",
 ]
 
-type _AtMost1D = tuple[()] | tuple[int]
+type _1D = tuple[int]
+type _2D = tuple[int, int]
+type _3D = tuple[int, int, int]
+type _AtMost1D = tuple[()] | _1D
 type _AtLeast1D = tuple[int, *tuple[int, ...]]
 type _AtLeast2D = tuple[int, int, *tuple[int, ...]]
 type _AtLeast3D = tuple[int, int, int, *tuple[int, ...]]
@@ -81,6 +84,7 @@ type _tuple2[T] = tuple[T, T]
 type _Ax2 = SupportsIndex | _tuple2[SupportsIndex]
 
 type _inexact32 = np.float32 | np.complex64
+type _inexact64 = np.float64 | np.complex128
 type _inexact80 = np.longdouble | np.clongdouble
 type _to_integer = np.integer | np.bool
 type _to_timedelta64 = np.timedelta64 | _to_integer
@@ -91,9 +95,11 @@ type _to_complex = np.number | np.bool
 type _to_float64_co = np.float64 | np.float32 | np.float16 | _to_integer
 type _to_complex128_co = np.complex128 | np.complex64 | _to_float64_co
 
-type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
-type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array1D[ScalarT: np.generic] = np.ndarray[_1D, np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[_2D, np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[_3D, np.dtype[ScalarT]]
 type _Array3ND[ScalarT: np.generic] = np.ndarray[_AtLeast3D, np.dtype[ScalarT]]
+type _ArrayJustND[ScalarT: np.generic] = np.ndarray[_JustAnyShape, np.dtype[ScalarT]]
 
 type _Sequence2D[T] = Sequence[Sequence[T]]
 type _Sequence3D[T] = Sequence[_Sequence2D[T]]
@@ -103,12 +109,16 @@ type _Sequence4ND[T] = _NestedSequence[_Sequence3D[T]]
 type _Sequence0D1D[T] = T | Sequence[T]
 type _Sequence1D2D[T] = Sequence[T] | _Sequence2D[T]
 
-type _ArrayLike1D[ScalarT: np.generic] = _SupportsArray[tuple[int], np.dtype[ScalarT]] | Sequence[ScalarT]  # ==1d
-type _ArrayLike2D[ScalarT: np.generic] = _SupportsArray[tuple[int, int], np.dtype[ScalarT]] | _Sequence2D[ScalarT]  # ==2d
+type _ArrayLike1D2[ScalarT: np.generic, T] = _SupportsArray[_1D, np.dtype[ScalarT]] | Sequence[T]
+type _ArrayLike2D2[ScalarT: np.generic, T] = _SupportsArray[_2D, np.dtype[ScalarT]] | _Sequence2D[T]
+type _ArrayLike3D2[ScalarT: np.generic, T] = _SupportsArray[_3D, np.dtype[ScalarT]] | _Sequence3D[T]
+
+type _ArrayLike1D[ScalarT: np.generic] = _ArrayLike1D2[ScalarT, ScalarT]
+type _ArrayLike2D[ScalarT: np.generic] = _ArrayLike2D2[ScalarT, ScalarT]  # ==2d
 type _ArrayLike1D2D[ScalarT: np.generic] = (  # 1d or 2d
-    _SupportsArray[tuple[int] | tuple[int, int], np.dtype[ScalarT]] | _Sequence1D2D[ScalarT]
+    _SupportsArray[_1D | _2D, np.dtype[ScalarT]] | _Sequence1D2D[ScalarT]
 )
-type _ArrayLike3D[ScalarT: np.generic] = _SupportsArray[tuple[int, int, int], np.dtype[ScalarT]] | _Sequence3D[ScalarT]  # ==3d
+type _ArrayLike3D[ScalarT: np.generic] = _ArrayLike3D2[ScalarT, ScalarT]  # ==3d
 type _ArrayLike1ND[ScalarT: np.generic] = _SupportsArray[_AtLeast1D, np.dtype[ScalarT]] | _NestedSequence[ScalarT]  # >=1d
 type _ArrayLike2ND[ScalarT: np.generic] = _SupportsArray[_AtLeast2D, np.dtype[ScalarT]] | _Sequence2ND[ScalarT]  # >=2d
 type _ArrayLike3ND[ScalarT: np.generic] = _SupportsArray[_AtLeast3D, np.dtype[ScalarT]] | _Sequence3ND[ScalarT]  # >=3d
@@ -146,6 +156,7 @@ type _AsArrayF64_2nd = _ArrayLike2ND[np.float64] | _NestedSequence[list[float]]
 type _AsArrayC128 = _ArrayLike[np.complex128] | list[complex] | _NestedSequence[list[complex]]
 type _AsArrayC128_1d = _ArrayLike1D[np.complex128] | list[complex]
 type _AsArrayC128_2d = _ArrayLike2D[np.complex128] | Sequence[list[complex]]
+type _AsArrayC128_3d = _ArrayLike3D[np.complex128] | _Sequence2D[list[complex]]
 type _AsArrayC128_1nd = _ArrayLike1ND[np.complex128] | list[complex] | _NestedSequence[list[complex]]
 type _AsArrayC128_2nd = _ArrayLike2ND[np.complex128] | _NestedSequence[list[complex]]
 type _AsArrayC128_3nd = _ArrayLike3ND[np.complex128] | _Sequence2ND[list[complex]]
@@ -166,6 +177,8 @@ _FloatingT_co = TypeVar("_FloatingT_co", bound=np.floating, default=Any, covaria
 _FloatingOrArrayT_co = TypeVar("_FloatingOrArrayT_co", bound=np.floating | NDArray[np.floating], default=Any, covariant=True)
 _InexactT_co = TypeVar("_InexactT_co", bound=np.inexact, default=Any, covariant=True)
 _InexactOrArrayT_co = TypeVar("_InexactOrArrayT_co", bound=np.inexact | NDArray[np.inexact], default=Any, covariant=True)
+_ShapeT1_co = TypeVar("_ShapeT1_co", bound=_Shape, default=_AnyShape, covariant=True)
+_ShapeT2_co = TypeVar("_ShapeT2_co", bound=_Shape, default=_AnyShape, covariant=True)
 
 # shape-typed variant of numpy._typing._SupportsArray
 @type_check_only
@@ -178,22 +191,22 @@ fortran_int = np.intc
 
 # NOTE: These named tuple types are only generic when `typing.TYPE_CHECKING`
 
-class EigResult(NamedTuple, Generic[_InexactT_co]):
-    eigenvalues: NDArray[_InexactT_co]
-    eigenvectors: NDArray[_InexactT_co]
+class EigResult(NamedTuple, Generic[_InexactT_co, _ShapeT1_co, _ShapeT2_co]):
+    eigenvalues: np.ndarray[_ShapeT1_co, np.dtype[_InexactT_co]]
+    eigenvectors: np.ndarray[_ShapeT2_co, np.dtype[_InexactT_co]]
 
-class EighResult(NamedTuple, Generic[_FloatingT_co, _InexactT_co]):
-    eigenvalues: NDArray[_FloatingT_co]
-    eigenvectors: NDArray[_InexactT_co]
+class EighResult(NamedTuple, Generic[_FloatingT_co, _InexactT_co, _ShapeT1_co, _ShapeT2_co]):
+    eigenvalues: np.ndarray[_ShapeT1_co, np.dtype[_FloatingT_co]]
+    eigenvectors: np.ndarray[_ShapeT2_co, np.dtype[_InexactT_co]]
 
 class QRResult(NamedTuple, Generic[_InexactT_co]):
     Q: NDArray[_InexactT_co]
     R: NDArray[_InexactT_co]
 
-class SVDResult(NamedTuple, Generic[_FloatingT_co, _InexactT_co]):
-    U: NDArray[_InexactT_co]
-    S: NDArray[_FloatingT_co]
-    Vh: NDArray[_InexactT_co]
+class SVDResult(NamedTuple, Generic[_FloatingT_co, _InexactT_co, _ShapeT1_co, _ShapeT2_co]):
+    U: np.ndarray[_ShapeT2_co, np.dtype[_InexactT_co]]
+    S: np.ndarray[_ShapeT1_co, np.dtype[_FloatingT_co]]
+    Vh: np.ndarray[_ShapeT2_co, np.dtype[_InexactT_co]]
 
 class SlogdetResult(NamedTuple, Generic[_FloatingOrArrayT_co, _InexactOrArrayT_co]):
     sign: _InexactOrArrayT_co
@@ -248,8 +261,32 @@ def solve(a: _ArrayLike[_inexact32], b: _ArrayLike[np.complex64]) -> NDArray[np.
 def solve(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co) -> NDArray[np.complex128 | Any]: ...
 
 # keep in sync with the other inverse functions and cholesky
-@overload  # inexact32
-def tensorinv[ScalarT: _inexact32](a: _ArrayLike[ScalarT], ind: int = 2) -> NDArray[ScalarT]: ...
+@overload  # known array
+def tensorinv[ArrayT: np.ndarray[_AtLeast2D, np.dtype[_inexact32 | _inexact64]]](
+    a: ArrayT,
+    ind: int = 2,
+) -> ArrayT: ...
+@overload  # known shape, known dtype
+def tensorinv[ShapeT: _AtLeast2D, DTypeT: np.dtype[_inexact32 | _inexact64]](
+    a: _SupportsArray[ShapeT, DTypeT],
+    ind: int = 2,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # known shape, integer|bool
+def tensorinv[ShapeT: _AtLeast2D](
+    a: _SupportsArray[ShapeT, np.dtype[np.integer | np.bool]],
+    ind: int = 2,
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # 2d +float
+def tensorinv(a: Sequence[Sequence[float | np.integer | np.bool]], ind: int = 2) -> _Array2D[np.float64]: ...
+@overload  # 3d +float
+def tensorinv(
+    a: Sequence[Sequence[Sequence[float | np.integer | np.bool]]],
+    ind: int = 2,
+) -> _Array3D[np.float64]: ...
+@overload  # 2d ~complex
+def tensorinv(a: Sequence[list[complex]], ind: int = 2) -> _Array2D[np.complex128]: ...
+@overload  # 3d ~complex
+def tensorinv(a: Sequence[Sequence[list[complex]]], ind: int = 2) -> _Array3D[np.complex128]: ...
 @overload  # +float64
 def tensorinv(a: _ToArrayF64, ind: int = 2) -> NDArray[np.float64]: ...
 @overload  # ~complex128
@@ -258,8 +295,24 @@ def tensorinv(a: _AsArrayC128, ind: int = 2) -> NDArray[np.complex128]: ...
 def tensorinv(a: _ArrayLikeComplex_co, ind: int = 2) -> np.ndarray: ...
 
 # keep in sync with the other inverse functions and cholesky
-@overload  # inexact32
-def inv[ScalarT: _inexact32](a: _ArrayLike[ScalarT]) -> NDArray[ScalarT]: ...
+@overload  # known array
+def inv[ArrayT: np.ndarray[_AtLeast2D, np.dtype[_inexact32 | _inexact64]]](a: ArrayT) -> ArrayT: ...
+@overload  # known shape, known dtype
+def inv[ShapeT: _AtLeast2D, DTypeT: np.dtype[_inexact32 | _inexact64]](
+    a: _SupportsArray[ShapeT, DTypeT],
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # known shape, integer|bool
+def inv[ShapeT: _AtLeast2D](
+    a: _SupportsArray[ShapeT, np.dtype[np.integer | np.bool]],
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # 2d +float
+def inv(a: Sequence[Sequence[float | np.integer | np.bool]]) -> _Array2D[np.float64]: ...
+@overload  # 3d +float
+def inv(a: Sequence[Sequence[Sequence[float | np.integer | np.bool]]]) -> _Array3D[np.float64]: ...
+@overload  # 2d ~complex
+def inv(a: Sequence[list[complex]]) -> _Array2D[np.complex128]: ...
+@overload  # 3d ~complex
+def inv(a: Sequence[Sequence[list[complex]]]) -> _Array3D[np.complex128]: ...
 @overload  # +float64
 def inv(a: _ToArrayF64) -> NDArray[np.float64]: ...
 @overload  # ~complex128
@@ -268,14 +321,62 @@ def inv(a: _AsArrayC128) -> NDArray[np.complex128]: ...
 def inv(a: _ArrayLikeComplex_co) -> np.ndarray: ...
 
 # keep in sync with the other inverse functions and cholesky
-@overload  # inexact32
-def pinv[ScalarT: _inexact32](
-    a: _ArrayLike[ScalarT],
+@overload  # known array
+def pinv[ArrayT: np.ndarray[_AtLeast2D, np.dtype[_inexact32 | _inexact64]]](
+    a: ArrayT,
     rcond: _ArrayLikeFloat_co | None = None,
     hermitian: bool = False,
     *,
     rtol: _ArrayLikeFloat_co | _NoValueType = _NoValue,
-) -> NDArray[ScalarT]: ...
+) -> ArrayT: ...
+@overload  # known shape, known dtype
+def pinv[ShapeT: _AtLeast2D, DTypeT: np.dtype[_inexact32 | _inexact64]](
+    a: _SupportsArray[ShapeT, DTypeT],
+    rcond: _ArrayLikeFloat_co | None = None,
+    hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | _NoValueType = _NoValue,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # known shape, integer|bool
+def pinv[ShapeT: _AtLeast2D](
+    a: _SupportsArray[ShapeT, np.dtype[np.integer | np.bool]],
+    rcond: _ArrayLikeFloat_co | None = None,
+    hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | _NoValueType = _NoValue,
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # 2d +float
+def pinv(
+    a: Sequence[Sequence[float | np.integer | np.bool]],
+    rcond: _ArrayLikeFloat_co | None = None,
+    hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | _NoValueType = _NoValue,
+) -> _Array2D[np.float64]: ...
+@overload  # 3d +float
+def pinv(
+    a: Sequence[Sequence[Sequence[float | np.integer | np.bool]]],
+    rcond: _ArrayLikeFloat_co | None = None,
+    hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | _NoValueType = _NoValue,
+) -> _Array3D[np.float64]: ...
+@overload  # 2d ~complex
+def pinv(
+    a: Sequence[list[complex]],
+    rcond: _ArrayLikeFloat_co | None = None,
+    hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | _NoValueType = _NoValue,
+) -> _Array2D[np.complex128]: ...
+@overload  # 3d ~complex
+def pinv(
+    a: Sequence[Sequence[list[complex]]],
+    rcond: _ArrayLikeFloat_co | None = None,
+    hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | _NoValueType = _NoValue,
+) -> _Array3D[np.complex128]: ...
 @overload  # +float64
 def pinv(
     a: _ToArrayF64,
@@ -302,8 +403,45 @@ def pinv(
 ) -> NDArray[Any]: ...
 
 # keep in sync with the inverse functions
-@overload  # inexact32
-def cholesky[ScalarT: _inexact32](a: _ArrayLike[ScalarT], /, *, upper: bool = False) -> NDArray[ScalarT]: ...
+@overload  # known array
+def cholesky[ArrayT: np.ndarray[_AtLeast2D, np.dtype[_inexact32 | _inexact64]]](
+    a: ArrayT,
+    /,
+    *,
+    upper: bool = False,
+) -> ArrayT: ...
+@overload  # known shape, known dtype
+def cholesky[ShapeT: _AtLeast2D, DTypeT: np.dtype[_inexact32 | _inexact64]](
+    a: _SupportsArray[ShapeT, DTypeT],
+    /,
+    *,
+    upper: bool = False,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # known shape, integer
+def cholesky[ShapeT: _AtLeast2D](
+    a: _SupportsArray[ShapeT, np.dtype[np.integer]],
+    /,
+    *,
+    upper: bool = False,
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # 2d +float
+def cholesky(
+    a: Sequence[Sequence[float | np.integer]],
+    /,
+    *,
+    upper: bool = False,
+) -> _Array2D[np.float64]: ...
+@overload  # 3d +float
+def cholesky(
+    a: Sequence[Sequence[Sequence[float | np.integer]]],
+    /,
+    *,
+    upper: bool = False,
+) -> _Array3D[np.float64]: ...
+@overload  # 2d ~complex
+def cholesky(a: Sequence[list[complex]], /, *, upper: bool = False) -> _Array2D[np.complex128]: ...
+@overload  # 3d ~complex
+def cholesky(a: Sequence[Sequence[list[complex]]], /, *, upper: bool = False) -> _Array3D[np.complex128]: ...
 @overload  # +float64
 def cholesky(a: _ToArrayF64, /, *, upper: bool = False) -> NDArray[np.float64]: ...
 @overload  # ~complex128
@@ -329,28 +467,62 @@ def matrix_power[ScalarT: _inexact32](a: _ArrayLike[ScalarT], n: SupportsIndex) 
 def matrix_power(a: _ArrayLikeComplex_co | _ArrayLikeObject_co, n: SupportsIndex) -> np.ndarray: ...
 
 # NOTE: for real input the output dtype (floating/complexfloating) depends on the specific values
-@overload  # abstract `inexact` and `floating` (excluding concrete types)
+@overload  # abstract `inexact` (excluding concrete types)
 def eig(a: NDArray[np.inexact[Never]]) -> EigResult: ...
-@overload  # ~complex128
+@overload  # ?d +f64 (workaround)
+def eig(a: _ArrayJustND[_to_float64]) -> EigResult[np.float64 | np.complex128]: ...
+@overload  # ?d ~c128 (workaround)
+def eig(a: _ArrayJustND[np.complex128]) -> EigResult[np.complex128]: ...
+@overload  # ?d ~f32|c64 (workaround)
+def eig[ScalarT: _inexact32](a: _ArrayJustND[ScalarT]) -> EigResult[ScalarT | np.complex64]: ...
+@overload  # 2d +f64
+def eig(a: _ArrayLike2D2[_to_float64, float]) -> EigResult[np.float64 | np.complex128, _1D, _2D]: ...
+@overload  # 2d ~c128
+def eig(a: _AsArrayC128_2d) -> EigResult[np.complex128, _1D, _2D]: ...
+@overload  # 2d ~f32|c64
+def eig[ScalarT: _inexact32](a: _ArrayLike2D[ScalarT]) -> EigResult[ScalarT | np.complex64, _1D, _2D]: ...
+@overload  # 3d +f64
+def eig(a: _ArrayLike3D2[_to_float64, float]) -> EigResult[np.float64 | np.complex128, _2D, _3D]: ...
+@overload  # 3d ~c128
+def eig(a: _AsArrayC128_3d) -> EigResult[np.complex128, _2D, _3D]: ...
+@overload  # 3d ~f32|c64
+def eig[ScalarT: _inexact32](a: _ArrayLike3D[ScalarT]) -> EigResult[ScalarT | np.complex64, _2D, _3D]: ...
+@overload  # ?d +f64
+def eig(a: _ToArrayF64) -> EigResult[np.float64 | np.complex128]: ...
+@overload  # ?d ~c128
 def eig(a: _AsArrayC128) -> EigResult[np.complex128]: ...
-@overload  # +float64
-def eig(a: _ToArrayF64) -> EigResult[np.complex128]: ...
-@overload  # ~complex64
-def eig(a: _ArrayLike[np.complex64]) -> EigResult[np.complex64]: ...
-@overload  # ~float32
-def eig(a: _ArrayLike[np.float32]) -> EigResult[np.complex64]: ...
+@overload  # ?d ~f32|c64
+def eig[ScalarT: _inexact32](a: _ArrayLike[ScalarT]) -> EigResult[ScalarT | np.complex64]: ...
 @overload  # fallback
 def eig(a: _ArrayLikeComplex_co) -> EigResult: ...
 
 #
-@overload  # workaround for microsoft/pyright#10232
-def eigh(a: NDArray[Never], UPLO: _SideKind = "L") -> EighResult: ...
-@overload  # ~inexact32
-def eigh[ScalarT: _inexact32](a: _ArrayLike[ScalarT], UPLO: _SideKind = "L") -> EighResult[np.float32, ScalarT]: ...
-@overload  # +float64
+@overload  # abstract `inexact` (excluding concrete types)
+def eigh(a: NDArray[np.inexact[Never]], UPLO: _SideKind = "L") -> EighResult: ...
+@overload  # ?d +f64 (workaround)
+def eigh(a: _ArrayJustND[_to_float64], UPLO: _SideKind = "L") -> EighResult[np.float64, np.float64]: ...
+@overload  # ?d ~c128 (workaround)
+def eigh(a: _ArrayJustND[np.complex128], UPLO: _SideKind = "L") -> EighResult[np.float64, np.complex128]: ...
+@overload  # ?d ~f32|c64 (workaround)
+def eigh[ScalarT: _inexact32](a: _ArrayJustND[ScalarT], UPLO: _SideKind = "L") -> EighResult[np.float32, ScalarT]: ...
+@overload  # 2d +f64
+def eigh(a: _ArrayLike2D2[_to_float64, float], UPLO: _SideKind = "L") -> EighResult[np.float64, np.float64, _1D, _2D]: ...
+@overload  # 2d ~c128
+def eigh(a: _AsArrayC128_2d, UPLO: _SideKind = "L") -> EighResult[np.float64, np.complex128, _1D, _2D]: ...
+@overload  # 2d ~f32|c64
+def eigh[ScalarT: _inexact32](a: _ArrayLike2D[ScalarT], UPLO: _SideKind = "L") -> EighResult[np.float32, ScalarT, _1D, _2D]: ...
+@overload  # 3d +f64
+def eigh(a: _ArrayLike3D2[_to_float64, float], UPLO: _SideKind = "L") -> EighResult[np.float64, np.float64, _2D, _3D]: ...
+@overload  # 3d ~c128
+def eigh(a: _AsArrayC128_3d, UPLO: _SideKind = "L") -> EighResult[np.float64, np.complex128, _2D, _3D]: ...
+@overload  # 3d ~f32|c64
+def eigh[ScalarT: _inexact32](a: _ArrayLike3D[ScalarT], UPLO: _SideKind = "L") -> EighResult[np.float32, ScalarT, _2D, _3D]: ...
+@overload  # ?d +f64
 def eigh(a: _ToArrayF64, UPLO: _SideKind = "L") -> EighResult[np.float64, np.float64]: ...
-@overload  # ~complex128
+@overload  # ?d ~c128
 def eigh(a: _AsArrayC128, UPLO: _SideKind = "L") -> EighResult[np.float64, np.complex128]: ...
+@overload  # ?d ~f32|c64
+def eigh[ScalarT: _inexact32](a: _ArrayLike[ScalarT], UPLO: _SideKind = "L") -> EighResult[np.float32, ScalarT]: ...
 @overload  # fallback
 def eigh(a: _ArrayLikeComplex_co, UPLO: _SideKind = "L") -> EighResult: ...
 
@@ -380,64 +552,234 @@ def qr(a: _ArrayLikeComplex_co, mode: L["r"]) -> np.ndarray: ...
 @overload  # fallback,    raw
 def qr(a: _ArrayLikeComplex_co, mode: L["raw"]) -> _tuple2[np.ndarray]: ...
 
-#
-@overload  # workaround for microsoft/pyright#10232, compute_uv=True (default)
-def svd(a: NDArray[Never], full_matrices: bool = True, compute_uv: L[True] = True, hermitian: bool = False) -> SVDResult: ...
-@overload  # workaround for microsoft/pyright#10232, compute_uv=False (positional)
-def svd(a: NDArray[Never], full_matrices: bool, compute_uv: L[False], hermitian: bool = False) -> np.ndarray: ...
-@overload  # workaround for microsoft/pyright#10232, compute_uv=False (keyword)
-def svd(a: NDArray[Never], full_matrices: bool = True, *, compute_uv: L[False], hermitian: bool = False) -> np.ndarray: ...
-@overload  # ~inexact32, compute_uv=True (default)
-def svd[ScalarT: _inexact32](
-    a: _ArrayLike[ScalarT], full_matrices: bool = True, compute_uv: L[True] = True, hermitian: bool = False
-) -> SVDResult[np.float32, ScalarT]: ...
-@overload  # ~inexact32, compute_uv=False (positional)
-def svd(a: _ArrayLike[_inexact32], full_matrices: bool, compute_uv: L[False], hermitian: bool = False) -> NDArray[np.float32]: ...
-@overload  # ~inexact32, compute_uv=False (keyword)
+# keep the `compute_uv=False` overloads in sync with `svdvals`
+@overload  # abstract `inexact` (workaround)
 def svd(
-    a: _ArrayLike[_inexact32], full_matrices: bool = True, *, compute_uv: L[False], hermitian: bool = False
-) -> NDArray[np.float32]: ...
-@overload  # +float64, compute_uv=True (default)
-def svd(
-    a: _ToArrayF64, full_matrices: bool = True, compute_uv: L[True] = True, hermitian: bool = False
-) -> SVDResult[np.float64, np.float64]: ...
-@overload  # ~complex128, compute_uv=True (default)
-def svd(
-    a: _AsArrayC128, full_matrices: bool = True, compute_uv: L[True] = True, hermitian: bool = False
-) -> SVDResult[np.float64, np.complex128]: ...
-@overload  # +float64 | ~complex128, compute_uv=False (positional)
-def svd(a: _ToArrayC128, full_matrices: bool, compute_uv: L[False], hermitian: bool = False) -> NDArray[np.float64]: ...
-@overload  # +float64 | ~complex128, compute_uv=False (keyword)
-def svd(a: _ToArrayC128, full_matrices: bool = True, *, compute_uv: L[False], hermitian: bool = False) -> NDArray[np.float64]: ...
-@overload  # fallback, compute_uv=True (default)
-def svd(
-    a: _ArrayLikeComplex_co, full_matrices: bool = True, compute_uv: L[True] = True, hermitian: bool = False
+    a: NDArray[np.inexact[Never]],
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
 ) -> SVDResult: ...
-@overload  # fallback, compute_uv=False (positional)
-def svd(a: _ArrayLikeComplex_co, full_matrices: bool, compute_uv: L[False], hermitian: bool = False) -> np.ndarray: ...
-@overload  # fallback, compute_uv=False (keyword)
-def svd(a: _ArrayLikeComplex_co, full_matrices: bool = True, *, compute_uv: L[False], hermitian: bool = False) -> np.ndarray: ...
+@overload  # ?d +f64 (workaround)
+def svd(
+    a: _ArrayJustND[_to_float64],
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float64, np.float64]: ...
+@overload  # ?d ~c128 (workaround)
+def svd(
+    a: _ArrayJustND[np.complex128],
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float64, np.complex128]: ...
+@overload  # ?d ~f32|c64 (workaround)
+def svd[ScalarT: _inexact32](
+    a: _ArrayJustND[ScalarT],
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float32, ScalarT]: ...
+@overload  # 2d +f64
+def svd(
+    a: _ArrayLike2D2[_to_float64, float],
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float64, np.float64, _1D, _2D]: ...
+@overload  # 2d ~c128
+def svd(
+    a: _AsArrayC128_2d,
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float64, np.complex128, _1D, _2D]: ...
+@overload  # 2d ~f32|c64
+def svd[ScalarT: _inexact32](
+    a: _ArrayLike2D[ScalarT],
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float32, ScalarT, _1D, _2D]: ...
+@overload  # 3d +f64
+def svd(
+    a: _ArrayLike3D2[_to_float64, float],
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float64, np.float64, _2D, _3D]: ...
+@overload  # 3d ~c128
+def svd(
+    a: _AsArrayC128_3d,
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float64, np.complex128, _2D, _3D]: ...
+@overload  # 3d ~f32|c64
+def svd[ScalarT: _inexact32](
+    a: _ArrayLike3D[ScalarT],
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float32, ScalarT, _2D, _3D]: ...
+@overload  # ?d +f64
+def svd(
+    a: _ToArrayF64,
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float64, np.float64]: ...
+@overload  # ?d ~c128
+def svd(
+    a: _AsArrayC128,
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float64, np.complex128]: ...
+@overload  # ?d ~f32|c64
+def svd[ScalarT: _inexact32](
+    a: _ArrayLike[ScalarT],
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult[np.float32, ScalarT]: ...
+@overload  # fallback
+def svd(
+    a: _ArrayLikeComplex_co,
+    full_matrices: bool = True,
+    compute_uv: L[True] = True,
+    hermitian: bool = False,
+) -> SVDResult: ...
+@overload  # compute_uv=False, abstract `inexact` (workaround)
+def svd(
+    a: NDArray[np.inexact[Never]],
+    full_matrices: bool = True,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> np.ndarray: ...
+@overload  # compute_uv=False, ?d ~f32|c64 (workaround)
+def svd(
+    a: _ArrayJustND[_inexact32],
+    full_matrices: bool = True,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> NDArray[np.float32]: ...
+@overload  # compute_uv=False, ?d +c128 (workaround)
+def svd(
+    a: _ArrayJustND[_to_inexact64],
+    full_matrices: bool = True,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> NDArray[np.float64]: ...
+@overload  # compute_uv=False, 2d ~f32|c64
+def svd(
+    a: _ArrayLike2D[_inexact32],
+    full_matrices: bool = True,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> _Array1D[np.float32]: ...
+@overload  # compute_uv=False, 2d +c128
+def svd(
+    a: _ArrayLike2D2[_to_inexact64, complex],
+    full_matrices: bool = True,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> _Array1D[np.float64]: ...
+@overload  # compute_uv=False, 3d ~f32|c64
+def svd(
+    a: _ArrayLike3D[_inexact32],
+    full_matrices: bool = True,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> _Array2D[np.float32]: ...
+@overload  # compute_uv=False, 3d +c128
+def svd(
+    a: _ArrayLike3D2[_to_inexact64, complex],
+    full_matrices: bool = True,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> _Array2D[np.float64]: ...
+@overload  # compute_uv=False, ?d ~f32|c64
+def svd(
+    a: _ArrayLike[_inexact32],
+    full_matrices: bool = True,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> NDArray[np.float32]: ...
+@overload  # compute_uv=False, ?d +c128
+def svd(
+    a: _ToArrayC128,
+    full_matrices: bool = True,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> NDArray[np.float64]: ...
+@overload  # compute_uv=False, fallback
+def svd(
+    a: _ArrayLikeComplex_co,
+    full_matrices: bool = True,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> np.ndarray: ...
 
 # NOTE: for real input the output dtype (floating/complexfloating) depends on the specific values
-@overload  # abstract `inexact` and `floating` (excluding concrete types)
+@overload  # abstract `inexact` (excluding concrete types)
 def eigvals(a: NDArray[np.inexact[Never]]) -> np.ndarray: ...
-@overload  # ~complex128
+@overload  # ?d +f64 (workaround)
+def eigvals(a: _ArrayJustND[_to_float64]) -> NDArray[np.float64 | np.complex128]: ...
+@overload  # ?d ~c128 (workaround)
+def eigvals(a: _ArrayJustND[np.complex128]) -> NDArray[np.complex128]: ...
+@overload  # ?d ~f32|c64 (workaround)
+def eigvals[ScalarT: _inexact32](a: _ArrayJustND[ScalarT]) -> NDArray[ScalarT | np.complex64]: ...
+@overload  # 2d +f64
+def eigvals(a: _ArrayLike2D2[_to_float64, float]) -> _Array1D[np.float64 | np.complex128]: ...
+@overload  # 2d ~c128
+def eigvals(a: _AsArrayC128_2d) -> _Array1D[np.complex128]: ...
+@overload  # 2d ~f32|c64
+def eigvals[ScalarT: _inexact32](a: _ArrayLike2D[ScalarT]) -> _Array1D[ScalarT | np.complex64]: ...
+@overload  # 3d +f64
+def eigvals(a: _ArrayLike3D2[_to_float64, float]) -> _Array2D[np.float64 | np.complex128]: ...
+@overload  # 3d ~c128
+def eigvals(a: _AsArrayC128_3d) -> _Array2D[np.complex128]: ...
+@overload  # 3d ~f32|c64
+def eigvals[ScalarT: _inexact32](a: _ArrayLike3D[ScalarT]) -> _Array2D[ScalarT | np.complex64]: ...
+@overload  # ?d +f64
+def eigvals(a: _ToArrayF64) -> NDArray[np.float64 | np.complex128]: ...
+@overload  # ?d ~c128
 def eigvals(a: _AsArrayC128) -> NDArray[np.complex128]: ...
-@overload  # +float64
-def eigvals(a: _ToArrayF64) -> NDArray[np.complex128] | NDArray[np.float64]: ...
-@overload  # ~complex64
-def eigvals(a: _ArrayLike[np.complex64]) -> NDArray[np.complex64]: ...
-@overload  # ~float32
-def eigvals(a: _ArrayLike[np.float32]) -> NDArray[np.complex64] | NDArray[np.float32]: ...
+@overload  # ?d ~f32|c64
+def eigvals[ScalarT: _inexact32](a: _ArrayLike[ScalarT]) -> NDArray[ScalarT | np.complex64]: ...
 @overload  # fallback
 def eigvals(a: _ArrayLikeComplex_co) -> np.ndarray: ...
 
 # keep in sync with svdvals
 @overload  # abstract `inexact` (excluding concrete types)
 def eigvalsh(a: NDArray[np.inexact[Never]], UPLO: _SideKind = "L") -> NDArray[np.floating]: ...
-@overload  # ~inexact32
+@overload  # ?d ~f32|c64 (workaround)
+def eigvalsh(a: _ArrayJustND[_inexact32], UPLO: _SideKind = "L") -> NDArray[np.float32]: ...
+@overload  # ?d +c128 (workaround)
+def eigvalsh(a: _ArrayJustND[_to_inexact64], UPLO: _SideKind = "L") -> NDArray[np.float64]: ...
+@overload  # 2d ~f32|c64
+def eigvalsh(a: _ArrayLike2D[_inexact32], UPLO: _SideKind = "L") -> _Array1D[np.float32]: ...
+@overload  # 2d +c128
+def eigvalsh(a: _ArrayLike2D2[_to_inexact64, complex], UPLO: _SideKind = "L") -> _Array1D[np.float64]: ...
+@overload  # 3d ~f32|c64
+def eigvalsh(a: _ArrayLike3D[_inexact32], UPLO: _SideKind = "L") -> _Array2D[np.float32]: ...
+@overload  # 3d +c128
+def eigvalsh(a: _ArrayLike3D2[_to_inexact64, complex], UPLO: _SideKind = "L") -> _Array2D[np.float64]: ...
+@overload  # ?d ~f32|c64
 def eigvalsh(a: _ArrayLike[_inexact32], UPLO: _SideKind = "L") -> NDArray[np.float32]: ...
-@overload  # +complex128
+@overload  # ?d +c128
 def eigvalsh(a: _ToArrayC128, UPLO: _SideKind = "L") -> NDArray[np.float64]: ...
 @overload  # fallback
 def eigvalsh(a: _ArrayLikeComplex_co, UPLO: _SideKind = "L") -> NDArray[np.floating]: ...
@@ -445,9 +787,21 @@ def eigvalsh(a: _ArrayLikeComplex_co, UPLO: _SideKind = "L") -> NDArray[np.float
 # keep in sync with eigvalsh
 @overload  # abstract `inexact` (excluding concrete types)
 def svdvals(a: NDArray[np.inexact[Never]], /) -> NDArray[np.floating]: ...
-@overload  # ~inexact32
+@overload  # ?d ~f32|c64 (workaround)
+def svdvals(a: _ArrayJustND[_inexact32], /) -> NDArray[np.float32]: ...
+@overload  # ?d +c128 (workaround)
+def svdvals(a: _ArrayJustND[_to_inexact64], /) -> NDArray[np.float64]: ...
+@overload  # 2d ~f32|c64
+def svdvals(a: _ArrayLike2D[_inexact32], /) -> _Array1D[np.float32]: ...
+@overload  # 2d +c128
+def svdvals(a: _ArrayLike2D2[_to_inexact64, complex], /) -> _Array1D[np.float64]: ...
+@overload  # 3d ~f32|c64
+def svdvals(a: _ArrayLike3D[_inexact32], /) -> _Array2D[np.float32]: ...
+@overload  # 3d +c128
+def svdvals(a: _ArrayLike3D2[_to_inexact64, complex], /) -> _Array2D[np.float64]: ...
+@overload  # ?d ~f32|c64
 def svdvals(a: _ArrayLike[_inexact32], /) -> NDArray[np.float32]: ...
-@overload  # +complex128
+@overload  # ?d +c128
 def svdvals(a: _ToArrayC128, /) -> NDArray[np.float64]: ...
 @overload  # fallback
 def svdvals(a: _ArrayLikeComplex_co, /) -> NDArray[np.floating]: ...
@@ -607,6 +961,51 @@ def norm(
     axis: None = None,
     keepdims: L[False] = False,
 ) -> np.float64: ...
+@overload  # +inexact64 (unsafe casting), ?d, axis=<int> (positional), keepdims=False
+def norm(
+    x: _SupportsArray[_JustAnyShape, np.dtype[_to_inexact64_unsafe]],
+    ord: _OrderKind | None,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+) -> NDArray[np.float64]: ...
+@overload  # +inexact64 (unsafe casting), ?d, axis=<int> (keyword), keepdims=False
+def norm(
+    x: _SupportsArray[_JustAnyShape, np.dtype[_to_inexact64_unsafe]],
+    ord: _OrderKind | None = None,
+    *,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+) -> NDArray[np.float64]: ...
+@overload  # +inexact64 (unsafe casting), 2d, axis=<int> (positional), keepdims=False
+def norm(
+    x: _ArrayLike2D[_to_inexact64_unsafe] | _Sequence2D[complex],
+    ord: _OrderKind | None,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+) -> _Array1D[np.float64]: ...
+@overload  # +inexact64 (unsafe casting), 2d, axis=<int> (keyword), keepdims=False
+def norm(
+    x: _ArrayLike2D[_to_inexact64_unsafe] | _Sequence2D[complex],
+    ord: _OrderKind | None = None,
+    *,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+) -> _Array1D[np.float64]: ...
+@overload  # +inexact64 (unsafe casting), 3d, axis=<int> (positional), keepdims=False
+def norm(
+    x: _ArrayLike3D[_to_inexact64_unsafe] | _Sequence3D[complex],
+    ord: _OrderKind | None,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+) -> _Array2D[np.float64]: ...
+@overload  # +inexact64 (unsafe casting), 3d, axis=<int> (keyword), keepdims=False
+def norm(
+    x: _ArrayLike3D[_to_inexact64_unsafe] | _Sequence3D[complex],
+    ord: _OrderKind | None = None,
+    *,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+) -> _Array2D[np.float64]: ...
 @overload  # +inexact64 (unsafe casting), axis=<given> (positional), keepdims=False
 def norm(
     x: _ArrayLike[_to_inexact64_unsafe] | _NestedSequence[complex],
@@ -660,6 +1059,51 @@ def norm(
 def norm(
     x: _ArrayLike[_inexact32], ord: _OrderKind | None = None, axis: None = None, keepdims: L[False] = False
 ) -> np.float32: ...
+@overload  # ~inexact32, ?d, axis=<int> (positional), keepdims=False
+def norm(
+    x: _SupportsArray[_JustAnyShape, np.dtype[_inexact32]],
+    ord: _OrderKind | None,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+) -> NDArray[np.float32]: ...
+@overload  # ~inexact32, ?d, axis=<int> (keyword), keepdims=False
+def norm(
+    x: _SupportsArray[_JustAnyShape, np.dtype[_inexact32]],
+    ord: _OrderKind | None = None,
+    *,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+) -> NDArray[np.float32]: ...
+@overload  # ~inexact32, 2d, axis=<int> (positional), keepdims=False
+def norm(
+    x: _ArrayLike2D[_inexact32],
+    ord: _OrderKind | None,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+) -> _Array1D[np.float32]: ...
+@overload  # ~inexact32, 2d, axis=<int> (keyword), keepdims=False
+def norm(
+    x: _ArrayLike2D[_inexact32],
+    ord: _OrderKind | None = None,
+    *,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+) -> _Array1D[np.float32]: ...
+@overload  # ~inexact32, 3d, axis=<int> (positional), keepdims=False
+def norm(
+    x: _ArrayLike3D[_inexact32],
+    ord: _OrderKind | None,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+) -> _Array2D[np.float32]: ...
+@overload  # ~inexact32, 3d, axis=<int> (keyword), keepdims=False
+def norm(
+    x: _ArrayLike3D[_inexact32],
+    ord: _OrderKind | None = None,
+    *,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+) -> _Array2D[np.float32]: ...
 @overload  # ~inexact32, axis=<given> (positional), keepdims=False
 def norm(x: _ArrayLike[_inexact32], ord: _OrderKind | None, axis: _Ax2, keepdims: L[False] = False) -> NDArray[np.float32]: ...
 @overload  # ~inexact32, axis=<given> (keyword), keepdims=False
@@ -797,6 +1241,33 @@ def vector_norm(
     axis: None = None,
     ord: float | None = 2,
 ) -> np.float64: ...
+@overload  # +inexact64 (unsafe casting), ?d, axis=<int>, keepdims=False
+def vector_norm(
+    x: _SupportsArray[_JustAnyShape, np.dtype[_to_inexact64_unsafe]],
+    /,
+    *,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+    ord: float | None = 2,
+) -> NDArray[np.float64]: ...
+@overload  # +inexact64 (unsafe casting), 2d, axis=<int>, keepdims=False
+def vector_norm(
+    x: _ArrayLike2D[_to_inexact64_unsafe] | _Sequence2D[complex],
+    /,
+    *,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+    ord: float | None = 2,
+) -> _Array1D[np.float64]: ...
+@overload  # +inexact64 (unsafe casting), 3d, axis=<int>, keepdims=False
+def vector_norm(
+    x: _ArrayLike3D[_to_inexact64_unsafe] | _Sequence3D[complex],
+    /,
+    *,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+    ord: float | None = 2,
+) -> _Array2D[np.float64]: ...
 @overload  # +inexact64 (unsafe casting), axis=<given>, keepdims=False
 def vector_norm(
     x: _ArrayLike[_to_inexact64_unsafe] | _NestedSequence[complex],
@@ -844,6 +1315,33 @@ def vector_norm(
 def vector_norm(
     x: _ArrayLike[_inexact32], /, *, axis: None = None, keepdims: L[False] = False, ord: float | None = 2
 ) -> np.float32: ...
+@overload  # ~inexact32, ?d, axis=<int>, keepdims=False
+def vector_norm(
+    x: _SupportsArray[_JustAnyShape, np.dtype[_inexact32]],
+    /,
+    *,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+    ord: float | None = 2,
+) -> NDArray[np.float32]: ...
+@overload  # ~inexact32, 2d, axis=<int>, keepdims=False
+def vector_norm(
+    x: _ArrayLike2D[_inexact32],
+    /,
+    *,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+    ord: float | None = 2,
+) -> _Array1D[np.float32]: ...
+@overload  # ~inexact32, 3d, axis=<int>, keepdims=False
+def vector_norm(
+    x: _ArrayLike3D[_inexact32],
+    /,
+    *,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+    ord: float | None = 2,
+) -> _Array2D[np.float32]: ...
 @overload  # ~inexact32, axis=<given>  keepdims=False
 def vector_norm(
     x: _ArrayLike[_inexact32], /, *, axis: _Ax2, keepdims: L[False] = False, ord: float | None = 2

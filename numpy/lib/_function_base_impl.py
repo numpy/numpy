@@ -3562,7 +3562,8 @@ def _i0_1(x):
 
 
 def _i0_2(x):
-    return exp(x) * _chbevl(32.0 / x - 2.0, _i0B) / sqrt(x)
+    half_exp = exp(0.5 * x)
+    return half_exp * (_chbevl(32.0 / x - 2.0, _i0B) / sqrt(x)) * half_exp
 
 
 def _i0_dispatcher(x):
@@ -3627,7 +3628,7 @@ def i0(x):
     if x.dtype.kind != 'f':
         x = x.astype(float)
     x = np.abs(x)
-    return piecewise(x, [x <= 8.0], [_i0_1, _i0_2])
+    return piecewise(x, [x <= 8.0, np.isinf(x)], [_i0_1, lambda x: x, _i0_2])
 
 ## End of cephes code for i0
 

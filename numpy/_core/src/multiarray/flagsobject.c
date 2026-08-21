@@ -460,24 +460,16 @@ static PyGetSetDef arrayflags_getsets[] = {
 static PyObject *
 arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
 {
-    char *key = NULL;
-    char buf[16];
-    int n;
+    char const *key = NULL;
+    Py_ssize_t n;
     if (PyUnicode_Check(ind)) {
-        PyObject *tmp_str;
-        tmp_str = PyUnicode_AsASCIIString(ind);
-        if (tmp_str == NULL) {
-            return NULL;
-        }
-        key = PyBytes_AS_STRING(tmp_str);
-        n = PyBytes_GET_SIZE(tmp_str);
-        if (n > 16) {
-            Py_DECREF(tmp_str);
+        if (!PyUnicode_IS_ASCII(ind)) {
             goto fail;
         }
-        memcpy(buf, key, n);
-        Py_DECREF(tmp_str);
-        key = buf;
+        key = PyUnicode_AsUTF8AndSize(ind, &n);
+        if (key == NULL) {
+            return NULL;
+        }
     }
     else if (PyBytes_Check(ind)) {
         key = PyBytes_AS_STRING(ind);
@@ -580,21 +572,16 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
 static int
 arrayflags_setitem(PyArrayFlagsObject *self, PyObject *ind, PyObject *item)
 {
-    char *key;
-    char buf[16];
-    int n;
+    char const *key;
+    Py_ssize_t n;
     if (PyUnicode_Check(ind)) {
-        PyObject *tmp_str;
-        tmp_str = PyUnicode_AsASCIIString(ind);
-        if (tmp_str == NULL) {
+        if (!PyUnicode_IS_ASCII(ind)) {
             goto fail;
         }
-        key = PyBytes_AS_STRING(tmp_str);
-        n = PyBytes_GET_SIZE(tmp_str);
-        if (n > 16) n = 16;
-        memcpy(buf, key, n);
-        Py_DECREF(tmp_str);
-        key = buf;
+        key = PyUnicode_AsUTF8AndSize(ind, &n);
+        if (key == NULL) {
+            return -1;
+        }
     }
     else if (PyBytes_Check(ind)) {
         key = PyBytes_AS_STRING(ind);
