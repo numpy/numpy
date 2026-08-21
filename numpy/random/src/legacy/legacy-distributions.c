@@ -618,19 +618,43 @@ int64_t legacy_random_geometric(bitgen_t *bitgen_state, double p) {
   }
 }
 
+static RAND_INT_TYPE legacy_random_binomial_for_multinomial(
+    bitgen_t *bitgen_state, double p, RAND_INT_TYPE n, binomial_t *binomial) {
+  double q;
+
+  if ((n == 0LL) || (p == 0.0f)) {
+    return 0;
+  }
+
+  if (p <= 0.5) {
+    if (p * n <= 30.0) {
+      return random_binomial_inversion(bitgen_state, n, p, binomial);
+    } else {
+      return legacy_random_binomial_btpe(bitgen_state, n, p, binomial);
+    }
+  } else {
+    q = 1.0 - p;
+    if (q * n <= 30.0) {
+      return n - random_binomial_inversion(bitgen_state, n, q, binomial);
+    } else {
+      return n - legacy_random_binomial_btpe(bitgen_state, n, q, binomial);
+    }
+  }
+}
+
 void legacy_random_multinomial(bitgen_t *bitgen_state, RAND_INT_TYPE n,
                                RAND_INT_TYPE *mnix, double *pix, npy_intp d,
                                binomial_t *binomial) {
   /*
-   * Mirrors random_multinomial but dispatches to legacy_random_binomial,
-   * since bug fixes to random_binomial would otherwise change the
-   * RandomState stream.
+   * Mirrors the random_multinomial path used by RandomState before gh-31238.
+   * It retains the current inversion and early returns, while preserving the
+   * legacy BTPE implementation.
    */
   double remaining_p = 1.0;
   npy_intp j;
   RAND_INT_TYPE dn = n;
   for (j = 0; j < (d - 1); j++) {
-    mnix[j] = (RAND_INT_TYPE)legacy_random_binomial(
+    mnix[j] = legacy_random_binomial_for_multinomial(
         bitgen_state, pix[j] / remaining_p, dn, binomial);
     dn = dn - mnix[j];
     if (dn <= 0) {
