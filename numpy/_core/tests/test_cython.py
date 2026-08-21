@@ -354,6 +354,27 @@ def test_npystring_allocators_other_dtype(install_temp):
     assert checks.npystring_allocators_other_types(arr1, arr2) == 0
 
 
+def test_npystring_pack_invalid_utf8(install_temp):
+    """Check StringDType stays safe on stored bytes that aren't valid UTF-8."""
+    import checks
+
+    from numpy._core.umath import _center, _ljust, _rjust
+
+    sdt = np.dtypes.StringDType()
+
+    # the raw ufuncs skip the wrapper's one-character fill check
+    fill = np.array(["x"], dtype=sdt)
+    assert checks.npystring_pack_invalid_utf8(fill, b"\x80") == 0
+    src = np.array(["hello"], dtype=sdt)
+    for pad in (_center, _ljust, _rjust):
+        pad(src, 100_000, fill)
+
+    bad = np.array(["placeholder"], dtype=sdt)
+    assert checks.npystring_pack_invalid_utf8(bad, b"\x80" * 12) == 0
+    assert np.strings.find(bad, "z")[0] == -1
+    assert np.strings.count(bad, "z")[0] == 0
+
+
 @pytest.mark.skipif(sysconfig.get_platform() == 'win-arm64',
                     reason='no checks module on win-arm64')
 def test_npy_uintp_type_enum(install_temp):
