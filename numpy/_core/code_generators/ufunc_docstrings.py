@@ -3314,6 +3314,42 @@ add_newdoc('numpy._core.umath', '_unwrap',
 
     """)
 
+add_newdoc('numpy._core.umath', '_searchsorted_left',
+    """
+    _searchsorted_left(a, v)
+
+    Generalized ufunc backing `numpy.searchsorted` with ``side='left'``,
+    with signature ``(n),(m?)->(m?)``.
+
+    """)
+
+add_newdoc('numpy._core.umath', '_searchsorted_left_sorter',
+    """
+    _searchsorted_left_sorter(a, v, sorter)
+
+    As `_searchsorted_left`, with ``a`` indexed through ``sorter``, with
+    signature ``(n),(m?),(n)->(m?)``.
+
+    """)
+
+add_newdoc('numpy._core.umath', '_searchsorted_right',
+    """
+    _searchsorted_right(a, v)
+
+    Generalized ufunc backing `numpy.searchsorted` with ``side='right'``,
+    with signature ``(n),(m?)->(m?)``.
+
+    """)
+
+add_newdoc('numpy._core.umath', '_searchsorted_right_sorter',
+    """
+    _searchsorted_right_sorter(a, v, sorter)
+
+    As `_searchsorted_right`, with ``a`` indexed through ``sorter``, with
+    signature ``(n),(m?),(n)->(m?)``.
+
+    """)
+
 add_newdoc('numpy._core.umath', 'power',
     """
     First array elements raised to powers from second array, element-wise.

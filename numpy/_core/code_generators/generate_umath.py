@@ -1212,6 +1212,30 @@ defdict = {
           None,
           signature='(n),(),()->(n)',
           ),
+'_searchsorted_left':
+    Ufunc(2, 1, None,
+          docstrings.get('numpy._core.umath._searchsorted_left'),
+          None,
+          signature='(n),(m?)->(m?)',
+          ),
+'_searchsorted_right':
+    Ufunc(2, 1, None,
+          docstrings.get('numpy._core.umath._searchsorted_right'),
+          None,
+          signature='(n),(m?)->(m?)',
+          ),
+'_searchsorted_left_sorter':
+    Ufunc(3, 1, None,
+          docstrings.get('numpy._core.umath._searchsorted_left_sorter'),
+          None,
+          signature='(n),(m?),(n)->(m?)',
+          ),
+'_searchsorted_right_sorter':
+    Ufunc(3, 1, None,
+          docstrings.get('numpy._core.umath._searchsorted_right_sorter'),
+          None,
+          signature='(n),(m?),(n)->(m?)',
+          ),
 # Real and imag ufunc helpers (loops added later):
 'real':
     Ufunc(1, 1, None,
