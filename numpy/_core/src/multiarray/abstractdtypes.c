@@ -403,6 +403,29 @@ npy_update_operand_for_scalar(
 
 
 /*
+ * Convert an operand marked with NPY_ARRAY_WAS_PYTHON_STR again from the
+ * original str once the operation's target descriptor is known, so that the
+ * fixed-width unicode temporary cannot lose trailing nulls.  A no-op when
+ * the str's DType has no common DType with the target's.
+ */
+NPY_NO_EXPORT int
+npy_update_operand_for_pystr(
+    PyArrayObject **operand, PyObject *scalar, PyArray_Descr *target,
+    NPY_CASTING casting)
+{
+    PyArray_Descr *descr = npy_find_descr_for_scalar(
+            scalar, PyArray_DESCR(*operand),
+            NPY_DTYPE(PyArray_DESCR(*operand)), NPY_DTYPE(target));
+    if (descr == NULL) {
+        return -1;
+    }
+    int res = npy_update_operand_for_scalar(operand, scalar, descr, casting);
+    Py_DECREF(descr);
+    return res;
+}
+
+
+/*
  * When a user passed a Python literal (int, float, complex), special promotion
  * rules mean that we don't know the exact descriptor that should be used.
  *
