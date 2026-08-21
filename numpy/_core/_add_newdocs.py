@@ -5541,13 +5541,24 @@ add_newdoc('numpy._core', 'ufunc', ('accumulate',
         If not provided or None, a freshly-allocated array is returned.
         For consistency with ``ufunc.__call__``, if passed as a keyword
         argument, can be Ellipses (``out=...``, which has the same effect
-        as None as an array is always returned), or a 1-element tuple.
+        as None as an array is always returned), or a tuple with one entry
+        per output. For a ufunc with a single output, a 1-element tuple is
+        also accepted, as before.
 
     Returns
     -------
-    r : ndarray
+    r : ndarray or tuple of ndarray
         The accumulated values. If `out` was supplied, `r` is a reference to
-        `out`.
+        `out`. For a ufunc with more than one output whose loop implementation
+        registers a reduction loop (see the note below), `r` is instead a
+        tuple with one array per output.
+
+    Notes
+    -----
+    ``accumulate`` normally only supports ufuncs with a single output. A ufunc
+    with more than one output can still be used if its loop implementation
+    registers a dedicated reduction loop. Otherwise, calling it raises a
+    ``TypeError``.
 
     Examples
     --------
