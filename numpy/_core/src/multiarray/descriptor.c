@@ -24,6 +24,7 @@
 #include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "descriptor.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "multiarraymodule.h"  // for thread unsafe state access
 #include "alloc.h"
 #include "assert.h"
@@ -35,8 +36,6 @@
 #ifndef PyDictProxy_Check
 #define PyDictProxy_Check(obj) (Py_TYPE(obj) == &PyDictProxy_Type)
 #endif
-
-static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
 
 static PyArray_Descr *
 _try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj);
@@ -96,7 +95,8 @@ _try_convert_from_dtype_attr(PyObject *obj)
     int used_dtype_attr = 0;
     /* For arbitrary objects that have a "dtype" attribute */
     PyObject *attr;
-    int res = PyObject_GetOptionalAttr(obj, npy_interned_str.numpy_dtype, &attr);
+    npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
+    int res = PyObject_GetOptionalAttr(obj, interned_str->numpy_dtype, &attr);
     if (res < 0) {
         return NULL;
     }
@@ -108,7 +108,7 @@ _try_convert_from_dtype_attr(PyObject *obj)
          * syntax.
          */
         used_dtype_attr = 1;
-        int res = PyObject_GetOptionalAttr(obj, npy_interned_str.dtype, &attr);
+        int res = PyObject_GetOptionalAttr(obj, interned_str->dtype, &attr);
         if (res < 0) {
             return NULL;
         }
@@ -126,7 +126,7 @@ _try_convert_from_dtype_attr(PyObject *obj)
         }
         PyErr_Format(PyExc_ValueError,
             "Could not convert %R to a NumPy dtype (via `.%S` value %R).", obj,
-            used_dtype_attr ? npy_interned_str.dtype : npy_interned_str.numpy_dtype,
+            used_dtype_attr ? interned_str->dtype : interned_str->numpy_dtype,
             attr);
         Py_DECREF(attr);
         return NULL;
@@ -140,18 +140,15 @@ _try_convert_from_dtype_attr(PyObject *obj)
  * dtype names to numpy scalar types.
  */
 NPY_NO_EXPORT PyObject *
-array_set_typeDict(PyObject *NPY_UNUSED(ignored), PyObject *args)
+array_set_typeDict(PyObject *module, PyObject *args)
 {
     PyObject *dict;
 
     if (!PyArg_ParseTuple(args, "O:set_typeDict", &dict)) {
         return NULL;
     }
-    /* Decrement old reference (if any)*/
-    Py_XDECREF(typeDict);
-    typeDict = dict;
-    /* Create an internal reference to it */
-    Py_INCREF(dict);
+    multiarray_umath_state *state = get_module_state(module);
+    Py_XSETREF(state->typeDict, Py_NewRef(dict));
     Py_RETURN_NONE;
 }
 
@@ -748,15 +745,16 @@ _convert_from_list(PyObject *obj, int align)
 static PyArray_Descr *
 _convert_from_commastring(PyObject *obj, int align)
 {
+    multiarray_umath_state *state = _npy_module_state;
     PyObject *parsed;
     PyArray_Descr *res;
     assert(PyUnicode_Check(obj));
     if (npy_cache_import_runtime(
             "numpy._core._internal", "_commastring",
-            &npy_runtime_imports._commastring) == -1) {
+            &state->runtime_imports._commastring) == -1) {
         return NULL;
     }
-    parsed = PyObject_CallOneArg(npy_runtime_imports._commastring, obj);
+    parsed = PyObject_CallOneArg(state->runtime_imports._commastring, obj);
     if (parsed == NULL) {
         return NULL;
     }
@@ -1056,13 +1054,16 @@ _validate_object_field_overlap(_PyArray_LegacyDescr *dtype)
 static PyArray_Descr *
 _convert_from_field_dict(PyObject *obj, int align)
 {
+    multiarray_umath_state *state = _npy_module_state;
     if (npy_cache_import_runtime(
-            "numpy._core._internal", "_usefields", &npy_runtime_imports._usefields) < 0) {
+            "numpy._core._internal", "_usefields",
+            &state->runtime_imports._usefields) < 0) {
         return NULL;
     }
 
     return (PyArray_Descr *)PyObject_CallFunctionObjArgs(
-        npy_runtime_imports._usefields, obj, align ? Py_True : Py_False, NULL);
+        state->runtime_imports._usefields, obj,
+        align ? Py_True : Py_False, NULL);
 }
 
 /*
@@ -1928,6 +1929,7 @@ _convert_from_str(PyObject *obj, int align)
             (ret = PyArray_DescrFromType(check_num)) == NULL) {
         PyErr_Clear();
         /* Now check to see if the object is registered in typeDict */
+        PyObject *typeDict = _npy_module_state->typeDict;
         if (typeDict == NULL) {
             goto fail;
         }
@@ -2652,7 +2654,7 @@ arraydescr_new(PyTypeObject *subtype,
             if (res == -1 && PyErr_Occurred()) {
                 return NULL;  // Should actually be impossible (as inputs are `long`)
             }
-            if (PyErr_WarnFormat(npy_static_pydata.VisibleDeprecationWarning, 1,
+            if (PyErr_WarnFormat(_npy_module_state->static_pydata.VisibleDeprecationWarning, 1,
                         "dtype(): align should be passed as Python or NumPy boolean but got `align=%.100R`. "
                         "Did you mean to pass a tuple to create a subarray type? (Deprecated NumPy 2.4)",
                         oalign) < 0) {
@@ -2810,7 +2812,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         Py_DECREF(ret);
         return NULL;
     }
-    obj = PyObject_GetAttr(mod, npy_interned_str.dtype);
+    obj = PyObject_GetAttr(mod, get_module_state(mod)->interned_str.dtype);
     Py_DECREF(mod);
     if (obj == NULL) {
         Py_DECREF(ret);

@@ -4,11 +4,13 @@
 #include "npy_cpu_dispatch.h"
 #include "numpy/ndarraytypes.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 
 NPY_VISIBILITY_HIDDEN int
 npy_cpu_dispatch_tracer_init(PyObject *mod)
 {
-    if (npy_static_pydata.cpu_dispatch_registry != NULL) {
+    multiarray_umath_state *state = get_module_state(mod);
+    if (state->static_pydata.cpu_dispatch_registry != NULL) {
         PyErr_Format(PyExc_RuntimeError, "CPU dispatcher tracer already initialized");
         return -1;
     }
@@ -21,11 +23,11 @@ npy_cpu_dispatch_tracer_init(PyObject *mod)
         return -1;
     }
     int err = PyDict_SetItemString(mod_dict, "__cpu_targets_info__", reg_dict);
-    Py_DECREF(reg_dict);
     if (err != 0) {
+        Py_DECREF(reg_dict);
         return -1;
     }
-    npy_static_pydata.cpu_dispatch_registry = reg_dict;
+    state->static_pydata.cpu_dispatch_registry = reg_dict;
     return 0;
 }
 
@@ -33,13 +35,14 @@ NPY_VISIBILITY_HIDDEN void
 npy_cpu_dispatch_trace(const char *fname, const char *signature,
                        const char **dispatch_info)
 {
-    PyObject *func_dict = PyDict_GetItemString(npy_static_pydata.cpu_dispatch_registry, fname); // noqa: borrowed-ref OK
+    npy_static_pydata_struct *static_pydata = &_npy_module_state->static_pydata;
+    PyObject *func_dict = PyDict_GetItemString(static_pydata->cpu_dispatch_registry, fname); // noqa: borrowed-ref OK
     if (func_dict == NULL) {
         func_dict = PyDict_New();
         if (func_dict == NULL) {
             return;
         }
-        int err = PyDict_SetItemString(npy_static_pydata.cpu_dispatch_registry, fname, func_dict);
+        int err = PyDict_SetItemString(static_pydata->cpu_dispatch_registry, fname, func_dict);
         Py_DECREF(func_dict);
         if (err != 0) {
             return;

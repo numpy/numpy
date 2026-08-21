@@ -34,6 +34,7 @@
 #include "real_imag_ufuncs.h"
 #include "unwrap.h"
 #include "extobj.h"  /* for _extobject_contextvar exposure */
+#include "module_state.h"
 #include "ufunc_type_resolution.h"
 
 /* Automatically generated code to define all ufuncs: */
@@ -213,8 +214,10 @@ int initumath(PyObject *m)
 #undef ADDSCONST
     PyModule_AddIntConstant(m, "UFUNC_BUFSIZE_DEFAULT", (long)NPY_BUFSIZE);
 
-    Py_INCREF(npy_static_pydata.npy_extobj_contextvar);
-    PyModule_AddObject(m, "_extobj_contextvar", npy_static_pydata.npy_extobj_contextvar);
+    multiarray_umath_state *state = get_module_state(m);
+    Py_INCREF(state->static_pydata.npy_extobj_contextvar);
+    PyModule_AddObject(m, "_extobj_contextvar",
+                       state->static_pydata.npy_extobj_contextvar);
 
     PyModule_AddObject(m, "PINF", PyFloat_FromDouble(NPY_INFINITY));
     PyModule_AddObject(m, "NINF", PyFloat_FromDouble(-NPY_INFINITY));
