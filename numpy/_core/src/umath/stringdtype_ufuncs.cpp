@@ -1423,6 +1423,7 @@ string_replace_strided_loop(
                         npy_gil_error(PyExc_ValueError,
                                       "Only string or NaN-like null strings can "
                                       "be used as search strings for replace");
+                        goto fail;
                     }
                 }
             }
@@ -1444,7 +1445,7 @@ string_replace_strided_loop(
             Buffer<ENCODING::UTF8> buf2((char *)i2s.buf, i2s.size);
 
             npy_int64 in_count = *(npy_int64*)in4;
-            if (in_count == -1) {
+            if (in_count < 0) {
                 in_count = NPY_MAX_INT64;
             }
 
