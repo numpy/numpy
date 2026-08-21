@@ -2,7 +2,17 @@
 Discrete Fourier Transforms - _helper.py
 
 """
-from numpy._core import arange, asarray, empty, float64, floating, integer, roll
+from numpy._core import (
+    arange,
+    asarray,
+    empty,
+    float64,
+    inexact,
+    integer,
+    issubdtype,
+    result_type,
+    roll,
+)
 from numpy._core.overrides import array_function_dispatch, set_module
 
 # Created by Pearu Peterson, September 2002
@@ -148,8 +158,8 @@ def fftfreq(n, d=1.0, device=None, dtype=None):
 
         .. versionadded:: 2.0.0
     dtype : dtype, optional
-        The type of the output array. Must be a real-valued floating-point type.
-        Default is `numpy.float64`.
+        The type of the output array. Must be an inexact type.
+        Default is ``numpy.result_type(numpy.float64, d)``.
 
         .. versionadded:: 2.6.0
 
@@ -172,9 +182,9 @@ def fftfreq(n, d=1.0, device=None, dtype=None):
     """
     if not isinstance(n, integer_types):
         raise ValueError("n should be an integer")
-    dtype = dtype or float64
-    if not issubclass(dtype, floating):
-        raise ValueError(f"`dtype` must be a real floating-point type. Got {dtype=}.")
+    dtype = result_type(d, float64) if dtype is None else dtype
+    if not issubdtype(dtype, inexact):
+        raise ValueError(f"`dtype` must be an inexact type. Got {dtype=}.")
     val = 1.0 / (n * d)
     results = empty(n, dtype, device=device)
     N = (n - 1) // 2 + 1
@@ -216,10 +226,10 @@ def rfftfreq(n, d=1.0, device=None, dtype=None):
 
         .. versionadded:: 2.0.0
     dtype : dtype, optional
-        The type of the output array. Must be a real-valued floating-point type.
-        Default is `numpy.float64`.
+        The type of the output array. Must be an inexact type.
+        Default is ``numpy.result_type(numpy.float64, d)``.
 
-        ..versionadded:: 2.6.0
+        .. versionadded:: 2.6.0
 
     Returns
     -------
@@ -243,9 +253,9 @@ def rfftfreq(n, d=1.0, device=None, dtype=None):
     """
     if not isinstance(n, integer_types):
         raise ValueError("n should be an integer")
-    dtype = dtype or float64
-    if not issubclass(dtype, floating):
-        raise ValueError(f"`dtype` must be a real floating-point type. Got {dtype=}.")
+    dtype = result_type(d, float64) if dtype is None else dtype
+    if not issubdtype(dtype, inexact):
+        raise ValueError(f"`dtype` must be an inexact type. Got {dtype=}.")
     val = 1.0 / (n * d)
     N = n // 2 + 1
     results = arange(0, N, dtype=dtype, device=device)
