@@ -475,7 +475,7 @@ The signature of ``__array_ufunc__`` is::
 - *method* is a string indicating how the Ufunc was called, either
   ``"__call__"`` to indicate it was called directly, or one of its
   :ref:`methods<ufuncs.methods>`: ``"reduce"``, ``"accumulate"``,
-  ``"reduceat"``, ``"outer"``, or ``"at"``.
+  ``"reduceat"``, ``"segmented_reduce"``, ``"outer"``, or ``"at"``.
 - *inputs* is a tuple of the input arguments to the ``ufunc``
 - *kwargs* contains any optional or keyword arguments passed to the
   function. This includes any ``out`` arguments, which are always
