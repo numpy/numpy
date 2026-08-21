@@ -1,0 +1,6 @@
+Non-integer ``indices_or_sections`` is deprecated
+-------------------------------------------------
+Passing a non-integer scalar as ``indices_or_sections`` to `numpy.array_split`
+or `numpy.split` is deprecated. Such values were silently truncated towards
+zero, so that for example ``np.array_split(x, 3.9)`` returned three sub-arrays.
+Pass an integer instead; this will raise an error in a future version.
