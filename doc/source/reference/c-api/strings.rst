@@ -267,3 +267,6 @@ Functions
 
    Copy and pack the first ``size`` entries of the buffer pointed to by ``buf``
    into the ``packed_string``. Returns 0 on success and -1 on failure.
+
+   The ``buf`` pointer must store valid, complete UTF-8. The ``NpyString_pack``
+   function does not validate it.

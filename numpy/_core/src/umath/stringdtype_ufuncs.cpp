@@ -21,6 +21,7 @@
 #include "string_buffer.h"
 #include "string_fastsearch.h"
 #include "templ_common.h" /* for npy_mul_size_with_overflow_size_t */
+#include "npy_extint128.h" /* for safe_add, safe_mul */
 
 #include "stringdtype/static_string.h"
 #include "stringdtype/dtype.h"
@@ -134,6 +135,17 @@ static int multiply_loop_core(
         }
         T factor = *(T *)iin;
         size_t cursize = is.size;
+        // the overflow check below passes for an empty input regardless of
+        // factor, but the copy loop still runs factor times
+        if (factor < 1 || cursize == 0) {
+            factor = 0;
+        }
+        // on 32-bit platforms size_t truncates a 64-bit factor
+        else if ((npy_uint64)factor > (npy_uint64)PY_SSIZE_T_MAX) {
+            npy_gil_error(PyExc_OverflowError,
+                      "Overflow encountered in string multiply");
+            goto fail;
+        }
         size_t newsize;
         int overflowed = npy_mul_with_overflow_size_t(
                 &newsize, cursize, factor);
@@ -175,6 +187,7 @@ static int multiply_loop_core(
             if (NpyString_pack(oallocator, ops, buf, newsize) < 0) {
                 npy_gil_error(PyExc_MemoryError,
                               "Failed to pack string in multiply");
+                PyMem_RawFree(buf);
                 goto fail;
             }
 
@@ -370,6 +383,7 @@ add_strided_loop(PyArrayMethod_Context *context, char *const data[],
             if (NpyString_pack(oallocator, ops, buf, newsize) < 0) {
                 npy_gil_error(PyExc_MemoryError,
                           "Failed to pack output string in add");
+                PyMem_RawFree(buf);
                 goto fail;
             }
 
@@ -1753,28 +1767,33 @@ center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
             Buffer<ENCODING::UTF8> fill((char *)s2.buf, s2.size);
 
             size_t num_codepoints = inbuf.num_codepoints();
-            npy_intp width = (npy_intp)*(npy_int64*)in2;
+            npy_int64 width = *(npy_int64 *)in2;
 
-            if ((npy_intp)num_codepoints > width) {
-                width = num_codepoints;
+            if ((npy_int64)num_codepoints > width) {
+                width = (npy_int64)num_codepoints;
             }
 
             char *buf = NULL;
-            npy_intp newsize;
-            int overflowed = npy_mul_sizes_with_overflow(
-                    &(newsize),
-                    (npy_intp)num_bytes_for_utf8_character((unsigned char *)s2.buf),
-                    width - num_codepoints);
-            newsize += s1.size;
-
-            if (overflowed || newsize > PY_SSIZE_T_MAX) {
+            char overflowed = 0;
+            // size the pad with the same encoded length buffer_memset writes
+            char fill_utf8[4];
+            npy_int64 fill_nbytes =
+                    (npy_int64)ucs4_code_to_utf8_char(*fill, fill_utf8);
+            npy_int64 pad_nbytes = safe_mul(
+                    fill_nbytes, width - (npy_int64)num_codepoints, &overflowed);
+            npy_int64 newsize = safe_add(pad_nbytes, (npy_int64)s1.size,
+                                         &overflowed);
+            // also bounds width: the fill is at least one byte per pad
+            // character and s1.size >= num_codepoints, so width <= newsize
+            if (overflowed || newsize > NPY_MAX_INTP) {
                 npy_gil_error(PyExc_OverflowError,
                               "Overflow encountered in %s", ufunc_name);
                 goto fail;
             }
 
-            if (context->descriptors[0] == context->descriptors[3]) {
-                // in-place
+            int in_place = context->descriptors[0] == context->descriptors[3] ||
+                           context->descriptors[2] == context->descriptors[3];
+            if (in_place) {
                 buf = (char *)PyMem_RawMalloc(newsize);
                 if (buf == NULL) {
                     npy_gil_error(PyExc_MemoryError,
@@ -1792,17 +1811,21 @@ center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
 
             Buffer<ENCODING::UTF8> outbuf(buf, newsize);
 
-            npy_intp len = string_pad(inbuf, *(npy_int64*)in2, *fill, pos, outbuf);
+            npy_intp len = string_pad(inbuf, width, *fill, pos, outbuf);
 
             if (len < 0) {
-                return -1;
+                if (in_place) {
+                    PyMem_RawFree(buf);
+                }
+                goto fail;
             }
 
             // in-place operations need to clean up temp buffer
-            if (context->descriptors[0] == context->descriptors[3]) {
+            if (in_place) {
                 if (NpyString_pack(oallocator, ops, buf, newsize) < 0) {
                     npy_gil_error(PyExc_MemoryError,
                                   "Failed to pack string in %s", ufunc_name);
+                    PyMem_RawFree(buf);
                     goto fail;
                 }
 
@@ -1885,13 +1908,21 @@ zfill_strided_loop(PyArrayMethod_Context *context,
         {
             Buffer<ENCODING::UTF8> inbuf((char *)is.buf, is.size);
             size_t in_codepoints = inbuf.num_codepoints();
-            npy_intp width = (npy_intp)*(npy_int64*)in2;
-            if ((npy_intp)in_codepoints > width) {
-                width = in_codepoints;
+            npy_int64 width = *(npy_int64 *)in2;
+            if ((npy_int64)in_codepoints > width) {
+                width = (npy_int64)in_codepoints;
             }
             // number of leading one-byte characters plus the size of the
             // original string
-            size_t outsize = (width - in_codepoints) + is.size;
+            char overflowed = 0;
+            npy_int64 outsize = safe_add(width - (npy_int64)in_codepoints,
+                                         (npy_int64)is.size, &overflowed);
+            // also bounds width: is.size >= in_codepoints, so width <= outsize
+            if (overflowed || outsize > NPY_MAX_INTP) {
+                npy_gil_error(PyExc_OverflowError,
+                              "Overflow encountered in zfill");
+                goto fail;
+            }
             char *buf = NULL;
             if (context->descriptors[0] == context->descriptors[2]) {
                 // in-place
@@ -1911,7 +1942,10 @@ zfill_strided_loop(PyArrayMethod_Context *context,
             }
 
             Buffer<ENCODING::UTF8> outbuf(buf, outsize);
-            if (string_zfill(inbuf, (npy_int64)width, outbuf) < 0) {
+            if (string_zfill(inbuf, width, outbuf) < 0) {
+                if (context->descriptors[0] == context->descriptors[2]) {
+                    PyMem_RawFree(buf);
+                }
                 goto fail;
             }
 
@@ -1920,6 +1954,7 @@ zfill_strided_loop(PyArrayMethod_Context *context,
                 if (NpyString_pack(oallocator, ops, buf, outsize) < 0) {
                     npy_gil_error(PyExc_MemoryError,
                                   "Failed to pack string in zfill");
+                    PyMem_RawFree(buf);
                     goto fail;
                 }
 
@@ -2237,6 +2272,11 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
         npy_intp stop = *(npy_intp *)stop_ptr;
         npy_intp step = *(npy_intp *)step_ptr;
 
+        if (step == 0) {
+            npy_gil_error(PyExc_ValueError, "slice step cannot be zero");
+            goto fail;
+        }
+
         npy_static_string is = {0, NULL};
         const npy_packed_static_string *ips = (npy_packed_static_string *)iptr;
         npy_static_string os = {0, NULL};
@@ -2264,24 +2304,32 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
                 num_codepoints++;
                 int num_bytes = num_bytes_for_utf8_character(
                         ((unsigned char *)inbuf_ptr));
+                // num_bytes is 0 for a malformed lead byte
+                if (num_bytes < 1) {
+                    // keep forward progress
+                    num_bytes = 1;
+                }
+                // never advance past the end
+                if (num_bytes > inbuf_ptr_end - inbuf_ptr) {
+                    num_bytes = (int)(inbuf_ptr_end - inbuf_ptr);
+                }
                 codepoint_offsets.push_back((unsigned char *)inbuf_ptr);
                 inbuf_ptr += num_bytes;
             }
+            // trailing offset so offsets[i + 1] - offsets[i] is codepoint i's
+            // byte length below, including for the last codepoint
+            codepoint_offsets.push_back((unsigned char *)inbuf_ptr_end);
         }
 
         // adjust slice to string length in codepoints
         // and handle negative indices
-        npy_intp slice_length =
-                PySlice_AdjustIndices(num_codepoints, &start, &stop, step);
+        npy_intp slice_length = PySlice_AdjustIndices(num_codepoints, &start, &stop,
+                                                      step < -NPY_MAX_INTP ? -NPY_MAX_INTP : step);
 
         if (step == 1) {
             // step == 1 is the easy case, we can just use memcpy
-            unsigned char *start_bounded = ((size_t)start < num_codepoints
-                                            ? codepoint_offsets[start]
-                                            : (unsigned char *)is.buf + is.size);
-            unsigned char *stop_bounded = ((size_t)stop < num_codepoints
-                                           ? codepoint_offsets[stop]
-                                           : (unsigned char *)is.buf + is.size);
+            unsigned char *start_bounded = codepoint_offsets[start];
+            unsigned char *stop_bounded = codepoint_offsets[stop];
             npy_intp outsize = stop_bounded - start_bounded;
             outsize = outsize < 0 ? 0 : outsize;
 
@@ -2295,11 +2343,16 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
             memcpy(buf, start_bounded, outsize);
         }
         else {
-            // handle step != 1
-            // compute outsize
+            // step != 1. Only add step when another iteration remains: for an
+            // extreme step the final i_idx += step would overflow npy_intp and
+            // index codepoint_offsets out of bounds.
             npy_intp outsize = 0;
-            for (int i = start; step > 0 ? i < stop : i > stop; i += step) {
-                outsize += num_bytes_for_utf8_character(codepoint_offsets[i]);
+            npy_intp i_idx = start;
+            for (npy_intp o_idx = 0; o_idx < slice_length; o_idx++) {
+                outsize += codepoint_offsets[i_idx + 1] - codepoint_offsets[i_idx];
+                if (o_idx + 1 < slice_length) {
+                    i_idx += step;
+                }
             }
 
             if (outsize > 0) {
@@ -2310,10 +2363,15 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
                 /* explicitly discard const; initializing new buffer */
                 char *buf = (char *)os.buf;
 
-                for (npy_intp i_idx = start, o_idx = 0; o_idx < slice_length; o_idx++, i_idx += step) {
-                    int num_bytes = num_bytes_for_utf8_character(codepoint_offsets[i_idx]);
+                i_idx = start;
+                for (npy_intp o_idx = 0; o_idx < slice_length; o_idx++) {
+                    npy_intp num_bytes =
+                            codepoint_offsets[i_idx + 1] - codepoint_offsets[i_idx];
                     memcpy(buf, codepoint_offsets[i_idx], num_bytes);
                     buf += num_bytes;
+                    if (o_idx + 1 < slice_length) {
+                        i_idx += step;
+                    }
                 }
             }
         }

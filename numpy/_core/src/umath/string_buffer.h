@@ -320,11 +320,12 @@ struct Buffer {
             buf += rhs;
             break;
         case ENCODING::UTF32:
-            buf += rhs * sizeof(npy_ucs4);
+            buf += rhs * (npy_int64)sizeof(npy_ucs4);
             break;
         case ENCODING::UTF8:
-            for (int i=0; i<rhs; i++) {
-                buf += num_bytes_for_utf8_character((unsigned char *)buf);
+            for (npy_int64 i = 0; i < rhs && buf < after; i++) {
+                buf += num_bytes_for_utf8_character_bounded(
+                        (unsigned char *)buf, (size_t)(after - buf));
             }
             break;
         }
@@ -339,7 +340,7 @@ struct Buffer {
             buf -= rhs;
             break;
         case ENCODING::UTF32:
-            buf -= rhs * sizeof(npy_ucs4);
+            buf -= rhs * (npy_int64)sizeof(npy_ucs4);
             break;
         case ENCODING::UTF8:
             buf = (char *) find_previous_utf8_character((unsigned char *)buf, (size_t) rhs);
@@ -482,7 +483,8 @@ struct Buffer {
             case ENCODING::UTF32:
                 return 4;
             case ENCODING::UTF8:
-                return num_bytes_for_utf8_character((unsigned char *)(*this).buf);
+                return num_bytes_for_utf8_character_bounded(
+                        (unsigned char *)buf, (size_t)(after - buf));
         }
     }
 
@@ -720,12 +722,13 @@ operator+(Buffer<enc> lhs, npy_int64 rhs)
         case ENCODING::ASCII:
             return Buffer<enc>(lhs.buf + rhs, lhs.after - lhs.buf - rhs);
         case ENCODING::UTF32:
-            return Buffer<enc>(lhs.buf + rhs * sizeof(npy_ucs4),
-                          lhs.after - lhs.buf - rhs * sizeof(npy_ucs4));
+            return Buffer<enc>(lhs.buf + rhs * (npy_int64)sizeof(npy_ucs4),
+                          lhs.after - lhs.buf - rhs * (npy_int64)sizeof(npy_ucs4));
         case ENCODING::UTF8:
             char* buf = lhs.buf;
-            for (int i=0; i<rhs; i++) {
-                buf += num_bytes_for_utf8_character((unsigned char *)buf);
+            for (npy_int64 i = 0; i < rhs && buf < lhs.after; i++) {
+                buf += num_bytes_for_utf8_character_bounded(
+                        (unsigned char *)buf, (size_t)(lhs.after - buf));
             }
             return Buffer<enc>(buf, (npy_int64)(lhs.after - buf));
     }
@@ -756,8 +759,8 @@ operator-(Buffer<enc> lhs, npy_int64 rhs)
         case ENCODING::ASCII:
             return Buffer<enc>(lhs.buf - rhs, lhs.after - lhs.buf + rhs);
         case ENCODING::UTF32:
-            return Buffer<enc>(lhs.buf - rhs * sizeof(npy_ucs4),
-                          lhs.after - lhs.buf + rhs * sizeof(npy_ucs4));
+            return Buffer<enc>(lhs.buf - rhs * (npy_int64)sizeof(npy_ucs4),
+                          lhs.after - lhs.buf + rhs * (npy_int64)sizeof(npy_ucs4));
         case ENCODING::UTF8:
             char* buf = lhs.buf;
             buf = (char *)find_previous_utf8_character((unsigned char *)buf, rhs);
@@ -1632,13 +1635,18 @@ string_zfill(Buffer<enc> buf, npy_int64 width, Buffer<enc> out)
         return -1;
     }
 
-    size_t offset = final_width - buf.num_codepoints();
-    Buffer<enc> tmp = out + offset;
+    // when no padding was added there is no sign to move, and the sign
+    // position below would be out of bounds
+    size_t len = buf.num_codepoints();
+    if (len > 0 && final_width > len) {
+        size_t offset = final_width - len;
+        Buffer<enc> tmp = out + offset;
 
-    npy_ucs4 c = *tmp;
-    if (c == '+' || c == '-') {
-        tmp.buffer_memset(fill, 1);
-        out.buffer_memset(c, 1);
+        npy_ucs4 c = *tmp;
+        if (c == '+' || c == '-') {
+            tmp.buffer_memset(fill, 1);
+            out.buffer_memset(c, 1);
+        }
     }
 
     return new_len;
