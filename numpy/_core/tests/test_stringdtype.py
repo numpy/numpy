@@ -417,6 +417,104 @@ class TestStringLikeCasts:
                 sarr.astype("S20")
 
 
+# malformed UTF-8, one sequence per distinct failure class; every bytes-like
+# -> StringDType ingress must reject these (gh-32287, gh-32288)
+INVALID_UTF8 = [
+    b"\x80AAAA",  # gh-32287: continuation byte as lead (0-length)
+    b"\xF8AAAA",  # 0xF8-0xFF lead (0-length)
+    b"\xFC\x80",  # 5-/6-byte lead, disallowed since RFC 3629
+    b"A" * 15 + b"\xF0",  # gh-32288: truncated 4-byte lead at the buffer end
+    b"A\xC3",  # truncated 2-byte lead
+    b"A\xE2\x82",  # truncated 3-byte lead
+    b"\xE2\x28\xA1",  # non-continuation byte inside a 3-byte sequence
+    b"\xC0\xAF",  # overlong 2-byte encoding of '/'
+    b"\xE0\x80\xAF",  # overlong 3-byte encoding of '/'
+    b"\xF0\x80\x80\xAF",  # overlong 4-byte encoding of '/'
+    b"\xED\xA0\x80",  # UTF-16 surrogate
+    b"\xF4\x90\x80\x80",  # code point above U+10FFFF
+    b"\xF5\x80\x80\x80",  # 0xF5-0xF7 lead, always above U+10FFFF
+]
+
+
+@pytest.mark.parametrize("bad", INVALID_UTF8)
+def test_bytes_cast_rejects_invalid_utf8(bad):
+    arr = np.array([bad], dtype=f"S{len(bad)}")
+    with pytest.raises(TypeError, match="Invalid UTF-8"):
+        arr.astype(StringDType())
+
+
+@pytest.mark.parametrize("bad", INVALID_UTF8)
+def test_void_cast_rejects_invalid_utf8(bad):
+    # the void ('V') -> StringDType cast validates the same way as bytes
+    arr = np.array([bad], dtype=f"V{len(bad)}")
+    with pytest.raises(TypeError, match="Invalid UTF-8"):
+        arr.astype(StringDType())
+
+
+def test_bytes_cast_roundtrips_valid_utf8():
+    # boundary code points adjacent to the reject cases above: largest 2-byte,
+    # U+D7FF below the surrogates, max code point
+    strings = ["héllo", "naïve", "😀 e", "über\x00embedded",
+               "߿퟿", "\U0010FFFF"]
+    barr = np.array([s.encode() for s in strings], dtype="S16")
+    sarr = barr.astype(StringDType())
+    assert list(sarr) == strings
+    assert list(sarr.astype("U16")) == strings
+
+
+def test_slice_extreme_step_no_overflow():
+    # an extreme step must not overflow the slice index and read out of bounds
+    arr = np.array(["abcd"], dtype=StringDType())
+    imax = np.iinfo(np.intp).max
+    assert np.strings.slice(arr, 1, None, imax).tolist() == ["b"]
+    assert np.strings.slice(arr, None, None, imax).tolist() == ["a"]
+    assert np.strings.slice(arr, None, None, -imax).tolist() == ["d"]
+    assert np.strings.slice(arr, 2, None, -imax).tolist() == ["c"]
+    mb = np.array(["a😀cd"], dtype=StringDType())
+    assert np.strings.slice(mb, 1, None, imax).tolist() == ["😀"]
+    imin = np.iinfo(np.intp).min
+    assert np.strings.slice(arr, None, None, imin).tolist() == ["d"]
+    assert np.strings.slice(mb, None, None, imin).tolist() == ["d"]
+
+
+def test_pad_extreme_width_overflow():
+    # width near the npy_intp max must raise OverflowError, not wrap the output
+    # size past the check (which surfaced as a MemoryError)
+    arr = np.array(["😀"], dtype=StringDType())
+    imax = np.iinfo(np.intp).max
+    for pad in (np.strings.ljust, np.strings.rjust, np.strings.center,
+                np.strings.zfill):
+        with pytest.raises(OverflowError):
+            pad(arr, imax)
+
+
+def test_pad_out_aliases_fill():
+    from numpy._core.umath import _center, _ljust, _rjust
+    dt = StringDType()
+    for pad, expected in [(_center, "***abc***"), (_ljust, "abc******"),
+                          (_rjust, "******abc")]:
+        a = np.array(["abc"], dtype=dt)
+        fill = np.array(["*"], dtype=dt)
+        assert pad(a, 9, fill, out=fill).tolist() == [expected]
+    # a fill longer than 15 bytes is stored in the arena, not the packed struct
+    a = np.array(["abc"], dtype=dt)
+    fill = np.array(["*" * 300], dtype=dt)
+    assert _center(a, 9, fill, out=fill).tolist() == ["***abc***"]
+
+
+def test_zfill_no_padding_no_oob():
+    # no padding is added for an empty input or a width <= the input length
+    dt = StringDType()
+    assert np.strings.zfill(np.array([""], dtype=dt), 20).tolist() == ["0" * 20]
+    assert np.strings.zfill(np.array([""], dtype=dt), 0).tolist() == [""]
+    assert np.strings.zfill(np.array(["42"], dtype=dt), 1).tolist() == ["42"]
+    assert np.strings.zfill(np.array(["-7"], dtype=dt), 5).tolist() == ["-0007"]
+    # the in-place path writes into a heap buffer the sanitizer can bounds-check
+    from numpy._core.umath import _zfill
+    a = np.array([""], dtype=dt)
+    assert _zfill(a, 20, out=a).tolist() == ["0" * 20]
+
+
 def test_additional_unicode_cast(dtype):
     string_list = random_unicode_string_list()
     arr = np.array(string_list, dtype=dtype)
@@ -1301,6 +1399,16 @@ def test_multiply_two_string_raises():
     arr = np.array(["hello", "world"], dtype="T")
     with pytest.raises(np._core._exceptions._UFuncNoLoopError):
         np.multiply(arr, arr)
+
+
+def test_multiply_nonpositive_factor_or_empty():
+    # a non-positive factor or an empty input yields an empty string
+    dt = StringDType()
+    for factor in (0, -1, -100):
+        assert (np.array(["ab", ""], dtype=dt) * factor).tolist() == ["", ""]
+    assert (np.array([""], dtype=dt) * np.uint64(2**63)).tolist() == [""]
+    with pytest.raises(OverflowError):
+        np.array(["ab"], dtype=dt) * np.uint64(2**63)
 
 
 @pytest.mark.parametrize("use_out", [True, False])

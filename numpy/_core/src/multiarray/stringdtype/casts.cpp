@@ -2040,17 +2040,19 @@ bytes_to_string(PyArrayMethod_Context *context, char *const data[],
     npy_intp out_stride = strides[1];
 
     while(N--) {
-        size_t out_num_bytes = max_in_size;
-
-        // ignore trailing nulls
-        while (out_num_bytes > 0 && in[out_num_bytes - 1] == 0) {
-            out_num_bytes--;
+        // reject non-UTF-8 input; readers of the stored bytes assume validity
+        Py_ssize_t out_num_bytes = utf8_buffer_size(in, max_in_size);
+        if (out_num_bytes < 0) {
+            npy_gil_error(PyExc_TypeError,
+                          "Invalid UTF-8 bytes found, cannot convert to "
+                          "StringDType");
+            goto fail;
         }
 
         npy_static_string out_ss = {0, NULL};
         if (load_new_string((npy_packed_static_string *)out,
-                            &out_ss, out_num_bytes, allocator,
-                            "void to string cast") == -1) {
+                            &out_ss, (size_t)out_num_bytes, allocator,
+                            "bytes to string cast") == -1) {
             goto fail;
         }
 
