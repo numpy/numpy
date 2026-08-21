@@ -4,13 +4,14 @@
 #include "numpy/ndarraytypes.h"
 #include "npy_import.h"
 #include <stdatomic.h>
+#include <string.h>
 
 
 NPY_VISIBILITY_HIDDEN npy_runtime_imports_struct npy_runtime_imports;
 
 NPY_NO_EXPORT int
 init_import_mutex(void) {
-#if PY_VERSION_HEX < 0x30d00b3
+#ifdef NPY_USE_LEGACY_LOCK
     npy_runtime_imports.import_mutex = PyThread_allocate_lock();
     if (npy_runtime_imports.import_mutex == NULL) {
         PyErr_NoMemory();
@@ -36,7 +37,9 @@ npy_import_entry_point(const char *entry_point) {
     if (colon) { // there is a module.
         result = PyUnicode_FromStringAndSize(entry_point, colon - entry_point);
         if (result != NULL) {
-            Py_SETREF(result, PyImport_Import(result));
+            PyObject *module = PyImport_Import(result);
+            Py_DECREF(result);
+            result = module;
         }
         item = colon + 1;
     }
@@ -55,7 +58,9 @@ npy_import_entry_point(const char *entry_point) {
             Py_DECREF(result);
             return NULL;
         }
-        Py_SETREF(result, PyObject_GetAttr(result, string));
+        PyObject *attr = PyObject_GetAttr(result, string);
+        Py_DECREF(result);
+        result = attr;
         Py_DECREF(string);
     }
     return result;
@@ -69,7 +74,7 @@ npy_cache_import_runtime(const char *module, const char *attr, PyObject **obj) {
         if (value == NULL) {
             return -1;
         }
-#if PY_VERSION_HEX < 0x30d00b3
+#ifdef NPY_USE_LEGACY_LOCK
         PyThread_acquire_lock(npy_runtime_imports.import_mutex, WAIT_LOCK);
 #else
         PyMutex_Lock(&npy_runtime_imports.import_mutex);
@@ -77,7 +82,7 @@ npy_cache_import_runtime(const char *module, const char *attr, PyObject **obj) {
         if (!atomic_load_explicit((_Atomic(PyObject *) *)obj, memory_order_acquire)) {
             atomic_store_explicit((_Atomic(PyObject *) *)obj, Py_NewRef(value), memory_order_release);
         }
-#if PY_VERSION_HEX < 0x30d00b3
+#ifdef NPY_USE_LEGACY_LOCK
         PyThread_release_lock(npy_runtime_imports.import_mutex);
 #else
         PyMutex_Unlock(&npy_runtime_imports.import_mutex);

@@ -88,7 +88,7 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
     """Prints new casts, the values given are default "can-cast" values, not
     actual ones.
     """
-    from numpy._core._multiarray_tests import get_all_cast_information
+    from numpy._core._multiarray_umath import _get_all_cast_information
 
     cast_table = {
         -1: " ",
@@ -108,7 +108,7 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
     cast_info = namedtuple("cast_info", ["can_cast", "legacy", "flags"])
     no_cast_info = cast_info(" ", " ", " ")
 
-    casts = get_all_cast_information()
+    casts = _get_all_cast_information()
     table = {}
     dtypes = set()
     for cast in casts:
