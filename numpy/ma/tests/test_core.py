@@ -49,6 +49,7 @@ from numpy.ma.core import (
     array,
     asarray,
     choose,
+    common_fill_value,
     concatenate,
     conjugate,
     cos,
@@ -2632,6 +2633,16 @@ class TestFillingValues:
         a = empty(shape=(3, ), dtype="(2,)3S,(2,)3U")
         assert_equal(a["f0"].fill_value, default_fill_value(b"spam"))
         assert_equal(a["f1"].fill_value, default_fill_value("eggs"))
+
+    def test_common_fill_value(self):
+        # Test with matching fill value, across different dtypes and shapes.
+        a = array([1, 2, 3], dtype=int, fill_value=10)
+        b = array([[4, 5], [6, 7]], dtype=float, fill_value=10)
+        assert_equal(common_fill_value(a, b), 10)
+
+        # Test with non-matching fill value.
+        b.fill_value = -10
+        assert common_fill_value(a, b) is None
 
 
 class TestUfuncs:
