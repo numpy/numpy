@@ -107,6 +107,10 @@ array_converter_new(
             ((PyArrayObject_fields *)(item->array))->flags &= (
                     ~NPY_ARRAY_WAS_PYTHON_LITERAL);
         }
+        else if (PyUnicode_CheckExact(item->object)) {
+            item->scalar_input = 1;
+            item->descr = NULL;
+        }
         else {
             item->descr = PyArray_DESCR(item->array);
             Py_INCREF(item->descr);
@@ -400,7 +404,7 @@ static PyGetSetDef array_converter_getsets[] = {
 
 
 static PyMethodDef array_converter_methods[] = {
-    {"as_arrays", 
+    {"as_arrays",
         (PyCFunction)array_converter_as_arrays,
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"result_type",
