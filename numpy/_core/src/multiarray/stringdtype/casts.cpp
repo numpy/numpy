@@ -23,6 +23,7 @@
 #include "dtypemeta.h"
 #include "dtype.h"
 #include "utf8_utils.h"
+#include "npy_static_data.h"
 
 #include "casts.h"
 
@@ -601,15 +602,20 @@ static PyType_Slot b2s_slots[] = {{NPY_METH_resolve_descriptors,
 // casts between string and (u)int dtypes
 
 
+// Load the string at `in` for conversion to a numeric type. A missing
+// element sets *is_nan_na if the na object is NaN-like, errors if there is
+// some other na object, and loads the default string if there is none.
 static int
-load_non_nullable_string(char *in, int has_null, const npy_static_string *default_string,
-                         npy_static_string *string_to_load, npy_string_allocator *allocator,
-                         int has_gil)
+load_numeric_string(char *in, int has_null, int has_nan_na,
+                    const npy_static_string *default_string,
+                    npy_static_string *string_to_load, int *is_nan_na,
+                    npy_string_allocator *allocator, int has_gil)
 {
+    *is_nan_na = 0;
     const npy_packed_static_string *ps = (npy_packed_static_string *)in;
     int isnull = NpyString_load(allocator, ps, string_to_load);
     if (isnull == -1) {
-        const char msg[] = "Failed to load string for conversion to a non-nullable type";
+        const char msg[] = "Failed to load string during cast";
         if (has_gil)
         {
             PyErr_SetString(PyExc_MemoryError, msg);
@@ -620,6 +626,10 @@ load_non_nullable_string(char *in, int has_null, const npy_static_string *defaul
         return -1;
     }
     else if (isnull) {
+        if (has_nan_na) {
+            *is_nan_na = 1;
+            return 0;
+        }
         if (has_null) {
             const char msg[] = "Arrays with missing data cannot be converted to a non-nullable type";
             if (has_gil)
@@ -636,15 +646,21 @@ load_non_nullable_string(char *in, int has_null, const npy_static_string *defaul
     return 0;
 }
 
-// note that this is only used to convert to numeric types and errors
-// on nulls
+// note that this is only used to convert to numeric types; a NaN-like
+// missing element becomes "nan" so the numeric parsers produce NaN
 static PyObject *
-non_nullable_string_to_pystring(char *in, int has_null, const npy_static_string *default_string,
-                                npy_string_allocator *allocator)
+string_to_pystring(char *in, int has_null, int has_nan_na,
+                   const npy_static_string *default_string,
+                   npy_string_allocator *allocator)
 {
     npy_static_string s = {0, NULL};
-    if (load_non_nullable_string(in, has_null, default_string, &s, allocator, 1) == -1) {
+    int is_nan_na = 0;
+    if (load_numeric_string(in, has_null, has_nan_na, default_string, &s,
+                            &is_nan_na, allocator, 1) == -1) {
         return NULL;
+    }
+    if (is_nan_na) {
+        return PyUnicode_FromString("nan");
     }
     PyObject *val_obj = PyUnicode_FromStringAndSize(s.buf, s.size);
     if (val_obj == NULL) {
@@ -658,8 +674,9 @@ string_to_pylong(char *in, int has_null,
                  const npy_static_string *default_string,
                  npy_string_allocator *allocator)
 {
-    PyObject *val_obj = non_nullable_string_to_pystring(
-            in, has_null, default_string, allocator);
+    // integers cannot represent NaN, so a missing value is always an error
+    PyObject *val_obj = string_to_pystring(
+            in, has_null, 0, default_string, allocator);
     if (val_obj == NULL) {
         return NULL;
     }
@@ -975,11 +992,12 @@ static PyObject *
 string_to_pyfloat(
     char *in,
     int has_null,
+    int has_nan_na,
     const npy_static_string *default_string,
     npy_string_allocator *allocator
 ) {
-    PyObject *val_obj = non_nullable_string_to_pystring(
-            in, has_null, default_string, allocator);
+    PyObject *val_obj = string_to_pystring(
+            in, has_null, has_nan_na, default_string, allocator);
     if (val_obj == NULL) {
         return NULL;
     }
@@ -1018,7 +1036,7 @@ string_to_float(
 
     while (N--) {
         PyObject *pyfloat_value = string_to_pyfloat(
-            in, has_null, default_string, allocator
+            in, has_null, descr->has_nan_na, default_string, allocator
         );
         if (pyfloat_value == NULL) {
             goto fail;
@@ -1074,7 +1092,7 @@ string_to_float<npy_float64, NPY_DOUBLE>(
 
     while (N--) {
         PyObject *pyfloat_value = string_to_pyfloat(
-            in, has_null, default_string, allocator
+            in, has_null, descr->has_nan_na, default_string, allocator
         );
         if (pyfloat_value == NULL) {
             goto fail;
@@ -1107,6 +1125,7 @@ string_to_float<npy_longdouble, NPY_LONGDOUBLE>(
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
     int has_null = descr->na_object != NULL;
+    int has_nan_na = descr->has_nan_na;
     const npy_static_string *default_string = &descr->default_string;
     npy_intp N = dimensions[0];
     char *in = data[0];
@@ -1117,8 +1136,16 @@ string_to_float<npy_longdouble, NPY_LONGDOUBLE>(
 
     while (N--) {
         npy_static_string s = {0, NULL};
-        if (load_non_nullable_string(in, has_null, default_string, &s, allocator, 0) == -1) {
+        int is_nan_na = 0;
+        if (load_numeric_string(in, has_null, has_nan_na, default_string,
+                                &s, &is_nan_na, allocator, 0) == -1) {
             goto fail;
+        }
+        if (is_nan_na) {
+            *(npy_longdouble *)out = (npy_longdouble)NPY_NAN;
+            in += in_stride;
+            out += out_stride;
+            continue;
         }
 
         // allocate temporary null-terminated copy
@@ -1208,6 +1235,66 @@ static PyType_Slot s2float_slots[] = {
         {NPY_METH_strided_loop, (void *)&string_to_float<NpyType, typenum, npy_is_inf, double_is_inf, double_to_float>},
         {0, NULL}};
 
+// Whether a value counts as NaN for a NaN-like missing-data sentinel. Complex
+// values follow np.isnan (either component NaN); coercing one to the sentinel
+// is lossy, so the call sites raise a ComplexWarning.
+template <typename NpyType>
+static inline bool
+float_is_nan_na(NpyType val)
+{
+    if constexpr (std::is_same_v<NpyType, npy_half>) {
+        return npy_half_isnan(val);
+    }
+    else if constexpr (std::is_same_v<NpyType, npy_cfloat>) {
+        return npy_isnan(npy_crealf(val)) || npy_isnan(npy_cimagf(val));
+    }
+    else if constexpr (std::is_same_v<NpyType, npy_cdouble>) {
+        return npy_isnan(npy_creal(val)) || npy_isnan(npy_cimag(val));
+    }
+    else if constexpr (std::is_same_v<NpyType, npy_clongdouble>) {
+        return npy_isnan(npy_creall(val)) || npy_isnan(npy_cimagl(val));
+    }
+    else {
+        return npy_isnan(val);
+    }
+}
+
+template <typename NpyType>
+inline constexpr bool is_complex_npy_v =
+        std::is_same_v<NpyType, npy_cfloat> ||
+        std::is_same_v<NpyType, npy_cdouble> ||
+        std::is_same_v<NpyType, npy_clongdouble>;
+
+NPY_NO_EXPORT int
+pyobj_is_nan_na(PyObject *obj)
+{
+    if (PyFloat_Check(obj) || PyArray_IsScalar(obj, Floating)) {
+        double value = PyFloat_AsDouble(obj);
+        if (value == -1.0 && PyErr_Occurred()) {
+            PyErr_Clear();  // out-of-double-range longdouble: finite, not NaN
+            return 0;
+        }
+        return float_is_nan_na<npy_double>(value) ? 1 : 0;
+    }
+    if (PyComplex_Check(obj) || PyArray_IsScalar(obj, ComplexFloating)) {
+        Py_complex value = PyComplex_AsCComplex(obj);
+        if (value.real == -1.0 && PyErr_Occurred()) {
+            PyErr_Clear();  // out-of-double-range clongdouble: finite, not NaN
+            return 0;
+        }
+        if (!(npy_isnan(value.real) || npy_isnan(value.imag))) {
+            return 0;
+        }
+        if (npy_gil_warning(npy_static_pydata.ComplexWarning, 1,
+                            "Casting complex values to real discards "
+                            "the imaginary part") < 0) {
+            return -1;
+        }
+        return 1;
+    }
+    return 0;
+}
+
 template<typename NpyType>
 static int
 float_to_string(
@@ -1228,40 +1315,45 @@ float_to_string(
     PyArray_StringDTypeObject *descr =
             (PyArray_StringDTypeObject *)context->descriptors[1];
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
-    // borrowed reference
-    PyObject *na_object = descr->na_object;
+    [[maybe_unused]] int coerced_complex_to_na = 0;
 
     while (N--) {
-        PyObject *scalar_val = PyArray_Scalar(in, float_descr, NULL);
-        if (descr->has_nan_na) {
-            // check for case when scalar_val is the na_object and store a null string
-            int na_cmp = na_eq_cmp(scalar_val, na_object);
-            if (na_cmp < 0) {
-                Py_DECREF(scalar_val);
+        if (descr->has_nan_na && float_is_nan_na(*(NpyType *)in)) {
+            if constexpr (is_complex_npy_v<NpyType>) {
+                coerced_complex_to_na = 1;
+            }
+            if (NpyString_pack_null(allocator, (npy_packed_static_string *)out) < 0) {
+                npy_gil_error(PyExc_MemoryError,
+                              "Failed to pack null string during float "
+                              "to string cast");
                 goto fail;
             }
-            if (na_cmp) {
-                Py_DECREF(scalar_val);
-                if (NpyString_pack_null(allocator, (npy_packed_static_string *)out) < 0) {
-                    PyErr_SetString(PyExc_MemoryError,
-                                    "Failed to pack null string during float "
-                                    "to string cast");
-                    goto fail;
-                }
-                goto next_step;
+        }
+        else {
+            PyObject *scalar_val = PyArray_Scalar(in, float_descr, NULL);
+            // steals reference to scalar_val
+            if (pyobj_to_string(scalar_val, out, allocator) == -1) {
+                goto fail;
             }
         }
-        // steals reference to scalar_val
-        if (pyobj_to_string(scalar_val, out, allocator) == -1) {
-            goto fail;
-        }
 
-      next_step:
         in += in_stride;
         out += out_stride;
     }
 
     NpyString_release_allocator(allocator);
+
+    // warn outside the loop so the warning machinery never runs while the
+    // allocator lock is held
+    if constexpr (is_complex_npy_v<NpyType>) {
+        if (coerced_complex_to_na) {
+            if (npy_gil_warning(npy_static_pydata.ComplexWarning, 1,
+                                "Casting complex values to real discards "
+                                "the imaginary part") < 0) {
+                return -1;
+            }
+        }
+    }
     return 0;
 fail:
     NpyString_release_allocator(allocator);
@@ -1276,12 +1368,12 @@ static PyType_Slot float2s_slots [] = {
 };
 
 static PyObject*
-string_to_pycomplex(char *in, int has_null,
+string_to_pycomplex(char *in, int has_null, int has_nan_na,
                     const npy_static_string *default_string,
                     npy_string_allocator *allocator)
 {
-    PyObject *val_obj = non_nullable_string_to_pystring(
-            in, has_null, default_string, allocator);
+    PyObject *val_obj = string_to_pystring(
+            in, has_null, has_nan_na, default_string, allocator);
     if (val_obj == NULL) {
         return NULL;
     }
@@ -1323,7 +1415,7 @@ string_to_complex_float(
 
     while (N--) {
         PyObject *pycomplex_value = string_to_pycomplex(
-                in, has_null, default_string, allocator);
+                in, has_null, descr->has_nan_na, default_string, allocator);
 
         if (pycomplex_value == NULL) {
             goto fail;
