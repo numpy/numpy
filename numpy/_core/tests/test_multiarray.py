@@ -6757,6 +6757,19 @@ class TestIO:
                 monkeypatch.setattr(os, "dup", dup)
                 assert_raises(exc, np.fromfile, f)
 
+    def test_fromfile_failed_fdopen_closes_dup(
+            self, tmp_path, param_filename, monkeypatch):
+        closed_fds = []
+        tmp_filename = normalize_filename(tmp_path, param_filename)
+
+        monkeypatch.setattr(os, "dup", lambda fd: -2)
+        monkeypatch.setattr(os, "close", closed_fds.append)
+
+        with open(tmp_filename, "wb") as f:
+            assert_raises(OSError, np.fromfile, f)
+
+        assert closed_fds == [-2]
+
     def _check_from(self, s, value, filename, **kw):
         if 'sep' not in kw:
             y = np.frombuffer(s, **kw)
