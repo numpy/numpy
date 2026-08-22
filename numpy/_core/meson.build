@@ -471,6 +471,12 @@ optional_intrinsics = [
 ]
 foreach intrin: optional_intrinsics
   func = intrin[0]
+  # MSVC does not support these builtins in C mode (gh-32229).
+  if (compiler_id == 'msvc' and
+      func in ['__builtin_isnan', '__builtin_isinf', '__builtin_isfinite']
+    )
+    continue
+  endif
   func_args = intrin[1]
   header = intrin[2]
   define = intrin[3]
