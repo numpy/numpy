@@ -1,17 +1,17 @@
 #include "numpy/npy_math.h"
-#include "simd/simd.h"
 #include "loops_utils.h"
 #include "loops.h"
 
-// Provides the various *_LOOP macros
-#include "fast_loop_macros.h"
 #include <hwy/highway.h>
-namespace hn = hwy::HWY_NAMESPACE;
+#include "simd/simd.hpp"
 
-#if HWY_NATIVE_FMA // native support
+namespace {
+using namespace np::simd;
+
+#if NPY_HWY_FMA // native support
 
 /*
- * NOTE: The following implementation of tanh(f32, f64) have been converted from
+ * NOTE: The following implementation of tanh(_Tag<float>(), _Tag<double>()) have been converted from
  * Intel SVML to universal intrinsics, and the original code can be found in:
  *
  * - https://github.com/numpy/SVML/blob/main/linux/avx512/svml_z0_tanh_d_la.s
@@ -73,103 +73,86 @@ namespace hn = hwy::HWY_NAMESPACE;
  *
  */
 
-const hn::ScalableTag<float> f32;
-const hn::ScalableTag<int32_t> s32;
-const hn::ScalableTag<uint32_t> u32;
-using vec_f32 = hn::Vec<decltype(f32)>;
-using vec_s32 = hn::Vec<decltype(s32)>;
-using vec_u32 = hn::Vec<decltype(u32)>;
-
-const hn::ScalableTag<double> f64;
-const hn::ScalableTag<int64_t> s64;
-const hn::ScalableTag<uint64_t> u64;
-using vec_f64 = hn::Vec<decltype(f64)>;
-using vec_s64 = hn::Vec<decltype(s64)>;
-using vec_u64 = hn::Vec<decltype(u64)>;
-
 template <typename vtype, typename type_t>
-HWY_ATTR NPY_FINLINE vtype
-load_vector(type_t* src, npy_intp ssrc, npy_intp len){
-    auto D = hn::DFromV<vtype>();
+HWY_ATTR HWY_INLINE vtype load_vector(type_t* src, npy_intp ssrc, npy_intp len){
+    auto D   = hn::DFromV<vtype>();
     using DI = hn::RebindToSigned<decltype(D)>;
     DI di;
-    
+
     auto indices = hn::Iota(di, 0);
-    auto stride = hn::Set(di, ssrc);
+    auto stride  = hn::Set(di, ssrc);
     indices = hn::Mul(indices, stride);
-    
+
     const int nlanes = hn::Lanes(D);
     if (len < nlanes){
         if (ssrc == 1) {
             return hn::LoadN(D, src, len);
         } else {
-            return hn::GatherIndexN(D, src, indices, len); 
+            return hn::GatherIndexN(D, src, indices, len);
         }
     }else{
         if (ssrc == 1) {
             return hn::LoadU(D, src);
         } else {
-            return hn::GatherIndex(D, src, indices); 
+            return hn::GatherIndex(D, src, indices);
         }
     }
 }
 
 template <typename vtype, typename type_t>
-HWY_ATTR NPY_FINLINE void
-store_vector(vtype vec, type_t* dst, npy_intp sdst, npy_intp len){
-    auto D = hn::DFromV<vtype>();
+HWY_ATTR HWY_INLINE void store_vector(vtype vec, type_t* dst, npy_intp sdst, npy_intp len){
+    auto D   = hn::DFromV<vtype>();
     using DI = hn::RebindToSigned<decltype(D)>;
     DI di;
-    
+
     auto indices = hn::Iota(di, 0);
-    auto stride = hn::Set(di, sdst);
+    auto stride  = hn::Set(di, sdst);
     indices = hn::Mul(indices, stride);
-    
+
     const int nlanes = hn::Lanes(D);
     if (len < nlanes){
         if (sdst == 1) {
             hn::StoreN(vec, D, dst, len);
         } else {
-            hn::ScatterIndexN(vec, D, dst, indices, len); 
+            hn::ScatterIndexN(vec, D, dst, indices, len);
         }
     }else{
         if (sdst == 1) {
             hn::StoreU(vec, D, dst);
         } else {
-            hn::ScatterIndex(vec, D, dst, indices); 
+            hn::ScatterIndex(vec, D, dst, indices);
         }
     }
 }
 
-#if NPY_SIMD_F64
+#if NPY_HWY_F64
+[[maybe_unused]] HWY_ATTR HWY_INLINE Vec<double> lut_16_f64(const double * lut, Vec<uint64_t> idx){
+    if constexpr(hn::MaxLanes(_Tag<double>()) == 8){
+        const Vec<double> lut0 = hn::Load(_Tag<double>(), lut);
+        const Vec<double> lut1 = hn::Load(_Tag<double>(), lut + 8);
+        return hn::TwoTablesLookupLanes(_Tag<double>(), lut0, lut1, hn::IndicesFromVec(_Tag<double>(), idx));
+    }else if constexpr (hn::MaxLanes(_Tag<double>()) == 4){
+        const Vec<double> lut0 = hn::Load(_Tag<double>(), lut);
+        const Vec<double> lut1 = hn::Load(_Tag<double>(), lut + 4);
+        const Vec<double> lut2 = hn::Load(_Tag<double>(), lut + 8);
+        const Vec<double> lut3 = hn::Load(_Tag<double>(), lut + 12);
 
-[[maybe_unused]] HWY_ATTR NPY_FINLINE vec_f64 lut_16_f64(const double * lut, vec_u64 idx){
-    if constexpr(hn::MaxLanes(f64) == 8){
-        const vec_f64 lut0 = hn::Load(f64, lut);
-        const vec_f64 lut1 = hn::Load(f64, lut + 8);
-        return hn::TwoTablesLookupLanes(f64, lut0, lut1, hn::IndicesFromVec(f64, idx));
-    }else if constexpr (hn::MaxLanes(f64) == 4){
-        const vec_f64 lut0 = hn::Load(f64, lut);
-        const vec_f64 lut1 = hn::Load(f64, lut + 4);
-        const vec_f64 lut2 = hn::Load(f64, lut + 8);
-        const vec_f64 lut3 = hn::Load(f64, lut + 12);
-        
-        const auto high_mask = hn::Ne(hn::ShiftRight<3>(idx), hn::Zero(u64));
-        const auto load_mask = hn::And(idx, hn::Set(u64, 0b111));
-        
-        const vec_f64 lut_low = hn::TwoTablesLookupLanes(f64, lut0, lut1, hn::IndicesFromVec(f64, load_mask));
-        const vec_f64 lut_high = hn::TwoTablesLookupLanes(f64, lut2, lut3, hn::IndicesFromVec(f64, load_mask));
-        
-        return hn::IfThenElse(hn::RebindMask(f64, high_mask), lut_high, lut_low);
+        const auto high_mask = hn::Ne(hn::ShiftRight<3>(idx), Zero<uint64_t>());
+        const auto load_mask = hn::And(idx, Set(uint64_t(0b111)));
+
+        const Vec<double> lut_low  = hn::TwoTablesLookupLanes(_Tag<double>(), lut0, lut1, hn::IndicesFromVec(_Tag<double>(), load_mask));
+        const Vec<double> lut_high = hn::TwoTablesLookupLanes(_Tag<double>(), lut2, lut3, hn::IndicesFromVec(_Tag<double>(), load_mask));
+
+        return hn::IfThenElse(hn::RebindMask(_Tag<double>(), high_mask), lut_high, lut_low);
     }else{
-        return hn::GatherIndex(f64, lut, hn::BitCast(s64, idx));
+        return hn::GatherIndex(_Tag<double>(), lut, BitCast<int64_t>(idx));
     }
 }
 
 HWY_ATTR static void
 simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_intp len)
 {
-    static const npy_uint64 NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) lut18x16[] = {
+    static const npy_uint64 NPY_DECL_ALIGNED(kMaxLanes<uint8_t>) lut18x16[] = {
         // 0
         0x0ull,                0x0ull,                0x3ff0000000000000ull, 0xbbf0b3ea3fdfaa19ull, // b,   c0,  c1,  c2
         0xbfd5555555555555ull, 0xbce6863ee44ed636ull, 0x3fc1111111112ab5ull, 0xbda1ea19ddddb3b4ull, // c3,  c4,  c5,  c6
@@ -261,14 +244,14 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
         0x3b873f9f2d2fda99ull, 0xbb5eca68e2c1ba2eull, 0xbabf0b21acfa52abull, 0xba8e0a4c47ae75f5ull,
         0x3ae5c7f1fd871496ull, 0xbab5a71b5f7d9035ull,
         // 15
-        0x0ull,                0x3ff0000000000000ull, 0x0ull,                0x0ull,                
-        0x0ull,                0x0ull,                0x0ull,                0x0ull,               
+        0x0ull,                0x3ff0000000000000ull, 0x0ull,                0x0ull,
+        0x0ull,                0x0ull,                0x0ull,                0x0ull,
         0x0ull,                0x0ull,                0x0ull,                0x0ull,
         0x0ull,                0x0ull,                0x0ull,                0x0ull,
         0x0ull,                0x0ull,               
     };
 
-    static const npy_uint64 NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) lut16x18[] = {
+    static const npy_uint64 NPY_DECL_ALIGNED(kMaxLanes<uint8_t>) lut16x18[] = {
         // 0
         0x0ull,                0x3fcc000000000000ull, 0x3fd4000000000000ull, 0x3fdc000000000000ull,
         0x3fe4000000000000ull, 0x3fec000000000000ull, 0x3ff4000000000000ull, 0x3ffc000000000000ull,
@@ -361,45 +344,89 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
         0xbc730b73f1eaff20ull, 0xbbba2cff8135d462ull, 0xbab5a71b5f7d9035ull, 0x0ull
     };
 
-    const int nlanes = hn::Lanes(f64);
-    const vec_f64 qnan = hn::Set(f64, NPY_NAN);
+    const int nlanes = Lanes<double>();
+    const Vec<double> qnan = Set(double(NPY_NAN));
     for (; len > 0; len -= nlanes, src += ssrc*nlanes, dst += sdst*nlanes) {
-        vec_f64 x = load_vector<vec_f64>(src, ssrc, len);
-        
-        vec_s64 ndnan = hn::And(hn::BitCast(s64, x), hn::Set(s64, 0x7ff8000000000000ll));
+        Vec<double> x = load_vector<Vec<double>>(src, ssrc, len);
+
+        Vec<int64_t> ndnan = hn::And(BitCast<int64_t>(x), Set(int64_t(0x7ff8000000000000ll)));
         // |x| > HUGE_THRESHOLD, INF and NaNs.
-        auto special_m = hn::Le(ndnan, hn::Set(s64, 0x7fe0000000000000ll));
+        auto special_m = hn::Le(ndnan, Set(int64_t(0x7fe0000000000000ll)) );
         auto nan_m = hn::IsNaN(x);
-        vec_s64 idxs = hn::Sub(ndnan, hn::Set(s64, 0x3fc0000000000000ll));
+        Vec<int64_t> idxs = hn::Sub(ndnan, Set(int64_t(0x3fc0000000000000ll)) );
         // no native 64-bit for max/min and its fine to use 32-bit max/min
         // since we're not crossing 32-bit edge
-        vec_s32 idxl = hn::Max(hn::BitCast(s32, idxs), hn::Zero(s32));
-                 idxl = hn::Min(idxl, hn::Set(s32, 0x780000));
-        vec_u64 idx  = hn::ShiftRightSame(hn::BitCast(u64, idxl), 51);
+        Vec<int32_t> idxl = hn::Max(BitCast<int32_t>(idxs), Zero<int32_t>() );
+                     idxl = hn::Min(idxl, Set(int32_t(0x780000)) );
+        Vec<uint64_t> idx = hn::ShiftRightSame(BitCast<uint64_t>(idxl), 51);
 
         // For architectures without efficient gather / scatter instructions, it is
         // better to use a transposed LUT where we can load all coefficients for an
         // index linearly.  In order to keep the same vertical calculation, we
         // transpose the coef. into lanes.  2 lane transpose is all that's
-        // implemented so we require `npyv_nlanes_f64` == 2.
-        vec_f64 b, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16;
-        if constexpr(hn::MaxLanes(f64) == 2){
-            vec_f64 e0e1_0, e0e1_1;
-            uint64_t index[hn::MaxLanes(f64)];
-            hn::StoreU(idx, u64, index);
+        // implemented so we require `hn::MaxLanes(_Tag<double>())` == 2.
+        Vec<double> b, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16;
+        if constexpr(hn::MaxLanes(_Tag<double>()) == 2){
+            Vec<double> e0e1_0, e0e1_1;
+            uint64_t index[hn::MaxLanes(_Tag<double>())];
+            StoreU(idx, index);
 
-            /**begin repeat
-            * #off = 0,  2,  4,  6,  8,  10, 12, 14, 16#
-            * #e0  = b,  c1, c3, c5, c7, c9, c11,c13,c15#
-            * #e1  = c0, c2, c4, c6, c8, c10,c12,c14,c16#
-            */
-            e0e1_0 = hn::LoadU(f64, (const double*)lut18x16 + index[0] * 18 + @off@);
-            e0e1_1 = hn::LoadU(f64, (const double*)lut18x16 + index[1] * 18 + @off@);
-            @e0@ = hn::ConcatLowerLower(f64, e0e1_1, e0e1_0);
-            @e1@ = hn::ConcatUpperUpper(f64, e0e1_1, e0e1_0);
-            /**end repeat**/
+            // off = 0, e0 = b, e1 = c0
+            e0e1_0 = LoadU((const double*)lut18x16 + index[0] * 18 + 0);
+            e0e1_1 = LoadU((const double*)lut18x16 + index[1] * 18 + 0);
+            b  = hn::ConcatLowerLower(_Tag<double>(),  e0e1_1, e0e1_0);
+            c0 = hn::ConcatUpperUpper(_Tag<double>(), e0e1_1, e0e1_0);
+
+            // off = 2, e0 = c1, e1 = c2
+            e0e1_0 = LoadU((const double*)lut18x16 + index[0] * 18 + 2);
+            e0e1_1 = LoadU((const double*)lut18x16 + index[1] * 18 + 2);
+            c1 = hn::ConcatLowerLower(_Tag<double>(), e0e1_1, e0e1_0);
+            c2 = hn::ConcatUpperUpper(_Tag<double>(), e0e1_1, e0e1_0);
+
+            // off = 4, e0 = c3, e1 = c4
+            e0e1_0 = LoadU((const double*)lut18x16 + index[0] * 18 + 4);
+            e0e1_1 = LoadU((const double*)lut18x16 + index[1] * 18 + 4);
+            c3 = hn::ConcatLowerLower(_Tag<double>(), e0e1_1, e0e1_0);
+            c4 = hn::ConcatUpperUpper(_Tag<double>(), e0e1_1, e0e1_0);
+
+            // off = 6, e0 = c5, e1 = c6
+            e0e1_0 = LoadU((const double*)lut18x16 + index[0] * 18 + 6);
+            e0e1_1 = LoadU((const double*)lut18x16 + index[1] * 18 + 6);
+            c5 = hn::ConcatLowerLower(_Tag<double>(), e0e1_1, e0e1_0);
+            c6 = hn::ConcatUpperUpper(_Tag<double>(), e0e1_1, e0e1_0);
+
+            // off = 8, e0 = c7, e1 = c8
+            e0e1_0 = LoadU((const double*)lut18x16 + index[0] * 18 + 8);
+            e0e1_1 = LoadU((const double*)lut18x16 + index[1] * 18 + 8);
+            c7 = hn::ConcatLowerLower(_Tag<double>(), e0e1_1, e0e1_0);
+            c8 = hn::ConcatUpperUpper(_Tag<double>(), e0e1_1, e0e1_0);
+
+            // off = 10, e0 = c9, e1 = c10
+            e0e1_0 = LoadU((const double*)lut18x16 + index[0] * 18 + 10);
+            e0e1_1 = LoadU((const double*)lut18x16 + index[1] * 18 + 10);
+            c9 = hn::ConcatLowerLower(_Tag<double>(),  e0e1_1, e0e1_0);
+            c10 = hn::ConcatUpperUpper(_Tag<double>(), e0e1_1, e0e1_0);
+
+            // off = 12, e0 = c11, e1 = c12
+            e0e1_0 = LoadU((const double*)lut18x16 + index[0] * 18 + 12);
+            e0e1_1 = LoadU((const double*)lut18x16 + index[1] * 18 + 12);
+            c11 = hn::ConcatLowerLower(_Tag<double>(), e0e1_1, e0e1_0);
+            c12 = hn::ConcatUpperUpper(_Tag<double>(), e0e1_1, e0e1_0);
+
+            // off = 14, e0 = c13, e1 = c14
+            e0e1_0 = LoadU((const double*)lut18x16 + index[0] * 18 + 14);
+            e0e1_1 = LoadU((const double*)lut18x16 + index[1] * 18 + 14);
+            c13 = hn::ConcatLowerLower(_Tag<double>(), e0e1_1, e0e1_0);
+            c14 = hn::ConcatUpperUpper(_Tag<double>(), e0e1_1, e0e1_0);
+
+            // off = 16, e0 = c15, e1 = c16
+            e0e1_0 = LoadU((const double*)lut18x16 + index[0] * 18 + 16);
+            e0e1_1 = LoadU((const double*)lut18x16 + index[1] * 18 + 16);
+            c15 = hn::ConcatLowerLower(_Tag<double>(), e0e1_1, e0e1_0);
+            c16 = hn::ConcatUpperUpper(_Tag<double>(), e0e1_1, e0e1_0);
+            
         } else {
-            b = lut_16_f64((const double*)lut16x18 + 16*0, idx);
+            b  = lut_16_f64((const double*)lut16x18 + 0*16, idx);
             c0 = lut_16_f64((const double*)lut16x18 + 1*16, idx);
             c1 = lut_16_f64((const double*)lut16x18 + 2*16, idx);
             c2 = lut_16_f64((const double*)lut16x18 + 3*16, idx);
@@ -421,9 +448,9 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
 
         // no need to zerofy nans or avoid FP exceptions by NO_EXC like SVML does
         // since we're clearing the FP status anyway.
-        vec_f64 sign = hn::And(x, hn::BitCast(f64, hn::Set(u64, 0x8000000000000000ull)));
-        vec_f64 y = hn::Sub(hn::Abs(x), b);
-        vec_f64 r = hn::MulAdd(c16, y, c15);
+        Vec<double> sign = hn::And(x, BitCast<double>(Set(uint64_t(0x8000000000000000ull))));
+        Vec<double> y = hn::Sub(hn::Abs(x), b);
+        Vec<double> r = hn::MulAdd(c16, y, c15);
         r = hn::MulAdd(r, y, c14);
         r = hn::MulAdd(r, y, c13);
         r = hn::MulAdd(r, y, c12);
@@ -440,51 +467,49 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
         r = hn::MulAdd(r, y, c1);
         r = hn::MulAdd(r, y, c0);
         // 1.0 if |x| > HUGE_THRESHOLD || INF
-        r = hn::IfThenElse(hn::RebindMask(f64, special_m), r, hn::Set(f64, 1.0));
+        r = hn::IfThenElse(hn::RebindMask(_Tag<double>(), special_m), r, Set(double(1.0)));
         r = hn::Or(r, sign);
         // qnan if nan
-        r = hn::IfThenElse(hn::RebindMask(f64, nan_m), qnan, r);
+        r = hn::IfThenElse(hn::RebindMask(_Tag<double>(), nan_m), qnan, r);
         
-        store_vector<vec_f64>(r, dst, sdst, len);
+        store_vector<Vec<double>>(r, dst, sdst, len);
     }
 }
 
-#endif // NPY_SIMD_F64
+#endif // NPY_HWY_F64
 
-#if NPY_SIMD_F32
-
-HWY_ATTR NPY_FINLINE void zip_f32_lanes(vec_f32 a, vec_f32 b, vec_f32& lower, vec_f32& upper) {
-    lower = hn::InterleaveLower(f32, a, b);
-    upper = hn::InterleaveUpper(f32, a, b);
+HWY_ATTR HWY_INLINE void zip_f32_lanes(Vec<float> a, Vec<float> b, Vec<float>& lower, Vec<float>& upper) {
+    lower = hn::InterleaveLower(_Tag<float>(), a, b);
+    upper = hn::InterleaveUpper(_Tag<float>(), a, b);
 }
 
-[[maybe_unused]] HWY_ATTR NPY_FINLINE vec_f32 lut_32_f32(const float * lut, vec_u32 idx){
-    if constexpr(hn::MaxLanes(f32) == 16){
-        const vec_f32 lut0 = hn::Load(f32, lut);
-        const vec_f32 lut1 = hn::Load(f32, lut + 16);
-        return hn::TwoTablesLookupLanes(f32, lut0, lut1, hn::IndicesFromVec(f32, idx));
-    }else if constexpr (hn::MaxLanes(f32) == 8){
-        const vec_f32 lut0 = hn::Load(f32, lut);
-        const vec_f32 lut1 = hn::Load(f32, lut + 8);
-        const vec_f32 lut2 = hn::Load(f32, lut + 16);
-        const vec_f32 lut3 = hn::Load(f32, lut + 24);
-        
-        const auto high_mask = hn::Ne(hn::ShiftRight<4>(idx), hn::Zero(u32));
-        const auto load_mask = hn::And(idx, hn::Set(u32, 0b1111));
-        
-        const vec_f32 lut_low = hn::TwoTablesLookupLanes(f32, lut0, lut1, hn::IndicesFromVec(f32, load_mask));
-        const vec_f32 lut_high = hn::TwoTablesLookupLanes(f32, lut2, lut3, hn::IndicesFromVec(f32, load_mask));
-        
-        return hn::IfThenElse(hn::RebindMask(f32, high_mask), lut_high, lut_low);
+[[maybe_unused]] HWY_ATTR HWY_INLINE Vec<float> lut_32_f32(const float * lut, Vec<uint32_t> idx){
+    if constexpr(hn::MaxLanes(_Tag<float>()) == 16){
+        const Vec<float> lut0 = hn::Load(_Tag<float>(), lut);
+        const Vec<float> lut1 = hn::Load(_Tag<float>(), lut + 16);
+        return hn::TwoTablesLookupLanes(_Tag<float>(), lut0, lut1, hn::IndicesFromVec(_Tag<float>(), idx));
+    }else if constexpr (hn::MaxLanes(_Tag<float>()) == 8){
+        const Vec<float> lut0 = hn::Load(_Tag<float>(), lut);
+        const Vec<float> lut1 = hn::Load(_Tag<float>(), lut + 8);
+        const Vec<float> lut2 = hn::Load(_Tag<float>(), lut + 16);
+        const Vec<float> lut3 = hn::Load(_Tag<float>(), lut + 24);
+
+        const auto high_mask = hn::Ne(hn::ShiftRight<4>(idx), Zero<uint32_t>());
+        const auto load_mask = hn::And(idx, Set(uint32_t(0b1111)));
+
+        const Vec<float> lut_low  = hn::TwoTablesLookupLanes(_Tag<float>(), lut0, lut1, hn::IndicesFromVec(_Tag<float>(), load_mask));
+        const Vec<float> lut_high = hn::TwoTablesLookupLanes(_Tag<float>(), lut2, lut3, hn::IndicesFromVec(_Tag<float>(), load_mask));
+
+        return hn::IfThenElse(hn::RebindMask(_Tag<float>(), high_mask), lut_high, lut_low);
     }else{
-        return hn::GatherIndex(f32, lut, hn::BitCast(s32, idx));
+        return hn::GatherIndex(_Tag<float>(), lut, BitCast<int32_t>(idx));
     }
 }
 
 HWY_ATTR static void
 simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_intp len)
 {
-    static const npy_uint32 NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) lut8x32[] = {
+    static const npy_uint32 NPY_DECL_ALIGNED(kMaxLanes<uint8_t>) lut8x32[] = {
         // c6       c5          c4          c3          c2          c1          c0          b
         0xbc0e2f66, 0x3e0910e9, 0xb76dd6b9, 0xbeaaaaa5, 0xb0343c7b, 0x3f800000, 0x0,        0x0,       
         0x460bda12, 0x43761143, 0xbe1c276d, 0xbeab0612, 0xbd6ee69d, 0x3f7f1f84, 0x3d6fb9c9, 0x3d700000,
@@ -527,7 +552,7 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
         0x0,        0x0,        0x0,        0x0,        0x0,        0x0,        0x3f800000, 0x0,       
     };
 
-    static const npy_uint32 NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) lut32x8[] = {
+    static const npy_uint32 NPY_DECL_ALIGNED(kMaxLanes<uint8_t>) lut32x8[] = {
         // 0
         0x0,        0x3d700000, 0x3d900000, 0x3db00000, 0x3dd00000, 0x3df00000, 0x3e100000, 0x3e300000,
         0x3e500000, 0x3e700000, 0x3e900000, 0x3eb00000, 0x3ed00000, 0x3ef00000, 0x3f100000, 0x3f300000,
@@ -570,38 +595,46 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
         0xb97f9f0f, 0xb8c8af50, 0xb7bdddfb, 0xb64f2950, 0xb4e085b1, 0xb3731dfa, 0xb15a1f04, 0x0
     };
 
-    const int nlanes = hn::Lanes(f32);//npyv_nlanes_f32;
-    const vec_f32 qnan = hn::Set(f32, NPY_NAN);
+    const int nlanes = Lanes<float>();
+    const Vec<float> qnan = Set(float(NPY_NAN));
     for (; len > 0; len -= nlanes, src += ssrc*nlanes, dst += sdst*nlanes) {
-        vec_f32 x = load_vector<vec_f32>(src, ssrc, len);
-        
-        vec_s32 ndnan = hn::And(hn::BitCast(s32, x), hn::Set(s32, 0x7fe00000));
+        Vec<float> x = load_vector<Vec<float>>(src, ssrc, len);
+
+        Vec<int32_t> ndnan = hn::And(BitCast<int32_t>(x), Set(int32_t(0x7fe00000)));
         // check |x| > HUGE_THRESHOLD, INF and NaNs.
-        auto special_m = hn::Le(ndnan, hn::Set(s32, 0x7f000000));
+        auto special_m = hn::Le(ndnan, Set(int32_t(0x7f000000)));
         auto nan_m = hn::IsNaN(x);
-        vec_s32 idxs = hn::Sub(ndnan, hn::Set(s32, 0x3d400000));
-                 idxs = hn::Max(idxs, hn::Zero(s32));
-                 idxs = hn::Min(idxs, hn::Set(s32, 0x3e00000));
-        vec_u32 idx  = hn::ShiftRightSame(hn::BitCast(u32, idxs), 21);
+        Vec<int32_t> idxs = hn::Sub(ndnan, Set(int32_t(0x3d400000)));
+                 idxs = hn::Max(idxs, Zero<int32_t>());
+                 idxs = hn::Min(idxs, Set(int32_t(0x3e00000)));
+        Vec<uint32_t> idx  = hn::ShiftRightSame(BitCast<uint32_t>(idxs), 21);
 
         // For architectures without efficient gather / scatter instructions, it is
         // better to use a transposed LUT where we can load all coefficients for an
         // index linearly.  In order to keep the same vertical calculation, we
         // transpose the coef. into lanes.  A 4x4 transpose is all that's
-        // supported so we require `npyv_nlanes_f32` == 4.
-        vec_f32 b, c0, c1, c2, c3, c4, c5, c6;
-        if constexpr(hn::MaxLanes(f32) == 4 && HWY_TARGET >= HWY_SSE4){
-            vec_f32 c6543_0, c6543_1, c6543_2, c6543_3;
-            vec_f32 c210b_0, c210b_1, c210b_2, c210b_3;
-            npyv_lanetype_u32 index[npyv_nlanes_f32];
+        // supported so we require `hn::MaxLanes(_Tag<float>())` == 4.
+        Vec<float> b, c0, c1, c2, c3, c4, c5, c6;
+        if constexpr(hn::MaxLanes(_Tag<float>()) == 4 && HWY_TARGET >= HWY_SSE4){
+            Vec<float> c6543_0, c6543_1, c6543_2, c6543_3;
+            Vec<float> c210b_0, c210b_1, c210b_2, c210b_3;
+            uint32_t index[hn::MaxLanes(_Tag<float>())];
 
-            /**begin repeat
-             * #lane = 0, 1, 2, 3#
-             */
-            index[@lane@] = hn::ExtractLane(idx, @lane@);
-            c6543_@lane@ = hn::LoadU(f32, (const float*)lut8x32 + index[@lane@] * 8);
-            c210b_@lane@ = hn::LoadU(f32, (const float*)lut8x32 + index[@lane@] * 8 + 4);
-            /**end repeat**/
+            index[0] = hn::ExtractLane(idx, 0);
+            c6543_0 = LoadU((const float*)lut8x32 + index[0] * 8);
+            c210b_0 = LoadU((const float*)lut8x32 + index[0] * 8 + 4);
+
+            index[1] = hn::ExtractLane(idx, 1);
+            c6543_1 = LoadU((const float*)lut8x32 + index[1] * 8);
+            c210b_1 = LoadU((const float*)lut8x32 + index[1] * 8 + 4);
+
+            index[2] = hn::ExtractLane(idx, 2);
+            c6543_2 = LoadU((const float*)lut8x32 + index[2] * 8);
+            c210b_2 = LoadU((const float*)lut8x32 + index[2] * 8 + 4);
+
+            index[3] = hn::ExtractLane(idx, 3);
+            c6543_3 = LoadU((const float*)lut8x32 + index[3] * 8);
+            c210b_3 = LoadU((const float*)lut8x32 + index[3] * 8 + 4);
 
             // lane0: {c6, c5, c4, c3},  {c2, c1, c0, b}
             // lane1: {c6, c5, c4, c3},  {c2, c1, c0, b}
@@ -618,25 +651,25 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
             // c0: {lane0, lane1, lane2, lane3}
             // b : {lane0, lane1, lane2, lane3}
 
-            vec_f32 c6543_l01_low, c6543_l01_high;
-            vec_f32 c6543_l23_low, c6543_l23_high;
+            Vec<float> c6543_l01_low, c6543_l01_high;
+            Vec<float> c6543_l23_low, c6543_l23_high;
             zip_f32_lanes(c6543_0, c6543_1, c6543_l01_low, c6543_l01_high);
             zip_f32_lanes(c6543_2, c6543_3, c6543_l23_low, c6543_l23_high);
 
-            c6 = hn::ConcatLowerLower(f32, c6543_l23_low, c6543_l01_low);
-            c5 = hn::ConcatUpperUpper(f32, c6543_l23_low, c6543_l01_low);
-            c4 = hn::ConcatLowerLower(f32, c6543_l23_high, c6543_l01_high);
-            c3 = hn::ConcatUpperUpper(f32, c6543_l23_high, c6543_l01_high);
+            c6 = hn::ConcatLowerLower(_Tag<float>(), c6543_l23_low, c6543_l01_low);
+            c5 = hn::ConcatUpperUpper(_Tag<float>(), c6543_l23_low, c6543_l01_low);
+            c4 = hn::ConcatLowerLower(_Tag<float>(), c6543_l23_high, c6543_l01_high);
+            c3 = hn::ConcatUpperUpper(_Tag<float>(), c6543_l23_high, c6543_l01_high);
 
-            vec_f32 c210b_l01_low, c210b_l01_high;
-            vec_f32 c210b_l23_low, c210b_l23_high;
+            Vec<float> c210b_l01_low, c210b_l01_high;
+            Vec<float> c210b_l23_low, c210b_l23_high;
             zip_f32_lanes(c210b_0, c210b_1, c210b_l01_low, c210b_l01_high);
             zip_f32_lanes(c210b_2, c210b_3, c210b_l23_low, c210b_l23_high);
 
-            c2 = hn::ConcatLowerLower(f32, c210b_l23_low, c210b_l01_low);
-            c1 = hn::ConcatUpperUpper(f32, c210b_l23_low, c210b_l01_low);
-            c0 = hn::ConcatLowerLower(f32, c210b_l23_high, c210b_l01_high);
-            b  = hn::ConcatUpperUpper(f32, c210b_l23_high, c210b_l01_high);
+            c2 = hn::ConcatLowerLower(_Tag<float>(), c210b_l23_low, c210b_l01_low);
+            c1 = hn::ConcatUpperUpper(_Tag<float>(), c210b_l23_low, c210b_l01_low);
+            c0 = hn::ConcatLowerLower(_Tag<float>(), c210b_l23_high, c210b_l01_high);
+            b  = hn::ConcatUpperUpper(_Tag<float>(), c210b_l23_high, c210b_l01_high);
         } else {
             b  = lut_32_f32((const float*)lut32x8 + 32*0, idx);
             c0 = lut_32_f32((const float*)lut32x8 + 32*1, idx);
@@ -650,66 +683,100 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
 
         // no need to zerofy nans or avoid FP exceptions by NO_EXC like SVML does
         // since we're clearing the FP status anyway.
-        vec_f32 sign = hn::And(x, hn::BitCast(f32, hn::Set(s32, 0x80000000)));
-        vec_f32 y = hn::Sub(hn::Abs(x), b);
-        vec_f32 r = hn::MulAdd(c6, y, c5);
+        Vec<float> sign = hn::And(x, BitCast<float>(Set(int32_t(0x80000000))));
+        Vec<float> y = hn::Sub(hn::Abs(x), b);
+        Vec<float> r = hn::MulAdd(c6, y, c5);
         r = hn::MulAdd(r, y, c4);
         r = hn::MulAdd(r, y, c3);
         r = hn::MulAdd(r, y, c2);
         r = hn::MulAdd(r, y, c1);
         r = hn::MulAdd(r, y, c0);
         // 1.0 if |x| > HUGE_THRESHOLD || INF
-        r = hn::IfThenElse(hn::RebindMask(f32, special_m), r, hn::Set(f32, 1.0f));
+        r = hn::IfThenElse(hn::RebindMask(_Tag<float>(), special_m), r, Set(float(1.0f)));
         r = hn::Or(r, sign);
         // qnan if nan
-        r = hn::IfThenElse(hn::RebindMask(f32, nan_m), qnan, r);
-        
-        store_vector<vec_f32>(r, dst, sdst, len);
+        r = hn::IfThenElse(hn::RebindMask(_Tag<float>(), nan_m), qnan, r);
+
+        store_vector<Vec<float>>(r, dst, sdst, len);
     }
 }
 
-#endif // NPY_SIMD_F32
-#endif // HWY_NATIVE_FMA
+#endif // NPY_HWY_FMA
 
-/**begin repeat
- * #TYPE = FLOAT, DOUBLE#
- * #type = float, double#
- * #sfx  = f32,   f64#
- * #ssfx = f,     #
- * #simd = HWY_NATIVE_FMA && NPY_SIMD_F32, HWY_NATIVE_FMA && NPY_SIMD_F64#
- */
-/**begin repeat1
- *  #func = tanh#
- *  #simd_req_clear = 1#
- */
-NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
-(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-#if @simd@
-    npy_intp len = dimensions[0];
+template<typename T>
+struct tanh_ops;
 
-    if (is_mem_overlap(args[0], steps[0], args[1], steps[1], len) ||
-        !npyv_loadable_stride_@sfx@(steps[0]) ||
-        !npyv_storable_stride_@sfx@(steps[1])
-    ) {
-        UNARY_LOOP {
-            simd_@func@_@sfx@((@type@ *)ip1, 1, (@type@ *)op1, 1, 1);
-        }
-    } else {
-        npy_intp ssrc = steps[0] / sizeof(@type@);
-        npy_intp sdst = steps[1] / sizeof(@type@);
-        simd_@func@_@sfx@((@type@ *)args[0], ssrc, (@type@ *)args[1], sdst, len);
-    }
-    npyv_cleanup();
-    #if @simd_req_clear@
-        npy_clear_floatstatus_barrier((char*)dimensions);
-    #endif
-#else
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *(@type@ *)op1 = npy_@func@@ssfx@(in1);
+template<>
+struct tanh_ops<float> {
+#if NPY_HWY_FMA
+    static HWY_ATTR void simd_func(const float *src, npy_intp src_stride, float *dst, npy_intp dst_stride, npy_intp len) {
+        simd_tanh_f32(src, src_stride, dst, dst_stride, len);
     }
 #endif
+    static HWY_INLINE float scalar_func(float x) {
+        return npy_tanhf(x);
+    }
+};
+
+template<>
+struct tanh_ops<double> {
+#if (NPY_HWY_FMA && NPY_HWY_F64)
+    static HWY_ATTR void simd_func(const double *src, npy_intp src_stride, double *dst, npy_intp dst_stride, npy_intp len) {
+        simd_tanh_f64(src, src_stride, dst, dst_stride, len);
+    }
+#endif
+    static HWY_INLINE double scalar_func(double x) {
+        return npy_tanh(x);
+    }
+};
+
+
+template <typename T>
+HWY_INLINE void
+unary_tanh(char **args, npy_intp const *dimensions, npy_intp const *steps)
+{
+    const char *src = args[0]; char *dst = args[1];
+    const npy_intp src_step = steps[0];
+    const npy_intp dst_step = steps[1];
+    npy_intp len = dimensions[0];
+
+    if constexpr (NPY_HWY_FMA && (std::is_same_v<T, float> || NPY_HWY_F64)){
+        if (is_mem_overlap(args[0], steps[0], args[1], steps[1], len) ||
+            !(alignof(T) == sizeof(T) && src_step % sizeof(T) == 0) ||
+            !(alignof(T) == sizeof(T) && dst_step % sizeof(T) == 0)
+        ) {
+            for (; len > 0; --len, src += src_step, dst += dst_step) {
+                tanh_ops<T>::simd_func((T *)src, 1, (T *)dst, 1, 1);
+            }
+        } else {
+            npy_intp ssrc = steps[0] / sizeof(T);
+            npy_intp sdst = steps[1] / sizeof(T);
+            tanh_ops<T>::simd_func((T *)args[0], ssrc, (T *)args[1], sdst, len);
+        }
+
+        npy_clear_floatstatus_barrier((char*)dimensions);
+    }
+    else{
+            for (; len > 0; --len, src += src_step, dst += dst_step) {
+                const T src0 = *reinterpret_cast<const T*>(src);
+                *reinterpret_cast<T*>(dst) = tanh_ops<T>::scalar_func(src0);
+            }
+    }
 }
-/**end repeat1**/
-/**end repeat**/
+
+} // anonymous namespace
+
+/******************************************************************************************
+ ** Defining ufunc inner functions
+ *****************************************************************************************/
+#define DEFINE_UNARY_TANH_FUNCTION(TYPE, T)                                 \
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(TYPE##_##tanh)                                 \
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data)) \
+{                                                                                        \
+    unary_tanh<T>(args, dimensions, steps);                                \
+}
+
+DEFINE_UNARY_TANH_FUNCTION(FLOAT, float)
+DEFINE_UNARY_TANH_FUNCTION(DOUBLE, double)
+
+#undef DEFINE_UNARY_TANH_FUNCTION
