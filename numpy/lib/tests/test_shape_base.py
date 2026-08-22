@@ -495,6 +495,20 @@ class TestSplit:
         a = np.arange(10)
         assert_raises(ValueError, split, a, 3)
 
+    def test_integer_split_list_and_tuple(self):
+        # gh-17463: `split` with an integer number of sections must accept
+        # array-like input (list/tuple), consistent with `array_split`.
+        desired = [np.array([1, 2]), np.array([3, 4])]
+
+        res = split([1, 2, 3, 4], 2)
+        compare_results(res, desired)
+
+        res = split((1, 2, 3, 4), 2)
+        compare_results(res, desired)
+
+        # An unequal division must still raise (rather than AttributeError).
+        assert_raises(ValueError, split, [1, 2, 3, 4], 3)
+
 
 class TestColumnStack:
     def test_non_iterable(self):
