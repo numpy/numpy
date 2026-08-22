@@ -49,6 +49,7 @@ code.
    generalized-ufuncs
    strings
    coremath
+   float16
    datetimes
    deprecations
    data_memory
