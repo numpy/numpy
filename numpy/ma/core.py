@@ -1125,6 +1125,9 @@ class _MaskedBinaryOperation(_MaskedUFunc):
         else:
             tr = self.f.reduce(t, axis, dtype=dtype)
             mr = umath.logical_and.reduce(m, axis)
+        
+        if not isinstance(tr, (np.ndarray, np.generic)):
+            tr = np.asarray(tr)
 
         if not tr.shape:
             if mr:
@@ -5176,6 +5179,8 @@ class MaskedArray(ndarray):
         if m is nomask:
             result = super().trace(offset=offset, axis1=axis1, axis2=axis2,
                                    out=out)
+            if not isinstance(result, (np.ndarray, np.generic)):
+                result = np.asarray(result)
             return result.astype(dtype)
         else:
             D = self.diagonal(offset=offset, axis1=axis1, axis2=axis2)
@@ -5967,7 +5972,11 @@ class MaskedArray(ndarray):
         # No explicit output
         if out is None:
             result = self.filled(fill_value).min(
-                axis=axis, out=out, **kwargs).view(type(self))
+                axis=axis, out=out, **kwargs
+            )
+            if not isinstance(result, (np.ndarray, np.generic)):
+                result = np.asarray(result)
+            result = result.view(type(self))
             if result.ndim:
                 # Set the mask
                 result.__setmask__(newmask)
@@ -6072,7 +6081,11 @@ class MaskedArray(ndarray):
         # No explicit output
         if out is None:
             result = self.filled(fill_value).max(
-                axis=axis, out=out, **kwargs).view(type(self))
+                axis=axis, out=out, **kwargs
+            )
+            if not isinstance(result, (np.ndarray, np.generic)):
+                result = np.asarray(result)
+            result = result.view(type(self))
             if result.ndim:
                 # Set the mask
                 result.__setmask__(newmask)
@@ -8315,7 +8328,7 @@ def dot(a, b, strict=False, out=None):
     if out is None:
         d = np.dot(filled(a, 0), filled(b, 0))
         m = ~np.dot(am, bm)
-        if np.ndim(d) == 0:
+        if not isinstance(d, (np.ndarray, np.generic)):
             d = np.asarray(d)
         r = d.view(get_masked_subclass(a, b))
         r.__setmask__(m)
@@ -8343,7 +8356,10 @@ def inner(a, b):
         fa = fa.reshape((1,))
     if fb.ndim == 0:
         fb = fb.reshape((1,))
-    return np.inner(fa, fb).view(MaskedArray)
+    d = np.inner(fa, fb)
+    if not isinstance(d, (np.ndarray, np.generic)):
+        d = np.asarray(d)
+    return d.view(MaskedArray)
 
 
 inner.__doc__ = doc_note(np.inner.__doc__,
