@@ -2706,14 +2706,65 @@ finish_loop:
     return retval;
 }
 
+typedef union {
+    npy_bool bool_;
+    npy_byte byte_;
+    npy_ubyte ubyte_;
+    npy_short short_;
+    npy_ushort ushort_;
+    npy_int int_;
+    npy_uint uint_;
+    npy_long long_;
+    npy_ulong ulong_;
+    npy_longlong longlong_;
+    npy_ulonglong ulonglong_;
+    npy_half half_;
+    npy_float float_;
+    npy_double double_;
+    npy_longdouble longdouble_;
+    npy_cfloat cfloat_;
+    npy_cdouble cdouble_;
+    npy_clongdouble clongdouble_;
+    npy_datetime datetime_;
+    npy_timedelta timedelta_;
+} reduction_scalar_storage;
+
+static inline char *
+reduction_scalar_storage_ptr(reduction_scalar_storage *storage, int type_num)
+{
+    switch (type_num) {
+        case NPY_BOOL: return (char *)&storage->bool_;
+        case NPY_BYTE: return (char *)&storage->byte_;
+        case NPY_UBYTE: return (char *)&storage->ubyte_;
+        case NPY_SHORT: return (char *)&storage->short_;
+        case NPY_USHORT: return (char *)&storage->ushort_;
+        case NPY_INT: return (char *)&storage->int_;
+        case NPY_UINT: return (char *)&storage->uint_;
+        case NPY_LONG: return (char *)&storage->long_;
+        case NPY_ULONG: return (char *)&storage->ulong_;
+        case NPY_LONGLONG: return (char *)&storage->longlong_;
+        case NPY_ULONGLONG: return (char *)&storage->ulonglong_;
+        case NPY_HALF: return (char *)&storage->half_;
+        case NPY_FLOAT: return (char *)&storage->float_;
+        case NPY_DOUBLE: return (char *)&storage->double_;
+        case NPY_LONGDOUBLE: return (char *)&storage->longdouble_;
+        case NPY_CFLOAT: return (char *)&storage->cfloat_;
+        case NPY_CDOUBLE: return (char *)&storage->cdouble_;
+        case NPY_CLONGDOUBLE: return (char *)&storage->clongdouble_;
+        case NPY_DATETIME: return (char *)&storage->datetime_;
+        case NPY_TIMEDELTA: return (char *)&storage->timedelta_;
+        default: return NULL;
+    }
+}
+
 /*
  * Try a fast path that bypasses NpyIter / PyUFunc_ReduceWrapper for full
  * reductions (axis=None) over a trivially iterable, aligned input where no
  * casting is required.  The strided reduce loop is called directly on the
  * input buffer and writes into a freshly allocated 0-d result, or -- when
- * ``return_scalar`` says the caller would convert the 0-d result to a
- * scalar anyway -- into a stack buffer that is turned into the scalar
- * directly.
+ * ``*return_scalar`` says the caller would convert the 0-d result to a
+ * scalar anyway -- into stack storage that is turned into the scalar
+ * directly.  ``*return_scalar`` is cleared if the dtype has no such storage.
  *
  * Returns:
  *      1 on success; ``*out_result`` holds the new 0-d array or scalar.
@@ -2727,7 +2778,7 @@ try_reduce_contiguous(
         PyArrayMethod_Context *context, PyArrayObject *arr,
         PyArray_Descr *const *descrs,
         PyArrayObject **out, PyArrayObject *wheremask, PyObject *initial,
-        int ndim, int naxes, int keepdims, int return_scalar,
+        int ndim, int naxes, int keepdims, int *return_scalar,
         int errormask,
         PyObject **out_result)
 {
@@ -2769,19 +2820,23 @@ try_reduce_contiguous(
         return 0;
     }
 
-    /* Allocate one 0-d result per output so the loop can write into them.
-     * With ``return_scalar`` set, accumulate into a stack buffer.
+    /*
+     * Accumulate on the stack when returning a scalar directly, otherwise
+     * allocate one 0-d result per output so the loop can write into them.
      */
-    npy_clongdouble buffer;  /* aligned scratch large enough for any number */
+    reduction_scalar_storage storage;
     PyArrayObject *result[NPY_MAXARGS];
     char *accum[NPY_MAXARGS];
-    if (return_scalar) {
+    if (*return_scalar) {
         assert(nout == 1);
         result[0] = NULL;
-        accum[0] = (char *)&buffer;
+        accum[0] = reduction_scalar_storage_ptr(&storage, descrs[0]->type_num);
+        *return_scalar = accum[0] != NULL;
+        /* PyArray_Scalar must not need ``base`` for these dtypes. */
+        assert(!*return_scalar || !PyTypeNum_ISFLEXIBLE(descrs[0]->type_num));
+        assert(!*return_scalar || !PyDataType_FLAGCHK(descrs[0], NPY_USE_GETITEM));
     }
-    else {
-        /* Allocate one 0-d result per output so the loop can write into them. */
+    if (!*return_scalar) {
         for (int i = 0; i < nout; i++) {
             Py_INCREF(descrs[i]);
             result[i] = (PyArrayObject *)PyArray_NewFromDescr(
@@ -2873,7 +2928,7 @@ try_reduce_contiguous(
         }
         return -1;
     }
-    if (return_scalar) {
+    if (*return_scalar) {
         *out_result = PyArray_Scalar(accum[0], descrs[0], NULL);
         return *out_result == NULL ? -1 : 1;
     }
@@ -2942,23 +2997,11 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
     context.caller = (PyObject *)ufunc;
     context.method = ufuncimpl;
 
-    /*
-     * The fast path can only create the scalar directly for single-output
-     * reductions over dtypes whose scalars are self-contained:
-     * ``PyArray_Scalar`` uses its ``base`` argument for flexible and
-     * NPY_USE_GETITEM dtypes.
-     */
-    *return_scalar = *return_scalar
-            && ufunc->nout == 1
-            && descrs[0]->elsize <= (npy_intp)sizeof(npy_clongdouble)
-            && !PyTypeNum_ISFLEXIBLE(descrs[0]->type_num)
-            && !PyDataType_FLAGCHK(descrs[0], NPY_USE_GETITEM);
-
     PyObject *result = NULL;
 
     int fast_status = try_reduce_contiguous(
             &context, arr, descrs, out, wheremask, initial,
-            ndim, naxes, keepdims, *return_scalar, errormask, &result);
+            ndim, naxes, keepdims, return_scalar, errormask, &result);
     if (fast_status == 0) {
         /* Fast path did not apply; run the full reduction. */
         *return_scalar = 0;
@@ -4113,8 +4156,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
          * wrapping below would be a plain scalar conversion.  On return,
          * ``scalar_created`` says whether that actually happened.
          */
-        scalar_created = return_scalar && out[0] == NULL
-                && PyArray_CheckExact(op);
+        scalar_created = return_scalar && ufunc->nout == 1
+                && out[0] == NULL && PyArray_CheckExact(op);
         ret = PyUFunc_Reduce(ufunc,
                 mp, out, naxes, axes, signature, keepdims, initial, wheremask,
                 &scalar_created);
