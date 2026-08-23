@@ -60,7 +60,7 @@ def trimseq(seq):
         return seq[:i + 1]
 
 
-def as_series(alist, trim=True, _validate_input=True, copy=True):
+def as_series(alist, trim=True, copy=True):
     """
     Return argument as a list of 1-d arrays.
 
@@ -78,6 +78,13 @@ def as_series(alist, trim=True, _validate_input=True, copy=True):
     trim : boolean, optional
         When True, trailing zeros are removed from the inputs.
         When False, the inputs are passed through intact.
+    copy : bool or None, optional
+        The `copy` argument passed on to `numpy.array` when constructing
+        the returned arrays.  With the default True the returned arrays
+        are always copies; with None inputs that already have the common
+        dtype may be returned uncopied.
+
+        .. versionadded:: 2.6.0
 
     Returns
     -------
@@ -111,15 +118,12 @@ def as_series(alist, trim=True, _validate_input=True, copy=True):
     [array([2.]), array([1.1, 0. ])]
 
     """
-    if _validate_input:
-        arrays = [np.array(a, ndmin=1, copy=None) for a in alist]
-        for a in arrays:
-            if a.size == 0:
-                raise ValueError("Coefficient array is empty")
-            if a.ndim != 1:
-                raise ValueError("Coefficient array is not 1-d")
-    else:
-        arrays = alist
+    arrays = [np.array(a, ndmin=1, copy=None) for a in alist]
+    for a in arrays:
+        if a.size == 0:
+            raise ValueError("Coefficient array is empty")
+        if a.ndim != 1:
+            raise ValueError("Coefficient array is not 1-d")
     if trim:
         arrays = [trimseq(a) for a in arrays]
 
