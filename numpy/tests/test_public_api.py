@@ -1,18 +1,18 @@
 import functools
-import sys
-import sysconfig
-import subprocess
-import pkgutil
-import types
 import importlib
 import inspect
+import pkgutil
+import sys
+import sysconfig
+import types
 import warnings
 
-import numpy as np
-import numpy
-from numpy.testing import IS_WASM
-
 import pytest
+
+import numpy
+import numpy as np
+from numpy.testing import HAS_SUBPROCESSES
+from numpy.testing._private.utils import run_subprocess
 
 try:
     import ctypes
@@ -46,7 +46,7 @@ def test_numpy_namespace():
     assert bad_results == allowlist
 
 
-@pytest.mark.skipif(IS_WASM, reason="can't start subprocess")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 @pytest.mark.parametrize('name', ['testing'])
 def test_import_lazy_import(name):
     """Make sure we can actually use the modules we lazy load.
@@ -62,8 +62,8 @@ def test_import_lazy_import(name):
 
     """
     exe = (sys.executable, '-c', "import numpy; numpy." + name)
-    result = subprocess.check_output(exe)
-    assert not result
+    result = run_subprocess(exe)
+    assert not result.stdout
 
     # Make sure they are still in the __dir__
     assert name in dir(np)
@@ -138,20 +138,8 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "testing",
     "testing.overrides",
     "typing",
-    "typing.mypy_plugin",
     "version",
 ]]
-if sys.version_info < (3, 12):
-    PUBLIC_MODULES += [
-        'numpy.' + s for s in [
-            "distutils",
-            "distutils.cpuinfo",
-            "distutils.exec_command",
-            "distutils.misc_util",
-            "distutils.log",
-            "distutils.system_info",
-        ]
-    ]
 
 
 PUBLIC_ALIASED_MODULES = [
@@ -162,8 +150,6 @@ PUBLIC_ALIASED_MODULES = [
 
 
 PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
-    "compat",
-    "compat.py3k",
     "conftest",
     "core",
     "core.multiarray",
@@ -192,13 +178,10 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "f2py.rules",
     "f2py.symbolic",
     "f2py.use_rules",
-    "fft.helper",
     "lib.user_array",  # note: not in np.lib, but probably should just be deleted
     "linalg.lapack_lite",
-    "linalg.linalg",
     "ma.core",
     "ma.testutils",
-    "ma.timer_comparison",
     "matlib",
     "matrixlib",
     "matrixlib.defmatrix",
@@ -207,86 +190,18 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "random.bit_generator",
     "testing.print_coercion_tables",
 ]]
-if sys.version_info < (3, 12):
-    PRIVATE_BUT_PRESENT_MODULES += [
-        'numpy.' + s for s in [
-            "distutils.armccompiler",
-            "distutils.fujitsuccompiler",
-            "distutils.ccompiler",
-            'distutils.ccompiler_opt',
-            "distutils.command",
-            "distutils.command.autodist",
-            "distutils.command.bdist_rpm",
-            "distutils.command.build",
-            "distutils.command.build_clib",
-            "distutils.command.build_ext",
-            "distutils.command.build_py",
-            "distutils.command.build_scripts",
-            "distutils.command.build_src",
-            "distutils.command.config",
-            "distutils.command.config_compiler",
-            "distutils.command.develop",
-            "distutils.command.egg_info",
-            "distutils.command.install",
-            "distutils.command.install_clib",
-            "distutils.command.install_data",
-            "distutils.command.install_headers",
-            "distutils.command.sdist",
-            "distutils.conv_template",
-            "distutils.core",
-            "distutils.extension",
-            "distutils.fcompiler",
-            "distutils.fcompiler.absoft",
-            "distutils.fcompiler.arm",
-            "distutils.fcompiler.compaq",
-            "distutils.fcompiler.environment",
-            "distutils.fcompiler.g95",
-            "distutils.fcompiler.gnu",
-            "distutils.fcompiler.hpux",
-            "distutils.fcompiler.ibm",
-            "distutils.fcompiler.intel",
-            "distutils.fcompiler.lahey",
-            "distutils.fcompiler.mips",
-            "distutils.fcompiler.nag",
-            "distutils.fcompiler.none",
-            "distutils.fcompiler.pathf95",
-            "distutils.fcompiler.pg",
-            "distutils.fcompiler.nv",
-            "distutils.fcompiler.sun",
-            "distutils.fcompiler.vast",
-            "distutils.fcompiler.fujitsu",
-            "distutils.from_template",
-            "distutils.intelccompiler",
-            "distutils.lib2def",
-            "distutils.line_endings",
-            "distutils.mingw32ccompiler",
-            "distutils.msvccompiler",
-            "distutils.npy_pkg_config",
-            "distutils.numpy_distribution",
-            "distutils.pathccompiler",
-            "distutils.unixccompiler",
-        ]
-    ]
 
 
 def is_unexpected(name):
     """Check if this needs to be considered."""
     return (
         '._' not in name and '.tests' not in name and '.setup' not in name
-		and name not in PUBLIC_MODULES
-		and name not in PUBLIC_ALIASED_MODULES
-		and name not in PRIVATE_BUT_PRESENT_MODULES
-	)
+        and name not in PUBLIC_MODULES
+        and name not in PUBLIC_ALIASED_MODULES
+        and name not in PRIVATE_BUT_PRESENT_MODULES
+    )
 
 
-if sys.version_info >= (3, 12):
-    SKIP_LIST = []
-else:
-    SKIP_LIST = ["numpy.distutils.msvc9compiler"]
-
-
-# suppressing warnings from deprecated modules
-@pytest.mark.filterwarnings("ignore:.*np.compat.*:DeprecationWarning")
 def test_all_modules_are_expected():
     """
     Test that we don't add anything that looks like a new public module by
@@ -297,7 +212,7 @@ def test_all_modules_are_expected():
     for _, modname, ispkg in pkgutil.walk_packages(path=np.__path__,
                                                    prefix=np.__name__ + '.',
                                                    onerror=None):
-        if is_unexpected(modname) and modname not in SKIP_LIST:
+        if is_unexpected(modname):
             # We have a name that is new.  If that's on purpose, add it to
             # PUBLIC_MODULES.  We don't expect to have to add anything to
             # PRIVATE_BUT_PRESENT_MODULES.  Use an underscore in the name!
@@ -310,7 +225,6 @@ def test_all_modules_are_expected():
 # Stuff that clearly shouldn't be in the API and is detected by the next test
 # below
 SKIP_LIST_2 = [
-    'numpy.lib.math',
     'numpy.matlib.char',
     'numpy.matlib.rec',
     'numpy.matlib.emath',
@@ -322,14 +236,9 @@ SKIP_LIST_2 = [
     'numpy.matlib.ctypeslib',
     'numpy.matlib.ma',
 ]
-if sys.version_info < (3, 12):
-    SKIP_LIST_2 += [
-        'numpy.distutils.log.sys',
-        'numpy.distutils.log.logging',
-        'numpy.distutils.log.warnings',
-    ]
 
 
+@pytest.mark.slow
 def test_all_modules_are_expected_2():
     """
     Method checking all objects. The pkgutil-based method in
@@ -379,7 +288,7 @@ def test_all_modules_are_expected_2():
 
     if unexpected_members:
         raise AssertionError("Found unexpected object(s) that look like "
-                             "modules: {}".format(unexpected_members))
+                             f"modules: {unexpected_members}")
 
 
 def test_api_importable():
@@ -405,7 +314,7 @@ def test_api_importable():
 
     if module_names:
         raise AssertionError("Modules in the public API that cannot be "
-                             "imported: {}".format(module_names))
+                             f"imported: {module_names}")
 
     for module_name in PUBLIC_ALIASED_MODULES:
         try:
@@ -415,7 +324,7 @@ def test_api_importable():
 
     if module_names:
         raise AssertionError("Modules in the public API that were not "
-                             "found: {}".format(module_names))
+                             f"found: {module_names}")
 
     with warnings.catch_warnings(record=True) as w:
         warnings.filterwarnings('always', category=DeprecationWarning)
@@ -427,7 +336,7 @@ def test_api_importable():
     if module_names:
         raise AssertionError("Modules that are not really public but looked "
                              "public and can not be imported: "
-                             "{}".format(module_names))
+                             f"{module_names}")
 
 
 @pytest.mark.xfail(
@@ -449,14 +358,7 @@ def test_array_api_entry_point():
     numpy_in_sitepackages = sysconfig.get_path('platlib') in np.__file__
 
     eps = importlib.metadata.entry_points()
-    try:
-        xp_eps = eps.select(group="array_api")
-    except AttributeError:
-        # The select interface for entry_points was introduced in py3.10,
-        # deprecating its dict interface. We fallback to dict keys for finding
-        # Array API entry points so that running this test in <=3.9 will
-        # still work - see https://github.com/numpy/numpy/pull/19800.
-        xp_eps = eps.get("array_api", [])
+    xp_eps = eps.select(group="array_api")
     if len(xp_eps) == 0:
         if numpy_in_sitepackages:
             msg = "No entry points for 'array_api' found"
@@ -536,8 +438,13 @@ def test_core_shims_coherence():
 
         # np.core is a shim and all submodules of np.core are shims
         # but we should be able to import everything in those shims
-        # that are available in the "real" modules in np._core
-        if inspect.ismodule(member):
+        # that are available in the "real" modules in np._core, with
+        # the exception of the namespace packages (__spec__.origin is None),
+        # like numpy._core.include, or numpy._core.lib.pkgconfig.
+        if (
+            inspect.ismodule(member)
+            and member.__spec__ and member.__spec__.origin is not None
+        ):
             submodule = member
             submodule_name = member_name
             for submodule_member_name in dir(submodule):
@@ -559,6 +466,7 @@ def test_core_shims_coherence():
             assert member is getattr(core, member_name)
 
 
+@pytest.mark.filterwarnings(r"ignore:\w+ chararray \w+:DeprecationWarning")
 def test_functions_single_location():
     """
     Check that each public function is available from one location only.
@@ -566,20 +474,22 @@ def test_functions_single_location():
     Test performs BFS search traversing NumPy's public API. It flags
     any function-like object that is accessible from more that one place.
     """
-    from typing import Any, Callable, Dict, List, Set, Tuple
+    from collections.abc import Callable
+    from typing import Any
+
     from numpy._core._multiarray_umath import (
-        _ArrayFunctionDispatcher as dispatched_function
+        _ArrayFunctionDispatcher as dispatched_function,
     )
 
-    visited_modules: Set[types.ModuleType] = {np}
-    visited_functions: Set[Callable[..., Any]] = set()
+    visited_modules: set[types.ModuleType] = {np}
+    visited_functions: set[Callable[..., Any]] = set()
     # Functions often have `__name__` overridden, therefore we need
     # to keep track of locations where functions have been found.
-    functions_original_paths: Dict[Callable[..., Any], str] = {}
+    functions_original_paths: dict[Callable[..., Any], str] = {}
 
     # Here we aggregate functions with more than one location.
     # It must be empty for the test to pass.
-    duplicated_functions: List[Tuple] = []
+    duplicated_functions: list[tuple] = []
 
     modules_queue = [np]
 
@@ -767,6 +677,7 @@ def _check_correct_qualname_and_module(obj) -> bool:
     )
 
 
+@pytest.mark.filterwarnings(r"ignore:\w+ chararray \w+:DeprecationWarning")
 def test___qualname___and___module___attribute():
     # NumPy messes with module and name/qualname attributes, but any object
     # should be discoverable based on its module and qualname, so test that.
@@ -785,8 +696,7 @@ def test___qualname___and___module___attribute():
                 inspect.ismodule(member) and  # it's a module
                 "numpy" in member.__name__ and  # inside NumPy
                 not member_name.startswith("_") and  # not private
-                member_name != "tests" and
-                member_name != "typing" and  # 2024-12: type names don't match
+                member_name not in {"tests", "typing"} and  # type names don't match
                 "numpy._core" not in member.__name__ and  # outside _core
                 member not in visited_modules  # not visited yet
             ):

@@ -1,6 +1,8 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_
 
+#include <Python.h>
+
 #include <structmember.h>
 #include "numpy/npy_common.h"
 #include "numpy/ndarraytypes.h"
@@ -11,6 +13,7 @@
 #include "npy_static_data.h"
 #include "npy_import.h"
 #include <limits.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,6 +21,10 @@ extern "C" {
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
+
+NPY_NO_EXPORT PyObject *
+build_array_interface(PyObject *dataptr, PyObject *descr, PyObject *strides,
+                      PyObject *typestr, PyObject *shape);
 
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_DTypeFromObjectStringDiscovery(
@@ -52,6 +59,27 @@ _array_find_python_scalar_type(PyObject *op);
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap);
 
+/*
+ * Check whether a missing legacy copyswap/copyswapn slot can be replaced for
+ * a dtype (for example one written using the new DType API).  A dtype whose
+ * byteorder is NPY_IGNORE ('|') declares that byte order does not apply to it,
+ * so copyswap degenerates to a plain copy.  The fallback is allowed when that
+ * copy is one numpy can make on its own:
+ *
+ *   - `inplace_swap` (the caller passes src == NULL): there is no data to
+ *     copy at all, so the fallback does nothing.
+ *   - otherwise the dtype must be trivially copyable, i.e. its value is
+ *     exactly its bytes, so copying them is the whole operation.
+ *
+ * Anything else raises: a dtype with a real byte order gave numpy no way to
+ * swap it, and one that owns references cannot be copied by moving bytes.
+ * Callers that can copy some other way -- np.place and `.flat` assignment
+ * go through the casting machinery -- should do that instead of asking here.
+ * Returns 1 when the fallback is safe; otherwise sets TypeError and returns 0.
+ */
+NPY_NO_EXPORT int
+can_substitute_copyswap(PyArray_Descr *dtype, int inplace_swap);
+
 NPY_NO_EXPORT PyObject *
 convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending);
 
@@ -62,11 +90,22 @@ convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending);
 NPY_NO_EXPORT void
 dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j);
 
+
 /**
  * unpack tuple of PyDataType_FIELDS(dtype) (descr, offset, title[not-needed])
  */
 NPY_NO_EXPORT int
 _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset);
+
+/**
+ * Unpack a field from a structured dtype by index.
+ */
+NPY_NO_EXPORT int
+_unpack_field_index(
+   _PyArray_LegacyDescr *descr,
+   npy_intp index,
+   PyArray_Descr **odescr,
+   npy_intp *offset);
 
 /*
  * check whether arrays with datatype dtype might have object fields. This will
@@ -76,6 +115,40 @@ _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset);
  */
 NPY_NO_EXPORT int
 _may_have_objects(PyArray_Descr *dtype);
+
+/*
+ * For a sub-array descriptor, return the base descriptor,
+ * set newnd to nd plus the number of subarray dimensions,
+ * and fill newdims by copying nd items from dims and appending
+ * newnd-nd items from the subarray.
+ * If newstrides != NULL, they are similarly filled.
+ *
+ * Note: caller has to ensure that descr is a subarray, and that
+ * newdims and newstrides are big enough (i.e., NPY_MAXDIMS if
+ * the new size is not yet known).
+ */
+NPY_NO_EXPORT PyArray_Descr*
+_get_subarray_base_and_dimensions(
+    const PyArray_Descr *descr,
+    const int nd, const npy_intp *dims, const npy_intp *strides,
+    int *newnd, npy_intp *newdims, npy_intp *newstrides);
+
+/*
+ * Check whether self can be viewed with the given dtype.
+ * If so, return a new reference to the dtype (possibly changed).
+ * If needed, also determine new dimensions and strides:
+ * - For views, *newdims and *newstrides hold storage.  If a change is
+ *   required, copy old dims and strides and make the change.
+ *   If no change is needed, set *dims and *strides to self's versions.
+ * - For _set_dtype, *newdims and *newstrides are NULL. Allocate a new
+ *   array if the number of dimensions increases (because type is a
+ *   subarray), and otherwise use self's dims and strides, possibly
+ *   changing the last element in-place.
+ */
+NPY_NO_EXPORT PyArray_Descr*
+_check_compatibility_with_new_dtype(
+    PyArrayObject *self, PyArray_Descr *type,
+    int *newnd, npy_intp **newdims, npy_intp **newstrides);
 
 /*
  * Returns -1 and sets an exception if *index is an invalid index for
@@ -230,15 +303,6 @@ npy_uint_alignment(int itemsize)
  * compared to memchr it returns one stride past end instead of NULL if needle
  * is not found.
  */
-#ifdef __clang__
-    /*
-     * The code below currently makes use of !NPY_ALIGNMENT_REQUIRED, which
-     * should be OK but causes the clang sanitizer to warn.  It may make
-     * sense to modify the code to avoid this "unaligned" access but
-     * it would be good to carefully check the performance changes.
-     */
-    __attribute__((no_sanitize("alignment")))
-#endif
 static inline char *
 npy_memchr(char * haystack, char needle,
            npy_intp stride, npy_intp size, npy_intp * psubloopsize, int invert)
@@ -259,11 +323,12 @@ npy_memchr(char * haystack, char needle,
     }
     else {
         /* usually find elements to skip path */
-        if (!NPY_ALIGNMENT_REQUIRED && needle == 0 && stride == 1) {
+        if (needle == 0 && stride == 1) {
             /* iterate until last multiple of 4 */
             char * block_end = haystack + size - (size % sizeof(unsigned int));
             while (p < block_end) {
-                unsigned int  v = *(unsigned int*)p;
+                unsigned int v;
+                memcpy(&v, p, sizeof(v));
                 if (v != 0) {
                     break;
                 }
@@ -318,8 +383,6 @@ NPY_NO_EXPORT int
 check_is_convertible_to_scalar(PyArrayObject *v);
 
 
-#include "ucsnarrow.h"
-
 /*
  * Make a new empty array, of the passed size, of a type that takes the
  * priority of ap1 and ap2 into account.
@@ -331,7 +394,7 @@ check_is_convertible_to_scalar(PyArrayObject *v);
  */
 NPY_NO_EXPORT PyArrayObject *
 new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
-                  int nd, npy_intp dimensions[], int typenum, PyArrayObject **result);
+                  int nd, npy_intp dimensions[], PyArray_Descr *descr, PyArrayObject **result);
 
 
 /*

@@ -20,6 +20,13 @@ NPY_NO_EXPORT int
 array_might_be_written(PyArrayObject *obj);
 
 /*
+ * For use in __setstate__, where pickle gives us an instance on which we
+ * have to replace all the actual data. Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+clear_array_attributes(PyArrayObject *self);
+
+/*
  * This flag is used to mark arrays which we would like to, in the future,
  * turn into views. It causes a warning to be issued on the first attempt to
  * write to the array (but the write is allowed to succeed).
@@ -52,6 +59,15 @@ static const int NPY_ARRAY_WAS_PYTHON_COMPLEX = (1 << 28);
  */
 static const int NPY_ARRAY_WAS_INT_AND_REPLACED = (1 << 27);
 static const int NPY_ARRAY_WAS_PYTHON_LITERAL = (1 << 30 | 1 << 29 | 1 << 28);
+
+/*
+ * Mark an array converted from an exact Python str.  Unlike the flags above
+ * it does not participate in promotion (the array keeps its discovered
+ * dtype); it only lets the ufunc machinery convert the operand again from
+ * the original object once the loop's descriptors are resolved.  Not part
+ * of NPY_ARRAY_WAS_PYTHON_LITERAL, whose consumers assume a numeric scalar.
+ */
+static const int NPY_ARRAY_WAS_PYTHON_STR = (1 << 25);
 
 /*
  * This flag allows same kind casting, similar to NPY_ARRAY_FORCECAST.

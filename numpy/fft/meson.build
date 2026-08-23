@@ -13,6 +13,7 @@ py.extension_module('_pocketfft_umath',
   dependencies: np_core_dep,
   install: true,
   subdir: 'numpy/fft',
+  limited_api: py_limited_api,
 )
 
 py.install_sources(
@@ -23,7 +24,6 @@ py.install_sources(
     '_pocketfft.pyi',
     '_helper.py',
     '_helper.pyi',
-    'helper.py',
   ],
   subdir: 'numpy/fft'
 )

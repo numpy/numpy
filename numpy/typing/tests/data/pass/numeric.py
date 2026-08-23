@@ -2,25 +2,20 @@
 Tests for :mod:`numpy._core.numeric`.
 
 Does not include tests which fall under ``array_constructors``.
-
 """
 
-from __future__ import annotations
-from typing import cast
+from typing import Any
 
 import numpy as np
-import numpy.typing as npt
 
-class SubClass(npt.NDArray[np.float64]): ...
+
+class SubClass(np.ndarray[tuple[Any, ...], np.dtype[np.float64]]): ...
 
 
 i8 = np.int64(1)
 
-A = cast(
-    np.ndarray[tuple[int, int, int], np.dtype[np.intp]],
-    np.arange(27).reshape(3, 3, 3),
-)
-B: list[list[list[int]]] = A.tolist()
+A = np.arange(27).reshape(3, 3, 3)
+B = A.tolist()
 C = np.empty((27, 27)).view(SubClass)
 
 np.count_nonzero(i8)

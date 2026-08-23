@@ -14,9 +14,12 @@
 #include "string_fastsearch.h"
 #include "gil_utils.h"
 
-#define CHECK_OVERFLOW(index) if (buf + (index) >= after) return 0
-#define MSB(val) ((val) >> 7 & 1)
-
+#ifdef _MSC_VER
+// MSVC sometimes complains (C4715: "not all control paths return a value")
+// on switch statements over enum classes, even though all enum values are covered.
+// This warning is suppressed here to avoid invasive changes.
+#   pragma warning(disable:4715)
+#endif
 
 enum class ENCODING {
     ASCII, UTF32, UTF8
@@ -297,6 +300,18 @@ struct Buffer {
         return num_codepoints;
     }
 
+    inline size_t
+    buffer_width()
+    {
+        switch (enc) {
+            case ENCODING::ASCII:
+            case ENCODING::UTF8:
+                return after - buf;
+            case ENCODING::UTF32:
+                return (after - buf) / sizeof(npy_ucs4);
+        }
+    }
+
     inline Buffer<enc>&
     operator+=(npy_int64 rhs)
     {
@@ -305,11 +320,12 @@ struct Buffer {
             buf += rhs;
             break;
         case ENCODING::UTF32:
-            buf += rhs * sizeof(npy_ucs4);
+            buf += rhs * (npy_int64)sizeof(npy_ucs4);
             break;
         case ENCODING::UTF8:
-            for (int i=0; i<rhs; i++) {
-                buf += num_bytes_for_utf8_character((unsigned char *)buf);
+            for (npy_int64 i = 0; i < rhs && buf < after; i++) {
+                buf += num_bytes_for_utf8_character_bounded(
+                        (unsigned char *)buf, (size_t)(after - buf));
             }
             break;
         }
@@ -324,7 +340,7 @@ struct Buffer {
             buf -= rhs;
             break;
         case ENCODING::UTF32:
-            buf -= rhs * sizeof(npy_ucs4);
+            buf -= rhs * (npy_int64)sizeof(npy_ucs4);
             break;
         case ENCODING::UTF8:
             buf = (char *) find_previous_utf8_character((unsigned char *)buf, (size_t) rhs);
@@ -467,7 +483,8 @@ struct Buffer {
             case ENCODING::UTF32:
                 return 4;
             case ENCODING::UTF8:
-                return num_bytes_for_utf8_character((unsigned char *)(*this).buf);
+                return num_bytes_for_utf8_character_bounded(
+                        (unsigned char *)buf, (size_t)(after - buf));
         }
     }
 
@@ -627,7 +644,9 @@ struct Buffer {
     {
         Buffer<enc> tmp(after, 0);
         tmp--;
-        while (tmp >= *this && (*tmp == '\0' || NumPyOS_ascii_isspace(*tmp))) {
+        while (tmp >= *this && (
+                NumPyOS_ascii_isspace(*tmp) ||
+                (enc != ENCODING::UTF8 && *tmp == '\0'))) {
             tmp--;
         }
         tmp++;
@@ -703,12 +722,13 @@ operator+(Buffer<enc> lhs, npy_int64 rhs)
         case ENCODING::ASCII:
             return Buffer<enc>(lhs.buf + rhs, lhs.after - lhs.buf - rhs);
         case ENCODING::UTF32:
-            return Buffer<enc>(lhs.buf + rhs * sizeof(npy_ucs4),
-                          lhs.after - lhs.buf - rhs * sizeof(npy_ucs4));
+            return Buffer<enc>(lhs.buf + rhs * (npy_int64)sizeof(npy_ucs4),
+                          lhs.after - lhs.buf - rhs * (npy_int64)sizeof(npy_ucs4));
         case ENCODING::UTF8:
             char* buf = lhs.buf;
-            for (int i=0; i<rhs; i++) {
-                buf += num_bytes_for_utf8_character((unsigned char *)buf);
+            for (npy_int64 i = 0; i < rhs && buf < lhs.after; i++) {
+                buf += num_bytes_for_utf8_character_bounded(
+                        (unsigned char *)buf, (size_t)(lhs.after - buf));
             }
             return Buffer<enc>(buf, (npy_int64)(lhs.after - buf));
     }
@@ -739,8 +759,8 @@ operator-(Buffer<enc> lhs, npy_int64 rhs)
         case ENCODING::ASCII:
             return Buffer<enc>(lhs.buf - rhs, lhs.after - lhs.buf + rhs);
         case ENCODING::UTF32:
-            return Buffer<enc>(lhs.buf - rhs * sizeof(npy_ucs4),
-                          lhs.after - lhs.buf + rhs * sizeof(npy_ucs4));
+            return Buffer<enc>(lhs.buf - rhs * (npy_int64)sizeof(npy_ucs4),
+                          lhs.after - lhs.buf + rhs * (npy_int64)sizeof(npy_ucs4));
         case ENCODING::UTF8:
             char* buf = lhs.buf;
             buf = (char *)find_previous_utf8_character((unsigned char *)buf, rhs);
@@ -1179,7 +1199,8 @@ string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE strip_type
 
     if (strip_type != STRIPTYPE::LEFTSTRIP) {
         while (new_stop > new_start) {
-            if (*traverse_buf != 0 && !traverse_buf.first_character_isspace()) {
+            if (!traverse_buf.first_character_isspace() &&
+                    (enc == ENCODING::UTF8 || *traverse_buf != 0)) {
                 break;
             }
 
@@ -1614,13 +1635,18 @@ string_zfill(Buffer<enc> buf, npy_int64 width, Buffer<enc> out)
         return -1;
     }
 
-    size_t offset = final_width - buf.num_codepoints();
-    Buffer<enc> tmp = out + offset;
+    // when no padding was added there is no sign to move, and the sign
+    // position below would be out of bounds
+    size_t len = buf.num_codepoints();
+    if (len > 0 && final_width > len) {
+        size_t offset = final_width - len;
+        Buffer<enc> tmp = out + offset;
 
-    npy_ucs4 c = *tmp;
-    if (c == '+' || c == '-') {
-        tmp.buffer_memset(fill, 1);
-        out.buffer_memset(c, 1);
+        npy_ucs4 c = *tmp;
+        if (c == '+' || c == '-') {
+            tmp.buffer_memset(fill, 1);
+            out.buffer_memset(c, 1);
+        }
     }
 
     return new_len;

@@ -3,18 +3,33 @@
 """
 import functools
 import operator
+import os
+import warnings
 
+from numpy._core import iinfo, overrides
 from numpy._core._multiarray_umath import _array_converter
 from numpy._core.numeric import (
-    asanyarray, arange, zeros, greater_equal, multiply, ones,
-    asarray, where, int8, int16, int32, int64, intp, empty, promote_types,
-    diagonal, nonzero, indices
-    )
+    arange,
+    asanyarray,
+    asarray,
+    diagonal,
+    empty,
+    greater_equal,
+    indices,
+    int8,
+    int16,
+    int32,
+    int64,
+    intp,
+    multiply,
+    nonzero,
+    ones,
+    promote_types,
+    where,
+    zeros,
+)
 from numpy._core.overrides import finalize_array_function_like, set_module
-from numpy._core import overrides
-from numpy._core import iinfo
 from numpy.lib._stride_tricks_impl import broadcast_to
-
 
 __all__ = [
     'diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'tri', 'triu',
@@ -204,7 +219,7 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
     Examples
     --------
     >>> import numpy as np
-    >>> np.eye(2, dtype=int)
+    >>> np.eye(2, dtype=np.int_)
     array([[1, 0],
            [0, 1]])
     >>> np.eye(3, k=1)
@@ -372,7 +387,6 @@ def diagflat(v, k=0):
 
     return conv.wrap(res)
 
-
 @finalize_array_function_like
 @set_module('numpy')
 def tri(N, M=None, k=0, dtype=float, *, like=None):
@@ -405,7 +419,7 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
     Examples
     --------
     >>> import numpy as np
-    >>> np.tri(3, 5, 2, dtype=int)
+    >>> np.tri(3, 5, 2, dtype=np.int_)
     array([[1, 1, 1, 0, 0],
            [1, 1, 1, 1, 0],
            [1, 1, 1, 1, 1]])
@@ -416,17 +430,43 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
            [1.,  1.,  0.,  0.,  0.]])
 
     """
+
+    warning_for_type = None
+    try:
+        N = operator.index(N)
+    except TypeError:
+        warning_for_type = warning_for_type or type(N)
+
     if like is not None:
         return _tri_with_like(like, N, M=M, k=k, dtype=dtype)
 
     if M is None:
         M = N
+    else:
+        try:
+            M = operator.index(M)
+        except TypeError:
+            warning_for_type = warning_for_type or type(M)
+
+    try:
+        k = operator.index(k)
+    except TypeError:
+        warning_for_type = warning_for_type or type(k)
 
     m = greater_equal.outer(arange(N, dtype=_min_int(0, N)),
                             arange(-k, M - k, dtype=_min_int(-k, M - k)))
 
     # Avoid making a copy if the requested type is already bool
     m = m.astype(dtype, copy=False)
+
+    # Deprecation in NumPy 2.5, 2026-03
+    if warning_for_type:
+        warnings.warn(
+            (f"Cannot convert {(warning_for_type).__name__} safely to an integer."
+             "This will raise an error in future versions (Deprecated NumPy 2.5)"),
+            DeprecationWarning,
+            skip_file_prefixes=(os.path.dirname(__file__),),
+        )
 
     return m
 
@@ -815,7 +855,7 @@ def histogram2d(x, y, bins=10, range=None, density=None, weights=None):
     except TypeError:
         N = 1
 
-    if N != 1 and N != 2:
+    if N not in {1, 2}:
         xedges = yedges = asarray(bins)
         bins = [xedges, yedges]
     hist, edges = histogramdd([x, y], bins, range, density, weights)
@@ -841,7 +881,7 @@ def mask_indices(n, mask_func, k=0):
         A function whose call signature is similar to that of `triu`, `tril`.
         That is, ``mask_func(x, k)`` returns a boolean array, shaped like `x`.
         `k` is an optional argument to the function.
-    k : scalar
+    k : scalar, optional
         An optional argument which is passed through to `mask_func`. Functions
         like `triu`, `tril` take a second argument that is interpreted as an
         offset.
@@ -913,7 +953,7 @@ def tril_indices(n, k=0, m=None):
     -------
     inds : tuple of arrays
         The row and column indices, respectively. The row indices are sorted
-        in non-decreasing order, and the correspdonding column indices are
+        in non-decreasing order, and the corresponding column indices are
         strictly increasing for each row.
 
     See also
@@ -1060,7 +1100,7 @@ def triu_indices(n, k=0, m=None):
     -------
     inds : tuple, shape(2) of ndarrays, shape(`n`)
         The row and column indices, respectively. The row indices are sorted
-        in non-decreasing order, and the correspdonding column indices are
+        in non-decreasing order, and the corresponding column indices are
         strictly increasing for each row.
 
     See also
@@ -1119,6 +1159,20 @@ def triu_indices(n, k=0, m=None):
            [ 12,  13,  14,  -1]])
 
     """
+
+    try:
+        k = operator.index(k)
+    except TypeError:
+        # If same instance,then warning will be given in tri
+        if not isinstance(k, type(k - 1)):
+            # Deprecated in NumPy 2.5, 2026-03
+            warnings.warn(
+                (f"Cannot convert {type(k).__name__} safely to an integer."
+                 "This will raise an error in future versions (Deprecated NumPy 2.5)"),
+                DeprecationWarning,
+                skip_file_prefixes=(os.path.dirname(__file__),),
+            )
+
     tri_ = ~tri(n, m, k=k - 1, dtype=bool)
 
     return tuple(broadcast_to(inds, tri_.shape)[tri_]

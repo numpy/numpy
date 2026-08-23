@@ -6,10 +6,11 @@ See build_and_import_extensions for usage hints
 
 import os
 import pathlib
-import subprocess
 import sys
 import sysconfig
 import textwrap
+
+from .utils import run_subprocess
 
 __all__ = ['build_and_import_extension', 'compile_extension_module']
 
@@ -104,9 +105,9 @@ def compile_extension_module(
     dirname = builddir / name
     dirname.mkdir(exist_ok=True)
     cfile = _convert_str_to_file(source_string, dirname)
-    include_dirs = include_dirs if include_dirs else []
-    libraries = libraries if libraries else []
-    library_dirs = library_dirs if library_dirs else []
+    include_dirs = include_dirs or []
+    libraries = libraries or []
+    library_dirs = library_dirs or []
 
     return _c_compile(
         cfile, outputfilename=dirname / modname,
@@ -134,52 +135,50 @@ def _make_methods(functions, modname):
     methods_table = []
     codes = []
     for funcname, flags, code in functions:
-        cfuncname = "%s_%s" % (modname, funcname)
+        cfuncname = f"{modname}_{funcname}"
         if 'METH_KEYWORDS' in flags:
             signature = '(PyObject *self, PyObject *args, PyObject *kwargs)'
         else:
             signature = '(PyObject *self, PyObject *args)'
-        methods_table.append(
-            "{\"%s\", (PyCFunction)%s, %s}," % (funcname, cfuncname, flags))
-        func_code = """
+        methods_table.append(f'{{"{funcname}", (PyCFunction){cfuncname}, {flags}}},')
+        func_code = f"""
         static PyObject* {cfuncname}{signature}
         {{
         {code}
         }}
-        """.format(cfuncname=cfuncname, signature=signature, code=code)
+        """
         codes.append(func_code)
 
-    body = "\n".join(codes) + """
-    static PyMethodDef methods[] = {
-    %(methods)s
-    { NULL }
-    };
-    static struct PyModuleDef moduledef = {
+    methods_str = '\n'.join(methods_table)
+    body = "\n".join(codes) + f"""
+    static PyMethodDef methods[] = {{
+    {methods_str}
+    {{ NULL }}
+    }};
+    static struct PyModuleDef moduledef = {{
         PyModuleDef_HEAD_INIT,
-        "%(modname)s",  /* m_name */
+        "{modname}",    /* m_name */
         NULL,           /* m_doc */
         -1,             /* m_size */
         methods,        /* m_methods */
-    };
-    """ % {'methods': '\n'.join(methods_table), 'modname': modname}
+    }};
+    """
     return body
 
 
 def _make_source(name, init, body):
     """ Combines the code fragments into source code ready to be compiled
     """
-    code = """
+    code = f"""
     #include <Python.h>
 
-    %(body)s
+    {body}
 
     PyMODINIT_FUNC
-    PyInit_%(name)s(void) {
-    %(init)s
-    }
-    """ % {
-        'name': name, 'init': init, 'body': body,
-    }
+    PyInit_{name}(void) {{
+    {init}
+    }}
+    """
     return code
 
 
@@ -227,18 +226,17 @@ def build(cfile, outputfilename, compile_extra, link_extra,
             python = '{sys.executable}'
         """))
     if sys.platform == "win32":
-        subprocess.check_call(["meson", "setup",
-                               "--buildtype=release",
-                               "--vsenv", ".."],
-                              cwd=build_dir,
-                              )
+        run_subprocess(["meson", "setup",
+                        "--buildtype=release",
+                        "--vsenv", ".."],
+                       build_dir)
     else:
-        subprocess.check_call(["meson", "setup", "--vsenv", "..", f'--native-file={os.fspath(native_file_name)}'],
-                              cwd=build_dir
-                              )
+        run_subprocess(["meson", "setup", "--vsenv",
+                        "..", f'--native-file={os.fspath(native_file_name)}'],
+                       build_dir)
 
     so_name = outputfilename.parts[-1] + get_so_suffix()
-    subprocess.check_call(["meson", "compile"], cwd=build_dir)
+    run_subprocess(["meson", "compile"], build_dir)
     os.rename(str(build_dir / so_name), cfile.parent / so_name)
     return cfile.parent / so_name
 

@@ -1,9 +1,10 @@
-from numpy.testing import IS_WASM, IS_EDITABLE
 import pytest
 
-if IS_WASM:
+from numpy.testing import IS_EDITABLE, IS_IOS, IS_WASM
+
+if IS_WASM or IS_IOS:
     pytest.skip(
-        "WASM/Pyodide does not use or support Fortran",
+        "Platform does not use or support Fortran",
         allow_module_level=True
     )
 

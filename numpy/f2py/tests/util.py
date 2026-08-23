@@ -6,23 +6,24 @@ Utility functions for
 - determining paths to tests
 
 """
+import atexit
+import concurrent.futures
+import contextlib
 import glob
 import os
-import sys
-import subprocess
-import tempfile
 import shutil
-import atexit
-import pytest
-import contextlib
-import numpy
-import concurrent.futures
-
-from pathlib import Path
-from numpy._utils import asunicode
-from numpy.testing import temppath, IS_WASM
+import subprocess
+import sys
+import tempfile
 from importlib import import_module
+from pathlib import Path
+
+import pytest
+
+import numpy
+from numpy._utils import asunicode
 from numpy.f2py._backends._meson import MesonBackend
+from numpy.testing import IS_IOS, IS_WASM, temppath
 
 #
 # Check if compilers are available at all...
@@ -52,7 +53,7 @@ def check_language(lang, code_snippet=None):
                 cwd=tmpdir,
                 capture_output=True,
             )
-        except subprocess.CalledProcessError:
+        except OSError:
             pytest.skip("meson not present, skipping compiler dependent test", allow_module_level=True)
         return runmeson.returncode == 0
     finally:
@@ -88,7 +89,7 @@ class CompilerChecker:
         self.has_f90 = False
 
     def check_compilers(self):
-        if (not self.compilers_checked) and (not sys.platform == "cygwin"):
+        if (not self.compilers_checked):
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = [
                     executor.submit(check_language, "c"),
@@ -103,7 +104,7 @@ class CompilerChecker:
             self.compilers_checked = True
 
 
-if not IS_WASM:
+if not IS_WASM and not IS_IOS:
     checker = CompilerChecker()
     checker.check_compilers()
 
@@ -160,7 +161,7 @@ def get_temp_module_name():
     # Assume single-threaded, and the module dir usable only by this thread
     global _module_num
     get_module_dir()
-    name = "_test_ext_module_%d" % _module_num
+    name = f"_test_ext_module_{_module_num}"
     _module_num += 1
     if name in sys.modules:
         # this should not be possible, but check anyway
@@ -212,7 +213,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     f2py_sources = []
     for fn in source_files:
         if not os.path.isfile(fn):
-            raise RuntimeError("%s is not a file" % fn)
+            raise RuntimeError(f"{fn} is not a file")
         dst = os.path.join(d, os.path.basename(fn))
         shutil.copyfile(fn, dst)
         dst_sources.append(dst)
@@ -247,8 +248,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
                              stderr=subprocess.STDOUT)
         out, err = p.communicate()
         if p.returncode != 0:
-            raise RuntimeError("Running f2py failed: %s\n%s" %
-                               (cmd[4:], asunicode(out)))
+            raise RuntimeError(f"Running f2py failed: {cmd[4:]}\n{asunicode(out)}")
     finally:
         os.chdir(cwd)
 
@@ -262,7 +262,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
         # need to change to record how big each module is, rather than
         # relying on rebase being able to find that from the files.
         _module_list.extend(
-            glob.glob(os.path.join(d, "{:s}*".format(module_name)))
+            glob.glob(os.path.join(d, f"{module_name:s}*"))
         )
         subprocess.check_call(
             ["/usr/bin/rebase", "--database", "--oblivious", "--verbose"]
@@ -358,9 +358,9 @@ def build_meson(source_files, module_name=None, **kwargs):
 class F2PyTest:
     code = None
     sources = None
-    options = []
-    skip = []
-    only = []
+    options = []  # noqa: RUF012
+    skip = []  # noqa: RUF012
+    only = []  # noqa: RUF012
     suffix = ".f"
     module = None
     _has_c_compiler = None
@@ -385,7 +385,7 @@ class F2PyTest:
         if self.module is not None:
             return
 
-        codes = self.sources if self.sources else []
+        codes = self.sources or []
         if self.code:
             codes.append(self.suffix)
 

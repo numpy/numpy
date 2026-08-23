@@ -20,6 +20,7 @@
 #include "common.h"
 #include "conversion_utils.h"
 #include "ctors.h"
+#include "npy_pycompat.h"
 
 /* Functions not part of the public NumPy C API */
 npy_bool npyiter_has_writeback(NpyIter *iter);
@@ -135,17 +136,13 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
 
         if (PyUnicode_Check(f)) {
             /* accept unicode input */
-            PyObject *f_str;
-            f_str = PyUnicode_AsASCIIString(f);
-            if (f_str == NULL) {
+            str = (char *)PyUnicode_AsUTF8AndSize(f, &length);
+            if (str == NULL) {
                 Py_DECREF(f);
                 return 0;
             }
-            Py_DECREF(f);
-            f = f_str;
         }
-
-        if (PyBytes_AsStringAndSize(f, &str, &length) < 0) {
+        else if (PyBytes_AsStringAndSize(f, &str, &length) < 0) {
             Py_DECREF(f);
             return 0;
         }
@@ -267,17 +264,13 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
 
         if (PyUnicode_Check(f)) {
             /* accept unicode input */
-            PyObject *f_str;
-            f_str = PyUnicode_AsASCIIString(f);
-            if (f_str == NULL) {
+            str = (char *)PyUnicode_AsUTF8AndSize(f, &length);
+            if (str == NULL) {
                 Py_DECREF(f);
                 return 0;
             }
-            Py_DECREF(f);
-            f = f_str;
         }
-
-        if (PyBytes_AsStringAndSize(f, &str, &length) < 0) {
+        else if (PyBytes_AsStringAndSize(f, &str, &length) < 0) {
             PyErr_Clear();
             Py_DECREF(f);
             PyErr_SetString(PyExc_ValueError,
@@ -588,7 +581,7 @@ npyiter_prepare_ops(PyObject *op_in, PyObject **out_owner, PyObject ***out_objs)
 {
     /* Take ownership of op_in (either a tuple/list or single element): */
     if (PyTuple_Check(op_in) || PyList_Check(op_in)) {
-        PyObject *seq = PySequence_Fast(op_in, "failed accessing item list");
+        PyObject *seq = PySequence_Fast(op_in, "failed accessing item list"); // noqa: borrowed-ref OK
         if (op_in == NULL) {
             Py_DECREF(op_in);
             return -1;
@@ -719,35 +712,62 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
 
     /* Need nop to set up workspaces */
     PyObject **op_objs = NULL;
-    PyObject *op_in_owned = NULL;  /* Sequence/object owning op_objs. */
-    int nop = npyiter_prepare_ops(op_in, &op_in_owned, &op_objs);
+    PyObject *op_in_owned = NULL; /* Sequence/object owning op_objs. */
+    PyArray_Descr **op_request_dtypes = NULL;
+    int pre_alloc_fail = 0;
+    int post_alloc_fail = 0;
+    int nop;
+    NPY_DEFINE_WORKSPACE(op, PyArrayObject *, 2 * 8);
+    NPY_DEFINE_WORKSPACE(op_flags, npy_uint32, 8);
+    NPY_DEFINE_WORKSPACE(op_axes_storage, int, 8 * NPY_MAXDIMS);
+    NPY_DEFINE_WORKSPACE(op_axes, int *, 8);
+
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(op_in);
+
+    nop = npyiter_prepare_ops(op_in, &op_in_owned, &op_objs);
     if (nop < 0) {
-        goto pre_alloc_fail;
+        pre_alloc_fail = 1;
+        goto cleanup;
     }
 
     /* allocate workspace for Python objects (operands and dtypes) */
-    NPY_ALLOC_WORKSPACE(op, PyArrayObject *, 2 * 8, 2 * nop);
+    NPY_INIT_WORKSPACE(op, PyArrayObject *, 2 * 8, 2 * nop);
     if (op == NULL) {
-        goto pre_alloc_fail;
+        pre_alloc_fail = 1;
+        goto cleanup;
     }
     memset(op, 0, sizeof(PyObject *) * 2 * nop);
-    PyArray_Descr **op_request_dtypes = (PyArray_Descr **)(op + nop);
+    op_request_dtypes = (PyArray_Descr **)(op + nop);
 
     /* And other workspaces (that do not need to clean up their content) */
-    NPY_ALLOC_WORKSPACE(op_flags, npy_uint32, 8, nop);
-    NPY_ALLOC_WORKSPACE(op_axes_storage, int, 8 * NPY_MAXDIMS, nop * NPY_MAXDIMS);
-    NPY_ALLOC_WORKSPACE(op_axes, int *, 8, nop);
+    NPY_INIT_WORKSPACE(op_flags, npy_uint32, 8, nop);
+    NPY_INIT_WORKSPACE(op_axes_storage, int, 8 * NPY_MAXDIMS, nop * NPY_MAXDIMS);
+    NPY_INIT_WORKSPACE(op_axes, int *, 8, nop);
     /*
      * Trying to allocate should be OK if one failed, check for error now
      * that we can use `goto finish` to clean up everything.
      * (NPY_ALLOC_WORKSPACE has to be done before a goto fail currently.)
      */
     if (op_flags == NULL || op_axes_storage == NULL || op_axes == NULL) {
-        goto finish;
+        post_alloc_fail = 1;
+        goto cleanup;
     }
 
     /* op and op_flags */
     if (npyiter_convert_ops(nop, op_objs, op_flags_in, op, op_flags) != 1) {
+        post_alloc_fail = 1;
+        goto cleanup;
+    }
+
+cleanup:;
+
+    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
+
+    if (pre_alloc_fail) {
+        goto pre_alloc_fail;
+    }
+
+    if (post_alloc_fail) {
         goto finish;
     }
 
@@ -888,7 +908,7 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
         }
         if (!PyTuple_Check(item) && !PyList_Check(item)) {
             PyErr_SetString(PyExc_ValueError,
-                    "Each item in axes must be a an integer tuple");
+                    "Each item in axes must be an integer tuple");
             Py_DECREF(item);
             return NULL;
         }
@@ -1395,7 +1415,10 @@ npyiter_enable_external_loop(
         return NULL;
     }
 
-    NpyIter_EnableExternalLoop(self->iter);
+    if (NpyIter_EnableExternalLoop(self->iter) != NPY_SUCCEED) {
+        return NULL;
+    }
+
     /* EnableExternalLoop invalidates cached values */
     if (npyiter_cache_values(self) < 0) {
         return NULL;
@@ -1645,6 +1668,9 @@ npyiter_multi_index_set(
         }
         for (idim = 0; idim < ndim; ++idim) {
             PyObject *v = PySequence_GetItem(value, idim);
+            if (v == NULL) {
+                return -1;
+            }
             multi_index[idim] = PyLong_AsLong(v);
             Py_DECREF(v);
             if (error_converting(multi_index[idim])) {

@@ -7,7 +7,6 @@ work; they don't recognize anything like alpha/beta/rc/dev versions.
 """
 import re
 
-
 __all__ = ['NumpyVersion']
 
 
@@ -23,8 +22,7 @@ class NumpyVersion:
     - Release candidates: '1.8.0rc1', '1.8.0rc2', etc.
     - Development versions: '1.8.0.dev-f1234afa' (git commit hash appended)
     - Development versions after a1: '1.8.0a1.dev-f1234afa',
-                                     '1.8.0b2.dev-f1234afa',
-                                     '1.8.1rc1.dev-f1234afa', etc.
+      '1.8.0b2.dev-f1234afa', '1.8.1rc1.dev-f1234afa', etc.
     - Development versions (no git hash available): '1.8.0.dev-Unknown'
 
     Comparing needs to be done against a valid version string or other
@@ -152,4 +150,4 @@ class NumpyVersion:
         return self._compare(other) >= 0
 
     def __repr__(self):
-        return "NumpyVersion(%s)" % self.vstring
+        return f"NumpyVersion({self.vstring})"

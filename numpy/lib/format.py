@@ -1,12 +1,12 @@
-from ._format_impl import (
-    __all__,
-    __doc__,
+from ._format_impl import (  # noqa: F401
     ARRAY_ALIGN,
     BUFFER_SIZE,
     EXPECTED_KEYS,
     GROWTH_AXIS_MAX_DIGITS,
     MAGIC_LEN,
     MAGIC_PREFIX,
+    __all__,
+    __doc__,
     descr_to_dtype,
     drop_metadata,
     dtype_to_descr,

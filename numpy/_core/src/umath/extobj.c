@@ -15,6 +15,7 @@
 #include "numpy/ufuncobject.h"
 
 #include "common.h"
+#include "npy_pycompat.h"
 
 
 #define UFUNC_ERR_IGNORE 0
@@ -145,6 +146,13 @@ init_extobj(void)
     if (npy_static_pydata.default_extobj_capsule == NULL) {
         return -1;
     }
+#ifdef Py_GIL_DISABLED
+    if (PyUnstable_SetImmortal(npy_static_pydata.default_extobj_capsule) == 0) {
+        PyErr_SetString(PyExc_RuntimeError, "Could not mark extobj capsule as immortal");
+        Py_CLEAR(npy_static_pydata.default_extobj_capsule);
+        return -1;
+    }
+#endif
     npy_static_pydata.npy_extobj_contextvar = PyContextVar_New(
             "numpy.ufunc.extobj", npy_static_pydata.default_extobj_capsule);
     if (npy_static_pydata.npy_extobj_contextvar == NULL) {
@@ -205,14 +213,13 @@ extobj_make_extobj(PyObject *NPY_UNUSED(mod),
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("_seterrobj", args, len_args, kwnames,
-            "$all", &errmodeconverter, &all_mode,
-            "$divide", &errmodeconverter, &divide_mode,
-            "$over", &errmodeconverter, &over_mode,
-            "$under", &errmodeconverter, &under_mode,
-            "$invalid", &errmodeconverter, &invalid_mode,
-            "$bufsize", &PyArray_IntpFromPyIntConverter, &bufsize,
-            "$call", NULL, &pyfunc,
-            NULL, NULL, NULL) < 0) {
+            {"$all", &errmodeconverter, &all_mode},
+            {"$divide", &errmodeconverter, &divide_mode},
+            {"$over", &errmodeconverter, &over_mode},
+            {"$under", &errmodeconverter, &under_mode},
+            {"$invalid", &errmodeconverter, &invalid_mode},
+            {"$bufsize", &PyArray_IntpFromPyIntConverter, &bufsize},
+            {"$call", NULL, &pyfunc}) < 0) {
         return NULL;
     }
 
@@ -398,7 +405,7 @@ _error_handler(const char *name, int method, PyObject *pyfunc, char *errtype,
     switch(method) {
     case UFUNC_ERR_WARN:
         PyOS_snprintf(msg, sizeof(msg), "%s encountered in %s", errtype, name);
-        if (PyErr_Warn(PyExc_RuntimeWarning, msg) < 0) {
+        if (PyErr_WarnEx(PyExc_RuntimeWarning, msg, 1) < 0) {
             goto fail;
         }
         break;

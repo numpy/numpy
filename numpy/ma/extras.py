@@ -5,7 +5,6 @@ A collection of utilities for `numpy.ma`.
 
 :author: Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
-:version: $Id: extras.py 3473 2007-10-29 15:18:13Z jarrod.millman $
 
 """
 __all__ = [
@@ -17,24 +16,44 @@ __all__ = [
     'isin', 'in1d', 'intersect1d', 'mask_cols', 'mask_rowcols', 'mask_rows',
     'masked_all', 'masked_all_like', 'median', 'mr_', 'ndenumerate',
     'notmasked_contiguous', 'notmasked_edges', 'polyfit', 'row_stack',
-    'setdiff1d', 'setxor1d', 'stack', 'unique', 'union1d', 'vander', 'vstack',
+    'setdiff1d', 'setxor1d', 'stack', 'unique', 'union1d', 'unwrap', 'vander',
+    'vstack',
     ]
 
+import functools
 import itertools
 import warnings
 
-from . import core as ma
-from .core import (
-    MaskedArray, MAError, add, array, asarray, concatenate, filled, count,
-    getmask, getmaskarray, make_mask_descr, masked, masked_array, mask_or,
-    nomask, ones, sort, zeros, getdata, get_masked_subclass, dot
-    )
-
 import numpy as np
-from numpy import ndarray, array as nxarray
-from numpy.lib.array_utils import normalize_axis_index, normalize_axis_tuple
+from numpy import array as nxarray, ndarray
 from numpy.lib._function_base_impl import _ureduce
 from numpy.lib._index_tricks_impl import AxisConcatenator
+from numpy.lib.array_utils import normalize_axis_index, normalize_axis_tuple
+
+from . import core as ma
+from .core import (  # noqa: F401
+    MAError,
+    MaskedArray,
+    add,
+    array,
+    asarray,
+    concatenate,
+    count,
+    dot,
+    filled,
+    get_masked_subclass,
+    getdata,
+    getmask,
+    getmaskarray,
+    make_mask_descr,
+    mask_or,
+    masked,
+    masked_array,
+    nomask,
+    ones,
+    sort,
+    zeros,
+)
 
 
 def issequence(seq):
@@ -227,151 +246,93 @@ def masked_all_like(arr):
 #####--------------------------------------------------------------------------
 #---- --- Standard functions ---
 #####--------------------------------------------------------------------------
-class _fromnxfunction:
+
+def _fromnxfunction_function(_fromnxfunction):
     """
-    Defines a wrapper to adapt NumPy functions to masked arrays.
-
-
-    An instance of `_fromnxfunction` can be called with the same parameters
-    as the wrapped NumPy function. The docstring of `newfunc` is adapted from
-    the wrapped function as well, see `getdoc`.
-
-    This class should not be used directly. Instead, one of its extensions that
-    provides support for a specific type of input should be used.
+    Decorator to wrap a "_fromnxfunction" function, wrapping a numpy function as a
+    masked array function, with proper docstring and name.
 
     Parameters
     ----------
-    funcname : str
-        The name of the function to be adapted. The function should be
-        in the NumPy namespace (i.e. ``np.funcname``).
+    _fromnxfunction : ({params}) -> ndarray, {params}) -> masked_array
+        Wrapper function that calls the wrapped numpy function
+
+    Returns
+    -------
+    decorator : (f: ({params}) -> ndarray) -> ({params}) -> masked_array
+        Function that accepts a numpy function and returns a masked array function
 
     """
+    def decorator(npfunc, /):
+        def wrapper(*args, **kwargs):
+            return _fromnxfunction(npfunc, *args, **kwargs)
 
-    def __init__(self, funcname):
-        self.__name__ = funcname
-        self.__qualname__ = funcname
-        self.__doc__ = self.getdoc()
+        functools.update_wrapper(wrapper, npfunc, assigned=("__name__", "__qualname__"))
+        wrapper.__doc__ = ma.doc_note(
+            npfunc.__doc__,
+            "The function is applied to both the ``_data`` and the ``_mask``, if any.",
+        )
+        return wrapper
 
-    def getdoc(self):
-        """
-        Retrieve the docstring and signature from the function.
-
-        The ``__doc__`` attribute of the function is used as the docstring for
-        the new masked array version of the function. A note on application
-        of the function to the mask is appended.
-
-        Parameters
-        ----------
-        None
-
-        """
-        npfunc = getattr(np, self.__name__, None)
-        doc = getattr(npfunc, '__doc__', None)
-        if doc:
-            sig = ma.get_object_signature(npfunc)
-            doc = ma.doc_note(doc, "The function is applied to both the _data "
-                                   "and the _mask, if any.")
-            if sig:
-                sig = self.__name__ + sig + "\n\n"
-            return sig + doc
-        return
-
-    def __call__(self, *args, **params):
-        pass
+    return decorator
 
 
-class _fromnxfunction_single(_fromnxfunction):
+@_fromnxfunction_function
+def _fromnxfunction_single(npfunc, a, /, *args, **kwargs):
     """
-    A version of `_fromnxfunction` that is called with a single array
-    argument followed by auxiliary args that are passed verbatim for
-    both the data and mask calls.
+    Wraps a NumPy function that can be called with a single array argument followed by
+    auxiliary args that are passed verbatim for both the data and mask calls.
     """
-    def __call__(self, x, *args, **params):
-        func = getattr(np, self.__name__)
-        if isinstance(x, ndarray):
-            _d = func(x.__array__(), *args, **params)
-            _m = func(getmaskarray(x), *args, **params)
-            return masked_array(_d, mask=_m)
-        else:
-            _d = func(np.asarray(x), *args, **params)
-            _m = func(getmaskarray(x), *args, **params)
-            return masked_array(_d, mask=_m)
+    return masked_array(
+        data=npfunc(np.asarray(a), *args, **kwargs),
+        mask=npfunc(getmaskarray(a), *args, **kwargs),
+    )
 
 
-class _fromnxfunction_seq(_fromnxfunction):
+@_fromnxfunction_function
+def _fromnxfunction_seq(npfunc, arys, /, *args, **kwargs):
     """
-    A version of `_fromnxfunction` that is called with a single sequence
-    of arrays followed by auxiliary args that are passed verbatim for
-    both the data and mask calls.
+    Wraps a NumPy function that can be called with a single sequence of arrays followed
+    by auxiliary args that are passed verbatim for both the data and mask calls.
     """
-    def __call__(self, x, *args, **params):
-        func = getattr(np, self.__name__)
-        _d = func(tuple(np.asarray(a) for a in x), *args, **params)
-        _m = func(tuple(getmaskarray(a) for a in x), *args, **params)
-        return masked_array(_d, mask=_m)
+    return masked_array(
+        data=npfunc(tuple(np.asarray(a) for a in arys), *args, **kwargs),
+        mask=npfunc(tuple(getmaskarray(a) for a in arys), *args, **kwargs),
+    )
 
-
-class _fromnxfunction_args(_fromnxfunction):
+@_fromnxfunction_function
+def _fromnxfunction_allargs(npfunc, /, *arys, **kwargs):
     """
-    A version of `_fromnxfunction` that is called with multiple array
-    arguments. The first non-array-like input marks the beginning of the
-    arguments that are passed verbatim for both the data and mask calls.
-    Array arguments are processed independently and the results are
-    returned in a list. If only one array is found, the return value is
-    just the processed array instead of a list.
+    Wraps a NumPy function that can be called with multiple array arguments.
+    All args are converted to arrays even if they are not so already.
+    This makes it possible to process scalars as 1-D arrays.
+    Only keyword arguments are passed through verbatim for the data and mask calls.
+    Arrays arguments are processed independently and the results are returned in a list.
+    If only one arg is present, the return value is just the processed array instead of
+    a list.
     """
-    def __call__(self, *args, **params):
-        func = getattr(np, self.__name__)
-        arrays = []
-        args = list(args)
-        while len(args) > 0 and issequence(args[0]):
-            arrays.append(args.pop(0))
-        res = []
-        for x in arrays:
-            _d = func(np.asarray(x), *args, **params)
-            _m = func(getmaskarray(x), *args, **params)
-            res.append(masked_array(_d, mask=_m))
-        if len(arrays) == 1:
-            return res[0]
-        return res
+    out = tuple(
+        masked_array(
+            data=npfunc(np.asarray(a), **kwargs),
+            mask=npfunc(getmaskarray(a), **kwargs),
+        )
+        for a in arys
+    )
+    return out[0] if len(out) == 1 else out
 
 
-class _fromnxfunction_allargs(_fromnxfunction):
-    """
-    A version of `_fromnxfunction` that is called with multiple array
-    arguments. Similar to `_fromnxfunction_args` except that all args
-    are converted to arrays even if they are not so already. This makes
-    it possible to process scalars as 1-D arrays. Only keyword arguments
-    are passed through verbatim for the data and mask calls. Arrays
-    arguments are processed independently and the results are returned
-    in a list. If only one arg is present, the return value is just the
-    processed array instead of a list.
-    """
-    def __call__(self, *args, **params):
-        func = getattr(np, self.__name__)
-        res = []
-        for x in args:
-            _d = func(np.asarray(x), **params)
-            _m = func(getmaskarray(x), **params)
-            res.append(masked_array(_d, mask=_m))
-        if len(args) == 1:
-            return res[0]
-        return res
+atleast_1d = _fromnxfunction_allargs(np.atleast_1d)
+atleast_2d = _fromnxfunction_allargs(np.atleast_2d)
+atleast_3d = _fromnxfunction_allargs(np.atleast_3d)
 
+vstack = row_stack = _fromnxfunction_seq(np.vstack)
+hstack = _fromnxfunction_seq(np.hstack)
+column_stack = _fromnxfunction_seq(np.column_stack)
+dstack = _fromnxfunction_seq(np.dstack)
+stack = _fromnxfunction_seq(np.stack)
 
-atleast_1d = _fromnxfunction_allargs('atleast_1d')
-atleast_2d = _fromnxfunction_allargs('atleast_2d')
-atleast_3d = _fromnxfunction_allargs('atleast_3d')
-
-vstack = row_stack = _fromnxfunction_seq('vstack')
-hstack = _fromnxfunction_seq('hstack')
-column_stack = _fromnxfunction_seq('column_stack')
-dstack = _fromnxfunction_seq('dstack')
-stack = _fromnxfunction_seq('stack')
-
-hsplit = _fromnxfunction_single('hsplit')
-
-diagflat = _fromnxfunction_single('diagflat')
+hsplit = _fromnxfunction_single(np.hsplit)
+diagflat = _fromnxfunction_single(np.diagflat)
 
 
 #####--------------------------------------------------------------------------
@@ -389,7 +350,36 @@ def flatten_inplace(seq):
 
 def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     """
-    (This docstring should be overwritten)
+    Apply a function to 1-D slices of a masked array along an axis.
+
+    This function is the equivalent of `numpy.apply_along_axis` that returns
+    a masked array.  See `numpy.apply_along_axis` for the full documentation.
+
+    See Also
+    --------
+    numpy.apply_along_axis : Equivalent function for ndarrays.
+
+    Examples
+    --------
+    >>> import numpy as np
+
+    Sum each column, skipping masked values:
+
+    >>> a = np.ma.array([[1, 2, 3],
+    ...                  [4, 5, 6]], mask=[[0, 1, 0],
+    ...                                    [0, 0, 1]])
+    >>> np.ma.apply_along_axis(np.ma.sum, 0, a)
+    masked_array(data=[5, 5, 3],
+                 mask=False,
+           fill_value=999999)
+
+    Compute the mean of each row, ignoring masked values:
+
+    >>> np.ma.apply_along_axis(np.ma.mean, 1, a)
+    masked_array(data=[2. , 4.5],
+                 mask=False,
+           fill_value=1e+20)
+
     """
     arr = array(arr, copy=False, subok=True)
     nd = arr.ndim
@@ -467,9 +457,6 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         result = asarray(outarr, dtype=max_dtypes)
         result.fill_value = ma.default_fill_value(result)
     return result
-
-
-apply_along_axis.__doc__ = np.apply_along_axis.__doc__
 
 
 def apply_over_axes(func, a, axes):
@@ -750,8 +737,9 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     median : ndarray
         A new array holding the result is returned unless out is
         specified, in which case a reference to out is returned.
-        Return data-type is `float64` for integers and floats smaller than
-        `float64`, or the input data-type, otherwise.
+        If the input contains integers, the output data-type is ``float64``.
+        Otherwise, the output data-type is the same as that of the input.
+        If `out` is specified, that array is returned instead.
 
     See Also
     --------
@@ -1118,7 +1106,7 @@ def mask_rowcols(a, axis=None):
     Examples
     --------
     >>> import numpy as np
-    >>> a = np.zeros((3, 3), dtype=int)
+    >>> a = np.zeros((3, 3), dtype=np.int_)
     >>> a[1, 1] = 1
     >>> a
     array([[0, 0, 0],
@@ -1175,7 +1163,7 @@ def mask_rows(a, axis=np._NoValue):
     Examples
     --------
     >>> import numpy as np
-    >>> a = np.zeros((3, 3), dtype=int)
+    >>> a = np.zeros((3, 3), dtype=np.int_)
     >>> a[1, 1] = 1
     >>> a
     array([[0, 0, 0],
@@ -1226,7 +1214,7 @@ def mask_cols(a, axis=np._NoValue):
     Examples
     --------
     >>> import numpy as np
-    >>> a = np.zeros((3, 3), dtype=int)
+    >>> a = np.zeros((3, 3), dtype=np.int_)
     >>> a[1, 1] = 1
     >>> a
     array([[0, 0, 0],
@@ -1260,6 +1248,121 @@ def mask_cols(a, axis=np._NoValue):
             "The axis argument has always been ignored, in future passing it "
             "will raise TypeError", DeprecationWarning, stacklevel=2)
     return mask_rowcols(a, 1)
+
+
+def unwrap(p, discont=None, axis=-1, *, period=2 * np.pi):
+    r"""
+    Unwrap by taking the complement of large deltas with respect to the period.
+
+    This unwraps a signal `p` by changing elements which have an absolute
+    difference from their predecessor of more than ``max(discont, period/2)``
+    to their `period`-complementary values. Masked elements are skipped over,
+    so the predecessor of an element is the closest preceding unmasked one,
+    and the mask is preserved in the output.
+
+    For the default case where `period` is :math:`2\pi` and `discont` is
+    :math:`\pi`, this unwraps a radian phase `p` such that adjacent differences
+    are never greater than :math:`\pi` by adding :math:`2k\pi` for some
+    integer :math:`k`.
+
+    Parameters
+    ----------
+    p : array_like
+        Input array.
+        Masked entries are not taken into account in the computation.
+    discont : float, optional
+        Maximum discontinuity between values, default is ``period/2``.
+        Values below ``period/2`` are treated as if they were ``period/2``.
+        To have an effect different from the default, `discont` should be
+        larger than ``period/2``.
+    axis : int, optional
+        Axis along which unwrap will operate, default is the last axis.
+    period : float or int, optional
+        Size of the range over which the input wraps. By default, it is
+        ``2 pi``.
+
+    Returns
+    -------
+    out : MaskedArray
+        Output array, carrying the mask of `p`. Its dtype is
+        ``numpy.result_type(p, period)``. In particular an integer array
+        unwrapped with an integer `period` keeps its integer dtype, while any
+        float `period` (including the default ``2 pi``) produces a
+        floating-point result. The data underlying the masked elements is
+        unspecified.
+
+    See Also
+    --------
+    numpy.unwrap : Equivalent function for ndarrays
+
+    Notes
+    -----
+    If the discontinuity in `p` is smaller than ``period/2``,
+    but larger than `discont`, no unwrapping is done because taking
+    the complement would only make the discontinuity larger.
+
+    Unwrapping assumes that the change between an element and its predecessor
+    is less than half a period. Across a masked gap that assumption cannot be
+    checked, so a gap hiding more than half a period of change is not
+    recovered and leaves the elements after it offset by a multiple of
+    `period`.
+
+    Examples
+    --------
+    >>> import numpy as np
+
+    >>> phase = np.ma.masked_array([0., 1., 2., 2 + 2 * np.pi, 3 + 2 * np.pi],
+    ...                            mask=[0, 0, 1, 0, 0])
+    >>> np.ma.unwrap(phase)
+    masked_array(data=[0.0, 1.0, --, 2.0, 3.0],
+                 mask=[False, False,  True, False, False],
+           fill_value=1e+20)
+
+    The masked element is skipped over, so the fourth element is unwrapped
+    against the second one.
+
+    >>> phase_deg = np.ma.masked_array([0., 170., 340., 150.],
+    ...                                mask=[0, 1, 0, 0])
+    >>> np.ma.unwrap(phase_deg, period=360)
+    masked_array(data=[0.0, --, -20.0, 150.0],
+                 mask=[False,  True, False, False],
+           fill_value=1e+20)
+
+    """
+    p = ma.asanyarray(p)
+    mask = getmask(p)
+    if mask is nomask:
+        result = masked_array(np.unwrap(getdata(p), discont, axis,
+                                        period=period))
+    else:
+        axis = normalize_axis_index(axis, p.ndim)
+        if p.ndim == 1:
+            # a single line has no neighbours to keep the unmasked elements
+            # apart from, so they can be plucked out and put back directly
+            unwrapped = np.unwrap(p.compressed(), discont, period=period)
+            out = np.zeros(p.shape, dtype=unwrapped.dtype)
+            out[~mask] = unwrapped
+        else:
+            # carry the last unmasked value of every line forward over the
+            # masked ones: the deltas inside a masked run are then zero and
+            # the one ending it is against the true predecessor. the leading
+            # masked elements have none, so point them at the first unmasked
+            # element instead. their own data is arbitrary, so drop it
+            notmask = ~mask
+            n = p.shape[axis]
+            shape = [1] * p.ndim
+            shape[axis] = n
+            held = np.where(notmask, np.arange(n).reshape(shape), -1)
+            np.maximum.accumulate(held, axis=axis, out=held)
+            if n:
+                np.copyto(held, notmask.argmax(axis=axis, keepdims=True),
+                          where=held < 0)
+            out = np.unwrap(np.take_along_axis(p.filled(0), held, axis=axis),
+                            discont, axis, period=period)
+            np.copyto(out, 0, where=mask)
+        result = masked_array(out, mask=mask.copy())
+    result._update_from(p)
+    return result.view(get_masked_subclass(p))
 
 
 #####--------------------------------------------------------------------------
@@ -1429,14 +1532,13 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     Test whether each element of an array is also present in a second
     array.
 
-    The output is always a masked array. See `numpy.in1d` for more details.
+    The output is always a masked array.
 
     We recommend using :func:`isin` instead of `in1d` for new code.
 
     See Also
     --------
     isin       : Version of this function that preserves the shape of ar1.
-    numpy.in1d : Equivalent function for ndarrays.
 
     Examples
     --------
@@ -1713,8 +1815,8 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
     return result
 
 
-def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
-             ddof=np._NoValue):
+def corrcoef(x, y=None, rowvar=True, allow_masked=True,
+             ):
     """
     Return Pearson product-moment correlation coefficients.
 
@@ -1735,31 +1837,16 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
         variable, with observations in the columns. Otherwise, the relationship
         is transposed: each column represents a variable, while the rows
         contain observations.
-    bias : _NoValue, optional
-        Has no effect, do not use.
-
-        .. deprecated:: 1.10.0
     allow_masked : bool, optional
         If True, masked values are propagated pair-wise: if a value is masked
         in `x`, the corresponding value is masked in `y`.
         If False, raises an exception.  Because `bias` is deprecated, this
         argument needs to be treated as keyword only to avoid a warning.
-    ddof : _NoValue, optional
-        Has no effect, do not use.
-
-        .. deprecated:: 1.10.0
 
     See Also
     --------
     numpy.corrcoef : Equivalent function in top-level NumPy module.
     cov : Estimate the covariance matrix.
-
-    Notes
-    -----
-    This function accepts but discards arguments `bias` and `ddof`.  This is
-    for backwards compatibility with previous versions of this function.  These
-    arguments had no effect on the return values of the function and can be
-    safely ignored in this and previous versions of numpy.
 
     Examples
     --------
@@ -1775,10 +1862,6 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
       dtype=float64)
 
     """
-    msg = 'bias and ddof have no effect and are deprecated'
-    if bias is not np._NoValue or ddof is not np._NoValue:
-        # 2015-03-15, 1.10
-        warnings.warn(msg, DeprecationWarning, stacklevel=2)
     # Estimate the covariance matrix.
     corr = cov(x, y, rowvar, allow_masked=allow_masked)
     # The non-masked version returns a masked value for a scalar.
@@ -2275,7 +2358,26 @@ def clump_masked(a):
 
 def vander(x, n=None):
     """
+    Generate a Vandermonde matrix.
+
     Masked values in the input array result in rows of zeros.
+
+    Parameters
+    ----------
+    x : array_like
+        1-D input array.
+    n : int, optional
+        Number of columns in the output. If `n` is not specified, a square
+        array is returned.
+
+    Returns
+    -------
+    out : ndarray
+        Vandermonde matrix.
+
+    See Also
+    --------
+    numpy.vander : Equivalent function for ndarrays.
 
     """
     _vander = np.vander(x, n)
@@ -2285,12 +2387,44 @@ def vander(x, n=None):
     return _vander
 
 
-vander.__doc__ = ma.doc_note(np.vander.__doc__, vander.__doc__)
-
-
 def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     """
-    Any masked values in x is propagated in y, and vice-versa.
+    Least squares polynomial fit to data with possible masked values.
+
+    This function is the equivalent of `numpy.polyfit` that takes masked
+    values into account, see `numpy.polyfit` for details.
+
+    Notes
+    -----
+    Any masked values in `x` are propagated to `y`, and vice-versa.
+    A data point is excluded from the fit if either coordinate is masked.
+
+    See Also
+    --------
+    numpy.polyfit : Equivalent function for ndarrays.
+
+    Examples
+    --------
+    >>> import numpy as np
+
+    Fit a line to data with a masked outlier in ``y``:
+
+    >>> x = np.ma.array([0., 1., 2., 3., 4.])
+    >>> y = np.ma.array([1., 3., 5., 7., 999.], mask=[0, 0, 0, 0, 1])
+    >>> np.ma.polyfit(x, y, 1)
+    array([2., 1.])
+
+    Masking a value in ``x`` also excludes the corresponding ``y`` point:
+
+    >>> x = np.ma.array([0., 1., 999., 3., 4.], mask=[0, 0, 1, 0, 0])
+    >>> y = np.ma.array([1., 3., 5., 7., 9.])
+    >>> np.ma.polyfit(x, y, 1)
+    array([2., 1.])
+
+    Without masking, an outlier distorts the fit significantly:
+
+    >>> np.polyfit([0., 1., 2., 3., 4.], [1., 3., 5., 7., 999.], 1)
+    array([ 200., -197.])
 
     """
     x = asarray(x)
@@ -2321,6 +2455,3 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         return np.polyfit(x[not_m], y[not_m], deg, rcond, full, w, cov)
     else:
         return np.polyfit(x, y, deg, rcond, full, w, cov)
-
-
-polyfit.__doc__ = ma.doc_note(np.polyfit.__doc__, polyfit.__doc__)

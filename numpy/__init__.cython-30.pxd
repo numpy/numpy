@@ -51,15 +51,11 @@ cdef extern from "numpy/arrayobject.h":
     ctypedef signed short       npy_int16
     ctypedef signed int         npy_int32
     ctypedef signed long long   npy_int64
-    ctypedef signed long long   npy_int96
-    ctypedef signed long long   npy_int128
 
     ctypedef unsigned char      npy_uint8
     ctypedef unsigned short     npy_uint16
     ctypedef unsigned int       npy_uint32
     ctypedef unsigned long long npy_uint64
-    ctypedef unsigned long long npy_uint96
-    ctypedef unsigned long long npy_uint128
 
     ctypedef float        npy_float32
     ctypedef double       npy_float64
@@ -128,28 +124,21 @@ cdef extern from "numpy/arrayobject.h":
         NPY_INT16
         NPY_INT32
         NPY_INT64
-        NPY_INT128
-        NPY_INT256
         NPY_UINT8
         NPY_UINT16
         NPY_UINT32
         NPY_UINT64
-        NPY_UINT128
-        NPY_UINT256
         NPY_FLOAT16
         NPY_FLOAT32
         NPY_FLOAT64
         NPY_FLOAT80
         NPY_FLOAT96
         NPY_FLOAT128
-        NPY_FLOAT256
-        NPY_COMPLEX32
         NPY_COMPLEX64
         NPY_COMPLEX128
         NPY_COMPLEX160
         NPY_COMPLEX192
         NPY_COMPLEX256
-        NPY_COMPLEX512
 
         NPY_INTP
         NPY_UINTP
@@ -167,6 +156,7 @@ cdef extern from "numpy/arrayobject.h":
         NPY_SAFE_CASTING
         NPY_SAME_KIND_CASTING
         NPY_UNSAFE_CASTING
+        NPY_SAME_VALUE_CASTING
 
     ctypedef enum NPY_CLIPMODE:
         NPY_CLIP
@@ -192,40 +182,6 @@ cdef extern from "numpy/arrayobject.h":
         NPY_SEARCHRIGHT
 
     enum:
-        # DEPRECATED since NumPy 1.7 ! Do not use in new code!
-        NPY_C_CONTIGUOUS
-        NPY_F_CONTIGUOUS
-        NPY_CONTIGUOUS
-        NPY_FORTRAN
-        NPY_OWNDATA
-        NPY_FORCECAST
-        NPY_ENSURECOPY
-        NPY_ENSUREARRAY
-        NPY_ELEMENTSTRIDES
-        NPY_ALIGNED
-        NPY_NOTSWAPPED
-        NPY_WRITEABLE
-        NPY_ARR_HAS_DESCR
-
-        NPY_BEHAVED
-        NPY_BEHAVED_NS
-        NPY_CARRAY
-        NPY_CARRAY_RO
-        NPY_FARRAY
-        NPY_FARRAY_RO
-        NPY_DEFAULT
-
-        NPY_IN_ARRAY
-        NPY_OUT_ARRAY
-        NPY_INOUT_ARRAY
-        NPY_IN_FARRAY
-        NPY_OUT_FARRAY
-        NPY_INOUT_FARRAY
-
-        NPY_UPDATE_ALL
-
-    enum:
-        # Added in NumPy 1.7 to replace the deprecated enums above.
         NPY_ARRAY_C_CONTIGUOUS
         NPY_ARRAY_F_CONTIGUOUS
         NPY_ARRAY_OWNDATA
@@ -271,18 +227,30 @@ cdef extern from "numpy/arrayobject.h":
         pass
 
     ctypedef class numpy.dtype [object PyArray_Descr, check_size ignore]:
-        # Use PyDataType_* macros when possible, however there are no macros
-        # for accessing some of the fields, so some are defined.
-        cdef PyTypeObject* typeobj
-        cdef char kind
-        cdef char type
+        @property
+        cdef inline PyTypeObject* typeobj(self) noexcept nogil:
+            return PyDataType_TYPEOBJ(self)
+
+        @property
+        cdef inline char kind(self) noexcept nogil:
+            return PyDataType_KIND(self)
+
+        @property
+        cdef inline char type(self) noexcept nogil:
+            return PyDataType_TYPE(self)
+
         # Numpy sometimes mutates this without warning (e.g. it'll
         # sometimes change "|" to "<" in shared dtype objects on
         # little-endian machines). If this matters to you, use
         # PyArray_IsNativeByteOrder(dtype.byteorder) instead of
         # directly accessing this field.
-        cdef char byteorder
-        cdef int type_num
+        @property
+        cdef inline char byteorder(self) noexcept nogil:
+            return PyDataType_BYTEORDER(self)
+
+        @property
+        cdef inline int type_num(self) noexcept nogil:
+            return PyDataType_TYPENUM(self)
 
         @property
         cdef inline npy_intp itemsize(self) noexcept nogil:
@@ -472,6 +440,11 @@ cdef extern from "numpy/arrayobject.h":
     PyArray_ArrayDescr* PyDataType_SUBARRAY(dtype) nogil
     PyObject* PyDataType_NAMES(dtype) nogil
     PyObject* PyDataType_FIELDS(dtype) nogil
+    char PyDataType_TYPE(dtype) nogil
+    char PyDataType_KIND(dtype) nogil
+    int PyDataType_TYPENUM(dtype) nogil
+    char PyDataType_BYTEORDER(dtype) nogil
+    PyTypeObject* PyDataType_TYPEOBJ(dtype) nogil
 
     bint PyDataType_ISBOOL(dtype) nogil
     bint PyDataType_ISUNSIGNED(dtype) nogil
@@ -789,15 +762,11 @@ ctypedef npy_int8       int8_t
 ctypedef npy_int16      int16_t
 ctypedef npy_int32      int32_t
 ctypedef npy_int64      int64_t
-#ctypedef npy_int96      int96_t
-#ctypedef npy_int128     int128_t
 
 ctypedef npy_uint8      uint8_t
 ctypedef npy_uint16     uint16_t
 ctypedef npy_uint32     uint32_t
 ctypedef npy_uint64     uint64_t
-#ctypedef npy_uint96     uint96_t
-#ctypedef npy_uint128    uint128_t
 
 ctypedef npy_float32    float32_t
 ctypedef npy_float64    float64_t
@@ -859,6 +828,18 @@ cdef extern from "numpy/ndarraytypes.h":
         int64_t year
         int32_t month, day, hour, min, sec, us, ps, as
 
+    # Iterator API added in v1.6
+    #
+    # These don't match the definition in the C API because Cython can't wrap
+    # function pointers that return functions.
+    # https://github.com/cython/cython/issues/6720
+    ctypedef int (*NpyIter_IterNextFunc "NpyIter_IterNextFunc *")(NpyIter* it) noexcept nogil
+    ctypedef void (*NpyIter_GetMultiIndexFunc "NpyIter_GetMultiIndexFunc *")(NpyIter* it, npy_intp* outcoords) noexcept nogil
+
+    PyArray_DatetimeMetaData _PyDatetimeScalarObject_GetMetadata(object) noexcept nogil
+    PyArray_DatetimeMetaData _PyTimedeltaScalarObject_GetMetadata(object) noexcept nogil
+    npy_datetime _PyDatetimeScalarObject_GetValue(object) noexcept nogil
+    npy_timedelta _PyTimedeltaScalarObject_GetValue(object) noexcept nogil
 
 cdef extern from "numpy/arrayscalars.h":
 
@@ -945,29 +926,85 @@ cdef extern from "numpy/ufuncobject.h":
 
     ctypedef void (*PyUFuncGenericFunction) (char **, npy_intp *, npy_intp *, void *)
 
+    ctypedef struct PyUFuncObject_fields:
+        int nin, nout, nargs
+        int identity
+        PyUFuncGenericFunction *functions
+        void **data
+        int ntypes
+        int check_return
+        char *name
+        char *types
+        char *doc
+        void *ptr
+        PyObject *obj
+        PyObject *userloops
+
+    ctypedef struct PyUFuncObject:
+        pass
+
     ctypedef class numpy.ufunc [object PyUFuncObject, check_size ignore]:
-        cdef:
-            int nin, nout, nargs
-            int identity
-            PyUFuncGenericFunction *functions
-            void **data
-            int ntypes
-            int check_return
-            char *name
-            char *types
-            char *doc
-            void *ptr
-            PyObject *obj
-            PyObject *userloops
+        @property
+        cdef inline int nin(self) noexcept nogil:
+            return _PyUFuncObject_GET_ITEM_DATA(self).nin
+
+        @property
+        cdef inline int nout(self) noexcept nogil:
+            return _PyUFuncObject_GET_ITEM_DATA(self).nout
+
+        @property
+        cdef inline int nargs(self) noexcept nogil:
+            return _PyUFuncObject_GET_ITEM_DATA(self).nargs
+
+        @property
+        cdef inline PyUFuncGenericFunction* functions(self) noexcept nogil:
+            return _PyUFuncObject_GET_ITEM_DATA(self).functions
+
+        @property
+        cdef inline void ** data(self) noexcept nogil:
+            return <void **>_PyUFuncObject_GET_ITEM_DATA(self).data
+
+        @property
+        cdef inline int ntypes(self) noexcept nogil:
+            return _PyUFuncObject_GET_ITEM_DATA(self).ntypes
+
+        @property
+        cdef inline const char* name(self) noexcept nogil:
+            return _PyUFuncObject_GET_ITEM_DATA(self).name
+
+        @property
+        cdef inline const char* doc(self) noexcept nogil:
+            return _PyUFuncObject_GET_ITEM_DATA(self).doc
+
+        @property
+        cdef inline void* ptr(self) noexcept nogil:
+            return _PyUFuncObject_GET_ITEM_DATA(self).ptr
+
+        @property
+        cdef inline PyObject* obj(self) noexcept nogil:
+            return _PyUFuncObject_GET_ITEM_DATA(self).obj
+
+        @property
+        cdef inline PyObject* userloops(self) noexcept nogil:
+            return _PyUFuncObject_GET_ITEM_DATA(self).userloops
+
+    PyUFuncObject_fields *_PyUFuncObject_GET_ITEM_DATA(ufunc) nogil
 
     cdef enum:
         PyUFunc_Zero
         PyUFunc_One
         PyUFunc_None
+        # deprecated
         UFUNC_FPE_DIVIDEBYZERO
         UFUNC_FPE_OVERFLOW
         UFUNC_FPE_UNDERFLOW
         UFUNC_FPE_INVALID
+        # use these instead
+        NPY_FPE_DIVIDEBYZERO
+        NPY_FPE_OVERFLOW
+        NPY_FPE_UNDERFLOW
+        NPY_FPE_INVALID
+
 
     object PyUFunc_FromFuncAndData(PyUFuncGenericFunction *,
           void **, char *, int, int, int, int, char *, char *, int)
@@ -1093,26 +1130,22 @@ cdef inline npy_datetime get_datetime64_value(object obj) noexcept nogil:
     Note that to interpret this as a datetime, the corresponding unit is
     also needed.  That can be found using `get_datetime64_unit`.
     """
-    return (<PyDatetimeScalarObject*>obj).obval
+    return _PyDatetimeScalarObject_GetValue(obj)
 
 
 cdef inline npy_timedelta get_timedelta64_value(object obj) noexcept nogil:
     """
     returns the int64 value underlying scalar numpy timedelta64 object
     """
-    return (<PyTimedeltaScalarObject*>obj).obval
+    return _PyTimedeltaScalarObject_GetValue(obj)
 
 
 cdef inline NPY_DATETIMEUNIT get_datetime64_unit(object obj) noexcept nogil:
     """
     returns the unit part of the dtype for a numpy datetime64 object.
     """
-    return <NPY_DATETIMEUNIT>(<PyDatetimeScalarObject*>obj).obmeta.base
+    return _PyDatetimeScalarObject_GetMetadata(obj).base
 
-
-# Iterator API added in v1.6
-ctypedef int (*NpyIter_IterNextFunc)(NpyIter* it) noexcept nogil
-ctypedef void (*NpyIter_GetMultiIndexFunc)(NpyIter* it, npy_intp* outcoords) noexcept nogil
 
 cdef extern from "numpy/arrayobject.h":
 
@@ -1231,9 +1264,12 @@ cdef extern from "numpy/arrayobject.h":
                                         npy_intp* outstrides) except NPY_FAIL
     npy_bool NpyIter_IsFirstVisit(NpyIter* it, int iop) nogil
     # functions for iterating an NpyIter object
-    NpyIter_IterNextFunc* NpyIter_GetIterNext(NpyIter* it, char** errmsg) except NULL
-    NpyIter_GetMultiIndexFunc* NpyIter_GetGetMultiIndex(NpyIter* it,
-                                                        char** errmsg) except NULL
+    #
+    # These don't match the definition in the C API because Cython can't wrap
+    # function pointers that return functions.
+    NpyIter_IterNextFunc NpyIter_GetIterNext(NpyIter* it, char** errmsg) except NULL
+    NpyIter_GetMultiIndexFunc NpyIter_GetGetMultiIndex(NpyIter* it,
+                                                       char** errmsg) except NULL
     char** NpyIter_GetDataPtrArray(NpyIter* it) nogil
     char** NpyIter_GetInitialDataPtrArray(NpyIter* it) nogil
     npy_intp* NpyIter_GetIndexPtr(NpyIter* it)

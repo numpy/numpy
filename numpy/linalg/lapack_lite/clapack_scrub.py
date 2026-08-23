@@ -4,7 +4,7 @@ import os
 import re
 import sys
 
-from plex import Scanner, Str, Lexicon, Opt, Bol, State, AnyChar, TEXT, IGNORE
+from plex import IGNORE, TEXT, AnyChar, Bol, Lexicon, Opt, Scanner, State, Str
 from plex.traditional import re as Re
 
 try:
@@ -79,19 +79,19 @@ class LenSubsScanner(MyScanner):
     keep_ftnlen = (Str('ilaenv_') | Str('iparmq_') | Str('s_rnge')) + Str('(')
 
     lexicon = Lexicon([
-        (iofunctions,                           TEXT),
-        (keep_ftnlen,                           beginArgs),
+        (iofunctions,                                        TEXT),
+        (keep_ftnlen,                                        beginArgs),
         State('args', [
             (Str(')'),   endArgs),
             (Str('('),   beginArgs),
             (AnyChar,    TEXT),
         ]),
-        (cS + Re(r'[1-9][0-9]*L'),                IGNORE),
-        (cS + Str('ftnlen') + Opt(S + len_),          IGNORE),
-        (cS + sep_seq(['(', 'ftnlen', ')'], S) + S + digits,      IGNORE),
-        (Bol + Str('ftnlen ') + len_ + Str(';\n'),    IGNORE),
-        (cS + len_,                               TEXT),
-        (AnyChar,                               TEXT),
+        (cS + Re(r'[1-9][0-9]*L'),                           IGNORE),
+        (cS + Str('ftnlen') + Opt(S + len_),                 IGNORE),
+        (cS + sep_seq(['(', 'ftnlen', ')'], S) + S + digits, IGNORE),
+        (Bol + Str('ftnlen ') + len_ + Str(';\n'),           IGNORE),
+        (cS + len_,                                          TEXT),
+        (AnyChar,                                            TEXT),
     ])
 
 def scrubFtnlen(source):

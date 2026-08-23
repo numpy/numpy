@@ -1,22 +1,23 @@
 import sys
-from importlib.util import LazyLoader, find_spec, module_from_spec
+import textwrap
+
 import pytest
 
+from numpy.testing import HAS_SUBPROCESSES
+from numpy.testing._private.utils import run_subprocess
 
-# Warning raised by _reload_guard() in numpy/__init__.py
-@pytest.mark.filterwarnings("ignore:The NumPy module was reloaded")
+
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 def test_lazy_load():
     # gh-22045. lazyload doesn't import submodule names into the namespace
-    # muck with sys.modules to test the importing system
-    old_numpy = sys.modules.pop("numpy")
 
-    numpy_modules = {}
-    for mod_name, mod in list(sys.modules.items()):
-        if mod_name[:6] == "numpy.":
-            numpy_modules[mod_name] = mod
-            sys.modules.pop(mod_name)
+    # Test within a new process, to ensure that we do not mess with the
+    # global state during the test run (could lead to cryptic test failures).
+    # This is generally unsafe, especially, since we also reload the C-modules.
+    code = textwrap.dedent(r"""
+        import sys
+        from importlib.util import LazyLoader, find_spec, module_from_spec
 
-    try:
         # create lazy load of numpy as np
         spec = find_spec("numpy")
         module = module_from_spec(spec)
@@ -30,8 +31,5 @@ def test_lazy_load():
 
         # test triggering the import of the package
         np.ndarray
-
-    finally:
-        if old_numpy:
-            sys.modules["numpy"] = old_numpy
-            sys.modules.update(numpy_modules)
+        """)
+    run_subprocess((sys.executable, '-c', code))

@@ -6,12 +6,13 @@ for the various polynomial classes. It operates as a mixin, but uses the
 abc module from the stdlib, hence it is only available for Python >= 2.6.
 
 """
-import os
 import abc
 import numbers
-from typing import Callable
+import os
+from collections.abc import Callable
 
 import numpy as np
+
 from . import polyutils as pu
 
 __all__ = ['ABCPolyBase']
@@ -200,9 +201,9 @@ class ABCPolyBase(abc.ABC):
 
         """
         return (
-			len(self.coef) == len(other.coef)
-			and np.all(self.coef == other.coef)
-		)
+            len(self.coef) == len(other.coef)
+            and np.all(self.coef == other.coef)
+        )
 
     def has_samedomain(self, other):
         """Check if domains match.
@@ -430,7 +431,7 @@ class ABCPolyBase(abc.ABC):
     def _repr_latex_scalar(x, parens=False):
         # TODO: we're stuck with disabling math formatting until we handle
         # exponents in this function
-        return r'\text{{{}}}'.format(pu.format_float(x, parens=parens))
+        return fr'\text{{{pu.format_float(x, parens=parens)}}}'
 
     def _format_term(self, scalar_format: Callable, off: float, scale: float):
         """ Format a single term in the expansion """
@@ -610,10 +611,6 @@ class ABCPolyBase(abc.ABC):
         except Exception:
             return NotImplemented
         return self.__class__(coef, self.domain, self.window, self.symbol)
-
-    def __rdiv__(self, other):
-        # set to __floordiv__ /.
-        return self.__rfloordiv__(other)
 
     def __rtruediv__(self, other):
         # An instance of ABCPolyBase is not considered a
@@ -1019,7 +1016,7 @@ class ABCPolyBase(abc.ABC):
             if domain[0] == domain[1]:
                 domain[0] -= 1
                 domain[1] += 1
-        elif type(domain) is list and len(domain) == 0:
+        elif isinstance(domain, list) and len(domain) == 0:
             domain = cls.domain
 
         if window is None:
@@ -1067,7 +1064,7 @@ class ABCPolyBase(abc.ABC):
         [roots] = pu.as_series([roots], trim=False)
         if domain is None:
             domain = pu.getdomain(roots)
-        elif type(domain) is list and len(domain) == 0:
+        elif isinstance(domain, list) and len(domain) == 0:
             domain = cls.domain
 
         if window is None:

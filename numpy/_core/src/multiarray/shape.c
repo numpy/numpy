@@ -26,20 +26,12 @@ static int
 _attempt_nocopy_reshape(PyArrayObject *self, int newnd, const npy_intp *newdims,
                         npy_intp *newstrides, int is_f_order);
 
-/*NUMPY_API
- * Resize (reallocate data).  Only works if nothing else is referencing this
- * array and it is contiguous.  If refcheck is 0, then the reference count is
- * not checked and assumed to be 1.  You still must own this data and have no
- * weak-references and no base object.
- */
-NPY_NO_EXPORT PyObject *
-PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
-               NPY_ORDER NPY_UNUSED(order))
+NPY_NO_EXPORT int
+PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
 {
     npy_intp oldnbytes, newnbytes;
     npy_intp oldsize, newsize;
     int new_nd=newshape->len, k, elsize;
-    int refcnt;
     npy_intp* new_dimensions=newshape->ptr;
     npy_intp new_strides[NPY_MAXDIMS];
     npy_intp *dimptr;
@@ -48,7 +40,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
     if (!PyArray_ISONESEGMENT(self)) {
         PyErr_SetString(PyExc_ValueError,
                 "resize only works on single-segment arrays");
-        return NULL;
+        return -1;
     }
 
     /* Compute total size of old and new arrays. The new size might overflow */
@@ -62,10 +54,11 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         if (new_dimensions[k] < 0) {
             PyErr_SetString(PyExc_ValueError,
                     "negative dimensions not allowed");
-            return NULL;
+            return -1;
         }
         if (npy_mul_sizes_with_overflow(&newsize, newsize, new_dimensions[k])) {
-            return PyErr_NoMemory();
+            PyErr_NoMemory();
+            return -1;
         }
     }
 
@@ -73,74 +66,90 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
     elsize = PyArray_ITEMSIZE(self);
     oldnbytes = oldsize * elsize;
     if (npy_mul_sizes_with_overflow(&newnbytes, newsize, elsize)) {
-        return PyErr_NoMemory();
+        PyErr_NoMemory();
+        return -1;
     }
 
     if (oldnbytes != newnbytes) {
         if (!(PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA)) {
             PyErr_SetString(PyExc_ValueError,
                     "cannot resize this array: it does not own its data");
-            return NULL;
+            return -1;
         }
 
+        static const char *msg =
+                "cannot resize an array that references or is referenced\n"
+                "by another object in this way.\n"
+                "Use the np.resize function to get a new resized copy or\n "
+                "set refcheck=False to disable this check";
         if (PyArray_BASE(self) != NULL
               || (((PyArrayObject_fields *)self)->weakreflist != NULL)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "cannot resize an array that "
-                    "references or is referenced\n"
-                    "by another array in this way. Use the np.resize function.");
-            return NULL;
+            PyErr_SetString(PyExc_ValueError, msg);
+            return -1;
         }
         if (refcheck) {
-#ifdef PYPY_VERSION
-            PyErr_SetString(PyExc_ValueError,
-                    "cannot resize an array with refcheck=True on PyPy.\n"
-                    "Use the np.resize function or refcheck=False");
-            return NULL;
+#if PY_VERSION_HEX >= 0x030E00B0
+            // Python 3.14 changed reference counting semantics for function-
+            // local variables. There is no way to tell if the calling function
+            // has been optimized (because it might be implemented in C or Cython)
+            //
+            // Instead, warn if the refcount is exactly 2 that this might be a
+            // false positive
+            if (!PyUnstable_Object_IsUniquelyReferenced((PyObject *)self)) {
+                if (Py_REFCNT(self) == 2) {
+                    PyErr_SetString(
+                            PyExc_ValueError,
+                            "cannot resize an array that may be referenced "
+                            "by another object.\n"
+                            "It is possible that this is a false positive.\n"
+                            "If you are sure that the array is uniquely referenced, "
+                            "set refcheck=False.");
+                    return -1;
+                }
 #else
-            refcnt = Py_REFCNT(self);
-#endif /* PYPY_VERSION */
+            if (Py_REFCNT(self) > 2) {
+#endif
+                PyErr_SetString(PyExc_ValueError, msg);
+                return -1;
+            }
         }
-        else {
-            refcnt = 1;
-        }
-        if (refcnt > 2) {
-            PyErr_SetString(PyExc_ValueError,
-                    "cannot resize an array that "
-                    "references or is referenced\n"
-                    "by another array in this way.\n"
-                    "Use the np.resize function or refcheck=False");
-            return NULL;
-        }
-
         /* Reallocate space if needed - allocating 0 is forbidden */
         PyObject *handler = PyArray_HANDLER(self);
         if (handler == NULL) {
             /* This can happen if someone arbitrarily sets NPY_ARRAY_OWNDATA */
             PyErr_SetString(PyExc_RuntimeError,
                             "no memory handler found but OWNDATA flag set");
-            return NULL;
+            return -1;
         }
+        if (newnbytes < oldnbytes) {
+            /* Clear now removed data (if dtype has references) */
+            if (PyArray_ClearBuffer(
+                    PyArray_DESCR(self), PyArray_BYTES(self) + newnbytes,
+                    elsize, oldsize-newsize, PyArray_ISALIGNED(self)) < 0) {
+                return -1;
+            }
+        }
+
         new_data = PyDataMem_UserRENEW(PyArray_DATA(self),
-                                       newnbytes == 0 ? elsize : newnbytes,
+                                       newnbytes == 0 ? 1 : newnbytes,
                                        handler);
         if (new_data == NULL) {
             PyErr_SetString(PyExc_MemoryError,
                     "cannot allocate memory for array");
-            return NULL;
+            return -1;
         }
         ((PyArrayObject_fields *)self)->data = new_data;
-    }
 
-    if (newnbytes > oldnbytes && PyArray_ISWRITEABLE(self)) {
-        /* Fill new memory with zeros (PyLong zero for object arrays) */
-        npy_intp stride = elsize;
-        npy_intp size = newsize - oldsize;
-        char *data = PyArray_BYTES(self) + oldnbytes;
-        int aligned = PyArray_ISALIGNED(self);
-        if (PyArray_ZeroContiguousBuffer(PyArray_DESCR(self), data,
-                                         stride, size, aligned) < 0) {
-            return NULL;
+        if (newnbytes > oldnbytes && PyArray_ISWRITEABLE(self)) {
+            /* Fill new memory with zeros (PyLong zero for object arrays) */
+            npy_intp stride = elsize;
+            npy_intp size = newsize - oldsize;
+            char *data = PyArray_BYTES(self) + oldnbytes;
+            int aligned = PyArray_ISALIGNED(self);
+            if (PyArray_ZeroContiguousBuffer(PyArray_DESCR(self), data,
+                                            stride, size, aligned) < 0) {
+                return -1;
+            }
         }
     }
 
@@ -153,7 +162,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
             if (dimptr == NULL) {
                 PyErr_SetString(PyExc_MemoryError,
                                 "cannot allocate memory for array");
-                return NULL;
+                return -1;
             }
             ((PyArrayObject_fields *)self)->dimensions = dimptr;
             ((PyArrayObject_fields *)self)->strides = dimptr + new_nd;
@@ -166,10 +175,32 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         memmove(PyArray_STRIDES(self), new_strides, new_nd*sizeof(npy_intp));
     }
     else {
-        PyDimMem_FREE(((PyArrayObject_fields *)self)->dimensions);
+        npy_free_cache_dim_array(self);
         ((PyArrayObject_fields *)self)->nd = 0;
         ((PyArrayObject_fields *)self)->dimensions = NULL;
         ((PyArrayObject_fields *)self)->strides = NULL;
+    }
+    return 0;
+}
+
+/*NUMPY_API
+ * Resize (reallocate data).  Only works if nothing else is referencing this
+ * array and it is contiguous.  If refcheck is 0, then the reference count is
+ * not checked and assumed to be 1.  You still must own this data and have no
+ * weak-references and no base object.
+ *
+ * On Python 3.13 and older, the check allows objects with exactly one
+ * reference to be reallocated in-place. On Python 3.14 and newer, the array
+ * must be uniquely referenced. In some cases this can lead to spurious
+ * ValueErrors.
+ *
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
+               NPY_ORDER NPY_UNUSED(order))
+{
+    if (PyArray_Resize_int(self, newshape, refcheck) < 0) {
+        return NULL;
     }
     Py_RETURN_NONE;
 }

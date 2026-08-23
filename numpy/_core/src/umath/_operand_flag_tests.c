@@ -2,6 +2,15 @@
 #include <Python.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+/* `NPY_INTERNAL_BUILD` exposes `PyArray_DTypeMeta`, which embeds
+ * `PyHeapTypeObject` and so is not limited-API safe.  Build as a downstream
+ * module instead, keeping the in-tree feature version. */
+#if defined(NPY_INTERNAL_BUILD)
+#undef NPY_INTERNAL_BUILD
+#endif
+#define NPY_TARGET_VERSION NPY_API_VERSION
+
 #include <numpy/arrayobject.h>
 #include <numpy/ufuncobject.h>
 #include "numpy/npy_3kcompat.h"
@@ -57,17 +66,20 @@ PyMODINIT_FUNC PyInit__operand_flag_tests(void)
     PyObject *m = NULL;
     PyObject *ufunc;
 
+    import_array();
+    import_umath();
+
     m = PyModule_Create(&moduledef);
     if (m == NULL) {
         goto fail;
     }
 
-    import_array();
-    import_umath();
-
     ufunc = PyUFunc_FromFuncAndData(funcs, data, types, 1, 2, 0,
                                     PyUFunc_None, "inplace_add",
                                     "inplace_add_docstring", 0);
+    if (ufunc == NULL) {
+        goto fail;
+    }
 
     /*
      * Set flags to turn off buffering for first input operand,
@@ -75,9 +87,19 @@ PyMODINIT_FUNC PyInit__operand_flag_tests(void)
      */
     ((PyUFuncObject*)ufunc)->op_flags[0] = NPY_ITER_READWRITE;
     ((PyUFuncObject*)ufunc)->iter_flags = NPY_ITER_REDUCE_OK;
-    PyModule_AddObject(m, "inplace_add", (PyObject*)ufunc);
 
-#if Py_GIL_DISABLED
+    int res = PyModule_AddObjectRef(m, "inplace_add", ufunc);
+    Py_DECREF(ufunc);
+    if (res < 0) {
+        goto fail;
+    }
+
+    /*
+     * TODO: 3.15 adds a free-threaded stable ABI (abi3t); supporting it needs
+     * more than this guard, e.g. module setup via the new PyModExport API,
+     * since a static `PyModuleDef` cannot be used there.
+     */
+#if defined(Py_GIL_DISABLED) && !defined(Py_LIMITED_API)
     // signal this module supports running with the GIL disabled
     PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
 #endif

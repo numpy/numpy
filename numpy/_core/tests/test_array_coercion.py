@@ -11,23 +11,20 @@ from pytest import param
 
 import numpy as np
 import numpy._core._multiarray_umath as ncu
-from numpy._core._rational_tests import rational
-
-from numpy.testing import (
-    assert_array_equal, assert_warns, IS_PYPY)
+from numpy._core._rational_tests import rational, rational2
+from numpy.testing import IS_64BIT, assert_array_equal
 
 
 def arraylikes():
-    """
-    Generator for functions converting an array into various array-likes.
-    If full is True (default) it includes array-likes not capable of handling
-    all dtypes.
-    """
+    """Test parameters for functions converting an array into various array-likes."""
+
+    params = []
+
     # base array:
     def ndarray(a):
         return a
 
-    yield param(ndarray, id="ndarray")
+    params.append(param(ndarray, id="ndarray"))
 
     # subclass:
     class MyArr(np.ndarray):
@@ -36,7 +33,7 @@ def arraylikes():
     def subclass(a):
         return a.view(MyArr)
 
-    yield subclass
+    params.append(subclass)
 
     class _SequenceLike:
         # Older NumPy versions, sometimes cared whether a protocol array was
@@ -45,7 +42,7 @@ def arraylikes():
         def __len__(self):
             raise TypeError
 
-        def __getitem__(self):
+        def __getitem__(self, _, /):
             raise TypeError
 
     # Array-interface
@@ -58,10 +55,10 @@ def arraylikes():
                 return self.a
             return self.a.astype(dtype)
 
-    yield param(ArrayDunder, id="__array__")
+    params.append(param(ArrayDunder, id="__array__"))
 
     # memory-view
-    yield param(memoryview, id="memoryview")
+    params.append(param(memoryview, id="memoryview"))
 
     # Array-interface
     class ArrayInterface:
@@ -69,7 +66,7 @@ def arraylikes():
             self.a = a  # need to hold on to keep interface valid
             self.__array_interface__ = a.__array_interface__
 
-    yield param(ArrayInterface, id="__array_interface__")
+    params.append(param(ArrayInterface, id="__array_interface__"))
 
     # Array-Struct
     class ArrayStruct:
@@ -77,7 +74,9 @@ def arraylikes():
             self.a = a  # need to hold on to keep struct valid
             self.__array_struct__ = a.__array_struct__
 
-    yield param(ArrayStruct, id="__array_struct__")
+    params.append(param(ArrayStruct, id="__array_struct__"))
+
+    return params
 
 
 def scalar_instances(times=True, extended_precision=True, user_dtype=True):
@@ -96,9 +95,7 @@ def scalar_instances(times=True, extended_precision=True, user_dtype=True):
         yield param(np.sqrt(np.clongdouble(2 + 3j)), id="clongdouble")
 
     # Bool:
-    # XFAIL: Bool should be added, but has some bad properties when it
-    # comes to strings, see also gh-9875
-    # yield param(np.bool(0), id="bool")
+    yield param(np.bool(0), id="bool")
 
     # Integers:
     yield param(np.int8(2), id="int8")
@@ -114,6 +111,7 @@ def scalar_instances(times=True, extended_precision=True, user_dtype=True):
     # Rational:
     if user_dtype:
         yield param(rational(1, 2), id="rational")
+        yield param(rational2(1, 2), id="rational2")
 
     # Cannot create a structured void scalar directly:
     structured = np.array([(1, 3)], "i,i")[0]
@@ -123,11 +121,11 @@ def scalar_instances(times=True, extended_precision=True, user_dtype=True):
 
     if times:
         # Datetimes and timedelta
-        yield param(np.timedelta64(2), id="timedelta64[generic]")
+        yield param(np.timedelta64(2, "ns"), id="timedelta64[ns]")
         yield param(np.timedelta64(23, "s"), id="timedelta64[s]")
         yield param(np.timedelta64("NaT", "s"), id="timedelta64[s](NaT)")
 
-        yield param(np.datetime64("NaT"), id="datetime64[generic](NaT)")
+        yield param(np.datetime64("NaT", "D"), id="datetime64[D](NaT)")
         yield param(np.datetime64("2020-06-07 12:43", "ms"), id="datetime64[ms]")
 
     # Strings and unstructured void:
@@ -228,7 +226,7 @@ class TestScalarDiscovery:
         assert arr.shape == ()
         assert arr.dtype == np.dtype("O")
 
-    @pytest.mark.parametrize("scalar", scalar_instances())
+    @pytest.mark.parametrize("scalar", list(scalar_instances()))
     def test_scalar(self, scalar):
         arr = np.array(scalar)
         assert arr.shape == ()
@@ -260,18 +258,13 @@ class TestScalarDiscovery:
                 # Will currently always go to object dtype
                 assert arr.dtype == np.dtype("O")
 
-    @pytest.mark.parametrize("scalar", scalar_instances())
+    @pytest.mark.parametrize("scalar", list(scalar_instances()))
     def test_scalar_coercion(self, scalar):
         # This tests various scalar coercion paths, mainly for the numerical
         # types. It includes some paths not directly related to `np.array`.
         if isinstance(scalar, np.inexact):
             # Ensure we have a full-precision number if available
             scalar = type(scalar)((scalar * 2)**0.5)
-
-        if type(scalar) is rational:
-            # Rational generally fails due to a missing cast. In the future
-            # object casts should automatically be defined based on `setitem`.
-            pytest.xfail("Rational to object cast is undefined currently.")
 
         # Use casting from object:
         arr = np.array(scalar, dtype=object).astype(scalar.dtype)
@@ -289,9 +282,8 @@ class TestScalarDiscovery:
         assert_array_equal(arr, arr3)
         assert_array_equal(arr, arr4)
 
-    @pytest.mark.xfail(IS_PYPY, reason="`int(np.complex128(3))` fails on PyPy")
     @pytest.mark.filterwarnings("ignore::numpy.exceptions.ComplexWarning")
-    @pytest.mark.parametrize("cast_to", scalar_instances())
+    @pytest.mark.parametrize("cast_to", list(scalar_instances()))
     def test_scalar_coercion_same_as_cast_and_assignment(self, cast_to):
         """
         Test that in most cases:
@@ -324,18 +316,18 @@ class TestScalarDiscovery:
                 cast = np.array(scalar).astype(dtype)
             except (TypeError, ValueError, RuntimeError):
                 # coercion should also raise (error type may change)
-                with pytest.raises(Exception):
+                with pytest.raises(Exception):  # noqa: B017
                     np.array(scalar, dtype=dtype)
 
                 if (isinstance(scalar, rational) and
                         np.issubdtype(dtype, np.signedinteger)):
                     return
 
-                with pytest.raises(Exception):
+                with pytest.raises(Exception):  # noqa: B017
                     np.array([scalar], dtype=dtype)
                 # assignment should also raise
                 res = np.zeros((), dtype=dtype)
-                with pytest.raises(Exception):
+                with pytest.raises(Exception):  # noqa: B017
                     res[()] = scalar
 
                 return
@@ -409,7 +401,7 @@ class TestTimeScalars:
     @pytest.mark.parametrize("scalar",
             [param(np.timedelta64("NaT", "s"), id="timedelta64[s](NaT)"),
              param(np.timedelta64(123, "s"), id="timedelta64[s]"),
-             param(np.datetime64("NaT", "generic"), id="datetime64[generic](NaT)"),
+             param(np.datetime64("NaT", "D"), id="datetime64[D](NaT)"),
              param(np.datetime64(1, "D"), id="datetime64[D]")],)
     def test_coercion_basic(self, dtype, scalar):
         # Note the `[scalar]` is there because np.array(scalar) uses stricter
@@ -429,12 +421,11 @@ class TestTimeScalars:
             assert_array_equal(ass, cast)
 
     @pytest.mark.parametrize("dtype", [np.int64, np.float32])
-    @pytest.mark.parametrize("scalar",
-            [param(np.timedelta64(123, "ns"), id="timedelta64[ns]"),
-             param(np.timedelta64(12, "generic"), id="timedelta64[generic]")])
-    def test_coercion_timedelta_convert_to_number(self, dtype, scalar):
+    @pytest.mark.parametrize("value, unit", [param(123, "ns", id="timedelta64[ns]")])
+    def test_coercion_timedelta_convert_to_number(self, dtype, value, unit):
         # Only "ns" and "generic" timedeltas can be converted to numbers
         # so these are slightly special.
+        scalar = np.timedelta64(value, unit)
         arr = np.array(scalar, dtype=dtype)
         cast = np.array(scalar).astype(dtype)
         ass = np.ones((), dtype=dtype)
@@ -442,6 +433,23 @@ class TestTimeScalars:
 
         assert_array_equal(arr, cast)
         assert_array_equal(cast, cast)
+
+    @pytest.mark.parametrize("dtype", [np.int64, np.float32])
+    @pytest.mark.parametrize("value, unit",
+            [param(12, "generic", id="timedelta64[generic]")])
+    def test_coercion_generic_timedelta_convert_to_number(self, dtype, value, unit):
+        with pytest.warns(
+            DeprecationWarning,
+            match="The 'generic' unit for NumPy timedelta is deprecated",
+        ):
+            scalar = np.timedelta64(value, unit)
+            arr = np.array(scalar, dtype=dtype)
+            cast = np.array(scalar).astype(dtype)
+            ass = np.ones((), dtype=dtype)
+            ass[()] = scalar  # raises, as would np.array([scalar], dtype=dtype)
+
+            assert_array_equal(arr, cast)
+            assert_array_equal(cast, cast)
 
     @pytest.mark.parametrize("dtype", ["S6", "U6"])
     @pytest.mark.parametrize(["val", "unit"],
@@ -635,7 +643,7 @@ class TestBadSequences:
                 obj[0][0] = 2  # replace with a different list.
                 raise ValueError("not actually a sequence!")
 
-            def __getitem__(self):
+            def __getitem__(self, _, /):
                 pass
 
         # Runs into a corner case in the new code, the `array(2)` is cached
@@ -718,8 +726,8 @@ class TestArrayLikes:
         arr = np.array([ArrayLike])
         assert arr[0] is ArrayLike
 
-    @pytest.mark.skipif(
-            np.dtype(np.intp).itemsize < 8, reason="Needs 64bit platform")
+    @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
+    @pytest.mark.thread_unsafe(reason="large slow test in parallel")
     def test_too_large_array_error_paths(self):
         """Test the error paths, including for memory leaks"""
         arr = np.array(0, dtype="uint8")
@@ -758,7 +766,7 @@ class TestArrayLikes:
             def __len__(self):
                 raise error
 
-            def __getitem__(self):
+            def __getitem__(self, _, /):
                 # must have getitem to be a Sequence
                 return 1
 
@@ -912,3 +920,24 @@ def test_empty_string():
     assert_array_equal(res, b"")
     assert res.shape == (2, 10)
     assert res.dtype == "S1"
+
+
+@pytest.mark.parametrize("dtype", ["S", "U", object])
+@pytest.mark.parametrize("res_dt,hug_val",
+    [("float16", "1e30"), ("float32", "1e200")])
+def test_string_to_float_coercion_errors(dtype, res_dt, hug_val):
+    # This test primarily tests setitem
+    val = np.array(["3M"], dtype=dtype)[0]  # use the scalar
+
+    with pytest.raises(ValueError):
+        np.array(val, dtype=res_dt)
+
+    val = np.array([hug_val], dtype=dtype)[0]  # use the scalar
+
+    with np.errstate(all="warn"):
+        with pytest.warns(RuntimeWarning):
+            np.array(val, dtype=res_dt)
+
+    with np.errstate(all="raise"):
+        with pytest.raises(FloatingPointError):
+            np.array(val, dtype=res_dt)

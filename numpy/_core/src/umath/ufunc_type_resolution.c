@@ -38,6 +38,7 @@
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
 #include "npy_import.h"
+#include "npy_static_data.h"
 #include "ufunc_type_resolution.h"
 #include "ufunc_object.h"
 #include "common.h"
@@ -69,6 +70,51 @@ npy_casting_to_py_object(NPY_CASTING casting)
         default:
             return PyLong_FromLong(casting);
     }
+}
+
+
+/*
+ * The dispatching code calls the legacy type resolvers a second time to
+ * promote (`legacy_promote_using_legacy_type_resolver`); that result is
+ * cached while the type-resolution call happens on every ufunc invocation.
+ * The promotion call is bracketed with this context variable so each
+ * invocation warns exactly once, no matter the promotion cache state.
+ * The warnings machinery cannot deduplicate the two emissions for us:
+ * under `simplefilter("always")` it delivers everything by design.
+ */
+NPY_NO_EXPORT PyObject *
+npy_begin_legacy_resolver_promotion(void)
+{
+    return PyContextVar_Set(
+            npy_static_pydata.legacy_resolver_promoting, Py_True);
+}
+
+NPY_NO_EXPORT int
+npy_end_legacy_resolver_promotion(PyObject *token)
+{
+    int result = PyContextVar_Reset(
+            npy_static_pydata.legacy_resolver_promoting, token);
+    Py_DECREF(token);
+    return result;
+}
+
+static int
+deprecate_integer_datetime_operation(void)
+{
+    PyObject *promoting;
+    if (PyContextVar_Get(npy_static_pydata.legacy_resolver_promoting,
+                         Py_False, &promoting) < 0) {
+        return -1;
+    }
+    int skip = (promoting == Py_True);
+    Py_DECREF(promoting);
+    if (skip) {
+        return 0;
+    }
+    return DEPRECATE(
+            "The 'generic' unit for NumPy timedelta is deprecated, "
+            "and will raise an error in the future. "
+            "Please convert the integer with an explicit unit.");
 }
 
 
@@ -429,6 +475,34 @@ PyUFunc_NegativeTypeResolver(PyUFuncObject *ufunc,
     return ret;
 }
 
+/*
+ * This function applies special type resolution rules for the 'sign' ufunc.
+ * 'sign' converts timedelta64 to float64, so isn't covered by the simple
+ * unary type resolution.
+ *
+ * Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+PyUFunc_SignTypeResolver(PyUFuncObject *ufunc,
+                         NPY_CASTING casting,
+                         PyArrayObject **operands,
+                         PyObject *type_tup,
+                         PyArray_Descr **out_dtypes)
+{
+    if (PyArray_DESCR(operands[0])->type_num == NPY_TIMEDELTA) {
+        out_dtypes[0] = NPY_DT_CALL_ensure_canonical(PyArray_DESCR(operands[0]));
+        if (out_dtypes[0] == NULL) {
+            return -1;
+        }
+        out_dtypes[1] = PyArray_DescrFromType(NPY_DOUBLE);
+        return 0;
+    }
+    else {
+        return PyUFunc_SimpleUniformOperationTypeResolver(ufunc, casting,
+                    operands, type_tup, out_dtypes);
+    }
+}
+
 
 /*
  * The ones_like function shouldn't really be a ufunc, but while it
@@ -584,6 +658,9 @@ PyUFunc_SimpleUniformOperationTypeResolver(
             descr = PyArray_DESCR(operands[0]);
         }
         out_dtypes[0] = NPY_DT_CALL_ensure_canonical(descr);
+        if (out_dtypes[0] == NULL) {
+            return -1;
+        }
     }
 
     /* All types are the same - copy the first one to the rest */
@@ -650,6 +727,9 @@ PyUFunc_IsNaTTypeResolver(PyUFuncObject *ufunc,
     }
 
     out_dtypes[0] = NPY_DT_CALL_ensure_canonical(PyArray_DESCR(operands[0]));
+    if (out_dtypes[0] == NULL) {
+        return -1;
+    }
     out_dtypes[1] = PyArray_DescrFromType(NPY_BOOL);
 
     return 0;
@@ -669,6 +749,9 @@ PyUFunc_IsFiniteTypeResolver(PyUFuncObject *ufunc,
     }
 
     out_dtypes[0] = NPY_DT_CALL_ensure_canonical(PyArray_DESCR(operands[0]));
+    if (out_dtypes[0] == NULL) {
+        return -1;
+    }
     out_dtypes[1] = PyArray_DescrFromType(NPY_BOOL);
 
     return 0;
@@ -781,6 +864,9 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
         /* m8[<A>] + int => m8[<A>] + m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                                     PyTypeNum_ISBOOL(type_num2)) {
+            if (deprecate_integer_datetime_operation() < 0) {
+                return -1;
+            }
             out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
                     PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
@@ -818,6 +904,9 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
         /* M8[<A>] + int => M8[<A>] + m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                     PyTypeNum_ISBOOL(type_num2)) {
+            if (deprecate_integer_datetime_operation() < 0) {
+                return -1;
+            }
             out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
                     PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
@@ -843,6 +932,9 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
     else if (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) {
         /* int + m8[<A>] => m8[<A>] + m8[<A>] */
         if (type_num2 == NPY_TIMEDELTA) {
+            if (deprecate_integer_datetime_operation() < 0) {
+                return -1;
+            }
             out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
                     PyArray_DESCR(operands[1]));
             if (out_dtypes[0] == NULL) {
@@ -856,6 +948,9 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
             type_num1 = NPY_TIMEDELTA;
         }
         else if (type_num2 == NPY_DATETIME) {
+            if (deprecate_integer_datetime_operation() < 0) {
+                return -1;
+            }
             /* Make a new NPY_TIMEDELTA, and copy type2's metadata */
             out_dtypes[0] = timedelta_dtype_with_copied_meta(
                                             PyArray_DESCR(operands[1]));
@@ -954,6 +1049,9 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
         /* m8[<A>] - int => m8[<A>] - m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                                         PyTypeNum_ISBOOL(type_num2)) {
+            if (deprecate_integer_datetime_operation() < 0) {
+                return -1;
+            }
             out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
                     PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
@@ -991,6 +1089,9 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
         /* M8[<A>] - int => M8[<A>] - m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                     PyTypeNum_ISBOOL(type_num2)) {
+            if (deprecate_integer_datetime_operation() < 0) {
+                return -1;
+            }
             out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
                     PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
@@ -1032,6 +1133,9 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
     else if (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) {
         /* int - m8[<A>] => m8[<A>] - m8[<A>] */
         if (type_num2 == NPY_TIMEDELTA) {
+            if (deprecate_integer_datetime_operation() < 0) {
+                return -1;
+            }
             out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
                     PyArray_DESCR(operands[1]));
             if (out_dtypes[0] == NULL) {
@@ -1121,7 +1225,7 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
 
-            // This is wrong agaian cause of elsize, but only the DType matters
+            // This is wrong again because of elsize, but only the DType matters
             // here (String or Unicode).
             out_dtypes[2] = out_dtypes[1];
             Py_INCREF(out_dtypes[1]);
@@ -1252,9 +1356,10 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
     type_num2 = PyArray_DESCR(operands[1])->type_num;
 
     /* Use the default when datetime and timedelta are not involved */
-    if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
-        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
-                    type_tup, out_dtypes);
+    if ((!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) ||
+            (PyTypeNum_ISOBJECT(type_num1) || PyTypeNum_ISOBJECT(type_num2))) {
+        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands, type_tup,
+                                           out_dtypes);
     }
 
     if (type_num1 == NPY_TIMEDELTA) {
@@ -1455,7 +1560,7 @@ find_userloop(PyUFuncObject *ufunc,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItemWithError(ufunc->userloops, key);
+            obj = PyDict_GetItemWithError(ufunc->userloops, key); // noqa: borrowed-ref - manual fix needed
             Py_DECREF(key);
             if (obj == NULL && PyErr_Occurred()){
                 return -1;
@@ -1742,7 +1847,7 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItemWithError(self->userloops, key);
+            obj = PyDict_GetItemWithError(self->userloops, key); // noqa: borrowed-ref - manual fix needed
             Py_DECREF(key);
             if (obj == NULL && PyErr_Occurred()){
                 return -1;
@@ -1813,7 +1918,7 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItemWithError(self->userloops, key);
+            obj = PyDict_GetItemWithError(self->userloops, key); // noqa: borrowed-ref - manual fix needed
             Py_DECREF(key);
             if (obj == NULL && PyErr_Occurred()){
                 return -1;

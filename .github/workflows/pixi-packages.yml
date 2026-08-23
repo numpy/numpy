@@ -1,0 +1,47 @@
+name: Pixi packages tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  build_packages:
+    name: Build Pixi packages
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
+        package_variant:
+          - default
+          - freethreading
+          - asan
+          # TSan CI runs for longer than 30 minutes due to slow
+          # stdlib bytecode compilation step. Disable or parallelize
+          # byte compilation once rattler-build has support.
+          # See https://github.com/prefix-dev/pixi/pull/5737
+          # - tsan-freethreading
+    if: github.repository == 'numpy/numpy'
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+
+    - uses: prefix-dev/setup-pixi@f00437f565399d418b0acc85936d12c1fb668347 # v0.10.1
+      with:
+        pixi-version: v0.73.0
+        run-install: false
+
+    - name: Build
+      run: pixi publish --path="pixi-packages/${{ matrix.package_variant }}"

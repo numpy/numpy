@@ -11,13 +11,13 @@ nd1.reshape((2, 2), order="C")
 nd1.reshape(4, order="C")
 
 # resize
-nd1.resize()
-nd1.resize(4)
-nd1.resize(2, 2)
-nd1.resize((2, 2))
+nd1.resize()  # type: ignore[deprecated]
+nd1.resize(4)  # type: ignore[deprecated]
+nd1.resize(2, 2)  # type: ignore[deprecated]
+nd1.resize((2, 2))  # type: ignore[deprecated]
 
-nd1.resize((2, 2), refcheck=True)
-nd1.resize(4, refcheck=True)
+nd1.resize((2, 2), refcheck=True)  # type: ignore[deprecated]
+nd1.resize(4, refcheck=True)  # type: ignore[deprecated]
 
 nd2 = np.array([[1, 2], [3, 4]])
 

@@ -9,9 +9,8 @@ Legacy fixed-width string functionality
 
 .. legacy::
 
-   The string operations in this module, as well as the `numpy.char.chararray`
-   class, are planned to be deprecated in the future. Use `numpy.strings`
-   instead.
+   The string operations in this module are planned to be deprecated in the future, and
+   the `numpy.char.chararray` class is deprecated in NumPy 2.5. Use `numpy.strings` instead.
 
 The `numpy.char` module provides a set of vectorized string
 operations for arrays of type `numpy.str_` or `numpy.bytes_`. For example

@@ -3,6 +3,7 @@
 
 #include <numpy/npy_math.h>
 #include <numpy/npy_common.h>
+#include <numpy/utils.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -100,13 +101,16 @@ typedef int (PyUFunc_ProcessCoreDimsFunc)(
                                 npy_intp *core_dim_sizes);
 
 typedef struct _tagPyUFuncObject {
+#ifndef Py_TARGET_ABI3T
         PyObject_HEAD
+#endif
         /*
          * nin: Number of inputs
          * nout: Number of outputs
          * nargs: Always nin + nout (Why is it stored?)
          */
-        int nin, nout, nargs;
+        _NPY_OPAQUE_FIRST_FIELD int nin;
+        int nout, nargs;
 
         /*
          * Identity for reduction, any of PyUFunc_One, PyUFunc_Zero
@@ -122,8 +126,8 @@ typedef struct _tagPyUFuncObject {
         /* The number of elements in 'functions' and 'data' */
         int ntypes;
 
-        /* Used to be unused field 'check_return' */
-        int reserved1;
+        /* Flags for the ufunc (e.g. UFUNC_NO_FLOATINGPOINT_ERRORS) */
+        int _ufunc_flags;
 
         /* The name of the ufunc */
         const char *name;
@@ -179,7 +183,7 @@ typedef struct _tagPyUFuncObject {
          * but this was never implemented. (This is also why the above
          * selector is called the "legacy" selector.)
          */
-        #ifndef Py_LIMITED_API
+        #if !defined(Py_LIMITED_API) || Py_LIMITED_API >= 0x030C0000
             vectorcallfunc vectorcall;
         #else
             void *vectorcall;
@@ -223,7 +227,7 @@ typedef struct _tagPyUFuncObject {
     #if NPY_FEATURE_VERSION >= NPY_1_22_API_VERSION
         /* New private fields related to dispatching */
         void *_dispatch_cache;
-        /* A PyListObject of `(tuple of DTypes, ArrayMethod/Promoter)` */
+        /* Ordered dict `tuple of DTypes -> (tuple of DTypes, ArrayMethod/Promoter)` */
         PyObject *_loops;
     #endif
     #if NPY_FEATURE_VERSION >= NPY_2_1_API_VERSION
@@ -232,7 +236,8 @@ typedef struct _tagPyUFuncObject {
          */
         PyUFunc_ProcessCoreDimsFunc *process_core_dims_func;
     #endif
-} PyUFuncObject;
+} PyUFuncObject_fields;
+
 
 #include "arrayobject.h"
 /* Generalized ufunc; 0x0001 reserved for possible use as CORE_ENABLED */
@@ -246,6 +251,15 @@ typedef struct _tagPyUFuncObject {
 
 #define UFUNC_OBJ_ISOBJECT      1
 #define UFUNC_OBJ_NEEDS_API     2
+
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+/*
+ * Flag stored in PyUFuncObject._ufunc_flags to indicate that non-object loops
+ * of this ufunc never raise floating point errors.  Used to skip the
+ * expensive npy_clear_floatstatus/npy_get_floatstatus calls.
+ */
+#define UFUNC_NO_FLOATINGPOINT_ERRORS  0x1
+#endif  /* NPY_INTERNAL_BUILD */
 
 
 #if NPY_ALLOW_THREADS
@@ -316,8 +330,7 @@ typedef struct _loop1d_info {
 
 #define UFUNC_PYVALS_NAME "UFUNC_PYVALS"
 
-/*
- * THESE MACROS ARE DEPRECATED.
+/* THESE MACROS ARE DEPRECATED.
  * Use npy_set_floatstatus_* in the npymath library.
  */
 #define UFUNC_FPE_DIVIDEBYZERO  NPY_FPE_DIVIDEBYZERO
@@ -325,10 +338,7 @@ typedef struct _loop1d_info {
 #define UFUNC_FPE_UNDERFLOW     NPY_FPE_UNDERFLOW
 #define UFUNC_FPE_INVALID       NPY_FPE_INVALID
 
-#define generate_divbyzero_error() npy_set_floatstatus_divbyzero()
-#define generate_overflow_error() npy_set_floatstatus_overflow()
-
-  /* Make sure it gets defined if it isn't already */
+/* Make sure it gets defined if it isn't already */
 #ifndef UFUNC_NOFPE
 /* Clear the floating point exception default of Borland C++ */
 #if defined(__BORLANDC__)
@@ -338,7 +348,18 @@ typedef struct _loop1d_info {
 #endif
 #endif
 
+#ifndef Py_TARGET_ABI3T
+typedef struct _tagPyUFuncObject PyUFuncObject;
+#else
+typedef struct tagPyUFuncObject PyUFuncObject;
+#endif
+
 #include "__ufunc_api.h"
+
+#ifndef Py_TARGET_ABI3T
+#undef _PyUFuncObject_GET_ITEM_DATA
+#define _PyUFuncObject_GET_ITEM_DATA(ufunc) ((PyUFuncObject_fields *)(ufunc))
+#endif
 
 #ifdef __cplusplus
 }

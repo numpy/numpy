@@ -1,0 +1,7 @@
+`numpy.common_type` now raises a clear error for non-array input
+----------------------------------------------------------------
+Passing a dtype or scalar type to `numpy.common_type`, such as
+``np.common_type(np.dtype("f4"))``, used to raise a confusing
+``AttributeError``. It now raises a ``TypeError`` that points to
+`numpy.result_type` and `numpy.promote_types`, which are the tools meant for
+combining dtypes and scalar types.

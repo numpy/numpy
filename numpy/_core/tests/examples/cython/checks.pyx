@@ -4,6 +4,7 @@
 Functions in this module give python-space wrappers for cython functions
 exposed in numpy/__init__.pxd, so they can be tested in test_cython.py
 """
+import numpy as np
 cimport numpy as cnp
 cnp.import_array()
 
@@ -142,7 +143,7 @@ def get_dtype_flags(cnp.dtype dtype):
 
 
 cdef cnp.NpyIter* npyiter_from_nditer_obj(object it):
-    """A function to create a NpyIter struct from a nditer object.
+    """A function to create a NpyIter struct from an nditer object.
 
     This function is only meant for testing purposes and only extracts the
     necessary info from nditer to test the functionality of NpyIter methods
@@ -242,6 +243,16 @@ def npyiter_has_multi_index(it: "nditer"):
     return result
 
 
+def test_get_multi_index_iter_next(it: "nditer", cnp.ndarray[cnp.float64_t, ndim=2] arr):
+    cdef cnp.NpyIter* cit = npyiter_from_nditer_obj(it)
+    cdef cnp.NpyIter_GetMultiIndexFunc _get_multi_index = \
+        cnp.NpyIter_GetGetMultiIndex(cit, NULL)
+    cdef cnp.NpyIter_IterNextFunc _iternext = \
+        cnp.NpyIter_GetIterNext(cit, NULL)
+    cnp.NpyIter_Deallocate(cit)
+    return 1
+
+
 def npyiter_has_finished(it: "nditer"):
     cdef cnp.NpyIter* cit
     try:
@@ -281,6 +292,21 @@ def npystring_pack(arr):
         allocator, <cnp.npy_packed_static_string *>cnp.PyArray_DATA(arr), string, size,
     )
 
+    cnp.NpyString_release_allocator(allocator)
+    return ret
+
+
+def npystring_pack_invalid_utf8(arr, bytes data):
+    # NpyString_pack does not validate its input, so pack raw bytes into arr[0]
+    cdef const char *buf = data
+    cdef size_t size = len(data)
+
+    allocator = cnp.NpyString_acquire_allocator(
+        <cnp.PyArray_StringDTypeObject *>cnp.PyArray_DESCR(arr)
+    )
+    ret = cnp.NpyString_pack(
+        allocator, <cnp.npy_packed_static_string *>cnp.PyArray_DATA(arr), buf, size,
+    )
     cnp.NpyString_release_allocator(allocator)
     return ret
 
@@ -362,3 +388,9 @@ def check_npy_uintp_type_enum():
     # Regression test for gh-27890: cnp.NPY_UINTP was not defined.
     # Cython would fail to compile this before gh-27890 was fixed.
     return cnp.NPY_UINTP > 0
+
+
+def resize_refcheck_test():
+    # see gh-30991
+    a = np.array([[0, 1], [2, 3]], order='C')
+    a.resize((2, 1))

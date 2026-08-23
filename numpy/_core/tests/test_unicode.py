@@ -1,6 +1,7 @@
 
 import numpy as np
-from numpy.testing import assert_, assert_equal, assert_array_equal
+from numpy.testing import assert_, assert_array_equal, assert_equal
+
 
 def buffer_length(arr):
     if isinstance(arr, str):
@@ -65,18 +66,18 @@ class CreateZeros:
 
     def test_zeros0D(self):
         # Check creation of 0-dimensional objects
-        ua = np.zeros((), dtype='U%s' % self.ulen)
+        ua = np.zeros((), dtype=f'U{self.ulen}')
         self.content_check(ua, ua[()], 4 * self.ulen)
 
     def test_zerosSD(self):
         # Check creation of single-dimensional objects
-        ua = np.zeros((2,), dtype='U%s' % self.ulen)
+        ua = np.zeros((2,), dtype=f'U{self.ulen}')
         self.content_check(ua, ua[0], 4 * self.ulen * 2)
         self.content_check(ua, ua[1], 4 * self.ulen * 2)
 
     def test_zerosMD(self):
         # Check creation of multi-dimensional objects
-        ua = np.zeros((2, 3, 4), dtype='U%s' % self.ulen)
+        ua = np.zeros((2, 3, 4), dtype=f'U{self.ulen}')
         self.content_check(ua, ua[0, 0, 0], 4 * self.ulen * 2 * 3 * 4)
         self.content_check(ua, ua[-1, -1, -1], 4 * self.ulen * 2 * 3 * 4)
 
@@ -122,18 +123,19 @@ class CreateValues:
 
     def test_values0D(self):
         # Check creation of 0-dimensional objects with values
-        ua = np.array(self.ucs_value * self.ulen, dtype='U%s' % self.ulen)
+        ua = np.array(self.ucs_value * self.ulen, dtype=f'U{self.ulen}')
         self.content_check(ua, ua[()], 4 * self.ulen)
 
     def test_valuesSD(self):
         # Check creation of single-dimensional objects with values
-        ua = np.array([self.ucs_value * self.ulen] * 2, dtype='U%s' % self.ulen)
+        ua = np.array([self.ucs_value * self.ulen] * 2, dtype=f'U{self.ulen}')
         self.content_check(ua, ua[0], 4 * self.ulen * 2)
         self.content_check(ua, ua[1], 4 * self.ulen * 2)
 
     def test_valuesMD(self):
         # Check creation of multi-dimensional objects with values
-        ua = np.array([[[self.ucs_value * self.ulen] * 2] * 3] * 4, dtype='U%s' % self.ulen)
+        data = [[[self.ucs_value * self.ulen] * 2] * 3] * 4
+        ua = np.array(data, dtype=f'U{self.ulen}')
         self.content_check(ua, ua[0, 0, 0], 4 * self.ulen * 2 * 3 * 4)
         self.content_check(ua, ua[-1, -1, -1], 4 * self.ulen * 2 * 3 * 4)
 
@@ -204,13 +206,13 @@ class AssignValues:
 
     def test_values0D(self):
         # Check assignment of 0-dimensional objects with values
-        ua = np.zeros((), dtype='U%s' % self.ulen)
+        ua = np.zeros((), dtype=f'U{self.ulen}')
         ua[()] = self.ucs_value * self.ulen
         self.content_check(ua, ua[()], 4 * self.ulen)
 
     def test_valuesSD(self):
         # Check assignment of single-dimensional objects with values
-        ua = np.zeros((2,), dtype='U%s' % self.ulen)
+        ua = np.zeros((2,), dtype=f'U{self.ulen}')
         ua[0] = self.ucs_value * self.ulen
         self.content_check(ua, ua[0], 4 * self.ulen * 2)
         ua[1] = self.ucs_value * self.ulen
@@ -218,7 +220,7 @@ class AssignValues:
 
     def test_valuesMD(self):
         # Check assignment of multi-dimensional objects with values
-        ua = np.zeros((2, 3, 4), dtype='U%s' % self.ulen)
+        ua = np.zeros((2, 3, 4), dtype=f'U{self.ulen}')
         ua[0, 0, 0] = self.ucs_value * self.ulen
         self.content_check(ua, ua[0, 0, 0], 4 * self.ulen * 2 * 3 * 4)
         ua[-1, -1, -1] = self.ucs_value * self.ulen
@@ -270,7 +272,7 @@ class ByteorderValues:
 
     def test_values0D(self):
         # Check byteorder of 0-dimensional objects
-        ua = np.array(self.ucs_value * self.ulen, dtype='U%s' % self.ulen)
+        ua = np.array(self.ucs_value * self.ulen, dtype=f'U{self.ulen}')
         ua2 = ua.view(ua.dtype.newbyteorder())
         # This changes the interpretation of the data region (but not the
         #  actual data), therefore the returned scalars are not
@@ -282,7 +284,7 @@ class ByteorderValues:
 
     def test_valuesSD(self):
         # Check byteorder of single-dimensional objects
-        ua = np.array([self.ucs_value * self.ulen] * 2, dtype='U%s' % self.ulen)
+        ua = np.array([self.ucs_value * self.ulen] * 2, dtype=f'U{self.ulen}')
         ua2 = ua.view(ua.dtype.newbyteorder())
         assert_((ua != ua2).all())
         assert_(ua[-1] != ua2[-1])
@@ -293,7 +295,7 @@ class ByteorderValues:
     def test_valuesMD(self):
         # Check byteorder of multi-dimensional objects
         ua = np.array([[[self.ucs_value * self.ulen] * 2] * 3] * 4,
-                      dtype='U%s' % self.ulen)
+                      dtype=f'U{self.ulen}')
         ua2 = ua.view(ua.dtype.newbyteorder())
         assert_((ua != ua2).all())
         assert_(ua[-1, -1, -1] != ua2[-1, -1, -1])
@@ -304,7 +306,7 @@ class ByteorderValues:
     def test_values_cast(self):
         # Check byteorder of when casting the array for a strided and
         # contiguous array:
-        test1 = np.array([self.ucs_value * self.ulen] * 2, dtype='U%s' % self.ulen)
+        test1 = np.array([self.ucs_value * self.ulen] * 2, dtype=f'U{self.ulen}')
         test2 = np.repeat(test1, 2)[::2]
         for ua in (test1, test2):
             ua2 = ua.astype(dtype=ua.dtype.newbyteorder())
@@ -317,11 +319,11 @@ class ByteorderValues:
     def test_values_updowncast(self):
         # Check byteorder of when casting the array to a longer and shorter
         # string length for strided and contiguous arrays
-        test1 = np.array([self.ucs_value * self.ulen] * 2, dtype='U%s' % self.ulen)
+        test1 = np.array([self.ucs_value * self.ulen] * 2, dtype=f'U{self.ulen}')
         test2 = np.repeat(test1, 2)[::2]
         for ua in (test1, test2):
             # Cast to a longer type with zero padding
-            longer_type = np.dtype('U%s' % (self.ulen + 1)).newbyteorder()
+            longer_type = np.dtype(f'U{self.ulen + 1}').newbyteorder()
             ua2 = ua.astype(dtype=longer_type)
             assert_((ua == ua2).all())
             assert_(ua[-1] == ua2[-1])

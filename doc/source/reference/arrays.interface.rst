@@ -13,13 +13,9 @@ The array interface protocol
    This page describes the NumPy-specific API for accessing the contents of
    a NumPy array from other C extensions. :pep:`3118` --
    :c:func:`The Revised Buffer Protocol <PyObject_GetBuffer>` introduces
-   similar, standardized API to Python 2.6 and 3.0 for any extension
-   module to use. Cython__'s buffer array support
-   uses the :pep:`3118` API; see the `Cython NumPy
-   tutorial`__. Cython provides a way to write code that supports the buffer
-   protocol with Python versions older than 2.6 because it has a
-   backward-compatible implementation utilizing the array interface
-   described here.
+   similar, standardized API for any extension module to use. Cython__'s
+   buffer array support uses the :pep:`3118` API; see the `Cython NumPy
+   tutorial`__.
 
 __ https://cython.org/
 __ https://github.com/cython/cython/wiki/tutorials-numpy
@@ -124,7 +120,7 @@ This approach to the interface consists of the object having an
 
        **Default**: ``[('', typestr)]``
 
-   **data** (optional)
+   **data**
        A 2-tuple whose first argument is a :doc:`Python integer <python:c-api/long>`
        that points to the data-area storing the array contents.
 
@@ -140,15 +136,23 @@ This approach to the interface consists of the object having an
 
        This attribute can also be an object exposing the
        :ref:`buffer interface <bufferobjects>` which
-       will be used to share the data. If this key is not present (or
-       returns None), then memory sharing will be done
-       through the buffer interface of the object itself.  In this
+       will be used to share the data. If this key is ``None``, then memory sharing
+       will be done through the buffer interface of the object itself.  In this
        case, the offset key can be used to indicate the start of the
        buffer.  A reference to the object exposing the array interface
        must be stored by the new object if the memory area is to be
        secured.
 
-       **Default**: ``None``
+        .. note::
+            Not specifying this field uses a "scalar" path that we may remove in the future
+            as we are not aware of any users.  In this case, NumPy assigns the original object
+            as a scalar into the array. 
+
+        .. versionchanged:: 2.4
+            Prior to NumPy 2.4 a ``NULL`` pointer used the undocumented "scalar" path
+            and was thus usually not accepted (and triggered crashes on some paths).
+            After NumPy 2.4, ``NULL`` is accepted, although NumPy will create a 1-byte sized
+            new allocation for the array.
 
    **strides** (optional)
        Either ``None`` to indicate a C-style contiguous array or

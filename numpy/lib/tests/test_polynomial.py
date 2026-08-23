@@ -1,10 +1,16 @@
-import numpy as np
-from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_raises, assert_allclose
-    )
-
 import pytest
+
+import numpy as np
+import numpy.polynomial.polynomial as poly
+from numpy.testing import (
+    assert_,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
 
 # `poly1d` has some support for `np.bool` and `np.timedelta64`,
 # but it is limited and they are therefore excluded here
@@ -55,7 +61,8 @@ class TestPolynomial:
         assert_equal(p * q, np.poly1d([3., 8., 14., 8., 3.]))
         assert_equal(p + q, np.poly1d([4., 4., 4.]))
         assert_equal(p - q, np.poly1d([-2., 0., 2.]))
-        assert_equal(p ** 4, np.poly1d([1., 8., 36., 104., 214., 312., 324., 216., 81.]))
+        assert_equal(p ** 4, np.poly1d([1., 8., 36., 104., 214.,
+                                        312., 324., 216., 81.]))
         assert_equal(p(q), np.poly1d([9., 12., 16., 8., 6.]))
         assert_equal(q(p), np.poly1d([3., 12., 32., 40., 34.]))
         assert_equal(p.deriv(), np.poly1d([2., 2.]))
@@ -120,6 +127,29 @@ class TestPolynomial:
 
     def test_roots(self):
         assert_array_equal(np.roots([1, 0, 0]), [0, 0])
+
+        # Testing for larger root values
+        for i in np.logspace(10, 25, num=1000, base=10):
+            tgt = np.array([-1, 1, i])
+            res = np.sort(np.roots(poly.polyfromroots(tgt)[::-1]))
+            # Adapting the expected precision according to the root value,
+            # to take into account numerical calculation error
+            assert_almost_equal(res, tgt, 14 - int(np.log10(i)))
+
+        for i in np.logspace(10, 25, num=1000, base=10):
+            tgt = np.array([-1, 1.01, i])
+            res = np.sort(np.roots(poly.polyfromroots(tgt)[::-1]))
+            # Adapting the expected precision according to the root value,
+            # to take into account numerical calculation error
+            assert_almost_equal(res, tgt, 14 - int(np.log10(i)))
+
+    @pytest.mark.parametrize("dtyp", [int, np.float32, np.float64])
+    def test_roots_dtype(self, dtyp):
+        coef = np.asarray([1, 0, -1], dtype=dtyp)   # x**2 - 1
+        r = np.roots(coef)
+        r.sort()
+        assert_allclose(r, np.asarray([-1, 1]))
+        assert r.dtype == {int: np.float64}.get(dtyp, dtyp)
 
     def test_str_leading_zeros(self):
         p = np.poly1d([4, 3, 2, 1])
@@ -232,8 +262,8 @@ class TestPolynomial:
     def test_integ_coeffs(self):
         p = np.poly1d([3, 2, 1])
         p2 = p.integ(3, k=[9, 7, 6])
-        assert_(
-            (p2.coeffs == [1 / 4. / 5., 1 / 3. / 4., 1 / 2. / 3., 9 / 1. / 2., 7, 6]).all())
+        expected = [1 / 4 / 5, 1 / 3 / 4, 1 / 2 / 3, 9 / 1 / 2, 7, 6]
+        assert_((p2.coeffs == expected).all())
 
     def test_zero_dims(self):
         try:
@@ -246,7 +276,7 @@ class TestPolynomial:
         Regression test for gh-5096.
         """
         v = np.arange(1, 21)
-        assert_almost_equal(np.poly(v), np.poly(np.diag(v)))
+        assert_allclose(np.poly(v), np.poly(np.diag(v)))
 
     def test_zero_poly_dtype(self):
         """

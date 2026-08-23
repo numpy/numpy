@@ -3,9 +3,10 @@
 
 """
 
-from numpy._core.overrides import ARRAY_FUNCTIONS as _array_functions
-from numpy import ufunc as _ufunc
 import numpy._core.umath as _umath
+from numpy import ufunc as _ufunc
+from numpy._core.overrides import ARRAY_FUNCTIONS as _array_functions
+
 
 def get_overridable_numpy_ufuncs():
     """List all numpy ufuncs overridable via `__array_ufunc__`

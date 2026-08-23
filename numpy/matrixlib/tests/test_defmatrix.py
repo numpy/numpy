@@ -1,12 +1,17 @@
 import collections.abc
 
 import numpy as np
-from numpy import matrix, asmatrix, bmat
-from numpy.testing import (
-    assert_, assert_equal, assert_almost_equal, assert_array_equal,
-    assert_array_almost_equal, assert_raises
-    )
+from numpy import asmatrix, bmat, matrix
 from numpy.linalg import matrix_power
+from numpy.testing import (
+    assert_,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
+
 
 class TestCtor:
     def test_basic(self):
@@ -283,10 +288,10 @@ class TestMatrixReturn:
             'argmin', 'choose', 'dump', 'dumps', 'fill', 'getfield',
             'getA', 'getA1', 'item', 'nonzero', 'put', 'putmask', 'resize',
             'searchsorted', 'setflags', 'setfield', 'sort',
-            'partition', 'argpartition', 'newbyteorder', 'to_device',
-            'take', 'tofile', 'tolist', 'tostring', 'tobytes', 'all', 'any',
+            'partition', 'argpartition', 'to_device',
+            'take', 'tofile', 'tolist', 'tobytes', 'all', 'any',
             'sum', 'argmax', 'argmin', 'min', 'max', 'mean', 'var', 'ptp',
-            'prod', 'std', 'ctypes', 'itemset', 'bitwise_count',
+            'prod', 'std', 'ctypes', 'bitwise_count',
             ]
         for attrib in dir(a):
             if attrib.startswith('_') or attrib in excluded_methods:
@@ -298,7 +303,7 @@ class TestMatrixReturn:
                 a.fill(1.0)
                 args = methodargs.get(attrib, ())
                 b = f(*args)
-                assert_(type(b) is matrix, "%s" % attrib)
+                assert_(type(b) is matrix, f"{attrib}")
         assert_(type(a.real) is matrix)
         assert_(type(a.imag) is matrix)
         c, d = matrix([0.0]).nonzero()
@@ -318,7 +323,7 @@ class TestIndexing:
 class TestNewScalarIndexing:
     a = matrix([[1, 2], [3, 4]])
 
-    def test_dimesions(self):
+    def test_dimensions(self):
         a = self.a
         x = a[0]
         assert_equal(x.ndim, 2)
@@ -339,10 +344,10 @@ class TestNewScalarIndexing:
         assert_equal(x, matrix([[3,  4,  3]]))
         x = a[[1, 0]]
         assert_(isinstance(x, matrix))
-        assert_equal(x, matrix([[3,  4], [1, 2]]))
+        assert_equal(x, matrix([[3, 4], [1, 2]]))
         x = a[[[1], [0]], [[1, 0], [0, 1]]]
         assert_(isinstance(x, matrix))
-        assert_equal(x, matrix([[4,  3], [1,  2]]))
+        assert_equal(x, matrix([[4, 3], [1, 2]]))
 
     def test_matrix_element(self):
         x = matrix([[1, 2, 3], [4, 5, 6]])
@@ -368,15 +373,13 @@ class TestNewScalarIndexing:
         assert_array_equal(x[:, 1], [[0], [1]])
 
     def test_boolean_indexing(self):
-        A = np.arange(6)
-        A.shape = (3, 2)
+        A = np.arange(6).reshape((3, 2))
         x = asmatrix(A)
         assert_array_equal(x[:, np.array([True, False])], x[:, 0])
         assert_array_equal(x[np.array([True, False, False]), :], x[0, :])
 
     def test_list_indexing(self):
-        A = np.arange(6)
-        A.shape = (3, 2)
+        A = np.arange(6).reshape((3, 2))
         x = asmatrix(A)
         assert_array_equal(x[:, [1, 0]], x[:, ::-1])
         assert_array_equal(x[[2, 1, 0], :], x[::-1, :])
@@ -448,3 +451,25 @@ class TestShape:
         expanded = np.expand_dims(a, axis=1)
         assert_equal(expanded.ndim, 3)
         assert_(not isinstance(expanded, np.matrix))
+
+
+class TestPatternMatching:
+    """Tests for structural pattern matching support (PEP 634)."""
+
+    def test_match_sequence_pattern_2d(self):
+        # matrix is always 2D, so rows are (1, N) matrices not 1D arrays
+        arr = matrix([[1, 2], [3, 4]])
+        # outer matching
+        match arr:
+            case [row1, row2]:
+                assert_array_equal(row1, [[1, 2]])
+                assert_array_equal(row2, [[3, 4]])
+            case _:
+                raise AssertionError("2D matrix did not match sequence pattern")
+        # inner matching - rows are still 2D matrices, not scalars
+        match arr:
+            case [[a], [b]]:
+                assert_array_equal(a, [[1, 2]])
+                assert_array_equal(b, [[3, 4]])
+            case _:
+                raise AssertionError("2D matrix did not match sequence pattern")

@@ -64,10 +64,12 @@ body:
 
 - type: textarea
   attributes:
-    label: "Context for the issue:"
+    label: "How does this issue affect you or how did you find it:"
     description: |
-      Please explain how this issue affects your work or why it should be prioritized.
+      Please explain how this issue concretely affects you or others.
+      Especially if it does not impact you how did you find it?
+      (If an issue has no concrete impact this is also helpful to know.)
     placeholder: |
-      << your explanation here >>
+      << description of how the issue affects you >>
   validations:
     required: false

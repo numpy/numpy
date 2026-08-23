@@ -394,7 +394,7 @@ protocol, *e.g.* ``pathlib.Path``.
 
 Add new methods for ``quantile`` and ``percentile``
 ---------------------------------------------------
-``quantile`` and ``percentile`` now have have a ``method=`` keyword argument
+``quantile`` and ``percentile`` now have a ``method=`` keyword argument
 supporting 13 different methods.  This replaces the ``interpolation=`` keyword
 argument.
 

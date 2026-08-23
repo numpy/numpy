@@ -6,7 +6,7 @@
  * duplicates or NaTs, and not include any days already excluded
  * by the associated weekmask.
  *
- * The data is manually managed with PyArray_malloc/PyArray_free.
+ * The data is manually managed with PyMem_RawMalloc/PyMem_RawFree.
  */
 typedef struct {
     npy_datetime *begin, *end;

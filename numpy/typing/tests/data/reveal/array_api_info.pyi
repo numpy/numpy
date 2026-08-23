@@ -1,8 +1,6 @@
-from typing import Literal
+from typing import Literal, Never, assert_type
 
 import numpy as np
-
-from typing_extensions import Never, assert_type
 
 info = np.__array_namespace_info__()
 

@@ -1,11 +1,11 @@
 """
 Test scalar buffer interface adheres to PEP 3118
 """
-import numpy as np
-from numpy._core._rational_tests import rational
-from numpy._core._multiarray_tests import get_buffer_info
 import pytest
 
+import numpy as np
+from numpy._core._multiarray_tests import get_buffer_info
+from numpy._core._rational_tests import rational, rational2
 from numpy.testing import assert_, assert_equal, assert_raises
 
 # PEP3118 format strings for native (standard alignment and byteorder) types
@@ -128,13 +128,13 @@ class TestScalarPEP3118:
         s = np.str_(s)  # only our subclass implements the buffer protocol
 
         # all the same, characters always encode as ucs4
-        expected = {'strides': (), 'itemsize': 8, 'ndim': 0, 'shape': (), 'format': '2w',
-                        'readonly': True}
+        expected = {'strides': (), 'itemsize': 8, 'ndim': 0, 'shape': (),
+                    'format': '2w', 'readonly': True}
 
         v = memoryview(s)
         assert self._as_dict(v) == expected
 
-        # integers of the paltform-appropriate endianness
+        # integers of the platform-appropriate endianness
         code_points = np.frombuffer(v, dtype='i4')
 
         assert_equal(code_points, [ord(c) for c in s])
@@ -143,8 +143,9 @@ class TestScalarPEP3118:
         with pytest.raises(BufferError, match="scalar buffer is readonly"):
             get_buffer_info(s, ["WRITABLE"])
 
-    def test_user_scalar_fails_buffer(self):
-        r = rational(1)
+    @pytest.mark.parametrize("rat_cls", [rational, rational2])
+    def test_user_scalar_fails_buffer(self, rat_cls):
+        r = rat_cls(1)
         with assert_raises(TypeError):
             memoryview(r)
 

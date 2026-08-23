@@ -1,13 +1,19 @@
-import sys
 import platform
+import sys
+
 import pytest
 
 import numpy as np
+
 # import the c-extension module directly since _arg is not exported via umath
 import numpy._core._multiarray_umath as ncu
 from numpy.testing import (
-    assert_raises, assert_equal, assert_array_equal, assert_almost_equal, assert_array_max_ulp
-    )
+    assert_almost_equal,
+    assert_array_equal,
+    assert_array_max_ulp,
+    assert_equal,
+    assert_raises,
+)
 
 # TODO: branch cuts (use Pauli code)
 # TODO: conj 'symmetry'
@@ -16,7 +22,7 @@ from numpy.testing import (
 # At least on Windows the results of many complex functions are not conforming
 # to the C99 standard. See ticket 1574.
 # Ditto for Solaris (ticket 1642) and OS X on PowerPC.
-#FIXME: this will probably change when we require full C99 compatibility
+# FIXME: this will probably change when we require full C99 compatibility
 with np.errstate(all='ignore'):
     functions_seem_flaky = ((np.exp(complex(np.inf, 0)).imag != 0)
                             or (np.log(complex(ncu.NZERO, 0)).imag != np.pi))
@@ -333,7 +339,7 @@ class TestCsqrt:
         def _check_ninf_nan(dummy):
             msgform = "csqrt(-inf, nan) is (%f, %f), expected (nan, +-inf)"
             z = np.sqrt(np.array(complex(-np.inf, np.nan)))
-            #Fixme: ugly workaround for isinf bug.
+            # FIXME: ugly workaround for isinf bug.
             with np.errstate(invalid='ignore'):
                 if not (np.isnan(z.real) and np.isinf(z.imag)):
                     raise AssertionError(msgform % (z.real, z.imag))
@@ -383,7 +389,7 @@ class TestCpow:
 
         n_r = [x[i] ** y[i] for i in lx]
         for i in lx:
-            assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
+            assert_almost_equal(n_r[i], p_r[i], err_msg=f'Loop {i}\n')
 
     def test_array(self):
         x = np.array([1, 1j,         2,  2.5 + .37j, np.inf, np.nan])
@@ -403,7 +409,7 @@ class TestCpow:
 
         n_r = x ** y
         for i in lx:
-            assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
+            assert_almost_equal(n_r[i], p_r[i], err_msg=f'Loop {i}\n')
 
 class TestCabs:
     def setup_method(self):
@@ -556,31 +562,35 @@ class TestSpecialComplexAVX:
     @pytest.mark.parametrize("stride", [-4, -2, -1, 1, 2, 4])
     @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
     def test_array(self, stride, astype):
-        arr = np.array([complex(np.nan, np.nan),
-                        complex(np.nan, np.inf),
-                        complex(np.inf, np.nan),
-                        complex(np.inf, np.inf),
-                        complex(0.,     np.inf),
-                        complex(np.inf, 0.),
-                        complex(0.,     0.),
-                        complex(0.,     np.nan),
-                        complex(np.nan, 0.)], dtype=astype)
-        abs_true = np.array([np.nan, np.inf, np.inf, np.inf, np.inf, np.inf, 0., np.nan, np.nan], dtype=arr.real.dtype)
-        sq_true = np.array([complex(np.nan,  np.nan),
-                            complex(np.nan,  np.nan),
-                            complex(np.nan,  np.nan),
-                            complex(np.nan,  np.inf),
-                            complex(-np.inf, np.nan),
-                            complex(np.inf,  np.nan),
-                            complex(0.,      0.),
-                            complex(np.nan,  np.nan),
-                            complex(np.nan,  np.nan)], dtype=astype)
+        nan = np.nan
+        inf = np.inf
+        arr = np.array([complex(nan, nan),
+                        complex(nan, inf),
+                        complex(inf, nan),
+                        complex(inf, inf),
+                        complex(0.,  inf),
+                        complex(inf,  0.),
+                        complex(0.,   0.),
+                        complex(0.,  nan),
+                        complex(nan,  0.)], dtype=astype)
+        abs_true = np.array([nan, inf, inf, inf, inf, inf, 0., nan, nan],
+                            dtype=arr.real.dtype)
+        sq_true = np.array([complex(nan,  nan),
+                            complex(nan,  nan),
+                            complex(nan,  nan),
+                            complex(nan,  inf),
+                            complex(-inf, nan),
+                            complex(inf,  nan),
+                            complex(0.,    0.),
+                            complex(nan,  nan),
+                            complex(nan,  nan)], dtype=astype)
         with np.errstate(invalid='ignore'):
             assert_equal(np.abs(arr[::stride]), abs_true[::stride])
             assert_equal(np.square(arr[::stride]), sq_true[::stride])
 
 class TestComplexAbsoluteAVX:
-    @pytest.mark.parametrize("arraysize", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 18, 19])
+    @pytest.mark.parametrize("arraysize",
+                             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 18, 19])
     @pytest.mark.parametrize("stride", [-4, -3, -2, -1, 1, 2, 3, 4])
     @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
     # test to ensure masking and strides work as intended in the AVX implementation
@@ -600,15 +610,15 @@ class TestComplexAbsoluteMixedDTypes:
                  ('cont_chisq', '<f4'), ('psd_var_val', '<f4'), ('sg_chisq', '<f4'),
                  ('mycomplex', astype), ('time_index', '<i8')]
         vec = np.array([
-                (0, 0., 0, -31.666483, 200, 0., 0.,  1.      ,  3.0 + 4.0j  ,  613090),   # noqa: E203,E501
-                (1, 0., 0, 260.91525 ,  42, 0., 0.,  1.      ,  5.0 + 12.0j ,  787315),   # noqa: E203,E501
-                (1, 0., 0,  52.15155 ,  42, 0., 0.,  1.      ,  8.0 + 15.0j ,  806641),   # noqa: E203,E501
-                (1, 0., 0,  52.430195,  42, 0., 0.,  1.      ,  7.0 + 24.0j , 1363540),   # noqa: E203,E501
-                (2, 0., 0, 304.43646 ,  58, 0., 0.,  1.      ,  20.0 + 21.0j,  787323),   # noqa: E203,E501
-                (3, 0., 0, 299.42108 ,  52, 0., 0.,  1.      ,  12.0 + 35.0j,  787332),   # noqa: E203,E501
-                (4, 0., 0,  39.4836  ,  28, 0., 0.,  9.182192,  9.0 + 40.0j ,  787304),   # noqa: E203,E501
-                (4, 0., 0,  76.83787 ,  28, 0., 0.,  1.      ,  28.0 + 45.0j, 1321869),   # noqa: E203,E501
-                (5, 0., 0, 143.26366 ,  24, 0., 0., 10.996129,  11.0 + 60.0j,  787299)],  # noqa: E203,E501
+                (0, 0., 0, -31.666483, 200, 0., 0.,  1.      ,  3.0 + 4.0j  ,  613090),   # noqa: E203
+                (1, 0., 0, 260.91525 ,  42, 0., 0.,  1.      ,  5.0 + 12.0j ,  787315),   # noqa: E203
+                (1, 0., 0,  52.15155 ,  42, 0., 0.,  1.      ,  8.0 + 15.0j ,  806641),   # noqa: E203
+                (1, 0., 0,  52.430195,  42, 0., 0.,  1.      ,  7.0 + 24.0j , 1363540),   # noqa: E203
+                (2, 0., 0, 304.43646 ,  58, 0., 0.,  1.      ,  20.0 + 21.0j,  787323),   # noqa: E203
+                (3, 0., 0, 299.42108 ,  52, 0., 0.,  1.      ,  12.0 + 35.0j,  787332),   # noqa: E203
+                (4, 0., 0,  39.4836  ,  28, 0., 0.,  9.182192,  9.0 + 40.0j ,  787304),   # noqa: E203
+                (4, 0., 0,  76.83787 ,  28, 0., 0.,  1.      ,  28.0 + 45.0j, 1321869),   # noqa: E203
+                (5, 0., 0, 143.26366 ,  24, 0., 0., 10.996129,  11.0 + 60.0j,  787299)],  # noqa: E203
             dtype=dtype)
         myfunc = getattr(np, func)
         a = vec['mycomplex']

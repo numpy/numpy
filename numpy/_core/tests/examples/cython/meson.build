@@ -15,6 +15,15 @@ if cy.version().version_compare('>=3.1.0')
   cython_args += ['-Xfreethreading_compatible=True']
 endif
 
+extra_c_args = []
+if host_machine.system() == 'windows' and host_machine.cpu_family() == 'x86'
+  # Cython's constant immortalization passes UINT32_MAX through a Py_ssize_t,
+  # which aborts module init on 32-bit free-threaded builds when asserts are
+  # enabled. See https://github.com/cython/cython/issues/7742; this should be
+  # fixed in Cython 3.2.6, after which the workaround can be removed.
+  extra_c_args += ['-DCYTHON_IMMORTAL_CONSTANTS=0']
+endif
+
 npy_include_path = run_command(py, [
     '-c',
     'import os; os.chdir(".."); import numpy; print(os.path.abspath(numpy.get_include()))'
@@ -37,7 +46,7 @@ py.extension_module(
       '-DNPY_NO_DEPRECATED_API=0',  # Cython still uses old NumPy C API
       # Require 1.25+ to test datetime additions
       '-DNPY_TARGET_VERSION=NPY_2_0_API_VERSION',
-    ],
+    ] + extra_c_args,
     include_directories: [npy_include_path],
     cython_args: cython_args,
 )

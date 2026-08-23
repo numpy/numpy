@@ -7,22 +7,21 @@ specified.
 
 """
 import hashlib
+import importlib.util
 import io
 import os
 import re
 import sys
-import importlib.util
 import textwrap
-
 from os.path import join
 
 
 def get_processor():
-    # Convoluted because we can't import from numpy.distutils
+    # Convoluted because we can't import from numpy
     # (numpy is not yet built)
     conv_template_path = os.path.join(
         os.path.dirname(__file__),
-        '..', '..', 'distutils', 'conv_template.py'
+        '..', '..', '_build_utils', 'conv_template.py'
     )
     spec = importlib.util.spec_from_file_location(
         'conv_template', conv_template_path
@@ -63,7 +62,7 @@ API_FILES = [join('multiarray', 'alloc.c'),
              join('multiarray', 'descriptor.c'),
              join('multiarray', 'dlpack.c'),
              join('multiarray', 'dtypemeta.c'),
-             join('multiarray', 'einsum.c.src'),
+             join('multiarray', 'einsum.cpp'),
              join('multiarray', 'public_dtype_api.c'),
              join('multiarray', 'flagsobject.c'),
              join('multiarray', 'getset.c'),
@@ -133,9 +132,9 @@ class StealRef:
 
     def __str__(self):
         try:
-            return ' '.join('NPY_STEALS_REF_TO_ARG(%d)' % x for x in self.arg)
+            return ' '.join(f'NPY_STEALS_REF_TO_ARG({x})' for x in self.arg)
         except TypeError:
-            return 'NPY_STEALS_REF_TO_ARG(%d)' % self.arg
+            return f'NPY_STEALS_REF_TO_ARG({self.arg})'
 
 
 class Function:
@@ -154,10 +153,10 @@ class Function:
     def __str__(self):
         argstr = ', '.join([self._format_arg(*a) for a in self.args])
         if self.doc:
-            doccomment = '/* %s */\n' % self.doc
+            doccomment = f'/* {self.doc} */\n'
         else:
             doccomment = ''
-        return '%s%s %s(%s)' % (doccomment, self.return_type, self.name, argstr)
+        return f'{doccomment}{self.return_type} {self.name}({argstr})'
 
     def api_hash(self):
         m = hashlib.md5(usedforsecurity=False)
@@ -177,7 +176,7 @@ class ParseError(Exception):
         self.msg = msg
 
     def __str__(self):
-        return '%s:%s:%s' % (self.filename, self.lineno, self.msg)
+        return f'{self.filename}:{self.lineno}:{self.msg}'
 
 def skip_brackets(s, lbrac, rbrac):
     count = 0
@@ -188,7 +187,7 @@ def skip_brackets(s, lbrac, rbrac):
             count -= 1
         if count == 0:
             return i
-    raise ValueError("no match '%s' for '%s' (%r)" % (lbrac, rbrac, s))
+    raise ValueError(f"no match '{lbrac}' for '{rbrac}' ({s!r})")
 
 def split_arguments(argstr):
     arguments = []
@@ -338,13 +337,11 @@ class TypeApi:
         self.internal_type = internal_type
 
     def define_from_array_api_string(self):
-        return "#define %s (*(%s *)%s[%d])" % (self.name,
-                                               self.ptr_cast,
-                                               self.api_name,
-                                               self.index)
+        return (f"#define {self.name} (*({self.ptr_cast} *)"
+                f"{self.api_name}[{self.index}])")
 
     def array_api_define(self):
-        return "        (void *) &%s" % self.name
+        return f"        (void *) &{self.name}"
 
     def internal_define(self):
         if self.internal_type is None:
@@ -370,18 +367,14 @@ class GlobalVarApi:
         self.api_name = api_name
 
     def define_from_array_api_string(self):
-        return "#define %s (*(%s *)%s[%d])" % (self.name,
-                                                        self.type,
-                                                        self.api_name,
-                                                        self.index)
+        return f"#define {self.name} (*({self.type} *){self.api_name}[{self.index}])"
 
     def array_api_define(self):
-        return "        (%s *) &%s" % (self.type, self.name)
+        return f"        ({self.type} *) &{self.name}"
 
     def internal_define(self):
-        astr = """\
-extern NPY_NO_EXPORT %(type)s %(name)s;
-""" % {'type': self.type, 'name': self.name}
+        astr = f"""extern NPY_NO_EXPORT {self.type} {self.name};
+"""
         return astr
 
 # Dummy to be able to consistently use *Api instances for all items in the
@@ -394,13 +387,10 @@ class BoolValuesApi:
         self.api_name = api_name
 
     def define_from_array_api_string(self):
-        return "#define %s ((%s *)%s[%d])" % (self.name,
-                                              self.type,
-                                              self.api_name,
-                                              self.index)
+        return f"#define {self.name} (({self.type} *){self.api_name}[{self.index}])"
 
     def array_api_define(self):
-        return "        (void *) &%s" % self.name
+        return f"        (void *) &{self.name}"
 
     def internal_define(self):
         astr = """\
@@ -448,15 +438,13 @@ class FunctionApi:
         return define
 
     def array_api_define(self):
-        return "        (void *) %s" % self.name
+        return f"        (void *) {self.name}"
 
     def internal_define(self):
         annstr = [str(a) for a in self.annotations]
         annstr = ' '.join(annstr)
-        astr = """\
-NPY_NO_EXPORT %s %s %s \\\n       (%s);""" % (annstr, self.return_type,
-                                              self.name,
-                                              self._argtypes_string())
+        astr = f"""NPY_NO_EXPORT {annstr} {self.return_type} {self.name} \\
+       ({self._argtypes_string()});"""
         return astr
 
 def order_dict(d):
@@ -470,8 +458,7 @@ def order_dict(d):
 def merge_api_dicts(dicts):
     ret = {}
     for d in dicts:
-        for k, v in d.items():
-            ret[k] = v
+        ret.update(d)
 
     return ret
 
@@ -498,7 +485,7 @@ def check_api_dict(d):
                 doubled[index] = [name]
         fmt = "Same index has been used twice in api definition: {}"
         val = ''.join(
-            '\n\tindex {} -> {}'.format(index, names)
+            f'\n\tindex {index} -> {names}'
             for index, names in doubled.items() if len(names) != 1
         )
         raise ValueError(fmt.format(val))
@@ -511,8 +498,7 @@ def check_api_dict(d):
                          f"{indexes.intersection(removed)}")
     if indexes.union(removed) != expected:
         diff = expected.symmetric_difference(indexes.union(removed))
-        msg = "There are some holes in the API indexing: " \
-              "(symmetric diff is %s)" % diff
+        msg = f"There are some holes in the API indexing: (symmetric diff is {diff})"
         raise ValueError(msg)
 
 def get_api_functions(tagname, api_dict):

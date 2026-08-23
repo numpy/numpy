@@ -1,8 +1,10 @@
-import pytest
 import textwrap
-from numpy.testing import assert_array_equal, assert_equal, assert_raises
+
+import pytest
+
 import numpy as np
 from numpy.f2py.tests import util
+from numpy.testing import assert_array_equal, assert_equal, assert_raises
 
 
 @pytest.mark.slow
@@ -132,6 +134,7 @@ class TestCharacterString(util.F2PyTest):
         assert_array_equal(f(a), expected)
 
 
+@pytest.mark.slow
 class TestCharacter(util.F2PyTest):
     # options = ['--debug-capi', '--build-dir', '/tmp/test-build-f2py']
     suffix = '.f90'
@@ -430,6 +433,7 @@ class TestCharacter(util.F2PyTest):
         assert_equal(f(b'B'), b"B")
 
 
+@pytest.mark.slow
 class TestMiscCharacter(util.F2PyTest):
     # options = ['--debug-capi', '--build-dir', '/tmp/test-build-f2py']
     suffix = '.f90'
@@ -513,7 +517,6 @@ class TestMiscCharacter(util.F2PyTest):
        end subroutine {fprefix}_character_bc_old
     """)
 
-    @pytest.mark.slow
     def test_gh18684(self):
         # Test character(len=5) and character*5 usages
         f = getattr(self.module, self.fprefix + '_gh18684')
@@ -573,6 +576,7 @@ class TestMiscCharacter(util.F2PyTest):
         assert_raises(Exception, lambda: f(b'c'))
 
 
+@pytest.mark.slow
 class TestStringScalarArr(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "scalar_string.f90")]
 
@@ -592,6 +596,7 @@ class TestStringScalarArr(util.F2PyTest):
             expected = '|S12'
             assert out.dtype == expected
 
+@pytest.mark.slow
 class TestStringAssumedLength(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "gh24008.f")]
 
@@ -607,7 +612,7 @@ class TestStringOptionalInOut(util.F2PyTest):
         a = np.array('hi', dtype='S32')
         self.module.string_inout_optional(a)
         assert "output string" in a.tobytes().decode()
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             aa = "Hi"
             self.module.string_inout_optional(aa)
 

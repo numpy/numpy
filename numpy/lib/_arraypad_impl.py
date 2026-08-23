@@ -3,10 +3,11 @@ The arraypad module contains a group of functions to pad values onto the edges
 of an n-dimensional array.
 
 """
+import typing
+
 import numpy as np
 from numpy._core.overrides import array_function_dispatch
 from numpy.lib._index_tricks_impl import ndindex
-
 
 __all__ = ['pad']
 
@@ -227,6 +228,26 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
     return left_ramp, right_ramp
 
 
+def _validate_zero_width_linear_ramp(roi, axis, end_value_pair):
+    """
+    Preserve zero-width linear_ramp validation without constructing ramps.
+    """
+    if roi.dtype.hasobject:
+        _get_linear_ramps(roi, axis, (0, 0), end_value_pair)
+        return
+
+    edge = np.zeros((1,) * (roi.ndim - 1), dtype=roi.dtype)
+    for end_value in end_value_pair:
+        np.linspace(
+            start=end_value,
+            stop=edge,
+            num=0,
+            endpoint=False,
+            dtype=roi.dtype,
+            axis=axis
+        )
+
+
 def _get_stats(padded, axis, width_pair, length_pair, stat_func):
     """
     Calculate statistic for the empty-padded array in given dimension.
@@ -291,6 +312,18 @@ def _get_stats(padded, axis, width_pair, length_pair, stat_func):
     _round_if_needed(right_stat, padded.dtype)
 
     return left_stat, right_stat
+
+
+def _validate_zero_width_stat(roi, axis, length_pair, stat_func):
+    """
+    Preserve zero-width statistic validation without reducing full arrays.
+    """
+    if roi.dtype.hasobject:
+        _get_stats(roi, axis, (0, 0), length_pair, stat_func)
+        return
+
+    validation_slice = (slice(0, 1),) * roi.ndim
+    _get_stats(roi[validation_slice], axis, (0, 0), length_pair, stat_func)
 
 
 def _set_reflect_both(padded, axis, width_pair, method,
@@ -551,7 +584,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
     ----------
     array : array_like of rank N
         The array to pad.
-    pad_width : {sequence, array_like, int}
+    pad_width : {sequence, array_like, int, dict}
         Number of values padded to the edges of each axis.
         ``((before_1, after_1), ... (before_N, after_N))`` unique pad widths
         for each axis.
@@ -559,6 +592,9 @@ def pad(array, pad_width, mode='constant', **kwargs):
         and after pad for each axis.
         ``(pad,)`` or ``int`` is a shortcut for before = after = pad width
         for all axes.
+        If a ``dict``, each key is an axis and its corresponding value is an ``int`` or
+        ``int`` pair describing the padding ``(before, after)`` or ``pad`` width for
+        that axis.
     mode : str or function, optional
         One of the following string values or a user supplied function.
 
@@ -746,8 +782,39 @@ def pad(array, pad_width, mode='constant', **kwargs):
            [100, 100,   3,   4,   5, 100, 100],
            [100, 100, 100, 100, 100, 100, 100],
            [100, 100, 100, 100, 100, 100, 100]])
+
+    >>> a = np.arange(1, 7).reshape(2, 3)
+    >>> np.pad(a, {1: (1, 2)})
+    array([[0, 1, 2, 3, 0, 0],
+           [0, 4, 5, 6, 0, 0]])
+    >>> np.pad(a, {-1: 2})
+    array([[0, 0, 1, 2, 3, 0, 0],
+           [0, 0, 4, 5, 6, 0, 0]])
+    >>> np.pad(a, {0: (3, 0)})
+    array([[0, 0, 0],
+           [0, 0, 0],
+           [0, 0, 0],
+           [1, 2, 3],
+           [4, 5, 6]])
+    >>> np.pad(a, {0: (3, 0), 1: 2})
+    array([[0, 0, 0, 0, 0, 0, 0],
+           [0, 0, 0, 0, 0, 0, 0],
+           [0, 0, 0, 0, 0, 0, 0],
+           [0, 0, 1, 2, 3, 0, 0],
+           [0, 0, 4, 5, 6, 0, 0]])
     """
     array = np.asarray(array)
+    if isinstance(pad_width, dict):
+        seq = [(0, 0)] * array.ndim
+        for axis, width in pad_width.items():
+            match width:
+                case int(both):
+                    seq[axis] = both, both
+                case tuple((int(before), int(after))):
+                    seq[axis] = before, after
+                case _ as invalid:
+                    typing.assert_never(invalid)
+        pad_width = seq
     pad_width = np.asarray(pad_width)
 
     if not pad_width.dtype.kind == 'i':
@@ -794,10 +861,10 @@ def pad(array, pad_width, mode='constant', **kwargs):
     try:
         unsupported_kwargs = set(kwargs) - set(allowed_kwargs[mode])
     except KeyError:
-        raise ValueError("mode '{}' is not supported".format(mode)) from None
+        raise ValueError(f"mode '{mode}' is not supported") from None
     if unsupported_kwargs:
-        raise ValueError("unsupported keyword arguments for mode '{}': {}"
-                         .format(mode, unsupported_kwargs))
+        raise ValueError("unsupported keyword arguments for mode "
+                         f"'{mode}': {unsupported_kwargs}")
 
     stat_functions = {"maximum": np.amax, "minimum": np.amin,
                       "mean": np.mean, "median": np.median}
@@ -826,8 +893,8 @@ def pad(array, pad_width, mode='constant', **kwargs):
         for axis, width_pair in zip(axes, pad_width):
             if array.shape[axis] == 0 and any(width_pair):
                 raise ValueError(
-                    "can't extend empty axis {} using modes other than "
-                    "'constant' or 'empty'".format(axis)
+                    f"can't extend empty axis {axis} using modes other than "
+                    "'constant' or 'empty'"
                 )
         # passed, don't need to do anything more as _pad_simple already
         # returned the correct result
@@ -843,6 +910,9 @@ def pad(array, pad_width, mode='constant', **kwargs):
         end_values = _as_pairs(end_values, padded.ndim)
         for axis, width_pair, value_pair in zip(axes, pad_width, end_values):
             roi = _view_roi(padded, original_area_slice, axis)
+            if not any(width_pair):
+                _validate_zero_width_linear_ramp(roi, axis, value_pair)
+                continue
             ramp_pair = _get_linear_ramps(roi, axis, width_pair, value_pair)
             _set_pad_area(roi, axis, width_pair, ramp_pair)
 
@@ -852,6 +922,9 @@ def pad(array, pad_width, mode='constant', **kwargs):
         length = _as_pairs(length, padded.ndim, as_index=True)
         for axis, width_pair, length_pair in zip(axes, pad_width, length):
             roi = _view_roi(padded, original_area_slice, axis)
+            if not any(width_pair):
+                _validate_zero_width_stat(roi, axis, length_pair, func)
+                continue
             stat_pair = _get_stats(roi, axis, width_pair, length_pair, func)
             _set_pad_area(roi, axis, width_pair, stat_pair)
 

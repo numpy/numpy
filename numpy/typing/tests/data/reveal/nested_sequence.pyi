@@ -1,9 +1,7 @@
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, assert_type
 
 from numpy._typing import _NestedSequence
-
-from typing_extensions import assert_type
 
 a: Sequence[int]
 b: Sequence[Sequence[int]]

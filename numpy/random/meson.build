@@ -89,6 +89,7 @@ foreach gen: random_pyx_sources
     install: true,
     subdir: 'numpy/random',
     cython_args: cython_args,
+    limited_api: py_limited_api,
   )
 endforeach
 
@@ -99,11 +100,14 @@ py.install_sources(
     '__init__.pxd',
     '__init__.py',
     '__init__.pyi',
+    '_bounded_integers.pyi',
     '_common.pxd',
+    '_common.pyi',
     '_generator.pyi',
     '_mt19937.pyi',
     '_pcg64.pyi',
     '_pickle.py',
+    '_pickle.pyi',
     '_philox.pyi',
     '_sfc64.pyi',
     'bit_generator.pxd',

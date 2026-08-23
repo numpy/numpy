@@ -52,7 +52,7 @@ your system.
     * BLAS and LAPACK libraries. `OpenBLAS <https://github.com/OpenMathLib/OpenBLAS/>`__
       is the NumPy default; other variants include Apple Accelerate,
       `MKL <https://software.intel.com/en-us/intel-mkl>`__,
-      `ATLAS <http://math-atlas.sourceforge.net/>`__ and
+      `ATLAS <https://math-atlas.sourceforge.net/>`__ and
       `Netlib <https://www.netlib.org/lapack/index.html>`__ (or "Reference")
       BLAS and LAPACK.
 
@@ -140,66 +140,26 @@ your system.
   .. tab-item:: Windows
     :sync: windows
 
-    On Windows, the use of a Fortran compiler is more tricky than on other
-    platforms, because MSVC does not support Fortran, and gfortran and MSVC
-    can't be used together. If you don't need to run the ``f2py`` tests, simply
-    using MSVC is easiest. Otherwise, you will need one of these sets of
-    compilers:
-
-    1. MSVC + Intel Fortran (``ifort``)
-    2. Intel compilers (``icc``, ``ifort``)
-    3. Mingw-w64 compilers (``gcc``, ``g++``, ``gfortran``)
-
     Compared to macOS and Linux, building NumPy on Windows is a little more
-    difficult, due to the need to set up these compilers. It is not possible to
-    just call a one-liner on the command prompt as you would on other
-    platforms.
-
-    First, install Microsoft Visual Studio - the 2019 Community Edition or any
-    newer version will work (see the
+    difficult, due to the need to set up compilers. First, install Microsoft
+    Visual Studio - the 2019 Community Edition or any newer version will work
+    (see the
     `Visual Studio download site <https://visualstudio.microsoft.com/downloads/>`__).
-    This is needed even if you use the MinGW-w64 or Intel compilers, in order
-    to ensure you have the Windows Universal C Runtime (the other components of
-    Visual Studio are not needed when using Mingw-w64, and can be deselected if
-    desired, to save disk space). The recommended version of the UCRT is
-    >= 10.0.22621.0.
+    This is needed to ensure you have the Windows Universal C Runtime. The
+    recommended version of the UCRT is >= 10.0.22621.0.
 
-    .. tab-set::
+    The MSVC installer does not put the compilers on the system path, and
+    the install location may change. To query the install location, MSVC
+    comes with a ``vswhere.exe`` command-line utility. And to make the
+    C/C++ compilers available inside the shell you are using, you need to
+    run a ``.bat`` file for the correct bitness and architecture (e.g., for
+    64-bit Intel CPUs, use ``vcvars64.bat``).
 
-      .. tab-item:: MSVC
+    For detailed guidance, see `Use the Microsoft C++ toolset from the command line
+    <https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170>`__.
 
-        The MSVC installer does not put the compilers on the system path, and
-        the install location may change. To query the install location, MSVC
-        comes with a ``vswhere.exe`` command-line utility. And to make the
-        C/C++ compilers available inside the shell you are using, you need to
-        run a ``.bat`` file for the correct bitness and architecture (e.g., for
-        64-bit Intel CPUs, use ``vcvars64.bat``).
-
-        If using a Conda environment while a version of Visual Studio 2019+ is
-        installed that includes the MSVC v142 package (VS 2019 C++ x86/x64
-        build tools), activating the conda environment should cause Visual
-        Studio to be found and the appropriate .bat file executed to set
-        these variables.
-
-        For detailed guidance, see `Use the Microsoft C++ toolset from the command line
-        <https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170>`__.
-
-      .. tab-item:: Intel
-
-        Similar to MSVC, the Intel compilers are designed to be used with an
-        activation script (``Intel\oneAPI\setvars.bat``) that you run in the
-        shell you are using. This makes the compilers available on the path.
-        For detailed guidance, see
-        `Get Started with the Intel® oneAPI HPC Toolkit for Windows
-        <https://www.intel.com/content/www/us/en/docs/oneapi-hpc-toolkit/get-started-guide-windows/2023-1/overview.html>`__.
-
-      .. tab-item:: MinGW-w64
-
-        There are several sources of binaries for MinGW-w64. We recommend the
-        RTools versions, which can be installed with Chocolatey (see
-        Chocolatey install instructions `here <https://chocolatey.org/install>`_)::
-
-            choco install rtools -y --no-progress --force --version=4.0.0.20220206
+    If you don't need ``f2py``, MSVC alone is sufficient. For Fortran compiler
+    setup (needed for ``f2py``), see :ref:`F2PY and Windows <f2py-windows>`.
 
     .. note::
 
@@ -208,9 +168,7 @@ your system.
         can be found) in order to be found, with the exception of MSVC which
         will be found automatically if and only if there are no other compilers
         on the ``PATH``. You can use any shell (e.g., Powershell, ``cmd`` or
-        Git Bash) to invoke a build. To check that this is the case, try
-        invoking a Fortran compiler in the shell you use (e.g., ``gfortran
-        --version`` or ``ifort --version``).
+        Git Bash) to invoke a build.
 
     .. warning::
 
@@ -218,8 +176,48 @@ your system.
         creation will not work due to an outdated Fortran compiler. If that
         happens, remove the ``compilers`` entry from ``environment.yml`` and
         try again. The Fortran compiler should be installed as described in
-        this section.
+        the :ref:`F2PY Windows documentation <f2py-windows>`.
 
+  .. tab-item:: Windows on ARM64
+    :sync: Windows on ARM64
+
+    In Windows on ARM64, the compiler options available for building NumPy are
+    limited. GCC and gfortran are not yet supported. Currently, the NumPy build
+    for Windows on ARM64 is supported with MSVC and LLVM toolchains.
+
+    First, install Microsoft Visual Studio - the 2022 Community Edition will
+    work (see the `Visual Studio download site <https://visualstudio.microsoft.com/downloads/>`__).
+    Ensure that you have installed necessary Visual Studio components for building NumPy
+    on WoA from `here <https://gist.github.com/Mugundanmcw/c3bb93018d5da9311fb2b222f205ba19>`__.
+
+    The MSVC installer does not put the compilers on the system path, and
+    the install location may change. To query the install location, MSVC
+    comes with a ``vswhere.exe`` command-line utility. And to make the
+    C/C++ compilers available inside the shell you are using, you need to
+    run a ``.bat`` file for the correct bitness and architecture (e.g., for
+    ARM64-based CPUs, use ``vcvarsarm64.bat``).
+
+    For detailed guidance, see `Use the Microsoft C++ toolset from the command line
+    <https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170>`__.
+
+    If you don't need ``f2py``, MSVC alone is sufficient. For Fortran compiler
+    setup (needed for ``f2py``), see :ref:`F2PY and Windows <f2py-windows>`.
+
+    .. note::
+
+        Compilers should be on the system path (i.e., the ``PATH`` environment
+        variable should contain the directory in which the compiler executables
+        can be found) in order to be found, with the exception of MSVC which
+        will be found automatically if and only if there are no other compilers
+        on the ``PATH``. You can use any shell (e.g., Powershell, ``cmd`` or
+        Git Bash) to invoke a build.
+
+    .. warning::
+
+        Currently, Conda environment is not yet supported officially on `Windows
+        on ARM64 <https://github.com/conda-forge/conda-forge.github.io/issues/1940>`__.
+        The present approach uses virtualenv for building NumPy from source on
+        Windows on ARM64.
 
 Building NumPy from source
 --------------------------
@@ -302,7 +300,7 @@ Then you want to do the following:
 1. Create a dedicated development environment (virtual environment or conda
    environment),
 2. Install all needed dependencies (*build*, and also *test*, *doc* and
-   *optional* dependencies), 
+   *optional* dependencies),
 3. Build NumPy with the ``spin`` developer interface.
 
 Step (3) is always the same, steps (1) and (2) are different between conda and
@@ -361,9 +359,25 @@ virtual environments:
           python -m venv venv
           .\venv\Scripts\activate
 
+      .. tab-item:: Windows on ARM64
+        :sync: Windows on ARM64
+
+        ::
+
+          python -m venv venv
+          .\venv\Scripts\activate
+
+        .. note::
+
+          Building NumPy with BLAS and LAPACK functions requires OpenBLAS
+          library at Runtime. In Windows on ARM64, this can be done by setting
+          up pkg-config for OpenBLAS dependency. The build steps for OpenBLAS
+          for Windows on ARM64 can be found `here <http://www.openmathlib.org/OpenBLAS/docs/install/#windows-on-arm>`__.
+
+
     Then install the Python-level dependencies from PyPI with::
 
-       python -m pip install -r requirements/all_requirements.txt
+       python -m pip install -r requirements/build_requirements.txt
 
 To build NumPy in an activated development environment, run::
 
@@ -395,7 +409,7 @@ interface is self-documenting, so please see ``spin --help`` and
     install").
 
     Editable installs are supported. It is important to understand that **you
-    may use either an editable install or ``spin`` in a given repository clone,
+    may use either an editable install or** ``spin`` **in a given repository clone,
     but not both**. If you use editable installs, you have to use ``pytest``
     and other development tools directly instead of using ``spin``.
 
@@ -437,6 +451,7 @@ Customizing builds
 
    compilers_and_options
    blas_lapack
+   cpu_simd
    cross_compilation
    redistributable_binaries
 

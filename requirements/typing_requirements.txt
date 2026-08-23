@@ -1,0 +1,7 @@
+# static typing requirements that are not needed for runtime tests
+
+-r test_requirements.txt
+-r hypothesis_requirements.txt
+
+mypy==2.3.1
+pyrefly==1.2.0

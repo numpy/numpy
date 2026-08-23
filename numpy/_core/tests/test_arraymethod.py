@@ -3,8 +3,6 @@ This file tests the generic aspects of ArrayMethod.  At the time of writing
 this is private API, but when added, public API may be added here.
 """
 
-from __future__ import annotations
-
 import types
 from typing import Any
 
@@ -12,6 +10,9 @@ import pytest
 
 import numpy as np
 from numpy._core._multiarray_umath import _get_castingimpl as get_castingimpl
+
+# accessing `numpy.char.charray` will issue a deprecation warning
+from numpy._core.defchararray import chararray
 
 
 class TestResolveDescriptors:
@@ -64,9 +65,7 @@ class TestSimpleStridedCall:
 
 
 @pytest.mark.parametrize(
-    "cls", [
-        np.ndarray, np.recarray, np.char.chararray, np.matrix, np.memmap
-    ]
+    "cls", [np.ndarray, np.recarray, chararray, np.matrix, np.memmap]
 )
 class TestClassGetItem:
     def test_class_getitem(self, cls: type[np.ndarray]) -> None:

@@ -1,8 +1,10 @@
 import platform
+
 import pytest
-import numpy as np
 
 from numpy import array
+from numpy.testing import IS_64BIT
+
 from . import util
 
 
@@ -37,8 +39,8 @@ class TestReturnReal(util.F2PyTest):
         pytest.raises(IndexError, t, [])
         pytest.raises(IndexError, t, ())
 
-        pytest.raises(Exception, t, t)
-        pytest.raises(Exception, t, {})
+        pytest.raises(TypeError, t, t)
+        pytest.raises(TypeError, t, {})
 
         try:
             r = t(10**400)
@@ -53,8 +55,7 @@ class TestReturnReal(util.F2PyTest):
     "but not when run in isolation",
 )
 @pytest.mark.skipif(
-    np.dtype(np.intp).itemsize < 8,
-    reason="32-bit builds are buggy"
+    not IS_64BIT, reason="32-bit builds are buggy"
 )
 class TestCReturnReal(TestReturnReal):
     suffix = ".pyf"

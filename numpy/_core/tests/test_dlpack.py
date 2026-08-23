@@ -1,36 +1,36 @@
 import sys
+
 import pytest
 
 import numpy as np
-from numpy.testing import assert_array_equal, IS_PYPY
+from numpy.testing import assert_array_equal
 
 
 def new_and_old_dlpack():
-    yield np.arange(5)
 
     class OldDLPack(np.ndarray):
         # Support only the "old" version
         def __dlpack__(self, stream=None):
             return super().__dlpack__(stream=None)
 
-    yield np.arange(5).view(OldDLPack)
+    return [np.arange(5), np.arange(5).view(OldDLPack)]
 
 
 class TestDLPack:
-    @pytest.mark.skipif(IS_PYPY, reason="PyPy can't get refcounts.")
     @pytest.mark.parametrize("max_version", [(0, 0), None, (1, 0), (100, 3)])
     def test_dunder_dlpack_refcount(self, max_version):
         x = np.arange(5)
         y = x.__dlpack__(max_version=max_version)
-        assert sys.getrefcount(x) == 3
+        startcount = sys.getrefcount(x)
         del y
-        assert sys.getrefcount(x) == 2
+        assert startcount - sys.getrefcount(x) == 1
 
     def test_dunder_dlpack_stream(self):
         x = np.arange(5)
         x.__dlpack__(stream=None)
 
-        with pytest.raises(RuntimeError):
+        with pytest.raises(
+                ValueError, match="NumPy only supports stream=None."):
             x.__dlpack__(stream=1)
 
     def test_dunder_dlpack_copy(self):
@@ -53,14 +53,13 @@ class TestDLPack:
         with pytest.raises(BufferError):
             np.from_dlpack(z)
 
-    @pytest.mark.skipif(IS_PYPY, reason="PyPy can't get refcounts.")
     @pytest.mark.parametrize("arr", new_and_old_dlpack())
     def test_from_dlpack_refcount(self, arr):
         arr = arr.copy()
         y = np.from_dlpack(arr)
-        assert sys.getrefcount(arr) == 3
+        startcount = sys.getrefcount(arr)
         del y
-        assert sys.getrefcount(arr) == 2
+        assert startcount - sys.getrefcount(arr) == 1
 
     @pytest.mark.parametrize("dtype", [
         np.bool,
@@ -144,6 +143,17 @@ class TestDLPack:
         y = np.from_dlpack(x)
         assert not y.flags.writeable
 
+    def test_writeable(self):
+        x_new, x_old = new_and_old_dlpack()
+
+        # new dlpacks respect writeability
+        y = np.from_dlpack(x_new)
+        assert y.flags.writeable
+
+        # old dlpacks are not writeable for backwards compatibility
+        y = np.from_dlpack(x_old)
+        assert not y.flags.writeable
+
     def test_ndim0(self):
         x = np.array(1.0)
         y = np.from_dlpack(x)
@@ -172,7 +182,172 @@ class TestDLPack:
         np.from_dlpack(x, device="cpu")
         np.from_dlpack(x, device=None)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(BufferError):
             x.__dlpack__(dl_device=(10, 0))
+        with pytest.raises(ValueError):
+            np.from_dlpack(x, device="gpu")
+
+
+class TestRegisterDlpackDtype:
+    @pytest.fixture(scope="class", autouse=True)
+    @staticmethod
+    def dlpack_registry_clear():
+        prev = np._core._multiarray_umath._dlpack_registry_replace({}, {})
+        yield
+        np._core._multiarray_umath._dlpack_registry_replace(*prev)
+
+    @pytest.mark.parametrize("key,dtype", [
+        ((2,), np.dtype("f4")),
+        ((2, 2, 2), np.dtype(np.float16)),
+        (None, np.dtype(np.float16)),
+        ((4, 16), "S2"),  # not a dtype instance
+    ])
+    def test_register_bad_dlpack_tuple(self, key, dtype):
+        with pytest.raises(TypeError):
+            np.dtypes.register_dlpack_dtype(key, dtype)
+
+    @pytest.mark.parametrize("key,dtype", [
+        ((-1, 16), np.dtype(np.float16)),
+        ((256, 16), np.dtype(np.float16)),
+        ((4, 15), np.dtype(np.float16)),
+        ((4, 256), np.dtype("V256")),
+        ((4, 15), np.dtype(np.float32)),
+    ])
+    def test_register_bad_code_or_bits(self, key, dtype):
+        with pytest.raises(ValueError, match="(0..255|must match the dtype)"):
+            np.dtypes.register_dlpack_dtype(key, dtype)
+
+    def test_register_idempotent(self):
+        dt = np.dtype(np.float16)
+        np.dtypes.register_dlpack_dtype((4, 16), dt)
+        np.dtypes.register_dlpack_dtype((4, 16), dt)
+
+    def test_roundtrip(self, dtype=np.dtype("S1")):  # noqa: B008
+        # Register "S1" as kDLFloat8_e3m4 == 7
+        # (use of kwarg ensure singleton in free-threading)
+        np.dtypes.register_dlpack_dtype((7, 8), dtype)
+        x = np.array([1.0, 2.0], dtype="S1")
+        y = np.from_dlpack(x)
+        assert y.dtype == "S1"
+        assert_array_equal(x, y)
+
+    def test_register_conflict(self):
+        np.dtypes.register_dlpack_dtype((4, 16), np.dtype(np.float16))
+        with pytest.raises(ValueError, match="already exported"):
+            np.dtypes.register_dlpack_dtype((5, 16), np.dtype(np.float16))
+
+        a = np.array(["12", "23"])
+        with pytest.raises(BufferError):
+            np.from_dlpack(a)  # dtype not yet registered
+
+        with pytest.raises(ValueError, match="already maps"):
+            np.dtypes.register_dlpack_dtype((4, 16), np.dtype("S2"))
+
+        # But... accept that this now does get exported (but won't roundtrip)
+        arr = np.from_dlpack(np.array(["12", "23"], dtype="S2"))
+        assert arr.dtype == np.float16
+
+    @pytest.mark.thread_unsafe(reason="dlpack registry is thread-unsafe")
+    def test_buffererror_bad_dtype(self, dtype=np.dtype("S3")):  # noqa: B008
+        # Register S3 as a nonsensical dtype
+        np.dtypes.register_dlpack_dtype((123, 24), dtype)
+        # Delete from import but not from export.
+        imp, exp = np._core._multiarray_umath._dlpack_registry_replace({}, {})
+        imp.pop((123, 24))
+        np._core._multiarray_umath._dlpack_registry_replace(imp, exp)
+
+        arr = np.array(["1", "2"], dtype=dtype)
+        arr.__dlpack__()  # passes
+        with pytest.raises(BufferError):
+            np.from_dlpack(arr)  # doesn't round-trip
+
+
+class TestScalarDLPack:
+    @pytest.mark.parametrize(
+        "dtype",
+        [
+            np.bool_,
+            np.uint8,
+            np.int32,
+            np.int64,
+            np.float16,
+            np.float32,
+            np.float64,
+            np.complex128,
+        ],
+    )
+    def test_dlpack(self, dtype):
+        x = dtype(2)
+        y = np.from_dlpack(x)
+
+        assert x.dtype == y.dtype
+        assert y.shape == ()
+        assert x == y
+
+        # copy=False
+        y = np.from_dlpack(x, copy=False)
+        assert x.dtype == y.dtype
+        assert y.shape == ()
+        assert x == y
+
+    def test_dlpack_device(self):
+        x = np.float64(2)
+        assert x.__dlpack_device__() == (1, 0)
+
+    def test_dunder_dlpack_refcount(self):
+        x = np.float64(2)
+        y = x.__dlpack__(max_version=(1, 0))
+        startcount = sys.getrefcount(x)
+        del y
+        assert startcount - sys.getrefcount(x) == 1
+
+    def test_dunder_dlpack_version(self):
+        x = np.float64(2)
+        with pytest.raises(BufferError, match="readonly is unsupported"):
+            x.__dlpack__(max_version=(0, 0), copy=False)
+        with pytest.raises(BufferError, match="readonly is unsupported"):
+            # None is equivalent to (0, 0)
+            x.__dlpack__(copy=False)
+
+        # if copy=True, then we create a 0-D array, so should work
+        x.__dlpack__(max_version=(0, 0), copy=True)
+        x.__dlpack__(max_version=None, copy=True)
+
+    def test_dlpack_copy(self):
+        x = np.float64(2)
+        y = np.from_dlpack(x, copy=True)
+        assert x.dtype == y.dtype
+        assert y.shape == ()
+        assert x == y
+
+        y[()] = 3
+        assert x == 2
+        assert y == 3
+
+    def test_dlpack_read_only(self):
+        x = np.float64(2)
+        y = np.from_dlpack(x, copy=False)
+
+        with pytest.raises(
+            ValueError, match="assignment destination is read-only"
+        ):
+            y[()] = 3
+
+    @pytest.mark.parametrize("dtype", [np.str_, np.datetime64])
+    def test_invalid_dtype(self, dtype):
+        x = dtype('2021-05-27')
+
+        with pytest.raises(BufferError):
+            np.from_dlpack(x)
+
+    def test_device(self):
+        x = np.float64(2)
+        # requesting (1, 0), i.e. CPU device works in both calls:
+        x.__dlpack__(dl_device=(1, 0), max_version=(1, 0))
+        np.from_dlpack(x, device="cpu")
+        np.from_dlpack(x, device=None)
+
+        with pytest.raises(BufferError):
+            x.__dlpack__(dl_device=(10, 0), max_version=(1, 0))
         with pytest.raises(ValueError):
             np.from_dlpack(x, device="gpu")

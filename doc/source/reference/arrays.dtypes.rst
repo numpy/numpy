@@ -187,11 +187,14 @@ Generic types
         to an array of ``float64``, even though ``float32`` is a subdtype of
         ``np.floating``.
 
+.. _dtype-constructing-from-python-types:
 
 Built-in Python types
-    Several python types are equivalent to a corresponding
+    Several Python types are equivalent to a corresponding
     array scalar when used to generate a :class:`dtype` object:
 
+    ===================      ===============
+    Python type              NumPy type
     ===================      ===============
     :class:`int`             :class:`int\_`
     :class:`bool`            :class:`bool\_`
@@ -251,25 +254,40 @@ One-character strings
 Array-protocol type strings (see :ref:`arrays.interface`)
    The first character specifies the kind of data and the remaining
    characters specify the number of bytes per item, except for Unicode,
-   where it is interpreted as the number of characters.  The item size
-   must correspond to an existing type, or an error will be raised.  The
-   supported kinds are
+   where it is interpreted as the number of characters, and except ``b1``
+   which represents boolean.  The item size must correspond to an existing
+   type, or an error will be raised.  The supported kinds are
 
-   ================   ========================
-   ``'?'``            boolean
-   ``'b'``            (signed) byte
-   ``'B'``            unsigned byte
-   ``'i'``            (signed) integer
-   ``'u'``            unsigned integer
-   ``'f'``            floating-point
-   ``'c'``            complex-floating point
-   ``'m'``            timedelta
-   ``'M'``            datetime
-   ``'O'``            (Python) objects
-   ``'S'``, ``'a'``   zero-terminated bytes (not recommended)
-   ``'U'``            Unicode string
-   ``'V'``            raw data (:class:`void`)
-   ================   ========================
+   ==================  ========================
+   ``'?'``             boolean
+   ``'b'``             (signed) byte
+   ``'B'``             unsigned byte
+   ``'h'``             (signed) short
+   ``'H'``             unsigned short
+   ``'i'``             (signed) integer
+   ``'I'``             unsigned integer
+   ``'l'``             (signed) long integer
+   ``'L'``             unsigned long integer
+   ``'q'``             (signed) long long integer
+   ``'Q'``             unsigned long long integer
+   ``'n'``             signed :class:`intp`
+   ``'N'``             unsigned :class:`uintp`
+   ``'p'``             signed integer large enough for pointers
+   ``'P'``             unsigned integer large enough for pointers
+   ``'e'``             half precision
+   ``'f'``             single precision
+   ``'F'``             complex single precision
+   ``'d'``             double precision
+   ``'D'``             complex double precision
+   ``'g'``             long precision
+   ``'G'``             complex long double precision
+   ``'S'``             zero-terminated bytes (not recommended)
+   ``'U'``             Unicode string
+   ``'V'``             raw data (:class:`void`)
+   ``'O'``             (Python) objects
+   ``'M'``             :class:`datetime64`
+   ``'m'``             :class:`timedelta64`
+   ==================  ========================
 
    .. admonition:: Example
 
@@ -282,15 +300,6 @@ Array-protocol type strings (see :ref:`arrays.interface`)
          >>> dt = np.dtype('c16')  # 128-bit complex floating-point number
          >>> dt = np.dtype('S25')  # 25-length zero-terminated bytes
          >>> dt = np.dtype('U25')  # 25-character string
-
-   .. _string-dtype-note:
-
-   .. admonition:: Note on string types
-
-    For backward compatibility with existing code originally written to support
-    Python 2, ``S`` and ``a`` typestrings are zero-terminated bytes. 
-    For unicode strings, use ``U``, `numpy.str_`.  For signed bytes that do not
-    need zero-termination ``b`` or ``i1`` can be used.
 
 String with comma-separated fields
    A short-hand notation for specifying the format of a structured data type is
@@ -558,7 +567,7 @@ This equivalence can only be handled through ``==``, not through ``is``.
 
       >>> import numpy as np
 
-      >>> a = np.array([1, 2], dtype=float)
+      >>> a = np.array([1, 2], dtype=np.float64)
       >>> a.dtype == np.dtype(np.float64)
       True
       >>> a.dtype == np.float64

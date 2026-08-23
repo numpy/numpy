@@ -2,9 +2,13 @@
 Use cffi to access any of the underlying C functions from distributions.h
 """
 import os
-import numpy as np
+
 import cffi
+
+import numpy as np
+
 from .parse import parse_distributions_h
+
 ffi = cffi.FFI()
 
 inc_dir = os.path.join(np.get_include(), 'numpy')
@@ -28,7 +32,7 @@ state = bit_gen.state
 
 interface = rng.bit_generator.cffi
 n = 100
-vals_cffi = ffi.new('double[%d]' % n)
+vals_cffi = ffi.new(f'double[{n}]')
 lib.random_standard_normal_fill(interface.bit_generator, n, vals_cffi)
 
 # reset the state

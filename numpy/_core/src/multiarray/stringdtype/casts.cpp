@@ -1,12 +1,12 @@
-#include <cmath>
-#include <type_traits>
-
-#include "numpy/npy_common.h"
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include "numpy/npy_common.h"
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
+
+#include <cmath>
+#include <type_traits>
 
 #include "numpy/ndarraytypes.h"
 #include "numpy/arrayobject.h"
@@ -18,6 +18,7 @@
 #include "numpyos.h"
 #include "umathmodule.h"
 #include "gil_utils.h"
+#include "raii_utils.hpp"
 #include "static_string.h"
 #include "dtypemeta.h"
 #include "dtype.h"
@@ -146,6 +147,9 @@ string_to_string_resolve_descriptors(PyObject *NPY_UNUSED(self),
 {
     if (given_descrs[1] == NULL) {
         loop_descrs[1] = stringdtype_finalize_descr(given_descrs[0]);
+        if (loop_descrs[1] == NULL) {
+            return (NPY_CASTING)-1;
+        }
     }
     else {
         Py_INCREF(given_descrs[1]);
@@ -605,7 +609,7 @@ load_non_nullable_string(char *in, int has_null, const npy_static_string *defaul
     const npy_packed_static_string *ps = (npy_packed_static_string *)in;
     int isnull = NpyString_load(allocator, ps, string_to_load);
     if (isnull == -1) {
-        const char *msg = "Failed to load string for conversion to a non-nullable type";
+        const char msg[] = "Failed to load string for conversion to a non-nullable type";
         if (has_gil)
         {
             PyErr_SetString(PyExc_MemoryError, msg);
@@ -617,7 +621,7 @@ load_non_nullable_string(char *in, int has_null, const npy_static_string *defaul
     }
     else if (isnull) {
         if (has_null) {
-            const char *msg = "Arrays with missing data cannot be converted to a non-nullable type";
+            const char msg[] = "Arrays with missing data cannot be converted to a non-nullable type";
             if (has_gil)
             {
                 PyErr_SetString(PyExc_ValueError, msg);
@@ -773,10 +777,10 @@ string_to_int(
 
     npy_intp N = dimensions[0];
     char *in = data[0];
-    NpyType *out = (NpyType *)data[1];
+    char *out = data[1];
 
     npy_intp in_stride = strides[0];
-    npy_intp out_stride = strides[1] / sizeof(NpyType);
+    npy_intp out_stride = strides[1];
 
     while (N--) {
         NpyLongType value;
@@ -784,10 +788,10 @@ string_to_int(
             npy_gil_error(PyExc_RuntimeError, "Encountered problem converting string dtype to integer dtype.");
             goto fail;
         }
-        *out = (NpyType)value;
+        *(NpyType *)out = (NpyType)value;
 
         // Cast back to NpyLongType to check for out-of-bounds errors
-        if (static_cast<NpyLongType>(*out) != value) {
+        if (static_cast<NpyLongType>(*(NpyType *)out) != value) {
             // out of bounds, raise error following NEP 50 behavior
             const char *errmsg = NULL;
             if constexpr (std::is_same_v<NpyLongType, npy_ulonglong>) {
@@ -821,8 +825,8 @@ static PyType_Slot s2int_slots[] = {
 
 static const char *
 make_s2type_name(NPY_TYPES typenum) {
-    const char *prefix = "cast_StringDType_to_";
-    size_t plen = strlen(prefix);
+    const char prefix[] = "cast_StringDType_to_";
+    size_t plen = sizeof(prefix)/sizeof(char) - 1;
 
     const char *type_name = typenum_to_cstr(typenum);
     size_t nlen = strlen(type_name);
@@ -833,31 +837,40 @@ make_s2type_name(NPY_TYPES typenum) {
         return NULL;
     }
 
-    // memcpy instead of strcpy to avoid stringop-truncation warning, since
-    // we are not including the trailing null character
-    memcpy(buf, prefix, plen);
-    strncat(buf, type_name, nlen);
+    // memcpy instead of strcpy/strncat to avoid stringop-truncation warning,
+    // since we are not including the trailing null character
+    char *p = buf;
+    memcpy(p, prefix, plen);
+    p += plen;
+    memcpy(p, type_name, nlen);
     return buf;
 }
 
 static const char *
 make_type2s_name(NPY_TYPES typenum) {
-    const char *prefix = "cast_";
-    size_t plen = strlen(prefix);
+    const char prefix[] = "cast_";
+    size_t plen = sizeof(prefix)/sizeof(char) - 1;
 
     const char *type_name = typenum_to_cstr(typenum);
     size_t nlen = strlen(type_name);
 
-    const char *suffix = "_to_StringDType";
-    size_t slen = strlen(suffix);
+    const char suffix[] = "_to_StringDType";
+    size_t slen = sizeof(suffix)/sizeof(char) - 1;
 
     char *buf = (char *)PyMem_RawCalloc(sizeof(char), plen + nlen + slen + 1);
+    if (buf == NULL) {
+        npy_gil_error(PyExc_MemoryError, "Failed allocate memory for cast");
+        return NULL;
+    }
 
-    // memcpy instead of strcpy to avoid stringop-truncation warning, since
-    // we are not including the trailing null character
-    memcpy(buf, prefix, plen);
-    strncat(buf, type_name, nlen);
-    strncat(buf, suffix, slen);
+    // memcpy instead of strcpy/strncat to avoid stringop-truncation warning,
+    // since we are not including the trailing null character
+    char *p = buf;
+    memcpy(p, prefix, plen);
+    p += plen;
+    memcpy(p, type_name, nlen);
+    p += nlen;
+    memcpy(p, suffix, slen);
     return buf;
 }
 
@@ -888,10 +901,10 @@ type_to_string(
     NpyAuxData *NPY_UNUSED(auxdata)
 ) {
     npy_intp N = dimensions[0];
-    NpyType *in = (NpyType *)data[0];
+    char *in = data[0];
     char *out = data[1];
 
-    npy_intp in_stride = strides[0] / sizeof(NpyType);
+    npy_intp in_stride = strides[0];
     npy_intp out_stride = strides[1];
 
     PyArray_StringDTypeObject *descr =
@@ -900,7 +913,7 @@ type_to_string(
             NpyString_acquire_allocator(descr);
 
     while (N--) {
-        if (int_to_stringbuf((TClongType)*in, out, allocator) != 0) {
+        if (int_to_stringbuf((TClongType)*(NpyType *)in, out, allocator) != 0) {
             goto fail;
         }
 
@@ -998,10 +1011,10 @@ string_to_float(
 
     npy_intp N = dimensions[0];
     char *in = data[0];
-    NpyType *out = (NpyType *)data[1];
+    char *out = data[1];
 
     npy_intp in_stride = strides[0];
-    npy_intp out_stride = strides[1] / sizeof(NpyType);
+    npy_intp out_stride = strides[1];
 
     while (N--) {
         PyObject *pyfloat_value = string_to_pyfloat(
@@ -1021,7 +1034,7 @@ string_to_float(
             }
         }
 
-        *out = fval;
+        *(NpyType *)out = fval;
 
         in += in_stride;
         out += out_stride;
@@ -1054,10 +1067,10 @@ string_to_float<npy_float64, NPY_DOUBLE>(
 
     npy_intp N = dimensions[0];
     char *in = data[0];
-    npy_float64 *out = (npy_float64 *)data[1];
+    char *out = data[1];
 
     npy_intp in_stride = strides[0];
-    npy_intp out_stride = strides[1] / sizeof(npy_float64);
+    npy_intp out_stride = strides[1];
 
     while (N--) {
         PyObject *pyfloat_value = string_to_pyfloat(
@@ -1066,7 +1079,7 @@ string_to_float<npy_float64, NPY_DOUBLE>(
         if (pyfloat_value == NULL) {
             goto fail;
         }
-        *out = (npy_float64)PyFloat_AS_DOUBLE(pyfloat_value);
+        *(npy_float64 *)out = (npy_float64)PyFloat_AS_DOUBLE(pyfloat_value);
         Py_DECREF(pyfloat_value);
 
         in += in_stride;
@@ -1097,10 +1110,10 @@ string_to_float<npy_longdouble, NPY_LONGDOUBLE>(
     const npy_static_string *default_string = &descr->default_string;
     npy_intp N = dimensions[0];
     char *in = data[0];
-    npy_longdouble *out = (npy_longdouble *)data[1];
+    char *out = data[1];
 
     npy_intp in_stride = strides[0];
-    npy_intp out_stride = strides[1] / sizeof(npy_longdouble);
+    npy_intp out_stride = strides[1];
 
     while (N--) {
         npy_static_string s = {0, NULL};
@@ -1110,6 +1123,12 @@ string_to_float<npy_longdouble, NPY_LONGDOUBLE>(
 
         // allocate temporary null-terminated copy
         char *buf = (char *)PyMem_RawMalloc(s.size + 1);
+        if (buf == NULL) {
+            npy_gil_error(PyExc_MemoryError,
+                          "Failed to allocate string buffer while converting "
+                          "to a long double.");
+            goto fail;
+        }
         memcpy(buf, s.buf, s.size);
         buf[s.size] = '\0';
 
@@ -1117,6 +1136,15 @@ string_to_float<npy_longdouble, NPY_LONGDOUBLE>(
         errno = 0;
         npy_longdouble longdouble_value = NumPyOS_ascii_strtold(buf, &end);
 
+        if (end == buf || end != buf + s.size ||
+                (errno != 0 && errno != ERANGE)) {
+            npy_gil_error(PyExc_ValueError,
+                         "invalid literal for long double: %s (%s)",
+                         buf,
+                         strerror(errno));
+            PyMem_RawFree(buf);
+            goto fail;
+        }
         if (errno == ERANGE) {
             /* strtold returns INFINITY of the correct sign. */
             if (
@@ -1130,16 +1158,8 @@ string_to_float<npy_longdouble, NPY_LONGDOUBLE>(
                 goto fail;
             }
         }
-        else if (errno || end == buf || *end) {
-            npy_gil_error(PyExc_ValueError,
-                         "invalid literal for long double: %s (%s)",
-                         buf,
-                         strerror(errno));
-            PyMem_RawFree(buf);
-            goto fail;
-        }
         PyMem_RawFree(buf);
-        *out = longdouble_value;
+        *(npy_longdouble *)out = longdouble_value;
 
         in += in_stride;
         out += out_stride;
@@ -1198,11 +1218,11 @@ float_to_string(
     NpyAuxData *NPY_UNUSED(auxdata)
 ) {
     npy_intp N = dimensions[0];
-    NpyType *in = (NpyType *)data[0];
+    char *in = data[0];
     char *out = data[1];
     PyArray_Descr *float_descr = context->descriptors[0];
 
-    npy_intp in_stride = strides[0] / sizeof(NpyType);
+    npy_intp in_stride = strides[0];
     npy_intp out_stride = strides[1];
 
     PyArray_StringDTypeObject *descr =
@@ -1296,10 +1316,10 @@ string_to_complex_float(
     const npy_static_string *default_string = &descr->default_string;
     npy_intp N = dimensions[0];
     char *in = data[0];
-    NpyComplexType *out = (NpyComplexType *)data[1];
+    char *out = data[1];
 
     npy_intp in_stride = strides[0];
-    npy_intp out_stride = strides[1] / sizeof(NpyComplexType);
+    npy_intp out_stride = strides[1];
 
     while (N--) {
         PyObject *pycomplex_value = string_to_pycomplex(
@@ -1316,8 +1336,8 @@ string_to_complex_float(
             goto fail;
         }
 
-        npy_csetrealfunc(out, (NpyFloatType) complex_value.real);
-        npy_csetimagfunc(out, (NpyFloatType) complex_value.real);
+        npy_csetrealfunc((NpyComplexType *)out, (NpyFloatType) complex_value.real);
+        npy_csetimagfunc((NpyComplexType *)out, (NpyFloatType) complex_value.imag);
         in += in_stride;
         out += out_stride;
     }
@@ -1446,10 +1466,10 @@ string_to_datetime(PyArrayMethod_Context *context, char *const data[],
 
     npy_intp N = dimensions[0];
     char *in = data[0];
-    npy_datetime *out = (npy_datetime *)data[1];
+    char *out = data[1];
 
     npy_intp in_stride = strides[0];
-    npy_intp out_stride = strides[1] / sizeof(npy_datetime);
+    npy_intp out_stride = strides[1];
 
     npy_datetimestruct dts;
     NPY_DATETIMEUNIT in_unit = NPY_FR_ERROR;
@@ -1472,13 +1492,13 @@ string_to_datetime(PyArrayMethod_Context *context, char *const data[],
         }
         if (is_null) {
             if (has_null && !has_string_na) {
-                *out = NPY_DATETIME_NAT;
+                *(npy_datetime *)out = NPY_DATETIME_NAT;
                 goto next_step;
             }
             s = *default_string;
         }
         if (is_nat_string(&s)) {
-            *out = NPY_DATETIME_NAT;
+            *(npy_datetime *)out = NPY_DATETIME_NAT;
             goto next_step;
         }
 
@@ -1488,8 +1508,8 @@ string_to_datetime(PyArrayMethod_Context *context, char *const data[],
                     &dts, &in_meta.base, &out_special) < 0) {
             goto fail;
         }
-        if (NpyDatetime_ConvertDatetimeStructToDatetime64(dt_meta, &dts, out) <
-            0) {
+        if (NpyDatetime_ConvertDatetimeStructToDatetime64(
+                    dt_meta, &dts, (npy_datetime *)out) < 0) {
             goto fail;
         }
 
@@ -1520,10 +1540,10 @@ datetime_to_string(PyArrayMethod_Context *context, char *const data[],
                    NpyAuxData *NPY_UNUSED(auxdata))
 {
     npy_intp N = dimensions[0];
-    npy_datetime *in = (npy_datetime *)data[0];
+    char *in = data[0];
     char *out = data[1];
 
-    npy_intp in_stride = strides[0] / sizeof(npy_datetime);
+    npy_intp in_stride = strides[0];
     npy_intp out_stride = strides[1];
 
     _PyArray_LegacyDescr *dt_descr = (_PyArray_LegacyDescr *)context->descriptors[0];
@@ -1538,7 +1558,7 @@ datetime_to_string(PyArrayMethod_Context *context, char *const data[],
 
     while (N--) {
         npy_packed_static_string *out_pss = (npy_packed_static_string *)out;
-        if (*in == NPY_DATETIME_NAT)
+        if (*(npy_datetime *)in == NPY_DATETIME_NAT)
         {
             if (!has_null) {
                 npy_static_string os = {3, "NaT"};
@@ -1560,7 +1580,7 @@ datetime_to_string(PyArrayMethod_Context *context, char *const data[],
         else {
             npy_datetimestruct dts;
             if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(
-                        dt_meta, *in, &dts) < 0) {
+                        dt_meta, *(npy_datetime *)in, &dts) < 0) {
                 goto fail;
             }
 
@@ -1615,10 +1635,10 @@ string_to_timedelta(PyArrayMethod_Context *context, char *const data[],
 
     npy_intp N = dimensions[0];
     char *in = data[0];
-    npy_timedelta *out = (npy_timedelta *)data[1];
+    char *out = data[1];
 
     npy_intp in_stride = strides[0];
-    npy_intp out_stride = strides[1] / sizeof(npy_timedelta);
+    npy_intp out_stride = strides[1];
 
     while (N--) {
         const npy_packed_static_string *ps = (npy_packed_static_string *)in;
@@ -1632,7 +1652,7 @@ string_to_timedelta(PyArrayMethod_Context *context, char *const data[],
         }
         if (is_null) {
             if (has_null && !has_string_na) {
-                *out = NPY_DATETIME_NAT;
+                *(npy_timedelta *)out = NPY_DATETIME_NAT;
                 in += in_stride;
                 out += out_stride;
                 continue;
@@ -1640,7 +1660,7 @@ string_to_timedelta(PyArrayMethod_Context *context, char *const data[],
             s = *default_string;
         }
         if (is_nat_string(&s)) {
-            *out = NPY_DATETIME_NAT;
+            *(npy_timedelta *)out = NPY_DATETIME_NAT;
             in += in_stride;
             out += out_stride;
             continue;
@@ -1664,7 +1684,7 @@ string_to_timedelta(PyArrayMethod_Context *context, char *const data[],
             goto fail;
         }
 
-        *out = (npy_timedelta)value;
+        *(npy_timedelta *)out = (npy_timedelta)value;
 
         in += in_stride;
         out += out_stride;
@@ -1692,10 +1712,10 @@ timedelta_to_string(PyArrayMethod_Context *context, char *const data[],
                    NpyAuxData *NPY_UNUSED(auxdata))
 {
     npy_intp N = dimensions[0];
-    npy_timedelta *in = (npy_timedelta *)data[0];
+    char *in = data[0];
     char *out = data[1];
 
-    npy_intp in_stride = strides[0] / sizeof(npy_timedelta);
+    npy_intp in_stride = strides[0];
     npy_intp out_stride = strides[1];
 
     PyArray_StringDTypeObject *sdescr = (PyArray_StringDTypeObject *)context->descriptors[1];
@@ -1704,7 +1724,7 @@ timedelta_to_string(PyArrayMethod_Context *context, char *const data[],
 
     while (N--) {
         npy_packed_static_string *out_pss = (npy_packed_static_string *)out;
-        if (*in == NPY_DATETIME_NAT)
+        if (*(npy_timedelta *)in == NPY_DATETIME_NAT)
         {
             if (!has_null) {
                 npy_static_string os = {3, "NaT"};
@@ -1723,7 +1743,7 @@ timedelta_to_string(PyArrayMethod_Context *context, char *const data[],
                 goto fail;
             }
         }
-        else if (int_to_stringbuf((long long)*in, out, allocator) < 0) {
+        else if (int_to_stringbuf((long long)*(npy_timedelta *)in, out, allocator) < 0) {
             goto fail;
         }
 
@@ -1860,7 +1880,7 @@ void_to_string(PyArrayMethod_Context *context, char *const data[],
     npy_intp out_stride = strides[1];
 
     while(N--) {
-        size_t out_num_bytes = utf8_buffer_size(in, max_in_size);
+        Py_ssize_t out_num_bytes = utf8_buffer_size(in, max_in_size);
         if (out_num_bytes < 0) {
             npy_gil_error(PyExc_TypeError,
                           "Invalid UTF-8 bytes found, cannot convert to UTF-8");
@@ -1868,7 +1888,7 @@ void_to_string(PyArrayMethod_Context *context, char *const data[],
         }
         npy_static_string out_ss = {0, NULL};
         if (load_new_string((npy_packed_static_string *)out,
-                            &out_ss, out_num_bytes, allocator,
+                            &out_ss, (size_t)out_num_bytes, allocator,
                             "void to string cast") == -1) {
             goto fail;
         }
@@ -1905,7 +1925,6 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
                 NpyAuxData *NPY_UNUSED(auxdata))
 {
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
-    npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
     int has_null = descr->na_object != NULL;
     int has_string_na = descr->has_string_na;
     const npy_static_string *default_string = &descr->default_string;
@@ -1917,26 +1936,46 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
     npy_intp out_stride = strides[1];
     size_t max_out_size = context->descriptors[1]->elsize;
 
+    np::raii::NpyStringAcquireAllocator alloc(descr);
+
     while (N--) {
         const npy_packed_static_string *ps = (npy_packed_static_string *)in;
         npy_static_string s = {0, NULL};
         if (load_nullable_string(ps, &s, has_null, has_string_na,
-                                 default_string, na_name, allocator,
+                                 default_string, na_name, alloc.allocator(),
                                  "in string to bytes cast") == -1) {
-            goto fail;
+            return -1;
         }
 
-        for (size_t i=0; i<s.size; i++) {
+        for (size_t i = 0; i < s.size; i++) {
             if (((unsigned char *)s.buf)[i] > 127) {
-                NPY_ALLOW_C_API_DEF;
-                NPY_ALLOW_C_API;
-                PyObject *str = PyUnicode_FromStringAndSize(s.buf, s.size);
+                // Building the UnicodeEncodeError needs the GIL and must not
+                // run while the allocator is held (re-entrant Python could
+                // deadlock on it), so copy the offending bytes out, release the
+                // allocator, then raise.
+                char *bad = (char *)PyMem_RawMalloc(s.size);
+                if (bad == NULL) {
+                    alloc.release();
+                    npy_gil_error(PyExc_MemoryError,
+                                  "Failed to allocate memory for unicode "
+                                  "encoding error");
+                    return -1;
+                }
+                memcpy(bad, s.buf, s.size);
+                size_t bad_size = s.size;
+                size_t bad_pos = i;
+                alloc.release();
+
+                np::raii::EnsureGIL ensure_gil{};
+
+                PyObject *str = PyUnicode_FromStringAndSize(bad, bad_size);
+                PyMem_RawFree(bad);
 
                 if (str == NULL) {
                     PyErr_SetString(
                         PyExc_UnicodeEncodeError, "Invalid character encountered during unicode encoding."
                     );
-                    goto fail;
+                    return -1;
                 }
 
                 PyObject *exc = PyObject_CallFunction(
@@ -1944,21 +1983,20 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
                     "sOnns",
                     "ascii",
                     str,
-                    (Py_ssize_t)i,
-                    (Py_ssize_t)(i+1),
+                    (Py_ssize_t)bad_pos,
+                    (Py_ssize_t)(bad_pos + 1),
                     "ordinal not in range(128)"
                 );
 
                 if (exc == NULL) {
                     Py_DECREF(str);
-                    goto fail;
+                    return -1;
                 }
 
                 PyErr_SetObject(PyExceptionInstance_Class(exc), exc);
                 Py_DECREF(exc);
                 Py_DECREF(str);
-                NPY_DISABLE_C_API;
-                goto fail;
+                return -1;
             }
         }
 
@@ -1971,15 +2009,7 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
         out += out_stride;
     }
 
-    NpyString_release_allocator(allocator);
-
     return 0;
-
-fail:
-
-    NpyString_release_allocator(allocator);
-
-    return -1;
 }
 
 static PyType_Slot s2bytes_slots[] = {
@@ -2010,17 +2040,19 @@ bytes_to_string(PyArrayMethod_Context *context, char *const data[],
     npy_intp out_stride = strides[1];
 
     while(N--) {
-        size_t out_num_bytes = max_in_size;
-
-        // ignore trailing nulls
-        while (out_num_bytes > 0 && in[out_num_bytes - 1] == 0) {
-            out_num_bytes--;
+        // reject non-UTF-8 input; readers of the stored bytes assume validity
+        Py_ssize_t out_num_bytes = utf8_buffer_size(in, max_in_size);
+        if (out_num_bytes < 0) {
+            npy_gil_error(PyExc_TypeError,
+                          "Invalid UTF-8 bytes found, cannot convert to "
+                          "StringDType");
+            goto fail;
         }
 
         npy_static_string out_ss = {0, NULL};
         if (load_new_string((npy_packed_static_string *)out,
-                            &out_ss, out_num_bytes, allocator,
-                            "void to string cast") == -1) {
+                            &out_ss, (size_t)out_num_bytes, allocator,
+                            "bytes to string cast") == -1) {
             goto fail;
         }
 
@@ -2246,7 +2278,7 @@ get_casts() {
             &PyArray_StringDType, &PyArray_BytesDType);
 
     PyArrayMethod_Spec *StringToBytesCastSpec = get_cast_spec(
-        make_s2type_name(NPY_BYTE),
+        make_s2type_name(NPY_STRING),
         NPY_SAME_KIND_CASTING,
         NPY_METH_NO_FLOATINGPOINT_ERRORS,
         s2bytes_dtypes,
@@ -2257,7 +2289,7 @@ get_casts() {
             &PyArray_BytesDType, &PyArray_StringDType);
 
     PyArrayMethod_Spec *BytesToStringCastSpec = get_cast_spec(
-        make_type2s_name(NPY_BYTE),
+        make_type2s_name(NPY_STRING),
         NPY_SAME_KIND_CASTING,
         NPY_METH_NO_FLOATINGPOINT_ERRORS,
         bytes2s_dtypes,

@@ -51,4 +51,3 @@ def parse_distributions_h(ffi, inc_dir):
             line = line.replace('RAND_INT_TYPE', 'int64_t')
             s.append(line)
         ffi.cdef('\n'.join(s))
-

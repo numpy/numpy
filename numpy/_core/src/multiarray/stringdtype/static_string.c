@@ -155,8 +155,6 @@ vstring_buffer(npy_string_arena *arena, _npy_static_string_u *string)
     return (char *)((size_t)arena->buffer + string->vstring.offset);
 }
 
-#define ARENA_EXPAND_FACTOR 1.25
-
 static char *
 arena_malloc(npy_string_arena *arena, npy_string_realloc_func r, size_t size)
 {
@@ -168,24 +166,17 @@ arena_malloc(npy_string_arena *arena, npy_string_realloc_func r, size_t size)
     else {
         string_storage_size = size + sizeof(size_t);
     }
-    if ((arena->size - arena->cursor) <= string_storage_size) {
-        // realloc the buffer so there is enough room
-        // first guess is to double the size of the buffer
-        size_t newsize;
-        if (arena->size == 0) {
-            newsize = string_storage_size;
+    if ((arena->size - arena->cursor) < string_storage_size) {
+        size_t minsize = arena->cursor + string_storage_size;
+        if (minsize < arena->cursor) {
+            return NULL;  // overflow means out of memory
         }
-        else if (((ARENA_EXPAND_FACTOR * arena->size) - arena->cursor) >
-                 string_storage_size) {
-            newsize = ARENA_EXPAND_FACTOR * arena->size;
+        // Allocate 25% more than needed for this string.
+        size_t newsize = minsize + minsize / 4;
+        if (newsize < minsize) {
+            return NULL;  // overflow means out of memory
         }
-        else {
-            newsize = arena->size + string_storage_size;
-        }
-        if ((arena->cursor + size) >= newsize) {
-            // need extra room beyond the expansion factor, leave some padding
-            newsize = ARENA_EXPAND_FACTOR * (arena->cursor + size);
-        }
+
         // passing a NULL buffer to realloc is the same as malloc
         char *newbuf = r(arena->buffer, newsize);
         if (newbuf == NULL) {
@@ -237,6 +228,37 @@ arena_free(npy_string_arena *arena, _npy_static_string_u *str)
 }
 
 static npy_string_arena NEW_ARENA = {0, 0, NULL};
+
+static void
+acquire_allocator_lock(npy_string_allocator *allocator)
+{
+#if PY_VERSION_HEX < 0x30d00b3
+    if (!PyThread_acquire_lock(allocator->allocator_lock, NOWAIT_LOCK)) {
+        if (PyGILState_Check()) {
+            Py_BEGIN_ALLOW_THREADS
+            PyThread_acquire_lock(allocator->allocator_lock, WAIT_LOCK);
+            Py_END_ALLOW_THREADS
+        }
+        else {
+            PyThread_acquire_lock(allocator->allocator_lock, WAIT_LOCK);
+        }
+    }
+#else
+    PyMutex_Lock(&allocator->allocator_lock);
+#endif
+}
+
+static int
+allocator_seen(npy_string_allocator *allocator,
+               npy_string_allocator *allocators[], size_t end)
+{
+    for (size_t i = 0; i < end; i++) {
+        if (allocators[i] == allocator) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 NPY_NO_EXPORT npy_string_allocator *
 NpyString_new_allocator(npy_string_malloc_func m, npy_string_free_func f,
@@ -290,18 +312,13 @@ NpyString_free_allocator(npy_string_allocator *allocator)
  * by this function exactly once.
  *
  * Note that functions requiring the GIL should not be called while the
- * allocator mutex is held, as doing so may cause deadlocks.
+ * allocator mutex is held and reentrant calls are possible, as doing so may
+ * cause deadlocks.
  */
 NPY_NO_EXPORT npy_string_allocator *
 NpyString_acquire_allocator(const PyArray_StringDTypeObject *descr)
 {
-#if PY_VERSION_HEX < 0x30d00b3
-    if (!PyThread_acquire_lock(descr->allocator->allocator_lock, NOWAIT_LOCK)) {
-        PyThread_acquire_lock(descr->allocator->allocator_lock, WAIT_LOCK);
-    }
-#else
-    PyMutex_Lock(&descr->allocator->allocator_lock);
-#endif
+    acquire_allocator_lock(descr->allocator);
     return descr->allocator;
 }
 
@@ -318,42 +335,64 @@ NpyString_acquire_allocator(const PyArray_StringDTypeObject *descr)
  * ignored. A buffer overflow will happen if the *descrs* array does not
  * contain n_descriptors elements.
  *
- * If pointers to the same descriptor are passed multiple times, only acquires
+ * If pointers to the same allocator are passed multiple times, only acquires
  * the allocator mutex once but sets identical allocator pointers appropriately.
+ * Distinct allocator mutexes are acquired in ascending allocator address order
+ * to avoid lock-ordering deadlocks when callers pass different descriptor
+ * orders.
  *
  * The allocator mutexes must be released after this function returns, see
  * NpyString_release_allocators.
  *
  * Note that functions requiring the GIL should not be called while the
- * allocator mutex is held, as doing so may cause deadlocks.
+ * allocator mutex is held and reentrant calls are possible, as doing so may
+ * cause deadlocks.
  */
 NPY_NO_EXPORT void
 NpyString_acquire_allocators(size_t n_descriptors,
                              PyArray_Descr *const descrs[],
                              npy_string_allocator *allocators[])
 {
-    for (size_t i=0; i<n_descriptors; i++) {
+    for (size_t i = 0; i < n_descriptors; i++) {
         if (NPY_DTYPE(descrs[i]) != &PyArray_StringDType) {
             allocators[i] = NULL;
             continue;
         }
-        int allocators_match = 0;
-        for (size_t j=0; j<i; j++) {
-            if (allocators[j] == NULL) {
+        allocators[i] = ((PyArray_StringDTypeObject *)descrs[i])->allocator;
+    }
+
+    uintptr_t last_locked_addr = 0;
+    int have_last_locked_addr = 0;
+
+    for (;;) {
+        npy_string_allocator *next_allocator = NULL;
+        uintptr_t next_addr = UINTPTR_MAX;
+
+        for (size_t i = 0; i < n_descriptors; i++) {
+            npy_string_allocator *allocator = allocators[i];
+
+            if (allocator == NULL || allocator_seen(allocator, allocators, i)) {
                 continue;
             }
-            if (((PyArray_StringDTypeObject *)descrs[i])->allocator ==
-                ((PyArray_StringDTypeObject *)descrs[j])->allocator)
-            {
-                allocators[i] = allocators[j];
-                allocators_match = 1;
-                break;
+
+            uintptr_t addr = (uintptr_t)allocator;
+
+            if (have_last_locked_addr && addr <= last_locked_addr) {
+                continue;
+            }
+            if (next_allocator == NULL || addr < next_addr) {
+                next_allocator = allocator;
+                next_addr = addr;
             }
         }
-        if (!allocators_match) {
-            allocators[i] = NpyString_acquire_allocator(
-                    (PyArray_StringDTypeObject *)descrs[i]);
+
+        if (next_allocator == NULL) {
+            break;
         }
+
+        acquire_allocator_lock(next_allocator);
+        last_locked_addr = next_addr;
+        have_last_locked_addr = 1;
     }
 }
 
@@ -404,7 +443,7 @@ NpyString_release_allocators(size_t length, npy_string_allocator *allocators[])
     }
 }
 
-static const char * const EMPTY_STRING = "";
+static const char EMPTY_STRING[] = "";
 
 /*NUMPY_API
  * Extract the packed contents of *packed_string* into *unpacked_string*.
@@ -478,7 +517,7 @@ heap_or_arena_allocate(npy_string_allocator *allocator,
         if (*flags == 0) {
             // string isn't previously allocated, so add to existing arena allocation
             char *ret = arena_malloc(arena, allocator->realloc, sizeof(char) * size);
-            if (size < NPY_MEDIUM_STRING_MAX_SIZE) {
+            if (size <= NPY_MEDIUM_STRING_MAX_SIZE) {
                 *flags = NPY_STRING_INITIALIZED;
             }
             else {
@@ -706,6 +745,9 @@ NpyString_dup(const npy_packed_static_string *in,
     int used_malloc = 0;
     if (in_allocator == out_allocator && !is_short_string(in)) {
         in_buf = in_allocator->malloc(size);
+        if (in_buf == NULL) {
+            return -1;
+        }
         memcpy(in_buf, vstring_buffer(arena, in_u), size);
         used_malloc = 1;
     }
@@ -734,7 +776,7 @@ NpyString_cmp(const npy_static_string *s1, const npy_static_string *s2)
     int cmp = 0;
 
     if (minsize != 0) {
-        cmp = strncmp(s1->buf, s2->buf, minsize);
+        cmp = memcmp(s1->buf, s2->buf, minsize);
     }
 
     if (cmp == 0) {
@@ -771,6 +813,10 @@ NpyString_size(const npy_packed_static_string *packed_string)
  *
  * Copy and pack the first *size* entries of the buffer pointed to by *buf*
  * into the *packed_string*. Returns 0 on success and -1 on failure.
+ *
+ * *buf* must be valid, complete UTF-8: StringDType readers decode the stored
+ * bytes without validating them, so malformed input can make them stall or
+ * read out of bounds. This function does not validate *buf*.
 */
 NPY_NO_EXPORT int
 NpyString_pack(npy_string_allocator *allocator,
@@ -786,6 +832,12 @@ NpyString_pack(npy_string_allocator *allocator,
 NPY_NO_EXPORT int
 NpyString_share_memory(const npy_packed_static_string *s1, npy_string_allocator *a1,
                        const npy_packed_static_string *s2, npy_string_allocator *a2) {
+    if (s1 == s2) {
+        // a packed string trivially shares memory with itself; this case
+        // needs to be checked explicitly since the checks below miss it
+        // for short and null strings
+        return 1;
+    }
     if (a1 != a2 ||
         is_short_string(s1) || is_short_string(s2) ||
         NpyString_isnull(s1) || NpyString_isnull(s2)) {

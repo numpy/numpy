@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
 import argparse
-import subprocess
-import tempfile
 import os
-import sys
 import shutil
-
+import subprocess
+import sys
+import tempfile
 
 parser = argparse.ArgumentParser(
     description='Upload files to a remote repo, replacing existing content'
@@ -45,7 +44,7 @@ def run(cmd, stdout=True):
     try:
         subprocess.check_call(cmd, stdout=pipe, stderr=pipe)
     except subprocess.CalledProcessError:
-        print("\n! Error executing: `%s;` aborting" % ' '.join(cmd))
+        print(f"\n! Error executing: `{' '.join(cmd)};` aborting")
         sys.exit(1)
 
 
@@ -56,16 +55,16 @@ run(['git', 'init'])
 # ensure the working branch is called "main"
 # (`--initial-branch=main` appeared to have failed on older git versions):
 run(['git', 'checkout', '-b', 'main'])
-run(['git', 'remote', 'add', 'origin',  args.remote])
+run(['git', 'remote', 'add', 'origin', args.remote])
 run(['git', 'config', '--local', 'user.name', args.committer])
 run(['git', 'config', '--local', 'user.email', args.email])
 
-print('- committing new content: "%s"' % args.message)
+print(f'- committing new content: "{args.message}"')
 run(['cp', '-R', os.path.join(args.dir, '.'), '.'])
 run(['git', 'add', '.'], stdout=False)
 run(['git', 'commit', '--allow-empty', '-m', args.message], stdout=False)
 
-print('- uploading as %s <%s>' % (args.committer, args.email))
+print(f'- uploading as {args.committer} <{args.email}>')
 if args.force:
     run(['git', 'push', 'origin', 'main', '--force'])
 else:

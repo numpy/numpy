@@ -509,9 +509,9 @@ will be ignored.  This means, that operations will never silently use the
 The user will have to write one of::
 
     np.array([3]) + np.array(2**100)
-    np.array([3]) + np.array(2**100, dtype=object)
+    np.array([3]) + np.array(2**100, dtype=np.object_)
 
-As such implicit conversion to ``object`` should be rare and the work-around
+As such implicit conversion to ``object_`` should be rare and the work-around
 is clear, we expect that the backwards compatibility concerns are fairly small.
 
 

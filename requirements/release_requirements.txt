@@ -1,19 +1,9 @@
 # These packages are needed for a release in addition to those needed
 # for building, testing, and the creation of documentation.
 
-# download-wheels.py
-urllib3
-beautifulsoup4
-
 # changelog.py
 pygithub
-gitpython>=3.1.30
-
-# uploading wheels
-twine
-
-# building and notes
-Paver
+gitpython==3.1.59
 
 # uploading release documentation
 packaging

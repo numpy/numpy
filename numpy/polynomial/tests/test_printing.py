@@ -1,18 +1,21 @@
-from math import nan, inf
-import pytest
-from numpy._core import array, arange, printoptions
-import numpy.polynomial as poly
-from numpy.testing import assert_equal, assert_
+from decimal import Decimal
 
 # For testing polynomial printing with object arrays
 from fractions import Fraction
-from decimal import Decimal
+from math import inf, nan
+
+import pytest
+
+import numpy.polynomial as poly
+from numpy._core import arange, array, printoptions
+from numpy.testing import assert_, assert_equal
 
 
 class TestStrUnicodeSuperSubscripts:
 
     @pytest.fixture(scope='class', autouse=True)
-    def use_unicode(self):
+    @classmethod
+    def use_unicode(cls):
         poly.set_default_printstyle('unicode')
 
     @pytest.mark.parametrize(('inp', 'tgt'), (
@@ -95,7 +98,8 @@ class TestStrUnicodeSuperSubscripts:
 class TestStrAscii:
 
     @pytest.fixture(scope='class', autouse=True)
-    def use_ascii(self):
+    @classmethod
+    def use_ascii(cls):
         poly.set_default_printstyle('ascii')
 
     @pytest.mark.parametrize(('inp', 'tgt'), (
@@ -181,7 +185,8 @@ class TestStrAscii:
 class TestLinebreaking:
 
     @pytest.fixture(scope='class', autouse=True)
-    def use_ascii(self):
+    @classmethod
+    def use_ascii(cls):
         poly.set_default_printstyle('ascii')
 
     def test_single_line_one_less(self):
@@ -244,6 +249,7 @@ class TestLinebreaking:
                 assert_(len(line) < lw)
 
 
+@pytest.mark.thread_unsafe(reason="set_default_printstyle() is global state")
 def test_set_default_printoptions():
     p = poly.Polynomial([1, 2, 3])
     c = poly.Chebyshev([1, 2, 3])
@@ -257,6 +263,7 @@ def test_set_default_printoptions():
         poly.set_default_printstyle('invalid_input')
 
 
+@pytest.mark.thread_unsafe(reason="set_default_printstyle() is global state")
 def test_complex_coefficients():
     """Test both numpy and built-in complex."""
     coefs = [0 + 1j, 1 + 1j, -2 + 2j, 3 + 0j]
@@ -487,12 +494,13 @@ SWITCH_TO_EXP = (
     '1.23 + 0.12 x + (1.23e-02) x**2 + (1.23e-03) x**3',
     '1.235 + 0.123 x + (1.235e-02) x**2 + (1.235e-03) x**3',
     '1.2346 + 0.1235 x + 0.0123 x**2 + (1.2346e-03) x**3 + (1.2346e-04) x**4',
-    '1.23457 + 0.12346 x + 0.01235 x**2 + (1.23457e-03) x**3 + '
-    '(1.23457e-04) x**4',
-    '1.234568 + 0.123457 x + 0.012346 x**2 + 0.001235 x**3 + '
-    '(1.234568e-04) x**4 + (1.234568e-05) x**5',
-    '1.2345679 + 0.1234568 x + 0.0123457 x**2 + 0.0012346 x**3 + '
-    '(1.2345679e-04) x**4 + (1.2345679e-05) x**5')
+    ('1.23457 + 0.12346 x + 0.01235 x**2 + (1.23457e-03) x**3 + '
+     '(1.23457e-04) x**4'),
+    ('1.234568 + 0.123457 x + 0.012346 x**2 + 0.001235 x**3 + '
+     '(1.234568e-04) x**4 + (1.234568e-05) x**5'),
+    ('1.2345679 + 0.1234568 x + 0.0123457 x**2 + 0.0012346 x**3 + '
+     '(1.2345679e-04) x**4 + (1.2345679e-05) x**5')
+)
 
 class TestPrintOptions:
     """
@@ -502,7 +510,8 @@ class TestPrintOptions:
     """
 
     @pytest.fixture(scope='class', autouse=True)
-    def use_ascii(self):
+    @classmethod
+    def use_ascii(cls):
         poly.set_default_printstyle('ascii')
 
     def test_str(self):

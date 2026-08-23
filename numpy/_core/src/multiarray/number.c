@@ -122,6 +122,8 @@ _PyArray_SetNumericOps(PyObject *dict)
     SET(conjugate);
     SET(matmul);
     SET(clip);
+    SET(real);
+    SET(imag);
 
     // initialize static globals needed for matmul
     npy_static_pydata.axes_1d_obj_kwargs = Py_BuildValue(
@@ -146,6 +148,9 @@ _get_keywords(int rtype, PyArrayObject *out)
     PyObject *kwds = NULL;
     if (rtype != NPY_NOTYPE || out != NULL) {
         kwds = PyDict_New();
+        if (kwds == NULL) {
+            return NULL;
+        }
         if (rtype != NPY_NOTYPE) {
             PyArray_Descr *descr;
             descr = PyArray_DescrFromType(rtype);
@@ -169,13 +174,16 @@ PyArray_GenericReduceFunction(PyArrayObject *m1, PyObject *op, int axis,
     PyObject *kwds;
 
     args = Py_BuildValue("(Oi)", m1, axis);
+    if (args == NULL) {
+        return NULL;
+    }
     kwds = _get_keywords(rtype, out);
     meth = PyObject_GetAttrString(op, "reduce");
     if (meth && PyCallable_Check(meth)) {
         ret = PyObject_Call(meth, args, kwds);
     }
     Py_DECREF(args);
-    Py_DECREF(meth);
+    Py_XDECREF(meth);
     Py_XDECREF(kwds);
     return ret;
 }
@@ -189,13 +197,16 @@ PyArray_GenericAccumulateFunction(PyArrayObject *m1, PyObject *op, int axis,
     PyObject *kwds;
 
     args = Py_BuildValue("(Oi)", m1, axis);
+    if (args == NULL) {
+        return NULL;
+    }
     kwds = _get_keywords(rtype, out);
     meth = PyObject_GetAttrString(op, "accumulate");
     if (meth && PyCallable_Check(meth)) {
         ret = PyObject_Call(meth, args, kwds);
     }
     Py_DECREF(args);
-    Py_DECREF(meth);
+    Py_XDECREF(meth);
     Py_XDECREF(kwds);
     return ret;
 }
@@ -332,6 +343,7 @@ static int
 fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
 {
     PyObject *fastop = NULL;
+
     if (PyLong_CheckExact(o2)) {
         int overflow = 0;
         long exp = PyLong_AsLongAndOverflow(o2, &overflow);
@@ -363,7 +375,12 @@ fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
     }
 
     PyArrayObject *a1 = (PyArrayObject *)o1;
-    if (!(PyArray_ISFLOAT(a1) || PyArray_ISCOMPLEX(a1))) {
+    if (PyArray_ISOBJECT(a1)) {
+        return 1;
+    }
+    if (fastop != n_ops.square && !PyArray_ISFLOAT(a1) && !PyArray_ISCOMPLEX(a1)) {
+        // we special-case squaring for any array type
+        // gh-29388
         return 1;
     }
 

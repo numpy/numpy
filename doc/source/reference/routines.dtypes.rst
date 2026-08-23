@@ -71,3 +71,11 @@ Others
 .. attribute:: ObjectDType
                VoidDType
 
+
+Routines for DType authors
+--------------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   register_dlpack_dtype

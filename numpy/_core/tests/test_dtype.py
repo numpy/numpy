@@ -1,24 +1,32 @@
-import sys
-import operator
-import pytest
+import contextlib
 import ctypes
-import gc
-import types
-from typing import Any
+import inspect
+import operator
+import os
 import pickle
+import sys
+import types
+import warnings
+from itertools import permutations
+from typing import Any
+
+import pytest
 
 import numpy as np
 import numpy.dtypes
-from numpy._core._rational_tests import rational
 from numpy._core._multiarray_tests import create_custom_field_dtype
+from numpy._core._rational_tests import rational, rational2
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT,
-    IS_PYSTON)
-from itertools import permutations
-import random
-
-import hypothesis
-from hypothesis.extra import numpy as hynp
+    HAS_REFCOUNT,
+    IS_64BIT,
+    IS_WASM,
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
+from numpy.testing._private.hypothesis_helpers import HAS_HYPOTHESIS, hynp, hypothesis
+from numpy.testing._private.utils import requires_deep_recursion
 
 
 def assert_dtype_equal(a, b):
@@ -204,7 +212,7 @@ class TestBuiltin:
                       'formats': ['i4', 'f4'],
                       'offsets': [4, 0]})
         assert_equal(x == y, False)
-        # This is an safe cast (not equiv) due to the different names:
+        # This is a safe cast (not equiv) due to the different names:
         assert np.can_cast(x, y, casting="safe")
 
     @pytest.mark.parametrize(
@@ -250,6 +258,29 @@ class TestBuiltin:
         assert dt1 == dt2
         assert repr(dt1) == "dtype('S10')"
         assert dt1.itemsize == 10
+
+
+class TestByteOrderStr:
+    """Regression coverage for numpy._core._dtype._byte_order_str.
+
+    Documents the premise the dead-branch removal relies on:
+    dtype.byteorder only ever returns one of '<', '>', '=', or '|'.
+    """
+
+    def test_dtype_byteorder_never_returns_S(self):
+        # No reasonable way to construct a dtype produces
+        # .byteorder == 'S'. Even newbyteorder('S') resolves to
+        # '<' or '>' on the resulting dtype.
+        for spec in ['int8', 'int32', 'float64', 'complex128', 'U4', 'S4']:
+            for arg in ('<', '>', '=', '|', 'S', 'native', 'swap'):
+                try:
+                    dt = np.dtype(spec).newbyteorder(arg)
+                except (ValueError, TypeError):
+                    continue
+                assert dt.byteorder in ('<', '>', '=', '|'), (
+                    f"dtype({spec!r}).newbyteorder({arg!r}).byteorder "
+                    f"= {dt.byteorder!r}, expected one of '<>=|'"
+                )
 
 
 class TestRecord:
@@ -620,6 +651,18 @@ class TestRecord:
         assert arr.dtype.hasobject  # but claims to contain objects
         del arr  # the deletion failed previously.
 
+    def test_structured_out_of_range(self):
+        # Regression test for gh-29270 against over-eager optimization of
+        # copying of structured dtype: do not copy when dtype has holes
+        # because the itemsize was explicitly given.
+        dtype = np.dtype(dict(names=["a"], formats=["i4"], itemsize=8))
+        raw_arr = np.zeros(10, dtype="i8")
+        arr1 = raw_arr.view(dtype)
+        arr2 = np.full(10, -1, dtype="i8").view(dtype)
+        # This should only fill in the i4 field of `dtype`:
+        arr1[...] = arr2
+        assert (raw_arr.view("i4")[1::2] == 0).all()
+
 
 class TestSubarray:
     def test_single_subarray(self):
@@ -742,7 +785,7 @@ class TestSubarray:
         assert_raises(ValueError, np.dtype, [('a', 'f4', (-1, -1))])
 
     def test_alignment(self):
-        #Check that subarrays are aligned
+        # Check that subarrays are aligned
         t1 = np.dtype('(1,)i4', align=True)
         t2 = np.dtype('2i4', align=True)
         assert_equal(t1.alignment, t2.alignment)
@@ -771,7 +814,7 @@ class TestSubarray:
         arr = np.ones(3, dtype=[("f", "i", 3)])
         cast = arr.astype(object)
         for fields in cast:
-            assert type(fields) == tuple and len(fields) == 1
+            assert type(fields) is tuple and len(fields) == 1
             subarr = fields[0]
             assert subarr.base is None
             assert subarr.flags.owndata
@@ -812,115 +855,6 @@ def iter_struct_object_dtypes():
                    ('b', [('ba', 'O'), ('bb', 'O')], (2, 3))])
     p = (0, [[(obj, obj)] * 3] * 2)
     yield pytest.param(dt, p, 12, obj, id="<structured subarray 2>")
-
-
-@pytest.mark.skipif(
-    sys.version_info >= (3, 12),
-    reason="Python 3.12 has immortal refcounts, this test will no longer "
-           "work. See gh-23986"
-)
-@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
-class TestStructuredObjectRefcounting:
-    """These tests cover various uses of complicated structured types which
-    include objects and thus require reference counting.
-    """
-    @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
-                             iter_struct_object_dtypes())
-    @pytest.mark.parametrize(["creation_func", "creation_obj"], [
-        pytest.param(np.empty, None,
-             # None is probably used for too many things
-             marks=pytest.mark.skip("unreliable due to python's behaviour")),
-        (np.ones, 1),
-        (np.zeros, 0)])
-    def test_structured_object_create_delete(self, dt, pat, count, singleton,
-                                             creation_func, creation_obj):
-        """Structured object reference counting in creation and deletion"""
-        # The test assumes that 0, 1, and None are singletons.
-        gc.collect()
-        before = sys.getrefcount(creation_obj)
-        arr = creation_func(3, dt)
-
-        now = sys.getrefcount(creation_obj)
-        assert now - before == count * 3
-        del arr
-        now = sys.getrefcount(creation_obj)
-        assert now == before
-
-    @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
-                             iter_struct_object_dtypes())
-    def test_structured_object_item_setting(self, dt, pat, count, singleton):
-        """Structured object reference counting for simple item setting"""
-        one = 1
-
-        gc.collect()
-        before = sys.getrefcount(singleton)
-        arr = np.array([pat] * 3, dt)
-        assert sys.getrefcount(singleton) - before == count * 3
-        # Fill with `1` and check that it was replaced correctly:
-        before2 = sys.getrefcount(one)
-        arr[...] = one
-        after2 = sys.getrefcount(one)
-        assert after2 - before2 == count * 3
-        del arr
-        gc.collect()
-        assert sys.getrefcount(one) == before2
-        assert sys.getrefcount(singleton) == before
-
-    @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
-                             iter_struct_object_dtypes())
-    @pytest.mark.parametrize(
-        ['shape', 'index', 'items_changed'],
-        [((3,), ([0, 2],), 2),
-         ((3, 2), ([0, 2], slice(None)), 4),
-         ((3, 2), ([0, 2], [1]), 2),
-         ((3,), ([True, False, True]), 2)])
-    def test_structured_object_indexing(self, shape, index, items_changed,
-                                        dt, pat, count, singleton):
-        """Structured object reference counting for advanced indexing."""
-        # Use two small negative values (should be singletons, but less likely
-        # to run into race-conditions).  This failed in some threaded envs
-        # When using 0 and 1.  If it fails again, should remove all explicit
-        # checks, and rely on `pytest-leaks` reference count checker only.
-        val0 = -4
-        val1 = -5
-
-        arr = np.full(shape, val0, dt)
-
-        gc.collect()
-        before_val0 = sys.getrefcount(val0)
-        before_val1 = sys.getrefcount(val1)
-        # Test item getting:
-        part = arr[index]
-        after_val0 = sys.getrefcount(val0)
-        assert after_val0 - before_val0 == count * items_changed
-        del part
-        # Test item setting:
-        arr[index] = val1
-        gc.collect()
-        after_val0 = sys.getrefcount(val0)
-        after_val1 = sys.getrefcount(val1)
-        assert before_val0 - after_val0 == count * items_changed
-        assert after_val1 - before_val1 == count * items_changed
-
-    @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
-                             iter_struct_object_dtypes())
-    def test_structured_object_take_and_repeat(self, dt, pat, count, singleton):
-        """Structured object reference counting for specialized functions.
-        The older functions such as take and repeat use different code paths
-        then item setting (when writing this).
-        """
-        indices = [0, 1]
-
-        arr = np.array([pat] * 3, dt)
-        gc.collect()
-        before = sys.getrefcount(singleton)
-        res = arr.take(indices)
-        after = sys.getrefcount(singleton)
-        assert after - before == count * 2
-        new = res.repeat(10)
-        gc.collect()
-        after_repeat = sys.getrefcount(singleton)
-        assert after_repeat - after == count * 2 * 10
 
 
 class TestStructuredDtypeSparseFields:
@@ -969,22 +903,50 @@ class TestMonsterType:
             ('yi', np.dtype((a, (3, 2))))])
         assert_dtype_equal(c, d)
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
+    @requires_deep_recursion
     def test_list_recursion(self):
         l = []
         l.append(('f', l))
         with pytest.raises(RecursionError):
             np.dtype(l)
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
+    @requires_deep_recursion
     def test_tuple_recursion(self):
         d = np.int32
         for i in range(100000):
             d = (d, (1,))
-        with pytest.raises(RecursionError):
+        # depending on OS and Python version, this might succeed
+        # see gh-30370 and cpython issue #142253
+        with contextlib.suppress(RecursionError):
             np.dtype(d)
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
+    @pytest.mark.thread_unsafe(reason="Sets global threading stack size")
+    @pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for threads")
+    def test_deep_subarray_dtype_dealloc(self):
+        import threading
+
+        import numpy as np
+
+        def build_and_drop():
+            d = np.dtype(np.int32)
+            for _ in range(200000):
+                d = np.dtype((d, (1,)))
+            # hold a second reference so teardown exercises stopping
+            # and resuming
+            held = d.base
+            del d
+            del held
+
+        # small stack size to fail reliably if deallocation is recusive
+        old_stack_size = threading.stack_size(1024 * 1024)
+        try:
+            t = threading.Thread(target=build_and_drop)
+            t.start()
+            t.join()
+        finally:
+            threading.stack_size(old_stack_size)
+
+    @requires_deep_recursion
     def test_dict_recursion(self):
         d = {"names": ['self'], "formats": [None], "offsets": [0]}
         d['formats'][0] = d
@@ -1171,6 +1133,10 @@ class TestString:
         assert_equal(str(dt), "(numpy.record, [('a', '<u2')])")
         assert_equal(dt.name, 'record16')
 
+    def test_custom_dtype_str(self):
+        dt = np.dtypes.StringDType()
+        assert_equal(dt.str, "StringDType()")
+
 
 class TestDtypeAttributeDeletion:
 
@@ -1212,7 +1178,10 @@ class TestDtypeAttributes:
         arr = np.broadcast_to(arr, 10)
         assert arr.strides == (0,)
         with pytest.raises(ValueError):
-            arr.dtype = "i1"
+            with warnings.catch_warnings():  # gh-28901
+                warnings.filterwarnings(action="ignore",
+                                        category=DeprecationWarning)
+                arr.dtype = "i1"
 
 class TestDTypeMakeCanonical:
     def check_canonical(self, dtype, canonical):
@@ -1295,12 +1264,13 @@ class TestDTypeMakeCanonical:
 
     def test_object_flag_not_inherited(self):
         # The following dtype still indicates "object", because its included
-        # in the unaccessible space (maybe this could change at some point):
+        # in the inaccessible space (maybe this could change at some point):
         arr = np.ones(3, "i,O,i")[["f0", "f2"]]
         assert arr.dtype.hasobject
         canonical_dt = np.result_type(arr.dtype)
         assert not canonical_dt.hasobject
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @pytest.mark.slow
     @hypothesis.given(dtype=hynp.nested_dtypes())
     def test_make_canonical_hypothesis(self, dtype):
@@ -1310,12 +1280,14 @@ class TestDTypeMakeCanonical:
         two_arg_result = np.result_type(dtype, dtype)
         assert np.can_cast(two_arg_result, canonical, casting="no")
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @pytest.mark.slow
     @hypothesis.given(
             dtype=hypothesis.extra.numpy.array_dtypes(
                 subtype_strategy=hypothesis.extra.numpy.array_dtypes(),
-                min_size=5, max_size=10, allow_subarrays=True))
-    def test_structured(self, dtype):
+                min_size=5, max_size=10, allow_subarrays=True),
+            random=hypothesis.strategies.randoms())
+    def test_structured(self, dtype, random):
         # Pick 4 of the fields at random.  This will leave empty space in the
         # dtype (since we do not canonicalize it here).
         field_subset = random.sample(dtype.names, k=4)
@@ -1361,6 +1333,15 @@ class TestPickling:
             assert_equal(x, y)
             assert_equal(x[0], y[0])
 
+    @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+    @pytest.mark.xfail(reason="dtype conversion doesn't allow this yet.")
+    def test_pickling_large(self):
+        # The actual itemsize is larger than a c-integer here.
+        dtype = np.dtype(f"({2**31},)i")
+        self.check_pickling(dtype)
+        dtype = np.dtype(f"({2**31},)i", metadata={"a": "b"})
+        self.check_pickling(dtype)
+
     @pytest.mark.parametrize('t', [int, float, complex, np.int32, str, object,
                                    bool])
     def test_builtin(self, t):
@@ -1396,10 +1377,10 @@ class TestPickling:
     @pytest.mark.parametrize('unit', ['', 'Y', 'M', 'W', 'D', 'h', 'm', 's',
                                       'ms', 'us', 'ns', 'ps', 'fs', 'as'])
     def test_datetime(self, base, unit):
-        dt = np.dtype('%s[%s]' % (base, unit) if unit else base)
+        dt = np.dtype(f'{base}[{unit}]' if unit else base)
         self.check_pickling(dt)
         if unit:
-            dt = np.dtype('%s[7%s]' % (base, unit))
+            dt = np.dtype(f'{base}[7{unit}]')
             self.check_pickling(dt)
 
     def test_metadata(self):
@@ -1408,7 +1389,7 @@ class TestPickling:
 
     @pytest.mark.parametrize("DType",
         [type(np.dtype(t)) for t in np.typecodes['All']] +
-        [type(np.dtype(rational)), np.dtype])
+        [type(np.dtype(rational)), type(np.dtype(rational2)), np.dtype])
     def test_pickle_dtype_class(self, DType):
         # Check that DTypes (the classes/types) roundtrip when pickling
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
@@ -1417,7 +1398,7 @@ class TestPickling:
 
     @pytest.mark.parametrize("dt",
         [np.dtype(t) for t in np.typecodes['All']] +
-        [np.dtype(rational)])
+        [np.dtype(rational), np.dtype(rational2)])
     def test_pickle_dtype(self, dt):
         # Check that dtype instances roundtrip when pickling and that pickling
         # doesn't change the hash value
@@ -1425,7 +1406,62 @@ class TestPickling:
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             roundtrip_dt = pickle.loads(pickle.dumps(dt, proto))
             assert roundtrip_dt == dt
-            assert hash(dt) == pre_pickle_hash
+            assert hash(roundtrip_dt) == pre_pickle_hash
+
+    @pytest.mark.parametrize('dt', [
+        np.dtype([('a', 'i4'), ('b', 'f8')]),
+        np.dtype('i4, i1', align=True),
+    ])
+    def test_setstate_invalid_tuple_size(self, dt):
+        # gh-30476
+        valid_state = dt.__reduce__()[2]
+        dt.__setstate__(valid_state)
+
+        for size in [1, 2, 3, 4]:
+            with pytest.raises(
+                ValueError, match="Invalid state while unpickling"
+            ):
+                dt.__setstate__(valid_state[:size])
+
+        min_extra = 10 - len(valid_state)
+        for extra in range(min_extra, min_extra + 5):
+            extended = valid_state + (None,) * extra
+            with pytest.raises(
+                ValueError, match="Invalid state while unpickling"
+            ):
+                dt.__setstate__(extended)
+
+    @pytest.mark.parametrize('spec, align', [
+        ([('a', 'i4'), ('b', 'f8')], False),
+        ('i4, i1', True),
+    ])
+    def test_setstate_endian(self, spec, align):
+        dt = np.dtype(spec, align=align)
+        valid_state = list(dt.__reduce__()[2])
+
+        def state_with_endian(endian):
+            state = list(valid_state)
+            state[1] = endian
+            return tuple(state)
+
+        # a non-native byte order is stored as given, a native one as '='
+        swapped = '>' if sys.byteorder == 'little' else '<'
+
+        # bytes are accepted for backwards compatibility with old pickles
+        dt.__setstate__(state_with_endian(swapped.encode()))
+        assert dt.byteorder == swapped
+        dt.__setstate__(state_with_endian(swapped))
+        assert dt.byteorder == swapped
+
+        for endian in ['\N{MICRO SIGN}', '\N{SNOWMAN}', '\ud800', '', '>>',
+                       b'', b'>>']:
+            with pytest.raises(
+                ValueError, match="endian is not 1-char string"
+            ):
+                dt.__setstate__(state_with_endian(endian))
+
+        with pytest.raises(ValueError, match="endian is not a string"):
+            dt.__setstate__(state_with_endian(42))
 
 
 class TestPromotion:
@@ -1481,14 +1517,15 @@ class TestPromotion:
         res = np.minimum(np.ones(3, dtype=other), complex_scalar).dtype
         assert res == expected
 
-    def test_complex_pyscalar_promote_rational(self):
+    @pytest.mark.parametrize("rat_cls", [rational, rational2])
+    def test_complex_pyscalar_promote_rational(self, rat_cls):
         with pytest.raises(TypeError,
                 match=r".* no common DType exists for the given inputs"):
-            np.result_type(1j, rational)
+            np.result_type(1j, rat_cls)
 
         with pytest.raises(TypeError,
                 match=r".* no common DType exists for the given inputs"):
-            np.result_type(1j, rational(1, 2))
+            np.result_type(1j, rat_cls(1, 2))
 
     @pytest.mark.parametrize("val", [2, 2**32, 2**63, 2**64, 2 * 100])
     def test_python_integer_promotion(self, val):
@@ -1531,14 +1568,24 @@ class TestPromotion:
             assert np.result_type(*perm) == expected
 
 
-def test_rational_dtype():
+def test_rational2_uses_new_dtype_api():
+    # ``rational2`` provides its own ``common_dtype`` slot (which the
+    # legacy ``rational`` cannot), and that slot rejects floats.
+    assert np.result_type(rational, 1.0) == np.float64
+    with pytest.raises(TypeError,
+            match=r".* no common DType exists for the given inputs"):
+        np.result_type(rational2, 1.0)
+
+
+@pytest.mark.parametrize("rat_cls", [rational, rational2])
+def test_rational_dtype(rat_cls):
     # test for bug gh-5719
-    a = np.array([1111], dtype=rational).astype
+    a = np.array([1111], dtype=rat_cls).astype
     assert_raises(OverflowError, a, 'int8')
 
     # test that dtype detection finds user-defined types
-    x = rational(1)
-    assert_equal(np.array([x, x]).dtype, np.dtype(rational))
+    x = rat_cls(1)
+    assert np.array([x, x]).dtype.type is rat_cls
 
 
 def test_dtypes_are_true():
@@ -1567,20 +1614,22 @@ class TestFromDTypeAttribute:
         assert np.dtype(dt) == np.float64
         assert np.dtype(dt()) == np.float64
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    def test_recursion(self):
+    def test_recursive(self):
+        # This used to recurse. It now doesn't, we enforce the
+        # dtype attribute to be a dtype (and will not recurse).
         class dt:
             pass
 
         dt.dtype = dt
-        with pytest.raises(RecursionError):
+        with pytest.raises(ValueError):
             np.dtype(dt)
 
         dt_instance = dt()
         dt_instance.dtype = dt
-        with pytest.raises(RecursionError):
+        with pytest.raises(ValueError):
             np.dtype(dt_instance)
 
+    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
     def test_void_subtype(self):
         class dt(np.void):
             # This code path is fully untested before, so it is unclear
@@ -1591,31 +1640,70 @@ class TestFromDTypeAttribute:
         np.dtype(dt)
         np.dtype(dt(1))
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    def test_void_subtype_recursion(self):
+    def test_void_subtype_recursive(self):
+        # Used to recurse, but dtype is now enforced to be a dtype instance
+        # so that we do not recurse.
         class vdt(np.void):
             pass
 
         vdt.dtype = vdt
 
-        with pytest.raises(RecursionError):
+        with pytest.raises(ValueError):
             np.dtype(vdt)
 
-        with pytest.raises(RecursionError):
+        with pytest.raises(ValueError):
             np.dtype(vdt(1))
 
 
+class TestFromDTypeProtocol:
+    def test_simple(self):
+        class A:
+            dtype = np.dtype("f8")
+
+        assert np.dtype(A()) == np.dtype(np.float64)
+
+    def test_not_a_dtype(self):
+        # This also prevents coercion as a trivial path, although
+        # a custom error may be nicer.
+        class ArrayLike:
+            __numpy_dtype__ = None
+            dtype = np.dtype("f8")
+
+        with pytest.raises(ValueError, match=".*__numpy_dtype__.*"):
+            np.dtype(ArrayLike())
+
+    def test_prevent_dtype_explicit(self):
+        class ArrayLike:
+            @property
+            def __numpy_dtype__(self):
+                raise RuntimeError("my error!")
+
+        with pytest.raises(RuntimeError, match="my error!"):
+            np.dtype(ArrayLike())
+
+    def test_type_object(self):
+        class TypeWithProperty:
+            @property
+            def __numpy_dtype__(self):
+                raise RuntimeError("not reached")
+
+        # Arbitrary types go to object currently, and the
+        # protocol doesn't prevent that.
+        assert np.dtype(TypeWithProperty) == object
+
+
 class TestDTypeClasses:
-    @pytest.mark.parametrize("dtype", list(np.typecodes['All']) + [rational])
+    @pytest.mark.parametrize(
+        "dtype", list(np.typecodes['All']) + [rational, rational2])
     def test_basic_dtypes_subclass_properties(self, dtype):
         # Note: Except for the isinstance and type checks, these attributes
         #       are considered currently private and may change.
         dtype = np.dtype(dtype)
         assert isinstance(dtype, np.dtype)
         assert type(dtype) is not np.dtype
-        if dtype.type.__name__ != "rational":
+        if dtype.type.__name__ not in ("rational", "rational2"):
             dt_name = type(dtype).__name__.lower().removesuffix("dtype")
-            if dt_name == "uint" or dt_name == "int":
+            if dt_name in {"uint", "int"}:
                 # The scalar names has a `c` attached because "int" is Python
                 # int and that is long...
                 dt_name += "c"
@@ -1624,7 +1712,7 @@ class TestDTypeClasses:
             assert type(dtype).__module__ == "numpy.dtypes"
 
             assert getattr(numpy.dtypes, type(dtype).__name__) is type(dtype)
-        else:
+        elif dtype.type.__name__ == "rational":
             assert type(dtype).__name__ == "dtype[rational]"
             assert type(dtype).__module__ == "numpy"
 
@@ -1672,9 +1760,27 @@ class TestDTypeClasses:
 
     @pytest.mark.parametrize("name",
             ["Half", "Float", "Double", "CFloat", "CDouble"])
-    def test_float_alias_names(self, name):
-        with pytest.raises(AttributeError):
-            getattr(numpy.dtypes, name + "DType") is numpy.dtypes.Float16DType
+    def test_float_alias_names_not_present(self, name):
+        assert not hasattr(numpy.dtypes, f"{name}DType")
+
+    def test_scalar_helper_all_dtypes(self):
+        for dtype in np.dtypes.__all__:
+            if dtype == "register_dlpack_dtype":
+                continue
+
+            dt_class = getattr(np.dtypes, dtype)
+            dt = np.dtype(dt_class)
+            if dt.char not in 'OTVM':
+                assert np._core.multiarray.scalar(dt) == dt.type()
+            elif dt.char == 'V':
+                assert np._core.multiarray.scalar(dt) == dt.type(b'\x00')
+            elif dt.char == 'M':
+                # can't do anything with this without generating ValueError
+                # because 'M' has no units
+                _ = np._core.multiarray.scalar(dt)
+            else:
+                with pytest.raises(TypeError):
+                    np._core.multiarray.scalar(dt)
 
 
 class TestFromCTypes:
@@ -1757,7 +1863,12 @@ class TestFromCTypes:
             ]
         expected = np.dtype({
             "names": ['a', 'b', 'c', 'd'],
-            "formats": ['u1', np.uint16, np.uint32, [('one', 'u1'), ('two', np.uint32)]],
+            "formats": [
+                'u1',
+                np.uint16,
+                np.uint32,
+                [('one', 'u1'), ('two', np.uint32)],
+            ],
             "offsets": [0, 0, 0, 0],
             "itemsize": ctypes.sizeof(Union)
         })
@@ -1781,7 +1892,12 @@ class TestFromCTypes:
             ]
         expected = np.dtype({
             "names": ['a', 'b', 'c', 'd'],
-            "formats": ['u1', np.uint16, np.uint32, [('one', 'u1'), ('two', np.uint32)]],
+            "formats": [
+                'u1',
+                np.uint16,
+                np.uint32,
+                [('one', 'u1'), ('two', np.uint32)],
+            ],
             "offsets": [0, 0, 0, 0],
             "itemsize": ctypes.sizeof(Union)
         })
@@ -1813,7 +1929,15 @@ class TestFromCTypes:
                 ('g', ctypes.c_uint8)
                 ]
         expected = np.dtype({
-            "formats": [np.uint8, np.uint16, np.uint8, np.uint16, np.uint32, np.uint32, np.uint8],
+            "formats": [
+                np.uint8,
+                np.uint16,
+                np.uint8,
+                np.uint16,
+                np.uint32,
+                np.uint32,
+                np.uint8,
+            ],
             "offsets": [0, 2, 4, 6, 8, 12, 16],
             "names": ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
             "itemsize": 18})
@@ -1870,7 +1994,7 @@ class TestFromCTypes:
         self.check(ctypes.c_uint8.__ctype_be__, np.dtype('u1'))
 
     all_types = set(np.typecodes['All'])
-    all_pairs = permutations(all_types, 2)
+    all_pairs = list(permutations(all_types, 2))
 
     @pytest.mark.parametrize("pair", all_pairs)
     def test_pairs(self, pair):
@@ -1886,6 +2010,10 @@ class TestFromCTypes:
 
 class TestUserDType:
     @pytest.mark.leaks_references(reason="dynamically creates custom dtype.")
+    @pytest.mark.thread_unsafe(
+        reason="crashes when GIL disabled, dtype setup is thread-unsafe",
+    )
+    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
     def test_custom_structured_dtype(self):
         class mytype:
             pass
@@ -1901,10 +2029,15 @@ class TestUserDType:
         if HAS_REFCOUNT:
             # Create an array and test that memory gets cleaned up (gh-25949)
             o = object()
+            startcount = sys.getrefcount(o)
             a = np.array([o], dtype=dt)
             del a
-            assert sys.getrefcount(o) == 2
+            assert sys.getrefcount(o) == startcount
 
+    @pytest.mark.thread_unsafe(
+        reason="crashes when GIL disabled, dtype setup is thread-unsafe",
+    )
+    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
     def test_custom_structured_dtype_errors(self):
         class mytype:
             pass
@@ -1952,12 +2085,79 @@ class TestClassGetItem:
 def test_result_type_integers_and_unitless_timedelta64():
     # Regression test for gh-20077.  The following call of `result_type`
     # would cause a seg. fault.
-    td = np.timedelta64(4)
-    result = np.result_type(0, td)
-    assert_dtype_equal(result, td.dtype)
+    with pytest.warns(
+        DeprecationWarning,
+        match="The 'generic' unit for NumPy timedelta is deprecated",
+    ):
+        td = np.timedelta64(4)
+        result = np.result_type(0, td)
+        assert_dtype_equal(result, td.dtype)
 
 
 def test_creating_dtype_with_dtype_class_errors():
     # Regression test for #25031, calling `np.dtype` with itself segfaulted.
     with pytest.raises(TypeError, match="Cannot convert np.dtype into a"):
         np.array(np.ones(10), dtype=np.dtype)
+
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+class TestDTypeSignatures:
+    def test_signature_dtype(self):
+        sig = inspect.signature(np.dtype)
+
+        assert len(sig.parameters) == 4
+
+        assert "dtype" in sig.parameters
+        assert sig.parameters["dtype"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert sig.parameters["dtype"].default is inspect.Parameter.empty
+
+        assert "align" in sig.parameters
+        assert sig.parameters["align"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert sig.parameters["align"].default is False
+
+        assert "copy" in sig.parameters
+        assert sig.parameters["copy"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert sig.parameters["copy"].default is False
+
+        # the optional `metadata` parameter has no default, so `**kwargs` must be used
+        assert "kwargs" in sig.parameters
+        assert sig.parameters["kwargs"].kind is inspect.Parameter.VAR_KEYWORD
+        assert sig.parameters["kwargs"].default is inspect.Parameter.empty
+
+    def test_signature_dtype_newbyteorder(self):
+        sig = inspect.signature(np.dtype.newbyteorder)
+
+        assert len(sig.parameters) == 2
+
+        assert "self" in sig.parameters
+        assert sig.parameters["self"].kind is inspect.Parameter.POSITIONAL_ONLY
+        assert sig.parameters["self"].default is inspect.Parameter.empty
+
+        assert "new_order" in sig.parameters
+        assert sig.parameters["new_order"].kind is inspect.Parameter.POSITIONAL_ONLY
+        assert sig.parameters["new_order"].default == "S"
+
+    @pytest.mark.parametrize("typename", [
+        n for n in np.dtypes.__all__ if n != "register_dlpack_dtype"
+    ])
+    def test_signature_dtypes_classes(self, typename: str):
+        dtype_type = getattr(np.dtypes, typename)
+        sig = inspect.signature(dtype_type)
+
+        match typename.lower().removesuffix("dtype"):
+            case "bytes" | "str":
+                params_expect = {"size"}
+            case "void":
+                params_expect = {"length"}
+            case "datetime64" | "timedelta64":
+                params_expect = {"unit"}
+            case "string":
+                # `na_object` cannot be used in the text signature because of its
+                # `np._NoValue` default, which isn't supported by `inspect.signature`,
+                # so `**kwargs` is used instead.
+                params_expect = {"coerce", "kwargs"}
+            case _:
+                params_expect = set()
+
+        params_actual = set(sig.parameters)
+        assert params_actual == params_expect

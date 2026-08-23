@@ -104,21 +104,21 @@ typedef struct
 {
     // type name compatible with python style
     const char *pyname;
-    // returns '1' if the type represent a unsigned integer
+    // returns '1' if the type represents an unsigned integer
     unsigned int is_unsigned:1;
-    // returns '1' if the type represent a signed integer
+    // returns '1' if the type represents a signed integer
     unsigned int is_signed:1;
-    // returns '1' if the type represent a single or double precision
+    // returns '1' if the type represents a single or double precision
     unsigned int is_float:1;
-    // returns '1' if the type represent a boolean
+    // returns '1' if the type represents a boolean
     unsigned int is_bool:1;
-    // returns '1' if the type represent a sequence
+    // returns '1' if the type represents a sequence
     unsigned int is_sequence:1;
-    // returns '1' if the type represent a scalar
+    // returns '1' if the type represents a scalar
     unsigned int is_scalar:1;
-    // returns '1' if the type represent a vector
+    // returns '1' if the type represents a vector
     unsigned int is_vector:1;
-    // returns the len of multi-vector if the type represent x2 or x3 vector
+    // returns the len of multi-vector if the type represents x2 or x3 vector
     // otherwise returns 0, e.g. returns 2 if data type is simd_data_vu8x2
     int is_vectorx;
     // returns the equivalent scalar data type e.g. simd_data_vu8 -> simd_data_u8

@@ -237,7 +237,7 @@ meshgrid. This means that when it is indexed, only one dimension of each
 returned array is greater than 1. This avoids repeating the data and thus saves
 memory, which is often desirable.
 
-These sparse coordinate grids are intended to be use with :ref:`broadcasting`.
+These sparse coordinate grids are intended to be used with :ref:`broadcasting`.
 When all coordinates are used in an expression, broadcasting still leads to a
 fully-dimensional result array.
 

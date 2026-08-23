@@ -20,19 +20,7 @@ body {
   width: 15%;
 }
 
-/* Version switcher colors from PyData Sphinx Theme */
-
-.version-switcher__button[data-active-version-name*="devdocs"] {
-  background-color: var(--pst-color-warning);
-  border-color: var(--pst-color-warning);
-  opacity: 0.9;
-}
-
-.version-switcher__button:not([data-active-version-name*="stable"]):not([data-active-version-name*="dev"]):not([data-active-version-name*="pull"]) {
-  background-color: var(--pst-color-danger);
-  border-color: var(--pst-color-danger);
-  opacity: 0.9;
-}
+/* Version switcher from PyData Sphinx Theme */
 
 .version-switcher__menu a.list-group-item {
   font-size: small;
@@ -40,11 +28,14 @@ body {
 
 button.btn.version-switcher__button,
 button.btn.version-switcher__button:hover {
-  color: black;
   font-size: small;
 }
 
 /* Main index page overview cards */
+
+.sd-card {
+  background-color: var(--pst-color-on-background);
+}
 
 .sd-card .sd-card-img-top {
   height: 60px;
@@ -57,7 +48,8 @@ button.btn.version-switcher__button:hover {
 /* Main index page overview images */
 
 html[data-theme=dark] .sd-card img[src*='.svg'] {
-  filter: invert(0.82) brightness(0.8) contrast(1.2);
+  filter: invert(1.0) saturate(0.0);
+  background: none;
 }
 
 /* Legacy admonition */
@@ -89,7 +81,7 @@ div.admonition-legacy>.admonition-title {
   font-size: small;
 }
 
-/* Use more acccessible colours for text in dark mode */
+/* Use more accessible colours for text in dark mode */
 [data-theme=dark] .try_examples_button {
   color: black;
 }
@@ -111,4 +103,9 @@ div.admonition-legacy>.admonition-title {
 
 .try_examples_outer_iframe {
   margin-top: 0.4em;
+}
+
+code.literal,
+code.literal .pre {
+    font-variant-ligatures: none;
 }

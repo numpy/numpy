@@ -4,10 +4,11 @@ metadata is passed to Jinja for filling out the toctrees for various NEP
 categories.
 """
 
-import os
-import jinja2
 import glob
+import os
 import re
+
+import jinja2
 
 
 def render(tpl_path, context):

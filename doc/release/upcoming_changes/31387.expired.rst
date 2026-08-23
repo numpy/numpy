@@ -1,0 +1,4 @@
+* The deprecated ``'full'``, ``'f'``, ``'economic'``, and ``'e'`` modes of
+  `numpy.linalg.qr` have been removed. These were deprecated in NumPy 1.8.
+  Use ``'reduced'`` instead of ``'full'``/``'f'``, and ``'raw'`` instead of
+  ``'economic'``/``'e'``.

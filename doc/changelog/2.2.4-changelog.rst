@@ -1,0 +1,45 @@
+
+Contributors
+============
+
+A total of 15 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Abhishek Kumar
+* Andrej Zhilenkov
+* Andrew Nelson
+* Charles Harris
+* Giovanni Del Monte
+* Guan Ming(Wesley) Chiu +
+* Jonathan Albrecht +
+* Joren Hammudoglu
+* Mark Harfouche
+* Matthieu Darbois
+* Nathan Goldbaum
+* Pieter Eendebak
+* Sebastian Berg
+* Tyler Reddy
+* lvllvl +
+
+Pull requests merged
+====================
+
+A total of 17 pull requests were merged for this release.
+
+* `#28333 <https://github.com/numpy/numpy/pull/28333>`__: MAINT: Prepare 2.2.x for further development.
+* `#28348 <https://github.com/numpy/numpy/pull/28348>`__: TYP: fix positional- and keyword-only params in astype, cross...
+* `#28377 <https://github.com/numpy/numpy/pull/28377>`__: MAINT: Update FreeBSD version and fix test failure
+* `#28379 <https://github.com/numpy/numpy/pull/28379>`__: BUG: numpy.loadtxt reads only 50000 lines when skip_rows >= max_rows
+* `#28385 <https://github.com/numpy/numpy/pull/28385>`__: BUG: Make np.nonzero threading safe
+* `#28420 <https://github.com/numpy/numpy/pull/28420>`__: BUG: safer bincount casting (backport to 2.2.x)
+* `#28422 <https://github.com/numpy/numpy/pull/28422>`__: BUG: Fix building on s390x with clang
+* `#28423 <https://github.com/numpy/numpy/pull/28423>`__: CI: use QEMU 9.2.2 for Linux Qemu tests
+* `#28424 <https://github.com/numpy/numpy/pull/28424>`__: BUG: skip legacy dtype multithreaded test on 32 bit runners
+* `#28435 <https://github.com/numpy/numpy/pull/28435>`__: BUG: Fix searchsorted and CheckFromAny byte-swapping logic
+* `#28449 <https://github.com/numpy/numpy/pull/28449>`__: BUG: sanity check ``__array_interface__`` number of dimensions
+* `#28510 <https://github.com/numpy/numpy/pull/28510>`__: MAINT: Hide decorator from pytest traceback
+* `#28512 <https://github.com/numpy/numpy/pull/28512>`__: TYP: Typing fixes backported from #28452, #28491, #28494
+* `#28521 <https://github.com/numpy/numpy/pull/28521>`__: TYP: Backport fixes from #28505, #28506, #28508, and #28511
+* `#28533 <https://github.com/numpy/numpy/pull/28533>`__: TYP: Backport typing fixes from main (2)
+* `#28534 <https://github.com/numpy/numpy/pull/28534>`__: TYP: Backport typing fixes from main (3)
+* `#28542 <https://github.com/numpy/numpy/pull/28542>`__: TYP: Backport typing fixes from main (4)

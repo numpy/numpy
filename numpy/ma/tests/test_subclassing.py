@@ -1,19 +1,28 @@
-# pylint: disable-msg=W0611, W0612, W0511,R0201
 """Tests suite for MaskedArray & subclassing.
 
 :author: Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
-:version: $Id: test_subclassing.py 3473 2007-10-29 15:18:13Z jarrod.millman $
 
 """
 import numpy as np
 from numpy.lib.mixins import NDArrayOperatorsMixin
-from numpy.testing import assert_, assert_raises
-from numpy.ma.testutils import assert_equal
 from numpy.ma.core import (
-    array, arange, masked, MaskedArray, masked_array, log, add, hypot,
-    divide, asarray, asanyarray, nomask
-    )
+    MaskedArray,
+    add,
+    arange,
+    array,
+    asanyarray,
+    asarray,
+    divide,
+    hypot,
+    log,
+    masked,
+    masked_array,
+    nomask,
+)
+from numpy.ma.testutils import assert_equal
+from numpy.testing import assert_, assert_raises
+
 # from numpy.ma.core import (
 
 def assert_startswith(a, b):
@@ -31,7 +40,6 @@ class SubArray(np.ndarray):
     def __array_finalize__(self, obj):
         super().__array_finalize__(obj)
         self.info = getattr(obj, 'info', {}).copy()
-        return
 
     def __add__(self, other):
         result = super().__add__(other)
@@ -180,10 +188,10 @@ class WrappedArray(NDArrayOperatorsMixin):
 class TestSubclassing:
     # Test suite for masked subclasses of ndarray.
 
-    def setup_method(self):
+    def _create_data(self):
         x = np.arange(5, dtype='float')
         mx = msubarray(x, mask=[0, 1, 0, 0, 0])
-        self.data = (x, mx)
+        return x, mx
 
     def test_data_subclassing(self):
         # Tests whether the subclass is kept.
@@ -197,19 +205,19 @@ class TestSubclassing:
 
     def test_maskedarray_subclassing(self):
         # Tests subclassing MaskedArray
-        (x, mx) = self.data
+        mx = self._create_data()[1]
         assert_(isinstance(mx._data, subarray))
 
     def test_masked_unary_operations(self):
         # Tests masked_unary_operation
-        (x, mx) = self.data
+        x, mx = self._create_data()
         with np.errstate(divide='ignore'):
             assert_(isinstance(log(mx), msubarray))
             assert_equal(log(x), np.log(x))
 
     def test_masked_binary_operations(self):
         # Tests masked_binary_operation
-        (x, mx) = self.data
+        x, mx = self._create_data()
         # Result should be a msubarray
         assert_(isinstance(add(mx, mx), msubarray))
         assert_(isinstance(add(mx, x), msubarray))
@@ -222,7 +230,7 @@ class TestSubclassing:
 
     def test_masked_binary_operations2(self):
         # Tests domained_masked_binary_operation
-        (x, mx) = self.data
+        x, mx = self._create_data()
         xmx = masked_array(mx.data.__array__(), mask=mx.mask)
         assert_(isinstance(divide(mx, mx), msubarray))
         assert_(isinstance(divide(mx, x), msubarray))
@@ -419,20 +427,20 @@ def test_array_no_inheritance():
 class TestClassWrapping:
     # Test suite for classes that wrap MaskedArrays
 
-    def setup_method(self):
+    def _create_data(self):
         m = np.ma.masked_array([1, 3, 5], mask=[False, True, False])
         wm = WrappedArray(m)
-        self.data = (m, wm)
+        return m, wm
 
     def test_masked_unary_operations(self):
         # Tests masked_unary_operation
-        (m, wm) = self.data
+        wm = self._create_data()[1]
         with np.errstate(divide='ignore'):
             assert_(isinstance(np.log(wm), WrappedArray))
 
     def test_masked_binary_operations(self):
         # Tests masked_binary_operation
-        (m, wm) = self.data
+        m, wm = self._create_data()
         # Result should be a WrappedArray
         assert_(isinstance(np.add(wm, wm), WrappedArray))
         assert_(isinstance(np.add(m, wm), WrappedArray))

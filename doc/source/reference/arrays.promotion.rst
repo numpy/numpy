@@ -79,10 +79,10 @@ their precision when determining the result dtype. This is often convenient.
 For instance, when working with arrays of a low precision dtype, it is usually
 desirable for simple operations with Python scalars to preserve the dtype.
 
-  >>> arr_float32 = np.array([1, 2.5, 2.1], dtype="float32")
+  >>> arr_float32 = np.array([1, 2.5, 2.1], dtype=np.float32)
   >>> arr_float32 + 10.0  # undesirable to promote to float64
   array([11. , 12.5, 12.1], dtype=float32)
-  >>> arr_int16 = np.array([3, 5, 7], dtype="int16")
+  >>> arr_int16 = np.array([3, 5, 7], dtype=np.int16)
   >>> arr_int16 + 10  # undesirable to promote to int64
   array([13, 15, 17], dtype=int16)
 
@@ -130,7 +130,7 @@ overflows:
   ... RuntimeWarning: overflow encountered in scalar add
 
 Note that NumPy warns when overflows occur for scalars, but not for arrays;
-e.g., ``np.array(100, dtype="uint8") + 100`` will *not* warn.
+e.g., ``np.array(100, dtype=np.uint8) + 100`` will *not* warn.
 
 Numerical promotion
 -------------------
@@ -201,6 +201,27 @@ This leads to what may appear as "exceptions" to the rules:
 In principle, some of these exceptions may make sense for other functions.
 Please raise an issue if you feel this is the case.
 
+Notable behavior with Python builtin type classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When combining Python's builtin scalar *types* (i.e., ``float``, ``int``,
+or ``complex``, not scalar *values*), the promotion rules can appear
+surprising:
+
+  >>> np.result_type(7, np.array([1], np.float32))
+  dtype('float32')  # The scalar value '7' does not impact type promotion
+  >>> np.result_type(type(7), np.array([1], np.float32))
+  dtype('float64')  # The *type* of the scalar value '7' does impact promotion
+  # Similar situations happen with Python's float and complex types
+
+The reason for this behavior is that NumPy converts ``int`` to its default
+integer type, and uses that type for promotion:
+
+  >>> np.result_type(int)
+  dtype('int64')
+
+See also :ref:`dtype-constructing-from-python-types` for more details.
+
 Promotion of non-numerical datatypes
 ------------------------------------
 
@@ -236,7 +257,9 @@ such as byte-order, metadata, string length, or exact structured dtype layout.
 While the string length or field names of a structured dtype are important,
 NumPy considers byte-order, metadata, and the exact layout of a structured
 dtype as storage details.
+
 During promotion NumPy does *not* take these storage details into account:
+
 * Byte-order is converted to native byte-order.
 * Metadata attached to the dtype may or may not be preserved.
 * Resulting structured dtypes will be packed (but aligned if inputs were).
@@ -256,4 +279,4 @@ could drastically slow down evaluation.
    precision of NumPy scalars or 0-D arrays for promotion purposes.
 
 .. [#default-int] The default integer is marked as ``int64`` in the schema
-   but is ``int32`` on 32bit platforms.  However, normal PCs are 64bit.
+   but is ``int32`` on 32bit platforms.  However, most modern systems are 64bit.

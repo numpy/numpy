@@ -35,6 +35,7 @@ From the bash command line with $GITHUB token::
 """
 import os
 import re
+
 from git import Repo
 from github import Github
 
@@ -147,12 +148,12 @@ def main(token, revision_range):
         # substitute any single backtick not adjacent to a backtick
         # for a double backtick
         title = re.sub(
-            "(?P<pre>(?:^|(?<=[^`])))`(?P<post>(?=[^`]|$))",
+            r"(?P<pre>(?:^|(?<=[^`])))`(?P<post>(?=[^`]|$))",
             r"\g<pre>``\g<post>",
             title
         )
         # add an escaped space if code block is not followed by a space
-        title = re.sub("``(.*?)``(.)", backtick_repl, title)
+        title = re.sub(r"``(.*?)``(.)", backtick_repl, title)
 
         # sanitize asterisks
         title = title.replace('*', '\\*')
@@ -160,8 +161,8 @@ def main(token, revision_range):
         if len(title) > 60:
             remainder = re.sub(r"\s.*$", "...", title[60:])
             if len(remainder) > 20:
-                # just use the first 80 characters, with ellipses.
-                # note: this was previously bugged,
+                # just use the first 80 characters, with ellipses.
+                # note: this was previously bugged,
                 # assigning to `remainder` rather than `title`
                 title = title[:80] + "..."
             else:

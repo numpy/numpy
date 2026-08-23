@@ -1,0 +1,4 @@
+``f2py`` line wrapping no longer produces invalid continuation lines
+--------------------------------------------------------------------
+Lines exceeding the column limit in ``f2py``-generated Fortran wrappers are now
+split correctly for both fixed-form and free-form source.

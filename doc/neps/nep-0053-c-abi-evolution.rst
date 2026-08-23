@@ -47,7 +47,7 @@ The implementation of this NEP consists would consist of two steps:
 Motivation and scope
 ====================
 
-The NumPy API conists of more than 300 functions and numerous macros.
+The NumPy API consists of more than 300 functions and numerous macros.
 Many of these are outdated: some were only ever used within NumPy,
 exist only for compatibility with NumPy's predecessors, or have no or only
 a single known downstream user (i.e. SciPy).

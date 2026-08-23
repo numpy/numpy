@@ -1,5 +1,8 @@
 name: Linux SIMD tests
 
+# To update the Intel SDE version (not handled by Dependabot setup-sde updates):
+# update the sdeVersion inputs in the Intel SDE jobs below.
+#
 # This file is meant for testing different SIMD-related build options and
 # optimization levels. See `meson_options.txt` for the available build options.
 #
@@ -7,7 +10,7 @@ name: Linux SIMD tests
 #
 # - baseline_only:
 #   Focuses on completing as quickly as possible and acts as a filter for other, more resource-intensive jobs.
-#   Utilizes only the default baseline targets (e.g., SSE3 on X86_64) without enabling any runtime dispatched features.
+#   Utilizes only the default baseline targets (e.g., X86_V2 on X86_64) without enabling any runtime dispatched features.
 #
 # - old_gcc:
 #   Tests the oldest supported GCC version with default CPU/baseline/dispatch settings.
@@ -18,10 +21,6 @@ name: Linux SIMD tests
 # - native:
 #   Tests against the host CPU features set as the baseline without enabling any runtime dispatched features.
 #   Intended to assess the entire NumPy codebase against host flags, even for code sections lacking handwritten SIMD intrinsics.
-#
-# - without_avx512/avx2/fma3:
-#   Uses runtime SIMD dispatching but disables AVX2, FMA3, and AVX512.
-#   Intended to evaluate 128-bit SIMD extensions without FMA support.
 #
 # - without_avx512:
 #   Uses runtime SIMD dispatching but disables AVX512.
@@ -35,6 +34,11 @@ on:
     branches:
       - main
       - maintenance/**
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
+      - 'tools/stubtest/**'
 
 defaults:
   run:
@@ -42,6 +46,7 @@ defaults:
 
 env:
   TERM: xterm-256color
+  APT_TIMEOUT_MINUTES: 15
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -58,14 +63,14 @@ jobs:
     env:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-dispatch=none"
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
     - uses: ./.github/meson_actions
       name: Build/Test
 
@@ -76,28 +81,21 @@ jobs:
     env:
       MESON_ARGS: "-Dallow-noblas=true"
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
-    - name: Install GCC9/10
+    - name: Install GCC10
+      timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
         echo "deb http://archive.ubuntu.com/ubuntu focal main universe" | sudo tee /etc/apt/sources.list.d/focal.list
         sudo apt update
-        sudo apt install -y g++-9 g++-10
-
-    - name: Enable gcc-9
-      run: |
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 1
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 1
-
-    - uses: ./.github/meson_actions
-      name: Build/Test against gcc-9
+        sudo apt install -y g++-10
 
     - name: Enable gcc-10
       run: |
@@ -106,6 +104,39 @@ jobs:
 
     - uses: ./.github/meson_actions
       name: Build/Test against gcc-10
+
+  arm64_simd:
+    if: github.repository == 'numpy/numpy'
+    needs: [baseline_only]
+    runs-on: ubuntu-22.04-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: "baseline only"
+            args: "-Dallow-noblas=true -Dcpu-dispatch=none"
+          - name: "with ASIMD"
+            args: "-Dallow-noblas=true -Dcpu-baseline=asimd"
+          - name: "native"
+            args: "-Dallow-noblas=true -Dcpu-baseline=native -Dcpu-dispatch=none"
+    name: "ARM64 SIMD - ${{ matrix.config.name }}"
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        submodules: recursive
+        fetch-tags: true
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      with:
+        python-version: '3.12'
+    - name: Install dependencies
+      run: |
+        python -m pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+    - name: Build
+      run: |
+        spin build -- ${{ matrix.config.args }}
+    - name: Test
+      run: |
+        spin test -- --timeout=600 --durations=10
 
   specialize:
     needs: [baseline_only]
@@ -124,17 +155,12 @@ jobs:
           - [
             "native",
             "-Dallow-noblas=true -Dcpu-baseline=native -Dcpu-dispatch=none",
-            "3.11"
+            "3.12"
           ]
           - [
             "without avx512",
-            "-Dallow-noblas=true -Dcpu-dispatch=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C,AVX2,FMA3",
-            "3.11"
-          ]
-          - [
-            "without avx512/avx2/fma3",
-            "-Dallow-noblas=true -Dcpu-dispatch=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C",
-            "3.11"
+            "-Dallow-noblas=true -Dcpu-dispatch=max-x86_v4",
+            "3.12"
           ]
 
     env:
@@ -142,12 +168,12 @@ jobs:
 
     name: "${{ matrix.BUILD_PROP[0] }}"
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: "${{ matrix.BUILD_PROP[2] }}"
     - uses: ./.github/meson_actions
@@ -157,28 +183,31 @@ jobs:
     needs: [baseline_only]
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: Install Intel SDE
-      run: |
-        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/788820/sde-external-9.27.0-2023-09-13-lin.tar.xz
-        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
-        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
+      # setup-sde v5.0 installs Intel SDE 9.58.0 when requested below.
+      uses: petarpetrovt/setup-sde@6d2773bc0ef3005fd52e0ae0bb91782321793aec # v6.0
+      with:
+        environmentVariableName: SDE_PATH
+        sdeVersion: 9.58.0
+
+    - name: Add Intel SDE to PATH
+      run: echo "$SDE_PATH" >> "$GITHUB_PATH"
 
     - name: Install dependencies
       run: |
-        python -m pip install -r requirements/build_requirements.txt
-        python -m pip install pytest pytest-xdist hypothesis typing_extensions
+        python -m pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
 
     - name: Build
-      run: CC=gcc-13 CXX=g++-13 spin build -- -Dallow-noblas=true -Dcpu-baseline=avx512_skx -Dtest-simd='BASELINE,AVX512_KNL,AVX512_KNM,AVX512_SKX,AVX512_CLX,AVX512_CNL,AVX512_ICL,AVX512_SPR'
+      run: CC=gcc-13 CXX=g++-13 spin build -- -Denable-openmp=true -Dallow-noblas=true -Dcpu-baseline=X86_V4 -Dtest-simd='BASELINE,AVX512_ICL,AVX512_SPR'
 
     - name: Meson Log
       if: always()
@@ -208,28 +237,31 @@ jobs:
     needs: [baseline_only]
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: Install Intel SDE
-      run: |
-        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/788820/sde-external-9.27.0-2023-09-13-lin.tar.xz
-        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
-        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
+      # setup-sde v5.0 installs Intel SDE 9.58.0 when requested below.
+      uses: petarpetrovt/setup-sde@6d2773bc0ef3005fd52e0ae0bb91782321793aec # v6.0
+      with:
+        environmentVariableName: SDE_PATH
+        sdeVersion: 9.58.0
+
+    - name: Add Intel SDE to PATH
+      run: echo "$SDE_PATH" >> "$GITHUB_PATH"
 
     - name: Install dependencies
       run: |
-        python -m pip install -r requirements/build_requirements.txt
-        python -m pip install pytest pytest-xdist hypothesis typing_extensions
+        python -m pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
 
     - name: Build
-      run: CC=gcc-13 CXX=g++-13 spin build -- -Dallow-noblas=true -Dcpu-baseline=avx512_spr
+      run: CC=gcc-13 CXX=g++-13 spin build -- -Denable-openmp=true -Dallow-noblas=true -Dcpu-baseline=avx512_spr
 
     - name: Meson Log
       if: always()

@@ -1,4 +1,4 @@
-from ._array_utils_impl import (
+from ._array_utils_impl import (  # noqa: F401
     __all__,
     __doc__,
     byte_bounds,

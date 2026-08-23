@@ -101,6 +101,10 @@ For maintainers
   If a PR becomes inactive, maintainers may make larger changes. 
   Remember, a PR is a collaboration between a contributor and a reviewer/s, 
   sometimes a direct push is the best way to finish it.
+- The maintainer team can add contributors to the list of accounts allowed
+  to have more than one non-draft PR open for review at a time (see
+  :ref:`pull-request-limit`). We liberally add contributors who attend the
+  community and triage meetings.
 
 API changes
 -----------

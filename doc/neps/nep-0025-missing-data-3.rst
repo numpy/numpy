@@ -432,7 +432,7 @@ follows:
 * strings: the first byte (or, in the case of unicode strings, first 4 bytes)
   is used as a flag to indicate NA, and the rest of the data gives the actual
   string. (no R compatibility possible)
-* objects: Two options (FIXME): either we don't include an NA-ful version, or
+* objects: Two options (FIXME): either we don't include an NA-full version, or
   we use np.NA as the NA bit pattern.
 * boolean: we do whatever R does (FIXME: look this up -- 0 == FALSE, 1 == TRUE,
   2 == NA?)

@@ -53,6 +53,8 @@ __all__ = ['load_library', 'ndpointer', 'c_intp', 'as_ctypes', 'as_array',
            'as_ctypes_type']
 
 import os
+import sys
+
 import numpy as np
 import numpy._core.multiarray as mu
 from numpy._utils import set_module
@@ -128,8 +130,19 @@ else:
         loader_path = os.fsdecode(loader_path)
 
         ext = os.path.splitext(libname)[1]
-        if not ext:
-            import sys
+        if sys.platform == "ios" and loader_path.endswith(".fwork"):
+            # iOS requires all dynamic libraries to be delivered as
+            # frameworks; CPython uses .fwork files to provide tracing
+            # from the CPython-expected location to the runtime location.
+            with open(loader_path) as f:
+                loader_path = os.path.join(
+                    os.path.dirname(sys.executable),
+                    f.read().strip()
+                )
+            base_ext = ""
+            libname = os.path.basename(loader_path)
+            libname_ext = [libname]
+        elif not ext:
             import sysconfig
             # Try to load library with platform-specific name, otherwise
             # default to libname.[so|dll|dylib].  Sometimes, these files are
@@ -158,9 +171,9 @@ else:
                 try:
                     return ctypes.cdll[libpath]
                 except OSError:
-                    ## defective lib file
+                    # defective lib file
                     raise
-        ## if no successful return in the libname_ext loop:
+        # if no successful return in the libname_ext loop:
         raise OSError("no file with expected extension")
 
 
@@ -189,17 +202,16 @@ class _ndptr(_ndptr_base):
             raise TypeError("argument must be an ndarray")
         if cls._dtype_ is not None \
                and obj.dtype != cls._dtype_:
-            raise TypeError("array must have data type %s" % cls._dtype_)
+            raise TypeError(f"array must have data type {cls._dtype_}")
         if cls._ndim_ is not None \
                and obj.ndim != cls._ndim_:
-            raise TypeError("array must have %d dimension(s)" % cls._ndim_)
+            raise TypeError(f"array must have {cls._ndim_} dimension(s)")
         if cls._shape_ is not None \
                and obj.shape != cls._shape_:
-            raise TypeError("array must have shape %s" % str(cls._shape_))
+            raise TypeError(f"array must have shape {str(cls._shape_)}")
         if cls._flags_ is not None \
                and ((obj.flags.num & cls._flags_) != cls._flags_):
-            raise TypeError("array must have flags %s" %
-                    _flags_fromnum(cls._flags_))
+            raise TypeError(f"array must have flags {_flags_fromnum(cls._flags_)}")
         return obj.ctypes
 
 
@@ -333,7 +345,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     else:
         name = dtype.str
     if ndim is not None:
-        name += "_%dd" % ndim
+        name += f"_{ndim}d"
     if shape is not None:
         name += "_" + "x".join(str(x) for x in shape)
     if flags is not None:
@@ -344,7 +356,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     else:
         base = _ndptr
 
-    klass = type("ndpointer_%s" % name, (base,),
+    klass = type(f"ndpointer_{name}", (base,),
                  {"_dtype_": dtype,
                   "_shape_": shape,
                   "_ndim_": ndim,
@@ -385,7 +397,7 @@ if ctypes is not None:
             ctype = _scalar_type_map[dtype_native]
         except KeyError as e:
             raise NotImplementedError(
-                "Converting {!r} to a ctypes type".format(dtype)
+                f"Converting {dtype!r} to a ctypes type"
             ) from None
 
         if dtype_with_endian.byteorder == '>':
@@ -410,7 +422,7 @@ if ctypes is not None:
         # ctypes doesn't care about field order
         field_data = sorted(field_data, key=lambda f: f[0])
 
-        if len(field_data) > 1 and all(offset == 0 for offset, name, ctype in field_data):
+        if len(field_data) > 1 and all(offset == 0 for offset, _, _ in field_data):
             # union, if multiple fields all at address 0
             size = 0
             _fields_ = []
@@ -502,7 +514,7 @@ if ctypes is not None:
         --------
         Converting a simple dtype:
 
-        >>> dt = np.dtype('int8')
+        >>> dt = np.dtype(np.int8)
         >>> ctype = np.ctypeslib.as_ctypes_type(dt)
         >>> ctype
         <class 'ctypes.c_byte'>

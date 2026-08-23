@@ -1,15 +1,31 @@
-from . import util
-import numpy as np
 import pytest
+
+import numpy as np
 from numpy.testing import assert_allclose
 
+from . import util
+
+
+@pytest.mark.slow
 class TestISOC(util.F2PyTest):
     sources = [
         util.getpath("tests", "src", "isocintrin", "isoCtests.f90"),
     ]
 
+    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
+    def test_bindc_complex_float(self, dtype):
+        a = np.array([1j, 2j, 3j], dtype=dtype)
+        b = np.array([4j, 5j, 6j], dtype=dtype)
+        out = {
+            np.complex64: self.module.coddity.add_cfloat_arr,
+            np.complex128: self.module.coddity.add_cdouble_arr,
+            np.clongdouble: self.module.coddity.add_clong_double_arr
+        }[dtype](a, b)
+        exp = a + b
+        assert_allclose(out, exp)
+        assert out.dtype == exp.dtype
+
     # gh-24553
-    @pytest.mark.slow
     def test_c_double(self):
         out = self.module.coddity.c_add(1, 2)
         exp_out = 3
@@ -27,13 +43,19 @@ class TestISOC(util.F2PyTest):
         exp_out = 21
         assert out == exp_out
 
-    # gh-25207
-    def test_bindc_add_arr(self):
-        a = np.array([1, 2, 3])
-        b = np.array([1, 2, 3])
-        out = self.module.coddity.add_arr(a, b)
-        exp_out = a * 2
+    # gh-25207 (int64/add_arr)
+    @pytest.mark.parametrize("dtype", [np.int8, np.long, np.int64])
+    def test_bindc_add_int_arr(self, dtype):
+        a = np.array([1, 2, 3], dtype=dtype)
+        b = np.array([4, 5, 6], dtype=dtype)
+        out = {
+            np.int8: self.module.coddity.add_int8_arr,
+            np.long: self.module.coddity.add_clong_arr,
+            np.int64: self.module.coddity.add_arr
+        }[dtype](a, b)
+        exp_out = a + b
         assert_allclose(out, exp_out)
+        assert out.dtype == exp_out.dtype
 
 
 def test_process_f2cmap_dict():

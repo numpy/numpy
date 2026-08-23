@@ -193,4 +193,3 @@ Miscellaneous
 
    interp
 
-   bitwise_count

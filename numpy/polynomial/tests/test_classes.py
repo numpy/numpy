@@ -7,13 +7,18 @@ import operator as op
 from numbers import Number
 
 import pytest
+
 import numpy as np
-from numpy.polynomial import (
-    Polynomial, Legendre, Chebyshev, Laguerre, Hermite, HermiteE)
-from numpy.testing import (
-    assert_almost_equal, assert_raises, assert_equal, assert_,
-    )
 from numpy.exceptions import RankWarning
+from numpy.polynomial import (
+    Chebyshev,
+    Hermite,
+    HermiteE,
+    Laguerre,
+    Legendre,
+    Polynomial,
+)
+from numpy.testing import assert_, assert_almost_equal, assert_equal, assert_raises
 
 #
 # fixtures
@@ -310,7 +315,11 @@ def test_truediv(Poly):
     p2 = p1 * 5
 
     for stype in np.ScalarType:
-        if not issubclass(stype, Number) or issubclass(stype, bool):
+        if (
+            not issubclass(stype, Number)
+            or issubclass(stype, bool)
+            or issubclass(stype, np.timedelta64)
+        ):
             continue
         s = stype(5)
         assert_poly_almost_equal(op.truediv(p2, s), p1)
@@ -323,7 +332,15 @@ def test_truediv(Poly):
         s = stype(5, 0)
         assert_poly_almost_equal(op.truediv(p2, s), p1)
         assert_raises(TypeError, op.truediv, s, p2)
-    for s in [(), [], {}, bool(), np.array([1])]:
+    for stype in [np.timedelta64]:
+        s = stype(5, 'D')
+        with pytest.warns(
+            DeprecationWarning,
+            match="The 'generic' unit for NumPy timedelta is deprecated",
+        ):
+            assert_poly_almost_equal(op.truediv(p2, s), p1)
+        assert_raises(TypeError, op.truediv, s, p2)
+    for s in [(), [], {}, False, np.array([1])]:
         assert_raises(TypeError, op.truediv, p2, s)
         assert_raises(TypeError, op.truediv, s, p2)
     for ptype in classes:

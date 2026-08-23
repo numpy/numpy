@@ -268,7 +268,7 @@ specifies your data-type. This type number should be stored and made
 available by your module so that other modules can use it to recognize
 your data-type.
 
-Note that this API is inherently thread-unsafe. See `thread_safety` for more
+Note that this API is inherently thread-unsafe. See :ref:`thread_safety` for more
 details about thread safety in NumPy.
 
 
