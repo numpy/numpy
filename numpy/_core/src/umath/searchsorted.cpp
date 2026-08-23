@@ -372,9 +372,9 @@ init_searchsorted_ufuncs(PyObject *umath)
     };
 
     /*
-     * Searched through the legacy comparison function, so that `axis` is not
-     * limited to the dtypes above.  StringDType still falls back, its
-     * comparison needs its allocators held.
+     * Searched through the legacy comparison function, so that more than one
+     * dimension is not limited to the dtypes above.  StringDType still falls
+     * back, its comparison needs its allocators held.
      */
     static const int generic_typenums[] = {
         NPY_OBJECT, NPY_STRING, NPY_UNICODE, NPY_VOID,

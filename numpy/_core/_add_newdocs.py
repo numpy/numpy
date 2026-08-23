@@ -4286,9 +4286,9 @@ _array_method_doc('round', "decimals=0, out=None",
     numpy.around : equivalent function
     """)
 
-_array_method_doc('searchsorted', "v, /, side='left', sorter=None, *, axis=-1",
+_array_method_doc('searchsorted', "v, /, side='left', sorter=None",
     """
-    a.searchsorted(v, side='left', sorter=None, *, axis=-1)
+    a.searchsorted(v, side='left', sorter=None)
 
     Find indices where elements of `v` should be inserted in `a` to maintain order.
 
