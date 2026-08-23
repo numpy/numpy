@@ -2,7 +2,7 @@
 # kept in sync.
 # Note: hypothesis is an optional test dependency, see hypothesis_requirements.txt
 
-Cython
+Cython>=3.1.0,<3.3
 pytest==9.1.1
 pytest-cov==7.1.0
 meson
