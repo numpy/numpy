@@ -1,0 +1,34 @@
+.. currentmodule:: numpy
+
+=========================
+NumPy 2.4.6 Release Notes
+=========================
+
+NumPy 2.4.6 is a quick release that fixes a regression discovered in the 2.4.5
+release.
+
+This release supports Python versions 3.11-3.14
+
+
+Contributors
+============
+
+A total of 4 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* !EarlMilktea
+* Charles Harris
+* Sebastian Berg
+* Warren Weckesser
+
+
+Pull requests merged
+====================
+
+A total of 4 pull requests were merged for this release.
+
+* `#31444 <https://github.com/numpy/numpy/pull/31444>`__: MAINT: Prepare 2.4.x for further development
+* `#31453 <https://github.com/numpy/numpy/pull/31453>`__: BUG: Fix regression in ``arr.conj()``
+* `#31459 <https://github.com/numpy/numpy/pull/31459>`__: BUG: ``np.linalg.svd(..., hermitian=True)`` returns non-unitary...
+* `#31460 <https://github.com/numpy/numpy/pull/31460>`__: BUG: Don't call INCREF/DECREF on descr in NpyStringAcquireAllocator...
+

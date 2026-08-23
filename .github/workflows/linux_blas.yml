@@ -40,6 +40,11 @@ on:
     branches:
       - main
       - maintenance/**
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
+      - 'tools/stubtest/**'
 
 defaults:
   run:
@@ -51,6 +56,9 @@ concurrency:
 
 permissions:
   contents: read # to fetch code (actions/checkout)
+
+env:
+  APT_TIMEOUT_MINUTES: 15
 
 jobs:
   openblas32_stable_nightly:
@@ -65,17 +73,18 @@ jobs:
       USE_NIGHTLY_OPENBLAS: ${{ matrix.USE_NIGHTLY_OPENBLAS }}
     name: "Test Linux (${{ matrix.USE_NIGHTLY_OPENBLAS && 'nightly' || 'stable' }} OpenBLAS)"
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        persist-credentials: false
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
         # Install OpenBLAS
         if [[ $USE_NIGHTLY_OPENBLAS == "true" ]]; then
             python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scipy-openblas32
@@ -84,16 +93,13 @@ jobs:
         fi
         mkdir -p ./.openblas
         python -c"import scipy_openblas32 as ob32; print(ob32.get_pkg_config())" > ./.openblas/scipy-openblas.pc
-        echo "PKG_CONFIG_PATH=${{ github.workspace }}/.openblas" >> $GITHUB_ENV
-        ld_library_path=$(python -c"import scipy_openblas32 as ob32; print(ob32.get_lib_dir())")
-        echo "LD_LIBRARY_PATH=$ld_library_path" >> $GITHUB_ENV
 
     - name: Build
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       env:
         TERM: xterm-256color
       run:
-        spin build -- --werror -Dallow-noblas=false
+        spin build -- --werror -Dallow-noblas=false -Dpkg_config_path=${PWD}/.openblas
 
     - name: Check build-internal dependencies
       run:
@@ -105,15 +111,14 @@ jobs:
     - name: Ensure scipy-openblas
       run: |
         set -ex
-        spin python tools/check_openblas_version.py 0.3.26
+        spin python tools/check_openblas_version.py -- --min-version 0.3.30
 
     - name: Test
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       env:
         TERM: xterm-256color
       run: |
-        pip install pytest pytest-xdist hypothesis typing_extensions
-        spin test -j auto
+        spin test -j auto -- --timeout=600 --durations=10
 
 
   openblas_no_pkgconfig_fedora:
@@ -126,21 +131,21 @@ jobs:
       run: |
         dnf install git gcc-gfortran g++ python3-devel openblas-devel -y
 
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
+        persist-credentials: false
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install pytest hypothesis typing_extensions
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
 
     - name: Build (LP64)
       run: spin build -- -Dblas=openblas -Dlapack=openblas -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
-      run: spin test -- numpy/linalg
+      run: spin test -- numpy/linalg --timeout=600 --durations=10
 
     - name: Build (ILP64)
       run: |
@@ -148,7 +153,7 @@ jobs:
         spin build -- -Duse-ilp64=true -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
-      run: spin test -- numpy/linalg
+      run: spin test -- numpy/linalg --timeout=600 --durations=10
 
 
   flexiblas_fedora:
@@ -161,21 +166,21 @@ jobs:
       run: |
         dnf install git gcc-gfortran g++ python3-devel flexiblas-devel -y
 
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
+        persist-credentials: false
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install pytest hypothesis typing_extensions
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
 
     - name: Build
       run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
-      run: spin test -- numpy/linalg
+      run: spin test -- numpy/linalg --timeout=600 --durations=10
 
     - name: Build (ILP64)
       run: |
@@ -183,7 +188,7 @@ jobs:
         spin build -- -Ddisable-optimization=true -Duse-ilp64=true -Dallow-noblas=false
 
     - name: Test (ILP64)
-      run: spin test -- numpy/linalg
+      run: spin test -- numpy/linalg --timeout=600 --durations=10
 
 
   openblas_cmake:
@@ -191,18 +196,19 @@ jobs:
     runs-on: ubuntu-latest
     name: "OpenBLAS with CMake"
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        persist-credentials: false
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: Install dependencies
+      timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install pytest pytest-xdist hypothesis typing_extensions
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
         sudo apt-get update
         sudo apt-get install libopenblas-dev cmake
         sudo apt-get remove pkg-config
@@ -211,25 +217,27 @@ jobs:
       run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
-      run: spin test -j auto -- numpy/linalg
+      run: spin test -j auto -- numpy/linalg  --timeout=600 --durations=10
 
- 
+
   netlib-debian:
     if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     name: "Debian libblas/liblapack"
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        persist-credentials: false
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: Install dependencies
+      timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install -r requirements/build_requirements.txt
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
         sudo apt-get update
         sudo apt-get install liblapack-dev pkg-config
 
@@ -239,8 +247,7 @@ jobs:
 
     - name: Test
       run: |
-        pip install pytest pytest-xdist hypothesis typing_extensions
-        spin test -j auto -- numpy/linalg
+        spin test -j auto -- numpy/linalg  --timeout=600 --durations=10
 
 
   netlib-split:
@@ -255,10 +262,11 @@ jobs:
         # If it is needed in the future, use install name `pkgconf-pkg-config`
         zypper install -y git gcc-c++ python3-pip python3-devel blas cblas lapack
 
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
+        persist-credentials: false
 
     - name: Install PyPI dependencies
       run: |
@@ -270,8 +278,10 @@ jobs:
 
     - name: Test
       run: |
-        pip install --break-system-packages pytest pytest-xdist hypothesis typing_extensions
-        spin test -j auto -- numpy/linalg
+        # do not use test_requirements.txt, it includes coverage which requires
+        # sqlite3, which is not available on OpenSUSE python
+        pip install --break-system-packages pytest pytest-xdist pytest-timeout
+        spin test -j auto -- numpy/linalg  --timeout=600 --durations=10
 
 
   mkl:
@@ -279,18 +289,19 @@ jobs:
     runs-on: ubuntu-latest
     name: "MKL (LP64, ILP64, SDL)"
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        persist-credentials: false
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install pytest pytest-xdist hypothesis typing_extensions
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
         pip install mkl mkl-devel
 
     - name: Repair MKL pkg-config files and symlinks
@@ -307,6 +318,7 @@ jobs:
         # add the expected .so -> .so.2 symlinks to fix linking
         cd ..
         for i in $( ls libmkl*.so.2 ); do ln -s $i ${i%.*}; done
+        for i in $( ls libmkl*.so.3 ); do ln -s $i ${i%.*}; done
 
     - name: Build with defaults (LP64)
       run: |
@@ -314,7 +326,7 @@ jobs:
         spin build -- -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
-      run: spin test -- numpy/linalg
+      run: spin test -- numpy/linalg --timeout=600 --durations=10
 
     - name: Build with ILP64
       run: |
@@ -323,7 +335,7 @@ jobs:
         spin build -- -Duse-ilp64=true -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
-      run: spin test -- numpy/linalg
+      run: spin test -- numpy/linalg --timeout=600 --durations=10
 
     - name: Build without pkg-config (default options, SDL)
       run: |
@@ -335,25 +347,27 @@ jobs:
         spin build -- -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
-      run: spin test -- numpy/linalg
+      run: spin test -- numpy/linalg --timeout=600 --durations=10
 
   blis:
     if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     name: "BLIS"
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        persist-credentials: false
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: Install dependencies
+      timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install pytest pytest-xdist hypothesis typing_extensions
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
         sudo apt-get update
         sudo apt-get install libblis-dev libopenblas-dev pkg-config
 
@@ -371,25 +385,27 @@ jobs:
       run: spin build -- -Dblas=blis -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
-      run: spin test -- numpy/linalg
+      run: spin test -- numpy/linalg --timeout=600 --durations=10
 
   atlas:
     if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     name: "ATLAS"
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        persist-credentials: false
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: Install dependencies
+      timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install pytest pytest-xdist hypothesis typing_extensions
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
         sudo apt-get update
         sudo apt-get install libatlas-base-dev pkg-config
 
@@ -398,4 +414,3 @@ jobs:
 
     - name: Test
       run: spin test -- numpy/linalg
-

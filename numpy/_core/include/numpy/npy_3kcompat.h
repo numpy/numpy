@@ -242,7 +242,7 @@ static inline PyObject*
 npy_PyFile_OpenFile(PyObject *filename, const char *mode)
 {
     PyObject *open;
-    open = PyDict_GetItemString(PyEval_GetBuiltins(), "open");
+    open = PyDict_GetItemString(PyEval_GetBuiltins(), "open"); // noqa: borrowed-ref OK
     if (open == NULL) {
         return NULL;
     }

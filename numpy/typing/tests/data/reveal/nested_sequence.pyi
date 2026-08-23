@@ -1,9 +1,7 @@
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, assert_type
 
 from numpy._typing import _NestedSequence
-
-from typing_extensions import assert_type
 
 a: Sequence[int]
 b: Sequence[Sequence[int]]
@@ -14,8 +12,7 @@ f: tuple[int, ...]
 g: list[int]
 h: Sequence[Any]
 
-def func(a: _NestedSequence[int]) -> None:
-    ...
+def func(a: _NestedSequence[int]) -> None: ...
 
 assert_type(func(a), None)
 assert_type(func(b), None)

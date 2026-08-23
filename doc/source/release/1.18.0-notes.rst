@@ -202,9 +202,9 @@ exception will require adaptation, and code that mistakenly called
 Moved modules in ``numpy.random``
 ---------------------------------
 As part of the API cleanup, the submodules in ``numpy.random``
-``bit_generator``, ``philox``, ``pcg64``, ``sfc64, ``common``, ``generator``,
+``bit_generator``, ``philox``, ``pcg64``, ``sfc64``, ``common``, ``generator``,
 and ``bounded_integers`` were moved to ``_bit_generator``, ``_philox``,
-``_pcg64``, ``_sfc64, ``_common``, ``_generator``, and ``_bounded_integers``
+``_pcg64``, ``_sfc64``, ``_common``, ``_generator``, and ``_bounded_integers``
 respectively to indicate that they are not part of the public interface.
 (`gh-14608 <https://github.com/numpy/numpy/pull/14608>`__)
 
@@ -350,7 +350,7 @@ and load will be addressed in a future release.
 
 ``numpy.distutils`` append behavior changed for LDFLAGS and similar
 -------------------------------------------------------------------
-`numpy.distutils` has always overridden rather than appended to ``LDFLAGS`` and
+``numpy.distutils`` has always overridden rather than appended to ``LDFLAGS`` and
 other similar such environment variables for compiling Fortran extensions. Now
 the default behavior has changed to appending - which is the expected behavior
 in most situations.  To preserve the old (overwriting) behavior, set the

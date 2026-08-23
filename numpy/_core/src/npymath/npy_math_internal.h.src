@@ -506,6 +506,14 @@ NPY_INPLACE @type@ npy_logaddexp2@c@(@type@ x, @type@ y)
     }
 }
 
+
+/* Define a macro for the ARM64 Clang specific condition */
+#if defined(__aarch64__) && defined(__clang__)
+    #define IS_ARM64_CLANG 1
+#else
+    #define IS_ARM64_CLANG 0
+#endif
+
 /*
  * Wrapper function for remainder edge cases
  * Internally calls npy_divmod*
@@ -514,34 +522,48 @@ NPY_INPLACE @type@
 npy_remainder@c@(@type@ a, @type@ b)
 {
     @type@ mod;
-    if (NPY_UNLIKELY(!b)) {
+    
+    if (NPY_UNLIKELY(!b) || 
+        NPY_UNLIKELY(IS_ARM64_CLANG && sizeof(@type@) == sizeof(long double) && (npy_isnan(a) || npy_isnan(b)))) {
         /*
-         * in2 == 0 (and not NaN): normal fmod will give the correct
-         * result (always NaN). `divmod` may set additional FPE for the
-         * division by zero creating an inf.
+         * Handle two cases:
+         * 1. in2 == 0 (and not NaN): normal fmod will give the correct
+         *    result (always NaN). `divmod` may set additional FPE for the
+         *    division by zero creating an inf.
+         * 2. ARM64 with Clang: Special handling to avoid FPE with float128
+         *    TODO: This is a workaround for a known Clang issue on ARM64 where 
+         *    float128 operations trigger incorrect FPE behavior. This can be 
+         *    removed once fixed:
+         *    https://github.com/llvm/llvm-project/issues/59924
          */
-        mod = npy_fmod@c@(a, b);
+        return npy_fmod@c@(a, b);
     }
-    else {
-        npy_divmod@c@(a, b, &mod);
-    }
+    
+    npy_divmod@c@(a, b, &mod);
     return mod;
 }
 
 NPY_INPLACE @type@
 npy_floor_divide@c@(@type@ a, @type@ b) {
     @type@ div, mod;
-    if (NPY_UNLIKELY(!b)) {
+    
+    if (NPY_UNLIKELY(!b) || 
+        NPY_UNLIKELY(IS_ARM64_CLANG && sizeof(@type@) == sizeof(long double) && (npy_isnan(a) || npy_isnan(b)))) {
         /*
-         * in2 == 0 (and not NaN): normal division will give the correct
-         * result (Inf or NaN). `divmod` may set additional FPE for the modulo
-         * evaluating to NaN.
+         * Handle two cases:
+         * 1. in2 == 0 (and not NaN): normal division will give the correct
+         *    result (Inf or NaN). `divmod` may set additional FPE for the modulo
+         *    evaluating to NaN.
+         * 2. ARM64 with Clang: Special handling to avoid FPE with float128
+         *    TODO: This is a workaround for a known Clang issue on ARM64 where 
+         *    float128 operations trigger incorrect FPE behavior. This can be 
+         *    removed once fixed:
+         *    https://github.com/llvm/llvm-project/issues/59924
          */
-        div = a / b;
+        return a / b;
     }
-    else {
-        div = npy_divmod@c@(a, b, &mod);
-    }
+    
+    div = npy_divmod@c@(a, b, &mod);
     return div;
 }
 
@@ -628,12 +650,21 @@ npy_lcm@c@(@type@ a, @type@ b)
  *
  * #type = (npy_int, npy_long, npy_longlong)*2#
  * #c = (,l,ll)*2#
+ * #utype = (npy_uint, npy_ulong, npy_ulonglong)*2#
  * #func=gcd*3,lcm*3#
  */
 NPY_INPLACE @type@
 npy_@func@@c@(@type@ a, @type@ b)
 {
-    return npy_@func@u@c@(a < 0 ? -a : a, b < 0 ? -b : b);
+    /*
+     * Cast to unsigned to avoid overflow when negating minimum signed value.
+     * For negative values, cast to unsigned first, then apply negation in
+     * unsigned arithmetic to avoid undefined behavior.
+     * This ensures correct behavior across all architectures. #31359
+     */
+    @utype@ a_abs = a < 0 ? (@utype@)(0) - (@utype@)a : (@utype@)a;
+    @utype@ b_abs = b < 0 ? (@utype@)(0) - (@utype@)b : (@utype@)b;
+    return (@type@)npy_@func@u@c@(a_abs, b_abs);
 }
 /**end repeat**/
 

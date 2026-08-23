@@ -1,0 +1,53 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 2.2.5 Release Notes
+==========================
+
+NumPy 2.2.5 is a patch release that fixes bugs found after the 2.2.4 release.
+It has a large number of typing fixes/improvements as well as the normal bug
+fixes and some CI maintenance.
+
+This release supports Python versions 3.10-3.13.
+
+
+Contributors
+============
+
+A total of 7 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Joren Hammudoglu
+* Baskar Gopinath + 
+* Nathan Goldbaum
+* Nicholas Christensen +
+* Sayed Adel
+* karl +
+
+
+Pull requests merged
+====================
+
+A total of 19 pull requests were merged for this release.
+
+* `#28545 <https://github.com/numpy/numpy/pull/28545>`__: MAINT: Prepare 2.2.x for further development
+* `#28582 <https://github.com/numpy/numpy/pull/28582>`__: BUG: Fix return type of NpyIter_GetIterNext in Cython declarations
+* `#28583 <https://github.com/numpy/numpy/pull/28583>`__: BUG: avoid deadlocks with C++ shared mutex in dispatch cache
+* `#28585 <https://github.com/numpy/numpy/pull/28585>`__: TYP: fix typing errors in ``_core.strings``
+* `#28631 <https://github.com/numpy/numpy/pull/28631>`__: MAINT, CI: Update Ubuntu to 22.04 in azure-pipelines
+* `#28632 <https://github.com/numpy/numpy/pull/28632>`__: BUG: Set writeable flag for writeable dlpacks.
+* `#28633 <https://github.com/numpy/numpy/pull/28633>`__: BUG: Fix crackfortran parsing error when a division occurs within...
+* `#28650 <https://github.com/numpy/numpy/pull/28650>`__: TYP: fix ``ndarray.tolist()`` and ``.item()`` for unknown dtype
+* `#28654 <https://github.com/numpy/numpy/pull/28654>`__: BUG: fix deepcopying StringDType arrays (#28643)
+* `#28661 <https://github.com/numpy/numpy/pull/28661>`__: TYP: Accept objects that ``write()`` to ``str`` in ``savetxt``
+* `#28663 <https://github.com/numpy/numpy/pull/28663>`__: CI: Replace QEMU armhf with native (32-bit compatibility mode)
+* `#28682 <https://github.com/numpy/numpy/pull/28682>`__: SIMD: Resolve Highway QSort symbol linking error on aarch32/ASIMD
+* `#28683 <https://github.com/numpy/numpy/pull/28683>`__: TYP: add missing ``"b1"`` literals for ``dtype[bool]``
+* `#28705 <https://github.com/numpy/numpy/pull/28705>`__: TYP: Fix false rejection of ``NDArray[object_].__abs__()``
+* `#28706 <https://github.com/numpy/numpy/pull/28706>`__: TYP: Fix inconsistent ``NDArray[float64].__[r]truediv__`` return...
+* `#28723 <https://github.com/numpy/numpy/pull/28723>`__: TYP: fix string-like ``ndarray`` rich comparison operators
+* `#28758 <https://github.com/numpy/numpy/pull/28758>`__: TYP: some ``[arg]partition`` fixes
+* `#28772 <https://github.com/numpy/numpy/pull/28772>`__: TYP: fix incorrect ``random.Generator.integers`` return type
+* `#28774 <https://github.com/numpy/numpy/pull/28774>`__: TYP: fix ``count_nonzero`` signature
+

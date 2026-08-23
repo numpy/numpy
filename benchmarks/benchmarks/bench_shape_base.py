@@ -1,6 +1,6 @@
-from .common import Benchmark
-
 import numpy as np
+
+from .common import Benchmark
 
 
 class Block(Benchmark):
@@ -76,7 +76,7 @@ class Block2D(Benchmark):
     def setup(self, shape, dtype, n_chunks):
 
         self.block_list = [
-             [np.full(shape=[s//n_chunk for s, n_chunk in zip(shape, n_chunks)],
+             [np.full(shape=[s // n_chunk for s, n_chunk in zip(shape, n_chunks)],
                      fill_value=1, dtype=dtype) for _ in range(n_chunks[1])]
             for _ in range(n_chunks[0])
         ]

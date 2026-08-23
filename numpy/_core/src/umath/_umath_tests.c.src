@@ -25,7 +25,6 @@
 #include "npy_cpu_features.h"
 #include "npy_cpu_dispatch.h"
 #include "numpy/npy_cpu.h"
-#include "npy_import.h"
 #include "numpy/dtype_api.h"
 
 /*
@@ -460,6 +459,15 @@ addUfuncs(PyObject *dictionary) {
     }
     PyDict_SetItemString(dictionary, "always_error", f);
     Py_DECREF(f);
+    f = PyUFunc_FromFuncAndData(always_error_functions, always_error_data,
+            always_error_signatures, 1, 1, 1, PyUFunc_None, "always_error_unary",
+            "simply, broken, ufunc that sets an error (but releases the GIL).",
+            0);
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "always_error_unary", f);
+    Py_DECREF(f);
     f = PyUFunc_FromFuncAndDataAndSignature(always_error_functions,
             always_error_data, always_error_signatures, 1, 2, 1, PyUFunc_None,
             "always_error_gufunc",
@@ -594,11 +602,15 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         return NULL;
     }
 
+    if (sig_str == NULL) {
+        return NULL;
+    }
+
     f = (PyUFuncObject*)PyUFunc_FromFuncAndDataAndSignature(
         NULL, NULL, NULL,
         0, nin, nout, PyUFunc_None, "no name",
         "doc:none",
-        1, PyBytes_AS_STRING(sig_str));
+        1, PyBytes_AsString(sig_str));
     if (sig_str != signature) {
         Py_DECREF(sig_str);
     }
@@ -616,9 +628,12 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         if (core_num_dims == NULL) {
             goto fail;
         }
+
         for (i = 0; i < f->nargs; i++) {
             PyObject *val = PyLong_FromLong(f->core_num_dims[i]);
-            PyTuple_SET_ITEM(core_num_dims, i, val);
+            if (val == NULL || PyTuple_SetItem(core_num_dims, i, val) < 0) {
+                goto fail;
+            }
             core_num_ixs += f->core_num_dims[i];
         }
     }
@@ -633,7 +648,9 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         }
         for (i = 0; i < core_num_ixs; i++) {
             PyObject *val = PyLong_FromLong(f->core_dim_ixs[i]);
-            PyTuple_SET_ITEM(core_dim_ixs, i, val);
+            if (val == NULL || PyTuple_SetItem(core_dim_ixs, i, val) < 0) {
+                goto fail;
+            }
         }
     }
     else {
@@ -647,7 +664,9 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         }
         for (i = 0; i < f->core_num_dim_ix; i++) {
             PyObject *val = PyLong_FromLong(f->core_dim_flags[i]);
-            PyTuple_SET_ITEM(core_dim_flags, i, val);
+            if (val == NULL || PyTuple_SetItem(core_dim_flags, i, val) < 0) {
+                goto fail;
+            }
         }
     }
     else {
@@ -661,7 +680,9 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         }
         for (i = 0; i < f->core_num_dim_ix; i++) {
             PyObject *val = PyLong_FromLong(f->core_dim_sizes[i]);
-            PyTuple_SET_ITEM(core_dim_sizes, i, val);
+            if (val == NULL || PyTuple_SetItem(core_dim_sizes, i, val) < 0) {
+                goto fail;
+            }
         }
     }
     else {
@@ -673,7 +694,7 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
                          core_dim_ixs, core_dim_flags, core_dim_sizes);
 
 fail:
-    Py_XDECREF(f);
+    Py_XDECREF((PyObject *)f);
     Py_XDECREF(core_num_dims);
     Py_XDECREF(core_dim_ixs);
     Py_XDECREF(core_dim_flags);
@@ -682,9 +703,7 @@ fail:
 }
 
 // Testing the utilities of the CPU dispatcher
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "_umath_tests.dispatch.h"
-#endif
+#include "_umath_tests.dispatch.h"
 NPY_CPU_DISPATCH_DECLARE(extern const char *_umath_tests_dispatch_var)
 NPY_CPU_DISPATCH_DECLARE(const char *_umath_tests_dispatch_func, (void))
 NPY_CPU_DISPATCH_DECLARE(void _umath_tests_dispatch_attach, (PyObject *list))
@@ -717,7 +736,7 @@ UMath_Tests_test_dispatch(PyObject *NPY_UNUSED(dummy), PyObject *NPY_UNUSED(dumm
         goto err;
     }
     NPY_CPU_DISPATCH_CALL_ALL(_umath_tests_dispatch_attach, (item));
-    Py_SETREF(item, NULL);
+    Py_CLEAR(item);
     if (PyErr_Occurred()) {
         goto err;
     }
@@ -850,6 +869,106 @@ static void *const conv1d_full_data[] = {NULL};
 static const char conv1d_full_typecodes[] = {NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE};
 
 
+/*
+ * Test helpers for PyUFunc_ReplaceLoopBySignature.
+ *
+ * _constant42_loop: unary float64 loop that always writes 42.0.
+ */
+static void
+_constant42_loop(char **args, npy_intp const *dimensions,
+                 npy_intp const *steps, void *NPY_UNUSED(data))
+{
+    npy_intp n = dimensions[0];
+    char *out = args[1];
+    npy_intp out_step = steps[1];
+    for (npy_intp i = 0; i < n; i++) {
+        *(double *)out = 42.0;
+        out += out_step;
+    }
+}
+
+/*
+ * replace_loop(ufunc): Replace the dd->d loop with _constant42_loop.
+ * Only works for unary ufuncs.  Returns a capsule holding the old loop.
+ */
+static PyObject *
+UMath_Tests_replace_loop(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    PyUFuncObject *ufunc;
+    if (!PyArg_ParseTuple(args, "O!", &PyUFunc_Type, &ufunc)) {
+        return NULL;
+    }
+    if (ufunc->nin != 1 || ufunc->nout != 1) {
+        PyErr_SetString(PyExc_ValueError,
+                "replace_loop only supports unary ufuncs");
+        return NULL;
+    }
+    int signature[2] = {NPY_DOUBLE, NPY_DOUBLE};
+    PyUFuncGenericFunction oldfunc = NULL;
+    if (PyUFunc_ReplaceLoopBySignature(
+            ufunc, _constant42_loop, signature, &oldfunc) < 0) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "failed to find a float64 loop");
+        return NULL;
+    }
+    return PyCapsule_New((void *)oldfunc, "oldfunc", NULL);
+}
+
+/*
+ * restore_loop(ufunc, capsule): Restore the loop saved by replace_loop.
+ */
+static PyObject *
+UMath_Tests_restore_loop(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    PyUFuncObject *ufunc;
+    PyObject *capsule;
+    if (!PyArg_ParseTuple(args, "O!O", &PyUFunc_Type, &ufunc, &capsule)) {
+        return NULL;
+    }
+    PyUFuncGenericFunction oldfunc = (PyUFuncGenericFunction)
+            PyCapsule_GetPointer(capsule, "oldfunc");
+    if (oldfunc == NULL) {
+        return NULL;
+    }
+    int signature[2] = {NPY_DOUBLE, NPY_DOUBLE};
+    PyUFunc_ReplaceLoopBySignature(ufunc, oldfunc, signature, NULL);
+    Py_RETURN_NONE;
+}
+
+/*
+ * create_unary_ufunc(): Return a fresh unary d->d ufunc (negation).
+ * A new ufunc is created on every call, so its dispatch state is
+ * guaranteed to be untouched (used to test loop replacement before
+ * the first call).
+ */
+static void
+_double_negation_loop(char **args, npy_intp const *dimensions,
+                      npy_intp const *steps, void *NPY_UNUSED(data))
+{
+    npy_intp n = dimensions[0];
+    char *in = args[0], *out = args[1];
+    for (npy_intp i = 0; i < n; i++) {
+        *(double *)out = -*(double *)in;
+        in += steps[0];
+        out += steps[1];
+    }
+}
+
+static PyUFuncGenericFunction _fresh_unary_functions[] = {
+    _double_negation_loop};
+static const char _fresh_unary_types[] = {NPY_DOUBLE, NPY_DOUBLE};
+static void *const _fresh_unary_data[] = {NULL};
+
+static PyObject *
+UMath_Tests_create_unary_ufunc(PyObject *NPY_UNUSED(dummy),
+                               PyObject *NPY_UNUSED(args))
+{
+    return PyUFunc_FromFuncAndData(
+            _fresh_unary_functions, _fresh_unary_data, _fresh_unary_types,
+            1, 1, 1, PyUFunc_None, "fresh_unary",
+            "fresh unary float64 test ufunc (negation)", 0);
+}
+
 static PyMethodDef UMath_TestsMethods[] = {
     {"test_signature",  UMath_Tests_test_signature, METH_VARARGS,
      "Test signature parsing of ufunc. \n"
@@ -858,6 +977,15 @@ static PyMethodDef UMath_TestsMethods[] = {
      "internals. \n",
      },
     {"test_dispatch", UMath_Tests_test_dispatch, METH_NOARGS, NULL},
+    {"replace_loop", UMath_Tests_replace_loop, METH_VARARGS,
+     "Replace the float64 loop of a ufunc with one that outputs 42.0.\n"
+     "Returns a capsule holding the old loop for restore_loop().\n"},
+    {"restore_loop", UMath_Tests_restore_loop, METH_VARARGS,
+     "Restore a ufunc loop previously replaced by replace_loop().\n"
+     "Arguments: ufunc, capsule\n"},
+    {"create_unary_ufunc", UMath_Tests_create_unary_ufunc, METH_NOARGS,
+     "Create a fresh unary float64 ufunc (negation) with untouched "
+     "dispatch state.\n"},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
@@ -946,7 +1074,12 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-#if Py_GIL_DISABLED
+    /*
+     * TODO: 3.15 adds a free-threaded stable ABI (abi3t), but supporting it
+     * also needs module setup via the new PyModExport API, since a static
+     * `PyModuleDef` cannot be used there.
+     */
+#if defined(Py_GIL_DISABLED) && !defined(Py_LIMITED_API)
     // signal this module supports running with the GIL disabled
     PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
 #endif

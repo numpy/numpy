@@ -206,7 +206,7 @@ Human-readable
 
 :func:`numpy.save` and :func:`numpy.savez` create binary files. To **write a
 human-readable file**, use :func:`numpy.savetxt`. The array can only be 1- or
-2-dimensional, and there's no ` savetxtz` for multiple files.
+2-dimensional, and there's no ``savetxtz`` for multiple files.
 
 Large arrays
 ------------

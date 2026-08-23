@@ -9,13 +9,12 @@ terms of the NumPy (BSD style) LICENSE.
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 import pprint
-import sys
 import re
+import sys
 import types
 from functools import reduce
 
-from . import __version__
-from . import cfuncs
+from . import __version__, cfuncs
 from .cfuncs import errmess
 
 __all__ = [
@@ -26,7 +25,7 @@ __all__ = [
     'hasexternals', 'hasinitvalue', 'hasnote', 'hasresultnote',
     'isallocatable', 'isarray', 'isarrayofstrings',
     'ischaracter', 'ischaracterarray', 'ischaracter_or_characterarray',
-    'iscomplex',
+    'iscomplex', 'iscstyledirective',
     'iscomplexarray', 'iscomplexfunction', 'iscomplexfunction_warn',
     'isdouble', 'isdummyroutine', 'isexternal', 'isfunction',
     'isfunction_wrap', 'isint1', 'isint1array', 'isinteger', 'isintent_aux',
@@ -43,7 +42,7 @@ __all__ = [
     'isunsigned_long_long', 'isunsigned_long_longarray', 'isunsigned_short',
     'isunsigned_shortarray', 'l_and', 'l_not', 'l_or', 'outmess', 'replace',
     'show', 'stripcomma', 'throw_error', 'isattr_value', 'getuseblocks',
-    'process_f2cmap_dict', 'containscommon'
+    'process_f2cmap_dict', 'containscommon', 'containsderivedtypes'
 ]
 
 
@@ -133,12 +132,34 @@ def isreal(var):
 
 def get_kind(var):
     try:
-        return var['kindselector']['*']
+        result = var['kindselector']['*']
     except KeyError:
         try:
-            return var['kindselector']['kind']
+            result = var['kindselector']['kind']
         except KeyError:
-            pass
+            result = None
+    if result is not None:
+        try:
+            int(result)
+        except ValueError:
+            from .capi_maps import f2cmap_all
+            var_typespec = var.get('typespec', "real")
+            f2cmap_for_type = f2cmap_all.get(var_typespec, {})
+            c_type = f2cmap_for_type.get(result)
+            do_neg = False
+            if var_typespec == "integer":
+                do_neg = True
+            for kind_exp in range(5):
+                test_kind = str(2 ** kind_exp)
+                if c_type == f2cmap_for_type.get(test_kind, ""):
+                    result = test_kind
+                    break
+                if do_neg:
+                    test_kind = f"-{test_kind:s}"
+                    if c_type == f2cmap_for_type.get(test_kind, ""):
+                        result = test_kind
+                        break
+        return result
 
 
 def isint1(var):
@@ -416,11 +437,16 @@ def getdimension(var):
     dimpattern = r"\((.*?)\)"
     if 'attrspec' in var.keys():
         if any('dimension' in s for s in var['attrspec']):
-            return [re.findall(dimpattern, v) for v in var['attrspec']][0]
+            return next(re.findall(dimpattern, v) for v in var['attrspec'])
 
 
 def isrequired(var):
     return not isoptional(var) and isintent_nothide(var)
+
+
+def iscstyledirective(f2py_line):
+    directives = {"callstatement", "callprotoargument", "pymethoddef"}
+    return any(directive in f2py_line.lower() for directive in directives)
 
 
 def isintent_in(var):
@@ -565,6 +591,20 @@ def containscommon(rout):
     return 0
 
 
+def hasderivedtypes(rout):
+    return ('block' in rout) and rout['block'] == 'type'
+
+
+def containsderivedtypes(rout):
+    if hasderivedtypes(rout):
+        return 1
+    if hasbody(rout):
+        for b in rout['body']:
+            if hasderivedtypes(b):
+                return 1
+    return 0
+
+
 def containsmodule(block):
     if ismodule(block):
         return 1
@@ -602,24 +642,24 @@ class throw_error:
         self.mess = mess
 
     def __call__(self, var):
-        mess = '\n\n  var = %s\n  Message: %s\n' % (var, self.mess)
+        mess = f'\n\n  var = {var}\n  Message: {self.mess}\n'
         raise F2PYError(mess)
 
 
 def l_and(*f):
     l1, l2 = 'lambda v', []
     for i in range(len(f)):
-        l1 = '%s,f%d=f[%d]' % (l1, i, i)
-        l2.append('f%d(v)' % (i))
-    return eval('%s:%s' % (l1, ' and '.join(l2)))
+        l1 = f'{l1},f{i}=f[{i}]'
+        l2.append(f'f{i}(v)')
+    return eval(f"{l1}:{' and '.join(l2)}")
 
 
 def l_or(*f):
     l1, l2 = 'lambda v', []
     for i in range(len(f)):
-        l1 = '%s,f%d=f[%d]' % (l1, i, i)
-        l2.append('f%d(v)' % (i))
-    return eval('%s:%s' % (l1, ' or '.join(l2)))
+        l1 = f'{l1},f{i}=f[{i}]'
+        l2.append(f'f{i}(v)')
+    return eval(f"{l1}:{' or '.join(l2)}")
 
 
 def l_not(f):
@@ -639,8 +679,7 @@ def getfortranname(rout):
         if name == '':
             raise KeyError
         if not name:
-            errmess('Failed to use fortranname from %s\n' %
-                    (rout['f2pyenhancements']))
+            errmess(f"Failed to use fortranname from {rout['f2pyenhancements']}\n")
             raise KeyError
     except KeyError:
         name = rout['name']
@@ -672,8 +711,7 @@ def getmultilineblock(rout, blockname, comment=1, counter=0):
             else:
                 r = r[:-3]
         else:
-            errmess("%s multiline block should end with `'''`: %s\n"
-                    % (blockname, repr(r)))
+            errmess(f"{blockname} multiline block should end with `'''`: {repr(r)}\n")
     return r
 
 
@@ -705,9 +743,8 @@ def getcallprotoargument(rout, cb_map={}):
                 pass
             elif isstring(var):
                 pass
-            else:
-                if not isattr_value(var):
-                    ctype = ctype + '*'
+            elif not isattr_value(var):
+                ctype = ctype + '*'
             if (isstring(var)
                  or isarrayofstrings(var)  # obsolete?
                  or isstringarray(var)):
@@ -776,7 +813,7 @@ def getrestdoc(rout):
 
 def gentitle(name):
     ln = (80 - len(name) - 6) // 2
-    return '/*%s %s %s*/' % (ln * '*', name, ln * '*')
+    return f"/*{ln * '*'} {name} {ln * '*'}*/"
 
 
 def flatlist(lst):
@@ -804,9 +841,9 @@ def replace(str, d, defaultsep=''):
         else:
             sep = defaultsep
         if isinstance(d[k], list):
-            str = str.replace('#%s#' % (k), sep.join(flatlist(d[k])))
+            str = str.replace(f'#{k}#', sep.join(flatlist(d[k])))
         else:
-            str = str.replace('#%s#' % (k), d[k])
+            str = str.replace(f'#{k}#', d[k])
     return str
 
 
@@ -877,28 +914,23 @@ def applyrules(rules, d, var={}):
                         for i in rules[k][k1]:
                             if isinstance(i, dict):
                                 res = applyrules({'supertext': i}, d, var)
-                                if 'supertext' in res:
-                                    i = res['supertext']
-                                else:
-                                    i = ''
+                                i = res.get('supertext', '')
                             ret[k].append(replace(i, d))
                     else:
                         i = rules[k][k1]
                         if isinstance(i, dict):
                             res = applyrules({'supertext': i}, d)
-                            if 'supertext' in res:
-                                i = res['supertext']
-                            else:
-                                i = ''
+                            i = res.get('supertext', '')
                         ret[k].append(replace(i, d))
         else:
-            errmess('applyrules: ignoring rule %s.\n' % repr(rules[k]))
+            errmess(f'applyrules: ignoring rule {repr(rules[k])}.\n')
         if isinstance(ret[k], list):
             if len(ret[k]) == 1:
                 ret[k] = ret[k][0]
             if ret[k] == []:
                 del ret[k]
     return ret
+
 
 _f2py_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]+)',
                                      re.I).match
@@ -911,7 +943,7 @@ def get_f2py_modulename(source):
         for line in f:
             m = _f2py_module_name_match(line)
             if m:
-                if _f2py_user_module_name_match(line): # skip *__user__* names
+                if _f2py_user_module_name_match(line):  # skip *__user__* names
                     continue
                 name = m.group('name')
                 break
@@ -925,7 +957,7 @@ def getuseblocks(pymod):
                 all_uses.extend([x for x in modblock.get("use").keys() if "__" not in x])
     return all_uses
 
-def process_f2cmap_dict(f2cmap_all, new_map, c2py_map, verbose = False):
+def process_f2cmap_dict(f2cmap_all, new_map, c2py_map, verbose=False):
     """
     Update the Fortran-to-C type mapping dictionary with new mappings and
     return a list of successfully mapped C types.
@@ -978,18 +1010,18 @@ def process_f2cmap_dict(f2cmap_all, new_map, c2py_map, verbose = False):
             if v1 in c2py_map:
                 if k1 in f2cmap_all[k]:
                     outmess(
-                        "\tWarning: redefinition of {'%s':{'%s':'%s'->'%s'}}\n"
-                        % (k, k1, f2cmap_all[k][k1], v1)
+                        "\tWarning: redefinition of "
+                        f"{{'{k}':{{'{k1}':'{f2cmap_all[k][k1]}'->'{v1}'}}}}\n"
                     )
                 f2cmap_all[k][k1] = v1
                 if verbose:
-                    outmess('\tMapping "%s(kind=%s)" to "%s"\n' % (k, k1, v1))
+                    outmess(f'\tMapping "{k}(kind={k1})" to "{v1}\"\n')
                 f2cmap_mapped.append(v1)
-            else:
-                if verbose:
-                    errmess(
-                        "\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n"
-                        % (k, k1, v1, v1, list(c2py_map.keys()))
-                    )
+            elif verbose:
+                c2py_map_keys = list(c2py_map.keys())
+                errmess(
+                    f"\tIgnoring map {{'{k}':{{'{k1}':'{v1}'}}}}: '{v1}' "
+                    f"must be in {c2py_map_keys}\n"
+                )
 
     return f2cmap_all, f2cmap_mapped

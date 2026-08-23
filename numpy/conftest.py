@@ -4,13 +4,21 @@ Pytest configuration and fixtures for the Numpy test suite.
 import os
 import sys
 import tempfile
-from contextlib import contextmanager
 import warnings
+from contextlib import contextmanager
+from pathlib import Path
 
-import hypothesis
 import pytest
-import numpy
 
+try:
+    import hypothesis
+except ImportError:
+    # hypothesis is an optional test dependency (see
+    # requirements/hypothesis_requirements.txt); the property-based tests that
+    # use it are skipped when it is not installed.
+    hypothesis = None
+
+import numpy
 from numpy._core._multiarray_tests import get_fpu_mode
 from numpy.testing._private.utils import NOGIL_BUILD
 
@@ -20,35 +28,41 @@ try:
 except ModuleNotFoundError:
     HAVE_SCPDT = False
 
+try:
+    import pytest_run_parallel  # noqa: F401
+    PARALLEL_RUN_AVAILABLE = True
+except ModuleNotFoundError:
+    PARALLEL_RUN_AVAILABLE = False
 
 _old_fpu_mode = None
 _collect_results = {}
 
-# Use a known and persistent tmpdir for hypothesis' caches, which
-# can be automatically cleared by the OS or user.
-hypothesis.configuration.set_hypothesis_home_dir(
-    os.path.join(tempfile.gettempdir(), ".hypothesis")
-)
+if hypothesis is not None:
+    # Use a known and persistent tmpdir for hypothesis' caches, which
+    # can be automatically cleared by the OS or user.
+    hypothesis.configuration.set_hypothesis_home_dir(
+        os.path.join(tempfile.gettempdir(), ".hypothesis")
+    )
 
-# We register two custom profiles for Numpy - for details see
-# https://hypothesis.readthedocs.io/en/latest/settings.html
-# The first is designed for our own CI runs; the latter also
-# forces determinism and is designed for use via np.test()
-hypothesis.settings.register_profile(
-    name="numpy-profile", deadline=None, print_blob=True,
-)
-hypothesis.settings.register_profile(
-    name="np.test() profile",
-    deadline=None, print_blob=True, database=None, derandomize=True,
-    suppress_health_check=list(hypothesis.HealthCheck),
-)
-# Note that the default profile is chosen based on the presence
-# of pytest.ini, but can be overridden by passing the
-# --hypothesis-profile=NAME argument to pytest.
-_pytest_ini = os.path.join(os.path.dirname(__file__), "..", "pytest.ini")
-hypothesis.settings.load_profile(
-    "numpy-profile" if os.path.isfile(_pytest_ini) else "np.test() profile"
-)
+    # We register two custom profiles for Numpy - for details see
+    # https://hypothesis.readthedocs.io/en/latest/settings.html
+    # The first is designed for our own CI runs; the latter also
+    # forces determinism and is designed for use via np.test()
+    hypothesis.settings.register_profile(
+        name="numpy-profile", deadline=None, print_blob=True,
+    )
+    hypothesis.settings.register_profile(
+        name="np.test() profile",
+        deadline=None, print_blob=True, database=None, derandomize=True,
+        suppress_health_check=list(hypothesis.HealthCheck),
+    )
+    # Note that the default profile is chosen based on the presence
+    # of pytest.ini, but can be overridden by passing the
+    # --hypothesis-profile=NAME argument to pytest.
+    _pytest_ini = os.path.join(os.path.dirname(__file__), "..", "pytest.ini")
+    hypothesis.settings.load_profile(
+        "numpy-profile" if os.path.isfile(_pytest_ini) else "np.test() profile"
+    )
 
 # The experimentalAPI is used in _umath_tests
 os.environ["NUMPY_EXPERIMENTAL_DTYPE_API"] = "1"
@@ -60,8 +74,17 @@ def pytest_configure(config):
         "leaks_references: Tests that are known to leak references.")
     config.addinivalue_line("markers",
         "slow: Tests that are very slow.")
-    config.addinivalue_line("markers",
-        "slow_pypy: Tests that are very slow on pypy.")
+    if not PARALLEL_RUN_AVAILABLE:
+        config.addinivalue_line("markers",
+            "parallel_threads(n): run the given test function in parallel "
+            "using `n` threads.",
+        )
+        config.addinivalue_line("markers",
+            "iterations(n): run the given test function `n` times in each thread",
+        )
+        config.addinivalue_line("markers",
+            "thread_unsafe: mark the test function as single-threaded",
+        )
 
 
 def pytest_addoption(parser):
@@ -99,8 +122,8 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
         tr.line("code that re-enables the GIL should do so in a subprocess.")
         pytest.exit("GIL re-enabled during tests", returncode=1)
 
-#FIXME when yield tests are gone.
-@pytest.hookimpl()
+# FIXME when yield tests are gone.
+@pytest.hookimpl(tryfirst=True)
 def pytest_itemcollected(item):
     """
     Check FPU precision mode was not changed during test collection.
@@ -119,6 +142,11 @@ def pytest_itemcollected(item):
         _collect_results[item] = (_old_fpu_mode, mode)
         _old_fpu_mode = mode
 
+    # mark f2py tests as thread unsafe
+    if Path(item.fspath).parent == Path(__file__).parent / 'f2py' / 'tests':
+        item.add_marker(pytest.mark.thread_unsafe(
+            reason="f2py tests are thread-unsafe"))
+
 
 @pytest.fixture(scope="function", autouse=True)
 def check_fpu_mode(request):
@@ -130,24 +158,19 @@ def check_fpu_mode(request):
     new_mode = get_fpu_mode()
 
     if old_mode != new_mode:
-        raise AssertionError("FPU precision mode changed from {0:#x} to {1:#x}"
-                             " during the test".format(old_mode, new_mode))
+        raise AssertionError(f"FPU precision mode changed from {old_mode:#x} to "
+                             f"{new_mode:#x} during the test")
 
     collect_result = _collect_results.get(request.node)
     if collect_result is not None:
         old_mode, new_mode = collect_result
-        raise AssertionError("FPU precision mode changed from {0:#x} to {1:#x}"
-                             " when collecting the test".format(old_mode,
-                                                                new_mode))
+        raise AssertionError(f"FPU precision mode changed from {old_mode:#x} to "
+                             f"{new_mode:#x} when collecting the test")
 
 
 @pytest.fixture(autouse=True)
 def add_np(doctest_namespace):
     doctest_namespace['np'] = numpy
-
-@pytest.fixture(autouse=True)
-def env_setup(monkeypatch):
-    monkeypatch.setenv('PYTHONHASHSEED', '0')
 
 
 if HAVE_SCPDT:
@@ -164,12 +187,15 @@ if HAVE_SCPDT:
                 "msvccompiler",
                 "Deprecated call",
                 "numpy.core",
-                "`np.compat`",
                 "Importing from numpy.matlib",
                 "This function is deprecated.",    # random_integers
-                "Data type alias 'a'",     # numpy.rec.fromfile
                 "Arrays of 2-dimensional vectors",   # matlib.cross
-                "`in1d` is deprecated", ]
+                "NumPy warning suppression and assertion utilities are deprecated.",
+                "numpy.fix is deprecated",  # fix -> trunc
+                "The chararray class is deprecated",  # char.chararray
+                "numpy.typename is deprecated",  # typename -> dtype.name
+                "numpy.ma.round_ is deprecated",  # ma.round_ -> ma.round
+        ]
         msg = "|".join(msgs)
 
         msgs_r = [
@@ -204,17 +230,18 @@ if HAVE_SCPDT:
     dt_config.check_namespace['StringDType'] = numpy.dtypes.StringDType
 
     # temporary skips
-    dt_config.skiplist = set([
+    dt_config.skiplist = {
         'numpy.savez',    # unclosed file
         'numpy.matlib.savez',
         'numpy.__array_namespace_info__',
         'numpy.matlib.__array_namespace_info__',
-    ])
+    }
 
     # xfail problematic tutorials
     dt_config.pytest_extra_xfail = {
         'how-to-verify-bug.rst': '',
         'c-info.ufunc-tutorial.rst': '',
+        'c-info.reduction-loop-tutorial.rst': '',
         'basics.interoperability.rst': 'needs pandas',
         'basics.dispatch.rst': 'errors out in /testing/overrides.py',
         'basics.subclassing.rst': '.. testcode:: admonitions not understood',
@@ -227,7 +254,5 @@ if HAVE_SCPDT:
         'numpy/_core/cversions.py',
         'numpy/_pyinstaller',
         'numpy/random/_examples',
-        'numpy/compat',
         'numpy/f2py/_backends/_distutils.py',
     ]
-

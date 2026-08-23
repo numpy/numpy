@@ -83,7 +83,7 @@ array_converter_new(
         }
         else {
             item->array = (PyArrayObject *)PyArray_FromAny_int(
-                    item->object, NULL, NULL, 0, 0, 0, NULL,
+                    item->object, NULL, NULL, 0, NPY_MAXDIMS, 0,
                     &item->scalar_input);
             if (item->array == NULL) {
                 goto fail;
@@ -97,7 +97,7 @@ array_converter_new(
         Py_INCREF(item->DType);
 
         /*
-         * Check whether we were passed a an int/float/complex Python scalar.
+         * Check whether we were passed an int/float/complex Python scalar.
          * If not, set `descr` and clear pyscalar/scalar flags as needed.
          */
         if (item->scalar_input && npy_mark_tmp_array_if_pyscalar(
@@ -213,6 +213,13 @@ pyscalar_mode_conv(PyObject *obj, scalar_policy *policy)
 }
 
 
+/*
+ * NOTE: array__wrapit in multiarraymodule.c calls `as_arrays` and `wrap`
+ * by interned name at runtime (with the `subok=`/`to_scalar=` keywords,
+ * interned in npy_static_data.c), and relies on `as_arrays` returning a
+ * length-1 tuple for a single-input converter.  Keep it in sync when
+ * changing the API of either method.
+ */
 static PyObject *
 array_converter_as_arrays(PyArrayArrayConverterObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
@@ -221,11 +228,10 @@ array_converter_as_arrays(PyArrayArrayConverterObject *self,
     scalar_policy policy = CONVERT_IF_NO_ARRAY;
 
     NPY_PREPARE_ARGPARSER;
+    /* pyscalars: how to handle scalars (ignored if dtype is given). */
     if (npy_parse_arguments("as_arrays", args, len_args, kwnames,
-            "$subok", &PyArray_BoolConverter, &subok,
-            /* how to handle scalars (ignored if dtype is given). */
-            "$pyscalars", &pyscalar_mode_conv, &policy,
-            NULL, NULL, NULL) < 0) {
+            {"$subok", &PyArray_BoolConverter, &subok},
+            {"$pyscalars", &pyscalar_mode_conv, &policy}) < 0) {
         return NULL;
     }
     if (policy == CONVERT_IF_NO_ARRAY) {
@@ -286,11 +292,10 @@ array_converter_wrap(PyArrayArrayConverterObject *self,
     }
 
     NPY_PREPARE_ARGPARSER;
+    /* to_scalar is three-way "bool", if `None` inspect input to decide. */
     if (npy_parse_arguments("wrap", args, len_args, kwnames,
-            "", NULL, &obj,
-            /* Three-way "bool", if `None` inspect input to decide. */
-            "$to_scalar", NULL, &to_scalar,
-            NULL, NULL, NULL) < 0) {
+            {"", NULL, &obj},
+            {"$to_scalar", NULL, &to_scalar}) < 0) {
         return NULL;
     }
     if (to_scalar == Py_None) {
@@ -327,9 +332,8 @@ array_converter_result_type(PyArrayArrayConverterObject *self,
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("result_type", args, len_args, kwnames,
-            "|extra_dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
-            "|ensure_inexact", &PyArray_BoolConverter, &ensure_inexact,
-            NULL, NULL, NULL) < 0) {
+            {"|extra_dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info},
+            {"|ensure_inexact", &PyArray_BoolConverter, &ensure_inexact}) < 0) {
         goto finish;
     }
 

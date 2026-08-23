@@ -359,7 +359,7 @@ namespace, which is their primary location. To make it unambiguous how to access
 public function, ``np.lib`` is now empty and contains only a handful of specialized submodules,
 classes and functions:
 
-- ``array_utils``, ``format``, ``introspect``, ``mixins``, ``npyio``
+- ``array_utils``, ``format``, ``introspect``, ``mixins``, ``npyio``, ``scimath``
   and ``stride_tricks`` submodules,
 
 - ``Arrayterator`` and ``NumpyVersion`` classes,

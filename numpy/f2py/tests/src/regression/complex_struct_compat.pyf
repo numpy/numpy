@@ -1,0 +1,12 @@
+python module _complex_struct_compat_test
+    interface
+    subroutine zero_imag(c, n)
+        callstatement { int k; for(k=0;k<n;k++) (c+k)->i = 0.0; }
+        callprotoargument complex_double*, int*
+
+        complex*16 intent(inout), dimension(n) :: c
+        integer intent(hide), depend(c) :: n = shape(c,0)
+
+    end subroutine zero_imag
+    end interface
+end python module _complex_struct_compat_test

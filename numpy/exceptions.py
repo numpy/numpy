@@ -1,14 +1,13 @@
 """
-Exceptions and Warnings (:mod:`numpy.exceptions`)
-=================================================
+Exceptions and Warnings
+=======================
 
 General exceptions used by NumPy.  Note that some exceptions may be module
 specific, such as linear algebra errors.
 
 .. versionadded:: NumPy 1.25
 
-    The exceptions module is new in NumPy 1.25.  Older exceptions remain
-    available through the main NumPy namespace for compatibility.
+    The exceptions module is new in NumPy 1.25.
 
 .. currentmodule:: numpy.exceptions
 
@@ -95,11 +94,11 @@ class RankWarning(RuntimeWarning):
 
 # Exception used in shares_memory()
 class TooHardError(RuntimeError):
-    """max_work was exceeded.
+    """``max_work`` was exceeded.
 
     This is raised whenever the maximum number of candidate solutions
     to consider specified by the ``max_work`` parameter is exceeded.
-    Assigning a finite number to max_work may have caused the operation
+    Assigning a finite number to ``max_work`` may have caused the operation
     to fail.
 
     """
@@ -171,7 +170,7 @@ class AxisError(ValueError, IndexError):
 
     """
 
-    __slots__ = ("axis", "ndim", "_msg")
+    __slots__ = ("_msg", "axis", "ndim")
 
     def __init__(self, axis, ndim=None, msg_prefix=None):
         if ndim is msg_prefix is None:
@@ -243,5 +242,5 @@ class DTypePromotionError(TypeError):
     DTypePromotionError: field names `('field1', 'field2')` and `('field1',)`
     mismatch.
 
-    """  # NOQA
+    """  # noqa: E501
     pass

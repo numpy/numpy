@@ -174,8 +174,8 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
                                         npy_bool from_pickle);
 
 /*
- * Gets a tzoffset in minutes by calling the fromutc() function on
- * the Python datetime.tzinfo object.
+ * Gets a tzoffset in minutes by calling the astimezone() function on
+ * the Python datetime.datetime object.
  */
 NPY_NO_EXPORT int
 get_tzoffset_from_pytzinfo(PyObject *timezone, npy_datetimestruct *dts);
@@ -242,9 +242,10 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
 /*
  * Converts a datetime into a PyObject *.
  *
- * For days or coarser, returns a datetime.date.
- * For microseconds or coarser, returns a datetime.datetime.
- * For units finer than microseconds, returns an integer.
+ * NaT (Not-a-time) is returned as None.
+ * For D/W/Y/M (days or coarser), returns a datetime.date.
+ * For μs/ms/s/m/h/D/W (microseconds or coarser), returns a datetime.datetime.
+ * For ns/ps/fs/as (units shorter than microseconds), returns an integer.
  */
 NPY_NO_EXPORT PyObject *
 convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta);
@@ -252,9 +253,9 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta);
 /*
  * Converts a timedelta into a PyObject *.
  *
- * Not-a-time is returned as the string "NaT".
- * For microseconds or coarser, returns a datetime.timedelta.
- * For units finer than microseconds, returns an integer.
+ * NaT (Not-a-time) is returned as None.
+ * For μs/ms/s/m/h/D/W (microseconds or coarser), returns a datetime.timedelta.
+ * For Y/M (non-linear units), generic units and ns/ps/fs/as (units shorter than microseconds), returns an integer.
  */
 NPY_NO_EXPORT PyObject *
 convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta);
@@ -333,5 +334,46 @@ datetime_hash(PyArray_DatetimeMetaData *meta, npy_datetime dt);
 
 NPY_NO_EXPORT npy_hash_t
 timedelta_hash(PyArray_DatetimeMetaData *meta, npy_timedelta td);
+
+/*
+ * Scale a datetime or timedelta value by num/denom, checking for overflow.
+ *
+ * Positive values compute *dt * num / denom.
+ * Negative values compute (*dt * num - (denom - 1)) / denom to round
+ * toward negative infinity.
+ *
+ * NPY_DATETIME_NAT is NPY_MIN_INT64 (i.e. -NPY_MAX_INT64 - 1).
+ * The asymmetric neg_limit formula ensures that a valid *dt * num never
+ * produces NPY_MIN_INT64, which would be misinterpreted as NaT.
+ *
+ * NaT values pass through unchanged.
+ *
+ * Returns 0 on success, -1 on overflow (with PyExc_OverflowError set).
+ */
+static inline int
+_datetime_scale_with_overflow_check(
+        npy_int64 *dt, npy_int64 num, npy_int64 denom,
+        const char *type_name)
+{
+    if (*dt == NPY_DATETIME_NAT) {
+        return 0;
+    }
+    npy_int64 pos_limit = NPY_MAX_INT64 / num;
+    npy_int64 neg_limit = (NPY_MAX_INT64 - denom + 1) / num;
+
+    if (*dt > pos_limit || *dt < -neg_limit) {
+        PyErr_Format(PyExc_OverflowError,
+                "Overflow when converting between "
+                "%s units", type_name);
+        return -1;
+    }
+    if (*dt < 0) {
+        *dt = (*dt * num - (denom - 1)) / denom;
+    }
+    else {
+        *dt = *dt * num / denom;
+    }
+    return 0;
+}
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY__DATETIME_H_ */

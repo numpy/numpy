@@ -1,14 +1,12 @@
+import pathlib
 import re
 import zipfile
-import pathlib
-from typing import IO, Any
 from collections.abc import Mapping
+from typing import IO, Any, assert_type
 
-import numpy.typing as npt
 import numpy as np
+import numpy.typing as npt
 from numpy.lib._npyio_impl import BagObj
-
-from typing_extensions import assert_type
 
 str_path: str
 pathlib_path: pathlib.Path
@@ -20,6 +18,8 @@ npz_file: np.lib.npyio.NpzFile
 AR_i8: npt.NDArray[np.int64]
 AR_LIKE_f8: list[float]
 
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+
 class BytesWriter:
     def write(self, data: bytes) -> None: ...
 
@@ -30,11 +30,11 @@ class BytesReader:
 bytes_writer: BytesWriter
 bytes_reader: BytesReader
 
-assert_type(npz_file.zip, zipfile.ZipFile)
-assert_type(npz_file.fid, None | IO[str])
+assert_type(npz_file.zip, zipfile.ZipFile | None)
+assert_type(npz_file.fid, IO[str] | None)
 assert_type(npz_file.files, list[str])
 assert_type(npz_file.allow_pickle, bool)
-assert_type(npz_file.pickle_kwargs, None | Mapping[str, Any])
+assert_type(npz_file.pickle_kwargs, Mapping[str, Any] | None)
 assert_type(npz_file.f, BagObj[np.lib.npyio.NpzFile])
 assert_type(npz_file["test"], npt.NDArray[Any])
 assert_type(len(npz_file), int)
@@ -70,11 +70,11 @@ assert_type(np.loadtxt(str_path, delimiter="\n"), npt.NDArray[np.float64])
 assert_type(np.loadtxt(str_path, ndmin=2), npt.NDArray[np.float64])
 assert_type(np.loadtxt(["1", "2", "3"]), npt.NDArray[np.float64])
 
-assert_type(np.fromregex(bytes_file, "test", np.float64), npt.NDArray[np.float64])
-assert_type(np.fromregex(str_file, b"test", dtype=float), npt.NDArray[Any])
-assert_type(np.fromregex(str_path, re.compile("test"), dtype=np.str_, encoding="utf8"), npt.NDArray[np.str_])
-assert_type(np.fromregex(pathlib_path, "test", np.float64), npt.NDArray[np.float64])
-assert_type(np.fromregex(bytes_reader, "test", np.float64), npt.NDArray[np.float64])
+assert_type(np.fromregex(bytes_file, "test", np.float64), _Array1D[np.float64])
+assert_type(np.fromregex(str_file, b"test", dtype=float), _Array1D[Any])
+assert_type(np.fromregex(str_path, re.compile("test"), dtype=np.str_, encoding="utf8"), _Array1D[np.str_])
+assert_type(np.fromregex(pathlib_path, "test", np.float64), _Array1D[np.float64])
+assert_type(np.fromregex(bytes_reader, "test", np.float64), _Array1D[np.float64])
 
 assert_type(np.genfromtxt(bytes_file), npt.NDArray[Any])
 assert_type(np.genfromtxt(pathlib_path, dtype=np.str_), npt.NDArray[np.str_])

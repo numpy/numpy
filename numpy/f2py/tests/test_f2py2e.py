@@ -1,18 +1,19 @@
+import os
+import platform
 import re
 import shlex
 import subprocess
 import sys
 import textwrap
-from pathlib import Path
 from collections import namedtuple
-
-import platform
+from pathlib import Path
 
 import pytest
 
-from . import util
-from numpy.f2py.f2py2e import main as f2pycli
+from numpy.f2py.f2py2e import get_newer_options, main as f2pycli
 from numpy.testing._private.utils import NOGIL_BUILD
+
+from . import util
 
 #######################
 # F2PY Test utilities #
@@ -29,6 +30,7 @@ def compiler_check_f2pycli():
 #########################
 # CLI utils and classes #
 #########################
+
 
 PPaths = namedtuple("PPaths", "finp, f90inp, pyf, wrap77, wrap90, cmodf")
 
@@ -144,11 +146,10 @@ def test_gh22819_cli(capfd, gh22819_cli, monkeypatch):
     with util.switchdir(ipath.parent):
         f2pycli()
         gen_paths = [item.name for item in ipath.parent.rglob("*") if item.is_file()]
-        assert "blahmodule.c" not in gen_paths # shouldn't be generated
+        assert "blahmodule.c" not in gen_paths  # shouldn't be generated
         assert "blah-f2pywrappers.f" not in gen_paths
         assert "test_22819-f2pywrappers.f" in gen_paths
         assert "test_22819module.c" in gen_paths
-        assert "Ignoring blah"
 
 
 def test_gh22819_many_pyf(capfd, gh22819_cli, monkeypatch):
@@ -220,6 +221,7 @@ def test_gen_pyf_no_overwrite(capfd, hello_world_f90, monkeypatch):
 
 
 @pytest.mark.skipif(sys.version_info <= (3, 12), reason="Python 3.12 required")
+@pytest.mark.slow
 def test_untitled_cli(capfd, hello_world_f90, monkeypatch):
     """Check that modules are named correctly
 
@@ -232,10 +234,9 @@ def test_untitled_cli(capfd, hello_world_f90, monkeypatch):
         out, _ = capfd.readouterr()
         assert "untitledmodule.c" in out
 
-
-@pytest.mark.skipif((platform.system() != 'Linux') or (sys.version_info <= (3, 12)), reason='Compiler and 3.12 required')
-def test_no_py312_distutils_fcompiler(capfd, hello_world_f90, monkeypatch):
-    """Check that no distutils imports are performed on 3.12
+@pytest.mark.slow
+def test_no_distutils_backend(capfd, hello_world_f90, monkeypatch):
+    """Check that distutils backend and related options fail
     CLI :: --fcompiler --help-link --backend distutils
     """
     MNAME = "hi"
@@ -248,22 +249,23 @@ def test_no_py312_distutils_fcompiler(capfd, hello_world_f90, monkeypatch):
         compiler_check_f2pycli()
         out, _ = capfd.readouterr()
         assert "--fcompiler cannot be used with meson" in out
-    monkeypatch.setattr(
-        sys, "argv", "f2py --help-link".split()
-    )
-    with util.switchdir(ipath.parent):
-        f2pycli()
-        out, _ = capfd.readouterr()
-        assert "Use --dep for meson builds" in out
-    MNAME = "hi2" # Needs to be different for a new -c
-    monkeypatch.setattr(
-        sys, "argv", f"f2py {ipath} -c -m {MNAME} --backend distutils".split()
-    )
-    with util.switchdir(ipath.parent):
-        f2pycli()
-        out, _ = capfd.readouterr()
-        assert "Cannot use distutils backend with Python>=3.12" in out
 
+    monkeypatch.setattr(
+        sys, "argv", ["f2py", "--help-link"]
+    )
+    with pytest.raises(SystemExit):
+        f2pycli()
+        out, _ = capfd.readouterr()
+        assert "Unknown option --help-link" in out
+
+    monkeypatch.setattr(
+        sys, "argv", ["f2py", "--backend", "distutils"]
+    )
+    with pytest.raises(SystemExit):
+        compiler_check_f2pycli()
+        f2pycli()
+        out, _ = capfd.readouterr()
+        assert "'distutils' backend was removed" in out
 
 @pytest.mark.xfail
 def test_f2py_skip(capfd, retreal_f77, monkeypatch):
@@ -507,6 +509,24 @@ def test_nolatexdoc(capfd, hello_world_f90, monkeypatch):
         out, _ = capfd.readouterr()
         assert "Documentation is saved to file" not in out
 
+@pytest.mark.slow
+def test_latex_doc_gh30268(tmp_path):
+
+    if not util.has_fortran_compiler():
+        pytest.skip("No Fortran compiler found")
+
+    fsource = textwrap.dedent("""
+        subroutine foo
+        end
+    """)
+
+    fpath = tmp_path / "test_latex.f90"
+    with open(fpath, "w") as f:
+        f.write(fsource)
+
+    cmd = [sys.executable, "-m", "numpy.f2py", "-c", str(fpath), "-m", "test_latex", "--latex-doc"]
+    subprocess.check_call(cmd, cwd=tmp_path)
+
 
 def test_shortlatex(capfd, hello_world_f90, monkeypatch):
     """Ensures that truncated documentation is written out
@@ -673,14 +693,65 @@ def test_inclheader(capfd, hello_world_f90, monkeypatch):
             assert "#include <stdbool.h>" in ocmr
             assert "#include <stdio.h>" in ocmr
 
+@pytest.mark.skipif((platform.system() != 'Linux'), reason='Compiler required')
+@pytest.mark.slow
+def test_cli_obj(capfd, hello_world_f90, monkeypatch):
+    """Ensures that the extra object can be specified when using meson backend
+    """
+    ipath = Path(hello_world_f90)
+    mname = "blah"
+    odir = "tttmp"
+    obj = "extra.o"
+    monkeypatch.setattr(sys, "argv",
+                        f'f2py --backend meson --build-dir {odir} -m {mname} -c {obj} {ipath}'.split())
 
-def test_inclpath():
+    with util.switchdir(ipath.parent):
+        Path(obj).touch()
+        compiler_check_f2pycli()
+        with Path(f"{odir}/meson.build").open() as mesonbuild:
+            mbld = mesonbuild.read()
+            assert "objects:" in mbld
+            assert f"'''{obj}'''" in mbld
+
+
+def test_inclpath(monkeypatch):
     """Add to the include directories
 
     CLI :: --include-paths
     """
-    # TODO: populate
-    pass
+    monkeypatch.setattr(os, "pathsep", ";")
+
+    include_paths, ftcompat, remain = get_newer_options(
+        ["--include-paths", r"C:\inc1"]
+    )
+
+    assert include_paths == [r"C:\inc1"]
+    assert ftcompat is None
+    assert remain == []
+
+    include_paths, ftcompat, remain = get_newer_options(
+        ["--include-paths", r"C:\inc1;D:\inc2"]
+    )
+
+    assert set(include_paths) == {r"C:\inc1", r"D:\inc2"}
+    assert ftcompat is None
+    assert remain == []
+
+    include_paths, ftcompat, remain = get_newer_options(
+        ["--include_paths", r"C:\inc1;D:\inc2"]
+    )
+
+    assert set(include_paths) == {r"C:\inc1", r"D:\inc2"}
+    assert ftcompat is None
+    assert remain == []
+
+    include_paths, ftcompat, remain = get_newer_options(
+        ["-I", r"C:\inc1;D:\inc2"]
+    )
+
+    assert include_paths == [r"C:\inc1;D:\inc2"]
+    assert ftcompat is None
+    assert remain == []
 
 
 def test_hlink():
@@ -743,7 +814,7 @@ def test_version(capfd, monkeypatch):
 
     CLI :: -v
     """
-    monkeypatch.setattr(sys, "argv", 'f2py -v'.split())
+    monkeypatch.setattr(sys, "argv", ["f2py", "-v"])
     # TODO: f2py2e should not call sys.exit() after printing the version
     with pytest.raises(SystemExit):
         f2pycli()
@@ -770,6 +841,7 @@ def test_npdistop(hello_world_f90, monkeypatch):
 
 @pytest.mark.skipif((platform.system() != 'Linux') or sys.version_info <= (3, 12),
                     reason='Compiler and Python 3.12 or newer required')
+@pytest.mark.slow
 def test_no_freethreading_compatible(hello_world_f90, monkeypatch):
     """
     CLI :: --no-freethreading-compatible
@@ -813,7 +885,8 @@ def test_freethreading_compatible(hello_world_f90, monkeypatch):
         rout = subprocess.run(cmd_run, capture_output=True, encoding='UTF-8')
         eout = ' Hello World\n'
         assert rout.stdout == eout
-        assert rout.stderr == ""
+        if "LSAN_OPTIONS" not in os.environ:
+            assert rout.stderr == ""
         assert rout.returncode == 0
 
 

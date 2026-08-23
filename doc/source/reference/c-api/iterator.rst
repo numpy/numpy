@@ -434,6 +434,9 @@ Construction and destruction
     is enabled, the caller must be sure to check whether
     ``NpyIter_IterationNeedsAPI(iter)`` is true, in which case
     it may not release the GIL during iteration.
+    If you are working with known dtypes `NpyIter_GetTransferFlags` is
+    a faster and more precise way to check for whether the iterator needs
+    the API due to buffering.
 
 .. c:macro:: NPY_ITER_ZEROSIZE_OK
 
@@ -822,6 +825,20 @@ Construction and destruction
     Deallocates the iterator object and resolves any needed writebacks.
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
+
+.. c:function:: NPY_ARRAYMETHOD_FLAGS NpyIter_GetTransferFlags(NpyIter *iter)
+
+    .. versionadded:: 2.3
+
+    Fetches the `NPY_METH_RUNTIME_FLAGS` which provide the information on
+    whether buffering needs the Python GIL (`NPY_METH_REQUIRES_PYAPI`) or
+    floating point errors may be set (`NPY_METH_NO_FLOATINGPOINT_ERRORS`).
+
+    Prior to NumPy 2.3, the public function available was
+    ``NpyIter_IterationNeedsAPI``, which is still available and additionally
+    checks for object (or similar) dtypes and not exclusively for
+    buffering/iteration needs itself.
+    In general, this function should be preferred.
 
 .. c:function:: int NpyIter_Reset(NpyIter* iter, char** errmsg)
 

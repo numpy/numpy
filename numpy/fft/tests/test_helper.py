@@ -4,8 +4,8 @@ Copied from fftpack.helper by Pearu Peterson, October 2005
 
 """
 import numpy as np
-from numpy.testing import assert_array_almost_equal
 from numpy import fft, pi
+from numpy.testing import assert_array_almost_equal
 
 
 class TestFFTShift:
@@ -84,8 +84,8 @@ class TestFFTShift:
         assert_array_almost_equal(fft.ifftshift(shift_dim_both), freqs)
 
     def test_equal_to_original(self):
-        """ Test that the new (>=v1.15) implementation (see #10073) is equal to the original (<=v1.14) """
-        from numpy._core import asarray, concatenate, arange, take
+        """ Test the new (>=v1.15) and old implementations are equal (see #10073) """
+        from numpy._core import arange, asarray, concatenate, take
 
         def original_fftshift(x, axes=None):
             """ How fftshift was implemented in v1.14"""
@@ -137,29 +137,29 @@ class TestFFTFreq:
 
     def test_definition(self):
         x = [0, 1, 2, 3, 4, -4, -3, -2, -1]
-        assert_array_almost_equal(9*fft.fftfreq(9), x)
-        assert_array_almost_equal(9*pi*fft.fftfreq(9, pi), x)
+        assert_array_almost_equal(9 * fft.fftfreq(9), x)
+        assert_array_almost_equal(9 * pi * fft.fftfreq(9, pi), x)
         x = [0, 1, 2, 3, 4, -5, -4, -3, -2, -1]
-        assert_array_almost_equal(10*fft.fftfreq(10), x)
-        assert_array_almost_equal(10*pi*fft.fftfreq(10, pi), x)
+        assert_array_almost_equal(10 * fft.fftfreq(10), x)
+        assert_array_almost_equal(10 * pi * fft.fftfreq(10, pi), x)
 
 
 class TestRFFTFreq:
 
     def test_definition(self):
         x = [0, 1, 2, 3, 4]
-        assert_array_almost_equal(9*fft.rfftfreq(9), x)
-        assert_array_almost_equal(9*pi*fft.rfftfreq(9, pi), x)
+        assert_array_almost_equal(9 * fft.rfftfreq(9), x)
+        assert_array_almost_equal(9 * pi * fft.rfftfreq(9, pi), x)
         x = [0, 1, 2, 3, 4, 5]
-        assert_array_almost_equal(10*fft.rfftfreq(10), x)
-        assert_array_almost_equal(10*pi*fft.rfftfreq(10, pi), x)
+        assert_array_almost_equal(10 * fft.rfftfreq(10), x)
+        assert_array_almost_equal(10 * pi * fft.rfftfreq(10, pi), x)
 
 
 class TestIRFFTN:
 
     def test_not_last_axis_success(self):
         ar, ai = np.random.random((2, 16, 8, 32))
-        a = ar + 1j*ai
+        a = ar + 1j * ai
 
         axes = (-2,)
 

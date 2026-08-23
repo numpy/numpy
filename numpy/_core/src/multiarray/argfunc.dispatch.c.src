@@ -1,12 +1,4 @@
 /* -*- c -*- */
-/*@targets
- ** $maxopt baseline
- ** sse2 sse42 xop avx2 avx512_skx
- ** vsx2
- ** neon asimd
- ** vx vxe
- **/
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "simd/simd.h"

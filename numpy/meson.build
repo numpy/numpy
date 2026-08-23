@@ -32,7 +32,7 @@ endif
 # than a `.a` file extension in order not to break including them in a
 # distutils-based build (see gh-23981 and
 # https://mesonbuild.com/FAQ.html#why-does-building-my-project-with-msvc-output-static-libraries-called-libfooa)
-if is_windows and cc.get_id() == 'msvc'
+if is_windows and cc.get_id() in ['msvc', 'clang-cl']
   name_prefix_staticlib = ''
   name_suffix_staticlib = 'lib'
 else
@@ -71,7 +71,7 @@ endif
 blas_order = get_option('blas-order')
 if blas_order == ['auto']
   blas_order = []
-  if host_machine.system() == 'darwin'
+  if host_machine.system() in ['darwin', 'ios']
     blas_order += 'accelerate'
   endif
   if host_machine.cpu_family() == 'x86_64'
@@ -82,7 +82,7 @@ endif
 lapack_order = get_option('lapack-order')
 if lapack_order == ['auto']
   lapack_order = []
-  if host_machine.system() == 'darwin'
+  if host_machine.system() in ['darwin', 'ios']
     lapack_order += 'accelerate'
   endif
   if host_machine.cpu_family() == 'x86_64'
@@ -223,6 +223,7 @@ null_dep = dependency('', required : false)
 atomic_dep = null_dep
 code_non_lockfree = '''
   #include <stdint.h>
+  #include <stddef.h>
   int main() {
    struct {
      void *p;
@@ -230,10 +231,10 @@ code_non_lockfree = '''
    } x;
    x.p = NULL;
    x.u8v = 0;
-   uint8_t res = __atomic_load_n(x.u8v, __ATOMIC_SEQ_CST);
-   __atomic_store_n(x.u8v, 1, ATOMIC_SEQ_CST);
-   void *p = __atomic_load_n(x.p, __ATOMIC_SEQ_CST);
-   __atomic_store_n((void **)x.p, NULL, __ATOMIC_SEQ_CST)
+   uint8_t res = __atomic_load_n(&x.u8v, __ATOMIC_SEQ_CST);
+   __atomic_store_n(&x.u8v, 1, __ATOMIC_SEQ_CST);
+   void *p = __atomic_load_n((void **)x.p, __ATOMIC_SEQ_CST);
+   __atomic_store_n((void **)x.p, NULL, __ATOMIC_SEQ_CST);
    return 0;
    }
 '''
@@ -275,19 +276,22 @@ python_sources = [
   '_array_api_info.py',
   '_array_api_info.pyi',
   '_configtool.py',
+  '_configtool.pyi',
   '_distributor_init.py',
+  '_distributor_init.pyi',
   '_globals.py',
+  '_globals.pyi',
   '_pytesttester.py',
   '_pytesttester.pyi',
   '_expired_attrs_2_0.py',
+  '_expired_attrs_2_0.pyi',
   'conftest.py',
-  'ctypeslib.py',
-  'ctypeslib.pyi',
   'exceptions.py',
   'exceptions.pyi',
   'dtypes.py',
   'dtypes.pyi',
   'matlib.py',
+  'matlib.pyi',
   'py.typed',
   'version.pyi',
 ]
@@ -313,7 +317,7 @@ pure_subdirs = [
   '_pyinstaller',
   '_typing',
   '_utils',
-  'compat',
+  'ctypeslib',
   'doc',
   'f2py',
   'lib',
@@ -359,13 +363,28 @@ else
 endif
 
 foreach subdir: pure_subdirs
-  install_subdir(subdir, install_dir: np_dir, install_tag: 'python-runtime', exclude_directories: ['tests'])
+  install_subdir(
+    subdir,
+    install_dir: np_dir,
+    install_tag: 'python-runtime',
+    exclude_directories: ['tests', '__pycache__']
+  )
   if fs.is_dir(subdir/'tests')
-    install_subdir(subdir/'tests', install_dir: np_dir/subdir, install_tag: 'tests')
+    install_subdir(
+      subdir/'tests',
+      install_dir: np_dir/subdir,
+      install_tag: 'tests',
+      exclude_directories: ['__pycache__']
+    )
   endif
 endforeach
 
-install_subdir('tests', install_dir: np_dir, install_tag: 'tests')
+install_subdir(
+  'tests',
+  install_dir: np_dir,
+  install_tag: 'tests',
+  exclude_directories: ['__pycache__']
+)
 
 compilers = {
   'C': cc,
@@ -404,7 +423,7 @@ foreach name, machine : machines
   conf_data.set(name + '_CPU_SYSTEM', machine.system())
 endforeach
 
-conf_data.set('CROSS_COMPILED', meson.is_cross_build())
+conf_data.set('CROSS_COMPILED', meson.is_cross_build() ? 'True' : 'False')
 
 # Python information
 conf_data.set('PYTHON_PATH', py.full_path())
@@ -420,13 +439,13 @@ if have_blas
   dependency_map += {'BLAS': blas}
 else
   conf_data.set('BLAS_NAME', blas_name)
-  conf_data.set('BLAS_FOUND', false)
+  conf_data.set('BLAS_FOUND', 'False')
 endif
 
 
 foreach name, dep : dependency_map
   conf_data.set(name + '_NAME', dep.name())
-  conf_data.set(name + '_FOUND', dep.found())
+  conf_data.set(name + '_FOUND', dep.found() ? 'True' : 'False')
   if dep.found()
     conf_data.set(name + '_VERSION', dep.version())
     conf_data.set(name + '_TYPE_NAME', dep.type_name())

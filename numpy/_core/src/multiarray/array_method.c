@@ -4,7 +4,7 @@
  * pointers to do fast operations on the given input functions.
  * It thus adds an abstraction layer around individual ufunc loops.
  *
- * Unlike methods, a ArrayMethod can have multiple inputs and outputs.
+ * Unlike methods, an ArrayMethod can have multiple inputs and outputs.
  * This has some serious implication for garbage collection, and as far
  * as I (@seberg) understands, it is not possible to always guarantee correct
  * cyclic garbage collection of dynamically created DTypes with methods.
@@ -30,8 +30,8 @@
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
 
-#include <npy_pycompat.h>
 #include <numpy/ndarrayobject.h>
+#include <npy_pycompat.h>
 #include "arrayobject.h"
 #include "array_coercion.h"
 #include "array_method.h"
@@ -39,6 +39,7 @@
 #include "convert_datatype.h"
 #include "common.h"
 #include "numpy/ufuncobject.h"
+#include "dtype_transfer.h"
 
 
 /*
@@ -85,7 +86,7 @@ default_resolve_descriptors(
      * abstract ones or unspecified outputs).  We can use the common-dtype
      * operation to provide a default here.
      */
-    if (method->casting == NPY_NO_CASTING) {
+    if (method->casting == NPY_NO_CASTING && (method->flags & _NPY_METH_IS_CAST)) {
         /*
          * By (current) definition no-casting should imply viewable.  This
          * is currently indicated for example for object to object cast.
@@ -128,9 +129,9 @@ is_contiguous(
  * param move_references UNUSED -- listed below but doxygen doesn't see as a parameter
  * @param strides Array of step sizes for each dimension of the arrays involved
  * @param out_loop Output pointer to the function that will perform the strided loop.
- * @param out_transferdata Output pointer to auxiliary data (if any) 
+ * @param out_transferdata Output pointer to auxiliary data (if any)
  *        needed by the out_loop function.
- * @param flags Output pointer to additional flags (if any) 
+ * @param flags Output pointer to additional flags (if any)
  *        needed by the out_loop function
  * @returns 0 on success -1 on failure.
  */
@@ -184,12 +185,17 @@ validate_spec(PyArrayMethod_Spec *spec)
                 "not exceed %d. (method: %s)", NPY_MAXARGS, spec->name);
         return -1;
     }
-    switch (spec->casting) {
+    switch ((int)spec->casting) {
         case NPY_NO_CASTING:
         case NPY_EQUIV_CASTING:
         case NPY_SAFE_CASTING:
         case NPY_SAME_KIND_CASTING:
         case NPY_UNSAFE_CASTING:
+        case NPY_NO_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+        case NPY_EQUIV_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+        case NPY_SAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+        case NPY_SAME_KIND_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+        case NPY_UNSAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
             break;
         default:
             if (spec->casting != -1) {
@@ -246,7 +252,9 @@ fill_arraymethod_from_slots(
     /* Set the defaults */
     meth->get_strided_loop = &npy_default_get_strided_loop;
     meth->resolve_descriptors = &default_resolve_descriptors;
+    meth->get_reduction_loop = NULL;
     meth->get_reduction_initial = NULL;  /* no initial/identity by default */
+    meth->get_multi_reduction_initials = NULL;  /* no initial/identity by default */
 
     /* Fill in the slots passed by the user */
     /*
@@ -295,6 +303,12 @@ fill_arraymethod_from_slots(
             case NPY_METH_get_reduction_initial:
                 meth->get_reduction_initial = slot->pfunc;
                 continue;
+            case NPY_METH_get_reduction_loop:
+                meth->get_reduction_loop = slot->pfunc;
+                continue;
+            case NPY_METH_get_multi_reduction_initials:
+                meth->get_multi_reduction_initials = slot->pfunc;
+                continue;
             case NPY_METH_contiguous_indexed_loop:
                 meth->contiguous_indexed_loop = slot->pfunc;
                 continue;
@@ -307,6 +321,47 @@ fill_arraymethod_from_slots(
         PyErr_Format(PyExc_RuntimeError,
                 "invalid slot number %d to ArrayMethod: %s",
                 slot->slot, spec->name);
+        return -1;
+    }
+
+    if (meth->get_reduction_loop != NULL) {
+        int max_reduce_outputs = (NPY_MAXARGS - 2) / 2;
+        if (meth->nout > max_reduce_outputs) {
+            PyErr_Format(PyExc_ValueError,
+                    "ArrayMethod reduction loops are limited to at most %d "
+                    "outputs. (method: %s)",
+                    max_reduce_outputs, spec->name);
+            return -1;
+        }
+    }
+
+    if (meth->get_reduction_initial != NULL &&
+            meth->get_multi_reduction_initials != NULL) {
+        PyErr_Format(PyExc_ValueError,
+                "ArrayMethod cannot register both get_reduction_initial and "
+                "get_multi_reduction_initials. Use get_multi_reduction_initials "
+                "alone (it supports single-output reductions too). "
+                "(method: %s)",
+                spec->name);
+        return -1;
+    }
+    if (meth->nout > 1 && meth->get_reduction_initial != NULL
+            && meth->get_reduction_loop != NULL) {
+        PyErr_Format(PyExc_ValueError,
+                "get_reduction_initial does not support multi-output "
+                "reductions. Use get_multi_reduction_initials instead. "
+                "(method: %s)",
+                spec->name);
+        return -1;
+    }
+    if (meth->nout > 1 && meth->get_multi_reduction_initials != NULL &&
+            meth->get_reduction_loop == NULL) {
+        PyErr_Format(PyExc_ValueError,
+                "get_multi_reduction_initials was registered without a "
+                "get_reduction_loop. Without a reduction loop, reduce() is "
+                "unreachable for a multi-output ArrayMethod, so this identity "
+                "would never be used. (method: %s)",
+                spec->name);
         return -1;
     }
 
@@ -459,8 +514,8 @@ PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private)
         PyErr_NoMemory();
         return NULL;
     }
-    memset((char *)(res->method) + sizeof(PyObject), 0,
-           sizeof(PyArrayMethodObject) - sizeof(PyObject));
+    memset((char *)(res->method) + offsetof(PyArrayMethodObject, name), 0,
+           sizeof(PyArrayMethodObject) - offsetof(PyArrayMethodObject, name));
 
     res->method->nin = spec->nin;
     res->method->nout = spec->nout;
@@ -479,7 +534,12 @@ PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private)
         return NULL;
     }
     strcpy(res->method->name, spec->name);
-
+#ifdef Py_GIL_DISABLED
+    // Mark immortal to reduce reference count contention in PyArray_GetCastingImpl
+    // If we ever allow replacing ArrayMethod objects or cleanup it DTypes or ufuncs, this may need to be reconsidered.
+    // An alternative that might help is to store cast methods in a PyArrayIdentityHash instead of a dict.
+    PyUnstable_SetImmortal((PyObject *)res->method);
+#endif
     return res;
 }
 
@@ -561,7 +621,7 @@ boundarraymethod_dealloc(PyObject *self)
  *       changes and especially testing if they were to be made public.
  */
 static PyObject *
-boundarraymethod__resolve_descripors(
+boundarraymethod__resolve_descriptors(
         PyBoundArrayMethodObject *self, PyObject *descr_tuple)
 {
     int nin = self->method->nin;
@@ -668,10 +728,11 @@ boundarraymethod__resolve_descripors(
         if (!parametric) {
             /*
              * Non-parametric can only mismatch if it switches from equiv to no
-             * (e.g. due to byteorder changes).
+             * (e.g. due to byteorder changes). Throw away same_value casting flag
              */
+            int method_casting = self->method->casting & ~NPY_SAME_VALUE_CASTING_FLAG;
             if (cast != self->method->casting &&
-                    self->method->casting != NPY_EQUIV_CASTING) {
+                    method_casting != NPY_EQUIV_CASTING) {
                 PyErr_Format(PyExc_RuntimeError,
                         "resolve_descriptors cast level changed even though "
                         "the cast is non-parametric where the only possible "
@@ -792,11 +853,10 @@ boundarraymethod__simple_strided_call(
         return NULL;
     }
 
-    PyArrayMethod_Context context = {
-            .caller = NULL,
-            .method = self->method,
-            .descriptors = descrs,
-    };
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, descrs);
+    context.method = self->method;
+
     PyArrayMethod_StridedLoop *strided_loop = NULL;
     NpyAuxData *loop_data = NULL;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
@@ -950,8 +1010,56 @@ PyArrayMethod_GetMaskedStridedLoop(
 }
 
 
+/*
+ * Reduction counterpart of `PyArrayMethod_GetMaskedStridedLoop`, used for the
+ * `where=` keyword of reductions.  It wraps the (N+1)->N reduction loop
+ * (arity `2 * nout + 1`) rather than the forward elementwise loop, but reuses
+ * `generic_masked_strided_loop` and its auxdata since the masked iteration
+ * itself is identical.
+ */
+NPY_NO_EXPORT int
+PyArrayMethod_GetMaskedReductionLoop(
+        PyArrayMethod_Context *context,
+        int aligned, npy_intp *fixed_strides,
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    _masked_stridedloop_data *data;
+    int nargs = 2 * context->method->nout + 1;
+
+    /* Add working memory for the data pointers, to modify them in-place */
+    data = PyMem_Malloc(sizeof(_masked_stridedloop_data) +
+                        sizeof(char *) * nargs);
+    if (data == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+    data->base.free = _masked_stridedloop_data_free;
+    data->base.clone = NULL;  /* not currently used */
+    data->unmasked_stridedloop = NULL;
+    data->nargs = nargs;
+
+    /* Copy so the strides passed on are always fully initialized (+1 for the mask) */
+    npy_intp reduction_strides[NPY_MAXARGS];
+    for (int i = 0; i < nargs + 1; i++) {
+        reduction_strides[i] = fixed_strides[i];
+    }
+
+    if (reduction_get_loop_func(context->method)(context,
+            aligned, 0, reduction_strides,
+            &data->unmasked_stridedloop, &data->unmasked_auxdata, flags) < 0) {
+        PyMem_Free(data);
+        return -1;
+    }
+    *out_transferdata = (NpyAuxData *)data;
+    *out_loop = generic_masked_strided_loop;
+    return 0;
+}
+
+
 PyMethodDef boundarraymethod_methods[] = {
-    {"_resolve_descriptors", (PyCFunction)boundarraymethod__resolve_descripors,
+    {"_resolve_descriptors", (PyCFunction)boundarraymethod__resolve_descriptors,
      METH_O, "Resolve the given dtypes."},
     {"_simple_strided_call", (PyCFunction)boundarraymethod__simple_strided_call,
      METH_O, "call on 1-d inputs and pre-allocated outputs (single call)."},

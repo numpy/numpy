@@ -544,9 +544,9 @@ solve_diophantine(unsigned int n, diophantine_term_t *E, npy_int64 b,
         diophantine_term_t *Ep = NULL;
         npy_int64 *Epsilon = NULL, *Gamma = NULL;
 
-        Ep = malloc(n * sizeof(diophantine_term_t));
-        Epsilon = malloc(n * sizeof(npy_int64));
-        Gamma = malloc(n * sizeof(npy_int64));
+        Ep = PyMem_RawMalloc(n * sizeof(diophantine_term_t));
+        Epsilon = PyMem_RawMalloc(n * sizeof(npy_int64));
+        Gamma = PyMem_RawMalloc(n * sizeof(npy_int64));
         if (Ep == NULL || Epsilon == NULL || Gamma == NULL) {
             res = MEM_OVERLAP_ERROR;
         }
@@ -557,9 +557,9 @@ solve_diophantine(unsigned int n, diophantine_term_t *E, npy_int64 b,
             res = diophantine_dfs(n, n-1, E, Ep, Gamma, Epsilon, b, max_work,
                                   require_ub_nontrivial, x, &count);
         }
-        free(Ep);
-        free(Gamma);
-        free(Epsilon);
+        PyMem_RawFree(Ep);
+        PyMem_RawFree(Gamma);
+        PyMem_RawFree(Epsilon);
         return res;
     }
 }

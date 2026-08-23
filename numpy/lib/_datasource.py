@@ -36,8 +36,7 @@ Example::
 """
 import os
 
-from .._utils import set_module
-
+from numpy._utils import set_module
 
 _open = open
 
@@ -57,7 +56,7 @@ def _check_mode(mode, encoding, newline):
     """
     if "t" in mode:
         if "b" in mode:
-            raise ValueError("Invalid mode: %r" % (mode,))
+            raise ValueError(f"Invalid mode: {mode!r}")
     else:
         if encoding is not None:
             raise ValueError("Argument 'encoding' not supported in binary mode")
@@ -149,24 +148,25 @@ class _FileOpeners:
         self._load()
         return self._file_openers[key]
 
+
 _file_openers = _FileOpeners()
 
 def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
     """
     Open `path` with `mode` and return the file object.
 
-    If ``path`` is an URL, it will be downloaded, stored in the
+    If ``path`` is a URL, it will be downloaded, stored in the
     `DataSource` `destpath` directory and opened from there.
 
     Parameters
     ----------
-    path : str or pathlib.Path
+    path : str or path-like
         Local file path or URL to open.
     mode : str, optional
         Mode to open `path`. Mode 'r' for reading, 'w' for writing, 'a' to
         append. Available modes depend on the type of object specified by
         path.  Default is 'r'.
-    destpath : str, optional
+    destpath : str, path-like, or None, optional
         Path to the directory where the source file gets downloaded to for
         use.  If `destpath` is None, a temporary directory will be created.
         The default path is the current directory.
@@ -188,6 +188,7 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
 
     """
 
+    path = os.fspath(path)
     ds = DataSource(destpath)
     return ds.open(path, mode, encoding=encoding, newline=newline)
 
@@ -206,7 +207,7 @@ class DataSource:
 
     Parameters
     ----------
-    destpath : str or None, optional
+    destpath : str, path-like, or None, optional
         Path to the directory where the source file gets downloaded to for
         use.  If `destpath` is None, a temporary directory will be created.
         The default path is the current directory.
@@ -293,7 +294,7 @@ class DataSource:
         if not self._iszip(filename):
             for zipext in _file_openers.keys():
                 if zipext:
-                    names.append(filename+zipext)
+                    names.append(filename + zipext)
         return names
 
     def _isurl(self, path):
@@ -340,7 +341,7 @@ class DataSource:
     def _findfile(self, path):
         """Searches for ``path`` and returns full path if found.
 
-        If path is an URL, _findfile will cache a local copy and return the
+        If path is a URL, _findfile will cache a local copy and return the
         path to the cached file.  If path is a local file, _findfile will
         return a path to that local file.
 
@@ -372,13 +373,13 @@ class DataSource:
         """
         Return absolute path of file in the DataSource directory.
 
-        If `path` is an URL, then `abspath` will return either the location
+        If `path` is a URL, then `abspath` will return either the location
         the file exists locally or the location it would exist when opened
         using the `open` method.
 
         Parameters
         ----------
-        path : str or pathlib.Path
+        path : str or path-like
             Can be a local file or a remote URL.
 
         Returns
@@ -391,6 +392,8 @@ class DataSource:
         The functionality is based on `os.path.abspath`.
 
         """
+        path = os.fspath(path)
+
         # We do this here to reduce the 'import numpy' initial import time.
         from urllib.parse import urlparse
 
@@ -438,7 +441,7 @@ class DataSource:
 
         Parameters
         ----------
-        path : str or pathlib.Path
+        path : str or path-like
             Can be a local file or a remote URL.
 
         Returns
@@ -448,12 +451,14 @@ class DataSource:
 
         Notes
         -----
-        When `path` is an URL, `exists` will return True if it's either
+        When `path` is a URL, `exists` will return True if it's either
         stored locally in the `DataSource` directory, or is a valid remote
         URL.  `DataSource` does not discriminate between the two, the file
         is accessible if it exists in either location.
 
         """
+
+        path = os.fspath(path)
 
         # First test for local path
         if os.path.exists(path):
@@ -461,8 +466,8 @@ class DataSource:
 
         # We import this here because importing urllib is slow and
         # a significant fraction of numpy's total import time.
-        from urllib.request import urlopen
         from urllib.error import URLError
+        from urllib.request import urlopen
 
         # Test cached url
         upath = self.abspath(path)
@@ -474,7 +479,7 @@ class DataSource:
             try:
                 netfile = urlopen(path)
                 netfile.close()
-                del(netfile)
+                del netfile
                 return True
             except URLError:
                 return False
@@ -484,12 +489,12 @@ class DataSource:
         """
         Open and return file-like object.
 
-        If `path` is an URL, it will be downloaded, stored in the
+        If `path` is a URL, it will be downloaded, stored in the
         `DataSource` directory and opened from there.
 
         Parameters
         ----------
-        path : str or pathlib.Path
+        path : str or path-like
             Local file path or URL to open.
         mode : {'r', 'w', 'a'}, optional
             Mode to open `path`.  Mode 'r' for reading, 'w' for writing,
@@ -513,6 +518,8 @@ class DataSource:
 
         # TODO: Add a ``subdir`` parameter for specifying the subdirectory
         #       used to store URLs in self._destpath.
+
+        path = os.fspath(path)
 
         if self._isurl(path) and self._iswritemode(mode):
             raise ValueError("URLs are not writeable")
@@ -544,10 +551,10 @@ class Repository (DataSource):
 
     Parameters
     ----------
-    baseurl : str
+    baseurl : str or path-like
         Path to the local directory or remote location that contains the
         data files.
-    destpath : str or None, optional
+    destpath : str, path-like, or None, optional
         Path to the directory where the source file gets downloaded to for
         use.  If `destpath` is None, a temporary directory will be created.
         The default path is the current directory.
@@ -572,13 +579,14 @@ class Repository (DataSource):
     def __init__(self, baseurl, destpath=os.curdir):
         """Create a Repository with a shared url or directory of baseurl."""
         DataSource.__init__(self, destpath=destpath)
-        self._baseurl = baseurl
+        self._baseurl = os.fspath(baseurl)
 
     def __del__(self):
         DataSource.__del__(self)
 
     def _fullpath(self, path):
         """Return complete path for path.  Prepends baseurl if necessary."""
+        path = os.fspath(path)
         splitpath = path.split(self._baseurl, 2)
         if len(splitpath) == 1:
             result = os.path.join(self._baseurl, path)
@@ -594,13 +602,13 @@ class Repository (DataSource):
         """
         Return absolute path of file in the Repository directory.
 
-        If `path` is an URL, then `abspath` will return either the location
+        If `path` is a URL, then `abspath` will return either the location
         the file exists locally or the location it would exist when opened
         using the `open` method.
 
         Parameters
         ----------
-        path : str or pathlib.Path
+        path : str or path-like
             Can be a local file or a remote URL. This may, but does not
             have to, include the `baseurl` with which the `Repository` was
             initialized.
@@ -627,7 +635,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str or pathlib.Path
+        path : str or path-like
             Can be a local file or a remote URL. This may, but does not
             have to, include the `baseurl` with which the `Repository` was
             initialized.
@@ -639,7 +647,7 @@ class Repository (DataSource):
 
         Notes
         -----
-        When `path` is an URL, `exists` will return True if it's either
+        When `path` is a URL, `exists` will return True if it's either
         stored locally in the `DataSource` directory, or is a valid remote
         URL.  `DataSource` does not discriminate between the two, the file
         is accessible if it exists in either location.
@@ -651,12 +659,12 @@ class Repository (DataSource):
         """
         Open and return file-like object prepending Repository base URL.
 
-        If `path` is an URL, it will be downloaded, stored in the
+        If `path` is a URL, it will be downloaded, stored in the
         DataSource directory and opened from there.
 
         Parameters
         ----------
-        path : str or pathlib.Path
+        path : str or path-like
             Local file path or URL to open. This may, but does not have to,
             include the `baseurl` with which the `Repository` was
             initialized.
@@ -685,7 +693,7 @@ class Repository (DataSource):
 
         Returns
         -------
-        files : list of str or pathlib.Path
+        files : list of str
             List of file names (not containing a directory part).
 
         Notes

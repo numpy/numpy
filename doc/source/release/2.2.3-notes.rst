@@ -1,0 +1,56 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 2.2.3 Release Notes
+==========================
+
+NumPy 2.2.3 is a patch release that fixes bugs found after the 2.2.2 release.
+The majority of the changes are typing improvements and fixes for free
+threaded Python. Both of those areas are still under development, so if you
+discover new problems, please report them.
+
+This release supports Python versions 3.10-3.13.
+
+
+Contributors
+============
+
+A total of 9 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* !amotzop
+* Charles Harris
+* Chris Sidebottom
+* Joren Hammudoglu
+* Matthew Brett
+* Nathan Goldbaum
+* Raghuveer Devulapalli
+* Sebastian Berg
+* Yakov Danishevsky +
+
+Pull requests merged
+====================
+
+A total of 21 pull requests were merged for this release.
+
+* `#28185 <https://github.com/numpy/numpy/pull/28185>`__: MAINT: Prepare 2.2.x for further development
+* `#28201 <https://github.com/numpy/numpy/pull/28201>`__: BUG: fix data race in a more minimal way on stable branch
+* `#28208 <https://github.com/numpy/numpy/pull/28208>`__: BUG: Fix ``from_float_positional`` errors for huge pads
+* `#28209 <https://github.com/numpy/numpy/pull/28209>`__: BUG: fix data race in np.repeat
+* `#28212 <https://github.com/numpy/numpy/pull/28212>`__: MAINT: Use VQSORT_COMPILER_COMPATIBLE to determine if we should...
+* `#28224 <https://github.com/numpy/numpy/pull/28224>`__: MAINT: update highway to latest
+* `#28236 <https://github.com/numpy/numpy/pull/28236>`__: BUG: Add cpp atomic support (#28234)
+* `#28237 <https://github.com/numpy/numpy/pull/28237>`__: BLD: Compile fix for clang-cl on WoA
+* `#28243 <https://github.com/numpy/numpy/pull/28243>`__: TYP: Avoid upcasting ``float64`` in the set-ops
+* `#28249 <https://github.com/numpy/numpy/pull/28249>`__: BLD: better fix for clang / ARM compiles
+* `#28266 <https://github.com/numpy/numpy/pull/28266>`__: TYP: Fix ``timedelta64.__divmod__`` and ``timedelta64.__mod__``...
+* `#28274 <https://github.com/numpy/numpy/pull/28274>`__: TYP: Fixed missing typing information of set_printoptions
+* `#28278 <https://github.com/numpy/numpy/pull/28278>`__: BUG: backport resource cleanup bugfix from gh-28273
+* `#28282 <https://github.com/numpy/numpy/pull/28282>`__: BUG: fix incorrect bytes to stringdtype coercion
+* `#28283 <https://github.com/numpy/numpy/pull/28283>`__: TYP: Fix scalar constructors
+* `#28284 <https://github.com/numpy/numpy/pull/28284>`__: TYP: stub ``numpy.matlib``
+* `#28285 <https://github.com/numpy/numpy/pull/28285>`__: TYP: stub the missing ``numpy.testing`` modules
+* `#28286 <https://github.com/numpy/numpy/pull/28286>`__: CI: Fix the github label for ``TYP:`` PR's and issues
+* `#28305 <https://github.com/numpy/numpy/pull/28305>`__: TYP: Backport typing updates from main
+* `#28321 <https://github.com/numpy/numpy/pull/28321>`__: BUG: fix race initializing legacy dtype casts
+* `#28324 <https://github.com/numpy/numpy/pull/28324>`__: CI: update test_moderately_small_alpha

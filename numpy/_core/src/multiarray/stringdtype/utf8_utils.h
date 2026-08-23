@@ -8,8 +8,35 @@ extern "C" {
 NPY_NO_EXPORT size_t
 utf8_char_to_ucs4_code(const unsigned char *c, Py_UCS4 *code);
 
-NPY_NO_EXPORT int
-num_bytes_for_utf8_character(const unsigned char *c);
+static inline int num_bytes_for_utf8_character(const unsigned char *c)
+{
+    // adapted from https://github.com/skeeto/branchless-utf8
+    // the first byte of a UTF-8 character encodes the length of the character
+    static const char LENGTHS_LUT[] = {
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0
+    };
+    return LENGTHS_LUT[c[0] >> 3];
+}
+
+// like num_bytes_for_utf8_character, but clamps the result to [1, max_bytes]
+// (0 if max_bytes is 0) so a walk over invalid UTF-8 cannot stall on a
+// malformed lead byte or advance past the end of the buffer
+static inline int
+num_bytes_for_utf8_character_bounded(const unsigned char *c, size_t max_bytes)
+{
+    if (max_bytes == 0) {
+        return 0;
+    }
+    int num_bytes = num_bytes_for_utf8_character(c);
+    if (num_bytes < 1) {
+        num_bytes = 1;
+    }
+    if ((size_t)num_bytes > max_bytes) {
+        num_bytes = (int)max_bytes;
+    }
+    return num_bytes;
+}
 
 NPY_NO_EXPORT const unsigned char*
 find_previous_utf8_character(const unsigned char *c, size_t nchar);

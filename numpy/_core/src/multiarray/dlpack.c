@@ -6,10 +6,86 @@
 
 #include "dlpack/dlpack.h"
 #include "numpy/arrayobject.h"
+#include "scalartypes.h"
+#include "npy_pycompat.h"
 #include "npy_argparse.h"
 #include "npy_dlpack.h"
 #include "npy_static_data.h"
+#include "common.h"
 #include "conversion_utils.h"
+#include "descriptor.h"
+
+
+/*
+ * Find user-registered DLPack dtype mapping (1 if found, -1 on error).
+ */
+static int
+dlpack_export_registry_lookup(PyArray_Descr *dtype,
+        uint8_t *out_code, uint8_t *out_bits)
+{
+    PyObject *val = NULL;
+    int gres = PyDict_GetItemRef(
+            npy_static_pydata.dlpack_export_registry,
+            (PyObject *)dtype,
+            &val);
+    if (gres <= 0) {
+        return gres;
+    }
+    if (!PyTuple_Check(val) || PyTuple_GET_SIZE(val) != 2) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "internal: dlpack export_registry values must be length-2 tuples");
+        Py_DECREF(val);
+        return -1;
+    }
+    long c = PyLong_AsLong(PyTuple_GET_ITEM(val, 0));
+    if (error_converting(c)) {
+        Py_DECREF(val);
+        return -1;
+    }
+    long b = PyLong_AsLong(PyTuple_GET_ITEM(val, 1));
+    if (error_converting(b)) {
+        Py_DECREF(val);
+        return -1;
+    }
+    *out_code = (uint8_t)c;
+    *out_bits = (uint8_t)b;
+    Py_DECREF(val);
+    return 1;
+}
+
+
+/*
+ * Return a registered dtype or raise an error if none is found.
+ */
+static PyArray_Descr *
+dlpack_dtype_registry_lookup(uint8_t code, uint8_t bits)
+{
+    npy_intp key_vals[2] = {code, bits};
+    PyObject *key = PyArray_IntTupleFromIntp(2, key_vals);
+    if (key == NULL) {
+        return NULL;
+    }
+    PyObject *reg_val = NULL;
+    int gres = PyDict_GetItemRef(
+            npy_static_pydata.dlpack_dtype_registry, key, &reg_val);
+    Py_DECREF(key);
+    if (gres < 0) {
+        return NULL;
+    }
+    if (gres == 0) {
+        PyErr_SetString(PyExc_BufferError,
+                "Unsupported dtype in DLTensor.");
+        return NULL;
+    }
+    if (!PyArray_DescrCheck(reg_val)) {
+        Py_DECREF(reg_val);
+        PyErr_SetString(PyExc_TypeError,
+                "from_dlpack(): DLPack dtype registry must only contain "
+                "numpy.dtype instances; see numpy.dtypes.register_dlpack_dtype.");
+        return NULL;
+    }
+    return (PyArray_Descr *)reg_val;
+}
 
 
 /*
@@ -30,7 +106,7 @@ array_dlpack_deleter(DLManagedTensorVersioned *self)
 
     PyGILState_STATE state = PyGILState_Ensure();
 
-    PyArrayObject *array = (PyArrayObject *)self->manager_ctx;
+    PyObject *array = self->manager_ctx;
     // This will also free the shape and strides as it's one allocation.
     PyMem_Free(self);
     Py_XDECREF(array);
@@ -54,7 +130,6 @@ array_dlpack_deleter_unversioned(DLManagedTensor *self)
 
     PyGILState_Release(state);
 }
-
 
 /*
  * Deleter for a DLPack capsule wrapping a DLManagedTensor(Versioned).
@@ -187,31 +262,16 @@ array_get_dl_device(PyArrayObject *self) {
 
 
 /*
- * Fill the dl_tensor struct from the `self` array.
+ * Fill the dl_tensor struct from array or scalar details.
  * This struct could be versioned, but as of now is not.
  */
 static int
 fill_dl_tensor_information(
-    DLTensor *dl_tensor, PyArrayObject *self, DLDevice *result_device)
+    DLTensor *dl_tensor, DLDevice *result_device,
+    npy_intp itemsize, int ndim, npy_intp *strides, npy_intp *shape,
+    PyArray_Descr *dtype, void *data)
 {
-    npy_intp itemsize = PyArray_ITEMSIZE(self);
-    int ndim = PyArray_NDIM(self);
-    npy_intp *strides = PyArray_STRIDES(self);
-    npy_intp *shape = PyArray_SHAPE(self);
-
-    if (!PyArray_IS_C_CONTIGUOUS(self) && PyArray_SIZE(self) != 1) {
-        for (int i = 0; i < ndim; ++i) {
-            if (shape[i] != 1 && strides[i] % itemsize != 0) {
-                PyErr_SetString(PyExc_BufferError,
-                        "DLPack only supports strides which are a multiple of "
-                        "itemsize.");
-                return -1;
-            }
-        }
-    }
-
     DLDataType managed_dtype;
-    PyArray_Descr *dtype = PyArray_DESCR(self);
 
     if (PyDataType_ISBYTESWAPPED(dtype)) {
         PyErr_SetString(PyExc_BufferError,
@@ -254,10 +314,18 @@ fill_dl_tensor_information(
         managed_dtype.code = kDLComplex;
     }
     else {
-        PyErr_SetString(PyExc_BufferError,
-                "DLPack only supports signed/unsigned integers, float "
-                "and complex dtypes.");
-        return -1;
+        int reg_res = dlpack_export_registry_lookup(dtype,
+                &managed_dtype.code, &managed_dtype.bits);
+        if (reg_res < 0) {
+            return -1;
+        }
+        if (!reg_res) {
+            PyErr_SetString(PyExc_BufferError,
+                    "DLPack only supports signed/unsigned integers, float "
+                    "and complex dtypes (or dtypes registered by third-party "
+                    "packages).");
+            return -1;
+        }
     }
 
     /*
@@ -273,7 +341,7 @@ fill_dl_tensor_information(
      * that NumPy MUST use `byte_offset` to adhere to the standard (as
      * specified in the header)!
      */
-    dl_tensor->data = PyArray_DATA(self);
+    dl_tensor->data = data;
     dl_tensor->byte_offset = 0;
     dl_tensor->device = *result_device;
     dl_tensor->dtype = managed_dtype;
@@ -283,23 +351,77 @@ fill_dl_tensor_information(
         // Strides in DLPack are items; in NumPy are bytes.
         dl_tensor->strides[i] = strides[i] / itemsize;
     }
-
     dl_tensor->ndim = ndim;
-    if (PyArray_IS_C_CONTIGUOUS(self)) {
-        /* No need to pass strides, so just NULL it again */
-        dl_tensor->strides = NULL;
-    }
-    dl_tensor->byte_offset = 0;
 
     return 0;
 }
 
 
-static PyObject *
-create_dlpack_capsule(
-        PyArrayObject *self, int versioned, DLDevice *result_device, int copied)
+/*
+ * Fill the dl_tensor struct from a `self` array.
+ */
+static int
+fill_dl_tensor_information_from_array(
+    DLTensor *dl_tensor, PyArrayObject *self, DLDevice *result_device)
 {
+    npy_intp itemsize = PyArray_ITEMSIZE(self);
     int ndim = PyArray_NDIM(self);
+    npy_intp *strides = PyArray_STRIDES(self);
+    npy_intp *shape = PyArray_SHAPE(self);
+
+    if (!PyArray_IS_C_CONTIGUOUS(self) && PyArray_SIZE(self) != 1) {
+        for (int i = 0; i < ndim; ++i) {
+            if (shape[i] != 1 && strides[i] % itemsize != 0) {
+                PyErr_SetString(PyExc_BufferError,
+                        "DLPack only supports strides which are a multiple of "
+                        "itemsize.");
+                return -1;
+            }
+        }
+    }
+
+    PyArray_Descr *dtype = PyArray_DESCR(self);
+    void *data = PyArray_DATA(self);
+
+    return fill_dl_tensor_information(dl_tensor, result_device,
+            itemsize, ndim, strides, shape, dtype, data);
+}
+
+
+/*
+ * Fill the dl_tensor struct from a `self` scalar.
+ */
+static int
+fill_dl_tensor_information_from_scalar(
+    DLTensor *dl_tensor, PyObject *self, DLDevice *result_device)
+{
+    PyArray_Descr *dtype = PyArray_DescrFromScalar(self);
+    if (dtype == NULL) {
+        return -1;
+    }
+
+    void *data = scalar_value(self, dtype);
+    if (data == NULL) {
+        Py_DECREF(dtype);
+        return -1;
+    }
+
+    int ret = fill_dl_tensor_information(dl_tensor, result_device,
+        dtype->elsize, 0, NULL, NULL, dtype, data);
+    Py_DECREF(dtype);
+    return ret;
+}
+
+
+static PyObject *
+create_dlpack_capsule(PyObject *scalar, PyArrayObject *array,
+    int versioned, DLDevice *result_device, int copied)
+{
+    int ndim = array == NULL ? 0 : PyArray_NDIM(array);
+    PyObject *self = array == NULL ? scalar : (PyObject *)array;
+
+    /* Scalars are exported read-only, which only versioned capsules can signal. */
+    assert(array != NULL || versioned);
 
     /*
      * We align shape and strides at the end but need to align them, offset
@@ -334,11 +456,16 @@ create_dlpack_capsule(
         managed->version.minor = 0;
 
         managed->flags = 0;
-        if (!PyArray_CHKFLAGS(self, NPY_ARRAY_WRITEABLE)) {
-            managed->flags |= DLPACK_FLAG_BITMASK_READ_ONLY;
+        if (array != NULL) {
+            if (!PyArray_CHKFLAGS(array, NPY_ARRAY_WRITEABLE)) {
+                managed->flags |= DLPACK_FLAG_BITMASK_READ_ONLY;
+            }
+            if (copied) {
+                managed->flags |= DLPACK_FLAG_BITMASK_IS_COPIED;
+            }
         }
-        if (copied) {
-            managed->flags |= DLPACK_FLAG_BITMASK_IS_COPIED;
+        else {
+            managed->flags |= DLPACK_FLAG_BITMASK_READ_ONLY;
         }
     }
     else {
@@ -351,11 +478,19 @@ create_dlpack_capsule(
         dl_tensor = &managed->dl_tensor;
     }
 
-    dl_tensor->shape = (int64_t *)((char *)ptr + offset);
-    /* Note that strides may be set to NULL later if C-contiguous */
-    dl_tensor->strides = dl_tensor->shape + ndim;
+    dl_tensor->shape = (ndim > 0) ? (int64_t *)((char *)ptr + offset) : NULL;
+    dl_tensor->strides = (ndim > 0) ? dl_tensor->shape + ndim : NULL;
 
-    if (fill_dl_tensor_information(dl_tensor, self, result_device) < 0) {
+    int ret;
+    if (array == NULL) {
+        ret = fill_dl_tensor_information_from_scalar(dl_tensor,
+            scalar, result_device);
+    }
+    else {
+        ret = fill_dl_tensor_information_from_array(dl_tensor,
+            array, result_device);
+    }
+    if (ret < 0) {
         PyMem_Free(ptr);
         return NULL;
     }
@@ -397,7 +532,8 @@ device_converter(PyObject *obj, DLDevice *result_device)
         return NPY_SUCCEED;
     }
 
-    PyErr_SetString(PyExc_ValueError, "unsupported device requested");
+    /* Must be a BufferError */
+    PyErr_SetString(PyExc_BufferError, "unsupported device requested");
     return NPY_FAIL;
 }
 
@@ -418,11 +554,10 @@ array_dlpack(PyArrayObject *self,
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("__dlpack__", args, len_args, kwnames,
-            "$stream", NULL, &stream,
-            "$max_version", NULL, &max_version,
-            "$dl_device", &device_converter, &result_device,
-            "$copy", &PyArray_CopyConverter, &copy_mode,
-            NULL, NULL, NULL)) {
+            {"$stream", NULL, &stream},
+            {"$max_version", NULL, &max_version},
+            {"$dl_device", &device_converter, &result_device},
+            {"$copy", &PyArray_CopyConverter, &copy_mode}) < 0) {
         return NULL;
     }
 
@@ -439,7 +574,7 @@ array_dlpack(PyArrayObject *self,
     }
 
     if (stream != Py_None) {
-        PyErr_SetString(PyExc_RuntimeError,
+        PyErr_SetString(PyExc_ValueError,
                 "NumPy only supports stream=None.");
         return NULL;
     }
@@ -473,7 +608,7 @@ array_dlpack(PyArrayObject *self,
      * can then be removed again.
      */
     PyObject *res = create_dlpack_capsule(
-            self, major_version >= 1, &result_device,
+            NULL, self, major_version >= 1, &result_device,
             copy_mode == NPY_COPY_ALWAYS);
     Py_DECREF(self);
 
@@ -491,49 +626,96 @@ array_dlpack_device(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 }
 
 NPY_NO_EXPORT PyObject *
+gentype_dlpack(PyObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    PyObject *stream = Py_None;
+    PyObject *max_version = Py_None;
+    NPY_COPYMODE copy_mode = NPY_COPY_IF_NEEDED;
+    long major_version = 0;
+    /* We allow the user to request a result device in principle. */
+    DLDevice result_device = {kDLCPU, 0};
+
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("__dlpack__", args, len_args, kwnames,
+            {"$stream", NULL, &stream},
+            {"$max_version", NULL, &max_version},
+            {"$dl_device", &device_converter, &result_device},
+            {"$copy", &PyArray_CopyConverter, &copy_mode}) < 0) {
+        return NULL;
+    }
+
+    if (max_version != Py_None) {
+        if (!PyTuple_Check(max_version) || PyTuple_GET_SIZE(max_version) != 2) {
+            PyErr_SetString(PyExc_TypeError,
+                    "max_version must be None or a tuple with two elements.");
+            return NULL;
+        }
+        major_version = PyLong_AsLong(PyTuple_GET_ITEM(max_version, 0));
+        if (major_version == -1 && PyErr_Occurred()) {
+            return NULL;
+        }
+    }
+
+    if (stream != Py_None) {
+        PyErr_SetString(PyExc_ValueError,
+                "NumPy only supports stream=None.");
+        return NULL;
+    }
+
+    if ((copy_mode != NPY_COPY_NEVER && major_version < 1)
+        || (copy_mode == NPY_COPY_ALWAYS)) {
+        /* Export a fresh 0-d array that owns the copied data. */
+        PyArrayObject *arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
+        if (arr == NULL) {
+            return NULL;
+        }
+        /* Ensure the array is not a view */
+        assert(PyArray_BASE(arr) == NULL);
+
+        PyObject *res = create_dlpack_capsule(
+                NULL, arr, major_version >= 1, &result_device, 1);
+        Py_DECREF(arr);
+        return res;
+    }
+
+    if (major_version < 1) {
+        PyErr_SetString(PyExc_BufferError,
+            "Cannot export scalars since signalling readonly "
+            "is unsupported by DLPack (supported by newer DLPack version)."
+            "Consider using `copy=True` if possible.");
+        return NULL;
+    }
+
+    return create_dlpack_capsule(
+            self, NULL, major_version >= 1, &result_device, 0);
+}
+
+NPY_NO_EXPORT PyObject *
+gentype_dlpack_device(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
+{
+    return Py_BuildValue("ii", kDLCPU, 0);
+}
+
+NPY_NO_EXPORT PyObject *
 from_dlpack(PyObject *NPY_UNUSED(self),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *obj, *copy = Py_None, *device = Py_None;
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("from_dlpack", args, len_args, kwnames,
-            "obj", NULL, &obj,
-            "$copy", NULL, &copy,
-            "$device", NULL, &device,
-            NULL, NULL, NULL) < 0) {
+            {"obj", NULL, &obj},
+            {"$copy", NULL, &copy},
+            {"$device", NULL, &device}) < 0) {
         return NULL;
     }
 
-    /* Prepare the arguments to call objects __dlpack__() method */
-    static PyObject *call_kwnames = NULL;
-    static PyObject *dl_cpu_device_tuple = NULL;
-    static PyObject *max_version = NULL;
-
-    if (call_kwnames == NULL) {
-        call_kwnames = Py_BuildValue("(sss)", "dl_device", "copy", "max_version");
-        if (call_kwnames == NULL) {
-            return NULL;
-        }
-    }
-    if (dl_cpu_device_tuple == NULL) {
-        dl_cpu_device_tuple = Py_BuildValue("(i,i)", 1, 0);
-        if (dl_cpu_device_tuple == NULL) {
-            return NULL;
-        }
-    }
-    if (max_version == NULL) {
-        max_version = Py_BuildValue("(i,i)", 1, 0);
-        if (max_version == NULL) {
-            return NULL;
-        }
-    }
-
-    /* 
+    /*
      * Prepare arguments for the full call. We always forward copy and pass
      * our max_version. `device` is always passed as `None`, but if the user
      * provided a device, we will replace it with the "cpu": (1, 0).
      */
-    PyObject *call_args[] = {obj, Py_None, copy, max_version};
+    PyObject *call_args[] = {obj, Py_None, copy, npy_static_pydata.dl_max_version};
     Py_ssize_t nargsf = 1 | PY_VECTORCALL_ARGUMENTS_OFFSET;
 
     /* If device is passed it must be "cpu" and replace it with (1, 0) */
@@ -544,12 +726,13 @@ from_dlpack(PyObject *NPY_UNUSED(self),
             return NULL;
         }
         assert(device_request == NPY_DEVICE_CPU);
-        call_args[1] = dl_cpu_device_tuple;
+        call_args[1] = npy_static_pydata.dl_cpu_device_tuple;
     }
 
 
     PyObject *capsule = PyObject_VectorcallMethod(
-            npy_interned_str.__dlpack__, call_args, nargsf, call_kwnames);
+            npy_interned_str.__dlpack__, call_args, nargsf,
+            npy_static_pydata.dl_call_kwnames);
     if (capsule == NULL) {
         /*
          * TODO: This path should be deprecated in NumPy 2.1.  Once deprecated
@@ -601,12 +784,12 @@ from_dlpack(PyObject *NPY_UNUSED(self),
             return NULL;
         }
         dl_tensor = managed->dl_tensor;
-        readonly = 0;
+        readonly = 1;
     }
 
     const int ndim = dl_tensor.ndim;
     if (ndim > NPY_MAXDIMS) {
-        PyErr_SetString(PyExc_RuntimeError,
+        PyErr_SetString(PyExc_BufferError,
                 "maxdims of DLPack tensor is higher than the supported "
                 "maxdims.");
         Py_DECREF(capsule);
@@ -618,14 +801,14 @@ from_dlpack(PyObject *NPY_UNUSED(self),
             device_type != kDLCUDAHost &&
             device_type != kDLROCMHost &&
             device_type != kDLCUDAManaged) {
-        PyErr_SetString(PyExc_RuntimeError,
+        PyErr_SetString(PyExc_BufferError,
                 "Unsupported device in DLTensor.");
         Py_DECREF(capsule);
         return NULL;
     }
 
     if (dl_tensor.dtype.lanes != 1) {
-        PyErr_SetString(PyExc_RuntimeError,
+        PyErr_SetString(PyExc_BufferError,
                 "Unsupported lanes in DLTensor dtype.");
         Py_DECREF(capsule);
         return NULL;
@@ -633,7 +816,6 @@ from_dlpack(PyObject *NPY_UNUSED(self),
 
     int typenum = -1;
     const uint8_t bits = dl_tensor.dtype.bits;
-    const npy_intp itemsize = bits / 8;
     switch (dl_tensor.dtype.code) {
     case kDLBool:
         if (bits == 8) {
@@ -675,12 +857,24 @@ from_dlpack(PyObject *NPY_UNUSED(self),
         break;
     }
 
-    if (typenum == -1) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "Unsupported dtype in DLTensor.");
-        Py_DECREF(capsule);
-        return NULL;
+    PyArray_Descr *descr = NULL;
+    if (typenum != -1) {
+        descr = PyArray_DescrFromType(typenum);
+        if (descr == NULL) {
+            Py_DECREF(capsule);
+            return NULL;
+        }
     }
+    else {
+        descr = dlpack_dtype_registry_lookup(
+                (uint8_t)dl_tensor.dtype.code, bits);
+        if (descr == NULL) {
+            Py_DECREF(capsule);
+            return NULL;
+        }
+    }
+
+    npy_intp itemsize = descr->elsize;
 
     npy_intp shape[NPY_MAXDIMS];
     npy_intp strides[NPY_MAXDIMS];
@@ -695,20 +889,13 @@ from_dlpack(PyObject *NPY_UNUSED(self),
 
     char *data = (char *)dl_tensor.data + dl_tensor.byte_offset;
 
-    PyArray_Descr *descr = PyArray_DescrFromType(typenum);
-    if (descr == NULL) {
-        Py_DECREF(capsule);
-        return NULL;
-    }
-
     PyObject *ret = PyArray_NewFromDescr(&PyArray_Type, descr, ndim, shape,
-            dl_tensor.strides != NULL ? strides : NULL, data, 0, NULL);
+            dl_tensor.strides != NULL ? strides : NULL, data, readonly ? 0 :
+            NPY_ARRAY_WRITEABLE, NULL);
+
     if (ret == NULL) {
         Py_DECREF(capsule);
         return NULL;
-    }
-    if (readonly) {
-        PyArray_CLEARFLAGS((PyArrayObject *)ret, NPY_ARRAY_WRITEABLE);
     }
 
     PyObject *new_capsule;
@@ -748,4 +935,106 @@ from_dlpack(PyObject *NPY_UNUSED(self),
     return ret;
 }
 
+
+NPY_NO_EXPORT PyObject *
+_register_dlpack_dtype(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    PyObject *ret = NULL;
+    PyArray_Descr *descr = NULL;
+    PyObject *dlpack_tuple = NULL;
+    PyObject *original_tuple = NULL;  // Existing dlpack tuple for export
+    PyObject *original_descr = NULL;  // Existing dtype for import
+
+    long code = 0;
+    long bits_l = 0;
+    if (!PyArg_ParseTuple(args, "(ll)O!:register_dlpack_dtype", &code, &bits_l,
+            &PyArrayDescr_Type, &descr)) {
+        goto finish;
+    }
+
+    /* Sanity check code and bits, if DLPack relaxes this we can do this also. */
+    if (code < 0 || code > 255) {
+        PyErr_SetString(PyExc_ValueError,
+                "register_dlpack_dtype: DLPack code must be in 0..255.");
+        goto finish;
+    }
+    // Check bits fit into 255 bytes via elsize to avoid elsize * 8 overflow.
+    if (descr->elsize > 255/8 || descr->elsize * 8 != bits_l) {
+        PyErr_SetString(PyExc_ValueError,
+                "register_dlpack_dtype: number of bits must match the "
+                "dtype's elsize and be <=255.");
+        goto finish;
+    }
+
+    dlpack_tuple = Py_BuildValue("(ll)", code, bits_l);
+    if (dlpack_tuple == NULL) {
+        goto finish;
+    }
+
+    int set_res = PyDict_SetDefaultRef(
+            npy_static_pydata.dlpack_export_registry, (PyObject *)descr, dlpack_tuple,
+            &original_tuple);
+    if (set_res < 0) {
+        goto finish;
+    }
+    else if (set_res == 1) {
+        /* Key was present, allow if the value is equal: */
+        int exp_same = PyObject_RichCompareBool(original_tuple, dlpack_tuple, Py_EQ);
+        if (exp_same < 0) {
+            goto finish;
+        }
+        if (exp_same == 0) {
+            PyErr_Format(PyExc_ValueError,
+                    "register_dlpack_dtype: this NumPy dtype is already exported "
+                    "with a different DLPack (code, bits).");
+            goto finish;
+        }
+    }
+
+    if (PyDict_SetDefaultRef(
+            npy_static_pydata.dlpack_dtype_registry, dlpack_tuple, (PyObject *)descr,
+            &original_descr) < 0) {
+        goto finish;
+    }
+    if ((PyObject *)descr != original_descr) {
+        PyErr_Format(PyExc_ValueError,
+            "register_dlpack_dtype: the same (code, bits) already maps to a "
+            "%R which is not identical (it may be equal). "
+            "The dtype->(code, bits) was, however, established.",
+            original_descr);
+        goto finish;
+    }
+
+    ret = Py_NewRef(Py_None);
+
+finish:
+    Py_XDECREF(dlpack_tuple);
+    Py_XDECREF(original_tuple);
+    Py_XDECREF(original_descr);
+    return ret;
+}
+
+
+/* Swap out the registry dicts for testing purposes. */
+NPY_NO_EXPORT PyObject *
+_dlpack_registry_replace(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    PyObject *imp, *exp;
+    if (!PyArg_ParseTuple(args, "O!O!: _dlpack_registry_replace",
+            &PyDict_Type, &imp, &PyDict_Type, &exp)) {
+        return NULL;
+    }
+
+    PyObject *ret = PyTuple_Pack(2,
+        npy_static_pydata.dlpack_dtype_registry,
+        npy_static_pydata.dlpack_export_registry);
+    if (ret == NULL) {
+        return ret;
+    }
+
+    /* Replace the currently used dicts in place. */
+    Py_SETREF(npy_static_pydata.dlpack_dtype_registry, Py_NewRef(imp));
+    Py_SETREF(npy_static_pydata.dlpack_export_registry, Py_NewRef(exp));
+    return ret;
+}
 

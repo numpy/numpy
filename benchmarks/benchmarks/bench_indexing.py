@@ -1,11 +1,11 @@
-from .common import (
-    Benchmark, get_square_, get_indexes_, get_indexes_rand_, TYPES1)
-
-from os.path import join as pjoin
 import shutil
-from numpy import memmap, float32, array
-import numpy as np
+from os.path import join as pjoin
 from tempfile import mkdtemp
+
+import numpy as np
+from numpy import array, float32, memmap
+
+from .common import TYPES1, Benchmark, get_indexes_, get_indexes_rand_, get_square_
 
 
 class Indexing(Benchmark):
@@ -84,6 +84,22 @@ class ScalarIndexing(Benchmark):
             arr[indx] = val
 
 
+class BooleanAssignmentOrder(Benchmark):
+    params = ['C', 'F']
+    param_names = ['order']
+
+    def setup(self, order):
+        shape = (64, 64, 64)
+        # emulate gh-30156: boolean assignment into a Fortran/C array
+        self.base = np.zeros(shape, dtype=np.uint32, order=order)
+        mask = np.random.RandomState(0).rand(*self.base.shape) > 0.5
+        self.mask = mask.copy(order)
+        self.value = np.uint32(7)
+
+    def time_boolean_assign_scalar(self, order):
+        self.base[self.mask] = self.value
+
+
 class IndexingSeparate(Benchmark):
     def setup(self):
         self.tmp_dir = mkdtemp()
@@ -134,6 +150,7 @@ class FlatIterIndexing(Benchmark):
         self.m_half = np.copy(self.m_all)
         self.m_half[::2] = False
         self.m_none = np.repeat(False, 200 * 50000)
+        self.m_index_2d = np.arange(200 * 50000).reshape((100, 100000))
 
     def time_flat_bool_index_none(self):
         self.a.flat[self.m_none]
@@ -143,3 +160,21 @@ class FlatIterIndexing(Benchmark):
 
     def time_flat_bool_index_all(self):
         self.a.flat[self.m_all]
+
+    def time_flat_fancy_index_2d(self):
+        self.a.flat[self.m_index_2d]
+
+    def time_flat_empty_tuple_index(self):
+        self.a.flat[()]
+
+    def time_flat_ellipsis_index(self):
+        self.a.flat[...]
+
+    def time_flat_bool_index_0d(self):
+        self.a.flat[True]
+
+    def time_flat_int_index(self):
+        self.a.flat[1_000_000]
+
+    def time_flat_slice_index(self):
+        self.a.flat[1_000_000:2_000_000]

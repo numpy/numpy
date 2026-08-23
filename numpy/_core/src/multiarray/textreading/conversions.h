@@ -1,11 +1,11 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_CONVERSIONS_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_CONVERSIONS_H_
 
-#include <stdbool.h>
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
+
+#include <stdbool.h>
 
 #include "textreading/parser_config.h"
 

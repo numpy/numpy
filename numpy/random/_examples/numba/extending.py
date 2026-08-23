@@ -1,8 +1,9 @@
-import numpy as np
+from timeit import timeit
+
 import numba as nb
 
+import numpy as np
 from numpy.random import PCG64
-from timeit import timeit
 
 bit_gen = PCG64()
 next_d = bit_gen.cffi.next_double
@@ -24,6 +25,7 @@ def normals(n, state):
             out[2 * i + 1] = f * x2
     return out
 
+
 # Compile using Numba
 normalsj = nb.jit(normals, nopython=True)
 # Must use state address not state with numba
@@ -32,10 +34,12 @@ n = 10000
 def numbacall():
     return normalsj(n, state_addr)
 
+
 rg = np.random.Generator(PCG64())
 
 def numpycall():
     return rg.normal(size=n)
+
 
 # Check that the functions work
 r1 = numbacall()
@@ -80,5 +84,3 @@ def bounded_uints(lb, ub, n, state):
 
 
 bounded_uints(323, 2394691, 10000000, ctypes_state.value)
-
-

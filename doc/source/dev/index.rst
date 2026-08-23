@@ -107,6 +107,10 @@ Here's the short summary, complete TOC links are below:
      button. Make sure the title and message are clear, concise, and self-
      explanatory. Then click the button to submit it.
 
+   * Note that non-maintainers may only have one non-draft pull request
+     open for review at a time. See :ref:`pull-request-limit` for details
+     and how to be allowed more open pull requests.
+
    * If your commit introduces a new feature or changes functionality, post on
      the `mailing list`_ to explain your changes. For bug fixes, documentation
      updates, etc., this is generally not necessary, though if you do not get
@@ -183,6 +187,8 @@ Guidelines
 * No changes are ever committed without review and approval by a core
   team member. Please ask politely on the PR or on the `mailing list`_ if you
   get no response to your pull request within a week.
+* Do not include copyright notices in source code without explicitly discussing the need first. 
+  In general, any code you contribute to the project is under the project `license <https://numpy.org/devdocs/license.html>`_.
 
 .. _stylistic-guidelines:
 
@@ -190,8 +196,8 @@ Stylistic guidelines
 --------------------
 
 * Set up your editor to follow `PEP 8 <https://www.python.org/dev/peps/
-  pep-0008/>`_ (remove trailing white space, no tabs, etc.).  Check code with
-  pyflakes / flake8.
+  pep-0008/>`_ (remove trailing white space, no tabs, etc.).  Check code
+  with ruff.
 
 * Use NumPy data types instead of strings (``np.uint8`` instead of
   ``"uint8"``).
@@ -252,10 +258,13 @@ The rest of the story
 .. toctree::
    :maxdepth: 2
 
+   ai_policy
    development_environment
+   spin
    howto_build_docs
    development_workflow
    development_advanced_debugging
+   development_ghcodespaces
    reviewer_guidelines
    ../benchmarking
    NumPy C style guide <https://numpy.org/neps/nep-0045-c_style_guide.html>

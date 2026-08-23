@@ -10,15 +10,16 @@ import re
 import sys
 import warnings
 
-from ..exceptions import DTypePromotionError
-from .multiarray import dtype, array, ndarray, promote_types, StringDType
 from numpy import _NoValue
+from numpy.exceptions import DTypePromotionError
+
+from ._multiarray_umath import _is_view_safe_cast
+from .multiarray import StringDType, array, dtype, promote_types
+
 try:
     import ctypes
 except ImportError:
     ctypes = None
-
-IS_PYPY = sys.implementation.name == 'pypy'
 
 if sys.byteorder == 'little':
     _nbo = '<'
@@ -158,7 +159,7 @@ def _commastring(astr):
             (order1, repeats, order2, dtype) = mo.groups()
         except (TypeError, AttributeError):
             raise ValueError(
-                f'format number {len(result)+1} of "{astr}" is not recognized'
+                f'format number {len(result) + 1} of "{astr}" is not recognized'
                 ) from None
         startindex = mo.end()
         # Separator or ending padding
@@ -169,8 +170,8 @@ def _commastring(astr):
                 mo = sep_re.match(astr, pos=startindex)
                 if not mo:
                     raise ValueError(
-                        'format number %d of "%s" is not recognized' %
-                        (len(result)+1, astr))
+                        f'format number {len(result) + 1} of "{astr}" '
+                        'is not recognized')
                 startindex = mo.end()
                 islist = True
 
@@ -183,8 +184,7 @@ def _commastring(astr):
             order2 = _convorder.get(order2, order2)
             if (order1 != order2):
                 raise ValueError(
-                    'inconsistent byte-order specification %s and %s' %
-                    (order1, order2))
+                    f'inconsistent byte-order specification {order1} and {order2}')
             order = order1
 
         if order in ('|', '=', _nbo):
@@ -302,7 +302,7 @@ class _ctypes:
         """
         if self._zerod:
             return None
-        return (obj*self._arr.ndim)(*self._arr.shape)
+        return (obj * self._arr.ndim)(*self._arr.shape)
 
     def strides_as(self, obj):
         """
@@ -311,7 +311,7 @@ class _ctypes:
         """
         if self._zerod:
             return None
-        return (obj*self._arr.ndim)(*self._arr.strides)
+        return (obj * self._arr.ndim)(*self._arr.strides)
 
     @property
     def data(self):
@@ -363,46 +363,6 @@ class _ctypes:
         Enables `c_func(some_array.ctypes)`
         """
         return self.data_as(ctypes.c_void_p)
-
-    # Numpy 1.21.0, 2021-05-18
-
-    def get_data(self):
-        """Deprecated getter for the `_ctypes.data` property.
-
-        .. deprecated:: 1.21
-        """
-        warnings.warn('"get_data" is deprecated. Use "data" instead',
-                      DeprecationWarning, stacklevel=2)
-        return self.data
-
-    def get_shape(self):
-        """Deprecated getter for the `_ctypes.shape` property.
-
-        .. deprecated:: 1.21
-        """
-        warnings.warn('"get_shape" is deprecated. Use "shape" instead',
-                      DeprecationWarning, stacklevel=2)
-        return self.shape
-
-    def get_strides(self):
-        """Deprecated getter for the `_ctypes.strides` property.
-
-        .. deprecated:: 1.21
-        """
-        warnings.warn('"get_strides" is deprecated. Use "strides" instead',
-                      DeprecationWarning, stacklevel=2)
-        return self.strides
-
-    def get_as_parameter(self):
-        """Deprecated getter for the `_ctypes._as_parameter_` property.
-
-        .. deprecated:: 1.21
-        """
-        warnings.warn(
-            '"get_as_parameter" is deprecated. Use "_as_parameter_" instead',
-            DeprecationWarning, stacklevel=2,
-        )
-        return self._as_parameter_
 
 
 def _newnames(datatype, order):
@@ -525,7 +485,7 @@ def _getfield_is_safe(oldtype, newtype, offset):
 
     """
     if newtype.hasobject or oldtype.hasobject:
-        if offset == 0 and newtype == oldtype:
+        if offset == 0 and _is_view_safe_cast(oldtype, newtype):
             return
         if oldtype.names is not None:
             for name in oldtype.names:
@@ -555,9 +515,10 @@ def _view_is_safe(oldtype, newtype):
 
     """
 
-    # if the types are equivalent, there is no problem.
-    # for example: dtype((np.record, 'i4,i4')) == dtype((np.void, 'i4,i4'))
-    if oldtype == newtype:
+    # more precise than ``oldtype == newtype``: e.g. dtype((np.record, 'i4,i4'))
+    # views safely as dtype((np.void, 'i4,i4')), while two equal StringDType
+    # instances with separate allocators do not
+    if _is_view_safe_cast(oldtype, newtype):
         return
 
     if newtype.hasobject or oldtype.hasobject:
@@ -669,12 +630,12 @@ def _dtype_from_pep3118(spec):
     return dtype
 
 def __dtype_from_pep3118(stream, is_subdtype):
-    field_spec = dict(
-        names=[],
-        formats=[],
-        offsets=[],
-        itemsize=0
-    )
+    field_spec = {
+        'names': [],
+        'formats': [],
+        'offsets': [],
+        'itemsize': 0
+    }
     offset = 0
     common_alignment = 1
     is_padding = False
@@ -730,7 +691,7 @@ def __dtype_from_pep3118(stream, is_subdtype):
             is_padding = (typechar == 'x')
             dtypechar = type_map[typechar]
             if dtypechar in 'USV':
-                dtypechar += '%d' % itemsize
+                dtypechar += f'{itemsize}'
                 itemsize = 1
             numpy_byteorder = {'@': '=', '^': '='}.get(
                 stream.byteorder, stream.byteorder)
@@ -739,11 +700,10 @@ def __dtype_from_pep3118(stream, is_subdtype):
         elif stream.next in _pep3118_unsupported_map:
             desc = _pep3118_unsupported_map[stream.next]
             raise NotImplementedError(
-                "Unrepresentable PEP 3118 data type {!r} ({})"
-                .format(stream.next, desc))
+                f"Unrepresentable PEP 3118 data type {stream.next!r} ({desc})")
         else:
             raise ValueError(
-                "Unknown PEP 3118 data type specifier %r" % stream.s
+                f"Unknown PEP 3118 data type specifier {stream.s!r}"
             )
 
         #
@@ -834,21 +794,21 @@ def _fix_names(field_spec):
 def _add_trailing_padding(value, padding):
     """Inject the specified number of padding bytes at the end of a dtype"""
     if value.fields is None:
-        field_spec = dict(
-            names=['f0'],
-            formats=[value],
-            offsets=[0],
-            itemsize=value.itemsize
-        )
+        field_spec = {
+            'names': ['f0'],
+            'formats': [value],
+            'offsets': [0],
+            'itemsize': value.itemsize
+        }
     else:
         fields = value.fields
         names = value.names
-        field_spec = dict(
-            names=names,
-            formats=[fields[name][0] for name in names],
-            offsets=[fields[name][1] for name in names],
-            itemsize=value.itemsize
-        )
+        field_spec = {
+            'names': names,
+            'formats': [fields[name][0] for name in names],
+            'offsets': [fields[name][1] for name in names],
+            'itemsize': value.itemsize
+        }
 
     field_spec['itemsize'] += padding
     return dtype(field_spec)
@@ -873,21 +833,21 @@ def _lcm(a, b):
 
 def array_ufunc_errmsg_formatter(dummy, ufunc, method, *inputs, **kwargs):
     """ Format the error message for when __array_ufunc__ gives up. """
-    args_string = ', '.join(['{!r}'.format(arg) for arg in inputs] +
-                            ['{}={!r}'.format(k, v)
+    args_string = ', '.join([f'{arg!r}' for arg in inputs] +
+                            [f'{k}={v!r}'
                              for k, v in kwargs.items()])
     args = inputs + kwargs.get('out', ())
     types_string = ', '.join(repr(type(arg).__name__) for arg in args)
     return ('operand type(s) all returned NotImplemented from '
-            '__array_ufunc__({!r}, {!r}, {}): {}'
-            .format(ufunc, method, args_string, types_string))
+            f'__array_ufunc__({ufunc!r}, {method!r}, {args_string}): {types_string}'
+            )
 
 
 def array_function_errmsg_formatter(public_api, types):
     """ Format the error message for when __array_ufunc__ gives up. """
-    func_name = '{}.{}'.format(public_api.__module__, public_api.__name__)
-    return ("no implementation found for '{}' on types that implement "
-            '__array_function__: {}'.format(func_name, list(types)))
+    func_name = f'{public_api.__module__}.{public_api.__name__}'
+    return (f"no implementation found for '{func_name}' on types that implement "
+            f'__array_function__: {list(types)}')
 
 
 def _ufunc_doc_signature_formatter(ufunc):
@@ -895,13 +855,15 @@ def _ufunc_doc_signature_formatter(ufunc):
     Builds a signature string which resembles PEP 457
 
     This is used to construct the first line of the docstring
+
+    Keep in sync with `_ufunc_inspect_signature_builder`.
     """
 
     # input arguments are simple
     if ufunc.nin == 1:
         in_args = 'x'
     else:
-        in_args = ', '.join(f'x{i+1}' for i in range(ufunc.nin))
+        in_args = ', '.join(f'x{i + 1}' for i in range(ufunc.nin))
 
     # output arguments are both keyword or positional
     if ufunc.nout == 0:
@@ -911,8 +873,8 @@ def _ufunc_doc_signature_formatter(ufunc):
     else:
         out_args = '[, {positional}], / [, out={default}]'.format(
             positional=', '.join(
-                'out{}'.format(i+1) for i in range(ufunc.nout)),
-            default=repr((None,)*ufunc.nout)
+                f'out{i + 1}' for i in range(ufunc.nout)),
+            default=repr((None,) * ufunc.nout)
         )
 
     # keyword only args depend on whether this is a gufunc
@@ -930,12 +892,55 @@ def _ufunc_doc_signature_formatter(ufunc):
         kwargs += "[, signature, axes, axis]"
 
     # join all the parts together
-    return '{name}({in_args}{out_args}, *{kwargs})'.format(
-        name=ufunc.__name__,
-        in_args=in_args,
-        out_args=out_args,
-        kwargs=kwargs
+    return f'{ufunc.__name__}({in_args}{out_args}, *{kwargs})'
+
+
+def _ufunc_inspect_signature_builder(ufunc):
+    """
+    Builds a ``__signature__`` string.
+
+    Should be kept in sync with `_ufunc_doc_signature_formatter`.
+    """
+
+    from inspect import Parameter, Signature
+
+    params = []
+
+    # positional-only input parameters
+    if ufunc.nin == 1:
+        params.append(Parameter("x", Parameter.POSITIONAL_ONLY))
+    else:
+        params.extend(
+            Parameter(f"x{i}", Parameter.POSITIONAL_ONLY)
+            for i in range(1, ufunc.nin + 1)
+        )
+
+    # for the sake of simplicity, we only consider a single output parameter
+    if ufunc.nout == 1:
+        out_default = None
+    else:
+        out_default = (None,) * ufunc.nout
+    params.append(
+        Parameter("out", Parameter.POSITIONAL_OR_KEYWORD, default=out_default),
     )
+
+    if ufunc.signature is None:
+        params.append(Parameter("where", Parameter.KEYWORD_ONLY, default=True))
+    else:
+        # NOTE: not all gufuncs support the `axis` parameters
+        params.append(Parameter("axes", Parameter.KEYWORD_ONLY, default=_NoValue))
+        params.append(Parameter("axis", Parameter.KEYWORD_ONLY, default=_NoValue))
+        params.append(Parameter("keepdims", Parameter.KEYWORD_ONLY, default=False))
+
+    params.extend((
+        Parameter("casting", Parameter.KEYWORD_ONLY, default='same_kind'),
+        Parameter("order", Parameter.KEYWORD_ONLY, default='K'),
+        Parameter("dtype", Parameter.KEYWORD_ONLY, default=None),
+        Parameter("subok", Parameter.KEYWORD_ONLY, default=True),
+        Parameter("signature", Parameter.KEYWORD_ONLY, default=None),
+    ))
+
+    return Signature(params)
 
 
 def npy_ctypes_check(cls):
@@ -944,12 +949,8 @@ def npy_ctypes_check(cls):
     try:
         # ctypes class are new-style, so have an __mro__. This probably fails
         # for ctypes classes with multiple inheritance.
-        if IS_PYPY:
-            # (..., _ctypes.basics._CData, Bufferable, object)
-            ctype_base = cls.__mro__[-3]
-        else:
-            # # (..., _ctypes._CData, object)
-            ctype_base = cls.__mro__[-2]
+        # # (..., _ctypes._CData, object)
+        ctype_base = cls.__mro__[-2]
         # right now, they're part of the _ctypes module
         return '_ctypes' in ctype_base.__module__
     except Exception:

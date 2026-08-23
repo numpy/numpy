@@ -1,6 +1,6 @@
-from .common import Benchmark
-
 import numpy as np
+
+from .common import Benchmark
 
 
 class Records(Benchmark):
@@ -12,11 +12,11 @@ class Records(Benchmark):
         self.formats_str = ','.join(self.formats)
         self.dtype_ = np.dtype(
             [
-                ('field_{}'.format(i), self.l50.dtype.str)
+                (f'field_{i}', self.l50.dtype.str)
                 for i in range(self.fields_number)
             ]
         )
-        self.buffer = self.l50.tostring() * self.fields_number
+        self.buffer = self.l50.tobytes() * self.fields_number
 
     def time_fromarrays_w_dtype(self):
         np._core.records.fromarrays(self.arrays, dtype=self.dtype_)
@@ -30,11 +30,11 @@ class Records(Benchmark):
     def time_fromarrays_formats_as_string(self):
         np._core.records.fromarrays(self.arrays, formats=self.formats_str)
 
-    def time_fromstring_w_dtype(self):
+    def time_frombytes_w_dtype(self):
         np._core.records.fromstring(self.buffer, dtype=self.dtype_)
 
-    def time_fromstring_formats_as_list(self):
+    def time_frombytes_formats_as_list(self):
         np._core.records.fromstring(self.buffer, formats=self.formats)
 
-    def time_fromstring_formats_as_string(self):
+    def time_frombytes_formats_as_string(self):
         np._core.records.fromstring(self.buffer, formats=self.formats_str)

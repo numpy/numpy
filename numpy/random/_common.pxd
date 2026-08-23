@@ -26,12 +26,15 @@ cdef enum ConstraintType:
     LEGACY_CONS_NON_NEGATIVE_INBOUNDS_LONG
 
 ctypedef ConstraintType constraint_type
+ctypedef fused double_or_int64:
+    double
+    int64_t
 
 cdef object benchmark(bitgen_t *bitgen, object lock, Py_ssize_t cnt, object method)
 cdef object random_raw(bitgen_t *bitgen, object lock, object size, object output)
 cdef object prepare_cffi(bitgen_t *bitgen)
 cdef object prepare_ctypes(bitgen_t *bitgen)
-cdef int check_constraint(double val, object name, constraint_type cons) except -1
+cdef int check_constraint(double_or_int64 val, object name, constraint_type cons) except -1
 cdef int check_array_constraint(np.ndarray val, object name, constraint_type cons) except -1
 
 cdef extern from "include/aligned_malloc.h":

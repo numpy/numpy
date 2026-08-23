@@ -22,13 +22,13 @@ def git_version(version):
     # Append last commit date and hash to dev version information,
     # if available
 
-    import subprocess
     import os.path
+    import subprocess
 
     git_hash = ''
     try:
         p = subprocess.Popen(
-            ['git', 'log', '-1', '--format="%H %aI"'],
+            ['git', '-c', 'log.showSignature=false', 'log', '-1', '--format="%H %aI"'],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=os.path.dirname(__file__),

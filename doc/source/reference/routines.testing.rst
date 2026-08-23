@@ -1,8 +1,8 @@
 .. _routines.testing:
 .. module:: numpy.testing
 
-Test support (:mod:`numpy.testing`)
-===================================
+Test support
+============
 
 .. currentmodule:: numpy.testing
 

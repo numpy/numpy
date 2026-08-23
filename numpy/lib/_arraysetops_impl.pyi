@@ -1,59 +1,19 @@
-from typing import (
-    Any,
-    Generic,
-    Literal as L,
-    NamedTuple,
-    overload,
-    SupportsIndex,
-    TypeVar,
-)
-from typing_extensions import deprecated
+from _typeshed import Incomplete
+from collections.abc import Sequence
+from typing import Any, Literal as L, NamedTuple, SupportsIndex, TypeVar, overload
 
 import numpy as np
-from numpy import (
-    generic,
-    number,
-    ushort,
-    ubyte,
-    uintc,
-    uint,
-    ulonglong,
-    short,
-    int8,
-    byte,
-    intc,
-    int_,
-    intp,
-    longlong,
-    half,
-    single,
-    double,
-    longdouble,
-    csingle,
-    cdouble,
-    clongdouble,
-    timedelta64,
-    datetime64,
-    object_,
-    str_,
-    bytes_,
-    void,
-)
-
 from numpy._typing import (
     ArrayLike,
     NDArray,
     _ArrayLike,
     _ArrayLikeBool_co,
-    _ArrayLikeDT64_co,
-    _ArrayLikeTD64_co,
-    _ArrayLikeObject_co,
     _ArrayLikeNumber_co,
+    _Shape,
 )
 
 __all__ = [
     "ediff1d",
-    "in1d",
     "intersect1d",
     "isin",
     "setdiff1d",
@@ -66,358 +26,951 @@ __all__ = [
     "unique_values",
 ]
 
-_SCT = TypeVar("_SCT", bound=generic)
-_NumberType = TypeVar("_NumberType", bound=number[Any])
-
 # Explicitly set all allowed values to prevent accidental castings to
 # abstract dtypes (their common super-type).
-#
 # Only relevant if two or more arguments are parametrized, (e.g. `setdiff1d`)
 # which could result in, for example, `int64` and `float64`producing a
 # `number[_64Bit]` array
-_SCTNoCast = TypeVar(
-    "_SCTNoCast",
+_AnyScalarT = TypeVar(
+    "_AnyScalarT",
     np.bool,
-    ushort,
-    ubyte,
-    uintc,
-    uint,
-    ulonglong,
-    short,
-    byte,
-    intc,
-    int_,
-    longlong,
-    half,
-    single,
-    double,
-    longdouble,
-    csingle,
-    cdouble,
-    clongdouble,
-    timedelta64,
-    datetime64,
-    object_,
-    str_,
-    bytes_,
-    void,
-)
+    np.int8, np.int16, np.int32, np.int64, np.intp,
+    np.uint8, np.uint16, np.uint32, np.uint64, np.uintp,
+    np.float16, np.float32, np.float64, np.longdouble,
+    np.complex64, np.complex128, np.clongdouble,
+    np.timedelta64, np.datetime64,
+    np.bytes_, np.str_, np.void, np.object_,
+    np.integer, np.floating, np.complexfloating, np.character,
+)  # fmt: skip
 
-class UniqueAllResult(NamedTuple, Generic[_SCT]):
-    values: NDArray[_SCT]
-    indices: NDArray[intp]
-    inverse_indices: NDArray[intp]
-    counts: NDArray[intp]
+type _NumericScalar = np.number | np.timedelta64 | np.object_
 
-class UniqueCountsResult(NamedTuple, Generic[_SCT]):
-    values: NDArray[_SCT]
-    counts: NDArray[intp]
+type _Array0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]]
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 
-class UniqueInverseResult(NamedTuple, Generic[_SCT]):
-    values: NDArray[_SCT]
-    inverse_indices: NDArray[intp]
+type _IntND = NDArray[np.intp]
+type _Int1D = _Array1D[np.intp]
 
+type _IntersectResult[ScalarT: np.generic] = tuple[_Array1D[ScalarT], _Int1D, _Int1D]
+
+###
+
+class UniqueAllResult[ScalarT: np.generic](NamedTuple):
+    values: _Array1D[ScalarT]
+    indices: _Int1D
+    inverse_indices: _IntND
+    counts: _Int1D
+
+class UniqueCountsResult[ScalarT: np.generic](NamedTuple):
+    values: _Array1D[ScalarT]
+    counts: _Int1D
+
+class UniqueInverseResult[ScalarT: np.generic](NamedTuple):
+    values: _Array1D[ScalarT]
+    inverse_indices: NDArray[np.intp]
+
+# keep in sync with `ma.extras.ediff1d`
 @overload
 def ediff1d(
     ary: _ArrayLikeBool_co,
-    to_end: None | ArrayLike = ...,
-    to_begin: None | ArrayLike = ...,
-) -> NDArray[int8]: ...
+    to_end: ArrayLike | None = None,
+    to_begin: ArrayLike | None = None,
+) -> _Array1D[np.int8]: ...
+@overload
+def ediff1d[NumericT: _NumericScalar](
+    ary: _ArrayLike[NumericT],
+    to_end: ArrayLike | None = None,
+    to_begin: ArrayLike | None = None,
+) -> _Array1D[NumericT]: ...
 @overload
 def ediff1d(
-    ary: _ArrayLike[_NumberType],
-    to_end: None | ArrayLike = ...,
-    to_begin: None | ArrayLike = ...,
-) -> NDArray[_NumberType]: ...
+    ary: _ArrayLike[np.datetime64[Any]],
+    to_end: ArrayLike | None = None,
+    to_begin: ArrayLike | None = None,
+) -> _Array1D[np.timedelta64]: ...
 @overload
 def ediff1d(
     ary: _ArrayLikeNumber_co,
-    to_end: None | ArrayLike = ...,
-    to_begin: None | ArrayLike = ...,
+    to_end: ArrayLike | None = None,
+    to_begin: ArrayLike | None = None,
+) -> _Array1D[Incomplete]: ...
+
+#
+@overload  # known array, FFF, axis=<given>
+def unique[ShapeT: _Shape, DTypeT: np.dtype](
+    ar: np.ndarray[ShapeT, DTypeT],
+    return_index: L[False] = False,
+    return_inverse: L[False] = False,
+    return_counts: L[False] = False,
+    *,
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # known scalar-type, FFF, axis=None  (default)
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[False] = False,
+    return_inverse: L[False] = False,
+    return_counts: L[False] = False,
+    axis: None = None,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> _Array1D[ScalarT]: ...
+@overload  # known scalar-type, FFF, axis=<given>
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[False] = False,
+    return_inverse: L[False] = False,
+    return_counts: L[False] = False,
+    *,
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> NDArray[ScalarT]: ...
+@overload  # unknown scalar-type, FFF, axis=None (default)
+def unique(
+    ar: ArrayLike,
+    return_index: L[False] = False,
+    return_inverse: L[False] = False,
+    return_counts: L[False] = False,
+    axis: None = None,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> _Array1D[Any]: ...
+@overload  # unknown scalar-type, FFF, axis=<given>
+def unique(
+    ar: ArrayLike,
+    return_index: L[False] = False,
+    return_inverse: L[False] = False,
+    return_counts: L[False] = False,
+    *,
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
 ) -> NDArray[Any]: ...
-@overload
-def ediff1d(
-    ary: _ArrayLikeDT64_co | _ArrayLikeTD64_co,
-    to_end: None | ArrayLike = ...,
-    to_begin: None | ArrayLike = ...,
-) -> NDArray[timedelta64]: ...
-@overload
-def ediff1d(
-    ary: _ArrayLikeObject_co,
-    to_end: None | ArrayLike = ...,
-    to_begin: None | ArrayLike = ...,
-) -> NDArray[object_]: ...
+@overload  # known array, TFF, axis=<given>
+def unique[ShapeT: _Shape, DTypeT: np.dtype](
+    ar: np.ndarray[ShapeT, DTypeT],
+    return_index: L[True],
+    return_inverse: L[False] = False,
+    return_counts: L[False] = False,
+    *,
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[np.ndarray[ShapeT, DTypeT], _Int1D]: ...
+@overload  # known scalar-type, TFF, axis=None (default)
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[True],
+    return_inverse: L[False] = False,
+    return_counts: L[False] = False,
+    axis: None = None,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[ScalarT], _Int1D]: ...
+@overload  # known scalar-type, TFF, axis=<given>
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[True],
+    return_inverse: L[False] = False,
+    return_counts: L[False] = False,
+    *,
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[ScalarT], _Int1D]: ...
+@overload  # unknown scalar-type, TFF, axis=None (default)
+def unique(
+    ar: ArrayLike,
+    return_index: L[True],
+    return_inverse: L[False] = False,
+    return_counts: L[False] = False,
+    axis: None = None,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[Any], _Int1D]: ...
+@overload  # unknown scalar-type, TFF, axis=<given>
+def unique(
+    ar: ArrayLike,
+    return_index: L[True],
+    return_inverse: L[False] = False,
+    return_counts: L[False] = False,
+    *,
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[Any], _Int1D]: ...
+@overload  # known array, FTF (positional), axis=None (default)
+def unique[ShapeT: _Shape, DTypeT: np.dtype](
+    ar: np.ndarray[ShapeT, DTypeT],
+    return_index: L[False],
+    return_inverse: L[True],
+    return_counts: L[False] = False,
+    axis: None = None,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[np.ndarray[tuple[int], DTypeT], np.ndarray[ShapeT, np.dtype[np.intp]]]: ...
+@overload  # known array, FTF (positional), axis=<given>
+def unique[ShapeT: _Shape, DTypeT: np.dtype](
+    ar: np.ndarray[ShapeT, DTypeT],
+    return_index: L[False],
+    return_inverse: L[True],
+    return_counts: L[False] = False,
+    *,
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[np.ndarray[ShapeT, DTypeT], _Int1D]: ...
+@overload  # known scalar-type, FTF (positional), axis=None (default)
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[False],
+    return_inverse: L[True],
+    return_counts: L[False] = False,
+    axis: None = None,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[ScalarT], _IntND]: ...
+@overload  # known scalar-type, FTF (positional), axis=<given>
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[False],
+    return_inverse: L[True],
+    return_counts: L[False] = False,
+    *,
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[ScalarT], _Int1D]: ...
+@overload  # unknown scalar-type, FTF (positional), axis=None (default)
+def unique(
+    ar: ArrayLike,
+    return_index: L[False],
+    return_inverse: L[True],
+    return_counts: L[False] = False,
+    axis: None = None,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[Any], _IntND]: ...
+@overload  # unknown scalar-type, FTF (positional), axis=<given>
+def unique(
+    ar: ArrayLike,
+    return_index: L[False],
+    return_inverse: L[True],
+    return_counts: L[False] = False,
+    *,
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[Any], _Int1D]: ...
+@overload  # known array, FTF (keyword), axis=None (default)
+def unique[ShapeT: _Shape, DTypeT: np.dtype](
+    ar: np.ndarray[ShapeT, DTypeT],
+    return_index: L[False] = False,
+    *,
+    return_inverse: L[True],
+    return_counts: L[False] = False,
+    axis: None = None,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[np.ndarray[tuple[int], DTypeT], np.ndarray[ShapeT, np.dtype[np.intp]]]: ...
+@overload  # known array, FTF (keyword), axis=<given>
+def unique[ShapeT: _Shape, DTypeT: np.dtype](
+    ar: np.ndarray[ShapeT, DTypeT],
+    return_index: L[False] = False,
+    *,
+    return_inverse: L[True],
+    return_counts: L[False] = False,
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[np.ndarray[ShapeT, DTypeT], _Int1D]: ...
+@overload  # known scalar-type, FTF (keyword), axis=None (default)
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[False] = False,
+    *,
+    return_inverse: L[True],
+    return_counts: L[False] = False,
+    axis: None = None,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[ScalarT], _IntND]: ...
+@overload  # known scalar-type, FTF (keyword), axis=<given>
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[False] = False,
+    *,
+    return_inverse: L[True],
+    return_counts: L[False] = False,
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[ScalarT], _Int1D]: ...
+@overload  # unknown scalar-type, FTF (keyword), axis=None (default)
+def unique(
+    ar: ArrayLike,
+    return_index: L[False] = False,
+    *,
+    return_inverse: L[True],
+    return_counts: L[False] = False,
+    axis: None = None,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[Any], _IntND]: ...
+@overload  # unknown scalar-type, FTF (keyword), axis=<given>
+def unique(
+    ar: ArrayLike,
+    return_index: L[False] = False,
+    *,
+    return_inverse: L[True],
+    return_counts: L[False] = False,
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[Any], _Int1D]: ...
+@overload  # known array, FFT (positional), axis=<given>
+def unique[ShapeT: _Shape, DTypeT: np.dtype](
+    ar: np.ndarray[ShapeT, DTypeT],
+    return_index: L[False],
+    return_inverse: L[False],
+    return_counts: L[True],
+    axis: SupportsIndex,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[np.ndarray[ShapeT, DTypeT], _Int1D]: ...
+@overload  # known scalar-type, FFT (positional), axis=None (default)
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[False],
+    return_inverse: L[False],
+    return_counts: L[True],
+    axis: None = None,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[ScalarT], _Int1D]: ...
+@overload  # known scalar-type, FFT (positional), axis=<given>
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[False],
+    return_inverse: L[False],
+    return_counts: L[True],
+    axis: SupportsIndex,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[ScalarT], _Int1D]: ...
+@overload  # unknown scalar-type, FFT (positional), axis=None (default)
+def unique(
+    ar: ArrayLike,
+    return_index: L[False],
+    return_inverse: L[False],
+    return_counts: L[True],
+    axis: None = None,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[Any], _Int1D]: ...
+@overload  # unknown scalar-type, FFT (positional), axis=<given>
+def unique(
+    ar: ArrayLike,
+    return_index: L[False],
+    return_inverse: L[False],
+    return_counts: L[True],
+    axis: SupportsIndex,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[Any], _Int1D]: ...
+@overload  # known array, FFT (keyword), axis=<given>
+def unique[ShapeT: _Shape, DTypeT: np.dtype](
+    ar: np.ndarray[ShapeT, DTypeT],
+    return_index: L[False] = False,
+    return_inverse: L[False] = False,
+    *,
+    return_counts: L[True],
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[np.ndarray[ShapeT, DTypeT], _Int1D]: ...
+@overload  # known scalar-type, FFT (keyword), axis=None (default)
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[False] = False,
+    return_inverse: L[False] = False,
+    *,
+    return_counts: L[True],
+    axis: None = None,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[ScalarT], _Int1D]: ...
+@overload  # known scalar-type, FFT (keyword), axis=<given>
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[False] = False,
+    return_inverse: L[False] = False,
+    *,
+    return_counts: L[True],
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[ScalarT], _Int1D]: ...
+@overload  # unknown scalar-type, FFT (keyword), axis=None (default)
+def unique(
+    ar: ArrayLike,
+    return_index: L[False] = False,
+    return_inverse: L[False] = False,
+    *,
+    return_counts: L[True],
+    axis: None = None,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[Any], _Int1D]: ...
+@overload  # unknown scalar-type, FFT (keyword), axis=<given>
+def unique(
+    ar: ArrayLike,
+    return_index: L[False] = False,
+    return_inverse: L[False] = False,
+    *,
+    return_counts: L[True],
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[Any], _Int1D]: ...
+@overload  # known array, TTF, axis=None (default)
+def unique[ShapeT: _Shape, DTypeT: np.dtype](
+    ar: np.ndarray[ShapeT, DTypeT],
+    return_index: L[True],
+    return_inverse: L[True],
+    return_counts: L[False] = False,
+    axis: None = None,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[np.ndarray[tuple[int], DTypeT], _Int1D, np.ndarray[ShapeT, np.dtype[np.intp]]]: ...
+@overload  # known array, TTF, axis=<given>
+def unique[ShapeT: _Shape, DTypeT: np.dtype](
+    ar: np.ndarray[ShapeT, DTypeT],
+    return_index: L[True],
+    return_inverse: L[True],
+    return_counts: L[False] = False,
+    *,
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[np.ndarray[ShapeT, DTypeT], _Int1D, _Int1D]: ...
+@overload  # known scalar-type, TTF, axis=None (default)
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[True],
+    return_inverse: L[True],
+    return_counts: L[False] = False,
+    axis: None = None,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[ScalarT], _Int1D, _IntND]: ...
+@overload  # known scalar-type, TTF, axis=<given>
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[True],
+    return_inverse: L[True],
+    return_counts: L[False] = False,
+    *,
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[ScalarT], _Int1D, _Int1D]: ...
+@overload  # unknown scalar-type, TTF, axis=None (default)
+def unique(
+    ar: ArrayLike,
+    return_index: L[True],
+    return_inverse: L[True],
+    return_counts: L[False] = False,
+    axis: None = None,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[Any], _Int1D, _IntND]: ...
+@overload  # unknown scalar-type, TTF, axis=<given>
+def unique(
+    ar: ArrayLike,
+    return_index: L[True],
+    return_inverse: L[True],
+    return_counts: L[False] = False,
+    *,
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[Any], _Int1D, _Int1D]: ...
+@overload  # known array, TFT (positional), axis=<given>
+def unique[ShapeT: _Shape, DTypeT: np.dtype](
+    ar: np.ndarray[ShapeT, DTypeT],
+    return_index: L[True],
+    return_inverse: L[False],
+    return_counts: L[True],
+    axis: SupportsIndex,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[np.ndarray[ShapeT, DTypeT], _Int1D, _Int1D]: ...
+@overload  # known scalar-type, TFT (positional), axis=None (default)
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[True],
+    return_inverse: L[False],
+    return_counts: L[True],
+    axis: None = None,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[ScalarT], _Int1D, _Int1D]: ...
+@overload  # known scalar-type, TFT (positional), axis=<given>
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[True],
+    return_inverse: L[False],
+    return_counts: L[True],
+    axis: SupportsIndex,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[ScalarT], _Int1D, _Int1D]: ...
+@overload  # unknown scalar-type, TFT (positional), axis=None (default)
+def unique(
+    ar: ArrayLike,
+    return_index: L[True],
+    return_inverse: L[False],
+    return_counts: L[True],
+    axis: None = None,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[Any], _Int1D, _Int1D]: ...
+@overload  # unknown scalar-type, TFT (positional), axis=<given>
+def unique(
+    ar: ArrayLike,
+    return_index: L[True],
+    return_inverse: L[False],
+    return_counts: L[True],
+    axis: SupportsIndex,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[Any], _Int1D, _Int1D]: ...
+@overload  # known array, TFT (keyword), axis=<given>
+def unique[ShapeT: _Shape, DTypeT: np.dtype](
+    ar: np.ndarray[ShapeT, DTypeT],
+    return_index: L[True],
+    return_inverse: L[False] = False,
+    *,
+    return_counts: L[True],
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[np.ndarray[ShapeT, DTypeT], _Int1D, _Int1D]: ...
+@overload  # known scalar-type, TFT (keyword), axis=None (default)
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[True],
+    return_inverse: L[False] = False,
+    *,
+    return_counts: L[True],
+    axis: None = None,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[ScalarT], _Int1D, _Int1D]: ...
+@overload  # known scalar-type, TFT (keyword), axis=<given>
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[True],
+    return_inverse: L[False] = False,
+    *,
+    return_counts: L[True],
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[ScalarT], _Int1D, _Int1D]: ...
+@overload  # unknown scalar-type, TFT (keyword), axis=None (default)
+def unique(
+    ar: ArrayLike,
+    return_index: L[True],
+    return_inverse: L[False] = False,
+    *,
+    return_counts: L[True],
+    axis: None = None,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[Any], _Int1D, _Int1D]: ...
+@overload  # unknown scalar-type, TFT (keyword), axis=<given>
+def unique(
+    ar: ArrayLike,
+    return_index: L[True],
+    return_inverse: L[False] = False,
+    *,
+    return_counts: L[True],
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[Any], _Int1D, _Int1D]: ...
+@overload  # known array, FTT (positional), axis=None (default)
+def unique[ShapeT: _Shape, DTypeT: np.dtype](
+    ar: np.ndarray[ShapeT, DTypeT],
+    return_index: L[False],
+    return_inverse: L[True],
+    return_counts: L[True],
+    axis: None = None,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[np.ndarray[tuple[int], DTypeT], np.ndarray[ShapeT, np.dtype[np.intp]], _Int1D]: ...
+@overload  # known array, FTT (positional), axis=<given>
+def unique[ShapeT: _Shape, DTypeT: np.dtype](
+    ar: np.ndarray[ShapeT, DTypeT],
+    return_index: L[False],
+    return_inverse: L[True],
+    return_counts: L[True],
+    axis: SupportsIndex,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[np.ndarray[ShapeT, DTypeT], _Int1D, _Int1D]: ...
+@overload  # known scalar-type, FTT (positional), axis=None (default)
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[False],
+    return_inverse: L[True],
+    return_counts: L[True],
+    axis: None = None,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[ScalarT], _IntND, _Int1D]: ...
+@overload  # known scalar-type, FTT (positional), axis=<given>
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[False],
+    return_inverse: L[True],
+    return_counts: L[True],
+    axis: SupportsIndex,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[ScalarT], _Int1D, _Int1D]: ...
+@overload  # unknown scalar-type, FTT (positional), axis=None (default)
+def unique(
+    ar: ArrayLike,
+    return_index: L[False],
+    return_inverse: L[True],
+    return_counts: L[True],
+    axis: None = None,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[Any], _IntND, _Int1D]: ...
+@overload  # unknown scalar-type, FTT (positional), axis=<given>
+def unique(
+    ar: ArrayLike,
+    return_index: L[False],
+    return_inverse: L[True],
+    return_counts: L[True],
+    axis: SupportsIndex,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[Any], _Int1D, _Int1D]: ...
+@overload  # known array, FTT (keyword), axis=None (default)
+def unique[ShapeT: _Shape, DTypeT: np.dtype](
+    ar: np.ndarray[ShapeT, DTypeT],
+    return_index: L[False] = False,
+    *,
+    return_inverse: L[True],
+    return_counts: L[True],
+    axis: None = None,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[np.ndarray[tuple[int], DTypeT], np.ndarray[ShapeT, np.dtype[np.intp]], _Int1D]: ...
+@overload  # known array, FTT (keyword), axis=<given>
+def unique[ShapeT: _Shape, DTypeT: np.dtype](
+    ar: np.ndarray[ShapeT, DTypeT],
+    return_index: L[False] = False,
+    *,
+    return_inverse: L[True],
+    return_counts: L[True],
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[np.ndarray[ShapeT, DTypeT], _Int1D, _Int1D]: ...
+@overload  # known scalar-type, FTT (keyword), axis=None (default)
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[False] = False,
+    *,
+    return_inverse: L[True],
+    return_counts: L[True],
+    axis: None = None,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[ScalarT], _IntND, _Int1D]: ...
+@overload  # known scalar-type, FTT (keyword), axis=<given>
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[False] = False,
+    *,
+    return_inverse: L[True],
+    return_counts: L[True],
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[ScalarT], _Int1D, _Int1D]: ...
+@overload  # unknown scalar-type, FTT (keyword), axis=None (default)
+def unique(
+    ar: ArrayLike,
+    return_index: L[False] = False,
+    *,
+    return_inverse: L[True],
+    return_counts: L[True],
+    axis: None = None,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[Any], _IntND, _Int1D]: ...
+@overload  # unknown scalar-type, FTT (keyword), axis=<given>
+def unique(
+    ar: ArrayLike,
+    return_index: L[False] = False,
+    *,
+    return_inverse: L[True],
+    return_counts: L[True],
+    axis: SupportsIndex,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[Any], _Int1D, _Int1D]: ...
+@overload  # known array, TTT, axis=None (default)
+def unique[ShapeT: _Shape, DTypeT: np.dtype](
+    ar: np.ndarray[ShapeT, DTypeT],
+    return_index: L[True],
+    return_inverse: L[True],
+    return_counts: L[True],
+    axis: None = None,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[np.ndarray[tuple[int], DTypeT], _Int1D, np.ndarray[ShapeT, np.dtype[np.intp]], _Int1D]: ...
+@overload  # known array, TTT, axis=<given>
+def unique[ShapeT: _Shape, DTypeT: np.dtype](
+    ar: np.ndarray[ShapeT, DTypeT],
+    return_index: L[True],
+    return_inverse: L[True],
+    return_counts: L[True],
+    axis: SupportsIndex,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[np.ndarray[ShapeT, DTypeT], _Int1D, _Int1D, _Int1D]: ...
+@overload  # known scalar-type, TTT, axis=None (default)
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[True],
+    return_inverse: L[True],
+    return_counts: L[True],
+    axis: None = None,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[ScalarT], _Int1D, _IntND, _Int1D]: ...
+@overload  # known scalar-type, TTT, axis=<given>
+def unique[ScalarT: np.generic](
+    ar: _ArrayLike[ScalarT],
+    return_index: L[True],
+    return_inverse: L[True],
+    return_counts: L[True],
+    axis: SupportsIndex,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[NDArray[ScalarT], _Int1D, _Int1D, _Int1D]: ...
+@overload  # unknown scalar-type, TTT, axis=None (default)
+def unique(
+    ar: ArrayLike,
+    return_index: L[True],
+    return_inverse: L[True],
+    return_counts: L[True],
+    axis: None = None,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[_Array1D[Any], _Int1D, _IntND, _Int1D]: ...
+@overload  # unknown scalar-type, TTT, axis=<given>
+def unique(
+    ar: ArrayLike,
+    return_index: L[True],
+    return_inverse: L[True],
+    return_counts: L[True],
+    axis: SupportsIndex,
+    *,
+    equal_nan: bool = True,
+    sorted: bool = True,
+) -> tuple[np.ndarray, _Int1D, _Int1D, _Int1D]: ...
 
+#
 @overload
-def unique(
-    ar: _ArrayLike[_SCT],
-    return_index: L[False] = ...,
-    return_inverse: L[False] = ...,
-    return_counts: L[False] = ...,
-    axis: None | SupportsIndex = ...,
-    *,
-    equal_nan: bool = ...,
-) -> NDArray[_SCT]: ...
+def unique_all[ScalarT: np.generic](x: _ArrayLike[ScalarT]) -> UniqueAllResult[ScalarT]: ...
 @overload
-def unique(
-    ar: ArrayLike,
-    return_index: L[False] = ...,
-    return_inverse: L[False] = ...,
-    return_counts: L[False] = ...,
-    axis: None | SupportsIndex = ...,
-    *,
-    equal_nan: bool = ...,
-) -> NDArray[Any]: ...
-@overload
-def unique(
-    ar: _ArrayLike[_SCT],
-    return_index: L[True] = ...,
-    return_inverse: L[False] = ...,
-    return_counts: L[False] = ...,
-    axis: None | SupportsIndex = ...,
-    *,
-    equal_nan: bool = ...,
-) -> tuple[NDArray[_SCT], NDArray[intp]]: ...
-@overload
-def unique(
-    ar: ArrayLike,
-    return_index: L[True] = ...,
-    return_inverse: L[False] = ...,
-    return_counts: L[False] = ...,
-    axis: None | SupportsIndex = ...,
-    *,
-    equal_nan: bool = ...,
-) -> tuple[NDArray[Any], NDArray[intp]]: ...
-@overload
-def unique(
-    ar: _ArrayLike[_SCT],
-    return_index: L[False] = ...,
-    return_inverse: L[True] = ...,
-    return_counts: L[False] = ...,
-    axis: None | SupportsIndex = ...,
-    *,
-    equal_nan: bool = ...,
-) -> tuple[NDArray[_SCT], NDArray[intp]]: ...
-@overload
-def unique(
-    ar: ArrayLike,
-    return_index: L[False] = ...,
-    return_inverse: L[True] = ...,
-    return_counts: L[False] = ...,
-    axis: None | SupportsIndex = ...,
-    *,
-    equal_nan: bool = ...,
-) -> tuple[NDArray[Any], NDArray[intp]]: ...
-@overload
-def unique(
-    ar: _ArrayLike[_SCT],
-    return_index: L[False] = ...,
-    return_inverse: L[False] = ...,
-    return_counts: L[True] = ...,
-    axis: None | SupportsIndex = ...,
-    *,
-    equal_nan: bool = ...,
-) -> tuple[NDArray[_SCT], NDArray[intp]]: ...
-@overload
-def unique(
-    ar: ArrayLike,
-    return_index: L[False] = ...,
-    return_inverse: L[False] = ...,
-    return_counts: L[True] = ...,
-    axis: None | SupportsIndex = ...,
-    *,
-    equal_nan: bool = ...,
-) -> tuple[NDArray[Any], NDArray[intp]]: ...
-@overload
-def unique(
-    ar: _ArrayLike[_SCT],
-    return_index: L[True] = ...,
-    return_inverse: L[True] = ...,
-    return_counts: L[False] = ...,
-    axis: None | SupportsIndex = ...,
-    *,
-    equal_nan: bool = ...,
-) -> tuple[NDArray[_SCT], NDArray[intp], NDArray[intp]]: ...
-@overload
-def unique(
-    ar: ArrayLike,
-    return_index: L[True] = ...,
-    return_inverse: L[True] = ...,
-    return_counts: L[False] = ...,
-    axis: None | SupportsIndex = ...,
-    *,
-    equal_nan: bool = ...,
-) -> tuple[NDArray[Any], NDArray[intp], NDArray[intp]]: ...
-@overload
-def unique(
-    ar: _ArrayLike[_SCT],
-    return_index: L[True] = ...,
-    return_inverse: L[False] = ...,
-    return_counts: L[True] = ...,
-    axis: None | SupportsIndex = ...,
-    *,
-    equal_nan: bool = ...,
-) -> tuple[NDArray[_SCT], NDArray[intp], NDArray[intp]]: ...
-@overload
-def unique(
-    ar: ArrayLike,
-    return_index: L[True] = ...,
-    return_inverse: L[False] = ...,
-    return_counts: L[True] = ...,
-    axis: None | SupportsIndex = ...,
-    *,
-    equal_nan: bool = ...,
-) -> tuple[NDArray[Any], NDArray[intp], NDArray[intp]]: ...
-@overload
-def unique(
-    ar: _ArrayLike[_SCT],
-    return_index: L[False] = ...,
-    return_inverse: L[True] = ...,
-    return_counts: L[True] = ...,
-    axis: None | SupportsIndex = ...,
-    *,
-    equal_nan: bool = ...,
-) -> tuple[NDArray[_SCT], NDArray[intp], NDArray[intp]]: ...
-@overload
-def unique(
-    ar: ArrayLike,
-    return_index: L[False] = ...,
-    return_inverse: L[True] = ...,
-    return_counts: L[True] = ...,
-    axis: None | SupportsIndex = ...,
-    *,
-    equal_nan: bool = ...,
-) -> tuple[NDArray[Any], NDArray[intp], NDArray[intp]]: ...
-@overload
-def unique(
-    ar: _ArrayLike[_SCT],
-    return_index: L[True] = ...,
-    return_inverse: L[True] = ...,
-    return_counts: L[True] = ...,
-    axis: None | SupportsIndex = ...,
-    *,
-    equal_nan: bool = ...,
-) -> tuple[NDArray[_SCT], NDArray[intp], NDArray[intp], NDArray[intp]]: ...
-@overload
-def unique(
-    ar: ArrayLike,
-    return_index: L[True] = ...,
-    return_inverse: L[True] = ...,
-    return_counts: L[True] = ...,
-    axis: None | SupportsIndex = ...,
-    *,
-    equal_nan: bool = ...,
-) -> tuple[NDArray[Any], NDArray[intp], NDArray[intp], NDArray[intp]]: ...
+def unique_all(x: ArrayLike) -> UniqueAllResult[Any]: ...
 
+#
 @overload
-def unique_all(
-    x: _ArrayLike[_SCT], /
-) -> UniqueAllResult[_SCT]: ...
+def unique_counts[ScalarT: np.generic](x: _ArrayLike[ScalarT]) -> UniqueCountsResult[ScalarT]: ...
 @overload
-def unique_all(
-    x: ArrayLike, /
-) -> UniqueAllResult[Any]: ...
+def unique_counts(x: ArrayLike) -> UniqueCountsResult[Any]: ...
 
+#
 @overload
-def unique_counts(
-    x: _ArrayLike[_SCT], /
-) -> UniqueCountsResult[_SCT]: ...
+def unique_inverse[ScalarT: np.generic](x: _ArrayLike[ScalarT]) -> UniqueInverseResult[ScalarT]: ...
 @overload
-def unique_counts(
-    x: ArrayLike, /
-) -> UniqueCountsResult[Any]: ...
+def unique_inverse(x: ArrayLike) -> UniqueInverseResult[Any]: ...
 
+#
 @overload
-def unique_inverse(x: _ArrayLike[_SCT], /) -> UniqueInverseResult[_SCT]: ...
+def unique_values[ScalarT: np.generic](x: _ArrayLike[ScalarT]) -> _Array1D[ScalarT]: ...
 @overload
-def unique_inverse(x: ArrayLike, /) -> UniqueInverseResult[Any]: ...
+def unique_values(x: ArrayLike) -> _Array1D[Incomplete]: ...
 
-@overload
-def unique_values(x: _ArrayLike[_SCT], /) -> NDArray[_SCT]: ...
-@overload
-def unique_values(x: ArrayLike, /) -> NDArray[Any]: ...
+# NOTE: we ignore UP047 because inlining `_AnyScalarT` would result in a lot of code duplication
 
-@overload
-def intersect1d(
-    ar1: _ArrayLike[_SCTNoCast],
-    ar2: _ArrayLike[_SCTNoCast],
-    assume_unique: bool = ...,
-    return_indices: L[False] = ...,
-) -> NDArray[_SCTNoCast]: ...
-@overload
+#
+@overload  # known scalar-type, return_indices=False (default)
+def intersect1d(  # noqa: UP047
+    ar1: _ArrayLike[_AnyScalarT],
+    ar2: _ArrayLike[_AnyScalarT],
+    assume_unique: bool = False,
+    return_indices: L[False] = False,
+) -> _Array1D[_AnyScalarT]: ...
+@overload  # known scalar-type, return_indices=True (positional)
+def intersect1d(  # noqa: UP047
+    ar1: _ArrayLike[_AnyScalarT],
+    ar2: _ArrayLike[_AnyScalarT],
+    assume_unique: bool,
+    return_indices: L[True],
+) -> _IntersectResult[_AnyScalarT]: ...
+@overload  # known scalar-type, return_indices=True (keyword)
+def intersect1d(  # noqa: UP047
+    ar1: _ArrayLike[_AnyScalarT],
+    ar2: _ArrayLike[_AnyScalarT],
+    assume_unique: bool = False,
+    *,
+    return_indices: L[True],
+) -> _IntersectResult[_AnyScalarT]: ...
+@overload  # unknown scalar-type, return_indices=False (default)
 def intersect1d(
     ar1: ArrayLike,
     ar2: ArrayLike,
-    assume_unique: bool = ...,
-    return_indices: L[False] = ...,
-) -> NDArray[Any]: ...
-@overload
-def intersect1d(
-    ar1: _ArrayLike[_SCTNoCast],
-    ar2: _ArrayLike[_SCTNoCast],
-    assume_unique: bool = ...,
-    return_indices: L[True] = ...,
-) -> tuple[NDArray[_SCTNoCast], NDArray[intp], NDArray[intp]]: ...
-@overload
+    assume_unique: bool = False,
+    return_indices: L[False] = False,
+) -> _Array1D[Incomplete]: ...
+@overload  # unknown scalar-type, return_indices=True (positional)
 def intersect1d(
     ar1: ArrayLike,
     ar2: ArrayLike,
-    assume_unique: bool = ...,
-    return_indices: L[True] = ...,
-) -> tuple[NDArray[Any], NDArray[intp], NDArray[intp]]: ...
-
-@overload
-def setxor1d(
-    ar1: _ArrayLike[_SCTNoCast],
-    ar2: _ArrayLike[_SCTNoCast],
-    assume_unique: bool = ...,
-) -> NDArray[_SCTNoCast]: ...
-@overload
-def setxor1d(
+    assume_unique: bool,
+    return_indices: L[True],
+) -> _IntersectResult[Incomplete]: ...
+@overload  # unknown scalar-type, return_indices=True (keyword)
+def intersect1d(
     ar1: ArrayLike,
     ar2: ArrayLike,
-    assume_unique: bool = ...,
-) -> NDArray[Any]: ...
+    assume_unique: bool = False,
+    *,
+    return_indices: L[True],
+) -> _IntersectResult[Incomplete]: ...
 
+#
+@overload
+def setxor1d(  # noqa: UP047
+    ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT], assume_unique: bool = False
+) -> _Array1D[_AnyScalarT]: ...
+@overload
+def setxor1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False) -> _Array1D[Incomplete]: ...
+
+#
+@overload
+def union1d(ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT]) -> _Array1D[_AnyScalarT]: ...  # noqa: UP047
+@overload
+def union1d(ar1: ArrayLike, ar2: ArrayLike) -> _Array1D[Incomplete]: ...
+
+#
+@overload
+def setdiff1d(  # noqa: UP047
+    ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT], assume_unique: bool = False
+) -> _Array1D[_AnyScalarT]: ...
+@overload
+def setdiff1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False) -> _Array1D[Incomplete]: ...
+
+#
+@overload  # known shape
+def isin[ShapeT: _Shape](
+    element: np.ndarray[ShapeT],
+    test_elements: ArrayLike,
+    assume_unique: bool = False,
+    invert: bool = False,
+    *,
+    kind: L["sort", "table"] | None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+@overload  # 0d
+def isin[ShapeT: _Shape](
+    element: complex | np.generic,
+    test_elements: ArrayLike,
+    assume_unique: bool = False,
+    invert: bool = False,
+    *,
+    kind: L["sort", "table"] | None = None,
+) -> _Array0D[np.bool]: ...
+@overload  # 1d
+def isin[ShapeT: _Shape](
+    element: Sequence[complex | np.generic],
+    test_elements: ArrayLike,
+    assume_unique: bool = False,
+    invert: bool = False,
+    *,
+    kind: L["sort", "table"] | None = None,
+) -> _Array1D[np.bool]: ...
+@overload  # 2d
+def isin[ShapeT: _Shape](
+    element: Sequence[Sequence[complex | np.generic]],
+    test_elements: ArrayLike,
+    assume_unique: bool = False,
+    invert: bool = False,
+    *,
+    kind: L["sort", "table"] | None = None,
+) -> _Array2D[np.bool]: ...
+@overload  # 3d
+def isin[ShapeT: _Shape](
+    element: Sequence[Sequence[Sequence[complex | np.generic]]],
+    test_elements: ArrayLike,
+    assume_unique: bool = False,
+    invert: bool = False,
+    *,
+    kind: L["sort", "table"] | None = None,
+) -> _Array3D[np.bool]: ...
+@overload  # fallback
 def isin(
     element: ArrayLike,
     test_elements: ArrayLike,
-    assume_unique: bool = ...,
-    invert: bool = ...,
+    assume_unique: bool = False,
+    invert: bool = False,
     *,
-    kind: None | str = ...,
+    kind: L["sort", "table"] | None = None,
 ) -> NDArray[np.bool]: ...
-
-@deprecated("Use 'isin' instead")
-def in1d(
-    element: ArrayLike,
-    test_elements: ArrayLike,
-    assume_unique: bool = ...,
-    invert: bool = ...,
-    *,
-    kind: None | str = ...,
-) -> NDArray[np.bool]: ...
-
-@overload
-def union1d(
-    ar1: _ArrayLike[_SCTNoCast],
-    ar2: _ArrayLike[_SCTNoCast],
-) -> NDArray[_SCTNoCast]: ...
-@overload
-def union1d(
-    ar1: ArrayLike,
-    ar2: ArrayLike,
-) -> NDArray[Any]: ...
-
-@overload
-def setdiff1d(
-    ar1: _ArrayLike[_SCTNoCast],
-    ar2: _ArrayLike[_SCTNoCast],
-    assume_unique: bool = ...,
-) -> NDArray[_SCTNoCast]: ...
-@overload
-def setdiff1d(
-    ar1: ArrayLike,
-    ar2: ArrayLike,
-    assume_unique: bool = ...,
-) -> NDArray[Any]: ...

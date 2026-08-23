@@ -271,7 +271,7 @@ via the services of shippable.com.
 
 Appending to build flags
 ------------------------
-`numpy.distutils` has always overridden rather than appended to `LDFLAGS` and
+``numpy.distutils`` has always overridden rather than appended to `LDFLAGS` and
 other similar such environment variables for compiling Fortran extensions.
 Now, if the `NPY_DISTUTILS_APPEND_FLAGS` environment variable is set to 1, the
 behavior will be appending.  This applied to: `LDFLAGS`, `F77FLAGS`,

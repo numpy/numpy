@@ -115,8 +115,9 @@ two notable exceptions:
 * ``intent(inout)`` array arguments must always be
   :term:`proper-contiguous <contiguous>` and have a compatible ``dtype``,
   otherwise an exception is raised.
-* ``intent(inplace)`` array arguments  will be changed *in situ* if the argument
-  has a different type than expected (see the ``intent(inplace)``
+* ``intent(inplace)`` array arguments must be arrays. If these have
+  incompatible order or size, a converted copy is passed in, which is
+  copied back into the original array on exit (see the ``intent(inplace)``
   :ref:`attribute <f2py-attributes>` for more information).
 
 In general, if a NumPy array is :term:`proper-contiguous <contiguous>` and has

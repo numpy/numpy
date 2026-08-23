@@ -2,20 +2,23 @@
 
 :author: Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
-:version: $Id: testutils.py 3529 2007-11-13 08:01:14Z jarrod.millman $
 
 """
 import operator
 
 import numpy as np
-from numpy import ndarray
 import numpy._core.umath as umath
 import numpy.testing
-from numpy.testing import (
-    assert_, assert_allclose, assert_array_almost_equal_nulp,
-    assert_raises, build_err_msg
-    )
-from .core import mask_or, getmask, masked_array, nomask, masked, filled
+from numpy import ndarray
+from numpy.testing import (  # noqa: F401
+    assert_,
+    assert_allclose,
+    assert_array_almost_equal_nulp,
+    assert_raises,
+    build_err_msg,
+)
+
+from .core import filled, getmask, mask_or, masked, masked_array, nomask
 
 __all__masked = [
     'almost', 'approx', 'assert_almost_equal', 'assert_array_almost_equal',
@@ -29,13 +32,14 @@ __all__masked = [
 # have mistakenly included them from this file. SciPy is one. That is
 # unfortunate, as some of these functions are not intended to work with
 # masked arrays. But there was no way to tell before.
-from unittest import TestCase
+from unittest import TestCase  # noqa: F401
+
 __some__from_testing = [
     'TestCase', 'assert_', 'assert_allclose', 'assert_array_almost_equal_nulp',
     'assert_raises'
     ]
 
-__all__ = __all__masked + __some__from_testing
+__all__ = __all__masked + __some__from_testing  # noqa: PLE0605
 
 
 def approx(a, b, fill_value=True, rtol=1e-5, atol=1e-8):
@@ -91,7 +95,6 @@ def _assert_equal_on_sequences(actual, desired, err_msg=''):
     assert_equal(len(actual), len(desired), err_msg)
     for k in range(len(desired)):
         assert_equal(actual[k], desired[k], f'item={k!r}\n{err_msg}')
-    return
 
 
 def assert_equal_records(a, b):
@@ -106,7 +109,6 @@ def assert_equal_records(a, b):
         (af, bf) = (operator.getitem(a, f), operator.getitem(b, f))
         if not (af is masked) and not (bf is masked):
             assert_equal(operator.getitem(a, f), operator.getitem(b, f))
-    return
 
 
 def assert_equal(actual, desired, err_msg=''):
@@ -119,7 +121,7 @@ def assert_equal(actual, desired, err_msg=''):
         if not isinstance(actual, dict):
             raise AssertionError(repr(type(actual)))
         assert_equal(len(actual), len(desired), err_msg)
-        for k, i in desired.items():
+        for k in desired:
             if k not in actual:
                 raise AssertionError(f"{k} not in {actual}")
             assert_equal(actual[k], desired[k], f'key={k!r}\n{err_msg}')
@@ -157,7 +159,7 @@ def fail_if_equal(actual, desired, err_msg='',):
         if not isinstance(actual, dict):
             raise AssertionError(repr(type(actual)))
         fail_if_equal(len(actual), len(desired), err_msg)
-        for k, i in desired.items():
+        for k in desired:
             if k not in actual:
                 raise AssertionError(repr(k))
             fail_if_equal(actual[k], desired[k], f'key={k!r}\n{err_msg}')

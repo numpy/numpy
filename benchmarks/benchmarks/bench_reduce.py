@@ -1,6 +1,6 @@
-from .common import Benchmark, TYPES1, get_squares
-
 import numpy as np
+
+from .common import TYPES1, Benchmark, get_squares
 
 
 class AddReduce(Benchmark):
@@ -52,7 +52,7 @@ class StatsReductions(Benchmark):
     def setup(self, dtype):
         self.data = np.ones(200, dtype=dtype)
         if dtype.startswith('complex'):
-            self.data = self.data * self.data.T*1j
+            self.data = self.data * self.data.T * 1j
 
     def time_min(self, dtype):
         np.min(self.data)
@@ -112,8 +112,26 @@ class ArgMin(Benchmark):
 
 
 class SmallReduction(Benchmark):
-    def setup(self):
-        self.d = np.ones(100, dtype=np.float32)
+    params = [[4, 100]]
+    param_names = ['size']
 
-    def time_small(self):
+    def setup(self, size):
+        self.d = np.ones(size, dtype=np.float32)
+        self.b = np.ones(size, dtype=bool)
+
+    def time_sum(self, size):
         np.sum(self.d)
+
+    def time_any(self, size):
+        np.any(self.b)
+
+    def time_max(self, size):
+        np.max(self.d)
+
+
+class SmallReduction2D(Benchmark):
+    def setup(self):
+        self.d = np.ones((4, 4), dtype=np.float32)
+
+    def time_sum_axis_1(self):
+        np.sum(self.d, axis=1)

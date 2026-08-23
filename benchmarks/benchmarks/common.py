@@ -1,7 +1,8 @@
-import numpy as np
 import random
 from functools import lru_cache
 from pathlib import Path
+
+import numpy as np
 
 # Various pre-crafted datasets/variables for testing
 # !!! Must not be changed -- only appended !!!
@@ -20,14 +21,14 @@ nxs, nys = 100, 100
 TYPES1 = [
     'int16', 'float16',
     'int32', 'float32',
-    'int64', 'float64',  'complex64',
+    'int64', 'float64', 'complex64',
     'complex128',
 ]
 
 DLPACK_TYPES = [
     'int16', 'float16',
     'int32', 'float32',
-    'int64', 'float64',  'complex64',
+    'int64', 'float64', 'complex64',
     'complex128', 'bool',
 ]
 
@@ -41,7 +42,7 @@ CACHE_ROOT = Path(__file__).resolve().parent.parent / 'env' / 'numpy_benchdata'
 @lru_cache(typed=True)
 def get_values():
     rnd = np.random.RandomState(1804169117)
-    values = np.tile(rnd.uniform(0, 100, size=nx*ny//10), 10)
+    values = np.tile(rnd.uniform(0, 100, size=nx * ny // 10), 10)
     return values
 
 
@@ -53,7 +54,7 @@ def get_square(dtype):
     # adjust complex ones to have non-degenerated imagery part -- use
     # original data transposed for that
     if arr.dtype.kind == 'c':
-        arr += arr.T*1j
+        arr += arr.T * 1j
 
     return arr
 
@@ -203,7 +204,7 @@ def get_data(size, dtype, ip_num=0, zeros=False, finite=True, denormal=False):
             rands += [np.zeros(lsize, dtype)]
         stride = len(rands)
         for start, r in enumerate(rands):
-            array[start:len(r)*stride:stride] = r
+            array[start:len(r) * stride:stride] = r
 
     if not CACHE_ROOT.exists():
         CACHE_ROOT.mkdir(parents=True)

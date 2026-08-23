@@ -16,6 +16,7 @@
 #include "ctors.h"
 #include "common.h"
 #include "dtypemeta.h"
+#include "dtype_transfer.h"
 #include "simd/simd.h"
 
 #include <string.h>
@@ -123,10 +124,9 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("bincount", args, len_args, kwnames,
-                "list", NULL, &list,
-                "|weights", NULL, &weight,
-                "|minlength", NULL, &mlength,
-                NULL, NULL, NULL) < 0) {
+                {"list", NULL, &list},
+                {"|weights", NULL, &weight},
+                {"|minlength", NULL, &mlength}) < 0) {
         return NULL;
     }
 
@@ -150,24 +150,15 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
         }
         if (PyArray_SIZE(tmp1) > 0) {
             /* The input is not empty, so convert it to NPY_INTP. */
-            lst = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)tmp1,
-                                                             NPY_INTP, 1, 1);
+            int flags = NPY_ARRAY_WRITEABLE | NPY_ARRAY_ALIGNED | NPY_ARRAY_C_CONTIGUOUS;
+            if (PyArray_ISINTEGER(tmp1)) {
+                flags = flags | NPY_ARRAY_FORCECAST;
+            }
+            PyArray_Descr* local_dtype = PyArray_DescrFromType(NPY_INTP);
+            lst = (PyArrayObject *)PyArray_FromAny((PyObject *)tmp1, local_dtype, 1, 1, flags, NULL);
             Py_DECREF(tmp1);
             if (lst == NULL) {
-                /* Failed converting to NPY_INTP. */
-                if (PyErr_ExceptionMatches(PyExc_TypeError)) {
-                    PyErr_Clear();
-                    /* Deprecated 2024-08-02, NumPy 2.1 */
-                    if (DEPRECATE("Non-integer input passed to bincount. In a "
-                                  "future version of NumPy, this will be an "
-                                  "error. (Deprecated NumPy 2.1)") < 0) {
-                        goto fail;
-                    }
-                }
-                else {
-                    /* Failure was not a TypeError. */
-                    goto fail;
-                }
+                goto fail;
             }
         }
         else {
@@ -177,7 +168,13 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
     }
 
     if (lst == NULL) {
-        lst = (PyArrayObject *)PyArray_ContiguousFromAny(list, NPY_INTP, 1, 1);
+        int flags = NPY_ARRAY_WRITEABLE | NPY_ARRAY_ALIGNED | NPY_ARRAY_C_CONTIGUOUS;
+        if (PyArray_Check((PyObject *)list) &&
+            PyArray_ISINTEGER((PyArrayObject *)list)) {
+            flags = flags | NPY_ARRAY_FORCECAST;
+        }
+        PyArray_Descr* local_dtype = PyArray_DescrFromType(NPY_INTP);
+        lst = (PyArrayObject *)PyArray_FromAny(list, local_dtype, 1, 1, flags, NULL);
         if (lst == NULL) {
             goto fail;
         }
@@ -185,15 +182,12 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
     len = PyArray_SIZE(lst);
 
     /*
-     * This if/else if can be removed by changing the argspec to O|On above,
-     * once we retire the deprecation
+     * This if/else if can be removed by changing the argspec above,
      */
     if (mlength == Py_None) {
-        /* NumPy 1.14, 2017-06-01 */
-        if (DEPRECATE("0 should be passed as minlength instead of None; "
-                      "this will error in future.") < 0) {
-            goto fail;
-        }
+        PyErr_SetString(PyExc_TypeError,
+             "use 0 instead of None for minlength");
+        goto fail;
     }
     else if (mlength != NULL) {
         minlength = PyArray_PyIntAsIntp(mlength);
@@ -400,18 +394,66 @@ arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     j = 0;
 
     copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(array))->copyswap;
-    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(array));
-    for (i = 0; i < ni; i++) {
-        if (mask_data[i]) {
-            if (j >= nv) {
-                j = 0;
-            }
+    if (copyswap == NULL || PyDataType_REFCHK(PyArray_DESCR(array))) {
+        NPY_cast_info cast_info;
+        NPY_ARRAYMETHOD_FLAGS flags;
+        const npy_intp one = 1;
+        const npy_intp elsize = chunk;
+        const npy_intp strides[2] = {elsize, elsize};
 
-            copyswap(dest + i*chunk, src + j*chunk, 0, array);
-            j++;
+        NPY_cast_info_init(&cast_info);
+        if (PyArray_GetDTypeTransferFunction(
+                PyArray_ISALIGNED(values) && PyArray_ISALIGNED(array),
+                strides[0], strides[1],
+                PyArray_DESCR(values), PyArray_DESCR(array), 0,
+                &cast_info, &flags) < 0) {
+            goto fail;
+        }
+        if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
+            NPY_BEGIN_THREADS;
+        }
+        for (i = 0; i < ni; i++) {
+            if (mask_data[i]) {
+                if (j >= nv) {
+                    j = 0;
+                }
+
+                char *data[2] = {src + j*chunk, dest + i*chunk};
+                if (cast_info.func(
+                        &cast_info.context, data, &one, strides,
+                        cast_info.auxdata) < 0) {
+                    NPY_END_THREADS;
+                    NPY_cast_info_xfree(&cast_info);
+                    goto fail;
+                }
+                j++;
+            }
+        }
+        NPY_END_THREADS;
+        NPY_cast_info_xfree(&cast_info);
+    }
+    else {
+        int needs_api = PyDataType_FLAGCHK(PyArray_DESCR(array), NPY_NEEDS_PYAPI);
+        NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(array));
+        for (i = 0; i < ni; i++) {
+            if (mask_data[i]) {
+                if (j >= nv) {
+                    j = 0;
+                }
+
+                copyswap(dest + i*chunk, src + j*chunk, 0, array);
+                if (needs_api && PyErr_Occurred()) {
+                    /* e.g. a structured dtype field that does not support copyswap */
+                    break;
+                }
+                j++;
+            }
+        }
+        NPY_END_THREADS;
+        if (PyErr_Occurred()) {
+            goto fail;
         }
     }
-    NPY_END_THREADS;
 
     Py_XDECREF(values);
     Py_XDECREF(mask);
@@ -421,7 +463,7 @@ arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
  fail:
     Py_XDECREF(mask);
-    PyArray_ResolveWritebackIfCopy(array);
+    PyArray_DiscardWritebackIfCopy(array);
     Py_XDECREF(array);
     Py_XDECREF(values);
     return NULL;
@@ -443,7 +485,7 @@ _linear_search(const npy_double key, const npy_double *arr, const npy_intp len, 
 
 /** @brief find index of a sorted array such that arr[i] <= key < arr[i + 1].
  *
- * If an starting index guess is in-range, the array values around this
+ * If a starting index guess is in-range, the array values around this
  * index are first checked.  This allows for repeated calls for well-ordered
  * keys (a very common case) to use the previous index as a very good guess.
  *
@@ -559,12 +601,11 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("interp", args, len_args, kwnames,
-                "x", NULL, &x,
-                "xp", NULL, &xp,
-                "fp", NULL, &fp,
-                "|left", NULL, &left,
-                "|right", NULL, &right,
-                NULL, NULL, NULL) < 0) {
+                {"x", NULL, &x},
+                {"xp", NULL, &xp},
+                {"fp", NULL, &fp},
+                {"|left", NULL, &left},
+                {"|right", NULL, &right}) < 0) {
         return NULL;
     }
 
@@ -581,7 +622,8 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
         goto fail;
     }
     lenxp = PyArray_SIZE(axp);
-    if (lenxp == 0) {
+    lenx = PyArray_SIZE(ax);
+    if (lenxp == 0 && lenx != 0) {
         PyErr_SetString(PyExc_ValueError,
                 "array of sample points is empty");
         goto fail;
@@ -597,7 +639,9 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
     if (af == NULL) {
         goto fail;
     }
-    lenx = PyArray_SIZE(ax);
+    if (lenx == 0) {
+        goto finish;
+    }
 
     dy = (const npy_double *)PyArray_DATA(afp);
     dx = (const npy_double *)PyArray_DATA(axp);
@@ -641,7 +685,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
 
         /* only pre-calculate slopes if there are relatively few of them. */
         if (lenxp <= lenx) {
-            slopes = PyArray_malloc((lenxp - 1) * sizeof(npy_double));
+            slopes = PyMem_RawMalloc((lenxp - 1) * sizeof(npy_double));
             if (slopes == NULL) {
                 PyErr_NoMemory();
                 goto fail;
@@ -697,7 +741,9 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
         NPY_END_THREADS;
     }
 
-    PyArray_free(slopes);
+    PyMem_RawFree(slopes);
+
+finish:
     Py_DECREF(afp);
     Py_DECREF(axp);
     Py_DECREF(ax);
@@ -731,12 +777,11 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("interp_complex", args, len_args, kwnames,
-                "x", NULL, &x,
-                "xp", NULL, &xp,
-                "fp", NULL, &fp,
-                "|left", NULL, &left,
-                "|right", NULL, &right,
-                NULL, NULL, NULL) < 0) {
+                {"x", NULL, &x},
+                {"xp", NULL, &xp},
+                {"fp", NULL, &fp},
+                {"|left", NULL, &left},
+                {"|right", NULL, &right}) < 0) {
         return NULL;
     }
 
@@ -755,7 +800,8 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
         goto fail;
     }
     lenxp = PyArray_SIZE(axp);
-    if (lenxp == 0) {
+    lenx = PyArray_SIZE(ax);
+    if (lenxp == 0 && lenx != 0) {
         PyErr_SetString(PyExc_ValueError,
                 "array of sample points is empty");
         goto fail;
@@ -766,7 +812,6 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
         goto fail;
     }
 
-    lenx = PyArray_SIZE(ax);
     dx = (const npy_double *)PyArray_DATA(axp);
     dz = (const npy_double *)PyArray_DATA(ax);
 
@@ -774,6 +819,9 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
                                             PyArray_DIMS(ax), NPY_CDOUBLE);
     if (af == NULL) {
         goto fail;
+    }
+    if (lenx == 0) {
+        goto finish;
     }
 
     dy = (const npy_cdouble *)PyArray_DATA(afp);
@@ -825,7 +873,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
 
         /* only pre-calculate slopes if there are relatively few of them. */
         if (lenxp <= lenx) {
-            slopes = PyArray_malloc((lenxp - 1) * sizeof(npy_cdouble));
+            slopes = PyMem_RawMalloc((lenxp - 1) * sizeof(npy_cdouble));
             if (slopes == NULL) {
                 PyErr_NoMemory();
                 goto fail;
@@ -898,8 +946,9 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
 
         NPY_END_THREADS;
     }
-    PyArray_free(slopes);
+    PyMem_RawFree(slopes);
 
+finish:
     Py_DECREF(afp);
     Py_DECREF(axp);
     Py_DECREF(ax);
@@ -913,11 +962,11 @@ fail:
     return NULL;
 }
 
-static const char *EMPTY_SEQUENCE_ERR_MSG = "indices must be integral: the provided " \
+static const char EMPTY_SEQUENCE_ERR_MSG[] = "indices must be integral: the provided " \
     "empty sequence was inferred as float. Wrap it with " \
     "'np.array(indices, dtype=np.intp)'";
 
-static const char *NON_INTEGRAL_ERROR_MSG = "only int indices permitted";
+static const char NON_INTEGRAL_ERROR_MSG[] = "only int indices permitted";
 
 /* Convert obj to an ndarray with integer dtype or fail */
 static PyArrayObject *
@@ -1458,7 +1507,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
     PyObject *obj;
     PyObject *str;
     const char *docstr;
-    static char *msg = "already has a different docstring";
+    static const char msg[] = "already has a different docstring";
 
     /* Don't add docstrings */
 #if PY_VERSION_HEX > 0x030b0000
@@ -1471,9 +1520,8 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("add_docstring", args, len_args, NULL,
-            "", NULL, &obj,
-            "", NULL, &str,
-            NULL, NULL, NULL) < 0) {
+            {"", NULL, &obj},
+            {"", NULL, &str}) < 0) {
         return NULL;
     }
     if (!PyUnicode_Check(str)) {
@@ -1515,7 +1563,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
         PyTypeObject *new = (PyTypeObject *)obj;
         _ADDDOC(new->tp_doc, new->tp_name);
         if (new->tp_dict != NULL && PyDict_CheckExact(new->tp_dict) &&
-                PyDict_GetItemString(new->tp_dict, "__doc__") == Py_None) {
+                PyDict_GetItemString(new->tp_dict, "__doc__") == Py_None) { // noqa: borrowed-ref - manual fix needed
             /* Warning: Modifying `tp_dict` is not generally safe! */
             if (PyDict_SetItemString(new->tp_dict, "__doc__", str) < 0) {
                 return NULL;
@@ -1613,21 +1661,37 @@ pack_inner(const char *inptr,
             bb[1] = npyv_tobits_b8(npyv_cmpneq_u8(v1, v_zero));
             bb[2] = npyv_tobits_b8(npyv_cmpneq_u8(v2, v_zero));
             bb[3] = npyv_tobits_b8(npyv_cmpneq_u8(v3, v_zero));
-            if(out_stride == 1 && 
-                (!NPY_ALIGNMENT_REQUIRED || isAligned)) {
-                npy_uint64 *ptr64 = (npy_uint64*)outptr;
+            if(out_stride == 1 && isAligned) {
             #if NPY_SIMD_WIDTH == 16
-                npy_uint64 bcomp = bb[0] | (bb[1] << 16) | (bb[2] << 32) | (bb[3] << 48);
-                ptr64[0] = bcomp;
+                npy_uint64 arr[1] = {bb[0] | (bb[1] << 16) | (bb[2] << 32) | (bb[3] << 48)};
             #elif NPY_SIMD_WIDTH == 32
-                ptr64[0] = bb[0] | (bb[1] << 32);
-                ptr64[1] = bb[2] | (bb[3] << 32);
+                npy_uint64 arr[2] = {bb[0] | (bb[1] << 32), bb[2] | (bb[3] << 32)};
             #else
-                ptr64[0] = bb[0]; ptr64[1] = bb[1];
-                ptr64[2] = bb[2]; ptr64[3] = bb[3];
+                npy_uint64 arr[4] = {bb[0], bb[1], bb[2], bb[3]};
             #endif
+
+            #if NPY_BYTE_ORDER == NPY_BIG_ENDIAN
+                #if NPY_SIMD_WIDTH == 16
+                arr[0] = npy_bswap8(arr[0]);
+                #elif NPY_SIMD_WIDTH == 32
+                arr[0] = npy_bswap8(arr[0]);
+                arr[1] = npy_bswap8(arr[1]);
+                #else
+                arr[0] = npy_bswap8(arr[0]);
+                arr[1] = npy_bswap8(arr[1]);
+                arr[2] = npy_bswap8(arr[2]);
+                arr[3] = npy_bswap8(arr[3]);
+                #endif
+            #endif
+                memcpy(outptr, arr, sizeof(arr));
                 outptr += vstepx4;
             } else {
+                #if NPY_BYTE_ORDER == NPY_BIG_ENDIAN
+                bb[0] = npy_bswap8(bb[0]);
+                bb[1] = npy_bswap8(bb[1]);
+                bb[2] = npy_bswap8(bb[2]);
+                bb[3] = npy_bswap8(bb[3]);
+                #endif
                 for(int i = 0; i < 4; i++) {
                     for (int j = 0; j < vstep; j++) {
                         memcpy(outptr, (char*)&bb[i] + j, 1);
@@ -1642,6 +1706,11 @@ pack_inner(const char *inptr,
                 va = npyv_rev64_u8(va);
             }
             npy_uint64 bb = npyv_tobits_b8(npyv_cmpneq_u8(va, v_zero));
+
+            #if NPY_BYTE_ORDER == NPY_BIG_ENDIAN
+            bb = npy_bswap8(bb);
+            #endif
+
             for (int i = 0; i < vstep; ++i) {
                 memcpy(outptr, (char*)&bb + i, 1);
                 outptr += out_stride;

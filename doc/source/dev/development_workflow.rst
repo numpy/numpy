@@ -205,13 +205,6 @@ these fragments in each commit message of a PR:
   settings.
   `See the configuration files for these checks. <https://github.com/numpy/numpy/tree/main/.github/workflows>`__
 
-* ``[skip azp]``: skip Azure jobs
-
-  `Azure <https://azure.microsoft.com/en-us/products/devops/pipelines>`__ is
-  where all comprehensive tests are run. This is an expensive run, and one you
-  could typically skip if you do documentation-only changes, for example.
-  `See the main configuration file for these checks. <https://github.com/numpy/numpy/blob/main/azure-pipelines.yml>`__
-
 * ``[skip circle]``: skip CircleCI jobs
 
   `CircleCI <https://circleci.com/>`__ is where we build the documentation and
@@ -221,16 +214,10 @@ these fragments in each commit message of a PR:
   you may need to run these tests to verify that the doctests are still valid.
   `See the configuration file for these checks. <https://github.com/numpy/numpy/blob/main/.circleci/config.yml>`__
 
-* ``[skip cirrus]``: skip Cirrus jobs
-
-  `CirrusCI <https://cirrus-ci.org/>`__ mostly triggers Linux aarch64 and MacOS Arm64 wheels
-  uploads.
-  `See the configuration file for these checks. <https://github.com/numpy/numpy/blob/main/.cirrus.star>`__
-
 Test building wheels
 ~~~~~~~~~~~~~~~~~~~~
 
-Numpy currently uses `cibuildwheel <https://https://cibuildwheel.readthedocs.io/en/stable/>`_
+NumPy currently uses `cibuildwheel <https://cibuildwheel.readthedocs.io/en/stable/>`_
 in order to build wheels through continuous integration services. To save resources, the
 cibuildwheel wheel builders are not run by default on every single PR or commit to main.
 
@@ -276,6 +263,24 @@ function, add a release note to the ``doc/release/upcoming_changes/``
 directory, following the instructions and format in the
 ``doc/release/upcoming_changes/README.rst`` file.
 
+Use the same prefix convention for your pull request title as for commit
+messages (e.g., ``BUG:``, ``ENH:``, ``DOC:``). This enables automated labeling
+of your PR.
+
+
+.. _pull-request-limit:
+
+Open pull request limit
+=======================
+
+To keep the review queue manageable, GitHub is configured to allow only one
+open non-draft pull request per non-maintainer at a time. Draft pull requests
+do not count towards the limit. The maintainer team can, at its discretion,
+add contributors to the list of accounts allowed to open more pull requests
+at once. We liberally add contributors who attend the community and triage
+meetings, which alternate weekly on Wednesdays -- see the `community calendar
+<https://scientific-python.org/calendars/>`__ for times.
+
 
 .. _workflow_PR_timeline:
 
@@ -288,6 +293,9 @@ adding a comment on your PR (this will notify maintainers).
 
 If your PR is large or complicated, asking for input on the numpy-discussion
 mailing list may also be useful.
+
+Pull requests that go stale or do not meet our quality standards may be
+labeled by a triager and closed automatically by a bot.
 
 
 .. _rebasing-on-main:

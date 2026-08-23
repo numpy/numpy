@@ -136,7 +136,7 @@ implement ``__*slice__`` on the derived class, as ``__*item__`` will intercept
 these calls correctly.
 
 Any code that did implement these will work exactly as before. Code that
-invokes``ndarray.__getslice__`` (e.g. through ``super(...).__getslice__``) will
+invokes ``ndarray.__getslice__`` (e.g. through ``super(...).__getslice__``) will
 now issue a DeprecationWarning - ``.__getitem__(slice(start, end))`` should be
 used instead.
 

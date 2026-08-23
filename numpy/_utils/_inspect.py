@@ -58,6 +58,7 @@ def iscode(object):
     """
     return isinstance(object, types.CodeType)
 
+
 # ------------------------------------------------ argument list extraction
 # These constants are from Python's compile.h.
 CO_OPTIMIZED, CO_NEWLOCALS, CO_VARARGS, CO_VARKEYWORDS = 1, 2, 4, 8

@@ -60,7 +60,7 @@ simd_sequence_new(Py_ssize_t len, simd_data_type dtype)
     const simd_data_info *info = simd_data_getinfo(dtype);
     assert(len > 0 && info->is_sequence && info->lane_size > 0);
     size_t size = sizeof(simd__alloc_data) + len * info->lane_size + NPY_SIMD_WIDTH;
-    void *ptr = malloc(size);
+    void *ptr = PyMem_RawMalloc(size);
     if (ptr == NULL) {
         return PyErr_NoMemory();
     }
@@ -82,7 +82,7 @@ simd_sequence_len(void const *ptr)
 static void
 simd_sequence_free(void *ptr)
 {
-    free(((simd__alloc_data *)ptr)[-1].ptr);
+    PyMem_RawFree(((simd__alloc_data *)ptr)[-1].ptr);
 }
 
 static void *
@@ -105,6 +105,7 @@ simd_sequence_from_iterable(PyObject *obj, simd_data_type dtype, Py_ssize_t min_
     }
     npyv_lanetype_u8 *dst = simd_sequence_new(seq_size, dtype);
     if (dst == NULL) {
+        Py_DECREF(seq_obj);
         return NULL;
     }
     PyObject **seq_items = PySequence_Fast_ITEMS(seq_obj);

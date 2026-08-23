@@ -32,6 +32,8 @@ using the standard Python iterator interface.
 
 .. admonition:: Example
 
+    .. try_examples::
+
         >>> import numpy as np
 
         >>> a = np.arange(6).reshape(2,3)
@@ -49,6 +51,8 @@ over the transpose of our previous array, compared to taking a copy
 of that transpose in C order.
 
 .. admonition:: Example
+
+    .. try_examples::
 
         >>> import numpy as np
 
@@ -79,6 +83,8 @@ is order='K' to keep the existing order. This can be overridden with
 order='C' for C order and order='F' for Fortran order.
 
 .. admonition:: Example
+
+    .. try_examples::
 
         >>> import numpy as np
 
@@ -116,6 +122,8 @@ The nditer can no longer be iterated once either `~nditer.close` is called or it
 context is exited.
 
 .. admonition:: Example
+
+    .. try_examples::
 
         >>> import numpy as np
 
@@ -158,6 +166,8 @@ elements each.
 
 .. admonition:: Example
 
+    .. try_examples::
+
         >>> import numpy as np
 
         >>> a = np.arange(6).reshape(2,3)
@@ -185,6 +195,8 @@ requested. The examples below show printouts demonstrating the
 progression of the index:
 
 .. admonition:: Example
+
+    .. try_examples::
 
         >>> import numpy as np
 
@@ -216,6 +228,8 @@ raise an exception.
 
 .. admonition:: Example
 
+    .. try_examples::
+
         >>> import numpy as np
 
         >>> a = np.zeros((2,3))
@@ -235,6 +249,8 @@ properties, such as tracked indices remain as before. The examples below
 produce identical results to the ones in the previous section.
 
 .. admonition:: Example
+
+    .. try_examples::
 
         >>> import numpy as np
 
@@ -278,6 +294,8 @@ the inner loop gets to see all the elements in one go when buffering
 is enabled.
 
 .. admonition:: Example
+
+    .. try_examples::
 
         >>> import numpy as np
 
@@ -323,6 +341,8 @@ data type doesn't match precisely.
 
 .. admonition:: Example
 
+    .. try_examples::
+
         >>> import numpy as np
 
         >>> a = np.arange(6).reshape(2,3) - 3
@@ -338,6 +358,8 @@ done to provide control in a per-operand fashion. Buffering mode is
 specified as an iterator flag.
 
 .. admonition:: Example
+
+    .. try_examples::
 
         >>> import numpy as np
 
@@ -363,6 +385,8 @@ conversion from 64 to 32-bit float, but not from float to int or from
 complex to float.
 
 .. admonition:: Example
+
+    .. try_examples::
 
         >>> import numpy as np
 
@@ -397,6 +421,8 @@ would violate the casting rule.
 
 .. admonition:: Example
 
+    .. try_examples::
+
         >>> import numpy as np
 
         >>> a = np.arange(6)
@@ -422,6 +448,8 @@ a two dimensional array together.
 
 .. admonition:: Example
 
+    .. try_examples::
+
         >>> import numpy as np
 
         >>> a = np.arange(3)
@@ -435,6 +463,8 @@ When a broadcasting error occurs, the iterator raises an exception
 which includes the input shapes to help diagnose the problem.
 
 .. admonition:: Example
+
+    .. try_examples::
 
         >>> import numpy as np
 
@@ -461,6 +491,8 @@ its input. Let's start with a minimal function definition excluding 'out'
 parameter support.
 
 .. admonition:: Example
+
+    .. try_examples::
 
         >>> import numpy as np
 
@@ -500,6 +532,8 @@ flags, as these are what you will typically want for performance
 reasons.
 
 .. admonition:: Example
+
+    .. try_examples::
 
         >>> import numpy as np
 
@@ -559,6 +593,8 @@ Everything to do with the outer product is handled by the iterator setup.
 
 .. admonition:: Example
 
+    .. try_examples::
+
         >>> import numpy as np
 
         >>> a = np.arange(3)
@@ -593,6 +629,8 @@ For a simple example, consider taking the sum of all elements in an array.
 
 .. admonition:: Example
 
+    .. try_examples::
+
         >>> import numpy as np
 
         >>> a = np.arange(24).reshape(2,3,4)
@@ -613,6 +651,8 @@ initialized to its starting values. Here's how we can do this, taking
 sums along the last axis of `a`.
 
 .. admonition:: Example
+
+    .. try_examples::
 
         >>> import numpy as np
 
@@ -649,6 +689,8 @@ iteration. Here's how the previous example looks if we also enable
 buffering.
 
 .. admonition:: Example
+
+    .. try_examples::
 
         >>> import numpy as np
 

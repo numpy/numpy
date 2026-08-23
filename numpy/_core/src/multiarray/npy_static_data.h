@@ -1,6 +1,10 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_STATIC_DATA_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_STATIC_DATA_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 NPY_NO_EXPORT int
 initialize_static_globals(void);
 
@@ -20,6 +24,7 @@ typedef struct npy_interned_str_struct {
     PyObject *array_wrap;
     PyObject *array_finalize;
     PyObject *array_ufunc;
+    PyObject *numpy_dtype;
     PyObject *implementation;
     PyObject *axis1;
     PyObject *axis2;
@@ -39,6 +44,32 @@ typedef struct npy_interned_str_struct {
     PyObject *pyvals_name;
     PyObject *legacy;
     PyObject *__doc__;
+    PyObject *__signature__;
+    PyObject *copy;
+    PyObject *dl_device;
+    PyObject *max_version;
+    PyObject *array_dealloc;
+    PyObject *real;
+    PyObject *imag;
+    PyObject *sort;
+    PyObject *argsort;
+    PyObject *as_arrays;
+    PyObject *wrap;
+    PyObject *subok;
+    PyObject *to_scalar;
+    PyObject *partition;
+    PyObject *argpartition;
+    PyObject *_set_dtype;
+    PyObject *year;
+    PyObject *month;
+    PyObject *day;
+    PyObject *hour;
+    PyObject *minute;
+    PyObject *second;
+    PyObject *microsecond;
+    PyObject *tzinfo;
+    PyObject *utcoffset;
+    PyObject *total_seconds;
 } npy_interned_str_struct;
 
 /*
@@ -77,6 +108,13 @@ typedef struct npy_static_pydata_struct {
     PyObject *ndarray_array_function;
 
     /*
+     * References to ndarray._set_dtype and ndarray.dtype descriptor,
+     * used in PyArray_View to detect subclass overrides.
+     */
+    PyObject *ndarray_set_dtype;
+    PyObject *ndarray_dtype_descr;
+
+    /*
      * References to the '1' and '0' PyLong objects
      */
     PyObject *one_obj;
@@ -111,9 +149,23 @@ typedef struct npy_static_pydata_struct {
     PyObject *format_options;
 
     /*
+     * Context variable set to True while the legacy ufunc type resolvers
+     * run for promotion, to suppress their deprecation warnings (the
+     * resolution step warns on every call).
+     */
+    PyObject *legacy_resolver_promoting;
+
+    /*
      * Used in the __array__ internals to avoid building a tuple inline
      */
     PyObject *kwnames_is_copy;
+
+    /*
+     * Used by _wrapit to call the array converter's as_arrays/wrap
+     * methods without building kwnames tuples inline
+     */
+    PyObject *wrapit_kwnames_subok;
+    PyObject *wrapit_kwnames_to_scalar;
 
     /*
      * Used in __imatmul__ to avoid building tuples inline
@@ -134,6 +186,16 @@ typedef struct npy_static_pydata_struct {
     PyObject *GenericToVoidMethod;
     PyObject *ObjectToGenericMethod;
     PyObject *GenericToObjectMethod;
+
+    /*
+     * Used in from_dlpack
+     */
+    PyObject *dl_call_kwnames;
+    PyObject *dl_cpu_device_tuple;
+    PyObject *dl_max_version;
+    /* dicts for implementing `register_dlpack_dtype` */
+    PyObject *dlpack_dtype_registry;
+    PyObject *dlpack_export_registry;
 } npy_static_pydata_struct;
 
 
@@ -167,5 +229,9 @@ typedef struct npy_static_cdata_struct {
 NPY_VISIBILITY_HIDDEN extern npy_interned_str_struct npy_interned_str;
 NPY_VISIBILITY_HIDDEN extern npy_static_pydata_struct npy_static_pydata;
 NPY_VISIBILITY_HIDDEN extern npy_static_cdata_struct npy_static_cdata;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // NUMPY_CORE_SRC_MULTIARRAY_STATIC_DATA_H_

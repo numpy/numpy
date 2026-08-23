@@ -78,10 +78,11 @@ If there are object arrays involved then loop->obj gets set to 1.  Then there ar
 	      loop, then "remainder" DECREF's are needed).
 
    Outputs:
-            - castbuf contains a new reference as the result of the function call.  This
-	      gets converted to the type of interest and.  This new reference in castbuf
-	      will be DECREF'd by later calls to the function.  Thus, only after the
-	      inner most loop do we need to DECREF the remaining references in castbuf.
+        - castbuf contains a new reference as the result of the function call.
+          This is converted to the type of interest, and this new reference 
+          in castbuf will be DECREF'd (its reference count decreased) by
+          later calls to the function. Thus, only after the innermost loop
+          finishes do we need to DECREF the remaining references in castbuf.
 
 2) The loop function is of a different type:
 

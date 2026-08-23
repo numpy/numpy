@@ -213,7 +213,7 @@ C API changes
 New functions ``npy_get_floatstatus_barrier`` and ``npy_clear_floatstatus_barrier``
 -----------------------------------------------------------------------------------
 Functions ``npy_get_floatstatus_barrier`` and ``npy_clear_floatstatus_barrier``
-have been added and should be used in place of the ``npy_get_floatstatus``and
+have been added and should be used in place of the ``npy_get_floatstatus`` and
 ``npy_clear_status`` functions. Optimizing compilers like GCC 8.1 and Clang
 were rearranging the order of operations when the previous functions were used
 in the ufunc SIMD functions, resulting in the floatstatus flags being checked
@@ -326,8 +326,8 @@ passed explicitly, and are not yet computed automatically.
 No longer does an IQR of 0 result in ``n_bins=1``, rather the number of bins
 chosen is related to the data size in this situation.
 
-The edges returned by `histogram`` and ``histogramdd`` now match the data float type
-------------------------------------------------------------------------------------
+The edges returned by ``histogram`` and ``histogramdd`` now match the data float type
+-------------------------------------------------------------------------------------
 When passed ``np.float16``, ``np.float32``, or ``np.longdouble`` data, the
 returned edges are now of the same dtype. Previously, ``histogram`` would only
 return the same type if explicit bins were given, and ``histogram`` would

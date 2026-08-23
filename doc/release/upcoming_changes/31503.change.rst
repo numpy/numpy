@@ -1,0 +1,4 @@
+NumPy's internal memory allocations now use ``PyMem_RawMalloc``
+---------------------------------------------------------------
+NumPy's internal memory allocations now use ``PyMem_RawMalloc`` instead of
+``malloc`` and can be tracked by ``tracemalloc``.

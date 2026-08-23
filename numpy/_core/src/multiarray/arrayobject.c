@@ -249,7 +249,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
      */
     ndim = PyArray_DiscoverDTypeAndShape(src_object,
             PyArray_NDIM(dest), dims, &cache,
-            NPY_DTYPE(PyArray_DESCR(dest)), PyArray_DESCR(dest), &dtype, 1, NULL);
+            NPY_DTYPE(PyArray_DESCR(dest)), PyArray_DESCR(dest), &dtype, -1, NULL);
     if (ndim < 0) {
         return -1;
     }
@@ -358,80 +358,87 @@ PyArray_ResolveWritebackIfCopy(PyArrayObject * self)
 /*********************** end C-API functions **********************/
 
 
-/* dealloc must not raise an error, best effort try to write
-   to stderr and clear the error
-*/
-
-static inline void
-WARN_IN_DEALLOC(PyObject* warning, const char * msg) {
-    if (PyErr_WarnEx(warning, msg, 1) < 0) {
-        PyObject * s;
-
-        s = PyUnicode_FromString("array_dealloc");
-        if (s) {
-            PyErr_WriteUnraisable(s);
-            Py_DECREF(s);
-        }
-        else {
-            PyErr_WriteUnraisable(Py_None);
-        }
+/*
+ * During dealloc we cannot propagate errors so if unraisable is set
+ * we simply print out the error message and convert the error into
+ * success (returning 0).
+ */
+static inline int
+write_and_clear_error_if_unraisable(int status, npy_bool unraisable)
+{
+    if (status < 0 && unraisable) {
+        PyErr_WriteUnraisable(npy_interned_str.array_dealloc);
+        return 0;
     }
+    return status;
 }
 
 /* array object functions */
 
-static void
-array_dealloc(PyArrayObject *self)
+/*
+ * Much of the actual work for dealloc, split off for use in __setstate__
+ * via clear_array_attributes function defined below.
+ * If not unraisable, will return -1 on error, 0 on success.
+ * If unraisable, always succeeds, though may print errors and warnings.
+ */
+static int
+_clear_array_attributes(PyArrayObject *self, npy_bool unraisable)
 {
     PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
 
     if (_buffer_info_free(fa->_buffer_info, (PyObject *)self) < 0) {
-        PyErr_WriteUnraisable(NULL);
+        if (write_and_clear_error_if_unraisable(-1, unraisable) < 0) {
+            return -1;
+        }
     }
+    fa->_buffer_info = NULL;
 
-    if (fa->weakreflist != NULL) {
-        PyObject_ClearWeakRefs((PyObject *)self);
-    }
     if (fa->base) {
-        int retval;
         if (PyArray_FLAGS(self) & NPY_ARRAY_WRITEBACKIFCOPY)
         {
-            char const * msg = "WRITEBACKIFCOPY detected in array_dealloc. "
+            char const * msg = "WRITEBACKIFCOPY detected in clearing of array. "
                 " Required call to PyArray_ResolveWritebackIfCopy or "
                 "PyArray_DiscardWritebackIfCopy is missing.";
+            int retval = PyErr_WarnEx(PyExc_RuntimeWarning, msg, 1);
+            if (write_and_clear_error_if_unraisable(retval, unraisable) < 0) {
+                return -1;
+            }
             /*
              * prevent reaching 0 twice and thus recursing into dealloc.
              * Increasing sys.gettotalrefcount, but path should not be taken.
              */
             Py_INCREF(self);
-            WARN_IN_DEALLOC(PyExc_RuntimeWarning, msg);
             retval = PyArray_ResolveWritebackIfCopy(self);
-            if (retval < 0)
-            {
-                PyErr_Print();
-                PyErr_Clear();
+            if (write_and_clear_error_if_unraisable(retval, unraisable) < 0) {
+                return -1;
             }
         }
         /*
          * If fa->base is non-NULL, it is something
          * to DECREF -- either a view or a buffer object
          */
-        Py_XDECREF(fa->base);
+        Py_CLEAR(fa->base);
     }
 
     if ((fa->flags & NPY_ARRAY_OWNDATA) && fa->data) {
         /* Free any internal references */
         if (PyDataType_REFCHK(fa->descr)) {
             if (PyArray_ClearArray(self) < 0) {
-                PyErr_WriteUnraisable(NULL);
+                if (write_and_clear_error_if_unraisable(-1, unraisable) < 0) {
+                    return -1;
+                }
             }
         }
+        /* mem_handler can be absent if NPY_ARRAY_OWNDATA arbitrarily set */
         if (fa->mem_handler == NULL) {
-            if (npy_thread_unsafe_state.warn_if_no_mem_policy) {
+            if (npy_global_state.warn_if_no_mem_policy) {
                 char const *msg = "Trying to dealloc data, but a memory policy "
                     "is not set. If you take ownership of the data, you must "
                     "set a base owning the data (e.g. a PyCapsule).";
-                WARN_IN_DEALLOC(PyExc_RuntimeWarning, msg);
+                int retval = PyErr_WarnEx(PyExc_RuntimeWarning, msg, 1);
+                if (write_and_clear_error_if_unraisable(retval, unraisable) < 0) {
+                    return -1;
+                }
             }
             // Guess at malloc/free ???
             free(fa->data);
@@ -442,14 +449,38 @@ array_dealloc(PyArrayObject *self)
                 nbytes = 1;
             }
             PyDataMem_UserFREE(fa->data, nbytes, fa->mem_handler);
-            Py_DECREF(fa->mem_handler);
         }
+        fa->data = NULL;
     }
+    Py_CLEAR(fa->mem_handler);
 
     /* must match allocation in PyArray_NewFromDescr */
     npy_free_cache_dim(fa->dimensions, 2 * fa->nd);
-    Py_DECREF(fa->descr);
+    fa->dimensions = NULL;
+    Py_CLEAR(fa->descr);
+    return 0;
+}
+
+static void
+array_dealloc(PyArrayObject *self)
+{
+    // NPY_TRUE flags that errors are unraisable.
+    int ret = _clear_array_attributes(self, NPY_TRUE);
+    // silence unused variable warning in release builds
+    (void)ret;
+    assert(ret == 0);  // should always succeed if unraisable.
+    // Only done on actual deallocation, nothing allocated by numpy.
+    if (((PyArrayObject_fields *)self)->weakreflist != NULL) {
+        PyObject_ClearWeakRefs((PyObject *)self);
+    }
     Py_TYPE(self)->tp_free((PyObject *)self);
+}
+
+NPY_NO_EXPORT int
+clear_array_attributes(PyArrayObject *self)
+{
+    // NPY_FALSE flags that errors can be raised.
+    return _clear_array_attributes(self, NPY_FALSE);
 }
 
 /*NUMPY_API
@@ -930,6 +961,9 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         PyErr_Clear();
 
         PyArrayObject *array_other = (PyArrayObject *)PyArray_FROM_O(other);
+        if (array_other == NULL) {
+            return NULL;
+        }
         if (PyArray_TYPE(array_other) == NPY_VOID) {
             /*
             * Void arrays are currently not handled by ufuncs, so if the other
@@ -940,13 +974,17 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         }
 
         if (PyArray_NDIM(self) == 0 && PyArray_NDIM(array_other) == 0) {
-            /*
-             * (seberg) not sure that this is best, but we preserve Python
-             * bool result for "scalar" inputs for now by returning
-             * `NotImplemented`.
-             */
+            // we have scalar arrays with different types
+            // we return a numpy bool directly instead of NotImplemented,
+            // which would mean a fallback to the python default __eq__/__neq__
+            // see gh-27271
             Py_DECREF(array_other);
-            Py_RETURN_NOTIMPLEMENTED;
+            if (cmp_op == Py_EQ) {
+                return Py_NewRef(PyArrayScalar_False);
+            }
+            else {
+                return Py_NewRef(PyArrayScalar_True);
+            }
         }
 
         /* Hack warning: using NpyIter to allocate broadcasted result. */
@@ -1165,6 +1203,12 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     }
     else {
         /* buffer given -- use it */
+        if (NPY_DT_has_finalize(NPY_DTYPE(descr))) {
+            PyErr_Format(PyExc_TypeError,
+                         "cannot create a %S array from a buffer",
+                         descr);
+            goto fail;
+        }
         if (dims.len == 1 && dims.ptr[0] == -1) {
             dims.ptr[0] = (buffer.len-(npy_intp)offset) / itemsize;
         }
@@ -1228,7 +1272,7 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     .tp_as_mapping = &array_as_mapping,
     .tp_str = (reprfunc)array_str,
     .tp_as_buffer = &array_as_buffer,
-    .tp_flags =(Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE),
+    .tp_flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_SEQUENCE),
 
     .tp_richcompare = (richcmpfunc)array_richcompare,
     .tp_weaklistoffset = offsetof(PyArrayObject_fields, weakreflist),
@@ -1237,3 +1281,111 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     .tp_getset = array_getsetlist,
     .tp_new = (newfunc)array_new,
 };
+
+/*
+ * Python stable ABI compatible object field accessor functions.
+ *
+ * The following *_GET_ITEM_DATA functions are used to get the pointer to the fields of the
+ * corresponding struct from the given object. It is technically undefined behaviour
+ * to access the fields of the struct through a pointer that is not of the same type,
+ * but in our case it is not a problem in practice because this is used only in stable ABI
+ * extensions where the original object layout is opaque.
+ *
+ * To expose the struct this way alignment guarantees must be met, see `utils.h` and the
+ * definition of `_NPY_OPAQUE_FIRST_FIELD`.
+ */
+
+#if SIZEOF_VOID_P != 4  // not a 32bit build
+/*
+ * If this assert fails then Python changed the sizeof(PyObject). If we simply remove the
+ * assert we lose flexibility to add 16byte aligned fields to the stable ABI fields.
+ * We can choose that this is fine or increase the padding to 16/max_align_t when it happens.
+ * (See comments in `ndarraytypes.h` for more details.)
+ */
+static_assert(sizeof(PyObject) % 16 == 0,
+    "Expected sizeof(PyObject) to be multiple of 16 on 64bit builds.");
+#endif
+
+static_assert(NPY_ALIGNOF(PyArray_Descr_fields) <= 8,
+              "PyArray_Descr must not require more than 8-byte alignment");
+static_assert(NPY_ALIGNOF(_PyArray_LegacyDescr_fields) <= 8,
+              "_PyArray_LegacyDescr must not require more than 8-byte alignment");
+static_assert(NPY_ALIGNOF(PyArrayObject_fields) <= 8,
+              "PyArrayObject must not require more than 8-byte alignment");
+static_assert(NPY_ALIGNOF(PyArrayMultiIterObject_fields) <= 8,
+              "PyArrayMultiIterObject must not require more than 8-byte alignment");
+static_assert(NPY_ALIGNOF(PyArrayIterObject_fields) <= 8,
+              "PyArrayIterObject must not require more than 8-byte alignment");
+static_assert(NPY_ALIGNOF(PyArrayNeighborhoodIterObject_fields) <= 8,
+              "PyArrayNeighborhoodIterObject must not require more than 8-byte alignment");
+#undef _PyDataType_GET_ITEM_DATA
+/*NUMPY_API*/
+NPY_NO_EXPORT PyArray_Descr_fields *
+_PyDataType_GET_ITEM_DATA(const PyArray_Descr *dtype)
+{
+    return (PyArray_Descr_fields *)(((char *)dtype) + offsetof(PyArray_Descr, typeobj));
+}
+#undef _PyArray_LegacyDescr_GET_ITEM_DATA
+/*NUMPY_API*/
+NPY_NO_EXPORT _PyArray_LegacyDescr_fields *
+_PyArray_LegacyDescr_GET_ITEM_DATA(const _PyArray_LegacyDescr *dtype)
+{
+    return (_PyArray_LegacyDescr_fields *)(((char *)dtype) + offsetof(_PyArray_LegacyDescr, typeobj));
+}
+#undef _PyArray_GET_ITEM_DATA
+/*NUMPY_API*/
+NPY_NO_EXPORT PyArrayObject_fields *
+_PyArray_GET_ITEM_DATA(const PyArrayObject *arr)
+{
+    return (PyArrayObject_fields *)(((char *)arr) + offsetof(PyArrayObject_fields, data));
+}
+#undef _PyArrayMultiIter_GET_ITEM_DATA
+/*NUMPY_API*/
+NPY_NO_EXPORT PyArrayMultiIterObject_fields *
+_PyArrayMultiIter_GET_ITEM_DATA(const PyArrayMultiIterObject *multi)
+{
+    return (PyArrayMultiIterObject_fields *)(((char *)multi) + offsetof(PyArrayMultiIterObject_fields, numiter));
+}
+#undef _PyArrayIter_GET_ITEM_DATA
+/*NUMPY_API*/
+NPY_NO_EXPORT PyArrayIterObject_fields *
+_PyArrayIter_GET_ITEM_DATA(const PyArrayIterObject *iter)
+{
+    return (PyArrayIterObject_fields *)(((char *)iter) + offsetof(PyArrayIterObject_fields, nd_m1));
+}
+#undef _PyArrayNeighborhoodIter_GET_ITEM_DATA
+/*NUMPY_API*/
+NPY_NO_EXPORT PyArrayNeighborhoodIterObject_fields *
+_PyArrayNeighborhoodIter_GET_ITEM_DATA(const PyArrayNeighborhoodIterObject *iter)
+{
+    return (PyArrayNeighborhoodIterObject_fields *)(((char *)iter) + offsetof(PyArrayNeighborhoodIterObject_fields, nd_m1));
+}
+#undef _PyDatetimeScalarObject_GetMetadata
+/*NUMPY_API*/
+NPY_NO_EXPORT PyArray_DatetimeMetaData
+_PyDatetimeScalarObject_GetMetadata(PyObject *self)
+{
+    return ((PyDatetimeScalarObject *)self)->obmeta;
+}
+#undef _PyTimedeltaScalarObject_GetMetadata
+/*NUMPY_API*/
+NPY_NO_EXPORT PyArray_DatetimeMetaData
+_PyTimedeltaScalarObject_GetMetadata(PyObject *self)
+{
+    return ((PyTimedeltaScalarObject *)self)->obmeta;
+}
+#undef _PyDatetimeScalarObject_GetValue
+/*NUMPY_API*/
+NPY_NO_EXPORT npy_datetime
+_PyDatetimeScalarObject_GetValue(PyObject *self)
+{
+    return ((PyDatetimeScalarObject *)self)->obval;
+}
+#undef _PyTimedeltaScalarObject_GetValue
+/*NUMPY_API*/
+NPY_NO_EXPORT npy_timedelta
+_PyTimedeltaScalarObject_GetValue(PyObject *self)
+{
+    return ((PyTimedeltaScalarObject *)self)->obval;
+}
+

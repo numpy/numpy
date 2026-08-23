@@ -1,24 +1,37 @@
-#include "highway_qsort.hpp"
 #define VQSORT_ONLY_STATIC 1
+#include "hwy/highway.h"
 #include "hwy/contrib/sort/vqsort-inl.h"
 
+#include "highway_qsort.hpp"
+#include "quicksort_generic.hpp"
+
+namespace np::highway::qsort_simd {
+template <typename T>
+void NPY_CPU_DISPATCH_CURFX(QSort)(T *arr, npy_intp size, bool reverse)
+{
 #if VQSORT_ENABLED
+    if (reverse) {
+        hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortDescending());
+    }
+    else {
+        hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortAscending());
+    }
+#else
+    if (reverse) {
+        sort::Quick<true>(arr, size);
+    }
+    else {
+        sort::Quick<false>(arr, size);
+    }
+#endif
+}
 
-#define DISPATCH_VQSORT(TYPE) \
-template<> void NPY_CPU_DISPATCH_CURFX(QSort)(TYPE *arr, intptr_t size) \
-{ \
-    hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortAscending()); \
-} \
+template void NPY_CPU_DISPATCH_CURFX(QSort)<int32_t>(int32_t*, npy_intp, bool);
+template void NPY_CPU_DISPATCH_CURFX(QSort)<uint32_t>(uint32_t*, npy_intp, bool);
+template void NPY_CPU_DISPATCH_CURFX(QSort)<int64_t>(int64_t*, npy_intp, bool);
+template void NPY_CPU_DISPATCH_CURFX(QSort)<uint64_t>(uint64_t*, npy_intp, bool);
+template void NPY_CPU_DISPATCH_CURFX(QSort)<float>(float*, npy_intp, bool);
+template void NPY_CPU_DISPATCH_CURFX(QSort)<double>(double*, npy_intp, bool);
 
-namespace np { namespace highway { namespace qsort_simd {
+} // np::highway::qsort_simd
 
-    DISPATCH_VQSORT(int32_t)
-    DISPATCH_VQSORT(uint32_t)
-    DISPATCH_VQSORT(int64_t)
-    DISPATCH_VQSORT(uint64_t)
-    DISPATCH_VQSORT(double)
-    DISPATCH_VQSORT(float)
-
-} } } // np::highway::qsort_simd
-
-#endif // VQSORT_ENABLED

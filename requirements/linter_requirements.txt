@@ -1,2 +1,5 @@
-pycodestyle==2.12.1
-GitPython>=3.1.30
+# keep in sync with `environment.yml`
+cython-lint
+ruff==0.16.4
+GitPython==3.1.59
+spin

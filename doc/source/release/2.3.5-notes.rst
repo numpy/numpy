@@ -1,0 +1,50 @@
+.. currentmodule:: numpy
+
+=========================
+NumPy 2.3.5 Release Notes
+=========================
+
+The NumPy 2.3.5 release is a patch release split between a number of maintenance
+updates and bug fixes. This release supports Python versions 3.11-3.14.
+
+
+Contributors
+============
+
+A total of 10 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Aaron Kollasch +
+* Charles Harris
+* Joren Hammudoglu
+* Matti Picus
+* Nathan Goldbaum
+* Rafael Laboissière +
+* Sayed Awad
+* Sebastian Berg
+* Warren Weckesser
+* Yasir Ashfaq +
+
+
+Pull requests merged
+====================
+
+A total of 16 pull requests were merged for this release.
+
+* `#29979 <https://github.com/numpy/numpy/pull/29979>`__: MAINT: Prepare 2.3.x for further development
+* `#30026 <https://github.com/numpy/numpy/pull/30026>`__: SIMD, BLD: Backport FPMATH mode on x86-32 and filter successor...
+* `#30029 <https://github.com/numpy/numpy/pull/30029>`__: MAINT: Backport write_release.py
+* `#30041 <https://github.com/numpy/numpy/pull/30041>`__: TYP: Various typing updates
+* `#30059 <https://github.com/numpy/numpy/pull/30059>`__: BUG: Fix np.strings.slice if stop=None or start and stop >= len...
+* `#30063 <https://github.com/numpy/numpy/pull/30063>`__: BUG: Fix np.strings.slice if start > stop
+* `#30076 <https://github.com/numpy/numpy/pull/30076>`__: BUG: avoid negating INT_MIN in PyArray_Round implementation (#30071)
+* `#30090 <https://github.com/numpy/numpy/pull/30090>`__: BUG: Fix resize when it contains references (#29970)
+* `#30129 <https://github.com/numpy/numpy/pull/30129>`__: BLD: update scipy-openblas, use -Dpkg_config_path (#30049)
+* `#30130 <https://github.com/numpy/numpy/pull/30130>`__: BUG: Avoid compilation error of wrapper file generated with SWIG...
+* `#30157 <https://github.com/numpy/numpy/pull/30157>`__: BLD: use scipy-openblas 0.3.30.7 (#30132)
+* `#30158 <https://github.com/numpy/numpy/pull/30158>`__: DOC: Remove nonexistent ``order`` parameter docs of ``ma.asanyarray``...
+* `#30185 <https://github.com/numpy/numpy/pull/30185>`__: BUG: Fix check of PyMem_Calloc return value. (#30176)
+* `#30217 <https://github.com/numpy/numpy/pull/30217>`__: DOC: fix links for newly rebuilt numpy-tutorials site
+* `#30218 <https://github.com/numpy/numpy/pull/30218>`__: BUG: Fix build on s390x with clang (#30214)
+* `#30237 <https://github.com/numpy/numpy/pull/30237>`__: ENH: Make FPE blas check a runtime check for all apple arm systems
+

@@ -23,18 +23,18 @@ Accessing the BitGenerator and spawning
 .. autosummary::
    :toctree: generated/
 
-   ~numpy.random.Generator.bit_generator
-   ~numpy.random.Generator.spawn
+   ~Generator.bit_generator
+   ~Generator.spawn
 
 Simple random data
 ------------------
 .. autosummary::
    :toctree: generated/
 
-   ~numpy.random.Generator.integers
-   ~numpy.random.Generator.random
-   ~numpy.random.Generator.choice
-   ~numpy.random.Generator.bytes
+   ~Generator.integers
+   ~Generator.random
+   ~Generator.choice
+   ~Generator.bytes
 
 Permutations
 ------------
@@ -43,9 +43,9 @@ The methods for randomly permuting a sequence are
 .. autosummary::
    :toctree: generated/
 
-   ~numpy.random.Generator.shuffle
-   ~numpy.random.Generator.permutation
-   ~numpy.random.Generator.permuted
+   ~Generator.shuffle
+   ~Generator.permutation
+   ~Generator.permuted
 
 The following table summarizes the behaviors of the methods.
 
@@ -71,6 +71,8 @@ returns a copy.
 By default, `Generator.permuted` returns a copy.  To operate in-place with
 `Generator.permuted`, pass the same array as the first argument *and* as
 the value of the ``out`` parameter.  For example,
+
+.. try_examples::
 
     >>> import numpy as np
     >>> rng = np.random.default_rng()
@@ -101,6 +103,8 @@ which dimension of the input array to use as the sequence. In the case of a
 two-dimensional array, ``axis=0`` will, in effect, rearrange the rows of the
 array, and  ``axis=1`` will rearrange the columns.  For example
 
+.. try_examples::
+
     >>> import numpy as np
     >>> rng = np.random.default_rng()
     >>> x = np.arange(0, 15).reshape(3, 5)
@@ -121,6 +125,8 @@ how `numpy.sort` treats it.  Each slice along the given axis is shuffled
 independently of the others.  Compare the following example of the use of
 `Generator.permuted` to the above example of `Generator.permutation`:
 
+.. try_examples::
+
     >>> import numpy as np
     >>> rng = np.random.default_rng()
     >>> rng.permuted(x, axis=1) #doctest: +SKIP
@@ -137,6 +143,8 @@ Shuffling non-NumPy sequences
 `Generator.shuffle` works on non-NumPy sequences.  That is, if it is given
 a sequence that is not a NumPy array, it shuffles that sequence in-place.
 
+.. try_examples::
+
     >>> import numpy as np
     >>> rng = np.random.default_rng()
     >>> a = ['A', 'B', 'C', 'D', 'E']
@@ -149,39 +157,39 @@ Distributions
 .. autosummary::
    :toctree: generated/
 
-   ~numpy.random.Generator.beta
-   ~numpy.random.Generator.binomial
-   ~numpy.random.Generator.chisquare
-   ~numpy.random.Generator.dirichlet
-   ~numpy.random.Generator.exponential
-   ~numpy.random.Generator.f
-   ~numpy.random.Generator.gamma
-   ~numpy.random.Generator.geometric
-   ~numpy.random.Generator.gumbel
-   ~numpy.random.Generator.hypergeometric
-   ~numpy.random.Generator.laplace
-   ~numpy.random.Generator.logistic
-   ~numpy.random.Generator.lognormal
-   ~numpy.random.Generator.logseries
-   ~numpy.random.Generator.multinomial
-   ~numpy.random.Generator.multivariate_hypergeometric
-   ~numpy.random.Generator.multivariate_normal
-   ~numpy.random.Generator.negative_binomial
-   ~numpy.random.Generator.noncentral_chisquare
-   ~numpy.random.Generator.noncentral_f
-   ~numpy.random.Generator.normal
-   ~numpy.random.Generator.pareto
-   ~numpy.random.Generator.poisson
-   ~numpy.random.Generator.power
-   ~numpy.random.Generator.rayleigh
-   ~numpy.random.Generator.standard_cauchy
-   ~numpy.random.Generator.standard_exponential
-   ~numpy.random.Generator.standard_gamma
-   ~numpy.random.Generator.standard_normal
-   ~numpy.random.Generator.standard_t
-   ~numpy.random.Generator.triangular
-   ~numpy.random.Generator.uniform
-   ~numpy.random.Generator.vonmises
-   ~numpy.random.Generator.wald
-   ~numpy.random.Generator.weibull
-   ~numpy.random.Generator.zipf
+   ~Generator.beta
+   ~Generator.binomial
+   ~Generator.chisquare
+   ~Generator.dirichlet
+   ~Generator.exponential
+   ~Generator.f
+   ~Generator.gamma
+   ~Generator.geometric
+   ~Generator.gumbel
+   ~Generator.hypergeometric
+   ~Generator.laplace
+   ~Generator.logistic
+   ~Generator.lognormal
+   ~Generator.logseries
+   ~Generator.multinomial
+   ~Generator.multivariate_hypergeometric
+   ~Generator.multivariate_normal
+   ~Generator.negative_binomial
+   ~Generator.noncentral_chisquare
+   ~Generator.noncentral_f
+   ~Generator.normal
+   ~Generator.pareto
+   ~Generator.poisson
+   ~Generator.power
+   ~Generator.rayleigh
+   ~Generator.standard_cauchy
+   ~Generator.standard_exponential
+   ~Generator.standard_gamma
+   ~Generator.standard_normal
+   ~Generator.standard_t
+   ~Generator.triangular
+   ~Generator.uniform
+   ~Generator.vonmises
+   ~Generator.wald
+   ~Generator.weibull
+   ~Generator.zipf

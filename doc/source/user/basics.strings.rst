@@ -109,7 +109,7 @@ that empty strings are used to populate empty arrays:
   >>> np.empty(3, dtype=StringDType())
   array(['', '', ''], dtype=StringDType())
 
-Optionally, you can pass create an instance of ``StringDType`` with
+Optionally, you can create an instance of ``StringDType`` with
 support for missing values by passing ``na_object`` as a keyword
 argument for the initializer:
 

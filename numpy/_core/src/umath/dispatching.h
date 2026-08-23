@@ -16,6 +16,9 @@ PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate);
 NPY_NO_EXPORT int
 PyUFunc_AddLoopFromSpec_int(PyObject *ufunc, PyArrayMethod_Spec *spec, int priv);
 
+NPY_NO_EXPORT int
+PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots);
+
 NPY_NO_EXPORT PyArrayMethodObject *
 promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         PyArrayObject *const ops[],
@@ -42,6 +45,10 @@ object_only_ufunc_promoter(PyObject *ufunc,
 
 NPY_NO_EXPORT int
 install_logical_ufunc_promoter(PyObject *ufunc);
+
+NPY_NO_EXPORT PyObject *
+get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
+                 int ndtypes);
 
 #ifdef __cplusplus
 }

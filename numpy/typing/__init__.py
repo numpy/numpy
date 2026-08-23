@@ -14,15 +14,6 @@ the two below:
 
 .. _typing-extensions: https://pypi.org/project/typing-extensions/
 
-Mypy plugin
------------
-
-.. versionadded:: 1.21
-
-.. automodule:: numpy.typing.mypy_plugin
-
-.. currentmodule:: numpy.typing
-
 Differences from the runtime NumPy API
 --------------------------------------
 
@@ -61,21 +52,6 @@ or explicitly type the array like object as `~typing.Any`:
     >>> np.array(array_like)
     array(<generator object <genexpr> at ...>, dtype=object)
 
-ndarray
-~~~~~~~
-
-It's possible to mutate the dtype of an array at runtime. For example,
-the following code is valid:
-
-.. code-block:: python
-
-    >>> x = np.array([1, 2])
-    >>> x.dtype = np.bool
-
-This sort of mutation is not allowed by the types. Users who want to
-write statically typed code should instead use the `numpy.ndarray.view`
-method to create a view of the array with a different dtype.
-
 DTypeLike
 ~~~~~~~~~
 
@@ -93,7 +69,7 @@ Please see : :ref:`Data type objects <arrays.dtypes>`
 Number precision
 ~~~~~~~~~~~~~~~~
 
-The precision of `numpy.number` subclasses is treated as a invariant generic
+The precision of `numpy.number` subclasses is treated as an invariant generic
 parameter (see :class:`~NBitBase`), simplifying the annotating of processes
 involving precision-based casting.
 
@@ -104,12 +80,44 @@ involving precision-based casting.
     >>> import numpy.typing as npt
 
     >>> T = TypeVar("T", bound=npt.NBitBase)
-    >>> def func(a: "np.floating[T]", b: "np.floating[T]") -> "np.floating[T]":
+    >>> def func(a: np.floating[T], b: np.floating[T]) -> np.floating[T]:
     ...     ...
 
 Consequently, the likes of `~numpy.float16`, `~numpy.float32` and
 `~numpy.float64` are still sub-types of `~numpy.floating`, but, contrary to
 runtime, they're not necessarily considered as sub-classes.
+
+.. deprecated:: 2.3
+    The :class:`~numpy.typing.NBitBase` helper is deprecated and will be
+    removed in a future release. Prefer expressing precision relationships via
+    ``typing.overload`` or ``TypeVar`` definitions bounded by concrete scalar
+    classes. For example:
+
+    .. code-block:: python
+
+        from typing import TypeVar
+        import numpy as np
+
+        S = TypeVar("S", bound=np.floating)
+
+        def func(a: S, b: S) -> S:
+            ...
+
+    or in the case of different input types mapping to different output types:
+
+   .. code-block:: python
+
+        from typing import overload
+        import numpy as np
+
+        @overload
+        def phase(x: np.complex64) -> np.float32: ...
+        @overload
+        def phase(x: np.complex128) -> np.float64: ...
+        @overload
+        def phase(x: np.clongdouble) -> np.longdouble: ...
+        def phase(x: np.complexfloating) -> np.floating:
+            ...
 
 Timedelta64
 ~~~~~~~~~~~
@@ -117,20 +125,6 @@ Timedelta64
 The `~numpy.timedelta64` class is not considered a subclass of
 `~numpy.signedinteger`, the former only inheriting from `~numpy.generic`
 while static type checking.
-
-0D arrays
-~~~~~~~~~
-
-During runtime numpy aggressively casts any passed 0D arrays into their
-corresponding `~numpy.generic` instance. Until the introduction of shape
-typing (see :pep:`646`) it is unfortunately not possible to make the
-necessary distinction between 0D and >0D arrays. While thus not strictly
-correct, all operations are that can potentially perform a 0D-array -> scalar
-cast are currently annotated as exclusively returning an `~numpy.ndarray`.
-
-If it is known in advance that an operation *will* perform a
-0D-array -> scalar cast, then one can consider manually remedying the
-situation with either `typing.cast` or a ``# type: ignore`` comment.
 
 Record array dtypes
 ~~~~~~~~~~~~~~~~~~~
@@ -151,18 +145,64 @@ buggy behavior.
 API
 ---
 
+.. rubric:: ndarray
+
+The `numpy.ndarray` class is a `generic type`_ that accepts two type arguments:
+
+1. The type of `numpy.ndarray.shape`, which must be a `tuple` of `int`, e.g.
+   ``tuple[int, int]`` (2-D shape) or ``tuple[()]`` (0-D shape).
+   The default shape is ``tuple[Any, ...]``, which represents an unknown shape with
+   *any* number of dimensions.
+   Currently, ``Literal`` ints or other more specific types are not supported.
+2. The type of `numpy.ndarray.dtype`, which must be a subtype of `numpy.dtype` such as
+   ``numpy.dtype[numpy.float64]``. If omitted, it will default to ``numpy.dtype[Any]``.
+
+.. code-block:: python
+
+    >>> import numpy as np
+
+    >>> type ImageRGB = np.ndarray[tuple[int, int, int], np.dtype[np.uint8]]
+    >>> type Vector[S: np.generic] = np.ndarray[tuple[int], np.dtype[S]]
+
+.. _generic type: https://typing.python.org/en/latest/spec/generics.html
+
 """
 # NOTE: The API section will be appended with additional entries
 # further down in this file
 
-from numpy._typing import (
-    ArrayLike,
-    DTypeLike,
-    NBitBase,
-    NDArray,
-)
+# pyright: reportDeprecated=false
+
+from numpy._typing import ArrayLike, DTypeLike, NBitBase, NDArray
 
 __all__ = ["ArrayLike", "DTypeLike", "NBitBase", "NDArray"]
+
+
+__DIR = __all__ + [k for k in globals() if k.startswith("__") and k.endswith("__")]
+__DIR_SET = frozenset(__DIR)
+
+
+def __dir__() -> list[str]:
+    return __DIR
+
+def __getattr__(name: str) -> object:
+    if name == "NBitBase":
+        import warnings
+
+        # Deprecated in NumPy 2.3, 2025-05-01
+        warnings.warn(
+            "`NBitBase` is deprecated and will be removed from numpy.typing in the "
+            "future. Use `@typing.overload` or a `TypeVar` with a scalar-type as upper "
+            "bound, instead. (deprecated in NumPy 2.3)",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return NBitBase
+
+    if name in __DIR_SET:
+        return globals()[name]
+
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 if __doc__ is not None:
     from numpy._typing._add_docstring import _docstrings
@@ -171,5 +211,6 @@ if __doc__ is not None:
     del _docstrings
 
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester

@@ -1,8 +1,8 @@
 #ifndef NUMPY_CORE_SRC_COMMON_BINOP_OVERRIDE_H_
 #define NUMPY_CORE_SRC_COMMON_BINOP_OVERRIDE_H_
 
-#include <string.h>
 #include <Python.h>
+#include <string.h>
 #include "numpy/arrayobject.h"
 
 #include "get_attr_string.h"

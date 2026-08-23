@@ -1,6 +1,11 @@
-from . import util
+import pytest
+
 import numpy as np
 
+from . import util
+
+
+@pytest.mark.slow
 class TestF2Cmap(util.F2PyTest):
     sources = [
         util.getpath("tests", "src", "f2cmap", "isoFortranEnvMap.f90"),
