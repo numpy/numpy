@@ -316,7 +316,7 @@ def polymulx(c):
     array([0., 1., 2., 3.])
 
     """
-    # c is trimmed 
+    # c is trimmed
     [c] = pu.as_series([c], copy=None)
     # The zero series needs special treatment
     if len(c) == 1 and c[0] == 0:
@@ -360,7 +360,7 @@ def polymul(c1, c2):
     array([  3.,   8.,  14.,   8.,   3.])
 
     """
-    # c1, c2 are trimmed 
+    # c1, c2 are trimmed
     [c1, c2] = pu.as_series([c1, c2], copy=None)
     ret = np.convolve(c1, c2)
     return pu.trimseq(ret)

@@ -290,7 +290,7 @@ class ABCPolyBase(abc.ABC):
         return other
 
     def __init__(self, coef, domain=None, window=None, symbol='x',
-                 _validate_input = True):
+                 _validate_input=True):
         if _validate_input:
             [coef] = pu.as_series([coef], trim=False)
 
@@ -540,7 +540,7 @@ class ABCPolyBase(abc.ABC):
         except Exception:
             return NotImplemented
         return self.__class__(coef, self.domain, self.window, self.symbol,
-                              _validate_input = False)
+                              _validate_input=False)
 
     def __sub__(self, other):
         othercoef = self._get_coefficients(other)
@@ -549,7 +549,7 @@ class ABCPolyBase(abc.ABC):
         except Exception:
             return NotImplemented
         return self.__class__(coef, self.domain, self.window, self.symbol,
-                              _validate_input = False)
+                              _validate_input=False)
 
     def __mul__(self, other):
         othercoef = self._get_coefficients(other)
@@ -558,7 +558,7 @@ class ABCPolyBase(abc.ABC):
         except Exception:
             return NotImplemented
         return self.__class__(coef, self.domain, self.window, self.symbol,
-                              _validate_input = False)
+                              _validate_input=False)
 
     def __truediv__(self, other):
         # there is no true divide if the rhs is not a Number, although it
