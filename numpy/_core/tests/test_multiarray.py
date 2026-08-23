@@ -3789,6 +3789,22 @@ class TestMethods:
         big = np.array(['a' * 100, 'c' * 100, 'e' * 100], dtype=s)
         assert_equal(np.searchsorted(big, 'd' * 100), 2)
 
+    def test_searchsorted_nd_dtype_without_loop(self):
+        # a dtype with no gufunc loop is limited to the one dimensional
+        # implementation, and the error has to say why rather than complain
+        # about the depth of `a` alone
+        s = np.dtypes.StringDType()
+        a = np.array([['a', 'c', 'e'], ['b', 'd', 'f']], dtype=s)
+        msg = "registers no searchsorted gufunc loop"
+        for kwargs in ({}, {'axis': 0}, {'axis': -1},
+                       {'sorter': np.argsort(a, axis=-1)}):
+            with pytest.raises(ValueError, match=msg):
+                np.searchsorted(a, 'd', **kwargs)
+        # one dimension keeps working, and so does flattening
+        assert_equal(np.searchsorted(a[0], 'd'), 2)
+        assert_equal(np.searchsorted(a, 'd', axis=None),
+                     np.searchsorted(a.reshape(-1), 'd'))
+
     def test_searchsorted_nd_scalar_promotion(self):
         # searchsorted promotes by value, so an out-of-range key must not
         # overflow the array's dtype (see gh-4224 discussion)

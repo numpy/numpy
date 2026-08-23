@@ -2618,7 +2618,8 @@ PyArray_SearchSorted_int(PyArrayObject *op1, PyObject *op2,
     if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
         return NULL;
     }
-    if (!PyErr_ExceptionMatches(npy_static_pydata._UFuncNoLoopError)) {
+    int no_loop = PyErr_ExceptionMatches(npy_static_pydata._UFuncNoLoopError);
+    if (!no_loop) {
         /* Stash the error: the attribute lookups must not run under it. */
         PyObject *exc = PyErr_GetRaisedException();
         int declined_override = PyUFunc_HasOverride((PyObject *)op1)
@@ -2627,6 +2628,14 @@ PyArray_SearchSorted_int(PyArrayObject *op1, PyObject *op2,
         if (!declined_override) {
             return NULL;
         }
+    }
+    if (no_loop && axis != NPY_RAVEL_AXIS && PyArray_NDIM(op1) > 1) {
+        PyErr_Clear();
+        PyErr_Format(PyExc_ValueError,
+                     "a must be 1-dimensional for dtype %R, which "
+                     "registers no searchsorted gufunc loop",
+                     (PyObject *)PyArray_DESCR(op1));
+        return NULL;
     }
     if (axis != NPY_RAVEL_AXIS && axis != -1
             && !(PyArray_NDIM(op1) <= 1 && (axis == 0 || axis == -1))) {
