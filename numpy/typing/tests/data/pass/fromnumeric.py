@@ -76,8 +76,6 @@ np.searchsorted(A[0], 0)
 np.searchsorted(B[0], 0)
 np.searchsorted(A[0], [0])
 np.searchsorted(B[0], [0])
-np.searchsorted(A, 0, axis=0)
-np.searchsorted(A, [0], axis=None)
 
 np.resize(a, (5, 5))
 np.resize(b, (5, 5))

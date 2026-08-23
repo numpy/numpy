@@ -28,11 +28,11 @@ PyArray_MultiIndexSetItem(PyArrayObject *self, const npy_intp *multi_index,
                                                 PyObject *obj);
 
 /*
- * Internal version of PyArray_SearchSorted that additionally takes an `axis`
- * (which may be NPY_RAVEL_AXIS to search a flattened `op1`).
+ * Internal version of PyArray_SearchSorted that accepts an `op1` of any
+ * dimensionality, searching each one dimensional slice along its last axis.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_SearchSorted_int(PyArrayObject *op1, PyObject *op2,
-                         NPY_SEARCHSIDE side, PyObject *perm, int axis);
+                         NPY_SEARCHSIDE side, PyObject *perm);
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_ITEM_SELECTION_H_ */

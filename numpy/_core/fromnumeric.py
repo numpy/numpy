@@ -1571,12 +1571,12 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     return _wrapfunc(a, 'argmin', axis=axis, out=out, **kwds)
 
 
-def _searchsorted_dispatcher(a, v, side=None, sorter=None, *, axis=None):
+def _searchsorted_dispatcher(a, v, side=None, sorter=None):
     return (a, v, sorter)
 
 
 @array_function_dispatch(_searchsorted_dispatcher)
-def searchsorted(a, v, side='left', sorter=None, *, axis=_NoValue):
+def searchsorted(a, v, side='left', sorter=None):
     """
     Find indices where elements should be inserted to maintain order.
 
@@ -1597,36 +1597,34 @@ def searchsorted(a, v, side='left', sorter=None, *, axis=_NoValue):
     ----------
     a : array_like
         Input array. If `sorter` is None, then it must be sorted in
-        ascending order along `axis`, otherwise `sorter` must be an array of
-        indices that sort it.
+        ascending order along the last axis, otherwise `sorter` must be an
+        array of indices that sort it.
+
+        .. versionchanged:: 2.6.0
+            `a` may have more than one dimension. To search along another
+            axis, bring it to the end first, for instance with
+            `numpy.moveaxis`.
+
     v : array_like
         Values to insert into `a`. The searched keys are taken along the last
-        axis of `v`. Any leading axes are broadcast against the non-`axis`
-        dimensions of `a`.
+        axis of `v`. Any leading axes are broadcast against the leading axes
+        of `a`.
     side : {'left', 'right'}, optional
         If 'left', the index of the first suitable location found is given.
         If 'right', return the last such index.  If there is no suitable
         index, return either 0 or N (where N is the length of `a`).
     sorter : array_like, optional
         Optional array of integer indices that sort array a into ascending
-        order along `axis`. They are typically the result of argsort,
-        giving `sorter` the same shape as `a`.  A `sorter` with fewer
-        dimensions sorts along its last axis, which must match the `axis`
-        dimension of `a`, and its leading dimensions broadcast.
-    axis : int or None, optional
-        The axis of `a` holding the sorted sequence. The default, -1,
-        searches along the last axis. If None, `a` is flattened first.
-
-        .. versionadded:: 2.6.0
+        order along the last axis. They are typically the result of argsort,
+        giving `sorter` the same shape as `a`.
 
     Returns
     -------
     indices : int or array of ints
         Array of insertion points. Its shape is the broadcast of `a`'s
-        non-`axis` dimensions with `v`'s leading dimensions, with the number
-        of keys, i.e. ``v``'s last dimension, inserted at `axis`. For a
-        one-dimensional `a` this is simply the shape of `v`, and an integer
-        if `v` is a scalar.
+        leading axes with `v`'s, followed by the number of keys, i.e. ``v``'s
+        last dimension. For a one-dimensional `a` this is simply the shape of
+        `v`, and an integer if `v` is a scalar.
 
     See Also
     --------
@@ -1669,16 +1667,16 @@ def searchsorted(a, v, side='left', sorter=None, *, axis=_NoValue):
     30  # The element at index 2 of the sorted array is 30.
 
     `a` may have more than one dimension, in which case each one-dimensional
-    slice along `axis` is searched independently:
+    slice along the last axis is searched independently:
 
     >>> a = np.array([[0, 2, 4, 6], [1, 3, 5, 7]])
     >>> np.searchsorted(a, [[3, 5], [2, 4]])
     array([[2, 3],
            [1, 2]])
 
-    The keys broadcast against the other dimensions of `a`, so a single set
-    of keys can be searched in every row, and a scalar drops the keys
-    dimension altogether:
+    The keys broadcast against the leading axes of `a`, so a single set of
+    keys can be searched in every row, and a scalar drops the keys dimension
+    altogether:
 
     >>> np.searchsorted(a, [1, 6])
     array([[1, 3],
@@ -1686,8 +1684,7 @@ def searchsorted(a, v, side='left', sorter=None, *, axis=_NoValue):
     >>> np.searchsorted(a, 5)
     array([3, 2])
     """
-    kwds = {'axis': axis} if axis is not _NoValue else {}
-    return _wrapfunc(a, 'searchsorted', v, side=side, sorter=sorter, **kwds)
+    return _wrapfunc(a, 'searchsorted', v, side=side, sorter=sorter)
 
 
 def _resize_dispatcher(a, new_shape):

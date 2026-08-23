@@ -5748,8 +5748,6 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
         side: _SortSide = "left",
         sorter: _ArrayLikeInt_co | None = None,
-        *,
-        axis: SupportsIndex | None = -1,
     ) -> intp: ...
     @overload
     def searchsorted(
@@ -5758,8 +5756,6 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
         side: _SortSide = "left",
         sorter: _ArrayLikeInt_co | None = None,
-        *,
-        axis: SupportsIndex | None = -1,
     ) -> NDArray[intp]: ...
 
     def sort(
@@ -7846,7 +7842,7 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     def sort(self: Never, /, axis: L[-1] = -1, kind: None = None, order: None = None, *, stable: None = None, descending: None = None) -> Never: ...  # type: ignore[misc]
     def nonzero(self: Never, /) -> Never: ...  # type: ignore[misc]
     def setfield(self: Never, val: Never, /, dtype: Never, offset: L[0] = 0) -> None: ...  # type: ignore[misc]
-    def searchsorted(self: Never, v: Never, /, side: L["left"] = "left", sorter: None = None, *, axis: L[-1] = -1) -> Never: ...  # type: ignore[misc]
+    def searchsorted(self: Never, v: Never, /, side: L["left"] = "left", sorter: None = None) -> Never: ...  # type: ignore[misc]
 
     # NOTE: this won't raise, but won't do anything either
     @overload

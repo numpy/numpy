@@ -2409,117 +2409,31 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     return NULL;
 }
 
-/* Number of dimensions an operand will have once the gufunc converts it. */
-static int
-searchsorted_operand_ndim(PyObject *op)
-{
-    if (PyArray_Check(op)) {
-        return PyArray_NDIM((PyArrayObject *)op);
-    }
-    PyArrayObject *tmp = (PyArrayObject *)PyArray_FromAny(op, NULL, 0, 0, 0,
-                                                          NULL);
-    if (tmp == NULL) {
-        return -1;
-    }
-    int ndim = PyArray_NDIM(tmp);
-    Py_DECREF(tmp);
-    return ndim;
-}
-
 
 /*
- * Build the gufunc `axes` argument placing `a`'s core dimension at `axis`,
- * and the searched dimension of the result there too.  `v` and a lower
- * dimensional `sorter` keep their own last axis, and a 0-d `v` has dropped
- * the flexible dimension so it names no axis at all.
- */
-static PyObject *
-searchsorted_build_axes(int axis, int a_ndim, int v_ndim, int sorter_ndim)
-{
-    PyObject *keys, *out;
-    if (v_ndim == 0) {
-        keys = Py_BuildValue("()");
-        out = Py_BuildValue("()");
-    }
-    else {
-        keys = Py_BuildValue("(i)", -1);
-        out = Py_BuildValue("(i)", axis);
-    }
-    if (keys == NULL || out == NULL) {
-        Py_XDECREF(keys);
-        Py_XDECREF(out);
-        return NULL;
-    }
-    PyObject *axes;
-    if (sorter_ndim < 0) {
-        axes = Py_BuildValue("[(i),O,O]", axis, keys, out);
-    }
-    else {
-        axes = Py_BuildValue("[(i),O,(i),O]", axis, keys,
-                             sorter_ndim == a_ndim ? axis : -1, out);
-    }
-    Py_DECREF(keys);
-    Py_DECREF(out);
-    return axes;
-}
-
-
-/*
- * Dispatch to the private searchsorted gufuncs.  As PyArray_SearchSorted, `a`
- * and `v` are promoted to a common descriptor and cast to it, so the gufunc
- * matches one of its loops exactly.  Returns NULL with an exception set on
- * failure, which the caller may recover from by falling back.
+ * Dispatch to the private searchsorted gufuncs, which search the last axis
+ * of `a`.  As PyArray_SearchSorted, `a` and `v` are promoted to a common
+ * descriptor and cast to it, so the gufunc matches one of its loops exactly.
+ * Returns NULL with an exception set on failure, which the caller may
+ * recover from by falling back.
  */
 static PyObject *
 searchsorted_gufunc(PyArrayObject *op1, PyObject *op2,
-                    NPY_SEARCHSIDE side, PyObject *perm, int axis)
+                    NPY_SEARCHSIDE side, PyObject *perm)
 {
-    PyArrayObject *a = NULL, *ap1 = NULL, *ap2 = NULL, *sorter = NULL;
-    PyObject *axes = NULL, *kwnames = NULL, *ret = NULL;
-    int needs_axes = 0, use_axis = -1;
+    PyArrayObject *ap1 = NULL, *ap2 = NULL, *sorter = NULL;
+    PyObject *ret = NULL;
 
     if (perm != NULL) {
         sorter = searchsorted_prepare_sorter(perm, 0, NPY_ARRAY_ENSUREARRAY);
         if (sorter == NULL) {
             return NULL;
         }
-    }
-
-    /*
-     * `axis=None` searches the flattened array, which `axes` cannot express.
-     * Any other axis is handed to the gufunc as its `axes` argument below.
-     */
-    if (axis == NPY_RAVEL_AXIS) {
-        a = (PyArrayObject *)PyArray_Ravel(op1, NPY_CORDER);
-        if (a == NULL) {
+        if (PyArray_NDIM(op1) == 1 && PyArray_NDIM(sorter) == 1
+                && PyArray_SIZE(sorter) != PyArray_SIZE(op1)) {
+            PyErr_SetString(PyExc_ValueError, "sorter.size must equal a.size");
             goto finish;
         }
-        if (sorter != NULL) {
-            PyArrayObject *flat = (PyArrayObject *)PyArray_Ravel(sorter,
-                                                                NPY_CORDER);
-            if (flat == NULL) {
-                goto finish;
-            }
-            Py_SETREF(sorter, flat);
-        }
-    }
-    else {
-        int ndim = PyArray_NDIM(op1);
-
-        use_axis = axis;
-        if (ndim > 0 && check_and_adjust_axis(&use_axis, ndim) < 0) {
-            goto finish;
-        }
-        if (ndim > 1 && use_axis != ndim - 1) {
-            needs_axes = 1;
-        }
-        a = (PyArrayObject *)Py_NewRef(op1);
-    }
-
-    if (sorter != NULL && PyArray_NDIM(a) == 1 && PyArray_NDIM(sorter) == 1
-            && PyArray_SIZE(sorter) != PyArray_SIZE(a)) {
-        PyErr_SetString(PyExc_ValueError, "sorter.size must equal a.size");
-        goto finish;
     }
 
     /*
@@ -2528,13 +2442,13 @@ searchsorted_gufunc(PyArrayObject *op1, PyObject *op2,
      * raises TypeError, which the caller turns into the one dimensional
      * implementation, as before.
      */
-    if (PyUFunc_HasOverride((PyObject *)a) || PyUFunc_HasOverride(op2)) {
-        ap1 = (PyArrayObject *)Py_NewRef(a);
+    if (PyUFunc_HasOverride((PyObject *)op1) || PyUFunc_HasOverride(op2)) {
+        ap1 = (PyArrayObject *)Py_NewRef(op1);
         ap2 = (PyArrayObject *)Py_NewRef(op2);
     }
     /* NPY_ARRAY_ENSUREARRAY keeps the result a base ndarray, as it has
      * always been for the functions returning indices. */
-    else if (searchsorted_cast_operands(a, op2, 1, 0, NPY_ARRAY_ENSUREARRAY,
+    else if (searchsorted_cast_operands(op1, op2, 1, 0, NPY_ARRAY_ENSUREARRAY,
                                         NPY_ARRAY_ENSUREARRAY,
                                         &ap1, &ap2) < 0) {
         goto finish;
@@ -2558,50 +2472,30 @@ searchsorted_gufunc(PyArrayObject *op1, PyObject *op2,
                                  caches[with_sorter][right]) == -1) {
         goto finish;
     }
-
-    if (needs_axes) {
-        int v_ndim = searchsorted_operand_ndim((PyObject *)ap2);
-        if (v_ndim < 0) {
-            goto finish;
-        }
-        axes = searchsorted_build_axes(
-                use_axis, PyArray_NDIM(ap1), v_ndim,
-                with_sorter ? PyArray_NDIM(sorter) : -1);
-        kwnames = Py_BuildValue("(s)", "axes");
-        if (axes == NULL || kwnames == NULL) {
-            goto finish;
-        }
-    }
     {
-        PyObject *stack[4] = {(PyObject *)ap1, (PyObject *)ap2,
-                              (PyObject *)sorter, NULL};
-        if (needs_axes) {
-            stack[with_sorter ? 3 : 2] = axes;
-        }
+        PyObject *stack[3] = {(PyObject *)ap1, (PyObject *)ap2,
+                              (PyObject *)sorter};
         ret = PyObject_Vectorcall(*caches[with_sorter][right], stack,
-                                  with_sorter ? 3 : 2, kwnames);
+                                  with_sorter ? 3 : 2, NULL);
     }
 
   finish:
-    Py_XDECREF(a);
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
     Py_XDECREF(sorter);
-    Py_XDECREF(axes);
-    Py_XDECREF(kwnames);
     return ret;
 }
 
 
 /*
- * Internal version of PyArray_SearchSorted that additionally takes an `axis`,
- * which may be NPY_RAVEL_AXIS to search a flattened `op1`.
+ * Internal version of PyArray_SearchSorted that accepts an `op1` of any
+ * dimensionality, searching each one dimensional slice along its last axis.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_SearchSorted_int(PyArrayObject *op1, PyObject *op2,
-                         NPY_SEARCHSIDE side, PyObject *perm, int axis)
+                         NPY_SEARCHSIDE side, PyObject *perm)
 {
-    PyObject *ret = searchsorted_gufunc(op1, op2, side, perm, axis);
+    PyObject *ret = searchsorted_gufunc(op1, op2, side, perm);
     if (ret != NULL) {
         return ret;
     }
@@ -2612,8 +2506,7 @@ PyArray_SearchSorted_int(PyArrayObject *op1, PyObject *op2,
      * StringDType above all, fail with _UFuncNoLoopError, and an operand
      * whose `__array_ufunc__` declined the call raises a plain TypeError.
      * Any other TypeError (a bad `sorter`, a failing object comparison, ...)
-     * is a genuine error.  The generic implementation is 1-D only and can
-     * therefore stand in only when the search axis is `op1`'s single axis.
+     * is a genuine error.
      */
     if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
         return NULL;
@@ -2629,7 +2522,7 @@ PyArray_SearchSorted_int(PyArrayObject *op1, PyObject *op2,
             return NULL;
         }
     }
-    if (no_loop && axis != NPY_RAVEL_AXIS && PyArray_NDIM(op1) > 1) {
+    if (no_loop && PyArray_NDIM(op1) > 1) {
         PyErr_Clear();
         PyErr_Format(PyExc_ValueError,
                      "a must be 1-dimensional for dtype %R, which "
@@ -2637,38 +2530,8 @@ PyArray_SearchSorted_int(PyArrayObject *op1, PyObject *op2,
                      (PyObject *)PyArray_DESCR(op1));
         return NULL;
     }
-    if (axis != NPY_RAVEL_AXIS && axis != -1
-            && !(PyArray_NDIM(op1) <= 1 && (axis == 0 || axis == -1))) {
-        return NULL;
-    }
     PyErr_Clear();
 
-    if (axis == NPY_RAVEL_AXIS && PyArray_NDIM(op1) != 1) {
-        /* The 1-D fallback cannot express `axis=None`, so flatten first. */
-        PyArrayObject *flat = (PyArrayObject *)PyArray_Ravel(op1, NPY_CORDER);
-        if (flat == NULL) {
-            return NULL;
-        }
-        PyObject *flat_perm = NULL;
-        if (perm != NULL) {
-            PyArrayObject *perm_arr = (PyArrayObject *)PyArray_FromAny(
-                    perm, NULL, 0, 0, 0, NULL);
-            if (perm_arr == NULL) {
-                Py_DECREF(flat);
-                return NULL;
-            }
-            flat_perm = PyArray_Ravel(perm_arr, NPY_CORDER);
-            Py_DECREF(perm_arr);
-            if (flat_perm == NULL) {
-                Py_DECREF(flat);
-                return NULL;
-            }
-        }
-        ret = PyArray_SearchSorted(flat, op2, side, flat_perm);
-        Py_DECREF(flat);
-        Py_XDECREF(flat_perm);
-        return ret;
-    }
     return PyArray_SearchSorted(op1, op2, side, perm);
 }
 

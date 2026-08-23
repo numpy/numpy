@@ -3613,7 +3613,7 @@ class TestMethods:
 
     def test_searchsorted_nd(self):
         # `a` may have more than one dimension. Each 1-D slice along the
-        # searched axis is searched independently.
+        # last axis is searched independently.
         a = np.array([[0., 2., 4., 6.], [1., 3., 5., 7.]])
 
         # keys are the last axis of `v`, paired row by row
@@ -3636,6 +3636,10 @@ class TestMethods:
         assert_equal(np.searchsorted(b, 2., side='left'), [1, 1])
         assert_equal(np.searchsorted(b, 2., side='right'), [3, 3])
 
+        # an empty searched axis gives 0 for every key
+        assert_equal(np.searchsorted(np.zeros((2, 0)), [1., 2.]),
+                     np.zeros((2, 2)))
+
     def test_searchsorted_nd_matches_loop(self):
         rng = np.random.RandomState(1234)
         a = np.sort(rng.rand(3, 4, 20), axis=-1)
@@ -3656,45 +3660,6 @@ class TestMethods:
         # mismatched batch dimensions are a broadcasting error
         assert_raises(ValueError, np.searchsorted, a, np.ones((3, 2)))
 
-    def test_searchsorted_axis(self):
-        a = np.array([[0., 2., 4., 6.], [1., 3., 5., 7.]])
-        v = np.array([[3., 5.], [2., 4.]])
-
-        # the searched dimension of the result sits at `axis`, so searching a
-        # transposed array along axis 0 gives the transposed result
-        assert_equal(np.searchsorted(a.T, v, axis=0),
-                     np.searchsorted(a, v).T)
-        # negative and positive spellings agree
-        assert_equal(np.searchsorted(a, v, axis=1),
-                     np.searchsorted(a, v, axis=-1))
-        # the default is the last axis
-        assert_equal(np.searchsorted(a, v, axis=-1), np.searchsorted(a, v))
-
-        # a 3-D case, checked against moveaxis
-        rng = np.random.RandomState(0)
-        b = np.sort(rng.rand(4, 5, 6), axis=1)
-        w = rng.rand(4, 6, 3)
-        assert_equal(np.searchsorted(b, w, axis=1),
-                     np.moveaxis(np.searchsorted(np.moveaxis(b, 1, -1), w),
-                                 -1, 1))
-
-        # out-of-range axes are rejected
-        assert_raises(np.exceptions.AxisError, np.searchsorted, a, v, axis=2)
-        assert_raises(np.exceptions.AxisError, np.searchsorted, a, v, axis=-3)
-
-    def test_searchsorted_axis_none(self):
-        a = np.array([[0., 2., 4., 6.], [1., 3., 5., 7.]])
-        # axis=None searches the flattened array
-        assert_equal(np.searchsorted(a, 3., axis=None),
-                     np.searchsorted(a.ravel(), 3.))
-        assert_equal(np.searchsorted(a, [1., 6.], axis=None),
-                     np.searchsorted(a.ravel(), [1., 6.]))
-        # ... and works with a sorter, which is flattened alongside it
-        b = np.array([[6., 4., 2., 0.], [7., 5., 3., 1.]])
-        s = np.argsort(b, axis=None)
-        assert_equal(np.searchsorted(b, 3.5, sorter=s, axis=None),
-                     np.searchsorted(np.sort(b, axis=None), 3.5))
-
     def test_searchsorted_nd_sorter(self):
         rng = np.random.RandomState(42)
         a = rng.rand(3, 10)
@@ -3705,31 +3670,26 @@ class TestMethods:
             expected[i] = np.searchsorted(a[i], v[i], sorter=s[i])
         assert_equal(np.searchsorted(a, v, sorter=s), expected)
 
-        # the sorter must line up with `a` along the searched axis
+        # the sorter must line up with `a` along the last axis
         assert_raises(ValueError, np.searchsorted, a, v, sorter=s[:, :5])
 
-    def test_searchsorted_nd_axis_sorter(self):
-        rng = np.random.RandomState(7)
-        a = rng.rand(10, 3)
-        s = np.argsort(a, axis=0)
-        v = rng.rand(3, 4)
-        assert_equal(np.searchsorted(a, v, sorter=s, axis=0),
-                     np.searchsorted(a.T, v, sorter=s.T).T)
+        # a lower dimensional sorter broadcasts against `a`'s leading axes
+        b = np.array([[6., 4., 2., 0.], [7., 5., 3., 1.]])
+        s1 = np.array([3, 2, 1, 0])
+        assert_equal(np.searchsorted(b, [2.5, 5.5], sorter=s1),
+                     [np.searchsorted(b[i], [2.5, 5.5], sorter=s1)
+                      for i in range(2)])
 
     @pytest.mark.parametrize("dtype", ['O', 'S4', 'U4',
                                        [('x', 'i4'), ('y', 'i4')]])
     def test_searchsorted_nd_generic_dtype(self, dtype):
         # dtypes searched through the generic comparison function support
-        # `axis` too, so that it is not limited to the dtypes with a
-        # dedicated binary search
+        # more than one dimension too, so that it is not limited to the
+        # dtypes with a dedicated binary search
         a = np.array([[1, 3, 5], [2, 4, 6]], dtype='i4').astype(dtype)
         v = a[0, 1]
         expected = np.array([np.searchsorted(a[i], v) for i in range(2)])
         assert_equal(np.searchsorted(a, v), expected)
-        assert_equal(np.searchsorted(np.ascontiguousarray(a.T), v, axis=0),
-                     expected)
-        assert_equal(np.searchsorted(a, v, axis=None),
-                     np.searchsorted(a.ravel(), v))
         # 1-D keeps working, and so does a sorter
         assert_equal(np.searchsorted(a[0], v), 1)
         s = np.argsort(a, axis=-1)
@@ -3774,8 +3734,6 @@ class TestMethods:
         v = np.array(4, dtype=rational)
         expected = np.array([np.searchsorted(a[i], v) for i in range(2)])
         assert_equal(np.searchsorted(a, v), expected)
-        assert_equal(np.searchsorted(np.ascontiguousarray(a.T), v, axis=0),
-                     expected)
         s = np.argsort(a, axis=-1)
         assert_equal(np.searchsorted(a, v, sorter=s), expected)
 
@@ -3796,14 +3754,11 @@ class TestMethods:
         s = np.dtypes.StringDType()
         a = np.array([['a', 'c', 'e'], ['b', 'd', 'f']], dtype=s)
         msg = "registers no searchsorted gufunc loop"
-        for kwargs in ({}, {'axis': 0}, {'axis': -1},
-                       {'sorter': np.argsort(a, axis=-1)}):
+        for kwargs in ({}, {'sorter': np.argsort(a, axis=-1)}):
             with pytest.raises(ValueError, match=msg):
                 np.searchsorted(a, 'd', **kwargs)
-        # one dimension keeps working, and so does flattening
+        # one dimension keeps working
         assert_equal(np.searchsorted(a[0], 'd'), 2)
-        assert_equal(np.searchsorted(a, 'd', axis=None),
-                     np.searchsorted(a.reshape(-1), 'd'))
 
     def test_searchsorted_nd_scalar_promotion(self):
         # searchsorted promotes by value, so an out-of-range key must not
@@ -3827,14 +3782,6 @@ class TestMethods:
         common = np.promote_types(a.dtype, key.dtype)
         assert_equal(np.searchsorted(a, key),
                      np.searchsorted(a.astype(common), key.astype(common)))
-
-    def test_searchsorted_axis_none_fallback_dtype(self):
-        # `axis=None` must flatten `a` even for a dtype that falls back to the
-        # one dimensional generic implementation
-        s = np.dtypes.StringDType()
-        a = np.array([['a', 'c', 'e'], ['b', 'd', 'f']], dtype=s)
-        assert_equal(np.searchsorted(a, 'd', axis=None),
-                     np.searchsorted(a.reshape(-1), 'd'))
 
     def test_searchsorted_nd_no_fp_warning(self):
         # comparing against NaN keys must not report a spurious FP error

@@ -1624,22 +1624,20 @@ array_searchsorted(PyArrayObject *self,
     PyObject *keys;
     PyObject *sorter;
     NPY_SEARCHSIDE side = NPY_SEARCHLEFT;
-    int axis = -1;
     NPY_PREPARE_ARGPARSER;
 
     sorter = NULL;
     if (npy_parse_arguments("searchsorted", args, len_args, kwnames,
             {"v", NULL, &keys},
             {"|side", &PyArray_SearchsideConverter, &side},
-            {"|sorter", NULL, &sorter},
-            {"$axis", &PyArray_AxisConverter, &axis}) < 0) {
+            {"|sorter", NULL, &sorter}) < 0) {
         return NULL;
     }
     if (sorter == Py_None) {
         sorter = NULL;
     }
     return PyArray_Return((PyArrayObject *)PyArray_SearchSorted_int(
-            self, keys, side, sorter, axis));
+            self, keys, side, sorter));
 }
 
 static int
