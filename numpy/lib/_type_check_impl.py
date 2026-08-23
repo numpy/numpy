@@ -708,7 +708,7 @@ def common_type(*arrays):
             ) from None
         is_complex = is_complex or issubclass(t, _nx.complexfloating)
 
-        p = array_precision.get(t, None)
+        p = array_precision.get(t)
         if p is None:
             if issubclass(t, _nx.integer):
                 p = 2  # array_precision[_nx.double]
