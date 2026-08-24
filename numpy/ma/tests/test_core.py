@@ -2626,6 +2626,22 @@ class TestFillingValues:
         y = x.view(dtype=np.int32)
         assert_(y.fill_value == 999999)
 
+    def test_fillvalue_after_dtype_changing_ufunc(self):
+        # Test that a fill_value which no longer matches the dtype of the
+        # result of a ufunc (because the ufunc changed the dtype) is reset
+        # to the default for the new dtype, rather than being propagated
+        # unchanged and later causing errors (e.g. in .view()). See gh-32330.
+        a = array(['foo', 'bar', 'baz'], mask=False, fill_value='N/A')
+        result = np.strings.find(a, 'foo')
+
+        assert_equal(result.dtype, np.dtype(np.int64))
+        assert_equal(result.fill_value, default_fill_value(np.int64(0)))
+
+        # Accessing .view() used to raise a TypeError here because the
+        # stale string fill_value could not be cast to the new int64 dtype.
+        viewed = result.view(MaskedArray)
+        assert_equal(viewed.fill_value, default_fill_value(np.int64(0)))
+
     def test_fillvalue_bytes_or_str(self):
         # Test whether fill values work as expected for structured dtypes
         # containing bytes or str.  See issue #7259.

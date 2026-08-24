@@ -3037,7 +3037,20 @@ class MaskedArray(ndarray):
         _optinfo.update(getattr(obj, '_basedict', {}))
         if not isinstance(obj, MaskedArray):
             _optinfo.update(getattr(obj, '__dict__', {}))
-        _dict = {'_fill_value': getattr(obj, '_fill_value', None),
+        _fill_value = getattr(obj, '_fill_value', None)
+        if _fill_value is not None:
+            try:
+                # Only check that obj's fill_value is still compatible with
+                # self's dtype; don't store the (possibly lossy) cast result,
+                # to avoid e.g. narrowing an untouched default fill_value.
+                _check_fill_value(_fill_value, self.dtype)
+            except (TypeError, ValueError):
+                # obj's fill_value is no longer valid for self's dtype,
+                # e.g. because a ufunc changed the dtype. Fall back to the
+                # default fill_value for the new dtype instead of
+                # propagating a stale, incompatible value.
+                _fill_value = _check_fill_value(None, self.dtype)
+        _dict = {'_fill_value': _fill_value,
                      '_hardmask': getattr(obj, '_hardmask', False),
                      '_sharedmask': getattr(obj, '_sharedmask', False),
                      '_isfield': getattr(obj, '_isfield', False),
