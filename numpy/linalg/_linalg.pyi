@@ -1921,7 +1921,8 @@ _AnyNumberT = TypeVar(
     np.float16, np.float32, np.float64, np.longdouble, np.complex64, np.complex128, np.clongdouble,
 )  # fmt: skip
 
-_AnyRankT = TypeVar("_AnyRankT", _1D, _2D, _3D, tuple[int, int, int, int])
+_AnyRankT = TypeVar("_AnyRankT", _1D, _2D, _3D, _4D)
+_AnyRank2T = TypeVar("_AnyRank2T", _2D, _3D, _4D)
 
 # NOTE: we use constraints instead of a `: np.number` bound, to prevent joins/unions
 # NOTE: we ignore UP047 because inlining `_AnyScalarT` would result in a lot of code duplication
@@ -2030,9 +2031,10 @@ def cross[ScalarT: np.number](
     axis: SupportsIndex = -1,
 ) -> NDArray[ScalarT]: ...
 
-# These overloads can be grouped into three parts:
-# - 16 overloads as workaround for microsoft/pyright#10232
+# These overloads can be grouped into four parts:
+# - 18 overloads as workaround for microsoft/pyright#10232
 # -  9 overloads for the scalar cases (both args 1d)
+# -  7 overloads for the known-rank cases (both with same dtype)
 # - 18 overloads for the non-scalar cases (at least one arg >1d)
 @overload  # ?d ~T, 1d ~T
 def matmul(  # noqa: UP047
@@ -2077,7 +2079,15 @@ def matmul(
 @overload  # 1d ~complex128, ?d +complex128
 def matmul(
     x1: _AsArrayC128_1d, x2: _SupportsArray[_JustAnyShape, np.dtype[_to_complex128_co]], /
-) -> NDArray[np.complex128] | Any: ...  # end workaround
+) -> NDArray[np.complex128] | Any: ...
+@overload  # ?d ~T, >=1d ~T (workaround)
+def matmul(  # noqa: UP047
+    x1: _ArrayJustND[_AnyNumberT], x2: _SupportsArray[_AtLeast1D, np.dtype[_AnyNumberT]], /
+) -> NDArray[_AnyNumberT]: ...
+@overload  # >=1d ~T, ?d ~T (workaround)
+def matmul(  # noqa: UP047
+    x1: _SupportsArray[_AtLeast1D, np.dtype[_AnyNumberT]], x2: _ArrayJustND[_AnyNumberT], /
+) -> NDArray[_AnyNumberT]: ...  # end workaround
 @overload  # 1d ~T, 1d ~T
 def matmul(x1: _ArrayLike1D[_AnyScalarT], x2: _ArrayLike1D[_AnyScalarT], /) -> _AnyScalarT: ...  # noqa: UP047
 @overload  # 1d +bool, 1d +bool
@@ -2096,6 +2106,48 @@ def matmul(x1: _AsArrayC128_1d, x2: _ToArrayComplex_1d, /) -> np.complex128: ...
 def matmul(x1: _ToArrayComplex_1d, x2: _AsArrayC128_1d, /) -> np.complex128: ...
 @overload  # 1d fallback, 1d fallback
 def matmul(x1: _ToArrayComplex_1d, x2: _ToArrayComplex_1d, /) -> Any: ...  # end 1d x 1d
+@overload  # 1d ~T, 2d ~T
+def matmul(  # noqa: UP047
+    x1: _SupportsArray[_1D, np.dtype[_AnyNumberT]],
+    x2: _SupportsArray[_2D, np.dtype[_AnyNumberT]],
+    /,
+) -> np.ndarray[_1D, np.dtype[_AnyNumberT]]: ...
+@overload  # 1d ~T, 3d ~T
+def matmul(  # noqa: UP047
+    x1: _SupportsArray[_1D, np.dtype[_AnyNumberT]],
+    x2: _SupportsArray[_3D, np.dtype[_AnyNumberT]],
+    /,
+) -> np.ndarray[_2D, np.dtype[_AnyNumberT]]: ...
+@overload  # 2d ~T, 1d ~T
+def matmul(  # noqa: UP047
+    x1: _SupportsArray[_2D, np.dtype[_AnyNumberT]],
+    x2: _SupportsArray[_1D, np.dtype[_AnyNumberT]],
+    /,
+) -> np.ndarray[_1D, np.dtype[_AnyNumberT]]: ...
+@overload  # 2d ~T, Nd ~T
+def matmul(  # noqa: UP047
+    x1: _SupportsArray[_2D, np.dtype[_AnyNumberT]],
+    x2: _SupportsArray[_AnyRank2T, np.dtype[_AnyNumberT]],
+    /,
+) -> np.ndarray[_AnyRank2T, np.dtype[_AnyNumberT]]: ...
+@overload  # 3d ~T, 1d ~T
+def matmul(  # noqa: UP047
+    x1: _SupportsArray[_3D, np.dtype[_AnyNumberT]],
+    x2: _SupportsArray[_1D, np.dtype[_AnyNumberT]],
+    /,
+) -> np.ndarray[_2D, np.dtype[_AnyNumberT]]: ...
+@overload  # Nd ~T, 2d ~T
+def matmul(  # noqa: UP047
+    x1: _SupportsArray[_AnyRank2T, np.dtype[_AnyNumberT]],
+    x2: _SupportsArray[_2D, np.dtype[_AnyNumberT]],
+    /,
+) -> np.ndarray[_AnyRank2T, np.dtype[_AnyNumberT]]: ...
+@overload  # Nd ~T, Nd ~T
+def matmul(  # noqa: UP047
+    x1: _SupportsArray[_AnyRank2T, np.dtype[_AnyNumberT]],
+    x2: _SupportsArray[_AnyRank2T, np.dtype[_AnyNumberT]],
+    /,
+) -> np.ndarray[_AnyRank2T, np.dtype[_AnyNumberT]]: ...
 @overload  # >=1d ~T, >=2d ~T
 def matmul(x1: _ArrayLike1ND[_AnyScalarT], x2: _ArrayLike2ND[_AnyScalarT], /) -> NDArray[_AnyScalarT]: ...  # noqa: UP047
 @overload  # >=2d ~T, >=1d ~T
