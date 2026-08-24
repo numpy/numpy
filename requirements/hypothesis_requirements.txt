@@ -4,4 +4,4 @@
 # hard to install on platforms without a prebuilt wheel (riscv64, win-arm64,
 # ppc64le, s390x, CPython pre-releases, QEMU-emulated targets). The test suite
 # skips the property-based tests when hypothesis is not installed.
-hypothesis==6.165.7
+hypothesis==6.165.10
