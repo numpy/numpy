@@ -72,13 +72,16 @@ AR_f2_2d: _Array2D[np.float16]
 AR_f4_1d: _Array1D[np.float32]
 AR_f4_2d: _Array2D[np.float32]
 AR_f4_3d: _Array3D[np.float32]
+AR_f4_4d: _Array4D[np.float32]
 AR_f10_2d: _Array2D[np.longdouble]
 AR_f10_3d: _Array3D[np.longdouble]
 AR_c8_2d: _Array2D[np.complex64]
 AR_c8_3d: _Array3D[np.complex64]
+AR_c8_4d: _Array4D[np.complex64]
 AR_c16_1d: _Array1D[np.complex128]
 AR_c16_2d: _Array2D[np.complex128]
 AR_c16_3d: _Array3D[np.complex128]
+AR_c16_4d: _Array4D[np.complex128]
 
 ###
 
@@ -388,14 +391,27 @@ assert_type(np.linalg.slogdet(complex_list_2d), SlogdetResult[np.float64, np.com
 assert_type(np.linalg.slogdet(complex_list_3d), SlogdetResult[npt.NDArray[np.float64], npt.NDArray[np.complex128]])
 
 assert_type(np.linalg.det(AR_i8), Any)
+assert_type(np.linalg.det(AR_f4), Any)
 assert_type(np.linalg.det(AR_f8), Any)
+assert_type(np.linalg.det(AR_c8), Any)
 assert_type(np.linalg.det(AR_c16), Any)
+assert_type(np.linalg.det(AR_any), Any)
 assert_type(np.linalg.det(AR_f4_2d), np.float32)
 assert_type(np.linalg.det(AR_f8_2d), np.float64)
-assert_type(np.linalg.det(AR_f4_3d), npt.NDArray[np.float32])
-assert_type(np.linalg.det(AR_f8_3d), npt.NDArray[np.float64])
+assert_type(np.linalg.det(AR_c8_2d), np.complex64)
+assert_type(np.linalg.det(AR_c16_2d), np.complex128)
+assert_type(np.linalg.det(int_list_2d), np.float64)
 assert_type(np.linalg.det(complex_list_2d), np.complex128)
-assert_type(np.linalg.det(complex_list_3d), npt.NDArray[np.complex128])
+assert_type(np.linalg.det(AR_f4_3d), _Array1D[np.float32])
+assert_type(np.linalg.det(AR_f8_3d), _Array1D[np.float64])
+assert_type(np.linalg.det(AR_c8_3d), _Array1D[np.complex64])
+assert_type(np.linalg.det(AR_c16_3d), _Array1D[np.complex128])
+assert_type(np.linalg.det(int_list_3d), _Array1D[np.float64])
+assert_type(np.linalg.det(complex_list_3d), _Array1D[np.complex128])
+assert_type(np.linalg.det(AR_f4_4d), npt.NDArray[np.float32])
+assert_type(np.linalg.det(AR_f8_4d), npt.NDArray[np.float64])
+assert_type(np.linalg.det(AR_c8_4d), npt.NDArray[np.complex64])
+assert_type(np.linalg.det(AR_c16_4d), npt.NDArray[np.complex128])
 
 assert_type(
     np.linalg.lstsq(AR_i8, AR_i8),
