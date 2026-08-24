@@ -73,6 +73,7 @@ __all__ = [
 type _1D = tuple[int]
 type _2D = tuple[int, int]
 type _3D = tuple[int, int, int]
+type _4D = tuple[int, int, int, int]
 type _AtMost1D = tuple[()] | _1D
 type _AtLeast1D = tuple[int, *tuple[int, ...]]
 type _AtLeast2D = tuple[int, int, *tuple[int, ...]]
@@ -103,6 +104,7 @@ type _ArrayJustND[ScalarT: np.generic] = np.ndarray[_JustAnyShape, np.dtype[Scal
 
 type _Sequence2D[T] = Sequence[Sequence[T]]
 type _Sequence3D[T] = Sequence[_Sequence2D[T]]
+type _Sequence4D[T] = Sequence[_Sequence3D[T]]
 type _Sequence2ND[T] = _NestedSequence[Sequence[T]]
 type _Sequence3ND[T] = _NestedSequence[_Sequence2D[T]]
 type _Sequence4ND[T] = _NestedSequence[_Sequence3D[T]]
@@ -1298,7 +1300,23 @@ def matrix_norm(
     ord: _OrderKind | None = "fro",
     keepdims: L[False] = False,
 ) -> np.float64: ...
-@overload  # +inexact64 (unsafe casting), >2d, keepdims=False
+@overload  # +inexact64 (unsafe casting), 3d, keepdims=False
+def matrix_norm(
+    x: _ArrayLike3D[_to_inexact64_unsafe] | _Sequence3D[complex],
+    /,
+    *,
+    ord: _OrderKind | None = "fro",
+    keepdims: L[False] = False,
+) -> _Array1D[np.float64]: ...
+@overload  # +inexact64 (unsafe casting), 4d, keepdims=False
+def matrix_norm(
+    x: _SupportsArray[_4D, np.dtype[_to_inexact64_unsafe]] | _Sequence4D[complex],
+    /,
+    *,
+    ord: _OrderKind | None = "fro",
+    keepdims: L[False] = False,
+) -> _Array2D[np.float64]: ...
+@overload  # +inexact64 (unsafe casting), >4d, keepdims=False
 def matrix_norm(
     x: _ArrayLike3ND[_to_inexact64_unsafe] | _Sequence3D[complex],
     /,
@@ -1324,7 +1342,15 @@ def matrix_norm(
 ) -> NDArray[np.float16] | Any: ...
 @overload  # ~float16, 2d, keepdims=False
 def matrix_norm(x: _ArrayLike2D[np.float16], /, *, ord: _OrderKind | None = "fro", keepdims: L[False] = False) -> np.float16: ...
-@overload  # ~float16, >2d, keepdims=False
+@overload  # ~float16, 3d, keepdims=False
+def matrix_norm(
+    x: _ArrayLike3D[np.float16], /, *, ord: _OrderKind | None = "fro", keepdims: L[False] = False
+) -> _Array1D[np.float16]: ...
+@overload  # ~float16, 4d, keepdims=False
+def matrix_norm(
+    x: _SupportsArray[_4D, np.dtype[np.float16]], /, *, ord: _OrderKind | None = "fro", keepdims: L[False] = False
+) -> _Array2D[np.float16]: ...
+@overload  # ~float16, >4d, keepdims=False
 def matrix_norm(
     x: _ArrayLike3ND[np.float16], /, *, ord: _OrderKind | None = "fro", keepdims: L[False] = False
 ) -> NDArray[np.float16]: ...
@@ -1340,7 +1366,15 @@ def matrix_norm(
 ) -> NDArray[np.float32] | Any: ...
 @overload  # ~inexact32, 2d, keepdims=False
 def matrix_norm(x: _ArrayLike2D[_inexact32], /, *, ord: _OrderKind | None = "fro", keepdims: L[False] = False) -> np.float32: ...
-@overload  # ~inexact32, >2d, keepdims=False
+@overload  # ~inexact32, 3d, keepdims=False
+def matrix_norm(
+    x: _ArrayLike3D[_inexact32], /, *, ord: _OrderKind | None = "fro", keepdims: L[False] = False
+) -> _Array1D[np.float32]: ...
+@overload  # ~inexact32, 4d, keepdims=False
+def matrix_norm(
+    x: _SupportsArray[_4D, np.dtype[_inexact32]], /, *, ord: _OrderKind | None = "fro", keepdims: L[False] = False
+) -> _Array2D[np.float32]: ...
+@overload  # ~inexact32, >4d, keepdims=False
 def matrix_norm(
     x: _ArrayLike3ND[_inexact32], /, *, ord: _OrderKind | None = "fro", keepdims: L[False] = False
 ) -> NDArray[np.float32]: ...
@@ -1358,7 +1392,15 @@ def matrix_norm(
 def matrix_norm(
     x: _ArrayLike2D[_inexact80], /, *, ord: _OrderKind | None = "fro", keepdims: L[False] = False
 ) -> np.longdouble: ...
-@overload  # ~inexact80, >2d, keepdims=False
+@overload  # ~inexact80, 3d, keepdims=False
+def matrix_norm(
+    x: _ArrayLike3D[_inexact80], /, *, ord: _OrderKind | None = "fro", keepdims: L[False] = False
+) -> _Array1D[np.longdouble]: ...
+@overload  # ~inexact80, 4d, keepdims=False
+def matrix_norm(
+    x: _SupportsArray[_4D, np.dtype[_inexact80]], /, *, ord: _OrderKind | None = "fro", keepdims: L[False] = False
+) -> _Array2D[np.longdouble]: ...
+@overload  # ~inexact80, >4d, keepdims=False
 def matrix_norm(
     x: _ArrayLike3ND[_inexact80], /, *, ord: _OrderKind | None = "fro", keepdims: L[False] = False
 ) -> NDArray[np.longdouble]: ...
