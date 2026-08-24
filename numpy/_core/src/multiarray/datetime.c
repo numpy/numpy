@@ -2390,7 +2390,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             if (DEPRECATE(
                         "The 'generic' unit for NumPy timedelta is deprecated, "
                         "and will raise an error in the future. "
-                        "This includes implicit conversion of bare integers (e.g. `+ 1`)."
+                        "This includes implicit conversion of bare integers (e.g. `+ 1`). "
                         "Please use a specific unit instead.") < 0) {
                 return -1;
             }
@@ -2526,7 +2526,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             if (DEPRECATE(
                         "The 'generic' unit for NumPy timedelta is deprecated, "
                         "and will raise an error in the future. "
-                        "This includes implicit conversion of bare integers (e.g. `+ 1`)."
+                        "This includes implicit conversion of bare integers (e.g. `+ 1`). "
                         "Please use a specific unit instead.") < 0) {
                 return -1;
             }
@@ -2612,7 +2612,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
                 if (DEPRECATE(
                             "The 'generic' unit for NumPy timedelta is deprecated, "
                             "and will raise an error in the future. "
-                            "This includes implicit conversion of bare integers (e.g. `+ 1`)."
+                            "This includes implicit conversion of bare integers (e.g. `+ 1`). "
                             "Please use a specific unit instead.") < 0) {
                     return -1;
                 }
@@ -2638,7 +2638,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
             if (DEPRECATE(
                     "The 'generic' unit for NumPy timedelta is deprecated, "
                     "and will raise an error in the future. "
-                    "This includes implicit conversion of bare integers (e.g. `+ 1`)."
+                    "This includes implicit conversion of bare integers (e.g. `+ 1`). "
                     "Please use a specific unit instead.") < 0) {
                 return -1;
             }
