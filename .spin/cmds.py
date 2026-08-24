@@ -403,7 +403,7 @@ def lint(ctx, fix):
 )
 @click.option(
     '--cpu-affinity', default=None, multiple=False,
-    help="Set CPU affinity for running the benchmark, in format: 0 or 0,1,2 or 0-3."
+    help="Set CPU affinity for running the benchmark, in format: 0 or 0,1,2 or 0-3. "
          "Default: not set"
 )
 @click.argument(
