@@ -1972,9 +1972,6 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
                 PyMem_RawFree(bad);
 
                 if (str == NULL) {
-                    PyErr_SetString(
-                        PyExc_UnicodeEncodeError, "Invalid character encountered during unicode encoding."
-                    );
                     return -1;
                 }
 

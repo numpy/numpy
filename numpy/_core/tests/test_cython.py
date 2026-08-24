@@ -374,6 +374,14 @@ def test_npystring_pack_invalid_utf8(install_temp):
     assert np.strings.find(bad, "z")[0] == -1
     assert np.strings.count(bad, "z")[0] == 0
 
+    # casts that hit the stored bytes report where they stop being UTF-8
+    assert checks.npystring_pack_invalid_utf8(bad, b"\xffbc") == 0
+    with pytest.raises(UnicodeDecodeError) as excinfo:
+        bad.astype("S3")
+    exc = excinfo.value
+    assert (exc.encoding, exc.object, exc.start, exc.end) == (
+        "utf-8", b"\xffbc", 0, 1)
+
 
 @pytest.mark.skipif(sysconfig.get_platform() == 'win-arm64',
                     reason='no checks module on win-arm64')
