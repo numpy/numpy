@@ -2838,6 +2838,21 @@ init_stringdtype_ufuncs(PyObject *umath)
         return -1;
     }
 
+    for (int i = 0; i < 2; i++) {
+        if (add_promoter(umath, minimum_maximum_names[i], rall_strings_promoter_dtypes, 3,
+                         all_strings_promoter) < 0) {
+            return -1;
+        }
+        if (add_promoter(umath, minimum_maximum_names[i], lall_strings_promoter_dtypes, 3,
+                         all_strings_promoter) < 0) {
+            return -1;
+        }
+        if (add_promoter(umath, minimum_maximum_names[i], out_strings_promoter_dtypes, 3,
+                         all_strings_promoter) < 0) {
+            return -1;
+        }
+    }
+
     INIT_MULTIPLY(Int64, int64);
     INIT_MULTIPLY(UInt64, uint64);
 
