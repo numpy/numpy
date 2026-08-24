@@ -14,7 +14,7 @@ np.linalg.inv(AR_O)  # type: ignore[type-var]
 np.linalg.pinv(AR_O)  # type: ignore[type-var]
 np.linalg.cholesky(AR_O)  # type: ignore[type-var]
 
-np.linalg.matrix_power(AR_M, 5)  # type: ignore[arg-type]
+np.linalg.matrix_power(AR_M, 5)  # type: ignore[type-var]
 
 np.linalg.eig(AR_O)  # type: ignore[arg-type]
 
