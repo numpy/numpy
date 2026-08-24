@@ -82,6 +82,7 @@ type _JustAnyShape = tuple[Never, ...]  # workaround for microsoft/pyright#10232
 
 type _tuple2[T] = tuple[T, T]
 type _Ax2 = SupportsIndex | _tuple2[SupportsIndex]
+type _TensorAxes = int | tuple[_ShapeLike, _ShapeLike]
 
 type _inexact32 = np.float32 | np.complex64
 type _inexact64 = np.float64 | np.complex128
@@ -95,9 +96,11 @@ type _to_complex = np.number | np.bool
 type _to_float64_co = np.float64 | np.float32 | np.float16 | _to_integer
 type _to_complex128_co = np.complex128 | np.complex64 | _to_float64_co
 
+type _Array0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]]
 type _Array1D[ScalarT: np.generic] = np.ndarray[_1D, np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[_2D, np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[_3D, np.dtype[ScalarT]]
+type _Array4D[ScalarT: np.generic] = np.ndarray[_4D, np.dtype[ScalarT]]
 type _Array3ND[ScalarT: np.generic] = np.ndarray[_AtLeast3D, np.dtype[ScalarT]]
 type _ArrayJustND[ScalarT: np.generic] = np.ndarray[_JustAnyShape, np.dtype[ScalarT]]
 
@@ -118,6 +121,7 @@ type _ArrayLike1ND2[ScalarT: np.generic, T] = _SupportsArray[_AtLeast1D, np.dtyp
 type _ArrayLike1D[ScalarT: np.generic] = _ArrayLike1D2[ScalarT, ScalarT]
 type _ArrayLike2D[ScalarT: np.generic] = _ArrayLike2D2[ScalarT, ScalarT]
 type _ArrayLike3D[ScalarT: np.generic] = _ArrayLike3D2[ScalarT, ScalarT]
+type _ArrayLike4D[ScalarT: np.generic] = _SupportsArray[_4D, np.dtype[ScalarT]] | _Sequence4D[ScalarT]
 
 type _ArrayLike1D2D[ScalarT: np.generic] = (  # 1d or 2d
     _SupportsArray[_1D | _2D, np.dtype[ScalarT]] | _Sequence1D2D[ScalarT]
@@ -185,6 +189,20 @@ _InexactT_co = TypeVar("_InexactT_co", bound=np.inexact, default=Any, covariant=
 _InexactOrArrayT_co = TypeVar("_InexactOrArrayT_co", bound=np.inexact | NDArray[np.inexact], default=Any, covariant=True)
 _ShapeT1_co = TypeVar("_ShapeT1_co", bound=_Shape, default=_AnyShape, covariant=True)
 _ShapeT2_co = TypeVar("_ShapeT2_co", bound=_Shape, default=_AnyShape, covariant=True)
+
+_AnyNumberT = TypeVar(
+    "_AnyNumberT",
+    np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64, np.uint64,
+    np.float16, np.float32, np.float64, np.longdouble, np.complex64, np.complex128, np.clongdouble,
+)  # fmt: skip
+# note that this doesn't include bool, int_, float64, and complex128, as those require special-casing overloads
+_AnyScalarT = TypeVar(
+    "_AnyScalarT",
+    np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.uint64,
+    np.float16, np.float32, np.longdouble, np.complex64, np.clongdouble,
+)  # fmt: skip
+_AnyRankT = TypeVar("_AnyRankT", _1D, _2D, _3D, _4D)
+_AnyRank2T = TypeVar("_AnyRank2T", _2D, _3D, _4D)
 
 # shape-typed variant of numpy._typing._SupportsArray
 @type_check_only
@@ -1751,26 +1769,98 @@ def vector_norm(
 def vector_norm(x: ArrayLike, /, *, axis: _Ax2 | None = None, keepdims: bool = False, ord: float | None = 2) -> Any: ...
 
 # keep in sync with numpy._core.numeric.tensordot (ignoring `/, *`)
-@overload
-def tensordot[ScalarT: np.number | np.timedelta64 | np.object_](
-    a: _ArrayLike[ScalarT], b: _ArrayLike[ScalarT], /, *, axes: int | tuple[_ShapeLike, _ShapeLike] = 2
-) -> NDArray[ScalarT]: ...
-@overload
+@overload  # ?d ~T, Nd ~T (workaround)
+def tensordot(  # noqa: UP047
+    a: _ArrayJustND[_AnyNumberT], b: _ArrayLike1ND[_AnyNumberT], /, *, axes: _TensorAxes = 2
+) -> NDArray[_AnyNumberT]: ...
+@overload  # Nd ~T, ?d ~T (workaround)
+def tensordot(  # noqa: UP047
+    a: _ArrayLike1ND[_AnyNumberT], b: _ArrayJustND[_AnyNumberT], /, *, axes: _TensorAxes = 2
+) -> NDArray[_AnyNumberT]: ...
+@overload  # ?d +bool, Nd +bool (workaround)
+def tensordot(a: _ArrayJustND[np.bool], b: _ArrayLikeBool_co, /, *, axes: _TensorAxes = 2) -> NDArray[np.bool]: ...
+@overload  # Nd +bool, ?d +bool (workaround)
+def tensordot(a: _ArrayLikeBool_co, b: _ArrayJustND[np.bool], /, *, axes: _TensorAxes = 2) -> NDArray[np.bool]: ...
+@overload  # ?d +i64, Nd +i64 (workaround)
+def tensordot(a: _ArrayJustND[_to_integer], b: _ArrayLikeInt_co, /, *, axes: _TensorAxes = 2) -> NDArray[np.int_ | Any]: ...
+@overload  # Nd +i64, ?d +i64 (workaround)
+def tensordot(a: _ArrayLikeInt_co, b: _ArrayJustND[_to_integer], /, *, axes: _TensorAxes = 2) -> NDArray[np.int_ | Any]: ...
+@overload  # ?d +f64, Nd +f64 (workaround)
 def tensordot(
-    a: _ArrayLikeBool_co, b: _ArrayLikeBool_co, /, *, axes: int | tuple[_ShapeLike, _ShapeLike] = 2
-) -> NDArray[np.bool]: ...
-@overload
-def tensordot(
-    a: _ArrayLikeInt_co, b: _ArrayLikeInt_co, /, *, axes: int | tuple[_ShapeLike, _ShapeLike] = 2
-) -> NDArray[np.int_ | Any]: ...
-@overload
-def tensordot(
-    a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co, /, *, axes: int | tuple[_ShapeLike, _ShapeLike] = 2
+    a: _ArrayJustND[_to_float64_co], b: _ArrayLikeFloat_co, /, *, axes: _TensorAxes = 2
 ) -> NDArray[np.float64 | Any]: ...
-@overload
+@overload  # Nd +f64, ?d +f64 (workaround)
 def tensordot(
-    a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co, /, *, axes: int | tuple[_ShapeLike, _ShapeLike] = 2
+    a: _ArrayLikeFloat_co, b: _ArrayJustND[_to_float64_co], /, *, axes: _TensorAxes = 2
+) -> NDArray[np.float64 | Any]: ...
+@overload  # ?d, Nd (fallback) (workaround)
+def tensordot(
+    a: _ArrayJustND[_to_complex], b: _ArrayLikeComplex_co, /, *, axes: _TensorAxes = 2
 ) -> NDArray[np.complex128 | Any]: ...
+@overload  # Nd, ?d (fallback) (workaround)
+def tensordot(
+    a: _ArrayLikeComplex_co, b: _ArrayJustND[_to_complex], /, *, axes: _TensorAxes = 2
+) -> NDArray[np.complex128 | Any]: ...
+@overload  # 1d ~T, 1d ~T, axes=0
+def tensordot(a: _ArrayLike1D[_AnyNumberT], b: _ArrayLike1D[_AnyNumberT], /, *, axes: L[0]) -> _Array2D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 1d ~T, 1d ~T, axes=1
+def tensordot(a: _ArrayLike1D[_AnyNumberT], b: _ArrayLike1D[_AnyNumberT], /, *, axes: L[1]) -> _Array0D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 1d ~T, 2d ~T, axes=0
+def tensordot(a: _ArrayLike1D[_AnyNumberT], b: _ArrayLike2D[_AnyNumberT], /, *, axes: L[0]) -> _Array3D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 1d ~T, 2d ~T, axes=1
+def tensordot(a: _ArrayLike1D[_AnyNumberT], b: _ArrayLike2D[_AnyNumberT], /, *, axes: L[1]) -> _Array1D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 1d ~T, 3d ~T, axes=0
+def tensordot(a: _ArrayLike1D[_AnyNumberT], b: _ArrayLike3D[_AnyNumberT], /, *, axes: L[0]) -> _Array4D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 1d ~T, 3d ~T, axes=1
+def tensordot(a: _ArrayLike1D[_AnyNumberT], b: _ArrayLike3D[_AnyNumberT], /, *, axes: L[1]) -> _Array2D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 2d ~T, 1d ~T, axes=0
+def tensordot(a: _ArrayLike2D[_AnyNumberT], b: _ArrayLike1D[_AnyNumberT], /, *, axes: L[0]) -> _Array3D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 2d ~T, 1d ~T, axes=1
+def tensordot(a: _ArrayLike2D[_AnyNumberT], b: _ArrayLike1D[_AnyNumberT], /, *, axes: L[1]) -> _Array1D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 2d ~T, 2d ~T, axes=0
+def tensordot(a: _ArrayLike2D[_AnyNumberT], b: _ArrayLike2D[_AnyNumberT], /, *, axes: L[0]) -> _Array4D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 2d ~T, 2d ~T, axes=1
+def tensordot(a: _ArrayLike2D[_AnyNumberT], b: _ArrayLike2D[_AnyNumberT], /, *, axes: L[1]) -> _Array2D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 2d ~T, 2d ~T, axes=2
+def tensordot(a: _ArrayLike2D[_AnyNumberT], b: _ArrayLike2D[_AnyNumberT], /, *, axes: L[2] = 2) -> _Array0D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 2d ~T, 3d ~T, axes=1
+def tensordot(a: _ArrayLike2D[_AnyNumberT], b: _ArrayLike3D[_AnyNumberT], /, *, axes: L[1]) -> _Array3D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 2d ~T, 3d ~T, axes=2
+def tensordot(a: _ArrayLike2D[_AnyNumberT], b: _ArrayLike3D[_AnyNumberT], /, *, axes: L[2] = 2) -> _Array1D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 2d ~T, 4d ~T, axes=2
+def tensordot(a: _ArrayLike2D[_AnyNumberT], b: _ArrayLike4D[_AnyNumberT], /, *, axes: L[2] = 2) -> _Array2D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 3d ~T, 1d ~T, axes=0
+def tensordot(a: _ArrayLike3D[_AnyNumberT], b: _ArrayLike1D[_AnyNumberT], /, *, axes: L[0]) -> _Array4D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 3d ~T, 1d ~T, axes=1
+def tensordot(a: _ArrayLike3D[_AnyNumberT], b: _ArrayLike1D[_AnyNumberT], /, *, axes: L[1]) -> _Array2D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 3d ~T, 2d ~T, axes=1
+def tensordot(a: _ArrayLike3D[_AnyNumberT], b: _ArrayLike2D[_AnyNumberT], /, *, axes: L[1]) -> _Array3D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 3d ~T, 2d ~T, axes=2
+def tensordot(a: _ArrayLike3D[_AnyNumberT], b: _ArrayLike2D[_AnyNumberT], /, *, axes: L[2] = 2) -> _Array1D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 3d ~T, 3d ~T, axes=1
+def tensordot(a: _ArrayLike3D[_AnyNumberT], b: _ArrayLike3D[_AnyNumberT], /, *, axes: L[1]) -> _Array4D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 3d ~T, 3d ~T, axes=2
+def tensordot(a: _ArrayLike3D[_AnyNumberT], b: _ArrayLike3D[_AnyNumberT], /, *, axes: L[2] = 2) -> _Array2D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 3d ~T, 4d ~T, axes=2
+def tensordot(a: _ArrayLike3D[_AnyNumberT], b: _ArrayLike4D[_AnyNumberT], /, *, axes: L[2] = 2) -> _Array3D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 4d ~T, 2d ~T, axes=2
+def tensordot(a: _ArrayLike4D[_AnyNumberT], b: _ArrayLike2D[_AnyNumberT], /, *, axes: L[2] = 2) -> _Array2D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 4d ~T, 3d ~T, axes=2
+def tensordot(a: _ArrayLike4D[_AnyNumberT], b: _ArrayLike3D[_AnyNumberT], /, *, axes: L[2] = 2) -> _Array3D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # 4d ~T, 4d ~T, axes=2
+def tensordot(a: _ArrayLike4D[_AnyNumberT], b: _ArrayLike4D[_AnyNumberT], /, *, axes: L[2] = 2) -> _Array4D[_AnyNumberT]: ...  # noqa: UP047
+@overload  # Nd ~T, Nd ~T
+def tensordot[ScalarT: np.number | np.timedelta64 | np.object_](
+    a: _ArrayLike[ScalarT], b: _ArrayLike[ScalarT], /, *, axes: _TensorAxes = 2
+) -> NDArray[ScalarT]: ...
+@overload  # Nd +bool, Nd +bool
+def tensordot(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co, /, *, axes: _TensorAxes = 2) -> NDArray[np.bool]: ...
+@overload  # Nd +i64, Nd +i64
+def tensordot(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co, /, *, axes: _TensorAxes = 2) -> NDArray[np.int_ | Any]: ...
+@overload  # Nd +f64, Nd +f64
+def tensordot(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co, /, *, axes: _TensorAxes = 2) -> NDArray[np.float64 | Any]: ...
+@overload  # fallback
+def tensordot(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co, /, *, axes: _TensorAxes = 2) -> NDArray[np.complex128 | Any]: ...
 
 #
 @overload  # out=
@@ -1780,31 +1870,31 @@ def multi_dot[ArrayT: np.ndarray](
     out: ArrayT,
 ) -> ArrayT: ...
 @overload  # ?d ~T (workaround)
-def multi_dot(
+def multi_dot(  # noqa: UP047
     arrays: Sequence[_ArrayJustND[_AnyNumberT]],
     *,
     out: None = None,
 ) -> NDArray[_AnyNumberT]: ...
 @overload  # 2d ~T, .., 2d ~T
-def multi_dot(
+def multi_dot(  # noqa: UP047
     arrays: Sequence[_Array2D[_AnyNumberT]],
     *,
     out: None = None,
 ) -> _Array2D[_AnyNumberT]: ...
 @overload  # 1d ~T, .., 2d ~T
-def multi_dot(
+def multi_dot(  # noqa: UP047
     arrays: tuple[_Array1D[_AnyNumberT], *tuple[_Array2D[_AnyNumberT], ...], _Array2D[_AnyNumberT]],
     *,
     out: None = None,
 ) -> _Array1D[_AnyNumberT]: ...
 @overload  # 2d ~T, .., 1d ~T
-def multi_dot(
+def multi_dot(  # noqa: UP047
     arrays: tuple[_Array2D[_AnyNumberT], *tuple[_Array2D[_AnyNumberT], ...], _Array1D[_AnyNumberT]],
     *,
     out: None = None,
 ) -> _Array1D[_AnyNumberT]: ...
 @overload  # ?d ~T
-def multi_dot(
+def multi_dot(  # noqa: UP047
     arrays: Sequence[_ArrayLike[_AnyNumberT]],
     *,
     out: None = None,
@@ -1939,22 +2029,6 @@ def outer(x1: _ToArrayComplex_1d, x2: _AsArrayC128_1d, /) -> _Array2D[np.complex
 def outer[ScalarT: np.number | np.object_](x1: _ArrayLike1D[ScalarT], x2: _ArrayLike1D[ScalarT], /) -> _Array2D[ScalarT]: ...
 @overload  # fallback
 def outer(x1: _ToArrayComplex_1d, x2: _ToArrayComplex_1d, /) -> _Array2D[Any]: ...
-
-# note that this doesn't include bool, int_, float64, and complex128, as those require special-casing overloads
-_AnyScalarT = TypeVar(
-    "_AnyScalarT",
-    np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.uint64,
-    np.float16, np.float32, np.longdouble, np.complex64, np.clongdouble,
-)  # fmt: skip
-
-_AnyNumberT = TypeVar(
-    "_AnyNumberT",
-    np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64, np.uint64,
-    np.float16, np.float32, np.float64, np.longdouble, np.complex64, np.complex128, np.clongdouble,
-)  # fmt: skip
-
-_AnyRankT = TypeVar("_AnyRankT", _1D, _2D, _3D, _4D)
-_AnyRank2T = TypeVar("_AnyRank2T", _2D, _3D, _4D)
 
 # NOTE: we use constraints instead of a `: np.number` bound, to prevent joins/unions
 # NOTE: we ignore UP047 because inlining `_AnyScalarT` would result in a lot of code duplication
