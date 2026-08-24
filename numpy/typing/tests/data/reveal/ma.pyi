@@ -61,6 +61,7 @@ MAR_into_subclass: IntoMaskedArraySubClass[np.float32]
 
 MAR_1d: np.ma.MaskedArray[tuple[int], np.dtype]
 AR_2d_f4: np.ndarray[tuple[int, int], np.dtype[np.float32]]
+MAR_0d_f4: np.ma.MaskedArray[tuple[()], np.dtype[np.float32]]
 MAR_1d_f4: np.ma.MaskedArray[tuple[int], np.dtype[np.float32]]
 MAR_2d_f4: np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]]
 MAR_3d_f4: np.ma.MaskedArray[tuple[int, int, int], np.dtype[np.float32]]
@@ -141,9 +142,9 @@ assert_type(MAR_f4.ptp(None, MAR_subclass), MaskedArraySubclassC)
 assert_type(MAR_b.argmin(), np.intp)
 assert_type(MAR_f4.argmin(), np.intp)
 assert_type(MAR_f4.argmin(fill_value=6.28318, keepdims=False), np.intp)
-assert_type(MAR_b.argmin(axis=0), MaskedArray[np.intp])
-assert_type(MAR_f4.argmin(axis=0), MaskedArray[np.intp])
-assert_type(MAR_b.argmin(keepdims=True), MaskedArray[np.intp])
+assert_type(MAR_b.argmin(axis=0), NDArray[np.intp] | Any)
+assert_type(MAR_f4.argmin(axis=0), NDArray[np.intp] | Any)
+assert_type(MAR_b.argmin(keepdims=True), NDArray[np.intp])
 assert_type(MAR_f4.argmin(out=MAR_subclass_i), MaskedArraySubclassI)
 assert_type(MAR_f4.argmin(None, None, out=MAR_subclass_i), MaskedArraySubclassI)
 
@@ -159,9 +160,9 @@ assert_type(np.ma.argmin(MAR_f4, None, None, out=MAR_subclass), MaskedArraySubcl
 assert_type(MAR_b.argmax(), np.intp)
 assert_type(MAR_f4.argmax(), np.intp)
 assert_type(MAR_f4.argmax(fill_value=6.28318, keepdims=False), np.intp)
-assert_type(MAR_b.argmax(axis=0), MaskedArray[np.intp])
-assert_type(MAR_f4.argmax(axis=0), MaskedArray[np.intp])
-assert_type(MAR_b.argmax(keepdims=True), MaskedArray[np.intp])
+assert_type(MAR_b.argmax(axis=0), NDArray[np.intp] | Any)
+assert_type(MAR_f4.argmax(axis=0), NDArray[np.intp] | Any)
+assert_type(MAR_b.argmax(keepdims=True), NDArray[np.intp])
 assert_type(MAR_f4.argmax(out=MAR_subclass_i), MaskedArraySubclassI)
 assert_type(MAR_f4.argmax(None, None, out=MAR_subclass_i), MaskedArraySubclassI)
 
@@ -350,7 +351,7 @@ assert_type(np.ma.filled(MAR_1d), np.ndarray[tuple[int], np.dtype])  # type: ign
 assert_type(MAR_b.repeat(3), np.ma.MaskedArray[tuple[int], np.dtype[np.bool]])
 assert_type(MAR_2d_f4.repeat(MAR_i8), np.ma.MaskedArray[tuple[int], np.dtype[np.float32]])
 assert_type(MAR_2d_f4.repeat(MAR_i8, axis=None), np.ma.MaskedArray[tuple[int], np.dtype[np.float32]])
-assert_type(MAR_2d_f4.repeat(MAR_i8, axis=0), MaskedArray[np.float32])
+assert_type(MAR_2d_f4.repeat(MAR_i8, axis=0), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
 
 assert_type(np.ma.allequal(AR_f4, MAR_f4), bool)
 assert_type(np.ma.allequal(AR_f4, MAR_f4, fill_value=False), bool)
@@ -1134,6 +1135,13 @@ assert_type(np.ma.hstack([MAR_2d_f4, MAR_2d_f4]), _MArray2D[np.float32])
 assert_type(np.ma.hstack([MAR_3d_f4, MAR_3d_f4]), _MArray3D[np.float32])
 assert_type(np.ma.hstack([MAR_3d_f4, MAR_3d_f4], dtype=np.int8), _MArray3D[np.int8])
 assert_type(np.ma.hstack([AR_LIKE_f, AR_LIKE_f]), MaskedArray[Any])
+
+assert_type(np.ma.column_stack([MAR_f4, MAR_f4]), MaskedArray[np.float32])
+assert_type(np.ma.column_stack([AR_LIKE_f, AR_LIKE_f]), MaskedArray[Any])
+assert_type(np.ma.column_stack([MAR_0d_f4, MAR_0d_f4]), _MArray2D[np.float32])
+assert_type(np.ma.column_stack([MAR_1d_f4, MAR_1d_f4]), _MArray2D[np.float32])
+assert_type(np.ma.column_stack([MAR_2d_f4, MAR_2d_f4]), _MArray2D[np.float32])
+assert_type(np.ma.column_stack([MAR_3d_f4, MAR_3d_f4]), _MArray3D[np.float32])
 
 assert_type(np.ma.stack([MAR_f4, MAR_f4]), MaskedArray[np.float32])
 assert_type(np.ma.stack([AR_f4, AR_f4]), MaskedArray[np.float32])

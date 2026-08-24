@@ -6989,6 +6989,15 @@ add_newdoc('numpy._core.numerictypes', 'number', ('__class_getitem__',
 
     """))
 
+add_newdoc('numpy._core.numerictypes', 'object_', ('__class_getitem__',
+    """
+    __class_getitem__($cls, item, /)
+    --
+
+    Return `~numpy.object_` itself, so that it remains usable as a dtype.
+
+    """))
+
 ##############################################################################
 #
 # Documentation for scalar type abstract base classes in type hierarchy

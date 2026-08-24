@@ -19,6 +19,25 @@ static inline int num_bytes_for_utf8_character(const unsigned char *c)
     return LENGTHS_LUT[c[0] >> 3];
 }
 
+// like num_bytes_for_utf8_character, but clamps the result to [1, max_bytes]
+// (0 if max_bytes is 0) so a walk over invalid UTF-8 cannot stall on a
+// malformed lead byte or advance past the end of the buffer
+static inline int
+num_bytes_for_utf8_character_bounded(const unsigned char *c, size_t max_bytes)
+{
+    if (max_bytes == 0) {
+        return 0;
+    }
+    int num_bytes = num_bytes_for_utf8_character(c);
+    if (num_bytes < 1) {
+        num_bytes = 1;
+    }
+    if ((size_t)num_bytes > max_bytes) {
+        num_bytes = (int)max_bytes;
+    }
+    return num_bytes;
+}
+
 NPY_NO_EXPORT const unsigned char*
 find_previous_utf8_character(const unsigned char *c, size_t nchar);
 

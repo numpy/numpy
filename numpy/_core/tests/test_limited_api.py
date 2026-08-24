@@ -197,8 +197,15 @@ def limited_api_module_names():
 
 
 def limited_api_cython_module_names():
-    return _module_names("limited_api_cython", _PY_ABI3_VERSIONS)
-
+    # see https://github.com/cython/cython/issues/7914
+    skip_3_11 = pytest.mark.skipif(
+        cython is not None
+        and _pep440.parse(cython_version) == _pep440.Version("3.3.0"),
+        reason="abi3 3.11 module is unimportable with Cython 3.3.0")
+    return [
+        pytest.param(name, marks=skip_3_11) if "_3_11_" in name else name
+        for name in _module_names("limited_api_cython", _PY_ABI3_VERSIONS)
+    ]
 
 @pytest.mark.skipif(
     not HAS_SUBPROCESSES, reason="platform cannot start subprocesses"

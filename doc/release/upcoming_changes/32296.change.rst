@@ -1,0 +1,4 @@
+* Casting a fixed-width byte string array (``np.bytes_``) to ``StringDType``
+  now raises ``TypeError`` when the bytes are not valid UTF-8. Previously the
+  invalid bytes were stored as-is and later caused undefined behavior in
+  string operations.

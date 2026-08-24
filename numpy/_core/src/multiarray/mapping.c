@@ -2813,7 +2813,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     }
 
     /* create new MapIter object */
-    mit = (PyArrayMapIterObject *)PyArray_malloc(
+    mit = (PyArrayMapIterObject *)PyObject_Malloc(
             sizeof(PyArrayMapIterObject) + sizeof(NPY_cast_info));
     if (mit == NULL) {
         Py_DECREF(intp_descr);
@@ -3463,7 +3463,7 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
     if (mit->extra_op_iter != NULL) {
         NpyIter_Deallocate(mit->extra_op_iter);
     }
-    PyArray_free(mit);
+    PyObject_Free(mit);
 }
 
 /*
@@ -3482,5 +3482,6 @@ NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type = {
     .tp_name = "numpy.mapiter",
     .tp_basicsize = sizeof(PyArrayMapIterObject),
     .tp_dealloc = (destructor)arraymapiter_dealloc,
+    .tp_free = PyObject_Free,
     .tp_flags = Py_TPFLAGS_DEFAULT,
 };

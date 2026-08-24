@@ -719,7 +719,7 @@ UNICODE_setitem(PyArray_Descr *descr, PyObject *op, char *ov)
     char *buffer;
     int aligned = npy_is_aligned(ov, NPY_ALIGNOF(Py_UCS4));
     if (!aligned) {
-        buffer = PyArray_malloc(num_bytes);
+        buffer = PyMem_RawMalloc(num_bytes);
         if (buffer == NULL) {
             Py_DECREF(temp);
             PyErr_NoMemory();
@@ -730,14 +730,14 @@ UNICODE_setitem(PyArray_Descr *descr, PyObject *op, char *ov)
         buffer = ov;
     }
     if (PyUnicode_AsUCS4(temp, (Py_UCS4 *)buffer, actual_len, 0) == NULL) {
-        PyArray_free(buffer);
+        PyMem_RawFree(buffer);
         Py_DECREF(temp);
         return -1;
     }
 
     if (!aligned) {
         memcpy(ov, buffer, num_bytes);
-        PyArray_free(buffer);
+        PyMem_RawFree(buffer);
     }
 
     /* Fill in the rest of the space with 0 */
@@ -2278,13 +2278,56 @@ STRING_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
 
 /* See common.h for the contract of this helper. */
 NPY_NO_EXPORT int
-raise_missing_copyswap(PyArray_Descr *dtype, int inplace_swap)
+can_substitute_copyswap(PyArray_Descr *dtype, int inplace_swap)
 {
-    (void)inplace_swap;
+    if (PyDataType_BYTEORDER(dtype) == NPY_IGNORE
+            && (inplace_swap || PyDataType_ISTRIVIALLYCOPYABLE(dtype))) {
+        return 1;
+    }
     npy_gil_error(PyExc_TypeError,
             "dtype %S does not implement copyswap",
             (PyObject *)dtype);
-    return -1;
+    return 0;
+}
+
+/*
+ * Keep the fallback as an operation rather than manufacturing a legacy
+ * function pointer whose itemsize can only be recovered from `arr`.
+ */
+static int
+copyswapn_or_fallback(PyArray_Descr *dtype,
+                      void *dst, npy_intp dstride,
+                      void *src, npy_intp sstride,
+                      npy_intp n, int swap, void *arr)
+{
+    PyArray_CopySwapNFunc *slot = PyDataType_GetArrFuncs(dtype)->copyswapn;
+    if (slot != NULL) {
+        slot(dst, dstride, src, sstride, n, swap, arr);
+        return 0;
+    }
+
+    if (!can_substitute_copyswap(dtype, src == NULL)) {
+        return -1;
+    }
+    _basic_copyn(dst, dstride, src, sstride, n, PyDataType_ELSIZE(dtype));
+    return 0;
+}
+
+static int
+copyswap_or_fallback(PyArray_Descr *dtype,
+                     void *dst, void *src, int swap, void *arr)
+{
+    PyArray_CopySwapFunc *slot = PyDataType_GetArrFuncs(dtype)->copyswap;
+    if (slot != NULL) {
+        slot(dst, src, swap, arr);
+        return 0;
+    }
+
+    if (!can_substitute_copyswap(dtype, src == NULL)) {
+        return -1;
+    }
+    _basic_copy(dst, src, PyDataType_ELSIZE(dtype));
+    return 0;
 }
 
 /* */
@@ -2317,14 +2360,12 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
             }
 
             dummy_fields.descr = new;
-            PyArray_CopySwapNFunc *copyswapn =
-                    PyDataType_GetArrFuncs(new)->copyswapn;
-            if (copyswapn == NULL && raise_missing_copyswap(new, src == NULL) < 0) {
+            if (copyswapn_or_fallback(
+                    new, dst+offset, dstride,
+                    (src != NULL ? src+offset : NULL), sstride,
+                    n, swap, dummy_arr) < 0) {
                 return;
             }
-            copyswapn(dst+offset, dstride,
-                      (src != NULL ? src+offset : NULL),
-                      sstride, n, swap, dummy_arr);
         }
         return;
     }
@@ -2365,7 +2406,12 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
 
         PyArray_CopySwapNFunc *copyswapn =
                 PyDataType_GetArrFuncs(new)->copyswapn;
-        if (copyswapn == NULL && raise_missing_copyswap(new, src == NULL) < 0) {
+        if (copyswapn == NULL) {
+            if (!can_substitute_copyswap(new, src == NULL)) {
+                return;
+            }
+            /* The whole subarray is trivially copyable, or this is a no-op. */
+            _basic_copyn(dst, dstride, src, sstride, n, descr->elsize);
             return;
         }
         num = descr->elsize / subitemsize;
@@ -2412,14 +2458,12 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
                 return;
             }
             dummy_fields.descr = new;
-            PyArray_CopySwapFunc *copyswap =
-                    PyDataType_GetArrFuncs(new)->copyswap;
-            if (copyswap == NULL && raise_missing_copyswap(new, src == NULL) < 0) {
+            if (copyswap_or_fallback(
+                    new, dst+offset,
+                    (src != NULL ? src+offset : NULL),
+                    swap, dummy_arr) < 0) {
                 return;
             }
-            copyswap(dst+offset,
-                     (src != NULL ? src+offset : NULL),
-                     swap, dummy_arr);
         }
         return;
     }
@@ -2456,7 +2500,12 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
 
         PyArray_CopySwapNFunc *copyswapn =
                 PyDataType_GetArrFuncs(new)->copyswapn;
-        if (copyswapn == NULL && raise_missing_copyswap(new, src == NULL) < 0) {
+        if (copyswapn == NULL) {
+            if (!can_substitute_copyswap(new, src == NULL)) {
+                return;
+            }
+            /* The whole subarray is trivially copyable, or this is a no-op. */
+            _basic_copy(dst, src, descr->elsize);
             return;
         }
         num = descr->elsize / subitemsize;
@@ -3399,7 +3448,7 @@ static int
 {
     npy_intp i;
     int elsize = PyArray_ITEMSIZE(aip);
-    @type@ *mp = (@type@ *)PyArray_malloc(elsize);
+    @type@ *mp = (@type@ *)PyMem_RawMalloc(elsize);
 
     if (mp == NULL) {
         return 0;
@@ -3413,7 +3462,7 @@ static int
             *max_ind = i;
         }
     }
-    PyArray_free(mp);
+    PyMem_RawFree(mp);
     return 0;
 }
 
@@ -3463,7 +3512,7 @@ static int
 {
     npy_intp i;
     int elsize = PyArray_ITEMSIZE(aip);
-    @type@ *mp = (@type@ *)PyArray_malloc(elsize);
+    @type@ *mp = (@type@ *)PyMem_RawMalloc(elsize);
 
     if (mp==NULL) return 0;
     memcpy(mp, ip, elsize);
@@ -3475,7 +3524,7 @@ static int
             *min_ind=i;
         }
     }
-    PyArray_free(mp);
+    PyMem_RawFree(mp);
     return 0;
 }
 
@@ -4011,7 +4060,7 @@ static NpyAuxData *
 _datetime_dtype_metadata_clone(NpyAuxData *data)
 {
     PyArray_DatetimeDTypeMetaData *newdata =
-        (PyArray_DatetimeDTypeMetaData *)PyArray_malloc(
+        (PyArray_DatetimeDTypeMetaData *)PyMem_RawMalloc(
                         sizeof(*newdata));
     if (newdata == NULL) {
         PyErr_NoMemory();
@@ -4032,7 +4081,7 @@ _create_datetime_metadata(NPY_DATETIMEUNIT base, int num)
     PyArray_DatetimeDTypeMetaData *data;
 
     /* Allocate memory for the metadata */
-    data = PyArray_malloc(sizeof(*data));
+    data = PyMem_RawMalloc(sizeof(*data));
     if (data == NULL) {
         PyErr_NoMemory();
         return NULL;
@@ -4040,7 +4089,7 @@ _create_datetime_metadata(NPY_DATETIMEUNIT base, int num)
 
     /* Initialize the base aux data */
     memset(data, 0, sizeof(PyArray_DatetimeDTypeMetaData));
-    data->base.free = (NpyAuxData_FreeFunc *)PyArray_free;
+    data->base.free = (NpyAuxData_FreeFunc *)PyMem_RawFree;
     data->base.clone = _datetime_dtype_metadata_clone;
 
     data->meta.base = base;

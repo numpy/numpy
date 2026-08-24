@@ -392,32 +392,24 @@ struct NpyAuxData_tag {
 #define NPY_ERR2(str) fprintf(stderr, str); fflush(stderr);
 
 /*
-* Macros to define how array, and dimension/strides data is
-* allocated. These should be made private
-*/
+ * These are soft-deprecated but are left for backward compatibility.
+ * Use PyMem_Raw APIs directly instead.
+ */
 
 #define NPY_USE_PYMEM 1
 
-
-#if NPY_USE_PYMEM == 1
-/* use the Raw versions which are safe to call with the GIL released */
 #define PyArray_malloc PyMem_RawMalloc
 #define PyArray_free PyMem_RawFree
 #define PyArray_realloc PyMem_RawRealloc
-#else
-#define PyArray_malloc malloc
-#define PyArray_free free
-#define PyArray_realloc realloc
-#endif
 
 /* Dimensions and strides */
 #define PyDimMem_NEW(size)                                         \
-    ((npy_intp *)PyArray_malloc(size*sizeof(npy_intp)))
+    ((npy_intp *)PyMem_RawMalloc(size*sizeof(npy_intp)))
 
-#define PyDimMem_FREE(ptr) PyArray_free(ptr)
+#define PyDimMem_FREE(ptr) PyMem_RawFree(ptr)
 
 #define PyDimMem_RENEW(ptr,size)                                   \
-        ((npy_intp *)PyArray_realloc(ptr,size*sizeof(npy_intp)))
+        ((npy_intp *)PyMem_RawRealloc(ptr,size*sizeof(npy_intp)))
 
 /* forward declaration */
 struct _PyArray_Descr;

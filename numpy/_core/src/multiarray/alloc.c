@@ -231,7 +231,7 @@ npy_free_cache_dim(void * p, npy_uintp sz)
         sz = 2;
     }
     _npy_free_cache(p, sz, NBUCKETS_DIM, dimcache,
-                    &PyArray_free);
+                    &PyMem_RawFree);
 }
 
 /* Similar to array_dealloc in arrayobject.c */

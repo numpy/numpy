@@ -2320,7 +2320,7 @@ def masked_object(x, value, copy=True, shrink=True):
     else:
         condition = umath.equal(np.asarray(x), value)
         mask = nomask
-    mask = mask_or(mask, make_mask(condition, shrink=shrink))
+    mask = mask_or(mask, make_mask(condition, shrink=shrink), shrink=shrink)
     return masked_array(x, mask=mask, copy=copy, fill_value=value)
 
 
