@@ -4956,7 +4956,7 @@ def trapezoid(y, x=None, dx=1.0, axis=-1):
     Integrate `y` (`x`) along each 1d slice on the given axis, compute
     :math:`\int y(x) dx`.
     When `x` is specified, this integrates along the parametric curve,
-    computing :math:`\int_t y(t) dt =
+    computing :math:`\int_x y(x(t)) dx =
     \int_t y(t) \left.\frac{dx}{dt}\right|_{x=x(t)} dt`.
 
     .. versionadded:: 2.0.0
