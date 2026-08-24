@@ -7,6 +7,7 @@ from numpy._typing import (
     _ArrayLikeFloat_co,
     _ArrayLikeObject_co,
     _FloatLike_co,
+    _Shape,
 )
 
 __all__ = ["fix", "isneginf", "isposinf"]
@@ -28,6 +29,8 @@ def fix[ArrayT: np.ndarray](x: _ArrayLikeFloat_co | _ArrayLikeObject_co, out: Ar
 @overload
 def isposinf(x: _FloatLike_co, out: None = None) -> np.bool: ...
 @overload
+def isposinf[ShapeT: _Shape](x: np.ndarray[ShapeT, np.dtype[np.floating | np.integer | np.bool]], out: None = None) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+@overload
 def isposinf(x: _ArrayLikeFloat_co, out: None = None) -> NDArray[np.bool]: ...
 @overload
 def isposinf[ArrayT: np.ndarray](x: _ArrayLikeFloat_co, out: ArrayT) -> ArrayT: ...
@@ -35,6 +38,8 @@ def isposinf[ArrayT: np.ndarray](x: _ArrayLikeFloat_co, out: ArrayT) -> ArrayT: 
 #
 @overload
 def isneginf(x: _FloatLike_co, out: None = None) -> np.bool: ...
+@overload
+def isneginf[ShapeT: _Shape](x: np.ndarray[ShapeT, np.dtype[np.floating | np.integer | np.bool]], out: None = None) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
 @overload
 def isneginf(x: _ArrayLikeFloat_co, out: None = None) -> NDArray[np.bool]: ...
 @overload

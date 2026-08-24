@@ -11,6 +11,9 @@ AR_LIKE_O: list[np.object_]
 
 AR_U: npt.NDArray[np.str_]
 
+AR_f8_1d: np.ndarray[tuple[int], np.dtype[np.float64]]
+AR_f8_2d: np.ndarray[tuple[int, int], np.dtype[np.float64]]
+
 assert_type(np.fix(AR_LIKE_b), npt.NDArray[np.floating])  # type: ignore[deprecated]
 assert_type(np.fix(AR_LIKE_u), npt.NDArray[np.floating])  # type: ignore[deprecated]
 assert_type(np.fix(AR_LIKE_i), npt.NDArray[np.floating])  # type: ignore[deprecated]
@@ -23,9 +26,13 @@ assert_type(np.isposinf(AR_LIKE_u), npt.NDArray[np.bool])
 assert_type(np.isposinf(AR_LIKE_i), npt.NDArray[np.bool])
 assert_type(np.isposinf(AR_LIKE_f), npt.NDArray[np.bool])
 assert_type(np.isposinf(AR_LIKE_f, out=AR_U), npt.NDArray[np.str_])
+assert_type(np.isposinf(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.isposinf(AR_f8_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
 
 assert_type(np.isneginf(AR_LIKE_b), npt.NDArray[np.bool])
 assert_type(np.isneginf(AR_LIKE_u), npt.NDArray[np.bool])
 assert_type(np.isneginf(AR_LIKE_i), npt.NDArray[np.bool])
 assert_type(np.isneginf(AR_LIKE_f), npt.NDArray[np.bool])
 assert_type(np.isneginf(AR_LIKE_f, out=AR_U), npt.NDArray[np.str_])
+assert_type(np.isneginf(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.isneginf(AR_f8_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
