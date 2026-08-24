@@ -2579,7 +2579,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     if isinstance(a, _gentype):
         # 2018-02-25, 1.15.0
         raise TypeError(
-            "Calling np.sum(generator) is deprecated."
+            "Calling np.sum(generator) is deprecated. "
             "Use np.sum(np.fromiter(generator)) or "
             "the python sum builtin instead.",
         )
