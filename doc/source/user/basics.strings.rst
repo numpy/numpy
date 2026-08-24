@@ -200,7 +200,8 @@ most useful when strings need to be memory-mapped in an ndarray or
 when a fixed-width string is needed for reading and writing to a
 columnar data format with a known maximum string length. The
 `numpy.bytes_` cast is most useful for string data that is known to
-contain UTF-8 encoded text, including ASCII text.
+contain only ASCII characters, as characters outside this range cannot
+be represented in a single byte in the UTF-8 encoding and are rejected.
 
 When converting an array to a fixed-width string dtype with an
 unspecified size using `numpy.ndarray.astype`, NumPy infers the size by
