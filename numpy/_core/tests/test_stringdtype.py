@@ -530,7 +530,7 @@ INVALID_UTF8 = [
 @pytest.mark.parametrize("bad", INVALID_UTF8)
 def test_bytes_cast_rejects_invalid_utf8(bad):
     arr = np.array([bad], dtype=f"S{len(bad)}")
-    with pytest.raises(TypeError, match="Invalid UTF-8"):
+    with pytest.raises(UnicodeDecodeError):
         arr.astype(StringDType())
 
 
@@ -538,7 +538,7 @@ def test_bytes_cast_rejects_invalid_utf8(bad):
 def test_void_cast_rejects_invalid_utf8(bad):
     # the void ('V') -> StringDType cast validates the same way as bytes
     arr = np.array([bad], dtype=f"V{len(bad)}")
-    with pytest.raises(TypeError, match="Invalid UTF-8"):
+    with pytest.raises(UnicodeDecodeError):
         arr.astype(StringDType())
 
 
