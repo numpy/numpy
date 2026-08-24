@@ -21,7 +21,7 @@ np.linalg.eig(AR_O)  # type: ignore[arg-type]
 np.linalg.eigh(AR_O)  # type: ignore[arg-type]
 np.linalg.eigh(AR_O, UPLO="bob")  # type: ignore[call-overload]
 
-np.linalg.qr(AR_O)  # type: ignore[type-var]
+np.linalg.qr(AR_O)  # type: ignore[arg-type]
 np.linalg.qr(AR_f8, mode="bob")  # type: ignore[call-overload]
 
 np.linalg.svd(AR_O)  # type: ignore[arg-type]
