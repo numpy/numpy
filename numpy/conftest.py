@@ -93,7 +93,7 @@ def pytest_addoption(parser):
                            "test suite. This can result to tests requiring "
                            "especially large amounts of memory to be skipped. "
                            "Equivalent to setting environment variable "
-                           "NPY_AVAILABLE_MEM. Default: determined"
+                           "NPY_AVAILABLE_MEM. Default: determined "
                            "automatically."))
 
 

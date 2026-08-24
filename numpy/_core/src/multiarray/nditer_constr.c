@@ -1427,7 +1427,7 @@ npyiter_check_reduce_ok_and_set_flags(
                     "result of a reduction");
             return 0;
         }
-        NPY_IT_DBG_PRINT("Iterator: Indicating that a reduction is"
+        NPY_IT_DBG_PRINT("Iterator: Indicating that a reduction is "
                          "occurring\n");
 
         NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;

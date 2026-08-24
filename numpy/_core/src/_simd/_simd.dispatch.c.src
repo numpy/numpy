@@ -244,7 +244,7 @@ simd__intrin_@intrin@_@sfx@(PyObject* NPY_UNUSED(self), PyObject *args)
     // overflow guard
     if (cur_seq_len < min_seq_len) {
         PyErr_Format(PyExc_ValueError,
-            "@intrin@_@sfx@(), according to provided stride %d, the"
+            "@intrin@_@sfx@(), according to provided stride %d, the "
             "minimum acceptable size of the required sequence is %d, given(%d)",
             stride, min_seq_len, cur_seq_len
         );

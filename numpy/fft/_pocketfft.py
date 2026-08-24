@@ -72,7 +72,7 @@ def _raw_fft(a, n, axis, is_real, is_forward, norm, out=None):
     elif norm == "forward":
         fct = reciprocal(n, dtype=real_dtype)
     else:
-        raise ValueError(f'Invalid norm value {norm}; should be "backward",'
+        raise ValueError(f'Invalid norm value {norm}; should be "backward", '
                          '"ortho" or "forward".')
 
     n_out = n

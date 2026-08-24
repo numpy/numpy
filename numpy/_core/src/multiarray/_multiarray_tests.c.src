@@ -2336,7 +2336,7 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"get_all_cast_information",
         get_all_cast_information,
         METH_NOARGS,
-        "Return a list with info on all available casts. Some of the info"
+        "Return a list with info on all available casts. Some of the info "
         "may differ for an actual cast if it uses value-based casting "
         "(flexible types)."},
     {"create_identity_hash",
