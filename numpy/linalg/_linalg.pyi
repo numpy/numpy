@@ -1771,29 +1771,59 @@ def tensordot(
 ) -> NDArray[np.complex128 | Any]: ...
 
 #
-@overload
+@overload  # out=
 def multi_dot[ArrayT: np.ndarray](
-    arrays: Iterable[_ArrayLikeComplex_co | _ArrayLikeObject_co | _ArrayLikeTD64_co], *, out: ArrayT,
+    arrays: Iterable[_ArrayLikeComplex_co | _ArrayLikeObject_co | _ArrayLikeTD64_co],
+    *,
+    out: ArrayT,
 ) -> ArrayT: ...
-@overload
-def multi_dot[
-    AnyScalarT: (
-        np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64, np.uint64,
-        np.float16, np.float32, np.float64, np.longdouble, np.complex64, np.complex128, np.clongdouble,
-        np.object_, np.timedelta64,
-    ),
-](arrays: Sequence[_ArrayLike[AnyScalarT]], *, out: None = None) -> NDArray[AnyScalarT]: ...
-@overload
+@overload  # ?d ~T (workaround)
+def multi_dot(
+    arrays: Sequence[_ArrayJustND[_AnyNumberT]],
+    *,
+    out: None = None,
+) -> NDArray[_AnyNumberT]: ...
+@overload  # 2d ~T, .., 2d ~T
+def multi_dot(
+    arrays: Sequence[_Array2D[_AnyNumberT]],
+    *,
+    out: None = None,
+) -> _Array2D[_AnyNumberT]: ...
+@overload  # 1d ~T, .., 2d ~T
+def multi_dot(
+    arrays: tuple[_Array1D[_AnyNumberT], *tuple[_Array2D[_AnyNumberT], ...], _Array2D[_AnyNumberT]],
+    *,
+    out: None = None,
+) -> _Array1D[_AnyNumberT]: ...
+@overload  # 2d ~T, .., 1d ~T
+def multi_dot(
+    arrays: tuple[_Array2D[_AnyNumberT], *tuple[_Array2D[_AnyNumberT], ...], _Array1D[_AnyNumberT]],
+    *,
+    out: None = None,
+) -> _Array1D[_AnyNumberT]: ...
+@overload  # ?d ~T
+def multi_dot(
+    arrays: Sequence[_ArrayLike[_AnyNumberT]],
+    *,
+    out: None = None,
+) -> NDArray[_AnyNumberT]: ...
+@overload  # ?d ~T
+def multi_dot[AnyScalarT: (np.object_, np.timedelta64)](
+    arrays: Sequence[_ArrayLike[AnyScalarT]],
+    *,
+    out: None = None,
+) -> NDArray[AnyScalarT]: ...
+@overload  # ?d +bool
 def multi_dot(arrays: Sequence[_ArrayLikeBool_co], *, out: None = None) -> NDArray[np.bool]: ...
-@overload
+@overload  # ?d +i64
 def multi_dot(arrays: Sequence[_ArrayLikeInt_co], *, out: None = None) -> NDArray[np.int64 | Any]: ...
-@overload
+@overload  # ?d +f64
 def multi_dot(arrays: Sequence[_ArrayLikeFloat_co], *, out: None = None) -> NDArray[np.float64 | Any]: ...
-@overload
+@overload  # ?d +c128
 def multi_dot(arrays: Sequence[_ArrayLikeComplex_co], *, out: None = None) -> NDArray[np.complex128 | Any]: ...
-@overload
+@overload  # ?d +timedelta64
 def multi_dot(arrays: Sequence[_ArrayLikeTD64_co], *, out: None = None) -> NDArray[np.timedelta64 | Any]: ...
-@overload
+@overload  # fallback
 def multi_dot[ScalarT: np.number | np.object_ | np.timedelta64](
     arrays: Sequence[_ArrayLike[ScalarT]], *, out: None = None
 ) -> NDArray[ScalarT]: ...

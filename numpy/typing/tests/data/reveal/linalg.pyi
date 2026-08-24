@@ -698,6 +698,17 @@ assert_type(np.linalg.multi_dot([AR_i8, AR_i8]), npt.NDArray[np.int64])
 assert_type(np.linalg.multi_dot([AR_f8, AR_f8]), npt.NDArray[np.float64])
 assert_type(np.linalg.multi_dot([AR_c16, AR_c16]), npt.NDArray[np.complex128])
 assert_type(np.linalg.multi_dot([AR_O, AR_O]), npt.NDArray[np.object_])
+assert_type(np.linalg.multi_dot([AR_i8_2d, AR_i8_2d]), _Array2D[np.int64])
+assert_type(np.linalg.multi_dot([AR_f4_2d, AR_f4_2d]), _Array2D[np.float32])
+assert_type(np.linalg.multi_dot([AR_f8_2d, AR_f8_2d, AR_f8_2d]), _Array2D[np.float64])
+assert_type(np.linalg.multi_dot([AR_c8_2d, AR_c8_2d]), _Array2D[np.complex64])
+assert_type(np.linalg.multi_dot([AR_c16_2d, AR_c16_2d]), _Array2D[np.complex128])
+assert_type(np.linalg.multi_dot((AR_f4_1d, AR_f4_2d)), _Array1D[np.float32])
+assert_type(np.linalg.multi_dot((AR_f8_1d, AR_f8_2d, AR_f8_2d)), _Array1D[np.float64])
+assert_type(np.linalg.multi_dot((AR_c16_1d, AR_c16_2d)), _Array1D[np.complex128])
+assert_type(np.linalg.multi_dot((AR_f4_2d, AR_f4_1d)), _Array1D[np.float32])
+assert_type(np.linalg.multi_dot((AR_f8_2d, AR_f8_2d, AR_f8_1d)), _Array1D[np.float64])
+assert_type(np.linalg.multi_dot((AR_c16_2d, AR_c16_1d)), _Array1D[np.complex128])
 # Mypy incorrectly infers `ndarray[Any, Any]`, but pyright behaves correctly.
 assert_type(np.linalg.multi_dot([AR_i8, AR_f8]), npt.NDArray[np.float64 | Any])  # type: ignore[assert-type]
 assert_type(np.linalg.multi_dot([AR_f8, AR_c16]), npt.NDArray[np.complex128 | Any])  # type: ignore[assert-type]
