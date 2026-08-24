@@ -112,14 +112,16 @@ type _Sequence1D2D[T] = Sequence[T] | _Sequence2D[T]
 type _ArrayLike1D2[ScalarT: np.generic, T] = _SupportsArray[_1D, np.dtype[ScalarT]] | Sequence[T]
 type _ArrayLike2D2[ScalarT: np.generic, T] = _SupportsArray[_2D, np.dtype[ScalarT]] | _Sequence2D[T]
 type _ArrayLike3D2[ScalarT: np.generic, T] = _SupportsArray[_3D, np.dtype[ScalarT]] | _Sequence3D[T]
+type _ArrayLike1ND2[ScalarT: np.generic, T] = _SupportsArray[_AtLeast1D, np.dtype[ScalarT]] | _NestedSequence[T]  # >=1d
 
 type _ArrayLike1D[ScalarT: np.generic] = _ArrayLike1D2[ScalarT, ScalarT]
-type _ArrayLike2D[ScalarT: np.generic] = _ArrayLike2D2[ScalarT, ScalarT]  # ==2d
+type _ArrayLike2D[ScalarT: np.generic] = _ArrayLike2D2[ScalarT, ScalarT]
+type _ArrayLike3D[ScalarT: np.generic] = _ArrayLike3D2[ScalarT, ScalarT]
+
 type _ArrayLike1D2D[ScalarT: np.generic] = (  # 1d or 2d
     _SupportsArray[_1D | _2D, np.dtype[ScalarT]] | _Sequence1D2D[ScalarT]
 )
-type _ArrayLike3D[ScalarT: np.generic] = _ArrayLike3D2[ScalarT, ScalarT]  # ==3d
-type _ArrayLike1ND[ScalarT: np.generic] = _SupportsArray[_AtLeast1D, np.dtype[ScalarT]] | _NestedSequence[ScalarT]  # >=1d
+type _ArrayLike1ND[ScalarT: np.generic] = _ArrayLike1ND2[ScalarT, ScalarT]  # >=1d
 type _ArrayLike2ND[ScalarT: np.generic] = _SupportsArray[_AtLeast2D, np.dtype[ScalarT]] | _Sequence2ND[ScalarT]  # >=2d
 type _ArrayLike3ND[ScalarT: np.generic] = _SupportsArray[_AtLeast3D, np.dtype[ScalarT]] | _Sequence3ND[ScalarT]  # >=3d
 type _ArrayLike4ND[ScalarT: np.generic] = _SupportsArray[_AtLeast4D, np.dtype[ScalarT]] | _Sequence4ND[ScalarT]  # >=3d
@@ -1682,85 +1684,116 @@ _AnyScalarT = TypeVar(
     np.float16, np.float32, np.longdouble, np.complex64, np.clongdouble,
 )  # fmt: skip
 
-# NOTE: we ignore UP047 because inlining `_AnyScalarT` would result in a lot of code duplication
+_AnyNumberT = TypeVar(
+    "_AnyNumberT",
+    np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64, np.uint64,
+    np.float16, np.float32, np.float64, np.longdouble, np.complex64, np.complex128, np.clongdouble,
+)  # fmt: skip
 
-#
-@overload  # ~T, ~T  (we use constraints instead of a `: np.number` bound to prevent joins/unions)
+_AnyRankT = TypeVar("_AnyRankT", _1D, _2D, _3D, tuple[int, int, int, int])
+
+# NOTE: we use constraints instead of a `: np.number` bound, to prevent joins/unions
+# NOTE: we ignore UP047 because inlining `_AnyScalarT` would result in a lot of code duplication
+@overload  # ?d ~T, ?d ~T (workaround)
 def cross(  # noqa: UP047
-    x1: _ArrayLike1D2D[_AnyScalarT],
-    x2: _ArrayLike1D2D[_AnyScalarT],
+    x1: _SupportsArray[_JustAnyShape, np.dtype[_AnyNumberT]],
+    x2: _ArrayLike1ND[_AnyNumberT],
     /,
     *,
     axis: SupportsIndex = -1,
-) -> NDArray[_AnyScalarT]: ...  # fmt: skip
-@overload  # ~int64, +int64
+) -> NDArray[_AnyNumberT]: ...
+@overload  # ?d ~T, ?d ~T (workaround)
+def cross(  # noqa: UP047
+    x1: _ArrayLike1ND[_AnyNumberT],
+    x2: _SupportsArray[_JustAnyShape, np.dtype[_AnyNumberT]],
+    /,
+    *,
+    axis: SupportsIndex = -1,
+) -> NDArray[_AnyNumberT]: ...
+@overload  # Nd ~T, Nd ~T
+def cross(  # noqa: UP047
+    x1: _SupportsArray[_AnyRankT, np.dtype[_AnyNumberT]],
+    x2: _SupportsArray[_AnyRankT, np.dtype[_AnyNumberT]],
+    /,
+    *,
+    axis: SupportsIndex = -1,
+) -> np.ndarray[_AnyRankT, np.dtype[_AnyNumberT]]: ...
+@overload  # ?d ~T, ?d ~T
+def cross(  # noqa: UP047
+    x1: _ArrayLike1ND[_AnyScalarT],
+    x2: _ArrayLike1ND[_AnyScalarT],
+    /,
+    *,
+    axis: SupportsIndex = -1,
+) -> NDArray[_AnyScalarT]: ...
+@overload  # ?d ~i64, ?d +i64
 def cross(
-    x1: _ArrayLike1D2D[np.int64] | _Sequence1D2D[int],
-    x2: _ArrayLike1D2D[np.integer] | _Sequence1D2D[int],
+    x1: _ArrayLike1ND2[np.int64, int],
+    x2: _ArrayLike1ND2[np.integer, int],
     /,
     *,
     axis: SupportsIndex = -1,
 ) -> NDArray[np.int64]: ...
-@overload  # +int64, ~int64
+@overload  # ?d +i64, ?d ~i64
 def cross(
-    x1: _ArrayLike1D2D[np.integer],
-    x2: _ArrayLike1D2D[np.int64],
+    x1: _ArrayLike1ND[np.integer],
+    x2: _ArrayLike1ND[np.int64],
     /,
     *,
     axis: SupportsIndex = -1,
 ) -> NDArray[np.int64]: ...
-@overload  # ~float64, +float64
+@overload  # ?d ~f64, ?d +f64
 def cross(
-    x1: _ArrayLike1D2D[np.float64] | _Sequence0D1D[list[float]],
-    x2: _ArrayLike1D2D[np.floating | np.integer] | _Sequence1D2D[float],
+    x1: _ArrayLike1ND2[np.float64, list[float]] | list[float],
+    x2: _ArrayLike1ND2[np.floating | np.integer, float],
     /,
     *,
     axis: SupportsIndex = -1,
 ) -> NDArray[np.float64]: ...
-@overload  # +float64, ~float64
+@overload  # ?d +f64, ?d ~f64
 def cross(
-    x1: _ArrayLike1D2D[np.floating | np.integer] | _Sequence1D2D[float],
-    x2: _ArrayLike1D2D[np.float64] | _Sequence0D1D[list[float]],
+    x1: _ArrayLike1ND2[np.floating | np.integer, float],
+    x2: _ArrayLike1ND2[np.float64, list[float]] | list[float],
     /,
     *,
     axis: SupportsIndex = -1,
 ) -> NDArray[np.float64]: ...
-@overload  # ~complex128, +complex128
+@overload  # ?d ~c128, ?d +c128
 def cross(
-    x1: _ArrayLike1D2D[np.complex128] | _Sequence0D1D[list[complex]],
-    x2: _ArrayLike1D2D[np.number] | _Sequence1D2D[complex],
+    x1: _ArrayLike1ND2[np.complex128, list[complex]] | list[complex],
+    x2: _ArrayLike1ND2[np.number, complex],
     /,
     *,
     axis: SupportsIndex = -1,
 ) -> NDArray[np.complex128]: ...
-@overload  # +complex128, ~complex128
+@overload  # ?d +c128, ?d ~c128
 def cross(
-    x1: _ArrayLike1D2D[np.number] | _Sequence1D2D[complex],
-    x2: _ArrayLike1D2D[np.complex128] | _Sequence0D1D[list[complex]],
+    x1: _ArrayLike1ND2[np.number, complex],
+    x2: _ArrayLike1ND2[np.complex128, list[complex]] | list[complex],
     /,
     *,
     axis: SupportsIndex = -1,
 ) -> NDArray[np.complex128]: ...
-@overload  # ~object_, +object_
+@overload  # ?d ~object, ?d +object
 def cross(
-    x1: _SupportsArray[tuple[int] | tuple[int, int], np.dtype[np.object_]],
-    x2: _ArrayLike1D2D[np.number | np.object_] | _Sequence1D2D[complex],
+    x1: _SupportsArray[_AtLeast1D, np.dtype[np.object_]],
+    x2: _ArrayLike1ND2[np.number | np.object_, complex],
     /,
     *,
     axis: SupportsIndex = -1,
 ) -> NDArray[np.object_]: ...
-@overload  # +object_, ~object_
+@overload  # ?d +object, ?d ~object
 def cross(
-    x1: _ArrayLike1D2D[np.number | np.object_] | _Sequence1D2D[complex],
-    x2: _SupportsArray[tuple[int] | tuple[int, int], np.dtype[np.object_]],
+    x1: _ArrayLike1ND2[np.number | np.object_, complex],
+    x2: _SupportsArray[_AtLeast1D, np.dtype[np.object_]],
     /,
     *,
     axis: SupportsIndex = -1,
 ) -> NDArray[np.object_]: ...
 @overload  # fallback
 def cross[ScalarT: np.number](
-    x1: _ArrayLike1D2D[ScalarT],
-    x2: _ArrayLike1D2D[ScalarT],
+    x1: _ArrayLike1ND[ScalarT],
+    x2: _ArrayLike1ND[ScalarT],
     /,
     *,
     axis: SupportsIndex = -1,
