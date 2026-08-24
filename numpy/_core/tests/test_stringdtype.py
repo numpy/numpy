@@ -918,8 +918,10 @@ def test_nonzero(strings, na_object):
 
     strings_with_na = np.array(strings + [na_object], dtype=dtype)
     is_nan = np.isnan(np.array([dtype.na_object], dtype=dtype))[0]
+    # a string sentinel null is truthy exactly when the sentinel is
+    is_truthy = is_nan or (isinstance(na_object, str) and na_object != "")
 
-    if is_nan:
+    if is_truthy:
         assert strings_with_na.nonzero()[0][-1] == 4
     else:
         assert strings_with_na.nonzero()[0][-1] == 3
@@ -2436,6 +2438,13 @@ def test_minimum_maximum_promote_fixed_width_and_str():
     fixed = np.array(["c", "c"])
     assert np.minimum(arr, fixed).tolist() == ["b", "c"]
     assert np.maximum(fixed, arr).dtype == StringDType()
+
+
+@pytest.mark.parametrize("na", ["", "x"])
+def test_string_na_cast_to_bool_matches_sentinel(na):
+    arr = np.array([na, "y"], dtype=StringDType(na_object=na))
+    assert arr.astype(bool).tolist() == [bool(na), True]
+    assert arr.nonzero()[0].tolist() == [i for i in range(2) if [na, "y"][i]]
 
 
 class TestImplementation:

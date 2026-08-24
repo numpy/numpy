@@ -484,15 +484,11 @@ nonzero(void *data, void *arr)
     int has_nan_na = descr->has_nan_na;
     int has_string_na = descr->has_string_na;
     if (has_null && NpyString_isnull((npy_packed_static_string *)data)) {
-        if (!has_string_na) {
-            if (has_nan_na) {
-                // numpy treats NaN as truthy, following python
-                return 1;
-            }
-            else {
-                return 0;
-            }
+        if (has_string_na) {
+            return descr->default_string.size != 0;
         }
+        // numpy treats NaN as truthy, following python
+        return has_nan_na;
     }
     return NpyString_size((npy_packed_static_string *)data) != 0;
 }

@@ -509,7 +509,7 @@ string_to_bool(PyArrayMethod_Context *context, char *const data[],
                 }
             }
             else {
-                *out = (npy_bool)(default_string->size == 0);
+                *out = (npy_bool)(default_string->size != 0);
             }
         }
         else if (s.size == 0) {
