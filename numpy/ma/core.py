@@ -8495,9 +8495,8 @@ def allequal(a, b, fill_value=True):
     Returns
     -------
     y : bool
-        Returns True if the two arrays are equal within the given
-        tolerance, False otherwise. If either array contains NaN,
-        then False is returned.
+        Returns True if the arrays are equal, False otherwise. If either
+        array contains NaN, then False is returned.
 
     See Also
     --------
