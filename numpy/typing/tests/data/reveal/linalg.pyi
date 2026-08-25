@@ -14,6 +14,7 @@ type _1D = tuple[int]
 type _2D = tuple[int, int]
 type _3D = tuple[int, int, int]
 
+type _Array0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]]
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
@@ -687,12 +688,50 @@ assert_type(np.linalg.vector_norm(AR_f8_3d, axis=(0, 1)), npt.NDArray[np.float64
 assert_type(np.linalg.vector_norm(AR_f8_4d, axis=0), npt.NDArray[np.float64])
 assert_type(np.linalg.vector_norm(AR_f8, axis=0), npt.NDArray[np.float64])
 
+# tensordot
+
 assert_type(np.linalg.tensordot(AR_b, AR_b), npt.NDArray[np.bool])
 assert_type(np.linalg.tensordot(AR_i8, AR_i8), npt.NDArray[np.int64])
 assert_type(np.linalg.tensordot(AR_f8, AR_f8), npt.NDArray[np.float64])
 assert_type(np.linalg.tensordot(AR_c16, AR_c16), npt.NDArray[np.complex128])
 assert_type(np.linalg.tensordot(AR_m, AR_m), npt.NDArray[np.timedelta64])
 assert_type(np.linalg.tensordot(AR_O, AR_O), npt.NDArray[np.object_[int]])
+
+assert_type(np.linalg.tensordot(AR_f8_1d, AR_f8_1d, axes=0), _Array2D[np.float64])
+assert_type(np.linalg.tensordot(AR_f8_1d, AR_f8_1d, axes=1), _Array0D[np.float64])
+assert_type(np.linalg.tensordot(AR_f8_1d, AR_f8_2d, axes=0), _Array3D[np.float64])
+assert_type(np.linalg.tensordot(AR_f8_1d, AR_f8_2d, axes=1), _Array1D[np.float64])
+assert_type(np.linalg.tensordot(AR_f8_1d, AR_f8_3d, axes=0), _Array4D[np.float64])
+assert_type(np.linalg.tensordot(AR_f8_1d, AR_f8_3d, axes=1), _Array2D[np.float64])
+
+assert_type(np.linalg.tensordot(AR_f8_2d, AR_f8_1d, axes=0), _Array3D[np.float64])
+assert_type(np.linalg.tensordot(AR_f8_2d, AR_f8_1d, axes=1), _Array1D[np.float64])
+assert_type(np.linalg.tensordot(AR_f8_2d, AR_f8_2d, axes=0), _Array4D[np.float64])
+assert_type(np.linalg.tensordot(AR_f8_2d, AR_f8_2d, axes=1), _Array2D[np.float64])
+assert_type(np.linalg.tensordot(AR_f8_2d, AR_f8_2d), _Array0D[np.float64])
+assert_type(np.linalg.tensordot(AR_f8_2d, AR_f8_3d, axes=1), _Array3D[np.float64])
+assert_type(np.linalg.tensordot(AR_f8_2d, AR_f8_3d), _Array1D[np.float64])
+assert_type(np.linalg.tensordot(AR_f8_2d, AR_f8_4d), _Array2D[np.float64])
+
+assert_type(np.linalg.tensordot(AR_f8_3d, AR_f8_1d, axes=0), _Array4D[np.float64])
+assert_type(np.linalg.tensordot(AR_f8_3d, AR_f8_1d, axes=1), _Array2D[np.float64])
+assert_type(np.linalg.tensordot(AR_f8_3d, AR_f8_2d, axes=1), _Array3D[np.float64])
+assert_type(np.linalg.tensordot(AR_f8_3d, AR_f8_2d), _Array1D[np.float64])
+assert_type(np.linalg.tensordot(AR_f8_3d, AR_f8_3d, axes=1), _Array4D[np.float64])
+assert_type(np.linalg.tensordot(AR_f8_3d, AR_f8_3d), _Array2D[np.float64])
+assert_type(np.linalg.tensordot(AR_f8_3d, AR_f8_4d), _Array3D[np.float64])
+
+assert_type(np.linalg.tensordot(AR_f8_4d, AR_f8_2d), _Array2D[np.float64])
+assert_type(np.linalg.tensordot(AR_f8_4d, AR_f8_3d), _Array3D[np.float64])
+assert_type(np.linalg.tensordot(AR_f8_4d, AR_f8_4d), _Array4D[np.float64])
+
+assert_type(np.linalg.tensordot(AR_i8_3d, AR_i8_3d), _Array2D[np.int64])
+assert_type(np.linalg.tensordot(AR_f4_3d, AR_f4_3d), _Array2D[np.float32])
+assert_type(np.linalg.tensordot(AR_f8_3d, AR_f8_3d), _Array2D[np.float64])
+assert_type(np.linalg.tensordot(AR_c8_3d, AR_c8_3d), _Array2D[np.complex64])
+assert_type(np.linalg.tensordot(AR_c16_3d, AR_c16_3d), _Array2D[np.complex128])
+
+# multi_dot
 
 assert_type(np.linalg.multi_dot([AR_i8, AR_i8]), npt.NDArray[np.int64])
 assert_type(np.linalg.multi_dot([AR_f8, AR_f8]), npt.NDArray[np.float64])
