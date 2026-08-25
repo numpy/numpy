@@ -15,6 +15,8 @@ AR_f4_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float32]]
 AR_f8: npt.NDArray[np.float64]
 AR_c16: npt.NDArray[np.complex128]
 AR_i8: npt.NDArray[np.int64]
+AR_b_nd: npt.NDArray[np.bool]
+AR_b_2d: np.ndarray[tuple[int, int], np.dtype[np.bool]]
 AR_u1: npt.NDArray[np.uint8]
 AR_m: npt.NDArray[np.timedelta64]
 AR_M: npt.NDArray[np.datetime64]
@@ -201,6 +203,13 @@ assert_type(np.where(AR_f4_1d), tuple[_Int1D])
 assert_type(np.where(AR_f4_2d), tuple[_Int1D, _Int1D])
 assert_type(np.where(AR_f4_3d), tuple[_Int1D, _Int1D, _Int1D])
 assert_type(np.where(AR_f4_nd), tuple[_Int1D, ...])
+assert_type(np.where(AR_b_2d, AR_f4_2d, AR_f4_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.where(AR_b_nd, AR_f8, AR_i8), npt.NDArray[np.float64])
+assert_type(np.where(AR_b_nd, AR_i8, AR_f8), npt.NDArray[np.float64])
+assert_type(np.where(AR_b_nd, AR_c16, AR_f8), npt.NDArray[np.complex128])
+assert_type(np.where(AR_b_nd, AR_f8, AR_c16), npt.NDArray[np.complex128])
+assert_type(np.where(AR_b_nd, AR_u1, AR_u1), npt.NDArray[np.uint8])
+assert_type(np.where(AR_b_nd, AR_f4_nd, AR_f4_nd), npt.NDArray[np.float32])
 assert_type(np.where([True, True, False], 1, 0), npt.NDArray[Any])
 
 assert_type(np.lexsort([0, 1, 2]), npt.NDArray[np.intp])
