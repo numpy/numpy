@@ -517,7 +517,8 @@ this to simplify the prototype implementation.
 Discussion
 ----------
 
-NumPy `issue #27701 <https://github.com/numpy/numpy/issues/27701>`__.
+* NumPy `issue #27701 <https://github.com/numpy/numpy/issues/27701>`__.
+* `Mailing list thread <https://mail.python.org/archives/list/numpy-discussion@python.org/thread/O4BIZE4YIYAS2SYOMXIENVS7BP2NNNWI/>`_
 
 Copyright
 ---------
