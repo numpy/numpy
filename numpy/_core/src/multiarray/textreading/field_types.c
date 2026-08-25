@@ -187,7 +187,7 @@ field_types_create(PyArray_Descr *descr, field_type **ft)
          * so it is an awkward corner case that probably never really worked.
          */
         PyErr_SetString(PyExc_TypeError,
-                "file reader does not support subarray dtypes.  You can"
+                "file reader does not support subarray dtypes.  You can "
                 "put the dtype into a structured one using "
                 "`np.dtype(('name', dtype))` to avoid this limitation.");
         return -1;
