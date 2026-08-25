@@ -41,6 +41,7 @@ from numpy.testing import (
     HAS_REFCOUNT,
     HAS_SUBPROCESSES,
     IS_64BIT,
+    IS_MUSL,
     IS_WASM,
     assert_,
     assert_allclose,
@@ -6757,6 +6758,10 @@ class TestIO:
                 monkeypatch.setattr(os, "dup", dup)
                 assert_raises(exc, np.fromfile, f)
 
+    @pytest.mark.skipif(
+        IS_WASM or IS_MUSL,
+        reason="musl and emscripten libc fdopen do not validate the fd",
+    )
     def test_fromfile_failed_fdopen_closes_dup(
             self, tmp_path, param_filename, monkeypatch):
         closed_fds = []

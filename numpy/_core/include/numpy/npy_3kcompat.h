@@ -122,8 +122,11 @@ npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
 #endif
     if (handle == NULL) {
         ret = PyObject_CallMethod(os, "close", "i", fd2);
-        Py_XDECREF(ret);
         Py_DECREF(os);
+        if (ret == NULL) {
+            PyErr_WriteUnraisable(NULL);
+        }
+        Py_XDECREF(ret);
         PyErr_SetString(PyExc_IOError,
                         "Getting a FILE* from a Python file object via "
                         "_fdopen failed. If you built NumPy, you probably "
