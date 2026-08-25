@@ -60,8 +60,10 @@ from numpy._typing import (
     _ArrayLike,
     _ArrayLikeBool_co,
     _ArrayLikeBytes_co,
+    _ArrayLikeComplex128_co,
     _ArrayLikeComplex_co,
     _ArrayLikeDT64_co,
+    _ArrayLikeFloat64_co,
     _ArrayLikeFloat_co,
     _ArrayLikeInt,
     _ArrayLikeInt_co,
@@ -183,6 +185,20 @@ __all__ = [
 ]
 
 _ArrayT_co = TypeVar("_ArrayT_co", bound=np.ndarray, default=np.ndarray, covariant=True)
+_AnyRankT = TypeVar(
+    "_AnyRankT",
+    tuple[()], tuple[int], tuple[int, int], tuple[int, int, int], tuple[int, int, int, int],
+)  # fmt: skip
+_AnyScalarT = TypeVar(
+    "_AnyScalarT",
+    np.bool,
+    np.int8, np.int16, np.int32, np.int64, np.intp,
+    np.uint8, np.uint16, np.uint32, np.uint64, np.uintp,
+    np.float16, np.float32, np.float64, np.longdouble,
+    np.complex64, np.complex128, np.clongdouble,
+    np.timedelta64, np.datetime64,
+    np.bytes_, np.str_, np.void, np.object_,
+)  # fmt: skip
 
 type _Array[ShapeT: _Shape, ScalarT: np.generic] = ndarray[ShapeT, dtype[ScalarT]]
 type _Array0D[ScalarT: np.generic] = ndarray[tuple[()], dtype[ScalarT]]
@@ -1364,21 +1380,39 @@ def dot(a: ArrayLike, b: ArrayLike, out: None = None) -> Incomplete: ...
 @overload
 def dot[OutT: np.ndarray](a: ArrayLike, b: ArrayLike, out: OutT) -> OutT: ...
 
-# keep in sync with `ma.core.where` and the 1-arg overloads with `_core.fromnumeric.nonzerp`
-@overload  # (?d)  (workaround)
+# keep in sync with `ma.core.where` and the 1-arg overloads with `_core.fromnumeric.nonzero`
+@overload  # ?d, None, None  (workaround)
 def where(condition: _ArrayJustND[Any], x: None = None, y: None = None, /) -> tuple[_Array1D[np.intp], ...]: ...
-@overload  # (1d)
+@overload  # 1d, None, None
 def where(condition: _ToArray1D[Any], x: None = None, y: None = None, /) -> tuple[_Array1D[np.intp]]: ...
-@overload  # (2d)
+@overload  # 2d, None, None
 def where(condition: _ToArray2D[Any], x: None = None, y: None = None, /) -> tuple[_Array1D[np.intp], _Array1D[np.intp]]: ...
-@overload  # (3d)
+@overload  # 3d, None, None
 def where(
     condition: _ToArray3D[Any], x: None = None, y: None = None, /
 ) -> tuple[_Array1D[np.intp], _Array1D[np.intp], _Array1D[np.intp]]: ...
-@overload  # (Nd)  (fallback)
+@overload  # Nd, None, None  (fallback)
 def where(condition: _ArrayLike[Any], x: None = None, y: None = None, /) -> tuple[_Array1D[np.intp], ...]: ...
-@overload
-def where(condition: ArrayLike, x: ArrayLike, y: ArrayLike, /) -> NDArray[Incomplete]: ...
+@overload  # ?d, ?d ~T, ?d ~T  (workaround)
+def where(  # noqa: UP047
+    condition: _ArrayJustND[np.bool], x: _ArrayLike[_AnyScalarT], y: _ArrayLike[_AnyScalarT], /
+) -> NDArray[_AnyScalarT]: ...
+@overload  # Nd, Nd ~T, Nd ~T
+def where(  # noqa: UP047
+    condition: _Array[_AnyRankT, np.bool], x: _Array[_AnyRankT, _AnyScalarT], y: _Array[_AnyRankT, _AnyScalarT], /
+) -> _Array[_AnyRankT, _AnyScalarT]: ...
+@overload  # Nd, ?d ~f64, ?d +f64
+def where(condition: ArrayLike, x: _ArrayLike[np.float64], y: _ArrayLikeFloat64_co, /) -> NDArray[np.float64]: ...
+@overload  # ?d, ?d +f64, ?d ~f64
+def where(condition: ArrayLike, x: _ArrayLikeFloat64_co, y: _ArrayLike[np.float64], /) -> NDArray[np.float64]: ...
+@overload  # ?d, ?d ~c128, ?d +c128
+def where(condition: ArrayLike, x: _ArrayLike[np.complex128], y: _ArrayLikeComplex128_co, /) -> NDArray[np.complex128]: ...
+@overload  # ?d, ?d +c128, ?d ~c128
+def where(condition: ArrayLike, x: _ArrayLikeComplex128_co, y: _ArrayLike[np.complex128], /) -> NDArray[np.complex128]: ...
+@overload  # ?d, ?d ~T, ?d ~T
+def where(condition: ArrayLike, x: _ArrayLike[_AnyScalarT], y: _ArrayLike[_AnyScalarT], /) -> NDArray[_AnyScalarT]: ...  # noqa: UP047
+@overload  # fallback
+def where(condition: ArrayLike, x: ArrayLike, y: ArrayLike, /) -> NDArray[Any]: ...
 
 #
 def lexsort(keys: ArrayLike, axis: SupportsIndex = -1) -> NDArray[intp]: ...
