@@ -327,7 +327,8 @@ assert_type(np.is_busday("2012"), np.bool)
 assert_type(np.is_busday(date_scalar), np.bool)
 assert_type(np.is_busday(["2012"]), npt.NDArray[np.bool])
 
-# NOTE: Mypy incorrectly infers `Any`, but pyright behaves correctly.
+# NOTE: Mypy incorrectly infers `Any` for the scalar case and `ndarray[Any, Any]` for the
+# shaped cases, but pyright behaves correctly.
 assert_type(np.datetime_as_string(M), np.str_)  # type: ignore[assert-type]
 assert_type(np.datetime_as_string(AR_M), npt.NDArray[np.str_])
 assert_type(np.datetime_as_string(AR_M_1d), np.ndarray[tuple[int], np.dtype[np.str_]])  # type: ignore[assert-type]
