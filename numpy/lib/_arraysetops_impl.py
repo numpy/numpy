@@ -806,7 +806,13 @@ def setxor1d(ar1, ar2, assume_unique=False):
 def _isin(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     # Ravel both arrays, behavior for the first array could be different
     ar1 = np.asarray(ar1).ravel()
-    ar2 = np.asarray(ar2).ravel()
+    ar2_array = np.asarray(ar2)
+    # Convert Python strings with the StringDType descriptor so trailing
+    # NUL characters are not lost to fixed-width Unicode inference.
+    if ar1.dtype.kind == "T" and ar2_array.dtype.kind == "U":
+        ar2 = np.asarray(ar2, dtype=ar1.dtype).ravel()
+    else:
+        ar2 = ar2_array.ravel()
 
     # Ensure that iteration through object arrays yields size-1 arrays
     if ar2.dtype == object:

@@ -343,6 +343,16 @@ class TestSetOps:
 
         assert_array_equal(c, ec)
 
+    def test_isin_stringdtype_trailing_null(self):
+        a = np.array(["a", "x\0"], dtype=StringDType())
+
+        assert_array_equal(isin(a, ["x\0"]), [False, True])
+        assert_array_equal(isin(a, ["x\0"], invert=True), [True, False])
+
+    def test_isin_stringdtype_does_not_coerce_non_string_needles(self):
+        no_coerce = np.array(["1"], dtype=StringDType(coerce=False))
+        assert_array_equal(isin(no_coerce, [1]), [False])
+
     @pytest.mark.parametrize("kind", [None, "sort", "table"])
     def test_isin_invert(self, kind):
         "Test isin's invert parameter"
