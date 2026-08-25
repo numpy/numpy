@@ -2634,13 +2634,14 @@ class TestFillingValues:
         a = array(['foo', 'bar', 'baz'], mask=False, fill_value='N/A')
         result = np.strings.find(a, 'foo')
 
-        assert_equal(result.dtype, np.dtype(np.int64))
-        assert_equal(result.fill_value, default_fill_value(np.int64(0)))
+        # np.strings.find returns the platform default int dtype
+        assert_(result.dtype.kind == 'i')
+        assert_equal(result.fill_value, default_fill_value(result.dtype))
 
         # Accessing .view() used to raise a TypeError here because the
-        # stale string fill_value could not be cast to the new int64 dtype.
+        # stale string fill_value could not be cast to the new dtype.
         viewed = result.view(MaskedArray)
-        assert_equal(viewed.fill_value, default_fill_value(np.int64(0)))
+        assert_equal(viewed.fill_value, default_fill_value(result.dtype))
 
     def test_fillvalue_bytes_or_str(self):
         # Test whether fill values work as expected for structured dtypes
