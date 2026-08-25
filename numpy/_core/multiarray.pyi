@@ -2402,7 +2402,7 @@ def datetime_as_string(
 ) -> str_: ...
 @overload
 def datetime_as_string[ShapeT: tuple[int, *tuple[int, ...]]](
-    arr: ndarray[ShapeT, dtype[datetime64]],
+    arr: ndarray[ShapeT, dtype[datetime64[Any]]],
     unit: L["auto"] | _UnitKind | None = None,
     timezone: _TimezoneContext = "naive",
     casting: _CastingKind = "same_kind",
