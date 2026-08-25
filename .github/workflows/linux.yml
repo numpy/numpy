@@ -146,7 +146,7 @@ jobs:
       run: |
         pip install -r requirements/build_requirements.txt
         pip install -r requirements/test_requirements.txt
-    - name: Install gfortran and setup OpenBLAS (MacPython build)
+    - name: Install gfortran and setup OpenBLAS 32 bits
       run: |
         set -xe
         sudo apt update
