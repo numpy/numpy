@@ -144,9 +144,9 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
 
     #
     @overload  # type: ignore[override]
-    def __eq__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...
+    def __eq__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...  # pyrefly: ignore[bad-override]
     @overload
-    def __eq__(self: _CharArray[bytes_], other: S_co, /) -> NDArray[np.bool]: ...
+    def __eq__(self: _CharArray[bytes_], other: S_co, /) -> NDArray[np.bool]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     #
     @overload  # type: ignore[override]

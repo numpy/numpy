@@ -6096,6 +6096,17 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def __iter__(self, /) -> Iterator[Any]: ...
 
     #
+    @override  # type: ignore[override]
+    @overload  # 0d
+    def __eq__[ShapeT: _Shape](
+        self: ndarray[ShapeT, Any],
+        other: _ScalarLike_co | ndarray[ShapeT, Any],
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # ?d
+    def __eq__(self, other: object, /) -> NDArray[bool_]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
     @overload  # 0d +number
     def __lt__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[number | bool_]],
