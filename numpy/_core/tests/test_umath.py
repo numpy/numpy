@@ -17,6 +17,7 @@ from numpy._core import _umath_tests as ncu_tests, sctypes
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_MUSL,
+    IS_PYPY,
     IS_WASM,
     _gen_alignment_data,
     assert_,
@@ -5208,6 +5209,7 @@ class TestReplaceLoopBySignature:
 
 class TestAddDocstring:
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
     def test_add_same_docstring(self):
         # test for attributes (which are C-level defined)
         ncu.add_docstring(np.ndarray.flat, np.ndarray.flat.__doc__)
