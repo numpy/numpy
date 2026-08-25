@@ -2401,6 +2401,13 @@ def datetime_as_string(
     casting: _CastingKind = "same_kind",
 ) -> str_: ...
 @overload
+def datetime_as_string[ShapeT: _AnyShape](
+    arr: ndarray[ShapeT, dtype[datetime64]],
+    unit: L["auto"] | _UnitKind | None = None,
+    timezone: _TimezoneContext = "naive",
+    casting: _CastingKind = "same_kind",
+) -> ndarray[ShapeT, dtype[str_]]: ...
+@overload
 def datetime_as_string(
     arr: _ArrayLikeDT64_co | _NestedSequence[dt.date],
     unit: L["auto"] | _UnitKind | None = None,
