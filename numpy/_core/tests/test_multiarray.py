@@ -41,6 +41,7 @@ from numpy.testing import (
     HAS_REFCOUNT,
     HAS_SUBPROCESSES,
     IS_64BIT,
+    IS_MUSL,
     IS_WASM,
     assert_,
     assert_allclose,
@@ -6756,6 +6757,23 @@ class TestIO:
             for dup, exc in ((dup_str, TypeError), (dup_bigint, OSError)):
                 monkeypatch.setattr(os, "dup", dup)
                 assert_raises(exc, np.fromfile, f)
+
+    @pytest.mark.skipif(
+        IS_WASM or IS_MUSL,
+        reason="musl and emscripten libc fdopen do not validate the fd",
+    )
+    def test_fromfile_failed_fdopen_closes_dup(
+            self, tmp_path, param_filename, monkeypatch):
+        closed_fds = []
+        tmp_filename = normalize_filename(tmp_path, param_filename)
+
+        monkeypatch.setattr(os, "dup", lambda fd: -2)
+        monkeypatch.setattr(os, "close", closed_fds.append)
+
+        with open(tmp_filename, "wb") as f:
+            assert_raises(OSError, np.fromfile, f)
+
+        assert closed_fds == [-2]
 
     def _check_from(self, s, value, filename, **kw):
         if 'sep' not in kw:
