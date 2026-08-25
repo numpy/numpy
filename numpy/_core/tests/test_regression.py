@@ -2670,3 +2670,19 @@ class TestRegression:
         x = np.array([(0, 1.)], dtype=[('time', '<i8'), ('value', '<f8')])
         y = np.array((0, 0.), dtype=[('time', '<i8'), ('value', '<f8')])
         x.searchsorted(y)
+
+    def test_array_finalize_repr_recursion(self):
+        # gh-8509: repr() of an array with ndim > 1 used to index into it,
+        # and indexing creates a view, which calls __array_finalize__ on
+        # that view. Calling repr() inside __array_finalize__ (as the
+        # subclassing docs long did) therefore recursed until
+        # RecursionError: repr(parent) -> parent[0] -> finalize(view) ->
+        # repr(parent) -> ...
+        class ReprFinalize(np.ndarray):
+            def __array_finalize__(self, obj):
+                repr(self)
+                repr(obj)
+
+        arr = np.arange(10.0).reshape(5, 2).view(ReprFinalize)
+        assert type(arr) is ReprFinalize
+        repr(arr)
