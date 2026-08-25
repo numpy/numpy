@@ -226,7 +226,25 @@ conveniently be installed with::
 Tests for a module should ideally cover all code in that module,
 i.e., statement coverage should be at 100%.
 
-To measure the test coverage, run::
+Coverage for the Python and the compiled C sources is collected by separate
+tools, but both can be measured in a single ``spin test`` invocation.
+First install the coverage tools along with NumPy's test requirements::
+
+    $ python -m pip install coverage gcovr -r requirements/test_requirements.txt
+
+Then rebuild with C coverage instrumentation and run the tests, generating both
+reports at once::
+
+    $ spin build --clean --gcov
+    $ spin test --coverage --gcov
+
+The Python report is written to ``build/coverage`` and the C report to
+``build/meson-logs/coveragereport``.
+
+Python coverage
+~~~~~~~~~~~~~~~
+
+To measure the coverage of NumPy's Python sources, run::
 
   $ spin test --coverage
 
@@ -234,6 +252,41 @@ This will create a report in ``html`` format at ``build/coverage``, which can be
 viewed with your browser, e.g.::
 
   $ firefox build/coverage/index.html
+
+The report format is selected with ``pytest-cov``'s ``--cov-report`` option,
+passed through after ``--``, which defaults to ``html``. It can be given more
+than once, e.g. to additionally print a terminal summary and write an XML
+report to a custom location::
+
+  $ spin test --coverage -- --cov-report=term --cov-report=xml:$PWD/coverage.xml
+
+See the `pytest-cov <https://pytest-cov.readthedocs.io/>`__ and `coverage.py
+<https://coverage.readthedocs.io/>`__ documentation for the available report
+formats and options.
+
+C coverage
+~~~~~~~~~~
+
+Measuring the coverage of NumPy's compiled C sources with ``gcov`` requires a
+build with coverage instrumentation, so rebuild first with::
+
+  $ spin build --clean --gcov
+
+Then run the tests with ``--gcov``::
+
+  $ spin test --gcov
+
+This runs the tests and writes the HTML report to
+``build/meson-logs/coveragereport``.
+
+The report format is selected with ``--gcov-format``, which defaults to
+``html``::
+
+  $ spin test --gcov --gcov-format=text
+
+See the `gcovr <https://gcovr.com/>`__ documentation for the available formats.
+Generating a C coverage report requires ``gcovr`` to be installed; ``spin``
+reports if it is missing.
 
 .. _building-docs:
 
