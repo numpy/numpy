@@ -530,10 +530,14 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
 
 /*
  * Concatenates a list of ndarrays, flattening each in the specified order.
+ * If `op`, the sequence `arrays` were converted from, is given, any exact
+ * Python str in it is converted again with the result descriptor so that
+ * trailing nulls survive.
  */
 NPY_NO_EXPORT PyArrayObject *
 PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
-                                   NPY_ORDER order, PyArrayObject *ret,
+                                   NPY_ORDER order, PyObject *op,
+                                   PyArrayObject *ret,
                                    PyArray_Descr *dtype, NPY_CASTING casting)
 {
     int iarrays;
@@ -600,6 +604,16 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         descr = NULL;
         if (ret == NULL) {
             return NULL;
+        }
+    }
+
+    if (op != NULL) {
+        for (iarrays = 0; iarrays < narrays; ++iarrays) {
+            if (npy_update_operand_if_pystr(&arrays[iarrays], op, iarrays,
+                                            PyArray_DESCR(ret), casting) < 0) {
+                Py_DECREF(ret);
+                return NULL;
+            }
         }
     }
 
@@ -692,7 +706,6 @@ PyArray_ConcatenateInto(PyObject *op,
         PyErr_NoMemory();
         return NULL;
     }
-    int any_pystr = 0;
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
         PyObject *item = PySequence_GetItem(op, iarrays);
         if (item == NULL) {
@@ -706,36 +719,13 @@ PyArray_ConcatenateInto(PyObject *op,
             goto fail;
         }
         npy_mark_tmp_array_if_pyscalar(item, arrays[iarrays], NULL);
-        any_pystr |= npy_mark_tmp_array_if_pystr(item, arrays[iarrays]);
+        npy_mark_tmp_array_if_pystr(item, arrays[iarrays]);
         Py_DECREF(item);
-    }
-
-    /* Explicit axes reject the 0-d str before resolving a descriptor */
-    if (any_pystr && axis == NPY_RAVEL_AXIS) {
-        PyArray_Descr *target = PyArray_FindConcatenationDescriptor(
-                narrays, arrays, ret != NULL ? PyArray_DESCR(ret) : dtype);
-        if (target == NULL) {
-            goto fail;
-        }
-        for (iarrays = 0; iarrays < narrays; ++iarrays) {
-            if (!(PyArray_FLAGS(arrays[iarrays]) & NPY_ARRAY_WAS_PYTHON_STR)) {
-                continue;
-            }
-            PyObject *item = PySequence_GetItem(op, iarrays);
-            if (item == NULL || npy_update_operand_for_pystr(
-                    &arrays[iarrays], item, target, casting) < 0) {
-                Py_XDECREF(item);
-                Py_DECREF(target);
-                goto fail;
-            }
-            Py_DECREF(item);
-        }
-        Py_DECREF(target);
     }
 
     if (axis == NPY_RAVEL_AXIS) {
         ret = PyArray_ConcatenateFlattenedArrays(
-                narrays, arrays, NPY_CORDER, ret, dtype,
+                narrays, arrays, NPY_CORDER, op, ret, dtype,
                 casting);
     }
     else {
@@ -744,7 +734,7 @@ PyArray_ConcatenateInto(PyObject *op,
     }
 
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
-        Py_DECREF(arrays[iarrays]);
+        Py_XDECREF(arrays[iarrays]);
     }
     PyMem_RawFree(arrays);
 
@@ -753,7 +743,7 @@ PyArray_ConcatenateInto(PyObject *op,
 fail:
     /* 'narrays' was set to how far we got in the conversion */
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
-        Py_XDECREF(arrays[iarrays]);
+        Py_DECREF(arrays[iarrays]);
     }
     PyMem_RawFree(arrays);
 

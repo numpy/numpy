@@ -2032,14 +2032,9 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
     for (i = 0; i < n; i++) {
         int flags = NPY_ARRAY_CARRAY;
 
-        if (PyArray_FLAGS(mps[i]) & NPY_ARRAY_WAS_PYTHON_STR) {
-            PyObject *item = PySequence_GetItem(op, i);
-            if (item == NULL || npy_update_operand_for_pystr(
-                    &mps[i], item, common_descr, NPY_SAFE_CASTING) < 0) {
-                Py_XDECREF(item);
-                goto fail;
-            }
-            Py_DECREF(item);
+        if (npy_update_operand_if_pystr(&mps[i], op, i,
+                                        common_descr, NPY_SAFE_CASTING) < 0) {
+            goto fail;
         }
 
         PyArrayObject *tmp = mps[i];

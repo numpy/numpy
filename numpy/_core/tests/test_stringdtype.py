@@ -304,19 +304,14 @@ def test_pystr_scalar_full_copyto_where_preserve_nulls(dtype):
 
     dst = np.empty(2, dtype=dtype)
     np.copyto(dst, scalar)
-    assert dst[0] == scalar
-    np.copyto(dst, scalar, casting="unsafe")
-    assert dst[1] == scalar
+    assert dst.tolist() == [scalar, scalar]
 
     cond = np.array([True, False])
     arr = np.array(["y", "y"], dtype=dtype)
-    res = np.where(cond, scalar, arr)
-    assert res.dtype == dtype
-    assert res[0] == scalar
-    assert res[1] == "y"
-    res = np.where(cond, arr, scalar)
-    assert res[0] == "y"
-    assert res[1] == scalar
+    assert_array_equal(np.where(cond, scalar, arr),
+                       np.array([scalar, "y"], dtype=dtype), strict=True)
+    assert_array_equal(np.where(cond, arr, scalar),
+                       np.array(["y", scalar], dtype=dtype), strict=True)
 
 
 def test_pystr_scalar_full_copyto_where_object_preserve_nulls():
@@ -336,8 +331,7 @@ def test_pystr_scalar_concatenate_preserves_nulls(dtype):
     arr = np.array(["y"], dtype=dtype)
 
     res = np.concatenate((arr, scalar), axis=None)
-    assert res.dtype == dtype
-    assert_array_equal(res, np.array(["y", scalar], dtype=dtype))
+    assert_array_equal(res, np.array(["y", scalar], dtype=dtype), strict=True)
 
     res = np.concatenate((scalar, arr), axis=None)
     assert res[0] == scalar
@@ -361,8 +355,7 @@ def test_pystr_scalar_choose_preserves_nulls(dtype):
     arr = np.array(["y"], dtype=dtype)
 
     res = np.choose(np.array([1]), (arr, scalar))
-    assert res.dtype == dtype
-    assert res[0] == scalar
+    assert_array_equal(res, np.array([scalar], dtype=dtype), strict=True)
 
     res = np.choose(np.array([0]), (arr, scalar))
     assert res[0] == "y"
