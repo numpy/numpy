@@ -605,6 +605,25 @@ class TestMisc:
         tgt = np.array([-1j * np.sqrt(2), 1j * np.sqrt(2)])
         tgt.sort()
         assert_almost_equal(res, tgt)
+        # regression: for real coefficients, a complex-conjugate pair
+        # of roots must be an *exact* conjugate pair (Vieta's sum and
+        # product of roots are both real, which only holds for an
+        # exact conjugate pair) - deriving the second root from the
+        # first via the product-of-roots relation instead of building
+        # both from the same real/imaginary parts previously left them
+        # off by 1 ulp, which also flipped their sort order.
+        res = poly.polyroots([1, 1, 1])
+        assert_(res[0] == np.conj(res[1]))
+        assert_(res[0].imag < 0)
+        # same conjugate-pair/ordering guarantee with a negative
+        # leading coefficient: the sign of that coefficient flips the
+        # sign of the imaginary part computed from it, so a fix that
+        # only checks the disc<0 case above without also normalizing
+        # that sign could satisfy it while still ordering this case
+        # wrong.
+        res = poly.polyroots([-1, 0, -1])
+        assert_(res[0] == np.conj(res[1]))
+        assert_(res[0].imag < 0)
         # complex coefficients always give complex output
         c = [1 + 1j, 0, 1]
         res = poly.polyroots(c)
