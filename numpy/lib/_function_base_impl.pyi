@@ -450,7 +450,9 @@ def average(
 
 #
 @overload
-def asarray_chkfinite[ArrayT: np.ndarray](a: ArrayT, dtype: None = None, order: _OrderKACF = None) -> ArrayT: ...
+def asarray_chkfinite[ShapeT: _Shape, ScalarT: np.generic](
+    a: np.ndarray[ShapeT, np.dtype[ScalarT]], dtype: None = None, order: _OrderKACF = None
+) -> _Array[ShapeT, ScalarT]: ...
 @overload
 def asarray_chkfinite[ShapeT: _Shape, ScalarT: np.generic](
     a: np.ndarray[ShapeT], dtype: _DTypeLike[ScalarT], order: _OrderKACF = None
