@@ -2629,8 +2629,7 @@ class TestFillingValues:
     def test_fillvalue_after_dtype_changing_ufunc(self):
         # Test that a fill_value which no longer matches the dtype of the
         # result of a ufunc (because the ufunc changed the dtype) is reset
-        # to the default for the new dtype, rather than being propagated
-        # unchanged and later causing errors (e.g. in .view()). See gh-32330.
+        # to the default for the new dtype.
         a = array(['foo', 'bar', 'baz'], mask=False, fill_value='N/A')
         result = np.strings.find(a, 'foo')
 
@@ -2638,8 +2637,6 @@ class TestFillingValues:
         assert_(result.dtype.kind == 'i')
         assert_equal(result.fill_value, default_fill_value(result.dtype))
 
-        # Accessing .view() used to raise a TypeError here because the
-        # stale string fill_value could not be cast to the new dtype.
         viewed = result.view(MaskedArray)
         assert_equal(viewed.fill_value, default_fill_value(result.dtype))
 
