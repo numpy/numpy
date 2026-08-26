@@ -5156,9 +5156,11 @@ static int module_loaded = 0;
 
 /*
  * The module state is never torn down: the static types and the PyArray_API
- * table keep using objects it holds. These slots are no-ops so an unbalanced
- * Py_DECREF cannot clear it either.
+ * table keep using objects it holds.  Hence the 1 branch, where the slots are
+ * no-ops so an unbalanced Py_DECREF cannot clear the state either.  Switch to
+ * 0 once the state can be torn down.
  */
+#if 1
 static int
 multiarray_umath_traverse(PyObject *NPY_UNUSED(m), visitproc NPY_UNUSED(visit),
                           void *NPY_UNUSED(arg))
@@ -5176,8 +5178,7 @@ static void
 multiarray_umath_free(void *NPY_UNUSED(m))
 {
 }
-
-#if 0  /* restore once the module state can be torn down */
+#else
 static int
 multiarray_umath_traverse(PyObject *m, visitproc visit, void *arg)
 {
@@ -5246,7 +5247,7 @@ multiarray_umath_free(void *m)
     multiarray_umath_clear((PyObject *)m);
     _npy_module_state = NULL;
 }
-#endif  /* 0 */
+#endif
 
 static int
 _multiarray_umath_exec(PyObject *m) {
