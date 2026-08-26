@@ -6096,6 +6096,40 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def __iter__(self, /) -> Iterator[Any]: ...
 
     #
+    @override
+    @overload  # 0d | Nd
+    def __eq__[ShapeT: _Shape](
+        self: ndarray[ShapeT, Any],
+        other: _ScalarLike_co | ndarray[ShapeT, Any],
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # ?d
+    def __eq__(
+        self,
+        other: ndarray[Any, Any] | _NestedSequence[_ScalarLike_co],
+        /,
+    ) -> NDArray[bool_]: ...
+    @overload  # fallback
+    def __eq__(self, other: object, /) -> Any: ...
+
+    #
+    @override
+    @overload  # 0d | Nd
+    def __ne__[ShapeT: _Shape](
+        self: ndarray[ShapeT, Any],
+        other: _ScalarLike_co | ndarray[ShapeT, Any],
+        /,
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # ?d
+    def __ne__(
+        self,
+        other: ndarray[Any, Any] | _NestedSequence[_ScalarLike_co],
+        /,
+    ) -> NDArray[bool_]: ...
+    @overload  # fallback
+    def __ne__(self, other: object, /) -> Any: ...
+
+    #
     @overload  # 0d +number
     def __lt__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[number | bool_]],

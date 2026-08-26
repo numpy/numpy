@@ -2429,6 +2429,15 @@ def test_accumulation(string_array, tile):
         assert_array_equal(res, res_obj.astype(arr.dtype), strict=True)
 
 
+def test_minimum_maximum_promote_fixed_width_and_str():
+    arr = np.array(["b", "y"], dtype=StringDType())
+    assert np.minimum(arr, "c\x00").tolist() == ["b", "c\x00"]
+    assert np.maximum(arr, "c\x00").tolist() == ["c\x00", "y"]
+    fixed = np.array(["c", "c"])
+    assert np.minimum(arr, fixed).tolist() == ["b", "c"]
+    assert np.maximum(fixed, arr).dtype == StringDType()
+
+
 class TestImplementation:
     """Check that strings are stored in the arena when possible.
 
