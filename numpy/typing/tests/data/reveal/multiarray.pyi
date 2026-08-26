@@ -20,6 +20,8 @@ AR_b_2d: np.ndarray[tuple[int, int], np.dtype[np.bool]]
 AR_u1: npt.NDArray[np.uint8]
 AR_m: npt.NDArray[np.timedelta64]
 AR_M: npt.NDArray[np.datetime64]
+AR_M_1d: np.ndarray[tuple[int], np.dtype[np.datetime64]]
+AR_M_2d: np.ndarray[tuple[int, int], np.dtype[np.datetime64]]
 AR_O_nd: npt.NDArray[np.object_[int]]
 AR_O_1d: np.ndarray[tuple[int], np.dtype[np.object_[int]]]
 AR_O_2d: np.ndarray[tuple[int, int], np.dtype[np.object_[int]]]
@@ -325,9 +327,13 @@ assert_type(np.is_busday("2012"), np.bool)
 assert_type(np.is_busday(date_scalar), np.bool)
 assert_type(np.is_busday(["2012"]), npt.NDArray[np.bool])
 
-# NOTE: Mypy incorrectly infers `Any`, but pyright behaves correctly.
+# NOTE: Mypy incorrectly infers `Any` for the scalar case and `ndarray[Any, Any]` for the
+# shaped cases, but pyright behaves correctly.
 assert_type(np.datetime_as_string(M), np.str_)  # type: ignore[assert-type]
 assert_type(np.datetime_as_string(AR_M), npt.NDArray[np.str_])
+assert_type(np.datetime_as_string(AR_M_1d), np.ndarray[tuple[int], np.dtype[np.str_]])  # type: ignore[assert-type]
+assert_type(np.datetime_as_string(AR_M_2d), np.ndarray[tuple[int, int], np.dtype[np.str_]])  # type: ignore[assert-type]
+assert_type(np.datetime_as_string(date_seq), npt.NDArray[np.str_])
 
 assert_type(np.busdaycalendar(holidays=date_seq), np.busdaycalendar)
 assert_type(np.busdaycalendar(holidays=[M]), np.busdaycalendar)
