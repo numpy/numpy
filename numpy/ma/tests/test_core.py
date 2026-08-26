@@ -2701,6 +2701,31 @@ class TestUfuncs:
         assert_equal(test.mask, control.mask)
         assert_(not isinstance(test.mask, MaskedArray))
 
+    def test_dtype_changing_ufunc_does_not_inherit_invalid_fill_value(self):
+        # gh-32401: when a ufunc changes the output dtype (e.g.
+        # np.strings.find maps a string array to int64 positions), the
+        # result inherited the input's raw _fill_value without checking
+        # that it is still valid for the new dtype.  The inconsistent
+        # state only surfaced later, when a .view() re-ran
+        # _check_fill_value via __array_finalize__ and raised.
+        col = masked_array(['foo', 'bar', 'baz'], mask=False,
+                           fill_value='N/A')
+        result = np.strings.find(col, 'foo')
+        assert_equal(result, [0, -1, -1])
+        # The string fill_value is invalid for the int64 result; it must
+        # not be carried over silently.
+        assert_(result._fill_value is None)
+        # Previously raised TypeError: Cannot convert fill_value
+        # N/A to dtype int64
+        result.view(MaskedArray)
+
+    def test_dtype_changing_ufunc_keeps_convertible_fill_value(self):
+        # A fill value that IS valid for the new dtype must survive the
+        # dtype change (converted), not be discarded.
+        col = masked_array(['foo', 'bar'], mask=False, fill_value=7)
+        result = np.strings.find(col, 'o')
+        assert_equal(result._fill_value.item(), 7)
+
     def test_treatment_of_NotImplemented(self):
         # Check that NotImplemented is returned at appropriate places
 

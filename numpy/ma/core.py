@@ -3152,6 +3152,21 @@ class MaskedArray(ndarray):
         else:
             result = obj.view(type(self))
             result._update_from(self)
+            if (result._fill_value is not None
+                    and result.dtype != self.dtype):
+                # The ufunc changed the dtype of the output relative to the
+                # input, so a fill_value copied over from `self` may no
+                # longer be valid (e.g., a string fill_value on an integer
+                # result). Revalidate it now instead of leaving the output
+                # in an inconsistent state that only surfaces later, when
+                # something calls `.view()` and __array_finalize__ runs
+                # _check_fill_value (gh-32401).
+                try:
+                    fill = _check_fill_value(result._fill_value,
+                                             result.dtype)
+                except (TypeError, ValueError):
+                    fill = None
+                result._fill_value = fill
 
         if context is not None:
             result._mask = result._mask.copy()
