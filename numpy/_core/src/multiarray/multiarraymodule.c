@@ -530,9 +530,9 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
 
 /*
  * Concatenates a list of ndarrays, flattening each in the specified order.
- * If `op`, the sequence `arrays` were converted from, is given, any exact
- * Python str in it is converted again with the result descriptor so that
- * trailing nulls survive.
+ * `op` is the sequence `arrays` were converted from; any exact Python str in
+ * it is converted again with the result descriptor so that trailing nulls
+ * survive.
  */
 NPY_NO_EXPORT PyArrayObject *
 PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
@@ -607,16 +607,6 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         }
     }
 
-    if (op != NULL) {
-        for (iarrays = 0; iarrays < narrays; ++iarrays) {
-            if (npy_update_operand_if_pystr(&arrays[iarrays], op, iarrays,
-                                            PyArray_DESCR(ret), casting) < 0) {
-                Py_DECREF(ret);
-                return NULL;
-            }
-        }
-    }
-
     /*
      * Create a view which slides through ret for assigning the
      * successive input arrays.
@@ -629,6 +619,13 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
     }
 
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
+        if (npy_update_operand_if_pystr(&arrays[iarrays], op, iarrays,
+                                        PyArray_DESCR(ret), casting) < 0) {
+            Py_DECREF(sliding_view);
+            Py_DECREF(ret);
+            return NULL;
+        }
+
         /* Adjust the window dimensions for this array */
         sliding_view->dimensions[0] = PyArray_SIZE(arrays[iarrays]);
 
