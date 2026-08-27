@@ -2475,6 +2475,9 @@ _multiarray_tests_exec(PyObject *m)
     if (init_argparse_mutex() < 0) {
         return -1;
     }
+    if (init_import_mutex() < 0) {
+        return -1;
+    }
     if (PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load _multiarray_tests module.");
