@@ -7121,7 +7121,9 @@ def minmax(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
                  mask=[False, False],
            fill_value=1e+20)
     """
-    out_min, out_max = out if type(out) is tuple else (None, None)
+    if out is not None and (type(out) is not tuple or len(out) != 2):
+        raise TypeError("'out' must be a tuple of two arrays")
+    out_min, out_max = out if out is not None else (None, None)
     return (min(obj, axis=axis, out=out_min, fill_value=fill_value,
                 keepdims=keepdims),
             max(obj, axis=axis, out=out_max, fill_value=fill_value,

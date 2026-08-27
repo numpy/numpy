@@ -2800,8 +2800,8 @@ class TestMinimumMaximum(_FilterInvalids):
 
     def test_reduce_identity(self):
         # no identity, so an empty reduction needs an explicit initial value
-        assert_raises(ValueError, ncu.minimummaximum.reduce,
-                      np.array([], dtype=np.float64))
+        with pytest.raises(ValueError):
+            ncu.minimummaximum.reduce(np.array([], dtype=np.float64))
         lo, hi = ncu.minimummaximum.reduce(
             np.array([], dtype=np.float64), initial=(np.inf, -np.inf))
         assert_equal((lo, hi), (np.inf, -np.inf))

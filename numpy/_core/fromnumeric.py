@@ -3566,8 +3566,8 @@ def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     try:
         return _wrapreduction(a, um.minimummaximum, 'minmax', axis, None, out,
                               keepdims, initial, where)
-    except TypeError:
-        out_min, out_max = out if type(out) is tuple else (None, None)
+    except np._core._exceptions._UFuncNoLoopError:
+        out_min, out_max = out if out is not None else (None, None)
         initial_min, initial_max = (initial if type(initial) is tuple
                                     else (initial, initial))
         return (min(a, axis=axis, out=out_min, keepdims=keepdims,

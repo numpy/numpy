@@ -1428,6 +1428,12 @@ class TestMaskedArrayArithmetic:
         assert_equal(out1, min(xm, axis=0))
         assert_equal(out2, max(xm, axis=0))
 
+        # `out` must be a tuple of two arrays, not silently ignored
+        with pytest.raises(TypeError):
+            minmax(xm, out=out1)
+        with pytest.raises(TypeError):
+            minmax(xm, out=(out1,))
+
     def test_minmax_methods(self):
         # Additional tests on max/min
         xm = self._create_data()[5]
