@@ -1747,8 +1747,8 @@ gentype_struct_free(PyObject *ptr)
     }
     Py_XDECREF(context);
     Py_XDECREF(arrif->descr);
-    PyArray_free(arrif->shape);
-    PyArray_free(arrif);
+    PyMem_RawFree(arrif->shape);
+    PyMem_RawFree(arrif);
 }
 
 static PyObject *
@@ -1759,7 +1759,7 @@ gentype_struct_get(PyObject *self, void *NPY_UNUSED(ignored))
     PyObject *ret;
 
     arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
-    inter = (PyArrayInterface *)PyArray_malloc(sizeof(PyArrayInterface));
+    inter = (PyArrayInterface *)PyMem_RawMalloc(sizeof(PyArrayInterface));
     inter->two = 2;
     inter->nd = 0;
     inter->flags = PyArray_FLAGS(arr);
@@ -2173,21 +2173,83 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
         char *data;
         PyArray_Descr *descr;
         PyObject *new;
-        char *newmem;
 
         descr = PyArray_DescrFromScalar(self);
         data = (void *)scalar_value(self, descr);
-
-        newmem = PyMem_Malloc(descr->elsize);
-        if (newmem == NULL) {
+        if (data == NULL) {
+            if (PyErr_Occurred()) {
+                /* e.g. allocating the unicode scalar's UCS4 buffer failed */
+                Py_DECREF(descr);
+                return NULL;
+            }
+            /*
+             * Zero-sized void scalars have no data to swap; return an
+             * equivalent empty scalar.  PyArray_Scalar does not read data
+             * when descr->elsize is 0.
+             */
+            assert(descr->elsize == 0);
+            PyObject *ret = PyArray_Scalar(data, descr, NULL);
             Py_DECREF(descr);
-            return PyErr_NoMemory();
+            return ret;
+        }
+
+        /*
+         * The scalar is rebuilt by copying into fresh memory, so this is not
+         * a pure in-place swap: inplace_swap is 0 and only a dtype whose
+         * value is exactly its bytes can stand in for a missing slot.  The
+         * copy is inlined rather than fetched as a function because there is
+         * no array here to pass to it.
+         */
+        PyArray_CopySwapFunc *copyswap =
+                PyDataType_GetArrFuncs(descr)->copyswap;
+        if (copyswap == NULL && !can_substitute_copyswap(descr, 0)) {
+            Py_DECREF(descr);
+            return NULL;
+        }
+
+        if (PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
+            /*
+             * NPY_NEEDS_INIT means copyswap reads the destination before it
+             * writes it so the buffer cannot be a bare malloc.  This is
+             * equivalent to np.array([scalar]).byteswap()[0].
+             */
+            Py_INCREF(descr);
+            PyArrayObject *tmp = (PyArrayObject *)PyArray_NewFromDescr_int(
+                    &PyArray_Type, descr, 0, NULL, NULL, NULL, 0, NULL, NULL,
+                    _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
+            if (tmp == NULL) {
+                Py_DECREF(descr);
+                return NULL;
+            }
+            copyswap(PyArray_DATA(tmp), data, 1, tmp);
+            new = PyArray_Scalar(PyArray_DATA(tmp), descr, (PyObject *)tmp);
+            Py_DECREF(tmp);
         }
         else {
-            PyDataType_GetArrFuncs(descr)->copyswap(newmem, data, 1, NULL);
+            char *newmem = PyMem_Calloc(1, descr->elsize);
+            if (newmem == NULL) {
+                Py_DECREF(descr);
+                return PyErr_NoMemory();
+            }
+            if (PyDataType_ISFLEXIBLE(descr)) {
+                /*
+                 * Need a dummy array because these types use it to access the
+                 * descriptor. This is much faster than the heap-allocated
+                 * temp array path that dtypes with embedded objects need.
+                 */
+                PyArrayObject_fields dummy_fields;
+                memset(&dummy_fields, 0, sizeof(dummy_fields));
+                dummy_fields.descr = descr;
+                dummy_fields.flags = NPY_ARRAY_ALIGNED | NPY_ARRAY_C_CONTIGUOUS |
+                                     NPY_ARRAY_F_CONTIGUOUS;
+                copyswap(newmem, data, 1, (PyArrayObject *)&dummy_fields);
+            }
+            else {
+                copyswap(newmem, data, 1, NULL);
+            }
+            new = PyArray_Scalar(newmem, descr, NULL);
+            PyMem_Free(newmem);
         }
-        new = PyArray_Scalar(newmem, descr, NULL);
-        PyMem_Free(newmem);
         Py_DECREF(descr);
         return new;
     }
@@ -2504,6 +2566,13 @@ numbertype_class_getitem(PyObject *cls, PyObject *args)
                  "There are no type variables left in %s",
                  ((PyTypeObject *)cls)->tp_name);
     return NULL;
+}
+
+/* Returns `np.object_` itself, so that e.g. `np.object_[str]` stays dtype-like */
+static PyObject *
+objecttype_class_getitem(PyObject *cls, PyObject *NPY_UNUSED(args))
+{
+    return Py_NewRef(cls);
 }
 
 /*
@@ -2912,6 +2981,14 @@ static PyMethodDef @name@type_methods[] = {
     {NULL, NULL, 0, NULL} /* sentinel */
 };
 /**end repeat**/
+
+static PyMethodDef objecttype_methods[] = {
+    /* for typing */
+    {"__class_getitem__",
+        (PyCFunction)objecttype_class_getitem,
+        METH_CLASS | METH_O, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
 
 /**begin repeat
  * #name = cfloat,clongdouble#
@@ -4511,6 +4588,8 @@ initialize_numeric_types(void)
     PyVoidArrType_Type.tp_as_sequence = &voidtype_as_sequence;
     PyVoidArrType_Type.tp_repr = voidtype_repr;
     PyVoidArrType_Type.tp_str = voidtype_str;
+
+    PyObjectArrType_Type.tp_methods = objecttype_methods;
 
     PyIntegerArrType_Type.tp_getset = inttype_getsets;
 

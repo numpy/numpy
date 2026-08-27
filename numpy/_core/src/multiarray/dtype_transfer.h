@@ -32,6 +32,7 @@ NPY_context_init(PyArrayMethod_Context *context, PyArray_Descr *descr[2])
     context->caller = NULL;
     context->_reserved = NULL;
     context->flags = 0;
+    context->parameters = NULL;
 }
 
 /*

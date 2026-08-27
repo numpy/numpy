@@ -1742,7 +1742,7 @@ npyiter_allocate_buffers(NpyIter *iter, char **errmsg)
             buffer = NULL;
             if (!npy_mul_sizes_with_overflow(
                         &alloc_size, itemsize, buffersize)) {
-                buffer = PyArray_malloc(alloc_size);
+                buffer = PyMem_RawMalloc(alloc_size);
             }
             if (buffer == NULL) {
                 if (errmsg == NULL) {
@@ -1765,7 +1765,7 @@ npyiter_allocate_buffers(NpyIter *iter, char **errmsg)
 fail:
     for (i = 0; i < iop; ++i) {
         if (buffers[i] != NULL) {
-            PyArray_free(buffers[i]);
+            PyMem_RawFree(buffers[i]);
             buffers[i] = NULL;
         }
     }

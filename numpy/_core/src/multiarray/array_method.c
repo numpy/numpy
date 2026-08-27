@@ -181,7 +181,7 @@ validate_spec(PyArrayMethod_Spec *spec)
     /* Check the passed spec for invalid fields/values */
     if (spec->nin < 0 || spec->nout < 0 || nargs > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
-                "ArrayMethod inputs and outputs must be greater zero and"
+                "ArrayMethod inputs and outputs must be greater zero and "
                 "not exceed %d. (method: %s)", NPY_MAXARGS, spec->name);
         return -1;
     }
@@ -224,7 +224,7 @@ validate_spec(PyArrayMethod_Spec *spec)
         }
         if (!PyObject_TypeCheck(spec->dtypes[i], &PyArrayDTypeMeta_Type)) {
             PyErr_Format(PyExc_TypeError,
-                    "ArrayMethod provided object %R is not a DType."
+                    "ArrayMethod provided object %R is not a DType. "
                     "(method: %s)", spec->dtypes[i], spec->name);
             return -1;
         }
@@ -1092,4 +1092,3 @@ NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type = {
     .tp_methods = boundarraymethod_methods,
     .tp_getset = boundarraymethods_getters,
 };
-

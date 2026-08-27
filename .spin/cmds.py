@@ -172,6 +172,7 @@ def test(*, parent_callback, pytest_args, tests, markexpr, parallel_threads, **k
     if kwargs.get('coverage'):
         coveragerc = curdir.parent / '.coveragerc'
         pytest_args = (f'--cov-config={coveragerc}',) + pytest_args
+        os.environ['COVERAGE_FILE'] = str(curdir.parent / '.coverage')
 
     kwargs['pytest_args'] = pytest_args
     parent_callback(**{'pytest_args': pytest_args, 'tests': tests, **kwargs})
@@ -402,7 +403,7 @@ def lint(ctx, fix):
 )
 @click.option(
     '--cpu-affinity', default=None, multiple=False,
-    help="Set CPU affinity for running the benchmark, in format: 0 or 0,1,2 or 0-3."
+    help="Set CPU affinity for running the benchmark, in format: 0 or 0,1,2 or 0-3. "
          "Default: not set"
 )
 @click.argument(

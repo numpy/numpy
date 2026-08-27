@@ -792,42 +792,29 @@ cmp(const void *av, const void *bv, void *NPY_UNUSED(arr))
 }
 
 
-NPY_NO_EXPORT int
-sfloat_stable_sort_loop(
-        PyArrayMethod_Context *context,
-        char *const *data,
-        const npy_intp *dimensions,
-        const npy_intp *strides,
-        NpyAuxData *NPY_UNUSED(auxdata))
+// The descending comparator still sorts NaNs to the end of the array; it is
+// not simply the ascending comparator with its arguments swapped.
+static inline int
+cmp_descending(const void *av, const void *bv, void *NPY_UNUSED(arr))
 {
-    assert(data[0] == data[1]);
-    assert(strides[0] == sizeof(npy_float64) && strides[1] == sizeof(npy_float64));
-    assert(((PyArrayMethod_SortParameters *)context->parameters)->flags == NPY_SORT_STABLE);
-
-    npy_intp N = dimensions[0];
-    char *in = data[0];
-
-    return npy_timsort_impl(in, N, NULL, strides[0], cmp);
+    npy_float64 a = *(const npy_float64 *)av;
+    npy_float64 b = *(const npy_float64 *)bv;
+    if (a > b || (b != b && a == a)) {
+        return -1;
+    }
+    if (a < b || (a != a && b == b)) {
+        return 1;
+    }
+    return 0;
 }
 
 
-NPY_NO_EXPORT int
-sfloat_default_sort_loop(
-        PyArrayMethod_Context *context,
-        char *const *data,
-        const npy_intp *dimensions,
-        const npy_intp *strides,
-        NpyAuxData *NPY_UNUSED(auxdata))
-{
-    assert(data[0] == data[1]);
-    assert(strides[0] == sizeof(npy_float64) && strides[1] == sizeof(npy_float64));
-    assert(((PyArrayMethod_SortParameters *)context->parameters)->flags == NPY_SORT_DEFAULT);
-
-    npy_intp N = dimensions[0];
-    char *in = data[0];
-
-    return npy_quicksort_impl(in, N, NULL, strides[0], cmp);
-}
+// {ascending, descending} compare functions for the sort and argsort
+// ArrayMethods' static_data, indexed by npy_default_sort_loop and
+// npy_default_argsort_loop based on the descending bit of the sort
+// parameters.
+static PyArray_CompareFunc *sfloat_sort_compares[2] = {
+        &cmp, &cmp_descending};
 
 
 NPY_NO_EXPORT int
@@ -845,11 +832,9 @@ sfloat_sort_get_loop(
         *flags |= NPY_METH_REQUIRES_PYAPI;
     }
 
-    if (parameters->flags == NPY_SORT_STABLE) {
-        *out_loop = (PyArrayMethod_StridedLoop *)sfloat_stable_sort_loop;
-    }
-    else if (parameters->flags == NPY_SORT_DEFAULT) {
-        *out_loop = (PyArrayMethod_StridedLoop *)sfloat_default_sort_loop;
+    NPY_SORTKIND kind = parameters->flags & ~NPY_SORT_DESCENDING;
+    if (kind == NPY_SORT_STABLE || kind == NPY_SORT_DEFAULT) {
+        *out_loop = (PyArrayMethod_StridedLoop *)npy_default_sort_loop;
     }
     else {
         PyErr_SetString(PyExc_RuntimeError, "unsupported sort kind");
@@ -880,46 +865,6 @@ sfloat_sort_resolve_descriptors(
 
 
 NPY_NO_EXPORT int
-sfloat_stable_argsort_loop(
-        PyArrayMethod_Context *context,
-        char *const *data,
-        const npy_intp *dimensions,
-        const npy_intp *strides,
-        NpyAuxData *NPY_UNUSED(auxdata))
-{
-    assert(((PyArrayMethod_SortParameters *)context->parameters)->flags == NPY_SORT_STABLE);
-    assert(strides[0] == sizeof(npy_float64));
-    assert(strides[1] == sizeof(npy_intp));
-
-    npy_intp N = dimensions[0];
-    char *in = data[0];
-    npy_intp *out = (npy_intp *)data[1];
-
-    return npy_atimsort_impl(in, out, N, NULL, strides[0], cmp);
-}
-
-
-NPY_NO_EXPORT int
-sfloat_default_argsort_loop(
-        PyArrayMethod_Context *context,
-        char *const *data,
-        const npy_intp *dimensions,
-        const npy_intp *strides,
-        NpyAuxData *NPY_UNUSED(auxdata))
-{
-    assert(((PyArrayMethod_SortParameters *)context->parameters)->flags == NPY_SORT_DEFAULT);
-    assert(strides[0] == sizeof(npy_float64));
-    assert(strides[1] == sizeof(npy_intp));
-
-    npy_intp N = dimensions[0];
-    char *in = data[0];
-    npy_intp *out = (npy_intp *)data[1];
-
-    return npy_aquicksort_impl(in, out, N, NULL, strides[0], cmp);
-}
-
-
-NPY_NO_EXPORT int
 sfloat_argsort_get_loop(
         PyArrayMethod_Context *context,
         int aligned, int move_references,
@@ -934,11 +879,9 @@ sfloat_argsort_get_loop(
         *flags |= NPY_METH_REQUIRES_PYAPI;
     }
 
-    if (parameters->flags == NPY_SORT_STABLE) {
-        *out_loop = (PyArrayMethod_StridedLoop *)sfloat_stable_argsort_loop;
-    }
-    else if (parameters->flags == NPY_SORT_DEFAULT) {
-        *out_loop = (PyArrayMethod_StridedLoop *)sfloat_default_argsort_loop;
+    NPY_SORTKIND kind = parameters->flags & ~NPY_SORT_DESCENDING;
+    if (kind == NPY_SORT_STABLE || kind == NPY_SORT_DEFAULT) {
+        *out_loop = (PyArrayMethod_StridedLoop *)npy_default_argsort_loop;
     }
     else {
         PyErr_SetString(PyExc_RuntimeError, "unsupported sort kind");
@@ -1130,9 +1073,10 @@ sfloat_init_ufuncs(void) {
     };
 
     PyArray_DTypeMeta *sort_dtypes[2] = {&PyArray_SFloatDType, &PyArray_SFloatDType};
-    PyType_Slot sort_slots[3] = {
+    PyType_Slot sort_slots[4] = {
         {NPY_METH_resolve_descriptors, &sfloat_sort_resolve_descriptors},
         {NPY_METH_get_loop, &sfloat_sort_get_loop},
+        {_NPY_METH_static_data, sfloat_sort_compares},
         {0, NULL}
     };
     PyArrayMethod_Spec sort_spec = {
@@ -1146,9 +1090,10 @@ sfloat_init_ufuncs(void) {
     sort_spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
     PyArray_DTypeMeta *argsort_dtypes[2] = {&PyArray_SFloatDType, &PyArray_IntpDType};
-    PyType_Slot argsort_slots[3] = {
+    PyType_Slot argsort_slots[4] = {
         {NPY_METH_resolve_descriptors, &sfloat_argsort_resolve_descriptors},
         {NPY_METH_get_loop, &sfloat_argsort_get_loop},
+        {_NPY_METH_static_data, sfloat_sort_compares},
         {0, NULL}
     };
     PyArrayMethod_Spec argsort_spec = {

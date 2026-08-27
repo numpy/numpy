@@ -3626,28 +3626,39 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.bool]: ...
-    @overload  # >0d object_, >=0d
-    def __call__(
+    @overload  # >0d object_, >0d object_
+    def __call__[T1, T2](
         self,
-        x1: npt.NDArray[np.object_],
+        x1: npt.NDArray[np.object_[T1]],
+        x2: npt.NDArray[np.object_[T2]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeObject | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.object_[T1 | T2]]: ...
+    @overload  # >0d object_, >=0d
+    def __call__[T](
+        self,
+        x1: npt.NDArray[np.object_[T]],
         x2: npt.ArrayLike,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLikeObject | None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[T | Any]]: ...
     @overload  # >=0d, >0d object_
-    def __call__(
+    def __call__[T](
         self,
         x1: npt.ArrayLike,
-        x2: npt.NDArray[np.object_],
+        x2: npt.NDArray[np.object_[T]],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLikeObject | None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[T | Any]]: ...
     @overload  # >=0d, >=0d, out=...
     def __call__(
         self,
@@ -3739,28 +3750,39 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.bool]: ...
-    @overload  # >0d object, >=0d
-    def outer(
+    @overload  # >0d object_, >0d object_
+    def outer[T1, T2](
         self,
-        x1: npt.NDArray[np.object_],
+        x1: npt.NDArray[np.object_[T1]],
+        x2: npt.NDArray[np.object_[T2]],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeObject | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.object_[T1 | T2]]: ...
+    @overload  # >0d object, >=0d
+    def outer[T](
+        self,
+        x1: npt.NDArray[np.object_[T]],
         x2: npt.ArrayLike,
         /,
         *,
         out: None = None,
         dtype: _DTypeLikeObject | None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[T | Any]]: ...
     @overload  # >=0d, >0d object
-    def outer(
+    def outer[T](
         self,
         x1: npt.ArrayLike,
-        x2: npt.NDArray[np.object_],
+        x2: npt.NDArray[np.object_[T]],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: _DTypeLikeObject | None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[T | Any]]: ...
     @overload  # >=0d, >=0d, out=<given>
     def outer[OutT: np.ndarray](
         self,
@@ -3881,57 +3903,57 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.bool]: ...
     @overload  # unknown shape, object_
-    def reduce(
+    def reduce[T](
         self,
-        array: npt.NDArray[np.object_],
+        array: npt.NDArray[np.object_[T]],
         /,
         axis: int | tuple[int, ...] = 0,
         dtype: _DTypeLikeObject | None = None,
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: _IntLike_co = ...,
+        initial: T = ...,
         where: _ArrayLikeBool_co = True,
-    ) -> npt.NDArray[np.object_] | Any: ...
+    ) -> npt.NDArray[np.object_[T]] | Any: ...
     @overload  # unknown shape, object_, axis=None
-    def reduce(
+    def reduce[T](
         self,
-        array: npt.NDArray[np.object_],
+        array: npt.NDArray[np.object_[T]],
         /,
         axis: None,
         dtype: _DTypeLikeObject | None = None,
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: _IntLike_co = ...,
+        initial: T = ...,
         where: _ArrayLikeBool_co = True,
-    ) -> Any: ...
-    @overload  # unknown shape, not object_ keepdims=True
-    def reduce(
+    ) -> T: ...
+    @overload  # unknown shape, object_ keepdims=True
+    def reduce[T](
         self,
-        array: npt.NDArray[np.object_],
+        array: npt.NDArray[np.object_[T]],
         /,
         axis: int | tuple[int, ...] | None = 0,
         dtype: _DTypeLikeObject | None = None,
         *,
         out: None = None,
         keepdims: Literal[True],
-        initial: _IntLike_co = ...,
+        initial: T = ...,
         where: _ArrayLikeBool_co = True,
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[T]]: ...
     @overload  # unknown shape, object_, out=...
-    def reduce(
+    def reduce[T](
         self,
-        array: npt.NDArray[np.object_],
+        array: npt.NDArray[np.object_[T]],
         /,
         axis: int | tuple[int, ...] | None = 0,
         dtype: _DTypeLikeBool | None = None,
         *,
         out: EllipsisType,
         keepdims: bool = False,
-        initial: _IntLike_co = ...,
+        initial: T = ...,
         where: _ArrayLikeBool_co = True,
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[T]]: ...
     @overload  # out=<given>
     def reduce[OutT: np.ndarray](
         self,
@@ -3973,16 +3995,16 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         out: None = None,
     ) -> _Array[ShapeT, np.bool]: ...
     @overload  # known shape, object_
-    def reduceat[ShapeT: _Shape](  # pyrefly:ignore[bad-override]
+    def reduceat[ShapeT: _Shape, T](  # pyrefly:ignore[bad-override]
         self,
-        array: _Array[ShapeT, np.object_],
+        array: _Array[ShapeT, np.object_[T]],
         /,
         indices: _ArrayLikeInt,
         axis: int = 0,
         dtype: _DTypeLikeObject | None = None,
         *,
         out: None = None,
-    ) -> _Array[ShapeT, np.object_]: ...
+    ) -> _Array[ShapeT, np.object_[T]]: ...
     @overload  # unknown shape
     def reduceat(
         self,
@@ -4030,15 +4052,15 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         out: None = None,
     ) -> _Array[ShapeT, np.bool]: ...
     @overload  # known shape, OBJECT_
-    def accumulate[ShapeT: _Shape](
+    def accumulate[ShapeT: _Shape, T](
         self,
-        array: _Array[ShapeT, np.object_],
+        array: _Array[ShapeT, np.object_[T]],
         /,
         axis: int = 0,
         dtype: _DTypeLikeObject | None = None,
         *,
         out: None = None,
-    ) -> _Array[ShapeT, np.object_]: ...
+    ) -> _Array[ShapeT, np.object_[T]]: ...
     @overload  # unknown shape
     def accumulate(
         self,
@@ -7387,25 +7409,25 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # Nd ~O, ?d ?
     def __call__(
         self,
-        x1: npt.NDArray[np.object_],
+        x1: npt.NDArray[np.object_[Incomplete]],
         x2: _ArrayLikeNumericObj_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[Incomplete]]: ...
     @overload  # ?d ?, Nd ~O
     def __call__(
         self,
         x1: _ArrayLikeNumericObj_co,
-        x2: npt.NDArray[np.object_],
+        x2: npt.NDArray[np.object_[Incomplete]],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[Incomplete]]: ...
     @overload  # Nd T@floating, ?d +float
     def __call__[ScalarT: np.inexact | np.timedelta64](
         self,
@@ -7830,25 +7852,25 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # Nd ~O, ?d ?
     def outer(
         self,
-        x1: npt.NDArray[np.object_],
+        x1: npt.NDArray[np.object_[Incomplete]],
         x2: _ArrayLikeNumericObj_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[Incomplete]]: ...
     @overload  # ?d ?, Nd ~O
     def outer(
         self,
         x1: _ArrayLikeNumericObj_co,
-        x2: npt.NDArray[np.object_],
+        x2: npt.NDArray[np.object_[Incomplete]],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[Incomplete]]: ...
     @overload  # Nd T@floating, ?d +float
     def outer[ScalarT: np.inexact | np.timedelta64](
         self,
@@ -8585,27 +8607,27 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.uint8]: ...
     @overload  # Nd ~obj, ?d +obj
-    def __call__(
+    def __call__[T](
         self,
-        x1: npt.NDArray[np.object_],
+        x1: npt.NDArray[np.object_[T]],
         x2: _ArrayLikeIntObj_co,
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[T]]: ...
     @overload  # ?d +obj, Nd ~obj
-    def __call__(
+    def __call__[T](
         self,
         x1: _ArrayLikeIntObj_co,
-        x2: npt.NDArray[np.object_],
+        x2: npt.NDArray[np.object_[T]],
         /,
         *,
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
-    ) -> npt.NDArray[np.object_]: ...
+    ) -> npt.NDArray[np.object_[T]]: ...
     @overload  # Nd T@integer, ?d +bool
     def __call__[ScalarT: np.integer | np.object_](
         self,
@@ -12646,7 +12668,7 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     #
     @override
     @overload  # known scalar type
-    def reduce[ScalarT: np.number | np.object_](  # pyrefly:ignore[bad-override]
+    def reduce[ScalarT: np.number](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -12671,6 +12693,32 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         initial: _NumberLike_co = ...,
         where: _ArrayLikeBool_co = True,
     ) -> ScalarT: ...
+    @overload  # known scalar type, keepdims=True
+    def reduce[ScalarT: np.number](
+        self,
+        array: _ArrayLike[ScalarT],
+        /,
+        *,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: _NumberLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # object_
+    def reduce(
+        self,
+        array: npt.NDArray[np.object_],
+        /,
+        *,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _NumberLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.object_[Any]] | Any: ...
     @overload  # ~object_, axis=None
     def reduce(
         self,
@@ -12684,10 +12732,10 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         initial: object = ...,
         where: _ArrayLikeBool_co = True,
     ) -> Any: ...
-    @overload  # known scalar type, keepdims=True
-    def reduce[ScalarT: np.number | np.object_](
+    @overload  # object_, keepdims=True
+    def reduce(
         self,
-        array: _ArrayLike[ScalarT],
+        array: npt.NDArray[np.object_],
         /,
         axis: int | tuple[int, ...] | None = 0,
         dtype: None = None,
@@ -12696,7 +12744,7 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         keepdims: Literal[True],
         initial: _NumberLike_co = ...,
         where: _ArrayLikeBool_co = True,
-    ) -> npt.NDArray[ScalarT]: ...
+    ) -> npt.NDArray[np.object_[Any]]: ...
     @overload  # ~bool
     def reduce(
         self,
@@ -12948,7 +12996,7 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     #
     @override
     @overload  # known scalar type
-    def reduceat[ScalarT: np.number | np.object_](  # pyrefly:ignore[bad-override]
+    def reduceat[ScalarT: np.number](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -12969,6 +13017,17 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         *,
         out: None = None,
     ) -> npt.NDArray[np.int8]: ...
+    @overload  # object_
+    def reduceat(
+        self,
+        array: npt.NDArray[np.object_],
+        /,
+        indices: tuple[int, ...],
+        *,
+        axis: int = 0,
+        dtype: None = None,
+        out: None = None,
+    ) -> npt.NDArray[np.object_[Any]]: ...
     @overload  # ~timedelta64  (if timedelta in domain)
     def reduceat[TimedeltaT: np.timedelta64](
         self: _ufunc_21_pow_sub[np.timedelta64],
@@ -13061,7 +13120,7 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     #
     @override
     @overload  # known scalar type
-    def accumulate[ScalarT: np.number | np.object_](  # pyrefly:ignore[bad-override]
+    def accumulate[ScalarT: np.number](  # pyrefly:ignore[bad-override]
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -13080,6 +13139,16 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         *,
         out: None = None,
     ) -> npt.NDArray[np.int8]: ...
+    @overload  # object_
+    def accumulate(
+        self,
+        array: npt.NDArray[np.object_],
+        /,
+        *,
+        axis: int = 0,
+        dtype: None = None,
+        out: None = None,
+    ) -> npt.NDArray[np.object_[Any]]: ...
     @overload  # ~timedelta64  (if timedelta in domain)
     def accumulate[TimedeltaT: np.timedelta64](
         self: _ufunc_21_pow_sub[np.timedelta64],
@@ -14642,9 +14711,9 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         where: _ArrayLikeBool_co = True,
     ) -> ScalarT: ...
     @overload  # ~object_, axis=None
-    def reduce(
+    def reduce[T](
         self,
-        array: npt.NDArray[np.object_],
+        array: npt.NDArray[np.object_[T]],
         /,
         axis: None,
         dtype: None = None,
@@ -14653,7 +14722,7 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         keepdims: Literal[False] = False,
         initial: object = ...,
         where: _ArrayLikeBool_co = True,
-    ) -> Any: ...
+    ) -> T: ...
     @overload  # known scalar type, keepdims=True
     def reduce[ScalarT: np.inexact | np.object_](
         self,
@@ -16608,18 +16677,18 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         where: _ArrayLikeBool_co = True,
     ) -> ScalarT: ...
     @overload  # ~object_, axis=None
-    def reduce(
+    def reduce[T](
         self,
-        array: npt.NDArray[np.object_],
+        array: npt.NDArray[np.object_[T]],
         /,
         axis: None,
         dtype: None = None,
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: object = ...,
+        initial: T = ...,
         where: _ArrayLikeBool_co = True,
-    ) -> Any: ...
+    ) -> T: ...
     @overload  # known scalar type, keepdims=True
     def reduce[ScalarT: _to_numeric | np.datetime64 | np.object_](
         self,
@@ -18689,18 +18758,18 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         where: _ArrayLikeBool_co = True,
     ) -> ScalarT: ...
     @overload  # ~object_, axis=None
-    def reduce(
+    def reduce[T](
         self,
-        array: npt.NDArray[np.object_],
+        array: npt.NDArray[np.object_[T]],
         /,
         axis: None,
         dtype: None = None,
         *,
         out: None = None,
         keepdims: Literal[False] = False,
-        initial: object = ...,
+        initial: T = ...,
         where: _ArrayLikeBool_co = True,
-    ) -> Any: ...
+    ) -> T: ...
     @overload  # known scalar type, keepdims=True
     def reduce[ScalarT: np.inexact | np.timedelta64 | np.character | np.object_](
         self,

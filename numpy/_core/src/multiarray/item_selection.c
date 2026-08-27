@@ -1940,13 +1940,13 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 "need sequence of keys with len > 0 in lexsort");
         return NULL;
     }
-    mps = (PyArrayObject **) PyArray_malloc(n * sizeof(PyArrayObject *));
+    mps = (PyArrayObject **) PyMem_RawMalloc(n * sizeof(PyArrayObject *));
     if (mps == NULL) {
         return PyErr_NoMemory();
     }
-    its = (PyArrayIterObject **) PyArray_malloc(n * sizeof(PyArrayIterObject *));
+    its = (PyArrayIterObject **) PyMem_RawMalloc(n * sizeof(PyArrayIterObject *));
     if (its == NULL) {
-        PyArray_free(mps);
+        PyMem_RawFree(mps);
         return PyErr_NoMemory();
     }
     for (i = 0; i < n; i++) {
@@ -2151,8 +2151,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         Py_XDECREF(its[i]);
     }
     Py_XDECREF(rit);
-    PyArray_free(mps);
-    PyArray_free(its);
+    PyMem_RawFree(mps);
+    PyMem_RawFree(its);
     return (PyObject *)ret;
 
  fail:
@@ -2167,8 +2167,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         Py_XDECREF(mps[i]);
         Py_XDECREF(its[i]);
     }
-    PyArray_free(mps);
-    PyArray_free(its);
+    PyMem_RawFree(mps);
+    PyMem_RawFree(its);
     return NULL;
 }
 

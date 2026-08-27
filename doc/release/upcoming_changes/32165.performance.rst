@@ -1,0 +1,8 @@
+Faster method dispatch for ``np.take``, ``np.argsort`` and similar functions
+----------------------------------------------------------------------------
+The internal helpers that forward functions such as `numpy.take`,
+`numpy.reshape`, `numpy.transpose`, `numpy.argsort`, `numpy.argmax`,
+`numpy.cumsum`, `numpy.round` and `numpy.searchsorted` to the corresponding
+ndarray method are now implemented in C. This reduces the Python-level call
+overhead of about 25 dispatched functions, which is most noticeable for
+small arrays (typically 5%-30% faster).

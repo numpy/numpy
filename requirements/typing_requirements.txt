@@ -3,5 +3,5 @@
 -r test_requirements.txt
 -r hypothesis_requirements.txt
 
-mypy==2.3.0
-pyrefly==1.1.1
+mypy==2.3.1
+pyrefly==1.2.0

@@ -136,17 +136,13 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
 
         if (PyUnicode_Check(f)) {
             /* accept unicode input */
-            PyObject *f_str;
-            f_str = PyUnicode_AsASCIIString(f);
-            if (f_str == NULL) {
+            str = (char *)PyUnicode_AsUTF8AndSize(f, &length);
+            if (str == NULL) {
                 Py_DECREF(f);
                 return 0;
             }
-            Py_DECREF(f);
-            f = f_str;
         }
-
-        if (PyBytes_AsStringAndSize(f, &str, &length) < 0) {
+        else if (PyBytes_AsStringAndSize(f, &str, &length) < 0) {
             Py_DECREF(f);
             return 0;
         }
@@ -268,17 +264,13 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
 
         if (PyUnicode_Check(f)) {
             /* accept unicode input */
-            PyObject *f_str;
-            f_str = PyUnicode_AsASCIIString(f);
-            if (f_str == NULL) {
+            str = (char *)PyUnicode_AsUTF8AndSize(f, &length);
+            if (str == NULL) {
                 Py_DECREF(f);
                 return 0;
             }
-            Py_DECREF(f);
-            f = f_str;
         }
-
-        if (PyBytes_AsStringAndSize(f, &str, &length) < 0) {
+        else if (PyBytes_AsStringAndSize(f, &str, &length) < 0) {
             PyErr_Clear();
             Py_DECREF(f);
             PyErr_SetString(PyExc_ValueError,

@@ -1,0 +1,4 @@
+Generic `numpy.object_` type
+----------------------------
+The `numpy.object_` scalar type is now a generic type, with its type parameter
+representing the wrapped Python object, defaulting to ``Any`` if omitted.

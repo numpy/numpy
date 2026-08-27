@@ -813,6 +813,10 @@ NpyString_size(const npy_packed_static_string *packed_string)
  *
  * Copy and pack the first *size* entries of the buffer pointed to by *buf*
  * into the *packed_string*. Returns 0 on success and -1 on failure.
+ *
+ * *buf* must be valid, complete UTF-8: StringDType readers decode the stored
+ * bytes without validating them, so malformed input can make them stall or
+ * read out of bounds. This function does not validate *buf*.
 */
 NPY_NO_EXPORT int
 NpyString_pack(npy_string_allocator *allocator,
@@ -828,6 +832,12 @@ NpyString_pack(npy_string_allocator *allocator,
 NPY_NO_EXPORT int
 NpyString_share_memory(const npy_packed_static_string *s1, npy_string_allocator *a1,
                        const npy_packed_static_string *s2, npy_string_allocator *a2) {
+    if (s1 == s2) {
+        // a packed string trivially shares memory with itself; this case
+        // needs to be checked explicitly since the checks below miss it
+        // for short and null strings
+        return 1;
+    }
     if (a1 != a2 ||
         is_short_string(s1) || is_short_string(s2) ||
         NpyString_isnull(s1) || NpyString_isnull(s2)) {

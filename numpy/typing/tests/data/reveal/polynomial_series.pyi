@@ -16,7 +16,7 @@ AR_u4: npt.NDArray[np.uint32]
 AR_i8: npt.NDArray[np.int64]
 AR_f8: npt.NDArray[np.float64]
 AR_c16: npt.NDArray[np.complex128]
-AR_O: npt.NDArray[np.object_]
+AR_O: npt.NDArray[np.object_[int]]
 
 PS_poly: npp.Polynomial
 PS_cheb: npp.Chebyshev

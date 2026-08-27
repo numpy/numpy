@@ -233,7 +233,7 @@ raise_incorrect_number_of_positional_args(const char *funcname,
                 funcname, cache->nrequired, cache->npositional,
                 len_args, verb);
     }
-    return -1;
+    return NPY_ARGPARSE_MISMATCH;
 }
 
 static void
@@ -267,7 +267,7 @@ raise_missing_argument(const char *funcname,
  * @param specs Array of argument specifications
  * @param nspecs Number of argument specifications
  *
- * @return Returns 0 on success and -1 on failure.
+ * @return 0 on success, NPY_ARGPARSE_MISMATCH on mismatch, and -1 on failure.
  */
 NPY_NO_EXPORT int
 _npy_parse_arguments(const char *funcname,
@@ -351,10 +351,15 @@ _npy_parse_arguments(const char *funcname,
                 }
                 if (NPY_UNLIKELY(*name == NULL)) {
                     /* Invalid keyword argument. */
-                    PyErr_Format(PyExc_TypeError,
+                    PyObject *message = PyUnicode_FromFormat(
                             "%s() got an unexpected keyword argument '%S'",
                             funcname, key);
-                    return -1;
+                    if (message == NULL) {
+                        return -1;
+                    }
+                    PyErr_SetObject(PyExc_TypeError, message);
+                    Py_DECREF(message);
+                    return NPY_ARGPARSE_MISMATCH;
                 }
             }
 
@@ -363,10 +368,15 @@ _npy_parse_arguments(const char *funcname,
 
             /* There could be an identical positional argument */
             if (NPY_UNLIKELY(all_arguments[param_pos] != NULL)) {
-                PyErr_Format(PyExc_TypeError,
+                PyObject *message = PyUnicode_FromFormat(
                         "argument for %s() given by name ('%S') and position "
                         "(position %zd)", funcname, key, param_pos);
-                return -1;
+                if (message == NULL) {
+                    return -1;
+                }
+                PyErr_SetObject(PyExc_TypeError, message);
+                Py_DECREF(message);
+                return NPY_ARGPARSE_MISMATCH;
             }
 
             all_arguments[param_pos] = value;
@@ -416,12 +426,12 @@ _npy_parse_arguments(const char *funcname,
         /* (PyArg_* also does this after the actual parsing is finished) */
         if (NPY_UNLIKELY(max_nargs < cache->nrequired)) {
             raise_missing_argument(funcname, cache, max_nargs);
-            return -1;
+            return NPY_ARGPARSE_MISMATCH;
         }
         for (int i = 0; i < cache->nrequired; i++) {
             if (NPY_UNLIKELY(all_arguments[i] == NULL)) {
                 raise_missing_argument(funcname, cache, i);
-                return -1;
+                return NPY_ARGPARSE_MISMATCH;
             }
         }
     }
