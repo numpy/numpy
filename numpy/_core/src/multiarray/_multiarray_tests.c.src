@@ -569,6 +569,7 @@ create_custom_field_dtype(PyObject *NPY_UNUSED(mod), PyObject *args)
     else if (error_path != 0) {
         PyErr_SetString(PyExc_ValueError,
                 "invalid error argument to test function.");
+        return NULL;
     }
     int new_typenum = PyArray_RegisterDataType(&proto);
     if (new_typenum < 0) {
