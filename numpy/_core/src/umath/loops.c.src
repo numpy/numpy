@@ -2691,29 +2691,8 @@ OBJECT@suffix@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *s
 /**end repeat1**/
 /**end repeat**/
 
-static inline PyObject *
-object_min(PyObject *a, PyObject *b)
-{
-    int cmp = PyObject_RichCompareBool(a, b, Py_LE);
-    if (cmp < 0) {
-        return NULL;
-    }
-    PyObject *r = cmp ? a : b;
-    Py_INCREF(r);
-    return r;
-}
-
-static inline PyObject *
-object_max(PyObject *a, PyObject *b)
-{
-    int cmp = PyObject_RichCompareBool(a, b, Py_GE);
-    if (cmp < 0) {
-        return NULL;
-    }
-    PyObject *r = cmp ? a : b;
-    Py_INCREF(r);
-    return r;
-}
+NPY_NO_EXPORT PyObject *npy_ObjectMin(PyObject *i1, PyObject *i2);
+NPY_NO_EXPORT PyObject *npy_ObjectMax(PyObject *i1, PyObject *i2);
 
 NPY_NO_EXPORT void
 OBJECT_minimummaximum(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
@@ -2727,8 +2706,8 @@ OBJECT_minimummaximum(char **args, npy_intp const *dimensions, npy_intp const *s
         if (in2 == NULL) {
             in2 = Py_None;
         }
-        PyObject *lo = object_min(in1, in2);
-        PyObject *hi = lo != NULL ? object_max(in1, in2) : NULL;
+        PyObject *lo = npy_ObjectMin(in1, in2);
+        PyObject *hi = lo != NULL ? npy_ObjectMax(in1, in2) : NULL;
         if (lo == NULL || hi == NULL) {
             Py_XDECREF(lo);
             Py_XDECREF(hi);
@@ -2760,8 +2739,8 @@ OBJECT_minimummaximum_reduce(PyArrayMethod_Context *NPY_UNUSED(context),
         if (val == NULL) {
             val = Py_None;
         }
-        PyObject *lo = object_min(cur_min, val);
-        PyObject *hi = lo != NULL ? object_max(cur_max, val) : NULL;
+        PyObject *lo = npy_ObjectMin(cur_min, val);
+        PyObject *hi = lo != NULL ? npy_ObjectMax(cur_max, val) : NULL;
         if (lo == NULL || hi == NULL) {
             Py_XDECREF(lo);
             Py_XDECREF(hi);
