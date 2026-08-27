@@ -142,7 +142,7 @@ from numpy.ma.testutils import (
     assert_not_equal,
     fail_if_equal,
 )
-from numpy.testing import IS_WASM, assert_raises, temppath
+from numpy.testing import IS_WASM, assert_no_warnings, assert_raises, temppath
 from numpy.testing._private.utils import requires_memory
 
 pi = np.pi
@@ -2626,7 +2626,7 @@ class TestFillingValues:
         y = x.view(dtype=np.int32)
         assert_(y.fill_value == 999999)
 
-    def test_fillvalue_after_dtype_changing_ufunc(self):
+    def test_fillvalue_reset_after_dtype_changing_ufunc(self):
         # Test that a fill_value which no longer matches the dtype of the
         # result of a ufunc (because the ufunc changed the dtype) is reset
         # to the default for the new dtype.
@@ -2636,9 +2636,43 @@ class TestFillingValues:
         # np.strings.find returns the platform default int dtype
         assert_(result.dtype.kind == 'i')
         assert_equal(result.fill_value, default_fill_value(result.dtype))
+        assert_equal(result.filled().dtype, result.dtype)
 
         viewed = result.view(MaskedArray)
         assert_equal(viewed.fill_value, default_fill_value(result.dtype))
+
+    def test_fillvalue_castable_after_dtype_changing_ufunc(self):
+        # Test that fill_values that *can* be cast into the new dtype.
+        # The cast value should be kept rather than being reset to the default,
+        # and .filled() should not be forced to fall back to `object` dtype.
+        a = array(['ab', 'cd'], mask=[0, 1], fill_value='-1')
+        result = np.strings.find(a, 'a')
+        assert_(result.dtype.kind == 'i')
+        assert_equal(result.fill_value, -1)
+        assert_equal(result.filled(), [0, -1])
+        assert_equal(result.filled().dtype, result.dtype)
+
+        x = array([1.5, np.nan, 2.5], mask=[0, 0, 1], fill_value=1e20)
+        y = np.isnan(x)
+        assert_equal(y.dtype, np.dtype(bool))
+        assert_equal(y.fill_value, True)
+        assert_equal(y.filled(), [False, True, True])
+        assert_equal(y.filled().dtype, y.dtype)
+
+        d = array(np.array(['2020-01-01', '2020-01-02'], 'M8[D]'), mask=[0, 1])
+        d.set_fill_value(np.datetime64('NaT', 'D'))
+        z = d - np.datetime64('2020-01-01', 'D')
+        assert_equal(z.dtype, np.dtype('timedelta64[D]'))
+        assert_(np.isnat(z.fill_value))
+        assert_equal(z.filled().dtype, z.dtype)
+
+        # complex -> real (e.g. np.abs, np.angle) should take the real
+        # part of the fill_value rather than raising ComplexWarning.
+        c = array([1 + 1j, 2j], mask=[0, 1])
+        with assert_no_warnings():
+            r = np.abs(c)
+        assert_equal(r.dtype, np.dtype(float))
+        assert_equal(r.filled().dtype, r.dtype)
 
     def test_fillvalue_bytes_or_str(self):
         # Test whether fill values work as expected for structured dtypes
