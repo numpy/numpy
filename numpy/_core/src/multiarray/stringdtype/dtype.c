@@ -474,21 +474,26 @@ fail:
     return NULL;
 }
 
+NPY_NO_EXPORT npy_bool
+stringdtype_null_is_truthy(const PyArray_StringDTypeObject *descr)
+{
+    // nulls cannot be stored in an array without an na object
+    assert(descr->na_object != NULL);
+    if (descr->has_string_na) {
+        return (npy_bool)(descr->default_string.size != 0);
+    }
+    // numpy treats NaN as truthy, following python
+    return (npy_bool)descr->has_nan_na;
+}
+
 // PyArray_NonzeroFunc
 // Unicode strings are nonzero if their length is nonzero.
 static npy_bool
 nonzero(void *data, void *arr)
 {
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(arr);
-    int has_null = descr->na_object != NULL;
-    int has_nan_na = descr->has_nan_na;
-    int has_string_na = descr->has_string_na;
-    if (has_null && NpyString_isnull((npy_packed_static_string *)data)) {
-        if (has_string_na) {
-            return descr->default_string.size != 0;
-        }
-        // numpy treats NaN as truthy, following python
-        return has_nan_na;
+    if (NpyString_isnull((npy_packed_static_string *)data)) {
+        return stringdtype_null_is_truthy(descr);
     }
     return NpyString_size((npy_packed_static_string *)data) != 0;
 }
