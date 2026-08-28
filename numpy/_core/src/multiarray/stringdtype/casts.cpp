@@ -463,9 +463,11 @@ finish:
         PyMem_RawFree(bad_buf);
         if (decoded != NULL) {
             Py_DECREF(decoded);
-            PyErr_SetString(PyExc_TypeError,
-                            "Invalid UTF-8 bytes found in string width "
-                            "discovery");
+            PyErr_SetString(PyExc_RuntimeError,
+                            "Invalid UTF-8 bytes found in %s that the Python "
+                            "UTF-8 decoder accepted. If you did not set a "
+                            "custom 'strict' codec, this could indicate memory "
+                            "corruption or a race.");
         }
     }
     if (!succeeded) {
