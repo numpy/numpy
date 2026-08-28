@@ -119,7 +119,8 @@ def docs(*, parent_callback, **kwargs):
     # Run towncrier without staging anything for commit. This is the way to get
     # release notes snippets included in a local doc build.
     cmd = ['towncrier', 'build', '--version', '2.x.y', '--keep', '--draft']
-    p = subprocess.run(cmd, check=True, capture_output=True, text=True)
+    p = subprocess.run(cmd, check=True, capture_output=True, text=True,
+                       encoding="utf-8")
     outfile = curdir.parent / 'doc' / 'source' / 'release' / 'notes-towncrier.rst'
     with open(outfile, 'w') as f:
         f.write(p.stdout)

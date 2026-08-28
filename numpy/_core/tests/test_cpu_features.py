@@ -130,7 +130,8 @@ class TestEnvPrivation:
     env = os.environ.copy()
     _enable = os.environ.pop('NPY_ENABLE_CPU_FEATURES', None)
     _disable = os.environ.pop('NPY_DISABLE_CPU_FEATURES', None)
-    SUBPROCESS_ARGS = {"cwd": cwd, "capture_output": True, "text": True, "check": True}
+    SUBPROCESS_ARGS = {"cwd": cwd, "capture_output": True, "text": True,
+                       "check": True, "encoding": "utf-8"}
     unavailable_feats = [
         feat for feat in __cpu_dispatch__ if not __cpu_features__[feat]
     ]

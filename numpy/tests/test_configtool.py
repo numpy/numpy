@@ -20,7 +20,8 @@ PKG_CONFIG_DIR = NUMPY_ROOT / '_core' / 'lib' / 'pkgconfig'
                     reason="platform cannot start subprocesses")
 class TestNumpyConfig:
     def check_numpyconfig(self, arg):
-        p = subprocess.run(['numpy-config', arg], capture_output=True, text=True)
+        p = subprocess.run(['numpy-config', arg], capture_output=True, text=True,
+                           encoding="utf-8")
         p.check_returncode()
         return p.stdout.strip()
 
