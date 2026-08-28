@@ -8481,28 +8481,38 @@ def convolve(a, v, mode='full', propagate_mask=True):
 
 def allequal(a, b, fill_value=True):
     """
-    Return True if all entries of a and b are equal, using
-    fill_value as a truth value where either or both are masked.
+    Return True if all elements of two arrays are equal, accounting for masks.
+
+    If either or both elements at a given position are masked, they are considered
+    equal if `fill_value` is True, and unequal if `fill_value` is False.
 
     Parameters
     ----------
     a, b : array_like
         Input arrays to compare.
     fill_value : bool, optional
-        Whether masked values in a or b are considered equal (True) or not
-        (False).
+        Whether masked values in `a` or `b` are considered equal (True)
+        or not (False). Default is True.
 
     Returns
     -------
     y : bool
-        Returns True if the two arrays are equal within the given
-        tolerance, False otherwise. If either array contains NaN,
+        Returns True if all elements of `a` and `b` are equal according to
+        `fill_value`, False otherwise. If either array contains NaN,
         then False is returned.
+
+    Notes
+    -----
+    `numpy.ma.allequal` supports shape broadcasting between `a` and `b`.
+    Regarding shape handling, its behavior is equivalent to `numpy.array_equiv`
+    rather than `numpy.array_equal`.
 
     See Also
     --------
     all, any
-    numpy.ma.allclose
+    numpy.ma.allclose : Check equality within a given numerical tolerance.
+    numpy.array_equiv : Equivalent function for unmasked ndarrays with broadcasting.
+    numpy.array_equal : Check if two unmasked ndarrays have equal shapes and values.
 
     Examples
     --------
@@ -8515,10 +8525,15 @@ def allequal(a, b, fill_value=True):
 
     >>> b = np.array([1e10, 1e-7, -42.0])
     >>> b
-    array([  1.00000000e+10,   1.00000000e-07,  -4.20000000e+01])
+    array([ 1.00000000e+10,   1.00000000e-07,  -4.20000000e+01])
     >>> np.ma.allequal(a, b, fill_value=False)
     False
     >>> np.ma.allequal(a, b)
+    True
+
+    `allequal` supports broadcasting:
+
+    >>> np.ma.allequal(np.ones(3), 1)
     True
 
     """
