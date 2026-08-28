@@ -740,8 +740,7 @@ TIMEDELTA_md_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
 NPY_NO_EXPORT void
 TIMEDELTA_dm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
-/* TIMEDELTA_mq_m_divide and TIMEDELTA_mm_q_floor_divide are SIMD-dispatched,
- * see loops_arithmetic.dispatch.c.src */
+#include "loops_arithmetic_timedelta.dispatch.h"
 NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void TIMEDELTA_mq_m_divide,
     (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
 
