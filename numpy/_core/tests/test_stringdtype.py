@@ -632,7 +632,7 @@ class TestUnsizedFixedWidthCasts:
         arr = np.array(["this", "is", "an", "array"], dtype="T")
         expected = np.array(["this", "is", "an", "array"], dtype=f"{kind}5")
         for spelling in UNSIZED_SPELLINGS[kind]:
-            assert_array_equal(arr.astype(spelling), expected)
+            assert_array_equal(arr.astype(spelling), expected, strict=True)
 
     @pytest.mark.parametrize("convert", CONVERSION_PATHS)
     @pytest.mark.parametrize("kind", ["S", "U"])
@@ -680,13 +680,9 @@ class TestUnsizedFixedWidthCasts:
         res = arr.astype("U")
         assert res.dtype == np.dtype("U3")
         assert_array_equal(res, np.array(["a😊b", "é"], dtype="U3"))
-        # the "S" cast sizes by bytes but rejects non-ASCII entries
+        # the "S" cast rejects non-ASCII entries
         with pytest.raises(UnicodeEncodeError):
             arr.astype("S")
-        arr = np.array(["hello", "world!!"], dtype="T")
-        res = arr.astype("S")
-        assert res.dtype == np.dtype("S7")
-        assert_array_equal(res, np.array(["hello", "world!!"], dtype="S7"))
 
     def test_multiple_arrays_promote_to_widest(self):
         arr1 = np.array(["abc"], dtype="T")
@@ -713,21 +709,19 @@ class TestUnsizedCastMissingValues:
         dt = StringDType(na_object=np.nan)
         arr = np.array(["abcde", np.nan], dtype=dt)
         res = arr.astype("U")
-        assert res.dtype == np.dtype("U5")
-        assert res[1] == "nan"
+        assert_array_equal(res, np.array(["abcde", "nan"], dtype="U5"), strict=True)
         all_null = np.array([np.nan, np.nan], dtype=dt)
         res = all_null.astype("U")
-        assert res.dtype == np.dtype("U3")
-        assert_array_equal(res, np.array(["nan", "nan"], dtype="U3"))
+        assert_array_equal(res, np.array(["nan", "nan"], dtype="U3"), strict=True)
 
     def test_non_ascii_string_na(self):
-        # a non-ASCII sentinel counts code points for "U" and raises for
-        # the ASCII-only "S" cast
+        # a missing entry counts with the width of the sentinel, in code
+        # points for "U", and raises for the ASCII-only "S" cast
         dt = StringDType(na_object="😊😊")
-        arr = np.array(["ab", "😊😊"], dtype=dt)
+        arr = np.array(["ab", None], dtype=StringDType(na_object=None)).astype(dt)
+        assert arr[1] is dt.na_object
         res = arr.astype("U")
-        assert res.dtype == np.dtype("U2")
-        assert res[1] == "😊😊"
+        assert_array_equal(res, np.array(["ab", "😊😊"], dtype="U2"), strict=True)
         with pytest.raises(UnicodeEncodeError):
             arr.astype("S")
 

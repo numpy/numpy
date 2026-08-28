@@ -380,14 +380,15 @@ load_nullable_string(const PyArray_StringDTypeObject *descr,
 // Find a fixed-width string or unicode descriptor wide enough to store every
 // entry of *arr*, a StringDType array, without truncation.  Entries convert
 // exactly as in the corresponding cast loops: missing entries count with the
-// width of their effective value (see load_nullable_string above) and
-// embedded and trailing NULs count as data.  The result is at least "S1" or
-// "U1", including for empty arrays and arrays that only hold empty strings.
+// width of the string load_nullable_string substitutes for them and embedded
+// and trailing NULs count as data.  The result is at least "S1" or "U1",
+// including for empty arrays and arrays that only hold empty strings.
 //
-// For NPY_UNICODE the entries must be counted in code points, so invalid
-// UTF-8 is detected here and raises a UnicodeDecodeError.  For NPY_STRING
-// the width is the UTF-8 byte length; non-ASCII entries are not rejected
-// here, the cast loop raises a UnicodeEncodeError for them.
+// For NPY_UNICODE the entries must be counted in code points, which also
+// validates them: NpyString_pack does not check its input, so C API users
+// can store invalid UTF-8, which raises a UnicodeDecodeError here.  For
+// NPY_STRING the width is the UTF-8 byte length; non-ASCII entries are not
+// rejected here, the cast loop raises a UnicodeEncodeError for them.
 //
 // Returns NULL with an error set on failure.
 NPY_NO_EXPORT PyArray_Descr *
@@ -471,8 +472,7 @@ finish:
         // another error raised during the loop
         return NULL;
     }
-    if (max_width > NPY_MAX_INT ||
-            (type_num == NPY_UNICODE && max_width > NPY_MAX_INT / 4)) {
+    if (max_width > (type_num == NPY_UNICODE ? NPY_MAX_INT / 4 : NPY_MAX_INT)) {
         PyErr_SetString(PyExc_TypeError,
                         "string too large to store inside array.");
         return NULL;

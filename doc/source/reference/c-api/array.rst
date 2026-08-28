@@ -503,6 +503,13 @@ From other objects
     array but it needs to be of a specific *newtype* (including
     byte-order) or has certain *requirements*.
 
+    If *newtype* is an unsized flexible descriptor, the result takes the
+    itemsize of *op* without inspecting its values. :c:func:`PyArray_FromAny`
+    and :c:func:`PyArray_CastToType` instead adapt an unsized descriptor to the
+    values of *op*, so converting a ``NPY_VSTRING`` or ``NPY_OBJECT`` array to
+    ``NPY_STRING`` or ``NPY_UNICODE`` infers the width of the output by finding
+    the length of the longest input string.
+
 .. c:function:: PyObject* PyArray_FromStructInterface(PyObject* op)
 
     Returns an ndarray object from a Python object that exposes the

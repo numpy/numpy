@@ -8,8 +8,11 @@ extern "C" {
 
 PyArrayMethod_Spec **get_casts(void);
 
-// Load the effective value of *ps* for a conversion to a fixed-width dtype;
-// the caller must hold *allocator*, acquired from *descr*.
+// Load the string representation for *ps*. This might be the packed string
+// itself or, for a missing entry, str(na_object) when the descriptor has a
+// non-string na_object and its default string otherwise (the na_object for a
+// string na_object, empty without one).  The caller must hold *allocator*,
+// acquired from *descr*.
 NPY_NO_EXPORT int
 load_nullable_string(const PyArray_StringDTypeObject *descr,
                      const npy_packed_static_string *ps,
