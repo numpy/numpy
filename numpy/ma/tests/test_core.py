@@ -142,7 +142,7 @@ from numpy.ma.testutils import (
     assert_not_equal,
     fail_if_equal,
 )
-from numpy.testing import IS_WASM, assert_no_warnings, assert_raises, temppath
+from numpy.testing import IS_WASM, assert_raises, temppath
 from numpy.testing._private.utils import requires_memory
 
 pi = np.pi
@@ -1286,8 +1286,11 @@ class TestMaskedArrayArithmetic:
         assert_equal(np.arctan(z), arctan(zm))
         assert_equal(np.arctan2(x, y), arctan2(xm, ym))
         assert_equal(np.absolute(x), absolute(xm))
-        assert_equal(np.angle(x + 1j * y), angle(xm + 1j * ym))
-        assert_equal(np.angle(x + 1j * y, deg=True), angle(xm + 1j * ym, deg=True))
+        # Complex fill_value becomes real, raising ComplexWarning
+        with pytest.warns(np.exceptions.ComplexWarning):
+            assert_equal(np.angle(x + 1j * y), angle(xm + 1j * ym))
+        with pytest.warns(np.exceptions.ComplexWarning):
+            assert_equal(np.angle(x + 1j * y, deg=True), angle(xm + 1j * ym, deg=True))
         assert_equal(np.equal(x, y), equal(xm, ym))
         assert_equal(np.not_equal(x, y), not_equal(xm, ym))
         assert_equal(np.less(x, y), less(xm, ym))
@@ -2666,12 +2669,12 @@ class TestFillingValues:
         assert_(np.isnat(z.fill_value))
         assert_equal(z.filled().dtype, z.dtype)
 
-        # complex -> real (e.g. np.abs, np.angle) should take the real
-        # part of the fill_value rather than raising ComplexWarning.
-        c = array([1 + 1j, 2j], mask=[0, 1])
-        with assert_no_warnings():
+        # the fill_value's complex dtype is cast into the new real dtype
+        c = array([1 + 1j, 2j], mask=[0, 1], fill_value=2 + 3j)
+        with pytest.warns(np.exceptions.ComplexWarning):
             r = np.abs(c)
         assert_equal(r.dtype, np.dtype(float))
+        assert_equal(r.fill_value, 2.0)
         assert_equal(r.filled().dtype, r.dtype)
 
     def test_fillvalue_bytes_or_str(self):

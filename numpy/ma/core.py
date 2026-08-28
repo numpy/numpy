@@ -3039,11 +3039,9 @@ class MaskedArray(ndarray):
             _optinfo.update(getattr(obj, '__dict__', {}))
         _fill_value = getattr(obj, '_fill_value', None)
         if _fill_value is not None and getattr(obj, 'dtype', None) != self.dtype:
-            if _fill_value.dtype.kind == 'c' and self.dtype.kind in 'biuf':
-                _fill_value = _fill_value.real
             try:
                 _fill_value = _check_fill_value(_fill_value, self.dtype)
-            except (TypeError, ValueError):
+            except (TypeError, ValueError, OverflowError):
                 _fill_value = None
         _dict = {'_fill_value': _fill_value,
                      '_hardmask': getattr(obj, '_hardmask', False),
