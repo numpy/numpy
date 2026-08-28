@@ -24,6 +24,8 @@
 #include "loops.h"
 #include "minmax.h"
 
+#include "loops_minmax.dispatch.h"
+
 
 /*
  * `get_reduction_loop` slot for `minimummaximum`: return the dedicated
@@ -42,7 +44,6 @@ minimummaximum_get_reduction_loop(
     NPY_ARRAYMETHOD_FLAGS f = NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
     switch (context->descriptors[0]->type_num) {
-#include "loops_minmax.dispatch.h"
 #define SIMD_CASE(TYPE) \
         case NPY_##TYPE: \
             NPY_CPU_DISPATCH_CALL(loop = TYPE##_minimummaximum_reduce); \
@@ -133,7 +134,9 @@ init_minimummaximum(PyObject *umath)
             goto fail;
         }
         if (info == Py_None || !PyObject_TypeCheck(info, &PyArrayMethod_Type)) {
-            Py_DECREF(info);
+            if (info == Py_None) {
+                Py_DECREF(info);
+            }
             PyErr_SetString(PyExc_RuntimeError,
                     "internal NumPy error: minimummaximum loop not found");
             goto fail;
