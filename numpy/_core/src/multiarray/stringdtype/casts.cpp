@@ -394,7 +394,7 @@ load_nullable_string(const PyArray_StringDTypeObject *descr,
 NPY_NO_EXPORT PyArray_Descr *
 stringdtype_find_fixed_width_descr(PyArrayObject *arr, int type_num)
 {
-    assert(type_num == NPY_STRING || type_num == NPY_UNICODE);
+    assert(PyTypeNum_ISFLEXIBLE(type_num));
     assert(PyArray_TYPE(arr) == NPY_VSTRING);
 
     PyArray_StringDTypeObject *descr =
@@ -424,10 +424,7 @@ stringdtype_find_fixed_width_descr(PyArrayObject *arr, int type_num)
             goto finish;
         }
         npy_uint64 width;
-        if (type_num == NPY_STRING) {
-            width = (npy_uint64)s.size;
-        }
-        else {
+        if (type_num == NPY_UNICODE) {
             size_t num_codepoints = 0;
             if (num_codepoints_for_utf8_bytes(
                         (const unsigned char *)s.buf, &num_codepoints,
@@ -443,6 +440,9 @@ stringdtype_find_fixed_width_descr(PyArrayObject *arr, int type_num)
                 goto finish;
             }
             width = (npy_uint64)num_codepoints;
+        }
+        else {
+            width = (npy_uint64)s.size;
         }
         if (width > max_width) {
             max_width = width;
@@ -1862,12 +1862,11 @@ string_to_void_resolve_descriptors(PyObject *NPY_UNUSED(self),
                                    npy_intp *NPY_UNUSED(view_offset))
 {
     if (given_descrs[1] == NULL) {
-        // currently there's no way to determine the correct output
-        // size, so set an error and bail
         PyErr_SetString(
                 PyExc_TypeError,
                 "Casting from StringDType to a fixed-width dtype with an "
-                "unspecified size is not currently supported, specify "
+                "unspecified size is only supported with the widths can be "
+                "inferred from the values of an array being cast, specify "
                 "an explicit size for the output dtype instead.");
         return (NPY_CASTING)-1;
     }

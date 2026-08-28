@@ -20,8 +20,9 @@ load_nullable_string(const PyArray_StringDTypeObject *descr,
                      npy_string_allocator *allocator,
                      const char *context);
 
-// Find a fixed-width NPY_STRING or NPY_UNICODE descriptor wide enough to
-// store every entry of the StringDType array *arr* without truncation.
+// Find a fixed-width NPY_STRING, NPY_UNICODE or NPY_VOID descriptor wide
+// enough to store every entry of the StringDType array *arr* without
+// truncation.
 // Returns NULL with an error set on failure.
 NPY_NO_EXPORT PyArray_Descr *
 stringdtype_find_fixed_width_descr(PyArrayObject *arr, int type_num);

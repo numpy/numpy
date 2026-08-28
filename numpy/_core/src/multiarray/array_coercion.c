@@ -801,10 +801,10 @@ find_descriptor_from_array(
         return 0;
     }
 
+    /* Special cases that inspect values to determine the output dtype */
     if (NPY_UNLIKELY(NPY_DT_is_parametric(DType) && PyArray_ISOBJECT(arr))) {
         /*
-         * Inspecting array values is limited to this branch and the two
-         * below.  If the input array is of object DType and the dtype is
+         * If the input array is of object DType and the dtype is
          * not fixed already but parametric, we allow inspection of all
          * elements, treating them as elements. We do this recursively, so
          * nested 0-D arrays can work, but nested higher dimensional arrays
@@ -853,8 +853,7 @@ find_descriptor_from_array(
         Py_DECREF(iter);
     }
     else if (NPY_UNLIKELY(PyArray_TYPE(arr) == NPY_VSTRING &&
-                          (DType->type_num == NPY_STRING ||
-                           DType->type_num == NPY_UNICODE))) {
+                          PyTypeNum_ISFLEXIBLE(DType->type_num))) {
         /*
          * Casting a StringDType array to a fixed-width string DType with no
          * size means finding the width of the widest entry first, so that
