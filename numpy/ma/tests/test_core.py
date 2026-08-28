@@ -2677,6 +2677,14 @@ class TestFillingValues:
         assert_equal(r.fill_value, 2.0)
         assert_equal(r.filled().dtype, r.dtype)
 
+        # a fill_value that overflows the new dtype during the cast
+        wide = np.dtype([('id', object)])
+        narrow = np.dtype([('id', 'i8')])
+        e = array([(1,), (2,)], dtype=wide, mask=[0, 1], fill_value=(10 ** 30,))
+        f = e.astype(narrow)
+        assert_equal(f.fill_value, default_fill_value(narrow))
+        assert_equal(f.filled().dtype, f.dtype)
+
     def test_fillvalue_bytes_or_str(self):
         # Test whether fill values work as expected for structured dtypes
         # containing bytes or str.  See issue #7259.
