@@ -1913,8 +1913,11 @@ fixed_width_bytes_to_string(PyArrayMethod_Context *context, char *const data[],
             PyMem_RawFree(bad);
             if (decoded != NULL) {
                 Py_DECREF(decoded);
-                PyErr_Format(PyExc_TypeError,
-                             "Invalid UTF-8 bytes found in %s", context_name);
+                PyErr_Format(PyExc_RuntimeError,
+                             "Invalid UTF-8 bytes found in %s that the Python "
+                             "UTF-8 decoder accepted. If you did not set a "
+                             "custom 'strict' codec, this could indicate memory "
+                             "corruption or a race.", context_name);
             }
             return -1;
         }
