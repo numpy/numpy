@@ -330,6 +330,20 @@ def test_npystring_load(install_temp):
     assert result == 'abcd'
 
 
+def test_npystring_pack_invalid_utf8_width_inference(install_temp):
+    # NpyString_pack does not validate, so width inference can see bytes
+    # that do not decode
+    import checks
+
+    arr = np.array(["abc"], dtype="T")
+    assert checks.npystring_pack_invalid_utf8(arr, b"\xffbc") == 0
+    with pytest.raises(UnicodeDecodeError) as excinfo:
+        arr.astype("U")
+    exc = excinfo.value
+    assert (exc.encoding, exc.object, exc.start, exc.end) == (
+        "utf-8", b"\xffbc", 0, 1)
+
+
 def test_npystring_multiple_allocators(install_temp):
     """Check that the cython API can acquire/release multiple vstring allocators."""
     import checks
