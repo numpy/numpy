@@ -1323,51 +1323,46 @@ static PyMethodDef module_methods[] = {
     {0} /* sentinel */
 };
 
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "_rational_tests",
-    NULL,
-    -1,
-    module_methods,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
+/*
+ * Opt out of more than one module object per process: the rational types are
+ * held in C statics and their dtypes are registered in NumPy's process-global
+ * user dtype table, so a second module object would leave arrays of the first
+ * one's dtype handing out scalars of the second one's type.
+ *
+ * https://docs.python.org/3/howto/isolating-extensions.html#opt-out-limiting-to-one-module-object-per-process
+ */
+static int module_loaded = 0;
 
-PyMODINIT_FUNC PyInit__rational_tests(void) {
-    PyObject *m = NULL;
-    PyObject* numpy_str;
-    PyObject* numpy;
+static int
+_rational_tests_exec(PyObject *m)
+{
+    PyObject *numpy = NULL;
+    PyArray_Descr *npyrational_descr = NULL;
+    PyArray_Descr *npyrational2_descr = NULL;
     int npy_rational;
     int npy_rational2;
-    PyArray_Descr *npyrational2_descr = NULL;
+    int ret;
 
-    import_array();
-    if (PyErr_Occurred()) {
+    // https://docs.python.org/3/howto/isolating-extensions.html#opt-out-limiting-to-one-module-object-per-process
+    if (module_loaded) {
+        PyErr_SetString(PyExc_ImportError,
+                        "cannot load module more than once per process");
+        return -1;
+    }
+    module_loaded = 1;
+
+    if (PyArray_ImportNumPyAPI() < 0) {
         goto fail;
     }
-    import_umath();
-    if (PyErr_Occurred()) {
+    if (PyUFunc_ImportUFuncAPI() < 0) {
         goto fail;
     }
-    numpy_str = PyUnicode_FromString("numpy");
-    if (!numpy_str) {
-        goto fail;
-    }
-    numpy = PyImport_Import(numpy_str);
-    Py_DECREF(numpy_str);
+    numpy = PyImport_ImportModule("numpy");
     if (!numpy) {
         goto fail;
     }
 
-    /* Create module; the heap types below are bound to it */
-    m = PyModule_Create(&moduledef);
-    if (!m) {
-        goto fail;
-    }
-
-    /* Initialize rational type object */
+    /* Initialize rational type object; the heap types below are bound to `m` */
     PyRational_Type = PyType_FromModuleAndSpec(
             m, &pyrational_spec, (PyObject *)&PyGenericArrType_Type);
     if (!PyRational_Type) {
@@ -1394,7 +1389,10 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
     if (npy_rational<0) {
         goto fail;
     }
-    PyArray_Descr *npyrational_descr = PyArray_DescrFromType(npy_rational);
+    npyrational_descr = PyArray_DescrFromType(npy_rational);
+    if (!npyrational_descr) {
+        goto fail;
+    }
 
     /* Support dtype(rational) syntax */
     if (PyObject_SetAttrString(
@@ -1523,9 +1521,14 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
         }
         if (PyUFunc_RegisterLoopForType((PyUFuncObject*)gufunc, npy_rational,
                 rational_gufunc_matrix_multiply, types2, 0) < 0) {
+            Py_DECREF(gufunc);
             goto fail;
         }
-        PyModule_AddObject(m,"matrix_multiply",(PyObject*)gufunc);
+        int status = PyModule_AddObjectRef(m, "matrix_multiply", gufunc);
+        Py_DECREF(gufunc);
+        if (status < 0) {
+            goto fail;
+        }
     }
 
     /* Create test ufunc with built in input types and rational output type */
@@ -1540,9 +1543,14 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
         }
         if (PyUFunc_RegisterLoopForType((PyUFuncObject*)ufunc, npy_rational,
                 rational_ufunc_test_add, types3, 0) < 0) {
+            Py_DECREF(ufunc);
             goto fail;
         }
-        PyModule_AddObject(m,"test_add",(PyObject*)ufunc);
+        int status = PyModule_AddObjectRef(m, "test_add", ufunc);
+        Py_DECREF(ufunc);
+        if (status < 0) {
+            goto fail;
+        }
     }
 
     /* Create test ufunc with rational types using RegisterLoopForDescr */
@@ -1559,9 +1567,14 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
         }
         if (PyUFunc_RegisterLoopForDescr((PyUFuncObject*)ufunc, npyrational_descr,
                 rational_ufunc_test_add_rationals, types, 0) < 0) {
+            Py_DECREF(ufunc);
             goto fail;
         }
-        PyModule_AddObject(m,"test_add_rationals",(PyObject*)ufunc);
+        int status = PyModule_AddObjectRef(m, "test_add_rationals", ufunc);
+        Py_DECREF(ufunc);
+        if (status < 0) {
+            goto fail;
+        }
     }
 
     /* Create numerator and denominator ufuncs */
@@ -1574,9 +1587,14 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
         } \
         if (PyUFunc_RegisterLoopForType((PyUFuncObject*)ufunc, \
                 npy_rational,rational_ufunc_##name,types,0)<0) { \
+            Py_DECREF(ufunc); \
             goto fail; \
         } \
-        PyModule_AddObject(m,#name,(PyObject*)ufunc); \
+        int status = PyModule_AddObjectRef(m, #name, ufunc); \
+        Py_DECREF(ufunc); \
+        if (status < 0) { \
+            goto fail; \
+        } \
     }
     NEW_UNARY_UFUNC(numerator,NPY_INT64,"rational number numerator");
     NEW_UNARY_UFUNC(denominator,NPY_INT64,"rational number denominator");
@@ -1592,31 +1610,52 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
         if (!ufunc) { \
             goto fail; \
         } \
-        PyModule_AddObject(m,#name,(PyObject*)ufunc); \
+        int status = PyModule_AddObjectRef(m, #name, ufunc); \
+        Py_DECREF(ufunc); \
+        if (status < 0) { \
+            goto fail; \
+        } \
     }
     GCD_LCM_UFUNC(gcd,NPY_INT64,"greatest common denominator of two integers");
     GCD_LCM_UFUNC(lcm,NPY_INT64,"least common multiple of two integers");
 
-    /*
-     * TODO: 3.15 adds a free-threaded stable ABI (abi3t), but supporting it
-     * also needs module setup via the new PyModExport API and instance
-     * structs that do not embed `PyObject`.
-     */
-#if defined(Py_GIL_DISABLED) && !defined(Py_LIMITED_API)
-    // signal this module supports running with the GIL disabled
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
-#endif
-
-    return m;
+    ret = 0;
+    goto finish;
 
 fail:
     if (!PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load _rational_tests module.");
     }
-    if (m) {
-        Py_DECREF(m);
-        m = NULL;
-    }
-    return m;
+    ret = -1;
+
+finish:
+    Py_XDECREF(numpy);
+    Py_XDECREF((PyObject *)npyrational_descr);
+    Py_XDECREF((PyObject *)npyrational2_descr);
+    return ret;
+}
+
+static struct PyModuleDef_Slot _rational_tests_slots[] = {
+    {Py_mod_exec, _rational_tests_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
+#endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    // signal that this module supports running without an active GIL
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
+
+static struct PyModuleDef moduledef = {
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "_rational_tests",
+    .m_size = 0,
+    .m_methods = module_methods,
+    .m_slots = _rational_tests_slots,
+};
+
+PyMODINIT_FUNC PyInit__rational_tests(void) {
+    return PyModuleDef_Init(&moduledef);
 }
