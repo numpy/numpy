@@ -192,6 +192,7 @@ if __name__ == "__main__":
     def setup_method(self):
         """Ensure that the environment is reset"""
         self.env = os.environ.copy()
+        self.env['PYTHONIOENCODING'] = 'utf-8'
 
     def test_runtime_feature_selection(self):
         """
