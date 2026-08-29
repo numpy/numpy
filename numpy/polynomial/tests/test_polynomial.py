@@ -630,6 +630,24 @@ class TestMisc:
         assert_(res.dtype == np.complex128)
         assert_almost_equal(poly.polyval(res, c), [0, 0])
 
+        # regression: b**2 and 4ac can individually be much larger
+        # than their true difference right at the real/complex-root
+        # boundary, so the plain subtraction can round the
+        # discriminant to the wrong sign (even exactly 0),
+        # misclassifying a genuine (if tiny) complex-conjugate pair
+        # as a real repeated root.
+        res = poly.polyroots(
+            [3.4181422002034245, 1.049714501038826, 0.08059206355031207])
+        assert_(res.dtype == np.complex128)
+        assert_(res[0] == np.conj(res[1]))
+        assert_(res[0].imag != 0)
+
+        # regression: a root overflowing a narrower dtype like float16
+        # (not just float32/complex64) must still raise, not silently
+        # return inf.
+        assert_raises(np.linalg.LinAlgError, poly.polyroots,
+                       np.array([65504, -65504, 0.5], dtype=np.float16))
+
         # dtype is preserved
         assert_(poly.polyroots(
             np.array([2, -3, 1], dtype=np.float32)).dtype == np.float32)

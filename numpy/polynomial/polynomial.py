@@ -112,6 +112,22 @@ _QUADRATIC_FAST_PATH_DTYPES = frozenset([
 _FLOAT32_MAX = np.finfo(np.float32).max
 
 
+def _two_product(a, b):
+    """(p, e) with p+e == a*b exactly, via Dekker's error-free
+    split (no FMA needed). Used to recompute the quadratic's
+    discriminant near the real/complex-root boundary, where the
+    ordinary b**2 - 4*a*c can lose its sign to cancellation."""
+    p = a * b
+    split = a * 134217729.0  # 2**27 + 1: Veltkamp splitter
+    a_hi = split - (split - a)
+    a_lo = a - a_hi
+    split = b * 134217729.0
+    b_hi = split - (split - b)
+    b_lo = b - b_hi
+    e = ((a_hi * b_hi - p) + a_hi * b_lo + a_lo * b_hi) + a_lo * b_lo
+    return p, e
+
+
 #
 # These are constant arrays are of integer type so as to be compatible
 # with the widest range of other types, such as Decimal.
@@ -1662,8 +1678,26 @@ def polyroots(c):
             # converting each of the 3 coefficients individually.
             c0, c1, c2 = c.tolist()
             s = max(abs(c0), abs(c1), abs(c2))
+            raw0, raw1, raw2 = c0, c1, c2
             c0, c1, c2 = c0 / s, c1 / s, c2 / s
             disc = c1 * c1 - 4 * c2 * c0
+            if not is_complex_in:
+                # b**2 and 4ac can be much larger than their
+                # difference right at the real/complex-root boundary,
+                # so the subtraction above can round disc to the
+                # wrong sign (even exactly 0), misclassifying a
+                # genuine complex-conjugate pair as a real repeated
+                # root. Recompute with error-compensated products
+                # when that's a real risk; a power-of-2 rescale keeps
+                # it overflow-safe without reintroducing the rounding
+                # an ordinary division would.
+                bound = max(abs(c1 * c1), abs(4 * c2 * c0))
+                if bound > 0 and abs(disc) < 1e-9 * bound:
+                    s2 = math.ldexp(1.0, math.frexp(s)[1])
+                    c0s, c1s, c2s = raw0 / s2, raw1 / s2, raw2 / s2
+                    p1, e1 = _two_product(c1s, c1s)
+                    p2, e2 = _two_product(4 * c2s, c0s)
+                    disc = ((p1 - p2) + (e1 - e2)) * (s2 / s) ** 2
             if not is_complex_in and disc < 0:
                 # Real coefficients with a negative discriminant means
                 # the two roots are a complex-conjugate pair (Vieta's
@@ -1724,7 +1758,7 @@ def polyroots(c):
         else:
             dtype = c.dtype
 
-        if dtype == np.float32 or dtype == np.complex64:
+        if dtype != np.float64 and dtype != np.complex128:
             # The arithmetic above ran in double precision throughout,
             # but coefficients were only normalized to keep
             # *intermediate* values away from overflow - root
@@ -1733,9 +1767,13 @@ def polyroots(c):
             # exceed what a narrower target dtype can hold. Checking
             # against that dtype's own max closes the gap without
             # needing to redo the computation at lower precision.
+            # Not just a float32/complex64 concern: float16 has the
+            # same gap, with a much smaller max to exceed.
+            cap = float(_FLOAT32_MAX if dtype == np.float32 or dtype == np.complex64
+                        else np.finfo(dtype).max)
             for v in (r0, r1):
                 parts = (v.real, v.imag) if is_complex_out else (v,)
-                if any(abs(p) > _FLOAT32_MAX for p in parts):
+                if any(abs(p) > cap for p in parts):
                     from numpy.linalg import LinAlgError
                     raise LinAlgError(
                         "Array must not contain infs or NaNs")
