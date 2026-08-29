@@ -676,6 +676,25 @@ class TestMisc:
         assert_raises(np.linalg.LinAlgError, poly.polyroots,
                        [1.03994035e+236, -2.56001588e+167, -4.33885628e-183])
 
+        # regression: a literal zero constant term factors exactly as
+        # x*(c2*x + c1), so one root is exactly 0 and the other is
+        # -c1/c2. Deriving both from the general formula instead can
+        # lose the small root to underflow when squaring c1 (needed
+        # for the discriminant) itself underflows to 0.
+        res = poly.polyroots([0.0, 1.88562000e-157, -6.26804016e+028])
+        assert_equal(res[0], 0.0)
+        assert_almost_equal(res[1], 3.0083087406383176e-186)
+
+        # regression: rescaling the coefficients by the nearest power
+        # of 2 (to recompute a cancellation-prone discriminant) can
+        # itself overflow when that power of 2 lands on 2**1024, which
+        # isn't representable in float64. Must not raise anything
+        # other than the documented LinAlgError.
+        for c in ([-1.02437727e+308, -1.22052573e+162, -3.63558206e+015],
+                  [1.06670315e+308, -4.07560533e+156, 3.89296657e+004]):
+            res = poly.polyroots(c)
+            assert_(np.all(np.isfinite(res)))
+
     def test_polyfit(self):
         def f(x):
             return x * (x - 1) * (x - 2)

@@ -1661,51 +1661,75 @@ def polyroots(c):
             s = max(abs(c0), abs(c1), abs(c2))
             raw0, raw1, raw2 = c0, c1, c2
             c0, c1, c2 = c0 / s, c1 / s, c2 / s
-            disc = c1 * c1 - 4 * c2 * c0
-            if not is_complex_in:
-                # b**2 and 4ac can be much larger than their
-                # difference near the real/complex boundary, so disc
-                # can round to the wrong sign, even exactly 0.
-                # Recompute with error-compensated products when
-                # that's a risk; the power-of-2 rescale keeps it exact
-                # and overflow-safe.
-                bound = max(abs(c1 * c1), abs(4 * c2 * c0))
-                if bound > 0 and abs(disc) < 1e-9 * bound:
-                    s2 = math.ldexp(1.0, math.frexp(s)[1])
-                    c0s, c1s, c2s = raw0 / s2, raw1 / s2, raw2 / s2
-                    p1, e1 = _two_product(c1s, c1s)
-                    p2, e2 = _two_product(4 * c2s, c0s)
-                    disc = ((p1 - p2) + (e1 - e2)) * (s2 / s) ** 2
-            if not is_complex_in and disc < 0:
-                # Real coefficients with disc < 0 give an exact
-                # conjugate pair (Vieta's sum/product are both real).
-                # Deriving the second root via the product-of-roots
-                # relation below only reproduces that up to rounding;
-                # building both from the same real/imaginary parts
-                # keeps it exact.
-                re = -0.5 * c1 / c2
-                im = abs(math.sqrt(-disc) / (2 * c2))
-                r0, r1 = re - 1j * im, re + 1j * im
-                is_complex_out = True
-            else:
-                d = cmath.sqrt(disc) if is_complex_in else math.sqrt(disc)
-                cond = (c1.conjugate() * d).real < 0 if is_complex_in else c1 * d < 0
-                if cond:
-                    d = -d
-                q = -0.5 * (c1 + d)
-                if q == 0:
-                    r0, r1 = (0j if is_complex_in else 0.0), -c1 / c2
-                else:
-                    r0, r1 = q / c2, c0 / q
-                is_complex_out = (is_complex_in or isinstance(r0, complex)
-                                  or isinstance(r1, complex))
-                # Order directly rather than via array .sort(); the
-                # disc < 0 branch above is already ordered.
+            if raw0 == 0:
+                # A literal zero constant term factors exactly as
+                # x*(c2*x + c1): roots 0 and -c1/c2, no sqrt needed.
+                # This must check the unnormalized raw0, not the
+                # normalized c0 above - c0 can also round to 0 when
+                # raw0 is merely tiny relative to c1/c2 (coefficients
+                # spanning hundreds of orders of magnitude), where
+                # neither root need actually be near zero, and forcing
+                # one to exactly 0 would be wrong in that case.
+                r0, r1 = (0j if is_complex_in else 0.0), -raw1 / raw2
+                is_complex_out = is_complex_in
                 if is_complex_out:
                     if (r0.real, r0.imag) > (r1.real, r1.imag):
                         r0, r1 = r1, r0
                 elif r0 > r1:
                     r0, r1 = r1, r0
+            else:
+                disc = c1 * c1 - 4 * c2 * c0
+                if not is_complex_in:
+                    # b**2 and 4ac can be much larger than their
+                    # difference near the real/complex boundary, so disc
+                    # can round to the wrong sign, even exactly 0.
+                    # Recompute with error-compensated products when
+                    # that's a risk; the power-of-2 rescale keeps it exact
+                    # and overflow-safe.
+                    bound = max(abs(c1 * c1), abs(4 * c2 * c0))
+                    if bound > 0 and abs(disc) < 1e-9 * bound:
+                        # min(..., 1023): the nearest power of 2 to s can
+                        # itself round up past float64's own max (2**1024
+                        # isn't representable), so cap it - the rescale
+                        # only needs to land raw0/raw1/raw2 in a safe
+                        # range, not hit s exactly.
+                        exp = min(math.frexp(s)[1], 1023)
+                        s2 = math.ldexp(1.0, exp)
+                        c0s, c1s, c2s = raw0 / s2, raw1 / s2, raw2 / s2
+                        p1, e1 = _two_product(c1s, c1s)
+                        p2, e2 = _two_product(4 * c2s, c0s)
+                        disc = ((p1 - p2) + (e1 - e2)) * (s2 / s) ** 2
+                if not is_complex_in and disc < 0:
+                    # Real coefficients with disc < 0 give an exact
+                    # conjugate pair (Vieta's sum/product are both real).
+                    # Deriving the second root via the product-of-roots
+                    # relation below only reproduces that up to rounding;
+                    # building both from the same real/imaginary parts
+                    # keeps it exact.
+                    re = -0.5 * c1 / c2
+                    im = abs(math.sqrt(-disc) / (2 * c2))
+                    r0, r1 = re - 1j * im, re + 1j * im
+                    is_complex_out = True
+                else:
+                    d = cmath.sqrt(disc) if is_complex_in else math.sqrt(disc)
+                    cond = ((c1.conjugate() * d).real < 0 if is_complex_in
+                            else c1 * d < 0)
+                    if cond:
+                        d = -d
+                    q = -0.5 * (c1 + d)
+                    if q == 0:
+                        r0, r1 = (0j if is_complex_in else 0.0), -c1 / c2
+                    else:
+                        r0, r1 = q / c2, c0 / q
+                    is_complex_out = (is_complex_in or isinstance(r0, complex)
+                                      or isinstance(r1, complex))
+                    # Order directly rather than via array .sort(); the
+                    # disc < 0 branch above is already ordered.
+                    if is_complex_out:
+                        if (r0.real, r0.imag) > (r1.real, r1.imag):
+                            r0, r1 = r1, r0
+                    elif r0 > r1:
+                        r0, r1 = r1, r0
             ok = ((cmath.isfinite(r0) and cmath.isfinite(r1)) if is_complex_out
                   else (math.isfinite(r0) and math.isfinite(r1)))
             if not ok:
