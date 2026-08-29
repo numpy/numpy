@@ -1610,15 +1610,16 @@ def polyroots(c):
 
     Notes
     -----
-    For degrees higher than two the root estimates are obtained as the
-    eigenvalues of the companion matrix, Roots far from the origin of the
-    complex plane may have large errors due to the numerical instability
-    of the power series for such values. Roots with multiplicity greater
-    than 1 will also show larger errors as the value of the series near
-    such points is relatively insensitive to errors in the roots.
-    Isolated roots near the origin can be improved by a few iterations of
-    Newton's method. Linear and quadratic polynomials use explicit,
-    numerically stable formulas instead.
+    The root estimates are obtained as the eigenvalues of the companion
+    matrix. Roots far from the origin of the complex plane may have large
+    errors due to the numerical instability of the power series for such
+    values. Roots with multiplicity greater than 1 will also show larger
+    errors as the value of the series near such points is relatively
+    insensitive to errors in the roots. Isolated roots near the origin can
+    be improved by a few iterations of Newton's method.
+
+    Degree one and two polynomials use explicit formulas instead of the
+    eigenvalue method above.
 
     Examples
     --------
@@ -1634,17 +1635,12 @@ def polyroots(c):
     """  # noqa: E501
     # c is a trimmed copy
     #
-    # as_series() was measured as the single largest piece of
-    # per-call overhead in this function (larger than the quadratic
-    # formula itself): it promotes dtype via common_type and always
-    # makes a defensive copy, neither of which this function needs
-    # when c is already a clean 1-d float/complex array with nothing
-    # to trim - polyroots only ever reads from c, never mutates it,
-    # and common_type on a single already-numeric array just hands
-    # its dtype back unchanged. Skip straight to using c itself in
-    # that common case; anything else (object or integer dtype, a
-    # plain list, 2-d input, a trailing zero needing trimming) falls
-    # back to the general path, unchanged.
+    # as_series() always makes a defensive copy and promotes dtype via
+    # common_type, neither of which this function needs when c is
+    # already a clean 1-d array with an accepted dtype and nothing to
+    # trim - it only ever reads c. Falls back to as_series() for
+    # anything else (object/integer dtype, a plain list, 2-d input, a
+    # trailing zero), unchanged.
     if not (type(c) is np.ndarray and c.ndim == 1 and c.size > 0
             and c.dtype in _QUADRATIC_FAST_PATH_DTYPES and c[-1] != 0):
         [c] = pu.as_series([c])
@@ -1654,28 +1650,13 @@ def polyroots(c):
     if n == 2:
         return np.array([-c[0] / c[1]])
     if n == 3:
-        # Explicit quadratic formula, using the standard trick of
-        # picking the sign of the square root that avoids cancellation
-        # in computing one root, then getting the other root from the
-        # product-of-roots relation c0/c2 = r0*r1. Coefficients are
-        # normalized by their largest magnitude first: this doesn't
-        # change the roots, but keeps c1**2 and c2*c0 well away from
-        # overflow/underflow for polynomials with huge or tiny
-        # coefficients.
-        #
-        # Uses native Python scalar arithmetic rather than numpy
-        # ufuncs: for a fixed 3-coefficient computation, per-call
-        # ufunc dispatch overhead dominates the actual arithmetic
-        # cost, and this formula only needs a handful of additions
-        # and multiplications, one division, and one square root -
-        # about 5x faster than the eigenvalue path end to end, versus
-        # roughly no improvement when the same formula is expressed
-        # in numpy ufuncs.
+        # Explicit quadratic formula: pick the sign of the square root
+        # that avoids cancellation in one root, get the other from the
+        # product-of-roots relation c0/c2 = r0*r1. Normalizing by the
+        # largest coefficient keeps c1**2 and c2*c0 away from
+        # overflow/underflow.
         is_complex_in = c.dtype.kind == 'c'
         try:
-            # tolist() hands back native Python float/complex matching
-            # c's dtype family in one call, cheaper than indexing and
-            # converting each of the 3 coefficients individually.
             c0, c1, c2 = c.tolist()
             s = max(abs(c0), abs(c1), abs(c2))
             raw0, raw1, raw2 = c0, c1, c2
@@ -1683,14 +1664,11 @@ def polyroots(c):
             disc = c1 * c1 - 4 * c2 * c0
             if not is_complex_in:
                 # b**2 and 4ac can be much larger than their
-                # difference right at the real/complex-root boundary,
-                # so the subtraction above can round disc to the
-                # wrong sign (even exactly 0), misclassifying a
-                # genuine complex-conjugate pair as a real repeated
-                # root. Recompute with error-compensated products
-                # when that's a real risk; a power-of-2 rescale keeps
-                # it overflow-safe without reintroducing the rounding
-                # an ordinary division would.
+                # difference near the real/complex boundary, so disc
+                # can round to the wrong sign, even exactly 0.
+                # Recompute with error-compensated products when
+                # that's a risk; the power-of-2 rescale keeps it exact
+                # and overflow-safe.
                 bound = max(abs(c1 * c1), abs(4 * c2 * c0))
                 if bound > 0 and abs(disc) < 1e-9 * bound:
                     s2 = math.ldexp(1.0, math.frexp(s)[1])
@@ -1699,16 +1677,12 @@ def polyroots(c):
                     p2, e2 = _two_product(4 * c2s, c0s)
                     disc = ((p1 - p2) + (e1 - e2)) * (s2 / s) ** 2
             if not is_complex_in and disc < 0:
-                # Real coefficients with a negative discriminant means
-                # the two roots are a complex-conjugate pair (Vieta's
-                # sum and product of roots are both real, which only
-                # holds for an exact conjugate pair). Deriving the
-                # second root from the first via the product-of-roots
-                # relation below only reproduces that up to rounding,
-                # not exactly, so build both roots from the same two
-                # real numbers instead - this is also cancellation-free
-                # on its own, since a real quantity and a purely
-                # imaginary one can't partially cancel.
+                # Real coefficients with disc < 0 give an exact
+                # conjugate pair (Vieta's sum/product are both real).
+                # Deriving the second root via the product-of-roots
+                # relation below only reproduces that up to rounding;
+                # building both from the same real/imaginary parts
+                # keeps it exact.
                 re = -0.5 * c1 / c2
                 im = abs(math.sqrt(-disc) / (2 * c2))
                 r0, r1 = re - 1j * im, re + 1j * im
@@ -1725,13 +1699,8 @@ def polyroots(c):
                     r0, r1 = q / c2, c0 / q
                 is_complex_out = (is_complex_in or isinstance(r0, complex)
                                   or isinstance(r1, complex))
-                # Order the pair here directly rather than relying on
-                # the array .sort() below: for a fixed 2-element
-                # result, comparing the scalars themselves first is
-                # cheaper than constructing the array before sorting
-                # it. The re-disc<0 branch above needs no such step,
-                # it already builds r0/r1 in ascending order by
-                # construction.
+                # Order directly rather than via array .sort(); the
+                # disc < 0 branch above is already ordered.
                 if is_complex_out:
                     if (r0.real, r0.imag) > (r1.real, r1.imag):
                         r0, r1 = r1, r0
@@ -1742,12 +1711,9 @@ def polyroots(c):
             if not ok:
                 raise _QuadraticOverflow
         except (ZeroDivisionError, _QuadraticOverflow):
-            # An intermediate 0/0 - Python's native division raises,
-            # unlike numpy's silent inf/nan - or a non-finite result
-            # both mean the same thing here: at least one true root
-            # doesn't fit in the input's floating-point range, the
-            # same failure case the general eigenvalue path below
-            # raises LinAlgError for.
+            # 0/0 (Python raises; numpy would give nan) or a
+            # non-finite result both mean a root doesn't fit - the
+            # same case the eigenvalue path below raises for.
             from numpy.linalg import LinAlgError
             raise LinAlgError(
                 "Array must not contain infs or NaNs") from None
@@ -1759,16 +1725,10 @@ def polyroots(c):
             dtype = c.dtype
 
         if dtype != np.float64 and dtype != np.complex128:
-            # The arithmetic above ran in double precision throughout,
-            # but coefficients were only normalized to keep
-            # *intermediate* values away from overflow - root
-            # magnitudes are unbounded (see the "roots spanning many
-            # orders of magnitude" test) and can still legitimately
-            # exceed what a narrower target dtype can hold. Checking
-            # against that dtype's own max closes the gap without
-            # needing to redo the computation at lower precision.
-            # Not just a float32/complex64 concern: float16 has the
-            # same gap, with a much smaller max to exceed.
+            # Root magnitudes are unbounded even though normalization
+            # keeps intermediates in range, so check against the
+            # target dtype's own max before downcasting (float16
+            # needs this too, not just float32/complex64).
             cap = float(_FLOAT32_MAX if dtype == np.float32 or dtype == np.complex64
                         else np.finfo(dtype).max)
             for v in (r0, r1):
@@ -1777,18 +1737,10 @@ def polyroots(c):
                     from numpy.linalg import LinAlgError
                     raise LinAlgError(
                         "Array must not contain infs or NaNs")
-        r = np.array((r0, r1), dtype=dtype)
-        # r0/r1 are already in ascending order (see above), so no
-        # .sort() call needed here, unlike the eigenvalue path below.
-        # Unlike that path too, is_complex_out already
-        # says definitively whether this result is real or complex,
-        # and r was constructed with exactly that dtype - the generic
-        # "check whether every imaginary part happens to be zero"
-        # backwards-compat re-detection below would just re-derive
-        # what's already known, at real cost (it was measured as the
-        # single largest piece of overhead in this whole function,
-        # bigger than the arithmetic above), so skip it here.
-        return r
+        # Already ordered (see above) and dtype is already known for
+        # certain, so skip the array .sort() and the generic
+        # real-vs-complex re-check the eigenvalue path below needs.
+        return np.array((r0, r1), dtype=dtype)
 
     m = polycompanion(c)
     r = np.linalg.eigvals(m)
