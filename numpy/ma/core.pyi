@@ -1177,8 +1177,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         fill_value: _ScalarLike_co | None = None,
     ) -> MaskedArray[_ShapeT_co, np.dtype]: ...
 
-    # Keep in sync with `ndarray.__getitem__`
-    @overload
+    #
+    @overload  # type: ignore[override]
     def __getitem__(self, key: _ArrayInt_co | tuple[_ArrayInt_co, ...], /) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
     @overload
     def __getitem__(self, key: SupportsIndex | tuple[SupportsIndex, ...], /) -> Any: ...

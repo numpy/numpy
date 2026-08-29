@@ -123,7 +123,7 @@ jobs:
       run: |
         pip install -r requirements/build_requirements.txt
         pip install -r requirements/test_requirements.txt -r requirements/hypothesis_requirements.txt
-    - name: Install gfortran and setup OpenBLAS (MacPython build)
+    - name: Install gfortran and setup OpenBLAS 32 bits
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
         set -xe
@@ -333,7 +333,7 @@ jobs:
       with:
         repository: jax-ml/ml_dtypes
         # Current ml_dtypes main, should be updated occasionally:
-        ref: '9b8b2471a5ec5fd4c223693f677fcc2416847970'  # main as of 2026-05-11
+        ref: 'b793a6e2864ce20b6680df2fd480a5cd2a75fa82'  # main as of 2026-08-21
         submodules: 'true'
         path: 'ml_dtypes'
         persist-credentials: false
