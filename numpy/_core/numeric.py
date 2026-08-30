@@ -1833,22 +1833,28 @@ def indices(dimensions, dtype=int, sparse=False):
 @set_module('numpy')
 def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     """
-    Construct an array by executing a function over each coordinate.
+    Construct an array by applying a function to coordinate arrays.
 
-    The resulting array therefore has a value ``fn(x, y, z)`` at
-    coordinate ``(x, y, z)``.
+    The function is called once with one coordinate array per axis, not
+    once per output element.  This is equivalent to::
+
+        function(*np.indices(shape, dtype=dtype))
+
+    If `function` operates element-wise on those arrays, the result has
+    value ``function(x, y, z)`` at coordinate ``(x, y, z)``.
 
     Parameters
     ----------
     function : callable
-        The function is called with N parameters, where N is the rank of
-        `shape`.  Each parameter represents the coordinates of the array
-        varying along a specific axis.  For example, if `shape`
-        were ``(2, 2)``, then the parameters would be
-        ``array([[0, 0], [1, 1]])`` and ``array([[0, 1], [0, 1]])``
+        Called once with N array arguments, where N is the number of
+        dimensions in `shape`.  Each argument is the full coordinate
+        array along one axis and has shape `shape`; the arguments are
+        not scalar indices.  For example, if `shape` is ``(2, 2)``, the
+        arguments are ``array([[0, 0], [1, 1]])`` and
+        ``array([[0, 1], [0, 1]])``.
     shape : (N,) tuple of ints
-        Shape of the output array, which also determines the shape of
-        the coordinate arrays passed to `function`.
+        Shape of the coordinate arrays passed to `function`.  This is
+        the intended output shape when `function` is applied element-wise.
     dtype : data-type, optional
         Data-type of the coordinate arrays passed to `function`.
         By default, `dtype` is float.
@@ -1872,6 +1878,10 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     -----
     Keywords other than `dtype` and `like` are passed to `function`.
 
+    Because `function` is not invoked per element, a constant such as
+    ``lambda i, j: 3`` returns the scalar ``3``, not an array of shape
+    `shape`.
+
     Examples
     --------
     >>> import numpy as np
@@ -1892,6 +1902,12 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     array([[0, 1, 2],
            [1, 2, 3],
            [2, 3, 4]])
+
+    A function that returns a scalar does not produce an array of the
+    requested shape:
+
+    >>> np.fromfunction(lambda i, j: 3, (2, 2), dtype=int)
+    3
 
     """
     if like is not None:
