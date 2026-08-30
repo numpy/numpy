@@ -35,10 +35,11 @@ SOFTWARE.
 
 import abc
 from itertools import cycle
+from operator import index
 import re
 from secrets import randbits
 
-from threading import RLock
+from threading import Lock, RLock
 
 from cpython.pycapsule cimport PyCapsule_New
 
@@ -62,6 +63,21 @@ cdef uint32_t MIX_MULT_L = 0xca01f9dd
 cdef uint32_t MIX_MULT_R = 0x4973f715
 cdef uint32_t XSHIFT = np.dtype(np.uint32).itemsize * 8 // 2
 cdef uint32_t MASK32 = 0xFFFFFFFF
+
+# Serializes the ``n_children_spawned`` bookkeeping of `SeedSequence.spawn`
+# across all `SeedSequence` instances.  Handing the same spawn key to two
+# threads gives them bit generators with identical streams, so the reservation
+# of a block of keys has to be atomic (see gh-32063).
+#
+# This is deliberately a single module-level lock rather than a per-instance
+# one: adding an attribute to the `SeedSequence` cdef class changes the
+# checksum that Cython's auto-generated unpickler validates, which would make
+# every already-written pickle of a `SeedSequence`, `BitGenerator` or
+# `Generator` fail to load.  Only the few operations needed to reserve a range
+# of keys are done under the lock -- constructing the children, which is the
+# expensive part, happens outside it -- so the shared scope costs nothing in
+# practice.
+_spawn_lock = Lock()
 
 def _int_to_uint32_array(n):
     arr = []
@@ -484,19 +500,30 @@ cdef class SeedSequence:
 
         """
         cdef uint32_t i
+        cdef uint32_t first_child
 
         if n_children < 0:
             raise ValueError("n_children must be non-negative")
+        # Reject non-integers before touching the shared counter, keeping the
+        # error identical to the one ``range`` used to raise below.
+        n_children = index(n_children)
+
+        # Reserve the whole block of spawn keys up front.  Building the
+        # children runs Python code (``np.concatenate`` inside
+        # ``get_assembled_entropy``, and any subclass ``__init__``), so it can
+        # release the GIL; doing the bookkeeping afterwards let concurrent
+        # spawns observe the same starting index and hand out duplicate keys.
+        with _spawn_lock:
+            first_child = self.n_children_spawned
+            self.n_children_spawned = first_child + n_children
 
         seqs = []
-        for i in range(self.n_children_spawned,
-                       self.n_children_spawned + n_children):
+        for i in range(first_child, first_child + n_children):
             seqs.append(type(self)(
                 self.entropy,
                 spawn_key=self.spawn_key + (i,),
                 pool_size=self.pool_size,
             ))
-        self.n_children_spawned += n_children
         return seqs
 
 

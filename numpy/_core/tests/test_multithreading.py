@@ -83,6 +83,38 @@ def test_parallel_bit_generator_state_access(bitgen_name):
 
     run_threaded(func, pass_count=True, pass_barrier=True)
 
+def test_parallel_seed_sequence_spawn():
+    # gh-32063: SeedSequence.spawn read n_children_spawned, built the children
+    # (running Python code, so the GIL could be released), and only then
+    # advanced the counter.  Concurrent spawns therefore started from the same
+    # index and handed out duplicate spawn keys, i.e. bit generators with
+    # identical streams.
+    n_threads = 8
+    n_spawns = 250
+    seed_seq = np.random.SeedSequence(12345)
+    spawn_keys = []
+    results_lock = threading.Lock()
+
+    def func(barrier):
+        barrier.wait()
+        children = seed_seq.spawn(n_spawns)
+        with results_lock:
+            spawn_keys.extend(child.spawn_key for child in children)
+
+    # Switch threads aggressively so the window between reading the counter
+    # and advancing it is actually hit on the GIL-enabled build.
+    old_interval = sys.getswitchinterval()
+    sys.setswitchinterval(1e-6)
+    try:
+        run_threaded(func, max_workers=n_threads, pass_barrier=True)
+    finally:
+        sys.setswitchinterval(old_interval)
+
+    expected = n_threads * n_spawns
+    # Every key handed out exactly once, and the counter agrees.
+    assert sorted(spawn_keys) == [(i,) for i in range(expected)]
+    assert seed_seq.n_children_spawned == expected
+
 def test_parallel_ufunc_execution():
     # if the loop data cache or dispatch cache are not thread-safe
     # computing ufuncs simultaneously in multiple threads leads
