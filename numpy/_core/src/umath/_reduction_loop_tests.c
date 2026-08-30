@@ -349,6 +349,7 @@ static PyMethodDef ReductionLoopTestsMethods[] = {
     {NULL, NULL, 0, NULL}
 };
 
+/* Module execution function, run on every import of the module */
 static int
 _reduction_loop_tests_exec(PyObject *m)
 {
@@ -372,10 +373,18 @@ _reduction_loop_tests_exec(PyObject *m)
 static struct PyModuleDef_Slot _reduction_loop_tests_slots[] = {
     {Py_mod_exec, _reduction_loop_tests_exec},
 #if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    /*
+     * NumPy relies on process-global state and so does not support
+     * subinterpreters; `_multiarray_umath` sets this same flag.
+     */
     {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
 #endif
 #if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
-    // signal that this module supports running without an active GIL
+    /*
+     * No GIL is needed: the inner loops never touch Python objects,
+     * apart from the object ones, which declare NPY_METH_REQUIRES_PYAPI
+     * so the iterator does not release the GIL around them.
+     */
     {Py_mod_gil, Py_MOD_GIL_NOT_USED},
 #endif
     {0, NULL},
