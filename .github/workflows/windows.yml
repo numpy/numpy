@@ -99,7 +99,11 @@ jobs:
           architecture: ${{ matrix.architecture }}
 
       - name: Setup MSVC
-        uses: bus1/cabuild/action/msdevshell@e22aba57d6e74891d059d66501b6b5aed8123c4d  # v1
+        # bus1/cabuild has no tags; `v1` is a branch, so pinning to its tip would make
+        # this drift (and redden CI) every time upstream pushes. Dependabot is told to
+        # ignore this action for the same reason - if it ever needs a change, vendor it
+        # or work on resolving meson#11435 so we can do this with `--vsenv=x86`.
+        uses: bus1/cabuild/action/msdevshell@e22aba57d6e74891d059d66501b6b5aed8123c4d  # v1  # zizmor: ignore[ref-version-mismatch]
         with:
           architecture: ${{ matrix.architecture }}
 

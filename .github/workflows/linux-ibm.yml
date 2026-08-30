@@ -65,6 +65,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
+        persist-credentials: false
 
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
