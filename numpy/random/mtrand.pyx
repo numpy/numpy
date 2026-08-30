@@ -214,16 +214,35 @@ cdef class RandomState:
         return __randomstate_ctor, (self._bit_generator, ), self.get_state(legacy=False)
 
     cdef _initialize_bit_generator(self, bit_generator):
-        self._bit_generator = bit_generator
+        # Validate before mutating anything.  Assigning ``self._bit_generator``
+        # first would drop the last reference to the bit generator currently in
+        # use -- freeing the state that ``self._bitgen.state`` still points at --
+        # and then leave the object wedged that way when the check below fails.
         capsule = bit_generator.capsule
         cdef const char *name = "BitGenerator"
         if not PyCapsule_IsValid(capsule, name):
             raise ValueError("Invalid bit generator. The bit generator must "
                              "be instantized.")
-        self._bitgen = (<bitgen_t *> PyCapsule_GetPointer(capsule, name))[0]
-        self._aug_state.bit_generator = &self._bitgen
-        self.lock = bit_generator.lock
-        self._reset_gauss()
+
+        # ``self.lock`` is None only while ``__init__`` runs, when no other
+        # thread can reach this object yet.  Otherwise hold the lock belonging
+        # to the bit generator being replaced: distribution methods read
+        # ``self._bitgen`` (a *copy* of the function pointers and state pointer)
+        # under that lock with the GIL released, so swapping without it lets
+        # them observe a half-written struct or a pointer into a bit generator
+        # that has just been deallocated.  See gh-32063.
+        old_lock = self.lock
+        if old_lock is not None:
+            old_lock.acquire()
+        try:
+            self._bit_generator = bit_generator
+            self._bitgen = (<bitgen_t *> PyCapsule_GetPointer(capsule, name))[0]
+            self._aug_state.bit_generator = &self._bitgen
+            self.lock = bit_generator.lock
+            self._reset_gauss()
+        finally:
+            if old_lock is not None:
+                old_lock.release()
 
     cdef _reset_gauss(self):
         with self.lock:

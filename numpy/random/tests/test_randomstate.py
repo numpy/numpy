@@ -1,6 +1,7 @@
 import hashlib
 import pickle
 import sys
+import threading
 import warnings
 
 import pytest
@@ -2105,3 +2106,57 @@ def test_swapped_singleton_against_direct(restore_singleton_bitgen):
     rg = np.random.RandomState(PCG64(98765))
     non_singleton_vals = rg.randint(0, 2 ** 30, 10)
     assert_equal(non_singleton_vals, singleton_vals)
+
+
+class _NotABitGenerator:
+    """Passes the ``.capsule`` attribute lookup but fails validation."""
+    capsule = None
+
+
+@pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
+@pytest.mark.parametrize("bad", [object(), None, "PCG64", _NotABitGenerator()])
+def test_failed_swap_leaves_singleton_usable(restore_singleton_bitgen, bad):
+    # gh-32063: the bit generator was assigned before the capsule was
+    # validated, so a rejected argument dropped the last reference to the
+    # generator that ``_bitgen`` still pointed into and wedged the singleton.
+    keep_alive = PCG64(0)
+    np.random.set_bit_generator(keep_alive)
+    expected = np.random.get_state(legacy=False)
+
+    with pytest.raises((AttributeError, ValueError)):
+        np.random.set_bit_generator(bad)
+
+    assert np.random.get_bit_generator() is keep_alive
+    assert np.random.get_state(legacy=False) == expected
+    # The singleton must still produce values rather than read freed memory.
+    np.random.standard_normal(10)
+
+
+@pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
+def test_set_bit_generator_waits_for_lock(restore_singleton_bitgen):
+    # gh-32063: swapping the singleton's bit generator rewrites the cached
+    # ``bitgen_t`` struct and drops the reference to the old generator, so it
+    # must not run while another thread holds that generator's lock and is
+    # drawing from it.
+    old = PCG64(0)
+    new = PCG64(1)
+    np.random.set_bit_generator(old)
+
+    swapped = threading.Event()
+
+    def swap():
+        np.random.set_bit_generator(new)
+        swapped.set()
+
+    thread = threading.Thread(target=swap)
+    with old.lock:
+        thread.start()
+        # Cannot prove a negative, but with the swap unsynchronized this
+        # reliably completes immediately.
+        assert not swapped.wait(0.5), "swap ran while the old lock was held"
+        assert np.random.get_bit_generator() is old
+
+    thread.join(30)
+    assert not thread.is_alive()
+    assert swapped.is_set()
+    assert np.random.get_bit_generator() is new
