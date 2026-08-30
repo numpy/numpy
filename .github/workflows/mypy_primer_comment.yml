@@ -1,10 +1,13 @@
 name: Comment with mypy_primer diff
-on: # zizmor: ignore[dangerous-triggers] safe: no PR-head checkout, no code execution, only pull-requests: write
+
+on: # zizmor: ignore[dangerous-triggers] no PR-head checkout, no code execution; artifact trusted by convention, worst case is a comment on the wrong PR
   workflow_run:
     workflows:
       - Run mypy_primer
     types:
       - completed
+
+permissions: {}
 
 jobs:
   comment:
