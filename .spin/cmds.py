@@ -131,7 +131,7 @@ def docs(*, parent_callback, **kwargs):
 jobs_param = next(p for p in docs.params if p.name == 'jobs')
 jobs_param.default = 1
 
-default = "not slow"
+default = "not slow and not slow_pypy"
 
 @click.option(
     "-m",

@@ -316,6 +316,7 @@ class TestSavezLoad(RoundtripTest):
                 fp.seek(0)
                 assert_(not fp.closed)
 
+    @pytest.mark.slow_pypy
     def test_closing_fid(self):
         # Test that issue #1517 (too many opened files) remains closed
         # It might be a "weak" test since failed to get triggered on
@@ -333,7 +334,14 @@ class TestSavezLoad(RoundtripTest):
                 # TODO: specify exact message
                 warnings.simplefilter('ignore', ResourceWarning)
                 for i in range(1, 1025):
-                    np.load(tmp)["data"]
+                    try:
+                        np.load(tmp)["data"]
+                    except Exception as e:
+                        msg = f"Failed to load data from a file: {e}"
+                        raise AssertionError(msg)
+                    finally:
+                        if IS_PYPY:
+                            gc.collect()
 
     def test_closing_zipfile_after_load(self):
         # Check that zipfile owns file and can close it.  This needs to

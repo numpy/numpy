@@ -162,7 +162,7 @@ class PytestTester:
             pytest_args += ["--cov=" + module_path]
 
         if label == "fast":
-            pytest_args += ["-m", "not slow"]
+            pytest_args += ["-m", "not slow and not slow_pypy"]
 
         elif label != "full":
             pytest_args += ["-m", label]
