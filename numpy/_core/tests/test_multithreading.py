@@ -83,6 +83,36 @@ def test_parallel_bit_generator_state_access(bitgen_name):
 
     run_threaded(func, pass_count=True, pass_barrier=True)
 
+@pytest.mark.thread_unsafe(
+    reason="np.random.set_bit_generator affects global state")
+def test_parallel_singleton_bit_generator_swap():
+    # gh-32063: RandomState uses its bit generator's lock, and
+    # set_bit_generator replaced that lock.  Call sites read the lock and only
+    # acquire it some time later, so a thread holding the old lock could sit
+    # in the critical section at the same moment as one that acquired the new
+    # lock -- with an instrumented build this put up to 4 threads inside it at
+    # once, all using the same cached bitgen_t.
+    orig = np.random.get_bit_generator()
+    try:
+        np.random.set_bit_generator(np.random.PCG64(0))
+
+        def func(i, barrier):
+            rnd = random.Random(i)
+            barrier.wait()
+            for _ in range(200):
+                if rnd.randrange(4) == 0:
+                    np.random.set_bit_generator(
+                        np.random.PCG64(rnd.randrange(1000)))
+                else:
+                    vals = np.random.random(4)
+                    assert ((vals >= 0) & (vals < 1)).all()
+
+        run_threaded(func, pass_count=True, pass_barrier=True)
+        # The singleton survives the hammering and is still usable.
+        assert np.random.random(4).shape == (4,)
+    finally:
+        np.random.set_bit_generator(orig)
+
 def test_parallel_seed_sequence_spawn():
     # gh-32063: SeedSequence.spawn read n_children_spawned, built the children
     # (running Python code, so the GIL could be released), and only then

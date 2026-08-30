@@ -118,6 +118,60 @@ cdef object int64_to_long(object x):
     return x.astype('l', casting='unsafe')
 
 
+@cython.final
+cdef class _StableLock:
+    """A lock handle for `RandomState` whose identity never changes.
+
+    `RandomState` uses the lock of its bit generator, so that a `Generator`
+    built on the same bit generator serializes against it.  That makes
+    ``set_bit_generator`` replace the lock, which alone is not enough to make
+    the swap safe: call sites read ``self.lock`` and acquire it only some time
+    later -- ``cont()`` and friends allocate the output array in between -- so
+    a thread holding the old lock can sit in the critical section at the same
+    moment as one that acquired the new lock, and both then use the same
+    ``self._bitgen``.
+
+    A `RandomState` is given one of these the first time its bit generator is
+    replaced, and keeps it from then on, so what callers read never goes
+    stale.  Acquiring re-checks the lock afterwards and retries if a swap won
+    the race.  Only ever one lock is held, so this cannot deadlock against
+    code holding a bit generator's lock directly.
+
+    Instances that are never swapped (every `RandomState` but the
+    ``numpy.random`` singleton, which is the only one ``set_bit_generator``
+    can reach) keep using the bare lock and pay nothing for this.
+    """
+    cdef object _lock
+    cdef object _acquire
+
+    def __cinit__(self, lock):
+        self._lock = lock
+        self._acquire = lock.acquire
+
+    cdef _set(self, lock):
+        # Only ever called while the outgoing lock is held.
+        self._lock = lock
+        self._acquire = lock.acquire
+
+    def __enter__(self):
+        cdef object lock
+        while True:
+            lock = self._lock
+            self._acquire()
+            if lock is self._lock:
+                return None
+            # A swap slipped in between reading the lock and acquiring it.
+            # Drop the stale one and take whatever is current now.
+            lock.release()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        # A swap cannot complete while this lock is held, because
+        # ``_initialize_bit_generator`` acquires it first, so ``_lock`` is
+        # still the one that ``__enter__`` took.
+        self._lock.release()
+        return False
+
+
 cdef class RandomState:
     # the first line is used to populate `__text_signature__`
     """RandomState(seed=None)\n--
@@ -225,24 +279,44 @@ cdef class RandomState:
                              "be instantized.")
 
         # ``self.lock`` is None only while ``__init__`` runs, when no other
-        # thread can reach this object yet.  Otherwise hold the lock belonging
-        # to the bit generator being replaced: distribution methods read
-        # ``self._bitgen`` (a *copy* of the function pointers and state pointer)
-        # under that lock with the GIL released, so swapping without it lets
-        # them observe a half-written struct or a pointer into a bit generator
-        # that has just been deallocated.  See gh-32063.
-        old_lock = self.lock
-        if old_lock is not None:
-            old_lock.acquire()
-        try:
-            self._bit_generator = bit_generator
-            self._bitgen = (<bitgen_t *> PyCapsule_GetPointer(capsule, name))[0]
-            self._aug_state.bit_generator = &self._bitgen
+        # thread can reach this object yet.
+        cdef _StableLock guard
+        if self.lock is None:
             self.lock = bit_generator.lock
-            self._reset_gauss()
+            self._swap_bit_generator(bit_generator, capsule, name)
+            return
+
+        # Hold the lock that is in use across the whole swap.  Distribution
+        # methods read ``self._bitgen`` -- a *copy* of the bit generator's
+        # function pointers and state pointer -- under it with the GIL
+        # released, so rewriting it unsynchronized lets them observe a
+        # half-written struct, or a pointer into a bit generator that has just
+        # been deallocated.  See gh-32063.
+        if isinstance(self.lock, _StableLock):
+            guard = <_StableLock>self.lock
+            base = guard._lock
+        else:
+            guard = None
+            base = self.lock
+
+        base.acquire()
+        try:
+            self._swap_bit_generator(bit_generator, capsule, name)
+            # Publish the new lock only once the swap is complete.  A thread
+            # that already read the old lock blocks on it above, then sees the
+            # identity change and retries against the new one.
+            if guard is None:
+                self.lock = _StableLock(bit_generator.lock)
+            else:
+                guard._set(bit_generator.lock)
         finally:
-            if old_lock is not None:
-                old_lock.release()
+            base.release()
+
+    cdef _swap_bit_generator(self, bit_generator, capsule, const char *name):
+        self._bit_generator = bit_generator
+        self._bitgen = (<bitgen_t *> PyCapsule_GetPointer(capsule, name))[0]
+        self._aug_state.bit_generator = &self._bitgen
+        self._reset_gauss()
 
     cdef _reset_gauss(self):
         with self.lock:
