@@ -16,7 +16,8 @@ I propose ``ByteStringDType``, a variable-width bytes data type: the bytes
 sibling of ``StringDType`` (:ref:`NEP 55 <NEP55>`). It reuses StringDType's
 arena-backed storage, allocator, and missing-data machinery while
 
-* storing and returning Python :class:`bytes`,
+* storing Python :class:`bytes` and returning them as a NumPy scalar that
+  subclasses ``bytes``,
 * supporting embedded and trailing NUL bytes by construction, and
 * exposing only operations meaningful on raw bytes.
 
@@ -75,6 +76,8 @@ In scope:
   *set* as fixed-width ``S`` (ASCII case folding and predicates,
   byte-indexed search/slice), the same missing-data support as
   StringDType, and casts to/from ``S``, void, and bool.
+* A scalar type for the new DType that subclasses ``bytes`` and
+  ``np.generic``.
 * Explicit, codec-aware ``encode`` and ``decode`` ufuncs as the only
   text-to-bytes path for the variable-width pair.
 * As a structural side effect, StringDType's UTF-8 assumptions are
@@ -103,10 +106,8 @@ NUL bytes automatically:
     >>> from numpy.dtypes import ByteStringDType
 
     >>> a = np.array([b"x\x00", b"a\x00b", b"\xff\xfe"], dtype=ByteStringDType())
-    >>> a[0]                      # trailing NULs survive
-    b'x\x00'
-    >>> a[1]                      # embedded NULs too
-    b'a\x00b'
+    >>> a.tolist()                # trailing and embedded NULs survive
+    [b'x\x00', b'a\x00b', b'\xff\xfe']
     >>> np.strings.str_len(a)     # lengths are in bytes, length-explicit
     array([2, 3, 2])
     >>> np.strings.find(a, b"\x00")
@@ -162,10 +163,10 @@ fixed-width bytes dtype would strip them. Unlike the ``S`` to ``StringDType``
 cast, which rejects bytes that are not valid UTF-8, the ``S`` to
 ``ByteStringDType`` cast accepts any bytes.
 
-Array elements are plain Python :class:`bytes`. Any ``bytes`` instance
-may be stored, including subclasses like ``np.bytes_``, which are stored
-as their raw bytes. Whether to also accept buffer-protocol objects is an
-open question below.
+Any ``bytes`` instance may be stored, including subclasses like
+``np.bytes_``, which are stored as their raw bytes. Elements are returned
+as instances of the scalar type described under :ref:`nep58-scalar`.
+Whether to also accept buffer-protocol objects is an open question below.
 
 The ``ByteStringDType`` constructor does not support coercing data to bytes.
 Anything that is not bytes — including ``str`` — raises ``TypeError``.  The
@@ -181,14 +182,70 @@ The supported operations are the same set the fixed-width ``S`` dtype and the
 Python ``bytes`` type support. Search, slicing, lengths, and widths are all
 measured in bytes.
 
-Missing data works exactly as in ``StringDType``: ``na_object`` may be a
-``bytes`` sentinel, a NaN-like object, or any other object, with the same
-null-propagation rules as ``StringDType``. Finally, the type code and number are
-tentative and listed as an `open question <open_questions>`_ below: the character
-``'R'`` (for *raw* bytes) with ``NPY_VBYTES = 2057``. No built-in dtype uses
-``'R'``, but the character is used for the ``rational2`` test dtype, but that is
-not exposed publicly. The ``'Y'`` code is also unused as a dtype character, but
-collides with the datetime YEAR unit character.
+The type code and number are tentative and listed as an `open question
+<open_questions>`_ below: the character ``'R'`` (for *raw* bytes) with
+``NPY_VBYTES = 2057``. No built-in dtype uses ``'R'``, but the character is
+used for the ``rational2`` test dtype, but that is not exposed publicly. The
+``'Y'`` code is also unused as a dtype character, but collides with the
+datetime YEAR unit character.
+
+.. _nep58-scalar:
+
+Scalar type
+===========
+
+ByteStringDType gets its own scalar type, ``np.vbytes``: a type that subclasses
+both ``bytes`` and ``np.generic``, holds its own copy of the bytes, and follows
+the implementation of ``np.bytes_``. Non-null entries returns an ``np.vbytes``
+instance for scalar acess and ``na_object`` for a null one; ``.item()`` and
+``.tolist()`` return plain ``bytes``. ``np.bytes_`` cannot serve as the scalar
+because NumPy needs a distinct scalar type to distinguish from ``np.bytes_``.
+
+NEP 55 chose ``str`` as StringDType's scalar to avoid maintaining a subclass.
+On reflection, this was probably as mistake since it is an exception from the
+rest of NumPy and is difficult to capture in NumPy's type stubs.  NumPy `PR
+#28196 <https://github.com/numpy/numpy/pull/28196>`__ now prototyped a
+StringDType scalar (``np.vstr``). Review there converged on two points this NEP
+adopts: the scalar subclasses ``str``, here ``bytes``, as well as
+``np.generic``, and it owns a copy of its data instead of refencing data storing
+references to arena storage.
+
+.. _nep58-missing-data:
+
+Missing data
+============
+
+``na_object`` works as it does for ``StringDType``: the sentinel may be a
+``bytes`` object, a NaN-like object, or any other object, with the same
+null-propagation rules. The reasoning in NEP 55 applies unchanged, and the
+object arrays this dtype replaces show why the sentinel stays a free
+choice. pyarrow and polars export nulls in binary and string columns as
+``None``. pandas exports ``float("nan")`` from its default string dtype
+and ``pd.NA`` from nullable and Arrow-backed string and bytes columns, and
+``to_numpy(na_value=...)`` lets the caller pick any other value.
+scikit-learn's encoders treat ``None`` and ``nan`` in object arrays as two
+distinct missing categories. StringDType users make the same range of
+choices: `anndata
+<https://github.com/scverse/anndata/blob/ca5234e62a5b757751a2f635803b42f2b5d61c5c/src/anndata/experimental/backed/_lazy_arrays.py#L186-L189>`__
+uses ``pd.NA``, `h5col
+<https://github.com/HDFGroup/h5col/blob/13d248afa1b4a9f7f83e8c8441e38a7e10ea45f4/src/h5col/strings.py#L40-L43>`__
+uses ``None``, and the pyarrow pull request for StringDType conversion
+(`apache/arrow#50951 <https://github.com/apache/arrow/pull/50951>`__)
+tests ``None``, a placeholder string, and ``float("nan")``. ``pd.NA`` is a
+pandas object NumPy cannot enumerate, so a closed set of sentinels would
+exclude the arrays pandas produces (see :ref:`nep58-alternatives`).
+
+Two reasons are specific to this NEP. ``encode`` and ``decode`` propagate
+nulls between the two dtypes (:ref:`nep58-null-round-trip`), so the bytes
+side needs somewhere to put them. The missing-data machinery is shared, so
+leaving it out of ByteStringDType would remove capability without
+removing code.
+
+The stubs parametrize ``StringDType`` by the type of ``na_object``, and
+``ByteStringDType`` is typed the same way. That is exact for ``None``,
+``pd.NA``, and other singleton sentinels. A NaN sentinel types as
+``float``, the same value-level imprecision NumPy typing accepts for
+integer ranges and fixed string widths.
 
 .. _operation_surface:
 
@@ -259,6 +316,8 @@ StringDType and ByteStringDType alike; a typed array argument preserves
 them. NumPy `issue #32431 <https://github.com/numpy/numpy/issues/32431>`_ tracks
 this problem.
 
+.. _nep58-null-round-trip:
+
 Missing values round-trip between StringDType and ByteStringDType
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -289,8 +348,7 @@ on the variable-width paths. To enable future support for other encodings,
 the public wrappers expose ``encoding`` and ``errors`` arguments. Invalid
 bytes under ``errors='strict'`` raise ``UnicodeDecodeError`` with the same
 position and reason as :meth:`bytes.decode`, whether the bytes are an
-array element or the ``na_object``. The loop copies the offending element
-out and releases the string allocators before Python builds the exception.
+array element or the ``na_object``.
 
 ``np.strings.encode`` keeps its current behavior for StringDType input
 when the new ``dtype=`` argument is unspecified: the result is fixed-width
@@ -393,48 +451,20 @@ is sufficient to access array data safely.
 Implementation
 ==============
 
-One shared descriptor struct, two DTypes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Both DTypes use the existing ``PyArray_StringDTypeObject`` descriptor
+struct with an unchanged layout. The struct is public: it is defined in
+``ndarraytypes.h``, and ``NpyString_acquire_allocator`` takes a pointer to
+it, so C code written against the ``NpyString`` API works on
+ByteStringDType descriptors without changes. What makes the DTypes
+distinct is their ``PyArray_DTypeMeta``, not the struct.
 
-Both DTypes' descriptor instances use the existing
-``PyArray_StringDTypeObject`` struct with a byte-for-byte unchanged
-layout. On bytes descriptors ``coerce`` is vestigial: fixed at the
-default and never exposed. What makes the DTypes distinct is their
-``PyArray_DTypeMeta``, not the struct. This keeps the ``NpyString_*``
-allocator API ABI-stable:
-
-* the singular ``NpyString_acquire_allocator`` reads
-  ``descr->allocator`` and works on either DType's descriptors unchanged;
-* the plural ``NpyString_acquire_allocators`` relaxes its internal
-  DTypeMeta guard to a string-like predicate — a logic change, not a
-  signature or ABI change.
-
-That stability has costs: the DTypes cannot grow divergent descriptor
-fields, any future change to the struct applies to both DTypes, and
-bytes descriptors carry an unused ``coerce`` byte.
-
-Encoding-specific runtime dispatch
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The encoding-specific surface of the dtype implementation is small and
-enumerable: about 13 ``PyUnicode_*``-touching lines across 7 functions,
-covering scalar type, coercion to stored bytes, scalar construction from
-stored bytes, and ``na_object`` classification. Both DTypes therefore
-share one set of implementations that dispatch at runtime on the
-descriptor's DType at those spots.
-
-Every affected function already receives the descriptor or the DTypeMeta,
-so the dispatch is a check on the descriptor's type
-number. Encoding-agnostic slots (``nonzero``, ``compare``,
-``argmax``/``argmin``, the clear loop) are shared with no dispatch at
-all. Because ``common_dtype`` never promotes the two DTypes with each
+The encoding-specific parts of the StringDType implementation (scalar
+construction, coercion to stored bytes, and ``na_object`` classification)
+dispatch at runtime on the descriptor's type number; everything else is
+shared. Because ``common_dtype`` never promotes the two DTypes with each
 other, NumPy's rule for non-promotable dtypes applies: ``==`` and ``!=``
 return all-``False`` and all-``True`` arrays, while ``np.equal`` itself and
 the ordering operators raise ``TypeError``.
-
-In the string ufunc layer, ``BYTES`` joins the ``ENCODING`` enum as a third
-category: per-byte stepping and ASCII character classification like ``ASCII``,
-but length-explicit with no trailing-NUL stripping like ``UTF8``.
 
 .. _open_questions:
 
@@ -447,15 +477,18 @@ Decisions the prototype makes provisionally, for review to ratify:
 2. Should setitem also accept buffer-protocol objects (``bytearray``,
    ``memoryview``)? I prefer to defer support to a later iteration to
    reduce the complexity of the initial version.
-3. The shared-descriptor-struct approach (vestigial ``coerce``) vs. a
-   distinct struct.
-4. The ``np.strings.encode`` transition for StringDType input: this NEP
+3. The ``np.strings.encode`` transition for StringDType input: this NEP
    proposes emitting a ``DeprecationWarning`` now and flipping the default
    result dtype to ByteStringDType in a later release, after the full
    encoding/errors matrix lands. The flip also changes values whose
    encoding ends in NUL bytes (see :ref:`encoding_decoding`). Ratify the
    flip and its timing, or keep the variable-width result opt-in via
    ``dtype=`` indefinitely?
+4. The name of the scalar type. The prototype uses ``np.vbytes``, since
+   ``np.bytes_`` belongs to the fixed-width dtype.
+5. Whether to expose a shared abstract base class for StringDType and
+   ByteStringDType in ``np.dtypes``. I prefer not to until a need for
+   such a thing arises.
 
 Reference implementation
 ========================
@@ -465,9 +498,9 @@ The ``bytestringdtype`` `development branch
 on my GitHub fork of NumPy implements the prototype functionality subset
 listed above (see :ref:`operation_surface`). The StringDType suite passes
 unchanged. A shared suite parametrizes the encoding-agnostic storage,
-allocator, and dtype machinery over both DTypes. The bytes test suite
-covers fixed-``S`` parity, the encode/decode bridge, and the cross-dtype
-comparison semantics.
+allocator, and dtype machinery over both DTypes. The test suite covers
+the scalar type, ``np.bytes_`` parity, the encode/decode bridge, and the
+cross-dtype comparison semantics.
 
 .. _nep58-prerequisites:
 
@@ -483,11 +516,6 @@ ByteStringDType.
 * NumPy `PR #32356 <https://github.com/numpy/numpy/pull/32356>`__ adds the
   NEP-50-style string promotion outside ufuncs described above, which the
   planned ``bytes`` follow-up mirrors.
-* NumPy `PR #32418 <https://github.com/numpy/numpy/pull/32418>`_ makes the bool
-  cast and ``nonzero`` of a null whose ``na_object`` is a string follow the
-  sentinel's truthiness.
-* NumPy `PR #32419 <https://github.com/numpy/numpy/pull/32419>`_ adds
-  ``minimum``/``maximum`` promoters for ``str`` and fixed-width unicode operands.
 * numpy `issue #32431 <https://github.com/numpy/numpy/issues/32431>`_ tracks
   ``np.append``, ``np.isin``, ``np.select``, and ``np.pad`` not losing
   NUL bytes for python scalar or python sequence operands.
@@ -496,8 +524,11 @@ Acceptance and release plan
 ===========================
 
 Accepting this NEP ratifies the design. The prototype can be merged at that
-point. The NEP becomes Final when the deferred operations, the numeric casts,
-and the ``bytes`` scalar promotion for value-based conversions have landed.
+point. The NEP becomes Final when the scalar type, the deferred operations,
+the numeric casts, and the ``bytes`` scalar promotion for value-based
+conversions have landed.
+
+.. _nep58-alternatives:
 
 Alternatives
 ------------
@@ -513,6 +544,14 @@ be factored into compile-time policy structs, with the dtype slots as
 function templates over the policy. Nothing in this proposal blocks
 that; a future refactor could adopt it independently. I elected not to do
 this to simplify the prototype implementation.
+
+**A closed set of missing-data sentinels.** Restricting ``na_object`` to
+``None`` and NaN, or to an enum, was suggested so that an array element
+has an exact static type. The dtype's type parameter already records the
+sentinel's type and only NaN types imprecisely, while every sentinel
+outside the set, ``pd.NA`` included, would become unrepresentable. An
+enum stored as the element would also defeat the checks users choose NaN
+for, such as ``np.isnan`` and ``x != x``.
 
 Discussion
 ----------
