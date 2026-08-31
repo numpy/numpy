@@ -349,51 +349,56 @@ static PyMethodDef ReductionLoopTestsMethods[] = {
     {NULL, NULL, 0, NULL}
 };
 
+/* Module execution function, run on every import of the module */
+static int
+_reduction_loop_tests_exec(PyObject *m)
+{
+    if (PyArray_ImportNumPyAPI() < 0) {
+        return -1;
+    }
+    if (PyUFunc_ImportUFuncAPI() < 0) {
+        return -1;
+    }
+
+    if (add_minimummaximum(m, "minimummaximum", 0) < 0) {
+        return -1;
+    }
+    if (add_minimummaximum(m, "minimummaximum_with_identity", 1) < 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
+static struct PyModuleDef_Slot _reduction_loop_tests_slots[] = {
+    {Py_mod_exec, _reduction_loop_tests_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    /*
+     * NumPy relies on process-global state and so does not support
+     * subinterpreters; `_multiarray_umath` sets this same flag.
+     */
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
+#endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    /*
+     * No GIL is needed: the inner loops never touch Python objects,
+     * apart from the object ones, which declare NPY_METH_REQUIRES_PYAPI
+     * so the iterator does not release the GIL around them.
+     */
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
+
 static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "_reduction_loop_tests",
-    NULL,
-    -1,
-    ReductionLoopTestsMethods,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "_reduction_loop_tests",
+    .m_size = 0,
+    .m_methods = ReductionLoopTestsMethods,
+    .m_slots = _reduction_loop_tests_slots,
 };
 
 PyMODINIT_FUNC PyInit__reduction_loop_tests(void)
 {
-    PyObject *m = PyModule_Create(&moduledef);
-    if (m == NULL) {
-        return NULL;
-    }
-
-    if (PyArray_ImportNumPyAPI() < 0) {
-        Py_DECREF(m);
-        return NULL;
-    }
-    if (PyUFunc_ImportUFuncAPI() < 0) {
-        Py_DECREF(m);
-        return NULL;
-    }
-
-    if (add_minimummaximum(m, "minimummaximum", 0) < 0) {
-        Py_DECREF(m);
-        return NULL;
-    }
-    if (add_minimummaximum(m, "minimummaximum_with_identity", 1) < 0) {
-        Py_DECREF(m);
-        return NULL;
-    }
-
-    /*
-     * TODO: free-threading under the stable ABI needs abi3t (3.15+), where
-     * `PyModuleDef` is opaque and `PyModExport` slots replace it.
-     */
-#if defined(Py_GIL_DISABLED) && !defined(Py_LIMITED_API)
-    // signal this module supports running with the GIL disabled
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
-#endif
-
-    return m;
+    return PyModuleDef_Init(&moduledef);
 }
