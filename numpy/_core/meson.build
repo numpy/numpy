@@ -1424,6 +1424,13 @@ py.extension_module('_multiarray_umath',
   subdir: 'numpy/_core',
 )
 
+# `limited_api:` only reaches an extension module's own sources, so a static
+# library linked into one is still built against the unrestricted API and must
+# be passed these args too. Drop this once
+# https://github.com/mesonbuild/meson/issues/13824 is resolved.
+py_limited_api_args = get_option('python.allow_limited_api') \
+  ? ['-DPy_LIMITED_API=' + py_limited_api_hex] : []
+
 # Build SIMD module
 # -----------------
 _simd_dispatch = []
