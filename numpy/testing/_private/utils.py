@@ -2907,8 +2907,12 @@ def run_subprocess(cmd, cwd=None, **kwargs):
 
     import pytest
 
+    env = kwargs.pop("env", None)
+    env = dict(env) if env is not None else dict(os.environ)
+    env["PYTHONIOENCODING"] = "utf-8"
     res = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True,
-                         errors="replace", **kwargs)
+                         encoding="utf-8", errors="replace", env=env,
+                         **kwargs)
     if res.returncode != 0:
         cmd_str = cmd if isinstance(cmd, str) else " ".join(map(str, cmd))
         in_dir = f" in {cwd}" if cwd is not None else ""
