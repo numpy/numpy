@@ -1610,6 +1610,47 @@ def test_cfloat_to_string_nan_na_strided_field_view(nan_like_na_object):
 
 
 @pytest.mark.parametrize("typename", ["float16", "float32", "float64",
+                                      "complex64", "complex128"])
+def test_float_to_string_nan_na_non_native_byteorder(typename,
+                                                     nan_like_na_object):
+    dt = StringDType(na_object=nan_like_na_object)
+    arr = np.array([1.5, np.nan, -2.0], dtype=typename)
+    expected = arr.astype(dt)
+    res = arr.astype(arr.dtype.newbyteorder("S")).astype(dt)
+    assert res[0] == expected[0]
+    assert res[1] is nan_like_na_object
+    assert res[2] == expected[2]
+
+    # the bytes of a native NaN are a finite subnormal in the other byte
+    # order, so they must not be mistaken for a NaN
+    finite = arr[1:2].view(arr.dtype.newbyteorder("S"))
+    assert not np.isnan(finite[0])
+    res = finite.astype(dt)
+    assert isinstance(res[0], str)
+    assert res[0] == str(finite[0])
+
+
+NON_NATIVE_BYTEORDER_CASES = [
+    ("i4", [1, -2, 300]),
+    ("u2", [1, 2, 300]),
+    ("f2", [1.5, -2.0]),
+    ("f8", [1.5, -2.0]),
+    ("c16", [1.5 + 2j]),
+    ("M8[s]", ["2020-01-01", "NaT"]),
+    ("m8[s]", [5, "NaT"]),
+    ("U3", ["abc", "d"]),
+]
+
+
+@pytest.mark.parametrize("dtype, values", NON_NATIVE_BYTEORDER_CASES)
+def test_non_native_byteorder_to_string(dtype, values):
+    native = np.array(values, dtype=dtype)
+    swapped = native.astype(native.dtype.newbyteorder("S"))
+    assert_array_equal(swapped.astype(StringDType()),
+                       native.astype(StringDType()))
+
+
+@pytest.mark.parametrize("typename", ["float16", "float32", "float64",
                                       "longdouble"])
 def test_setitem_nan_na_matches_float_cast(typename, nan_like_na_object):
     dt = StringDType(na_object=nan_like_na_object)

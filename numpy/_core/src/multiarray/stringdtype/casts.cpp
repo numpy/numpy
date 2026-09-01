@@ -131,8 +131,11 @@ any_to_string_resolve_descriptors(
         loop_descrs[1] = given_descrs[1];
     }
 
-    Py_INCREF(given_descrs[0]);
-    loop_descrs[0] = given_descrs[0];
+    loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
+    if (loop_descrs[0] == NULL) {
+        Py_DECREF(loop_descrs[1]);
+        return (NPY_CASTING)-1;
+    }
 
     return safety;
 }
