@@ -39,6 +39,9 @@ if IS_EDITABLE:
 @pytest.fixture(scope='module')
 def install_temp(tmpdir_factory):
     # Based in part on test_cython from random.tests.test_extending
+    # This runs meson only once, but that single build compiles a separate
+    # extension module for every (Python, NumPy) version combination; see
+    # the comment above _PY_ABI3_VERSIONS below.
     if not HAS_SUBPROCESSES:
         pytest.skip("No subprocess")
 
@@ -171,7 +174,24 @@ def _check_api_module(mod, cython=False):
             assert mod.stringdtype_load(arr) is None
 
 
-# Test limited API extension modules for all supported Python and NumPy versions
+# Test limited API extension modules for all supported Python and NumPy versions.
+#
+# The single meson build run by the install_temp fixture compiles one C and one
+# Cython extension module for every combination of abi3 Python version (up to
+# the running interpreter) and NumPy target version listed below, e.g.
+# limited_api_3_11_npy2_2 and limited_api_cython_3_11_npy2_2 (see meson.build
+# in examples/limited_api). Each parametrized test imports one of those
+# modules by name and tests it with the _check_api_module helper.
+# So every iteration tests a different extension module built with a different
+# combination of Python and NumPy target versions.
+#
+# Normally a single Python package uses a single Python and a single NumPy version
+# as the target (i.e., lowest-supported) version, so this test isn't realistic in
+# that respect. However, it *is* realistic for cross-package issues between
+# extension modules. This can happen in practice, e.g. when Cython extensions load
+# types/objects from `sys.modules` instead of from the local copy embedded in each
+# extension (cython#7914).
+#
 # The _PY_ABI3_VERSIONS and _NPY_TARGET_VERSIONS lists should be kept in sync
 # with the lists defined in meson.build, and the test should be updated
 # if new versions are added here.
@@ -197,8 +217,15 @@ def limited_api_module_names():
 
 
 def limited_api_cython_module_names():
-    return _module_names("limited_api_cython", _PY_ABI3_VERSIONS)
-
+    # see https://github.com/cython/cython/issues/7914
+    skip_3_11 = pytest.mark.skipif(
+        cython is not None
+        and _pep440.parse(cython_version) == _pep440.Version("3.3.0"),
+        reason="abi3 3.11 module is unimportable with Cython 3.3.0")
+    return [
+        pytest.param(name, marks=skip_3_11) if "_3_11_" in name else name
+        for name in _module_names("limited_api_cython", _PY_ABI3_VERSIONS)
+    ]
 
 @pytest.mark.skipif(
     not HAS_SUBPROCESSES, reason="platform cannot start subprocesses"

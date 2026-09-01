@@ -27,7 +27,9 @@ AR_O: npt.NDArray[np.object_[int]]
 AR_b: npt.NDArray[np.bool]
 AR_U: npt.NDArray[np.str_]
 CHAR_AR_U: np.char.chararray[tuple[int], np.dtype[np.str_]]  # type: ignore[deprecated]
+MAR_f8_1d: np.ma.MaskedArray[tuple[int], np.dtype[np.float64]]
 
+AR_f8_0d: np.ndarray[tuple[()], np.dtype[np.float64]]
 AR_f8_1d: np.ndarray[tuple[int], np.dtype[np.float64]]
 AR_f8_2d: np.ndarray[tuple[int, int], np.dtype[np.float64]]
 AR_f8_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float64]]
@@ -101,6 +103,10 @@ assert_type(np.asarray_chkfinite(AR_f8), npt.NDArray[np.float64])
 assert_type(np.asarray_chkfinite(AR_LIKE_f8), np.ndarray)
 assert_type(np.asarray_chkfinite(AR_f8, dtype=np.float64), npt.NDArray[np.float64])
 assert_type(np.asarray_chkfinite(AR_f8, dtype=float), np.ndarray)
+assert_type(np.asarray_chkfinite(MAR_f8_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.asarray_chkfinite(AR_f8_0d), np.ndarray[tuple[()], np.dtype[np.float64]])
+assert_type(np.asarray_chkfinite(AR_f8_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(np.asarray_chkfinite(AR_f8_2d, dtype=np.float32), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 
 # piecewise
 assert_type(np.piecewise(AR_f8_1d, AR_b, [-1.0, 1.0]), np.ndarray[tuple[int], np.dtype[np.float64]])

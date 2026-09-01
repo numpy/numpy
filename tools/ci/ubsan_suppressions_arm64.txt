@@ -25,7 +25,6 @@ pointer-overflow:_core/src/umath/loops_arithm_fp.dispatch.c.src
 pointer-overflow:_core/src/umath/loops_unary.dispatch.c.src
 pointer-overflow:_core/src/umath/loops_unary_complex.dispatch.c.src
 pointer-overflow:_core/src/umath/loops_unary_fp_le.dispatch.c.src
-pointer-overflow:_core/src/umath/string_buffer.h
 pointer-overflow:linalg/umath_linalg.cpp
 pointer-overflow:numpy/random/bit_generator.pyx.c
 
