@@ -33,8 +33,8 @@ new_stringdtype_instance(PyObject *na_object, int coerce)
         return NULL;
     }
 
-    char *default_string_buf = NULL;
-    char *na_name_buf = NULL;
+    npy_static_string default_string = {0, NULL};
+    npy_static_string na_name = {0, NULL};
 
     npy_string_allocator *allocator = NpyString_new_allocator(PyMem_RawMalloc, PyMem_RawFree,
                                                               PyMem_RawRealloc);
@@ -43,9 +43,6 @@ new_stringdtype_instance(PyObject *na_object, int coerce)
                         "Failed to create string allocator");
         goto fail;
     }
-
-    npy_static_string default_string = {0, NULL};
-    npy_static_string na_name = {0, NULL};
 
     Py_XINCREF(na_object);
     ((PyArray_StringDTypeObject *)new)->na_object = na_object;
@@ -132,14 +129,11 @@ new_stringdtype_instance(PyObject *na_object, int coerce)
     return new;
 
 fail:
-    // this only makes sense if the allocator isn't attached to new yet
+    // the buffers and the allocator are only attached to new on success, so
+    // dealloc does not double-free them
     Py_DECREF(new);
-    if (default_string_buf != NULL) {
-        PyMem_RawFree(default_string_buf);
-    }
-    if (na_name_buf != NULL) {
-        PyMem_RawFree(na_name_buf);
-    }
+    PyMem_RawFree((char *)default_string.buf);
+    PyMem_RawFree((char *)na_name.buf);
     if (allocator != NULL) {
         NpyString_free_allocator(allocator);
     }
