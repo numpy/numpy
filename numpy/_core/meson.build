@@ -865,6 +865,13 @@ py.extension_module('_multiarray_tests',
   install_tag: 'tests'
 )
 
+# `limited_api:` only reaches an extension module's own sources, so a static
+# library linked into one is still built against the unrestricted API and must
+# be passed these args too. Drop this once
+# https://github.com/mesonbuild/meson/issues/13824 is resolved.
+py_limited_api_args = get_option('python.allow_limited_api') \
+  ? ['-DPy_LIMITED_API=' + py_limited_api_hex] : []
+
 _umath_tests_mtargets = mod_features.multi_targets(
   '_umath_tests.dispatch.h',
   'src/umath/_umath_tests.dispatch.c',
@@ -877,8 +884,7 @@ _umath_tests_mtargets = mod_features.multi_targets(
   baseline: CPU_BASELINE,
   prefix: 'NPY_',
   dependencies: [py_dep, np_core_dep],
-  # `py.extension_module()`'s `limited_api` kwarg doesn't reach static libs.
-  c_args: get_option('python.allow_limited_api') ? ['-DPy_LIMITED_API=' + py_limited_api_hex] : [],
+  c_args: py_limited_api_args,
 )
 
 # [module name, sources, libraries to link with, limited API version ('' to
@@ -1423,13 +1429,6 @@ py.extension_module('_multiarray_umath',
   install: true,
   subdir: 'numpy/_core',
 )
-
-# `limited_api:` only reaches an extension module's own sources, so a static
-# library linked into one is still built against the unrestricted API and must
-# be passed these args too. Drop this once
-# https://github.com/mesonbuild/meson/issues/13824 is resolved.
-py_limited_api_args = get_option('python.allow_limited_api') \
-  ? ['-DPy_LIMITED_API=' + py_limited_api_hex] : []
 
 # Build SIMD module
 # -----------------
