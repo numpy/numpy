@@ -23,7 +23,6 @@
 #include "dtypemeta.h"
 #include "dtype.h"
 #include "utf8_utils.h"
-#include "npy_static_data.h"
 
 #include "casts.h"
 
@@ -1324,9 +1323,7 @@ static PyType_Slot s2float_slots[] = {
         {NPY_METH_strided_loop, (void *)&string_to_float<NpyType, typenum, npy_is_inf, double_is_inf, double_to_float>},
         {0, NULL}};
 
-// Whether a value counts as NaN for a NaN-like missing-data sentinel. Complex
-// values follow np.isnan (either component NaN); coercing one to the sentinel
-// is lossy, so the call sites raise a ComplexWarning.
+// complex values follow np.isnan: NaN if either component is NaN
 template <typename NpyType>
 static inline bool
 float_is_nan_na(NpyType val)
@@ -1348,38 +1345,22 @@ float_is_nan_na(NpyType val)
     }
 }
 
-template <typename NpyType>
-inline constexpr bool is_complex_npy_v =
-        std::is_same_v<NpyType, npy_cfloat> ||
-        std::is_same_v<NpyType, npy_cdouble> ||
-        std::is_same_v<NpyType, npy_clongdouble>;
-
 NPY_NO_EXPORT int
 pyobj_is_nan_na(PyObject *obj)
 {
     if (PyFloat_Check(obj) || PyArray_IsScalar(obj, Floating)) {
         double value = PyFloat_AsDouble(obj);
         if (value == -1.0 && PyErr_Occurred()) {
-            PyErr_Clear();  // out-of-double-range longdouble: finite, not NaN
-            return 0;
+            return -1;
         }
         return float_is_nan_na<npy_double>(value) ? 1 : 0;
     }
     if (PyComplex_Check(obj) || PyArray_IsScalar(obj, ComplexFloating)) {
         Py_complex value = PyComplex_AsCComplex(obj);
         if (value.real == -1.0 && PyErr_Occurred()) {
-            PyErr_Clear();  // out-of-double-range clongdouble: finite, not NaN
-            return 0;
-        }
-        if (!(npy_isnan(value.real) || npy_isnan(value.imag))) {
-            return 0;
-        }
-        if (npy_gil_warning(npy_static_pydata.ComplexWarning, 1,
-                            "Casting complex values to real discards "
-                            "the imaginary part") < 0) {
             return -1;
         }
-        return 1;
+        return (npy_isnan(value.real) || npy_isnan(value.imag)) ? 1 : 0;
     }
     return 0;
 }
@@ -1404,13 +1385,9 @@ float_to_string(
     PyArray_StringDTypeObject *descr =
             (PyArray_StringDTypeObject *)context->descriptors[1];
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
-    [[maybe_unused]] int coerced_complex_to_na = 0;
 
     while (N--) {
         if (descr->has_nan_na && float_is_nan_na(*(NpyType *)in)) {
-            if constexpr (is_complex_npy_v<NpyType>) {
-                coerced_complex_to_na = 1;
-            }
             if (NpyString_pack_null(allocator, (npy_packed_static_string *)out) < 0) {
                 npy_gil_error(PyExc_MemoryError,
                               "Failed to pack null string during float "
@@ -1431,18 +1408,6 @@ float_to_string(
     }
 
     NpyString_release_allocator(allocator);
-
-    // warn outside the loop so the warning machinery never runs while the
-    // allocator lock is held
-    if constexpr (is_complex_npy_v<NpyType>) {
-        if (coerced_complex_to_na) {
-            if (npy_gil_warning(npy_static_pydata.ComplexWarning, 1,
-                                "Casting complex values to real discards "
-                                "the imaginary part") < 0) {
-                return -1;
-            }
-        }
-    }
     return 0;
 fail:
     NpyString_release_allocator(allocator);

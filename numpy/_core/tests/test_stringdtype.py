@@ -1583,17 +1583,15 @@ def test_float_to_string_nan_na_consistent(typename, nan_like_na_object):
 @pytest.mark.parametrize("typename", ["complex64", "complex128", "clongdouble"])
 def test_cfloat_to_string_nan_na(typename, nan_like_na_object):
     # a complex value with any NaN component is missing (np.isnan semantics)
-    # and coercing it to the sentinel warns, like a complex -> real cast
     dt = StringDType(na_object=nan_like_na_object)
 
     for val in (complex(np.nan, 0.0), complex(np.nan, 2.0),
                 complex(0.0, np.nan), complex(2.0, np.nan),
                 complex(np.nan, np.nan)):
-        with pytest.warns(ComplexWarning):
-            arr = np.array([val], dtype=typename).astype(dt)
+        arr = np.array([val], dtype=typename).astype(dt)
         assert arr[0] is nan_like_na_object
 
-    # no NaN component (even inf): stringified, without a warning
+    # no NaN component (even inf): stringified
     arr = np.array([1.5 + 2j, complex(np.inf, 1)], dtype=typename).astype(dt)
     assert arr[0] == "(1.5+2j)"
     assert arr[1] == "(inf+1j)"
@@ -1605,8 +1603,7 @@ def test_cfloat_to_string_nan_na_strided_field_view(nan_like_na_object):
     rec = np.zeros(3, dtype=[("c", "c16"), ("pad", "f8")])
     rec["c"] = [1 + 2j, complex(np.nan, 4.0), 5 + 6j]
     dt = StringDType(na_object=nan_like_na_object)
-    with pytest.warns(ComplexWarning):
-        res = rec["c"].astype(dt)
+    res = rec["c"].astype(dt)
     assert res[0] == "(1+2j)"
     assert res[1] is nan_like_na_object
     assert res[2] == "(5+6j)"
@@ -1644,11 +1641,9 @@ def test_setitem_cfloat_nan(typename, nan_like_na_object):
     for val in (complex(np.nan, 0.0), complex(np.nan, 2.0),
                 complex(0.0, np.nan), complex(2.0, np.nan),
                 complex(np.nan, np.nan)):
-        with pytest.warns(ComplexWarning):
-            arr[0] = np.dtype(typename).type(val)
+        arr[0] = np.dtype(typename).type(val)
         assert arr[0] is nan_like_na_object
-        with pytest.warns(ComplexWarning):
-            arr[0] = val
+        arr[0] = val
         assert arr[0] is nan_like_na_object
 
     arr[0] = np.dtype(typename).type(1.5 + 2j)
