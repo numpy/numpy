@@ -847,7 +847,7 @@ type _NestedList[T] = list[T] | _NestedSequence[list[T]]
 
 type _ArrayUInt_co = NDArray[unsignedinteger | bool_]
 type _ArrayInt_co = NDArray[integer | bool_]
-type _ArrayFloat64_co = NDArray[floating[_64Bit] | float32 | float16 | integer | bool_]
+type _ArrayFloat64_co = NDArray[floating[_64Bit] | _Float32_co]
 type _ArrayFloat_co = NDArray[floating | integer | bool_]
 type _ArrayComplex128_co = NDArray[number[_64Bit] | number[_32Bit] | float16 | integer | bool_]
 type _ArrayComplex_co = NDArray[inexact | integer | bool_]
@@ -864,8 +864,10 @@ type _ScalarNotObject = _ScalarOrderable | flexible
 type _ArrayLikeNotFlex = _DualArrayLike[_dtype[_ScalarOrderable | object_], complex]
 type _ScalarLikeNotFlex = _ScalarOrderable | complex
 
-type _Int64_co = int32 | int16 | int8 | uint32 | uint16 | uint8 | bool_
-type _Float64_co = float | floating[_64Bit] | float32 | float16 | integer | bool_
+type _UInt64_co = uint32 | uint16 | uint8 | bool_
+type _Int64_co = int32 | int16 | int8 | _UInt64_co
+type _Float32_co = float32 | float16 | integer | bool_
+type _Float64_co = float | floating[_64Bit] | _Float32_co
 type _Complex64_co = number[_32Bit] | number[_16Bit] | number[_8Bit] | py_bool | bool_
 type _Complex128_co = complex | number[_64Bit] | _Complex64_co
 
@@ -6810,12 +6812,12 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # Nd u64, Nd +u64
     def __add__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[uint64]],
-        other: ndarray[ShapeT, _dtype[uint32 | uint16 | uint8 | bool_]],
+        other: ndarray[ShapeT, _dtype[_UInt64_co]],
         /,
     ) -> ndarray[ShapeT, _dtype[uint64]]: ...
     @overload  # Nd +u64, Nd u64
     def __add__[ShapeT: _Shape](
-        self: ndarray[ShapeT, _dtype[uint32 | uint16 | uint8 | bool_]],
+        self: ndarray[ShapeT, _dtype[_UInt64_co]],
         other: ndarray[ShapeT, _dtype[uint64]],
         /,
     ) -> ndarray[ShapeT, _dtype[uint64]]: ...
@@ -6834,24 +6836,24 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # Nd f64, Nd +f64
     def __add__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[float64]],
-        other: ndarray[ShapeT, _dtype[float32 | float16 | integer | bool_]],
+        other: ndarray[ShapeT, _dtype[_Float32_co]],
         /,
     ) -> ndarray[ShapeT, _dtype[float64]]: ...
     @overload  # Nd +f64, Nd f64
     def __add__[ShapeT: _Shape](
-        self: ndarray[ShapeT, _dtype[float32 | float16 | integer | bool_]],
+        self: ndarray[ShapeT, _dtype[_Float32_co]],
         other: ndarray[ShapeT, _dtype[float64]],
         /,
     ) -> ndarray[ShapeT, _dtype[float64]]: ...
     @overload  # Nd c128, Nd +c128
     def __add__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[complex128]],
-        other: ndarray[ShapeT, _dtype[complex64 | float64 | float32 | float16 | integer | bool_]],
+        other: ndarray[ShapeT, _dtype[complex64 | float64 | _Float32_co]],
         /,
     ) -> ndarray[ShapeT, _dtype[complex128]]: ...
     @overload  # Nd +c128, Nd c128
     def __add__[ShapeT: _Shape](
-        self: ndarray[ShapeT, _dtype[complex64 | float64 | float32 | float16 | integer | bool_]],
+        self: ndarray[ShapeT, _dtype[complex64 | float64 | _Float32_co]],
         other: ndarray[ShapeT, _dtype[complex128]],
         /,
     ) -> ndarray[ShapeT, _dtype[complex128]]: ...
@@ -6921,12 +6923,14 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         other: _TD64Like_co | ndarray[ShapeT, _dtype[timedelta64]],
         /,
     ) -> ndarray[ShapeT, _dtype[datetime64]]: ...
+    @overload  # ?d ~bool, ?d +bool
+    def __add__(self: NDArray[bool_], other: _ArrayLikeBool_co, /) -> NDArray[bool_]: ...
     @overload  # ?d ~bool, ?d T
-    def __add__[ScalarT: number](
-        self: NDArray[bool_],
-        other: _ArrayLike[ScalarT],
-        /,
-    ) -> NDArray[ScalarT]: ...
+    def __add__[ScalarT: number](self: NDArray[bool_], other: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
+    @overload  # ?d T, ?d T
+    def __add__[ScalarT: number](self: NDArray[ScalarT], other: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
+    @overload  # ?d T, ?d +bool
+    def __add__[ScalarT: number](self: NDArray[ScalarT], other: _ArrayLikeBool_co, /) -> NDArray[ScalarT]: ...
     @overload  # ?d ~u64, ?d +u64
     def __add__(self: NDArray[uint64], other: _ArrayLikeUInt_co, /) -> NDArray[uint64]: ...
     @overload  # ?d +u64, ?d ~u64
@@ -6934,15 +6938,17 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d ~i64, ?d +i64
     def __add__(self: NDArray[int64], other: _DualArrayLike[_dtype[int64 | _Int64_co], int], /) -> NDArray[int64]: ...
     @overload  # ?d +i64, ?d ~i64
-    def __add__(self: NDArray[_Int64_co], other: _ArrayLike[int64], /) -> NDArray[int64]: ...
+    def __add__(self: NDArray[_Int64_co], other: _ArrayLike[int64] | _NestedList[int], /) -> NDArray[int64]: ...
     @overload  # ?d ~f64, ?d +f64
     def __add__(self: NDArray[float64], other: _ArrayLikeFloat64_co, /) -> NDArray[float64]: ...
     @overload  # ?d +f64, ?d ~f64
-    def __add__(self: _ArrayFloat64_co, other: _ArrayLike[float64], /) -> NDArray[float64]: ...
+    def __add__(self: _ArrayFloat64_co, other: _ArrayLike[float64] | _NestedList[float], /) -> NDArray[float64]: ...
     @overload  # ?d ~c128, ?d +c128
     def __add__(self: NDArray[complex128], other: _ArrayLikeComplex128_co, /) -> NDArray[complex128]: ...
     @overload  # ?d +c128, ?d ~c128
-    def __add__(self: _ArrayComplex128_co, other: _ArrayLike[complex128], /) -> NDArray[complex128]: ...
+    def __add__(self: _ArrayComplex128_co, other: _ArrayLike[complex128] | _NestedList[complex], /) -> NDArray[complex128]: ...
+    @overload  # ?d +m8, ?d ~m8
+    def __add__(self: _ArrayTD64_co, other: _ArrayLike[timedelta64], /) -> NDArray[timedelta64]: ...
     @overload  # ?d ~m8, ?d +m8
     def __add__(self: NDArray[timedelta64], other: _ArrayLikeTD64_co, /) -> NDArray[timedelta64]: ...
     @overload  # ?d +m8, ?d ~M8
@@ -6978,12 +6984,12 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # Nd u64, Nd +u64
     def __radd__[ShapeT: _Shape](  # type: ignore[misc]
         self: ndarray[ShapeT, _dtype[uint64]],
-        other: ndarray[ShapeT, _dtype[uint32 | uint16 | uint8 | bool_]],
+        other: ndarray[ShapeT, _dtype[_UInt64_co]],
         /,
     ) -> ndarray[ShapeT, _dtype[uint64]]: ...
     @overload  # Nd +u64, Nd u64
     def __radd__[ShapeT: _Shape](
-        self: ndarray[ShapeT, _dtype[uint32 | uint16 | uint8 | bool_]],
+        self: ndarray[ShapeT, _dtype[_UInt64_co]],
         other: ndarray[ShapeT, _dtype[uint64]],
         /,
     ) -> ndarray[ShapeT, _dtype[uint64]]: ...
@@ -7002,24 +7008,24 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # Nd f64, Nd +f64
     def __radd__[ShapeT: _Shape](  # type: ignore[misc]
         self: ndarray[ShapeT, _dtype[float64]],
-        other: ndarray[ShapeT, _dtype[float32 | float16 | integer | bool_]],
+        other: ndarray[ShapeT, _dtype[_Float32_co]],
         /,
     ) -> ndarray[ShapeT, _dtype[float64]]: ...
     @overload  # Nd +f64, Nd f64
     def __radd__[ShapeT: _Shape](
-        self: ndarray[ShapeT, _dtype[float32 | float16 | integer | bool_]],
+        self: ndarray[ShapeT, _dtype[_Float32_co]],
         other: ndarray[ShapeT, _dtype[float64]],
         /,
     ) -> ndarray[ShapeT, _dtype[float64]]: ...
     @overload  # Nd c128, Nd +c128
     def __radd__[ShapeT: _Shape](  # type: ignore[misc]
         self: ndarray[ShapeT, _dtype[complex128]],
-        other: ndarray[ShapeT, _dtype[complex64 | float64 | float32 | float16 | integer | bool_]],
+        other: ndarray[ShapeT, _dtype[complex64 | float64 | _Float32_co]],
         /,
     ) -> ndarray[ShapeT, _dtype[complex128]]: ...
     @overload  # Nd +c128, Nd c128
     def __radd__[ShapeT: _Shape](
-        self: ndarray[ShapeT, _dtype[complex64 | float64 | float32 | float16 | integer | bool_]],
+        self: ndarray[ShapeT, _dtype[complex64 | float64 | _Float32_co]],
         other: ndarray[ShapeT, _dtype[complex128]],
         /,
     ) -> ndarray[ShapeT, _dtype[complex128]]: ...
@@ -7089,12 +7095,14 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         other: _TD64Like_co | ndarray[ShapeT, _dtype[timedelta64]],
         /,
     ) -> ndarray[ShapeT, _dtype[datetime64]]: ...
+    @overload  # ?d ~bool, ?d +bool
+    def __radd__(self: NDArray[bool_], other: _ArrayLikeBool_co, /) -> NDArray[bool_]: ...
     @overload  # ?d ~bool, ?d T
-    def __radd__[ScalarT: number](
-        self: NDArray[bool_],
-        other: _ArrayLike[ScalarT],
-        /,
-    ) -> NDArray[ScalarT]: ...
+    def __radd__[ScalarT: number](self: NDArray[bool_], other: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
+    @overload  # ?d T, ?d T
+    def __radd__[ScalarT: number](self: NDArray[ScalarT], other: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
+    @overload  # ?d T, ?d +bool
+    def __radd__[ScalarT: number](self: NDArray[ScalarT], other: _ArrayLikeBool_co, /) -> NDArray[ScalarT]: ...
     @overload  # ?d ~u64, ?d +u64
     def __radd__(self: NDArray[uint64], other: _ArrayLikeUInt_co, /) -> NDArray[uint64]: ...
     @overload  # ?d +u64, ?d ~u64
@@ -7102,15 +7110,17 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d ~i64, ?d +i64
     def __radd__(self: NDArray[int64], other: _DualArrayLike[_dtype[int64 | _Int64_co], int], /) -> NDArray[int64]: ...
     @overload  # ?d +i64, ?d ~i64
-    def __radd__(self: NDArray[_Int64_co], other: _ArrayLike[int64], /) -> NDArray[int64]: ...
+    def __radd__(self: NDArray[_Int64_co], other: _ArrayLike[int64] | _NestedList[int], /) -> NDArray[int64]: ...
     @overload  # ?d ~f64, ?d +f64
     def __radd__(self: NDArray[float64], other: _ArrayLikeFloat64_co, /) -> NDArray[float64]: ...
     @overload  # ?d +f64, ?d ~f64
-    def __radd__(self: _ArrayFloat64_co, other: _ArrayLike[float64], /) -> NDArray[float64]: ...
+    def __radd__(self: _ArrayFloat64_co, other: _ArrayLike[float64] | _NestedList[float], /) -> NDArray[float64]: ...
     @overload  # ?d ~c128, ?d +c128
     def __radd__(self: NDArray[complex128], other: _ArrayLikeComplex128_co, /) -> NDArray[complex128]: ...
     @overload  # ?d +c128, ?d ~c128
-    def __radd__(self: _ArrayComplex128_co, other: _ArrayLike[complex128], /) -> NDArray[complex128]: ...
+    def __radd__(self: _ArrayComplex128_co, other: _ArrayLike[complex128] | _NestedList[complex], /) -> NDArray[complex128]: ...
+    @overload  # ?d +m8, ?d ~m8
+    def __radd__(self: _ArrayTD64_co, other: _ArrayLike[timedelta64], /) -> NDArray[timedelta64]: ...
     @overload  # ?d ~m8, ?d +m8
     def __radd__(self: NDArray[timedelta64], other: _ArrayLikeTD64_co, /) -> NDArray[timedelta64]: ...
     @overload  # ?d +m8, ?d ~M8
@@ -7137,80 +7147,332 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def __radd__(self, other: ArrayLike, /) -> NDArray[Any]: ...
 
     # Keep in sync with `MaskedArray.__sub__`
-    @overload
-    def __sub__[ScalarT: number](self: NDArray[ScalarT], other: int | bool_, /) -> ndarray[_ShapeT_co, _dtype[ScalarT]]: ...
-    @overload
-    def __sub__[ScalarT: number](self: NDArray[ScalarT], other: _ArrayLikeBool_co, /) -> NDArray[ScalarT]: ...
-    @overload
-    def __sub__(self: NDArray[bool_], other: _ArrayLikeBool_co, /) -> NoReturn: ...
-    @overload
+    @overload  # Nd Any, 0d|Nd  (workaround)
+    def __sub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[Never]],
+        other: complex | generic | ndarray[ShapeT, Any],
+        /,
+    ) -> ndarray[ShapeT, _dtype[Any]]: ...
+    @overload  # Nd u64, Nd +u64
+    def __sub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[uint64]],
+        other: ndarray[ShapeT, _dtype[_UInt64_co]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[uint64]]: ...
+    @overload  # Nd +u64, Nd u64
+    def __sub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[_UInt64_co]],
+        other: ndarray[ShapeT, _dtype[uint64]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[uint64]]: ...
+    @overload  # Nd i64, Nd +i64
+    def __sub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[int64]],
+        other: ndarray[ShapeT, _dtype[_Int64_co]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[int64]]: ...
+    @overload  # Nd +i64, Nd i64
+    def __sub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[_Int64_co]],
+        other: ndarray[ShapeT, _dtype[int64]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[int64]]: ...
+    @overload  # Nd f64, Nd +f64
+    def __sub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[float64]],
+        other: ndarray[ShapeT, _dtype[_Float32_co]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[float64]]: ...
+    @overload  # Nd +f64, Nd f64
+    def __sub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[_Float32_co]],
+        other: ndarray[ShapeT, _dtype[float64]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[float64]]: ...
+    @overload  # Nd c128, Nd +c128
+    def __sub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[complex128]],
+        other: ndarray[ShapeT, _dtype[complex64 | float64 | _Float32_co]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[complex128]]: ...
+    @overload  # Nd +c128, Nd c128
+    def __sub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[complex64 | float64 | _Float32_co]],
+        other: ndarray[ShapeT, _dtype[complex128]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[complex128]]: ...
+    @overload  # Nd ~M8, 0d|Nd ~M8
+    def __sub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[datetime64]],
+        other: datetime64 | ndarray[ShapeT, _dtype[datetime64]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[timedelta64]]: ...
+    @overload  # Nd T, Nd T
+    def __sub__[ShapeT: _Shape, DTypeT: _dtype](
+        self: ndarray[ShapeT, DTypeT],
+        other: py_bool | bool_ | ndarray[ShapeT, DTypeT],
+        /,
+    ) -> ndarray[ShapeT, DTypeT]: ...
+    @overload  # Nd bool, 0d|Nd T
+    def __sub__[ShapeT: _Shape, ScalarT: number](
+        self: ndarray[ShapeT, _dtype[bool_]],
+        other: ScalarT | ndarray[ShapeT, _dtype[ScalarT]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd T, 0d|Nd bool | 0d int|T
+    def __sub__[ShapeT: _Shape, ScalarT: number](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        other: ScalarT | bool_ | int | ndarray[ShapeT, _dtype[bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd T, 0d float
+    def __sub__[ShapeT: _Shape, ScalarT: inexact](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        other: float,
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd T, 0d complex
+    def __sub__[ShapeT: _Shape, ScalarT: complexfloating](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        other: complex,
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd bool, 0d int
+    def __sub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[bool_]],
+        other: int,
+        /,
+    ) -> ndarray[ShapeT, _dtype[int64]]: ...
+    @overload  # Nd integer, 0d float
+    def __sub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[integer]],
+        other: float,
+        /,
+    ) -> ndarray[ShapeT, _dtype[float64]]: ...
+    @overload  # Nd f64, 0d complex
+    def __sub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[float64]],
+        other: complex,
+        /,
+    ) -> ndarray[ShapeT, _dtype[complex128]]: ...
+    @overload  # Nd f32|f16, 0d complex
+    def __sub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[float32 | float16]],
+        other: complex,
+        /,
+    ) -> ndarray[ShapeT, _dtype[complex64]]: ...
+    @overload  # Nd +m8, 0d|Nd ~m8
+    def __sub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[timedelta64 | integer | bool_]],
+        other: timedelta64 | ndarray[ShapeT, _dtype[timedelta64]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[timedelta64]]: ...
+    @overload  # Nd ~M8, 0d|Nd +m8
+    def __sub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[datetime64]],
+        other: _TD64Like_co | ndarray[ShapeT, _dtype[timedelta64]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[datetime64]]: ...
+    @overload  # ?d ~bool, ?d T
     def __sub__[ScalarT: number](self: NDArray[bool_], other: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
-    @overload
+    @overload  # ?d T, ?d T
+    def __sub__[ScalarT: number](self: NDArray[ScalarT], other: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
+    @overload  # ?d T, ?d +bool
+    def __sub__[ScalarT: number](self: NDArray[ScalarT], other: _ArrayLikeBool_co, /) -> NDArray[ScalarT]: ...
+    @overload  # ?d ~u64, ?d +u64
+    def __sub__(self: NDArray[uint64], other: _ArrayLikeUInt_co, /) -> NDArray[uint64]: ...
+    @overload  # ?d +u64, ?d ~u64
+    def __sub__(self: _ArrayUInt_co, other: _ArrayLike[uint64], /) -> NDArray[uint64]: ...
+    @overload  # ?d ~i64, ?d +i64
+    def __sub__(self: NDArray[int64], other: _DualArrayLike[_dtype[int64 | _Int64_co], int], /) -> NDArray[int64]: ...
+    @overload  # ?d +i64, ?d ~i64
+    def __sub__(self: NDArray[_Int64_co], other: _ArrayLike[int64] | _NestedList[int], /) -> NDArray[int64]: ...
+    @overload  # ?d ~f64, ?d +f64
     def __sub__(self: NDArray[float64], other: _ArrayLikeFloat64_co, /) -> NDArray[float64]: ...
-    @overload
-    def __sub__(self: _ArrayFloat64_co, other: _ArrayLike[floating[_64Bit]], /) -> NDArray[float64]: ...
-    @overload
+    @overload  # ?d +f64, ?d ~f64
+    def __sub__(self: _ArrayFloat64_co, other: _ArrayLike[float64] | _NestedList[float], /) -> NDArray[float64]: ...
+    @overload  # ?d ~c128, ?d +c128
     def __sub__(self: NDArray[complex128], other: _ArrayLikeComplex128_co, /) -> NDArray[complex128]: ...
-    @overload
-    def __sub__(self: _ArrayComplex128_co, other: _ArrayLike[complexfloating[_64Bit]], /) -> NDArray[complex128]: ...
-    @overload
-    def __sub__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co, /) -> NDArray[unsignedinteger]: ...
-    @overload
-    def __sub__(self: _ArrayInt_co, other: _ArrayLikeInt_co, /) -> NDArray[signedinteger]: ...
-    @overload
-    def __sub__(self: _ArrayFloat_co, other: _ArrayLikeFloat_co, /) -> NDArray[floating]: ...
-    @overload
-    def __sub__(self: _ArrayComplex_co, other: _ArrayLikeComplex_co, /) -> NDArray[complexfloating]: ...
-    @overload
-    def __sub__(self: NDArray[number], other: _ArrayLikeNumber_co, /) -> NDArray[number]: ...
-    @overload
-    def __sub__(self: _ArrayTD64_co, other: _ArrayLikeTD64_co, /) -> NDArray[timedelta64]: ...
-    @overload
+    @overload  # ?d +c128, ?d ~c128
+    def __sub__(self: _ArrayComplex128_co, other: _ArrayLike[complex128] | _NestedList[complex], /) -> NDArray[complex128]: ...
+    @overload  # ?d +m8, ?d ~m8
+    def __sub__(self: _ArrayTD64_co, other: _ArrayLike[timedelta64], /) -> NDArray[timedelta64]: ...
+    @overload  # ?d ~m8, ?d +m8
+    def __sub__(self: NDArray[timedelta64], other: _ArrayLikeTD64_co, /) -> NDArray[timedelta64]: ...
+    @overload  # ?d ~M8, ?d +m8
     def __sub__(self: NDArray[datetime64], other: _ArrayLikeTD64_co, /) -> NDArray[datetime64]: ...
-    @overload
+    @overload  # ?d ~M8, ?d +M8
     def __sub__(self: NDArray[datetime64], other: _ArrayLikeDT64_co, /) -> NDArray[timedelta64]: ...
-    @overload
-    def __sub__(self: NDArray[object_], other: Any, /) -> Any: ...
-    @overload
-    def __sub__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
+    @overload  # ?d ~object, ?d
+    def __sub__(self: NDArray[object_], other: Any, /) -> NDArray[object_]: ...
+    @overload  # ?d, ?d +object
+    def __sub__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
+    @overload  # fallback
+    def __sub__(self, other: ArrayLike, /) -> NDArray[Any]: ...
 
-    # Keep in sync with `MaskedArray.__rsub__`
-    @overload
-    def __rsub__[ScalarT: number](self: NDArray[ScalarT], other: int | bool_, /) -> ndarray[_ShapeT_co, _dtype[ScalarT]]: ...
-    @overload
-    def __rsub__[ScalarT: number](self: NDArray[ScalarT], other: _ArrayLikeBool_co, /) -> NDArray[ScalarT]: ...
-    @overload
-    def __rsub__(self: NDArray[bool_], other: _ArrayLikeBool_co, /) -> NoReturn: ...
-    @overload
+    # keep in sync with __sub__ (modulo non-commutative datetime64)
+    @overload  # Nd Any, 0d|Nd  (workaround)
+    def __rsub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[Never]],
+        other: complex | generic | ndarray[ShapeT, Any],
+        /,
+    ) -> ndarray[ShapeT, _dtype[Any]]: ...
+    @overload  # Nd u64, Nd +u64
+    def __rsub__[ShapeT: _Shape](  # type: ignore[misc]
+        self: ndarray[ShapeT, _dtype[uint64]],
+        other: ndarray[ShapeT, _dtype[_UInt64_co]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[uint64]]: ...
+    @overload  # Nd +u64, Nd u64
+    def __rsub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[_UInt64_co]],
+        other: ndarray[ShapeT, _dtype[uint64]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[uint64]]: ...
+    @overload  # Nd i64, Nd +i64
+    def __rsub__[ShapeT: _Shape](  # type: ignore[misc]
+        self: ndarray[ShapeT, _dtype[int64]],
+        other: ndarray[ShapeT, _dtype[_Int64_co]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[int64]]: ...
+    @overload  # Nd +i64, Nd i64
+    def __rsub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[_Int64_co]],
+        other: ndarray[ShapeT, _dtype[int64]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[int64]]: ...
+    @overload  # Nd f64, Nd +f64
+    def __rsub__[ShapeT: _Shape](  # type: ignore[misc]
+        self: ndarray[ShapeT, _dtype[float64]],
+        other: ndarray[ShapeT, _dtype[_Float32_co]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[float64]]: ...
+    @overload  # Nd +f64, Nd f64
+    def __rsub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[_Float32_co]],
+        other: ndarray[ShapeT, _dtype[float64]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[float64]]: ...
+    @overload  # Nd c128, Nd +c128
+    def __rsub__[ShapeT: _Shape](  # type: ignore[misc]
+        self: ndarray[ShapeT, _dtype[complex128]],
+        other: ndarray[ShapeT, _dtype[complex64 | float64 | _Float32_co]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[complex128]]: ...
+    @overload  # Nd +c128, Nd c128
+    def __rsub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[complex64 | float64 | _Float32_co]],
+        other: ndarray[ShapeT, _dtype[complex128]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[complex128]]: ...
+    @overload  # Nd ~M8, 0d|Nd ~M8
+    def __rsub__[ShapeT: _Shape](  # type: ignore[misc]
+        self: ndarray[ShapeT, _dtype[datetime64]],
+        other: datetime64 | ndarray[ShapeT, _dtype[datetime64]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[timedelta64]]: ...
+    @overload  # Nd T, Nd T
+    def __rsub__[ShapeT: _Shape, DTypeT: _dtype](  # type: ignore[misc]
+        self: ndarray[ShapeT, DTypeT],
+        other: py_bool | bool_ | ndarray[ShapeT, DTypeT],
+        /,
+    ) -> ndarray[ShapeT, DTypeT]: ...
+    @overload  # Nd bool, 0d|Nd T
+    def __rsub__[ShapeT: _Shape, ScalarT: number](
+        self: ndarray[ShapeT, _dtype[bool_]],
+        other: ScalarT | ndarray[ShapeT, _dtype[ScalarT]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd T, 0d|Nd bool | 0d int|T
+    def __rsub__[ShapeT: _Shape, ScalarT: number](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        other: ScalarT | bool_ | int | ndarray[ShapeT, _dtype[bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd T, 0d float
+    def __rsub__[ShapeT: _Shape, ScalarT: inexact](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        other: float,
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd T, 0d complex
+    def __rsub__[ShapeT: _Shape, ScalarT: complexfloating](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        other: complex,
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd bool, 0d int
+    def __rsub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[bool_]],
+        other: int,
+        /,
+    ) -> ndarray[ShapeT, _dtype[int64]]: ...
+    @overload  # Nd integer, 0d float
+    def __rsub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[integer]],
+        other: float,
+        /,
+    ) -> ndarray[ShapeT, _dtype[float64]]: ...
+    @overload  # Nd f64, 0d complex
+    def __rsub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[float64]],
+        other: complex,
+        /,
+    ) -> ndarray[ShapeT, _dtype[complex128]]: ...
+    @overload  # Nd f32|f16, 0d complex
+    def __rsub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[float32 | float16]],
+        other: complex,
+        /,
+    ) -> ndarray[ShapeT, _dtype[complex64]]: ...
+    @overload  # Nd +m8, 0d|Nd ~m8
+    def __rsub__[ShapeT: _Shape](  # type:ignore[has-type]  # mypy bug
+        self: ndarray[ShapeT, _dtype[timedelta64 | integer | bool_]],
+        other: timedelta64 | ndarray[ShapeT, _dtype[timedelta64]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[timedelta64]]: ...
+    @overload  # Nd +m8, 0d|Nd ~M8
+    def __rsub__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[timedelta64 | integer | bool_]],
+        other: datetime64 | ndarray[ShapeT, _dtype[datetime64]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[datetime64]]: ...
+    @overload  # ?d ~bool, ?d T
     def __rsub__[ScalarT: number](self: NDArray[bool_], other: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
-    @overload
+    @overload  # ?d T, ?d T
+    def __rsub__[ScalarT: number](self: NDArray[ScalarT], other: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
+    @overload  # ?d T, ?d +bool
+    def __rsub__[ScalarT: number](self: NDArray[ScalarT], other: _ArrayLikeBool_co, /) -> NDArray[ScalarT]: ...
+    @overload  # ?d ~u64, ?d +u64
+    def __rsub__(self: NDArray[uint64], other: _ArrayLikeUInt_co, /) -> NDArray[uint64]: ...
+    @overload  # ?d +u64, ?d ~u64
+    def __rsub__(self: _ArrayUInt_co, other: _ArrayLike[uint64], /) -> NDArray[uint64]: ...
+    @overload  # ?d ~i64, ?d +i64
+    def __rsub__(self: NDArray[int64], other: _DualArrayLike[_dtype[int64 | _Int64_co], int], /) -> NDArray[int64]: ...
+    @overload  # ?d +i64, ?d ~i64
+    def __rsub__(self: NDArray[_Int64_co], other: _ArrayLike[int64] | _NestedList[int], /) -> NDArray[int64]: ...
+    @overload  # ?d ~f64, ?d +f64
     def __rsub__(self: NDArray[float64], other: _ArrayLikeFloat64_co, /) -> NDArray[float64]: ...
-    @overload
-    def __rsub__(self: _ArrayFloat64_co, other: _ArrayLike[floating[_64Bit]], /) -> NDArray[float64]: ...
-    @overload
+    @overload  # ?d +f64, ?d ~f64
+    def __rsub__(self: _ArrayFloat64_co, other: _ArrayLike[float64] | _NestedList[float], /) -> NDArray[float64]: ...
+    @overload  # ?d ~c128, ?d +c128
     def __rsub__(self: NDArray[complex128], other: _ArrayLikeComplex128_co, /) -> NDArray[complex128]: ...
-    @overload
-    def __rsub__(self: _ArrayComplex128_co, other: _ArrayLike[complexfloating[_64Bit]], /) -> NDArray[complex128]: ...
-    @overload
-    def __rsub__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co, /) -> NDArray[unsignedinteger]: ...
-    @overload
-    def __rsub__(self: _ArrayInt_co, other: _ArrayLikeInt_co, /) -> NDArray[signedinteger]: ...
-    @overload
-    def __rsub__(self: _ArrayFloat_co, other: _ArrayLikeFloat_co, /) -> NDArray[floating]: ...
-    @overload
-    def __rsub__(self: _ArrayComplex_co, other: _ArrayLikeComplex_co, /) -> NDArray[complexfloating]: ...
-    @overload
-    def __rsub__(self: NDArray[number], other: _ArrayLikeNumber_co, /) -> NDArray[number]: ...
-    @overload
-    def __rsub__(self: _ArrayTD64_co, other: _ArrayLikeTD64_co, /) -> NDArray[timedelta64]: ...
-    @overload
+    @overload  # ?d +c128, ?d ~c128
+    def __rsub__(self: _ArrayComplex128_co, other: _ArrayLike[complex128] | _NestedList[complex], /) -> NDArray[complex128]: ...
+    @overload  # ?d +m8, ?d ~m8
+    def __rsub__(self: _ArrayTD64_co, other: _ArrayLike[timedelta64], /) -> NDArray[timedelta64]: ...
+    @overload  # ?d ~m8, ?d +m8
+    def __rsub__(self: NDArray[timedelta64], other: _ArrayLikeTD64_co, /) -> NDArray[timedelta64]: ...
+    @overload  # ?d +m8, ?d ~M8
     def __rsub__(self: _ArrayTD64_co, other: _ArrayLikeDT64_co, /) -> NDArray[datetime64]: ...
-    @overload
+    @overload  # ?d ~M8, ?d +M8
     def __rsub__(self: NDArray[datetime64], other: _ArrayLikeDT64_co, /) -> NDArray[timedelta64]: ...
-    @overload
-    def __rsub__(self: NDArray[object_], other: Any, /) -> Any: ...
-    @overload
-    def __rsub__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
+    @overload  # ?d ~object, ?d
+    def __rsub__(self: NDArray[object_], other: Any, /) -> NDArray[object_]: ...
+    @overload  # ?d, ?d +object
+    def __rsub__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
+    @overload  # fallback
+    def __rsub__(self, other: ArrayLike, /) -> NDArray[Any]: ...
 
     # Keep in sync with `MaskedArray.__mul__`
     @overload
