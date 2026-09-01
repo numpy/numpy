@@ -201,6 +201,15 @@ def test_create_with_failing_na_comparison():
         np.array(["y"], dtype=dt)
 
 
+def test_create_with_failing_na_str():
+    class BadStr(str):
+        def __str__(self):
+            raise RuntimeError("boom")
+
+    with pytest.raises(RuntimeError, match="boom"):
+        StringDType(na_object=BadStr("na"))
+
+
 @pytest.mark.parametrize("i", list(range(5)))
 def test_set_replace_na(i):
     # Test strings of various lengths can be set to NaN and then replaced.
