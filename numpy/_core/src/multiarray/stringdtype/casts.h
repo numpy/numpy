@@ -27,6 +27,13 @@ load_nullable_string(const PyArray_StringDTypeObject *descr,
 NPY_NO_EXPORT PyArray_Descr *
 stringdtype_find_fixed_width_descr(PyArrayObject *arr, int type_num);
 
+// Whether obj is a NaN missing value: a float NaN or a complex value with a
+// NaN component (np.isnan semantics). Returns 1 if it is, 0 if not, and -1 on
+// error. Used by stringdtype_setitem; kept consistent with float_is_nan_na in
+// the float-to-string casts.
+NPY_NO_EXPORT int
+pyobj_is_nan_na(PyObject *obj);
+
 #ifdef __cplusplus
 }
 #endif

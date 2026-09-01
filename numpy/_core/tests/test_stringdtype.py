@@ -13,6 +13,7 @@ import pytest
 import numpy as np
 from numpy._core.tests._natype import pd_NA
 from numpy.dtypes import StringDType
+from numpy.exceptions import ComplexWarning
 from numpy.testing import assert_array_equal
 
 
@@ -45,6 +46,15 @@ def coerce(request):
 )
 def na_object(request):
     """Possible values for the missing data sentinel"""
+    return request.param
+
+
+@pytest.fixture(
+    params=[np.nan, float("nan"), pd_NA],
+    ids=["np.nan", "float('nan')", "pandas.NA"],
+)
+def nan_like_na_object(request):
+    """The subset of ``na_object`` sentinels that are NaN-like (has_nan_na)"""
     return request.param
 
 
@@ -1558,6 +1568,176 @@ def test_string_to_bytes_invalid_ascii_error():
         np.array(["abc", "xy"], dtype="T").astype("S3"),
         np.array([b"abc", b"xy"], dtype="S3"),
     )
+
+
+@pytest.mark.parametrize("typename", ["float16", "float32", "float64",
+                                      "longdouble"])
+def test_float_to_string_nan_na_consistent(typename, nan_like_na_object):
+    dt = StringDType(na_object=nan_like_na_object)
+    arr = np.array([1.5, np.nan, -2.0], dtype=typename).astype(dt)
+    assert arr[0] == "1.5"
+    assert arr[2] == "-2.0"
+    assert arr[1] is nan_like_na_object
+
+
+@pytest.mark.parametrize("typename", ["complex64", "complex128", "clongdouble"])
+def test_cfloat_to_string_nan_na(typename, nan_like_na_object):
+    # a complex value with any NaN component is missing (np.isnan semantics)
+    dt = StringDType(na_object=nan_like_na_object)
+
+    for val in (complex(np.nan, 0.0), complex(np.nan, 2.0),
+                complex(0.0, np.nan), complex(2.0, np.nan),
+                complex(np.nan, np.nan)):
+        arr = np.array([val], dtype=typename).astype(dt)
+        assert arr[0] is nan_like_na_object
+
+    # no NaN component (even inf): stringified
+    arr = np.array([1.5 + 2j, complex(np.inf, 1)], dtype=typename).astype(dt)
+    assert arr[0] == "(1.5+2j)"
+    assert arr[1] == "(inf+1j)"
+
+
+def test_cfloat_to_string_nan_na_strided_field_view(nan_like_na_object):
+    # the field view's byte stride is aligned but not a multiple of the
+    # itemsize; the NaN check and the value read must step in bytes
+    rec = np.zeros(3, dtype=[("c", "c16"), ("pad", "f8")])
+    rec["c"] = [1 + 2j, complex(np.nan, 4.0), 5 + 6j]
+    dt = StringDType(na_object=nan_like_na_object)
+    res = rec["c"].astype(dt)
+    assert res[0] == "(1+2j)"
+    assert res[1] is nan_like_na_object
+    assert res[2] == "(5+6j)"
+
+
+@pytest.mark.parametrize("typename", ["float16", "float32", "float64",
+                                      "complex64", "complex128"])
+def test_float_to_string_nan_na_non_native_byteorder(typename,
+                                                     nan_like_na_object):
+    dt = StringDType(na_object=nan_like_na_object)
+    arr = np.array([1.5, np.nan, -2.0], dtype=typename)
+    expected = arr.astype(dt)
+    res = arr.astype(arr.dtype.newbyteorder("S")).astype(dt)
+    assert res[0] == expected[0]
+    assert res[1] is nan_like_na_object
+    assert res[2] == expected[2]
+
+    # the bytes of a native NaN are a finite subnormal in the other byte
+    # order, so they must not be mistaken for a NaN
+    finite = arr[1:2].view(arr.dtype.newbyteorder("S"))
+    assert not np.isnan(finite[0])
+    res = finite.astype(dt)
+    assert isinstance(res[0], str)
+    assert res[0] == str(finite[0])
+
+
+NON_NATIVE_BYTEORDER_CASES = [
+    ("i4", [1, -2, 300]),
+    ("u2", [1, 2, 300]),
+    ("f2", [1.5, -2.0]),
+    ("f8", [1.5, -2.0]),
+    ("c16", [1.5 + 2j]),
+    ("M8[s]", ["2020-01-01", "NaT"]),
+    ("m8[s]", [5, "NaT"]),
+    ("U3", ["abc", "d"]),
+]
+
+
+@pytest.mark.parametrize("dtype, values", NON_NATIVE_BYTEORDER_CASES)
+def test_non_native_byteorder_to_string(dtype, values):
+    native = np.array(values, dtype=dtype)
+    swapped = native.astype(native.dtype.newbyteorder("S"))
+    assert_array_equal(swapped.astype(StringDType()),
+                       native.astype(StringDType()))
+
+
+@pytest.mark.parametrize("typename", ["float16", "float32", "float64",
+                                      "longdouble"])
+def test_setitem_nan_na_matches_float_cast(typename, nan_like_na_object):
+    dt = StringDType(na_object=nan_like_na_object)
+    nan_scalar = np.dtype(typename).type("nan")
+
+    arr = np.empty(4, dtype=dt)
+    arr[0] = nan_scalar
+    arr[1] = float("nan")
+    arr[2] = np.nan
+    arr[3] = np.dtype(typename).type("1.5")
+    assert arr[0] is nan_like_na_object
+    assert arr[1] is nan_like_na_object
+    assert arr[2] is nan_like_na_object
+    assert arr[3] == "1.5"
+
+    cast = np.array([nan_scalar, float("nan"), np.nan, 1.5], dtype=typename).astype(dt)
+    assert cast[0] is nan_like_na_object
+    assert cast[1] is nan_like_na_object
+    assert cast[2] is nan_like_na_object
+    assert cast[3] == arr[3]
+
+
+@pytest.mark.parametrize("typename", ["complex64", "complex128", "clongdouble"])
+def test_setitem_cfloat_nan(typename, nan_like_na_object):
+    # setitem agrees with the cast, for numpy scalars and Python complex
+    dt = StringDType(na_object=nan_like_na_object)
+    arr = np.empty(1, dtype=dt)
+
+    for val in (complex(np.nan, 0.0), complex(np.nan, 2.0),
+                complex(0.0, np.nan), complex(2.0, np.nan),
+                complex(np.nan, np.nan)):
+        arr[0] = np.dtype(typename).type(val)
+        assert arr[0] is nan_like_na_object
+        arr[0] = val
+        assert arr[0] is nan_like_na_object
+
+    arr[0] = np.dtype(typename).type(1.5 + 2j)
+    assert arr[0] == "(1.5+2j)"
+
+
+@pytest.mark.parametrize("dt", [StringDType(), StringDType(na_object="missing")],
+                         ids=["no-na", "string-na"])
+def test_nan_is_not_missing_without_nan_like_na(dt):
+    arr = np.array([np.nan, 1.5], dtype="float32").astype(dt)
+    assert arr[0] == "nan"
+    assert arr[1] == "1.5"
+    arr = np.array([complex(np.nan, 2.0), complex(0.0, np.nan)],
+                   dtype="complex128").astype(dt)
+    assert arr[0] == "(nan+2j)"
+    assert arr[1] == "nanj"
+    arr = np.empty(2, dtype=dt)
+    arr[0] = np.float32("nan")
+    arr[1] = np.complex128(complex(np.nan, 2.0))
+    assert arr[0] == "nan"
+    assert arr[1] == "(nan+2j)"
+
+
+@pytest.mark.parametrize("typename", ["float16", "float32", "float64",
+                                      "longdouble", "complex64", "complex128",
+                                      "clongdouble"])
+def test_string_na_to_numeric_is_nan(typename, nan_like_na_object):
+    dt = StringDType(na_object=nan_like_na_object)
+    out = np.array(["1.5", nan_like_na_object], dtype=dt).astype(typename)
+    assert out[0] == np.dtype(typename).type("1.5")
+    assert np.isnan(out[1])
+
+
+@pytest.mark.parametrize(
+    "order",
+    # complex -> string -> float can't round-trip (a complex stringifies to
+    # "(1.5+0j)", not a valid float literal), so those orderings are omitted
+    [o for o in itertools.permutations(["complex128", "float64", "string"])
+     if ("complex128", "string") not in zip(o, o[1:])],
+    ids="->".join)
+def test_roundtrip_float_through_complex_and_string(order, nan_like_na_object):
+    # bracketing the trip with float64 normalizes the string form of a complex
+    # value ("(1.5+0j)" vs "1.5") so the values come back unchanged
+    dt = StringDType(na_object=nan_like_na_object)
+    specs = {"complex128": "complex128", "float64": "float64", "string": dt}
+    original = np.array([1.5, np.nan, -2.0, 0.0], dtype="float64")
+
+    arr = original
+    # each order does complex -> real exactly once, which warns
+    with pytest.warns(ComplexWarning):
+        for name in (*order, "float64"):
+            arr = arr.astype(specs[name])
+    assert_array_equal(arr, original)
 
 
 def test_void_to_string_invalid_utf8_error():
