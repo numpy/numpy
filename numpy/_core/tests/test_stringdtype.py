@@ -1650,6 +1650,15 @@ def test_non_native_byteorder_to_string(dtype, values):
                        native.astype(StringDType()))
 
 
+@pytest.mark.parametrize("dtype, values", NON_NATIVE_BYTEORDER_CASES)
+def test_string_to_non_native_byteorder(dtype, values):
+    native = np.array(values, dtype=dtype)
+    swapped_dtype = native.dtype.newbyteorder("S")
+    res = native.astype(StringDType()).astype(swapped_dtype)
+    assert res.dtype == swapped_dtype
+    assert_array_equal(res, native)
+
+
 @pytest.mark.parametrize("typename", ["float16", "float32", "float64",
                                       "longdouble"])
 def test_setitem_nan_na_matches_float_cast(typename, nan_like_na_object):
