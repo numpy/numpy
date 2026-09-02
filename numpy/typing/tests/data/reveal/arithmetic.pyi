@@ -260,7 +260,7 @@ assert_type(c8 + b_, np.complex64)
 assert_type(c8 + b, np.complex64)
 assert_type(c8 + c, np.complex64 | np.complex128)
 assert_type(c8 + f, np.complex64 | np.complex128)
-assert_type(c8 + AR_f, Any)
+assert_type(c8 + AR_f, npt.NDArray[Any])
 
 assert_type(f16 + c8, np.complexfloating[_128Bit, _128Bit] | np.complex64)
 assert_type(c16 + c8, np.complex128)
