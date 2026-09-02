@@ -390,10 +390,10 @@ npy_update_operand_for_scalar(
     Py_INCREF(descr);
     PyArrayObject *new = (PyArrayObject *)PyArray_NewFromDescr(
             &PyArray_Type, descr, 0, NULL, NULL, NULL, 0, NULL);
-    Py_SETREF(*operand, new);
-    if (*operand == NULL) {
+    if (new == NULL) {
         return -1;
     }
+    Py_SETREF(*operand, new);
     if (scalar == NULL) {
         /* The ufunc.resolve_dtypes paths can go here.  Anything should go. */
         return 0;
@@ -411,7 +411,7 @@ npy_update_operand_for_scalar(
 NPY_NO_EXPORT int
 npy_update_operand_if_pystr(
     PyArrayObject **operand, PyObject *op, Py_ssize_t i,
-    PyArray_Descr *target, NPY_CASTING casting)
+    PyArray_Descr *target)
 {
     if (!(PyArray_FLAGS(*operand) & NPY_ARRAY_WAS_PYTHON_STR)) {
         return 0;
@@ -427,7 +427,8 @@ npy_update_operand_if_pystr(
         Py_DECREF(scalar);
         return -1;
     }
-    int res = npy_update_operand_for_scalar(operand, scalar, descr, casting);
+    int res = npy_update_operand_for_scalar(
+            operand, scalar, descr, NPY_SAFE_CASTING);
     Py_DECREF(scalar);
     Py_DECREF(descr);
     return res;

@@ -620,7 +620,7 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
 
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
         if (npy_update_operand_if_pystr(&arrays[iarrays], op, iarrays,
-                                        PyArray_DESCR(ret), casting) < 0) {
+                                        PyArray_DESCR(ret)) < 0) {
             Py_DECREF(sliding_view);
             Py_DECREF(ret);
             return NULL;
@@ -731,7 +731,7 @@ PyArray_ConcatenateInto(PyObject *op,
     }
 
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
-        Py_XDECREF(arrays[iarrays]);
+        Py_DECREF(arrays[iarrays]);
     }
     PyMem_RawFree(arrays);
 

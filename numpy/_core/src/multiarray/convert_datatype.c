@@ -2032,8 +2032,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
     for (i = 0; i < n; i++) {
         int flags = NPY_ARRAY_CARRAY;
 
-        if (npy_update_operand_if_pystr(&mps[i], op, i,
-                                        common_descr, NPY_SAFE_CASTING) < 0) {
+        if (npy_update_operand_if_pystr(&mps[i], op, i, common_descr) < 0) {
             goto fail;
         }
 

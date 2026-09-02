@@ -480,7 +480,7 @@ def test_copyto_cast_safety():
     np.copyto(np.arange(3, dtype=object), 3, casting="equiv")
 
     # A Python str adopts a StringDType's semantics in the same way
-    np.copyto(np.empty(3, dtype=np.dtypes.StringDType()), "x", casting="no")
+    np.copyto(np.empty(3, dtype=np.dtypes.StringDType()), "x", casting="safe")
     with pytest.raises(TypeError):
         np.copyto(np.empty(3, dtype=np.dtypes.StringDType()), "x",
                   casting="equiv")

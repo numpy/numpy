@@ -346,8 +346,10 @@ def test_pystr_scalar_concatenate_preserves_nulls(dtype):
     res = np.concatenate((scalar,), axis=None, dtype=dtype)
     assert res[0] == scalar
 
-    res = np.concatenate((arr, "z"), axis=None, casting="no")
-    assert res[1] == "z"
+    # like a Python int, the str is not cast, so any casting rule allows it
+    for casting in ["no", "equiv", "safe", "same_kind", "unsafe"]:
+        res = np.concatenate((arr, "z"), axis=None, casting=casting)
+        assert res[1] == "z"
 
 
 def test_pystr_scalar_choose_preserves_nulls(dtype):
