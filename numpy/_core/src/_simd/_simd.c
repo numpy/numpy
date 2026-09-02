@@ -47,9 +47,24 @@ simd_module_from_def(PyModuleDef *def, const char *name)
     return m;
 }
 
+/*
+ * Each per-target module hands out its own static vector type, which is
+ * process-global rather than owned by the module instance that exposed it, so a
+ * second instance could not be isolated from the first. Allow only one instance
+ * of the module per process.
+ */
+static int module_loaded = 0;
+
 static int
 _simd_exec(PyObject *m)
 {
+    if (module_loaded) {
+        PyErr_SetString(PyExc_ImportError,
+                        "cannot load module more than once per process");
+        return -1;
+    }
+    module_loaded = 1;
+
     if (npy_cpu_init() < 0) {
         return -1;
     }
