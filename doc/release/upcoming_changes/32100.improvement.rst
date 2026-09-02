@@ -1,5 +1,4 @@
 np.positive no longer raises _UfuncNoLoopError when called on boolean arrays
 ---------------------------------------------------------------------------- 
-np.positive and unary+ are now registers boolean arrays.
-np.positive and unary+ raise no compatibility issues with CPython.
-`np.positive(np.array([True, False]))` casts to an int8 and returns `[1, 0]`.
+``np.positive`` and ``unary+`` now register boolean arrays and raise no compatibility issues with CPython.
+``np.positive(np.array([True, False]))`` casts to an ``int8`` and returns ``[1, 0]``
