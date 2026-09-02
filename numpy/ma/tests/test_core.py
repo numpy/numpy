@@ -1286,8 +1286,11 @@ class TestMaskedArrayArithmetic:
         assert_equal(np.arctan(z), arctan(zm))
         assert_equal(np.arctan2(x, y), arctan2(xm, ym))
         assert_equal(np.absolute(x), absolute(xm))
-        assert_equal(np.angle(x + 1j * y), angle(xm + 1j * ym))
-        assert_equal(np.angle(x + 1j * y, deg=True), angle(xm + 1j * ym, deg=True))
+        # Complex fill_value becomes real, raising ComplexWarning
+        with pytest.warns(np.exceptions.ComplexWarning):
+            assert_equal(np.angle(x + 1j * y), angle(xm + 1j * ym))
+        with pytest.warns(np.exceptions.ComplexWarning):
+            assert_equal(np.angle(x + 1j * y, deg=True), angle(xm + 1j * ym, deg=True))
         assert_equal(np.equal(x, y), equal(xm, ym))
         assert_equal(np.not_equal(x, y), not_equal(xm, ym))
         assert_equal(np.less(x, y), less(xm, ym))
@@ -2625,6 +2628,62 @@ class TestFillingValues:
         # array with a large fill_value).
         y = x.view(dtype=np.int32)
         assert_(y.fill_value == 999999)
+
+    def test_fillvalue_reset_after_dtype_changing_ufunc(self):
+        # Test that a fill_value which no longer matches the dtype of the
+        # result of a ufunc (because the ufunc changed the dtype) is reset
+        # to the default for the new dtype.
+        a = array(['foo', 'bar', 'baz'], mask=False, fill_value='N/A')
+        result = np.strings.find(a, 'foo')
+
+        # np.strings.find returns the platform default int dtype
+        assert_(result.dtype.kind == 'i')
+        assert_equal(result.fill_value, default_fill_value(result.dtype))
+        assert_equal(result.filled().dtype, result.dtype)
+
+        viewed = result.view(MaskedArray)
+        assert_equal(viewed.fill_value, default_fill_value(result.dtype))
+
+    def test_fillvalue_castable_after_dtype_changing_ufunc(self):
+        # Test that fill_values that *can* be cast into the new dtype.
+        # The cast value should be kept rather than being reset to the default,
+        # and .filled() should not be forced to fall back to `object` dtype.
+        a = array(['ab', 'cd'], mask=[0, 1], fill_value='-1')
+        result = np.strings.find(a, 'a')
+        assert_(result.dtype.kind == 'i')
+        assert_equal(result.fill_value, -1)
+        assert_equal(result.filled(), [0, -1])
+        assert_equal(result.filled().dtype, result.dtype)
+
+        x = array([1.5, np.nan, 2.5], mask=[0, 0, 1], fill_value=1e20)
+        y = np.isnan(x)
+        assert_equal(y.dtype, np.dtype(bool))
+        assert_equal(y.fill_value, True)
+        assert_equal(y.filled(), [False, True, True])
+        assert_equal(y.filled().dtype, y.dtype)
+
+        d = array(np.array(['2020-01-01', '2020-01-02'], 'M8[D]'), mask=[0, 1])
+        d.set_fill_value(np.datetime64('NaT', 'D'))
+        z = d - np.datetime64('2020-01-01', 'D')
+        assert_equal(z.dtype, np.dtype('timedelta64[D]'))
+        assert_(np.isnat(z.fill_value))
+        assert_equal(z.filled().dtype, z.dtype)
+
+        # the fill_value's complex dtype is cast into the new real dtype
+        c = array([1 + 1j, 2j], mask=[0, 1], fill_value=2 + 3j)
+        with pytest.warns(np.exceptions.ComplexWarning):
+            r = np.abs(c)
+        assert_equal(r.dtype, np.dtype(float))
+        assert_equal(r.fill_value, 2.0)
+        assert_equal(r.filled().dtype, r.dtype)
+
+        # a fill_value that overflows the new dtype during the cast
+        wide = np.dtype([('id', object)])
+        narrow = np.dtype([('id', 'i8')])
+        e = array([(1,), (2,)], dtype=wide, mask=[0, 1], fill_value=(10 ** 30,))
+        f = e.astype(narrow)
+        assert_equal(f.fill_value, default_fill_value(narrow))
+        assert_equal(f.filled().dtype, f.dtype)
 
     def test_fillvalue_bytes_or_str(self):
         # Test whether fill values work as expected for structured dtypes
