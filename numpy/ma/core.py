@@ -3037,7 +3037,13 @@ class MaskedArray(ndarray):
         _optinfo.update(getattr(obj, '_basedict', {}))
         if not isinstance(obj, MaskedArray):
             _optinfo.update(getattr(obj, '__dict__', {}))
-        _dict = {'_fill_value': getattr(obj, '_fill_value', None),
+        _fill_value = getattr(obj, '_fill_value', None)
+        if _fill_value is not None and getattr(obj, 'dtype', None) != self.dtype:
+            try:
+                _fill_value = _check_fill_value(_fill_value, self.dtype)
+            except (TypeError, ValueError, OverflowError):
+                _fill_value = None
+        _dict = {'_fill_value': _fill_value,
                      '_hardmask': getattr(obj, '_hardmask', False),
                      '_sharedmask': getattr(obj, '_sharedmask', False),
                      '_isfield': getattr(obj, '_isfield', False),
