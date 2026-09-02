@@ -3211,7 +3211,7 @@ class TestAbsoluteNegative:
 
 class TestPositive:
     def test_valid(self):
-        valid_dtypes = [int, float, complex, object]
+        valid_dtypes = [int, bool, float, complex, object]
         for dtype in valid_dtypes:
             x = np.arange(5, dtype=dtype)
             result = np.positive(x)
