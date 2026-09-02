@@ -2343,7 +2343,8 @@ get_tzoffset_from_pytzinfo(PyObject *timezone_obj, npy_datetimestruct *dts)
     }
 
     /* Convert the datetime from UTC to local time */
-    loc_dt = PyObject_CallMethod(dt, "astimezone", "O", timezone_obj);
+    loc_dt = PyObject_CallMethodOneArg(
+            dt, _npy_module_state->interned_str.astimezone, timezone_obj);
     Py_DECREF(dt);
     if (loc_dt == NULL) {
         return -1;
@@ -2428,7 +2429,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             if (DEPRECATE(
                         "The 'generic' unit for NumPy timedelta is deprecated, "
                         "and will raise an error in the future. "
-                        "This includes implicit conversion of bare integers (e.g. `+ 1`)."
+                        "This includes implicit conversion of bare integers (e.g. `+ 1`). "
                         "Please use a specific unit instead.") < 0) {
                 return -1;
             }
@@ -2585,7 +2586,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             if (DEPRECATE(
                         "The 'generic' unit for NumPy timedelta is deprecated, "
                         "and will raise an error in the future. "
-                        "This includes implicit conversion of bare integers (e.g. `+ 1`)."
+                        "This includes implicit conversion of bare integers (e.g. `+ 1`). "
                         "Please use a specific unit instead.") < 0) {
                 return -1;
             }
@@ -2671,7 +2672,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
                 if (DEPRECATE(
                             "The 'generic' unit for NumPy timedelta is deprecated, "
                             "and will raise an error in the future. "
-                            "This includes implicit conversion of bare integers (e.g. `+ 1`)."
+                            "This includes implicit conversion of bare integers (e.g. `+ 1`). "
                             "Please use a specific unit instead.") < 0) {
                     return -1;
                 }
@@ -2697,7 +2698,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
             if (DEPRECATE(
                     "The 'generic' unit for NumPy timedelta is deprecated, "
                     "and will raise an error in the future. "
-                    "This includes implicit conversion of bare integers (e.g. `+ 1`)."
+                    "This includes implicit conversion of bare integers (e.g. `+ 1`). "
                     "Please use a specific unit instead.") < 0) {
                 return -1;
             }
@@ -3364,7 +3365,7 @@ convert_pyobjects_to_datetimes(int count,
     /* Use the inputs to resolve the unit metadata if requested */
     if (inout_meta->base == NPY_FR_ERROR) {
         /* Allocate an array of metadata corresponding to the objects */
-        meta = PyArray_malloc(count * sizeof(PyArray_DatetimeMetaData));
+        meta = PyMem_RawMalloc(count * sizeof(PyArray_DatetimeMetaData));
         if (meta == NULL) {
             PyErr_NoMemory();
             return -1;
@@ -3383,14 +3384,14 @@ convert_pyobjects_to_datetimes(int count,
             else if (type_nums[i] == NPY_DATETIME) {
                 if (convert_pyobject_to_datetime(&meta[i], objs[i],
                                             casting, &out_values[i]) < 0) {
-                    PyArray_free(meta);
+                    PyMem_RawFree(meta);
                     return -1;
                 }
             }
             else if (type_nums[i] == NPY_TIMEDELTA) {
                 if (convert_pyobject_to_timedelta(&meta[i], objs[i],
                                             casting, &out_values[i]) < 0) {
-                    PyArray_free(meta);
+                    PyMem_RawFree(meta);
                     return -1;
                 }
             }
@@ -3398,7 +3399,7 @@ convert_pyobjects_to_datetimes(int count,
                 PyErr_SetString(PyExc_ValueError,
                         "convert_pyobjects_to_datetimes requires that "
                         "all the type_nums provided be datetime or timedelta");
-                PyArray_free(meta);
+                PyMem_RawFree(meta);
                 return -1;
             }
         }
@@ -3412,7 +3413,7 @@ convert_pyobjects_to_datetimes(int count,
                                     &meta[i], inout_meta, inout_meta,
                                     type_nums[i] == NPY_TIMEDELTA,
                                     is_out_strict) < 0) {
-                PyArray_free(meta);
+                PyMem_RawFree(meta);
                 return -1;
             }
             is_out_strict = is_out_strict || (type_nums[i] == NPY_TIMEDELTA);
@@ -3423,20 +3424,20 @@ convert_pyobjects_to_datetimes(int count,
             if (type_nums[i] == NPY_DATETIME) {
                 if (cast_datetime_to_datetime(&meta[i], inout_meta,
                                          out_values[i], &out_values[i]) < 0) {
-                    PyArray_free(meta);
+                    PyMem_RawFree(meta);
                     return -1;
                 }
             }
             else if (type_nums[i] == NPY_TIMEDELTA) {
                 if (cast_timedelta_to_timedelta(&meta[i], inout_meta,
                                          out_values[i], &out_values[i]) < 0) {
-                    PyArray_free(meta);
+                    PyMem_RawFree(meta);
                     return -1;
                 }
             }
         }
 
-        PyArray_free(meta);
+        PyMem_RawFree(meta);
     }
     /* Otherwise convert to the provided unit metadata */
     else {
@@ -3723,7 +3724,7 @@ find_string_array_datetime64_type(PyArrayObject *arr,
     maxlen = NpyIter_GetDescrArray(iter)[0]->elsize;
 
     /* Allocate a buffer for strings which fill the buffer completely */
-    tmp_buffer = PyArray_malloc(maxlen+1);
+    tmp_buffer = PyMem_RawMalloc(maxlen+1);
     if (tmp_buffer == NULL) {
         PyErr_NoMemory();
         NpyIter_Deallocate(iter);
@@ -3779,13 +3780,13 @@ find_string_array_datetime64_type(PyArrayObject *arr,
         }
     } while(iternext(iter));
 
-    PyArray_free(tmp_buffer);
+    PyMem_RawFree(tmp_buffer);
     NpyIter_Deallocate(iter);
 
     return 0;
 
 fail:
-    PyArray_free(tmp_buffer);
+    PyMem_RawFree(tmp_buffer);
     NpyIter_Deallocate(iter);
 
     return -1;

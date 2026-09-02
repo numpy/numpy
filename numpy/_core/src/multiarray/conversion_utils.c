@@ -228,8 +228,11 @@ PyArray_CopyConverter(PyObject *obj, NPY_COPYMODE *copymode) {
 
     int int_copymode;
 
-    if ((PyObject *)Py_TYPE(obj) == _npy_module_state->static_pydata._CopyMode) {
-        PyObject* mode_value = PyObject_GetAttrString(obj, "value");
+    multiarray_umath_state *state = _npy_module_state;
+
+    if ((PyObject *)Py_TYPE(obj) == state->static_pydata._CopyMode) {
+        PyObject* mode_value = PyObject_GetAttr(obj,
+                state->interned_str.value);
         if (mode_value == NULL) {
             return NPY_FAIL;
         }

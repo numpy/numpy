@@ -503,6 +503,13 @@ From other objects
     array but it needs to be of a specific *newtype* (including
     byte-order) or has certain *requirements*.
 
+    If *newtype* is an unsized flexible descriptor, the result takes the
+    itemsize of *op* without inspecting its values. :c:func:`PyArray_FromAny`
+    and :c:func:`PyArray_CastToType` instead adapt an unsized descriptor to the
+    values of *op*, so converting a ``NPY_VSTRING`` or ``NPY_OBJECT`` array to
+    ``NPY_STRING`` or ``NPY_UNICODE`` infers the width of the output by finding
+    the length of the longest input string.
+
 .. c:function:: PyObject* PyArray_FromStructInterface(PyObject* op)
 
     Returns an ndarray object from a Python object that exposes the
@@ -3055,12 +3062,12 @@ an element copier function as a primitive.
         eldoubler_aux_data *d = (eldoubler_aux_data *)data;
         /* Free the memory owned by this auxdata */
         NPY_AUXDATA_FREE(d->funcdata);
-        PyArray_free(d);
+        PyMem_RawFree(d);
     }
 
     NpyAuxData *clone_element_doubler_aux_data(NpyAuxData *data)
     {
-        eldoubler_aux_data *ret = PyArray_malloc(sizeof(eldoubler_aux_data));
+        eldoubler_aux_data *ret = PyMem_RawMalloc(sizeof(eldoubler_aux_data));
         if (ret == NULL) {
             return NULL;
         }
@@ -3071,7 +3078,7 @@ an element copier function as a primitive.
         /* Fix up the owned auxdata so we have our own copy */
         ret->funcdata = NPY_AUXDATA_CLONE(ret->funcdata);
         if (ret->funcdata == NULL) {
-            PyArray_free(ret);
+            PyMem_RawFree(ret);
             return NULL;
         }
 
@@ -3082,7 +3089,7 @@ an element copier function as a primitive.
                                 ElementCopier_Func *func,
                                 NpyAuxData *funcdata)
     {
-        eldoubler_aux_data *ret = PyArray_malloc(sizeof(eldoubler_aux_data));
+        eldoubler_aux_data *ret = PyMem_RawMalloc(sizeof(eldoubler_aux_data));
         if (ret == NULL) {
             PyErr_NoMemory();
             return NULL;
@@ -4488,12 +4495,15 @@ Memory management
 
 .. c:function:: void* PyArray_realloc(npy_intp* ptr, size_t nbytes)
 
-    These macros use different memory allocators, depending on the
-    constant :c:data:`NPY_USE_PYMEM`. The system malloc is used when
-    :c:data:`NPY_USE_PYMEM` is 0, if :c:data:`NPY_USE_PYMEM` is 1, then
-    the Python memory allocator is used.
+    These macros are aliases for ``PyMem_RawMalloc``, ``PyMem_RawFree``, and
+    ``PyMem_RawRealloc``. They exist to maintain backward compatibility for code
+    written against older versions of NumPy's C API. For new code, we recommend
+    using the `CPython Raw Memory Interface
+    <https://docs.python.org/3/c-api/memory.html#raw-memory-interface>`_.
 
-    .. c:macro:: NPY_USE_PYMEM
+.. c:macro:: NPY_USE_PYMEM
+
+   Always defined to be ``1`` and present in the API for backward compatibility.
 
 .. c:function:: int PyArray_ResolveWritebackIfCopy(PyArrayObject* obj)
 

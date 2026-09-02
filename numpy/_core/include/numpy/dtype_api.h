@@ -519,7 +519,7 @@ typedef PyArray_DTypeMeta *(PyArrayDTypeMeta_CommonDType)(
  * Convenience utility for getting a reference to the DType metaclass associated
  * with a dtype instance.
  */
-#define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE(descr))
+#define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE((PyObject *)(descr)))
 
 static inline PyArray_DTypeMeta *
 NPY_DT_NewRef(PyArray_DTypeMeta *o) {

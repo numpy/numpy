@@ -58,6 +58,9 @@ extern "C" {
     F(partition)            \
     F(argpartition)         \
     F(_set_dtype)           \
+    F(conjugate)            \
+    F(astimezone)           \
+    F(value)                \
     F(year)                 \
     F(month)                \
     F(day)                  \

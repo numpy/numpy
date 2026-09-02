@@ -573,7 +573,7 @@ NpyIter_Copy(NpyIter *iter)
                 }
                 else {
                     itemsize = dtypes[iop]->elsize;
-                    buffers[iop] = PyArray_malloc(itemsize*buffersize);
+                    buffers[iop] = PyMem_RawMalloc(itemsize*buffersize);
                     if (buffers[iop] == NULL) {
                         out_of_memory = 1;
                     }
@@ -691,7 +691,7 @@ NpyIter_Deallocate(NpyIter *iter)
         /* buffers */
         buffers = NBF_BUFFERS(bufferdata);
         for (iop = 0; iop < nop; ++iop, ++buffers) {
-            PyArray_free(*buffers);
+            PyMem_RawFree(*buffers);
         }
 
         NpyIter_TransferInfo *transferinfo = NBF_TRANSFERINFO(bufferdata);
@@ -1427,7 +1427,7 @@ npyiter_check_reduce_ok_and_set_flags(
                     "result of a reduction");
             return 0;
         }
-        NPY_IT_DBG_PRINT("Iterator: Indicating that a reduction is"
+        NPY_IT_DBG_PRINT("Iterator: Indicating that a reduction is "
                          "occurring\n");
 
         NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;

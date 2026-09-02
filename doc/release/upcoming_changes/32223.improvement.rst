@@ -1,0 +1,3 @@
+* `numpy.i0` no longer returns ``inf`` for large inputs such as ``np.i0(713.0)``.
+  The function now avoids intermediate overflow and returns the correct finite value.
+* `numpy.i0(np.inf)` no longer triggers a spurious ``RuntimeWarning`` due to divide-by-zero in the implementation and returns `np.inf` rather than `np.nan`.

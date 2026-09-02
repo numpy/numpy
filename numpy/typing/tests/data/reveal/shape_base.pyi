@@ -3,20 +3,24 @@ from typing import Any, Self, assert_type
 import numpy as np
 import numpy.typing as npt
 
+type _Array0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]]
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 type _Array4D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int], np.dtype[ScalarT]]
+type _Array5D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int, int], np.dtype[ScalarT]]
+type _Array6D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int, int, int], np.dtype[ScalarT]]
 
 i8: np.int64
 f8: np.float64
 
 AR_b: npt.NDArray[np.bool]
 AR_i8: npt.NDArray[np.int64]
-AR_i8_0d: np.ndarray[tuple[()], np.dtype[np.int64]]
+AR_i8_0d: _Array0D[np.int64]
 AR_i8_1d: _Array1D[np.int64]
 AR_i8_2d: _Array2D[np.int64]
 AR_i8_3d: _Array3D[np.int64]
+AR_i8_4d: _Array4D[np.int64]
 AR_f8: npt.NDArray[np.float64]
 
 AR_LIKE_f8: list[float]
@@ -40,18 +44,26 @@ assert_type(np.expand_dims(AR_i8, ()), npt.NDArray[np.int64])
 assert_type(np.expand_dims(AR_i8, 0), npt.NDArray[np.int64])
 assert_type(np.expand_dims(AR_i8, (0,)), npt.NDArray[np.int64])
 assert_type(np.expand_dims(AR_i8, (0, 1)), npt.NDArray[np.int64])
-assert_type(np.expand_dims(AR_i8_0d, ()), np.ndarray[tuple[()], np.dtype[np.int64]])
-assert_type(np.expand_dims(AR_i8_0d, 0), np.ndarray[tuple[int], np.dtype[np.int64]])
-assert_type(np.expand_dims(AR_i8_0d, (0,)), np.ndarray[tuple[int], np.dtype[np.int64]])
-assert_type(np.expand_dims(AR_i8_0d, (0, 1)), np.ndarray[tuple[int, int], np.dtype[np.int64]])
-assert_type(np.expand_dims(AR_i8_1d, ()), np.ndarray[tuple[int], np.dtype[np.int64]])
-assert_type(np.expand_dims(AR_i8_1d, 0), np.ndarray[tuple[int, int], np.dtype[np.int64]])
-assert_type(np.expand_dims(AR_i8_1d, (0,)), np.ndarray[tuple[int, int], np.dtype[np.int64]])
-assert_type(np.expand_dims(AR_i8_1d, (0, 1)), np.ndarray[tuple[int, int, int], np.dtype[np.int64]])
-assert_type(np.expand_dims(AR_i8_2d, ()), np.ndarray[tuple[int, int], np.dtype[np.int64]])
-assert_type(np.expand_dims(AR_i8_2d, 0), np.ndarray[tuple[int, int, int], np.dtype[np.int64]])
-assert_type(np.expand_dims(AR_i8_2d, (0,)), np.ndarray[tuple[int, int, int], np.dtype[np.int64]])
-assert_type(np.expand_dims(AR_i8_2d, (0, 1)), np.ndarray[tuple[int, int, int, int], np.dtype[np.int64]])
+assert_type(np.expand_dims(AR_i8_0d, ()), _Array0D[np.int64])
+assert_type(np.expand_dims(AR_i8_0d, 0), _Array1D[np.int64])
+assert_type(np.expand_dims(AR_i8_0d, (0,)), _Array1D[np.int64])
+assert_type(np.expand_dims(AR_i8_0d, (0, 1)), _Array2D[np.int64])
+assert_type(np.expand_dims(AR_i8_1d, ()), _Array1D[np.int64])
+assert_type(np.expand_dims(AR_i8_1d, 0), _Array2D[np.int64])
+assert_type(np.expand_dims(AR_i8_1d, (0,)), _Array2D[np.int64])
+assert_type(np.expand_dims(AR_i8_1d, (0, 1)), _Array3D[np.int64])
+assert_type(np.expand_dims(AR_i8_2d, ()), _Array2D[np.int64])
+assert_type(np.expand_dims(AR_i8_2d, 0), _Array3D[np.int64])
+assert_type(np.expand_dims(AR_i8_2d, (0,)), _Array3D[np.int64])
+assert_type(np.expand_dims(AR_i8_2d, (0, 1)), _Array4D[np.int64])
+assert_type(np.expand_dims(AR_i8_3d, ()), _Array3D[np.int64])
+assert_type(np.expand_dims(AR_i8_3d, 0), _Array4D[np.int64])
+assert_type(np.expand_dims(AR_i8_3d, (0,)), _Array4D[np.int64])
+assert_type(np.expand_dims(AR_i8_3d, (0, 1)), _Array5D[np.int64])
+assert_type(np.expand_dims(AR_i8_4d, ()), _Array4D[np.int64])
+assert_type(np.expand_dims(AR_i8_4d, 0), _Array5D[np.int64])
+assert_type(np.expand_dims(AR_i8_4d, (0,)), _Array5D[np.int64])
+assert_type(np.expand_dims(AR_i8_4d, (0, 1)), _Array6D[np.int64])
 
 assert_type(np.column_stack([AR_i8]), npt.NDArray[np.int64])
 assert_type(np.column_stack([AR_LIKE_f8]), npt.NDArray[Any])

@@ -74,8 +74,7 @@ npy_Object@Kind@(PyObject *i1, PyObject *i2)
     else {
         result = i2;
     }
-    Py_INCREF(result);
-    return result;
+    return Py_NewRef(result);
 }
 /**end repeat**/
 
@@ -84,12 +83,10 @@ static PyObject *
 npy_ObjectLogicalOr(PyObject *i1, PyObject *i2)
 {
     if (i1 == NULL) {
-        Py_XINCREF(i2);
-        return i2;
+        return Py_XNewRef(i2);
     }
     else if (i2 == NULL) {
-        Py_INCREF(i1);
-        return i1;
+        return Py_NewRef(i1);
     }
     else {
         int retcode = PyObject_IsTrue(i1);
@@ -97,12 +94,10 @@ npy_ObjectLogicalOr(PyObject *i1, PyObject *i2)
             return NULL;
         }
         else if (retcode) {
-            Py_INCREF(i1);
-            return i1;
+            return Py_NewRef(i1);
         }
         else {
-            Py_INCREF(i2);
-            return i2;
+            return Py_NewRef(i2);
         }
     }
 }
@@ -123,12 +118,10 @@ npy_ObjectLogicalAnd(PyObject *i1, PyObject *i2)
             return NULL;
         }
         else if (!retcode) {
-            Py_INCREF(i1);
-            return i1;
+            return Py_NewRef(i1);
         }
         else {
-            Py_INCREF(i2);
-            return i2;
+            return Py_NewRef(i2);
         }
     }
 }
@@ -157,20 +150,20 @@ npy_ObjectLogicalNot(PyObject *i1)
 
 static PyObject *
 npy_ObjectFloor(PyObject *obj) {
-    return PyObject_CallFunction(_npy_module_state->static_pydata.math_floor_func,
-                                 "O", obj);
+    return PyObject_CallOneArg(
+            _npy_module_state->static_pydata.math_floor_func, obj);
 }
 
 static PyObject *
 npy_ObjectCeil(PyObject *obj) {
-    return PyObject_CallFunction(_npy_module_state->static_pydata.math_ceil_func,
-                                 "O", obj);
+    return PyObject_CallOneArg(
+            _npy_module_state->static_pydata.math_ceil_func, obj);
 }
 
 static PyObject *
 npy_ObjectTrunc(PyObject *obj) {
-    return PyObject_CallFunction(_npy_module_state->static_pydata.math_trunc_func,
-                                 "O", obj);
+    return PyObject_CallOneArg(
+            _npy_module_state->static_pydata.math_trunc_func, obj);
 }
 
 static PyObject *
@@ -178,11 +171,12 @@ npy_ObjectGCD(PyObject *i1, PyObject *i2)
 {
     multiarray_umath_state *state = _npy_module_state;
     PyObject *gcd = NULL;
+    PyObject *args[2] = {i1, i2};
 
     /* use math.gcd if valid on the provided types */
     {
-        gcd = PyObject_CallFunction(state->static_pydata.math_gcd_func,
-                                    "OO", i1, i2);
+        gcd = PyObject_Vectorcall(state->static_pydata.math_gcd_func,
+                                  args, 2, NULL);
         if (gcd != NULL) {
             return gcd;
         }
@@ -197,8 +191,8 @@ npy_ObjectGCD(PyObject *i1, PyObject *i2)
                 &state->runtime_imports.internal_gcd_func) == -1) {
             return NULL;
         }
-        gcd = PyObject_CallFunction(state->runtime_imports.internal_gcd_func,
-                                    "OO", i1, i2);
+        gcd = PyObject_Vectorcall(state->runtime_imports.internal_gcd_func,
+                                  args, 2, NULL);
         if (gcd == NULL) {
             return NULL;
         }

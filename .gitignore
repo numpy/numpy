@@ -66,6 +66,7 @@ doc/cdoc/build
 pip-wheel-metadata
 .python-version
 # virtual envs
+.venv/
 numpy-dev/
 venv/
 # cibuildwheel output directory

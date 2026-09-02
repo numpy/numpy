@@ -122,7 +122,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     if (i) {
         offset[1] += (sizeof(void *)-i);
     }
-    ptr = PyArray_malloc(offset[0] + offset[1] + sizeof(void *) +
+    ptr = PyMem_RawMalloc(offset[0] + offset[1] + sizeof(void *) +
                             (fname_len + 14));
     if (ptr == NULL) {
         Py_XDECREF(pyname);
@@ -153,7 +153,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
             str, doc, /* unused */ 0, NULL, identity);
 
     if (self == NULL) {
-        PyArray_free(ptr);
+        PyMem_RawFree(ptr);
         return NULL;
     }
     Py_INCREF(function);

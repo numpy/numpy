@@ -24,7 +24,7 @@
 /*
  * Internal helper to create new instances
  */
-PyObject *
+NPY_NO_EXPORT PyObject *
 new_stringdtype_instance(PyObject *na_object, int coerce)
 {
     PyObject *new =
@@ -34,8 +34,8 @@ new_stringdtype_instance(PyObject *na_object, int coerce)
         return NULL;
     }
 
-    char *default_string_buf = NULL;
-    char *na_name_buf = NULL;
+    npy_static_string default_string = {0, NULL};
+    npy_static_string na_name = {0, NULL};
 
     npy_string_allocator *allocator = NpyString_new_allocator(PyMem_RawMalloc, PyMem_RawFree,
                                                               PyMem_RawRealloc);
@@ -44,9 +44,6 @@ new_stringdtype_instance(PyObject *na_object, int coerce)
                         "Failed to create string allocator");
         goto fail;
     }
-
-    npy_static_string default_string = {0, NULL};
-    npy_static_string na_name = {0, NULL};
 
     Py_XINCREF(na_object);
     ((PyArray_StringDTypeObject *)new)->na_object = na_object;
@@ -133,14 +130,11 @@ new_stringdtype_instance(PyObject *na_object, int coerce)
     return new;
 
 fail:
-    // this only makes sense if the allocator isn't attached to new yet
+    // the buffers and the allocator are only attached to new on success, so
+    // dealloc does not double-free them
     Py_DECREF(new);
-    if (default_string_buf != NULL) {
-        PyMem_RawFree(default_string_buf);
-    }
-    if (na_name_buf != NULL) {
-        PyMem_RawFree(na_name_buf);
-    }
+    PyMem_RawFree((char *)default_string.buf);
+    PyMem_RawFree((char *)na_name.buf);
     if (allocator != NULL) {
         NpyString_free_allocator(allocator);
     }
@@ -179,7 +173,7 @@ na_eq_cmp(PyObject *a, PyObject *b) {
 }
 
 // sets the logical rules for determining equality between dtype instances
-int
+static int
 _eq_comparison(int scoerce, int ocoerce, PyObject *sna, PyObject *ona)
 {
     if (scoerce != ocoerce) {
@@ -375,7 +369,7 @@ string_discover_descriptor_from_pyobject(PyTypeObject *NPY_UNUSED(cls),
 
 // Take a python object `obj` and insert it into the array of dtype `descr` at
 // the position given by dataptr.
-int
+NPY_NO_EXPORT int
 stringdtype_setitem(PyArray_StringDTypeObject *descr, PyObject *obj, char **dataptr)
 {
     npy_packed_static_string *sdata = (npy_packed_static_string *)dataptr;
@@ -388,6 +382,13 @@ stringdtype_setitem(PyArray_StringDTypeObject *descr, PyObject *obj, char **data
     int na_cmp = na_eq_cmp(obj, na_object);
     if (na_cmp == -1) {
         return -1;
+    }
+
+    if (!na_cmp && descr->has_nan_na) {
+        na_cmp = pyobj_is_nan_na(obj);
+        if (na_cmp < 0) {
+            return -1;
+        }
     }
 
     if (na_object != NULL && na_cmp) {
@@ -475,32 +476,33 @@ fail:
     return NULL;
 }
 
+NPY_NO_EXPORT npy_bool
+stringdtype_null_is_truthy(const PyArray_StringDTypeObject *descr)
+{
+    // nulls cannot be stored in an array without an na object
+    assert(descr->na_object != NULL);
+    if (descr->has_string_na) {
+        return (npy_bool)(descr->default_string.size != 0);
+    }
+    // numpy treats NaN as truthy, following python
+    return (npy_bool)descr->has_nan_na;
+}
+
 // PyArray_NonzeroFunc
 // Unicode strings are nonzero if their length is nonzero.
-npy_bool
+static npy_bool
 nonzero(void *data, void *arr)
 {
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(arr);
-    int has_null = descr->na_object != NULL;
-    int has_nan_na = descr->has_nan_na;
-    int has_string_na = descr->has_string_na;
-    if (has_null && NpyString_isnull((npy_packed_static_string *)data)) {
-        if (!has_string_na) {
-            if (has_nan_na) {
-                // numpy treats NaN as truthy, following python
-                return 1;
-            }
-            else {
-                return 0;
-            }
-        }
+    if (NpyString_isnull((npy_packed_static_string *)data)) {
+        return stringdtype_null_is_truthy(descr);
     }
     return NpyString_size((npy_packed_static_string *)data) != 0;
 }
 
 // Implementation of PyArray_CompareFunc.
 // Compares unicode strings by their code points.
-int
+static int
 compare(void *a, void *b, void *arr)
 {
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(arr);
@@ -571,7 +573,7 @@ _compare_impl(void *a, void *b, PyArray_StringDTypeObject *descr_a,
 }
 
 // We assume the allocator mutex is already held.
-int
+NPY_NO_EXPORT int
 _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
          PyArray_StringDTypeObject *descr_b)
 {
@@ -587,7 +589,7 @@ stringdtype_binsearch_compare(const void *a, const void *b,
                     (PyArray_StringDTypeObject *)PyArray_DESCR(arr_b));
 }
 
-int
+NPY_NO_EXPORT int
 _sort_compare(const void *a, const void *b, void *context)
 {
     PyArrayMethod_Context *sort_context = (PyArrayMethod_Context *)context;
@@ -597,7 +599,7 @@ _sort_compare(const void *a, const void *b, void *context)
     return _compare_impl((void *)a, (void *)b, sdescr, sdescr, 0);
 }
 
-int
+static int
 _sort_compare_descending(const void *a, const void *b, void *context)
 {
     PyArrayMethod_Context *sort_context = (PyArrayMethod_Context *)context;
@@ -616,7 +618,7 @@ static PyArray_CompareFunc *stringdtype_sort_compares[2] = {
 
 // PyArray_ArgFunc
 // The max element is the one with the highest unicode code point.
-int
+static int
 argmax(char *data, npy_intp n, npy_intp *max_ind, void *arr)
 {
     PyArray_Descr *descr = PyArray_DESCR(arr);
@@ -632,7 +634,7 @@ argmax(char *data, npy_intp n, npy_intp *max_ind, void *arr)
 
 // PyArray_ArgFunc
 // The min element is the one with the lowest unicode code point.
-int
+static int
 argmin(char *data, npy_intp n, npy_intp *min_ind, void *arr)
 {
     PyArray_Descr *descr = PyArray_DESCR(arr);
@@ -732,7 +734,7 @@ stringdtype_is_known_scalar_type(PyArray_DTypeMeta *cls,
     return 0;
 }
 
-PyArray_Descr *
+NPY_NO_EXPORT PyArray_Descr *
 stringdtype_finalize_descr(PyArray_Descr *dtype)
 {
     PyArray_StringDTypeObject *sdtype = (PyArray_StringDTypeObject *)dtype;
@@ -1151,7 +1153,7 @@ init_string_dtype(void)
     return 0;
 }
 
-int
+NPY_NO_EXPORT int
 free_and_copy(npy_string_allocator *in_allocator,
               npy_string_allocator *out_allocator,
               const npy_packed_static_string *in,

@@ -13,6 +13,7 @@ import pytest
 import numpy as np
 from numpy._core.tests._natype import pd_NA
 from numpy.dtypes import StringDType
+from numpy.exceptions import ComplexWarning
 from numpy.testing import assert_array_equal
 
 
@@ -45,6 +46,15 @@ def coerce(request):
 )
 def na_object(request):
     """Possible values for the missing data sentinel"""
+    return request.param
+
+
+@pytest.fixture(
+    params=[np.nan, float("nan"), pd_NA],
+    ids=["np.nan", "float('nan')", "pandas.NA"],
+)
+def nan_like_na_object(request):
+    """The subset of ``na_object`` sentinels that are NaN-like (has_nan_na)"""
     return request.param
 
 
@@ -199,6 +209,15 @@ def test_create_with_failing_na_comparison():
     # na object classification, which fails
     with pytest.raises(RuntimeError, match="boom"):
         np.array(["y"], dtype=dt)
+
+
+def test_create_with_failing_na_str():
+    class BadStr(str):
+        def __str__(self):
+            raise RuntimeError("boom")
+
+    with pytest.raises(RuntimeError, match="boom"):
+        StringDType(na_object=BadStr("na"))
 
 
 @pytest.mark.parametrize("i", list(range(5)))
@@ -506,6 +525,291 @@ class TestStringLikeCasts:
         except UnicodeEncodeError:
             with pytest.raises(UnicodeEncodeError):
                 sarr.astype("S20")
+
+
+# malformed UTF-8, one sequence per distinct failure class; every bytes-like
+# -> StringDType ingress must reject these (gh-32287, gh-32288)
+INVALID_UTF8 = [
+    b"\x80AAAA",  # gh-32287: continuation byte as lead (0-length)
+    b"\xF8AAAA",  # 0xF8-0xFF lead (0-length)
+    b"\xFC\x80",  # 5-/6-byte lead, disallowed since RFC 3629
+    b"A" * 15 + b"\xF0",  # gh-32288: truncated 4-byte lead at the buffer end
+    b"A\xC3",  # truncated 2-byte lead
+    b"A\xE2\x82",  # truncated 3-byte lead
+    b"\xE2\x28\xA1",  # non-continuation byte inside a 3-byte sequence
+    b"\xC0\xAF",  # overlong 2-byte encoding of '/'
+    b"\xE0\x80\xAF",  # overlong 3-byte encoding of '/'
+    b"\xF0\x80\x80\xAF",  # overlong 4-byte encoding of '/'
+    b"\xED\xA0\x80",  # UTF-16 surrogate
+    b"\xF4\x90\x80\x80",  # code point above U+10FFFF
+    b"\xF5\x80\x80\x80",  # 0xF5-0xF7 lead, always above U+10FFFF
+]
+
+
+@pytest.mark.parametrize("bad", INVALID_UTF8)
+def test_bytes_cast_rejects_invalid_utf8(bad):
+    arr = np.array([bad], dtype=f"S{len(bad)}")
+    with pytest.raises(UnicodeDecodeError):
+        arr.astype(StringDType())
+
+
+@pytest.mark.parametrize("bad", INVALID_UTF8)
+def test_void_cast_rejects_invalid_utf8(bad):
+    # the void ('V') -> StringDType cast validates the same way as bytes
+    arr = np.array([bad], dtype=f"V{len(bad)}")
+    with pytest.raises(UnicodeDecodeError):
+        arr.astype(StringDType())
+
+
+def test_bytes_cast_roundtrips_valid_utf8():
+    # boundary code points adjacent to the reject cases above: largest 2-byte,
+    # U+D7FF below the surrogates, max code point
+    strings = ["héllo", "naïve", "😀 e", "über\x00embedded",
+               "߿퟿", "\U0010FFFF"]
+    barr = np.array([s.encode() for s in strings], dtype="S16")
+    sarr = barr.astype(StringDType())
+    assert list(sarr) == strings
+    assert list(sarr.astype("U16")) == strings
+
+
+def test_slice_extreme_step_no_overflow():
+    # an extreme step must not overflow the slice index and read out of bounds
+    arr = np.array(["abcd"], dtype=StringDType())
+    imax = np.iinfo(np.intp).max
+    assert np.strings.slice(arr, 1, None, imax).tolist() == ["b"]
+    assert np.strings.slice(arr, None, None, imax).tolist() == ["a"]
+    assert np.strings.slice(arr, None, None, -imax).tolist() == ["d"]
+    assert np.strings.slice(arr, 2, None, -imax).tolist() == ["c"]
+    mb = np.array(["a😀cd"], dtype=StringDType())
+    assert np.strings.slice(mb, 1, None, imax).tolist() == ["😀"]
+    imin = np.iinfo(np.intp).min
+    assert np.strings.slice(arr, None, None, imin).tolist() == ["d"]
+    assert np.strings.slice(mb, None, None, imin).tolist() == ["d"]
+
+
+def test_pad_extreme_width_overflow():
+    # width near the npy_intp max must raise OverflowError, not wrap the output
+    # size past the check (which surfaced as a MemoryError)
+    arr = np.array(["😀"], dtype=StringDType())
+    imax = np.iinfo(np.intp).max
+    for pad in (np.strings.ljust, np.strings.rjust, np.strings.center,
+                np.strings.zfill):
+        with pytest.raises(OverflowError):
+            pad(arr, imax)
+
+
+def test_pad_out_aliases_fill():
+    from numpy._core.umath import _center, _ljust, _rjust
+    dt = StringDType()
+    for pad, expected in [(_center, "***abc***"), (_ljust, "abc******"),
+                          (_rjust, "******abc")]:
+        a = np.array(["abc"], dtype=dt)
+        fill = np.array(["*"], dtype=dt)
+        assert pad(a, 9, fill, out=fill).tolist() == [expected]
+    # a fill longer than 15 bytes is stored in the arena, not the packed struct
+    a = np.array(["abc"], dtype=dt)
+    fill = np.array(["*" * 300], dtype=dt)
+    assert _center(a, 9, fill, out=fill).tolist() == ["***abc***"]
+
+
+def test_zfill_no_padding_no_oob():
+    # no padding is added for an empty input or a width <= the input length
+    dt = StringDType()
+    assert np.strings.zfill(np.array([""], dtype=dt), 20).tolist() == ["0" * 20]
+    assert np.strings.zfill(np.array([""], dtype=dt), 0).tolist() == [""]
+    assert np.strings.zfill(np.array(["42"], dtype=dt), 1).tolist() == ["42"]
+    assert np.strings.zfill(np.array(["-7"], dtype=dt), 5).tolist() == ["-0007"]
+    # the in-place path writes into a heap buffer the sanitizer can bounds-check
+    from numpy._core.umath import _zfill
+    a = np.array([""], dtype=dt)
+    assert _zfill(a, 20, out=a).tolist() == ["0" * 20]
+
+
+UNSIZED_SPELLINGS = {
+    "S": ["S", "S0", np.dtype("S"), np.dtypes.BytesDType, np.bytes_],
+    "U": ["U", "U0", np.dtype("U"), np.dtypes.StrDType, np.str_],
+    "V": ["V", "V0", np.dtype("V"), np.dtypes.VoidDType, np.void],
+}
+
+
+def encode_nested(strings):
+    if isinstance(strings, str):
+        return strings.encode()
+    return [encode_nested(s) for s in strings]
+
+
+def fixed_width_array(strings, dtype):
+    # void dtypes only accept bytes
+    if np.dtype(dtype).kind == "V":
+        strings = encode_nested(strings)
+    return np.array(strings, dtype=dtype)
+
+
+CONVERSION_PATHS = [
+    pytest.param(lambda arr, req: arr.astype(req), id="astype"),
+    pytest.param(lambda arr, req: np.array(arr, dtype=req), id="np.array"),
+    pytest.param(lambda arr, req: np.asarray(arr, dtype=req),
+                 id="np.asarray"),
+    # exercises PyArray_CastToType
+    pytest.param(lambda arr, req: arr.__array__(dtype=np.dtype(req),
+                                                copy=True), id="__array__"),
+]
+
+
+class TestUnsizedFixedWidthCasts:
+    """Converting to an unsized "S", "U" or "V" dtype infers the width by
+    inspecting the values in the array being converted."""
+
+    @pytest.mark.parametrize("kind", ["S", "U", "V"])
+    def test_unsized_spellings(self, kind):
+        arr = np.array(["this", "is", "an", "array"], dtype="T")
+        expected = fixed_width_array(["this", "is", "an", "array"], f"{kind}5")
+        for spelling in UNSIZED_SPELLINGS[kind]:
+            assert_array_equal(arr.astype(spelling), expected, strict=True)
+
+    @pytest.mark.parametrize("convert", CONVERSION_PATHS)
+    @pytest.mark.parametrize("kind", ["S", "U", "V"])
+    @pytest.mark.parametrize(
+        "strings,width",
+        [
+            (["this", "is", "an", "array"], 5),
+            (["a" * 100, "", "b"], 100),
+            # embedded and trailing NULs count as data
+            (["x\0", "y\0\0z", ""], 4),
+            # empty arrays and all-empty entries produce width 1
+            ([], 1),
+            (["", "", ""], 1),
+        ],
+    )
+    def test_conversion_paths_infer_width(self, convert, kind, strings,
+                                          width):
+        arr = np.array(strings, dtype="T")
+        res = convert(arr, kind)
+        assert res.dtype == np.dtype(f"{kind}{width}")
+        assert_array_equal(res, fixed_width_array(strings, f"{kind}{width}"))
+
+    @pytest.mark.parametrize("kind", ["S", "U", "V"])
+    def test_zero_dimensional(self, kind):
+        res = np.array("abcd", dtype="T").astype(kind)
+        assert res.dtype == np.dtype(f"{kind}4")
+        assert res == fixed_width_array("abcd", f"{kind}4")
+
+    @pytest.mark.parametrize("kind", ["S", "U", "V"])
+    def test_strided_and_multidimensional(self, kind):
+        arr = np.array(
+            ["a long string entry", "ab", "c", "d"], dtype="T")
+        # only the short entries participate in a strided view
+        assert arr[1::2].astype(kind).dtype == np.dtype(f"{kind}2")
+        assert arr[::-1].astype(kind).dtype == np.dtype(f"{kind}19")
+        arr_2d = np.array([["a", "bb"], ["ccc", "dddd"]], dtype="T")
+        res = arr_2d.astype(kind)
+        assert res.dtype == np.dtype(f"{kind}4")
+        assert_array_equal(
+            res, fixed_width_array([["a", "bb"], ["ccc", "dddd"]], f"{kind}4"))
+
+    def test_multibyte_unicode_widths(self):
+        # "U" widths count code points, "S" and "V" widths count UTF-8 bytes
+        arr = np.array(["a😊b", "é"], dtype="T")
+        res = arr.astype("U")
+        assert_array_equal(res, np.array(["a😊b", "é"], dtype="U3"), strict=True)
+        res = arr.astype("V")
+        assert_array_equal(res, fixed_width_array(["a😊b", "é"], "V6"), strict=True)
+        # the "S" cast rejects non-ASCII entries
+        with pytest.raises(UnicodeEncodeError):
+            arr.astype("S")
+
+    def test_multiple_arrays_promote_to_widest(self):
+        arr1 = np.array(["abc"], dtype="T")
+        arr2 = np.array(["longer!"], dtype="T")
+        assert np.array([arr1, arr2], dtype="S").dtype == np.dtype("S7")
+
+    @pytest.mark.parametrize("kind", ["S", "U", "V"])
+    def test_descriptor_only_resolution_still_fails(self, kind):
+        # functions that adapt descriptors without inspecting array values
+        # cannot infer a width
+        arr = np.array(["abc"], dtype="T")
+        with pytest.raises(TypeError,
+                           match="cannot cast dtype StringDType"):
+            np.concatenate([arr, arr], dtype=kind)
+
+    def test_explicit_width_still_truncates(self):
+        arr = np.array(["abcdef"], dtype="T")
+        assert_array_equal(arr.astype("S3"), np.array([b"abc"], dtype="S3"))
+        assert_array_equal(arr.astype("U3"), np.array(["abc"], dtype="U3"))
+        assert_array_equal(arr.astype("V3"), np.array([b"abc"], dtype="V3"))
+
+
+class TestUnsizedCastMissingValues:
+    def test_nan_na(self):
+        dt = StringDType(na_object=np.nan)
+        arr = np.array(["abcde", np.nan], dtype=dt)
+        res = arr.astype("U")
+        assert_array_equal(res, np.array(["abcde", "nan"], dtype="U5"), strict=True)
+        res = arr.astype("V")
+        assert_array_equal(res, np.array([b"abcde", b"nan"], dtype="V5"), strict=True)
+        all_null = np.array([np.nan, np.nan], dtype=dt)
+        res = all_null.astype("U")
+        assert_array_equal(res, np.array(["nan", "nan"], dtype="U3"), strict=True)
+
+    def test_non_ascii_string_na(self):
+        # a missing entry counts with the width of the sentinel, in code
+        # points for "U" and UTF-8 bytes for "V", and raises for the
+        # ASCII-only "S" cast
+        dt = StringDType(na_object="😊😊")
+        arr = np.array(["ab", None], dtype=StringDType(na_object=None)).astype(dt)
+        assert arr[1] is dt.na_object
+        res = arr.astype("U")
+        assert_array_equal(res, np.array(["ab", "😊😊"], dtype="U2"), strict=True)
+        res = arr.astype("V")
+        assert_array_equal(res, fixed_width_array(["ab", "😊😊"], "V8"), strict=True)
+        with pytest.raises(UnicodeEncodeError):
+            arr.astype("S")
+
+
+class TestStringDTypeNditer:
+    def test_infer_width_for_existing_operand(self):
+        arr = np.array(["abc", "defgh"], dtype="T")
+        for kind, expected in [("S", "S5"), ("U", "U5"), ("V", "V5")]:
+            with np.nditer(
+                arr,
+                op_dtypes=[np.dtype(kind)],
+                flags=["buffered", "refs_ok"],
+                casting="unsafe" if kind == "V" else "same_kind",
+            ) as it:
+                assert it.dtypes[0] == np.dtype(expected)
+                assert [x[()] for x in it] == list(
+                    fixed_width_array(["abc", "defgh"], expected))
+
+    def test_readwrite_stringdtype_operand_fixed_width_buffers(self):
+        # reads convert to the inferred fixed-width dtype and writing
+        # back into the StringDType array round-trips the values
+        arr = np.array(["abc", "defgh"], dtype="T")
+        with np.nditer(
+            arr,
+            op_dtypes=[np.dtype("U")],
+            op_flags=[["readwrite"]],
+            flags=["buffered", "refs_ok"],
+            casting="same_kind",
+        ) as it:
+            assert it.dtypes[0] == np.dtype("U5")
+            for x in it:
+                x[...] = str(x[()]).upper()
+        assert_array_equal(
+            arr, np.array(["ABC", "DEFGH"], dtype="T"))
+
+    @pytest.mark.parametrize("kind,expected", [("S", "S1"), ("U", "U1")])
+    def test_allocated_output_stays_unsized_legacy(self, kind, expected):
+        # allocated outputs have no values to inspect, so an unsized
+        # request keeps the legacy one-character width
+        arr = np.array(["abc", "defgh"], dtype="T")
+        it = np.nditer(
+            [arr, None],
+            op_dtypes=[arr.dtype, np.dtype(kind)],
+            op_flags=[["readonly"], ["writeonly", "allocate"]],
+            flags=["buffered", "refs_ok"],
+            casting="unsafe",
+        )
+        assert it.operands[1].dtype == np.dtype(expected)
 
 
 def test_additional_unicode_cast(dtype):
@@ -820,8 +1124,10 @@ def test_nonzero(strings, na_object):
 
     strings_with_na = np.array(strings + [na_object], dtype=dtype)
     is_nan = np.isnan(np.array([dtype.na_object], dtype=dtype))[0]
+    # a string sentinel null is truthy exactly when the sentinel is
+    is_truthy = is_nan or (isinstance(na_object, str) and na_object != "")
 
-    if is_nan:
+    if is_truthy:
         assert strings_with_na.nonzero()[0][-1] == 4
     else:
         assert strings_with_na.nonzero()[0][-1] == 3
@@ -1264,13 +1570,239 @@ def test_string_to_bytes_invalid_ascii_error():
     )
 
 
+@pytest.mark.parametrize("typename", ["float16", "float32", "float64",
+                                      "longdouble"])
+def test_float_to_string_nan_na_consistent(typename, nan_like_na_object):
+    dt = StringDType(na_object=nan_like_na_object)
+    arr = np.array([1.5, np.nan, -2.0], dtype=typename).astype(dt)
+    assert arr[0] == "1.5"
+    assert arr[2] == "-2.0"
+    assert arr[1] is nan_like_na_object
+
+
+@pytest.mark.parametrize("typename", ["complex64", "complex128", "clongdouble"])
+def test_cfloat_to_string_nan_na(typename, nan_like_na_object):
+    # a complex value with any NaN component is missing (np.isnan semantics)
+    dt = StringDType(na_object=nan_like_na_object)
+
+    for val in (complex(np.nan, 0.0), complex(np.nan, 2.0),
+                complex(0.0, np.nan), complex(2.0, np.nan),
+                complex(np.nan, np.nan)):
+        arr = np.array([val], dtype=typename).astype(dt)
+        assert arr[0] is nan_like_na_object
+
+    # no NaN component (even inf): stringified
+    arr = np.array([1.5 + 2j, complex(np.inf, 1)], dtype=typename).astype(dt)
+    assert arr[0] == "(1.5+2j)"
+    assert arr[1] == "(inf+1j)"
+
+
+def test_cfloat_to_string_nan_na_strided_field_view(nan_like_na_object):
+    # the field view's byte stride is aligned but not a multiple of the
+    # itemsize; the NaN check and the value read must step in bytes
+    rec = np.zeros(3, dtype=[("c", "c16"), ("pad", "f8")])
+    rec["c"] = [1 + 2j, complex(np.nan, 4.0), 5 + 6j]
+    dt = StringDType(na_object=nan_like_na_object)
+    res = rec["c"].astype(dt)
+    assert res[0] == "(1+2j)"
+    assert res[1] is nan_like_na_object
+    assert res[2] == "(5+6j)"
+
+
+@pytest.mark.parametrize("typename", ["float16", "float32", "float64",
+                                      "complex64", "complex128"])
+def test_float_to_string_nan_na_non_native_byteorder(typename,
+                                                     nan_like_na_object):
+    dt = StringDType(na_object=nan_like_na_object)
+    arr = np.array([1.5, np.nan, -2.0], dtype=typename)
+    expected = arr.astype(dt)
+    res = arr.astype(arr.dtype.newbyteorder("S")).astype(dt)
+    assert res[0] == expected[0]
+    assert res[1] is nan_like_na_object
+    assert res[2] == expected[2]
+
+    # the bytes of a native NaN are a finite subnormal in the other byte
+    # order, so they must not be mistaken for a NaN
+    finite = arr[1:2].view(arr.dtype.newbyteorder("S"))
+    assert not np.isnan(finite[0])
+    res = finite.astype(dt)
+    assert isinstance(res[0], str)
+    assert res[0] == str(finite[0])
+
+
+NON_NATIVE_BYTEORDER_CASES = [
+    ("i4", [1, -2, 300]),
+    ("u2", [1, 2, 300]),
+    ("f2", [1.5, -2.0]),
+    ("f8", [1.5, -2.0]),
+    ("c16", [1.5 + 2j]),
+    ("M8[s]", ["2020-01-01", "NaT"]),
+    ("m8[s]", [5, "NaT"]),
+    ("U3", ["abc", "d"]),
+]
+
+
+@pytest.mark.parametrize("dtype, values", NON_NATIVE_BYTEORDER_CASES)
+def test_non_native_byteorder_to_string(dtype, values):
+    native = np.array(values, dtype=dtype)
+    swapped = native.astype(native.dtype.newbyteorder("S"))
+    assert_array_equal(swapped.astype(StringDType()),
+                       native.astype(StringDType()))
+
+
+@pytest.mark.parametrize("dtype, values", NON_NATIVE_BYTEORDER_CASES)
+def test_string_to_non_native_byteorder(dtype, values):
+    native = np.array(values, dtype=dtype)
+    swapped_dtype = native.dtype.newbyteorder("S")
+    res = native.astype(StringDType()).astype(swapped_dtype)
+    assert res.dtype == swapped_dtype
+    assert_array_equal(res, native)
+
+
+@pytest.mark.parametrize("typename", ["float16", "float32", "float64",
+                                      "longdouble"])
+def test_setitem_nan_na_matches_float_cast(typename, nan_like_na_object):
+    dt = StringDType(na_object=nan_like_na_object)
+    nan_scalar = np.dtype(typename).type("nan")
+
+    arr = np.empty(4, dtype=dt)
+    arr[0] = nan_scalar
+    arr[1] = float("nan")
+    arr[2] = np.nan
+    arr[3] = np.dtype(typename).type("1.5")
+    assert arr[0] is nan_like_na_object
+    assert arr[1] is nan_like_na_object
+    assert arr[2] is nan_like_na_object
+    assert arr[3] == "1.5"
+
+    cast = np.array([nan_scalar, float("nan"), np.nan, 1.5], dtype=typename).astype(dt)
+    assert cast[0] is nan_like_na_object
+    assert cast[1] is nan_like_na_object
+    assert cast[2] is nan_like_na_object
+    assert cast[3] == arr[3]
+
+
+@pytest.mark.parametrize("typename", ["complex64", "complex128", "clongdouble"])
+def test_setitem_cfloat_nan(typename, nan_like_na_object):
+    # setitem agrees with the cast, for numpy scalars and Python complex
+    dt = StringDType(na_object=nan_like_na_object)
+    arr = np.empty(1, dtype=dt)
+
+    for val in (complex(np.nan, 0.0), complex(np.nan, 2.0),
+                complex(0.0, np.nan), complex(2.0, np.nan),
+                complex(np.nan, np.nan)):
+        arr[0] = np.dtype(typename).type(val)
+        assert arr[0] is nan_like_na_object
+        arr[0] = val
+        assert arr[0] is nan_like_na_object
+
+    arr[0] = np.dtype(typename).type(1.5 + 2j)
+    assert arr[0] == "(1.5+2j)"
+
+
+@pytest.mark.parametrize("dt", [StringDType(), StringDType(na_object="missing")],
+                         ids=["no-na", "string-na"])
+def test_nan_is_not_missing_without_nan_like_na(dt):
+    arr = np.array([np.nan, 1.5], dtype="float32").astype(dt)
+    assert arr[0] == "nan"
+    assert arr[1] == "1.5"
+    arr = np.array([complex(np.nan, 2.0), complex(0.0, np.nan)],
+                   dtype="complex128").astype(dt)
+    assert arr[0] == "(nan+2j)"
+    assert arr[1] == "nanj"
+    arr = np.empty(2, dtype=dt)
+    arr[0] = np.float32("nan")
+    arr[1] = np.complex128(complex(np.nan, 2.0))
+    assert arr[0] == "nan"
+    assert arr[1] == "(nan+2j)"
+
+
+@pytest.mark.parametrize("typename", ["float16", "float32", "float64",
+                                      "longdouble", "complex64", "complex128",
+                                      "clongdouble"])
+def test_string_na_to_numeric_is_nan(typename, nan_like_na_object):
+    dt = StringDType(na_object=nan_like_na_object)
+    out = np.array(["1.5", nan_like_na_object], dtype=dt).astype(typename)
+    assert out[0] == np.dtype(typename).type("1.5")
+    assert np.isnan(out[1])
+
+
+@pytest.mark.parametrize(
+    "order",
+    # complex -> string -> float can't round-trip (a complex stringifies to
+    # "(1.5+0j)", not a valid float literal), so those orderings are omitted
+    [o for o in itertools.permutations(["complex128", "float64", "string"])
+     if ("complex128", "string") not in zip(o, o[1:])],
+    ids="->".join)
+def test_roundtrip_float_through_complex_and_string(order, nan_like_na_object):
+    # bracketing the trip with float64 normalizes the string form of a complex
+    # value ("(1.5+0j)" vs "1.5") so the values come back unchanged
+    dt = StringDType(na_object=nan_like_na_object)
+    specs = {"complex128": "complex128", "float64": "float64", "string": dt}
+    original = np.array([1.5, np.nan, -2.0, 0.0], dtype="float64")
+
+    arr = original
+    # each order does complex -> real exactly once, which warns
+    with pytest.warns(ComplexWarning):
+        for name in (*order, "float64"):
+            arr = arr.astype(specs[name])
+    assert_array_equal(arr, original)
+
+
 def test_void_to_string_invalid_utf8_error():
-    # invalid UTF-8 in a void buffer used to surface as a confusing
-    # MemoryError because the error return of utf8_buffer_size was
-    # stored in an unsigned variable
     varr = np.array([b"\xff\xff\xff\xff"], dtype="V4")
-    with pytest.raises(TypeError, match="Invalid UTF-8"):
-        varr.astype(StringDType())
+    with pytest.raises(UnicodeDecodeError) as excinfo:
+        varr.astype("T")
+    exc = excinfo.value
+    assert exc.encoding == "utf-8"
+    assert exc.object == b"\xff\xff\xff\xff"
+    assert exc.start == 0
+
+
+class TestFixedWidthCastSafety:
+    def test_fixed_width_to_stringdtype_is_safe(self):
+        for source in ["S10", "U10"]:
+            assert np.can_cast(source, "T", casting="safe")
+            assert np.can_cast(source, "T", casting="same_kind")
+            assert not np.can_cast(source, "T", casting="no")
+            assert not np.can_cast(source, "T", casting="equiv")
+
+    def test_stringdtype_to_fixed_width_is_same_kind(self):
+        for target in ["S5", "U5", "S", "U"]:
+            assert not np.can_cast("T", target, casting="safe")
+            assert np.can_cast("T", target, casting="same_kind")
+            assert np.can_cast("T", target, casting="unsafe")
+
+    def test_unicode_surrogate_runtime_error(self):
+        arr = np.array(["\ud800"], dtype="U1")
+        assert np.can_cast(arr.dtype, "T", casting="safe")
+        with pytest.raises(TypeError, match="Invalid unicode code point"):
+            arr.astype("T")
+
+    def test_bytes_to_stringdtype_valid_utf8(self):
+        barr = np.array(["café".encode(), "😊".encode()], dtype="S5")
+        assert_array_equal(
+            barr.astype("T"),
+            np.array(["café", "😊"], dtype="T"),
+        )
+
+    @pytest.mark.parametrize("kind", ["S", "V"])
+    @pytest.mark.parametrize(
+        "bad,reason",
+        [
+            (b"a\xffb", "invalid start byte"),
+            # 0xc3 starts a two-byte sequence the itemsize truncates
+            (b"a\xc3", "unexpected end of data"),
+        ],
+    )
+    def test_invalid_utf8_error(self, kind, bad, reason):
+        arr = np.array([bad], dtype=f"{kind}{len(bad)}")
+        with pytest.raises(UnicodeDecodeError) as excinfo:
+            arr.astype("T")
+        exc = excinfo.value
+        assert exc.encoding == "utf-8"
+        assert exc.object == bad
+        assert (exc.start, exc.end, exc.reason) == (1, 2, reason)
 
 
 @pytest.mark.parametrize(
@@ -1518,6 +2050,16 @@ def test_multiply_two_string_raises():
     arr = np.array(["hello", "world"], dtype="T")
     with pytest.raises(np._core._exceptions._UFuncNoLoopError):
         np.multiply(arr, arr)
+
+
+def test_multiply_nonpositive_factor_or_empty():
+    # a non-positive factor or an empty input yields an empty string
+    dt = StringDType()
+    for factor in (0, -1, -100):
+        assert (np.array(["ab", ""], dtype=dt) * factor).tolist() == ["", ""]
+    assert (np.array([""], dtype=dt) * np.uint64(2**63)).tolist() == [""]
+    with pytest.raises(OverflowError):
+        np.array(["ab"], dtype=dt) * np.uint64(2**63)
 
 
 @pytest.mark.parametrize("use_out", [True, False])
@@ -2095,6 +2637,14 @@ def test_replace_non_default_repeat(count):
     assert_array_equal(result, np.array(["🐍--", "🦜†🦜†"], "T"))
 
 
+@pytest.mark.parametrize("count", [-1, -2, -2**63])
+def test_replace_negative_count_replaces_all(count):
+    # any negative count means "replace all", matching str.replace
+    arr = np.array(["aaa"], dtype="T")
+    assert_array_equal(np.strings.replace(arr, "a", "X", count),
+                       np.array(["XXX"], dtype="T"))
+
+
 def test_trailing_null_is_not_padding():
     arr = np.array(["x\0", "\0", "x\0y\0", "abc"], dtype=StringDType())
     nul = np.array("\0", dtype=StringDType())
@@ -2311,6 +2861,22 @@ def test_accumulation(string_array, tile):
         res_obj = np.add.accumulate(arr.astype(object), axis=-1)
 
         assert_array_equal(res, res_obj.astype(arr.dtype), strict=True)
+
+
+def test_minimum_maximum_promote_fixed_width_and_str():
+    arr = np.array(["b", "y"], dtype=StringDType())
+    assert np.minimum(arr, "c\x00").tolist() == ["b", "c\x00"]
+    assert np.maximum(arr, "c\x00").tolist() == ["c\x00", "y"]
+    fixed = np.array(["c", "c"])
+    assert np.minimum(arr, fixed).tolist() == ["b", "c"]
+    assert np.maximum(fixed, arr).dtype == StringDType()
+
+
+@pytest.mark.parametrize("na", ["", "x"])
+def test_string_na_cast_to_bool_matches_sentinel(na):
+    arr = np.array([na, "y"], dtype=StringDType(na_object=na))
+    assert arr.astype(bool).tolist() == [bool(na), True]
+    assert arr.nonzero()[0].tolist() == [i for i in range(2) if [na, "y"][i]]
 
 
 class TestImplementation:

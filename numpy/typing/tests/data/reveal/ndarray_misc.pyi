@@ -20,6 +20,7 @@ import numpy.typing as npt
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+type _Array4D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int], np.dtype[ScalarT]]
 
 class SubClass(np.ndarray[tuple[Any, ...], np.dtype[np.object_]]): ...
 
@@ -47,6 +48,16 @@ AR_f8_1d: np.ndarray[tuple[int], np.dtype[np.float64]]
 AR_f8_2d: np.ndarray[tuple[int, int], np.dtype[np.float64]]
 AR_f8_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float64]]
 AR_f8_4d: np.ndarray[tuple[int, int, int, int], np.dtype[np.float64]]
+AR_b_1d: np.ndarray[tuple[int], np.dtype[np.bool]]
+AR_b_2d: np.ndarray[tuple[int, int], np.dtype[np.bool]]
+AR_b_3d: np.ndarray[tuple[int, int, int], np.dtype[np.bool]]
+AR_i8_0d: np.ndarray[tuple[()], np.dtype[np.int64]]
+AR_i8_1d: np.ndarray[tuple[int], np.dtype[np.int64]]
+AR_i8_2d: np.ndarray[tuple[int, int], np.dtype[np.int64]]
+
+class _Sub2D[ScalarT: np.generic](np.ndarray[tuple[int, int], np.dtype[ScalarT]]): ...
+
+AR_sub_2d: _Sub2D[np.float64]
 
 AR_any: np.ndarray
 
@@ -510,17 +521,106 @@ assert_type(operator.index(AR_i8), int)
 
 assert_type(AR_f8.__array_wrap__(B), npt.NDArray[np.object_])
 
+#
+
 assert_type(AR_V[0], Any)
 assert_type(AR_V[0, 0], Any)
 assert_type(AR_V[AR_i8], npt.NDArray[np.void])
 assert_type(AR_V[AR_i8, AR_i8], npt.NDArray[np.void])
 assert_type(AR_V[AR_i8, None], npt.NDArray[np.void])
 assert_type(AR_V[0, ...], npt.NDArray[np.void])
+
+assert_type(AR_f8_1d[()], _Array1D[np.float64])
+assert_type(AR_f8_1d[True], npt.NDArray[np.float64])
+assert_type(AR_f8_1d[np.True_], npt.NDArray[np.float64])
+assert_type(AR_f8_1d[None], _Array2D[np.float64])
+assert_type(AR_f8_1d[:, None], _Array2D[np.float64])
+assert_type(AR_f8_1d[None, :], _Array2D[np.float64])
+assert_type(AR_f8_1d[:], _Array1D[np.float64])
+assert_type(AR_f8_1d[...], _Array1D[np.float64])
+assert_type(AR_f8_1d[0], np.float64)
+assert_type(AR_f8_1d[AR_b_1d], _Array1D[np.float64])
+assert_type(AR_f8_1d[AR_i8_0d], np.float64)
+assert_type(AR_f8_1d[AR_i8_1d], _Array1D[np.float64])
+assert_type(AR_f8_1d[AR_i8_2d], _Array2D[np.float64])
+
+assert_type(AR_f8_2d[()], _Array2D[np.float64])
+assert_type(AR_f8_2d[None], _Array3D[np.float64])
+assert_type(AR_f8_2d[:, None], _Array3D[np.float64])
+assert_type(AR_f8_2d[None, :], _Array3D[np.float64])
+assert_type(AR_f8_2d[..., None], _Array3D[np.float64])
+assert_type(AR_f8_2d[:], _Array2D[np.float64])
+assert_type(AR_f8_2d[...], _Array2D[np.float64])
+assert_type(AR_f8_2d[:, :], _Array2D[np.float64])
+assert_type(AR_f8_2d[0], _Array1D[np.float64])
+assert_type(AR_f8_2d[0, :], _Array1D[np.float64])
+assert_type(AR_f8_2d[:, 0], _Array1D[np.float64])
+assert_type(AR_f8_2d[0, 0], np.float64)
+assert_type(AR_f8_2d[AR_b_1d], _Array2D[np.float64])
+assert_type(AR_f8_2d[AR_b_2d], _Array1D[np.float64])
+assert_type(AR_f8_2d[AR_i8_0d], _Array1D[np.float64])
+assert_type(AR_f8_2d[AR_i8_1d], _Array2D[np.float64])
+assert_type(AR_f8_2d[AR_i8_2d], _Array3D[np.float64])
+assert_type(AR_f8_2d[AR_i8_1d, :], _Array2D[np.float64])
+assert_type(AR_f8_2d[:, AR_i8_1d], _Array2D[np.float64])
+assert_type(AR_f8_2d[AR_i8_1d, 0], _Array1D[np.float64])
+
+assert_type(AR_f8_3d[()], _Array3D[np.float64])
+assert_type(AR_f8_3d[None], _Array4D[np.float64])
+assert_type(AR_f8_3d[:], _Array3D[np.float64])
+assert_type(AR_f8_3d[:, :], _Array3D[np.float64])
+assert_type(AR_f8_3d[:, :, :], _Array3D[np.float64])
+assert_type(AR_f8_3d[0], _Array2D[np.float64])
+assert_type(AR_f8_3d[0, :], _Array2D[np.float64])
+assert_type(AR_f8_3d[:, 0], _Array2D[np.float64])
+assert_type(AR_f8_3d[0, :, :], _Array2D[np.float64])
+assert_type(AR_f8_3d[:, 0, :], _Array2D[np.float64])
+assert_type(AR_f8_3d[:, :, 0], _Array2D[np.float64])
+assert_type(AR_f8_3d[0, 0], _Array1D[np.float64])
+assert_type(AR_f8_3d[0, 0, :], _Array1D[np.float64])
+assert_type(AR_f8_3d[0, :, 0], _Array1D[np.float64])
+assert_type(AR_f8_3d[:, 0, 0], _Array1D[np.float64])
+assert_type(AR_f8_3d[0, 0, 0], np.float64)
+assert_type(AR_f8_3d[AR_b_1d], _Array3D[np.float64])
+assert_type(AR_f8_3d[AR_b_2d], _Array2D[np.float64])
+assert_type(AR_f8_3d[AR_b_3d], _Array1D[np.float64])
+assert_type(AR_f8_3d[AR_i8_0d], _Array2D[np.float64])
+assert_type(AR_f8_3d[AR_i8_1d], _Array3D[np.float64])
+assert_type(AR_f8_3d[AR_i8_2d], _Array4D[np.float64])
+assert_type(AR_f8_3d[AR_i8_1d, :], _Array3D[np.float64])
+assert_type(AR_f8_3d[:, AR_i8_1d, :], _Array3D[np.float64])
+assert_type(AR_f8_3d[AR_i8_1d, 0], _Array2D[np.float64])
+
+assert_type(AR_f8_4d[()], _Array4D[np.float64])
+assert_type(AR_f8_4d[:], _Array4D[np.float64])
+assert_type(AR_f8_4d[:, :], _Array4D[np.float64])
+assert_type(AR_f8_4d[:, :, :], _Array4D[np.float64])
+assert_type(AR_f8_4d[0], _Array3D[np.float64])
+assert_type(AR_f8_4d[0, :], _Array3D[np.float64])
+assert_type(AR_f8_4d[:, 0, :], _Array3D[np.float64])
+assert_type(AR_f8_4d[0, 0], _Array2D[np.float64])
+assert_type(AR_f8_4d[0, 0, :], _Array2D[np.float64])
+assert_type(AR_f8_4d[0, 0, 0], _Array1D[np.float64])
+assert_type(AR_f8_4d[AR_b_2d], _Array3D[np.float64])
+assert_type(AR_f8_4d[AR_i8_0d], _Array3D[np.float64])
+assert_type(AR_f8_4d[AR_i8_1d], _Array4D[np.float64])
+assert_type(AR_f8_4d[AR_i8_1d, :, :], _Array4D[np.float64])
+
+assert_type(AR_sub_2d[()], _Sub2D[np.float64])
+assert_type(AR_sub_2d[:], _Sub2D[np.float64])
+assert_type(AR_sub_2d[AR_b_1d], _Sub2D[np.float64])
+assert_type(AR_sub_2d[AR_i8_1d], _Sub2D[np.float64])
+assert_type(AR_sub_2d[0], _Array1D[np.float64])
+assert_type(AR_sub_2d[0, 0], np.float64)
+assert_type(AR_sub_2d[AR_i8_1d, :], _Sub2D[np.float64])
+
 assert_type(AR_V[[0]], npt.NDArray[np.void])
 assert_type(AR_V[[0], [0]], npt.NDArray[np.void])
 assert_type(AR_V[:], npt.NDArray[np.void])
 assert_type(AR_V["a"], npt.NDArray[Any])
 assert_type(AR_V[["a", "b"]], npt.NDArray[np.void])
+
+#
 
 assert_type(AR_f8.dump("test_file"), None)
 assert_type(AR_f8.dump(b"test_file"), None)
@@ -545,7 +645,8 @@ assert_type(AR_m.to_device("cpu"), npt.NDArray[np.timedelta64])
 assert_type(f8.__array_namespace__(), ModuleType)
 assert_type(AR_f8.__array_namespace__(), ModuleType)
 
-assert_type(iter(AR_f8), Iterator[Any])  # any-D
-assert_type(iter(AR_f8_1d), Iterator[np.float64])  # 1-D
-assert_type(iter(AR_f8_2d), Iterator[npt.NDArray[np.float64]])  # 2-D
-assert_type(iter(AR_f8_3d), Iterator[npt.NDArray[np.float64]])  # 3-D
+assert_type(iter(AR_f8), Iterator[Any])
+assert_type(iter(AR_f8_1d), Iterator[np.float64])
+assert_type(iter(AR_f8_2d), Iterator[_Array1D[np.float64]])
+assert_type(iter(AR_f8_3d), Iterator[_Array2D[np.float64]])
+assert_type(iter(AR_f8_4d), Iterator[_Array3D[np.float64]])
