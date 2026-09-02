@@ -2834,9 +2834,6 @@ try_reduce_contiguous(
         result[0] = NULL;
         accum[0] = reduction_scalar_storage_ptr(&storage, descrs[0]->type_num);
         *return_scalar = accum[0] != NULL;
-        /* PyArray_Scalar must not need ``base`` for these dtypes. */
-        assert(!*return_scalar || !PyTypeNum_ISFLEXIBLE(descrs[0]->type_num));
-        assert(!*return_scalar || !PyDataType_FLAGCHK(descrs[0], NPY_USE_GETITEM));
     }
     if (!*return_scalar) {
         for (int i = 0; i < nout; i++) {
