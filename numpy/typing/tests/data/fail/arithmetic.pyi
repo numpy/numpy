@@ -35,7 +35,7 @@ AR_M // AR_LIKE_c  # type: ignore[operator]
 AR_M // AR_LIKE_m  # type: ignore[operator]
 AR_M // AR_LIKE_M  # type: ignore[operator]
 
-AR_b // AR_LIKE_M  # type: ignore[operator]
+AR_b // AR_LIKE_M  # type: ignore[type-var]
 AR_u // AR_LIKE_M  # type: ignore[operator]
 AR_i // AR_LIKE_M  # type: ignore[operator]
 AR_f // AR_LIKE_M  # type: ignore[operator]
@@ -45,6 +45,10 @@ AR_M // AR_LIKE_M  # type: ignore[operator]
 
 AR_m // AR_LIKE_c  # type: ignore[operator]
 
+AR_b // AR_LIKE_m  # type: ignore[type-var]
+AR_u // AR_LIKE_m  # type: ignore[operator]
+AR_i // AR_LIKE_m  # type: ignore[operator]
+AR_f // AR_LIKE_m  # type: ignore[operator]
 AR_c // AR_LIKE_m  # type: ignore[operator]
 
 # regression tests for https://github.com/numpy/numpy/issues/28957
