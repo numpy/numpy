@@ -145,6 +145,7 @@ object_minimummaximum_loop(PyArrayMethod_Context *NPY_UNUSED(context),
 
     for (npy_intp i = 0; i < n; i++) {
         PyObject *a = *(PyObject **)in1, *b = *(PyObject **)in2;
+        PyObject **o1 = (PyObject **)out1, **o2 = (PyObject **)out2;
         if (a == NULL) a = Py_None;
         if (b == NULL) b = Py_None;
         PyObject *lo = object_min(a, b);
@@ -154,8 +155,11 @@ object_minimummaximum_loop(PyArrayMethod_Context *NPY_UNUSED(context),
             Py_XDECREF(hi);
             return -1;
         }
-        Py_XSETREF(*(PyObject **)out1, lo);
-        Py_XSETREF(*(PyObject **)out2, hi);
+        PyObject *old1 = *o1, *old2 = *o2;
+        *o1 = lo;
+        *o2 = hi;
+        Py_XDECREF(old1);
+        Py_XDECREF(old2);
         in1 += strides[0]; in2 += strides[1];
         out1 += strides[2]; out2 += strides[3];
     }
@@ -176,6 +180,7 @@ object_minimummaximum_reduce_loop(PyArrayMethod_Context *NPY_UNUSED(context),
         PyObject *cur_min = *(PyObject **)acc_min;
         PyObject *cur_max = *(PyObject **)acc_max;
         PyObject *val = *(PyObject **)x;
+        PyObject **o_min = (PyObject **)out_min, **o_max = (PyObject **)out_max;
         if (cur_min == NULL) cur_min = Py_None;
         if (cur_max == NULL) cur_max = Py_None;
         if (val == NULL) val = Py_None;
@@ -186,8 +191,11 @@ object_minimummaximum_reduce_loop(PyArrayMethod_Context *NPY_UNUSED(context),
             Py_XDECREF(hi);
             return -1;
         }
-        Py_XSETREF(*(PyObject **)out_min, lo);
-        Py_XSETREF(*(PyObject **)out_max, hi);
+        PyObject *old_min = *o_min, *old_max = *o_max;
+        *o_min = lo;
+        *o_max = hi;
+        Py_XDECREF(old_min);
+        Py_XDECREF(old_max);
         acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
         out_min += strides[3]; out_max += strides[4];
     }
@@ -225,7 +233,7 @@ minimummaximum_promoter(PyObject *NPY_UNUSED(ufunc),
 
     for (int i = 0; i < 4; i++) {
         PyArray_DTypeMeta *dt = signature[i] != NULL ? signature[i] : double_dt;
-        Py_INCREF(dt);
+        Py_INCREF((PyObject *)dt);
         new_op_dtypes[i] = dt;
     }
     Py_DECREF(double_descr);
@@ -326,12 +334,14 @@ add_minimummaximum(PyObject *module, const char *name, int with_identity)
 
     res = PyUFunc_AddLoopFromSpec(minimummaximum, &object_spec);
     Py_DECREF(object_descr);
-    if (res < 0 || register_minimummaximum_promoter(minimummaximum) < 0
-            || PyModule_AddObject(module, name, minimummaximum) < 0) {
-        Py_XDECREF(minimummaximum);
-        return -1;
+    if (res == 0) {
+        res = register_minimummaximum_promoter(minimummaximum);
     }
-    return 0;
+    if (res == 0) {
+        res = PyModule_AddObjectRef(module, name, minimummaximum);
+    }
+    Py_DECREF(minimummaximum);
+    return res;
 }
 
 
@@ -339,47 +349,56 @@ static PyMethodDef ReductionLoopTestsMethods[] = {
     {NULL, NULL, 0, NULL}
 };
 
+/* Module execution function, run on every import of the module */
+static int
+_reduction_loop_tests_exec(PyObject *m)
+{
+    if (PyArray_ImportNumPyAPI() < 0) {
+        return -1;
+    }
+    if (PyUFunc_ImportUFuncAPI() < 0) {
+        return -1;
+    }
+
+    if (add_minimummaximum(m, "minimummaximum", 0) < 0) {
+        return -1;
+    }
+    if (add_minimummaximum(m, "minimummaximum_with_identity", 1) < 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
+static struct PyModuleDef_Slot _reduction_loop_tests_slots[] = {
+    {Py_mod_exec, _reduction_loop_tests_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    /*
+     * NumPy relies on process-global state and so does not support
+     * subinterpreters; `_multiarray_umath` sets this same flag.
+     */
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
+#endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    /*
+     * No GIL is needed: the inner loops never touch Python objects,
+     * apart from the object ones, which declare NPY_METH_REQUIRES_PYAPI
+     * so the iterator does not release the GIL around them.
+     */
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
+
 static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "_reduction_loop_tests",
-    NULL,
-    -1,
-    ReductionLoopTestsMethods,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "_reduction_loop_tests",
+    .m_size = 0,
+    .m_methods = ReductionLoopTestsMethods,
+    .m_slots = _reduction_loop_tests_slots,
 };
 
 PyMODINIT_FUNC PyInit__reduction_loop_tests(void)
 {
-    PyObject *m = PyModule_Create(&moduledef);
-    if (m == NULL) {
-        return NULL;
-    }
-
-    if (PyArray_ImportNumPyAPI() < 0) {
-        Py_DECREF(m);
-        return NULL;
-    }
-    if (PyUFunc_ImportUFuncAPI() < 0) {
-        Py_DECREF(m);
-        return NULL;
-    }
-
-    if (add_minimummaximum(m, "minimummaximum", 0) < 0) {
-        Py_DECREF(m);
-        return NULL;
-    }
-    if (add_minimummaximum(m, "minimummaximum_with_identity", 1) < 0) {
-        Py_DECREF(m);
-        return NULL;
-    }
-
-#ifdef Py_GIL_DISABLED
-    // signal this module supports running with the GIL disabled
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
-#endif
-
-    return m;
+    return PyModuleDef_Init(&moduledef);
 }

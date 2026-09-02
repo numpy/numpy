@@ -501,7 +501,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
     if (type_num == NPY_UNICODE) {
         /* we need the full string length here, else copyswap will write too
            many bytes */
-        void *buff = PyArray_malloc(descr->elsize);
+        void *buff = PyMem_RawMalloc(descr->elsize);
         if (buff == NULL) {
             return PyErr_NoMemory();
         }
@@ -512,7 +512,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 
         /* truncation occurs here */
         PyObject *u = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, buff, itemsize / 4);
-        PyArray_free(buff);
+        PyMem_RawFree(buff);
         if (u == NULL) {
             return NULL;
         }

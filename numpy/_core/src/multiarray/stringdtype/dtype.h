@@ -51,9 +51,6 @@ NPY_NO_EXPORT PyArray_Descr *
 stringdtype_finalize_descr(PyArray_Descr *dtype);
 
 NPY_NO_EXPORT int
-_eq_comparison(int scoerce, int ocoerce, PyObject *sna, PyObject *ona);
-
-NPY_NO_EXPORT int
 stringdtype_compatible_na(PyObject *na1, PyObject *na2, PyObject **out_na);
 
 NPY_NO_EXPORT int
@@ -65,6 +62,9 @@ stringdtype_effective_na_descr(int ndescrs, PyArray_Descr *const descrs[]);
 
 NPY_NO_EXPORT int
 na_eq_cmp(PyObject *a, PyObject *b);
+
+NPY_NO_EXPORT npy_bool
+stringdtype_null_is_truthy(const PyArray_StringDTypeObject *descr);
 
 #ifdef __cplusplus
 }

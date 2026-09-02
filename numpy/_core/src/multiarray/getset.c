@@ -408,7 +408,7 @@ array_struct_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 {
     PyArrayInterface *inter;
 
-    inter = (PyArrayInterface *)PyArray_malloc(sizeof(PyArrayInterface));
+    inter = (PyArrayInterface *)PyMem_RawMalloc(sizeof(PyArrayInterface));
     if (inter==NULL) {
         return PyErr_NoMemory();
     }
@@ -430,9 +430,9 @@ array_struct_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
      *when the array is "reshaped".
      */
     if (PyArray_NDIM(self) > 0) {
-        inter->shape = (npy_intp *)PyArray_malloc(2*sizeof(npy_intp)*PyArray_NDIM(self));
+        inter->shape = (npy_intp *)PyMem_RawMalloc(2*sizeof(npy_intp)*PyArray_NDIM(self));
         if (inter->shape == NULL) {
-            PyArray_free(inter);
+            PyMem_RawFree(inter);
             return PyErr_NoMemory();
         }
         inter->strides = inter->shape + PyArray_NDIM(self);

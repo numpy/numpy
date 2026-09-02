@@ -393,6 +393,25 @@ class TestSFloat:
         # original is unchanged
         assert_array_equal(a.view(np.float64), [6., 4., 2.])
 
+    @pytest.mark.parametrize("stable", [True, False])
+    def test_sort_descending(self, stable):
+        a = self._get_array(1.)
+
+        sorted_a = np.sort(a, stable=stable, descending=True)
+        assert_array_equal(sorted_a.view(np.float64), [3., 2., 1.])
+        # original is unchanged
+        assert_array_equal(a.view(np.float64), [1., 2., 3.])
+
+        # NaNs sort to the end of the array for either sort direction
+        a = np.array([np.nan, 1., 3., np.nan, 2.]).view(SF(1.))
+        sorted_a = np.sort(a, stable=stable, descending=True)
+        assert_array_equal(sorted_a.view(np.float64),
+                           [3., 2., 1., np.nan, np.nan])
+
+        indices = np.argsort(a, stable=stable, descending=True)
+        assert_array_equal(a[indices].view(np.float64),
+                           [3., 2., 1., np.nan, np.nan])
+
     def test_argsort(self):
         a = self._get_array(1.)
         a = a[::-1]  # reverse it

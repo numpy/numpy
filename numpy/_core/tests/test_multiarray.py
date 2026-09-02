@@ -41,6 +41,7 @@ from numpy.testing import (
     HAS_REFCOUNT,
     HAS_SUBPROCESSES,
     IS_64BIT,
+    IS_MUSL,
     IS_WASM,
     assert_,
     assert_allclose,
@@ -276,6 +277,23 @@ class TestFlags:
         arr = np.arange(10)
         with pytest.raises(KeyError, match="Unknown flag"):
             arr.flags["\N{MICRO SIGN}"] = True
+
+    @pytest.mark.parametrize("key", ["\N{MICRO SIGN}", "\N{SNOWMAN}",
+                                     "\ud800", "WRITEABLE" * 3, ""])
+    def test_bad_flag_key_raises_keyerror(self, key):
+        arr = np.arange(10)
+        with pytest.raises(KeyError, match="Unknown flag"):
+            arr.flags[key]
+        with pytest.raises(KeyError, match="Unknown flag"):
+            arr.flags[key] = True
+
+    def test_bytes_flag_key(self):
+        # bytes keys are accepted for backwards compatibility
+        arr = np.arange(10)
+        assert_equal(arr.flags[b'WRITEABLE'], True)
+        assert_equal(arr.flags[b'W'], True)
+        arr.flags[b'WRITEABLE'] = False
+        assert_equal(arr.flags['WRITEABLE'], False)
 
     def test_string_align(self):
         a = np.zeros(4, dtype=np.dtype('|S4'))
@@ -2929,12 +2947,17 @@ class TestMethods:
         self._test_sort_descending_nonan(a, stable, descending)
         self._test_sort_descending_nan(a, nan, stable, descending)
 
-    @pytest.mark.parametrize('dtype', [np.str_, np.bytes_])
+    @pytest.mark.parametrize('dtype', [
+        np.str_, np.bytes_, np.dtypes.StringDType(),
+        np.dtypes.StringDType(na_object=np.nan),
+    ])
     @pytest.mark.parametrize('stable', [True, False])
     @pytest.mark.parametrize('descending', [True, False])
     def test_sort_descending_string(self, dtype, stable, descending):
         a = np.array([f"{i:03d}" for i in range(101)], dtype=dtype)
         self._test_sort_descending_nonan(a, stable, descending)
+        if hasattr(dtype, "na_object"):
+            self._test_sort_descending_nan(a, np.nan, stable, descending)
 
     def _test_argsort_descending_nonan(self, a, stable, descending):
         expected = np.arange(len(a))[::-1]
@@ -3075,7 +3098,10 @@ class TestMethods:
         self._test_argsort_descending_nonan(a, stable, descending)
         self._test_argsort_descending_nan(a, nan, stable, descending)
 
-    @pytest.mark.parametrize("dtype", [np.str_, np.bytes_])
+    @pytest.mark.parametrize("dtype", [
+        np.str_, np.bytes_, np.dtypes.StringDType(),
+        np.dtypes.StringDType(na_object=np.nan),
+    ])
     @pytest.mark.parametrize("stable", [True, False])
     @pytest.mark.parametrize("descending", [True, False])
     def test_argsort_descending_string(self, dtype, stable, descending):
@@ -3197,12 +3223,17 @@ class TestMethods:
         assert_equal(before_part, before_sort, msg)
         assert_equal(after_part, after_sort, msg)
 
-    @pytest.mark.parametrize('dtype', [np.str_, np.bytes_])
+    @pytest.mark.parametrize('dtype', [
+        np.str_, np.bytes_, np.dtypes.StringDType(),
+        np.dtypes.StringDType(na_object=np.nan),
+    ])
     @pytest.mark.parametrize('k', [2, 15, 50, 95])
     @pytest.mark.parametrize('descending', [True, False])
     def test_partition_descending_strings(self, dtype, k, descending):
         a = np.array([f"{i:03d}" for i in range(101)], dtype=dtype)
         self._test_partition_descending(a, k, None, descending)
+        if hasattr(dtype, "na_object"):
+            self._test_partition_descending(a, k, np.nan, descending)
 
     @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
     @pytest.mark.parametrize('k', [2, 15, 50, 95])
@@ -3301,12 +3332,17 @@ class TestMethods:
         a = np.arange(-50, 51, dtype=dtype) + 1j * np.arange(-50, 51, dtype=dtype)
         self._test_argpartition_descending(a, k, nan, descending)
 
-    @pytest.mark.parametrize('dtype', [np.str_, np.bytes_])
+    @pytest.mark.parametrize('dtype', [
+        np.str_, np.bytes_, np.dtypes.StringDType(),
+        np.dtypes.StringDType(na_object=np.nan),
+    ])
     @pytest.mark.parametrize('k', [2, 15, 50, 80])
     @pytest.mark.parametrize('descending', [True, False])
     def test_argpartition_descending_strings(self, dtype, k, descending):
         a = np.array([f"{i:03d}" for i in range(101)], dtype=dtype)
         self._test_argpartition_descending(a, k, None, descending)
+        if hasattr(dtype, "na_object"):
+            self._test_argpartition_descending(a, k, np.nan, descending)
 
     @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
     @pytest.mark.parametrize('k', [2, 15, 50, 80])
@@ -6721,6 +6757,23 @@ class TestIO:
             for dup, exc in ((dup_str, TypeError), (dup_bigint, OSError)):
                 monkeypatch.setattr(os, "dup", dup)
                 assert_raises(exc, np.fromfile, f)
+
+    @pytest.mark.skipif(
+        IS_WASM or IS_MUSL,
+        reason="musl and emscripten libc fdopen do not validate the fd",
+    )
+    def test_fromfile_failed_fdopen_closes_dup(
+            self, tmp_path, param_filename, monkeypatch):
+        closed_fds = []
+        tmp_filename = normalize_filename(tmp_path, param_filename)
+
+        monkeypatch.setattr(os, "dup", lambda fd: -2)
+        monkeypatch.setattr(os, "close", closed_fds.append)
+
+        with open(tmp_filename, "wb") as f:
+            assert_raises(OSError, np.fromfile, f)
+
+        assert closed_fds == [-2]
 
     def _check_from(self, s, value, filename, **kw):
         if 'sep' not in kw:

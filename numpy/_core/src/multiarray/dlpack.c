@@ -682,7 +682,7 @@ gentype_dlpack(PyObject *self,
     if (major_version < 1) {
         PyErr_SetString(PyExc_BufferError,
             "Cannot export scalars since signalling readonly "
-            "is unsupported by DLPack (supported by newer DLPack version)."
+            "is unsupported by DLPack (supported by newer DLPack version). "
             "Consider using `copy=True` if possible.");
         return NULL;
     }

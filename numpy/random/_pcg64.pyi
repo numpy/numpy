@@ -1,4 +1,5 @@
 from typing import TypedDict, type_check_only
+from typing_extensions import disjoint_base
 
 from numpy._typing import _ArrayLikeInt_co
 from numpy.random.bit_generator import BitGenerator, SeedSequence
@@ -17,6 +18,7 @@ class _PCG64State(TypedDict):
     has_uint32: int
     uinteger: int
 
+@disjoint_base
 class PCG64(BitGenerator):
     def __init__(self, seed: _ArrayLikeInt_co | SeedSequence | None = ...) -> None: ...
     def jumped(self, jumps: int = 1) -> PCG64: ...
@@ -26,6 +28,7 @@ class PCG64(BitGenerator):
     def state(self, value: _PCG64State) -> None: ...
     def advance(self, delta: int) -> PCG64: ...
 
+@disjoint_base
 class PCG64DXSM(BitGenerator):
     def __init__(self, seed: _ArrayLikeInt_co | SeedSequence | None = ...) -> None: ...
     def jumped(self, jumps: int = 1) -> PCG64DXSM: ...

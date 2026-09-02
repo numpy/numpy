@@ -110,8 +110,8 @@ assert_type(np.tensordot(AR_f8, AR_f8), npt.NDArray[np.float64])
 assert_type(np.tensordot(AR_f8, AR_i8), npt.NDArray[np.float64 | Any])
 assert_type(np.tensordot(AR_c16, AR_c16), npt.NDArray[np.complex128])
 assert_type(np.tensordot(AR_c16, AR_f8), npt.NDArray[np.complex128 | Any])
-assert_type(np.tensordot(AR_m, AR_m), npt.NDArray[np.timedelta64])
-assert_type(np.tensordot(AR_O, AR_O), npt.NDArray[np.object_])
+assert_type(np.tensordot(AR_m, AR_m), npt.NDArray[np.timedelta64])  # type: ignore[assert-type]
+assert_type(np.tensordot(AR_O, AR_O), npt.NDArray[np.object_])  # type: ignore[assert-type]
 assert_type(np.tensordot(_to_1d_bool, _to_1d_bool), npt.NDArray[np.bool])
 assert_type(np.tensordot(_to_1d_int, _to_1d_int), npt.NDArray[np.int_ | Any])
 assert_type(np.tensordot(_to_1d_float, _to_1d_float), npt.NDArray[np.float64 | Any])

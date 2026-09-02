@@ -1,4 +1,5 @@
 from typing import TypedDict, type_check_only
+from typing_extensions import disjoint_base
 
 from numpy import uint32
 from numpy._typing import _ArrayLikeInt_co
@@ -17,6 +18,7 @@ class _MT19937State(TypedDict):
     bit_generator: str
     state: _MT19937Internal
 
+@disjoint_base
 class MT19937(BitGenerator):
     def __init__(self, seed: _ArrayLikeInt_co | SeedSequence | None = ...) -> None: ...
     def _legacy_seeding(self, seed: _ArrayLikeInt_co) -> None: ...

@@ -719,7 +719,7 @@ UNICODE_setitem(PyArray_Descr *descr, PyObject *op, char *ov)
     char *buffer;
     int aligned = npy_is_aligned(ov, NPY_ALIGNOF(Py_UCS4));
     if (!aligned) {
-        buffer = PyArray_malloc(num_bytes);
+        buffer = PyMem_RawMalloc(num_bytes);
         if (buffer == NULL) {
             Py_DECREF(temp);
             PyErr_NoMemory();
@@ -730,14 +730,14 @@ UNICODE_setitem(PyArray_Descr *descr, PyObject *op, char *ov)
         buffer = ov;
     }
     if (PyUnicode_AsUCS4(temp, (Py_UCS4 *)buffer, actual_len, 0) == NULL) {
-        PyArray_free(buffer);
+        PyMem_RawFree(buffer);
         Py_DECREF(temp);
         return -1;
     }
 
     if (!aligned) {
         memcpy(ov, buffer, num_bytes);
-        PyArray_free(buffer);
+        PyMem_RawFree(buffer);
     }
 
     /* Fill in the rest of the space with 0 */
@@ -3448,7 +3448,7 @@ static int
 {
     npy_intp i;
     int elsize = PyArray_ITEMSIZE(aip);
-    @type@ *mp = (@type@ *)PyArray_malloc(elsize);
+    @type@ *mp = (@type@ *)PyMem_RawMalloc(elsize);
 
     if (mp == NULL) {
         return 0;
@@ -3462,7 +3462,7 @@ static int
             *max_ind = i;
         }
     }
-    PyArray_free(mp);
+    PyMem_RawFree(mp);
     return 0;
 }
 
@@ -3512,7 +3512,7 @@ static int
 {
     npy_intp i;
     int elsize = PyArray_ITEMSIZE(aip);
-    @type@ *mp = (@type@ *)PyArray_malloc(elsize);
+    @type@ *mp = (@type@ *)PyMem_RawMalloc(elsize);
 
     if (mp==NULL) return 0;
     memcpy(mp, ip, elsize);
@@ -3524,7 +3524,7 @@ static int
             *min_ind=i;
         }
     }
-    PyArray_free(mp);
+    PyMem_RawFree(mp);
     return 0;
 }
 
@@ -4060,7 +4060,7 @@ static NpyAuxData *
 _datetime_dtype_metadata_clone(NpyAuxData *data)
 {
     PyArray_DatetimeDTypeMetaData *newdata =
-        (PyArray_DatetimeDTypeMetaData *)PyArray_malloc(
+        (PyArray_DatetimeDTypeMetaData *)PyMem_RawMalloc(
                         sizeof(*newdata));
     if (newdata == NULL) {
         PyErr_NoMemory();
@@ -4081,7 +4081,7 @@ _create_datetime_metadata(NPY_DATETIMEUNIT base, int num)
     PyArray_DatetimeDTypeMetaData *data;
 
     /* Allocate memory for the metadata */
-    data = PyArray_malloc(sizeof(*data));
+    data = PyMem_RawMalloc(sizeof(*data));
     if (data == NULL) {
         PyErr_NoMemory();
         return NULL;
@@ -4089,7 +4089,7 @@ _create_datetime_metadata(NPY_DATETIMEUNIT base, int num)
 
     /* Initialize the base aux data */
     memset(data, 0, sizeof(PyArray_DatetimeDTypeMetaData));
-    data->base.free = (NpyAuxData_FreeFunc *)PyArray_free;
+    data->base.free = (NpyAuxData_FreeFunc *)PyMem_RawFree;
     data->base.clone = _datetime_dtype_metadata_clone;
 
     data->meta.base = base;
