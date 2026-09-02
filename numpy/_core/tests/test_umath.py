@@ -3213,9 +3213,9 @@ class TestPositive:
     def test_valid(self):
         valid_dtypes = [int, bool, float, complex, object]
         for dtype in valid_dtypes:
-            x = np.arange(5, dtype=dtype)
+            x = np.arange(5).astype(dtype)
             result = np.positive(x)
-            assert_equal(x, result, err_msg=str(dtype))
+            assert_array_equal(x, result, strict=True, err_msg=str(dtype))
 
     def test_invalid(self):
         with assert_raises(TypeError):
@@ -3225,12 +3225,14 @@ class TestPositive:
         with assert_raises(TypeError):
             np.positive(np.array(['bar'], dtype=object))
 
-    def test_bool_positive(self):
-        x = np.arange(2, dtype=bool)
-        result = np.positive(x)
-        actual_dtype = result.dtype
-        desired_dtype = np.int8
-        assert_equal(actual_dtype, desired_dtype, err_msg=str(bool))
+    def test_bool(self):
+        x = np.array([True, False])
+        assert_array_equal(+x, x, strict=True)
+        assert np.positive(x, out=x) is x
+        for scalar in (np.True_, True):
+            result = np.positive(scalar)
+            assert type(result) is np.bool
+            assert result == scalar
 
 
 class TestSpecialMethods:
