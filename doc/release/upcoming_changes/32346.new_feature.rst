@@ -7,4 +7,7 @@ and any leading axes broadcast against the leading axes of ``a``, so one set
 of keys can be searched in every slice. ``sorter`` may now have the same
 shape as ``a``. To search along another axis, bring it to the end first, for
 instance with `numpy.moveaxis`. This feature is available for all built-in
-dtypes except ``StringDType``, which remains one-dimensional.
+dtypes except ``StringDType``, which remains one-dimensional. The search now
+runs as a generalized ufunc, so an argument implementing ``__array_ufunc__``
+is consulted and decides the return type, while an ``ndarray`` subclass
+without one still gets a base ``ndarray`` back.

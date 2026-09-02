@@ -205,6 +205,47 @@ searchsorted_sorter_loop(PyArrayMethod_Context *context, char *const data[],
 
 
 /*
+ * Both searched operands are read through `descriptors[0]`, so they have to
+ * end up on one canonical descriptor.  The loop only pins the DType, leaving
+ * `a` and `v` free to arrive with different units, itemsizes or byte orders,
+ * so promote them here and let the machinery cast.
+ */
+static NPY_CASTING
+searchsorted_resolve_descriptors(
+        PyArrayMethodObject *method,
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
+        PyArray_Descr *const given_descrs[],
+        PyArray_Descr *loop_descrs[],
+        npy_intp *NPY_UNUSED(view_offset))
+{
+    if (PyArray_EquivTypes(given_descrs[0], given_descrs[1])) {
+        /* Equivalent is not enough, the kernels need native byte order. */
+        loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
+    }
+    else {
+        loop_descrs[0] = PyArray_PromoteTypes(given_descrs[0],
+                                              given_descrs[1]);
+    }
+    if (loop_descrs[0] == NULL) {
+        return (NPY_CASTING)-1;
+    }
+    loop_descrs[1] = (PyArray_Descr *)Py_NewRef(loop_descrs[0]);
+
+    /* The sorter, if any, and the result are always intp. */
+    for (int i = 2; i < method->nin + method->nout; i++) {
+        loop_descrs[i] = PyArray_DescrFromType(NPY_INTP);
+        if (loop_descrs[i] == NULL) {
+            for (int j = 0; j < i; j++) {
+                Py_CLEAR(loop_descrs[j]);
+            }
+            return (NPY_CASTING)-1;
+        }
+    }
+    return NPY_SAFE_CASTING;
+}
+
+
+/*
  * `generic` picks the legacy comparison function over the dedicated kernels
  * from binsearch.cpp.
  */
@@ -247,6 +288,8 @@ add_searchsorted_loop(PyObject *ufunc, PyArray_DTypeMeta *dt, int with_sorter,
     }
     PyType_Slot slots[] = {
         {NPY_METH_strided_loop, loop},
+        {NPY_METH_resolve_descriptors,
+         (void *)&searchsorted_resolve_descriptors},
         {0, NULL}
     };
 
@@ -254,7 +297,8 @@ add_searchsorted_loop(PyObject *ufunc, PyArray_DTypeMeta *dt, int with_sorter,
     spec.name = with_sorter ? "searchsorted_sorter_loop" : "searchsorted_loop";
     spec.nin = with_sorter ? 3 : 2;
     spec.nout = 1;
-    spec.casting = NPY_NO_CASTING;
+    /* What searchsorted_resolve_descriptors returns, promoting when needed. */
+    spec.casting = NPY_SAFE_CASTING;
     /* Discarded by the gufunc machinery, see searchsorted_restore_floatstatus */
     spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
     if (generic) {
@@ -312,9 +356,21 @@ searchsorted_promoter(PyObject *ufunc, PyArray_DTypeMeta *const op_dtypes[],
             || NPY_DT_SLOTS(dt)->f.compare == NULL) {
         return -1;
     }
-    if (add_searchsorted_loop(ufunc, dt, ufunc_obj->nin == 3,
-                              searchsorted_ufunc_side(ufunc_obj), 1) < 0) {
-        return -1;
+    /*
+     * Every builtin dtype is given its loop up front, so one reaching here
+     * only needs the sorter or the output corrected below.  A run time dtype
+     * may already have been given one too, by an earlier call that differed
+     * only in the sorter, so a duplicate is not an error.  Dispatch reports
+     * it below if the loop really is missing.
+     */
+    if (dt->type_num >= NPY_USERDEF
+            && add_searchsorted_loop(ufunc, dt, ufunc_obj->nin == 3,
+                                     searchsorted_ufunc_side(ufunc_obj),
+                                     1) < 0) {
+        if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
+            return -1;
+        }
+        PyErr_Clear();
     }
 
     PyArray_DTypeMeta *intp_dt = PyArray_DTypeFromTypeNum(NPY_INTP);

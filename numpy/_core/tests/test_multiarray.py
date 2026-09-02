@@ -3658,7 +3658,8 @@ class TestMethods:
         assert_equal(np.searchsorted(a, np.array([[3.], [5.]])).shape, (2, 1))
         assert_equal(np.searchsorted(a, np.ones((5, 2, 3))).shape, (5, 2, 3))
         # mismatched batch dimensions are a broadcasting error
-        assert_raises(ValueError, np.searchsorted, a, np.ones((3, 2)))
+        with pytest.raises(ValueError):
+            np.searchsorted(a, np.ones((3, 2)))
 
     def test_searchsorted_nd_sorter(self):
         rng = np.random.RandomState(42)
@@ -3671,7 +3672,8 @@ class TestMethods:
         assert_equal(np.searchsorted(a, v, sorter=s), expected)
 
         # the sorter must line up with `a` along the last axis
-        assert_raises(ValueError, np.searchsorted, a, v, sorter=s[:, :5])
+        with pytest.raises(ValueError):
+            np.searchsorted(a, v, sorter=s[:, :5])
 
         # a lower dimensional sorter broadcasts against `a`'s leading axes
         b = np.array([[6., 4., 2., 0.], [7., 5., 3., 1.]])
@@ -3724,6 +3726,47 @@ class TestMethods:
         assert a.view(Handles).searchsorted(v) == "handled"
         assert_equal(a.searchsorted(v.view(Declines)), [3, 8])
         assert_equal(a.view(Declines).searchsorted(v), [3, 8])
+
+    def test_searchsorted_gufunc_descr_mismatch(self):
+        # the loops read both searched operands through `a`'s descriptor, so
+        # one dtype with two descriptors, differing in unit or itemsize, has
+        # to be promoted rather than compared as is
+        from numpy._core.umath import _searchsorted_left
+        cases = [
+            (np.array(['2020', '2022', '2024'], dtype='M8[Y]'),
+             np.array(['2021-06-01'], dtype='M8[D]')),
+            (np.array([b'aaaa', b'cccc'], dtype='S4'),
+             np.array([b'aaaazzzz'], dtype='S8')),
+            (np.array(['aa', 'cc'], dtype='U2'),
+             np.array(['aazzz'], dtype='U5')),
+        ]
+        for a, v in cases:
+            assert_equal(_searchsorted_left(a, v), np.searchsorted(a, v))
+
+        # dtypes that cannot be promoted are rejected, not compared blindly
+        a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
+        v = np.array([(1, 2, 3)],
+                     dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'i4')])
+        with pytest.raises(TypeError):
+            _searchsorted_left(a, v)
+
+        # one descriptor shared by both operands still has to be made native,
+        # the kernels compare the stored bytes
+        a = np.arange(10.).astype('>f8')
+        v = a[:1].copy().view(a.dtype)
+        v[...] = 0.5
+        assert a.dtype is v.dtype
+        assert_equal(_searchsorted_left(a, v), [1])
+
+    def test_searchsorted_gufunc_sorter_dtype(self):
+        # a sorter of another integer dtype is cast rather than sent to the
+        # promoter as a dtype whose loop is missing
+        from numpy._core.umath import _searchsorted_left_sorter
+        a = np.arange(10.)
+        v = np.array([2.5])
+        for dtype in (np.int32, np.uint8, np.int64):
+            s = np.arange(10, dtype=dtype)
+            assert_equal(_searchsorted_left_sorter(a, v, s), [3])
 
     def test_searchsorted_runtime_registered_dtype(self):
         # a dtype registered at run time cannot be given a loop up front, so
