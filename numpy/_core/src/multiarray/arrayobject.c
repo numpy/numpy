@@ -759,7 +759,8 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
                 res = temp;
             }
             else {
-                temp2 = PyObject_CallFunction(op, "OO", res, temp);
+                PyObject *call_args[2] = {res, temp};
+                temp2 = PyObject_Vectorcall(op, call_args, 2, NULL);
                 Py_DECREF(temp);
                 Py_DECREF(res);
                 if (temp2 == NULL) {
