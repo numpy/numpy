@@ -1,0 +1,8 @@
+`MaskedArray._fill_value` would become stale when ufuncs that change dtype
+left the result holding a fill_value typed for the old dtype. The mismatch
+was silent until something later called `_check_fill_value`, such as
+`.view()`, and then a `TypeError` would be raised.  Now, when the copied
+fill_value is no longer valid for the new dtype, fall back to the
+default fill_value for that dtype instead of propagating the stale value.
+This can now raise a `ComplexWarning` if the fill_value is complex and the
+new dtype is real.
