@@ -98,6 +98,8 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
         3: "~",  # same-kind casting
         4: ".",  # unsafe casting
     }
+    # NPY_SAME_VALUE_CASTING_FLAG, or'ed on top of a casting level
+    same_value_flag = 64
     flags_table = {
         0: "▗", 7: "█",
         1: "▚", 2: "▐", 4: "▄",
@@ -119,7 +121,10 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
             table[cast["from"]] = {}
         to_dict = table[cast["from"]]
 
-        can_cast = cast_table[cast["casting"]]
+        casting = cast["casting"]
+        if casting >= 0:  # negative values are error codes
+            casting &= ~same_value_flag
+        can_cast = cast_table[casting]
         legacy = "L" if cast["legacy"] else "."
         flags = 0
         if cast["requires_pyapi"]:

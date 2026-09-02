@@ -18,6 +18,10 @@ import numpy as np
 from numpy._core._multiarray_umath import _get_castingimpl as get_castingimpl
 from numpy.lib.stride_tricks import as_strided
 from numpy.testing import assert_array_equal, assert_equal
+from numpy.testing.print_coercion_tables import (
+    print_cancast_table,
+    print_new_cast_table,
+)
 
 # Simple skips object, parametric and long double (unsupported by struct)
 simple_dtypes = "?bhilqBHILQefdFD"
@@ -968,3 +972,10 @@ class TestCasting:
         f = np.array(123, dtype=np.float64)
         assert i.astype(np.float64, casting='same_value') == f
         assert f.astype(np.int64, casting='same_value') == f
+
+
+def test_print_new_cast_table(capsys):
+    # print_cancast_table first: it registers casts with an error-code level.
+    print_cancast_table(np.typecodes['All'])
+    print_new_cast_table(can_cast=True, legacy=True, flags=True)
+    assert capsys.readouterr().out
