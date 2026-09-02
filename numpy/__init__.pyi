@@ -8276,67 +8276,269 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # fallback
     def __rpow__(self, other: ArrayLike, mod: None = None, /) -> NDArray[Any]: ...
 
-    # Keep in sync with `MaskedArray.__truediv__`
-    @overload
-    def __truediv__(self: _ArrayInt_co | NDArray[float64], other: _ArrayLikeFloat64_co, /) -> NDArray[float64]: ...
-    @overload
-    def __truediv__(self: _ArrayFloat64_co, other: _ArrayLikeInt_co | _ArrayLike[floating[_64Bit]], /) -> NDArray[float64]: ...
-    @overload
+    #
+    @overload  # Nd Any, 0d|Nd  (workaround)
+    def __truediv__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[Never]],
+        other: complex | generic | ndarray[ShapeT, Any],
+        /,
+    ) -> ndarray[ShapeT, _dtype[Any]]: ...
+    @overload  # Nd f64, Nd +f64
+    def __truediv__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[float64]],
+        other: ndarray[ShapeT, _dtype[_Float32_co]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[float64]]: ...
+    @overload  # Nd +f64, Nd f64
+    def __truediv__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[_Float32_co]],
+        other: ndarray[ShapeT, _dtype[float64]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[float64]]: ...
+    @overload  # Nd c128, Nd +c128
+    def __truediv__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[complex128]],
+        other: ndarray[ShapeT, _dtype[complex64 | float64 | _Float32_co]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[complex128]]: ...
+    @overload  # Nd +c128, Nd c128
+    def __truediv__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[complex64 | float64 | _Float32_co]],
+        other: ndarray[ShapeT, _dtype[complex128]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[complex128]]: ...
+    @overload  # Nd T:inexact|object, Nd T
+    def __truediv__[ShapeT: _Shape, ScalarT: inexact | object_](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        other: py_bool | bool_ | ndarray[ShapeT, _dtype[ScalarT]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd integer|bool, 0d float | 0d|Nd integer|bool
+    def __truediv__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        other: float | integer | bool_ | ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[float64]]: ...
+    @overload  # Nd bool, 0d|Nd T:inexact
+    def __truediv__[ShapeT: _Shape, ScalarT: inexact](
+        self: ndarray[ShapeT, _dtype[bool_]],
+        other: ScalarT | ndarray[ShapeT, _dtype[ScalarT]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd T:inexact, 0d|Nd bool | 0d int|T
+    def __truediv__[ShapeT: _Shape, ScalarT: inexact](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        other: ScalarT | bool_ | int | ndarray[ShapeT, _dtype[bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd T:inexact, 0d float
+    def __truediv__[ShapeT: _Shape, ScalarT: inexact](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        other: float,
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd T:complexfloating, 0d complex
+    def __truediv__[ShapeT: _Shape, ScalarT: complexfloating](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        other: complex,
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd f64, 0d complex
+    def __truediv__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[float64]],
+        other: complex,
+        /,
+    ) -> ndarray[ShapeT, _dtype[complex128]]: ...
+    @overload  # Nd integer|bool, 0d complex
+    def __truediv__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        other: complex,
+        /,
+    ) -> ndarray[ShapeT, _dtype[complex128 | Any]]: ...
+    @overload  # Nd f32|f16, 0d complex
+    def __truediv__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[float32 | float16]],
+        other: complex,
+        /,
+    ) -> ndarray[ShapeT, _dtype[complex64]]: ...
+    @overload  # Nd ~m8, 0d|Nd ~m8
+    def __truediv__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[timedelta64]],
+        other: timedelta64 | ndarray[ShapeT, _dtype[timedelta64]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[float64]]: ...
+    @overload  # Nd ~m8, 0d|Nd +floating
+    def __truediv__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[timedelta64]],
+        other: float | integer | floating | ndarray[ShapeT, _dtype[integer | floating]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[timedelta64]]: ...
+    @overload  # ?d ~bool, ?d T:inexact
+    def __truediv__[ScalarT: inexact](self: NDArray[bool_], other: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
+    @overload  # ?d T:inexact, ?d +bool|T
+    def __truediv__[ScalarT: inexact](
+        self: NDArray[ScalarT],
+        other: _ArrayLikeBool_co | _ArrayLike[ScalarT],
+        /,
+    ) -> NDArray[ScalarT]: ...
+    @overload  # ?d integer|bool, ?d +f64
+    def __truediv__(self: NDArray[integer | bool_], other: _ArrayLikeFloat64_co, /) -> NDArray[float64]: ...
+    @overload  # ?d ~f64, ?d +f64
+    def __truediv__(self: NDArray[float64], other: _ArrayLikeFloat64_co, /) -> NDArray[float64]: ...
+    @overload  # ?d +f64, ?d ~f64
+    def __truediv__(self: _ArrayFloat64_co, other: _ArrayLike[float64] | _NestedList[float], /) -> NDArray[float64]: ...
+    @overload  # ?d ~c128, ?d +c128
     def __truediv__(self: NDArray[complex128], other: _ArrayLikeComplex128_co, /) -> NDArray[complex128]: ...
-    @overload
-    def __truediv__(self: _ArrayComplex128_co, other: _ArrayLike[complexfloating[_64Bit]], /) -> NDArray[complex128]: ...
-    @overload
-    def __truediv__(self: NDArray[floating], other: _ArrayLikeFloat_co, /) -> NDArray[floating]: ...
-    @overload
-    def __truediv__(self: _ArrayFloat_co, other: _ArrayLike[floating], /) -> NDArray[floating]: ...
-    @overload
-    def __truediv__(self: NDArray[complexfloating], other: _ArrayLikeNumber_co, /) -> NDArray[complexfloating]: ...
-    @overload
-    def __truediv__(self: _ArrayNumber_co, other: _ArrayLike[complexfloating], /) -> NDArray[complexfloating]: ...
-    @overload
-    def __truediv__(self: NDArray[inexact], other: _ArrayLikeNumber_co, /) -> NDArray[inexact]: ...
-    @overload
-    def __truediv__(self: NDArray[number], other: _ArrayLikeNumber_co, /) -> NDArray[number]: ...
-    @overload
+    @overload  # ?d +c128, ?d ~c128
+    def __truediv__(
+        self: _ArrayComplex128_co,
+        other: _ArrayLike[complex128] | _NestedList[complex],
+        /,
+    ) -> NDArray[complex128]: ...
+    @overload  # ?d ~m8, ?d ~m8
     def __truediv__(self: NDArray[timedelta64], other: _ArrayLike[timedelta64], /) -> NDArray[float64]: ...
-    @overload
-    def __truediv__(self: NDArray[timedelta64], other: _ArrayLikeBool_co, /) -> NoReturn: ...
-    @overload
-    def __truediv__(self: NDArray[timedelta64], other: _ArrayLikeFloat_co, /) -> NDArray[timedelta64]: ...
-    @overload
-    def __truediv__(self: NDArray[object_], other: Any, /) -> Any: ...
-    @overload
-    def __truediv__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
+    @overload  # ?d ~m8, ?d +floating
+    def __truediv__(
+        self: NDArray[timedelta64],
+        other: _ArrayLike[integer | floating] | _NestedList[int] | _NestedList[float],
+        /,
+    ) -> NDArray[timedelta64]: ...
+    @overload  # ?d ~object, ?d
+    def __truediv__(self: NDArray[object_], other: Any, /) -> NDArray[object_]: ...
+    @overload  # ?d, ?d +object
+    def __truediv__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
+    @overload  # fallback
+    def __truediv__(self, other: ArrayLike, /) -> NDArray[Any]: ...
 
-    # Keep in sync with `MaskedArray.__rtruediv__`
-    @overload
-    def __rtruediv__(self: _ArrayInt_co | NDArray[float64], other: _ArrayLikeFloat64_co, /) -> NDArray[float64]: ...
-    @overload
-    def __rtruediv__(self: _ArrayFloat64_co, other: _ArrayLikeInt_co | _ArrayLike[floating[_64Bit]], /) -> NDArray[float64]: ...
-    @overload
+    # keep in sync with __truediv__ (modulo non-commutative timedelta64)
+    @overload  # Nd Any, 0d|Nd  (workaround)
+    def __rtruediv__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[Never]],
+        other: complex | generic | ndarray[ShapeT, Any],
+        /,
+    ) -> ndarray[ShapeT, _dtype[Any]]: ...
+    @overload  # Nd f64, Nd +f64
+    def __rtruediv__[ShapeT: _Shape](  # type: ignore[misc]
+        self: ndarray[ShapeT, _dtype[float64]],
+        other: ndarray[ShapeT, _dtype[_Float32_co]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[float64]]: ...
+    @overload  # Nd +f64, Nd f64
+    def __rtruediv__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[_Float32_co]],
+        other: ndarray[ShapeT, _dtype[float64]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[float64]]: ...
+    @overload  # Nd c128, Nd +c128
+    def __rtruediv__[ShapeT: _Shape](  # type: ignore[misc]
+        self: ndarray[ShapeT, _dtype[complex128]],
+        other: ndarray[ShapeT, _dtype[complex64 | float64 | _Float32_co]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[complex128]]: ...
+    @overload  # Nd +c128, Nd c128
+    def __rtruediv__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[complex64 | float64 | _Float32_co]],
+        other: ndarray[ShapeT, _dtype[complex128]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[complex128]]: ...
+    @overload  # Nd T:inexact|object, Nd T
+    def __rtruediv__[ShapeT: _Shape, ScalarT: inexact | object_](  # type: ignore[misc]
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        other: py_bool | bool_ | ndarray[ShapeT, _dtype[ScalarT]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd integer|bool, 0d float | 0d|Nd integer|bool
+    def __rtruediv__[ShapeT: _Shape](  # type: ignore[misc]
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        other: float | integer | bool_ | ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[float64]]: ...
+    @overload  # Nd bool, 0d|Nd T:inexact
+    def __rtruediv__[ShapeT: _Shape, ScalarT: inexact](
+        self: ndarray[ShapeT, _dtype[bool_]],
+        other: ScalarT | ndarray[ShapeT, _dtype[ScalarT]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd T:inexact, 0d|Nd bool | 0d int|T
+    def __rtruediv__[ShapeT: _Shape, ScalarT: inexact](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        other: ScalarT | bool_ | int | ndarray[ShapeT, _dtype[bool_]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd T:inexact, 0d float
+    def __rtruediv__[ShapeT: _Shape, ScalarT: inexact](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        other: float,
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd T:complexfloating, 0d complex
+    def __rtruediv__[ShapeT: _Shape, ScalarT: complexfloating](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        other: complex,
+        /,
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd f64, 0d complex
+    def __rtruediv__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[float64]],
+        other: complex,
+        /,
+    ) -> ndarray[ShapeT, _dtype[complex128]]: ...
+    @overload  # Nd integer|bool, 0d complex
+    def __rtruediv__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        other: complex,
+        /,
+    ) -> ndarray[ShapeT, _dtype[complex128 | Any]]: ...
+    @overload  # Nd f32|f16, 0d complex
+    def __rtruediv__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[float32 | float16]],
+        other: complex,
+        /,
+    ) -> ndarray[ShapeT, _dtype[complex64]]: ...
+    @overload  # Nd ~m8, 0d|Nd ~m8
+    def __rtruediv__[ShapeT: _Shape](  # type: ignore[misc]
+        self: ndarray[ShapeT, _dtype[timedelta64]],
+        other: timedelta64 | ndarray[ShapeT, _dtype[timedelta64]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[float64]]: ...
+    @overload  # Nd +floating, 0d|Nd ~m8
+    def __rtruediv__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[integer | floating]],
+        other: timedelta64 | ndarray[ShapeT, _dtype[timedelta64]],
+        /,
+    ) -> ndarray[ShapeT, _dtype[timedelta64]]: ...
+    @overload  # ?d ~bool, ?d T:inexact
+    def __rtruediv__[ScalarT: inexact](self: NDArray[bool_], other: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
+    @overload  # ?d T:inexact, ?d +bool|T
+    def __rtruediv__[ScalarT: inexact](
+        self: NDArray[ScalarT],
+        other: _ArrayLikeBool_co | _ArrayLike[ScalarT],
+        /,
+    ) -> NDArray[ScalarT]: ...
+    @overload  # ?d integer|bool, ?d +f64
+    def __rtruediv__(self: NDArray[integer | bool_], other: _ArrayLikeFloat64_co, /) -> NDArray[float64]: ...
+    @overload  # ?d ~f64, ?d +f64
+    def __rtruediv__(self: NDArray[float64], other: _ArrayLikeFloat64_co, /) -> NDArray[float64]: ...
+    @overload  # ?d +f64, ?d ~f64
+    def __rtruediv__(self: _ArrayFloat64_co, other: _ArrayLike[float64] | _NestedList[float], /) -> NDArray[float64]: ...
+    @overload  # ?d ~c128, ?d +c128
     def __rtruediv__(self: NDArray[complex128], other: _ArrayLikeComplex128_co, /) -> NDArray[complex128]: ...
-    @overload
-    def __rtruediv__(self: _ArrayComplex128_co, other: _ArrayLike[complexfloating[_64Bit]], /) -> NDArray[complex128]: ...
-    @overload
-    def __rtruediv__(self: NDArray[floating], other: _ArrayLikeFloat_co, /) -> NDArray[floating]: ...
-    @overload
-    def __rtruediv__(self: _ArrayFloat_co, other: _ArrayLike[floating], /) -> NDArray[floating]: ...
-    @overload
-    def __rtruediv__(self: NDArray[complexfloating], other: _ArrayLikeNumber_co, /) -> NDArray[complexfloating]: ...
-    @overload
-    def __rtruediv__(self: _ArrayNumber_co, other: _ArrayLike[complexfloating], /) -> NDArray[complexfloating]: ...
-    @overload
-    def __rtruediv__(self: NDArray[inexact], other: _ArrayLikeNumber_co, /) -> NDArray[inexact]: ...
-    @overload
-    def __rtruediv__(self: NDArray[number], other: _ArrayLikeNumber_co, /) -> NDArray[number]: ...
-    @overload
+    @overload  # ?d +c128, ?d ~c128
+    def __rtruediv__(
+        self: _ArrayComplex128_co,
+        other: _ArrayLike[complex128] | _NestedList[complex],
+        /,
+    ) -> NDArray[complex128]: ...
+    @overload  # ?d ~m8, ?d ~m8
     def __rtruediv__(self: NDArray[timedelta64], other: _ArrayLike[timedelta64], /) -> NDArray[float64]: ...
-    @overload
+    @overload  # ?d +floating, ?d ~m8
     def __rtruediv__(self: NDArray[integer | floating], other: _ArrayLike[timedelta64], /) -> NDArray[timedelta64]: ...
-    @overload
-    def __rtruediv__(self: NDArray[object_], other: Any, /) -> Any: ...
-    @overload
-    def __rtruediv__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
+    @overload  # ?d ~object, ?d
+    def __rtruediv__(self: NDArray[object_], other: Any, /) -> NDArray[object_]: ...
+    @overload  # ?d, ?d +object
+    def __rtruediv__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
+    @overload  # fallback
+    def __rtruediv__(self, other: ArrayLike, /) -> NDArray[Any]: ...
 
     # Keep in sync with `MaskedArray.__floordiv__`
     @overload
