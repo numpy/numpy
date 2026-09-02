@@ -130,9 +130,11 @@ any_to_string_resolve_descriptors(
         Py_INCREF(given_descrs[1]);
         loop_descrs[1] = given_descrs[1];
     }
-
-    Py_INCREF(given_descrs[0]);
-    loop_descrs[0] = given_descrs[0];
+    loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
+    if (loop_descrs[0] == NULL) {
+        Py_DECREF(loop_descrs[1]);
+        return (NPY_CASTING)-1;
+    }
 
     return safety;
 }
@@ -339,8 +341,10 @@ string_to_fixed_width_resolve_descriptors(
         return (NPY_CASTING)-1;
     }
     else {
-        Py_INCREF(given_descrs[1]);
-        loop_descrs[1] = given_descrs[1];
+        loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
+        if (loop_descrs[1] == NULL) {
+            return (NPY_CASTING)-1;
+        }
     }
 
     Py_INCREF(given_descrs[0]);
@@ -460,8 +464,10 @@ string_to_bool_resolve_descriptors(PyObject *NPY_UNUSED(self),
         loop_descrs[1] = PyArray_DescrNewFromType(NPY_BOOL);
     }
     else {
-        Py_INCREF(given_descrs[1]);
-        loop_descrs[1] = given_descrs[1];
+        loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
+        if (loop_descrs[1] == NULL) {
+            return (NPY_CASTING)-1;
+        }
     }
 
     Py_INCREF(given_descrs[0]);
@@ -745,8 +751,10 @@ string_to_int_resolve_descriptors(
         loop_descrs[1] = PyArray_DescrNewFromType(typenum);
     }
     else {
-        Py_INCREF(given_descrs[1]);
-        loop_descrs[1] = given_descrs[1];
+        loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
+        if (loop_descrs[1] == NULL) {
+            return (NPY_CASTING)-1;
+        }
     }
 
     Py_INCREF(given_descrs[0]);
@@ -1186,8 +1194,10 @@ string_to_float_resolve_descriptors(
         loop_descrs[1] = PyArray_DescrNewFromType(typenum);
     }
     else {
-        Py_INCREF(given_descrs[1]);
-        loop_descrs[1] = given_descrs[1];
+        loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
+        if (loop_descrs[1] == NULL) {
+            return (NPY_CASTING)-1;
+        }
     }
 
     Py_INCREF(given_descrs[0]);
@@ -1433,8 +1443,10 @@ string_to_datetime_timedelta_resolve_descriptors(
         return (NPY_CASTING)-1;
     }
     else {
-        Py_INCREF(given_descrs[1]);
-        loop_descrs[1] = given_descrs[1];
+        loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
+        if (loop_descrs[1] == NULL) {
+            return (NPY_CASTING)-1;
+        }
     }
 
     Py_INCREF(given_descrs[0]);
