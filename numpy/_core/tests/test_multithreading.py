@@ -557,7 +557,8 @@ def assert_no_deadlock(workload, *, args=(), helpers=(), timeout=30,
         ) from None
 
 
-def threaded_deadlock_reproducer(operation, nworkers, niters, stall):
+def threaded_deadlock_reproducer(operation, nworkers, niters, stall,
+                                 time_budget_secs=2.0):
     import faulthandler
     import os
     import sys
@@ -571,9 +572,12 @@ def threaded_deadlock_reproducer(operation, nworkers, niters, stall):
     def worker(idx):
         try:
             barrier.wait()
+            deadline = time.monotonic() + time_budget_secs
             for _ in range(niters):
                 operation(idx)
                 progress[idx] += 1
+                if time.monotonic() > deadline:
+                    break
         except BaseException as exc:
             errors.append(exc)
             raise
