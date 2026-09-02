@@ -6907,7 +6907,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, ?d +object
     def __add__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
     @overload  # fallback
-    def __add__(self, other: ArrayLike, /) -> NDArray[Any]: ...
+    def __add__(self, other: ArrayLike, /) -> Any: ...
 
     # keep in sync with __add__
     @overload  # Nd Any, 0d|Nd  (workaround)
@@ -7065,7 +7065,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d ~bytes, ?d +bytes
     def __radd__(self: NDArray[bytes_], other: _ArrayLikeBytes_co, /) -> NDArray[bytes_]: ...
     @overload  # ?d ~str, ?d ~StringDType
-    def __radd__(  # type: ignore[misc]
+    def __radd__(
         self: NDArray[str_],
         other: ndarray[Any, dtypes.StringDType],
         /,
@@ -7083,7 +7083,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, ?d +object
     def __radd__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
     @overload  # fallback
-    def __radd__(self, other: ArrayLike, /) -> NDArray[Any]: ...
+    def __radd__(self, other: ArrayLike, /) -> Any: ...
 
     #
     @overload  # Nd Any, 0d|Nd  (workaround)
@@ -7283,7 +7283,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, ?d +object
     def __sub__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
     @overload  # fallback
-    def __sub__(self, other: ArrayLike, /) -> NDArray[Any]: ...
+    def __sub__(self, other: ArrayLike, /) -> Any: ...
 
     # keep in sync with __sub__ (modulo non-commutative datetime64)
     @overload  # Nd Any, 0d|Nd  (workaround)
@@ -7447,7 +7447,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, ?d +object
     def __rsub__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
     @overload  # fallback
-    def __rsub__(self, other: ArrayLike, /) -> NDArray[Any]: ...
+    def __rsub__(self, other: ArrayLike, /) -> Any: ...
 
     #
     @overload  # Nd Any, 0d|Nd  (workaround)
@@ -7669,7 +7669,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, ?d +object
     def __mul__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
     @overload  # fallback
-    def __mul__(self, other: ArrayLike, /) -> NDArray[Any]: ...
+    def __mul__(self, other: ArrayLike, /) -> Any: ...
 
     # keep in sync with __mul__
     @overload  # Nd Any, 0d|Nd  (workaround)
@@ -7727,7 +7727,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[complex128]]: ...
     @overload  # Nd ~int, Nd ~StringDType
-    def __rmul__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rmul__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[integer]],
         other: ndarray[ShapeT, dtypes.StringDType],
         /,
@@ -7799,7 +7799,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[timedelta64]]: ...
     @overload  # Nd ~StringDType, 0d|Nd int
-    def __rmul__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rmul__[ShapeT: _Shape](
         self: ndarray[ShapeT, dtypes.StringDType],
         other: int | integer | ndarray[ShapeT, _dtype[integer]],
         /,
@@ -7835,7 +7835,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d ~StringDType, ?d +int
     def __rmul__(self: ndarray[Any, dtypes.StringDType], other: _ArrayLikeInt, /) -> ndarray[_AnyShape, dtypes.StringDType]: ...
     @overload  # ?d ~int, ?d ~StringDType
-    def __rmul__(  # type: ignore[misc]
+    def __rmul__(
         self: NDArray[integer],
         other: ndarray[Any, dtypes.StringDType],
         /,
@@ -7845,7 +7845,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, ?d +object
     def __rmul__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
     @overload  # fallback
-    def __rmul__(self, other: ArrayLike, /) -> NDArray[Any]: ...
+    def __rmul__(self, other: ArrayLike, /) -> Any: ...
 
     #
     @overload  # Nd Any, 0d|Nd  (workaround)
@@ -8108,7 +8108,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, ?d +object
     def __pow__(self: NDArray[Any], other: _ArrayLikeObject_co, mod: None = None, /) -> NDArray[object_]: ...
     @overload  # fallback
-    def __pow__(self, other: ArrayLike, mod: None = None, /) -> NDArray[Any]: ...
+    def __pow__(self, other: ArrayLike, mod: None = None, /) -> Any: ...
 
     # keep in sync with __pow__
     @overload  # Nd Any, 0d|Nd  (workaround)
@@ -8333,7 +8333,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, ?d +object
     def __rpow__(self: NDArray[Any], other: _ArrayLikeObject_co, mod: None = None, /) -> NDArray[object_]: ...
     @overload  # fallback
-    def __rpow__(self, other: ArrayLike, mod: None = None, /) -> NDArray[Any]: ...
+    def __rpow__(self, other: ArrayLike, mod: None = None, /) -> Any: ...
 
     #
     @overload  # Nd Any, 0d|Nd  (workaround)
@@ -8499,7 +8499,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, ?d +object
     def __truediv__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
     @overload  # fallback
-    def __truediv__(self, other: ArrayLike, /) -> NDArray[Any]: ...
+    def __truediv__(self, other: ArrayLike, /) -> Any: ...
 
     # keep in sync with __truediv__ (modulo non-commutative timedelta64)
     @overload  # Nd Any, 0d|Nd  (workaround)
@@ -8633,7 +8633,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, ?d +object
     def __rtruediv__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
     @overload  # fallback
-    def __rtruediv__(self, other: ArrayLike, /) -> NDArray[Any]: ...
+    def __rtruediv__(self, other: ArrayLike, /) -> Any: ...
 
     #
     @overload  # Nd Any, 0d|Nd  (workaround)
@@ -8811,7 +8811,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         self: NDArray[timedelta64 | floating | integer | bool_ | object_],
         other: _DualArrayLike[_dtype[floating | integer | bool_ | object_], float],
         /,
-    ) -> NDArray[Any]: ...
+    ) -> Any: ...
 
     # keep in sync with __floordiv__ (modulo non-commutative timedelta64)
     @overload  # Nd Any, 0d|Nd  (workaround)
@@ -8949,7 +8949,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         self: NDArray[timedelta64 | floating | integer | bool_ | object_],
         other: _DualArrayLike[_dtype[floating | integer | bool_ | object_], float],
         /,
-    ) -> NDArray[Any]: ...
+    ) -> Any: ...
 
     #
     @overload  # Nd Any, 0d|Nd  (workaround)
@@ -9113,7 +9113,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         self: NDArray[timedelta64 | floating | integer | bool_ | object_],
         other: _DualArrayLike[_dtype[floating | integer | bool_ | object_], float],
         /,
-    ) -> NDArray[Any]: ...
+    ) -> Any: ...
 
     # keep in sync with __mod__
     @overload  # Nd Any, 0d|Nd  (workaround)
@@ -9243,7 +9243,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         self: NDArray[timedelta64 | floating | integer | bool_ | object_],
         other: _DualArrayLike[_dtype[floating | integer | bool_ | object_], float],
         /,
-    ) -> NDArray[Any]: ...
+    ) -> Any: ...
 
     #
     @overload  # Nd Any, 0d|Nd  (workaround)
