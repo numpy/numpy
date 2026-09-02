@@ -8714,8 +8714,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def __rfloordiv__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
     @overload  # fallback
     def __rfloordiv__(
-        self: NDArray[bool_ | integer | floating | timedelta64 | object_],
-        other: _DualArrayLike[_dtype[bool_ | integer | floating | object_], float],
+        self: NDArray[timedelta64 | floating | integer | bool_ | object_],
+        other: _DualArrayLike[_dtype[floating | integer | bool_ | object_], float],
         /,
     ) -> NDArray[Any]: ...
 
@@ -8974,66 +8974,270 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def __rmod__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
     @overload  # fallback
     def __rmod__(
-        self: NDArray[bool_ | integer | floating | timedelta64 | object_],
-        other: _DualArrayLike[_dtype[bool_ | integer | floating | object_], float],
+        self: NDArray[timedelta64 | floating | integer | bool_ | object_],
+        other: _DualArrayLike[_dtype[floating | integer | bool_ | object_], float],
         /,
     ) -> NDArray[Any]: ...
 
     #
-    @overload
+    @overload  # Nd Any, 0d|Nd  (workaround)
+    def __divmod__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[Never]],
+        rhs: complex | generic | ndarray[ShapeT, Any],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[Any]]]: ...
+    @overload  # Nd u64, Nd +u64
+    def __divmod__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[uint64]],
+        rhs: ndarray[ShapeT, _dtype[_UInt32_co]],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[uint64]]]: ...
+    @overload  # Nd +u64, Nd u64
+    def __divmod__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[_UInt32_co]],
+        rhs: ndarray[ShapeT, _dtype[uint64]],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[uint64]]]: ...
+    @overload  # Nd i64, Nd +i64
+    def __divmod__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[int64]],
+        rhs: ndarray[ShapeT, _dtype[_Int32_co]],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[int64]]]: ...
+    @overload  # Nd +i64, Nd i64
+    def __divmod__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[_Int32_co]],
+        rhs: ndarray[ShapeT, _dtype[int64]],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[int64]]]: ...
+    @overload  # Nd f64, Nd +f64
+    def __divmod__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[float64]],
+        rhs: ndarray[ShapeT, _dtype[_Float32_co]],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[float64]]]: ...
+    @overload  # Nd +f64, Nd f64
+    def __divmod__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[_Float32_co]],
+        rhs: ndarray[ShapeT, _dtype[float64]],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[float64]]]: ...
+    @overload  # Nd bool, 0d|Nd bool
+    def __divmod__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[int8 | bool_]],
+        rhs: py_bool | int8 | bool_ | ndarray[ShapeT, _dtype[int8 | bool_]],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[int8]]]: ...
+    @overload  # Nd T, Nd T
+    def __divmod__[ShapeT: _Shape, ScalarT: floating | integer](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        rhs: py_bool | bool_ | ndarray[ShapeT, _dtype[ScalarT]],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[ScalarT]]]: ...
+    @overload  # Nd bool, 0d|Nd T
+    def __divmod__[ShapeT: _Shape, ScalarT: floating | integer](
+        self: ndarray[ShapeT, _dtype[bool_]],
+        rhs: ScalarT | ndarray[ShapeT, _dtype[ScalarT]],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[ScalarT]]]: ...
+    @overload  # Nd T, 0d|Nd bool | 0d int|T
+    def __divmod__[ShapeT: _Shape, ScalarT: floating | integer](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        rhs: ScalarT | bool_ | int | ndarray[ShapeT, _dtype[bool_]],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[ScalarT]]]: ...
+    @overload  # Nd T, 0d float
+    def __divmod__[ShapeT: _Shape, ScalarT: floating](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        rhs: float,
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[ScalarT]]]: ...
+    @overload  # Nd bool, 0d int
+    def __divmod__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[bool_]],
+        rhs: int,
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[int64 | Any]]]: ...
+    @overload  # Nd integer, 0d float
+    def __divmod__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[integer]],
+        rhs: float,
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[float64]]]: ...
+    @overload  # Nd ~m8, 0d|Nd ~m8
+    def __divmod__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[timedelta64]],
+        rhs: timedelta64 | ndarray[ShapeT, _dtype[timedelta64]],
+        /,
+    ) -> tuple[ndarray[ShapeT, _dtype[int64]], ndarray[ShapeT, _dtype[timedelta64]]]: ...
+    @overload  # ?d ~bool, ?d T
     def __divmod__[ScalarT: floating | integer](
-        self: NDArray[ScalarT], rhs: int | bool_, /
-    ) -> _2Tuple[ndarray[_ShapeT_co, _dtype[ScalarT]]]: ...
-    @overload
-    def __divmod__[ScalarT: floating | integer](
-        self: NDArray[ScalarT], rhs: _ArrayLikeBool_co, /
+        self: NDArray[bool_],
+        rhs: _ArrayLike[ScalarT],
+        /,
     ) -> _2Tuple[NDArray[ScalarT]]: ...
-    @overload
+    @overload  # ?d T, ?d +bool|T
+    def __divmod__[ScalarT: floating | integer](
+        self: NDArray[ScalarT],
+        rhs: _ArrayLikeBool_co | _ArrayLike[ScalarT],
+        /,
+    ) -> _2Tuple[NDArray[ScalarT]]: ...
+    @overload  # ?d ~bool, ?d +bool
     def __divmod__(self: NDArray[bool_], rhs: _ArrayLikeBool_co, /) -> _2Tuple[NDArray[int8]]: ...
-    @overload
-    def __divmod__[ScalarT: floating | integer](
-        self: NDArray[bool_], rhs: _ArrayLike[ScalarT], /
-    ) -> _2Tuple[NDArray[ScalarT]]: ...
-    @overload
+    @overload  # ?d ~u64, ?d +u64
+    def __divmod__(self: NDArray[uint64], rhs: _ArrayLikeUInt_co, /) -> _2Tuple[NDArray[uint64]]: ...
+    @overload  # ?d +u64, ?d ~u64
+    def __divmod__(self: _ArrayUInt_co, rhs: _ArrayLike[uint64], /) -> _2Tuple[NDArray[uint64]]: ...
+    @overload  # ?d ~i64, ?d +i64
+    def __divmod__(self: NDArray[int64], rhs: _DualArrayLike[_dtype[int64 | _Int32_co], int], /) -> _2Tuple[NDArray[int64]]: ...
+    @overload  # ?d +i64, ?d ~i64
+    def __divmod__(self: NDArray[_Int32_co], rhs: _ArrayLike[int64] | _NestedList[int], /) -> _2Tuple[NDArray[int64]]: ...
+    @overload  # ?d ~f64, ?d +f64
     def __divmod__(self: NDArray[float64], rhs: _ArrayLikeFloat64_co, /) -> _2Tuple[NDArray[float64]]: ...
-    @overload
-    def __divmod__(self: _ArrayFloat64_co, rhs: _ArrayLike[floating[_64Bit]], /) -> _2Tuple[NDArray[float64]]: ...
-    @overload
-    def __divmod__(self: _ArrayUInt_co, rhs: _ArrayLikeUInt_co, /) -> _2Tuple[NDArray[unsignedinteger]]: ...
-    @overload
-    def __divmod__(self: _ArrayInt_co, rhs: _ArrayLikeInt_co, /) -> _2Tuple[NDArray[signedinteger]]: ...
-    @overload
-    def __divmod__(self: _ArrayFloat_co, rhs: _ArrayLikeFloat_co, /) -> _2Tuple[NDArray[floating]]: ...
-    @overload
-    def __divmod__(self: NDArray[timedelta64], rhs: _ArrayLike[timedelta64], /) -> tuple[NDArray[int64], NDArray[timedelta64]]: ...
+    @overload  # ?d +f64, ?d ~f64
+    def __divmod__(self: _ArrayFloat64_co, rhs: _ArrayLike[float64] | _NestedList[float], /) -> _2Tuple[NDArray[float64]]: ...
+    @overload  # ?d ~m8, ?d ~m8
+    def __divmod__(
+        self: NDArray[timedelta64],
+        rhs: _ArrayLike[timedelta64],
+        /,
+    ) -> tuple[NDArray[int64], NDArray[timedelta64]]: ...
+    @overload  # fallback
+    def __divmod__(
+        self: NDArray[timedelta64 | floating | integer | bool_],
+        rhs: _DualArrayLike[_dtype[floating | integer | bool_], float],
+        /,
+    ) -> _2Tuple[NDArray[Any]]: ...
 
-    #
-    @overload  # signature equivalent to __divmod__
+    # keep in sync with __divmod__
+    @overload  # Nd Any, 0d|Nd  (workaround)
+    def __rdivmod__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[Never]],
+        lhs: complex | generic | ndarray[ShapeT, Any],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[Any]]]: ...
+    @overload  # Nd u64, Nd +u64
+    def __rdivmod__[ShapeT: _Shape](  # type: ignore[misc]
+        self: ndarray[ShapeT, _dtype[uint64]],
+        lhs: ndarray[ShapeT, _dtype[_UInt32_co]],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[uint64]]]: ...
+    @overload  # Nd +u64, Nd u64
+    def __rdivmod__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[_UInt32_co]],
+        lhs: ndarray[ShapeT, _dtype[uint64]],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[uint64]]]: ...
+    @overload  # Nd i64, Nd +i64
+    def __rdivmod__[ShapeT: _Shape](  # type: ignore[misc]
+        self: ndarray[ShapeT, _dtype[int64]],
+        lhs: ndarray[ShapeT, _dtype[_Int32_co]],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[int64]]]: ...
+    @overload  # Nd +i64, Nd i64
+    def __rdivmod__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[_Int32_co]],
+        lhs: ndarray[ShapeT, _dtype[int64]],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[int64]]]: ...
+    @overload  # Nd f64, Nd +f64
+    def __rdivmod__[ShapeT: _Shape](  # type: ignore[misc]
+        self: ndarray[ShapeT, _dtype[float64]],
+        lhs: ndarray[ShapeT, _dtype[_Float32_co]],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[float64]]]: ...
+    @overload  # Nd +f64, Nd f64
+    def __rdivmod__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[_Float32_co]],
+        lhs: ndarray[ShapeT, _dtype[float64]],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[float64]]]: ...
+    @overload  # Nd bool, 0d|Nd bool
+    def __rdivmod__[ShapeT: _Shape](  # type: ignore[misc]
+        self: ndarray[ShapeT, _dtype[int8 | bool_]],
+        lhs: py_bool | int8 | bool_ | ndarray[ShapeT, _dtype[int8 | bool_]],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[int8]]]: ...
+    @overload  # Nd T, Nd T
+    def __rdivmod__[ShapeT: _Shape, ScalarT: floating | integer](  # type: ignore[misc]
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        lhs: py_bool | bool_ | ndarray[ShapeT, _dtype[ScalarT]],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[ScalarT]]]: ...
+    @overload  # Nd bool, 0d|Nd T
+    def __rdivmod__[ShapeT: _Shape, ScalarT: floating | integer](
+        self: ndarray[ShapeT, _dtype[bool_]],
+        lhs: ScalarT | ndarray[ShapeT, _dtype[ScalarT]],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[ScalarT]]]: ...
+    @overload  # Nd T, 0d|Nd bool | 0d int|T
+    def __rdivmod__[ShapeT: _Shape, ScalarT: floating | integer](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        lhs: ScalarT | bool_ | int | ndarray[ShapeT, _dtype[bool_]],
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[ScalarT]]]: ...
+    @overload  # Nd T, 0d float
+    def __rdivmod__[ShapeT: _Shape, ScalarT: floating](
+        self: ndarray[ShapeT, _dtype[ScalarT]],
+        lhs: float,
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[ScalarT]]]: ...
+    @overload  # Nd bool, 0d int
+    def __rdivmod__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[bool_]],
+        lhs: int,
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[int64 | Any]]]: ...
+    @overload  # Nd integer, 0d float
+    def __rdivmod__[ShapeT: _Shape](
+        self: ndarray[ShapeT, _dtype[integer]],
+        lhs: float,
+        /,
+    ) -> _2Tuple[ndarray[ShapeT, _dtype[float64]]]: ...
+    @overload  # Nd ~m8, 0d|Nd ~m8
+    def __rdivmod__[ShapeT: _Shape](  # type: ignore[misc]
+        self: ndarray[ShapeT, _dtype[timedelta64]],
+        lhs: timedelta64 | ndarray[ShapeT, _dtype[timedelta64]],
+        /,
+    ) -> tuple[ndarray[ShapeT, _dtype[int64]], ndarray[ShapeT, _dtype[timedelta64]]]: ...
+    @overload  # ?d ~bool, ?d T
     def __rdivmod__[ScalarT: floating | integer](
-        self: NDArray[ScalarT], lhs: int | bool_, /
-    ) -> _2Tuple[ndarray[_ShapeT_co, _dtype[ScalarT]]]: ...
-    @overload
-    def __rdivmod__[ScalarT: floating | integer](
-        self: NDArray[ScalarT], lhs: _ArrayLikeBool_co, /
+        self: NDArray[bool_],
+        lhs: _ArrayLike[ScalarT],
+        /,
     ) -> _2Tuple[NDArray[ScalarT]]: ...
-    @overload
+    @overload  # ?d T, ?d +bool|T
+    def __rdivmod__[ScalarT: floating | integer](
+        self: NDArray[ScalarT],
+        lhs: _ArrayLikeBool_co | _ArrayLike[ScalarT],
+        /,
+    ) -> _2Tuple[NDArray[ScalarT]]: ...
+    @overload  # ?d ~bool, ?d +bool
     def __rdivmod__(self: NDArray[bool_], lhs: _ArrayLikeBool_co, /) -> _2Tuple[NDArray[int8]]: ...
-    @overload
-    def __rdivmod__[ScalarT: floating | integer](
-        self: NDArray[bool_], lhs: _ArrayLike[ScalarT], /
-    ) -> _2Tuple[NDArray[ScalarT]]: ...
-    @overload
+    @overload  # ?d ~u64, ?d +u64
+    def __rdivmod__(self: NDArray[uint64], lhs: _ArrayLikeUInt_co, /) -> _2Tuple[NDArray[uint64]]: ...
+    @overload  # ?d +u64, ?d ~u64
+    def __rdivmod__(self: _ArrayUInt_co, lhs: _ArrayLike[uint64], /) -> _2Tuple[NDArray[uint64]]: ...
+    @overload  # ?d ~i64, ?d +i64
+    def __rdivmod__(self: NDArray[int64], lhs: _DualArrayLike[_dtype[int64 | _Int32_co], int], /) -> _2Tuple[NDArray[int64]]: ...
+    @overload  # ?d +i64, ?d ~i64
+    def __rdivmod__(self: NDArray[_Int32_co], lhs: _ArrayLike[int64] | _NestedList[int], /) -> _2Tuple[NDArray[int64]]: ...
+    @overload  # ?d ~f64, ?d +f64
     def __rdivmod__(self: NDArray[float64], lhs: _ArrayLikeFloat64_co, /) -> _2Tuple[NDArray[float64]]: ...
-    @overload
-    def __rdivmod__(self: _ArrayFloat64_co, lhs: _ArrayLike[floating[_64Bit]], /) -> _2Tuple[NDArray[float64]]: ...
-    @overload
-    def __rdivmod__(self: _ArrayUInt_co, lhs: _ArrayLikeUInt_co, /) -> _2Tuple[NDArray[unsignedinteger]]: ...
-    @overload
-    def __rdivmod__(self: _ArrayInt_co, lhs: _ArrayLikeInt_co, /) -> _2Tuple[NDArray[signedinteger]]: ...
-    @overload
-    def __rdivmod__(self: _ArrayFloat_co, lhs: _ArrayLikeFloat_co, /) -> _2Tuple[NDArray[floating]]: ...
-    @overload
-    def __rdivmod__(self: NDArray[timedelta64], lhs: _ArrayLike[timedelta64], /) -> tuple[NDArray[int64], NDArray[timedelta64]]: ...
+    @overload  # ?d +f64, ?d ~f64
+    def __rdivmod__(self: _ArrayFloat64_co, lhs: _ArrayLike[float64] | _NestedList[float], /) -> _2Tuple[NDArray[float64]]: ...
+    @overload  # ?d ~m8, ?d ~m8
+    def __rdivmod__(
+        self: NDArray[timedelta64],
+        lhs: _ArrayLike[timedelta64],
+        /,
+    ) -> tuple[NDArray[int64], NDArray[timedelta64]]: ...
+    @overload  # fallback
+    def __rdivmod__(
+        self: NDArray[timedelta64 | floating | integer | bool_],
+        lhs: _DualArrayLike[_dtype[floating | integer | bool_], float],
+        /,
+    ) -> _2Tuple[NDArray[Any]]: ...
 
     #
     @overload  # Nd bool, 0d|Nd bool
