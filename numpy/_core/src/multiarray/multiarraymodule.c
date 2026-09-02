@@ -5250,25 +5250,8 @@ multiarray_umath_free(void *m)
 #endif
 
 static int
-_multiarray_umath_exec(PyObject *m) {
+_multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
     PyObject *d, *s, *c_api;
-
-    // https://docs.python.org/3/howto/isolating-extensions.html#opt-out-limiting-to-one-module-object-per-process
-    if (module_loaded) {
-        PyErr_SetString(PyExc_ImportError,
-                        "cannot load module more than once per process");
-        return -1;
-    }
-    module_loaded = 1;
-
-    /*
-     * Deallocating the module also frees the module state, so leak a
-     * reference to keep it valid for the life of the process.
-     */
-    Py_INCREF(m);
-
-    multiarray_umath_state *state = get_module_state(m);
-    _npy_module_state = state;
 
     /* Initialize CPU features */
     if (npy_cpu_init() < 0) {
@@ -5653,6 +5636,33 @@ _multiarray_umath_exec(PyObject *m) {
     PyDict_SetItemString(d, "_UFUNC_API", c_api);
     Py_DECREF(c_api);
     if (PyErr_Occurred()) {
+        return -1;
+    }
+
+    return 0;
+}
+
+static int
+_multiarray_umath_exec(PyObject *m) {
+    if (module_loaded) {
+        PyErr_SetString(PyExc_ImportError,
+                        "cannot load module more than once per process");
+        return -1;
+    }
+    module_loaded = 1;
+
+    /*
+     * Deallocating the module also frees the module state, so leak a
+     * reference to keep it valid for the life of the process.
+     */
+    Py_INCREF(m);
+
+    multiarray_umath_state *state = get_module_state(m);
+    _npy_module_state = state;
+
+    if (_multiarray_umath_exec_impl(m, state) < 0) {
+        _npy_module_state = NULL;
+        Py_DECREF(m);
         return -1;
     }
 
