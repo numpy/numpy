@@ -59,7 +59,7 @@ NumPy provides several hooks that classes can customize:
    - *ufunc* is the ufunc object that was called.
    - *method* is a string indicating which Ufunc method was called
      (one of ``"__call__"``, ``"reduce"``, ``"reduceat"``,
-     ``"accumulate"``, ``"outer"``, ``"inner"``).
+     ``"segmented_reduce"``, ``"accumulate"``, ``"outer"``, ``"inner"``).
    - *inputs* is a tuple of the input arguments to the ``ufunc``.
    - *kwargs* is a dictionary containing the optional input arguments
      of the ufunc. If given, any ``out`` arguments, both positional
