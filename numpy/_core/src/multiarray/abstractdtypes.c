@@ -406,32 +406,35 @@ npy_update_operand_for_scalar(
 
 
 /*
- * If `*operand` (converted from item `i` of sequence `op`) is marked with
- * NPY_ARRAY_WAS_PYTHON_STR, convert it again from the original str once the
- * operation's target descriptor is known, so that the fixed-width unicode
- * temporary cannot lose trailing nulls.
+ * If `*operand` (converted from item `i` of sequence `op`) is marked as a
+ * Python int, float, complex or str, convert it again from the original
+ * object once the operation's target descriptor is known, with the same
+ * rules as ufuncs and `copyto`.
  */
 NPY_NO_EXPORT int
-npy_update_operand_if_pystr(
+npy_update_operand_if_pyscalar(
     PyArrayObject **operand, PyObject *op, Py_ssize_t i,
-    PyArray_Descr *target)
+    PyArray_Descr *target, NPY_CASTING casting)
 {
-    if (!(PyArray_FLAGS(*operand) & NPY_ARRAY_WAS_PYTHON_STR)) {
+    if (!(PyArray_FLAGS(*operand) &
+            (NPY_ARRAY_WAS_PYTHON_LITERAL | NPY_ARRAY_WAS_PYTHON_STR))) {
         return 0;
     }
     PyObject *scalar = PySequence_GetItem(op, i);
     if (scalar == NULL) {
         return -1;
     }
+    PyArray_DTypeMeta *DType = NPY_DTYPE(PyArray_DESCR(*operand));
+    Py_INCREF(DType);
+    npy_mark_tmp_array_if_pyscalar(scalar, *operand, &DType);
     PyArray_Descr *descr = npy_find_descr_for_scalar(
-            scalar, PyArray_DESCR(*operand),
-            NPY_DTYPE(PyArray_DESCR(*operand)), NPY_DTYPE(target));
+            scalar, PyArray_DESCR(*operand), DType, NPY_DTYPE(target));
+    Py_DECREF(DType);
     if (descr == NULL) {
         Py_DECREF(scalar);
         return -1;
     }
-    int res = npy_update_operand_for_scalar(
-            operand, scalar, descr, NPY_SAFE_CASTING);
+    int res = npy_update_operand_for_scalar(operand, scalar, descr, casting);
     Py_DECREF(scalar);
     Py_DECREF(descr);
     return res;
