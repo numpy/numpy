@@ -878,6 +878,9 @@ type _PermXYZ[X, Y, Z] = tuple[X, Y, Z] | tuple[X, Z, Y] | tuple[Y, X, Z] | tupl
 type _BoolND[ShapeT: _Shape] = ndarray[ShapeT, dtype[bool_]]
 type _IntND[ShapeT: _Shape] = ndarray[ShapeT, dtype[integer]]
 type _ToIntJustND = ndarray[_JustND, dtype[integer | bool_]]
+type _ToInt0D = _IntLike_co | _IntND[_0D]
+type _ToInt1D = _IntND[_1D] | Sequence[_IntLike_co]
+type _ToInt2D = _IntND[_2D] | Sequence[Sequence[_IntLike_co]]
 
 type _ToNewAxis = None | _PermXY[None, _ToSlice]
 type _ToSlices = _ToSlice | _2Tuple[_ToSlice] | _3Tuple[_ToSlice]
@@ -5980,42 +5983,169 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         out: ArrayT,
     ) -> ArrayT: ...
 
-    @overload
+    #
+    @overload  # Nd, ?d  (workaround)
+    def take(
+        self,
+        indices: _ToIntJustND,
+        /,
+        axis: SupportsIndex | None = None,
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[_AnyShape, _DTypeT_co]: ...
+    @overload  # Nd, 0d, axis=None  (default)
     def take[ScalarT: generic](
         self: NDArray[ScalarT],
-        indices: _IntLike_co,
+        indices: _ToInt0D,
         /,
-        axis: SupportsIndex | None = ...,
+        axis: None = None,
         out: None = None,
-        mode: _ModeKind = ...,
+        mode: _ModeKind = "raise",
     ) -> ScalarT: ...
-    @overload
+    @overload  # Nd, 1d, axis=None  (default)
+    def take(
+        self,
+        indices: _ToInt1D,
+        /,
+        axis: None = None,
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[_1D, _DTypeT_co]: ...
+    @overload  # Nd, 2d, axis=None  (default)
+    def take(
+        self,
+        indices: _ToInt2D,
+        /,
+        axis: None = None,
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[_2D, _DTypeT_co]: ...
+    @overload  # fallback, axis=None  (default)
     def take(
         self,
         indices: _ArrayLikeInt_co,
         /,
-        axis: SupportsIndex | None = ...,
+        axis: None = None,
         out: None = None,
-        mode: _ModeKind = ...,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[_AnyShape, _DTypeT_co] | Any: ...
+    @overload  # ?d, 0d, axis=<given>  (workaround)
+    def take[DTypeT: _dtype](
+        self: ndarray[_JustND, DTypeT],
+        indices: _ToInt0D,
+        /,
+        axis: SupportsIndex,
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[_AnyShape, DTypeT] | Any: ...
+    @overload  # ?d, ?d, axis=<given>  (workaround)
+    def take[DTypeT: _dtype](
+        self: ndarray[_JustND, DTypeT],
+        indices: _ArrayLikeInt_co,
+        /,
+        axis: SupportsIndex,
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[_AnyShape, DTypeT]: ...
+    @overload  # >=1d, 1d, axis=<given>
+    def take[ShapeT: tuple[int, *tuple[int, ...]], DTypeT: _dtype](
+        self: ndarray[ShapeT, DTypeT],
+        indices: _ToInt1D,
+        /,
+        axis: SupportsIndex,
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, DTypeT]: ...
+    @overload  # 1d, 0d, axis=<given>
+    def take[ScalarT: generic](
+        self: ndarray[_1D, _dtype[ScalarT]],
+        indices: _ToInt0D,
+        /,
+        axis: SupportsIndex,
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ScalarT: ...
+    @overload  # 1d, 2d, axis=<given>
+    def take[DTypeT: _dtype](
+        self: ndarray[_1D, DTypeT],
+        indices: _ToInt2D,
+        /,
+        axis: SupportsIndex,
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[_2D, DTypeT]: ...
+    @overload  # 2d, 0d, axis=<given>
+    def take[DTypeT: _dtype](
+        self: ndarray[_2D, DTypeT],
+        indices: _ToInt0D,
+        /,
+        axis: SupportsIndex,
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[_1D, DTypeT]: ...
+    @overload  # 2d, 2d, axis=<given>
+    def take[DTypeT: _dtype](
+        self: ndarray[_2D, DTypeT],
+        indices: _ToInt2D,
+        /,
+        axis: SupportsIndex,
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[_3D, DTypeT]: ...
+    @overload  # 3d, 0d, axis=<given>
+    def take[DTypeT: _dtype](
+        self: ndarray[_3D, DTypeT],
+        indices: _ToInt0D,
+        /,
+        axis: SupportsIndex,
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[_2D, DTypeT]: ...
+    @overload  # 3d, 2d, axis=<given>
+    def take[DTypeT: _dtype](
+        self: ndarray[_3D, DTypeT],
+        indices: _ToInt2D,
+        /,
+        axis: SupportsIndex,
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[_4D, DTypeT]: ...
+    @overload  # 4d, 0d, axis=<given>
+    def take[DTypeT: _dtype](
+        self: ndarray[_4D, DTypeT],
+        indices: _ToInt0D,
+        /,
+        axis: SupportsIndex,
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[_3D, DTypeT]: ...
+    @overload  # fallback, axis=<given>
+    def take(
+        self,
+        indices: _ArrayLikeInt_co,
+        /,
+        axis: SupportsIndex,
+        out: None = None,
+        mode: _ModeKind = "raise",
     ) -> ndarray[_AnyShape, _DTypeT_co]: ...
-    @overload
+    @overload  # out=<given>  (keyword)
     def take[ArrayT: ndarray](
         self,
         indices: _ArrayLikeInt_co,
         /,
-        axis: SupportsIndex | None = ...,
+        axis: SupportsIndex | None = None,
         *,
         out: ArrayT,
-        mode: _ModeKind = ...,
+        mode: _ModeKind = "raise",
     ) -> ArrayT: ...
-    @overload
+    @overload  # out=<given>  (positional)
     def take[ArrayT: ndarray](
         self,
         indices: _ArrayLikeInt_co,
         /,
         axis: SupportsIndex | None,
         out: ArrayT,
-        mode: _ModeKind = ...,
+        mode: _ModeKind = "raise",
     ) -> ArrayT: ...
 
     # keep in sync with `ma.MaskedArray.repeat`
