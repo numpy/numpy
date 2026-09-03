@@ -158,6 +158,16 @@ casting.
     ...
   TypeError: Cannot cast scalar from dtype('float64') to dtype('int8') according to the rule 'same_kind'
 
+Under ``casting="equiv"`` and ``casting="no"`` a Python scalar must convert
+to its default dtype (``int64``, ``float64`` or ``complex128``) or to
+``object``; any other conversion raises ``TypeError``:
+
+  >>> np.copyto(np.array([1, 2]), 3, casting="no")
+  >>> np.copyto(arr_int8, 3, casting="no")
+  Traceback (most recent call last):
+    ...
+  TypeError: cannot cast Python int to int8 under the casting rule 'no'
+
 `numpy.can_cast` does not accept Python scalars.
 
 Numerical promotion

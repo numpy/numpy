@@ -10,6 +10,7 @@
 
 #include "dtypemeta.h"
 #include "abstractdtypes.h"
+#include "convert_datatype.h"
 #include "array_coercion.h"
 #include "common.h"
 #include "npy_pycompat.h"
@@ -373,20 +374,14 @@ npy_update_operand_for_scalar(
             return 0;
         }
     }
-    else if (NPY_UNLIKELY(casting == NPY_EQUIV_CASTING) &&
+    else if (NPY_UNLIKELY(casting <= NPY_EQUIV_CASTING) &&
              descr->type_num != NPY_OBJECT) {
-        /*
-         * incredibly niche, but users could pass equiv casting and we
-         * actually need to cast.  Let object pass (technically correct) but
-         * in all other cases, we don't technically consider equivalent.
-         * NOTE(seberg): I don't think we should be beholden to this logic.
-         */
         const char *name = (scalar != NULL) ? Py_TYPE(scalar)->tp_name :
                 ((PyArray_FLAGS(*operand) & NPY_ARRAY_WAS_PYTHON_INT) ? "int" :
                  ((PyArray_FLAGS(*operand) & NPY_ARRAY_WAS_PYTHON_FLOAT) ? "float" : "complex"));
         PyErr_Format(PyExc_TypeError,
-            "cannot cast Python %s to %S under the casting rule 'equiv'",
-            name, descr);
+            "cannot cast Python %s to %S under the casting rule %s",
+            name, descr, npy_casting_to_string(casting));
         return -1;
     }
 
