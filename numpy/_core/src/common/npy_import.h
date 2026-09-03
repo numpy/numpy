@@ -41,6 +41,10 @@ typedef struct npy_runtime_imports_struct {
     PyObject *numpy_matrix;
     PyObject *_prod;
     PyObject *_promote_fields;
+    PyObject *_searchsorted_left;
+    PyObject *_searchsorted_left_sorter;
+    PyObject *_searchsorted_right;
+    PyObject *_searchsorted_right_sorter;
     PyObject *_std;
     PyObject *_sum;
     PyObject *_ufunc_doc_signature_formatter;

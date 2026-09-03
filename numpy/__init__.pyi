@@ -5900,7 +5900,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 
     @overload
     def searchsorted(
-        self,  # >= 1D array
+        self: ndarray[_1D, Any],  # 1D array
         v: _ScalarLike_co,  # 0D array-like
         /,
         side: _SortSide = "left",

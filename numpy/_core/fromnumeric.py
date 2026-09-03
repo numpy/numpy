@@ -1595,25 +1595,36 @@ def searchsorted(a, v, side='left', sorter=None):
 
     Parameters
     ----------
-    a : 1-D array_like
+    a : array_like
         Input array. If `sorter` is None, then it must be sorted in
-        ascending order, otherwise `sorter` must be an array of indices
-        that sort it.
+        ascending order along the last axis, otherwise `sorter` must be an
+        array of indices that sort it.
+
+        .. versionchanged:: 2.6.0
+            `a` may have more than one dimension. To search along another
+            axis, bring it to the end first, for instance with
+            `numpy.moveaxis`.
+
     v : array_like
-        Values to insert into `a`.
+        Values to insert into `a`. The searched keys are taken along the last
+        axis of `v`. Any leading axes are broadcast against the leading axes
+        of `a`.
     side : {'left', 'right'}, optional
         If 'left', the index of the first suitable location found is given.
         If 'right', return the last such index.  If there is no suitable
         index, return either 0 or N (where N is the length of `a`).
-    sorter : 1-D array_like, optional
+    sorter : array_like, optional
         Optional array of integer indices that sort array a into ascending
-        order. They are typically the result of argsort.
+        order along the last axis. They are typically the result of argsort,
+        giving `sorter` the same shape as `a`.
 
     Returns
     -------
     indices : int or array of ints
-        Array of insertion points with the same shape as `v`,
-        or an integer if `v` is a scalar.
+        Array of insertion points. Its shape is the broadcast of `a`'s
+        leading axes with `v`'s, followed by the number of keys, i.e. ``v``'s
+        last dimension. For a one-dimensional `a` this is simply the shape of
+        `v`, and an integer if `v` is a scalar.
 
     See Also
     --------
@@ -1654,6 +1665,24 @@ def searchsorted(a, v, side='left', sorter=None):
     2
     >>> a[sorter[result]]
     30  # The element at index 2 of the sorted array is 30.
+
+    `a` may have more than one dimension, in which case each one-dimensional
+    slice along the last axis is searched independently:
+
+    >>> a = np.array([[0, 2, 4, 6], [1, 3, 5, 7]])
+    >>> np.searchsorted(a, [[3, 5], [2, 4]])
+    array([[2, 3],
+           [1, 2]])
+
+    The keys broadcast against the leading axes of `a`, so a single set of
+    keys can be searched in every row, and a scalar drops the keys dimension
+    altogether:
+
+    >>> np.searchsorted(a, [1, 6])
+    array([[1, 3],
+           [0, 3]])
+    >>> np.searchsorted(a, 5)
+    array([3, 2])
     """
     return _wrapfunc(a, 'searchsorted', v, side=side, sorter=sorter)
 
