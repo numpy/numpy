@@ -5993,10 +5993,82 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         descending: py_bool | None = None,
     ) -> ndarray[tuple[int], dtype[intp]]: ...
 
-    # Keep in sync with `MaskedArray.trace`
-    @overload
+    #
+    @overload  # ?d  (workaround)
+    def trace[ScalarT: inexact | timedelta64 | object_](
+        self: _ArrayJustND[ScalarT],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: None = None,
+        out: None = None,
+    ) -> ndarray[_AnyShape, _dtype[ScalarT]] | Any: ...
+    @overload  # ?d, +integer  (workaround)
     def trace(
-        self,  # >= 2D array
+        self: _ArrayJustND[integer | bool_],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: None = None,
+        out: None = None,
+    ) -> ndarray[_AnyShape, _dtype[int_]] | Any: ...
+    @overload  # ?d, dtype=<known>  (workaround)
+    def trace[ScalarT: generic](
+        self: _ArrayJustND[number | bool_ | timedelta64 | object_],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+    ) -> ndarray[_AnyShape, _dtype[ScalarT]] | Any: ...
+    @overload  # ?d, dtype=<unknown>  (workaround)
+    def trace(
+        self: _ArrayJustND[number | bool_ | timedelta64 | object_],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: DTypeLike | None = None,
+        out: None = None,
+    ) -> ndarray | Any: ...
+    @overload  # 2d
+    def trace[ScalarT: inexact | timedelta64](
+        self: ndarray[_2D, _dtype[ScalarT]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: None = None,
+        out: None = None,
+    ) -> ScalarT: ...
+    @overload  # 2d, +integer
+    def trace(
+        self: ndarray[_2D, _dtype[integer | bool_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: None = None,
+        out: None = None,
+    ) -> int_: ...
+    @overload  # 2d, dtype=<known>
+    def trace[ScalarT: generic](
+        self: ndarray[_2D, _dtype[number | bool_ | timedelta64 | object_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+    ) -> ScalarT: ...
+    @overload  # 2d, dtype=<unknown>
+    def trace(
+        self: ndarray[_2D, _dtype[number | bool_ | timedelta64 | object_]],
         /,
         offset: SupportsIndex = 0,
         axis1: SupportsIndex = 0,
@@ -6004,25 +6076,138 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         dtype: DTypeLike | None = None,
         out: None = None,
     ) -> Any: ...
-    @overload
+    @overload  # 3d
+    def trace[ScalarT: inexact | timedelta64 | object_](
+        self: ndarray[_3D, _dtype[ScalarT]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: None = None,
+        out: None = None,
+    ) -> ndarray[_1D, _dtype[ScalarT]]: ...
+    @overload  # 3d, +integer
+    def trace(
+        self: ndarray[_3D, _dtype[integer | bool_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: None = None,
+        out: None = None,
+    ) -> ndarray[_1D, _dtype[int_]]: ...
+    @overload  # 3d, dtype=<known>
+    def trace[ScalarT: generic](
+        self: ndarray[_3D, _dtype[number | bool_ | timedelta64 | object_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+    ) -> ndarray[_1D, _dtype[ScalarT]]: ...
+    @overload  # 3d, dtype=<unknown>
+    def trace(
+        self: ndarray[_3D, _dtype[number | bool_ | timedelta64 | object_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: DTypeLike | None = None,
+        out: None = None,
+    ) -> ndarray[_1D, _dtype[Any]]: ...
+    @overload  # 4d
+    def trace[ScalarT: inexact | timedelta64 | object_](
+        self: ndarray[_4D, _dtype[ScalarT]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: None = None,
+        out: None = None,
+    ) -> ndarray[_2D, _dtype[ScalarT]]: ...
+    @overload  # 4d, +integer
+    def trace(
+        self: ndarray[_4D, _dtype[integer | bool_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: None = None,
+        out: None = None,
+    ) -> ndarray[_2D, _dtype[int_]]: ...
+    @overload  # 4d, dtype=<known>
+    def trace[ScalarT: generic](
+        self: ndarray[_4D, _dtype[number | bool_ | timedelta64 | object_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+    ) -> ndarray[_2D, _dtype[ScalarT]]: ...
+    @overload  # 4d, dtype=<unknown>
+    def trace(
+        self: ndarray[_4D, _dtype[number | bool_ | timedelta64 | object_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: DTypeLike | None = None,
+        out: None = None,
+    ) -> ndarray[_2D, _dtype[Any]]: ...
+    @overload  # Nd  (fallback)
+    def trace[ScalarT: inexact | timedelta64 | object_](
+        self: ndarray[Any, _dtype[ScalarT]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: None = None,
+        out: None = None,
+    ) -> ndarray[_AnyShape, _dtype[ScalarT]] | Any: ...
+    @overload  # Nd, +integer  (fallback)
+    def trace(
+        self: ndarray[Any, _dtype[integer | bool_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: None = None,
+        out: None = None,
+    ) -> ndarray[_AnyShape, _dtype[int_]] | Any: ...
+    @overload  # Nd, dtype=<known>  (fallback)
+    def trace[ScalarT: generic](
+        self: ndarray[Any, _dtype[number | bool_ | timedelta64 | object_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+    ) -> ndarray[_AnyShape, _dtype[ScalarT]] | Any: ...
+    @overload  # Nd, dtype=<unknown>  (fallback)
+    def trace(
+        self: ndarray[Any, _dtype[number | bool_ | timedelta64 | object_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: DTypeLike | None = None,
+        out: None = None,
+    ) -> NDArray[Any] | Any: ...
+    @overload  # out=<given>
     def trace[ArrayT: ndarray](
-        self,  # >= 2D array
+        self,
         /,
         offset: SupportsIndex = 0,
         axis1: SupportsIndex = 0,
         axis2: SupportsIndex = 1,
         dtype: DTypeLike | None = None,
         *,
-        out: ArrayT,
-    ) -> ArrayT: ...
-    @overload
-    def trace[ArrayT: ndarray](
-        self,  # >= 2D array
-        /,
-        offset: SupportsIndex,
-        axis1: SupportsIndex,
-        axis2: SupportsIndex,
-        dtype: DTypeLike | None,
         out: ArrayT,
     ) -> ArrayT: ...
 

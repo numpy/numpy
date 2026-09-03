@@ -54,6 +54,7 @@ AR_b_3d: np.ndarray[tuple[int, int, int], np.dtype[np.bool]]
 AR_i8_0d: np.ndarray[tuple[()], np.dtype[np.int64]]
 AR_i8_1d: np.ndarray[tuple[int], np.dtype[np.int64]]
 AR_i8_2d: np.ndarray[tuple[int, int], np.dtype[np.int64]]
+AR_O_2d: np.ndarray[tuple[int, int], np.dtype[np.object_]]
 
 class _Sub2D[ScalarT: np.generic](np.ndarray[tuple[int, int], np.dtype[ScalarT]]): ...
 
@@ -522,8 +523,23 @@ assert_type(AR_f8.searchsorted([[1]]), _Array2D[np.intp])
 assert_type(AR_f8.searchsorted([[[1]]]), _Array3D[np.intp])
 assert_type(AR_f8.searchsorted([[[[1]]]]), npt.NDArray[np.intp] | Any)
 
-assert_type(AR_f8.trace(), Any)
+assert_type(AR_i8.trace(), npt.NDArray[np.int_] | Any)
+assert_type(AR_f8.trace(), npt.NDArray[np.float64] | Any)
+assert_type(AR_f8.trace(dtype=np.float32), npt.NDArray[np.float32] | Any)
+assert_type(AR_f8.trace(dtype="f4"), np.ndarray | Any)
 assert_type(AR_f8.trace(out=B), SubClass)
+assert_type(AR_b_2d.trace(), np.int_)
+assert_type(AR_i8_2d.trace(), np.int_)
+assert_type(AR_f8_2d.trace(), np.float64)
+assert_type(AR_f8_2d.trace(dtype=np.float32), np.float32)
+assert_type(AR_f8_2d.trace(dtype="f4"), Any)
+assert_type(AR_O_2d.trace(), Any)
+assert_type(AR_b_3d.trace(), _Array1D[np.int_])
+assert_type(AR_f8_3d.trace(), _Array1D[np.float64])
+assert_type(AR_f8_3d.trace(dtype=np.float32), _Array1D[np.float32])
+assert_type(AR_f8_3d.trace(dtype="f4"), np.ndarray[tuple[int]])
+assert_type(AR_f8_4d.trace(), _Array2D[np.float64])
+assert_type(AR_f8_4d.trace(1, 2, 3), _Array2D[np.float64])
 
 assert_type(AR_f8.item(), float)
 assert_type(AR_U.item(), str)
