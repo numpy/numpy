@@ -532,9 +532,8 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
 
 /*
  * Concatenates a list of ndarrays, flattening each in the specified order.
- * `op` is the sequence `arrays` were converted from; any exact Python str in
- * it is converted again with the result descriptor so that trailing nulls
- * survive.
+ * `op` is the sequence `arrays` were converted from; any Python scalar in it
+ * is converted again with the result descriptor.
  */
 NPY_NO_EXPORT PyArrayObject *
 PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
@@ -621,8 +620,8 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
     }
 
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
-        if (npy_update_operand_if_pystr(&arrays[iarrays], op, iarrays,
-                                        PyArray_DESCR(ret)) < 0) {
+        if (npy_update_operand_if_pyscalar(&arrays[iarrays], op, iarrays,
+                                           PyArray_DESCR(ret), casting) < 0) {
             Py_DECREF(sliding_view);
             Py_DECREF(ret);
             return NULL;

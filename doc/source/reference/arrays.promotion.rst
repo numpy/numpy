@@ -132,6 +132,34 @@ overflows:
 Note that NumPy warns when overflows occur for scalars, but not for arrays;
 e.g., ``np.array(100, dtype=np.uint8) + 100`` will *not* warn.
 
+.. _arrays.promotion.python-scalar-casting:
+
+Cast safety of Python scalars
+-----------------------------
+The ``casting`` argument of ufuncs, `numpy.copyto` and `numpy.concatenate`
+treats a Python ``int``, ``float`` or ``complex`` by its kind, since the
+scalar has no precision of its own. Converting a Python ``int`` to any NumPy
+integer dtype or a Python ``float`` to any NumPy floating point dtype counts
+as "safe", even though the value may not fit. A value that does not fit
+raises ``OverflowError`` on conversion, as shown above. Lowering the kind,
+such as a Python ``float`` into an integer dtype, requires
+``casting="unsafe"``. `numpy.choose` applies the same rules with "safe"
+casting.
+
+  >>> arr_int8 = np.array([1, 2], dtype=np.int8)
+  >>> np.concatenate((arr_int8, 3), axis=None, casting="safe")
+  array([1, 2, 3], dtype=int8)
+  >>> np.copyto(arr_int8, 300, casting="safe")
+  Traceback (most recent call last):
+    ...
+  OverflowError: Python integer 300 out of bounds for int8
+  >>> np.copyto(arr_int8, 3.0, casting="same_kind")
+  Traceback (most recent call last):
+    ...
+  TypeError: Cannot cast scalar from dtype('float64') to dtype('int8') according to the rule 'same_kind'
+
+`numpy.can_cast` does not accept Python scalars.
+
 Numerical promotion
 -------------------
 
