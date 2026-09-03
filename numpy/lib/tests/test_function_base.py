@@ -2872,6 +2872,29 @@ class TestCorrCoef:
         res = corrcoef(cast_A, dtype=test_type)
         assert test_type == res.dtype
 
+    def test_constant_vector(self):
+        # Regression test for gh-32446
+        # corrcoef should return NaN for constant vectors since
+        # Pearson correlation is undefined when either input has zero variance
+        x = np.ones(1448)
+        res = corrcoef(x)
+        assert np.isnan(res)
+
+        # Two constant vectors should also give NaN
+        y = np.ones(1448) * 2
+        res_xy = corrcoef(x, y)
+        assert np.all(np.isnan(res_xy))
+
+        # Mixed constant and non-constant should give NaN for the
+        # constant row/column
+        z = np.array([1, 2, 3, 4, 5])
+        res_xz = corrcoef(x[:5], z)
+        # First row/column should be NaN due to constant x
+        assert np.isnan(res_xz[0, 1])
+        assert np.isnan(res_xz[1, 0])
+        # But the correlation of z with itself should be 1
+        assert res_xz[1, 1] == 1.0
+
 
 class TestCov:
     x1 = np.array([[0, 2], [1, 1], [2, 0]]).T

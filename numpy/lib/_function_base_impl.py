@@ -3061,8 +3061,18 @@ def corrcoef(x, y=None, rowvar=True, *,
         # nan if incorrect value (nan, inf, 0), 1 otherwise
         return c / c
     stddev = sqrt(d.real)
-    c /= stddev[:, None]
-    c /= stddev[None, :]
+
+    # corrcoef is undefined when either input has zero variance;
+    # use np.errstate to suppress warnings from division by zero.
+    with np.errstate(divide='ignore', invalid='ignore'):
+        c /= stddev[:, None]
+        c /= stddev[None, :]
+
+    # Set correlation coefficients to NaN where either variable
+    # has zero variance (correlation is mathematically undefined).
+    zero_std = stddev == 0
+    if np.any(zero_std):
+        c[zero_std[:, None] | zero_std[None, :]] = np.nan
 
     # Clip real and imaginary parts to [-1, 1].  This does not guarantee
     # abs(a[i,j]) <= 1 for complex arrays, but is the best we can do without
