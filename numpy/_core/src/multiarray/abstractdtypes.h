@@ -102,6 +102,12 @@ npy_update_operand_for_scalar(
     NPY_CASTING casting);
 
 
+NPY_NO_EXPORT int
+npy_update_operand_if_pystr(
+    PyArrayObject **operand, PyObject *op, Py_ssize_t i,
+    PyArray_Descr *target);
+
+
 NPY_NO_EXPORT PyArray_Descr *
 npy_find_descr_for_scalar(
     PyObject *scalar, PyArray_Descr *original_descr,

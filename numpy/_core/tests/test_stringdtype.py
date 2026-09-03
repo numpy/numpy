@@ -297,6 +297,79 @@ def test_pystr_scalar_ufunc_operand_any_instance(dtype):
     assert (arr + "x\0")[0] == "abc\0x\0"
 
 
+def test_pystr_scalar_full_copyto_where_preserve_nulls(dtype):
+    scalar = "x\0"
+
+    assert np.full(2, scalar, dtype=dtype)[0] == scalar
+
+    dst = np.empty(2, dtype=dtype)
+    np.copyto(dst, scalar)
+    assert dst.tolist() == [scalar, scalar]
+
+    cond = np.array([True, False])
+    arr = np.array(["y", "y"], dtype=dtype)
+    assert_array_equal(np.where(cond, scalar, arr),
+                       np.array([scalar, "y"], dtype=dtype), strict=True)
+    assert_array_equal(np.where(cond, arr, scalar),
+                       np.array(["y", scalar], dtype=dtype), strict=True)
+
+
+def test_pystr_scalar_full_copyto_where_object_preserve_nulls():
+    scalar = "x\0"
+
+    assert np.full(1, scalar, dtype=object)[0] == scalar
+
+    dst = np.empty(1, dtype=object)
+    np.copyto(dst, scalar)
+    assert dst[0] == scalar
+
+    assert np.where([True], scalar, np.array(["y"], dtype=object))[0] == scalar
+
+
+def test_pystr_scalar_concatenate_preserves_nulls(dtype):
+    scalar = "x\0"
+    arr = np.array(["y"], dtype=dtype)
+
+    res = np.concatenate((arr, scalar), axis=None)
+    assert_array_equal(res, np.array(["y", scalar], dtype=dtype), strict=True)
+
+    res = np.concatenate((scalar, arr), axis=None)
+    assert res[0] == scalar
+
+    out = np.empty(2, dtype=dtype)
+    np.concatenate((arr, scalar), axis=None, out=out)
+    assert out[1] == scalar
+
+    res = np.concatenate((["y"], scalar), axis=None, dtype=dtype)
+    assert res[1] == scalar
+
+    res = np.concatenate((scalar,), axis=None, dtype=dtype)
+    assert res[0] == scalar
+
+    # like a Python int, the str is not cast, so any casting rule allows it
+    for casting in ["no", "equiv", "safe", "same_kind", "unsafe"]:
+        res = np.concatenate((arr, "z"), axis=None, casting=casting)
+        assert res[1] == "z"
+
+
+def test_pystr_scalar_choose_preserves_nulls(dtype):
+    scalar = "x\0"
+    arr = np.array(["y"], dtype=dtype)
+
+    res = np.choose(np.array([1]), (arr, scalar))
+    assert_array_equal(res, np.array([scalar], dtype=dtype), strict=True)
+
+    res = np.choose(np.array([0]), (arr, scalar))
+    assert res[0] == "y"
+
+
+def test_pystr_scalar_concatenate_choose_object_preserve_nulls():
+    scalar = "x\0"
+    arr = np.array(["y"], dtype=object)
+    assert np.concatenate((arr, scalar), axis=None)[1] == scalar
+    assert np.choose(np.array([1]), (arr, scalar))[0] == scalar
+
+
 def test_partition_str_sep():
     arr = np.array(["a-b\0c", "nosep"], dtype="T")
 
