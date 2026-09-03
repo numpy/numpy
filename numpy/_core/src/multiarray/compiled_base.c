@@ -32,42 +32,33 @@ typedef enum {
  * and 0 if the array is not monotonic.
  */
 static int
-check_array_monotonic_integer(const char *a, npy_intp lena, npy_intp elsize,
-                              PyArray_CompareFunc *compare,
-                              PyArrayObject *arr)
+check_array_monotonic_int64(const npy_int64 *a, npy_intp lena)
 {
     npy_intp i;
-    const char *next;
-    const char *last;
-    int cmp;
+    npy_int64 next;
+    npy_int64 last;
 
     if (lena == 0) {
         /* all bin edges hold the same value */
         return 1;
     }
-    last = a;
+    last = a[0];
 
     /* Skip repeated values at the beginning of the array */
-    for (i = 1; i < lena; i++) {
-        cmp = compare(last, a + i * elsize, arr);
-        if (cmp != 0) {
-            break;
-        }
-    }
+    for (i = 1; (i < lena) && (a[i] == last); i++);
 
     if (i == lena) {
         /* all bin edges hold the same value */
         return 1;
     }
 
-    next = a + i * elsize;
-    if (cmp < 0) {
+    next = a[i];
+    if (last < next) {
         /* Possibly monotonic increasing */
         for (i += 1; i < lena; i++) {
             last = next;
-            next = a + i * elsize;
-            cmp = compare(last, next, arr);
-            if (cmp > 0) {
+            next = a[i];
+            if (last > next) {
                 return 0;
             }
         }
@@ -77,9 +68,54 @@ check_array_monotonic_integer(const char *a, npy_intp lena, npy_intp elsize,
         /* last > next, possibly monotonic decreasing */
         for (i += 1; i < lena; i++) {
             last = next;
-            next = a + i * elsize;
-            cmp = compare(last, next, arr);
-            if (cmp < 0) {
+            next = a[i];
+            if (last < next) {
+                return 0;
+            }
+        }
+        return -1;
+    }
+}
+
+static int
+check_array_monotonic_uint64(const npy_uint64 *a, npy_intp lena)
+{
+    npy_intp i;
+    npy_uint64 next;
+    npy_uint64 last;
+
+    if (lena == 0) {
+        /* all bin edges hold the same value */
+        return 1;
+    }
+    last = a[0];
+
+    /* Skip repeated values at the beginning of the array */
+    for (i = 1; (i < lena) && (a[i] == last); i++);
+
+    if (i == lena) {
+        /* all bin edges hold the same value */
+        return 1;
+    }
+
+    next = a[i];
+    if (last < next) {
+        /* Possibly monotonic increasing */
+        for (i += 1; i < lena; i++) {
+            last = next;
+            next = a[i];
+            if (last > next) {
+                return 0;
+            }
+        }
+        return 1;
+    }
+    else {
+        /* last > next, possibly monotonic decreasing */
+        for (i += 1; i < lena; i++) {
+            last = next;
+            next = a[i];
+            if (last < next) {
                 return 0;
             }
         }
@@ -344,7 +380,7 @@ arr__monotonicity(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     }
 
     if (PyArray_Check(obj_x) &&
-            PyArray_ISINTEGER((PyArrayObject *)obj_x)) {
+            PyArray_TYPE((PyArrayObject *)obj_x) == NPY_INT64) {
         /* Casting to double loses ordering information for large integers. */
         arr_x = (PyArrayObject *)PyArray_CheckFromAny(
             obj_x, NULL, 1, 1,
@@ -354,19 +390,25 @@ arr__monotonicity(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         }
 
         len_x = PyArray_SIZE(arr_x);
-        PyArray_CompareFunc *compare =
-                PyDataType_GetArrFuncs(PyArray_DESCR(arr_x))->compare;
-        if (compare == NULL) {
-            PyErr_SetString(PyExc_TypeError, "compare not supported for type");
-            Py_DECREF(arr_x);
+        NPY_BEGIN_THREADS_THRESHOLDED(len_x)
+        monotonic = check_array_monotonic_int64(
+            (const npy_int64 *)PyArray_DATA(arr_x), len_x);
+        NPY_END_THREADS
+    }
+    else if (PyArray_Check(obj_x) &&
+            PyArray_TYPE((PyArrayObject *)obj_x) == NPY_UINT64) {
+        /* Casting to double loses ordering information for large integers. */
+        arr_x = (PyArrayObject *)PyArray_CheckFromAny(
+            obj_x, NULL, 1, 1,
+            NPY_ARRAY_CARRAY_RO | NPY_ARRAY_NOTSWAPPED, NULL);
+        if (arr_x == NULL) {
             return NULL;
         }
 
-        /* Built-in integer comparators do not access Python objects. */
+        len_x = PyArray_SIZE(arr_x);
         NPY_BEGIN_THREADS_THRESHOLDED(len_x)
-        monotonic = check_array_monotonic_integer(
-            (const char *)PyArray_DATA(arr_x), len_x, PyArray_ITEMSIZE(arr_x),
-            compare, arr_x);
+        monotonic = check_array_monotonic_uint64(
+            (const npy_uint64 *)PyArray_DATA(arr_x), len_x);
         NPY_END_THREADS
     }
     else {
@@ -381,10 +423,6 @@ arr__monotonicity(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         monotonic = check_array_monotonic(
             (const double *)PyArray_DATA(arr_x), len_x);
         NPY_END_THREADS
-    }
-    if (PyErr_Occurred()) {
-        Py_DECREF(arr_x);
-        return NULL;
     }
     Py_DECREF(arr_x);
 
