@@ -5886,23 +5886,57 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d
     def nonzero(self) -> tuple[ndarray[_1D, _dtype[intp]], ...]: ...
 
-    @overload
+    #
+    @overload  # >=1d
+    def searchsorted[ShapeT: tuple[int, *tuple[int, ...]]](
+        self: ndarray[tuple[int, *tuple[int, ...]]],
+        v: ndarray[ShapeT, Any],
+        /,
+        side: _SortSide = "left",
+        sorter: _ArrayLikeInt_co | None = None,
+    ) -> ndarray[ShapeT, _dtype[intp]]: ...
+    @overload  # 0d
     def searchsorted(
-        self,  # >= 1D array
-        v: _ScalarLike_co,  # 0D array-like
+        self: ndarray[tuple[int, *tuple[int, ...]]],
+        v: complex | str | generic | ndarray[_0D, Any],
         /,
         side: _SortSide = "left",
         sorter: _ArrayLikeInt_co | None = None,
     ) -> intp: ...
-    @overload
+    @overload  # 1d
     def searchsorted(
-        self,  # >= 1D array
+        self: ndarray[tuple[int, *tuple[int, ...]]],
+        v: Sequence[complex | generic] | list[str],
+        /,
+        side: _SortSide = "left",
+        sorter: _ArrayLikeInt_co | None = None,
+    ) -> ndarray[_1D, _dtype[intp]]: ...
+    @overload  # 2d
+    def searchsorted(
+        self: ndarray[tuple[int, *tuple[int, ...]]],
+        v: Sequence[Sequence[complex | generic]] | Sequence[list[str]],
+        /,
+        side: _SortSide = "left",
+        sorter: _ArrayLikeInt_co | None = None,
+    ) -> ndarray[_2D, _dtype[intp]]: ...
+    @overload  # 3d
+    def searchsorted(
+        self: ndarray[tuple[int, *tuple[int, ...]]],
+        v: Sequence[Sequence[Sequence[complex | generic]]] | Sequence[Sequence[list[str]]],
+        /,
+        side: _SortSide = "left",
+        sorter: _ArrayLikeInt_co | None = None,
+    ) -> ndarray[_3D, _dtype[intp]]: ...
+    @overload  # fallback
+    def searchsorted(
+        self: ndarray[tuple[int, *tuple[int, ...]]],
         v: ArrayLike,
         /,
         side: _SortSide = "left",
         sorter: _ArrayLikeInt_co | None = None,
-    ) -> NDArray[intp]: ...
+    ) -> NDArray[intp] | Any: ...
 
+    #
     def sort(
         self,
         /,
