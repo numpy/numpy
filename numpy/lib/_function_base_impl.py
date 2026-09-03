@@ -4791,7 +4791,7 @@ def _quantile(
         except KeyError:
             raise ValueError(
                 f"{method!r} is not a valid method. Use one of: "
-                f"{_QuantileMethods.keys()}") from None
+                f"{', '.join(map(repr, _QuantileMethods))}") from None
         virtual_indexes = method_props["get_virtual_index"](values_count,
                                                             quantiles)
         virtual_indexes = np.asanyarray(virtual_indexes)
