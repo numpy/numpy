@@ -839,6 +839,8 @@ type _2D = tuple[int, int]
 type _3D = tuple[int, int, int]
 type _4D = tuple[int, int, int, int]
 
+type _AtLeast1D = tuple[int, *tuple[int, ...]]
+
 # workaround for microsoft/pyright#10232
 type _JustND = tuple[Never, Never, Never, Never]
 type _ArrayJustND[ScalarT: generic] = ndarray[_JustND, _dtype[ScalarT]]
@@ -6024,6 +6026,153 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         axis2: SupportsIndex,
         dtype: DTypeLike | None,
         out: ArrayT,
+    ) -> ArrayT: ...
+
+    #
+    @override  # type: ignore[override]
+    @overload  # Nd, ?d  (workaround)
+    def choose[DTypeT: _dtype](
+        self: NDArray[integer | bool_],
+        /,
+        choices: ndarray[_JustND, DTypeT] | Sequence[ndarray[_JustND, DTypeT]],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[_AnyShape, DTypeT]: ...
+    @overload  # >=1d, 1d
+    def choose[ShapeT: _AtLeast1D, DTypeT: _dtype](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+        choices: ndarray[_1D, DTypeT],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, DTypeT]: ...
+    @overload  # >=1d, 1d bool
+    def choose[ShapeT: _AtLeast1D](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+        choices: Sequence[py_bool],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # >=1d, 1d ~int
+    def choose[ShapeT: _AtLeast1D](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+        choices: list[int],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, _dtype[int_]]: ...
+    @overload  # >=1d, 1d ~float
+    def choose[ShapeT: _AtLeast1D](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+        choices: list[float],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, _dtype[float64]]: ...
+    @overload  # >=1d, 1d ~complex
+    def choose[ShapeT: _AtLeast1D](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+        choices: list[complex],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, _dtype[complex128]]: ...
+    @overload  # >=1d, 1d ~T
+    def choose[ShapeT: _AtLeast1D, ScalarT: generic](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+        choices: Sequence[ScalarT],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # >=1d, 1d _
+    def choose[ShapeT: _AtLeast1D](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+        choices: Sequence[complex | generic],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, _dtype[Any]]: ...
+    @overload  # >=1d, 2d
+    def choose[ShapeT: _AtLeast1D, DTypeT: _dtype](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+        choices: ndarray[_2D, DTypeT] | Sequence[ndarray[_1D, DTypeT]],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, DTypeT]: ...
+    @overload  # >=2d, 3d
+    def choose[ShapeT: tuple[int, int, *tuple[int, ...]], DTypeT: _dtype](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+        choices: ndarray[_3D, DTypeT] | Sequence[ndarray[_2D, DTypeT]],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, DTypeT]: ...
+    @overload  # >=3d, 4d
+    def choose[ShapeT: tuple[int, int, int, *tuple[int, ...]], DTypeT: _dtype](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+        choices: ndarray[_4D, DTypeT] | Sequence[ndarray[_3D, DTypeT]],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, DTypeT]: ...
+    @overload  # <=2d, 4d
+    def choose[DTypeT: _dtype](
+        self: ndarray[_0D | _1D | _2D, _dtype[integer | bool_]],
+        /,
+        choices: ndarray[_4D, DTypeT] | Sequence[ndarray[_3D, DTypeT]],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[_3D, DTypeT]: ...
+    @overload  # <=1d, 3d
+    def choose[DTypeT: _dtype](
+        self: ndarray[_0D | _1D, _dtype[integer | bool_]],
+        /,
+        choices: ndarray[_3D, DTypeT] | Sequence[ndarray[_2D, DTypeT]],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[_2D, DTypeT]: ...
+    @overload  # 0d, 1d
+    def choose[ScalarT: generic](
+        self: ndarray[_0D, _dtype[integer | bool_]],
+        /,
+        choices: ndarray[_1D, _dtype[ScalarT]],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ScalarT: ...
+    @overload  # 0d, 1d ~T
+    def choose[ScalarT: generic](
+        self: ndarray[_0D, _dtype[integer | bool_]],
+        /,
+        choices: Sequence[ScalarT],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ScalarT: ...
+    @overload  # 0d, 2d
+    def choose[DTypeT: _dtype](
+        self: ndarray[_0D, _dtype[integer | bool_]],
+        /,
+        choices: ndarray[_2D, DTypeT] | Sequence[ndarray[_1D, DTypeT]],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[_1D, DTypeT]: ...
+    @overload  # fallback
+    def choose(
+        self,
+        /,
+        choices: ArrayLike,
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> Any: ...
+    @overload  # out=<given>
+    def choose[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        /,
+        choices: ArrayLike,
+        out: ArrayT,
+        mode: _ModeKind = "raise",
     ) -> ArrayT: ...
 
     #
