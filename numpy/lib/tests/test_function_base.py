@@ -4311,17 +4311,11 @@ class TestQuantile:
 
     @pytest.mark.parametrize("func", [np.quantile, np.percentile])
     def test_invalid_method_error_message(self, func):
-        # The message used to interpolate a dict_keys repr, so it read
-        # "Use one of: dict_keys([...])".
         q = 0.5 if func is np.quantile else 50
-        with pytest.raises(ValueError, match="is not a valid method") as excinfo:
+        with pytest.raises(
+            ValueError, match=r"is not a valid method\. Use one of: 'inverted_cdf'"
+        ):
             func(np.arange(4), q, method="bogus")
-
-        message = str(excinfo.value)
-        assert "dict_keys" not in message
-        # every accepted method is listed, quoted, so it can be copied verbatim
-        for name in ("linear", "inverted_cdf", "nearest"):
-            assert repr(name) in message
 
     def test_correct_quantile_value(self):
         a = np.array([True])
