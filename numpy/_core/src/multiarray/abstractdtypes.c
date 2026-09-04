@@ -381,9 +381,12 @@ npy_update_operand_for_scalar(
          * in all other cases, we don't technically consider equivalent.
          * NOTE(seberg): I don't think we should be beholden to this logic.
          */
+        const char *name = (scalar != NULL) ? Py_TYPE(scalar)->tp_name :
+                ((PyArray_FLAGS(*operand) & NPY_ARRAY_WAS_PYTHON_INT) ? "int" :
+                 ((PyArray_FLAGS(*operand) & NPY_ARRAY_WAS_PYTHON_FLOAT) ? "float" : "complex"));
         PyErr_Format(PyExc_TypeError,
             "cannot cast Python %s to %S under the casting rule 'equiv'",
-            Py_TYPE(scalar)->tp_name, descr);
+            name, descr);
         return -1;
     }
 
