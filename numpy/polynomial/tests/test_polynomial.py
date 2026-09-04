@@ -586,6 +586,115 @@ class TestMisc:
             # to take into account numerical calculation error.
             assert_almost_equal(res, tgt, 14 - int(np.log10(i)))
 
+    def test_polyroots_quadratic(self):
+        # quadratics use an explicit, numerically stable formula rather
+        # than the general companion-matrix eigenvalue path; exercise it
+        # directly, including the edge cases that formula has to handle.
+
+        # ordinary real roots
+        assert_almost_equal(poly.polyroots([2, -3, 1]), [1, 2])
+        # repeated root
+        assert_almost_equal(poly.polyroots([1, -2, 1]), [1, 1])
+        # repeated root at the origin (b == 0 and disc == 0)
+        res = poly.polyroots([0, 0, 1])
+        assert_almost_equal(res, [0, 0])
+        assert_(res.dtype == np.float64)
+        # complex-conjugate roots from real coefficients (disc < 0)
+        res = poly.polyroots([2, 0, 1])
+        assert_(res.dtype == np.complex128)
+        tgt = np.array([-1j * np.sqrt(2), 1j * np.sqrt(2)])
+        tgt.sort()
+        assert_almost_equal(res, tgt)
+        # regression: for real coefficients, a complex-conjugate pair
+        # of roots must be an *exact* conjugate pair (Vieta's sum and
+        # product of roots are both real, which only holds for an
+        # exact conjugate pair) - deriving the second root from the
+        # first via the product-of-roots relation instead of building
+        # both from the same real/imaginary parts previously left them
+        # off by 1 ulp, which also flipped their sort order.
+        res = poly.polyroots([1, 1, 1])
+        assert_(res[0] == np.conj(res[1]))
+        assert_(res[0].imag < 0)
+        # same conjugate-pair/ordering guarantee with a negative
+        # leading coefficient: the sign of that coefficient flips the
+        # sign of the imaginary part computed from it, so a fix that
+        # only checks the disc<0 case above without also normalizing
+        # that sign could satisfy it while still ordering this case
+        # wrong.
+        res = poly.polyroots([-1, 0, -1])
+        assert_(res[0] == np.conj(res[1]))
+        assert_(res[0].imag < 0)
+        # complex coefficients always give complex output
+        c = [1 + 1j, 0, 1]
+        res = poly.polyroots(c)
+        assert_(res.dtype == np.complex128)
+        assert_almost_equal(poly.polyval(res, c), [0, 0])
+
+        # regression: b**2 and 4ac can individually be much larger
+        # than their true difference right at the real/complex-root
+        # boundary, so the plain subtraction can round the
+        # discriminant to the wrong sign (even exactly 0),
+        # misclassifying a genuine (if tiny) complex-conjugate pair
+        # as a real repeated root.
+        res = poly.polyroots(
+            [3.4181422002034245, 1.049714501038826, 0.08059206355031207])
+        assert_(res.dtype == np.complex128)
+        assert_(res[0] == np.conj(res[1]))
+        assert_(res[0].imag != 0)
+
+        # regression: a root overflowing a narrower dtype like float16
+        # (not just float32/complex64) must still raise, not silently
+        # return inf.
+        assert_raises(np.linalg.LinAlgError, poly.polyroots,
+                       np.array([65504, -65504, 0.5], dtype=np.float16))
+
+        # dtype is preserved
+        assert_(poly.polyroots(
+            np.array([2, -3, 1], dtype=np.float32)).dtype == np.float32)
+        assert_(poly.polyroots(
+            np.array([2, 0, 1], dtype=np.float32)).dtype == np.complex64)
+
+        # roots spanning many orders of magnitude: the naive +/- formula
+        # loses precision to cancellation here, the stable formula should
+        # not.
+        for i in np.logspace(3, 20, num=200, base=10):
+            tgt = np.array([-1, i])
+            res = poly.polyroots(poly.polyfromroots(tgt))
+            assert_almost_equal(res, tgt, 14 - int(np.log10(i)))
+
+        # regression: squaring c1 directly (instead of normalizing the
+        # coefficients first) overflows to inf here even though both
+        # roots are individually well within float64 range.
+        res = poly.polyroots([1.0, 1e200, 1.0])
+        assert_almost_equal(res, [-1e200, -1e-200])
+
+        # when the roots genuinely don't fit in float64 (coefficients
+        # spread over an extreme range), this should fail the same way
+        # the general eigenvalue path does for higher-degree polynomials
+        # with similarly unrepresentable roots, rather than silently
+        # returning inf/nan.
+        assert_raises(np.linalg.LinAlgError, poly.polyroots,
+                       [1.03994035e+236, -2.56001588e+167, -4.33885628e-183])
+
+        # regression: a literal zero constant term factors exactly as
+        # x*(c2*x + c1), so one root is exactly 0 and the other is
+        # -c1/c2. Deriving both from the general formula instead can
+        # lose the small root to underflow when squaring c1 (needed
+        # for the discriminant) itself underflows to 0.
+        res = poly.polyroots([0.0, 1.88562000e-157, -6.26804016e+028])
+        assert_equal(res[0], 0.0)
+        assert_almost_equal(res[1], 3.0083087406383176e-186)
+
+        # regression: rescaling the coefficients by the nearest power
+        # of 2 (to recompute a cancellation-prone discriminant) can
+        # itself overflow when that power of 2 lands on 2**1024, which
+        # isn't representable in float64. Must not raise anything
+        # other than the documented LinAlgError.
+        for c in ([-1.02437727e+308, -1.22052573e+162, -3.63558206e+015],
+                  [1.06670315e+308, -4.07560533e+156, 3.89296657e+004]):
+            res = poly.polyroots(c)
+            assert_(np.all(np.isfinite(res)))
+
     def test_polyfit(self):
         def f(x):
             return x * (x - 1) * (x - 2)
