@@ -519,3 +519,4 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_divide_indexed)
 }
 
 /**end repeat**/
+

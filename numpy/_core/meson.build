@@ -1044,6 +1044,17 @@ foreach gen_mtargets : [
     ]
   ],
   [
+    'loops_arithmetic_timedelta.dispatch.h',
+    'src/umath/loops_arithmetic_timedelta.dispatch.cpp',
+    [
+      X86_V4, X86_V3, X86_V2,
+      NEON,
+      VSX4, VSX2,
+      VX,
+      LSX,
+    ]
+  ],
+  [
     'loops_comparison.dispatch.h',
     src_file.process('src/umath/loops_comparison.dispatch.c.src'),
     [
