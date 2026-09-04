@@ -80,6 +80,13 @@
 #define PyArray_FloatAbstractDType (*(PyArray_DTypeMeta *)PyArray_API[367])
 #define PyArray_ComplexAbstractDType (*(PyArray_DTypeMeta *)PyArray_API[368])
 
+#if NPY_FEATURE_VERSION >= NPY_2_6_API_VERSION
+#define PyArray_NumericAbstractDType (*(PyArray_DTypeMeta *)PyArray_API[379])
+#define PyArray_SignedIntegerAbstractDType (*(PyArray_DTypeMeta *)PyArray_API[380])
+#define PyArray_UnsignedIntegerAbstractDType (*(PyArray_DTypeMeta *)PyArray_API[381])
+#define PyArray_InexactAbstractDType (*(PyArray_DTypeMeta *)PyArray_API[382])
+#endif /* NPY_FEATURE_VERSION >= NPY_2_6_API_VERSION */
+
 #endif /* NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION */
 
 #endif  /* NPY_INTERNAL_BUILD */

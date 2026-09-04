@@ -462,6 +462,28 @@ class TestIsDType:
         else:
             assert not np.isdtype(dtype, dtype_group)
 
+    def test_isdtype_abstract_dtype_kind(self):
+        # New pattern: ``kind`` may be an abstract DType class such as
+        # ``np.dtypes.IntegerAbstractDType``.
+        IA = np.dtypes.IntegerAbstractDType
+        FA = np.dtypes.FloatingAbstractDType
+        NA = np.dtypes.NumericAbstractDType
+
+        # dtype instance and scalar type input forms:
+        for arg in [np.dtype('int64'), np.int64]:
+            assert np.isdtype(arg, IA)
+            assert np.isdtype(arg, NA)
+            assert not np.isdtype(arg, FA)
+            # Tuple containing both DType classes and string groups still
+            # works:
+            assert np.isdtype(arg, (FA, "integral"))
+            assert np.isdtype(arg, (FA, IA))
+            assert not np.isdtype(arg, (FA, "complex floating"))
+
+        # Concrete DType class as kind:
+        assert np.isdtype(np.int64, np.dtypes.Int64DType)
+        assert not np.isdtype(np.int64, np.dtypes.Int32DType)
+
     def test_isdtype_invalid_args(self):
         with assert_raises_regex(TypeError, r".*must be a NumPy dtype.*"):
             np.isdtype("int64", np.int64)
@@ -480,17 +502,19 @@ class TestIsDType:
 
         # matches itself and the StringDType class, which stands in for
         # the scalar type that identifies the other dtypes
-        assert np.isdtype(dt, dt)
         assert np.isdtype(dt, np.dtypes.StringDType)
-        assert np.isdtype(np.dtypes.StringDType, dt)
         assert np.isdtype(dt, ("numeric", np.dtypes.StringDType))
-        assert not np.isdtype(np.int64, dt)
         assert not np.isdtype(dt, ("integral", np.int64))
 
-        # dtype parameters are ignored, like datetime64 units
-        assert np.isdtype(np.dtypes.StringDType(na_object=None), dt)
-        assert np.isdtype(dt, np.dtypes.StringDType(na_object=np.nan,
-                                                    coerce=False))
+        # Second argument being an instance is deprecated.
+        with pytest.warns(
+                DeprecationWarning, match=r"isdtype\(\) with a dtype.*"):
+            assert np.isdtype(dt, dt)
+            assert not np.isdtype(np.int64, dt)
+            # dtype parameters are ignored, like datetime64 units
+            assert np.isdtype(np.dtypes.StringDType(na_object=None), dt)
+            assert np.isdtype(dt, np.dtypes.StringDType(na_object=np.nan,
+                                                        coerce=False))
 
         # fixed-width unicode strings are a different kind
         assert not np.isdtype(dt, np.str_)
