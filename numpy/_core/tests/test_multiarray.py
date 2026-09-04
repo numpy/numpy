@@ -6136,6 +6136,122 @@ class TestMinMax:
             assert_equal(np.amin(a), a[3])
             assert_equal(np.amax(a), a[3])
 
+    # `np.minmax` returns both extrema in a single pass; it must always agree
+    # with the `min`/`max` pair it fuses.
+    def check_minmax(self, a, **kwargs):
+        lo, hi = np.minmax(a, **kwargs)
+        assert_equal(lo, np.min(a, **kwargs))
+        assert_equal(hi, np.max(a, **kwargs))
+
+    def test_minmax_scalar(self):
+        with pytest.raises(AxisError):
+            np.minmax(1, 1)
+
+        assert_equal(np.minmax(1, axis=0), (1, 1))
+        assert_equal(np.minmax(1, axis=None), (1, 1))
+
+    def test_minmax_axis(self):
+        with pytest.raises(AxisError):
+            np.minmax([1, 2, 3], 1000)
+        assert_equal(np.minmax([[1, 2, 3]], axis=1), (1, 3))
+
+        a = np.arange(2 * 3 * 4).reshape(2, 3, 4)
+        for axis in [None, 0, 1, 2, (0, 1), (1, 2), (0, 2), (0, 1, 2)]:
+            self.check_minmax(a, axis=axis)
+        self.check_minmax(a, axis=1, keepdims=True)
+
+    def test_minmax_dtypes(self):
+        # a large array so the SIMD reduction kernels (not just the scalar
+        # tail) are exercised for every lane width
+        for dtype in (np.typecodes['AllInteger'] + np.typecodes['AllFloat']
+                      + np.typecodes['Complex'] + '?'):
+            self.check_minmax(np.arange(1000).astype(dtype))
+        self.check_minmax(np.arange(1000, dtype=object))
+
+    def test_minmax_nan(self):
+        # NaN is propagated, like min/max
+        a = np.arange(10.0)
+        a[3] = np.nan
+        self.check_minmax(a)
+
+    def test_minmax_datetime(self):
+        # Do not ignore NaT
+        for dtype in ('m8[s]', 'm8[Y]'):
+            a = np.arange(10).astype(dtype)
+            self.check_minmax(a)
+            a[3] = 'NaT'
+            self.check_minmax(a)
+
+    def test_minmax_out(self):
+        a = np.arange(12.0).reshape(3, 4)
+        out1 = np.empty(4)
+        out2 = np.empty(4)
+        res = np.minmax(a, axis=0, out=(out1, out2))
+        assert_(res[0] is out1 and res[1] is out2)
+        assert_equal(out1, np.min(a, axis=0))
+        assert_equal(out2, np.max(a, axis=0))
+
+    def test_minmax_out_array_function(self):
+        # the arrays inside the `out` tuple must take part in dispatching
+        class MyArray:
+            def __array_function__(self, *args, **kwargs):
+                return "handled"
+
+        a = np.array([1, 2, 3])
+        assert_equal(np.minmax(a, out=(MyArray(), MyArray())), "handled")
+        assert_equal(np.minmax(a, out=MyArray()), "handled")
+
+    def test_minmax_out_invalid(self):
+        # a bad `out` is rejected rather than silently dropped, like np.min
+        a = np.arange(4)
+        single = np.empty((), dtype=a.dtype)
+        for x in (a, list(a)):
+            with pytest.raises(TypeError):
+                np.minmax(x, out="foo")
+            with pytest.raises(TypeError):
+                np.minmax(x, out=single)
+
+    def test_minmax_initial_and_where(self):
+        a = np.array([[-50], [10]])
+        assert_equal(np.minmax(a, axis=-1, initial=0), ([-50, 0], [0, 10]))
+        with pytest.raises(ValueError):
+            np.minmax(np.array([], dtype=np.float64))
+        assert_equal(np.minmax(np.array([], dtype=np.float64),
+                               initial=(np.inf, -np.inf)), (np.inf, -np.inf))
+
+    def test_minmax_no_loop_fallback(self):
+        # dtypes with no fused `minimummaximum` loop but that support min/max
+        # (the variable-width string DType, other user DTypes) fall back to two
+        # separate reductions.
+        a = np.array(["banana", "apple", "cherry"],
+                     dtype=np.dtypes.StringDType())
+        assert_equal(np.minmax(a), (np.min(a), np.max(a)))
+        a2 = a.reshape(3, 1)
+        lo, hi = np.minmax(a2, axis=0)
+        assert_equal(lo, np.min(a2, axis=0))
+        assert_equal(hi, np.max(a2, axis=0))
+
+    def test_minmax_no_loop_raises(self):
+        # a dtype that supports neither `minmax` nor `min`/`max` still raises
+        with pytest.raises(TypeError):
+            np.minmax(np.array(["banana", "apple"]))
+
+    def test_minmax_array_ufunc_no_fallback(self):
+        # a subclass whose __array_ufunc__ declines the private minimummaximum
+        # ufunc takes total control (the __array_ufunc__ contract), so minmax
+        # does not fall back to min/max and the TypeError propagates
+        class Sub(np.ndarray):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kw):
+                if ufunc in (np.minimum, np.maximum):
+                    inputs = [np.asarray(i) if isinstance(i, Sub) else i
+                              for i in inputs]
+                    return getattr(ufunc, method)(*inputs, **kw)
+                return NotImplemented
+
+        a = np.array([3, 1, 2]).view(Sub)
+        with pytest.raises(TypeError):
+            np.minmax(a)
+
 
 class TestNewaxis:
     def test_basic(self):

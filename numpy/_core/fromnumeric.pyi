@@ -70,6 +70,7 @@ __all__ = [
     "mean",
     "max",
     "min",
+    "minmax",
     "matrix_transpose",
     "ndim",
     "nonzero",
@@ -2493,6 +2494,44 @@ def amin(
 ) -> NDArray[Any]: ...
 
 min = amin
+
+@overload
+def minmax[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | tuple[_NumberLike_co, _NumberLike_co] | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[ScalarT, ScalarT]: ...
+@overload
+def minmax(
+    a: ArrayLike,
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    keepdims: bool | _NoValueType = ...,
+    initial: _NumberLike_co | tuple[_NumberLike_co, _NumberLike_co] | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[Any, Any]: ...
+@overload
+def minmax[ArrayT: np.ndarray](
+    a: ArrayLike,
+    axis: int | tuple[int, ...] | None,
+    out: tuple[ArrayT, ArrayT],
+    keepdims: bool | _NoValueType = ...,
+    initial: _NumberLike_co | tuple[_NumberLike_co, _NumberLike_co] | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[ArrayT, ArrayT]: ...
+@overload
+def minmax[ArrayT: np.ndarray](
+    a: ArrayLike,
+    axis: int | tuple[int, ...] | None = None,
+    *,
+    out: tuple[ArrayT, ArrayT],
+    keepdims: bool | _NoValueType = ...,
+    initial: _NumberLike_co | tuple[_NumberLike_co, _NumberLike_co] | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[ArrayT, ArrayT]: ...
 
 # keep in sync with `cumsum` above (minus `timedelta64` and `StringDType`)
 @overload
