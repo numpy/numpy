@@ -2268,6 +2268,51 @@ def _test_array_equal_parametrizations():
     yield (cplx3, cplx4, True, True)
 
 
+class TestArrayEqualFused:
+    @pytest.mark.parametrize("dt", ["?", "b", "B", "h", "H", "i", "I", "l",
+                                    "L", "q", "Q", "e", "f", "d", "g", "F",
+                                    "D", "G"])
+    @pytest.mark.parametrize("equal_nan", [False, True])
+    def test_array_equal_fused_path(self, dt, equal_nan):
+        # Large same-dtype operands take a fused C reduction (gh-32465);
+        # results must match the generic path.
+        n = 70000
+        a = (np.arange(n) % 5).astype(dt)
+        assert_(np.array_equal(a, a.copy(), equal_nan=equal_nan))
+        b = a.copy()
+        for pos in (0, n // 2, n - 1):
+            b[pos] = 0 if a[pos] else 1
+            assert_(not np.array_equal(a, b, equal_nan=equal_nan))
+            b[pos] = a[pos]
+        # strided, F-order and reversed views
+        assert_(np.array_equal(a[::2], a[::2].copy(),
+                               equal_nan=equal_nan))
+        a2 = np.asfortranarray(a[:69984].reshape(486, 144))
+        assert_(np.array_equal(a2, a2.copy(), equal_nan=equal_nan))
+        assert_(np.array_equal(a[::-1], a[::-1].copy(),
+                               equal_nan=equal_nan))
+
+    @pytest.mark.parametrize("dt", ["e", "f", "d", "g", "F", "D", "G"])
+    def test_array_equal_fused_nan(self, dt):
+        n = 70000
+        a = (np.arange(n) % 7).astype(dt)
+        a[n // 3] = np.nan
+        b = a.copy()
+        assert_(not np.array_equal(a, b))
+        assert_(np.array_equal(a, b, equal_nan=True))
+        c = a.copy()
+        c[n // 3] = 1
+        c[n // 3 + 1] = np.nan
+        assert_(not np.array_equal(a, c, equal_nan=True))
+
+    def test_array_equal_fused_bool_noncanonical(self):
+        # bools compare by truth value even for non-0/1 byte patterns
+        a = (np.full(70000, 3, dtype=np.int8)).view(bool)
+        b = np.ones(70000, dtype=bool)
+        assert_(np.array_equal(a, b))
+        assert_(np.array_equal(a, b, equal_nan=True))
+
+
 class TestArrayComparisons:
     @pytest.mark.parametrize(
         "bx,by,equal_nan,expected", list(_test_array_equal_parametrizations())

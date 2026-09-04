@@ -11,6 +11,7 @@ import numpy as np
 from numpy.exceptions import AxisError
 
 from . import multiarray, numerictypes, numerictypes as nt, overrides, shape_base, umath
+from ._multiarray_umath import _all_equal, _all_equal_nan
 from ._ufunc_config import errstate
 from .multiarray import (  # noqa: F401
     ALLOW_THREADS,
@@ -2537,6 +2538,22 @@ def array_equal(a1, a2, equal_nan=False):
         return False
     if a1.shape != a2.shape:
         return False
+    d1 = a1.dtype
+    if d1 is a2.dtype and (d1.num <= 16 or d1.num == 23):
+        # Builtin bool/integer/float/complex operands sharing the descr
+        # singleton: fused C reduction with an early exit, avoiding the
+        # temporary boolean array.
+        if a1.ndim == 0:
+            a1 = a1.reshape(1)
+            a2 = a2.reshape(1)
+        if equal_nan and d1.num > 10:
+            # only inexact dtypes can hold NaN
+            if a1 is a2:
+                return True
+            r = _all_equal_nan(a1, a2)
+        else:
+            r = _all_equal(a1, a2)
+        return builtins.bool(r if a1.ndim == 1 else r.all())
     if not equal_nan:
         return builtins.bool((asanyarray(a1 == a2)).all())
 
