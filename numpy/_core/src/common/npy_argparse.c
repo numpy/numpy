@@ -5,6 +5,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <stdatomic.h>
+#include <string.h>
 
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_2_compat.h"
@@ -13,7 +14,7 @@
 
 #include "arrayfunction_override.h"
 
-#if PY_VERSION_HEX < 0x30d00b3
+#ifdef NPY_USE_LEGACY_LOCK
 static PyThread_type_lock argparse_mutex;
 #define LOCK_ARGPARSE_MUTEX                             \
     PyThread_acquire_lock(argparse_mutex, WAIT_LOCK)
@@ -27,7 +28,7 @@ static PyMutex argparse_mutex = {0};
 
 NPY_NO_EXPORT int
 init_argparse_mutex(void) {
-#if PY_VERSION_HEX < 0x30d00b3
+#ifdef NPY_USE_LEGACY_LOCK
     argparse_mutex = PyThread_allocate_lock();
     if (argparse_mutex == NULL) {
         PyErr_NoMemory();
@@ -305,7 +306,14 @@ _npy_parse_arguments(const char *funcname,
 
     /* If there are any kwargs, first handle them */
     if (NPY_LIKELY(kwnames != NULL)) {
+#if defined(Py_LIMITED_API)
+        len_kwargs = PyTuple_Size(kwnames);
+        if (len_kwargs < 0) {
+            return -1;
+        }
+#else
         len_kwargs = PyTuple_GET_SIZE(kwnames);
+#endif
         max_nargs = cache->nargs;
 
         for (int i = len_args; i < cache->nargs; i++) {
@@ -313,7 +321,14 @@ _npy_parse_arguments(const char *funcname,
         }
 
         for (Py_ssize_t i = 0; i < len_kwargs; i++) {
+#if defined(Py_LIMITED_API)
+            PyObject *key = PyTuple_GetItem(kwnames, i);
+            if (key == NULL) {
+                return -1;
+            }
+#else
             PyObject *key = PyTuple_GET_ITEM(kwnames, i);
+#endif
             PyObject *value = args[i + len_args];
             PyObject *const *name;
 

@@ -862,6 +862,7 @@ py.extension_module('_multiarray_tests',
   gnu_symbol_visibility: 'default',
   install: true,
   subdir: 'numpy/_core',
+  limited_api: py_limited_api,
   install_tag: 'tests'
 )
 
