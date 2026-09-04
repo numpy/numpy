@@ -3300,6 +3300,26 @@ class TestUnaryTrivialCall:
             assert res.dtype == arr.dtype and res.view("i8") == -5
             assert np.isnat(np.negative(arr))[1]
 
+    def test_strides_and_empty(self):
+        base = np.arange(8.0)
+        expected = np.sin(base.tolist())
+        for view in (base[::-1], base[::2], base[1:5], base[::-3]):
+            assert_array_equal(np.sin(view), np.sin(view.tolist()))
+        # zero strides (broadcast views)
+        b = np.broadcast_to(np.array(0.5), (3,))
+        assert_array_equal(np.sin(b), np.sin([0.5, 0.5, 0.5]))
+        b = np.broadcast_to(np.arange(3.0), (2, 3))
+        assert_array_equal(np.sin(b), np.sin(np.arange(3.0).tolist()) * np.ones((2, 1)))
+        # 2-d views that are not contiguous fall back to the iterator
+        a = np.arange(12.0).reshape(3, 4)
+        for view in (a[:, ::2], a[::-1], a.T):
+            assert_array_equal(np.sin(view), np.sin(view.tolist()))
+        # empty arrays
+        for shape in ((0,), (0, 3), (3, 0)):
+            res = np.sin(np.zeros(shape))
+            assert res.shape == shape and res.dtype == np.float64
+        assert np.sin(np.zeros(0, dtype=np.int64)).dtype == np.float64
+
     def test_fortran_order_output(self):
         a = np.asfortranarray(np.arange(6.0).reshape(2, 3))
         res = np.sin(a)
