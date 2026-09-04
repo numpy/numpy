@@ -397,6 +397,14 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
 
       The underlying file descriptor is closed when exiting the 'with'
       block.
+    - Data for each array in a ``.npz`` file is read from disk lazily,
+      only when that array is actually accessed (e.g. via ``data['a']``),
+      not when `load` returns. Overwriting the source file in place
+      before all needed arrays have been read can raise ``BadZipFile``
+      or similar errors; the effect of deleting or replacing the file
+      is platform- and filesystem-dependent. To decouple the result
+      from the file on disk, either access all needed keys first or
+      convert it to a plain ``dict``, e.g. ``dict(np.load('foo.npz'))``.
 
     Examples
     --------
