@@ -2999,7 +2999,7 @@ class MaskedConstant(MaskedArray[tuple[()], dtype[float64]]):
     @override
     def __imul__(self, other: _Ignored, /) -> Self: ...  # type: ignore[override]
     @override
-    def __ifloordiv__(self, other: _Ignored, /) -> Self: ...
+    def __ifloordiv__(self, other: _Ignored, /) -> Self: ...  # type: ignore[override]
     @override
     def __itruediv__(self, other: _Ignored, /) -> Self: ...  # type: ignore[override]
     @override

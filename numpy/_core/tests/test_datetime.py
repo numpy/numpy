@@ -1781,6 +1781,39 @@ class TestDateTime:
     def test_timedelta_floor_divide(self, op1, op2, exp):
         assert_equal(op1 // op2, exp)
 
+    @staticmethod
+    def _simd_timedelta_operands():
+        # Array larger than any SIMD width and not a multiple of it, so the
+        # vectorized division kernels run both their vector body and scalar
+        # tail. NaT sits at a vector boundary and in the tail.
+        imin = np.iinfo(np.int64).min  # == NaT
+        vals = (np.arange(137, dtype=np.int64) - 68) * np.int64(0x200000001)
+        vals[::17] = -vals[::17]
+        vals[3] = vals[64] = vals[-1] = imin
+        return vals
+
+    @pytest.mark.parametrize("d", [1, 2, 3, 7, -4, 999983,
+                                   np.iinfo(np.int64).min])
+    def test_timedelta_divide_by_scalar_simd(self, d):
+        # m8 / int -> truncated division (TIMEDELTA_mq_m_divide)
+        imin = np.iinfo(np.int64).min
+        vals = self._simd_timedelta_operands()
+        got = (vals.view('m8[s]') / np.int64(d)).view(np.int64)
+        exp = [imin if v == imin else
+               abs(int(v)) // abs(d) * (1 if (v < 0) == (d < 0) else -1)
+               for v in vals]
+        assert_array_equal(got, np.array(exp, dtype=np.int64))
+
+    @pytest.mark.parametrize("d", [1, 2, 3, 7, -4, 999983])
+    def test_timedelta_floor_divide_by_scalar_simd(self, d):
+        # m8 // m8 -> floor division (TIMEDELTA_mm_q_floor_divide)
+        imin = np.iinfo(np.int64).min
+        vals = self._simd_timedelta_operands()
+        with np.errstate(invalid='ignore'):
+            got = vals.view('m8[s]') // np.timedelta64(d, 's')
+        exp = [0 if v == imin else int(v) // d for v in vals]
+        assert_array_equal(got, np.array(exp, dtype=np.int64))
+
     def test_generic_timedelta_floor_divide(self):
         with pytest.warns(
             DeprecationWarning,

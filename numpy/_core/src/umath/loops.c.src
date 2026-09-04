@@ -23,9 +23,6 @@
 
 #include <string.h> /* for memchr */
 
-/* Use Libdivide for faster division */
-#include "numpy/libdivide/libdivide.h"
-
 /*
  * cutoff blocksize for pairwise summation
  * decreasing it decreases errors slightly as more pairs are summed but
@@ -1071,56 +1068,6 @@ TIMEDELTA_dm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
     }
 }
 
-/* Note: Assuming 'q' == NPY_LONGLONG */
-NPY_NO_EXPORT void
-TIMEDELTA_mq_m_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    /* NOTE: This code is similar to array floor divide */
-    BINARY_DEFS
-
-    /* When the divisor is a constant, use libdivide for faster division */
-    if (steps[1] == 0) {
-        /* In case of empty array, just return */
-        if (n == 0) {
-            return;
-        }
-
-        const npy_int64 in2 = *(npy_int64 *)ip2;
-
-        /* If divisor is 0, we need not compute anything */
-        if (in2 == 0) {
-            npy_set_floatstatus_divbyzero();
-            BINARY_LOOP_SLIDING {
-                *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
-            }
-        }
-        else {
-            struct libdivide_s64_t fast_d = libdivide_s64_gen(in2);
-            BINARY_LOOP_SLIDING {
-                const npy_timedelta in1 = *(npy_timedelta *)ip1;
-                if (in1 == NPY_DATETIME_NAT) {
-                    *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
-                }
-                else {
-                    *((npy_timedelta *)op1) = libdivide_s64_do(in1, &fast_d);
-                }
-            }
-        }
-    }
-    else {
-        BINARY_LOOP_SLIDING {
-            const npy_timedelta in1 = *(npy_timedelta *)ip1;
-            const npy_int64 in2 = *(npy_int64 *)ip2;
-            if (in1 == NPY_DATETIME_NAT || in2 == 0) {
-                *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
-            }
-            else {
-                *((npy_timedelta *)op1) = in1 / in2;
-            }
-        }
-    }
-}
-
 NPY_NO_EXPORT void
 TIMEDELTA_md_m_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
@@ -1179,77 +1126,6 @@ TIMEDELTA_mm_m_remainder(char **args, npy_intp const *dimensions, npy_intp const
                 }
                 else {
                     *((npy_timedelta *)op1) = rem + in2;
-                }
-            }
-        }
-    }
-}
-
-NPY_NO_EXPORT void
-TIMEDELTA_mm_q_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    /* NOTE: This code is similar to array floor divide */
-    BINARY_DEFS
-
-    /* When the divisor is a constant, use libdivide for faster division */
-    if (steps[1] == 0) {
-        /* In case of empty array, just return */
-        if (n == 0) {
-            return;
-        }
-
-        const npy_timedelta in2 = *(npy_timedelta *)ip2;
-
-        /* If divisor is 0 or NAT, we need not compute anything */
-        if (in2 == 0) {
-            npy_set_floatstatus_divbyzero();
-            BINARY_LOOP_SLIDING {
-                *((npy_int64 *)op1) = 0;
-            }
-        }
-        else if (in2 == NPY_DATETIME_NAT) {
-            npy_set_floatstatus_invalid();
-            BINARY_LOOP_SLIDING {
-                *((npy_int64 *)op1) = 0;
-            }
-        }
-        else {
-            struct libdivide_s64_t fast_d = libdivide_s64_gen(in2);
-             BINARY_LOOP_SLIDING {
-                const npy_timedelta in1 = *(npy_timedelta *)ip1;
-                if (in1 == NPY_DATETIME_NAT) {
-                    npy_set_floatstatus_invalid();
-                    *((npy_int64 *)op1) = 0;
-                }
-                else {
-                    *((npy_int64 *)op1) = libdivide_s64_do(in1, &fast_d);
-
-                    /* Negative quotients needs to be rounded down */
-                    if (((in1 > 0) != (in2 > 0)) && (*((npy_int64 *)op1) * in2 != in1)) {
-                        *((npy_int64 *)op1) = *((npy_int64 *)op1) - 1;
-                    }
-                }
-            }
-        }
-    }
-    else {
-        BINARY_LOOP_SLIDING {
-            const npy_timedelta in1 = *(npy_timedelta *)ip1;
-            const npy_timedelta in2 = *(npy_timedelta *)ip2;
-            if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
-                npy_set_floatstatus_invalid();
-                *((npy_int64 *)op1) = 0;
-            }
-            else if (in2 == 0) {
-                npy_set_floatstatus_divbyzero();
-                *((npy_int64 *)op1) = 0;
-            }
-            else {
-                *((npy_int64 *)op1) = in1/in2;
-
-                /* Negative quotients needs to be rounded down */
-                if (((in1 > 0) != (in2 > 0)) && (*((npy_int64 *)op1) * in2 != in1)) {
-                    *((npy_int64 *)op1) = *((npy_int64 *)op1) - 1;
                 }
             }
         }

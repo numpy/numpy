@@ -4309,6 +4309,13 @@ class TestQuantile:
         assert_equal(np.quantile(x, 1), 3.5)
         assert_equal(np.quantile(x, 0.5), 1.75)
 
+    @pytest.mark.parametrize("func", [np.quantile, np.percentile])
+    def test_invalid_method_error_message(self, func):
+        with pytest.raises(
+            ValueError, match=r"is not a valid method\. Use one of: 'inverted_cdf'"
+        ):
+            func(np.arange(4), 1, method="bogus")
+
     def test_correct_quantile_value(self):
         a = np.array([True])
         tf_quant = np.quantile(True, False)

@@ -532,10 +532,14 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
 
 /*
  * Concatenates a list of ndarrays, flattening each in the specified order.
+ * `op` is the sequence `arrays` were converted from; any exact Python str in
+ * it is converted again with the result descriptor so that trailing nulls
+ * survive.
  */
 NPY_NO_EXPORT PyArrayObject *
 PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
-                                   NPY_ORDER order, PyArrayObject *ret,
+                                   NPY_ORDER order, PyObject *op,
+                                   PyArrayObject *ret,
                                    PyArray_Descr *dtype, NPY_CASTING casting)
 {
     int iarrays;
@@ -617,6 +621,13 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
     }
 
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
+        if (npy_update_operand_if_pystr(&arrays[iarrays], op, iarrays,
+                                        PyArray_DESCR(ret)) < 0) {
+            Py_DECREF(sliding_view);
+            Py_DECREF(ret);
+            return NULL;
+        }
+
         /* Adjust the window dimensions for this array */
         sliding_view->dimensions[0] = PyArray_SIZE(arrays[iarrays]);
 
@@ -707,12 +718,13 @@ PyArray_ConcatenateInto(PyObject *op,
             goto fail;
         }
         npy_mark_tmp_array_if_pyscalar(item, arrays[iarrays], NULL);
+        npy_mark_tmp_array_if_pystr(item, arrays[iarrays]);
         Py_DECREF(item);
     }
 
     if (axis == NPY_RAVEL_AXIS) {
         ret = PyArray_ConcatenateFlattenedArrays(
-                narrays, arrays, NPY_CORDER, ret, dtype,
+                narrays, arrays, NPY_CORDER, op, ret, dtype,
                 casting);
     }
     else {
@@ -1983,13 +1995,14 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
     }
     PyArray_DTypeMeta *DType = NPY_DTYPE(PyArray_DESCR(src));
     Py_INCREF(DType);
-    if (npy_mark_tmp_array_if_pyscalar(src_obj, src, &DType)) {
-        /* The user passed a Python scalar */
+    int is_pyscalar = npy_mark_tmp_array_if_pyscalar(src_obj, src, &DType);
+    if (is_pyscalar || npy_mark_tmp_array_if_pystr(src_obj, src)) {
         PyArray_Descr *descr;
         PyArray_DTypeMeta *dst_DType = NPY_DTYPE(PyArray_DESCR(dst));
         bool is_npy_nan = PyFloat_Check(src_obj) && npy_isnan(PyFloat_AsDouble(src_obj));
-        if (!is_npy_nan && (dst_DType->type_num == NPY_TIMEDELTA ||
-                            dst_DType->type_num == NPY_DATETIME)) {
+        if (is_pyscalar && !is_npy_nan &&
+                (dst_DType->type_num == NPY_TIMEDELTA ||
+                 dst_DType->type_num == NPY_DATETIME)) {
             descr = PyArray_DESCR(dst);
             Py_INCREF(descr);
         }
@@ -3276,6 +3289,8 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     }
     npy_mark_tmp_array_if_pyscalar(x, ax, NULL);
     npy_mark_tmp_array_if_pyscalar(y, ay, NULL);
+    npy_mark_tmp_array_if_pystr(x, ax);
+    npy_mark_tmp_array_if_pystr(y, ay);
 
     npy_uint32 flags = NPY_ITER_EXTERNAL_LOOP | NPY_ITER_BUFFERED |
                         NPY_ITER_REFS_OK | NPY_ITER_ZEROSIZE_OK;
@@ -3294,14 +3309,14 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         goto fail;
     }
 
-    if (PyArray_FLAGS(ax) & NPY_ARRAY_WAS_PYTHON_LITERAL) {
+    if (PyArray_FLAGS(ax) & (NPY_ARRAY_WAS_PYTHON_LITERAL | NPY_ARRAY_WAS_PYTHON_STR)) {
         if (npy_update_operand_for_scalar(&ax, x, common_dt, NPY_SAFE_CASTING) < 0) {
             goto fail;
         }
         op_in[2] = ax;
     }
 
-    if (PyArray_FLAGS(ay) & NPY_ARRAY_WAS_PYTHON_LITERAL) {
+    if (PyArray_FLAGS(ay) & (NPY_ARRAY_WAS_PYTHON_LITERAL | NPY_ARRAY_WAS_PYTHON_STR)) {
         if (npy_update_operand_for_scalar(&ay, y, common_dt, NPY_SAFE_CASTING) < 0) {
             goto fail;
         }
