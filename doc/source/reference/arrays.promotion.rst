@@ -140,11 +140,11 @@ The ``casting`` argument of ufuncs, `numpy.copyto` and `numpy.concatenate`
 treats a Python ``int``, ``float`` or ``complex`` by its kind, since the
 scalar has no precision of its own. Converting a Python ``int`` to any NumPy
 integer dtype or a Python ``float`` to any NumPy floating point dtype counts
-as "safe", even though the value may not fit. A value that does not fit
-raises ``OverflowError`` on conversion, as shown above. Lowering the kind,
-such as a Python ``float`` into an integer dtype, requires
-``casting="unsafe"``. `numpy.choose` applies the same rules with "safe"
-casting.
+as "safe", even though the value may not fit or may lose precision. An
+integer that does not fit raises ``OverflowError`` on conversion, as shown
+above, while a ``float`` is rounded to the lower precision, or overflows to
+``inf`` with a ``RuntimeWarning``. Lowering the kind, such as a Python
+``float`` into an integer dtype, requires ``casting="unsafe"``.
 
   >>> arr_int8 = np.array([1, 2], dtype=np.int8)
   >>> np.concatenate((arr_int8, 3), axis=None, casting="safe")
