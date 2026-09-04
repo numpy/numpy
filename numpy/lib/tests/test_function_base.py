@@ -4736,6 +4736,23 @@ class TestQuantile:
         value = np.quantile(a, np.float32(0.5), method=method)
         assert value.dtype == np.float32
 
+    @pytest.mark.parametrize("method", quantile_methods)
+    @pytest.mark.parametrize("dtype", [np.float64, np.int64])
+    def test_quantile_dense_kth_matches_sparse(self, method, dtype):
+        m = 2049
+        rng = np.random.default_rng(12345)
+        if dtype == np.int64:
+            a = rng.integers(-1000, 1000, size=m, dtype=np.int64)
+        else:
+            a = rng.standard_normal(m)
+            a[rng.integers(0, m, size=17)] = np.nan
+        q_shared = np.array([0.0, 0.25, 0.5, 0.75, 1.0])
+        q_dense = np.linspace(0.0, 1.0, m)
+        sparse = np.quantile(a, q_shared, method=method)
+        dense = np.quantile(a, q_dense, method=method)
+        assert_allclose(
+            dense[[0, 512, 1024, 1536, 2048]], sparse, rtol=1e-12)
+
 
 class TestLerp:
     @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
