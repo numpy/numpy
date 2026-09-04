@@ -2530,6 +2530,9 @@ add_newdoc('numpy._core.umath', 'maximum',
     neither x1 nor x2 are nans, but it is faster and does proper
     broadcasting.
 
+    For string arrays (dtype ``bytes_`` or ``str_``), elements are compared
+    lexicographically; there is no concept of NaN for strings.
+
     Examples
     --------
     >>> import numpy as np
@@ -2589,6 +2592,9 @@ add_newdoc('numpy._core.umath', 'minimum',
     The minimum is equivalent to ``np.where(x1 <= x2, x1, x2)`` when
     neither x1 nor x2 are NaNs, but it is faster and does proper
     broadcasting.
+
+    For string arrays (dtype ``bytes_`` or ``str_``), elements are compared
+    lexicographically; there is no concept of NaN for strings.
 
     Examples
     --------
