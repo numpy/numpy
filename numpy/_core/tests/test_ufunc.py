@@ -3292,11 +3292,11 @@ class TestLowlevelAPIAccess:
         r = np.add.resolve_dtypes((f4, int, None))
         assert r == (f4, f4, f4)
 
-        msg = r"cannot cast Python.*under the casting rule 'equiv'"
+        msg = r"cannot cast Python.*under the casting rule '{}'"
         for pytype, dtype in [(int, "uint8"), (float, "float32"),
                               (complex, "complex64")]:
             for casting in ["equiv", "no"]:
-                with pytest.raises(TypeError, match=msg):
+                with pytest.raises(TypeError, match=msg.format(casting)):
                     np.add.resolve_dtypes((np.dtype(dtype), pytype, None),
                                           casting=casting)
 
