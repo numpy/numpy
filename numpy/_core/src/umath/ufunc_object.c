@@ -4732,6 +4732,49 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
 }
 
 /*
+ * Run a resolved unary loop, including floating point error handling.
+ * Returns 0 on success and -1 with an error set.
+ */
+static inline int
+execute_unary_trivial_loop(
+        PyUFuncObject *ufunc, PyArrayMethod_Context *context,
+        char **data, npy_intp *strides, npy_intp count)
+{
+    NPY_BEGIN_THREADS_DEF;
+
+    PyArrayMethod_StridedLoop *strided_loop;
+    NpyAuxData *auxdata = NULL;
+    NPY_ARRAYMETHOD_FLAGS flags = 0;
+    if (context->method->get_strided_loop(context, 1, 0, strides,
+                                          &strided_loop, &auxdata, &flags) < 0) {
+        return -1;
+    }
+
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        npy_clear_floatstatus();
+    }
+    if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
+        NPY_BEGIN_THREADS_THRESHOLDED(count);
+    }
+    int ret = strided_loop(context, data, &count, strides, auxdata);
+    NPY_END_THREADS;
+    NPY_AUXDATA_FREE(auxdata);
+
+    if (ret == 0 && PyErr_Occurred()) {
+        ret = -1;
+    }
+    if (ret == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        int fpe_errors = npy_get_floatstatus();
+        if (fpe_errors && PyUFunc_GiveFloatingpointErrors(
+                ufunc_get_name_cstr(ufunc), fpe_errors) < 0) {
+            ret = -1;
+        }
+    }
+    return ret;
+}
+
+
+/*
  * Check whether the input object is a known scalar and whether the ufunc has
  * a suitable inner loop for it, which takes and returns the data type of the
  * input (this function is not called if output or any other argument was given).
@@ -4809,9 +4852,11 @@ try_trivial_scalar_call(
         (PyTuple_GET_ITEM(all_dtypes, 1) != (PyObject *)NPY_DTYPE(dt))) {
         goto bail;
     }
-    // Get method, bailing if not an arraymethod (e.g., a promotor).
+    // Get method, bailing if not an arraymethod (e.g., a promotor) or if
+    // it needs descriptor resolution (only the legacy resolver is trivial).
     PyArrayMethodObject *method = (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
-    if (!PyObject_TypeCheck(method, &PyArrayMethod_Type)) {
+    if (!PyObject_TypeCheck(method, &PyArrayMethod_Type)
+            || method->resolve_descriptors != &simple_legacy_resolve_descriptors) {
         goto bail;
     }
     // Get loop, requiring that the output and input dtype are the same.
@@ -4821,43 +4866,11 @@ try_trivial_scalar_call(
     context.caller = (PyObject *)ufunc;
     context.method = method;
     npy_intp strides[2] = {0, 0};  // 0 ensures scalar math, not SIMD for half.
-    PyArrayMethod_StridedLoop *strided_loop;
-    NpyAuxData *auxdata = NULL;
-    NPY_ARRAYMETHOD_FLAGS flags = 0;
-    if (method->get_strided_loop(&context, 1, 0, strides,
-                                 &strided_loop, &auxdata, &flags) < 0) {
-        ret = -1;  // Should not happen, so raise error if it does anyway.
-        goto bail;
-    }
-    /*
-     * Call loop with single element, checking floating point errors.
-     */
-    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        npy_clear_floatstatus();
-    }
-    npy_intp n = 1;
-    ret = strided_loop(&context, data, &n, strides, auxdata);
-    NPY_AUXDATA_FREE(auxdata);
+    ret = execute_unary_trivial_loop(ufunc, &context, data, strides, 1);
     if (ret == 0) {
-        if (PyErr_Occurred()) {
-            ret = -1;
-            goto bail;
-        }
-        if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-            // Check for any unmasked floating point errors (note: faster
-            // than _check_ufunc_fperr as one doesn't need mask up front).
-            int fpe_errors = npy_get_floatstatus();
-            if (fpe_errors) {
-                if (PyUFunc_GiveFloatingpointErrors(
-                        ufunc_get_name_cstr(ufunc), fpe_errors) < 0) {
-                    ret = -1;  // Real error, falling back would not help.
-                    goto bail;
-                }
-            }
-        }
         *result = PyArray_Scalar(out, dt, NULL);
         if (*result == NULL) {
-            ret = -1;  // Real error (should never happen).
+            ret = -1;
         }
     }
   bail:
@@ -4891,77 +4904,6 @@ typedef union {
     npy_clongdouble clongdouble_;
 } unary_scalar_storage;
 
-/* Pointer to the union member for `type_num`, or NULL if unsupported. */
-static inline char *
-unary_scalar_storage_ptr(unary_scalar_storage *storage, int type_num)
-{
-    switch (type_num) {
-        case NPY_BOOL: return (char *)&storage->bool_;
-        case NPY_BYTE: return (char *)&storage->byte_;
-        case NPY_UBYTE: return (char *)&storage->ubyte_;
-        case NPY_SHORT: return (char *)&storage->short_;
-        case NPY_USHORT: return (char *)&storage->ushort_;
-        case NPY_INT: return (char *)&storage->int_;
-        case NPY_UINT: return (char *)&storage->uint_;
-        case NPY_LONG: return (char *)&storage->long_;
-        case NPY_ULONG: return (char *)&storage->ulong_;
-        case NPY_LONGLONG: return (char *)&storage->longlong_;
-        case NPY_ULONGLONG: return (char *)&storage->ulonglong_;
-        case NPY_HALF: return (char *)&storage->half_;
-        case NPY_FLOAT: return (char *)&storage->float_;
-        case NPY_DOUBLE: return (char *)&storage->double_;
-        case NPY_LONGDOUBLE: return (char *)&storage->longdouble_;
-        case NPY_CFLOAT: return (char *)&storage->cfloat_;
-        case NPY_CDOUBLE: return (char *)&storage->cdouble_;
-        case NPY_CLONGDOUBLE: return (char *)&storage->clongdouble_;
-        default: return NULL;
-    }
-}
-
-
-/*
- * Run a resolved unary loop, including floating point error handling.
- * Returns 0 on success and -1 with an error set.
- */
-static inline int
-execute_unary_trivial_loop(
-        PyUFuncObject *ufunc, PyArrayMethod_Context *context,
-        char **data, npy_intp *strides, npy_intp count)
-{
-    NPY_BEGIN_THREADS_DEF;
-
-    PyArrayMethod_StridedLoop *strided_loop;
-    NpyAuxData *auxdata = NULL;
-    NPY_ARRAYMETHOD_FLAGS flags = 0;
-    if (context->method->get_strided_loop(context, 1, 0, strides,
-                                          &strided_loop, &auxdata, &flags) < 0) {
-        return -1;
-    }
-
-    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        npy_clear_floatstatus();
-    }
-    if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
-        NPY_BEGIN_THREADS_THRESHOLDED(count);
-    }
-    int ret = strided_loop(context, data, &count, strides, auxdata);
-    NPY_END_THREADS;
-    NPY_AUXDATA_FREE(auxdata);
-
-    if (ret == 0 && PyErr_Occurred()) {
-        ret = -1;
-    }
-    if (ret == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        int fpe_errors = npy_get_floatstatus();
-        if (fpe_errors && PyUFunc_GiveFloatingpointErrors(
-                ufunc_get_name_cstr(ufunc), fpe_errors) < 0) {
-            ret = -1;
-        }
-    }
-    return ret;
-}
-
-
 /*
  * Fast path for `ufunc(arr)` with an exact, trivially iterable ndarray
  * (0-d, 1-d, or C/F-contiguous) of a builtin non-parametric dtype.
@@ -4980,7 +4922,8 @@ try_unary_trivial_call(
 
     PyArray_Descr *in_descr = PyArray_DESCR(in);
     PyArray_DTypeMeta *in_DType = NPY_DTYPE(in_descr);
-    if (in_descr != in_DType->singleton || !PyArray_ISALIGNED(in)) {
+    if (!PyDataType_ISNUMBER(in_descr)
+            || in_descr != in_DType->singleton || !PyArray_ISALIGNED(in)) {
         return -2;
     }
     int ndim = PyArray_NDIM(in);
@@ -5007,7 +4950,8 @@ try_unary_trivial_call(
     PyArrayMethodObject *method =
             (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
     if (!PyObject_TypeCheck(method, &PyArrayMethod_Type)
-            || method->resolve_descriptors_with_scalars != NULL) {
+            || method->resolve_descriptors_with_scalars != NULL
+            || method->resolve_descriptors != &simple_legacy_resolve_descriptors) {
         return -2;
     }
     PyObject *all_dtypes = PyTuple_GET_ITEM(info, 0);
@@ -5018,12 +4962,8 @@ try_unary_trivial_call(
     PyArray_DTypeMeta *out_DType =
             (PyArray_DTypeMeta *)PyTuple_GET_ITEM(all_dtypes, 1);
     PyArray_Descr *out_descr = out_DType->singleton;
-    /* No parametric (datetime, strings) or refcounted dtypes, and no
-     * finalize_descr (the allocation could replace the descr). */
-    if (out_descr == NULL || PyDataType_REFCHK(in_descr)
-            || PyDataType_REFCHK(out_descr)
-            || NPY_DT_is_parametric(in_DType) || NPY_DT_is_parametric(out_DType)
-            || NPY_DT_has_finalize(out_DType)) {
+    /* Only builtin numeric/bool descriptors can bypass resolution. */
+    if (out_descr == NULL || !PyDataType_ISNUMBER(out_descr)) {
         return -2;
     }
 
@@ -5037,10 +4977,7 @@ try_unary_trivial_call(
         /* 0-d returns a scalar: compute on the stack, skip the temp array. */
         unary_scalar_storage storage;
         memset(&storage, 0, sizeof(storage));  /* deterministic padding bytes */
-        char *out_buf = unary_scalar_storage_ptr(&storage, out_descr->type_num);
-        if (out_buf == NULL) {
-            return -2;
-        }
+        char *out_buf = (char *)&storage;
         char *data[2] = {PyArray_BYTES(in), out_buf};
         npy_intp strides[2] = {0, 0};  // 0 ensures scalar math, not SIMD
         if (execute_unary_trivial_loop(ufunc, &context, data, strides, 1) < 0) {
@@ -5050,10 +4987,9 @@ try_unary_trivial_call(
         return *result == NULL ? -1 : 0;
     }
 
-    PyArrayObject *out = (PyArrayObject *)PyArray_NewFromDescr_int(
+    PyArrayObject *out = (PyArrayObject *)PyArray_NewFromDescr(
             &PyArray_Type, (PyArray_Descr *)Py_NewRef(out_descr),
-            ndim, PyArray_SHAPE(in), NULL, NULL, out_fortran,
-            NULL, NULL, _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
+            ndim, PyArray_SHAPE(in), NULL, NULL, out_fortran, NULL);
     if (out == NULL) {
         return -1;
     }

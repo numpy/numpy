@@ -3261,6 +3261,19 @@ class TestUnaryTrivialCall:
     # ``ufunc(arr)`` for an exact, trivially iterable ndarray with a builtin
     # dtype takes a fast path (``try_unary_trivial_call``).
 
+    @pytest.mark.parametrize("arg", [np.ones(()), np.ones(2), 1.0, np.float64(1.)])
+    def test_cached_descriptor_resolver_error(self, arg):
+        # Covers the array fast path (0-d and 1-d) and the scalar fast path.
+        ufunc = ncu_tests.create_unary_ufunc_with_resolver_error()
+
+        # The first call caches the ArrayMethod before its resolver raises.
+        with pytest.raises(TypeError, match="unary descriptor resolution failed"):
+            ufunc(arg)
+
+        # A cache hit must still invoke the resolver, without running the loop.
+        with pytest.raises(TypeError, match="unary descriptor resolution failed"):
+            ufunc(arg)
+
     @pytest.mark.parametrize("dtype", ["?", "i1", "u8", "e", "d", "g", "G"])
     def test_0d_returns_scalar(self, dtype):
         arr = np.array([1, 0], dtype=dtype)

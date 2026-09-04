@@ -71,7 +71,7 @@ wrapped_legacy_resolve_descriptors(PyArrayMethodObject *NPY_UNUSED(self),
  * Much the same as the default type resolver, but tries a bit harder to
  * preserve metadata.
  */
-static NPY_CASTING
+NPY_NO_EXPORT NPY_CASTING
 simple_legacy_resolve_descriptors(
         PyArrayMethodObject *method,
         PyArray_DTypeMeta *const *dtypes,
