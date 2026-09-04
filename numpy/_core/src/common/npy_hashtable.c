@@ -122,7 +122,14 @@ find_item_buckets(struct buckets *buckets, int key_len, PyObject *const *key,
             /* The item is not in the cache; return the empty bucket */
             return item;
         }
-        if (memcmp(item+1, key, key_len * sizeof(PyObject *)) == 0) {
+        int match = 1;
+        for (int i = 0; i < key_len; i++) {
+            if (item[i + 1] != key[i]) {
+                match = 0;
+                break;
+            }
+        }
+        if (match) {
             /* This is a match, so return the item/bucket */
             return item;
         }
