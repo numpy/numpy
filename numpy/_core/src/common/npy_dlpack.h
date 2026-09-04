@@ -35,7 +35,7 @@ gentype_dlpack_device(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args));
 
 
 NPY_NO_EXPORT PyObject *
-from_dlpack(PyObject *NPY_UNUSED(self),
+from_dlpack(PyObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames);
 
 

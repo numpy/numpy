@@ -5,6 +5,7 @@
 #include "numpy/ufuncobject.h"
 #include "npy_import.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "multiarraymodule.h"
 #include "npy_pycompat.h"
 #include "override.h"
@@ -113,6 +114,7 @@ initialize_normal_kwds(PyObject *const *out_args, int nout,
         }
     }
 
+    PyObject *out_str = _npy_module_state->interned_str.out;
     if (out_args != NULL) {
         assert(nout > 0);
         /* Replace `out` argument with the normalized version */
@@ -120,7 +122,7 @@ initialize_normal_kwds(PyObject *const *out_args, int nout,
         if (out_tuple == NULL) {
             return -1;
         }
-        int res = PyDict_SetItem(normal_kwds, npy_interned_str.out, out_tuple);
+        int res = PyDict_SetItem(normal_kwds, out_str, out_tuple);
         Py_DECREF(out_tuple);
         if (res < 0) {
             return -1;
@@ -128,12 +130,12 @@ initialize_normal_kwds(PyObject *const *out_args, int nout,
     }
     else {
         /* Ensure that `out` is not present. */
-        int res = PyDict_Contains(normal_kwds, npy_interned_str.out);
+        int res = PyDict_Contains(normal_kwds, out_str);
         if (res < 0) {
             return -1;
         }
         if (res) {
-            return PyDict_DelItem(normal_kwds, npy_interned_str.out);
+            return PyDict_DelItem(normal_kwds, out_str);
         }
     }
     return 0;
@@ -184,7 +186,7 @@ copy_positional_args_to_kwargs(const char **keywords,
              * 5 keyword arguments.
              */
             assert(strcmp(keywords[i], "initial") == 0);
-            if (args[i] == npy_static_pydata._NoValue) {
+            if (args[i] == _npy_module_state->static_pydata._NoValue) {
                 continue;
             }
         }
@@ -216,6 +218,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
         PyObject **result)
 {
+    multiarray_umath_state *state = _npy_module_state;
     int status;
 
     int num_override_args;
@@ -370,14 +373,15 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
 
             /* All tuple items must be set before use */
             PyTuple_SET_ITEM(override_args, 0, Py_NewRef(Py_None));
+            npy_runtime_imports_struct *imports = &state->runtime_imports;
             if (npy_cache_import_runtime(
                     "numpy._core._internal",
                     "array_ufunc_errmsg_formatter",
-                    &npy_runtime_imports.array_ufunc_errmsg_formatter) == -1) {
+                    &imports->array_ufunc_errmsg_formatter) == -1) {
                 goto fail;
             }
             errmsg = PyObject_Call(
-                    npy_runtime_imports.array_ufunc_errmsg_formatter,
+                    state->runtime_imports.array_ufunc_errmsg_formatter,
                     override_args, normal_kwds);
             if (errmsg != NULL) {
                 PyErr_SetObject(PyExc_TypeError, errmsg);

@@ -3,6 +3,7 @@
 
 #include "npy_static_data.h"
 #include "npy_import.h"
+#include "module_state.h"
 
 extern NPY_NO_EXPORT PyMethodDef array_methods[];
 
@@ -14,11 +15,12 @@ extern NPY_NO_EXPORT PyMethodDef array_methods[];
 static inline PyObject *
 NpyPath_PathlikeToFspath(PyObject *file)
 {
-    if (!PyObject_IsInstance(file, npy_static_pydata.os_PathLike)) {
+    multiarray_umath_state *state = _npy_module_state;
+    if (!PyObject_IsInstance(file, state->static_pydata.os_PathLike)) {
         Py_INCREF(file);
         return file;
     }
-    return PyObject_CallFunctionObjArgs(npy_static_pydata.os_fspath,
+    return PyObject_CallFunctionObjArgs(state->static_pydata.os_fspath,
                                         file, NULL);
 }
 
