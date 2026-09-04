@@ -5036,6 +5036,7 @@ try_unary_trivial_call(
     if (ndim == 0) {
         /* 0-d returns a scalar: compute on the stack, skip the temp array. */
         unary_scalar_storage storage;
+        memset(&storage, 0, sizeof(storage));  /* deterministic padding bytes */
         char *out_buf = unary_scalar_storage_ptr(&storage, out_descr->type_num);
         if (out_buf == NULL) {
             return -2;
