@@ -3,6 +3,9 @@
 Copied from fftpack.helper by Pearu Peterson, October 2005
 
 """
+
+import pytest
+
 import numpy as np
 from numpy import fft, pi
 from numpy.testing import assert_array_almost_equal
@@ -143,6 +146,21 @@ class TestFFTFreq:
         assert_array_almost_equal(10 * fft.fftfreq(10), x)
         assert_array_almost_equal(10 * pi * fft.fftfreq(10, pi), x)
 
+    @pytest.mark.parametrize("dtype", "efFdDgG")
+    def test_valid_dtype(self, dtype):
+        assert fft.fftfreq(10, dtype=dtype).dtype == dtype
+
+    @pytest.mark.parametrize("dtype", "?bBhHiIlLqQOSUV")
+    def test_invalid_dtype(self, dtype):
+        msg = f"`dtype` must be an inexact type. Got {dtype=}."
+        with pytest.raises(ValueError, match=msg):
+            fft.fftfreq(10, dtype=dtype)
+
+    @pytest.mark.parametrize("d_dtype", "efFdDgG?bBhHiIlLqQ")
+    def test_default_dtype(self, d_dtype):
+        d = np.dtype(d_dtype).type(1.0)
+        assert fft.fftfreq(10, d).dtype == np.result_type(np.float64, d_dtype)
+
 
 class TestRFFTFreq:
 
@@ -153,6 +171,21 @@ class TestRFFTFreq:
         x = [0, 1, 2, 3, 4, 5]
         assert_array_almost_equal(10 * fft.rfftfreq(10), x)
         assert_array_almost_equal(10 * pi * fft.rfftfreq(10, pi), x)
+
+    @pytest.mark.parametrize("dtype", "efFdDgG")
+    def test_valid_dtype(self, dtype):
+        assert fft.rfftfreq(10, dtype=dtype).dtype == dtype
+
+    @pytest.mark.parametrize("dtype", "?bBhHiIlLqQOSUV")
+    def test_invalid_dtype(self, dtype):
+        msg = f"`dtype` must be an inexact type. Got {dtype=}."
+        with pytest.raises(ValueError, match=msg):
+            fft.rfftfreq(10, dtype=dtype)
+
+    @pytest.mark.parametrize("d_dtype", "efFdDgG?bBhHiIlLqQ")
+    def test_default_dtype(self, d_dtype):
+        d = np.dtype(d_dtype).type(1.0)
+        assert fft.rfftfreq(10, d).dtype == np.result_type(np.float64, d_dtype)
 
 
 class TestIRFFTN:
