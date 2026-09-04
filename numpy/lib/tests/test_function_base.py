@@ -2108,6 +2108,85 @@ class TestVectorize:
         assert_array_equal(np.vectorize(lambda x: x, signature="(i)->(j)",
                                         otypes=[otype])(arr), arr)
 
+    @pytest.mark.parametrize("unit", ["Y", "M", "D", "h", "s", "ms", "us",
+                                      "ns", "ps", "fs", "as"])
+    def test_datetime64_roundtrip(self, unit):
+        # gh-31382: the unit was silently changed (M8[Y] -> M8[D],
+        # M8[h] -> M8[us]) and M8[ns] raised ValueError, because elements
+        # were unboxed to datetime.date/datetime.datetime/int on the way
+        # to the pyfunc, losing the unit.
+        arr = np.arange(0, 3, dtype=f"M8[{unit}]")
+        res = vectorize(lambda x: x)(arr)
+        assert_equal(res.dtype, arr.dtype)
+        assert_array_equal(res, arr)
+
+    @pytest.mark.parametrize("unit", ["D", "h", "s", "us", "ns"])
+    def test_timedelta64_roundtrip(self, unit):
+        # gh-31382, as above but for timedelta64.
+        arr = np.arange(0, 3, dtype=f"m8[{unit}]")
+        res = vectorize(lambda x: x)(arr)
+        assert_equal(res.dtype, arr.dtype)
+        assert_array_equal(res, arr)
+
+    @pytest.mark.parametrize("dtype", ["M8[Y]", "M8[us]", "M8[ns]", "m8[s]"])
+    def test_datetime64_argument_type(self, dtype):
+        # gh-31382: every call must see the same type.  The output-type
+        # probe in _get_ufunc_and_otypes passes a NumPy scalar, so the
+        # vectorized loop has to as well.
+        arr = np.arange(0, 3, dtype=dtype)
+        seen = []
+        vectorize(lambda x: seen.append(type(x)) or x)(arr)
+        assert_equal(set(seen), {type(arr[0])})
+
+    def test_datetime64_argument_type_nat_and_out_of_range(self):
+        # gh-31382: NaT reached the pyfunc as None, and years outside
+        # 1..9999 as int, even at us resolution.
+        arr = np.array(['NaT', '0000-06-01', '2011-01-02'], dtype="M8[us]")
+        seen = []
+        vectorize(lambda x: seen.append(type(x)) or x, otypes=[object])(arr)
+        assert_equal(set(seen), {np.datetime64})
+
+    def test_datetime64_preserves_shape(self):
+        # The datetime path rebuilds the object array, so shape and
+        # non-contiguous input must survive.
+        arr = np.arange(0, 6, dtype="M8[s]").reshape(2, 3)
+        assert_array_equal(vectorize(lambda x: x)(arr), arr)
+        assert_array_equal(vectorize(lambda x: x)(arr.T), arr.T)
+
+    def test_datetime64_masked_array(self):
+        # gh-31382: the mask and the MaskedArray type must survive, and
+        # the pyfunc must not receive np.ma.masked for masked positions.
+        arr = ma.array(np.arange(0, 4, dtype="M8[s]"), mask=[0, 1, 0, 1])
+        seen = []
+        res = vectorize(lambda x: seen.append(type(x)) or x,
+                        otypes=[object])(arr)
+        assert_equal(set(seen), {np.datetime64})
+        assert_(isinstance(res, ma.MaskedArray))
+        assert_array_equal(res.mask, arr.mask)
+
+    def test_datetime64_ndarray_subclass(self):
+        # gh-31382: the datetime path must not downgrade a subclass.
+        class MyArray(np.ndarray):
+            pass
+
+        arr = np.arange(0, 4, dtype="M8[s]").view(MyArray)
+        res = vectorize(lambda x: x)(arr)
+        assert_(isinstance(res, MyArray))
+        assert_array_equal(res, arr)
+
+    @pytest.mark.parametrize("arr,expected", [
+        (np.arange(2, dtype="int64"), int),
+        (np.arange(2, dtype="float64"), float),
+        (np.array([True, False]), bool),
+        (np.array(["ab", "cd"]), str),
+    ])
+    def test_non_datetime_arguments_unchanged(self, arr, expected):
+        # The gh-31382 fix is limited to datetime64/timedelta64; every
+        # other dtype keeps passing plain Python scalars to the pyfunc.
+        seen = []
+        vectorize(lambda x: seen.append(type(x)) or x, otypes=[object])(arr)
+        assert_equal(set(seen), {expected})
+
 
 class TestLeaks:
     class A:
