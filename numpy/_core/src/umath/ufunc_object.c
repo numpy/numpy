@@ -4976,7 +4976,6 @@ try_unary_trivial_call(
     if (ndim == 0) {
         /* 0-d returns a scalar: compute on the stack, skip the temp array. */
         unary_scalar_storage storage;
-        memset(&storage, 0, sizeof(storage));  /* deterministic padding bytes */
         char *out_buf = (char *)&storage;
         char *data[2] = {PyArray_BYTES(in), out_buf};
         npy_intp strides[2] = {0, 0};  // 0 ensures scalar math, not SIMD
