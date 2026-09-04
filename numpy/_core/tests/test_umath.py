@@ -2848,7 +2848,6 @@ class TestBool:
     def test_exceptions(self):
         a = np.ones(1, dtype=np.bool)
         assert_raises(TypeError, np.negative, a)
-        assert_raises(TypeError, np.positive, a)
         assert_raises(TypeError, np.subtract, a, a)
 
     def test_truth_table_logical(self):
@@ -3240,21 +3239,28 @@ class TestAbsoluteNegative:
 
 class TestPositive:
     def test_valid(self):
-        valid_dtypes = [int, float, complex, object]
+        valid_dtypes = [int, bool, float, complex, object]
         for dtype in valid_dtypes:
-            x = np.arange(5, dtype=dtype)
+            x = np.arange(5).astype(dtype)
             result = np.positive(x)
-            assert_equal(x, result, err_msg=str(dtype))
+            assert_array_equal(x, result, strict=True, err_msg=str(dtype))
 
     def test_invalid(self):
-        with assert_raises(TypeError):
-            np.positive(True)
         with assert_raises(TypeError):
             np.positive(np.datetime64('2000-01-01'))
         with assert_raises(TypeError):
             np.positive(np.array(['foo'], dtype=str))
         with assert_raises(TypeError):
             np.positive(np.array(['bar'], dtype=object))
+
+    def test_bool(self):
+        x = np.array([True, False])
+        assert_array_equal(+x, x, strict=True)
+        assert np.positive(x, out=x) is x
+        for scalar in (np.True_, True):
+            result = np.positive(scalar)
+            assert type(result) is np.bool
+            assert result == scalar
 
 
 class TestSpecialMethods:
