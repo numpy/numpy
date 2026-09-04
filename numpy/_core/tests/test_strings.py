@@ -115,6 +115,33 @@ def test_string_minmax_ufuncs(op, ufunc, name, dtypes):
     assert_array_equal(ufunc(arr2, arr), expected)
 
 
+@pytest.mark.parametrize(["op", "ufunc", "name"], MINMAX)
+def test_mixed_string_minmax_ufuncs_fail(op, ufunc, name):
+    arr_string = np.array(["a", "b"], dtype="S")
+    arr_unicode = np.array(["a", "c"], dtype="U")
+
+    with pytest.raises(TypeError, match="did not contain a loop"):
+        ufunc(arr_string, arr_unicode)
+
+    with pytest.raises(TypeError, match="did not contain a loop"):
+        ufunc(arr_unicode, arr_string)
+
+
+@pytest.mark.parametrize(["op", "ufunc", "name"], MINMAX)
+def test_mixed_string_minmax_ufuncs_with_cast(op, ufunc, name):
+    arr_string = np.array(["a", "b"], dtype="S")
+    arr_unicode = np.array(["a", "c"], dtype="U")
+
+    # While there is no loop, manual casting is acceptable:
+    res1 = ufunc(arr_string, arr_unicode, signature="UU->U", casting="unsafe")
+    res2 = ufunc(arr_string, arr_unicode, signature="SS->S", casting="unsafe")
+
+    expected = [op(d1, d2) for d1, d2 in
+                zip(arr_string.astype("U").tolist(), arr_unicode.tolist())]
+    assert_array_equal(res1, expected)
+    assert_array_equal(res2, np.array(expected, dtype="S"))
+
+
 @pytest.mark.parametrize("dt", ["S", "U"])
 def test_string_array_max_min(dt):
     # gh-1914: ndarray.max()/.min() reduce via np.maximum/np.minimum
