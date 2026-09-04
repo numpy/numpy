@@ -1,0 +1,3 @@
+``np.insert`` is faster for empty indices
+-----------------------------------------
+``np.insert`` now skips the general insertion machinery when the index array is empty, reducing overhead for no-op inserts.
