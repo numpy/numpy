@@ -1,0 +1,14 @@
+``dot``, ``vdot`` and ``inner`` now work for user-defined DTypes
+----------------------------------------------------------------
+`numpy.dot`, `numpy.vdot` and `numpy.inner` (and thus also
+`numpy.linalg.multi_dot`) previously required the legacy ``dotfunc`` "array
+function" slot, which new-style user-defined DTypes cannot provide.  For such
+DTypes NumPy now falls back to the `numpy.matmul` and `numpy.multiply` ufuncs,
+so the operations work as long as the DType implements those.
+
+The stacked-array behaviour of `numpy.dot`, which for ``a.ndim >= 2`` and
+``b.ndim >= 3`` contracts the last axis of the first operand with the
+second-to-last axis of the second and takes the *outer* product of the
+remaining axes (rather than broadcasting them), is intentionally not
+reproduced by this fallback.  Such calls raise a ``ValueError`` pointing to
+`numpy.tensordot` instead.
