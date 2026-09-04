@@ -640,6 +640,8 @@ class TestUfunc:
         with pytest.raises(TypeError):
             # We accept python float as float64 but not float32 for equiv.
             ufunc(3., 4., dtype="float32", casting="equiv")
+        with pytest.raises(TypeError):
+            ufunc(3., 4., dtype="float32", casting="no")
 
         # Special case for object and equal (note that equiv implies safe)
         ufunc(3, 4, dtype=object, casting="equiv")
@@ -3290,12 +3292,13 @@ class TestLowlevelAPIAccess:
         r = np.add.resolve_dtypes((f4, int, None))
         assert r == (f4, f4, f4)
 
-        msg = r"cannot cast Python.*under the casting rule 'equiv'"
+        msg = r"cannot cast Python.*under the casting rule '{}'"
         for pytype, dtype in [(int, "uint8"), (float, "float32"),
                               (complex, "complex64")]:
-            with pytest.raises(TypeError, match=msg):
-                np.add.resolve_dtypes((np.dtype(dtype), pytype, None),
-                                      casting="equiv")
+            for casting in ["equiv", "no"]:
+                with pytest.raises(TypeError, match=msg.format(casting)):
+                    np.add.resolve_dtypes((np.dtype(dtype), pytype, None),
+                                          casting=casting)
 
         with pytest.raises(TypeError):
             np.add.resolve_dtypes((i4, f4, None), casting="no")
