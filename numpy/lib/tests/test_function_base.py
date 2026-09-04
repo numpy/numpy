@@ -1541,6 +1541,12 @@ class TestTrimZeros:
         data, expected = self.construct_input_output(rng, shape, axis, trim)
         assert_array_equal(trim_zeros(data, axis=axis, trim=trim), expected)
 
+    @pytest.mark.parametrize("seq", ([[0, 1], [0, 0]], ((0, 1), (0, 0))))
+    def test_nested_sequence(self, seq):
+        res = np.trim_zeros(seq)
+        assert isinstance(res, np.ndarray)
+        assert_array_equal(res, [[1]])
+
 
 class TestExtins:
 
