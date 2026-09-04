@@ -2734,29 +2734,10 @@ typedef union {
 static inline char *
 reduction_scalar_storage_ptr(reduction_scalar_storage *storage, int type_num)
 {
-    switch (type_num) {
-        case NPY_BOOL: return (char *)&storage->bool_;
-        case NPY_BYTE: return (char *)&storage->byte_;
-        case NPY_UBYTE: return (char *)&storage->ubyte_;
-        case NPY_SHORT: return (char *)&storage->short_;
-        case NPY_USHORT: return (char *)&storage->ushort_;
-        case NPY_INT: return (char *)&storage->int_;
-        case NPY_UINT: return (char *)&storage->uint_;
-        case NPY_LONG: return (char *)&storage->long_;
-        case NPY_ULONG: return (char *)&storage->ulong_;
-        case NPY_LONGLONG: return (char *)&storage->longlong_;
-        case NPY_ULONGLONG: return (char *)&storage->ulonglong_;
-        case NPY_HALF: return (char *)&storage->half_;
-        case NPY_FLOAT: return (char *)&storage->float_;
-        case NPY_DOUBLE: return (char *)&storage->double_;
-        case NPY_LONGDOUBLE: return (char *)&storage->longdouble_;
-        case NPY_CFLOAT: return (char *)&storage->cfloat_;
-        case NPY_CDOUBLE: return (char *)&storage->cdouble_;
-        case NPY_CLONGDOUBLE: return (char *)&storage->clongdouble_;
-        case NPY_DATETIME: return (char *)&storage->datetime_;
-        case NPY_TIMEDELTA: return (char *)&storage->timedelta_;
-        default: return NULL;
+    if (PyTypeNum_ISNUMBER(type_num) || PyTypeNum_ISDATETIME(type_num)) { 
+        return (char *)storage;
     }
+    return NULL;
 }
 
 /*
