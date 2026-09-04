@@ -492,11 +492,72 @@ class TestFillDiagonal:
                          [0, 0, 5, 0, 0, 0, 0, 0, 0, 0]])
             )
 
+    def test_offset_positive(self):
+        a = np.zeros((4, 4), int)
+        fill_diagonal(a, 5, offset=1)
+        assert_array_equal(
+            a, np.array([[0, 5, 0, 0],
+                         [0, 0, 5, 0],
+                         [0, 0, 0, 5],
+                         [0, 0, 0, 0]])
+            )
+
+    def test_offset_negative(self):
+        a = np.zeros((4, 4), int)
+        fill_diagonal(a, [1, 2], offset=-2)
+        assert_array_equal(
+            a, np.array([[0, 0, 0, 0],
+                         [0, 0, 0, 0],
+                         [1, 0, 0, 0],
+                         [0, 2, 0, 0]])
+            )
+
+    def test_offset_rectangular(self):
+        a = np.zeros((3, 5), int)
+        fill_diagonal(a, 5, offset=2)
+        assert_array_equal(
+            a, np.array([[0, 0, 5, 0, 0],
+                         [0, 0, 0, 5, 0],
+                         [0, 0, 0, 0, 5]])
+            )
+
+    def test_offset_out_of_bounds(self):
+        a = np.zeros((3, 3), int)
+        fill_diagonal(a, 5, offset=3)
+        assert_array_equal(a, np.zeros((3, 3), int))
+
+    def test_offset_wrap(self):
+        a = np.zeros((5, 3), int)
+        fill_diagonal(a, 5, True, offset=1)
+        assert_array_equal(
+            a, np.array([[0, 5, 0],
+                         [0, 0, 5],
+                         [0, 0, 0],
+                         [5, 0, 0],
+                         [0, 5, 0]])
+            )
+
+        a = np.zeros((4, 4), int)
+        fill_diagonal(a, 5, True, offset=3)
+        assert_array_equal(
+            a, np.array([[0, 0, 0, 5],
+                         [0, 0, 0, 0],
+                         [0, 0, 0, 0],
+                         [0, 0, 0, 0]])
+            )
+
     def test_operate_4d_array(self):
         a = np.zeros((3, 3, 3, 3), int)
         fill_diagonal(a, 4)
         i = np.array([0, 1, 2])
         assert_equal(np.where(a != 0), (i, i, i, i))
+
+    def test_operate_3d_array_offset(self):
+        a = np.zeros((3, 3, 3), int)
+        fill_diagonal(a, 4, offset=1)
+        expected = np.zeros((3, 3, 3), int)
+        expected[(np.array([0, 1]), np.array([1, 2]), np.array([0, 1]))] = 4
+        assert_array_equal(a, expected)
 
     def test_low_dim_handling(self):
         # raise error with low dimensionality
@@ -540,6 +601,25 @@ def test_diag_indices():
         )
 
 
+def test_diag_indices_offset():
+    r, c = diag_indices(4, offset=1)
+    assert_array_equal(r, np.array([0, 1, 2]))
+    assert_array_equal(c, np.array([1, 2, 3]))
+
+    r, c = diag_indices(4, offset=-2)
+    assert_array_equal(r, np.array([2, 3]))
+    assert_array_equal(c, np.array([0, 1]))
+
+    r, c = diag_indices(4, offset=4)
+    assert_array_equal(r, np.array([], dtype=np.int_))
+    assert_array_equal(c, np.array([], dtype=np.int_))
+
+    i, j, z = diag_indices(3, ndim=3, offset=1)
+    assert_array_equal(i, np.array([0, 1]))
+    assert_array_equal(j, np.array([1, 2]))
+    assert_array_equal(z, np.array([0, 1]))
+
+
 class TestDiagIndicesFrom:
 
     def test_diag_indices_from(self):
@@ -547,6 +627,12 @@ class TestDiagIndicesFrom:
         r, c = diag_indices_from(x)
         assert_array_equal(r, np.arange(4))
         assert_array_equal(c, np.arange(4))
+
+    def test_diag_indices_from_offset(self):
+        x = np.random.random((4, 4))
+        r, c = diag_indices_from(x, offset=1)
+        assert_array_equal(r, np.arange(3))
+        assert_array_equal(c, np.arange(1, 4))
 
     def test_error_small_input(self):
         x = np.ones(7)
