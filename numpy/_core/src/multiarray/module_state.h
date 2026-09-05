@@ -23,6 +23,11 @@ typedef struct {
     PyObject *typeDict;
     PyObject *current_handler;
     PyObject *global_pytype_to_type_dict;
+
+    PyTypeObject *PyArrayFlags_Type;
+    PyTypeObject *PyArrayArrayConverter_Type;
+    PyTypeObject *PyArrayFunctionDispatcher_Type;
+    PyTypeObject *NpyBusDayCalendar_Type;
     NumericOps n_ops;
 } multiarray_umath_state;
 
@@ -49,9 +54,10 @@ static_assert(sizeof(NumericOps) ==
 /* The loose members sit contiguously between the sub-structs and n_ops. */
 static_assert(offsetof(multiarray_umath_state, n_ops) -
         offsetof(multiarray_umath_state, typeDict) ==
-        NPY_FIELD_COUNT(NPY_MODULE_STATE_OBJECT_FIELDS) * sizeof(PyObject *),
+        (NPY_FIELD_COUNT(NPY_MODULE_STATE_OBJECT_FIELDS) +
+         NPY_FIELD_COUNT(NPY_MODULE_STATE_TYPE_FIELDS)) * sizeof(PyObject *),
         "multiarray_umath_state member missing from "
-        "NPY_MODULE_STATE_OBJECT_FIELDS");
+        "NPY_MODULE_STATE_OBJECT_FIELDS or NPY_MODULE_STATE_TYPE_FIELDS");
 
 static inline multiarray_umath_state *
 get_module_state(PyObject *module)

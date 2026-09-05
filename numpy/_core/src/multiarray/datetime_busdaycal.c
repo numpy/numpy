@@ -24,6 +24,7 @@
 #include "_datetime.h"
 #include "datetime_busday.h"
 #include "datetime_busdaycal.h"
+#include "module_state.h"
 
 NPY_NO_EXPORT int
 PyArray_WeekMaskConverter(PyObject *weekmask_in, npy_bool *weekmask)
@@ -342,32 +343,6 @@ fail:
     return 0;
 }
 
-static PyObject *
-busdaycalendar_new(PyTypeObject *subtype,
-                    PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds))
-{
-    NpyBusDayCalendar *self;
-
-    self = (NpyBusDayCalendar *)subtype->tp_alloc(subtype, 0);
-    if (self != NULL) {
-        /* Start with an empty holidays list */
-        self->holidays.begin = NULL;
-        self->holidays.end = NULL;
-
-        /* Set the weekmask to the default */
-        self->busdays_in_weekmask = 5;
-        self->weekmask[0] = 1;
-        self->weekmask[1] = 1;
-        self->weekmask[2] = 1;
-        self->weekmask[3] = 1;
-        self->weekmask[4] = 1;
-        self->weekmask[5] = 0;
-        self->weekmask[6] = 0;
-    }
-
-    return (PyObject *)self;
-}
-
 static int
 busdaycalendar_init(NpyBusDayCalendar *self, PyObject *args, PyObject *kwds)
 {
@@ -419,9 +394,19 @@ busdaycalendar_init(NpyBusDayCalendar *self, PyObject *args, PyObject *kwds)
     return 0;
 }
 
+/* The holidays list is raw memory, so the only reference held is the type. */
+static int
+busdaycalendar_traverse(NpyBusDayCalendar *self, visitproc visit, void *arg)
+{
+    Py_VISIT(Py_TYPE(self));
+    return 0;
+}
+
 static void
 busdaycalendar_dealloc(NpyBusDayCalendar *self)
 {
+    PyObject_GC_UnTrack(self);
+
     /* Clear the holidays */
     if (self->holidays.begin != NULL) {
         PyMem_RawFree(self->holidays.begin);
@@ -429,7 +414,9 @@ busdaycalendar_dealloc(NpyBusDayCalendar *self)
         self->holidays.end = NULL;
     }
 
-    Py_TYPE(self)->tp_free((PyObject*)self);
+    PyTypeObject *type = Py_TYPE(self);
+    type->tp_free((PyObject *)self);
+    Py_DECREF(type);
 }
 
 static PyObject *
@@ -489,13 +476,30 @@ static PyGetSetDef busdaycalendar_getsets[] = {
     {NULL, NULL, NULL, NULL, NULL}
 };
 
-NPY_NO_EXPORT PyTypeObject NpyBusDayCalendar_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy.busdaycalendar",
-    .tp_basicsize = sizeof(NpyBusDayCalendar),
-    .tp_dealloc = (destructor)busdaycalendar_dealloc,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_getset = busdaycalendar_getsets,
-    .tp_init = (initproc)busdaycalendar_init,
-    .tp_new = busdaycalendar_new,
+static PyType_Slot busdaycalendar_slots[] = {
+    {Py_tp_dealloc, busdaycalendar_dealloc},
+    {Py_tp_traverse, busdaycalendar_traverse},
+    {Py_tp_getset, busdaycalendar_getsets},
+    {Py_tp_init, busdaycalendar_init},
+    {Py_tp_new, PyType_GenericNew},
+    {0, NULL},
 };
+
+static PyType_Spec busdaycalendar_spec = {
+    .name = "numpy.busdaycalendar",
+    .basicsize = sizeof(NpyBusDayCalendar),
+    .flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC
+              | Py_TPFLAGS_IMMUTABLETYPE),
+    .slots = busdaycalendar_slots,
+};
+
+NPY_NO_EXPORT int
+init_busdaycalendar_type(PyObject *module)
+{
+    PyObject *type = PyType_FromSpec(&busdaycalendar_spec);
+    if (type == NULL) {
+        return -1;
+    }
+    get_module_state(module)->NpyBusDayCalendar_Type = (PyTypeObject *)type;
+    return 0;
+}

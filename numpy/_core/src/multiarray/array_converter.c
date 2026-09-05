@@ -54,12 +54,11 @@ array_converter_new(
         return NULL;
     }
 
-    PyArrayArrayConverterObject *self = PyObject_NewVar(
-            PyArrayArrayConverterObject, cls, narrs);
+    PyArrayArrayConverterObject *self = (PyArrayArrayConverterObject *)
+            PyType_GenericAlloc(cls, narrs);
     if (self == NULL) {
         return NULL;
     }
-    PyObject_InitVar((PyVarObject *)self, &PyArrayArrayConverter_Type, narrs);
 
     self->narrs = 0;
     self->flags = 0;
@@ -415,20 +414,56 @@ static PyMethodDef array_converter_methods[] = {
 };
 
 
+/*
+ * Only the first `narrs` items own their references; `array_converter_new`
+ * increments the count as it fills them in.
+ */
+static int
+array_converter_traverse(
+        PyArrayArrayConverterObject *self, visitproc visit, void *arg)
+{
+    Py_VISIT(Py_TYPE(self));
+
+    creation_item *item = self->items;
+    for (int i = 0; i < self->narrs; i++, item++) {
+        Py_VISIT(item->array);
+        Py_VISIT(item->object);
+        Py_VISIT(item->DType);
+        Py_VISIT(item->descr);
+    }
+
+    Py_VISIT(self->wrap);
+    Py_VISIT(self->wrap_type);
+    return 0;
+}
+
+static int
+array_converter_clear(PyArrayArrayConverterObject *self)
+{
+    creation_item *item = self->items;
+    int narrs = self->narrs;
+    self->narrs = 0;
+    for (int i = 0; i < narrs; i++, item++) {
+        Py_CLEAR(item->array);
+        Py_CLEAR(item->object);
+        Py_CLEAR(item->DType);
+        Py_CLEAR(item->descr);
+    }
+
+    Py_CLEAR(self->wrap);
+    Py_CLEAR(self->wrap_type);
+    return 0;
+}
+
 static void
 array_converter_dealloc(PyArrayArrayConverterObject *self)
 {
-    creation_item *item = self->items;
-    for (int i = 0; i < self->narrs; i++, item++) {
-        Py_XDECREF(item->array);
-        Py_XDECREF(item->object);
-        Py_XDECREF(item->DType);
-        Py_XDECREF(item->descr);
-    }
+    PyObject_GC_UnTrack(self);
+    array_converter_clear(self);
 
-    Py_XDECREF(self->wrap);
-    Py_XDECREF(self->wrap_type);
-    PyObject_Del((PyObject *)self);
+    PyTypeObject *type = Py_TYPE(self);
+    type->tp_free((PyObject *)self);
+    Py_DECREF(type);
 }
 
 
@@ -463,21 +498,35 @@ array_converter_item(PyArrayArrayConverterObject *self, Py_ssize_t item)
 }
 
 
-static PySequenceMethods array_converter_as_sequence = {
-    .sq_length = (lenfunc)array_converter_length,
-    .sq_item = (ssizeargfunc)array_converter_item,
+static PyType_Slot array_converter_slots[] = {
+    {Py_tp_new, array_converter_new},
+    {Py_tp_dealloc, array_converter_dealloc},
+    {Py_tp_traverse, array_converter_traverse},
+    {Py_tp_clear, array_converter_clear},
+    {Py_tp_getset, array_converter_getsets},
+    {Py_tp_methods, array_converter_methods},
+    {Py_sq_length, array_converter_length},
+    {Py_sq_item, array_converter_item},
+    {0, NULL},
 };
 
-
-NPY_NO_EXPORT PyTypeObject PyArrayArrayConverter_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy._core._multiarray_umath._array_converter",
-    .tp_basicsize = sizeof(PyArrayArrayConverterObject),
-    .tp_itemsize = sizeof(creation_item),
-    .tp_new = array_converter_new,
-    .tp_dealloc = (destructor)array_converter_dealloc,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_getset = array_converter_getsets,
-    .tp_methods = array_converter_methods,
-    .tp_as_sequence = &array_converter_as_sequence,
+static PyType_Spec array_converter_spec = {
+    .name = "numpy._core._multiarray_umath._array_converter",
+    .basicsize = sizeof(PyArrayArrayConverterObject),
+    .itemsize = sizeof(creation_item),
+    .flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC
+              | Py_TPFLAGS_IMMUTABLETYPE),
+    .slots = array_converter_slots,
 };
+
+NPY_NO_EXPORT int
+init_array_converter_type(PyObject *module)
+{
+    PyObject *type = PyType_FromSpec(&array_converter_spec);
+    if (type == NULL) {
+        return -1;
+    }
+    get_module_state(module)->PyArrayArrayConverter_Type =
+            (PyTypeObject *)type;
+    return 0;
+}

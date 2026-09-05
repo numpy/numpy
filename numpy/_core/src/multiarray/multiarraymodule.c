@@ -4659,7 +4659,7 @@ array__wrapit(PyObject *NPY_UNUSED(self),
     multiarray_umath_state *state = _npy_module_state;
 
     PyObject *conv = PyObject_Vectorcall(
-            (PyObject *)&PyArrayArrayConverter_Type, args, 1, NULL);
+            (PyObject *)state->PyArrayArrayConverter_Type, args, 1, NULL);
     if (conv == NULL) {
         return NULL;
     }
@@ -5216,6 +5216,7 @@ multiarray_umath_traverse(PyObject *m, visitproc visit, void *arg)
 
 #define NPY_VISIT_FIELD(name) Py_VISIT(state->name);
     NPY_MODULE_STATE_OBJECT_FIELDS(NPY_VISIT_FIELD)
+    NPY_MODULE_STATE_TYPE_FIELDS(NPY_VISIT_FIELD)
 #undef NPY_VISIT_FIELD
 
 #define NPY_VISIT_FIELD(name) Py_VISIT(state->n_ops.name);
@@ -5247,6 +5248,7 @@ multiarray_umath_clear(PyObject *m)
 
 #define NPY_CLEAR_FIELD(name) Py_CLEAR(state->name);
     NPY_MODULE_STATE_OBJECT_FIELDS(NPY_CLEAR_FIELD)
+    NPY_MODULE_STATE_TYPE_FIELDS(NPY_CLEAR_FIELD)
 #undef NPY_CLEAR_FIELD
 
 #define NPY_CLEAR_FIELD(name) Py_CLEAR(state->n_ops.name);
@@ -5379,11 +5381,10 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
         return -1;
     }
 
-    if (PyType_Ready(&PyArrayFlags_Type) < 0) {
+    if (init_arrayflags_type(m) < 0) {
         return -1;
     }
-    NpyBusDayCalendar_Type.tp_new = PyType_GenericNew;
-    if (PyType_Ready(&NpyBusDayCalendar_Type) < 0) {
+    if (init_busdaycalendar_type(m) < 0) {
         return -1;
     }
 
@@ -5472,11 +5473,11 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
     PyDict_SetItemString(d, "broadcast",
                          (PyObject *)&PyArrayMultiIter_Type);
     PyDict_SetItemString(d, "dtype", (PyObject *)&PyArrayDescr_Type);
-    PyDict_SetItemString(d, "flagsobj", (PyObject *)&PyArrayFlags_Type);
+    PyDict_SetItemString(d, "flagsobj", (PyObject *)state->PyArrayFlags_Type);
 
     /* Business day calendar object */
     PyDict_SetItemString(d, "busdaycalendar",
-                            (PyObject *)&NpyBusDayCalendar_Type);
+                            (PyObject *)state->NpyBusDayCalendar_Type);
     set_flaginfo(d);
 
     if (PyType_Ready(&PyArrayMethod_Type) < 0) {
@@ -5514,19 +5515,19 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
         return -1;
     }
 
-    if (PyType_Ready(&PyArrayFunctionDispatcher_Type) < 0) {
+    if (init_array_function_dispatcher_type(m) < 0) {
         return -1;
     }
     PyDict_SetItemString(
             d, "_ArrayFunctionDispatcher",
-            (PyObject *)&PyArrayFunctionDispatcher_Type);
+            (PyObject *)state->PyArrayFunctionDispatcher_Type);
 
-    if (PyType_Ready(&PyArrayArrayConverter_Type) < 0) {
+    if (init_array_converter_type(m) < 0) {
         return -1;
     }
     PyDict_SetItemString(
             d, "_array_converter",
-            (PyObject *)&PyArrayArrayConverter_Type);
+            (PyObject *)state->PyArrayArrayConverter_Type);
 
     if (PyArray_InitializeCasts() < 0) {
         return -1;
