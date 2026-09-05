@@ -1,38 +1,3 @@
-.. currentmodule:: numpy
-
-=========================
-NumPy 2.5.3 Release Notes
-=========================
-
-The NumPy 2.5.3 is a patch release that fixes bugs discovered after the 2.5.2
-release. Apart from the usual bug and maintenance work, there are a number of
-StringDType related fixes for problems discovered during the ongoing string
-work in the main branch.
-
-This release supports Python versions 3.12-3.15
-
-
-Changes
-=======
-
-* Casting a fixed-width byte string array (``np.bytes_``) to ``StringDType``
-  now raises ``TypeError`` when the bytes are not valid UTF-8. Previously the
-  invalid bytes were stored as-is and later caused undefined behavior in
-  string operations.
-
-  (`gh-32296 <https://github.com/numpy/numpy/pull/32296>`__)
-
-* ``MaskedArray._fill_value`` would become stale when ufuncs that change dtype
-  left the result holding a fill_value typed for the old dtype. The mismatch
-  was silent until something later called ``_check_fill_value``, such as
-  ``.view()``, and then a ``TypeError`` would be raised.  Now, when the copied
-  fill_value is no longer valid for the new dtype, fall back to the
-  default fill_value for that dtype instead of propagating the stale value.
-  This may raise a ``ComplexWarning`` if the fill_value is complex and the
-  new dtype is real.
-
-  (`gh-32423 <https://github.com/numpy/numpy/pull/32423>`__)
-
 
 Contributors
 ============
@@ -49,7 +14,6 @@ names contributed a patch for the first time.
 * Nathan Goldbaum
 * Shikhar Goel +
 * Yeonho Kim +
-
 
 Pull requests merged
 ====================
