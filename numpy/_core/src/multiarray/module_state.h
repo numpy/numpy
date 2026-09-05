@@ -21,6 +21,7 @@ typedef struct {
     npy_global_state_struct    global_state;
 
     NPY_DECLARE_PYOBJECT_FIELDS(NPY_MODULE_STATE_OBJECT_FIELDS)
+    NPY_DECLARE_TYPE_FIELDS(NPY_MODULE_STATE_TYPE_FIELDS)
     NumericOps n_ops;
 } multiarray_umath_state;
 
@@ -48,9 +49,10 @@ static_assert(sizeof(NumericOps) ==
 /* The loose members sit contiguously between the sub-structs and n_ops. */
 static_assert(offsetof(multiarray_umath_state, n_ops) -
         offsetof(multiarray_umath_state, typeDict) ==
-        NPY_FIELD_COUNT(NPY_MODULE_STATE_OBJECT_FIELDS) * sizeof(PyObject *),
+        (NPY_FIELD_COUNT(NPY_MODULE_STATE_OBJECT_FIELDS) +
+         NPY_FIELD_COUNT(NPY_MODULE_STATE_TYPE_FIELDS)) * sizeof(PyObject *),
         "multiarray_umath_state member missing from "
-        "NPY_MODULE_STATE_OBJECT_FIELDS");
+        "NPY_MODULE_STATE_OBJECT_FIELDS or NPY_MODULE_STATE_TYPE_FIELDS");
 
 static inline multiarray_umath_state *
 get_module_state(PyObject *module)
