@@ -3300,6 +3300,31 @@ class TestUnaryTrivialCall:
             assert res.dtype == arr.dtype and res.view("i8") == -5
             assert np.isnat(np.negative(arr))[1]
 
+    def test_cache_with_other_arguments(self):
+        # Calls with out/dtype/signature use other cache keys and must not
+        # influence the plain call (and vice versa).
+        arr = np.arange(3.0)
+        expected = np.sin(arr.tolist())
+        assert np.sin(arr, dtype=np.float32).dtype == np.float32
+        assert_array_equal(np.sin(arr), expected)
+        out = np.empty(3, dtype=np.float32)
+        assert np.sin(arr, out=out) is out
+        assert np.sin(arr).dtype == np.float64
+        assert np.sin(arr, signature="f->f").dtype == np.float32
+        res = np.sin(arr[1, ...])
+        assert type(res) is np.float64 and res == expected[1]
+
+    def test_scalar_input_different_output_dtype(self):
+        # The scalar shortcut shares the loop lookup with the array fast path
+        # and also handles loops with a different (builtin) output dtype.
+        assert np.isnan(1.5) is np.False_
+        assert np.isfinite(np.float32(1.0)) is np.True_
+        assert np.logical_not(3) is np.False_
+        res = np.abs(3 + 4j)
+        assert type(res) is np.float64 and res == 5.0
+        res = np.bitwise_count(3)
+        assert type(res) is np.uint8 and res == 2
+
     def test_strides_and_empty(self):
         base = np.arange(8.0)
         expected = np.sin(base.tolist())
