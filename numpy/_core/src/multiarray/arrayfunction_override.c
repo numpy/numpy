@@ -955,8 +955,7 @@ static PyType_Spec dispatcher_spec = {
 NPY_NO_EXPORT int
 init_array_function_dispatcher_type(PyObject *module)
 {
-    PyObject *type = PyType_FromModuleAndSpec(
-            module, &dispatcher_spec, NULL);
+    PyObject *type = PyType_FromSpec(&dispatcher_spec);
     if (type == NULL) {
         return -1;
     }

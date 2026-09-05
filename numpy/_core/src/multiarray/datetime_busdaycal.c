@@ -496,8 +496,7 @@ static PyType_Spec busdaycalendar_spec = {
 NPY_NO_EXPORT int
 init_busdaycalendar_type(PyObject *module)
 {
-    PyObject *type = PyType_FromModuleAndSpec(
-            module, &busdaycalendar_spec, NULL);
+    PyObject *type = PyType_FromSpec(&busdaycalendar_spec);
     if (type == NULL) {
         return -1;
     }

@@ -522,8 +522,7 @@ static PyType_Spec array_converter_spec = {
 NPY_NO_EXPORT int
 init_array_converter_type(PyObject *module)
 {
-    PyObject *type = PyType_FromModuleAndSpec(
-            module, &array_converter_spec, NULL);
+    PyObject *type = PyType_FromSpec(&array_converter_spec);
     if (type == NULL) {
         return -1;
     }

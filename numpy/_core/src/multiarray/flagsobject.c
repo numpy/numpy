@@ -722,7 +722,7 @@ static PyType_Spec arrayflags_spec = {
 NPY_NO_EXPORT int
 init_arrayflags_type(PyObject *module)
 {
-    PyObject *type = PyType_FromModuleAndSpec(module, &arrayflags_spec, NULL);
+    PyObject *type = PyType_FromSpec(&arrayflags_spec);
     if (type == NULL) {
         return -1;
     }
