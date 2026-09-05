@@ -1665,7 +1665,7 @@ static PyObject *
 voidtype_flags_get(PyVoidScalarObject *self, void *NPY_UNUSED(ignored))
 {
     PyObject *flagobj;
-    flagobj = PyArrayFlags_Type.tp_alloc(&PyArrayFlags_Type, 0);
+    flagobj = PyType_GenericAlloc(_npy_module_state->PyArrayFlags_Type, 0);
     if (flagobj == NULL) {
         return NULL;
     }

@@ -511,8 +511,22 @@ try_reduction(PyArray_ArrayFunctionDispatcherObject *self,
 }
 
 
-static void
-dispatcher_dealloc(PyArray_ArrayFunctionDispatcherObject *self)
+static int
+dispatcher_traverse(
+        PyArray_ArrayFunctionDispatcherObject *self, visitproc visit, void *arg)
+{
+    Py_VISIT(Py_TYPE(self));
+    Py_VISIT(self->relevant_arg_func);
+    Py_VISIT(self->default_impl);
+    Py_VISIT(self->reduction);
+    Py_VISIT(self->dict);
+    Py_VISIT(self->dispatcher_name);
+    Py_VISIT(self->public_name);
+    return 0;
+}
+
+static int
+dispatcher_clear(PyArray_ArrayFunctionDispatcherObject *self)
 {
     Py_CLEAR(self->relevant_arg_func);
     Py_CLEAR(self->default_impl);
@@ -520,7 +534,18 @@ dispatcher_dealloc(PyArray_ArrayFunctionDispatcherObject *self)
     Py_CLEAR(self->dict);
     Py_CLEAR(self->dispatcher_name);
     Py_CLEAR(self->public_name);
-    PyObject_FREE(self);
+    return 0;
+}
+
+static void
+dispatcher_dealloc(PyArray_ArrayFunctionDispatcherObject *self)
+{
+    PyObject_GC_UnTrack(self);
+    dispatcher_clear(self);
+
+    PyTypeObject *type = Py_TYPE(self);
+    type->tp_free((PyObject *)self);
+    Py_DECREF(type);
 }
 
 
@@ -743,7 +768,7 @@ cleanup:
 
 
 static PyObject *
-dispatcher_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwargs)
+dispatcher_new(PyTypeObject *cls, PyObject *args, PyObject *kwargs)
 {
     PyArray_ArrayFunctionDispatcherObject *self;
     PyObject *reduction = Py_None;
@@ -757,11 +782,9 @@ dispatcher_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
-    self = PyObject_New(
-            PyArray_ArrayFunctionDispatcherObject,
-            &PyArrayFunctionDispatcher_Type);
+    self = (PyArray_ArrayFunctionDispatcherObject *)PyType_GenericAlloc(cls, 0);
     if (self == NULL) {
-        return PyErr_NoMemory();
+        return NULL;
     }
 
     self->vectorcall = (vectorcallfunc)dispatcher_vectorcall;
@@ -891,21 +914,53 @@ static struct PyGetSetDef func_dispatcher_getset[] = {
 };
 
 
-NPY_NO_EXPORT PyTypeObject PyArrayFunctionDispatcher_Type = {
-     PyVarObject_HEAD_INIT(NULL, 0)
-     .tp_name = "numpy._ArrayFunctionDispatcher",
-     .tp_basicsize = sizeof(PyArray_ArrayFunctionDispatcherObject),
-     /* We have a dict, so in theory could traverse, but in practice... */
-     .tp_dictoffset = offsetof(PyArray_ArrayFunctionDispatcherObject, dict),
-     .tp_dealloc = (destructor)dispatcher_dealloc,
-     .tp_new = (newfunc)dispatcher_new,
-     .tp_str = (reprfunc)dispatcher_str,
-     .tp_repr = (reprfunc)dispatcher_repr,
-     .tp_flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_VECTORCALL
-                  | Py_TPFLAGS_METHOD_DESCRIPTOR),
-     .tp_methods = func_dispatcher_methods,
-     .tp_getset = func_dispatcher_getset,
-     .tp_descr_get = func_dispatcher___get__,
-     .tp_call = &PyVectorcall_Call,
-     .tp_vectorcall_offset = offsetof(PyArray_ArrayFunctionDispatcherObject, vectorcall),
+/*
+ * A spec cannot set tp_vectorcall_offset or tp_dictoffset directly; they are
+ * given as the members CPython reserves for them.
+ */
+static struct PyMemberDef dispatcher_members[] = {
+    {"__vectorcalloffset__", Py_T_PYSSIZET,
+        offsetof(PyArray_ArrayFunctionDispatcherObject, vectorcall),
+        Py_READONLY},
+    {"__dictoffset__", Py_T_PYSSIZET,
+        offsetof(PyArray_ArrayFunctionDispatcherObject, dict), Py_READONLY},
+    {NULL, 0, 0, 0, NULL}
 };
+
+
+static PyType_Slot dispatcher_slots[] = {
+    {Py_tp_dealloc, dispatcher_dealloc},
+    {Py_tp_traverse, dispatcher_traverse},
+    {Py_tp_clear, dispatcher_clear},
+    {Py_tp_new, dispatcher_new},
+    {Py_tp_str, dispatcher_str},
+    {Py_tp_repr, dispatcher_repr},
+    {Py_tp_methods, func_dispatcher_methods},
+    {Py_tp_getset, func_dispatcher_getset},
+    {Py_tp_members, dispatcher_members},
+    {Py_tp_descr_get, func_dispatcher___get__},
+    {Py_tp_call, PyVectorcall_Call},
+    {0, NULL},
+};
+
+static PyType_Spec dispatcher_spec = {
+    .name = "numpy._ArrayFunctionDispatcher",
+    .basicsize = sizeof(PyArray_ArrayFunctionDispatcherObject),
+    .flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC
+              | Py_TPFLAGS_IMMUTABLETYPE | Py_TPFLAGS_HAVE_VECTORCALL
+              | Py_TPFLAGS_METHOD_DESCRIPTOR),
+    .slots = dispatcher_slots,
+};
+
+NPY_NO_EXPORT int
+init_array_function_dispatcher_type(PyObject *module)
+{
+    PyObject *type = PyType_FromModuleAndSpec(
+            module, &dispatcher_spec, NULL);
+    if (type == NULL) {
+        return -1;
+    }
+    get_module_state(module)->PyArrayFunctionDispatcher_Type =
+            (PyTypeObject *)type;
+    return 0;
+}

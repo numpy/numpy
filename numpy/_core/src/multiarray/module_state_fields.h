@@ -200,6 +200,16 @@ extern "C" {
     F(current_handler) \
     F(global_pytype_to_type_dict)
 
+/*
+ * Heap types created with PyType_FromModuleAndSpec during module execution.
+ * The names match the static types they replaced.
+ */
+#define NPY_MODULE_STATE_TYPE_FIELDS(F) \
+    F(PyArrayFlags_Type)              \
+    F(PyArrayArrayConverter_Type)     \
+    F(PyArrayFunctionDispatcher_Type) \
+    F(NpyBusDayCalendar_Type)
+
 #define NPY_FIELD_COUNT_ONE(name) + 1
 #define NPY_FIELD_COUNT(list) (0 list(NPY_FIELD_COUNT_ONE))
 
