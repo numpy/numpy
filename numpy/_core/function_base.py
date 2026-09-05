@@ -473,13 +473,16 @@ def _needs_add_docstring(obj):
 
     This function errs on the side of being overly conservative.
     """
-    Py_TPFLAGS_HEAPTYPE = 1 << 9
+    Py_TPFLAGS_IMMUTABLETYPE = 1 << 8
 
     if isinstance(obj, (types.FunctionType, types.MethodType, property)):
         return False
 
-    if isinstance(obj, type) and obj.__flags__ & Py_TPFLAGS_HEAPTYPE:
-        return False
+    if isinstance(obj, type):
+        # A class written in Python carries its docstring from its
+        # definition.  A type defined in C is immutable, whether it is a
+        # static type or a heap type created with ``PyType_FromSpec``.
+        return bool(obj.__flags__ & Py_TPFLAGS_IMMUTABLETYPE)
 
     return True
 
