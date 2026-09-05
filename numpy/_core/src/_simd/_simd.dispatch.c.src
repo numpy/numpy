@@ -913,16 +913,6 @@ SIMD_INTRIN_DEF(pack_b8_b64)
 //#########################################################################
 //## Defining a separate module for each target
 //#########################################################################
-#if defined(NPY_MTARGETS_CURRENT) // meson build
-    #define SIMD_MODULE_NAME \
-        "numpy._core._simd." NPY_TOSTRING(NPY_MTARGETS_CURRENT)
-#elif defined(NPY__CPU_TARGET_CURRENT)
-    #define SIMD_MODULE_NAME \
-        "numpy._core._simd." NPY_TOSTRING(NPY__CPU_TARGET_CURRENT)
-#else
-    #define SIMD_MODULE_NAME "numpy._core._simd.baseline"
-#endif
-
 static int
 simd_module_exec(PyObject *m)
 {

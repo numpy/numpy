@@ -13,6 +13,7 @@
 #define _SIMD_SIMD_H_
 
 #include <Python.h>
+#include <string.h>
 #include "numpy/npy_common.h"
 #include "npy_cpu_features.h"
 #include "npy_cpu_dispatch.h"

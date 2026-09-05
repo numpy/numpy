@@ -4,6 +4,15 @@
 #include <Python.h>
 #include "simd/simd.h"
 
+// Submodule name for this dispatch target; also prefixes its vector type name.
+#if defined(NPY_MTARGETS_CURRENT) // meson build
+    #define SIMD_MODULE_NAME "numpy._core._simd." NPY_TOSTRING(NPY_MTARGETS_CURRENT)
+#elif defined(NPY__CPU_TARGET_CURRENT)
+    #define SIMD_MODULE_NAME "numpy._core._simd." NPY_TOSTRING(NPY__CPU_TARGET_CURRENT)
+#else
+    #define SIMD_MODULE_NAME "numpy._core._simd.baseline"
+#endif
+
 #if NPY_SIMD
 /************************************
  ** Types
