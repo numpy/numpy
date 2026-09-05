@@ -8,7 +8,13 @@ from numpy.lib._utils_impl import drop_metadata as drop_metadata
 
 __all__: list[str] = []
 
-type _DTypeDescr = list[tuple[str, str]] | list[tuple[str, str, tuple[int, ...]]]
+type _DTypeFieldName = str | tuple[str, str]
+type _DTypeDescr = (
+    str
+    | tuple[_DTypeDescr, tuple[int, ...]]
+    | list[tuple[_DTypeFieldName, _DTypeDescr]]
+    | list[tuple[_DTypeFieldName, _DTypeDescr, tuple[int, ...]]]
+)
 
 ###
 
