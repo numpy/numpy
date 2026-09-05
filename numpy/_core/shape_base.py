@@ -114,20 +114,22 @@ def atleast_2d(*arys):
     (array([[1]]), array([[1, 2]]), array([[1, 2]]))
 
     """
+    if len(arys) == 1:
+        result = asanyarray(arys[0])
+        if result.ndim == 0:
+            result = result.reshape(1, 1)
+        elif result.ndim == 1:
+            result = result[_nx.newaxis, :]
+        return result
     res = []
     for ary in arys:
-        ary = asanyarray(ary)
-        if ary.ndim == 0:
-            result = ary.reshape(1, 1)
-        elif ary.ndim == 1:
-            result = ary[_nx.newaxis, :]
-        else:
-            result = ary
+        result = asanyarray(ary)
+        if result.ndim == 0:
+            result = result.reshape(1, 1)
+        elif result.ndim == 1:
+            result = result[_nx.newaxis, :]
         res.append(result)
-    if len(res) == 1:
-        return res[0]
-    else:
-        return tuple(res)
+    return tuple(res)
 
 
 def _atleast_3d_dispatcher(*arys):
@@ -185,22 +187,26 @@ def atleast_3d(*arys):
     [[[1 2]]] (1, 1, 2)
 
     """
+    if len(arys) == 1:
+        result = asanyarray(arys[0])
+        if result.ndim == 0:
+            result = result.reshape(1, 1, 1)
+        elif result.ndim == 1:
+            result = result[_nx.newaxis, :, _nx.newaxis]
+        elif result.ndim == 2:
+            result = result[:, :, _nx.newaxis]
+        return result
     res = []
     for ary in arys:
-        ary = asanyarray(ary)
-        if ary.ndim == 0:
-            result = ary.reshape(1, 1, 1)
-        elif ary.ndim == 1:
-            result = ary[_nx.newaxis, :, _nx.newaxis]
-        elif ary.ndim == 2:
-            result = ary[:, :, _nx.newaxis]
-        else:
-            result = ary
+        result = asanyarray(ary)
+        if result.ndim == 0:
+            result = result.reshape(1, 1, 1)
+        elif result.ndim == 1:
+            result = result[_nx.newaxis, :, _nx.newaxis]
+        elif result.ndim == 2:
+            result = result[:, :, _nx.newaxis]
         res.append(result)
-    if len(res) == 1:
-        return res[0]
-    else:
-        return tuple(res)
+    return tuple(res)
 
 
 def _arrays_for_stack_dispatcher(arrays):
