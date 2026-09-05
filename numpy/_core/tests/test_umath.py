@@ -3257,6 +3257,110 @@ class TestPositive:
             np.positive(np.array(['bar'], dtype=object))
 
 
+class TestUnaryTrivialCall:
+    # ``ufunc(arr)`` for an exact, trivially iterable ndarray with a builtin
+    # dtype takes a fast path (``try_unary_trivial_call``).
+
+    @pytest.mark.parametrize("arg", [np.ones(()), np.ones(2), 1.0, np.float64(1.)])
+    def test_cached_descriptor_resolver_error(self, arg):
+        # Covers the array fast path (0-d and 1-d) and the scalar fast path.
+        ufunc = ncu_tests.create_unary_ufunc_with_resolver_error()
+
+        # The first call caches the ArrayMethod before its resolver raises.
+        with pytest.raises(TypeError, match="unary descriptor resolution failed"):
+            ufunc(arg)
+
+        # A cache hit must still invoke the resolver, without running the loop.
+        with pytest.raises(TypeError, match="unary descriptor resolution failed"):
+            ufunc(arg)
+
+    @pytest.mark.parametrize("dtype", ["?", "i1", "u8", "e", "d", "g", "G"])
+    def test_0d_returns_scalar(self, dtype):
+        arr = np.array([1, 0], dtype=dtype)
+        for ufunc in (np.abs, np.isfinite):
+            expected = ufunc(arr)[0]
+            res = ufunc(arr[0, ...])
+            assert type(res) is type(expected)
+            assert_equal(res, expected)
+        # promoted loop (bool -> uint8): the input dtype is not the out dtype
+        res = np.bitwise_count(np.array(True))
+        assert type(res) is np.uint8 and res == 1
+
+    @pytest.mark.parametrize("dtype", ["m8", "M8"])
+    def test_generic_unit_datetime(self, dtype):
+        # Generic-unit datetimes are parametric; the fast path must not treat
+        # their (singleton) descriptor as a fixed builtin dtype.
+        arr = np.zeros(2, dtype=dtype)
+        arr.view("i8")[...] = [5, np.iinfo("i8").min]  # second one is NaT
+        assert np.isnat(arr[0, ...]) is np.False_
+        assert np.isnat(arr[1, ...]) is np.True_
+        if dtype == "m8":
+            res = np.negative(arr[0, ...])
+            assert type(res) is np.timedelta64
+            assert res.dtype == arr.dtype and res.view("i8") == -5
+            assert np.isnat(np.negative(arr))[1]
+
+    def test_cache_with_other_arguments(self):
+        # Calls with out/dtype/signature use other cache keys and must not
+        # influence the plain call (and vice versa).
+        arr = np.arange(3.0)
+        expected = np.sin(arr.tolist())
+        assert np.sin(arr, dtype=np.float32).dtype == np.float32
+        assert_array_equal(np.sin(arr), expected)
+        out = np.empty(3, dtype=np.float32)
+        assert np.sin(arr, out=out) is out
+        assert np.sin(arr).dtype == np.float64
+        assert np.sin(arr, signature="f->f").dtype == np.float32
+        res = np.sin(arr[1, ...])
+        assert type(res) is np.float64 and res == expected[1]
+
+    def test_scalar_input_different_output_dtype(self):
+        # The scalar shortcut shares the loop lookup with the array fast path
+        # and also handles loops with a different (builtin) output dtype.
+        assert np.isnan(1.5) is np.False_
+        assert np.isfinite(np.float32(1.0)) is np.True_
+        assert np.logical_not(3) is np.False_
+        res = np.abs(3 + 4j)
+        assert type(res) is np.float64 and res == 5.0
+        res = np.bitwise_count(3)
+        assert type(res) is np.uint8 and res == 2
+
+    def test_strides_and_empty(self):
+        base = np.arange(8.0)
+        expected = np.sin(base.tolist())
+        for view in (base[::-1], base[::2], base[1:5], base[::-3]):
+            assert_array_equal(np.sin(view), np.sin(view.tolist()))
+        # zero strides (broadcast views)
+        b = np.broadcast_to(np.array(0.5), (3,))
+        assert_array_equal(np.sin(b), np.sin([0.5, 0.5, 0.5]))
+        b = np.broadcast_to(np.arange(3.0), (2, 3))
+        assert_array_equal(np.sin(b), np.sin(np.arange(3.0).tolist()) * np.ones((2, 1)))
+        # 2-d views that are not contiguous fall back to the iterator
+        a = np.arange(12.0).reshape(3, 4)
+        for view in (a[:, ::2], a[::-1], a.T):
+            assert_array_equal(np.sin(view), np.sin(view.tolist()))
+        # empty arrays
+        for shape in ((0,), (0, 3), (3, 0)):
+            res = np.sin(np.zeros(shape))
+            assert res.shape == shape and res.dtype == np.float64
+        assert np.sin(np.zeros(0, dtype=np.int64)).dtype == np.float64
+
+    def test_fortran_order_output(self):
+        a = np.asfortranarray(np.arange(6.0).reshape(2, 3))
+        res = np.sin(a)
+        assert res.flags.f_contiguous
+        assert_array_equal(res, np.sin(a.tolist()))
+
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
+    def test_0d_floating_point_errors(self):
+        arr = np.array(-1.0)
+        with pytest.warns(RuntimeWarning, match="invalid value"):
+            np.sqrt(arr)
+        with np.errstate(invalid="raise"):
+            with pytest.raises(FloatingPointError):
+                np.sqrt(arr)
+
+
 class TestSpecialMethods:
     def test_wrap(self):
 
