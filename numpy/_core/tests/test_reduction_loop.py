@@ -377,11 +377,153 @@ class TestReductionLoop:
         with pytest.raises(ValueError, match="mismatch in size"):
             mm.reduce(a, dtype=(np.int32, np.int64))
 
-    def test_accumulate_raises(self):
-        a = make_array((4,), seed=20)
-        with pytest.raises(
-                ValueError, match="only supported for functions returning a single"):
+    @pytest.mark.parametrize("shape", SHAPES, ids=str)
+    def test_accumulate(self, shape):
+        a = make_array(shape, seed=20)
+        for axis in range(a.ndim):
+            got_min, got_max = mm.accumulate(a, axis=axis)
+            np.testing.assert_array_equal(
+                got_min, np.minimum.accumulate(a, axis=axis))
+            np.testing.assert_array_equal(
+                got_max, np.maximum.accumulate(a, axis=axis))
+
+    def test_accumulate_returns_tuple(self):
+        a = make_array((5,), seed=20)
+        result = mm.accumulate(a)
+        assert isinstance(result, tuple) and len(result) == 2
+
+    def test_accumulate_single_element(self):
+        a = np.array([7.0])
+        got_min, got_max = mm.accumulate(a)
+        np.testing.assert_array_equal(got_min, [7.0])
+        np.testing.assert_array_equal(got_max, [7.0])
+
+    def test_accumulate_empty(self):
+        a = np.array([], np.float64)
+        got_min, got_max = mm.accumulate(a)
+        np.testing.assert_array_equal(got_min, np.minimum.accumulate(a))
+        np.testing.assert_array_equal(got_max, np.maximum.accumulate(a))
+
+    def test_accumulate_strided(self):
+        a = make_array((12,), seed=20)[::-1]
+        got_min, got_max = mm.accumulate(a)
+        np.testing.assert_array_equal(got_min, np.minimum.accumulate(a))
+        np.testing.assert_array_equal(got_max, np.maximum.accumulate(a))
+
+    @pytest.mark.parametrize("kind", list(SPECIALS))
+    def test_accumulate_specials(self, kind):
+        vals = [1.0, -2.0, 3.5, 0.0, -1.0] + SPECIALS[kind]
+        a = np.array(vals, dtype=np.float64)
+        got_min, got_max = mm.accumulate(a)
+        np.testing.assert_array_equal(got_min, np.minimum.accumulate(a))
+        np.testing.assert_array_equal(got_max, np.maximum.accumulate(a))
+
+    def test_accumulate_identity_ignored(self):
+        # accumulate always seeds with the first element, so a registered
+        # identity must not change the result.
+        a = make_array((10,), seed=25)
+        a_mn, a_mx = mm.accumulate(a)
+        i_mn, i_mx = mmi.accumulate(a)
+        np.testing.assert_array_equal(a_mn, i_mn)
+        np.testing.assert_array_equal(a_mx, i_mx)
+
+    @pytest.mark.parametrize("shape", SHAPES, ids=str)
+    def test_accumulate_out_tuple(self, shape):
+        a = make_array(shape, seed=20)
+        for axis in range(a.ndim):
+            ref_min = np.minimum.accumulate(a, axis=axis)
+            ref_max = np.maximum.accumulate(a, axis=axis)
+            omin = np.empty(shape, np.float64)
+            omax = np.empty(shape, np.float64)
+            got_min, got_max = mm.accumulate(a, axis=axis, out=(omin, omax))
+            assert got_min is omin and got_max is omax
+            np.testing.assert_array_equal(omin, ref_min)
+            np.testing.assert_array_equal(omax, ref_max)
+
+    # `out=None` must behave like no `out`, not raise about needing a tuple.
+    def test_accumulate_out_none(self):
+        a = make_array((6,), seed=26)
+        got_min, got_max = mm.accumulate(a, out=None)
+        np.testing.assert_array_equal(got_min, np.minimum.accumulate(a))
+        np.testing.assert_array_equal(got_max, np.maximum.accumulate(a))
+
+    @pytest.mark.parametrize("which", [0, 1])
+    def test_accumulate_out_partial(self, which):
+        # Only some entries of the `out` tuple given, the rest allocated.
+        a = make_array((6,), seed=26)
+        given = np.empty(6, np.float64)
+        out = (given, None) if which == 0 else (None, given)
+        got = mm.accumulate(a, out=out)
+        assert got[which] is given
+        np.testing.assert_array_equal(got[0], np.minimum.accumulate(a))
+        np.testing.assert_array_equal(got[1], np.maximum.accumulate(a))
+
+    # `out` overlapping the input still gives the right result (the iterator
+    # makes a writeback copy) and returns the passed-in arrays.
+    def test_accumulate_out_overlapping_input(self):
+        a = make_array((8,), seed=27)
+        ref_min = np.minimum.accumulate(a)
+        ref_max = np.maximum.accumulate(a)
+        omax = np.empty(8, np.float64)
+        got_min, got_max = mm.accumulate(a, out=(a, omax))
+        assert got_min is a and got_max is omax
+        np.testing.assert_array_equal(a, ref_min)
+        np.testing.assert_array_equal(omax, ref_max)
+
+    def test_accumulate_out_bare_array_raises(self):
+        a = make_array((4,), seed=9)
+        with pytest.raises(TypeError, match="must be a tuple of arrays"):
+            mm.accumulate(a, out=np.empty(4))
+
+    def test_accumulate_out_wrong_length_raises(self):
+        a = make_array((4,), seed=10)
+        with pytest.raises(ValueError, match="exactly one entry per ufunc output"):
+            mm.accumulate(a, out=(np.empty(4),))
+
+    def test_accumulate_dtype_same(self):
+        a = make_array((4,), seed=16)
+        got_min, got_max = mm.accumulate(a, dtype=np.float64)
+        assert got_min.dtype == np.float64 and got_max.dtype == np.float64
+        np.testing.assert_array_equal(
+            got_min, np.minimum.accumulate(a, dtype=np.float64))
+        np.testing.assert_array_equal(
+            got_max, np.maximum.accumulate(a, dtype=np.float64))
+
+    def test_accumulate_dtype_forced_no_loop_raises(self):
+        a = make_array((4,), seed=17)
+        with pytest.raises(TypeError, match="did not contain a loop"):
+            mm.accumulate(a, dtype=np.int64)
+
+    def test_accumulate_dtype_mismatched_tuple_raises(self):
+        a = make_array((4,), seed=18)
+        with pytest.raises(ValueError, match="mismatch in size"):
+            mm.accumulate(a, dtype=(np.int32, np.int64))
+
+    def test_accumulate_unsupported_dtype_raises(self):
+        a = np.array(["a", "b", "c"])
+        with pytest.raises(ValueError, match="could not convert string to float"):
             mm.accumulate(a)
+
+    def test_accumulate_no_reduction_loop_raises(self):
+        with pytest.raises(
+                TypeError, match="resolved loop does not register a reduction loop"):
+            np.divmod.accumulate([1, 2, 3])
+
+    # `minimummaximum` also registers an object loop, so accumulate is
+    # exercised with refcounted (NPY_ITEM_REFCOUNT) descriptors too.
+    @pytest.mark.parametrize("shape", SHAPES, ids=str)
+    def test_object_accumulate(self, shape):
+        a = np.random.default_rng(30).integers(-50, 51, size=shape).astype(object)
+        for axis in range(a.ndim):
+            got_min, got_max = mm.accumulate(a, axis=axis)
+            np.testing.assert_array_equal(
+                got_min, np.minimum.accumulate(a, axis=axis))
+            np.testing.assert_array_equal(
+                got_max, np.maximum.accumulate(a, axis=axis))
+
+    def test_object_accumulate_incomparable_raises(self):
+        with pytest.raises(TypeError):
+            mm.accumulate(np.array([1, "x", 2], dtype=object))
 
     def test_reduceat_raises(self):
         a = make_array((4,), seed=21)
