@@ -132,23 +132,31 @@ get_descr_from_type_and_elsize(const int type_num, const int elsize)  {
 
 /************************* FortranObject *******************************/
 
+#ifdef Py_TARGET_ABI3T
+#define to_fortran_object(o) ((PyFortranObject*)PyObject_GetTypeData(o, PyFortran_TypePtr))
+#else
+#define to_fortran_object(o) ((PyFortranObject*)o)
+#endif 
+
 typedef PyObject *(*fortranfunc)(PyObject *, PyObject *, PyObject *, void *);
 
 PyObject *
 PyFortranObject_New(FortranDataDef *defs, f2py_void_func init)
 {
     int i;
-    PyFortranObject *fp = NULL;
+    PyFortranObject *fp;
+    PyObject *fpo = NULL;
     PyObject *v = NULL;
     if (init != NULL) { /* Initialize F90 module objects */
         (*(init))();
     }
-    fp = PyObject_New(PyFortranObject, &PyFortran_Type);
-    if (fp == NULL) {
+    fpo = PyObject_GC_New(PyObject, PyFortran_TypePtr);
+    if (fpo == NULL) {
         return NULL;
     }
+    fp = to_fortran_object(fpo);
     if ((fp->dict = PyDict_New()) == NULL) {
-        Py_DECREF(fp);
+        Py_DECREF(fpo);
         return NULL;
     }
     fp->len = 0;
@@ -187,21 +195,23 @@ PyFortranObject_New(FortranDataDef *defs, f2py_void_func init)
             Py_XDECREF(v);
         }
     }
-    return (PyObject *)fp;
+    return fpo;
 fail:
-    Py_XDECREF(fp);
+    Py_XDECREF(fpo);
     return NULL;
 }
 
 PyObject *
 PyFortranObject_NewAsAttr(FortranDataDef *defs)
 { /* used for calling F90 module routines */
-    PyFortranObject *fp = NULL;
-    fp = PyObject_New(PyFortranObject, &PyFortran_Type);
-    if (fp == NULL)
+    PyObject *fpo = NULL;
+    PyFortranObject *fp;
+    fpo = PyObject_GC_New(PyObject, PyFortran_TypePtr);
+    if (fpo == NULL)
         return NULL;
+    fp = to_fortran_object(fpo);
     if ((fp->dict = PyDict_New()) == NULL) {
-        PyObject_Del(fp);
+        PyObject_GC_Del(fpo);
         return NULL;
     }
     fp->len = 1;
@@ -215,25 +225,41 @@ PyFortranObject_NewAsAttr(FortranDataDef *defs)
       name = PyUnicode_FromFormat("array %s", defs->name);
     }
     if (name == NULL) {
-        Py_DECREF(fp);
+        Py_DECREF(fpo);
         return NULL;
     }
     if (PyDict_SetItemString(fp->dict, "__name__", name) < 0) {
         Py_DECREF(name);
-        Py_DECREF(fp);
+        Py_DECREF(fpo);
         return NULL;
     }
     Py_DECREF(name);
-    return (PyObject *)fp;
+    return fpo;
 }
 
 /* Fortran methods */
 
+static int
+fortran_clear(PyObject *fpo) {
+    Py_CLEAR(to_fortran_object(fpo)->dict);
+    return 0;
+}
+
+static int
+fortran_traverse(PyObject *fpo, visitproc visit, void *arg) {
+    Py_VISIT(to_fortran_object(fpo)->dict);
+    Py_VISIT(Py_TYPE(fpo));
+    return 0;
+}
+
 static void
-fortran_dealloc(PyFortranObject *fp)
+fortran_dealloc(PyObject *fpo)
 {
-    Py_XDECREF(fp->dict);
-    PyObject_Del(fp);
+    PyTypeObject *tp = Py_TYPE(fpo);
+    PyObject_GC_UnTrack(fpo);
+    fortran_clear(fpo);
+    PyObject_GC_Del(fpo);
+    Py_DECREF((PyObject*)tp);
 }
 
 static PyObject *
@@ -283,7 +309,7 @@ fortran_doc(FortranDataDef def)
         if (!formatted_def) return NULL;
         d = PyArray_DescrFromType(def.type);
         if (d) {
-            s = PyUnicode_FromFormat("%s : '%c'-%U\n", def.name, d->type, formatted_def);
+            s = PyUnicode_FromFormat("%s : '%c'-%U\n", def.name, PyDataType_TYPE(d), formatted_def);
             Py_DECREF(d);
         }
         Py_DECREF(formatted_def);
@@ -303,9 +329,10 @@ set_data(char *d, npy_intp *f)
 }
 
 static PyObject *
-fortran_getattr(PyFortranObject *fp, char *name)
+fortran_getattr(PyObject *fpo, char *name)
 {
     int i, j, k, flag;
+    PyFortranObject *fp = to_fortran_object(fpo);
     if (fp->dict != NULL) {
         // python 3.13 added PyDict_GetItemRef
 #if PY_VERSION_HEX < 0x030D0000
@@ -394,16 +421,17 @@ fortran_getattr(PyFortranObject *fp, char *name)
     }
     PyObject *str, *ret;
     str = PyUnicode_FromString(name);
-    if (!str) return NULL;
-    ret = PyObject_GenericGetAttr((PyObject *)fp, str);
+    if (!str) return NULL;  
+    ret = PyObject_GenericGetAttr(fpo, str);
     Py_DECREF(str);
     return ret;
 }
 
 static int
-fortran_setattr(PyFortranObject *fp, char *name, PyObject *v)
+fortran_setattr(PyObject *fpo, char *name, PyObject *v)
 {
     int i, j, flag;
+    PyFortranObject *fp = to_fortran_object(fpo);
     PyArrayObject *arr = NULL;
     for (i = 0, j = 1; i < fp->len && (j = strcmp(name, fp->defs[i].name));
          i++)
@@ -482,9 +510,10 @@ fortran_setattr(PyFortranObject *fp, char *name, PyObject *v)
 }
 
 static PyObject *
-fortran_call(PyFortranObject *fp, PyObject *arg, PyObject *kw)
+fortran_call(PyObject *fpo, PyObject *arg, PyObject *kw)
 {
     int i = 0;
+    PyFortranObject *fp = to_fortran_object(fpo);
     /*  printf("fortran call
         name=%s,func=%p,data=%p,%p\n",fp->defs[i].name,
         fp->defs[i].func,fp->defs[i].data,&fp->defs[i].data); */
@@ -495,21 +524,21 @@ fortran_call(PyFortranObject *fp, PyObject *arg, PyObject *kw)
         }
         else if (fp->defs[i].data == NULL)
             /* dummy routine */
-            return (*((fortranfunc)(fp->defs[i].func)))((PyObject *)fp, arg,
+            return (*((fortranfunc)(fp->defs[i].func)))(fpo, arg,
                                                         kw, NULL);
         else
             return (*((fortranfunc)(fp->defs[i].func)))(
-                    (PyObject *)fp, arg, kw, (void *)fp->defs[i].data);
+                    fpo, arg, kw, (void *)fp->defs[i].data);
     }
     PyErr_Format(PyExc_TypeError, "this fortran object is not callable");
     return NULL;
 }
 
 static PyObject *
-fortran_repr(PyFortranObject *fp)
+fortran_repr(PyObject *fpo)
 {
     PyObject *name = NULL, *repr = NULL;
-    name = PyObject_GetAttrString((PyObject *)fp, "__name__");
+    name = PyObject_GetAttrString(fpo, "__name__");
     PyErr_Clear();
     if (name != NULL && PyUnicode_Check(name)) {
         repr = PyUnicode_FromFormat("<fortran %U>", name);
@@ -522,9 +551,10 @@ fortran_repr(PyFortranObject *fp)
 }
 
 static PyObject *
-fortran_dir(PyFortranObject *fp, PyObject *Py_UNUSED(args))
+fortran_dir(PyObject *fpo, PyObject *Py_UNUSED(args))
 {
     int i;
+    PyFortranObject *fp = to_fortran_object(fpo);
     PyObject *dir_list = PyDict_Keys(fp->dict);
     if (dir_list == NULL) {
         return NULL;
@@ -562,16 +592,54 @@ static PyMethodDef fortran_methods[] = {
         {NULL, NULL, 0, NULL}
 };
 
-PyTypeObject PyFortran_Type = {
-        PyVarObject_HEAD_INIT(NULL, 0).tp_name = "fortran",
-        .tp_basicsize = sizeof(PyFortranObject),
-        .tp_dealloc = (destructor)fortran_dealloc,
-        .tp_getattr = (getattrfunc)fortran_getattr,
-        .tp_setattr = (setattrfunc)fortran_setattr,
-        .tp_repr = (reprfunc)fortran_repr,
-        .tp_methods = fortran_methods,
-        .tp_call = (ternaryfunc)fortran_call,
+static PyType_Slot fortran_slots[] = {
+    {Py_tp_dealloc, (void*)fortran_dealloc},
+    {Py_tp_getattr, (void*)fortran_getattr},
+    {Py_tp_setattr, (void*)fortran_setattr},
+    {Py_tp_repr, (void*)fortran_repr},
+    {Py_tp_methods, fortran_methods},
+    {Py_tp_call, (void*)fortran_call},
+    {Py_tp_clear, (void*)fortran_clear},
+    {Py_tp_traverse, (void*)fortran_traverse},
+    {0, NULL}
 };
+
+static PyType_Spec fortran_spec = {
+    .name = "<f2py internal>.fortran",
+#ifdef Py_TARGET_ABI3T
+    .basicsize = -((Py_ssize_t)sizeof(PyFortranObject)),
+#else
+    .basicsize = sizeof(PyFortranObject),
+#endif
+    .flags = Py_TPFLAGS_DEFAULT |  Py_TPFLAGS_IMMUTABLETYPE | Py_TPFLAGS_HAVE_GC,
+    .slots = fortran_slots
+};
+
+PyTypeObject *PyFortran_TypePtr = NULL;
+
+int F2Py_InitializePyFortranType(void) {
+#ifdef Py_GIL_DISABLED
+    // This is an arbitrary object to lock on.
+    // It's really unlikely to matter, unless multiple modules are linked
+    // together into a single shared object/executable.
+    Py_BEGIN_CRITICAL_SECTION(Py_Ellipsis);
+#endif
+    PyObject *new_type;
+    if (PyFortran_TypePtr) {
+        return 0;  // Already initialized.
+    }
+    new_type = PyType_FromSpec(&fortran_spec);
+    if (PyFortran_TypePtr) {
+        // Race to initialize it and the other thread won.
+        Py_XDECREF(new_type);
+    } else {
+        PyFortran_TypePtr = (PyTypeObject*)new_type;
+    }
+#ifdef Py_GIL_DISABLED
+    Py_END_CRITICAL_SECTION();
+#endif
+    return PyFortran_TypePtr == NULL ? -1 : 0;
+}
 
 /************************* f2py_report_atexit *******************************/
 
@@ -1027,7 +1095,8 @@ ndarray_from_pyobj(const int type_num,
             if (!(ARRAY_ISCOMPATIBLE(arr, type_num))) {
                 extra_msg = PyUnicode_FromFormat(
                     " -- input '%c' not compatible to '%c'",
-                    PyArray_DESCR(arr)->type, descr->type);
+                    PyDataType_TYPE(PyArray_DESCR(arr)),
+                    PyDataType_TYPE(descr));
                 if (!extra_msg) goto end_intent_err_handling;
                 PyUnicode_AppendAndDel(&msg, extra_msg);
                 if (!msg) goto end_intent_err_handling;
@@ -1066,7 +1135,8 @@ ndarray_from_pyobj(const int type_num,
                     PyExc_ValueError,
                     "failed to initialize intent(inplace) array"
                     " -- input '%c' not compatible to '%c'",
-                    PyArray_DESCR(arr)->type, descr->type);
+                    PyDataType_TYPE(PyArray_DESCR(arr)),
+                    PyDataType_TYPE(descr));
                   Py_DECREF(descr);
                   return NULL;
               }
@@ -1360,7 +1430,8 @@ PyObject *f2py_describe_obj(PyObject *obj) {
     if (PyArray_CheckScalar(obj)) {
         PyArrayObject* arr = (PyArrayObject*)obj;
         result = PyUnicode_FromFormat("%c%" NPY_INTP_FMT "-" TP_NAME_FMT "-scalar",
-                                    PyArray_DESCR(arr)->kind, PyArray_ITEMSIZE(arr), tp_name);
+                                      PyDataType_KIND(PyArray_DESCR(arr)),
+                                      PyArray_ITEMSIZE(arr), tp_name);
     } else if (PyArray_Check(obj)) {
         int i;
         PyArrayObject* arr = (PyArrayObject*)obj;
@@ -1377,7 +1448,8 @@ PyObject *f2py_describe_obj(PyObject *obj) {
         }
         result = PyUnicode_FromFormat(
             "(%U)-%c%" NPY_INTP_FMT "-" TP_NAME_FMT,
-            dims_str, PyArray_DESCR(arr)->kind, PyArray_ITEMSIZE(arr), tp_name);
+            dims_str, PyDataType_KIND(PyArray_DESCR(arr)),
+            PyArray_ITEMSIZE(arr), tp_name);
         Py_DECREF(dims_str);
     } else if (PySequence_Check(obj)) {
         Py_ssize_t len = PySequence_Length(obj);
