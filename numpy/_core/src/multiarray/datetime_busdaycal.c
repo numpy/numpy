@@ -74,7 +74,7 @@ general_weekmask_string:
         /* a string like "SatSun" or "Mon Tue Wed" */
         memset(weekmask, 0, 7);
         for (Py_ssize_t i = 0; i < len; i += 3) {
-            while (isspace(str[i]))
+            while (isspace(Py_CHARMASK(str[i])))
                 ++i;
 
             if (i == len) {
