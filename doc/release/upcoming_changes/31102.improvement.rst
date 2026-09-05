@@ -1,0 +1,13 @@
+`numpy.nanmin` and `numpy.nanmax` now respect ``initial`` consistently
+----------------------------------------------------------------------
+
+`numpy.nanmin` and `numpy.nanmax` no longer propagate ``NaN`` from the
+``initial`` argument and now use a non-``NaN`` ``initial`` as the result for
+all-``NaN`` (or empty) slices instead of returning ``NaN`` with a
+``RuntimeWarning``. For example, ``np.nanmax([np.nan, np.nan], initial=5.0)``
+now returns ``5.0`` instead of ``NaN``, and ``np.nanmax([1.0, 2.0, 3.0],
+initial=np.nan)`` returns ``3.0`` instead of ``NaN``.
+
+When ``initial`` is ``NaN`` and every element of the slice is also ``NaN`` (or
+masked out by ``where=``), the existing ``RuntimeWarning`` and ``NaN`` return
+value are preserved.
