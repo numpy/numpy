@@ -193,17 +193,33 @@ int initumath(PyObject *m)
 #if defined(Py_GIL_DISABLED) && PY_VERSION_HEX >= 0x030e0000
     /* Immortalize the builtin ufuncs to avoid refcount contention. */
     {
-        PyObject *key, *value;
-        Py_ssize_t pos = 0;
-        while (PyDict_Next(d, &pos, &key, &value)) {
-            if (PyObject_TypeCheck(value, &PyUFunc_Type)) {
-                if (PyUnstable_SetImmortal(value) == 0) {
-                    PyErr_Format(PyExc_RuntimeError,
-                            "failed to immortalize ufunc %R", key);
-                    return -1;
-                }
-            }
+        PyObject *keys = PyDict_Keys(d);
+        if (keys == NULL) {
+            return -1;
         }
+        Py_ssize_t nkeys = PyList_Size(keys);
+        for (Py_ssize_t i = 0; i < nkeys; i++) {
+            PyObject *key = PyList_GetItemRef(keys, i);
+            PyObject *value = NULL;
+            if (key == NULL || PyDict_GetItemRef(d, key, &value) < 0) {
+                Py_XDECREF(key);
+                Py_DECREF(keys);
+                return -1;
+            }
+            int is_ufunc = PyObject_TypeCheck(value, &PyUFunc_Type);
+            /* The dict keeps the ufunc alive; drop our reference so that
+             * it is uniquely referenced, as PyUnstable_SetImmortal requires. */
+            Py_DECREF(value);
+            if (is_ufunc && PyUnstable_SetImmortal(value) == 0) {
+                PyErr_Format(PyExc_RuntimeError,
+                        "failed to immortalize ufunc %R", key);
+                Py_DECREF(key);
+                Py_DECREF(keys);
+                return -1;
+            }
+            Py_DECREF(key);
+        }
+        Py_DECREF(keys);
     }
 #endif
 
