@@ -136,6 +136,64 @@ def _unpack_tuple(x):
         return x
 
 
+def _unique1d_dense_ints(
+    ar, return_inverse=False, return_counts=False, *, inverse_shape=None
+):
+    """
+    Fast path for dense integer/bool arrays when `return_index` is not needed.
+    """
+    if ar.size == 0 or ar.dtype.kind not in "uib":
+        return NotImplemented
+
+    ar_min = int(np.min(ar))
+    ar_max = int(np.max(ar))
+    ar_range = ar_max - ar_min
+
+    # `bincount` allocates one slot for every value in the covered range.
+    if ar_range < 0 or ar_range > np.iinfo(np.intp).max:
+        return NotImplemented
+    if ar_range > 6 * ar.size:
+        return NotImplemented
+
+    ar_min = ar.dtype.type(ar_min)
+
+    if ar_range == 0:
+        uniq = np.array([ar_min], dtype=ar.dtype)
+        ret = (uniq,)
+        if return_inverse:
+            ret += (np.zeros(ar.shape, dtype=np.intp).reshape(inverse_shape),)
+        if return_counts:
+            ret += (np.array([ar.size], dtype=np.intp),)
+        return ret
+
+    if ar.dtype.kind == "b":
+        shifted = ar.astype(np.intp, copy=False)
+    else:
+        # Subtract in the original dtype first so dense uint64 ranges near
+        # the intp limit do not overflow during promotion to intp.
+        shifted = np.subtract(ar, ar_min)
+        shifted = shifted.astype(np.intp, copy=False)
+    counts = np.bincount(shifted)
+    values = counts.nonzero()[0]
+
+    if ar.dtype.kind == "b":
+        uniq = values.astype(np.bool_, copy=False)
+    else:
+        uniq = values.astype(ar.dtype, copy=False)
+        uniq = np.add(uniq, ar_min)
+
+    ret = (uniq,)
+    if return_inverse:
+        lut = np.empty(counts.size, dtype=np.intp)
+        # Safe because shifted indices are a subset of the populated `values`.
+        lut[values] = np.arange(values.size, dtype=np.intp)
+        inv_idx = lut[shifted]
+        ret += (inv_idx.reshape(inverse_shape),)
+    if return_counts:
+        ret += (counts[values],)
+    return ret
+
+
 def _unique_dispatcher(ar, return_index=None, return_inverse=None,
                        return_counts=None, axis=None, *, equal_nan=None,
                        sorted=True):
@@ -376,6 +434,16 @@ def _unique1d(ar, return_index=False, return_inverse=False,
                 hash_unique.sort()
             # We wrap the result back in case it was a subclass of numpy.ndarray.
             return (conv.wrap(hash_unique),)
+
+    if (
+        not return_index and sorted and not np.ma.is_masked(ar)
+        and (dense_unique := _unique1d_dense_ints(
+            ar, return_inverse=return_inverse, return_counts=return_counts,
+            inverse_shape=inverse_shape,
+        )) is not NotImplemented
+    ):
+        conv = _array_converter(ar)
+        return (conv.wrap(dense_unique[0]),) + dense_unique[1:]
 
     # If we don't use the hash map, we use the slower sorting method.
     if optional_indices:
