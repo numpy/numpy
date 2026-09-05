@@ -191,6 +191,23 @@ int initumath(PyObject *m)
         return -1;
     }
 
+#if defined(Py_GIL_DISABLED) && PY_VERSION_HEX >= 0x030e0000
+    /* Immortalize the builtin ufuncs to avoid refcount contention. */
+    {
+        PyObject *key, *value;
+        Py_ssize_t pos = 0;
+        while (PyDict_Next(d, &pos, &key, &value)) {  // noqa: borrowed-ref OK
+            if (PyObject_TypeCheck(value, &PyUFunc_Type)) {
+                if (PyUnstable_SetImmortal(value) == 0) {
+                    PyErr_Format(PyExc_RuntimeError,
+                            "failed to immortalize ufunc %R", key);
+                    return -1;
+                }
+            }
+        }
+    }
+#endif
+
     PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(NPY_PI));
     Py_DECREF(s);
     PyDict_SetItemString(d, "e", s = PyFloat_FromDouble(NPY_E));
