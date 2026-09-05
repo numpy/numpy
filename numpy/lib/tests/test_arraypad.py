@@ -158,11 +158,23 @@ class TestConditionalShortcuts:
             result = np.pad(test, 0, mode="linear_ramp", end_values=1 + 2j)
         assert_array_equal(test, result)
 
-    @pytest.mark.parametrize("mode", ["maximum", "mean", "median", "minimum"])
+    @pytest.mark.parametrize("mode", ["mean", "median"])
     def test_zero_padding_stat_modes_validate_string_dtype(self, mode):
         test = np.array(["a", "b"])
         with pytest.raises(TypeError):
             np.pad(test, 0, mode=mode)
+
+    @pytest.mark.parametrize("mode", ["maximum", "minimum"])
+    @pytest.mark.parametrize("dt", ["U", "S"])
+    def test_zero_padding_minmax_modes_string_dtype(self, mode, dt):
+        # maximum/minimum ufuncs support string dtypes, so these stat
+        # modes now work rather than raising (see gh-32504).
+        test = np.array(["ab", "abc", "b"], dtype=dt)
+        result = np.pad(test, (1, 1), mode=mode)
+        pad = test.min() if mode == "minimum" else test.max()
+        assert result.dtype == test.dtype
+        assert_array_equal(
+            result, np.array([pad, "ab", "abc", "b", pad], dtype=dt))
 
     @pytest.mark.parametrize("mode", ["maximum", "mean", "median", "minimum"])
     def test_zero_padding_stat_modes_validate_object_dtype(self, mode):
