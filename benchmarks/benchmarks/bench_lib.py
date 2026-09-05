@@ -253,3 +253,82 @@ class Isin(Benchmark):
 
     def time_isin(self, size, highest_element):
         np.isin(self.array, self.in_array)
+
+
+class IsinStringDType(Benchmark):
+    """Benchmarks for `numpy.isin` with StringDType arrays."""
+
+    param_names = ["size", "na_kind"]
+    params = [
+        [10, 30_000],
+        ["unset", "None", "nan", "string"],
+    ]
+
+    def setup(self, size, na_kind):
+        if na_kind == "unset":
+            dtype = np.dtypes.StringDType()
+            na_object = "value-2"
+        else:
+            na_object = {
+                "None": None,
+                "nan": np.nan,
+                "string": "missing",
+            }[na_kind]
+            dtype = np.dtypes.StringDType(na_object=na_object)
+
+        values = ["value-0", "value-1", "value-2", na_object]
+        repeats = size // len(values) + 1
+        self.array = np.array((values * repeats)[:size], dtype=dtype)
+        self.in_array = self.array.copy()
+
+        # Exercise compatible but unequal descriptors.  A dtype without an NA
+        # is compatible with one that has an NA; otherwise differing coercion
+        # settings make the descriptors unequal without changing NA behavior.
+        if na_kind == "unset":
+            compatible_dtype = np.dtypes.StringDType(na_object=None)
+        else:
+            compatible_dtype = np.dtypes.StringDType(
+                na_object=na_object, coerce=False
+            )
+        self.in_array_compatible_dtype = np.array(
+            (values * repeats)[:size], dtype=compatible_dtype
+        )
+        self.fixed_width_array = np.array(
+            (values * repeats)[:size], dtype="U"
+        )
+
+    def time_isin(self, size, na_kind):
+        np.isin(self.array, self.in_array)
+
+    def time_isin_compatible_dtype(self, size, na_kind):
+        np.isin(self.array, self.in_array_compatible_dtype)
+
+    def time_isin_fixed_width_values(self, size, na_kind):
+        np.isin(self.fixed_width_array, self.in_array)
+
+    def time_isin_fixed_width_candidates(self, size, na_kind):
+        np.isin(self.array, self.fixed_width_array)
+
+
+class IsinIncompatibleStringDType(Benchmark):
+    """Benchmark the scalar fallback for incompatible StringDType arrays."""
+
+    param_names = ["size"]
+    params = [[10, 30_000]]
+
+    def setup(self, size):
+        values = ["value-0", "value-1", "value-2", None]
+        repeats = size // len(values) + 1
+        dtype = np.dtypes.StringDType(na_object=None)
+        self.array = np.array((values * repeats)[:size], dtype=dtype)
+
+        # Incompatible missing values require scalar comparisons.  For the
+        # large case, 64 candidates exceed the sorting cutoff while keeping
+        # this deliberately slow fallback practical to benchmark.
+        candidate_count = min(size, 64)
+        candidates = [f"value-{i}" for i in range(candidate_count)]
+        other_dtype = np.dtypes.StringDType(na_object=np.nan)
+        self.in_array = np.array(candidates, dtype=other_dtype)
+
+    def time_isin(self, size):
+        np.isin(self.array, self.in_array)
