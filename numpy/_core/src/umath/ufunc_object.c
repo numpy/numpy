@@ -2729,10 +2729,10 @@ typedef union {
     npy_clongdouble clongdouble_;
     npy_datetime datetime_;
     npy_timedelta timedelta_;
-} reduction_scalar_storage;
+} ufunc_scalar_storage;
 
 static inline char *
-reduction_scalar_storage_ptr(reduction_scalar_storage *storage, int type_num)
+ufunc_scalar_storage_ptr(ufunc_scalar_storage *storage, int type_num)
 {
     if (PyTypeNum_ISNUMBER(type_num) || PyTypeNum_ISDATETIME(type_num)) { 
         return (char *)storage;
@@ -2807,13 +2807,13 @@ try_reduce_contiguous(
      * Accumulate on the stack when returning a scalar directly, otherwise
      * allocate one 0-d result per output so the loop can write into them.
      */
-    reduction_scalar_storage storage;
+    ufunc_scalar_storage storage;
     PyArrayObject *result[NPY_MAXARGS];
     char *accum[NPY_MAXARGS];
     if (*return_scalar) {
         assert(nout == 1);
         result[0] = NULL;
-        accum[0] = reduction_scalar_storage_ptr(&storage, descrs[0]->type_num);
+        accum[0] = ufunc_scalar_storage_ptr(&storage, descrs[0]->type_num);
         *return_scalar = accum[0] != NULL;
     }
     if (!*return_scalar) {
