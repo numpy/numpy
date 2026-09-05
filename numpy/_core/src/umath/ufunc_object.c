@@ -4775,8 +4775,8 @@ execute_unary_trivial_loop(
 
 
 /*
- * Stack storage for a single element of any builtin numeric or bool
- * dtype, with the correct alignment for each.
+ * Stack storage for a single element of any builtin non-flexible dtype
+ * (numeric, bool, datetime), with the correct alignment for each.
  */
 typedef union {
     npy_bool bool_;
@@ -4797,7 +4797,9 @@ typedef union {
     npy_cfloat cfloat_;
     npy_cdouble cdouble_;
     npy_clongdouble clongdouble_;
-} trivial_scalar_storage;
+    npy_datetime datetime_;
+    npy_timedelta timedelta_;
+} ufunc_scalar_storage;
 
 
 /*
@@ -4863,7 +4865,7 @@ unary_trivial_scalar_result(PyUFuncObject *ufunc,
     context.caller = (PyObject *)ufunc;
     context.method = method;
 
-    trivial_scalar_storage out;
+    ufunc_scalar_storage out;
     char *data[2] = {in_data, (char *)&out};
     npy_intp strides[2] = {0, 0};  // 0 ensures scalar math, not SIMD for half.
     if (execute_unary_trivial_loop(ufunc, &context, data, strides, 1) < 0) {
@@ -4887,7 +4889,7 @@ try_trivial_scalar_call(
     PyUFuncObject *ufunc, PyObject *const obj, PyObject **result)
 {
     assert(ufunc->nin == 1 && ufunc->nout == 1 && !ufunc->core_enabled);
-    trivial_scalar_storage cin;  // aligned storage for the input value
+    ufunc_scalar_storage cin;  // aligned storage for the input value
     char *in = (char *)&cin;
     int ret = -2;
     PyArray_Descr *dt;
