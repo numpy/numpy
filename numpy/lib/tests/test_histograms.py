@@ -429,6 +429,66 @@ class TestHistogram:
         assert edges[0] == Z[0]
         assert edges[-1] == Z[-1]
 
+    def test_masks(self):
+        # gh-10019: histogram ignores masked elements.
+        a = np.ma.array([1, 2, 3, 4, 5], mask=[False, False, True, False, False])
+        hist, _ = histogram(a, bins=[1, 2, 3, 4, 5, 6])
+        assert_array_equal(hist, [1, 1, 0, 1, 1])
+
+        n = 100
+        mask = np.zeros(n, dtype=bool)
+        mask[12:15] = True
+        y = np.ma.array(np.arange(n) + 0.5, mask=mask)
+        hist, _ = histogram(y)
+        assert_array_equal(hist, [10, 7, 10, 10, 10, 10, 10, 10, 10, 10])
+
+        a_plain = np.array([1.0, 2.0, 3.0, 4.0])
+        a_masked = np.ma.array([1.0, 2.0, 3.0, 4.0])
+        assert_array_equal(histogram(a_masked)[0], histogram(a_plain)[0])
+
+        a = np.ma.array([1.0, 2.0, 3.0], mask=[True, True, True])
+        hist, _ = histogram(a, bins=3, range=(0.0, 3.0))
+        assert_array_equal(hist, [0, 0, 0])
+
+        a = np.ma.array([[1, 2], [3, 4]], mask=[[False, True], [False, False]])
+        hist, _ = histogram(a, bins=[1, 2, 3, 4, 5])
+        assert_array_equal(hist, [1, 0, 1, 1])  # value 2 is masked
+
+        data = np.array([1.0, 2.0, 100.0, 4.0, 5.0])
+        mask = np.array([False, False, True, False, False])
+        h_masked, e_masked = histogram(np.ma.array(data, mask=mask), bins=4)
+        h_filtered, e_filtered = histogram(data[~mask], bins=4)
+        assert_array_equal(h_masked, h_filtered)
+        assert_array_equal(e_masked, e_filtered)
+
+        # Masked outlier doesn't affect auto bin selection or range
+        data = np.concatenate([np.linspace(0.0, 1.0, 50), [1000.0]])
+        mask = np.zeros(51, dtype=bool)
+        mask[-1] = True
+        h_masked, e_masked = histogram(np.ma.array(data, mask=mask), bins='auto')
+        h_ref, e_ref = histogram(data[:-1], bins='auto')
+        assert_array_equal(h_masked, h_ref)
+        assert_array_equal(e_masked, e_ref)
+
+        a = np.ma.array([1.0, 2.0, 3.0, 4.0, 5.0], mask=[False, True, False, False,
+                                                         False])
+        hist, edges = histogram(a, bins=4, density=True)
+        assert_almost_equal((hist * np.diff(edges)).sum(), 1.0)
+
+        # masked weights
+        a = np.array([1, 2, 3, 4, 5])
+        w = np.ma.array([1.0, 1.0, 99.0, 1.0, 1.0], mask=[False, False, True, False,
+                                                          False])
+        hist, _ = histogram(a, bins=[1, 2, 3, 4, 5, 6], weights=w)
+        assert_array_equal(hist, [1.0, 1.0, 0.0, 1.0, 1.0])
+
+        # Both masked data and weights
+        a = np.ma.array([1, 2, 3, 4, 5], mask=[False, True, False, False, False])
+        w = np.ma.array([1.0, 1.0, 99.0, 1.0, 1.0], mask=[False, False, True, False,
+                                                          False])
+        hist, _ = histogram(a, bins=[1, 2, 3, 4, 5, 6], weights=w)
+        assert_array_equal(hist, [1.0, 0.0, 0.0, 1.0, 1.0])
+
 class TestHistogramOptimBinNums:
     """
     Provide test coverage when using provided estimators for optimal number of
