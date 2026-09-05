@@ -1342,6 +1342,35 @@ create_cb_arglist(PyObject* fun, PyTupleObject* xa , const int maxnofargs,
     Py_ssize_t tot, opt, ext, siz, i, di = 0;
     CFUNCSMESS(\"create_cb_arglist\\n\");
     tot=opt=ext=siz=0;
+    /* Check if the function is callable */
+    if (!fun || !(PyCallable_Check(fun) || F2PyCapsule_Check(fun))) {
+#ifdef Py_LIMITED_API
+        PyObject *tp_name_obj = NULL;
+#endif
+        const char *tp_name = "NULL";
+        if (fun != NULL) {
+#ifndef Py_LIMITED_API
+            tp_name = Py_TYPE(fun)->tp_name;
+#else
+            tp_name_obj = PyType_GetQualName(Py_TYPE(fun));
+            if (!tp_name_obj) goto capi_fail;
+            tp_name = PyUnicode_AsUTF8AndSize(tp_name_obj, NULL);
+            if (!tp_name) {
+                Py_DECREF(tp_name_obj);
+                goto capi_fail;
+            }
+#endif
+        }
+        fprintf(
+            stderr,
+            \"Call-back argument must be a Python-callable|f2py-function \"
+            \"but got %s.\\n\", tp_name);
+#ifdef Py_LIMITED_API
+        Py_XDECREF(tp_name_obj);
+#endif
+        goto capi_fail;
+    }
+
     /* Get the total number of arguments */
     if (PyFunction_Check(fun)) {
         tmp_fun = fun;
@@ -1349,32 +1378,16 @@ create_cb_arglist(PyObject* fun, PyTupleObject* xa , const int maxnofargs,
     }
     else {
         di = 1;
-        if (PyObject_HasAttrString(fun,\"im_func\")) {
-            tmp_fun = PyObject_GetAttrString(fun,\"im_func\");
-        }
-        else if (PyObject_HasAttrString(fun,\"__call__\")) {
-            tmp = PyObject_GetAttrString(fun,\"__call__\");
-            if (PyObject_HasAttrString(tmp,\"im_func\"))
-                tmp_fun = PyObject_GetAttrString(tmp,\"im_func\");
-            else {
-                tmp_fun = fun; /* built-in function */
-                Py_INCREF(tmp_fun);
-                tot = maxnofargs;
-                if (PyCFunction_Check(fun)) {
-                    /* In case the function has a co_argcount */
-                    di = 0;
-                }
-                if (xa != NULL)
-                    tot += PyTuple_Size((PyObject *)xa);
-            }
-            Py_XDECREF(tmp);
-        }
-        else if (PyFortran_Check(fun) || PyFortran_Check1(fun)) {
+        if (PyObject_HasAttrString(fun,\"__call__\")) {
+            tmp_fun = fun; /* built-in function */
+            Py_INCREF(tmp_fun);
             tot = maxnofargs;
+            if (PyCFunction_Check(fun)) {
+                /* In case the function has a co_argcount */
+                di = 0;
+            }
             if (xa != NULL)
                 tot += PyTuple_Size((PyObject *)xa);
-            tmp_fun = fun;
-            Py_INCREF(tmp_fun);
         }
         else if (F2PyCapsule_Check(fun)) {
             tot = maxnofargs;
@@ -1387,33 +1400,13 @@ create_cb_arglist(PyObject* fun, PyTupleObject* xa , const int maxnofargs,
             tmp_fun = fun;
             Py_INCREF(tmp_fun);
         }
-    }
-
-    if (tmp_fun == NULL) {
-        const char *tp_name = \"NULL\";
-#if defined(Py_LIMITED_API)
-        PyObject *tp_name_obj=NULL;
-#endif
-        if (fun != NULL) {
-#if defined(Py_LIMITED_API)
-            tp_name_obj = PyType_GetFullyQualifiedName(Py_TYPE(fun));
-            if (!tp_name_obj) goto capi_fail;
-            tp_name = PyUnicode_AsUTF8AndSize(tp_name_obj, NULL);
-            if (tp_name == NULL) {
-                Py_DECREF(tp_name_obj); goto capi_fail;
-            }
-#else
-            tp_name = Py_TYPE(fun)->tp_name;
-#endif
+        else {
+            tot = maxnofargs;
+            if (xa != NULL)
+                tot += PyTuple_Size((PyObject *)xa);
+            tmp_fun = fun;
+            Py_INCREF(tmp_fun);
         }
-        fprintf(stderr,
-                \"Call-back argument must be function|instance|instance.__call__|f2py-function \"
-                \"but got %s.\\n\",
-                tp_name);
-#if defined(Py_LIMITED_API)
-        Py_XDECREF(tp_name_obj);
-#endif
-        goto capi_fail;
     }
 
     if (PyObject_HasAttrString(tmp_fun,\"__code__\")) {
