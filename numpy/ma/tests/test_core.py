@@ -2692,6 +2692,27 @@ class TestFillingValues:
         assert_equal(a["f0"].fill_value, default_fill_value(b"spam"))
         assert_equal(a["f1"].fill_value, default_fill_value("eggs"))
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
+    def test_fillvalue_reset_on_lossy_float_cast(self):
+        # gh-28255
+        a = arange(9.0)
+        untouched = np.ones_like(a, dtype="int64")
+        a.fill_value  # materialise the default fill_value
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            touched = np.ones_like(a, dtype="int64")
+        assert_equal(touched.fill_value, untouched.fill_value)
+        assert_equal(touched.fill_value, default_fill_value(touched.dtype))
+
+    def test_fillvalue_kept_on_exact_float_cast(self):
+        a = array([1.0, 2.0], mask=[0, 1], fill_value=5.0)
+        assert_equal(np.ones_like(a, dtype="int64").fill_value, 5)
+
+    def test_fillvalue_setter_still_raises(self):
+        a = array([1, 2], dtype="int64")
+        with pytest.raises(TypeError):
+            a.fill_value = 1e20
+
 
 class TestUfuncs:
     # Test class for the application of ufuncs on MaskedArrays.
@@ -4793,10 +4814,12 @@ class TestMaskedArrayFunctions:
         tmp[(xm <= 2).filled(True)] = True
         assert_equal(d._mask, tmp)
 
-        with np.errstate(invalid="warn"):
-            # The fill value is 1e20, it cannot be converted to `int`:
-            with pytest.warns(RuntimeWarning, match="invalid value"):
-                ixm = xm.astype(int)
+        # The fill value is 1e20, it cannot be converted to `int`, so the
+        # cast falls back to the default fill_value (gh-28255):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            ixm = xm.astype(int)
+        assert_equal(ixm.fill_value, default_fill_value(ixm.dtype))
         d = where(ixm > 2, ixm, masked)
         assert_equal(d, [-9, -9, -9, -9, -9, 4, -9, -9, 10, -9, -9, 3])
         assert_equal(d.dtype, ixm.dtype)
