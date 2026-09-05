@@ -60,6 +60,15 @@ class CopyTo(Benchmark):
         np.copyto(self.d, self.e, where=self.im8)
 
 
+class CopyToWhereTrue(Benchmark):
+    def setup(self):
+        self.d = np.ones(8)
+        self.e = self.d.copy()
+
+    def time_copyto(self):
+        np.copyto(self.d, self.e, where=True)
+
+
 class CopyStructured(Benchmark):
     params = [
         [10, 100, 1000],
