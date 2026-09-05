@@ -4667,6 +4667,14 @@ set_typeinfo(PyObject *dict)
     if (dtypemeta == NULL) {
         return -1;
     }
+#if defined(Py_GIL_DISABLED) && PY_VERSION_HEX >= 0x030e0000
+    /* Avoid refcount contention; a type is never uniquely referenced
+     * (its __mro__ points back at it), so PyUnstable_SetImmortal can't be used. */
+    {
+        PyAPI_FUNC(void) _Py_SetImmortal(PyObject *op);
+        _Py_SetImmortal((PyObject *)dtypemeta);
+    }
+#endif
     NPY_DT_SLOTS(dtypemeta)->setitem = @NAME@_setitem;
     NPY_DT_SLOTS(dtypemeta)->get_constant = @NAME@_get_constant;
 
