@@ -1,0 +1,15 @@
+Python scalars in ``concatenate`` and ``choose`` follow NEP 50 value rules
+--------------------------------------------------------------------------
+`numpy.concatenate` with ``axis=None`` and `numpy.choose` now convert Python
+scalars with the result dtype, as ufuncs and `numpy.copyto` do. A Python
+integer that does not fit the result dtype raises ``OverflowError`` instead of
+wrapping. For example, ``np.concatenate((np.ones(2, "int8"), 300), axis=None)``
+previously returned ``44`` for the new element.
+
+``casting="no"`` rejects a Python scalar that changes dtype
+-----------------------------------------------------------
+A Python scalar that would be converted to a dtype other than its default
+(``int64``, ``float64`` or ``complex128``) or ``object`` now raises
+``TypeError`` under ``casting="no"``, as it already did under
+``casting="equiv"``. This applies to ufuncs, `numpy.copyto` and
+`numpy.concatenate`.
