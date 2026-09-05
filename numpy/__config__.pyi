@@ -1,4 +1,3 @@
-from enum import Enum
 from types import ModuleType
 from typing import (
     Final,
@@ -91,14 +90,10 @@ __all__ = ["show_config"]
 
 CONFIG: Final[_ConfigDict] = ...
 
-class DisplayModes(Enum):
-    stdout = "stdout"
-    dicts = "dicts"
-
 def _check_pyyaml() -> ModuleType: ...
 
 @overload
-def show(mode: L["stdout"] = "stdout") -> None: ...
+def show(mode: L["stdout"]) -> None: ...
 @overload
 def show(mode: L["dicts"]) -> _ConfigDict: ...
 
