@@ -1814,6 +1814,29 @@ class TestDateTime:
         exp = [0 if v == imin else int(v) // d for v in vals]
         assert_array_equal(got, np.array(exp, dtype=np.int64))
 
+    @pytest.mark.parametrize("d", [1, 2, 3, 7, -4, 999983])
+    def test_timedelta_floor_divide_by_int_scalar_simd(self, d):
+        # m8 // int -> floor division (TIMEDELTA_mq_m_floor_divide); gh-32522
+        imin = np.iinfo(np.int64).min
+        vals = self._simd_timedelta_operands()
+        got = (vals.view('m8[s]') // np.int64(d)).view(np.int64)
+        exp = [imin if v == imin else int(v) // d for v in vals]
+        assert_array_equal(got, np.array(exp, dtype=np.int64))
+
+    def test_timedelta_floor_divide_by_int_matches_int64(self):
+        # Negative timedelta // int must floor like int64 // int (gh-32522)
+        delta = np.timedelta64(-7, "us")
+        assert_equal(delta // 2, np.timedelta64(-4, "us"))
+        assert_equal(delta // np.int64(2), np.timedelta64(-4, "us"))
+        assert_equal(
+            int((delta // 2) / np.timedelta64(1, "us")),
+            int(np.int64(-7) // 2),
+        )
+        assert_equal(
+            int(delta // np.timedelta64(2, "us")),
+            int(np.int64(-7) // 2),
+        )
+
     def test_generic_timedelta_floor_divide(self):
         with pytest.warns(
             DeprecationWarning,

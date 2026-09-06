@@ -637,6 +637,11 @@ class TestDivision:
              (np.timedelta64(-2, 'Y'), -2, np.timedelta64(1, 'Y')),
              (np.timedelta64(-2, 'Y'), -2, np.timedelta64(1, 'Y')),
              (np.timedelta64(-2, 'Y'), -3, np.timedelta64(0, 'Y')),
+             # Floor, not toward-zero truncation; see gh-32522
+             (np.timedelta64(-7, 'us'), 2, np.timedelta64(-4, 'us')),
+             (np.timedelta64(7, 'us'), -2, np.timedelta64(-4, 'us')),
+             (np.timedelta64(-7, 'us'), -2, np.timedelta64(3, 'us')),
+             (np.timedelta64(-7, 'us'), 3, np.timedelta64(-3, 'us')),
              (np.timedelta64(-2, 'Y'), 0, np.timedelta64('Nat', 'Y')),
             ])
     def test_division_int_timedelta(self, dividend, divisor, quotient):

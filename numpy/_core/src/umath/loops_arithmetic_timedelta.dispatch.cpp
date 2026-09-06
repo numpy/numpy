@@ -102,8 +102,14 @@ simd_divide_by_scalar_contig_timedelta(char **args, npy_intp len)
     }
 }
 
+/*
+ * Floor division by an invariant scalar. When propagate_nat is true (m // q),
+ * NaT dividends become NaT. Otherwise (m // m -> q), NaT becomes 0 and sets
+ * the invalid float status, matching TIMEDELTA_mm_q_floor_divide.
+ */
 static void HWY_ATTR
-simd_floor_divide_by_scalar_contig_timedelta(char **args, npy_intp len)
+simd_floor_divide_by_scalar_contig_timedelta(char **args, npy_intp len,
+                                             bool propagate_nat)
 {
     const int64_t *src = (const int64_t *)args[0];
     int64_t scalar     = *(const int64_t *)args[1];
@@ -118,13 +124,14 @@ simd_floor_divide_by_scalar_contig_timedelta(char **args, npy_intp len)
     const VI64 vzero       = hn::Zero(d);
     const VI64 vone        = hn::Set(d, 1);
     const VI64 nsign_d     = hn::Set(d, (npy_int64)(scalar < 0)); // 0 or 1
+    const VI64 nat_out     = propagate_nat ? vnat : vzero;
     bool any_nat = false;
 
     npy_intp i = 0;
     for (; i + vstep <= len; i += vstep) {
         VI64 a   = hn::LoadU(d, src + i);
         auto nat = hn::Eq(a, vnat);
-        if (!hn::AllFalse(d, nat)) {
+        if (!propagate_nat && !hn::AllFalse(d, nat)) {
             any_nat = true;
         }
         VI64 nsign_a   = hn::IfThenElse(hn::Lt(a, nsign_d), vone, vzero);
@@ -132,7 +139,7 @@ simd_floor_divide_by_scalar_contig_timedelta(char **args, npy_intp len)
         VI64 to_ninf   = hn::Xor(nsign_a, nsign_d);
         VI64 trunc     = simd_trunc_divide_s64(hn::Add(a, diff_sign), mv, p.sh, dsignv);
         VI64 floor     = hn::Sub(trunc, to_ninf);
-        floor = hn::IfThenElse(nat, vzero, floor);
+        floor = hn::IfThenElse(nat, nat_out, floor);
         hn::StoreU(floor, d, dst + i);
     }
     if (any_nat) {
@@ -142,8 +149,13 @@ simd_floor_divide_by_scalar_contig_timedelta(char **args, npy_intp len)
     for (; i < len; ++i) {
         const npy_int64 a = src[i];
         if (a == NPY_DATETIME_NAT) {
-            npy_set_floatstatus_invalid();
-            dst[i] = 0;
+            if (propagate_nat) {
+                dst[i] = NPY_DATETIME_NAT;
+            }
+            else {
+                npy_set_floatstatus_invalid();
+                dst[i] = 0;
+            }
         }
         else {
             npy_int64 r = a / scalar;
@@ -247,7 +259,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(TIMEDELTA_mm_q_floor_divide)
 #if NPY_SIMD && !defined(SIMD_DISABLE_DIV64_OPT)
             /* contiguous block of memory with a non-zero, non-NAT scalar divisor */
             if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(npy_timedelta), NPY_SIMD_WIDTH)) {
-                simd_floor_divide_by_scalar_contig_timedelta(args, n);
+                simd_floor_divide_by_scalar_contig_timedelta(args, n, false);
                 return;
             }
 #endif
@@ -287,6 +299,70 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(TIMEDELTA_mm_q_floor_divide)
                     quo -= 1;
                 }
                 *((npy_int64 *)op1) = quo;
+            }
+        }
+    }
+}
+
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(TIMEDELTA_mq_m_floor_divide)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    BINARY_DEFS
+
+    /* When the divisor is a scalar, we can vectorize the division */
+    if (steps[1] == 0) {
+        /* In case of empty array, just return */
+        if (n == 0) {
+            return;
+        }
+
+        const npy_int64 in2 = *(npy_int64 *)ip2;
+
+        /* If divisor is 0, we need not compute anything */
+        if (in2 == 0) {
+            npy_set_floatstatus_divbyzero();
+            BINARY_LOOP_SLIDING {
+                *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+            }
+        }
+        else {
+#if NPY_SIMD && !defined(SIMD_DISABLE_DIV64_OPT)
+            /* contiguous block of memory with a non-zero scalar divisor */
+            if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(npy_timedelta), NPY_SIMD_WIDTH)) {
+                simd_floor_divide_by_scalar_contig_timedelta(args, n, true);
+                return;
+            }
+#endif
+            BINARY_LOOP_SLIDING {
+                const npy_timedelta in1 = *(npy_timedelta *)ip1;
+                if (in1 == NPY_DATETIME_NAT) {
+                    *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+                }
+                else {
+                    npy_timedelta quo = in1 / in2;
+                    /* Negative quotients needs to be rounded down */
+                    if (((in1 > 0) != (in2 > 0)) && (quo * in2 != in1)) {
+                        quo -= 1;
+                    }
+                    *((npy_timedelta *)op1) = quo;
+                }
+            }
+        }
+    }
+    else {
+        BINARY_LOOP_SLIDING {
+            const npy_timedelta in1 = *(npy_timedelta *)ip1;
+            const npy_int64 in2 = *(npy_int64 *)ip2;
+            if (in1 == NPY_DATETIME_NAT || in2 == 0) {
+                *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
+            }
+            else {
+                npy_timedelta quo = in1 / in2;
+                /* Negative quotients needs to be rounded down */
+                if (((in1 > 0) != (in2 > 0)) && (quo * in2 != in1)) {
+                    quo -= 1;
+                }
+                *((npy_timedelta *)op1) = quo;
             }
         }
     }
