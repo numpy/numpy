@@ -1343,8 +1343,8 @@ def replace(a, old, new, count=-1):
         return _replace(a, old, new, count)
 
     a_dt = arr.dtype
-    old = old_arr.astype(old_dtype or a_dt, copy=False)
-    new = new_arr.astype(new_dtype or a_dt, copy=False)
+    old = old_arr.astype(old_dtype or a_dt.char, copy=False)
+    new = new_arr.astype(new_dtype or a_dt.char, copy=False)
     max_int64 = np.iinfo(np.int64).max
     counts = _count_ufunc(arr, old, 0, max_int64)
     counts = np.where(count < 0, counts, np.minimum(counts, count))
