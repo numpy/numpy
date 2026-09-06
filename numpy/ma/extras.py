@@ -1720,6 +1720,32 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
     return (x, xnotmask, rowvar)
 
 
+def _pairwise_cov_sums(x, xnotmask, rowvar):
+    """
+    Covariance sums over the observations that each pair of variables shares.
+
+    Takes the values returned by `_covhelper`, where ``x`` holds the deviation
+    of each variable from the mean over that variable's own unmasked
+    observations.  With variables along the first axis, ``npair[i, j]`` counts
+    the observations where variables ``i`` and ``j`` are both unmasked, and
+    ``xpsum[i, j]`` sums variable ``i`` over those observations.  Subtracting
+    ``xpsum * xpsum.T / npair`` from the sum of products moves the means onto
+    those same observations, giving ``cpair``.  See gh-15601.
+
+    ``xdev``, ``xpsum`` and ``xnotmask`` are returned as well; `corrcoef`
+    needs them for the variances over each pair.
+
+    """
+    if not rowvar:
+        x, xnotmask = x.T, xnotmask.T
+    xdev = filled(x, 0)
+    npair = np.dot(xnotmask, xnotmask.T)
+    xpsum = np.dot(xdev, xnotmask.T)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        cpair = np.dot(xdev, xdev.T.conj()) - xpsum * xpsum.T.conj() / npair
+    return npair, cpair, xdev, xpsum, xnotmask
+
+
 def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
     """
     Estimate the covariance matrix.
@@ -1770,6 +1796,19 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
     --------
     numpy.cov
 
+    Notes
+    -----
+    Each entry is computed from the observations where both variables are
+    unmasked, and the means are taken over those same observations.  This is
+    the pairwise-complete convention of ``pandas.DataFrame.cov``.  Because
+    different entries are computed from different observations, the result is
+    not guaranteed to be positive semi-definite.
+
+    .. versionchanged:: 2.6.0
+        The means are taken over the observations a pair shares.  Previously
+        each variable was centered on the mean over its own unmasked
+        observations, which is not the set the sum of products runs over.
+
     Examples
     --------
     >>> import numpy as np
@@ -1800,19 +1839,12 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
             ddof = 1
 
     (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)
-    if not rowvar:
-        fact = np.dot(xnotmask.T, xnotmask) - ddof
-        mask = np.less_equal(fact, 0, dtype=bool)
-        with np.errstate(divide="ignore", invalid="ignore"):
-            data = np.dot(filled(x.T, 0), filled(x.conj(), 0)) / fact
-        result = ma.array(data, mask=mask).squeeze()
-    else:
-        fact = np.dot(xnotmask, xnotmask.T) - ddof
-        mask = np.less_equal(fact, 0, dtype=bool)
-        with np.errstate(divide="ignore", invalid="ignore"):
-            data = np.dot(filled(x, 0), filled(x.T.conj(), 0)) / fact
-        result = ma.array(data, mask=mask).squeeze()
-    return result
+    npair, cpair = _pairwise_cov_sums(x, xnotmask, rowvar)[:2]
+    fact = npair - ddof
+    mask = np.less_equal(fact, 0, dtype=bool)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        data = cpair / fact
+    return ma.array(data, mask=mask).squeeze()
 
 
 def corrcoef(x, y=None, rowvar=True, allow_masked=True,
@@ -1848,6 +1880,24 @@ def corrcoef(x, y=None, rowvar=True, allow_masked=True,
     numpy.corrcoef : Equivalent function in top-level NumPy module.
     cov : Estimate the covariance matrix.
 
+    Notes
+    -----
+    Each coefficient is computed from the observations where both variables
+    are unmasked, and the means and variances are taken over those same
+    observations.  This is the pairwise-complete convention of
+    ``pandas.DataFrame.corr``.  Because different coefficients are computed
+    from different observations, the result is not guaranteed to be positive
+    semi-definite.
+
+    .. versionchanged:: 2.6.0
+        The means and variances are taken over the observations a pair
+        shares.  Previously the variances came from the diagonal of `cov`,
+        which holds each variable's variance over its own unmasked
+        observations, and coefficients could fall outside ``[-1, 1]``.
+        A single variable returns ``1.0`` where it has at least two
+        observations and a non-zero variance, as `numpy.corrcoef` does, and
+        is masked otherwise; it was masked in every case since 2.1.0.
+
     Examples
     --------
     >>> import numpy as np
@@ -1862,15 +1912,33 @@ def corrcoef(x, y=None, rowvar=True, allow_masked=True,
       dtype=float64)
 
     """
-    # Estimate the covariance matrix.
-    corr = cov(x, y, rowvar, allow_masked=allow_masked)
-    # The non-masked version returns a masked value for a scalar.
-    try:
-        std = ma.sqrt(ma.diagonal(corr))
-    except ValueError:
-        return ma.MaskedConstant()
-    corr /= ma.multiply.outer(std, std)
-    return corr
+    # The variances cannot be read off the diagonal of `cov`.  Each pair is
+    # computed over the observations it shares, so the variance of a variable
+    # differs from one pair to the next.  See gh-15601.
+    (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)
+    npair, cpair, xdev, xpsum, xnotmask = _pairwise_cov_sums(x, xnotmask, rowvar)
+    if xdev.shape[0] == 1:
+        if npair[0, 0] >= 2 and cpair[0, 0].real > 0:
+            return ma.array(1.0)
+        return masked
+    with np.errstate(divide="ignore", invalid="ignore"):
+        # The ``- ddof`` normalization cancels between the covariance and the
+        # two standard deviations, as in np.corrcoef.  It cancels only
+        # because all three are taken over the same observations.
+        sumsq = np.dot(xdev * xdev.conj(), xnotmask.T).real
+        vpair = sumsq - (xpsum * xpsum.conj()).real / npair
+        stddev = np.sqrt(vpair)
+        data = cpair / (stddev * stddev.T)
+    # A constant variable leaves rounding noise here rather than an exact
+    # zero, so compare against the noise level.  Mask before the clip,
+    # which would fold an inf onto +-1.
+    no_variance = vpair <= npair * np.finfo(vpair.dtype).eps * sumsq
+    mask = (np.less(npair, 2, dtype=bool) | no_variance | no_variance.T
+            | ~np.isfinite(data))
+    np.clip(data.real, -1, 1, out=data.real)
+    if np.iscomplexobj(data):
+        np.clip(data.imag, -1, 1, out=data.imag)
+    return ma.array(data, mask=mask)
 
 #####--------------------------------------------------------------------------
 #---- --- Concatenation helpers ---
