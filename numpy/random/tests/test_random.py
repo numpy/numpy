@@ -1061,8 +1061,21 @@ class TestBroadcast:
     # correctly when presented with non-scalar arguments
     seed = 123456789
 
-    # TODO: Include test for randint once it can broadcast
-    # Can steal the test written in PR #6938
+    def test_randint(self):
+        low = [0]
+        high = [10]
+        bad_high = [0]
+        desired = np.array([3, 4, 7])
+
+        rng = random.RandomState(self.seed)
+        actual = rng.randint(low * 3, high)
+        assert_array_equal(actual, desired)
+        assert_raises(ValueError, rng.randint, low * 3, bad_high)
+
+        rng = random.RandomState(self.seed)
+        actual = rng.randint(low, high * 3)
+        assert_array_equal(actual, desired)
+        assert_raises(ValueError, rng.randint, low, bad_high * 3)
 
     def test_uniform(self):
         low = [0]
