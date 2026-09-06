@@ -988,6 +988,13 @@ class TestMethods:
         assert_array_equal(act3, res3)
         assert_array_equal(act1 + act2 + act3, buf)
 
+    def test_partition_sep_not_truncated(self, dt):
+        buf = np.array(["a"], dtype=dt)
+        act1, act2, act3 = np.strings.partition(buf, "ab")
+        assert_array_equal(act1, np.array(["a"], dtype=dt))
+        assert_array_equal(act2, np.array([""], dtype=dt))
+        assert_array_equal(act3, np.array([""], dtype=dt))
+
     @pytest.mark.parametrize("buf,sep,res1,res2,res3", [
         ("this is the partition method", "ti", "this is the parti",
             "ti", "on method"),
@@ -1014,6 +1021,13 @@ class TestMethods:
         assert_array_equal(act2, res2)
         assert_array_equal(act3, res3)
         assert_array_equal(act1 + act2 + act3, buf)
+
+    def test_rpartition_sep_not_truncated(self, dt):
+        buf = np.array(["a"], dtype=dt)
+        act1, act2, act3 = np.strings.rpartition(buf, "ab")
+        assert_array_equal(act1, np.array([""], dtype=dt))
+        assert_array_equal(act2, np.array([""], dtype=dt))
+        assert_array_equal(act3, np.array(["a"], dtype=dt))
 
     @pytest.mark.parametrize("args", [
         (None,),

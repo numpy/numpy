@@ -1591,7 +1591,7 @@ def partition(a, sep):
         return _partition(a, sep)
 
     a = a_arr
-    sep = sep_arr.astype(a_arr.dtype, copy=False)
+    sep = sep_arr.astype(a_arr.dtype.char, copy=False)
     pos = _find_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)
@@ -1664,7 +1664,7 @@ def rpartition(a, sep):
         return _rpartition(a, sep)
 
     a = a_arr
-    sep = sep_arr.astype(a_arr.dtype, copy=False)
+    sep = sep_arr.astype(a_arr.dtype.char, copy=False)
     pos = _rfind_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)
