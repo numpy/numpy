@@ -42,6 +42,18 @@ def _inplace_binary_method(ufunc, name):
     return func
 
 
+def _pow_method(ufunc, name):
+    """Implement a forward pow method with a ufunc, accepting optional modulo."""
+    def func(self, other, modulo=None):
+        if modulo is not None:
+            return NotImplemented
+        if _disables_array_ufunc(other):
+            return NotImplemented
+        return ufunc(self, other)
+    func.__name__ = f'__{name}__'
+    return func
+
+
 def _numeric_methods(ufunc, name):
     """Implement forward, reflected and inplace binary methods with a ufunc."""
     return (_binary_method(ufunc, name),
@@ -162,9 +174,9 @@ class NDArrayOperatorsMixin:
     __mod__, __rmod__, __imod__ = _numeric_methods(um.remainder, 'mod')
     __divmod__ = _binary_method(um.divmod, 'divmod')
     __rdivmod__ = _reflected_binary_method(um.divmod, 'divmod')
-    # __idivmod__ does not exist
-    # TODO: handle the optional third argument for __pow__?
-    __pow__, __rpow__, __ipow__ = _numeric_methods(um.power, 'pow')
+    __pow__ = _pow_method(um.power, 'pow')
+    __rpow__ = _reflected_binary_method(um.power, 'pow')
+    __ipow__ = _inplace_binary_method(um.power, 'pow')
     __lshift__, __rlshift__, __ilshift__ = _numeric_methods(
         um.left_shift, 'lshift')
     __rshift__, __rrshift__, __irshift__ = _numeric_methods(

@@ -213,3 +213,12 @@ class TestNDArrayOperatorsMixin:
             np.frexp(ArrayLike(2 ** -3)), expected)
         _assert_equal_type_and_value(
             np.frexp(ArrayLike(np.array(2 ** -3))), expected)
+
+    def test_pow_modulo(self):
+        x = ArrayLike(2)
+        _assert_equal_type_and_value(pow(x, 3, None), ArrayLike(8))
+        _assert_equal_type_and_value(x.__pow__(3, None), ArrayLike(8))
+        assert_(x.__pow__(3, 5) is NotImplemented)
+        with assert_raises(TypeError):
+            pow(x, 3, 5)
+
