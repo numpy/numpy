@@ -797,6 +797,15 @@ class TestMethods:
         res = np.array(res, dtype=dt)
         assert_array_equal(np.strings.replace(buf, old, new, count), res)
 
+    def test_replace_scalar_truncation(self):
+        # Test for issue #32518
+        a = np.array(["a"])
+        res = np.strings.replace(a, "ab", "X")
+        assert_array_equal(res, np.array(["a"])) # "ab" is not found
+
+        res = np.strings.replace(a, "a", "XY")
+        assert_array_equal(res, np.array(["XY"]))
+
     @pytest.mark.parametrize("buf,sub,start,end,res", [
         ("abcdefghiabc", "", 0, None, 0),
         ("abcdefghiabc", "def", 0, None, 3),
