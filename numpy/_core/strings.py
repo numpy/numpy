@@ -18,6 +18,7 @@ from numpy import (
     not_equal,
 )
 from numpy._core.multiarray import _vec_string
+from numpy._core._multiarray_umath import _array_converter
 from numpy._core.overrides import array_function_dispatch, set_module
 from numpy._core.umath import (
     _center,
@@ -1329,22 +1330,14 @@ def replace(a, old, new, count=-1):
     if not np.issubdtype(count.dtype, np.integer):
         raise TypeError(f"unsupported type {count.dtype} for operand 'count'")
 
-    arr = np.asanyarray(a)
-    old_dtype = getattr(old, 'dtype', None)
-    old_arr = np.asanyarray(old)
-    new_dtype = getattr(new, 'dtype', None)
-    new_arr = np.asanyarray(new)
-
-    if np.result_type(arr, old_arr, new_arr).char == "T":
+    ac = _array_converter(a, old, new)
+    if ac.result_type().char == "T":
         # pass exact str objects so the ufunc converts them directly
-        a = a if type(a) is str else arr
-        old = old if type(old) is str else old_arr
-        new = new if type(new) is str else new_arr
-        return _replace(a, old, new, count)
+        return _replace(*ac.as_arrays(), count)
 
-    a_dt = arr.dtype
-    old = old_arr.astype(old_dtype or a_dt, copy=False)
-    new = new_arr.astype(new_dtype or a_dt, copy=False)
+    arr, old_arr, new_arr = ac.as_arrays(pyscalars="convert")
+    old = old_arr.astype(getattr(old, "dtype", arr.dtype), copy=False)
+    new = new_arr.astype(getattr(new, "dtype", arr.dtype), copy=False)
     max_int64 = np.iinfo(np.int64).max
     counts = _count_ufunc(arr, old, 0, max_int64)
     counts = np.where(count < 0, counts, np.minimum(counts, count))
@@ -1581,17 +1574,13 @@ def partition(a, sep):
      array(['is nice!'], dtype='<U8'))
 
     """
-    a_arr = np.asanyarray(a)
-    sep_arr = np.asanyarray(sep)
-
-    if np.result_type(a_arr, sep_arr).char == "T":
+    ac = _array_converter(a, sep)
+    if ac.result_type().char == "T":
         # pass exact str objects so the ufunc converts them directly
-        a = a if type(a) is str else a_arr
-        sep = sep if type(sep) is str else sep_arr
-        return _partition(a, sep)
+        return _partition(*ac.as_arrays())
 
-    a = a_arr
-    sep = sep_arr.astype(a_arr.dtype, copy=False)
+    a, sep_arr = ac.as_arrays(pyscalars="convert")
+    sep = sep_arr.astype(a.dtype, copy=False)
     pos = _find_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)
@@ -1654,17 +1643,14 @@ def rpartition(a, sep):
      array(['', '  ', 'Bba'], dtype='<U3'))
 
     """
-    a_arr = np.asanyarray(a)
-    sep_arr = np.asanyarray(sep)
+    ac = _array_converter(a, sep)
 
-    if np.result_type(a_arr, sep_arr).char == "T":
+    if ac.result_type().char == "T":
         # pass exact str objects so the ufunc converts them directly
-        a = a if type(a) is str else a_arr
-        sep = sep if type(sep) is str else sep_arr
-        return _rpartition(a, sep)
+        return _rpartition(*ac.as_arrays())
 
-    a = a_arr
-    sep = sep_arr.astype(a_arr.dtype, copy=False)
+    a, sep_arr = ac.as_arrays(pyscalars="convert")
+    sep = sep_arr.astype(a.dtype, copy=False)
     pos = _rfind_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)
