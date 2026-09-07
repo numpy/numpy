@@ -32,7 +32,7 @@ PyArray_MultiIndexSetItem(PyArrayObject *self, const npy_intp *multi_index,
  * dimensionality, searching each one dimensional slice along its last axis.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_SearchSorted_int(PyArrayObject *op1, PyObject *op2,
-                         NPY_SEARCHSIDE side, PyObject *perm);
+npy_searchsorted(PyArrayObject *op1, PyObject *op2,
+                 NPY_SEARCHSIDE side, PyObject *perm);
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_ITEM_SELECTION_H_ */

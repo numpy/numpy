@@ -21,6 +21,7 @@
 
 #include "npy_binsearch.h"
 #include "common.h"
+#include "gil_utils.h"
 
 
 #include "searchsorted.h"
@@ -99,14 +100,11 @@ searchsorted_loop(PyArrayMethod_Context *context, char *const data[],
     PyArray_BinSearchFunc *bs = get_binsearch_func(descr, side);
     if (bs == NULL) {
         /* Unreachable, but the typed loop may run without the GIL. */
-        NPY_ALLOW_C_API_DEF;
-        NPY_ALLOW_C_API;
-        PyErr_SetString(PyExc_TypeError, "compare not supported for type");
-        NPY_DISABLE_C_API;
+        npy_gil_error(PyExc_TypeError, "compare not supported for type");
         return -1;
     }
     PyArrayObject *carrier = NULL;
-    if (generic) {
+    if constexpr (generic) {
         carrier = searchsorted_descr_carrier(descr);
         if (carrier == NULL) {
             return -1;
@@ -123,6 +121,7 @@ searchsorted_loop(PyArrayMethod_Context *context, char *const data[],
 
     char *a_o = data[0], *v_o = data[1], *out_o = data[2];
 
+    int ret = 0;
     int saved = searchsorted_save_floatstatus((char *)&n_outer);
     for (npy_intp k = 0; k < n_outer; k++,
                                       a_o += s_a, v_o += s_v, out_o += s_out) {
@@ -130,13 +129,16 @@ searchsorted_loop(PyArrayMethod_Context *context, char *const data[],
            generic ? &searchsorted_compare : NULL);
         /* A comparison may have raised; do not keep searching on top of a
          * pending error (the GIL is held here, generic implies PYAPI). */
-        if (generic && PyErr_Occurred()) {
-            break;
+        if constexpr (generic) {
+            if (PyErr_Occurred()) {
+                ret = -1;
+                break;
+            }
         }
     }
     searchsorted_restore_floatstatus((char *)&n_outer, saved);
     Py_XDECREF(carrier);
-    return (generic && PyErr_Occurred()) ? -1 : 0;
+    return ret;
 }
 
 
@@ -150,14 +152,11 @@ searchsorted_sorter_loop(PyArrayMethod_Context *context, char *const data[],
     PyArray_ArgBinSearchFunc *bs = get_argbinsearch_func(descr, side);
     if (bs == NULL) {
         /* Unreachable, but the typed loop may run without the GIL. */
-        NPY_ALLOW_C_API_DEF;
-        NPY_ALLOW_C_API;
-        PyErr_SetString(PyExc_TypeError, "compare not supported for type");
-        NPY_DISABLE_C_API;
+        npy_gil_error(PyExc_TypeError, "compare not supported for type");
         return -1;
     }
     PyArrayObject *carrier = NULL;
-    if (generic) {
+    if constexpr (generic) {
         carrier = searchsorted_descr_carrier(descr);
         if (carrier == NULL) {
             return -1;
@@ -185,22 +184,22 @@ searchsorted_sorter_loop(PyArrayMethod_Context *context, char *const data[],
                generic ? &searchsorted_compare : NULL) < 0) {
             /* The kernel reports an out of bounds sorter entry but does not
              * set an error itself. */
-            NPY_ALLOW_C_API_DEF;
-            NPY_ALLOW_C_API;
-            PyErr_SetString(PyExc_ValueError, "Sorter index out of range.");
-            NPY_DISABLE_C_API;
+            npy_gil_error(PyExc_ValueError, "Sorter index out of range.");
             ret = -1;
             break;
         }
         /* A comparison may have raised; do not keep searching on top of a
          * pending error (the GIL is held here, generic implies PYAPI). */
-        if (generic && PyErr_Occurred()) {
-            break;
+        if constexpr (generic) {
+            if (PyErr_Occurred()) {
+                ret = -1;
+                break;
+            }
         }
     }
     searchsorted_restore_floatstatus((char *)&n_outer, saved);
     Py_XDECREF(carrier);
-    return (ret == 0 && generic && PyErr_Occurred()) ? -1 : ret;
+    return ret;
 }
 
 
@@ -234,12 +233,6 @@ searchsorted_resolve_descriptors(
     /* The sorter, if any, and the result are always intp. */
     for (int i = 2; i < method->nin + method->nout; i++) {
         loop_descrs[i] = PyArray_DescrFromType(NPY_INTP);
-        if (loop_descrs[i] == NULL) {
-            for (int j = 0; j < i; j++) {
-                Py_CLEAR(loop_descrs[j]);
-            }
-            return (NPY_CASTING)-1;
-        }
     }
     return NPY_SAFE_CASTING;
 }
@@ -330,7 +323,6 @@ add_searchsorted_loop_for_typenum(PyObject *ufunc, int typenum,
 }
 
 
-/* The four gufuncs differ only in side and in whether a sorter is taken. */
 static NPY_SEARCHSIDE
 searchsorted_ufunc_side(PyUFuncObject *ufunc)
 {
@@ -373,16 +365,11 @@ searchsorted_promoter(PyObject *ufunc, PyArray_DTypeMeta *const op_dtypes[],
         PyErr_Clear();
     }
 
-    PyArray_DTypeMeta *intp_dt = PyArray_DTypeFromTypeNum(NPY_INTP);
-    if (intp_dt == NULL) {
-        return -1;
-    }
     new_op_dtypes[0] = (PyArray_DTypeMeta *)Py_NewRef(dt);
     new_op_dtypes[1] = (PyArray_DTypeMeta *)Py_NewRef(dt);
     for (int i = 2; i < ufunc_obj->nargs; i++) {
-        new_op_dtypes[i] = (PyArray_DTypeMeta *)Py_NewRef(intp_dt);
+        new_op_dtypes[i] = PyArray_DTypeFromTypeNum(NPY_INTP);
     }
-    Py_DECREF(intp_dt);
     return 0;
 }
 

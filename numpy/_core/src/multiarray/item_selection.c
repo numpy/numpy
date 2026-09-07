@@ -2493,8 +2493,8 @@ searchsorted_gufunc(PyArrayObject *op1, PyObject *op2,
  * dimensionality, searching each one dimensional slice along its last axis.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_SearchSorted_int(PyArrayObject *op1, PyObject *op2,
-                         NPY_SEARCHSIDE side, PyObject *perm)
+npy_searchsorted(PyArrayObject *op1, PyObject *op2,
+                 NPY_SEARCHSIDE side, PyObject *perm)
 {
     PyObject *ret = searchsorted_gufunc(op1, op2, side, perm);
     if (ret != NULL) {
