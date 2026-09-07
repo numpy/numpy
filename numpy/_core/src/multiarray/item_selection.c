@@ -2455,11 +2455,11 @@ searchsorted_gufunc(PyArrayObject *op1, PyObject *op2,
         goto finish;
     }
 
+    npy_runtime_imports_struct *imports = &_npy_module_state->runtime_imports;
     PyObject **caches[2][2] = {
-        {&npy_runtime_imports._searchsorted_left,
-         &npy_runtime_imports._searchsorted_right},
-        {&npy_runtime_imports._searchsorted_left_sorter,
-         &npy_runtime_imports._searchsorted_right_sorter},
+        {&imports->_searchsorted_left, &imports->_searchsorted_right},
+        {&imports->_searchsorted_left_sorter,
+         &imports->_searchsorted_right_sorter},
     };
     static const char *const names[2][2] = {
         {"_searchsorted_left", "_searchsorted_right"},
@@ -2512,7 +2512,8 @@ npy_searchsorted(PyArrayObject *op1, PyObject *op2,
     if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
         return NULL;
     }
-    int no_loop = PyErr_ExceptionMatches(npy_static_pydata._UFuncNoLoopError);
+    int no_loop = PyErr_ExceptionMatches(
+            _npy_module_state->static_pydata._UFuncNoLoopError);
     if (!no_loop) {
         /* Stash the error: the attribute lookups must not run under it. */
         PyObject *exc = PyErr_GetRaisedException();

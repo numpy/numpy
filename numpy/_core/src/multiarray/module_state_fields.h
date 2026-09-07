@@ -143,6 +143,10 @@ extern "C" {
     F(numpy_matrix)                     \
     F(_prod)                            \
     F(_promote_fields)                  \
+    F(_searchsorted_left)               \
+    F(_searchsorted_left_sorter)        \
+    F(_searchsorted_right)              \
+    F(_searchsorted_right_sorter)       \
     F(_std)                             \
     F(_sum)                             \
     F(_ufunc_doc_signature_formatter)   \
