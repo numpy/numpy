@@ -2452,7 +2452,7 @@ reducelike_promote_and_resolve_multi(PyUFuncObject *ufunc,
  *        the array itself to the type-resolution.
  * @param signature The DType signature, which may already be set due to the
  *        dtype passed in by the user, or the special cases (add, multiply).
- *        (Contains strong references and may be modified.)
+ *        (Contains borrowed references and may be modified.)
  * @param enforce_uniform_args If `NPY_TRUE` fully uniform dtypes/descriptors
  *        are enforced as required for accumulate and (currently) reduceat.
  * @param out_descrs New references to the resolved descriptors (on success).
@@ -2489,19 +2489,20 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
                 && ((strcmp(ufunc->name, "add") == 0)
                     || (strcmp(ufunc->name, "multiply") == 0))) {
             if (PyTypeNum_ISBOOL(typenum)) {
-                typenum = NPY_INTP;
+                signature[0] = &PyArray_IntpDType;
             }
             else if ((size_t)PyArray_ITEMSIZE(arr) < sizeof(npy_intp)) {
                 if (PyTypeNum_ISUNSIGNED(typenum)) {
-                    typenum = NPY_UINTP;
+                    signature[0] = &PyArray_UIntpDType;
                 }
                 else {
-                    typenum = NPY_INTP;
+                    signature[0] = &PyArray_IntpDType;
                 }
             }
-            /* borrow, builtin DTypes are effectively immortal */
-            signature[0] = PyArray_DTypeFromTypeNum(typenum);
-            Py_DECREF(signature[0]);
+            else {
+                /* borrowed, `arr` keeps it alive */
+                signature[0] = NPY_DTYPE(PyArray_DESCR(arr));
+            }
         }
     }
     assert(signature[2] == NULL);  /* we always fill it here */
