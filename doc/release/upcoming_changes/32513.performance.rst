@@ -1,5 +1,5 @@
 Better multithreaded scaling of ufunc calls on free-threaded Python
 -------------------------------------------------------------------
-On free-threaded builds, the builtin ufuncs, DType classes and float
-constants such as ``np.pi`` are now immortal, which removes reference count
-contention between threads using them concurrently.
+On free-threaded builds, the builtin ufuncs and float constants such
+as ``np.pi`` are now immortal, which removes reference count contention
+between threads using them concurrently.
