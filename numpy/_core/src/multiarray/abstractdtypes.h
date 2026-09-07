@@ -43,8 +43,8 @@ initialize_abstract_dtypes(void);
  *
  * @param obj The original Python object.
  * @param arr The array into which the Python object was converted.
- * @param[in,out] **dtype A pointer to the array's DType, if not NULL it will be
- *        replaced with the abstract DType.
+ * @param[in,out] **dtype A borrowed pointer to the array's DType, if not NULL
+ *        it will be replaced with the (effectively immortal) abstract DType.
  * @return 0 if the `obj` was not a python scalar, and 1 if it was.
  */
 static inline int
@@ -54,24 +54,21 @@ npy_mark_tmp_array_if_pyscalar(
     if (PyLong_CheckExact(obj)) {
         _PyArray_GET_ITEM_DATA(arr)->flags |= NPY_ARRAY_WAS_PYTHON_INT;
         if (dtype != NULL) {
-            Py_INCREF(&PyArray_PyLongDType);
-            Py_SETREF(*dtype, &PyArray_PyLongDType);
+            *dtype = &PyArray_PyLongDType;
         }
         return 1;
     }
     else if (PyFloat_CheckExact(obj)) {
         _PyArray_GET_ITEM_DATA(arr)->flags |= NPY_ARRAY_WAS_PYTHON_FLOAT;
         if (dtype != NULL) {
-            Py_INCREF(&PyArray_PyFloatDType);
-            Py_SETREF(*dtype, &PyArray_PyFloatDType);
+            *dtype = &PyArray_PyFloatDType;
         }
         return 1;
     }
     else if (PyComplex_CheckExact(obj)) {
         _PyArray_GET_ITEM_DATA(arr)->flags |= NPY_ARRAY_WAS_PYTHON_COMPLEX;
         if (dtype != NULL) {
-            Py_INCREF(&PyArray_PyComplexDType);
-            Py_SETREF(*dtype, &PyArray_PyComplexDType);
+            *dtype = &PyArray_PyComplexDType;
         }
         return 1;
     }

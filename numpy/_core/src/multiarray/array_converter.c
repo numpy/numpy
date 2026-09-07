@@ -95,7 +95,6 @@ array_converter_new(
         self->narrs++;
         Py_INCREF(item->object);
         item->DType = NPY_DTYPE(PyArray_DESCR(item->array));
-        Py_INCREF(item->DType);
 
         /*
          * Check whether we were passed an int/float/complex Python scalar.
@@ -119,6 +118,7 @@ array_converter_new(
                 self->flags &= ~(NPY_CH_ALL_PYSCALARS | NPY_CH_ALL_SCALARS);
             }
         }
+        Py_INCREF(item->DType);
     }
 
     return (PyObject *)self;

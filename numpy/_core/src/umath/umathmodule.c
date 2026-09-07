@@ -161,7 +161,6 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     self->ptr = ptr;
 
     self->type_resolver = &object_ufunc_type_resolver;
-    PyObject_GC_Track(self);
 
     return (PyObject *)self;
 }
