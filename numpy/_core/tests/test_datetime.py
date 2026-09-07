@@ -1837,6 +1837,25 @@ class TestDateTime:
             int(np.int64(-7) // 2),
         )
 
+    def test_timedelta_floor_divide_by_int_array(self):
+        # Non-scalar divisor path (steps[1] != 0) in TIMEDELTA_mq_m_floor_divide
+        vals = np.array([-7, -8, -1, 0, 1, 7, -7], dtype=np.int64)
+        divs = np.array([2, 3, 2, 2, 2, -2, 0], dtype=np.int64)
+        with np.errstate(divide='ignore'):
+            got = (vals.view('m8[us]') // divs).view(np.int64)
+        exp = np.array(
+            [v // d if d != 0 else np.iinfo(np.int64).min for v, d in zip(vals, divs)],
+            dtype=np.int64,
+        )
+        assert_array_equal(got, exp)
+
+        # NaT dividend stays NaT
+        nat = np.iinfo(np.int64).min
+        left = np.array([nat, -7], dtype=np.int64).view('m8[us]')
+        right = np.array([2, 2], dtype=np.int64)
+        got_nat = (left // right).view(np.int64)
+        assert_array_equal(got_nat, np.array([nat, -4], dtype=np.int64))
+
     def test_generic_timedelta_floor_divide(self):
         with pytest.warns(
             DeprecationWarning,
