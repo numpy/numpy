@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class _ConfigDisplayModes(Enum):
+class _ConfigDisplayModes(StrEnum):
     stdout = "stdout"
     dicts = "dicts"
 
