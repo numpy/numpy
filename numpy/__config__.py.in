@@ -97,7 +97,7 @@ CONFIG = _cleanup_empty_dict_values(
 )
 
 
-def show(mode):
+def show(mode=_ConfigDisplayModes.stdout.value):
     """
     Show libraries and system information on which NumPy was built
     and is being used
