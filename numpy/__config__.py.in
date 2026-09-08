@@ -6,16 +6,16 @@ from numpy._core._multiarray_umath import (
     __cpu_dispatch__,
 )
 from numpy._utils._config_helpers import (
-    ConfigDisplayModes,
-    cleanup_empty_dict_values,
-    print_or_return_config,
+    _ConfigDisplayModes,
+    _cleanup_empty_dict_values,
+    _print_or_return_config,
 )
 
 __all__ = ["show_config"]
 _built_with_meson = True
 
 
-CONFIG = cleanup_empty_dict_values(
+CONFIG = _cleanup_empty_dict_values(
     {
         "Compilers": {
             "c": {
@@ -126,10 +126,10 @@ def show(mode):
        output if ``pyyaml`` is installed
 
     """
-    return print_or_return_config(mode, CONFIG)
+    return _print_or_return_config(mode, CONFIG)
 
 
-def show_config(mode=ConfigDisplayModes.stdout.value):
+def show_config(mode=_ConfigDisplayModes.stdout.value):
     return show(mode)
 
 

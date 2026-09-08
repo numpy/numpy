@@ -13,7 +13,7 @@ __all__ = [
 
 
 @set_module('numpy')
-def show_runtime(mode=_config_helpers.ConfigDisplayModes.stdout.value):
+def show_runtime(mode=_config_helpers._ConfigDisplayModes.stdout.value):
     """
     Print information about various resources in the system
     including available intrinsic support and BLAS/LAPACK library
@@ -90,7 +90,7 @@ def show_runtime(mode=_config_helpers.ConfigDisplayModes.stdout.value):
               " Install it by `pip install threadpoolctl`."
               " Once installed, try `np.show_runtime` again"
               " for more detailed build information")
-    return _config_helpers.print_or_return_config(mode, config_found)
+    return _config_helpers._print_or_return_config(mode, config_found)
 
 @set_module('numpy')
 def get_include():

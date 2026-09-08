@@ -21,7 +21,7 @@ class TestNumPyConfigs:
     ]
 
     @pytest.mark.thread_unsafe(reason="unittest.mock.patch updates global state")
-    @patch("numpy._utils._config_helpers.check_pyyaml")
+    @patch("numpy._utils._config_helpers._check_pyyaml")
     def test_pyyaml_not_found(self, mock_yaml_importer):
         mock_yaml_importer.side_effect = ModuleNotFoundError()
         with pytest.warns(UserWarning):
@@ -41,7 +41,7 @@ class TestNumPyConfigs:
             np.show_config(mode="foo")
 
     def test_warn_to_add_tests(self):
-        assert len(np._utils._config_helpers.ConfigDisplayModes) == 2, (
+        assert len(np._utils._config_helpers._ConfigDisplayModes) == 2, (
             "New mode detected,"
             " please add UT if applicable and increment this count"
         )
