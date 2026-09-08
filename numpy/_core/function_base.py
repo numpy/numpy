@@ -479,9 +479,8 @@ def _needs_add_docstring(obj):
         return False
 
     if isinstance(obj, type):
-        # A class written in Python carries its docstring from its
-        # definition.  A type defined in C is immutable, whether it is a
-        # static type or a heap type created with ``PyType_FromSpec``.
+        # ``__doc__`` is read-only exactly on immutable types: static
+        # types, plus heap types that set ``Py_TPFLAGS_IMMUTABLETYPE``.
         return bool(obj.__flags__ & Py_TPFLAGS_IMMUTABLETYPE)
 
     return True
