@@ -32,7 +32,6 @@
 #include "npy_partition.h"
 #include "npy_binsearch.h"
 #include "npy_import.h"
-#include "ufunc_override.h"
 #include "alloc.h"
 #include "arraytypes.h"
 #include "array_coercion.h"
@@ -2412,24 +2411,6 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
 
 
 /*
- * `__array_ufunc__ = None` opts out of ufuncs rather than implementing them,
- * and searchsorted has always simply converted such an operand.  Keep doing
- * that, only an override that can be called is handed to the gufunc.
- */
-static int
-searchsorted_has_override(PyObject *obj)
-{
-    PyObject *method = PyUFuncOverride_GetNonDefaultArrayUfunc(obj);
-    if (method == NULL) {
-        return 0;
-    }
-    int has_override = method != Py_None;
-    Py_DECREF(method);
-    return has_override;
-}
-
-
-/*
  * Dispatch to the private searchsorted gufuncs, which search the last axis
  * of `a`.  As PyArray_SearchSorted, `a` and `v` are promoted to a common
  * descriptor and cast to it, so the gufunc matches one of its loops exactly.
@@ -2455,22 +2436,10 @@ searchsorted_gufunc(PyArrayObject *op1, PyObject *op2,
         }
     }
 
-    /*
-     * An operand that overrides ufuncs has to be handed to the gufunc
-     * unchanged, casting it first would hide it.  An override that declines
-     * raises TypeError, which the caller turns into the one dimensional
-     * implementation, as before.
-     */
-    if (searchsorted_has_override((PyObject *)op1)
-            || searchsorted_has_override(op2)) {
-        ap1 = (PyArrayObject *)Py_NewRef(op1);
-        ap2 = (PyArrayObject *)Py_NewRef(op2);
-    }
     /* NPY_ARRAY_ENSUREARRAY keeps the result a base ndarray, as it has
      * always been for the functions returning indices. */
-    else if (searchsorted_cast_operands(op1, op2, 1, 0, NPY_ARRAY_ENSUREARRAY,
-                                        NPY_ARRAY_ENSUREARRAY,
-                                        &ap1, &ap2) < 0) {
+    if (searchsorted_cast_operands(op1, op2, 1, 0, NPY_ARRAY_ENSUREARRAY,
+                                   NPY_ARRAY_ENSUREARRAY, &ap1, &ap2) < 0) {
         goto finish;
     }
 
@@ -2508,41 +2477,6 @@ searchsorted_gufunc(PyArrayObject *op1, PyObject *op2,
 
 
 /*
- * Whether the pending exception is the TypeError the ufunc machinery raises
- * once every `__array_ufunc__` has returned NotImplemented, rather than one
- * an override raised itself.  Only the former may fall back.  The message is
- * built by `array_ufunc_errmsg_formatter` in numpy._core._internal.
- */
-static int
-searchsorted_override_declined(void)
-{
-    PyObject *exc = PyErr_GetRaisedException();
-    if (exc == NULL) {
-        return 0;
-    }
-    int declined = 0;
-    PyObject *msg = PyObject_Str(exc);
-    if (msg == NULL) {
-        PyErr_Clear();
-    }
-    else {
-        static const char prefix[] = "operand type(s) all returned "
-                                     "NotImplemented";
-        const char *text = PyUnicode_AsUTF8(msg);
-        if (text == NULL) {
-            PyErr_Clear();
-        }
-        else {
-            declined = strncmp(text, prefix, sizeof(prefix) - 1) == 0;
-        }
-        Py_DECREF(msg);
-    }
-    PyErr_SetRaisedException(exc);
-    return declined;
-}
-
-
-/*
  * Internal version of PyArray_SearchSorted that accepts an `op1` of any
  * dimensionality, searching each one dimensional slice along its last axis.
  */
@@ -2558,20 +2492,14 @@ npy_searchsorted(PyArrayObject *op1, PyObject *op2,
     /*
      * Only a failure to dispatch may fall back to the generic
      * implementation: dtypes with neither a loop nor a usable comparison,
-     * StringDType above all, fail with _UFuncNoLoopError, and a call every
-     * `__array_ufunc__` declined raises a plain TypeError.  Any other
-     * TypeError (a bad `sorter`, an override raising one of its own, a
-     * failing object comparison, ...) is a genuine error.
+     * StringDType above all, fail with _UFuncNoLoopError.  Any other error
+     * (a bad `sorter`, a failing object comparison, ...) is a genuine one.
      */
-    if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
+    if (!PyErr_ExceptionMatches(
+            _npy_module_state->static_pydata._UFuncNoLoopError)) {
         return NULL;
     }
-    int no_loop = PyErr_ExceptionMatches(
-            _npy_module_state->static_pydata._UFuncNoLoopError);
-    if (!no_loop && !searchsorted_override_declined()) {
-        return NULL;
-    }
-    if (no_loop && PyArray_NDIM(op1) > 1) {
+    if (PyArray_NDIM(op1) > 1) {
         PyErr_Clear();
         PyErr_Format(PyExc_ValueError,
                      "a must be 1-dimensional for dtype %R, which "

@@ -3710,57 +3710,6 @@ class TestMethods:
         with pytest.raises(RuntimeError, match="boom"):
             np.searchsorted(a, Bad())
 
-    def test_searchsorted_array_ufunc_override(self):
-        # an operand overriding ufuncs is consulted, and one that declines
-        # falls back to the ordinary implementation
-        class Handles(np.ndarray):
-            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
-                return "handled"
-
-        class Declines(np.ndarray):
-            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
-                return NotImplemented
-
-        a = np.arange(10.)
-        v = np.array([2.5, 7.5])
-        assert a.searchsorted(v.view(Handles)) == "handled"
-        assert a.view(Handles).searchsorted(v) == "handled"
-        assert_equal(a.searchsorted(v.view(Declines)), [3, 8])
-        assert_equal(a.view(Declines).searchsorted(v), [3, 8])
-
-    def test_searchsorted_array_ufunc_override_raises(self):
-        # an error from an override is its own, not a decline, so it must not
-        # be swallowed by the fallback
-        class RaisesType(np.ndarray):
-            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
-                raise TypeError("boom")
-
-        class RaisesValue(np.ndarray):
-            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
-                raise ValueError("bang")
-
-        a = np.arange(10.)
-        v = np.array([2.5, 7.5])
-        with pytest.raises(TypeError, match="boom"):
-            a.searchsorted(v.view(RaisesType))
-        with pytest.raises(TypeError, match="boom"):
-            a.view(RaisesType).searchsorted(v)
-        with pytest.raises(ValueError, match="bang"):
-            a.searchsorted(v.view(RaisesValue))
-        with pytest.raises(ValueError, match="bang"):
-            a.view(RaisesValue).searchsorted(v)
-
-    def test_searchsorted_array_ufunc_none(self):
-        # `__array_ufunc__ = None` opts out of ufuncs rather than handling
-        # them, and searchsorted has always just converted such an operand
-        class OptsOut(np.ndarray):
-            __array_ufunc__ = None
-
-        a = np.arange(10.)
-        v = np.array([2.5, 7.5])
-        assert_equal(a.searchsorted(v.view(OptsOut)), [3, 8])
-        assert_equal(a.view(OptsOut).searchsorted(v), [3, 8])
-
     def test_searchsorted_gufunc_descr_mismatch(self):
         # the loops read both searched operands through `a`'s descriptor, so
         # one dtype with two descriptors, differing in unit or itemsize, has
