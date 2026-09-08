@@ -983,28 +983,195 @@ def diagonal(
     axis2: SupportsIndex = 1,
 ) -> NDArray[Any]: ...
 
-# keep in sync with `ma.core.trace`
-@overload
+#
+@overload  # ?d  (workaround)
+def trace[ScalarT: np.inexact | np.timedelta64 | np.object_](
+    a: _ArrayJustND[ScalarT],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: None = None,
+    out: None = None,
+) -> NDArray[ScalarT] | Any: ...
+@overload  # ?d, +integer  (workaround)
 def trace(
-    a: ArrayLike,  # >= 2D array
+    a: _ArrayJustND[np.integer | np.bool],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: None = None,
+    out: None = None,
+) -> NDArray[np.int_] | Any: ...
+@overload  # ?d, dtype=<known>  (workaround)
+def trace[ScalarT: np.generic](
+    a: _ArrayJustND[np.number | np.bool | np.object_ | np.timedelta64],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    out: None = None,
+) -> NDArray[ScalarT] | Any: ...
+@overload  # ?d, dtype=<unknown>  (workaround)
+def trace(
+    a: _ArrayJustND[np.number | np.bool | np.object_ | np.timedelta64],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: DTypeLike | None = None,
+    out: None = None,
+) -> np.ndarray | Any: ...
+@overload  # 2d
+def trace[ScalarT: np.inexact | np.timedelta64](
+    a: _ToArray2D[ScalarT],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: None = None,
+    out: None = None,
+) -> ScalarT: ...
+@overload  # 2d, +integer
+def trace(
+    a: _ToArray2D2[np.integer | np.bool, int],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: None = None,
+    out: None = None,
+) -> np.int_: ...
+@overload  # 2d, dtype=<known>
+def trace[ScalarT: np.generic](
+    a: _ToNumeric2D,
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    out: None = None,
+) -> ScalarT: ...
+@overload  # 2d, dtype=<unknown>
+def trace(
+    a: _ToNumeric2D,
     offset: SupportsIndex = 0,
     axis1: SupportsIndex = 0,
     axis2: SupportsIndex = 1,
     dtype: DTypeLike | None = None,
     out: None = None,
 ) -> Any: ...
-@overload
+@overload  # 3d
+def trace[ScalarT: np.inexact | np.timedelta64 | np.object_](
+    a: _ToArray3D[ScalarT],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: None = None,
+    out: None = None,
+) -> _Array1D[ScalarT]: ...
+@overload  # 3d, +integer
+def trace(
+    a: _ToArray3D2[np.integer | np.bool, int],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: None = None,
+    out: None = None,
+) -> _Array1D[np.int_]: ...
+@overload  # 3d, dtype=<known>
+def trace[ScalarT: np.generic](
+    a: _ToNumeric3D,
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    out: None = None,
+) -> _Array1D[ScalarT]: ...
+@overload  # 3d, dtype=<unknown>
+def trace(
+    a: _ToNumeric3D,
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: DTypeLike | None = None,
+    out: None = None,
+) -> _Array1D[Any]: ...
+@overload  # 4d
+def trace[ScalarT: np.inexact | np.timedelta64 | np.object_](
+    a: _ToArray4D[ScalarT],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: None = None,
+    out: None = None,
+) -> _Array2D[ScalarT]: ...
+@overload  # 4d, +integer
+def trace(
+    a: _ToArray4D2[np.integer | np.bool, int],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: None = None,
+    out: None = None,
+) -> _Array2D[np.int_]: ...
+@overload  # 4d, dtype=<known>
+def trace[ScalarT: np.generic](
+    a: _ToNumeric4D,
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    out: None = None,
+) -> _Array2D[ScalarT]: ...
+@overload  # 4d, dtype=<unknown>
+def trace(
+    a: _ToNumeric4D,
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: DTypeLike | None = None,
+    out: None = None,
+) -> _Array2D[Any]: ...
+@overload  # Nd  (fallback)
+def trace[ScalarT: np.inexact | np.timedelta64 | np.object_](
+    a: _ArrayLike[ScalarT],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: None = None,
+    out: None = None,
+) -> NDArray[ScalarT] | Any: ...
+@overload  # Nd, +integer  (fallback)
+def trace(
+    a: _ArrayLike[np.integer | np.bool] | _NestedSequence[int],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: None = None,
+    out: None = None,
+) -> NDArray[np.int_] | Any: ...
+@overload  # Nd, dtype=<known>  (fallback)
+def trace[ScalarT: np.generic](
+    a: _ArrayLikeNumeric_co,
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    out: None = None,
+) -> NDArray[ScalarT] | Any: ...
+@overload  # Nd, dtype=<unknown>  (fallback)
+def trace(
+    a: _ArrayLikeNumeric_co,
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: DTypeLike | None = None,
+    out: None = None,
+) -> Any: ...
+@overload  # out=<given>  (keyword)
 def trace[ArrayT: np.ndarray](
-    a: ArrayLike,  # >= 2D array
-    offset: SupportsIndex,
-    axis1: SupportsIndex,
-    axis2: SupportsIndex,
-    dtype: DTypeLike | None,
-    out: ArrayT,
-) -> ArrayT: ...
-@overload
-def trace[ArrayT: np.ndarray](
-    a: ArrayLike,  # >= 2D array
+    a: ArrayLike,
     offset: SupportsIndex = 0,
     axis1: SupportsIndex = 0,
     axis2: SupportsIndex = 1,
@@ -1012,7 +1179,17 @@ def trace[ArrayT: np.ndarray](
     *,
     out: ArrayT,
 ) -> ArrayT: ...
+@overload  # out=<given>  (positional)
+def trace[ArrayT: np.ndarray](
+    a: ArrayLike,
+    offset: SupportsIndex,
+    axis1: SupportsIndex,
+    axis2: SupportsIndex,
+    dtype: DTypeLike | None,
+    out: ArrayT,
+) -> ArrayT: ...
 
+#
 @overload
 def ravel[ScalarT: np.generic](a: _ArrayLike[ScalarT], order: _OrderKACF = "C") -> _Array1D[ScalarT]: ...
 @overload
