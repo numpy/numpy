@@ -403,7 +403,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, npy_intp offset)
         }
 
         /* only returns True or raises */
-        safe = PyObject_CallFunction(npy_runtime_imports._getfield_is_safe,
+        safe = PyObject_CallFunction(state->runtime_imports._getfield_is_safe,
                                      "OOn", PyArray_DESCR(self),
                                      typed, offset);
         if (safe == NULL) {
