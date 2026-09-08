@@ -2293,6 +2293,7 @@ gentype_astype(PyObject *self,
         
         Py_XDECREF(dt_info.descr);
         Py_XDECREF(dt_info.dtype);
+        Py_DECREF(from);
         return NULL;
     }
 
@@ -2304,18 +2305,15 @@ gentype_astype(PyObject *self,
     Py_DECREF(dt_info.dtype);    
 
     if (to == NULL){
+        Py_DECREF(from);
         Py_DECREF(assign);
         return NULL;
     }
     
     int equiv = (to != NULL) && PyArray_EquivTypes(from, to) && Py_TYPE(self) == (PyTypeObject *)to->typeobj;
+    Py_DECREF(from);
     if(equiv){
-        if (forcecopy == 0){
-            Py_DECREF(to);
-            Py_DECREF(assign);
-            return Py_NewRef(self);
-        }
-        else if(! PyArray_IsScalar(self, Void)){
+        if ((forcecopy == 0) | (! PyArray_IsScalar(self, Void))){
             Py_DECREF(to);
             Py_DECREF(assign);
             return Py_NewRef(self);
