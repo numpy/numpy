@@ -5903,7 +5903,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     #
     @overload  # >=1d
     def searchsorted[ShapeT: tuple[int, *tuple[int, ...]]](
-        self: ndarray[tuple[int, *tuple[int, ...]]],
+        self: ndarray[_1D, Any],
         v: ndarray[ShapeT, Any],
         /,
         side: _SortSide = "left",
@@ -5911,7 +5911,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     ) -> ndarray[ShapeT, _dtype[intp]]: ...
     @overload  # 0d
     def searchsorted(
-        self: ndarray[tuple[int, *tuple[int, ...]]],
+        self: ndarray[_1D, Any],
         v: complex | str | generic | ndarray[_0D, Any],
         /,
         side: _SortSide = "left",
@@ -5919,7 +5919,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     ) -> intp: ...
     @overload  # 1d
     def searchsorted(
-        self: ndarray[tuple[int, *tuple[int, ...]]],
+        self: ndarray[_1D, Any],
         v: Sequence[complex | generic] | list[str],
         /,
         side: _SortSide = "left",
@@ -5927,7 +5927,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     ) -> ndarray[_1D, _dtype[intp]]: ...
     @overload  # 2d
     def searchsorted(
-        self: ndarray[tuple[int, *tuple[int, ...]]],
+        self: ndarray[_1D, Any],
         v: Sequence[Sequence[complex | generic]] | Sequence[list[str]],
         /,
         side: _SortSide = "left",
@@ -5935,7 +5935,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     ) -> ndarray[_2D, _dtype[intp]]: ...
     @overload  # 3d
     def searchsorted(
-        self: ndarray[tuple[int, *tuple[int, ...]]],
+        self: ndarray[_1D, Any],
         v: Sequence[Sequence[Sequence[complex | generic]]] | Sequence[Sequence[list[str]]],
         /,
         side: _SortSide = "left",

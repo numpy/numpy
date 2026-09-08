@@ -1638,7 +1638,8 @@ array_searchsorted(PyArrayObject *self,
     if (sorter == Py_None) {
         sorter = NULL;
     }
-    return PyArray_Return((PyArrayObject *)PyArray_SearchSorted(self, keys, side, sorter));
+    return PyArray_Return((PyArrayObject *)npy_searchsorted(
+            self, keys, side, sorter));
 }
 
 static int
