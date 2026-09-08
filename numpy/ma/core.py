@@ -3039,9 +3039,12 @@ class MaskedArray(ndarray):
             _optinfo.update(getattr(obj, '__dict__', {}))
         _fill_value = getattr(obj, '_fill_value', None)
         if _fill_value is not None and getattr(obj, 'dtype', None) != self.dtype:
+            # _check_fill_value does not raise when a float overflows an
+            # integer dtype; that failure only shows up as an FP error.
             try:
-                _fill_value = _check_fill_value(_fill_value, self.dtype)
-            except (TypeError, ValueError, OverflowError):
+                with np.errstate(invalid='raise'):
+                    _fill_value = _check_fill_value(_fill_value, self.dtype)
+            except (TypeError, ValueError, OverflowError, FloatingPointError):
                 _fill_value = None
         _dict = {'_fill_value': _fill_value,
                      '_hardmask': getattr(obj, '_hardmask', False),
