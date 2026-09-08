@@ -13,6 +13,7 @@ AR_f4: npt.NDArray[np.float32]
 AR_f4_1d: np.ndarray[tuple[int], np.dtype[np.float32]]
 AR_f4_2d: np.ndarray[tuple[int, int], np.dtype[np.float32]]
 AR_f4_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float32]]
+AR_f4_4d: np.ndarray[tuple[int, int, int, int], np.dtype[np.float32]]
 AR_c8: npt.NDArray[np.complex64]
 AR_c16: npt.NDArray[np.complex128]
 AR_i1: npt.NDArray[np.int8]
@@ -49,6 +50,7 @@ AR_sub_i: NDArrayIntSubclass
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+type _Array4D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int], np.dtype[ScalarT]]
 
 assert_type(np.take(b, 0), np.bool)
 assert_type(np.take(f4, 0), np.float32)
@@ -218,10 +220,23 @@ assert_type(np.diagonal(AR_f4), npt.NDArray[np.float32])
 assert_type(np.diagonal(AR_f4_2d), np.ndarray[tuple[int], np.dtype[np.float32]])
 assert_type(np.diagonal(AR_f4_3d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 
-assert_type(np.trace(AR_b), Any)
-assert_type(np.trace(AR_f4), Any)
+assert_type(np.trace(AR_f4), npt.NDArray[np.float32] | Any)
+assert_type(np.trace(AR_i8), npt.NDArray[np.int_] | Any)
+assert_type(np.trace(AR_f4, dtype=np.float64), npt.NDArray[np.float64] | Any)
+assert_type(np.trace(AR_f4, dtype="f8"), np.ndarray | Any)
+assert_type(np.trace(AR_f4_2d), np.float32)
+assert_type(np.trace(_py_list_2d), np.int_)
+assert_type(np.trace(AR_f4_2d, dtype=np.float64), np.float64)
+assert_type(np.trace(AR_f4_2d, dtype="f8"), Any)
+assert_type(np.trace(AR_f4_3d), _Array1D[np.float32])
+assert_type(np.trace(_py_list_3d), _Array1D[np.int_])
+assert_type(np.trace(AR_f4_3d, dtype=np.float64), _Array1D[np.float64])
+assert_type(np.trace(AR_f4_3d, dtype="f8"), _Array1D[Any])
+assert_type(np.trace(AR_f4_4d), _Array2D[np.float32])
+assert_type(np.trace(AR_f4_4d, dtype=np.float64), _Array2D[np.float64])
+assert_type(np.trace(AR_f4_4d, dtype="f8"), _Array2D[Any])
 assert_type(np.trace(AR_f4, out=AR_subclass), NDArraySubclass)
-assert_type(np.trace(AR_f4, out=AR_subclass, dtype=None), NDArraySubclass)
+assert_type(np.trace(AR_f4, 0, 0, 1, None, AR_subclass), NDArraySubclass)
 
 assert_type(np.ravel(b), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(np.ravel(f4), np.ndarray[tuple[int], np.dtype[np.float32]])
