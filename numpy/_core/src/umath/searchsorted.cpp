@@ -85,6 +85,37 @@ searchsorted_descr_carrier(PyArray_Descr *descr)
 
 
 /*
+ * The carrier is built once per call in `searchsorted_get_loop` rather than
+ * once per chunk in the loop, and travels to the loop as its auxiliary data.
+ */
+typedef struct {
+    NpyAuxData base;
+    PyArrayObject *carrier;
+} searchsorted_auxdata;
+
+
+static void
+searchsorted_auxdata_free(NpyAuxData *data)
+{
+    Py_XDECREF(((searchsorted_auxdata *)data)->carrier);
+    PyMem_Free(data);
+}
+
+
+static NpyAuxData *
+searchsorted_auxdata_clone(NpyAuxData *data)
+{
+    searchsorted_auxdata *copy = PyMem_New(searchsorted_auxdata, 1);
+    if (copy == NULL) {
+        return NULL;
+    }
+    *copy = *(searchsorted_auxdata *)data;
+    Py_XINCREF(copy->carrier);
+    return (NpyAuxData *)copy;
+}
+
+
+/*
  * `generic` selects the legacy comparison function, used by the dtypes
  * without a dedicated kernel.  It needs a descriptor carrier because the
  * comparison callback reads the descriptor off the array it is handed.
@@ -94,7 +125,7 @@ template <bool generic, NPY_SEARCHSIDE side>
 static int
 searchsorted_loop(PyArrayMethod_Context *context, char *const data[],
                   npy_intp const dimensions[], npy_intp const strides[],
-                  NpyAuxData *NPY_UNUSED(auxdata))
+                  NpyAuxData *auxdata)
 {
     PyArray_Descr *descr = context->descriptors[0];
     PyArray_BinSearchFunc *bs = get_binsearch_func(descr, side);
@@ -104,11 +135,10 @@ searchsorted_loop(PyArrayMethod_Context *context, char *const data[],
         return -1;
     }
     PyArrayObject *carrier = NULL;
+    int needs_api = 0;
     if constexpr (generic) {
-        carrier = searchsorted_descr_carrier(descr);
-        if (carrier == NULL) {
-            return -1;
-        }
+        carrier = ((searchsorted_auxdata *)auxdata)->carrier;
+        needs_api = PyDataType_FLAGCHK(descr, NPY_NEEDS_PYAPI);
     }
 
     npy_intp n_outer = dimensions[0];
@@ -128,16 +158,14 @@ searchsorted_loop(PyArrayMethod_Context *context, char *const data[],
         bs(a_o, v_o, out_o, n, m, a_str, v_str, out_str, carrier, carrier,
            generic ? &searchsorted_compare : NULL);
         /* A comparison may have raised; do not keep searching on top of a
-         * pending error (the GIL is held here, generic implies PYAPI). */
-        if constexpr (generic) {
-            if (PyErr_Occurred()) {
-                ret = -1;
-                break;
-            }
+         * pending error.  Only the dtypes that need the Python API get here
+         * holding the GIL, and only those can raise. */
+        if (needs_api && PyErr_Occurred()) {
+            ret = -1;
+            break;
         }
     }
     searchsorted_restore_floatstatus((char *)&n_outer, saved);
-    Py_XDECREF(carrier);
     return ret;
 }
 
@@ -146,7 +174,7 @@ template <bool generic, NPY_SEARCHSIDE side>
 static int
 searchsorted_sorter_loop(PyArrayMethod_Context *context, char *const data[],
                          npy_intp const dimensions[], npy_intp const strides[],
-                         NpyAuxData *NPY_UNUSED(auxdata))
+                         NpyAuxData *auxdata)
 {
     PyArray_Descr *descr = context->descriptors[0];
     PyArray_ArgBinSearchFunc *bs = get_argbinsearch_func(descr, side);
@@ -156,11 +184,10 @@ searchsorted_sorter_loop(PyArrayMethod_Context *context, char *const data[],
         return -1;
     }
     PyArrayObject *carrier = NULL;
+    int needs_api = 0;
     if constexpr (generic) {
-        carrier = searchsorted_descr_carrier(descr);
-        if (carrier == NULL) {
-            return -1;
-        }
+        carrier = ((searchsorted_auxdata *)auxdata)->carrier;
+        needs_api = PyDataType_FLAGCHK(descr, NPY_NEEDS_PYAPI);
     }
 
     npy_intp n_outer = dimensions[0];
@@ -189,16 +216,14 @@ searchsorted_sorter_loop(PyArrayMethod_Context *context, char *const data[],
             break;
         }
         /* A comparison may have raised; do not keep searching on top of a
-         * pending error (the GIL is held here, generic implies PYAPI). */
-        if constexpr (generic) {
-            if (PyErr_Occurred()) {
-                ret = -1;
-                break;
-            }
+         * pending error.  Only the dtypes that need the Python API get here
+         * holding the GIL, and only those can raise. */
+        if (needs_api && PyErr_Occurred()) {
+            ret = -1;
+            break;
         }
     }
     searchsorted_restore_floatstatus((char *)&n_outer, saved);
-    Py_XDECREF(carrier);
     return ret;
 }
 
@@ -235,6 +260,49 @@ searchsorted_resolve_descriptors(
         loop_descrs[i] = PyArray_DescrFromType(NPY_INTP);
     }
     return NPY_SAFE_CASTING;
+}
+
+
+/*
+ * Build the descriptor carrier the legacy comparison needs, and release the
+ * GIL for the dtypes whose comparison cannot reach Python.  This is the test
+ * PyArray_SearchSorted makes through NPY_BEGIN_THREADS_DESCR.  VOID_compare
+ * calls into Python even with no object fields, so the dtype flag rather
+ * than a reference check decides it, and it depends on the descriptor rather
+ * than the DType, which is why it happens here.
+ */
+static int
+searchsorted_get_loop(PyArrayMethod_Context *context, int aligned,
+                      int move_references, const npy_intp *strides,
+                      PyArrayMethod_StridedLoop **out_loop,
+                      NpyAuxData **out_transferdata,
+                      NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    if (npy_default_get_strided_loop(context, aligned, move_references,
+                                     strides, out_loop, out_transferdata,
+                                     flags) < 0) {
+        return -1;
+    }
+    searchsorted_auxdata *auxdata = PyMem_New(searchsorted_auxdata, 1);
+    if (auxdata == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+    memset(auxdata, 0, sizeof(*auxdata));
+    auxdata->base.free = &searchsorted_auxdata_free;
+    auxdata->base.clone = &searchsorted_auxdata_clone;
+
+    PyArray_Descr *descr = context->descriptors[0];
+    auxdata->carrier = searchsorted_descr_carrier(descr);
+    if (auxdata->carrier == NULL) {
+        PyMem_Free(auxdata);
+        return -1;
+    }
+    *out_transferdata = (NpyAuxData *)auxdata;
+    if (!PyDataType_FLAGCHK(descr, NPY_NEEDS_PYAPI)) {
+        *flags = (NPY_ARRAYMETHOD_FLAGS)(*flags & ~NPY_METH_REQUIRES_PYAPI);
+    }
+    return 0;
 }
 
 
@@ -283,8 +351,15 @@ add_searchsorted_loop(PyObject *ufunc, PyArray_DTypeMeta *dt, int with_sorter,
         {NPY_METH_strided_loop, loop},
         {NPY_METH_resolve_descriptors,
          (void *)&searchsorted_resolve_descriptors},
+        {0, NULL},
         {0, NULL}
     };
+    if (generic) {
+        /* Only the legacy comparison needs a carrier and, for some dtypes,
+         * the GIL. */
+        slots[2].slot = NPY_METH_get_loop;
+        slots[2].pfunc = (void *)&searchsorted_get_loop;
+    }
 
     PyArrayMethod_Spec spec = {};
     spec.name = with_sorter ? "searchsorted_sorter_loop" : "searchsorted_loop";
@@ -295,7 +370,8 @@ add_searchsorted_loop(PyObject *ufunc, PyArray_DTypeMeta *dt, int with_sorter,
     /* Discarded by the gufunc machinery, see searchsorted_restore_floatstatus */
     spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
     if (generic) {
-        /* the legacy comparison function may call into Python */
+        /* Cleared again in searchsorted_get_loop for the dtypes whose
+         * comparison cannot call into Python. */
         spec.flags = (NPY_ARRAYMETHOD_FLAGS)(spec.flags
                                              | NPY_METH_REQUIRES_PYAPI);
     }
