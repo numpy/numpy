@@ -1629,16 +1629,36 @@ class TestFromDTypeAttribute:
         with pytest.raises(ValueError):
             np.dtype(dt_instance)
 
-    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
     def test_void_subtype(self):
         class dt(np.void):
-            # This code path is fully untested before, so it is unclear
-            # what this should be useful for. Note that if np.void is used
-            # numpy will think we are deallocating a base type [1.17, 2019-02].
+            # Note that if np.void is used numpy will think we are
+            # deallocating a base type [1.17, 2019-02].
             dtype = np.dtype("f,f")
 
-        np.dtype(dt)
-        np.dtype(dt(1))
+        # the result inherits the fields of the `.dtype` attribute
+        res = np.dtype(dt)
+        assert res.names == ('f0', 'f1')
+        assert res.itemsize == dt.dtype.itemsize
+        assert res.type is dt
+        assert np.dtype(dt(1)) == dt.dtype
+
+        if HAS_REFCOUNT:
+            # this used to leak one reference to the attribute per call
+            expected = sys.getrefcount(dt.dtype)
+            for _ in range(10):
+                np.dtype(dt)
+            assert sys.getrefcount(dt.dtype) == expected
+
+    def test_void_subtype_subarray(self):
+        # subarray info is inherited by copy; the attribute itself
+        # must not be mutated (its subarray used to be stolen)
+        class dt(np.void):
+            dtype = np.dtype("(2,)f4")
+
+        res = np.dtype(dt)
+        assert res.subdtype == (np.dtype("f4"), (2,))
+        assert res.itemsize == dt.dtype.itemsize
+        assert dt.dtype.subdtype == (np.dtype("f4"), (2,))
 
     def test_void_subtype_recursive(self):
         # Used to recurse, but dtype is now enforced to be a dtype instance

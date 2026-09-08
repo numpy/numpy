@@ -364,25 +364,29 @@ PyArray_DescrFromTypeObject(PyObject *type)
                     return NULL;
                 }
             }
+            else {
+                /* inherit from the attribute below (steals the reference) */
+                conv = (_PyArray_LegacyDescr *)attr;
+            }
         }
 
-        _PyArray_LegacyDescr *new = (_PyArray_LegacyDescr  *)PyArray_DescrNewFromType(NPY_VOID);
+        _PyArray_LegacyDescr *new;
+        if (conv != NULL && PyDataType_ISLEGACY(conv)
+                && conv->type_num == NPY_VOID) {
+            /* copies fields, names, elsize and subarray */
+            new = (_PyArray_LegacyDescr *)PyArray_DescrNew((PyArray_Descr *)conv);
+        }
+        else {
+            new = (_PyArray_LegacyDescr *)PyArray_DescrNewFromType(NPY_VOID);
+            if (new != NULL && conv != NULL && PyDataType_ISLEGACY(conv)) {
+                new->elsize = conv->elsize;
+            }
+        }
+        Py_XDECREF(conv);
         if (new == NULL) {
             return NULL;
         }
-        if (conv != NULL && PyDataType_ISLEGACY(conv)) {
-            new->fields = conv->fields;
-            Py_XINCREF(new->fields);
-            new->names = conv->names;
-            Py_XINCREF(new->names);
-            new->elsize = conv->elsize;
-            new->subarray = conv->subarray;
-            conv->subarray = NULL;
-        }
-        Py_XDECREF(conv);
-        Py_XDECREF(new->typeobj);
-        new->typeobj = (PyTypeObject *)type;
-        Py_INCREF(type);
+        Py_XSETREF(new->typeobj, (PyTypeObject *)Py_NewRef(type));
         return (PyArray_Descr *)new;
     }
 
