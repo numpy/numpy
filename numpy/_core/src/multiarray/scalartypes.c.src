@@ -2300,34 +2300,35 @@ gentype_astype(PyObject *self,
     PyArrayObject *assign = (PyArrayObject *)PyArray_FromScalar(self, NULL);
     to = PyArray_AdaptDescriptorToArray(assign, dt_info.dtype, dt_info.descr);
 
-    if (to == NULL) {
-        return NULL;
-    }
-
     Py_XDECREF(dt_info.descr);
     Py_DECREF(dt_info.dtype);    
+
+    if (to == NULL){
+        Py_DECREF(assign);
+        return NULL;
+    }
     
     int equiv = (to != NULL) && PyArray_EquivTypes(from, to) && Py_TYPE(self) == (PyTypeObject *)to->typeobj;
     if(equiv){
-        Py_XDECREF(to);
         if (forcecopy == 0){
+            Py_DECREF(to);
+            Py_DECREF(assign);
             return Py_NewRef(self);
         }
         else if(! PyArray_IsScalar(self, Void)){
+            Py_DECREF(to);
+            Py_DECREF(assign);
             return Py_NewRef(self);
         }  
     }
 
-
     PyArrayObject *ret = assign;
-    
-    // This steals the reference to dtype
     Py_INCREF(to);
-
     ret = (PyArrayObject *)PyArray_NewLikeArray(assign, order, to, subok);
     PyArray_AssignArray(ret, assign, NULL, casting);
     Py_DECREF(assign);
     Py_DECREF(to);
+
     return PyArray_Return(ret);
 }
 /*
