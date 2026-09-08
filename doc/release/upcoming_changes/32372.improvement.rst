@@ -1,0 +1,15 @@
+``numpy.linalg.norm`` no longer overflows or underflows for representable results
+--------------------------------------------------------------------------------
+The 2-norm of a vector and the Frobenius norm of a matrix are computed by
+summing squares, which can overflow to ``inf`` or underflow to ``0`` even when
+the true norm is perfectly representable.  For example, ``np.linalg.norm([1e200,
+1e200])`` returned ``inf`` and ``np.linalg.norm([1e-200, 1e-200])`` returned
+``0.0``.
+
+The sum of squares is now only trusted while it stays finite and normal.  When
+it overflows, underflows, or goes subnormal, the norm is recomputed with the
+max-scaled (``nrm2``) approach, which keeps every term ``<= 1`` before summing.
+This also applies to vector norms with ``ord > 1`` computed along an axis and to
+the Frobenius norm of matrices, and works for all float dtypes including
+``float16``, whose wide subnormal range made the failure mode especially easy to
+hit.  See :gh:`19097` and :gh:`32372`.

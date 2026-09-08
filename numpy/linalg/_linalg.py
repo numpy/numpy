@@ -44,11 +44,14 @@ from numpy._core import (
     empty_like,
     errstate,
     finfo,
+    float16,
+    float32,
     inexact,
     inf,
     intc,
     intp,
     isfinite,
+    isinf,
     isnan,
     matmul as _core_matmul,
     matrix_transpose as _core_matrix_transpose,
@@ -64,11 +67,13 @@ from numpy._core import (
     sort,
     sqrt,
     sum,
+    squeeze,
     swapaxes,
     tensordot as _core_tensordot,
     trace as _core_trace,
     transpose as _core_transpose,
     vecdot as _core_vecdot,
+    where,
     zeros,
 )
 from numpy._globals import _NoValue
@@ -2568,6 +2573,103 @@ def _norm_dispatcher(x, ord=None, axis=None, keepdims=None):
     return (x,)
 
 
+# The naive sum-of-squares path is only trusted while the intermediate sum
+# stays finite and normal.  float16 has the largest ``smallest_normal`` of the
+# float dtypes, so a sum of squares at or above this constant is normal in
+# every inexact dtype; a plain constant comparison keeps the per-dtype
+# finfo() lookup off the fast path of every norm() call.
+_SAFE_SQNORM_MIN = 6.103515625e-05
+
+_smallest_normal_cache = {}
+
+
+def _smallest_normal(dtype):
+    """``dtype``'s smallest normal, cached.
+
+    finfo() is far too slow to call on norm()'s fast paths, and the value
+    only depends on the dtype.
+    """
+    try:
+        return _smallest_normal_cache[dtype]
+    except KeyError:
+        return _smallest_normal_cache.setdefault(
+            dtype, float(finfo(dtype).smallest_normal)
+        )
+
+
+def _norm_rescale_flat(x, ret, sqnorm):
+    """Recompute a fully-reduced 2-norm whose sum of squares over/underflowed.
+
+    ``sqnorm`` only fell outside the always-safe band, which for the wider
+    float dtypes can still be perfectly normal, so re-check it exactly here
+    before paying for the max-scaled second pass (gh-19097, gh-32372).
+    """
+    if not x.size:
+        return ret
+    if isfinite(sqnorm) and sqnorm >= _smallest_normal(ret.dtype):
+        return ret
+    # An all-zero input has a genuinely zero norm; an inf/nan input should
+    # propagate.  Only a finite nonzero maximum can be rescaled.
+    max_abs = abs(x).max()
+    if not isfinite(max_abs) or max_abs == 0:
+        return ret
+    # Scaling by the maximum magnitude keeps every term <= 1 before squaring
+    # and summing, the approach used by LAPACK's dnrm2 (Higham, *Accuracy and
+    # Stability of Numerical Algorithms*, 2nd ed., \u00a727.8).  float16's
+    # narrow range can overflow even this scaled sum for large arrays, so it
+    # accumulates in float32.
+    scaled = abs(x) / max_abs
+    if x.real.dtype == float16:
+        sqnorm_scaled = (scaled * scaled).sum(dtype=float32)
+        return (sqrt(sqnorm_scaled) * max_abs).astype(float16)
+    return sqrt((scaled * scaled).sum()) * max_abs
+
+
+def _norm_rescale_axis(x, ret, axis, ord, keepdims):
+    """Recompute the over/underflowed slices of an axis-reduced ord-norm.
+
+    ``ret`` is the naive vector ord-norm / Frobenius norm over ``axis``.  If
+    any slice came out non-finite, subnormal, or spuriously zero, the
+    reduction is redone with a max-scaled sum (nrm2 scaling, valid for
+    ord >= 1) and only those slices take the rescaled value; inf/nan and
+    genuine zeros keep theirs (gh-19097, gh-32372).  The common case of
+    nothing needing a rescale returns ``ret`` untouched.
+    """
+    if not issubclass(x.dtype.type, inexact):
+        return ret
+    # ``ret**ord`` is the per-slice sum of powers; below ``_SAFE_SQNORM_MIN``
+    # it over-, under-, or subnormal-flowed and lost precision, so recompute
+    # that slice.  ``ord`` is always finite and > 1 here, so the test applies
+    # to ``ret`` directly against the rooted threshold.
+    tiny_root = _SAFE_SQNORM_MIN ** (1.0 / ord)
+    bad = ~isfinite(ret) | (ret < tiny_root)
+    if not bad.any():
+        return ret
+    ax_abs = abs(x)
+    # `initial=0` keeps empty slices at max 0 (the ok mask leaves them at
+    # their naive 0).
+    max_kd = ax_abs.max(axis=axis, keepdims=True, initial=0)
+    ok_kd = isfinite(max_kd) & (max_kd != 0)  # slices we can safely rescale
+    max_abs = max_kd if keepdims else squeeze(max_kd, axis=axis)
+    ok = ok_kd if keepdims else squeeze(ok_kd, axis=axis)
+    # `bad` also fires on genuine zeros and on inf/nan, none of which can be
+    # rescaled, so the scaled pass would only be discarded by `where`.
+    fix = bad & ok
+    if not fix.any():
+        return ret
+    acc_dtype = float32 if x.real.dtype == float16 else None
+    scaled = ax_abs / where(ok_kd, max_kd, 1)
+    scaled **= ord
+    r = add.reduce(scaled, axis=axis, keepdims=keepdims, dtype=acc_dtype)
+    r **= reciprocal(ord, dtype=r.dtype)
+    rescaled = max_abs * r
+    if acc_dtype is not None:
+        rescaled = rescaled.astype(ret.dtype)
+    # `[()]` unwraps a fully reduced result, which `where` would otherwise
+    # turn from a scalar into a 0-d array.
+    return where(fix, rescaled, ret)[()]
+
+
 @array_function_dispatch(_norm_dispatcher)
 def norm(x, ord=None, axis=None, keepdims=False):
     """
@@ -2739,6 +2841,15 @@ def norm(x, ord=None, axis=None, keepdims=False):
             else:
                 sqnorm = x.dot(x)
             ret = sqrt(sqnorm)
+            # The naive sum of squares can overflow or underflow for
+            # perfectly representable results (gh-19097, gh-32372); rescale
+            # whenever it is not finite and normal.  The constant comparison
+            # keeps finfo() off the fast path, and the inexact guard skips
+            # object arrays, whose sqnorm need not be a scalar to compare.
+            if issubclass(x.dtype.type, inexact) and not (
+                _SAFE_SQNORM_MIN <= sqnorm < inf
+            ):
+                ret = _norm_rescale_flat(x, ret, sqnorm)
             if keepdims:
                 ret = ret.reshape(ndim * [1])
             return ret
@@ -2772,9 +2883,11 @@ def norm(x, ord=None, axis=None, keepdims=False):
             # special case for speedup
             return add.reduce(abs(x), axis=axis, keepdims=keepdims)
         elif ord is None or ord == 2:
-            # special case for speedup
+            # special case for speedup; rescale any over/underflowed slices
+            # (gh-19097, gh-32372).
             s = (x.conj() * x).real
-            return sqrt(add.reduce(s, axis=axis, keepdims=keepdims))
+            ret = sqrt(add.reduce(s, axis=axis, keepdims=keepdims))
+            return _norm_rescale_axis(x, ret, axis, 2, keepdims)
         # None of the str-type keywords for ord ('fro', 'nuc')
         # are valid for vectors
         elif isinstance(ord, str):
@@ -2784,6 +2897,10 @@ def norm(x, ord=None, axis=None, keepdims=False):
             absx **= ord
             ret = add.reduce(absx, axis=axis, keepdims=keepdims)
             ret **= reciprocal(ord, dtype=ret.dtype)
+            if ord > 1:
+                # same over/underflow rescale as the 2-norm (gh-19097,
+                # gh-32372)
+                ret = _norm_rescale_axis(x, ret, axis, ord, keepdims)
             return ret
     elif len(axis) == 2:
         row_axis, col_axis = axis
@@ -2813,6 +2930,9 @@ def norm(x, ord=None, axis=None, keepdims=False):
             ret = add.reduce(abs(x), axis=col_axis).min(axis=row_axis)
         elif ord in [None, 'fro', 'f']:
             ret = sqrt(add.reduce((x.conj() * x).real, axis=axis))
+            # keepdims is applied below for all matrix orders; rescale on
+            # the already-reduced result (gh-19097, gh-32372).
+            ret = _norm_rescale_axis(x, ret, axis, 2, keepdims=False)
         elif ord == 'nuc':
             ret = _multi_svd_norm(x, row_axis, col_axis, sum, 0)
         else:

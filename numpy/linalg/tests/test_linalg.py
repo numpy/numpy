@@ -1653,6 +1653,190 @@ class TestNorm_NonSystematic:
         old_assert_almost_equal(np.linalg.norm(d, ord=3), res, decimal=5)
 
 
+class TestNormStable:
+    """2-norm / Frobenius norm must not over- or underflow for
+    representable results (gh-19097, gh-32372)."""
+
+    # Magnitudes chosen so the sum of squares over/underflows the input
+    # dtype while the true norm stays representable.
+    MAG = {np.float16: (1e4, 1e-4), np.float32: (3e30, 3e-30),
+           np.float64: (3e200, 3e-300)}
+    DTS = [np.float16, np.float32, np.float64, np.complex64, np.complex128]
+
+    @staticmethod
+    def _mag(dt, big):
+        # Complex dtypes share the exponent range of their real part.
+        real_dt = np.empty(0, dtype=dt).real.dtype.type
+        return TestNormStable.MAG[real_dt][0 if big else 1]
+
+    @staticmethod
+    def _ref2(x, axis=None):
+        """Reference 2-norm computed in float64, scaled like the
+        implementation so the reference itself cannot over/underflow."""
+        x = np.abs(x).astype(np.float64)
+        if axis is None:
+            m = x.max(initial=0.0)
+            return np.sqrt(np.sum((x / m) ** 2)) * m if m > 0 else 0.0
+        ax = (axis,) if isinstance(axis, int) else axis
+        m = x.max(axis=ax, keepdims=True, initial=0.0)
+        m = np.where(m == 0, 1.0, m)
+        r = np.sqrt(np.sum((x / m) ** 2, axis=ax, keepdims=True)) * m
+        return np.squeeze(r, axis=ax)
+
+    @staticmethod
+    def _rtol(dt):
+        return {np.float16: 1e-2, np.float32: 1e-4,
+                np.float64: 1e-10}[np.dtype(dt).type]
+
+    @staticmethod
+    def _silence():
+        # The naive sum-of-squares step legitimately trips fp warnings for
+        # the extreme inputs below (the code then recovers from them), so
+        # they are ignored here.
+        return np.errstate(over="ignore", under="ignore", invalid="ignore")
+
+    @pytest.mark.parametrize("dt", DTS)
+    def test_vector_overflow(self, dt):
+        with self._silence():
+            b = self._mag(dt, big=True)
+            if np.dtype(dt).kind == 'c':
+                x = np.array([b + 4j * b, b + 4j * b], dtype=dt)
+            else:
+                x = np.array([b, 4 * b], dtype=dt)
+            assert_allclose(linalg.norm(x), self._ref2(x),
+                            rtol=self._rtol(x.real.dtype.type))
+            # dtype is preserved for inexact inputs
+            assert_equal(linalg.norm(x).dtype, x.real.dtype)
+
+    @pytest.mark.parametrize("dt", DTS)
+    def test_matrix_overflow(self, dt):
+        # Same for the Frobenius norm of a matrix, all `ord` spellings.
+        with self._silence():
+            b = self._mag(dt, big=True)
+            if np.dtype(dt).kind == 'c':
+                x = np.array([[b + 4j * b, b]], dtype=dt)
+            else:
+                x = np.array([[b, 4 * b], [b, b]], dtype=dt)
+            for ord in (None, 'fro', 'f'):
+                assert_allclose(linalg.norm(x, ord=ord), self._ref2(x),
+                                rtol=self._rtol(x.real.dtype.type))
+
+    @pytest.mark.parametrize("dt", DTS)
+    def test_vector_underflow(self, dt):
+        # The squares underflow, but the true norm is representable.
+        with self._silence():
+            t = self._mag(dt, big=False)
+            if np.dtype(dt).kind == 'c':
+                x = np.array([t + 4j * t, t + 4j * t], dtype=dt)
+            else:
+                x = np.array([t, 4 * t], dtype=dt)
+            assert_allclose(linalg.norm(x), self._ref2(x),
+                            rtol=self._rtol(x.real.dtype.type))
+
+    @pytest.mark.parametrize("dt", DTS)
+    def test_matrix_underflow(self, dt):
+        with self._silence():
+            t = self._mag(dt, big=False)
+            if np.dtype(dt).kind == 'c':
+                x = np.array([[t + 4j * t, t]], dtype=dt)
+            else:
+                x = np.array([[t, 4 * t], [t, t]], dtype=dt)
+            for ord in (None, 'fro', 'f'):
+                assert_allclose(linalg.norm(x, ord=ord), self._ref2(x),
+                                rtol=self._rtol(x.real.dtype.type))
+
+    @pytest.mark.parametrize("dt", [np.float32, np.float64])
+    def test_axis_mixed(self, dt):
+        # Only some slices are affected; the rest must be untouched.
+        with self._silence():
+            b = self._mag(dt, big=True)
+            x = np.array([[b, 4 * b], [1.0, 1.0], [0.0, 0.0]], dtype=dt)
+            assert_allclose(linalg.norm(x, axis=1), self._ref2(x, axis=1),
+                            rtol=self._rtol(dt))
+            # 3-D input with a matrix axis tuple
+            x3 = x[np.newaxis].repeat(2, axis=0)
+            assert_allclose(linalg.norm(x3, axis=(1, 2)),
+                            self._ref2(x3, axis=(1, 2)), rtol=self._rtol(dt))
+
+    @pytest.mark.parametrize("dt", [np.float32, np.float64])
+    def test_axis_underflow(self, dt):
+        with self._silence():
+            t = self._mag(dt, big=False)
+            x = np.array([[t, 4 * t], [1.0, 1.0]], dtype=dt)
+            assert_allclose(linalg.norm(x, axis=1), self._ref2(x, axis=1),
+                            rtol=self._rtol(dt))
+
+    def test_keepdims_shapes(self):
+        # The stable fallback must preserve the shapes of the fast path.
+        with self._silence():
+            for x in (np.array([1e200, 1e200]),
+                      np.ones((2, 3, 4)) * 1e200,
+                      np.ones((2, 3, 4)) * 1e-200):
+                x = np.asarray(x)
+                ref = linalg.norm(x, keepdims=True)
+                assert_equal(ref.shape, (1,) * x.ndim)
+                if x.ndim > 1:
+                    ref = linalg.norm(x, axis=(1, 2))
+                    assert_equal(ref.shape, (x.shape[0],))
+                    ref = linalg.norm(x, axis=(1, 2), keepdims=True)
+                    assert_equal(ref.shape, (x.shape[0], 1, 1))
+
+    def test_inf_nan_zeros(self):
+        assert_equal(linalg.norm(np.array([inf, 1.0])), inf)
+        assert_(np.isnan(linalg.norm(np.array([np.nan, 1.0]))))
+        assert_equal(linalg.norm(np.zeros(5)), 0.0)
+        assert_equal(linalg.norm(np.array([])), 0.0)
+        assert_equal(linalg.norm(np.empty((0, 4))), 0.0)
+        assert_equal(linalg.norm(np.empty((0, 4)), axis=0), np.zeros(4))
+        # An all-zero slice alongside an overflowing one
+        with self._silence():
+            x = np.array([[3e200, 4e200], [0.0, 0.0]])
+            assert_allclose(linalg.norm(x, axis=1), [5e200, 0.0], rtol=1e-12)
+
+    def test_float16_large_arrays(self):
+        # float16's accumulator would overflow for large arrays even after
+        # scaling; accumulate in float32 instead.
+        with self._silence():
+            x = np.full(70000, 2.0, dtype=np.float16)
+            assert_allclose(linalg.norm(x), np.sqrt(70000) * 2, rtol=1e-2)
+            assert_equal(linalg.norm(x).dtype, np.float16)
+
+    def test_float16_overflow(self):
+        with self._silence():
+            x = np.array([3e4, 4e4], dtype=np.float16)
+            assert_allclose(linalg.norm(x), 5e4, rtol=1e-2)
+
+    @pytest.mark.parametrize("dt", [np.float32, np.float64])
+    def test_ord_gt_1(self, dt):
+        # ord > 1 vector norms over/underflow the same way.
+        with self._silence():
+            b = self._mag(dt, big=True)
+            x = np.array([[b, b], [3.0, 4.0]], dtype=dt)
+            ref = np.array([b * 2 ** (1.0 / 3),
+                            (3.0 ** 3 + 4.0 ** 3) ** (1.0 / 3)])
+            assert_allclose(linalg.norm(x, ord=3, axis=1), ref,
+                            rtol=self._rtol(dt))
+            t = self._mag(dt, big=False)
+            y = np.array([[t, t]], dtype=dt)
+            assert_allclose(linalg.norm(y, ord=3, axis=1),
+                            [t * 2 ** (1.0 / 3)], rtol=self._rtol(dt))
+
+    @pytest.mark.skipif(np.finfo(np.longdouble).nmant < 63,
+                        reason="longdouble is not extended precision")
+    def test_longdouble_overflow(self):
+        # Values far outside float64's range, but inside longdouble's.
+        with self._silence():
+            b = np.longdouble(10) ** 2000
+            assert_allclose(linalg.norm(np.array([b, b])),
+                            np.sqrt(2) * b, rtol=1e-12)
+            t = np.longdouble(10) ** -2000
+            assert_allclose(linalg.norm(np.array([t, t])),
+                            np.sqrt(2) * t, rtol=1e-12)
+            x = np.array([[b, b], [1.0, 1.0]])
+            assert_allclose(linalg.norm(x, axis=1),
+                            [np.sqrt(2) * b, np.sqrt(2)], rtol=1e-12)
+
+
 # Separate definitions so we can use them for matrix tests.
 class _TestNormDoubleBase(_TestNormBase):
     dt = np.double
