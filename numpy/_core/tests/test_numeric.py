@@ -2312,6 +2312,159 @@ class TestArrayEqualFused:
         assert_(np.array_equal(a, b))
         assert_(np.array_equal(a, b, equal_nan=True))
 
+    @staticmethod
+    def _reference(a, b, equal_nan):
+        # np.array_equal's generic implementation, for cross-checking
+        if a.shape != b.shape:
+            return False
+        if not equal_nan or a.dtype.kind not in "fc":
+            return bool((a == b).all())
+        both_nan = np.isnan(a) & np.isnan(b)
+        return bool(((a == b) | both_nan).all())
+
+    def _check(self, a, b, equal_nan=False):
+        expected = self._reference(a, b, equal_nan)
+        got = np.array_equal(a, b, equal_nan=equal_nan)
+        assert_equal(got, expected)
+        assert type(got) is bool
+        return got
+
+    @pytest.mark.parametrize("dt", ["?", "q", "d", "D"])
+    @pytest.mark.parametrize("equal_nan", [False, True])
+    def test_array_equal_fused_shapes(self, dt, equal_nan):
+        # 0-d, empty and multidimensional operands must agree with the
+        # generic path; contiguous ones are flattened to a single early
+        # exiting reduction (gh-32465).
+        assert self._check(np.array(5, dtype=dt), np.array(5, dtype=dt),
+                           equal_nan)
+        assert not self._check(np.array(5, dtype=dt),
+                               np.array(0, dtype=dt), equal_nan)
+        assert self._check(np.empty(0, dtype=dt), np.empty(0, dtype=dt),
+                           equal_nan)
+        assert self._check(np.empty((0, 3), dtype=dt),
+                           np.empty((0, 3), dtype=dt), equal_nan)
+
+        a = (np.arange(600) % 7).astype(dt).reshape(20, 30)
+        for x, y in [(a, a.copy()),                       # C/C
+                     (np.asfortranarray(a),               # F/F
+                      np.asfortranarray(a).copy(order="F")),
+                     (a, np.asfortranarray(a)),           # C/F, mixed
+                     (a[:, ::2], a[:, ::2].copy()),       # strided/C
+                     (a.reshape(600, 1), a.reshape(600, 1).copy())]:
+            assert self._check(x, y, equal_nan)
+            z = y.copy()
+            z[-1, -1] = 0 if z[-1, -1] else 1
+            assert not self._check(x, z, equal_nan)
+
+    @pytest.mark.parametrize("dt", ["h", "i", "q", "f", "d", "D"])
+    @pytest.mark.parametrize("equal_nan", [False, True])
+    # either side of _ALL_EQUAL_SMALL_NBYTES, which decides whether the layout
+    # is inspected at all
+    @pytest.mark.parametrize("n", [64, 70000])
+    def test_array_equal_fused_byteswapped(self, dt, equal_nan, n):
+        # Operands that share a non-native byte order must give the same
+        # answer as native ones.  Integers may be compared through a
+        # native view; inexact dtypes fall back to the generic path.
+        swapped = np.dtype(dt).newbyteorder("S")
+        a = (np.arange(n) % 5).astype(dt)
+        sa = a.astype(swapped)
+        assert not sa.dtype.isnative
+        sb = sa.copy()
+        assert sb.dtype is sa.dtype
+        assert self._check(sa, sb, equal_nan)
+        for pos in (0, n // 2, n - 1):
+            sb[pos] = 0 if a[pos] else 1
+            assert not self._check(sa, sb, equal_nan)
+            sb[pos] = a[pos]
+        # mixed byte order still resolves through the generic path
+        assert self._check(a, sa, equal_nan)
+
+    @pytest.mark.parametrize("dt", ["q", "d"])
+    @pytest.mark.parametrize("equal_nan", [False, True])
+    @pytest.mark.parametrize("n", [64, 70000])
+    def test_array_equal_fused_unaligned(self, dt, equal_nan, n):
+        # Large unaligned operands are excluded from the fused path (a
+        # gufunc cannot buffer its core dimension and would copy them in
+        # full); small ones are copied.  Both must compare correctly.
+        itemsize = np.dtype(dt).itemsize
+        buf = np.zeros(itemsize * n + 1, dtype=np.uint8)
+        a = buf[1:].view(dt)
+        assert not a.flags.aligned
+        a[:] = np.arange(n) % 5
+        b = a.copy()
+        assert self._check(a, b, equal_nan)
+        assert self._check(a, np.ascontiguousarray(a), equal_nan)
+        b[n // 2] = 0 if a[n // 2] else 1
+        assert not self._check(a, b, equal_nan)
+
+    @pytest.mark.parametrize("dt", ["?", "b", "q", "e", "f", "d", "g",
+                                    "F", "D", "G"])
+    def test_array_equal_fused_identity(self, dt):
+        # An array is equal to itself unless it holds NaN and equal_nan
+        # is False.
+        a = (np.arange(1000) % 5).astype(dt)
+        assert np.array_equal(a, a) is True
+        assert np.array_equal(a, a, equal_nan=True) is True
+        if a.dtype.kind in "fc":
+            a[7] = np.nan
+            assert np.array_equal(a, a) is False
+            assert np.array_equal(a, a, equal_nan=True) is True
+
+    def test_array_equal_fused_dispatch(self, monkeypatch):
+        # The fused reduction must actually be reached for the layouts it
+        # is meant to cover, and skipped where the iterator would copy.
+        from numpy._core import numeric
+
+        calls = []
+        orig = numeric._all_equal
+
+        def spy(x1, x2):
+            calls.append((x1.ndim, x1.dtype))
+            return orig(x1, x2)
+
+        monkeypatch.setattr(numeric, "_all_equal", spy)
+        n = 2 * numeric._ALL_EQUAL_SMALL_NBYTES
+        a = np.zeros(n, dtype=np.int8)
+
+        def taken(x, y):
+            del calls[:]
+            np.array_equal(x, y)
+            return len(calls) == 1
+
+        assert taken(a, a.copy())
+        # contiguous multidimensional operands are flattened first
+        assert taken(a.reshape(-1, 8), a.reshape(-1, 8).copy())
+        del calls[:]
+        assert np.array_equal(a.reshape(-1, 8), a.reshape(-1, 8).copy())
+        assert calls[0][0] == 1
+        # non-native integers go through a native view
+        b = np.zeros(n, dtype=">i2")
+        del calls[:]
+        assert np.array_equal(b, b.copy())
+        assert calls[0][1].isnative
+        # ... but non-native floats and unaligned operands do not
+        c = np.zeros(n, dtype=">f4")
+        assert not taken(c, c.copy())
+        buf = np.zeros(8 * n + 1, dtype=np.uint8)
+        u = buf[1:].view(np.float64)
+        assert not taken(u, u.copy())
+
+    def test_array_equal_fused_not_hijacked(self):
+        # dtypes outside the fused path keep the generic behaviour
+        for a in [np.array(["ab", "cd"]),
+                  np.array([1, 2], dtype=object),
+                  np.zeros(2, "i4,f8")]:
+            assert np.array_equal(a, a.copy()) is True
+            # equal_nan is unsupported for these, on this path as before
+            with pytest.raises(TypeError):
+                np.array_equal(a, a.copy(), equal_nan=True)
+        d = np.array([1, 2], "m8[s]")
+        assert np.array_equal(d, d.copy()) is True
+        assert np.array_equal(d, d.copy(), equal_nan=True) is True
+        # different but equivalent dtypes are compared elementwise
+        assert np.array_equal(np.arange(5, dtype="i4"),
+                              np.arange(5, dtype="i8")) is True
+
 
 class TestArrayComparisons:
     @pytest.mark.parametrize(

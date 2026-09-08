@@ -64,7 +64,7 @@
 
 /* Integer loops: memcmp for unit strides, scalar early exit otherwise. */
 #define INT_ALL_EQUAL(TYPE, type) \
-static void \
+static NPY_GCC_OPT_3 void \
 TYPE##_all_equal(char **args, npy_intp const *dimensions, \
                  npy_intp const *steps, void *NPY_UNUSED(func)) \
 { \
@@ -153,7 +153,7 @@ FLOAT_ALL_EQUAL(CFLOAT, npy_float, 2)
 FLOAT_ALL_EQUAL(CDOUBLE, npy_double, 2)
 FLOAT_ALL_EQUAL(CLONGDOUBLE, npy_longdouble, 2)
 
-static void
+static NPY_GCC_OPT_3 void
 HALF_all_equal(char **args, npy_intp const *dimensions,
                npy_intp const *steps, void *NPY_UNUSED(func))
 {
@@ -196,7 +196,7 @@ FLOAT_ALL_EQUAL_NAN(FLOAT, npy_float)
 FLOAT_ALL_EQUAL_NAN(DOUBLE, npy_double)
 FLOAT_ALL_EQUAL_NAN(LONGDOUBLE, npy_longdouble)
 
-static void
+static NPY_GCC_OPT_3 void
 HALF_all_equal_nan(char **args, npy_intp const *dimensions,
                    npy_intp const *steps, void *NPY_UNUSED(func))
 {
@@ -214,7 +214,7 @@ HALF_all_equal_nan(char **args, npy_intp const *dimensions,
 
 /* A complex value counts as NaN if either component is NaN. */
 #define CFLOAT_ALL_EQUAL_NAN(TYPE, type) \
-static void \
+static NPY_GCC_OPT_3 void \
 TYPE##_all_equal_nan(char **args, npy_intp const *dimensions, \
                      npy_intp const *steps, void *NPY_UNUSED(func)) \
 { \

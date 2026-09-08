@@ -2473,6 +2473,13 @@ def _dtype_cannot_hold_nan(dtype):
     return type(dtype) in _no_nan_types
 
 
+# Operand size in bytes below which array_equal treats a pair as small:
+# their layout is not inspected (the checks cost more than the copy the
+# iterator might make), and a multidimensional pair is left to the generic
+# path rather than flattened for the fused _all_equal gufunc.
+_ALL_EQUAL_SMALL_NBYTES = 8192
+
+
 @array_function_dispatch(_array_equal_dispatcher)
 def array_equal(a1, a2, equal_nan=False):
     """
@@ -2539,21 +2546,70 @@ def array_equal(a1, a2, equal_nan=False):
     if a1.shape != a2.shape:
         return False
     d1 = a1.dtype
-    if d1 is a2.dtype and (d1.num <= 16 or d1.num == 23):
+    num = d1.num
+    if d1 is a2.dtype and (num <= 16 or num == 23):
         # Builtin bool/integer/float/complex operands sharing the descr
         # singleton: fused C reduction with an early exit, avoiding the
         # temporary boolean array.
-        if a1.ndim == 0:
-            a1 = a1.reshape(1)
-            a2 = a2.reshape(1)
-        if equal_nan and d1.num > 10:
-            # only inexact dtypes can hold NaN
-            if a1 is a2:
-                return True
-            r = _all_equal_nan(a1, a2)
+        inexact = num > 10  # only inexact dtypes can hold NaN
+        if a1 is a2 and (equal_nan or not inexact):
+            # NaN is the only value that is not equal to itself.
+            return True
+        nan_path = equal_nan and inexact
+        if a1.nbytes <= _ALL_EQUAL_SMALL_NBYTES:
+            # Small operands are reduced exactly as they are: inspecting
+            # the layout costs more than the copy the iterator might make
+            # for a non-native or unaligned one.  Multidimensional ones
+            # are left to the generic path, which beats flattening them
+            # at this size -- unless equal_nan makes it slow anyway.
+            if a1.ndim == 1:
+                if nan_path:
+                    return builtins.bool(_all_equal_nan(a1, a2))
+                return builtins.bool(_all_equal(a1, a2))
+            if nan_path:
+                # 0-d and multidimensional operands still need a 1-d core
+                # dimension; flattening may copy, but only a few KB.
+                return builtins.bool(
+                    _all_equal_nan(a1.reshape(-1), a2.reshape(-1)))
         else:
-            r = _all_equal(a1, a2)
-        return builtins.bool(r if a1.ndim == 1 else r.all())
+            # Large operands are worth a closer look: a contiguous
+            # multidimensional pair flattens into a single reduction that
+            # exits early over the whole array (and needs no result
+            # array), and an operand the iterator would copy must not
+            # reach the gufunc at all.  A gufunc cannot buffer its core
+            # dimension, so an operand needing a cast or a realignment is
+            # copied in full -- worse than the temporary being avoided.
+            x1 = a1
+            x2 = a2
+            fused = True
+            if not d1.isnative:
+                # Two integers sharing a byte order are equal exactly
+                # when their bytes are, so a native view is safe.  For
+                # inexact dtypes equal bytes are neither necessary
+                # (-0.0 == 0.0) nor sufficient (NaN) for equality.
+                fused = not inexact
+                if fused:
+                    nd = d1.newbyteorder('=')
+                    x1 = x1.view(nd)
+                    x2 = x2.view(nd)
+            if fused:
+                f1 = x1.flags
+                f2 = x2.flags
+                if not (f1.aligned and f2.aligned):
+                    fused = False
+                elif x1.ndim != 1:
+                    if f1.c_contiguous and f2.c_contiguous:
+                        x1 = x1.reshape(-1)
+                        x2 = x2.reshape(-1)
+                    elif f1.f_contiguous and f2.f_contiguous:
+                        x1 = x1.reshape(-1, order='F')
+                        x2 = x2.reshape(-1, order='F')
+            if fused:
+                if nan_path:
+                    r = _all_equal_nan(x1, x2)
+                else:
+                    r = _all_equal(x1, x2)
+                return builtins.bool(r if x1.ndim == 1 else r.all())
     if not equal_nan:
         return builtins.bool((asanyarray(a1 == a2)).all())
 

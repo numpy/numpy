@@ -1,0 +1,8 @@
+``np.array_equal`` avoids the temporary comparison array
+--------------------------------------------------------
+For operands sharing a builtin boolean, integer, floating point or complex
+dtype, `numpy.array_equal` now runs a fused C reduction instead of
+materializing ``a1 == a2`` and reducing it in a second pass.  The comparison
+exits at the first difference, so mismatching arrays are found far more
+quickly, and no temporary array is allocated.  ``equal_nan=True`` benefits as
+well; it no longer computes ``isnan`` over both operands up front.
