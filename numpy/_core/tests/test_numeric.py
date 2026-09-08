@@ -2312,6 +2312,102 @@ class TestArrayEqualFused:
         assert_(np.array_equal(a, b))
         assert_(np.array_equal(a, b, equal_nan=True))
 
+    @pytest.mark.parametrize("dt", ["f", "d", "g"])
+    def test_array_equal_fused_nan_byte_identical(self, dt):
+        # Byte-identical contiguous floats take the memcmp fast path
+        # inside the fused equal_nan loop (gh-32465).
+        n = 70000
+        a = (np.arange(n) % 7).astype(dt)
+        a[n // 3] = np.nan
+        b = a.copy()
+        assert a.tobytes() == b.tobytes()
+        assert self._check(a, b, equal_nan=True)
+
+    @pytest.mark.parametrize("dt", ["f", "d", "g"])
+    def test_array_equal_fused_nan_byte_different(self, dt):
+        # +0.0 vs -0.0 and different NaN signs are semantically equal
+        # under equal_nan but bytewise different: they must go through
+        # the semantic scan, not the byte-identical shortcut (gh-32465).
+        n = 70000
+        # signed zero: equal in both modes, different bytes (NaN-free so
+        # that equal_nan=False is meaningful here as well)
+        b = np.zeros(n, dtype=dt)
+        c = b.copy()
+        c[20] = -0.0
+        assert b.tobytes() != c.tobytes()
+        assert self._check(b, c, equal_nan=False)
+        assert self._check(b, c, equal_nan=True)
+        # opposite-sign NaNs at the same positions: equal only with
+        # equal_nan (negation flips just the sign bit, stays quiet without
+        # raising, and is endian-independent unlike crafted payload bytes)
+        a = (np.arange(n) % 7).astype(dt)
+        a[10] = np.nan
+        d = a.copy()
+        e = a.copy()
+        e[10] = -e[10]
+        assert np.isnan(d[10]) and np.isnan(e[10])
+        assert d.tobytes() != e.tobytes()
+        assert self._check(d, e, equal_nan=True)
+        assert not self._check(d, e, equal_nan=False)
+        # NaN on one side only: not equal in either mode
+        f = a.copy()
+        f[10] = 1.0
+        assert not self._check(a, f, equal_nan=True)
+        assert not self._check(a, f, equal_nan=False)
+
+    @pytest.mark.parametrize("dt", ["f", "d"])
+    def test_array_equal_fused_nan_strided(self, dt):
+        # The non-contiguous fused loop keeps equal_nan semantics (gh-32465).
+        n = 70000
+        a = (np.arange(n) % 7).astype(dt)
+        # even index so the NaN lands in the [::2] view below
+        a[2 * (n // 6)] = np.nan
+        x, y = a[::2], a[::2].copy()
+        assert np.isnan(x).any()
+        assert self._check(x, y, equal_nan=True)
+        assert not self._check(x, y, equal_nan=False)
+        z = y.copy()
+        z[10] = 0.0 if z[10] else 1.0
+        assert not self._check(x, z, equal_nan=True)
+
+    @pytest.mark.parametrize("dt", ["F", "D", "G"])
+    def test_array_equal_fused_complex_nan_bytes(self, dt):
+        # Complex equal_nan: a value counts as NaN if either component is.
+        # Byte-identical operands take the memcmp shortcut; byte-different
+        # but semantically equal ones use the semantic scan (gh-32465).
+        n = 70000
+        comp = np.dtype(dt).type
+        real = (np.arange(n) % 251).astype(comp).real
+        a = (real + 1j * (real % 7)).astype(comp)
+        assert self._check(a, a.copy(), equal_nan=True)
+        # real-NaN vs imag-NaN at the same position: equal
+        p = a.copy()
+        p[10] = comp(complex(np.nan, 1.0))
+        q = a.copy()
+        q[10] = comp(complex(2.0, np.nan))
+        assert self._check(p, q, equal_nan=True)
+        assert not self._check(p, q, equal_nan=False)
+        # NaN on one side only: not equal
+        s = a.copy()
+        s[10] = comp(complex(np.nan, 1.0))
+        assert not self._check(a, s, equal_nan=True)
+
+    @pytest.mark.parametrize("dt", ["F", "D", "G"])
+    def test_array_equal_fused_complex_nan_strided(self, dt):
+        # Strided complex operands skip the memcmp shortcut (non-contiguous
+        # core strides) and use the semantic scan (gh-32465).
+        n = 70000
+        comp = np.dtype(dt).type
+        a = (np.arange(n) % 251).astype(comp)
+        # even index so the NaN lands in the [::2] view below
+        a[2 * (n // 6)] = comp(complex(np.nan, 0.0))
+        x, y = a[::2], a[::2].copy()
+        assert self._check(x, y, equal_nan=True)
+        assert not self._check(x, y, equal_nan=False)
+        z = y.copy()
+        z[10] += 1
+        assert not self._check(x, z, equal_nan=True)
+
     @staticmethod
     def _reference(a, b, equal_nan):
         # np.array_equal's generic implementation, for cross-checking

@@ -32,3 +32,27 @@ class ArrayEqual(Benchmark):
 
     def time_array_equal_nan(self, dtype, difference, layout):
         np.array_equal(self.a, self.b, equal_nan=True)
+
+
+class ArrayEqualSmall(Benchmark):
+    """Regression guard for small-operand overhead (gh-32541 review).
+
+    The fused path must not slow down small float/int comparisons, where
+    the gufunc call overhead matters most.
+    """
+
+    param_names = ["dtype", "size"]
+    params = [
+        ["int64", "float64"],
+        [16, 128],
+    ]
+
+    def setup(self, dtype, size):
+        self.a = np.arange(size, dtype=dtype)
+        self.b = self.a.copy()
+
+    def time_array_equal(self, dtype, size):
+        np.array_equal(self.a, self.b)
+
+    def time_array_equal_nan(self, dtype, size):
+        np.array_equal(self.a, self.b, equal_nan=True)

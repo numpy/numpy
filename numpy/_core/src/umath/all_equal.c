@@ -70,7 +70,8 @@ TYPE##_all_equal(char **args, npy_intp const *dimensions, \
 { \
     OUTER_LOOP_HEAD \
     if (ais_ == sizeof(type) && bis_ == sizeof(type)) { \
-        res_ = memcmp(a_, b_, n_ * sizeof(type)) == 0; \
+        /* memcmp needs valid pointers even for a zero count. */ \
+        res_ = n_ == 0 || memcmp(a_, b_, (size_t)n_ * sizeof(type)) == 0; \
     } \
     else { \
         for (npy_intp k_ = 0; k_ < n_; k_++, a_ += ais_, b_ += bis_) { \
@@ -101,7 +102,7 @@ BOOL_all_equal(char **args, npy_intp const *dimensions,
 {
     OUTER_LOOP_HEAD
     if (ais_ == 1 && bis_ == 1) {
-        if (memcmp(a_, b_, n_) != 0) {
+        if (n_ != 0 && memcmp(a_, b_, (size_t)n_) != 0) {
             BLOCKED_CONTIG(npy_bool, n_, (ta[k_] != 0) == (tb[k_] != 0));
         }
     }
@@ -175,9 +176,32 @@ TYPE##_all_equal_nan(char **args, npy_intp const *dimensions, \
 { \
     OUTER_LOOP_HEAD \
     if (ais_ == sizeof(type) && bis_ == sizeof(type)) { \
-        BLOCKED_CONTIG(type, n_, \
-            ((ta[k_] != ta[k_]) == (tb[k_] != tb[k_])) \
-            & ((ta[k_] != ta[k_]) | (ta[k_] == tb[k_]))); \
+        /* Block-local byte check: a byte-identical block holds identical
+         * values-or-NaNs and is accepted immediately, while a differing
+         * block falls back to the semantic comparison below, preserving
+         * signed-zero and NaN semantics. Scanning per block avoids
+         * re-reading a long equal prefix before a late mismatch. */ \
+        const type *ta = (const type *)a_; \
+        const type *tb = (const type *)b_; \
+        npy_intp k_ = 0; \
+        while (k_ < n_ && res_) { \
+            npy_intp end_ = k_ + ALL_EQUAL_BLOCK; \
+            if (end_ > n_) { \
+                end_ = n_; \
+            } \
+            if (memcmp((const char *)(ta + k_), (const char *)(tb + k_), \
+                       (size_t)(end_ - k_) * sizeof(type)) != 0) { \
+                npy_bool ok_ = 1; \
+                for (; k_ < end_; k_++) { \
+                    ok_ &= (npy_bool)((ta[k_] == tb[k_]) \
+                        | ((ta[k_] != ta[k_]) & (tb[k_] != tb[k_]))); \
+                } \
+                res_ = ok_; \
+            } \
+            else { \
+                k_ = end_; \
+            } \
+        } \
     } \
     else { \
         for (npy_intp k_ = 0; k_ < n_; k_++, a_ += ais_, b_ += bis_) { \
@@ -219,15 +243,50 @@ TYPE##_all_equal_nan(char **args, npy_intp const *dimensions, \
                      npy_intp const *steps, void *NPY_UNUSED(func)) \
 { \
     OUTER_LOOP_HEAD \
-    for (npy_intp k_ = 0; k_ < n_; k_++, a_ += ais_, b_ += bis_) { \
-        const type *ca_ = (const type *)a_; \
-        const type *cb_ = (const type *)b_; \
-        int an_ = ca_[0] != ca_[0] || ca_[1] != ca_[1]; \
-        int bn_ = cb_[0] != cb_[0] || cb_[1] != cb_[1]; \
-        if (an_ != bn_ \
-                || (!an_ && (ca_[0] != cb_[0] || ca_[1] != cb_[1]))) { \
-            res_ = 0; \
-            break; \
+    /* Block-local byte check: byte-identical blocks hold identical
+     * components (equal values or same-representation complex NaN) and
+     * are accepted immediately; differing blocks use the semantic scan
+     * below, which also handles non-contiguous operands. */ \
+    if (ais_ == 2 * sizeof(type) && bis_ == 2 * sizeof(type)) { \
+        const type *ta = (const type *)a_; \
+        const type *tb = (const type *)b_; \
+        npy_intp k_ = 0; \
+        while (k_ < n_ && res_) { \
+            npy_intp end_ = k_ + ALL_EQUAL_BLOCK; \
+            if (end_ > n_) { \
+                end_ = n_; \
+            } \
+            if (memcmp((const char *)(ta + 2 * k_), \
+                       (const char *)(tb + 2 * k_), \
+                       2 * (size_t)(end_ - k_) * sizeof(type)) != 0) { \
+                npy_bool ok_ = 1; \
+                for (; k_ < end_; k_++) { \
+                    int an_ = ta[2 * k_] != ta[2 * k_] \
+                        || ta[2 * k_ + 1] != ta[2 * k_ + 1]; \
+                    int bn_ = tb[2 * k_] != tb[2 * k_] \
+                        || tb[2 * k_ + 1] != tb[2 * k_ + 1]; \
+                    ok_ &= (npy_bool)((an_ == bn_) \
+                        & (an_ | ((ta[2 * k_] == tb[2 * k_]) \
+                            & (ta[2 * k_ + 1] == tb[2 * k_ + 1])))); \
+                } \
+                res_ = ok_; \
+            } \
+            else { \
+                k_ = end_; \
+            } \
+        } \
+    } \
+    else { \
+        for (npy_intp k_ = 0; k_ < n_; k_++, a_ += ais_, b_ += bis_) { \
+            const type *ca_ = (const type *)a_; \
+            const type *cb_ = (const type *)b_; \
+            int an_ = ca_[0] != ca_[0] || ca_[1] != ca_[1]; \
+            int bn_ = cb_[0] != cb_[0] || cb_[1] != cb_[1]; \
+            if (an_ != bn_ \
+                    || (!an_ && (ca_[0] != cb_[0] || ca_[1] != cb_[1]))) { \
+                res_ = 0; \
+                break; \
+            } \
         } \
     } \
     OUTER_LOOP_TAIL \
