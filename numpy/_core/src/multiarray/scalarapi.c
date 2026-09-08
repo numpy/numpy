@@ -373,13 +373,26 @@ PyArray_DescrFromTypeObject(PyObject *type)
         _PyArray_LegacyDescr *new;
         if (conv != NULL && PyDataType_ISLEGACY(conv)
                 && conv->type_num == NPY_VOID) {
-            /* copies fields, names, elsize and subarray */
+            /* the same kind of descriptor, so copy it wholesale */
             new = (_PyArray_LegacyDescr *)PyArray_DescrNew((PyArray_Descr *)conv);
         }
         else {
+            /* otherwise only the layout can be inherited onto a void descr */
             new = (_PyArray_LegacyDescr *)PyArray_DescrNewFromType(NPY_VOID);
             if (new != NULL && conv != NULL && PyDataType_ISLEGACY(conv)) {
                 new->elsize = conv->elsize;
+                /*
+                 * A registered legacy user dtype is not NPY_VOID but may
+                 * still be structured (see `PyArray_RegisterDataType`);
+                 * `flags` and `alignment` describe that same layout.
+                 */
+                if (conv->names != NULL) {
+                    new->names = Py_NewRef(conv->names);
+                    new->fields = conv->fields == Py_None
+                            ? NULL : Py_XNewRef(conv->fields);
+                    new->flags = conv->flags;
+                    new->alignment = conv->alignment;
+                }
             }
         }
         Py_XDECREF(conv);
