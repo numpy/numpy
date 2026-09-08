@@ -1777,6 +1777,8 @@ class TestDateTime:
         (np.array([1, 2, 3], dtype='m8[s]'),
          np.array([2], dtype='m8[s]'),
          np.array([0, 1, 1], dtype=np.int64)),
+        # m8 // bool
+        (np.timedelta64(7, 's'), True, np.timedelta64(7, 's'))
         ])
     def test_timedelta_floor_divide(self, op1, op2, exp):
         assert_equal(op1 // op2, exp)
@@ -1959,6 +1961,9 @@ class TestDateTime:
             # m8 / float
             assert_equal(tda / 0.5, tdc)
             assert_equal((tda / 0.5).dtype, np.dtype('m8[h]'))
+            # m8 / bool
+            assert_equal(tdc / True, tdc)
+            assert_equal((tdc / True).dtype, np.dtype('m8[h]'))
             # m8 / m8
             assert_equal(tda / tdb, 6 / 9)
             assert_equal(np.divide(tda, tdb), 6 / 9)
