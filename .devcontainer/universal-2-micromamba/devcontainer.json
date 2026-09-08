@@ -1,6 +1,7 @@
 {
 	// More info about Features: https://containers.dev/features
-	"image": "mcr.microsoft.com/devcontainers/universal:2",
+	"name": "universal-micromamba",
+	"image": "mcr.microsoft.com/devcontainers/universal",
 	"features": {},
 
 	"onCreateCommand": "bash .devcontainer/setup.sh",
