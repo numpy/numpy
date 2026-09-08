@@ -31,3 +31,8 @@
 #23 0xffffb1c61b44 in initialize_static_globals ../numpy/_core/src/multiarray/npy_static_data.c:124
 
 leak:initialize_static_globals
+# The same two stat-timestamp float leaks, matched right above the
+# allocation: with a deep (nested) import chain the captured stack can end
+# before reaching initialize_static_globals, in which case the suppression
+# above does not match and the leak is reported.
+leak:fill_time
