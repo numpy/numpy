@@ -12886,7 +12886,7 @@ class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]
     def __truediv__(self: timedelta64[Never], b: _FloatLike_co_, /) -> timedelta64: ...
     @overload
     def __truediv__[AnyItemT: (dt.timedelta, int, None)](
-        self: timedelta64[AnyItemT], b: int | integer | bool_, /
+        self: timedelta64[AnyItemT], b: _IntLike_co, /
     ) -> timedelta64[AnyItemT]: ...
     @overload
     def __truediv__[AnyItemT: (dt.timedelta, int, None)](
