@@ -38,6 +38,7 @@ from numpy._typing import (
     _ShapeLike,
     _SupportsArray,
 )
+from numpy._typing._array_like import _DualArrayLike
 
 __all__ = [
     "select",
@@ -101,12 +102,14 @@ type _SortsToComplex128 = (
 )
 type _ScalarNumeric = np.inexact | np.timedelta64 | np.object_
 type _InexactDouble = np.float64 | np.longdouble | np.complex128 | np.clongdouble
+type _ArrayLikeNumeric_co = _DualArrayLike[np.dtype[np.number | np.bool | np.timedelta64 | np.object_], complex]
 
 type _Array[ShapeT: _Shape, ScalarT: np.generic] = np.ndarray[ShapeT, np.dtype[ScalarT]]
 type _Array0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]]
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+type _Array4D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int], np.dtype[ScalarT]]
 type _ArrayMax2D[ScalarT: np.generic] = np.ndarray[tuple[int] | tuple[int, int], np.dtype[ScalarT]]
 # workaround for mypy and pyright not following the typing spec for overloads
 type _ArrayNoD[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, Never], np.dtype[ScalarT]]
@@ -114,6 +117,7 @@ type _ArrayNoD[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, Neve
 type _Seq1D[T] = Sequence[T]
 type _Seq2D[T] = Sequence[Sequence[T]]
 type _Seq3D[T] = Sequence[Sequence[Sequence[T]]]
+type _Seq4D[T] = Sequence[Sequence[Sequence[Sequence[T]]]]
 type _ListSeqND[T] = list[T] | _SeqND[list[T]]
 
 type _Tuple2[T] = tuple[T, T]
@@ -1378,9 +1382,24 @@ def sinc(x: _Seq2D[list[complex]]) -> _Array3D[np.complex128]: ...
 @overload
 def sinc(x: _ArrayLikeComplex_co) -> np.ndarray | Any: ...
 
-# NOTE: We assume that `axis` is only provided for >=1-D arrays because for <1-D arrays
-# it has no effect, and would complicate the overloads significantly.
-@overload  # known scalar-type, keepdims=False (default)
+#
+@overload  # Nd +f64, axis=None  (default)
+def median(
+    a: _DualArrayLike[np.dtype[_integer_co], float],
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> np.float64: ...
+@overload  # Nd ~object_, axis=None  (default)
+def median(
+    a: _ArrayLike[np.object_],
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> Any: ...
+@overload  # Nd ~inexact | timedelta64, axis=None  (default)
 def median[ScalarT: np.inexact | np.timedelta64](
     a: _ArrayLike[ScalarT],
     axis: None = None,
@@ -1388,15 +1407,7 @@ def median[ScalarT: np.inexact | np.timedelta64](
     overwrite_input: bool = False,
     keepdims: L[False] = False,
 ) -> ScalarT: ...
-@overload  # float array-like, keepdims=False (default)
-def median(
-    a: _ArrayLikeInt_co | _SeqND[float] | float,
-    axis: None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    keepdims: L[False] = False,
-) -> np.float64: ...
-@overload  # complex array-like, keepdims=False (default)
+@overload  # Nd ~complex, axis=None  (default)
 def median(
     a: _ListSeqND[complex],
     axis: None = None,
@@ -1404,7 +1415,7 @@ def median(
     overwrite_input: bool = False,
     keepdims: L[False] = False,
 ) -> np.complex128: ...
-@overload  # complex scalar, keepdims=False (default)
+@overload  # 0d ~builtins.complex, axis=None  (default)
 def median(
     a: complex,
     axis: None = None,
@@ -1412,7 +1423,176 @@ def median(
     overwrite_input: bool = False,
     keepdims: L[False] = False,
 ) -> np.complex128 | Any: ...
-@overload  # known array-type, keepdims=True
+@overload  # ?d +integer, axis=<given>  (workaround)
+def median(
+    a: _ArrayNoD[_integer_co],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> NDArray[np.float64] | Any: ...
+@overload  # ?d ~inexact | timedelta64 | object_, axis=<given>  (workaround)
+def median[ScalarT: _ScalarNumeric](
+    a: _ArrayNoD[ScalarT],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> NDArray[ScalarT] | Any: ...
+@overload  # fallback, ?d, axis=<given>  (workaround)
+def median(
+    a: _ArrayNoD[np.number | np.bool | np.timedelta64 | np.object_],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> NDArray[Any] | Any: ...
+@overload  # 1d +f64, axis=<given>
+def median(
+    a: _Array1D[_integer_co] | _Seq1D[float],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> np.float64: ...
+@overload  # 1d ~object_, axis=<given>
+def median(
+    a: _Array1D[np.object_],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> Any: ...
+@overload  # 1d ~inexact | timedelta64, axis=<given>
+def median[ScalarT: np.inexact | np.timedelta64](
+    a: _Array1D[ScalarT] | _Seq1D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> ScalarT: ...
+@overload  # 1d ~complex, axis=<given>
+def median(
+    a: list[complex],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> np.complex128: ...
+@overload  # fallback, 1d, axis=<given>
+def median(
+    a: _Array1D[np.number | np.bool | np.timedelta64 | np.object_] | _Seq1D[complex],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> Any: ...
+@overload  # 2d +f64, axis=<given>
+def median(
+    a: _Array2D[_integer_co] | _Seq2D[float],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array1D[np.float64]: ...
+@overload  # 2d ~inexact | timedelta64 | object_, axis=<given>
+def median[ScalarT: _ScalarNumeric](
+    a: _Array2D[ScalarT] | _Seq2D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array1D[ScalarT]: ...
+@overload  # 2d ~complex, axis=<given>
+def median(
+    a: _Seq1D[list[complex]],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array1D[np.complex128]: ...
+@overload  # fallback, 2d, axis=<given>
+def median(
+    a: _Array2D[np.number | np.bool | np.timedelta64 | np.object_] | _Seq2D[complex],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array1D[Any]: ...
+@overload  # 3d +f64, axis=<given>
+def median(
+    a: _Array3D[_integer_co] | _Seq3D[float],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array2D[np.float64]: ...
+@overload  # 3d ~inexact | timedelta64 | object_, axis=<given>
+def median[ScalarT: _ScalarNumeric](
+    a: _Array3D[ScalarT] | _Seq3D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array2D[ScalarT]: ...
+@overload  # 3d ~complex, axis=<given>
+def median(
+    a: _Seq2D[list[complex]],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array2D[np.complex128]: ...
+@overload  # fallback, 3d, axis=<given>
+def median(
+    a: _Array3D[np.number | np.bool | np.timedelta64 | np.object_] | _Seq3D[complex],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array2D[Any]: ...
+@overload  # 4d +f64, axis=<given>
+def median(
+    a: _Array4D[_integer_co] | _Seq4D[float],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array3D[np.float64]: ...
+@overload  # 4d ~inexact | timedelta64 | object_, axis=<given>
+def median[ScalarT: _ScalarNumeric](
+    a: _Array4D[ScalarT] | _Seq4D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array3D[ScalarT]: ...
+@overload  # 4d ~complex, axis=<given>
+def median(
+    a: _Seq3D[list[complex]],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array3D[np.complex128]: ...
+@overload  # fallback, 4d, axis=<given>
+def median(
+    a: _Array4D[np.number | np.bool | np.timedelta64 | np.object_] | _Seq4D[complex],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array3D[Any]: ...
+@overload  # Nd +integer, keepdims=True
+def median[ShapeT: _Shape](
+    a: _Array[ShapeT, _integer_co],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    *,
+    keepdims: L[True],
+) -> _Array[ShapeT, np.float64]: ...
+@overload  # Nd ~inexact | timedelta64 | object_, keepdims=True
 def median[ArrayT: NDArray[_ScalarNumeric]](
     a: ArrayT,
     axis: _ShapeLike | None = None,
@@ -1421,7 +1601,16 @@ def median[ArrayT: NDArray[_ScalarNumeric]](
     *,
     keepdims: L[True],
 ) -> ArrayT: ...
-@overload  # known scalar-type, keepdims=True
+@overload  # Nd +f64, keepdims=True  (fallback)
+def median(
+    a: _DualArrayLike[np.dtype[_integer_co], float],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    *,
+    keepdims: L[True],
+) -> NDArray[np.float64]: ...
+@overload  # Nd ~inexact | timedelta64 | object_, keepdims=True  (fallback)
 def median[ScalarT: _ScalarNumeric](
     a: _ArrayLike[ScalarT],
     axis: _ShapeLike | None = None,
@@ -1430,73 +1619,81 @@ def median[ScalarT: _ScalarNumeric](
     *,
     keepdims: L[True],
 ) -> NDArray[ScalarT]: ...
-@overload  # known scalar-type, axis=<given>
+@overload  # Nd ~complex, keepdims=True  (fallback)
+def median(
+    a: _ListSeqND[complex],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    *,
+    keepdims: L[True],
+) -> NDArray[np.complex128]: ...
+@overload  # fallback, keepdims=True
+def median(
+    a: _ArrayLikeNumeric_co,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    *,
+    keepdims: L[True],
+) -> NDArray[Any]: ...
+@overload  # Nd +f64, axis=<given>  (fallback)
+def median(
+    a: _DualArrayLike[np.dtype[_integer_co], float],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> NDArray[np.float64] | Any: ...
+@overload  # Nd ~inexact | timedelta64 | object_, axis=<given>  (fallback)
 def median[ScalarT: _ScalarNumeric](
     a: _ArrayLike[ScalarT],
     axis: _ShapeLike,
     out: None = None,
     overwrite_input: bool = False,
     keepdims: bool = False,
-) -> NDArray[ScalarT]: ...
-@overload  # float array-like, keepdims=True
-def median(
-    a: _SeqND[float],
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    *,
-    keepdims: L[True],
-) -> NDArray[np.float64]: ...
-@overload  # float array-like, axis=<given>
-def median(
-    a: _SeqND[float],
-    axis: _ShapeLike,
-    out: None = None,
-    overwrite_input: bool = False,
-    keepdims: bool = False,
-) -> NDArray[np.float64]: ...
-@overload  # complex array-like, keepdims=True
-def median(
-    a: _ListSeqND[complex],
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    *,
-    keepdims: L[True],
-) -> NDArray[np.complex128]: ...
-@overload  # complex array-like, axis=<given>
+) -> NDArray[ScalarT] | Any: ...
+@overload  # Nd ~complex, axis=<given>  (fallback)
 def median(
     a: _ListSeqND[complex],
     axis: _ShapeLike,
     out: None = None,
     overwrite_input: bool = False,
     keepdims: bool = False,
-) -> NDArray[np.complex128]: ...
-@overload  # out=<given> (keyword)
+) -> NDArray[np.complex128] | Any: ...
+@overload  # fallback, axis=<given>
+def median(
+    a: _ArrayLikeNumeric_co,
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> NDArray[Any] | Any: ...
+@overload  # fallback
+def median(
+    a: _ArrayLikeNumeric_co,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> Any: ...
+@overload  # out=<given>  (keyword)
 def median[ArrayT: np.ndarray](
-    a: _ArrayLikeComplex_co | _ArrayLike[np.timedelta64 | np.object_],
+    a: _ArrayLikeNumeric_co,
     axis: _ShapeLike | None = None,
     *,
     out: ArrayT,
     overwrite_input: bool = False,
     keepdims: bool = False,
 ) -> ArrayT: ...
-@overload  # out=<given> (positional)
+@overload  # out=<given>  (positional)
 def median[ArrayT: np.ndarray](
-    a: _ArrayLikeComplex_co | _ArrayLike[np.timedelta64 | np.object_],
+    a: _ArrayLikeNumeric_co,
     axis: _ShapeLike | None,
     out: ArrayT,
     overwrite_input: bool = False,
     keepdims: bool = False,
 ) -> ArrayT: ...
-@overload  # fallback
-def median(
-    a: _ArrayLikeComplex_co | _ArrayLike[np.timedelta64 | np.object_],
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    keepdims: bool = False,
-) -> Incomplete: ...
 
 # NOTE: keep in sync with `quantile`
 @overload  # inexact, scalar, axis=None
