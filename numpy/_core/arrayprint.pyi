@@ -61,6 +61,7 @@ class _FormatOptions(TypedDict):
     formatter: _FormatDict | None
     sign: _Sign
     floatmode: _FloatMode
+    exp_format: bool
     legacy: _Legacy
 
 ###
@@ -79,6 +80,7 @@ def set_printoptions(
     sign: _Sign | None = None,
     floatmode: _FloatMode | None = None,
     *,
+    exp_format: bool | None = None,
     legacy: _Legacy | None = None,
     override_repr: _ReprFunc | None = None,
 ) -> None: ...
@@ -99,6 +101,7 @@ def array2string(
     sign: _Sign | None = None,
     floatmode: _FloatMode | None = None,
     suffix: str = "",
+    exp_format: bool | None = None,
     legacy: _Legacy | None = None,
 ) -> str: ...
 
