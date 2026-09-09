@@ -1,0 +1,6 @@
+StringDType missing values in testing assertions
+-----------------------------------------------
+NumPy's array equality assertions now use `numpy.isnan` to identify NaN-like
+missing values in ``StringDType`` arrays. This fixes comparisons of arrays
+whose sentinel is a NumPy floating-point NaN, such as ``numpy.float32("nan")``,
+which was not previously recognized by the testing helpers.
