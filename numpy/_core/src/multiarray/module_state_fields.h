@@ -74,56 +74,124 @@ extern "C" {
     F(reduce)               \
     F(accumulate)
 
-#define NPY_STATIC_PYDATA_FIELDS(F) \
-    F(default_truediv_type_tup)    \
-    F(default_extobj_capsule)      \
-    F(npy_extobj_contextvar)       \
-    F(ndarray_array_ufunc)         \
-    F(ndarray_array_finalize)      \
-    F(ndarray_array_function)      \
-    F(ndarray_set_dtype)           \
-    F(ndarray_dtype_descr)         \
-    F(one_obj)                     \
-    F(zero_obj)                    \
-    F(zero_pyint_like_arr)         \
-    F(AxisError)                   \
-    F(ComplexWarning)              \
-    F(DTypePromotionError)         \
-    F(TooHardError)                \
-    F(VisibleDeprecationWarning)   \
-    F(_CopyMode)                   \
-    F(_NoValue)                    \
-    F(_ArrayMemoryError)           \
-    F(_UFuncBinaryResolutionError) \
-    F(_UFuncInputCastingError)     \
-    F(_UFuncNoLoopError)           \
-    F(_UFuncOutputCastingError)    \
-    F(math_floor_func)             \
-    F(math_ceil_func)              \
-    F(math_trunc_func)             \
-    F(math_gcd_func)               \
-    F(os_PathLike)                 \
-    F(os_fspath)                   \
-    F(format_options)              \
-    F(legacy_resolver_promoting)   \
-    F(kwnames_is_copy)             \
-    F(wrapit_kwnames_subok)        \
-    F(wrapit_kwnames_to_scalar)    \
-    F(kwnames_dtype)               \
-    F(kwnames_out)                 \
-    F(kwnames_dtype_out)           \
-    F(axes_1d_obj_kwargs)          \
-    F(axes_2d_obj_kwargs)          \
-    F(cpu_dispatch_registry)       \
-    F(VoidToGenericMethod)         \
-    F(GenericToVoidMethod)         \
-    F(ObjectToGenericMethod)       \
-    F(GenericToObjectMethod)       \
-    F(dl_call_kwnames)             \
-    F(dl_cpu_device_tuple)         \
-    F(dl_max_version)              \
-    F(dlpack_dtype_registry)       \
-    F(dlpack_export_registry)
+#define NPY_STATIC_PYDATA_FIELDS(F)                                             \
+    /*                                                                          \
+     * Used in ufunc_type_resolution.c to avoid reconstructing a tuple          \
+     * storing the default true division return types.                          \
+     */                                                                         \
+    F(default_truediv_type_tup)                                                 \
+                                                                                \
+    /*                                                                          \
+     * Used to set up the default extobj context variable                       \
+     */                                                                         \
+    F(default_extobj_capsule)                                                   \
+                                                                                \
+    /*                                                                          \
+     * The global ContextVar to store the extobject. It is exposed to Python    \
+     * as `_extobj_contextvar`.                                                 \
+     */                                                                         \
+    F(npy_extobj_contextvar)                                                    \
+                                                                                \
+    /*                                                                          \
+     * A reference to ndarray's implementations for __array_*__ special methods \
+     */                                                                         \
+    F(ndarray_array_ufunc)                                                      \
+    F(ndarray_array_finalize)                                                   \
+    F(ndarray_array_function)                                                   \
+                                                                                \
+    /*                                                                          \
+     * References to ndarray._set_dtype and ndarray.dtype descriptor,           \
+     * used in PyArray_View to detect subclass overrides.                       \
+     */                                                                         \
+    F(ndarray_set_dtype)                                                        \
+    F(ndarray_dtype_descr)                                                      \
+                                                                                \
+    /*                                                                          \
+     * References to the '1' and '0' PyLong objects                             \
+     */                                                                         \
+    F(one_obj)                                                                  \
+    F(zero_obj)                                                                 \
+                                                                                \
+    /*                                                                          \
+     * Reference to an np.array(0, dtype=np.long) instance                      \
+     */                                                                         \
+    F(zero_pyint_like_arr)                                                      \
+                                                                                \
+    /*                                                                          \
+     * References to items obtained via an import at module initialization      \
+     */                                                                         \
+    F(AxisError)                                                                \
+    F(ComplexWarning)                                                           \
+    F(DTypePromotionError)                                                      \
+    F(TooHardError)                                                             \
+    F(VisibleDeprecationWarning)                                                \
+    F(_CopyMode)                                                                \
+    F(_NoValue)                                                                 \
+    F(_ArrayMemoryError)                                                        \
+    F(_UFuncBinaryResolutionError)                                              \
+    F(_UFuncInputCastingError)                                                  \
+    F(_UFuncNoLoopError)                                                        \
+    F(_UFuncOutputCastingError)                                                 \
+    F(math_floor_func)                                                          \
+    F(math_ceil_func)                                                           \
+    F(math_trunc_func)                                                          \
+    F(math_gcd_func)                                                            \
+    F(os_PathLike)                                                              \
+    F(os_fspath)                                                                \
+    F(format_options)                                                           \
+                                                                                \
+    /*                                                                          \
+     * Context variable set to True while the legacy ufunc type resolvers       \
+     * run for promotion, to suppress their deprecation warnings (the           \
+     * resolution step warns on every call).                                    \
+     */                                                                         \
+    F(legacy_resolver_promoting)                                                \
+                                                                                \
+    /*                                                                          \
+     * Used in the __array__ internals to avoid building a tuple inline         \
+     */                                                                         \
+    F(kwnames_is_copy)                                                          \
+                                                                                \
+    /*                                                                          \
+     * Used by _wrapit to call the array converter's as_arrays/wrap             \
+     * methods without building kwnames tuples inline                           \
+     */                                                                         \
+    F(wrapit_kwnames_subok)                                                     \
+    F(wrapit_kwnames_to_scalar)                                                 \
+                                                                                \
+    F(kwnames_dtype)                                                            \
+    F(kwnames_out)                                                              \
+    F(kwnames_dtype_out)                                                        \
+                                                                                \
+    /*                                                                          \
+     * Used in __imatmul__ to avoid building tuples inline                      \
+     */                                                                         \
+    F(axes_1d_obj_kwargs)                                                       \
+    F(axes_2d_obj_kwargs)                                                       \
+                                                                                \
+    /*                                                                          \
+     * Used for CPU feature detection and dispatch                              \
+     */                                                                         \
+    F(cpu_dispatch_registry)                                                    \
+                                                                                \
+    /*                                                                          \
+     * references to ArrayMethod implementations that are cached                \
+     * to avoid repeatedly creating them                                        \
+     */                                                                         \
+    F(VoidToGenericMethod)                                                      \
+    F(GenericToVoidMethod)                                                      \
+    F(ObjectToGenericMethod)                                                    \
+    F(GenericToObjectMethod)                                                    \
+                                                                                \
+    /*                                                                          \
+     * Used in from_dlpack                                                      \
+     */                                                                         \
+    F(dl_call_kwnames)                                                          \
+    F(dl_cpu_device_tuple)                                                      \
+    F(dl_max_version)                                                           \
+    /* dicts for implementing `register_dlpack_dtype` */                        \
+    F(dlpack_dtype_registry)                                                    \
+    F(dlpack_export_registry)                                                   
 
 #define NPY_RUNTIME_IMPORTS_FIELDS(F) \
     F(_add_dtype_helper)                \
@@ -204,6 +272,13 @@ extern "C" {
     F(typeDict)        \
     F(current_handler) \
     F(global_pytype_to_type_dict)
+
+/*
+ * Expand a field list into the PyObject * members it names, so the structs
+ * below are declared from the same list the traverse and clear functions use.
+ */
+#define NPY_DECLARE_ONE_PYOBJECT_FIELD(name) PyObject *name;
+#define NPY_DECLARE_PYOBJECT_FIELDS(list) list(NPY_DECLARE_ONE_PYOBJECT_FIELD)
 
 #define NPY_FIELD_COUNT_ONE(name) + 1
 #define NPY_FIELD_COUNT(list) (0 list(NPY_FIELD_COUNT_ONE))
