@@ -168,50 +168,205 @@ class _CanArray[ArrayT: np.ndarray](Protocol):
 type _ArrayLike1D = _CanArray[_Array1D[Any]] | Sequence[_ScalarLike_co]
 type _ArrayLikeInt1D = _CanArray[_Array1D[np.integer]] | Sequence[int | np.integer]
 
+type _ToInt0D = _IntLike_co | np.ndarray[_0D, np.dtype[np.integer | np.bool]]
+type _ToInt1D = _ToArray1D2[np.integer | np.bool, _IntLike_co]
+type _ToInt2D = _ToArray2D2[np.integer | np.bool, _IntLike_co]
+
 ###
 
-# TODO: Fix overlapping overloads: https://github.com/numpy/numpy/issues/27032
-@overload
+@overload  # Nd, ?d  (workaround)
 def take[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
-    indices: _IntLike_co,
-    axis: None = None,
-    out: None = None,
-    mode: _ModeKind = "raise",
-) -> ScalarT: ...
-@overload
-def take(
-    a: ArrayLike,
-    indices: _IntLike_co,
-    axis: SupportsIndex | None = None,
-    out: None = None,
-    mode: _ModeKind = "raise",
-) -> Any: ...
-@overload
-def take[ScalarT: np.generic](
-    a: _ArrayLike[ScalarT],
-    indices: _ArrayLikeInt_co,
+    indices: _ArrayJustND[np.integer | np.bool],
     axis: SupportsIndex | None = None,
     out: None = None,
     mode: _ModeKind = "raise",
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # Nd, ?d  (workaround)
 def take(
     a: ArrayLike,
-    indices: _ArrayLikeInt_co,
+    indices: _ArrayJustND[np.integer | np.bool],
     axis: SupportsIndex | None = None,
     out: None = None,
     mode: _ModeKind = "raise",
 ) -> NDArray[Any]: ...
-@overload
-def take[ArrayT: np.ndarray](
+@overload  # Nd, 0d, axis=None  (default)
+def take[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    indices: _ToInt0D,
+    axis: None = None,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> ScalarT: ...
+@overload  # Nd, 0d, axis=None  (default)
+def take(
+    a: ArrayLike,
+    indices: _ToInt0D,
+    axis: None = None,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> Any: ...
+@overload  # Nd, 1d, axis=None  (default)
+def take[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    indices: _ToInt1D,
+    axis: None = None,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> _Array1D[ScalarT]: ...
+@overload  # Nd, 1d, axis=None  (default)
+def take(
+    a: ArrayLike,
+    indices: _ToInt1D,
+    axis: None = None,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> _Array1D[Any]: ...
+@overload  # Nd, 2d, axis=None  (default)
+def take[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    indices: _ToInt2D,
+    axis: None = None,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> _Array2D[ScalarT]: ...
+@overload  # Nd, 2d, axis=None  (default)
+def take(
+    a: ArrayLike,
+    indices: _ToInt2D,
+    axis: None = None,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> _Array2D[Any]: ...
+@overload  # fallback, axis=None  (default)
+def take[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    indices: _ArrayLikeInt_co,
+    axis: None = None,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> NDArray[ScalarT] | Any: ...
+@overload  # fallback, axis=None  (default)
+def take(
     a: ArrayLike,
     indices: _ArrayLikeInt_co,
-    axis: SupportsIndex | None,
-    out: ArrayT,
+    axis: None = None,
+    out: None = None,
     mode: _ModeKind = "raise",
-) -> ArrayT: ...
-@overload
+) -> Any: ...
+@overload  # ?d, 0d, axis=<given>  (workaround)
+def take[ScalarT: np.generic](
+    a: _ArrayJustND[ScalarT],
+    indices: _ToInt0D,
+    axis: SupportsIndex,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> NDArray[ScalarT] | Any: ...
+@overload  # ?d, ?d, axis=<given>  (workaround)
+def take[ScalarT: np.generic](
+    a: _ArrayJustND[ScalarT],
+    indices: _ArrayLikeInt_co,
+    axis: SupportsIndex,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> NDArray[ScalarT]: ...
+@overload  # >=1d, 1d, axis=<given>
+def take[ShapeT: tuple[int, *tuple[int, ...]], ScalarT: np.generic](
+    a: np.ndarray[ShapeT, np.dtype[ScalarT]],
+    indices: _ToInt1D,
+    axis: SupportsIndex,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # 1d, 0d, axis=<given>
+def take[ScalarT: np.generic](
+    a: _ToArray1D[ScalarT],
+    indices: _ToInt0D,
+    axis: SupportsIndex,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> ScalarT: ...
+@overload  # 1d, 2d, axis=<given>
+def take[ScalarT: np.generic](
+    a: _ToArray1D[ScalarT],
+    indices: _ToInt2D,
+    axis: SupportsIndex,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> _Array2D[ScalarT]: ...
+@overload  # 2d, 0d, axis=<given>
+def take[ScalarT: np.generic](
+    a: _ToArray2D[ScalarT],
+    indices: _ToInt0D,
+    axis: SupportsIndex,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> _Array1D[ScalarT]: ...
+@overload  # 2d, 2d, axis=<given>
+def take[ScalarT: np.generic](
+    a: _ToArray2D[ScalarT],
+    indices: _ToInt2D,
+    axis: SupportsIndex,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> _Array3D[ScalarT]: ...
+@overload  # 3d, 0d, axis=<given>
+def take[ScalarT: np.generic](
+    a: _ToArray3D[ScalarT],
+    indices: _ToInt0D,
+    axis: SupportsIndex,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> _Array2D[ScalarT]: ...
+@overload  # 3d, 2d, axis=<given>
+def take[ScalarT: np.generic](
+    a: _ToArray3D[ScalarT],
+    indices: _ToInt2D,
+    axis: SupportsIndex,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> _Array4D[ScalarT]: ...
+@overload  # 4d, 0d, axis=<given>
+def take[ScalarT: np.generic](
+    a: _ToArray4D[ScalarT],
+    indices: _ToInt0D,
+    axis: SupportsIndex,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> _Array3D[ScalarT]: ...
+@overload  # fallback, 0d, axis=<given>
+def take[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    indices: _ToInt0D,
+    axis: SupportsIndex,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> NDArray[ScalarT] | Any: ...
+@overload  # fallback, 0d, axis=<given>
+def take(
+    a: ArrayLike,
+    indices: _ToInt0D,
+    axis: SupportsIndex,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> Any: ...
+@overload  # fallback, axis=<given>
+def take[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    indices: _ArrayLikeInt_co,
+    axis: SupportsIndex,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> NDArray[ScalarT]: ...
+@overload  # fallback, axis=<given>
+def take(
+    a: ArrayLike,
+    indices: _ArrayLikeInt_co,
+    axis: SupportsIndex,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> NDArray[Any]: ...
+@overload  # out=<given>  (keyword)
 def take[ArrayT: np.ndarray](
     a: ArrayLike,
     indices: _ArrayLikeInt_co,
@@ -220,7 +375,16 @@ def take[ArrayT: np.ndarray](
     out: ArrayT,
     mode: _ModeKind = "raise",
 ) -> ArrayT: ...
+@overload  # out=<given>  (positional)
+def take[ArrayT: np.ndarray](
+    a: ArrayLike,
+    indices: _ArrayLikeInt_co,
+    axis: SupportsIndex | None,
+    out: ArrayT,
+    mode: _ModeKind = "raise",
+) -> ArrayT: ...
 
+#
 def top_k(
     a: ArrayLike,
     k: int,
@@ -983,28 +1147,195 @@ def diagonal(
     axis2: SupportsIndex = 1,
 ) -> NDArray[Any]: ...
 
-# keep in sync with `ma.core.trace`
-@overload
+#
+@overload  # ?d  (workaround)
+def trace[ScalarT: np.inexact | np.timedelta64 | np.object_](
+    a: _ArrayJustND[ScalarT],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: None = None,
+    out: None = None,
+) -> NDArray[ScalarT] | Any: ...
+@overload  # ?d, +integer  (workaround)
 def trace(
-    a: ArrayLike,  # >= 2D array
+    a: _ArrayJustND[np.integer | np.bool],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: None = None,
+    out: None = None,
+) -> NDArray[np.int_] | Any: ...
+@overload  # ?d, dtype=<known>  (workaround)
+def trace[ScalarT: np.generic](
+    a: _ArrayJustND[np.number | np.bool | np.object_ | np.timedelta64],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    out: None = None,
+) -> NDArray[ScalarT] | Any: ...
+@overload  # ?d, dtype=<unknown>  (workaround)
+def trace(
+    a: _ArrayJustND[np.number | np.bool | np.object_ | np.timedelta64],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: DTypeLike | None = None,
+    out: None = None,
+) -> np.ndarray | Any: ...
+@overload  # 2d
+def trace[ScalarT: np.inexact | np.timedelta64](
+    a: _ToArray2D[ScalarT],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: None = None,
+    out: None = None,
+) -> ScalarT: ...
+@overload  # 2d, +integer
+def trace(
+    a: _ToArray2D2[np.integer | np.bool, int],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: None = None,
+    out: None = None,
+) -> np.int_: ...
+@overload  # 2d, dtype=<known>
+def trace[ScalarT: np.generic](
+    a: _ToNumeric2D,
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    out: None = None,
+) -> ScalarT: ...
+@overload  # 2d, dtype=<unknown>
+def trace(
+    a: _ToNumeric2D,
     offset: SupportsIndex = 0,
     axis1: SupportsIndex = 0,
     axis2: SupportsIndex = 1,
     dtype: DTypeLike | None = None,
     out: None = None,
 ) -> Any: ...
-@overload
+@overload  # 3d
+def trace[ScalarT: np.inexact | np.timedelta64 | np.object_](
+    a: _ToArray3D[ScalarT],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: None = None,
+    out: None = None,
+) -> _Array1D[ScalarT]: ...
+@overload  # 3d, +integer
+def trace(
+    a: _ToArray3D2[np.integer | np.bool, int],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: None = None,
+    out: None = None,
+) -> _Array1D[np.int_]: ...
+@overload  # 3d, dtype=<known>
+def trace[ScalarT: np.generic](
+    a: _ToNumeric3D,
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    out: None = None,
+) -> _Array1D[ScalarT]: ...
+@overload  # 3d, dtype=<unknown>
+def trace(
+    a: _ToNumeric3D,
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: DTypeLike | None = None,
+    out: None = None,
+) -> _Array1D[Any]: ...
+@overload  # 4d
+def trace[ScalarT: np.inexact | np.timedelta64 | np.object_](
+    a: _ToArray4D[ScalarT],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: None = None,
+    out: None = None,
+) -> _Array2D[ScalarT]: ...
+@overload  # 4d, +integer
+def trace(
+    a: _ToArray4D2[np.integer | np.bool, int],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: None = None,
+    out: None = None,
+) -> _Array2D[np.int_]: ...
+@overload  # 4d, dtype=<known>
+def trace[ScalarT: np.generic](
+    a: _ToNumeric4D,
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    out: None = None,
+) -> _Array2D[ScalarT]: ...
+@overload  # 4d, dtype=<unknown>
+def trace(
+    a: _ToNumeric4D,
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: DTypeLike | None = None,
+    out: None = None,
+) -> _Array2D[Any]: ...
+@overload  # Nd  (fallback)
+def trace[ScalarT: np.inexact | np.timedelta64 | np.object_](
+    a: _ArrayLike[ScalarT],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: None = None,
+    out: None = None,
+) -> NDArray[ScalarT] | Any: ...
+@overload  # Nd, +integer  (fallback)
+def trace(
+    a: _ArrayLike[np.integer | np.bool] | _NestedSequence[int],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: None = None,
+    out: None = None,
+) -> NDArray[np.int_] | Any: ...
+@overload  # Nd, dtype=<known>  (fallback)
+def trace[ScalarT: np.generic](
+    a: _ArrayLikeNumeric_co,
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    out: None = None,
+) -> NDArray[ScalarT] | Any: ...
+@overload  # Nd, dtype=<unknown>  (fallback)
+def trace(
+    a: _ArrayLikeNumeric_co,
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+    dtype: DTypeLike | None = None,
+    out: None = None,
+) -> Any: ...
+@overload  # out=<given>  (keyword)
 def trace[ArrayT: np.ndarray](
-    a: ArrayLike,  # >= 2D array
-    offset: SupportsIndex,
-    axis1: SupportsIndex,
-    axis2: SupportsIndex,
-    dtype: DTypeLike | None,
-    out: ArrayT,
-) -> ArrayT: ...
-@overload
-def trace[ArrayT: np.ndarray](
-    a: ArrayLike,  # >= 2D array
+    a: ArrayLike,
     offset: SupportsIndex = 0,
     axis1: SupportsIndex = 0,
     axis2: SupportsIndex = 1,
@@ -1012,7 +1343,17 @@ def trace[ArrayT: np.ndarray](
     *,
     out: ArrayT,
 ) -> ArrayT: ...
+@overload  # out=<given>  (positional)
+def trace[ArrayT: np.ndarray](
+    a: ArrayLike,
+    offset: SupportsIndex,
+    axis1: SupportsIndex,
+    axis2: SupportsIndex,
+    dtype: DTypeLike | None,
+    out: ArrayT,
+) -> ArrayT: ...
 
+#
 @overload
 def ravel[ScalarT: np.generic](a: _ArrayLike[ScalarT], order: _OrderKACF = "C") -> _Array1D[ScalarT]: ...
 @overload

@@ -2442,18 +2442,19 @@ array_sum(PyArrayObject *self,
 
 
 static PyObject *
-array_cumsum(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_cumsum(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     int axis = NPY_RAVEL_AXIS;
     PyArray_Descr *dtype = NULL;
     PyArrayObject *out = NULL;
     int rtype;
-    static char *kwlist[] = {"axis", "dtype", "out", NULL};
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&:cumsum", kwlist,
-                                     PyArray_AxisConverter, &axis,
-                                     PyArray_DescrConverter2, &dtype,
-                                     PyArray_OutputConverter, &out)) {
+    if (npy_parse_arguments("cumsum", args, len_args, kwnames,
+            {"|axis", &PyArray_AxisConverter, &axis},
+            {"|dtype", &PyArray_DescrConverter2, &dtype},
+            {"|out", &PyArray_OutputConverter, &out}) < 0) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -2471,18 +2472,19 @@ array_prod(PyArrayObject *self,
 }
 
 static PyObject *
-array_cumprod(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_cumprod(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     int axis = NPY_RAVEL_AXIS;
     PyArray_Descr *dtype = NULL;
     PyArrayObject *out = NULL;
     int rtype;
-    static char *kwlist[] = {"axis", "dtype", "out", NULL};
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&:cumprod", kwlist,
-                                     PyArray_AxisConverter, &axis,
-                                     PyArray_DescrConverter2, &dtype,
-                                     PyArray_OutputConverter, &out)) {
+    if (npy_parse_arguments("cumprod", args, len_args, kwnames,
+            {"|axis", &PyArray_AxisConverter, &axis},
+            {"|dtype", &PyArray_DescrConverter2, &dtype},
+            {"|out", &PyArray_OutputConverter, &out}) < 0) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -3007,10 +3009,10 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"cumprod",
         (PyCFunction)array_cumprod,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"cumsum",
         (PyCFunction)array_cumsum,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"diagonal",
         (PyCFunction)array_diagonal,
         METH_VARARGS | METH_KEYWORDS, NULL},
