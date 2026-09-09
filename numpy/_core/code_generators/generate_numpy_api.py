@@ -14,7 +14,6 @@ typedef struct {
         npy_bool obval;
 } PyBoolScalarObject;
 
-extern NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type;
 extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 
 %s

@@ -23,6 +23,7 @@
 #include "item_selection.h"
 #include "lowlevel_strided_loops.h"
 #include "array_assign.h"
+#include "module_state.h"
 #include "npy_pycompat.h"
 
 #define NEWAXIS_INDEX -1
@@ -1694,7 +1695,8 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, const npy_intp *bounds,
     int i;
     PyArrayNeighborhoodIterObject *ret;
 
-    ret = PyObject_New(PyArrayNeighborhoodIterObject, &PyArrayNeighborhoodIter_Type);
+    ret = PyObject_New(PyArrayNeighborhoodIterObject,
+                       _npy_module_state->PyArrayNeighborhoodIter_Type);
     if (ret == NULL) {
         return NULL;
     }
@@ -1782,7 +1784,9 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, const npy_intp *bounds,
 clean_x:
     Py_DECREF(ret->_internal_iter);
     array_iter_base_dealloc((PyArrayIterObject*)ret);
+    PyTypeObject *type = Py_TYPE(ret);
     PyObject_Free(ret);
+    Py_DECREF(type);
     return NULL;
 }
 
@@ -1797,14 +1801,33 @@ static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)
     Py_DECREF(iter->_internal_iter);
 
     array_iter_base_dealloc((PyArrayIterObject*)iter);
+
+    PyTypeObject *type = Py_TYPE(iter);
     PyObject_Free(iter);
+    Py_DECREF(type);
 }
 
-NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy.neigh_internal_iter",
-    .tp_basicsize = sizeof(PyArrayNeighborhoodIterObject),
-    .tp_dealloc = (destructor)neighiter_dealloc,
-    .tp_free = PyObject_Free,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
+static PyType_Slot neighiter_slots[] = {
+    {Py_tp_dealloc, neighiter_dealloc},
+    {Py_tp_new, PyType_GenericNew},
+    {0, NULL},
 };
+
+static PyType_Spec neighiter_spec = {
+    .name = "numpy.neigh_internal_iter",
+    .basicsize = sizeof(PyArrayNeighborhoodIterObject),
+    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_IMMUTABLETYPE,
+    .slots = neighiter_slots,
+};
+
+NPY_NO_EXPORT int
+init_neighborhood_iter_type(PyObject *module)
+{
+    PyObject *type = PyType_FromModuleAndSpec(module, &neighiter_spec, NULL);
+    if (type == NULL) {
+        return -1;
+    }
+    get_module_state(module)->PyArrayNeighborhoodIter_Type =
+            (PyTypeObject *)type;
+    return 0;
+}

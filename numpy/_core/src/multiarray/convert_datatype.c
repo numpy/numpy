@@ -225,7 +225,8 @@ PyArray_GetBoundCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
 
     /* TODO: Create better way to wrap method into bound method */
     PyBoundArrayMethodObject *res;
-    res = PyObject_New(PyBoundArrayMethodObject, &PyBoundArrayMethod_Type);
+    res = PyObject_New(PyBoundArrayMethodObject,
+                       _npy_module_state->PyBoundArrayMethod_Type);
     if (res == NULL) {
         return NULL;
     }
@@ -3622,7 +3623,8 @@ PyArray_InitializeObjectToObjectCast(void)
 static int
 initialize_void_and_object_globals(void) {
     multiarray_umath_state *state = _npy_module_state;
-    PyArrayMethodObject *method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
+    PyArrayMethodObject *method = PyObject_New(
+            PyArrayMethodObject, state->PyArrayMethod_Type);
     if (method == NULL) {
         PyErr_NoMemory();
         return -1;
@@ -3637,7 +3639,7 @@ initialize_void_and_object_globals(void) {
     method->nout = 1;
     state->static_pydata.VoidToGenericMethod = (PyObject *)method;
 
-    method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
+    method = PyObject_New(PyArrayMethodObject, state->PyArrayMethod_Type);
     if (method == NULL) {
         PyErr_NoMemory();
         return -1;
@@ -3652,7 +3654,7 @@ initialize_void_and_object_globals(void) {
     method->nout = 1;
     state->static_pydata.GenericToVoidMethod = (PyObject *)method;
 
-    method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
+    method = PyObject_New(PyArrayMethodObject, state->PyArrayMethod_Type);
     if (method == NULL) {
         PyErr_NoMemory();
         return -1;
@@ -3669,7 +3671,7 @@ initialize_void_and_object_globals(void) {
     method->get_strided_loop = &object_to_any_get_loop;
     state->static_pydata.ObjectToGenericMethod = (PyObject *)method;
 
-    method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
+    method = PyObject_New(PyArrayMethodObject, state->PyArrayMethod_Type);
     if (method == NULL) {
         PyErr_NoMemory();
         return -1;

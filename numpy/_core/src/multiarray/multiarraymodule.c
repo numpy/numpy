@@ -54,6 +54,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "scalartypes.h"
 #include "convert_datatype.h"
 #include "conversion_utils.h"
+#include "iterators.h"
 #include "nditer_pywrap.h"
 #define NPY_ITERATOR_IMPLEMENTATION_CODE
 #include "nditer_impl.h"
@@ -5372,14 +5373,13 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
     if (PyType_Ready(&PyArrayIter_Type) < 0) {
         return -1;
     }
-    if (PyType_Ready(&PyArrayMapIter_Type) < 0) {
+    if (init_mapiter_type(m) < 0) {
         return -1;
     }
     if (PyType_Ready(&PyArrayMultiIter_Type) < 0) {
         return -1;
     }
-    PyArrayNeighborhoodIter_Type.tp_new = PyType_GenericNew;
-    if (PyType_Ready(&PyArrayNeighborhoodIter_Type) < 0) {
+    if (init_neighborhood_iter_type(m) < 0) {
         return -1;
     }
     if (PyType_Ready(&NpyIter_Type) < 0) {
@@ -5485,10 +5485,7 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
                             (PyObject *)state->NpyBusDayCalendar_Type);
     set_flaginfo(d);
 
-    if (PyType_Ready(&PyArrayMethod_Type) < 0) {
-        return -1;
-    }
-    if (PyType_Ready(&PyBoundArrayMethod_Type) < 0) {
+    if (init_array_method_types(m) < 0) {
         return -1;
     }
 
