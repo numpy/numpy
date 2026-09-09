@@ -120,6 +120,10 @@ enum npy_cpu_features
     // LOONGARCH
     NPY_CPU_FEATURE_LSX               = 500,
 
+    // Elbrus2000, SIMD via x86 intrinsics
+    NPY_CPU_FEATURE_E2K_SSE           = NPY_CPU_FEATURE_X86_V2,
+    NPY_CPU_FEATURE_E2K_AVX           = NPY_CPU_FEATURE_X86_V3,
+
     NPY_CPU_FEATURE_MAX
 };
 

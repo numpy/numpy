@@ -929,7 +929,8 @@ foreach gen_mtargets : [
       X86_V4, X86_V3, X86_V2,
       VSX2,
       ASIMD, NEON,
-      VXE, VX
+      VXE, VX,
+      E2K_AVX, E2K_SSE,
     ]
   ],
 ]
@@ -1037,6 +1038,7 @@ foreach gen_mtargets : [
       VSX3, VSX2,
       VXE, VX,
       LSX,
+      E2K_AVX, E2K_SSE,
     ]
   ],
   [
@@ -1048,6 +1050,7 @@ foreach gen_mtargets : [
       VSX4, VSX2,
       VX,
       LSX,
+      E2K_AVX, E2K_SSE,
     ]
   ],
   [
@@ -1070,6 +1073,7 @@ foreach gen_mtargets : [
       NEON,
       VXE, VX,
       LSX,
+      E2K_AVX, E2K_SSE,
     ]
   ],
   [
@@ -1077,6 +1081,7 @@ foreach gen_mtargets : [
     src_file.process('src/umath/loops_exponent_log.dispatch.c.src'),
     [
       X86_V4, X86_V3,
+      E2K_AVX, E2K_SSE,
     ]
   ],
   [
@@ -1088,6 +1093,7 @@ foreach gen_mtargets : [
       NEON_VFPV4,
       VXE,
       LSX,
+      E2K_AVX, E2K_SSE,
     ]
   ],
   [
@@ -1100,6 +1106,7 @@ foreach gen_mtargets : [
       VX,
       LSX,
       RVV,
+      E2K_AVX, E2K_SSE,
     ]
   ],
   [
@@ -1111,6 +1118,7 @@ foreach gen_mtargets : [
       VSX2,
       VXE, VX,
       LSX,
+      E2K_AVX, E2K_SSE,
     ]
   ],
   [
@@ -1129,6 +1137,7 @@ foreach gen_mtargets : [
       NEON_VFPV4,
       VXE2, VXE,
       LSX,
+      E2K_AVX, E2K_SSE,
     ]
   ],
   [
@@ -1145,6 +1154,7 @@ foreach gen_mtargets : [
       VSX2,
       VXE, VX,
       LSX,
+      E2K_AVX, E2K_SSE,
     ]
   ],
   [
@@ -1156,6 +1166,7 @@ foreach gen_mtargets : [
       ASIMD, NEON,
       VXE, VX,
       LSX,
+      E2K_SSE,
     ]
   ],
   [
@@ -1166,6 +1177,7 @@ foreach gen_mtargets : [
       VSX2,
       ASIMD, NEON,
       LSX,
+      E2K_SSE,
     ]
   ],
   [
@@ -1177,6 +1189,7 @@ foreach gen_mtargets : [
       VSX3, VSX2,
       VXE, VX,
       LSX,
+      E2K_AVX, E2K_SSE,
     ]
   ],
   [
@@ -1188,7 +1201,8 @@ foreach gen_mtargets : [
       VSX2,
       VX,
       LSX,
-      RVV
+      RVV,
+      E2K_AVX, E2K_SSE,
     ]
   ],
   [
