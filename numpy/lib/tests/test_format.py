@@ -518,6 +518,90 @@ def test_memmap_roundtrip(tmpdir):
         ma.flush()
 
 
+@pytest.mark.skipif(IS_WASM, reason="memmap doesn't work correctly")
+@pytest.mark.parametrize(
+    "i, dtype, shape, fortran_order, expected_dtype, expected_shape, "
+    "expected_c_contiguous, expected_f_contiguous",
+    [
+        (0, np.dtype('<i4'), (3,), False, np.dtype('<i4'), (3,), True, True),
+        # Plain top-level subarray dtypes expand into the memmap shape on read.
+        (1, np.dtype((np.int64, (8,))), (2,), False, np.dtype(np.int64),
+         (2, 8), True, False),
+        # A missing outer shape is treated as a scalar array whose shape comes
+        # entirely from the top-level subarray dtype.
+        (2, np.dtype((np.int64, (2,))), None, False, np.dtype(np.int64),
+         (2,), True, True),
+        # Scalar outer shapes should normalize the same way as one-element
+        # shape tuples when top-level subarray axes are appended.
+        (3, np.dtype((np.int64, (2,))), 3, False, np.dtype(np.int64),
+         (3, 2), True, False),
+        (4, np.dtype((np.int64, (2, 3))), (4,), True, np.dtype(np.int64),
+         (4, 2, 3), False, True),
+        # Nested top-level subarray layers must all be flattened into the
+        # header shape written by open_memmap.
+        (5, np.dtype((np.dtype((np.int64, (2,))), (3,))), None, False,
+         np.dtype(np.int64), (3, 2), True, False),
+        (6, np.dtype((np.dtype((np.int64, (2,))), (3,))), (5,), False,
+         np.dtype(np.int64), (5, 3, 2), True, False),
+        (7, np.dtype((np.dtype((np.int64, (2,))), (3,))), (5,), True,
+         np.dtype(np.int64), (5, 3, 2), False, True),
+        (
+            8,
+            np.dtype([('a', '<i4'), ('b', '<f8')]),
+            (4,),
+            False,
+            np.dtype([('a', '<i4'), ('b', '<f8')]),
+            (4,),
+            True,
+            True,
+        ),
+        # Structured base dtypes should behave the same when wrapped in a
+        # top-level subarray.
+        (
+            9,
+            np.dtype(([('a', '<i4'), ('b', '<f8')], (3,))),
+            (2,),
+            False,
+            np.dtype([('a', '<i4'), ('b', '<f8')]),
+            (2, 3),
+            True,
+            False,
+        ),
+        (
+            10,
+            np.dtype((np.dtype(([('a', '<i4'), ('b', '<f8')], (3,))), (2,))),
+            (4,),
+            False,
+            np.dtype([('a', '<i4'), ('b', '<f8')]),
+            (4, 2, 3),
+            True,
+            False,
+        ),
+    ],
+)
+def test_memmap_user_dtype_roundtrip(
+    tmpdir, i, dtype, shape, fortran_order, expected_dtype, expected_shape,
+    expected_c_contiguous, expected_f_contiguous
+):
+    path = os.path.join(tmpdir, f"user_dtype{i}.npy")
+    # Writing through the explicit `dtype=` path is the case that needs the
+    # top-level subarray normalization in open_memmap.
+    memmap = format.open_memmap(
+        path, mode='w+', dtype=dtype, shape=shape, fortran_order=fortran_order)
+    memmap.flush()
+
+    loaded = format.open_memmap(path, mode='r')
+
+    assert_equal_(loaded.dtype, expected_dtype)
+    assert_equal_(loaded.shape, expected_shape)
+    assert_equal_(loaded.flags.c_contiguous, expected_c_contiguous)
+    assert_equal_(loaded.flags.f_contiguous, expected_f_contiguous)
+
+    # np.load exercises the regular .npy reader instead of the memmap path.
+    arr = np.load(path)
+    assert_array_equal(arr, loaded)
+
+
 def test_compressed_roundtrip(tmpdir):
     arr = np.random.rand(200, 200)
     npz_file = os.path.join(tmpdir, 'compressed.npz')
@@ -619,12 +703,14 @@ def test_pickle_disallow(tmpdir):
                   allow_pickle=False)
 
 @pytest.mark.parametrize('dt', [
-    # Not testing a subarray only dtype, because it cannot be attached to an array
-    # (and would fail the test as of writing this.)
+    np.dtype(('<i8', (8,))),
+    np.dtype((np.dtype((np.int64, (2,))), (3,))),
+    np.dtype((np.dtype((np.dtype((np.int64, (2,))), (3,))), (4,))),
     np.dtype([('a', np.int8),
               ('b', np.int16),
               ('c', np.int32),
              ], align=True),
+    np.dtype((np.dtype([('a', '<i4'), ('b', '<f8')]), (3,))),
     np.dtype([('x', np.dtype(({'names': ['a', 'b'],
                               'formats': ['i1', 'i1'],
                               'offsets': [0, 4],
@@ -667,8 +753,8 @@ def test_pickle_disallow(tmpdir):
         )))
         ]),
     ])
-def test_descr_to_dtype(dt):
-    dt1 = format.descr_to_dtype(dt.descr)
+def test_descr_dtype_roundtrip(dt):
+    dt1 = format.descr_to_dtype(format.dtype_to_descr(dt))
     assert_equal_(dt1, dt)
     arr1 = np.zeros(3, dt)
     arr2 = roundtrip(arr1)
