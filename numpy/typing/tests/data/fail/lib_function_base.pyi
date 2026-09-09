@@ -52,6 +52,7 @@ np.median(AR_M)  # type: ignore[arg-type]
 
 np.percentile(AR_f8, 50j)  # type: ignore[call-overload]
 np.percentile(AR_f8, 50, interpolation="bob")  # type: ignore[call-overload]
+np.percentile(AR_c16, 50)  # type: ignore[arg-type]
 np.quantile(AR_f8, 0.5j)  # type: ignore[call-overload]
 np.quantile(AR_f8, 0.5, interpolation="bob")  # type: ignore[call-overload]
 np.meshgrid(AR_f8, AR_f8, indexing="bob")  # type: ignore[call-overload]
