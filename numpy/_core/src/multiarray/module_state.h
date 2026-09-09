@@ -20,13 +20,12 @@ typedef struct {
     npy_runtime_imports_struct runtime_imports;
     npy_global_state_struct    global_state;
 
-    PyObject *typeDict;
-    PyObject *current_handler;
-    PyObject *global_pytype_to_type_dict;
+    NPY_DECLARE_PYOBJECT_FIELDS(NPY_MODULE_STATE_OBJECT_FIELDS)
     NumericOps n_ops;
 } multiarray_umath_state;
 
-/* All members are PyObject *, so these catch one missing from a field list. */
+/* The structs are generated from the lists, so these only catch a stray
+ * member added by hand outside them. */
 static_assert(sizeof(npy_interned_str_struct) ==
         (NPY_FIELD_COUNT(NPY_INTERNED_STR_FIELDS) + NPY_ERRMODE_STRING_COUNT)
                 * sizeof(PyObject *),

@@ -3105,6 +3105,16 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         }
     }
 
+    if (PyArray_NDIM(op[0]) != PyArray_NDIM(op[1]) ||
+            !PyArray_CompareLists(PyArray_DIMS(op[0]),
+                                  PyArray_DIMS(op[1]),
+                                  PyArray_NDIM(op[0]))) {
+        PyErr_SetString(PyExc_ValueError,
+                "provided out is the wrong size "
+                "for the accumulation.");
+        goto fail;
+    }
+
     /* The loop descriptors borrow from the final iterator/array operands. */
     PyArray_Descr *loop_descrs[3] = {
             PyArray_DESCR(op[0]), PyArray_DESCR(op[1]), PyArray_DESCR(op[0])};
@@ -3242,15 +3252,6 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
 
         NPY_UF_DBG_PRINT("UFunc: Reduce loop with no iterators\n");
 
-        if (PyArray_NDIM(op[0]) != PyArray_NDIM(op[1]) ||
-                !PyArray_CompareLists(PyArray_DIMS(op[0]),
-                                      PyArray_DIMS(op[1]),
-                                      PyArray_NDIM(op[0]))) {
-            PyErr_SetString(PyExc_ValueError,
-                    "provided out is the wrong size "
-                    "for the accumulation.");
-            goto fail;
-        }
         stride0 = PyArray_STRIDE(op[0], axis);
 
         /* Turn the two items into three for the inner loop */
