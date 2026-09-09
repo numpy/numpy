@@ -706,13 +706,13 @@ def common_type(*arrays):
                 "To find a common type for dtypes or scalar types use "
                 "np.result_type or np.promote_types instead."
             ) from None
-        if iscomplexobj(a):
-            is_complex = True
-        if issubclass(t, _nx.integer):
-            p = 2  # array_precision[_nx.double]
-        else:
-            p = array_precision.get(t)
-            if p is None:
+        is_complex = is_complex or issubclass(t, _nx.complexfloating)
+
+        p = array_precision.get(t)
+        if p is None:
+            if issubclass(t, _nx.integer):
+                p = 2  # array_precision[_nx.double]
+            else:
                 raise TypeError("can't get common type for non-numeric array")
         precision = max(precision, p)
     if is_complex:
