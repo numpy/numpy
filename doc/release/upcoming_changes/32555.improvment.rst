@@ -1,3 +1,1 @@
-Upcasting `bool` in `PyUFunc_DivisionTypeResolver()`
-----------------------------------------------------
-Previously, dividing `timedelta64` array by boolean raised `_UFuncBinaryResolutionError` now boolean is upcasted to int64.
+* Added support for dividing ``timedelta64`` by ``bool``.
