@@ -30,6 +30,7 @@ import pytest
 
 import numpy as np
 import numpy._core._multiarray_tests as _multiarray_tests
+from numpy._core._exceptions import _UFuncNoLoopError
 from numpy._core._rational_tests import rational, rational2
 from numpy._core.multiarray import _get_ndarray_c_version, dot
 from numpy._core.numeric import _dot_fallback, _vdot_fallback
@@ -8828,6 +8829,35 @@ class TestDotFamilyFallback:
         assert_raises(ValueError, np.dot, s, s)
         assert_raises(ValueError, _vdot_fallback, s, s)
         assert_raises(ValueError, np.vdot, s, s)
+
+    def test_dot_scalar_operands_bypass_fallback(self):
+        # `dot` handles a 0-D operand with `multiply` for every dtype, and
+        # casts both operands to their common dtype first.  That must keep
+        # happening for dtypes without a dotfunc: routing them through the
+        # fallback would skip the cast and reach `multiply`'s heterogeneous
+        # loops, so `np.dot` would start repeating strings instead of
+        # raising.  See the `out=` cases below.
+        s = np.array("ab")
+        assert_raises(_UFuncNoLoopError, np.dot, s, 3)
+        assert_raises(_UFuncNoLoopError, np.dot, 3, s)
+        assert_raises(_UFuncNoLoopError, np.dot, s, 3, np.empty((), "U6"))
+        assert_raises(_UFuncNoLoopError, np.dot, 3, s, np.empty((), "U6"))
+
+        b = np.array(b"ab")
+        assert_raises(_UFuncNoLoopError, np.dot, b, 3, np.empty((), "S6"))
+
+        # a dtype that does have a dotfunc behaves the same way, which is
+        # the point: the 0-D path is not special-cased per dtype
+        td = np.array(1, dtype="m8[s]")
+        assert_raises(_UFuncNoLoopError, np.dot, td, td)
+
+    def test_dot_fallback_unsupported_type_is_uniform(self):
+        # A dtype with no dotfunc and no matmul loop reports the same legacy
+        # ValueError whatever the shapes are.
+        s1, s2 = np.array(["a", "b"]), np.array([["a", "b"], ["c", "d"]])
+        for x, y in [(s1, s1), (s1, s2), (s2, s1), (s2, s2)]:
+            assert_raises(ValueError, _dot_fallback, x, y)
+            assert_raises(ValueError, np.dot, x, y)
 
     def test_dot_fallback_noncontiguous_inputs(self):
         a = np.arange(12, dtype=np.float64).reshape(4, 3)

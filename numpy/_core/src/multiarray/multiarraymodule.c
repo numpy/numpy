@@ -1014,18 +1014,6 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     }
     Py_SETREF(typec, NPY_DT_CALL_ensure_canonical(typec));
 
-    if (PyDataType_GetArrFuncs(typec)->dotfunc == NULL) {
-        Py_DECREF(typec);
-        if (npy_cache_import_runtime(
-                "numpy._core.numeric", "_dot_fallback",
-                &_npy_module_state->runtime_imports._dot_fallback) == -1) {
-            return NULL;
-        }
-        return PyObject_CallFunctionObjArgs(
-                _npy_module_state->runtime_imports._dot_fallback, op1, op2,
-                out != NULL ? (PyObject *)out : Py_None, NULL);
-    }
-
     Py_INCREF(typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0,
                                         NPY_ARRAY_ALIGNED, NULL);
@@ -1056,6 +1044,29 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         Py_DECREF(ap1);
         Py_DECREF(ap2);
         return mul_res;
+    }
+
+    if (PyDataType_GetArrFuncs(typec)->dotfunc == NULL) {
+        /*
+         * DTypes without a legacy dotfunc (i.e. all new-style user DTypes)
+         * are served by the matmul gufunc instead.  This is deliberately
+         * checked *after* the 0-D case above: `dot` has always handled 0-D
+         * operands with `multiply` for every dtype, and it casts both to
+         * their common dtype first.  Diverting them into the fallback would
+         * skip that cast and so expose `multiply`'s heterogeneous loops
+         * (e.g. string repetition) where `dot` never allowed them.
+         */
+        Py_DECREF(ap1);
+        Py_DECREF(ap2);
+        Py_DECREF(typec);
+        if (npy_cache_import_runtime(
+                "numpy._core.numeric", "_dot_fallback",
+                &_npy_module_state->runtime_imports._dot_fallback) == -1) {
+            return NULL;
+        }
+        return PyObject_CallFunctionObjArgs(
+                _npy_module_state->runtime_imports._dot_fallback, op1, op2,
+                out != NULL ? (PyObject *)out : Py_None, NULL);
     }
     l = PyArray_DIMS(ap1)[PyArray_NDIM(ap1) - 1];
     if (PyArray_NDIM(ap2) > 1) {

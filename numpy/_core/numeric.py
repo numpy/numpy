@@ -1235,6 +1235,9 @@ def _dot_fallback(a, b, out=None):
             "'a.ndim >= 2 and b.ndim >= 3' for user-defined dtypes; "
             "use 'numpy.tensordot' instead."
         )
+    # ``dot`` itself handles 0-D operands with ``multiply`` before it ever
+    # reaches this fallback, so in practice only the ``matmul`` branch is
+    # used; the 0-D one is kept so the helper stands on its own.
     op = np.multiply if a_ndim == 0 or b_ndim == 0 else np.matmul
     try:
         return op(a, b, out=out)
