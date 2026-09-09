@@ -29,6 +29,7 @@ import numpy as np
 import numpy.linalg._umath_linalg
 from numpy import isfinite, isnan
 from numpy._core import arange, array, array_repr, empty, float32, intp, isnat, ndarray
+from numpy._core._multiarray_umath import _stringdtype_na_is_nan_like
 
 __all__ = [
         'assert_equal', 'assert_almost_equal', 'assert_approx_equal',
@@ -891,15 +892,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         elif isvstring(x) and isvstring(y):
             dt = x.dtype
             if equal_nan and dt == y.dtype and hasattr(dt, 'na_object'):
-                is_nan = (isinstance(dt.na_object, float) and
-                          np.isnan(dt.na_object))
-                bool_errors = 0
-                try:
-                    bool(dt.na_object)
-                except TypeError:
-                    bool_errors = 1
-                if is_nan or bool_errors:
-                    # nan-like NA object
+                if _stringdtype_na_is_nan_like(dt):
                     flagged = func_assert_same_pos(
                         x, y, func=isnan, hasval=x.dtype.na_object)
 

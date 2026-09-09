@@ -4,6 +4,8 @@
 import pytest
 
 import numpy as np
+from numpy._core.tests._natype import pd_NA
+from numpy._core.tests.test_stringdtype import string_list  # noqa: F401
 from numpy import ediff1d, intersect1d, isin, setdiff1d, setxor1d, union1d, unique
 from numpy.dtypes import StringDType
 from numpy.exceptions import AxisError
@@ -342,6 +344,245 @@ class TestSetOps:
         c = isin(a, b)
 
         assert_array_equal(c, ec)
+
+    @pytest.mark.parametrize(
+        "na_object, missing_matches",
+        [
+            pytest.param(None, True, id="None"),
+            pytest.param(np.nan, False, id="nan"),
+            pytest.param(pd_NA, False, id="pandas-NA"),
+            pytest.param("NA", True, id="string"),
+        ],
+    )
+    def test_isin_stringdtype_missing(
+            self, na_object, missing_matches, string_list):
+        dtype = StringDType(na_object=na_object)
+        matched_strings = string_list[::2]
+
+        # The shared fixture includes short and long strings, both with and
+        # without non-ASCII characters.  Extra rows and candidates exercise
+        # the sorting implementation; the largest string is also a match.
+        values = np.array(
+            (string_list + [na_object]) * 20, dtype=dtype
+        )
+        test_values = np.array(
+            matched_strings + [na_object]
+            + [f"unused-{i}" for i in range(30)],
+            dtype=dtype,
+        )
+
+        # Missing values follow the equality semantics of the dtype: None and
+        # string sentinels match themselves, while NaN-like sentinels do not.
+        string_results = [value in matched_strings for value in string_list]
+        expected = np.tile(string_results + [missing_matches], 20)
+        result = np.isin(values, test_values)
+        assert_array_equal(result, expected)
+
+        # ``invert`` is always the logical complement, including for
+        # NaN-like missing values whose equality and inequality are both false.
+        assert_array_equal(
+            np.isin(values, test_values, invert=True),
+            np.invert(expected),
+        )
+
+    def test_isin_stringdtype_without_missing(self, string_list):
+        dtype = StringDType()
+        matched_strings = string_list[::2]
+        values = np.array(string_list * 20, dtype=dtype)
+        test_values = np.array(
+            matched_strings + [f"unused-{i}" for i in range(30)],
+            dtype=dtype,
+        )
+
+        # StringDType has ``hasobject`` set even without a missing-value
+        # sentinel.  Large arrays can still use normal string sorting.
+        string_results = [value in matched_strings for value in string_list]
+        expected = np.tile(string_results, 20)
+        assert_array_equal(np.isin(values, test_values, kind="sort"), expected)
+
+        # Fixed-width Unicode and StringDType promote to a common StringDType,
+        # so either one can supply the values for the same sorting workflow.
+        fixed_values = np.array(string_list * 20, dtype="U")
+        fixed_test_values = np.array(
+            matched_strings + [f"unused-{i}" for i in range(30)], dtype="U"
+        )
+        assert_array_equal(np.isin(fixed_values, test_values), expected)
+        assert_array_equal(np.isin(values, fixed_test_values), expected)
+
+    def test_isin_stringdtype_nan_like_small_test_array(self, string_list):
+        dtype = StringDType(na_object=pd_NA)
+        matched_strings = string_list[::2]
+        values = np.array([pd_NA] + string_list, dtype=dtype)
+        test_values = np.array([pd_NA] + matched_strings, dtype=dtype)
+
+        # Small test arrays use scalar comparisons.  A pandas-like missing
+        # value must be skipped because it is NaN-like and never matches.
+        expected = np.array(
+            [False] + [value in matched_strings for value in string_list]
+        )
+        assert_array_equal(np.isin(values, test_values), expected)
+        assert_array_equal(
+            np.isin(values, test_values, invert=True), np.invert(expected)
+        )
+
+    def test_isin_stringdtype_unsortable_custom_na(self, string_list):
+        class CustomNA:
+            def __eq__(self, other):
+                return isinstance(other, CustomNA)
+
+            def __ne__(self, other):
+                return not self == other
+
+        na_object = CustomNA()
+        dtype = StringDType(na_object=na_object)
+        matched_strings = string_list[::2]
+        values = np.array([na_object] + string_list, dtype=dtype)
+        test_values = np.array(
+            [na_object]
+            + matched_strings
+            + [f"unused-{i}" for i in range(25)],
+            dtype=dtype,
+        )
+
+        # The sentinel cannot be ordered relative to strings.  Filtering it
+        # before sorting preserves its equality-based membership.  These
+        # inputs are genuinely unique, so they also exercise assume_unique.
+        expected = np.array(
+            [True] + [value in matched_strings for value in string_list]
+        )
+        assert_array_equal(
+            np.isin(values, test_values, assume_unique=True), expected
+        )
+
+    def test_isin_stringdtype_empty_non_null_subset(self, string_list):
+        dtype = StringDType(na_object=None)
+        missing = np.array([None] * 40, dtype=dtype)
+        strings = np.array((string_list * 7)[:40], dtype=dtype)
+
+        # Filtering can leave either side of the sorting operation empty.
+        # Missing values still match each other, but never ordinary strings.
+        assert_array_equal(np.isin(missing, missing), np.ones(40, dtype=bool))
+        assert_array_equal(np.isin(missing, strings), np.zeros(40, dtype=bool))
+        assert_array_equal(np.isin(strings, missing), np.zeros(40, dtype=bool))
+
+    def test_isin_incompatible_stringdtype_instances(self, string_list):
+        matched_strings = string_list[::2]
+        values = np.array(
+            string_list + [None], dtype=StringDType(na_object=None)
+        )
+        test_values = np.array(
+            matched_strings
+            + [np.nan]
+            + [f"unused-{i}" for i in range(30)],
+            dtype=StringDType(na_object=np.nan),
+        )
+
+        # Dtypes with different missing-value definitions cannot share the
+        # specialized sorting path, but ordinary strings still compare.
+        expected = [value in matched_strings for value in string_list] + [False]
+        assert_array_equal(np.isin(values, test_values), expected)
+
+    def test_isin_compatible_stringdtype_instances(self, string_list):
+        plain = StringDType()
+        nullable = StringDType(na_object=None)
+        noncoercing = StringDType(na_object=None, coerce=False)
+        matched_strings = string_list[::2]
+        extra_candidates = [f"unused-{i}" for i in range(30)]
+
+        nullable_values = np.array(
+            (string_list + [None]) * 20, dtype=nullable
+        )
+        expected_nullable = np.tile(
+            [value in matched_strings for value in string_list] + [True], 20
+        )
+
+        # Differing coercion settings do not change NA compatibility.  The
+        # shared equality-like missing value therefore matches itself.
+        noncoercing_candidates = np.array(
+            matched_strings + [None] + extra_candidates, dtype=noncoercing
+        )
+        assert_array_equal(
+            np.isin(nullable_values, noncoercing_candidates),
+            expected_nullable,
+        )
+
+        # If only one dtype declares an NA, it supplies the missing-value
+        # semantics for the operation.  This works with the nullable dtype on
+        # either side; a plain array simply has no missing values to match.
+        plain_candidates = np.array(
+            matched_strings + extra_candidates, dtype=plain
+        )
+        expected_without_null_match = np.tile(
+            [value in matched_strings for value in string_list] + [False], 20
+        )
+        assert_array_equal(
+            np.isin(nullable_values, plain_candidates),
+            expected_without_null_match,
+        )
+
+        plain_values = np.array(string_list * 20, dtype=plain)
+        nullable_candidates = np.array(
+            matched_strings + [None] + extra_candidates, dtype=nullable
+        )
+        expected_plain = np.tile(
+            [value in matched_strings for value in string_list], 20
+        )
+        assert_array_equal(
+            np.isin(plain_values, nullable_candidates), expected_plain
+        )
+
+    @pytest.mark.parametrize(
+        "na_object, fixed_missing_matches",
+        [
+            pytest.param(None, False, id="None"),
+            pytest.param(np.nan, False, id="nan"),
+            pytest.param(pd_NA, False, id="pandas-NA"),
+            pytest.param("NA", True, id="string"),
+        ],
+    )
+    def test_isin_stringdtype_and_fixed_unicode(
+            self, na_object, fixed_missing_matches, string_list):
+        dtype = StringDType(na_object=na_object)
+        matched_strings = string_list[::2]
+        extra_candidates = [f"unused-{i}" for i in range(30)]
+        fixed_na = na_object if isinstance(na_object, str) else str(na_object)
+
+        string_values = np.array(
+            (string_list + [na_object]) * 20, dtype=dtype
+        )
+        fixed_candidates = np.array(
+            matched_strings + [fixed_na] + extra_candidates, dtype="U"
+        )
+        expected = np.tile(
+            [value in matched_strings for value in string_list]
+            + [fixed_missing_matches],
+            20,
+        )
+
+        # Fixed-width Unicode has no missing marker.  Its ordinary strings can
+        # still match StringDType values, while only a string-valued sentinel
+        # compares equal to the corresponding fixed-width string.
+        result = np.isin(string_values, fixed_candidates)
+        assert_array_equal(result, expected)
+        assert_array_equal(
+            np.isin(string_values, fixed_candidates, invert=True),
+            np.invert(expected),
+        )
+
+        # The same promotion and missing-value rules apply when the fixed-width
+        # array supplies the values and StringDType supplies the candidates.
+        fixed_values = np.array(
+            (string_list + [fixed_na]) * 20, dtype="U"
+        )
+        string_candidates = np.array(
+            matched_strings + [na_object] + extra_candidates, dtype=dtype
+        )
+        result = np.isin(fixed_values, string_candidates)
+        assert_array_equal(result, expected)
+        assert_array_equal(
+            np.isin(fixed_values, string_candidates, invert=True),
+            np.invert(expected),
+        )
 
     @pytest.mark.parametrize("kind", [None, "sort", "table"])
     def test_isin_invert(self, kind):
