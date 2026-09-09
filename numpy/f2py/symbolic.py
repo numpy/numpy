@@ -293,7 +293,7 @@ class Expr:
         elif self.op is Op.STRING:
             r = self.data[0]
             if self.data[1] != 1:
-                r = self.data[1] + '_' + r
+                r = str(self.data[1]) + '_' + r
             precedence = Precedence.ATOM
         elif self.op is Op.ARRAY:
             r = ', '.join(item.tostring(Precedence.TUPLE, language=language)
