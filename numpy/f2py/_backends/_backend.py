@@ -20,6 +20,7 @@ class Backend(ABC):
         setup_flags,
         remove_build_dir,
         extra_dat,
+        limited_api,
     ):
         self.modulename = modulename
         self.sources = sources
@@ -37,6 +38,7 @@ class Backend(ABC):
         self.setup_flags = setup_flags
         self.remove_build_dir = remove_build_dir
         self.extra_dat = extra_dat
+        self.limited_api = limited_api
 
     @abstractmethod
     def compile(self) -> None:

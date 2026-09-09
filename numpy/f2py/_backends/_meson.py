@@ -33,6 +33,7 @@ class MesonTemplate:
         linker_args: list[str],
         fortran_args: list[str],
         build_type: str,
+        limited_api: str | None,
         python_exe: str,
     ):
         self.modulename = modulename
@@ -62,8 +63,10 @@ class MesonTemplate:
             self.include_substitution,
             self.libraries_substitution,
             self.fortran_args_substitution,
+            self.limited_api_substitution,
         ]
         self.build_type = build_type
+        self.limited_api = limited_api
         self.python_exe = python_exe
         self.indent = " " * 21
 
@@ -137,6 +140,12 @@ class MesonTemplate:
         else:
             self.substitutions["fortran_args"] = ""
 
+    def limited_api_substitution(self) -> None:
+        if self.limited_api:
+            self.substitutions["limited_api_args"] = f"{self.indent}limited_api: '{self.limited_api}',"
+        else:
+            self.substitutions["limited_api_args"] = ""
+
     def generate_meson_build(self):
         for node in self.pipeline:
             node()
@@ -185,6 +194,7 @@ class MesonBackend(Backend):
             self.flib_flags,
             self.fc_flags,
             self.build_type,
+            self.limited_api,
             sys.executable,
         )
         src = meson_template.generate_meson_build()
