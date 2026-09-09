@@ -2336,14 +2336,10 @@ gentype_astype(PyObject *self,
         ((PyArrayObject_fields *)ret)->nd = PyArray_NDIM(temp); 
         ((PyArrayObject_fields *)ret)->descr = to; 
     } 
+    
     int success; 
-    if (((int)casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) { 
-        success = PyArray_AssignArray(ret, temp, NULL, casting); 
-    }
-    else { 
-        success = PyArray_AssignArray(ret, temp, NULL, NPY_UNSAFE_CASTING); 
-    } 
-  
+    success = PyArray_AssignArray(ret, temp, NULL, casting); 
+      
     ((PyArrayObject_fields *)ret)->nd = out_ndim; 
     ((PyArrayObject_fields *)ret)->descr = out_descr; 
     
