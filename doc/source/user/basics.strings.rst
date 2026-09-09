@@ -149,6 +149,13 @@ sort to the end of the array:
   >>> np.sort(arr)
   array(['hello', 'world', nan], dtype=StringDType(na_object=nan))
 
+Comparisons also follow floating-point NaN semantics: equality and ordered
+comparisons involving a NaN-like sentinel return ``False``, while inequality
+returns ``True``.
+
+  >>> arr != "hello"
+  array([False,  True,  True])
+
 String Missing Data Sentinels
 +++++++++++++++++++++++++++++
 

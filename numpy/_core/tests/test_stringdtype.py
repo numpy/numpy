@@ -979,6 +979,74 @@ def test_comparisons(string_list, dtype, op, o_dtype):
     assert_array_equal(res, orres)
 
 
+@pytest.mark.parametrize("op", comparison_operators)
+@pytest.mark.parametrize("step", [1, 2, -1])
+def test_nan_like_comparisons(nan_like_na_object, op, step, coerce, coerce2):
+    na_object = nan_like_na_object
+    left_dtype = StringDType(na_object=na_object, coerce=coerce)
+    right_dtype = StringDType(na_object=na_object, coerce=coerce2)
+    left = np.array([na_object, "a", na_object, "a", "b", "a"],
+                    dtype=left_dtype)[::step]
+    right = np.array(["a", na_object, na_object, "a", "a", "b"],
+                     dtype=right_dtype)[::step]
+    # Numeric NaNs supply the expected semantics for all six comparisons.
+    numeric_left = np.array([np.nan, 0, np.nan, 0, 1, 0])[::step]
+    numeric_right = np.array([0, np.nan, np.nan, 0, 0, 1])[::step]
+
+    assert_array_equal(op(left, right), op(numeric_left, numeric_right))
+    assert_array_equal(op(right, left), op(numeric_right, numeric_left))
+
+    scalar = np.array(na_object, dtype=right_dtype)
+    assert_array_equal(op(left, scalar), op(numeric_left, np.nan))
+    assert_array_equal(op(scalar, left), op(np.nan, numeric_left))
+    assert_array_equal(op(left, "a"), op(numeric_left, 0))
+    assert_array_equal(op("a", left), op(0, numeric_left))
+
+
+@pytest.mark.parametrize("na_object", [None, object()], ids=["None", "object"])
+@pytest.mark.parametrize("op", [np.equal, np.not_equal])
+@pytest.mark.parametrize("step", [1, 2, -1])
+def test_non_string_na_comparisons(dtype, op, step, coerce2):
+    na_object = dtype.na_object
+    right_dtype = StringDType(na_object=na_object, coerce=coerce2)
+    left = np.array(["", na_object, "x", na_object, "", "x"],
+                    dtype=dtype)[::step]
+    right = np.array([na_object, "", na_object, na_object, "", "x"],
+                     dtype=right_dtype)[::step]
+    expected = np.array([False, False, False, True, True, True])[::step]
+    if op is np.not_equal:
+        expected = ~expected
+
+    assert_array_equal(op(left, right), expected)
+    assert_array_equal(op(right, left), expected)
+
+    # A typed scalar must distinguish missing values from empty strings too.
+    scalar = np.array(na_object, dtype=right_dtype)
+    expected = np.array([False, True, False, True, False, False])[::step]
+    if op is np.not_equal:
+        expected = ~expected
+    assert_array_equal(op(left, scalar), expected)
+    assert_array_equal(op(scalar, left), expected)
+
+
+@pytest.mark.parametrize("na_object", [None, object()], ids=["None", "object"])
+@pytest.mark.parametrize("op", [np.equal, np.not_equal])
+@pytest.mark.parametrize("other_dtype", [
+    StringDType(), StringDType(coerce=False), np.dtype("U1"),
+])
+def test_non_string_na_comparisons_without_na(dtype, op, other_dtype):
+    na_object = dtype.na_object
+    left = np.array([na_object, "", "x", na_object],
+                    dtype=dtype)
+    right = np.array(["", "", "x", "x"], dtype=other_dtype)
+    expected = np.array([False, True, True, False])
+    if op is np.not_equal:
+        expected = ~expected
+
+    assert_array_equal(op(left, right), expected)
+    assert_array_equal(op(right, left), expected)
+
+
 def test_isnan(dtype, string_list):
     if not hasattr(dtype, "na_object"):
         pytest.skip("no na support")
@@ -1091,6 +1159,23 @@ def test_sort(dtype, strings, stable):
         arr_sorted = np.array(sorted(strings), dtype=dtype)
 
     test_sort(strings, arr_sorted)
+
+
+@pytest.mark.parametrize("descending", [True, False])
+@pytest.mark.parametrize("size", [2, 40])
+def test_sort_nan_like_stability(nan_like_na_object, descending, size):
+    na = nan_like_na_object
+    dtype = StringDType(na_object=na)
+    for values in [[na] * size, ["b", na, "a", na, "b", na] * size]:
+        arr = np.array(values, dtype=dtype)
+        strings = [i for i, value in enumerate(values) if value is not na]
+        missing = [i for i, value in enumerate(values) if value is na]
+        expected = sorted(strings, key=values.__getitem__, reverse=descending)
+        expected += missing
+
+        assert_array_equal(
+            np.argsort(arr, stable=True, descending=descending), expected,
+        )
 
 
 @pytest.mark.parametrize("strings", SORT_STRINGS)
