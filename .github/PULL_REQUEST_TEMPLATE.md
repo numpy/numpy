@@ -3,7 +3,8 @@
 your pull request (PR). Describe the PR using the questions below as guidance.<br>
 
 What problem does this PR solve? Link any relevant issues and PRs.<br>
-Who benefits from the proposed changes, and how?<br>
+Why are you interested in working on this PR?<br>
+How does the proposed change help you?<br>
 
 Please keep in mind that even seemingly small changes can have unexpected consequences
 for workflows unrelated to the ones you may be familiar with. For this reason, maintainers
@@ -15,9 +16,11 @@ and fill out the AI disclosure section below.
 -->
 
 ### First time committer introduction
-<!-- If you are new to the NumPy community, please introduce yourself and share how you use
-NumPy. It helps us get to know you, understand the context of your contribution, and
-collaborate more effectively during the review process.
+<!-- If you are new to the NumPy contributor community, please introduce yourself and
+share how you use NumPy. It helps us get to know you, understand the context of your
+contribution, and collaborate more effectively during the review process. 2-3
+sentences is plenty, we are not looking for a work history or a measure of your
+expertise.
 
 -->
 
