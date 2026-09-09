@@ -1,0 +1,12 @@
+Poisson sampling is more accurate for large ``lam``
+---------------------------------------------------
+The transformed rejection method used by `numpy.random.Generator.poisson` now
+evaluates the Poisson probability without cancellation. This prevents the
+sampled variance from becoming inaccurate for large values of ``lam``.
+
+As a result, ``Generator.poisson`` and ``Generator.negative_binomial`` (which
+uses Poisson internally) may now return different samples for the same seed.
+
+The legacy `numpy.random.RandomState.poisson` and
+`numpy.random.RandomState.negative_binomial` are not affected: they preserve
+the original behavior, so existing streams remain reproducible.
