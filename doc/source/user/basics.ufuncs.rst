@@ -62,10 +62,12 @@ See :ref:`ufuncs.methods` for more. However, these methods only make sense on
 ufuncs that take two input arguments and return one output argument (so-called
 "scalar" ufuncs since the inner loop operates on a single scalar value).
 Attempting to call these methods on other ufuncs will cause a
-:exc:`ValueError` (or, for :meth:`~numpy.ufunc.reduce` on a ufunc with more
-than one output, a :exc:`TypeError`), unless the ufunc's loop implementation
-registers a dedicated reduction loop, in which case :meth:`~numpy.ufunc.reduce`
-also works for ufuncs with more than one output. See
+:exc:`ValueError` (or, for :meth:`~numpy.ufunc.reduce` and
+:meth:`~numpy.ufunc.accumulate` on a ufunc with more than one output, a
+:exc:`TypeError`), unless the ufunc's loop implementation registers a
+dedicated reduction loop, in which case :meth:`~numpy.ufunc.reduce` and
+:meth:`~numpy.ufunc.accumulate` both work for ufuncs with more than one
+output. See
 :doc:`c-info.reduction-loop-tutorial` for how to add one to a custom ufunc.
 
 For example, :func:`numpy.add` takes two inputs and returns one output,
@@ -83,9 +85,10 @@ reduction loop registered, so calling its methods raises an error::
    TypeError: divmod.reduce is not supported: the resolved loop does not register a reduction loop
 
 For a ufunc with more than one output whose loop *does* register a reduction
-loop, :meth:`~numpy.ufunc.reduce` instead returns a tuple with one array per
-output. Its *initial* argument then also accepts either a single value,
-broadcast to every output, or a tuple with one value per output.
+loop, :meth:`~numpy.ufunc.reduce` and :meth:`~numpy.ufunc.accumulate` instead
+return a tuple with one array per output. The *initial* argument of
+:meth:`~numpy.ufunc.reduce` then also accepts either a single value, broadcast
+to every output, or a tuple with one value per output.
 
 The reduce-like methods all take an *axis* keyword, a *dtype*
 keyword, and an *out* keyword, and the arrays must all have dimension >= 1.
