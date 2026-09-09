@@ -1,0 +1,178 @@
+[workspace]
+name = "numpy"
+version = "2.5.0.dev0"
+description = "Fundamental package for array computing in Python"
+authors = ["NumPy Developers <numpy-dev@python.org>"]
+channels = ["https://prefix.dev/conda-forge"]
+platforms = ["osx-arm64", "linux-64", "win-64"]
+
+### Environments ###
+
+[environments.build]
+features = ["build-deps", "build-task"]
+solve-group = "default"
+
+[environments.test]
+features = ["build-deps", "test-deps", "test-tasks"]
+solve-group = "default"
+
+[environments.ipython]
+features = ["build-deps", "test-deps", "ipython"]
+solve-group = "default"
+
+[environments.lint]
+features = ["lint"]
+no-default-feature = true
+
+[environments.docs]
+features = ["build-deps", "docs"]
+solve-group = "default"
+
+[environments.build-debug]
+features = ["build-deps", "build-debug"]
+solve-group = "debug"
+
+[environments.gdb]
+features = ["build-deps", "test-deps", "gdb"]
+solve-group = "debug"
+
+[environments.lldb]
+features = ["build-deps", "test-deps", "lldb"]
+solve-group = "debug"
+
+[environments.free-threading]
+features = ["build-deps", "free-threading"]
+no-default-feature = true
+
+### Default Dependencies ###
+
+[dependencies]
+spin = ">=0.15,<0.16"
+python = ">=3.11" 
+
+### Building ###
+
+[feature.build-deps.dependencies]
+compilers = ">=1.9.0,<2"
+pkg-config = ">=0.29.2,<0.30"
+ninja = ">=1.12.1,<2"
+meson = ">=1.10.0,<2"
+meson-python = ">=0.18.0"
+openblas = ">=0.3.29,<0.4"
+blas-devel = "*"
+cython = ">=3.2,<4"
+python-build = ">=1.2.2.post1,<2"
+ccache = ">=4.11.2,<5"
+
+[feature.build-deps.target.win-64.dependencies]
+blas-devel = { version = "*", build = "*openblas" }
+
+[feature.build-task.tasks.build]
+cmd = "spin build"
+description = "Build NumPy"
+
+[feature.build-task.tasks.wheel]
+cmd = "python -m build -wnx -Cbuild-dir=build-whl"
+description = "Build a wheel"
+
+### Testing ###
+
+[feature.test-deps.dependencies]
+pytest = "*"
+hypothesis = "*"
+pytest-xdist = "*"
+asv = "*"
+mypy = "==1.19.1"
+
+[feature.test-tasks.tasks.test]
+cmd = "spin test --no-build"
+depends-on = "build"
+description = "Run tests (relies on build)"
+
+[feature.test-tasks.tasks.test-parallel]
+cmd = "spin test --no-build -- -n auto"
+depends-on = "build"
+description = "Run tests in parallel"
+
+[feature.test-tasks.tasks.bench]
+cmd = "spin bench"
+depends-on = "build"
+description = "Run benchmarks"
+
+[feature.test-tasks.tasks.mypy]
+cmd = "spin mypy"
+description = "Run mypy type checking"
+
+### IPython ###
+
+[feature.ipython.dependencies]
+ipython = ">=9.1.0,<10"
+
+[feature.ipython.tasks.ipython]
+cmd = "spin ipython"
+description = "Start IPython shell with NumPy"
+
+### Debugging ###
+
+[feature.build-debug]
+platforms = ["linux-64", "osx-arm64"]
+
+[feature.build-debug.tasks.build-debug]
+cmd = "spin build --build-dir=build-debug --setup-args=-Dc_args='-O0' --setup-args=-Dbuildtype=debug"
+description = "Build NumPy with debug settings"
+
+[feature.gdb]
+platforms = ["linux-64"]
+dependencies = { gdb = "*" }
+tasks = { gdb = { cmd = "spin gdb --build-dir=build-debug", depends-on = "build-debug" } }
+
+[feature.lldb]
+platforms = ["osx-arm64"]
+dependencies = { lldb = "*" }
+tasks = { lldb = { cmd = "spin lldb --build-dir=build-debug", depends-on = "build-debug" } }
+
+### Linting ###
+
+[feature.lint.dependencies]
+ruff = "*"
+pycodestyle = "2.8.*"
+gitpython = ">=3.1.30"
+spin = ">=0.15,<0.16"
+python = ">=3.11"
+
+[feature.lint.tasks]
+lint = { cmd = "spin lint" }
+
+### Documentation ###
+
+[feature.docs.dependencies]
+towncrier = "*"
+sphinx = "==7.2.6"
+numpydoc = "==1.4"
+matplotlib = ">=3.10.1,<4"
+sphinx-copybutton = ">=0.5.2,<0.6"
+sphinx-design = ">=0.6.1,<0.7"
+jupyterlite-sphinx = ">=0.19.1,<0.20"
+jupyterlite-pyodide-kernel = "==0.5.2"
+pydata-sphinx-theme = ">=0.16.1,<0.17"
+scipy = ">=1.16.3,<2"
+breathe = ">=4.36.0,<5"
+doxygen = ">=1.13.2,<2"
+
+[feature.docs.tasks]
+docs = { cmd = "spin docs -j6" }
+open-docs = { cmd = "python -m webbrowser doc/build/html/index.html" }
+
+###Free Threading ###
+
+[feature.free-threading.dependencies]
+python-freethreading = ">=3.14.0,<3.15"
+spin = ">=0.15,<0.16"
+pytest = "*"
+hypothesis = "*"
+pytest-xdist = "*"
+
+[feature.free-threading.tasks]
+build = { cmd = "spin build --build-dir=build-nogil" }
+test = { cmd = "spin test --build-dir=build-nogil" }
+ipython = { cmd = "spin ipython --build-dir=build-nogil" }
