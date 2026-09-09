@@ -49,6 +49,7 @@ from numpy.ma.core import (
     array,
     asarray,
     choose,
+    common_fill_value,
     concatenate,
     conjugate,
     cos,
