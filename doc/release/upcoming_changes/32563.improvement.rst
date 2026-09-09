@@ -1,5 +1,5 @@
 StringDType descriptor hashing with NaN sentinels
------------------------------------------------
+-------------------------------------------------
 ``StringDType`` descriptors with equivalent floating-point NaN sentinels now
 have equal hashes. Previously, distinct NaN objects could produce equal
 descriptors with different hashes, causing dictionary lookups and set
