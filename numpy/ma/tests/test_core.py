@@ -2715,6 +2715,17 @@ class TestFillingValues:
         assert_equal(touched.fill_value, untouched.fill_value)
         assert_equal(touched.fill_value, default_fill_value(touched.dtype))
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
+    def test_fillvalue_reset_on_lossy_float_cast_in_constructor(self):
+        # gh-28255 follow-up: ``MaskedArray.__new__`` re-checks the
+        # fill_value inherited from ``data`` and must fall back as well.
+        a = arange(9.0)
+        a.fill_value  # materialise the default fill_value
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            b = array(a, dtype="int64")
+        assert_equal(b.fill_value, default_fill_value(b.dtype))
+
     def test_fillvalue_kept_on_exact_float_cast(self):
         a = array([1.0, 2.0], mask=[0, 1], fill_value=5.0)
         assert_equal(np.ones_like(a, dtype="int64").fill_value, 5)
