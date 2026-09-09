@@ -2636,6 +2636,9 @@ def astype(x, dtype, /, *, copy=True, device=None):
         array must always be returned. If ``False`` and the specified dtype
         matches the data type of the input array, the input array must be
         returned; otherwise, a newly allocated array must be returned.
+        For immutable scalars, if the specified data type matches the data
+        type of the input, the input scalar is returned regardless of the value
+        of ``copy``.
         Defaults to ``True``.
     device : str, optional
         The device on which to place the returned array. Default: None.
