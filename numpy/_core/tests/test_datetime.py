@@ -1964,6 +1964,12 @@ class TestDateTime:
             # m8 / bool
             assert_equal(tdc / True, tdc)
             assert_equal((tdc / True).dtype, np.dtype('m8[h]'))
+            # m8 / np.bool_
+            assert_equal(tdc / np.True_, tdc)
+            assert_equal((tdc / np.True_).dtype, np.dtype('m8[h]'))
+            # m8 / np.array(True)
+            assert_equal(tdc / np.array(True), tdc)
+            assert_equal((tdc / np.array(True)).dtype, np.dtype('m8[h]'))
             # m8 / m8
             assert_equal(tda / tdb, 6 / 9)
             assert_equal(np.divide(tda, tdb), 6 / 9)
