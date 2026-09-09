@@ -2284,7 +2284,7 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
     npy_int i;
     size_t structsize;
     Py_ssize_t field_count;
-    int src_offset, dst_offset;
+    npy_intp src_offset, dst_offset;
     _field_transfer_data *data;
 
     /*
@@ -2313,7 +2313,7 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
         for (i = 0; i < field_count; ++i) {
             key = PyTuple_GET_ITEM(PyDataType_NAMES(dst_dtype), i);
             tup = PyDict_GetItem(PyDataType_FIELDS(dst_dtype), key); // noqa: borrowed-ref OK
-            if (!PyArg_ParseTuple(tup, "Oi|O", &dst_fld_dtype,
+            if (!PyArg_ParseTuple(tup, "On|O", &dst_fld_dtype,
                                                     &dst_offset, &title)) {
                 PyMem_Free(data);
                 return NPY_FAIL;
@@ -2377,7 +2377,7 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
 
         key = PyTuple_GET_ITEM(PyDataType_NAMES(src_dtype), 0);
         tup = PyDict_GetItem(PyDataType_FIELDS(src_dtype), key); // noqa: borrowed-ref OK
-        if (!PyArg_ParseTuple(tup, "Oi|O",
+        if (!PyArg_ParseTuple(tup, "On|O",
                               &src_fld_dtype, &src_offset, &title)) {
             PyMem_Free(data);
             return NPY_FAIL;
@@ -2429,14 +2429,14 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
     for (i = 0; i < field_count; ++i) {
         key = PyTuple_GET_ITEM(PyDataType_NAMES(dst_dtype), i);
         tup = PyDict_GetItem(PyDataType_FIELDS(dst_dtype), key); // noqa: borrowed-ref OK
-        if (!PyArg_ParseTuple(tup, "Oi|O", &dst_fld_dtype,
+        if (!PyArg_ParseTuple(tup, "On|O", &dst_fld_dtype,
                                                 &dst_offset, &title)) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;
         }
         key = PyTuple_GET_ITEM(PyDataType_NAMES(src_dtype), i);
         tup = PyDict_GetItem(PyDataType_FIELDS(src_dtype), key); // noqa: borrowed-ref OK
-        if (!PyArg_ParseTuple(tup, "Oi|O", &src_fld_dtype,
+        if (!PyArg_ParseTuple(tup, "On|O", &src_fld_dtype,
                                                 &src_offset, &title)) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;

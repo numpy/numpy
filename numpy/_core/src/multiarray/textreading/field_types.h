@@ -62,7 +62,7 @@ typedef struct _field_type {
 
 
 NPY_NO_EXPORT void
-field_types_xclear(int num_field_types, field_type *ft);
+field_types_xclear(npy_intp num_field_types, field_type *ft);
 
 NPY_NO_EXPORT npy_intp
 field_types_create(PyArray_Descr *descr, field_type **ft);
