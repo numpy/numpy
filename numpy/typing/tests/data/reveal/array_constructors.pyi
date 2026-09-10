@@ -29,6 +29,7 @@ _f32_0d: np.float32
 _f32_1d: _Array1D[np.float32]
 _f32_2d: _Array2D[np.float32]
 _f32_3d: _Array3D[np.float32]
+_f64_0d: _Array0D[np.float64]
 _obj_str_1d: _Array1D[np.object_[str]]
 
 _py_b_1d: list[bool]
@@ -167,10 +168,44 @@ assert_type(np.asanyarray(A, dtype="c16"), npt.NDArray[Any])
 
 assert_type(np.ascontiguousarray(A), npt.NDArray[np.float64])
 assert_type(np.ascontiguousarray(B), npt.NDArray[np.float64])
-assert_type(np.ascontiguousarray([1, 1.0]), npt.NDArray[Any])
+assert_type(np.ascontiguousarray(C), _Array1D[np.int_])
 assert_type(np.ascontiguousarray(A, dtype=np.int64), npt.NDArray[np.int64])
 assert_type(np.ascontiguousarray(A, dtype="c16"), npt.NDArray[Any])
+assert_type(np.ascontiguousarray(_f64_0d), _Array1D[np.float64])
+assert_type(np.ascontiguousarray(_f64_0d, dtype=np.int64), _Array1D[np.int64])
+assert_type(np.ascontiguousarray(_f64_0d, dtype="c16"), _Array1D[Any])
+assert_type(np.ascontiguousarray(_f32_0d), _Array1D[np.float32])
 assert_type(np.ascontiguousarray(_f32_1d), _Array1D[np.float32])
+assert_type(np.ascontiguousarray(_f32_2d), _Array2D[np.float32])
+assert_type(np.ascontiguousarray(_f32_3d), _Array3D[np.float32])
+assert_type(np.ascontiguousarray(_f32_1d, dtype=np.float64), _Array1D[np.float64])
+assert_type(np.ascontiguousarray(_f32_1d, dtype="f8"), _Array1D[Any])
+assert_type(np.ascontiguousarray([]), npt.NDArray[Any])
+assert_type(np.ascontiguousarray([[]]), npt.NDArray[Any])
+assert_type(np.ascontiguousarray(True), _Array1D[np.bool_])
+assert_type(np.ascontiguousarray(1), _Array1D[np.int_ | Any])
+assert_type(np.ascontiguousarray(1.0), _Array1D[np.float64 | Any])
+assert_type(np.ascontiguousarray(1j), _Array1D[np.complex128 | Any])
+assert_type(np.ascontiguousarray(_py_b_1d), _Array1D[np.bool_])
+assert_type(np.ascontiguousarray(_py_b_2d), _Array2D[np.bool_])
+assert_type(np.ascontiguousarray(_py_b_3d), _Array3D[np.bool_])
+assert_type(np.ascontiguousarray(_py_i_1d), _Array1D[np.int_])
+assert_type(np.ascontiguousarray(_py_i_2d), _Array2D[np.int_])
+assert_type(np.ascontiguousarray(_py_i_3d), _Array3D[np.int_])
+assert_type(np.ascontiguousarray(_py_f_1d), _Array1D[np.float64])
+assert_type(np.ascontiguousarray(_py_f_2d), _Array2D[np.float64])
+assert_type(np.ascontiguousarray(_py_f_3d), _Array3D[np.float64])
+assert_type(np.ascontiguousarray(_py_c_1d), _Array1D[np.complex128])
+assert_type(np.ascontiguousarray(_py_c_2d), _Array2D[np.complex128])
+assert_type(np.ascontiguousarray(_py_c_3d), _Array3D[np.complex128])
+assert_type(np.ascontiguousarray(1, dtype=np.float32), _Array1D[np.float32])
+assert_type(np.ascontiguousarray(1, dtype="f"), _Array1D[Any])
+assert_type(np.ascontiguousarray(_py_i_1d, dtype=np.float32), _Array1D[np.float32])
+assert_type(np.ascontiguousarray(_py_i_1d, dtype="f4"), _Array1D[Any])
+assert_type(np.ascontiguousarray(_py_i_2d, dtype=np.float32), _Array2D[np.float32])
+assert_type(np.ascontiguousarray(_py_i_2d, dtype="f4"), _Array2D[Any])
+assert_type(np.ascontiguousarray(_py_i_3d, dtype=np.float32), _Array3D[np.float32])
+assert_type(np.ascontiguousarray(_py_i_3d, dtype="f4"), _Array3D[Any])
 
 assert_type(np.asfortranarray(A), npt.NDArray[np.float64])
 assert_type(np.asfortranarray(B), npt.NDArray[np.float64])
