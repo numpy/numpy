@@ -1140,14 +1140,17 @@ cleanup:
 }
 
 static PyObject *
-array_function(PyArrayObject *NPY_UNUSED(self), PyObject *c_args, PyObject *c_kwds)
+array_function(PyArrayObject *NPY_UNUSED(self),
+        PyObject *const *argv, Py_ssize_t len_args, PyObject *kwnames)
 {
+    NPY_PREPARE_ARGPARSER;
     PyObject *func, *types, *args, *kwargs, *result;
-    static char *kwlist[] = {"func", "types", "args", "kwargs", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(
-            c_args, c_kwds, "OOOO:__array_function__", kwlist,
-            &func, &types, &args, &kwargs)) {
+    if (npy_parse_arguments("__array_function__", argv, len_args, kwnames,
+            {"func", NULL, &func},
+            {"types", NULL, &types},
+            {"args", NULL, &args},
+            {"kwargs", NULL, &kwargs}) < 0) {
         return NULL;
     }
     if (!PyTuple_CheckExact(args)) {
@@ -2931,7 +2934,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"__array_function__",
         (PyCFunction)array_function,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
 
     /* for the sys module */
     {"__sizeof__",
