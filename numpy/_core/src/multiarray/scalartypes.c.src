@@ -16,9 +16,12 @@
 #include "npy_pycompat.h"
 
 #include "arraytypes.h"
+#include "array_assign.h"
+#include "array_coercion.h"
 #include "npy_config.h"
 #include "mapping.h"
 #include "ctors.h"
+#include "convert_datatype.h"
 #include "dtypemeta.h"
 #include "descriptor.h"
 #include "usertypes.h"
@@ -34,6 +37,7 @@
 #include "alloc.h"
 #include "npy_import.h"
 #include "dragon4.h"
+#include "npy_argparse.h"
 #include "npy_longdouble.h"
 #include "npy_buffer.h"
 #include "npy_dlpack.h"
@@ -2282,7 +2286,94 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
     }
 }
 
+NPY_NO_EXPORT int
+PyArray_CastingConverterSameValue(PyObject *obj, NPY_CASTING *casting);
 
+static PyObject*
+gentype_astype(PyObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    PyArray_Descr *from = PyArray_DescrFromScalar(self);
+    if (from == NULL) {
+        return NULL;
+    }
+        
+    NPY_PREPARE_ARGPARSER;
+
+    npy_dtype_info dt_info = {NULL, NULL};
+    NPY_CASTING casting = NPY_UNSAFE_CASTING;
+    NPY_ORDER order = NPY_KEEPORDER;
+    NPY_ASTYPECOPYMODE forcecopy = 1;
+    int subok = 1;
+
+    if (npy_parse_arguments("astype", args, len_args, kwnames,
+        {"dtype", &PyArray_DTypeOrDescrConverterRequired, &dt_info},
+        {"|order", &PyArray_OrderConverter, &order},
+        {"|casting", &PyArray_CastingConverterSameValue, &casting},
+        {"|subok", &PyArray_PythonPyIntFromInt, &subok},
+        {"|copy", &PyArray_AsTypeCopyConverter, &forcecopy}) < 0){
+        
+        Py_XDECREF(dt_info.descr);
+        Py_XDECREF(dt_info.dtype);
+        Py_DECREF(from);
+        return NULL;
+    }
+
+    PyArray_Descr *to;
+    PyArrayObject *temp = (PyArrayObject *)PyArray_FromScalar(self, NULL);
+    to = PyArray_AdaptDescriptorToArray(temp, dt_info.dtype, dt_info.descr);
+
+    Py_XDECREF(dt_info.descr);
+    Py_DECREF(dt_info.dtype);    
+
+    if (temp == NULL){
+        Py_DECREF(from);
+        Py_XDECREF(to);
+        return NULL;
+    }
+
+    if (to == NULL){
+        Py_DECREF(from);
+        Py_DECREF(temp);
+        return NULL;
+    }
+    
+    int equiv = (to != NULL) && PyArray_EquivTypes(from, to);
+    Py_DECREF(from);
+    if(equiv){
+        if ((forcecopy == 0) | (! PyArray_IsScalar(self, Void))){
+            Py_DECREF(to);
+            Py_DECREF(temp);
+            return Py_NewRef(self);
+        }  
+    }
+
+    PyArrayObject *ret = temp;
+    Py_INCREF(to);
+    ret = (PyArrayObject *)PyArray_NewLikeArray(temp, order, to, subok);
+
+    int out_ndim = PyArray_NDIM(ret); 
+    PyArray_Descr *out_descr = PyArray_DESCR(ret); 
+    if (out_ndim != PyArray_NDIM(temp)) { 
+        ((PyArrayObject_fields *)ret)->nd = PyArray_NDIM(temp); 
+        ((PyArrayObject_fields *)ret)->descr = to; 
+    } 
+     
+    int success = PyArray_AssignArray(ret, temp, NULL, casting); 
+      
+    ((PyArrayObject_fields *)ret)->nd = out_ndim; 
+    ((PyArrayObject_fields *)ret)->descr = out_descr; 
+    
+    Py_DECREF(temp);
+    Py_DECREF(to);
+
+    if (success < 0) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+
+    return PyArray_Return(ret);
+}
 /*
  * These gentype_* functions take keyword arguments.
  * The proper flag is METH_FASTCALL | METH_KEYWORDS.
@@ -2291,7 +2382,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
  *
  * #name = take, getfield, put, repeat, tofile, mean, trace, diagonal, clip,
  *         std, var, sum, cumsum, prod, cumprod, compress, sort, argsort,
- *         round, argmax, argmin, max, min, any, all, astype, resize,
+ *         round, argmax, argmin, max, min, any, all, resize,
  *         reshape, choose, tobytes, copy, searchsorted, view,
  *         flatten, ravel, squeeze#
  */
