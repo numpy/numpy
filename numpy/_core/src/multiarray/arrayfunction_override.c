@@ -513,7 +513,8 @@ try_reduction(PyArray_ArrayFunctionDispatcherObject *self,
          * implementation, which may provide a fallback (e.g. `minmax` reducing
          * via `min`/`max`).  Any other error propagates.
          */
-        if (PyErr_ExceptionMatches(npy_static_pydata._UFuncNoLoopError)) {
+        if (PyErr_ExceptionMatches(
+                _npy_module_state->static_pydata._UFuncNoLoopError)) {
             PyErr_Clear();
             return 0;
         }
