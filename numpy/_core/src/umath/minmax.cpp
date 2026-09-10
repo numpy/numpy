@@ -24,13 +24,12 @@
 #include "loops.h"
 #include "minmax.h"
 
-#include "loops_minmax.dispatch.h"
-
 
 /*
  * `get_reduction_loop` slot for `minimummaximum`: return the dedicated
  * (nout+1)->nout reduction loop for the resolved dtype.
  */
+#include "loops_minmax.dispatch.h"
 static int
 minimummaximum_get_reduction_loop(
         PyArrayMethod_Context *context,
@@ -134,9 +133,6 @@ init_minimummaximum(PyObject *umath)
             goto fail;
         }
         if (info == Py_None || !PyObject_TypeCheck(info, &PyArrayMethod_Type)) {
-            if (info == Py_None) {
-                Py_DECREF(info);
-            }
             PyErr_SetString(PyExc_RuntimeError,
                     "internal NumPy error: minimummaximum loop not found");
             goto fail;
