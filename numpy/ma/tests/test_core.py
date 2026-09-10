@@ -2726,6 +2726,17 @@ class TestFillingValues:
             b = array(a, dtype="int64")
         assert_equal(b.fill_value, default_fill_value(b.dtype))
 
+    def test_fillvalue_user_given_still_raises_in_constructor(self):
+        a = arange(9.0)
+        with pytest.raises(TypeError):
+            array(a, fill_value=1e20, dtype="int64")
+
+    def test_fillvalue_reset_on_object_to_float_in_constructor(self):
+        a = array([1, 2, 3], dtype=object)
+        assert_equal(a.fill_value, '?')
+        b = array(a, dtype=float)
+        assert_equal(b.fill_value, default_fill_value(b.dtype))
+
     def test_fillvalue_kept_on_exact_float_cast(self):
         a = array([1.0, 2.0], mask=[0, 1], fill_value=5.0)
         assert_equal(np.ones_like(a, dtype="int64").fill_value, 5)
