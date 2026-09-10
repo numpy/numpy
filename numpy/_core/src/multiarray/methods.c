@@ -159,17 +159,19 @@ array_fill(PyArrayObject *self, PyObject *args)
 }
 
 static PyObject *
-array_put(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_put(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *indices, *values;
     NPY_CLIPMODE mode = NPY_RAISE;
-    static char *kwlist[] = {"indices", "values", "mode", NULL};
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O&:put", kwlist,
-                                     &indices,
-                                     &values,
-                                     PyArray_ClipmodeConverter, &mode))
+    if (npy_parse_arguments("put", args, len_args, kwnames,
+            {"indices", NULL, &indices},
+            {"values", NULL, &values},
+            {"|mode", &PyArray_ClipmodeConverter, &mode}) < 0) {
         return NULL;
+    }
     return PyArray_PutTo(self, values, indices, mode);
 }
 
@@ -443,16 +445,16 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
 }
 
 static PyObject *
-array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_getfield(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-
     PyArray_Descr *dtype = NULL;
     int offset = 0;
-    static char *kwlist[] = {"dtype", "offset", 0};
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|i:getfield", kwlist,
-                                     PyArray_DescrConverter, &dtype,
-                                     &offset)) {
+    if (npy_parse_arguments("getfield", args, len_args, kwnames,
+            {"dtype", &PyArray_DescrConverter, &dtype},
+            {"|offset", &PyArray_PythonPyIntFromInt, &offset}) < 0) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -619,13 +621,14 @@ array_tolist(PyArrayObject *self, PyObject *args)
 
 
 static PyObject *
-array_tobytes(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_tobytes(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     NPY_ORDER order = NPY_CORDER;
-    static char *kwlist[] = {"order", NULL};
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&:tobytes", kwlist,
-                                     PyArray_OrderConverter, &order)) {
+    if (npy_parse_arguments("tobytes", args, len_args, kwnames,
+            {"|order", &PyArray_OrderConverter, &order}) < 0) {
         return NULL;
     }
     return PyArray_ToString(self, order);
@@ -1226,14 +1229,16 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-array_repeat(PyArrayObject *self, PyObject *args, PyObject *kwds) {
+array_repeat(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
     PyObject *repeats;
     int axis = NPY_RAVEL_AXIS;
-    static char *kwlist[] = {"repeats", "axis", NULL};
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&:repeat", kwlist,
-                                     &repeats,
-                                     PyArray_AxisConverter, &axis)) {
+    if (npy_parse_arguments("repeat", args, len_args, kwnames,
+            {"repeats", NULL, &repeats},
+            {"|axis", &PyArray_AxisConverter, &axis}) < 0) {
         return NULL;
     }
     return PyArray_Return((PyArrayObject *)PyArray_Repeat(self, repeats, axis));
@@ -2554,17 +2559,18 @@ array_variance(PyArrayObject *self,
 }
 
 static PyObject *
-array_compress(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_compress(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     int axis = NPY_RAVEL_AXIS;
     PyObject *condition;
     PyArrayObject *out = NULL;
-    static char *kwlist[] = {"condition", "axis", "out", NULL};
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&:compress", kwlist,
-                                     &condition,
-                                     PyArray_AxisConverter, &axis,
-                                     PyArray_OutputConverter, &out)) {
+    if (npy_parse_arguments("compress", args, len_args, kwnames,
+            {"condition", NULL, &condition},
+            {"|axis", &PyArray_AxisConverter, &axis},
+            {"|out", &PyArray_OutputConverter, &out}) < 0) {
         return NULL;
     }
 
@@ -2657,16 +2663,17 @@ array_conjugate(PyArrayObject *self, PyObject *args)
 
 
 static PyObject *
-array_diagonal(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_diagonal(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     int axis1 = 0, axis2 = 1, offset = 0;
-    static char *kwlist[] = {"offset", "axis1", "axis2", NULL};
     PyArrayObject *ret;
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iii:diagonal", kwlist,
-                                     &offset,
-                                     &axis1,
-                                     &axis2)) {
+    if (npy_parse_arguments("diagonal", args, len_args, kwnames,
+            {"|offset", &PyArray_PythonPyIntFromInt, &offset},
+            {"|axis1", &PyArray_PythonPyIntFromInt, &axis1},
+            {"|axis2", &PyArray_PythonPyIntFromInt, &axis2}) < 0) {
         return NULL;
     }
 
@@ -2706,15 +2713,16 @@ array_ravel(PyArrayObject *self,
 
 
 static PyObject *
-array_round(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_round(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     int decimals = 0;
     PyArrayObject *out = NULL;
-    static char *kwlist[] = {"decimals", "out", NULL};
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iO&:round", kwlist,
-                                     &decimals,
-                                     PyArray_OutputConverter, &out)) {
+    if (npy_parse_arguments("round", args, len_args, kwnames,
+            {"|decimals", &PyArray_PythonPyIntFromInt, &decimals},
+            {"|out", &PyArray_OutputConverter, &out}) < 0) {
         return NULL;
     }
 
@@ -2997,7 +3005,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"compress",
         (PyCFunction)array_compress,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"conj",
         (PyCFunction)array_conjugate,
         METH_VARARGS, NULL},
@@ -3015,7 +3023,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"diagonal",
         (PyCFunction)array_diagonal,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"dot",
         (PyCFunction)array_dot,
         METH_FASTCALL | METH_KEYWORDS, NULL},
@@ -3027,7 +3035,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"getfield",
         (PyCFunction)array_getfield,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"item",
         (PyCFunction)array_toscalar,
         METH_VARARGS, NULL},
@@ -3051,13 +3059,13 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"put",
         (PyCFunction)array_put,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"ravel",
         (PyCFunction)array_ravel,
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"repeat",
         (PyCFunction)array_repeat,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"reshape",
         (PyCFunction)array_reshape,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -3066,7 +3074,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"round",
         (PyCFunction)array_round,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"searchsorted",
         (PyCFunction)array_searchsorted,
         METH_FASTCALL | METH_KEYWORDS, NULL},
@@ -3096,7 +3104,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"tobytes",
         (PyCFunction)array_tobytes,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"tofile",
         (PyCFunction)array_tofile,
         METH_VARARGS | METH_KEYWORDS, NULL},
