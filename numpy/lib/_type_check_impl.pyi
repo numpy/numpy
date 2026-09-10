@@ -1,4 +1,4 @@
-from collections.abc import Container, Iterable
+from collections.abc import Container, Iterable, Sequence
 from typing import Any, Literal as L, Protocol, overload, type_check_only
 from typing_extensions import deprecated
 
@@ -39,6 +39,9 @@ type _ToReal = _Real | np.bool
 type _InexactMax32 = np.inexact[_32Bit] | np.float16
 type _NumberMax64 = np.number[_64Bit] | np.number[_32Bit] | np.number[_16Bit] | np.integer
 
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+
 @type_check_only
 class _HasReal[T](Protocol):
     @property
@@ -59,11 +62,27 @@ class _HasDType[ScalarT: np.generic](Protocol):
 def mintypecode(typechars: Iterable[str | ArrayLike], typeset: str | Container[str] = "GDFgdf", default: str = "d") -> str: ...
 
 #
-@overload
+@overload  # T.real
 def real[T](val: _HasReal[T]) -> T: ...
-@overload
+@overload  # 1d bool
+def real(val: list[bool]) -> _Array1D[np.bool]: ...
+@overload  # 1d int
+def real(val: list[int]) -> _Array1D[np.int_]: ...
+@overload  # 1d float
+def real(val: list[float]) -> _Array1D[np.float64]: ...
+@overload  # 1d complex
+def real(val: list[complex]) -> _Array1D[np.float64]: ...
+@overload  # 2d bool
+def real(val: Sequence[list[bool]]) -> _Array2D[np.bool]: ...
+@overload  # 2d int
+def real(val: Sequence[list[int]]) -> _Array2D[np.int_]: ...
+@overload  # 2d float
+def real(val: Sequence[list[float]]) -> _Array2D[np.float64]: ...
+@overload  # 2d complex
+def real(val: Sequence[list[complex]]) -> _Array2D[np.float64]: ...
+@overload  # Nd T
 def real[RealT: _ToReal](val: _ArrayLike[RealT]) -> NDArray[RealT]: ...
-@overload
+@overload  # fallback
 def real(val: ArrayLike) -> NDArray[Any]: ...
 
 #
