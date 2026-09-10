@@ -833,8 +833,7 @@ def _isin(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
         if ar2.dtype == bool:
             ar2 = ar2.astype(np.uint8)
 
-        ar2_min = int(np.min(ar2))
-        ar2_max = int(np.max(ar2))
+        ar2_min, ar2_max = map(int, np.minmax(ar2))
 
         ar2_range = ar2_max - ar2_min
 
