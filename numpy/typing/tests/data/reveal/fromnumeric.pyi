@@ -225,10 +225,15 @@ assert_type(np.resize(AR_b, (5, 5)), np.ndarray[tuple[int, int], np.dtype[np.boo
 assert_type(np.resize(AR_f4, (5, 5)), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 
 assert_type(np.squeeze(b), np.bool)
-assert_type(np.squeeze(f4), np.float32)
-assert_type(np.squeeze(f), npt.NDArray[Any])
 assert_type(np.squeeze(AR_b), npt.NDArray[np.bool])
+assert_type(np.squeeze(AR_i8_0d), np.ndarray[tuple[()], np.dtype[np.int64]])
+assert_type(np.squeeze(f4), np.float32)
+assert_type(np.squeeze(AR_f4_1d, 0), np.ndarray[tuple[()], np.dtype[np.float32]])
+assert_type(np.squeeze(AR_f4_2d, axis=0), _Array1D[np.float32])
+assert_type(np.squeeze(AR_f4_3d, (0,)), _Array2D[np.float32])
+assert_type(np.squeeze(AR_f4_4d, axis=(1,)), _Array3D[np.float32])
 assert_type(np.squeeze(AR_f4), npt.NDArray[np.float32])
+assert_type(np.squeeze(f), npt.NDArray[Any] | Any)
 
 assert_type(np.diagonal(AR_b), npt.NDArray[np.bool])
 assert_type(np.diagonal(AR_f4), npt.NDArray[np.float32])

@@ -1103,13 +1103,35 @@ def resize[AnyShapeT: (_0D, _1D, _2D, _3D, _4D)](a: ArrayLike, new_shape: AnySha
 @overload
 def resize(a: ArrayLike, new_shape: _ShapeLike) -> NDArray[Any]: ...
 
-# TODO: Fix overlapping overloads: https://github.com/numpy/numpy/issues/27032
-@overload
+#
+@overload  # 0d T
 def squeeze[ScalarT: np.generic](a: ScalarT, axis: _ShapeLike | None = None) -> ScalarT: ...
-@overload
-def squeeze[ScalarT: np.generic](a: _ArrayLike[ScalarT], axis: _ShapeLike | None = None) -> NDArray[ScalarT]: ...
-@overload
-def squeeze(a: ArrayLike, axis: _ShapeLike | None = None) -> NDArray[Any]: ...
+@overload  # 0d  (the generic shape catches `tuple[Any, ...]`)
+def squeeze[ShapeT: _0D, DTypeT: np.dtype](
+    a: np.ndarray[ShapeT, DTypeT], axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # 1d, axis=<single>
+def squeeze[DTypeT: np.dtype](
+    a: np.ndarray[_1D, DTypeT], axis: SupportsIndex | tuple[SupportsIndex]
+) -> np.ndarray[_0D, DTypeT]: ...
+@overload  # 2d, axis=<single>
+def squeeze[DTypeT: np.dtype](
+    a: np.ndarray[_2D, DTypeT], axis: SupportsIndex | tuple[SupportsIndex]
+) -> np.ndarray[_1D, DTypeT]: ...
+@overload  # 3d, axis=<single>
+def squeeze[DTypeT: np.dtype](
+    a: np.ndarray[_3D, DTypeT], axis: SupportsIndex | tuple[SupportsIndex]
+) -> np.ndarray[_2D, DTypeT]: ...
+@overload  # 4d, axis=<single>
+def squeeze[DTypeT: np.dtype](
+    a: np.ndarray[_4D, DTypeT], axis: SupportsIndex | tuple[SupportsIndex]
+) -> np.ndarray[_3D, DTypeT]: ...
+@overload  # Nd T
+def squeeze[ScalarT: np.generic](
+    a: NDArray[ScalarT] | _NestedSequence[_SupportsArray[np.dtype[ScalarT]]], axis: _ShapeLike | None = None
+) -> NDArray[ScalarT]: ...
+@overload  # fallback
+def squeeze(a: ArrayLike, axis: _ShapeLike | None = None) -> NDArray[Any] | Any: ...
 
 # keep in sync with `ma.core.diagonal`
 @overload  # ?d  (workaround)
