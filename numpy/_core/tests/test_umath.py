@@ -4908,6 +4908,16 @@ class TestSubclass:
 
 class TestFrompyfunc:
 
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    def test_identity_refcount(self):
+        identity = object()
+        count = sys.getrefcount(identity)
+
+        ufunc = np.frompyfunc(np.add, 2, 1, identity=identity)
+        assert sys.getrefcount(identity) == count + 1
+        del ufunc
+        assert sys.getrefcount(identity) == count
+
     def test_identity(self):
         def mul(a, b):
             return a * b
