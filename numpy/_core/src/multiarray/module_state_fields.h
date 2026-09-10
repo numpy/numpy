@@ -5,8 +5,8 @@
  * Field lists for the PyObject members of multiarray_umath_state, used to
  * expand the module traverse and clear functions.
  *
- * interned_str.errmode_strings is an array, so it is handled separately at
- * each use site.
+ * interned_str.errmode_strings and interned_str.scalar_method_names are
+ * arrays, handled separately at each use site.
  */
 
 #ifdef __cplusplus
@@ -284,6 +284,22 @@ extern "C" {
 #define NPY_FIELD_COUNT(list) (0 list(NPY_FIELD_COUNT_ONE))
 
 #define NPY_ERRMODE_STRING_COUNT 6
+
+/* Names of the 0-d array methods the scalars forward to; the forwarders in
+ * `scalartypes.c.src` are generated from this list too. */
+#define NPY_SCALAR_METHOD_NAMES(F)                               \
+    F(__copy__)     F(__deepcopy__) F(all)          F(any)       \
+    F(argmax)       F(argmin)       F(argsort)      F(astype)    \
+    F(choose)       F(clip)         F(compress)     F(conj)      \
+    F(conjugate)    F(copy)         F(cumprod)      F(cumsum)    \
+    F(diagonal)     F(fill)         F(flatten)      F(getfield)  \
+    F(item)         F(max)          F(mean)         F(min)       \
+    F(nonzero)      F(prod)         F(put)          F(ravel)     \
+    F(repeat)       F(reshape)      F(resize)       F(round)     \
+    F(searchsorted) F(sort)         F(squeeze)      F(std)       \
+    F(sum)          F(swapaxes)     F(take)         F(tobytes)   \
+    F(tofile)       F(tolist)       F(trace)        F(transpose) \
+    F(var)          F(view)
 
 #ifdef __cplusplus
 }
