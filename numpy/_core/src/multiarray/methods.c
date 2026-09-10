@@ -176,46 +176,52 @@ array_put(PyArrayObject *self,
 }
 
 static PyObject *
-array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_reshape(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    static char *keywords[] = {"order", "copy", NULL};
+    NPY_PREPARE_ARGPARSER;
     PyArray_Dims newshape;
     PyObject *ret;
     NPY_ORDER order = NPY_CORDER;
     NPY_COPYMODE copy = NPY_COPY_IF_NEEDED;
-    Py_ssize_t n = PyTuple_Size(args);
 
-    if (!NpyArg_ParseKeywords(kwds, "|$O&O&", keywords,
-                PyArray_OrderConverter, &order,
-                PyArray_CopyConverter, &copy)) {
-        return NULL;
-    }
-
-    if (n <= 1) {
-        if (n != 0 && PyTuple_GET_ITEM(args, 0) == Py_None) {
-            return PyArray_View(self, NULL, NULL);
-        }
-        if (!PyArg_ParseTuple(args, "O&:reshape", PyArray_IntpConverter,
-                              &newshape)) {
+    if (kwnames != NULL) {
+        /* keyword only, and stored after the positional arguments */
+        if (npy_parse_arguments("reshape", args + len_args, 0, kwnames,
+                {"$order", &PyArray_OrderConverter, &order},
+                {"$copy", &PyArray_CopyConverter, &copy}) < 0) {
             return NULL;
         }
     }
+
+    if (len_args == 1) {
+        if (args[0] == Py_None) {
+            return PyArray_View(self, NULL, NULL);
+        }
+        if (!PyArray_IntpConverter(args[0], &newshape)) {
+            return NULL;
+        }
+    }
+    else if (len_args == 0) {
+        PyErr_SetString(PyExc_TypeError,
+                "reshape() takes exactly 1 argument (0 given)");
+        return NULL;
+    }
     else {
-        if (!PyArray_IntpConverter(args, &newshape)) {
-            if (!PyErr_Occurred()) {
-                PyErr_SetString(PyExc_TypeError,
-                                "invalid shape");
-            }
-            goto fail;
+        /* shape given as separate integers */
+        PyObject *shape = PyTuple_FromArray(args, len_args);
+        if (shape == NULL) {
+            return NULL;
+        }
+        int converted = PyArray_IntpConverter(shape, &newshape);
+        Py_DECREF(shape);
+        if (!converted) {
+            return NULL;
         }
     }
     ret = _reshape_with_copy_arg(self, &newshape, order, copy);
     npy_free_cache_dim_obj(newshape);
     return ret;
-
- fail:
-    npy_free_cache_dim_obj(newshape);
-    return NULL;
 }
 
 static PyObject *
@@ -3068,7 +3074,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"reshape",
         (PyCFunction)array_reshape,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"resize",
         (PyCFunction)array_resize,
         METH_VARARGS | METH_KEYWORDS, NULL},
