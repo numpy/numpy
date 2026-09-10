@@ -2320,7 +2320,7 @@ def masked_object(x, value, copy=True, shrink=True):
     else:
         condition = umath.equal(np.asarray(x), value)
         mask = nomask
-    mask = mask_or(mask, make_mask(condition, shrink=shrink))
+    mask = mask_or(mask, make_mask(condition, shrink=shrink), shrink=shrink)
     return masked_array(x, mask=mask, copy=copy, fill_value=value)
 
 
@@ -3039,9 +3039,12 @@ class MaskedArray(ndarray):
             _optinfo.update(getattr(obj, '__dict__', {}))
         _fill_value = getattr(obj, '_fill_value', None)
         if _fill_value is not None and getattr(obj, 'dtype', None) != self.dtype:
+            # _check_fill_value does not raise when a float overflows an
+            # integer dtype; that failure only shows up as an FP error.
             try:
-                _fill_value = _check_fill_value(_fill_value, self.dtype)
-            except (TypeError, ValueError, OverflowError):
+                with np.errstate(invalid='raise'):
+                    _fill_value = _check_fill_value(_fill_value, self.dtype)
+            except (TypeError, ValueError, OverflowError, FloatingPointError):
                 _fill_value = None
         _dict = {'_fill_value': _fill_value,
                      '_hardmask': getattr(obj, '_hardmask', False),
