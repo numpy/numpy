@@ -31,3 +31,13 @@
 #23 0xffffb1c61b44 in initialize_static_globals ../numpy/_core/src/multiarray/npy_static_data.c:124
 
 leak:initialize_static_globals
+
+# The same two leaks are also reached through more deeply nested Python
+# imports. Those stacks exhaust malloc_context_size (30 by default) about
+# three import levels in, while still inside CPython's import machinery, so
+# initialize_static_globals is never recorded and the suppression above cannot
+# match. Raising malloc_context_size only moves that cliff, since the depth
+# depends on how deeply nested the importing test module is. Match on
+# fill_time instead: it sits at frame #2 regardless of depth, and it allocates
+# nothing but the float timestamps of an os.stat() result.
+leak:fill_time
