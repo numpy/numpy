@@ -1629,16 +1629,78 @@ class TestFromDTypeAttribute:
         with pytest.raises(ValueError):
             np.dtype(dt_instance)
 
-    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
     def test_void_subtype(self):
         class dt(np.void):
-            # This code path is fully untested before, so it is unclear
-            # what this should be useful for. Note that if np.void is used
-            # numpy will think we are deallocating a base type [1.17, 2019-02].
+            # Note that if np.void is used numpy will think we are
+            # deallocating a base type [1.17, 2019-02].
             dtype = np.dtype("f,f")
 
-        np.dtype(dt)
-        np.dtype(dt(1))
+        # the result inherits the fields of the `.dtype` attribute
+        res = np.dtype(dt)
+        assert res.names == ('f0', 'f1')
+        assert res.itemsize == dt.dtype.itemsize
+        assert res.type is dt
+        assert np.dtype(dt(1)) == dt.dtype
+
+        if HAS_REFCOUNT:
+            # this used to leak one reference to the attribute per call.
+            # Count outside the `assert`: pytest's assertion rewriting
+            # hoists `dt.dtype` and would hold a reference of its own.
+            expected = sys.getrefcount(dt.dtype)
+            for _ in range(20):
+                np.dtype(dt)
+            count = sys.getrefcount(dt.dtype)
+            assert count == expected
+
+    def test_void_subtype_subarray(self):
+        # subarray info is inherited by copy; the attribute itself
+        # must not be mutated (its subarray used to be stolen)
+        class dt(np.void):
+            dtype = np.dtype("(2,)f4")
+
+        res = np.dtype(dt)
+        assert res.subdtype == (np.dtype("f4"), (2,))
+        assert res.itemsize == dt.dtype.itemsize
+        assert dt.dtype.subdtype == (np.dtype("f4"), (2,))
+
+    def test_void_subtype_non_void_attribute(self):
+        # A non-void `.dtype` attribute only contributes its itemsize
+        class dt(np.void):
+            dtype = np.dtype("f8")
+
+        res = np.dtype(dt)
+        assert res.itemsize == 8
+        assert res.names is None
+        assert res.subdtype is None
+        assert res.char == "V"
+
+    @pytest.mark.leaks_references(reason="dynamically creates custom dtype.")
+    @pytest.mark.thread_unsafe(
+        reason="crashes when GIL disabled, dtype setup is thread-unsafe",
+    )
+    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
+    def test_void_subtype_structured_user_dtype(self):
+        # A legacy user dtype is not NPY_VOID but can still be structured
+        # (see `PyArray_RegisterDataType`), so its fields are inherited too.
+        class mytype:
+            pass
+
+        user_dtype = create_custom_field_dtype(
+                np.dtype([("field", object)]), mytype, 0)
+        assert user_dtype.num != np.dtype("V").num
+        assert user_dtype.names == ("field",)
+
+        class dt(np.void):
+            dtype = user_dtype
+
+        res = np.dtype(dt)
+        assert res.names == ("field",)
+        assert res.fields["field"][0] == np.dtype(object)
+        assert res.itemsize == user_dtype.itemsize
+        assert res.alignment == user_dtype.alignment
+        # the flags must stay consistent with the inherited fields
+        assert res.hasobject
+        assert res.flags == user_dtype.flags
 
     def test_void_subtype_recursive(self):
         # Used to recurse, but dtype is now enforced to be a dtype instance
