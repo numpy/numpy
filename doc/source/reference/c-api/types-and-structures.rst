@@ -71,23 +71,30 @@ PyArray_Type and PyArrayObject
    member of this structure contains a pointer to the :c:data:`PyArray_Type`
    typeobject.
 
-.. c:type:: PyArrayObject
-            NPY_AO
+.. c:type:: PyArrayObject_fields
 
-   The :c:type:`PyArrayObject` C-structure contains all of the required
-   information for an array. All instances of an ndarray (and its
-   subclasses) will have this structure.  For future compatibility,
-   these structure members should normally be accessed using the
-   provided macros. If you need a shorter name, then you can make use
-   of :c:type:`NPY_AO` (deprecated) which is defined to be equivalent to
-   :c:type:`PyArrayObject`. Direct access to the struct fields are
-   deprecated. Use the ``PyArray_*(arr)`` form instead.
-   As of NumPy 1.20, the size of this struct is not considered part of
-   the NumPy ABI (see note at the end of the member list).
+   An implementation detail for accessing the :c:data:`PyArrayObject` struct.
+   You should use :c:data:`PyArrayObject` to ensure code compatibility and stability.
+
+.. c:type:: PyArrayObject
+
+   .. deprecated:: 1.7
+      Use ``NPY_AO`` for a shorter name.
+
+   Represents a NumPy array object in the C API, contains all of the required
+   information for an array.
+
+   To hide the implementation details, only the Python struct HEAD is exposed.
+   Direct access to the struct fields is deprecated;
+   instead, use the ``PyArray_*(*arr)`` functions (such as :c:func:`PyArray_NDIM`).
+
+   As of NumPy 1.20, the size of this struct is not considered part of the NumPy ABI
+   (see the note below).
+
 
    .. code-block:: c
 
-      typedef struct PyArrayObject {
+      typedef struct{
           PyObject_HEAD
           char *data;
           int nd;
@@ -97,6 +104,7 @@ PyArray_Type and PyArrayObject
           PyArray_Descr *descr;
           int flags;
           PyObject *weakreflist;
+          PyObject *mem_handler;
           /* version dependent private members */
       } PyArrayObject;
 
@@ -180,6 +188,19 @@ PyArray_Type and PyArrayObject
 
        This member allows array objects to have weak references (using the
        weakref module).
+
+   .. c:member:: PyObject *mem_handler
+
+   .. versionadded:: 1.22
+
+   A pointer to a ``PyObject`` that serves as a :c:data:`PyDataMem_Handler`.
+   This allows custom memory management policies for each array object,
+   enabling the use of user-defined memory allocation and deallocation routines
+   instead of the standard `malloc`, `calloc`, `realloc`, and `free` functions.
+
+   Accessed through :c:data:`PyArray_HANDLER`.
+   For setting or retrieving the current memory management policy,
+   see the `PyDataMem_SetHandler` and `PyDataMem_GetHandler` functions.
 
    .. note::
 
