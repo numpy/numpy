@@ -103,7 +103,7 @@ class TestArithmetic:
 
     def test_polydiv(self):
         # check zero division
-        assert_raises(ZeroDivisionError, poly.polydiv, [1], [0])
+        assert_raises_regex(ZeroDivisionError, "zero polynomial", poly.polydiv, [1], [0])
 
         # check scalar division
         quo, rem = poly.polydiv([2], [2])
