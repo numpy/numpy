@@ -6185,15 +6185,13 @@ class MaskedArray(ndarray):
                     dtype=uint8)
         """
         if out is None:
-            result = self.max(axis=axis, fill_value=fill_value,
-                              keepdims=keepdims)
-            result -= self.min(axis=axis, fill_value=fill_value,
-                               keepdims=keepdims)
+            min_value, result = minmax(self, axis=axis, fill_value=fill_value,
+                                       keepdims=keepdims)
+            result -= min_value
             return result
-        out.flat = self.max(axis=axis, out=out, fill_value=fill_value,
-                            keepdims=keepdims)
-        min_value = self.min(axis=axis, fill_value=fill_value,
-                             keepdims=keepdims)
+        min_value, max_value = minmax(self, axis=axis, out=(None, out),
+                                      fill_value=fill_value, keepdims=keepdims)
+        out.flat = max_value
         np.subtract(out, min_value, out=out, casting='unsafe')
         return out
 
