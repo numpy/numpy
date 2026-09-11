@@ -422,9 +422,10 @@ real-world implementation, like the built-in :func:`numpy.add` or a fuller
   It is registered alongside the reduction loop, by adding this entry to the
   ``slots`` array above:
   ``{NPY_METH_get_multi_reduction_initials, (void *)&minimummaximum_get_multi_reduction_initials}``.
-- :meth:`~numpy.ufunc.accumulate`, :meth:`~numpy.ufunc.reduceat`, and
-  :meth:`~numpy.ufunc.at` are not supported for multi-output ufuncs yet,
-  only :meth:`~numpy.ufunc.reduce` is.
+- :meth:`~numpy.ufunc.accumulate` and :meth:`~numpy.ufunc.at` are not
+  supported for multi-output ufuncs yet. :meth:`~numpy.ufunc.reduce` and
+  :meth:`~numpy.ufunc.reduceat` both work for them once a reduction loop is
+  registered.
 
 .. seealso::
 

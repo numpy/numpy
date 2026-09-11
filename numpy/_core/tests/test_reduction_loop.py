@@ -383,11 +383,169 @@ class TestReductionLoop:
                 ValueError, match="only supported for functions returning a single"):
             mm.accumulate(a)
 
-    def test_reduceat_raises(self):
-        a = make_array((4,), seed=21)
-        with pytest.raises(
-                ValueError, match="only supported for functions returning a single"):
+    @pytest.mark.parametrize("shape", SHAPES, ids=str)
+    def test_reduceat(self, shape):
+        a = make_array(shape, seed=21)
+        for axis in range(a.ndim):
+            idx = [0] if shape[axis] == 1 else [0, shape[axis] // 2]
+            got_min, got_max = mm.reduceat(a, idx, axis=axis)
+            np.testing.assert_array_equal(
+                got_min, np.minimum.reduceat(a, idx, axis=axis))
+            np.testing.assert_array_equal(
+                got_max, np.maximum.reduceat(a, idx, axis=axis))
+
+    def test_reduceat_returns_tuple(self):
+        a = make_array((6,), seed=21)
+        result = mm.reduceat(a, [0, 3])
+        assert isinstance(result, tuple) and len(result) == 2
+
+    def test_reduceat_single_element(self):
+        a = np.array([7.0])
+        got_min, got_max = mm.reduceat(a, [0])
+        np.testing.assert_array_equal(got_min, [7.0])
+        np.testing.assert_array_equal(got_max, [7.0])
+
+    def test_reduceat_empty(self):
+        a = np.array([], np.float64)
+        got_min, got_max = mm.reduceat(a, [])
+        np.testing.assert_array_equal(got_min, np.minimum.reduceat(a, []))
+        np.testing.assert_array_equal(got_max, np.maximum.reduceat(a, []))
+
+    def test_reduceat_strided(self):
+        a = make_array((12,), seed=21)[::-1]
+        idx = [0, 4, 9]
+        got_min, got_max = mm.reduceat(a, idx)
+        np.testing.assert_array_equal(got_min, np.minimum.reduceat(a, idx))
+        np.testing.assert_array_equal(got_max, np.maximum.reduceat(a, idx))
+
+    @pytest.mark.parametrize("kind", list(SPECIALS))
+    def test_reduceat_specials(self, kind):
+        vals = [1.0, -2.0, 3.5, 0.0, -1.0] + SPECIALS[kind]
+        a = np.array(vals, dtype=np.float64)
+        idx = [0, 2, 5]
+        got_min, got_max = mm.reduceat(a, idx)
+        np.testing.assert_array_equal(got_min, np.minimum.reduceat(a, idx))
+        np.testing.assert_array_equal(got_max, np.maximum.reduceat(a, idx))
+
+    def test_reduceat_identity_ignored(self):
+        # reduceat seeds each segment with its first element, so a registered
+        # identity must not change the result.
+        a = make_array((10,), seed=25)
+        idx = [0, 4, 7]
+        a_mn, a_mx = mm.reduceat(a, idx)
+        i_mn, i_mx = mmi.reduceat(a, idx)
+        np.testing.assert_array_equal(a_mn, i_mn)
+        np.testing.assert_array_equal(a_mx, i_mx)
+
+    @pytest.mark.parametrize("shape", SHAPES, ids=str)
+    def test_reduceat_out_tuple(self, shape):
+        a = make_array(shape, seed=21)
+        for axis in range(a.ndim):
+            idx = [0] if shape[axis] == 1 else [0, shape[axis] // 2]
+            ref_min = np.minimum.reduceat(a, idx, axis=axis)
+            ref_max = np.maximum.reduceat(a, idx, axis=axis)
+            omin = np.empty(ref_min.shape, np.float64)
+            omax = np.empty(ref_max.shape, np.float64)
+            got_min, got_max = mm.reduceat(a, idx, axis=axis, out=(omin, omax))
+            assert got_min is omin and got_max is omax
+            np.testing.assert_array_equal(omin, ref_min)
+            np.testing.assert_array_equal(omax, ref_max)
+
+    @pytest.mark.parametrize("idx", [[0, 0, 3], [3, 1], [0, 5], [5],
+                                     [0, 2, 2, 4], [4, 0]])
+    def test_reduceat_repeated_and_unordered_indices(self, idx):
+        # Segments that are empty or run backwards return the element at the
+        # index itself, which the reduction loop must not fold over.
+        a = make_array((6,), seed=29)
+        got_min, got_max = mm.reduceat(a, idx)
+        np.testing.assert_array_equal(got_min, np.minimum.reduceat(a, idx))
+        np.testing.assert_array_equal(got_max, np.maximum.reduceat(a, idx))
+
+    def test_reduceat_out_none(self):
+        a = make_array((6,), seed=26)
+        got_min, got_max = mm.reduceat(a, [0, 3], out=None)
+        np.testing.assert_array_equal(got_min, np.minimum.reduceat(a, [0, 3]))
+        np.testing.assert_array_equal(got_max, np.maximum.reduceat(a, [0, 3]))
+
+    @pytest.mark.parametrize("which", [0, 1])
+    def test_reduceat_out_partial(self, which):
+        a = make_array((6,), seed=26)
+        idx = [0, 3]
+        given = np.empty(len(idx), np.float64)
+        out = (given, None) if which == 0 else (None, given)
+        got = mm.reduceat(a, idx, out=out)
+        assert got[which] is given
+        np.testing.assert_array_equal(got[0], np.minimum.reduceat(a, idx))
+        np.testing.assert_array_equal(got[1], np.maximum.reduceat(a, idx))
+
+    def test_reduceat_out_overlapping_input(self):
+        a = make_array((8,), seed=28)
+        idx = [0, 4]
+        ref_min = np.minimum.reduceat(a, idx)
+        ref_max = np.maximum.reduceat(a, idx)
+        omin, omax = a[:2], a[2:4]
+        got_min, got_max = mm.reduceat(a, idx, out=(omin, omax))
+        assert got_min is omin and got_max is omax
+        np.testing.assert_array_equal(omin, ref_min)
+        np.testing.assert_array_equal(omax, ref_max)
+
+    def test_reduceat_out_bare_array_raises(self):
+        a = make_array((4,), seed=9)
+        with pytest.raises(TypeError, match="must be a tuple of arrays"):
+            mm.reduceat(a, [0, 2], out=np.empty(2))
+
+    def test_reduceat_out_wrong_length_raises(self):
+        a = make_array((4,), seed=10)
+        with pytest.raises(ValueError, match="exactly one entry per ufunc output"):
+            mm.reduceat(a, [0, 2], out=(np.empty(2),))
+
+    def test_reduceat_dtype_same(self):
+        a = make_array((4,), seed=16)
+        idx = [0, 2]
+        got_min, got_max = mm.reduceat(a, idx, dtype=np.float64)
+        assert got_min.dtype == np.float64 and got_max.dtype == np.float64
+        np.testing.assert_array_equal(
+            got_min, np.minimum.reduceat(a, idx, dtype=np.float64))
+        np.testing.assert_array_equal(
+            got_max, np.maximum.reduceat(a, idx, dtype=np.float64))
+
+    def test_reduceat_dtype_forced_no_loop_raises(self):
+        a = make_array((4,), seed=17)
+        with pytest.raises(TypeError, match="did not contain a loop"):
+            mm.reduceat(a, [0, 2], dtype=np.int64)
+
+    def test_reduceat_dtype_mismatched_tuple_raises(self):
+        a = make_array((4,), seed=18)
+        with pytest.raises(ValueError, match="mismatch in size"):
+            mm.reduceat(a, [0, 2], dtype=(np.int32, np.int64))
+
+    def test_reduceat_unsupported_dtype_raises(self):
+        a = np.array(["a", "b", "c"])
+        with pytest.raises(ValueError, match="could not convert string to float"):
             mm.reduceat(a, [0, 2])
+
+    def test_reduceat_no_reduction_loop_raises(self):
+        with pytest.raises(
+                TypeError, match="resolved loop does not register a reduction loop"):
+            np.divmod.reduceat([1, 2, 3], [0, 1])
+
+    def test_reduceat_out_of_bounds_index_raises(self):
+        a = make_array((4,), seed=21)
+        with pytest.raises(IndexError, match="out-of-bounds"):
+            mm.reduceat(a, [0, 9])
+
+    # `minimummaximum` also registers an object loop, so reduceat is
+    # exercised with refcounted (NPY_ITEM_REFCOUNT) descriptors too.
+    def test_object_reduceat(self):
+        a = np.random.default_rng(31).integers(-50, 51, size=12).astype(object)
+        idx = [0, 3, 7]
+        got_min, got_max = mm.reduceat(a, idx)
+        np.testing.assert_array_equal(got_min, np.minimum.reduceat(a, idx))
+        np.testing.assert_array_equal(got_max, np.maximum.reduceat(a, idx))
+
+    def test_object_reduceat_incomparable_raises(self):
+        with pytest.raises(TypeError):
+            mm.reduceat(np.array([1, "x", 2], dtype=object), [0, 1])
 
     def test_at_raises(self):
         a = make_array((4,), seed=22)
