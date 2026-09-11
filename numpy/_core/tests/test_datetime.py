@@ -1407,7 +1407,7 @@ class TestDateTime:
                             f"Error roundtripping unit {unit}")
 
     def test_astype_object_returns_numpy_scalar(self):
-        # GH#12550: astype(object) should always return numpy datetime64/
+        # gh-12550: astype(object) should always return numpy datetime64/
         # timedelta64 scalars, never Python datetime or raw ints.
         for unit in ["Y", "M", "W", "D", "h", "m", "s",
                      "ms", "us", "ns", "ps", "fs", "as"]:
@@ -1428,7 +1428,7 @@ class TestDateTime:
         assert np.isnat(nat.astype(object)[0])
 
     def test_item_returns_numpy_scalar(self):
-        # GH#12550: .item() should return numpy datetime64/timedelta64
+        # gh-12550: .item() should return numpy datetime64/timedelta64
         # scalars, not Python datetime or raw ints.
         for unit in ["Y", "M", "W", "D", "h", "m", "s",
                      "ms", "us", "ns", "ps", "fs", "as"]:
@@ -1438,21 +1438,17 @@ class TestDateTime:
             td = np.timedelta64(1000, unit)
             assert isinstance(td.item(), np.timedelta64)
 
-    def test_datetime_timedelta_int_float_raises(self):
-        # GH#12550: int()/float() on datetime64/timedelta64 scalars should
-        # raise TypeError rather than returning raw integers.
-        for unit in ["ns", "us", "ms", "s"]:
-            dt = np.datetime64(123, unit)
+    @pytest.mark.parametrize("cls", [np.datetime64, np.timedelta64])
+    @pytest.mark.parametrize("unit", ["us", "ms", "s", "m", "h", "D"])
+    def test_datetime_timedelta_int_float_raises(self, cls, unit):
+        # gh-12550: these have a datetime.datetime/datetime.timedelta
+        # representation, so int()/float() raise as they do for those types.
+        # The values that do not are deprecated, see test_deprecations.
+        for scalar in [cls(123, unit), cls("NaT", unit)]:
             with pytest.raises(TypeError):
-                int(dt)
+                int(scalar)
             with pytest.raises(TypeError):
-                float(dt)
-
-            td = np.timedelta64(123, unit)
-            with pytest.raises(TypeError):
-                int(td)
-            with pytest.raises(TypeError):
-                float(td)
+                float(scalar)
 
     def test_month_truncation(self):
         # Make sure that months are truncating correctly

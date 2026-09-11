@@ -256,6 +256,18 @@ NPY_NO_EXPORT PyObject *
 convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta);
 
 /*
+ * Whether int()/float() on this scalar returned an integer before NumPy 2.6,
+ * i.e. whether it is deprecated rather than a TypeError.  -1 on error.
+ */
+NPY_NO_EXPORT int
+datetime_int_conversion_is_deprecated(
+        npy_datetime dt, PyArray_DatetimeMetaData *meta);
+
+NPY_NO_EXPORT int
+timedelta_int_conversion_is_deprecated(
+        npy_timedelta td, PyArray_DatetimeMetaData *meta);
+
+/*
  * Adjusts a datetimestruct based on a seconds offset. Assumes
  * the current values are valid.
  */

@@ -3074,6 +3074,52 @@ convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta)
 }
 
 /*
+ * Whether int()/float() on this scalar returned an integer before NumPy 2.6,
+ * i.e. whether it is deprecated rather than a TypeError.  -1 on error.
+ */
+NPY_NO_EXPORT int
+datetime_int_conversion_is_deprecated(
+        npy_datetime dt, PyArray_DatetimeMetaData *meta)
+{
+    /* NaT and generic units converted to None, so int() raised. */
+    if (dt == NPY_DATETIME_NAT || meta->base == NPY_FR_GENERIC) {
+        return 0;
+    }
+    if (meta->base > NPY_FR_us) {
+        return 1;
+    }
+
+    npy_datetimestruct dts;
+    if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(meta, dt, &dts) < 0) {
+        return -1;
+    }
+    /* Years out of datetime.datetime's range, and leap seconds. */
+    return dts.year < 1 || dts.year > 9999 || dts.sec == 60;
+}
+
+NPY_NO_EXPORT int
+timedelta_int_conversion_is_deprecated(
+        npy_timedelta td, PyArray_DatetimeMetaData *meta)
+{
+    /* NaT converted to None, so int() raised. */
+    if (td == NPY_DATETIME_NAT) {
+        return 0;
+    }
+    /* Y/M are not a fixed number of days, so they have no timedelta. */
+    if (meta->base > NPY_FR_us || meta->base == NPY_FR_Y
+            || meta->base == NPY_FR_M || meta->base == NPY_FR_GENERIC) {
+        return 1;
+    }
+
+    npy_timedeltastruct tds;
+    if (convert_timedelta_to_timedeltastruct(meta, td, &tds) < 0) {
+        return -1;
+    }
+    /* Too many days for datetime.timedelta. */
+    return tds.day < -999999999 || tds.day > 999999999;
+}
+
+/*
  * We require that if d is a PyDelta, then
  * hash(numpy.timedelta64(d)) == hash(d).
  * Where possible, convert dt to a PyDelta and hash it.

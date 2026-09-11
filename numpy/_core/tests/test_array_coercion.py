@@ -4,6 +4,7 @@ Note that other such tests exist, e.g., in `test_api.py` and many corner-cases
 are tested (sometimes indirectly) elsewhere.
 """
 
+import warnings
 from itertools import permutations, product
 
 import pytest
@@ -423,21 +424,19 @@ class TestTimeScalars:
     @pytest.mark.parametrize("dtype", [np.int64, np.float32])
     @pytest.mark.parametrize("value, unit", [param(123, "ns", id="timedelta64[ns]")])
     def test_coercion_timedelta_convert_to_number(self, dtype, value, unit):
-        # "ns" timedeltas can be converted to numeric dtypes
-        # via np.array(scalar, dtype=...) and .astype(), but integer item
-        # assignment raises TypeError because it goes through int().
+        # Only "ns" and "generic" timedeltas can be converted to numbers
+        # so these are slightly special.
         scalar = np.timedelta64(value, unit)
         arr = np.array(scalar, dtype=dtype)
         cast = np.array(scalar).astype(dtype)
-        assert_array_equal(arr, cast)
-
         ass = np.ones((), dtype=dtype)
-        if np.issubdtype(dtype, np.integer):
-            with pytest.raises(TypeError):
-                ass[()] = scalar
-        else:
+        with warnings.catch_warnings():
+            # integer assignment goes through int(), see test_deprecations
+            warnings.simplefilter("ignore", DeprecationWarning)
             ass[()] = scalar
-            assert_array_equal(ass, cast)
+
+        assert_array_equal(arr, cast)
+        assert_array_equal(ass, cast)
 
     @pytest.mark.parametrize("dtype", [np.int64, np.float32])
     @pytest.mark.parametrize("value, unit",
@@ -450,15 +449,14 @@ class TestTimeScalars:
             scalar = np.timedelta64(value, unit)
             arr = np.array(scalar, dtype=dtype)
             cast = np.array(scalar).astype(dtype)
-            assert_array_equal(arr, cast)
-
             ass = np.ones((), dtype=dtype)
-            if np.issubdtype(dtype, np.integer):
-                with pytest.raises(TypeError):
-                    ass[()] = scalar
-            else:
+            with warnings.catch_warnings():
+                # integer assignment goes through int(), see test_deprecations
+                warnings.simplefilter("ignore", DeprecationWarning)
                 ass[()] = scalar
-                assert_array_equal(ass, cast)
+
+            assert_array_equal(arr, cast)
+            assert_array_equal(ass, cast)
 
     @pytest.mark.parametrize("dtype", ["S6", "U6"])
     @pytest.mark.parametrize(["val", "unit"],
