@@ -74,7 +74,8 @@ __all__ = [
     'masked_object', 'masked_outside', 'masked_print_option',
     'masked_singleton', 'masked_values', 'masked_where', 'max', 'maximum',
     'maximum_fill_value', 'mean', 'min', 'minimum', 'minimum_fill_value',
-    'mod', 'multiply', 'mvoid', 'ndim', 'negative', 'nomask', 'nonzero',
+    'minmax', 'mod', 'multiply', 'mvoid', 'ndim', 'negative', 'nomask',
+    'nonzero',
     'not_equal', 'ones', 'ones_like', 'outer', 'outerproduct', 'power', 'prod',
     'product', 'ptp', 'put', 'putmask', 'ravel', 'remainder',
     'repeat', 'reshape', 'resize', 'right_shift', 'round', 'round_',
@@ -3039,9 +3040,12 @@ class MaskedArray(ndarray):
             _optinfo.update(getattr(obj, '__dict__', {}))
         _fill_value = getattr(obj, '_fill_value', None)
         if _fill_value is not None and getattr(obj, 'dtype', None) != self.dtype:
+            # _check_fill_value does not raise when a float overflows an
+            # integer dtype; that failure only shows up as an FP error.
             try:
-                _fill_value = _check_fill_value(_fill_value, self.dtype)
-            except (TypeError, ValueError, OverflowError):
+                with np.errstate(invalid='raise'):
+                    _fill_value = _check_fill_value(_fill_value, self.dtype)
+            except (TypeError, ValueError, OverflowError, FloatingPointError):
                 _fill_value = None
         _dict = {'_fill_value': _fill_value,
                      '_hardmask': getattr(obj, '_hardmask', False),
@@ -7059,6 +7063,82 @@ def max(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
 max.__doc__ = MaskedArray.max.__doc__
 
 
+def minmax(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
+    """
+    Return the minimum and maximum along a given axis.
+
+    This is equivalent to ``(ma.min(obj, ...), ma.max(obj, ...))`` but returns
+    both in a single call.
+
+    Parameters
+    ----------
+    axis : None or int or tuple of ints, optional
+        Axis along which to operate.  By default, ``axis`` is None and the
+        flattened input is used.
+        If this is a tuple of ints, the reduction is performed over multiple
+        axes, instead of a single axis or all the axes as before.
+    out : tuple of array_like, optional
+        A tuple ``(min, max)`` of alternative output arrays in which to place
+        the result.  Must be of the same shape and buffer length as the
+        expected output.
+    fill_value : scalar or None, optional
+        Value used to fill in the masked values.
+        If None, use the output of `minimum_fill_value` for the minimum and of
+        `maximum_fill_value` for the maximum.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the array.
+
+    Returns
+    -------
+    result : tuple of array_like
+        A tuple ``(min, max)`` holding the minimum and maximum.
+        If ``out`` was specified, its arrays are returned.
+
+    See Also
+    --------
+    ma.min : Return the minimum along a given axis.
+    ma.max : Return the maximum along a given axis.
+    ma.minimum_fill_value
+        Returns the minimum filling value for a given datatype.
+    ma.maximum_fill_value
+        Returns the maximum filling value for a given datatype.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> x = [[1., -2., 3.], [0.2, -0.7, 0.1]]
+    >>> mask = [[1, 1, 0], [0, 0, 1]]
+    >>> masked_x = ma.masked_array(x, mask)
+    >>> masked_x
+    masked_array(
+      data=[[--, --, 3.0],
+            [0.2, -0.7, --]],
+      mask=[[ True,  True, False],
+            [False, False,  True]],
+      fill_value=1e+20)
+    >>> ma.minmax(masked_x)
+    (-0.7, 3.0)
+    >>> mn, mx = ma.minmax(masked_x, axis=-1)
+    >>> mn
+    masked_array(data=[3.0, -0.7],
+                 mask=[False, False],
+           fill_value=1e+20)
+    >>> mx
+    masked_array(data=[3.0, 0.2],
+                 mask=[False, False],
+           fill_value=1e+20)
+    """
+    if out is not None and (type(out) is not tuple or len(out) != 2):
+        raise TypeError("'out' must be a tuple of two arrays")
+    out_min, out_max = out if out is not None else (None, None)
+    return (min(obj, axis=axis, out=out_min, fill_value=fill_value,
+                keepdims=keepdims),
+            max(obj, axis=axis, out=out_max, fill_value=fill_value,
+                keepdims=keepdims))
+
+
 def ptp(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
     kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
     try:
@@ -8501,9 +8581,8 @@ def allequal(a, b, fill_value=True):
     Returns
     -------
     y : bool
-        Returns True if the two arrays are equal within the given
-        tolerance, False otherwise. If either array contains NaN,
-        then False is returned.
+        Returns True if the arrays are equal. If either array contains
+        NaN, then False is returned.
 
     See Also
     --------

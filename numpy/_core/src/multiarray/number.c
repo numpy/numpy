@@ -141,50 +141,58 @@ _PyArray_SetNumericOps(PyObject *dict)
 }
 
 
+/* Call `op.<method_name>(m1, axis, [dtype=rtype], [out=out])` via vectorcall */
 static PyObject *
-_get_keywords(int rtype, PyArrayObject *out)
+_call_reduce_like(PyObject *method_name, PyArrayObject *m1, PyObject *op,
+                  int axis, int rtype, PyArrayObject *out)
 {
-    PyObject *kwds = NULL;
-    if (rtype != NPY_NOTYPE || out != NULL) {
-        kwds = PyDict_New();
-        if (kwds == NULL) {
+    multiarray_umath_state *state = _npy_module_state;
+    PyObject *args[5];
+    PyObject *kwnames = NULL;
+    PyObject *descr = NULL;
+    Py_ssize_t nargs = 3;
+
+    PyObject *axis_obj = PyLong_FromLong(axis);
+    if (axis_obj == NULL) {
+        return NULL;
+    }
+    args[0] = op;
+    args[1] = (PyObject *)m1;
+    args[2] = axis_obj;
+
+    if (rtype != NPY_NOTYPE) {
+        descr = (PyObject *)PyArray_DescrFromType(rtype);
+        if (descr == NULL) {
+            Py_DECREF(axis_obj);
             return NULL;
         }
-        if (rtype != NPY_NOTYPE) {
-            PyArray_Descr *descr;
-            descr = PyArray_DescrFromType(rtype);
-            if (descr) {
-                PyDict_SetItemString(kwds, "dtype", (PyObject *)descr);
-                Py_DECREF(descr);
-            }
-        }
+        args[nargs++] = descr;
         if (out != NULL) {
-            PyDict_SetItemString(kwds, "out", (PyObject *)out);
+            args[nargs++] = (PyObject *)out;
+            kwnames = state->static_pydata.kwnames_dtype_out;
+        }
+        else {
+            kwnames = state->static_pydata.kwnames_dtype;
         }
     }
-    return kwds;
+    else if (out != NULL) {
+        args[nargs++] = (PyObject *)out;
+        kwnames = state->static_pydata.kwnames_out;
+    }
+
+    PyObject *ret = PyObject_VectorcallMethod(
+            method_name, args, 3 | PY_VECTORCALL_ARGUMENTS_OFFSET, kwnames);
+    Py_DECREF(axis_obj);
+    Py_XDECREF(descr);
+    return ret;
 }
 
 NPY_NO_EXPORT PyObject *
 PyArray_GenericReduceFunction(PyArrayObject *m1, PyObject *op, int axis,
                               int rtype, PyArrayObject *out)
 {
-    PyObject *args, *ret = NULL, *meth;
-    PyObject *kwds;
-
-    args = Py_BuildValue("(Oi)", m1, axis);
-    if (args == NULL) {
-        return NULL;
-    }
-    kwds = _get_keywords(rtype, out);
-    meth = PyObject_GetAttrString(op, "reduce");
-    if (meth && PyCallable_Check(meth)) {
-        ret = PyObject_Call(meth, args, kwds);
-    }
-    Py_DECREF(args);
-    Py_XDECREF(meth);
-    Py_XDECREF(kwds);
-    return ret;
+    return _call_reduce_like(_npy_module_state->interned_str.reduce,
+                             m1, op, axis, rtype, out);
 }
 
 
@@ -192,22 +200,8 @@ NPY_NO_EXPORT PyObject *
 PyArray_GenericAccumulateFunction(PyArrayObject *m1, PyObject *op, int axis,
                                   int rtype, PyArrayObject *out)
 {
-    PyObject *args, *ret = NULL, *meth;
-    PyObject *kwds;
-
-    args = Py_BuildValue("(Oi)", m1, axis);
-    if (args == NULL) {
-        return NULL;
-    }
-    kwds = _get_keywords(rtype, out);
-    meth = PyObject_GetAttrString(op, "accumulate");
-    if (meth && PyCallable_Check(meth)) {
-        ret = PyObject_Call(meth, args, kwds);
-    }
-    Py_DECREF(args);
-    Py_XDECREF(meth);
-    Py_XDECREF(kwds);
-    return ret;
+    return _call_reduce_like(_npy_module_state->interned_str.accumulate,
+                             m1, op, axis, rtype, out);
 }
 
 

@@ -870,7 +870,8 @@ py.extension_module('_multiarray_tests',
 # library linked into one is still built against the unrestricted API and must
 # be passed these args too. Drop this once
 # https://github.com/mesonbuild/meson/issues/13824 is resolved.
-py_limited_api_args = get_option('python.allow_limited_api') \
+py_limited_api_args = (get_option('python.allow_limited_api')
+                       and py_limited_api_hex != '') \
   ? ['-DPy_LIMITED_API=' + py_limited_api_hex] : []
 
 _umath_tests_mtargets = mod_features.multi_targets(
@@ -1350,6 +1351,8 @@ src_umath = umath_gen_headers + [
   src_file.process('src/umath/scalarmath.c.src'),
   'src/umath/ufunc_object.c',
   'src/umath/umathmodule.c',
+  'src/umath/minmax.cpp',
+  'src/umath/minmax.h',
   'src/umath/real_imag_ufuncs.cpp',
   'src/umath/special_integer_comparisons.cpp',
   'src/umath/string_ufuncs.cpp',

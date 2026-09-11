@@ -1441,7 +1441,8 @@ install_logical_ufunc_promoter(PyObject *ufunc)
 
 /*
  * Return the PyArrayMethodObject or PyCapsule that matches a registered
- * tuple of identical dtypes. Return a borrowed ref of the first match.
+ * tuple of identical dtypes, or Py_None if there is no match (NULL on error).
+ * The result is always a borrowed reference.
  */
 NPY_NO_EXPORT PyObject *
 get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
@@ -1466,7 +1467,7 @@ get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
         Py_DECREF(info);
         return result;
     }
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 /*UFUNC_API

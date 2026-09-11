@@ -127,6 +127,28 @@ gentype_free(PyObject *v)
 
 
 static PyObject *
+gentype_generic_vectorcall(PyObject *self, PyObject *const *args,
+        Py_ssize_t len_args, PyObject *kwnames, const char *str)
+{
+    PyObject *arr = PyArray_FromScalar(self, NULL);
+    if (arr == NULL) {
+        return NULL;
+    }
+    PyObject *meth = PyObject_GetAttrString(arr, str);
+    Py_DECREF(arr);
+    if (meth == NULL) {
+        return NULL;
+    }
+    PyObject *ret = PyObject_Vectorcall(meth, args, len_args, kwnames);
+    Py_DECREF(meth);
+    if (ret != NULL && PyArray_Check(ret)) {
+        return PyArray_Return((PyArrayObject *)ret);
+    }
+    return ret;
+}
+
+
+static PyObject *
 gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
         char *str)
 {
@@ -2263,7 +2285,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
 
 /*
  * These gentype_* functions take keyword arguments.
- * The proper flag is METH_VARARGS | METH_KEYWORDS.
+ * The proper flag is METH_FASTCALL | METH_KEYWORDS.
  */
 /**begin repeat
  *
@@ -2274,9 +2296,10 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
  *         flatten, ravel, squeeze#
  */
 static PyObject *
-gentype_@name@(PyObject *self, PyObject *args, PyObject *kwds)
+gentype_@name@(PyObject *self, PyObject *const *args, Py_ssize_t len_args,
+        PyObject *kwnames)
 {
-    return gentype_generic_method(self, args, kwds, "@name@");
+    return gentype_generic_vectorcall(self, args, len_args, kwnames, "@name@");
 }
 /**end repeat**/
 
@@ -2293,20 +2316,9 @@ static PyObject *
         return NULL;
     }
 
-    PyObject *tup;
-    if (ndigits == Py_None) {
-        tup = PyTuple_Pack(0);
-    }
-    else {
-        tup = PyTuple_Pack(1, ndigits);
-    }
-
-    if (tup == NULL) {
-        return NULL;
-    }
-
-    PyObject *obj = gentype_round(self, tup, NULL);
-    Py_DECREF(tup);
+    /* `ndigits` defaulting to None means it was not passed at all */
+    Py_ssize_t nargs = (ndigits == Py_None) ? 0 : 1;
+    PyObject *obj = gentype_round(self, &ndigits, nargs, NULL);
     if (obj == NULL) {
         return NULL;
     }
@@ -2731,28 +2743,28 @@ static PyMethodDef gentype_methods[] = {
         METH_VARARGS, NULL},
     {"tobytes",
         (PyCFunction)gentype_tobytes,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"tofile",
         (PyCFunction)gentype_tofile,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"byteswap",
         (PyCFunction)gentype_byteswap,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"astype",
         (PyCFunction)gentype_astype,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"getfield",
         (PyCFunction)gentype_getfield,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"setfield",
         (PyCFunction)gentype_setfield,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"copy",
         (PyCFunction)gentype_copy,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"resize",
         (PyCFunction)gentype_resize,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"__array__",
         (PyCFunction)gentype_getarray,
         METH_VARARGS, doc_getarray},
@@ -2797,61 +2809,61 @@ static PyMethodDef gentype_methods[] = {
         METH_VARARGS, NULL},
     {"take",
         (PyCFunction)gentype_take,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"put",
         (PyCFunction)gentype_put,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"repeat",
         (PyCFunction)gentype_repeat,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"choose",
         (PyCFunction)gentype_choose,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"sort",
         (PyCFunction)gentype_sort,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"argsort",
         (PyCFunction)gentype_argsort,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"searchsorted",
         (PyCFunction)gentype_searchsorted,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"argmax",
         (PyCFunction)gentype_argmax,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"argmin",
         (PyCFunction)gentype_argmin,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"reshape",
         (PyCFunction)gentype_reshape,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"squeeze",
         (PyCFunction)gentype_squeeze,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"view",
         (PyCFunction)gentype_view,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"swapaxes",
         (PyCFunction)gentype_swapaxes,
         METH_VARARGS, NULL},
     {"max",
         (PyCFunction)gentype_max,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"min",
         (PyCFunction)gentype_min,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"mean",
         (PyCFunction)gentype_mean,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"trace",
         (PyCFunction)gentype_trace,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"diagonal",
         (PyCFunction)gentype_diagonal,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"clip",
         (PyCFunction)gentype_clip,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"conj",
         (PyCFunction)gentype_conj,
         METH_VARARGS, NULL},
@@ -2863,40 +2875,40 @@ static PyMethodDef gentype_methods[] = {
         METH_VARARGS, NULL},
     {"std",
         (PyCFunction)gentype_std,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"var",
         (PyCFunction)gentype_var,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"sum",
         (PyCFunction)gentype_sum,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"cumsum",
         (PyCFunction)gentype_cumsum,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"prod",
         (PyCFunction)gentype_prod,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"cumprod",
         (PyCFunction)gentype_cumprod,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"all",
         (PyCFunction)gentype_all,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"any",
         (PyCFunction)gentype_any,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"compress",
         (PyCFunction)gentype_compress,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"flatten",
         (PyCFunction)gentype_flatten,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"ravel",
         (PyCFunction)gentype_ravel,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"round",
         (PyCFunction)gentype_round,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     /* For the format function */
     {"__format__",
         gentype_format,
@@ -3549,6 +3561,27 @@ unicode_arrtype_dealloc(PyObject *v)
     PyUnicode_Type.tp_dealloc(v);
 }
 
+static inline int
+scalar_new_parse_posargs(PyObject *args, PyObject *kwds, const char *format,
+        char **kwnames, PyObject **arg0)
+{
+    Py_ssize_t nargs = PyTuple_GET_SIZE(args);
+
+    assert(format[0] == '|' && format[1] == 'O');
+    assert(kwnames[0] != NULL && kwnames[1] == NULL);
+    if (NPY_LIKELY(nargs <= 1
+                   && (kwds == NULL || PyDict_GET_SIZE(kwds) == 0))) {
+        if (nargs == 1) {
+            *arg0 = PyTuple_GET_ITEM(args, 0);
+        }
+        return 0;
+    }
+    /* Always an error; the generic parser phrases it. */
+    return PyArg_ParseTupleAndKeywords(args, kwds, format, kwnames,
+                                       arg0) ? 0 : -1;
+}
+
+
 /**begin repeat
  * #name = byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
  *         ulonglong, half, float, double, longdouble, cfloat, cdouble,
@@ -3619,7 +3652,7 @@ static PyObject *
     }
 #else
     static char *kwnames[] = {"", NULL};  /* positional-only */
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwnames, &obj)) {
+    if (scalar_new_parse_posargs(args, kwds, "|O", kwnames, &obj) < 0) {
         return NULL;
     }
 #endif
@@ -3709,7 +3742,7 @@ object_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *kwd
 {
     PyObject *obj = Py_None;
     static char *kwnames[] = {"", NULL};  /* positional-only */
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:object_", kwnames, &obj)) {
+    if (scalar_new_parse_posargs(args, kwds, "|O:object_", kwnames, &obj) < 0) {
         return NULL;
     }
     PyArray_Descr *typecode = PyArray_DescrFromType(NPY_OBJECT);
@@ -3805,7 +3838,7 @@ bool_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *kwds)
     PyArrayObject *arr;
 
     static char *kwnames[] = {"", NULL};  /* positional-only */
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:bool_", kwnames, &obj)) {
+    if (scalar_new_parse_posargs(args, kwds, "|O:bool_", kwnames, &obj) < 0) {
         return NULL;
     }
     if (obj == NULL) {

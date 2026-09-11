@@ -94,6 +94,7 @@ from .fromnumeric import (
     max,
     mean,
     min,
+    minmax,
     ndim,
     nonzero,
     partition,
@@ -527,6 +528,7 @@ __all__ = [
     "min",
     "min_scalar_type",
     "minimum",
+    "minmax",
     "mod",
     "modf",
     "moveaxis",
@@ -648,6 +650,12 @@ type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[Scalar
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 type _Array4D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int], np.dtype[ScalarT]]
 type _ArrayJustND[ScalarT: np.generic] = np.ndarray[tuple[Never, ...], np.dtype[ScalarT]]
+
+type _ToArray0D = _Array0D[Any] | complex | str | np.generic
+type _ToArray1D = _Array1D[Any] | Sequence[complex | np.generic]
+type _ToArray2D = _Array2D[Any] | Sequence[Sequence[complex | np.generic]]
+type _ToArray3D = _Array3D[Any] | Sequence[Sequence[Sequence[complex | np.generic]]]
+type _ToArray4D = _Array4D[Any] | Sequence[Sequence[Sequence[Sequence[complex | np.generic]]]]
 
 type _TensorAxes = int | tuple[_ShapeLike, _ShapeLike]
 
@@ -1254,15 +1262,40 @@ def full_like(
 ) -> NDArray[Any]: ...
 
 #
-@overload
+@overload  # Nd, keepdims=True
+def count_nonzero[ShapeT: tuple[int, *tuple[int, ...]]](
+    a: np.ndarray[ShapeT, Any],
+    axis: _ShapeLike | None = None,
+    *,
+    keepdims: L[True],
+) -> np.ndarray[ShapeT, np.dtype[np.intp]]: ...
+@overload  # ?d, axis=<given>  (workaround)
+def count_nonzero(a: _ArrayJustND[Any], axis: _ShapeLike, *, keepdims: L[False] = False) -> NDArray[np.intp] | Any: ...
+@overload  # 0d, keepdims=True
+def count_nonzero(a: _ToArray0D, axis: _ShapeLike | None = None, *, keepdims: L[True]) -> np.intp: ...
+@overload  # 1d, keepdims=True
+def count_nonzero(a: _ToArray1D, axis: _ShapeLike | None = None, *, keepdims: L[True]) -> _Array1D[np.intp]: ...
+@overload  # 1d, axis=<given>
+def count_nonzero(a: _ToArray1D, axis: int | tuple[int], *, keepdims: L[False] = False) -> np.intp: ...
+@overload  # 2d, keepdims=True
+def count_nonzero(a: _ToArray2D, axis: _ShapeLike | None = None, *, keepdims: L[True]) -> _Array2D[np.intp]: ...
+@overload  # 2d, axis=<given>
+def count_nonzero(a: _ToArray2D, axis: int | tuple[int], *, keepdims: L[False] = False) -> _Array1D[np.intp]: ...
+@overload  # 3d, keepdims=True
+def count_nonzero(a: _ToArray3D, axis: _ShapeLike | None = None, *, keepdims: L[True]) -> _Array3D[np.intp]: ...
+@overload  # 3d, axis=<given>
+def count_nonzero(a: _ToArray3D, axis: int | tuple[int], *, keepdims: L[False] = False) -> _Array2D[np.intp]: ...
+@overload  # 4d, keepdims=True
+def count_nonzero(a: _ToArray4D, axis: _ShapeLike | None = None, *, keepdims: L[True]) -> _Array4D[np.intp]: ...
+@overload  # 4d, axis=<given>
+def count_nonzero(a: _ToArray4D, axis: int | tuple[int], *, keepdims: L[False] = False) -> _Array3D[np.intp]: ...
+@overload  # Nd, axis=None  (default)
 def count_nonzero(a: ArrayLike, axis: None = None, *, keepdims: L[False] = False) -> np.intp: ...
-@overload
-def count_nonzero(a: _ScalarLike_co, axis: _ShapeLike | None = None, *, keepdims: L[True]) -> np.intp: ...
-@overload
-def count_nonzero(
-    a: NDArray[Any] | _NestedSequence[ArrayLike], axis: _ShapeLike | None = None, *, keepdims: L[True]
-) -> NDArray[np.intp]: ...
-@overload
+@overload  # Nd, keepdims=True  (fallback)
+def count_nonzero(a: _NestedSequence[ArrayLike], axis: _ShapeLike | None = None, *, keepdims: L[True]) -> NDArray[np.intp]: ...
+@overload  # Nd, axis=<given>  (fallback)
+def count_nonzero(a: ArrayLike, axis: _ShapeLike, *, keepdims: L[False] = False) -> NDArray[np.intp] | Any: ...
+@overload  # fallback
 def count_nonzero(a: ArrayLike, axis: _ShapeLike | None = None, *, keepdims: py_bool = False) -> Any: ...
 
 #

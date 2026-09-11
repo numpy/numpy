@@ -49,6 +49,7 @@ from numpy.ma.core import (
     array,
     asarray,
     choose,
+    common_fill_value,
     concatenate,
     conjugate,
     cos,
@@ -100,6 +101,7 @@ from numpy.ma.core import (
     min,
     minimum,
     minimum_fill_value,
+    minmax,
     mod,
     multiply,
     mvoid,
@@ -1404,6 +1406,39 @@ class TestMaskedArrayArithmetic:
             result = mafunc(xm, axis=0, out=nout)
             assert_(result is nout)
 
+    def test_minmax(self):
+        # ma.minmax returns (ma.min, ma.max) and is mask-aware
+        x = array([1, 2, 3, 4], mask=[0, 0, 1, 1])
+        assert_equal(minmax(x), (min(x), max(x)))
+        assert_equal(minmax(x), (1, 2))
+
+        a = arange(6).reshape(2, 3)
+        a[0, 0] = masked
+        for axis in (None, 0, 1):
+            lo, hi = minmax(a, axis=axis)
+            assert_equal(lo, min(a, axis=axis))
+            assert_equal(hi, max(a, axis=axis))
+
+        lo, hi = minmax(a, axis=1, keepdims=True)
+        assert_equal(lo, min(a, axis=1, keepdims=True))
+        assert_equal(hi, max(a, axis=1, keepdims=True))
+
+        # `out` tuple is filled and returned
+        xm = array(np.random.uniform(0, 10, 12), mask=np.random.rand(12).round())
+        xm = xm.reshape((3, 4))
+        out1 = np.empty((4,), dtype=float)
+        out2 = np.empty((4,), dtype=float)
+        res = minmax(xm, axis=0, out=(out1, out2))
+        assert_(res[0] is out1 and res[1] is out2)
+        assert_equal(out1, min(xm, axis=0))
+        assert_equal(out2, max(xm, axis=0))
+
+        # `out` must be a tuple of two arrays, not silently ignored
+        with pytest.raises(TypeError):
+            minmax(xm, out=out1)
+        with pytest.raises(TypeError):
+            minmax(xm, out=(out1,))
+
     def test_minmax_methods(self):
         # Additional tests on max/min
         xm = self._create_data()[5]
@@ -2691,6 +2726,37 @@ class TestFillingValues:
         a = empty(shape=(3, ), dtype="(2,)3S,(2,)3U")
         assert_equal(a["f0"].fill_value, default_fill_value(b"spam"))
         assert_equal(a["f1"].fill_value, default_fill_value("eggs"))
+
+    def test_common_fill_value(self):
+        # Test with matching fill value, across different dtypes and shapes.
+        a = array([1, 2, 3], dtype=int, fill_value=10)
+        b = array([[4, 5], [6, 7]], dtype=float, fill_value=10)
+        assert_equal(common_fill_value(a, b), 10)
+
+        # Test with non-matching fill value.
+        b.fill_value = -10
+        assert common_fill_value(a, b) is None
+
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
+    def test_fillvalue_reset_on_lossy_float_cast(self):
+        # gh-28255
+        a = arange(9.0)
+        untouched = np.ones_like(a, dtype="int64")
+        a.fill_value  # materialise the default fill_value
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            touched = np.ones_like(a, dtype="int64")
+        assert_equal(touched.fill_value, untouched.fill_value)
+        assert_equal(touched.fill_value, default_fill_value(touched.dtype))
+
+    def test_fillvalue_kept_on_exact_float_cast(self):
+        a = array([1.0, 2.0], mask=[0, 1], fill_value=5.0)
+        assert_equal(np.ones_like(a, dtype="int64").fill_value, 5)
+
+    def test_fillvalue_setter_still_raises(self):
+        a = array([1, 2], dtype="int64")
+        with pytest.raises(TypeError):
+            a.fill_value = 1e20
 
 
 class TestUfuncs:
@@ -4793,10 +4859,12 @@ class TestMaskedArrayFunctions:
         tmp[(xm <= 2).filled(True)] = True
         assert_equal(d._mask, tmp)
 
-        with np.errstate(invalid="warn"):
-            # The fill value is 1e20, it cannot be converted to `int`:
-            with pytest.warns(RuntimeWarning, match="invalid value"):
-                ixm = xm.astype(int)
+        # The fill value is 1e20, it cannot be converted to `int`, so the
+        # cast falls back to the default fill_value (gh-28255):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            ixm = xm.astype(int)
+        assert_equal(ixm.fill_value, default_fill_value(ixm.dtype))
         d = where(ixm > 2, ixm, masked)
         assert_equal(d, [-9, -9, -9, -9, -9, 4, -9, -9, 10, -9, -9, 3])
         assert_equal(d.dtype, ixm.dtype)
