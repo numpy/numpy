@@ -38,6 +38,7 @@ from ._multiarray_umath import (
     _slice,
     _strip_chars,
     _strip_whitespace,
+    _unwrap,
     _zfill,
 )
 

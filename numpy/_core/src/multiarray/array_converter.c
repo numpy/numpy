@@ -22,6 +22,7 @@
 #include "convert_datatype.h"
 #include "descriptor.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "ctors.h"
 
 #include "npy_config.h"
@@ -185,9 +186,10 @@ typedef enum {
 static int
 pyscalar_mode_conv(PyObject *obj, scalar_policy *policy)
 {
+    npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
     PyObject *strings[3] = {
-            npy_interned_str.convert, npy_interned_str.preserve,
-            npy_interned_str.convert_if_no_array};
+            interned_str->convert, interned_str->preserve,
+            interned_str->convert_if_no_array};
 
     /* First quick pass using the identity (should practically always match) */
     for (int i = 0; i < 3; i++) {
@@ -213,6 +215,13 @@ pyscalar_mode_conv(PyObject *obj, scalar_policy *policy)
 }
 
 
+/*
+ * NOTE: array__wrapit in multiarraymodule.c calls `as_arrays` and `wrap`
+ * by interned name at runtime (with the `subok=`/`to_scalar=` keywords,
+ * interned in npy_static_data.c), and relies on `as_arrays` returning a
+ * length-1 tuple for a single-input converter.  Keep it in sync when
+ * changing the API of either method.
+ */
 static PyObject *
 array_converter_as_arrays(PyArrayArrayConverterObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)

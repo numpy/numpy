@@ -503,6 +503,13 @@ From other objects
     array but it needs to be of a specific *newtype* (including
     byte-order) or has certain *requirements*.
 
+    If *newtype* is an unsized flexible descriptor, the result takes the
+    itemsize of *op* without inspecting its values. :c:func:`PyArray_FromAny`
+    and :c:func:`PyArray_CastToType` instead adapt an unsized descriptor to the
+    values of *op*, so converting a ``NPY_VSTRING`` or ``NPY_OBJECT`` array to
+    ``NPY_STRING`` or ``NPY_UNICODE`` infers the width of the output by finding
+    the length of the longest input string.
+
 .. c:function:: PyObject* PyArray_FromStructInterface(PyObject* op)
 
     Returns an ndarray object from a Python object that exposes the
@@ -1851,6 +1858,89 @@ the functions that must be implemented for each slot.
    initial value is correct, since NumPy may call this even when it is not
    strictly necessary to do so.
 
+.. c:type:: int (PyArrayMethod_GetMultiReductionInitials)( \
+        PyArrayMethod_Context *context, npy_bool reduction_is_empty, \
+        void **initials)
+
+   Multi-output version of :c:type:`PyArrayMethod_GetReductionInitial`, used to
+   query the per-output initial values for a reduction. It behaves the same as
+   :c:type:`PyArrayMethod_GetReductionInitial`, except that *initials*
+   is an array of ``nout`` pointers, one per reduction output, each pointing
+   to the buffer to fill. The *reduction_is_empty* argument and the -1, 0, or 1
+   return value have the same meaning as :c:type:`PyArrayMethod_GetReductionInitial`.
+   A return of 1 indicates every initial value has been successfully initialized
+   with valid data.
+
+.. c:macro:: NPY_METH_get_reduction_loop
+
+   .. versionadded:: 2.6
+
+   Registers a dedicated loop for use by :meth:`~numpy.ufunc.reduce`,
+   implemented as a :c:type:`PyArrayMethod_GetLoop` function (the same
+   typedef used for ``NPY_METH_get_loop``). This is required to reduce
+   ufuncs with more than one output, since the "forward" elementwise loop of
+   such a ufunc cannot be used as a reduction loop the way a single-output loop
+   can (by pointing the output and the first input at the same memory, so that
+   the loop accumulates in place). Instead, the returned
+   :c:type:`PyArrayMethod_StridedLoop` must implement the reduction
+   directly, with an ``(nout + 1)``-in/``nout``-out signature: it takes the
+   current per-output accumulators followed by one streamed input element,
+   and writes the updated accumulators. That is, for a ufunc whose forward
+   loop has ``nout`` outputs, the *data*, *strides*, and descriptor arrays
+   passed to the reduction loop are laid out as::
+
+       [acc_0, ..., acc_{nout-1}, x, out_0, ..., out_{nout-1}]
+
+   where ``x`` is the streamed element being reduced in, and each ``out_i``
+   points at the same memory as the matching ``acc_i`` (and typically has a
+   stride of 0 relative to it).
+
+   The *strides* argument passed to ``NPY_METH_get_reduction_loop`` itself at
+   setup time uses this same layout, so that ``strides[i]`` describes the
+   ``i``-th operand of the loop being requested. ``strides[nout]`` is the
+   stride of the streamed input, and each ``strides[nout + 1 + i]`` repeats
+   ``strides[i]``, because ``out_i`` and ``acc_i`` are the same buffer. The
+   accumulator strides are normally 0, since the reduction accumulates in
+   place. When a ``where=`` mask is used, one further entry at
+   ``strides[2 * nout + 1]`` holds the mask stride.
+
+   If ``NPY_METH_get_reduction_loop`` is not set, :meth:`~numpy.ufunc.reduce`
+   falls back to ``NPY_METH_get_loop``/``NPY_METH_strided_loop``, which only
+   works for the typical two-input/one-output case. Calling
+   :meth:`~numpy.ufunc.reduce` on a ufunc with more than one output whose
+   resolved ArrayMethod does not register a reduction loop raises a
+   :exc:`TypeError`. See :ref:`c-api.reduction-loop-tutorial` for a
+   worked example.
+
+   Note that this slot only lifts the restriction on how many outputs a
+   ufunc may have. It does not change how many inputs a ufunc may have:
+   :meth:`~numpy.ufunc.reduce` (as well as :meth:`~numpy.ufunc.accumulate`
+   and :meth:`~numpy.ufunc.reduceat`) still only works on ufuncs that take
+   exactly two inputs, whether or not a reduction loop is registered.
+   Calling any of these methods on a ufunc with a number of inputs other
+   than two raises a :exc:`ValueError`.
+
+.. c:macro:: NPY_METH_get_multi_reduction_initials
+
+   .. versionadded:: 2.6
+
+   Registers the per-output reduction identity/initial values, implemented as
+   a :c:type:`PyArrayMethod_GetMultiReductionInitials` function. It is the
+   multi-output version of :c:macro:`NPY_METH_get_reduction_initial` and fills
+   one initial value per reduction output instead of a single one.
+   :meth:`~numpy.ufunc.reduce` uses it to seed the accumulators when the
+   reduction is empty or when a ``where=`` mask is given, for a ufunc whose
+   loop also registers a :c:macro:`NPY_METH_get_reduction_loop`. See
+   :c:type:`PyArrayMethod_GetMultiReductionInitials` for the signature.
+
+   A method may register at most one of
+   :c:macro:`NPY_METH_get_reduction_initial` and
+   ``NPY_METH_get_multi_reduction_initials``. The latter supports single-output
+   reductions too. For a ufunc with more than one output it must be paired with
+   a :c:macro:`NPY_METH_get_reduction_loop`, otherwise
+   :meth:`~numpy.ufunc.reduce` is unreachable and the identity would never be
+   used. See :ref:`c-api.reduction-loop-tutorial` for a worked example.
+
 Flags
 ~~~~~
 
@@ -2167,6 +2257,40 @@ and not set any of the other loop slots.
 
         The flags passed to the sort operation. This is a bitwise OR of
         ``NPY_SORTKIND`` values indicating the kind of sort to perform.
+
+These specs can be registered using :c:func:`PyUFunc_AddLoopsFromSpecs`
+along with other ufunc loops.
+
+Partitioning and Argpartitioning
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Similarly to sorting and argsorting, partitioning and argpartitioning methods
+can be registered using the ArrayMethod API. This is done by adding an
+ArrayMethod spec with the name ``"partition"`` or ``"argpartition"`` respectively.
+The spec must have ``nin=2`` and ``nout=1`` for both partition and argpartition,
+where the first input ``data[0]`` is the array to partition and the second input
+``data[1]`` is the kth array of indices to partition by. Partitioning is
+inplace, hence we enforce that ``data[0] == data[2]``. ``data[1]`` is always
+a contiguous array of type ``NPY_INTP`` that contains the partition indices.
+If multiple partition indices are given, the array is partitioned for each
+index. Argpartitioning returns a new array of indices, so the output must be of
+``NPY_INTP`` type.
+
+The ``context`` passed to the loop contains the ``parameters`` field which
+for these operations is a ``PyArrayMethod_PartitionParameters *`` struct. This
+struct contains a ``flags`` field which is a bitwise OR of ``NPY_SELECTKIND``
+values indicating the kind of partition to perform (that is, whether it is a
+descending partition). If the strided loop depends on the flags, a good way
+to deal with this is to define :c:macro:`NPY_METH_get_loop`, and not set any
+of the other loop slots. For the loop, ``dimensions[0]`` is the number of
+elements to partition, and ``dimensions[1]`` is the number of partition indices.
+
+.. c:struct:: PyArrayMethod_PartitionParameters
+
+    .. c:member:: NPY_SELECTKIND flags
+
+        The flags passed to the partition operation. This is a bitwise OR of
+        ``NPY_SELECTKIND`` values indicating the kind of partition to perform.
 
 These specs can be registered using :c:func:`PyUFunc_AddLoopsFromSpecs`
 along with other ufunc loops.
@@ -2938,12 +3062,12 @@ an element copier function as a primitive.
         eldoubler_aux_data *d = (eldoubler_aux_data *)data;
         /* Free the memory owned by this auxdata */
         NPY_AUXDATA_FREE(d->funcdata);
-        PyArray_free(d);
+        PyMem_RawFree(d);
     }
 
     NpyAuxData *clone_element_doubler_aux_data(NpyAuxData *data)
     {
-        eldoubler_aux_data *ret = PyArray_malloc(sizeof(eldoubler_aux_data));
+        eldoubler_aux_data *ret = PyMem_RawMalloc(sizeof(eldoubler_aux_data));
         if (ret == NULL) {
             return NULL;
         }
@@ -2954,7 +3078,7 @@ an element copier function as a primitive.
         /* Fix up the owned auxdata so we have our own copy */
         ret->funcdata = NPY_AUXDATA_CLONE(ret->funcdata);
         if (ret->funcdata == NULL) {
-            PyArray_free(ret);
+            PyMem_RawFree(ret);
             return NULL;
         }
 
@@ -2965,7 +3089,7 @@ an element copier function as a primitive.
                                 ElementCopier_Func *func,
                                 NpyAuxData *funcdata)
     {
-        eldoubler_aux_data *ret = PyArray_malloc(sizeof(eldoubler_aux_data));
+        eldoubler_aux_data *ret = PyMem_RawMalloc(sizeof(eldoubler_aux_data));
         if (ret == NULL) {
             PyErr_NoMemory();
             return NULL;
@@ -4371,12 +4495,15 @@ Memory management
 
 .. c:function:: void* PyArray_realloc(npy_intp* ptr, size_t nbytes)
 
-    These macros use different memory allocators, depending on the
-    constant :c:data:`NPY_USE_PYMEM`. The system malloc is used when
-    :c:data:`NPY_USE_PYMEM` is 0, if :c:data:`NPY_USE_PYMEM` is 1, then
-    the Python memory allocator is used.
+    These macros are aliases for ``PyMem_RawMalloc``, ``PyMem_RawFree``, and
+    ``PyMem_RawRealloc``. They exist to maintain backward compatibility for code
+    written against older versions of NumPy's C API. For new code, we recommend
+    using the `CPython Raw Memory Interface
+    <https://docs.python.org/3/c-api/memory.html#raw-memory-interface>`_.
 
-    .. c:macro:: NPY_USE_PYMEM
+.. c:macro:: NPY_USE_PYMEM
+
+   Always defined to be ``1`` and present in the API for backward compatibility.
 
 .. c:function:: int PyArray_ResolveWritebackIfCopy(PyArrayObject* obj)
 

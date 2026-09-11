@@ -2,11 +2,17 @@
 #include <Python.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+/* Build as a downstream module: the internal `PyArray_DTypeMeta` is built on
+ * `PyHeapTypeObject`, which is not in the limited API.  `NPY_TARGET_VERSION`
+ * keeps the API target that `NPY_INTERNAL_BUILD` implied. */
+#if defined(NPY_INTERNAL_BUILD)
+#undef NPY_INTERNAL_BUILD
+#endif
+#define NPY_TARGET_VERSION NPY_API_VERSION
+
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
-#include "numpy/npy_3kcompat.h"
-
-#include <math.h>
 
 
 /*
@@ -104,63 +110,88 @@ static PyMethodDef StructUfuncTestMethods[] = {
     {NULL, NULL, 0, NULL}
 };
 
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "_struct_ufunc_tests",
-    NULL,
-    -1,
-    StructUfuncTestMethods,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
-
-PyMODINIT_FUNC PyInit__struct_ufunc_tests(void)
+/* Module execution function, run on every import of the module */
+static int
+_struct_ufunc_tests_exec(PyObject *m)
 {
-    PyObject *m, *add_triplet, *d;
-    PyObject *dtype_dict;
-    PyArray_Descr *dtype;
+    PyObject *add_triplet = NULL;
+    PyObject *dtype_dict = NULL;
+    PyArray_Descr *dtype = NULL;
     PyArray_Descr *dtypes[3];
 
-    import_array();
-    import_umath();
-
-    m = PyModule_Create(&moduledef);
-
-    if (m == NULL) {
-        return NULL;
+    if (PyArray_ImportNumPyAPI() < 0) {
+        return -1;
+    }
+    if (PyUFunc_ImportUFuncAPI() < 0) {
+        return -1;
     }
 
     add_triplet = PyUFunc_FromFuncAndData(NULL, NULL, NULL, 0, 2, 1,
                                           PyUFunc_None, "add_triplet",
                                           NULL, 0);
+    if (add_triplet == NULL) {
+        return -1;
+    }
 
     dtype_dict = Py_BuildValue("[(s, s), (s, s), (s, s)]",
                                "f0", "u8", "f1", "u8", "f2", "u8");
-    PyArray_DescrConverter(dtype_dict, &dtype);
+    if (dtype_dict == NULL) {
+        goto fail;
+    }
+    int converted = PyArray_DescrConverter(dtype_dict, &dtype);
     Py_DECREF(dtype_dict);
+    if (converted != NPY_SUCCEED) {
+        goto fail;
+    }
 
     dtypes[0] = dtype;
     dtypes[1] = dtype;
     dtypes[2] = dtype;
 
-    PyUFunc_RegisterLoopForDescr((PyUFuncObject *)add_triplet,
-                                dtype,
-                                &add_uint64_triplet,
-                                dtypes,
-                                NULL);
-
+    int retval = PyUFunc_RegisterLoopForDescr((PyUFuncObject *)add_triplet,
+                                              dtype,
+                                              &add_uint64_triplet,
+                                              dtypes,
+                                              NULL);
     Py_DECREF(dtype);
-    d = PyModule_GetDict(m);
+    if (retval < 0) {
+        goto fail;
+    }
 
-    PyDict_SetItemString(d, "add_triplet", add_triplet);
+    retval = PyModule_AddObjectRef(m, "add_triplet", add_triplet);
     Py_DECREF(add_triplet);
+    return retval;
 
-#ifdef Py_GIL_DISABLED
-    // signal this module supports running with the GIL disabled
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
+fail:
+    Py_DECREF(add_triplet);
+    return -1;
+}
+
+static struct PyModuleDef_Slot _struct_ufunc_tests_slots[] = {
+    {Py_mod_exec, _struct_ufunc_tests_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    /*
+     * NumPy relies on process-global state and so does not support
+     * subinterpreters; `_multiarray_umath` sets this same flag.
+     */
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
 #endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    /* No GIL is needed: the inner loops never touch Python objects. */
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
 
-    return m;
+static struct PyModuleDef moduledef = {
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "_struct_ufunc_tests",
+    .m_size = 0,
+    .m_methods = StructUfuncTestMethods,
+    .m_slots = _struct_ufunc_tests_slots,
+};
+
+PyMODINIT_FUNC PyInit__struct_ufunc_tests(void)
+{
+    return PyModuleDef_Init(&moduledef);
 }

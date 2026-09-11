@@ -659,7 +659,7 @@ def run_compile():
         v = '--fcompiler='
         if s[:len(v)] == v:
             outmess(
-                "--fcompiler cannot be used with meson,"
+                "--fcompiler cannot be used with meson, "
                 "set compiler with the FC environment variable\n"
                 )
     for s in del_list:

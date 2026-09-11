@@ -1,0 +1,9 @@
+Size inference when converting ``StringDType`` arrays to fixed-width strings
+----------------------------------------------------------------------------
+Previously, converting a `numpy.dtypes.StringDType` array to a fixed-width
+string dtype with an unspecified size, such as ``arr.astype(np.str_)`` or
+``np.array(arr, dtype="S")``, raised a ``TypeError`` asking for an explicit
+size. NumPy now inspects the array values and infers a size big enough to
+store the widest entry without truncation, matching the existing behavior
+when converting sequences of Python strings. Passing an explicit size still
+truncates entries that do not fit.

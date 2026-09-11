@@ -33,7 +33,7 @@ from numpy.linalg import LinAlgError, matrix_power, matrix_rank, multi_dot, norm
 from numpy.linalg._linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     HAS_LAPACK64,
-    IS_WASM,
+    HAS_SUBPROCESSES,
     NOGIL_BUILD,
     assert_,
     assert_allclose,
@@ -46,7 +46,13 @@ from numpy.testing import (
 from numpy.testing._private.utils import run_subprocess
 
 try:
-    import numpy.linalg.lapack_lite
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="The numpy.linalg.lapack_lite module is deprecated",
+            category=DeprecationWarning,
+        )
+        import numpy.linalg.lapack_lite
 except ImportError:
     # May be broken when numpy was built without BLAS/LAPACK present
     # If so, ensure we don't break the whole test suite - the `lapack_lite`
@@ -1166,7 +1172,6 @@ class TestMatrixPower:
         assert_raises(LinAlgError, matrix_power, np.array([[1], [2]], dt), 1)
         assert_raises(LinAlgError, matrix_power, np.ones((4, 3, 2), dt), 1)
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_exceptions_not_invertible(self, dt):
         if dt in self.dtnoinv:
             return
@@ -1995,7 +2000,6 @@ def test_byteorder_check():
             assert_array_equal(res, routine(sw_arr))
 
 
-@pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
 def test_generalized_raise_multiloop():
     # It should raise an error even if the error doesn't occur in the
     # last iteration of the ufunc inner loop
@@ -2068,7 +2072,7 @@ def test_xerbla_override():
             pytest.skip('Numpy xerbla not linked in.')
 
 
-@pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 @pytest.mark.slow
 def test_sdot_bug_8577():
     # Regression test that loading certain other libraries does not

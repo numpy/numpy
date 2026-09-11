@@ -381,24 +381,60 @@ npy_update_operand_for_scalar(
          * in all other cases, we don't technically consider equivalent.
          * NOTE(seberg): I don't think we should be beholden to this logic.
          */
+        const char *name = (scalar != NULL) ? Py_TYPE(scalar)->tp_name :
+                ((PyArray_FLAGS(*operand) & NPY_ARRAY_WAS_PYTHON_INT) ? "int" :
+                 ((PyArray_FLAGS(*operand) & NPY_ARRAY_WAS_PYTHON_FLOAT) ? "float" : "complex"));
         PyErr_Format(PyExc_TypeError,
             "cannot cast Python %s to %S under the casting rule 'equiv'",
-            Py_TYPE(scalar)->tp_name, descr);
+            name, descr);
         return -1;
     }
 
     Py_INCREF(descr);
     PyArrayObject *new = (PyArrayObject *)PyArray_NewFromDescr(
             &PyArray_Type, descr, 0, NULL, NULL, NULL, 0, NULL);
-    Py_SETREF(*operand, new);
-    if (*operand == NULL) {
+    if (new == NULL) {
         return -1;
     }
+    Py_SETREF(*operand, new);
     if (scalar == NULL) {
         /* The ufunc.resolve_dtypes paths can go here.  Anything should go. */
         return 0;
     }
     return PyArray_SETITEM(new, PyArray_BYTES(*operand), scalar);
+}
+
+
+/*
+ * If `*operand` (converted from item `i` of sequence `op`) is marked with
+ * NPY_ARRAY_WAS_PYTHON_STR, convert it again from the original str once the
+ * operation's target descriptor is known, so that the fixed-width unicode
+ * temporary cannot lose trailing nulls.
+ */
+NPY_NO_EXPORT int
+npy_update_operand_if_pystr(
+    PyArrayObject **operand, PyObject *op, Py_ssize_t i,
+    PyArray_Descr *target)
+{
+    if (!(PyArray_FLAGS(*operand) & NPY_ARRAY_WAS_PYTHON_STR)) {
+        return 0;
+    }
+    PyObject *scalar = PySequence_GetItem(op, i);
+    if (scalar == NULL) {
+        return -1;
+    }
+    PyArray_Descr *descr = npy_find_descr_for_scalar(
+            scalar, PyArray_DESCR(*operand),
+            NPY_DTYPE(PyArray_DESCR(*operand)), NPY_DTYPE(target));
+    if (descr == NULL) {
+        Py_DECREF(scalar);
+        return -1;
+    }
+    int res = npy_update_operand_for_scalar(
+            operand, scalar, descr, NPY_SAFE_CASTING);
+    Py_DECREF(scalar);
+    Py_DECREF(descr);
+    return res;
 }
 
 

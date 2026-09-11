@@ -28,7 +28,12 @@ npy_path = run_command(py, [
 # where cython may not find the right __init__.pyd file.
 add_project_arguments('-I', npy_path, language : 'cython')
 
-# Build limited API extension modules for all supported Python and NumPy versions
+# Build limited API extension modules for all supported Python and NumPy versions:
+# one C and one Cython module per (abi3 Python version, NumPy target version)
+# combination, each with the versions encoded in its name (e.g.
+# limited_api_3_11_npy2_2). test_limited_api.py imports each module separately,
+# checking that a module built against a given Py_LIMITED_API and
+# NPY_TARGET_VERSION works with the current Python and NumPy at runtime.
 # The _PY_ABI3_VERSIONS and _NPY_TARGET_VERSIONS lists should be kept in sync
 # with the lists defined in test_limited_api.py, and the test should be updated if new versions are added here.
 # The special 'default' entry builds without defining NPY_TARGET_VERSION at all,

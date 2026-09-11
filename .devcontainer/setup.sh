@@ -14,4 +14,4 @@ git submodule update --init
 
 # Enables users to activate environment without having to specify the full path
 echo "envs_dirs:
-  - /home/codespace/micromamba/envs" > /opt/conda/.condarc
+  - $HOME/micromamba/envs" > ~/.condarc

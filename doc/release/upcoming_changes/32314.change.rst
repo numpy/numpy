@@ -1,0 +1,6 @@
+Legacy valgrind-based C coverage tool removed
+----------------------------------------------
+The legacy C code-coverage tooling under ``tools/c_coverage/`` (which relied
+on valgrind's callgrind tool) has been removed. C coverage is now collected
+through ``gcov``; build with ``spin build --clean --gcov`` and run the tests
+with ``spin test --gcov`` to generate a coverage report.

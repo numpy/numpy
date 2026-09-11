@@ -1,0 +1,9 @@
+``nanmean``, ``nanstd`` and ``nanvar`` no longer fail on read-only reductions
+-----------------------------------------------------------------------------
+These functions divide the running sum by the count in place, which assumed
+the sum was writeable. When it was not they raised
+``ValueError: output array is read-only`` instead of returning a result and they
+now allocate the output in that case, keeping the dtype the in-place divide
+would have produced. This is what made ``np.nanmean``, ``np.nanstd`` and
+``np.nanvar`` fail on a ``MaskedArray`` whose values are all masked, since
+``numpy.ma`` reduces that to the read-only ``np.ma.masked``.

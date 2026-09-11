@@ -14,7 +14,7 @@ import pytest
 
 import numpy as np
 from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
-from numpy.testing import IS_WASM, assert_raises
+from numpy.testing import HAS_SUBPROCESSES, assert_raises
 from numpy.testing._private.utils import run_subprocess
 
 
@@ -522,7 +522,9 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
         self.assert_deprecated(np.add, num=None, args=(a, b))
         self.assert_deprecated(np.add, num=None, args=(b, c))
 
-    @pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for subprocess")
+    @pytest.mark.skipif(
+        not HAS_SUBPROCESSES, reason="platform cannot start subprocesses"
+    )
     def test_first_call_warns_once(self):
         # The legacy type resolver used to also warn when invoked to populate
         # the ufunc promotion cache, so the first call in a process emitted

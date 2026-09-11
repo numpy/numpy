@@ -19,6 +19,7 @@ AR_i8: npt.NDArray[np.int64]
 AR_LIKE_f8: list[float]
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
 class BytesWriter:
     def write(self, data: bytes) -> None: ...
@@ -62,13 +63,16 @@ assert_type(np.savez_compressed(str_path, AR_LIKE_f8, ar1=AR_i8), None)
 assert_type(np.savez_compressed(bytes_writer, AR_LIKE_f8, ar1=AR_i8), None)
 
 assert_type(np.loadtxt(bytes_file), npt.NDArray[np.float64])
+assert_type(np.loadtxt(str_file, comments=""), npt.NDArray[np.float64])
+assert_type(np.loadtxt(str_file, comments=None), npt.NDArray[np.float64])
+assert_type(np.loadtxt(str_path, delimiter=""), npt.NDArray[np.float64])
+assert_type(np.loadtxt(str_path, ndmin=1), npt.NDArray[np.float64])
+assert_type(np.loadtxt([""]), npt.NDArray[np.float64])
 assert_type(np.loadtxt(pathlib_path, dtype=np.str_), npt.NDArray[np.str_])
 assert_type(np.loadtxt(str_path, dtype=str, skiprows=2), npt.NDArray[Any])
-assert_type(np.loadtxt(str_file, comments="test"), npt.NDArray[np.float64])
-assert_type(np.loadtxt(str_file, comments=None), npt.NDArray[np.float64])
-assert_type(np.loadtxt(str_path, delimiter="\n"), npt.NDArray[np.float64])
-assert_type(np.loadtxt(str_path, ndmin=2), npt.NDArray[np.float64])
-assert_type(np.loadtxt(["1", "2", "3"]), npt.NDArray[np.float64])
+assert_type(np.loadtxt(str_path, ndmin=2), _Array2D[np.float64])
+assert_type(np.loadtxt(pathlib_path, dtype=np.str_, ndmin=2), _Array2D[np.str_])
+assert_type(np.loadtxt(str_path, dtype=str, ndmin=2), _Array2D[Any])
 
 assert_type(np.fromregex(bytes_file, "test", np.float64), _Array1D[np.float64])
 assert_type(np.fromregex(str_file, b"test", dtype=float), _Array1D[Any])

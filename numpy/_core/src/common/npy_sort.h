@@ -51,6 +51,14 @@ NPY_NO_EXPORT int npy_atimsort(void *vec, npy_intp *ind, npy_intp cnt, void *arr
  *****************************************************************************
  */
 
+/*
+ * Generic sort and argsort loops for comparison-based sort ArrayMethods.
+ * The method's ``static_data`` must point to an array of two
+ * ``PyArray_CompareFunc *`` entries, {ascending, descending}, indexed by
+ * whether ``NPY_SORT_DESCENDING`` is set in the sort parameters.  The
+ * descending entry may be NULL, in which case requesting a descending sort
+ * is an error.
+ */
 NPY_NO_EXPORT int npy_default_sort_loop(PyArrayMethod_Context *context,
         char *const *data, const npy_intp *dimensions, const npy_intp *strides,
         NpyAuxData *transferdata);

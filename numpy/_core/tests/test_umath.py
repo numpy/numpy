@@ -34,6 +34,7 @@ from numpy.testing import (
 from numpy.testing._private.utils import (
     LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE,
     _glibc_older_than,
+    longdouble_fpe_mark,
 )
 
 UFUNCS = [obj for obj in np._core.umath.__dict__.values()
@@ -465,6 +466,34 @@ class TestAdd:
         a['a'] = -1
         assert_equal(a['b'].sum(), 0)
 
+    def test_add_object_reentrant_mutation(self):
+        # gh-31988: the generic object loop must hold its operands; here
+        # __add__ clears the second operand's array slot before returning
+        # NotImplemented, so __radd__ runs on an object whose only other
+        # reference was that slot (use-after-free, detectable with
+        # PYTHONMALLOC=debug).
+        victim_deleted = []
+
+        class Victim:
+            def __del__(self):
+                victim_deleted.append(True)
+
+            def __radd__(self, other):
+                return 42
+
+        class Killer:
+            def __add__(self, other):
+                victim_array[0] = None  # drops the slot's reference
+                return NotImplemented
+
+        left = np.empty(1, dtype=object)
+        left[0] = Killer()
+        victim_array = np.empty(1, dtype=object)
+        victim_array[0] = Victim()
+
+        assert_equal(np.add(left, victim_array)[0], 42)
+        assert victim_deleted  # the slot really was cleared re-entrantly
+
 
 class TestDivision:
     def test_division_int(self):
@@ -478,7 +507,6 @@ class TestDivision:
         assert_equal(x // 100, [0, 0, 0, 1, -1, -1, -1, -1, -2])
         assert_equal(x % 100, [5, 10, 90, 0, 95, 90, 10, 0, 80])
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dtype", sctypes['int'] + sctypes['uint'])
     @pytest.mark.parametrize("ex_val", (
         (
@@ -563,7 +591,6 @@ class TestDivision:
 
             np.array([], dtype=dtype) // 0
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dtype", sctypes['int'] + sctypes['uint'])
     @pytest.mark.parametrize("ex_val", (
         "np.array([fo.max, 1, 2, 1, 1, 2, 3], dtype=dtype)",
@@ -624,8 +651,6 @@ class TestDivision:
             quotient_array = np.array([quotient] * 5)
             assert all(dividend_array // divisor == quotient_array), msg
         else:
-            if IS_WASM:
-                pytest.skip("fp errors don't work in wasm")
             with np.errstate(divide='raise', invalid='raise'):
                 with pytest.raises(FloatingPointError):
                     dividend // divisor
@@ -678,7 +703,13 @@ class TestDivision:
     @pytest.mark.skipif(hasattr(np.__config__, "blas_ssl2_info"),
             reason="gh-22982")
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
-    @pytest.mark.parametrize('dtype', np.typecodes['Float'])
+    @pytest.mark.parametrize(
+        'dtype',
+        [
+            pytest.param(code, marks=[longdouble_fpe_mark] if code == 'g' else [])
+            for code in np.typecodes['Float']
+        ],
+    )
     def test_floor_division_errors(self, dtype):
         fnan = np.array(np.nan, dtype=dtype)
         fone = np.array(1.0, dtype=dtype)
@@ -797,9 +828,10 @@ class TestRemainder:
                         assert_(b > rem >= 0, msg)
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
-    @pytest.mark.xfail(sys.platform.startswith("darwin"),
-            reason="MacOS seems to not give the correct 'invalid' warning for "
-                   "`fmod`.  Hopefully, others always do.")
+    @pytest.mark.xfail(
+        sys.platform in ["android", "darwin", "ios"],
+        reason="This platform seems to not give the correct 'invalid' warning"
+    )
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     def test_float_divmod_errors(self, dtype):
         # Check valid errors raised for divmod and remainder
@@ -826,9 +858,10 @@ class TestRemainder:
     @pytest.mark.skipif(hasattr(np.__config__, "blas_ssl2_info"),
             reason="gh-22982")
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
-    @pytest.mark.xfail(sys.platform.startswith("darwin"),
-           reason="MacOS seems to not give the correct 'invalid' warning for "
-                  "`fmod`.  Hopefully, others always do.")
+    @pytest.mark.xfail(
+        sys.platform in ["android", "darwin", "ios"],
+        reason="This platform seems to not give the correct 'invalid' warning"
+    )
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     @pytest.mark.parametrize('fn', [np.fmod, np.remainder])
     def test_float_remainder_errors(self, dtype, fn):
@@ -985,7 +1018,6 @@ class TestDivisionIntegerOverflowsAndDivideByZero:
             helper_lambdas['min-zero'], helper_lambdas['neg_min-zero'])
     }
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dtype", np.typecodes["Integer"])
     def test_signed_division_overflow(self, dtype):
         to_check = interesting_binop_operands(np.iinfo(dtype).min, -1, dtype)
@@ -1012,7 +1044,6 @@ class TestDivisionIntegerOverflowsAndDivideByZero:
             assert extractor(res1) == np.iinfo(op1.dtype).min
             assert extractor(res2) == 0
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
     def test_divide_by_zero(self, dtype):
         # Note that the return value cannot be well defined here, but NumPy
@@ -1032,7 +1063,6 @@ class TestDivisionIntegerOverflowsAndDivideByZero:
             assert extractor(res1) == 0
             assert extractor(res2) == 0
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dividend_dtype", sctypes['int'])
     @pytest.mark.parametrize("divisor_dtype", sctypes['int'])
     @pytest.mark.parametrize("operation",
@@ -1602,7 +1632,6 @@ class TestSpecialFloats:
             a = np.array(1e9, dtype='float32')
             np.log(a)
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize('dtype', ['e', 'f', 'd', 'g'])
     def test_sincos_values(self, dtype):
         with np.errstate(all='ignore'):
@@ -1613,9 +1642,8 @@ class TestSpecialFloats:
             assert_equal(np.sin(yf), xf)
             assert_equal(np.cos(yf), xf)
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.xfail(
-        sys.platform.startswith("darwin"),
+        sys.platform in {"darwin", "ios"},
         reason="underflow is triggered for scalar 'sin'"
     )
     def test_sincos_underflow(self):
@@ -1689,19 +1717,24 @@ class TestSpecialFloats:
                           np.array(1E200, dtype='d'))
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
-    def test_reciprocal_values(self):
+    @pytest.mark.parametrize(
+        'dt',
+        [
+            pytest.param(code, marks=[longdouble_fpe_mark] if code == 'g' else [])
+            for code in np.typecodes['Float']
+        ],
+    )
+    def test_reciprocal_values(self, dt):
         with np.errstate(all='ignore'):
             x = [np.nan,  np.nan, 0.0, -0.0, np.inf, -np.inf]
             y = [np.nan, -np.nan, np.inf, -np.inf, 0., -0.]
-            for dt in ['e', 'f', 'd', 'g']:
-                xf = np.array(x, dtype=dt)
-                yf = np.array(y, dtype=dt)
-                assert_equal(np.reciprocal(yf), xf)
+            xf = np.array(x, dtype=dt)
+            yf = np.array(y, dtype=dt)
+            assert_equal(np.reciprocal(yf), xf)
 
         with np.errstate(divide='raise'):
-            for dt in ['e', 'f', 'd', 'g']:
-                assert_raises(FloatingPointError, np.reciprocal,
-                              np.array(-0.0, dtype=dt))
+            assert_raises(FloatingPointError, np.reciprocal,
+                            np.array(-0.0, dtype=dt))
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_tan(self):
@@ -1765,8 +1798,8 @@ class TestSpecialFloats:
                           np.array(1200.0, dtype='d'))
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
-    @pytest.mark.skipif('bsd' in sys.platform,
-            reason="fallback implementation may not raise, see gh-2487")
+    @pytest.mark.xfail(any(name in sys.platform for name in ["android", "bsd"]),
+            reason="fallback implementation may not raise, see gh-24876")
     def test_cosh(self):
         in_ = [np.nan, -np.nan, np.inf, -np.inf]
         out = [np.nan, np.nan, np.inf, np.inf]
@@ -1935,14 +1968,16 @@ class TestSpecialFloats:
         #  - ceil/float16 on MSVC:32-bit
         #  - spacing/float16 on almost all platforms
         #  - spacing/float32,float64 on Windows MSVC with VS2022
+        #  - arccos/float16,float32 on Android
         if ufunc in (np.spacing, np.ceil) and dtype == 'e':
             return
         # Skip spacing tests with NaN on Windows MSVC (all dtypes)
         import platform
-        if (ufunc == np.spacing and
-            platform.system() == 'Windows' and
+        if ((ufunc, platform.system()) in [
+                (np.spacing, 'Windows'), (np.arccos, 'Android')
+            ] and
             any(np.isnan(d) if isinstance(d, (int, float)) else False for d in data)):
-            pytest.skip("spacing with NaN generates warnings on Windows/VS2022")
+            pytest.skip(f"{ufunc} with NaN generates warnings on this platform")
         array = np.array(data, dtype=dtype)
         with assert_no_warnings():
             ufunc(array)
@@ -2683,6 +2718,123 @@ class TestMinimum(_FilterInvalids):
                 assert_equal(np.minimum.reduce([v1, v2]), expected)
 
 
+class TestMinimumMaximum(_FilterInvalids):
+    # `minimummaximum` computes both extrema in a single pass; it must always
+    # agree with the `minimum`/`maximum` pair it fuses.
+    def check(self, *args, **kwargs):
+        lo, hi = ncu.minimummaximum(*args, **kwargs)
+        assert_equal(lo, np.minimum(*args, **kwargs))
+        assert_equal(hi, np.maximum(*args, **kwargs))
+
+    def check_reduce(self, a, **kwargs):
+        lo, hi = ncu.minimummaximum.reduce(a, **kwargs)
+        assert_equal(lo, np.minimum.reduce(a, **kwargs))
+        assert_equal(hi, np.maximum.reduce(a, **kwargs))
+
+    def test_dtypes(self):
+        dtypes = (np.typecodes['AllInteger'] + np.typecodes['AllFloat']
+                  + np.typecodes['Complex'] + '?')
+        seq1 = np.arange(11)
+        seq2 = seq1[::-1]
+        for dt in dtypes:
+            tmp1 = seq1.astype(dt)
+            tmp2 = seq2.astype(dt)
+            self.check(tmp1, tmp2)
+            self.check_reduce(tmp1)
+            self.check_reduce(tmp2)
+
+    def test_lengths(self):
+        # cover the SIMD main loops, their unrolled tails and the scalar tail
+        # across the lane widths (8/16/32/64-bit), for integer and float
+        dtypes = ['int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
+                  'int64', 'uint64', 'float32', 'float64']
+        for n in [0, 1, 2, 3, 7, 8, 15, 16, 17, 63, 64, 65, 127, 1000, 4099]:
+            for dt in dtypes:
+                a = np.arange(n).astype(dt)
+                b = a[::-1].copy()
+                self.check(a, b)
+                if n > 0:
+                    self.check_reduce(a)
+
+    def test_float_nans(self):
+        nan = np.nan
+        arg1 = np.array([0,   nan, nan])
+        arg2 = np.array([nan, 0,   nan])
+        self.check(arg1, arg2)
+        for dt in np.typecodes['AllFloat']:
+            tmp = np.arange(11).astype(dt)
+            tmp[::2] = np.nan
+            self.check_reduce(tmp)
+
+    def test_complex_nans(self):
+        nan = np.nan
+        for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)]:
+            arg1 = np.array([0, cnan, cnan], dtype=complex)
+            arg2 = np.array([cnan, 0, cnan], dtype=complex)
+            self.check(arg1, arg2)
+
+    def test_object_array(self):
+        arg1 = np.arange(5, dtype=object)
+        arg2 = arg1 + 1
+        self.check(arg1, arg2)
+        self.check_reduce(arg1)
+
+    def test_datetime(self):
+        # Do not ignore NaT
+        for dtype in ('m8[s]', 'M8[s]'):
+            a = np.arange(10).astype(dtype)
+            b = a[::-1].copy()
+            self.check(a, b)
+            self.check_reduce(a)
+            a[3] = 'NaT'
+            self.check(a, b)
+            self.check_reduce(a)
+
+    def test_strided_array(self):
+        arr1 = np.array([-4.0, 1.0, 10.0, 0.0, np.nan, -np.nan, np.inf, -np.inf])
+        arr2 = np.array([-2.0, -1.0, np.nan, 1.0, 0.0, np.nan, 1.0, -3.0])
+        self.check(arr1, arr2)
+        self.check(arr1[::2], arr2[::2])
+        self.check(arr1[:4:], arr2[::2])
+        self.check(arr1[::3], arr2[:3:])
+
+    def test_out(self):
+        arr1 = np.array([-4.0, 1.0, 10.0, 0.0])
+        arr2 = np.array([-2.0, -1.0, np.nan, 1.0])
+        out1 = np.empty(4)
+        out2 = np.empty(4)
+        res = ncu.minimummaximum(arr1, arr2, out=(out1, out2))
+        assert_(res[0] is out1 and res[1] is out2)
+        assert_equal(out1, np.minimum(arr1, arr2))
+        assert_equal(out2, np.maximum(arr1, arr2))
+
+    def test_reduce_axes(self):
+        a = np.arange(2 * 3 * 4, dtype=np.float64).reshape(2, 3, 4)
+        a[1, 2, 3] = np.nan
+        # `minimummaximum` is reorderable, so multiple axes are allowed
+        for axis in [0, 1, 2, (0, 1), (1, 2), (0, 2), (0, 1, 2), None]:
+            self.check_reduce(a, axis=axis)
+        self.check_reduce(a, axis=1, keepdims=True)
+        for view in (a[::2], a[:, ::2], a.T, np.asfortranarray(a)):
+            self.check_reduce(view, axis=1)
+
+    def test_reduce_out(self):
+        a = np.arange(12.0).reshape(3, 4)
+        out1 = np.empty(4)
+        out2 = np.empty(4)
+        ncu.minimummaximum.reduce(a, axis=0, out=(out1, out2))
+        assert_equal(out1, np.minimum.reduce(a, axis=0))
+        assert_equal(out2, np.maximum.reduce(a, axis=0))
+
+    def test_reduce_identity(self):
+        # no identity, so an empty reduction needs an explicit initial value
+        with pytest.raises(ValueError):
+            ncu.minimummaximum.reduce(np.array([], dtype=np.float64))
+        lo, hi = ncu.minimummaximum.reduce(
+            np.array([], dtype=np.float64), initial=(np.inf, -np.inf))
+        assert_equal((lo, hi), (np.inf, -np.inf))
+
+
 class TestFmax(_FilterInvalids):
     def test_reduce(self):
         dflt = np.typecodes['AllFloat']
@@ -2813,7 +2965,6 @@ class TestBool:
     def test_exceptions(self):
         a = np.ones(1, dtype=np.bool)
         assert_raises(TypeError, np.negative, a)
-        assert_raises(TypeError, np.positive, a)
         assert_raises(TypeError, np.subtract, a, a)
 
     def test_truth_table_logical(self):
@@ -3205,21 +3356,28 @@ class TestAbsoluteNegative:
 
 class TestPositive:
     def test_valid(self):
-        valid_dtypes = [int, float, complex, object]
+        valid_dtypes = [int, bool, float, complex, object]
         for dtype in valid_dtypes:
-            x = np.arange(5, dtype=dtype)
+            x = np.arange(5).astype(dtype)
             result = np.positive(x)
-            assert_equal(x, result, err_msg=str(dtype))
+            assert_array_equal(x, result, strict=True, err_msg=str(dtype))
 
     def test_invalid(self):
-        with assert_raises(TypeError):
-            np.positive(True)
         with assert_raises(TypeError):
             np.positive(np.datetime64('2000-01-01'))
         with assert_raises(TypeError):
             np.positive(np.array(['foo'], dtype=str))
         with assert_raises(TypeError):
             np.positive(np.array(['bar'], dtype=object))
+
+    def test_bool(self):
+        x = np.array([True, False])
+        assert_array_equal(+x, x, strict=True)
+        assert np.positive(x, out=x) is x
+        for scalar in (np.True_, True):
+            result = np.positive(scalar)
+            assert type(result) is np.bool
+            assert result == scalar
 
 
 class TestSpecialMethods:
@@ -4325,6 +4483,63 @@ class TestRationalFunctions:
             assert_equal(np.gcd(q * 3,  a), q)
             assert_equal(np.gcd(-q * 3, a), q)
 
+    def test_gcd_object_reentrant_mutation(self):
+        # gh-31988: a re-entrant __index__ clearing the second operand's
+        # array slot must not leave math.gcd with a dangling pointer
+        # (use-after-free, detectable with PYTHONMALLOC=debug).
+        victim_deleted = []
+
+        class Victim:
+            def __index__(self):
+                return 8
+
+            def __del__(self):
+                victim_deleted.append(True)
+
+        class Killer:
+            def __index__(self):
+                victim_array[0] = None  # drops the slot's reference
+                return 12
+
+        left = np.empty(1, dtype=object)
+        left[0] = Killer()
+        victim_array = np.empty(1, dtype=object)
+        victim_array[0] = Victim()
+
+        assert_equal(np.gcd(left, victim_array)[0], 4)
+        assert victim_deleted  # the slot really was cleared re-entrantly
+
+    def test_lcm_object_reentrant_mutation(self):
+        # gh-31988: np.lcm also uses both operands *after* the inner gcd
+        # call, so it must keep them alive for the whole loop body.
+        victim_deleted = []
+
+        class Victim:
+            def __index__(self):
+                return 8
+
+            def __del__(self):
+                victim_deleted.append(True)
+
+            def __rmul__(self, other):
+                return 8 * other
+
+        class Killer:
+            def __index__(self):
+                victim_array[0] = None  # drops the slot's reference
+                return 12
+
+            def __floordiv__(self, other):
+                return 12 // other
+
+        left = np.empty(1, dtype=object)
+        left[0] = Killer()
+        victim_array = np.empty(1, dtype=object)
+        victim_array[0] = Victim()
+
+        assert_equal(np.lcm(left, victim_array)[0], 24)
+        assert victim_deleted
+
     def test_decimal(self):
         from decimal import Decimal
         a = np.array([1,  1, -1, -1]) * Decimal('0.20')
@@ -4434,7 +4649,6 @@ class TestComplexFunctions:
             assert_almost_equal(fz.real, fr, err_msg=f'real part {f}')
             assert_almost_equal(fz.imag, 0., err_msg=f'imag part {f}')
 
-    @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     def test_precisions_consistent(self):
         z = 1 + 1j
         for f in self.funcs:
@@ -4444,7 +4658,6 @@ class TestComplexFunctions:
             assert_almost_equal(fcf, fcd, decimal=6, err_msg=f'fch-fcd {f}')
             assert_almost_equal(fcl, fcd, decimal=15, err_msg=f'fch-fcl {f}')
 
-    @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     def test_branch_cuts(self):
         # check branch cuts and continuity on them
         _check_branch_cut(np.log,   -0.5, 1j, 1, -1, True)  # noqa: E221
@@ -4470,7 +4683,6 @@ class TestComplexFunctions:
         _check_branch_cut(np.arccosh, [0 - 2j, 2j, 2], [1,  1,  1j], 1, 1)
         _check_branch_cut(np.arctanh, [0 - 2j, 2j, 0], [1,  1,  1j], 1, 1)
 
-    @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     def test_branch_cuts_complex64(self):
         # check branch cuts and continuity on them
         _check_branch_cut(np.log,   -0.5, 1j, 1, -1, True, np.complex64)  # noqa: E221
@@ -4555,14 +4767,15 @@ class TestComplexFunctions:
         _glibc_older_than("2.18"),
         reason="Older glibc versions are imprecise (maybe passes with SIMD?)"
     )
-    @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     @pytest.mark.parametrize('dtype', [
         np.complex64, np.complex128, np.clongdouble
     ])
     def test_loss_of_precision(self, dtype):
         """Check loss of precision in complex arc* functions"""
-        if dtype is np.clongdouble and platform.machine() != 'x86_64':
-            # Failures on musllinux, aarch64, s390x, ppc64le (see gh-17554)
+        if dtype is np.clongdouble and (
+            platform.machine() != 'x86_64' or sys.platform == 'android'
+        ):
+            # Failures on musllinux, android, aarch64, s390x, ppc64le (see gh-17554)
             pytest.skip('Only works reliably for x86-64 and recent glibc')
 
         # Check against known-good functions
@@ -4694,6 +4907,16 @@ class TestSubclass:
 
 
 class TestFrompyfunc:
+
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    def test_identity_refcount(self):
+        identity = object()
+        count = sys.getrefcount(identity)
+
+        ufunc = np.frompyfunc(np.add, 2, 1, identity=identity)
+        assert sys.getrefcount(identity) == count + 1
+        del ufunc
+        assert sys.getrefcount(identity) == count
 
     def test_identity(self):
         def mul(a, b):
@@ -5191,6 +5414,14 @@ class TestReplaceLoopBySignature:
             ncu_tests.restore_loop(np.negative, saved)
 
         assert_array_equal(np.negative(a), [-1.0, -2.0, -3.0])
+
+    def test_replace_loop_before_first_call(self):
+        # gh-31068: replacing the loop of a ufunc that was never called
+        # must take effect in the cached dispatch path created later.
+        # A fresh ufunc guarantees the dispatch state is untouched.
+        fresh = ncu_tests.create_unary_ufunc()
+        ncu_tests.replace_loop(fresh)
+        assert_array_equal(fresh(np.array([1.0, 2.0])), [42.0, 42.0])
 
 
 class TestAddDocstring:

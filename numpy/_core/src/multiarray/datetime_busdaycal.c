@@ -315,7 +315,7 @@ PyArray_HolidaysConverter(PyObject *dates_in, npy_holidayslist *holidays)
 
     /* Allocate the memory for the dates */
     count = PyArray_DIM(dates, 0);
-    holidays->begin = PyArray_malloc(sizeof(npy_datetime) * count);
+    holidays->begin = PyMem_RawMalloc(sizeof(npy_datetime) * count);
     if (holidays->begin == NULL) {
         PyErr_NoMemory();
         goto fail;
@@ -376,7 +376,7 @@ busdaycalendar_init(NpyBusDayCalendar *self, PyObject *args, PyObject *kwds)
 
     /* Clear the holidays if necessary */
     if (self->holidays.begin != NULL) {
-        PyArray_free(self->holidays.begin);
+        PyMem_RawFree(self->holidays.begin);
         self->holidays.begin = NULL;
         self->holidays.end = NULL;
     }
@@ -424,7 +424,7 @@ busdaycalendar_dealloc(NpyBusDayCalendar *self)
 {
     /* Clear the holidays */
     if (self->holidays.begin != NULL) {
-        PyArray_free(self->holidays.begin);
+        PyMem_RawFree(self->holidays.begin);
         self->holidays.begin = NULL;
         self->holidays.end = NULL;
     }

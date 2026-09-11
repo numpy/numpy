@@ -12,6 +12,8 @@ from numpy._core._multiarray_umath import (
     __cpu_dispatch__,
     __cpu_features__,
 )
+from numpy.testing import HAS_SUBPROCESSES
+from numpy.testing._private.utils import run_subprocess
 
 
 def assert_features_equal(actual, desired, fname):
@@ -120,13 +122,7 @@ class AbstractTest:
                     hwcap_value[1].upper().decode().split()
                 )
 
-@pytest.mark.skipif(
-    sys.platform == 'emscripten',
-    reason=(
-        "The subprocess module is not available on WASM platforms and"
-        " therefore this test class cannot be properly executed."
-    ),
-)
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 @pytest.mark.thread_unsafe(
     reason="setup & tmp_path_factory threads-unsafe, modifies environment variables",
 )
@@ -135,7 +131,7 @@ class TestEnvPrivation:
     env = os.environ.copy()
     _enable = os.environ.pop('NPY_ENABLE_CPU_FEATURES', None)
     _disable = os.environ.pop('NPY_DISABLE_CPU_FEATURES', None)
-    SUBPROCESS_ARGS = {"cwd": cwd, "capture_output": True, "text": True, "check": True}
+    SUBPROCESS_ARGS = {"cwd": cwd, "check": True}
     unavailable_feats = [
         feat for feat in __cpu_dispatch__ if not __cpu_features__[feat]
     ]
@@ -166,7 +162,7 @@ if __name__ == "__main__":
         self.file = file
 
     def _run(self):
-        return subprocess.run(
+        return run_subprocess(
             [sys.executable, self.file],
             env=self.env,
             **self.SUBPROCESS_ARGS,

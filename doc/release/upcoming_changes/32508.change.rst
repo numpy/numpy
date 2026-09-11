@@ -1,0 +1,7 @@
+A ``MaskedArray`` fill_value that cannot be represented in a new dtype is now
+reset to the default for that dtype in more cases.  Previously only casts that
+raised were detected.  A floating point fill_value that overflows an integer
+dtype fails through the floating point error state instead, and the resulting
+out-of-range value was kept together with a ``RuntimeWarning``.  Reading
+``arr.fill_value`` before a dtype change was enough to reach this, since
+reading it stores the default fill_value on the array.

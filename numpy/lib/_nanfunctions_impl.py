@@ -229,6 +229,11 @@ def _divide_by_count(a, b, out=None):
     with np.errstate(invalid='ignore', divide='ignore'):
         if isinstance(a, np.ndarray):
             if out is None:
+                # `a` is normally a temporary we can divide into, but
+                # some reductions return a read-only result (gh-29117).
+                # Allocate then, keeping the dtype the in-place divide gives.
+                if not a.flags.writeable:
+                    return np.divide(a, b, dtype=a.dtype, casting='unsafe')
                 return np.divide(a, b, out=a, casting='unsafe')
             else:
                 return np.divide(a, b, out=out, casting='unsafe')
@@ -1995,7 +2000,9 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
                  keepdims=keepdims, where=where, mean=mean,
                  correction=correction)
     if isinstance(var, np.ndarray):
-        std = np.sqrt(var, out=var)
+        # Take the square root in place, unless `var` came back read-only
+        # (gh-29117), in which case we have to allocate.
+        std = np.sqrt(var, out=var if var.flags.writeable else None)
     elif hasattr(var, 'dtype'):
         std = var.dtype.type(np.sqrt(var))
     else:

@@ -113,6 +113,49 @@ class Core(Benchmark):
         np.tril_indices(500)
 
 
+class SmallMethodDispatch(Benchmark):
+    # Small-array benchmarks for fromnumeric functions that dispatch to
+    # an ndarray method through the C helpers _wrapfunc/_wrapit
+    # (see gh-32165).
+    def setup(self):
+        self.a = np.arange(20)
+        self.m = np.ones((10, 10))
+        self.sorted = np.arange(20, dtype=np.float64)
+        self.lst = list(range(20))
+
+    def time_reshape(self):
+        np.reshape(self.a, (4, 5))
+
+    def time_transpose(self):
+        np.transpose(self.m)
+
+    def time_take(self):
+        np.take(self.a, [1, 2])
+
+    def time_argsort(self):
+        np.argsort(self.a)
+
+    def time_argmax_axis(self):
+        np.argmax(self.m, axis=0)
+
+    def time_searchsorted(self):
+        np.searchsorted(self.sorted, 5.5)
+
+    def time_cumsum(self):
+        np.cumsum(self.a)
+
+    def time_round(self):
+        np.round(self.a, 2)
+
+    def time_argsort_list(self):
+        # list input exercises the _wrapit conversion fallback
+        np.argsort(self.lst)
+
+    def time_cumsum_list(self):
+        # list input exercises the _wrapit conversion fallback
+        np.cumsum(self.lst)
+
+
 class Temporaries(Benchmark):
     def setup(self):
         self.amid = np.ones(50000)

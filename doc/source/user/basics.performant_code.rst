@@ -101,7 +101,7 @@ If you encounter pickling-related issues, consider the following strategies:
 * Consider third-party libraries such as `joblib <https://github.com/joblib/joblib>`__.
   ``joblib``'s default backend ``loky`` relies on `cloudpickle <https://github.com/cloudpipe/cloudpickle>`__
   for serialization and can handle a wider range of Python objects than the standard ``pickle`` module.
-  See the ``joblib`` documentaion on `Serialization of un-picklable objects <https://joblib.readthedocs.io/en/latest/auto_examples/serialization_and_wrappers.html>`__ for more details.
+  See the ``joblib`` documentation on `Serialization of un-picklable objects <https://joblib.readthedocs.io/en/latest/auto_examples/serialization_and_wrappers.html>`__ for more details.
 
 
 
@@ -438,7 +438,7 @@ not only for a single machine but also for a cluster of machines.
 It also provides ``DaskArray`` which has a similar API to NumPy's ``ndarray``. 
 If you are familiar with NumPy, you can easily get started with ``DaskArray``.
 
-* Dask Documentaion: https://docs.dask.org/en/stable/
+* Dask Documentation: https://docs.dask.org/en/stable/
 * Dask GitHub Repository: https://github.com/dask/dask
 
 

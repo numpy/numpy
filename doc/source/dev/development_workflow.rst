@@ -110,7 +110,7 @@ In more detail
    -a``. The extra ``-a`` flag automatically commits all modified files and
    removes all deleted files. This can save you some typing of numerous ``git
    add`` commands; however, it can add unwanted changes to a commit if you're
-   not careful. 
+   not careful.
 
 #. Push the changes to your fork on GitHub::
 
@@ -214,12 +214,6 @@ these fragments in each commit message of a PR:
   you may need to run these tests to verify that the doctests are still valid.
   `See the configuration file for these checks. <https://github.com/numpy/numpy/blob/main/.circleci/config.yml>`__
 
-* ``[skip cirrus]``: skip Cirrus jobs
-
-  `CirrusCI <https://cirrus-ci.org/>`__ mostly triggers Linux aarch64 and MacOS Arm64 wheels
-  uploads.
-  `See the configuration file for these checks. <https://github.com/numpy/numpy/blob/main/.cirrus.star>`__
-
 Test building wheels
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -263,7 +257,7 @@ OK to ping the list again.
 Asking for your changes to be merged with the main repo
 =======================================================
 
-When you feel your work is finished, you can create a pull request (PR). 
+When you feel your work is finished, you can create a pull request (PR).
 If your changes involve modifications to the API or addition/modification of a
 function, add a release note to the ``doc/release/upcoming_changes/``
 directory, following the instructions and format in the
@@ -272,6 +266,20 @@ directory, following the instructions and format in the
 Use the same prefix convention for your pull request title as for commit
 messages (e.g., ``BUG:``, ``ENH:``, ``DOC:``). This enables automated labeling
 of your PR.
+
+
+.. _pull-request-limit:
+
+Open pull request limit
+=======================
+
+To keep the review queue manageable, GitHub is configured to allow only two
+open non-draft pull requests per non-maintainer at a time. Draft pull requests
+do not count towards the limit. The maintainer team can, at its discretion,
+add contributors to the list of accounts allowed to open more pull requests
+at once. We liberally add contributors who attend the community and triage
+meetings, which alternate weekly on Wednesdays -- see the `community calendar
+<https://scientific-python.org/calendars/>`__ for times.
 
 
 .. _workflow_PR_timeline:
@@ -285,6 +293,9 @@ adding a comment on your PR (this will notify maintainers).
 
 If your PR is large or complicated, asking for input on the numpy-discussion
 mailing list may also be useful.
+
+Pull requests that go stale or do not meet our quality standards may be
+labeled by a triager and closed automatically by a bot.
 
 
 .. _rebasing-on-main:

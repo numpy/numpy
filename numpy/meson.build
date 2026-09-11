@@ -71,7 +71,7 @@ endif
 blas_order = get_option('blas-order')
 if blas_order == ['auto']
   blas_order = []
-  if host_machine.system() == 'darwin'
+  if host_machine.system() in ['darwin', 'ios']
     blas_order += 'accelerate'
   endif
   if host_machine.cpu_family() == 'x86_64'
@@ -82,7 +82,7 @@ endif
 lapack_order = get_option('lapack-order')
 if lapack_order == ['auto']
   lapack_order = []
-  if host_machine.system() == 'darwin'
+  if host_machine.system() in ['darwin', 'ios']
     lapack_order += 'accelerate'
   endif
   if host_machine.cpu_family() == 'x86_64'

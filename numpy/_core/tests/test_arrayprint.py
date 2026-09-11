@@ -3,8 +3,6 @@ import sys
 import textwrap
 
 import pytest
-from hypothesis import given
-from hypothesis.extra import numpy as hynp
 
 import numpy as np
 from numpy._core._rational_tests import rational, rational2
@@ -19,6 +17,7 @@ from numpy.testing import (
     assert_raises,
     assert_raises_regex,
 )
+from numpy.testing._private.hypothesis_helpers import HAS_HYPOTHESIS, given, hynp
 from numpy.testing._private.utils import run_threaded
 
 
@@ -536,6 +535,7 @@ class TestArray2String:
             '                     [1.]])]], dtype=object)'
         )
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @given(hynp.from_dtype(np.dtype("U")))
     def test_any_text(self, text):
         # This test checks that, given any value that can be represented in an

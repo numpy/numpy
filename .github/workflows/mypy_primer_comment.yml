@@ -1,21 +1,22 @@
 name: Comment with mypy_primer diff
 
-on:
+on: # zizmor: ignore[dangerous-triggers] no PR-head checkout, no code execution; artifact trusted by convention, worst case is a comment on the wrong PR
   workflow_run:
     workflows:
       - Run mypy_primer
     types:
       - completed
 
-permissions:
-  contents: read
-  pull-requests: write
+permissions: {}
 
 jobs:
   comment:
     name: Comment PR from mypy_primer
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Download diffs
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
@@ -49,7 +50,7 @@ jobs:
             return parseInt(fs.readFileSync("pr_number.txt", { encoding: "utf8" }))
 
       - name: Hide old comments
-        uses: int128/hide-comment-action@afc35066cef9f89f60a2022988cadb58445a208e  # v1.63.0
+        uses: int128/hide-comment-action@d77998fe0fbeb1cafd88f2cc4549c9ffd997656b  # v1.71.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ steps.get-pr-number.outputs.result }}

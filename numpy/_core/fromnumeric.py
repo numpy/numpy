@@ -6,11 +6,10 @@ import math
 import types
 
 import numpy as np
-from numpy._utils import set_module
 
 from . import _methods, multiarray as mu, numerictypes as nt, overrides, umath as um
-from ._multiarray_umath import _array_converter
-from .multiarray import asanyarray, asarray, concatenate
+from ._multiarray_umath import _wrapfunc, _wrapit
+from .multiarray import asanyarray, asarray, concatenate, normalize_axis_index
 
 _dt_ = nt.sctype2char
 
@@ -19,11 +18,12 @@ __all__ = [
     'all', 'amax', 'amin', 'any', 'argmax',
     'argmin', 'argpartition', 'argsort', 'around', 'choose', 'clip',
     'compress', 'cumprod', 'cumsum', 'cumulative_prod', 'cumulative_sum',
-    'diagonal', 'mean', 'max', 'min', 'matrix_transpose',
+    'diagonal', 'mean', 'max', 'min', 'minmax', 'matrix_transpose',
     'ndim', 'nonzero', 'partition', 'prod', 'ptp', 'put',
     'ravel', 'repeat', 'reshape', 'resize', 'round',
     'searchsorted', 'shape', 'size', 'sort', 'squeeze',
-    'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
+    'std', 'sum', 'swapaxes', 'take', 'top_k', 'trace',
+    'transpose', 'var',
 ]
 
 _gentype = types.GeneratorType
@@ -33,35 +33,6 @@ _NoValue = np._NoValue
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
-
-
-# functions that are now methods
-def _wrapit(obj, method, *args, **kwds):
-    conv = _array_converter(obj)
-    # As this already tried the method, subok is maybe quite reasonable here
-    # but this follows what was done before. TODO: revisit this.
-    arr, = conv.as_arrays(subok=False)
-    result = getattr(arr, method)(*args, **kwds)
-
-    return conv.wrap(result, to_scalar=False)
-
-
-def _wrapfunc(obj, method, *args, **kwds):
-    bound = getattr(obj, method, None)
-    if bound is None:
-        return _wrapit(obj, method, *args, **kwds)
-
-    try:
-        return bound(*args, **kwds)
-    except TypeError:
-        # A TypeError occurs if the object does have such a method in its
-        # class, but its signature is not identical to that of NumPy's. This
-        # situation has occurred in the case of a downstream library like
-        # 'pandas'.
-        #
-        # Call _wrapit from within the except clause to ensure a potential
-        # exception has a traceback chain.
-        return _wrapit(obj, method, *args, **kwds)
 
 
 # The positional-only signature and unrolled _NoValue checks (rather than
@@ -214,6 +185,112 @@ def take(a, indices, axis=None, out=None, mode='raise'):
            [5, 7]])
     """
     return _wrapfunc(a, 'take', indices, axis=axis, out=out, mode=mode)
+
+
+def _top_k_dispatcher(a, k, /, *, axis=-1, mode="largest", sorted=True):
+    return (a,)
+
+
+@array_function_dispatch(_top_k_dispatcher)
+def top_k(a, k, /, *, axis=-1, mode="largest", sorted=True):
+    """
+    Returns the ``k`` largest or smallest elements and their
+    indices along an axis.
+
+    A tuple of ``(values, indices)`` is returned, where ``values`` and
+    ``indices`` are the values and indices, respectively, of the largest/smallest
+    elements of each row of the input array in the given ``axis``.
+
+    Parameters
+    ----------
+    a: array_like
+        The source array
+    k: int
+        The number of largest/smallest elements to return. ``k`` must
+        be a non-negative integer and within indexable range specified by
+        ``axis``.
+    axis: int, optional
+        Axis along which to find the largest/smallest elements.
+        The default is -1 (the last axis).
+    mode: {"largest", "smallest"}, optional
+        If "largest", the largest elements are returned. If "smallest",
+        the smallest elements are returned. The default is "largest".
+
+        Similarly to sorts, NaN values are pushed to the end and
+        therefore only present in the output if they are among the
+        top ``k`` values, regardless of the value of ``mode``.
+    sorted: bool, optional
+        If True, the top ``k`` elements are returned in sorted order.
+        If False, sorted order is not guaranteed. The default is True.
+
+    Returns
+    -------
+    tuple_of_array: tuple
+        The output tuple of ``(topk_values, topk_indices)``, where
+        ``topk_values`` are the top ``k`` values and ``topk_indices``
+        are the corresponding indices. Both arrays are of the shape
+        of the input array with the dimension along ``axis`` replaced
+        by ``k``.
+
+
+    Notes
+    -----
+    The returned indices are not guaranteed to be stable, i.e., the order
+    of the returned indices for any duplicate values is not guaranteed to
+    be the same as their order in the input array. This is the case
+    regardless of the value of the ``sorted`` parameter.
+
+    See Also
+    --------
+    argpartition : Indirect partition.
+    sort : Full sorting.
+
+    Examples
+    --------
+    >>> a = np.array([[1,2,3,4,5], [5,4,3,2,1]])
+    >>> np.top_k(a, 2)
+    (array([[5, 4],
+            [5, 4]]),
+     array([[4, 3],
+            [0, 1]]))
+    >>> np.top_k(a, 2, axis=0)
+    (array([[5, 4, 3, 4, 5],
+           [1, 2, 3, 2, 1]]),
+     array([[1, 1, 0, 0, 0],
+           [0, 0, 1, 1, 1]]))
+    >>> np.top_k(a, 2, axis=1, mode="smallest")
+    (array([[1, 2],
+            [1, 2]]),
+     array([[0, 1],
+            [4, 3]]))
+    >>> np.top_k(np.array([1., 2., 3., np.nan]), 2)
+    (array([3., 2.]), array([2, 1]))
+    """
+    if k < 0:
+        raise ValueError(f'k(={k}) provided must be a non-negative integer.')
+    if axis is None:
+        raise ValueError('axis=None is not supported. Please provide a valid axis.')
+    if mode not in ["largest", "smallest"]:
+        raise ValueError(f'mode(="{mode}") must be either "largest" or "smallest".')
+    largest = mode == "largest"
+
+    arr = np.asanyarray(a)
+    axis = normalize_axis_index(axis, arr.ndim)
+
+    kth = k - 1 if k > 0 else np.array([], dtype=np.intp)
+    indices = np.argpartition(arr, kth, axis=axis, descending=largest)
+
+    slice_ = (np.s_[:],) * axis + (np.s_[:k],)
+    indices = indices[slice_]
+
+    values = np.take_along_axis(arr, indices, axis=axis)
+
+    if sorted:
+        sort_indices = np.argsort(values, axis=axis, descending=largest, stable=False)
+        values = np.take_along_axis(values, sort_indices, axis=axis)
+        indices = np.take_along_axis(indices, sort_indices, axis=axis)
+
+    return (values, indices)
 
 
 def _reshape_dispatcher(a, /, shape, order=None, *, copy=None):
@@ -2380,7 +2457,12 @@ def _sum_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
     return (a, out)
 
 
-@array_function_dispatch(_sum_dispatcher)
+# reduction= enables the C fast path for exact-ndarray reductions.
+# _ReductionKind selects the appropriate argument signature to use.
+@array_function_dispatch(
+    _sum_dispatcher,
+    reduction=(um.add, overrides._ReductionKind.SUM_PROD),
+)
 def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         initial=np._NoValue, where=np._NoValue):
     """
@@ -2496,7 +2578,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     if isinstance(a, _gentype):
         # 2018-02-25, 1.15.0
         raise TypeError(
-            "Calling np.sum(generator) is deprecated."
+            "Calling np.sum(generator) is deprecated. "
             "Use np.sum(np.fromiter(generator)) or "
             "the python sum builtin instead.",
         )
@@ -2511,7 +2593,10 @@ def _any_dispatcher(a, axis=None, out=None, keepdims=None, *,
     return (a, where, out)
 
 
-@array_function_dispatch(_any_dispatcher)
+@array_function_dispatch(
+    _any_dispatcher,
+    reduction=(um.logical_or, overrides._ReductionKind.ANY_ALL),
+)
 def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     """
     Test whether any array element along a given axis evaluates to True.
@@ -2623,7 +2708,10 @@ def _all_dispatcher(a, axis=None, out=None, keepdims=None, *,
     return (a, where, out)
 
 
-@array_function_dispatch(_all_dispatcher)
+@array_function_dispatch(
+    _all_dispatcher,
+    reduction=(um.logical_and, overrides._ReductionKind.ANY_ALL),
+)
 def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     """
     Test whether all array elements along a given axis evaluate to True.
@@ -3086,8 +3174,10 @@ def _max_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
     return (a, out)
 
 
-@array_function_dispatch(_max_dispatcher)
-@set_module('numpy')
+@array_function_dispatch(
+    _max_dispatcher,
+    reduction=(um.maximum, overrides._ReductionKind.MIN_MAX),
+)
 def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
          where=np._NoValue):
     """
@@ -3202,7 +3292,10 @@ def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
                           keepdims, initial, where)
 
 
-@array_function_dispatch(_max_dispatcher)
+@array_function_dispatch(
+    _max_dispatcher,
+    reduction=(um.maximum, overrides._ReductionKind.MIN_MAX),
+)
 def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
          where=np._NoValue):
     """
@@ -3224,7 +3317,10 @@ def _min_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
     return (a, out)
 
 
-@array_function_dispatch(_min_dispatcher)
+@array_function_dispatch(
+    _min_dispatcher,
+    reduction=(um.minimum, overrides._ReductionKind.MIN_MAX),
+)
 def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         where=np._NoValue):
     """
@@ -3340,7 +3436,10 @@ def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
                           keepdims, initial, where)
 
 
-@array_function_dispatch(_min_dispatcher)
+@array_function_dispatch(
+    _min_dispatcher,
+    reduction=(um.minimum, overrides._ReductionKind.MIN_MAX),
+)
 def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
          where=np._NoValue):
     """
@@ -3357,12 +3456,106 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
                           keepdims, initial, where)
 
 
+def _minmax_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
+                       where=None):
+    return (a, *out) if type(out) is tuple else (a, out)
+
+
+@array_function_dispatch(
+    _minmax_dispatcher,
+    reduction=(um.minimummaximum, overrides._ReductionKind.MIN_MAX),
+)
+def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
+           where=np._NoValue):
+    """
+    Return the minimum and maximum of an array or along an axis.
+
+    This is equivalent to ``(np.min(a, ...), np.max(a, ...))`` but computes
+    both the minimum and the maximum in a single pass over `a`.
+
+    Parameters
+    ----------
+    a : array_like
+        Input data.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which to operate.  By default, flattened input is
+        used.  If this is a tuple of ints, the reduction is performed over
+        multiple axes, instead of a single axis or all the axes as before.
+    out : tuple of ndarray, optional
+        A tuple ``(min, max)`` of two arrays in which to place the result.
+        Must be of the same shape and buffer length as the expected output.
+        See :ref:`ufuncs-output-type` for more details.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the input array.
+    initial : scalar or tuple of scalars, optional
+        If a tuple, the first entry is the maximum value for the minimum result
+        and the second entry is the minimum value for the maximum result. If a
+        scalar, the same value is used for both. Also used as a fill value for
+        empty slices. See `~numpy.ufunc.reduce` for details.
+    where : array_like of bool, optional
+        Elements to compare for the minimum and maximum. See
+        `~numpy.ufunc.reduce` for details.
+
+    Returns
+    -------
+    result : tuple of ndarray or scalar
+        A tuple ``(min, max)`` holding the minimum and maximum of `a`. If
+        `axis` is None, the results are scalar values. If `axis` is an int, the
+        results are arrays of dimension ``a.ndim - 1``. If `axis` is a tuple,
+        the results are arrays of dimension ``a.ndim - len(axis)``.
+
+    See Also
+    --------
+    min :
+        The minimum value of an array along a given axis, propagating any NaNs.
+    max :
+        The maximum value of an array along a given axis, propagating any NaNs.
+
+    Notes
+    -----
+    NaN values are propagated, that is if at least one item is NaN, the
+    corresponding output value will be NaN as well. To ignore NaN values
+    use `nanmin` and `nanmax`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = np.arange(4).reshape((2, 2))
+    >>> a
+    array([[0, 1],
+           [2, 3]])
+    >>> np.minmax(a)             # min and max of the flattened array
+    (np.int64(0), np.int64(3))
+    >>> np.minmax(a, axis=0)     # along the first axis
+    (array([0, 1]), array([2, 3]))
+    >>> np.minmax(a, axis=1)     # along the second axis
+    (array([0, 2]), array([1, 3]))
+
+    """
+    try:
+        return _wrapreduction(a, um.minimummaximum, 'minmax', axis, None, out,
+                              keepdims, initial, where)
+    except np._core._exceptions._UFuncNoLoopError:
+        out_min, out_max = out if out is not None else (None, None)
+        initial_min, initial_max = (initial if type(initial) is tuple
+                                    else (initial, initial))
+        return (min(a, axis=axis, out=out_min, keepdims=keepdims,
+                    initial=initial_min, where=where),
+                max(a, axis=axis, out=out_max, keepdims=keepdims,
+                    initial=initial_max, where=where))
+
+
 def _prod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
                      initial=None, where=None):
     return (a, out)
 
 
-@array_function_dispatch(_prod_dispatcher)
+@array_function_dispatch(
+    _prod_dispatcher,
+    reduction=(um.multiply, overrides._ReductionKind.SUM_PROD),
+)
 def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
          initial=np._NoValue, where=np._NoValue):
     """

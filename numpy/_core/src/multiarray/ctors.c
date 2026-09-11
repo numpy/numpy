@@ -17,6 +17,7 @@
 #include "npy_ctypes.h"
 
 #include "npy_static_data.h"
+#include "module_state.h"
 
 #include "common.h"
 #include "ctors.h"
@@ -580,7 +581,7 @@ raise_memory_error(int nd, npy_intp const *dims, PyArray_Descr *descr)
     if (exc_value == NULL){
         goto fail;
     }
-    PyErr_SetObject(npy_static_pydata._ArrayMemoryError, exc_value);
+    PyErr_SetObject(_npy_module_state->static_pydata._ArrayMemoryError, exc_value);
     Py_DECREF(exc_value);
     return;
 
@@ -603,6 +604,7 @@ PyArray_NewFromDescr_int(
         npy_intp const *dims, npy_intp const *strides, void *data,
         int flags, PyObject *obj, PyObject *base, _NPY_CREATION_FLAGS cflags)
 {
+    multiarray_umath_state *state = _npy_module_state;
     PyArrayObject_fields *fa;
     npy_intp nbytes;
 
@@ -897,11 +899,12 @@ PyArray_NewFromDescr_int(
      */
     if (subtype != &PyArray_Type) {
         PyObject *res, *func;
-        func = PyObject_GetAttr((PyObject *)subtype, npy_interned_str.array_finalize);
+        func = PyObject_GetAttr((PyObject *)subtype,
+                state->interned_str.array_finalize);
         if (func == NULL) {
             goto fail;
         }
-        else if (func == npy_static_pydata.ndarray_array_finalize) {
+        else if (func == state->static_pydata.ndarray_array_finalize) {
             Py_DECREF(func);
         }
         else {
@@ -1230,7 +1233,7 @@ _array_from_buffer_3118(PyObject *memoryview)
     if (view->suboffsets != NULL) {
         PyErr_SetString(PyExc_BufferError,
                 "NumPy currently does not support importing buffers which "
-                "include suboffsets as they are not compatible with the NumPy"
+                "include suboffsets as they are not compatible with the NumPy "
                 "memory layout without a copy.  Consider copying the original "
                 "before trying to convert it to a NumPy array.");
         return NULL;
@@ -1861,6 +1864,11 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         Py_INCREF(oldtype);
     }
     else if (PyDataType_ISUNSIZED(newtype)) {
+        /*
+         * Legacy behavior: an unsized descriptor takes on the source
+         * itemsize with no value inspection, unlike `PyArray_CastToType`,
+         * which adapts unsized descriptors to the array values.
+         */
         PyArray_DESCR_REPLACE(newtype);
         if (newtype == NULL) {
             return NULL;
@@ -2005,7 +2013,7 @@ PyArray_FromStructInterface(PyObject *input)
     char endian = NPY_NATBYTE;
 
     if (PyArray_LookupSpecial_OnInstance(
-            input, npy_interned_str.array_struct, &attr) < 0) {
+            input, _npy_module_state->interned_str.array_struct, &attr) < 0) {
         return NULL;
     }
     else if (attr == NULL) {
@@ -2129,7 +2137,7 @@ PyArray_FromInterface(PyObject *origin)
     int use_scalar_assign = 0;
 
     if (PyArray_LookupSpecial_OnInstance(
-            origin, npy_interned_str.array_interface, &iface) < 0) {
+            origin, _npy_module_state->interned_str.array_interface, &iface) < 0) {
         return NULL;
     }
     else if (iface == NULL) {
@@ -2451,7 +2459,7 @@ check_or_clear_and_warn_error_if_due_to_copy_kwarg(PyObject *kwnames)
         goto restore_error;
     }
     int copy_kwarg_unsupported = PyUnicode_Contains(
-            str_value, npy_interned_str.array_err_msg_substr);
+            str_value, _npy_module_state->interned_str.array_err_msg_substr);
     Py_DECREF(str_value);
     if (copy_kwarg_unsupported == -1) {
         goto restore_error;
@@ -2503,11 +2511,12 @@ NPY_NO_EXPORT PyObject *
 PyArray_FromArrayAttr_int(PyObject *op, PyArray_Descr *descr, int copy,
                           int *was_copied_by__array__)
 {
+    multiarray_umath_state *state = _npy_module_state;
     PyObject *new;
     PyObject *array_meth;
 
     if (PyArray_LookupSpecial_OnInstance(
-                op, npy_interned_str.array, &array_meth) < 0) {
+                op, state->interned_str.array, &array_meth) < 0) {
         return NULL;
     }
     else if (array_meth == NULL) {
@@ -2540,7 +2549,7 @@ PyArray_FromArrayAttr_int(PyObject *op, PyArray_Descr *descr, int copy,
      * signature of the __array__ method being called does not have `copy`.
      */
     if (copy != -1) {
-        kwnames = npy_static_pydata.kwnames_is_copy;
+        kwnames = state->static_pydata.kwnames_is_copy;
         arguments[nargs] = copy == 1 ? Py_True : Py_False;
     }
 
@@ -3984,11 +3993,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
 
     elsize = dtype->elsize;
 
-    /*
-     * Note that PyArray_DESCR(ret) may not match dtype.  There are exactly
-     * two cases where this can happen: empty strings/bytes/void (rejected
-     * above) and subarray dtypes (supported by sticking with `dtype`).
-     */
+
     Py_INCREF(dtype);
     ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, 1,
                                                 &elcount, NULL,NULL, 0, NULL);
@@ -4000,6 +4005,12 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
     PyArray_Dims new_dims = {dims, PyArray_NDIM(ret)};
 
     char *item = PyArray_BYTES(ret);
+
+    /*
+     * Note that PyArray_DESCR(ret) may not match dtype.
+     */
+    PyArray_Descr *pack_descr = PyDataType_HASSUBARRAY(dtype) ? dtype : PyArray_DESCR(ret);
+
     for (i = 0; i < count || count == -1; i++, item += elsize) {
         PyObject *value = PyIter_Next(iter);
         if (value == NULL) {
@@ -4028,7 +4039,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
             item = ((char *)PyArray_DATA(ret)) + i * elsize;
         }
 
-        if (PyArray_Pack(dtype, item, value) < 0) {
+        if (PyArray_Pack(pack_descr, item, value) < 0) {
             Py_DECREF(value);
             goto fail;
         }

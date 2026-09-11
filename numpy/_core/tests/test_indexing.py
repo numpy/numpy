@@ -777,6 +777,17 @@ class TestFancyIndexingCast:
                      zero_array.__setitem__, bool_index, np.array([1j]))
         assert_equal(zero_array[0, 1], 0)
 
+    def test_fancy_assign_buffered_cast_error(self):
+        # gh-31974: a cast failure while refilling the iterator buffer
+        # (only possible when the array exceeds one buffer chunk) ended
+        # iteration silently, leaving the error set but unraised.
+        N = 20000
+        dst = np.zeros(N, dtype=int)
+        vals = np.arange(N, dtype=object)
+        vals[9000] = None
+        with pytest.raises(TypeError):
+            dst[np.arange(N)] = vals
+
 
 class TestFancyIndexingEquivalence:
     def test_object_assign(self):

@@ -73,7 +73,7 @@ ignore = [
     "F821",    # Undefined name
     "F841",    # Local variable is assigned to but never used
     # pyupgrade
-    "UP015" ,  # Unnecessary mode argument
+    "UP015",   # Unnecessary mode argument
 ]
 
 [lint.per-file-ignores]
@@ -90,17 +90,9 @@ ignore = [
 # too disruptive to enable all at once
 "**/*.py" = ["Q"]
 
-"__init__.py" = ["F401", "F403", "F405"]
+"__init__.py" = ["F401"]
 "__init__.pyi" = ["F401"]
-"numpy/_core/defchararray.py" = ["F403", "F405"]
-"numpy/_core/multiarray.py" = ["F405"]
-"numpy/_core/numeric.py" = ["F403", "F405"]
-"numpy/_core/umath.py" = ["F401", "F403", "F405"]
-"numpy/f2py/capi_maps.py" = ["F403", "F405"]
-"numpy/f2py/crackfortran.py" = ["F403", "F405"]
-"numpy/f2py/f90mod_rules.py" = ["F403", "F405"]
-"numpy/ma/core.pyi" = ["F403", "F405"]
-"numpy/matlib.py" = ["F405"]
+"numpy/_core/umath.py" = ["F401"]
 "numpy/matlib.pyi" = ["F811"]
 
 [lint.flake8-builtins]

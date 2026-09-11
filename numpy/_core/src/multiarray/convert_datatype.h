@@ -16,6 +16,10 @@ NPY_NO_EXPORT PyObject *
 _get_castingimpl(PyObject *NPY_UNUSED(module), PyObject *args);
 
 NPY_NO_EXPORT PyObject *
+_get_all_cast_information(PyObject *NPY_UNUSED(module),
+                          PyObject *NPY_UNUSED(args));
+
+NPY_NO_EXPORT PyObject *
 _is_view_safe_cast(PyObject *NPY_UNUSED(module), PyObject *const *args,
                    Py_ssize_t len_args);
 

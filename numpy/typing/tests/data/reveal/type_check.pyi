@@ -16,6 +16,7 @@ AR_f16: npt.NDArray[np.longdouble]
 AR_c8: npt.NDArray[np.complex64]
 AR_c16: npt.NDArray[np.complex128]
 
+AR_f8_0d: np.ndarray[tuple[()], np.dtype[np.float64]]
 AR_f8_1d: np.ndarray[tuple[int], np.dtype[np.float64]]
 AR_f8_2d: np.ndarray[tuple[int, int], np.dtype[np.float64]]
 AR_c16_1d: np.ndarray[tuple[int], np.dtype[np.complex128]]
@@ -25,6 +26,13 @@ AR_LIKE_b: list[bool]
 AR_LIKE_i: list[int]
 AR_LIKE_f: list[float]
 AR_LIKE_c: list[complex]
+AR_LIKE_b_2d: list[list[bool]]
+AR_LIKE_i_2d: list[list[int]]
+AR_LIKE_f_2d: list[list[float]]
+AR_LIKE_c_2d: list[list[complex]]
+
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
 class ComplexObj:
     real: slice
@@ -34,21 +42,45 @@ assert_type(np.mintypecode(["f8"], typeset="qfQF"), str)
 
 assert_type(np.real(ComplexObj()), slice)
 assert_type(np.real(AR_f8), npt.NDArray[np.float64])
+assert_type(np.real(AR_c8), npt.NDArray[np.float32])
 assert_type(np.real(AR_c16), npt.NDArray[np.float64])
-assert_type(np.real(AR_LIKE_f), npt.NDArray[Any])
+assert_type(np.real(AR_LIKE_b), _Array1D[np.bool])
+assert_type(np.real(AR_LIKE_i), _Array1D[np.int_])
+assert_type(np.real(AR_LIKE_f), _Array1D[np.float64])
+assert_type(np.real(AR_LIKE_c), _Array1D[np.float64])
+assert_type(np.real(AR_LIKE_b_2d), _Array2D[np.bool])
+assert_type(np.real(AR_LIKE_i_2d), _Array2D[np.int_])
+assert_type(np.real(AR_LIKE_f_2d), _Array2D[np.float64])
+assert_type(np.real(AR_LIKE_c_2d), _Array2D[np.float64])
 
 assert_type(np.imag(ComplexObj()), slice)
 assert_type(np.imag(AR_f8), npt.NDArray[np.float64])
+assert_type(np.imag(AR_c8), npt.NDArray[np.float32])
 assert_type(np.imag(AR_c16), npt.NDArray[np.float64])
-assert_type(np.imag(AR_LIKE_f), npt.NDArray[Any])
+assert_type(np.imag(AR_LIKE_b), _Array1D[np.bool])
+assert_type(np.imag(AR_LIKE_i), _Array1D[np.int_])
+assert_type(np.imag(AR_LIKE_f), _Array1D[np.float64])
+assert_type(np.imag(AR_LIKE_c), _Array1D[np.float64])
+assert_type(np.imag(AR_LIKE_b_2d), _Array2D[np.bool])
+assert_type(np.imag(AR_LIKE_i_2d), _Array2D[np.int_])
+assert_type(np.imag(AR_LIKE_f_2d), _Array2D[np.float64])
+assert_type(np.imag(AR_LIKE_c_2d), _Array2D[np.float64])
 
 assert_type(np.iscomplex(f8), np.bool)
 assert_type(np.iscomplex(AR_f8), npt.NDArray[np.bool])
 assert_type(np.iscomplex(AR_LIKE_f), npt.NDArray[np.bool])
+assert_type(np.iscomplex(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.iscomplex(AR_f8_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.iscomplex(AR_c16_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.iscomplex(AR_c16_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
 
 assert_type(np.isreal(f8), np.bool)
 assert_type(np.isreal(AR_f8), npt.NDArray[np.bool])
 assert_type(np.isreal(AR_LIKE_f), npt.NDArray[np.bool])
+assert_type(np.isreal(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.isreal(AR_f8_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.isreal(AR_c16_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.isreal(AR_c16_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
 
 assert_type(np.iscomplexobj(f8), bool)
 assert_type(np.isrealobj(f8), bool)
@@ -61,16 +93,21 @@ assert_type(np.nan_to_num(i4), np.int32)
 assert_type(np.nan_to_num(f8), np.float64)
 assert_type(np.nan_to_num(m8_ns), np.timedelta64[int])
 assert_type(np.nan_to_num(M8_ns), np.datetime64[int])
-assert_type(np.nan_to_num(AR_LIKE_b), npt.NDArray[np.bool])
-assert_type(np.nan_to_num(AR_LIKE_i), npt.NDArray[np.int_])
-assert_type(np.nan_to_num(AR_LIKE_f), npt.NDArray[np.float64])
-assert_type(np.nan_to_num(AR_LIKE_c), npt.NDArray[np.complex128])
 assert_type(np.nan_to_num(AR_f8), npt.NDArray[np.float64])
 assert_type(np.nan_to_num(AR_c16), npt.NDArray[np.complex128])
-assert_type(np.nan_to_num(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
-assert_type(np.nan_to_num(AR_f8_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
-assert_type(np.nan_to_num(AR_c16_1d), np.ndarray[tuple[int], np.dtype[np.complex128]])
-assert_type(np.nan_to_num(AR_c16_2d), np.ndarray[tuple[int, int], np.dtype[np.complex128]])
+assert_type(np.nan_to_num(AR_f8_0d), np.float64)
+assert_type(np.nan_to_num(AR_f8_1d), _Array1D[np.float64])
+assert_type(np.nan_to_num(AR_f8_2d), _Array2D[np.float64])
+assert_type(np.nan_to_num(AR_c16_1d), _Array1D[np.complex128])
+assert_type(np.nan_to_num(AR_c16_2d), _Array2D[np.complex128])
+assert_type(np.nan_to_num(AR_LIKE_b), _Array1D[np.bool])
+assert_type(np.nan_to_num(AR_LIKE_i), _Array1D[np.int_])
+assert_type(np.nan_to_num(AR_LIKE_f), _Array1D[np.float64])
+assert_type(np.nan_to_num(AR_LIKE_c), _Array1D[np.complex128])
+assert_type(np.nan_to_num(AR_LIKE_b_2d), _Array2D[np.bool])
+assert_type(np.nan_to_num(AR_LIKE_i_2d), _Array2D[np.int_])
+assert_type(np.nan_to_num(AR_LIKE_f_2d), _Array2D[np.float64])
+assert_type(np.nan_to_num(AR_LIKE_c_2d), _Array2D[np.complex128])
 
 assert_type(np.real_if_close(AR_LIKE_f), npt.NDArray[Any])
 assert_type(np.real_if_close(AR_f8), npt.NDArray[np.float64])

@@ -9,7 +9,6 @@ import pytest
 import numpy
 import numpy as np
 from numpy.testing import (
-    IS_WASM,
     assert_,
     assert_array_equal,
     assert_equal,
@@ -671,6 +670,31 @@ class TestDateTime:
         assert_equal(clnan.astype('timedelta64[ns]'), nat)
         assert_equal(hnan.astype('timedelta64[ns]'), nat)
 
+    def test_datetime_nat_like_object_conversion(self):
+        # gh-31608: objects that duck-type as datetimes but whose
+        # year/month/day attributes are NaN (e.g. pandas NaT) should
+        # convert to NaT instead of raising a TypeError.
+        class NaTLike:
+            year = float("nan")
+            month = float("nan")
+            day = float("nan")
+
+        # explicit unit
+        arr_ns = np.asarray(NaTLike(), dtype=object).astype("datetime64[ns]")
+        assert arr_ns.dtype == np.dtype("M8[ns]")
+        assert np.isnat(arr_ns)
+
+        # scalar constructor path
+        assert np.isnat(np.datetime64(NaTLike(), "ns"))
+
+        # the exact bug-report case (no explicit unit)
+        with pytest.warns(
+            DeprecationWarning,
+            match="The 'generic' unit for NumPy datetime is deprecated",
+        ):
+            arr = np.asarray(NaTLike(), dtype=object).astype("datetime64")
+        assert np.isnat(arr)
+
     def test_days_creation(self):
         assert_equal(np.array('1599', dtype='M8[D]').astype('i8'),
                 (1600 - 1970) * 365 - (1972 - 1600) / 4 + 3 - 365)
@@ -755,6 +779,76 @@ class TestDateTime:
         # we can give a datetime.date time units
         assert_equal(np.array(datetime.date(1960, 3, 12), dtype='M8[s]'),
                      np.array(np.datetime64('1960-03-12T00:00:00')))
+
+    def test_pydatetime_subclass_and_duck_typing(self):
+        # Exact datetime.datetime/datetime.date objects are read directly from
+        # the CPython struct via the datetime C-API, while subclasses and
+        # arbitrary duck-typed objects fall back to attribute access.  All
+        # paths must agree.
+
+        # A datetime.datetime subclass goes through the attribute fallback but
+        # still converts to the same value
+        class MyDateTime(datetime.datetime):
+            pass
+        assert_equal(np.datetime64(MyDateTime(2021, 5, 17, 13, 14, 15, 678901)),
+                     np.datetime64('2021-05-17T13:14:15.678901'))
+
+        # A datetime.date subclass likewise, resolving to best unit 'D'
+        class MyDate(datetime.date):
+            pass
+        assert_equal(np.datetime64(MyDate(1999, 12, 31)),
+                     np.datetime64('1999-12-31'))
+        assert_equal(np.datetime64(MyDate(1999, 12, 31)).dtype, np.dtype('M8[D]'))
+
+        # A subclass that overrides an attribute is honored via the fallback,
+        # rather than reading the raw C struct (which would ignore the override)
+        class ShiftedYear(datetime.datetime):
+            @property
+            def year(self):
+                return super().year + 1
+        assert_equal(np.datetime64(ShiftedYear(2021, 5, 17, 13, 14, 15)),
+                     np.datetime64('2022-05-17T13:14:15'))
+
+        # A duck-typed object (not a date/datetime instance) still works via
+        # the attribute-lookup fallback path
+        class DuckDateTime:
+            year, month, day = 2000, 2, 29
+            hour, minute, second, microsecond = 1, 2, 3, 4
+            tzinfo = None
+        assert_equal(np.datetime64(DuckDateTime()),
+                     np.datetime64('2000-02-29T01:02:03.000004'))
+
+        # A duck-typed object with only date attributes -> best unit 'D'
+        class DuckDate:
+            year, month, day = 2010, 4, 16
+        assert_equal(np.datetime64(DuckDate()), np.datetime64('2010-04-16'))
+        assert_equal(np.datetime64(DuckDate()).dtype, np.dtype('M8[D]'))
+
+        # A duck-typed object with only *some* time attributes resolves as a
+        # pure date
+        class DuckPartialTime:
+            year, month, day, hour = 2010, 4, 16, 5  # no minute/second/us
+        assert_equal(np.datetime64(DuckPartialTime()), np.datetime64('2010-04-16'))
+        assert_equal(np.datetime64(DuckPartialTime()).dtype, np.dtype('M8[D]'))
+        assert_equal(np.array([DuckPartialTime()], dtype=object).astype('M8[us]')[0],
+                     np.datetime64('2010-04-16T00:00:00', 'us'))
+
+        # Invalid dates are rejected on both the fast and the fallback path
+        class DuckBadDate:
+            year, month, day = 2001, 2, 29  # not a leap year
+        with assert_raises(ValueError):
+            np.datetime64(DuckBadDate())
+
+    def test_pydatetime_timezone_fast_path(self):
+        # tz-aware datetimes take the fast field-extraction path and then
+        # apply the utcoffset (with the usual deprecation-style warning).
+        tz = datetime.timezone(datetime.timedelta(hours=-8))
+        msg = "no explicit representation of timezones available for " \
+              "np.datetime64"
+        with pytest.warns(UserWarning, match=msg):
+            assert_equal(
+                np.datetime64(datetime.datetime(2000, 1, 1, 0, tzinfo=tz)),
+                np.datetime64('2000-01-01T08'))
 
     def test_datetime_string_conversion(self):
         a = ['2011-03-16', '1920-01-01', '2013-05-19']
@@ -1750,9 +1844,44 @@ class TestDateTime:
         (np.array([1, 2, 3], dtype='m8[s]'),
          np.array([2], dtype='m8[s]'),
          np.array([0, 1, 1], dtype=np.int64)),
+        # m8 // bool
+        (np.timedelta64(7, 's'), True, np.timedelta64(7, 's'))
         ])
     def test_timedelta_floor_divide(self, op1, op2, exp):
         assert_equal(op1 // op2, exp)
+
+    @staticmethod
+    def _simd_timedelta_operands():
+        # Array larger than any SIMD width and not a multiple of it, so the
+        # vectorized division kernels run both their vector body and scalar
+        # tail. NaT sits at a vector boundary and in the tail.
+        imin = np.iinfo(np.int64).min  # == NaT
+        vals = (np.arange(137, dtype=np.int64) - 68) * np.int64(0x200000001)
+        vals[::17] = -vals[::17]
+        vals[3] = vals[64] = vals[-1] = imin
+        return vals
+
+    @pytest.mark.parametrize("d", [1, 2, 3, 7, -4, 999983,
+                                   np.iinfo(np.int64).min])
+    def test_timedelta_divide_by_scalar_simd(self, d):
+        # m8 / int -> truncated division (TIMEDELTA_mq_m_divide)
+        imin = np.iinfo(np.int64).min
+        vals = self._simd_timedelta_operands()
+        got = (vals.view('m8[s]') / np.int64(d)).view(np.int64)
+        exp = [imin if v == imin else
+               abs(int(v)) // abs(d) * (1 if (v < 0) == (d < 0) else -1)
+               for v in vals]
+        assert_array_equal(got, np.array(exp, dtype=np.int64))
+
+    @pytest.mark.parametrize("d", [1, 2, 3, 7, -4, 999983])
+    def test_timedelta_floor_divide_by_scalar_simd(self, d):
+        # m8 // m8 -> floor division (TIMEDELTA_mm_q_floor_divide)
+        imin = np.iinfo(np.int64).min
+        vals = self._simd_timedelta_operands()
+        with np.errstate(invalid='ignore'):
+            got = vals.view('m8[s]') // np.timedelta64(d, 's')
+        exp = [0 if v == imin else int(v) // d for v in vals]
+        assert_array_equal(got, np.array(exp, dtype=np.int64))
 
     def test_generic_timedelta_floor_divide(self):
         with pytest.warns(
@@ -1761,7 +1890,6 @@ class TestDateTime:
         ):
             assert_equal(np.timedelta64(1890) // np.timedelta64(31), 60)
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("op1, op2", [
         # div by 0
         (np.timedelta64(10, 'us'),
@@ -1859,7 +1987,6 @@ class TestDateTime:
     def test_timedelta_divmod_typeerror(self, op1, op2):
         assert_raises(TypeError, np.divmod, op1, op2)
 
-    @pytest.mark.skipif(IS_WASM, reason="does not work in wasm")
     @pytest.mark.parametrize("op1, op2", [
         # reuse cases from floordiv
         # div by 0
@@ -1901,6 +2028,15 @@ class TestDateTime:
             # m8 / float
             assert_equal(tda / 0.5, tdc)
             assert_equal((tda / 0.5).dtype, np.dtype('m8[h]'))
+            # m8 / bool
+            assert_equal(tdc / True, tdc)
+            assert_equal((tdc / True).dtype, np.dtype('m8[h]'))
+            # m8 / np.bool_
+            assert_equal(tdc / np.True_, tdc)
+            assert_equal((tdc / np.True_).dtype, np.dtype('m8[h]'))
+            # m8 / np.array(True)
+            assert_equal(tdc / np.array(True), tdc)
+            assert_equal((tdc / np.array(True)).dtype, np.dtype('m8[h]'))
             # m8 / m8
             assert_equal(tda / tdb, 6 / 9)
             assert_equal(np.divide(tda, tdb), 6 / 9)
@@ -2517,7 +2653,6 @@ class TestDateTime:
         with assert_raises_regex(TypeError, "common metadata divisor"):
             val1 % val2
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_timedelta_modulus_div_by_zero(self):
         with pytest.warns(RuntimeWarning):
             actual = np.timedelta64(10, 's') % np.timedelta64(0, 's')

@@ -15,7 +15,6 @@
 # Mark some files as vendored
 numpy/linalg/lapack_lite/f2c.c linguist-vendored
 numpy/linalg/lapack_lite/f2c.h linguist-vendored
-numpy/_core/include/numpy/libdivide/* linguist-vendored
 numpy/_core/src/umath/svml/* linguist-vendored
 numpy/_core/src/common/dlpack/dlpack.h linguist-vendored
 

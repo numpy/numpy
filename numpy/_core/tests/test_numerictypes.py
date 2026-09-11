@@ -470,6 +470,32 @@ class TestIsDType:
         with assert_raises_regex(ValueError, r".*not a known kind name.*"):
             np.isdtype(np.int64, "int64")
 
+    def test_isdtype_string_dtype(self):
+        # gh-27545: StringDType has no NumPy scalar type, but it is a
+        # built-in dtype, so `isdtype` must accept it rather than raise
+        dt = np.dtypes.StringDType()
+        assert not np.isdtype(dt, "bool")
+        for kind in self.dtype_group_dict:
+            assert not np.isdtype(dt, kind)
+
+        # matches itself and the StringDType class, which stands in for
+        # the scalar type that identifies the other dtypes
+        assert np.isdtype(dt, dt)
+        assert np.isdtype(dt, np.dtypes.StringDType)
+        assert np.isdtype(np.dtypes.StringDType, dt)
+        assert np.isdtype(dt, ("numeric", np.dtypes.StringDType))
+        assert not np.isdtype(np.int64, dt)
+        assert not np.isdtype(dt, ("integral", np.int64))
+
+        # dtype parameters are ignored, like datetime64 units
+        assert np.isdtype(np.dtypes.StringDType(na_object=None), dt)
+        assert np.isdtype(dt, np.dtypes.StringDType(na_object=np.nan,
+                                                    coerce=False))
+
+        # fixed-width unicode strings are a different kind
+        assert not np.isdtype(dt, np.str_)
+        assert not np.isdtype(np.dtype("U8"), dt)
+
     def test_sctypes_complete(self):
         # issue 26439: int32/intc were masking each other on 32-bit builds
         assert np.int32 in sctypes['int']

@@ -1,4 +1,5 @@
 from typing import TypedDict, type_check_only
+from typing_extensions import disjoint_base
 
 from numpy import uint64
 from numpy._typing import _ArrayLikeInt_co
@@ -21,6 +22,7 @@ class _PhiloxState(TypedDict):
     has_uint32: int
     uinteger: int
 
+@disjoint_base
 class Philox(BitGenerator):
     def __init__(
         self,

@@ -392,32 +392,24 @@ struct NpyAuxData_tag {
 #define NPY_ERR2(str) fprintf(stderr, str); fflush(stderr);
 
 /*
-* Macros to define how array, and dimension/strides data is
-* allocated. These should be made private
-*/
+ * These are soft-deprecated but are left for backward compatibility.
+ * Use PyMem_Raw APIs directly instead.
+ */
 
 #define NPY_USE_PYMEM 1
 
-
-#if NPY_USE_PYMEM == 1
-/* use the Raw versions which are safe to call with the GIL released */
 #define PyArray_malloc PyMem_RawMalloc
 #define PyArray_free PyMem_RawFree
 #define PyArray_realloc PyMem_RawRealloc
-#else
-#define PyArray_malloc malloc
-#define PyArray_free free
-#define PyArray_realloc realloc
-#endif
 
 /* Dimensions and strides */
 #define PyDimMem_NEW(size)                                         \
-    ((npy_intp *)PyArray_malloc(size*sizeof(npy_intp)))
+    ((npy_intp *)PyMem_RawMalloc(size*sizeof(npy_intp)))
 
-#define PyDimMem_FREE(ptr) PyArray_free(ptr)
+#define PyDimMem_FREE(ptr) PyMem_RawFree(ptr)
 
 #define PyDimMem_RENEW(ptr,size)                                   \
-        ((npy_intp *)PyArray_realloc(ptr,size*sizeof(npy_intp)))
+        ((npy_intp *)PyMem_RawRealloc(ptr,size*sizeof(npy_intp)))
 
 /* forward declaration */
 struct _PyArray_Descr;
@@ -1492,6 +1484,8 @@ typedef struct PyArray_StringDTypeObject PyArray_StringDTypeObject;
     /* TODO: Make this definition public in the API, as soon as its settled */
     NPY_NO_EXPORT extern PyTypeObject PyArrayDTypeMeta_Type;
 
+#ifndef Py_LIMITED_API
+
     /*
      * While NumPy DTypes would not need to be heap types the plan is to
      * make DTypes available in Python at which point they will be heap types.
@@ -1531,6 +1525,17 @@ typedef struct PyArray_StringDTypeObject PyArray_StringDTypeObject;
         void *dt_slots;
         void *reserved[3];
     } PyArray_DTypeMeta;
+
+#else
+
+    /*
+     * PyHeapTypeObject is not part of the Limited API, so the fields above
+     * are not accessible there.  This is the same opaque form dtype_api.h
+     * already uses for downstream Limited API builds.
+     */
+    typedef PyTypeObject PyArray_DTypeMeta;
+
+#endif /* Py_LIMITED_API */
 
 #endif  /* NPY_INTERNAL_BUILD */
 

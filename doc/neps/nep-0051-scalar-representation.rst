@@ -224,10 +224,10 @@ Related work
 ============
 
 A PR to only change the representation of booleans was previously
-made `here <https://github.com/numpy/numpy/pull/17592>`_.
+made `here <https://github.com/numpy/numpy/pull/17592>`__.
 
 The implementation is (at the time of writing) largely finished and can be
-found `here <https://github.com/numpy/numpy/pull/22449>`_
+found `here <https://github.com/numpy/numpy/pull/22449>`__
 
 Implementation
 ==============

@@ -128,12 +128,10 @@ PyArray_IterNew(PyObject *obj)
         return NULL;
     }
 
-    it = (PyArrayIterObject *)PyArray_malloc(sizeof(PyArrayIterObject));
+    it = PyObject_New(PyArrayIterObject, &PyArrayIter_Type);
     if (it == NULL) {
-        PyErr_NoMemory();
         return NULL;
     }
-    PyObject_Init((PyObject *)it, &PyArrayIter_Type);
 
     Py_INCREF(ao);  /* PyArray_RawIterBaseInit steals a reference */
     PyArray_RawIterBaseInit(it, ao);
@@ -167,11 +165,10 @@ PyArray_BroadcastToShape(PyObject *obj, npy_intp *dims, int nd)
     if (!compat) {
         goto err;
     }
-    it = (PyArrayIterObject *)PyArray_malloc(sizeof(PyArrayIterObject));
+    it = PyObject_New(PyArrayIterObject, &PyArrayIter_Type);
     if (it == NULL) {
         return NULL;
     }
-    PyObject_Init((PyObject *)it, &PyArrayIter_Type);
 
     PyArray_UpdateFlags(ao, NPY_ARRAY_C_CONTIGUOUS);
     if (PyArray_ISCONTIGUOUS(ao)) {
@@ -345,7 +342,7 @@ arrayiter_dealloc(PyArrayIterObject *it)
      * which does not call this function.
      */
     array_iter_base_dealloc(it);
-    PyArray_free(it);
+    PyObject_Free(it);
 }
 
 static Py_ssize_t
@@ -1101,6 +1098,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayIter_Type = {
     .tp_name = "numpy.flatiter",
     .tp_basicsize = sizeof(PyArrayIterObject),
     .tp_dealloc = (destructor)arrayiter_dealloc,
+    .tp_free = PyObject_Free,
     .tp_as_mapping = &iter_as_mapping,
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_richcompare = (richcmpfunc)iter_richcompare,
@@ -1245,11 +1243,10 @@ multiiter_new_impl(int n_args, PyObject **args)
     PyArrayMultiIterObject *multi;
     int i;
 
-    multi = PyArray_malloc(sizeof(PyArrayMultiIterObject));
+    multi = PyObject_New(PyArrayMultiIterObject, &PyArrayMultiIter_Type);
     if (multi == NULL) {
-        return PyErr_NoMemory();
+        return NULL;
     }
-    PyObject_Init((PyObject *)multi, &PyArrayMultiIter_Type);
     multi->numiter = 0;
 
     for (i = 0; i < n_args; ++i) {
@@ -1525,6 +1522,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type = {
     .tp_name = "numpy.broadcast",
     .tp_basicsize = sizeof(PyArrayMultiIterObject),
     .tp_dealloc = (destructor)arraymultiter_dealloc,
+    .tp_free = PyObject_Free,
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_iternext = (iternextfunc)arraymultiter_next,
     .tp_methods = arraymultiter_methods,
@@ -1696,11 +1694,10 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, const npy_intp *bounds,
     int i;
     PyArrayNeighborhoodIterObject *ret;
 
-    ret = PyArray_malloc(sizeof(*ret));
+    ret = PyObject_New(PyArrayNeighborhoodIterObject, &PyArrayNeighborhoodIter_Type);
     if (ret == NULL) {
         return NULL;
     }
-    PyObject_Init((PyObject *)ret, &PyArrayNeighborhoodIter_Type);
 
     Py_INCREF(x->ao);  /* PyArray_RawIterBaseInit steals a reference */
     PyArray_RawIterBaseInit((PyArrayIterObject*)ret, x->ao);
@@ -1785,7 +1782,7 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, const npy_intp *bounds,
 clean_x:
     Py_DECREF(ret->_internal_iter);
     array_iter_base_dealloc((PyArrayIterObject*)ret);
-    PyArray_free((PyArrayObject*)ret);
+    PyObject_Free(ret);
     return NULL;
 }
 
@@ -1800,7 +1797,7 @@ static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)
     Py_DECREF(iter->_internal_iter);
 
     array_iter_base_dealloc((PyArrayIterObject*)iter);
-    PyArray_free((PyArrayObject*)iter);
+    PyObject_Free(iter);
 }
 
 NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type = {
@@ -1808,5 +1805,6 @@ NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type = {
     .tp_name = "numpy.neigh_internal_iter",
     .tp_basicsize = sizeof(PyArrayNeighborhoodIterObject),
     .tp_dealloc = (destructor)neighiter_dealloc,
+    .tp_free = PyObject_Free,
     .tp_flags = Py_TPFLAGS_DEFAULT,
 };

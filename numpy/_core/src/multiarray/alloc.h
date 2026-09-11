@@ -12,7 +12,7 @@ NPY_NO_EXPORT PyObject *
 _get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args));
 
 NPY_NO_EXPORT PyObject *
-_set_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *enabled_obj);
+_set_madvise_hugepage(PyObject *self, PyObject *enabled_obj);
 
 NPY_NO_EXPORT void *
 PyDataMem_UserNEW(npy_uintp sz, PyObject *mem_handler);
@@ -45,7 +45,6 @@ npy_free_cache_dim_array(PyArrayObject * arr)
 }
 
 extern PyDataMem_Handler default_handler;
-extern PyObject *current_handler; /* PyContextVar/PyCapsule */
 
 NPY_NO_EXPORT PyObject *
 get_handler_name(PyObject *NPY_UNUSED(self), PyObject *obj);
