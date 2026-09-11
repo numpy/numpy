@@ -1792,9 +1792,7 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
     not guaranteed to be positive semi-definite.
 
     .. versionchanged:: 2.6.0
-        The means are taken over the observations a pair shares.  Previously
-        each variable was centered on the mean over its own unmasked
-        observations, which is not the set the sum of products runs over.
+        The means are taken over the observations a pair shares.
 
     Examples
     --------
@@ -1878,12 +1876,9 @@ def corrcoef(x, y=None, rowvar=True, allow_masked=True,
 
     .. versionchanged:: 2.6.0
         The means and variances are taken over the observations a pair
-        shares.  Previously the variances came from the diagonal of `cov`,
-        which holds each variable's variance over its own unmasked
-        observations, and coefficients could fall outside ``[-1, 1]``.
-        A single variable returns ``1.0`` where it has at least two
-        observations and a non-zero variance, as `numpy.corrcoef` does, and
-        is masked otherwise; it was masked in every case since 2.1.0.
+        shares, so coefficients no longer fall outside ``[-1, 1]``.  A single
+        variable returns ``1.0`` instead of masked when it has at least two
+        observations and a non-zero variance.
 
     Examples
     --------
