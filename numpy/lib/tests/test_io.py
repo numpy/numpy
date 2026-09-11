@@ -228,6 +228,17 @@ class TestSavezLoad(RoundtripTest):
                 assert len(npz["test2"]) == 10
                 assert npz["metadata"] == b"Name: Test"
 
+    def test_mmap(self):
+        """"
+        Verify that np.load raises a ValueError when mmap_mode 
+        is used with .npz files, as mmap is not supported for .npz.
+        """
+        with temppath(prefix="numpy_test_npz_mmap_", suffix=".npz") as tmp:
+            np.savez(tmp, x=np.arange(10))
+
+            with pytest.raises(ValueError):
+                np.load(tmp, mmap_mode="r")
+
     @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
     @pytest.mark.slow
     @pytest.mark.thread_unsafe(reason="crashes with low memory")
