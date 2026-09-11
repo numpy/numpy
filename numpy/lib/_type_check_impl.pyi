@@ -129,7 +129,7 @@ def isrealobj(x: _HasDType[Any] | ArrayLike) -> bool: ...
 @overload  # 0d | Nd T  (`ndarray` subclasses pass through)
 def nan_to_num[ScalarOrArrayT: np.generic | np.ndarray[tuple[int, *tuple[int, ...]], Any]](
     x: ScalarOrArrayT,
-    copy: bool = True,
+    copy: bool | None = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
@@ -145,7 +145,7 @@ def nan_to_num[ScalarT: np.generic](
 @overload  # Nd T
 def nan_to_num[ScalarT: np.generic](
     x: _NestedSequence[_ArrayLike[ScalarT]],
-    copy: bool = True,
+    copy: bool | None = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
@@ -153,7 +153,7 @@ def nan_to_num[ScalarT: np.generic](
 @overload  # ?d T
 def nan_to_num[DTypeT: np.dtype](
     x: _SupportsArray[DTypeT],
-    copy: bool = True,
+    copy: bool | None = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
@@ -161,7 +161,7 @@ def nan_to_num[DTypeT: np.dtype](
 @overload  # 0d bool
 def nan_to_num(
     x: bool,
-    copy: bool = True,
+    copy: bool | None = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
@@ -169,7 +169,7 @@ def nan_to_num(
 @overload  # 0d ~int  (overlaps with bool)
 def nan_to_num(
     x: int,
-    copy: bool = True,
+    copy: bool | None = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
@@ -177,7 +177,7 @@ def nan_to_num(
 @overload  # 0d ~float  (overlaps with int)
 def nan_to_num(
     x: float,
-    copy: bool = True,
+    copy: bool | None = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
@@ -185,7 +185,7 @@ def nan_to_num(
 @overload  # 0d ~complex  (overlaps with float)
 def nan_to_num(
     x: complex,
-    copy: bool = True,
+    copy: bool | None = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
@@ -257,7 +257,7 @@ def nan_to_num(
 @overload  # Nd bool
 def nan_to_num(
     x: _NestedSequence[bool],
-    copy: bool = True,
+    copy: bool | None = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
@@ -265,7 +265,7 @@ def nan_to_num(
 @overload  # Nd ~int
 def nan_to_num(
     x: _NestedSequence[list[int]] | list[int],
-    copy: bool = True,
+    copy: bool | None = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
@@ -273,7 +273,7 @@ def nan_to_num(
 @overload  # Nd ~float
 def nan_to_num(
     x: _NestedSequence[list[float]] | list[float],
-    copy: bool = True,
+    copy: bool | None = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
@@ -281,7 +281,7 @@ def nan_to_num(
 @overload  # Nd ~complex
 def nan_to_num(
     x: _NestedSequence[list[complex]] | list[complex],
-    copy: bool = True,
+    copy: bool | None = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
@@ -289,7 +289,7 @@ def nan_to_num(
 @overload  # Nd  (fallback)
 def nan_to_num(
     x: _NestedSequence[ArrayLike],
-    copy: bool = True,
+    copy: bool | None = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
@@ -297,7 +297,7 @@ def nan_to_num(
 @overload  # ?d  (fallback)
 def nan_to_num(
     x: ArrayLike,
-    copy: bool = True,
+    copy: bool | None = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
