@@ -109,12 +109,20 @@ def _resolve_forward_spec(implementation, target, slot_names,
             continue
         filled.add(slot)
         if defaults_override and name in defaults_override:
+            override = defaults_override[name]
             if default is Parameter.empty:
                 # the fast path would succeed where the wrapper raises
                 raise RuntimeError(
                     f"forward default for required parameter {name!r} of "
                     f"{implementation.__qualname__}")
-            defaults[slot] = defaults_override[name]
+            if default is not _NoValue and default != override:
+                # the fast path would pass `override` where the wrapper
+                # passes `default`, so the two would disagree
+                raise RuntimeError(
+                    f"forward default {override!r} for {name!r} of "
+                    f"{implementation.__qualname__} contradicts its "
+                    f"signature default {default!r}")
+            defaults[slot] = override
         elif default is _NoValue:
             raise RuntimeError(
                 f"parameter {name!r} of {implementation.__qualname__} "
