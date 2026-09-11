@@ -318,9 +318,18 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
      * This function uses hashing to identify uniqueness efficiently.
      */
 
-    auto hash = [equal_nan](const npy_static_string *value) -> size_t {
+    auto *descr = reinterpret_cast<PyArray_StringDTypeObject *>(
+            PyArray_DESCR(self));
+    bool equal_nulls = equal_nan || !descr->has_nan_na;
+    const npy_static_string *na_string =
+            descr->has_string_na ? &descr->default_string : nullptr;
+
+    auto hash = [equal_nulls, na_string](const npy_static_string *value) -> size_t {
         if (value->buf == NULL) {
-            if (equal_nan) {
+            if (na_string != nullptr) {
+                value = na_string;
+            }
+            else if (equal_nulls) {
                 return 0;
             } else {
                 return std::hash<const npy_static_string *>{}(value);
@@ -328,9 +337,18 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
         }
         return npy_fnv1a(value->buf, value->size * sizeof(char));
     };
-    auto equal = [equal_nan](const npy_static_string *lhs, const npy_static_string *rhs) -> bool {
+    auto equal = [equal_nulls, na_string](const npy_static_string *lhs, const npy_static_string *rhs) -> bool {
+        // String-valued nulls compare equal to their ordinary string value.
+        if (na_string != nullptr) {
+            if (lhs->buf == NULL) {
+                lhs = na_string;
+            }
+            if (rhs->buf == NULL) {
+                rhs = na_string;
+            }
+        }
         if (lhs->buf == NULL && rhs->buf == NULL) {
-            if (equal_nan) {
+            if (equal_nulls) {
                 return true;
             } else {
                 return lhs == rhs;
@@ -355,8 +373,6 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
     set_type hashset(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
 
     {
-        PyArray_StringDTypeObject *descr =
-            reinterpret_cast<PyArray_StringDTypeObject *>(PyArray_DESCR(self));
         np::raii::SaveThreadState save_thread_state{};
         np::raii::NpyStringAcquireAllocator alloc(descr);
 
