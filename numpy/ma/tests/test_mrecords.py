@@ -486,7 +486,7 @@ class TestMRecordsImport:
 'strings',4,-1e-10,,,1
 """)
         with temppath() as path:
-            with open(path, 'w') as f:
+            with open(path, 'w', encoding='utf-8') as f:
                 f.write(fcontent)
             mrectxt = fromtextfile(path, delimiter=',', varnames='ABCDEFG')
         assert_(isinstance(mrectxt, MaskedRecords))

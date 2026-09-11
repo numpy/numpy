@@ -53,7 +53,7 @@ class TestAccuracy:
             files = list(filter(lambda f: f.endswith('.csv'), files))
             for filename in files:
                 filepath = path.join(data_dir, filename)
-                with open(filepath) as fid:
+                with open(filepath, encoding="utf-8") as fid:
                     file_without_comments = (
                         r for r in fid if r[0] not in ('$', '#')
                     )

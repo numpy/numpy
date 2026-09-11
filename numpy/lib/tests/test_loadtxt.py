@@ -964,7 +964,7 @@ def test_parametric_unit_discovery(
     # file-obj path
     fd, fname = mkstemp()
     os.close(fd)
-    with open(fname, "w") as fh:
+    with open(fname, "w", encoding="utf-8") as fh:
         fh.write("\n".join(data) + "\n")
     # loading the full file...
     a = np.loadtxt(fname, dtype=unitless_dtype)
@@ -994,7 +994,7 @@ def test_str_dtype_unit_discovery_with_converter():
     # file-obj path
     fd, fname = mkstemp()
     os.close(fd)
-    with open(fname, "w") as fh:
+    with open(fname, "w", encoding="utf-8") as fh:
         fh.write("\n".join(data))
     a = np.loadtxt(fname, dtype="U", converters=conv)
     os.remove(fname)
@@ -1045,7 +1045,7 @@ def test_maxrows_exceeding_chunksize(nmax):
     # file-obj path
     fd, fname = mkstemp()
     os.close(fd)
-    with open(fname, "w") as fh:
+    with open(fname, "w", encoding="utf-8") as fh:
         fh.write("\n".join(data))
     res = np.loadtxt(fname, dtype=str, delimiter=" ", max_rows=nmax)
     os.remove(fname)

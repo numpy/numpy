@@ -23,7 +23,7 @@ def assert_features_equal(actual, desired, fname):
         return
     detected = str(__cpu_features__).replace("'", "")
     try:
-        with open("/proc/cpuinfo") as fd:
+        with open("/proc/cpuinfo", encoding="utf-8") as fd:
             cpuinfo = fd.read(2048)
     except Exception as err:
         cpuinfo = str(err)
@@ -102,7 +102,7 @@ class AbstractTest:
 
     def get_cpuinfo_item(self, magic_key):
         values = set()
-        with open('/proc/cpuinfo') as fd:
+        with open('/proc/cpuinfo', encoding="utf-8") as fd:
             for line in fd:
                 if not line.startswith(magic_key):
                     continue
@@ -158,7 +158,7 @@ if __name__ == "__main__":
     def setup_class(self, tmp_path_factory):
         file = tmp_path_factory.mktemp("runtime_test_script")
         file /= "_runtime_detect.py"
-        file.write_text(self.SCRIPT)
+        file.write_text(self.SCRIPT, encoding="utf-8")
         self.file = file
 
     def _run(self):
