@@ -1365,9 +1365,11 @@ class TestDateTime:
         for offset in [1, 2, 100, 1000, 10000]:
             dt64 = np.datetime64(info.min + offset, "D")
             result = dt64.item()
-            # expected integer value
-            assert result == info.min + offset
-            assert isinstance(result, int)
+            assert isinstance(result, np.datetime64)
+            assert result == dt64
+            # gh-31688: str() is now what converts to a datetimestruct, which
+            # is where these values used to overflow.
+            assert np.datetime64(str(dt64), "D") == dt64
 
     def test_pyobject_roundtrip(self):
         # All datetime types should be able to roundtrip through object
