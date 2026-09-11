@@ -26,6 +26,7 @@
 #include "mem_overlap.h"
 #include "array_assign.h"
 #include "array_coercion.h"
+#include "module_state.h"
 /* TODO: Only for `NpyIter_GetTransferFlags` until it is public */
 #define NPY_ITERATOR_IMPLEMENTATION_CODE
 #include "nditer_impl.h"
@@ -2812,7 +2813,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     }
     /* set all attributes of mapiter to zero */
     memset(mit, 0, sizeof(PyArrayMapIterObject) + sizeof(NPY_cast_info));
-    PyObject_Init((PyObject *)mit, &PyArrayMapIter_Type);
+    PyObject_Init((PyObject *)mit, _npy_module_state->PyArrayMapIter_Type);
 
     Py_INCREF(arr);
     mit->array = arr;
@@ -3454,7 +3455,10 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
     if (mit->extra_op_iter != NULL) {
         NpyIter_Deallocate(mit->extra_op_iter);
     }
+
+    PyTypeObject *type = Py_TYPE(mit);
     PyObject_Free(mit);
+    Py_DECREF(type);
 }
 
 /*
@@ -3468,11 +3472,28 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
  * removed. This is not very useful anyway, since mapiter is equivalent
  * to a[indexobj].flat but the latter gets to use slice syntax.
  */
-NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy.mapiter",
-    .tp_basicsize = sizeof(PyArrayMapIterObject),
-    .tp_dealloc = (destructor)arraymapiter_dealloc,
-    .tp_free = PyObject_Free,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
+static PyType_Slot arraymapiter_slots[] = {
+    {Py_tp_dealloc, arraymapiter_dealloc},
+    {Py_tp_iter, PyObject_SelfIter},
+    {0, NULL},
 };
+
+static PyType_Spec arraymapiter_spec = {
+    .name = "numpy.mapiter",
+    .basicsize = sizeof(PyArrayMapIterObject),
+    .flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_IMMUTABLETYPE
+              | Py_TPFLAGS_DISALLOW_INSTANTIATION),
+    .slots = arraymapiter_slots,
+};
+
+NPY_NO_EXPORT int
+init_mapiter_type(PyObject *module)
+{
+    PyObject *type = PyType_FromModuleAndSpec(
+            module, &arraymapiter_spec, NULL);
+    if (type == NULL) {
+        return -1;
+    }
+    get_module_state(module)->PyArrayMapIter_Type = (PyTypeObject *)type;
+    return 0;
+}

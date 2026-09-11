@@ -32,6 +32,7 @@
 #include "legacy_array_method.h"
 #include "dtypemeta.h"
 #include "dispatching.h"
+#include "module_state.h"
 
 
 static NPY_CASTING
@@ -256,7 +257,8 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
     }
     if (existing_info != NULL) {
         PyObject *existing_meth = PyTuple_GET_ITEM(existing_info, 1);
-        if (!PyObject_TypeCheck(existing_meth, &PyArrayMethod_Type)) {
+        if (!PyObject_TypeCheck(
+                    existing_meth, _npy_module_state->PyArrayMethod_Type)) {
             PyErr_SetString(PyExc_TypeError,
                     "Matching loop was not an ArrayMethod.");
             goto finish;

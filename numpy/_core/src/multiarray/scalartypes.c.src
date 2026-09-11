@@ -1687,7 +1687,7 @@ static PyObject *
 voidtype_flags_get(PyVoidScalarObject *self, void *NPY_UNUSED(ignored))
 {
     PyObject *flagobj;
-    flagobj = PyArrayFlags_Type.tp_alloc(&PyArrayFlags_Type, 0);
+    flagobj = PyType_GenericAlloc(_npy_module_state->PyArrayFlags_Type, 0);
     if (flagobj == NULL) {
         return NULL;
     }
@@ -4785,7 +4785,6 @@ initialize_numeric_types(void)
     PyVoidArrType_Type.tp_dealloc = (destructor) void_dealloc;
 
     PyArrayIter_Type.tp_iter = PyObject_SelfIter;
-    PyArrayMapIter_Type.tp_iter = PyObject_SelfIter;
 }
 
 typedef struct {
