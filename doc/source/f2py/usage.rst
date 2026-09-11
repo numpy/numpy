@@ -60,6 +60,9 @@ current directory.
 Here ``<fortran files>`` may also contain signature files. Among other options
 (see below), the following options can be used in this mode:
 
+For callback-related staged workflows that use signature files, see
+:ref:`Call-back arguments`.
+
 ``--debug-capi``
   Adds debugging hooks to the extension module. When using this extension
   module, various diagnostic information about the wrapper is written to the
