@@ -1001,6 +1001,21 @@ zero_matrix(typ *dst, const linearize_data* data)
     }
 }
 
+template<typename typ>
+static inline bool
+all_finite(const typ *a, size_t count)
+{
+    using basetyp = basetype_t<typ>;
+    /* complex values are stored as (real, imag) pairs */
+    const basetyp *p = (const basetyp *)a;
+    size_t len = count * (sizeof(typ) / sizeof(basetyp));
+    bool finite = true;
+    for (size_t i = 0; i < len; i++) {
+        finite &= npy_isfinite(p[i]) != 0;
+    }
+    return finite;
+}
+
                /* identity square matrix generation */
 template<typename typ>
 static inline void
@@ -3061,7 +3076,8 @@ dispatch_scalar<typ>())) {
             int not_ok;
             /* copy the matrix in */
             linearize_matrix((typ*)params.A, (typ*)args[0], &a_in);
-            not_ok = call_gesdd(&params);
+            not_ok = !all_finite((typ*)params.A, (size_t)params.M * params.N)
+                     || call_gesdd(&params);
             if (!not_ok) {
                 if ('N' == params.JOBZ) {
                     delinearize_matrix((basetyp*)args[1], (basetyp*)params.S, &s_out);
@@ -4162,7 +4178,8 @@ using basetyp = basetype_t<typ>;
             linearize_matrix((typ*)params.A, (typ*)args[0], &a_in);
             linearize_matrix((typ*)params.B, (typ*)args[1], &b_in);
             params.RCOND = (basetyp*)args[2];
-            not_ok = call_gelsd(&params);
+            not_ok = !all_finite((typ*)params.A, (size_t)m * n)
+                     || call_gelsd(&params);
             if (!not_ok) {
                 delinearize_matrix((typ*)args[3], (typ*)params.B, &x_out);
                 *(npy_int*) args[5] = params.RANK;
