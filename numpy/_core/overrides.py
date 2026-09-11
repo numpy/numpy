@@ -16,8 +16,7 @@ ARRAY_FUNCTIONS = set()
 
 # ufunc.reduce positional argument order and defaults, used to express
 # reduction=<ufunc> as a forward spec (see _resolve_forward_spec).
-_REDUCE_SLOT_NAMES = (
-    "a", "axis", "dtype", "out", "keepdims", "initial", "where")
+_REDUCE_SLOT_NAMES = ("a", "axis", "dtype", "out", "keepdims", "initial", "where")
 _REDUCE_DEFAULTS = {
     "axis": None, "dtype": None, "out": None,
     "keepdims": False, "initial": _NoValue, "where": True,
