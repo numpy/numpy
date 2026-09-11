@@ -1,4 +1,7 @@
 import functools
+import operator
+import os
+import warnings
 
 import numpy as np
 import numpy._core.numeric as _nx
@@ -754,7 +757,20 @@ def array_split(ary, indices_or_sections, axis=0):
         div_points = [0] + list(indices_or_sections) + [Ntotal]
     except TypeError:
         # indices_or_sections is a scalar, not an array.
-        Nsections = int(indices_or_sections)
+        try:
+            Nsections = operator.index(indices_or_sections)
+        except TypeError:
+            # Deprecated in NumPy 2.6, 2026-08
+            # Convert first, so that values which cannot be converted at all
+            # keep raising as before rather than also emitting a warning.
+            Nsections = int(indices_or_sections)
+            warnings.warn(
+                f"Cannot convert {type(indices_or_sections).__name__} safely "
+                "to an integer. This will raise an error in future versions "
+                "(Deprecated NumPy 2.6)",
+                DeprecationWarning,
+                skip_file_prefixes=(os.path.dirname(__file__),),
+            )
         if Nsections <= 0:
             raise ValueError('number sections must be larger than 0.') from None
         Neach_section, extras = divmod(Ntotal, Nsections)
@@ -801,6 +817,10 @@ def split(ary, indices_or_sections, axis=0):
 
         If an index exceeds the dimension of the array along `axis`,
         an empty sub-array is returned correspondingly.
+
+        .. deprecated:: 2.6
+            Passing a non-integer scalar is deprecated. Such values were
+            silently truncated towards zero.
     axis : int, optional
         The axis along which to split, default is 0.
 
