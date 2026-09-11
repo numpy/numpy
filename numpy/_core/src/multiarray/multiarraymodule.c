@@ -5210,6 +5210,9 @@ multiarray_umath_traverse(PyObject *m, visitproc visit, void *arg)
     for (int i = 0; i < NPY_ERRMODE_STRING_COUNT; i++) {
         Py_VISIT(state->interned_str.errmode_strings[i]);
     }
+    for (int i = 0; i < NPY_SCALAR_METHOD_COUNT; i++) {
+        Py_VISIT(state->interned_str.scalar_method_names[i]);
+    }
 
 #define NPY_VISIT_FIELD(name) Py_VISIT(state->static_pydata.name);
     NPY_STATIC_PYDATA_FIELDS(NPY_VISIT_FIELD)
@@ -5240,6 +5243,9 @@ multiarray_umath_clear(PyObject *m)
 #undef NPY_CLEAR_FIELD
     for (int i = 0; i < NPY_ERRMODE_STRING_COUNT; i++) {
         Py_CLEAR(state->interned_str.errmode_strings[i]);
+    }
+    for (int i = 0; i < NPY_SCALAR_METHOD_COUNT; i++) {
+        Py_CLEAR(state->interned_str.scalar_method_names[i]);
     }
 
 #define NPY_CLEAR_FIELD(name) Py_CLEAR(state->static_pydata.name);

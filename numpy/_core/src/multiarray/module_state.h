@@ -27,8 +27,8 @@ typedef struct {
 /* The structs are generated from the lists, so these only catch a stray
  * member added by hand outside them. */
 static_assert(sizeof(npy_interned_str_struct) ==
-        (NPY_FIELD_COUNT(NPY_INTERNED_STR_FIELDS) + NPY_ERRMODE_STRING_COUNT)
-                * sizeof(PyObject *),
+        (NPY_FIELD_COUNT(NPY_INTERNED_STR_FIELDS) + NPY_ERRMODE_STRING_COUNT
+                + NPY_SCALAR_METHOD_COUNT) * sizeof(PyObject *),
         "npy_interned_str_struct member missing from NPY_INTERNED_STR_FIELDS");
 
 static_assert(sizeof(npy_static_pydata_struct) ==

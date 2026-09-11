@@ -4731,6 +4731,10 @@ class TestMethods:
         e = np.array(['1+1j'], 'U')
         assert_raises(TypeError, complex, e)
 
+    def test_item_multi_index_tuple(self):
+        a = np.arange(6).reshape(2, 3)
+        assert a.item((1, 2)) == a.item(1, 2) == 5
+
 class TestCequenceMethods:
     def test_array_contains(self):
         assert_(4.0 in np.arange(16.).reshape(4, 4))
