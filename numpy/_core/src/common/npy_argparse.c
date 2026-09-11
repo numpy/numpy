@@ -61,7 +61,23 @@ PyArray_PythonPyIntFromInt(PyObject *obj, int *value)
         return NPY_FAIL;
     }
 
-    long result = PyLong_AsLong(obj);
+    PyObject *integer = PyNumber_Index(obj);
+    if (integer == NULL) {
+        PyErr_Clear();
+        integer = PyNumber_Long(obj);
+        if (integer == NULL) {
+            return NPY_FAIL;
+        }
+        if (PyErr_WarnEx(PyExc_DeprecationWarning,
+                "Conversion of non-integer input to an integer is deprecated. "
+                "In a future version of NumPy, it will raise an error.", 1) < 0) {
+            Py_DECREF(integer);
+            return NPY_FAIL;
+        }
+    }
+
+    long result = PyLong_AsLong(integer);
+    Py_DECREF(integer);
     if (NPY_UNLIKELY((result == -1) && PyErr_Occurred())) {
         return NPY_FAIL;
     }
@@ -70,10 +86,8 @@ PyArray_PythonPyIntFromInt(PyObject *obj, int *value)
                         "Python int too large to convert to C int");
         return NPY_FAIL;
     }
-    else {
-        *value = (int)result;
-        return NPY_SUCCEED;
-    }
+    *value = (int)result;
+    return NPY_SUCCEED;
 }
 
 

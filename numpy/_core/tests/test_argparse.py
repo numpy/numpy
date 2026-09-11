@@ -12,6 +12,7 @@ match exactly, and could be adjusted):
 """
 
 import threading
+import warnings
 
 import pytest
 
@@ -42,6 +43,22 @@ def test_invalid_integers():
         func(1.)
     with pytest.raises(OverflowError):
         func(2**100)
+
+
+def test_legacy_integer_conversion_warns():
+    class HasIndex:
+        def __index__(self):
+            return 1
+
+    class HasInt:
+        def __int__(self):
+            return 1
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        func(HasIndex(), None)
+    with pytest.warns(DeprecationWarning, match="non-integer input"):
+        func(HasInt(), None)
 
 
 def test_missing_arguments():
