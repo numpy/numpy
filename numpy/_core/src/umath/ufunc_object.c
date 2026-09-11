@@ -626,6 +626,7 @@ _wheremask_converter(PyObject *obj, PyArrayObject **wheremask)
  *
  * `*operand` must be an owned reference to a temporary array (freshly
  * converted from `obj`); it may be replaced with a new reference.
+ * `*DType` is borrowed and replaced with the pyscalar DType
  *
  * Returns 1 if `obj` was a Python int, float, or complex, and 0 otherwise.
  */
@@ -704,8 +705,8 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
             /* Does not affect promotion, only conversion after resolution. */
             npy_mark_tmp_array_if_pystr(obj, out_op[i]);
         }
+        /* borrowed, the operand keeps it alive */
         out_op_DTypes[i] = NPY_DTYPE(PyArray_DESCR(out_op[i]));
-        Py_INCREF(out_op_DTypes[i]);
 
         if (nin == 1) {
             /*
@@ -748,7 +749,6 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
             }
             if (out_op[i] != NULL) {
                 out_op_DTypes[i + nin] = NPY_DTYPE(PyArray_DESCR(out_op[i]));
-                Py_INCREF(out_op_DTypes[i + nin]);
             }
         }
     }
@@ -2347,7 +2347,7 @@ reducelike_promote_and_resolve_multi(PyUFuncObject *ufunc,
 
     for (int i = 0; i < nin; i++) {
         ops[i] = arr;
-        Py_INCREF(stream_DType);
+        /* borrowed, `arr` keeps it alive */
         operation_DTypes[i] = stream_DType;
     }
     /*
@@ -2364,9 +2364,7 @@ reducelike_promote_and_resolve_multi(PyUFuncObject *ufunc,
         else if (signature[0] != NULL) {
             out_DType = signature[0];
         }
-        Py_XINCREF(out_DType);
         operation_DTypes[nin + i] = out_DType;
-        Py_XINCREF(signature[0]);
         fwd_signature[nin + i] = signature[0];
     }
 
@@ -2374,21 +2372,12 @@ reducelike_promote_and_resolve_multi(PyUFuncObject *ufunc,
             ops, fwd_signature, operation_DTypes, NPY_FALSE, NPY_FALSE, NPY_FALSE);
 
     if (ufuncimpl == NULL) {
-        for (int i = 0; i < fwd_nargs; i++) {
-            Py_XDECREF(operation_DTypes[i]);
-            Py_XDECREF(fwd_signature[i]);
-        }
         return NULL;
     }
 
     PyArray_Descr *fwd_descrs[NPY_MAXARGS];
     int res = resolve_descriptors(fwd_nargs, ufunc, ufuncimpl,
             ops, fwd_descrs, fwd_signature, operation_DTypes, NULL, casting);
-
-    for (int i = 0; i < fwd_nargs; i++) {
-        Py_XDECREF(operation_DTypes[i]);
-        Py_XDECREF(fwd_signature[i]);
-    }
     if (res < 0) {
         return NULL;
     }
@@ -2463,7 +2452,7 @@ reducelike_promote_and_resolve_multi(PyUFuncObject *ufunc,
  *        the array itself to the type-resolution.
  * @param signature The DType signature, which may already be set due to the
  *        dtype passed in by the user, or the special cases (add, multiply).
- *        (Contains strong references and may be modified.)
+ *        (Contains borrowed references and may be modified.)
  * @param enforce_uniform_args If `NPY_TRUE` fully uniform dtypes/descriptors
  *        are enforced as required for accumulate and (currently) reduceat.
  * @param out_descrs New references to the resolved descriptors (on success).
@@ -2500,21 +2489,23 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
                 && ((strcmp(ufunc->name, "add") == 0)
                     || (strcmp(ufunc->name, "multiply") == 0))) {
             if (PyTypeNum_ISBOOL(typenum)) {
-                typenum = NPY_INTP;
+                signature[0] = &PyArray_IntpDType;
             }
             else if ((size_t)PyArray_ITEMSIZE(arr) < sizeof(npy_intp)) {
                 if (PyTypeNum_ISUNSIGNED(typenum)) {
-                    typenum = NPY_UINTP;
+                    signature[0] = &PyArray_UIntpDType;
                 }
                 else {
-                    typenum = NPY_INTP;
+                    signature[0] = &PyArray_IntpDType;
                 }
             }
-            signature[0] = PyArray_DTypeFromTypeNum(typenum);
+            else {
+                /* borrowed, `arr` keeps it alive */
+                signature[0] = NPY_DTYPE(PyArray_DESCR(arr));
+            }
         }
     }
     assert(signature[2] == NULL);  /* we always fill it here */
-    Py_XINCREF(signature[0]);
     signature[2] = signature[0];
 
     /*
@@ -2531,25 +2522,19 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
      *       value.  As of 1.20, it returned an integer, so that should
      *       probably go to an error/warning first.
      */
+    /* borrowed, the operands keep them alive */
     PyArray_DTypeMeta *operation_DTypes[3] = {
             NULL, NPY_DTYPE(PyArray_DESCR(arr)), NULL};
-    Py_INCREF(operation_DTypes[1]);
 
     if (_out != NULL) {
         operation_DTypes[0] = NPY_DTYPE(PyArray_DESCR(_out));
-        Py_INCREF(operation_DTypes[0]);
         operation_DTypes[2] = operation_DTypes[0];
-        Py_INCREF(operation_DTypes[2]);
     }
 
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
             ops, signature, operation_DTypes, NPY_FALSE, NPY_FALSE, NPY_TRUE);
 
     if (ufuncimpl == NULL) {
-        /* DTypes may currently get filled in fallbacks and XDECREF for error: */
-        Py_XDECREF(operation_DTypes[0]);
-        Py_XDECREF(operation_DTypes[1]);
-        Py_XDECREF(operation_DTypes[2]);
         return NULL;
     }
 
@@ -2562,10 +2547,6 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
      */
     int res = resolve_descriptors(3, ufunc, ufuncimpl,
             ops, out_descrs, signature, operation_DTypes, NULL, casting);
-
-    Py_XDECREF(operation_DTypes[0]);
-    Py_XDECREF(operation_DTypes[1]);
-    Py_XDECREF(operation_DTypes[2]);
     if (res < 0) {
         return NULL;
     }
@@ -4140,10 +4121,6 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         Py_XDECREF(out[i]);
     }
 
-    for (int i = 0; i < NPY_MAXARGS; i++) {
-        Py_XDECREF(signature[i]);
-    }
-
     Py_DECREF(mp);
     multi_XDECREF(ufunc_input, nin_args);
 
@@ -4202,10 +4179,6 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
 fail:
     for (int i = 0; i < ufunc->nout; i++) {
         Py_XDECREF(out[i]);
-    }
-
-    for (int i = 0; i < NPY_MAXARGS; i++) {
-        Py_XDECREF(signature[i]);
     }
 
     Py_XDECREF(mp);
@@ -4267,11 +4240,13 @@ _check_and_copy_sig_to_signature(
  * parsing should eventually be adapted to prefer classes and possible
  * deprecated instances. (Users should not notice that much, since `np.float64`
  * or "float64" usually denotes the DType class rather than the instance.)
+ *
+ * Returns a borrowed reference: `dtype_obj` itself, or a legacy DType (which
+ * is effectively immortal).
  */
 static PyArray_DTypeMeta *
 _get_dtype(PyObject *dtype_obj) {
     if (PyObject_TypeCheck(dtype_obj, &PyArrayDTypeMeta_Type)) {
-        Py_INCREF(dtype_obj);
         return (PyArray_DTypeMeta *)dtype_obj;
     }
     else {
@@ -4303,7 +4278,6 @@ _get_dtype(PyObject *dtype_obj) {
                 return NULL;
             }
         }
-        Py_INCREF(out);
         Py_DECREF(descr);
         return out;
     }
@@ -4317,8 +4291,8 @@ _get_dtype(PyObject *dtype_obj) {
  * descriptor).
  * Unlike the dtype of an `out` array, it influences loop selection!
  *
- * It is the callers responsibility to clean `signature` and NULL it before
- * calling.
+ * The caller must NULL `signature` before calling.  The entries are borrowed
+ * (kept alive by the passed objects, or effectively immortal legacy DTypes).
  */
 static int
 _get_fixed_signature(PyUFuncObject *ufunc,
@@ -4347,10 +4321,8 @@ _get_fixed_signature(PyUFuncObject *ufunc,
             return -1;
         }
         for (int i = nin; i < nop; i++) {
-            Py_INCREF(dtype);
             signature[i] = dtype;
         }
-        Py_DECREF(dtype);
         return 0;
     }
 
@@ -4448,8 +4420,8 @@ _get_fixed_signature(PyUFuncObject *ufunc,
                     Py_DECREF(str_object);
                     return -1;
                 }
+                /* borrowed, builtin DTypes are effectively immortal */
                 signature[i] = NPY_DTYPE(descr);
-                Py_INCREF(signature[i]);
                 Py_DECREF(descr);
             }
             Py_DECREF(str_object);
@@ -4920,6 +4892,10 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     }
     memset(scratch_objs, 0, sizeof(void *) * (nop * 4 + 2 + nop));
 
+    /*
+     * `signature` and `operand_DTypes` are borrowed (kept alive by the
+     * operands, the arguments, or `ufunc->_loops`).
+     */
     PyArray_DTypeMeta **signature = (PyArray_DTypeMeta **)scratch_objs;
     PyArrayObject **operands = (PyArrayObject **)(signature + nop);
     PyArray_DTypeMeta **operand_DTypes = (PyArray_DTypeMeta **)(operands + nop + 1);
@@ -5194,8 +5170,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
      */
     Py_XDECREF(wheremask);
     for (int i = 0; i < nop; i++) {
-        Py_DECREF(signature[i]);
-        Py_XDECREF(operand_DTypes[i]);
         Py_DECREF(operation_descrs[i]);
         if (i < nin) {
             Py_DECREF(operands[i]);
@@ -5224,8 +5198,6 @@ fail:
     Py_XDECREF(wheremask);
     for (int i = 0; i < ufunc->nargs; i++) {
         Py_XDECREF(operands[i]);
-        Py_XDECREF(signature[i]);
-        Py_XDECREF(operand_DTypes[i]);
         Py_XDECREF(operation_descrs[i]);
     }
     npy_free_workspace(scratch_objs);
@@ -5373,11 +5345,7 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     }
 
     ufunc = PyObject_GC_New(PyUFuncObject, &PyUFunc_Type);
-    /*
-     * We use GC_New here for ufunc->obj, but do not use GC_Track since
-     * ufunc->obj is still NULL at the end of this function.
-     * See ufunc_frompyfunc where ufunc->obj is set and GC_Track is called.
-     */
+    /* GC tracked at the end of this function, once fully initialized. */
     if (ufunc == NULL) {
         return NULL;
     }
@@ -5503,6 +5471,13 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
      *       datetimes, this meant that `timedelta.sum(dtype="f8")` returned
      *       datetimes (and not floats or error), arguably wrong, but...
      */
+
+    /*
+     * Track the ufunc: on free-threaded CPython 3.15+ the specializer enables
+     * deferred refcounting for GC tracked module attributes, which removes the
+     * per-call refcount contention on the ufunc object.
+     */
+    PyObject_GC_Track(ufunc);
     return (PyObject *)ufunc;
 }
 
@@ -6574,9 +6549,9 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
          *       operand array is special (it is written to) similar to reductions.
          *       Using unsafe-casting as done here, is likely not desirable.
          */
+        /* borrowed, the operands keep the DTypes alive */
         tmp_operands[0] = op1_array;
         operand_DTypes[0] = NPY_DTYPE(PyArray_DESCR(op1_array));
-        Py_INCREF(operand_DTypes[0]);
         int force_legacy_promotion = 0;
 
         npy_bool op2_is_pyscalar = NPY_FALSE;
@@ -6586,7 +6561,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             tmp_operands[1] = op2_array;
             Py_INCREF(tmp_operands[1]);
             operand_DTypes[1] = NPY_DTYPE(PyArray_DESCR(op2_array));
-            Py_INCREF(operand_DTypes[1]);
             multiarray_umath_state *state = _npy_module_state;
             if (mark_pyscalar_operand(
                     state, op2, &tmp_operands[1], &operand_DTypes[1])) {
@@ -6597,7 +6571,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             }
             tmp_operands[2] = tmp_operands[0];
             operand_DTypes[2] = operand_DTypes[0];
-            Py_INCREF(operand_DTypes[2]);
 
             if ((PyArray_NDIM(op1_array) == 0)
                     != (PyArray_NDIM(op2_array) == 0)) {
@@ -6608,7 +6581,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         else {
             tmp_operands[1] = tmp_operands[0];
             operand_DTypes[1] = operand_DTypes[0];
-            Py_INCREF(operand_DTypes[1]);
             tmp_operands[2] = NULL;
         }
 
@@ -6632,10 +6604,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
         if (op2_array != NULL) {
             Py_SETREF(op2_array, tmp_operands[1]);
-        }
-        for (int i = 0; i < 3; i++) {
-            Py_XDECREF(signature[i]);
-            Py_XDECREF(operand_DTypes[i]);
         }
         if (resolve_result < 0) {
             goto fail;
@@ -6895,8 +6863,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
             if (dummy_arrays[i] == NULL) {
                 goto finish;
             }
+            /* borrowed, the dummy array owns it */
             DTypes[i] = NPY_DTYPE(descr);
-            Py_INCREF(DTypes[i]);
         }
         /* Explicitly allow int, float, and complex for the "weak" types. */
         else if (descr_obj == (PyObject *)&PyLong_Type && i < ufunc -> nin) {
@@ -6906,7 +6874,6 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
                 goto finish;
             }
             PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_INT);
-            Py_INCREF(&PyArray_PyLongDType);
             DTypes[i] = &PyArray_PyLongDType;
             promoting_pyscalars = NPY_TRUE;
         }
@@ -6917,7 +6884,6 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
                 goto finish;
             }
             PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_FLOAT);
-            Py_INCREF(&PyArray_PyFloatDType);
             DTypes[i] = &PyArray_PyFloatDType;
             promoting_pyscalars = NPY_TRUE;
         }
@@ -6928,7 +6894,6 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
                 goto finish;
             }
             PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_COMPLEX);
-            Py_INCREF(&PyArray_PyComplexDType);
             DTypes[i] = &PyArray_PyComplexDType;
             promoting_pyscalars = NPY_TRUE;
         }
@@ -7053,10 +7018,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
   finish:
     Py_XDECREF(result_dtype_tuple);
     for (int i = 0; i < ufunc->nargs; i++) {
-        Py_XDECREF(signature[i]);
         Py_XDECREF(dummy_arrays[i]);
         Py_XDECREF(operation_descrs[i]);
-        Py_XDECREF(DTypes[i]);
     }
 
     return result;
