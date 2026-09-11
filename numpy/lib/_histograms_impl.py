@@ -295,7 +295,7 @@ def _ravel_and_check_weights(a, weights):
     return a, weights
 
 
-def _get_outer_edges(a, range):
+def _get_outer_edges(a, range, n_bins=1):
     """
     Determine the outer bin edges to use, from either the data or the range
     argument
@@ -319,8 +319,9 @@ def _get_outer_edges(a, range):
 
     # expand empty range to avoid divide by zero
     if first_edge == last_edge:
-        first_edge = first_edge - 0.5
-        last_edge = last_edge + 0.5
+        half = max(0.5, n_bins * np.spacing(abs(first_edge)))
+        first_edge = first_edge - half
+        last_edge = last_edge + half
 
     return first_edge, last_edge
 
@@ -422,7 +423,7 @@ def _get_bin_edges(a, bins, range, weights):
         if n_equal_bins < 1:
             raise ValueError('`bins` must be positive, when an integer')
 
-        first_edge, last_edge = _get_outer_edges(a, range)
+        first_edge, last_edge = _get_outer_edges(a, range, n_equal_bins)
 
     elif np.ndim(bins) == 1:
         bin_edges = np.asarray(bins)
