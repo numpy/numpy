@@ -1694,6 +1694,8 @@ PyArray_ResultType(
         npy_intp ndtypes, PyArray_Descr *descrs[])
 {
     PyArray_Descr *result = NULL;
+    PyArray_DTypeMeta *common_dtype = NULL;
+    npy_bool own_common_dtype = NPY_FALSE;
 
     if (narrs + ndtypes <= 1) {
         /* If the input is a single value, skip promotion. */
@@ -1748,10 +1750,21 @@ PyArray_ResultType(
         }
     }
 
-    PyArray_DTypeMeta *common_dtype = PyArray_PromoteDTypeSequence(
-            narrs+ndtypes, all_DTypes);
-    if (common_dtype == NULL) {
-        goto error;
+    /* If all DTypes are identical, skip promotion and borrow the DType. */
+    common_dtype = all_DTypes[0];
+    for (npy_intp i = 1; i < narrs + ndtypes; i++) {
+        if (all_DTypes[i] != common_dtype) {
+            common_dtype = NULL;
+            break;
+        }
+    }
+    if (common_dtype == NULL || NPY_DT_is_abstract(common_dtype)) {
+        common_dtype = PyArray_PromoteDTypeSequence(
+                narrs+ndtypes, all_DTypes);
+        if (common_dtype == NULL) {
+            goto error;
+        }
+        own_common_dtype = NPY_TRUE;
     }
 
     if (NPY_DT_is_abstract(common_dtype)) {
@@ -1761,7 +1774,11 @@ PyArray_ResultType(
             goto error;
         }
         Py_INCREF(NPY_DTYPE(tmp_descr));
-        Py_SETREF(common_dtype, NPY_DTYPE(tmp_descr));
+        if (own_common_dtype) {
+            Py_DECREF(common_dtype);
+        }
+        common_dtype = NPY_DTYPE(tmp_descr);
+        own_common_dtype = NPY_TRUE;
         Py_DECREF(tmp_descr);
     }
 
@@ -1801,13 +1818,17 @@ PyArray_ResultType(
         }
     }
 
-    Py_DECREF(common_dtype);
+    if (own_common_dtype) {
+        Py_DECREF(common_dtype);
+    }
     npy_free_workspace(workspace);
     return result;
 
   error:
     Py_XDECREF(result);
-    Py_XDECREF(common_dtype);
+    if (own_common_dtype) {
+        Py_DECREF(common_dtype);
+    }
     npy_free_workspace(workspace);
     return NULL;
 }

@@ -1637,11 +1637,10 @@ _convert_from_type(PyObject *obj) {
         return PyArray_DescrFromType(NPY_OBJECT);
     }
     else {
+        /* borrowed reference */
         PyObject *DType = PyArray_DiscoverDTypeFromScalarType(typ);
         if (DType != NULL) {
-            PyArray_Descr *ret = PyArray_GetDefaultDescr((PyArray_DTypeMeta *)DType);
-            Py_DECREF(DType);
-            return ret;
+            return PyArray_GetDefaultDescr((PyArray_DTypeMeta *)DType);
         }
         PyArray_Descr *ret = _try_convert_from_dtype_attr(obj);
         if ((PyObject *)ret != Py_NotImplemented) {

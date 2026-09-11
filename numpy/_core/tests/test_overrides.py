@@ -888,3 +888,25 @@ def test_function_like():
     bound = np.mean.__get__(MyClass)  # classmethod
     with pytest.raises(TypeError, match="unsupported operand type"):
         bound()
+
+
+def test_dispatcher_is_gc_tracked():
+    # The dispatcher holds Python functions and a dict, so it takes part in
+    # garbage collection.  (On free-threaded CPython 3.15+ this also lets the
+    # interpreter use deferred reference counting for `np.<func>` lookups.)
+    import gc
+    assert gc.is_tracked(np.sum)
+    assert gc.is_tracked(np.concatenate)
+
+    def dispatcher(a):
+        return (a,)
+
+    def implementation(a):
+        return a
+
+    func = _ArrayFunctionDispatcher(dispatcher, implementation)
+    # Create a reference cycle through the dispatcher's __dict__:
+    func.self = func
+    assert gc.is_tracked(func)
+    del func
+    gc.collect()

@@ -1,0 +1,6 @@
+Better multithreaded scaling of array coercion and promotion
+------------------------------------------------------------
+On free-threaded Python, converting scalars to arrays (e.g.
+``np.asarray(scalar)``, ``arr[i] = value``), ``np.result_type`` and
+dispatching through ``__array_function__`` no longer contend on shared
+reference counts, so these calls now scale across threads.
