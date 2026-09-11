@@ -1359,18 +1359,9 @@ PyArray_TransferNDimToStrided(npy_intp ndim,
     N = shape0*M;
 
     /*
-     * When the source does not advance along this dimension it is broadcast
-     * over it, so every repetition writes byte-identical data.  If the
-     * destination is contiguous we can call the transfer function once and
-     * then grow the result by repeatedly doubling it, which turns O(M)
-     * transfer calls into O(log M).  This matters a lot when `shape0` is
-     * small (e.g. filling a buffer from a length-3 row vector), where the
-     * plain loop degenerates into thousands of tiny copies.
-     *
-     * Restricted to dtypes without references: doubling duplicates raw
-     * destination bytes without adjusting reference counts, and it also
-     * invokes the transfer function fewer times, which would be observable
-     * for casts with side effects (as object casts can have).
+     * The source does not advance along this dimension, so all repetitions
+     * are identical: transfer once and fill the rest by doubling. Not for
+     * dtypes with references.
      */
     if (M > 0 && count > 0 && src_stride1 == 0
             && dst_stride == cast_info->context.descriptors[1]->elsize

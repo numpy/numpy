@@ -244,13 +244,8 @@ npyiter_buffered_iternext(NpyIter *iter)
     }
 
     /*
-     * Save the previously used data pointers in the user pointers so that
-     * `npyiter_copy_to_buffers()` can skip the copy for operands whose data
-     * pointer did not change (e.g. an operand broadcast over the buffered
-     * dimensions, whose buffer content is identical for every fill).
-     * This mirrors what the buffered *reduce* iternext already does.
-     * NB: `npyiter_goto_iterindex()` does not clobber the user pointers in
-     * the buffered case, and a non-zero `coreoffset` disables the re-use.
+     * Save the previous data pointers so that copy_to_buffers can re-use the
+     * buffers of operands that did not move, as the reduce iternext does.
      */
     memcpy(ptrs, NIT_DATAPTRS(iter), NPY_SIZEOF_INTP*nop);
 
