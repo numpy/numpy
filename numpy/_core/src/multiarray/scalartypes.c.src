@@ -3564,6 +3564,27 @@ unicode_arrtype_dealloc(PyObject *v)
     PyUnicode_Type.tp_dealloc(v);
 }
 
+static inline int
+scalar_new_parse_posargs(PyObject *args, PyObject *kwds, const char *format,
+        char **kwnames, PyObject **arg0)
+{
+    Py_ssize_t nargs = PyTuple_GET_SIZE(args);
+
+    assert(format[0] == '|' && format[1] == 'O');
+    assert(kwnames[0] != NULL && kwnames[1] == NULL);
+    if (NPY_LIKELY(nargs <= 1
+                   && (kwds == NULL || PyDict_GET_SIZE(kwds) == 0))) {
+        if (nargs == 1) {
+            *arg0 = PyTuple_GET_ITEM(args, 0);
+        }
+        return 0;
+    }
+    /* Always an error; the generic parser phrases it. */
+    return PyArg_ParseTupleAndKeywords(args, kwds, format, kwnames,
+                                       arg0) ? 0 : -1;
+}
+
+
 /**begin repeat
  * #name = byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
  *         ulonglong, half, float, double, longdouble, cfloat, cdouble,
@@ -3634,7 +3655,7 @@ static PyObject *
     }
 #else
     static char *kwnames[] = {"", NULL};  /* positional-only */
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwnames, &obj)) {
+    if (scalar_new_parse_posargs(args, kwds, "|O", kwnames, &obj) < 0) {
         return NULL;
     }
 #endif
@@ -3724,7 +3745,7 @@ object_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *kwd
 {
     PyObject *obj = Py_None;
     static char *kwnames[] = {"", NULL};  /* positional-only */
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:object_", kwnames, &obj)) {
+    if (scalar_new_parse_posargs(args, kwds, "|O:object_", kwnames, &obj) < 0) {
         return NULL;
     }
     PyArray_Descr *typecode = PyArray_DescrFromType(NPY_OBJECT);
@@ -3820,7 +3841,7 @@ bool_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *kwds)
     PyArrayObject *arr;
 
     static char *kwnames[] = {"", NULL};  /* positional-only */
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:bool_", kwnames, &obj)) {
+    if (scalar_new_parse_posargs(args, kwds, "|O:bool_", kwnames, &obj) < 0) {
         return NULL;
     }
     if (obj == NULL) {

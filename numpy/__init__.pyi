@@ -2583,7 +2583,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def squeeze(
         self,
         /,
-        axis: SupportsIndex | tuple[SupportsIndex] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     ) -> ndarray[_AnyShape, _DTypeT_co]: ...
 
     #
