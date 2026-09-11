@@ -1112,11 +1112,7 @@ static PyType_Spec boundarraymethod_spec = {
 };
 
 
-/*
- * Neither type supports subclassing or takes part in a reference cycle, so
- * both are created without `Py_TPFLAGS_HAVE_GC`; instances are allocated with
- * `PyObject_New` and freed with `PyObject_Free`.
- */
+/* Neither type can be part of a reference cycle, so neither needs GC. */
 NPY_NO_EXPORT int
 init_array_method_types(PyObject *module)
 {

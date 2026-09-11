@@ -1559,15 +1559,11 @@ arr_add_docstring(PyObject *module, PyObject *const *args, Py_ssize_t len_args)
     }
     else if (PyObject_TypeCheck(obj, &PyType_Type)) {
         /*
-         * We add it to both `tp_doc` and `__doc__` here.  `tp_doc` keeps the
-         * leading signature line, which is where `__text_signature__` comes
-         * from.  `__doc__` in `tp_dict` is what a heap type reports, so it
-         * gets the docstring with that line removed, matching what a static
-         * type reports from `tp_doc`.
-         * The dictionary path is only necessary for heaptypes and
-         * metaclasses.  If `__doc__` as stored in `tp_dict` is None, we
-         * assume this was filled in by `PyType_Ready()` and should also be
-         * replaced.
+         * `tp_doc` keeps the signature line, which `__text_signature__` is
+         * parsed from.  `__doc__` in `tp_dict` is what a heap type reports,
+         * so it gets that line stripped to match what a static type reports
+         * from `tp_doc`.  A `__doc__` of None was filled in by
+         * `PyType_Ready()` and should be replaced too.
          */
         PyTypeObject *new = (PyTypeObject *)obj;
         _ADDDOC(new->tp_doc, new->tp_name);
