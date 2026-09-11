@@ -1475,7 +1475,6 @@ class TestCorrcoef:
         assert_almost_equal(test[:-1, :-1], control[:-1, :-1])
 
     def test_gh_15601(self):
-        # gh-15601
         d = np.array([[6., 8.], [6., 4.], [3., 9.], [1., 7.], [9., 5.]])
         m = np.array([[0, 1], [0, 1], [0, 0], [1, 0], [0, 0]], dtype=bool)
         # rows 2 and 4 are the only ones the two variables share
@@ -1544,7 +1543,6 @@ class TestCorrcoef:
         assert_(corrcoef(array(np.arange(5.), mask=mask)) is masked)
 
     def test_single_variable_without_variance(self):
-        # A constant variable has no correlation with itself.
         assert_(corrcoef(array(np.ones(5))) is masked)
 
     def test_no_variance_left_as_rounding_noise(self):
