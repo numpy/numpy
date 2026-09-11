@@ -1,0 +1,8 @@
+Cast safety of Python scalars is applied uniformly
+--------------------------------------------------
+The ``casting`` argument treats a Python ``int``, ``float`` or ``complex`` by
+its kind in ufuncs, `numpy.copyto`, `numpy.concatenate` and `numpy.choose`.
+An ``int`` into any integer dtype or a ``float`` into any floating point dtype
+is "safe", lowering the kind requires ``"unsafe"``, and a value that does not
+fit raises ``OverflowError``. These rules are now documented in
+:ref:`arrays.promotion.python-scalar-casting`.

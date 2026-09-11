@@ -470,11 +470,18 @@ def test_copyto_cast_safety():
     np.copyto(np.arange(3., dtype="float32"), 3., casting="safe")
 
     # But not equiv:
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="under the casting rule 'equiv'"):
         np.copyto(np.arange(3, dtype="uint8"), 3, casting="equiv")
 
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="under the casting rule 'equiv'"):
         np.copyto(np.arange(3., dtype="float32"), 3., casting="equiv")
+
+    # and neither "no", which is stricter:
+    np.copyto(np.arange(3), 3, casting="no")
+    with pytest.raises(TypeError, match="under the casting rule 'no'"):
+        np.copyto(np.arange(3, dtype="uint8"), 3, casting="no")
+    with pytest.raises(TypeError, match="under the casting rule 'no'"):
+        np.copyto(np.arange(3., dtype="float32"), 3., casting="no")
 
     # As a special thing, object is equiv currently:
     np.copyto(np.arange(3, dtype=object), 3, casting="equiv")
