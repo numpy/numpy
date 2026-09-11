@@ -1122,16 +1122,13 @@ TIMEDELTA_qm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
 }
 
 /*
- * Convert a floating-point timedelta64 result to int64, guarding the int64
- * range like the integer datetime/timedelta loops above.  A NaN result (e.g.
- * ``td * nan`` or ``0 * inf``) becomes NaT; a magnitude reaching 2**63 -- which
- * covers +/-inf and any finite value that would overflow int64 -- raises
- * OverflowError and returns -1.
+ * Convert a floating-point timedelta64 result to int64: NaN becomes NaT, an
+ * out-of-range magnitude raises OverflowError and returns -1.
  *
- * The bound is 2**63, not int64.max (2**63 - 1): the latter is not exactly
- * representable in float64 and rounds up to 2**63, so a result landing there
- * would otherwise slip past the check and saturate on the cast (2**63 is also
- * the magnitude of the NaT sentinel, NPY_DATETIME_NAT == -2**63).
+ * The bound is 2**63, not int64.max (2**63 - 1), which is not representable in
+ * float64 and rounds up to 2**63 -- a result landing there would slip past the
+ * check and saturate on the cast.  It also keeps in-range results off the NaT
+ * sentinel (NPY_DATETIME_NAT == -2**63).
  */
 static inline int
 timedelta_from_double(double result, npy_timedelta *out)
@@ -1197,9 +1194,8 @@ TIMEDELTA_md_m_divide(char **args, npy_intp const *dimensions, npy_intp const *s
         }
         else {
             /* Divide first so the FPU still flags divide-by-zero.  A zero
-             * divisor maps to NaT (numpy's long-standing convention, like the
-             * integer timedelta loops), not overflow; a tiny nonzero divisor
-             * whose quotient is +/-inf is a genuine overflow and raises. */
+             * divisor gives NaT like the integer loops; a tiny nonzero one
+             * overflows. */
             const double result = (double)in1 / in2;
             if (in2 == 0.0) {
                 *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
