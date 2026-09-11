@@ -1,0 +1,14 @@
+StringDType missing-value handling
+----------------------------------
+NumPy's array equality assertions now handle matching missing values in
+``StringDType`` arrays whose sentinel is a NumPy floating-point NaN, such as
+``numpy.float32("nan")``. Previously, these assertions could incorrectly
+report unequal arrays.
+
+For `numpy.unique`, requesting indices, inverse indices, or counts now handles
+NaN-like sentinels consistently: ``equal_nan=True`` groups missing entries,
+while ``equal_nan=False`` keeps them separate. With ``return_index=True``, the
+index returned for grouped missing values now identifies their first occurrence.
+
+Comparisons also correctly distinguish ``None``-like missing values from empty
+strings.

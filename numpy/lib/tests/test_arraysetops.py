@@ -5,6 +5,7 @@ import pytest
 
 import numpy as np
 from numpy import ediff1d, intersect1d, isin, setdiff1d, setxor1d, union1d, unique
+from numpy._core.tests._natype import pd_NA
 from numpy.dtypes import StringDType
 from numpy.exceptions import AxisError
 from numpy.testing import (
@@ -631,6 +632,13 @@ class TestSetOps:
 
 class TestUnique:
 
+    @pytest.fixture(
+        params=[np.nan, np.float32("nan"), pd_NA],
+        ids=["np.nan", "np.float32('nan')", "pandas.NA"],
+    )
+    def nan_string_dtype(self, request):
+        return StringDType(na_object=request.param)
+
     def check_all(self, a, b, i1, i2, c, dt):
         base_msg = 'check {0} failed for type {1}'
 
@@ -1018,6 +1026,56 @@ class TestUnique:
 
         a1_wo_none = sorted(x for x in a1 if x is not None)
         assert_array_equal(a1_wo_none, unq_sorted_wo_none)
+
+    @pytest.mark.parametrize("values, indices, inverse, counts", [
+        ([np.nan, "b", "a", np.nan, "b", np.nan],
+         [2, 1, 0], [2, 1, 0, 2, 1, 2], [1, 2, 3]),
+        ([np.nan] * 3, [0], [0, 0, 0], [3]),
+        ([], [], [], []),
+        (["b", "a", "b"], [1, 0], [1, 0, 1], [1, 2]),
+    ])
+    def test_unique_vstring_nan_metadata(
+            self, nan_string_dtype, values, indices, inverse, counts):
+        dtype = nan_string_dtype
+        a = np.array(values, dtype=dtype)
+        indices = np.array(indices, dtype=np.intp)
+        expected = a[indices]
+
+        self.check_all(a, expected, indices, inverse, counts, dtype)
+        assert_array_equal(np.sort(unique(a, sorted=False)), expected)
+
+    @pytest.mark.parametrize("sorted", [True, False])
+    @pytest.mark.parametrize("values, expected_indices, expected_counts", [
+        ([np.nan, "b", "a", np.nan, "b", np.nan],
+         [2, 1, 0, 3, 5], [1, 2, 1, 1, 1]),
+        ([np.nan] * 3, [0, 1, 2], [1, 1, 1]),
+        ([], [], []),
+    ])
+    def test_unique_vstring_nan_not_equal(
+            self, nan_string_dtype, sorted, values,
+            expected_indices, expected_counts):
+        dtype = nan_string_dtype
+        a = np.array(values, dtype=dtype)
+        expected_indices = np.array(expected_indices, dtype=np.intp)
+        expected = a[expected_indices]
+
+        assert_array_equal(
+            np.sort(unique(a, sorted=sorted, equal_nan=False)), expected,
+        )
+        v, indices, inverse, counts = unique(
+            a, True, True, True, sorted=sorted, equal_nan=False,
+        )
+        assert_array_equal(v, expected)
+        assert_array_equal(indices, expected_indices)
+        assert_array_equal(v[inverse], a)
+        assert_array_equal(counts, expected_counts)
+        assert_array_equal(np.bincount(inverse), counts)
+
+        # Without return_index, sorting need not preserve the order of NaNs.
+        v, inverse = unique(a, return_inverse=True, sorted=sorted, equal_nan=False)
+        assert_array_equal(v, expected)
+        assert_array_equal(v[inverse], a)
+        assert_array_equal(np.bincount(inverse), expected_counts)
 
     def test_unique_vstring_errors(self):
         a = np.array(

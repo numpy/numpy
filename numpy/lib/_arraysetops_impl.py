@@ -386,9 +386,11 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         aux = ar
     mask = np.empty(aux.shape, dtype=np.bool)
     mask[:1] = True
-    if (equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and
-            np.isnan(aux[-1])):
-        if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent
+    # Keep the last element typed so isnan handles StringDType's NA sentinel.
+    if (equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmMT" and
+            np.isnan(aux[-1:])):
+        if aux.dtype.kind in "cT":
+            # Complex NaNs and StringDType's NaN-like sentinels are equivalent.
             aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
         else:
             aux_firstnan = np.searchsorted(aux, aux[-1], side='left')
