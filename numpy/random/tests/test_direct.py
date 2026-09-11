@@ -241,7 +241,7 @@ class Base:
 
     @classmethod
     def _read_csv(cls, filename):
-        with open(filename) as csv:
+        with open(filename, encoding="utf-8") as csv:
             seed = csv.readline()
             seed = seed.split(',')
             seed = [int(s.strip(), 0) for s in seed[1:]]

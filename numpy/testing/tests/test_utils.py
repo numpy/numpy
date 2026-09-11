@@ -2040,7 +2040,7 @@ def test_no_warnings_message_reports_warning():
 def test_tempdir():
     with tempdir() as tdir:
         fpath = os.path.join(tdir, 'tmp')
-        with open(fpath, 'w'):
+        with open(fpath, 'w', encoding='utf-8'):
             pass
     assert_(not os.path.isdir(tdir))
 
@@ -2056,7 +2056,7 @@ def test_tempdir():
 
 def test_temppath():
     with temppath() as fpath:
-        with open(fpath, 'w'):
+        with open(fpath, 'w', encoding='utf-8'):
             pass
     assert_(not os.path.isfile(fpath))
 

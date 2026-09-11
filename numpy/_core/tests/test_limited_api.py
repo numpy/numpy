@@ -59,7 +59,7 @@ def build_limited_api_modules(tmpdir_factory):
     # Ensure we use the correct Python interpreter even when `meson` is
     # installed in a different Python environment (see gh-24956)
     native_file = str(build_dir / 'interpreter-native-file.ini')
-    with open(native_file, 'w') as f:
+    with open(native_file, 'w', encoding='utf-8') as f:
         f.write("[binaries]\n")
         f.write(f"python = '{sys.executable}'\n")
         f.write(f"python3 = '{sys.executable}'")

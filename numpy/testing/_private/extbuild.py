@@ -206,7 +206,7 @@ def build(cfile, outputfilename, compile_extra, link_extra,
 
     build_dir = cfile.parent / "build"
     os.makedirs(build_dir, exist_ok=True)
-    with open(cfile.parent / "meson.build", "wt") as fid:
+    with open(cfile.parent / "meson.build", "wt", encoding="utf-8") as fid:
         link_dirs = ['-L' + d for d in library_dirs]
         fid.write(textwrap.dedent(f"""\
             project('foo', 'c')
@@ -220,7 +220,7 @@ def build(cfile, outputfilename, compile_extra, link_extra,
             )
         """))
     native_file_name = cfile.parent / ".mesonpy-native-file.ini"
-    with open(native_file_name, "wt") as fid:
+    with open(native_file_name, "wt", encoding="utf-8") as fid:
         fid.write(textwrap.dedent(f"""\
             [binaries]
             python = '{sys.executable}'
