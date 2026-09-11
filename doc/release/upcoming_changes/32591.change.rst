@@ -1,0 +1,7 @@
+`numpy.linalg.svd` and `numpy.linalg.lstsq` raise on non-finite input
+---------------------------------------------------------------------
+`numpy.linalg.svd`, `numpy.linalg.lstsq` and the functions built on them
+(`numpy.linalg.pinv`, `numpy.linalg.matrix_rank`, `numpy.linalg.cond`, ...)
+now raise ``LinAlgError`` when the input contains ``inf``, as they already
+did for ``nan``. Previously, some LAPACK implementations never returned for
+such inputs.
